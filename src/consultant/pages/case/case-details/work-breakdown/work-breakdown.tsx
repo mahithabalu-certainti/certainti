@@ -13,13 +13,17 @@ import {
 } from '../../../../services/work-breakdown/work-breakdown-service';
 import {
   fetchTaskCommentsList,
-  TaskComment,
   fetchTaskAttachmentsList,
 } from '../../../../services/case-task/case-task-service';
 import {
   useGetUserOptions,
   useGetTagOptions,
 } from '../../../../services/case-team/case-team-service';
+import {
+  transformActivities,
+  transformComments,
+  transformAttachments,
+} from './helper';
 import { CaseTask } from './case-task';
 import { getAssignGroupsFilterFields } from './case-task/helper';
 import { ExportType } from '../../../../types';
@@ -205,21 +209,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
           taskId
         );
 
-        const transformedActivities = activitiesData.map((activity) => ({
-          id: activity.rid,
-          user: activity.created_by_name,
-          action: `changed ${activity.attribute_name} from "${activity.old_value}" to "${activity.new_value}"`,
-          date: new Date(activity.created_datetime).toLocaleDateString(
-            'en-US',
-            {
-              year: 'numeric',
-              month: 'short',
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit',
-            }
-          ),
-        }));
+        const transformedActivities = transformActivities(activitiesData);
 
         return transformedActivities;
       } catch (error) {
@@ -245,22 +235,8 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
           limit: 100,
         });
 
-        const transformedComments = (commentsResponse?.data?.data || []).map(
-          (comment: TaskComment) => ({
-            id: comment.id || comment.comment_rid,
-            user: comment.user || comment.user_name || 'Unknown',
-            text: comment.text || comment.comment_text || '',
-            date: new Date(
-              comment.date || comment.created_date || new Date()
-            ).toLocaleDateString('en-US', {
-              year: 'numeric',
-              month: 'short',
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit',
-            }),
-            attachments: comment.attachments,
-          })
+        const transformedComments = transformComments(
+          commentsResponse?.data?.data || []
         );
 
         return transformedComments;
@@ -287,26 +263,9 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
           limit: 100,
         });
 
-        const transformedAttachments = (
+        const transformedAttachments = transformAttachments(
           attachmentsResponse?.data?.data || []
-        ).map((attachment) => ({
-          id: attachment.id || attachment.attachment_rid,
-          fileName: attachment.file_name,
-          filePath: attachment.file_path,
-          fileSize: attachment.file_size,
-          fileType: attachment.file_type,
-          uploadedBy:
-            attachment.uploaded_by || attachment.uploaded_by_name || 'Unknown',
-          uploadedDate: new Date(
-            attachment.uploaded_date || attachment.created_date || new Date()
-          ).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-          }),
-        }));
+        );
         return transformedAttachments;
       } catch (error) {
         console.error('Failed to fetch task attachments:', error);

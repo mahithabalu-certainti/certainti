@@ -1,6 +1,12 @@
 import { useEffect, useState, useRef } from 'react';
 import { TaskDetailModalProps, Task, Activity, Comment } from './types';
-import { MenuItem, Select, SelectChangeEvent } from '@mui/material';
+import {
+  MenuItem,
+  Select,
+  SelectChangeEvent,
+  Autocomplete,
+  TextField,
+} from '@mui/material';
 import dayjs from 'dayjs';
 import { CalendarIcon, CloseIcon } from '../../assets';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -61,6 +67,8 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   const attachmentsFetchedRef = useRef<string | null>(null);
   const caseRidRef = useRef<string | null>(null);
   const accountRidRef = useRef<string | null>(null);
+
+  const [availableTags, setAvailableTags] = useState(tagData);
 
   const enrichedUsers = availableUsers.map(enrichUserOption);
 
@@ -1183,112 +1191,83 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                       <span className='text-sm text-gray-700'>Tags</span>
                     </div>
                     <div className='w-[140px]'>
-                      <Select
-                        name='tags'
+                      <Autocomplete
+                        multiple
+                        freeSolo
                         disabled={fieldDisabled.tags}
-                        className='custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px]'
-                        onChange={(event: SelectChangeEvent<string[]>) => {
-                          const selectedTags = event.target.value as string[];
+                        options={availableTags.map((tag) => tag.name)}
+                        value={editedTask?.tags || []}
+                        onChange={(_, newValue) => {
+                          // Filter out empty strings and duplicates
+                          const cleanedValues = Array.from(
+                            new Set(newValue.filter((v) => v.trim()))
+                          );
+
+                          // Add any new custom tags to availableTags
+                          cleanedValues.forEach((tagName) => {
+                            if (
+                              !availableTags.find((t) => t.name === tagName)
+                            ) {
+                              setAvailableTags([
+                                ...availableTags,
+                                {
+                                  id: `custom-${Date.now()}-${Math.random()}`,
+                                  name: tagName,
+                                  color: '#3B82F6',
+                                },
+                              ]);
+                            }
+                          });
+
                           setEditedTask((prev) =>
-                            prev ? { ...prev, tags: selectedTags } : null
+                            prev ? { ...prev, tags: cleanedValues } : null
                           );
                         }}
-                        value={editedTask?.tags || []}
-                        displayEmpty
-                        fullWidth
-                        size='small'
-                        multiple
-                        renderValue={() => (
-                          <span style={{ color: '#7D98B6', fontSize: '13px' }}>
-                            Add Tags
-                          </span>
-                        )}
-                        MenuProps={{
-                          PaperProps: {
-                            sx: {
-                              maxWidth: 300,
-                              maxHeight: 300,
-                              marginTop: '4px',
-                              zIndex: 40,
-                              boxShadow:
-                                'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
-                              '& .MuiMenuItem-root': {
-                                fontSize: '13px',
-                                padding: '6px 12px',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
+                        renderTags={() => null}
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            size='small'
+                            placeholder='Add Tags'
+                            sx={{
+                              '& .MuiOutlinedInput-root': {
+                                padding: '6px',
+                                minHeight: '32px',
+                                '& input': {
+                                  fontSize: '13px',
+                                  padding: '0 !important',
+                                  color: '#7D98B6',
+                                },
                               },
-                            },
+                              '& .MuiOutlinedInput-notchedOutline': {
+                                borderColor: '#CBD6E2',
+                                borderWidth: '1px',
+                              },
+                              '&:hover .MuiOutlinedInput-notchedOutline': {
+                                borderColor: '#CBD6E2',
+                                borderWidth: '1px',
+                              },
+                              '&.Mui-focused .MuiOutlinedInput-notchedOutline':
+                                {
+                                  borderColor: '#60A5FA',
+                                  borderWidth: '2px',
+                                },
+                            }}
+                          />
+                        )}
+                        ListboxProps={{
+                          style: {
+                            maxHeight: '300px',
+                            fontSize: '13px',
                           },
                         }}
                         sx={{
-                          height: '32px',
-                          fontSize: '13px',
-                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                            border: '2px solid #60A5FA',
-                          },
                           '& .MuiOutlinedInput-root': {
-                            '&.Mui-focused': {
-                              boxShadow: 'none',
-                            },
-                          },
-                          '.MuiSelect-select': {
-                            padding: '6px 6px',
-                            color: '#7D98B6',
-                            display: 'flex',
-                            alignItems: 'center',
-                            minHeight: '20px',
-                            overflow: 'hidden',
-                          },
-                          '& .MuiOutlinedInput-notchedOutline': {
-                            border: '1px solid #CBD6E2',
-                            borderRadius: '2px',
-                          },
-                          '&:hover .MuiOutlinedInput-notchedOutline': {
-                            border: '1px solid #CBD6E2',
-                          },
-                          '& svg': {
-                            color: '#7D98B6',
+                            padding: '6px',
+                            fontSize: '13px',
                           },
                         }}
-                      >
-                        {tagData.map((tag) => (
-                          <MenuItem
-                            sx={{
-                              color: '#425A76',
-                              fontSize: '13px',
-                              fontWeight: '500',
-                              backgroundColor: editedTask?.tags?.includes(
-                                tag.name
-                              )
-                                ? '#EBF8FF'
-                                : 'inherit',
-                            }}
-                            key={tag.id}
-                            value={tag.name}
-                            title={tag.name}
-                          >
-                            <div
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '8px',
-                                width: '100%',
-                              }}
-                            >
-                              <input
-                                type='checkbox'
-                                checked={
-                                  editedTask?.tags?.includes(tag.name) || false
-                                }
-                                onChange={() => {}}
-                                style={{ margin: 0, pointerEvents: 'none' }}
-                              />
-                              <span style={{ flex: 1 }}>{tag.name}</span>
-                            </div>
-                          </MenuItem>
-                        ))}
-                      </Select>
+                      />
                     </div>
                   </div>
 
