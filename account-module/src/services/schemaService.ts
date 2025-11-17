@@ -123,6 +123,9 @@ class SchemaService {
       await this.createNotesTable(schemaName, sequelize);
       await this.createNotesTimeline(schemaName, sequelize);
 
+      await this.createCheckListTable(schemaName, sequelize);
+      await this.createCheckListItemTable(schemaName, sequelize);
+      
       await transaction.commit();
     } catch (Err) {
       errorLog("Error creating account tables:", (Err as Error).message);
@@ -1429,6 +1432,34 @@ class SchemaService {
       );
     }
   }
+
+  private async createCheckListTable(schemaName: string, sequelize: any) {
+    await sequelize.query(
+      rawQueries.getCheckListSequenceQuery(schemaName)
+    );
+
+    await sequelize.query(
+      rawQueries.getCreateChecklistTableQuery(schemaName)
+    );
+
+    const indexQueries =
+      rawQueries.getCreateChecklistIndexesQueries(schemaName);
+    for (const query of indexQueries) {
+      await sequelize.query(query);
+    }
+  }
+  private async createCheckListItemTable(schemaName: string, sequelize: any) {
+
+  await sequelize.query(
+    rawQueries.getCreateCheckListItemTableQuery(schemaName)
+  );
+
+  const indexQueries =
+    rawQueries.getCreateCheckListItemIndexesQueries(schemaName);
+  for (const query of indexQueries) {
+    await sequelize.query(query);
+  }
+}
 
   async insertAccountDetails(
     account_number: string,

@@ -28,10 +28,12 @@ import {
   exportCasesAccountSchema,
   exportCaseSummarySchema,
   exportCheckListSchema,
+  exportReviewProjectSchema,
   listCasesAccountSchema,
   listCaseSummarySchema,
   listCaseTeamSchema,
   listCheckListSchema,
+  listReviewProjectSchema,
   updateCaseSchema,
   updateChecklistSchema,
   updateTaskSchema,
@@ -1154,8 +1156,7 @@ async function getReviewProjects(req: Request, res: Response): Promise<void> {
   try {
     const userId = req.headers["x-user-id"] as string;
     const { accountRid, caseRid } = req.params;
-    console.log("accountRid, caseRid", accountRid, caseRid);
-    const value = await validateRequest(req, listCaseTeamSchema, res, "GET");
+    const value = await validateRequest(req, listReviewProjectSchema, res, "GET");
     if (!value) return;
     let parsedFilters: Record<string, any> = {};
     try {
@@ -1206,8 +1207,7 @@ async function exportReviewProjects(req: Request, res: Response): Promise<void> 
   try {
     const userId = req.headers["x-user-id"] as string;
     const { accountRid, caseRid } = req.params;
-    console.log("accountRid, caseRid", accountRid, caseRid);
-    const value = await validateRequest(req, listCaseTeamSchema, res, "GET");
+    const value = await validateRequest(req, exportReviewProjectSchema, res, "GET");
     if (!value) return;
     let parsedFilters: Record<string, any> = {};
     try {
@@ -1228,7 +1228,7 @@ async function exportReviewProjects(req: Request, res: Response): Promise<void> 
     );
    const fields = await caseService.getAllowedExportFields(
       userId,
-      "projects_view_edit"
+      "case_review_projects_view_edit"
     );
     const allowedFieldSet = new Set<string>();
     for (const field of fields) {
@@ -1243,8 +1243,7 @@ async function exportReviewProjects(req: Request, res: Response): Promise<void> 
       return moment(date)
         .tz(isValidTZ ? value.timezone : "UTC")
         .format("YYYY-MMM-DD, hh:mm:ss A");
-    };
-    console.log("reviewProjects?.data?.reviewProjects", reviewProjects?.data?.reviewProjects); 
+    }; 
 
     if (reviewProjects.statusCode === HttpStatus.SUCCESS) {
         const finalStructuredData =

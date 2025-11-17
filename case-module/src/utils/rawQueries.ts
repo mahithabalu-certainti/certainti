@@ -591,7 +591,7 @@ export const listAllEmailTemplates = (
         array_agg(jsonb_build_object(
         'rid', i.rid,
         'r_number', i.r_number,
-        'status', i.status_rid,
+        'status_rid', i.status_rid,
         'status_name', i.status_name,
         'created_by', i.created_by,
         'modified_by', i.modified_by,

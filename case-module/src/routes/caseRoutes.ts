@@ -240,12 +240,12 @@ routes.post(
 
 routes.get(
   "/reviewProjects/:accountRid/:caseRid",
-  checkUserStatusMiddleware("projects_view_edit"),
+  checkUserStatusMiddleware("case_review_projects_view_edit"),
   controller.caseController.getReviewProjects
 )
 routes.get(
   "/exportReviewProjects/:accountRid/:caseRid",
-  checkUserStatusMiddleware("projects_view_edit"),
+  checkUserStatusMiddleware("case_review_projects_export"),
   controller.caseController.exportReviewProjects
 )
 export default routes;

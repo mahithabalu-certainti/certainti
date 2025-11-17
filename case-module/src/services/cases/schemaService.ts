@@ -479,7 +479,6 @@ class CaseSchemaService {
       await setupCaseHistorySubmissionSequence(orgDbSequlize, schemaName);
     } catch (err) {
       errorLog("Error creating case tables", (err as Error).message);
-      console.log(err)
       return this.throwServiceError(err as Error);
     }
   }
@@ -955,7 +954,6 @@ class CaseSchemaService {
       // Filter logic for your input structure
       Object.entries(filters).forEach(([field, filter]) => {
         if (!filter || typeof filter !== 'object') {
-          console.log(`Skipping filter for field ${field} due to invalid structure`);
           return;
         }
 
@@ -963,7 +961,6 @@ class CaseSchemaService {
         const value = operator ? filter[operator] : undefined;
 
         if (!operator || value === undefined) {
-          console.log(`Skipping filter for field ${field} due to missing operator or value`);
           return;
         }
 
@@ -1025,7 +1022,7 @@ class CaseSchemaService {
             break;
 
           default:
-            console.log(`Unhandled filter field: ${field}`);
+            logMessage(`Unhandled filter field: ${field}`);
         }
 
         if (Object.keys(condition).length > 0) {
@@ -1392,7 +1389,6 @@ class CaseSchemaService {
         /\D/g,
         ""
       )}`;
-    console.log("schemaName", schemaName);
     
     filters = filters || {};
     let offset = (page - 1) * limit;
@@ -1409,7 +1405,6 @@ class CaseSchemaService {
     let [pointOfContactRoleid]:any[] = await this.mainDbSequelize.query(
         rawQueries.fetchPOCRoleId()
       );
-    console.log("pointOfContactRoleiddd", pointOfContactRoleid);
     let filteredQueryArray: string[] = [];
     let andConditions = ``;
     let filterQueryValues;
@@ -2648,6 +2643,63 @@ class CaseSchemaService {
     }
   }
 
+  async assignCaseTeamToTasks(
+    accountNumber: string,
+    caseReq: any,
+    userId: string
+  ) {
+    try {
+      const { CaseTask, CaseTeam } =
+        await this.caseModelService.getModels(accountNumber); 
+      const teamMembers = await CaseTeam.findAll({
+        attributes: ['user_rid', 'role_rid'],
+        where: {
+          case_rid: caseReq.case_rid,
+          account_rid: caseReq.account_rid,
+        },
+        raw: true,
+      });
+
+      // Fetch user names from mainDbSequelize using rawQueries
+      const userRids = teamMembers.map((tm: any) => tm.user_rid);
+      let userNamesMap: Map<string, string> = new Map();
+      if (userRids.length > 0 && this.mainDbSequelize) {
+        const users = await this.mainDbSequelize.query(
+          rawQueries.fetchUser(userRids)
+        );
+        if (users && Array.isArray(users) && users[0] && Array.isArray(users[0])) {
+          users[0].forEach((user: any) => {
+            userNamesMap.set(user.rid, `${user.first_name} ${user.last_name}`);
+          });
+        }
+      }
+
+      // Enrich teamMembers with user_name
+      const enrichedTeamMembers = teamMembers.map((tm: any) => ({
+        ...tm,
+        user_name: userNamesMap.get(tm.user_rid) || null
+      }));
+      for (const member of teamMembers) {
+        await CaseTask.update(
+          {
+            assigned_to: enrichedTeamMembers.find(etm => etm.user_rid === member.user_rid)?.user_name || null,
+          },
+          {
+            where: {
+              case_rid: caseReq.case_rid,
+              account_rid: caseReq.account_rid,
+              case_team_member_role_rid: member.role_rid,
+            },
+          }
+        );
+      }
+      
+    } catch (error) {
+      logMessage(`Error assigning case team to tasks: ${error}`);
+      throw new Error("Error assigning case team to tasks: " + error);
+    }
+  }
+
   /**
    * Formats dates for display in error messages
    */
@@ -3662,7 +3714,6 @@ class CaseSchemaService {
 
   }
   catch (err) { 
-    console.log(err)
     logMessage(`Error in fetch cases checklists: ${err}`);
     errorLog("Error in fetch cases checklists:", (err as Error).message);
     return [];
@@ -5727,7 +5778,6 @@ async function editChecklistItem(
   createdBy: string,
   transaction: Transaction
 ) {
-  console.log("Editing checklist item:", item, checklistRid);
   // First, find the existing item by template_rid and sequence_no
   const existingItem = await CheckListItem.findOne({
     where: {
