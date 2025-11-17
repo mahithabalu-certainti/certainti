@@ -204,13 +204,8 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
       filters: modelTableParms.filter,
       fiscal_year: Number(fiscalYear),
       account_rid: accountId,
-      flag: 'project',
-      // project_rid: projectDetails?.project_rid || '',
-      // project_fiscal_rid:
-      //   projectDetails?.project_fiscal_rid ||
-      //   projectid ||
-      //   projectDetails?.rid ||
-      //   '',
+      flag: 'case',
+      case_rid: caseId || '',
       reminder_specific_list: true,
     },
     reminderModalOpen,
