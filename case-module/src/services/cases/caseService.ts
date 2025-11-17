@@ -22,8 +22,10 @@ import {
   ICreateCaseTeam,
   ICreateChecklist,
   priorityTypes,
+  TagsTypes,
   TaskCardDetailsType,
   TaskCardResponse,
+  taskTags,
   TaskTypeResponse,
   UpdateCaseTaskType,
   UpdateCommentsType,
@@ -2269,9 +2271,23 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
         let taskStatusType;
         const priorityIds : string[] = [];
         const taskStatusIds : string[] = [];
+        let tagMap : Map<string, string> = new Map();
 
         let checklistItemsStatusIds = [...new Set(result[0]?.task_details.checklists.checklist_items.map((d : ChecklistItems) => d.status_rid))]
         const uniqueUserIds = [...new Set(Object.values(userIds))];
+        if(result[0]?.task_details.tags !== null) {
+          let tagIds = [...new Set(result[0]?.task_details.tags.map((d : taskTags) => d.tag_rid))]
+          if(tagIds.length > 0) {
+            let query = rawQueries.getAllTagsName(tagIds)
+            if(query) {
+              const findTagNames = await mainDb.query<TagsTypes>(query, {type : QueryTypes.SELECT});
+              if(findTagNames.length > 0) {
+                tagMap = new Map(findTagNames.map((d : TagsTypes) => [d.rid, d.tag_name]));
+              }
+            }
+          }
+            
+        }
         
         priorityIds.push(priorityId.priority_id)
         taskStatusIds.push(taskStatusID.task_status_rid!)
@@ -2327,6 +2343,12 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
                 checklist_item_description : d.checklist_item_description
               }
 
+            }),
+            tags : resData?.task_details.tags.map((d : taskTags) => {
+              return {
+                ...d,
+                tag_name : tagMap.get(d.tag_rid) || null
+              }
             })
           }
         }
@@ -2440,5 +2462,4 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
       throw this.throwServiceError(err as Error);
     }
   }
-
 }

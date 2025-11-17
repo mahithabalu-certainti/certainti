@@ -562,6 +562,10 @@ export type ChecklistItems = {
   checklist_item_status_name : string
 }
 
+export type taskTags = {
+  tag_rid : string
+}
+
 export type checklistType = {
   rid : string
   checklist_name : string
@@ -589,6 +593,7 @@ export type TaskCardDetailsType = {
   task_status_name : string
   assigned_to_name : string
   checklists : checklistType
+  tags : taskTags[]
 }
 export type TaskCardResponse ={
   task_details :TaskCardDetailsType
@@ -596,4 +601,12 @@ export type TaskCardResponse ={
 export type caseTaskStatusTypes = {
   rid : string,
   task_status_name : string
+}
+export type WorkflowConnectorType = {
+  rid : string,
+  relationship_type : string
+}
+export type TagsTypes = {
+  rid : string
+  tag_name : string
 }

@@ -1722,6 +1722,39 @@ async function getEmailCategoryPlaceHolders(req : Request, res : Response) {
     return;
   }
 }
+async function getWorkFlowConnector (req : Request, res : Response) {
+  const methodName = "getWorkFlowConnector"
+  try {
+    const userId = req.headers["x-user-id"] as string;    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const result = await caseManagementService.getWorkflowConnetorData();
+    if(result.statusCode == HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.workflowConnectorListSuccess,
+        data : result.data
+      })
+    } else {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.dataNotAvailable,
+        data : []
+      })    
+    }    
+  } catch (error) {
+    
+  }
+}
 // Export the controller functions for use in route definitions
 export default {
   createAdminCheckList,
@@ -1746,5 +1779,6 @@ export default {
   getEmailTemplateDetailsById,
   exportEmailTemplates,
   getEmailCategoryPlaceHolders,
-  getEmailTemplateCategory
+  getEmailTemplateCategory,
+  getWorkFlowConnector
 };

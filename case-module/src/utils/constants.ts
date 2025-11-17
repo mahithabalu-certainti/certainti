@@ -150,7 +150,8 @@ export const STATUS_MESSAGE = {
   collaboratorAlreadyAdded : "Requested Collaborator already added",
   collaboratorsAddedSuccesss : "Collaborator added successfully",
   collaboratorAddedFailed : "Failed to add collaborator",
-  collaboratorsListedSuccess : "Collaborators fetched successfully"
+  collaboratorsListedSuccess : "Collaborators fetched successfully",
+  workflowConnectorListSuccess : "Workflow Connector listed successfully"
 
 };
 
@@ -1289,6 +1290,16 @@ export const rawQueries = {
   },
   fetchChecklistStatus () {
     return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.checklist_status WHERE status_name ILIKE '%Done%'`
+  },
+  fetchWorkFlowConnector () {
+    return `SELECT rid, relationship_type FROM ${MAIN_SCHEMA_NAME}.workflow_connector ORDER BY sequence ASC`
+  },
+  getAllTagsName (rid : any[]) {
+    let ids : string[] = []
+    if(rid.length > 0) {
+      ids.push(`${rid.map((d : any) => `'${d}'`).join(',')}`)
+      return `SELECT rid, tag_name FROM ${MAIN_SCHEMA_NAME}.tags WHERE rid IN (${ids})`
+    }
   }
 };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 

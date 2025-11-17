@@ -897,5 +897,18 @@ async listEmailTemplates (
         errorMessage: err.message,
       };
     }
-
+  async getWorkflowConnetorData () {
+    const result = await this.caseManangementSchemaService.getWorkFlowConnector();
+    if(result.length > 0) {
+      return {
+        statusCode : HttpStatus.SUCCESS,
+        data : result
+      }
+    } else {
+      return {
+        statusCode : HttpStatus.NOT_FOUND,
+        data : result
+      }
+    }
+  }
 }

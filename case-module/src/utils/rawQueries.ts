@@ -1219,6 +1219,19 @@ return query;
     ORDER BY c.created_datetime ASC
     ),
 
+    fetch_task_tags AS (
+    SELECT t.rid,
+    array_agg(jsonb_build_object(
+    'tag_rid', tt.tag_rid
+    )) AS tags
+    FROM
+    ${schemaName}.case_task t
+    LEFT JOIN ${schemaName}.task_tags tt ON tt.task_rid = t.rid
+    WHERE
+    t.rid = '${taskRid}'
+    GROUP BY t.rid
+    ),
+
     fetch_checlist_items AS (
     SELECT
     f.rid, COUNT(ch.rid) AS checklist_items_count,
@@ -1268,11 +1281,13 @@ return query;
     'priority_rid', ct.priority_rid,
     'task_description', ct.task_description,
     'task_status_rid', ct.task_status_rid,
-    'checklists', fci.checklists
+    'checklists', fci.checklists,
+    'tags', ftt.tags
     ) AS task_details
     FROM
     ${schemaName}.case_task ct
     LEFT JOIN aggregate_checklists fci ON fci.task_rid = ct.rid
+    LEFT JOIN fetch_task_tags ftt ON ftt.rid = ct.rid
     WHERE
     ct.rid = '${taskRid}'
     AND
@@ -1280,7 +1295,7 @@ return query;
     AND
     ct.case_rid = '${caseRid}'
     `
-    console.log(query)
+
     return query;
   }
   export const listAllTaskStatus = () => {
