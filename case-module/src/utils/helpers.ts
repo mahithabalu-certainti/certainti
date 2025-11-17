@@ -147,6 +147,51 @@ export function handlePromptResponse(
   });
 }
 
+/**
+ * Generates a base64-encoded Excel file from structured data, highlighting empty cells.
+ * @param {Array<Record<string, any>>} data - Array of objects representing rows.
+ * @param {string} sheetName - Name of the worksheet.
+ * @returns {Promise<string>} - Base64 string of the Excel file.
+ */
+export async function generateExcelBase64WithEmptyCheck(data: Array<Record<string, any>>, sheetName: string): Promise<string> {
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet(sheetName);
+
+  if (!data || data.length === 0 || !data[0]) {
+    worksheet.addRow(['No data available']);
+  } else {
+    // Add header row
+    const header = Object.keys(data[0] ?? {});
+    worksheet.addRow(header);
+
+    // Add data rows
+    data.forEach(rowObj => {
+      const rowValues = header.map(h => {
+        // Treat null, undefined, or empty string as empty
+        const v = rowObj[h];
+        return v === null || v === undefined || v === '' ? '' : v;
+      });
+      const row = worksheet.addRow(rowValues);
+      row.eachCell((cell, colNumber) => {
+        // Only highlight if the value is truly empty string
+        if (cell.value === '') {
+          cell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FFFFC7CE' } // Light red fill for empty cells
+          };
+        }
+      });
+    });
+  }
+
+  // Generate buffer and encode to base64
+  const buffer = await workbook.xlsx.writeBuffer();
+ //  await workbook.xlsx.writeFile('cases1.xlsx');
+  return Buffer.from(buffer).toString('base64');
+}
+
+
 export async function generateExcelBase64(data: any, sheetName: string) {
   const workbook = new ExcelJS.Workbook();
   const worksheet = workbook.addWorksheet(sheetName);
@@ -296,6 +341,34 @@ export const buildDatetimeFilterCondition = (
   };
 
   return conditionMap[condition]?.(columnRef, values) || "";
+};
+
+export const buildDatetimeFilterConditionTemplates = (
+  condition: string,
+  values: any,
+  filteredColumns: string,
+  tableAlias: string = 'i'
+): string => {
+  const columnRef = `DATE(${tableAlias}.${filteredColumns})`;
+  
+  switch (condition) {
+    case ALPHANUMERIC_CONDITIONS.equals:
+      return `${columnRef} = '${values}'`;
+    case ALPHANUMERIC_CONDITIONS.before:
+      return `${columnRef} < '${values}'`;
+    case ALPHANUMERIC_CONDITIONS.after:
+      return `${columnRef} > '${values}'`;
+    case ALPHANUMERIC_CONDITIONS.between:
+      // values should be an object: { from: string, to: string }
+      if (values && typeof values === 'object' && values.from && values.to) {
+      return `${columnRef} BETWEEN '${values.from}' AND '${values.to}'`;
+      }
+      return '';
+    case ALPHANUMERIC_CONDITIONS.isEmpty:
+      return `${columnRef} IS NULL`;
+    default:
+      return '';
+  }
 };
 
 export const setTaskTemplateData = (dbData : TaskTemplate, reqData : any, userId : string) => {

@@ -59,7 +59,10 @@ export const mainTableFilters: Record<any, any> = {
   modified_user_name: "modified_user_name",
   filing_type_name: "filing_type_name",
   case_owner_name: "case_owner_name",
-  case_name: "case_full_name"
+  case_name: "case_full_name",
+  industry_name: "industry_name",
+  project_classification_name: "project_classification_name",
+  project_type_name: "project_type_name",
 };
 
 export const STATUS_MESSAGE = {
@@ -468,6 +471,122 @@ export const checklistsFieldMappings = [
           
 ];
 
+export const reviewProjectsFieldMappings = [
+  {
+    permissionField: "project_code",
+    exportField: "Project Code",
+    dataField: "project_code",
+  },
+  {
+    permissionField: "fiscal_year",
+    exportField: "Fiscal Year",
+    dataField: "fiscal_year",
+  },
+  {
+    permissionField: "program_name",
+    exportField: "Name",
+    dataField: "program_name",
+  },
+  {
+    permissionField: "project_type_rid",
+    exportField: "Project Type",
+    dataField: "project_type_rid",
+  },
+  {
+    permissionField: "project_classification_rid",
+    exportField: "Project Classification",
+    dataField: "project_classification_rid",
+  },
+  {
+    permissionField: "project_group",
+    exportField: " Project Group",
+    dataField: "project_group",
+  },
+  {
+    permissionField: "industry_rid",
+    exportField: " Industry",
+    dataField: "industry_rid",
+  },
+  {
+    permissionField: "point_of_contact_name",
+    exportField: "Primary Point of Contact",
+    dataField: "point_of_contact_name",
+  },
+   {
+    permissionField: "point_of_contact_email",
+    exportField: "Primary Point of Contact Email",
+    dataField: "point_of_contact_email",
+  },
+  {
+    permissionField: "total_fte_count",
+    exportField: "Total FTE Count",
+    dataField: "total_fte_prj",
+  },
+  {
+    permissionField: "total_subcon_count",
+    exportField: "Total Sub Con Count",
+    dataField: "total_subcon_prj",
+  },
+  {
+    permissionField: "total_non_labor_count",
+    exportField: "Total Non Labor Count",
+    dataField: "total_nonlabor_prj",
+  },
+  {
+    permissionField: "total_effort_fte_prj",
+    exportField: "Total FTE Effort",
+    dataField: "total_effort_fte_prj",
+  },
+   {
+    permissionField: "total_effort_subcon_prj",
+    exportField: "Total Sub Con Effort",
+    dataField: "total_effort_subcon_prj",
+  },
+   {
+    permissionField: "total_effort_prj",
+    exportField: "Total Effort in Hrs",
+    dataField: "total_effort_prj",
+  },
+   {
+    permissionField: "total_cost_fte_prj",
+    exportField: "Total FTE Cost",
+    dataField: "total_cost_fte_prj",
+  },
+   {
+    permissionField: "total_cost_subcon_prj",
+    exportField: "Total Sub Con Cost",
+    dataField: "total_cost_subcon_prj",
+  },
+   {
+    permissionField: "total_cost_nonlabor_prj",
+    exportField: "Total Non Labor Cost",
+    dataField: "total_cost_nonlabor_prj",
+  },
+   {
+    permissionField: "total_cost_prj",
+    exportField: "Total Cost",
+    dataField: "total_cost_prj",
+  },
+   {
+    permissionField: "total_resources_prj",
+    exportField: "Number of Project Resource",
+    dataField: "total_resources_prj",
+  },
+  {
+    permissionField: "total_tasks",
+    exportField: "Number of Project Task",
+    dataField: "total_tasks",
+  },
+    {
+    permissionField: "total_technical_summary_generated",
+    exportField: "Number of Technical Summary Generated",
+    dataField: "total_technical_summary_generated",
+  }
+
+          
+];
+
+
 export const rawQueries = {
   fetchParentAccountDetails: `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
   async fetchParentAccount(
@@ -506,10 +625,29 @@ export const rawQueries = {
   fetchCountryByAccountId(accountRid: string) {
     return `SELECT country_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`;
   },
+  fetchPOCRoleId() {
+    return `
+    SELECT rid FROM ${MAIN_SCHEMA_NAME}.key_contact_role WHERE role_name = '${keyContactRole.pocName}'`;
+  },
   fetchStatus(statusIds: any): string {
     let ids = statusIds.map((d: any) => `'${d}'`);
     return `
     SELECT rid, status_name as name FROM ${MAIN_SCHEMA_NAME}.case_status WHERE rid IN (${ids})`;
+  },
+  fetchIndustry(industryIds: any): string {
+    let ids = industryIds.map((d: any) => `'${d}'`);
+    return `
+    SELECT rid, industry_name as name FROM ${MAIN_SCHEMA_NAME}.industry WHERE rid IN (${ids})`;
+  },
+  fetchClassification(classificationIds: any): string {
+    let ids = classificationIds.map((d: any) => `'${d}'`);
+    return `
+    SELECT rid, classification_name as name FROM ${MAIN_SCHEMA_NAME}.project_classification WHERE rid IN (${ids})`;
+  },
+   fetchProjectType(projectTypeIds: any): string {
+    let ids = projectTypeIds.map((d: any) => `'${d}'`);
+    return `
+    SELECT rid, project_type_name as name FROM ${MAIN_SCHEMA_NAME}.project_type WHERE rid IN (${ids})`;
   },
   fetchFilingType(filingTypeIds: any): string {
     let ids = filingTypeIds.map((d: any) => `'${d}'`);
@@ -572,7 +710,7 @@ export const rawQueries = {
   },
   getEmailCategoryPlaceHolders(categoryRid : string) {  
     return `
-      SELECT ec.rid,placeholder_rid,ep.placeholder_key,applicable_to
+      SELECT ec.rid,placeholder_rid,ep.placeholder_key,applicable_to,ep.placeholder_value
       FROM ${MAIN_SCHEMA_NAME}.email_category_placeholder  ec
       LEFT JOIN ${MAIN_SCHEMA_NAME}.email_placeholder ep ON ep.rid = ec.placeholder_rid
       WHERE category_rid = '${categoryRid}'
@@ -1166,20 +1304,77 @@ export const filterTypesForCaseSummary: Record<string, any> = {
   created_user_name: "string",
   updated_user_name: "string",
   status_rid: "string",
-  account_name: "string",
   fiscal_year: "number",
   createdAt: "datetime",
-  case_owner_name: "string",
-  filing_type_name: "string",
-  case_name: "string",
-  submitted_datetime: "datetime",
-  approved_datetime: "datetime",
-  case_total_project_cost: "number",
-  case_total_qre_cost: "number",
-  case_total_rd_cost: "number",
-  case_total_projects: "number",
-  case_total_qualified_projects: "number",
-  country_name: "string",
+  total_resources_prj: "number",
+  total_cost_prj: "number",
+  total_cost_nonlabor_prj: "number",
+  total_cost_subcon_prj: "number",
+  total_cost_fte_prj: "number",
+  total_effort_prj: "number",
+  total_effort_subcon_prj: "number",
+  total_effort_fte_prj: "number",
+  total_subcon_prj: "number",
+  total_nonlabor_prj: "number",
+  total_fte_prj: "number",
+  
+};
+
+export const filterTypesForReviewProjects: Record<string, any> = {
+  r_number: "string",
+  created_datetime: "datetime",
+  modified_datetime: "datetime",
+  created_user_name: "string",
+  updated_user_name: "string",
+  status_rid: "string",
+  fiscal_year: "number",
+  createdAt: "datetime",
+  total_effort_prj: "number",
+  total_subcon_prj: "number",
+  total_cost_fte_prj: "number",
+  total_nonlabor_prj: "number",
+  total_resources_prj: "number",
+  total_effort_fte_prj: "number",
+  total_cost_subcon_prj: "number",
+  total_cost_nonlabor_prj: "number",
+  total_effort_subcon_prj: "number",
+  project_classification_rid: "string",
+  project_type_rid: "string",
+  total_tasks: "number",
+  project_group: "string",
+  project_name: "string",
+  project_code: "string",
+  total_technical_summaries: "number",
+  industry_rid: "string",
+  project_point_of_contact_email: "string",
+  project_point_of_contact: "string",
+};
+
+export const filtersColumnsForReviewProjects: Record<string, string> = {
+    r_number: "r_number",
+    created_datetime: "created_datetime",
+    modified_datetime: "modified_datetime",
+    fiscal_year: "fiscal_year",
+    createdAt: "created_datetime",
+    total_resources_prj: "total_resources_prj",
+    total_cost_prj: "total_cost_prj",
+    total_cost_nonlabor_prj: "total_cost_nonlabor_prj",
+    total_cost_subcon_prj: "total_cost_subcon_prj",
+    total_cost_fte_prj: "total_cost_fte_prj",
+    total_effort_prj: "total_effort_prj",
+    total_effort_subcon_prj: "total_effort_subcon_prj",
+    total_effort_fte_prj: "total_effort_fte_prj",
+    total_subcon_prj: "total_subcon_prj",
+    total_nonlabor_prj: "total_nonlabor_prj",
+    total_fte_prj: "total_fte_prj",
+    project_group: "project_group",
+    project_name: "project_name",
+    project_code: "project_code",
+    total_tasks: "total_tasks",
+    total_technical_summaries: "total_technical_summaries",
+    industry_rid: "industry_rid",
+    project_point_of_contact_email: "project_point_of_contact_email",
+    project_point_of_contact: "project_point_of_contact",
 };
 
 export const filtersColumnsForCaseSummary: Record<string, string> = {
@@ -1205,6 +1400,7 @@ export const filtersColumnsForCaseSummary: Record<string, string> = {
   case_total_qualified_projects: "case_total_qualified_projects",
   country_name: "country_rid",
 };
+
 
 export const filterTypesForAdminCheckList: Record<string, any> = {
   r_number: "string",

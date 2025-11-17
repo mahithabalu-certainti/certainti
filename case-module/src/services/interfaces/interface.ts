@@ -247,6 +247,17 @@ addCollaboratorToTask (data : any) : Promise<{
     statusMessage: string;
 }>
 getCollaboratorsList(data : any) : Promise<TaskCollaborators[] | undefined>
+getReviewProjects( 
+  data: any, 
+  filters: Record<string, any>,
+  userId:string,apiType:string,
+  accountRid: string, caseRid: string): Promise<{
+  statusCode: number;
+  message: string;
+  errorMessage?: string;
+  data?: { reviewProjects: any ,count: number};
+}>;
+
 }
 
 export interface ICaseManagementService {
