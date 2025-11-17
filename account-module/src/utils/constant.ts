@@ -879,7 +879,7 @@ export const rawQueries = {
         project_rid VARCHAR(50) NOT NULL,
         attribute_name VARCHAR(100) NOT NULL,
         old_value VARCHAR(2000),
-        new_value VARCHAR(2000) NOT NULL
+        new_value VARCHAR(2000)
       );
     `;
   },

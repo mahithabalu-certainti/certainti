@@ -610,3 +610,24 @@ export type TagsTypes = {
   rid : string
   tag_name : string
 }
+
+export interface IActivityTask {
+  task_template_rid?: string;
+  activity_type:string
+  created_by: string;
+  modified_by?: string;
+  created_datetime?: Date;
+  modified_datetime?: Date;
+  account_rid: string;
+  fiscal_year: number;
+  attach_to: string;
+  attachment_level: string;
+  task_name: string;
+  description?: string;
+  start_datetime?: Date;
+  end_datetime?: Date;
+  priority_rid?: string;
+  assigned_to?: string;
+  status_rid?: string;
+  remainder_interval?: number;
+}

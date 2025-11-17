@@ -483,6 +483,27 @@ const createTaskSchema = Joi.object({
   case_rid : Joi.string().max(255).required()
 });
 
+const createActivitTaskSchema = Joi.object({
+  task_name: Joi.string().max(255).required(),
+  effort_in_days : Joi.number().optional(),
+  reminder_interval: Joi.number().optional(),
+  effective_start_datetime : Joi.string().optional(),
+  effective_end_datetime : Joi.string().optional(),
+  checklist_template_rid : Joi.string().allow("").optional(),
+  status_rid : Joi.string().optional(),
+  priority_rid : Joi.string().allow("").optional(),
+  description : Joi.string().allow("").optional(),
+  task_status_rid : Joi.string().allow("").optional(),
+  account_rid : Joi.string().max(255).required(),
+  attach_to : Joi.string().required(),
+  attachment_level : Joi.string().required(),
+  fiscal_year : Joi.number().optional(),
+  tags: Joi.string().allow("").optional(),
+  assigned_to : Joi.string().allow("").optional(),
+  checklist_rid: Joi.string().allow("").optional(),
+  remainder_interval: Joi.number().optional()
+});
+
 const updateTaskSchema = Joi.object({
   rid : Joi.string().max(255).required(),
   task_name: Joi.string().max(255).required(),
@@ -531,5 +552,6 @@ export {
   listHistoricalSubmissionSchema,
   createHistoricalSubmissionSchema,
   listEmailTemplateSchema,
-  exportEmailTemplateSchema
+  exportEmailTemplateSchema,
+  createActivitTaskSchema
 };
