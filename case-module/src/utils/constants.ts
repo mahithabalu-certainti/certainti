@@ -484,9 +484,9 @@ export const reviewProjectsFieldMappings = [
     dataField: "fiscal_year",
   },
   {
-    permissionField: "program_name",
+    permissionField: "project_name",
     exportField: "Name",
-    dataField: "program_name",
+    dataField: "project_name",
   },
   {
     permissionField: "project_type_rid",
@@ -509,27 +509,27 @@ export const reviewProjectsFieldMappings = [
     dataField: "industry_rid",
   },
   {
-    permissionField: "point_of_contact_name",
+    permissionField: "primary_point_of_contact",
     exportField: "Primary Point of Contact",
-    dataField: "point_of_contact_name",
+    dataField: "primary_point_of_contact",
   },
    {
-    permissionField: "point_of_contact_email",
+    permissionField: "primary_point_of_contact_email",
     exportField: "Primary Point of Contact Email",
-    dataField: "point_of_contact_email",
+    dataField: "primary_point_of_contact_email",
   },
   {
-    permissionField: "total_fte_count",
+    permissionField: "total_fte_prj",
     exportField: "Total FTE Count",
     dataField: "total_fte_prj",
   },
   {
-    permissionField: "total_subcon_count",
+    permissionField: "total_subcon_prj",
     exportField: "Total Sub Con Count",
     dataField: "total_subcon_prj",
   },
   {
-    permissionField: "total_non_labor_count",
+    permissionField: "total_nonlabor_prj",
     exportField: "Total Non Labor Count",
     dataField: "total_nonlabor_prj",
   },
@@ -579,9 +579,9 @@ export const reviewProjectsFieldMappings = [
     dataField: "total_tasks",
   },
     {
-    permissionField: "total_technical_summary_generated",
+    permissionField: "total_technical_summaries",
     exportField: "Number of Technical Summary Generated",
-    dataField: "total_technical_summary_generated",
+    dataField: "total_technical_summaries",
   }
 
           

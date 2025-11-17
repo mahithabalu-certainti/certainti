@@ -2255,6 +2255,11 @@ export const rawQueries = {
       CREATE SEQUENCE IF NOT EXISTS "${schemaName}".interactions_seq START 1;
     `;
   },
+  getCheckListSequenceQuery(schemaName: string): string {
+    return `
+      CREATE SEQUENCE IF NOT EXISTS "${schemaName}".checklist_seq START 1;
+    `;
+  },
   getCreateInteractionsTableQuery(schemaName: string): string {
     return `
       CREATE TABLE IF NOT EXISTS "${schemaName}".interactions (
@@ -2298,6 +2303,87 @@ export const rawQueries = {
         CONSTRAINT interactions_rid_unique UNIQUE (rid)
       );
     `;
+  },
+   getCreateChecklistTableQuery(schemaName: string): string {
+    return `
+      CREATE TABLE IF NOT EXISTS "${schemaName}".checklists (
+        rid VARCHAR(50) DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+        r_number VARCHAR(20) UNIQUE DEFAULT 'CHK-' || LPAD(nextval('"${schemaName}".checklist_seq')::TEXT, 10, '0'),
+        created_by character varying(50) NOT NULL,
+        modified_by character varying(50),
+        created_datetime timestamp with time zone NOT NULL DEFAULT NOW(),
+        modified_datetime timestamp with time zone,
+        account_rid character varying(50) NOT NULL,
+        attach_to character varying(50),
+        attachment_level character varying(50),
+        fiscal_year integer,
+        checklist_template_rid character varying(50) NOT NULL,
+        checklist_name character varying(255) NOT NULL,
+        checklist_description character varying(2000),
+        assigned_to character varying(50),
+        status_rid character varying(50),
+        CONSTRAINT checklists_rid_unique UNIQUE (rid)
+          CONSTRAINT checklists_pkey PRIMARY KEY (rid),
+    CONSTRAINT checklists_r_number_key UNIQUE (r_number),
+    CONSTRAINT checklists_account_rid_fkey FOREIGN KEY (account_rid)
+        REFERENCES ${schemaName}.account_details (account_rid) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE NO ACTION
+      );
+    `;
+  },
+   getCreateChecklistIndexesQueries(schemaName: string): string[] {
+    const fieldsToIndex = [
+      "account_rid",
+      "rid",
+      "fiscal_year",
+      "attach_to",
+      "attachment_level"
+    ];
+    
+    return fieldsToIndex.map(field => {
+      const indexName = `${schemaName}_checklists_${field}_idx`;
+      return `
+        CREATE INDEX IF NOT EXISTS "${indexName}"
+        ON "${schemaName}"."checklists"("${field}");
+      `;
+    });
+  },
+   getCreateCheckListItemTableQuery(schemaName: string): string {
+    return `
+      CREATE TABLE IF NOT EXISTS "${schemaName}".checklist_items (
+        rid VARCHAR(50) DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+        created_by character varying(50) NOT NULL,
+        modified_by character varying(50),
+        created_datetime timestamp with time zone NOT NULL DEFAULT NOW(),
+        modified_datetime timestamp with time zone,
+        account_rid character varying(50) NOT NULL,
+        checklist_rid character varying(50) NOT NULL,
+        checklist_item_name character varying(255) NOT NULL,
+        checklist_item_description character varying(2000),
+        status_rid character varying(50),
+        CONSTRAINT checklist_items_pkey UNIQUE (rid)
+        CONSTRAINT checklist_items_account_rid_fkey FOREIGN KEY (account_rid)
+        REFERENCES ${schemaName}.account_details (account_rid) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE NO ACTION
+      );
+    `;
+  },
+   getCreateCheckListItemIndexesQueries(schemaName: string): string[] {
+    const fieldsToIndex = [
+      "account_rid",
+      "checklist_rid",
+      "rid"
+    ];
+    
+    return fieldsToIndex.map(field => {
+      const indexName = `${schemaName}_checklist_items_${field}_idx`;
+      return `
+        CREATE INDEX IF NOT EXISTS "${indexName}"
+        ON "${schemaName}"."checklist_items"("${field}");
+      `;
+    });
   },
   getCreateInteractionsIndexesQueries(schemaName: string): string[] {
     const fieldsToIndex = [

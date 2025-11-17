@@ -521,10 +521,9 @@ export const listAllCheckList = (
 
             FROM
             ${MAIN_SCHEMA_NAME}.checklist_template ct
-  COUNT(pt.rid) AS total_tasks,
-  COUNT(ats.rid) AS total_technical_summaries,
-  primary_contact.key_contact_name AS project_point_of_contact,
-  primary_contact.key_contact_email AS project_point_of_contact_email
+            LEFT JOIN ${MAIN_SCHEMA_NAME}.status s ON s.rid = ct.status_rid
+            LEFT JOIN ${MAIN_SCHEMA_NAME}.user uc ON uc.rid = ct.created_by
+            LEFT JOIN ${MAIN_SCHEMA_NAME}.user um ON um.rid = ct.modified_by
               WHERE
     (ct.r_number ILIKE '${searchValue}' OR ct.checklist_name ILIKE '${searchValue}')
     ${joinedConditions}
@@ -591,7 +590,7 @@ export const listAllEmailTemplates = (
         array_agg(jsonb_build_object(
         'rid', i.rid,
         'r_number', i.r_number,
-        'status', i.status_rid,
+        'status_rid', i.status_rid,
         'status_name', i.status_name,
         'created_by', i.created_by,
         'modified_by', i.modified_by,

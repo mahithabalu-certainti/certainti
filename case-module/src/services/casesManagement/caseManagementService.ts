@@ -749,7 +749,7 @@ async listEmailTemplates (
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.NOT_FOUND_MESSAGE,
         data: {
-          emailTemplates: null,
+          emailTemplates: [],
           count: 0,
         },
       };

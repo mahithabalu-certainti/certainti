@@ -130,6 +130,21 @@ const listCaseTeamSchema = Joi.object({
   sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
 });
 
+const listReviewProjectSchema = Joi.object({
+  page: Joi.string().optional().pattern(/^[0-9]+$/),
+  limit: Joi.string().optional().pattern(/^[0-9]+$/),
+  filters: Joi.string().default("{}"),
+  sortBy: Joi.string().optional(),
+  sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
+});
+
+const exportReviewProjectSchema = Joi.object({
+  filters: Joi.string().default("{}"),
+  sortBy: Joi.string().optional(),
+  sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
+  timezone: Joi.string().optional()
+});
+
 const adminChecklistSchema = Joi.object({
   checklist_name: Joi.string().max(255).required(),
   checklist_description: Joi.string().max(2000).optional().allow(""),
@@ -495,6 +510,8 @@ export {
   exportCaseSummarySchema,
   createCaseTeamSchema,
   listCaseTeamSchema,
+  listReviewProjectSchema,
+  exportReviewProjectSchema,
   adminChecklistSchema,
   checklistSchema,
   jurisdictionSchema,
