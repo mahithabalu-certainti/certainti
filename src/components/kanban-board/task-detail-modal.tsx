@@ -661,7 +661,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
         }`}
         style={{ top: '38.1px' }}
       >
-        <div className='sticky top-0 flex items-center justify-between p-4 border-b border-gray-200 bg-white z-50 shadow-sm'>
+        <div className='sticky top-0 flex items-center justify-between p-[16.5px] border-b border-[#CBD6E2] bg-white z-50'>
           <button
             onClick={handleMarkComplete}
             className='flex items-center gap-2 px-3 py-1 bg-emerald-600 hover:bg-emerald-700 rounded text-sm font-medium transition-colors text-white'
