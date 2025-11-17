@@ -243,4 +243,9 @@ routes.get(
   checkUserStatusMiddleware("projects_view_edit"),
   controller.caseController.getReviewProjects
 )
+routes.get(
+  "/exportReviewProjects/:accountRid/:caseRid",
+  checkUserStatusMiddleware("projects_view_edit"),
+  controller.caseController.exportReviewProjects
+)
 export default routes;

@@ -1530,7 +1530,10 @@ class CaseSchemaService {
         ...new Set(result.map((projectInfo: any) => projectInfo.industry_rid)),
       ];
       let classificationIds: any[] = [
-        ...new Set(result.map((projectInfo: any) => projectInfo.classification_rid)),
+        ...new Set(result.map((projectInfo: any) => projectInfo.project_classification_rid)),
+      ];
+      let projectTypeIds: any[] = [
+        ...new Set(result.map((projectInfo: any) => projectInfo.project_type_rid)),
       ];
       let fetchCreatedByUsers = await this.mainDbSequelize.query(
         rawQueries.fetchUser(createdByIds)
@@ -1546,6 +1549,9 @@ class CaseSchemaService {
       );
       let fetchClassificationInfo = await this.mainDbSequelize.query(
         rawQueries.fetchClassification(classificationIds)
+      );
+      let fetchProjectTypeInfo = await this.mainDbSequelize.query(
+        rawQueries.fetchProjectType(projectTypeIds)
       );
       let createdMap: Map<string, string> = new Map(
         fetchCreatedByUsers[0].map((user: any) => [
@@ -1568,6 +1574,10 @@ class CaseSchemaService {
       let classificationMap: Map<string, string> = new Map(
         fetchClassificationInfo[0].map((classification: any) => [classification.rid, classification.name])
       );
+      let projectTypeMap: Map<string, string> = new Map(
+        fetchProjectTypeInfo[0].map((projectType: any) => [projectType.rid, projectType.name])
+      );
+      
       let finalData =
               Array.isArray(result) && result.length > 0
                 ? result.map((d: any) => {
@@ -1578,7 +1588,8 @@ class CaseSchemaService {
                       modified_user_name: modifiedMap.get(d.modified_by) || null,
                       status_name: statusMap.get(d.status_rid) || null,
                       industry_name: industryMap.get(d.industry_rid) || null,
-                      project_classification_name: classificationMap.get(d.classification_rid) || null,
+                      project_classification_name: classificationMap.get(d.project_classification_rid) || null,
+                      project_type_name: projectTypeMap.get(d.project_type_rid) || null,
                     };
                   })
                 : [];

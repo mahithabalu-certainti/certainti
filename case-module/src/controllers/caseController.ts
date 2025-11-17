@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import {
   errorLog,
   generateExcelBase64,
+  generateExcelBase64WithEmptyCheck,
   handleCustomResponse,
   handleErrorResponse,
   handleSuccessResponse,
@@ -15,6 +16,7 @@ import {
   casesSummaryFieldMappings,
   checklistsFieldMappings,
   HttpStatus,
+  reviewProjectsFieldMappings,
   STATUS_MESSAGE,
 } from "../utils/constants";
 import {
@@ -1148,7 +1150,7 @@ async function deleteProjectFromCase(
 
 
 async function getReviewProjects(req: Request, res: Response): Promise<void> {
-  const methodName = "List Case Team Members";
+  const methodName = "Get Review Projects";
   try {
     const userId = req.headers["x-user-id"] as string;
     const { accountRid, caseRid } = req.params;
@@ -1175,6 +1177,126 @@ async function getReviewProjects(req: Request, res: Response): Promise<void> {
     if (reviewProjects.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
       handleSuccessResponse(res, reviewProjects.data);
+      return;
+    } else {
+      errorLog(methodName, reviewProjects.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        reviewProjects.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+async function exportReviewProjects(req: Request, res: Response): Promise<void> {
+  const methodName = "Export Review Projects";
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    const { accountRid, caseRid } = req.params;
+    console.log("accountRid, caseRid", accountRid, caseRid);
+    const value = await validateRequest(req, listCaseTeamSchema, res, "GET");
+    if (!value) return;
+    let parsedFilters: Record<string, any> = {};
+    try {
+      parsedFilters = JSON.parse(value.filters);
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid filters format. Must be a valid JSON object."
+      );
+    }
+    const reviewProjects = await caseService.getReviewProjects(
+      value,
+      parsedFilters,
+      userId,
+      "download",
+      accountRid!,
+      caseRid!,
+    );
+   const fields = await caseService.getAllowedExportFields(
+      userId,
+      "projects_view_edit"
+    );
+    const allowedFieldSet = new Set<string>();
+    for (const field of fields) {
+      if (field.read) {
+        allowedFieldSet.add(field.field_name);
+      }
+    }
+    const isValidTZ = value.timezone && isValidTimezone(value.timezone);
+    const formatDate = (date?: Date) => {
+      if (!date) return null;
+      
+      return moment(date)
+        .tz(isValidTZ ? value.timezone : "UTC")
+        .format("YYYY-MMM-DD, hh:mm:ss A");
+    };
+    console.log("reviewProjects?.data?.reviewProjects", reviewProjects?.data?.reviewProjects); 
+
+    if (reviewProjects.statusCode === HttpStatus.SUCCESS) {
+        const finalStructuredData =
+        !reviewProjects?.data?.reviewProjects || reviewProjects.data.reviewProjects.length < 1
+          ? []
+          : reviewProjects.data.reviewProjects.map((d: any) => {
+              let resultMap: { [key: string]: any } = {
+                r_number: d.r_number,
+                fiscal_year: `FY-${d.fiscal_year}`,
+                program_name: d.project_name,
+                project_code: d.project_code,
+                industry_rid: d.industry_name,
+                project_classification_rid: d.project_classification_name,
+                project_type_rid: d.project_type_name,
+                project_group: d.project_group,
+                total_tasks: d.total_tasks,
+                total_fte_prj: d.total_fte_prj,
+                total_cost_prj: d.total_cost_prj,
+                total_effort_prj: d.total_effort_prj,
+                total_subcon_prj: d.total_subcon_prj,
+                total_cost_fte_prj: d.total_cost_fte_prj,
+                total_nonlabor_prj: d.total_nonlabor_prj,
+                total_resources_prj: d.total_resources_prj,
+                total_effort_fte_prj  : d.total_effort_fte_prj,
+                total_cost_nonlabor_prj : d.total_cost_nonlabor_prj,
+                total_effort_subcon_prj : d.total_effort_subcon_prj,
+                project_point_of_contact: d.project_point_of_contact,
+                project_point_of_contact_email: d.project_point_of_contact_email,
+                total_technical_summaries: d.total_technical_summaries,
+
+
+               
+              };
+
+              // Build exportRecord using allowed fields and resultMap
+              const exportRecord: Record<string, any> = {};
+              reviewProjectsFieldMappings.forEach((mapping) => {
+                if (allowedFieldSet.has(mapping.permissionField)) {
+                  exportRecord[mapping.exportField] =
+                    resultMap[mapping.dataField];
+                }
+              });
+
+              return exportRecord;
+            });
+
+      const generateBase64Response = await generateExcelBase64WithEmptyCheck(
+        finalStructuredData,
+        "Review Projects"
+      );
+      successLog(methodName);
+      handleSuccessResponse(res, generateBase64Response);
       return;
     } else {
       errorLog(methodName, reviewProjects.errorMessage);
@@ -3394,6 +3516,7 @@ export default {
   deleteTaskAttachments,
   listTaskAttachments,
   getReviewProjects,
+  exportReviewProjects,
   fetchTaskActivity,
   fetchTaskDetails,
   fetchCaseTaskStatus,

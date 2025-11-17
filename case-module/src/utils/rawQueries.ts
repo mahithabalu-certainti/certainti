@@ -466,6 +466,8 @@ AND (
     SELECT 
         array_agg(jsonb_build_object(
             'rid', c.rid,
+            'project_code', c.project_code,
+            'project_name', c.project_name,
             'r_number', c.r_number,
             'status_rid', c.status_rid,
             'created_by', c.created_by,
@@ -476,6 +478,7 @@ AND (
             'fiscal_year', c.fiscal_year,
             'project_type_rid', c.project_type_rid,
             'project_classification_rid', c.project_classification_rid,
+            'project_group', c.project_group,
             'industry_rid', c.industry_rid,
             'total_fte_prj', c.total_fte_prj,
             'total_subcon_prj', c.total_subcon_prj,

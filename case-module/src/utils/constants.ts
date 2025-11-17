@@ -471,6 +471,122 @@ export const checklistsFieldMappings = [
           
 ];
 
+export const reviewProjectsFieldMappings = [
+  {
+    permissionField: "project_code",
+    exportField: "Project Code",
+    dataField: "project_code",
+  },
+  {
+    permissionField: "fiscal_year",
+    exportField: "Fiscal Year",
+    dataField: "fiscal_year",
+  },
+  {
+    permissionField: "program_name",
+    exportField: "Name",
+    dataField: "program_name",
+  },
+  {
+    permissionField: "project_type_rid",
+    exportField: "Project Type",
+    dataField: "project_type_rid",
+  },
+  {
+    permissionField: "project_classification_rid",
+    exportField: "Project Classification",
+    dataField: "project_classification_rid",
+  },
+  {
+    permissionField: "project_group",
+    exportField: " Project Group",
+    dataField: "project_group",
+  },
+  {
+    permissionField: "industry_rid",
+    exportField: " Industry",
+    dataField: "industry_rid",
+  },
+  {
+    permissionField: "point_of_contact_name",
+    exportField: "Primary Point of Contact",
+    dataField: "point_of_contact_name",
+  },
+   {
+    permissionField: "point_of_contact_email",
+    exportField: "Primary Point of Contact Email",
+    dataField: "point_of_contact_email",
+  },
+  {
+    permissionField: "total_fte_count",
+    exportField: "Total FTE Count",
+    dataField: "total_fte_prj",
+  },
+  {
+    permissionField: "total_subcon_count",
+    exportField: "Total Sub Con Count",
+    dataField: "total_subcon_prj",
+  },
+  {
+    permissionField: "total_non_labor_count",
+    exportField: "Total Non Labor Count",
+    dataField: "total_nonlabor_prj",
+  },
+  {
+    permissionField: "total_effort_fte_prj",
+    exportField: "Total FTE Effort",
+    dataField: "total_effort_fte_prj",
+  },
+   {
+    permissionField: "total_effort_subcon_prj",
+    exportField: "Total Sub Con Effort",
+    dataField: "total_effort_subcon_prj",
+  },
+   {
+    permissionField: "total_effort_prj",
+    exportField: "Total Effort in Hrs",
+    dataField: "total_effort_prj",
+  },
+   {
+    permissionField: "total_cost_fte_prj",
+    exportField: "Total FTE Cost",
+    dataField: "total_cost_fte_prj",
+  },
+   {
+    permissionField: "total_cost_subcon_prj",
+    exportField: "Total Sub Con Cost",
+    dataField: "total_cost_subcon_prj",
+  },
+   {
+    permissionField: "total_cost_nonlabor_prj",
+    exportField: "Total Non Labor Cost",
+    dataField: "total_cost_nonlabor_prj",
+  },
+   {
+    permissionField: "total_cost_prj",
+    exportField: "Total Cost",
+    dataField: "total_cost_prj",
+  },
+   {
+    permissionField: "total_resources_prj",
+    exportField: "Number of Project Resource",
+    dataField: "total_resources_prj",
+  },
+  {
+    permissionField: "total_tasks",
+    exportField: "Number of Project Task",
+    dataField: "total_tasks",
+  },
+    {
+    permissionField: "total_technical_summary_generated",
+    exportField: "Number of Technical Summary Generated",
+    dataField: "total_technical_summary_generated",
+  }
+
+          
+];
+
+
 export const rawQueries = {
   fetchParentAccountDetails: `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
   async fetchParentAccount(
@@ -527,6 +643,11 @@ export const rawQueries = {
     let ids = classificationIds.map((d: any) => `'${d}'`);
     return `
     SELECT rid, classification_name as name FROM ${MAIN_SCHEMA_NAME}.project_classification WHERE rid IN (${ids})`;
+  },
+   fetchProjectType(projectTypeIds: any): string {
+    let ids = projectTypeIds.map((d: any) => `'${d}'`);
+    return `
+    SELECT rid, project_type_name as name FROM ${MAIN_SCHEMA_NAME}.project_type WHERE rid IN (${ids})`;
   },
   fetchFilingType(filingTypeIds: any): string {
     let ids = filingTypeIds.map((d: any) => `'${d}'`);
