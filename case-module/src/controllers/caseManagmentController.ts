@@ -404,25 +404,14 @@ async function exportAdminCheckList(req: Request, res: Response) {
            allowedFieldSet.add(field.field_name);
          }
        }
-       const isValidTZ = value.timezone && isValidTimezone(value.timezone);
-
-       
-       const formatDate = (date?: Date | string) => {
-        if (!date) return null;
-        
-        // Convert string to Date object if needed
-        const dateObj = typeof date === 'string' ? new Date(date) : date;
-        
-        // Check if the date is valid
-        if (isNaN(dateObj.getTime())) return null;
-        
-        const offsetMs = (5 * 60 + 30) * 60 * 1000;
-        const convertedDate = new Date(dateObj.getTime() + offsetMs);
-        return moment
-          .utc(convertedDate)
-          .tz(isValidTZ ? value.timezone : "UTC")
-          .format("YYYY-MMM-DD, hh:mm:ss A");
-       };
+        const isValidTZ = value.timezone && isValidTimezone(value.timezone);
+           const formatDate = (date?: Date) => {
+             if (!date) return null;
+             
+             return moment(date)
+               .tz(isValidTZ ? value.timezone : "UTC")
+               .format("YYYY-MMM-DD, hh:mm:ss A");
+           };
        if (result.statusCode === HttpStatus.SUCCESS) {
          const finalStructuredData =
            result?.data?.checklist.length < 1
@@ -980,18 +969,14 @@ async function ExportAdminTaskTemplateList (req : Request, res : Response) {
         allowedFieldSet.add(field.field_name);
       }
     }
-    const isValidTZ = data.timezone && isValidTimezone(data.timezone);
-    const formatDate = (date?: Date) => {
-      const offsetMs = (5 * 60 + 30) * 60 * 1000;
-      const convertedDate = new Date(date?.getTime() ?? "" + offsetMs);
-      return date
-        ? moment
-            .utc(convertedDate)
+     const isValidTZ = data.timezone && isValidTimezone(data.timezone);
+        const formatDate = (date?: Date) => {
+          if (!date) return null;
+          
+          return moment(date)
             .tz(isValidTZ ? data.timezone : "UTC")
-            .utcOffset("-05:30")
-            .format("YYYY-MMM-DD, hh:mm:ss A")
-        : null;
-    };
+            .format("YYYY-MMM-DD, hh:mm:ss A");
+      };
     if(result.statusCode == HttpStatus.SUCCESS) {
       const finalData = result.data.map((d : any) => {
         return {
