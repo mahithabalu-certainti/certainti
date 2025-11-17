@@ -1182,6 +1182,12 @@ export class CaseService {
         caseRequest,
         userId
       );
+     
+      await this.caseSchemaService.assignCaseTeamToTasks(
+        accountNumber,
+         caseRequest,
+        userId
+      );
 
       return {
         statusCode: HttpStatus.SUCCESS,
