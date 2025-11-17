@@ -5593,9 +5593,7 @@ function filterForReviewProjects(
             let dynamicReference = ``;
 
             if (filteredColumns == "account_name") dynamicReference = `a`;
-            else if (filteredColumns == "country_name") dynamicReference = `c`;
-            else if (filteredColumns == "case_full_name") dynamicReference = ``;
-            else dynamicReference = `cs`;
+            else dynamicReference = `pf`;
 
             const stringCondition = buildStringFilterCondition(
               condition,
@@ -5612,7 +5610,8 @@ function filterForReviewProjects(
             const numericCondition = buildNumericFilterCondition(
               condition,
               values,
-              filteredColumns!
+              filteredColumns!,
+              "pf"
             );
             if (numericCondition) {
               filteredQueryArray.push(numericCondition);
@@ -5620,7 +5619,7 @@ function filterForReviewProjects(
             break;
           }
           case "datetime": {
-            let dynamicReference = `cs`;
+            let dynamicReference = `pf`;
             const datetimeCondition = buildDatetimeFilterCondition(
               condition,
               values,

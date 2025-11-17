@@ -1336,6 +1336,17 @@ export const filterTypesForReviewProjects: Record<string, any> = {
   status_rid: "string",
   fiscal_year: "number",
   createdAt: "datetime",
+  total_effort_prj: "number",
+  total_subcon_prj: "number",
+  total_cost_fte_prj: "number",
+  total_nonlabor_prj: "number",
+  total_resources_prj: "number",
+  total_effort_fte_prj: "number",
+  total_cost_subcon_prj: "number",
+  total_cost_nonlabor_prj: "number",
+  total_effort_subcon_prj: "number",
+  project_classification_rid: "string",
+  project_type_rid: "string",
 };
 
 export const filtersColumnsForReviewProjects: Record<string, string> = {

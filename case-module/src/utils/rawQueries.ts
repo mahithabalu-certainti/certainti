@@ -430,8 +430,8 @@ LEFT JOIN LATERAL (
 
     WHERE
     (pf.r_number ILIKE '${searchValue}' OR pf.project_code ILIKE '${searchValue}' OR pf.project_name ILIKE '${searchValue}'
-    ${joinedConditions}
     )
+     ${joinedConditions}
     AND pf.rid IN (
       SELECT project_fiscal_rid 
       FROM ${schemaName}.case_projects
