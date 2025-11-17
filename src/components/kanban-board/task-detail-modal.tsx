@@ -37,12 +37,19 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   onFetchTaskActivities,
   onFetchTaskComments,
   onFetchTaskAttachments,
+  onFetchCollaborators,
   fieldVisibility = {},
   fieldDisabled = {},
 }) => {
   const [task, setTask] = useState<Task | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [comments, setComments] = useState<Comment[]>([]);
+  const [collaborators, setCollaborators] = useState<
+    Array<{
+      assigned_to: string;
+      assigned_to_name: string;
+    }>
+  >([]);
   const [taskAttachments, setTaskAttachments] = useState<
     Array<{
       id?: string;
@@ -64,6 +71,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   const [hideCheckedItems, setHideCheckedItems] = useState(false);
   const activitiesFetchedRef = useRef<string | null>(null);
   const commentsFetchedRef = useRef<string | null>(null);
+  const collaboratorsFetchedRef = useRef<string | null>(null);
   const attachmentsFetchedRef = useRef<string | null>(null);
   const caseRidRef = useRef<string | null>(null);
   const accountRidRef = useRef<string | null>(null);
@@ -71,7 +79,21 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
 
   const [availableTags, setAvailableTags] = useState(tagData);
 
-  const enrichedUsers = availableUsers.map(enrichUserOption);
+  // Map collaborators and available users to enriched users
+  const collaboratorUsers = collaborators.map((collab) =>
+    enrichUserOption({
+      rid: collab.assigned_to,
+      name: collab.assigned_to_name,
+    })
+  );
+
+  // Merge collaborators with available users, avoiding duplicates
+  const allEnrichedUsers = [
+    ...collaboratorUsers,
+    ...(availableUsers
+      ?.filter((user) => !collaboratorUsers.find((cu) => cu.id === user.rid))
+      .map((user) => enrichUserOption(user)) || []),
+  ];
 
   useEffect(() => {
     const fetchTask = async () => {
@@ -285,6 +307,94 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [taskId, isOpen]);
 
+  useEffect(() => {
+    const fetchCollaboratorsData = async () => {
+      if (!taskId || !onFetchCollaborators) {
+        setCollaborators([]);
+        return;
+      }
+
+      if (collaboratorsFetchedRef.current === taskId) {
+        return;
+      }
+      collaboratorsFetchedRef.current = taskId;
+
+      try {
+        const fetchedCollaborators = await onFetchCollaborators(taskId);
+        console.log('🔍 Fetched collaborators from API:', fetchedCollaborators);
+
+        if (fetchedCollaborators && Array.isArray(fetchedCollaborators)) {
+          console.log('✅ Setting collaborators state:', fetchedCollaborators);
+          setCollaborators(fetchedCollaborators);
+        } else {
+          console.log('❌ No valid collaborators array received');
+          setCollaborators([]);
+        }
+      } catch (error) {
+        console.error('Error fetching collaborators:', error);
+        setCollaborators([]);
+      }
+    };
+
+    if (isOpen && taskId) {
+      fetchCollaboratorsData();
+    }
+  }, [taskId, isOpen, onFetchCollaborators]);
+
+  // Separate effect to update editedTask with fetched collaborators
+  useEffect(() => {
+    console.log(
+      '🔄 Collaborators effect running - collaborators:',
+      collaborators,
+      'editedTask:',
+      !!editedTask
+    );
+
+    if (!editedTask || collaborators.length === 0) {
+      console.log(
+        '⏭️  Skipping: editedTask =',
+        !!editedTask,
+        'collaborators.length =',
+        collaborators.length
+      );
+      return;
+    }
+
+    console.log('📝 Processing collaborators:', collaborators);
+
+    const mappedCollaborators = collaborators.map((collab) => {
+      const enrichedUser = enrichUserOption({
+        rid: collab.assigned_to,
+        name: collab.assigned_to_name,
+      });
+      console.log('👤 Enriched user:', {
+        name: enrichedUser.name,
+        initials: enrichedUser.initials,
+      });
+      return {
+        name: enrichedUser.name,
+        initials: enrichedUser.initials,
+        color: enrichedUser.color,
+      };
+    });
+
+    console.log('✨ Final mapped collaborators:', mappedCollaborators);
+
+    setEditedTask((prev) => {
+      if (!prev) {
+        console.log('❌ Previous editedTask is null');
+        return null;
+      }
+
+      console.log(
+        '💾 Updating editedTask with',
+        mappedCollaborators.length,
+        'collaborators'
+      );
+      return { ...prev, collaborators: mappedCollaborators };
+    });
+  }, [collaborators, editedTask]);
+
   if (!isOpen || !taskId) return null;
 
   if (loading) {
@@ -452,7 +562,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   };
 
   const handleAssigneeChange = (event: SelectChangeEvent<string>) => {
-    const selectedUser = enrichedUsers.find(
+    const selectedUser = allEnrichedUsers.find(
       (user) => user.id === event.target.value
     );
     if (selectedUser) {
@@ -473,7 +583,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
 
   const getAssigneeForSelect = () => {
     if (!editedTask?.assignee) return '';
-    const foundUser = enrichedUsers.find(
+    const foundUser = allEnrichedUsers.find(
       (u) => u.name === editedTask.assignee.name
     );
     return foundUser?.id || '';
@@ -522,7 +632,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
 
   const handleCollaboratorsChange = (event: SelectChangeEvent<string[]>) => {
     const selectedUserIds = event.target.value as string[];
-    const selectedUsers = enrichedUsers.filter((user) =>
+    const selectedUsers = allEnrichedUsers.filter((user) =>
       selectedUserIds.includes(user.id)
     );
     const collaborators = selectedUsers.map((user) => ({
@@ -537,7 +647,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     const collaborators = editedTask.collaborators || [];
     return collaborators
       .map((collab) => {
-        const user = enrichedUsers.find((u) => u.name === collab.name);
+        const user = allEnrichedUsers.find((u) => u.name === collab.name);
         return user?.id || '';
       })
       .filter((id) => id !== '');
@@ -740,7 +850,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                   >
                     Select User
                   </MenuItem>
-                  {enrichedUsers.map((user) => (
+                  {allEnrichedUsers.map((user) => (
                     <MenuItem
                       sx={{
                         color: '#425A76',
@@ -1799,7 +1909,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                       },
                     }}
                   >
-                    {enrichedUsers.map((user) => {
+                    {allEnrichedUsers.map((user) => {
                       const isSelected =
                         editedTask.collaborators?.find(
                           (c) => c.name === user.name
@@ -1866,59 +1976,66 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
               </div>
 
               <div className='flex items-center -space-x-2'>
-                {(editedTask.collaborators || []).map((collab, index) => (
-                  <div
-                    key={collab.name}
-                    className={`relative group transition-transform duration-200 hover:scale-110 hover:z-10 hover:-translate-y-2 ${
-                      index < (editedTask.collaborators?.length || 0) - 1
-                        ? 'peer'
-                        : ''
-                    }`}
-                    title={collab.name}
-                    onMouseEnter={() => {
-                      const nextProfile = document.querySelector(
-                        `[data-profile-index="${index + 1}"]`
-                      ) as HTMLElement;
-                      if (nextProfile) {
-                        nextProfile.style.transform = 'translateX(8px)';
-                      }
-                    }}
-                    onMouseLeave={() => {
-                      const nextProfile = document.querySelector(
-                        `[data-profile-index="${index + 1}"]`
-                      ) as HTMLElement;
-                      if (nextProfile) {
-                        nextProfile.style.transform = 'translateX(0)';
-                      }
-                    }}
-                    data-profile-index={index}
-                  >
+                {(editedTask.collaborators || []).length > 0 ? (
+                  (editedTask.collaborators || []).map((collab, index) => (
                     <div
-                      className='w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold cursor-pointer text-white border-2 border-white shadow-md transition-all duration-300 ease-in-out group-hover:shadow-xl group-hover:border-blue-200'
-                      style={{ backgroundColor: collab.color, fontSize: '8px' }}
+                      key={collab.name}
+                      className={`relative group transition-transform duration-200 hover:scale-110 hover:z-10 hover:-translate-y-2 ${
+                        index < (editedTask.collaborators?.length || 0) - 1
+                          ? 'peer'
+                          : ''
+                      }`}
+                      title={collab.name}
+                      onMouseEnter={() => {
+                        const nextProfile = document.querySelector(
+                          `[data-profile-index="${index + 1}"]`
+                        ) as HTMLElement;
+                        if (nextProfile) {
+                          nextProfile.style.transform = 'translateX(8px)';
+                        }
+                      }}
+                      onMouseLeave={() => {
+                        const nextProfile = document.querySelector(
+                          `[data-profile-index="${index + 1}"]`
+                        ) as HTMLElement;
+                        if (nextProfile) {
+                          nextProfile.style.transform = 'translateX(0)';
+                        }
+                      }}
+                      data-profile-index={index}
                     >
-                      {collab.initials}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const updatedCollabs =
-                            editedTask.collaborators?.filter(
-                              (c) => c.name !== collab.name
-                            ) || [];
-                          setEditedTask((prev) =>
-                            prev
-                              ? { ...prev, collaborators: updatedCollabs }
-                              : null
-                          );
+                      <div
+                        className='w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold cursor-pointer text-white border-2 border-white shadow-md transition-all duration-300 ease-in-out group-hover:shadow-xl group-hover:border-blue-200'
+                        style={{
+                          backgroundColor: collab.color,
+                          fontSize: '8px',
                         }}
-                        className='absolute -top-1 -right-1 w-4 h-4 bg-red-500 hover:bg-red-600 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 ease-in-out scale-0 group-hover:scale-100 shadow-sm'
-                        title={`Remove ${collab.name}`}
                       >
-                        ×
-                      </button>
+                        {collab.initials}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const updatedCollabs =
+                              editedTask.collaborators?.filter(
+                                (c) => c.name !== collab.name
+                              ) || [];
+                            setEditedTask((prev) =>
+                              prev
+                                ? { ...prev, collaborators: updatedCollabs }
+                                : null
+                            );
+                          }}
+                          className='absolute -top-1 -right-1 w-4 h-4 bg-red-500 hover:bg-red-600 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 ease-in-out scale-0 group-hover:scale-100 shadow-sm'
+                          title={`Remove ${collab.name}`}
+                        >
+                          ×
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  <></>
+                )}
               </div>
             </div>
           )}

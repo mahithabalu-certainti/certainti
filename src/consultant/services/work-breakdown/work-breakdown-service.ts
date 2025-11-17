@@ -383,3 +383,42 @@ export const useGetTaskStatuses = () => {
     gcTime: 1000 * 60 * 60 * 24, // 24 hours
   });
 };
+
+export interface CollaboratorData {
+  assigned_to: string;
+  assigned_to_name: string;
+}
+
+export interface CollaboratorsResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: CollaboratorData[];
+}
+
+export const fetchCollaborators = async (
+  accountId: string,
+  caseId: string,
+  taskId: string
+): Promise<CollaboratorData[]> => {
+  try {
+    const payload = {
+      case_rid: caseId,
+      account_rid: accountId,
+      rid: taskId,
+    };
+
+    const response = await caseServiceApi.post<CollaboratorsResponse>(
+      '/api/cases/task/collaborator/list',
+      payload
+    );
+
+    if (response.data?.data && Array.isArray(response.data.data)) {
+      return response.data.data;
+    }
+    return [];
+  } catch (error) {
+    console.error(`Error fetching collaborators for task ${taskId}:`, error);
+    return [];
+  }
+};

@@ -12,6 +12,7 @@ import {
   fetchTaskActivities,
   useGetTaskPriorities,
   useGetTaskStatuses,
+  fetchCollaborators,
 } from '../../../../services/work-breakdown/work-breakdown-service';
 import {
   fetchTaskCommentsList,
@@ -325,6 +326,29 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
     [accountId, caseId]
   );
 
+  const handleFetchCollaborators = useCallback(
+    async (taskId: string) => {
+      if (!accountId || !caseId) {
+        console.warn('Account ID or Case ID is missing');
+        return [];
+      }
+
+      try {
+        const collaboratorsData = await fetchCollaborators(
+          accountId,
+          caseId,
+          taskId
+        );
+
+        return collaboratorsData;
+      } catch (error) {
+        console.error('Failed to fetch collaborators:', error);
+        return [];
+      }
+    },
+    [accountId, caseId]
+  );
+
   return (
     <>
       <SectionTabPanel
@@ -384,6 +408,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
                 onFetchTaskActivities={handleFetchTaskActivities}
                 onFetchTaskComments={handleFetchTaskComments}
                 onFetchTaskAttachments={handleFetchTaskAttachments}
+                onFetchCollaborators={handleFetchCollaborators}
                 showCommentCount={true}
                 showTaskCount={true}
                 showProfileIndicator={true}

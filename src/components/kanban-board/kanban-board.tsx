@@ -72,6 +72,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
   onFetchTaskActivities,
   onFetchTaskComments,
   onFetchTaskAttachments,
+  onFetchCollaborators,
   fieldVisibility = {},
   fieldDisabled = {},
   onCreateTask,
@@ -479,6 +480,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
               onFetchTaskActivities={onFetchTaskActivities}
               onFetchTaskComments={onFetchTaskComments}
               onFetchTaskAttachments={onFetchTaskAttachments}
+              onFetchCollaborators={onFetchCollaborators}
               fieldVisibility={fieldVisibility}
               fieldDisabled={fieldDisabled}
             />
@@ -597,6 +599,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
             onFetchTaskActivities={onFetchTaskActivities}
             onFetchTaskComments={onFetchTaskComments}
             onFetchTaskAttachments={onFetchTaskAttachments}
+            onFetchCollaborators={onFetchCollaborators}
             fieldVisibility={fieldVisibility}
             fieldDisabled={fieldDisabled}
           />

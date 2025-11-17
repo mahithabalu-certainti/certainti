@@ -168,6 +168,12 @@ export interface KanbanBoardProps {
       uploadedDate: string;
     }>
   >;
+  onFetchCollaborators?: (taskId: string) => Promise<
+    Array<{
+      assigned_to: string;
+      assigned_to_name: string;
+    }>
+  >;
   fieldVisibility?: FieldVisibility;
   fieldDisabled?: FieldDisabled;
   isLoading?: boolean;
@@ -238,6 +244,12 @@ export interface TaskDetailModalProps {
       fileType?: string;
       uploadedBy: string;
       uploadedDate: string;
+    }>
+  >;
+  onFetchCollaborators?: (taskId: string) => Promise<
+    Array<{
+      assigned_to: string;
+      assigned_to_name: string;
     }>
   >;
   fieldVisibility?: FieldVisibility;

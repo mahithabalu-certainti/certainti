@@ -113,6 +113,21 @@ export interface TagOptionsResponse extends CommonApiResponse {
   data: TagOption[];
 }
 
+export interface CollaboratorOption {
+  assigned_to: string;
+  assigned_to_name: string;
+}
+
+export interface CollaboratorOptionsResponse extends CommonApiResponse {
+  data: CollaboratorOption[];
+}
+
+export interface CollaboratorListPayload {
+  case_rid: string;
+  account_rid: string;
+  rid?: string;
+}
+
 const fetchCaseTeam = async (
   caseId: string,
   accountId: string
@@ -202,6 +217,26 @@ const fetchTagOptions = async (): Promise<TagOption[]> => {
   }
 };
 
+const fetchCollaboratorOptions = async (
+  payload: CollaboratorListPayload
+): Promise<CollaboratorOption[]> => {
+  try {
+    const response = await caseServiceApi.post<CollaboratorOptionsResponse>(
+      '/api/cases/task/collaborator/list',
+      payload
+    );
+
+    // Handle the actual API response format which returns data array directly
+    if (response.data?.data && Array.isArray(response.data.data)) {
+      return response.data.data;
+    }
+    return [];
+  } catch (error) {
+    console.error('Error fetching collaborator options:', error);
+    return [];
+  }
+};
+
 export const useGetCaseTeam = (
   caseId?: string,
   accountId?: string
@@ -252,6 +287,25 @@ export const useGetTagOptions = (
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
     enabled,
+  });
+};
+
+export const useGetCollaboratorOptions = (
+  payload?: CollaboratorListPayload,
+  enabled: boolean = true
+): UseQueryResult<CollaboratorOption[] | undefined, Error> => {
+  return useQuery<CollaboratorOption[] | undefined, Error>({
+    queryKey: [
+      'case-collaborator-options',
+      payload?.case_rid,
+      payload?.account_rid,
+      payload?.rid,
+    ],
+    queryFn: () => fetchCollaboratorOptions(payload!),
+    retry: 0,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    enabled: enabled && !!payload?.case_rid && !!payload?.account_rid,
   });
 };
 

@@ -75,6 +75,21 @@ export const enrichAssignee = (assignee: {
   };
 };
 
+export const normalizeTags = (
+  tags: (string | { tag_name?: string; name?: string; tag_rid?: string })[]
+): string[] => {
+  if (!Array.isArray(tags)) return [];
+  return tags
+    .map((tag) => {
+      // Handle API format (tag_name property)
+      if (typeof tag === 'string') return tag;
+      if (typeof tag === 'object' && tag.tag_name) return tag.tag_name;
+      if (typeof tag === 'object' && tag.name) return tag.name;
+      return '';
+    })
+    .filter(Boolean);
+};
+
 export const enrichTask = (task: Task): Task => {
   const enrichedTask = { ...task };
 
@@ -84,6 +99,11 @@ export const enrichTask = (task: Task): Task => {
 
   if (enrichedTask.collaborators && enrichedTask.collaborators.length > 0) {
     enrichedTask.collaborators = enrichedTask.collaborators.map(enrichAssignee);
+  }
+
+  // Normalize tags from API response format to simple strings
+  if (enrichedTask.tags) {
+    enrichedTask.tags = normalizeTags(enrichedTask.tags);
   }
 
   return enrichedTask;
