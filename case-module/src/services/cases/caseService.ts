@@ -12,6 +12,7 @@ import {
   CaseStatusType,
   caseTaskStatusTypes,
   ChecklistItems,
+  checklistType,
   CommentsListType,
   CountryType,
   CreateCaseTaskType,
@@ -22,8 +23,10 @@ import {
   ICreateCaseTeam,
   ICreateChecklist,
   priorityTypes,
+  TagsTypes,
   TaskCardDetailsType,
   TaskCardResponse,
+  taskTags,
   TaskTypeResponse,
   UpdateCaseTaskType,
   UpdateCommentsType,
@@ -2273,10 +2276,29 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
         let taskStatusType;
         const priorityIds : string[] = [];
         const taskStatusIds : string[] = [];
+        let tagMap : Map<string, string> = new Map();
+        let checklistItemsStatusIds : string[];
+        let checkListData : any
 
-        let checklistItemsStatusIds = [...new Set(result[0]?.task_details.checklists.checklist_items.map((d : ChecklistItems) => d.status_rid))]
-        const uniqueUserIds = [...new Set(Object.values(userIds))];
+        if(result[0]?.task_details.checklists.checklist_items !== null) {
+          checklistItemsStatusIds = [...new Set(result[0]?.task_details.checklists.checklist_items.map((d : ChecklistItems) => d.status_rid))]
+        } else {
+          checklistItemsStatusIds = []
+        }
         
+        const uniqueUserIds = [...new Set(Object.values(userIds))];
+        if(result[0]?.task_details.tags !== null) {
+          let tagIds = [...new Set(result[0]?.task_details.tags.map((d : taskTags) => d.tag_rid))]
+          if(tagIds.length > 0) {
+            let query = rawQueries.getAllTagsName(tagIds)
+            if(query) {
+              const findTagNames = await mainDb.query<TagsTypes>(query, {type : QueryTypes.SELECT});
+              if(findTagNames.length > 0) {
+                tagMap = new Map(findTagNames.map((d : TagsTypes) => [d.rid, d.tag_name]));
+              }
+            }
+          }
+        }
         priorityIds.push(priorityId.priority_id)
         taskStatusIds.push(taskStatusID.task_status_rid!)
         const getUsers = await mainDb.query(rawQueries.getOwnerDetails(uniqueUserIds))
@@ -2296,6 +2318,25 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
         let checkListItemsMap : Map<string, string> = new Map(checkListStatusName?.[0]?.map((d : any) => [d.rid, d.status_name]));
 
         const resData = result[0]
+        if(result[0]?.task_details.checklists.rid === null) checkListData = null
+        else checkListData = {
+            rid : resData?.task_details.checklists.rid,
+            task_rid: resData?.task_details.checklists.task_rid,
+            checklist_name : resData?.task_details.checklists.checklist_name,
+            checklist_description : resData?.task_details.checklists.checklist_description,
+            checklist_items_count : resData?.task_details.checklists.checklist_items_count,
+            completed_items_count : resData?.task_details.checklists.completed_items_count,
+            checklist_items : resData?.task_details.checklists.checklist_items !== null ? resData?.task_details.checklists.checklist_items.map((d : ChecklistItems) => {
+              return {
+                rid : d.rid,
+                status_rid : d.status_rid,
+                checklist_item_status_name : checkListItemsMap.get(d.status_rid) || null,
+                checklist_item_name : d.checklist_item_name,
+                checklist_item_description : d.checklist_item_description
+              }
+
+            }) : [],
+          }
         let finalStruture = {
           rid : resData?.task_details.rid,
           r_number : resData?.task_details.r_number,
@@ -2307,7 +2348,6 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
           modified_by : resData?.task_details.modified_by,
           modified_by_name : assignedToMap.get(resData?.task_details.modified_by!) || null,
           priority_rid : resData?.task_details.priority_rid,
-
           priority_name : priorityMap.get(resData?.task_details.priority_rid!) || null,
           task_status_rid : resData?.task_details.task_status_rid,
           task_status_name : taskStatusMap.get(resData?.task_details.task_status_rid!) || null,
@@ -2315,24 +2355,13 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
           task_description : resData?.task_details.task_description,
           effective_start_datetime : resData?.task_details.effective_start_datetime,
           effective_end_datetime : resData?.task_details.effective_end_datetime,
-          checklists : {
-            rid : resData?.task_details.checklists.rid,
-            task_rid: resData?.task_details.checklists.task_rid,
-            checklist_name : resData?.task_details.checklists.checklist_name,
-            checklist_description : resData?.task_details.checklists.checklist_description,
-            checklist_items_count : resData?.task_details.checklists.checklist_items_count,
-            completed_items_count : resData?.task_details.checklists.completed_items_count,
-            checklist_items : resData?.task_details.checklists.checklist_items.map((d : ChecklistItems) => {
+          checklists : checkListData,
+          tags : resData?.task_details.tags.filter((f : taskTags) => f.tag_rid !== null).map((d : taskTags) => {
               return {
-                rid : d.rid,
-                status_rid : d.status_rid,
-                checklist_item_status_name : checkListItemsMap.get(d.status_rid) || null,
-                checklist_item_name : d.checklist_item_name,
-                checklist_item_description : d.checklist_item_description
+                tag_rid : d.tag_rid,
+                tag_name : tagMap.get(d.tag_rid) || null
               }
-
-            })
-          }
+            }) || []
         }
         return {
           statusCode : HttpStatus.SUCCESS,
@@ -2442,5 +2471,4 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
       throw this.throwServiceError(err as Error);
     }
   }
-
 }
