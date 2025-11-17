@@ -1228,7 +1228,7 @@ async function exportReviewProjects(req: Request, res: Response): Promise<void> 
     );
    const fields = await caseService.getAllowedExportFields(
       userId,
-      "projects_view_edit"
+      "case_review_projects_view_edit"
     );
     const allowedFieldSet = new Set<string>();
     for (const field of fields) {
