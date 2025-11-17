@@ -1,6 +1,6 @@
 import { col, fn, Op, QueryTypes, Sequelize, Transaction, where } from "sequelize";
 import { CaseModelService } from "../caseModelsService";
-import { CreateTaskTemplateType, filterType, ICreateChecklistTemplate, ICreateChecklistItemTemplate, TaskType, UpdateTaskTemplateType, MilestoneResponse, ICreateEmailTemplate } from "../../utils/types";
+import { CreateTaskTemplateType, filterType, ICreateChecklistTemplate, ICreateChecklistItemTemplate, TaskType, UpdateTaskTemplateType, MilestoneResponse, ICreateEmailTemplate, WorkflowConnectorType } from "../../utils/types";
 import { buildDatetimeFilterCondition, buildDatetimeFilterConditionTemplates, buildNumericFilterCondition, buildStringFilterCondition, errorLog, logMessage } from "../../utils/helpers";
 import { HttpStatus, STATUS_MESSAGE, filtersColumnsForCaseSummary, filterTypesForCaseSummary, filterTypesForAdminCheckList, filtersColumnsForAdminCheckList, rawQueries, filterTypesForEmailTemplate, filtersColumnsForEmailTemplate } from "../../utils/constants";
 import { fetchCaseTemplateData, listAllCheckList, listAllEmailTemplates } from "../../utils/rawQueries";
@@ -1165,7 +1165,16 @@ async getEmailTemplateCategory(
         return [];
       }
     }
-
+async getWorkFlowConnector () {
+  if(!this.mainDbSequelize) {
+    this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+  }
+  const result = await this.mainDbSequelize.query<WorkflowConnectorType>(rawQueries.fetchWorkFlowConnector(), {type : QueryTypes.SELECT});
+  if(result.length > 0) {
+    return result
+  } 
+  else return []
+}
 }
 
 export { CaseManagementSchemaService };

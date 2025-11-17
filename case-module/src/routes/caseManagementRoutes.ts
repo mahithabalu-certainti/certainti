@@ -118,6 +118,11 @@ routes.get(
   checkUserStatusMiddleware("NA"),
   controller.caseManagementController.getEmailTemplateCategory
 );
+routes.get(
+  "/workflowConnector/list",
+  checkUserStatusMiddleware("NA"),
+  controller.caseManagementController.getWorkFlowConnector
+)
 
 
 export default routes;
