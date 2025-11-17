@@ -521,10 +521,9 @@ export const listAllCheckList = (
 
             FROM
             ${MAIN_SCHEMA_NAME}.checklist_template ct
-  COUNT(pt.rid) AS total_tasks,
-  COUNT(ats.rid) AS total_technical_summaries,
-  primary_contact.key_contact_name AS project_point_of_contact,
-  primary_contact.key_contact_email AS project_point_of_contact_email
+            LEFT JOIN ${MAIN_SCHEMA_NAME}.status s ON s.rid = ct.status_rid
+            LEFT JOIN ${MAIN_SCHEMA_NAME}.user uc ON uc.rid = ct.created_by
+            LEFT JOIN ${MAIN_SCHEMA_NAME}.user um ON um.rid = ct.modified_by
               WHERE
     (ct.r_number ILIKE '${searchValue}' OR ct.checklist_name ILIKE '${searchValue}')
     ${joinedConditions}

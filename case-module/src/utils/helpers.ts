@@ -162,7 +162,27 @@ export async function generateExcelBase64WithEmptyCheck(data: Array<Record<strin
   } else {
     // Add header row
     const header = Object.keys(data[0] ?? {});
-    worksheet.addRow(header);
+    const headerRow = worksheet.addRow(header);
+    headerRow.eachCell((cell) => {
+      cell.alignment = { wrapText: true };
+    });
+
+    // Auto-adjust column widths based on header and data
+    worksheet.columns = header.map((h, i) => {
+      // Find max length in column (header or any data row)
+      const maxDataLength = Math.max(
+        h.length,
+        ...data.map(rowObj => {
+          const v = rowObj[h];
+          return (v === null || v === undefined) ? 0 : String(v).length;
+        })
+      );
+      // Minimum width 12, max 50
+      return {
+        key: h,
+        width: Math.min(Math.max(maxDataLength + 2, 12), 50)
+      };
+    });
 
     // Add data rows
     data.forEach(rowObj => {
@@ -173,12 +193,14 @@ export async function generateExcelBase64WithEmptyCheck(data: Array<Record<strin
       });
       const row = worksheet.addRow(rowValues);
       row.eachCell((cell, colNumber) => {
-        // Only highlight if the value is truly empty string
-        if (cell.value === '') {
+        // Enable text wrapping for all cells
+        cell.alignment = { wrapText: true };
+        // Highlight if value is null, empty string, or 0
+        if (cell.value === '' || cell.value === null || cell.value === 0) {
           cell.fill = {
             type: 'pattern',
             pattern: 'solid',
-            fgColor: { argb: 'FFFFC7CE' } // Light red fill for empty cells
+            fgColor: { argb: 'FFFFC7CE' } // Light red fill for empty/null/zero cells
           };
         }
       });
