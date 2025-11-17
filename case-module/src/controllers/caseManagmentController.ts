@@ -1755,6 +1755,109 @@ async function getWorkFlowConnector (req : Request, res : Response) {
     
   }
 }
+
+async function linkAdminTask (req : Request, res : Response) {
+  const methodName = "linkAdminTask";
+  try {
+   const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const data = req.body;
+    data.created_by = userId
+    const result = await caseManagementService.linkTask(data); 
+    if(result.statusCode === HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: result.statusMessage,
+      });
+    } 
+    else if (result.statusCode === HttpStatus.NOT_FOUND) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: result.statusMessage,
+      });
+    }
+    else if (result.statusCode === HttpStatus.BAD_REQUEST) {
+      return res.status(HttpStatus.BAD_REQUEST).json({
+        statusCode: HttpStatus.BAD_REQUEST,
+        statusCodeValue: HttpStatus.BAD_REQUEST_MESSAGE,
+        statusMessage: result.statusMessage,
+      });
+    }
+    else {
+      return res.status(HttpStatus.FAILED).json({
+        statusCode: HttpStatus.FAILED,
+        statusCodeValue: HttpStatus.FAILED_MESSAGE,
+        statusMessage: result.statusMessage,
+      });
+    }
+  } catch (error: any) {
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+
+async function linkAdminDeleteTask (req : Request, res : Response) {
+  const methodName = "linkAdminDeleteTask";
+  try {
+   const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const data = req.body;
+    data.created_by = userId
+    const result = await caseManagementService.deleteLinkTask(data); 
+    if(result?.statusCode === HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: result.statusMessage,
+      });
+    } 
+    else if (result?.statusCode === HttpStatus.NOT_FOUND) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: result.statusMessage,
+      });
+    }
+    else {
+      return res.status(HttpStatus.FAILED).json({
+        statusCode: HttpStatus.FAILED,
+        statusCodeValue: HttpStatus.FAILED_MESSAGE,
+        statusMessage: result?.statusMessage,
+      });
+    }
+  } catch (error: any) {
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
 // Export the controller functions for use in route definitions
 export default {
   createAdminCheckList,
@@ -1780,5 +1883,7 @@ export default {
   exportEmailTemplates,
   getEmailCategoryPlaceHolders,
   getEmailTemplateCategory,
-  getWorkFlowConnector
+  getWorkFlowConnector,
+  linkAdminDeleteTask,
+  linkAdminTask
 };

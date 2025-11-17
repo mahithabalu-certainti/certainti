@@ -804,7 +804,7 @@ export const fetchMilestoneTaskTemplate = (taskTypeRid : string, filingTypeRid :
   ),
   fetch_task_data AS (
   SELECT 
-  t.created_by AS "task_created_by", t.modified_by AS "task_modified_by", t.created_datetime AS "task_created_datetime",
+  t.rid AS task_rid, t.created_by AS "task_created_by", t.modified_by AS "task_modified_by", t.created_datetime AS "task_created_datetime",
   t.modified_datetime AS "task_modified_datetime", t.task_name, t.sequence_no, t.effort_in_days,
   t.reminder_interval, t.effective_start_datetime, t.effective_end_datetime, t.case_team_member_role_rid,
   t.checklist_template_rid, t.status_rid AS "task_status_rid", t.priority_rid, t.task_type_rid,
@@ -833,6 +833,7 @@ export const fetchMilestoneTaskTemplate = (taskTypeRid : string, filingTypeRid :
   ),
   aggregate_task_data AS (
   SELECT array_agg(jsonb_build_object(
+    'task_rid', t.task_rid,
     'created_by', t.task_created_by,
     'modified_by', t.task_modified_by,
     'created_datetime', t.task_created_datetime,
@@ -1214,7 +1215,11 @@ return query;
     ${schemaName}.case_task ct
     LEFT JOIN ${schemaName}.checklists c ON c.attach_to = ct.rid
     WHERE
-    ct.rid = '${taskRid}' 
+    ct.rid = '${taskRid}'
+    AND
+    ct.account_rid = '${accountRid}'
+    AND
+    ct.case_rid = '${caseRid}' 
     ORDER BY c.created_datetime ASC
     ),
 
@@ -1225,9 +1230,13 @@ return query;
     )) AS tags
     FROM
     ${schemaName}.case_task t
-    LEFT JOIN ${schemaName}.task_tags tt ON tt.task_rid = t.rid
+    LEFT JOIN ${schemaName}.task_tags tt ON tt.task_rid = t.rid AND t.account_rid = tt.account_rid AND tt.case_rid = t.case_rid
     WHERE
     t.rid = '${taskRid}'
+    AND
+    t.account_rid = '${accountRid}'
+    AND
+    t.case_rid = '${caseRid}' 
     GROUP BY t.rid
     ),
 

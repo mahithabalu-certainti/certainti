@@ -248,4 +248,14 @@ routes.get(
   checkUserStatusMiddleware("case_review_projects_export"),
   controller.caseController.exportReviewProjects
 )
+routes.post(
+  "/task/workflowConnector/add",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.linkTask
+)
+routes.post(
+  "/task/workflowConnector/delete",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.linkDeleteTask
+)
 export default routes;

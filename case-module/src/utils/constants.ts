@@ -151,8 +151,12 @@ export const STATUS_MESSAGE = {
   collaboratorsAddedSuccesss : "Collaborator added successfully",
   collaboratorAddedFailed : "Failed to add collaborator",
   collaboratorsListedSuccess : "Collaborators fetched successfully",
-  workflowConnectorListSuccess : "Workflow Connector listed successfully"
-
+  workflowConnectorListSuccess : "Workflow Connector listed successfully",
+  dataAlreadyMapped : "Requested data already mapped",
+  workflowConnectorMappedSuccess : "Task linked successfully",
+  workflowConnectorMappedFailed: "Task linking failed",
+  workflowConnectorMappedDeleted : "Linked Task deleted successfully",
+  workflowConnectorMappedDeletedFailed : "Failed to link task",
 };
 
 export const caseStatuses = {
@@ -1552,4 +1556,11 @@ export const filterColumnsCaseTaskTypes : any = {
   effective_start_datetime : `date`,
   effective_end_datetime : `date`,
   task_status_rid : `string`
+}
+
+export const relationshipTypes = {
+  blocks : "blocks",
+  enables : "enables",
+  isBlockedBy : "is_blocked_by",
+  isEnabledBy : "is_enabled_by"
 }

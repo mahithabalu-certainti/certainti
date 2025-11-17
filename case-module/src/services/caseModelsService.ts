@@ -23,6 +23,9 @@ import { CaseHistorySubmission } from "../models/caseHistorySubmissionModel";
 import { EmailTemplate } from "../models/emailTemplateModel";import { TaskComments } from "../models/taskCommentsModel";
 import { CommentsAttachments } from "../models/commentsAttachmentModel";
 import { TaskAttachments } from "../models/taskAttachmentModel";
+import { CaseTaskWorkflowConnector } from "../models/caseTaskWorkflowConnectorModel";
+import { WorkflowConnector } from "../models/workflowConnectorModel";
+import { WorkflowConnectorMapping } from "../models/workflowConnectorMapModel";
 
 export class CaseModelService {
   orgDbSequelize: Sequelize | null = null;
@@ -46,6 +49,9 @@ export class CaseModelService {
       CommentsAttachments : ReturnType<typeof CommentsAttachments.initialise>
       TaskAttachments : ReturnType<typeof TaskAttachments.initialise>
       CaseHistorySubmission: ReturnType<typeof CaseHistorySubmission.initialize>;
+      CaseTaskWorkflowConnector: ReturnType<typeof CaseTaskWorkflowConnector.initialize>
+      WorkflowConnector : ReturnType<typeof WorkflowConnector.initialize>
+      WorkflowConnectorMapping: ReturnType<typeof WorkflowConnectorMapping.initialize>
     }
   > = new Map();
 
@@ -95,7 +101,9 @@ export class CaseModelService {
     const CommentsAttachmentsModel = CommentsAttachments.initialise(sequelize, schemaName)
     const TaskAttachmentsModel = TaskAttachments.initialise(sequelize, schemaName)
     const CaseHistorySubmissionModel = CaseHistorySubmission.initialize(sequelize, schemaName);
-
+    const CaseTaskWorkflowConnectorModel = CaseTaskWorkflowConnector.initialize(sequelize, schemaName)
+    const WorkflowConnectorModel = WorkflowConnector.initialize(mainDbSequelize, MAIN_SCHEMA_NAME);
+    const WorkflowConnectorMappingModel = WorkflowConnectorMapping.initialize(mainDbSequelize, MAIN_SCHEMA_NAME)
     const models = {
       Case: CaseModel,
       CaseSummary: CaseSummaryModel,
@@ -118,7 +126,10 @@ export class CaseModelService {
       TaskComments : TaskCommentsModel,
       CommentsAttachments : CommentsAttachmentsModel,
       TaskAttachments : TaskAttachmentsModel,
-      CaseHistorySubmission: CaseHistorySubmissionModel
+      CaseHistorySubmission: CaseHistorySubmissionModel,
+      CaseTaskWorkflowConnector : CaseTaskWorkflowConnectorModel,
+      WorkflowConnector : WorkflowConnectorModel,
+      WorkflowConnectorMapping : WorkflowConnectorMappingModel
     };
 
     this.modelCache.set(schemaName, models);

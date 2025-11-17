@@ -3474,6 +3474,109 @@ async function listCollaborators (req : Request, res : Response) {
     );
   }
 }
+
+async function linkTask (req : Request, res : Response) {
+  const methodName = "linkTask";
+  try {
+   const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const data = req.body;
+    data.created_by = userId
+    const result = await caseService.linkTask(data); 
+    if(result.statusCode === HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: result.statusMessage,
+      });
+    } 
+    else if (result.statusCode === HttpStatus.NOT_FOUND) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: result.statusMessage,
+      });
+    }
+    else if (result.statusCode === HttpStatus.BAD_REQUEST) {
+      return res.status(HttpStatus.BAD_REQUEST).json({
+        statusCode: HttpStatus.BAD_REQUEST,
+        statusCodeValue: HttpStatus.BAD_REQUEST_MESSAGE,
+        statusMessage: result.statusMessage,
+      });
+    }
+    else {
+      return res.status(HttpStatus.FAILED).json({
+        statusCode: HttpStatus.FAILED,
+        statusCodeValue: HttpStatus.FAILED_MESSAGE,
+        statusMessage: result.statusMessage,
+      });
+    }
+  } catch (error: any) {
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+
+async function linkDeleteTask (req : Request, res : Response) {
+  const methodName = "linkDeleteTask";
+  try {
+   const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const data = req.body;
+    data.created_by = userId
+    const result = await caseService.deleteLinkTask(data); 
+    if(result?.statusCode === HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: result.statusMessage,
+      });
+    } 
+    else if (result?.statusCode === HttpStatus.NOT_FOUND) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: result.statusMessage,
+      });
+    }
+    else {
+      return res.status(HttpStatus.FAILED).json({
+        statusCode: HttpStatus.FAILED,
+        statusCodeValue: HttpStatus.FAILED_MESSAGE,
+        statusMessage: result?.statusMessage,
+      });
+    }
+  } catch (error: any) {
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
 export default {
   createCases,
   updateCases,
@@ -3521,5 +3624,7 @@ export default {
   fetchCaseTaskStatus,
   fetchCasePriority,
   addCollaborators,
-  listCollaborators
+  listCollaborators,
+  linkTask,
+  linkDeleteTask
 };

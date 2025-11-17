@@ -14,6 +14,7 @@ import {
 import { CaseModelService } from "../caseModelsService";
 import {
   ALPHANUMERIC_CONDITIONS,
+  ENV_PREFIX,
   filtersColumnsForCaseSummary,
   filtersColumnsForReviewProjects,
   filterTypesForCaseSummary,
@@ -22,6 +23,7 @@ import {
   MAIN_SCHEMA_NAME,
   mainTableFilters,
   rawQueries,
+  relationshipTypes,
   SCHEMANAME_PREFIX,
   STATUS_MESSAGE,
 } from "../../utils/constants";
@@ -31,6 +33,8 @@ import {
   assignProjectType,
   CaseHeadersColumns,
   CaseTaskQueryType,
+  CaseTaskWorkFlowCreate,
+  CaseTaskWorkFlowDelete,
   CreateCaseTaskType,
   DeleteCommentsType,
   FilterType,
@@ -79,6 +83,8 @@ import { Tags } from "../../models/tagsModel";
 import { setupTaskCommentsSequence, TaskComments } from "../../models/taskCommentsModel";
 import { CommentsAttachments, setupCommentsAttachmentsSequence } from "../../models/commentsAttachmentModel";
 import { setupTaskAttachmentsSequence, TaskAttachments } from "../../models/taskAttachmentModel";
+import { CaseTaskWorkflowConnector, setupCaseTaskWorkflowConnectorSequence } from "../../models/caseTaskWorkflowConnectorModel";
+import {v4 as uuidv4} from 'uuid'
 
 class CaseSchemaService {
   private orgDbSequelize: Sequelize | null = null;
@@ -446,6 +452,10 @@ class CaseSchemaService {
         orgDbSequlize,
         schemaName
       )
+      const CaseTaskWorkflowConnectorModel = CaseTaskWorkflowConnector.initialize(
+        orgDbSequlize,
+        schemaName
+      )
 
       await CaseModel.sync({ force: false });
       await setupCaseSequence(orgDbSequlize, schemaName);
@@ -477,6 +487,8 @@ class CaseSchemaService {
       await setupTaskAttachmentsSequence(orgDbSequlize, schemaName)
       await caseHistorySubmissionModel.sync({ force: false });
       await setupCaseHistorySubmissionSequence(orgDbSequlize, schemaName);
+      await CaseTaskWorkflowConnectorModel.sync({force : false});
+      await setupCaseTaskWorkflowConnectorSequence(orgDbSequlize, schemaName)
     } catch (err) {
       errorLog("Error creating case tables", (err as Error).message);
       return this.throwServiceError(err as Error);
@@ -4429,7 +4441,8 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             effective_end_datetime : mapValueHolderForEnd,
             account_rid : accountRid,
             case_rid : caseRid,
-            task_status_rid : taskStatusRid
+            task_status_rid : taskStatusRid,
+            rid : d.task_rid
           }
         })
         
@@ -4536,7 +4549,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     if(result) return result
     else return null;
   }
-  async createUserLevelTask (data : CreateCaseTaskType, accountNumber : string, transaction : Transaction) {
+  async createUserLevelTask (data : CreateCaseTaskType, accountNumber : string, transaction : Transaction, activeStatusRid : string) {
     const {CaseTask, CaseTimeline} = await this.caseModelService.getModels(accountNumber);
     const fetchSequenceNumber = await this.fetchSequenceOrder(data.milestone_template_rid, accountNumber);
     let sequenceNo : number = 0;
@@ -4546,6 +4559,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       sequenceNo = 0
     }
     const createdTaskResult = await CaseTask.create({
+      rid : `${ENV_PREFIX}${uuidv4()}`,
       created_by : data.created_by,
       created_datetime : new Date(),
       task_name : data.task_name,
@@ -4566,6 +4580,8 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       task_status_rid : data.task_status_rid
     }, {transaction});
     if(createdTaskResult) {
+      if(data.tag_rid)
+        await this.createOrUpdateTags(createdTaskResult.dataValues.rid, data.account_rid, data.case_rid, data.tag_rid, data.is_new_tag, accountNumber, data.created_by, activeStatusRid)
       await CaseTimeline.create({
         created_by : data.created_by,
         created_datetime : new Date(),
@@ -4589,7 +4605,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     }
   }
 
-  async updateUserLevelTask (data : UpdateCaseTaskType, accountNumber : string, transaction : Transaction) {
+  async updateUserLevelTask (data : UpdateCaseTaskType, accountNumber : string, transaction : Transaction, activeStatusRid : string) {
     if(!this.mainDbSequelize) {
       this.mainDbSequelize = await initMainDbSequelize()
     }
@@ -4601,7 +4617,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         statusMessage : STATUS_MESSAGE.caseNotFound
       } 
     } else {
-      const isTaskExists = await this.findTaskById(data.rid, accountNumber);
+      const isTaskExists = await this.findTaskById(data.rid, data.account_rid, data.case_rid, accountNumber);
       if(!isTaskExists) {
         return {
           statusCode : HttpStatus.BAD_REQUEST,
@@ -4610,7 +4626,9 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       } else {
         const [updatedResult] = await CaseTask.update(data, {
           where : {
-            rid : data.rid
+            rid : data.rid,
+            account_rid : data.account_rid,
+            case_rid : data.case_rid
           }, transaction
         });
         const checkIsDifferentCollaborator = await this.isNewCollaborator(data.modified_by, accountNumber);
@@ -4628,6 +4646,8 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
           }
         }
         if(updatedResult == 1) {
+          if(data.tag_rid)
+            await this.createOrUpdateTags(data.rid, data.account_rid, data.case_rid, data.tag_rid, data.is_new_tag, accountNumber, data.modified_by, activeStatusRid)
           const fetchUpdatedColumns = getColumnsNamesForTaskUpdate(data, isTaskExists);
           if(fetchUpdatedColumns.length > 0) {
             let updatedColumnsStorage : string[] = []
@@ -4733,11 +4753,13 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     })
     return findSequenceOrder;
   }
-  async findTaskById (rid : string, accountNumber : string) {
+  async findTaskById (rid : string, accountRid : string, caseRid : string , accountNumber : string) {
     const { CaseTask } = await this.caseModelService.getModels(accountNumber);
     const checkTaskExists = await CaseTask.findOne({
       where : {
-        rid : rid
+        rid : rid,
+        account_rid : accountRid,
+        case_rid : caseRid
       }, 
       raw : true
     })
@@ -5305,7 +5327,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
 
   async addAttachmentForTask (data : any, accountNumber : string, files : Express.Multer.File[], userId : string) {
     const {TaskAttachments} = await this.caseModelService.getModels(accountNumber)
-    const findTaskDetails = await this.findTaskById(data.task_rid, accountNumber);
+    const findTaskDetails = await this.findTaskById(data.task_rid, data.account_rid, data.case_rid, accountNumber);
     if(files != undefined) {
       if(Array.isArray(files)) {
         for(let f of files) {
@@ -5357,7 +5379,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
 
   async deleteAttachment (accountNumber : string, data : any, userId : string) {
     const {TaskAttachments} = await this.caseModelService.getModels(accountNumber)
-    const findTaskDetails = await this.findTaskById(data.task_rid, accountNumber);
+    const findTaskDetails = await this.findTaskById(data.task_rid, data.account_rid, data.case_rid, accountNumber);
     const checkIsFileExists = await TaskAttachments.findOne({
       where : {
         rid : data.rid,
@@ -5493,6 +5515,207 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     });
     if(result.length > 0) return result;
     else return []
+  }
+  async taskWorkflowConnector (accountNumber : string, data : CaseTaskWorkFlowCreate) {
+    const {CaseTaskWorkflowConnector, CaseTask, CaseTimeline, CaseHistory, WorkflowConnector} = await this.caseModelService.getModels(accountNumber);
+    let taskIds : string[] = []
+    let iterationCount : number = 0;
+    let totalIteration = data.target_rid.length
+    for(let d of data.target_rid) {
+      iterationCount += 1
+      taskIds.push(data.source_rid)
+      taskIds.push(d)
+      const pushToSetIds = [...new Set(taskIds.map((d : string) => d))]
+
+      const workFlowConnectorData = await WorkflowConnector.findOne({
+        where : {
+          rid : data.relationship_connector_rid
+        }, raw : true
+      })
+      let workFlowConnectorDetails;
+      let dynamicRelationTypeName : string = ``
+      if(workFlowConnectorData) {
+        if(workFlowConnectorData.relationship_type === 'blocks') {
+          dynamicRelationTypeName = relationshipTypes.isBlockedBy
+        } else if (workFlowConnectorData.relationship_type === 'enables') {
+          dynamicRelationTypeName = relationshipTypes.isEnabledBy
+        } else if (workFlowConnectorData.relationship_type === 'is_enabled_by') {
+          dynamicRelationTypeName = relationshipTypes.enables
+        } else if (workFlowConnectorData.relationship_type === 'is_blocked_by') {
+          dynamicRelationTypeName = relationshipTypes.blocks
+        }
+      }
+      const fetchTasks = await CaseTask.findAll({
+        attributes : ['rid', 'task_name'],
+        where : {
+          rid : {
+            [Op.in] : pushToSetIds
+          }
+        }, raw : true
+      })
+      if(fetchTasks.length > 0 && workFlowConnectorData) {
+        const taskMap = new Map(fetchTasks.map((d : any) => [d.rid, d.task_name]));
+        const checkIsAlreadyMapped = await CaseTaskWorkflowConnector.findOne({
+          where : {
+            case_rid : data.case_rid,
+            account_rid : data.account_rid,
+            source_rid : data.source_rid,
+            target_rid : d,
+            relationship_connector_rid : data.relationship_connector_rid
+          }, raw : true
+        });
+        if(checkIsAlreadyMapped) {
+          return {
+            statusCode : HttpStatus.BAD_REQUEST,
+            statusMessage : STATUS_MESSAGE.dataAlreadyMapped
+          }
+        } else {
+          const result = await CaseTaskWorkflowConnector.create({
+            created_by : data.created_by,
+            created_datetime : new Date(),
+            case_rid :data.case_rid,
+            account_rid : data.account_rid,
+            source_rid : data.source_rid,
+            target_rid : d,
+            relationship_connector_rid : data.relationship_connector_rid
+          });
+          if(result) {
+            workFlowConnectorDetails = await WorkflowConnector.findOne({
+              where : {
+                relationship_type : dynamicRelationTypeName
+              }, raw : true
+            })
+            if(workFlowConnectorDetails) {
+              await CaseTaskWorkflowConnector.create({
+              created_by : data.created_by,
+              created_datetime : new Date(),
+              case_rid :data.case_rid,
+              account_rid : data.account_rid,
+              source_rid : d,
+              target_rid : data.source_rid,
+              relationship_connector_rid : workFlowConnectorDetails.rid!
+            });
+            }
+            await CaseTimeline.create({
+              created_by : data.created_by,
+              created_datetime : new Date(),
+              account_rid : data.account_rid,
+              entity_rid : data.source_rid,
+              event_name : 
+              `Case Task Workflow Connector created`,
+              event_type : "ui handler",
+              event_status : "success",
+              event_datetime : new Date(),
+              description : `${taskMap.get(data.source_rid)} ${workFlowConnectorData.relationship_type} ${taskMap.get(d)}`
+            });
+            await CaseHistory.create({
+              created_by : data.created_by,
+              created_datetime : new Date(),
+              case_rid : data.case_rid,
+              attribute_name : data.relationship_connector_rid,
+              new_value : `${taskMap.get(data.source_rid)} ${workFlowConnectorData.relationship_type} ${taskMap.get(d)}`
+            });
+            
+          }
+      }
+    } 
+    else 
+      {
+        return {
+          statusCode : HttpStatus.NOT_FOUND,
+          statusMessage : STATUS_MESSAGE.taskNotFound
+      }
+    }
+  }
+  if(iterationCount === totalIteration) {
+    return {
+      statusCode : HttpStatus.SUCCESS,
+      statusMessage : STATUS_MESSAGE.workflowConnectorMappedSuccess
+    }
+  } else {
+    return {
+      statusCode : HttpStatus.FAILED,
+      statusMessage : STATUS_MESSAGE.workflowConnectorMappedFailed
+    }
+  }
+}
+
+  async deleteTaskWorkConnector (accountNumber : string, data : CaseTaskWorkFlowDelete) {
+    const {CaseTaskWorkflowConnector, CaseTimeline, WorkflowConnector} = await this.caseModelService.getModels(accountNumber);
+    const checkDataExists = await CaseTaskWorkflowConnector.findOne({
+      where : {
+        rid : data.rid
+      }
+    });
+    if(checkDataExists) {
+      let workFlowConnectorDetails;
+      let dynamicRelationTypeName : string = ``
+      const workFlowConnectorData = await WorkflowConnector.findOne({
+        where : {
+          rid : checkDataExists.relationship_connector_rid
+        }, raw : true
+      })
+      if(workFlowConnectorData) {
+        if(workFlowConnectorData.relationship_type === 'blocks') {
+          dynamicRelationTypeName = relationshipTypes.isBlockedBy
+        } else if (workFlowConnectorData.relationship_type === 'enables') {
+          dynamicRelationTypeName = relationshipTypes.isEnabledBy
+        } else if (workFlowConnectorData.relationship_type === 'is_enabled_by') {
+          dynamicRelationTypeName = relationshipTypes.enables
+        } else if (workFlowConnectorData.relationship_type === 'is_blocked_by') {
+          dynamicRelationTypeName = relationshipTypes.blocks
+        }
+      }
+      workFlowConnectorDetails = await WorkflowConnector.findOne({
+          where : {
+            relationship_type : dynamicRelationTypeName
+          }, raw : true
+        })
+      if(workFlowConnectorDetails) {
+        const deleteData = await CaseTaskWorkflowConnector.destroy({
+          where : {
+            case_rid : data.case_rid,
+            account_rid : data.account_rid,
+            source_rid : checkDataExists.target_rid,
+            target_rid : checkDataExists.source_rid,
+            relationship_connector_rid : workFlowConnectorDetails.rid
+          }
+        });
+        if(deleteData === 1) {
+          await CaseTaskWorkflowConnector.destroy({
+            where : {
+              rid : data.rid
+            }
+          })
+          await CaseTimeline.create({
+            created_by : data.created_by,
+            created_datetime : new Date(),
+            account_rid : data.account_rid,
+            entity_rid : data.rid,
+            event_name : 
+            `Case Task Workflow Connector deleted`,
+            event_type : "ui handler",
+            event_status : "success",
+            event_datetime : new Date(),
+            description : ``
+          });
+          return {
+            statusCode : HttpStatus.SUCCESS,
+            statusMessage : STATUS_MESSAGE.workflowConnectorMappedDeleted
+          }
+        } else {
+          return {
+            statusCode : HttpStatus.FAILED,
+            statusMessage : STATUS_MESSAGE.workflowConnectorMappedDeletedFailed
+          }
+        }
+      }
+    } else {
+      return {
+        statusCode : HttpStatus.NOT_FOUND,
+        statusMessage : STATUS_MESSAGE.dataNotAvailable
+      }
+    }
   }
 }
 

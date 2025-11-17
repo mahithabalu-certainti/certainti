@@ -11,6 +11,8 @@ import {
   CaseOwnerType,
   CaseStatusType,
   caseTaskStatusTypes,
+  CaseTaskWorkFlowCreate,
+  CaseTaskWorkFlowDelete,
   ChecklistItems,
   checklistType,
   CommentsListType,
@@ -1844,7 +1846,8 @@ export class CaseService {
         if(isCaseExists) {
         const [getTaskStatus] = await mainDb.query<TaskTypeResponse>(rawQueries.getSpecificTaskStatus(), {type : QueryTypes.SELECT})
         data.task_status_rid = getTaskStatus?.rid! || ''
-        const result = await this.caseSchemaService.createUserLevelTask(data, fetchParentNumber[0][0].r_number, transaction);
+        const getActiveStatusId : any = await mainDb.query(rawQueries.getActiveStatusId());
+        const result = await this.caseSchemaService.createUserLevelTask(data, fetchParentNumber[0][0].r_number, transaction, getActiveStatusId[0][0].rid);
         if(result.statusCode === HttpStatus.SUCCESS) {
           await transaction.commit()
           return {
@@ -1900,7 +1903,8 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
           }         
         }
         else {
-          const result = await this.caseSchemaService.updateUserLevelTask(data, fetchParentNumber[0][0].r_number, transaction);
+          const getActiveStatusId : any = await mainDb.query(rawQueries.getActiveStatusId());
+          const result = await this.caseSchemaService.updateUserLevelTask(data, fetchParentNumber[0][0].r_number, transaction, getActiveStatusId[0][0].rid);
           if(result.statusCode === HttpStatus.SUCCESS) {
             await transaction.commit()
           }
@@ -2059,7 +2063,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
       const mainDb = await this.getMainDb();
       const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
       data.created_by = userId
-      const fetchTaskDetails = await this.caseSchemaService.findTaskById(data.task_rid, fetchParent[0][0].r_number);
+      const fetchTaskDetails = await this.caseSchemaService.findTaskById(data.task_rid, data.account_rid, data.case_rid, fetchParent[0][0].r_number);
       const result = await this.caseSchemaService.addComments(data, fetchParent[0][0].r_number, fetchTaskDetails?.r_number!, files);
       if(result.statusCode == HttpStatus.SUCCESS) {
         return result
@@ -2106,7 +2110,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
       const mainDb = await this.getMainDb();
       const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
       data.modified_by = userId
-      const fetchTaskDetails = await this.caseSchemaService.findTaskById(data.task_rid, fetchParent[0][0].r_number);
+      const fetchTaskDetails = await this.caseSchemaService.findTaskById(data.task_rid,data.account_rid, data.case_rid ,fetchParent[0][0].r_number);
       const result = await this.caseSchemaService.updateComments(data, fetchParent[0][0].r_number, fetchTaskDetails?.r_number!, files);
       if(result?.statusCode === HttpStatus.SUCCESS) {
         return {
@@ -2470,5 +2474,17 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
       logMessage(`Error fetching review project info, ${err}`);
       throw this.throwServiceError(err as Error);
     }
+  }
+  async linkTask (data : CaseTaskWorkFlowCreate) {
+    const mainDb = await this.getMainDb();
+    const accountNumber : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
+    const result = await this.caseSchemaService.taskWorkflowConnector(accountNumber[0][0].r_number, data);
+    return result;
+  }
+  async deleteLinkTask (data : CaseTaskWorkFlowDelete) {
+    const mainDb = await this.getMainDb();
+    const accountNumber : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
+    const result = await this.caseSchemaService.deleteTaskWorkConnector(accountNumber[0][0].r_number, data);
+    return result;
   }
 }
