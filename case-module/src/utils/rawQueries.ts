@@ -431,7 +431,7 @@ LEFT JOIN LATERAL (
     WHERE
     (pf.r_number ILIKE '${searchValue}' OR pf.project_code ILIKE '${searchValue}' OR pf.project_name ILIKE '${searchValue}'
     )
-     ${joinedConditions}
+    
     AND pf.rid IN (
       SELECT project_fiscal_rid 
       FROM ${schemaName}.case_projects
@@ -461,7 +461,7 @@ AND (
       GROUP BY pf.rid ,primary_contact.key_contact_name,primary_contact.key_contact_email
     ),
     paginated_data AS (
-    SELECT * FROM fetch_all_cases c ${sortValue} ${pagination}
+    SELECT * FROM fetch_all_cases c  where 1 = 1  ${joinedConditions} ${sortValue} ${pagination}
     )
     SELECT 
         array_agg(jsonb_build_object(

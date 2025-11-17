@@ -1317,14 +1317,7 @@ export const filterTypesForCaseSummary: Record<string, any> = {
   total_subcon_prj: "number",
   total_nonlabor_prj: "number",
   total_fte_prj: "number",
-  project_group: "string",
-  project_name: "string",
-  project_code: "string",
-  total_tasks: "number",
-  total_technical_summaries: "number",
-  industry_rid: "string",
-  project_type_rid: "string",
-  project_classification_rid: "string"
+  
 };
 
 export const filterTypesForReviewProjects: Record<string, any> = {
@@ -1347,6 +1340,14 @@ export const filterTypesForReviewProjects: Record<string, any> = {
   total_effort_subcon_prj: "number",
   project_classification_rid: "string",
   project_type_rid: "string",
+  total_tasks: "number",
+  project_group: "string",
+  project_name: "string",
+  project_code: "string",
+  total_technical_summaries: "number",
+  industry_rid: "string",
+  project_point_of_contact_email: "string",
+  project_point_of_contact: "string",
 };
 
 export const filtersColumnsForReviewProjects: Record<string, string> = {
@@ -1371,6 +1372,9 @@ export const filtersColumnsForReviewProjects: Record<string, string> = {
     project_code: "project_code",
     total_tasks: "total_tasks",
     total_technical_summaries: "total_technical_summaries",
+    industry_rid: "industry_rid",
+    project_point_of_contact_email: "project_point_of_contact_email",
+    project_point_of_contact: "project_point_of_contact",
 };
 
 export const filtersColumnsForCaseSummary: Record<string, string> = {

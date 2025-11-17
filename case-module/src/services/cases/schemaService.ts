@@ -1481,7 +1481,7 @@ class CaseSchemaService {
         ? filterDatas.filteredQueryArray.join(" AND ")
         : "";
       if (fiscalYear == 0) fiscalYearQuery = ``;
-      else fiscalYearQuery = ` pf.fiscal_year = ${fiscalYear}`;
+      else fiscalYearQuery = ` c.fiscal_year = ${fiscalYear}`;
       searchValue = search ? `%${search}%` : `%%`;
       whereKey = `1 = 1`;
       const conditions = [
@@ -1509,31 +1509,38 @@ class CaseSchemaService {
         pointOfContactRoleid
       );
       console.log("projectQuery", projectQuery);
+    
       const [projectInfo]: any[] = await this.orgDbSequelize.query(
         projectQuery,
         { type: "SELECT" }
       );
        let result = projectInfo.cases_summary;
+       if(!Array.isArray(result)){
+        return {
+          data: [],
+          count: 0,
+        };  
+       }
       
       let createdByIds: any[] = [
-        ...new Set(result.map((projectInfo: any) => projectInfo.created_by)),
+        ...new Set(result.map((projectInfo: any) => projectInfo?.created_by)),
       ];
       let modifiedByIds: any[] = [
         ...new Set(
-          result.map((projectInfo: any) => projectInfo.modified_by)
+          result.map((projectInfo: any) => projectInfo?.modified_by)
         ),
       ];
       let statusIds: any[] = [
-        ...new Set(result.map((projectInfo: any) => projectInfo.status_rid)),
+        ...new Set(result.map((projectInfo: any) => projectInfo?.status_rid)),
       ];
       let industryIds: any[] = [
-        ...new Set(result.map((projectInfo: any) => projectInfo.industry_rid)),
+        ...new Set(result.map((projectInfo: any) => projectInfo?.industry_rid)),
       ];
       let classificationIds: any[] = [
-        ...new Set(result.map((projectInfo: any) => projectInfo.project_classification_rid)),
+        ...new Set(result.map((projectInfo: any) => projectInfo?.project_classification_rid)),
       ];
       let projectTypeIds: any[] = [
-        ...new Set(result.map((projectInfo: any) => projectInfo.project_type_rid)),
+        ...new Set(result.map((projectInfo: any) => projectInfo?.project_type_rid)),
       ];
       let fetchCreatedByUsers = await this.mainDbSequelize.query(
         rawQueries.fetchUser(createdByIds)
@@ -5593,7 +5600,7 @@ function filterForReviewProjects(
             let dynamicReference = ``;
 
             if (filteredColumns == "account_name") dynamicReference = `a`;
-            else dynamicReference = `pf`;
+            else dynamicReference = `c`;
 
             const stringCondition = buildStringFilterCondition(
               condition,
@@ -5611,7 +5618,7 @@ function filterForReviewProjects(
               condition,
               values,
               filteredColumns!,
-              "pf"
+              "c"
             );
             if (numericCondition) {
               filteredQueryArray.push(numericCondition);
