@@ -4331,7 +4331,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       }
     }
   async cloneDefaultMilestoneTaskTemplate (accountRid : string, caseRid : string, filing_type_rid : string, taskTypeRid : string, accountNumber : string, transaction : Transaction, caseStartDate : Date, taskStatusRid : string) {
-    const {CaseTask, CaseMilestone} = await this.caseModelService.getModels(accountNumber);
+    const {CaseTask, CaseMilestone, CaseTaskWorkflowConnector} = await this.caseModelService.getModels(accountNumber);
     if (!this.mainDbSequelize) {
       this.mainDbSequelize = await this.caseModelService.getMainSequelize();
     }
@@ -4445,8 +4445,15 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             rid : d.task_rid
           }
         })
-        
+        const finalWorkFlowData = clonedData.workflow_data.map((d : any) => {
+          return {
+            ...d,
+            account_rid : accountRid,
+            case_rid : caseRid
+          }
+        })
         await CaseTask.bulkCreate(finalTaskData, {transaction})
+        await CaseTaskWorkflowConnector.bulkCreate(finalWorkFlowData, {transaction});
         await this.cloneDefaultChecklistTemplate(accountRid, caseRid, filing_type_rid, accountNumber, transaction,finalTaskData)
       }
     }

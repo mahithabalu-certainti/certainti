@@ -815,6 +815,10 @@ export const fetchMilestoneTaskTemplate = (taskTypeRid : string, filingTypeRid :
   WHERE
   t.task_type_rid = '${taskTypeRid}'
   ),
+  fetch_workflow_connector_map AS (
+  SELECT w.created_by, w.created_datetime, w.source_rid, w.target_rid, w.relationship_connector_rid
+  FROM ${MAIN_SCHEMA_NAME}.workflow_connector_mapping w
+  ),
   aggregate_milestone AS (
   SELECT array_agg(jsonb_build_object(
   'milestone_sequence_no', m.r_number,
@@ -853,11 +857,24 @@ export const fetchMilestoneTaskTemplate = (taskTypeRid : string, filingTypeRid :
     'task_description', t.task_description
   )ORDER BY t.task_created_datetime ASC ) AS task_data
   FROM fetch_task_data t
+  ),
+  aggregate_workflow_connector AS (
+  SELECT array_agg(jsonb_build_object(
+    'created_by', w.created_by,
+    'created_datetime', NOW(),
+    'source_rid', w.source_rid,
+    'target_rid', w.target_rid,
+    'relationship_connector_rid', w.relationship_connector_rid
+  )) AS workflow_data
+  FROM
+  fetch_workflow_connector_map w
   )
-  SELECT a.*, t.* 
+
+  SELECT a.*, t.*, w.*
   FROM
   aggregate_milestone a
   CROSS JOIN aggregate_task_data t
+  CROSS JOIN aggregate_workflow_connector w
   `
   return query;
 }
