@@ -67,6 +67,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   const attachmentsFetchedRef = useRef<string | null>(null);
   const caseRidRef = useRef<string | null>(null);
   const accountRidRef = useRef<string | null>(null);
+  const taskDetailsFetchedRef = useRef<string | null>(null);
 
   const [availableTags, setAvailableTags] = useState(tagData);
 
@@ -77,10 +78,15 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
       if (!taskId || !onFetchTaskDetails) {
         setTask(null);
         setEditedTask(null);
-        setActivities([]);
         return;
       }
 
+      // Prevent duplicate calls using ref
+      if (taskDetailsFetchedRef.current === taskId) {
+        return;
+      }
+
+      taskDetailsFetchedRef.current = taskId;
       setLoading(true);
       try {
         const fetchedTask = await onFetchTaskDetails(taskId);
@@ -337,26 +343,20 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     );
   };
 
-  const handleStatusChange = (
-    event: SelectChangeEvent<'Done' | 'In Progress' | 'To Do'>
-  ) => {
+  const handleStatusChange = (event: SelectChangeEvent<string>) => {
     setEditedTask((prev) =>
       prev
         ? {
             ...prev,
-            status: event.target.value as 'Done' | 'In Progress' | 'To Do',
+            status: event.target.value,
           }
         : null
     );
   };
 
-  const handlePriorityChange = (
-    event: SelectChangeEvent<'Low' | 'Medium' | 'High'>
-  ) => {
+  const handlePriorityChange = (event: SelectChangeEvent<string>) => {
     setEditedTask((prev) =>
-      prev
-        ? { ...prev, priority: event.target.value as 'Low' | 'Medium' | 'High' }
-        : null
+      prev ? { ...prev, priority: event.target.value } : null
     );
   };
 

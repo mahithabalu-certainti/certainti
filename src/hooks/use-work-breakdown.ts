@@ -29,7 +29,5 @@ export const useGetTaskActivities = (
     queryFn: () => fetchTaskActivities(accountId, caseId, taskId),
     enabled: enabled && !!accountId && !!caseId && !!taskId,
     retry: 0,
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
   });
 };

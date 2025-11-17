@@ -34,14 +34,25 @@ export interface StatusOption {
 
 export interface Task {
   id: string;
+  r_number?: string;
   title: string;
-  status: 'To Do' | 'In Progress' | 'Done';
-  priority?: 'Low' | 'Medium' | 'High';
+  status: string;
+  priority?: string;
   assignee: Assignee;
   commentCount: number;
   createdAt: Date;
+  createdBy?: string;
+  modifiedBy?: string;
   description?: string;
   checklist?: Array<{ id: string; text: string; completed: boolean }>;
+  checklistName?: string;
+  checklistInfo?: {
+    rid: string;
+    name: string;
+    description: string;
+    totalItems: number;
+    completedItems: number;
+  };
   tags?: string[];
   collaborators?: Assignee[];
   startDate?: Date;
@@ -50,6 +61,8 @@ export interface Task {
   commentAttachments?: string[];
   activities?: Activity[];
   sequenceNo?: number;
+  statusRid?: string;
+  priorityRid?: string;
 }
 
 export interface TaskCard {
@@ -133,6 +146,12 @@ export interface KanbanBoardProps {
   priorityData?: Array<{ id: string; name: string; color: string }>;
   tagData?: Array<{ id: string; name: string; color: string }>;
   userData?: UserOption[];
+  roleOptions?: Array<{
+    rid: string;
+    role_name: string;
+    role_description?: string;
+    status?: string;
+  }>;
   isDragable?: boolean;
   isDragablebetweenBoards?: boolean;
   onFetchTaskDetails?: (taskId: string) => Promise<Task | null>;
@@ -152,6 +171,10 @@ export interface KanbanBoardProps {
   fieldVisibility?: FieldVisibility;
   fieldDisabled?: FieldDisabled;
   isLoading?: boolean;
+  onCreateTask?: (
+    columnId: string,
+    taskData: Partial<TaskCard>
+  ) => Promise<void>;
 }
 
 export interface TaskCardProps {
@@ -187,6 +210,10 @@ export interface KanbanColumnProps {
   priorityData?: Array<{ id: string; name: string; color: string }>;
   onTaskUpdate?: (taskId: string, updatedTask: Partial<Task>) => void;
   onFetchTaskDetails?: (taskId: string) => Promise<Task | null>;
+  onCreateTask?: (
+    columnId: string,
+    taskData: Partial<TaskCard>
+  ) => Promise<void>;
 }
 
 export interface TaskDetailModalProps {

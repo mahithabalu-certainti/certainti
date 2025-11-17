@@ -64,6 +64,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
   priorityData,
   tagData,
   userData = [],
+  roleOptions = [],
   isDragable = false,
   isDragablebetweenBoards = false,
   isLoading = false,
@@ -73,6 +74,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
   onFetchTaskAttachments,
   fieldVisibility = {},
   fieldDisabled = {},
+  onCreateTask,
 }) => {
   const [columns, setColumns] = useState<KanbanColumnTypes[]>(data);
   const [isCreatingSection, setIsCreatingSection] = useState(false);
@@ -392,8 +394,10 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   statusData={effectiveStatusData}
                   statusOptions={statusOptions}
                   priorityData={priorityData}
+                  roleOptions={roleOptions}
                   onTaskUpdate={handleTaskUpdate}
                   onFetchTaskDetails={onFetchTaskDetails}
+                  onCreateTask={onCreateTask}
                 />
               ))}
 
@@ -509,8 +513,10 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
               statusData={effectiveStatusData}
               statusOptions={statusOptions}
               priorityData={priorityData}
+              roleOptions={roleOptions}
               onTaskUpdate={handleTaskUpdate}
               onFetchTaskDetails={onFetchTaskDetails}
+              onCreateTask={onCreateTask}
             />
           ))}
 

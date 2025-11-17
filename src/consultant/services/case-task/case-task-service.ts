@@ -1,6 +1,7 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { caseServiceApi } from '../../../api/api';
 import { CaseExportResponse } from '../../types';
+import { CommonApiResponse } from '../../../common-service';
 
 // Case Task Types
 export interface CaseTaskListParams {
@@ -118,8 +119,36 @@ export interface TaskAttachmentsApiResponse {
   message: string;
 }
 
+// Create Task Types
+export interface CreateTaskPayload {
+  case_rid: string;
+  account_rid: string;
+  task_name: string;
+  effort_in_days: string;
+  reminder_interval?: number;
+  case_team_member_role_rid?: string;
+  checklist_template_rid?: string;
+  status_rid?: string;
+  priority_rid?: string;
+  milestone_template_rid?: string;
+  task_type_rid?: string;
+  task_description?: string;
+  effective_start_datetime?: string;
+  effective_end_datetime?: string;
+  [key: string]: unknown;
+}
+
+export interface CreateTaskResponse extends CommonApiResponse {
+  data?: {
+    rid?: string;
+    task_name?: string;
+    [key: string]: unknown;
+  };
+}
+
 // Case Task URL
 export const getCaseTaskListUrl = () => '/api/cases/task/list';
+export const getCaseTaskCreateUrl = () => '/api/cases/task/create';
 export const getCaseTaskExportUrl = () => '/api/cases/task/export';
 export const getTaskCommentsListUrl = () => '/api/cases/task/comments/list';
 export const getTaskAttachmentsListUrl = () =>
@@ -156,6 +185,22 @@ export const fetchTaskAttachmentsList = async (
     params
   );
   return data;
+};
+
+// Create Case Task
+export const createCaseTask = async (
+  payload: CreateTaskPayload
+): Promise<CreateTaskResponse> => {
+  try {
+    const { data } = await caseServiceApi.post<CreateTaskResponse>(
+      getCaseTaskCreateUrl(),
+      payload
+    );
+    return data;
+  } catch (error) {
+    console.error('Error creating case task:', error);
+    throw error;
+  }
 };
 
 // Custom Hook for Case Tasks
@@ -225,6 +270,13 @@ export const useGetTaskAttachmentsList = (
       options?.enabled !== false
     ),
     ...options,
+  });
+};
+
+// Custom Hook for Creating Case Task
+export const useCreateCaseTask = () => {
+  return useMutation<CreateTaskResponse, Error, CreateTaskPayload>({
+    mutationFn: (payload) => createCaseTask(payload),
   });
 };
 

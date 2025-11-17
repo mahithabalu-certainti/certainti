@@ -3,31 +3,41 @@ import { CaseIcon } from '../../../../../assets';
 import { SectionHeaderTab, SectionTabPanel } from '../../../../../components';
 import SectionHeader from '../../../../../components/details-section/section-header';
 import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
-import { AllPermissions, useGetStatus } from '../../../../../common-service';
+import { AllPermissions } from '../../../../../common-service';
 import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
 import KanbanBoard from '../../../../../components/kanban-board/kanban-board';
 import { useGetWorkBreakdownList } from '../../../../../hooks/use-work-breakdown';
 import {
   getTaskDetail,
   fetchTaskActivities,
+  useGetTaskPriorities,
+  useGetTaskStatuses,
 } from '../../../../services/work-breakdown/work-breakdown-service';
 import {
   fetchTaskCommentsList,
   fetchTaskAttachmentsList,
+  useCreateCaseTask,
+  CreateTaskPayload,
 } from '../../../../services/case-task/case-task-service';
 import {
   useGetUserOptions,
   useGetTagOptions,
+  useGetRoleOptions,
 } from '../../../../services/case-team/case-team-service';
 import {
   transformActivities,
   transformComments,
   transformAttachments,
+  transformPriorityData,
+  transformStatusData,
+  transformTagData,
 } from './helper';
 import { CaseTask } from './case-task';
+import type { TaskCard } from '../../../../../components/kanban-board/types';
 import { getAssignGroupsFilterFields } from './case-task/helper';
 import { ExportType } from '../../../../types';
 import { ActivityMenuItem } from '../../../../types';
+import { useToast } from '../../../../../hooks';
 
 const ConfigTabs: ResourceTabs[] = [
   {
@@ -35,12 +45,6 @@ const ConfigTabs: ResourceTabs[] = [
     name: 'Overview',
     hide: false,
   },
-  // {
-  //   id: AllPermissions.ACCOUNT_ATTACHMENT_TIMELINE,
-  //   name: 'Timeline',
-  //   hide: false,
-  //   disable: true,
-  // },
 ];
 interface WorkBreakDownProps {
   activityMenuItems: ActivityMenuItem[];
@@ -59,6 +63,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
     caseId: string;
   }>();
   const accountId = searchParams.get('accountID');
+  const { successToast, errorToast } = useToast();
 
   const {
     data: kanbanData,
@@ -68,6 +73,23 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
 
   const userOptionsQuery = useGetUserOptions(accountId || '');
   const tagOptionsQuery = useGetTagOptions();
+  const roleOptionsQuery = useGetRoleOptions();
+  const prioritiesQuery = useGetTaskPriorities();
+  const statusesQuery = useGetTaskStatuses();
+
+  const tagData = transformTagData(tagOptionsQuery.data || []);
+
+  const priorityData = useMemo(
+    () => transformPriorityData(prioritiesQuery.data || []),
+    [prioritiesQuery.data]
+  );
+
+  const statusData = useMemo(
+    () => transformStatusData(statusesQuery.data || []),
+    [statusesQuery.data]
+  );
+
+  const createTaskMutation = useCreateCaseTask();
 
   const tabParam = searchParams.get('tab') || 'milestone';
   const [appliedFilters, setAppliedFilters] = useState<
@@ -81,25 +103,6 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
     React.useState<HTMLButtonElement | null>(null);
   const [seachText, setSearchText] = useState('');
   const [resetSearch, setResetSearch] = useState(false);
-
-  const priorityData = [
-    { id: '1', name: 'Lowest', color: '#gray' },
-    { id: '2', name: 'Low', color: '#lightblue' },
-    { id: '3', name: 'Medium', color: '#yellow' },
-    { id: '4', name: 'High', color: '#orange' },
-    { id: '5', name: 'Highest', color: '#red' },
-  ];
-
-  const statusData = [
-    { id: '1', name: 'Active', color: '#10b981' },
-    { id: '2', name: 'Inactive', color: '#ef4444' },
-  ];
-
-  const tagData = (tagOptionsQuery.data || []).map((tag) => ({
-    id: tag.rid,
-    name: tag.tag_name,
-    color: '#3B82F6',
-  }));
 
   useEffect(() => {
     if (
@@ -120,15 +123,13 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
     setResetSearch(false);
   };
 
-  const statusOptions = useGetStatus();
-
   const memoizedStatus = useMemo(
     () =>
-      statusOptions?.data?.data?.status.map((status) => ({
-        option: status.status_name,
+      statusesQuery?.data?.map((status) => ({
+        option: status.task_status_name,
         value: status.rid,
       })) || [],
-    [statusOptions?.data?.data?.status]
+    [statusesQuery?.data]
   );
 
   const filterFields =
@@ -165,6 +166,53 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
     setColumnAnchorEl(event.currentTarget);
   };
 
+  const handleCreateTask = useCallback(
+    async (columnId: string, taskData: Partial<TaskCard>) => {
+      if (!accountId || !caseId) {
+        errorToast('Account ID or Case ID is missing');
+        throw new Error('Missing Account ID or Case ID');
+      }
+
+      try {
+        const taskPayload: CreateTaskPayload = {
+          case_rid: caseId,
+          account_rid: accountId,
+          task_name: taskData.task_name || 'New Task',
+          effort_in_days: String(taskData.effort_in_days || 0),
+          reminder_interval: taskData.reminder_interval || 0,
+          case_team_member_role_rid: taskData.case_team_member_role_rid || '',
+          checklist_template_rid: '',
+          status_rid: taskData.status_rid || '',
+          priority_rid: taskData.priority_rid || '',
+          milestone_template_rid: columnId,
+          task_type_rid: '',
+          task_description: taskData.task_description || '',
+          effective_start_datetime: taskData.effective_start_datetime || '',
+          effective_end_datetime: taskData.effective_end_datetime || '',
+        };
+
+        const response = await createTaskMutation.mutateAsync(taskPayload);
+
+        if (response?.data?.rid) {
+          successToast('Task created successfully');
+          setReFetchData(Date.now());
+        } else {
+          throw new Error(response?.statusMessage || 'Failed to create task');
+        }
+      } catch (error) {
+        const errorMessage =
+          (error as { response?: { data?: { statusMessage?: string } } })
+            ?.response?.data?.statusMessage ||
+          (error as Error)?.message ||
+          'Failed to create task';
+        errorToast(errorMessage);
+        console.error('Error creating task:', error);
+        throw error;
+      }
+    },
+    [accountId, caseId, createTaskMutation, successToast, errorToast]
+  );
+
   const headerButtons = [
     {
       label: 'Show/Hide Fields',
@@ -186,6 +234,11 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
 
       try {
         const taskData = await getTaskDetail(accountId, caseId, taskId);
+
+        if (!taskData) {
+          return null;
+        }
+
         return taskData;
       } catch (error) {
         console.error('Failed to fetch task details:', error);
@@ -225,7 +278,6 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
       if (!accountId || !caseId) {
         return [];
       }
-
       try {
         const commentsResponse = await fetchTaskCommentsList({
           account_rid: accountId,
@@ -238,7 +290,6 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
         const transformedComments = transformComments(
           commentsResponse?.data?.data || []
         );
-
         return transformedComments;
       } catch (error) {
         console.error('Failed to fetch task comments:', error);
@@ -253,7 +304,6 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
       if (!accountId || !caseId) {
         return [];
       }
-
       try {
         const attachmentsResponse = await fetchTaskAttachmentsList({
           account_rid: accountId,
@@ -343,6 +393,8 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
                 priorityData={priorityData}
                 tagData={tagData}
                 userData={userOptionsQuery.data || []}
+                roleOptions={roleOptionsQuery.data || []}
+                onCreateTask={handleCreateTask}
               />
             )}
           </>

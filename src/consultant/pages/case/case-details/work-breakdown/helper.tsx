@@ -2,6 +2,11 @@ import {
   Activity,
   Comment,
 } from '../../../../../components/kanban-board/types';
+import { generateColorFromName } from '../../../../../components/kanban-board/helper';
+import type {
+  PriorityData,
+  StatusData,
+} from '../../../../services/work-breakdown/work-breakdown-service';
 
 export interface TaskActivityRaw {
   rid: string;
@@ -35,6 +40,11 @@ export interface TaskAttachmentRaw {
   uploaded_by_name?: string;
   uploaded_date?: string;
   created_date?: string;
+}
+
+export interface TagOption {
+  rid: string;
+  tag_name: string;
 }
 
 /**
@@ -111,5 +121,44 @@ export const transformAttachments = (
       hour: '2-digit',
       minute: '2-digit',
     }),
+  }));
+};
+
+/**
+ * Transform priority data from API to format suitable for dropdown
+ */
+export const transformPriorityData = (
+  prioritiesData: PriorityData[]
+): Array<{ id: string; name: string; color: string }> => {
+  return prioritiesData.map((priority) => ({
+    id: priority.rid,
+    name: priority.priority_name,
+    color: generateColorFromName(priority.priority_name),
+  }));
+};
+
+/**
+ * Transform status data from API to format suitable for dropdown
+ */
+export const transformStatusData = (
+  statusesData: StatusData[]
+): Array<{ id: string; name: string; color: string }> => {
+  return statusesData.map((status) => ({
+    id: status.rid,
+    name: status.task_status_name,
+    color: generateColorFromName(status.task_status_name),
+  }));
+};
+
+/**
+ * Transform tag data from API to format suitable for dropdown
+ */
+export const transformTagData = (
+  tagsData: TagOption[]
+): Array<{ id: string; name: string; color: string }> => {
+  return tagsData.map((tag) => ({
+    id: tag.rid,
+    name: tag.tag_name,
+    color: '#3B82F6',
   }));
 };

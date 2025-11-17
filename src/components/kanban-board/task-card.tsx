@@ -56,20 +56,21 @@ const TaskCardComponent: React.FC<ExtendedTaskCardProps> = ({
         border: isActive ? '#BBF7D0' : '#FECACA', // green border for active, red border for inactive
       };
     }
-
-    // Fallback to original color mapping for backward compatibility
     const colors = {
       status: {
+        // Status colors
+        'To Do': { bg: '#F3F4F6', text: '#374151', border: '#D1D5DB' },
+        'In Progress': { bg: '#DBEAFE', text: '#1E40AF', border: '#93C5FD' },
+        Done: { bg: '#DCFCE7', text: '#166534', border: '#BBF7D0' },
         Active: { bg: '#DCFCE7', text: '#15803D', border: '#BBF7D0' }, // green theme
-        'To Do': { bg: '#F8FAFC', text: '#475569', border: '#E2E8F0' },
-        'In Progress': { bg: '#EFF6FF', text: '#3730A3', border: '#DBEAFE' },
-        Done: { bg: '#F0FDF4', text: '#166534', border: '#DCFCE7' },
         Inactive: { bg: '#FEE2E2', text: '#DC2626', border: '#FECACA' }, // red theme
       },
       priority: {
-        Low: { bg: '#F9FAFB', text: '#374151', border: '#E5E7EB' },
+        // Priority colors - Low (blue), Medium (yellow), High & Highest (red)
+        Low: { bg: '#EFF6FF', text: '#1E40AF', border: '#93C5FD' },
         Medium: { bg: '#FFFBEB', text: '#92400E', border: '#FDE68A' },
-        High: { bg: '#FEF2F2', text: '#991B1B', border: '#FECACA' },
+        High: { bg: '#FEE2E2', text: '#991B1B', border: '#FECACA' },
+        Highest: { bg: '#FEE2E2', text: '#991B1B', border: '#FECACA' },
       },
     } as const;
 
@@ -82,6 +83,14 @@ const TaskCardComponent: React.FC<ExtendedTaskCardProps> = ({
         border: '#E5E7EB',
       }
     );
+  };
+
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Prevent drag events from interfering with click
+    if (isDragable || isDragablebetweenBoards) {
+      e.stopPropagation();
+    }
+    onTaskClick?.(taskId);
   };
 
   if (!taskData) {
@@ -99,7 +108,10 @@ const TaskCardComponent: React.FC<ExtendedTaskCardProps> = ({
     );
   }
 
-  const statusColor = getColor('status', taskData.task_status_name ?? ' ');
+  const statusColor = getColor(
+    'status',
+    (taskData.task_status_name || taskData.status_name) ?? ' '
+  );
   const priorityColor = getColor('priority', taskData.priority_name ?? ' ');
 
   return (
@@ -109,8 +121,8 @@ const TaskCardComponent: React.FC<ExtendedTaskCardProps> = ({
       {...(isDragable || isDragablebetweenBoards
         ? { ...attributes, ...listeners }
         : {})}
-      onClick={() => onTaskClick?.(taskId)}
-      onDoubleClick={() => onTaskClick?.(taskId)}
+      onClick={handleCardClick}
+      onDoubleClick={handleCardClick}
       className='bg-white border border-slate-200 rounded-lg p-3 mb-2 hover:bg-slate-50 transition-colors duration-200 group cursor-pointer'
     >
       <div className='flex items-center gap-1 mb-3'>
@@ -136,7 +148,7 @@ const TaskCardComponent: React.FC<ExtendedTaskCardProps> = ({
             fontSize: '13px',
           }}
         >
-          {taskData.task_status_name}
+          {taskData.task_status_name || taskData.status_name}
         </div>
 
         <div

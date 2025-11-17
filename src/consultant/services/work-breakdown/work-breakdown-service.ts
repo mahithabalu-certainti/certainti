@@ -3,7 +3,8 @@ import {
   getWorkBreakdownURL,
   getTaskDetailURL,
 } from '../urls/work-breakdown-url';
-import { Task, Assignee } from '../../../components/kanban-board/types';
+import type { Task } from '../../../components/kanban-board/types';
+import { useQuery } from '@tanstack/react-query';
 
 export interface KanbanBoardData {
   statusCode: number;
@@ -42,6 +43,8 @@ export interface TaskCard {
   case_team_member_role_name: string;
   task_type_name: string;
   status_name: string;
+  task_status_rid: string;
+  task_status_name: string;
 }
 
 export const getKanbanBoardData = async (
@@ -50,25 +53,55 @@ export const getKanbanBoardData = async (
 ): Promise<KanbanBoardData> => {
   const url = getWorkBreakdownURL(accountId, caseId);
   const response = await caseServiceApi.get<KanbanBoardData>(url);
+  if (response.data?.data) {
+    response.data.data = response.data.data.map((column) => ({
+      ...column,
+      tasks: column.tasks.map((task) => ({
+        ...task,
+        task_status_name: task.task_status_name || task.status_name || '',
+      })),
+    }));
+  }
+
   return response.data;
 };
 
 export interface TaskDetailResponse {
   rid: string;
+  r_number: string;
   task_name: string;
-  task_description?: string;
-  status_rid: string;
-  status_name: string;
+  created_by: string;
+  created_by_name: string;
+  assigned_to: string | null;
+  assigned_to_name: string | null;
+  modified_by?: string;
+  modified_by_name?: string;
   priority_rid: string;
   priority_name: string;
-  assigned_to?: string;
-  assigned_to_name?: string;
+  task_status_rid: string;
+  task_status_name: string;
+  created_datetime: string;
+  task_description?: string;
   effective_start_datetime?: string;
   effective_end_datetime?: string;
-  effort_in_days: number;
-  reminder_interval: number;
-  checklist_items?: Array<{ id: string; text: string; completed: boolean }>;
-  collaborators?: Assignee[];
+  checklists?: {
+    rid: string;
+    task_rid: string;
+    checklist_name: string;
+    checklist_description: string;
+    checklist_items_count: number;
+    completed_items_count: number;
+    checklist_items: Array<{
+      rid: string;
+      status_rid: string;
+      checklist_item_status_name: string;
+      checklist_item_name: string;
+      checklist_item_description: string | null;
+    }>;
+  };
+  effort_in_days?: number;
+  reminder_interval?: number;
+  collaborators?: Array<{ name: string }>;
   activities?: Array<{
     id?: string;
     user: string;
@@ -78,8 +111,6 @@ export interface TaskDetailResponse {
   }>;
   attachments?: string[];
   tags?: string[];
-  created_at?: string;
-  created_by?: string;
   case_team_member_role_name?: string;
   task_type_name?: string;
   case_team_member_role_rid?: string;
@@ -124,119 +155,70 @@ export const getTaskDetail = async (
   caseId: string,
   taskId: string
 ): Promise<Task | null> => {
-  console.log('account Id : ', accountId);
-  console.log('case Id : ', caseId);
-
-  // MOCK DATA
-  const assigneeName = 'John Doe';
-  const collaboratorNames = ['Jane Smith', 'Mike Johnson'];
-
-  const mockTask: Task = {
-    id: taskId,
-    title: 'Schedule Team Meetings internally',
-    status: 'In Progress' as const,
-    priority: 'Medium' as const,
-    assignee: {
-      name: assigneeName,
-      initials: generateInitials(assigneeName),
-      color: generateColorFromName(assigneeName),
-    },
-    description: 'Reviewing the projects which are added to Cases',
-    commentCount: 2,
-    createdAt: new Date('2025-11-05'),
-    checklist: [
-      { id: '1', text: 'Prepare agenda', completed: true },
-      { id: '2', text: 'Send invites', completed: true },
-      { id: '3', text: 'Setup meeting room', completed: false },
-      { id: '4', text: 'Test audio/video', completed: false },
-    ],
-    tags: ['Meeting', 'Internal'],
-    collaborators: collaboratorNames.map((name) => ({
-      name,
-      initials: generateInitials(name),
-      color: generateColorFromName(name),
-    })),
-    startDate: new Date('2025-11-05'),
-    endDate: new Date('2025-11-08'),
-    attachments: [],
-    commentAttachments: [],
-    activities: [
-      {
-        id: '1',
-        user: 'John Doe',
-        action: 'created this task',
-        date: '2 days ago',
-      },
-      {
-        id: '2',
-        user: 'Jane Smith',
-        action: 'marked checklist item as complete',
-        date: '1 day ago',
-      },
-    ],
-    sequenceNo: 1,
-  };
-
-  return mockTask;
-
-  /* COMMENTED OUT - API Implementation (uncomment when backend is ready)
   try {
-    const url = getTaskDetailURL(accountId, caseId, taskId);
-    const response = await caseServiceApi.get<TaskDetailResponse>(url);
+    // Fetch task details from API
+    const taskDetailResponse = await fetchTaskDetail(accountId, caseId, taskId);
 
-    if (!response.data) {
+    if (!taskDetailResponse) {
       return null;
     }
 
-    // Transform API response to Task interface
-    const apiTask = response.data;
-    
     // Generate initials and color from assignee name
-    const assigneeName = apiTask.assigned_to_name || 'Unassigned';
+    const assigneeName = taskDetailResponse.assigned_to_name || 'Unassigned';
     const assigneeInitials = generateInitials(assigneeName);
     const assigneeColor = generateColorFromName(assigneeName);
-    
-    // Generate initials and colors for collaborators
-    const collaborators = (apiTask.collaborators || []).map((collab) => ({
-      name: collab.name,
-      initials: generateInitials(collab.name),
-      color: generateColorFromName(collab.name),
-    }));
-    
+
+    // Transform checklist items from API response
+    const checklistItems =
+      taskDetailResponse.checklists?.checklist_items?.map((item) => ({
+        id: item.rid,
+        text: item.checklist_item_name,
+        completed: item.checklist_item_status_name === 'Done',
+      })) || [];
+
     const task: Task = {
-      id: apiTask.rid,
-      title: apiTask.task_name,
-      status: (apiTask.status_name || 'To Do') as
-        | 'To Do'
-        | 'In Progress'
-        | 'Done',
-      priority: (apiTask.priority_name || 'Medium') as
-        | 'Lowest'
-        | 'Low'
-        | 'Medium'
-        | 'High'
-        | 'Highest',
+      id: taskDetailResponse.rid,
+      r_number: taskDetailResponse.r_number,
+      title: taskDetailResponse.task_name,
+      status: taskDetailResponse.task_status_name,
+      priority: taskDetailResponse.priority_name,
       assignee: {
         name: assigneeName,
         initials: assigneeInitials,
         color: assigneeColor,
       },
-      description: apiTask.task_description,
+      createdBy: taskDetailResponse.created_by_name,
+      modifiedBy: taskDetailResponse.modified_by_name,
+      description: taskDetailResponse.task_description,
       commentCount: 0,
-      createdAt: apiTask.created_at ? new Date(apiTask.created_at) : new Date(),
-      checklist: apiTask.checklist_items || [],
-      tags: apiTask.tags || [],
-      collaborators,
-      startDate: apiTask.effective_start_datetime
-        ? new Date(apiTask.effective_start_datetime)
+      createdAt: taskDetailResponse.created_datetime
+        ? new Date(taskDetailResponse.created_datetime)
+        : new Date(),
+      checklist: checklistItems,
+      checklistName: taskDetailResponse.checklists?.checklist_name,
+      checklistInfo: taskDetailResponse.checklists
+        ? {
+            rid: taskDetailResponse.checklists.rid,
+            name: taskDetailResponse.checklists.checklist_name,
+            description: taskDetailResponse.checklists.checklist_description,
+            totalItems: taskDetailResponse.checklists.checklist_items_count,
+            completedItems: taskDetailResponse.checklists.completed_items_count,
+          }
         : undefined,
-      endDate: apiTask.effective_end_datetime
-        ? new Date(apiTask.effective_end_datetime)
+      tags: taskDetailResponse.tags || [],
+      collaborators: [],
+      startDate: taskDetailResponse.effective_start_datetime
+        ? new Date(taskDetailResponse.effective_start_datetime)
         : undefined,
-      attachments: apiTask.attachments || [],
+      endDate: taskDetailResponse.effective_end_datetime
+        ? new Date(taskDetailResponse.effective_end_datetime)
+        : undefined,
+      attachments: taskDetailResponse.attachments || [],
       commentAttachments: [],
-      activities: apiTask.activities || [],
-      sequenceNo: apiTask.sequence_no,
+      activities: taskDetailResponse.activities || [],
+      sequenceNo: taskDetailResponse.sequence_no,
+      statusRid: taskDetailResponse.task_status_rid,
+      priorityRid: taskDetailResponse.priority_rid,
     };
 
     return task;
@@ -244,7 +226,6 @@ export const getTaskDetail = async (
     console.error(`Error fetching task details for ${taskId}:`, error);
     return null;
   }
-  */
 };
 
 export const fetchTaskDetail = async (
@@ -253,9 +234,20 @@ export const fetchTaskDetail = async (
   taskId: string
 ): Promise<TaskDetailResponse> => {
   try {
-    const url = getTaskDetailURL(accountId, caseId, taskId);
-    const response = await caseServiceApi.get<TaskDetailResponse>(url);
-    return response.data;
+    const url = getTaskDetailURL();
+    const payload = {
+      task_rid: taskId,
+      account_rid: accountId,
+      case_rid: caseId,
+    };
+    const response = await caseServiceApi.post<{
+      statusCode: number;
+      statusCodeValue: string;
+      statusMessage: string;
+      data: TaskDetailResponse;
+    }>(url, payload);
+
+    return response.data.data;
   } catch (error) {
     console.error(`Error fetching task details for ${taskId}:`, error);
     throw error;
@@ -316,4 +308,78 @@ export const fetchTaskActivities = async (
     console.error(`Error fetching task activities for ${taskId}:`, error);
     return [];
   }
+};
+
+export interface PriorityData {
+  rid: string;
+  priority_name: string;
+}
+
+export interface StatusData {
+  rid: string;
+  task_status_name: string;
+}
+
+export interface PriorityResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: PriorityData[];
+}
+
+export interface StatusResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: StatusData[];
+}
+
+export const fetchTaskPriorities = async (): Promise<PriorityData[]> => {
+  try {
+    const response = await caseServiceApi.get<PriorityResponse>(
+      '/api/cases/task/priority'
+    );
+
+    if (response.data?.data && Array.isArray(response.data.data)) {
+      return response.data.data;
+    }
+    return [];
+  } catch (error) {
+    console.error('Error fetching task priorities:', error);
+    return [];
+  }
+};
+
+export const fetchTaskStatuses = async (): Promise<StatusData[]> => {
+  try {
+    const response = await caseServiceApi.get<StatusResponse>(
+      '/api/cases/task/status'
+    );
+
+    if (response.data?.data && Array.isArray(response.data.data)) {
+      return response.data.data;
+    }
+    return [];
+  } catch (error) {
+    console.error('Error fetching task statuses:', error);
+    return [];
+  }
+};
+
+export const useGetTaskPriorities = () => {
+  return useQuery({
+    queryKey: ['taskPriorities'],
+    queryFn: fetchTaskPriorities,
+    staleTime: 1000 * 60 * 60, // 1 hour
+    gcTime: 1000 * 60 * 60 * 24, // 24 hours
+  });
+};
+
+export const useGetTaskStatuses = () => {
+  return useQuery({
+    queryKey: ['taskStatuses'],
+    queryFn: fetchTaskStatuses,
+    staleTime: 1000 * 60 * 60, // 1 hour
+    gcTime: 1000 * 60 * 60 * 24, // 24 hours
+  });
 };
