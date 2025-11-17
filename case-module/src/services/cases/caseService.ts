@@ -1868,7 +1868,6 @@ export class CaseService {
     } 
   } 
   catch (error) {
-    console.log(error)
     await transaction.rollback()
     return {
       statusCode : HttpStatus.FAILED,
@@ -1909,7 +1908,6 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
       }
     } catch (error) {
       await transaction.rollback()
-      console.log(error)
       return {
         statusCode : HttpStatus.FAILED,
         statusMessage : STATUS_MESSAGE.taskUpdatedFailed
@@ -2399,7 +2397,6 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
     data?: { reviewProjects: any ,count: number };
   }> {
     try {
-      console.log("In service getReviewProjects",accountRid);
       const { accountNumber } =
         await this.caseSchemaService.fetchValidAccountNumberById(
           accountRid
@@ -2435,7 +2432,6 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
         },
       };
     } catch (err) {
-      console.log(err)
       logMessage(`Error fetching review project info, ${err}`);
       throw this.throwServiceError(err as Error);
     }

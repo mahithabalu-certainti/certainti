@@ -479,7 +479,6 @@ class CaseSchemaService {
       await setupCaseHistorySubmissionSequence(orgDbSequlize, schemaName);
     } catch (err) {
       errorLog("Error creating case tables", (err as Error).message);
-      console.log(err)
       return this.throwServiceError(err as Error);
     }
   }
@@ -955,7 +954,6 @@ class CaseSchemaService {
       // Filter logic for your input structure
       Object.entries(filters).forEach(([field, filter]) => {
         if (!filter || typeof filter !== 'object') {
-          console.log(`Skipping filter for field ${field} due to invalid structure`);
           return;
         }
 
@@ -963,7 +961,6 @@ class CaseSchemaService {
         const value = operator ? filter[operator] : undefined;
 
         if (!operator || value === undefined) {
-          console.log(`Skipping filter for field ${field} due to missing operator or value`);
           return;
         }
 
@@ -1025,7 +1022,7 @@ class CaseSchemaService {
             break;
 
           default:
-            console.log(`Unhandled filter field: ${field}`);
+            logMessage(`Unhandled filter field: ${field}`);
         }
 
         if (Object.keys(condition).length > 0) {
@@ -1392,7 +1389,6 @@ class CaseSchemaService {
         /\D/g,
         ""
       )}`;
-    console.log("schemaName", schemaName);
     
     filters = filters || {};
     let offset = (page - 1) * limit;
@@ -1409,7 +1405,6 @@ class CaseSchemaService {
     let [pointOfContactRoleid]:any[] = await this.mainDbSequelize.query(
         rawQueries.fetchPOCRoleId()
       );
-    console.log("pointOfContactRoleiddd", pointOfContactRoleid);
     let filteredQueryArray: string[] = [];
     let andConditions = ``;
     let filterQueryValues;
@@ -3662,7 +3657,6 @@ class CaseSchemaService {
 
   }
   catch (err) { 
-    console.log(err)
     logMessage(`Error in fetch cases checklists: ${err}`);
     errorLog("Error in fetch cases checklists:", (err as Error).message);
     return [];
@@ -5727,7 +5721,6 @@ async function editChecklistItem(
   createdBy: string,
   transaction: Transaction
 ) {
-  console.log("Editing checklist item:", item, checklistRid);
   // First, find the existing item by template_rid and sequence_no
   const existingItem = await CheckListItem.findOne({
     where: {
