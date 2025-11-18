@@ -24,6 +24,7 @@ import { EmailTemplate } from "../models/emailTemplateModel";import { TaskCommen
 import { CommentsAttachments } from "../models/commentsAttachmentModel";
 import { TaskAttachments } from "../models/taskAttachmentModel";
 import { Activities } from "../models/activitiesModel";
+import { TaskHistory } from "../models/taskHistory";
 
 export class CaseModelService {
   orgDbSequelize: Sequelize | null = null;
@@ -47,6 +48,7 @@ export class CaseModelService {
       CommentsAttachments : ReturnType<typeof CommentsAttachments.initialise>
       TaskAttachments : ReturnType<typeof TaskAttachments.initialise>
       CaseHistorySubmission: ReturnType<typeof CaseHistorySubmission.initialize>;
+      TaskHistory : ReturnType<typeof TaskHistory.initialize>;
     }
   > = new Map();
 
@@ -97,6 +99,7 @@ export class CaseModelService {
     const TaskAttachmentsModel = TaskAttachments.initialise(sequelize, schemaName)
     const CaseHistorySubmissionModel = CaseHistorySubmission.initialize(sequelize, schemaName);
     const ActivitiesModel = Activities.initialize(sequelize, schemaName);
+    const TaskHistoryModel = TaskHistory.initialize(sequelize, schemaName);
 
     const models = {
       Case: CaseModel,
@@ -121,7 +124,8 @@ export class CaseModelService {
       CommentsAttachments : CommentsAttachmentsModel,
       TaskAttachments : TaskAttachmentsModel,
       CaseHistorySubmission: CaseHistorySubmissionModel,
-      Activities: ActivitiesModel
+      Activities: ActivitiesModel,
+      TaskHistory: TaskHistoryModel
     };
 
     this.modelCache.set(schemaName, models);

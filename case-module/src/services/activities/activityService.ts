@@ -32,7 +32,12 @@ import {
   UpdateCaseTaskType,
   UpdateCommentsType,
 } from "../../utils/types";
-import { generateExcelBase64, generateSasUrl, isValidTimezone, logMessage } from "../../utils/helpers";
+import {
+  generateExcelBase64,
+  generateSasUrl,
+  isValidTimezone,
+  logMessage,
+} from "../../utils/helpers";
 import {
   caseStatuses,
   HttpStatus,
@@ -44,12 +49,17 @@ import { query } from "express";
 import currency from "currency.js";
 import moment from "moment";
 import { CaseManagementSchemaService } from "../casesManagement/schemaService";
-import { fetchTaskActivities, fetchTaskComments, listAllTaskStatus, taskCardDetails } from "../../utils/rawQueries";
+import {
+  fetchTaskActivities,
+  fetchTaskComments,
+  listAllTaskStatus,
+  taskCardDetails,
+} from "../../utils/rawQueries";
 import ActivitySchemaService from "./schemaService";
 export class ActivityService {
   private caseSchemaService: CaseSchemaService;
   private caseModelService: CaseModelService; // Assuming this is defined somewhere in your code
-  private caseManagementService : CaseManagementSchemaService
+  private caseManagementService: CaseManagementSchemaService;
   private activitySchemaService: ActivitySchemaService;
   private logger: Logger;
   private orgDbSequelize: Sequelize | null = null;
@@ -59,7 +69,7 @@ export class ActivityService {
     this.logger = logger;
     this.caseSchemaService = new CaseSchemaService();
     this.caseModelService = new CaseModelService(); // Initialize your model service here
-    this.caseManagementService = new CaseManagementSchemaService()
+    this.caseManagementService = new CaseManagementSchemaService();
     this.activitySchemaService = new ActivitySchemaService();
   }
 
@@ -77,33 +87,34 @@ export class ActivityService {
     return this.orgDbSequelize;
   }
 
-   async createActivityTask(
-      taskRequest: IActivityTask,
-      userId: string
-    ): Promise<{
-      statusCode: number;
-      message: string;
-      errorMessage?: string;
-      data?: { cases: any };
-    }> {
-      const dbInit = await this.caseModelService.getSequelize();
-      const transaction = await dbInit.transaction();
-      try {
-        taskRequest.created_by = userId;
-        const { accountNumber, parentAccountId } =
-          await this.caseSchemaService.fetchValidAccountNumberById(
-            taskRequest.account_rid
-          );
-  
-        if (!accountNumber) {
-          throw new Error("Invalid account ID");
-        }
-  
-        const response = await this.activitySchemaService.createActivityTask(
-          accountNumber,
-          taskRequest,
-          transaction
+  async createActivityTask(
+    taskRequest: IActivityTask,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { cases: any };
+  }> {
+    const dbInit = await this.caseModelService.getSequelize();
+    const transaction = await dbInit.transaction();
+    try {
+      taskRequest.created_by = userId;
+      const { accountNumber, parentAccountId } =
+        await this.caseSchemaService.fetchValidAccountNumberById(
+          taskRequest.account_rid!
         );
+
+      if (!accountNumber) {
+        throw new Error("Invalid account ID");
+      }
+
+      const response = await this.activitySchemaService.createActivityTask(
+        accountNumber,
+        taskRequest,
+        transaction
+      );
+     
       /*  if (response) {
           logMessage(`Case created with RID: ${response.rid}`);
           await this.activitySchemaService.addTaskSummary(
@@ -113,26 +124,152 @@ export class ActivityService {
             response.get("r_number") || ""
           );
         } */
-  
-        await transaction.commit();
-  
-        return {
-          statusCode: HttpStatus.SUCCESS,
-          message: STATUS_MESSAGE.caseCreated,
-          data: {
-            cases: response,
-          },
-        };
-      } catch (err) {
-        logMessage(`Error creating activity task, ${err}`);
-        await transaction.rollback();
+
+      await transaction.commit();
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: STATUS_MESSAGE.caseCreated,
+        data: {
+          cases: response,
+        },
+      };
+    } catch (err) {
+      console.log(err);
+      logMessage(`Error creating activity task, ${err}`);
+      await transaction.rollback();
+      return {
+        statusCode: HttpStatus.FAILED,
+        message: HttpStatus.FAILED_MESSAGE,
+        errorMessage: STATUS_MESSAGE.caseCreationFailed,
+      };
+    }
+  }
+  async updateActivityTask(
+    taskRequest: IActivityTask,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { tasks: any };
+  }> {
+    const dbInit = await this.caseModelService.getSequelize();
+    const transaction = await dbInit.transaction();
+    try {
+      taskRequest.created_by = userId;
+      const { accountNumber, parentAccountId } =
+        await this.caseSchemaService.fetchValidAccountNumberById(
+          taskRequest.accountRid
+        );
+
+      if (!accountNumber) {
+        throw new Error("Invalid account ID");
+      }
+
+      const response = await this.activitySchemaService.updateActivityTask(
+        accountNumber,
+        taskRequest,
+        transaction,
+        userId
+      );
+
+      /*  if (response) {
+          logMessage(`Case created with RID: ${response.rid}`);
+          await this.activitySchemaService.addTaskSummary(
+            accountNumber,
+            taskRequest,
+            response.rid,
+            response.get("r_number") || ""
+          );
+        } */
+
+      await transaction.commit();
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: STATUS_MESSAGE.caseCreated,
+        data: {
+          tasks: response,
+        },
+      };
+    } catch (err) {
+      logMessage(`Error creating activity task, ${err}`);
+      await transaction.rollback();
+      return {
+        statusCode: HttpStatus.FAILED,
+        message: HttpStatus.FAILED_MESSAGE,
+        errorMessage: STATUS_MESSAGE.caseCreationFailed,
+      };
+    }
+  }
+  async getAllActivities(
+    userId: string,
+    attachmentLevel?: string,
+    entityId?: string,
+    accountRid?: string,
+    page: number = 1,
+    limit: number = 10,
+    search?: string,
+    filters: Record<string, any> = {},
+    sortBy: string = "created_datetime",
+    sortOrder: string = "DESC",
+    fiscalYear: number = 0,
+    apiType: string = "list",
+    graphqlData?: any
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { activities: any[]; totalCount: number };
+  }> {
+    try {
+      const { accountNumber } =
+        await this.caseSchemaService.fetchValidAccountNumberById(accountRid!);
+
+      if (!accountNumber) {
+        logMessage(`Invalid account ID ${accountRid!}`);
         return {
           statusCode: HttpStatus.FAILED,
           message: HttpStatus.FAILED_MESSAGE,
-          errorMessage: STATUS_MESSAGE.caseCreationFailed,
+          errorMessage: "Invalid account ID",
         };
       }
+      const checklistResponse: any =
+        await this.caseSchemaService.fetchActivities(
+          accountNumber,
+          fiscalYear,
+          attachmentLevel,
+          entityId,
+          accountRid,
+          page,
+          limit,
+          search,
+          filters,
+          sortBy,
+          sortOrder,
+          apiType,
+          graphqlData
+        );
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          activities: checklistResponse.activities || [],
+          totalCount: checklistResponse.totalCount || 0,
+        },
+      };
+    } catch (error) {
+      console.log(error);
+      logMessage(`Error fetching activities task, ${error}`);
+      return {
+        statusCode: 500,
+        message: "Failed to fetch activities task",
+        errorMessage:
+          error instanceof Error ? error.message : "An unknown error occurred",
+        data: { activities: [], totalCount: 0 },
+      };
     }
- 
+  }
 }
- 

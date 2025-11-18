@@ -613,12 +613,13 @@ export type TagsTypes = {
 
 export interface IActivityTask {
   task_template_rid?: string;
+  task_rid: string;
   activity_type:string
   created_by: string;
   modified_by?: string;
   created_datetime?: Date;
   modified_datetime?: Date;
-  account_rid: string;
+  accountRid: string;
   fiscal_year: number;
   attach_to: string;
   attachment_level: string;
@@ -630,4 +631,5 @@ export interface IActivityTask {
   assigned_to?: string;
   status_rid?: string;
   remainder_interval?: number;
+  account_rid?: string; 
 }

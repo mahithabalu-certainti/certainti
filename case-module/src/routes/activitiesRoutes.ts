@@ -12,4 +12,10 @@ routes.post(
   controller.activitiesController.createActivityTask
 );
 
+routes.get(
+  "/tasks/list",
+  checkUserStatusMiddleware("checklists_view_edit"),
+  controller.activitiesController.getAllActivityTask
+);
+
 export default routes;

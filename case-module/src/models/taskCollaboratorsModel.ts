@@ -10,7 +10,7 @@ interface CreateCollaboratorsAttributes {
     created_datetime : Date
     modified_datetime? : Date
     account_rid : string
-    case_rid : string
+    case_rid?: string
     task_rid : string
     assigned_to : string
 }
@@ -28,7 +28,7 @@ implements  CreateCollaboratorsAttributes {
     public created_datetime! : Date
     public modified_datetime? : Date
     public account_rid!: string
-    public case_rid!: string
+    public case_rid?: string
     public task_rid! : string
     public assigned_to! : string 
 

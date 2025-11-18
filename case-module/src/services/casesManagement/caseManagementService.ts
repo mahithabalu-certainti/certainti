@@ -691,9 +691,11 @@ export class CaseManagementService {
 }> {
   try {
     // Set the user who is creating this checklist
+
     emailRequest.modified_by = userId;
+    if(emailRequest.template_name)
+    {
     const isUnique = await this.caseManangementSchemaService.checkisExistingTemplateUnique(emailRequest);
-    console.log("isUnique", isUnique);
     if (!isUnique) {
       return {
         statusCode: HttpStatus.BAD_REQUEST,
@@ -701,6 +703,7 @@ export class CaseManagementService {
         errorMessage: `A template with the name "${emailRequest.template_name}" and category already exists. Please choose a different name or category.`,
       };
     }
+  }
     const response =
       await this.caseManangementSchemaService.updateEmailTemplate(
         emailRequest

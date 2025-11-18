@@ -392,4 +392,24 @@ export interface IActivityService {
     errorMessage?: string;
     data?: { cases: any };
   }>;
+   getAllActivities(
+    userId: string,
+    attachmentLevel: string,
+    entityId: string,
+    accountRid: string,
+    page: number,
+    limit: number,
+    search: string,
+    filters: Record<string, any>,
+    sortBy: string,
+    sortOrder: string,
+    fiscalYear: number,
+    apiType: string,
+    graphqlData: any
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { activities: any[]; totalCount: number };
+  }>;
 }

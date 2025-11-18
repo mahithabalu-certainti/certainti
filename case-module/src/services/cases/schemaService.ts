@@ -929,7 +929,7 @@ class CaseSchemaService {
       ? { [Op.and]: [whereClause, searchCondition] }
       : searchCondition;
   }
-  private buildRawWhereClause(
+   buildRawWhereClause(
       filters: Record<string, any>,
       search?: string
     ): { whereClause: any } {
@@ -3719,7 +3719,7 @@ class CaseSchemaService {
     return [];
   }
 }
-  private async getAttachmentDisplayNames(attachments: any[], schemaNumber: string): Promise<any> {
+   async getAttachmentDisplayNames(attachments: any[], schemaNumber: string): Promise<any> {
   const displayNames: Record<string, string> = {};
   let parentRid : Record<string, string> = {}
   let currencyRid : Record<string, string> = {}
