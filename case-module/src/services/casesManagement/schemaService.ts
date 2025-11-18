@@ -607,6 +607,7 @@ class CaseManagementSchemaService {
       } else {
         sequenceNumber = sequenceNumber + 1
       }
+     
       dynamicData = {
         created_by : userId,
         task_name : data.task_name,
@@ -634,7 +635,13 @@ class CaseManagementSchemaService {
         priority_rid : data.priority_rid,
       }
     }
-    await TaskTemplate.create(dynamicData)
+    const result = await TaskTemplate.create(dynamicData);
+    if(result) {
+      data.workflow_connector.source_rid = result.dataValues.rid
+      if(data.workflow_connector.target_rid.length > 0) {
+        await this.taskWorkflowConnector(data.workflow_connector);
+      }
+    }
     return {
       statusCode : HttpStatus.SUCCESS,
       statusMessage : STATUS_MESSAGE.taskCreatedSuccess
@@ -685,6 +692,9 @@ class CaseManagementSchemaService {
         }
       })
       if(result === 1) {
+        if(data.workflow_connector.target_rid.length > 0) {
+          await this.taskWorkflowConnector(data.workflow_connector);
+        }
         return {
           statusCode : HttpStatus.SUCCESS,
           statusMessage : STATUS_MESSAGE.taskUpdatedSuccess
@@ -1206,7 +1216,7 @@ async getWorkFlowConnector () {
             relationship_connector_rid : data.relationship_connector_rid
           }, raw : true
         });
-        if(checkIsAlreadyMapped) {
+        if(!checkIsAlreadyMapped) {
           return {
             statusCode : HttpStatus.BAD_REQUEST,
             statusMessage : STATUS_MESSAGE.dataAlreadyMapped

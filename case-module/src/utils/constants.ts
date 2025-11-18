@@ -153,7 +153,9 @@ export const STATUS_MESSAGE = {
   caseTaskStatusListedSuccess : "Case Task Status fetched successfully",
   collaboratorAlreadyAdded : "Requested Collaborator already added",
   collaboratorsAddedSuccesss : "Collaborator added successfully",
+  collaboratorsRemovedSuccesss : "Collaborator removed successfully",
   collaboratorAddedFailed : "Failed to add collaborator",
+  collaboratorRemovedFailed : "Failed to remove collaborator",
   collaboratorsListedSuccess : "Collaborators fetched successfully",
   workflowConnectorListSuccess : "Workflow Connector listed successfully",
   dataAlreadyMapped : "Requested data already mapped",
@@ -1329,7 +1331,7 @@ export const rawQueries = {
       return `SELECT rid, relationship_type FROM ${MAIN_SCHEMA_NAME}.workflow_connector WHERE rid IN (${ids})`
     }
   },
-  getTaskTypeMilestone (rid : string) {
+  getTaskTypeMilestone () {
     return `SELECT rid, task_type_name FROM ${MAIN_SCHEMA_NAME}.task_type WHERE task_type_name ILIKE '%Milestone%'`
   },
 };

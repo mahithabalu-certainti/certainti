@@ -268,4 +268,9 @@ routes.post(
   checkUserStatusMiddleware("NA"),
   controller.caseController.listTaskDropdownAccountLevel
 )
+routes.post(
+  "/task/collaborator/delete",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.deleteCollaboratorsTaskLevel
+)
 export default routes;

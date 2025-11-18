@@ -486,7 +486,17 @@ const createTaskSchema = Joi.object({
       is_new_tag: Joi.boolean().required()
     })
   )
-  .optional()
+  .optional(),
+  workflow_connector: Joi.alternatives().try(
+    Joi.object({
+      source_rid: Joi.string().required(),
+      target_rid: Joi.array().items(Joi.string()).min(1).required(),
+      relationship_connector_rid: Joi.string().required(),
+    }).unknown(false),
+
+    Joi.object().empty(),
+    Joi.valid(null)
+  ).optional()
 });
 
 const updateTaskSchema = Joi.object({
@@ -511,7 +521,17 @@ const updateTaskSchema = Joi.object({
       is_new_tag: Joi.boolean().required()
     })
   )
-  .optional()
+  .optional(),
+  workflow_connector: Joi.alternatives().try(
+    Joi.object({
+      source_rid: Joi.string().required(),
+      target_rid: Joi.array().items(Joi.string()).min(1).required(),
+      relationship_connector_rid: Joi.string().required(),
+    }).unknown(false),
+
+    Joi.object().empty(),
+    Joi.valid(null)                    
+  ).optional()
 });
 export {
   createCaseSchema,
