@@ -156,6 +156,8 @@ const NotesForm: React.FC = () => {
     if (isEditView && noteData) {
       const disableLevel =
         noteData?.attachment_level?.toLowerCase() === 'project' ||
+        noteData?.attachment_level?.toLowerCase() === 'project_resource' ||
+        noteData?.attachment_level?.toLowerCase() === 'project_task' ||
         noteData?.attachment_level?.toLowerCase() === 'case';
       setDisableFiscalYear(disableLevel);
     }

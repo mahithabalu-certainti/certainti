@@ -1261,6 +1261,152 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           </div>
         );
       }
+      case 'multiSelect': {
+        const fieldValue =
+          constructFormData[field.name] || field.defaultValue || [];
+
+        return (
+          <div className='w-full'>
+            <Select
+              multiple
+              name={field.name}
+              className={
+                'custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px] ' +
+                (!fieldValue ||
+                (typeof fieldValue === 'string' && fieldValue.length === 0)
+                  ? 'text-[#7D98B6] '
+                  : '') +
+                isError +
+                fieldDisabled
+              }
+              value={fieldValue}
+              onChange={(e) => {
+                const { value } = e.target;
+                handleChange(
+                  typeof value === 'string' ? value.split(',') : value
+                );
+              }}
+              disabled={field.disabled}
+              displayEmpty
+              fullWidth
+              size='small'
+              renderValue={(selected) => {
+                if ((selected as string[]).length === 0 && field.placeholder) {
+                  return (
+                    <span style={{ color: '#7D98B6' }}>
+                      {field.placeholder}
+                    </span>
+                  );
+                }
+                return (selected as string[])
+                  .map(
+                    (val) =>
+                      field.options?.find((opt) => opt.value === val)?.label ??
+                      val
+                  )
+                  .join(', ');
+              }}
+              MenuProps={{
+                PaperProps: {
+                  sx: {
+                    maxWidth: 300,
+                    maxHeight: 300,
+                    marginTop: '4px',
+                    boxShadow:
+                      'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
+                    '& .MuiMenuItem-root': {
+                      fontSize: '13px',
+                      padding: '6px 12px',
+                    },
+                  },
+                },
+              }}
+              sx={{
+                height: '32px',
+                fontSize: '13px',
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  border: '2px solid #60A5FA',
+                },
+                '& .MuiOutlinedInput-root': {
+                  '&.Mui-focused': {
+                    boxShadow: 'none',
+                  },
+                },
+                '.MuiSelect-select': {
+                  padding: '6px 6px',
+                  color:
+                    !fieldValue ||
+                    (typeof fieldValue === 'string' && fieldValue.length === 0)
+                      ? '#7D98B6'
+                      : 'black',
+                },
+                '&.Mui-disabled': {
+                  backgroundColor: '#f3f4f6',
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    border: field.error
+                      ? '1px solid #ef4444 !important'
+                      : '1px solid #CBD6E2 !important',
+                    opacity: 1,
+                  },
+                  '& .MuiSelect-select': {
+                    color: '#7D98B6',
+                    WebkitTextFillColor: '#7D98B6',
+                  },
+                },
+                '& .MuiOutlinedInput-notchedOutline': {
+                  border: field.error
+                    ? '1px solid #ef4444'
+                    : '1px solid #CBD6E2',
+                  borderRadius: '2px',
+                },
+                '&:hover .MuiOutlinedInput-notchedOutline': {
+                  border: field.error
+                    ? '1px solid #ef4444'
+                    : '1px solid #CBD6E2',
+                },
+                '& svg': {
+                  color: '#7D98B6',
+                },
+              }}
+            >
+              {field?.options?.map((option, i) => (
+                <MenuItem
+                  key={i}
+                  value={option.value}
+                  title={option.label}
+                  sx={{
+                    color: '#425A76',
+                    fontSize: '13px',
+                    fontWeight: '500',
+                    '&.Mui-selected': {
+                      backgroundColor: 'transparent',
+                    },
+                  }}
+                >
+                  <Checkbox
+                    size='small'
+                    checked={
+                      Array.isArray(fieldValue)
+                        ? fieldValue.indexOf(option.value) > -1
+                        : String(fieldValue).indexOf(option.value) > -1
+                    }
+                    sx={{
+                      color: '#CBD6E2',
+                      '&.Mui-checked': {
+                        color: '#1755E7',
+                      },
+                      padding: '0px',
+                      mr: 1,
+                    }}
+                  />
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </div>
+        );
+      }
+
       case 'expandselect': {
         const fieldValue =
           (constructFormData[field.name] || field.defaultValue) ?? '';
@@ -1528,9 +1674,15 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         return (
           <div className='flex gap-4'>
             {field?.options?.map((option, i) => (
-              <label key={i} className='m-0'>
+              <label key={i} className='m-0 flex items-center gap-1'>
                 <Checkbox
-                  sx={{ p: 0.75 }}
+                  sx={{
+                    p: 0.75,
+                    color: '#7D98B6', // unchecked color (light blue-gray)
+                    '&.Mui-checked': {
+                      color: '#1976d2', // blue when checked
+                    },
+                  }}
                   size='small'
                   checked={
                     (constructFormData[field.name] as string[])?.includes(

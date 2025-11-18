@@ -15,6 +15,7 @@ import {
   useUpdateProjectResourceStatus,
 } from '../../../../services/project-resources/project-resource-service';
 import {
+  CHECKLIST_CREATE,
   NOTES_CREATE,
   PROJECT_RESOURCE_CREATE,
   PROJECT_RESOURCE_EDIT,
@@ -90,6 +91,7 @@ export const ProjectResources = ({
   setAttachmentParams,
   projectCode,
   accountOrProjectInActive,
+  projectFiscalYear,
 }: {
   projectID?: string;
   accountData?: {
@@ -104,6 +106,7 @@ export const ProjectResources = ({
   >;
   projectCode?: string;
   accountOrProjectInActive?: boolean;
+  projectFiscalYear?: number | string;
 }) => {
   const { errorToast } = useToast();
   const [showFilter, setShowFilter] = useState<boolean>(false);
@@ -403,6 +406,11 @@ export const ProjectResources = ({
     AllPermissions.NOTES_CREATE
   );
 
+  const isChecklistCreateEnable = checkPermission(
+    permission,
+    AllPermissions.CHECKLIST_CREATE
+  );
+
   const handleOpen = () => {
     const newParams = new URLSearchParams(searchParams);
     newParams.set('attachment_entity', 'project_resource');
@@ -429,12 +437,29 @@ export const ProjectResources = ({
   const handleCreateNote = () => {
     const projectResourceId = searchParams.get('pro_res_id');
     const path = generatePath(NOTES_CREATE, {
-      module: 'account',
+      module: 'project',
     });
     const queryParams = new URLSearchParams({
       accountId: accountID,
       entityLevel: 'project_resource',
       entityId: projectResourceId || '',
+      projectFiscalYear: projectFiscalYear?.toString() || '',
+      source: `Project Resource > ${resourceData?.r_number}`,
+      ...(!activeMenuPath ? {} : { activeMenu: activeMenuPath }),
+    });
+    navigate(`${path}?${queryParams.toString()}`);
+  };
+
+  const handleCreateChecklist = () => {
+    const projectResourceId = searchParams.get('pro_res_id');
+    const path = generatePath(CHECKLIST_CREATE, {
+      module: 'project',
+    });
+    const queryParams = new URLSearchParams({
+      accountId: accountID,
+      entityLevel: 'project_resource',
+      entityId: projectResourceId || '',
+      projectFiscalYear: projectFiscalYear?.toString() || '',
       source: `Project Resource > ${resourceData?.r_number}`,
       ...(!activeMenuPath ? {} : { activeMenu: activeMenuPath }),
     });
@@ -461,6 +486,14 @@ export const ProjectResources = ({
       disabled: accountOrProjectInActive,
       sx: { ...BUTTON_STYLES, width: '80px', minWidth: '80px' },
       hide: !viewDetails || !isNoteCreateEnable,
+    },
+    {
+      label: 'Add Checklist',
+      variant: 'outlined' as const,
+      onClick: () => handleCreateChecklist(),
+      disabled: accountOrProjectInActive,
+      sx: { ...BUTTON_STYLES, width: '105px', minWidth: '105px' },
+      hide: !viewDetails || !isChecklistCreateEnable,
     },
     {
       label: viewDetails ? 'Edit' : 'New',
@@ -771,6 +804,7 @@ export const ProjectResources = ({
             accountId={accountID}
             attachID={resID}
             onUploadSuccess={handleDetailReFetch}
+            projectFiscalYear={projectFiscalYear}
           />
         ) : (
           <>

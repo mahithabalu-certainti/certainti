@@ -230,7 +230,7 @@ const SummayListTable: React.FC<FinancialSummaryProps> = ({
           loading={isLoading || !fiscalYear}
           error={isError ? 'Failed to load data' : undefined}
           showEmptyRow={false}
-          loadindRowCount={1}
+          loadingRowCount={1}
         />
       </div>
       <div className={hideDetailedMetric ? 'hidden' : 'block'}>
@@ -253,7 +253,7 @@ const SummayListTable: React.FC<FinancialSummaryProps> = ({
           loading={isLoading || !fiscalYear}
           error={isError ? 'Failed to load data' : undefined}
           showEmptyRow={false}
-          loadindRowCount={5}
+          loadingRowCount={5}
         />
       </div>
       <div className={hideClaimJurisdiction ? 'hidden' : 'block'}>
@@ -276,7 +276,7 @@ const SummayListTable: React.FC<FinancialSummaryProps> = ({
           loading={isLoading || !fiscalYear}
           error={isError ? 'Failed to load data' : undefined}
           showEmptyRow={false}
-          loadindRowCount={3}
+          loadingRowCount={3}
         />
       </div>
       <div className={hideRdPercent ? 'hidden' : 'block'}>
@@ -299,7 +299,7 @@ const SummayListTable: React.FC<FinancialSummaryProps> = ({
           loading={isLoading || !fiscalYear}
           error={isError ? 'Failed to load data' : undefined}
           showEmptyRow={false}
-          loadindRowCount={1}
+          loadingRowCount={1}
           onCellEdit={handleRdPercentCellEdit}
         />
       </div>
@@ -325,7 +325,7 @@ const SummayListTable: React.FC<FinancialSummaryProps> = ({
           loading={isLoading || !fiscalYear}
           error={isError ? 'Failed to load data' : undefined}
           showEmptyRow={false}
-          loadindRowCount={1}
+          loadingRowCount={1}
         />
       </div>
       <div className={hideRdCreditsColumns ? 'hidden' : 'block'}>
@@ -350,7 +350,7 @@ const SummayListTable: React.FC<FinancialSummaryProps> = ({
           loading={isLoading || !fiscalYear}
           error={isError ? 'Failed to load data' : undefined}
           showEmptyRow={false}
-          loadindRowCount={1}
+          loadingRowCount={1}
         />
       </div>
       <div className={`${hideClaimStatus ? 'hidden' : 'block'}`}>

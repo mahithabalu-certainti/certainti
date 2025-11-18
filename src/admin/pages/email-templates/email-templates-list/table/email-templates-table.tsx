@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { FilterCondition } from '../../../../types/manage-user';
 import {
   ActionItem,
-  ListTableColumn,
+  CellEditData,
+  FieldChangeValue,
   ShowHideTableColumn,
 } from '../../../../../components/table/types';
 import { EditIcon } from '../../../../../assets';
@@ -15,6 +16,13 @@ import { EmailTemplateList, EmailTemplateListParams } from '../../../../types';
 import { generatePath, useNavigate } from 'react-router-dom';
 import { EMAIL_TEMPLATES_EDIT } from '../../../../../routes';
 import { useEmailTemplateList } from '../../../../service/email-template/email-template-service';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../../store/store';
+import { AllPermissions } from '../../../../../common-service';
+import { useMutation } from '@apollo/client';
+import { EMAIL_TEMPLATE } from '../../../../../api/graphql/queries/email-template-query';
+import { caseClient } from '../../../../../api/graphql/clients/client';
+import { useToast } from '../../../../../hooks';
 
 interface IEmailTemplateTableProps {
   appliedFilters: Record<string, FilterCondition>;
@@ -25,6 +33,8 @@ interface IEmailTemplateTableProps {
   setColumnAnchorEl: React.Dispatch<
     React.SetStateAction<HTMLButtonElement | null>
   >;
+  statusOptions: { label: string; value: string }[];
+  categoryOptions: { label: string; value: string }[];
 }
 
 export const EmailTemplateTable: React.FC<IEmailTemplateTableProps> = ({
@@ -34,11 +44,18 @@ export const EmailTemplateTable: React.FC<IEmailTemplateTableProps> = ({
   refreshTrigger,
   columnAnchorEl,
   setColumnAnchorEl,
+  statusOptions,
+  // categoryOptions,
 }) => {
+  const { errorToast } = useToast();
   const navigate = useNavigate();
   const [emailTemplateList, setEmailTemplateList] = useState<
     EmailTemplateList[]
   >([]);
+
+  const [updateEmailTemplate] = useMutation(EMAIL_TEMPLATE, {
+    client: caseClient,
+  });
 
   const { data, isLoading, isError } = useEmailTemplateList(
     { ...tableParams, filters: appliedFilters },
@@ -53,33 +70,31 @@ export const EmailTemplateTable: React.FC<IEmailTemplateTableProps> = ({
   }, [data?.emailTemplates]);
 
   // Permission
-  // const { permission } = useSelector((state: RootState) => state.permission);
+  const { permission } = useSelector((state: RootState) => state.permission);
 
-  // const emailTemplateViewEditFields = useMemo(
-  //   () =>
-  //     permission.find(
-  //       (item) => item.name === AllPermissions.EMAIL_TEMPLATES_VIEW_EDIT
-  //     )?.fields ?? [],
-  //   [permission]
-  // );
+  const emailTemplateViewEditFields = useMemo(
+    () =>
+      permission.find(
+        (item) => item.name === AllPermissions.EMAIL_TEMPLATES_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
 
-  // const permissionMap = useMemo(() => {
-  //   const map: Record<string, { read: boolean; edit: boolean }> = {};
-  //   emailTemplateViewEditFields.forEach((item) => {
-  //     map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
-  //   });
-  //   return map;
-  // }, [emailTemplateViewEditFields]);
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    emailTemplateViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [emailTemplateViewEditFields]);
 
-  // const emailTemplateFieldsEditable = useMemo(
-  //   () =>
-  //     permission
-  //       .find(
-  //         (item) => item.name === AllPermissions.EMAIL_TEMPLATES_VIEW_EDIT
-  //       )
-  //       ?.fields?.some((field) => field.edit),
-  //   [permission]
-  // );
+  const emailTemplateFieldsEditable = useMemo(
+    () =>
+      permission
+        .find((item) => item.name === AllPermissions.EMAIL_TEMPLATES_VIEW_EDIT)
+        ?.fields?.some((field) => field.edit),
+    [permission]
+  );
 
   const getRowId = (row: EmailTemplateList) => row.rid;
 
@@ -114,23 +129,14 @@ export const EmailTemplateTable: React.FC<IEmailTemplateTableProps> = ({
     }));
   };
 
-  const templateColumns = useMemo(() => getEmailTemplateColumns(), []);
-
-  const [visibleColumns, setVisibleColumns] = useState<
-    ListTableColumn<EmailTemplateList>[]
-  >(templateColumns.filter((col) => !col.hide));
-
-  useEffect(() => {
-    const updatedColumns = templateColumns.filter((col) => !col.hide);
-    setVisibleColumns(updatedColumns);
-  }, [templateColumns]);
+  const templateColumns = getEmailTemplateColumns(permissionMap, statusOptions);
 
   const actionButtons: ActionItem<EmailTemplateList>[] = [
     {
       label: 'Edit',
       onClick: (row) => handleEdit(row),
       icon: EditIcon,
-      // hide: !emailTemplateFieldsEditable,
+      hide: !emailTemplateFieldsEditable,
       iconStyle: {
         filter:
           'brightness(0) saturate(100%) invert(25%) sepia(16%) saturate(592%) hue-rotate(164deg) brightness(93%) contrast(91%)',
@@ -138,30 +144,80 @@ export const EmailTemplateTable: React.FC<IEmailTemplateTableProps> = ({
     },
   ];
 
+  const isModalOpen = Boolean(columnAnchorEl);
+
+  const handlePopoverClose = () => setColumnAnchorEl(null);
+  const modalId = isModalOpen
+    ? 'case-checklist-list-column-visibility-popover'
+    : undefined;
+
   const RestrictedColumns = [
-    {
-      id: 'r_number',
-      canHide: false,
-      canDrag: false,
-    },
+    { id: 'r_number', canHide: false, canDrag: false },
   ];
 
+  const [columnVisibility, setColumnVisibility] = useState<
+    Record<string, boolean>
+  >(Object.fromEntries(templateColumns.map((col) => [col.id, !col.hide])));
+
+  const [columnOrder, setColumnOrder] = useState(
+    templateColumns.map((col) => col.id)
+  );
+
   const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
-    setVisibleColumns(
-      updatedColumns.filter(
-        (col) => !col.hide
-      ) as ListTableColumn<EmailTemplateList>[]
+    const newVisibility = Object.fromEntries(
+      updatedColumns.map((col) => [col.id, !col.hide])
     );
+    setColumnVisibility(newVisibility);
+    setColumnOrder(updatedColumns.map((col) => col.id));
   };
 
-  const handlePopoverClose = () => {
-    setColumnAnchorEl(null);
-  };
+  const visibleColumns = columnOrder
+    .map((id) => templateColumns.find((col) => col.id === id)!)
+    .filter((col) => columnVisibility[col.id]);
 
-  const isModalOpen = Boolean(columnAnchorEl);
-  const modalId = isModalOpen
-    ? 'email-template-column-visibility-popover'
-    : undefined;
+  const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
+    const previousEmailTemplateList = [...emailTemplateList];
+
+    const matchedEmailTemplate = emailTemplateList.find(
+      (task) => task.rid === rowId
+    );
+    if (!matchedEmailTemplate) {
+      return;
+    }
+
+    const updateData = updates.reduce<Record<string, FieldChangeValue>>(
+      (usr, item) => {
+        const key = item.editId || item.columnId;
+        usr[key] = item.value;
+        return usr;
+      },
+      {
+        email_template_rid: rowId,
+        category_rid: matchedEmailTemplate.category_rid,
+      }
+    );
+
+    try {
+      const res = await updateEmailTemplate({
+        variables: { data: updateData },
+      });
+      const result = res.data?.updateEmailTemplate;
+      if (result?.statusCode === 200 && result.data) {
+        const updatedItem = result.data;
+        setEmailTemplateList((prev) =>
+          prev.map((item) =>
+            item.rid === updatedItem.rid ? { ...item, ...updatedItem } : item
+          )
+        );
+      } else {
+        errorToast(result?.message || 'Failed to update field');
+        setEmailTemplateList(previousEmailTemplateList);
+      }
+    } catch (error) {
+      errorToast((error as Error)?.message || 'Failed to update field');
+      setEmailTemplateList(previousEmailTemplateList);
+    }
+  };
 
   return (
     <>
@@ -187,14 +243,14 @@ export const EmailTemplateTable: React.FC<IEmailTemplateTableProps> = ({
         stickyHeader={true}
         stickyColumnsCount={2}
         // Selection
-        selectable={true}
+        selectable={false}
         // Actions
         actionWidth={60}
         actionDisplayMode='dropdown'
         actionMenuItems={actionButtons}
         // State
         loading={isLoading}
-        error={isError ? 'Failed to load email template' : undefined}
+        error={isError ? 'Failed to load email templates' : undefined}
         // Pagination
         rowsPerPageOptions={[25, 50, 100]}
         rowsPerPage={tableParams.limit}
@@ -206,6 +262,7 @@ export const EmailTemplateTable: React.FC<IEmailTemplateTableProps> = ({
         sortBy={tableParams.sortBy}
         sortOrder={tableParams.sortOrder}
         onSort={handleSort}
+        onCellEdit={handleCellEdit}
       />
     </>
   );
