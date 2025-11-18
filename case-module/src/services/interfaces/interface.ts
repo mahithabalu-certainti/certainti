@@ -182,6 +182,7 @@ taskListForCases(data : any, isExport : boolean) : Promise<{
 }>
 createOrMapTags(data : any) : Promise<{
     statusCode: number;
+    statusMessage: string;
     data: string | TaskTag | null;
 }>
 fetchTagsForDropdown (data : any) : Promise<{
