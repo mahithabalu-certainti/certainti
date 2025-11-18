@@ -6296,7 +6296,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                   success : false,
                   statusCode : HttpStatus.BAD_REQUEST,
                   statusMessage : null
-                }
+              }
             }
           }
         }
