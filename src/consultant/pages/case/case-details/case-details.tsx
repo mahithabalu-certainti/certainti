@@ -16,6 +16,7 @@ import {
   ExportType,
   MenuItem,
   NotesListExportParams,
+  InteractionListExportParams,
 } from '../../../types';
 import {
   AllMenus,
@@ -62,6 +63,7 @@ import { exportAttachmentsData } from '../../../services/attachments/attachments
 import Setting from './settings/setting';
 import { ExportChecklistList } from '../../../services/checklist/checklist-service';
 import { Checklist } from './checklist';
+import { CaseInteractions } from './case-interactions';
 
 export const CaseDetails = () => {
   const navigate = useNavigate();
@@ -147,6 +149,14 @@ export const CaseDetails = () => {
       filters: {},
     });
   const [showModal, setShowModal] = useState(false);
+
+  const [, setInteractionsParams] = useState<InteractionListExportParams>({
+    sortBy: '',
+    sortOrder: 'ASC',
+    filters: {},
+    page: 1,
+    limit: 100,
+  });
 
   useEffect(() => {
     const list = searchParams.get('list');
@@ -383,6 +393,16 @@ export const CaseDetails = () => {
             caseDetails={caseData}
           />
         );
+      case 'interactions':
+        return (
+          <CaseInteractions
+            accountInActive={false}
+            isSendInteraction={false}
+            CaseDetails={caseData || null}
+            loading={false}
+            setInteractionsParams={setInteractionsParams}
+          />
+        );
       default:
         return (
           <div className='flex items-center justify-center h-full'>
@@ -452,8 +472,8 @@ export const CaseDetails = () => {
       },
       {
         name: 'Interactions',
-        key: 'interaction',
-        id: AllModules.PROJECT_INTERACTIONS,
+        key: 'interactions',
+        id: AllModules.INTERACTIONS,
         disabled: false,
         icon: InteractionsIcon,
       },
@@ -569,7 +589,7 @@ export const CaseDetails = () => {
         error={isError}
         className={!isError ? 'max-h-[140px] min-h-[140px]' : ''}
       />
-      <div className='flex flex-1 flex-row w-full'>
+      <div className='flex flex-1 flex-row w-full border-b border-[#CBD6E2]'>
         <div
           className={`flex transition-all ease-in-out ${
             isCollapsed

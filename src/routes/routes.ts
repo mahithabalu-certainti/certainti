@@ -96,7 +96,8 @@ export const INTERACTIONS_EDIT = `${INTERACTIONS_BASE}/edit/:interactionId`;
 export const GLOBAL_INTERACTIONS_CREATE = `${INTERACTIONS}/create`;
 export const GLOBAL_INTERACTIONS_EDIT = `${INTERACTIONS}/edit/:interactionId`;
 export const ACCOUNT_INTERACTIONS_CREATE = `${INTERACTIONS_BASE}/account-create`;
-
+export const CASE_INTERACTIONS_CREATE = `${INTERACTIONS_BASE}/case-create`;
+export const CASE_INTERACTIONS_EDIT = `${INTERACTIONS_BASE}/case/edit/:interactionId`;
 // Notes routes
 export const NOTES = '/notes';
 export const NOTES_BASE = `/:module/notes`;
