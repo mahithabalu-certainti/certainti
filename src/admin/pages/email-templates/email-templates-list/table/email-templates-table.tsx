@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { FilterCondition } from '../../../../types/manage-user';
 import {
   ActionItem,
+  CellEditData,
+  FieldChangeValue,
   ShowHideTableColumn,
 } from '../../../../../components/table/types';
 import { EditIcon } from '../../../../../assets';
@@ -17,6 +19,10 @@ import { useEmailTemplateList } from '../../../../service/email-template/email-t
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
 import { AllPermissions } from '../../../../../common-service';
+import { useMutation } from '@apollo/client';
+import { EMAIL_TEMPLATE } from '../../../../../api/graphql/queries/email-template-query';
+import { caseClient } from '../../../../../api/graphql/clients/client';
+import { useToast } from '../../../../../hooks';
 
 interface IEmailTemplateTableProps {
   appliedFilters: Record<string, FilterCondition>;
@@ -38,13 +44,18 @@ export const EmailTemplateTable: React.FC<IEmailTemplateTableProps> = ({
   refreshTrigger,
   columnAnchorEl,
   setColumnAnchorEl,
-  // statusOptions,
+  statusOptions,
   // categoryOptions,
 }) => {
+  const { errorToast } = useToast();
   const navigate = useNavigate();
   const [emailTemplateList, setEmailTemplateList] = useState<
     EmailTemplateList[]
   >([]);
+
+  const [updateEmailTemplate] = useMutation(EMAIL_TEMPLATE, {
+    client: caseClient,
+  });
 
   const { data, isLoading, isError } = useEmailTemplateList(
     { ...tableParams, filters: appliedFilters },
@@ -118,7 +129,7 @@ export const EmailTemplateTable: React.FC<IEmailTemplateTableProps> = ({
     }));
   };
 
-  const templateColumns = getEmailTemplateColumns(permissionMap);
+  const templateColumns = getEmailTemplateColumns(permissionMap, statusOptions);
 
   const actionButtons: ActionItem<EmailTemplateList>[] = [
     {
@@ -164,6 +175,50 @@ export const EmailTemplateTable: React.FC<IEmailTemplateTableProps> = ({
     .map((id) => templateColumns.find((col) => col.id === id)!)
     .filter((col) => columnVisibility[col.id]);
 
+  const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
+    const previousEmailTemplateList = [...emailTemplateList];
+
+    const matchedEmailTemplate = emailTemplateList.find(
+      (task) => task.rid === rowId
+    );
+    if (!matchedEmailTemplate) {
+      return;
+    }
+
+    const updateData = updates.reduce<Record<string, FieldChangeValue>>(
+      (usr, item) => {
+        const key = item.editId || item.columnId;
+        usr[key] = item.value;
+        return usr;
+      },
+      {
+        email_template_rid: rowId,
+        category_rid: matchedEmailTemplate.category_rid,
+      }
+    );
+
+    try {
+      const res = await updateEmailTemplate({
+        variables: { data: updateData },
+      });
+      const result = res.data?.updateEmailTemplate;
+      if (result?.statusCode === 200 && result.data) {
+        const updatedItem = result.data;
+        setEmailTemplateList((prev) =>
+          prev.map((item) =>
+            item.rid === updatedItem.rid ? { ...item, ...updatedItem } : item
+          )
+        );
+      } else {
+        errorToast(result?.message || 'Failed to update field');
+        setEmailTemplateList(previousEmailTemplateList);
+      }
+    } catch (error) {
+      errorToast((error as Error)?.message || 'Failed to update field');
+      setEmailTemplateList(previousEmailTemplateList);
+    }
+  };
+
   return (
     <>
       <ManageColumnsPopover
@@ -207,6 +262,7 @@ export const EmailTemplateTable: React.FC<IEmailTemplateTableProps> = ({
         sortBy={tableParams.sortBy}
         sortOrder={tableParams.sortOrder}
         onSort={handleSort}
+        onCellEdit={handleCellEdit}
       />
     </>
   );

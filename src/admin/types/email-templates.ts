@@ -15,7 +15,7 @@ export type EmailTemplateList = {
   rid: string;
   r_number: string;
   template_name: string;
-  status: string;
+  status_rid: string;
   status_name: string;
   created_by: string;
   created_user_name: string;

@@ -253,7 +253,7 @@ export const ManageAccountUserGroupTable: React.FC<UserTableProps> = ({
           hoverHighlight={false}
           tableStyle={{
             height: '100%',
-            maxHeight: 'calc(100vh - 180px)',
+            maxHeight: 'calc(100vh - 230px)',
             overflow: 'auto',
           }}
           stickyHeader
