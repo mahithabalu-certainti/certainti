@@ -1322,6 +1322,19 @@ async getWorkFlowConnector () {
       }
     }
   }
+  async listTasksDropdown (data : any) {
+    const {TaskTemplate} = await this.caseModelService.getModels("");
+    const result = await TaskTemplate.findAll({
+      attributes : ['rid', 'task_name'],
+      where : {
+        task_name : {
+          [Op.iLike] : data.search == "" ? '%%' : `%${data.search}%`
+        } 
+      },
+      order : [['task_name', 'ASC']]
+    });
+    return result;
+  }
 }
 
 export { CaseManagementSchemaService };

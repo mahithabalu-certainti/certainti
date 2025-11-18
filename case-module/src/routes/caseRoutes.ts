@@ -258,4 +258,9 @@ routes.post(
   checkUserStatusMiddleware("NA"),
   controller.caseController.linkDeleteTask
 )
+routes.post(
+  "/task/dropdown",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.listTaskDropdownAccountLevel
+)
 export default routes;

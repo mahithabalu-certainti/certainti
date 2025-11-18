@@ -3577,6 +3577,48 @@ async function linkDeleteTask (req : Request, res : Response) {
     );
   }
 }
+
+async function listTaskDropdownAccountLevel (req : Request, res : Response) {
+  const methodName = "listTaskDropdownAccountLevel";
+  try {
+   const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const data = req.body;
+    const result = await caseService.taskListForDropdownAccountLevel(data); 
+    if(result.length > 0) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: STATUS_MESSAGE.caseTaskFetchedSuccess,
+        data : result
+      });
+    } 
+    else {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: STATUS_MESSAGE.dataNotAvailable,
+        data : []
+      });
+    }
+  } catch (error: any) {
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
 export default {
   createCases,
   updateCases,
@@ -3626,5 +3668,6 @@ export default {
   addCollaborators,
   listCollaborators,
   linkTask,
-  linkDeleteTask
+  linkDeleteTask,
+  listTaskDropdownAccountLevel
 };

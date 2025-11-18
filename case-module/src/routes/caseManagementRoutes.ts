@@ -133,6 +133,10 @@ routes.post(
   checkUserStatusMiddleware("NA"),
   controller.caseManagementController.linkAdminDeleteTask
 )
-
+routes.post(
+  "/taskTemplate/dropdown",
+  checkUserStatusMiddleware("NA"),
+  controller.caseManagementController.listAdminTaskDropdown
+)
 
 export default routes;

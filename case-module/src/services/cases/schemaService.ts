@@ -5724,6 +5724,22 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       }
     }
   }
+  async listTasksDropdownForAccountLevel (accountNumber : string, data : any) {
+    const {CaseTask} = await this.caseModelService.getModels(accountNumber);
+    const result = await CaseTask.findAll({
+      attributes : ['rid', 'task_name'],
+      where : {
+        account_rid : data.account_rid,
+        case_rid : data.case_rid,
+        task_name : {
+          [Op.iLike] : data.search == "" ? '%%' : `%${data.search}%`
+        } 
+      },
+      raw : true,
+      order : [['task_name', 'ASC']]
+    });
+    return result;
+  }
 }
 
 // Utility function for optimized column sorting
