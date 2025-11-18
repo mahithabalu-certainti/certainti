@@ -48,6 +48,7 @@ class ProjectGraphQlServices {
             }
         }
             if(data.fiscal_year) {
+                data.global_fiscal_year = data.fiscal_year;
                 let checkDuplicateYear = await orgSequelize.query(rawQueries.checkForDuplicateFiscalYear(schemaName, data))
                 if(checkDuplicateYear[0].length > 0) {
                 return {
