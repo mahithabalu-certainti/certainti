@@ -480,7 +480,9 @@ const createTaskSchema = Joi.object({
   task_description : Joi.string().allow("").optional(),
   task_status_rid : Joi.string().allow("").optional(),
   account_rid : Joi.string().max(255).required(),
-  case_rid : Joi.string().max(255).required()
+  case_rid : Joi.string().max(255).required(),
+  tag_rid : Joi.string().allow("").optional(),
+  is_new_tag : Joi.boolean().optional()
 });
 
 const updateTaskSchema = Joi.object({
@@ -499,7 +501,9 @@ const updateTaskSchema = Joi.object({
   task_description : Joi.string().allow("").optional(),
   task_status_rid : Joi.string().allow("").optional(),
   account_rid : Joi.string().max(255).required(),
-  case_rid : Joi.string().max(255).required()
+  case_rid : Joi.string().max(255).required(),
+  tag_rid : Joi.string().allow("").optional(),
+  is_new_tag : Joi.boolean().optional()
 });
 export {
   createCaseSchema,

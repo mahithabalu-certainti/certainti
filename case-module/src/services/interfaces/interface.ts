@@ -3,7 +3,7 @@ import { Tags } from "../../models/tagsModel";
 import { TaskCollaborators } from "../../models/taskCollaboratorsModel";
 import { TaskComments } from "../../models/taskCommentsModel";
 import { TaskTag } from "../../models/taskTagsModel";
-import { AddCommentsType, AdminTaskTemplatePayloadType, CaseTaskQueryType, CreateCaseTaskType, CreateTaskTemplateType, ICreateCases, ICreateCaseTeam, ICreateChecklist, ICreateChecklistTemplate, ICreateEmailTemplate, MilestoneResponse, UpdateCaseTaskType, UpdateTaskTemplateType, UpdateCommentsType, DeleteCommentsType, CommentsListType, ActivityType, TaskCardDetailsType, priorityTypes, caseTaskStatusTypes, WorkflowConnectorType } from "../../utils/types";
+import { AddCommentsType, AdminTaskTemplatePayloadType, CaseTaskQueryType, CreateCaseTaskType, CreateTaskTemplateType, ICreateCases, ICreateCaseTeam, ICreateChecklist, ICreateChecklistTemplate, ICreateEmailTemplate, MilestoneResponse, UpdateCaseTaskType, UpdateTaskTemplateType, UpdateCommentsType, DeleteCommentsType, CommentsListType, ActivityType, TaskCardDetailsType, priorityTypes, caseTaskStatusTypes, WorkflowConnectorType, CaseTaskWorkFlowCreate, CaseTaskWorkFlowDelete } from "../../utils/types";
 
 export interface ICaseService {
   createCase(
@@ -257,7 +257,14 @@ getReviewProjects(
   errorMessage?: string;
   data?: { reviewProjects: any ,count: number};
 }>;
-
+linkTask (data : CaseTaskWorkFlowCreate) : Promise<{
+    statusCode: number;
+    statusMessage: string;
+}>
+deleteLinkTask (data : CaseTaskWorkFlowDelete) : Promise<{
+    statusCode: number;
+    statusMessage: string;
+} | undefined>
 }
 
 export interface ICaseManagementService {
@@ -380,4 +387,12 @@ getWorkflowConnetorData() : Promise<{
     statusCode: number;
     data: WorkflowConnectorType[];
 }>
+linkTask (data : CaseTaskWorkFlowCreate) : Promise<{
+    statusCode: number;
+    statusMessage: string;
+}>
+deleteLinkTask (data : CaseTaskWorkFlowDelete) : Promise<{
+    statusCode: number;
+    statusMessage: string;
+} | undefined>
 }

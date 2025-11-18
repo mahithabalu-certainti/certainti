@@ -6,7 +6,7 @@ import { allow } from "joi";
 interface CaseTaskAttributes {
     rid : string,
     r_number? : string,
-    eid? : string,
+    eid : string,
     created_by : string,
     modified_by? : string,
     created_datetime : Date,
@@ -31,14 +31,14 @@ interface CaseTaskAttributes {
 }
 
 export interface CaseTaskCreationAttributesModel 
-extends Optional<CaseTaskAttributes, "rid"> {}
+extends Optional<CaseTaskAttributes, "eid"> {}
 
 export class CaseTask 
 extends Model<CaseTaskAttributes, CaseTaskCreationAttributesModel>
 implements CaseTaskAttributes {
     public rid! : string;
     public r_number? : string;
-    public eid? : string
+    public eid! : string
     public created_by! : string
     public modified_by? : string
     public created_datetime! : Date
@@ -65,9 +65,7 @@ implements CaseTaskAttributes {
         return CaseTask.init({
             rid : {
                 type : DataTypes.STRING,
-                defaultValue: Sequelize.literal(
-                `'${ENV_PREFIX}' || gen_random_uuid()`),
-                primaryKey : true
+                allowNull : true
             },
             r_number : {
                 type : DataTypes. STRING(50),
@@ -76,7 +74,10 @@ implements CaseTaskAttributes {
             },
             eid : {
                 type : DataTypes.STRING(50),
-                allowNull : true
+                allowNull : true,
+                defaultValue: Sequelize.literal(
+                `'${ENV_PREFIX}' || gen_random_uuid()`),
+                primaryKey : true
             },
             created_by : {
                 type : DataTypes.STRING(50),
