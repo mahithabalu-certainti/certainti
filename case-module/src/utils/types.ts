@@ -517,6 +517,7 @@ export type AddCommentsType = {
   account_rid : string
   task_rid : string
   comments : string
+  task_type: string
 }
 
 export type UpdateCommentsType = {
@@ -527,6 +528,7 @@ export type UpdateCommentsType = {
   task_rid : string
   rid : string,
   comments : string,
+  task_type: string,
   deleted_file_ids : string[]
 }
 export type DeleteCommentsType = {
@@ -535,7 +537,8 @@ export type DeleteCommentsType = {
   account_rid : string
   task_rid : string
   rid : string
-  deleted_file_ids : string[]
+  deleted_file_ids : string[],
+  task_type: string 
 }
 
 export type CommentsListType = {

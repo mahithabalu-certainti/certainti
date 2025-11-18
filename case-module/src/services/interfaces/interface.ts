@@ -388,6 +388,14 @@ getWorkflowConnetorData() : Promise<{
     statusCode: number;
     data: WorkflowConnectorType[];
 }>
+linkTask (data : CaseTaskWorkFlowCreate) : Promise<{
+    statusCode: number;
+    statusMessage: string;
+}>
+deleteLinkTask (data : CaseTaskWorkFlowDelete) : Promise<{
+    statusCode: number;
+    statusMessage: string;
+} | undefined>
 }
 
 export interface IActivityService {

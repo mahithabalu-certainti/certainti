@@ -4,6 +4,7 @@ import { ENV_PREFIX, MAIN_SCHEMA_NAME } from "../utils/constants";
 
 export interface ActivitiesAttributes {
   rid: string;
+  r_number?: string;
   created_by: string;
   modified_by?: string;
   created_datetime?: Date;
@@ -39,6 +40,7 @@ export interface ActivitiesCreationAttributes extends Optional<ActivitiesAttribu
 
 export class Activities extends Model<ActivitiesAttributes, ActivitiesCreationAttributes> implements ActivitiesAttributes {
   public rid!: string;
+  public r_number?: string;
   public created_by!: string;
   public modified_by?: string;
   public created_datetime?: Date;
@@ -75,6 +77,11 @@ export class Activities extends Model<ActivitiesAttributes, ActivitiesCreationAt
         type: DataTypes.STRING(50),
         defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
         primaryKey: true,
+      },
+      r_number: {
+        type: DataTypes.STRING(50),
+        allowNull: true,
+        unique: true,
       },
       created_by: { type: DataTypes.STRING(50), allowNull: false },
       modified_by: { type: DataTypes.STRING(50), allowNull: true },

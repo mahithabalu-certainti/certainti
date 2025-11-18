@@ -106,7 +106,8 @@ export class CaseModelService {
     const CaseHistorySubmissionModel = CaseHistorySubmission.initialize(sequelize, schemaName);
     const CaseTaskWorkflowConnectorModel = CaseTaskWorkflowConnector.initialize(sequelize, schemaName)
     const WorkflowConnectorModel = WorkflowConnector.initialize(mainDbSequelize, MAIN_SCHEMA_NAME);
-    const WorkflowConnectorMappingModel = WorkflowConnectorMapping.initialize(mainDbSequelize, MAIN_SCHEMA_NAME)    const ActivitiesModel = Activities.initialize(sequelize, schemaName);
+    const WorkflowConnectorMappingModel = WorkflowConnectorMapping.initialize(mainDbSequelize, MAIN_SCHEMA_NAME)   
+    const ActivitiesModel = Activities.initialize(sequelize, schemaName);
     const TaskHistoryModel = TaskHistory.initialize(sequelize, schemaName);
 
     const models = {

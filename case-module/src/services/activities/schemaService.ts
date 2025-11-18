@@ -1002,12 +1002,33 @@ class ActivitySchemaService {
     userId: string,
     eventName: string,
     eventStatus: string,
-    attachmentLevel: string = ""
+    taskRid: string = ""
   ) {
     try {
+      const {Activities} = await this.caseModelService.getModels(
+        accountNumber
+      );
+      const entityresponse:any = await Activities.findOne({
+        where: { rid: taskRid },
+        raw: true,
+      });
+    if(!entityresponse) {
+      logMessage(`No entity found for rid: ${taskRid}`);
+      return;
+    }
+    else {
+      const attachmentLevel = entityresponse?.attachment_level || "case";
+      if(!this.orgDbSequelize) {
+          this.orgDbSequelize = await this.caseModelService.getSequelize();
+        }
+        const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+          /\D/g,
+          ""
+        )}`;
+        let insertQuery = "";
       console.log("In add task timeline...", entity_rid, accountRid, attachmentLevel);
       if (attachmentLevel === "case") {
-        const { CaseTimeline } = await this.caseModelService.getModels(
+        /*const { CaseTimeline } = await this.caseModelService.getModels(
           accountNumber
         );
         console.log("Adding case timeline...", entity_rid, accountRid, userId);
@@ -1021,6 +1042,38 @@ class ActivitySchemaService {
           created_by: userId,
           event_datetime: new Date(),
           created_datetime: new Date(),
+        }); */
+          insertQuery = rawQueries.insertTimeline(schemaName,"case_timeline");
+      }
+      else if(attachmentLevel === "project") {
+         insertQuery = rawQueries.insertTimeline(schemaName,"project_timeline");
+      }
+      else if(attachmentLevel === "project_resource") {
+         insertQuery = rawQueries.insertTimeline(schemaName,"project_resource_timeline");
+      }
+      else if(attachmentLevel === "project_task") {
+         insertQuery = rawQueries.insertTimeline(schemaName,"project_task_timeline");
+      }
+      else if(attachmentLevel === "resource") {
+         insertQuery = rawQueries.insertTimeline(schemaName,"resource_timeline");
+      }
+      else {
+        insertQuery = rawQueries.insertTimeline(schemaName,"account_timeline");
+      }
+
+
+        await this.orgDbSequelize.query(insertQuery, {
+          type: QueryTypes.INSERT,
+          replacements: {
+            event_name: eventName,
+            event_status: eventStatus,
+            event_type: "ui handler",
+            entity_rid: entity_rid || "",
+            description: description,
+            created_by: userId,
+            event_datetime: new Date(),
+            created_datetime: new Date()
+          }
         });
       }
     } catch (err) {
