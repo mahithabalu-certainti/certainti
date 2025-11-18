@@ -322,6 +322,13 @@ class ProjectGraphQlServices {
                 data : finalData
             }
             }
+            else {
+                return {
+                    statusCode : HttpStatus.SUCCESS,
+                    statusMessage : STATUS_MESSAGE.projectUpdateSuccess,
+                    data : null
+                }
+            }
             } else {
             return {
             statusCode : HttpStatus.NOT_FOUND,
