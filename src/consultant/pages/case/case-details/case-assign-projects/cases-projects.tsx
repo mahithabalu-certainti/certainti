@@ -391,12 +391,10 @@ const CasesProjects: React.FC<casesProjectProps> = ({
     searchParams.set('projectID', data.rid);
     navigate({ search: searchParams.toString() }, { replace: true });
   };
-  const caseColumns =
-    tabParam === 'assign_projects'
-      ? isAssignProject
-        ? getAssignedProjectColumns(permissionMap)
-        : getSelectProjectColumns(permissionMap, handleProjectDetails)
-      : getReviewdProjectColumns(permissionMap);
+  const caseColumns = isAssignProject
+    ? getAssignedProjectColumns(permissionMap)
+    : getSelectProjectColumns(permissionMap, handleProjectDetails);
+  const reviewProjectColumns = getReviewdProjectColumns(permissionMap);
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
   >(Object.fromEntries(caseColumns.map((col) => [col.id, !col.hide])));
@@ -416,6 +414,30 @@ const CasesProjects: React.FC<casesProjectProps> = ({
   const visibleColumns = columnOrder
     .map((id) => caseColumns.find((col) => col.id === id)!)
     .filter((col) => columnVisibility[col.id]);
+
+  const [reviewColumnVisibility, setReviewColumnVisibility] = useState<
+    Record<string, boolean>
+  >(Object.fromEntries(reviewProjectColumns.map((col) => [col.id, !col.hide])));
+
+  // State for ordering of review columns
+  const [reviewColumnOrder, setReviewColumnOrder] = useState(
+    reviewProjectColumns.map((col) => col.id)
+  );
+
+  // Handle changes to review columns (from column settings popup)
+  const handleReviewColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
+    const newVisibility = Object.fromEntries(
+      updatedColumns.map((col) => [col.id, !col.hide])
+    );
+
+    setReviewColumnVisibility(newVisibility);
+    setReviewColumnOrder(updatedColumns.map((col) => col.id));
+  };
+
+  // Generate visible review columns
+  const visibleReviewColumns = reviewColumnOrder
+    .map((id) => reviewProjectColumns.find((col) => col.id === id)!)
+    .filter((col) => reviewColumnVisibility[col.id]);
 
   const handlePopoverClose = () => {
     setColumnAnchorEl(null);
@@ -445,8 +467,14 @@ const CasesProjects: React.FC<casesProjectProps> = ({
         open={isModalOpen}
         popoverId={modalId}
         onClose={handlePopoverClose}
-        columns={caseColumns}
-        onColumnsChange={handleColumnsChange}
+        columns={
+          tabParam === 'assign_projects' ? caseColumns : reviewProjectColumns
+        }
+        onColumnsChange={
+          tabParam === 'assign_projects'
+            ? handleColumnsChange
+            : handleReviewColumnsChange
+        }
         columnRestrictions={RestrictedColumns}
       />
       <SectionTabPanel
@@ -544,7 +572,7 @@ const CasesProjects: React.FC<casesProjectProps> = ({
         <div className='border border-[#CBD6E2] border-t-0'>
           <ReviewProjectsList
             accountInActive={accountInActive}
-            visibleColumns={visibleColumns}
+            visibleColumns={visibleReviewColumns}
             searchText={searchText}
             refreshTrigger={refreshTrigger}
             // fiscalYear={fiscalYear}
