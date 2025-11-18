@@ -1274,8 +1274,7 @@ async function exportReviewProjects(req: Request, res: Response): Promise<void> 
                 primary_point_of_contact_email: d.project_point_of_contact_email,
                 total_technical_summaries: d.total_technical_summaries,
 
-
-               
+  
               };
 
               // Build exportRecord using allowed fields and resultMap

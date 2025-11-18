@@ -102,6 +102,31 @@ const listHistoricalSubmissionSchema = Joi.object({
   sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
 });
 
+const listActivityTaskSchema = Joi.object({
+  accountRid: Joi.string().required(),
+  attachmentLevel: Joi.string()
+        .valid('account', 'project', 'project_resource', 'project_task', 'resource', 'resource_cost', 'resource_skill', 'case')
+        .required()
+        .messages({
+            'string.empty': 'Attachment level cannot be empty',
+            'any.required': 'Attachment level is required',
+            'any.only': 'Attachment level must be one of: account, project, project_resource, project_task, resource, resource_cost, resource_skill, case'
+        }),
+    entityId: Joi.string()
+        .required()
+        .messages({
+            'any.required': 'Entity ID is required',
+            'string.pattern.base': 'Entity ID must be a valid UUID'
+        }),
+  page: Joi.string().optional().pattern(/^[0-9]+$/),
+  limit: Joi.string().optional().pattern(/^[0-9]+$/),
+  filters: Joi.string().default("{}"),
+  sortBy: Joi.string().optional(),
+  sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
+});
+
+
+
 const createCaseTeamSchema = Joi.object({
   account_rid: Joi.string().required(),
   case_rid: Joi.string().required(),
@@ -489,6 +514,27 @@ const createTaskSchema = Joi.object({
   .optional()
 });
 
+const createActivitTaskSchema = Joi.object({
+  task_name: Joi.string().max(255).required(),
+  effort_in_days : Joi.number().optional(),
+  reminder_interval: Joi.number().optional(),
+  effective_start_datetime : Joi.string().optional(),
+  effective_end_datetime : Joi.string().optional(),
+  checklist_template_rid : Joi.string().allow("").optional(),
+  status_rid : Joi.string().optional(),
+  priority_rid : Joi.string().allow("").optional(),
+  description : Joi.string().allow("").optional(),
+  task_status_rid : Joi.string().allow("").optional(),
+  account_rid : Joi.string().max(255).required(),
+  attach_to : Joi.string().required(),
+  attachment_level : Joi.string().required(),
+  fiscal_year : Joi.number().optional(),
+  tags: Joi.string().allow("").optional(),
+  assigned_to : Joi.string().allow("").optional(),
+  checklist_rid: Joi.string().allow("").optional(),
+  remainder_interval: Joi.number().optional()
+});
+
 const updateTaskSchema = Joi.object({
   rid : Joi.string().max(255).required(),
   task_name: Joi.string().max(255).required(),
@@ -543,5 +589,7 @@ export {
   listHistoricalSubmissionSchema,
   createHistoricalSubmissionSchema,
   listEmailTemplateSchema,
-  exportEmailTemplateSchema
+  exportEmailTemplateSchema,
+  createActivitTaskSchema,
+  listActivityTaskSchema
 };

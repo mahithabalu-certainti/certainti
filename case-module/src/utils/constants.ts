@@ -1302,6 +1302,8 @@ export const rawQueries = {
     if(newRid === null) newRid = ''
     return `SELECT rid, task_status_name FROM ${MAIN_SCHEMA_NAME}.case_task_status WHERE rid IN ('${oldRid}', '${newRid}')`
   },
+  insertTimeline: (schemaName: string,tableName: string) =>
+    `INSERT INTO "${schemaName}".${tableName} (event_name, event_status, event_type, entity_rid, description, created_by, event_datetime, created_datetime) VALUES (:event_name, :event_status, :event_type, :entity_rid, :description, :created_by, :event_datetime, :created_datetime)`,
   fetchChecklistStatus () {
     return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.checklist_status WHERE status_name ILIKE '%Done%'`
   },

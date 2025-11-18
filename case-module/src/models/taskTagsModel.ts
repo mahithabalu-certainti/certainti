@@ -9,7 +9,7 @@ interface TaskTagAttributes {
     created_datetime : Date
     modified_by? : string
     modified_datetime? : Date
-    case_rid : string
+    case_rid? : string
     account_rid : string
     task_rid : string
     tag_rid : string
@@ -27,7 +27,7 @@ implements TaskTagAttributes {
     public created_datetime! : Date
     public modified_by? : string
     public modified_datetime? : Date
-    public case_rid! : string
+    public case_rid? : string
     public account_rid! : string
     public task_rid! : string
     public tag_rid! : string

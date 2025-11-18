@@ -222,6 +222,41 @@ class CaseSchemaService {
       throw new Error("Error creating case: " + error);
     }
   }
+
+  async checkIsCaseNameUnique(
+      caseReq: any,
+      accountNumber: string
+    ): Promise<boolean> {
+      const { Case } = await this.caseModelService.getModels(accountNumber);
+      const response = await Case.findOne({
+        where: {
+          [Op.and]: [
+            where(
+              fn("LOWER", col("case_name")),
+              Op.eq,
+              caseReq.case_name.toLowerCase()
+            )
+          ]
+        }
+      });
+      return !response;
+    }
+  async  checkisExistingCaseUnique(caseReq: any, accountNumber: string): Promise<boolean> {
+    const { Case } = await this.caseModelService.getModels(accountNumber);
+    const response = await Case.findOne({
+    where: {
+    [Op.and]: [
+      where(
+        fn("LOWER", col("case_name")),
+        Op.eq,
+        caseReq.case_name.toLowerCase()
+      ),
+      { rid: { [Op.ne]: caseReq.case_rid } },
+    ]
+  }
+});
+return !response;
+}
   async addCaseSummary(
     accountNumber: string,
     caseData: ICreateCases,
@@ -941,7 +976,7 @@ class CaseSchemaService {
       ? { [Op.and]: [whereClause, searchCondition] }
       : searchCondition;
   }
-  private buildRawWhereClause(
+   buildRawWhereClause(
       filters: Record<string, any>,
       search?: string
     ): { whereClause: any } {
@@ -3731,7 +3766,7 @@ class CaseSchemaService {
     return [];
   }
 }
-  private async getAttachmentDisplayNames(attachments: any[], schemaNumber: string): Promise<any> {
+   async getAttachmentDisplayNames(attachments: any[], schemaNumber: string): Promise<any> {
   const displayNames: Record<string, string> = {};
   let parentRid : Record<string, string> = {}
   let currencyRid : Record<string, string> = {}
@@ -4587,7 +4622,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     if(createdTaskResult) {
       if(data.tags.length > 0) {
         for(let d of data.tags) {
-        await this.createOrUpdateTags(createdTaskResult.dataValues.rid, data.account_rid, data.case_rid, d.tag_rid, d.is_new_tag, accountNumber, data.created_by, activeStatusRid)
+      await this.createOrUpdateTags(createdTaskResult.dataValues.rid, data.account_rid, data.case_rid, d.tag_rid, d.is_new_tag, accountNumber, data.created_by, activeStatusRid,"case_task")
         }
       }
       await CaseTimeline.create({
@@ -4625,7 +4660,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         statusMessage : STATUS_MESSAGE.caseNotFound
       } 
     } else {
-      const isTaskExists = await this.findTaskById(data.rid, data.account_rid, data.case_rid, accountNumber);
+      const isTaskExists = await this.findTaskById(data.rid, data.account_rid, data.case_rid, accountNumber,"milestone");
       if(!isTaskExists) {
         return {
           statusCode : HttpStatus.BAD_REQUEST,
@@ -4639,9 +4674,9 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             case_rid : data.case_rid
           }, transaction
         });
-        const checkIsDifferentCollaborator = await this.isNewCollaborator(data.modified_by, accountNumber);
+        const checkIsDifferentCollaborator = await this.isNewCollaborator(data.modified_by, accountNumber,"case_task");
         if(!checkIsDifferentCollaborator) {
-          const checkCollaboratorExists = await this.isCollaboratorAlreadyAdded(data.modified_by, data.case_rid, data.account_rid, data.rid, accountNumber);
+          const checkCollaboratorExists = await this.isCollaboratorAlreadyAdded(data.modified_by, data.case_rid, data.account_rid, data.rid, accountNumber,"case_task");
           if(!checkCollaboratorExists) {
             await TaskCollaborators.create({
               case_rid : data.case_rid,
@@ -4656,10 +4691,10 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         if(updatedResult == 1) {
           if(data.tags.length > 0) {
             for(let d of data.tags) {
-            await this.createOrUpdateTags(isTaskExists.rid, data.account_rid, data.case_rid, d.tag_rid, d.is_new_tag, accountNumber, data.modified_by, activeStatusRid)
+            await this.createOrUpdateTags(isTaskExists.rid, data.account_rid, data?.case_rid, d.tag_rid, d.is_new_tag, accountNumber, data.modified_by, activeStatusRid)
             }
           }
-          const fetchUpdatedColumns = getColumnsNamesForTaskUpdate(data, isTaskExists);
+          const fetchUpdatedColumns = getColumnsNamesForTaskUpdate(data, isTaskExists as any);
           if(fetchUpdatedColumns.length > 0) {
             let updatedColumnsStorage : string[] = []
             let oldValue : string;
@@ -4764,9 +4799,23 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     })
     return findSequenceOrder;
   }
-  async findTaskById (rid : string, accountRid : string, caseRid : string , accountNumber : string) {
-    const { CaseTask } = await this.caseModelService.getModels(accountNumber);
-    const checkTaskExists = await CaseTask.findOne({
+  async findTaskById (rid : string, accountRid : string, caseRid : string , accountNumber : string,taskType? : string) {
+    const { CaseTask ,Activities} = await this.caseModelService.getModels(accountNumber);
+    if(taskType === "activity")
+      {
+        const checkTaskExists = await Activities.findOne({
+        where : {
+        rid : rid,
+        account_rid : accountRid,
+        }, 
+        raw : true
+      })
+      if(checkTaskExists) return checkTaskExists
+      else return null
+      }
+    else
+    {
+      const checkTaskExists = await CaseTask.findOne({
       where : {
         rid : rid,
         account_rid : accountRid,
@@ -4776,6 +4825,9 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     })
     if(checkTaskExists) return checkTaskExists
     else return null
+
+    }
+    
   }
   async checkTaskNameExistsForUpdate (data : UpdateCaseTaskType, accountNumber : string) {
     const { CaseTask } = await this.caseModelService.getModels(accountNumber)
@@ -4805,30 +4857,45 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       return []
     }
   }
-  async isNewCollaborator (rid : string, accountNumber : string) {
-    const {CaseTask} = await this.caseModelService.getModels(accountNumber);
-    const result = await CaseTask.findOne({
-      where : {
-        assigned_to : rid
-      }, raw : true
-    });
+  async isNewCollaborator (rid : string, accountNumber : string, taskType : string) {
+    const {CaseTask, Activities} = await this.caseModelService.getModels(accountNumber);
+    let result;
+    if (taskType === 'activity') {
+      result = await Activities.findOne({
+        where: {
+          assigned_to: rid
+        },
+        raw: true
+      });
+    } else {
+      result = await CaseTask.findOne({
+        where: {
+          assigned_to: rid
+        },
+        raw: true
+      });
+    }
     if(result) return result;
     else return null
   }
-  async isCollaboratorAlreadyAdded (assignedTo : string, caseRid : string, accountRid : string, taskRid : string, accountNumber : string) {
+  async isCollaboratorAlreadyAdded (assignedTo : string, caseRid : string, accountRid : string, taskRid : string, accountNumber : string, taskType : string) {
     const {TaskCollaborators} = await this.caseModelService.getModels(accountNumber);
+    const whereClause: any = {
+      assigned_to: assignedTo,
+      account_rid: accountRid,
+      task_rid: taskRid
+    };
+    if (taskType !== 'activity') {
+      whereClause.case_rid = caseRid;
+    }
     const result = await TaskCollaborators.findOne({
-      where : {
-        assigned_to : assignedTo,
-        account_rid : accountRid,
-        case_rid : caseRid,
-        task_rid : taskRid
-      }, raw : true
+      where: whereClause,
+      raw: true
     });
     if(result) return result;
     else return null;
   }
-  async createOrUpdateTags (taskRid : string, accountRid : string, caseRid : string, tagRid : string, isNewTag : boolean, accountNumber : string, userId : string, activeStatusRid : string) {
+  async createOrUpdateTags (taskRid : string, accountRid : string, caseRid: string, tagRid : string, isNewTag : boolean, accountNumber : string, userId : string, activeStatusRid : string, taskType? : string) {
     const {Tags, TaskTag, CaseHistory, CaseTimeline} = await this.caseModelService.getModels(accountNumber)
 
     if(isNewTag) {
@@ -4850,12 +4917,14 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
           const finalResult = await TaskTag.create({
             task_rid : taskRid,
             account_rid : accountRid,
-            case_rid : caseRid,
+            case_rid : caseRid || "",
             tag_rid : result.dataValues.rid,
             created_by : userId,
             created_datetime : new Date()
           })
         if(finalResult) {
+           if(taskType !== "activity")
+        {
           await CaseTimeline.create({
             created_by : userId,
             created_datetime : new Date(),
@@ -4876,6 +4945,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             new_value : result.tag_name,
             task_rid : taskRid
           })
+        }
           return {
             statusCode : HttpStatus.SUCCESS,
             data : finalResult
@@ -4912,7 +4982,9 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
           created_by : userId,
           created_datetime : new Date()
         })
-        await CaseTimeline.create({
+        if(taskType !== "activity")
+        {
+          await CaseTimeline.create({
             created_by : userId,
             created_datetime : new Date(),
             account_rid : accountRid,
@@ -4931,6 +5003,8 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             new_value : tagDetails!.tag_name,
             task_rid : taskRid
           }) 
+        }
+       
         if(finalResult) {
           return {
             statusCode : HttpStatus.SUCCESS,
@@ -4966,83 +5040,106 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
   }
   async isTagAlreadyMapped (accountNumber : string, taskRid : string, accountRid : string, caseRid : string, tagRid : string) {
     const {TaskTag} = await this.caseModelService.getModels(accountNumber);
+    const whereClause: any = {
+      account_rid: accountRid,
+      task_rid: taskRid,
+      tag_rid: tagRid
+    };
+    if (caseRid) {
+      whereClause.case_rid = caseRid;
+    }
     const result = await TaskTag.findOne({
-      where : {
-        account_rid : accountRid,
-        task_rid : taskRid,
-        case_rid : caseRid,
-        tag_rid : tagRid
-      }
+      where: whereClause
     });
     if(result) return result;
     else return null;
   }
   async addComments (data : AddCommentsType, accountNumber : string,  taskNumber : string, files? : Express.Multer.File[]) {
-    const {TaskComments, CommentsAttachments, TaskAttachments, CaseTimeline, TaskCollaborators} = await this.caseModelService.getModels(accountNumber);
-    const createComments = await TaskComments.create({
-      created_by : data.created_by,
-      created_datetime : new Date(),
-      account_rid : data.account_rid,
-      case_rid : data.case_rid,
-      task_rid : data.task_rid,
-      comments : data.comments
-    });
+    const {TaskComments, CommentsAttachments, TaskAttachments, CaseTimeline, TaskCollaborators,Activities,TaskHistory} = await this.caseModelService.getModels(accountNumber);
+    const commentPayload: any = {
+      created_by: data.created_by,
+      created_datetime: new Date(),
+      account_rid: data.account_rid,
+      task_rid: data.task_rid,
+      comments: data.comments
+    };
+    if (data.task_type !== 'activity') {
+      commentPayload.case_rid = data.case_rid;
+    }
+    const createComments = await TaskComments.create(commentPayload);
     if(createComments) {
-      const checkIsDifferentCollaborator = await this.isNewCollaborator(data.created_by, accountNumber);
+      const checkIsDifferentCollaborator = await this.isNewCollaborator(data.created_by, accountNumber,data.task_type);
       if(!checkIsDifferentCollaborator) {
-        const checkCollaboratorExists = await this.isCollaboratorAlreadyAdded(data.created_by, data.case_rid, data.account_rid, data.task_rid, accountNumber);
+        const checkCollaboratorExists = await this.isCollaboratorAlreadyAdded(data.created_by, data.case_rid, data.account_rid, data.task_rid, accountNumber,data.task_type);
         if(!checkCollaboratorExists) {
-          await TaskCollaborators.create({
-            case_rid : data.case_rid,
-            account_rid : data.account_rid,
-            task_rid : data.task_rid,
-            assigned_to : data.created_by,
-            created_by : data.created_by,
-            created_datetime : new Date()
-          });
+          const collaboratorPayload: any = {
+            account_rid: data.account_rid,
+            task_rid: data.task_rid,
+            assigned_to: data.created_by,
+            created_by: data.created_by,
+            created_datetime: new Date()
+          };
+          if (data.task_type !== 'activity') {
+            collaboratorPayload.case_rid = data.case_rid;
+          }
+          await TaskCollaborators.create(collaboratorPayload);
         }
       }
       if(files != undefined) {
         for(let f of files) {
           const uploadFile = await uploadToAzureBlob(f, data.account_rid, taskNumber, "cases");
           if(uploadFile) {
-            await CommentsAttachments.create({
-              created_by : data.created_by,
-              created_datetime : new Date(),
-              case_rid : data.case_rid,
-              account_rid : data.account_rid,
-              task_rid : data.task_rid,
-              comments_rid : createComments.dataValues.rid,
-              browse_file : uploadFile.url,
-              size : uploadFile.size.toString(),
-              format : uploadFile.extension,
-              document_name : uploadFile.name,
-              is_file_deleted : false
-            })
-            await TaskAttachments.create({
-              created_by : data.created_by,
-              created_datetime : new Date(),
-              case_rid : data.case_rid,
-              account_rid : data.account_rid,
-              task_rid : data.task_rid,
-              browse_file : uploadFile.url,
-              size : uploadFile.size.toString(),
-              format : uploadFile.extension,
-              document_name : uploadFile.name,
-              is_file_deleted : false,
-              comments_rid : createComments.dataValues.rid
-            }) 
-            await CaseHistory.create({
-                created_by : data.created_by,
-                created_datetime : new Date(),
-                case_rid : data.case_rid,
-                attribute_name : "comments_attachments",
-                new_value : uploadFile.url,
-                task_rid : data.task_rid
-            })
+            const commentsAttachmentPayload: any = {
+              created_by: data.created_by,
+              created_datetime: new Date(),
+              account_rid: data.account_rid,
+              task_rid: data.task_rid,
+              comments_rid: createComments.dataValues.rid,
+              browse_file: uploadFile.url,
+              size: uploadFile.size.toString(),
+              format: uploadFile.extension,
+              document_name: uploadFile.name,
+              is_file_deleted: false
+            };
+            if (data.task_type !== 'activity') {
+              commentsAttachmentPayload.case_rid = data.case_rid;
+            }
+            await CommentsAttachments.create(commentsAttachmentPayload);
+
+            const taskAttachmentPayload: any = {
+              created_by: data.created_by,
+              created_datetime: new Date(),
+              account_rid: data.account_rid,
+              task_rid: data.task_rid,
+              browse_file: uploadFile.url,
+              size: uploadFile.size.toString(),
+              format: uploadFile.extension,
+              document_name: uploadFile.name,
+              is_file_deleted: false,
+              comments_rid: createComments.dataValues.rid
+            };
+            if (data.task_type !== 'activity') {
+              taskAttachmentPayload.case_rid = data.case_rid;
+            }
+            await TaskAttachments.create(taskAttachmentPayload);
+
+            const caseHistoryPayload: any = {
+              created_by: data.created_by,
+              created_datetime: new Date(),
+              attribute_name: "comments_attachments",
+              new_value: uploadFile.url,
+              task_rid: data.task_rid
+            };
+            if (data.task_type !== 'activity') {
+              caseHistoryPayload.case_rid = data.case_rid;
+               await CaseHistory.create(caseHistoryPayload);
+            }
+            else
+             await TaskHistory.create(caseHistoryPayload);
           }
         }
       }
+      if (data.task_type !== 'activity') {
       await CaseTimeline.create({
         created_by : data.created_by,
         created_datetime : new Date(),
@@ -5054,6 +5151,20 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         event_datetime : new Date(),
         description : `Task Comments : ${createComments.comments}`
       }) 
+    }
+    else
+    {
+      this.addTaskTimeline(
+        accountNumber,
+        createComments.dataValues.rid,
+        data.account_rid,
+        `Task Comments : ${createComments.comments}`,
+        data.created_by,
+       "Task Comments Created",
+        "success",
+       data.task_rid
+      )
+    } 
       return {
         statusCode : HttpStatus.SUCCESS,
         statusMessage : STATUS_MESSAGE.commentsAddedSuccess,
@@ -5069,7 +5180,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
   }
 
   async updateComments (data : UpdateCommentsType, accountNumber : string,  taskNumber : string, files? : Express.Multer.File[]) {
-    const {TaskComments, CommentsAttachments, TaskAttachments, TaskCollaborators, CaseHistory, CaseTimeline} = await this.caseModelService.getModels(accountNumber);
+    const {TaskComments, CommentsAttachments, TaskAttachments, TaskCollaborators, CaseHistory, CaseTimeline,TaskHistory} = await this.caseModelService.getModels(accountNumber);
     const isCommentExists = await TaskComments.findOne({
       where : {
         rid : data.rid
@@ -5082,58 +5193,71 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         }
       });
       if(updateComments === 1) {
-        const checkIsDifferentCollaborator = await this.isNewCollaborator(data.modified_by, accountNumber);
+        const checkIsDifferentCollaborator = await this.isNewCollaborator(data.modified_by, accountNumber,data.task_type);
         if(!checkIsDifferentCollaborator) {
-          const checkCollaboratorExists = await this.isCollaboratorAlreadyAdded(data.modified_by, data.case_rid, data.account_rid, data.task_rid, accountNumber);
+          const checkCollaboratorExists = await this.isCollaboratorAlreadyAdded(data.modified_by, data.case_rid, data.account_rid, data.task_rid, accountNumber,data.task_type);
           if(!checkCollaboratorExists) {
-            await TaskCollaborators.create({
-              case_rid : data.case_rid,
-              account_rid : data.account_rid,
-              task_rid : data.task_rid,
-              assigned_to : data.modified_by,
-              created_by : data.modified_by,
-              created_datetime : new Date()
-            });
+            const collaboratorPayload: any = {
+              account_rid: data.account_rid,
+              task_rid: data.task_rid,
+              assigned_to: data.modified_by,
+              created_by: data.modified_by,
+              created_datetime: new Date()
+            };
+            if (data.task_type !== 'activity') {
+              collaboratorPayload.case_rid = data.case_rid;
+            }
+            await TaskCollaborators.create(collaboratorPayload);
           }
         }
         if(files != undefined) {
           for(let f of files) {
             const uploadFile = await uploadToAzureBlob(f, data.account_rid, taskNumber, "cases");
             if(uploadFile) {
-              await CommentsAttachments.create({
-                created_by : data.modified_by,
-                created_datetime : new Date(),
-                case_rid : data.case_rid,
-                account_rid : data.account_rid,
-                task_rid : data.task_rid,
-                comments_rid : data.rid,
-                browse_file : uploadFile.url,
-                size : uploadFile.size.toString(),
-                format : uploadFile.extension,
-                document_name : uploadFile.name,
-                is_file_deleted : false
-              })
-              await TaskAttachments.create({
-                created_by : data.modified_by,
-                created_datetime : new Date(),
-                case_rid : data.case_rid,
-                account_rid : data.account_rid,
-                task_rid : data.task_rid,
-                browse_file : uploadFile.url,
-                size : uploadFile.size.toString(),
-                format : uploadFile.extension,
-                document_name : uploadFile.name,
-                is_file_deleted : false,
-                comments_rid : data.rid
-              })
-              await CaseHistory.create({
-                created_by : data.modified_by,
-                created_datetime : new Date(),
-                case_rid : data.case_rid,
-                attribute_name : "comments_attachments",
-                new_value : uploadFile.url,
-                task_rid : data.task_rid
-              })
+              const commentsAttachmentPayload: any = {
+                created_by: data.modified_by,
+                created_datetime: new Date(),
+                account_rid: data.account_rid,
+                task_rid: data.task_rid,
+                comments_rid: data.rid,
+                browse_file: uploadFile.url,
+                size: uploadFile.size.toString(),
+                format: uploadFile.extension,
+                document_name: uploadFile.name,
+                is_file_deleted: false
+              };
+              const taskAttachmentPayload: any = {
+                created_by: data.modified_by,
+                created_datetime: new Date(),
+                account_rid: data.account_rid,
+                task_rid: data.task_rid,
+                browse_file: uploadFile.url,
+                size: uploadFile.size.toString(),
+                format: uploadFile.extension,
+                document_name: uploadFile.name,
+                is_file_deleted: false,
+                comments_rid: data.rid
+              };
+              const caseHistoryPayload: any = {
+                created_by: data.modified_by,
+                created_datetime: new Date(),
+                attribute_name: "comments_attachments",
+                new_value: uploadFile.url,
+                task_rid: data.task_rid
+              };
+              if (data.task_type !== 'activity') {
+                commentsAttachmentPayload.case_rid = data.case_rid;
+                taskAttachmentPayload.case_rid = data.case_rid;
+                caseHistoryPayload.case_rid = data.case_rid;
+                await CaseHistory.create(caseHistoryPayload);
+              }
+              else
+              {
+                await TaskHistory.create(caseHistoryPayload)
+              }
+              await CommentsAttachments.create(commentsAttachmentPayload);
+              await TaskAttachments.create(taskAttachmentPayload);
+              
             }
           }
         } else {
@@ -5154,7 +5278,23 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                       is_file_deleted : false,
                     }
                   })
-                  await CaseTimeline.create({
+                  if(data.task_type !== 'activity')
+                    {
+                        await this.addTaskTimeline(
+                          accountNumber,
+                          fetchCommentsAttachmentDetails.rid,
+                          data.account_rid,
+                          `Task Comments : ${fetchCommentsAttachmentDetails.document_name}`,
+                          data.modified_by,
+                         "Task Comments Attachments deleted",
+                          "success",
+                         data.task_rid
+                        )
+   
+                    }
+                  else
+                  {
+                     await CaseTimeline.create({
                     created_by : data.modified_by,
                     created_datetime : new Date(),
                     account_rid : data.account_rid,
@@ -5165,6 +5305,9 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                     event_datetime : new Date(),
                     description : `Task Comments : ${fetchCommentsAttachmentDetails.document_name}`
                   }) 
+
+                  }
+                 
                 }
               }
             }
@@ -5181,20 +5324,32 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
               oldValue = (isCommentExists as any)[c]
               newValue = (data as any)[c]
               columnName = c
-              await CaseHistory.create({
-                created_by : data.modified_by,
-                created_datetime : new Date(),
-                case_rid : data.case_rid,
-                attribute_name : columnName,
-                old_value : oldValue,
-                new_value : newValue,
-                task_rid : data.task_rid
-              })
+              
+              const historyPayload: any = {
+                created_by: data.modified_by,
+                created_datetime: new Date(),
+                attribute_name: columnName,
+                old_value: oldValue,
+                new_value: newValue,
+                task_rid: data.task_rid
+              };
+              if (data.task_type !== 'activity') {
+                historyPayload.case_rid = data.case_rid;
+                 await CaseHistory.create(historyPayload);
+              }
+              else
+              {
+                await TaskHistory.create(historyPayload);
+              }
+             
+              
               updatedColumnsStorage.push(`${oldValue} changed to ${newValue}`);
             }
             if(updatedColumnsStorage.length > 0) {
               combinedColumns = updatedColumnsStorage.join(', ')
             }
+            if(data.task_type !== 'activity')
+            {
             await CaseTimeline.create({
               created_by : data.modified_by,
               created_datetime : new Date(),
@@ -5206,6 +5361,20 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
               event_datetime : new Date(),
               description : `Task Comments Updated : ${combinedColumns}`
             })
+          }
+          else
+          {
+            await this.addTaskTimeline(
+              accountNumber,
+              data.rid,
+              data.account_rid,
+              `Task Comments Updated : ${combinedColumns}`,
+              data.modified_by,
+             "Task Comments Updated",
+              "success",
+             data.task_rid
+            )
+          }
           }
         return {
           statusCode : HttpStatus.SUCCESS,
@@ -5219,6 +5388,93 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       }
     }
   }
+
+    async addTaskTimeline(
+      accountNumber: string,
+      entity_rid: string,
+      accountRid: string,
+      description: string,
+      userId: string,
+      eventName: string,
+      eventStatus: string,
+      taskRid: string = ""
+    ) {
+      try {
+        const {Activities} = await this.caseModelService.getModels(
+          accountNumber
+        );
+        const entityresponse:any = await Activities.findOne({
+          where: { rid: taskRid },
+          raw: true,
+        });
+      if(!entityresponse) {
+        logMessage(`No entity found for rid: ${taskRid}`);
+        return;
+      }
+      else {
+        const attachmentLevel = entityresponse?.attachment_level || "case";
+        if(!this.orgDbSequelize) {
+            this.orgDbSequelize = await this.caseModelService.getSequelize();
+          }
+          const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+            /\D/g,
+            ""
+          )}`;
+          let insertQuery = "";
+        console.log("In add task timeline...", entity_rid, accountRid, attachmentLevel);
+        if (attachmentLevel === "case") {
+          /*const { CaseTimeline } = await this.caseModelService.getModels(
+            accountNumber
+          );
+          console.log("Adding case timeline...", entity_rid, accountRid, userId);
+          await CaseTimeline.create({
+            account_rid: accountRid,
+            event_name: eventName,
+            event_status: eventStatus,
+            event_type: "ui handler",
+            entity_rid: entity_rid || "",
+            description: description,
+            created_by: userId,
+            event_datetime: new Date(),
+            created_datetime: new Date(),
+          }); */
+            insertQuery = rawQueries.insertTimeline(schemaName,"case_timeline");
+        }
+        else if(attachmentLevel === "project") {
+           insertQuery = rawQueries.insertTimeline(schemaName,"project_timeline");
+        }
+        else if(attachmentLevel === "project_resource") {
+           insertQuery = rawQueries.insertTimeline(schemaName,"project_resource_timeline");
+        }
+        else if(attachmentLevel === "project_task") {
+           insertQuery = rawQueries.insertTimeline(schemaName,"project_task_timeline");
+        }
+        else if(attachmentLevel === "resource") {
+           insertQuery = rawQueries.insertTimeline(schemaName,"resource_timeline");
+        }
+        else {
+          insertQuery = rawQueries.insertTimeline(schemaName,"account_timeline");
+        }
+  
+  
+          await this.orgDbSequelize.query(insertQuery, {
+            type: QueryTypes.INSERT,
+            replacements: {
+              event_name: eventName,
+              event_status: eventStatus,
+              event_type: "ui handler",
+              entity_rid: entity_rid || "",
+              description: description,
+              created_by: userId,
+              event_datetime: new Date(),
+              created_datetime: new Date()
+            }
+          });
+        }
+      } catch (err) {
+        logMessage(`Error creating case team timeline: ${err}`);
+      }
+    }
 
   async deleteComments (data : DeleteCommentsType, accountNumber : string) {
       const {TaskComments, CommentsAttachments, TaskAttachments} = await this.caseModelService.getModels(accountNumber);
@@ -5245,7 +5501,9 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                     is_file_deleted : false
                   },
                 })
-                await CaseTimeline.create({
+                if(data.task_type !== 'activity')
+                {
+                  await CaseTimeline.create({
                   created_by : data.modified_by,
                   created_datetime : new Date(),
                   account_rid : data.account_rid,
@@ -5256,6 +5514,22 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                   event_datetime : new Date(),
                   description : `Task Comments : ${fetchCommentsAttachmentDetails.document_name}`
                 })
+
+                }
+                else
+                {
+                  await this.addTaskTimeline(
+                    accountNumber,
+                    fetchCommentsAttachmentDetails.rid,
+                    data.account_rid,
+                    `Task Comments : ${fetchCommentsAttachmentDetails.document_name}`,
+                    data.modified_by,
+                   "Task Comments Attachments deleted",
+                    "success",
+                   data.task_rid
+                  )
+                }
+                
               } 
             }
           }
@@ -5306,9 +5580,9 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
           })
         const deleteComments = await TaskComments.destroy({ where : {rid : data.rid}});
         if(deleteComments === 1) {
-        const checkIsDifferentCollaborator = await this.isNewCollaborator(data.modified_by, accountNumber);
+        const checkIsDifferentCollaborator = await this.isNewCollaborator(data.modified_by, accountNumber,data.task_type);
         if(!checkIsDifferentCollaborator) {
-          const checkCollaboratorExists = await this.isCollaboratorAlreadyAdded(data.modified_by, data.case_rid, data.account_rid, data.task_rid, accountNumber);
+          const checkCollaboratorExists = await this.isCollaboratorAlreadyAdded(data.modified_by, data.case_rid, data.account_rid, data.task_rid, accountNumber,data.task_type);
           if(!checkCollaboratorExists) {
             await TaskCollaborators.create({
               case_rid : data.case_rid,
@@ -5342,26 +5616,32 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
   }
 
   async addAttachmentForTask (data : any, accountNumber : string, files : Express.Multer.File[], userId : string) {
-    const {TaskAttachments} = await this.caseModelService.getModels(accountNumber)
+    const {TaskAttachments,TaskHistory} = await this.caseModelService.getModels(accountNumber)
     const findTaskDetails = await this.findTaskById(data.task_rid, data.account_rid, data.case_rid, accountNumber);
     if(files != undefined) {
       if(Array.isArray(files)) {
         for(let f of files) {
           const uploadFile = await uploadToAzureBlob(f, data.account_rid, findTaskDetails?.r_number!, "cases");
           if(uploadFile) {
-            const result = await TaskAttachments.create({
-              case_rid : data.case_rid,
-              account_rid : data.account_rid,
-              task_rid : data.task_rid,
-              browse_file : uploadFile.url,
-              document_name : uploadFile.name,
-              size : uploadFile.size.toString(),
-              format : uploadFile.extension,
-              is_file_deleted : false,
-              created_by : userId,
-              created_datetime : new Date()
-            })
-            await CaseTimeline.create({
+            const taskAttachmentPayload: any = {
+              account_rid: data.account_rid,
+              task_rid: data.task_rid,
+              browse_file: uploadFile.url,
+              document_name: uploadFile.name,
+              size: uploadFile.size.toString(),
+              format: uploadFile.extension,
+              is_file_deleted: false,
+              created_by: userId,
+              created_datetime: new Date()
+            };
+            if (data.task_type !== 'activity') {
+              taskAttachmentPayload.case_rid = data.case_rid;
+            }
+            // Only add case_rid if not activity
+            const result = await TaskAttachments.create(taskAttachmentPayload);
+            if(data.task_type !== 'activity')
+            {
+              await CaseTimeline.create({
               created_by : userId,
               created_datetime : new Date(),
               account_rid : data.account_rid,
@@ -5371,8 +5651,8 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
               event_status : "success",
               event_datetime : new Date(),
               description : `Task Attachments Added : ${uploadFile.url}`
-          })
-          await CaseHistory.create({
+              })
+              await CaseHistory.create({
               created_by : userId,
               created_datetime : new Date(),
               case_rid : data.case_rid,
@@ -5380,6 +5660,27 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
               new_value : uploadFile.url,
               task_rid : data.task_rid
             })
+            }
+            else
+            {
+              await this.addTaskTimeline(
+                accountNumber,
+                result.dataValues.rid,
+                data.account_rid,
+                `Task Attachments Added : ${uploadFile.url}`,
+                userId,
+               `Attachment added for task ${findTaskDetails?.task_name}`,
+                "success",
+               data.task_rid
+              )
+              await TaskHistory.create({
+                created_by : userId,
+                created_datetime : new Date(),
+                attribute_name : "task_attachments",
+                new_value : uploadFile.url,
+                task_rid : data.task_rid
+              })
+            }
           }
         }
         return {
@@ -5406,7 +5707,9 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       await deleteFromAzureBlob(data.url);
       const [updateFile] = await TaskAttachments.update({is_file_deleted : true, modified_by : userId, modified_datetime : new Date()}, {where : {rid : data.rid}});
       if(updateFile === 1) {
-        await CaseTimeline.create({
+        if(data.task_type !== 'activity')
+        {
+          await CaseTimeline.create({
           created_by : userId,
           created_datetime : new Date(),
           account_rid : data.account_rid,
@@ -5416,7 +5719,22 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
           event_status : "success",
           event_datetime : new Date(),
           description : `Task Attachments Deleted : ${checkIsFileExists.document_name}`
-      })
+        })
+        }
+        else
+        {
+          await this.addTaskTimeline(
+            accountNumber,
+            checkIsFileExists.rid,
+            data.account_rid,
+            `Task Attachments Deleted : ${checkIsFileExists.document_name}`,
+            userId,
+           `Attachment deleted for task ${findTaskDetails?.task_name}`,
+            "success",
+           data.task_rid
+          )
+        }
+        
         return {
           statusCode : HttpStatus.SUCCESS,
           statusMessage : STATUS_MESSAGE.attachmentDeletedSuccess
@@ -5488,18 +5806,21 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
   }
   async addCollaborators (data : any,accountNumber : string) {
     const {TaskCollaborators} = await this.caseModelService.getModels(accountNumber);
-    const checkIsDifferentCollaborator = await this.isNewCollaborator(data.user_rid, accountNumber);
+    const checkIsDifferentCollaborator = await this.isNewCollaborator(data.user_rid, accountNumber,data.task_type);
     if(!checkIsDifferentCollaborator) {
-      const checkCollaboratorExists = await this.isCollaboratorAlreadyAdded(data.user_rid, data.case_rid, data.account_rid, data.rid, accountNumber);
+      const checkCollaboratorExists = await this.isCollaboratorAlreadyAdded(data.user_rid, data.case_rid, data.account_rid, data.rid, accountNumber,data.task_type);
       if(!checkCollaboratorExists) {
-        const result = await TaskCollaborators.create({
-          case_rid : data.case_rid,
-          account_rid : data.account_rid,
-          task_rid : data.rid,
-          assigned_to : data.user_rid,
-          created_by : data.created_by,
-          created_datetime : new Date()
-        });
+        const collaboratorPayload: any = {
+          account_rid: data.account_rid,
+          task_rid: data.rid,
+          assigned_to: data.user_rid,
+          created_by: data.created_by,
+          created_datetime: new Date()
+        };
+        if (data.task_type !== 'activity') {
+          collaboratorPayload.case_rid = data.case_rid;
+        }
+        const result = await TaskCollaborators.create(collaboratorPayload);
         if(result) {
           return {
             statusCode : HttpStatus.SUCCESS,
