@@ -222,6 +222,41 @@ class CaseSchemaService {
       throw new Error("Error creating case: " + error);
     }
   }
+
+  async checkIsCaseNameUnique(
+      caseReq: any,
+      accountNumber: string
+    ): Promise<boolean> {
+      const { Case } = await this.caseModelService.getModels(accountNumber);
+      const response = await Case.findOne({
+        where: {
+          [Op.and]: [
+            where(
+              fn("LOWER", col("case_name")),
+              Op.eq,
+              caseReq.case_name.toLowerCase()
+            )
+          ]
+        }
+      });
+      return !response;
+    }
+  async  checkisExistingCaseUnique(caseReq: any, accountNumber: string): Promise<boolean> {
+    const { Case } = await this.caseModelService.getModels(accountNumber);
+    const response = await Case.findOne({
+    where: {
+    [Op.and]: [
+      where(
+        fn("LOWER", col("case_name")),
+        Op.eq,
+        caseReq.case_name.toLowerCase()
+      ),
+      { rid: { [Op.ne]: caseReq.case_rid } },
+    ]
+  }
+});
+return !response;
+}
   async addCaseSummary(
     accountNumber: string,
     caseData: ICreateCases,

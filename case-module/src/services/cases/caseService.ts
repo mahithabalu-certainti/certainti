@@ -121,6 +121,14 @@ export class CaseService {
       if (!accountNumber) {
         throw new Error("Invalid account ID");
       }
+       const isUnique = await this.caseSchemaService.checkIsCaseNameUnique(caseRequest,accountNumber);
+      if (!isUnique) {
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: HttpStatus.BAD_REQUEST_MESSAGE,
+          errorMessage: `A case with the name "${caseRequest.case_name}" already exists. Please choose a different name.`,
+        };
+      }
 
       const { country_rid } =
         await this.caseSchemaService.fetchCountryByAccountId(
@@ -139,6 +147,7 @@ export class CaseService {
       }
       const { statusRid } = await this.getCaseStatusForCreate();
       caseRequest.status_rid = statusRid || "";
+
       const response = await this.caseSchemaService.createCases(
         accountNumber,
         caseRequest,
@@ -217,6 +226,14 @@ export class CaseService {
       if (!accountNumber) {
         throw new Error("Invalid account ID");
       }
+      const isUnique = await this.caseSchemaService.checkisExistingCaseUnique(caseRequest,accountNumber);
+    if (!isUnique) {
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: HttpStatus.BAD_REQUEST_MESSAGE,
+        errorMessage: `A case with the name "${caseRequest.case_name}" and category already exists. Please choose a different name or category.`,
+      };
+    }
 
       const response = await this.caseSchemaService.updateCases(
         accountNumber,
