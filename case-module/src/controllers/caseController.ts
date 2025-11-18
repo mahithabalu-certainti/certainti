@@ -3664,6 +3664,47 @@ async function deleteTagsTaskLevel (req : Request, res : Response) {
     );
   }
 }
+
+async function deleteCollaboratorsTaskLevel (req : Request, res : Response) {
+  const methodName = "deleteCollaboratorsTaskLevel";
+  try {
+   const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const data = req.body;
+    const result = await caseService.deleteCollaborators(data); 
+    if(result?.statusCode === HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: result.statusMessage
+      });
+    }
+    else {
+      return res.status(HttpStatus.FAILED).json({
+        statusCode: HttpStatus.FAILED,
+        statusCodeValue: HttpStatus.FAILED_MESSAGE,
+        statusMessage: result?.statusMessage
+      });
+    }
+  } catch (error: any) {
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+
 export default {
   createCases,
   updateCases,
@@ -3715,5 +3756,6 @@ export default {
   linkTask,
   linkDeleteTask,
   listTaskDropdownAccountLevel,
-  deleteTagsTaskLevel
+  deleteTagsTaskLevel,
+  deleteCollaboratorsTaskLevel
 };

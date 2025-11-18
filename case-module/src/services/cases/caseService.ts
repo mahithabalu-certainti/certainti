@@ -1852,7 +1852,9 @@ export class CaseService {
     try {
       const fetchParentNumber : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
       if(fetchParentNumber[0].length > 0) {
-      const isTaskNameExists = await this.caseManagementService.checkTaskExists(data, data.task_type_rid);
+      const getTaskType : any = await mainDb.query(rawQueries.getTaskTypeMilestone());  
+      data.task_type_rid = getTaskType[0][0].rid 
+      const isTaskNameExists = await this.caseSchemaService.checkTaskExistsForUserLevelTask(data, data.task_type_rid, fetchParentNumber[0][0].r_number);
       if(isTaskNameExists) {
         return {
           statusCode : HttpStatus.BAD_REQUEST,
@@ -1864,9 +1866,7 @@ export class CaseService {
         if(isCaseExists) {
         const [getTaskStatus] = await mainDb.query<TaskTypeResponse>(rawQueries.getSpecificTaskStatus(), {type : QueryTypes.SELECT})
         data.task_status_rid = getTaskStatus?.rid! || ''
-        const getActiveStatusId : any = await mainDb.query(rawQueries.getActiveStatusId());
-        const getTaskType : any = await mainDb.query(rawQueries.getTaskTypeMilestone(data.task_type_rid));   
-        data.task_type_rid = getTaskType[0][0].rid    
+        const getActiveStatusId : any = await mainDb.query(rawQueries.getActiveStatusId());   
         const result = await this.caseSchemaService.createUserLevelTask(data, fetchParentNumber[0][0].r_number, transaction, getActiveStatusId[0][0].rid);
         if(result.statusCode === HttpStatus.SUCCESS) {
           await transaction.commit()
@@ -2072,18 +2072,36 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
 
     async fetchTagsForDropdown (data : any) {
       const mainDb = await this.getMainDb();
+      let mappedTagsResult : any[] = []
       const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
-      const mappedTagsResult = await this.caseSchemaService.fetchMappedTags(fetchParent[0][0].r_number, data.case_rid, data.account_rid, data.task_rid)
-      const result = await this.caseSchemaService.fetchAllTags(mappedTagsResult);
-      if(result.length > 0) {
-        return {
-          statusCode : HttpStatus.SUCCESS,
-          data : result
+      if(data.action === "create") {
+        mappedTagsResult = []
+        const result = await this.caseSchemaService.fetchAllTags(mappedTagsResult);
+        if(result.length > 0) {
+          return {
+            statusCode : HttpStatus.SUCCESS,
+            data : result
+          }
+        } else {
+          return {
+            statusCode : HttpStatus.NOT_FOUND,
+            data : []
+          }
         }
-      } else {
-        return {
-          statusCode : HttpStatus.NOT_FOUND,
-          data : []
+      }
+      else {
+        mappedTagsResult = await this.caseSchemaService.fetchMappedTags(fetchParent[0][0].r_number, data.case_rid, data.account_rid, data.task_rid)
+        const result = await this.caseSchemaService.fetchAllTags(mappedTagsResult);
+        if(result.length > 0) {
+          return {
+            statusCode : HttpStatus.SUCCESS,
+            data : result
+          }
+        } else {
+          return {
+            statusCode : HttpStatus.NOT_FOUND,
+            data : []
+          }
         }
       }
     }
@@ -2575,6 +2593,12 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
     const mainDb = await this.getMainDb();
     const accountNumber : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
     const result = await this.caseSchemaService.deleteTags(accountNumber[0][0].r_number, data.case_rid, data.account_rid, data.task_rid, data.tag_rid);
+    return result;
+  }
+  async deleteCollaborators (data : any) {
+    const mainDb = await this.getMainDb();
+    const accountNumber : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
+    const result = await this.caseSchemaService.deleteCollaborators(accountNumber[0][0].r_number, data);
     return result;
   }
 }

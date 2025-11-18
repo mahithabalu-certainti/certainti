@@ -758,7 +758,15 @@ export const fetchAdminTemplates = (page : number, limit : number, sort : string
     t.effective_end_datetime, r.role_name, t.case_team_member_role_rid,
     c.checklist_name, t.checklist_template_rid, p.priority_name, t.priority_rid,
     s.status_name, t.status_rid, m.milestone_name, t.milestone_template_rid,
-    t.task_type_rid, tt.task_type_name, t.task_description
+    t.task_type_rid, tt.task_type_name, t.task_description,
+    array_agg(jsonb_build_object(
+    'source_rid', w.source_rid,
+    'source_name', t.task_name,
+    'target_rid', w.target_rid,
+    'target_name', ttt.task_name,
+    'relationship_connector_rid', w.relationship_connector_rid,
+    'relationship_type_name', wc.relationship_type
+    )) AS workflow_connector
     FROM
     ${MAIN_SCHEMA_NAME}.task_template t
     LEFT JOIN ${MAIN_SCHEMA_NAME}.case_priority p ON p.rid = t.priority_rid
@@ -769,6 +777,9 @@ export const fetchAdminTemplates = (page : number, limit : number, sort : string
     LEFT JOIN ${MAIN_SCHEMA_NAME}.status s ON s.rid = t.status_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.case_team_role r ON r.rid = t.case_team_member_role_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.task_type tt ON tt.rid = t.task_type_rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.workflow_connector_mapping w ON w.source_rid = t.rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.task_template ttt ON ttt.rid = w.target_rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.workflow_connector wc ON wc.rid = w.relationship_connector_rid
     WHERE
     (t.task_name ILIKE '${searchValue}' OR t.r_number ILIKE '${searchValue}' OR 
     u.first_name ILIKE '${searchValue}' OR u.last_name ILIKE '${searchValue}' OR CONCAT(u.first_name,' ', u.last_name) ILIKE '${searchValue}' OR
@@ -778,6 +789,15 @@ export const fetchAdminTemplates = (page : number, limit : number, sort : string
     ${graphqlConditions}
     ${andConditions}
     ${finalContainer}
+    GROUP BY
+    t.rid, t.r_number, u.first_name, u.last_name,
+    uu.first_name,uu.last_name, 
+    t.created_datetime, t.modified_datetime, t.task_name, t.sequence_no,
+    t.effort_in_days, t.reminder_interval, t.effective_start_datetime,
+    t.effective_end_datetime, r.role_name, t.case_team_member_role_rid,
+    c.checklist_name, t.checklist_template_rid, p.priority_name, t.priority_rid,
+    s.status_name, t.status_rid, m.milestone_name, t.milestone_template_rid,
+    t.task_type_rid, tt.task_type_name, t.task_description
     ${finalSortOrder}
   ),
   fetch_total_result AS (
