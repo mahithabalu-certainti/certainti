@@ -27,6 +27,25 @@ export enum StatusTypeEnum {
   inqueue = 'in-queue',
 }
 
+export interface globalFiltersType {
+  [key: string]: string[];
+}
+
+export interface InteractionListExportParams {
+  sortBy?: string;
+  sortOrder?: 'ASC' | 'DESC';
+  filters?: object;
+  fiscalYear?: number | string;
+  globalFilters?: globalFiltersType;
+  timezone?: string;
+  attachmentLevel?: string;
+  entityId?: string;
+  accountRid?: string;
+  page?: number;
+  limit?: number;
+  search?: string;
+}
+
 export interface InteractionFormTableColumn {
   name: string;
   label: string;
@@ -210,6 +229,7 @@ export interface InteractionListURLParams {
   attachment_count?: number | string | null;
   search?: string;
   reminder_specific_list?: boolean;
+  case_rid?: string;
 }
 
 export interface InteractionTemplatePayload {
@@ -325,6 +345,21 @@ export interface InteractionDetailsResponse {
     interactionDetails: InteractionDetails;
   };
 }
+export interface InteractionProjectKeyContacts {
+  project_rid: string;
+  project_code: string;
+  project_name: string | null;
+  key_contact_name: string;
+  key_contact_email: string;
+}
+export interface InteractionKeyContactResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: {
+    keyContacts: InteractionProjectKeyContacts[];
+  };
+}
 
 export interface InteractionHistoryResponse {
   interaction_response_rid: string;
@@ -335,7 +370,7 @@ export interface InteractionHistoryResponse {
   response: string;
   response_on: string;
   attachments: Attachment[];
-  is_mandatory?: boolean
+  is_mandatory?: boolean;
 }
 export interface InteractionDetailsHistoryResponse {
   statusCode: number;
