@@ -662,4 +662,6 @@ export interface IActivityTask {
   status_rid?: string;
   remainder_interval?: number;
   account_rid?: string; 
+  checklist_rid?: string;
+  tags : tagTypes[]
 }

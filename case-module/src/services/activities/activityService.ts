@@ -3,7 +3,6 @@ import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import { Logger } from "winston";
 import { CaseModelService } from "../caseModelsService";
-import CaseSchemaService from "./schemaService";
 import {
   AccountType,
   ActivityType,
@@ -56,21 +55,22 @@ import {
   taskCardDetails,
 } from "../../utils/rawQueries";
 import ActivitySchemaService from "./schemaService";
+import CaseSchemaService from "../cases/schemaService";
 export class ActivityService {
-  private caseSchemaService: CaseSchemaService;
   private caseModelService: CaseModelService; // Assuming this is defined somewhere in your code
   private caseManagementService: CaseManagementSchemaService;
   private activitySchemaService: ActivitySchemaService;
+  private caseSchemaService: CaseSchemaService;
   private logger: Logger;
   private orgDbSequelize: Sequelize | null = null;
   private mainDbSequelize: Sequelize | null = null;
 
   constructor(logger: Logger) {
     this.logger = logger;
-    this.caseSchemaService = new CaseSchemaService();
     this.caseModelService = new CaseModelService(); // Initialize your model service here
     this.caseManagementService = new CaseManagementSchemaService();
     this.activitySchemaService = new ActivitySchemaService();
+    this.caseSchemaService = new CaseSchemaService();
   }
 
   private async getMainDb() {
@@ -96,6 +96,9 @@ export class ActivityService {
     errorMessage?: string;
     data?: { cases: any };
   }> {
+    if(!this.mainDbSequelize){
+      this.mainDbSequelize = await this.getMainDb();
+    }
     const dbInit = await this.caseModelService.getSequelize();
     const transaction = await dbInit.transaction();
     try {
@@ -108,12 +111,47 @@ export class ActivityService {
       if (!accountNumber) {
         throw new Error("Invalid account ID");
       }
+      const isUnique = await this.activitySchemaService.checkIsActivityTaskUnique(taskRequest,accountNumber);
+      if (!isUnique) {
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: HttpStatus.BAD_REQUEST_MESSAGE,
+          errorMessage: `An Task with the name "${taskRequest.task_name}" already exists. Please choose a different name.`,
+        };
+      }
 
-      const response = await this.activitySchemaService.createActivityTask(
+      const taskResponse = await this.activitySchemaService.createActivityTask(
         accountNumber,
         taskRequest,
         transaction
       );
+      
+      if(taskRequest?.checklist_rid) 
+      {
+        const response  = await this.caseManagementService.fetchChecklistTemplateDetailsById(taskRequest.checklist_rid);
+        response.checklist_items.map((item:any) => item.action_type  = 'add');
+        let caseRequest = {
+          account_rid: taskRequest.account_rid!,
+          checklist_name: response.checklist_name,
+          checklist_description: response.description,  
+          checklist_items: response.checklist_items,
+          attach_to:taskResponse.rid,
+          attachment_level: 'task',
+          created_by: userId,
+          created_datetime: new Date(),
+          fiscal_year: taskRequest.fiscal_year,
+          checklist_rid: taskRequest.checklist_rid
+        };
+
+        const checklistResponse = await this.caseSchemaService.createCheckList(accountNumber, caseRequest, transaction);
+        const checklistItems = await this.caseSchemaService.manageCheckListItems(accountNumber,caseRequest,checklistResponse.rid, transaction);
+        }
+        if(taskRequest?.tags?.length > 0) {
+           const [activeStatusRid] : any[] = await this.mainDbSequelize.query(rawQueries.getActiveStatusId());
+        for(let d of taskRequest.tags) {
+              await this.caseSchemaService.createOrUpdateTags(taskResponse.rid, taskRequest.account_rid!,"", d.tag_rid, d.is_new_tag, accountNumber, taskRequest.created_by, activeStatusRid,"activity")
+        }
+      }
      
       /*  if (response) {
           logMessage(`Case created with RID: ${response.rid}`);
@@ -131,11 +169,10 @@ export class ActivityService {
         statusCode: HttpStatus.SUCCESS,
         message: STATUS_MESSAGE.caseCreated,
         data: {
-          cases: response,
+          cases: taskResponse,
         },
       };
     } catch (err) {
-      console.log(err);
       logMessage(`Error creating activity task, ${err}`);
       await transaction.rollback();
       return {
@@ -165,6 +202,15 @@ export class ActivityService {
 
       if (!accountNumber) {
         throw new Error("Invalid account ID");
+      }
+
+      const isUnique = await this.activitySchemaService.checkIsExistingActivityTaskUnique(taskRequest, accountNumber);
+      if (!isUnique) {
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: HttpStatus.BAD_REQUEST_MESSAGE,
+          errorMessage: `A Task with the name "${taskRequest.task_name}" already exists. Please choose a different name.`,
+        };
       }
 
       const response = await this.activitySchemaService.updateActivityTask(
@@ -236,7 +282,7 @@ export class ActivityService {
         };
       }
       const checklistResponse: any =
-        await this.caseSchemaService.fetchActivities(
+        await this.activitySchemaService.fetchActivities(
           accountNumber,
           fiscalYear,
           attachmentLevel,

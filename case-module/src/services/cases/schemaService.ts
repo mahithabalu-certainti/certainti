@@ -85,6 +85,7 @@ import { CommentsAttachments, setupCommentsAttachmentsSequence } from "../../mod
 import { setupTaskAttachmentsSequence, TaskAttachments } from "../../models/taskAttachmentModel";
 import { CaseTaskWorkflowConnector, setupCaseTaskWorkflowConnectorSequence } from "../../models/caseTaskWorkflowConnectorModel";
 import {v4 as uuidv4} from 'uuid'
+import { TaskHistory } from "../../models/taskHistory";
 
 class CaseSchemaService {
   private orgDbSequelize: Sequelize | null = null;
@@ -4914,14 +4915,17 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
           status_rid : activeStatusRid
         })
         if(result) {
-          const finalResult = await TaskTag.create({
-            task_rid : taskRid,
-            account_rid : accountRid,
-            case_rid : caseRid || "",
-            tag_rid : result.dataValues.rid,
-            created_by : userId,
-            created_datetime : new Date()
-          })
+          const tagPayload: any = {
+            task_rid: taskRid,
+            account_rid: accountRid,
+            tag_rid: result.dataValues.rid,
+            created_by: userId,
+            created_datetime: new Date()
+          };
+          if (taskType !== "activity") {
+            tagPayload.case_rid = caseRid || "";
+          }
+          const finalResult = await TaskTag.create(tagPayload);
         if(finalResult) {
            if(taskType !== "activity")
         {
@@ -4944,6 +4948,17 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             attribute_name : "tag_rid",
             new_value : result.tag_name,
             task_rid : taskRid
+          })
+        }
+        else
+        {
+          await this.addTaskTimeline(accountNumber, taskRid, accountRid, `Tag added for task : ${result.tag_name}`, userId, "Tag added for Task", "success", taskRid);
+          await TaskHistory.create({
+            task_rid : taskRid,
+            created_by : userId,
+            created_datetime : new Date(),
+            attribute_name : "tag_rid",
+            new_value : result.tag_name
           })
         }
           return {
