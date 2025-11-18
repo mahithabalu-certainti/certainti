@@ -4571,8 +4571,6 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       created_datetime : new Date(),
       task_name : data.task_name,
       sequence_no : sequenceNo,
-      effort_in_days : data.effort_in_days,
-      reminder_interval : data.reminder_interval,
       effective_start_datetime : data.effective_start_datetime,
       effective_end_datetime : data.effective_end_datetime,
       case_team_member_role_rid : data.case_team_member_role_rid,
@@ -4587,8 +4585,11 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       task_status_rid : data.task_status_rid
     }, {transaction});
     if(createdTaskResult) {
-      if(data.tag_rid)
-        await this.createOrUpdateTags(createdTaskResult.dataValues.rid, data.account_rid, data.case_rid, data.tag_rid, data.is_new_tag, accountNumber, data.created_by, activeStatusRid)
+      if(data.tags.length > 0) {
+        for(let d of data.tags) {
+        await this.createOrUpdateTags(createdTaskResult.dataValues.rid, data.account_rid, data.case_rid, d.tag_rid, d.is_new_tag, accountNumber, data.created_by, activeStatusRid)
+        }
+      }
       await CaseTimeline.create({
         created_by : data.created_by,
         created_datetime : new Date(),
@@ -4653,8 +4654,11 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
           }
         }
         if(updatedResult == 1) {
-          if(data.tag_rid)
-            await this.createOrUpdateTags(data.rid, data.account_rid, data.case_rid, data.tag_rid, data.is_new_tag, accountNumber, data.modified_by, activeStatusRid)
+          if(data.tags.length > 0) {
+            for(let d of data.tags) {
+            await this.createOrUpdateTags(isTaskExists.rid, data.account_rid, data.case_rid, d.tag_rid, d.is_new_tag, accountNumber, data.modified_by, activeStatusRid)
+            }
+          }
           const fetchUpdatedColumns = getColumnsNamesForTaskUpdate(data, isTaskExists);
           if(fetchUpdatedColumns.length > 0) {
             let updatedColumnsStorage : string[] = []
@@ -4946,11 +4950,16 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       }
     }
   }
-  async fetchAllTags () {
+  async fetchAllTags (data : TaskTag[]) {
     const {Tags} = await this.caseModelService.getModels("")
     const result = await Tags.findAll({
+      where : {
+        rid : {
+          [Op.notIn] : data.map((d : any) => d.tag_rid)
+        }
+      },
       attributes : ['rid', 'tag_name'],
-      order : [['tag_name', 'ASC']]
+      order : [['tag_name', 'ASC']],
     })
     if(result.length > 0) return result
     else return []
@@ -5739,6 +5748,17 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       order : [['task_name', 'ASC']]
     });
     return result;
+  }
+  async fetchMappedTags (accountNumber : string, caseRid : string, accountRid : string, taskRid : string) {
+    const {TaskTag} = await this.caseModelService.getModels(accountNumber);
+    const result = await TaskTag.findAll({
+      where : {
+        account_rid : accountRid,
+        case_rid : caseRid,
+        task_rid : taskRid
+      }, raw : true
+    });
+    return result
   }
 }
 

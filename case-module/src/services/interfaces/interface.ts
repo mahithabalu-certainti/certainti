@@ -184,7 +184,7 @@ createOrMapTags(data : any) : Promise<{
     statusCode: number;
     data: string | TaskTag | null;
 }>
-fetchTagsForDropdown() : Promise<{
+fetchTagsForDropdown (data : any) : Promise<{
     statusCode: number;
     data: Tags[];
 }>

@@ -2530,7 +2530,8 @@ async function fetchAllTags(req : Request, res : Response) {
       );
       return;
     }
-    const result = await caseService.fetchTagsForDropdown()
+    const data = req.body;
+    const result = await caseService.fetchTagsForDropdown(data)
     if(result.statusCode == HttpStatus.SUCCESS) {
       return res.status(HttpStatus.SUCCESS).json({
         statusCode: HttpStatus.SUCCESS,

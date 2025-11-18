@@ -159,7 +159,7 @@ routes.post(
   checkUserStatusMiddleware("NA"),
   controller.caseController.createOrMapTags
 )
-routes.get(
+routes.post(
   "/tag/list",
   checkUserStatusMiddleware("NA"),
   controller.caseController.fetchAllTags

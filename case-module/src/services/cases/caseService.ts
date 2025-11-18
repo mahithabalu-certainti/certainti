@@ -30,6 +30,7 @@ import {
   TaskCardResponse,
   taskTags,
   TaskTypeResponse,
+  taskWorkFlowConnector,
   UpdateCaseTaskType,
   UpdateCommentsType,
 } from "../../utils/types";
@@ -1847,6 +1848,8 @@ export class CaseService {
         const [getTaskStatus] = await mainDb.query<TaskTypeResponse>(rawQueries.getSpecificTaskStatus(), {type : QueryTypes.SELECT})
         data.task_status_rid = getTaskStatus?.rid! || ''
         const getActiveStatusId : any = await mainDb.query(rawQueries.getActiveStatusId());
+        const getTaskType : any = await mainDb.query(rawQueries.getTaskTypeMilestone(data.task_type_rid));   
+        data.task_type_rid = getTaskType[0][0].rid    
         const result = await this.caseSchemaService.createUserLevelTask(data, fetchParentNumber[0][0].r_number, transaction, getActiveStatusId[0][0].rid);
         if(result.statusCode === HttpStatus.SUCCESS) {
           await transaction.commit()
@@ -2045,8 +2048,11 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
       }
     }
 
-    async fetchTagsForDropdown () {
-      const result = await this.caseSchemaService.fetchAllTags();
+    async fetchTagsForDropdown (data : any) {
+      const mainDb = await this.getMainDb();
+      const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
+      const mappedTagsResult = await this.caseSchemaService.fetchMappedTags(fetchParent[0][0].r_number, data.case_rid, data.account_rid, data.task_rid)
+      const result = await this.caseSchemaService.fetchAllTags(mappedTagsResult);
       if(result.length > 0) {
         return {
           statusCode : HttpStatus.SUCCESS,
@@ -2283,7 +2289,33 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
         let tagMap : Map<string, string> = new Map();
         let checklistItemsStatusIds : string[];
         let checkListData : any
-
+        let taskNameMap : Map<string, string>;
+        let relationshipConnectorMap : Map<string, string>;
+        let sourceIds;
+        let targetIds;
+        let taskIds = []
+        let relationshipConnectorIds;
+        let taskNameResult;
+        let workflowResult;
+        if(result[0]?.task_details.workflow_connector !== null) {
+          sourceIds = [...new Set(result[0]?.task_details.workflow_connector.map((d : taskWorkFlowConnector) => d.source_rid))]
+          targetIds = [...new Set(result[0]?.task_details.workflow_connector.map((d : taskWorkFlowConnector) => d.target_rid))]
+          relationshipConnectorIds = [...new Set(result[0]?.task_details.workflow_connector.map((d : taskWorkFlowConnector) => d.relationship_connector_rid))]
+          taskIds.push(sourceIds.map((d : any) => d))
+          taskIds.push(targetIds.map((d : any) => d))
+          
+          
+          let query = rawQueries.getTaskNames(taskIds, schemaName);
+          let relationshipQuery = rawQueries.getWorkflowConnectors(relationshipConnectorIds);
+          if(query) {
+            taskNameResult = await orgDb.query(query);
+            taskNameMap = new Map(taskNameResult[0].map((d : any) => [d.rid, d.task_name]))
+          }
+          if(relationshipQuery) {
+            workflowResult = await mainDb.query(relationshipQuery);
+            relationshipConnectorMap = new Map(workflowResult[0].map((d : any) => [d.rid, d.relationship_type]));
+          }
+        }
         if(result[0]?.task_details.checklists.checklist_items !== null) {
           checklistItemsStatusIds = [...new Set(result[0]?.task_details.checklists.checklist_items.map((d : ChecklistItems) => d.status_rid))]
         } else {
@@ -2303,6 +2335,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
             }
           }
         }
+        
         priorityIds.push(priorityId.priority_id)
         taskStatusIds.push(taskStatusID.task_status_rid!)
         const getUsers = await mainDb.query(rawQueries.getOwnerDetails(uniqueUserIds))
@@ -2341,6 +2374,19 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
 
             }) : [],
           }
+        let finalWorkflowData
+        if(result[0]?.task_details.workflow_connector === null) {
+          finalWorkflowData = []
+        } else {
+          finalWorkflowData = result[0]?.task_details.workflow_connector.filter((f : any) => f.rid !== null).map((d : any) => {
+            return {
+              ...d,
+              source_task_name : taskNameMap.get(d.source_rid),
+              target_task_name : taskNameMap.get(d.target_rid),
+              relationship_name : relationshipConnectorMap.get(d.relationship_connector_rid)
+            }
+          }) || []
+        }
         let finalStruture = {
           rid : resData?.task_details.rid,
           r_number : resData?.task_details.r_number,
@@ -2365,7 +2411,8 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
                 tag_rid : d.tag_rid,
                 tag_name : tagMap.get(d.tag_rid) || null
               }
-            }) || []
+            }) || [],
+          workflow_connector : finalWorkflowData
         }
         return {
           statusCode : HttpStatus.SUCCESS,

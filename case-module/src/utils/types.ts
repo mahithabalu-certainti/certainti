@@ -443,13 +443,16 @@ export interface MilestoneData {
 
 export type MilestoneResponse = MilestoneData[];
 
+type tagTypes = {
+  tag_rid : string
+  is_new_tag : boolean
+}
+
 export type CreateCaseTaskType = {
   created_by : string,
   created_datetime : Date,
   task_name : string,
   sequence_no : number,
-  effort_in_days : number,
-  reminder_interval : number, 
   effective_start_datetime : Date,
   effective_end_datetime : Date,
   case_team_member_role_rid : string,
@@ -462,8 +465,7 @@ export type CreateCaseTaskType = {
   task_type_rid : string,
   task_description : string,
   status_rid : string,
-  tag_rid : string,
-  is_new_tag : boolean
+  tags : tagTypes[]
 }
 
 export type UpdateCaseTaskType = {
@@ -472,8 +474,6 @@ export type UpdateCaseTaskType = {
   modified_datetime : Date,
   task_name : string,
   sequence_no : number,
-  effort_in_days : number,
-  reminder_interval : number, 
   effective_start_datetime : Date,
   effective_end_datetime : Date,
   case_team_member_role_rid : string,
@@ -485,8 +485,7 @@ export type UpdateCaseTaskType = {
   case_rid: string,
   task_type_rid : string,
   task_description : string
-  tag_rid : string,
-  is_new_tag : boolean
+  tags : tagTypes[]
 }
 
 export type CaseTaskQueryType = {
@@ -570,6 +569,13 @@ export type taskTags = {
   tag_rid : string
 }
 
+export type taskWorkFlowConnector = {
+  rid : string
+  source_rid : string
+  target_rid : string
+  relationship_connector_rid : string
+}
+
 export type checklistType = {
   rid : string
   checklist_name : string
@@ -598,6 +604,7 @@ export type TaskCardDetailsType = {
   assigned_to_name : string
   checklists : checklistType
   tags : taskTags[]
+  workflow_connector :  taskWorkFlowConnector[]
 }
 export type TaskCardResponse ={
   task_details :TaskCardDetailsType
