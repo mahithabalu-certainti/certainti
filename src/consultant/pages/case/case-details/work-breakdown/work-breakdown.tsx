@@ -19,6 +19,9 @@ import {
   fetchTaskAttachmentsList,
   useCreateCaseTask,
   CreateTaskPayload,
+  addTaskComment,
+  updateTaskComment,
+  deleteTaskComment,
 } from '../../../../services/case-task/case-task-service';
 import {
   useGetUserOptions,
@@ -34,11 +37,11 @@ import {
   transformTagData,
 } from './helper';
 import { CaseTask } from './case-task';
-import type { TaskCard } from '../../../../../components/kanban-board/types';
 import { getAssignGroupsFilterFields } from './case-task/helper';
 import { ExportType } from '../../../../types';
 import { ActivityMenuItem } from '../../../../types';
 import { useToast } from '../../../../../hooks';
+import { TaskCard } from '../../../../../components/kanban-board/types';
 
 const ConfigTabs: ResourceTabs[] = [
   {
@@ -175,23 +178,65 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
       }
 
       try {
+        // Process tags - separate existing from new tags
+        const existingTagRids: string[] = [];
+        const newTags: string[] = [];
+
+        if (taskData.tags) {
+          taskData.tags.forEach((tagName: string) => {
+            const existingTag = tagData?.find((t) => t.name === tagName);
+            if (existingTag) {
+              existingTagRids.push(existingTag.id);
+            } else {
+              newTags.push(tagName);
+            }
+          });
+        }
+
+        // Build tag_rid - can be single string or array of strings
+        let tagRid: string | string[] | undefined;
+        if (existingTagRids.length > 0) {
+          tagRid =
+            existingTagRids.length === 1 ? existingTagRids[0] : existingTagRids;
+        }
+
+        // Build tags array for new custom tags
+        const tagsPayload =
+          newTags.length > 0 ? newTags.map((name) => ({ name })) : undefined;
+
+        // Build the complete API payload
         const taskPayload: CreateTaskPayload = {
           case_rid: caseId,
           account_rid: accountId,
-          task_name: taskData.task_name || 'New Task',
-          effort_in_days: String(taskData.effort_in_days || 0),
-          reminder_interval: taskData.reminder_interval || 0,
-          case_team_member_role_rid: taskData.case_team_member_role_rid || '',
-          checklist_template_rid: '',
+          task_name: taskData.task_name || '',
+          task_description: taskData.task_description || '',
           status_rid: taskData.status_rid || '',
           priority_rid: taskData.priority_rid || '',
-          milestone_template_rid: columnId,
-          task_type_rid: '',
-          task_description: taskData.task_description || '',
+          case_team_member_role_rid: taskData.case_team_member_role_rid || '',
           effective_start_datetime: taskData.effective_start_datetime || '',
           effective_end_datetime: taskData.effective_end_datetime || '',
+          milestone_template_rid: columnId,
+          checklist_template_rid: '',
         };
 
+        // Add tag_rid if we have existing tags
+        if (tagRid !== undefined) {
+          taskPayload.tag_rid = tagRid;
+          taskPayload.is_new_tag = false;
+        }
+
+        // Add tags array if we have new tags
+        if (tagsPayload !== undefined) {
+          taskPayload.tags = tagsPayload;
+          taskPayload.is_new_tag = true;
+        }
+
+        // If no tags at all, set is_new_tag to false
+        if (tagRid === undefined && tagsPayload === undefined) {
+          taskPayload.is_new_tag = false;
+        }
+
+        console.log('Creating task with payload:', taskPayload);
         const response = await createTaskMutation.mutateAsync(taskPayload);
 
         if (response?.data?.rid) {
@@ -211,7 +256,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
         throw error;
       }
     },
-    [accountId, caseId, createTaskMutation, successToast, errorToast]
+    [accountId, caseId, tagData, createTaskMutation, successToast, errorToast]
   );
 
   const headerButtons = [
@@ -349,6 +394,107 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
     [accountId, caseId]
   );
 
+  const handleAddComment = useCallback(
+    async (taskId: string, commentText: string) => {
+      if (!accountId || !caseId) {
+        errorToast('Account ID or Case ID is missing');
+        throw new Error('Missing Account ID or Case ID');
+      }
+
+      try {
+        await addTaskComment({
+          account_rid: accountId,
+          case_rid: caseId,
+          task_rid: taskId,
+          comments: commentText,
+        });
+
+        // Refetch comments to get the updated list (will be displayed by TaskDetailModal)
+        await fetchTaskCommentsList({
+          account_rid: accountId,
+          case_rid: caseId,
+          task_rid: taskId,
+          page: 1,
+          limit: 100,
+        });
+
+        successToast('Comment added successfully');
+      } catch (error) {
+        const errorMessage =
+          (error as { response?: { data?: { statusMessage?: string } } })
+            ?.response?.data?.statusMessage ||
+          (error as Error)?.message ||
+          'Failed to add comment';
+        errorToast(errorMessage);
+        console.error('Error adding comment:', error);
+        throw error;
+      }
+    },
+    [accountId, caseId, successToast, errorToast]
+  );
+
+  const handleUpdateComment = useCallback(
+    async (commentId: string, commentText: string) => {
+      if (!accountId || !caseId) {
+        errorToast('Account ID or Case ID is missing');
+        throw new Error('Missing Account ID or Case ID');
+      }
+
+      try {
+        await updateTaskComment({
+          account_rid: accountId,
+          case_rid: caseId,
+          task_rid: '',
+          rid: commentId,
+          comments: commentText,
+        });
+
+        successToast('Comment updated successfully');
+      } catch (error) {
+        const errorMessage =
+          (error as { response?: { data?: { statusMessage?: string } } })
+            ?.response?.data?.statusMessage ||
+          (error as Error)?.message ||
+          'Failed to update comment';
+        errorToast(errorMessage);
+        console.error('Error updating comment:', error);
+        throw error;
+      }
+    },
+    [accountId, caseId, successToast, errorToast]
+  );
+
+  const handleDeleteComment = useCallback(
+    async (commentId: string) => {
+      if (!accountId || !caseId) {
+        errorToast('Account ID or Case ID is missing');
+        throw new Error('Missing Account ID or Case ID');
+      }
+
+      try {
+        await deleteTaskComment({
+          account_rid: accountId,
+          case_rid: caseId,
+          task_rid: '',
+          rid: commentId,
+          deleted_file_ids: [],
+        });
+
+        successToast('Comment deleted successfully');
+      } catch (error) {
+        const errorMessage =
+          (error as { response?: { data?: { statusMessage?: string } } })
+            ?.response?.data?.statusMessage ||
+          (error as Error)?.message ||
+          'Failed to delete comment';
+        errorToast(errorMessage);
+        console.error('Error deleting comment:', error);
+        throw error;
+      }
+    },
+    [accountId, caseId, successToast, errorToast]
+  );
+
   return (
     <>
       <SectionTabPanel
@@ -420,6 +566,9 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
                 userData={userOptionsQuery.data || []}
                 roleOptions={roleOptionsQuery.data || []}
                 onCreateTask={handleCreateTask}
+                onAddComment={handleAddComment}
+                onUpdateComment={handleUpdateComment}
+                onDeleteComment={handleDeleteComment}
               />
             )}
           </>

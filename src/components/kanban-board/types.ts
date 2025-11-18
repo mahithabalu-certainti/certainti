@@ -21,6 +21,8 @@ export interface Comment {
   user: string;
   text: string;
   date: string;
+  createdBy?: string;
+  createdDateTime?: string;
   initials?: string;
   color?: string;
   attachments?: string[];
@@ -89,6 +91,7 @@ export interface TaskCard {
   task_type_name: string;
   status_name: string;
   task_status_name?: string;
+  tags?: string[];
 }
 
 export interface KanbanColumn {
@@ -174,6 +177,9 @@ export interface KanbanBoardProps {
       assigned_to_name: string;
     }>
   >;
+  onAddComment?: (taskId: string, comment: string) => Promise<void>;
+  onUpdateComment?: (commentId: string, comment: string) => Promise<void>;
+  onDeleteComment?: (commentId: string) => Promise<void>;
   fieldVisibility?: FieldVisibility;
   fieldDisabled?: FieldDisabled;
   isLoading?: boolean;
@@ -252,6 +258,9 @@ export interface TaskDetailModalProps {
       assigned_to_name: string;
     }>
   >;
+  onAddComment?: (taskId: string, comment: string) => Promise<void>;
+  onUpdateComment?: (commentId: string, comment: string) => Promise<void>;
+  onDeleteComment?: (commentId: string) => Promise<void>;
   fieldVisibility?: FieldVisibility;
   fieldDisabled?: FieldDisabled;
 }

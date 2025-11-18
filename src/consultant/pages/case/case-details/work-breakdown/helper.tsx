@@ -18,14 +18,22 @@ export interface TaskActivityRaw {
 }
 
 export interface TaskCommentRaw {
+  rid?: string;
   id?: string;
   comment_rid?: string;
+  case_rid?: string;
+  task_rid?: string;
+  account_rid?: string;
+  comments?: string;
   user?: string;
   user_name?: string;
   text?: string;
   comment_text?: string;
   date?: string;
   created_date?: string;
+  created_datetime?: string;
+  created_by?: string;
+  comments_attachments?: string[];
   attachments?: string[];
 }
 
@@ -73,21 +81,37 @@ export const transformActivities = (
 export const transformComments = (
   commentsData: TaskCommentRaw[]
 ): Comment[] => {
-  return commentsData.map((comment) => ({
-    id: comment.id || comment.comment_rid,
-    user: comment.user || comment.user_name || 'Unknown',
-    text: comment.text || comment.comment_text || '',
-    date: new Date(
-      comment.date || comment.created_date || new Date()
-    ).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    }),
-    attachments: comment.attachments,
-  }));
+  return commentsData.map((comment) => {
+    const commentText =
+      comment.comments || comment.text || comment.comment_text || '';
+    const userName =
+      comment.user || comment.user_name || comment.created_by || 'Unknown';
+    const commentDate =
+      comment.created_datetime || comment.date || comment.created_date;
+
+    const formattedDate = commentDate
+      ? new Date(commentDate).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        })
+      : '';
+
+    return {
+      id: comment.rid || comment.id || comment.comment_rid,
+      user: userName,
+      text: commentText,
+      createdBy: comment.created_by || userName,
+      createdDateTime: formattedDate,
+      date: formattedDate,
+      initials:
+        generateColorFromName(userName)?.substring(0, 2).toUpperCase() || 'UN',
+      color: generateColorFromName(userName),
+      attachments: comment.comments_attachments || comment.attachments || [],
+    };
+  });
 };
 
 /**
@@ -104,24 +128,28 @@ export const transformAttachments = (
   uploadedBy: string;
   uploadedDate: string;
 }> => {
-  return attachmentsData.map((attachment) => ({
-    id: attachment.id || attachment.attachment_rid,
-    fileName: attachment.file_name,
-    filePath: attachment.file_path,
-    fileSize: attachment.file_size,
-    fileType: attachment.file_type,
-    uploadedBy:
-      attachment.uploaded_by || attachment.uploaded_by_name || 'Unknown',
-    uploadedDate: new Date(
-      attachment.uploaded_date || attachment.created_date || new Date()
-    ).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    }),
-  }));
+  return attachmentsData.map((attachment) => {
+    const uploadDate = attachment.uploaded_date || attachment.created_date;
+
+    return {
+      id: attachment.id || attachment.attachment_rid,
+      fileName: attachment.file_name,
+      filePath: attachment.file_path,
+      fileSize: attachment.file_size,
+      fileType: attachment.file_type,
+      uploadedBy:
+        attachment.uploaded_by || attachment.uploaded_by_name || 'Unknown',
+      uploadedDate: uploadDate
+        ? new Date(uploadDate).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+          })
+        : 'Recently uploaded',
+    };
+  });
 };
 
 /**

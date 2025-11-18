@@ -8,7 +8,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import TaskCardComponent from './task-card';
-import TaskCreateModal from './task-create-modal';
+import TaskCreateModal, { TaskFormData } from './task-create-modal';
 import type { RoleOption } from '../../consultant/services/case-team/case-team-service';
 
 interface ExtendedKanbanColumnProps extends KanbanColumnProps {
@@ -27,7 +27,6 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
   showProfileIndicator,
   isCreateTaskDisabled,
   isCreateTaskHide,
-  onAddTask,
   onTaskClick,
   isDragable = false,
   isDragablebetweenBoards = false,
@@ -47,12 +46,27 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
     data: { type: 'Column', column },
   });
 
-  const handleCreateTask = async (columnId: string, task: TaskCard) => {
+  const handleCreateTask = async (columnId: string, formData: TaskFormData) => {
     try {
       if (onCreateTask) {
-        await onCreateTask(columnId, task);
+        const taskData: Partial<TaskCard> = {
+          task_name: formData.taskTitle,
+          task_description: formData.description,
+          status_rid: formData.selectedStatusRid,
+          priority_rid: formData.selectedPriorityRid,
+          priority_name: formData.selectedPriority,
+          effective_start_datetime: formData.startDate?.format(
+            'YYYY-MM-DD HH:mm:ss'
+          ),
+          effective_end_datetime: formData.endDate?.format(
+            'YYYY-MM-DD HH:mm:ss'
+          ),
+          assigned_to: formData.selectedAssignee,
+          case_team_member_role_rid: formData.selectedRoleRid,
+          tags: formData.selectedTags,
+        };
+        await onCreateTask(columnId, taskData);
       }
-      onAddTask(columnId, task, 'bottom');
       setIsCreateModalOpen(false);
     } catch (error) {
       console.error('Failed to create task:', error);

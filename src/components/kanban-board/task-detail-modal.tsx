@@ -12,6 +12,7 @@ import { CalendarIcon, CloseIcon } from '../../assets';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import TextButton from '../button/text-button';
 import {
   enrichTask,
   enrichUserOption,
@@ -38,6 +39,9 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   onFetchTaskComments,
   onFetchTaskAttachments,
   onFetchCollaborators,
+  onAddComment,
+  onUpdateComment,
+  onDeleteComment,
   fieldVisibility = {},
   fieldDisabled = {},
 }) => {
@@ -65,6 +69,8 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   const [isEditing, setIsEditing] = useState(false);
   const [editedTask, setEditedTask] = useState<Task | null>(null);
   const [comment, setComment] = useState('');
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editingCommentText, setEditingCommentText] = useState('');
   const [activeTab, setActiveTab] = useState<'comments' | 'activity'>(
     'comments'
   );
@@ -435,13 +441,10 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
       onTaskUpdate(taskId, editedTask);
       setIsEditing(false);
     }
-  };
 
-  const handleMarkComplete = () => {
-    if (editedTask && taskId) {
-      const updatedTask = { ...editedTask, status: 'Done' as const };
-      setEditedTask(updatedTask);
-      onTaskUpdate(taskId, { status: 'Done' });
+    // Handle comment submission if there's a comment
+    if (comment.trim()) {
+      handleSubmitComment();
     }
   };
 
@@ -653,6 +656,38 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
       .filter((id) => id !== '');
   };
 
+  const handleSubmitComment = async () => {
+    if (!comment.trim() || !taskId) {
+      return;
+    }
+
+    if (!onAddComment) {
+      console.error('onAddComment callback is not provided');
+      return;
+    }
+
+    try {
+      await onAddComment(taskId, comment.trim());
+
+      // Clear comment state
+      setComment('');
+      setEditedTask((prev) =>
+        prev ? { ...prev, commentAttachments: [] } : null
+      );
+
+      // Reset file input
+      const fileInput = document.getElementById(
+        'comment-attachments-input'
+      ) as HTMLInputElement;
+      if (fileInput) fileInput.value = '';
+
+      // Refresh comments by resetting the ref so useEffect will refetch
+      commentsFetchedRef.current = null;
+    } catch (error) {
+      console.error('Error submitting comment:', error);
+    }
+  };
+
   return (
     <>
       <div
@@ -663,21 +698,18 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
       >
         <div className='sticky top-0 flex items-center justify-between p-[16.5px] border-b border-[#CBD6E2] bg-white z-50'>
           <button
-            onClick={handleMarkComplete}
-            className='flex items-center gap-2 px-3 py-1 bg-emerald-600 hover:bg-emerald-700 rounded text-sm font-medium transition-colors text-white'
+            onClick={onClose}
+            className='p-2 hover:bg-gray-100 rounded transition-colors'
           >
-            <span className='text-xs'>✓</span>
-            Mark complete
+            <CloseIcon size={16} className='text-gray-600' />
           </button>
 
-          <div className='flex items-center gap-2'>
-            <button
-              onClick={onClose}
-              className='p-2 hover:bg-gray-100 rounded transition-colors'
-            >
-              <CloseIcon size={16} className='text-gray-600' />
-            </button>
-          </div>
+          <TextButton
+            label='Save'
+            onClick={handleSave}
+            disabled={false}
+            sx={{ padding: '6px 12px' }}
+          />
         </div>
 
         <div className='p-6 space-y-6'>
@@ -1642,58 +1674,155 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
               </div>
 
               {activeTab === 'comments' && (
-                <div className='space-y-4'>
-                  {comments.length > 0 && (
-                    <div className='space-y-3 max-h-[220px] overflow-y-auto pr-2 mb-4 border border-gray-200 rounded-lg p-3'>
-                      {comments.map((comment, idx) => (
+                <div className='space-y-3 max-h-[300px] overflow-y-auto pr-2'>
+                  {comments.length > 0 ? (
+                    comments.map((comment, idx) => (
+                      <div
+                        key={comment.id || idx}
+                        className='flex gap-3 pb-3 border-b border-gray-200 last:border-b-0'
+                      >
                         <div
-                          key={comment.id || idx}
-                          className='flex gap-3 pb-3 border-b border-gray-200 last:border-b-0'
+                          className='w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 text-white'
+                          style={{
+                            backgroundColor: comment.color || '#999',
+                            fontSize: '8px',
+                          }}
                         >
-                          <div
-                            className='w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 text-white'
-                            style={{
-                              backgroundColor: comment.color || '#999',
-                              fontSize: '8px',
-                            }}
-                          >
-                            {comment.initials ||
-                              comment.user
-                                .split(' ')
-                                .map((n) => n[0])
-                                .join('')}
-                          </div>
-                          <div className='flex-1'>
-                            <p className='text-sm font-semibold text-gray-700'>
-                              {comment.user}
-                            </p>
-                            <p className='text-sm text-gray-600 mt-1'>
-                              {comment.text}
-                            </p>
-                            {comment.attachments &&
-                              comment.attachments.length > 0 && (
-                                <div className='mt-2 space-y-1'>
-                                  {comment.attachments.map(
-                                    (attachment, idx) => (
-                                      <div
-                                        key={idx}
-                                        className='text-xs text-gray-500 bg-gray-50 p-1 rounded inline-block'
-                                      >
-                                        📎 {attachment}
-                                      </div>
-                                    )
+                          {comment.initials ||
+                            comment.user
+                              .split(' ')
+                              .map((n) => n[0])
+                              .join('')}
+                        </div>
+                        <div className='flex-1'>
+                          {editingCommentId === comment.id ? (
+                            <div className='space-y-2'>
+                              <div>
+                                <p className='text-sm font-semibold text-gray-700'>
+                                  {comment.user}
+                                </p>
+                                {comment.createdDateTime && (
+                                  <p className='text-xs text-gray-500'>
+                                    {comment.createdDateTime}
+                                  </p>
+                                )}
+                              </div>
+                              <textarea
+                                value={editingCommentText}
+                                onChange={(e) =>
+                                  setEditingCommentText(e.target.value)
+                                }
+                                className='w-full bg-white border border-gray-300 rounded-lg p-2 text-sm resize-none focus:border-blue-500 focus:outline-none text-gray-900 placeholder-gray-500'
+                                rows={3}
+                              />
+                              <div className='flex gap-2'>
+                                <button
+                                  onClick={() => {
+                                    if (
+                                      comment.id &&
+                                      onUpdateComment &&
+                                      editingCommentText.trim()
+                                    ) {
+                                      onUpdateComment(
+                                        comment.id,
+                                        editingCommentText.trim()
+                                      );
+                                      setEditingCommentId(null);
+                                      setEditingCommentText('');
+                                    }
+                                  }}
+                                  className='px-3 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 transition-colors'
+                                >
+                                  Save
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setEditingCommentId(null);
+                                    setEditingCommentText('');
+                                  }}
+                                  className='px-3 py-1 bg-gray-300 text-gray-700 text-xs rounded hover:bg-gray-400 transition-colors'
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <>
+                              <div className='flex items-center justify-between'>
+                                <div>
+                                  <p className='text-sm font-semibold text-gray-700'>
+                                    {comment.user}
+                                  </p>
+                                  {comment.createdDateTime && (
+                                    <p className='text-xs text-gray-500'>
+                                      {comment.createdDateTime}
+                                    </p>
                                   )}
                                 </div>
-                              )}
-                            <p className='text-xs text-gray-500 mt-2'>
-                              {comment.date}
-                            </p>
-                          </div>
+                                <div className='flex gap-3'>
+                                  <button
+                                    onClick={() => {
+                                      setEditingCommentId(comment.id || null);
+                                      setEditingCommentText(comment.text);
+                                    }}
+                                    className='text-xs text-blue-500 hover:text-blue-700 transition-colors'
+                                    title='Edit comment'
+                                  >
+                                    Edit
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      if (
+                                        comment.id &&
+                                        onDeleteComment &&
+                                        window.confirm(
+                                          'Are you sure you want to delete this comment?'
+                                        )
+                                      ) {
+                                        onDeleteComment(comment.id);
+                                      }
+                                    }}
+                                    className='text-xs text-red-500 hover:text-red-700 transition-colors'
+                                    title='Delete comment'
+                                  >
+                                    Delete
+                                  </button>
+                                </div>
+                              </div>
+                              <p className='text-sm text-gray-600 mt-2'>
+                                {comment.text}
+                              </p>
+                              {comment.attachments &&
+                                comment.attachments.length > 0 && (
+                                  <div className='mt-2 space-y-1'>
+                                    {comment.attachments.map(
+                                      (attachment, idx) => (
+                                        <div
+                                          key={idx}
+                                          className='text-xs text-gray-500 bg-gray-50 p-1 rounded inline-block'
+                                        >
+                                          📎 {attachment}
+                                        </div>
+                                      )
+                                    )}
+                                  </div>
+                                )}
+                            </>
+                          )}
                         </div>
-                      ))}
+                      </div>
+                    ))
+                  ) : (
+                    <div className='text-center py-4'>
+                      <p className='text-sm text-gray-500'>No comments yet</p>
                     </div>
                   )}
+                </div>
+              )}
 
+              {/* Comment input section - separated from the list */}
+              {activeTab === 'comments' && (
+                <div className='border-t border-gray-200 pt-4 mt-4'>
                   <div className='flex items-start gap-3'>
                     <div
                       className='w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 text-white'

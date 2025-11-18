@@ -124,8 +124,6 @@ export interface CreateTaskPayload {
   case_rid: string;
   account_rid: string;
   task_name: string;
-  effort_in_days: string;
-  reminder_interval?: number;
   case_team_member_role_rid?: string;
   checklist_template_rid?: string;
   status_rid?: string;
@@ -135,6 +133,9 @@ export interface CreateTaskPayload {
   task_description?: string;
   effective_start_datetime?: string;
   effective_end_datetime?: string;
+  tag_rid?: string | string[];
+  tags?: Array<{ name: string }>;
+  is_new_tag?: boolean;
   [key: string]: unknown;
 }
 
@@ -146,6 +147,41 @@ export interface CreateTaskResponse extends CommonApiResponse {
   };
 }
 
+// Comment Management Types
+export interface AddCommentPayload {
+  account_rid: string;
+  case_rid: string;
+  task_rid: string;
+  comments: string;
+  files?: File[];
+}
+
+export interface UpdateCommentPayload {
+  account_rid: string;
+  case_rid: string;
+  task_rid: string;
+  rid: string; // Comment ID
+  comments: string;
+  files?: File[];
+  deleted_file_ids?: string[];
+}
+
+export interface DeleteCommentPayload {
+  account_rid: string;
+  case_rid: string;
+  task_rid: string;
+  rid: string; // Comment ID
+  deleted_file_ids?: string[];
+}
+
+export interface CommentResponse extends CommonApiResponse {
+  data?: {
+    rid?: string;
+    comment_rid?: string;
+    [key: string]: unknown;
+  };
+}
+
 // Case Task URL
 export const getCaseTaskListUrl = () => '/api/cases/task/list';
 export const getCaseTaskCreateUrl = () => '/api/cases/task/create';
@@ -153,6 +189,11 @@ export const getCaseTaskExportUrl = () => '/api/cases/task/export';
 export const getTaskCommentsListUrl = () => '/api/cases/task/comments/list';
 export const getTaskAttachmentsListUrl = () =>
   '/api/cases/task/attachments/list';
+
+// Comment Management URLs
+export const getAddCommentUrl = () => '/api/cases/task/comments/add';
+export const getUpdateCommentUrl = () => '/api/cases/task/comments/update';
+export const getDeleteCommentUrl = () => '/api/cases/comments/delete';
 
 // Fetch Case Task List
 export const fetchCaseTaskList = async (
@@ -185,6 +226,95 @@ export const fetchTaskAttachmentsList = async (
     params
   );
   return data;
+};
+
+// Add Task Comment
+export const addTaskComment = async (
+  payload: AddCommentPayload
+): Promise<CommentResponse> => {
+  try {
+    const formData = new FormData();
+    formData.append('account_rid', payload.account_rid);
+    formData.append('case_rid', payload.case_rid);
+    formData.append('task_rid', payload.task_rid);
+    formData.append('comments', payload.comments);
+
+    // Add files if present
+    if (payload.files && payload.files.length > 0) {
+      payload.files.forEach((file) => {
+        formData.append('files', file);
+      });
+    }
+
+    const { data } = await caseServiceApi.post<CommentResponse>(
+      getAddCommentUrl(),
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+    return data;
+  } catch (error) {
+    console.error('Error adding task comment:', error);
+    throw error;
+  }
+};
+
+// Update Task Comment
+export const updateTaskComment = async (
+  payload: UpdateCommentPayload
+): Promise<CommentResponse> => {
+  try {
+    const formData = new FormData();
+    formData.append('account_rid', payload.account_rid);
+    formData.append('case_rid', payload.case_rid);
+    formData.append('task_rid', payload.task_rid);
+    formData.append('rid', payload.rid);
+    formData.append('comments', payload.comments);
+    formData.append(
+      'deleted_file_ids',
+      JSON.stringify(payload.deleted_file_ids || [])
+    );
+
+    // Add files if present
+    if (payload.files && payload.files.length > 0) {
+      payload.files.forEach((file) => {
+        formData.append('files', file);
+      });
+    }
+
+    const { data } = await caseServiceApi.put<CommentResponse>(
+      getUpdateCommentUrl(),
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+    return data;
+  } catch (error) {
+    console.error('Error updating task comment:', error);
+    throw error;
+  }
+};
+
+// Delete Task Comment
+export const deleteTaskComment = async (
+  payload: DeleteCommentPayload
+): Promise<CommentResponse> => {
+  try {
+    const { data } = await caseServiceApi.post<CommentResponse>(
+      getDeleteCommentUrl(),
+      payload
+    );
+    return data;
+  } catch (error) {
+    console.error('Error deleting task comment:', error);
+    throw error;
+  }
 };
 
 // Create Case Task
@@ -270,6 +400,27 @@ export const useGetTaskAttachmentsList = (
       options?.enabled !== false
     ),
     ...options,
+  });
+};
+
+// Custom Hook for Adding Comments
+export const useAddTaskComment = () => {
+  return useMutation<CommentResponse, Error, AddCommentPayload>({
+    mutationFn: (payload) => addTaskComment(payload),
+  });
+};
+
+// Custom Hook for Updating Comments
+export const useUpdateTaskComment = () => {
+  return useMutation<CommentResponse, Error, UpdateCommentPayload>({
+    mutationFn: (payload) => updateTaskComment(payload),
+  });
+};
+
+// Custom Hook for Deleting Comments
+export const useDeleteTaskComment = () => {
+  return useMutation<CommentResponse, Error, DeleteCommentPayload>({
+    mutationFn: (payload) => deleteTaskComment(payload),
   });
 };
 

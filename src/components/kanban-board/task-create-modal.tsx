@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   MenuItem,
   Select,
@@ -11,18 +11,34 @@ import { CalendarIcon, CloseIcon } from '../../assets';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import TextButton from '../button/text-button';
 import {
   enrichUserOption,
   generateInitials,
   generateColorFromName,
 } from './helper';
-import type { TaskCard, UserOption } from './types';
+import type { UserOption } from './types';
 import type { RoleOption } from '../../consultant/services/case-team/case-team-service';
+
+// Form data interface
+export interface TaskFormData {
+  taskTitle: string;
+  description: string;
+  selectedStatusRid: string;
+  selectedPriorityRid: string;
+  selectedPriority: string;
+  startDate: dayjs.Dayjs | null;
+  endDate: dayjs.Dayjs | null;
+  selectedAssignee: string;
+  selectedTags: string[];
+  selectedRole: string;
+  selectedRoleRid: string;
+}
 
 interface TaskCreateModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreateTask: (columnId: string, task: TaskCard) => Promise<void>;
+  onCreateTask: (columnId: string, formData: TaskFormData) => Promise<void>;
   columnId: string;
   columnName: string;
   statusData?: Array<{ id: string; name: string; color?: string }>;
@@ -58,13 +74,14 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
   onClose,
   onCreateTask,
   columnId,
+  columnName,
   statusData = [],
   priorityData = [],
   tagData = [],
   collaboratorData = [],
   availableUsers = [],
   roleOptions = [],
-  fieldVisibility = {},
+  fieldVisibility = { assignee: true },
   fieldDisabled = {},
 }) => {
   const [taskTitle, setTaskTitle] = useState('');
@@ -94,13 +111,18 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
 
   const enrichedUsers = collaborators;
 
-  useState(() => {
+  // Extract tag names from tagData for Autocomplete options
+  const tagOptions =
+    tagData && tagData.length > 0 ? tagData.map((tag) => tag.name) : [];
+
+  // Initialize status to "To Do" when statusData changes
+  useEffect(() => {
     const toDoStatus = statusData?.find((s) => s.name === 'To Do');
     if (toDoStatus) {
       setSelectedStatus('To Do');
       setSelectedStatusRid(toDoStatus.id);
     }
-  });
+  }, [statusData]);
 
   const handleClose = () => {
     setTaskTitle('');
@@ -120,42 +142,29 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
 
   const handleSubmit = async () => {
     if (!taskTitle.trim()) return;
-    if (!selectedStatus || !selectedStatusRid) return;
     if (!selectedPriority || !selectedPriorityRid) return;
     if (!startDate || !endDate) return;
+    if (!selectedRole || !selectedRoleRid) return;
+    if (selectedTags.length === 0) return;
 
     setIsSubmitting(true);
     try {
-      const assigneeUser = enrichedUsers.find((u) => u.id === selectedAssignee);
-      const newTask: TaskCard = {
-        rid: `task-${Date.now()}`,
-        r_number: `T-${Date.now()}`,
-        task_name: taskTitle.trim(),
-        created_by: '',
-        status_rid: selectedStatusRid,
-        assigned_to: assigneeUser?.id || null,
-        sequence_no: 0,
-        priority_rid: selectedPriorityRid,
-        task_type_rid: '',
-        effort_in_days: 0,
-        checklists_count: 0,
-        task_description: description,
-        reminder_interval: 0,
-        effective_end_datetime: endDate ? endDate.format('YYYY-MM-DD') : '',
-        effective_start_datetime: startDate
-          ? startDate.format('YYYY-MM-DD')
-          : '',
-        case_team_member_role_rid: selectedRoleRid,
-        milestone_template_rid: columnId,
-        priority_name: selectedPriority,
-        assigned_to_name: assigneeUser?.name || null,
-        case_team_member_role_name: selectedRole,
-        task_type_name: '',
-        status_name: selectedStatus,
-        task_status_name: selectedStatus,
+      const formData: TaskFormData = {
+        taskTitle: taskTitle.trim(),
+        description,
+        selectedStatusRid,
+        selectedPriorityRid,
+        selectedPriority,
+        startDate,
+        endDate,
+        selectedAssignee,
+        selectedTags,
+        selectedRole,
+        selectedRoleRid,
       };
 
-      await onCreateTask(columnId, newTask);
+      console.log('Submitting form data:', formData);
+      await onCreateTask(columnId, formData);
       handleClose();
     } catch (error) {
       console.error('Failed to create task:', error);
@@ -217,15 +226,16 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
   };
 
   const isFormValid = () => {
-    return (
-      taskTitle.trim() &&
-      selectedStatus &&
-      selectedStatusRid &&
-      selectedPriority &&
-      selectedPriorityRid &&
-      startDate &&
-      endDate
-    );
+    // Required fields that must always be filled
+    const hasTaskTitle = taskTitle.trim();
+    // Status is disabled and pre-filled with "To Do", so don't require explicit selection
+    const hasPriority = selectedPriority && selectedPriorityRid;
+    const hasDates = startDate && endDate;
+    const hasRole = selectedRole && selectedRoleRid;
+    const hasTags = selectedTags.length > 0;
+
+    // All required fields must be present (excluding status since it's auto-filled)
+    return hasTaskTitle && hasPriority && hasDates && hasRole && hasTags;
   };
 
   if (!isOpen) return null;
@@ -238,10 +248,15 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
       />
       <div
         className='fixed right-0 bottom-0 w-[650px] bg-white text-gray-900 shadow-2xl transform transition-transform duration-300 ease-in-out z-50 overflow-y-auto'
-        style={{ top: '38.1px' }}
+        style={{ top: '38.1px', backgroundColor: '#fff' }}
       >
         <div className='sticky top-0 flex items-center justify-between p-[17.5px] border-b border-[#CBD6E2] bg-white z-50'>
-          <h2 className='text-lg font-semibold text-gray-800'></h2>
+          <h2
+            className='text-[16px] font-semibold'
+            style={{ color: '#2D3E4F' }}
+          >
+            Create New Task in {columnName}
+          </h2>
           <button
             onClick={handleClose}
             className='p-2 hover:bg-gray-100 rounded transition-colors'
@@ -252,22 +267,22 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
 
         <div className='p-6 space-y-6'>
           <div>
-            <label className='block text-sm font-medium text-gray-700 mb-2'>
-              Task Name *
+            <label className='block text-[13px] font-medium text-gray-700 mb-2'>
+              Task Name <span className='text-red-500'>*</span>
             </label>
             <input
               type='text'
               value={taskTitle}
               onChange={(e) => setTaskTitle(e.target.value)}
               placeholder='Enter task name'
-              className='w-full text-2xl font-bold bg-transparent border-b-2 border-gray-300 focus:border-blue-500 outline-none text-gray-900 placeholder-gray-400 pb-2'
+              className='w-full text-[13px] font-normal bg-transparent border-b border-gray-300 focus:border-blue-400 focus:border-b outline-none text-gray-900 placeholder-[#7D98B6] pb-2'
               autoFocus
             />
           </div>
 
-          {!fieldVisibility.assignee && (
+          {fieldVisibility.assignee !== true && (
             <div className='flex items-center justify-between'>
-              <span className='text-sm font-medium text-gray-600'>
+              <span className='text-[13px] font-medium text-gray-600'>
                 Assignee
               </span>
               <div className='w-[200px]'>
@@ -459,8 +474,8 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
             <div className='grid grid-cols-2 gap-4'>
               {!fieldVisibility.startDate && (
                 <div>
-                  <label className='block text-xs font-medium text-gray-600 mb-1'>
-                    Start Date *
+                  <label className='block text-[13px] font-medium text-gray-600 mb-1'>
+                    Start Date <span className='text-red-500'>*</span>
                   </label>
                   <DatePicker
                     disabled={fieldDisabled.startDate}
@@ -489,6 +504,10 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                               pl: '11px',
                               color: 'black !important',
                               WebkitTextFillColor: 'black !important',
+                              '&::placeholder': {
+                                color: '#7D98B6',
+                                opacity: 1,
+                              },
                             },
                             '&:hover .MuiOutlinedInput-notchedOutline': {
                               border: '1px solid #CBD6E2',
@@ -510,8 +529,8 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
               )}
               {!fieldVisibility.endDate && (
                 <div>
-                  <label className='block text-xs font-medium text-gray-600 mb-1'>
-                    Due Date *
+                  <label className='block text-[13px] font-medium text-gray-600 mb-1'>
+                    Due Date <span className='text-red-500'>*</span>
                   </label>
                   <DatePicker
                     disabled={fieldDisabled.endDate}
@@ -541,6 +560,10 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                               pl: '11px',
                               color: 'black !important',
                               WebkitTextFillColor: 'black !important',
+                              '&::placeholder': {
+                                color: '#7D98B6',
+                                opacity: 1,
+                              },
                             },
                             '&:hover .MuiOutlinedInput-notchedOutline': {
                               border: '1px solid #CBD6E2',
@@ -564,7 +587,9 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
           </LocalizationProvider>
 
           <div>
-            <h3 className='text-sm font-semibold text-gray-700 mb-3'>Fields</h3>
+            <h3 className='text-[13px] font-semibold text-gray-700 mb-3'>
+              Fields
+            </h3>
             <div className='border border-gray-200 rounded-lg divide-y divide-gray-200'>
               {!fieldVisibility.status && (
                 <div className='flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors'>
@@ -580,12 +605,14 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                     >
                       <polyline points='22 12 18 12 15 21 9 3 6 12 2 12'></polyline>
                     </svg>
-                    <span className='text-sm text-gray-700'>Status *</span>
+                    <span className='text-[13px] text-gray-700'>
+                      Status <span className='text-red-500'>*</span>
+                    </span>
                   </div>
                   <div className='w-[200px]'>
                     <Select
                       name='status'
-                      disabled={fieldDisabled.status || true}
+                      disabled={true}
                       className='custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px]'
                       onChange={handleStatusChange}
                       value={selectedStatus}
@@ -606,8 +633,8 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                             opacity: 1,
                           },
                           '& .MuiSelect-select': {
-                            color: '#7D98B6',
-                            WebkitTextFillColor: '#7D98B6',
+                            color: '#425A76',
+                            WebkitTextFillColor: '#425A76',
                           },
                         },
                         '& .MuiOutlinedInput-notchedOutline': {
@@ -653,7 +680,9 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                       <path d='M9 3h2v18H9z'></path>
                       <path d='M15 8h2v13h-2z'></path>
                     </svg>
-                    <span className='text-sm text-gray-700'>Priority *</span>
+                    <span className='text-[13px] text-gray-700'>
+                      Priority <span className='text-red-500'>*</span>
+                    </span>
                   </div>
                   <div className='w-[200px]'>
                     <Select
@@ -729,7 +758,9 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                       <path d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'></path>
                       <circle cx='12' cy='7' r='4'></circle>
                     </svg>
-                    <span className='text-sm text-gray-700'>User Role</span>
+                    <span className='text-[13px] text-gray-700'>
+                      User Role <span className='text-red-500'>*</span>
+                    </span>
                   </div>
                   <div className='w-[200px]'>
                     <Select
@@ -789,7 +820,7 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                 </div>
               )}
 
-              {!fieldVisibility.tags && (
+              {fieldVisibility.tags !== true && (
                 <div className='px-4 py-3 hover:bg-gray-50 transition-colors'>
                   <div className='flex items-center justify-between mb-3'>
                     <div className='flex items-center gap-2'>
@@ -805,17 +836,23 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                         <path d='M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z'></path>
                         <line x1='7' y1='7' x2='7.01' y2='7'></line>
                       </svg>
-                      <span className='text-sm text-gray-700'>Tags</span>
+                      <span className='text-[13px] text-gray-700'>
+                        Tags <span className='text-red-500'>*</span>
+                      </span>
                     </div>
                     <div className='w-[200px]'>
                       <Autocomplete
                         multiple
-                        freeSolo
+                        freeSolo={true}
                         disabled={fieldDisabled.tags}
-                        options={tagData.map((tag) => tag.name)}
+                        options={tagOptions}
                         value={selectedTags}
                         onChange={(_, newValue) => {
-                          setSelectedTags(newValue);
+                          // Filter out empty strings and duplicates
+                          const cleanedValues = Array.from(
+                            new Set(newValue.filter((v) => v.trim()))
+                          );
+                          setSelectedTags(cleanedValues);
                         }}
                         renderTags={() => null}
                         renderInput={(params) => (
@@ -831,6 +868,10 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                                   fontSize: '13px',
                                   padding: '0 !important',
                                   color: '#7D98B6',
+                                  '&::placeholder': {
+                                    color: '#7D98B6',
+                                    opacity: 1,
+                                  },
                                 },
                               },
                               '& .MuiOutlinedInput-notchedOutline': {
@@ -856,10 +897,38 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                             fontSize: '13px',
                           },
                         }}
+                        noOptionsText={
+                          tagOptions.length === 0
+                            ? 'No tags available'
+                            : 'No matching tags'
+                        }
+                        slotProps={{
+                          paper: {
+                            sx: {
+                              zIndex: 9999,
+                              boxShadow:
+                                'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
+                              '& .MuiAutocomplete-option': {
+                                fontSize: '13px !important',
+                                padding: '8px 12px !important',
+                                color: '#425A76 !important',
+                              },
+                            },
+                          },
+                        }}
                         sx={{
                           '& .MuiOutlinedInput-root': {
                             padding: '6px',
                             fontSize: '13px',
+                          },
+                          '& .MuiAutocomplete-listbox': {
+                            maxHeight: '200px',
+                            fontSize: '13px',
+                          },
+                          '& .MuiAutocomplete-option': {
+                            fontSize: '13px',
+                            padding: '8px 12px',
+                            color: '#425A76',
                           },
                         }}
                       />
@@ -871,7 +940,7 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                       {selectedTags.map((tag, index) => (
                         <div
                           key={index}
-                          className='inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium hover:bg-blue-200 transition-colors group'
+                          className='inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-[13px] font-medium hover:bg-blue-200 transition-colors group'
                         >
                           <span>{tag}</span>
                           <button
@@ -896,14 +965,14 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
 
           {!fieldVisibility.description && (
             <div>
-              <h3 className='text-sm font-semibold text-gray-700 mb-3'>
+              <h3 className='text-[13px] font-semibold text-gray-700 mb-3'>
                 Description
               </h3>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder='Add a description...'
-                className='w-full bg-white border border-gray-300 rounded-lg p-3 text-sm resize-none focus:border-blue-500 focus:outline-none text-gray-900 placeholder-gray-500 min-h-[100px]'
+                className='w-full bg-white border border-gray-300 rounded-lg p-3 text-[13px] resize-none focus:border-blue-500 focus:outline-none text-gray-900 placeholder-[#7D98B6] min-h-[100px]'
                 disabled={fieldDisabled.description}
               />
             </div>
@@ -911,24 +980,26 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
         </div>
 
         <div className='sticky bottom-0 flex items-center justify-end gap-3 p-4 border-t border-gray-200 bg-white z-50 shadow-sm'>
-          <button
+          <TextButton
+            label='Cancel'
             onClick={handleClose}
-            className='px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors'
             disabled={isSubmitting}
-          >
-            Cancel
-          </button>
-          <button
+          />
+          <TextButton
+            label={isSubmitting ? 'Creating...' : 'Create Task'}
             onClick={handleSubmit}
             disabled={!isFormValid() || isSubmitting}
-            className={`px-4 py-2 text-sm font-medium text-white rounded transition-colors ${
-              isFormValid() && !isSubmitting
-                ? 'bg-blue-600 hover:bg-blue-700'
-                : 'bg-gray-400 cursor-not-allowed'
-            }`}
-          >
-            {isSubmitting ? 'Creating...' : 'Create Task'}
-          </button>
+            sx={{
+              backgroundColor:
+                !isFormValid() || isSubmitting ? '#D1D5DB' : '#2563EB',
+              color: !isFormValid() || isSubmitting ? '#9CA3AF' : '#FFFFFF',
+              '&:hover': {
+                backgroundColor:
+                  !isFormValid() || isSubmitting ? '#D1D5DB' : '#1D4ED8',
+                color: !isFormValid() || isSubmitting ? '#9CA3AF' : '#FFFFFF',
+              },
+            }}
+          />
         </div>
       </div>
     </>
