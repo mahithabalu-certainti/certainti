@@ -9,12 +9,12 @@ export const getCaseListURL = (
     limit,
     fiscalYear,
     globalFilters,
+    isGlobal,
     search,
   }: CaseListParams,
-  accountId?: string,
-  caseId?: string
+  accountId?: string
 ): string => {
-  const baseUrl = `/api/cases/reviewProjects/${accountId}/${caseId}`;
+  const baseUrl = `/api/cases/list${isGlobal ? `/caseSummary` : ''}`;
   const searchParams = new URLSearchParams();
 
   if (accountId) searchParams.set('account_rid', accountId);
