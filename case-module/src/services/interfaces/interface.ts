@@ -271,7 +271,10 @@ deleteTagsAccountLevel (data : any) : Promise<{
     statusCode: number;
     statusMessage: string;
 }>
-
+deleteCollaborators (data : any) : Promise<{
+    statusCode: number;
+    statusMessage: string;
+} | undefined>
 }
 
 export interface ICaseManagementService {

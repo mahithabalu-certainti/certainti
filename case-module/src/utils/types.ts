@@ -313,6 +313,23 @@ export interface ICreateChecklistItemTemplate {
   modified_datetime?: Date;
 }
 
+type WorkflowConnectorItems = {
+  source_rid : string
+  relationship_connector_rid : string
+  target_rid : string[]
+}
+
+type WorkflowConnectorItemsAccountLevel = {
+  case_rid : string
+  account_rid : string
+  task_rid : string
+  source_rid : string
+  relationship_connector_rid : string
+  target_rid : string[]
+  created_by : string
+  created_datetime : Date
+}
+
 export type CreateTaskTemplateType = {
   created_by : string,
   modified_by : string,
@@ -330,7 +347,8 @@ export type CreateTaskTemplateType = {
   priority_rid : string,
   task_type_rid: string,
   milestone_template_rid : string,
-  task_description : string
+  task_description : string,
+  workflow_connector : WorkflowConnectorItems
 }
 
 export type priorityTypes = {
@@ -368,7 +386,8 @@ export type UpdateTaskTemplateType = {
   priority_rid : string,
   task_type_rid: string,
   milestone_template_rid : string,
-  task_description : string
+  task_description : string,
+  workflow_connector : WorkflowConnectorItems
 }
 
 export type AdminTaskTemplateResponseTypes = {
@@ -465,7 +484,8 @@ export type CreateCaseTaskType = {
   task_type_rid : string,
   task_description : string,
   status_rid : string,
-  tags : tagTypes[]
+  tags : tagTypes[],
+  workflow_connector : WorkflowConnectorItemsAccountLevel
 }
 
 export type UpdateCaseTaskType = {
@@ -485,7 +505,8 @@ export type UpdateCaseTaskType = {
   case_rid: string,
   task_type_rid : string,
   task_description : string
-  tags : tagTypes[]
+  tags : tagTypes[],
+  workflow_connector : WorkflowConnectorItemsAccountLevel
 }
 
 export type CaseTaskQueryType = {

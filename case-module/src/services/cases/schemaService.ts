@@ -4625,6 +4625,15 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       await this.createOrUpdateTags(createdTaskResult.dataValues.rid, data.account_rid, data.case_rid, d.tag_rid, d.is_new_tag, accountNumber, data.created_by, activeStatusRid,"case_task")
         }
       }
+      if(Object.keys(data.workflow_connector).length > 0) {
+        if(data.workflow_connector.target_rid.length > 0) {
+          data.workflow_connector.created_by = data.created_by
+          data.workflow_connector.case_rid = data.case_rid
+          data.workflow_connector.source_rid = createdTaskResult.dataValues.rid
+          data.workflow_connector.account_rid = data.account_rid
+          await this.taskWorkflowConnector(accountNumber, data.workflow_connector);
+        }
+      }
       await CaseTimeline.create({
         created_by : data.created_by,
         created_datetime : new Date(),
@@ -4692,6 +4701,14 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
           if(data.tags.length > 0) {
             for(let d of data.tags) {
             await this.createOrUpdateTags(isTaskExists.rid, data.account_rid, data?.case_rid, d.tag_rid, d.is_new_tag, accountNumber, data.modified_by, activeStatusRid)
+            }
+          }
+          if(Object.keys(data.workflow_connector).length > 0) {
+            if(data.workflow_connector.target_rid.length > 0) {
+              data.workflow_connector.created_by = data.modified_by
+              data.workflow_connector.case_rid = data.case_rid
+              data.workflow_connector.account_rid = data.account_rid
+              await this.taskWorkflowConnector(accountNumber, data.workflow_connector);
             }
           }
           const fetchUpdatedColumns = getColumnsNamesForTaskUpdate(data, isTaskExists as any);
@@ -4828,6 +4845,19 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
 
     }
     
+  }
+   async checkTaskExistsForUserLevelTask (data : any, taskTypeRid : string, accountNumber : string) {
+    const { CaseTask } = await this.caseModelService.getModels(accountNumber)
+    const checkTaskNameExists = await CaseTask.findOne({
+      attributes : ['task_name'],
+      where : {
+        task_name : {
+          [Op.iLike] : data.task_name
+        },
+        task_type_rid : taskTypeRid
+      },raw : true
+    })
+    return checkTaskNameExists
   }
   async checkTaskNameExistsForUpdate (data : UpdateCaseTaskType, accountNumber : string) {
     const { CaseTask } = await this.caseModelService.getModels(accountNumber)
@@ -5026,6 +5056,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
   }
   async fetchAllTags (data : TaskTag[]) {
     const {Tags} = await this.caseModelService.getModels("")
+    if(data.length > 0) {
     const result = await Tags.findAll({
       where : {
         rid : {
@@ -5037,6 +5068,15 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     })
     if(result.length > 0) return result
     else return []
+    } else {
+    const result = await Tags.findAll({
+      attributes : ['rid', 'tag_name'],
+      order : [['tag_name', 'ASC']],
+    })
+    if(result.length > 0) return result
+    else return []
+    }
+
   }
   async isTagAlreadyMapped (accountNumber : string, taskRid : string, accountRid : string, caseRid : string, tagRid : string) {
     const {TaskTag} = await this.caseModelService.getModels(accountNumber);
@@ -6119,6 +6159,28 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       return {
         statusCode : HttpStatus.FAILED,
         statusMessage : STATUS_MESSAGE.tagDeletionFailed
+      }
+    }
+  }
+  async deleteCollaborators (accountNumber : string, data : any) {
+    const {TaskCollaborators} = await this.caseModelService.getModels(accountNumber);
+    const result = await TaskCollaborators.destroy({
+      where : {
+        account_rid : data.account_rid,
+        case_rid : data.case_rid,
+        task_rid : data.rid,
+        assigned_to : data.assigned_to
+      }
+    });
+    if(result > 0) {
+      return {
+        statusCode : HttpStatus.SUCCESS,
+        statusMessage : STATUS_MESSAGE.collaboratorsRemovedSuccesss
+      }
+    } else {
+      return {
+        statusCode : HttpStatus.SUCCESS,
+        statusMessage : STATUS_MESSAGE.collaboratorRemovedFailed
       }
     }
   }
