@@ -1150,7 +1150,7 @@ return query;
     ), 
     
     fetch_task_comments AS (
-    SELECT tc.rid, tc.comments, tc.account_rid, tc.case_rid, tc.task_rid, c.total_result
+    SELECT tc.rid, tc.comments, tc.account_rid, tc.case_rid, tc.task_rid, c.total_result, tc.created_by, tc.created_datetime
     FROM ${schemaName}.task_comments tc
     LEFT JOIN calculate_total_result c ON c.rid = tc.rid
     WHERE
@@ -1191,6 +1191,8 @@ return query;
     'case_rid', tc.case_rid,
     'task_rid', tc.task_rid,
     'total_result', tc.total_result,
+    'created_by', tc.created_by,
+    'created_datetime', tc.created_datetime,
     'comments_attachments', ca.comments_attachments
     )) AS comments
     FROM

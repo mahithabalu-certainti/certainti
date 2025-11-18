@@ -2162,6 +2162,9 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
       const result : any = await orgDb.query(fetchTaskComments(data.page, data.limit, data.task_rid, data.account_rid, data.case_rid, schemaName));
       if(result[0][0].comments !== null) {
         const total = result[0][0].comments[0].total_result
+        const userIds = [...new Set(result[0][0].comments.map((d : any) => d.created_by))];
+        const findUsers = await mainDb.query(rawQueries.getOwnerDetails(userIds));
+        const userMap = new Map(findUsers[0].map((d : any) => [d.rid, d.name]));
         const structuredData = await Promise.all(
         (result[0][0].comments || []).map(async (d: any) => {
           delete d.total_result
@@ -2173,6 +2176,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
             );
             return {
               ...d,
+              created_by_name : userMap.get(d.created_by) || null,
               comments_attachments: updatedAttachments,
             };
           })

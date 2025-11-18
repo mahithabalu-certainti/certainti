@@ -5436,6 +5436,9 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
   }
 
   async listTaskLevelAttachments (accountNumber : string, data : any) {
+    if(!this.mainDbSequelize) {
+      this.mainDbSequelize = await initMainDbSequelize()
+    }
     let offset = (data.page - 1) * data.limit;
     const {TaskAttachments} = await this.caseModelService.getModels(accountNumber)
     let fetchAllTaskAttachments = await TaskAttachments.findAll({
@@ -5448,9 +5451,13 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     if(fetchAllTaskAttachments.length > 0) {
       const total = fetchAllTaskAttachments.length
       fetchAllTaskAttachments = fetchAllTaskAttachments.slice(offset, data.page * data.limit);
+      const userIds = [...new Set(fetchAllTaskAttachments.map((d : any) => d.created_by))];
+      const findUsers = await this.mainDbSequelize.query(rawQueries.getOwnerDetails(userIds));
+      const userMap = new Map(findUsers[0].map((d : any) => [d.rid, d.name]));
       const structuredDate = await Promise.all(fetchAllTaskAttachments.map(async (d : any) => {
         return {
           ...d,
+          created_by_name : userMap.get(d.created_by) || null,
           browse_file : await generateSasUrl(d.browse_file)
         }
       }))
