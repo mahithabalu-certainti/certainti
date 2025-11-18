@@ -5760,6 +5760,40 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     });
     return result
   }
+
+  async deleteTags (accountNumber : string, caseRid : string, accountRid : string, taskRid : string, tagRid : string[]) {
+    const {TaskTag} = await this.caseModelService.getModels(accountNumber);
+    let responseMessage : string
+    if(tagRid.length == 1) responseMessage = STATUS_MESSAGE.tagDeletedSuccess
+    else responseMessage = STATUS_MESSAGE.multipleTagDeletedSuccess
+    if(tagRid.length == 0) {
+      return {
+        statusCode : HttpStatus.BAD_REQUEST,
+        statusMessage : STATUS_MESSAGE.tagRequired
+      }
+    }
+    const result = await TaskTag.destroy({
+      where : {
+        case_rid : caseRid,
+        account_rid : accountRid,
+        task_rid : taskRid,
+        tag_rid : {
+          [Op.in] : tagRid.map((d : any) => d)
+        },
+      }
+    });
+    if(result > 0) {
+      return {
+        statusCode : HttpStatus.SUCCESS,
+        statusMessage : responseMessage
+      }
+    } else {
+      return {
+        statusCode : HttpStatus.FAILED,
+        statusMessage : STATUS_MESSAGE.tagDeletionFailed
+      }
+    }
+  }
 }
 
 // Utility function for optimized column sorting

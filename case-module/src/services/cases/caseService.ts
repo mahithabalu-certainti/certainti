@@ -2032,18 +2032,23 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
       const dbInit = await this.caseModelService.getSequelize();
       const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
       const getActiveStatusId : any = await mainDb.query(rawQueries.getActiveStatusId());
-      const result = await this.caseSchemaService.createOrUpdateTags(data.task_rid, data.account_rid,
-        data.case_rid, data.tag_rid, data.is_new_tag, fetchParent[0][0].r_number, data.userId, getActiveStatusId[0][0].rid
-      )
-      if(result.statusCode == HttpStatus.SUCCESS) {
+      let iterationCount = 0
+      let totalIteration = 0
+      data.tags.length = totalIteration
+      for(let d of data.tags) {
+        iterationCount += 1
+        await this.caseSchemaService.createOrUpdateTags(data.task_rid, data.account_rid,
+        data.case_rid, data.tag_rid, data.is_new_tag, fetchParent[0][0].r_number, data.userId, getActiveStatusId[0][0].rid)
+      }
+      if(totalIteration === iterationCount) {
         return {
           statusCode : HttpStatus.SUCCESS,
-          data : result.data
+          statusMessage : STATUS_MESSAGE.tagsCreatedSuccesfully
         }
       } else {
         return {
           statusCode : HttpStatus.FAILED,
-          data : result.data
+          statusMessage : STATUS_MESSAGE.tagsCreationFailed
         }
       }
     }
@@ -2540,5 +2545,11 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
     const result = await this.caseSchemaService.listTasksDropdownForAccountLevel(accountNumber[0][0].r_number, data);
     if(result.length > 0) return result
     else return []
+  }
+  async deleteTagsAccountLevel (data : any) {
+    const mainDb = await this.getMainDb();
+    const accountNumber : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
+    const result = await this.caseSchemaService.deleteTags(accountNumber[0][0].r_number, data.case_rid, data.account_rid, data.task_rid, data.tag_rid);
+    return result;
   }
 }

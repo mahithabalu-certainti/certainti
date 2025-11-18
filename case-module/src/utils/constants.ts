@@ -126,6 +126,10 @@ export const STATUS_MESSAGE = {
   tagsCreatedSuccesfully : "Tags added successfully",
   tagMappedAlready : "Tag already added",
   tagsListedSuccess : "Tags listed successfully",
+  tagDeletedSuccess : "Tag deleted successfully",
+  tagRequired : "Atleast one tag is required to delete",
+  multipleTagDeletedSuccess : "Tags deleted successfully",
+  tagDeletionFailed : "Tag deletion failed",
   commentsAddedSuccess : "Comments added successfully",
   commentsFailed : "Failed to create comments",
   taskExportedSuccess : "Case Task exported successfully",
@@ -157,7 +161,8 @@ export const STATUS_MESSAGE = {
   workflowConnectorMappedFailed: "Task linking failed",
   workflowConnectorMappedDeleted : "Linked Task deleted successfully",
   workflowConnectorMappedDeletedFailed : "Failed to link task",
-  caseTaskFetchedSuccess : "Case Task fetched successfully"
+  caseTaskFetchedSuccess : "Case Task fetched successfully",
+  tagsCreationFailed : "Failed to add Tags"
 };
 
 export const caseStatuses = {

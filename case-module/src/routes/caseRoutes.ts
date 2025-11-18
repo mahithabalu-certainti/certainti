@@ -165,6 +165,11 @@ routes.post(
   controller.caseController.fetchAllTags
 )
 routes.post(
+  "/tag/delete",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.deleteTagsTaskLevel
+)
+routes.post(
   "/task/comments/add",
   checkUserStatusMiddleware("NA"),
   upload.array('files'),

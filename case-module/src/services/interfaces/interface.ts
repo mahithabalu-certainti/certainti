@@ -182,7 +182,7 @@ taskListForCases(data : any, isExport : boolean) : Promise<{
 }>
 createOrMapTags(data : any) : Promise<{
     statusCode: number;
-    data: string | TaskTag | null;
+    statusMessage: string;
 }>
 fetchTagsForDropdown (data : any) : Promise<{
     statusCode: number;
@@ -267,6 +267,10 @@ deleteLinkTask (data : CaseTaskWorkFlowDelete) : Promise<{
     statusMessage: string;
 } | undefined>
 taskListForDropdownAccountLevel (data : any) : Promise<CaseTask[]>
+deleteTagsAccountLevel (data : any) : Promise<{
+    statusCode: number;
+    statusMessage: string;
+}>
 }
 
 export interface ICaseManagementService {
