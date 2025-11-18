@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   MenuItem,
   Select,
@@ -33,6 +33,8 @@ export interface TaskFormData {
   selectedTags: string[];
   selectedRole: string;
   selectedRoleRid: string;
+  selectedChecklist: string;
+  selectedChecklistRid: string;
 }
 
 interface TaskCreateModalProps {
@@ -44,6 +46,7 @@ interface TaskCreateModalProps {
   statusData?: Array<{ id: string; name: string; color?: string }>;
   priorityData?: Array<{ id: string; name: string; color?: string }>;
   tagData?: Array<{ id: string; name: string }>;
+  checklistData?: Array<{ id: string; name: string }>;
   collaboratorData?: Array<{ rid: string; name: string; email?: string }>;
   availableUsers?: UserOption[];
   roleOptions?: RoleOption[];
@@ -54,6 +57,7 @@ interface TaskCreateModalProps {
     status?: boolean;
     priority?: boolean;
     tags?: boolean;
+    checklist?: boolean;
     description?: boolean;
     collaborators?: boolean;
   };
@@ -64,6 +68,7 @@ interface TaskCreateModalProps {
     status?: boolean;
     priority?: boolean;
     tags?: boolean;
+    checklist?: boolean;
     description?: boolean;
     collaborators?: boolean;
   };
@@ -78,6 +83,7 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
   statusData = [],
   priorityData = [],
   tagData = [],
+  checklistData = [],
   collaboratorData = [],
   availableUsers = [],
   roleOptions = [],
@@ -96,10 +102,12 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedRole, setSelectedRole] = useState('');
   const [selectedRoleRid, setSelectedRoleRid] = useState('');
+  const [selectedChecklist, setSelectedChecklist] = useState('');
+  const [selectedChecklistRid, setSelectedChecklistRid] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const collaborators =
-    collaboratorData && collaboratorData.length > 0
+  const enrichedUsers = useMemo(() => {
+    return collaboratorData && collaboratorData.length > 0
       ? collaboratorData.map((collab) => ({
           id: collab.rid,
           name: collab.name,
@@ -108,8 +116,7 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
           color: generateColorFromName(collab.name),
         }))
       : availableUsers.map(enrichUserOption);
-
-  const enrichedUsers = collaborators;
+  }, [collaboratorData, availableUsers]);
 
   // Extract tag names from tagData for Autocomplete options
   const tagOptions =
@@ -137,6 +144,8 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
     setSelectedTags([]);
     setSelectedRole('');
     setSelectedRoleRid('');
+    setSelectedChecklist('');
+    setSelectedChecklistRid('');
     onClose();
   };
 
@@ -161,6 +170,8 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
         selectedTags,
         selectedRole,
         selectedRoleRid,
+        selectedChecklist,
+        selectedChecklistRid,
       };
 
       console.log('Submitting form data:', formData);
@@ -449,13 +460,6 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                           style={{
                             width: '20px',
                             height: '20px',
-                            borderRadius: '50%',
-                            backgroundColor: user.color,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '8px',
-                            fontWeight: '600',
                             color: 'white',
                           }}
                         >
@@ -820,6 +824,111 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                 </div>
               )}
 
+              {fieldVisibility.checklist !== true && (
+                <div className='flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors'>
+                  <div className='flex items-center gap-2'>
+                    <svg
+                      width='16'
+                      height='16'
+                      viewBox='0 0 24 24'
+                      fill='none'
+                      stroke='currentColor'
+                      strokeWidth='2'
+                      className='text-gray-500'
+                    >
+                      <path d='M9 11l3 3L22 4'></path>
+                      <path d='M21 12a9 9 0 11-18 0 9 9 0 0118 0z'></path>
+                    </svg>
+                    <span className='text-[13px] text-gray-700'>
+                      Checklist Template
+                    </span>
+                  </div>
+                  <div className='w-[200px]'>
+                    <Select
+                      name='checklist'
+                      disabled={fieldDisabled.checklist}
+                      className='custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px]'
+                      onChange={(event: SelectChangeEvent<string>) => {
+                        const selectedName = event.target.value;
+                        setSelectedChecklist(selectedName);
+                        const checklistItem = checklistData?.find(
+                          (c) => c.name === selectedName
+                        );
+                        if (checklistItem) {
+                          setSelectedChecklistRid(checklistItem.id);
+                        }
+                      }}
+                      value={selectedChecklist}
+                      displayEmpty
+                      fullWidth
+                      size='small'
+                      sx={{
+                        height: '32px',
+                        fontSize: '13px',
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          border: '2px solid #60A5FA',
+                        },
+                        '.MuiSelect-select': {
+                          padding: '6px 6px',
+                          color: !selectedChecklist ? '#7D98B6' : 'black',
+                        },
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          border: '1px solid #CBD6E2',
+                          borderRadius: '2px',
+                        },
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          border: '1px solid #CBD6E2',
+                        },
+                        '& svg': {
+                          color: '#7D98B6',
+                        },
+                      }}
+                      renderValue={(value) =>
+                        value ? (
+                          value
+                        ) : (
+                          <span style={{ color: '#7D98B6' }}>
+                            Choose Checklist
+                          </span>
+                        )
+                      }
+                    >
+                      <MenuItem
+                        value=''
+                        sx={{
+                          color: '#425A76',
+                          fontSize: '13px',
+                          fontWeight: '500',
+                        }}
+                      >
+                        None
+                      </MenuItem>
+                      {checklistData && checklistData.length > 0 ? (
+                        checklistData.map((checklist) => (
+                          <MenuItem
+                            sx={{
+                              color: '#425A76',
+                              fontSize: '13px',
+                              fontWeight: '500',
+                            }}
+                            key={checklist.id}
+                            value={checklist.name}
+                          >
+                            {checklist.name}
+                          </MenuItem>
+                        ))
+                      ) : (
+                        <MenuItem disabled>
+                          <span style={{ color: '#9CA3AF' }}>
+                            No checklists available
+                          </span>
+                        </MenuItem>
+                      )}
+                    </Select>
+                  </div>
+                </div>
+              )}
+
               {fieldVisibility.tags !== true && (
                 <div className='px-4 py-3 hover:bg-gray-50 transition-colors'>
                   <div className='flex items-center justify-between mb-3'>
@@ -990,12 +1099,14 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
             onClick={handleSubmit}
             disabled={!isFormValid() || isSubmitting}
             sx={{
+              px: 4,
+              py: 1,
               backgroundColor:
                 !isFormValid() || isSubmitting ? '#D1D5DB' : '#2563EB',
               color: !isFormValid() || isSubmitting ? '#9CA3AF' : '#FFFFFF',
               '&:hover': {
                 backgroundColor:
-                  !isFormValid() || isSubmitting ? '#D1D5DB' : '#1D4ED8',
+                  !isFormValid() || isSubmitting ? '#D1D5DB' : '#2563EB',
                 color: !isFormValid() || isSubmitting ? '#9CA3AF' : '#FFFFFF',
               },
             }}

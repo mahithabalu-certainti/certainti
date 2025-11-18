@@ -4,7 +4,7 @@ import {
   getTaskDetailURL,
 } from '../urls/work-breakdown-url';
 import type { Task } from '../../../components/kanban-board/types';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 
 export interface KanbanBoardData {
   statusCode: number;
@@ -421,4 +421,56 @@ export const fetchCollaborators = async (
     console.error(`Error fetching collaborators for task ${taskId}:`, error);
     return [];
   }
+};
+
+export interface AddCollaboratorPayload {
+  case_rid: string;
+  account_rid: string;
+  rid: string; // task_rid
+  user_rid: string;
+  action_type?: string;
+}
+
+export interface AddCollaboratorResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data?: {
+    rid?: string;
+    [key: string]: unknown;
+  };
+}
+
+export const addCollaborator = async (
+  payload: AddCollaboratorPayload
+): Promise<AddCollaboratorResponse> => {
+  try {
+    // Hardcode action_type as 'milestone' if not provided
+    const enrichedPayload = {
+      ...payload,
+      action_type: payload.action_type || 'milestone',
+    };
+
+    const response = await caseServiceApi.post<AddCollaboratorResponse>(
+      '/api/cases/task/collaborator/add',
+      enrichedPayload
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error('Error adding collaborator:', error);
+    throw error;
+  }
+};
+
+export const useAddCollaborator = () => {
+  return useMutation({
+    mutationFn: (payload: AddCollaboratorPayload) => addCollaborator(payload),
+    onError: (error) => {
+      console.error('Failed to add collaborator:', error);
+    },
+    onSuccess: (data) => {
+      console.log('Collaborator added successfully:', data);
+    },
+  });
 };

@@ -13,6 +13,8 @@ import {
   useGetTaskPriorities,
   useGetTaskStatuses,
   fetchCollaborators,
+  useAddCollaborator,
+  AddCollaboratorPayload,
 } from '../../../../services/work-breakdown/work-breakdown-service';
 import {
   fetchTaskCommentsList,
@@ -25,8 +27,8 @@ import {
 } from '../../../../services/case-task/case-task-service';
 import {
   useGetUserOptions,
-  useGetTagOptions,
   useGetRoleOptions,
+  useGetTagOptions,
 } from '../../../../services/case-team/case-team-service';
 import {
   transformActivities,
@@ -42,6 +44,7 @@ import { ExportType } from '../../../../types';
 import { ActivityMenuItem } from '../../../../types';
 import { useToast } from '../../../../../hooks';
 import { TaskCard } from '../../../../../components/kanban-board/types';
+import { useGetTaskCheckListTypes } from '../../../../../admin/service/task-template/task-template-service';
 
 const ConfigTabs: ResourceTabs[] = [
   {
@@ -76,12 +79,36 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
   } = useGetWorkBreakdownList(accountId || '', caseId || '');
 
   const userOptionsQuery = useGetUserOptions(accountId || '');
-  const tagOptionsQuery = useGetTagOptions();
   const roleOptionsQuery = useGetRoleOptions();
   const prioritiesQuery = useGetTaskPriorities();
   const statusesQuery = useGetTaskStatuses();
+  const checklistQuery = useGetTaskCheckListTypes();
+  const tagOptionsQuery = useGetTagOptions(
+    {
+      task_rid: '',
+      account_rid: accountId || '',
+      case_rid: caseId || '',
+      action: 'create',
+    },
+    !!accountId && !!caseId
+  );
 
-  const tagData = transformTagData(tagOptionsQuery.data || []);
+  const tagData = useMemo(
+    () => transformTagData(tagOptionsQuery.data || []),
+    [tagOptionsQuery.data]
+  );
+
+  const checklistData = useMemo(() => {
+    if (checklistQuery.data?.data && Array.isArray(checklistQuery.data.data)) {
+      return checklistQuery.data.data.map(
+        (checklist: { rid: string; checklist_name: string }) => ({
+          id: checklist.rid,
+          name: checklist.checklist_name,
+        })
+      );
+    }
+    return [];
+  }, [checklistQuery.data]);
 
   const priorityData = useMemo(
     () => transformPriorityData(prioritiesQuery.data || []),
@@ -178,33 +205,28 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
       }
 
       try {
-        // Process tags - separate existing from new tags
-        const existingTagRids: string[] = [];
-        const newTags: string[] = [];
+        // Process tags - build array of tag objects with tag_rid and is_new_tag
+        const tagsArray: Array<{ tag_rid: string; is_new_tag: boolean }> = [];
 
-        if (taskData.tags) {
+        if (taskData.tags && taskData.tags.length > 0) {
           taskData.tags.forEach((tagName: string) => {
             const existingTag = tagData?.find((t) => t.name === tagName);
             if (existingTag) {
-              existingTagRids.push(existingTag.id);
+              // Existing tag - use the rid
+              tagsArray.push({
+                tag_rid: existingTag.id,
+                is_new_tag: false,
+              });
             } else {
-              newTags.push(tagName);
+              // New tag - use the tag name as tag_rid
+              tagsArray.push({
+                tag_rid: tagName,
+                is_new_tag: true,
+              });
             }
           });
         }
 
-        // Build tag_rid - can be single string or array of strings
-        let tagRid: string | string[] | undefined;
-        if (existingTagRids.length > 0) {
-          tagRid =
-            existingTagRids.length === 1 ? existingTagRids[0] : existingTagRids;
-        }
-
-        // Build tags array for new custom tags
-        const tagsPayload =
-          newTags.length > 0 ? newTags.map((name) => ({ name })) : undefined;
-
-        // Build the complete API payload
         const taskPayload: CreateTaskPayload = {
           case_rid: caseId,
           account_rid: accountId,
@@ -215,26 +237,21 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
           case_team_member_role_rid: taskData.case_team_member_role_rid || '',
           effective_start_datetime: taskData.effective_start_datetime || '',
           effective_end_datetime: taskData.effective_end_datetime || '',
+          assigned_to: taskData.assigned_to || '',
           milestone_template_rid: columnId,
-          checklist_template_rid: '',
+          checklist_template_rid:
+            (
+              taskData as Partial<TaskCard> & {
+                checklist_template_rid?: string;
+              }
+            ).checklist_template_rid || '',
+          tags: tagsArray.length > 0 ? tagsArray : undefined,
+          workflow_connector: {
+            source_rid: '',
+            target_rid: [],
+            relationship_connector_rid: '',
+          },
         };
-
-        // Add tag_rid if we have existing tags
-        if (tagRid !== undefined) {
-          taskPayload.tag_rid = tagRid;
-          taskPayload.is_new_tag = false;
-        }
-
-        // Add tags array if we have new tags
-        if (tagsPayload !== undefined) {
-          taskPayload.tags = tagsPayload;
-          taskPayload.is_new_tag = true;
-        }
-
-        // If no tags at all, set is_new_tag to false
-        if (tagRid === undefined && tagsPayload === undefined) {
-          taskPayload.is_new_tag = false;
-        }
 
         console.log('Creating task with payload:', taskPayload);
         const response = await createTaskMutation.mutateAsync(taskPayload);
@@ -256,7 +273,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
         throw error;
       }
     },
-    [accountId, caseId, tagData, createTaskMutation, successToast, errorToast]
+    [accountId, caseId, createTaskMutation, successToast, errorToast, tagData]
   );
 
   const headerButtons = [
@@ -300,16 +317,13 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
         console.warn('Missing Account ID or Case ID is missing');
         return [];
       }
-
       try {
         const activitiesData = await fetchTaskActivities(
           accountId,
           caseId,
           taskId
         );
-
         const transformedActivities = transformActivities(activitiesData);
-
         return transformedActivities;
       } catch (error) {
         console.error('Failed to fetch task activities:', error);
@@ -479,7 +493,6 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
           rid: commentId,
           deleted_file_ids: [],
         });
-
         successToast('Comment deleted successfully');
       } catch (error) {
         const errorMessage =
@@ -493,6 +506,50 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
       }
     },
     [accountId, caseId, successToast, errorToast]
+  );
+
+  // Initialize the add collaborator mutation
+  const addCollaboratorMutation = useAddCollaborator();
+
+  const handleAddCollaborator = useCallback(
+    async (taskId: string, userId: string) => {
+      if (!accountId || !caseId) {
+        errorToast('Account ID or Case ID is missing');
+        throw new Error('Missing Account ID or Case ID');
+      }
+
+      try {
+        const payload: AddCollaboratorPayload = {
+          case_rid: caseId,
+          account_rid: accountId,
+          rid: taskId,
+          user_rid: userId,
+          action_type: 'milestone',
+        };
+        const response = await addCollaboratorMutation.mutateAsync(payload);
+        if (
+          response?.statusCode === 200 ||
+          response?.statusCodeValue === 'OK'
+        ) {
+          successToast('Collaborator added successfully');
+          return response;
+        } else {
+          throw new Error(
+            response?.statusMessage || 'Failed to add collaborator'
+          );
+        }
+      } catch (error) {
+        const errorMessage =
+          (error as { response?: { data?: { statusMessage?: string } } })
+            ?.response?.data?.statusMessage ||
+          (error as Error)?.message ||
+          'Failed to add collaborator';
+        errorToast(errorMessage);
+        console.error('Error adding collaborator:', error);
+        throw error;
+      }
+    },
+    [accountId, caseId, addCollaboratorMutation, successToast, errorToast]
   );
 
   return (
@@ -550,11 +607,6 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
             ) : (
               <KanbanBoard
                 data={kanbanData?.data || []}
-                onFetchTaskDetails={handleFetchTaskDetails}
-                onFetchTaskActivities={handleFetchTaskActivities}
-                onFetchTaskComments={handleFetchTaskComments}
-                onFetchTaskAttachments={handleFetchTaskAttachments}
-                onFetchCollaborators={handleFetchCollaborators}
                 showCommentCount={true}
                 showTaskCount={true}
                 showProfileIndicator={true}
@@ -563,12 +615,19 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
                 statusData={statusData}
                 priorityData={priorityData}
                 tagData={tagData}
+                checklistData={checklistData}
                 userData={userOptionsQuery.data || []}
                 roleOptions={roleOptionsQuery.data || []}
+                onFetchTaskDetails={handleFetchTaskDetails}
+                onFetchTaskActivities={handleFetchTaskActivities}
+                onFetchTaskComments={handleFetchTaskComments}
+                onFetchTaskAttachments={handleFetchTaskAttachments}
+                onFetchCollaborators={handleFetchCollaborators}
                 onCreateTask={handleCreateTask}
                 onAddComment={handleAddComment}
                 onUpdateComment={handleUpdateComment}
                 onDeleteComment={handleDeleteComment}
+                onAddCollaborator={handleAddCollaborator}
               />
             )}
           </>

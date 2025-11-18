@@ -15,7 +15,6 @@ interface ExtendedKanbanColumnProps extends KanbanColumnProps {
   isDragable?: boolean;
   isDragablebetweenBoards?: boolean;
   roleOptions?: RoleOption[];
-  tagData?: Array<{ id: string; name: string }>;
   collaboratorData?: Array<{ rid: string; name: string; email?: string }>;
   availableUsers?: Array<{ rid: string; name: string; email?: string }>;
 }
@@ -37,6 +36,7 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
   onCreateTask,
   roleOptions = [],
   tagData = [],
+  checklistData = [],
   collaboratorData = [],
   availableUsers = [],
 }) => {
@@ -49,7 +49,9 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
   const handleCreateTask = async (columnId: string, formData: TaskFormData) => {
     try {
       if (onCreateTask) {
-        const taskData: Partial<TaskCard> = {
+        const taskData: Partial<TaskCard> & {
+          checklist_template_rid?: string;
+        } = {
           task_name: formData.taskTitle,
           task_description: formData.description,
           status_rid: formData.selectedStatusRid,
@@ -64,7 +66,11 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
           assigned_to: formData.selectedAssignee,
           case_team_member_role_rid: formData.selectedRoleRid,
           tags: formData.selectedTags,
+          ...(formData.selectedChecklistRid && {
+            checklist_template_rid: formData.selectedChecklistRid,
+          }),
         };
+
         await onCreateTask(columnId, taskData);
       }
       setIsCreateModalOpen(false);
@@ -149,6 +155,7 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
         statusData={statusData}
         priorityData={priorityData}
         tagData={tagData}
+        checklistData={checklistData}
         collaboratorData={collaboratorData}
         availableUsers={availableUsers}
         roleOptions={roleOptions}

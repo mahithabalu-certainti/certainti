@@ -133,9 +133,15 @@ export interface CreateTaskPayload {
   task_description?: string;
   effective_start_datetime?: string;
   effective_end_datetime?: string;
+  assigned_to?: string;
   tag_rid?: string | string[];
-  tags?: Array<{ name: string }>;
+  tags?: Array<{ tag_rid: string; is_new_tag: boolean }>;
   is_new_tag?: boolean;
+  workflow_connector?: {
+    source_rid: string;
+    target_rid: string[];
+    relationship_connector_rid: string;
+  };
   [key: string]: unknown;
 }
 
@@ -185,6 +191,7 @@ export interface CommentResponse extends CommonApiResponse {
 // Case Task URL
 export const getCaseTaskListUrl = () => '/api/cases/task/list';
 export const getCaseTaskCreateUrl = () => '/api/cases/task/create';
+export const getCaseTaskUpdateUrl = () => '/api/cases/task/update';
 export const getCaseTaskExportUrl = () => '/api/cases/task/export';
 export const getTaskCommentsListUrl = () => '/api/cases/task/comments/list';
 export const getTaskAttachmentsListUrl = () =>
@@ -333,6 +340,22 @@ export const createCaseTask = async (
   }
 };
 
+// Update Case Task
+export const updateCaseTask = async (
+  payload: CreateTaskPayload & { rid?: string }
+): Promise<CreateTaskResponse> => {
+  try {
+    const { data } = await caseServiceApi.post<CreateTaskResponse>(
+      getCaseTaskUpdateUrl(),
+      payload
+    );
+    return data;
+  } catch (error) {
+    console.error('Error updating case task:', error);
+    throw error;
+  }
+};
+
 // Custom Hook for Case Tasks
 export const useGetCaseTaskList = (
   params: CaseTaskListParams,
@@ -428,6 +451,17 @@ export const useDeleteTaskComment = () => {
 export const useCreateCaseTask = () => {
   return useMutation<CreateTaskResponse, Error, CreateTaskPayload>({
     mutationFn: (payload) => createCaseTask(payload),
+  });
+};
+
+// Custom Hook for Updating Case Task
+export const useUpdateCaseTask = () => {
+  return useMutation<
+    CreateTaskResponse,
+    Error,
+    CreateTaskPayload & { rid?: string }
+  >({
+    mutationFn: (payload) => updateCaseTask(payload),
   });
 };
 

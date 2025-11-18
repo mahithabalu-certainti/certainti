@@ -128,6 +128,13 @@ export interface CollaboratorListPayload {
   rid?: string;
 }
 
+export interface TagListPayload {
+  task_rid?: string;
+  account_rid: string;
+  case_rid: string;
+  action?: 'create' | 'update';
+}
+
 const fetchCaseTeam = async (
   caseId: string,
   accountId: string
@@ -201,10 +208,13 @@ const fetchUserOptions = async (accountId: string): Promise<UserOption[]> => {
   }
 };
 
-const fetchTagOptions = async (): Promise<TagOption[]> => {
+const fetchTagOptions = async (
+  payload: TagListPayload
+): Promise<TagOption[]> => {
   try {
-    const response = await caseServiceApi.get<TagOptionsResponse>(
-      '/api/cases/tag/list'
+    const response = await caseServiceApi.post<TagOptionsResponse>(
+      '/api/cases/tag/list',
+      payload
     );
 
     if (response.data?.data) {
@@ -278,15 +288,22 @@ export const useGetUserOptions = (
 };
 
 export const useGetTagOptions = (
+  payload?: TagListPayload,
   enabled: boolean = true
 ): UseQueryResult<TagOption[] | undefined, Error> => {
   return useQuery<TagOption[] | undefined, Error>({
-    queryKey: ['case-tag-options'],
-    queryFn: () => fetchTagOptions(),
+    queryKey: [
+      'case-tag-options',
+      payload?.task_rid,
+      payload?.account_rid,
+      payload?.case_rid,
+      payload?.action,
+    ],
+    queryFn: () => fetchTagOptions(payload!),
     retry: 0,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
-    enabled,
+    enabled: enabled && !!payload?.account_rid && !!payload?.case_rid,
   });
 };
 

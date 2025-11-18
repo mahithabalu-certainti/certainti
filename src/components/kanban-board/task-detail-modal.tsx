@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import { TaskDetailModalProps, Task, Activity, Comment } from './types';
 import {
   MenuItem,
@@ -13,6 +13,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import TextButton from '../button/text-button';
+import StyledSelect from './styled-select';
 import {
   enrichTask,
   enrichUserOption,
@@ -24,6 +25,17 @@ import {
   TaskCommentsListParams,
   TaskComment,
 } from '../../consultant/services/case-task/case-task-service';
+import { useGetTagOptions } from '../../consultant/services/case-team/case-team-service';
+
+interface CommentData {
+  created_by_name?: string;
+  created_datetime?: string;
+  user?: string;
+  date?: string;
+  user_name?: string;
+  created_date?: string;
+  [key: string]: unknown;
+}
 
 const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   taskId,
@@ -42,6 +54,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   onAddComment,
   onUpdateComment,
   onDeleteComment,
+  onAddCollaborator,
   fieldVisibility = {},
   fieldDisabled = {},
 }) => {
@@ -75,31 +88,92 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     'comments'
   );
   const [hideCheckedItems, setHideCheckedItems] = useState(false);
+  const [pendingCollaborators, setPendingCollaborators] = useState<string[]>(
+    []
+  );
+  const [selectedCollaboratorIds, setSelectedCollaboratorIds] = useState<
+    string[]
+  >([]);
+  const [isSaving, setIsSaving] = useState(false);
   const activitiesFetchedRef = useRef<string | null>(null);
   const commentsFetchedRef = useRef<string | null>(null);
   const collaboratorsFetchedRef = useRef<string | null>(null);
   const attachmentsFetchedRef = useRef<string | null>(null);
-  const caseRidRef = useRef<string | null>(null);
-  const accountRidRef = useRef<string | null>(null);
   const taskDetailsFetchedRef = useRef<string | null>(null);
 
   const [availableTags, setAvailableTags] = useState(tagData);
 
-  // Map collaborators and available users to enriched users
-  const collaboratorUsers = collaborators.map((collab) =>
-    enrichUserOption({
-      rid: collab.assigned_to,
-      name: collab.assigned_to_name,
-    })
+  // Fetch tag options for this task when viewing details (action: 'update')
+  const tagOptionsQuery = useGetTagOptions(
+    {
+      task_rid: taskId || undefined,
+      account_rid: task?.account_rid || '',
+      case_rid: task?.case_rid || '',
+      action: 'update',
+    },
+    !!(task && task.account_rid && task.case_rid)
   );
 
-  // Merge collaborators with available users, avoiding duplicates
-  const allEnrichedUsers = [
-    ...collaboratorUsers,
-    ...(availableUsers
-      ?.filter((user) => !collaboratorUsers.find((cu) => cu.id === user.rid))
-      .map((user) => enrichUserOption(user)) || []),
-  ];
+  useEffect(() => {
+    if (tagOptionsQuery.data) {
+      // Filter and map to match the expected tag format
+      const mappedTags = (
+        tagOptionsQuery.data as Array<{
+          rid?: string;
+          tag_name?: string;
+          tag_description?: string;
+          status?: string;
+        }>
+      ).map((tag) => ({
+        id: tag.rid || `tag-${tag.tag_name}`,
+        name: tag.tag_name || '',
+        color: '#3B82F6',
+      }));
+      setAvailableTags(mappedTags);
+    }
+  }, [tagOptionsQuery.data]);
+
+  // Helper function to check if task has been modified
+  const hasTaskChanged = () => {
+    if (!task || !editedTask) return false;
+
+    return (
+      task.title !== editedTask.title ||
+      task.description !== editedTask.description ||
+      task.status !== editedTask.status ||
+      task.priority !== editedTask.priority ||
+      task.startDate !== editedTask.startDate ||
+      task.endDate !== editedTask.endDate ||
+      task.assignee?.name !== editedTask.assignee?.name ||
+      JSON.stringify(task.tags) !== JSON.stringify(editedTask.tags) ||
+      JSON.stringify(task.collaborators) !==
+        JSON.stringify(editedTask.collaborators) ||
+      JSON.stringify(task.checklist) !== JSON.stringify(editedTask.checklist)
+    );
+  };
+
+  // Map collaborators and available users to enriched users
+  const collaboratorUsers = useMemo(
+    () =>
+      collaborators.map((collab) =>
+        enrichUserOption({
+          rid: collab.assigned_to,
+          name: collab.assigned_to_name,
+        })
+      ),
+    [collaborators]
+  );
+
+  // Merge collaborators with available users, avoiding duplicates - memoized
+  const allEnrichedUsers = useMemo(
+    () => [
+      ...collaboratorUsers,
+      ...(availableUsers
+        ?.filter((user) => !collaboratorUsers.find((cu) => cu.id === user.rid))
+        .map((user) => enrichUserOption(user)) || []),
+    ],
+    [collaboratorUsers, availableUsers]
+  );
 
   useEffect(() => {
     const fetchTask = async () => {
@@ -108,12 +182,10 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
         setEditedTask(null);
         return;
       }
-
       // Prevent duplicate calls using ref
       if (taskDetailsFetchedRef.current === taskId) {
         return;
       }
-
       taskDetailsFetchedRef.current = taskId;
       setLoading(true);
       try {
@@ -134,7 +206,6 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
         setLoading(false);
       }
     };
-
     if (isOpen) {
       fetchTask();
     }
@@ -144,38 +215,18 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   useEffect(() => {
     const fetchActivities = async () => {
       if (!taskId || !onFetchTaskActivities) {
-        console.warn('Missing taskId or onFetchTaskActivities:', {
-          taskId,
-          hasCallback: !!onFetchTaskActivities,
-        });
         setActivities([]);
         return;
       }
-
-      // Prevent duplicate calls using ref
       if (activitiesFetchedRef.current === taskId) {
-        console.log('Activities already fetched for taskId:', taskId);
         return;
       }
-
-      console.log('Fetching activities for taskId:', taskId);
       activitiesFetchedRef.current = taskId;
-
       try {
         const fetchedActivities = await onFetchTaskActivities(taskId);
-        console.log('Fetched activities:', fetchedActivities);
-
         if (fetchedActivities && Array.isArray(fetchedActivities)) {
           setActivities(fetchedActivities);
-          console.log(
-            'Activities set successfully, count:',
-            fetchedActivities.length
-          );
         } else {
-          console.warn(
-            'Activities response is not an array:',
-            fetchedActivities
-          );
           setActivities([]);
         }
       } catch (error) {
@@ -202,17 +253,29 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
 
           if (fetchedComments && Array.isArray(fetchedComments)) {
             const transformedComments: Comment[] = (
-              fetchedComments as TaskComment[]
+              fetchedComments as (TaskComment & CommentData)[]
             ).map((comment) => {
-              const userName = comment.user || comment.user_name || '';
+              const userName =
+                comment.created_by_name ||
+                comment.user ||
+                comment.user_name ||
+                '';
+              const createdDateRaw =
+                comment.created_datetime ||
+                comment.date ||
+                comment.created_date ||
+                new Date().toISOString();
+              const createdDate = createdDateRaw
+                ? dayjs(createdDateRaw)
+                    .local()
+                    .format('MMMM D, YYYY [at] h:mm A')
+                : '';
               return {
                 id: comment.id || comment.comment_rid,
                 user: userName,
                 text: comment.text || comment.comment_text || '',
-                date:
-                  comment.date ||
-                  comment.created_date ||
-                  new Date().toISOString(),
+                date: createdDate,
+                createdDateTime: createdDate,
                 initials: generateInitials(userName),
                 color: generateColorFromName(userName),
                 attachments: comment.attachments,
@@ -228,7 +291,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
         }
         return;
       }
-      if (!taskId || !caseRidRef.current || !accountRidRef.current) {
+      if (!taskId) {
         setComments([]);
         return;
       }
@@ -239,26 +302,38 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
 
       try {
         const params: TaskCommentsListParams = {
-          case_rid: caseRidRef.current,
-          account_rid: accountRidRef.current,
           task_rid: taskId,
           page: 1,
           limit: 100,
+          case_rid: task?.case_rid || '',
+          account_rid: task?.account_rid || '',
         };
 
         const response = await fetchTaskCommentsList(params);
         if (response?.data?.data && Array.isArray(response.data.data)) {
           const transformedComments: Comment[] = response.data.data.map(
-            (comment: TaskComment) => {
-              const userName = comment.user || comment.user_name || '';
+            (comment: TaskComment & CommentData) => {
+              const userName =
+                comment.created_by_name ||
+                comment.user ||
+                comment.user_name ||
+                '';
+              const createdDateRaw =
+                comment.created_datetime ||
+                comment.date ||
+                comment.created_date ||
+                new Date().toISOString();
+              const createdDate = createdDateRaw
+                ? dayjs(createdDateRaw)
+                    .local()
+                    .format('MMMM D, YYYY [at] h:mm A')
+                : '';
               return {
                 id: comment.id || comment.comment_rid,
                 user: userName,
                 text: comment.text || comment.comment_text || '',
-                date:
-                  comment.date ||
-                  comment.created_date ||
-                  new Date().toISOString(),
+                date: createdDate,
+                createdDateTime: createdDate,
                 initials: generateInitials(userName),
                 color: generateColorFromName(userName),
                 attachments: comment.attachments,
@@ -327,13 +402,9 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
 
       try {
         const fetchedCollaborators = await onFetchCollaborators(taskId);
-        console.log('🔍 Fetched collaborators from API:', fetchedCollaborators);
-
         if (fetchedCollaborators && Array.isArray(fetchedCollaborators)) {
-          console.log('✅ Setting collaborators state:', fetchedCollaborators);
           setCollaborators(fetchedCollaborators);
         } else {
-          console.log('❌ No valid collaborators array received');
           setCollaborators([]);
         }
       } catch (error) {
@@ -347,35 +418,14 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     }
   }, [taskId, isOpen, onFetchCollaborators]);
 
-  // Separate effect to update editedTask with fetched collaborators
   useEffect(() => {
-    console.log(
-      '🔄 Collaborators effect running - collaborators:',
-      collaborators,
-      'editedTask:',
-      !!editedTask
-    );
-
     if (!editedTask || collaborators.length === 0) {
-      console.log(
-        '⏭️  Skipping: editedTask =',
-        !!editedTask,
-        'collaborators.length =',
-        collaborators.length
-      );
       return;
     }
-
-    console.log('📝 Processing collaborators:', collaborators);
-
     const mappedCollaborators = collaborators.map((collab) => {
       const enrichedUser = enrichUserOption({
         rid: collab.assigned_to,
         name: collab.assigned_to_name,
-      });
-      console.log('👤 Enriched user:', {
-        name: enrichedUser.name,
-        initials: enrichedUser.initials,
       });
       return {
         name: enrichedUser.name,
@@ -384,25 +434,33 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
       };
     });
 
-    console.log('✨ Final mapped collaborators:', mappedCollaborators);
-
     setEditedTask((prev) => {
       if (!prev) {
-        console.log('❌ Previous editedTask is null');
         return null;
       }
-
-      console.log(
-        '💾 Updating editedTask with',
-        mappedCollaborators.length,
-        'collaborators'
-      );
       return { ...prev, collaborators: mappedCollaborators };
     });
   }, [collaborators, editedTask]);
 
-  if (!isOpen || !taskId) return null;
+  // Keep a separate list of selected collaborator IDs to avoid relying on editedTask timing
+  useEffect(() => {
+    if (!editedTask) return;
+    const ids = (editedTask.collaborators || [])
+      .map((collab) => {
+        const user = allEnrichedUsers.find((u) => u.name === collab.name);
+        return user?.id || '';
+      })
+      .filter((id) => id !== '');
+    setSelectedCollaboratorIds(ids);
+  }, [editedTask, allEnrichedUsers]);
 
+  useEffect(() => {
+    if (tagData && tagData.length > 0) {
+      setAvailableTags(tagData);
+    }
+  }, [tagData]);
+
+  if (!isOpen || !taskId) return null;
   if (loading) {
     return (
       <div
@@ -436,7 +494,23 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     );
   }
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    setIsSaving(true);
+
+    // Add pending collaborators first
+    if (pendingCollaborators.length > 0 && taskId && onAddCollaborator) {
+      try {
+        for (const userId of pendingCollaborators) {
+          await onAddCollaborator(taskId, userId);
+        }
+        // Clear pending collaborators after successful API calls
+        setPendingCollaborators([]);
+      } catch (error) {
+        console.error('Error adding collaborators:', error);
+      }
+    }
+
+    // Then update the task
     if (editedTask && taskId) {
       onTaskUpdate(taskId, editedTask);
       setIsEditing(false);
@@ -446,6 +520,8 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     if (comment.trim()) {
       handleSubmitComment();
     }
+
+    setIsSaving(false);
   };
 
   const handleDescriptionChange = (
@@ -456,20 +532,26 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     );
   };
 
-  const handleStatusChange = (event: SelectChangeEvent<string>) => {
+  const handleStatusChange = (
+    event: SelectChangeEvent<string> | SelectChangeEvent<string[]>
+  ) => {
+    const selectedName = event.target.value as string;
     setEditedTask((prev) =>
       prev
         ? {
             ...prev,
-            status: event.target.value,
+            status: selectedName,
           }
         : null
     );
   };
 
-  const handlePriorityChange = (event: SelectChangeEvent<string>) => {
+  const handlePriorityChange = (
+    event: SelectChangeEvent<string> | SelectChangeEvent<string[]>
+  ) => {
+    const selectedName = event.target.value as string;
     setEditedTask((prev) =>
-      prev ? { ...prev, priority: event.target.value } : null
+      prev ? { ...prev, priority: selectedName } : null
     );
   };
 
@@ -564,9 +646,12 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     );
   };
 
-  const handleAssigneeChange = (event: SelectChangeEvent<string>) => {
+  const handleAssigneeChange = (
+    event: SelectChangeEvent<string> | SelectChangeEvent<string[]>
+  ) => {
+    const selectedUserId = event.target.value as string;
     const selectedUser = allEnrichedUsers.find(
-      (user) => user.id === event.target.value
+      (user) => user.id === selectedUserId
     );
     if (selectedUser) {
       setEditedTask((prev) =>
@@ -634,26 +719,109 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   };
 
   const handleCollaboratorsChange = (event: SelectChangeEvent<string[]>) => {
+    console.log('🎯 handleCollaboratorsChange triggered');
+    console.log('   Event value:', event.target.value);
+    console.log('   Current selectedCollaboratorIds:', selectedCollaboratorIds);
+
+    // This handler kept for compatibility but we manage selection via toggleSelection
     const selectedUserIds = event.target.value as string[];
+    console.log('   Selected user IDs:', selectedUserIds);
+
+    setSelectedCollaboratorIds(selectedUserIds);
+    console.log(
+      '   selectedCollaboratorIds state updated to:',
+      selectedUserIds
+    );
+
     const selectedUsers = allEnrichedUsers.filter((user) =>
       selectedUserIds.includes(user.id)
     );
+    console.log('   Selected users:', selectedUsers);
+
     const collaborators = selectedUsers.map((user) => ({
       name: user.name,
       initials: user.initials,
       color: user.color,
     }));
-    setEditedTask((prev) => (prev ? { ...prev, collaborators } : null));
+    console.log('   Collaborators mapped:', collaborators);
+
+    setEditedTask((prev) => {
+      console.log('   Previous editedTask:', prev);
+      const updated = prev ? { ...prev, collaborators } : null;
+      console.log('   Updated editedTask:', updated);
+      return updated;
+    });
+
+    const currentCollaboratorNames =
+      editedTask?.collaborators?.map((c) => c.name) || [];
+    console.log('   Current collaborator names:', currentCollaboratorNames);
+
+    const newlyAddedUsers = selectedUsers.filter(
+      (user) => !currentCollaboratorNames.includes(user.name)
+    );
+    console.log('   Newly added users:', newlyAddedUsers);
+    console.log(
+      '   Setting pending collaborators to:',
+      newlyAddedUsers.map((user) => user.id)
+    );
+
+    setPendingCollaborators(newlyAddedUsers.map((user) => user.id));
   };
 
-  const getCollaboratorsForSelect = () => {
-    const collaborators = editedTask.collaborators || [];
-    return collaborators
-      .map((collab) => {
-        const user = allEnrichedUsers.find((u) => u.name === collab.name);
-        return user?.id || '';
-      })
-      .filter((id) => id !== '');
+  const toggleCollaboratorSelection = (userId: string) => {
+    console.log('🎯 toggleCollaboratorSelection triggered for userId:', userId);
+    console.log('   Current selectedCollaboratorIds:', selectedCollaboratorIds);
+    console.log(
+      '   Current editedTask.collaborators:',
+      editedTask?.collaborators
+    );
+
+    setSelectedCollaboratorIds((prev) => {
+      console.log('   Previous selectedCollaboratorIds:', prev);
+      const exists = prev.includes(userId);
+      console.log('   User exists in selection:', exists);
+
+      const next = exists
+        ? prev.filter((id) => id !== userId)
+        : [...prev, userId];
+      console.log('   New selectedCollaboratorIds:', next);
+
+      const selectedUsers = allEnrichedUsers.filter((u) => next.includes(u.id));
+      console.log('   Selected users for this IDs:', selectedUsers);
+
+      const collaborators = selectedUsers.map((user) => ({
+        name: user.name,
+        initials: user.initials,
+        color: user.color,
+      }));
+      console.log('   Collaborators mapped:', collaborators);
+
+      // Update edited task collaborators
+      setEditedTask((prevTask) => {
+        console.log('   Previous editedTask in setEditedTask:', prevTask);
+        const updated = prevTask ? { ...prevTask, collaborators } : null;
+        console.log('   Updated editedTask in setEditedTask:', updated);
+        return updated;
+      });
+
+      // Determine newly added users for pending collaborators
+      const currentCollaboratorNames =
+        editedTask?.collaborators?.map((c) => c.name) || [];
+      console.log('   Current collaborator names:', currentCollaboratorNames);
+
+      const newlyAdded = selectedUsers.filter(
+        (user) => !currentCollaboratorNames.includes(user.name)
+      );
+      console.log('   Newly added users:', newlyAdded);
+      console.log(
+        '   Setting pending collaborators to:',
+        newlyAdded.map((u) => u.id)
+      );
+
+      setPendingCollaborators(newlyAdded.map((u) => u.id));
+
+      return next;
+    });
   };
 
   const handleSubmitComment = async () => {
@@ -707,7 +875,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
           <TextButton
             label='Save'
             onClick={handleSave}
-            disabled={false}
+            disabled={!hasTaskChanged() || isSaving}
             sx={{ padding: '6px 12px' }}
           />
         </div>
@@ -743,161 +911,22 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
               <span className='text-sm font-medium text-gray-600'>
                 Assignee
               </span>
-              <div className='w-[200px]'>
-                <Select
-                  name='assignee'
-                  disabled={fieldDisabled.assignee}
-                  className='custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px]'
-                  onChange={handleAssigneeChange}
-                  value={getAssigneeForSelect()}
-                  displayEmpty
-                  fullWidth
-                  size='small'
-                  MenuProps={{
-                    PaperProps: {
-                      sx: {
-                        maxWidth: 300,
-                        maxHeight: 300,
-                        marginTop: '4px',
-                        zIndex: 40,
-                        boxShadow:
-                          'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
-                        '& .MuiMenuItem-root': {
-                          fontSize: '13px',
-                          padding: '6px 12px',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                        },
-                      },
-                    },
-                  }}
-                  sx={{
-                    height: '32px',
-                    fontSize: '13px',
-                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                      border: '2px solid #60A5FA',
-                    },
-                    '& .MuiOutlinedInput-root': {
-                      '&.Mui-focused': {
-                        boxShadow: 'none',
-                      },
-                    },
-                    '.MuiSelect-select': {
-                      padding: '6px 6px',
-                      color: !editedTask?.assignee ? '#7D98B6' : 'black',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      width: '100%',
-                      overflow: 'auto',
-                      overflowY: 'hidden',
-                      scrollBehavior: 'smooth',
-                      '&::-webkit-scrollbar': {
-                        height: '4px',
-                      },
-                      '&::-webkit-scrollbar-track': {
-                        background: 'transparent',
-                      },
-                      '&::-webkit-scrollbar-thumb': {
-                        background: '#CBD6E2',
-                        borderRadius: '2px',
-                      },
-                    },
-                    '& .MuiOutlinedInput-notchedOutline': {
-                      border: '1px solid #CBD6E2',
-                      borderRadius: '2px',
-                    },
-                    '&:hover .MuiOutlinedInput-notchedOutline': {
-                      border: '1px solid #CBD6E2',
-                    },
-                    '& svg': {
-                      color: '#7D98B6',
-                      flexShrink: 0,
-                    },
-                  }}
-                  renderValue={() => {
-                    if (editedTask?.assignee) {
-                      return (
-                        <div
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            width: '100%',
-                            minWidth: 0,
-                          }}
-                        >
-                          <div
-                            style={{
-                              width: '20px',
-                              height: '20px',
-                              borderRadius: '50%',
-                              backgroundColor: editedTask.assignee.color,
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: '9px',
-                              fontWeight: '600',
-                              color: 'white',
-                              flexShrink: 0,
-                            }}
-                          >
-                            {editedTask.assignee.initials}
-                          </div>
-                          <span
-                            style={{
-                              fontSize: '13px',
-                              color: 'black',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap',
-                              minWidth: 0,
-                            }}
-                          >
-                            {editedTask.assignee.name}
-                          </span>
-                        </div>
-                      );
-                    }
+              <StyledSelect
+                name='assignee'
+                value={getAssigneeForSelect()}
+                onChange={handleAssigneeChange}
+                disabled={fieldDisabled.assignee}
+                width='200px'
+                renderValue={() => {
+                  if (editedTask?.assignee) {
                     return (
-                      <span
-                        style={{
-                          color: '#7D98B6',
-                          fontSize: '13px',
-                          fontWeight: '400',
-                        }}
-                      >
-                        Select User
-                      </span>
-                    );
-                  }}
-                >
-                  <MenuItem
-                    value=''
-                    sx={{
-                      color: '#425A76',
-                      fontSize: '13px',
-                      fontWeight: '500',
-                    }}
-                  >
-                    Select User
-                  </MenuItem>
-                  {allEnrichedUsers.map((user) => (
-                    <MenuItem
-                      sx={{
-                        color: '#425A76',
-                        fontSize: '13px',
-                        fontWeight: '500',
-                      }}
-                      key={user.id}
-                      value={user.id}
-                      title={user.name}
-                    >
                       <div
                         style={{
                           display: 'flex',
                           alignItems: 'center',
                           gap: '8px',
+                          width: '100%',
+                          minWidth: 0,
                         }}
                       >
                         <div
@@ -905,23 +934,96 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                             width: '20px',
                             height: '20px',
                             borderRadius: '50%',
-                            backgroundColor: user.color,
+                            backgroundColor: editedTask.assignee.color,
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            fontSize: '8px',
+                            fontSize: '9px',
                             fontWeight: '600',
                             color: 'white',
+                            flexShrink: 0,
                           }}
                         >
-                          {user.initials}
+                          {editedTask.assignee.initials}
                         </div>
-                        {user.name}
+                        <span
+                          style={{
+                            fontSize: '13px',
+                            color: 'black',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            minWidth: 0,
+                          }}
+                        >
+                          {editedTask.assignee.name}
+                        </span>
                       </div>
-                    </MenuItem>
-                  ))}
-                </Select>
-              </div>
+                    );
+                  }
+                  return (
+                    <span
+                      style={{
+                        color: '#7D98B6',
+                        fontSize: '13px',
+                        fontWeight: '400',
+                      }}
+                    >
+                      Select User
+                    </span>
+                  );
+                }}
+              >
+                <MenuItem
+                  value=''
+                  sx={{
+                    color: '#425A76',
+                    fontSize: '13px',
+                    fontWeight: '500',
+                  }}
+                >
+                  Select User
+                </MenuItem>
+                {allEnrichedUsers.map((user) => (
+                  <MenuItem
+                    sx={{
+                      color: '#425A76',
+                      fontSize: '13px',
+                      fontWeight: '500',
+                    }}
+                    key={user.id}
+                    value={user.id}
+                    title={user.name}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: '20px',
+                          height: '20px',
+                          borderRadius: '50%',
+                          backgroundColor: user.color,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '8px',
+                          fontWeight: '600',
+                          color: 'white',
+                          flexShrink: 0,
+                        }}
+                      >
+                        {user.initials}
+                      </div>
+                      {user.name}
+                    </div>
+                  </MenuItem>
+                ))}
+              </StyledSelect>
             </div>
           )}
 
@@ -1112,76 +1214,30 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
           <div>
             <h3 className='text-sm font-semibold text-gray-700 mb-3'>Fields</h3>
             <div className='border border-gray-200 rounded-lg divide-y divide-gray-200'>
-              {!fieldVisibility.status && (
-                <div className='flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors'>
-                  <div className='flex items-center gap-2'>
-                    <svg
-                      width='16'
-                      height='16'
-                      viewBox='0 0 24 24'
-                      fill='none'
-                      stroke='currentColor'
-                      strokeWidth='2'
-                      className='text-gray-500'
-                    >
-                      <polyline points='22 12 18 12 15 21 9 3 6 12 2 12'></polyline>
-                    </svg>
-                    <span className='text-sm text-gray-700'>Status</span>
-                  </div>
-                  <div className='w-[140px]'>
-                    <Select
+              {!fieldVisibility.status &&
+                statusData &&
+                statusData.length > 0 && (
+                  <div className='flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors'>
+                    <div className='flex items-center gap-2'>
+                      <svg
+                        width='16'
+                        height='16'
+                        viewBox='0 0 24 24'
+                        fill='none'
+                        stroke='currentColor'
+                        strokeWidth='2'
+                        className='text-gray-500'
+                      >
+                        <polyline points='22 12 18 12 15 21 9 3 6 12 2 12'></polyline>
+                      </svg>
+                      <span className='text-sm text-gray-700'>Status</span>
+                    </div>
+                    <StyledSelect
                       name='status'
-                      disabled={fieldDisabled.status}
-                      className='custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px]'
-                      onChange={handleStatusChange}
                       value={editedTask?.status || ''}
-                      displayEmpty
-                      fullWidth
-                      size='small'
-                      MenuProps={{
-                        PaperProps: {
-                          sx: {
-                            maxWidth: 300,
-                            maxHeight: 300,
-                            marginTop: '4px',
-                            zIndex: 40,
-                            boxShadow:
-                              'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
-                            '& .MuiMenuItem-root': {
-                              fontSize: '13px',
-                              padding: '6px 12px',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                            },
-                          },
-                        },
-                      }}
-                      sx={{
-                        height: '32px',
-                        fontSize: '13px',
-                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                          border: '2px solid #60A5FA',
-                        },
-                        '& .MuiOutlinedInput-root': {
-                          '&.Mui-focused': {
-                            boxShadow: 'none',
-                          },
-                        },
-                        '.MuiSelect-select': {
-                          padding: '6px 6px',
-                          color: !editedTask?.status ? '#7D98B6' : 'black',
-                        },
-                        '& .MuiOutlinedInput-notchedOutline': {
-                          border: '1px solid #CBD6E2',
-                          borderRadius: '2px',
-                        },
-                        '&:hover .MuiOutlinedInput-notchedOutline': {
-                          border: '1px solid #CBD6E2',
-                        },
-                        '& svg': {
-                          color: '#7D98B6',
-                        },
-                      }}
+                      onChange={handleStatusChange}
+                      disabled={fieldDisabled.status}
+                      width='140px'
                     >
                       <MenuItem
                         value=''
@@ -1207,83 +1263,36 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                           {status.name}
                         </MenuItem>
                       ))}
-                    </Select>
+                    </StyledSelect>
                   </div>
-                </div>
-              )}
+                )}
 
-              {!fieldVisibility.priority && (
-                <div className='flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors'>
-                  <div className='flex items-center gap-2'>
-                    <svg
-                      width='16'
-                      height='16'
-                      viewBox='0 0 24 24'
-                      fill='none'
-                      stroke='currentColor'
-                      strokeWidth='2'
-                      className='text-gray-500'
-                    >
-                      <path d='M3 13h2v8H3z'></path>
-                      <path d='M9 3h2v18H9z'></path>
-                      <path d='M15 8h2v13h-2z'></path>
-                    </svg>
-                    <span className='text-sm text-gray-700'>Priority</span>
-                  </div>
-                  <div className='w-[140px]'>
-                    <Select
+              {!fieldVisibility.priority &&
+                priorityData &&
+                priorityData.length > 0 && (
+                  <div className='flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors'>
+                    <div className='flex items-center gap-2'>
+                      <svg
+                        width='16'
+                        height='16'
+                        viewBox='0 0 24 24'
+                        fill='none'
+                        stroke='currentColor'
+                        strokeWidth='2'
+                        className='text-gray-500'
+                      >
+                        <path d='M3 13h2v8H3z'></path>
+                        <path d='M9 3h2v18H9z'></path>
+                        <path d='M15 8h2v13h-2z'></path>
+                      </svg>
+                      <span className='text-sm text-gray-700'>Priority</span>
+                    </div>
+                    <StyledSelect
                       name='priority'
-                      disabled={fieldDisabled.priority}
-                      className='custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px]'
-                      onChange={handlePriorityChange}
                       value={editedTask?.priority || ''}
-                      displayEmpty
-                      fullWidth
-                      size='small'
-                      MenuProps={{
-                        PaperProps: {
-                          sx: {
-                            maxWidth: 300,
-                            maxHeight: 300,
-                            marginTop: '4px',
-                            zIndex: 40,
-                            boxShadow:
-                              'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
-                            '& .MuiMenuItem-root': {
-                              fontSize: '13px',
-                              padding: '6px 12px',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                            },
-                          },
-                        },
-                      }}
-                      sx={{
-                        height: '32px',
-                        fontSize: '13px',
-                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                          border: '2px solid #60A5FA',
-                        },
-                        '& .MuiOutlinedInput-root': {
-                          '&.Mui-focused': {
-                            boxShadow: 'none',
-                          },
-                        },
-                        '.MuiSelect-select': {
-                          padding: '6px 6px',
-                          color: !editedTask?.priority ? '#7D98B6' : 'black',
-                        },
-                        '& .MuiOutlinedInput-notchedOutline': {
-                          border: '1px solid #CBD6E2',
-                          borderRadius: '2px',
-                        },
-                        '&:hover .MuiOutlinedInput-notchedOutline': {
-                          border: '1px solid #CBD6E2',
-                        },
-                        '& svg': {
-                          color: '#7D98B6',
-                        },
-                      }}
+                      onChange={handlePriorityChange}
+                      disabled={fieldDisabled.priority}
+                      width='140px'
                     >
                       <MenuItem
                         value=''
@@ -1309,10 +1318,9 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                           {priority.name}
                         </MenuItem>
                       ))}
-                    </Select>
+                    </StyledSelect>
                   </div>
-                </div>
-              )}
+                )}
 
               {!fieldVisibility.tags && (
                 <div className='px-4 py-3 hover:bg-gray-50 transition-colors'>
@@ -1642,9 +1650,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                     ))}
                   </div>
                 </div>
-              ) : (
-                <></>
-              )}
+              ) : null}
             </div>
           )}
 
@@ -1943,7 +1949,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                     name='collaborators'
                     className='custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px]'
                     onChange={handleCollaboratorsChange}
-                    value={getCollaboratorsForSelect()}
+                    value={selectedCollaboratorIds}
                     displayEmpty
                     fullWidth
                     size='small'
@@ -2005,10 +2011,9 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                       },
                       '.MuiSelect-select': {
                         padding: '6px 6px',
-                        color: '#7D98B6',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '8px',
+                        gap: '4px',
                         minHeight: '20px',
                         width: '100%',
                         overflow: 'auto',
@@ -2039,10 +2044,9 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                     }}
                   >
                     {allEnrichedUsers.map((user) => {
-                      const isSelected =
-                        editedTask.collaborators?.find(
-                          (c) => c.name === user.name
-                        ) !== undefined;
+                      const isSelected = selectedCollaboratorIds.includes(
+                        user.id
+                      );
                       return (
                         <MenuItem
                           sx={{
@@ -2052,7 +2056,11 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                             backgroundColor: isSelected ? '#EBF8FF' : 'inherit',
                           }}
                           key={user.id}
-                          value={user.id}
+                          // prevent default Select automatic handling; we manage selection
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleCollaboratorSelection(user.id);
+                          }}
                           title={user.name}
                         >
                           <div
@@ -2067,7 +2075,8 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                               type='checkbox'
                               checked={isSelected}
                               onChange={() => {}}
-                              style={{ margin: 0, pointerEvents: 'none' }}
+                              onMouseDown={(e) => e.stopPropagation()}
+                              style={{ margin: 0 }}
                             />
                             <div
                               style={{
@@ -2173,5 +2182,4 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     </>
   );
 };
-
 export default TaskDetailModal;

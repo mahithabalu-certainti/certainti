@@ -1,3 +1,6 @@
+// Import AddCollaboratorResponse from work-breakdown service
+import type { AddCollaboratorResponse } from '../../consultant/services/work-breakdown/work-breakdown-service';
+
 export interface Assignee {
   name: string;
   initials: string;
@@ -65,6 +68,8 @@ export interface Task {
   sequenceNo?: number;
   statusRid?: string;
   priorityRid?: string;
+  account_rid?: string;
+  case_rid?: string;
 }
 
 export interface TaskCard {
@@ -148,6 +153,7 @@ export interface KanbanBoardProps {
   statusOptions?: StatusOption[]; // New prop for active/inactive status
   priorityData?: Array<{ id: string; name: string; color: string }>;
   tagData?: Array<{ id: string; name: string; color: string }>;
+  checklistData?: Array<{ id: string; name: string }>;
   userData?: UserOption[];
   roleOptions?: Array<{
     rid: string;
@@ -180,6 +186,10 @@ export interface KanbanBoardProps {
   onAddComment?: (taskId: string, comment: string) => Promise<void>;
   onUpdateComment?: (commentId: string, comment: string) => Promise<void>;
   onDeleteComment?: (commentId: string) => Promise<void>;
+  onAddCollaborator?: (
+    taskId: string,
+    userId: string
+  ) => Promise<AddCollaboratorResponse>;
   fieldVisibility?: FieldVisibility;
   fieldDisabled?: FieldDisabled;
   isLoading?: boolean;
@@ -220,6 +230,16 @@ export interface KanbanColumnProps {
   statusData?: Array<{ id: string; name: string; color: string }>;
   statusOptions?: StatusOption[]; // New prop for active/inactive status
   priorityData?: Array<{ id: string; name: string; color: string }>;
+  tagData?: Array<{ id: string; name: string; color: string }>;
+  checklistData?: Array<{ id: string; name: string }>;
+  roleOptions?: Array<{
+    rid: string;
+    role_name: string;
+    role_description?: string;
+    status?: string;
+  }>;
+  collaboratorData?: Array<{ rid: string; name: string; email?: string }>;
+  availableUsers?: UserOption[];
   onTaskUpdate?: (taskId: string, updatedTask: Partial<Task>) => void;
   onFetchTaskDetails?: (taskId: string) => Promise<Task | null>;
   onCreateTask?: (
@@ -261,6 +281,10 @@ export interface TaskDetailModalProps {
   onAddComment?: (taskId: string, comment: string) => Promise<void>;
   onUpdateComment?: (commentId: string, comment: string) => Promise<void>;
   onDeleteComment?: (commentId: string) => Promise<void>;
+  onAddCollaborator?: (
+    taskId: string,
+    userId: string
+  ) => Promise<AddCollaboratorResponse>;
   fieldVisibility?: FieldVisibility;
   fieldDisabled?: FieldDisabled;
 }

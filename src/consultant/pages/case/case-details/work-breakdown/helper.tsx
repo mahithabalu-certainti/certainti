@@ -25,6 +25,7 @@ export interface TaskCommentRaw {
   task_rid?: string;
   account_rid?: string;
   comments?: string;
+  created_by_name?: string;
   user?: string;
   user_name?: string;
   text?: string;
@@ -82,10 +83,19 @@ export const transformComments = (
   commentsData: TaskCommentRaw[]
 ): Comment[] => {
   return commentsData.map((comment) => {
+    // Get comment text - prioritize 'comments' field from new API response
     const commentText =
       comment.comments || comment.text || comment.comment_text || '';
+
+    // Get user name - prioritize 'created_by_name' from new API response
     const userName =
-      comment.user || comment.user_name || comment.created_by || 'Unknown';
+      comment.created_by_name ||
+      comment.user ||
+      comment.user_name ||
+      comment.created_by ||
+      'Unknown';
+
+    // Get comment date
     const commentDate =
       comment.created_datetime || comment.date || comment.created_date;
 
@@ -99,6 +109,15 @@ export const transformComments = (
         })
       : '';
 
+    // Generate initials from user name
+    const initials =
+      userName
+        .split(' ')
+        .map((n) => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2) || 'UN';
+
     return {
       id: comment.rid || comment.id || comment.comment_rid,
       user: userName,
@@ -106,8 +125,7 @@ export const transformComments = (
       createdBy: comment.created_by || userName,
       createdDateTime: formattedDate,
       date: formattedDate,
-      initials:
-        generateColorFromName(userName)?.substring(0, 2).toUpperCase() || 'UN',
+      initials: initials,
       color: generateColorFromName(userName),
       attachments: comment.comments_attachments || comment.attachments || [],
     };

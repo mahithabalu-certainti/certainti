@@ -63,6 +63,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
   statusOptions,
   priorityData,
   tagData,
+  checklistData = [],
   userData = [],
   roleOptions = [],
   isDragable = false,
@@ -76,6 +77,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
   onAddComment,
   onUpdateComment,
   onDeleteComment,
+  onAddCollaborator,
   fieldVisibility = {},
   fieldDisabled = {},
   onCreateTask,
@@ -377,6 +379,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   priorityData={priorityData}
                   roleOptions={roleOptions}
                   tagData={tagData}
+                  checklistData={checklistData}
                   collaboratorData={[]}
                   availableUsers={userData}
                   onTaskUpdate={handleTaskUpdate}
@@ -467,6 +470,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
               onAddComment={onAddComment}
               onUpdateComment={onUpdateComment}
               onDeleteComment={onDeleteComment}
+              onAddCollaborator={onAddCollaborator}
               fieldVisibility={fieldVisibility}
               fieldDisabled={fieldDisabled}
             />
@@ -503,6 +507,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
               priorityData={priorityData}
               roleOptions={roleOptions}
               tagData={tagData}
+              checklistData={checklistData}
               collaboratorData={[]}
               availableUsers={userData}
               onTaskUpdate={handleTaskUpdate}
@@ -592,6 +597,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
             onAddComment={onAddComment}
             onUpdateComment={onUpdateComment}
             onDeleteComment={onDeleteComment}
+            onAddCollaborator={onAddCollaborator}
             fieldVisibility={fieldVisibility}
             fieldDisabled={fieldDisabled}
           />
