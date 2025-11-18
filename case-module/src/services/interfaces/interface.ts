@@ -1,4 +1,5 @@
 import { CaseTask } from "../../models/caseTaskModel";
+import { TaskTemplate } from "../../models/caseTaskTemplateModel";
 import { Tags } from "../../models/tagsModel";
 import { TaskCollaborators } from "../../models/taskCollaboratorsModel";
 import { TaskComments } from "../../models/taskCommentsModel";
@@ -265,6 +266,11 @@ deleteLinkTask (data : CaseTaskWorkFlowDelete) : Promise<{
     statusCode: number;
     statusMessage: string;
 } | undefined>
+taskListForDropdownAccountLevel (data : any) : Promise<CaseTask[]>
+deleteTagsAccountLevel (data : any) : Promise<{
+    statusCode: number;
+    statusMessage: string;
+}>
 
 }
 
@@ -396,6 +402,39 @@ deleteLinkTask (data : CaseTaskWorkFlowDelete) : Promise<{
     statusCode: number;
     statusMessage: string;
 } | undefined>
+adminTaskListForDropdown (data : any) : Promise<TaskTemplate[]>
+}
+
+export interface IActivityService {
+ createActivityTask(
+    taskRequest: IActivityTask,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { cases: any };
+  }>;
+   getAllActivities(
+    userId: string,
+    attachmentLevel: string,
+    entityId: string,
+    accountRid: string,
+    page: number,
+    limit: number,
+    search: string,
+    filters: Record<string, any>,
+    sortBy: string,
+    sortOrder: string,
+    fiscalYear: number,
+    apiType: string,
+    graphqlData: any
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { activities: any[]; totalCount: number };
+  }>;
 }
 
 export interface IActivityService {

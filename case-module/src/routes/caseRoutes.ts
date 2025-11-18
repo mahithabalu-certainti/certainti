@@ -159,10 +159,15 @@ routes.post(
   checkUserStatusMiddleware("NA"),
   controller.caseController.createOrMapTags
 )
-routes.get(
+routes.post(
   "/tag/list",
   checkUserStatusMiddleware("NA"),
   controller.caseController.fetchAllTags
+)
+routes.post(
+  "/tag/delete",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.deleteTagsTaskLevel
 )
 routes.post(
   "/task/comments/add",
@@ -257,5 +262,10 @@ routes.post(
   "/task/workflowConnector/delete",
   checkUserStatusMiddleware("NA"),
   controller.caseController.linkDeleteTask
+)
+routes.post(
+  "/task/dropdown",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.listTaskDropdownAccountLevel
 )
 export default routes;

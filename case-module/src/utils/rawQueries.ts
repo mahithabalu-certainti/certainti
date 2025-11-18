@@ -1150,7 +1150,7 @@ return query;
     ), 
     
     fetch_task_comments AS (
-    SELECT tc.rid, tc.comments, tc.account_rid, tc.case_rid, tc.task_rid, c.total_result
+    SELECT tc.rid, tc.comments, tc.account_rid, tc.case_rid, tc.task_rid, c.total_result, tc.created_by, tc.created_datetime
     FROM ${schemaName}.task_comments tc
     LEFT JOIN calculate_total_result c ON c.rid = tc.rid
     WHERE
@@ -1191,6 +1191,8 @@ return query;
     'case_rid', tc.case_rid,
     'task_rid', tc.task_rid,
     'total_result', tc.total_result,
+    'created_by', tc.created_by,
+    'created_datetime', tc.created_datetime,
     'comments_attachments', ca.comments_attachments
     )) AS comments
     FROM
@@ -1275,6 +1277,26 @@ return query;
     GROUP BY f.rid
     ),
 
+    aggregate_workflow_connector AS (
+    SELECT t.rid, t.account_rid, t.case_rid,
+    array_agg(jsonb_build_object(
+    'rid', w.rid,
+    'source_rid', w.source_rid,
+    'target_rid', w.target_rid,
+    'relationship_connector_rid', w.relationship_connector_rid
+    )) AS workflow_connector
+    FROM
+    ${schemaName}.case_task t
+    LEFT JOIN ${schemaName}.case_task_workflow_connector_mapping w ON w.source_rid = t.rid AND w.account_rid = t.account_rid AND w.case_rid = t.case_rid
+    WHERE
+    t.rid = '${taskRid}'
+    AND
+    t.account_rid = '${accountRid}'
+    AND
+    t.case_rid = '${caseRid}'
+    GROUP BY t.rid, t.account_rid, t.case_rid
+    ),
+
     aggregate_checklists AS (
     SELECT 
     c.task_rid,
@@ -1307,12 +1329,14 @@ return query;
     'task_description', ct.task_description,
     'task_status_rid', ct.task_status_rid,
     'checklists', fci.checklists,
-    'tags', ftt.tags
+    'tags', ftt.tags,
+    'workflow_connector', w.workflow_connector
     ) AS task_details
     FROM
     ${schemaName}.case_task ct
     LEFT JOIN aggregate_checklists fci ON fci.task_rid = ct.rid
     LEFT JOIN fetch_task_tags ftt ON ftt.rid = ct.rid
+    LEFT JOIN aggregate_workflow_connector w ON w.rid = ct.rid
     WHERE
     ct.rid = '${taskRid}'
     AND
@@ -1320,7 +1344,6 @@ return query;
     AND
     ct.case_rid = '${caseRid}'
     `
-
     return query;
   }
   export const listAllTaskStatus = () => {

@@ -918,8 +918,14 @@ async listEmailTemplates (
       const result = await this.caseManangementSchemaService.taskWorkflowConnector(data);
       return result;
     }
-    async deleteLinkTask (data : any) {
-      const result = await this.caseManangementSchemaService.deleteTaskWorkConnector(data);
-      return result;
-    }
+  async deleteLinkTask (data : any) {
+    const result = await this.caseManangementSchemaService.deleteTaskWorkConnector(data);
+    return result;
+  }
+  async adminTaskListForDropdown (data : any) {
+    const result = await this.caseManangementSchemaService.listTasksDropdown(data);
+    if(result.length > 0) return result
+    else return []
+  }
+
 }
