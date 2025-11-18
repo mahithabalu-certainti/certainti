@@ -52,6 +52,8 @@ import { AttachmentsListExportParams } from '../../../types/attachment';
 import { useSelector } from 'react-redux';
 import { Attachments } from './case-attachments';
 import { exportAttachmentsData } from '../../../services/attachments/attachments-service';
+import { ExportReviewProjectList } from '../../../services/cases-assign-projects/review-project-service';
+import { ReviewProjectListURLParams } from '../../../types/assign-projects';
 
 export const CaseDetails = () => {
   const navigate = useNavigate();
@@ -94,7 +96,7 @@ export const CaseDetails = () => {
     caseData?.account_status_name?.toLowerCase() !== 'active';
   const [caseProjectParams, setCaseProjectParams] =
     useState<CaseAssignedExportParams>({
-      sort: 'project_type_name',
+      sort: 'project_code',
       sort_by: 'ASC',
       filter: {},
       timezone: '',
@@ -103,6 +105,16 @@ export const CaseDetails = () => {
       search: '',
       case_rid: caseId ?? '',
       account_id: accountId ?? '',
+    });
+  const [reviewProjectParams, setReviewProjectParams] =
+    useState<ReviewProjectListURLParams>({
+      sortOrder: 'ASC',
+      sortBy: 'project_code',
+      filters: {},
+      timezone: '',
+      page: 1,
+      limit: 10,
+      search: '',
     });
   const fiscalYear = caseData?.fiscal_year ?? 0;
   const [attachmentParams, setAttachmentParams] =
@@ -190,8 +202,11 @@ export const CaseDetails = () => {
         ...attachmentParams,
         ...attachmentPayload,
       });
-    } else if (list === 'caseProjects') {
+    } else if (list === 'caseProjects' && exportType === 'cases_projects') {
       ExportAssignedList(caseProjectParams);
+    } else if (list === 'caseProjects' && exportType === 'review_projects') {
+      console.log('review_projects');
+      ExportReviewProjectList(reviewProjectParams, accountId, caseId);
     }
   };
 
@@ -258,6 +273,7 @@ export const CaseDetails = () => {
               fiscalYear={fiscalYear}
               accountInActive={accountInActive}
               setTableParams={setCaseProjectParams}
+              setReviewProjectParams={setReviewProjectParams}
               setExportType={setExportType}
             />
           </div>

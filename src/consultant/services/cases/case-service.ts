@@ -162,7 +162,7 @@ export const ExportCaseList = async (
   accountId?: string
 ): Promise<void> => {
   try {
-    const filename = `cases_list.xlsx`;
+    const filename = `review_projects_list.xlsx`;
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
     const response = await caseServiceApi.get<ExportCaseListResponse>(

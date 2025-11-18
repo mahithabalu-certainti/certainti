@@ -522,7 +522,8 @@ export type ExportType =
   | 'resource_notes'
   | 'notes'
   | 'cases'
-  | 'cases_projects';
+  | 'cases_projects'
+  | 'review_projects';
 
 export type FinancialSummaryFlag = 'all' | 'rd_qualified';
 

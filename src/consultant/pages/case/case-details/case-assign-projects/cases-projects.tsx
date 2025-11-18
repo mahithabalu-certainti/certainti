@@ -11,7 +11,10 @@ import {
 import SectionHeader from '../../../../../components/details-section/section-header';
 import SelectProjects from './select-project/select-projects';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { AssignProject } from '../../../../types/assign-projects';
+import {
+  AssignProject,
+  ReviewProjectListURLParams,
+} from '../../../../types/assign-projects';
 import { selectProjectFilterFields } from './select-project/helper';
 import {
   useFetchClassification,
@@ -36,12 +39,16 @@ import ProjectTab from './projects-tab';
 import { getProjectFinancialResCostFields } from '../../../project/project-details/financial-highlights/helpers';
 import { useGetResourceType } from '../../../../services/resource-list';
 import { FilterValue } from '../../../../types/account-filter';
+import { getReviewdProjectColumns } from './review-projects/column';
 interface casesProjectProps {
   activeKey?: string;
   fiscalYear: number;
   accountInActive: boolean;
   setTableParams?: React.Dispatch<
     React.SetStateAction<CaseAssignedExportParams>
+  >;
+  setReviewProjectParams?: React.Dispatch<
+    React.SetStateAction<ReviewProjectListURLParams>
   >;
   setExportType?: (type: ExportType) => void;
 }
@@ -64,6 +71,7 @@ const CasesProjects: React.FC<casesProjectProps> = ({
   accountInActive,
   setTableParams,
   setExportType,
+  setReviewProjectParams,
 }) => {
   const { caseId } = useParams();
   const [refreshTrigger, setRefreshTrigger] = useState<number>(Date.now());
@@ -79,7 +87,7 @@ const CasesProjects: React.FC<casesProjectProps> = ({
   const [clearSelectedRows, setClearSelectedRows] = useState<boolean>(false);
   const [searchParams] = useSearchParams();
   const handleSorting = () => {
-    setSortFilterCount(sortFilterCount + 1);
+    // setSortFilterCount(sortFilterCount + 1);
   };
   const [selectedRows, setSelectedRows] = useState<AssignProject[]>([]);
   const [columnAnchorEl, setColumnAnchorEl] =
@@ -383,9 +391,12 @@ const CasesProjects: React.FC<casesProjectProps> = ({
     searchParams.set('projectID', data.rid);
     navigate({ search: searchParams.toString() }, { replace: true });
   };
-  const caseColumns = isAssignProject
-    ? getAssignedProjectColumns(permissionMap)
-    : getSelectProjectColumns(permissionMap, handleProjectDetails);
+  const caseColumns =
+    tabParam === 'assign_projects'
+      ? isAssignProject
+        ? getAssignedProjectColumns(permissionMap)
+        : getSelectProjectColumns(permissionMap, handleProjectDetails)
+      : getReviewdProjectColumns(permissionMap);
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
   >(Object.fromEntries(caseColumns.map((col) => [col.id, !col.hide])));
@@ -499,7 +510,7 @@ const CasesProjects: React.FC<casesProjectProps> = ({
         <div className='border border-[#CBD6E2] border-t-0'>
           {isAssignProject ? (
             <SelectProjects
-              accountInActive={false}
+              accountInActive={accountInActive}
               refreshTrigger={refreshTrigger}
               setSelectedRows={setSelectedRows}
               currentPage={currentPage}
@@ -509,10 +520,11 @@ const CasesProjects: React.FC<casesProjectProps> = ({
               setCount={setCount}
               clearSelectedRows={clearSelectedRows}
               fiscalYear={fiscalYear}
+              appliedFilters={appliedFilters}
             />
           ) : (
             <AssignedProjects
-              accountInActive={false}
+              accountInActive={accountInActive}
               refreshTrigger={refreshTrigger}
               setSelectedRows={setSelectedRows}
               currentPage={currentPage}
@@ -523,14 +535,23 @@ const CasesProjects: React.FC<casesProjectProps> = ({
               setCount={setCount}
               clearSelectedRows={clearSelectedRows}
               fiscalYear={fiscalYear}
+              setExportType={setExportType}
+              appliedFilters={appliedFilters}
             />
           )}
         </div>
       ) : (
         <div className='border border-[#CBD6E2] border-t-0'>
           <ReviewProjectsList
-            accountInActive={false}
+            accountInActive={accountInActive}
             visibleColumns={visibleColumns}
+            searchText={searchText}
+            refreshTrigger={refreshTrigger}
+            // fiscalYear={fiscalYear}
+            setTableParams={setReviewProjectParams}
+            setCount={setCount}
+            setExportType={setExportType}
+            appliedFilters={appliedFilters}
           />
         </div>
       )}

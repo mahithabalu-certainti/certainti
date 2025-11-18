@@ -5,7 +5,7 @@ import { AssignProject } from '../../../../../types/assign-projects';
 import { useAssignProjectsList } from '../../../../../services/cases-assign-projects/assign-project-service';
 import { ListTable } from '../../../../../../components/table';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { CaseAssignedExportParams } from '../../../../../types';
+import { CaseAssignedExportParams, ExportType } from '../../../../../types';
 
 interface AssignedProjectsProps {
   accountInActive: boolean;
@@ -21,6 +21,8 @@ interface AssignedProjectsProps {
   setCount: React.Dispatch<React.SetStateAction<number>>;
   clearSelectedRows: boolean;
   fiscalYear: number;
+  setExportType?: (type: ExportType) => void;
+  appliedFilters: Record<string, string | number | boolean | string[]>;
 }
 
 const AssignedProjects: React.FC<AssignedProjectsProps> = ({
@@ -34,6 +36,8 @@ const AssignedProjects: React.FC<AssignedProjectsProps> = ({
   setCount,
   clearSelectedRows,
   fiscalYear,
+  setExportType,
+  appliedFilters,
 }) => {
   const { caseId } = useParams();
   const [searchParams] = useSearchParams();
@@ -49,7 +53,7 @@ const AssignedProjects: React.FC<AssignedProjectsProps> = ({
       sort: sortField,
       sort_by: sortBy,
       search: searchText,
-      filter: {},
+      filter: appliedFilters,
       case_rid: caseId,
       account_rid: accountID, // Replace with the actual account_rid
       fiscal_year: fiscalYear,
@@ -59,6 +63,9 @@ const AssignedProjects: React.FC<AssignedProjectsProps> = ({
   useEffect(() => {
     if (data?.count) {
       setCount(data?.count);
+    }
+    if (setExportType) {
+      setExportType('cases_projects');
     }
     setTableParams?.({
       page: currentPage + 1,
@@ -82,6 +89,8 @@ const AssignedProjects: React.FC<AssignedProjectsProps> = ({
     accountID,
     data?.count,
     setCount,
+    setExportType,
+    appliedFilters,
   ]);
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
