@@ -121,6 +121,14 @@ export class CaseService {
       if (!accountNumber) {
         throw new Error("Invalid account ID");
       }
+       const isUnique = await this.caseSchemaService.checkIsCaseNameUnique(caseRequest,accountNumber);
+      if (!isUnique) {
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: HttpStatus.BAD_REQUEST_MESSAGE,
+          errorMessage: `A case with the name "${caseRequest.case_name}" already exists. Please choose a different name.`,
+        };
+      }
 
       const { country_rid } =
         await this.caseSchemaService.fetchCountryByAccountId(
@@ -139,6 +147,7 @@ export class CaseService {
       }
       const { statusRid } = await this.getCaseStatusForCreate();
       caseRequest.status_rid = statusRid || "";
+
       const response = await this.caseSchemaService.createCases(
         accountNumber,
         caseRequest,
@@ -217,6 +226,14 @@ export class CaseService {
       if (!accountNumber) {
         throw new Error("Invalid account ID");
       }
+      const isUnique = await this.caseSchemaService.checkisExistingCaseUnique(caseRequest,accountNumber);
+    if (!isUnique) {
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: HttpStatus.BAD_REQUEST_MESSAGE,
+        errorMessage: `A case with the name "${caseRequest.case_name}" and category already exists. Please choose a different name or category.`,
+      };
+    }
 
       const response = await this.caseSchemaService.updateCases(
         accountNumber,
@@ -2038,7 +2055,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
       for(let d of data.tags) {
         iterationCount += 1
         await this.caseSchemaService.createOrUpdateTags(data.task_rid, data.account_rid,
-        data.case_rid, data.tag_rid, data.is_new_tag, fetchParent[0][0].r_number, data.userId, getActiveStatusId[0][0].rid)
+        data?.case_rid, data.tag_rid, data.is_new_tag, fetchParent[0][0].r_number, data.userId, getActiveStatusId[0][0].rid),data.task_type
       }
       if(totalIteration === iterationCount) {
         return {
@@ -2092,7 +2109,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
       const mainDb = await this.getMainDb();
       const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
       data.created_by = userId
-      const fetchTaskDetails = await this.caseSchemaService.findTaskById(data.task_rid, data.account_rid, data.case_rid, fetchParent[0][0].r_number);
+      const fetchTaskDetails = await this.caseSchemaService.findTaskById(data.task_rid, data.account_rid, data.case_rid, fetchParent[0][0].r_number,data.task_type);
       const result = await this.caseSchemaService.addComments(data, fetchParent[0][0].r_number, fetchTaskDetails?.r_number!, files);
       if(result.statusCode == HttpStatus.SUCCESS) {
         return result

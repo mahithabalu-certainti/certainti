@@ -26,6 +26,8 @@ import { TaskAttachments } from "../models/taskAttachmentModel";
 import { CaseTaskWorkflowConnector } from "../models/caseTaskWorkflowConnectorModel";
 import { WorkflowConnector } from "../models/workflowConnectorModel";
 import { WorkflowConnectorMapping } from "../models/workflowConnectorMapModel";
+import { Activities } from "../models/activitiesModel";
+import { TaskHistory } from "../models/taskHistory";
 
 export class CaseModelService {
   orgDbSequelize: Sequelize | null = null;
@@ -52,6 +54,7 @@ export class CaseModelService {
       CaseTaskWorkflowConnector: ReturnType<typeof CaseTaskWorkflowConnector.initialize>
       WorkflowConnector : ReturnType<typeof WorkflowConnector.initialize>
       WorkflowConnectorMapping: ReturnType<typeof WorkflowConnectorMapping.initialize>
+      TaskHistory : ReturnType<typeof TaskHistory.initialize>;
     }
   > = new Map();
 
@@ -103,7 +106,10 @@ export class CaseModelService {
     const CaseHistorySubmissionModel = CaseHistorySubmission.initialize(sequelize, schemaName);
     const CaseTaskWorkflowConnectorModel = CaseTaskWorkflowConnector.initialize(sequelize, schemaName)
     const WorkflowConnectorModel = WorkflowConnector.initialize(mainDbSequelize, MAIN_SCHEMA_NAME);
-    const WorkflowConnectorMappingModel = WorkflowConnectorMapping.initialize(mainDbSequelize, MAIN_SCHEMA_NAME)
+    const WorkflowConnectorMappingModel = WorkflowConnectorMapping.initialize(mainDbSequelize, MAIN_SCHEMA_NAME)   
+    const ActivitiesModel = Activities.initialize(sequelize, schemaName);
+    const TaskHistoryModel = TaskHistory.initialize(sequelize, schemaName);
+
     const models = {
       Case: CaseModel,
       CaseSummary: CaseSummaryModel,
@@ -127,6 +133,8 @@ export class CaseModelService {
       CommentsAttachments : CommentsAttachmentsModel,
       TaskAttachments : TaskAttachmentsModel,
       CaseHistorySubmission: CaseHistorySubmissionModel,
+      Activities: ActivitiesModel,
+      TaskHistory: TaskHistoryModel,
       CaseTaskWorkflowConnector : CaseTaskWorkflowConnectorModel,
       WorkflowConnector : WorkflowConnectorModel,
       WorkflowConnectorMapping : WorkflowConnectorMappingModel

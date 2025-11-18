@@ -4,6 +4,7 @@ import { ICaseManagementService, ICaseService } from "./interfaces/interface";
 import { CaseManagementService } from "./casesManagement/caseManagementService";
 import { JurisdictionService }  from "./jurisdiction/jurisdictionServices";
 import { HistoricalSubmissionService }  from "./historicalSubmission/historicalSubmissionServices";
+import { ActivityService } from "./activities/activityService";
 
 class Services {
   private logger: Logger;
@@ -11,6 +12,7 @@ class Services {
   caseManagementService: ICaseManagementService;
   jurisdictionService: JurisdictionService;
   historicalSubmissionService: HistoricalSubmissionService;
+  activityService: ActivityService;
 
   constructor(logger: Logger) {
     this.logger = logger;
@@ -18,6 +20,7 @@ class Services {
     this.caseManagementService = new CaseManagementService(logger);
     this.jurisdictionService = new JurisdictionService(logger);
     this.historicalSubmissionService = new HistoricalSubmissionService(logger);
+    this.activityService = new ActivityService(logger);
   }
 }
 

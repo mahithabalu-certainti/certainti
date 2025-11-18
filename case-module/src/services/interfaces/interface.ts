@@ -4,7 +4,7 @@ import { Tags } from "../../models/tagsModel";
 import { TaskCollaborators } from "../../models/taskCollaboratorsModel";
 import { TaskComments } from "../../models/taskCommentsModel";
 import { TaskTag } from "../../models/taskTagsModel";
-import { AddCommentsType, AdminTaskTemplatePayloadType, CaseTaskQueryType, CreateCaseTaskType, CreateTaskTemplateType, ICreateCases, ICreateCaseTeam, ICreateChecklist, ICreateChecklistTemplate, ICreateEmailTemplate, MilestoneResponse, UpdateCaseTaskType, UpdateTaskTemplateType, UpdateCommentsType, DeleteCommentsType, CommentsListType, ActivityType, TaskCardDetailsType, priorityTypes, caseTaskStatusTypes, WorkflowConnectorType, CaseTaskWorkFlowCreate, CaseTaskWorkFlowDelete } from "../../utils/types";
+import { AddCommentsType, AdminTaskTemplatePayloadType, CaseTaskQueryType, CreateCaseTaskType, CreateTaskTemplateType, ICreateCases, ICreateCaseTeam, ICreateChecklist, ICreateChecklistTemplate, ICreateEmailTemplate, MilestoneResponse, UpdateCaseTaskType, UpdateTaskTemplateType, UpdateCommentsType, DeleteCommentsType, CommentsListType, ActivityType, TaskCardDetailsType, priorityTypes, caseTaskStatusTypes, WorkflowConnectorType, CaseTaskWorkFlowCreate, CaseTaskWorkFlowDelete, IActivityTask } from "../../utils/types";
 
 export interface ICaseService {
   createCase(
@@ -406,4 +406,68 @@ deleteLinkTask (data : CaseTaskWorkFlowDelete) : Promise<{
     statusMessage: string;
 } | undefined>
 adminTaskListForDropdown (data : any) : Promise<TaskTemplate[]>
+}
+
+export interface IActivityService {
+ createActivityTask(
+    taskRequest: IActivityTask,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { cases: any };
+  }>;
+   getAllActivities(
+    userId: string,
+    attachmentLevel: string,
+    entityId: string,
+    accountRid: string,
+    page: number,
+    limit: number,
+    search: string,
+    filters: Record<string, any>,
+    sortBy: string,
+    sortOrder: string,
+    fiscalYear: number,
+    apiType: string,
+    graphqlData: any
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { activities: any[]; totalCount: number };
+  }>;
+}
+
+export interface IActivityService {
+ createActivityTask(
+    taskRequest: IActivityTask,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { cases: any };
+  }>;
+   getAllActivities(
+    userId: string,
+    attachmentLevel: string,
+    entityId: string,
+    accountRid: string,
+    page: number,
+    limit: number,
+    search: string,
+    filters: Record<string, any>,
+    sortBy: string,
+    sortOrder: string,
+    fiscalYear: number,
+    apiType: string,
+    graphqlData: any
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { activities: any[]; totalCount: number };
+  }>;
 }

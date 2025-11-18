@@ -4,6 +4,7 @@ import caseRoutes from "./caseRoutes";
 import caseManagementRoutes from "./caseManagementRoutes"
 import jurisdictionRoutes from "./jurisdictionRoutes";
 import historicalSubmissionRoutes from "./historicalSubmissionRoutes";
+import activitiesRoutes from "./activitiesRoutes";
 
 const routes: Router = Router();
 
@@ -28,6 +29,7 @@ routes.get("/health", async (req, res) => {
 
 routes.use("/cases", caseRoutes);
 routes.use("/caseManagement", caseManagementRoutes);
+routes.use("/activities", activitiesRoutes);
 routes.use("/jurisdictions", jurisdictionRoutes);
 routes.use("/historicalSubmission", historicalSubmissionRoutes);
 

@@ -537,6 +537,7 @@ export type AddCommentsType = {
   account_rid : string
   task_rid : string
   comments : string
+  task_type: string
 }
 
 export type UpdateCommentsType = {
@@ -547,6 +548,7 @@ export type UpdateCommentsType = {
   task_rid : string
   rid : string,
   comments : string,
+  task_type: string,
   deleted_file_ids : string[]
 }
 export type DeleteCommentsType = {
@@ -555,7 +557,8 @@ export type DeleteCommentsType = {
   account_rid : string
   task_rid : string
   rid : string
-  deleted_file_ids : string[]
+  deleted_file_ids : string[],
+  task_type: string 
 }
 
 export type CommentsListType = {
@@ -642,6 +645,7 @@ export type TagsTypes = {
   rid : string
   tag_name : string
 }
+
 export type CaseTaskWorkFlowCreate = {
   case_rid : string,
   account_rid : string,
@@ -657,4 +661,26 @@ export type CaseTaskWorkFlowDelete = {
   account_rid : string
   created_by : string
   modified_datetime : string
+}
+export interface IActivityTask {
+  task_template_rid?: string;
+  task_rid: string;
+  activity_type:string
+  created_by: string;
+  modified_by?: string;
+  created_datetime?: Date;
+  modified_datetime?: Date;
+  accountRid: string;
+  fiscal_year: number;
+  attach_to: string;
+  attachment_level: string;
+  task_name: string;
+  description?: string;
+  start_datetime?: Date;
+  end_datetime?: Date;
+  priority_rid?: string;
+  assigned_to?: string;
+  status_rid?: string;
+  remainder_interval?: number;
+  account_rid?: string; 
 }
