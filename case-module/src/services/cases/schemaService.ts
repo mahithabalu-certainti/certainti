@@ -85,6 +85,7 @@ import { CommentsAttachments, setupCommentsAttachmentsSequence } from "../../mod
 import { setupTaskAttachmentsSequence, TaskAttachments } from "../../models/taskAttachmentModel";
 import { CaseTaskWorkflowConnector, setupCaseTaskWorkflowConnectorSequence } from "../../models/caseTaskWorkflowConnectorModel";
 import {v4 as uuidv4} from 'uuid'
+import { WorkflowConnector } from "../../models/workflowConnectorModel";
 
 class CaseSchemaService {
   private orgDbSequelize: Sequelize | null = null;
@@ -4669,13 +4670,22 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         statusMessage : STATUS_MESSAGE.caseNotFound
       } 
     } else {
-      const isTaskExists = await this.findTaskById(data.rid, data.account_rid, data.case_rid, accountNumber,"milestone");
+      const isTaskExists : any = await this.findTaskById(data.rid, data.account_rid, data.case_rid, accountNumber,"milestone");
       if(!isTaskExists) {
         return {
           statusCode : HttpStatus.BAD_REQUEST,
           statusMessage : STATUS_MESSAGE.taskNotFound
         } 
       } else {
+        if(isTaskExists.task_status_rid !== data.task_status_rid) {
+          const workflowResult = await this.checkTaskWorkFlow(accountNumber, data.rid, data.task_status_rid);
+          if(workflowResult?.success) {
+            return {
+              statusCode : HttpStatus.BAD_REQUEST,
+              statusMessage : workflowResult.statusMessage
+            } 
+          }
+        }
         const [updatedResult] = await CaseTask.update(data, {
           where : {
             rid : data.rid,
@@ -6181,6 +6191,181 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       return {
         statusCode : HttpStatus.SUCCESS,
         statusMessage : STATUS_MESSAGE.collaboratorRemovedFailed
+      }
+    }
+  }
+  async checkTaskWorkFlow (accountNumber : string, taskRid : string, statusRid : string) {
+    if(!this.mainDbSequelize) {
+      this.mainDbSequelize = await initMainDbSequelize()
+    }
+    const {CaseTaskWorkflowConnector} = await this.caseModelService.getModels(accountNumber);
+    const findTaskDependency = await CaseTaskWorkflowConnector.findAll({
+      where : {
+        source_rid : taskRid
+      }, raw : true
+    });
+    if(findTaskDependency.length > 0) {
+      const result = await this.sourceTaskValidation(accountNumber, findTaskDependency, taskRid, statusRid);
+      if(result?.success) {
+        return {
+          success : true,
+          statusMessage : result.statusMessage 
+        }
+      }
+      else {
+        const findTargetTaskDependency = await CaseTaskWorkflowConnector.findAll({
+            where : {
+              target_rid : taskRid
+            }, raw : true
+          });
+        if(findTaskDependency.length > 0) {
+          const result = await this.targetTaskValidation(accountNumber, findTargetTaskDependency, taskRid, statusRid);
+          if(result?.success) {
+            return {
+              success : true,
+              statusMessage : result.statusMessage 
+            }
+          }
+          else {
+            return {
+              success : false,
+              statusMessage : null
+            }
+          } 
+        }
+      } 
+    }
+  }
+
+  private async sourceTaskValidation (accountNumber : string, findTaskDependency: CaseTaskWorkflowConnector[], sourceRid : string, statusRid : string) {
+    if(!this.mainDbSequelize) {
+      this.mainDbSequelize = await initMainDbSequelize()
+    }
+    const {WorkflowConnector, CaseTask} = await this.caseModelService.getModels(accountNumber);
+    const relationIds = [...new Set(findTaskDependency.map((d : CaseTaskWorkflowConnector) => d.relationship_connector_rid))];
+    const findRelationshipConnector = await WorkflowConnector.findAll({
+      where : {
+        rid : {
+          [Op.in] : relationIds
+        }
+      }, raw : true
+    });
+    if(findRelationshipConnector.length > 0) {
+      const mapRelationShip : Map<string, string> = new Map(findRelationshipConnector.map((d : any) => [d.rid, d.relationship_type]));
+      const targetIds = [...new Set(findTaskDependency.map((d : CaseTaskWorkflowConnector) => d.target_rid))];
+      targetIds.push(sourceRid)
+      const findCaseTasks = await CaseTask.findAll({
+        where : {
+          rid : {
+            [Op.in] : targetIds
+          }
+        }, raw : true
+      });
+      if(findCaseTasks.length > 0) {
+        const mapTargetTasks : Map<string, CaseTask> = new Map(findCaseTasks.map((d : any) => [d.rid, d]));
+        
+        const taskStatusIds = [...new Set(findCaseTasks.map((d : any) => d.task_status_rid))];
+        taskStatusIds.push(statusRid);
+        let fetchStatusQuery = rawQueries.getAllTaskStatus(taskStatusIds);
+        if(fetchStatusQuery) {
+          const findTaskStatus : any = await this.mainDbSequelize.query(fetchStatusQuery);
+          const taskStatusMap = new Map(findTaskStatus[0].map((d : any) => [d.rid, d.task_status_name]));
+
+          for(let f of findTaskDependency) {
+            if(mapRelationShip.get(f.relationship_connector_rid) === 'is_enabled_by') {
+              if(taskStatusMap.get(mapTargetTasks.get(f.target_rid)?.task_status_rid) !== "Completed") {
+                if(taskStatusMap.get(statusRid) === "Completed") {
+                  return {
+                    success : true,
+                    statusCode : HttpStatus.BAD_REQUEST,
+                    statusMessage : `This task cannot be completed because it is enabled by ${mapTargetTasks.get(f.target_rid)?.task_name}`
+                  }
+                }
+              }
+            }
+            else if(mapRelationShip.get(f.relationship_connector_rid) === "is_blocked_by") {
+              if(taskStatusMap.get(mapTargetTasks.get(f.target_rid)?.task_status_rid) !== "Completed") {
+                return {
+                  success : true,
+                  statusCode : HttpStatus.BAD_REQUEST,
+                  statusMessage : `This task is blocked by ${mapTargetTasks.get(f.target_rid)?.task_name}. Please complete that task before proceeding.`
+                }
+              }
+            } else {
+              return {
+                  success : false,
+                  statusCode : HttpStatus.BAD_REQUEST,
+                  statusMessage : null
+                }
+            }
+          }
+        }
+      }
+    }
+  }
+  private async targetTaskValidation (accountNumber : string, findTaskDependency: CaseTaskWorkflowConnector[], targetRid : string, statusRid : string) {
+    if(!this.mainDbSequelize) {
+      this.mainDbSequelize = await initMainDbSequelize()
+    }
+    const {WorkflowConnector, CaseTask} = await this.caseModelService.getModels(accountNumber);
+    const relationIds = [...new Set(findTaskDependency.map((d : CaseTaskWorkflowConnector) => d.relationship_connector_rid))];
+    const findRelationshipConnector = await WorkflowConnector.findAll({
+      where : {
+        rid : {
+          [Op.in] : relationIds
+        }
+      }, raw : true
+    });
+    if(findRelationshipConnector.length > 0) {
+      const mapRelationShip : Map<string, string> = new Map(findRelationshipConnector.map((d : any) => [d.rid, d.relationship_type]));
+      const sourceIds = [...new Set(findTaskDependency.map((d : CaseTaskWorkflowConnector) => d.source_rid))];
+      sourceIds.push(targetRid)
+      const findCaseTasks = await CaseTask.findAll({
+        where : {
+          rid : {
+            [Op.in] : sourceIds
+          }
+        }, raw : true
+      });
+      if(findCaseTasks.length > 0) {
+        const mapSourceTasks : Map<string, CaseTask> = new Map(findCaseTasks.map((d : any) => [d.rid, d]));
+        
+        const taskStatusIds = [...new Set(findCaseTasks.map((d : any) => d.task_status_rid))];
+        taskStatusIds.push(statusRid);
+        let fetchStatusQuery = rawQueries.getAllTaskStatus(taskStatusIds);
+        if(fetchStatusQuery) {
+          const findTaskStatus : any = await this.mainDbSequelize.query(fetchStatusQuery);
+          const taskStatusMap = new Map(findTaskStatus[0].map((d : any) => [d.rid, d.task_status_name]));
+
+          for(let f of findTaskDependency) {
+            if(mapRelationShip.get(f.relationship_connector_rid) === 'enables') {
+              if(taskStatusMap.get(mapSourceTasks.get(f.source_rid)?.task_status_rid) !== "Completed") {
+                if(taskStatusMap.get(statusRid) === "Completed") {
+                  return {
+                    success : true,
+                    statusCode : HttpStatus.BAD_REQUEST,
+                    statusMessage : `This task cannot be completed because it is enabled by ${mapSourceTasks.get(f.source_rid)?.task_name}`
+                  }
+                }
+              }
+            }
+            else if(mapRelationShip.get(f.relationship_connector_rid) === "blocks") {
+              if(taskStatusMap.get(mapSourceTasks.get(f.target_rid)?.task_status_rid) !== "Completed") {
+                return {
+                  success : true,
+                  statusCode : HttpStatus.BAD_REQUEST,
+                  statusMessage : `This task is blocked by ${mapSourceTasks.get(f.source_rid)?.task_name}. Please complete that task before proceeding.`
+                }
+              }
+            } else {
+              return {
+                  success : false,
+                  statusCode : HttpStatus.BAD_REQUEST,
+                  statusMessage : null
+                }
+            }
+          }
+        }
       }
     }
   }
