@@ -1,4 +1,5 @@
 import { CaseTask } from "../../models/caseTaskModel";
+import { TaskTemplate } from "../../models/caseTaskTemplateModel";
 import { Tags } from "../../models/tagsModel";
 import { TaskCollaborators } from "../../models/taskCollaboratorsModel";
 import { TaskComments } from "../../models/taskCommentsModel";
@@ -181,9 +182,9 @@ taskListForCases(data : any, isExport : boolean) : Promise<{
 }>
 createOrMapTags(data : any) : Promise<{
     statusCode: number;
-    data: string | TaskTag | null;
+    statusMessage: string;
 }>
-fetchTagsForDropdown() : Promise<{
+fetchTagsForDropdown (data : any) : Promise<{
     statusCode: number;
     data: Tags[];
 }>
@@ -265,6 +266,11 @@ deleteLinkTask (data : CaseTaskWorkFlowDelete) : Promise<{
     statusCode: number;
     statusMessage: string;
 } | undefined>
+taskListForDropdownAccountLevel (data : any) : Promise<CaseTask[]>
+deleteTagsAccountLevel (data : any) : Promise<{
+    statusCode: number;
+    statusMessage: string;
+}>
 }
 
 export interface ICaseManagementService {
@@ -395,4 +401,5 @@ deleteLinkTask (data : CaseTaskWorkFlowDelete) : Promise<{
     statusCode: number;
     statusMessage: string;
 } | undefined>
+adminTaskListForDropdown (data : any) : Promise<TaskTemplate[]>
 }

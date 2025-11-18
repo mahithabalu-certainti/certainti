@@ -126,6 +126,10 @@ export const STATUS_MESSAGE = {
   tagsCreatedSuccesfully : "Tags added successfully",
   tagMappedAlready : "Tag already added",
   tagsListedSuccess : "Tags listed successfully",
+  tagDeletedSuccess : "Tag deleted successfully",
+  tagRequired : "Atleast one tag is required to delete",
+  multipleTagDeletedSuccess : "Tags deleted successfully",
+  tagDeletionFailed : "Tag deletion failed",
   commentsAddedSuccess : "Comments added successfully",
   commentsFailed : "Failed to create comments",
   taskExportedSuccess : "Case Task exported successfully",
@@ -157,6 +161,8 @@ export const STATUS_MESSAGE = {
   workflowConnectorMappedFailed: "Task linking failed",
   workflowConnectorMappedDeleted : "Linked Task deleted successfully",
   workflowConnectorMappedDeletedFailed : "Failed to link task",
+  caseTaskFetchedSuccess : "Case Task fetched successfully",
+  tagsCreationFailed : "Failed to add Tags"
 };
 
 export const caseStatuses = {
@@ -1308,7 +1314,24 @@ export const rawQueries = {
       ids.push(`${rid.map((d : any) => `'${d}'`).join(',')}`)
       return `SELECT rid, tag_name FROM ${MAIN_SCHEMA_NAME}.tags WHERE rid IN (${ids})`
     }
-  }
+  },
+  getTaskNames (rid : any[], schemaName : string) {
+    let ids : string[] = []
+    if(rid.length > 0) {
+      ids.push(`${rid.map((d : any) => `'${d}'`).join(',')}`)
+      return `SELECT rid, task_name FROM ${schemaName}.case_task WHERE rid IN (${ids})`
+    }
+  },
+  getWorkflowConnectors (rid : any[]) {
+    let ids : string[] = []
+    if(rid.length > 0) {
+      ids.push(`${rid.map((d : any) => `'${d}'`).join(',')}`)
+      return `SELECT rid, relationship_type FROM ${MAIN_SCHEMA_NAME}.workflow_connector WHERE rid IN (${ids})`
+    }
+  },
+  getTaskTypeMilestone (rid : string) {
+    return `SELECT rid, task_type_name FROM ${MAIN_SCHEMA_NAME}.task_type WHERE task_type_name ILIKE '%Milestone%'`
+  },
 };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 
 const keyContactRole = {

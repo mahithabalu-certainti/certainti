@@ -1858,6 +1858,48 @@ async function linkAdminDeleteTask (req : Request, res : Response) {
     );
   }
 }
+
+async function listAdminTaskDropdown (req : Request, res : Response) {
+  const methodName = "listAdminTaskDropdown";
+  try {
+   const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const data = req.body;
+    const result = await caseManagementService.adminTaskListForDropdown(data); 
+    if(result.length > 0) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: STATUS_MESSAGE.taskTemplateSuccess,
+        data : result
+      });
+    } 
+    else {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: STATUS_MESSAGE.dataNotAvailable,
+        data : []
+      });
+    }
+  } catch (error: any) {
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
 // Export the controller functions for use in route definitions
 export default {
   createAdminCheckList,
@@ -1885,5 +1927,6 @@ export default {
   getEmailTemplateCategory,
   getWorkFlowConnector,
   linkAdminDeleteTask,
-  linkAdminTask
+  linkAdminTask,
+  listAdminTaskDropdown
 };

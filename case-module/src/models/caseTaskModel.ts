@@ -13,8 +13,8 @@ interface CaseTaskAttributes {
     modified_datetime? : Date,
     task_name : string,
     sequence_no : number,
-    effort_in_days : number,
-    reminder_interval : number,
+    effort_in_days? : number,
+    reminder_interval? : number,
     effective_start_datetime? : Date,
     effective_end_datetime? : Date,
     case_team_member_role_rid? : string,
@@ -45,8 +45,8 @@ implements CaseTaskAttributes {
     public modified_datetime? : Date
     public task_name! : string
     public sequence_no! : number
-    public effort_in_days! : number
-    public reminder_interval! : number
+    public effort_in_days? : number
+    public reminder_interval? : number
     public effective_start_datetime? : Date
     public effective_end_datetime? : Date
     public case_team_member_role_rid? : string

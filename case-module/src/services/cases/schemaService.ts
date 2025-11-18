@@ -4571,8 +4571,6 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       created_datetime : new Date(),
       task_name : data.task_name,
       sequence_no : sequenceNo,
-      effort_in_days : data.effort_in_days,
-      reminder_interval : data.reminder_interval,
       effective_start_datetime : data.effective_start_datetime,
       effective_end_datetime : data.effective_end_datetime,
       case_team_member_role_rid : data.case_team_member_role_rid,
@@ -4587,8 +4585,11 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       task_status_rid : data.task_status_rid
     }, {transaction});
     if(createdTaskResult) {
-      if(data.tag_rid)
-        await this.createOrUpdateTags(createdTaskResult.dataValues.rid, data.account_rid, data.case_rid, data.tag_rid, data.is_new_tag, accountNumber, data.created_by, activeStatusRid)
+      if(data.tags.length > 0) {
+        for(let d of data.tags) {
+        await this.createOrUpdateTags(createdTaskResult.dataValues.rid, data.account_rid, data.case_rid, d.tag_rid, d.is_new_tag, accountNumber, data.created_by, activeStatusRid)
+        }
+      }
       await CaseTimeline.create({
         created_by : data.created_by,
         created_datetime : new Date(),
@@ -4653,8 +4654,11 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
           }
         }
         if(updatedResult == 1) {
-          if(data.tag_rid)
-            await this.createOrUpdateTags(data.rid, data.account_rid, data.case_rid, data.tag_rid, data.is_new_tag, accountNumber, data.modified_by, activeStatusRid)
+          if(data.tags.length > 0) {
+            for(let d of data.tags) {
+            await this.createOrUpdateTags(isTaskExists.rid, data.account_rid, data.case_rid, d.tag_rid, d.is_new_tag, accountNumber, data.modified_by, activeStatusRid)
+            }
+          }
           const fetchUpdatedColumns = getColumnsNamesForTaskUpdate(data, isTaskExists);
           if(fetchUpdatedColumns.length > 0) {
             let updatedColumnsStorage : string[] = []
@@ -4946,11 +4950,16 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       }
     }
   }
-  async fetchAllTags () {
+  async fetchAllTags (data : TaskTag[]) {
     const {Tags} = await this.caseModelService.getModels("")
     const result = await Tags.findAll({
+      where : {
+        rid : {
+          [Op.notIn] : data.map((d : any) => d.tag_rid)
+        }
+      },
       attributes : ['rid', 'tag_name'],
-      order : [['tag_name', 'ASC']]
+      order : [['tag_name', 'ASC']],
     })
     if(result.length > 0) return result
     else return []
@@ -5427,6 +5436,9 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
   }
 
   async listTaskLevelAttachments (accountNumber : string, data : any) {
+    if(!this.mainDbSequelize) {
+      this.mainDbSequelize = await initMainDbSequelize()
+    }
     let offset = (data.page - 1) * data.limit;
     const {TaskAttachments} = await this.caseModelService.getModels(accountNumber)
     let fetchAllTaskAttachments = await TaskAttachments.findAll({
@@ -5439,9 +5451,13 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     if(fetchAllTaskAttachments.length > 0) {
       const total = fetchAllTaskAttachments.length
       fetchAllTaskAttachments = fetchAllTaskAttachments.slice(offset, data.page * data.limit);
+      const userIds = [...new Set(fetchAllTaskAttachments.map((d : any) => d.created_by))];
+      const findUsers = await this.mainDbSequelize.query(rawQueries.getOwnerDetails(userIds));
+      const userMap = new Map(findUsers[0].map((d : any) => [d.rid, d.name]));
       const structuredDate = await Promise.all(fetchAllTaskAttachments.map(async (d : any) => {
         return {
           ...d,
+          created_by_name : userMap.get(d.created_by) || null,
           browse_file : await generateSasUrl(d.browse_file)
         }
       }))
@@ -5721,6 +5737,67 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       return {
         statusCode : HttpStatus.NOT_FOUND,
         statusMessage : STATUS_MESSAGE.dataNotAvailable
+      }
+    }
+  }
+  async listTasksDropdownForAccountLevel (accountNumber : string, data : any) {
+    const {CaseTask} = await this.caseModelService.getModels(accountNumber);
+    const result = await CaseTask.findAll({
+      attributes : ['rid', 'task_name'],
+      where : {
+        account_rid : data.account_rid,
+        case_rid : data.case_rid,
+        task_name : {
+          [Op.iLike] : data.search == "" ? '%%' : `%${data.search}%`
+        } 
+      },
+      raw : true,
+      order : [['task_name', 'ASC']]
+    });
+    return result;
+  }
+  async fetchMappedTags (accountNumber : string, caseRid : string, accountRid : string, taskRid : string) {
+    const {TaskTag} = await this.caseModelService.getModels(accountNumber);
+    const result = await TaskTag.findAll({
+      where : {
+        account_rid : accountRid,
+        case_rid : caseRid,
+        task_rid : taskRid
+      }, raw : true
+    });
+    return result
+  }
+
+  async deleteTags (accountNumber : string, caseRid : string, accountRid : string, taskRid : string, tagRid : string[]) {
+    const {TaskTag} = await this.caseModelService.getModels(accountNumber);
+    let responseMessage : string
+    if(tagRid.length == 1) responseMessage = STATUS_MESSAGE.tagDeletedSuccess
+    else responseMessage = STATUS_MESSAGE.multipleTagDeletedSuccess
+    if(tagRid.length == 0) {
+      return {
+        statusCode : HttpStatus.BAD_REQUEST,
+        statusMessage : STATUS_MESSAGE.tagRequired
+      }
+    }
+    const result = await TaskTag.destroy({
+      where : {
+        case_rid : caseRid,
+        account_rid : accountRid,
+        task_rid : taskRid,
+        tag_rid : {
+          [Op.in] : tagRid.map((d : any) => d)
+        },
+      }
+    });
+    if(result > 0) {
+      return {
+        statusCode : HttpStatus.SUCCESS,
+        statusMessage : responseMessage
+      }
+    } else {
+      return {
+        statusCode : HttpStatus.FAILED,
+        statusMessage : STATUS_MESSAGE.tagDeletionFailed
       }
     }
   }

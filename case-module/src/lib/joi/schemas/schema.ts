@@ -467,8 +467,6 @@ const exportAdminCheckListByIdSchema = Joi.object({
 
 const createTaskSchema = Joi.object({
   task_name: Joi.string().max(255).required(),
-  effort_in_days : Joi.number().optional(),
-  reminder_interval: Joi.number().optional(),
   effective_start_datetime : Joi.string().optional(),
   effective_end_datetime : Joi.string().optional(),
   case_team_member_role_rid : Joi.string().optional(),
@@ -481,15 +479,19 @@ const createTaskSchema = Joi.object({
   task_status_rid : Joi.string().allow("").optional(),
   account_rid : Joi.string().max(255).required(),
   case_rid : Joi.string().max(255).required(),
-  tag_rid : Joi.string().allow("").optional(),
-  is_new_tag : Joi.boolean().optional()
+  tags: Joi.array()
+  .items(
+    Joi.object({
+      tag_rid: Joi.string().required(),
+      is_new_tag: Joi.boolean().required()
+    })
+  )
+  .optional()
 });
 
 const updateTaskSchema = Joi.object({
   rid : Joi.string().max(255).required(),
   task_name: Joi.string().max(255).required(),
-  effort_in_days : Joi.number().optional(),
-  reminder_interval: Joi.number().optional(),
   effective_start_datetime : Joi.string().required(),
   effective_end_datetime : Joi.string().required(),
   case_team_member_role_rid : Joi.string().required(),
@@ -502,8 +504,14 @@ const updateTaskSchema = Joi.object({
   task_status_rid : Joi.string().allow("").optional(),
   account_rid : Joi.string().max(255).required(),
   case_rid : Joi.string().max(255).required(),
-  tag_rid : Joi.string().allow("").optional(),
-  is_new_tag : Joi.boolean().optional()
+  tags: Joi.array()
+  .items(
+    Joi.object({
+      tag_rid: Joi.string().required(),
+      is_new_tag: Joi.boolean().required()
+    })
+  )
+  .optional()
 });
 export {
   createCaseSchema,
