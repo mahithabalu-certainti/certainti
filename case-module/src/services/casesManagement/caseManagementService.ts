@@ -914,4 +914,12 @@ async listEmailTemplates (
       }
     }
   }
+  async linkTask (data : any) {
+      const result = await this.caseManangementSchemaService.taskWorkflowConnector(data);
+      return result;
+    }
+    async deleteLinkTask (data : any) {
+      const result = await this.caseManangementSchemaService.deleteTaskWorkConnector(data);
+      return result;
+    }
 }

@@ -2,7 +2,7 @@ import { col, fn, Op, QueryTypes, Sequelize, Transaction, where } from "sequeliz
 import { CaseModelService } from "../caseModelsService";
 import { CreateTaskTemplateType, filterType, ICreateChecklistTemplate, ICreateChecklistItemTemplate, TaskType, UpdateTaskTemplateType, MilestoneResponse, ICreateEmailTemplate, WorkflowConnectorType } from "../../utils/types";
 import { buildDatetimeFilterCondition, buildDatetimeFilterConditionTemplates, buildNumericFilterCondition, buildStringFilterCondition, errorLog, logMessage } from "../../utils/helpers";
-import { HttpStatus, STATUS_MESSAGE, filtersColumnsForCaseSummary, filterTypesForCaseSummary, filterTypesForAdminCheckList, filtersColumnsForAdminCheckList, rawQueries, filterTypesForEmailTemplate, filtersColumnsForEmailTemplate } from "../../utils/constants";
+import { HttpStatus, STATUS_MESSAGE, filtersColumnsForCaseSummary, filterTypesForCaseSummary, filterTypesForAdminCheckList, filtersColumnsForAdminCheckList, rawQueries, filterTypesForEmailTemplate, filtersColumnsForEmailTemplate, relationshipTypes } from "../../utils/constants";
 import { fetchCaseTemplateData, listAllCheckList, listAllEmailTemplates } from "../../utils/rawQueries";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import { initMainDbSequelize } from "../../config/mainDataSource";
@@ -1175,6 +1175,153 @@ async getWorkFlowConnector () {
   } 
   else return []
 }
+  async taskWorkflowConnector (data : any) {
+    const {WorkflowConnector, WorkflowConnectorMapping} = await this.caseModelService.getModels("");
+    let iterationCount : number = 0;
+    let totalIteration = data.target_rid.length
+    for(let d of data.target_rid) {
+      const workFlowConnectorData = await WorkflowConnector.findOne({
+        where : {
+          rid : data.relationship_connector_rid
+        }, raw : true
+      })
+      let workFlowConnectorDetails;
+      let dynamicRelationTypeName : string = ``
+      if(workFlowConnectorData) {
+        if(workFlowConnectorData.relationship_type === 'blocks') {
+          dynamicRelationTypeName = relationshipTypes.isBlockedBy
+        } else if (workFlowConnectorData.relationship_type === 'enables') {
+          dynamicRelationTypeName = relationshipTypes.isEnabledBy
+        } else if (workFlowConnectorData.relationship_type === 'is_enabled_by') {
+          dynamicRelationTypeName = relationshipTypes.enables
+        } else if (workFlowConnectorData.relationship_type === 'is_blocked_by') {
+          dynamicRelationTypeName = relationshipTypes.blocks
+        }
+      }
+      if(workFlowConnectorData) {
+        const checkIsAlreadyMapped = await WorkflowConnectorMapping.findOne({
+          where : {
+            source_rid : data.source_rid,
+            target_rid : d,
+            relationship_connector_rid : data.relationship_connector_rid
+          }, raw : true
+        });
+        if(checkIsAlreadyMapped) {
+          return {
+            statusCode : HttpStatus.BAD_REQUEST,
+            statusMessage : STATUS_MESSAGE.dataAlreadyMapped
+          }
+        } else {
+          const result = await WorkflowConnectorMapping.create({
+            created_by : data.created_by,
+            created_datetime : new Date(),
+            source_rid : data.source_rid,
+            target_rid : d,
+            relationship_connector_rid : data.relationship_connector_rid
+          });
+          if(result) {
+            workFlowConnectorDetails = await WorkflowConnector.findOne({
+              where : {
+                relationship_type : dynamicRelationTypeName
+              }, raw : true
+            })
+            if(workFlowConnectorDetails) {
+              await WorkflowConnectorMapping.create({
+                created_by : data.created_by,
+                created_datetime : new Date(),
+                source_rid : d,
+                target_rid : data.source_rid,
+                relationship_connector_rid : workFlowConnectorDetails.rid!
+              });
+            }
+          }
+      }
+    } 
+    else 
+      {
+        return {
+          statusCode : HttpStatus.NOT_FOUND,
+          statusMessage : STATUS_MESSAGE.taskNotFound
+      }
+    }
+    iterationCount += 1
+  }
+  if(iterationCount === totalIteration) {
+    return {
+      statusCode : HttpStatus.SUCCESS,
+      statusMessage : STATUS_MESSAGE.workflowConnectorMappedSuccess
+    }
+  } else {
+    return {
+      statusCode : HttpStatus.FAILED,
+      statusMessage : STATUS_MESSAGE.workflowConnectorMappedFailed
+    }
+  }
+}
+
+  async deleteTaskWorkConnector (data : any) {
+    const {WorkflowConnector, WorkflowConnectorMapping} = await this.caseModelService.getModels("");
+    const checkDataExists = await WorkflowConnectorMapping.findOne({
+      where : {
+        rid : data.rid
+      }
+    });
+    if(checkDataExists) {
+      let workFlowConnectorDetails;
+      let dynamicRelationTypeName : string = ``
+      const workFlowConnectorData = await WorkflowConnector.findOne({
+        where : {
+          rid : checkDataExists.relationship_connector_rid
+        }, raw : true
+      })
+      if(workFlowConnectorData) {
+        if(workFlowConnectorData.relationship_type === 'blocks') {
+          dynamicRelationTypeName = relationshipTypes.isBlockedBy
+        } else if (workFlowConnectorData.relationship_type === 'enables') {
+          dynamicRelationTypeName = relationshipTypes.isEnabledBy
+        } else if (workFlowConnectorData.relationship_type === 'is_enabled_by') {
+          dynamicRelationTypeName = relationshipTypes.enables
+        } else if (workFlowConnectorData.relationship_type === 'is_blocked_by') {
+          dynamicRelationTypeName = relationshipTypes.blocks
+        }
+      }
+      workFlowConnectorDetails = await WorkflowConnector.findOne({
+          where : {
+            relationship_type : dynamicRelationTypeName
+          }, raw : true
+        })
+      if(workFlowConnectorDetails) {
+        const deleteData = await WorkflowConnectorMapping.destroy({
+          where : {
+            source_rid : checkDataExists.target_rid,
+            target_rid : checkDataExists.source_rid,
+            relationship_connector_rid : workFlowConnectorDetails.rid
+          }
+        });
+        if(deleteData === 1) {
+          await WorkflowConnectorMapping.destroy({
+            where : {
+              rid : data.rid
+            }
+          })
+          return {
+            statusCode : HttpStatus.SUCCESS,
+            statusMessage : STATUS_MESSAGE.workflowConnectorMappedDeleted
+          }
+        } else {
+          return {
+            statusCode : HttpStatus.FAILED,
+            statusMessage : STATUS_MESSAGE.workflowConnectorMappedDeletedFailed
+          }
+        }
+      }
+    } else {
+      return {
+        statusCode : HttpStatus.NOT_FOUND,
+        statusMessage : STATUS_MESSAGE.dataNotAvailable
+      }
+    }
+  }
 }
 
 export { CaseManagementSchemaService };

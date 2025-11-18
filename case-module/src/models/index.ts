@@ -11,6 +11,7 @@ import { TaskTag } from "./taskTagsModel";
 import { TaskComments } from "./taskCommentsModel";
 import { CommentsAttachments } from "./commentsAttachmentModel";
 import { TaskAttachments } from "./taskAttachmentModel";
+import { CaseTaskWorkflowConnector } from "./caseTaskWorkflowConnectorModel";
 
 export const models = {
   Case,
@@ -23,7 +24,8 @@ export const models = {
   TaskTag,
   TaskComments,
   CommentsAttachments,
-  TaskAttachments
+  TaskAttachments,
+  CaseTaskWorkflowConnector
 };
 
 export async function initModels() {

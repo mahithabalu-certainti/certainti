@@ -461,7 +461,9 @@ export type CreateCaseTaskType = {
   case_rid: string,
   task_type_rid : string,
   task_description : string,
-  status_rid : string
+  status_rid : string,
+  tag_rid : string,
+  is_new_tag : boolean
 }
 
 export type UpdateCaseTaskType = {
@@ -483,6 +485,8 @@ export type UpdateCaseTaskType = {
   case_rid: string,
   task_type_rid : string,
   task_description : string
+  tag_rid : string,
+  is_new_tag : boolean
 }
 
 export type CaseTaskQueryType = {
@@ -611,6 +615,22 @@ export type TagsTypes = {
   tag_name : string
 }
 
+export type CaseTaskWorkFlowCreate = {
+  case_rid : string,
+  account_rid : string,
+  source_rid : string,
+  target_rid : string[],
+  relationship_connector_rid : string
+  created_by : string
+  created_datetime : Date
+}
+export type CaseTaskWorkFlowDelete = {
+  rid : string
+  case_rid : string,
+  account_rid : string
+  created_by : string
+  modified_datetime : string
+}
 export interface IActivityTask {
   task_template_rid?: string;
   task_rid: string;

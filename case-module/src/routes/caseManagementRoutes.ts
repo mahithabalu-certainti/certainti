@@ -123,6 +123,16 @@ routes.get(
   checkUserStatusMiddleware("NA"),
   controller.caseManagementController.getWorkFlowConnector
 )
+routes.post(
+  "/workflowConnector/add",
+  checkUserStatusMiddleware("NA"),
+  controller.caseManagementController.linkAdminTask
+)
+routes.post(
+  "/workflowConnector/delete",
+  checkUserStatusMiddleware("NA"),
+  controller.caseManagementController.linkAdminDeleteTask
+)
 
 
 export default routes;

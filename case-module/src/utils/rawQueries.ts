@@ -804,7 +804,7 @@ export const fetchMilestoneTaskTemplate = (taskTypeRid : string, filingTypeRid :
   ),
   fetch_task_data AS (
   SELECT 
-  t.created_by AS "task_created_by", t.modified_by AS "task_modified_by", t.created_datetime AS "task_created_datetime",
+  t.rid AS task_rid, t.created_by AS "task_created_by", t.modified_by AS "task_modified_by", t.created_datetime AS "task_created_datetime",
   t.modified_datetime AS "task_modified_datetime", t.task_name, t.sequence_no, t.effort_in_days,
   t.reminder_interval, t.effective_start_datetime, t.effective_end_datetime, t.case_team_member_role_rid,
   t.checklist_template_rid, t.status_rid AS "task_status_rid", t.priority_rid, t.task_type_rid,
@@ -814,6 +814,10 @@ export const fetchMilestoneTaskTemplate = (taskTypeRid : string, filingTypeRid :
   LEFT JOIN ${MAIN_SCHEMA_NAME}.task_template t ON t.milestone_template_rid = m.rid
   WHERE
   t.task_type_rid = '${taskTypeRid}'
+  ),
+  fetch_workflow_connector_map AS (
+  SELECT w.created_by, w.created_datetime, w.source_rid, w.target_rid, w.relationship_connector_rid
+  FROM ${MAIN_SCHEMA_NAME}.workflow_connector_mapping w
   ),
   aggregate_milestone AS (
   SELECT array_agg(jsonb_build_object(
@@ -833,6 +837,7 @@ export const fetchMilestoneTaskTemplate = (taskTypeRid : string, filingTypeRid :
   ),
   aggregate_task_data AS (
   SELECT array_agg(jsonb_build_object(
+    'task_rid', t.task_rid,
     'created_by', t.task_created_by,
     'modified_by', t.task_modified_by,
     'created_datetime', t.task_created_datetime,
@@ -852,11 +857,24 @@ export const fetchMilestoneTaskTemplate = (taskTypeRid : string, filingTypeRid :
     'task_description', t.task_description
   )ORDER BY t.task_created_datetime ASC ) AS task_data
   FROM fetch_task_data t
+  ),
+  aggregate_workflow_connector AS (
+  SELECT array_agg(jsonb_build_object(
+    'created_by', w.created_by,
+    'created_datetime', NOW(),
+    'source_rid', w.source_rid,
+    'target_rid', w.target_rid,
+    'relationship_connector_rid', w.relationship_connector_rid
+  )) AS workflow_data
+  FROM
+  fetch_workflow_connector_map w
   )
-  SELECT a.*, t.* 
+
+  SELECT a.*, t.*, w.*
   FROM
   aggregate_milestone a
   CROSS JOIN aggregate_task_data t
+  CROSS JOIN aggregate_workflow_connector w
   `
   return query;
 }
@@ -1214,7 +1232,11 @@ return query;
     ${schemaName}.case_task ct
     LEFT JOIN ${schemaName}.checklists c ON c.attach_to = ct.rid
     WHERE
-    ct.rid = '${taskRid}' 
+    ct.rid = '${taskRid}'
+    AND
+    ct.account_rid = '${accountRid}'
+    AND
+    ct.case_rid = '${caseRid}' 
     ORDER BY c.created_datetime ASC
     ),
 
@@ -1225,9 +1247,13 @@ return query;
     )) AS tags
     FROM
     ${schemaName}.case_task t
-    LEFT JOIN ${schemaName}.task_tags tt ON tt.task_rid = t.rid
+    LEFT JOIN ${schemaName}.task_tags tt ON tt.task_rid = t.rid AND t.account_rid = tt.account_rid AND tt.case_rid = t.case_rid
     WHERE
     t.rid = '${taskRid}'
+    AND
+    t.account_rid = '${accountRid}'
+    AND
+    t.case_rid = '${caseRid}' 
     GROUP BY t.rid
     ),
 
