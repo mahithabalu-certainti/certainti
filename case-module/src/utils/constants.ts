@@ -701,8 +701,8 @@ export const rawQueries = {
     return `  
       SELECT u.rid, CONCAT(u.first_name, ' ', u.last_name) AS name
       FROM ${MAIN_SCHEMA_NAME}.user u
-	  where is_consultant_firm is true
-	  or org_id = '${accountRid}'
+	  where (is_consultant_firm is true
+	  or org_id = '${accountRid}')
     AND u.status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active')
 	  order by name asc`
   },
