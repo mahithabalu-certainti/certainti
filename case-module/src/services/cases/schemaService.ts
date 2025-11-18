@@ -4374,7 +4374,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     let clonedData = queryResult[0][0]
     let milestoneSequenceNumber : any[] = []
     let milestoneMap : Map<string, string> = new Map();
-    if(clonedData.milestone_data.length > 0) {
+    if(clonedData.milestone_data !== null && clonedData.task_data !== null) {
       const finalMilestoneData = clonedData.milestone_data.map((d : any) => {
         milestoneMap.set(d.milestone_rid, d.milestone_sequence_no);
         milestoneSequenceNumber.push(d.milestone_sequence_no)
