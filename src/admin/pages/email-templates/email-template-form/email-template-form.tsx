@@ -955,136 +955,6 @@ const EmailTemplateForm: React.FC = () => {
               </div>
 
               <div
-                className='relative'
-                style={{
-                  display: shouldHideField('subject', isEditView, permissionMap)
-                    ? 'none'
-                    : 'block',
-                }}
-              >
-                <label
-                  htmlFor='subject'
-                  className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px]'
-                >
-                  Subject<span className='text-red-500'> *</span>
-                </label>
-                <input
-                  ref={subjectInputRef}
-                  type='text'
-                  name='subject'
-                  required
-                  placeholder='Enter Subject'
-                  value={formData.subject}
-                  onChange={handleSubjectChange}
-                  disabled={shouldDisableField(
-                    'subject',
-                    isEditView,
-                    permissionMap
-                  )}
-                  autoComplete='off'
-                  className={`placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] truncate overflow-hidden text-ellipsis whitespace-nowrap outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ${errors?.subject ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
-                />
-                {errors?.subject && (
-                  <span className='text-[12px] text-red-400'>
-                    {errors.subject}
-                  </span>
-                )}
-
-                <Popover
-                  open={subjectMentionState.show}
-                  anchorReference='anchorPosition'
-                  anchorPosition={
-                    subjectMentionState.position
-                      ? {
-                          top: subjectMentionState.position.top,
-                          left: subjectMentionState.position.left,
-                        }
-                      : undefined
-                  }
-                  transformOrigin={{
-                    vertical: 'top',
-                    horizontal: 'left',
-                  }}
-                  disableAutoFocus
-                  disableEnforceFocus
-                  PaperProps={{
-                    ref: subjectMentionPopoverRef,
-                    sx: {
-                      marginTop: '4px',
-                      boxShadow:
-                        '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '4px',
-                      maxHeight: 200,
-                      overflow: 'auto',
-                    },
-                  }}
-                  sx={{
-                    zIndex: 9999,
-                    pointerEvents: 'auto',
-                  }}
-                >
-                  <Box sx={{ width: 250 }}>
-                    <List dense sx={{ py: 0 }}>
-                      {subjectMentionState.suggestions.map(
-                        (suggestion, index) => (
-                          <ListItem
-                            key={suggestion.rid}
-                            onMouseDown={(e) =>
-                              handleSubjectSuggestionClick(e, suggestion)
-                            }
-                            onMouseEnter={() =>
-                              setSubjectMentionState((prev) => ({
-                                ...prev,
-                                selectionIndex: index,
-                              }))
-                            }
-                            sx={{
-                              cursor: 'pointer',
-                              backgroundColor:
-                                index === subjectMentionState.selectionIndex
-                                  ? '#f3f4f6'
-                                  : 'transparent',
-                              '&:hover': {
-                                backgroundColor: '#f3f4f6',
-                              },
-                              borderBottom: '1px solid #f3f4f6',
-                              '&:last-child': {
-                                borderBottom: 'none',
-                              },
-                            }}
-                          >
-                            <ListItemText
-                              primary={`{{${suggestion.placeholder_key}}}`}
-                              primaryTypographyProps={{
-                                fontSize: '13px',
-                                fontWeight:
-                                  index === subjectMentionState.selectionIndex
-                                    ? 600
-                                    : 400,
-                              }}
-                            />
-                          </ListItem>
-                        )
-                      )}
-                      {subjectMentionState.suggestions.length === 0 && (
-                        <ListItem>
-                          <ListItemText
-                            primary='No placeholders found'
-                            primaryTypographyProps={{
-                              fontSize: '13px',
-                              color: 'text.secondary',
-                              fontStyle: 'italic',
-                            }}
-                          />
-                        </ListItem>
-                      )}
-                    </List>
-                  </Box>
-                </Popover>
-              </div>
-
-              <div
                 style={{
                   display: shouldHideField(
                     'category_rid',
@@ -1225,52 +1095,135 @@ const EmailTemplateForm: React.FC = () => {
                 )}
               </div>
             </div>
+
             <div
-              className='grid grid-cols-1 px-10 pt-4'
+              className='relative grid grid-cols-1 px-10 pt-4'
               style={{
-                display: shouldHideField(
-                  'description',
-                  isEditView,
-                  permissionMap
-                )
+                display: shouldHideField('subject', isEditView, permissionMap)
                   ? 'none'
                   : 'block',
               }}
             >
               <label
-                htmlFor='description'
+                htmlFor='subject'
                 className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px]'
               >
-                Description
+                Subject<span className='text-red-500'> *</span>
               </label>
-              <textarea
-                name='description'
+              <input
+                ref={subjectInputRef}
+                type='text'
+                name='subject'
                 required
-                placeholder='Enter Description'
-                value={formData.description}
-                onChange={(e) =>
-                  handleInputChange('description', e.target.value)
-                }
-                className={`outline-none placeholder-custom-color h-[95px] w-full sm:text-sm py-2 px-3 resize-none focus:border-2 focus:border-blue-400 border border-[#CBD6E2] rounded-xs ${
-                  errors?.description
-                    ? 'border-red-500 bg-[#FEF2F2] focus:!bg-[#FEF2F2]'
-                    : ''
-                }`}
+                placeholder='Enter Subject'
+                value={formData.subject}
+                onChange={handleSubjectChange}
                 disabled={shouldDisableField(
-                  'description',
+                  'subject',
                   isEditView,
                   permissionMap
                 )}
-                style={{
-                  scrollbarWidth: 'thin',
-                  scrollbarColor: '#9ca3af transparent',
-                }}
+                autoComplete='off'
+                className={`placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] truncate overflow-hidden text-ellipsis whitespace-nowrap outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ${errors?.subject ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
               />
-              {errors?.description && (
+              {errors?.subject && (
                 <span className='text-[12px] text-red-400'>
-                  {errors.description}
+                  {errors.subject}
                 </span>
               )}
+
+              <Popover
+                open={subjectMentionState.show}
+                anchorReference='anchorPosition'
+                anchorPosition={
+                  subjectMentionState.position
+                    ? {
+                        top: subjectMentionState.position.top,
+                        left: subjectMentionState.position.left,
+                      }
+                    : undefined
+                }
+                transformOrigin={{
+                  vertical: 'top',
+                  horizontal: 'left',
+                }}
+                disableAutoFocus
+                disableEnforceFocus
+                PaperProps={{
+                  ref: subjectMentionPopoverRef,
+                  sx: {
+                    marginTop: '4px',
+                    boxShadow:
+                      '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '4px',
+                    maxHeight: 200,
+                    overflow: 'auto',
+                  },
+                }}
+                sx={{
+                  zIndex: 9999,
+                  pointerEvents: 'auto',
+                }}
+              >
+                <Box sx={{ width: 250 }}>
+                  <List dense sx={{ py: 0 }}>
+                    {subjectMentionState.suggestions.map(
+                      (suggestion, index) => (
+                        <ListItem
+                          key={suggestion.rid}
+                          onMouseDown={(e) =>
+                            handleSubjectSuggestionClick(e, suggestion)
+                          }
+                          onMouseEnter={() =>
+                            setSubjectMentionState((prev) => ({
+                              ...prev,
+                              selectionIndex: index,
+                            }))
+                          }
+                          sx={{
+                            cursor: 'pointer',
+                            backgroundColor:
+                              index === subjectMentionState.selectionIndex
+                                ? '#f3f4f6'
+                                : 'transparent',
+                            '&:hover': {
+                              backgroundColor: '#f3f4f6',
+                            },
+                            borderBottom: '1px solid #f3f4f6',
+                            '&:last-child': {
+                              borderBottom: 'none',
+                            },
+                          }}
+                        >
+                          <ListItemText
+                            primary={`{{${suggestion.placeholder_key}}}`}
+                            primaryTypographyProps={{
+                              fontSize: '13px',
+                              fontWeight:
+                                index === subjectMentionState.selectionIndex
+                                  ? 600
+                                  : 400,
+                            }}
+                          />
+                        </ListItem>
+                      )
+                    )}
+                    {subjectMentionState.suggestions.length === 0 && (
+                      <ListItem>
+                        <ListItemText
+                          primary='No placeholders found'
+                          primaryTypographyProps={{
+                            fontSize: '13px',
+                            color: 'text.secondary',
+                            fontStyle: 'italic',
+                          }}
+                        />
+                      </ListItem>
+                    )}
+                  </List>
+                </Box>
+              </Popover>
             </div>
 
             {/* Email Body */}
@@ -1447,6 +1400,54 @@ const EmailTemplateForm: React.FC = () => {
                   </span>
                 )}
               </div>
+            </div>
+
+            <div
+              className='grid grid-cols-1 px-10 pt-4'
+              style={{
+                display: shouldHideField(
+                  'description',
+                  isEditView,
+                  permissionMap
+                )
+                  ? 'none'
+                  : 'block',
+              }}
+            >
+              <label
+                htmlFor='description'
+                className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px]'
+              >
+                Description
+              </label>
+              <textarea
+                name='description'
+                required
+                placeholder='Enter Description'
+                value={formData.description}
+                onChange={(e) =>
+                  handleInputChange('description', e.target.value)
+                }
+                className={`outline-none placeholder-custom-color h-[95px] w-full sm:text-sm py-2 px-3 resize-none focus:border-2 focus:border-blue-400 border border-[#CBD6E2] rounded-xs ${
+                  errors?.description
+                    ? 'border-red-500 bg-[#FEF2F2] focus:!bg-[#FEF2F2]'
+                    : ''
+                }`}
+                disabled={shouldDisableField(
+                  'description',
+                  isEditView,
+                  permissionMap
+                )}
+                style={{
+                  scrollbarWidth: 'thin',
+                  scrollbarColor: '#9ca3af transparent',
+                }}
+              />
+              {errors?.description && (
+                <span className='text-[12px] text-red-400'>
+                  {errors.description}
+                </span>
+              )}
             </div>
 
             <div className={`${isEditView ? 'block pt-5' : 'hidden'}`}>

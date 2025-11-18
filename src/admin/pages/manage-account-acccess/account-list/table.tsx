@@ -138,7 +138,7 @@ export const ManageAccountTable: React.FC<AcoountTableProps> = ({
           hoverHighlight={false}
           tableStyle={{
             height: '100%',
-            maxHeight: 'calc(100vh - 180px)',
+            maxHeight: 'calc(100vh - 190px)',
             overflow: 'auto',
           }}
           stickyHeader={true}

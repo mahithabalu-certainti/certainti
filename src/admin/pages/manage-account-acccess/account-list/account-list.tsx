@@ -519,7 +519,7 @@ const AccountList = () => {
             hoverHighlight={false}
             tableStyle={{
               height: '100%',
-              maxHeight: 'calc(100vh - 195px)',
+              maxHeight: 'calc(100vh - 210px)',
               overflow: 'auto',
             }}
             selectable={false}
