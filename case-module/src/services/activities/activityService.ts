@@ -18,7 +18,9 @@ import {
   CurrencyType,
   DeleteCommentsType,
   FilingType,
+  IActivityCall,
   IActivityEmail,
+  IActivityMeeting,
   IActivityTask,
   ICreateCases,
   ICreateCaseTeam,
@@ -473,6 +475,186 @@ export class ActivityService {
         statusCode: HttpStatus.FAILED,
         message: HttpStatus.FAILED_MESSAGE,
         errorMessage: STATUS_MESSAGE.checkListError,
+      };
+    }
+  }
+
+  async getMeetingActivityDetailsById(
+    activityRid: string,
+    accountRid: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { activityDetails: any };
+  }> {
+    try {
+      const { accountNumber } =
+        await this.caseSchemaService.fetchValidAccountNumberById(accountRid);
+      const activityDetails =
+        await this.activitySchemaService.fetchMeetingActivityDetailsById(
+          activityRid,
+          accountNumber,
+          accountRid
+        );
+
+      if (!activityDetails) {
+        return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: "Invalid Activity ID",
+        };
+      }
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          activityDetails,
+        },
+      };
+    } catch (err) {
+      logMessage(`Error fetching email activity details, ${err}`);
+      return {
+        statusCode: HttpStatus.FAILED,
+        message: HttpStatus.FAILED_MESSAGE,
+        errorMessage: STATUS_MESSAGE.checkListError,
+      };
+    }
+  }
+
+  async createActivityMeeting(
+    data: IActivityMeeting,
+    userId: string,
+    files?: Express.Multer.File[]
+  ) {
+    try {
+      const { accountNumber } =
+        await this.caseSchemaService.fetchValidAccountNumberById(
+          data.account_rid!
+        );
+      if (!accountNumber) {
+        throw new Error("Invalid account ID");
+      }
+      const result = await this.activitySchemaService.createActivityMeeting(
+        accountNumber,
+        data,
+        userId,
+        files
+      );
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: STATUS_MESSAGE.activityCreated,
+        data: result,
+      };
+    } catch (err) {
+      logMessage(`Error adding comments to task, ${err}`);
+      return {
+        statusCode: HttpStatus.FAILED,
+        message: HttpStatus.FAILED_MESSAGE,
+        errorMessage: STATUS_MESSAGE.activityCreationFailed,
+      };
+    }
+  }
+
+   async createActivityCall(
+    data: IActivityCall,
+    userId: string,
+    files?: Express.Multer.File[]
+  ) {
+    try {
+      const { accountNumber } =
+        await this.caseSchemaService.fetchValidAccountNumberById(
+          data.account_rid!
+        );
+      if (!accountNumber) {
+        throw new Error("Invalid account ID");
+      }
+      const result = await this.activitySchemaService.createActivityCall(
+        accountNumber,
+        data,
+        userId,
+        files
+      );
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: STATUS_MESSAGE.activityCreated,
+        data: result,
+      };
+    } catch (err) {
+      logMessage(`Error adding call to task, ${err}`);
+      return {
+        statusCode: HttpStatus.FAILED,
+        message: HttpStatus.FAILED_MESSAGE,
+        errorMessage: STATUS_MESSAGE.activityCreationFailed,
+      };
+    }
+  }
+
+  async updateActivityCall(
+    data: IActivityCall,
+    userId: string,
+    files?: Express.Multer.File[]
+  ) {
+    try {
+      const { accountNumber } =
+        await this.caseSchemaService.fetchValidAccountNumberById(
+          data.account_rid!
+        );
+      if (!accountNumber) {
+        throw new Error("Invalid account ID");
+      }
+      const result = await this.activitySchemaService.updateActivityCall(
+        accountNumber,
+        data,
+        userId,
+        files
+      );
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: STATUS_MESSAGE.activityUpdated,
+        data: result,
+      };
+    } catch (err) {
+      logMessage(`Error updating call activity, ${err}`);
+      return {
+        statusCode: HttpStatus.FAILED,
+        message: HttpStatus.FAILED_MESSAGE,
+        errorMessage: STATUS_MESSAGE.activityUpdateFailed,
+      };
+    }
+  }
+
+  async updateActivityMeeting(
+    data: IActivityMeeting,
+    userId: string,
+    files?: Express.Multer.File[]
+  ) {
+    try {
+      const { accountNumber } =
+        await this.caseSchemaService.fetchValidAccountNumberById(
+          data.account_rid!
+        );
+      if (!accountNumber) {
+        throw new Error("Invalid account ID");
+      }
+      const result = await this.activitySchemaService.updateActivityMeeting(
+        accountNumber,
+        data,
+        userId,
+        files
+      );
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: STATUS_MESSAGE.activityCreated,
+        data: result,
+      };
+    } catch (err) {
+      logMessage(`Error updating meeting activity, ${err}`);
+      return {
+        statusCode: HttpStatus.FAILED,
+        message: HttpStatus.FAILED_MESSAGE,
+        errorMessage: STATUS_MESSAGE.activityCreationFailed,
       };
     }
   }

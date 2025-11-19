@@ -1683,3 +1683,24 @@ export const relationshipTypes = {
   isBlockedBy : "is_blocked_by",
   isEnabledBy : "is_enabled_by"
 }
+
+// Common fields for activity select queries
+export const meetingFields = [
+  "a.rid",
+  "a.subject",
+  "a.body_html",
+  "a.created_by",
+  "a.modified_by",
+  "a.account_rid",
+  "a.created_datetime",
+  "a.modified_datetime",
+  "a.fiscal_year",
+  "e.name AS attached_to",
+  "a.attachment_level",
+  "a.r_number",
+  "a.attach_to",
+  "a.status_rid",
+  "a.to_email",
+  "a.cc_email",
+  "a.sender_email"
+];

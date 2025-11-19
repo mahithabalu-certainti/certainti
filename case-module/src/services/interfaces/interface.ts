@@ -4,7 +4,7 @@ import { Tags } from "../../models/tagsModel";
 import { TaskCollaborators } from "../../models/taskCollaboratorsModel";
 import { TaskComments } from "../../models/taskCommentsModel";
 import { TaskTag } from "../../models/taskTagsModel";
-import { AddCommentsType, AdminTaskTemplatePayloadType, CaseTaskQueryType, CreateCaseTaskType, CreateTaskTemplateType, ICreateCases, ICreateCaseTeam, ICreateChecklist, ICreateChecklistTemplate, ICreateEmailTemplate, MilestoneResponse, UpdateCaseTaskType, UpdateTaskTemplateType, UpdateCommentsType, DeleteCommentsType, CommentsListType, ActivityType, TaskCardDetailsType, priorityTypes, caseTaskStatusTypes, WorkflowConnectorType, CaseTaskWorkFlowCreate, CaseTaskWorkFlowDelete, IActivityTask, IActivityEmail } from "../../utils/types";
+import { AddCommentsType, AdminTaskTemplatePayloadType, CaseTaskQueryType, CreateCaseTaskType, CreateTaskTemplateType, ICreateCases, ICreateCaseTeam, ICreateChecklist, ICreateChecklistTemplate, ICreateEmailTemplate, MilestoneResponse, UpdateCaseTaskType, UpdateTaskTemplateType, UpdateCommentsType, DeleteCommentsType, CommentsListType, ActivityType, TaskCardDetailsType, priorityTypes, caseTaskStatusTypes, WorkflowConnectorType, CaseTaskWorkFlowCreate, CaseTaskWorkFlowDelete, IActivityTask, IActivityEmail, IActivityMeeting, IActivityCall } from "../../utils/types";
 
 export interface ICaseService {
   createCase(
@@ -448,7 +448,31 @@ export interface IActivityService {
     errorMessage?: string;
     data?: any;
 }>;
+ createActivityMeeting(data : IActivityMeeting, userId : string, files? : Express.Multer.File[]) : Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: any;
+}>;
+ createActivityCall(data : IActivityCall, userId : string, files? : Express.Multer.File[]) : Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: any;
+}>;
+ updateActivityCall(data : IActivityCall, userId : string, files? : Express.Multer.File[]) : Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: any;
+}>;
  updateActivityEmail(data : IActivityEmail, userId : string, files? : Express.Multer.File[]) : Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: any;
+}>;
+ updateActivityMeeting(data : IActivityMeeting, userId : string, files? : Express.Multer.File[]) : Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;

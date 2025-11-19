@@ -712,6 +712,54 @@ export interface IActivityEmail {
   account_rid?: string; 
 }
 
+export interface IActivityMeeting {
+  activity_rid: string;
+  activity_type:string
+  created_by: string;
+  modified_by?: string;
+  created_datetime?: Date;
+  modified_datetime?: Date;
+  accountRid: string;
+  fiscal_year: number;
+  attach_to: string;
+  attachment_level: string;
+  meeting_status:string;
+  meeting_status_rid?: string;
+  invitees: JSON;
+  meeting_platform?: string;
+  meeting_url?: string;
+  meeting_start_datetime: Date;
+  meeting_end_datetime?: Date;
+  meeting_code?: string;
+  minutes_of_meeting?: string;
+  account_rid?: string;
+}
+
+export interface IActivityCall {
+  activity_rid: string;
+  activity_type:string
+  created_by: string;
+  modified_by?: string;
+  created_datetime?: Date;
+  modified_datetime?: Date;
+  accountRid: string;
+  fiscal_year: number;
+  attach_to: string;
+  attachment_level: string;
+  call_status:string;
+  call_status_rid?: string;
+  caller:string
+  attendees: JSON;
+  call_platform?: string;
+  call_url?: string;
+  call_start_datetime: Date;
+  call_end_datetime?: Date;
+  call_code?: string;
+  description?: string;
+  account_rid?: string;
+}
+
+
 export interface IEmailMessage {
   subject: string;
   body: {

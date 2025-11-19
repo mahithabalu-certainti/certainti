@@ -17,6 +17,10 @@ import {
   exportActivitySchema,
   createActivityEmailSchema,
   updateActivityEmailSchema,
+  updateActivityMeetingSchema,
+  createActivityMeetingSchema,
+  updateActivityCallSchema,
+  createActivityCallSchema,
 } from "../lib/joi/schemas/schema";
 import configurations from "../config/config";
 import moment from "moment";
@@ -255,6 +259,257 @@ async function updateActivityEmail(req: Request, res: Response) {
     return;
   }
 }
+
+async function createActivityMeeting(req: Request, res: Response) {
+  const methodName = "Create Meeting";
+  try {
+    const value = await validateRequest(
+      req,
+      createActivityMeetingSchema,
+      res,
+      "POST"
+    );
+    if (!value) {
+      return;
+    }
+    const userId = req.headers["x-user-id"] as string;
+
+    if (!userId) {
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User id is required"
+      );
+      return;
+    }
+    const data = req.body;
+    let fileArray: Express.Multer.File[] | [];
+    if (Array.isArray(req.files)) {
+      fileArray = req.files;
+    } else {
+      fileArray = [];
+    }
+    data.created_by = userId;
+    const result = await activityService.createActivityMeeting(
+      data,
+      userId,
+      fileArray
+    );
+    if (result.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleCustomResponse(res, result.data, result.message);
+      return;
+    } else {
+      errorLog(methodName, result.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        result.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+async function updateActivityMeeting(req: Request, res: Response) {
+  const methodName = "Update Meeting";
+  try {
+    const value = await validateRequest(
+      req,
+      updateActivityMeetingSchema,
+      res,
+      "POST"
+    );
+    if (!value) {
+      return;
+    }
+    const userId = req.headers["x-user-id"] as string;
+
+    if (!userId) {
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User id is required"
+      );
+      return;
+    }
+    const data = req.body;
+    let fileArray: Express.Multer.File[] | [];
+    if (Array.isArray(req.files)) {
+      fileArray = req.files;
+    } else {
+      fileArray = [];
+    }
+    data.created_by = userId;
+    const result = await activityService.updateActivityMeeting(
+      data,
+      userId,
+      fileArray
+    );
+    if (result.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleCustomResponse(res, result.data, result.message);
+      return;
+    } else {
+      errorLog(methodName, result.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        result.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+async function createActivityCall(req: Request, res: Response) {
+  const methodName = "Create Call";
+  try {
+    const value = await validateRequest(
+      req,
+      createActivityCallSchema,
+      res,
+      "POST"
+    );
+    if (!value) {
+      return;
+    }
+    const userId = req.headers["x-user-id"] as string;
+
+    if (!userId) {
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User id is required"
+      );
+      return;
+    }
+    const data = req.body;
+    let fileArray: Express.Multer.File[] | [];
+    if (Array.isArray(req.files)) {
+      fileArray = req.files;
+    } else {
+      fileArray = [];
+    }
+    data.created_by = userId;
+    const result = await activityService.createActivityCall(
+      data,
+      userId,
+      fileArray
+    );
+    if (result.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleCustomResponse(res, result.data, result.message);
+      return;
+    } else {
+      errorLog(methodName, result.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        result.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+async function updateActivityCall(req: Request, res: Response) {
+  const methodName = "Update Call";
+  try {
+    const value = await validateRequest(
+      req,
+      updateActivityCallSchema,
+      res,
+      "POST"
+    );
+    if (!value) {
+      return;
+    }
+    const userId = req.headers["x-user-id"] as string;
+
+    if (!userId) {
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User id is required"
+      );
+      return;
+    }
+    const data = req.body;
+    let fileArray: Express.Multer.File[] | [];
+    if (Array.isArray(req.files)) {
+      fileArray = req.files;
+    } else {
+      fileArray = [];
+    }
+    data.created_by = userId;
+    const result = await activityService.updateActivityCall(
+      data,
+      userId,
+      fileArray
+    );
+    if (result.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleCustomResponse(res, result.data, result.message);
+      return;
+    } else {
+      errorLog(methodName, result.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        result.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
 
 async function deleteActivityAttachments(req: Request, res: Response) {
   const methodName = "deleteActivityAttachments";
@@ -611,4 +866,8 @@ export default {
   updateActivityEmail,
   fetchEmailActivityById,
   getEmailStatus,
+  createActivityMeeting,
+  updateActivityMeeting,
+  createActivityCall,
+  updateActivityCall,
 };

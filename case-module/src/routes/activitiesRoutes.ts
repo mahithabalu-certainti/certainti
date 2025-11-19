@@ -26,6 +26,40 @@ routes.post(
 )
 
 routes.post(
+  "/email/update",
+  checkUserStatusMiddleware("NA"),
+  upload.array('files'),
+  controller.activitiesController.updateActivityEmail
+)
+
+routes.post(
+  "/meeting/update",
+  checkUserStatusMiddleware("NA"),
+  upload.array('files'),
+  controller.activitiesController.updateActivityMeeting
+)
+
+routes.post(
+  "/meeting/create",
+  checkUserStatusMiddleware("NA"),
+  upload.array('files'),
+  controller.activitiesController.createActivityMeeting
+)
+
+routes.post(
+  "/call/update",
+  checkUserStatusMiddleware("NA"),
+  upload.array('files'),
+  controller.activitiesController.updateActivityCall
+)
+
+routes.post(
+  "/call/create",
+  checkUserStatusMiddleware("NA"),
+  upload.array('files'),
+  controller.activitiesController.createActivityCall
+)
+routes.post(
   "/email/attachments/delete",
   checkUserStatusMiddleware("NA"),
   controller.activitiesController.deleteActivityAttachments
