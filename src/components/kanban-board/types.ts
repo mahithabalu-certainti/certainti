@@ -169,6 +169,7 @@ export interface KanbanBoardProps {
   }>;
   isDragable?: boolean;
   isDragablebetweenBoards?: boolean;
+  onTaskClick?: (taskId: string) => void; // New callback for task selection
   onFetchTaskDetails?: (taskId: string) => Promise<Task | null>;
   onFetchTaskActivities?: (taskId: string) => Promise<Activity[]>;
   onFetchTaskComments?: (taskId: string) => Promise<Comment[]>;
@@ -190,7 +191,7 @@ export interface KanbanBoardProps {
     }>
   >;
   onAddComment?: (taskId: string, comment: string) => Promise<void>;
-  onUpdateComment?: (commentId: string, comment: string) => Promise<void>;
+  onUpdateComment?: (commentId: string, comment: string, taskId: string) => Promise<void>;
   onDeleteComment?: (commentId: string) => Promise<void>;
   onAddCollaborator?: (
     taskId: string,
@@ -203,6 +204,8 @@ export interface KanbanBoardProps {
     columnId: string,
     taskData: Partial<TaskCard>
   ) => Promise<void>;
+  accountId?: string; // New prop for task detail modal
+  caseId?: string; // New prop for task detail modal
 }
 
 export interface TaskCardProps {
@@ -292,7 +295,7 @@ export interface TaskDetailModalProps {
     }>
   >;
   onAddComment?: (taskId: string, comment: string) => Promise<void>;
-  onUpdateComment?: (commentId: string, comment: string) => Promise<void>;
+  onUpdateComment?: (commentId: string, comment: string, taskId: string) => Promise<void>;
   onDeleteComment?: (commentId: string) => Promise<void>;
   onAddCollaborator?: (
     taskId: string,

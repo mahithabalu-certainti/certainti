@@ -200,7 +200,7 @@ export const getTaskAttachmentsListUrl = () =>
 // Comment URL
 export const getAddCommentUrl = () => '/api/cases/task/comments/add';
 export const getUpdateCommentUrl = () => '/api/cases/task/comments/update';
-export const getDeleteCommentUrl = () => '/api/cases/comments/delete';
+export const getDeleteCommentUrl = () => '/api/cases/task/comments/delete';
 
 // Fetch Case Task List
 export const fetchCaseTaskList = async (

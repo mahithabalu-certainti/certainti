@@ -69,18 +69,10 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
   isDragable = true,
   isDragablebetweenBoards = false,
   isLoading = false,
-  onFetchTaskDetails,
-  onFetchTaskActivities,
-  onFetchTaskComments,
-  onFetchTaskAttachments,
-  onFetchCollaborators,
-  onAddComment,
-  onUpdateComment,
-  onDeleteComment,
-  onAddCollaborator,
-  fieldVisibility = {},
-  fieldDisabled = {},
+  onTaskClick,
   onCreateTask,
+  accountId = '',
+  caseId = '',
 }) => {
   const [columns, setColumns] = useState<KanbanColumnTypes[]>(data);
   const [isCreatingSection, setIsCreatingSection] = useState(false);
@@ -157,6 +149,10 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
   const handleTaskClick = (taskId: string) => {
     setSelectedTaskId(taskId);
     setIsModalOpen(true);
+    // Call the parent's onTaskClick if provided
+    if (onTaskClick) {
+      onTaskClick(taskId);
+    }
   };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -383,7 +379,6 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   collaboratorData={[]}
                   availableUsers={userData}
                   onTaskUpdate={handleTaskUpdate}
-                  onFetchTaskDetails={onFetchTaskDetails}
                   onCreateTask={onCreateTask}
                 />
               ))}
@@ -462,17 +457,8 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
               priorityData={priorityData}
               tagData={tagData}
               availableUsers={userData}
-              onFetchTaskDetails={onFetchTaskDetails}
-              onFetchTaskActivities={onFetchTaskActivities}
-              onFetchTaskComments={onFetchTaskComments}
-              onFetchTaskAttachments={onFetchTaskAttachments}
-              onFetchCollaborators={onFetchCollaborators}
-              onAddComment={onAddComment}
-              onUpdateComment={onUpdateComment}
-              onDeleteComment={onDeleteComment}
-              onAddCollaborator={onAddCollaborator}
-              fieldVisibility={fieldVisibility}
-              fieldDisabled={fieldDisabled}
+              accountId={accountId}
+              caseId={caseId}
             />
           )}
         </Suspense>
@@ -511,7 +497,6 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
               collaboratorData={[]}
               availableUsers={userData}
               onTaskUpdate={handleTaskUpdate}
-              onFetchTaskDetails={onFetchTaskDetails}
               onCreateTask={onCreateTask}
             />
           ))}
@@ -589,17 +574,8 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
             priorityData={priorityData}
             tagData={tagData}
             availableUsers={userData}
-            onFetchTaskDetails={onFetchTaskDetails}
-            onFetchTaskActivities={onFetchTaskActivities}
-            onFetchTaskComments={onFetchTaskComments}
-            onFetchTaskAttachments={onFetchTaskAttachments}
-            onFetchCollaborators={onFetchCollaborators}
-            onAddComment={onAddComment}
-            onUpdateComment={onUpdateComment}
-            onDeleteComment={onDeleteComment}
-            onAddCollaborator={onAddCollaborator}
-            fieldVisibility={fieldVisibility}
-            fieldDisabled={fieldDisabled}
+            accountId={accountId}
+            caseId={caseId}
           />
         )}
       </Suspense>

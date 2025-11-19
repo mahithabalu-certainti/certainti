@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { CaseIcon } from '../../../../../assets';
 import { SectionHeaderTab, SectionTabPanel } from '../../../../../components';
 import SectionHeader from '../../../../../components/details-section/section-header';
@@ -6,13 +7,11 @@ import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/res
 import { AllPermissions } from '../../../../../common-service';
 import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
 import KanbanBoard from '../../../../../components/kanban-board/kanban-board';
+import TaskDetailModal from '../../../../../components/kanban-board/task-detail-modal';
 import {
   useGetWorkBreakdownList,
-  useGetTaskDetail,
-  useGetTaskActivities,
   useGetTaskPriorities,
   useGetTaskStatuses,
-  useGetCollaborators,
   useAddCollaborator,
   AddCollaboratorPayload,
   AddCollaboratorResponse,
@@ -23,8 +22,6 @@ import {
   useAddTaskComment,
   useUpdateTaskComment,
   useDeleteTaskComment,
-  useGetTaskCommentsList,
-  useGetTaskAttachmentsList,
 } from '../../../../services/case-task/case-task-service';
 import {
   useGetUserOptions,
@@ -32,9 +29,6 @@ import {
   useGetTagOptions,
 } from '../../../../services/case-team/case-team-service';
 import {
-  transformActivities,
-  transformComments,
-  transformAttachments,
   transformPriorityData,
   transformStatusData,
   transformTagData,
@@ -44,7 +38,7 @@ import { getAssignGroupsFilterFields } from './case-task/helper';
 import { ExportType } from '../../../../types';
 import { ActivityMenuItem } from '../../../../types';
 import { useToast } from '../../../../../hooks';
-import { TaskCard, Task } from '../../../../../components/kanban-board/types';
+import { TaskCard } from '../../../../../components/kanban-board/types';
 import { useGetTaskCheckListTypes } from '../../../../../admin/service/task-template/task-template-service';
 
 const ConfigTabs: ResourceTabs[] = [
@@ -73,12 +67,16 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
   const accountId = searchParams.get('accountID');
   const { successToast, errorToast } = useToast();
   const tabParam = searchParams.get('tab') || 'milestone';
+  const queryClient = useQueryClient();
+
+  // Single source of truth for opened task
+  const [openTaskId, setOpenTaskId] = useState<string | null>(null);
+
   const [appliedFilters, setAppliedFilters] = useState<
     Record<string, string | number | boolean | string[]>
   >({});
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState<number>(0);
-  const [reFetchData, setReFetchData] = useState<number>(Date.now());
   const [count, setCount] = useState<number>(0);
   const [columnAnchorEl, setColumnAnchorEl] =
     React.useState<HTMLButtonElement | null>(null);
@@ -91,63 +89,6 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
     isError,
   } = useGetWorkBreakdownList(accountId || '', caseId || '');
 
-  const [selectedTaskIdForCollaborators, setSelectedTaskIdForCollaborators] =
-    useState<string>('');
-  const collaboratorsQuery = useGetCollaborators(
-    accountId || '',
-    caseId || '',
-    selectedTaskIdForCollaborators,
-    !!selectedTaskIdForCollaborators
-  );
-
-  const [selectedTaskIdForActivities, setSelectedTaskIdForActivities] =
-    useState<string>('');
-  const activitiesQuery = useGetTaskActivities(
-    accountId || '',
-    caseId || '',
-    selectedTaskIdForActivities,
-    !!selectedTaskIdForActivities
-  );
-
-  const [selectedTaskIdForTaskDetail, setSelectedTaskIdForTaskDetail] =
-    useState<string>('');
-  const taskDetailQuery = useGetTaskDetail(
-    accountId || '',
-    caseId || '',
-    selectedTaskIdForTaskDetail,
-    !!selectedTaskIdForTaskDetail
-  );
-
-  const [selectedTaskIdForComments, setSelectedTaskIdForComments] =
-    useState<string>('');
-  const commentsQuery = useGetTaskCommentsList(
-    {
-      account_rid: accountId || '',
-      case_rid: caseId || '',
-      task_rid: selectedTaskIdForComments,
-      page: 1,
-      limit: 100,
-    },
-    {
-      enabled: !!selectedTaskIdForComments,
-    }
-  );
-
-  const [selectedTaskIdForAttachments, setSelectedTaskIdForAttachments] =
-    useState<string>('');
-  const attachmentsQuery = useGetTaskAttachmentsList(
-    {
-      account_rid: accountId || '',
-      case_rid: caseId || '',
-      task_rid: selectedTaskIdForAttachments,
-      page: 1,
-      limit: 100,
-    },
-    {
-      enabled: !!selectedTaskIdForAttachments,
-    }
-  );
-
   useEffect(() => {
     if (
       !searchParams.get('tab') &&
@@ -156,8 +97,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
       searchParams.set('tab', 'milestone');
       navigate(`?${searchParams.toString()}`, { replace: true });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
+  }, [searchParams, navigate]);
 
   const userOptionsQuery = useGetUserOptions(accountId || '');
   const roleOptionsQuery = useGetRoleOptions();
@@ -215,6 +155,12 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
     [statusesQuery?.data]
   );
 
+  const handleTaskSaved = useCallback(() => {
+    queryClient.invalidateQueries({
+      queryKey: ['kanbanBoardData', accountId, caseId],
+    });
+  }, [queryClient, accountId, caseId]);
+
   const handleCreateTask = useCallback(
     async (columnId: string, taskData: Partial<TaskCard>) => {
       if (!accountId || !caseId) {
@@ -271,7 +217,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
           onSuccess: (response) => {
             if (response?.data?.rid) {
               successToast('Task created successfully');
-              setReFetchData(Date.now());
+              handleTaskSaved();
               resolve();
             } else {
               const errorMessage =
@@ -293,99 +239,15 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
         });
       });
     },
-    [accountId, caseId, createTaskMutation, successToast, errorToast, tagData]
-  );
-
-  const handleFetchTaskDetails = useCallback(
-    async (taskId: string): Promise<Task | null> => {
-      if (!accountId || !caseId) {
-        console.warn('Account ID or Case ID is missing');
-        return null;
-      }
-
-      // Set the task ID to trigger the query
-      setSelectedTaskIdForTaskDetail(taskId);
-
-      // Return a promise that resolves when data arrives
-      return new Promise<Task | null>((resolve) => {
-        const maxAttempts = 100; // 10 seconds max (100 * 100ms)
-        let attempts = 0;
-
-        const checkData = () => {
-          attempts++;
-
-          // Check if query has finished loading
-          if (taskDetailQuery.isFetching === false) {
-            if (taskDetailQuery.data) {
-              resolve(taskDetailQuery.data);
-            } else if (taskDetailQuery.isError) {
-              resolve(null);
-            } else if (attempts < maxAttempts) {
-              setTimeout(checkData, 100);
-            } else {
-              resolve(null);
-            }
-          } else if (attempts < maxAttempts) {
-            setTimeout(checkData, 100);
-          } else {
-            resolve(null);
-          }
-        };
-
-        checkData();
-      });
-    },
-    [accountId, caseId, taskDetailQuery]
-  );
-
-  const handleFetchTaskActivities = useCallback(
-    async (taskId: string) => {
-      if (!accountId || !caseId) {
-        return [];
-      }
-      setSelectedTaskIdForActivities(taskId);
-      const activitiesData = activitiesQuery.data || [];
-      const transformedActivities = transformActivities(activitiesData);
-      return transformedActivities;
-    },
-    [accountId, caseId, activitiesQuery.data]
-  );
-
-  const handleFetchTaskComments = useCallback(
-    async (taskId: string) => {
-      if (!accountId || !caseId) {
-        return [];
-      }
-      setSelectedTaskIdForComments(taskId);
-      const commentsData = commentsQuery.data?.data?.data || [];
-      const transformedComments = transformComments(commentsData);
-      return transformedComments;
-    },
-    [accountId, caseId, commentsQuery.data]
-  );
-
-  const handleFetchTaskAttachments = useCallback(
-    async (taskId: string) => {
-      if (!accountId || !caseId) {
-        return [];
-      }
-      setSelectedTaskIdForAttachments(taskId);
-      const attachmentsData = attachmentsQuery.data?.data?.data || [];
-      const transformedAttachments = transformAttachments(attachmentsData);
-      return transformedAttachments;
-    },
-    [accountId, caseId, attachmentsQuery.data]
-  );
-
-  const handleFetchCollaborators = useCallback(
-    async (taskId: string) => {
-      if (!accountId || !caseId) {
-        return [];
-      }
-      setSelectedTaskIdForCollaborators(taskId);
-      return collaboratorsQuery.data || [];
-    },
-    [accountId, caseId, collaboratorsQuery.data]
+    [
+      accountId,
+      caseId,
+      createTaskMutation,
+      successToast,
+      errorToast,
+      tagData,
+      handleTaskSaved,
+    ]
   );
 
   const handleAddComment = useCallback(
@@ -405,7 +267,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
           },
           {
             onSuccess: () => {
-              setSelectedTaskIdForComments(taskId);
+              setOpenTaskId(taskId);
               successToast('Comment added successfully');
               resolve();
             },
@@ -426,7 +288,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
   );
 
   const handleUpdateComment = useCallback(
-    async (commentId: string, commentText: string) => {
+    async (commentId: string, commentText: string, taskId: string) => {
       if (!accountId || !caseId) {
         errorToast('Account ID or Case ID is missing');
         throw new Error('Missing Account ID or Case ID');
@@ -437,7 +299,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
           {
             account_rid: accountId,
             case_rid: caseId,
-            task_rid: '',
+            task_rid: taskId,
             rid: commentId,
             comments: commentText,
           },
@@ -582,7 +444,9 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
   };
 
   const onRefreshClick = () => {
-    setReFetchData(Date.now());
+    queryClient.invalidateQueries({
+      queryKey: ['kanbanBoardData', accountId, caseId],
+    });
   };
 
   const handleColumnVisibility = (
@@ -664,12 +528,34 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
                 checklistData={checklistData}
                 userData={userOptionsQuery.data || []}
                 roleOptions={roleOptionsQuery.data || []}
-                onFetchTaskDetails={handleFetchTaskDetails}
-                onFetchTaskActivities={handleFetchTaskActivities}
-                onFetchTaskComments={handleFetchTaskComments}
-                onFetchTaskAttachments={handleFetchTaskAttachments}
-                onFetchCollaborators={handleFetchCollaborators}
+                onTaskClick={setOpenTaskId}
                 onCreateTask={handleCreateTask}
+                onAddComment={handleAddComment}
+                onUpdateComment={handleUpdateComment}
+                onDeleteComment={handleDeleteComment}
+                onAddCollaborator={handleAddCollaborator}
+                accountId={accountId || ''}
+                caseId={caseId || ''}
+              />
+            )}
+
+            {/* Clean Task Detail Modal – uses real React Query inside */}
+            {openTaskId && (
+              <TaskDetailModal
+                taskId={openTaskId}
+                isOpen={true}
+                onClose={() => setOpenTaskId(null)}
+                accountId={accountId!}
+                caseId={caseId!}
+                onTaskUpdate={handleTaskSaved}
+                statusData={statusData}
+                priorityData={priorityData}
+                tagData={tagData}
+                availableUsers={userOptionsQuery.data || []}
+                roleOptions={roleOptionsQuery.data || []}
+                checklistData={checklistData}
+                fieldVisibility={{}}
+                fieldDisabled={{}}
                 onAddComment={handleAddComment}
                 onUpdateComment={handleUpdateComment}
                 onDeleteComment={handleDeleteComment}
@@ -681,7 +567,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
         {tabParam === 'case_task' && (
           <CaseTask
             caseId={caseId}
-            reFetchData={reFetchData}
+            reFetchData={Date.now()}
             setCount={setCount}
             filterParams={{
               page: currentPage,

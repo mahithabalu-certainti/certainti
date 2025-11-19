@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { TaskDetailModalProps, Task, Activity, Comment } from './types';
 import { MenuItem, SelectChangeEvent } from '@mui/material';
 import dayjs from 'dayjs';
@@ -13,28 +13,33 @@ import TaskAttachmentsSection from './task-attachments-section';
 import TaskCollaboratorsSection from './task-collaborators-section';
 import TaskFieldsSection from './task-fields-section';
 import TaskChecklistSection from './task-checklist-section';
+import { enrichTask, enrichUserOption } from './helper';
 import {
-  enrichTask,
-  enrichUserOption,
-  generateInitials,
-  generateColorFromName,
-} from './helper';
-
-interface CommentData {
-  created_by_name?: string;
-  created_datetime?: string;
-  user?: string;
-  date?: string;
-  user_name?: string;
-  created_date?: string;
-  [key: string]: unknown;
-}
+  useGetTaskDetail,
+  useGetTaskActivities,
+  useGetCollaborators,
+} from '../../consultant/services/work-breakdown/work-breakdown-service';
+import {
+  useGetTaskCommentsList,
+  useGetTaskAttachmentsList,
+} from '../../consultant/services/case-task/case-task-service';
+import {
+  transformComments,
+  transformActivities,
+  transformAttachments,
+  type TaskCommentRaw,
+  type TaskActivityRaw,
+  type TaskAttachmentRaw,
+} from '../../consultant/pages/case/case-details/work-breakdown/helper';
 
 // Extend the TaskDetailModalProps to include availableTagOptions
 interface TaskDetailModalPropsExtended
   extends Omit<TaskDetailModalProps, 'tagData'> {
   tagData?: Array<{ id: string; name: string; color: string }>;
   availableTagOptions?: Array<{ id: string; name: string; color: string }>;
+  accountId: string;
+  caseId: string;
+  onAddComment?: (taskId: string, comment: string) => Promise<void>;
 }
 
 const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
@@ -49,15 +54,12 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   availableUsers = [],
   roleOptions = [],
   checklistData = [],
-  onFetchTaskDetails,
-  onFetchTaskActivities,
-  onFetchTaskComments,
-  onFetchTaskAttachments,
-  onFetchCollaborators,
   onAddComment,
   onUpdateComment,
   onDeleteComment,
   onAddCollaborator,
+  accountId,
+  caseId,
   fieldVisibility = {},
   fieldDisabled = {},
 }) => {
@@ -82,8 +84,6 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     }>
   >([]);
   const [isLoadingTaskDetails, setIsLoadingTaskDetails] = useState(false);
-  const [loadingComments, setLoadingComments] = useState(false);
-  const [loadingActivities, setLoadingActivities] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editedTask, setEditedTask] = useState<Task | null>(null);
   const [comment, setComment] = useState('');
@@ -101,10 +101,159 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   const [isSaving, setIsSaving] = useState(false);
   const [selectedRole, setSelectedRole] = useState('');
   const [selectedChecklist, setSelectedChecklist] = useState('');
-  const activitiesFetchedRef = useRef<string | null>(null);
-  const commentsFetchedRef = useRef<string | null>(null);
-  const collaboratorsFetchedRef = useRef<string | null>(null);
-  const attachmentsFetchedRef = useRef<string | null>(null);
+
+  // Memoize query parameters to prevent unnecessary refetches
+  const commentsParams = useMemo(
+    () => ({
+      account_rid: accountId,
+      case_rid: caseId,
+      task_rid: taskId!,
+      page: 1,
+      limit: 100,
+    }),
+    [accountId, caseId, taskId]
+  );
+
+  const attachmentsParams = useMemo(
+    () => ({
+      account_rid: accountId,
+      case_rid: caseId,
+      task_rid: taskId!,
+      page: 1,
+      limit: 100,
+    }),
+    [accountId, caseId, taskId]
+  );
+
+  // CLEAN REACT QUERY DATA FETCHING
+  const { data: rawTask, isLoading: taskLoading } = useGetTaskDetail(
+    accountId,
+    caseId,
+    taskId!,
+    !!taskId && isOpen
+  );
+
+  const { data: rawCommentsResponse } = useGetTaskCommentsList(commentsParams, {
+    enabled: !!taskId && isOpen,
+  });
+
+  const { data: rawActivities = [] } = useGetTaskActivities(
+    accountId,
+    caseId,
+    taskId!,
+    !!taskId && isOpen
+  );
+
+  const { data: rawAttachmentsResponse } = useGetTaskAttachmentsList(
+    attachmentsParams,
+    { enabled: !!taskId && isOpen }
+  );
+
+  const { data: rawCollaborators = [] } = useGetCollaborators(
+    accountId,
+    caseId,
+    taskId!,
+    !!taskId && isOpen
+  );
+
+  // Sync rawTask → enriched task
+  useEffect(() => {
+    if (rawTask) {
+      const enriched = enrichTask(rawTask);
+      setTask(enriched);
+      setEditedTask(enriched);
+      setIsLoadingTaskDetails(false);
+    }
+  }, [rawTask]);
+
+  useEffect(() => {
+    let commentsArray: TaskCommentRaw[] = [];
+    if (rawCommentsResponse) {
+      if (Array.isArray(rawCommentsResponse)) {
+        commentsArray = rawCommentsResponse;
+      } else if (
+        typeof rawCommentsResponse === 'object' &&
+        'data' in rawCommentsResponse
+      ) {
+        const innerData = (
+          rawCommentsResponse as unknown as Record<string, unknown>
+        ).data;
+        if (Array.isArray(innerData)) {
+          commentsArray = innerData;
+        } else if (
+          innerData &&
+          typeof innerData === 'object' &&
+          'data' in innerData &&
+          Array.isArray((innerData as unknown as Record<string, unknown>).data)
+        ) {
+          commentsArray = (innerData as Record<string, unknown>)
+            .data as TaskCommentRaw[];
+        }
+      }
+    }
+    setComments(transformComments(commentsArray));
+  }, [rawCommentsResponse]);
+
+  useEffect(() => {
+    let activitiesArray: TaskActivityRaw[] = [];
+    if (rawActivities) {
+      if (Array.isArray(rawActivities)) {
+        activitiesArray = rawActivities;
+      } else if (typeof rawActivities === 'object' && 'data' in rawActivities) {
+        const innerData = (rawActivities as unknown as Record<string, unknown>)
+          .data;
+        if (Array.isArray(innerData)) {
+          activitiesArray = innerData;
+        } else if (
+          innerData &&
+          typeof innerData === 'object' &&
+          'data' in innerData &&
+          Array.isArray((innerData as unknown as Record<string, unknown>).data)
+        ) {
+          activitiesArray = (innerData as unknown as Record<string, unknown>)
+            .data as TaskActivityRaw[];
+        }
+      }
+    }
+    setActivities(transformActivities(activitiesArray));
+  }, [rawActivities]);
+
+  useEffect(() => {
+    let attachmentsArray: TaskAttachmentRaw[] = [];
+    if (rawAttachmentsResponse) {
+      if (Array.isArray(rawAttachmentsResponse)) {
+        attachmentsArray = rawAttachmentsResponse;
+      } else if (
+        typeof rawAttachmentsResponse === 'object' &&
+        'data' in rawAttachmentsResponse
+      ) {
+        const innerData = (
+          rawAttachmentsResponse as unknown as Record<string, unknown>
+        ).data;
+        if (Array.isArray(innerData)) {
+          attachmentsArray = innerData;
+        } else if (
+          innerData &&
+          typeof innerData === 'object' &&
+          'data' in innerData &&
+          Array.isArray((innerData as unknown as Record<string, unknown>).data)
+        ) {
+          attachmentsArray = (innerData as Record<string, unknown>)
+            .data as TaskAttachmentRaw[];
+        }
+      }
+    }
+    setTaskAttachments(transformAttachments(attachmentsArray));
+  }, [rawAttachmentsResponse]);
+
+  useEffect(() => {
+    setCollaborators(rawCollaborators || []);
+  }, [rawCollaborators]);
+
+  // Show loading while main task is fetching
+  useEffect(() => {
+    setIsLoadingTaskDetails(taskLoading);
+  }, [taskLoading]);
 
   // Use availableTagOptions from parent, fallback to tagData or empty array
   const [availableTags, setAvailableTags] = useState(
@@ -161,249 +310,6 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     ],
     [collaboratorUsers, availableUsers]
   );
-
-  useEffect(() => {
-    let cancelled = false;
-    const fetchTask = async () => {
-      if (!taskId || !onFetchTaskDetails) {
-        setTask(null);
-        setEditedTask(null);
-        setIsLoadingTaskDetails(false);
-        return;
-      }
-      setIsLoadingTaskDetails(true);
-      setTask(null);
-      setEditedTask(null);
-      try {
-        const fetchedTask = await onFetchTaskDetails(taskId);
-        if (!cancelled && taskId) {
-          if (fetchedTask) {
-            const enrichedTask = enrichTask(fetchedTask);
-            setTask(enrichedTask);
-            setEditedTask(enrichedTask);
-          } else {
-            setTask(null);
-            setEditedTask(null);
-          }
-          setIsLoadingTaskDetails(false);
-        }
-      } catch (error) {
-        console.error(error);
-        if (!cancelled) {
-          setTask(null);
-          setEditedTask(null);
-          setIsLoadingTaskDetails(false);
-        }
-      }
-    };
-    if (isOpen) {
-      fetchTask();
-    }
-    return () => {
-      cancelled = true;
-    };
-  }, [taskId, isOpen, onFetchTaskDetails]);
-
-  // Fetch activities separately - with deduplication
-  useEffect(() => {
-    const fetchActivities = async () => {
-      if (!taskId || !onFetchTaskActivities) {
-        setActivities([]);
-        return;
-      }
-      if (activitiesFetchedRef.current === taskId) {
-        return;
-      }
-      activitiesFetchedRef.current = taskId;
-      setLoadingActivities(true);
-      try {
-        const fetchedActivities = await onFetchTaskActivities(taskId);
-        console.log('📊 Fetched activities raw response:', fetchedActivities);
-        
-        // Handle nested response structures
-        let activitiesArray: unknown = fetchedActivities;
-        if (fetchedActivities && typeof fetchedActivities === 'object' && !Array.isArray(fetchedActivities)) {
-          // Try common response wrappers
-          const response = fetchedActivities as Record<string, unknown>;
-          activitiesArray = 
-            response.data || 
-            response.activities || 
-            response.result ||
-            [];
-        }
-        
-        console.log('📊 Activities array after extraction:', activitiesArray);
-        
-        if (activitiesArray && Array.isArray(activitiesArray)) {
-          setActivities(activitiesArray);
-        } else {
-          console.warn('⚠️ Activities data is not an array:', activitiesArray);
-          setActivities([]);
-        }
-      } catch (error) {
-        console.error('❌ Error fetching task activities:', error);
-        setActivities([]);
-      } finally {
-        setLoadingActivities(false);
-      }
-    };
-
-    if (isOpen && taskId) {
-      fetchActivities();
-    }
-  }, [taskId, isOpen, onFetchTaskActivities]);
-
-  // Fetch comments separately - with deduplication
-  useEffect(() => {
-    const fetchComments = async () => {
-      if (taskId && onFetchTaskComments) {
-        if (commentsFetchedRef.current === taskId) {
-          return;
-        }
-        commentsFetchedRef.current = taskId;
-        setLoadingComments(true);
-        try {
-          const fetchedComments = await onFetchTaskComments(taskId);
-          console.log('💬 Fetched comments raw response:', fetchedComments);
-          
-          // Handle nested response structures
-          let commentsArray: unknown = fetchedComments;
-          if (fetchedComments && typeof fetchedComments === 'object' && !Array.isArray(fetchedComments)) {
-            // Try common response wrappers
-            const response = fetchedComments as Record<string, unknown>;
-            commentsArray = 
-              (response.data as Record<string, unknown>)?.data ||
-              response.data || 
-              response.comments || 
-              response.result ||
-              [];
-          }
-          
-          console.log('💬 Comments array after extraction:', commentsArray);
-
-          if (commentsArray && Array.isArray(commentsArray)) {
-            const transformedComments: Comment[] = (
-              commentsArray as unknown[]
-            ).map((comment: unknown) => {
-              const commentData = comment as CommentData;
-              const userName =
-                commentData.created_by_name ||
-                commentData.user ||
-                commentData.user_name ||
-                '';
-              const createdDateRaw =
-                commentData.created_datetime ||
-                commentData.date ||
-                commentData.created_date ||
-                new Date().toISOString();
-              const createdDate = createdDateRaw
-                ? dayjs(createdDateRaw)
-                    .local()
-                    .format('MMMM D, YYYY [at] h:mm A')
-                : '';
-              return {
-                id: (commentData.id || commentData.comment_rid) as string,
-                user: userName,
-                text: (commentData.text ||
-                  commentData.comment_text ||
-                  '') as string,
-                date: createdDate,
-                createdDateTime: createdDate,
-                initials: generateInitials(userName),
-                color: generateColorFromName(userName),
-                attachments: (commentData.attachments as string[]) || undefined,
-              };
-            });
-            setComments(transformedComments);
-          } else {
-            console.warn('⚠️ Comments data is not an array:', commentsArray);
-            setComments([]);
-          }
-        } catch (error) {
-          console.error('❌ Error fetching task comments:', error);
-          setComments([]);
-        } finally {
-          setLoadingComments(false);
-        }
-        return;
-      }
-      if (!taskId) {
-        setComments([]);
-        return;
-      }
-      if (commentsFetchedRef.current === taskId) {
-        return;
-      }
-      commentsFetchedRef.current = taskId;
-    };
-
-    if (isOpen && taskId) {
-      fetchComments();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [taskId, isOpen]);
-
-  useEffect(() => {
-    const fetchAttachments = async () => {
-      if (!taskId || !onFetchTaskAttachments) {
-        setTaskAttachments([]);
-        return;
-      }
-
-      if (attachmentsFetchedRef.current === taskId) {
-        return;
-      }
-      attachmentsFetchedRef.current = taskId;
-
-      try {
-        const fetchedAttachments = await onFetchTaskAttachments(taskId);
-
-        if (fetchedAttachments && Array.isArray(fetchedAttachments)) {
-          setTaskAttachments(fetchedAttachments);
-        } else {
-          setTaskAttachments([]);
-        }
-      } catch (error) {
-        console.error('Error fetching task attachments:', error);
-        setTaskAttachments([]);
-      }
-    };
-
-    if (isOpen && taskId) {
-      fetchAttachments();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [taskId, isOpen]);
-
-  useEffect(() => {
-    const fetchCollaboratorsData = async () => {
-      if (!taskId || !onFetchCollaborators) {
-        setCollaborators([]);
-        return;
-      }
-
-      if (collaboratorsFetchedRef.current === taskId) {
-        return;
-      }
-      collaboratorsFetchedRef.current = taskId;
-
-      try {
-        const fetchedCollaborators = await onFetchCollaborators(taskId);
-        if (fetchedCollaborators && Array.isArray(fetchedCollaborators)) {
-          setCollaborators(fetchedCollaborators);
-        } else {
-          setCollaborators([]);
-        }
-      } catch (error) {
-        console.error('Error fetching collaborators:', error);
-        setCollaborators([]);
-      }
-    };
-
-    if (isOpen && taskId) {
-      fetchCollaboratorsData();
-    }
-  }, [taskId, isOpen, onFetchCollaborators]);
 
   useEffect(() => {
     if (!editedTask || collaborators.length === 0) {
@@ -548,11 +454,6 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       setIsEditing(false);
     }
 
-    // Handle comment submission if there's a comment
-    if (comment.trim()) {
-      handleSubmitComment();
-    }
-
     setIsSaving(false);
   };
 
@@ -611,12 +512,27 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   const handleAttachmentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
+      const formData = new FormData();
+
+      // Add task_rid to the payload
+      formData.append('task_rid', taskId || '');
+      formData.append('account_rid', accountId || '');
+      formData.append('case_rid', caseId || '');
+
+      // Add all files to the payload
+      Array.from(files).forEach((file) => {
+        formData.append('files', file);
+      });
+
+      // Also store file names in editedTask for UI display
       const fileNames = Array.from(files).map((f) => f.name);
       setEditedTask((prev) =>
         prev
           ? {
               ...prev,
               attachments: [...(prev.attachments || []), ...fileNames],
+              // Store the FormData for upload when Save is clicked
+              attachmentFormData: formData,
             }
           : null
       );
@@ -834,38 +750,6 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
 
       return next;
     });
-  };
-
-  const handleSubmitComment = async () => {
-    if (!comment.trim() || !taskId) {
-      return;
-    }
-
-    if (!onAddComment) {
-      console.error('onAddComment callback is not provided');
-      return;
-    }
-
-    try {
-      await onAddComment(taskId, comment.trim());
-
-      // Clear comment state
-      setComment('');
-      setEditedTask((prev) =>
-        prev ? { ...prev, commentAttachments: [] } : null
-      );
-
-      // Reset file input
-      const fileInput = document.getElementById(
-        'comment-attachments-input'
-      ) as HTMLInputElement;
-      if (fileInput) fileInput.value = '';
-
-      // Refresh comments by resetting the ref so useEffect will refetch
-      commentsFetchedRef.current = null;
-    } catch (error) {
-      console.error('Error submitting comment:', error);
-    }
   };
 
   return (
@@ -1296,12 +1180,14 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
               setComment={setComment}
               editedTask={editedTask}
               task={task}
+              accountId={accountId}
+              caseId={caseId}
+              taskId={taskId}
+              onAddComment={onAddComment}
               onUpdateComment={onUpdateComment}
               onDeleteComment={onDeleteComment}
               handleCommentAttachmentChange={handleCommentAttachmentChange}
               handleRemoveCommentAttachment={handleRemoveCommentAttachment}
-              loadingComments={loadingComments}
-              loadingActivities={loadingActivities}
             />
           )}
 
