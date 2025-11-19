@@ -520,10 +520,29 @@ export class CaseManagementService {
     const mainDb = await this.getMainDb();
     const result = await mainDb.query<AdminTaskTemplateResponseTypes>(fetchAdminTemplates(1,1, '', '', {},'', false, true, rid), {type : QueryTypes.SELECT});
     if(result.length > 0) {
+      let targetData : any[] = []
+      targetData = result.map((d : any) => d.workflow_connector.map((w : any) => {
+        return {
+          target_rid : w.target_rid,
+          target_name : w.target_name
+        }
+      }))
+      const finalStructuredData = result.map((d : any) => {
+        return {
+          ...d,
+          workflow_connector : {
+            source_rid : d.workflow_connector[0].source_rid,
+            source_name : d.workflow_connector[0].source_name,
+            relationship_connector_rid : d.workflow_connector[0].relationship_connector_rid,
+            relationship_type_name : d.workflow_connector[0].relationship_type_name,
+            target_data : targetData
+          }
+        }
+      })
       return {
         statusCode : HttpStatus.SUCCESS,
         statusMessage : STATUS_MESSAGE.taskTemplateSuccess,
-        data : result[0]
+        data : finalStructuredData[0]
       }
     } else {
       return {
