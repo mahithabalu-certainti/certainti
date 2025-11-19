@@ -5991,15 +5991,26 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
               }, raw : true
             })
             if(workFlowConnectorDetails) {
-              await CaseTaskWorkflowConnector.create({
-              created_by : data.created_by,
-              created_datetime : new Date(),
-              case_rid :data.case_rid,
-              account_rid : data.account_rid,
-              source_rid : d,
-              target_rid : data.source_rid,
-              relationship_connector_rid : workFlowConnectorDetails.rid!
-            });
+              const checkForMapping = await CaseTaskWorkflowConnector.findOne({
+                where : {
+                  case_rid : data.case_rid,
+                  account_rid : data.account_rid,
+                  source_rid : d,
+                  target_rid : data.source_rid,
+                  relationship_connector_rid : workFlowConnectorDetails.rid!
+                }, raw : true
+              });
+              if(!checkForMapping) {
+                await CaseTaskWorkflowConnector.create({
+                  created_by : data.created_by,
+                  created_datetime : new Date(),
+                  case_rid :data.case_rid,
+                  account_rid : data.account_rid,
+                  source_rid : d,
+                  target_rid : data.source_rid,
+                  relationship_connector_rid : workFlowConnectorDetails.rid!
+                });
+              }
             }
             await CaseTimeline.create({
               created_by : data.created_by,
