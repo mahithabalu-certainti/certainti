@@ -125,6 +125,30 @@ const listActivityTaskSchema = Joi.object({
   sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
 });
 
+const exportActivitySchema = Joi.object({
+  accountRid: Joi.string().required(),
+  attachmentLevel: Joi.string()
+        .valid('account', 'project', 'project_resource', 'project_task', 'resource', 'resource_cost', 'resource_skill', 'case')
+        .required()
+        .messages({
+            'string.empty': 'Attachment level cannot be empty',
+            'any.required': 'Attachment level is required',
+            'any.only': 'Attachment level must be one of: account, project, project_resource, project_task, resource, resource_cost, resource_skill, case'
+        }),
+    entityId: Joi.string()
+        .required()
+        .messages({
+            'any.required': 'Entity ID is required',
+            'string.pattern.base': 'Entity ID must be a valid UUID'
+        }),
+  timezone: Joi.string().optional(),
+  filters: Joi.string().default("{}"),
+  sortBy: Joi.string().optional(),
+  sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
+});
+
+
+
 
 
 const createCaseTeamSchema = Joi.object({
@@ -611,5 +635,6 @@ export {
   listEmailTemplateSchema,
   exportEmailTemplateSchema,
   createActivitTaskSchema,
-  listActivityTaskSchema
+  listActivityTaskSchema,
+  exportActivitySchema
 };

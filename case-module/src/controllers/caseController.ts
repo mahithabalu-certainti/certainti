@@ -2140,7 +2140,7 @@ async function exportAllChecklists(req: Request, res: Response): Promise<void> {
         value.filters = {};
       }
     }
-    const checklists = await caseService.getAllChecklists(userId,value.attachmentLevel,value.entityId,value.accountRid,value.page,value.limit,value.search,value.filters,value.sortBy,value.sortOrder,value.fiscalYear,"list", {});
+    const checklists = await caseService.getAllChecklists(userId,value.attachmentLevel,value.entityId,value.accountRid,value.page,value.limit,value.search,value.filters,value.sortBy,value.sortOrder,value.fiscalYear,"download", {});
     const fields = await caseService.getAllowedExportFields(
       userId,
       "checklists_view_edit"

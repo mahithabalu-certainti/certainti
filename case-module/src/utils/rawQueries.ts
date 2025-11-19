@@ -1366,6 +1366,102 @@ return query;
     `
     return query;
   }
+
+  export const taskCardDetailsActivityTask = (schemaName : string, taskRid : string, accountRid : string,checklistItemsStatusRid : string) => {
+  let query =
+  `
+  WITH fetch_checklists AS (
+  SELECT c.rid, c.account_rid, c.checklist_name, c.checklist_description, ct.rid AS task_rid
+  FROM 
+  ${schemaName}.activities ct
+  LEFT JOIN ${schemaName}.checklists c ON c.attach_to = ct.rid
+  WHERE
+  ct.rid = '${taskRid}'
+  AND
+  ct.account_rid = '${accountRid}'
+  and c.attachment_level = 'task'
+  ORDER BY c.created_datetime ASC
+  ),
+
+  fetch_task_tags AS (
+  SELECT t.rid,
+  array_agg(jsonb_build_object(
+  'tag_rid', tt.tag_rid
+  )) AS tags
+  FROM
+  ${schemaName}.activities t
+  LEFT JOIN ${schemaName}.task_tags tt ON tt.task_rid = t.rid AND t.account_rid = tt.account_rid 
+  WHERE
+  t.rid = '${taskRid}'
+  AND
+  t.account_rid = '${accountRid}'
+  GROUP BY t.rid
+  ),
+
+  fetch_checlist_items AS (
+  SELECT
+  f.rid, COUNT(ch.rid) AS checklist_items_count,
+  (SELECT COUNT(*) FROM ${schemaName}.checklist_items cit WHERE cit.checklist_rid = f.rid AND cit.status_rid = '${checklistItemsStatusRid}') AS completed_items_count,
+  array_agg(jsonb_build_object(
+  'rid', ch.rid,
+  'checklist_item_name', ch.checklist_item_name,
+  'checklist_item_description', ch.checklist_item_description,
+  'status_rid', ch.status_rid
+  )ORDER BY ch.created_datetime ASC) AS check_list_items
+  FROM
+  fetch_checklists f
+  LEFT JOIN ${schemaName}.checklist_items ch ON ch.checklist_rid = f.rid
+  WHERE
+  ch.checklist_rid = f.rid 
+  and ch.account_rid = '${accountRid}'
+  GROUP BY f.rid
+  ),
+
+  aggregate_checklists AS (
+  SELECT 
+  c.task_rid,
+  jsonb_build_object (
+  'rid', c.rid,
+  'checklist_name', c.checklist_name,
+  'checklist_description', c.checklist_description,
+  'task_rid', c.task_rid,
+  'checklist_items_count', fci.checklist_items_count,
+  'completed_items_count', fci.completed_items_count,
+  'checklist_items', fci.check_list_items
+  ) AS checklists
+  FROM
+  fetch_checklists c
+  LEFT JOIN fetch_checlist_items fci ON fci.rid = c.rid
+  )
+
+  SELECT 
+  jsonb_build_object(
+  'rid', ct.rid,
+  'r_number', ct.r_number,
+  'created_by', ct.created_by,
+  'modified_by', ct.modified_by,
+  'created_datetime', ct.created_datetime,
+  'task_name', ct.task_name,
+  'effective_start_datetime', ct.effective_start_datetime,
+  'effective_end_datetime', ct.effective_end_datetime,
+  'assigned_to', ct.assigned_to,
+  'priority_rid', ct.priority_rid,
+  'description', ct.description,
+  'status_rid', ct.status_rid,
+  'checklists', fci.checklists,
+  'tags', ftt.tags
+  ) AS task_details
+  FROM
+  ${schemaName}.activities ct
+  LEFT JOIN aggregate_checklists fci ON fci.task_rid = ct.rid
+  LEFT JOIN fetch_task_tags ftt ON ftt.rid = ct.rid
+  WHERE
+  ct.rid = '${taskRid}'
+  AND
+  ct.account_rid = '${accountRid}'
+  `
+  return query;
+  }
   export const listAllTaskStatus = () => {
     return `SELECT rid, task_status_name FROM ${MAIN_SCHEMA_NAME}.case_task_status ORDER BY task_status_level ASC`
   }

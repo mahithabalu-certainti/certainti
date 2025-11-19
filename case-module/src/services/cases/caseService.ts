@@ -46,7 +46,7 @@ import { query } from "express";
 import currency from "currency.js";
 import moment from "moment";
 import { CaseManagementSchemaService } from "../casesManagement/schemaService";
-import { fetchTaskActivities, fetchTaskComments, listAllTaskStatus, taskCardDetails } from "../../utils/rawQueries";
+import { fetchTaskActivities, fetchTaskComments, listAllTaskStatus, taskCardDetails,taskCardDetailsActivityTask } from "../../utils/rawQueries";
 export class CaseService {
   private caseSchemaService: CaseSchemaService;
   private caseModelService: CaseModelService; // Assuming this is defined somewhere in your code
@@ -2312,8 +2312,12 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
       const parentNumber : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
       let schemaName = rawQueries.fetchSchemaName(parentNumber[0][0].r_number);
       const fetchChecklistStatusRid : any = await mainDb.query(rawQueries.fetchChecklistStatus());
-
-      const result = await orgDb.query<TaskCardResponse>(taskCardDetails(schemaName, data.task_rid, data.account_rid, data.case_rid, fetchChecklistStatusRid[0][0].rid),{type : QueryTypes.SELECT});
+      let result = [];
+      if(data.task_type === 'activity') {
+        result = await orgDb.query<TaskCardResponse>(taskCardDetailsActivityTask(schemaName, data.task_rid, data.account_rid, fetchChecklistStatusRid[0][0].rid),{type : QueryTypes.SELECT});
+      } else {
+        result = await orgDb.query<TaskCardResponse>(taskCardDetails(schemaName, data.task_rid, data.account_rid, data.case_rid, fetchChecklistStatusRid[0][0].rid),{type : QueryTypes.SELECT});
+      }
       if(result.length > 0) {
         let userIds : Record<string, string> = {
           created_by : result[0]?.task_details.created_by!,
@@ -2341,7 +2345,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
         let relationshipConnectorIds;
         let taskNameResult;
         let workflowResult;
-        if(result[0]?.task_details.workflow_connector !== null) {
+        if(result[0]?.task_details.workflow_connector !== null && data.task_type !== 'activity') {
           sourceIds = [...new Set(result[0]?.task_details.workflow_connector.map((d : taskWorkFlowConnector) => d.source_rid))]
           targetIds = [...new Set(result[0]?.task_details.workflow_connector.map((d : taskWorkFlowConnector) => d.target_rid))]
           relationshipConnectorIds = [...new Set(result[0]?.task_details.workflow_connector.map((d : taskWorkFlowConnector) => d.relationship_connector_rid))]
@@ -2422,7 +2426,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
         if(result[0]?.task_details.workflow_connector === null) {
           finalWorkflowData = []
         } else {
-          finalWorkflowData = result[0]?.task_details.workflow_connector.filter((f : any) => f.rid !== null).map((d : any) => {
+          finalWorkflowData = result[0]?.task_details?.workflow_connector?.filter((f : any) => f.rid !== null).map((d : any) => {
             return {
               ...d,
               source_task_name : taskNameMap.get(d.source_rid),

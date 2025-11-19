@@ -728,7 +728,7 @@ class ActivitySchemaService {
 
       // 🔷 Sort
       const validSortFields = [
-        "checklist_name",
+        "task_name",
         "r_number",
         "attachment_level",
         "attached_to",
@@ -1237,6 +1237,44 @@ class ActivitySchemaService {
       );
     }
   }
+
+   async checkIsActivityTaskUnique(
+      taskReq: any,
+      accountNumber: string
+    ): Promise<boolean> {
+      const { Activities } = await this.caseModelService.getModels(accountNumber);
+      const response = await Activities.findOne({
+        where: {
+          [Op.and]: [
+            where(
+              fn("LOWER", col("task_name")),
+              Op.eq,
+              taskReq.task_name.toLowerCase()
+            ),
+            {activity_type: 'task' }
+          ]
+        }
+      });
+      return !response;
+    }
+
+  async  checkIsExistingActivityTaskUnique(taskReq: any, accountNumber: string): Promise<boolean> {
+  const { Activities } = await this.caseModelService.getModels(accountNumber);
+  const response = await Activities.findOne({
+    where: {
+      [Op.and]: [
+        where(
+          fn("LOWER", col("task_name")),
+          Op.eq,
+          taskReq.task_name.toLowerCase()
+        ),
+        { rid: { [Op.ne]: taskReq.task_rid } },
+        {activity_type: 'task' }
+      ]
+    }
+  });
+  return !response;
+}
 }
 
 export default ActivitySchemaService;
