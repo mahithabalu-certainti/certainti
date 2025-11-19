@@ -229,6 +229,17 @@ class CaseSchemaService {
       caseReq: any,
       accountNumber: string
     ): Promise<boolean> {
+      const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(
+        /\D/g,
+        ""
+      )}`;
+      const tableExists = await this.checkTableExists(schemaName, "cases");
+      if (!tableExists) {
+        logMessage(
+          `Cases table does not exist for account ${accountNumber}, returning empty result`
+        );
+        return true;
+      }
       const { Case } = await this.caseModelService.getModels(accountNumber);
       const response = await Case.findOne({
         where: {
@@ -527,6 +538,7 @@ return !response;
       await CaseTaskWorkflowConnectorModel.sync({force : false});
       await setupCaseTaskWorkflowConnectorSequence(orgDbSequlize, schemaName)
     } catch (err) {
+      console.log(err)
       errorLog("Error creating case tables", (err as Error).message);
       return this.throwServiceError(err as Error);
     }
@@ -4589,7 +4601,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     if(result) return result
     else return null;
   }
-  async createUserLevelTask (data : CreateCaseTaskType, accountNumber : string, transaction : Transaction, activeStatusRid : string) {
+  async createUserLevelTask (data : CreateCaseTaskType, accountNumber : string, transaction : Transaction, activeStatusRid : string, fiscalYear : number) {
     const {CaseTask, CaseTimeline} = await this.caseModelService.getModels(accountNumber);
     const fetchSequenceNumber = await this.fetchSequenceOrder(data.milestone_template_rid, accountNumber);
     let sequenceNo : number = 0;
@@ -4618,6 +4630,26 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       task_status_rid : data.task_status_rid
     }, {transaction});
     if(createdTaskResult) {
+      if(data?.checklist_template_rid) 
+      {
+        const response  = await this.fetchChecklistTemplateDetailsById(data.checklist_template_rid);
+        response.checklist_items.map((item:any) => item.action_type  = 'add');
+        let caseRequest = {
+          account_rid: data.account_rid!,
+          checklist_name: response.checklist_name,
+          checklist_description: response.description,  
+          checklist_items: response.checklist_items,
+          attach_to:createdTaskResult.dataValues.rid,
+          attachment_level: 'task',
+          created_by: data.created_by,
+          created_datetime: new Date(),
+          fiscal_year: fiscalYear,
+          checklist_rid: data.checklist_template_rid
+        };
+
+        const checklistResponse = await this.createCheckList(accountNumber, caseRequest, transaction);
+        await this.manageCheckListItems(accountNumber,caseRequest,checklistResponse.rid, transaction);
+      }
       if(data.tags.length > 0) {
         for(let d of data.tags) {
       await this.createOrUpdateTags(createdTaskResult.dataValues.rid, data.account_rid, data.case_rid, d.tag_rid, d.is_new_tag, accountNumber, data.created_by, activeStatusRid,"case_task")
@@ -5991,15 +6023,26 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
               }, raw : true
             })
             if(workFlowConnectorDetails) {
-              await CaseTaskWorkflowConnector.create({
-              created_by : data.created_by,
-              created_datetime : new Date(),
-              case_rid :data.case_rid,
-              account_rid : data.account_rid,
-              source_rid : d,
-              target_rid : data.source_rid,
-              relationship_connector_rid : workFlowConnectorDetails.rid!
-            });
+              const checkForMapping = await CaseTaskWorkflowConnector.findOne({
+                where : {
+                  case_rid : data.case_rid,
+                  account_rid : data.account_rid,
+                  source_rid : d,
+                  target_rid : data.source_rid,
+                  relationship_connector_rid : workFlowConnectorDetails.rid!
+                }, raw : true
+              });
+              if(!checkForMapping) {
+                await CaseTaskWorkflowConnector.create({
+                  created_by : data.created_by,
+                  created_datetime : new Date(),
+                  case_rid :data.case_rid,
+                  account_rid : data.account_rid,
+                  source_rid : d,
+                  target_rid : data.source_rid,
+                  relationship_connector_rid : workFlowConnectorDetails.rid!
+                });
+              }
             }
             await CaseTimeline.create({
               created_by : data.created_by,
@@ -6378,6 +6421,97 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
           }
         }
       }
+    }
+  }
+  async fetchChecklistTemplateDetailsById(
+    checklistId: string
+  ) {``
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+    }
+  
+    const [checklistDetailsResult] = await this.mainDbSequelize.query(rawQueries.fetchChecklistTemplates, {
+      replacements: { checklistId },
+      type: "SELECT"
+    }) as [any[], any];
+  
+    if (!checklistDetailsResult || checklistDetailsResult.length === 0) {
+      return null;
+    }
+  
+    const checklistDetails = checklistDetailsResult as any;
+  
+    let checklistItems = await this.fetchChecklistTemplateItems(
+      checklistId
+    );
+  
+     const userInfo = await this.insertUserDetails(
+       checklistDetails.created_by ?? "",
+       checklistDetails.modified_by ?? ""
+     );
+  
+    const response: any = {
+      checklist_template_rid: checklistDetails?.rid,
+      checklist_name: checklistDetails?.checklist_name ?? "",
+      checklist_description: checklistDetails?.checklist_description ?? "",
+      r_number: checklistDetails.r_number ?? "",
+      status_rid: checklistDetails.status_rid ?? "",
+      status_name: checklistDetails.status_name ?? "",
+      modified_by: userInfo.modified_name ?? checklistDetails.modified_by,
+      created_by: userInfo.created_name ?? checklistDetails.created_by,
+      created_datetime: checklistDetails.created_datetime ?? null,
+      modified_datetime: checklistDetails.modified_datetime ?? null,
+      checklist_items: checklistItems ?? [],
+    };
+  
+    return response;
+    }
+    async fetchChecklistTemplateItems(
+    checklistId: string,
+  ) {
+    try {
+      const {
+        AdminCheckListItem,
+      } = await this.caseModelService.getModels("");
+      // Convert Sequelize instances to plain objects
+
+      const items = await AdminCheckListItem.findAll({
+        attributes: [
+          "rid",
+          "checklist_item_name",
+          "checklist_template_rid",
+          "description"
+          ],
+        order: [
+          ["created_datetime", "ASC"],
+        ],
+        where: { $checklist_template_rid$: checklistId},
+      });
+      const plainItems = items.map((item) => item.get({ plain: true }));
+      return items;
+    } catch (err) {
+      logMessage(`Error fetching interaction template items: ${err}`);
+      throw new Error(
+        "Error fetching interaction template items: " + (err as Error).message
+      );
+    }
+  }
+  async updateChecklistItems (data : any, accountNumber : string, transaction : Transaction) {
+    const {CheckListItem} = await this.caseModelService.getModels(accountNumber);
+    const [result] = await CheckListItem.update({
+      status_rid : data.status_rid
+    }, {
+      where : {
+        rid : data.rid
+      },
+      transaction
+    });
+    if(result === 1) {
+      transaction.commit();
+      return result;
+    } else {
+      transaction.rollback()
+      return result;
     }
   }
 }

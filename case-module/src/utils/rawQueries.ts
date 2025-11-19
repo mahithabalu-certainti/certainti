@@ -754,7 +754,7 @@ export const fetchAdminTemplates = (page : number, limit : number, sort : string
     SELECT t.rid, t.r_number, CONCAT(u.first_name,' ', u.last_name) AS created_by_name,
     CONCAT(uu.first_name,' ', uu.last_name) AS modified_by_name, 
     t.created_datetime, t.modified_datetime, t.task_name, t.sequence_no,
-    t.effort_in_days, t.reminder_interval, t.effective_start_datetime,
+    t.effort_in_days, t.effective_start_datetime,
     t.effective_end_datetime, r.role_name, t.case_team_member_role_rid,
     c.checklist_name, t.checklist_template_rid, p.priority_name, t.priority_rid,
     s.status_name, t.status_rid, m.milestone_name, t.milestone_template_rid,
@@ -793,7 +793,7 @@ export const fetchAdminTemplates = (page : number, limit : number, sort : string
     t.rid, t.r_number, u.first_name, u.last_name,
     uu.first_name,uu.last_name, 
     t.created_datetime, t.modified_datetime, t.task_name, t.sequence_no,
-    t.effort_in_days, t.reminder_interval, t.effective_start_datetime,
+    t.effort_in_days, t.effective_start_datetime,
     t.effective_end_datetime, r.role_name, t.case_team_member_role_rid,
     c.checklist_name, t.checklist_template_rid, p.priority_name, t.priority_rid,
     s.status_name, t.status_rid, m.milestone_name, t.milestone_template_rid,
@@ -826,7 +826,7 @@ export const fetchMilestoneTaskTemplate = (taskTypeRid : string, filingTypeRid :
   SELECT 
   t.rid AS task_rid, t.created_by AS "task_created_by", t.modified_by AS "task_modified_by", t.created_datetime AS "task_created_datetime",
   t.modified_datetime AS "task_modified_datetime", t.task_name, t.sequence_no, t.effort_in_days,
-  t.reminder_interval, t.effective_start_datetime, t.effective_end_datetime, t.case_team_member_role_rid,
+  t.effective_start_datetime, t.effective_end_datetime, t.case_team_member_role_rid,
   t.checklist_template_rid, t.status_rid AS "task_status_rid", t.priority_rid, t.task_type_rid,
   t.milestone_template_rid, t.task_description
   FROM
@@ -865,7 +865,6 @@ export const fetchMilestoneTaskTemplate = (taskTypeRid : string, filingTypeRid :
     'task_name', t.task_name,
     'sequence_no', t.sequence_no,
     'effort_in_days', t.effort_in_days,
-    'reminder_interval', t.reminder_interval,
     'effective_start_datetime', t.effective_start_datetime,
     'effective_end_datetime', t.effective_end_datetime,
     'case_team_member_role_rid', t.case_team_member_role_rid,
@@ -911,7 +910,6 @@ export const fetchCaseTemplateData = (schemaName : string, caseRid : string, acc
   'created_by', t.created_by,
   'sequence_no', t.sequence_no,
   'effort_in_days', t.effort_in_days,
-  'reminder_interval', t.reminder_interval,
   'effective_start_datetime', t.effective_start_datetime,
   'effective_end_datetime', t.effective_end_datetime,
   'case_team_member_role_rid', t.case_team_member_role_rid,
@@ -1350,7 +1348,8 @@ return query;
     'task_status_rid', ct.task_status_rid,
     'checklists', fci.checklists,
     'tags', ftt.tags,
-    'workflow_connector', w.workflow_connector
+    'workflow_connector', w.workflow_connector,
+    'case_team_member_role_rid', ct.case_team_member_role_rid
     ) AS task_details
     FROM
     ${schemaName}.case_task ct

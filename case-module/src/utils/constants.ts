@@ -165,6 +165,8 @@ export const STATUS_MESSAGE = {
   workflowConnectorMappedDeletedFailed : "Failed to link task",
   caseTaskFetchedSuccess : "Case Task fetched successfully",
   tagsCreationFailed : "Failed to add Tags",
+  checklistItemsStatusSuccess : "Checklist-Item updated successfully",
+  failedToUpdate : "Failed to update",
   activityCreated: "Activity created successfully",
   activityCreationFailed: "Activity creation failed",
   activityUpdated: "Activity updated successfully",
@@ -1422,6 +1424,12 @@ export const rawQueries = {
   },
   getRelationShipIds () {
     return `SELECT rid, relationship_type FROM ${MAIN_SCHEMA_NAME}.workflow_connector where relationship_type ILIKE '%by%'`
+  },
+  getCaseStatusById (statusRid : string) {
+    return `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.case_status WHERE rid = '${statusRid}'`
+  },
+  getCaseTeamRoleName (roleRid : string) {
+    return `SELECT rid, role_name FROM ${MAIN_SCHEMA_NAME}.case_team_role WHERE rid = '${roleRid}'`
   }
 };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 
@@ -1597,7 +1605,6 @@ export const validColumnsForSortFilters : Record<string, string> = {
   role_name : "r.role_name",
   effective_start_datetime : "t.effective_start_datetime",
   effective_end_datetime : "t.effective_end_datetime",
-  reminder_interval : "t.reminder_interval",
   effort_in_days : "t.effort_in_days",
   created_datetime : "t.created_datetime",
   modified_datetime : "t.modified_datetime",
@@ -1618,7 +1625,6 @@ export const validColumnsForFilters : Record<string, string> = {
   case_team_member_role_rid : "t.case_team_member_role_rid",
   effective_start_datetime : "t.effective_start_datetime",
   effective_end_datetime : "t.effective_end_datetime",
-  reminder_interval : "t.reminder_interval",
   effort_in_days : "t.effort_in_days",
   created_datetime : "t.created_datetime",
   modified_datetime : "t.modified_datetime",
@@ -1639,7 +1645,6 @@ export const validFilterColumnTypes : Record<string, string> = {
   case_team_member_role_rid : "string",
   effective_start_datetime : "date",
   effective_end_datetime : "date",
-  reminder_interval : "number",
   effort_in_days : "number",
   created_datetime : "date",
   modified_datetime : "date",
