@@ -194,12 +194,12 @@ export const getTaskDetail = async (
       checklistName: taskDetailResponse.checklists?.checklist_name,
       checklistInfo: taskDetailResponse.checklists
         ? {
-            rid: taskDetailResponse.checklists.rid,
-            name: taskDetailResponse.checklists.checklist_name,
-            description: taskDetailResponse.checklists.checklist_description,
-            totalItems: taskDetailResponse.checklists.checklist_items_count,
-            completedItems: taskDetailResponse.checklists.completed_items_count,
-          }
+          rid: taskDetailResponse.checklists.rid,
+          name: taskDetailResponse.checklists.checklist_name,
+          description: taskDetailResponse.checklists.checklist_description,
+          totalItems: taskDetailResponse.checklists.checklist_items_count,
+          completedItems: taskDetailResponse.checklists.completed_items_count,
+        }
         : undefined,
       tags: taskDetailResponse.tags || [],
       collaborators: [],
@@ -215,6 +215,7 @@ export const getTaskDetail = async (
       sequenceNo: taskDetailResponse.sequence_no,
       statusRid: taskDetailResponse.task_status_rid,
       priorityRid: taskDetailResponse.priority_rid,
+      caseTeamMemberRoleName: taskDetailResponse.case_team_member_role_name,
     };
 
     return task;

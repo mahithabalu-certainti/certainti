@@ -19,6 +19,17 @@ export interface Activity {
   link?: string;
 }
 
+export interface CommentAttachment {
+  rid: string;
+  size: string;
+  format: string;
+  browseFile: string;
+  documentName: string;
+  isFileDeleted: boolean;
+  uploadedBy?: string;
+  uploadedDate?: string;
+}
+
 export interface Comment {
   id?: string;
   user: string;
@@ -28,7 +39,7 @@ export interface Comment {
   createdDateTime?: string;
   initials?: string;
   color?: string;
-  attachments?: string[];
+  attachments?: CommentAttachment[];
 }
 
 // New interface for simple status options (active/inactive)
@@ -70,6 +81,7 @@ export interface Task {
   priorityRid?: string;
   account_rid?: string;
   case_rid?: string;
+  caseTeamMemberRoleName?: string;
 }
 
 export interface TaskCard {
@@ -190,8 +202,14 @@ export interface KanbanBoardProps {
       assigned_to_name: string;
     }>
   >;
-  onAddComment?: (taskId: string, comment: string) => Promise<void>;
-  onUpdateComment?: (commentId: string, comment: string, taskId: string) => Promise<void>;
+  onAddComment?: (taskId: string, comment: string, files: File[]) => Promise<void>;
+  onUpdateComment?: (
+    commentId: string,
+    comment: string,
+    taskId: string,
+    files?: File[],
+    deletedFileIds?: string[]
+  ) => Promise<void>;
   onDeleteComment?: (commentId: string) => Promise<void>;
   onAddCollaborator?: (
     taskId: string,
@@ -294,8 +312,14 @@ export interface TaskDetailModalProps {
       assigned_to_name: string;
     }>
   >;
-  onAddComment?: (taskId: string, comment: string) => Promise<void>;
-  onUpdateComment?: (commentId: string, comment: string, taskId: string) => Promise<void>;
+  onAddComment?: (taskId: string, comment: string, files: File[]) => Promise<void>;
+  onUpdateComment?: (
+    commentId: string,
+    comment: string,
+    taskId: string,
+    files?: File[],
+    deletedFileIds?: string[]
+  ) => Promise<void>;
   onDeleteComment?: (commentId: string) => Promise<void>;
   onAddCollaborator?: (
     taskId: string,

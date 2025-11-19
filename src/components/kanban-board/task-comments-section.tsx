@@ -15,22 +15,21 @@ interface TaskCommentsSectionProps {
   editingCommentText: string;
   setEditingCommentId: (id: string | null) => void;
   setEditingCommentText: (text: string) => void;
-  comment: string;
-  setComment: (text: string) => void;
-  editedTask: Task | null;
   task: Task | null;
   accountId?: string;
   caseId?: string;
   taskId?: string;
-  onAddComment?: (taskId: string, comment: string) => Promise<void>;
+  onAddComment?: (taskId: string, comment: string, files: File[]) => Promise<void>;
   onUpdateComment?:
-    | ((commentId: string, comment: string, taskId: string) => Promise<void>)
-    | undefined;
+  | ((
+    commentId: string,
+    comment: string,
+    taskId: string,
+    files?: File[],
+    deletedFileIds?: string[]
+  ) => Promise<void>)
+  | undefined;
   onDeleteComment: ((commentId: string) => Promise<void>) | undefined;
-  handleCommentAttachmentChange: (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => void;
-  handleRemoveCommentAttachment: (indexToRemove: number) => void;
   loadingComments?: boolean;
   loadingActivities?: boolean;
 }
@@ -46,9 +45,6 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
   editingCommentText,
   setEditingCommentId,
   setEditingCommentText,
-  comment,
-  setComment,
-  editedTask,
   task,
   accountId,
   caseId,
@@ -56,10 +52,10 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
   onAddComment,
   onUpdateComment,
   onDeleteComment,
-  handleCommentAttachmentChange,
-  handleRemoveCommentAttachment,
 }) => {
   const queryClient = useQueryClient();
+  const [comment, setComment] = useState('');
+  const [commentFiles, setCommentFiles] = useState<File[]>([]);
   const [deleteConfirmModal, setDeleteConfirmModal] = useState<{
     isOpen: boolean;
     commentId: string | null;
@@ -72,6 +68,10 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
   const [isAddingComment, setIsAddingComment] = useState(false);
   const [showAddCommentForm, setShowAddCommentForm] = useState(false);
   const [hoveredCommentId, setHoveredCommentId] = useState<string | null>(null);
+  const [editingNewFiles, setEditingNewFiles] = useState<File[]>([]);
+  const [editingDeletedFileIds, setEditingDeletedFileIds] = useState<string[]>(
+    []
+  );
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const editTextareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -149,9 +149,17 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
       formData.append('deleted_file_ids', JSON.stringify([]));
 
       // Pass formData to the parent component's onUpdateComment handler
-      await onUpdateComment(commentId, editingCommentText.trim(), taskId);
+      await onUpdateComment(
+        commentId,
+        editingCommentText.trim(),
+        taskId,
+        editingNewFiles,
+        editingDeletedFileIds
+      );
       setEditingCommentId(null);
       setEditingCommentText('');
+      setEditingNewFiles([]);
+      setEditingDeletedFileIds([]);
       invalidateCommentQueries();
     } catch (error) {
       console.error('Error updating comment:', error);
@@ -172,8 +180,9 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
 
     setIsAddingComment(true);
     try {
-      await onAddComment(taskId, comment.trim());
+      await onAddComment(taskId, comment.trim(), commentFiles);
       setComment('');
+      setCommentFiles([]);
       setShowAddCommentForm(false);
       invalidateCommentQueries();
     } catch (error) {
@@ -183,8 +192,47 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
     }
   };
 
+  const handleCommentAttachmentChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      setCommentFiles((prev) => [...prev, ...Array.from(files)]);
+      e.target.value = '';
+    }
+  };
+
+  const handleRemoveCommentAttachment = (indexToRemove: number) => {
+    setCommentFiles((prev) => prev.filter((_, index) => index !== indexToRemove));
+  };
+
+  const handleEditAttachmentChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      setEditingNewFiles((prev) => [...prev, ...Array.from(files)]);
+      e.target.value = '';
+    }
+  };
+
+  const handleRemoveEditNewAttachment = (indexToRemove: number) => {
+    setEditingNewFiles((prev) =>
+      prev.filter((_, index) => index !== indexToRemove)
+    );
+  };
+
+  const handleRemoveExistingAttachment = (attachmentId: string) => {
+    setEditingDeletedFileIds((prev) => [...prev, attachmentId]);
+  };
+
+  const handleUndoRemoveExistingAttachment = (attachmentId: string) => {
+    setEditingDeletedFileIds((prev) => prev.filter((id) => id !== attachmentId));
+  };
+
   const handleCancelAdd = () => {
     setComment('');
+    setCommentFiles([]);
     setShowAddCommentForm(false);
   };
 
@@ -200,21 +248,19 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
       <div className='flex gap-6 mb-6 border-b border-gray-200'>
         <button
           onClick={() => setActiveTab('comments')}
-          className={`text-sm font-semibold pb-3 px-1 transition-all duration-200 ${
-            activeTab === 'comments'
-              ? 'text-gray-900 border-b-2 border-blue-600'
-              : 'text-gray-600 hover:text-gray-800 border-b-2 border-transparent'
-          }`}
+          className={`text-sm font-semibold pb-3 px-1 transition-all duration-200 ${activeTab === 'comments'
+            ? 'text-gray-900 border-b-2 border-blue-600'
+            : 'text-gray-600 hover:text-gray-800 border-b-2 border-transparent'
+            }`}
         >
           Comments ({comments.length})
         </button>
         <button
           onClick={() => setActiveTab('activity')}
-          className={`text-sm font-semibold pb-3 px-1 transition-all duration-200 ${
-            activeTab === 'activity'
-              ? 'text-gray-900 border-b-2 border-blue-600'
-              : 'text-gray-600 hover:text-gray-800 border-b-2 border-transparent'
-          }`}
+          className={`text-sm font-semibold pb-3 px-1 transition-all duration-200 ${activeTab === 'activity'
+            ? 'text-gray-900 border-b-2 border-blue-600'
+            : 'text-gray-600 hover:text-gray-800 border-b-2 border-transparent'
+            }`}
         >
           Activity ({activities.length})
         </button>
@@ -293,15 +339,121 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                         value={editingCommentText}
                         onChange={(e) => setEditingCommentText(e.target.value)}
                         className='w-full bg-white border border-gray-300 rounded-lg p-3 text-sm resize-none focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900 placeholder-gray-500 min-h-[100px]'
-                        placeholder='Edit your comment...'
+                        placeholder='Edit your comment'
                         disabled={isUpdating}
                       />
+
+                      {/* Edit Mode Attachments */}
+                      <div className='mt-3 space-y-3'>
+                        {/* Existing Attachments */}
+                        {commentItem.attachments &&
+                          commentItem.attachments.length > 0 && (
+                            <div className='space-y-2'>
+                              <p className='text-xs font-medium text-gray-500'>
+                                Existing Attachments:
+                              </p>
+                              {commentItem.attachments.map((att) => {
+                                const isMarkedForDeletion =
+                                  editingDeletedFileIds.includes(att.rid);
+                                return (
+                                  <div
+                                    key={att.rid}
+                                    className={`flex items-center justify-between p-2 rounded text-xs ${isMarkedForDeletion
+                                      ? 'bg-red-50 text-gray-400'
+                                      : 'bg-gray-50 text-gray-700'
+                                      }`}
+                                  >
+                                    <div className='flex items-center gap-2 overflow-hidden'>
+                                      <span
+                                        className={
+                                          isMarkedForDeletion ? 'line-through' : ''
+                                        }
+                                      >
+                                        📎 {att.documentName}
+                                      </span>
+                                      {isMarkedForDeletion && (
+                                        <span className='text-red-500 text-[10px]'>
+                                          (Marked for deletion)
+                                        </span>
+                                      )}
+                                    </div>
+                                    <button
+                                      onClick={() =>
+                                        isMarkedForDeletion
+                                          ? handleUndoRemoveExistingAttachment(
+                                            att.rid
+                                          )
+                                          : handleRemoveExistingAttachment(att.rid)
+                                      }
+                                      className={`ml-2 p-1 rounded hover:bg-opacity-80 ${isMarkedForDeletion
+                                        ? 'text-green-600 hover:bg-green-100'
+                                        : 'text-red-600 hover:bg-red-100'
+                                        }`}
+                                      title={
+                                        isMarkedForDeletion
+                                          ? 'Undo delete'
+                                          : 'Delete attachment'
+                                      }
+                                      disabled={isUpdating}
+                                    >
+                                      {isMarkedForDeletion ? '↩' : '✕'}
+                                    </button>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+
+                        {/* New Attachments Input */}
+                        <div className='space-y-2'>
+                          <label className='block border-2 border-dashed border-gray-300 rounded-lg p-3 text-center hover:border-gray-400 hover:bg-gray-50 transition-colors cursor-pointer bg-gray-50'>
+                            <input
+                              type='file'
+                              multiple
+                              onChange={handleEditAttachmentChange}
+                              className='hidden'
+                              disabled={isUpdating}
+                              onClick={(e) => (e.target as HTMLInputElement).value = ''}
+                            />
+                            <p className='text-xs text-gray-600 font-medium'>
+                              📎 Click to upload attachments
+                            </p>
+                          </label>
+
+                          {/* New Attachments List */}
+                          {editingNewFiles.length > 0 && (
+                            <div className='space-y-1'>
+                              {editingNewFiles.map((file, idx) => (
+                                <div
+                                  key={idx}
+                                  className='flex items-center justify-between p-2 bg-blue-50 text-blue-900 rounded text-xs'
+                                >
+                                  <span className='truncate'>
+                                    + {file.name}
+                                  </span>
+                                  <button
+                                    onClick={() =>
+                                      handleRemoveEditNewAttachment(idx)
+                                    }
+                                    className='text-blue-700 hover:text-blue-900'
+                                    disabled={isUpdating}
+                                  >
+                                    ✕
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
                       <div className='flex gap-2 justify-end mt-3'>
                         <TextButton
                           label='Cancel'
                           onClick={() => {
                             setEditingCommentId(null);
                             setEditingCommentText('');
+                            setEditingNewFiles([]);
+                            setEditingDeletedFileIds([]);
                           }}
                           disabled={isUpdating}
                           sx={{ padding: '6px 12px' }}
@@ -314,10 +466,12 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                           disabled={
                             isUpdating ||
                             !editingCommentText.trim() ||
-                            isCommentUnchanged(
-                              commentItem.text,
-                              editingCommentText
-                            )
+                            (!editingNewFiles.length &&
+                              !editingDeletedFileIds.length &&
+                              isCommentUnchanged(
+                                commentItem.text,
+                                editingCommentText
+                              ))
                           }
                           sx={{ padding: '6px 12px' }}
                         />
@@ -354,17 +508,18 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
 
                           {/* Action Icons - Hover Reveal */}
                           <div
-                            className={`flex gap-2 flex-shrink-0 transition-opacity duration-200 ${
-                              hoveredCommentId === commentItem.id
-                                ? 'opacity-100'
-                                : 'opacity-0'
-                            }`}
+                            className={`flex gap-2 flex-shrink-0 transition-opacity duration-200 ${hoveredCommentId === commentItem.id
+                              ? 'opacity-100'
+                              : 'opacity-0'
+                              }`}
                           >
                             <Suspense fallback={null}>
                               <button
                                 onClick={() => {
                                   setEditingCommentId(commentItem.id || null);
                                   setEditingCommentText(commentItem.text);
+                                  setEditingNewFiles([]);
+                                  setEditingDeletedFileIds([]);
                                 }}
                                 className='p-1.5 hover:bg-blue-100 rounded-md transition-colors group/edit'
                                 title='Edit comment'
@@ -393,20 +548,45 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
 
                         {commentItem.attachments &&
                           commentItem.attachments.length > 0 && (
-                            <div className='mt-3 space-y-1'>
-                              {commentItem.attachments.map(
-                                (attachment, idx) => (
-                                  <div
-                                    key={idx}
-                                    className='text-xs text-gray-600 bg-gray-100 p-2 rounded inline-flex items-center gap-2 max-w-full'
-                                  >
-                                    <span>📎</span>
-                                    <span className='truncate'>
-                                      {attachment}
-                                    </span>
+                            <div className='mt-2 space-y-2'>
+                              {commentItem.attachments.map((att) => (
+                                <div
+                                  key={att.rid}
+                                  className='bg-gray-50 p-2 rounded border border-gray-200'
+                                >
+                                  <div className='flex items-center gap-2'>
+                                    <svg
+                                      className='w-4 h-4 text-gray-400 flex-shrink-0'
+                                      fill='none'
+                                      stroke='currentColor'
+                                      viewBox='0 0 24 24'
+                                    >
+                                      <path
+                                        strokeLinecap='round'
+                                        strokeLinejoin='round'
+                                        strokeWidth={2}
+                                        d='M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13'
+                                      />
+                                    </svg>
+                                    <div className='flex-1 min-w-0'>
+                                      <a
+                                        href={att.browseFile}
+                                        target='_blank'
+                                        rel='noopener noreferrer'
+                                        className='text-sm text-blue-600 hover:underline font-medium block truncate'
+                                      >
+                                        {att.documentName}
+                                      </a>
+                                      {(att.uploadedBy || att.uploadedDate) && (
+                                        <p className='text-xs text-gray-500 mt-0.5'>
+                                          Uploaded by {att.uploadedBy || 'Unknown'} on{' '}
+                                          {att.uploadedDate || 'Recently uploaded'}
+                                        </p>
+                                      )}
+                                    </div>
                                   </div>
-                                )
-                              )}
+                                </div>
+                              ))}
                             </div>
                           )}
                       </div>
@@ -417,7 +597,7 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
             ) : (
               <div className='text-center py-8'>
                 <p className='text-sm text-gray-500'>
-                  No comments yet. Start a conversation!
+                  No comments yet.
                 </p>
               </div>
             )}
@@ -460,52 +640,44 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                   />
 
                   {/* File upload area */}
-                  <div className='border-2 border-dashed border-gray-300 rounded-lg p-3 text-center hover:border-gray-400 hover:bg-gray-50 transition-colors cursor-pointer bg-gray-50'>
+                  <label className='block border-2 border-dashed border-gray-300 rounded-lg p-3 text-center hover:border-gray-400 hover:bg-gray-50 transition-colors cursor-pointer bg-gray-50'>
                     <input
                       type='file'
                       multiple
                       onChange={handleCommentAttachmentChange}
                       className='hidden'
-                      id='comment-attachments-input'
                       disabled={fieldDisabled.comments || isAddingComment}
+                      onClick={(e) => (e.target as HTMLInputElement).value = ''}
                     />
-                    <label
-                      htmlFor='comment-attachments-input'
-                      className='cursor-pointer block'
-                    >
-                      <p className='text-xs text-gray-600 font-medium'>
-                        📎 Click to upload attachments
-                      </p>
-                    </label>
-                  </div>
+                    <p className='text-xs text-gray-600 font-medium'>
+                      📎 Click to upload attachments
+                    </p>
+                  </label>
 
                   {/* Attached files list */}
-                  {editedTask?.commentAttachments &&
-                    editedTask.commentAttachments.length > 0 && (
-                      <div className='space-y-1 max-w-full'>
-                        {editedTask.commentAttachments.map((file, idx) => (
-                          <div
-                            key={idx}
-                            className='text-xs text-gray-700 bg-gray-100 p-2.5 rounded flex items-center gap-2 justify-between min-w-0'
-                          >
-                            <div className='flex items-center gap-2 min-w-0'>
-                              <span className='flex-shrink-0'>📎</span>
-                              <span className='truncate'>{file}</span>
-                            </div>
-                            <button
-                              onClick={() => handleRemoveCommentAttachment(idx)}
-                              className='text-red-600 hover:text-red-700 transition-colors flex-shrink-0'
-                              disabled={
-                                fieldDisabled.comments || isAddingComment
-                              }
-                              title='Remove attachment'
-                            >
-                              ✕
-                            </button>
+                  {commentFiles.length > 0 && (
+                    <div className='space-y-1 max-w-full'>
+                      {commentFiles.map((file, idx) => (
+                        <div
+                          key={idx}
+                          className='text-xs text-gray-700 bg-gray-100 p-2.5 rounded flex items-center gap-2 justify-between min-w-0'
+                        >
+                          <div className='flex items-center gap-2 min-w-0'>
+                            <span className='flex-shrink-0'>📎</span>
+                            <span className='truncate'>{file.name}</span>
                           </div>
-                        ))}
-                      </div>
-                    )}
+                          <button
+                            onClick={() => handleRemoveCommentAttachment(idx)}
+                            className='text-red-600 hover:text-red-700 transition-colors flex-shrink-0'
+                            disabled={fieldDisabled.comments || isAddingComment}
+                            title='Remove attachment'
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
                   {/* Action Buttons */}
                   <div className='flex gap-2 justify-end pt-2'>
@@ -530,53 +702,55 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
               </div>
             )}
           </div>
-        </div>
+        </div >
       )}
 
       {/* Activity Tab */}
-      {activeTab === 'activity' && (
-        <div className='space-y-3 max-h-[400px] overflow-y-auto scrollbar-thin-comments pr-1'>
-          {activities.length > 0 ? (
-            activities.map((activity, idx) => (
-              <div
-                key={activity.id || idx}
-                className='flex gap-3 pb-3 border-b border-gray-200 last:border-b-0 hover:bg-gray-50 rounded-lg p-3 -mx-3 transition-colors'
-              >
+      {
+        activeTab === 'activity' && (
+          <div className='space-y-3 max-h-[400px] overflow-y-auto scrollbar-thin-comments pr-1'>
+            {activities.length > 0 ? (
+              activities.map((activity, idx) => (
                 <div
-                  className='w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 text-white'
-                  style={{
-                    backgroundColor: '#8B5CF6',
-                    fontSize: '8px',
-                  }}
+                  key={activity.id || idx}
+                  className='flex gap-3 pb-3 border-b border-gray-200 last:border-b-0 hover:bg-gray-50 rounded-lg p-3 -mx-3 transition-colors'
                 >
-                  {activity.user
-                    .split(' ')
-                    .map((n) => n[0])
-                    .join('')}
+                  <div
+                    className='w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 text-white'
+                    style={{
+                      backgroundColor: '#8B5CF6',
+                      fontSize: '8px',
+                    }}
+                  >
+                    {activity.user
+                      .split(' ')
+                      .map((n) => n[0])
+                      .join('')}
+                  </div>
+                  <div className='flex-1 min-w-0'>
+                    <p className='text-sm text-gray-900 break-words'>
+                      <span className='font-semibold'>{activity.user}</span>{' '}
+                      <span className='text-gray-700'>{activity.action}</span>
+                      {activity.link && (
+                        <span className='text-blue-600 font-medium'>
+                          {' '}
+                          {activity.link}
+                        </span>
+                      )}
+                    </p>
+                    <p className='text-xs text-gray-500 mt-1'>{activity.date}</p>
+                  </div>
                 </div>
-                <div className='flex-1 min-w-0'>
-                  <p className='text-sm text-gray-900 break-words'>
-                    <span className='font-semibold'>{activity.user}</span>{' '}
-                    <span className='text-gray-700'>{activity.action}</span>
-                    {activity.link && (
-                      <span className='text-blue-600 font-medium'>
-                        {' '}
-                        {activity.link}
-                      </span>
-                    )}
-                  </p>
-                  <p className='text-xs text-gray-500 mt-1'>{activity.date}</p>
-                </div>
+              ))
+            ) : (
+              <div className='text-center py-8'>
+                <p className='text-sm text-gray-500'>No activities yet</p>
               </div>
-            ))
-          ) : (
-            <div className='text-center py-8'>
-              <p className='text-sm text-gray-500'>No activities yet</p>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
+            )}
+          </div>
+        )
+      }
+    </div >
   );
 };
 

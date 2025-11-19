@@ -17,6 +17,18 @@ export interface TaskActivityRaw {
   created_datetime: string;
 }
 
+export interface TaskCommentAttachmentRaw {
+  rid: string;
+  size: string;
+  format: string;
+  browse_file: string;
+  comments_rid: string;
+  document_name: string;
+  is_file_deleted: boolean;
+  created_by_name?: string;
+  created_datetime?: string;
+}
+
 export interface TaskCommentRaw {
   rid?: string;
   id?: string;
@@ -34,21 +46,28 @@ export interface TaskCommentRaw {
   created_date?: string;
   created_datetime?: string;
   created_by?: string;
-  comments_attachments?: string[];
-  attachments?: string[];
+  comments_attachments?: TaskCommentAttachmentRaw[];
+  attachments?: TaskCommentAttachmentRaw[];
 }
 
 export interface TaskAttachmentRaw {
   id?: string;
   attachment_rid?: string;
-  file_name: string;
+  rid?: string;
+  file_name?: string;
+  document_name?: string;
   file_path?: string;
+  browse_file?: string;
   file_size?: number;
+  size?: string;
   file_type?: string;
+  format?: string;
   uploaded_by?: string;
   uploaded_by_name?: string;
+  created_by_name?: string;
   uploaded_date?: string;
   created_date?: string;
+  created_datetime?: string;
 }
 
 export interface TagOption {
@@ -101,12 +120,12 @@ export const transformComments = (
 
     const formattedDate = commentDate
       ? new Date(commentDate).toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-        })
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
       : '';
 
     // Generate initials from user name
@@ -118,6 +137,32 @@ export const transformComments = (
         .toUpperCase()
         .slice(0, 2) || 'UN';
 
+    const rawAttachments =
+      comment.comments_attachments || comment.attachments || [];
+
+    // Use comment-level metadata for attachments since they don't have their own
+    const commentUploadedBy = userName;
+    const commentUploadedDate = formattedDate;
+
+    const attachments = rawAttachments.map((att) => ({
+      rid: att.rid,
+      size: att.size,
+      format: att.format,
+      browseFile: att.browse_file,
+      documentName: att.document_name,
+      isFileDeleted: att.is_file_deleted,
+      uploadedBy: att.created_by_name || commentUploadedBy,
+      uploadedDate: att.created_datetime
+        ? new Date(att.created_datetime).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        })
+        : commentUploadedDate,
+    }));
+
     return {
       id: comment.rid || comment.id || comment.comment_rid,
       user: userName,
@@ -127,7 +172,7 @@ export const transformComments = (
       date: formattedDate,
       initials: initials,
       color: generateColorFromName(userName),
-      attachments: comment.comments_attachments || comment.attachments || [],
+      attachments: attachments,
     };
   });
 };
@@ -147,25 +192,26 @@ export const transformAttachments = (
   uploadedDate: string;
 }> => {
   return attachmentsData.map((attachment) => {
-    const uploadDate = attachment.uploaded_date || attachment.created_date;
+    const uploadDate = attachment.created_datetime || attachment.uploaded_date || attachment.created_date;
+    const formattedUploadDate = uploadDate
+      ? new Date(uploadDate).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+      : 'Recently uploaded';
 
     return {
-      id: attachment.id || attachment.attachment_rid,
-      fileName: attachment.file_name,
-      filePath: attachment.file_path,
-      fileSize: attachment.file_size,
-      fileType: attachment.file_type,
+      id: attachment.id || attachment.attachment_rid || attachment.rid,
+      fileName: attachment.file_name || attachment.document_name || '',
+      filePath: attachment.file_path || attachment.browse_file,
+      fileSize: attachment.file_size || (attachment.size ? parseFloat(attachment.size) : undefined),
+      fileType: attachment.file_type || attachment.format,
       uploadedBy:
-        attachment.uploaded_by || attachment.uploaded_by_name || 'Unknown',
-      uploadedDate: uploadDate
-        ? new Date(uploadDate).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-          })
-        : 'Recently uploaded',
+        attachment.created_by_name || attachment.uploaded_by_name || attachment.uploaded_by || 'Unknown',
+      uploadedDate: formattedUploadDate,
     };
   });
 };

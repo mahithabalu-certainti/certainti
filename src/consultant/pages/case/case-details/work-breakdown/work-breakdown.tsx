@@ -251,7 +251,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
   );
 
   const handleAddComment = useCallback(
-    async (taskId: string, commentText: string) => {
+    async (taskId: string, commentText: string, files: File[]) => {
       if (!accountId || !caseId) {
         errorToast('Account ID or Case ID is missing');
         throw new Error('Missing Account ID or Case ID');
@@ -264,6 +264,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
             case_rid: caseId,
             task_rid: taskId,
             comments: commentText,
+            files: files,
           },
           {
             onSuccess: () => {
@@ -288,7 +289,13 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
   );
 
   const handleUpdateComment = useCallback(
-    async (commentId: string, commentText: string, taskId: string) => {
+    async (
+      commentId: string,
+      commentText: string,
+      taskId: string,
+      files?: File[],
+      deletedFileIds?: string[]
+    ) => {
       if (!accountId || !caseId) {
         errorToast('Account ID or Case ID is missing');
         throw new Error('Missing Account ID or Case ID');
@@ -302,6 +309,8 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
             task_rid: taskId,
             rid: commentId,
             comments: commentText,
+            files: files,
+            deleted_file_ids: deletedFileIds,
           },
           {
             onSuccess: () => {
@@ -478,9 +487,9 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
         setAppliedFilters={setAppliedFilters}
         setCurrentPage={setCurrentPage}
         handleFilter={handleFilter}
-        handleSorting={() => {}}
+        handleSorting={() => { }}
         sortFilterCount={0}
-        setSortFilterCount={() => {}}
+        setSortFilterCount={() => { }}
         showRefresh={tabParam === 'case_task' ? true : false}
         onRefreshClick={onRefreshClick}
         // hideTabPanel={hideSection}

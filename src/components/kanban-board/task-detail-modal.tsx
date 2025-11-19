@@ -39,7 +39,7 @@ interface TaskDetailModalPropsExtended
   availableTagOptions?: Array<{ id: string; name: string; color: string }>;
   accountId: string;
   caseId: string;
-  onAddComment?: (taskId: string, comment: string) => Promise<void>;
+  onAddComment?: (taskId: string, comment: string, files: File[]) => Promise<void>;
 }
 
 const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
@@ -86,7 +86,6 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   const [isLoadingTaskDetails, setIsLoadingTaskDetails] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editedTask, setEditedTask] = useState<Task | null>(null);
-  const [comment, setComment] = useState('');
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingCommentText, setEditingCommentText] = useState('');
   const [activeTab, setActiveTab] = useState<'comments' | 'activity'>(
@@ -162,6 +161,12 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       const enriched = enrichTask(rawTask);
       setTask(enriched);
       setEditedTask(enriched);
+      if (enriched.caseTeamMemberRoleName) {
+        setSelectedRole(enriched.caseTeamMemberRoleName);
+      }
+      if (enriched.checklistName) {
+        setSelectedChecklist(enriched.checklistName);
+      }
       setIsLoadingTaskDetails(false);
     }
   }, [rawTask]);
@@ -191,7 +196,12 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
         }
       }
     }
-    setComments(transformComments(commentsArray));
+    try {
+      setComments(transformComments(commentsArray));
+    } catch (error) {
+      console.error('Error transforming comments:', error);
+      setComments([]);
+    }
   }, [rawCommentsResponse]);
 
   useEffect(() => {
@@ -283,7 +293,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       task.assignee?.name !== editedTask.assignee?.name ||
       JSON.stringify(task.tags) !== JSON.stringify(editedTask.tags) ||
       JSON.stringify(task.collaborators) !==
-        JSON.stringify(editedTask.collaborators) ||
+      JSON.stringify(editedTask.collaborators) ||
       JSON.stringify(task.checklist) !== JSON.stringify(editedTask.checklist)
     );
   };
@@ -469,9 +479,9 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     setEditedTask((prev) =>
       prev
         ? {
-            ...prev,
-            status: statusName,
-          }
+          ...prev,
+          status: statusName,
+        }
         : null
     );
   };
@@ -529,32 +539,11 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       setEditedTask((prev) =>
         prev
           ? {
-              ...prev,
-              attachments: [...(prev.attachments || []), ...fileNames],
-              // Store the FormData for upload when Save is clicked
-              attachmentFormData: formData,
-            }
-          : null
-      );
-      e.target.value = '';
-    }
-  };
-
-  const handleCommentAttachmentChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const files = e.target.files;
-    if (files && files.length > 0) {
-      const fileNames = Array.from(files).map((f) => f.name);
-      setEditedTask((prev) =>
-        prev
-          ? {
-              ...prev,
-              commentAttachments: [
-                ...(prev.commentAttachments || []),
-                ...fileNames,
-              ],
-            }
+            ...prev,
+            attachments: [...(prev.attachments || []), ...fileNames],
+            // Store the FormData for upload when Save is clicked
+            attachmentFormData: formData,
+          }
           : null
       );
       e.target.value = '';
@@ -565,25 +554,11 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     setEditedTask((prev) =>
       prev
         ? {
-            ...prev,
-            attachments:
-              prev.attachments?.filter((_, index) => index !== indexToRemove) ||
-              [],
-          }
-        : null
-    );
-  };
-
-  const handleRemoveCommentAttachment = (indexToRemove: number) => {
-    setEditedTask((prev) =>
-      prev
-        ? {
-            ...prev,
-            commentAttachments:
-              prev.commentAttachments?.filter(
-                (_, index) => index !== indexToRemove
-              ) || [],
-          }
+          ...prev,
+          attachments:
+            prev.attachments?.filter((_, index) => index !== indexToRemove) ||
+            [],
+        }
         : null
     );
   };
@@ -599,13 +574,13 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       setEditedTask((prev) =>
         prev
           ? {
-              ...prev,
-              assignee: {
-                name: selectedUser.name,
-                initials: selectedUser.initials,
-                color: selectedUser.color,
-              },
-            }
+            ...prev,
+            assignee: {
+              name: selectedUser.name,
+              initials: selectedUser.initials,
+              color: selectedUser.color,
+            },
+          }
           : null
       );
     }
@@ -755,9 +730,8 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   return (
     <>
       <div
-        className={`fixed right-0 bottom-0 w-[650px] bg-white text-gray-900 shadow-2xl transform transition-transform duration-300 ease-in-out z-50 overflow-y-auto ${
-          isOpen ? 'translate-x-0' : 'translate-x-full'
-        }`}
+        className={`fixed right-0 bottom-0 w-[650px] bg-white text-gray-900 shadow-2xl transform transition-transform duration-300 ease-in-out z-50 overflow-y-auto ${isOpen ? 'translate-x-0' : 'translate-x-full'
+          }`}
         style={{ top: '38.1px' }}
       >
         <div className='sticky top-0 flex items-center justify-between p-[16.5px] border-b border-[#CBD6E2] bg-white z-50'>
@@ -1176,9 +1150,6 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
               editingCommentText={editingCommentText}
               setEditingCommentId={setEditingCommentId}
               setEditingCommentText={setEditingCommentText}
-              comment={comment}
-              setComment={setComment}
-              editedTask={editedTask}
               task={task}
               accountId={accountId}
               caseId={caseId}
@@ -1186,8 +1157,6 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
               onAddComment={onAddComment}
               onUpdateComment={onUpdateComment}
               onDeleteComment={onDeleteComment}
-              handleCommentAttachmentChange={handleCommentAttachmentChange}
-              handleRemoveCommentAttachment={handleRemoveCommentAttachment}
             />
           )}
 
