@@ -6484,6 +6484,24 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       );
     }
   }
+  async updateChecklistItems (data : any, accountNumber : string, transaction : Transaction) {
+    const {CheckListItem} = await this.caseModelService.getModels(accountNumber);
+    const [result] = await CheckListItem.update({
+      status_rid : data.status_rid
+    }, {
+      where : {
+        rid : data.rid
+      },
+      transaction
+    });
+    if(result === 1) {
+      transaction.commit();
+      return result;
+    } else {
+      transaction.rollback()
+      return result;
+    }
+  }
 }
 
 // Utility function for optimized column sorting

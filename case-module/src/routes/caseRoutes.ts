@@ -273,4 +273,9 @@ routes.post(
   checkUserStatusMiddleware("NA"),
   controller.caseController.deleteCollaboratorsTaskLevel
 )
+routes.put(
+  "/task/checklist/status",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.updateChecklistItemStatus
+)
 export default routes;

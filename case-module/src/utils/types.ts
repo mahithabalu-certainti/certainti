@@ -316,7 +316,8 @@ export interface ICreateChecklistItemTemplate {
 type WorkflowConnectorItems = {
   source_rid : string
   relationship_connector_rid : string
-  target_rid : string[]
+  target_rid : string[],
+  created_by : string
 }
 
 type WorkflowConnectorItemsAccountLevel = {
@@ -622,7 +623,10 @@ export type TaskCardDetailsType = {
   priority_name : string
   task_status_name : string
   assigned_to_name : string
-  checklists : checklistType
+  checklists : checklistType,
+  checklist_rid : string
+  checklist_name : string
+  case_team_member_role_rid : string
   tags : taskTags[]
   workflow_connector :  taskWorkFlowConnector[]
 }

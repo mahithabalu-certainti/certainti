@@ -1348,7 +1348,8 @@ return query;
     'task_status_rid', ct.task_status_rid,
     'checklists', fci.checklists,
     'tags', ftt.tags,
-    'workflow_connector', w.workflow_connector
+    'workflow_connector', w.workflow_connector,
+    'case_team_member_role_rid', ct.case_team_member_role_rid
     ) AS task_details
     FROM
     ${schemaName}.case_task ct

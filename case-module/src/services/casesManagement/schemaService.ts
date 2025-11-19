@@ -637,6 +637,7 @@ class CaseManagementSchemaService {
     if(result) {
       if(Object.keys(data.workflow_connector).length > 0) {
         data.workflow_connector.source_rid = result.dataValues.rid
+        data.workflow_connector.created_by = userId
         if(data.workflow_connector.target_rid.length > 0) {
           await this.taskWorkflowConnector(data.workflow_connector);
         }
@@ -694,6 +695,7 @@ class CaseManagementSchemaService {
       if(result === 1) {
         if(Object.keys(data.workflow_connector).length > 0) {
           if(data.workflow_connector.target_rid.length > 0) {
+            data.workflow_connector.created_by = userId
             await this.taskWorkflowConnector(data.workflow_connector);
           }
         }
@@ -1218,7 +1220,7 @@ async getWorkFlowConnector () {
             relationship_connector_rid : data.relationship_connector_rid
           }, raw : true
         });
-        if(!checkIsAlreadyMapped) {
+        if(checkIsAlreadyMapped) {
           return {
             statusCode : HttpStatus.BAD_REQUEST,
             statusMessage : STATUS_MESSAGE.dataAlreadyMapped
