@@ -229,6 +229,17 @@ class CaseSchemaService {
       caseReq: any,
       accountNumber: string
     ): Promise<boolean> {
+      const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(
+        /\D/g,
+        ""
+      )}`;
+      const tableExists = await this.checkTableExists(schemaName, "cases");
+      if (!tableExists) {
+        logMessage(
+          `Cases table does not exist for account ${accountNumber}, returning empty result`
+        );
+        return true;
+      }
       const { Case } = await this.caseModelService.getModels(accountNumber);
       const response = await Case.findOne({
         where: {
@@ -527,6 +538,7 @@ return !response;
       await CaseTaskWorkflowConnectorModel.sync({force : false});
       await setupCaseTaskWorkflowConnectorSequence(orgDbSequlize, schemaName)
     } catch (err) {
+      console.log(err)
       errorLog("Error creating case tables", (err as Error).message);
       return this.throwServiceError(err as Error);
     }
