@@ -1499,10 +1499,6 @@ return !response;
       [
       "created_user_name",
       "updated_user_name",
-      "industry_name",
-      "project_classification_name",
-      "project_type_name",
-      "status_name",
     ].forEach((key) => {
       if (filters[key]) {
         disablePagination = true;

@@ -484,6 +484,61 @@ export const checklistsFieldMappings = [
           
 ];
 
+export const activityFieldMappings = [
+  {
+    permissionField: "r_number",
+    exportField: "Activity ID",
+    dataField: "r_number",
+  },
+  {
+    permissionField: "activity_type",
+    exportField: "Activity Type",
+    dataField: "activity_type",
+  },
+  {
+    permissionField: "attachment_level",
+    exportField: "Related Entity",
+    dataField: "attachment_level",
+  },
+  {
+    permissionField: "attach_to",
+    exportField: "Related To ID",
+    dataField: "attach_to",
+  },
+  {
+    permissionField: "attached_to",
+    exportField: "Related To Name",
+    dataField: "attached_to",
+  },
+  {
+    permissionField: "fiscal_year",
+    exportField: "Fiscal Year",
+    dataField: "fiscal_year",
+  },
+   
+   {
+    permissionField: "created_by",
+    exportField: "Created By",
+    dataField: "created_by_name",
+  },
+  {
+    permissionField: "created_datetime",
+    exportField: "Created On",
+    dataField: "created_datetime",
+  },
+  {
+    permissionField: "updated_by",
+    exportField: "Updated By",
+    dataField: "modified_by_name",
+  },
+  {
+    permissionField: "updated_datetime",
+    exportField: "Updated On",
+    dataField: "updated_datetime",
+  }
+          
+];
+
 export const reviewProjectsFieldMappings = [
   {
     permissionField: "project_code",
