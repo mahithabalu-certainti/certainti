@@ -2319,6 +2319,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
         result = await orgDb.query<TaskCardResponse>(taskCardDetails(schemaName, data.task_rid, data.account_rid, data.case_rid, fetchChecklistStatusRid[0][0].rid),{type : QueryTypes.SELECT});
       }
       if(result.length > 0) {
+        const findRole : any = await mainDb.query(rawQueries.getCaseTeamRoleName(result[0]?.task_details.case_team_member_role_rid!));
         let userIds : Record<string, string> = {
           created_by : result[0]?.task_details.created_by!,
           assigned_to : result[0]?.task_details.assigned_to!,
@@ -2351,7 +2352,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
           relationshipConnectorIds = [...new Set(result[0]?.task_details.workflow_connector.map((d : taskWorkFlowConnector) => d.relationship_connector_rid))]
           taskIds.push(sourceIds.map((d : any) => d))
           taskIds.push(targetIds.map((d : any) => d))
-          
+
           
           let query = rawQueries.getTaskNames(taskIds, schemaName);
           let relationshipQuery = rawQueries.getWorkflowConnectors(relationshipConnectorIds);
@@ -2453,6 +2454,10 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
           task_description : resData?.task_details.task_description,
           effective_start_datetime : resData?.task_details.effective_start_datetime,
           effective_end_datetime : resData?.task_details.effective_end_datetime,
+          checklist_rid : resData?.task_details.checklists.rid,
+          checklist_name : resData?.task_details.checklists.checklist_name,
+          case_team_member_role_rid : resData?.task_details.case_team_member_role_rid,
+          case_team_member_role_name : findRole[0][0].role_name,
           checklists : checkListData,
           tags : resData?.task_details.tags.filter((f : taskTags) => f.tag_rid !== null).map((d : taskTags) => {
               return {

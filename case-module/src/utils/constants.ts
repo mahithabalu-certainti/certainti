@@ -1398,6 +1398,9 @@ export const rawQueries = {
   },
   getCaseStatusById (statusRid : string) {
     return `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.case_status WHERE rid = '${statusRid}'`
+  },
+  getCaseTeamRoleName (roleRid : string) {
+    return `SELECT rid, role_name FROM ${MAIN_SCHEMA_NAME}.case_team_role WHERE rid = '${roleRid}'`
   }
 };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 
