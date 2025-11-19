@@ -121,6 +121,7 @@ export class CaseService {
       if (!accountNumber) {
         throw new Error("Invalid account ID");
       }
+      
        const isUnique = await this.caseSchemaService.checkIsCaseNameUnique(caseRequest,accountNumber);
       if (!isUnique) {
         return {
