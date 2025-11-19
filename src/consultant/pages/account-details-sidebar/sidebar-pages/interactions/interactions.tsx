@@ -16,7 +16,12 @@ import {
   useParams,
   useSearchParams,
 } from 'react-router-dom';
-import { ExportType, InteractionList, StatusTypeEnum } from '../../../../types';
+import {
+  ActivityDropdownItem,
+  ExportType,
+  InteractionList,
+  StatusTypeEnum,
+} from '../../../../types';
 import {
   useInteractionList,
   useInteractionListModel,
@@ -95,6 +100,7 @@ interface InteractionsProps {
     React.SetStateAction<AttachmentsListExportParams>
   >;
   loading: boolean;
+  activityMenuItems: ActivityDropdownItem[];
 }
 
 const Interactions: React.FC<InteractionsProps> = ({
@@ -103,6 +109,7 @@ const Interactions: React.FC<InteractionsProps> = ({
   setExportType,
   setInteractionsParams,
   loading,
+  activityMenuItems,
 }) => {
   const { accountid } = useParams();
   const [searchParams] = useSearchParams();
@@ -710,6 +717,8 @@ const Interactions: React.FC<InteractionsProps> = ({
           onSearch={(text) => setSearchText(text)}
           searchReset={resetSearch}
           onSearchReset={handleSearchReset}
+          showAddActivity={true}
+          activityMenuItems={activityMenuItems}
         />
         {viewDetails && !viewResponseHistory ? (
           <InteractionDetails

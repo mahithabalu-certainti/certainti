@@ -31,7 +31,11 @@ import {
   ShowHideTableColumn,
 } from '../../../../../components/table/types';
 import { useFetchClassification } from '../../../../services/account';
-import { AccountDetailsResponse, ExportType } from '../../../../types';
+import {
+  AccountDetailsResponse,
+  ActivityDropdownItem,
+  ExportType,
+} from '../../../../types';
 import { UPDATE_PROJECT } from '../../../../../api/graphql/queries/project-query';
 import { useMutation } from '@apollo/client';
 import { resourceClient } from '../../../../../api/graphql/clients/client';
@@ -53,6 +57,7 @@ interface ProjectsProps {
   setExportType?: (type: ExportType) => void;
   toggleEnabled: boolean;
   setToggleEnabled: (val: boolean) => void;
+  activityMenuItems: ActivityDropdownItem[];
 }
 
 const projectTabs: ResourceTabs[] = [
@@ -75,6 +80,7 @@ const Projects: React.FC<ProjectsProps> = ({
   setProjectParams,
   toggleEnabled,
   setToggleEnabled,
+  activityMenuItems,
 }) => {
   const { accountid } = useParams();
   const navigate = useNavigate();
@@ -636,6 +642,8 @@ const Projects: React.FC<ProjectsProps> = ({
         searchDisabled={false}
         searchPlaceholder='Search'
         onSearch={(text) => setSearchText(text)}
+        showAddActivity={true}
+        activityMenuItems={activityMenuItems}
       />
       {projectOverviewIsEnable && projectViewAllIsEnable ? (
         <>

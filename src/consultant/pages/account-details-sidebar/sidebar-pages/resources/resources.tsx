@@ -60,7 +60,11 @@ import { useFetchState } from '../../../../services/account';
 import { resourceClient } from '../../../../../api/graphql/clients/client';
 import { useToast } from '../../../../../hooks';
 import Uploads from '../../../../../components/Attachments/upload';
-import { ExportType, SelectOption } from '../../../../types';
+import {
+  ActivityDropdownItem,
+  ExportType,
+  SelectOption,
+} from '../../../../types';
 import { FilterValue } from '../../components/filter/filterType';
 import { ResourcesIcon } from '../../../../../assets';
 
@@ -76,6 +80,7 @@ interface ResourceProps {
   activeKey?: string;
   setTableParams?: React.Dispatch<React.SetStateAction<ExportModule>>;
   setExportType?: (type: ExportType) => void;
+  activityMenuItems: ActivityDropdownItem[];
 }
 
 export interface ResourceTabs {
@@ -146,6 +151,7 @@ const Resource: React.FC<ResourceProps> = ({
   permission,
   setTableParams,
   setExportType,
+  activityMenuItems,
 }) => {
   const [resourceTab, setResourceTab] = useState(resourceTabs);
   const [tabMenus, setTabMenus] = useState<TabMenus[]>(tabs);
@@ -1082,6 +1088,8 @@ const Resource: React.FC<ResourceProps> = ({
         onSearch={(text) => setSearchText(text)}
         resetSearch={resetSearch}
         onSearchReset={handleSearchReset}
+        showAddActivity={true}
+        activityMenuItems={activityMenuItems}
       />
       {showUploads ? (
         <Uploads accountId={accountid} attachID={resId} />

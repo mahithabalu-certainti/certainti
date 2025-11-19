@@ -16,7 +16,11 @@ import {
 } from '../../../../../common-service';
 import Uploads from '../../../../../components/Attachments/upload';
 import { useLocation, useSearchParams } from 'react-router-dom';
-import { ExportType, SelectOption } from '../../../../types';
+import {
+  ActivityDropdownItem,
+  ExportType,
+  SelectOption,
+} from '../../../../types';
 import { useAttachmentList } from '../../../../services/attachments/attachments-service';
 import {
   AttachmentList,
@@ -66,6 +70,7 @@ interface AttachmentsProps {
   >;
   accountInActive: boolean;
   refetchAccountDetails: () => void;
+  activityMenuItems: ActivityDropdownItem[];
 }
 
 const Attachments: React.FC<AttachmentsProps> = ({
@@ -73,6 +78,7 @@ const Attachments: React.FC<AttachmentsProps> = ({
   setAttachmentParams,
   accountInActive,
   refetchAccountDetails,
+  activityMenuItems,
 }) => {
   const { errorToast } = useToast();
   const { accountid } = useParams();
@@ -455,6 +461,8 @@ const Attachments: React.FC<AttachmentsProps> = ({
         onFilterChange={handleCategory}
         showSearch={showUploads ? false : true}
         onSearch={(text) => setSearchText(text)}
+        showAddActivity={true}
+        activityMenuItems={activityMenuItems}
       />
       {showUploads ? (
         <Uploads

@@ -1,5 +1,6 @@
 export interface FormType {
   sectionName: string;
+  subSection?: boolean; // Means this is a secondary level block → no header + half width
   fillType: 'half' | 'full' | 'quarter';
   fields: FormTypeFields[];
   from?: string;

@@ -253,6 +253,8 @@ export enum AllPermissions {
   ACCOUNT_RESOURCE_COST_EDIT_VIEW = 'account_resource_cost_edit_view',
   PROJECTS_RESOURCES_VIEW_EDIT = 'projects_resources_view_edit',
   ACCOUNTS_VIEW_EDIT = 'accounts_view_edit',
+  ACCOUNTS_OVERVIEW = 'accounts_overview',
+  ACCOUNTS_TIMELINE = 'accounts_timeline',
   PROJECTS_TASK_VIEW_EDIT = 'projects_task_view_edit',
   ACCOUNT_RESOURCE_SKILL_VIEW_EDIT = 'account_resource_skill_view_edit',
   ACCOUNT_PROJECTS_TIMELINE = 'account_projects_timeline',
@@ -321,6 +323,7 @@ export enum AllPermissions {
   CHECKLIST_VIEW_EDIT = 'checklists_view_edit',
   CHECKLIST_EXPORT = 'checklist_export',
   CHECKLIST_CREATE = 'checklist_create',
+  CHECKLIST_NEW = 'checklist_new',
 }
 
 export interface Country {

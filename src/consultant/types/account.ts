@@ -561,3 +561,11 @@ export interface ActivityMenuItem {
   disabled?: boolean;
   hide?: boolean;
 }
+
+export interface ActivityDropdownItem {
+  label: string;
+  hide?: boolean;
+  disabled?: boolean;
+  icon?: React.ElementType;
+  onClick: () => void;
+}

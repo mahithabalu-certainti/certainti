@@ -7,6 +7,7 @@ import {
 import { checkPermission, getFiscalYears } from '../../../../../common-utils';
 import { SectionTabPanel } from '../../../../../components';
 import {
+  ActivityDropdownItem,
   ExportType,
   TimeSheetList,
   TimeSheetListURLParams,
@@ -48,6 +49,7 @@ interface TimeSheetProps {
   setTimesheetTaskParams: React.Dispatch<
     React.SetStateAction<TimesheetProjectExportListURLParams>
   >;
+  activityMenuItems: ActivityDropdownItem[];
 }
 
 const TimesheetTabs: ResourceTabs[] = [
@@ -64,6 +66,7 @@ const Timesheet: React.FC<TimeSheetProps> = ({
   setTimesheetProjectParams,
   setTimesheetResourceParams,
   setTimesheetTaskParams,
+  activityMenuItems,
 }) => {
   // UseStates
   const [appliedFilters, setAppliedFilters] = useState<
@@ -393,6 +396,8 @@ const Timesheet: React.FC<TimeSheetProps> = ({
         searchDisabled={false}
         searchPlaceholder='Search'
         onSearch={(text) => setSearchText(text)}
+        showAddActivity={true}
+        activityMenuItems={activityMenuItems}
       />
       {viewDetails ? (
         <TimesheetDetails

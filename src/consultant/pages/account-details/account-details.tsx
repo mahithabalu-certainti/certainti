@@ -21,8 +21,17 @@ import {
   TimeSheetIcon,
   ConfigIcon,
   InteractionsIcon,
+  TaskCreateIcon,
+  DraftEmailIcon,
+  MeetingIcon,
+  CallLogIcon,
 } from '../../../assets';
-import { InfoSection, PageHeader, SideMenuPanel } from '../../../components';
+import {
+  ActivityModal,
+  InfoSection,
+  PageHeader,
+  SideMenuPanel,
+} from '../../../components';
 import { ACCOUNT } from '../../../routes';
 import { useAccountDetail } from '../../services/account-details/account-details-service';
 import {
@@ -56,6 +65,7 @@ import { AccountState } from '../../../store/type';
 import {
   AccountDetailsResponse,
   AccountFieldsApiResponse,
+  ActivityDropdownItem,
   CaseListExportParams,
   ChecklistListExportParams,
   ExportType,
@@ -112,6 +122,7 @@ export const AccountDetails = () => {
     permission,
     AllPermissions.TRIGGER_AI_ASSESSMENT
   );
+  const [activityModalId, setActivityModalId] = useState<string | null>(null);
 
   const { filters, fiscalYear } = useSelector<RootState, AccountState>(
     (state: RootState) => state.account
@@ -698,6 +709,29 @@ export const AccountDetails = () => {
     });
   };
 
+  const activityMenuItems: ActivityDropdownItem[] = [
+    {
+      label: 'Create Task',
+      onClick: () => setActivityModalId('create-task'),
+      icon: TaskCreateIcon,
+    },
+    {
+      label: 'Draft Email',
+      onClick: () => setActivityModalId('draft-email'),
+      icon: DraftEmailIcon,
+    },
+    {
+      label: 'Schedule Meeting',
+      onClick: () => setActivityModalId('schedule-meeting'),
+      icon: MeetingIcon,
+    },
+    {
+      label: 'Log a call',
+      onClick: () => setActivityModalId('call-log'),
+      icon: CallLogIcon,
+    },
+  ];
+
   const renderContent = () => {
     switch (activeKey) {
       case 'financial':
@@ -709,6 +743,7 @@ export const AccountDetails = () => {
             setFinancialProjectCostParams={setFinancialProjectCostParams}
             countryId={data?.data.accountById.country_rid}
             stateId={data?.data.accountById.region_rid}
+            activityMenuItems={activityMenuItems}
           />
         );
       case 'details':
@@ -718,6 +753,7 @@ export const AccountDetails = () => {
             isLoading={isPending}
             isError={isError}
             isAccountEditEnable={isAccountFieldsEditable}
+            activityMenuItems={activityMenuItems}
           />
         );
       case 'resources':
@@ -727,6 +763,7 @@ export const AccountDetails = () => {
             setTableParams={setTableParams}
             setExportType={setExportType}
             permission={permission}
+            activityMenuItems={activityMenuItems}
           />
         );
       case 'attachments':
@@ -736,6 +773,7 @@ export const AccountDetails = () => {
             setExportType={setExportType}
             setAttachmentParams={setAttachmentParams}
             refetchAccountDetails={onRefreshClick}
+            activityMenuItems={activityMenuItems}
           />
         );
       case 'projects':
@@ -749,6 +787,7 @@ export const AccountDetails = () => {
             setProjectParams={setProjectParams}
             toggleEnabled={toggleEnabled}
             setToggleEnabled={setToggleEnabled}
+            activityMenuItems={activityMenuItems}
           />
         );
       case 'interactions':
@@ -759,6 +798,7 @@ export const AccountDetails = () => {
             setExportType={setExportType}
             setInteractionsParams={setInteractionsParams}
             loading={isPending}
+            activityMenuItems={activityMenuItems}
           />
         );
       case 'cases':
@@ -768,6 +808,7 @@ export const AccountDetails = () => {
             accountDetails={{ ...data?.data } as accountDetailsProps}
             setExportType={setExportType}
             setCasesParams={setCasesParams}
+            activityMenuItems={activityMenuItems}
           />
         );
       case 'activities':
@@ -779,6 +820,7 @@ export const AccountDetails = () => {
             accountInActive={accountInActive}
             setNotesParams={setNotesParams}
             accountDetails={{ ...data?.data } as accountDetailsProps}
+            activityMenuItems={activityMenuItems}
           />
         );
       case 'checklist':
@@ -788,6 +830,7 @@ export const AccountDetails = () => {
             setChecklistParams={setChecklistParams}
             accountInActive={accountInActive}
             accountDetails={{ ...data?.data } as accountDetailsProps}
+            activityMenuItems={activityMenuItems}
           />
         );
       case 'timesheet':
@@ -798,6 +841,7 @@ export const AccountDetails = () => {
             setTimesheetProjectParams={setTimesheetProjectParams}
             setTimesheetResourceParams={setTimesheetResourceParams}
             setTimesheetTaskParams={setTimesheetTaskParams}
+            activityMenuItems={activityMenuItems}
           />
         );
       case 'imports':
@@ -810,6 +854,7 @@ export const AccountDetails = () => {
             accountInActive={accountInActive}
             setExportType={setExportType}
             setImportsParams={setImportsParams}
+            activityMenuItems={activityMenuItems}
           />
         );
       case 'configuration':
@@ -1033,6 +1078,10 @@ export const AccountDetails = () => {
           <Suspense fallback={null}>{renderContent()}</Suspense>
         </div>
       </div>
+      <ActivityModal
+        modalId={activityModalId}
+        onCloseModal={() => setActivityModalId(null)}
+      />
     </div>
   );
 };

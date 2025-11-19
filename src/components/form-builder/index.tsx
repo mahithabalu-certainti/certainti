@@ -3197,7 +3197,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           if (section.hide) return null;
           return (
             <div key={i}>
-              {section.sectionName && (
+              {section.sectionName && !section.subSection && (
                 <h4
                   className={`${i === 0 ? 'border-b' : 'border'} ${highlight?.section === section.sectionName ? 'animate-[fade-bg_3s_forwards]' : ''} capitalize h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 ${admin ? 'bg-[#FCFCFC]' : 'bg-[#ECECEC]'}  ${layout === Layout.TYPE_1 ? 'px-10' : 'px-4'}`}
                 >
@@ -3205,11 +3205,13 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 </h4>
               )}
               <>
-                {!section.sectionName
-                  ? loadSectionsWithoutTitle(section)
-                  : section.sectionName === 'key_contacts_list'
-                    ? loadKeyContactSection(section)
-                    : loadDefaultSections(section, isHalf, i)}
+                {section.subSection // Means this is a secondary level block → no header + half width
+                  ? loadDefaultSections(section, isHalf, i)
+                  : !section.sectionName
+                    ? loadSectionsWithoutTitle(section)
+                    : section.sectionName === 'key_contacts_list'
+                      ? loadKeyContactSection(section)
+                      : loadDefaultSections(section, isHalf, i)}
               </>
             </div>
           );
