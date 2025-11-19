@@ -418,7 +418,7 @@ export class CaseManagementService {
       }  
     }
   }
-  async updateTaskTemplate (data : UpdateTaskTemplateType, userId : string) {
+  async updateTaskTemplate (data : UpdateTaskTemplateType, userId : string)  {
     const result = await this.caseManangementSchemaService.updateTaskTemplate(data, userId);
     if(result?.statusCode == HttpStatus.SUCCESS) {
       return {
