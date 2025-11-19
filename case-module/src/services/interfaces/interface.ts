@@ -174,8 +174,8 @@ export interface ICaseService {
 }>
 updateUserLevelTask(data : UpdateCaseTaskType): Promise<{
     statusCode: number;
-    statusMessage: string;
-} | undefined>
+    statusMessage: string | null;
+}>
 taskListForCases(data : any, isExport : boolean) : Promise<{
     statusCode: number;
     data: CaseTaskQueryType[];
