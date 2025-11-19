@@ -94,7 +94,7 @@ implements CaseTaskAttributes {
                 allowNull : true
             },
             task_name : {
-                type : DataTypes.STRING(64),
+                type : DataTypes.STRING(2000),
                 allowNull : true
             },
             sequence_no : {

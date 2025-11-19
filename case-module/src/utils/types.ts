@@ -641,6 +641,10 @@ export type TagsTypes = {
   rid : string
   tag_name : string
 }
+export type caseStatusType = {
+  rid : string,
+  status_name : string
+}
 
 export type CaseTaskWorkFlowCreate = {
   case_rid : string,

@@ -1393,6 +1393,9 @@ export const rawQueries = {
   },
   getRelationShipIds () {
     return `SELECT rid, relationship_type FROM ${MAIN_SCHEMA_NAME}.workflow_connector where relationship_type ILIKE '%by%'`
+  },
+  getCaseStatusById (statusRid : string) {
+    return `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.case_status WHERE rid = '${statusRid}'`
   }
 };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 

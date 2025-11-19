@@ -5,7 +5,7 @@ import { CaseManagementSchemaService } from "./schemaService";
 import { HttpStatus, rawQueries, STATUS_MESSAGE } from "../../utils/constants";
 import { logMessage, setTaskTemplateData } from "../../utils/helpers";
 import CaseSchemaService from "../cases/schemaService";
-import { AdminTaskTemplatePayloadType, AdminTaskTemplateResponseTypes, checkListTypes, CreateTaskTemplateType, ICreateChecklist, ICreateChecklistTemplate, ICreateEmailTemplate, MilestoneTypes, priorityTypes, UpdateTaskTemplateType } from "../../utils/types";
+import { AdminTaskTemplatePayloadType, AdminTaskTemplateResponseTypes, caseStatusType, checkListTypes, CreateTaskTemplateType, ICreateChecklist, ICreateChecklistTemplate, ICreateEmailTemplate, MilestoneTypes, priorityTypes, UpdateTaskTemplateType } from "../../utils/types";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { fetchAdminTemplates } from "../../utils/rawQueries";
 
@@ -538,6 +538,7 @@ export class CaseManagementService {
     const fetchParentRnumber : any = await mainDb.query(await rawQueries.fetchParentAccount(accountRid, mainDb));
     if(fetchParentRnumber[0].length > 0) {
       const schemaName = rawQueries.fetchSchemaName(fetchParentRnumber[0][0].r_number);
+      const caseDetails = await this.caseManangementSchemaService.getCaseDetails(caseRid, fetchParentRnumber[0][0].r_number);
       const result : any = await this.caseManangementSchemaService.fetchKanbanBoard(schemaName, caseRid, accountRid);
       if(result.array_agg[0].rid !== null) {
         let uniquePriorityIds = [...new Set(result.array_agg.flatMap((d : any) => d.tasks.map((dd : any) => dd.priority_rid)))];
@@ -578,14 +579,23 @@ export class CaseManagementService {
         if(taskStatusQuery) {
           taskStatusType = await mainDb.query(taskStatusQuery)
         }
-
+        const [fetchCaseStatus] = await mainDb.query<caseStatusType>(rawQueries.getCaseStatusById(caseDetails?.status_rid!), {type : QueryTypes.SELECT});
+        
         let priorityMap : Map<string, string> = new Map(priority?.[0]?.map((d : any) => [d.rid, d.priority_name]));
         let assignedToMap : Map<string, string> = new Map(assignedTo?.[0]?.map((d : any) => [d.rid, d.name]));
         let teamRoleMap : Map<string, string> =new Map(teamRole?.[0]?.map((d : any) => [d.rid, d.role_name]));
         let taskTypeMap : Map<string, string> = new Map(tasktype?.[0]?.map((d : any) => [d.rid, d.task_type_name]));
         let statusMap : Map<string, string> = new Map(statusType?.[0]?.map((d : any) => [d.rid, d.status_name]));
         let taskStatusMap : Map<string, string> = new Map(taskStatusType?.[0]?.map((d : any) => [d.rid, d.task_status_name]));
-        const finalStructure = result.array_agg.map((d : any) => {
+        
+        let dynamicResult;
+        if(fetchCaseStatus?.status_name.toLowerCase() === "audit review") {
+          dynamicResult = result.array_agg
+        } else {
+          dynamicResult = result.array_agg.filter((d : any) => d.milestone_name.toLowerCase() !== 'audit review')
+        }
+        
+        const finalStructure = dynamicResult.map((d : any) => {
           return {
             rid : d.rid,
             milestone_name : d.milestone_name,
