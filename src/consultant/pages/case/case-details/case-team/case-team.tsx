@@ -52,7 +52,7 @@ import {
 import { TableSkeleton } from '../../../../../components/table';
 import { RootState } from '../../../../../store/store';
 import { useSelector } from 'react-redux';
-import { ActivityMenuItem } from '../../../../types';
+import { ActivityDropdownItem } from '../../../../types';
 
 const ConfigTabs: ResourceTabs[] = [
   {
@@ -63,7 +63,7 @@ const ConfigTabs: ResourceTabs[] = [
 ];
 
 interface CaseTeamProps {
-  activityMenuItems: ActivityMenuItem[];
+  activityMenuItems: ActivityDropdownItem[];
 }
 
 const CaseTeam: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {

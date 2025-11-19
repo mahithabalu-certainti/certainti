@@ -31,7 +31,11 @@ import {
   useAssignProjects,
   useRemoveProjects,
 } from '../../../../services/cases-assign-projects/assign-project-service';
-import { CaseAssignedExportParams, ExportType } from '../../../../types';
+import {
+  ActivityDropdownItem,
+  CaseAssignedExportParams,
+  ExportType,
+} from '../../../../types';
 import ProjectTab from './projects-tab';
 import { getProjectFinancialResCostFields } from '../../../project/project-details/financial-highlights/helpers';
 import { useGetResourceType } from '../../../../services/resource-list';
@@ -44,6 +48,7 @@ interface casesProjectProps {
     React.SetStateAction<CaseAssignedExportParams>
   >;
   setExportType?: (type: ExportType) => void;
+  activityMenuItems: ActivityDropdownItem[];
 }
 const InteractionsTabs: OverviewTabs[] = [
   {
@@ -64,6 +69,7 @@ const CasesProjects: React.FC<casesProjectProps> = ({
   accountInActive,
   setTableParams,
   setExportType,
+  activityMenuItems,
 }) => {
   const { caseId } = useParams();
   const [refreshTrigger, setRefreshTrigger] = useState<number>(Date.now());
@@ -458,6 +464,8 @@ const CasesProjects: React.FC<casesProjectProps> = ({
         searchDisabled={false}
         searchPlaceholder='Search'
         onSearch={(text) => setSearchText(text)}
+        showAddActivity={true}
+        activityMenuItems={activityMenuItems}
       />
       <SectionHeader
         title={isAssignProject ? 'Assign Projects' : 'Case Projects'}

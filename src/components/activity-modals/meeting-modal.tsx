@@ -1,5 +1,5 @@
 import React from 'react';
-import { TaskFormData } from './helper';
+import { MeetingFormData } from './helper';
 import { FormBuilder } from '../form-builder';
 import TextButton from '../button/text-button';
 
@@ -19,17 +19,19 @@ const MeetingModal: React.FC<MeetingModalProps> = ({ onCloseModal }) => {
     formRef.current?.requestSubmit();
   };
 
-  const formConfig = TaskFormData();
+  const formConfig = MeetingFormData();
 
   return (
-    <div className='py-2'>
-      <FormBuilder
-        loading={false}
-        data={formConfig}
-        values={{}}
-        outData={submitData}
-        formRef={formRef}
-      />
+    <div className='py-2 flex flex-col justify-between'>
+      <div className='min-h-[450px] max-h-[450px] overflow-y-auto'>
+        <FormBuilder
+          loading={false}
+          data={formConfig}
+          values={{}}
+          outData={submitData}
+          formRef={formRef}
+        />
+      </div>
       <div className='flex justify-end gap-3 py-4 px-6 border-t border-[#CBD6E2]'>
         <TextButton
           label='Cancel'

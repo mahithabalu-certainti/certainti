@@ -39,7 +39,7 @@ const ActivityModal: React.FC<ActivityModalProps> = ({
           title: 'Draft Email',
           color: '#FF73C3',
           icon: DraftEmailIcon,
-          body: <DraftEmailModal />,
+          body: <DraftEmailModal onCloseModal={onCloseModal} />,
         };
 
       case 'schedule-meeting':
@@ -99,7 +99,7 @@ const ActivityModal: React.FC<ActivityModalProps> = ({
           </div>
 
           {/* Body */}
-          <div className='min-h-[300px] max-h-[450px] overflow-y-auto'>
+          <div className='min-h-[300px] max-h-[550px] overflow-y-auto'>
             {modal.body}
           </div>
         </Box>

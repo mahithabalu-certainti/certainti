@@ -262,6 +262,7 @@ export const GearIcon = createLazySvgIcon('gearIcon');
 export const InfoIcon = createLazySvgIcon('infoIcon');
 export const EditTaskIcon = createLazySvgIcon('editTaskIcon');
 export const PencilIcon = createLazySvgIcon('pencilIcon');
+export const CommentIcon = createLazySvgIcon('commentIcon');
 export const CallLogIcon = createLazySvgIcon('callLogIcon');
 export const DraftEmailIcon = createLazySvgIcon('draftEmailIcon');
 export const MeetingIcon = createLazySvgIcon('meetingIcon');

@@ -144,6 +144,29 @@
   overflow-y: auto;
 }
 
+.draft-email-body-editor .ql-container {
+  min-height: 250px !important;
+  border: none !important;
+}
+
+.draft-email-body-editor .ql-tooltip {
+  left: 0 !important;
+  right: auto !important;
+  transform: none !important;
+  text-align: left !important;
+}
+
+.draft-email-body-editor .ql-toolbar {
+  border: none !important;
+  border-bottom: 1px solid #cbd6e2 !important;
+}
+
+.draft-email-body-editor .ql-editor {
+  max-height: 250px;
+  overflow-y: auto;
+  border: none !important;
+}
+
 /* markdown */
 .markdown p {
   line-height: 25px;

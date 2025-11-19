@@ -17,6 +17,7 @@ import {
   MenuItem,
   NotesListExportParams,
   InteractionListExportParams,
+  ActivityDropdownItem,
 } from '../../../types';
 import {
   AllMenus,
@@ -24,25 +25,29 @@ import {
   AllPermissions,
 } from '../../../../common-service';
 import {
+  ActivityModal,
   InfoSection,
   PageHeader,
   SideMenuPanel,
-  EmailModal,
 } from '../../../../components';
 import {
   AccountDetailsIcon,
   ActivitiesIcon,
   AttachmentsSideIcon,
+  CallLogIcon,
   CasesIcon,
   ChecklistIcon,
   ComingSoon,
   DetailsIcon,
+  DraftEmailIcon,
   FinancialIcon,
   InteractionsIcon,
+  MeetingIcon,
   NotesSideIcon,
   ProjectsSideIcon,
   ResourcesIcon,
   SettingIcon,
+  TaskCreateIcon,
   TechSummaryIcon,
 } from '../../../../assets';
 import { WorkBreakDown } from './work-breakdown';
@@ -67,12 +72,6 @@ import { CaseInteractions } from './case-interactions';
 
 export const CaseDetails = () => {
   const navigate = useNavigate();
-  const { email: userEmail, name: userName } = useSelector(
-    (state: RootState) => state.auth
-  );
-  console.log(userEmail);
-  console.log(userName);
-
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const { caseId } = useParams();
@@ -106,6 +105,8 @@ export const CaseDetails = () => {
     sortOrder: 'ASC',
     filters: {},
   });
+
+  const [activityModalId, setActivityModalId] = useState<string | null>(null);
 
   const noteView = searchParams.get('note_id');
   const checklistView = searchParams.get('checklist_id');
@@ -148,7 +149,6 @@ export const CaseDetails = () => {
       sortOrder: 'ASC',
       filters: {},
     });
-  const [showModal, setShowModal] = useState(false);
 
   const [, setInteractionsParams] = useState<InteractionListExportParams>({
     sortBy: '',
@@ -293,43 +293,28 @@ export const CaseDetails = () => {
     console.log('Settings clicked');
   };
 
-  const handleDraftEmail = () => {
-    setShowModal(true);
-  };
-
-  const activityMenuItems = [
-    { label: 'Create Task', onClick: () => console.log('Task') },
-    { label: 'Draft Email', onClick: handleDraftEmail },
-    { label: 'Schedule Meeting', onClick: () => console.log('Meeting') },
-    { label: 'Log a call', onClick: () => console.log('Call') },
+  const activityMenuItems: ActivityDropdownItem[] = [
+    {
+      label: 'Create Task',
+      onClick: () => setActivityModalId('create-task'),
+      icon: TaskCreateIcon,
+    },
+    {
+      label: 'Draft Email',
+      onClick: () => setActivityModalId('draft-email'),
+      icon: DraftEmailIcon,
+    },
+    {
+      label: 'Schedule Meeting',
+      onClick: () => setActivityModalId('schedule-meeting'),
+      icon: MeetingIcon,
+    },
+    {
+      label: 'Log a call',
+      onClick: () => setActivityModalId('call-log'),
+      icon: CallLogIcon,
+    },
   ];
-
-  // Mock data for email modal
-  const mockData = {
-    userName: 'John Doe',
-    userEmail: 'john.doe@example.com',
-    templates: [
-      {
-        id: '1',
-        subject: 'Greetings',
-        name: 'Welcome Email Template',
-        content: 'Dear recipient,<br><br>Welcome to our platform!',
-      },
-      {
-        id: '2',
-        subject: 'Follow up',
-        name: 'Follow-up Template',
-        content:
-          'Hi there,<br><br>Just following up on our previous conversation.',
-      },
-      {
-        id: '3',
-        subject: 'Meeting Scheduled',
-        name: 'Meeting Invitation',
-        content: 'Hello,<br><br>I would like to invite you to a meeting.',
-      },
-    ],
-  };
 
   const renderContent = () => {
     switch (activeKey) {
@@ -363,6 +348,7 @@ export const CaseDetails = () => {
               accountInActive={accountInActive}
               setTableParams={setCaseProjectParams}
               setExportType={setExportType}
+              activityMenuItems={activityMenuItems}
             />
           </div>
         );
@@ -373,6 +359,7 @@ export const CaseDetails = () => {
             setExportType={setExportType}
             setNotesParams={setNotesParams}
             caseDetails={caseData}
+            activityMenuItems={activityMenuItems}
           />
         );
       case 'attachments':
@@ -381,6 +368,7 @@ export const CaseDetails = () => {
             accountInActive={accountInActive}
             setExportType={setExportType}
             setAttachmentParams={setAttachmentParams}
+            activityMenuItems={activityMenuItems}
           />
         );
       case 'settings':
@@ -392,6 +380,7 @@ export const CaseDetails = () => {
             setChecklistParams={setChecklistParams}
             accountInActive={accountInActive}
             caseDetails={caseData}
+            activityMenuItems={activityMenuItems}
           />
         );
       case 'interactions':
@@ -402,6 +391,7 @@ export const CaseDetails = () => {
             CaseDetails={caseData || null}
             loading={false}
             setInteractionsParams={setInteractionsParams}
+            activityMenuItems={activityMenuItems}
           />
         );
       default:
@@ -618,13 +608,10 @@ export const CaseDetails = () => {
           <Suspense fallback={null}>{renderContent()}</Suspense>
         </div>
       </div>
-      {showModal && (
-        <EmailModal
-          onClose={() => setShowModal(false)}
-          data={mockData}
-          userData={{ name: userName || '', email: userEmail || '' }}
-        />
-      )}
+      <ActivityModal
+        modalId={activityModalId}
+        onCloseModal={() => setActivityModalId(null)}
+      />
     </div>
   );
 };

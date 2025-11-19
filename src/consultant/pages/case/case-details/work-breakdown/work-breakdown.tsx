@@ -12,8 +12,7 @@ import {
 } from '../../../../../components/kanban-board/mock-data';
 import { CaseTask } from './case-task';
 import { getAssignGroupsFilterFields } from './case-task/helper';
-import { ExportType } from '../../../../types';
-import { ActivityMenuItem } from '../../../../types';
+import { ActivityDropdownItem, ExportType } from '../../../../types';
 
 const ConfigTabs: ResourceTabs[] = [
   {
@@ -29,7 +28,7 @@ const ConfigTabs: ResourceTabs[] = [
   // },
 ];
 interface WorkBreakDownProps {
-  activityMenuItems: ActivityMenuItem[];
+  activityMenuItems: ActivityDropdownItem[];
   caseId: string | undefined;
   setExportType: (type: ExportType) => void;
   setCaseTaskParams: (params: Record<string, unknown>) => void;

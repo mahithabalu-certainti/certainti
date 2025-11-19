@@ -227,7 +227,7 @@ export const PageHeader: React.FC<HeaderProps> = ({
               sx={{
                 fontSize: '12px',
                 fontWeight: 400,
-                padding: '0 6px',
+                padding: '0 9px',
                 width: 'auto',
                 textWrap: 'nowrap !important',
               }}

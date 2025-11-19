@@ -22,14 +22,16 @@ const TaskModal: React.FC<TaskModalProps> = ({ onCloseModal }) => {
   const formConfig = TaskFormData();
 
   return (
-    <div className='py-2'>
-      <FormBuilder
-        loading={false}
-        data={formConfig}
-        values={{}}
-        outData={submitData}
-        formRef={formRef}
-      />
+    <div className='py-2 flex flex-col justify-between'>
+      <div className='min-h-[300px] max-h-[450px] overflow-y-auto'>
+        <FormBuilder
+          loading={false}
+          data={formConfig}
+          values={{}}
+          outData={submitData}
+          formRef={formRef}
+        />
+      </div>
       <div className='flex justify-end gap-3 py-4 px-6 border-t border-[#CBD6E2]'>
         <TextButton
           label='Cancel'

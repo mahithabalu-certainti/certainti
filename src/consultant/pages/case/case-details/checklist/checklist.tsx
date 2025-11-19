@@ -12,6 +12,7 @@ import {
   OverviewTabs,
 } from '../../../../../common-service';
 import {
+  ActivityDropdownItem,
   CaseDetails,
   ChecklistList,
   ChecklistListExportParams,
@@ -61,6 +62,7 @@ interface ChecklistProps {
   >;
   accountInActive: boolean;
   caseDetails?: CaseDetails;
+  activityMenuItems: ActivityDropdownItem[];
 }
 
 const Checklist: React.FC<ChecklistProps> = ({
@@ -68,6 +70,7 @@ const Checklist: React.FC<ChecklistProps> = ({
   setChecklistParams,
   accountInActive,
   caseDetails,
+  activityMenuItems,
 }) => {
   const { errorToast } = useToast();
   const [searchParams] = useSearchParams();
@@ -389,6 +392,8 @@ const Checklist: React.FC<ChecklistProps> = ({
         searchDisabled={false}
         searchPlaceholder='Search'
         onSearch={(text) => setSearchText(text)}
+        showAddActivity={true}
+        activityMenuItems={activityMenuItems}
       />
 
       {viewDetails ? (

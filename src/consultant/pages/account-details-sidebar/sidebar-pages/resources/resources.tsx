@@ -80,7 +80,7 @@ interface ResourceProps {
   activeKey?: string;
   setTableParams?: React.Dispatch<React.SetStateAction<ExportModule>>;
   setExportType?: (type: ExportType) => void;
-  activityMenuItems: ActivityDropdownItem[];
+  activityMenuItems?: ActivityDropdownItem[];
 }
 
 export interface ResourceTabs {
