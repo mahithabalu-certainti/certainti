@@ -164,7 +164,9 @@ export const STATUS_MESSAGE = {
   workflowConnectorMappedDeleted : "Linked Task deleted successfully",
   workflowConnectorMappedDeletedFailed : "Failed to link task",
   caseTaskFetchedSuccess : "Case Task fetched successfully",
-  tagsCreationFailed : "Failed to add Tags"
+  tagsCreationFailed : "Failed to add Tags",
+  checklistItemsStatusSuccess : "Checklist-Item updated successfully",
+  failedToUpdate : "Failed to update"
 };
 
 export const caseStatuses = {

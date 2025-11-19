@@ -2601,4 +2601,22 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
     const result = await this.caseSchemaService.deleteCollaborators(accountNumber[0][0].r_number, data);
     return result;
   }
+  async updateChecklistItemsStatus (data : any) {
+    const mainDb = await this.getMainDb();
+    const dbInit = await this.caseModelService.getSequelize();
+    const transaction = await dbInit.transaction();
+    const accountNumber : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
+    const result = await this.caseSchemaService.updateChecklistItems(data, accountNumber[0][0].r_number, transaction);
+    if(result === 1) {
+      return {
+        statusCode : HttpStatus.SUCCESS,
+        statusMessage : STATUS_MESSAGE.checklistItemsStatusSuccess
+      }
+    } else {
+      return {
+        statusCode : HttpStatus.FAILED,
+        statusMessage : STATUS_MESSAGE.failedToUpdate
+      }
+    }
+  }
 }

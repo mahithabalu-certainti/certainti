@@ -275,6 +275,10 @@ deleteCollaborators (data : any) : Promise<{
     statusCode: number;
     statusMessage: string;
 } | undefined>
+updateChecklistItemsStatus (data : any) : Promise<{
+    statusCode: number;
+    statusMessage: string;
+}>
 }
 
 export interface ICaseManagementService {
