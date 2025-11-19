@@ -446,13 +446,13 @@ export interface IActivityService {
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data: any;
+    data?: any;
 }>;
  updateActivityEmail(data : IActivityEmail, userId : string, files? : Express.Multer.File[]) : Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data: any;
+    data?: any;
 }>;
   deleteActivityAttachments (data : IActivityEmail, userId : string) : Promise<{
     statusCode: number;
