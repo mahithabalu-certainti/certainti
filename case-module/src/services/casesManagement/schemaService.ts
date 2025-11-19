@@ -613,7 +613,6 @@ class CaseManagementSchemaService {
         task_name : data.task_name,
         sequence_no : sequenceNumber,
         effort_in_days : data.effort_in_days,
-        reminder_interval : data.reminder_interval,
         effective_start_datetime : data.effective_start_datetime,
         effective_end_datetime : data.effective_end_datetime,
         case_team_member_role_rid : data.case_team_member_role_rid,

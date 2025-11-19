@@ -1867,7 +1867,7 @@ export class CaseService {
         const [getTaskStatus] = await mainDb.query<TaskTypeResponse>(rawQueries.getSpecificTaskStatus(), {type : QueryTypes.SELECT})
         data.task_status_rid = getTaskStatus?.rid! || ''
         const getActiveStatusId : any = await mainDb.query(rawQueries.getActiveStatusId());   
-        const result = await this.caseSchemaService.createUserLevelTask(data, fetchParentNumber[0][0].r_number, transaction, getActiveStatusId[0][0].rid);
+        const result = await this.caseSchemaService.createUserLevelTask(data, fetchParentNumber[0][0].r_number, transaction, getActiveStatusId[0][0].rid, isCaseExists.fiscal_year)
         if(result.statusCode === HttpStatus.SUCCESS) {
           await transaction.commit()
           return {

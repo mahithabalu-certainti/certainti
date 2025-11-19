@@ -605,7 +605,6 @@ export class CaseManagementService {
                 checklists_count: d.checklists_count,
                 comments_count : d.comments_count,
                 task_description: d.task_description,
-                reminder_interval: d.reminder_interval,
                 effective_end_datetime: d.effective_end_datetime,
                 effective_start_datetime: d.effective_start_datetime,
                 case_team_member_role_rid: d.case_team_member_role_rid,
