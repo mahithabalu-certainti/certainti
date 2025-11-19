@@ -526,7 +526,7 @@ export class CaseManagementService {
           target_rid : w.target_rid,
           target_name : w.target_name
         }
-      }))
+      }));
       const finalStructuredData = result.map((d : any) => {
         return {
           ...d,
