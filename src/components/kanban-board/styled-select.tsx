@@ -18,9 +18,10 @@ export const COMMON_SELECT_STYLES: SxProps<Theme> = {
     alignItems: 'center',
     gap: '8px',
     width: '100%',
-    overflow: 'auto',
-    overflowY: 'hidden' as const,
-    scrollBehavior: 'smooth' as const,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+    minWidth: 0,
     '&::-webkit-scrollbar': {
       height: '4px',
     },

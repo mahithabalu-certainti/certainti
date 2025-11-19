@@ -6,24 +6,25 @@ import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/res
 import { AllPermissions } from '../../../../../common-service';
 import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
 import KanbanBoard from '../../../../../components/kanban-board/kanban-board';
-import { useGetWorkBreakdownList } from '../../../../../hooks/use-work-breakdown';
 import {
-  getTaskDetail,
-  fetchTaskActivities,
+  useGetWorkBreakdownList,
+  useGetTaskDetail,
+  useGetTaskActivities,
   useGetTaskPriorities,
   useGetTaskStatuses,
-  fetchCollaborators,
+  useGetCollaborators,
   useAddCollaborator,
   AddCollaboratorPayload,
+  AddCollaboratorResponse,
 } from '../../../../services/work-breakdown/work-breakdown-service';
 import {
-  fetchTaskCommentsList,
-  fetchTaskAttachmentsList,
   useCreateCaseTask,
   CreateTaskPayload,
-  addTaskComment,
-  updateTaskComment,
-  deleteTaskComment,
+  useAddTaskComment,
+  useUpdateTaskComment,
+  useDeleteTaskComment,
+  useGetTaskCommentsList,
+  useGetTaskAttachmentsList,
 } from '../../../../services/case-task/case-task-service';
 import {
   useGetUserOptions,
@@ -43,7 +44,7 @@ import { getAssignGroupsFilterFields } from './case-task/helper';
 import { ExportType } from '../../../../types';
 import { ActivityMenuItem } from '../../../../types';
 import { useToast } from '../../../../../hooks';
-import { TaskCard } from '../../../../../components/kanban-board/types';
+import { TaskCard, Task } from '../../../../../components/kanban-board/types';
 import { useGetTaskCheckListTypes } from '../../../../../admin/service/task-template/task-template-service';
 
 const ConfigTabs: ResourceTabs[] = [
@@ -71,6 +72,18 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
   }>();
   const accountId = searchParams.get('accountID');
   const { successToast, errorToast } = useToast();
+  const tabParam = searchParams.get('tab') || 'milestone';
+  const [appliedFilters, setAppliedFilters] = useState<
+    Record<string, string | number | boolean | string[]>
+  >({});
+  const [showFilter, setShowFilter] = useState<boolean>(false);
+  const [currentPage, setCurrentPage] = useState<number>(0);
+  const [reFetchData, setReFetchData] = useState<number>(Date.now());
+  const [count, setCount] = useState<number>(0);
+  const [columnAnchorEl, setColumnAnchorEl] =
+    React.useState<HTMLButtonElement | null>(null);
+  const [seachText, setSearchText] = useState('');
+  const [resetSearch, setResetSearch] = useState(false);
 
   const {
     data: kanbanData,
@@ -78,11 +91,84 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
     isError,
   } = useGetWorkBreakdownList(accountId || '', caseId || '');
 
+  const [selectedTaskIdForCollaborators, setSelectedTaskIdForCollaborators] =
+    useState<string>('');
+  const collaboratorsQuery = useGetCollaborators(
+    accountId || '',
+    caseId || '',
+    selectedTaskIdForCollaborators,
+    !!selectedTaskIdForCollaborators
+  );
+
+  const [selectedTaskIdForActivities, setSelectedTaskIdForActivities] =
+    useState<string>('');
+  const activitiesQuery = useGetTaskActivities(
+    accountId || '',
+    caseId || '',
+    selectedTaskIdForActivities,
+    !!selectedTaskIdForActivities
+  );
+
+  const [selectedTaskIdForTaskDetail, setSelectedTaskIdForTaskDetail] =
+    useState<string>('');
+  const taskDetailQuery = useGetTaskDetail(
+    accountId || '',
+    caseId || '',
+    selectedTaskIdForTaskDetail,
+    !!selectedTaskIdForTaskDetail
+  );
+
+  const [selectedTaskIdForComments, setSelectedTaskIdForComments] =
+    useState<string>('');
+  const commentsQuery = useGetTaskCommentsList(
+    {
+      account_rid: accountId || '',
+      case_rid: caseId || '',
+      task_rid: selectedTaskIdForComments,
+      page: 1,
+      limit: 100,
+    },
+    {
+      enabled: !!selectedTaskIdForComments,
+    }
+  );
+
+  const [selectedTaskIdForAttachments, setSelectedTaskIdForAttachments] =
+    useState<string>('');
+  const attachmentsQuery = useGetTaskAttachmentsList(
+    {
+      account_rid: accountId || '',
+      case_rid: caseId || '',
+      task_rid: selectedTaskIdForAttachments,
+      page: 1,
+      limit: 100,
+    },
+    {
+      enabled: !!selectedTaskIdForAttachments,
+    }
+  );
+
+  useEffect(() => {
+    if (
+      !searchParams.get('tab') &&
+      searchParams.get('list') === 'workBreakdown'
+    ) {
+      searchParams.set('tab', 'milestone');
+      navigate(`?${searchParams.toString()}`, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
   const userOptionsQuery = useGetUserOptions(accountId || '');
   const roleOptionsQuery = useGetRoleOptions();
   const prioritiesQuery = useGetTaskPriorities();
   const statusesQuery = useGetTaskStatuses();
   const checklistQuery = useGetTaskCheckListTypes();
+  const createTaskMutation = useCreateCaseTask();
+  const addCommentMutation = useAddTaskComment();
+  const updateCommentMutation = useUpdateTaskComment();
+  const deleteCommentMutation = useDeleteTaskComment();
+  const addCollaboratorMutation = useAddCollaborator();
   const tagOptionsQuery = useGetTagOptions(
     {
       task_rid: '',
@@ -120,40 +206,6 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
     [statusesQuery.data]
   );
 
-  const createTaskMutation = useCreateCaseTask();
-
-  const tabParam = searchParams.get('tab') || 'milestone';
-  const [appliedFilters, setAppliedFilters] = useState<
-    Record<string, string | number | boolean | string[]>
-  >({});
-  const [showFilter, setShowFilter] = useState<boolean>(false);
-  const [currentPage, setCurrentPage] = useState<number>(0);
-  const [reFetchData, setReFetchData] = useState<number>(Date.now());
-  const [count, setCount] = useState<number>(0);
-  const [columnAnchorEl, setColumnAnchorEl] =
-    React.useState<HTMLButtonElement | null>(null);
-  const [seachText, setSearchText] = useState('');
-  const [resetSearch, setResetSearch] = useState(false);
-
-  useEffect(() => {
-    if (
-      !searchParams.get('tab') &&
-      searchParams.get('list') === 'workBreakdown'
-    ) {
-      searchParams.set('tab', 'milestone');
-      navigate(`?${searchParams.toString()}`, { replace: true });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
-
-  const handleFilter = () => {
-    setShowFilter(!showFilter);
-  };
-
-  const handleSearchReset = () => {
-    setResetSearch(false);
-  };
-
   const memoizedStatus = useMemo(
     () =>
       statusesQuery?.data?.map((status) => ({
@@ -163,40 +215,6 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
     [statusesQuery?.data]
   );
 
-  const filterFields =
-    tabParam === 'case_task'
-      ? getAssignGroupsFilterFields(memoizedStatus)
-      : undefined;
-
-  const getTitleIcon = () => {
-    return (
-      <CaseIcon
-        alt='case-icon'
-        className={`w-6 h-6 p-[5px] [&>path]:stroke-[#4ce547] bg-[#D2FFE3] !rounded-lg`}
-      />
-    );
-  };
-
-  const tabs = [
-    { label: 'Milestone', value: 'milestone' },
-    { label: 'Case Task', value: 'case_task' },
-  ];
-
-  const handleTabChange = (value: string) => {
-    searchParams.set('tab', value);
-    navigate(`?${searchParams.toString()}`, { replace: true });
-  };
-
-  const onRefreshClick = () => {
-    setReFetchData(Date.now());
-  };
-
-  const handleColumnVisibility = (
-    event: React.MouseEvent<HTMLButtonElement>
-  ) => {
-    setColumnAnchorEl(event.currentTarget);
-  };
-
   const handleCreateTask = useCallback(
     async (columnId: string, taskData: Partial<TaskCard>) => {
       if (!accountId || !caseId) {
@@ -204,21 +222,17 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
         throw new Error('Missing Account ID or Case ID');
       }
 
-      try {
-        // Process tags - build array of tag objects with tag_rid and is_new_tag
+      return new Promise<void>((resolve, reject) => {
         const tagsArray: Array<{ tag_rid: string; is_new_tag: boolean }> = [];
-
         if (taskData.tags && taskData.tags.length > 0) {
           taskData.tags.forEach((tagName: string) => {
             const existingTag = tagData?.find((t) => t.name === tagName);
             if (existingTag) {
-              // Existing tag - use the rid
               tagsArray.push({
                 tag_rid: existingTag.id,
                 is_new_tag: false,
               });
             } else {
-              // New tag - use the tag name as tag_rid
               tagsArray.push({
                 tag_rid: tagName,
                 is_new_tag: true,
@@ -253,28 +267,329 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
           },
         };
 
-        console.log('Creating task with payload:', taskPayload);
-        const response = await createTaskMutation.mutateAsync(taskPayload);
-
-        if (response?.data?.rid) {
-          successToast('Task created successfully');
-          setReFetchData(Date.now());
-        } else {
-          throw new Error(response?.statusMessage || 'Failed to create task');
-        }
-      } catch (error) {
-        const errorMessage =
-          (error as { response?: { data?: { statusMessage?: string } } })
-            ?.response?.data?.statusMessage ||
-          (error as Error)?.message ||
-          'Failed to create task';
-        errorToast(errorMessage);
-        console.error('Error creating task:', error);
-        throw error;
-      }
+        createTaskMutation.mutate(taskPayload, {
+          onSuccess: (response) => {
+            if (response?.data?.rid) {
+              successToast('Task created successfully');
+              setReFetchData(Date.now());
+              resolve();
+            } else {
+              const errorMessage =
+                response?.statusMessage || 'Failed to create task';
+              errorToast(errorMessage);
+              reject(new Error(errorMessage));
+            }
+          },
+          onError: (error) => {
+            const errorMessage =
+              (error as { response?: { data?: { statusMessage?: string } } })
+                ?.response?.data?.statusMessage ||
+              error?.message ||
+              'Failed to create task';
+            errorToast(errorMessage);
+            console.error('Error creating task:', error);
+            reject(error);
+          },
+        });
+      });
     },
     [accountId, caseId, createTaskMutation, successToast, errorToast, tagData]
   );
+
+  const handleFetchTaskDetails = useCallback(
+    async (taskId: string): Promise<Task | null> => {
+      if (!accountId || !caseId) {
+        console.warn('Account ID or Case ID is missing');
+        return null;
+      }
+
+      // Set the task ID to trigger the query
+      setSelectedTaskIdForTaskDetail(taskId);
+
+      // Return a promise that resolves when data arrives
+      return new Promise<Task | null>((resolve) => {
+        const maxAttempts = 100; // 10 seconds max (100 * 100ms)
+        let attempts = 0;
+
+        const checkData = () => {
+          attempts++;
+
+          // Check if query has finished loading
+          if (taskDetailQuery.isFetching === false) {
+            if (taskDetailQuery.data) {
+              resolve(taskDetailQuery.data);
+            } else if (taskDetailQuery.isError) {
+              resolve(null);
+            } else if (attempts < maxAttempts) {
+              setTimeout(checkData, 100);
+            } else {
+              resolve(null);
+            }
+          } else if (attempts < maxAttempts) {
+            setTimeout(checkData, 100);
+          } else {
+            resolve(null);
+          }
+        };
+
+        checkData();
+      });
+    },
+    [accountId, caseId, taskDetailQuery]
+  );
+
+  const handleFetchTaskActivities = useCallback(
+    async (taskId: string) => {
+      if (!accountId || !caseId) {
+        return [];
+      }
+      setSelectedTaskIdForActivities(taskId);
+      const activitiesData = activitiesQuery.data || [];
+      const transformedActivities = transformActivities(activitiesData);
+      return transformedActivities;
+    },
+    [accountId, caseId, activitiesQuery.data]
+  );
+
+  const handleFetchTaskComments = useCallback(
+    async (taskId: string) => {
+      if (!accountId || !caseId) {
+        return [];
+      }
+      setSelectedTaskIdForComments(taskId);
+      const commentsData = commentsQuery.data?.data?.data || [];
+      const transformedComments = transformComments(commentsData);
+      return transformedComments;
+    },
+    [accountId, caseId, commentsQuery.data]
+  );
+
+  const handleFetchTaskAttachments = useCallback(
+    async (taskId: string) => {
+      if (!accountId || !caseId) {
+        return [];
+      }
+      setSelectedTaskIdForAttachments(taskId);
+      const attachmentsData = attachmentsQuery.data?.data?.data || [];
+      const transformedAttachments = transformAttachments(attachmentsData);
+      return transformedAttachments;
+    },
+    [accountId, caseId, attachmentsQuery.data]
+  );
+
+  const handleFetchCollaborators = useCallback(
+    async (taskId: string) => {
+      if (!accountId || !caseId) {
+        return [];
+      }
+      setSelectedTaskIdForCollaborators(taskId);
+      return collaboratorsQuery.data || [];
+    },
+    [accountId, caseId, collaboratorsQuery.data]
+  );
+
+  const handleAddComment = useCallback(
+    async (taskId: string, commentText: string) => {
+      if (!accountId || !caseId) {
+        errorToast('Account ID or Case ID is missing');
+        throw new Error('Missing Account ID or Case ID');
+      }
+
+      return new Promise<void>((resolve, reject) => {
+        addCommentMutation.mutate(
+          {
+            account_rid: accountId,
+            case_rid: caseId,
+            task_rid: taskId,
+            comments: commentText,
+          },
+          {
+            onSuccess: () => {
+              setSelectedTaskIdForComments(taskId);
+              successToast('Comment added successfully');
+              resolve();
+            },
+            onError: (error) => {
+              const errorMessage =
+                (error as { response?: { data?: { statusMessage?: string } } })
+                  ?.response?.data?.statusMessage ||
+                error?.message ||
+                'Failed to add comment';
+              errorToast(errorMessage);
+              reject(error);
+            },
+          }
+        );
+      });
+    },
+    [accountId, caseId, successToast, errorToast, addCommentMutation]
+  );
+
+  const handleUpdateComment = useCallback(
+    async (commentId: string, commentText: string) => {
+      if (!accountId || !caseId) {
+        errorToast('Account ID or Case ID is missing');
+        throw new Error('Missing Account ID or Case ID');
+      }
+
+      return new Promise<void>((resolve, reject) => {
+        updateCommentMutation.mutate(
+          {
+            account_rid: accountId,
+            case_rid: caseId,
+            task_rid: '',
+            rid: commentId,
+            comments: commentText,
+          },
+          {
+            onSuccess: () => {
+              successToast('Comment updated successfully');
+              resolve();
+            },
+            onError: (error) => {
+              const errorMessage =
+                (error as { response?: { data?: { statusMessage?: string } } })
+                  ?.response?.data?.statusMessage ||
+                error?.message ||
+                'Failed to update comment';
+              errorToast(errorMessage);
+              reject(error);
+            },
+          }
+        );
+      });
+    },
+    [accountId, caseId, successToast, errorToast, updateCommentMutation]
+  );
+
+  const handleDeleteComment = useCallback(
+    async (commentId: string) => {
+      if (!accountId || !caseId) {
+        errorToast('Account ID or Case ID is missing');
+        throw new Error('Missing Account ID or Case ID');
+      }
+
+      return new Promise<void>((resolve, reject) => {
+        deleteCommentMutation.mutate(
+          {
+            account_rid: accountId,
+            case_rid: caseId,
+            task_rid: '',
+            rid: commentId,
+            deleted_file_ids: [],
+          },
+          {
+            onSuccess: () => {
+              successToast('Comment deleted successfully');
+              resolve();
+            },
+            onError: (error) => {
+              const errorMessage =
+                (error as { response?: { data?: { statusMessage?: string } } })
+                  ?.response?.data?.statusMessage ||
+                error?.message ||
+                'Failed to delete comment';
+              errorToast(errorMessage);
+              reject(error);
+            },
+          }
+        );
+      });
+    },
+    [accountId, caseId, successToast, errorToast, deleteCommentMutation]
+  );
+
+  const handleAddCollaborator = useCallback(
+    async (
+      taskId: string,
+      userId: string
+    ): Promise<AddCollaboratorResponse> => {
+      if (!accountId || !caseId) {
+        errorToast('Account ID or Case ID is missing');
+        throw new Error('Missing Account ID or Case ID');
+      }
+
+      return new Promise<AddCollaboratorResponse>((resolve, reject) => {
+        const payload: AddCollaboratorPayload = {
+          case_rid: caseId,
+          account_rid: accountId,
+          rid: taskId,
+          user_rid: userId,
+          action_type: 'milestone',
+        };
+
+        addCollaboratorMutation.mutate(payload, {
+          onSuccess: (response) => {
+            if (
+              response?.statusCode === 200 ||
+              response?.statusCodeValue === 'OK'
+            ) {
+              successToast('Collaborator added successfully');
+              resolve(response);
+            } else {
+              const errorMessage =
+                response?.statusMessage || 'Failed to add collaborator';
+              errorToast(errorMessage);
+              reject(new Error(errorMessage));
+            }
+          },
+          onError: (error) => {
+            const errorMessage =
+              (error as { response?: { data?: { statusMessage?: string } } })
+                ?.response?.data?.statusMessage ||
+              error?.message ||
+              'Failed to add collaborator';
+            errorToast(errorMessage);
+            console.error('Error adding collaborator:', error);
+            reject(error);
+          },
+        });
+      });
+    },
+    [accountId, caseId, addCollaboratorMutation, successToast, errorToast]
+  );
+
+  const filterFields =
+    tabParam === 'case_task'
+      ? getAssignGroupsFilterFields(memoizedStatus)
+      : undefined;
+
+  const handleFilter = () => {
+    setShowFilter(!showFilter);
+  };
+
+  const handleSearchReset = () => {
+    setResetSearch(false);
+  };
+
+  const getTitleIcon = () => {
+    return (
+      <CaseIcon
+        alt='case-icon'
+        className={`w-6 h-6 p-[5px] [&>path]:stroke-[#4ce547] bg-[#D2FFE3] !rounded-lg`}
+      />
+    );
+  };
+
+  const tabs = [
+    { label: 'Milestone', value: 'milestone' },
+    { label: 'Case Task', value: 'case_task' },
+  ];
+
+  const handleTabChange = (value: string) => {
+    searchParams.set('tab', value);
+    navigate(`?${searchParams.toString()}`, { replace: true });
+  };
+
+  const onRefreshClick = () => {
+    setReFetchData(Date.now());
+  };
+
+  const handleColumnVisibility = (
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    setColumnAnchorEl(event.currentTarget);
+  };
 
   const headerButtons = [
     {
@@ -286,271 +601,6 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
       hide: tabParam !== 'case_task',
     },
   ];
-
-  const handleFetchTaskDetails = useCallback(
-    async (taskId: string) => {
-      console.log('handleFetchTaskDetails called for taskId:', taskId);
-      if (!accountId || !caseId) {
-        console.warn('Account ID or Case ID is missing');
-        return null;
-      }
-
-      try {
-        const taskData = await getTaskDetail(accountId, caseId, taskId);
-
-        if (!taskData) {
-          return null;
-        }
-
-        return taskData;
-      } catch (error) {
-        console.error('Failed to fetch task details:', error);
-        return null;
-      }
-    },
-    [accountId, caseId]
-  );
-
-  const handleFetchTaskActivities = useCallback(
-    async (taskId: string) => {
-      if (!accountId || !caseId) {
-        console.warn('Missing Account ID or Case ID is missing');
-        return [];
-      }
-      try {
-        const activitiesData = await fetchTaskActivities(
-          accountId,
-          caseId,
-          taskId
-        );
-        const transformedActivities = transformActivities(activitiesData);
-        return transformedActivities;
-      } catch (error) {
-        console.error('Failed to fetch task activities:', error);
-        return [];
-      }
-    },
-    [accountId, caseId]
-  );
-
-  const handleFetchTaskComments = useCallback(
-    async (taskId: string) => {
-      if (!accountId || !caseId) {
-        return [];
-      }
-      try {
-        const commentsResponse = await fetchTaskCommentsList({
-          account_rid: accountId,
-          case_rid: caseId,
-          task_rid: taskId,
-          page: 1,
-          limit: 100,
-        });
-
-        const transformedComments = transformComments(
-          commentsResponse?.data?.data || []
-        );
-        return transformedComments;
-      } catch (error) {
-        console.error('Failed to fetch task comments:', error);
-        return [];
-      }
-    },
-    [accountId, caseId]
-  );
-
-  const handleFetchTaskAttachments = useCallback(
-    async (taskId: string) => {
-      if (!accountId || !caseId) {
-        return [];
-      }
-      try {
-        const attachmentsResponse = await fetchTaskAttachmentsList({
-          account_rid: accountId,
-          case_rid: caseId,
-          task_rid: taskId,
-          page: 1,
-          limit: 100,
-        });
-
-        const transformedAttachments = transformAttachments(
-          attachmentsResponse?.data?.data || []
-        );
-        return transformedAttachments;
-      } catch (error) {
-        console.error('Failed to fetch task attachments:', error);
-        return [];
-      }
-    },
-    [accountId, caseId]
-  );
-
-  const handleFetchCollaborators = useCallback(
-    async (taskId: string) => {
-      if (!accountId || !caseId) {
-        console.warn('Account ID or Case ID is missing');
-        return [];
-      }
-
-      try {
-        const collaboratorsData = await fetchCollaborators(
-          accountId,
-          caseId,
-          taskId
-        );
-
-        return collaboratorsData;
-      } catch (error) {
-        console.error('Failed to fetch collaborators:', error);
-        return [];
-      }
-    },
-    [accountId, caseId]
-  );
-
-  const handleAddComment = useCallback(
-    async (taskId: string, commentText: string) => {
-      if (!accountId || !caseId) {
-        errorToast('Account ID or Case ID is missing');
-        throw new Error('Missing Account ID or Case ID');
-      }
-
-      try {
-        await addTaskComment({
-          account_rid: accountId,
-          case_rid: caseId,
-          task_rid: taskId,
-          comments: commentText,
-        });
-
-        // Refetch comments to get the updated list (will be displayed by TaskDetailModal)
-        await fetchTaskCommentsList({
-          account_rid: accountId,
-          case_rid: caseId,
-          task_rid: taskId,
-          page: 1,
-          limit: 100,
-        });
-
-        successToast('Comment added successfully');
-      } catch (error) {
-        const errorMessage =
-          (error as { response?: { data?: { statusMessage?: string } } })
-            ?.response?.data?.statusMessage ||
-          (error as Error)?.message ||
-          'Failed to add comment';
-        errorToast(errorMessage);
-        console.error('Error adding comment:', error);
-        throw error;
-      }
-    },
-    [accountId, caseId, successToast, errorToast]
-  );
-
-  const handleUpdateComment = useCallback(
-    async (commentId: string, commentText: string) => {
-      if (!accountId || !caseId) {
-        errorToast('Account ID or Case ID is missing');
-        throw new Error('Missing Account ID or Case ID');
-      }
-
-      try {
-        await updateTaskComment({
-          account_rid: accountId,
-          case_rid: caseId,
-          task_rid: '',
-          rid: commentId,
-          comments: commentText,
-        });
-
-        successToast('Comment updated successfully');
-      } catch (error) {
-        const errorMessage =
-          (error as { response?: { data?: { statusMessage?: string } } })
-            ?.response?.data?.statusMessage ||
-          (error as Error)?.message ||
-          'Failed to update comment';
-        errorToast(errorMessage);
-        console.error('Error updating comment:', error);
-        throw error;
-      }
-    },
-    [accountId, caseId, successToast, errorToast]
-  );
-
-  const handleDeleteComment = useCallback(
-    async (commentId: string) => {
-      if (!accountId || !caseId) {
-        errorToast('Account ID or Case ID is missing');
-        throw new Error('Missing Account ID or Case ID');
-      }
-
-      try {
-        await deleteTaskComment({
-          account_rid: accountId,
-          case_rid: caseId,
-          task_rid: '',
-          rid: commentId,
-          deleted_file_ids: [],
-        });
-        successToast('Comment deleted successfully');
-      } catch (error) {
-        const errorMessage =
-          (error as { response?: { data?: { statusMessage?: string } } })
-            ?.response?.data?.statusMessage ||
-          (error as Error)?.message ||
-          'Failed to delete comment';
-        errorToast(errorMessage);
-        console.error('Error deleting comment:', error);
-        throw error;
-      }
-    },
-    [accountId, caseId, successToast, errorToast]
-  );
-
-  // Initialize the add collaborator mutation
-  const addCollaboratorMutation = useAddCollaborator();
-
-  const handleAddCollaborator = useCallback(
-    async (taskId: string, userId: string) => {
-      if (!accountId || !caseId) {
-        errorToast('Account ID or Case ID is missing');
-        throw new Error('Missing Account ID or Case ID');
-      }
-
-      try {
-        const payload: AddCollaboratorPayload = {
-          case_rid: caseId,
-          account_rid: accountId,
-          rid: taskId,
-          user_rid: userId,
-          action_type: 'milestone',
-        };
-        const response = await addCollaboratorMutation.mutateAsync(payload);
-        if (
-          response?.statusCode === 200 ||
-          response?.statusCodeValue === 'OK'
-        ) {
-          successToast('Collaborator added successfully');
-          return response;
-        } else {
-          throw new Error(
-            response?.statusMessage || 'Failed to add collaborator'
-          );
-        }
-      } catch (error) {
-        const errorMessage =
-          (error as { response?: { data?: { statusMessage?: string } } })
-            ?.response?.data?.statusMessage ||
-          (error as Error)?.message ||
-          'Failed to add collaborator';
-        errorToast(errorMessage);
-        console.error('Error adding collaborator:', error);
-        throw error;
-      }
-    },
-    [accountId, caseId, addCollaboratorMutation, successToast, errorToast]
-  );
 
   return (
     <>
@@ -607,10 +657,6 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
             ) : (
               <KanbanBoard
                 data={kanbanData?.data || []}
-                showCommentCount={true}
-                showTaskCount={true}
-                showProfileIndicator={true}
-                isDragable={true}
                 isLoading={isLoading}
                 statusData={statusData}
                 priorityData={priorityData}

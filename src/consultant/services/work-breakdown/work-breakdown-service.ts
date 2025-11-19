@@ -20,6 +20,22 @@ export interface KanbanColumn {
   task_count: number;
 }
 
+export interface AddCollaboratorPayload {
+  case_rid: string;
+  account_rid: string;
+  rid: string;
+  user_rid: string;
+  action_type?: string;
+}
+export interface AddCollaboratorResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data?: {
+    rid?: string;
+    [key: string]: unknown;
+  };
+}
 export interface TaskCard {
   rid: string;
   sequence_no: number;
@@ -46,26 +62,6 @@ export interface TaskCard {
   task_status_rid: string;
   task_status_name: string;
 }
-
-export const getKanbanBoardData = async (
-  accountId: string,
-  caseId: string
-): Promise<KanbanBoardData> => {
-  const url = getWorkBreakdownURL(accountId, caseId);
-  const response = await caseServiceApi.get<KanbanBoardData>(url);
-  if (response.data?.data) {
-    response.data.data = response.data.data.map((column) => ({
-      ...column,
-      tasks: column.tasks.map((task) => ({
-        ...task,
-        task_status_name: task.task_status_name || task.status_name || '',
-      })),
-    }));
-  }
-
-  return response.data;
-};
-
 export interface TaskDetailResponse {
   rid: string;
   r_number: string;
@@ -144,7 +140,7 @@ const generateColorFromName = (name: string): string => {
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
     hash = (hash << 5) - hash + name.charCodeAt(i);
-    hash = hash & hash; // Convert to 32bit integer
+    hash = hash & hash;
   }
 
   return colors[Math.abs(hash) % colors.length];
@@ -365,25 +361,6 @@ export const fetchTaskStatuses = async (): Promise<StatusData[]> => {
     return [];
   }
 };
-
-export const useGetTaskPriorities = () => {
-  return useQuery({
-    queryKey: ['taskPriorities'],
-    queryFn: fetchTaskPriorities,
-    staleTime: 1000 * 60 * 60, // 1 hour
-    gcTime: 1000 * 60 * 60 * 24, // 24 hours
-  });
-};
-
-export const useGetTaskStatuses = () => {
-  return useQuery({
-    queryKey: ['taskStatuses'],
-    queryFn: fetchTaskStatuses,
-    staleTime: 1000 * 60 * 60, // 1 hour
-    gcTime: 1000 * 60 * 60 * 24, // 24 hours
-  });
-};
-
 export interface CollaboratorData {
   assigned_to: string;
   assigned_to_name: string;
@@ -395,7 +372,6 @@ export interface CollaboratorsResponse {
   statusMessage: string;
   data: CollaboratorData[];
 }
-
 export const fetchCollaborators = async (
   accountId: string,
   caseId: string,
@@ -407,7 +383,6 @@ export const fetchCollaborators = async (
       account_rid: accountId,
       rid: taskId,
     };
-
     const response = await caseServiceApi.post<CollaboratorsResponse>(
       '/api/cases/task/collaborator/list',
       payload
@@ -422,47 +397,43 @@ export const fetchCollaborators = async (
     return [];
   }
 };
+export const getKanbanBoardData = async (
+  accountId: string,
+  caseId: string
+): Promise<KanbanBoardData> => {
+  const url = getWorkBreakdownURL(accountId, caseId);
+  const response = await caseServiceApi.get<KanbanBoardData>(url);
+  if (response.data?.data) {
+    response.data.data = response.data.data.map((column) => ({
+      ...column,
+      tasks: column.tasks.map((task) => ({
+        ...task,
+        task_status_name: task.task_status_name || task.status_name || '',
+      })),
+    }));
+  }
 
-export interface AddCollaboratorPayload {
-  case_rid: string;
-  account_rid: string;
-  rid: string; // task_rid
-  user_rid: string;
-  action_type?: string;
-}
-
-export interface AddCollaboratorResponse {
-  statusCode: number;
-  statusCodeValue: string;
-  statusMessage: string;
-  data?: {
-    rid?: string;
-    [key: string]: unknown;
-  };
-}
+  return response.data;
+};
 
 export const addCollaborator = async (
   payload: AddCollaboratorPayload
 ): Promise<AddCollaboratorResponse> => {
   try {
-    // Hardcode action_type as 'milestone' if not provided
     const enrichedPayload = {
       ...payload,
       action_type: payload.action_type || 'milestone',
     };
-
     const response = await caseServiceApi.post<AddCollaboratorResponse>(
       '/api/cases/task/collaborator/add',
       enrichedPayload
     );
-
     return response.data;
   } catch (error) {
     console.error('Error adding collaborator:', error);
     throw error;
   }
 };
-
 export const useAddCollaborator = () => {
   return useMutation({
     mutationFn: (payload: AddCollaboratorPayload) => addCollaborator(payload),
@@ -472,5 +443,76 @@ export const useAddCollaborator = () => {
     onSuccess: (data) => {
       console.log('Collaborator added successfully:', data);
     },
+  });
+};
+
+export const useGetTaskPriorities = () => {
+  return useQuery({
+    queryKey: ['taskPriorities'],
+    queryFn: fetchTaskPriorities,
+    staleTime: 1000 * 60 * 60,
+    gcTime: 1000 * 60 * 60 * 24,
+  });
+};
+
+export const useGetTaskStatuses = () => {
+  return useQuery({
+    queryKey: ['taskStatuses'],
+    queryFn: fetchTaskStatuses,
+    staleTime: 1000 * 60 * 60,
+    gcTime: 1000 * 60 * 60 * 24,
+  });
+};
+export const useGetWorkBreakdownList = (
+  accountId: string,
+  caseId: string
+): ReturnType<typeof useQuery<KanbanBoardData, Error>> => {
+  return useQuery<KanbanBoardData, Error>({
+    queryKey: ['kanbanBoardData', accountId, caseId],
+    queryFn: () => getKanbanBoardData(accountId, caseId),
+    enabled: !!accountId && !!caseId,
+    retry: false,
+  });
+};
+
+export const useGetTaskActivities = (
+  accountId: string,
+  caseId: string,
+  taskId: string,
+  enabled: boolean = true
+): ReturnType<typeof useQuery<TaskActivity[], Error>> => {
+  return useQuery<TaskActivity[], Error>({
+    queryKey: ['taskActivities', accountId, caseId, taskId],
+    queryFn: () => fetchTaskActivities(accountId, caseId, taskId),
+    enabled: enabled && !!accountId && !!caseId && !!taskId,
+    retry: 0,
+  });
+};
+
+export const useGetCollaborators = (
+  accountId: string,
+  caseId: string,
+  taskId: string,
+  enabled: boolean = true
+): ReturnType<typeof useQuery<CollaboratorData[], Error>> => {
+  return useQuery<CollaboratorData[], Error>({
+    queryKey: ['collaborators', accountId, caseId, taskId],
+    queryFn: () => fetchCollaborators(accountId, caseId, taskId),
+    enabled: enabled && !!accountId && !!caseId && !!taskId,
+    retry: false,
+  });
+};
+
+export const useGetTaskDetail = (
+  accountId: string,
+  caseId: string,
+  taskId: string,
+  enabled: boolean = true
+): ReturnType<typeof useQuery<Task | null, Error>> => {
+  return useQuery<Task | null, Error>({
+    queryKey: ['taskDetail', accountId, caseId, taskId],
+    queryFn: () => getTaskDetail(accountId, caseId, taskId),
+    enabled: enabled && !!accountId && !!caseId && !!taskId,
+    retry: false,
   });
 };

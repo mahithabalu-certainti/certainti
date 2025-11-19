@@ -33,16 +33,16 @@ const LoadingSkeleton: React.FC = () => (
             key={i}
             className='bg-[#f5f5f5] rounded-lg p-4 w-80 flex-shrink-0'
           >
-            <div className='bg-white border border-slate-200 rounded-lg p-3 mb-2 animate-pulse'>
-              <div className='h-4 bg-slate-200 rounded w-3/4'></div>
+            <div className='bg-white border border-[#E4E6E7] rounded-lg p-3 mb-2 animate-pulse'>
+              <div className='h-4 bg-[#E4E6E7] rounded w-3/4'></div>
             </div>
             {[1, 2, 3].map((j) => (
               <div
                 key={j}
-                className='bg-white border border-slate-200 rounded-lg p-3 mb-2 animate-pulse'
+                className='bg-white border border-[#E4E6E7] rounded-lg p-3 mb-2 animate-pulse'
               >
-                <div className='h-4 bg-slate-200 rounded w-3/4 mb-2'></div>
-                <div className='h-3 bg-slate-200 rounded w-1/2'></div>
+                <div className='h-4 bg-[#E4E6E7] rounded w-3/4 mb-2'></div>
+                <div className='h-3 bg-[#E4E6E7] rounded w-1/2'></div>
               </div>
             ))}
           </div>
@@ -66,7 +66,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
   checklistData = [],
   userData = [],
   roleOptions = [],
-  isDragable = false,
+  isDragable = true,
   isDragablebetweenBoards = false,
   isLoading = false,
   onFetchTaskDetails,

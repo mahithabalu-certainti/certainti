@@ -1,11 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import {
-  MenuItem,
-  Select,
-  SelectChangeEvent,
-  Autocomplete,
-  TextField,
-} from '@mui/material';
+import { MenuItem, SelectChangeEvent, Select } from '@mui/material';
 import dayjs from 'dayjs';
 import { CalendarIcon, CloseIcon } from '../../assets';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -17,6 +11,7 @@ import {
   generateInitials,
   generateColorFromName,
 } from './helper';
+import TaskFieldsSection from './task-fields-section';
 import type { UserOption } from './types';
 import type { RoleOption } from '../../consultant/services/case-team/case-team-service';
 
@@ -118,10 +113,6 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
       : availableUsers.map(enrichUserOption);
   }, [collaboratorData, availableUsers]);
 
-  // Extract tag names from tagData for Autocomplete options
-  const tagOptions =
-    tagData && tagData.length > 0 ? tagData.map((tag) => tag.name) : [];
-
   // Initialize status to "To Do" when statusData changes
   useEffect(() => {
     const toDoStatus = statusData?.find((s) => s.name === 'To Do');
@@ -182,37 +173,6 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const handleStatusChange = (event: SelectChangeEvent<string>) => {
-    const selectedName = event.target.value;
-    setSelectedStatus(selectedName);
-    const statusItem = statusData?.find((s) => s.name === selectedName);
-    if (statusItem) {
-      setSelectedStatusRid(statusItem.id);
-    }
-  };
-
-  const handlePriorityChange = (event: SelectChangeEvent<string>) => {
-    const selectedName = event.target.value;
-    setSelectedPriority(selectedName);
-    const priorityItem = priorityData?.find((p) => p.name === selectedName);
-    if (priorityItem) {
-      setSelectedPriorityRid(priorityItem.id);
-    }
-  };
-
-  const handleRoleChange = (event: SelectChangeEvent<string>) => {
-    const selectedName = event.target.value;
-    setSelectedRole(selectedName);
-    const roleItem = roleOptions?.find((r) => r.role_name === selectedName);
-    if (roleItem) {
-      setSelectedRoleRid(roleItem.rid);
-    }
-  };
-
-  const handleAssigneeChange = (event: SelectChangeEvent<string>) => {
-    setSelectedAssignee(event.target.value);
   };
 
   const handleStartDateChange = (newValue: dayjs.Dayjs | null) => {
@@ -276,7 +236,7 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
           </button>
         </div>
 
-        <div className='p-6 space-y-6'>
+        <div className='p-4 space-y-4'>
           <div>
             <label className='block text-[13px] font-medium text-gray-700 mb-2'>
               Task Name <span className='text-red-500'>*</span>
@@ -301,7 +261,9 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                   name='assignee'
                   disabled={fieldDisabled.assignee}
                   className='custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px]'
-                  onChange={handleAssigneeChange}
+                  onChange={(event: SelectChangeEvent<string>) =>
+                    setSelectedAssignee(event.target.value)
+                  }
                   value={selectedAssignee}
                   displayEmpty
                   fullWidth
@@ -590,487 +552,73 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
             </div>
           </LocalizationProvider>
 
-          <div>
-            <h3 className='text-[13px] font-semibold text-gray-700 mb-3'>
-              Fields
-            </h3>
-            <div className='border border-gray-200 rounded-lg divide-y divide-gray-200'>
-              {!fieldVisibility.status && (
-                <div className='flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors'>
-                  <div className='flex items-center gap-2'>
-                    <svg
-                      width='16'
-                      height='16'
-                      viewBox='0 0 24 24'
-                      fill='none'
-                      stroke='currentColor'
-                      strokeWidth='2'
-                      className='text-gray-500'
-                    >
-                      <polyline points='22 12 18 12 15 21 9 3 6 12 2 12'></polyline>
-                    </svg>
-                    <span className='text-[13px] text-gray-700'>
-                      Status <span className='text-red-500'>*</span>
-                    </span>
-                  </div>
-                  <div className='w-[200px]'>
-                    <Select
-                      name='status'
-                      disabled={true}
-                      className='custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px]'
-                      onChange={handleStatusChange}
-                      value={selectedStatus}
-                      displayEmpty
-                      fullWidth
-                      size='small'
-                      sx={{
-                        height: '32px',
-                        fontSize: '13px',
-                        '.MuiSelect-select': {
-                          padding: '6px 6px',
-                          color: selectedStatus ? 'black' : '#7D98B6',
-                        },
-                        '&.Mui-disabled': {
-                          backgroundColor: '#f3f4f6',
-                          '& .MuiOutlinedInput-notchedOutline': {
-                            border: '1px solid #CBD6E2 !important',
-                            opacity: 1,
-                          },
-                          '& .MuiSelect-select': {
-                            color: '#425A76',
-                            WebkitTextFillColor: '#425A76',
-                          },
-                        },
-                        '& .MuiOutlinedInput-notchedOutline': {
-                          border: '1px solid #CBD6E2',
-                          borderRadius: '2px',
-                        },
-                        '& svg': {
-                          color: '#7D98B6',
-                        },
-                      }}
-                    >
-                      {statusData.map((status) => (
-                        <MenuItem
-                          sx={{
-                            color: '#425A76',
-                            fontSize: '13px',
-                            fontWeight: '500',
-                          }}
-                          key={status.id}
-                          value={status.name}
-                        >
-                          {status.name}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </div>
-                </div>
-              )}
-
-              {!fieldVisibility.priority && (
-                <div className='flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors'>
-                  <div className='flex items-center gap-2'>
-                    <svg
-                      width='16'
-                      height='16'
-                      viewBox='0 0 24 24'
-                      fill='none'
-                      stroke='currentColor'
-                      strokeWidth='2'
-                      className='text-gray-500'
-                    >
-                      <path d='M3 13h2v8H3z'></path>
-                      <path d='M9 3h2v18H9z'></path>
-                      <path d='M15 8h2v13h-2z'></path>
-                    </svg>
-                    <span className='text-[13px] text-gray-700'>
-                      Priority <span className='text-red-500'>*</span>
-                    </span>
-                  </div>
-                  <div className='w-[200px]'>
-                    <Select
-                      name='priority'
-                      disabled={fieldDisabled.priority}
-                      className='custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px]'
-                      onChange={handlePriorityChange}
-                      value={selectedPriority}
-                      displayEmpty
-                      fullWidth
-                      size='small'
-                      sx={{
-                        height: '32px',
-                        fontSize: '13px',
-                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                          border: '2px solid #60A5FA',
-                        },
-                        '.MuiSelect-select': {
-                          padding: '6px 6px',
-                          color: !selectedPriority ? '#7D98B6' : 'black',
-                        },
-                        '& .MuiOutlinedInput-notchedOutline': {
-                          border: '1px solid #CBD6E2',
-                          borderRadius: '2px',
-                        },
-                        '&:hover .MuiOutlinedInput-notchedOutline': {
-                          border: '1px solid #CBD6E2',
-                        },
-                        '& svg': {
-                          color: '#7D98B6',
-                        },
-                      }}
-                      renderValue={(value) =>
-                        value ? (
-                          value
-                        ) : (
-                          <span style={{ color: '#7D98B6' }}>
-                            Choose Priority
-                          </span>
-                        )
-                      }
-                    >
-                      {priorityData.map((priority) => (
-                        <MenuItem
-                          sx={{
-                            color: '#425A76',
-                            fontSize: '13px',
-                            fontWeight: '500',
-                          }}
-                          key={priority.id}
-                          value={priority.name}
-                        >
-                          {priority.name}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </div>
-                </div>
-              )}
-
-              {roleOptions && roleOptions.length > 0 && (
-                <div className='flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors'>
-                  <div className='flex items-center gap-2'>
-                    <svg
-                      width='16'
-                      height='16'
-                      viewBox='0 0 24 24'
-                      fill='none'
-                      stroke='currentColor'
-                      strokeWidth='2'
-                      className='text-gray-500'
-                    >
-                      <path d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'></path>
-                      <circle cx='12' cy='7' r='4'></circle>
-                    </svg>
-                    <span className='text-[13px] text-gray-700'>
-                      User Role <span className='text-red-500'>*</span>
-                    </span>
-                  </div>
-                  <div className='w-[200px]'>
-                    <Select
-                      name='role'
-                      className='custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px]'
-                      onChange={handleRoleChange}
-                      value={selectedRole}
-                      displayEmpty
-                      fullWidth
-                      size='small'
-                      sx={{
-                        height: '32px',
-                        fontSize: '13px',
-                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                          border: '2px solid #60A5FA',
-                        },
-                        '.MuiSelect-select': {
-                          padding: '6px 6px',
-                          color: !selectedRole ? '#7D98B6' : 'black',
-                        },
-                        '& .MuiOutlinedInput-notchedOutline': {
-                          border: '1px solid #CBD6E2',
-                          borderRadius: '2px',
-                        },
-                        '&:hover .MuiOutlinedInput-notchedOutline': {
-                          border: '1px solid #CBD6E2',
-                        },
-                        '& svg': {
-                          color: '#7D98B6',
-                        },
-                      }}
-                      renderValue={(value) =>
-                        value ? (
-                          value
-                        ) : (
-                          <span style={{ color: '#7D98B6' }}>
-                            Choose User Role
-                          </span>
-                        )
-                      }
-                    >
-                      {roleOptions.map((role) => (
-                        <MenuItem
-                          sx={{
-                            color: '#425A76',
-                            fontSize: '13px',
-                            fontWeight: '500',
-                          }}
-                          key={role.rid}
-                          value={role.role_name}
-                        >
-                          {role.role_name}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </div>
-                </div>
-              )}
-
-              {fieldVisibility.checklist !== true && (
-                <div className='flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors'>
-                  <div className='flex items-center gap-2'>
-                    <svg
-                      width='16'
-                      height='16'
-                      viewBox='0 0 24 24'
-                      fill='none'
-                      stroke='currentColor'
-                      strokeWidth='2'
-                      className='text-gray-500'
-                    >
-                      <path d='M9 11l3 3L22 4'></path>
-                      <path d='M21 12a9 9 0 11-18 0 9 9 0 0118 0z'></path>
-                    </svg>
-                    <span className='text-[13px] text-gray-700'>
-                      Checklist Template
-                    </span>
-                  </div>
-                  <div className='w-[200px]'>
-                    <Select
-                      name='checklist'
-                      disabled={fieldDisabled.checklist}
-                      className='custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px]'
-                      onChange={(event: SelectChangeEvent<string>) => {
-                        const selectedName = event.target.value;
-                        setSelectedChecklist(selectedName);
-                        const checklistItem = checklistData?.find(
-                          (c) => c.name === selectedName
-                        );
-                        if (checklistItem) {
-                          setSelectedChecklistRid(checklistItem.id);
-                        }
-                      }}
-                      value={selectedChecklist}
-                      displayEmpty
-                      fullWidth
-                      size='small'
-                      sx={{
-                        height: '32px',
-                        fontSize: '13px',
-                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                          border: '2px solid #60A5FA',
-                        },
-                        '.MuiSelect-select': {
-                          padding: '6px 6px',
-                          color: !selectedChecklist ? '#7D98B6' : 'black',
-                        },
-                        '& .MuiOutlinedInput-notchedOutline': {
-                          border: '1px solid #CBD6E2',
-                          borderRadius: '2px',
-                        },
-                        '&:hover .MuiOutlinedInput-notchedOutline': {
-                          border: '1px solid #CBD6E2',
-                        },
-                        '& svg': {
-                          color: '#7D98B6',
-                        },
-                      }}
-                      renderValue={(value) =>
-                        value ? (
-                          value
-                        ) : (
-                          <span style={{ color: '#7D98B6' }}>
-                            Choose Checklist
-                          </span>
-                        )
-                      }
-                    >
-                      <MenuItem
-                        value=''
-                        sx={{
-                          color: '#425A76',
-                          fontSize: '13px',
-                          fontWeight: '500',
-                        }}
-                      >
-                        None
-                      </MenuItem>
-                      {checklistData && checklistData.length > 0 ? (
-                        checklistData.map((checklist) => (
-                          <MenuItem
-                            sx={{
-                              color: '#425A76',
-                              fontSize: '13px',
-                              fontWeight: '500',
-                            }}
-                            key={checklist.id}
-                            value={checklist.name}
-                          >
-                            {checklist.name}
-                          </MenuItem>
-                        ))
-                      ) : (
-                        <MenuItem disabled>
-                          <span style={{ color: '#9CA3AF' }}>
-                            No checklists available
-                          </span>
-                        </MenuItem>
-                      )}
-                    </Select>
-                  </div>
-                </div>
-              )}
-
-              {fieldVisibility.tags !== true && (
-                <div className='px-4 py-3 hover:bg-gray-50 transition-colors'>
-                  <div className='flex items-center justify-between mb-3'>
-                    <div className='flex items-center gap-2'>
-                      <svg
-                        width='16'
-                        height='16'
-                        viewBox='0 0 24 24'
-                        fill='none'
-                        stroke='currentColor'
-                        strokeWidth='2'
-                        className='text-gray-500'
-                      >
-                        <path d='M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z'></path>
-                        <line x1='7' y1='7' x2='7.01' y2='7'></line>
-                      </svg>
-                      <span className='text-[13px] text-gray-700'>
-                        Tags <span className='text-red-500'>*</span>
-                      </span>
-                    </div>
-                    <div className='w-[200px]'>
-                      <Autocomplete
-                        multiple
-                        freeSolo={true}
-                        disabled={fieldDisabled.tags}
-                        options={tagOptions}
-                        value={selectedTags}
-                        onChange={(_, newValue) => {
-                          // Filter out empty strings and duplicates
-                          const cleanedValues = Array.from(
-                            new Set(newValue.filter((v) => v.trim()))
-                          );
-                          setSelectedTags(cleanedValues);
-                        }}
-                        renderTags={() => null}
-                        renderInput={(params) => (
-                          <TextField
-                            {...params}
-                            size='small'
-                            placeholder='Add Tags'
-                            sx={{
-                              '& .MuiOutlinedInput-root': {
-                                padding: '6px',
-                                minHeight: '32px',
-                                '& input': {
-                                  fontSize: '13px',
-                                  padding: '0 !important',
-                                  color: '#7D98B6',
-                                  '&::placeholder': {
-                                    color: '#7D98B6',
-                                    opacity: 1,
-                                  },
-                                },
-                              },
-                              '& .MuiOutlinedInput-notchedOutline': {
-                                borderColor: '#CBD6E2',
-                                borderWidth: '1px',
-                                borderRadius: '2px',
-                              },
-                              '&:hover .MuiOutlinedInput-notchedOutline': {
-                                borderColor: '#CBD6E2',
-                                borderWidth: '1px',
-                              },
-                              '&.Mui-focused .MuiOutlinedInput-notchedOutline':
-                                {
-                                  borderColor: '#60A5FA',
-                                  borderWidth: '2px',
-                                },
-                            }}
-                          />
-                        )}
-                        ListboxProps={{
-                          style: {
-                            maxHeight: '200px',
-                            fontSize: '13px',
-                          },
-                        }}
-                        noOptionsText={
-                          tagOptions.length === 0
-                            ? 'No tags available'
-                            : 'No matching tags'
-                        }
-                        slotProps={{
-                          paper: {
-                            sx: {
-                              zIndex: 9999,
-                              boxShadow:
-                                'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
-                              '& .MuiAutocomplete-option': {
-                                fontSize: '13px !important',
-                                padding: '8px 12px !important',
-                                color: '#425A76 !important',
-                              },
-                            },
-                          },
-                        }}
-                        sx={{
-                          '& .MuiOutlinedInput-root': {
-                            padding: '6px',
-                            fontSize: '13px',
-                          },
-                          '& .MuiAutocomplete-listbox': {
-                            maxHeight: '200px',
-                            fontSize: '13px',
-                          },
-                          '& .MuiAutocomplete-option': {
-                            fontSize: '13px',
-                            padding: '8px 12px',
-                            color: '#425A76',
-                          },
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  {selectedTags.length > 0 && (
-                    <div className='flex flex-wrap items-center gap-2 mt-3'>
-                      {selectedTags.map((tag, index) => (
-                        <div
-                          key={index}
-                          className='inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-[13px] font-medium hover:bg-blue-200 transition-colors group'
-                        >
-                          <span>{tag}</span>
-                          <button
-                            onClick={() => {
-                              setSelectedTags(
-                                selectedTags.filter((_, i) => i !== index)
-                              );
-                            }}
-                            className='ml-1 text-blue-600 hover:text-red-600 transition-colors'
-                            title={`Remove ${tag}`}
-                          >
-                            ×
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
+          <TaskFieldsSection
+            fieldVisibility={fieldVisibility}
+            fieldDisabled={fieldDisabled}
+            editedTask={null}
+            statusData={(statusData || []).map((s) => ({
+              id: s.id,
+              name: s.name,
+              color: s.color || '#3B82F6',
+            }))}
+            priorityData={(priorityData || []).map((p) => ({
+              id: p.id,
+              name: p.name,
+              color: p.color || '#3B82F6',
+            }))}
+            roleOptions={roleOptions}
+            checklistData={checklistData}
+            availableTags={(tagData || []).map((tag) => ({
+              id: tag.id || `tag-${tag.name}`,
+              name: tag.name,
+              color: '#3B82F6',
+            }))}
+            selectedRole={selectedRole}
+            selectedChecklist={selectedChecklist}
+            selectedPriority={selectedPriority}
+            selectedTags={selectedTags}
+            onStatusChange={(statusName: string) => {
+              setSelectedStatus(statusName);
+              const statusItem = statusData?.find((s) => s.name === statusName);
+              if (statusItem) {
+                setSelectedStatusRid(statusItem.id);
+              }
+            }}
+            onPriorityChange={(priorityName: string) => {
+              setSelectedPriority(priorityName);
+              const priorityItem = priorityData?.find(
+                (p) => p.name === priorityName
+              );
+              if (priorityItem) {
+                setSelectedPriorityRid(priorityItem.id);
+              }
+            }}
+            onRoleChange={(value) => {
+              setSelectedRole(value);
+              const roleItem = roleOptions?.find((r) => r.role_name === value);
+              if (roleItem) {
+                setSelectedRoleRid(roleItem.rid);
+              }
+            }}
+            onChecklistChange={(value) => {
+              setSelectedChecklist(value);
+              const checklistItem = checklistData?.find(
+                (c) => c.name === value
+              );
+              if (checklistItem) {
+                setSelectedChecklistRid(checklistItem.id);
+              }
+            }}
+            onTagsChange={setSelectedTags}
+            onAddCustomTag={() => {}}
+            onSetEditedTask={() => {}}
+            mode='create'
+            selectedStatus={selectedStatus}
+            onStatusChangeCreate={(statusName, statusId) => {
+              setSelectedStatus(statusName);
+              setSelectedStatusRid(statusId);
+            }}
+          />
 
           {!fieldVisibility.description && (
             <div>
@@ -1099,11 +647,11 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
             onClick={handleSubmit}
             disabled={!isFormValid() || isSubmitting}
             sx={{
-              px: 4,
+              px: 1,
               py: 1,
               backgroundColor:
                 !isFormValid() || isSubmitting ? '#D1D5DB' : '#2563EB',
-              color: !isFormValid() || isSubmitting ? '#9CA3AF' : '#FFFFFF',
+              color: !isFormValid() || isSubmitting ? '#9CA3AF' : '',
               '&:hover': {
                 backgroundColor:
                   !isFormValid() || isSubmitting ? '#D1D5DB' : '#2563EB',

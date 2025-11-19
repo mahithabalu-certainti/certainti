@@ -119,6 +119,9 @@ export interface FieldVisibility {
   collaborators?: boolean;
   checklist?: boolean;
   activities?: boolean;
+  role?: boolean;
+  checklistTemplate?: boolean;
+  [key: string]: boolean | undefined;
 }
 
 export interface FieldDisabled {
@@ -133,6 +136,9 @@ export interface FieldDisabled {
   comments?: boolean;
   collaborators?: boolean;
   checklist?: boolean;
+  role?: boolean;
+  checklistTemplate?: boolean;
+  [key: string]: boolean | undefined;
 }
 
 export interface UserOption {
@@ -257,6 +263,13 @@ export interface TaskDetailModalProps {
   statusOptions?: StatusOption[]; // New prop for active/inactive status
   priorityData?: Array<{ id: string; name: string; color: string }>;
   tagData?: Array<{ id: string; name: string; color: string }>;
+  checklistData?: Array<{ id: string; name: string }>;
+  roleOptions?: Array<{
+    rid: string;
+    role_name: string;
+    role_description?: string;
+    status?: string;
+  }>;
   availableUsers?: UserOption[];
   onFetchTaskDetails?: (taskId: string) => Promise<Task | null>;
   onFetchTaskActivities?: (taskId: string) => Promise<Activity[]>;

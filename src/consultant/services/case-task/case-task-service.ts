@@ -197,7 +197,7 @@ export const getTaskCommentsListUrl = () => '/api/cases/task/comments/list';
 export const getTaskAttachmentsListUrl = () =>
   '/api/cases/task/attachments/list';
 
-// Comment Management URLs
+// Comment URL
 export const getAddCommentUrl = () => '/api/cases/task/comments/add';
 export const getUpdateCommentUrl = () => '/api/cases/task/comments/update';
 export const getDeleteCommentUrl = () => '/api/cases/comments/delete';
@@ -356,7 +356,7 @@ export const updateCaseTask = async (
   }
 };
 
-// Custom Hook for Case Tasks
+// Case Tasks
 export const useGetCaseTaskList = (
   params: CaseTaskListParams,
   refreshTrigger?: number,
@@ -376,7 +376,7 @@ export const useGetCaseTaskList = (
   });
 };
 
-// Custom Hook for Task Comments
+// Task Comments
 export const useGetTaskCommentsList = (
   params: TaskCommentsListParams,
   options?: {
@@ -401,7 +401,7 @@ export const useGetTaskCommentsList = (
   });
 };
 
-// Custom Hook for Task Attachments
+// Task Attachments
 export const useGetTaskAttachmentsList = (
   params: TaskAttachmentsListParams,
   options?: {
@@ -426,35 +426,35 @@ export const useGetTaskAttachmentsList = (
   });
 };
 
-// Custom Hook for Adding Comments
+// Adding Comments
 export const useAddTaskComment = () => {
   return useMutation<CommentResponse, Error, AddCommentPayload>({
     mutationFn: (payload) => addTaskComment(payload),
   });
 };
 
-// Custom Hook for Updating Comments
+// Updating Comments
 export const useUpdateTaskComment = () => {
   return useMutation<CommentResponse, Error, UpdateCommentPayload>({
     mutationFn: (payload) => updateTaskComment(payload),
   });
 };
 
-// Custom Hook for Deleting Comments
+//  Deleting Comments
 export const useDeleteTaskComment = () => {
   return useMutation<CommentResponse, Error, DeleteCommentPayload>({
     mutationFn: (payload) => deleteTaskComment(payload),
   });
 };
 
-// Custom Hook for Creating Case Task
+// Creating Case Task
 export const useCreateCaseTask = () => {
   return useMutation<CreateTaskResponse, Error, CreateTaskPayload>({
     mutationFn: (payload) => createCaseTask(payload),
   });
 };
 
-// Custom Hook for Updating Case Task
+// Updating Case Task
 export const useUpdateCaseTask = () => {
   return useMutation<
     CreateTaskResponse,
