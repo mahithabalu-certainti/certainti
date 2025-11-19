@@ -18,4 +18,22 @@ routes.get(
   controller.activitiesController.getAllActivityTask
 );
 
+routes.post(
+  "/email/create",
+  checkUserStatusMiddleware("NA"),
+  upload.array('files'),
+  controller.activitiesController.createActivityEmail
+)
+
+routes.post(
+  "/email/attachments/delete",
+  checkUserStatusMiddleware("NA"),
+  controller.activitiesController.deleteActivityAttachments
+)
+
+routes.get(
+  "/email/detail/:activityRid/:accountRid",
+  checkUserStatusMiddleware("NA"),
+  controller.activitiesController.fetchEmailActivityById
+);
 export default routes;

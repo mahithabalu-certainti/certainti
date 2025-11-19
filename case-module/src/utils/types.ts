@@ -686,3 +686,33 @@ export interface IActivityTask {
   checklist_rid?: string;
   tags : tagTypes[]
 }
+
+export interface IActivityEmail {
+  activity_rid: string;
+  activity_type:string
+  created_by: string;
+  modified_by?: string;
+  created_datetime?: Date;
+  modified_datetime?: Date;
+  accountRid: string;
+  fiscal_year: number;
+  attach_to: string;
+  attachment_level: string;
+  email_status:string;
+  to_email: JSON;
+  cc_email?: JSON;
+  subject: string;
+  body_html?: string;
+  sender_email?: string;
+  email_status_rid?: string;
+  account_rid?: string; 
+}
+
+export interface IEmailMessage {
+  subject: string;
+  body: {
+    contentType: string;
+    content: string;
+  };
+  toRecipients: { emailAddress: { address: string } }[];
+}

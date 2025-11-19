@@ -18,6 +18,7 @@ import {
   CurrencyType,
   DeleteCommentsType,
   FilingType,
+  IActivityEmail,
   IActivityTask,
   ICreateCases,
   ICreateCaseTeam,
@@ -96,7 +97,7 @@ export class ActivityService {
     errorMessage?: string;
     data?: { cases: any };
   }> {
-    if(!this.mainDbSequelize){
+    if (!this.mainDbSequelize) {
       this.mainDbSequelize = await this.getMainDb();
     }
     const dbInit = await this.caseModelService.getSequelize();
@@ -111,7 +112,11 @@ export class ActivityService {
       if (!accountNumber) {
         throw new Error("Invalid account ID");
       }
-      const isUnique = await this.activitySchemaService.checkIsActivityTaskUnique(taskRequest,accountNumber);
+      const isUnique =
+        await this.activitySchemaService.checkIsActivityTaskUnique(
+          taskRequest,
+          accountNumber
+        );
       if (!isUnique) {
         return {
           statusCode: HttpStatus.BAD_REQUEST,
@@ -125,34 +130,58 @@ export class ActivityService {
         taskRequest,
         transaction
       );
-      
-      if(taskRequest?.checklist_rid) 
-      {
-        const response  = await this.caseManagementService.fetchChecklistTemplateDetailsById(taskRequest.checklist_rid);
-        response.checklist_items.map((item:any) => item.action_type  = 'add');
+
+      if (taskRequest?.checklist_rid) {
+        const response =
+          await this.caseManagementService.fetchChecklistTemplateDetailsById(
+            taskRequest.checklist_rid
+          );
+        response.checklist_items.map((item: any) => (item.action_type = "add"));
         let caseRequest = {
           account_rid: taskRequest.account_rid!,
           checklist_name: response.checklist_name,
-          checklist_description: response.description,  
+          checklist_description: response.description,
           checklist_items: response.checklist_items,
-          attach_to:taskResponse.rid,
-          attachment_level: 'task',
+          attach_to: taskResponse.rid,
+          attachment_level: "task",
           created_by: userId,
           created_datetime: new Date(),
           fiscal_year: taskRequest.fiscal_year,
-          checklist_rid: taskRequest.checklist_rid
+          checklist_rid: taskRequest.checklist_rid,
         };
 
-        const checklistResponse = await this.caseSchemaService.createCheckList(accountNumber, caseRequest, transaction);
-        const checklistItems = await this.caseSchemaService.manageCheckListItems(accountNumber,caseRequest,checklistResponse.rid, transaction);
-        }
-        if(taskRequest?.tags?.length > 0) {
-           const [activeStatusRid] : any[] = await this.mainDbSequelize.query(rawQueries.getActiveStatusId());
-        for(let d of taskRequest.tags) {
-              await this.caseSchemaService.createOrUpdateTags(taskResponse.rid, taskRequest.account_rid!,"", d.tag_rid, d.is_new_tag, accountNumber, taskRequest.created_by, activeStatusRid,"activity")
+        const checklistResponse = await this.caseSchemaService.createCheckList(
+          accountNumber,
+          caseRequest,
+          transaction
+        );
+        const checklistItems =
+          await this.caseSchemaService.manageCheckListItems(
+            accountNumber,
+            caseRequest,
+            checklistResponse.rid,
+            transaction
+          );
+      }
+      if (taskRequest?.tags?.length > 0) {
+        const [activeStatusRid]: any[] = await this.mainDbSequelize.query(
+          rawQueries.getActiveStatusId()
+        );
+        for (let d of taskRequest.tags) {
+          await this.caseSchemaService.createOrUpdateTags(
+            taskResponse.rid,
+            taskRequest.account_rid!,
+            "",
+            d.tag_rid,
+            d.is_new_tag,
+            accountNumber,
+            taskRequest.created_by,
+            activeStatusRid,
+            "activity"
+          );
         }
       }
-     
+
       /*  if (response) {
           logMessage(`Case created with RID: ${response.rid}`);
           await this.activitySchemaService.addTaskSummary(
@@ -204,7 +233,11 @@ export class ActivityService {
         throw new Error("Invalid account ID");
       }
 
-      const isUnique = await this.activitySchemaService.checkIsExistingActivityTaskUnique(taskRequest, accountNumber);
+      const isUnique =
+        await this.activitySchemaService.checkIsExistingActivityTaskUnique(
+          taskRequest,
+          accountNumber
+        );
       if (!isUnique) {
         return {
           statusCode: HttpStatus.BAD_REQUEST,
@@ -318,4 +351,179 @@ export class ActivityService {
       };
     }
   }
+  async createActivityEmail(
+    data: IActivityEmail,
+    userId: string,
+    files?: Express.Multer.File[]
+  ) {
+    try {
+      const { accountNumber } =
+        await this.caseSchemaService.fetchValidAccountNumberById(
+          data.account_rid!
+        );
+      if (!accountNumber) {
+        throw new Error("Invalid account ID");
+      }
+      const result = await this.activitySchemaService.createActivityEmail(
+        accountNumber,
+        data,
+        userId,
+        files
+      );
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: STATUS_MESSAGE.activityCreated,
+        data: result,
+      };
+    } catch (err) {
+      logMessage(`Error adding comments to task, ${err}`);
+      return {
+        statusCode: HttpStatus.FAILED,
+        message: HttpStatus.FAILED_MESSAGE,
+        errorMessage: STATUS_MESSAGE.activityCreationFailed,
+      };
+    }
+  }
+  async updateActivityEmail(
+    data: IActivityEmail,
+    userId: string,
+    files?: Express.Multer.File[]
+  ) {
+    try {
+      const { accountNumber } =
+        await this.caseSchemaService.fetchValidAccountNumberById(
+          data.account_rid!
+        );
+      if (!accountNumber) {
+        throw new Error("Invalid account ID");
+      }
+      const result = await this.activitySchemaService.updateActivityEmail(
+        accountNumber,
+        data,
+        userId,
+        files
+      );
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: STATUS_MESSAGE.activityUpdated,
+        data: result,
+      };
+    } catch (err) {
+      logMessage(`Error adding comments to task, ${err}`);
+      return {
+        statusCode: HttpStatus.FAILED,
+        message: HttpStatus.FAILED_MESSAGE,
+        errorMessage: STATUS_MESSAGE.activityUpdateFailed,
+      };
+    }
+  }
+
+  async deleteActivityAttachments(data: IActivityEmail, userId: string) {
+    const { accountNumber } =
+      await this.caseSchemaService.fetchValidAccountNumberById(
+        data.account_rid!
+      );
+    if (!accountNumber) {
+      throw new Error("Invalid account ID");
+    }
+    const result = await this.activitySchemaService.deleteEmailAttachment(
+      accountNumber,
+      data,
+      userId
+    );
+    return result;
+  }
+  async getEmailActivityDetailsById(
+    activityRid: string,
+    accountRid: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { emailActivityDetails: any };
+  }> {
+    try {
+      const { accountNumber } =
+        await this.caseSchemaService.fetchValidAccountNumberById(accountRid);
+      const emailActivityDetails =
+        await this.activitySchemaService.fetchEmailActivityDetailsById(
+          activityRid,
+          accountNumber,
+          accountRid
+        );
+
+      if (!emailActivityDetails) {
+        return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: "Invalid Email Template ID",
+        };
+      }
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          emailActivityDetails,
+        },
+      };
+    } catch (err) {
+      logMessage(`Error fetching email activity details, ${err}`);
+      return {
+        statusCode: HttpStatus.FAILED,
+        message: HttpStatus.FAILED_MESSAGE,
+        errorMessage: STATUS_MESSAGE.checkListError,
+      };
+    }
+  }
+  async getEmailStatus(): Promise<{
+      statusCode: number;
+      message: string;
+      errorMessage?: string;
+      data?: { emailStatus: any };
+    }> {
+      try {
+        const emailStatus = await this.activitySchemaService.getEmailStatus();
+  
+        return {
+          statusCode: HttpStatus.SUCCESS,
+          message: HttpStatus.SUCCESS_MESSAGE,
+          data: {
+            emailStatus,
+          },
+        };
+      } catch (err) {
+        logMessage(`Error fetching email status, ${err}`);
+        throw this.throwServiceError(err as Error);
+      }
+    }
+    /**
+     * Formats an error response to be returned from service methods.
+     *
+     * @param {Error} err - The caught error object containing error details.
+     *
+     * @returns {{
+     *   statusCode: number;
+     *   message: string;
+     *   errorMessage: string;
+     * }} - Standardized error response object with consistent structure.
+     *
+     * @description
+     * - Converts any caught error into a standardized service error format.
+     * - Sets status code to FAILED (500) for consistent error handling.
+     * - Preserves the original error message for debugging purposes.
+     * - Used across all service methods to maintain consistent error response structure.
+     * - Ensures all service errors follow the same format for frontend consumption.
+     */
+    throwServiceError(err: Error): {
+      statusCode: number;
+      message: string;
+      errorMessage: string;
+    } {
+      return {
+        statusCode: HttpStatus.FAILED,
+        message: HttpStatus.FAILED_MESSAGE,
+        errorMessage: err.message,
+      };
+    }
 }

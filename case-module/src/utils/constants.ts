@@ -164,7 +164,11 @@ export const STATUS_MESSAGE = {
   workflowConnectorMappedDeleted : "Linked Task deleted successfully",
   workflowConnectorMappedDeletedFailed : "Failed to link task",
   caseTaskFetchedSuccess : "Case Task fetched successfully",
-  tagsCreationFailed : "Failed to add Tags"
+  tagsCreationFailed : "Failed to add Tags",
+  activityCreated: "Activity created successfully",
+  activityCreationFailed: "Activity creation failed",
+  activityUpdated: "Activity updated successfully",
+  activityUpdateFailed: "Activity update failed"
 };
 
 export const caseStatuses = {
@@ -702,6 +706,15 @@ export const rawQueries = {
     return `
     SELECT rid, status_name as name FROM ${MAIN_SCHEMA_NAME}.case_status WHERE rid IN (${ids})`;
   },
+  fetchEmailStatus(statusIds: any): string {
+    let ids = statusIds.map((d: any) => `'${d}'`);
+    return `
+    SELECT rid, status_name as name FROM ${MAIN_SCHEMA_NAME}.email_activity_status WHERE rid IN (${ids})`;
+  },
+   fetchEmailStatusByName(statusName: string): string {
+    return `
+    SELECT rid, status_name as name FROM ${MAIN_SCHEMA_NAME}.email_activity_status WHERE status_name = '${statusName}'`;
+  },
   fetchIndustry(industryIds: any): string {
     let ids = industryIds.map((d: any) => `'${d}'`);
     return `
@@ -728,6 +741,14 @@ export const rawQueries = {
       FROM ${MAIN_SCHEMA_NAME}.case_filing_type
       WHERE status = 'active'
       ORDER BY filing_type_name ASC
+    `;
+  },
+  getEmailStatus() {
+    return `
+      SELECT rid, status_name 
+      FROM ${MAIN_SCHEMA_NAME}.email_status
+      WHERE status = 'active'
+      ORDER BY status_name ASC
     `;
   },
   getCaseStatus() {
@@ -938,6 +959,14 @@ export const rawQueries = {
       WHERE u.rid = :userRid
       LIMIT 1
     `;
+  },
+  fetchSenderEmail(schemaName: string, accountRid: string) {
+    return `
+    SELECT support_email,client_id,client_secret,tenant_id, subscription_created FROM ${schemaName}.account_details WHERE account_rid = '${accountRid}'  and  subscription_created is true  and support_email is not null LIMIT 1`;
+  },
+  fetchAccountInfo(rid: string) {
+    return `
+    SELECT rid, account_name,r_number,parent_account_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${rid}'`;
   },
   fetchUserGroupType: `
       SELECT type group_type

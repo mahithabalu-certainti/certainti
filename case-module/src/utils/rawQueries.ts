@@ -1465,3 +1465,96 @@ return query;
   export const listAllTaskStatus = () => {
     return `SELECT rid, task_status_name FROM ${MAIN_SCHEMA_NAME}.case_task_status ORDER BY task_status_level ASC`
   }
+
+    export const fetchEmailActivityDetails = (schemaName : string, rid : string) => {
+    return `
+    SELECT 
+    a.rid, a.subject, a.body_html,
+    a.created_by, a.modified_by, a.account_rid, 
+    a.created_datetime, a.modified_datetime,
+    a.fiscal_year, e.name AS attached_to, 
+    a.attachment_level, a.r_number, a.attach_to, a.status_rid,
+    a.to_email,a.cc_email,a.sender_email
+    FROM
+    ${schemaName}.activities a
+    LEFT JOIN LATERAL (
+    SELECT ad.account_rid, ad.account_name AS name 
+    FROM ${schemaName}.account_details ad 
+    WHERE
+    LOWER(a.attachment_level) = 'account'
+    AND
+    ad.account_rid = a.attach_to
+
+    UNION ALL
+
+    SELECT pf.rid, pf.project_code AS name 
+    FROM
+    ${schemaName}.project_fiscal pf
+    WHERE
+    LOWER(a.attachment_level) = 'project'
+    AND
+    pf.rid = a.attach_to
+
+    UNION ALL
+
+    SELECT cd.rid, cd.case_name AS name 
+    FROM
+    ${schemaName}.cases cd
+    WHERE
+    LOWER(a.attachment_level) = 'case'
+    AND
+    cd.rid = a.attach_to
+
+    UNION ALL
+
+    SELECT r.rid, r.resource_code AS name
+    FROM
+    ${schemaName}.resources r
+    WHERE
+    LOWER(a.attachment_level) = 'resource'
+    AND
+    r.rid = a.attach_to
+    
+    UNION ALL
+
+    SELECT rc.rid, rc.r_number AS name
+    FROM
+    ${schemaName}.resource_cost rc
+    WHERE
+    LOWER(a.attachment_level) = 'resource_cost'
+    AND
+    rc.rid = a.attach_to
+
+    UNION ALL
+
+    SELECT rs.rid, rs.r_number AS name
+    FROM
+    ${schemaName}.resource_skill rs
+    WHERE
+    LOWER(a.attachment_level) = 'resource_skill'
+    AND
+    rs.rid = a.attach_to
+    UNION ALL
+
+    SELECT pt.rid, pt.r_number AS name
+    FROM
+    ${schemaName}.project_task pt
+    WHERE
+    LOWER(a.attachment_level) = 'project_task'
+    AND
+    pt.rid = a.attach_to
+
+    UNION ALL
+
+    SELECT pr.rid, pr.r_number AS name
+    FROM
+    ${schemaName}.project_resource pr
+    WHERE
+    LOWER(a.attachment_level) = 'project_resource'
+    AND
+    pr.rid = a.attach_to
+    ) e ON true
+    WHERE
+    a.rid = '${rid}'
+    `
+  }

@@ -4,7 +4,7 @@ import { Tags } from "../../models/tagsModel";
 import { TaskCollaborators } from "../../models/taskCollaboratorsModel";
 import { TaskComments } from "../../models/taskCommentsModel";
 import { TaskTag } from "../../models/taskTagsModel";
-import { AddCommentsType, AdminTaskTemplatePayloadType, CaseTaskQueryType, CreateCaseTaskType, CreateTaskTemplateType, ICreateCases, ICreateCaseTeam, ICreateChecklist, ICreateChecklistTemplate, ICreateEmailTemplate, MilestoneResponse, UpdateCaseTaskType, UpdateTaskTemplateType, UpdateCommentsType, DeleteCommentsType, CommentsListType, ActivityType, TaskCardDetailsType, priorityTypes, caseTaskStatusTypes, WorkflowConnectorType, CaseTaskWorkFlowCreate, CaseTaskWorkFlowDelete, IActivityTask } from "../../utils/types";
+import { AddCommentsType, AdminTaskTemplatePayloadType, CaseTaskQueryType, CreateCaseTaskType, CreateTaskTemplateType, ICreateCases, ICreateCaseTeam, ICreateChecklist, ICreateChecklistTemplate, ICreateEmailTemplate, MilestoneResponse, UpdateCaseTaskType, UpdateTaskTemplateType, UpdateCommentsType, DeleteCommentsType, CommentsListType, ActivityType, TaskCardDetailsType, priorityTypes, caseTaskStatusTypes, WorkflowConnectorType, CaseTaskWorkFlowCreate, CaseTaskWorkFlowDelete, IActivityTask, IActivityEmail } from "../../utils/types";
 
 export interface ICaseService {
   createCase(
@@ -438,36 +438,37 @@ export interface IActivityService {
     errorMessage?: string;
     data?: { activities: any[]; totalCount: number };
   }>;
+  createActivityEmail(data : IActivityEmail, userId : string, files? : Express.Multer.File[]) : Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data: any;
+}>;
+ updateActivityEmail(data : IActivityEmail, userId : string, files? : Express.Multer.File[]) : Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data: any;
+}>;
+  deleteActivityAttachments (data : IActivityEmail, userId : string) : Promise<{
+    statusCode: number;
+    statusMessage: string;
+}>;
+ getEmailActivityDetailsById(
+    activityRid: string,
+    accountRid: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { emailActivityDetails: any };
+  }>;
+   getEmailStatus(): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { emailStatus: any };
+  }>;
 }
 
-export interface IActivityService {
- createActivityTask(
-    taskRequest: IActivityTask,
-    userId: string
-  ): Promise<{
-    statusCode: number;
-    message: string;
-    errorMessage?: string;
-    data?: { cases: any };
-  }>;
-   getAllActivities(
-    userId: string,
-    attachmentLevel: string,
-    entityId: string,
-    accountRid: string,
-    page: number,
-    limit: number,
-    search: string,
-    filters: Record<string, any>,
-    sortBy: string,
-    sortOrder: string,
-    fiscalYear: number,
-    apiType: string,
-    graphqlData: any
-  ): Promise<{
-    statusCode: number;
-    message: string;
-    errorMessage?: string;
-    data?: { activities: any[]; totalCount: number };
-  }>;
-}
+

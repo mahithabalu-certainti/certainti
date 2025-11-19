@@ -569,6 +569,45 @@ const createActivitTaskSchema = Joi.object({
   remainder_interval: Joi.number().optional()
 });
 
+const createActivityEmailSchema = Joi.object({
+ subject: Joi.string().max(500).required(),
+ body_html: Joi.string().required(),
+ template_rid: Joi.string().optional().allow("", null),
+ account_rid : Joi.string().max(255).required(),
+ attach_to : Joi.string().required(),
+ attachment_level : Joi.string().required(),
+  fiscal_year : Joi.number().optional(),
+  activity_type: Joi.string().valid("email").required(),
+  to_email:Joi.string().email().required(),
+  /*to_email: Joi.array()
+    .items(Joi.string().email().required())
+    .min(1), */
+  ccEmail: Joi.array()
+    .items(Joi.string().email().required())
+    .optional()
+});
+
+const updateActivityEmailSchema = Joi.object({
+ activity_rid: Joi.string().max(255).required(),
+ subject: Joi.string().max(500).required(),
+ body_html: Joi.string().required(),
+ template_rid: Joi.string().optional().allow("", null),
+ account_rid : Joi.string().max(255).required(),
+ attach_to : Joi.string().required(),
+ attachment_level : Joi.string().required(),
+  fiscal_year : Joi.number().optional(),
+  activity_type: Joi.string().valid("email").required(),
+  to_email:Joi.string().email().required(),
+  /*to_email: Joi.array()
+    .items(Joi.string().email().required())
+    .min(1), */
+  ccEmail: Joi.array()
+    .items(Joi.string().email().required())
+    .optional()
+});
+
+
+
 const updateTaskSchema = Joi.object({
   rid : Joi.string().max(255).required(),
   task_name: Joi.string().max(255).required(),
@@ -636,5 +675,7 @@ export {
   exportEmailTemplateSchema,
   createActivitTaskSchema,
   listActivityTaskSchema,
-  exportActivitySchema
+  exportActivitySchema,
+  createActivityEmailSchema,
+  updateActivityEmailSchema
 };

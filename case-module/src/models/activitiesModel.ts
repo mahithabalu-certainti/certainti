@@ -34,6 +34,11 @@ export interface ActivitiesAttributes {
   invitees_list?: string;
   attendees_list?: string;
   mom?: string;
+  to_email?: JSON;
+  cc_email?: JSON;
+  sender_email?: string;
+  fiscal_year?: number;
+  body_html?: string;
 }
 
 export interface ActivitiesCreationAttributes extends Optional<ActivitiesAttributes, "rid"> {}
@@ -70,6 +75,11 @@ export class Activities extends Model<ActivitiesAttributes, ActivitiesCreationAt
   public invitees_list?: string;
   public attendees_list?: string;
   public mom?: string;
+  public to_email?: JSON;
+  public cc_email?: JSON
+  public sender_email?: string;
+  public fiscal_year?: number
+  public body_html?: string;
 
   static initialize(sequelize: Sequelize, schemaName: string = MAIN_SCHEMA_NAME) {
     return Activities.init({
@@ -112,6 +122,11 @@ export class Activities extends Model<ActivitiesAttributes, ActivitiesCreationAt
       invitees_list: { type: DataTypes.TEXT, allowNull: true },
       attendees_list: { type: DataTypes.TEXT, allowNull: true },
       mom: { type: DataTypes.TEXT, allowNull: true },
+      to_email: { type: DataTypes.JSONB, allowNull: true },
+      cc_email: { type: DataTypes.JSONB, allowNull: true },
+      sender_email: { type: DataTypes.STRING(255), allowNull: true },
+      fiscal_year: { type: DataTypes.INTEGER, allowNull: true },
+      body_html: { type: DataTypes.TEXT, allowNull: true },
     }, {
       sequelize,
       schema: schemaName,

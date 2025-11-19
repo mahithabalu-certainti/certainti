@@ -29,6 +29,7 @@ import {
   buildDatetimeFilterCondition,
   buildNumericFilterCondition,
   buildStringFilterCondition,
+  decryptClientSecret,
   deleteFromAzureBlob,
   errorLog,
   generateSasUrl,
@@ -63,6 +64,7 @@ import {
   fetchCaseDetails,
   fetchCasesHeadersDatas,
   fetchCaseSpecificTaskQuery,
+  fetchEmailActivityDetails,
   fetchMilestoneTaskTemplate,
   fetchProjectsForCases,
   listAllCasesSummaryQuery,
@@ -112,6 +114,7 @@ import {
 import { Activities } from "../../models/activitiesModel";
 import { CaseManagementSchemaService } from "../casesManagement/schemaService";
 import CaseSchemaService from "../cases/schemaService";
+import { sendEmailWithAttachment } from "../emailService";
 
 class ActivitySchemaService {
   private orgDbSequelize: Sequelize | null = null;
@@ -1005,20 +1008,19 @@ class ActivitySchemaService {
     taskRid: string = ""
   ) {
     try {
-      const {Activities} = await this.caseModelService.getModels(
+      const { Activities } = await this.caseModelService.getModels(
         accountNumber
       );
-      const entityresponse:any = await Activities.findOne({
+      const entityresponse: any = await Activities.findOne({
         where: { rid: taskRid },
         raw: true,
       });
-    if(!entityresponse) {
-      logMessage(`No entity found for rid: ${taskRid}`);
-      return;
-    }
-    else {
-      const attachmentLevel = entityresponse?.attachment_level || "case";
-      if(!this.orgDbSequelize) {
+      if (!entityresponse) {
+        logMessage(`No entity found for rid: ${taskRid}`);
+        return;
+      } else {
+        const attachmentLevel = entityresponse?.attachment_level || "case";
+        if (!this.orgDbSequelize) {
           this.orgDbSequelize = await this.caseModelService.getSequelize();
         }
         const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
@@ -1026,9 +1028,14 @@ class ActivitySchemaService {
           ""
         )}`;
         let insertQuery = "";
-      console.log("In add task timeline...", entity_rid, accountRid, attachmentLevel);
-      if (attachmentLevel === "case") {
-        /*const { CaseTimeline } = await this.caseModelService.getModels(
+        console.log(
+          "In add task timeline...",
+          entity_rid,
+          accountRid,
+          attachmentLevel
+        );
+        if (attachmentLevel === "case") {
+          /*const { CaseTimeline } = await this.caseModelService.getModels(
           accountNumber
         );
         console.log("Adding case timeline...", entity_rid, accountRid, userId);
@@ -1043,24 +1050,33 @@ class ActivitySchemaService {
           event_datetime: new Date(),
           created_datetime: new Date(),
         }); */
-          insertQuery = rawQueries.insertTimeline(schemaName,"case_timeline");
-      }
-      else if(attachmentLevel === "project") {
-         insertQuery = rawQueries.insertTimeline(schemaName,"project_timeline");
-      }
-      else if(attachmentLevel === "project_resource") {
-         insertQuery = rawQueries.insertTimeline(schemaName,"project_resource_timeline");
-      }
-      else if(attachmentLevel === "project_task") {
-         insertQuery = rawQueries.insertTimeline(schemaName,"project_task_timeline");
-      }
-      else if(attachmentLevel === "resource") {
-         insertQuery = rawQueries.insertTimeline(schemaName,"resource_timeline");
-      }
-      else {
-        insertQuery = rawQueries.insertTimeline(schemaName,"account_timeline");
-      }
-
+          insertQuery = rawQueries.insertTimeline(schemaName, "case_timeline");
+        } else if (attachmentLevel === "project") {
+          insertQuery = rawQueries.insertTimeline(
+            schemaName,
+            "project_timeline"
+          );
+        } else if (attachmentLevel === "project_resource") {
+          insertQuery = rawQueries.insertTimeline(
+            schemaName,
+            "project_resource_timeline"
+          );
+        } else if (attachmentLevel === "project_task") {
+          insertQuery = rawQueries.insertTimeline(
+            schemaName,
+            "project_task_timeline"
+          );
+        } else if (attachmentLevel === "resource") {
+          insertQuery = rawQueries.insertTimeline(
+            schemaName,
+            "resource_timeline"
+          );
+        } else {
+          insertQuery = rawQueries.insertTimeline(
+            schemaName,
+            "account_timeline"
+          );
+        }
 
         await this.orgDbSequelize.query(insertQuery, {
           type: QueryTypes.INSERT,
@@ -1072,8 +1088,8 @@ class ActivitySchemaService {
             description: description,
             created_by: userId,
             event_datetime: new Date(),
-            created_datetime: new Date()
-          }
+            created_datetime: new Date(),
+          },
         });
       }
     } catch (err) {
@@ -1093,7 +1109,13 @@ class ActivitySchemaService {
     attachmentLevel: string = "case"
   ) {
     try {
-      console.log("Adding task management timeline...", taskRid, accountRid, userId, operation);
+      console.log(
+        "Adding task management timeline...",
+        taskRid,
+        accountRid,
+        userId,
+        operation
+      );
       const eventName =
         operation === "created" ? "Task Created" : "Task Updated";
       let description = "";
@@ -1118,7 +1140,7 @@ class ActivitySchemaService {
         accountRid,
         description,
         userId,
-          eventName,
+        eventName,
         eventStatus,
         attachmentLevel
       );
@@ -1238,43 +1260,595 @@ class ActivitySchemaService {
     }
   }
 
-   async checkIsActivityTaskUnique(
-      taskReq: any,
-      accountNumber: string
-    ): Promise<boolean> {
-      const { Activities } = await this.caseModelService.getModels(accountNumber);
-      const response = await Activities.findOne({
-        where: {
-          [Op.and]: [
-            where(
-              fn("LOWER", col("task_name")),
-              Op.eq,
-              taskReq.task_name.toLowerCase()
-            ),
-            {activity_type: 'task' }
-          ]
+  async checkIsActivityTaskUnique(
+    taskReq: any,
+    accountNumber: string
+  ): Promise<boolean> {
+    const { Activities } = await this.caseModelService.getModels(accountNumber);
+    const response = await Activities.findOne({
+      where: {
+        [Op.and]: [
+          where(
+            fn("LOWER", col("task_name")),
+            Op.eq,
+            taskReq.task_name.toLowerCase()
+          ),
+          { activity_type: "task" },
+        ],
+      },
+    });
+    return !response;
+  }
+
+  async checkIsExistingActivityTaskUnique(
+    taskReq: any,
+    accountNumber: string
+  ): Promise<boolean> {
+    const { Activities } = await this.caseModelService.getModels(accountNumber);
+    const response = await Activities.findOne({
+      where: {
+        [Op.and]: [
+          where(
+            fn("LOWER", col("task_name")),
+            Op.eq,
+            taskReq.task_name.toLowerCase()
+          ),
+          { rid: { [Op.ne]: taskReq.task_rid } },
+          { activity_type: "task" },
+        ],
+      },
+    });
+    return !response;
+  }
+  async createActivityEmail(
+    accountNumber: string,
+    activityRequest: any,
+    userId: string,
+    files?: Express.Multer.File[]
+  ) {
+    const { Activities, ActivityAttachments } =
+      await this.caseModelService.getModels(accountNumber);
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize = await this.caseModelService.getSequelize();
+    }
+    const [emailStatus]: any[] = await this.mainDbSequelize.query(
+      rawQueries.fetchEmailStatusByName(activityRequest.email_status),
+      { type: "SELECT" }
+    );
+    const activityData = {
+      ...activityRequest,
+      activity_type: "Email",
+      email_status_rid: emailStatus?.rid || null,
+      account_rid:
+        activityRequest.accountRid || activityRequest.account_rid || "",
+    };
+    const response = await Activities.create(activityData);
+    activityRequest.activity_rid = response.rid;
+    if (files != undefined) {
+      for (let f of files) {
+        console.log("Processing file for email attachment: ", f);
+        const uploadFile = await uploadToAzureBlob(
+          f,
+          activityRequest.account_rid,
+          accountNumber,
+          "cases"
+        );
+        if (uploadFile) {
+          const attachmentPayload: any = {
+            created_by: activityRequest.created_by,
+            created_datetime: new Date(),
+            account_rid: activityRequest.account_rid,
+            activity_rid: activityRequest.activity_rid,
+            browse_file: uploadFile.url,
+            size: uploadFile.size.toString(),
+            format: uploadFile.extension,
+            document_name: uploadFile.name,
+            is_file_deleted: false,
+          };
+          await ActivityAttachments.create(attachmentPayload);
         }
+      }
+    }
+    if (activityRequest.email_status === "Sent") {
+      activityData.activity_rid = response.rid;
+      await this.sendActivityEmail(
+        accountNumber,
+        activityRequest,
+        userId,
+        files
+      );
+    }
+    this.addTaskTimeline(
+      accountNumber,
+      activityData.activity_rid,
+      activityData.account_rid,
+      `Email Activity Created with subject: ${activityRequest.subject}`,
+      userId,
+      `Email Activity Created: ${activityRequest.subject}`,
+      "success",
+      activityData.activity_rid
+    );
+    return response;
+  }
+
+  async updateActivityEmail(
+    accountNumber: string,
+    activityRequest: any,
+    userId: string,
+    files?: Express.Multer.File[]
+  ) {
+    const { Activities, ActivityAttachments } =
+      await this.caseModelService.getModels(accountNumber);
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize = await this.caseModelService.getSequelize();
+    }
+    const [emailStatus]: any[] = await this.mainDbSequelize.query(
+      rawQueries.fetchEmailStatusByName(activityRequest.email_status),
+      { type: "SELECT" }
+    );
+    activityRequest.email_status = "Sent";
+    if (activityRequest.email_status === "Sent") {
+      await this.sendActivityEmail(
+        accountNumber,
+        activityRequest,
+        userId,
+        files
+      );
+    }
+    const activityData = {
+      ...activityRequest,
+      activity_type: "Email",
+      email_status_rid: emailStatus?.rid || null,
+      account_rid:
+        activityRequest.accountRid || activityRequest.account_rid || "",
+    };
+
+    const response = await Activities.update(activityData, {
+      where: { rid: activityRequest.activity_rid },
+    });
+    if (files != undefined) {
+      for (let f of files) {
+        console.log("Processing file for email attachment: ", f);
+        const uploadFile = await uploadToAzureBlob(
+          f,
+          activityRequest.account_rid,
+          accountNumber,
+          "cases"
+        );
+        if (uploadFile) {
+          const attachmentPayload: any = {
+            created_by: activityRequest.created_by,
+            created_datetime: new Date(),
+            account_rid: activityRequest.account_rid,
+            activity_rid: activityRequest.activity_rid,
+            browse_file: uploadFile.url,
+            size: uploadFile.size.toString(),
+            format: uploadFile.extension,
+            document_name: uploadFile.name,
+            is_file_deleted: false,
+          };
+          await ActivityAttachments.create(attachmentPayload);
+        }
+      }
+    }
+    this.addTaskTimeline(
+      accountNumber,
+      activityRequest.activity_rid,
+      activityRequest.account_rid,
+      `Email Activity updated with subject: ${activityRequest.subject}`,
+      userId,
+      `Email Activity updated: ${activityRequest.subject}`,
+      "success",
+      activityRequest.activity_rid
+    );
+    return response;
+  }
+  async sendActivityEmail(
+    accountNumber: string,
+    activityRequest: any,
+    userId: string,
+    files?: Express.Multer.File[]
+  ) {
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize = await initMainDbSequelize();
+    }
+    const { ActivityAttachments } = await this.caseModelService.getModels(
+      accountNumber
+    );
+    const [accountInfo]: any[] = await this.mainDbSequelize.query(
+      rawQueries.fetchAccountInfo(activityRequest.account_rid),
+      { type: "SELECT" }
+    );
+
+    const senderEmailInfo = await this.fetchSenderEmailInfoByAccountId(
+      accountNumber,
+      accountInfo.parent_account_rid
+    );
+    const emailContent = {
+      message: {
+        subject: activityRequest.subject,
+        body: {
+          contentType: "HTML",
+          content: activityRequest.body_html,
+        },
+        toRecipients: [
+          {
+            emailAddress: {
+              address: activityRequest.to_email,
+            },
+          },
+        ],
+        ccRecipients:
+          activityRequest.ccEmails && activityRequest.ccEmails.length > 0
+            ? activityRequest.ccEmails.map((email: any) => ({
+                emailAddress: { address: email },
+              }))
+            : [],
+      },
+    };
+
+    // Generate attachments array from uploaded files
+    let attachments: any[] = Array.isArray(files)
+      ? files.map((file) => ({
+          "@odata.type": "#microsoft.graph.fileAttachment",
+          name: file.originalname || file.filename,
+          contentBytes: file.buffer.toString("base64"),
+          contentType: file.mimetype,
+        }))
+      : [];
+
+    if (activityRequest.activity_rid) {
+      const dbAttachments = await ActivityAttachments.findAll({
+        where: {
+          activity_rid: activityRequest.activity_rid,
+          is_file_deleted: false,
+        },
       });
-      return !response;
+      for (const dbFile of dbAttachments) {
+        try {
+          const response = await fetch(dbFile.browse_file);
+          const buffer = Buffer.from(await response.arrayBuffer());
+          attachments.push({
+            "@odata.type": "#microsoft.graph.fileAttachment",
+            name: dbFile.document_name,
+            contentBytes: buffer.toString("base64"),
+            contentType: dbFile.format || "application/octet-stream",
+          });
+        } catch (err) {
+          logMessage(
+            `Error fetching file from blob for email attachment: ${err}`
+          );
+        }
+      }
     }
 
-  async  checkIsExistingActivityTaskUnique(taskReq: any, accountNumber: string): Promise<boolean> {
-  const { Activities } = await this.caseModelService.getModels(accountNumber);
-  const response = await Activities.findOne({
-    where: {
-      [Op.and]: [
-        where(
-          fn("LOWER", col("task_name")),
-          Op.eq,
-          taskReq.task_name.toLowerCase()
-        ),
-        { rid: { [Op.ne]: taskReq.task_rid } },
-        {activity_type: 'task' }
-      ]
-    }
-  });
-  return !response;
-}
-}
+    let emailResponse = await sendEmailWithAttachment({
+      message: emailContent.message,
+      attachments,
+      senderEmailInfo: senderEmailInfo!,
+    });
+  }
 
+  async fetchSenderEmailInfoByAccountId(
+    accountNumber: string,
+    parentAccountId: string
+  ) {
+    try {
+      if (!this.orgDbSequelize) {
+        this.orgDbSequelize = await this.caseModelService.getSequelize();
+      }
+      const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+        /\D/g,
+        ""
+      )}`;
+      const [senderEmailInfo]: any[] = await this.orgDbSequelize.query(
+        rawQueries.fetchSenderEmail(schemaName, parentAccountId)
+      );
+      const clientSecret = senderEmailInfo[0]?.client_secret;
+      const decryptedSecret = await decryptClientSecret(clientSecret);
+
+      return {
+        email:
+          senderEmailInfo[0]?.support_email,
+        clientId:
+          senderEmailInfo[0]?.client_id,
+        clientSecret:
+          decryptedSecret,
+        tenantId:
+          senderEmailInfo[0]?.tenant_id ,
+      };
+    } catch (err) {
+      logMessage(`Error fetching sender email info for account: ${err}`);
+    }
+  }
+
+  async deleteEmailAttachment(
+    accountNumber: string,
+    data: any,
+    userId: string
+  ) {
+    const { ActivityAttachments } = await this.caseModelService.getModels(
+      accountNumber
+    );
+    const checkIsFileExists = await ActivityAttachments.findOne({
+      where: {
+        rid: data.rid,
+        is_file_deleted: false,
+      },
+    });
+    if (checkIsFileExists) {
+      await deleteFromAzureBlob(data.url);
+      const [updateFile] = await ActivityAttachments.update(
+        {
+          is_file_deleted: true,
+          modified_by: userId,
+          modified_datetime: new Date(),
+        },
+        { where: { rid: data.rid } }
+      );
+      if (updateFile === 1) {
+        await this.addTaskTimeline(
+          accountNumber,
+          checkIsFileExists.rid,
+          data.account_rid,
+          `Activity Attachments Deleted : ${checkIsFileExists.document_name}`,
+          userId,
+          `Attachment deleted for Email  ${data?.rid}`,
+          "success",
+          data.task_rid
+        );
+
+        return {
+          statusCode: HttpStatus.SUCCESS,
+          statusMessage: STATUS_MESSAGE.attachmentDeletedSuccess,
+        };
+      } else {
+        return {
+          statusCode: HttpStatus.FAILED,
+          statusMessage: STATUS_MESSAGE.attachmentDeleteFailed,
+        };
+      }
+    } else {
+      return {
+        statusCode: HttpStatus.NOT_FOUND,
+        statusMessage: STATUS_MESSAGE.attachmentNotFound,
+      };
+    }
+  }
+  async fetchEmailActivityDetailsById(
+    activityRid: string,
+    accountNumber: string,
+    accountRid: string
+  ) {
+    if (!this.orgDbSequelize) {
+      this.orgDbSequelize = await this.caseModelService.getSequelize();
+    }
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+    }
+    const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+      /\D/g,
+      ""
+    )}`;
+    const [emailDetails]: any[] = await this.orgDbSequelize.query(
+      fetchEmailActivityDetails(schemaName, activityRid),
+      { type: "SELECT" }
+    );
+
+    if (!emailDetails) {
+      throw new Error("Data not found");
+    }
+
+    const attachmentsDetails = await this.fetchEmailAttachments(
+      accountNumber,
+      activityRid
+    );
+
+    const userInfo = await this.caseSchemaService.insertUserDetails(
+      emailDetails.created_by ?? "",
+      emailDetails.modified_by ?? ""
+    );
+
+    const [accountInfo]: any[] = await this.mainDbSequelize.query(
+      rawQueries.fetchAccountAndCountryDetails(accountRid),
+      {
+        type: "SELECT",
+      }
+    );
+
+    const [statusInfo]: any[] = await this.mainDbSequelize.query(
+      rawQueries.getStatusDetails(emailDetails?.status_rid ?? ""),
+      {
+        type: "SELECT",
+      }
+    );
+    let attached_to = emailDetails?.attached_to ?? "";
+    if (emailDetails?.attach_to === "case") {
+      const [caseInfo]: any[] = await this.mainDbSequelize.query(
+        rawQueries.fetchCaseInfo(accountNumber, accountRid),
+        {
+          type: "SELECT",
+        }
+      );
+      // Compose case name: accountName-countryCode-fiscalYear-caseName
+      const accountName = accountInfo.account_name || "";
+      const countryCode = accountInfo.country_code || "";
+      const fiscalYear = caseInfo.fiscal_year || "";
+      const originalCaseName = caseInfo.case_name || "";
+      const composedCaseName = `${accountName}-${countryCode}-${fiscalYear}-${originalCaseName}`;
+      attached_to = composedCaseName;
+    }
+
+    // Fetch fiscal_year based on attach_to
+    let fiscal_year = null;
+    const attachTo = emailDetails?.attach_to;
+    const attachmentLevel = emailDetails?.attachment_level;
+    if (attachmentLevel === "case" && attachTo) {
+      const [caseInfo]: any[] = await this.orgDbSequelize.query(
+        rawQueries.fetchCaseInfo(schemaName, attachTo),
+        { type: "SELECT" }
+      );
+      fiscal_year = caseInfo?.fiscal_year ?? null;
+    } else if (attachmentLevel === "account" && attachTo) {
+      fiscal_year = emailDetails?.fiscal_year ?? null;
+    } else if (attachmentLevel === "project" && attachTo) {
+      const project = await this.caseSchemaService.fetchProjectInfoById(
+        schemaName,
+        attachTo
+      );
+      fiscal_year = project?.fiscal_year ?? null;
+    } else if (attachmentLevel === "project_resource" && attachTo) {
+      let projectResource: any =
+        await this.caseSchemaService.fetchProjectResourceById(
+          schemaName,
+          attachTo
+        );
+      if (Array.isArray(projectResource)) projectResource = projectResource[0];
+      if (projectResource && projectResource.project_fiscal_rid) {
+        const project = await this.caseSchemaService.fetchProjectInfoById(
+          schemaName,
+          projectResource.project_fiscal_rid
+        );
+        fiscal_year = project?.fiscal_year ?? null;
+      }
+    } else if (attachmentLevel === "project_task" && attachTo) {
+      let projectTask: any = await this.caseSchemaService.fetchProjectTaskById(
+        accountNumber,
+        attachTo
+      );
+      if (Array.isArray(projectTask)) projectTask = projectTask[0];
+      if (projectTask && projectTask.project_fiscal_rid) {
+        const project = await this.caseSchemaService.fetchProjectInfoById(
+          accountNumber,
+          projectTask.project_fiscal_rid
+        );
+        fiscal_year = project?.fiscal_year ?? null;
+      }
+    } else if (attachmentLevel === "resource" && attachTo) {
+      let resource: any = await this.caseSchemaService.fetchResourceById(
+        accountNumber,
+        attachTo
+      );
+      if (Array.isArray(resource)) resource = resource[0];
+      if (resource && resource.project_fiscal_rid) {
+        const project = await this.caseSchemaService.fetchProjectInfoById(
+          accountNumber,
+          resource.project_fiscal_rid
+        );
+        fiscal_year = project?.fiscal_year ?? null;
+      }
+    } else if (attachmentLevel === "resource_cost" && attachTo) {
+      let resourceCost: any =
+        await this.caseSchemaService.fetchResourceCostById(
+          accountNumber,
+          attachTo
+        );
+      if (Array.isArray(resourceCost)) resourceCost = resourceCost[0];
+      if (resourceCost && resourceCost.resource_rid) {
+        let resource: any = await this.caseSchemaService.fetchResourceById(
+          accountNumber,
+          resourceCost.resource_rid
+        );
+        if (Array.isArray(resource)) resource = resource[0];
+        if (resource && resource.project_fiscal_rid) {
+          const project = await this.caseSchemaService.fetchProjectInfoById(
+            accountNumber,
+            resource.project_fiscal_rid
+          );
+          fiscal_year = project?.fiscal_year ?? null;
+        }
+      }
+    } else if (attachmentLevel === "resource_skill" && attachTo) {
+      let resourceSkill: any =
+        await this.caseSchemaService.fetchResourceSkillById(
+          accountNumber,
+          attachTo
+        );
+      if (Array.isArray(resourceSkill)) resourceSkill = resourceSkill[0];
+      if (resourceSkill && resourceSkill.resource_rid) {
+        let resource: any = await this.caseSchemaService.fetchResourceById(
+          accountNumber,
+          resourceSkill.resource_rid
+        );
+        if (Array.isArray(resource)) resource = resource[0];
+        if (resource && resource.project_fiscal_rid) {
+          const project = await this.caseSchemaService.fetchProjectInfoById(
+            accountNumber,
+            resource.project_fiscal_rid
+          );
+          fiscal_year = project?.fiscal_year ?? null;
+        }
+      }
+    }
+
+    const response: any = {
+      attach_to: emailDetails?.attach_to ?? "",
+      attachment_level: emailDetails?.attachment_level ?? "",
+      attached_to: attached_to ?? "",
+      activity_rid: emailDetails?.rid,
+      activity_type: emailDetails?.activity_type ?? "",
+      subject: emailDetails?.subject ?? "",
+      body_html: emailDetails?.body_html ?? "",
+      to_email: emailDetails?.to_email ? emailDetails.to_email.split(";") : [],
+      cc_emails: emailDetails?.cc_emails
+        ? emailDetails.cc_emails.split(";")
+        : [],
+      email_status: emailDetails?.email_status ?? "",
+      r_number: emailDetails.r_number ?? "",
+      status_rid: emailDetails.status_rid ?? "",
+      account_rid: emailDetails.account_rid ?? "",
+      fiscal_year,
+      status_name: statusInfo?.status_name ?? "",
+      modified_by: userInfo.modified_name ?? emailDetails.modified_by,
+      created_by: userInfo.created_name ?? emailDetails.created_by,
+      created_datetime: emailDetails.created_datetime ?? null,
+      modified_datetime: emailDetails.modified_datetime ?? null,
+      attachments: attachmentsDetails || [],
+    };
+
+    return response;
+  }
+  async fetchEmailAttachments(accountNumber: string, activityId: string) {
+    try {
+      const { ActivityAttachments } = await this.caseModelService.getModels(
+        accountNumber
+      );
+      // Convert Sequelize instances to plain objects
+
+      const items = await ActivityAttachments.findAll({
+        order: [["created_datetime", "ASC"]],
+        where: { activity_rid: activityId },
+        raw: true,
+      });
+      const updatedAttachments = await Promise.all(
+        (items || []).map(async (da: any) => ({
+          ...da,
+          browse_file: da.browse_file
+            ? await generateSasUrl(da.browse_file)
+            : null,
+        }))
+      );
+      return updatedAttachments;
+    } catch (err) {
+      logMessage(`Error fetching email attachments: ${err}`);
+      throw new Error(
+        "Error fetching email attachments: " + (err as Error).message
+      );
+    }
+  }
+
+   async getEmailStatus() {
+      if (!this.mainDbSequelize) {
+        this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+      }
+      const emailStatus = await this.mainDbSequelize.query(
+        rawQueries.getEmailStatus(),
+        {
+          type: "SELECT",
+        }
+      );
+  
+      return emailStatus;
+    }
+}
 export default ActivitySchemaService;
