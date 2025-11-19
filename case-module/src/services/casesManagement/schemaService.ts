@@ -590,7 +590,7 @@ class CaseManagementSchemaService {
       this.mainDbSequelize = await initMainDbSequelize();
     }
     const { TaskTemplate } = await this.caseModelService.getModels("");
-    let sequenceNumber : any
+    let sequenceNumber = 0
     let dynamicData;
     const getTaskType : any = await this.mainDbSequelize.query(rawQueries.getTaskTypeRid(data.task_type_rid));
     if(getTaskType[0][0].task_type_name === 'Milestone') {
@@ -607,13 +607,11 @@ class CaseManagementSchemaService {
       } else {
         sequenceNumber = sequenceNumber + 1
       }
-     
       dynamicData = {
         created_by : userId,
         task_name : data.task_name,
         sequence_no : sequenceNumber,
         effort_in_days : data.effort_in_days,
-        reminder_interval : data.reminder_interval,
         effective_start_datetime : data.effective_start_datetime,
         effective_end_datetime : data.effective_end_datetime,
         case_team_member_role_rid : data.case_team_member_role_rid,
@@ -625,7 +623,7 @@ class CaseManagementSchemaService {
         task_description : data.task_description
       }
     } else {
-      sequenceNumber = null
+      sequenceNumber = 0
       dynamicData = {
         created_by : userId,
         task_name : data.task_name,
@@ -637,9 +635,11 @@ class CaseManagementSchemaService {
     }
     const result = await TaskTemplate.create(dynamicData);
     if(result) {
-      data.workflow_connector.source_rid = result.dataValues.rid
-      if(data.workflow_connector.target_rid.length > 0) {
-        await this.taskWorkflowConnector(data.workflow_connector);
+      if(Object.keys(data.workflow_connector).length > 0) {
+        data.workflow_connector.source_rid = result.dataValues.rid
+        if(data.workflow_connector.target_rid.length > 0) {
+          await this.taskWorkflowConnector(data.workflow_connector);
+        }
       }
     }
     return {
@@ -692,8 +692,10 @@ class CaseManagementSchemaService {
         }
       })
       if(result === 1) {
-        if(data.workflow_connector.target_rid.length > 0) {
-          await this.taskWorkflowConnector(data.workflow_connector);
+        if(Object.keys(data.workflow_connector).length > 0) {
+          if(data.workflow_connector.target_rid.length > 0) {
+            await this.taskWorkflowConnector(data.workflow_connector);
+          }
         }
         return {
           statusCode : HttpStatus.SUCCESS,
@@ -1342,6 +1344,16 @@ async getWorkFlowConnector () {
         } 
       },
       order : [['task_name', 'ASC']]
+    });
+    return result;
+  }
+  async getCaseDetails (caseRid : string, accountNumber : string) {
+    const {Case} = await this.caseModelService.getModels(accountNumber)
+    const result = await Case.findOne({
+      attributes : ['status_rid'],
+      where : {
+        rid : caseRid
+      }, raw : true
     });
     return result;
   }

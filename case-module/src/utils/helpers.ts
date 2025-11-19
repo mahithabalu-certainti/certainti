@@ -408,12 +408,6 @@ export const setTaskTemplateData = (dbData : TaskTemplate, reqData : any, userId
       validUpdateQuery.push(validUpdateConditions)
     }
   }
-  if(reqData.reminder_interval) {
-    if(reqData.reminder_interval !== dbData.reminder_interval) {
-      validUpdateConditions = `reminder_interval = ${reqData.reminder_interval}`
-      validUpdateQuery.push(validUpdateConditions)
-    }
-  }
   if(reqData.case_team_member_role_rid) {
     if(reqData.case_team_member_role_rid !== dbData.case_team_member_role_rid) {
       validUpdateConditions = `case_team_member_role_rid = '${reqData.case_team_member_role_rid}'`

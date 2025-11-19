@@ -338,7 +338,6 @@ export type CreateTaskTemplateType = {
   task_name : string,
   sequence_no : number,
   effort_in_days : number,
-  reminder_interval : number,
   effective_start_datetime : Date,
   effective_end_datetime : Date,
   case_team_member_role_rid : string,
@@ -377,7 +376,6 @@ export type UpdateTaskTemplateType = {
   task_name : string,
   sequence_no : number,
   effort_in_days : number,
-  reminder_interval : number,
   effective_start_datetime : Date,
   effective_end_datetime : Date,
   case_team_member_role_rid : string,
@@ -402,7 +400,6 @@ export type AdminTaskTemplateResponseTypes = {
   task_name : string,
   sequence_no : number,
   effort_in_days : number,
-  reminder_interval : number,
   effective_start_datetime : Date,
   effective_end_datetime : Date,
   case_team_member_role_rid : string,
@@ -441,7 +438,6 @@ export interface TaskData {
   created_by: string;
   sequence_no: number | null;
   effort_in_days: number | null;
-  reminder_interval: number | null;
   effective_start_datetime: string | Date | null;
   effective_end_datetime: string | Date | null;
   case_team_member_role_rid: string | null;
@@ -644,6 +640,10 @@ export type WorkflowConnectorType = {
 export type TagsTypes = {
   rid : string
   tag_name : string
+}
+export type caseStatusType = {
+  rid : string,
+  status_name : string
 }
 
 export type CaseTaskWorkFlowCreate = {

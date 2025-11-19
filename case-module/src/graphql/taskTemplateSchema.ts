@@ -13,7 +13,6 @@ modified_datetime: Date
 task_name: String
 sequence_no: Int
 effort_in_days: Int
-reminder_interval: Int
 effective_start_datetime: Date
 effective_end_datetime: Date
 role_name: String

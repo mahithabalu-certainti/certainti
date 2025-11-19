@@ -12,7 +12,6 @@ interface CaseTaskTemplateAttributes {
   task_name: string;
   sequence_no?: number;
   effort_in_days?: number;
-  reminder_interval?: number;
   effective_start_datetime?: Date;
   effective_end_datetime?: Date;
   case_team_member_role_rid?: string;
@@ -41,7 +40,6 @@ export class TaskTemplate
   public task_name!: string;
   public sequence_no?: number;
   public effort_in_days?: number;
-  public reminder_interval?: number;
   public effective_start_datetime?: Date;
   public effective_end_datetime?: Date;
   public case_team_member_role_rid?: string;
@@ -85,7 +83,6 @@ export class TaskTemplate
         task_name: { type: DataTypes.STRING(255), allowNull: false },
         sequence_no: { type: DataTypes.INTEGER, allowNull: true },
         effort_in_days: { type: DataTypes.INTEGER, allowNull: true },
-        reminder_interval: { type: DataTypes.INTEGER, allowNull: true },
         effective_start_datetime: { type: DataTypes.DATE, allowNull: true },
         effective_end_datetime: { type: DataTypes.DATE, allowNull: true },
         case_team_member_role_rid: { type: DataTypes.STRING(50), allowNull: true },
