@@ -1,4 +1,6 @@
 import { Sequelize } from "sequelize";
+import { CaseTaskWorkflowConnector } from "../models/caseTaskWorkflowConnectorModel";
+import { WorkflowConnectorMapping } from "../models/workflowConnectorMapModel";
 
 export const HttpStatus = {
   SUCCESS: 200,
@@ -1436,7 +1438,59 @@ export const rawQueries = {
   },
   getChecklistStatusByName (statusName : string) {
     return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.checklist_status WHERE status_name ILIKE '%${statusName}%'`;
-  }
+  },
+  checkDependency (sourceRid : string, targetRid : CaseTaskWorkflowConnector[], schemaName : string, caseRid : string, accountRid : string, relationshipConnectorRid : string, otherRelationshipRid : string) {
+    let ids: string[] = []
+    let relationshipIds : string[] = []
+    if(targetRid.length > 0) {
+      targetRid.map((d : any) => ids.push(`'${d.target_rid}'`));
+      relationshipIds.push(`'${relationshipConnectorRid}'`)
+      relationshipIds.push(`'${otherRelationshipRid}'`)
+      relationshipIds.map((d : any) => `${d}`)
+    } else {
+      ids.push('')
+    }
+    let query = `
+    SELECT t.task_name 
+    FROM ${schemaName}.case_task t
+    LEFT JOIN  ${schemaName}.case_task_workflow_connector_mapping w ON w.source_rid = t.rid
+    WHERE
+    t.rid = '${sourceRid}'
+    AND
+    w.target_rid IN (${ids})
+    AND
+    t.case_rid = '${caseRid}'
+    AND
+    t.account_rid = '${accountRid}'
+    AND
+    w.relationship_connector_rid IN (${relationshipIds})
+    `
+    return query;
+  },
+  checkDependencyAdminLevel(
+  sourceRid: string,
+  targetRid: WorkflowConnectorMapping[],
+  relationshipConnectorRid: string,
+  otherRelationshipRid: string
+) {
+  const ids = targetRid.length
+    ? targetRid.map(d => `'${d.target_rid}'`).join(",")
+    : `'NO_TARGET'`; // fallback to avoid IN ()
+
+  const relationshipIds = `'${relationshipConnectorRid}', '${otherRelationshipRid}'`;
+
+  const query = `
+    SELECT t.task_name 
+    FROM ${MAIN_SCHEMA_NAME}.task_template t
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.workflow_connector_mapping w ON w.source_rid = t.rid
+    WHERE
+      t.rid = '${sourceRid}'
+      AND w.target_rid IN (${ids})
+      AND w.relationship_connector_rid IN (${relationshipIds})
+  `;
+  
+  return query;
+}
 };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 
 const keyContactRole = {

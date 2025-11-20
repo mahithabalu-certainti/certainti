@@ -1199,6 +1199,8 @@ return query;
     LEFT JOIN fetch_task_comments ftc ON ftc.rid = ca.comments_rid
     WHERE
     ca.comments_rid = ftc.rid
+    AND
+    ca.is_file_deleted = false
     GROUP BY ca.comments_rid
     )
 

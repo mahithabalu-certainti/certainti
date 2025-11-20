@@ -13,6 +13,7 @@ interface TaskCommentsAttributes {
     account_rid : string
     task_rid : string
     comments : string
+    is_file_deleted : boolean
 }
 
 export interface TaskCommentsCreationAttributes 
@@ -31,6 +32,7 @@ implements TaskCommentsAttributes {
     public account_rid! : string
     public task_rid! : string
     public comments! : string
+    public is_file_deleted! : boolean
 
     static initialise (sequelize : Sequelize, schemaName : string) {
         return TaskComments.init({
@@ -76,6 +78,10 @@ implements TaskCommentsAttributes {
             },
             comments : {
                 type : DataTypes.TEXT(),
+                allowNull : true
+            },
+            is_file_deleted : {
+                type : DataTypes.BOOLEAN(),
                 allowNull : true
             }
         }, {
