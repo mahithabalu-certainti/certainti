@@ -66,7 +66,7 @@ export const ManageDetailComponent = ({
       value: getValueOrDefault(data?.task_type_name) || '-',
     },
     {
-      key: 'milestone_template_rid',
+      key: 'milestone_type_rid',
       label: 'Milestone Name',
       value: getValueOrDefault(data?.milestone_name) || '-',
     },
