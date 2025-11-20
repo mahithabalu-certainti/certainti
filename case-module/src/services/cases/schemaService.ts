@@ -3252,9 +3252,6 @@ return !response;
     accountNumber: string,
     accountRid: string
   ) {
-     const { CheckList } = await this.caseModelService.getModels(
-      accountNumber
-    );
     if(!this.orgDbSequelize)
     {
       this.orgDbSequelize = await this.caseModelService.getSequelize();
@@ -3322,6 +3319,8 @@ return !response;
       fiscal_year = caseInfo?.fiscal_year ?? null;
     } else if (attachmentLevel === 'account' && attachTo) {
       fiscal_year = checklistDetails?.fiscal_year ?? null;
+     } else if (attachmentLevel === 'resource' && attachTo) {
+      fiscal_year = checklistDetails?.fiscal_year ?? null;
     } else if (attachmentLevel === 'project' && attachTo) {
       const project = await this.fetchProjectInfoById(accountNumber, attachTo);
       fiscal_year = project?.fiscal_year ?? null;
@@ -3340,7 +3339,8 @@ return !response;
         const project = await this.fetchProjectInfoById(accountNumber, projectTask.project_fiscal_rid);
         fiscal_year = project?.fiscal_year ?? null;
       }
-    } else if (attachmentLevel === 'resource' && attachTo) {
+    } 
+    /*else if (attachmentLevel === 'resource' && attachTo) {
       let resource:any = await this.fetchResourceById(accountNumber, attachTo);
       if (Array.isArray(resource)) resource = resource[0];
       if (resource && resource.project_fiscal_rid) {
@@ -3369,7 +3369,7 @@ return !response;
           fiscal_year = project?.fiscal_year ?? null;
         }
       }
-    } 
+    } */
 
     const response: any = {
       attach_to: checklistDetails?.attach_to ?? "",
@@ -3652,9 +3652,10 @@ return !response;
           if (attachment.attachment_level === 'account') {
             return attachment.fiscal_year ?? null;
           }
-          if (attachment.attachment_level === 'resource') {
+          if (attachment.attachment_level === 'resource' || attachment.attachment_level === 'resource_cost' || attachment.attachment_level === 'resource_skill') {
             return attachment.fiscal_year ?? null;
           }
+          
           // PROJECT: fetch from project info (project fiscal_year)
           if (attachment.attachment_level === 'project' && attachment.attach_to) {
             const project = await this.fetchProjectInfoById(accountNumber, attachment.attach_to);

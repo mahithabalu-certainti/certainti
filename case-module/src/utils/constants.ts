@@ -471,7 +471,7 @@ export const checklistsFieldMappings = [
   },
    
    {
-    permissionField: "created_by",
+    permissionField: "created_by_name",
     exportField: "Created By",
     dataField: "created_by_name",
   },
@@ -481,12 +481,12 @@ export const checklistsFieldMappings = [
     dataField: "created_datetime",
   },
   {
-    permissionField: "updated_by",
+    permissionField: "modified_by_name",
     exportField: "Updated By",
     dataField: "modified_by_name",
   },
   {
-    permissionField: "updated_datetime",
+    permissionField: "modified_datetime",
     exportField: "Updated On",
     dataField: "modified_datetime",
   }
