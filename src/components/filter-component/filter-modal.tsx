@@ -305,7 +305,6 @@ const FilterModal: React.FC<FilterModalProps> = ({
     index?: number,
     targetKey: 'value' | 'toValue' = 'value'
   ) => {
-    setPage(1);
     const fieldConfig = filterFields.find((f) => f.name === fieldName);
     const newValue = event.target.value;
     if (!fieldConfig) return;

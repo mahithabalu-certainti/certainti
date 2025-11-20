@@ -212,6 +212,13 @@ export const ProfileList: React.FC = () => {
               placeholder='Search'
               disabled={false}
               hide={false}
+              setCurrentPage={(pageNo) => {
+                setPage(pageNo + 1);
+                setTableParams((prev) => ({
+                  ...prev,
+                  page: pageNo + 1,
+                }));
+              }}
             />
             <button
               aria-describedby={modalId}
@@ -230,7 +237,13 @@ export const ProfileList: React.FC = () => {
                 filterId={filterId}
                 filterFields={profileFilterFields}
                 setAppliedFilters={setAppliedFilters}
-                setPage={setPage}
+                setPage={(pageNo) => {
+                  setPage(pageNo);
+                  setTableParams((prev) => ({
+                    ...prev,
+                    page: pageNo,
+                  }));
+                }}
                 handleCloseFilter={handleCloseFilter}
                 handleSorting={handleSorting}
               />

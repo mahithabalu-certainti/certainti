@@ -62,9 +62,7 @@ export const getGlobalCaseListColumns = (
       sortable: true,
       sortId: 'filing_type_name',
       editId: 'filing_type_rid',
-      editable:
-        permissionMap?.['filing_type_rid']?.edit &&
-        permissionMap?.['filing_type_rid']?.read,
+      editable: false,
       hide:
         !permissionMap?.['filing_type_rid']?.edit &&
         !permissionMap?.['filing_type_rid']?.read,

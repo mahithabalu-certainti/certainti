@@ -223,6 +223,7 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
                 hide={searchHidden}
                 reset={searchReset}
                 onReset={onSearchReset}
+                setCurrentPage={setCurrentPage}
               />
             </Box>
           )}

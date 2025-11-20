@@ -320,7 +320,7 @@ export const transformToNewCreateTemplatePayload = (
     status_rid: formData.status,
     checklist_items: formData.questions.map((question) => ({
       checklist_item_name: question.question,
-      description: question.comments || question.question,
+      description: question.comments || '',
       action_type: 'add' as const,
     })),
   };
