@@ -263,7 +263,7 @@ export class CaseManagementService {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.NOT_FOUND_MESSAGE,
         data: {
-          checklist: null,
+          checklist: [],
           count: 0,
         },
       };

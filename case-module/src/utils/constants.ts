@@ -71,6 +71,7 @@ export const STATUS_MESSAGE = {
   caseCreated: "Case created successfully",
   caseTeamCreated: "Case team updated successfully",
   caseUpdated: "Case updated successfully",
+  caseUpdateFailed: "Case update failed",
   caseCreationFailed: "Case creation failed",
   caseTeamCreationFailed: "Case team creation failed",
   separateDb: "SEPARATE_DB",
@@ -487,7 +488,7 @@ export const checklistsFieldMappings = [
   {
     permissionField: "updated_datetime",
     exportField: "Updated On",
-    dataField: "updated_datetime",
+    dataField: "modified_datetime",
   }
           
 ];
@@ -713,11 +714,11 @@ export const rawQueries = {
   fetchEmailStatus(statusIds: any): string {
     let ids = statusIds.map((d: any) => `'${d}'`);
     return `
-    SELECT rid, status_name as name FROM ${MAIN_SCHEMA_NAME}.email_activity_status WHERE rid IN (${ids})`;
+    SELECT rid, status_name as name FROM ${MAIN_SCHEMA_NAME}.email_status WHERE rid IN (${ids})`;
   },
    fetchEmailStatusByName(statusName: string): string {
     return `
-    SELECT rid, status_name as name FROM ${MAIN_SCHEMA_NAME}.email_activity_status WHERE status_name = '${statusName}'`;
+    SELECT rid, status_name as name FROM ${MAIN_SCHEMA_NAME}.email_status WHERE status_name = '${statusName}'`;
   },
   fetchIndustry(industryIds: any): string {
     let ids = industryIds.map((d: any) => `'${d}'`);
@@ -1103,7 +1104,9 @@ export const rawQueries = {
     `
   },
   getChecklistTypes() {
-    return `SELECT rid, checklist_name FROM ${MAIN_SCHEMA_NAME}.checklist_template ORDER BY created_datetime ASC`
+    return `SELECT rid, checklist_name FROM ${MAIN_SCHEMA_NAME}.checklist_template
+     WHERE status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active')
+    ORDER BY created_datetime ASC`
   },
   getUserNameByIdQuery() {
     return `

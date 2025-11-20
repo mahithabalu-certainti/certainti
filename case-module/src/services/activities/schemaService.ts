@@ -42,7 +42,7 @@ import {
 } from "../../models/taskCollaboratorsModel";
 import CaseSchemaService from "../cases/schemaService";
 import { sendEmailWithAttachment } from "../emailService";
-
+import { scheduleTeamsMeetingUtil } from "../../utils/teamsMeetingUtil";
 class ActivitySchemaService {
   private orgDbSequelize: Sequelize | null = null;
   private mainDbSequelize: Sequelize | null = null;
@@ -100,7 +100,6 @@ class ActivitySchemaService {
       const { ActivityAttachments } = await this.caseModelService.getModels(accountNumber);
       if (!files) return;
       for (let f of files) {
-        console.log("Processing file for email attachment: ", f);
         const uploadFile = await uploadToAzureBlob(
           f,
           activityRequest.account_rid,
@@ -351,7 +350,6 @@ class ActivitySchemaService {
       let attachedToFilter;
       let createdByFilter;
       let modifiedByFilter;
-      let notesOwnerFilter;
       if (filters.attached_to) {
         attachedToFilter = filters.attached_to;
         delete filters.attached_to;
@@ -365,7 +363,7 @@ class ActivitySchemaService {
         delete filters.modified_by_name;
       }
 
-      const { whereClause } = this.caseSchemaService.buildRawWhereClause(
+      const { whereClause } = this.buildRawWhereClauseActivities(
         filters,
         search
       );
@@ -603,7 +601,6 @@ class ActivitySchemaService {
           const result = await Activities.findAll({ where: whereClause });
           allChecklists.push(...result);
         } catch (error) {
-          console.error("Error fetching attachments:", error);
           throw new Error("Failed to fetch attachments");
         }
       }
@@ -640,16 +637,15 @@ class ActivitySchemaService {
 
       // 🔷 Sort
       const validSortFields = [
-        "task_name",
         "r_number",
         "attachment_level",
         "attached_to",
         "created_datetime",
-        "descriptions",
         "created_by_name",
         "fiscal_year",
         "modified_by_name",
         "modified_datetime",
+        "activity_type",
       ];
       const finalSortBy = validSortFields.includes(sortBy)
         ? sortBy
@@ -906,6 +902,122 @@ class ActivitySchemaService {
     }
   }
 
+   private buildSearchCondition(
+      search: string,
+      whereClause: Record<string, any>
+    ): Record<string, any> {
+      const searchCondition = {
+        [Op.or]: [
+          { case_name: { [Op.iLike]: `%${search}%` } },
+          { r_number: { [Op.iLike]: `%${search}%` } },
+        ],
+      };
+  
+      return Object.keys(whereClause).length > 0
+        ? { [Op.and]: [whereClause, searchCondition] }
+        : searchCondition;
+    }
+     buildRawWhereClauseActivities(
+        filters: Record<string, any>,
+        search?: string
+      ): { whereClause: any } {
+        const whereClause: any = {
+          [Op.and]: []
+        };
+      
+        // Search logic
+        if (search) {
+          whereClause[Op.and].push({
+            [Op.or]: [
+              { activity_type: { [Op.iLike]: `%${search}%` } },
+              { r_number: { [Op.iLike]: `%${search}%` } },
+              { attachment_level : { [Op.iLike]: `%${search}%` } }
+            ]
+          });
+        }
+      
+        // Filter logic for your input structure
+        Object.entries(filters).forEach(([field, filter]) => {
+          
+          if (!filter || typeof filter !== 'object') {
+            return;
+          }
+          const operator = Object.keys(filter)[0];
+          const value = operator ? filter[operator] : undefined;
+  
+          if (!operator || value === undefined) {
+            return;
+          }
+  
+          const condition: any = {};
+          
+          switch (field) {
+            case 'activity_type':
+            case 'attachment_level':  
+            case 'descriptions':
+            case 'attached_to':
+            case 'attach_to':
+            case 'r_number':
+              switch (operator.toLowerCase()) {
+                case 'equals': condition[field] = { [Op.iLike]: value }; break;
+                case 'not_equals': condition[field] = { [Op.or]: [{ [Op.notILike]: value }, { [Op.is]: null }] }; break;          
+                case 'contains': condition[field] = { [Op.iLike]: `%${value}%` }; break;
+                case 'is_empty': condition[field] = { [Op.or]: [{ [Op.is]: null }, { [Op.eq]: '' }] }; break;
+                case 'in': condition[field] = { [Op.in]: Array.isArray(value) ? value : [value] }; break;
+              }
+              break;
+            case 'created_datetime':
+            case 'modified_datetime':
+              switch (operator.toLowerCase()) {
+                case 'equals': {
+                  const date = new Date(value);
+                  condition[field] = Sequelize.literal(`DATE("${field}") = DATE('${date.toISOString()}')`);
+                  break;
+                }
+                case 'before': {
+                  const date = new Date(value);
+                  condition[field] = Sequelize.literal(`DATE("${field}") < DATE('${date.toISOString()}')`);
+                  break;
+                }
+                case 'after': {
+                  const date = new Date(value);
+                  condition[field] = Sequelize.literal(`DATE("${field}") > DATE('${date.toISOString()}')`);
+                  break;
+                }
+                case 'between': {
+                  if (Array.isArray(value)) {
+                    const startDate = new Date(value[0]);
+                    const endDate = new Date(value[1]);
+                    condition[field] = Sequelize.literal(
+                      `DATE("${field}") BETWEEN DATE('${startDate.toISOString()}') AND DATE('${endDate.toISOString()}')`
+                    );
+                  }
+                  break;
+                }
+                case 'is_empty': condition[field] = { [Op.is]: null }; break;
+              }
+              break;
+            case 'fiscal_year':  
+              switch (operator.toLowerCase()) {
+                case 'equals': condition[field] = { [Op.eq]: value }; break;
+                case 'not_equals': condition[field] = { [Op.or]: [{ [Op.ne]: value }, { [Op.is]: null }] }; break;          
+                case 'in': condition[field] = { [Op.in]: Array.isArray(value) ? value : [value] }; break;
+                case 'is_empty': condition[field] = { [Op.or]: [{ [Op.is]: null }, { [Op.eq]: '' }] }; break;
+              }
+              break;
+  
+            default:
+              logMessage(`Unhandled filter field: ${field}`);
+          }
+  
+          if (Object.keys(condition).length > 0) {
+            whereClause[Op.and].push(condition);
+          }
+        });
+      
+        return { whereClause: whereClause[Op.and].length > 0 ? whereClause : {} };
+      }
+
   async addTaskTimeline(
     accountNumber: string,
     entity_rid: string,
@@ -937,12 +1049,6 @@ class ActivitySchemaService {
           ""
         )}`;
         let insertQuery = "";
-        console.log(
-          "In add task timeline...",
-          entity_rid,
-          accountRid,
-          attachmentLevel
-        );
         if (attachmentLevel === "case") {
           /*const { CaseTimeline } = await this.caseModelService.getModels(
           accountNumber
@@ -1018,13 +1124,6 @@ class ActivitySchemaService {
     attachmentLevel: string = "case"
   ) {
     try {
-      console.log(
-        "Adding task management timeline...",
-        taskRid,
-        accountRid,
-        userId,
-        operation
-      );
       const eventName =
         operation === "created" ? "Task Created" : "Task Updated";
       let description = "";
@@ -1224,6 +1323,29 @@ class ActivitySchemaService {
       rawQueries.fetchEmailStatusByName(activityRequest.email_status),
       { type: "SELECT" }
     );
+    let toEmailsArray: string[] = [];
+    let ccEmailsArray: string[] = [];
+     if (Array.isArray(activityRequest.to_email)) {
+    toEmailsArray = activityRequest.to_email;
+  } else if (typeof activityRequest.to_email === 'string') {
+    try {
+      toEmailsArray = JSON.parse(activityRequest.to_email);
+    } catch {
+      toEmailsArray = [];
+    }
+  }
+   if (Array.isArray(activityRequest.cc_email)) {
+    ccEmailsArray = activityRequest.cc_email;
+  } else if (typeof activityRequest.cc_email === 'string') {
+    try {
+      ccEmailsArray = JSON.parse(activityRequest.cc_email);
+    } catch {
+      ccEmailsArray = [];
+    }
+  }
+    activityRequest.cc_email = ccEmailsArray;
+    activityRequest.to_email = toEmailsArray;
+    
     const activityData = {
       ...activityRequest,
       activity_type: "Email",
@@ -1310,10 +1432,9 @@ class ActivitySchemaService {
     userId: string,
     files?: Express.Multer.File[]
   ) {
-    const { Activities } =
-      await this.caseModelService.getModels(accountNumber);
+    const { Activities } = await this.caseModelService.getModels(accountNumber);
     if (!this.mainDbSequelize) {
-      this.mainDbSequelize = await this.caseModelService.getSequelize();
+      this.mainDbSequelize = await this.caseModelService.getMainSequelize();
     }
     const [meetingStatus]: any[] = await this.mainDbSequelize.query(
       rawQueries.fetchEmailStatusByName(activityRequest.meeting_status),
@@ -1328,14 +1449,36 @@ class ActivitySchemaService {
     };
     const response = await Activities.create(activityData);
     activityRequest.activity_rid = response.rid;
+
+    // Schedule meeting in Teams using util function
+    try {
+      const [accountInfo]: any[] = await this.mainDbSequelize.query(
+      rawQueries.fetchAccountInfo(activityRequest.account_rid!),
+      { type: "SELECT" }
+    );
+
+   const senderEmailInfo = await this.fetchSenderEmailInfoByAccountId(
+      accountNumber,
+      accountInfo.parent_account_rid
+    );
+    if(!senderEmailInfo){
+      throw new Error("Sender email information not found for scheduling meeting.");
+    } 
+    
+
+      await scheduleTeamsMeetingUtil(activityRequest, userId,senderEmailInfo);
+    } catch (err) {
+      logMessage(`Error scheduling Teams meeting: ${err}`);
+    }
+
     await this.uploadActivityFiles(files, activityRequest, accountNumber);
     this.addTaskTimeline(
       accountNumber,
       activityData.activity_rid,
       activityData.account_rid,
-      `Meeting Activity Created with subject: ${activityRequest}`,
+      `Meeting Activity Created with subject: ${activityRequest.subject}`,
       userId,
-      `Meeting Activity Created: ${activityRequest}`,
+      `Meeting Activity Created: ${activityRequest.subject}`,
       "success",
       activityData.activity_rid
     );
