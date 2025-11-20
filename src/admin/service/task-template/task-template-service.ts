@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMutation, useQuery, UseQueryResult } from '@tanstack/react-query';
 import { caseServiceApi } from '../../../api/api';
 import {
@@ -13,6 +14,8 @@ import {
   TaskPriorityTypeResponse,
   TaskCheckListTypeResponse,
   TaskTemplateDetailsResponse,
+  TaskLinkTypeResponse,
+  TaskTemplateResponse,
 } from '../../types';
 import { CommonApiResponse } from '../../../common-service';
 
@@ -307,6 +310,62 @@ export const useGetTaskAssignRoleTypes = () => {
   return useQuery<TaskAssigneRoleTypeResponse, Error>({
     queryKey: ['task-assignerole-types'],
     queryFn: fetchTaskAssignRoleTypes,
+    retry: 0,
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+  });
+};
+
+export const getTaskConnectorTypeUrl = (): string =>
+  '/api/caseManagement/workflowConnector/list';
+
+export const fetchTaskConnectorTypes =
+  async (): Promise<TaskLinkTypeResponse> => {
+    try {
+      const { data } = await caseServiceApi.get<TaskLinkTypeResponse>(
+        getTaskConnectorTypeUrl()
+      );
+      // console.log(data, 'taskConecterTypes');
+      return data;
+    } catch (error) {
+      console.error('Error fetching task template types:', error);
+      throw error;
+    }
+  };
+export const useGetTaskConnectorTypes = () => {
+  return useQuery<TaskLinkTypeResponse, Error>({
+    queryKey: ['task-workflowConnector-types'],
+    queryFn: fetchTaskConnectorTypes,
+    retry: 0,
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+  });
+};
+export const getTaskTemplateUrl = (): string =>
+  '/api/caseManagement/taskTemplate/dropdown';
+
+export const fetchTaskTemplate = async (
+  payload: Record<string, any>
+): Promise<TaskTemplateResponse> => {
+  try {
+    const { data } = await caseServiceApi.post<TaskTemplateResponse>(
+      getTaskTemplateUrl(),
+      payload
+    );
+    return data;
+  } catch (error) {
+    console.error('Error fetching task template types:', error);
+    throw error;
+  }
+};
+export const useGetTaskTemplate = (payload: Record<string, any>) => {
+  return useQuery<TaskTemplateResponse, Error>({
+    queryKey: ['task-template', payload],
+    queryFn: () => fetchTaskTemplate(payload),
     retry: 0,
     staleTime: Infinity,
     gcTime: Infinity,

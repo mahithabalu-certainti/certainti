@@ -45,6 +45,7 @@ export const EMAIL_TEMPLATES_EDIT = `${EMAIL_TEMPLATES}/edit/:templateId`;
 export const TASK_TEMPLATES = `${ADMIN}/task-templates`;
 export const TASK_TEMPLATES_CREATE = `${TASK_TEMPLATES}/create`;
 export const TASK_TEMPLATES_EDIT = `${TASK_TEMPLATES}/edit/:templateId`;
+export const TASK_TEMPLATES_DETAILS = `${TASK_TEMPLATES}/details/:templateId`;
 
 /** ADMIN CHECKLIST TEMPLATES ROUTES */
 export const CHECKLIST_TEMPLATES = `${ADMIN}/checklist-templates`;

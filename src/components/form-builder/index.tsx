@@ -3110,6 +3110,65 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     isHalf: boolean,
     index: number
   ) => {
+    const isFirstOneRestTwo = section.gridMode === 'first-one-rest-two';
+
+    if (isFirstOneRestTwo) {
+      return (
+        <div
+          className={`grid md:grid-cols-3 gap-x-4 gap-y-[2px] ${layout === Layout.TYPE_1 ? 'px-10' : 'px-6'} ${!formData?.[index + 1]?.sectionName ? 'mb-1' : 'mb-4'} `}
+        >
+          {section.fields.map((field, j) => {
+            if (field.hide) return null;
+
+            let colSpanClass = 'md:col-span-1';
+            if (j === 0) {
+              // First field takes 1 column
+              colSpanClass = 'md:col-span-1';
+            } else {
+              // Remaining fields take 2 columns
+              colSpanClass = 'md:col-span-2';
+            }
+
+            return (
+              <div key={j} className={`${colSpanClass} flex flex-col`}>
+                <label
+                  className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
+                  htmlFor={field.name}
+                >
+                  {field.label}
+                  {field.required && <span className='text-red-500'> *</span>}
+                </label>
+                <div>
+                  {field.type === 'website' ? (
+                    <div
+                      className={`border border-[#CBD6E2] rounded-[2px] overflow-hidden focus-within:border-2 focus-within:border-blue-400 ${field.error ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
+                    >
+                      <div className='h-[32px]  box-border flex items-center gap-[4px]'>
+                        <span className='pl-[10px] text-[13px] text-[#425A76]'>
+                          https://
+                        </span>
+                        <VerticalSeparatorIcon alt-='separtor' />
+                        {getFields(field)}
+                      </div>
+                    </div>
+                  ) : (
+                    getFields(field)
+                  )}
+
+                  {field.error && (
+                    <span className='text-[12px] text-red-400 col-span-full'>
+                      {field.error}
+                    </span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      );
+    }
+
+    // Original logic for other cases
     return (
       <div
         className={`grid md:grid-cols-3 gap-x-4 gap-y-[2px] ${layout === Layout.TYPE_1 ? 'px-10' : 'px-6'} ${!formData?.[index + 1]?.sectionName ? 'mb-1' : 'mb-4'} `}
@@ -3194,10 +3253,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       <form onSubmit={submitData} ref={formRef}>
         {formData?.map((section, i) => {
           const isHalf = section.fillType === 'half';
+
           if (section.hide) return null;
           return (
             <div key={i}>
-              {section.sectionName && (
+              {section.sectionName && section.sectionName !== 'emptyName' && (
                 <h4
                   className={`${i === 0 ? 'border-b' : 'border'} ${highlight?.section === section.sectionName ? 'animate-[fade-bg_3s_forwards]' : ''} capitalize h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 ${admin ? 'bg-[#FCFCFC]' : 'bg-[#ECECEC]'}  ${layout === Layout.TYPE_1 ? 'px-10' : 'px-4'}`}
                 >
@@ -3209,7 +3269,12 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   ? loadSectionsWithoutTitle(section)
                   : section.sectionName === 'key_contacts_list'
                     ? loadKeyContactSection(section)
-                    : loadDefaultSections(section, isHalf, i)}
+                    : loadDefaultSections(
+                        section,
+                        isHalf,
+                        i
+                        // isFirstOneRestTwo
+                      )}
               </>
             </div>
           );
