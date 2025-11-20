@@ -801,7 +801,7 @@ export const rawQueries = {
   },
   getEmailCategoryPlaceHolders(categoryRid : string) {  
     return `
-      SELECT ec.rid,placeholder_rid,ep.placeholder_key,applicable_to,ep.placeholder_value
+      SELECT ec.rid,placeholder_rid,ep.placeholder_key,applicable_to,ep.display_name
       FROM ${MAIN_SCHEMA_NAME}.email_category_placeholder  ec
       LEFT JOIN ${MAIN_SCHEMA_NAME}.email_placeholder ep ON ep.rid = ec.placeholder_rid
       WHERE category_rid = '${categoryRid}'
