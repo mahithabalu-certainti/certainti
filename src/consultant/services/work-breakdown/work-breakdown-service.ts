@@ -583,9 +583,9 @@ export const deleteCollaborator = async (
   payload: DeleteCollaboratorPayload
 ): Promise<DeleteCollaboratorResponse> => {
   try {
-    const response = await caseServiceApi.put<DeleteCollaboratorResponse>(
+    const response = await caseServiceApi.post<DeleteCollaboratorResponse>(
       '/api/cases/task/collaborator/delete',
-      { data: payload }
+      payload
     );
     return response.data;
   } catch (error) {

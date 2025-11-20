@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { Select, MenuItem, SelectChangeEvent, Checkbox } from '@mui/material';
+import React from 'react';
+import { Autocomplete, TextField } from '@mui/material';
 import { Assignee, User } from './types';
 
 interface TaskCollaboratorsSectionProps {
@@ -13,7 +13,7 @@ interface TaskCollaboratorsSectionProps {
     initials: string;
     color: string;
   })[];
-  onCollaboratorsChange: (event: SelectChangeEvent<string[]>) => void;
+  onCollaboratorsChange: (userIds: string[]) => void;
   onRemoveCollaborator: (collaboratorName: string) => void;
   isAddingCollaborator?: boolean;
 }
@@ -27,243 +27,145 @@ const TaskCollaboratorsSection: React.FC<TaskCollaboratorsSectionProps> = ({
   onRemoveCollaborator,
   isAddingCollaborator = false,
 }) => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isOpen, setIsOpen] = useState(false);
-
-  // Filter users based on search query
-  const filteredUsers = useMemo(() => {
-    if (!searchQuery.trim()) return allEnrichedUsers;
-    return allEnrichedUsers.filter((user) =>
-      user.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [allEnrichedUsers, searchQuery]);
-
   if (fieldVisibility.collaborators) return null;
 
-  const handleOpen = () => {
-    setIsOpen(true);
-    setSearchQuery('');
-  };
+  const handleCollaboratorSelect = async (selectedIds: string[]) => {
+    // Find newly added collaborators
+    const newUserIds = selectedIds.filter(
+      (id) => !selectedCollaboratorIds.includes(id)
+    );
 
-  const handleClose = () => {
-    setIsOpen(false);
-    setSearchQuery('');
+    // If new users are added, trigger API call
+    if (newUserIds.length > 0) {
+      // Call parent handler to add collaborators via API
+      onCollaboratorsChange(selectedIds);
+    } else {
+      // Just update selection
+      onCollaboratorsChange(selectedIds);
+    }
   };
 
   return (
     <div className='border-t border-gray-200 pt-6 relative'>
       <div className='flex items-center justify-between mb-3'>
         <h3 className='text-sm font-semibold text-gray-700'>Collaborators</h3>
-        <div className='w-[280px] relative'>
-          <Select
-            name='collaborators'
-            className='custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px]'
-            onChange={onCollaboratorsChange}
-            value={selectedCollaboratorIds}
-            displayEmpty
-            fullWidth
-            size='small'
+        <div className='w-[280px]'>
+          <Autocomplete
             multiple
-            open={isOpen}
-            onOpen={handleOpen}
-            onClose={handleClose}
             disabled={isAddingCollaborator}
-            renderValue={() => (
-              <span
-                style={{
-                  color: '#7D98B6',
-                  fontSize: '13px',
-                  fontWeight: '400',
-                }}
-              >
-                {isAddingCollaborator
-                  ? 'Adding Collaborator...'
-                  : 'Add Collaborators'}
-              </span>
+            options={allEnrichedUsers}
+            getOptionLabel={(option) => option.name}
+            value={allEnrichedUsers.filter((user) =>
+              selectedCollaboratorIds.includes(user.id)
             )}
-            MenuProps={{
-              anchorOrigin: {
-                vertical: 'top',
-                horizontal: 'left',
-              },
-              transformOrigin: {
-                vertical: 'bottom',
-                horizontal: 'left',
-              },
-              PaperProps: {
-                sx: {
-                  width: '280px',
-                  maxHeight: 400,
-                  marginBottom: '8px',
-                  zIndex: 9999,
-                  boxShadow:
-                    'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
-                  '& .MuiMenuItem-root': {
-                    fontSize: '13px',
-                    padding: '6px 12px',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                  },
-                },
-              },
+            onChange={(_, newValue) => {
+              const newIds = newValue.map((user) => user.id);
+              handleCollaboratorSelect(newIds);
             }}
-            sx={{
-              height: '32px',
-              fontSize: '13px',
-              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                border: '2px solid #60A5FA',
-              },
-              '& .MuiOutlinedInput-root': {
-                '&.Mui-focused': {
-                  boxShadow: 'none',
-                },
-              },
-              '.MuiSelect-select': {
-                padding: '6px 6px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                minHeight: '20px',
-                width: '100%',
-                overflow: 'auto',
-                overflowY: 'hidden',
-                scrollBehavior: 'smooth',
-                '&::-webkit-scrollbar': {
-                  height: '4px',
-                },
-                '&::-webkit-scrollbar-track': {
-                  background: 'transparent',
-                },
-                '&::-webkit-scrollbar-thumb': {
-                  background: '#CBD6E2',
-                  borderRadius: '2px',
-                },
-              },
-              '& .MuiOutlinedInput-notchedOutline': {
-                border: '1px solid #CBD6E2',
-                borderRadius: '2px',
-              },
-              '&:hover .MuiOutlinedInput-notchedOutline': {
-                border: '1px solid #CBD6E2',
-              },
-              '& svg': {
-                color: '#7D98B6',
-                flexShrink: 0,
-              },
-            }}
-          >
-            {/* Search Input as first menu item */}
-            <MenuItem
-              disableRipple
-              onKeyDown={(e) => e.stopPropagation()}
-              sx={{
-                '&:hover': {
-                  backgroundColor: 'transparent',
-                },
-                cursor: 'default',
-                paddingTop: '8px',
-                paddingBottom: '8px',
-              }}
-            >
-              <input
-                type='text'
-                placeholder='Search users...'
-                value={searchQuery}
-                onChange={(e) => {
-                  e.stopPropagation();
-                  setSearchQuery(e.target.value);
-                }}
-                onClick={(e) => e.stopPropagation()}
-                onMouseDown={(e) => e.stopPropagation()}
-                style={{
-                  width: '100%',
-                  padding: '6px 8px',
-                  border: '1px solid #CBD6E2',
-                  borderRadius: '4px',
-                  fontSize: '13px',
-                  outline: 'none',
-                }}
-                autoFocus
-              />
-            </MenuItem>
-
-            {/* User List */}
-            {filteredUsers.length > 0 ? (
-              filteredUsers.map((user) => {
-                const isSelected = selectedCollaboratorIds.includes(user.id);
-                return (
-                  <MenuItem
-                    sx={{
-                      color: '#425A76',
+            renderTags={() => null}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                size='small'
+                placeholder={
+                  isAddingCollaborator ? 'Adding...' : 'Search collaborators'
+                }
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    padding: '6px',
+                    minHeight: '32px',
+                    '& input': {
                       fontSize: '13px',
-                      fontWeight: '500',
-                      backgroundColor: isSelected ? '#EBF8FF' : 'inherit',
-                      '&:hover': {
-                        backgroundColor: isSelected ? '#EBF8FF' : '#F5F5F5',
-                      },
-                    }}
-                    key={user.id}
-                    value={user.id}
-                    title={user.name}
-                  >
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        width: '100%',
-                      }}
-                    >
-                      <Checkbox
-                        checked={isSelected}
-                        sx={{
-                          padding: 0,
-                          margin: 0,
-                          '& .MuiSvgIcon-root': {
-                            fontSize: '18px',
-                          },
-                        }}
-                      />
-                      <div
-                        style={{
-                          width: '20px',
-                          height: '20px',
-                          borderRadius: '50%',
-                          backgroundColor: user.color,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '8px',
-                          fontWeight: '600',
-                          color: 'white',
-                          flexShrink: 0,
-                        }}
-                      >
-                        {user.initials}
-                      </div>
-                      <span
-                        style={{
-                          flex: 1,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {user.name}
-                      </span>
-                    </div>
-                  </MenuItem>
-                );
-              })
-            ) : (
-              <MenuItem disabled sx={{ fontSize: '13px', color: '#7D98B6' }}>
-                No users found
-              </MenuItem>
+                      padding: '0 !important',
+                      color: '#7D98B6',
+                    },
+                    '&.Mui-focused': {
+                      boxShadow: 'none',
+                    },
+                  },
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#CBD6E2',
+                    borderWidth: '1px',
+                    borderRadius: '2px',
+                  },
+                  '&:hover .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#CBD6E2',
+                    borderWidth: '1px',
+                  },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#60A5FA',
+                    borderWidth: '2px',
+                  },
+                }}
+              />
             )}
-          </Select>
+            ListboxProps={{
+              style: {
+                maxHeight: '300px',
+                fontSize: '13px',
+              },
+            }}
+            renderOption={(props, option, { selected }) => (
+              <li {...props}>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    width: '100%',
+                  }}
+                >
+                  <input
+                    type='checkbox'
+                    checked={selected}
+                    style={{
+                      cursor: 'pointer',
+                      width: '16px',
+                      height: '16px',
+                    }}
+                  />
+                  <div
+                    style={{
+                      width: '20px',
+                      height: '20px',
+                      borderRadius: '50%',
+                      backgroundColor: option.color,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '8px',
+                      fontWeight: '600',
+                      color: 'white',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {option.initials}
+                  </div>
+                  <span
+                    style={{
+                      flex: 1,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {option.name}
+                  </span>
+                </div>
+              </li>
+            )}
+            noOptionsText='No collaborators found'
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                padding: '6px',
+                fontSize: '13px',
+              },
+            }}
+          />
         </div>
       </div>
 
+      {/* Collaborators Display */}
       <div className='flex items-center -space-x-2'>
         {(editedTask?.collaborators || []).length > 0 ? (
           (editedTask?.collaborators || []).map((collab, index) => (

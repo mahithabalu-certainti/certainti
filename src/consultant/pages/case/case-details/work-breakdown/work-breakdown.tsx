@@ -68,10 +68,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
   const { successToast, errorToast } = useToast();
   const tabParam = searchParams.get('tab') || 'milestone';
   const queryClient = useQueryClient();
-
-  // Single source of truth for opened task
   const [openTaskId, setOpenTaskId] = useState<string | null>(null);
-
   const [appliedFilters, setAppliedFilters] = useState<
     Record<string, string | number | boolean | string[]>
   >({});

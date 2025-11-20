@@ -748,24 +748,31 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     );
   };
 
-  const handleCollaboratorsChange = async (
-    event: SelectChangeEvent<string[]>
-  ) => {
-    const selectedUserIds = event.target.value as string[];
-
-    const newUserIds = selectedUserIds.filter(
+  const handleCollaboratorsChange = async (selectedIds: string[]) => {
+    // Find newly added collaborators
+    const newUserIds = selectedIds.filter(
       (id) => !selectedCollaboratorIds.includes(id)
     );
 
+    // Find removed collaborators
+    const removedUserIds = selectedCollaboratorIds.filter(
+      (id) => !selectedIds.includes(id)
+    );
+
+    // If new users are added, trigger API call
     if (newUserIds.length > 0 && taskId && onAddCollaborator) {
       setIsAddingCollaborator(true);
       try {
+        // Call API for each newly added user
         for (const newUserId of newUserIds) {
           await onAddCollaborator(taskId, newUserId);
         }
-        setSelectedCollaboratorIds(selectedUserIds);
+        // On success, update the selected IDs
+        setSelectedCollaboratorIds(selectedIds);
+
+        // Update local collaborators state directly
         const selectedUsers = allEnrichedUsers.filter((user) =>
-          selectedUserIds.includes(user.id)
+          selectedIds.includes(user.id)
         );
         const collaborators = selectedUsers.map((user) => ({
           name: user.name,
@@ -785,10 +792,56 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       } finally {
         setIsAddingCollaborator(false);
       }
-    } else if (selectedUserIds.length < selectedCollaboratorIds.length) {
-      setSelectedCollaboratorIds(selectedUserIds);
+    }
+
+    // If users are removed via checkbox, trigger delete API calls
+    if (removedUserIds.length > 0 && taskId) {
+      try {
+        for (const removedUserId of removedUserIds) {
+          const userToRemove = allEnrichedUsers.find(
+            (u) => u.id === removedUserId
+          );
+          if (userToRemove) {
+            await deleteCollaboratorMutation.mutateAsync({
+              case_rid: caseId,
+              account_rid: accountId,
+              rid: taskId,
+              assigned_to: removedUserId,
+            });
+          }
+        }
+
+        // Update local state after successful deletion
+        setSelectedCollaboratorIds(selectedIds);
+        const selectedUsers = allEnrichedUsers.filter((user) =>
+          selectedIds.includes(user.id)
+        );
+        const collaborators = selectedUsers.map((user) => ({
+          name: user.name,
+          initials: user.initials,
+          color: user.color,
+        }));
+        setEditedTask((prev) => (prev ? { ...prev, collaborators } : null));
+        setOriginalTask((prev) => (prev ? { ...prev, collaborators } : null));
+        setCollaborators(
+          selectedUsers.map((user) => ({
+            assigned_to: user.id,
+            assigned_to_name: user.name,
+          }))
+        );
+        successToast('Collaborator removed successfully');
+      } catch (error) {
+        console.error('Failed to remove collaborator:', error);
+        errorToast('Failed to remove collaborator');
+      }
+    } else if (
+      selectedIds.length < selectedCollaboratorIds.length &&
+      removedUserIds.length === 0
+    ) {
+      // Fallback: just update UI if no removed IDs detected (shouldn't happen)
+      setSelectedCollaboratorIds(selectedIds);
       const selectedUsers = allEnrichedUsers.filter((user) =>
-        selectedUserIds.includes(user.id)
+        selectedIds.includes(user.id)
       );
       const collaborators = selectedUsers.map((user) => ({
         name: user.name,

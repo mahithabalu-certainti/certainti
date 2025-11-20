@@ -102,22 +102,28 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
   const invalidateCommentQueries = () => {
     if (accountId && caseId && taskId) {
       queryClient.invalidateQueries({
-        queryKey: ['taskComments', {
-          account_rid: accountId,
-          case_rid: caseId,
-          task_rid: taskId,
-          page: 1,
-          limit: 100,
-        }],
+        queryKey: [
+          'taskComments',
+          {
+            account_rid: accountId,
+            case_rid: caseId,
+            task_rid: taskId,
+            page: 1,
+            limit: 100,
+          },
+        ],
       });
       queryClient.invalidateQueries({
-        queryKey: ['taskAttachments', {
-          account_rid: accountId,
-          case_rid: caseId,
-          task_rid: taskId,
-          page: 1,
-          limit: 100,
-        }],
+        queryKey: [
+          'taskAttachments',
+          {
+            account_rid: accountId,
+            case_rid: caseId,
+            task_rid: taskId,
+            page: 1,
+            limit: 100,
+          },
+        ],
       });
     }
   };
@@ -321,7 +327,7 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
           )}
 
           {/* Comments List */}
-          <div className='space-y-3 max-h-[400px] overflow-y-auto scrollbar-thin-comments pr-1'>
+          <div className='space-y-3 max-h-[400px] overflow-y-auto scrollbar-hide pr-1'>
             {comments.length > 0 ? (
               comments.map((commentItem, idx) => (
                 <div
@@ -740,7 +746,7 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
 
       {/* Activity Tab */}
       {activeTab === 'activity' && (
-        <div className='space-y-3 max-h-[400px] overflow-y-auto scrollbar-thin-comments pr-1'>
+        <div className='space-y-3 max-h-[400px] overflow-y-auto scrollbar-hide pr-1'>
           {activities.length > 0 ? (
             activities.map((activity, idx) => (
               <div
