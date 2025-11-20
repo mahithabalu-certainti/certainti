@@ -5163,7 +5163,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     if(result) return result;
     else return null;
   }
-  async addComments (data : AddCommentsType, accountNumber : string,  taskNumber : string, files? : Express.Multer.File[]) {
+  async addComments (data : AddCommentsType, accountNumber : string,  taskNumber : string, files : Express.Multer.File[]) {
     const {TaskComments, CommentsAttachments, TaskAttachments, CaseTimeline, TaskCollaborators,Activities,TaskHistory} = await this.caseModelService.getModels(accountNumber);
     const commentPayload: any = {
       created_by: data.created_by,
@@ -5194,7 +5194,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
           await TaskCollaborators.create(collaboratorPayload);
         }
       }
-      if(files != undefined) {
+      if(files.length > 0) {
         for(let f of files) {
           const uploadFile = await uploadToAzureBlob(f, data.account_rid, taskNumber, "cases");
           if(uploadFile) {
@@ -5288,7 +5288,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     }
   }
 
-  async updateComments (data : UpdateCommentsType, accountNumber : string,  taskNumber : string, files? : Express.Multer.File[]) {
+  async updateComments (data : UpdateCommentsType, accountNumber : string,  taskNumber : string, files : Express.Multer.File[]) {
     const {TaskComments, CommentsAttachments, TaskAttachments, TaskCollaborators, CaseHistory, CaseTimeline,TaskHistory} = await this.caseModelService.getModels(accountNumber);
     const isCommentExists = await TaskComments.findOne({
       where : {
@@ -5301,6 +5301,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
           rid : data.rid
         }
       });
+      console.log("deleted Ids =====> ", data.deleted_file_ids)
       if(updateComments === 1) {
         const checkIsDifferentCollaborator = await this.isNewCollaborator(data.modified_by, accountNumber,data.task_type);
         if(!checkIsDifferentCollaborator) {
@@ -5319,7 +5320,8 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             await TaskCollaborators.create(collaboratorPayload);
           }
         }
-        if(files != undefined) {
+        console.log(files)
+        if(files.length > 0) {
           for(let f of files) {
             const uploadFile = await uploadToAzureBlob(f, data.account_rid, taskNumber, "cases");
             if(uploadFile) {
@@ -5600,6 +5602,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                 rid : id
               }, raw : true
             });
+            console.log("fetchCommentsAttachmentDetails ====> ", fetchCommentsAttachmentDetails)
             if(fetchCommentsAttachmentDetails) {
               await deleteFromAzureBlob(fetchCommentsAttachmentDetails.browse_file);
               const [deleteCommentsAttachRes] = await CommentsAttachments.update({is_file_deleted : true},{where : {rid : id}})
@@ -5872,7 +5875,8 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       where : {
         account_rid : data.account_rid,
         case_rid : data.case_rid,
-        task_rid : data.task_rid
+        task_rid : data.task_rid,
+        is_file_deleted : false
       }, raw : true,
     }); 
     if(fetchAllTaskAttachments.length > 0) {
@@ -6034,6 +6038,8 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             attributes : ['target_rid'],
             where : {
               source_rid : data.source_rid,
+              account_rid : data.account_rid,
+              case_rid : data.case_rid,
               relationship_connector_rid : {
                 [Op.in] : ids
               }

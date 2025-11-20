@@ -1,5 +1,6 @@
 import { Sequelize } from "sequelize";
 import { CaseTaskWorkflowConnector } from "../models/caseTaskWorkflowConnectorModel";
+import { WorkflowConnectorMapping } from "../models/workflowConnectorMapModel";
 
 export const HttpStatus = {
   SUCCESS: 200,
@@ -1458,6 +1459,30 @@ export const rawQueries = {
     t.case_rid = '${caseRid}'
     AND
     t.account_rid = '${accountRid}'
+    AND
+    w.relationship_connector_rid IN (${relationshipIds})
+    `
+    return query;
+  },
+  checkDependencyAdminLevel (sourceRid : string, targetRid : WorkflowConnectorMapping[], relationshipConnectorRid : string, otherRelationshipRid : string) {
+    let ids: string[] = []
+    let relationshipIds : string[] = []
+    if(targetRid.length > 0) {
+      targetRid.map((d : any) => ids.push(`'${d.target_rid}'`));
+      relationshipIds.push(`'${relationshipConnectorRid}'`)
+      relationshipIds.push(`'${otherRelationshipRid}'`)
+      relationshipIds.map((d : any) => `${d}`)
+    } else {
+      ids.push('')
+    }
+    let query = `
+    SELECT t.task_name 
+    FROM ${MAIN_SCHEMA_NAME}.task_template t
+    LEFT JOIN  ${MAIN_SCHEMA_NAME}.workflow_connector_mapping w ON w.source_rid = t.rid
+    WHERE
+    t.rid = '${sourceRid}'
+    AND
+    w.target_rid IN (${ids})
     AND
     w.relationship_connector_rid IN (${relationshipIds})
     `

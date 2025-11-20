@@ -2116,7 +2116,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
         }
       }
     }
-    async addCommentsToTask (data : AddCommentsType, userId : string, files? : Express.Multer.File[]) {
+    async addCommentsToTask (data : AddCommentsType, userId : string, files : Express.Multer.File[]) {
       const mainDb = await this.getMainDb();
       const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
       data.created_by = userId
@@ -2163,7 +2163,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
         };;
       }
     }
-    async updateComments (data : UpdateCommentsType, userId : string, files? : Express.Multer.File[]) {
+    async updateComments (data : UpdateCommentsType, userId : string, files : Express.Multer.File[]) {
       const mainDb = await this.getMainDb();
       const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
       data.modified_by = userId
