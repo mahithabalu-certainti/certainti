@@ -163,15 +163,7 @@ export interface ICaseService {
   }>;
 
   exportAssignedProjects (data : any) : Promise<any>,
-  createUserLevelTask(data : CreateCaseTaskType): Promise<{
-    statusCode: number;
-    statusMessage: string;
-    data: null;
-} | {
-    statusCode: number;
-    statusMessage: string;
-    data: CaseTask | {} | undefined;
-}>
+  createUserLevelTask(data : CreateCaseTaskType): Promise<any>
 updateUserLevelTask(data : UpdateCaseTaskType): Promise<{
     statusCode: number;
     statusMessage: string | null;

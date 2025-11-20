@@ -4665,7 +4665,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
           if(workflowResult.statusCode === HttpStatus.BAD_REQUEST) {
             return {
               statusCode : HttpStatus.BAD_REQUEST,
-              statusMessage : STATUS_MESSAGE.circularDependency
+              statusMessage : workflowResult.statusMessage
             }
           }
         }

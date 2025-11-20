@@ -1880,7 +1880,7 @@ export class CaseService {
           await transaction.rollback();
           return {
             statusCode : HttpStatus.BAD_REQUEST,
-            statusMessage : STATUS_MESSAGE.circularDependency,
+            statusMessage : result.statusMessage,
             data : null
           }
         } else {
