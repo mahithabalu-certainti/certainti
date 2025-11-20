@@ -122,7 +122,9 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
               disabled={fieldDisabled.status || mode === 'create'}
               width='200px'
               renderValue={(selected) => {
-                const value = Array.isArray(selected) ? selected.join(', ') : selected;
+                const value = Array.isArray(selected)
+                  ? selected.join(', ')
+                  : selected;
                 return (
                   <span
                     style={{
@@ -194,12 +196,18 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
               </div>
               <StyledSelect
                 name='priority'
-                value={shouldPrepopulate ? editedTask?.priority || '' : selectedPriority || ''}
+                value={
+                  shouldPrepopulate
+                    ? editedTask?.priority || ''
+                    : selectedPriority || ''
+                }
                 onChange={(e) => onPriorityChange(e.target.value as string)}
                 disabled={fieldDisabled.priority}
                 width='200px'
                 renderValue={(selected) => {
-                  const value = Array.isArray(selected) ? selected.join(', ') : (selected as string);
+                  const value = Array.isArray(selected)
+                    ? selected.join(', ')
+                    : (selected as string);
                   if (!value) {
                     return (
                       <span style={{ color: '#7D98B6', fontSize: '13px' }}>
@@ -280,7 +288,11 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
                   freeSolo
                   disabled={fieldDisabled.tags}
                   options={availableTags.map((tag) => tag.name)}
-                  value={shouldPrepopulate ? editedTask?.tags || [] : selectedTags || []}
+                  value={
+                    shouldPrepopulate
+                      ? editedTask?.tags || []
+                      : selectedTags || []
+                  }
                   onChange={(_, newValue) => {
                     const cleanedValues = Array.from(
                       new Set(newValue.filter((v) => v.trim()))
@@ -348,50 +360,53 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
               </div>
             </div>
 
-            {(shouldPrepopulate ? editedTask?.tags || [] : selectedTags || [])?.length > 0 && (
+            {(shouldPrepopulate ? editedTask?.tags || [] : selectedTags || [])
+              ?.length > 0 && (
               <div className='flex flex-wrap items-center gap-2 mt-2'>
-                {(shouldPrepopulate ? editedTask?.tags || [] : selectedTags || [])?.map(
-                  (tag, index) => (
-                    <div
-                      key={index}
-                      className='inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium hover:bg-blue-200 transition-colors group'
+                {(shouldPrepopulate
+                  ? editedTask?.tags || []
+                  : selectedTags || []
+                )?.map((tag, index) => (
+                  <div
+                    key={index}
+                    className='inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium hover:bg-blue-200 transition-colors group'
+                  >
+                    <span>{tag}</span>
+                    <button
+                      onClick={() => {
+                        const newTags =
+                          (shouldPrepopulate
+                            ? editedTask?.tags || []
+                            : selectedTags || []
+                          )?.filter((t) => t !== tag) || [];
+                        if (shouldPrepopulate) {
+                          onSetEditedTask(
+                            editedTask ? { ...editedTask, tags: newTags } : null
+                          );
+                        } else {
+                          onTagsChange(newTags);
+                        }
+                      }}
+                      className='ml-1 text-blue-600 hover:text-red-600 transition-colors'
+                      title={`Remove ${tag}`}
                     >
-                      <span>{tag}</span>
-                      <button
-                        onClick={() => {
-                          const newTags =
-                            (shouldPrepopulate
-                              ? editedTask?.tags || []
-                              : selectedTags || []
-                            )?.filter((t) => t !== tag) || [];
-                          if (shouldPrepopulate) {
-                            onSetEditedTask(
-                              editedTask
-                                ? { ...editedTask, tags: newTags }
-                                : null
-                            );
-                          } else {
-                            onTagsChange(newTags);
-                          }
-                        }}
-                        className='ml-1 text-blue-600 hover:text-red-600 transition-colors'
-                        title={`Remove ${tag}`}
-                      >
-                        ×
-                      </button>
-                    </div>
-                  )
-                )}
+                      ×
+                    </button>
+                  </div>
+                ))}
               </div>
             )}
           </div>
         )}
 
-        {mode === 'view' && !fieldVisibility.role && roleOptions && roleOptions.length > 0 && (
+        {!fieldVisibility.role && roleOptions && roleOptions.length > 0 && (
           <div className='flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors'>
             <div className='flex items-center gap-2'>
               <UserIconSvg className='w-4 h-4 text-gray-500' />
-              <span className='text-sm text-gray-700'>User Role</span>
+              <span className='text-sm text-gray-700'>
+                User Role
+                {mode === 'create' && <span className='text-red-500'>*</span>}
+              </span>
             </div>
             <StyledSelect
               name='role'
@@ -400,7 +415,9 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
               disabled={fieldDisabled.role}
               width='200px'
               renderValue={(selected) => {
-                const value = Array.isArray(selected) ? selected.join(', ') : (selected as string);
+                const value = Array.isArray(selected)
+                  ? selected.join(', ')
+                  : (selected as string);
                 if (!value) {
                   return (
                     <span style={{ color: '#7D98B6', fontSize: '13px' }}>
@@ -454,84 +471,90 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
           </div>
         )}
 
-        {mode === 'view' && !fieldVisibility.checklistTemplate && checklistData && checklistData.length > 0 && (
-          <div className='flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors'>
-            <div className='flex items-center gap-2'>
-              <svg
-                width='16'
-                height='16'
-                viewBox='0 0 24 24'
-                fill='none'
-                stroke='currentColor'
-                strokeWidth='2'
-                className='text-gray-500'
-              >
-                <path d='M3 3h18v18H3z'></path>
-                <path d='M3 9h18'></path>
-                <path d='M9 21V9'></path>
-              </svg>
-              <span className='text-sm text-gray-700'>Checklist Template</span>
-            </div>
-            <StyledSelect
-              name='checklistTemplate'
-              value={selectedChecklist}
-              onChange={(e) => onChecklistChange(e.target.value as string)}
-              disabled={fieldDisabled.checklistTemplate}
-              width='200px'
-              renderValue={(selected) => {
-                const value = Array.isArray(selected) ? selected.join(', ') : (selected as string);
-                if (!value) {
+        {!fieldVisibility.checklistTemplate &&
+          checklistData &&
+          checklistData.length > 0 && (
+            <div className='flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors'>
+              <div className='flex items-center gap-2'>
+                <svg
+                  width='16'
+                  height='16'
+                  viewBox='0 0 24 24'
+                  fill='none'
+                  stroke='currentColor'
+                  strokeWidth='2'
+                  className='text-gray-500'
+                >
+                  <path d='M3 3h18v18H3z'></path>
+                  <path d='M3 9h18'></path>
+                  <path d='M9 21V9'></path>
+                </svg>
+                <span className='text-sm text-gray-700'>
+                  Checklist Template
+                </span>
+              </div>
+              <StyledSelect
+                name='checklistTemplate'
+                value={selectedChecklist}
+                onChange={(e) => onChecklistChange(e.target.value as string)}
+                disabled={fieldDisabled.checklistTemplate}
+                width='200px'
+                renderValue={(selected) => {
+                  const value = Array.isArray(selected)
+                    ? selected.join(', ')
+                    : (selected as string);
+                  if (!value) {
+                    return (
+                      <span style={{ color: '#7D98B6', fontSize: '13px' }}>
+                        Select Template
+                      </span>
+                    );
+                  }
                   return (
-                    <span style={{ color: '#7D98B6', fontSize: '13px' }}>
-                      Select Template
+                    <span
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        minWidth: 0,
+                        maxWidth: 'calc(100% - 24px)',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                      title={typeof value === 'string' ? value : String(value)}
+                    >
+                      {typeof value === 'string' ? value : String(value)}
                     </span>
                   );
-                }
-                return (
-                  <span
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      minWidth: 0,
-                      maxWidth: 'calc(100% - 24px)',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                    title={typeof value === 'string' ? value : String(value)}
-                  >
-                    {typeof value === 'string' ? value : String(value)}
-                  </span>
-                );
-              }}
-            >
-              <MenuItem
-                value=''
-                sx={{
-                  color: '#425A76',
-                  fontSize: '13px',
-                  fontWeight: '500',
                 }}
               >
-                Select Template
-              </MenuItem>
-              {checklistData.map((template: { id: string; name: string }) => (
                 <MenuItem
+                  value=''
                   sx={{
                     color: '#425A76',
                     fontSize: '13px',
                     fontWeight: '500',
                   }}
-                  key={template.id}
-                  value={template.name}
-                  title={template.name}
                 >
-                  {template.name}
+                  Select Template
                 </MenuItem>
-              ))}
-            </StyledSelect>
-          </div>
-        )}
+                {checklistData.map((template: { id: string; name: string }) => (
+                  <MenuItem
+                    sx={{
+                      color: '#425A76',
+                      fontSize: '13px',
+                      fontWeight: '500',
+                    }}
+                    key={template.id}
+                    value={template.name}
+                    title={template.name}
+                  >
+                    {template.name}
+                  </MenuItem>
+                ))}
+              </StyledSelect>
+            </div>
+          )}
       </div>
     </div>
   );

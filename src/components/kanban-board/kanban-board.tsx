@@ -1,5 +1,5 @@
 import type React from 'react';
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type {
   KanbanBoardProps,
   KanbanColumn as KanbanColumnTypes,
@@ -18,8 +18,6 @@ import {
 import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import KanbanColumn from './kanban-column';
 import { AddIcon } from '../../assets';
-
-const TaskDetailModal = lazy(() => import('./task-detail-modal'));
 
 const LoadingSkeleton: React.FC = () => (
   <div
@@ -71,14 +69,10 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
   isLoading = false,
   onTaskClick,
   onCreateTask,
-  accountId = '',
-  caseId = '',
 }) => {
   const [columns, setColumns] = useState<KanbanColumnTypes[]>(data);
   const [isCreatingSection, setIsCreatingSection] = useState(false);
   const [newSectionName, setNewSectionName] = useState('');
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     setColumns(data);
@@ -147,8 +141,6 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
   };
 
   const handleTaskClick = (taskId: string) => {
-    setSelectedTaskId(taskId);
-    setIsModalOpen(true);
     // Call the parent's onTaskClick if provided
     if (onTaskClick) {
       onTaskClick(taskId);
@@ -340,15 +332,113 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
     return <LoadingSkeleton />;
   }
 
-  if (isDragable || isDragablebetweenBoards) {
-    return (
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCorners}
-        onDragStart={handleDragStart}
-        onDragOver={handleDragOver}
-        onDragEnd={handleDragEnd}
-      >
+  return (
+    <>
+      {isDragable || isDragablebetweenBoards ? (
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCorners}
+          onDragStart={handleDragStart}
+          onDragOver={handleDragOver}
+          onDragEnd={handleDragEnd}
+        >
+          <div
+            className='min-h-screen p-4 font-[13px]'
+            style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
+          >
+            <div className='max-w-full overflow-x-auto'>
+              <div className='flex items-start gap-6 pb-6'>
+                {memoizedColumns.map((column) => (
+                  <KanbanColumn
+                    key={column.rid}
+                    column={column}
+                    showTaskCount={showTaskCount}
+                    showCommentCount={showCommentCount}
+                    showProfileIndicator={showProfileIndicator}
+                    isCreateTaskDisabled={isCreateTaskDisabled}
+                    isCreateTaskHide={isCreateTaskHide}
+                    onAddTask={handleAddTask}
+                    onRenameColumn={handleRenameColumn}
+                    onDeleteColumn={handleDeleteColumn}
+                    onTaskClick={handleTaskClick}
+                    isDragable={isDragable}
+                    isDragablebetweenBoards={isDragablebetweenBoards}
+                    statusData={effectiveStatusData}
+                    statusOptions={statusOptions}
+                    priorityData={priorityData}
+                    roleOptions={roleOptions}
+                    tagData={tagData}
+                    checklistData={checklistData}
+                    collaboratorData={[]}
+                    availableUsers={userData}
+                    onTaskUpdate={handleTaskUpdate}
+                    onCreateTask={onCreateTask}
+                  />
+                ))}
+
+                {!isCreateTaskHide && (
+                  <div className='flex-shrink-0 w-80'>
+                    {isCreatingSection ? (
+                      <div className='bg-[#f5f5f5] rounded-lg p-4'>
+                        <div className='bg-white border border-slate-200 rounded-lg p-4 mb-4'>
+                          <input
+                            type='text'
+                            value={newSectionName}
+                            onChange={(e) => setNewSectionName(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                if (newSectionName.trim()) {
+                                  const newColumn: KanbanColumnTypes = {
+                                    rid: `column-${Date.now()}`,
+                                    milestone_name: newSectionName.trim(),
+                                    tasks: [],
+                                    task_count: 0,
+                                  };
+                                  setColumns([...columns, newColumn]);
+                                  setIsCreatingSection(false);
+                                  setNewSectionName('');
+                                }
+                              } else if (e.key === 'Escape') {
+                                setIsCreatingSection(false);
+                                setNewSectionName('');
+                              }
+                            }}
+                            onBlur={() => {
+                              setIsCreatingSection(false);
+                              setNewSectionName('');
+                            }}
+                            placeholder='Enter section name'
+                            className='w-full bg-white text-slate-800 text-[13px] font-semibold px-2 py-1 rounded border border-slate-300 focus:border-blue-500 focus:outline-none'
+                            style={{
+                              fontFamily: "'Mulish', 'Lexend', sans-serif",
+                            }}
+                            autoFocus
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className='bg-[#f5f5f5] rounded-lg p-4'>
+                        <button
+                          onClick={() => setIsCreatingSection(true)}
+                          className='w-full bg-white border border-slate-200 rounded-lg p-4 mb-4 transition-colors duration-200 flex items-center justify-center gap-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100'
+                          style={{
+                            fontFamily: "'Mulish', 'Lexend', sans-serif",
+                          }}
+                        >
+                          <AddIcon className='w-4 h-[18px]' />
+                          <span className='text-[13px] font-semibold'>
+                            Add Section
+                          </span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </DndContext>
+      ) : (
         <div
           className='min-h-screen p-4 font-[13px]'
           style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
@@ -444,142 +534,8 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
             </div>
           </div>
         </div>
-
-        <Suspense fallback={null}>
-          {isModalOpen && selectedTaskId && (
-            <TaskDetailModal
-              taskId={selectedTaskId}
-              isOpen={isModalOpen}
-              onClose={() => setIsModalOpen(false)}
-              onTaskUpdate={handleTaskUpdate}
-              statusData={effectiveStatusData}
-              statusOptions={statusOptions}
-              priorityData={priorityData}
-              tagData={tagData}
-              availableUsers={userData}
-              accountId={accountId}
-              caseId={caseId}
-            />
-          )}
-        </Suspense>
-      </DndContext>
-    );
-  }
-
-  return (
-    <div
-      className='min-h-screen p-4 font-[13px]'
-      style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
-    >
-      <div className='max-w-full overflow-x-auto'>
-        <div className='flex items-start gap-6 pb-6'>
-          {memoizedColumns.map((column) => (
-            <KanbanColumn
-              key={column.rid}
-              column={column}
-              showTaskCount={showTaskCount}
-              showCommentCount={showCommentCount}
-              showProfileIndicator={showProfileIndicator}
-              isCreateTaskDisabled={isCreateTaskDisabled}
-              isCreateTaskHide={isCreateTaskHide}
-              onAddTask={handleAddTask}
-              onRenameColumn={handleRenameColumn}
-              onDeleteColumn={handleDeleteColumn}
-              onTaskClick={handleTaskClick}
-              isDragable={isDragable}
-              isDragablebetweenBoards={isDragablebetweenBoards}
-              statusData={effectiveStatusData}
-              statusOptions={statusOptions}
-              priorityData={priorityData}
-              roleOptions={roleOptions}
-              tagData={tagData}
-              checklistData={checklistData}
-              collaboratorData={[]}
-              availableUsers={userData}
-              onTaskUpdate={handleTaskUpdate}
-              onCreateTask={onCreateTask}
-            />
-          ))}
-
-          {!isCreateTaskHide && (
-            <div className='flex-shrink-0 w-80'>
-              {isCreatingSection ? (
-                <div className='bg-[#f5f5f5] rounded-lg p-4'>
-                  <div className='bg-white border border-slate-200 rounded-lg p-4 mb-4'>
-                    <input
-                      type='text'
-                      value={newSectionName}
-                      onChange={(e) => setNewSectionName(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          if (newSectionName.trim()) {
-                            const newColumn: KanbanColumnTypes = {
-                              rid: `column-${Date.now()}`,
-                              milestone_name: newSectionName.trim(),
-                              tasks: [],
-                              task_count: 0,
-                            };
-                            setColumns([...columns, newColumn]);
-                            setIsCreatingSection(false);
-                            setNewSectionName('');
-                          }
-                        } else if (e.key === 'Escape') {
-                          setIsCreatingSection(false);
-                          setNewSectionName('');
-                        }
-                      }}
-                      onBlur={() => {
-                        setIsCreatingSection(false);
-                        setNewSectionName('');
-                      }}
-                      placeholder='Enter section name'
-                      className='w-full bg-white text-slate-800 text-[13px] font-semibold px-2 py-1 rounded border border-slate-300 focus:border-blue-500 focus:outline-none'
-                      style={{
-                        fontFamily: "'Mulish', 'Lexend', sans-serif",
-                      }}
-                      autoFocus
-                    />
-                  </div>
-                </div>
-              ) : (
-                <div className='bg-[#f5f5f5] rounded-lg p-4'>
-                  <button
-                    onClick={() => setIsCreatingSection(true)}
-                    className='w-full bg-white border border-slate-200 rounded-lg p-4 mb-4 transition-colors duration-200 flex items-center justify-center gap-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100'
-                    style={{
-                      fontFamily: "'Mulish', 'Lexend', sans-serif",
-                    }}
-                  >
-                    <AddIcon className='w-4 h-[18px]' />
-                    <span className='text-[13px] font-semibold'>
-                      Add Section
-                    </span>
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-
-      <Suspense fallback={null}>
-        {isModalOpen && selectedTaskId && (
-          <TaskDetailModal
-            taskId={selectedTaskId}
-            isOpen={isModalOpen}
-            onClose={() => setIsModalOpen(false)}
-            onTaskUpdate={handleTaskUpdate}
-            statusData={effectiveStatusData}
-            statusOptions={statusOptions}
-            priorityData={priorityData}
-            tagData={tagData}
-            availableUsers={userData}
-            accountId={accountId}
-            caseId={caseId}
-          />
-        )}
-      </Suspense>
-    </div>
+      )}
+    </>
   );
 };
 

@@ -1,21 +1,25 @@
 import React from 'react';
 import { Task } from './types';
 
+interface TaskAttachment {
+  id?: string;
+  rid?: string;
+  fileName: string;
+  filePath?: string;
+  fileSize?: number;
+  fileType?: string;
+  uploadedBy: string;
+  uploadedDate: string;
+}
+
 interface TaskAttachmentsSectionProps {
   fieldVisibility: Record<string, boolean | undefined>;
   fieldDisabled: Record<string, boolean | undefined>;
   editedTask: Task | null;
-  taskAttachments: Array<{
-    id?: string;
-    fileName: string;
-    filePath?: string;
-    fileSize?: number;
-    fileType?: string;
-    uploadedBy: string;
-    uploadedDate: string;
-  }>;
+  taskAttachments: TaskAttachment[];
   onAttachmentChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onRemoveAttachment: (indexToRemove: number) => void;
+  onRemoveExistingAttachment?: (attachmentId: string) => void;
 }
 
 const TaskAttachmentsSection: React.FC<TaskAttachmentsSectionProps> = ({
@@ -25,6 +29,7 @@ const TaskAttachmentsSection: React.FC<TaskAttachmentsSectionProps> = ({
   taskAttachments,
   onAttachmentChange,
   onRemoveAttachment,
+  onRemoveExistingAttachment,
 }) => {
   if (fieldVisibility.attachments) return null;
 
@@ -47,32 +52,15 @@ const TaskAttachmentsSection: React.FC<TaskAttachmentsSectionProps> = ({
           </p>
         </label>
       </div>
-      {editedTask?.attachments && editedTask.attachments.length > 0 && (
-        <div className='mt-3 space-y-2'>
-          {editedTask.attachments.map((file, idx) => (
-            <div
-              key={idx}
-              className='text-xs text-gray-600 bg-gray-50 p-2 rounded flex items-center gap-2'
-            >
-              <span>📎</span> {file}
-              <button
-                onClick={() => onRemoveAttachment(idx)}
-                className='ml-auto text-red-500 hover:text-red-700 transition-colors'
-                disabled={fieldDisabled.attachments}
-              >
-                Remove
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-      {taskAttachments && taskAttachments.length > 0 ? (
+
+      {/* Existing attachments from the server */}
+      {taskAttachments && taskAttachments.length > 0 && (
         <div className='mt-4'>
           <div className='space-y-2'>
-            {taskAttachments.map((attachment, idx) => (
+            {taskAttachments.map((attachment) => (
               <div
-                key={attachment.id || idx}
-                className='text-xs text-gray-600 bg-gray-50 p-3 rounded flex items-center gap-2 border border-gray-200'
+                key={attachment.id || attachment.rid}
+                className='text-xs text-gray-600 bg-blue-50 p-3 rounded flex items-center gap-2 border border-blue-200'
               >
                 <span>📎</span>
                 <div className='flex-1'>
@@ -84,11 +72,49 @@ const TaskAttachmentsSection: React.FC<TaskAttachmentsSectionProps> = ({
                     {attachment.uploadedDate}
                   </p>
                 </div>
+                <button
+                  onClick={() =>
+                    onRemoveExistingAttachment?.(
+                      attachment.rid || attachment.id || ''
+                    )
+                  }
+                  className='ml-auto text-red-500 hover:text-red-700 transition-colors font-bold text-lg'
+                  disabled={fieldDisabled.attachments}
+                  title='Remove attachment'
+                >
+                  ×
+                </button>
               </div>
             ))}
           </div>
         </div>
-      ) : null}
+      )}
+
+      {/* Newly added attachments (pending upload) */}
+      {editedTask?.attachments && editedTask.attachments.length > 0 && (
+        <div className='mt-3 space-y-2'>
+          {editedTask.attachments.map((file, idx) => (
+            <div
+              key={idx}
+              className='text-xs text-gray-600 bg-green-50 p-3 rounded flex items-center gap-2 border border-green-200'
+            >
+              <span>📎</span>
+              <span className='flex-1'>{file}</span>
+              <span className='text-green-600 text-xs font-medium'>
+                (Pending Upload)
+              </span>
+              <button
+                onClick={() => onRemoveAttachment(idx)}
+                className='ml-auto text-red-500 hover:text-red-700 transition-colors font-bold text-lg'
+                disabled={fieldDisabled.attachments}
+                title='Remove from upload queue'
+              >
+                ×
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

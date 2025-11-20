@@ -197,7 +197,6 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
           case_team_member_role_rid: taskData.case_team_member_role_rid || '',
           effective_start_datetime: taskData.effective_start_datetime || '',
           effective_end_datetime: taskData.effective_end_datetime || '',
-          assigned_to: taskData.assigned_to || '',
           milestone_template_rid: columnId,
           checklist_template_rid:
             (
@@ -206,11 +205,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
               }
             ).checklist_template_rid || '',
           tags: tagsArray.length > 0 ? tagsArray : undefined,
-          workflow_connector: {
-            source_rid: '',
-            target_rid: [],
-            relationship_connector_rid: '',
-          },
+          workflow_connector: {},
         };
 
         createTaskMutation.mutate(taskPayload, {
@@ -487,9 +482,9 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
         setAppliedFilters={setAppliedFilters}
         setCurrentPage={setCurrentPage}
         handleFilter={handleFilter}
-        handleSorting={() => { }}
+        handleSorting={() => {}}
         sortFilterCount={0}
-        setSortFilterCount={() => { }}
+        setSortFilterCount={() => {}}
         showRefresh={tabParam === 'case_task' ? true : false}
         onRefreshClick={onRefreshClick}
         // hideTabPanel={hideSection}

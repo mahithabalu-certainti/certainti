@@ -1,5 +1,10 @@
-import React from 'react';
-import { Select, MenuItem, SelectChangeEvent } from '@mui/material';
+import React, { useState, useMemo, useRef } from 'react';
+import {
+  Select,
+  MenuItem,
+  SelectChangeEvent,
+  OutlinedInput,
+} from '@mui/material';
 import { Assignee, User } from './types';
 
 interface TaskCollaboratorsSectionProps {
@@ -27,13 +32,24 @@ const TaskCollaboratorsSection: React.FC<TaskCollaboratorsSectionProps> = ({
   onToggleCollaboratorSelection,
   onRemoveCollaborator,
 }) => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Filter users based on search query
+  const filteredUsers = useMemo(() => {
+    if (!searchQuery.trim()) return allEnrichedUsers;
+    return allEnrichedUsers.filter((user) =>
+      user.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [allEnrichedUsers, searchQuery]);
+
   if (fieldVisibility.collaborators) return null;
 
   return (
     <div className='border-t border-gray-200 pt-6 relative'>
       <div className='flex items-center justify-between mb-3'>
         <h3 className='text-sm font-semibold text-gray-700'>Collaborators</h3>
-        <div className='w-[200px] relative'>
+        <div className='w-[350px] relative'>
           <Select
             name='collaborators'
             className='custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px]'
@@ -43,6 +59,28 @@ const TaskCollaboratorsSection: React.FC<TaskCollaboratorsSectionProps> = ({
             fullWidth
             size='small'
             multiple
+            onClose={() => {
+              setSearchQuery('');
+              if (inputRef.current) {
+                inputRef.current.value = '';
+              }
+            }}
+            input={
+              <OutlinedInput
+                inputRef={inputRef}
+                onChange={(event) => {
+                  setSearchQuery(event.target.value);
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === 'Escape') {
+                    setSearchQuery('');
+                    if (inputRef.current) {
+                      inputRef.current.value = '';
+                    }
+                  }
+                }}
+              />
+            }
             renderValue={() => (
               <span
                 style={{
@@ -65,8 +103,8 @@ const TaskCollaboratorsSection: React.FC<TaskCollaboratorsSectionProps> = ({
               },
               PaperProps: {
                 sx: {
-                  maxWidth: 300,
-                  maxHeight: 300,
+                  width: '350px',
+                  maxHeight: 400,
                   marginBottom: '8px',
                   zIndex: 9999,
                   boxShadow:
@@ -132,69 +170,78 @@ const TaskCollaboratorsSection: React.FC<TaskCollaboratorsSectionProps> = ({
               },
             }}
           >
-            {allEnrichedUsers.map((user) => {
-              const isSelected = selectedCollaboratorIds.includes(user.id);
-              return (
-                <MenuItem
-                  sx={{
-                    color: '#425A76',
-                    fontSize: '13px',
-                    fontWeight: '500',
-                    backgroundColor: isSelected ? '#EBF8FF' : 'inherit',
-                  }}
-                  key={user.id}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onToggleCollaboratorSelection(user.id);
-                  }}
-                  title={user.name}
-                >
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      width: '100%',
+            {filteredUsers.length > 0 ? (
+              filteredUsers.map((user) => {
+                const isSelected = selectedCollaboratorIds.includes(user.id);
+                return (
+                  <MenuItem
+                    sx={{
+                      color: '#425A76',
+                      fontSize: '13px',
+                      fontWeight: '500',
+                      backgroundColor: isSelected ? '#EBF8FF' : 'inherit',
+                      '&:hover': {
+                        backgroundColor: isSelected ? '#EBF8FF' : '#F5F5F5',
+                      },
                     }}
+                    key={user.id}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleCollaboratorSelection(user.id);
+                    }}
+                    title={user.name}
                   >
-                    <input
-                      type='checkbox'
-                      checked={isSelected}
-                      onChange={() => {}}
-                      onMouseDown={(e) => e.stopPropagation()}
-                      style={{ margin: 0 }}
-                    />
                     <div
                       style={{
-                        width: '20px',
-                        height: '20px',
-                        borderRadius: '50%',
-                        backgroundColor: user.color,
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '8px',
-                        fontWeight: '600',
-                        color: 'white',
-                        flexShrink: 0,
+                        gap: '8px',
+                        width: '100%',
                       }}
                     >
-                      {user.initials}
+                      <input
+                        type='checkbox'
+                        checked={isSelected}
+                        onChange={() => {}}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        style={{ margin: 0 }}
+                      />
+                      <div
+                        style={{
+                          width: '20px',
+                          height: '20px',
+                          borderRadius: '50%',
+                          backgroundColor: user.color,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '8px',
+                          fontWeight: '600',
+                          color: 'white',
+                          flexShrink: 0,
+                        }}
+                      >
+                        {user.initials}
+                      </div>
+                      <span
+                        style={{
+                          flex: 1,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {user.name}
+                      </span>
                     </div>
-                    <span
-                      style={{
-                        flex: 1,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {user.name}
-                    </span>
-                  </div>
-                </MenuItem>
-              );
-            })}
+                  </MenuItem>
+                );
+              })
+            ) : (
+              <MenuItem disabled sx={{ fontSize: '13px', color: '#7D98B6' }}>
+                No users found
+              </MenuItem>
+            )}
           </Select>
         </div>
       </div>

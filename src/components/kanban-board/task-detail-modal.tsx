@@ -22,6 +22,9 @@ import {
 import {
   useGetTaskCommentsList,
   useGetTaskAttachmentsList,
+  useUploadTaskAttachments,
+  useDeleteTaskAttachment,
+  useUpdateCaseTask,
 } from '../../consultant/services/case-task/case-task-service';
 import {
   transformComments,
@@ -31,6 +34,7 @@ import {
   type TaskActivityRaw,
   type TaskAttachmentRaw,
 } from '../../consultant/pages/case/case-details/work-breakdown/helper';
+import { useToast } from '../../hooks';
 
 // Extend the TaskDetailModalProps to include availableTagOptions
 interface TaskDetailModalPropsExtended
@@ -39,7 +43,11 @@ interface TaskDetailModalPropsExtended
   availableTagOptions?: Array<{ id: string; name: string; color: string }>;
   accountId: string;
   caseId: string;
-  onAddComment?: (taskId: string, comment: string, files: File[]) => Promise<void>;
+  onAddComment?: (
+    taskId: string,
+    comment: string,
+    files: File[]
+  ) => Promise<void>;
 }
 
 const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
@@ -100,6 +108,16 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   const [isSaving, setIsSaving] = useState(false);
   const [selectedRole, setSelectedRole] = useState('');
   const [selectedChecklist, setSelectedChecklist] = useState('');
+  const [pendingAttachments, setPendingAttachments] = useState<File[]>([]);
+  const [deletedAttachmentIds, setDeletedAttachmentIds] = useState<string[]>(
+    []
+  );
+  const [originalTask, setOriginalTask] = useState<Task | null>(null);
+
+  const { successToast, errorToast } = useToast();
+  const uploadAttachmentsMutation = useUploadTaskAttachments();
+  const deleteAttachmentMutation = useDeleteTaskAttachment();
+  const updateTaskMutation = useUpdateCaseTask();
 
   // Memoize query parameters to prevent unnecessary refetches
   const commentsParams = useMemo(
@@ -155,12 +173,13 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     !!taskId && isOpen
   );
 
-  // Sync rawTask → enriched task
+  // Sync rawTask → enriched task and store original for comparison
   useEffect(() => {
     if (rawTask) {
       const enriched = enrichTask(rawTask);
       setTask(enriched);
       setEditedTask(enriched);
+      setOriginalTask(enriched);
       if (enriched.caseTeamMemberRoleName) {
         setSelectedRole(enriched.caseTeamMemberRoleName);
       }
@@ -220,7 +239,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
           'data' in innerData &&
           Array.isArray((innerData as unknown as Record<string, unknown>).data)
         ) {
-          activitiesArray = (innerData as unknown as Record<string, unknown>)
+          activitiesArray = (innerData as Record<string, unknown>)
             .data as TaskActivityRaw[];
         }
       }
@@ -281,20 +300,32 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
 
   // Helper function to check if task has been modified
   const hasTaskChanged = () => {
-    if (!task || !editedTask) return false;
+    if (!task || !editedTask || !originalTask) return false;
+
+    const tagsChanged =
+      JSON.stringify(originalTask.tags) !== JSON.stringify(editedTask.tags);
+    const collaboratorsChanged =
+      JSON.stringify(originalTask.collaborators) !==
+      JSON.stringify(editedTask.collaborators);
+    const checklistChanged =
+      JSON.stringify(originalTask.checklist) !==
+      JSON.stringify(editedTask.checklist);
 
     return (
-      task.title !== editedTask.title ||
-      task.description !== editedTask.description ||
-      task.status !== editedTask.status ||
-      task.priority !== editedTask.priority ||
-      task.startDate !== editedTask.startDate ||
-      task.endDate !== editedTask.endDate ||
-      task.assignee?.name !== editedTask.assignee?.name ||
-      JSON.stringify(task.tags) !== JSON.stringify(editedTask.tags) ||
-      JSON.stringify(task.collaborators) !==
-      JSON.stringify(editedTask.collaborators) ||
-      JSON.stringify(task.checklist) !== JSON.stringify(editedTask.checklist)
+      originalTask.title !== editedTask.title ||
+      originalTask.description !== editedTask.description ||
+      originalTask.status !== editedTask.status ||
+      originalTask.priority !== editedTask.priority ||
+      originalTask.startDate !== editedTask.startDate ||
+      originalTask.endDate !== editedTask.endDate ||
+      originalTask.assignee?.name !== editedTask.assignee?.name ||
+      tagsChanged ||
+      collaboratorsChanged ||
+      checklistChanged ||
+      selectedRole !== (originalTask.caseTeamMemberRoleName || '') ||
+      selectedChecklist !== (originalTask.checklistName || '') ||
+      pendingAttachments.length > 0 ||
+      deletedAttachmentIds.length > 0
     );
   };
 
@@ -445,26 +476,139 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   const handleSave = async () => {
     setIsSaving(true);
 
-    // Add pending collaborators first
-    if (pendingCollaborators.length > 0 && taskId && onAddCollaborator) {
-      try {
-        for (const userId of pendingCollaborators) {
-          await onAddCollaborator(taskId, userId);
-        }
-        // Clear pending collaborators after successful API calls
-        setPendingCollaborators([]);
-      } catch (error) {
-        console.error('Error adding collaborators:', error);
+    try {
+      // Build tags array
+      const tagsArray: Array<{ tag_rid: string; is_new_tag: boolean }> = [];
+      if (editedTask?.tags && editedTask.tags.length > 0) {
+        editedTask.tags.forEach((tagName: string) => {
+          const existingTag = availableTags?.find((t) => t.name === tagName);
+          if (existingTag) {
+            tagsArray.push({
+              tag_rid: existingTag.id,
+              is_new_tag: false,
+            });
+          } else {
+            tagsArray.push({
+              tag_rid: tagName,
+              is_new_tag: true,
+            });
+          }
+        });
       }
-    }
 
-    // Then update the task
-    if (editedTask && taskId) {
-      onTaskUpdate(taskId, editedTask);
-      setIsEditing(false);
-    }
+      // Get status_rid and priority_rid from the data
+      const selectedStatus = statusData?.find(
+        (s) => s.name === editedTask?.status
+      );
+      const selectedPriority = priorityData?.find(
+        (p) => p.name === editedTask?.priority
+      );
 
-    setIsSaving(false);
+      // Find role and checklist rids
+      const selectedRoleObj = roleOptions?.find(
+        (r) => r.role_name === selectedRole
+      );
+      const selectedChecklistObj = checklistData?.find(
+        (c) => c.name === selectedChecklist
+      );
+
+      // Delete removed attachments first
+      if (deletedAttachmentIds.length > 0 && taskId) {
+        try {
+          for (const attachmentId of deletedAttachmentIds) {
+            await deleteAttachmentMutation.mutateAsync({
+              account_rid: accountId,
+              case_rid: caseId,
+              task_rid: taskId,
+              rid: attachmentId,
+            });
+          }
+          successToast('Attachments deleted successfully');
+          setDeletedAttachmentIds([]);
+        } catch (error) {
+          const errorMessage =
+            (error as { response?: { data?: { statusMessage?: string } } })
+              ?.response?.data?.statusMessage ||
+            (error instanceof Error
+              ? error.message
+              : 'Failed to delete attachments');
+          errorToast(errorMessage);
+          console.error('Error deleting attachments:', error);
+        }
+      }
+
+      // Upload new attachments
+      if (pendingAttachments.length > 0 && taskId) {
+        try {
+          await uploadAttachmentsMutation.mutateAsync({
+            account_rid: accountId,
+            case_rid: caseId,
+            task_rid: taskId,
+            files: pendingAttachments,
+          });
+          successToast('Attachments uploaded successfully');
+          setPendingAttachments([]);
+        } catch (error) {
+          const errorMessage =
+            (error as { response?: { data?: { statusMessage?: string } } })
+              ?.response?.data?.statusMessage ||
+            (error instanceof Error
+              ? error.message
+              : 'Failed to upload attachments');
+          errorToast(errorMessage);
+          console.error('Error uploading attachments:', error);
+        }
+      }
+
+      // Update the task
+      if (editedTask && taskId) {
+        const updatePayload = {
+          rid: taskId,
+          case_rid: caseId,
+          account_rid: accountId,
+          task_name: editedTask.title || '',
+          task_description: editedTask.description || '',
+          status_rid: selectedStatus?.id || '',
+          priority_rid: selectedPriority?.id || '',
+          case_team_member_role_rid: selectedRoleObj?.rid || '',
+          checklist_template_rid: selectedChecklistObj?.id || '',
+          effective_start_datetime: editedTask.startDate
+            ? dayjs(editedTask.startDate).format('YYYY-MM-DD')
+            : '',
+          effective_end_datetime: editedTask.endDate
+            ? dayjs(editedTask.endDate).format('YYYY-MM-DD')
+            : '',
+          tags: tagsArray.length > 0 ? tagsArray : undefined,
+          workflow_connector: {},
+        };
+
+        await updateTaskMutation.mutateAsync(updatePayload);
+        successToast('Task updated successfully');
+        setIsEditing(false);
+        setOriginalTask(editedTask);
+      }
+
+      // Add pending collaborators
+      if (pendingCollaborators.length > 0 && taskId && onAddCollaborator) {
+        try {
+          for (const userId of pendingCollaborators) {
+            await onAddCollaborator(taskId, userId);
+          }
+          setPendingCollaborators([]);
+        } catch (error) {
+          console.error('Error adding collaborators:', error);
+        }
+      }
+    } catch (error) {
+      const errorMessage =
+        (error as { response?: { data?: { statusMessage?: string } } })
+          ?.response?.data?.statusMessage ||
+        (error instanceof Error ? error.message : 'Failed to update task');
+      errorToast(errorMessage);
+      console.error('Error updating task:', error);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleDescriptionChange = (
@@ -479,9 +623,9 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     setEditedTask((prev) =>
       prev
         ? {
-          ...prev,
-          status: statusName,
-        }
+            ...prev,
+            status: statusName,
+          }
         : null
     );
   };
@@ -522,28 +666,19 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   const handleAttachmentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
-      const formData = new FormData();
+      const fileArray = Array.from(files);
 
-      // Add task_rid to the payload
-      formData.append('task_rid', taskId || '');
-      formData.append('account_rid', accountId || '');
-      formData.append('case_rid', caseId || '');
-
-      // Add all files to the payload
-      Array.from(files).forEach((file) => {
-        formData.append('files', file);
-      });
+      // Store files for upload on save
+      setPendingAttachments((prev) => [...prev, ...fileArray]);
 
       // Also store file names in editedTask for UI display
-      const fileNames = Array.from(files).map((f) => f.name);
+      const fileNames = fileArray.map((f) => f.name);
       setEditedTask((prev) =>
         prev
           ? {
-            ...prev,
-            attachments: [...(prev.attachments || []), ...fileNames],
-            // Store the FormData for upload when Save is clicked
-            attachmentFormData: formData,
-          }
+              ...prev,
+              attachments: [...(prev.attachments || []), ...fileNames],
+            }
           : null
       );
       e.target.value = '';
@@ -551,15 +686,29 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   };
 
   const handleRemoveAttachment = (indexToRemove: number) => {
-    setEditedTask((prev) =>
-      prev
-        ? {
-          ...prev,
-          attachments:
-            prev.attachments?.filter((_, index) => index !== indexToRemove) ||
-            [],
-        }
-        : null
+    setEditedTask((prev) => {
+      if (!prev) return null;
+      const updatedAttachments =
+        prev.attachments?.filter((_, index) => index !== indexToRemove) || [];
+
+      // Also remove from pending attachments if it's a pending one
+      if (indexToRemove < pendingAttachments.length) {
+        setPendingAttachments((prevPending) =>
+          prevPending.filter((_, index) => index !== indexToRemove)
+        );
+      }
+
+      return { ...prev, attachments: updatedAttachments };
+    });
+  };
+
+  const handleRemoveExistingAttachment = (attachmentId: string) => {
+    // Add to deleted list
+    setDeletedAttachmentIds((prev) => [...prev, attachmentId]);
+
+    // Remove from display list
+    setTaskAttachments((prev) =>
+      prev.filter((att) => att.id !== attachmentId)
     );
   };
 
@@ -574,13 +723,13 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       setEditedTask((prev) =>
         prev
           ? {
-            ...prev,
-            assignee: {
-              name: selectedUser.name,
-              initials: selectedUser.initials,
-              color: selectedUser.color,
-            },
-          }
+              ...prev,
+              assignee: {
+                name: selectedUser.name,
+                initials: selectedUser.initials,
+                color: selectedUser.color,
+              },
+            }
           : null
       );
     }
@@ -622,10 +771,6 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   };
 
   const handleCollaboratorsChange = (event: SelectChangeEvent<string[]>) => {
-    console.log('🎯 handleCollaboratorsChange triggered');
-    console.log('   Event value:', event.target.value);
-    console.log('   Current selectedCollaboratorIds:', selectedCollaboratorIds);
-
     // This handler kept for compatibility but we manage selection via toggleSelection
     const selectedUserIds = event.target.value as string[];
     console.log('   Selected user IDs:', selectedUserIds);
@@ -730,8 +875,9 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   return (
     <>
       <div
-        className={`fixed right-0 bottom-0 w-[650px] bg-white text-gray-900 shadow-2xl transform transition-transform duration-300 ease-in-out z-50 overflow-y-auto ${isOpen ? 'translate-x-0' : 'translate-x-full'
-          }`}
+        className={`fixed right-0 bottom-0 w-[650px] bg-white text-gray-900 shadow-2xl transform transition-transform duration-300 ease-in-out z-50 overflow-y-auto ${
+          isOpen ? 'translate-x-0' : 'translate-x-full'
+        }`}
         style={{ top: '38.1px' }}
       >
         <div className='sticky top-0 flex items-center justify-between p-[16.5px] border-b border-[#CBD6E2] bg-white z-50'>
@@ -1135,6 +1281,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
               taskAttachments={taskAttachments}
               onAttachmentChange={handleAttachmentChange}
               onRemoveAttachment={handleRemoveAttachment}
+              onRemoveExistingAttachment={handleRemoveExistingAttachment}
             />
           )}
 

@@ -119,6 +119,36 @@ export interface TaskAttachmentsApiResponse {
   message: string;
 }
 
+// Task Attachments Upload Types
+export interface UploadTaskAttachmentsPayload {
+  account_rid: string;
+  case_rid: string;
+  task_rid: string;
+  files: File[];
+}
+
+export interface UploadTaskAttachmentsResponse extends CommonApiResponse {
+  data?: {
+    rid?: string;
+    [key: string]: unknown;
+  };
+}
+
+// Task Attachments Delete Types
+export interface DeleteTaskAttachmentPayload {
+  account_rid: string;
+  case_rid: string;
+  task_rid: string;
+  rid: string;
+}
+
+export interface DeleteTaskAttachmentResponse extends CommonApiResponse {
+  data?: {
+    rid?: string;
+    [key: string]: unknown;
+  };
+}
+
 // Create Task Types
 export interface CreateTaskPayload {
   case_rid: string;
@@ -133,15 +163,10 @@ export interface CreateTaskPayload {
   task_description?: string;
   effective_start_datetime?: string;
   effective_end_datetime?: string;
-  assigned_to?: string;
   tag_rid?: string | string[];
   tags?: Array<{ tag_rid: string; is_new_tag: boolean }>;
   is_new_tag?: boolean;
-  workflow_connector?: {
-    source_rid: string;
-    target_rid: string[];
-    relationship_connector_rid: string;
-  };
+  workflow_connector?: Record<string, unknown>;
   [key: string]: unknown;
 }
 
@@ -196,6 +221,10 @@ export const getCaseTaskExportUrl = () => '/api/cases/task/export';
 export const getTaskCommentsListUrl = () => '/api/cases/task/comments/list';
 export const getTaskAttachmentsListUrl = () =>
   '/api/cases/task/attachments/list';
+export const getUploadTaskAttachmentsUrl = () =>
+  '/api/cases/task/attachments/add';
+export const getDeleteTaskAttachmentUrl = () =>
+  '/api/cases/task/attachments/delete';
 
 // Comment URL
 export const getAddCommentUrl = () => '/api/cases/task/comments/add';
@@ -324,6 +353,53 @@ export const deleteTaskComment = async (
   }
 };
 
+// Delete Task Attachment
+export const deleteTaskAttachment = async (
+  payload: DeleteTaskAttachmentPayload
+): Promise<DeleteTaskAttachmentResponse> => {
+  try {
+    const { data } = await caseServiceApi.post<DeleteTaskAttachmentResponse>(
+      getDeleteTaskAttachmentUrl(),
+      payload
+    );
+    return data;
+  } catch (error) {
+    console.error('Error deleting task attachment:', error);
+    throw error;
+  }
+};
+
+// Upload Task Attachments
+export const uploadTaskAttachments = async (
+  payload: UploadTaskAttachmentsPayload
+): Promise<UploadTaskAttachmentsResponse> => {
+  try {
+    const formData = new FormData();
+    formData.append('account_rid', payload.account_rid);
+    formData.append('case_rid', payload.case_rid);
+    formData.append('task_rid', payload.task_rid);
+
+    // Add all files to the payload
+    payload.files.forEach((file) => {
+      formData.append('files', file);
+    });
+
+    const { data } = await caseServiceApi.post<UploadTaskAttachmentsResponse>(
+      getUploadTaskAttachmentsUrl(),
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+    return data;
+  } catch (error) {
+    console.error('Error uploading task attachments:', error);
+    throw error;
+  }
+};
+
 // Create Case Task
 export const createCaseTask = async (
   payload: CreateTaskPayload
@@ -444,6 +520,28 @@ export const useUpdateTaskComment = () => {
 export const useDeleteTaskComment = () => {
   return useMutation<CommentResponse, Error, DeleteCommentPayload>({
     mutationFn: (payload) => deleteTaskComment(payload),
+  });
+};
+
+// Deleting Task Attachments
+export const useDeleteTaskAttachment = () => {
+  return useMutation<
+    DeleteTaskAttachmentResponse,
+    Error,
+    DeleteTaskAttachmentPayload
+  >({
+    mutationFn: (payload) => deleteTaskAttachment(payload),
+  });
+};
+
+// Uploading Task Attachments
+export const useUploadTaskAttachments = () => {
+  return useMutation<
+    UploadTaskAttachmentsResponse,
+    Error,
+    UploadTaskAttachmentsPayload
+  >({
+    mutationFn: (payload) => uploadTaskAttachments(payload),
   });
 };
 
