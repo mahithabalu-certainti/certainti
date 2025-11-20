@@ -2171,7 +2171,7 @@ async function exportAllChecklists(req: Request, res: Response): Promise<void> {
                 attachment_level: d.attachment_level,
                 attach_to: d.attach_to,
                 attached_to: d.attached_to,
-                created_by: d.created_by_name,
+                created_by_name: d.created_by_name,
                 created_datetime: formatDate(d.created_datetime),
                 modified_by_name: d.modified_by_name,
                 modified_datetime:
