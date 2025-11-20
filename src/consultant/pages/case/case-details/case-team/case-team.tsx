@@ -764,6 +764,7 @@ const CaseTeam: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
                                           <MenuItem
                                             key={role}
                                             value={role}
+                                            title={role}
                                             sx={{
                                               fontSize: '13px',
                                               color: '#425A76 !important',
@@ -864,6 +865,7 @@ const CaseTeam: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
                                           <MenuItem
                                             key={user}
                                             value={user}
+                                            title={user}
                                             sx={{
                                               fontSize: '13px',
                                               color: '#425A76 !important',

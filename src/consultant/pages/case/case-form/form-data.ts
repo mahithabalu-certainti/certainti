@@ -56,10 +56,7 @@ export const CaseFormData = (
             options: filingTypeOptions || [],
             placeholder: 'Choose Filing Type',
             required: true,
-            disabled:
-              isEditView &&
-              !permissionMap?.['filing_type_rid']?.edit &&
-              permissionMap?.['filing_type_rid']?.read,
+            disabled: isEditView,
             hide:
               isEditView &&
               !permissionMap?.['filing_type_rid']?.edit &&
