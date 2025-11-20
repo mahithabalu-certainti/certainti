@@ -1023,6 +1023,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                       )
                     }
                     format='YYYY-MMM-DD'
+                    minDate={dayjs()}
                     slots={{
                       openPickerIcon: () => (
                         <CalendarIcon className='w-4 h-4' />

@@ -452,6 +452,7 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                     value={startDate}
                     onChange={handleStartDateChange}
                     format='YYYY-MMM-DD'
+                    minDate={dayjs()}
                     slots={{
                       openPickerIcon: () => (
                         <CalendarIcon className='w-4 h-4' />
