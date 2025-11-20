@@ -5973,13 +5973,13 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       let workFlowConnectorDetails;
       let dynamicRelationTypeName : string = ``
       if(workFlowConnectorData) {
-        if(workFlowConnectorData.relationship_type === 'blocks') {
+        if(workFlowConnectorData.relationship_type === 'Blocks') {
           dynamicRelationTypeName = relationshipTypes.isBlockedBy
-        } else if (workFlowConnectorData.relationship_type === 'enables') {
+        } else if (workFlowConnectorData.relationship_type === 'Enables') {
           dynamicRelationTypeName = relationshipTypes.isEnabledBy
-        } else if (workFlowConnectorData.relationship_type === 'is_enabled_by') {
+        } else if (workFlowConnectorData.relationship_type === 'Is Enabled By') {
           dynamicRelationTypeName = relationshipTypes.enables
-        } else if (workFlowConnectorData.relationship_type === 'is_blocked_by') {
+        } else if (workFlowConnectorData.relationship_type === 'Is Blocked By') {
           dynamicRelationTypeName = relationshipTypes.blocks
         }
       }
@@ -6105,13 +6105,13 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         }, raw : true
       })
       if(workFlowConnectorData) {
-        if(workFlowConnectorData.relationship_type === 'blocks') {
+        if(workFlowConnectorData.relationship_type === 'Blocks') {
           dynamicRelationTypeName = relationshipTypes.isBlockedBy
-        } else if (workFlowConnectorData.relationship_type === 'enables') {
+        } else if (workFlowConnectorData.relationship_type === 'Enables') {
           dynamicRelationTypeName = relationshipTypes.isEnabledBy
-        } else if (workFlowConnectorData.relationship_type === 'is_enabled_by') {
+        } else if (workFlowConnectorData.relationship_type === 'Is Enabled By') {
           dynamicRelationTypeName = relationshipTypes.enables
-        } else if (workFlowConnectorData.relationship_type === 'is_blocked_by') {
+        } else if (workFlowConnectorData.relationship_type === 'Is Blocked By') {
           dynamicRelationTypeName = relationshipTypes.blocks
         }
       }
@@ -6498,9 +6498,14 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     }
   }
   async updateChecklistItems (data : any, accountNumber : string, transaction : Transaction) {
+    if(!this.mainDbSequelize) {
+      this.mainDbSequelize = await initMainDbSequelize()
+    }
     const {CheckListItem} = await this.caseModelService.getModels(accountNumber);
+    const fetchChecklistStatusId : any = await this.mainDbSequelize.query(rawQueries.getChecklistStatusByName(data.status_rid));
+
     const [result] = await CheckListItem.update({
-      status_rid : data.status_rid
+      status_rid : fetchChecklistStatusId[0][0].rid
     }, {
       where : {
         rid : data.rid

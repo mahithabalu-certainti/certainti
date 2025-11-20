@@ -1433,6 +1433,9 @@ export const rawQueries = {
   },
   getCaseTeamRoleName (roleRid : string) {
     return `SELECT rid, role_name FROM ${MAIN_SCHEMA_NAME}.case_team_role WHERE rid = '${roleRid}'`
+  },
+  getChecklistStatusByName (statusName : string) {
+    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.checklist_status WHERE status_name ILIKE '%${statusName}%'`;
   }
 };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 
@@ -1681,10 +1684,10 @@ export const filterColumnsCaseTaskTypes : any = {
 }
 
 export const relationshipTypes = {
-  blocks : "blocks",
-  enables : "enables",
-  isBlockedBy : "is_blocked_by",
-  isEnabledBy : "is_enabled_by"
+  blocks : "Blocks",
+  enables : "Enables",
+  isBlockedBy : "Is Blocked By",
+  isEnabledBy : "Is Enabled By"
 }
 
 // Common fields for activity select queries
