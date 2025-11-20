@@ -3650,6 +3650,9 @@ return !response;
           if (attachment.attachment_level === 'account') {
             return attachment.fiscal_year ?? null;
           }
+          if (attachment.attachment_level === 'resource') {
+            return attachment.fiscal_year ?? null;
+          }
           // PROJECT: fetch from project info (project fiscal_year)
           if (attachment.attachment_level === 'project' && attachment.attach_to) {
             const project = await this.fetchProjectInfoById(accountNumber, attachment.attach_to);
