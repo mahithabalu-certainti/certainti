@@ -1030,6 +1030,7 @@ return !response;
           case 'checklist_name':
           case 'attachment_level':  
           case 'descriptions':
+          case 'checklist_description':
           case 'attached_to':
           case 'attach_to':
           case 'r_number':

@@ -486,7 +486,7 @@ export const checklistsFieldMappings = [
   {
     permissionField: "updated_datetime",
     exportField: "Updated On",
-    dataField: "updated_datetime",
+    dataField: "modified_datetime",
   }
           
 ];
