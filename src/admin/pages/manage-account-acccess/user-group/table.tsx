@@ -58,7 +58,7 @@ export const ManageAccountUserGroupTable: React.FC<UserTableProps> = ({
       search: searchValue,
       page: 1,
     }));
-  }, [searchValue]);
+  }, [searchValue, appliedFilters]);
 
   const [addedAccounts, setAddedAccounts] = useState<string[]>([]);
   const [groupList, setGroupList] = useState<ManageAccountsGroupList[]>([]);

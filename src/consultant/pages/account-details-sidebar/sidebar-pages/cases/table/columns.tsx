@@ -60,10 +60,7 @@ export const getCaseListColumns = (
       sortable: true,
       sortId: 'filing_type_name',
       editId: 'filing_type_rid',
-      editable:
-        permissionMap?.['filing_type_rid']?.edit &&
-        permissionMap?.['filing_type_rid']?.read &&
-        !accountInActive,
+      editable: false,
       hide:
         !permissionMap?.['filing_type_rid']?.edit &&
         !permissionMap?.['filing_type_rid']?.read,
