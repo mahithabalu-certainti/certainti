@@ -291,7 +291,7 @@ export const buildNumericFilterCondition = (
     [ALPHANUMERIC_CONDITIONS.less_than]: (col, val) => `${col} < ${val}`,
     [ALPHANUMERIC_CONDITIONS.between]: (col, val) =>
       `${col} BETWEEN ${Array.isArray(val) ? val.join(" AND ") : val}`,
-    [ALPHANUMERIC_CONDITIONS.isEmpty]: (col) => `${col} IS NULL`,
+    [ALPHANUMERIC_CONDITIONS.isEmpty]: (col) => `(${col} IS NULL OR ${col} = '')`,
     [ALPHANUMERIC_CONDITIONS.IN]: (col, val) =>
       `${col} IN (${Array.isArray(val) ? val.join(",") : val})`,
   };
@@ -326,7 +326,7 @@ export const buildStringFilterCondition = (
       `LOWER(${col}) = LOWER('${val}')`,
     [ALPHANUMERIC_CONDITIONS.notEquals]: (col, val) =>
       `(LOWER(${col}) != LOWER('${val}') OR ${col} IS NULL)`,
-    [ALPHANUMERIC_CONDITIONS.isEmpty]: (col) => `${col} IS NULL`,
+    [ALPHANUMERIC_CONDITIONS.isEmpty]: (col) => `(${col} IS NULL OR ${col} = '')`,
     [ALPHANUMERIC_CONDITIONS.contains]: (col, val) => `${col} ILIKE '%${val}%'`,
     [ALPHANUMERIC_CONDITIONS.IN]: (col, val) =>
       `${col} IN (${

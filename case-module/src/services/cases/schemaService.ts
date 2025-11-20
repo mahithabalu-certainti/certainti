@@ -1005,8 +1005,7 @@ return !response;
           [Op.or]: [
             { checklist_name: { [Op.iLike]: `%${search}%` } },
             { r_number: { [Op.iLike]: `%${search}%` } },
-            { descriptions : { [Op.iLike]: `%${search}%` } },
-            { title : { [Op.iLike]: `%${search}%` } },
+            { checklist_description: { [Op.iLike]: `%${search}%` } },
             { attachment_level : { [Op.iLike]: `%${search}%` } }
           ]
         });
@@ -3230,6 +3229,7 @@ return !response;
           checklist_name: caseRequest.checklist_name,
           checklist_description: caseRequest.checklist_description,
           status_rid: caseRequest.status_rid,
+          fiscal_year:caseRequest.fiscal_year,
           checklist_template_rid: caseRequest?.checklist_template_rid || "",
           modified_by: caseRequest.modified_by,
           modified_datetime: new Date(),

@@ -42,7 +42,7 @@ import {
 } from "../../models/taskCollaboratorsModel";
 import CaseSchemaService from "../cases/schemaService";
 import { sendEmailWithAttachment } from "../emailService";
-
+import { scheduleTeamsMeetingUtil } from "../../utils/teamsMeetingUtil";
 class ActivitySchemaService {
   private orgDbSequelize: Sequelize | null = null;
   private mainDbSequelize: Sequelize | null = null;
@@ -1224,6 +1224,29 @@ class ActivitySchemaService {
       rawQueries.fetchEmailStatusByName(activityRequest.email_status),
       { type: "SELECT" }
     );
+    let toEmailsArray: string[] = [];
+    let ccEmailsArray: string[] = [];
+     if (Array.isArray(activityRequest.to_email)) {
+    toEmailsArray = activityRequest.to_email;
+  } else if (typeof activityRequest.to_email === 'string') {
+    try {
+      toEmailsArray = JSON.parse(activityRequest.to_email);
+    } catch {
+      toEmailsArray = [];
+    }
+  }
+   if (Array.isArray(activityRequest.cc_email)) {
+    ccEmailsArray = activityRequest.cc_email;
+  } else if (typeof activityRequest.cc_email === 'string') {
+    try {
+      ccEmailsArray = JSON.parse(activityRequest.cc_email);
+    } catch {
+      ccEmailsArray = [];
+    }
+  }
+    activityRequest.cc_email = ccEmailsArray;
+    activityRequest.to_email = toEmailsArray;
+    
     const activityData = {
       ...activityRequest,
       activity_type: "Email",
@@ -1310,10 +1333,9 @@ class ActivitySchemaService {
     userId: string,
     files?: Express.Multer.File[]
   ) {
-    const { Activities } =
-      await this.caseModelService.getModels(accountNumber);
+    const { Activities } = await this.caseModelService.getModels(accountNumber);
     if (!this.mainDbSequelize) {
-      this.mainDbSequelize = await this.caseModelService.getSequelize();
+      this.mainDbSequelize = await this.caseModelService.getMainSequelize();
     }
     const [meetingStatus]: any[] = await this.mainDbSequelize.query(
       rawQueries.fetchEmailStatusByName(activityRequest.meeting_status),
@@ -1328,14 +1350,36 @@ class ActivitySchemaService {
     };
     const response = await Activities.create(activityData);
     activityRequest.activity_rid = response.rid;
+
+    // Schedule meeting in Teams using util function
+    try {
+      const [accountInfo]: any[] = await this.mainDbSequelize.query(
+      rawQueries.fetchAccountInfo(activityRequest.account_rid!),
+      { type: "SELECT" }
+    );
+
+   const senderEmailInfo = await this.fetchSenderEmailInfoByAccountId(
+      accountNumber,
+      accountInfo.parent_account_rid
+    );
+    if(!senderEmailInfo){
+      throw new Error("Sender email information not found for scheduling meeting.");
+    } 
+    
+
+      await scheduleTeamsMeetingUtil(activityRequest, userId,senderEmailInfo);
+    } catch (err) {
+      logMessage(`Error scheduling Teams meeting: ${err}`);
+    }
+
     await this.uploadActivityFiles(files, activityRequest, accountNumber);
     this.addTaskTimeline(
       accountNumber,
       activityData.activity_rid,
       activityData.account_rid,
-      `Meeting Activity Created with subject: ${activityRequest}`,
+      `Meeting Activity Created with subject: ${activityRequest.subject}`,
       userId,
-      `Meeting Activity Created: ${activityRequest}`,
+      `Meeting Activity Created: ${activityRequest.subject}`,
       "success",
       activityData.activity_rid
     );
