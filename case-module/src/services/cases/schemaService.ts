@@ -6326,7 +6326,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
           const taskStatusMap = new Map(findTaskStatus[0].map((d : any) => [d.rid, d.task_status_name]));
 
           for(let f of findTaskDependency) {
-            if(mapRelationShip.get(f.relationship_connector_rid) === 'is_enabled_by') {
+            if(mapRelationShip.get(f.relationship_connector_rid) === 'Is Enabled By') {
               if(taskStatusMap.get(mapTargetTasks.get(f.target_rid)?.task_status_rid) !== "Completed") {
                 if(taskStatusMap.get(statusRid) === "Completed") {
                   return {
@@ -6337,7 +6337,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                 }
               }
             }
-            else if(mapRelationShip.get(f.relationship_connector_rid) === "is_blocked_by") {
+            else if(mapRelationShip.get(f.relationship_connector_rid) === "Is Blocked By") {
               if(taskStatusMap.get(mapTargetTasks.get(f.target_rid)?.task_status_rid) !== "Completed") {
                 return {
                   success : true,
@@ -6392,7 +6392,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
           const taskStatusMap = new Map(findTaskStatus[0].map((d : any) => [d.rid, d.task_status_name]));
 
           for(let f of findTaskDependency) {
-            if(mapRelationShip.get(f.relationship_connector_rid) === 'enables') {
+            if(mapRelationShip.get(f.relationship_connector_rid) === 'Enables') {
               if(taskStatusMap.get(mapSourceTasks.get(f.source_rid)?.task_status_rid) !== "Completed") {
                 if(taskStatusMap.get(statusRid) === "Completed") {
                   return {
@@ -6403,7 +6403,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                 }
               }
             }
-            else if(mapRelationShip.get(f.relationship_connector_rid) === "blocks") {
+            else if(mapRelationShip.get(f.relationship_connector_rid) === "Blocks") {
               if(taskStatusMap.get(mapSourceTasks.get(f.target_rid)?.task_status_rid) !== "Completed") {
                 return {
                   success : true,
