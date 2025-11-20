@@ -132,12 +132,12 @@ export const getTaskTemplateColumns = (
     field: {
       type: 'select',
       required: true,
-      placeholder: 'choose Milestone Type',
+      placeholder: 'Choose Milestone Type',
       options: taskMilestoneTypesOptions,
     },
   },
   {
-    id: 'case_team_member_role_rid',
+    id: 'role_name',
     editId: 'case_team_member_role_rid',
     editable:
       permissionMap?.['case_team_member_role_rid']?.edit &&
@@ -172,7 +172,7 @@ export const getTaskTemplateColumns = (
     field: {
       type: 'select',
       required: false,
-      placeholder: 'choose priority',
+      placeholder: 'Choose Priority',
       options: taskPrioritytTypesTypesOptions,
     },
   },
@@ -191,7 +191,7 @@ export const getTaskTemplateColumns = (
     field: {
       type: 'select',
       required: false,
-      placeholder: 'choose checklist',
+      placeholder: 'Choose Checklist',
       options: taskCheckListTypesTypesOptions,
     },
   },
@@ -211,7 +211,7 @@ export const getTaskTemplateColumns = (
     field: {
       type: 'select',
       required: false,
-      placeholder: ' choose status',
+      placeholder: ' Choose Status',
       options: memoizedStatus,
     },
   },

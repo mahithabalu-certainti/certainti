@@ -70,12 +70,12 @@ export const TaskTemplateFormFieldsData = (
             // hide: taskType,
             disabled:
               isEditView &&
-              !permissionMap?.['milestone_template_rid']?.edit &&
-              permissionMap?.['milestone_template_rid']?.read,
+              !permissionMap?.['milestone_type_rid']?.edit &&
+              permissionMap?.['milestone_type_rid']?.read,
             hide:
-              taskType &&
-              !permissionMap?.['milestone_template_rid']?.read &&
-              !permissionMap?.['milestone_template_rid']?.edit,
+              taskType ||
+              (!permissionMap?.['milestone_type_rid']?.read &&
+                !permissionMap?.['milestone_type_rid']?.edit),
           }),
           createSelectField('case_team_member_role_rid', 'Assign Role', {
             options: taskAssignRoleTypesTypesOptions || [],
@@ -86,9 +86,9 @@ export const TaskTemplateFormFieldsData = (
               !permissionMap?.['case_team_member_role_rid']?.edit &&
               permissionMap?.['case_team_member_role_rid']?.read,
             hide:
-              taskType &&
-              !permissionMap?.['case_team_member_role_rid']?.read &&
-              !permissionMap?.['case_team_member_role_rid']?.edit,
+              taskType ||
+              (!permissionMap?.['case_team_member_role_rid']?.read &&
+                !permissionMap?.['case_team_member_role_rid']?.edit),
           }),
           createTextField('effort_in_days', 'Efforts In Days', {
             regex: REGEX_PATTERNS.ALLOW_ONE_TO_99,
@@ -103,9 +103,9 @@ export const TaskTemplateFormFieldsData = (
               permissionMap?.['effort_in_days']?.read &&
               !permissionMap?.['effort_in_days']?.edit,
             hide:
-              taskType &&
-              !permissionMap?.['effort_in_days']?.read &&
-              !permissionMap?.['effort_in_days']?.edit,
+              taskType ||
+              (!permissionMap?.['effort_in_days']?.read &&
+                !permissionMap?.['effort_in_days']?.edit),
           }),
 
           createSelectField('priority_rid', 'Priority', {

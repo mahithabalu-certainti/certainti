@@ -118,7 +118,7 @@ export const ManageDetailComponent = ({
   const DescrptionInfo: DetailItem[] = [
     {
       key: 'task_description',
-      label: 'Descrption',
+      label: 'Description',
       value: getValueOrDefault(data?.task_description),
     },
   ];
