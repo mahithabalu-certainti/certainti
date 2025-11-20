@@ -36,7 +36,10 @@ const TaskAttachmentsSection: React.FC<TaskAttachmentsSectionProps> = ({
   return (
     <div>
       <h3 className='text-sm font-semibold text-gray-700 mb-3'>Attachments</h3>
-      <div className='border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors cursor-pointer bg-gray-50'>
+      <label
+        htmlFor='attachments-input'
+        className='border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors cursor-pointer bg-gray-50 block'
+      >
         <input
           type='file'
           multiple
@@ -46,12 +49,8 @@ const TaskAttachmentsSection: React.FC<TaskAttachmentsSectionProps> = ({
           id='attachments-input'
           disabled={fieldDisabled.attachments}
         />
-        <label htmlFor='attachments-input' className='cursor-pointer block'>
-          <p className='text-sm text-gray-600'>
-            📎 Click to upload attachments
-          </p>
-        </label>
-      </div>
+        <p className='text-sm text-gray-600'>📎 Click to upload attachments</p>
+      </label>
 
       {/* Existing attachments from response */}
       {taskAttachments && taskAttachments.length > 0 && (

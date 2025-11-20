@@ -196,10 +196,10 @@ const TaskCollaboratorsSection: React.FC<TaskCollaboratorsSectionProps> = ({
               data-profile-index={index}
             >
               <div
-                className='w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold cursor-pointer text-white border-2 border-white shadow-md transition-all duration-300 ease-in-out group-hover:shadow-xl group-hover:border-blue-200'
+                className='w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold cursor-pointer text-white border-2 border-white shadow-md transition-all duration-300 ease-in-out group-hover:shadow-xl group-hover:border-blue-200'
                 style={{
                   backgroundColor: collab.color,
-                  fontSize: '7px',
+                  fontSize: '10px',
                 }}
               >
                 {collab.initials}
