@@ -576,7 +576,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
         handleSorting={() => {}}
         sortFilterCount={0}
         setSortFilterCount={() => {}}
-        showRefresh={tabParam === 'case_task' ? true : false}
+        showRefresh={false}
         onRefreshClick={onRefreshClick}
         // hideTabPanel={hideSection}
         showSearch={tabParam === 'case_task' ? true : false}
@@ -660,7 +660,6 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
         {tabParam === 'case_task' && (
           <CaseTask
             caseId={caseId}
-            reFetchData={Date.now()}
             setCount={setCount}
             filterParams={{
               page: currentPage,
