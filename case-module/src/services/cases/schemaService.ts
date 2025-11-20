@@ -2713,6 +2713,7 @@ return !response;
         where: {
           case_rid: caseReq.case_rid,
           account_rid: caseReq.account_rid,
+          is_primary: true,
         },
         raw: true,
       });
@@ -2930,7 +2931,7 @@ return !response;
 
     for (const teamMember of editOperations) {
       try {
-        const validationError = await this.validateNoOverlappingDates(
+     /*   const validationError = await this.validateNoOverlappingDates(
           CaseTeam,
           teamMember,
           caseTeamRequest
@@ -2945,6 +2946,7 @@ return !response;
             error: validationError,
           });
         } else {
+        */
           const [updatedRowsCount] = await CaseTeam.update(
             {
               role_rid: teamMember.role_rid,
@@ -2970,7 +2972,7 @@ return !response;
             role_rid: teamMember.role_rid,
             status: "success",
           });
-        }
+        //}
       } catch (memberError) {
         logMessage(
           `Error editing team member ${teamMember.user_rid}: ${memberError}`
@@ -3000,7 +3002,7 @@ return !response;
 
     for (const teamMember of addOperations) {
       try {
-        const validationError = await this.validateNoOverlappingDates(
+       /* const validationError = await this.validateNoOverlappingDates(
           CaseTeam,
           teamMember,
           caseTeamRequest
@@ -3014,7 +3016,7 @@ return !response;
             status: "failed",
             error: validationError,
           });
-        } else {
+        } else { */
           const newTeamMember = await CaseTeam.create({
             account_rid: caseTeamRequest.account_rid,
             case_rid: caseTeamRequest.case_rid,
@@ -3035,7 +3037,7 @@ return !response;
             role_rid: teamMember.role_rid,
             status: "success",
           });
-        }
+      //  }
       } catch (memberError) {
         logMessage(
           `Error adding team member ${teamMember.user_rid}: ${memberError}`
