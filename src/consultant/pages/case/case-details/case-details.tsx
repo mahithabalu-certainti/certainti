@@ -70,9 +70,6 @@ export const CaseDetails = () => {
   const { email: userEmail, name: userName } = useSelector(
     (state: RootState) => state.auth
   );
-  console.log(userEmail);
-  console.log(userName);
-
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const { caseId } = useParams();

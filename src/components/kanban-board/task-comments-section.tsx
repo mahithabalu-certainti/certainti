@@ -265,7 +265,7 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
   if (fieldVisibility.comments) return null;
 
   return (
-    <div className='border-t border-gray-200 pt-6'>
+    <div className='border-t border-gray-200 pt-6 overflow-x-hidden overscroll-x-none'>
       <input
         ref={addFileInputRef}
         type='file'
@@ -338,7 +338,7 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
           )}
 
           {/* Comments List */}
-          <div className='space-y-3 max-h-[400px] overflow-y-auto scrollbar-hide pr-1'>
+          <div className='space-y-3 max-h-[400px] overflow-y-auto overflow-x-hidden scrollbar-hide pr-1'>
             {comments.length > 0 ? (
               comments.map((commentItem, idx) => (
                 <div
@@ -473,7 +473,9 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                               >
                                 <div className='flex items-center gap-2 min-w-0'>
                                   <span className='flex-shrink-0'>📎</span>
-                                  <span className='truncate'>{file.name}</span>
+                                  <span className='truncate break-all min-w-0'>
+                                    {file.name}
+                                  </span>
                                 </div>
                                 <button
                                   onClick={() =>
@@ -706,7 +708,9 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                         >
                           <div className='flex items-center gap-2 min-w-0'>
                             <span className='flex-shrink-0'>📎</span>
-                            <span className='truncate'>{file.name}</span>
+                            <span className='truncate break-all min-w-0'>
+                              {file.name}
+                            </span>
                           </div>
                           <button
                             onClick={() => handleRemoveCommentAttachment(idx)}
@@ -749,7 +753,7 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
 
       {/* Activity Tab */}
       {activeTab === 'activity' && (
-        <div className='space-y-3 max-h-[400px] overflow-y-auto scrollbar-hide pr-1'>
+        <div className='space-y-3 max-h-[400px] overflow-y-auto overflow-x-hidden overscroll-x-none scrollbar-hide pr-1'>
           {activities.length > 0 ? (
             activities.map((activity, idx) => (
               <div
