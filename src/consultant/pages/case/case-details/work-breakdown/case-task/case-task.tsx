@@ -34,7 +34,6 @@ type CaseTaskParamsType = {
 };
 
 interface CaseTaskProps {
-  reFetchData: number;
   caseId?: string;
   setCount: (value: number) => void;
   filterParams: ConfigAssignGroupsListParms | ConfigAssignUserListParms;
@@ -48,7 +47,6 @@ interface CaseTaskProps {
 }
 
 const CaseTask: React.FC<CaseTaskProps> = ({
-  reFetchData,
   caseId,
   setCount,
   filterParams,
@@ -95,10 +93,7 @@ const CaseTask: React.FC<CaseTaskProps> = ({
     ]
   );
 
-  const { data, isLoading, isError, error } = useGetCaseTaskList(
-    tableParams,
-    reFetchData
-  );
+  const { data, isLoading, isError, error } = useGetCaseTaskList(tableParams);
 
   useEffect(() => {
     if (setCaseTaskParams) {
