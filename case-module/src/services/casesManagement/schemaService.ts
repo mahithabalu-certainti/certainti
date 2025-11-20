@@ -1230,6 +1230,9 @@ async getWorkFlowConnector () {
   else return []
 }
   async taskWorkflowConnector (data : any) {
+    if(!this.mainDbSequelize) {
+      this.mainDbSequelize = await initMainDbSequelize()
+    }
     const {WorkflowConnector, WorkflowConnectorMapping} = await this.caseModelService.getModels("");
     let iterationCount : number = 0;
     let totalIteration = data.target_rid.length
@@ -1252,6 +1255,7 @@ async getWorkFlowConnector () {
           dynamicRelationTypeName = relationshipTypes.blocks
         }
       }
+      workFlowConnectorDetails = await WorkflowConnector.findOne({where : {relationship_type : dynamicRelationTypeName}, raw : true})
       if(workFlowConnectorData) {
         const checkIsAlreadyMapped = await WorkflowConnectorMapping.findOne({
           where : {
@@ -1266,6 +1270,25 @@ async getWorkFlowConnector () {
             statusMessage : STATUS_MESSAGE.dataAlreadyMapped
           }
         } else {
+          const ids : any[] = []
+          ids.push(data.relationship_connector_rid)
+          ids.push(workFlowConnectorDetails!.rid)
+          const fetchTaskMappedIds = await WorkflowConnectorMapping.findAll({
+            attributes : ['target_rid'],
+            where : {
+              source_rid : data.source_rid,
+              relationship_connector_rid : {
+                [Op.in] : ids
+              }
+            }, raw : true
+          });
+          const checkForCyclicDependency : any = await this.mainDbSequelize.query(rawQueries.checkDependencyAdminLevel(d, fetchTaskMappedIds,data.relationship_connector_rid, workFlowConnectorDetails!.rid!))
+          if(checkForCyclicDependency[0].length > 0) {
+            return {
+              statusCode : HttpStatus.BAD_REQUEST,
+              statusMessage : `Mapping not allowed: '${checkForCyclicDependency[0][0].task_name}' is already part of a loop.`
+            }
+          }
           const result = await WorkflowConnectorMapping.create({
             created_by : data.created_by,
             created_datetime : new Date(),
