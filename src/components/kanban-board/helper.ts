@@ -81,7 +81,6 @@ export const normalizeTags = (
   if (!Array.isArray(tags)) return [];
   return tags
     .map((tag) => {
-      // Handle API format (tag_name property)
       if (typeof tag === 'string') return tag;
       if (typeof tag === 'object' && tag.tag_name) return tag.tag_name;
       if (typeof tag === 'object' && tag.name) return tag.name;
@@ -101,7 +100,6 @@ export const enrichTask = (task: Task): Task => {
     enrichedTask.collaborators = enrichedTask.collaborators.map(enrichAssignee);
   }
 
-  // Normalize tags from API response format to simple strings
   if (enrichedTask.tags) {
     enrichedTask.tags = normalizeTags(enrichedTask.tags);
   }

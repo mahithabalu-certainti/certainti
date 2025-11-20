@@ -53,7 +53,7 @@ const TaskAttachmentsSection: React.FC<TaskAttachmentsSectionProps> = ({
         </label>
       </div>
 
-      {/* Existing attachments from the server */}
+      {/* Existing attachments from response */}
       {taskAttachments && taskAttachments.length > 0 && (
         <div className='mt-4'>
           <div className='space-y-2'>
@@ -100,9 +100,9 @@ const TaskAttachmentsSection: React.FC<TaskAttachmentsSectionProps> = ({
             >
               <span>📎</span>
               <span className='flex-1'>{file}</span>
-              <span className='text-green-600 text-xs font-medium'>
+              {/* <span className='text-green-600 text-xs font-medium'>
                 (Pending Upload)
-              </span>
+              </span> */}
               <button
                 onClick={() => onRemoveAttachment(idx)}
                 className='ml-auto text-red-500 hover:text-red-700 transition-colors font-bold text-lg'

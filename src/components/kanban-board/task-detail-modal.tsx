@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { TaskDetailModalProps, Task, Activity, Comment } from './types';
 import { MenuItem, SelectChangeEvent } from '@mui/material';
 import dayjs from 'dayjs';
@@ -37,7 +38,6 @@ import {
 } from '../../consultant/pages/case/case-details/work-breakdown/helper';
 import { useToast } from '../../hooks';
 
-// Extend the TaskDetailModalProps to include availableTagOptions
 interface TaskDetailModalPropsExtended
   extends Omit<TaskDetailModalProps, 'tagData'> {
   tagData?: Array<{ id: string; name: string; color: string }>;
@@ -117,8 +117,8 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   const deleteAttachmentMutation = useDeleteTaskAttachment();
   const updateTaskMutation = useUpdateCaseTask();
   const deleteCollaboratorMutation = useDeleteCollaborator();
+  const queryClient = useQueryClient();
 
-  // Memoize query parameters to prevent unnecessary refetches
   const commentsParams = useMemo(
     () => ({
       account_rid: accountId,
@@ -141,7 +141,6 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     [accountId, caseId, taskId]
   );
 
-  // CLEAN REACT QUERY DATA FETCHING
   const { data: rawTask, isLoading: taskLoading } = useGetTaskDetail(
     accountId,
     caseId,
@@ -172,7 +171,6 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     !!taskId && isOpen
   );
 
-  // Sync rawTask → enriched task and store original for comparison
   useEffect(() => {
     if (rawTask) {
       const enriched = enrichTask(rawTask);
@@ -278,17 +276,13 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     setCollaborators(rawCollaborators || []);
   }, [rawCollaborators]);
 
-  // Show loading while main task is fetching
   useEffect(() => {
     setIsLoadingTaskDetails(taskLoading);
   }, [taskLoading]);
 
-  // Use availableTagOptions from parent, fallback to tagData or empty array
   const [availableTags, setAvailableTags] = useState(
     availableTagOptions.length > 0 ? availableTagOptions : tagData
   );
-
-  // Update availableTags when availableTagOptions from parent changes
   useEffect(() => {
     if (availableTagOptions && availableTagOptions.length > 0) {
       setAvailableTags(availableTagOptions);
@@ -297,7 +291,6 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     }
   }, [availableTagOptions, tagData]);
 
-  // Helper function to check if task has been modified
   const hasTaskChanged = () => {
     if (!task || !editedTask || !originalTask) return false;
 
@@ -323,8 +316,6 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       deletedAttachmentIds.length > 0
     );
   };
-
-  // Map collaborators and available users to enriched users
   const collaboratorUsers = useMemo(
     () =>
       collaborators.map((collab) =>
@@ -335,8 +326,6 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       ),
     [collaborators]
   );
-
-  // Merge collaborators with available users, avoiding duplicates - memoized
   const allEnrichedUsers = useMemo(
     () => [
       ...collaboratorUsers,
@@ -384,8 +373,6 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   }, [editedTask, allEnrichedUsers]);
 
   if (!isOpen || !taskId) return null;
-
-  // Show loading skeleton while fetching task details
   if (isLoadingTaskDetails || (!task && !editedTask)) {
     return (
       <div
@@ -470,9 +457,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
 
   const handleSave = async () => {
     setIsSaving(true);
-
     try {
-      // Build tags array
       const tagsArray: Array<{ tag_rid: string; is_new_tag: boolean }> = [];
       if (editedTask?.tags && editedTask.tags.length > 0) {
         editedTask.tags.forEach((tagName: string) => {
@@ -490,24 +475,18 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
           }
         });
       }
-
-      // Get status_rid and priority_rid from the data
       const selectedStatus = statusData?.find(
         (s) => s.name === editedTask?.status
       );
       const selectedPriority = priorityData?.find(
         (p) => p.name === editedTask?.priority
       );
-
-      // Find role and checklist rids
       const selectedRoleObj = roleOptions?.find(
         (r) => r.role_name === selectedRole
       );
       const selectedChecklistObj = checklistData?.find(
         (c) => c.name === selectedChecklist
       );
-
-      // Delete removed attachments first
       if (deletedAttachmentIds.length > 0 && taskId) {
         try {
           for (const attachmentId of deletedAttachmentIds) {
@@ -518,7 +497,10 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
               rid: attachmentId,
             });
           }
-          successToast('Attachments deleted successfully');
+          const message =
+            deleteAttachmentMutation.data?.statusMessage ||
+            'Attachments deleted successfully';
+          successToast(message);
           setDeletedAttachmentIds([]);
         } catch (error) {
           const errorMessage =
@@ -531,18 +513,24 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
           console.error('Error deleting attachments:', error);
         }
       }
-
-      // Upload new attachments
       if (pendingAttachments.length > 0 && taskId) {
         try {
-          await uploadAttachmentsMutation.mutateAsync({
+          const uploadResponse = await uploadAttachmentsMutation.mutateAsync({
             account_rid: accountId,
             case_rid: caseId,
             task_rid: taskId,
             files: pendingAttachments,
           });
-          successToast('Attachments uploaded successfully');
+          const message =
+            uploadResponse?.statusMessage ||
+            'Attachments uploaded successfully';
+          successToast(message);
           setPendingAttachments([]);
+          setEditedTask((prev) => (prev ? { ...prev, attachments: [] } : null));
+
+          queryClient.invalidateQueries({
+            queryKey: ['taskAttachments', attachmentsParams],
+          });
         } catch (error) {
           const errorMessage =
             (error as { response?: { data?: { statusMessage?: string } } })
@@ -555,7 +543,6 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
         }
       }
 
-      // Update the task
       if (editedTask && taskId) {
         const updatePayload = {
           rid: taskId,
@@ -577,8 +564,11 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
           workflow_connector: {},
         };
 
-        await updateTaskMutation.mutateAsync(updatePayload);
-        successToast('Task updated successfully');
+        const updateResponse =
+          await updateTaskMutation.mutateAsync(updatePayload);
+        const message =
+          updateResponse?.statusMessage || 'Task updated successfully';
+        successToast(message);
         setIsEditing(false);
         setOriginalTask(editedTask);
       }
@@ -650,11 +640,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     const files = e.target.files;
     if (files && files.length > 0) {
       const fileArray = Array.from(files);
-
-      // Store files for upload on save
       setPendingAttachments((prev) => [...prev, ...fileArray]);
-
-      // Also store file names in editedTask for UI display
       const fileNames = fileArray.map((f) => f.name);
       setEditedTask((prev) =>
         prev
@@ -686,10 +672,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   };
 
   const handleRemoveExistingAttachment = (attachmentId: string) => {
-    // Add to deleted list
     setDeletedAttachmentIds((prev) => [...prev, attachmentId]);
-
-    // Remove from display list
     setTaskAttachments((prev) => prev.filter((att) => att.id !== attachmentId));
   };
 
@@ -749,28 +732,19 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   };
 
   const handleCollaboratorsChange = async (selectedIds: string[]) => {
-    // Find newly added collaborators
     const newUserIds = selectedIds.filter(
       (id) => !selectedCollaboratorIds.includes(id)
     );
-
-    // Find removed collaborators
     const removedUserIds = selectedCollaboratorIds.filter(
       (id) => !selectedIds.includes(id)
     );
-
-    // If new users are added, trigger API call
     if (newUserIds.length > 0 && taskId && onAddCollaborator) {
       setIsAddingCollaborator(true);
       try {
-        // Call API for each newly added user
         for (const newUserId of newUserIds) {
           await onAddCollaborator(taskId, newUserId);
         }
-        // On success, update the selected IDs
         setSelectedCollaboratorIds(selectedIds);
-
-        // Update local collaborators state directly
         const selectedUsers = allEnrichedUsers.filter((user) =>
           selectedIds.includes(user.id)
         );
@@ -793,8 +767,6 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
         setIsAddingCollaborator(false);
       }
     }
-
-    // If users are removed via checkbox, trigger delete API calls
     if (removedUserIds.length > 0 && taskId) {
       try {
         for (const removedUserId of removedUserIds) {
@@ -811,7 +783,6 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
           }
         }
 
-        // Update local state after successful deletion
         setSelectedCollaboratorIds(selectedIds);
         const selectedUsers = allEnrichedUsers.filter((user) =>
           selectedIds.includes(user.id)
@@ -838,7 +809,6 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       selectedIds.length < selectedCollaboratorIds.length &&
       removedUserIds.length === 0
     ) {
-      // Fallback: just update UI if no removed IDs detected (shouldn't happen)
       setSelectedCollaboratorIds(selectedIds);
       const selectedUsers = allEnrichedUsers.filter((user) =>
         selectedIds.includes(user.id)

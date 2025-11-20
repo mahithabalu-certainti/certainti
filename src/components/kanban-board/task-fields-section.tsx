@@ -95,7 +95,7 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
               </svg>
               <span className='text-sm text-gray-700'>
                 Status
-                {mode === 'create' && <span className='text-red-500'>*</span>}
+                {mode === 'create' && <span className='text-red-500'> * </span>}
               </span>
             </div>
             <StyledSelect
@@ -151,7 +151,7 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
                   fontWeight: '500',
                 }}
               >
-                Select Status
+                Choose Status
               </MenuItem>
               {statusData.map((status) => (
                 <MenuItem
@@ -191,7 +191,9 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
                 </svg>
                 <span className='text-sm text-gray-700'>
                   Priority
-                  {mode === 'create' && <span className='text-red-500'>*</span>}
+                  {mode === 'create' && (
+                    <span className='text-red-500'> * </span>
+                  )}
                 </span>
               </div>
               <StyledSelect
@@ -211,7 +213,7 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
                   if (!value) {
                     return (
                       <span style={{ color: '#7D98B6', fontSize: '13px' }}>
-                        Select Priority
+                        Choose Priority
                       </span>
                     );
                   }
@@ -241,7 +243,7 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
                     fontWeight: '500',
                   }}
                 >
-                  Select Priority
+                  Choose Priority
                 </MenuItem>
                 {priorityData.map((priority) => (
                   <MenuItem
@@ -279,7 +281,9 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
                 </svg>
                 <span className='text-sm text-gray-700'>
                   Tags
-                  {mode === 'create' && <span className='text-red-500'>*</span>}
+                  {mode === 'create' && (
+                    <span className='text-red-500'> * </span>
+                  )}
                 </span>
               </div>
               <div className='w-[200px]'>
@@ -405,7 +409,7 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
               <UserIconSvg className='w-4 h-4 text-gray-500' />
               <span className='text-sm text-gray-700'>
                 User Role
-                {mode === 'create' && <span className='text-red-500'>*</span>}
+                {mode === 'create' && <span className='text-red-500'> * </span>}
               </span>
             </div>
             <StyledSelect
@@ -421,7 +425,7 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
                 if (!value) {
                   return (
                     <span style={{ color: '#7D98B6', fontSize: '13px' }}>
-                      Select Role
+                      Choose Role
                     </span>
                   );
                 }
@@ -451,7 +455,7 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
                   fontWeight: '500',
                 }}
               >
-                Select Role
+                Choose Role
               </MenuItem>
               {roleOptions.map((role: { rid: string; role_name: string }) => (
                 <MenuItem
@@ -491,6 +495,9 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
                 </svg>
                 <span className='text-sm text-gray-700'>
                   Checklist Template
+                  {mode === 'create' && (
+                    <span className='text-red-500'> * </span>
+                  )}
                 </span>
               </div>
               <StyledSelect
@@ -506,7 +513,7 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
                   if (!value) {
                     return (
                       <span style={{ color: '#7D98B6', fontSize: '13px' }}>
-                        Select Template
+                        Choose Template
                       </span>
                     );
                   }
@@ -536,7 +543,7 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
                     fontWeight: '500',
                   }}
                 >
-                  Select Template
+                  Choose Template
                 </MenuItem>
                 {checklistData.map((template: { id: string; name: string }) => (
                   <MenuItem

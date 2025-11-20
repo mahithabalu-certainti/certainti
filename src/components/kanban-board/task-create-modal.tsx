@@ -197,16 +197,20 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
   };
 
   const isFormValid = () => {
-    // Required fields that must always be filled
     const hasTaskTitle = taskTitle.trim();
-    // Status is disabled and pre-filled with "To Do", so don't require explicit selection
     const hasPriority = selectedPriority && selectedPriorityRid;
     const hasDates = startDate && endDate;
     const hasRole = selectedRole && selectedRoleRid;
     const hasTags = selectedTags.length > 0;
-
-    // All required fields must be present (excluding status since it's auto-filled)
-    return hasTaskTitle && hasPriority && hasDates && hasRole && hasTags;
+    const hasChecklist = selectedChecklist && selectedChecklistRid;
+    return (
+      hasTaskTitle &&
+      hasPriority &&
+      hasDates &&
+      hasRole &&
+      hasTags &&
+      hasChecklist
+    );
   };
 
   if (!isOpen) return null;
@@ -385,7 +389,7 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                           fontWeight: '400',
                         }}
                       >
-                        Select User
+                        Choose User
                       </span>
                     );
                   }}
@@ -398,7 +402,7 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                       fontWeight: '500',
                     }}
                   >
-                    Select User
+                    Choose User
                   </MenuItem>
                   {enrichedUsers.map((user) => (
                     <MenuItem
@@ -487,7 +491,7 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                             borderRadius: '2px',
                           },
                         },
-                        placeholder: 'Select start date',
+                        placeholder: 'Choose start date',
                       },
                     }}
                   />
@@ -543,7 +547,7 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                             borderRadius: '2px',
                           },
                         },
-                        placeholder: 'Select end date',
+                        placeholder: 'Choose end date',
                       },
                     }}
                   />

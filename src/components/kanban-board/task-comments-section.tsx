@@ -80,6 +80,8 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
   );
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const editTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const addFileInputRef = useRef<HTMLInputElement>(null);
+  const editFileInputRef = useRef<HTMLInputElement>(null);
 
   // Auto-focus edit textarea when entering edit mode
   useEffect(() => {
@@ -160,16 +162,6 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
 
     setIsUpdating(true);
     try {
-      // Create FormData payload with all required fields
-      const formData = new FormData();
-      formData.append('account_rid', accountId);
-      formData.append('case_rid', caseId);
-      formData.append('task_rid', taskId);
-      formData.append('comments', editingCommentText.trim());
-      formData.append('rid', commentId);
-      formData.append('deleted_file_ids', JSON.stringify([]));
-
-      // Pass formData to the parent component's onUpdateComment handler
       await onUpdateComment(
         commentId,
         editingCommentText.trim(),
@@ -205,8 +197,6 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
       setComment('');
       setCommentFiles([]);
       setShowAddCommentForm(false);
-      // Invalidation is handled by parent component (work-breakdown.tsx)
-      // No need to invalidate here to avoid duplicate API calls
     } catch (error) {
       console.error('Error adding comment:', error);
     } finally {
@@ -219,8 +209,11 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
   ) => {
     const files = e.target.files;
     if (files && files.length > 0) {
-      setCommentFiles((prev) => [...prev, ...Array.from(files)]);
+      const arr = Array.from(files);
+      setCommentFiles((prev) => [...prev, ...arr]);
       e.target.value = '';
+    } else {
+      console.log('Add Comment - No files selected');
     }
   };
 
@@ -235,8 +228,11 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
   ) => {
     const files = e.target.files;
     if (files && files.length > 0) {
-      setEditingNewFiles((prev) => [...prev, ...Array.from(files)]);
+      const arr = Array.from(files);
+      setEditingNewFiles((prev) => [...prev, ...arr]);
       e.target.value = '';
+    } else {
+      console.log('Edit Comment - No files selected');
     }
   };
 
@@ -270,6 +266,22 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
 
   return (
     <div className='border-t border-gray-200 pt-6'>
+      <input
+        ref={addFileInputRef}
+        type='file'
+        multiple
+        onChange={handleCommentAttachmentChange}
+        className='hidden'
+        disabled={fieldDisabled.comments || isAddingComment}
+      />
+      <input
+        ref={editFileInputRef}
+        type='file'
+        multiple
+        onChange={handleEditAttachmentChange}
+        className='hidden'
+        disabled={isUpdating}
+      />
       {/* Tab Navigation */}
       <div className='flex gap-6 mb-6 border-b border-gray-200'>
         <button
@@ -297,7 +309,6 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
       {/* Comments Tab */}
       {activeTab === 'comments' && (
         <div className='space-y-4 relative'>
-          {/* Delete Confirmation Modal - Inline Centered */}
           {deleteConfirmModal.isOpen && (
             <div className='absolute top-0 left-0 right-0 flex items-start justify-center z-50 pt-4'>
               <div className='bg-white rounded-lg shadow-lg p-6 max-w-sm w-full mx-4'>
@@ -440,47 +451,44 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
 
                         {/* New Attachments Input */}
                         <div className='space-y-2'>
-                          <label className='block border-2 border-dashed border-gray-300 rounded-lg p-3 text-center hover:border-gray-400 hover:bg-gray-50 transition-colors cursor-pointer bg-gray-50'>
-                            <input
-                              type='file'
-                              multiple
-                              onChange={handleEditAttachmentChange}
-                              className='hidden'
-                              disabled={isUpdating}
-                              onClick={(e) =>
-                                ((e.target as HTMLInputElement).value = '')
-                              }
-                            />
+                          <button
+                            type='button'
+                            onClick={() => editFileInputRef.current?.click()}
+                            className='block w-full border-2 border-dashed border-gray-300 rounded-lg p-3 text-center hover:border-gray-400 hover:bg-gray-50 transition-colors cursor-pointer bg-gray-50'
+                            disabled={isUpdating}
+                          >
                             <p className='text-xs text-gray-600 font-medium'>
                               📎 Click to upload attachments
                             </p>
-                          </label>
-
-                          {/* New Attachments List */}
-                          {editingNewFiles.length > 0 && (
-                            <div className='space-y-1'>
-                              {editingNewFiles.map((file, idx) => (
-                                <div
-                                  key={idx}
-                                  className='flex items-center justify-between p-2 bg-blue-50 text-blue-900 rounded text-xs'
-                                >
-                                  <span className='truncate'>
-                                    + {file.name}
-                                  </span>
-                                  <button
-                                    onClick={() =>
-                                      handleRemoveEditNewAttachment(idx)
-                                    }
-                                    className='text-blue-700 hover:text-blue-900'
-                                    disabled={isUpdating}
-                                  >
-                                    ✕
-                                  </button>
-                                </div>
-                              ))}
-                            </div>
-                          )}
+                          </button>
                         </div>
+
+                        {/* Show selected files for edit comment */}
+                        {editingNewFiles.length > 0 && (
+                          <div className='space-y-1 max-w-full'>
+                            {editingNewFiles.map((file, idx) => (
+                              <div
+                                key={idx}
+                                className='text-xs text-blue-900 bg-blue-50 p-2 rounded flex items-center gap-2 justify-between min-w-0'
+                              >
+                                <div className='flex items-center gap-2 min-w-0'>
+                                  <span className='flex-shrink-0'>📎</span>
+                                  <span className='truncate'>{file.name}</span>
+                                </div>
+                                <button
+                                  onClick={() =>
+                                    handleRemoveEditNewAttachment(idx)
+                                  }
+                                  className='text-blue-700 hover:text-blue-900 transition-colors flex-shrink-0'
+                                  disabled={isUpdating}
+                                  title='Remove attachment'
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                       <div className='flex gap-2 justify-end mt-3'>
                         <TextButton
@@ -677,23 +685,18 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                   />
 
                   {/* File upload area */}
-                  <label className='block border-2 border-dashed border-gray-300 rounded-lg p-3 text-center hover:border-gray-400 hover:bg-gray-50 transition-colors cursor-pointer bg-gray-50'>
-                    <input
-                      type='file'
-                      multiple
-                      onChange={handleCommentAttachmentChange}
-                      className='hidden'
-                      disabled={fieldDisabled.comments || isAddingComment}
-                      onClick={(e) =>
-                        ((e.target as HTMLInputElement).value = '')
-                      }
-                    />
+                  <button
+                    type='button'
+                    onClick={() => addFileInputRef.current?.click()}
+                    className='block w-full border-2 border-dashed border-gray-300 rounded-lg p-3 text-center hover:border-gray-400 hover:bg-gray-50 transition-colors cursor-pointer bg-gray-50'
+                    disabled={fieldDisabled.comments || isAddingComment}
+                  >
                     <p className='text-xs text-gray-600 font-medium'>
                       📎 Click to upload attachments
                     </p>
-                  </label>
+                  </button>
 
-                  {/* Attached files list */}
+                  {/* Show selected files for add comment */}
                   {commentFiles.length > 0 && (
                     <div className='space-y-1 max-w-full'>
                       {commentFiles.map((file, idx) => (

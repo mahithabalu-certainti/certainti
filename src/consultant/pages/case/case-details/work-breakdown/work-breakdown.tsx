@@ -184,12 +184,26 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
           });
         }
 
+        // Get status_rid from statusData based on status_name or use provided status_rid
+        let statusRid = taskData.status_rid || '';
+        if (!statusRid && taskData.task_status_name) {
+          const statusItem = statusData?.find(
+            (s) => s.name === taskData.task_status_name
+          );
+          statusRid = statusItem?.id || '';
+        }
+        // If still empty, try to find "To Do" as default
+        if (!statusRid) {
+          const defaultStatus = statusData?.find((s) => s.name === 'To Do');
+          statusRid = defaultStatus?.id || '';
+        }
+
         const taskPayload: CreateTaskPayload = {
           case_rid: caseId,
           account_rid: accountId,
           task_name: taskData.task_name || '',
           task_description: taskData.task_description || '',
-          status_rid: taskData.status_rid || '',
+          status_rid: statusRid,
           priority_rid: taskData.priority_rid || '',
           case_team_member_role_rid: taskData.case_team_member_role_rid || '',
           effective_start_datetime: taskData.effective_start_datetime || '',
@@ -208,7 +222,9 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
         createTaskMutation.mutate(taskPayload, {
           onSuccess: (response) => {
             if (response?.data?.rid) {
-              successToast('Task created successfully');
+              const message =
+                response?.statusMessage || 'Task created successfully';
+              successToast(message);
               handleTaskSaved();
               resolve();
             } else {
@@ -238,6 +254,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
       successToast,
       errorToast,
       tagData,
+      statusData,
       handleTaskSaved,
     ]
   );
@@ -261,8 +278,10 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
           {
             onSuccess: () => {
               setOpenTaskId(taskId);
-              successToast('Comment added successfully');
-              // Refetch comments list - match the exact query key structure
+              const message =
+                addCommentMutation.data?.statusMessage ||
+                'Comment added successfully';
+              successToast(message);
               const commentsParams = {
                 account_rid: accountId,
                 case_rid: caseId,
@@ -270,8 +289,12 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
                 page: 1,
                 limit: 100,
               };
+              // Invalidate both comments and attachments queries
               queryClient.invalidateQueries({
                 queryKey: ['taskComments', commentsParams],
+              });
+              queryClient.invalidateQueries({
+                queryKey: ['taskAttachments', commentsParams],
               });
               resolve();
             },
@@ -324,8 +347,10 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
           },
           {
             onSuccess: () => {
-              successToast('Comment updated successfully');
-              // Refetch comments list - match the exact query key structure
+              const message =
+                updateCommentMutation.data?.statusMessage ||
+                'Comment updated successfully';
+              successToast(message);
               const commentsParams = {
                 account_rid: accountId,
                 case_rid: caseId,
@@ -379,8 +404,10 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
           },
           {
             onSuccess: () => {
-              successToast('Comment deleted successfully');
-              // Refetch comments list - match the exact query key structure
+              const message =
+                deleteCommentMutation.data?.statusMessage ||
+                'Comment deleted successfully';
+              successToast(message);
               const commentsParams = {
                 account_rid: accountId,
                 case_rid: caseId,
@@ -606,8 +633,6 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
                 caseId={caseId || ''}
               />
             )}
-
-            {/* Clean Task Detail Modal – uses real React Query inside */}
             {openTaskId && (
               <TaskDetailModal
                 taskId={openTaskId}

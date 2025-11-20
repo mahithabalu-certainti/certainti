@@ -392,7 +392,6 @@ export const fetchCollaborators = async (
     if (response.data && response.data.data) {
       const collaboratorsList = response.data.data;
       if (Array.isArray(collaboratorsList)) {
-        console.log('Fetched collaborators:', collaboratorsList);
         return collaboratorsList;
       }
     }
