@@ -1876,7 +1876,15 @@ export class CaseService {
             statusMessage : STATUS_MESSAGE.userLevelTaskCreatedSuccess,
             data : result.data
           }
+        } else if(result.statusCode === HttpStatus.BAD_REQUEST) {
+          await transaction.rollback();
+          return {
+            statusCode : HttpStatus.BAD_REQUEST,
+            statusMessage : STATUS_MESSAGE.circularDependency,
+            data : null
+          }
         } else {
+          await transaction.rollback();
           return {
             statusCode : HttpStatus.FAILED,
             statusMessage : STATUS_MESSAGE.taskCreateFailed,
@@ -1928,6 +1936,8 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
           const result = await this.caseSchemaService.updateUserLevelTask(data, fetchParentNumber[0][0].r_number, transaction, getActiveStatusId[0][0].rid);
           if(result.statusCode === HttpStatus.SUCCESS) {
             await transaction.commit()
+          } else {
+            await transaction.rollback()
           }
           return {
             statusCode : result.statusCode,
@@ -2578,8 +2588,10 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
   }
   async linkTask (data : CaseTaskWorkFlowCreate) {
     const mainDb = await this.getMainDb();
+    const dbInit = await this.caseModelService.getSequelize();
+    const transaction = await dbInit.transaction();
     const accountNumber : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
-    const result = await this.caseSchemaService.taskWorkflowConnector(accountNumber[0][0].r_number, data);
+    const result = await this.caseSchemaService.taskWorkflowConnector(accountNumber[0][0].r_number, data, transaction);
     return result;
   }
   async deleteLinkTask (data : CaseTaskWorkFlowDelete) {

@@ -170,7 +170,7 @@ export interface ICaseService {
 } | {
     statusCode: number;
     statusMessage: string;
-    data: CaseTask | {};
+    data: CaseTask | {} | undefined;
 }>
 updateUserLevelTask(data : UpdateCaseTaskType): Promise<{
     statusCode: number;

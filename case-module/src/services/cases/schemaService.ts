@@ -4661,7 +4661,13 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
           data.workflow_connector.case_rid = data.case_rid
           data.workflow_connector.source_rid = createdTaskResult.dataValues.rid
           data.workflow_connector.account_rid = data.account_rid
-          await this.taskWorkflowConnector(accountNumber, data.workflow_connector);
+          const workflowResult = await this.taskWorkflowConnector(accountNumber, data.workflow_connector, transaction);
+          if(workflowResult.statusCode === HttpStatus.BAD_REQUEST) {
+            return {
+              statusCode : HttpStatus.BAD_REQUEST,
+              statusMessage : STATUS_MESSAGE.circularDependency
+            }
+          }
         }
       }
       await CaseTimeline.create({
@@ -4747,7 +4753,13 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
               data.workflow_connector.created_by = data.modified_by
               data.workflow_connector.case_rid = data.case_rid
               data.workflow_connector.account_rid = data.account_rid
-              await this.taskWorkflowConnector(accountNumber, data.workflow_connector);
+              const workflowResult= await this.taskWorkflowConnector(accountNumber, data.workflow_connector, transaction);
+              if(workflowResult.statusCode === HttpStatus.BAD_REQUEST) {
+                return {
+                  statusCode : HttpStatus.BAD_REQUEST,
+                  statusMessage : workflowResult.statusMessage
+                }
+              }
             }
           }
           const fetchUpdatedColumns = getColumnsNamesForTaskUpdate(data, isTaskExists as any);
@@ -4893,6 +4905,8 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         task_name : {
           [Op.iLike] : data.task_name
         },
+        case_rid : data.case_rid,
+        account_rid : data.account_rid,
         task_type_rid : taskTypeRid
       },raw : true
     })
@@ -4904,11 +4918,13 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       attributes : ['rid'],
       where : {
         task_name : {
-          [Op.iLike] : data.task_name
+          [Op.iLike] : `%${data.task_name}%`
         },
         rid : {
           [Op.notIn] : [data.rid]
-        }
+        },
+        // account_rid : data.account_rid,
+        // case_rid : data.case_rid
       }, 
       raw : true
     })
@@ -5953,7 +5969,10 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     if(result.length > 0) return result;
     else return []
   }
-  async taskWorkflowConnector (accountNumber : string, data : CaseTaskWorkFlowCreate) {
+  async taskWorkflowConnector (accountNumber : string, data : CaseTaskWorkFlowCreate, transaction : Transaction) {
+    if(!this.orgDbSequelize) {
+      this.orgDbSequelize = await initOrgSequelize();
+    }
     const {CaseTaskWorkflowConnector, CaseTask, CaseTimeline, CaseHistory, WorkflowConnector} = await this.caseModelService.getModels(accountNumber);
     let taskIds : string[] = []
     let iterationCount : number = 0;
@@ -5982,6 +6001,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
           dynamicRelationTypeName = relationshipTypes.blocks
         }
       }
+      workFlowConnectorDetails = await WorkflowConnector.findOne({where : {relationship_type : dynamicRelationTypeName}, raw : true})
       const fetchTasks = await CaseTask.findAll({
         attributes : ['rid', 'task_name'],
         where : {
@@ -6007,6 +6027,29 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             statusMessage : STATUS_MESSAGE.dataAlreadyMapped
           }
         } else {
+          const ids : any[] = []
+          ids.push(data.relationship_connector_rid)
+          ids.push(workFlowConnectorDetails!.rid)
+          const fetchTaskMappedIds = await CaseTaskWorkflowConnector.findAll({
+            attributes : ['target_rid'],
+            where : {
+              source_rid : data.source_rid,
+              relationship_connector_rid : {
+                [Op.in] : ids
+              }
+            }, raw : true
+          });
+          if(fetchTaskMappedIds.length > 0) {
+            
+            let schemaName = rawQueries.fetchSchemaName(accountNumber);
+            const checkForCyclicDependency : any = await this.orgDbSequelize?.query(rawQueries.checkDependency(d, fetchTaskMappedIds, schemaName, data.case_rid, data.account_rid, data.relationship_connector_rid, workFlowConnectorDetails!.rid!))
+            if(checkForCyclicDependency[0].length > 0) {
+              return {
+                statusCode : HttpStatus.BAD_REQUEST,
+                statusMessage : `Mapping not allowed: '${checkForCyclicDependency[0][0].task_name}' is already part of a loop.`
+              }
+            }
+          }
           const result = await CaseTaskWorkflowConnector.create({
             created_by : data.created_by,
             created_datetime : new Date(),
@@ -6015,13 +6058,9 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             source_rid : data.source_rid,
             target_rid : d,
             relationship_connector_rid : data.relationship_connector_rid
-          });
+          }, {transaction});
           if(result) {
-            workFlowConnectorDetails = await WorkflowConnector.findOne({
-              where : {
-                relationship_type : dynamicRelationTypeName
-              }, raw : true
-            })
+            
             if(workFlowConnectorDetails) {
               const checkForMapping = await CaseTaskWorkflowConnector.findOne({
                 where : {
@@ -6041,7 +6080,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                   source_rid : d,
                   target_rid : data.source_rid,
                   relationship_connector_rid : workFlowConnectorDetails.rid!
-                });
+                }, {transaction});
               }
             }
             await CaseTimeline.create({
@@ -6055,15 +6094,14 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
               event_status : "success",
               event_datetime : new Date(),
               description : `${taskMap.get(data.source_rid)} ${workFlowConnectorData.relationship_type} ${taskMap.get(d)}`
-            });
+            }, {transaction});
             await CaseHistory.create({
               created_by : data.created_by,
               created_datetime : new Date(),
               case_rid : data.case_rid,
               attribute_name : data.relationship_connector_rid,
               new_value : `${taskMap.get(data.source_rid)} ${workFlowConnectorData.relationship_type} ${taskMap.get(d)}`
-            });
-            
+            }, {transaction});
           }
       }
     } 
