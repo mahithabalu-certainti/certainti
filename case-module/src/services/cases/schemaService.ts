@@ -3321,14 +3321,14 @@ return !response;
     } else if (attachmentLevel === 'account' && attachTo) {
       fiscal_year = checklistDetails?.fiscal_year ?? null;
     } else if (attachmentLevel === 'project' && attachTo) {
-      const project = await this.fetchProjectInfoById(schemaName, attachTo);
+      const project = await this.fetchProjectInfoById(accountNumber, attachTo);
       fiscal_year = project?.fiscal_year ?? null;
     }
     else if (attachmentLevel === 'project_resource' && attachTo) {
-      let projectResource:any = await this.fetchProjectResourceById(schemaName, attachTo);
+      let projectResource:any = await this.fetchProjectResourceById(accountNumber, attachTo);
       if (Array.isArray(projectResource)) projectResource = projectResource[0];
       if (projectResource && projectResource.project_fiscal_rid) {
-        const project = await this.fetchProjectInfoById(schemaName, projectResource.project_fiscal_rid);
+        const project = await this.fetchProjectInfoById(accountNumber, projectResource.project_fiscal_rid);
         fiscal_year = project?.fiscal_year ?? null;
       }
     } else if (attachmentLevel === 'project_task' && attachTo) {
