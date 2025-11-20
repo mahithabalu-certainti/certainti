@@ -177,6 +177,8 @@ const listCaseTeamSchema = Joi.object({
   filters: Joi.string().default("{}"),
   sortBy: Joi.string().optional(),
   sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
+  account_rid: Joi.string().required(),
+  case_rid: Joi.string().required(),
 });
 
 const listReviewProjectSchema = Joi.object({
@@ -566,6 +568,118 @@ const createActivitTaskSchema = Joi.object({
   remainder_interval: Joi.number().optional()
 });
 
+const createActivityEmailSchema = Joi.object({
+ subject: Joi.string().max(500).required(),
+ body_html: Joi.string().required(),
+ template_rid: Joi.string().optional().allow("", null),
+ account_rid : Joi.string().max(255).required(),
+ attach_to : Joi.string().required(),
+ attachment_level : Joi.string().required(),
+  fiscal_year : Joi.number().optional(),
+  activity_type: Joi.string().valid("email").required(),
+  to_email:Joi.string().email().required(),
+  /*to_email: Joi.array()
+    .items(Joi.string().email().required())
+    .min(1), */
+  ccEmail: Joi.array()
+    .items(Joi.string().email().required())
+    .optional()
+});
+
+const createActivityMeetingSchema = Joi.object({
+ account_rid : Joi.string().max(255).required(),
+ attach_to : Joi.string().required(),
+ attachment_level : Joi.string().required(),
+ fiscal_year : Joi.number().optional(),
+ activity_type: Joi.string().valid("meeting").required(),
+  meeting_subject: Joi.string().max(500).required(),
+  meeting_body: Joi.string().required(),
+  meeting_start_datetime: Joi.string().required(),
+  meeting_end_datetime: Joi.string().required(),
+  invitees: Joi.array().items(Joi.string().email().required()).optional(),
+  attendees: Joi.array().items(Joi.string().email().required()).optional(),
+  minutes_of_meeting: Joi.string().optional().allow(""),
+  meeting_platform: Joi.string().max(255).optional().allow(""),
+  meeting_url: Joi.string().max(1000).optional().allow(""),
+  meeting_code: Joi.string().max(255).optional().allow(""),
+});
+
+const updateActivityMeetingSchema = Joi.object({
+  activity_rid: Joi.string().max(255).required(),
+ account_rid : Joi.string().max(255).required(),
+ attach_to : Joi.string().required(),
+ attachment_level : Joi.string().required(),
+ fiscal_year : Joi.number().optional(),
+ activity_type: Joi.string().valid("meeting").required(),
+  meeting_subject: Joi.string().max(500).required(),
+  meeting_body: Joi.string().required(),
+  meeting_start_datetime: Joi.string().required(),
+  meeting_end_datetime: Joi.string().required(),
+  invitees: Joi.array().items(Joi.string().email().required()).optional(),
+  attendees: Joi.array().items(Joi.string().email().required()).optional(),
+  minutes_of_meeting: Joi.string().optional().allow(""),
+  meeting_platform: Joi.string().max(255).optional().allow(""),
+  meeting_url: Joi.string().max(1000).optional().allow(""),
+  meeting_code: Joi.string().max(255).optional().allow(""),
+});
+
+const updateActivityCallSchema = Joi.object({
+  activity_rid: Joi.string().max(255).required(),
+ account_rid : Joi.string().max(255).required(),
+ attach_to : Joi.string().required(),
+ attachment_level : Joi.string().required(),
+ fiscal_year : Joi.number().optional(),
+ activity_type: Joi.string().valid("meeting").required(),
+  call_subject: Joi.string().max(500).required(),
+  start_datetime: Joi.string().required(),
+  end_datetime: Joi.string().required(),
+  invitees: Joi.array().items(Joi.string().email().required()).optional(),
+  attendees: Joi.array().items(Joi.string().email().required()).optional(),
+  description: Joi.string().optional().allow(""),
+  call_platform: Joi.string().max(255).optional().allow(""),
+  call_url: Joi.string().max(1000).optional().allow(""),
+  call_code: Joi.string().max(255).optional().allow(""),
+});
+
+const createActivityCallSchema = Joi.object({
+  activity_rid: Joi.string().max(255).required(),
+ account_rid : Joi.string().max(255).required(),
+ attach_to : Joi.string().required(),
+ attachment_level : Joi.string().required(),
+ fiscal_year : Joi.number().optional(),
+ activity_type: Joi.string().valid("meeting").required(),
+  call_subject: Joi.string().max(500).required(),
+  start_datetime: Joi.string().required(),
+  end_datetime: Joi.string().required(),
+  invitees: Joi.array().items(Joi.string().email().required()).optional(),
+  attendees: Joi.array().items(Joi.string().email().required()).optional(),
+  description: Joi.string().optional().allow(""),
+  call_platform: Joi.string().max(255).optional().allow(""),
+  call_url: Joi.string().max(1000).optional().allow(""),
+  call_code: Joi.string().max(255).optional().allow(""),
+});
+
+const updateActivityEmailSchema = Joi.object({
+ activity_rid: Joi.string().max(255).required(),
+ subject: Joi.string().max(500).required(),
+ body_html: Joi.string().required(),
+ template_rid: Joi.string().optional().allow("", null),
+ account_rid : Joi.string().max(255).required(),
+ attach_to : Joi.string().required(),
+ attachment_level : Joi.string().required(),
+  fiscal_year : Joi.number().optional(),
+  activity_type: Joi.string().valid("email").required(),
+  to_email:Joi.string().email().required(),
+  /*to_email: Joi.array()
+    .items(Joi.string().email().required())
+    .min(1), */
+  ccEmail: Joi.array()
+    .items(Joi.string().email().required())
+    .optional()
+});
+
+
+
 const updateTaskSchema = Joi.object({
   rid : Joi.string().max(255).required(),
   task_name: Joi.string().max(255).required(),
@@ -633,5 +747,11 @@ export {
   exportEmailTemplateSchema,
   createActivitTaskSchema,
   listActivityTaskSchema,
-  exportActivitySchema
+  exportActivitySchema,
+  createActivityEmailSchema,
+  updateActivityEmailSchema,
+  createActivityMeetingSchema,
+  updateActivityMeetingSchema,
+  createActivityCallSchema,
+  updateActivityCallSchema
 };

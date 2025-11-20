@@ -166,7 +166,11 @@ export const STATUS_MESSAGE = {
   caseTaskFetchedSuccess : "Case Task fetched successfully",
   tagsCreationFailed : "Failed to add Tags",
   checklistItemsStatusSuccess : "Checklist-Item updated successfully",
-  failedToUpdate : "Failed to update"
+  failedToUpdate : "Failed to update",
+  activityCreated: "Activity created successfully",
+  activityCreationFailed: "Activity creation failed",
+  activityUpdated: "Activity updated successfully",
+  activityUpdateFailed: "Activity update failed"
 };
 
 export const caseStatuses = {
@@ -704,6 +708,15 @@ export const rawQueries = {
     return `
     SELECT rid, status_name as name FROM ${MAIN_SCHEMA_NAME}.case_status WHERE rid IN (${ids})`;
   },
+  fetchEmailStatus(statusIds: any): string {
+    let ids = statusIds.map((d: any) => `'${d}'`);
+    return `
+    SELECT rid, status_name as name FROM ${MAIN_SCHEMA_NAME}.email_activity_status WHERE rid IN (${ids})`;
+  },
+   fetchEmailStatusByName(statusName: string): string {
+    return `
+    SELECT rid, status_name as name FROM ${MAIN_SCHEMA_NAME}.email_activity_status WHERE status_name = '${statusName}'`;
+  },
   fetchIndustry(industryIds: any): string {
     let ids = industryIds.map((d: any) => `'${d}'`);
     return `
@@ -730,6 +743,14 @@ export const rawQueries = {
       FROM ${MAIN_SCHEMA_NAME}.case_filing_type
       WHERE status = 'active'
       ORDER BY filing_type_name ASC
+    `;
+  },
+  getEmailStatus() {
+    return `
+      SELECT rid, status_name 
+      FROM ${MAIN_SCHEMA_NAME}.email_status
+      WHERE status = 'active'
+      ORDER BY status_name ASC
     `;
   },
   getCaseStatus() {
@@ -780,7 +801,7 @@ export const rawQueries = {
   },
   getEmailCategoryPlaceHolders(categoryRid : string) {  
     return `
-      SELECT ec.rid,placeholder_rid,ep.placeholder_key,applicable_to,ep.placeholder_value
+      SELECT ec.rid,placeholder_rid,ep.placeholder_key,applicable_to,ep.display_name
       FROM ${MAIN_SCHEMA_NAME}.email_category_placeholder  ec
       LEFT JOIN ${MAIN_SCHEMA_NAME}.email_placeholder ep ON ep.rid = ec.placeholder_rid
       WHERE category_rid = '${categoryRid}'
@@ -940,6 +961,14 @@ export const rawQueries = {
       WHERE u.rid = :userRid
       LIMIT 1
     `;
+  },
+  fetchSenderEmail(schemaName: string, accountRid: string) {
+    return `
+    SELECT support_email,client_id,client_secret,tenant_id, subscription_created FROM ${schemaName}.account_details WHERE account_rid = '${accountRid}'  and  subscription_created is true  and support_email is not null LIMIT 1`;
+  },
+  fetchAccountInfo(rid: string) {
+    return `
+    SELECT rid, account_name,r_number,parent_account_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${rid}'`;
   },
   fetchUserGroupType: `
       SELECT type group_type
@@ -1548,7 +1577,7 @@ export const filterTypesForEmailTemplate: Record<string, any> = {
   created_datetime: "datetime",
   modified_datetime: "datetime",
   created_user_name: "string",
-  updated_user_name: "string",
+  modified_user_name: "string",
   status_rid: "string",
   template_name: "string",
   description: "string",
@@ -1560,7 +1589,7 @@ export const filtersColumnsForEmailTemplate: Record<string, string> = {
   created_datetime: "created_datetime",
   modified_datetime: "modified_datetime",
   created_user_name: "created_user_name",
-  updated_user_name: "updated_user_name",
+  modified_user_name: "modified_user_name",
   status_rid: "status_rid",
   status_name: "status_name",
   createdAt: "createdAt",
@@ -1657,3 +1686,24 @@ export const relationshipTypes = {
   isBlockedBy : "Is Blocked By",
   isEnabledBy : "Is Enabled By"
 }
+
+// Common fields for activity select queries
+export const meetingFields = [
+  "a.rid",
+  "a.subject",
+  "a.body_html",
+  "a.created_by",
+  "a.modified_by",
+  "a.account_rid",
+  "a.created_datetime",
+  "a.modified_datetime",
+  "a.fiscal_year",
+  "e.name AS attached_to",
+  "a.attachment_level",
+  "a.r_number",
+  "a.attach_to",
+  "a.status_rid",
+  "a.to_email",
+  "a.cc_email",
+  "a.sender_email"
+];
