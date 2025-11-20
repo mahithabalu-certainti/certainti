@@ -19,17 +19,23 @@ interface TaskCommentsSectionProps {
   accountId?: string;
   caseId?: string;
   taskId?: string;
-  onAddComment?: (taskId: string, comment: string, files: File[]) => Promise<void>;
-  onUpdateComment?:
-  | ((
-    commentId: string,
-    comment: string,
+  onAddComment?: (
     taskId: string,
-    files?: File[],
-    deletedFileIds?: string[]
-  ) => Promise<void>)
-  | undefined;
-  onDeleteComment: ((commentId: string) => Promise<void>) | undefined;
+    comment: string,
+    files: File[]
+  ) => Promise<void>;
+  onUpdateComment?:
+    | ((
+        commentId: string,
+        comment: string,
+        taskId: string,
+        files?: File[],
+        deletedFileIds?: string[]
+      ) => Promise<void>)
+    | undefined;
+  onDeleteComment:
+    | ((commentId: string, taskId: string) => Promise<void>)
+    | undefined;
   loadingComments?: boolean;
   loadingActivities?: boolean;
 }
@@ -96,22 +102,31 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
   const invalidateCommentQueries = () => {
     if (accountId && caseId && taskId) {
       queryClient.invalidateQueries({
-        queryKey: ['taskComments', accountId, caseId, taskId],
+        queryKey: ['taskComments', {
+          account_rid: accountId,
+          case_rid: caseId,
+          task_rid: taskId,
+          page: 1,
+          limit: 100,
+        }],
       });
       queryClient.invalidateQueries({
-        queryKey: ['taskAttachments', accountId, caseId, taskId],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ['collaborators', accountId, caseId, taskId],
+        queryKey: ['taskAttachments', {
+          account_rid: accountId,
+          case_rid: caseId,
+          task_rid: taskId,
+          page: 1,
+          limit: 100,
+        }],
       });
     }
   };
 
   const handleDeleteConfirm = async () => {
-    if (deleteConfirmModal.commentId && onDeleteComment) {
+    if (deleteConfirmModal.commentId && onDeleteComment && taskId) {
       setIsDeleting(true);
       try {
-        await onDeleteComment(deleteConfirmModal.commentId);
+        await onDeleteComment(deleteConfirmModal.commentId, taskId);
         setDeleteConfirmModal({ isOpen: false, commentId: null });
         invalidateCommentQueries();
       } catch (error) {
@@ -184,7 +199,8 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
       setComment('');
       setCommentFiles([]);
       setShowAddCommentForm(false);
-      invalidateCommentQueries();
+      // Invalidation is handled by parent component (work-breakdown.tsx)
+      // No need to invalidate here to avoid duplicate API calls
     } catch (error) {
       console.error('Error adding comment:', error);
     } finally {
@@ -203,7 +219,9 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
   };
 
   const handleRemoveCommentAttachment = (indexToRemove: number) => {
-    setCommentFiles((prev) => prev.filter((_, index) => index !== indexToRemove));
+    setCommentFiles((prev) =>
+      prev.filter((_, index) => index !== indexToRemove)
+    );
   };
 
   const handleEditAttachmentChange = (
@@ -227,7 +245,9 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
   };
 
   const handleUndoRemoveExistingAttachment = (attachmentId: string) => {
-    setEditingDeletedFileIds((prev) => prev.filter((id) => id !== attachmentId));
+    setEditingDeletedFileIds((prev) =>
+      prev.filter((id) => id !== attachmentId)
+    );
   };
 
   const handleCancelAdd = () => {
@@ -248,19 +268,21 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
       <div className='flex gap-6 mb-6 border-b border-gray-200'>
         <button
           onClick={() => setActiveTab('comments')}
-          className={`text-sm font-semibold pb-3 px-1 transition-all duration-200 ${activeTab === 'comments'
-            ? 'text-gray-900 border-b-2 border-blue-600'
-            : 'text-gray-600 hover:text-gray-800 border-b-2 border-transparent'
-            }`}
+          className={`text-sm font-semibold pb-3 px-1 transition-all duration-200 ${
+            activeTab === 'comments'
+              ? 'text-gray-900 border-b-2 border-blue-600'
+              : 'text-gray-600 hover:text-gray-800 border-b-2 border-transparent'
+          }`}
         >
           Comments ({comments.length})
         </button>
         <button
           onClick={() => setActiveTab('activity')}
-          className={`text-sm font-semibold pb-3 px-1 transition-all duration-200 ${activeTab === 'activity'
-            ? 'text-gray-900 border-b-2 border-blue-600'
-            : 'text-gray-600 hover:text-gray-800 border-b-2 border-transparent'
-            }`}
+          className={`text-sm font-semibold pb-3 px-1 transition-all duration-200 ${
+            activeTab === 'activity'
+              ? 'text-gray-900 border-b-2 border-blue-600'
+              : 'text-gray-600 hover:text-gray-800 border-b-2 border-transparent'
+          }`}
         >
           Activity ({activities.length})
         </button>
@@ -358,15 +380,18 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                                 return (
                                   <div
                                     key={att.rid}
-                                    className={`flex items-center justify-between p-2 rounded text-xs ${isMarkedForDeletion
-                                      ? 'bg-red-50 text-gray-400'
-                                      : 'bg-gray-50 text-gray-700'
-                                      }`}
+                                    className={`flex items-center justify-between p-2 rounded text-xs ${
+                                      isMarkedForDeletion
+                                        ? 'bg-red-50 text-gray-400'
+                                        : 'bg-gray-50 text-gray-700'
+                                    }`}
                                   >
                                     <div className='flex items-center gap-2 overflow-hidden'>
                                       <span
                                         className={
-                                          isMarkedForDeletion ? 'line-through' : ''
+                                          isMarkedForDeletion
+                                            ? 'line-through'
+                                            : ''
                                         }
                                       >
                                         📎 {att.documentName}
@@ -381,14 +406,17 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                                       onClick={() =>
                                         isMarkedForDeletion
                                           ? handleUndoRemoveExistingAttachment(
-                                            att.rid
-                                          )
-                                          : handleRemoveExistingAttachment(att.rid)
+                                              att.rid
+                                            )
+                                          : handleRemoveExistingAttachment(
+                                              att.rid
+                                            )
                                       }
-                                      className={`ml-2 p-1 rounded hover:bg-opacity-80 ${isMarkedForDeletion
-                                        ? 'text-green-600 hover:bg-green-100'
-                                        : 'text-red-600 hover:bg-red-100'
-                                        }`}
+                                      className={`ml-2 p-1 rounded hover:bg-opacity-80 ${
+                                        isMarkedForDeletion
+                                          ? 'text-green-600 hover:bg-green-100'
+                                          : 'text-red-600 hover:bg-red-100'
+                                      }`}
                                       title={
                                         isMarkedForDeletion
                                           ? 'Undo delete'
@@ -413,7 +441,9 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                               onChange={handleEditAttachmentChange}
                               className='hidden'
                               disabled={isUpdating}
-                              onClick={(e) => (e.target as HTMLInputElement).value = ''}
+                              onClick={(e) =>
+                                ((e.target as HTMLInputElement).value = '')
+                              }
                             />
                             <p className='text-xs text-gray-600 font-medium'>
                               📎 Click to upload attachments
@@ -508,10 +538,11 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
 
                           {/* Action Icons - Hover Reveal */}
                           <div
-                            className={`flex gap-2 flex-shrink-0 transition-opacity duration-200 ${hoveredCommentId === commentItem.id
-                              ? 'opacity-100'
-                              : 'opacity-0'
-                              }`}
+                            className={`flex gap-2 flex-shrink-0 transition-opacity duration-200 ${
+                              hoveredCommentId === commentItem.id
+                                ? 'opacity-100'
+                                : 'opacity-0'
+                            }`}
                           >
                             <Suspense fallback={null}>
                               <button
@@ -579,8 +610,10 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                                       </a>
                                       {(att.uploadedBy || att.uploadedDate) && (
                                         <p className='text-xs text-gray-500 mt-0.5'>
-                                          Uploaded by {att.uploadedBy || 'Unknown'} on{' '}
-                                          {att.uploadedDate || 'Recently uploaded'}
+                                          Uploaded by{' '}
+                                          {att.uploadedBy || 'Unknown'} on{' '}
+                                          {att.uploadedDate ||
+                                            'Recently uploaded'}
                                         </p>
                                       )}
                                     </div>
@@ -596,9 +629,7 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
               ))
             ) : (
               <div className='text-center py-8'>
-                <p className='text-sm text-gray-500'>
-                  No comments yet.
-                </p>
+                <p className='text-sm text-gray-500'>No comments yet.</p>
               </div>
             )}
           </div>
@@ -647,7 +678,9 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                       onChange={handleCommentAttachmentChange}
                       className='hidden'
                       disabled={fieldDisabled.comments || isAddingComment}
-                      onClick={(e) => (e.target as HTMLInputElement).value = ''}
+                      onClick={(e) =>
+                        ((e.target as HTMLInputElement).value = '')
+                      }
                     />
                     <p className='text-xs text-gray-600 font-medium'>
                       📎 Click to upload attachments
@@ -702,55 +735,53 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
               </div>
             )}
           </div>
-        </div >
+        </div>
       )}
 
       {/* Activity Tab */}
-      {
-        activeTab === 'activity' && (
-          <div className='space-y-3 max-h-[400px] overflow-y-auto scrollbar-thin-comments pr-1'>
-            {activities.length > 0 ? (
-              activities.map((activity, idx) => (
+      {activeTab === 'activity' && (
+        <div className='space-y-3 max-h-[400px] overflow-y-auto scrollbar-thin-comments pr-1'>
+          {activities.length > 0 ? (
+            activities.map((activity, idx) => (
+              <div
+                key={activity.id || idx}
+                className='flex gap-3 pb-3 border-b border-gray-200 last:border-b-0 hover:bg-gray-50 rounded-lg p-3 -mx-3 transition-colors'
+              >
                 <div
-                  key={activity.id || idx}
-                  className='flex gap-3 pb-3 border-b border-gray-200 last:border-b-0 hover:bg-gray-50 rounded-lg p-3 -mx-3 transition-colors'
+                  className='w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 text-white'
+                  style={{
+                    backgroundColor: '#8B5CF6',
+                    fontSize: '8px',
+                  }}
                 >
-                  <div
-                    className='w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 text-white'
-                    style={{
-                      backgroundColor: '#8B5CF6',
-                      fontSize: '8px',
-                    }}
-                  >
-                    {activity.user
-                      .split(' ')
-                      .map((n) => n[0])
-                      .join('')}
-                  </div>
-                  <div className='flex-1 min-w-0'>
-                    <p className='text-sm text-gray-900 break-words'>
-                      <span className='font-semibold'>{activity.user}</span>{' '}
-                      <span className='text-gray-700'>{activity.action}</span>
-                      {activity.link && (
-                        <span className='text-blue-600 font-medium'>
-                          {' '}
-                          {activity.link}
-                        </span>
-                      )}
-                    </p>
-                    <p className='text-xs text-gray-500 mt-1'>{activity.date}</p>
-                  </div>
+                  {activity.user
+                    .split(' ')
+                    .map((n) => n[0])
+                    .join('')}
                 </div>
-              ))
-            ) : (
-              <div className='text-center py-8'>
-                <p className='text-sm text-gray-500'>No activities yet</p>
+                <div className='flex-1 min-w-0'>
+                  <p className='text-sm text-gray-900 break-words'>
+                    <span className='font-semibold'>{activity.user}</span>{' '}
+                    <span className='text-gray-700'>{activity.action}</span>
+                    {activity.link && (
+                      <span className='text-blue-600 font-medium'>
+                        {' '}
+                        {activity.link}
+                      </span>
+                    )}
+                  </p>
+                  <p className='text-xs text-gray-500 mt-1'>{activity.date}</p>
+                </div>
               </div>
-            )}
-          </div>
-        )
-      }
-    </div >
+            ))
+          ) : (
+            <div className='text-center py-8'>
+              <p className='text-sm text-gray-500'>No activities yet</p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 };
 

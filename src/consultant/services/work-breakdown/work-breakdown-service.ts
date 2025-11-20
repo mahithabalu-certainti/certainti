@@ -4,7 +4,7 @@ import {
   getTaskDetailURL,
 } from '../urls/work-breakdown-url';
 import type { Task } from '../../../components/kanban-board/types';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 export interface KanbanBoardData {
   statusCode: number;
@@ -194,12 +194,12 @@ export const getTaskDetail = async (
       checklistName: taskDetailResponse.checklists?.checklist_name,
       checklistInfo: taskDetailResponse.checklists
         ? {
-          rid: taskDetailResponse.checklists.rid,
-          name: taskDetailResponse.checklists.checklist_name,
-          description: taskDetailResponse.checklists.checklist_description,
-          totalItems: taskDetailResponse.checklists.checklist_items_count,
-          completedItems: taskDetailResponse.checklists.completed_items_count,
-        }
+            rid: taskDetailResponse.checklists.rid,
+            name: taskDetailResponse.checklists.checklist_name,
+            description: taskDetailResponse.checklists.checklist_description,
+            totalItems: taskDetailResponse.checklists.checklist_items_count,
+            completedItems: taskDetailResponse.checklists.completed_items_count,
+          }
         : undefined,
       tags: taskDetailResponse.tags || [],
       collaborators: [],
@@ -395,7 +395,7 @@ export const fetchCollaborators = async (
     return [];
   } catch (error) {
     console.error(`Error fetching collaborators for task ${taskId}:`, error);
-    return [];
+    throw error;
   }
 };
 export const getKanbanBoardData = async (
@@ -435,35 +435,73 @@ export const addCollaborator = async (
     throw error;
   }
 };
-export const useAddCollaborator = () => {
+export const useAddCollaborator = (options?: {
+  onSuccess?: (data: AddCollaboratorResponse) => void;
+  onError?: (error: Error) => void;
+}) => {
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: (payload: AddCollaboratorPayload) => addCollaborator(payload),
+    onSuccess: (data, variables) => {
+      // Invalidate collaborators query for the specific task
+      queryClient.invalidateQueries({
+        queryKey: [
+          'collaborators',
+          variables.account_rid,
+          variables.case_rid,
+          variables.rid,
+        ],
+      });
+
+      // Invalidate task detail query to get updated collaborators list
+      queryClient.invalidateQueries({
+        queryKey: [
+          'taskDetail',
+          variables.account_rid,
+          variables.case_rid,
+          variables.rid,
+        ],
+      });
+
+      // Invalidate kanban board data to reflect changes
+      queryClient.invalidateQueries({
+        queryKey: [
+          'kanbanBoardData',
+          variables.account_rid,
+          variables.case_rid,
+        ],
+      });
+
+      if (options?.onSuccess) {
+        options.onSuccess(data);
+      }
+    },
     onError: (error) => {
       console.error('Failed to add collaborator:', error);
-    },
-    onSuccess: (data) => {
-      console.log('Collaborator added successfully:', data);
+      if (options?.onError) {
+        options.onError(error);
+      }
     },
   });
 };
 
-export const useGetTaskPriorities = () => {
+export const useGetTaskPriorities = (enabled: boolean = true) => {
   return useQuery({
     queryKey: ['taskPriorities'],
     queryFn: fetchTaskPriorities,
-    staleTime: 1000 * 60 * 60,
-    gcTime: 1000 * 60 * 60 * 24,
+    enabled: enabled,
   });
 };
 
-export const useGetTaskStatuses = () => {
+export const useGetTaskStatuses = (enabled: boolean = true) => {
   return useQuery({
     queryKey: ['taskStatuses'],
     queryFn: fetchTaskStatuses,
-    staleTime: 1000 * 60 * 60,
-    gcTime: 1000 * 60 * 60 * 24,
+    enabled: enabled,
   });
 };
+
 export const useGetWorkBreakdownList = (
   accountId: string,
   caseId: string
@@ -472,10 +510,8 @@ export const useGetWorkBreakdownList = (
     queryKey: ['kanbanBoardData', accountId, caseId],
     queryFn: () => getKanbanBoardData(accountId, caseId),
     enabled: !!accountId && !!caseId,
-    retry: false,
   });
 };
-
 export const useGetTaskActivities = (
   accountId: string,
   caseId: string,
@@ -486,10 +522,8 @@ export const useGetTaskActivities = (
     queryKey: ['taskActivities', accountId, caseId, taskId],
     queryFn: () => fetchTaskActivities(accountId, caseId, taskId),
     enabled: enabled && !!accountId && !!caseId && !!taskId,
-    retry: 0,
   });
 };
-
 export const useGetCollaborators = (
   accountId: string,
   caseId: string,
@@ -500,7 +534,6 @@ export const useGetCollaborators = (
     queryKey: ['collaborators', accountId, caseId, taskId],
     queryFn: () => fetchCollaborators(accountId, caseId, taskId),
     enabled: enabled && !!accountId && !!caseId && !!taskId,
-    retry: false,
   });
 };
 
@@ -514,6 +547,24 @@ export const useGetTaskDetail = (
     queryKey: ['taskDetail', accountId, caseId, taskId],
     queryFn: () => getTaskDetail(accountId, caseId, taskId),
     enabled: enabled && !!accountId && !!caseId && !!taskId,
-    retry: false,
+  });
+};
+export const useGetTaskDetailData = (
+  accountId: string,
+  caseId: string,
+  taskId: string,
+  enabled: boolean = true
+): ReturnType<typeof useQuery<TaskDetailResponse | null, Error>> => {
+  return useQuery<TaskDetailResponse | null, Error>({
+    queryKey: ['taskDetailData', accountId, caseId, taskId],
+    queryFn: async () => {
+      try {
+        return await fetchTaskDetail(accountId, caseId, taskId);
+      } catch (error) {
+        console.error(`Error fetching task detail data for ${taskId}:`, error);
+        return null;
+      }
+    },
+    enabled: enabled && !!accountId && !!caseId && !!taskId,
   });
 };

@@ -202,7 +202,11 @@ export interface KanbanBoardProps {
       assigned_to_name: string;
     }>
   >;
-  onAddComment?: (taskId: string, comment: string, files: File[]) => Promise<void>;
+  onAddComment?: (
+    taskId: string,
+    comment: string,
+    files: File[]
+  ) => Promise<void>;
   onUpdateComment?: (
     commentId: string,
     comment: string,
@@ -210,7 +214,7 @@ export interface KanbanBoardProps {
     files?: File[],
     deletedFileIds?: string[]
   ) => Promise<void>;
-  onDeleteComment?: (commentId: string) => Promise<void>;
+  onDeleteComment?: (commentId: string, taskId: string) => Promise<void>;
   onAddCollaborator?: (
     taskId: string,
     userId: string
@@ -312,7 +316,11 @@ export interface TaskDetailModalProps {
       assigned_to_name: string;
     }>
   >;
-  onAddComment?: (taskId: string, comment: string, files: File[]) => Promise<void>;
+  onAddComment?: (
+    taskId: string,
+    comment: string,
+    files: File[]
+  ) => Promise<void>;
   onUpdateComment?: (
     commentId: string,
     comment: string,
@@ -320,7 +328,7 @@ export interface TaskDetailModalProps {
     files?: File[],
     deletedFileIds?: string[]
   ) => Promise<void>;
-  onDeleteComment?: (commentId: string) => Promise<void>;
+  onDeleteComment?: (commentId: string, taskId: string) => Promise<void>;
   onAddCollaborator?: (
     taskId: string,
     userId: string

@@ -265,6 +265,17 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
             onSuccess: () => {
               setOpenTaskId(taskId);
               successToast('Comment added successfully');
+              // Refetch comments list - match the exact query key structure
+              const commentsParams = {
+                account_rid: accountId,
+                case_rid: caseId,
+                task_rid: taskId,
+                page: 1,
+                limit: 100,
+              };
+              queryClient.invalidateQueries({
+                queryKey: ['taskComments', commentsParams],
+              });
               resolve();
             },
             onError: (error) => {
@@ -280,7 +291,14 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
         );
       });
     },
-    [accountId, caseId, successToast, errorToast, addCommentMutation]
+    [
+      accountId,
+      caseId,
+      successToast,
+      errorToast,
+      addCommentMutation,
+      queryClient,
+    ]
   );
 
   const handleUpdateComment = useCallback(
@@ -310,6 +328,17 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
           {
             onSuccess: () => {
               successToast('Comment updated successfully');
+              // Refetch comments list - match the exact query key structure
+              const commentsParams = {
+                account_rid: accountId,
+                case_rid: caseId,
+                task_rid: taskId,
+                page: 1,
+                limit: 100,
+              };
+              queryClient.invalidateQueries({
+                queryKey: ['taskComments', commentsParams],
+              });
               resolve();
             },
             onError: (error) => {
@@ -325,11 +354,18 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
         );
       });
     },
-    [accountId, caseId, successToast, errorToast, updateCommentMutation]
+    [
+      accountId,
+      caseId,
+      successToast,
+      errorToast,
+      updateCommentMutation,
+      queryClient,
+    ]
   );
 
   const handleDeleteComment = useCallback(
-    async (commentId: string) => {
+    async (commentId: string, taskId: string) => {
       if (!accountId || !caseId) {
         errorToast('Account ID or Case ID is missing');
         throw new Error('Missing Account ID or Case ID');
@@ -340,13 +376,24 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
           {
             account_rid: accountId,
             case_rid: caseId,
-            task_rid: '',
+            task_rid: taskId,
             rid: commentId,
             deleted_file_ids: [],
           },
           {
             onSuccess: () => {
               successToast('Comment deleted successfully');
+              // Refetch comments list - match the exact query key structure
+              const commentsParams = {
+                account_rid: accountId,
+                case_rid: caseId,
+                task_rid: taskId,
+                page: 1,
+                limit: 100,
+              };
+              queryClient.invalidateQueries({
+                queryKey: ['taskComments', commentsParams],
+              });
               resolve();
             },
             onError: (error) => {
@@ -362,7 +409,14 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
         );
       });
     },
-    [accountId, caseId, successToast, errorToast, deleteCommentMutation]
+    [
+      accountId,
+      caseId,
+      successToast,
+      errorToast,
+      deleteCommentMutation,
+      queryClient,
+    ]
   );
 
   const handleAddCollaborator = useCallback(

@@ -707,9 +707,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     setDeletedAttachmentIds((prev) => [...prev, attachmentId]);
 
     // Remove from display list
-    setTaskAttachments((prev) =>
-      prev.filter((att) => att.id !== attachmentId)
-    );
+    setTaskAttachments((prev) => prev.filter((att) => att.id !== attachmentId));
   };
 
   const handleAssigneeChange = (
@@ -771,105 +769,36 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   };
 
   const handleCollaboratorsChange = (event: SelectChangeEvent<string[]>) => {
-    // This handler kept for compatibility but we manage selection via toggleSelection
     const selectedUserIds = event.target.value as string[];
-    console.log('   Selected user IDs:', selectedUserIds);
 
+    // Update selected IDs
     setSelectedCollaboratorIds(selectedUserIds);
-    console.log(
-      '   selectedCollaboratorIds state updated to:',
-      selectedUserIds
-    );
 
+    // Get the selected users from allEnrichedUsers
     const selectedUsers = allEnrichedUsers.filter((user) =>
       selectedUserIds.includes(user.id)
     );
-    console.log('   Selected users:', selectedUsers);
 
+    // Map to collaborator format
     const collaborators = selectedUsers.map((user) => ({
       name: user.name,
       initials: user.initials,
       color: user.color,
     }));
-    console.log('   Collaborators mapped:', collaborators);
 
-    setEditedTask((prev) => {
-      console.log('   Previous editedTask:', prev);
-      const updated = prev ? { ...prev, collaborators } : null;
-      console.log('   Updated editedTask:', updated);
-      return updated;
-    });
+    // Update editedTask with all selected collaborators
+    setEditedTask((prev) => (prev ? { ...prev, collaborators } : null));
 
-    const currentCollaboratorNames =
-      editedTask?.collaborators?.map((c) => c.name) || [];
-    console.log('   Current collaborator names:', currentCollaboratorNames);
+    // Calculate newly added users by comparing with original collaborators
+    const originalCollaboratorNames =
+      originalTask?.collaborators?.map((c) => c.name) || [];
 
     const newlyAddedUsers = selectedUsers.filter(
-      (user) => !currentCollaboratorNames.includes(user.name)
-    );
-    console.log('   Newly added users:', newlyAddedUsers);
-    console.log(
-      '   Setting pending collaborators to:',
-      newlyAddedUsers.map((user) => user.id)
+      (user) => !originalCollaboratorNames.includes(user.name)
     );
 
+    // Set pending collaborators to only the newly added ones
     setPendingCollaborators(newlyAddedUsers.map((user) => user.id));
-  };
-
-  const toggleCollaboratorSelection = (userId: string) => {
-    console.log('🎯 toggleCollaboratorSelection triggered for userId:', userId);
-    console.log('   Current selectedCollaboratorIds:', selectedCollaboratorIds);
-    console.log(
-      '   Current editedTask.collaborators:',
-      editedTask?.collaborators
-    );
-
-    setSelectedCollaboratorIds((prev) => {
-      console.log('   Previous selectedCollaboratorIds:', prev);
-      const exists = prev.includes(userId);
-      console.log('   User exists in selection:', exists);
-
-      const next = exists
-        ? prev.filter((id) => id !== userId)
-        : [...prev, userId];
-      console.log('   New selectedCollaboratorIds:', next);
-
-      const selectedUsers = allEnrichedUsers.filter((u) => next.includes(u.id));
-      console.log('   Selected users for this IDs:', selectedUsers);
-
-      const collaborators = selectedUsers.map((user) => ({
-        name: user.name,
-        initials: user.initials,
-        color: user.color,
-      }));
-      console.log('   Collaborators mapped:', collaborators);
-
-      // Update edited task collaborators
-      setEditedTask((prevTask) => {
-        console.log('   Previous editedTask in setEditedTask:', prevTask);
-        const updated = prevTask ? { ...prevTask, collaborators } : null;
-        console.log('   Updated editedTask in setEditedTask:', updated);
-        return updated;
-      });
-
-      // Determine newly added users for pending collaborators
-      const currentCollaboratorNames =
-        editedTask?.collaborators?.map((c) => c.name) || [];
-      console.log('   Current collaborator names:', currentCollaboratorNames);
-
-      const newlyAdded = selectedUsers.filter(
-        (user) => !currentCollaboratorNames.includes(user.name)
-      );
-      console.log('   Newly added users:', newlyAdded);
-      console.log(
-        '   Setting pending collaborators to:',
-        newlyAdded.map((u) => u.id)
-      );
-
-      setPendingCollaborators(newlyAdded.map((u) => u.id));
-
-      return next;
-    });
   };
 
   return (
@@ -1314,7 +1243,6 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
               selectedCollaboratorIds={selectedCollaboratorIds}
               allEnrichedUsers={allEnrichedUsers}
               onCollaboratorsChange={handleCollaboratorsChange}
-              onToggleCollaboratorSelection={toggleCollaboratorSelection}
               onRemoveCollaborator={(name) => {
                 const updatedCollabs =
                   editedTask?.collaborators?.filter((c) => c.name !== name) ||

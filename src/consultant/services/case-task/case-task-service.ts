@@ -421,7 +421,7 @@ export const updateCaseTask = async (
   payload: CreateTaskPayload & { rid?: string }
 ): Promise<CreateTaskResponse> => {
   try {
-    const { data } = await caseServiceApi.post<CreateTaskResponse>(
+    const { data } = await caseServiceApi.put<CreateTaskResponse>(
       getCaseTaskUpdateUrl(),
       payload
     );
@@ -572,9 +572,7 @@ export const ExportCaseTaskList = async (
       getCaseTaskExportUrl(),
       params
     );
-    console.log('response', response);
     const base64Data = response.data?.data;
-
     if (!base64Data) {
       console.error('No base64 data found in the response.');
       return;

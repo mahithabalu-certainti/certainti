@@ -173,7 +173,7 @@ const TaskCardComponent: React.FC<ExtendedTaskCardProps> = ({
               backgroundColor: '#E0F2FE',
               color: '#374151',
               fontFamily: "'Mulish', 'Lexend', sans-serif",
-              fontSize: '13px',
+              fontSize: '10px',
             }}
             title={taskData.assigned_to_name}
           >

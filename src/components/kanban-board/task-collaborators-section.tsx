@@ -1,10 +1,5 @@
-import React, { useState, useMemo, useRef } from 'react';
-import {
-  Select,
-  MenuItem,
-  SelectChangeEvent,
-  OutlinedInput,
-} from '@mui/material';
+import React, { useState, useMemo } from 'react';
+import { Select, MenuItem, SelectChangeEvent, Checkbox } from '@mui/material';
 import { Assignee, User } from './types';
 
 interface TaskCollaboratorsSectionProps {
@@ -19,7 +14,6 @@ interface TaskCollaboratorsSectionProps {
     color: string;
   })[];
   onCollaboratorsChange: (event: SelectChangeEvent<string[]>) => void;
-  onToggleCollaboratorSelection: (userId: string) => void;
   onRemoveCollaborator: (collaboratorName: string) => void;
 }
 
@@ -29,11 +23,10 @@ const TaskCollaboratorsSection: React.FC<TaskCollaboratorsSectionProps> = ({
   selectedCollaboratorIds,
   allEnrichedUsers,
   onCollaboratorsChange,
-  onToggleCollaboratorSelection,
   onRemoveCollaborator,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [isOpen, setIsOpen] = useState(false);
 
   // Filter users based on search query
   const filteredUsers = useMemo(() => {
@@ -44,6 +37,16 @@ const TaskCollaboratorsSection: React.FC<TaskCollaboratorsSectionProps> = ({
   }, [allEnrichedUsers, searchQuery]);
 
   if (fieldVisibility.collaborators) return null;
+
+  const handleOpen = () => {
+    setIsOpen(true);
+    setSearchQuery('');
+  };
+
+  const handleClose = () => {
+    setIsOpen(false);
+    setSearchQuery('');
+  };
 
   return (
     <div className='border-t border-gray-200 pt-6 relative'>
@@ -59,28 +62,9 @@ const TaskCollaboratorsSection: React.FC<TaskCollaboratorsSectionProps> = ({
             fullWidth
             size='small'
             multiple
-            onClose={() => {
-              setSearchQuery('');
-              if (inputRef.current) {
-                inputRef.current.value = '';
-              }
-            }}
-            input={
-              <OutlinedInput
-                inputRef={inputRef}
-                onChange={(event) => {
-                  setSearchQuery(event.target.value);
-                }}
-                onKeyDown={(event) => {
-                  if (event.key === 'Escape') {
-                    setSearchQuery('');
-                    if (inputRef.current) {
-                      inputRef.current.value = '';
-                    }
-                  }
-                }}
-              />
-            }
+            open={isOpen}
+            onOpen={handleOpen}
+            onClose={handleClose}
             renderValue={() => (
               <span
                 style={{
@@ -114,13 +98,6 @@ const TaskCollaboratorsSection: React.FC<TaskCollaboratorsSectionProps> = ({
                     padding: '6px 12px',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
-                  },
-                },
-              },
-              slotProps: {
-                paper: {
-                  style: {
-                    marginBottom: '8px',
                   },
                 },
               },
@@ -170,6 +147,42 @@ const TaskCollaboratorsSection: React.FC<TaskCollaboratorsSectionProps> = ({
               },
             }}
           >
+            {/* Search Input as first menu item */}
+            <MenuItem
+              disableRipple
+              onKeyDown={(e) => e.stopPropagation()}
+              sx={{
+                '&:hover': {
+                  backgroundColor: 'transparent',
+                },
+                cursor: 'default',
+                paddingTop: '8px',
+                paddingBottom: '8px',
+              }}
+            >
+              <input
+                type='text'
+                placeholder='Search users...'
+                value={searchQuery}
+                onChange={(e) => {
+                  e.stopPropagation();
+                  setSearchQuery(e.target.value);
+                }}
+                onClick={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
+                style={{
+                  width: '100%',
+                  padding: '6px 8px',
+                  border: '1px solid #CBD6E2',
+                  borderRadius: '4px',
+                  fontSize: '13px',
+                  outline: 'none',
+                }}
+                autoFocus
+              />
+            </MenuItem>
+
+            {/* User List */}
             {filteredUsers.length > 0 ? (
               filteredUsers.map((user) => {
                 const isSelected = selectedCollaboratorIds.includes(user.id);
@@ -185,10 +198,7 @@ const TaskCollaboratorsSection: React.FC<TaskCollaboratorsSectionProps> = ({
                       },
                     }}
                     key={user.id}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onToggleCollaboratorSelection(user.id);
-                    }}
+                    value={user.id}
                     title={user.name}
                   >
                     <div
@@ -199,12 +209,15 @@ const TaskCollaboratorsSection: React.FC<TaskCollaboratorsSectionProps> = ({
                         width: '100%',
                       }}
                     >
-                      <input
-                        type='checkbox'
+                      <Checkbox
                         checked={isSelected}
-                        onChange={() => {}}
-                        onMouseDown={(e) => e.stopPropagation()}
-                        style={{ margin: 0 }}
+                        sx={{
+                          padding: 0,
+                          margin: 0,
+                          '& .MuiSvgIcon-root': {
+                            fontSize: '18px',
+                          },
+                        }}
                       />
                       <div
                         style={{
@@ -276,10 +289,10 @@ const TaskCollaboratorsSection: React.FC<TaskCollaboratorsSectionProps> = ({
               data-profile-index={index}
             >
               <div
-                className='w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold cursor-pointer text-white border-2 border-white shadow-md transition-all duration-300 ease-in-out group-hover:shadow-xl group-hover:border-blue-200'
+                className='w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold cursor-pointer text-white border-2 border-white shadow-md transition-all duration-300 ease-in-out group-hover:shadow-xl group-hover:border-blue-200'
                 style={{
                   backgroundColor: collab.color,
-                  fontSize: '8px',
+                  fontSize: '7px',
                 }}
               >
                 {collab.initials}
@@ -288,7 +301,7 @@ const TaskCollaboratorsSection: React.FC<TaskCollaboratorsSectionProps> = ({
                     e.stopPropagation();
                     onRemoveCollaborator(collab.name);
                   }}
-                  className='absolute -top-1 -right-1 w-4 h-4 bg-red-500 hover:bg-red-600 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 ease-in-out scale-0 group-hover:scale-100 shadow-sm'
+                  className='absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-red-500 hover:bg-red-600 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 ease-in-out scale-0 group-hover:scale-100 shadow-sm'
                   title={`Remove ${collab.name}`}
                 >
                   ×
