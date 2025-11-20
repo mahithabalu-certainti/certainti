@@ -15,6 +15,7 @@ interface TaskCollaboratorsSectionProps {
   })[];
   onCollaboratorsChange: (event: SelectChangeEvent<string[]>) => void;
   onRemoveCollaborator: (collaboratorName: string) => void;
+  isAddingCollaborator?: boolean;
 }
 
 const TaskCollaboratorsSection: React.FC<TaskCollaboratorsSectionProps> = ({
@@ -24,6 +25,7 @@ const TaskCollaboratorsSection: React.FC<TaskCollaboratorsSectionProps> = ({
   allEnrichedUsers,
   onCollaboratorsChange,
   onRemoveCollaborator,
+  isAddingCollaborator = false,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
@@ -52,7 +54,7 @@ const TaskCollaboratorsSection: React.FC<TaskCollaboratorsSectionProps> = ({
     <div className='border-t border-gray-200 pt-6 relative'>
       <div className='flex items-center justify-between mb-3'>
         <h3 className='text-sm font-semibold text-gray-700'>Collaborators</h3>
-        <div className='w-[350px] relative'>
+        <div className='w-[280px] relative'>
           <Select
             name='collaborators'
             className='custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px]'
@@ -65,6 +67,7 @@ const TaskCollaboratorsSection: React.FC<TaskCollaboratorsSectionProps> = ({
             open={isOpen}
             onOpen={handleOpen}
             onClose={handleClose}
+            disabled={isAddingCollaborator}
             renderValue={() => (
               <span
                 style={{
@@ -73,7 +76,9 @@ const TaskCollaboratorsSection: React.FC<TaskCollaboratorsSectionProps> = ({
                   fontWeight: '400',
                 }}
               >
-                Add Collaborators
+                {isAddingCollaborator
+                  ? 'Adding Collaborator...'
+                  : 'Add Collaborators'}
               </span>
             )}
             MenuProps={{
@@ -87,7 +92,7 @@ const TaskCollaboratorsSection: React.FC<TaskCollaboratorsSectionProps> = ({
               },
               PaperProps: {
                 sx: {
-                  width: '350px',
+                  width: '280px',
                   maxHeight: 400,
                   marginBottom: '8px',
                   zIndex: 9999,

@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { Task } from './types';
+import { updateChecklistStatus } from '../../consultant/services/work-breakdown/work-breakdown-service';
 
 interface TaskChecklistSectionProps {
   fieldVisibility: Record<string, boolean | undefined>;
   fieldDisabled: Record<string, boolean | undefined>;
   editedTask: Task | null;
   onChecklistToggle: (itemId: string) => void;
+  caseId: string;
+  accountId: string;
 }
 
 const TaskChecklistSection: React.FC<TaskChecklistSectionProps> = ({
@@ -13,6 +16,8 @@ const TaskChecklistSection: React.FC<TaskChecklistSectionProps> = ({
   fieldDisabled,
   editedTask,
   onChecklistToggle,
+  caseId,
+  accountId,
 }) => {
   const [hideCheckedItems, setHideCheckedItems] = useState(false);
 
@@ -30,7 +35,25 @@ const TaskChecklistSection: React.FC<TaskChecklistSectionProps> = ({
       : checklist;
   };
 
-  const handleChecklistItemToggle = (itemId: string) => {
+  const handleChecklistItemToggle = async (itemId: string) => {
+    if (!editedTask) return;
+    const checklistInfo = editedTask.checklistInfo;
+    const checklistItem = (editedTask.checklist ?? []).find(
+      (item) => item.id === itemId
+    );
+    if (!checklistInfo || !checklistItem) return;
+
+    const newStatus = checklistItem.completed ? 'Open' : 'Done';
+
+    await updateChecklistStatus({
+      task_rid: editedTask.id,
+      case_rid: caseId,
+      account_rid: accountId,
+      checklist_rid: checklistInfo.rid,
+      rid: itemId,
+      status_rid: newStatus,
+    });
+
     onChecklistToggle(itemId);
   };
 

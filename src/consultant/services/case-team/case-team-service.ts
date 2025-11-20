@@ -199,7 +199,23 @@ const fetchUserOptions = async (accountId: string): Promise<UserOption[]> => {
     );
 
     if (response.data?.data?.users) {
-      return response.data.data.users;
+      const uniqueUsers = Array.from(
+        new Map(
+          response.data.data.users.map((user: UserOption) => [user.rid, user])
+        ).values()
+      );
+      const validUsers = uniqueUsers.filter(
+        (user: UserOption) => user.rid && user.name
+      );
+
+      if (validUsers.length === 0) {
+        console.warn(
+          'No valid users returned from API. All users have missing rid or name.',
+          response.data.data.users
+        );
+      }
+
+      return validUsers;
     }
     return [];
   } catch (error) {

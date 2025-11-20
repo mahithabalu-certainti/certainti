@@ -4,7 +4,7 @@ import {
   getTaskDetailURL,
 } from '../urls/work-breakdown-url';
 import type { Task } from '../../../components/kanban-board/types';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 
 export interface KanbanBoardData {
   statusCode: number;
@@ -389,9 +389,14 @@ export const fetchCollaborators = async (
       payload
     );
 
-    if (response.data?.data && Array.isArray(response.data.data)) {
-      return response.data.data;
+    if (response.data && response.data.data) {
+      const collaboratorsList = response.data.data;
+      if (Array.isArray(collaboratorsList)) {
+        console.log('Fetched collaborators:', collaboratorsList);
+        return collaboratorsList;
+      }
     }
+    console.log('No collaborators data found in response:', response.data);
     return [];
   } catch (error) {
     console.error(`Error fetching collaborators for task ${taskId}:`, error);
@@ -439,40 +444,9 @@ export const useAddCollaborator = (options?: {
   onSuccess?: (data: AddCollaboratorResponse) => void;
   onError?: (error: Error) => void;
 }) => {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: (payload: AddCollaboratorPayload) => addCollaborator(payload),
-    onSuccess: (data, variables) => {
-      // Invalidate collaborators query for the specific task
-      queryClient.invalidateQueries({
-        queryKey: [
-          'collaborators',
-          variables.account_rid,
-          variables.case_rid,
-          variables.rid,
-        ],
-      });
-
-      // Invalidate task detail query to get updated collaborators list
-      queryClient.invalidateQueries({
-        queryKey: [
-          'taskDetail',
-          variables.account_rid,
-          variables.case_rid,
-          variables.rid,
-        ],
-      });
-
-      // Invalidate kanban board data to reflect changes
-      queryClient.invalidateQueries({
-        queryKey: [
-          'kanbanBoardData',
-          variables.account_rid,
-          variables.case_rid,
-        ],
-      });
-
+    onSuccess: (data) => {
       if (options?.onSuccess) {
         options.onSuccess(data);
       }
@@ -566,5 +540,77 @@ export const useGetTaskDetailData = (
       }
     },
     enabled: enabled && !!accountId && !!caseId && !!taskId,
+  });
+};
+
+export interface UpdateChecklistStatusPayload {
+  task_rid: string;
+  case_rid: string;
+  account_rid: string;
+  checklist_rid: string;
+  rid: string;
+  status_rid: string;
+}
+
+export const updateChecklistStatus = async (
+  payload: UpdateChecklistStatusPayload
+) => {
+  const response = await caseServiceApi.put(
+    '/api/cases/task/checklist/status',
+    payload
+  );
+  return response.data;
+};
+
+export interface DeleteCollaboratorPayload {
+  case_rid: string;
+  account_rid: string;
+  rid: string;
+  assigned_to: string;
+}
+
+export interface DeleteCollaboratorResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data?: {
+    rid?: string;
+    [key: string]: unknown;
+  };
+}
+
+export const deleteCollaborator = async (
+  payload: DeleteCollaboratorPayload
+): Promise<DeleteCollaboratorResponse> => {
+  try {
+    const response = await caseServiceApi.put<DeleteCollaboratorResponse>(
+      '/api/cases/task/collaborator/delete',
+      { data: payload }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error deleting collaborator:', error);
+    throw error;
+  }
+};
+
+export const useDeleteCollaborator = (options?: {
+  onSuccess?: (data: DeleteCollaboratorResponse) => void;
+  onError?: (error: Error) => void;
+}) => {
+  return useMutation({
+    mutationFn: (payload: DeleteCollaboratorPayload) =>
+      deleteCollaborator(payload),
+    onSuccess: (data) => {
+      if (options?.onSuccess) {
+        options.onSuccess(data);
+      }
+    },
+    onError: (error) => {
+      console.error('Failed to delete collaborator:', error);
+      if (options?.onError) {
+        options.onError(error);
+      }
+    },
   });
 };

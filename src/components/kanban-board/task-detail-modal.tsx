@@ -18,6 +18,7 @@ import {
   useGetTaskDetail,
   useGetTaskActivities,
   useGetCollaborators,
+  useDeleteCollaborator,
 } from '../../consultant/services/work-breakdown/work-breakdown-service';
 import {
   useGetTaskCommentsList,
@@ -54,7 +55,6 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   taskId,
   isOpen,
   onClose,
-  onTaskUpdate,
   statusData = [],
   priorityData = [],
   tagData = [],
@@ -99,9 +99,6 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   const [activeTab, setActiveTab] = useState<'comments' | 'activity'>(
     'comments'
   );
-  const [pendingCollaborators, setPendingCollaborators] = useState<string[]>(
-    []
-  );
   const [selectedCollaboratorIds, setSelectedCollaboratorIds] = useState<
     string[]
   >([]);
@@ -113,11 +110,13 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     []
   );
   const [originalTask, setOriginalTask] = useState<Task | null>(null);
+  const [isAddingCollaborator, setIsAddingCollaborator] = useState(false);
 
   const { successToast, errorToast } = useToast();
   const uploadAttachmentsMutation = useUploadTaskAttachments();
   const deleteAttachmentMutation = useDeleteTaskAttachment();
   const updateTaskMutation = useUpdateCaseTask();
+  const deleteCollaboratorMutation = useDeleteCollaborator();
 
   // Memoize query parameters to prevent unnecessary refetches
   const commentsParams = useMemo(
@@ -304,9 +303,6 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
 
     const tagsChanged =
       JSON.stringify(originalTask.tags) !== JSON.stringify(editedTask.tags);
-    const collaboratorsChanged =
-      JSON.stringify(originalTask.collaborators) !==
-      JSON.stringify(editedTask.collaborators);
     const checklistChanged =
       JSON.stringify(originalTask.checklist) !==
       JSON.stringify(editedTask.checklist);
@@ -320,7 +316,6 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       originalTask.endDate !== editedTask.endDate ||
       originalTask.assignee?.name !== editedTask.assignee?.name ||
       tagsChanged ||
-      collaboratorsChanged ||
       checklistChanged ||
       selectedRole !== (originalTask.caseTeamMemberRoleName || '') ||
       selectedChecklist !== (originalTask.checklistName || '') ||
@@ -353,30 +348,30 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   );
 
   useEffect(() => {
-    if (!editedTask || collaborators.length === 0) {
+    if (
+      !editedTask ||
+      (editedTask.collaborators && editedTask.collaborators.length > 0)
+    ) {
       return;
     }
-    const mappedCollaborators = collaborators.map((collab) => {
-      const enrichedUser = enrichUserOption({
-        rid: collab.assigned_to,
-        name: collab.assigned_to_name,
+    if (collaborators && collaborators.length > 0) {
+      const mappedCollaborators = collaborators.map((collab) => {
+        const enrichedUser = enrichUserOption({
+          rid: collab.assigned_to,
+          name: collab.assigned_to_name,
+        });
+        return {
+          name: enrichedUser.name,
+          initials: enrichedUser.initials,
+          color: enrichedUser.color,
+        };
       });
-      return {
-        name: enrichedUser.name,
-        initials: enrichedUser.initials,
-        color: enrichedUser.color,
-      };
-    });
-
-    setEditedTask((prev) => {
-      if (!prev) {
-        return null;
-      }
-      return { ...prev, collaborators: mappedCollaborators };
-    });
+      setEditedTask((prev) =>
+        prev ? { ...prev, collaborators: mappedCollaborators } : null
+      );
+    }
   }, [collaborators, editedTask]);
 
-  // Keep a separate list of selected collaborator IDs to avoid relying on editedTask timing
   useEffect(() => {
     if (!editedTask) return;
     const ids = (editedTask.collaborators || [])
@@ -568,7 +563,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
           account_rid: accountId,
           task_name: editedTask.title || '',
           task_description: editedTask.description || '',
-          status_rid: selectedStatus?.id || '',
+          task_status_rid: selectedStatus?.id || '',
           priority_rid: selectedPriority?.id || '',
           case_team_member_role_rid: selectedRoleObj?.rid || '',
           checklist_template_rid: selectedChecklistObj?.id || '',
@@ -586,18 +581,6 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
         successToast('Task updated successfully');
         setIsEditing(false);
         setOriginalTask(editedTask);
-      }
-
-      // Add pending collaborators
-      if (pendingCollaborators.length > 0 && taskId && onAddCollaborator) {
-        try {
-          for (const userId of pendingCollaborators) {
-            await onAddCollaborator(taskId, userId);
-          }
-          setPendingCollaborators([]);
-        } catch (error) {
-          console.error('Error adding collaborators:', error);
-        }
       }
     } catch (error) {
       const errorMessage =
@@ -763,42 +746,64 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     setEditedTask((prev) =>
       prev ? { ...prev, checklist: updatedChecklist } : null
     );
-    if (taskId) {
-      onTaskUpdate(taskId, { checklist: updatedChecklist });
-    }
   };
 
-  const handleCollaboratorsChange = (event: SelectChangeEvent<string[]>) => {
+  const handleCollaboratorsChange = async (
+    event: SelectChangeEvent<string[]>
+  ) => {
     const selectedUserIds = event.target.value as string[];
 
-    // Update selected IDs
-    setSelectedCollaboratorIds(selectedUserIds);
-
-    // Get the selected users from allEnrichedUsers
-    const selectedUsers = allEnrichedUsers.filter((user) =>
-      selectedUserIds.includes(user.id)
+    const newUserIds = selectedUserIds.filter(
+      (id) => !selectedCollaboratorIds.includes(id)
     );
 
-    // Map to collaborator format
-    const collaborators = selectedUsers.map((user) => ({
-      name: user.name,
-      initials: user.initials,
-      color: user.color,
-    }));
-
-    // Update editedTask with all selected collaborators
-    setEditedTask((prev) => (prev ? { ...prev, collaborators } : null));
-
-    // Calculate newly added users by comparing with original collaborators
-    const originalCollaboratorNames =
-      originalTask?.collaborators?.map((c) => c.name) || [];
-
-    const newlyAddedUsers = selectedUsers.filter(
-      (user) => !originalCollaboratorNames.includes(user.name)
-    );
-
-    // Set pending collaborators to only the newly added ones
-    setPendingCollaborators(newlyAddedUsers.map((user) => user.id));
+    if (newUserIds.length > 0 && taskId && onAddCollaborator) {
+      setIsAddingCollaborator(true);
+      try {
+        for (const newUserId of newUserIds) {
+          await onAddCollaborator(taskId, newUserId);
+        }
+        setSelectedCollaboratorIds(selectedUserIds);
+        const selectedUsers = allEnrichedUsers.filter((user) =>
+          selectedUserIds.includes(user.id)
+        );
+        const collaborators = selectedUsers.map((user) => ({
+          name: user.name,
+          initials: user.initials,
+          color: user.color,
+        }));
+        setEditedTask((prev) => (prev ? { ...prev, collaborators } : null));
+        setOriginalTask((prev) => (prev ? { ...prev, collaborators } : null));
+        setCollaborators(
+          selectedUsers.map((user) => ({
+            assigned_to: user.id,
+            assigned_to_name: user.name,
+          }))
+        );
+      } catch (error) {
+        console.error('Failed to add collaborator:', error);
+      } finally {
+        setIsAddingCollaborator(false);
+      }
+    } else if (selectedUserIds.length < selectedCollaboratorIds.length) {
+      setSelectedCollaboratorIds(selectedUserIds);
+      const selectedUsers = allEnrichedUsers.filter((user) =>
+        selectedUserIds.includes(user.id)
+      );
+      const collaborators = selectedUsers.map((user) => ({
+        name: user.name,
+        initials: user.initials,
+        color: user.color,
+      }));
+      setEditedTask((prev) => (prev ? { ...prev, collaborators } : null));
+      setOriginalTask((prev) => (prev ? { ...prev, collaborators } : null));
+      setCollaborators(
+        selectedUsers.map((user) => ({
+          assigned_to: user.id,
+          assigned_to_name: user.name,
+        }))
+      );
+    }
   };
 
   return (
@@ -809,7 +814,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
         }`}
         style={{ top: '38.1px' }}
       >
-        <div className='sticky top-0 flex items-center justify-between p-[16.5px] border-b border-[#CBD6E2] bg-white z-50'>
+        <div className='sticky top-0 flex items-center justify-between p-[17.4px] border-b border-[#CBD6E2] bg-white z-50'>
           <button
             onClick={onClose}
             className='p-2 hover:bg-gray-100 rounded transition-colors'
@@ -859,8 +864,16 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                 name='assignee'
                 value={getAssigneeForSelect()}
                 onChange={handleAssigneeChange}
-                disabled={fieldDisabled.assignee}
+                disabled={true}
                 width='200px'
+                sx={{
+                  '&.Mui-disabled': {
+                    backgroundColor: '#ffffff',
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#CBD6E2',
+                    },
+                  },
+                }}
                 renderValue={() => {
                   if (editedTask?.assignee) {
                     return (
@@ -1185,6 +1198,8 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
             fieldDisabled={fieldDisabled}
             editedTask={editedTask}
             onChecklistToggle={handleChecklistToggle}
+            caseId={caseId}
+            accountId={accountId}
           />
 
           {!fieldVisibility.description && (
@@ -1243,12 +1258,48 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
               selectedCollaboratorIds={selectedCollaboratorIds}
               allEnrichedUsers={allEnrichedUsers}
               onCollaboratorsChange={handleCollaboratorsChange}
+              isAddingCollaborator={isAddingCollaborator}
               onRemoveCollaborator={(name) => {
-                const updatedCollabs =
-                  editedTask?.collaborators?.filter((c) => c.name !== name) ||
-                  [];
-                setEditedTask((prev) =>
-                  prev ? { ...prev, collaborators: updatedCollabs } : null
+                const collaboratorToRemove = editedTask?.collaborators?.find(
+                  (c) => c.name === name
+                );
+                if (!collaboratorToRemove) return;
+                const userToRemove = allEnrichedUsers.find(
+                  (u) => u.name === name
+                );
+                if (!userToRemove || !taskId) return;
+
+                deleteCollaboratorMutation.mutate(
+                  {
+                    case_rid: caseId,
+                    account_rid: accountId,
+                    rid: taskId,
+                    assigned_to: userToRemove.id,
+                  },
+                  {
+                    onSuccess: () => {
+                      const updatedCollabs =
+                        editedTask?.collaborators?.filter(
+                          (c) => c.name !== name
+                        ) || [];
+                      setEditedTask((prev) =>
+                        prev ? { ...prev, collaborators: updatedCollabs } : null
+                      );
+                      setOriginalTask((prev) =>
+                        prev ? { ...prev, collaborators: updatedCollabs } : null
+                      );
+                      setCollaborators((prev) =>
+                        prev.filter((c) => c.assigned_to_name !== name)
+                      );
+                      setSelectedCollaboratorIds((prev) =>
+                        prev.filter((id) => id !== userToRemove.id)
+                      );
+                      successToast('Collaborator removed successfully');
+                    },
+                    onError: () => {
+                      errorToast('Failed to remove collaborator');
+                    },
+                  }
                 );
               }}
             />

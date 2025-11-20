@@ -444,7 +444,13 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
               response?.statusCode === 200 ||
               response?.statusCodeValue === 'OK'
             ) {
-              successToast('Collaborator added successfully');
+              const message =
+                response?.statusMessage || 'Collaborator added successfully';
+              successToast(message);
+              queryClient.invalidateQueries({
+                queryKey: ['collaborators', accountId, caseId, taskId],
+              });
+
               resolve(response);
             } else {
               const errorMessage =
@@ -466,7 +472,14 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
         });
       });
     },
-    [accountId, caseId, addCollaboratorMutation, successToast, errorToast]
+    [
+      accountId,
+      caseId,
+      addCollaboratorMutation,
+      successToast,
+      errorToast,
+      queryClient,
+    ]
   );
 
   const filterFields =
