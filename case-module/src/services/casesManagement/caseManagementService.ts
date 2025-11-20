@@ -82,6 +82,14 @@ export class CaseManagementService {
     try {
       // Set the user who is creating this checklist
       caseRequest.created_by = userId;
+      const isUnique = await this.caseManangementSchemaService.checkIsCheckListTemplateUnique(caseRequest);
+      if (!isUnique) {
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: HttpStatus.BAD_REQUEST_MESSAGE,
+          errorMessage: `An template with the name "${caseRequest.checklist_name}" already exists. Please choose a different name.`,
+        };
+      }
 
       // Create the main admin checklist record
       const response =
@@ -110,6 +118,7 @@ export class CaseManagementService {
         },
       };
     } catch (err) {
+      console.log(err);
       logMessage(`Error creating admin checklist: ${err}`);
       await transaction.rollback();
       return {
@@ -160,7 +169,14 @@ export class CaseManagementService {
     try {
       // Set the user who is creating this checklist
       caseRequest.created_by = userId;
-
+      const isUnique = await this.caseManangementSchemaService.checkisExistingChecklistTemplateUnique(caseRequest);
+      if (!isUnique) {
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: HttpStatus.BAD_REQUEST_MESSAGE,
+          errorMessage: `A template with the name "${caseRequest.checklist_name}" . Please choose a different name.`,
+        };
+      }
       // Create the main admin checklist record
       const response =
         await this.caseManangementSchemaService.updateAdminChecklist(

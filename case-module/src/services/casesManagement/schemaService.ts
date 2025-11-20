@@ -244,6 +244,7 @@ class CaseManagementSchemaService {
       const updateData: any = {
         modified_by: userId,
         modified_datetime: new Date(),
+        status_rid: data.status_rid
       };
 
       if (data.checklist_name !== undefined) {
@@ -262,6 +263,7 @@ class CaseManagementSchemaService {
           returning: true
         }
       );
+      console.log("affectedCount", affectedCount);
 
       if (affectedCount === 0) {
         return {
@@ -925,7 +927,27 @@ async fetchChecklistTemplateDetailsById(
     return !response;
   }
 
-   async  checkisExistingTemplateUnique(emailReq: any): Promise<boolean> {
+  async checkIsCheckListTemplateUnique(
+    checklistReq: any
+  ): Promise<boolean> {
+    const { AdminChecklist } = await this.caseModelService.getModels("");
+    const response = await AdminChecklist.findOne({
+      where: {
+        [Op.and]: [
+          where(
+            fn("LOWER", col("checklist_name")),
+            Op.eq,
+            checklistReq.checklist_name.toLowerCase()
+          )
+        ]
+      }
+    });
+    return !response;
+  }
+
+  
+
+async  checkisExistingTemplateUnique(emailReq: any): Promise<boolean> {
   const { EmailTemplate } = await this.caseModelService.getModels("");
   const response = await EmailTemplate.findOne({
     where: {
@@ -940,6 +962,24 @@ async fetchChecklistTemplateDetailsById(
       ]
     }
   });
+  return !response;
+}
+
+async  checkisExistingChecklistTemplateUnique(checklistReq: any): Promise<boolean> {
+  const { AdminChecklist } = await this.caseModelService.getModels("");
+  const response = await AdminChecklist.findOne({
+    where: {
+      [Op.and]: [
+        where(
+          fn("LOWER", col("checklist_name")),
+          Op.eq,
+          checklistReq.checklist_name.toLowerCase()
+        ),
+        { rid: { [Op.ne]: checklistReq.checklist_template_rid } },
+      ]
+    }
+  });
+  console.log("response checkisExistingChecklistTemplateUnique", response);
   return !response;
 }
 

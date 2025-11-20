@@ -177,6 +177,8 @@ const listCaseTeamSchema = Joi.object({
   filters: Joi.string().default("{}"),
   sortBy: Joi.string().optional(),
   sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
+  account_rid: Joi.string().required(),
+  case_rid: Joi.string().required(),
 });
 
 const listReviewProjectSchema = Joi.object({
