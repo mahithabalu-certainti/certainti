@@ -54,10 +54,7 @@ export const TaskTemplateFormFieldsData = (
             placeholder: 'Choose Task Type',
             required: true,
             onChange: true,
-            disabled:
-              isEditView &&
-              !permissionMap?.['task_type_rid']?.edit &&
-              permissionMap?.['task_type_rid']?.read,
+            disabled: isEditView,
             hide:
               isEditView &&
               !permissionMap?.['task_type_rid']?.edit &&

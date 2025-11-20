@@ -28,7 +28,7 @@ import {
 import TextButton from '../../../../components/button/text-button';
 import { transformTaskTemplatePayload } from './utils';
 import { TaskTemplateFormFieldsData } from './form-data';
-import { SelectOption } from '../../../../consultant/types';
+import { SelectOption, TaskType } from '../../../../consultant/types';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
 
@@ -183,9 +183,11 @@ const TaskTemplateForm: React.FC = () => {
   };
   const onChangeField = (data: OnChange) => {
     if (data.fieldName === 'task_type_rid') {
-      const targetId = 'D001-43aaca8b-0c9a-4165-bf6a-93cada5c11d1';
-      const isMatch = data.fieldValue === targetId;
-      setTaskType(isMatch);
+      const selectedIndustry = taskTemplateTypesOptions.find(
+        (option) => String(option.value) === String(data.fieldValue)
+      );
+
+      setTaskType(selectedIndustry?.label.toLowerCase() === TaskType.Action);
     }
   };
 
@@ -215,6 +217,18 @@ const TaskTemplateForm: React.FC = () => {
     });
     return map;
   }, [taskViewEditFields]);
+
+  useEffect(() => {
+    if (taskTemplateFormData?.task_type) {
+      const selectedType = taskTemplateTypesOptions.find(
+        (option) =>
+          String(option.value) === String(taskTemplateFormData.task_type)
+      );
+
+      setTaskType(selectedType?.label.toLowerCase() === TaskType.Action);
+    }
+  }, [taskTemplateFormData, taskTemplateTypesOptions]);
+
   const formConfig = TaskTemplateFormFieldsData(
     isEditView,
     taskTemplateTypesOptions,

@@ -83,6 +83,7 @@ export const getTaskTemplateColumns = (
     label: 'Efforts In Days',
     width: 130,
     sortable: true,
+    conditionallyEdit: [{ key: 'task_type_name', matchValue: ['Milestone'] }],
     editable:
       permissionMap?.['effort_in_days']?.edit &&
       permissionMap?.['effort_in_days']?.read,
@@ -129,6 +130,7 @@ export const getTaskTemplateColumns = (
     label: 'Milestone Name',
     width: 200,
     sortable: true,
+    conditionallyEdit: [{ key: 'task_type_name', matchValue: ['Milestone'] }],
     field: {
       type: 'select',
       required: true,
@@ -149,6 +151,7 @@ export const getTaskTemplateColumns = (
     label: 'Assign Role',
     width: 230,
     sortable: true,
+    conditionallyEdit: [{ key: 'task_type_name', matchValue: ['Milestone'] }],
     field: {
       type: 'select',
       required: false,

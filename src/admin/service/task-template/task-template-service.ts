@@ -29,7 +29,6 @@ export const fetchTaskTemplateList = async (
     getTaskTemplateListUrl(),
     params
   );
-  console.log('data', data);
   return {
     taskTemplates: data.data.task_templates,
     count: data.data.total_result,
