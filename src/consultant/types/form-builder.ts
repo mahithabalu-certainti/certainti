@@ -1,4 +1,5 @@
 export interface FormType {
+  gridMode?: string;
   sectionName: string;
   fillType: 'half' | 'full' | 'quarter';
   fields: FormTypeFields[];

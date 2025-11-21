@@ -186,7 +186,10 @@ export enum OthersEnum {
   Other = 'other',
   Others = 'others',
 }
-
+export enum TaskType {
+  Action = 'action',
+  Milestone = 'milestone',
+}
 export enum ResourceType {
   full_time = 'full-time',
 }
