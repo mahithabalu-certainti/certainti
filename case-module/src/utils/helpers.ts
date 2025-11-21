@@ -468,6 +468,8 @@ export const getColumnsNamesForTaskUpdate = (data : UpdateCaseTaskType, dbData :
     columns.push(`task_status_rid`)
   if(data.task_type_rid !== dbData.task_type_rid)
     columns.push(`task_type_rid`)
+  if(data.weightage_rid !== dbData.weightage_rid)
+    columns.push(`weightage_rid`)
 
   return columns;
 }
