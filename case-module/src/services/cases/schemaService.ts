@@ -4919,19 +4919,23 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     })
     return checkTaskNameExists
   }
-  async checkTaskNameExistsForUpdate (data : UpdateCaseTaskType, accountNumber : string) {
+  async checkTaskNameExistsForUpdate (data : UpdateCaseTaskType, accountNumber : string, eid : string) {
     const { CaseTask } = await this.caseModelService.getModels(accountNumber)
     const checkTaskExists = await CaseTask.findOne({
       attributes : ['rid'],
       where : {
         task_name : {
-          [Op.iLike] : `%${data.task_name}%`
+          [Op.iLike] : data.task_name
         },
-        rid : {
-          [Op.notIn] : [data.rid]
+        eid : {
+          [Op.notIn] : [eid]
         },
-        // account_rid : data.account_rid,
-        // case_rid : data.case_rid
+        account_rid : {
+          [Op.in] : [data.account_rid ]
+        },
+        case_rid : {
+          [Op.in] : [data.case_rid]
+        }
       }, 
       raw : true
     })
