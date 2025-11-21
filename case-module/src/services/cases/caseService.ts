@@ -1551,11 +1551,11 @@ export class CaseService {
    * - Ensures users have appropriate access levels for case team participation
    * 
    */
-  async listUsersForCaseTeam(accountRid: string) {
+  async listUsersForCaseTeam(accountRid: string,scope:string) {
     try {
       // Delegate to schema service to fetch account-specific eligible users
       const users = await this.caseSchemaService.listUsersForCaseTeam(
-        accountRid
+        accountRid,scope
       );
       
       // Return successful response with user data
@@ -1628,7 +1628,15 @@ export class CaseService {
         };
       }
         caseRequest.created_by = userId;
-  
+
+      const isUnique = await this.caseSchemaService.checkIsChecklistNameUnique(caseRequest,accountNumber);
+      if (!isUnique) {
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: HttpStatus.BAD_REQUEST_MESSAGE,
+          errorMessage: `A checklist with the name "${caseRequest.checklist_name}" already exists for the fiscal year "${caseRequest.fiscal_year}". Please choose a different name.`,
+        };
+      }
         // Create the main admin checklist record
         const response =
           await this.caseSchemaService.createCheckList(
@@ -1696,6 +1704,17 @@ export class CaseService {
             message: HttpStatus.FAILED_MESSAGE,
             errorMessage: "Invalid account ID",
           };
+        }
+
+         if( caseRequest.checklist_name ){
+          const isUnique = await this.caseSchemaService.checkisExistingCheckilistUnique(caseRequest,accountNumber);
+          if (!isUnique) {
+            return {
+              statusCode: HttpStatus.BAD_REQUEST,
+              message: HttpStatus.BAD_REQUEST_MESSAGE,
+              errorMessage: `A checklist with the name "${caseRequest.checklist_name}" for fiscal year "${caseRequest.fiscal_year}" already exists. Please choose a different name or fiscal year.`,
+            };
+          }
         }
           // Create the main admin checklist record
           const response =

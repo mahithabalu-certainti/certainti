@@ -254,6 +254,48 @@ class CaseSchemaService {
       });
       return !response;
     }
+    async checkIsChecklistNameUnique(
+      caseReq: any,
+      accountNumber: string
+    ): Promise<boolean> {
+     
+      const { CheckList } = await this.caseModelService.getModels(accountNumber);
+      const response = await CheckList.findOne({
+        where: {
+          [Op.and]: [
+            where(
+              fn("LOWER", col("checklist_name")),
+              Op.eq,
+              caseReq.checklist_name.toLowerCase()
+            ),
+            { fiscal_year: { [Op.eq]: caseReq.fiscal_year } },
+            { account_rid: { [Op.eq]: caseReq.account_rid } },
+            {attachment_level: { [Op.eq]:caseReq.attachment_level } }
+          ]
+        }
+      });
+      return !response;
+    }
+    async  checkisExistingCheckilistUnique(caseReq: any, accountNumber: string): Promise<boolean> {
+    const { CheckList } = await this.caseModelService.getModels(accountNumber);
+    const response = await CheckList.findOne({
+    where: {
+    [Op.and]: [
+      where(
+        fn("LOWER", col("checklist_name")),
+        Op.eq,
+        caseReq.checklist_name.toLowerCase()
+      ),
+      { rid: { [Op.ne]: caseReq.checklist_rid } },
+      { fiscal_year: { [Op.eq]: caseReq.fiscal_year } },
+      { account_rid: { [Op.eq]: caseReq.account_rid } },
+      {attachment_level: { [Op.eq]:caseReq.attachment_level } }
+      ]
+  }
+});
+return !response;
+}
+
   async  checkisExistingCaseUnique(caseReq: any, accountNumber: string): Promise<boolean> {
     const { Case } = await this.caseModelService.getModels(accountNumber);
     const response = await Case.findOne({
@@ -3244,11 +3286,13 @@ return !response;
 
   
 
-  async listUsersForCaseTeam(accountRid: string) {
+  async listUsersForCaseTeam(accountRid: string, scope: string) {
     try {
       if (!this.mainDbSequelize) {
         this.mainDbSequelize = await this.caseModelService.getMainSequelize();
       }
+      if(scope != 'all')
+      {
       const users = await this.mainDbSequelize.query(
         rawQueries.listUsersForCaseTeam(accountRid),
         {
@@ -3256,6 +3300,19 @@ return !response;
         }
       );
       return users;
+      }
+      else
+      {
+        const users = await this.mainDbSequelize.query(
+        rawQueries.listAllUsers(),
+        {
+          type: "SELECT",
+        }
+      );
+      return users;
+
+      }
+      
     } catch (err) {
       logMessage(`Error in fetching users for case team: ${err}`);
       errorLog(
@@ -3381,9 +3438,9 @@ return !response;
       }
     );
     let attached_to = checklistDetails?.attached_to ?? "";
-    if(checklistDetails?.attach_to === 'case' ){
-          const [caseInfo]: any[] = await this.mainDbSequelize.query(
-          rawQueries.fetchCaseInfo(accountNumber, accountRid),
+    if(checklistDetails?.attach_to === 'case' || checklistDetails?.attachment_level === 'case'){
+          const [caseInfo]: any[] = await this.orgDbSequelize.query(
+          rawQueries.fetchCaseInfo(schemaName, checklistDetails.attach_to),
           {
             type: "SELECT",
           }
@@ -3391,8 +3448,8 @@ return !response;
        // Compose case name: accountName-countryCode-fiscalYear-caseName
         const accountName = accountInfo.account_name || "";
         const countryCode = accountInfo.country_code || "";
-        const fiscalYear =  caseInfo.fiscal_year || "";
-        const originalCaseName = caseInfo.case_name || "";
+        const fiscalYear =  caseInfo?.fiscal_year || "";
+        const originalCaseName = caseInfo?.case_name || "";
         const composedCaseName = `${accountName}-${countryCode}-${fiscalYear}-${originalCaseName}`;
         attached_to = composedCaseName;
     }

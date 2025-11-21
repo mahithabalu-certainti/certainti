@@ -2,7 +2,7 @@ import { col, fn, Op, QueryTypes, Sequelize, Transaction, where } from "sequeliz
 import { CaseModelService } from "../caseModelsService";
 import { CreateTaskTemplateType, filterType, ICreateChecklistTemplate, ICreateChecklistItemTemplate, TaskType, UpdateTaskTemplateType, MilestoneResponse, ICreateEmailTemplate, WorkflowConnectorType } from "../../utils/types";
 import { buildDatetimeFilterCondition, buildDatetimeFilterConditionTemplates, buildNumericFilterCondition, buildStringFilterCondition, errorLog, logMessage } from "../../utils/helpers";
-import { HttpStatus, STATUS_MESSAGE, filtersColumnsForCaseSummary, filterTypesForCaseSummary, filterTypesForAdminCheckList, filtersColumnsForAdminCheckList, rawQueries, filterTypesForEmailTemplate, filtersColumnsForEmailTemplate, relationshipTypes } from "../../utils/constants";
+import { HttpStatus, STATUS_MESSAGE, filtersColumnsForCaseSummary, filterTypesForCaseSummary, filterTypesForAdminCheckList, filtersColumnsForAdminCheckList, rawQueries, filterTypesForEmailTemplate, filtersColumnsForEmailTemplate, relationshipTypes, emailCategorties } from "../../utils/constants";
 import { fetchCaseTemplateData, listAllCheckList, listAllEmailTemplates } from "../../utils/rawQueries";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import { initMainDbSequelize } from "../../config/mainDataSource";
@@ -910,11 +910,15 @@ async fetchChecklistTemplateDetailsById(
     }
   }
 
-   async checkIsEmailTemplateUnique(
-    emailReq: any
-  ): Promise<boolean> {
+  
+  async checkEmailTemplateUniquenessAndCategory(emailReq: any): Promise<{
+    isUnique: boolean;
+    isSameCategoryExists: boolean;
+    category_name?: string;
+  }> {
+    // Check uniqueness by template name and category
     const { EmailTemplate } = await this.caseModelService.getModels("");
-    const response = await EmailTemplate.findOne({
+    const uniqueResponse = await EmailTemplate.findOne({
       where: {
         [Op.and]: [
           where(
@@ -926,21 +930,32 @@ async fetchChecklistTemplateDetailsById(
         ]
       }
     });
-    return !response;
-  }
- async checkIsSameCategoryExists(
-    emailReq: any
-  ): Promise<boolean> {
-    const { EmailTemplate } = await this.caseModelService.getModels("");
-    const response = await EmailTemplate.findOne({
-      where: {
-        [Op.and]: [
-          { category_rid: emailReq.category_rid },
-          {  status_rid: emailReq.status_rid }
-        ]
-      }
-    });
-    return !response;
+    let isUnique = !uniqueResponse;
+
+    // Check if same category exists (not for 'general')
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+    }
+    const [categoryInfo]: any[] = await this.mainDbSequelize.query(rawQueries.getCategoryDetails(emailReq.category_rid), { type: QueryTypes.SELECT });
+    const [statusInfo]: any[] = await this.mainDbSequelize.query(rawQueries.getActiveStatusId(), { type: QueryTypes.SELECT });
+    let isSameCategoryExists = true;
+    let category_name = categoryInfo?.category_name;
+    if (categoryInfo?.category_name !== emailCategorties.general) {
+      const categoryResponse = await EmailTemplate.findOne({
+        where: {
+          [Op.and]: [
+            { category_rid: emailReq.category_rid },
+            { status_rid: statusInfo.rid }
+          ]
+        }
+      });
+      isSameCategoryExists = !categoryResponse;
+    }
+    return {
+      isUnique,
+      isSameCategoryExists,
+      category_name
+    };
   }
   async checkIsCheckListTemplateUnique(
     checklistReq: any
@@ -960,25 +975,60 @@ async fetchChecklistTemplateDetailsById(
     return !response;
   }
 
-  
 
-async  checkisExistingTemplateUnique(emailReq: any): Promise<boolean> {
-  const { EmailTemplate } = await this.caseModelService.getModels("");
-  const response = await EmailTemplate.findOne({
-    where: {
-      [Op.and]: [
-        where(
-          fn("LOWER", col("template_name")),
-          Op.eq,
-          emailReq.template_name.toLowerCase()
-        ),
-        { category_rid: emailReq.category_rid },
-        { rid: { [Op.ne]: emailReq.email_template_rid } },
-      ]
+
+/**
+   * Checks both uniqueness (excluding current) and same category existence for email template update.
+   */
+  async checkisExistingTemplateUnique(emailReq: any): Promise<{
+    isUnique: boolean;
+    isSameCategoryExists: boolean;
+    category_name?: string;
+  }> {
+    const { EmailTemplate } = await this.caseModelService.getModels("");
+    // Uniqueness: template name, category, and exclude current rid
+    const uniqueResponse = await EmailTemplate.findOne({
+      where: {
+        [Op.and]: [
+          where(
+            fn("LOWER", col("template_name")),
+            Op.eq,
+            emailReq.template_name.toLowerCase()
+          ),
+          { category_rid: emailReq.category_rid },
+          { rid: { [Op.ne]: emailReq.email_template_rid } },
+        ]
+      }
+    });
+    let isUnique = !uniqueResponse;
+
+    // Category existence (not for 'general')
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize = await this.caseModelService.getMainSequelize();
     }
-  });
-  return !response;
-}
+    const [categoryInfo]: any[] = await this.mainDbSequelize.query(rawQueries.getCategoryDetails(emailReq.category_rid), { type: QueryTypes.SELECT });
+    const [statusInfo]: any[] = await this.mainDbSequelize.query(rawQueries.getActiveStatusId(), { type: QueryTypes.SELECT });
+    let isSameCategoryExists = true;
+    let category_name = categoryInfo?.category_name;
+    if (categoryInfo?.category_name !== emailCategorties.general) {
+      const categoryResponse = await EmailTemplate.findOne({
+        where: {
+          [Op.and]: [
+            { category_rid: emailReq.category_rid },
+            { status_rid: statusInfo.rid },
+            { rid: { [Op.ne]: emailReq.email_template_rid } },
+          ]
+        }
+      });
+      isSameCategoryExists = !categoryResponse;
+    }
+    return {
+      isUnique,
+      isSameCategoryExists,
+      category_name
+    };
+  }
+
 
 async  checkisExistingChecklistTemplateUnique(checklistReq: any): Promise<boolean> {
   const { AdminChecklist } = await this.caseModelService.getModels("");
