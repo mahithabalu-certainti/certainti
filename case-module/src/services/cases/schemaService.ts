@@ -6034,28 +6034,6 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
           const ids : any[] = []
           ids.push(data.relationship_connector_rid)
           ids.push(workFlowConnectorDetails!.rid)
-          const fetchTaskMappedIds = await CaseTaskWorkflowConnector.findAll({
-            attributes : ['target_rid'],
-            where : {
-              source_rid : data.source_rid,
-              account_rid : data.account_rid,
-              case_rid : data.case_rid,
-              relationship_connector_rid : {
-                [Op.in] : ids
-              }
-            }, raw : true
-          });
-          if(fetchTaskMappedIds.length > 0) {
-            
-            let schemaName = rawQueries.fetchSchemaName(accountNumber);
-            const checkForCyclicDependency : any = await this.orgDbSequelize?.query(rawQueries.checkDependency(d, fetchTaskMappedIds, schemaName, data.case_rid, data.account_rid, data.relationship_connector_rid, workFlowConnectorDetails!.rid!))
-            if(checkForCyclicDependency[0].length > 0) {
-              return {
-                statusCode : HttpStatus.BAD_REQUEST,
-                statusMessage : `Mapping not allowed: '${checkForCyclicDependency[0][0].task_name}' is already part of a loop.`
-              }
-            }
-          }
           const result = await CaseTaskWorkflowConnector.create({
             created_by : data.created_by,
             created_datetime : new Date(),
@@ -6066,7 +6044,6 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             relationship_connector_rid : data.relationship_connector_rid
           }, {transaction});
           if(result) {
-            
             if(workFlowConnectorDetails) {
               const checkForMapping = await CaseTaskWorkflowConnector.findOne({
                 where : {
