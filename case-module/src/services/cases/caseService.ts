@@ -2348,7 +2348,15 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
         }
         let taskStatusID = {
           task_status_rid : result[0]?.task_details.task_status_rid
-        } 
+        }
+        let weightageValue;
+        if(result[0]?.task_details.weightage_rid !== null) {
+          const weightageRes : any = await mainDb.query(rawQueries.getWeightageValue(result[0]?.task_details.weightage_rid!));
+          weightageValue = weightageRes[0][0].weightage_value;
+        } else {
+          weightageValue = null;
+        }
+          
         let priority;
         let taskStatusType;
         const priorityIds : string[] = [];
@@ -2476,6 +2484,8 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
           checklist_name : resData?.task_details.checklists.checklist_name,
           case_team_member_role_rid : resData?.task_details.case_team_member_role_rid,
           case_team_member_role_name : findRole[0][0].role_name,
+          weightage_rid : resData?.task_details.weightage_rid,
+          weightage_value : weightageValue,
           checklists : checkListData,
           tags : resData?.task_details.tags.filter((f : taskTags) => f.tag_rid !== null).map((d : taskTags) => {
               return {
@@ -2601,7 +2611,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
     const result = await this.caseSchemaService.taskWorkflowConnector(accountNumber[0][0].r_number, data, transaction);
     return result;
   }
-  async deleteLinkTask (data : CaseTaskWorkFlowDelete) {
+  async deleteLinkTask (data : CaseTaskWorkFlowCreate) {
     const mainDb = await this.getMainDb();
     const accountNumber : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
     const result = await this.caseSchemaService.deleteTaskWorkConnector(accountNumber[0][0].r_number, data);

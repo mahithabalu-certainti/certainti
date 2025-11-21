@@ -759,7 +759,7 @@ export const fetchAdminTemplates = (page : number, limit : number, sort : string
     t.effective_end_datetime, r.role_name, t.case_team_member_role_rid,
     c.checklist_name, t.checklist_template_rid, p.priority_name, t.priority_rid,
     s.status_name, t.status_rid, m.milestone_name, t.milestone_template_rid,
-    t.task_type_rid, tt.task_type_name, t.task_description,
+    t.task_type_rid, tt.task_type_name, t.task_description, wt.weightage_value, t.weightage_rid,
     array_agg(jsonb_build_object(
     'source_rid', w.source_rid,
     'source_name', t.task_name,
@@ -781,6 +781,7 @@ export const fetchAdminTemplates = (page : number, limit : number, sort : string
     LEFT JOIN ${MAIN_SCHEMA_NAME}.workflow_connector_mapping w ON w.source_rid = t.rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.task_template ttt ON ttt.rid = w.target_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.workflow_connector wc ON wc.rid = w.relationship_connector_rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.task_weightage wt ON wt.rid = t.weightage_rid
     WHERE
     (t.task_name ILIKE '${searchValue}' OR t.r_number ILIKE '${searchValue}' OR 
     u.first_name ILIKE '${searchValue}' OR u.last_name ILIKE '${searchValue}' OR CONCAT(u.first_name,' ', u.last_name) ILIKE '${searchValue}' OR
@@ -798,7 +799,7 @@ export const fetchAdminTemplates = (page : number, limit : number, sort : string
     t.effective_end_datetime, r.role_name, t.case_team_member_role_rid,
     c.checklist_name, t.checklist_template_rid, p.priority_name, t.priority_rid,
     s.status_name, t.status_rid, m.milestone_name, t.milestone_template_rid,
-    t.task_type_rid, tt.task_type_name, t.task_description
+    t.task_type_rid, tt.task_type_name, t.task_description,wt.weightage_value, t.weightage_rid
     ${finalSortOrder}
   ),
   fetch_total_result AS (
@@ -811,7 +812,7 @@ export const fetchAdminTemplates = (page : number, limit : number, sort : string
   return query
 }
 
-export const fetchMilestoneTaskTemplate = (taskTypeRid : string, filingTypeRid : string) => {
+export const fetchMilestoneTaskTemplate = (taskTypeRid : string, filingTypeRid : string, statusId : string) => {
   let query = 
   `
   WITH fetch_milestone_result AS (
@@ -835,6 +836,8 @@ export const fetchMilestoneTaskTemplate = (taskTypeRid : string, filingTypeRid :
   LEFT JOIN ${MAIN_SCHEMA_NAME}.task_template t ON t.milestone_template_rid = m.rid
   WHERE
   t.task_type_rid = '${taskTypeRid}'
+  AND
+  t.status_rid = '${statusId}'
   ),
   fetch_workflow_connector_map AS (
   SELECT w.created_by, w.created_datetime, w.source_rid, w.target_rid, w.relationship_connector_rid
@@ -1352,7 +1355,8 @@ return query;
     'checklists', fci.checklists,
     'tags', ftt.tags,
     'workflow_connector', w.workflow_connector,
-    'case_team_member_role_rid', ct.case_team_member_role_rid
+    'case_team_member_role_rid', ct.case_team_member_role_rid,
+    'weightage_rid', ct.weightage_rid
     ) AS task_details
     FROM
     ${schemaName}.case_task ct
@@ -1647,6 +1651,10 @@ return query;
     WHERE
     a.rid = '${rid}'
     `
+  }
+
+  export const fetchTaskWeightage = () => {
+    return `SELECT rid, weightage_value FROM ${MAIN_SCHEMA_NAME}.task_weightage ORDER BY weightage_value ASC`
   }
 
  

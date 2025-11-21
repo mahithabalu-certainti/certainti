@@ -4387,7 +4387,8 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     if (!this.mainDbSequelize) {
       this.mainDbSequelize = await this.caseModelService.getMainSequelize();
     }
-    const queryResult : any = await this.mainDbSequelize.query(fetchMilestoneTaskTemplate(taskTypeRid, filing_type_rid));
+    const fetchStatusRid : any = await this.mainDbSequelize.query(rawQueries.getActiveStatusId())
+    const queryResult : any = await this.mainDbSequelize.query(fetchMilestoneTaskTemplate(taskTypeRid, filing_type_rid, fetchStatusRid[0][0].rid));
     let clonedData = queryResult[0][0]
     let milestoneSequenceNumber : any[] = []
     let milestoneMap : Map<string, string> = new Map();
@@ -4756,17 +4757,15 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             }
           }
           if(Object.keys(data.workflow_connector).length > 0) {
+            data.workflow_connector.created_by = data.modified_by
+            data.workflow_connector.case_rid = data.case_rid
+            data.workflow_connector.account_rid = data.account_rid
             if(data.workflow_connector.target_rid.length > 0) {
-              data.workflow_connector.created_by = data.modified_by
-              data.workflow_connector.case_rid = data.case_rid
-              data.workflow_connector.account_rid = data.account_rid
-              const workflowResult= await this.taskWorkflowConnector(accountNumber, data.workflow_connector, transaction);
-              if(workflowResult.statusCode === HttpStatus.BAD_REQUEST) {
-                return {
-                  statusCode : HttpStatus.BAD_REQUEST,
-                  statusMessage : workflowResult.statusMessage
-                }
-              }
+              await this.taskWorkflowConnector(accountNumber, data.workflow_connector, transaction);
+            }
+            if(data.workflow_connector.delete_target_rids !== undefined) {
+              if(data.workflow_connector.delete_target_rids.length > 0)
+                await this.deleteTaskWorkConnector(accountNumber, data.workflow_connector)
             }
           }
           const fetchUpdatedColumns = getColumnsNamesForTaskUpdate(data, isTaskExists as any);
@@ -5312,7 +5311,6 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
           rid : data.rid
         }
       });
-      console.log("deleted Ids =====> ", data.deleted_file_ids)
       if(updateComments === 1) {
         const checkIsDifferentCollaborator = await this.isNewCollaborator(data.modified_by, accountNumber,data.task_type);
         if(!checkIsDifferentCollaborator) {
@@ -5992,31 +5990,30 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     let taskIds : string[] = []
     let iterationCount : number = 0;
     let totalIteration = data.target_rid.length
+    const workFlowConnectorData = await WorkflowConnector.findOne({
+      where : {
+        rid : data.relationship_connector_rid
+      }, raw : true
+    })
+    let workFlowConnectorDetails;
+    let dynamicRelationTypeName : string = ``
+    if(workFlowConnectorData) {
+      if(workFlowConnectorData.relationship_type === 'Blocks') {
+        dynamicRelationTypeName = relationshipTypes.isBlockedBy
+      } else if (workFlowConnectorData.relationship_type === 'Enables') {
+        dynamicRelationTypeName = relationshipTypes.isEnabledBy
+      } else if (workFlowConnectorData.relationship_type === 'Is Enabled By') {
+        dynamicRelationTypeName = relationshipTypes.enables
+      } else if (workFlowConnectorData.relationship_type === 'Is Blocked By') {
+        dynamicRelationTypeName = relationshipTypes.blocks
+      }
+    }
+    workFlowConnectorDetails = await WorkflowConnector.findOne({where : {relationship_type : dynamicRelationTypeName}, raw : true})
     for(let d of data.target_rid) {
       iterationCount += 1
       taskIds.push(data.source_rid)
       taskIds.push(d)
       const pushToSetIds = [...new Set(taskIds.map((d : string) => d))]
-
-      const workFlowConnectorData = await WorkflowConnector.findOne({
-        where : {
-          rid : data.relationship_connector_rid
-        }, raw : true
-      })
-      let workFlowConnectorDetails;
-      let dynamicRelationTypeName : string = ``
-      if(workFlowConnectorData) {
-        if(workFlowConnectorData.relationship_type === 'Blocks') {
-          dynamicRelationTypeName = relationshipTypes.isBlockedBy
-        } else if (workFlowConnectorData.relationship_type === 'Enables') {
-          dynamicRelationTypeName = relationshipTypes.isEnabledBy
-        } else if (workFlowConnectorData.relationship_type === 'Is Enabled By') {
-          dynamicRelationTypeName = relationshipTypes.enables
-        } else if (workFlowConnectorData.relationship_type === 'Is Blocked By') {
-          dynamicRelationTypeName = relationshipTypes.blocks
-        }
-      }
-      workFlowConnectorDetails = await WorkflowConnector.findOne({where : {relationship_type : dynamicRelationTypeName}, raw : true})
       const fetchTasks = await CaseTask.findAll({
         attributes : ['rid', 'task_name'],
         where : {
@@ -6036,12 +6033,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             relationship_connector_rid : data.relationship_connector_rid
           }, raw : true
         });
-        if(checkIsAlreadyMapped) {
-          return {
-            statusCode : HttpStatus.BAD_REQUEST,
-            statusMessage : STATUS_MESSAGE.dataAlreadyMapped
-          }
-        } else {
+        if(!checkIsAlreadyMapped) {
           const ids : any[] = []
           ids.push(data.relationship_connector_rid)
           ids.push(workFlowConnectorDetails!.rid)
@@ -6097,7 +6089,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
               new_value : `${taskMap.get(data.source_rid)} ${workFlowConnectorData.relationship_type} ${taskMap.get(d)}`
             }, {transaction});
           }
-      }
+        }
     } 
     else 
       {
@@ -6120,80 +6112,94 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
   }
 }
 
-  async deleteTaskWorkConnector (accountNumber : string, data : CaseTaskWorkFlowDelete) {
+  async deleteTaskWorkConnector (accountNumber : string, data : CaseTaskWorkFlowCreate) {
     const {CaseTaskWorkflowConnector, CaseTimeline, WorkflowConnector} = await this.caseModelService.getModels(accountNumber);
-    const checkDataExists = await CaseTaskWorkflowConnector.findOne({
-      where : {
-        rid : data.rid
-      }
-    });
-    if(checkDataExists) {
+    if(data.delete_target_rids.length > 0) {
       let workFlowConnectorDetails;
-      let dynamicRelationTypeName : string = ``
-      const workFlowConnectorData = await WorkflowConnector.findOne({
-        where : {
-          rid : checkDataExists.relationship_connector_rid
-        }, raw : true
-      })
-      if(workFlowConnectorData) {
-        if(workFlowConnectorData.relationship_type === 'Blocks') {
-          dynamicRelationTypeName = relationshipTypes.isBlockedBy
-        } else if (workFlowConnectorData.relationship_type === 'Enables') {
-          dynamicRelationTypeName = relationshipTypes.isEnabledBy
-        } else if (workFlowConnectorData.relationship_type === 'Is Enabled By') {
-          dynamicRelationTypeName = relationshipTypes.enables
-        } else if (workFlowConnectorData.relationship_type === 'Is Blocked By') {
-          dynamicRelationTypeName = relationshipTypes.blocks
-        }
-      }
-      workFlowConnectorDetails = await WorkflowConnector.findOne({
+      let deletedId : string;
+        let dynamicRelationTypeName : string = ``
+        const workFlowConnectorData = await WorkflowConnector.findOne({
           where : {
-            relationship_type : dynamicRelationTypeName
+            rid : data.relationship_connector_rid
           }, raw : true
         })
-      if(workFlowConnectorDetails) {
-        const deleteData = await CaseTaskWorkflowConnector.destroy({
-          where : {
-            case_rid : data.case_rid,
-            account_rid : data.account_rid,
-            source_rid : checkDataExists.target_rid,
-            target_rid : checkDataExists.source_rid,
-            relationship_connector_rid : workFlowConnectorDetails.rid
-          }
-        });
-        if(deleteData === 1) {
-          await CaseTaskWorkflowConnector.destroy({
-            where : {
-              rid : data.rid
-            }
-          })
-          await CaseTimeline.create({
-            created_by : data.created_by,
-            created_datetime : new Date(),
-            account_rid : data.account_rid,
-            entity_rid : data.rid,
-            event_name : 
-            `Case Task Workflow Connector deleted`,
-            event_type : "ui handler",
-            event_status : "success",
-            event_datetime : new Date(),
-            description : ``
-          });
-          return {
-            statusCode : HttpStatus.SUCCESS,
-            statusMessage : STATUS_MESSAGE.workflowConnectorMappedDeleted
-          }
-        } else {
-          return {
-            statusCode : HttpStatus.FAILED,
-            statusMessage : STATUS_MESSAGE.workflowConnectorMappedDeletedFailed
+        if(workFlowConnectorData) {
+          if(workFlowConnectorData.relationship_type === 'Blocks') {
+            dynamicRelationTypeName = relationshipTypes.isBlockedBy
+          } else if (workFlowConnectorData.relationship_type === 'Enables') {
+            dynamicRelationTypeName = relationshipTypes.isEnabledBy
+          } else if (workFlowConnectorData.relationship_type === 'Is Enabled By') {
+            dynamicRelationTypeName = relationshipTypes.enables
+          } else if (workFlowConnectorData.relationship_type === 'Is Blocked By') {
+            dynamicRelationTypeName = relationshipTypes.blocks
           }
         }
-      }
-    } else {
-      return {
-        statusCode : HttpStatus.NOT_FOUND,
-        statusMessage : STATUS_MESSAGE.dataNotAvailable
+        workFlowConnectorDetails = await WorkflowConnector.findOne({
+            where : {
+              relationship_type : dynamicRelationTypeName
+            }, raw : true
+          })
+        for(let d of data.delete_target_rids) {
+          const checkDataExists = await CaseTaskWorkflowConnector.findOne({
+            where : {
+              source_rid : data.source_rid,
+              target_rid : d,
+              account_rid : data.account_rid,
+              case_rid : data.case_rid,
+              relationship_connector_rid : data.relationship_connector_rid
+            }, raw : true
+          });
+          if(checkDataExists) {
+            deletedId = checkDataExists.rid!
+            if(workFlowConnectorDetails) {
+              const deleteData = await CaseTaskWorkflowConnector.destroy({
+                where : {
+                  case_rid : data.case_rid,
+                  account_rid : data.account_rid,
+                  source_rid : checkDataExists.target_rid,
+                  target_rid : checkDataExists.source_rid,
+                  relationship_connector_rid : workFlowConnectorDetails.rid
+                }
+              });
+              if(deleteData === 1) {
+                await CaseTaskWorkflowConnector.destroy({
+                  where : {
+                    source_rid : data.source_rid,
+                    target_rid : d,
+                    account_rid : data.account_rid,
+                    case_rid : data.case_rid,
+                    relationship_connector_rid : data.relationship_connector_rid
+                  }
+                })
+                await CaseTimeline.create({
+                  created_by : data.created_by,
+                  created_datetime : new Date(),
+                  account_rid : data.account_rid,
+                  entity_rid : deletedId,
+                  event_name : 
+                  `Case Task Workflow Connector deleted`,
+                  event_type : "ui handler",
+                  event_status : "success",
+                  event_datetime : new Date(),
+                  description : ``
+                });
+                return {
+                  statusCode : HttpStatus.SUCCESS,
+                  statusMessage : STATUS_MESSAGE.workflowConnectorMappedDeleted
+                }
+              } else {
+                return {
+                  statusCode : HttpStatus.FAILED,
+                  statusMessage : STATUS_MESSAGE.workflowConnectorMappedDeletedFailed
+                }
+              }
+            }
+        } else {
+          return {
+            statusCode : HttpStatus.NOT_FOUND,
+            statusMessage : STATUS_MESSAGE.dataNotAvailable
+          }
+        }
       }
     }
   }
