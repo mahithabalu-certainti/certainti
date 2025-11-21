@@ -254,6 +254,17 @@ routes.get(
   controller.caseController.exportReviewProjects
 )
 routes.post(
+  "/sentReviewProjects",
+  checkUserStatusMiddleware("case_review_projects_export"),
+  controller.caseController.sentReviewProjects
+)
+routes.get(
+  "/emailTemplatePreview",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.getEmailTemplatePreview
+)
+
+routes.post(
   "/task/workflowConnector/add",
   checkUserStatusMiddleware("NA"),
   controller.caseController.linkTask

@@ -605,6 +605,7 @@ async function getAllActivityTask(req: Request, res: Response) {
       value.sortOrder,
       value.fiscalYear,
       "list",
+      value.activityType,
       {}
     );
     if (result.statusCode === HttpStatus.SUCCESS) {
@@ -634,8 +635,8 @@ async function getAllActivityTask(req: Request, res: Response) {
   }
 }
 
-async function exportAllChecklists(req: Request, res: Response): Promise<void> {
-  const methodName = "export all checklists";
+async function exportAllActivity(req: Request, res: Response): Promise<void> {
+  const methodName = "export all activities";
   try {
     const value = await validateRequest(req, exportActivitySchema, res, "GET");
     if (!value) {
@@ -675,6 +676,7 @@ async function exportAllChecklists(req: Request, res: Response): Promise<void> {
       value.sortOrder,
       value.fiscalYear,
       "download",
+      value.activityType,
       {}
     );
     const fields = await caseService.getAllowedExportFields(
@@ -868,7 +870,7 @@ export default {
   createActivityTask,
   updateActivityTask,
   getAllActivityTask,
-  exportAllChecklists,
+  exportAllActivity,
   createActivityEmail,
   deleteActivityAttachments,
   updateActivityEmail,

@@ -297,6 +297,7 @@ export class ActivityService {
     sortOrder: string = "DESC",
     fiscalYear: number = 0,
     apiType: string = "list",
+    activityType: string = "All",
     graphqlData?: any
   ): Promise<{
     statusCode: number;
@@ -330,6 +331,7 @@ export class ActivityService {
           sortBy,
           sortOrder,
           apiType,
+          activityType,
           graphqlData
         );
 
