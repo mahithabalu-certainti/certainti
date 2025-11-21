@@ -1287,22 +1287,6 @@ async getWorkFlowConnector () {
           const ids : any[] = []
           ids.push(data.relationship_connector_rid)
           ids.push(workFlowConnectorDetails!.rid)
-          const fetchTaskMappedIds = await WorkflowConnectorMapping.findAll({
-            attributes : ['target_rid'],
-            where : {
-              source_rid : data.source_rid,
-              relationship_connector_rid : {
-                [Op.in] : ids
-              }
-            }, raw : true
-          });
-          const checkForCyclicDependency : any = await this.mainDbSequelize.query(rawQueries.checkDependencyAdminLevel(d, fetchTaskMappedIds,data.relationship_connector_rid, workFlowConnectorDetails!.rid!))
-          if(checkForCyclicDependency[0].length > 0) {
-            return {
-              statusCode : HttpStatus.BAD_REQUEST,
-              statusMessage : `Mapping not allowed: '${checkForCyclicDependency[0][0].task_name}' is already part of a loop.`
-            }
-          }
           const result = await WorkflowConnectorMapping.create({
             created_by : data.created_by,
             created_datetime : new Date(),
