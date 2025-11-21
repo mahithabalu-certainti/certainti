@@ -63,7 +63,7 @@ export const getCaseTeamTableColumns = (): CaseTeamTableColumn[] => [
     name: 'end_date',
     label: 'End Date',
     width: '25%',
-    required: true,
+    required: false,
   },
   {
     name: 'action',
