@@ -1,7 +1,7 @@
 import * as AuditModel from "../models/workflowRuleAudit";
 
 export const createAuditEntry = async (data: {
-  ruleRid: number;
+  ruleRid: string;
   action: string;
   oldValue?: any;
   newValue?: any;

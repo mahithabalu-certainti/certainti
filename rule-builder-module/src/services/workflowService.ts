@@ -21,7 +21,7 @@ const getEntityById = async (entityType: "case" | "task", entityId: number) => {
  * Check rule conditions
  * Replace with dynamic condition evaluation logic
  */
-const checkConditions = async (entity: any, ruleId: number) => {
+const checkConditions = async (entity: any, ruleId: string) => {
   // Example: simple check
   return entity.priority === "high";
 };
@@ -29,7 +29,7 @@ const checkConditions = async (entity: any, ruleId: number) => {
 /**
  * Execute actions for a rule
  */
-const executeActions = async (ruleId: number, entity: any, userId: number) => {
+const executeActions = async (ruleId: string, entity: any, userId: number) => {
   const actions = await ActionModel.getActionsByRule(ruleId);
   console.log(ruleId+"fetching actions");
   console.log(actions);

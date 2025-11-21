@@ -1,10 +1,10 @@
 import { db } from "../config/db";
 
 export interface RuleScopeMap {
-  rid?: number;
-  ruleRid: number;
-  scopeEntity: string;  // e.g., "case", "task"
-  scopeEntityId: number;
+  rid?: string;
+  ruleRid: string;
+  scopeEntityType: string;  // e.g., "case", "task"
+  scopeEntityRid: string;
   isActive?: boolean;
   createdBy: number;
   modifiedBy?: number;
@@ -15,11 +15,11 @@ export interface RuleScopeMap {
 export const createRuleScope = async (data: RuleScopeMap) => {
   const query = `
     INSERT INTO workflow_rule_scope_map
-    (rule_rid, scope_entity, scope_entity_id, is_active, created_by, modified_by)
-    VALUES ($1,$2,$3,$4,$5,$6)
+    (rid,rule_rid, scope_entity_type, scope_entity_rid, is_active, created_by, modified_by)
+    VALUES ($1,$2,$3,$4,$5,$6,$7)
     RETURNING *;
   `;
-  const values = [data.ruleRid, data.scopeEntity, data.scopeEntityId, data.isActive ?? true, data.createdBy, data.createdBy];
+  const values = [data.rid, data.ruleRid, data.scopeEntityType, data.scopeEntityRid, data.isActive ?? true, data.createdBy, data.createdBy];
   const res = await db.query(query, values);
   return res.rows[0];
 };
@@ -37,7 +37,7 @@ export const getScopesByRule = async (ruleRid: number) => {
 export const getScopesByEntity = async (entityType: string, entityId: number) => {
   const query = `
     SELECT * FROM workflow_rule_scope_map
-    WHERE scope_entity = $1
+    WHERE scope_entity_type = $1
       AND scope_entity_id = $2
       AND is_active = true
   `;
@@ -49,11 +49,11 @@ export const getScopesByEntity = async (entityType: string, entityId: number) =>
 export const updateRuleScope = async (rid: number, data: RuleScopeMap) => {
   const query = `
     UPDATE workflow_rule_scope_map
-    SET scope_entity=$1, scope_entity_id=$2, is_active=$3, modified_by=$4, modified_datetime=NOW()
+    SET scope_entity_type=$1, scope_entity_id=$2, is_active=$3, modified_by=$4, modified_datetime=NOW()
     WHERE rid=$5
     RETURNING *;
   `;
-  const values = [data.scopeEntity, data.scopeEntityId, data.isActive ?? true, data.modifiedBy, rid];
+  const values = [data.scopeEntityType, data.scopeEntityRid, data.isActive ?? true, data.modifiedBy, rid];
   const res = await db.query(query, values);
   return res.rows[0];
 };

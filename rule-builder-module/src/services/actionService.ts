@@ -1,6 +1,6 @@
 import * as ActionModel from "../models/workflowRuleAction";
 
-export const getActionsByRule = async (ruleRid: number) => {
+export const getActionsByRule = async (ruleRid: string) => {
   return await ActionModel.getActionsByRule(ruleRid);
 };
 

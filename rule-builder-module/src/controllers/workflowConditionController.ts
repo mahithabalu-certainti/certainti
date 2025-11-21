@@ -22,15 +22,15 @@ export const getConditionById = async (req: Request, res: Response) => {
   }
 };
 
-export const getConditionsByGroup = async (req: Request, res: Response) => {
-  try {
-    const conditions = await ConditionModel.getConditionsByGroup(Number(req.params.groupRid));
-    res.json(conditions);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to fetch conditions" });
-  }
-};
+// export const getConditionsByGroup = async (req: Request, res: Response) => {
+//   try {
+//     const conditions = await ConditionModel.getConditionsByGroup(Number(req.params.groupRid));
+//     res.json(conditions);
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ error: "Failed to fetch conditions" });
+//   }
+// };
 
 export const updateCondition = async (req: Request, res: Response) => {
   try {

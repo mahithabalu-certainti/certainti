@@ -1,8 +1,8 @@
 import { db } from "../config/db";
 
 export interface RuleAudit {
-  rid?: number;
-  ruleRid: number;
+  rid?: string;
+  ruleRid: string;
   action: string;
   oldValue?: string;
   newValue?: string;
@@ -14,11 +14,11 @@ export interface RuleAudit {
 export const createAuditEntry = async (data: RuleAudit) => {
   const query = `
     INSERT INTO workflow_rule_audit
-    (rule_rid, action, old_value, new_value, notes, created_by)
-    VALUES ($1,$2,$3,$4,$5,$6)
+    (rid,rule_rid, action, old_value, new_value, notes, created_by)
+    VALUES ($1,$2,$3,$4,$5,$6,$7)
     RETURNING *;
   `;
-  const values = [data.ruleRid, data.action, data.oldValue ?? null, data.newValue ?? null, data.notes ?? null, data.createdBy];
+  const values = [data.rid, data.ruleRid, data.action, data.oldValue ?? null, data.newValue ?? null, data.notes ?? null, data.createdBy];
   const res = await db.query(query, values);
   return res.rows[0];
 };

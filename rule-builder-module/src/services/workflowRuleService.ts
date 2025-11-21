@@ -8,27 +8,27 @@ import * as ScopeMapModel from "../models/workflowRuleScopeMap";
 /**
  * Evaluate a rule for a given entity (case or task)
  */
-export const evaluateRuleForEntity = async (ruleRid: number, entity: any, userId: number) => {
+export const evaluateRuleForEntity = async (ruleRid: string, entity: any, userId: number) => {
   const conditionGroups = await ConditionGroupModel.getConditionGroupsByRule(ruleRid);
 
   let ruleSatisfied = false;
 
   for (const group of conditionGroups) {
-    const conditions = await ConditionModel.getConditionsByGroup(group.rid!);
-    let groupResult = group.groupOperator === "AND";
+    // const conditions = await ConditionModel.getConditionsByGroup(group.rid!);
+    // let groupResult = group.groupOperator === "AND";
 
-    for (const condition of conditions) {
-      const entityValue = entity[condition.fieldName];
-      const conditionMatch = ActionService.checkCondition(entityValue, condition.operator, condition.value, condition.dataType);
+    //   for (const condition of conditions) {
+    //     const entityValue = entity[condition.fieldName];
+    //     const conditionMatch = ActionService.checkCondition(entityValue, condition.operator, condition.value, condition.dataType);
 
-      if (group.groupOperator === "AND") groupResult = groupResult && conditionMatch;
-      else groupResult = groupResult || conditionMatch;
-    }
+    //     if (group.groupOperator === "AND") groupResult = groupResult && conditionMatch;
+    //     else groupResult = groupResult || conditionMatch;
+    //   }
 
-    if (groupResult) {
-      ruleSatisfied = true;
-      break; // Stop if any group satisfies
-    }
+    //   if (groupResult) {
+    //     ruleSatisfied = true;
+    //     break; // Stop if any group satisfies
+    //   }
   }
 
   if (ruleSatisfied) {

@@ -24,7 +24,7 @@ export const getRuleActionById = async (req: Request, res: Response) => {
 
 export const getActionsByRule = async (req: Request, res: Response) => {
   try {
-    const actions = await ActionModel.getActionsByRule(Number(req.params.ruleRid));
+    const actions = await ActionModel.getActionsByRule(String(req.params.ruleRid));
     res.json(actions);
   } catch (err) {
     console.error(err);

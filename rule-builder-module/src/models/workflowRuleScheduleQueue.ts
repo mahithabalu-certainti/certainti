@@ -1,8 +1,8 @@
 import { db } from "../config/db";
 
 export interface RuleScheduleQueue {
-  rid?: number;
-  ruleRid: number;
+  rid?: string;
+  ruleRid: string;
   relatedTaskRid: number;
   scheduledDatetime: Date;
   executed?: boolean;
@@ -12,11 +12,11 @@ export interface RuleScheduleQueue {
 export const createScheduleQueue = async (data: RuleScheduleQueue) => {
   const query = `
     INSERT INTO workflow_rule_schedule_queue
-    (rule_rid, related_task_rid, scheduled_datetime)
-    VALUES ($1,$2,$3)
+    (rid,rule_rid, related_task_rid, scheduled_datetime)
+    VALUES ($1,$2,$3,$4)
     RETURNING *;
   `;
-  const values = [data.ruleRid, data.relatedTaskRid, data.scheduledDatetime];
+  const values = [data.rid,data.ruleRid, data.relatedTaskRid, data.scheduledDatetime];
   const res = await db.query(query, values);
   return res.rows[0];
 };

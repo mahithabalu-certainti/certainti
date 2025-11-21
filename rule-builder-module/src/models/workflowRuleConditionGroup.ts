@@ -23,7 +23,7 @@ export const getConditionGroupById = async (rid: number) => {
   return res.rows[0];
 };
 
-export const getConditionGroupsByRule = async (ruleRid: number) => {
+export const getConditionGroupsByRule = async (ruleRid: string) => {
   const res = await db.query(`SELECT * FROM workflow_rule_condition_group WHERE rule_rid=$1`, [ruleRid]);
   return res.rows;
 };

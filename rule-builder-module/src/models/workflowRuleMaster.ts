@@ -1,11 +1,15 @@
 import { db } from "../config/db";
 
 export interface RuleMaster {
-  rid?: number;
+  rid?: string;
   ruleName: string;
   description?: string;
   triggerEvent: string;
+  triggerType: number;
   isActive?: boolean;
+  scopeType: number;
+  scheduleOffsetType: string;
+  scheduleOffsetValue: string;
   createdBy: number;
   modifiedBy?: number;
   createdDatetime?: Date;
@@ -15,11 +19,11 @@ export interface RuleMaster {
 export const createRuleMaster = async (data: RuleMaster) => {
   const query = `
     INSERT INTO workflow_rule_master
-    (rule_name, description, trigger_event, is_active, created_by, modified_by)
-    VALUES ($1,$2,$3,$4,$5,$6)
+    (rid,rule_name, description, trigger_event, is_active, scope_type,trigger_type,schedule_offset_type,schedule_offset_value, created_by, modified_by)
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
     RETURNING *;
   `;
-  const values = [data.ruleName, data.description ?? null, data.triggerEvent, true, data.createdBy, data.createdBy];
+  const values = [data.rid, data.ruleName, data.description ?? null, data.triggerEvent, data.isActive, data.scopeType, data.triggerType, data.scheduleOffsetType, data.scheduleOffsetValue, data.createdBy, data.createdBy];
   const res = await db.query(query, values);
   return res.rows[0];
 };

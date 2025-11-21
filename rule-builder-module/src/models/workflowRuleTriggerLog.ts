@@ -1,8 +1,8 @@
 import { db } from "../config/db";
 
 export interface RuleTriggerLog {
-  rid?: number;
-  ruleRid: number;
+  rid?: string;
+  ruleRid: string;
   eventName: string;
   eventTime: Date;
   contextEntityId: number;
@@ -14,11 +14,11 @@ export interface RuleTriggerLog {
 export const createTriggerLog = async (data: RuleTriggerLog) => {
   const query = `
     INSERT INTO workflow_rule_trigger_log
-    (rule_rid, event_name, event_time, context_entity_id, status, message)
-    VALUES ($1,$2,$3,$4,$5,$6)
+    (rid,rule_rid, event_name, event_time, context_entity_id, status, message)
+    VALUES ($1,$2,$3,$4,$5,$6,$7)
     RETURNING *;
   `;
-  const values = [data.ruleRid, data.eventName, data.eventTime, data.contextEntityId, data.status, data.message ?? null];
+  const values = [data.rid, data.ruleRid, data.eventName, data.eventTime, data.contextEntityId, data.status, data.message ?? null];
   const res = await db.query(query, values);
   return res.rows[0];
 };

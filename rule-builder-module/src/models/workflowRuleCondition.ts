@@ -1,23 +1,24 @@
 import { db } from "../config/db";
 
 export interface Condition {
-  rid?: number;
-  groupRid: number;
+  rid?: string;
+  logicalOperator: String;
   fieldName: string;
   operator: string;
   value: string;
   dataType: string;
+  sequence: number;
   createdDatetime?: Date;
 }
 
 export const createCondition = async (data: Condition) => {
   const query = `
     INSERT INTO workflow_rule_condition
-    (group_rid, field_name, operator, value, data_type)
-    VALUES ($1,$2,$3,$4,$5)
+    (rid,logical_operator, field_name, operator, value, data_type,sequence)
+    VALUES ($1,$2,$3,$4,$5,$6,$7)
     RETURNING *;
   `;
-  const values = [data.groupRid, data.fieldName, data.operator, data.value, data.dataType];
+  const values = [data.rid, data.logicalOperator, data.fieldName, data.operator, data.value, data.dataType, data.sequence];
   const res = await db.query(query, values);
   return res.rows[0];
 };
@@ -27,10 +28,10 @@ export const getConditionById = async (rid: number) => {
   return res.rows[0];
 };
 
-export const getConditionsByGroup = async (groupRid: number) => {
-  const res = await db.query(`SELECT * FROM workflow_rule_condition WHERE group_rid=$1`, [groupRid]);
-  return res.rows;
-};
+// export const getConditionsByGroup = async (groupRid: number) => {
+//   const res = await db.query(`SELECT * FROM workflow_rule_condition WHERE group_rid=$1`, [groupRid]);
+//   return res.rows;
+// };
 
 export const updateCondition = async (rid: number, data: Condition) => {
   const query = `

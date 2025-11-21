@@ -18,19 +18,13 @@ router.get("/rule/:rid", RuleController.getRuleMasterById);
 router.put("/rule/:rid", RuleController.updateRuleMaster);
 router.delete("/rule/:rid", RuleController.deleteRuleMaster);
 
-// ConditionGroup
-router.post("/condition-group", ConditionGroupController.createConditionGroup);
-router.get("/condition-group/:rid", ConditionGroupController.getConditionGroupById);
-router.get("/condition-group/rule/:ruleRid", ConditionGroupController.getConditionGroupsByRule);
-router.put("/condition-group/:rid", ConditionGroupController.updateConditionGroup);
-router.delete("/condition-group/:rid", ConditionGroupController.deleteConditionGroup);
-
 // Condition
 router.post("/condition", ConditionController.createCondition);
 router.get("/condition/:rid", ConditionController.getConditionById);
-router.get("/condition/group/:groupRid", ConditionController.getConditionsByGroup);
 router.put("/condition/:rid", ConditionController.updateCondition);
 router.delete("/condition/:rid", ConditionController.deleteCondition);
+// router.get("/condition/group/:groupRid", ConditionController.getConditionsByGroup);
+
 
 // Action
 router.post("/action", ActionController.createRuleAction);
@@ -66,7 +60,15 @@ router.put("/schedule/:rid", ScheduleController.updateScheduleQueue);
 router.put("/schedule/execute/:rid", ScheduleController.markScheduleExecuted);
 router.delete("/schedule/:rid", ScheduleController.deleteScheduleQueue);
 
-
+//execute
 router.post("/execute", executeWorkflow);
+
+// ConditionGroup
+// router.post("/condition-group", ConditionGroupController.createConditionGroup);
+// router.get("/condition-group/:rid", ConditionGroupController.getConditionGroupById);
+// router.get("/condition-group/rule/:ruleRid", ConditionGroupController.getConditionGroupsByRule);
+// router.put("/condition-group/:rid", ConditionGroupController.updateConditionGroup);
+// router.delete("/condition-group/:rid", ConditionGroupController.deleteConditionGroup);
+
 
 export default router;
