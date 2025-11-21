@@ -12,9 +12,16 @@ import {
   ManageColumnsPopover,
 } from '../../../../../components/table';
 import { getTaskTemplateColumns } from './columns';
-import { TaskTemplateList, TaskTemplateListParams } from '../../../../types';
+import {
+  TaskTemplateDetails,
+  TaskTemplateList,
+  TaskTemplateListParams,
+} from '../../../../types';
 import { generatePath, useNavigate } from 'react-router-dom';
-import { TASK_TEMPLATES_EDIT } from '../../../../../routes';
+import {
+  TASK_TEMPLATES_DETAILS,
+  TASK_TEMPLATES_EDIT,
+} from '../../../../../routes';
 import {
   useGetTaskAssignRoleTypes,
   useGetTaskCheckListTypes,
@@ -26,8 +33,10 @@ import { TASK_TEMPLATE } from '../../../../../api/graphql/queries/task-template-
 import { useMutation } from '@apollo/client';
 import { caseClient } from '../../../../../api/graphql/clients/client';
 import { useToast } from '../../../../../hooks';
-import { useGetStatus } from '../../../../../common-service';
+import { AllPermissions, useGetStatus } from '../../../../../common-service';
 import { SelectOption } from '../../../../../consultant/types';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../../store/store';
 
 interface ITaskTemplateTableProps {
   appliedFilters: Record<string, FilterCondition>;
@@ -148,13 +157,36 @@ export const TaskTemplateTable: React.FC<ITaskTemplateTableProps> = ({
       })) || [],
     [statusOptions?.data?.data?.status]
   );
+  const { permission } = useSelector((state: RootState) => state.permission);
+  const taskViewEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.TASK_TEMPLATE_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
 
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    taskViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [taskViewEditFields]);
+  const handleViewDetails = (row: TaskTemplateDetails) => {
+    const path = generatePath(TASK_TEMPLATES_DETAILS, {
+      templateId: row.rid,
+    });
+    navigate(path);
+  };
   const taskColumns = getTaskTemplateColumns(
     taskMilestoneTypesOptions,
     taskPrioritytTypesTypesOptions,
     taskCheckListTypesTypesOptions,
     taskAssigneRoleTypesTypesOptions,
-    memoizedStatus
+    memoizedStatus,
+    permissionMap,
+    handleViewDetails
   );
   const [columnOrder, setColumnOrder] = useState(
     taskColumns.map((col) => col.id)

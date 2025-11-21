@@ -1,6 +1,6 @@
 import { Typography } from '@mui/material';
 import React, { useMemo } from 'react';
-import { ResourceData } from '../../../../../types'; 
+import { ResourceData } from '../../../../../types';
 import DetailsSection, {
   DetailItem,
 } from '../../../../../../components/details-section/details';
