@@ -1324,7 +1324,7 @@ class ActivitySchemaService {
     const { Activities } =
       await this.caseModelService.getModels(accountNumber);
     if (!this.mainDbSequelize) {
-      this.mainDbSequelize = await this.caseModelService.getSequelize();
+      this.mainDbSequelize = await this.caseModelService.getMainSequelize();
     }
     const [emailStatus]: any[] = await this.mainDbSequelize.query(
       rawQueries.fetchEmailStatusByName(activityRequest.email_status),
