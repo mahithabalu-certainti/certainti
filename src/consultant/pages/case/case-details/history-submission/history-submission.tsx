@@ -776,7 +776,7 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
                                   fontWeight: 500,
                                 }}
                               >
-                                Choose Year
+                                Choose Fiscal Year
                               </MenuItem>
                               {yearOptions.map((year) => (
                                 <MenuItem
@@ -847,7 +847,7 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
                               disabled={!isCaseTeamEditable}
                               size='small'
                               fullWidth
-                              placeholder='Enter total project cost'
+                              placeholder='Enter Total Project Cost'
                               sx={{
                                 '& .MuiInputBase-root': {
                                   height: '28px',
@@ -925,7 +925,7 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
                               disabled={!isCaseTeamEditable}
                               size='small'
                               fullWidth
-                              placeholder='Enter total QRE'
+                              placeholder='Enter Total QRE'
                               sx={{
                                 '& .MuiInputBase-root': {
                                   height: '28px',
@@ -1001,7 +1001,7 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
                               disabled={!isCaseTeamEditable}
                               size='small'
                               fullWidth
-                              placeholder='Enter total RD credits'
+                              placeholder='Enter Total RD Credits'
                               sx={{
                                 '& .MuiInputBase-root': {
                                   height: '28px',
@@ -1079,7 +1079,7 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
                               disabled={!isCaseTeamEditable}
                               size='small'
                               fullWidth
-                              placeholder='Enter annual gross receipts'
+                              placeholder='Enter Annual Gross Receipts'
                               sx={{
                                 '& .MuiInputBase-root': {
                                   height: '28px',
