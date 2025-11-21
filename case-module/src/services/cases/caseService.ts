@@ -1926,7 +1926,12 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
     try {
       const fetchParentNumber : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
       if(fetchParentNumber[0].length > 0) {
-        const isTaskNameExists = await this.caseSchemaService.checkTaskNameExistsForUpdate(data, fetchParentNumber[0][0].r_number);
+        const findTask : any = await this.caseSchemaService.findTaskById(data.rid, data.account_rid, data.case_rid, fetchParentNumber[0][0].r_number, "milestone");
+        let eid;
+        if(findTask) eid = findTask.eid
+        else eid = null
+        
+        const isTaskNameExists = await this.caseSchemaService.checkTaskNameExistsForUpdate(data, fetchParentNumber[0][0].r_number, eid);
         if(isTaskNameExists) {
           return {
             statusCode : HttpStatus.BAD_REQUEST,
