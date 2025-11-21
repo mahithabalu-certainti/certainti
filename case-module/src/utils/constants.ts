@@ -1613,7 +1613,8 @@ export const filterTypesForEmailTemplate: Record<string, any> = {
   status_rid: "string",
   template_name: "string",
   description: "string",
-  createdAt: "datetime"
+  createdAt: "datetime",
+  category_rid: "string"
 };
 
 export const filtersColumnsForEmailTemplate: Record<string, string> = {
@@ -1626,7 +1627,8 @@ export const filtersColumnsForEmailTemplate: Record<string, string> = {
   status_name: "status_name",
   createdAt: "createdAt",
   template_name: "template_name",
-  description: "description"
+  description: "description",
+  category_rid: "category_rid"
 
 };
 
