@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { FormType, SelectOption } from '../../../../consultant/types';
 import {
+  createMultiSelectField,
   createSelectField,
   createTextAreaField,
   createTextField,
@@ -15,8 +16,10 @@ export const TaskTemplateFormFieldsData = (
   taskCheckListTypesTypesOptions: SelectOption[],
   taskAssignRoleTypesTypesOptions: SelectOption[],
   statusOptions: SelectOption[],
-  taskType: boolean
-  // permissionMap: Record<string, { read: boolean; edit: boolean }>,
+  taskConnecterTypesOptions: SelectOption[],
+  taskTemplate: SelectOption[],
+  taskType: boolean,
+  permissionMap: Record<string, { read: boolean; edit: boolean }>
 ): FormType[] => {
   return useMemo(
     () => [
@@ -27,133 +30,141 @@ export const TaskTemplateFormFieldsData = (
           createTextField('task_name', 'Task Name', {
             required: true,
             placeholder: 'Enter Task Name',
-            // disabled:
-            //   isEditView &&
-            //   !permissionMap?.['task_name']?.edit &&
-            //   permissionMap?.['task_name']?.read,
-            // hide:
-            //   isEditView &&
-            //   !permissionMap?.['task_name']?.edit &&
-            //   !permissionMap?.['task_name']?.read,
+            disabled:
+              isEditView &&
+              !permissionMap?.['task_name']?.edit &&
+              permissionMap?.['task_name']?.read,
+            hide:
+              isEditView &&
+              !permissionMap?.['task_name']?.edit &&
+              !permissionMap?.['task_name']?.read,
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MIN_3,
+                errorMessage: 'Task Name must be at least 2 characters long',
+              },
+              {
+                regex: REGEX_PATTERNS.MAX_150,
+                errorMessage: 'Max length exceeded',
+              },
+            ],
           }),
           createSelectField('task_type_rid', 'Task Type', {
             options: taskTemplateTypesOptions || [],
             placeholder: 'Choose Task Type',
             required: true,
             onChange: true,
-            // disabled:
-            //   isEditView &&
-            //   !permissionMap?.['task_type_rid']?.edit &&
-            //   permissionMap?.['task_type_rid']?.read,
-            // hide:
-            //   isEditView &&
-            //   !permissionMap?.['task_type_rid']?.edit &&
-            //   !permissionMap?.['task_type_rid']?.read,
+            disabled: isEditView,
+            hide:
+              isEditView &&
+              !permissionMap?.['task_type_rid']?.edit &&
+              !permissionMap?.['task_type_rid']?.read,
           }),
           createSelectField('milestone_template_rid', 'Milestone Type', {
             options: taskMilestoneTypesOptions || [],
             placeholder: 'Choose Milestone Type',
             required: true,
-            hide: taskType,
-            // disabled:
-            //   isEditView &&
-            //   !permissionMap?.['task_type_rid']?.edit &&
-            //   permissionMap?.['task_type_rid']?.read,
-            // hide:
-            //   isEditView &&
-            //   !permissionMap?.['task_type_rid']?.edit &&
-            //   !permissionMap?.['task_type_rid']?.read,
+            // hide: taskType,
+            disabled:
+              isEditView &&
+              !permissionMap?.['milestone_type_rid']?.edit &&
+              permissionMap?.['milestone_type_rid']?.read,
+            hide:
+              taskType ||
+              (!permissionMap?.['milestone_type_rid']?.read &&
+                !permissionMap?.['milestone_type_rid']?.edit),
           }),
-          createSelectField('case_team_member_role_rid', 'Assing Role', {
+          createSelectField('case_team_member_role_rid', 'Assign Role', {
             options: taskAssignRoleTypesTypesOptions || [],
-            placeholder: 'Choose Assing Role',
+            placeholder: 'Choose Assign Role',
             required: false,
-            hide: taskType,
-            // disabled:
-            //   isEditView &&
-            //   !permissionMap?.['task_type_rid']?.edit &&
-            //   permissionMap?.['task_type_rid']?.read,
-            // hide:
-            //   isEditView &&
-            //   !permissionMap?.['task_type_rid']?.edit &&
-            //   !permissionMap?.['task_type_rid']?.read,
+            disabled:
+              isEditView &&
+              !permissionMap?.['case_team_member_role_rid']?.edit &&
+              permissionMap?.['case_team_member_role_rid']?.read,
+            hide:
+              taskType ||
+              (!permissionMap?.['case_team_member_role_rid']?.read &&
+                !permissionMap?.['case_team_member_role_rid']?.edit),
           }),
           createTextField('effort_in_days', 'Efforts In Days', {
-            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
-            // regexErrorMessage:
-            //   'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            regex: REGEX_PATTERNS.ALLOW_ONE_TO_99,
+            regexErrorMessage:
+              'Only positive numbers allowed, from 1 to 99 are allowed. ',
             placeholder: 'Enter Efforts In Days',
             required: true,
             onChange: true,
             formatCostValue: true,
-            hide: taskType,
-            // disabled:
-            //   isEditView &&
-            //   permissionMap?.['efforts']?.read &&
-            //   !permissionMap?.['efforts']?.edit,
-            // hide:
-            //   isEditView &&
-            //   !permissionMap?.['efforts']?.read &&
-            //   !permissionMap?.['efforts']?.edit,
+            disabled:
+              isEditView &&
+              permissionMap?.['effort_in_days']?.read &&
+              !permissionMap?.['effort_in_days']?.edit,
+            hide:
+              taskType ||
+              (!permissionMap?.['effort_in_days']?.read &&
+                !permissionMap?.['effort_in_days']?.edit),
           }),
-          createTextField('reminder_interval', 'Reminder Interval', {
-            // regex: REGEX_PATTERNS.EFFORTS_NUMBER,
-            // regexErrorMessage:
-            //   'Only positive numbers allowed, up to 16 digits and 2 decimal places',
-            placeholder: 'Enter Reminder Interval',
-            required: false,
-            onChange: true,
-            formatCostValue: true,
-            // disabled:
-            //   isEditView &&
-            //   permissionMap?.['efforts']?.read &&
-            //   !permissionMap?.['efforts']?.edit,
-            // hide:
-            //   isEditView &&
-            //   !permissionMap?.['efforts']?.read &&
-            //   !permissionMap?.['efforts']?.edit,
-          }),
+
           createSelectField('priority_rid', 'Priority', {
             options: taskPrioritytTypesTypesOptions || [],
-            placeholder: 'Choose Priority Type',
+            placeholder: 'Choose Priority',
             required: false,
-            // disabled:
-            //   isEditView &&
-            //   !permissionMap?.['task_type_rid']?.edit &&
-            //   permissionMap?.['task_type_rid']?.read,
-            // hide:
-            //   isEditView &&
-            //   !permissionMap?.['task_type_rid']?.edit &&
-            //   !permissionMap?.['task_type_rid']?.read,
+            disabled:
+              isEditView &&
+              !permissionMap?.['priority_rid']?.edit &&
+              permissionMap?.['priority_rid']?.read,
+            hide:
+              isEditView &&
+              !permissionMap?.['priority_rid']?.edit &&
+              !permissionMap?.['priority_rid']?.read,
           }),
           createSelectField('checklist_template_rid', 'Checklist', {
             options: taskCheckListTypesTypesOptions || [],
-            placeholder: 'Choose Checklist Type',
+            placeholder: 'Choose Checklist',
             required: false,
-            // disabled:
-            //   isEditView &&
-            //   !permissionMap?.['task_type_rid']?.edit &&
-            //   permissionMap?.['task_type_rid']?.read,
-            // hide:
-            //   isEditView &&
-            //   !permissionMap?.['task_type_rid']?.edit &&
-            //   !permissionMap?.['task_type_rid']?.read,
+            disabled:
+              isEditView &&
+              !permissionMap?.['checklist']?.edit &&
+              permissionMap?.['checklist']?.read,
+            hide:
+              isEditView &&
+              !permissionMap?.['checklist']?.edit &&
+              !permissionMap?.['checklist']?.read,
           }),
           createSelectField('status_rid', 'Status', {
             required: false,
             options: statusOptions,
             placeholder: 'Choose Status',
-            // hide:
-            //   isEditView &&
-            //   !permissionMap?.['status_rid']?.read &&
-            //   !permissionMap?.['status_rid']?.edit,
-            // disabled:
-            //   isEditView &&
-            //   permissionMap?.['status_rid']?.read &&
-            //   !permissionMap?.['status_rid']?.edit,
+            hide:
+              isEditView &&
+              !permissionMap?.['status_rid']?.read &&
+              !permissionMap?.['status_rid']?.edit,
+            disabled:
+              isEditView &&
+              permissionMap?.['status_rid']?.read &&
+              !permissionMap?.['status_rid']?.edit,
           }),
         ],
       },
+      {
+        sectionName: 'emptyName',
+        fillType: 'half',
+        gridMode: 'first-one-rest-two',
+        fields: [
+          createSelectField('relationship_connector_rid', 'Linked Type', {
+            options: taskConnecterTypesOptions || [],
+            placeholder: 'Choose Linked Type',
+            required: true,
+            onChange: true,
+          }),
+          createMultiSelectField('target_rid', 'Linked Task Type', {
+            options: taskTemplate || [],
+            placeholder: 'Choose Linked Task Type ',
+            required: false,
+          }),
+        ],
+      },
+
       {
         sectionName: '',
         fillType: 'full',
@@ -163,14 +174,14 @@ export const TaskTemplateFormFieldsData = (
             placeholder: 'Enter Description',
             regexErrorMessage: 'Description must be within 2000 characters',
             regex: REGEX_PATTERNS.DESCRIPTION,
-            // disabled:
-            //   isEditView &&
-            //   !permissionMap?.['task_description']?.edit &&
-            //   permissionMap?.['task_description']?.read,
-            // hide:
-            //   isEditView &&
-            //   !permissionMap?.['task_description']?.edit &&
-            //   !permissionMap?.['task_description']?.read,
+            disabled:
+              isEditView &&
+              !permissionMap?.['task_description']?.edit &&
+              permissionMap?.['task_description']?.read,
+            hide:
+              isEditView &&
+              !permissionMap?.['task_description']?.edit &&
+              !permissionMap?.['task_description']?.read,
           }),
         ],
       },
@@ -182,54 +193,66 @@ export const TaskTemplateFormFieldsData = (
           createTextField('record_id', 'Record ID', {
             required: false,
             disabled: true,
-            // hide:
-            //   isEditView &&
-            //   !permissionMap?.['rid']?.edit &&
-            //   !permissionMap?.['rid']?.read,
+            hide:
+              isEditView &&
+              !permissionMap?.['rid']?.edit &&
+              !permissionMap?.['rid']?.read,
           }),
           createTextField('created_on', 'Created On', {
             required: false,
             disabled: true,
-            // hide:
-            //   isEditView &&
-            //   !permissionMap?.['created_datetime']?.edit &&
-            //   !permissionMap?.['created_datetime']?.read,
+            hide:
+              isEditView &&
+              !permissionMap?.['created_datetime']?.edit &&
+              !permissionMap?.['created_datetime']?.read,
           }),
           createTextField('created_by', 'Created By', {
             required: false,
             disabled: true,
-            // hide:
-            //   isEditView &&
-            //   !permissionMap?.['created_by']?.edit &&
-            //   !permissionMap?.['created_by']?.read,
+            hide:
+              isEditView &&
+              !permissionMap?.['created_by']?.edit &&
+              !permissionMap?.['created_by']?.read,
           }),
           createTextField('template_id', 'Template ID', {
             required: false,
             disabled: true,
-            // hide:
-            //   isEditView &&
-            //   !permissionMap?.['r_number']?.edit &&
-            //   !permissionMap?.['r_number']?.read,
+            hide:
+              isEditView &&
+              !permissionMap?.['r_number']?.edit &&
+              !permissionMap?.['r_number']?.read,
           }),
           createTextField('updated_on', 'Updated On', {
             required: false,
             disabled: true,
-            // hide:
-            //   isEditView &&
-            //   !permissionMap?.['modified_datetime']?.edit &&
-            //   !permissionMap?.['modified_datetime']?.read,
+            hide:
+              isEditView &&
+              !permissionMap?.['modified_datetime']?.edit &&
+              !permissionMap?.['modified_datetime']?.read,
           }),
           createTextField('updated_by', 'Updated By', {
             required: false,
             disabled: true,
-            // hide:
-            //   isEditView &&
-            //   !permissionMap?.['modified_by']?.edit &&
-            //   !permissionMap?.['modified_by']?.read,
+            hide:
+              isEditView &&
+              !permissionMap?.['modified_by']?.edit &&
+              !permissionMap?.['modified_by']?.read,
           }),
         ],
       },
     ],
-    [isEditView, taskTemplateTypesOptions]
+    [
+      isEditView,
+      permissionMap,
+      statusOptions,
+      taskAssignRoleTypesTypesOptions,
+      taskCheckListTypesTypesOptions,
+      taskConnecterTypesOptions,
+      taskMilestoneTypesOptions,
+      taskPrioritytTypesTypesOptions,
+      taskTemplate,
+      taskTemplateTypesOptions,
+      taskType,
+    ]
   );
 };

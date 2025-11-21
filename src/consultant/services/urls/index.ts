@@ -8,3 +8,4 @@ export * from './technical-summary-url';
 export * from './notes-url';
 export * from './cases-url';
 export * from './checklist-url';
+export * from './work-breakdown-url';

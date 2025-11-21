@@ -210,7 +210,7 @@ export const EmailTemplateTable: React.FC<IEmailTemplateTableProps> = ({
           )
         );
       } else {
-        errorToast(result?.message || 'Failed to update field');
+        errorToast(result?.statusMessage || 'Failed to update field');
         setEmailTemplateList(previousEmailTemplateList);
       }
     } catch (error) {

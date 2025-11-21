@@ -564,7 +564,10 @@ const CaseTeam: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
         title={'Case Team'}
         titleIcon={getTitleIcon()}
         buttons={headerButtons}
-        count={formData.team_members.length}
+        count={formData.team_members.filter(
+          (m) =>
+            m.user_name || m.user_role || m.start_date || m.end_date || m.status
+        ).length}
         showItemCount={true}
         hideSection={false}
       />
@@ -761,6 +764,7 @@ const CaseTeam: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
                                           <MenuItem
                                             key={role}
                                             value={role}
+                                            title={role}
                                             sx={{
                                               fontSize: '13px',
                                               color: '#425A76 !important',
@@ -861,6 +865,7 @@ const CaseTeam: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
                                           <MenuItem
                                             key={user}
                                             value={user}
+                                            title={user}
                                             sx={{
                                               fontSize: '13px',
                                               color: '#425A76 !important',
@@ -1111,6 +1116,7 @@ const CaseTeam: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
                                           )
                                         }
                                         format='YYYY-MM-DD'
+                                        minDate={dayjs('1950-01-01')}
                                         disabled={
                                           isDisabled ||
                                           !permissionMap.effective_startdate
@@ -1293,11 +1299,15 @@ const CaseTeam: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
                                           )
                                         }
                                         format='YYYY-MM-DD'
+                                        minDate={
+                                          member.start_date
+                                            ? dayjs(member.start_date)
+                                            : dayjs('1950-01-01')
+                                        }
                                         disabled={
                                           isDisabled ||
                                           !permissionMap.effective_enddate?.edit
                                         }
-                                        minDate={dayjs(member.start_date)}
                                         sx={{
                                           width: '100%',
                                           minWidth: '140px',
