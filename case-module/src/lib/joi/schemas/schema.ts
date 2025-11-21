@@ -163,7 +163,7 @@ const createCaseTeamSchema = Joi.object({
         user_rid: Joi.string().required(),
         role_rid: Joi.string().required(),
         effective_from: Joi.date().required(),
-        effective_to: Joi.date().optional(),
+        effective_to: Joi.date().optional().allow(null, ""),
         is_primary: Joi.boolean().required(),
         status_rid: Joi.string().required(),
         action_type: Joi.string().valid("add", "edit", "delete").required(),
