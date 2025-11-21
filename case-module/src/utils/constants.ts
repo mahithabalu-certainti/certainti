@@ -174,6 +174,7 @@ export const STATUS_MESSAGE = {
   activityCreationFailed: "Activity creation failed",
   activityUpdated: "Activity updated successfully",
   activityUpdateFailed: "Activity update failed",
+  taskWeightageListSuccess : "Task Weightage fetched successfully",
   emailTemplatePreviewSuccess: "Email template preview generated successfully",
   emailTemplatePreviewFailed: "Failed to generate email template preview",
   emailSentSuccessfully: "Email sent successfully",
@@ -1473,6 +1474,9 @@ export const rawQueries = {
   getChecklistStatusByName (statusName : string) {
     return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.checklist_status WHERE status_name ILIKE '%${statusName}%'`;
   },
+  getWeightageValue (rid : string) {
+    return `SELECT weightage_value FROM ${MAIN_SCHEMA_NAME}.task_weightage WHERE rid = '${rid}'`
+  }
 };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 
 const keyContactRole = {
@@ -1656,7 +1660,8 @@ export const validColumnsForSortFilters : Record<string, string> = {
   modified_by_name : "CONCAT(uu.first_name,' ', uu.last_name)",
   sequence_no : "t.sequence_no",
   task_type_name : "tt.task_type_name",
-  task_description : "t.task_description"
+  task_description : "t.task_description",
+  weightage_value : "wt.weightage_value"
 }
 
 export const validColumnsForFilters : Record<string, string> = {
@@ -1676,7 +1681,8 @@ export const validColumnsForFilters : Record<string, string> = {
   modified_by : "t.modified_by",
   sequence_no : "t.sequence_no",
   task_type_rid : "t.task_type_rid",
-  task_description : "t.task_description"
+  task_description : "t.task_description",
+  weightage_rid : 't.weightage_rid'
 }
 
 export const validFilterColumnTypes : Record<string, string> = {
@@ -1696,7 +1702,8 @@ export const validFilterColumnTypes : Record<string, string> = {
   modified_by : "string",
   sequence_no : "number",
   task_type_rid : "string",
-  task_description : "string"
+  task_description : "string",
+  weightage_rid : "string"
 }
 
 export const sortByColumnsCaseTask : any = {

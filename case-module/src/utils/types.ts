@@ -317,6 +317,7 @@ type WorkflowConnectorItems = {
   source_rid : string
   relationship_connector_rid : string
   target_rid : string[],
+  delete_target_rids : string[]
   created_by : string
 }
 
@@ -325,6 +326,7 @@ type WorkflowConnectorItemsAccountLevel = {
   account_rid : string
   task_rid : string
   source_rid : string
+  delete_target_rids : string[]
   relationship_connector_rid : string
   target_rid : string[]
   created_by : string
@@ -349,6 +351,7 @@ export type CreateTaskTemplateType = {
   milestone_template_rid : string,
   task_description : string,
   workflow_connector : WorkflowConnectorItems
+  weightage_rid : string
 }
 
 export type priorityTypes = {
@@ -386,7 +389,8 @@ export type UpdateTaskTemplateType = {
   task_type_rid: string,
   milestone_template_rid : string,
   task_description : string,
-  workflow_connector : WorkflowConnectorItems
+  workflow_connector : WorkflowConnectorItems,
+  weightage_rid : string
 }
 
 export type AdminTaskTemplateResponseTypes = {
@@ -482,7 +486,8 @@ export type CreateCaseTaskType = {
   task_description : string,
   status_rid : string,
   tags : tagTypes[],
-  workflow_connector : WorkflowConnectorItemsAccountLevel
+  workflow_connector : WorkflowConnectorItemsAccountLevel,
+  weightage_rid : string
 }
 
 export type UpdateCaseTaskType = {
@@ -503,7 +508,8 @@ export type UpdateCaseTaskType = {
   task_type_rid : string,
   task_description : string
   tags : tagTypes[],
-  workflow_connector : WorkflowConnectorItemsAccountLevel
+  workflow_connector : WorkflowConnectorItemsAccountLevel,
+  weightage_rid : string
 }
 
 export type CaseTaskQueryType = {
@@ -628,7 +634,8 @@ export type TaskCardDetailsType = {
   checklist_name : string
   case_team_member_role_rid : string
   tags : taskTags[]
-  workflow_connector :  taskWorkFlowConnector[]
+  workflow_connector :  taskWorkFlowConnector[],
+  weightage_rid : string
 }
 export type TaskCardResponse ={
   task_details :TaskCardDetailsType
@@ -655,6 +662,7 @@ export type CaseTaskWorkFlowCreate = {
   account_rid : string,
   source_rid : string,
   target_rid : string[],
+  delete_target_rids : string[]
   relationship_connector_rid : string
   created_by : string
   created_datetime : Date
@@ -770,4 +778,9 @@ export interface IEmailMessage {
     content: string;
   };
   toRecipients: { emailAddress: { address: string } }[];
+}
+
+export type WeightageType = {
+  rid : string
+  weightage_value : number
 }

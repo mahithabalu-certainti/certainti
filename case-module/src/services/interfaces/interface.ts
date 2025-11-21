@@ -4,7 +4,7 @@ import { Tags } from "../../models/tagsModel";
 import { TaskCollaborators } from "../../models/taskCollaboratorsModel";
 import { TaskComments } from "../../models/taskCommentsModel";
 import { TaskTag } from "../../models/taskTagsModel";
-import { AddCommentsType, AdminTaskTemplatePayloadType, CaseTaskQueryType, CreateCaseTaskType, CreateTaskTemplateType, ICreateCases, ICreateCaseTeam, ICreateChecklist, ICreateChecklistTemplate, ICreateEmailTemplate, MilestoneResponse, UpdateCaseTaskType, UpdateTaskTemplateType, UpdateCommentsType, DeleteCommentsType, CommentsListType, ActivityType, TaskCardDetailsType, priorityTypes, caseTaskStatusTypes, WorkflowConnectorType, CaseTaskWorkFlowCreate, CaseTaskWorkFlowDelete, IActivityTask, IActivityEmail, IActivityMeeting, IActivityCall } from "../../utils/types";
+import { AddCommentsType, AdminTaskTemplatePayloadType, CaseTaskQueryType, CreateCaseTaskType, CreateTaskTemplateType, ICreateCases, ICreateCaseTeam, ICreateChecklist, ICreateChecklistTemplate, ICreateEmailTemplate, MilestoneResponse, UpdateCaseTaskType, UpdateTaskTemplateType, UpdateCommentsType, DeleteCommentsType, CommentsListType, ActivityType, TaskCardDetailsType, priorityTypes, caseTaskStatusTypes, WorkflowConnectorType, CaseTaskWorkFlowCreate, CaseTaskWorkFlowDelete, IActivityTask, IActivityEmail, IActivityMeeting, IActivityCall, WeightageType } from "../../utils/types";
 
 export interface ICaseService {
   createCase(
@@ -271,7 +271,7 @@ linkTask (data : CaseTaskWorkFlowCreate) : Promise<{
     statusCode: number;
     statusMessage: string;
 }>
-deleteLinkTask (data : CaseTaskWorkFlowDelete) : Promise<{
+deleteLinkTask (data : CaseTaskWorkFlowCreate) : Promise<{
     statusCode: number;
     statusMessage: string;
 } | undefined>
@@ -419,6 +419,10 @@ deleteLinkTask (data : CaseTaskWorkFlowDelete) : Promise<{
     statusMessage: string;
 } | undefined>
 adminTaskListForDropdown (data : any) : Promise<TaskTemplate[]>
+getWeightageList() : Promise<{
+    statusCode: number;
+    data: WeightageType[];
+}>
 }
 
 export interface IActivityService {

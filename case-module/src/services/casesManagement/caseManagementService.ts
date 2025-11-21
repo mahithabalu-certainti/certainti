@@ -5,9 +5,9 @@ import { CaseManagementSchemaService } from "./schemaService";
 import { HttpStatus, rawQueries, STATUS_MESSAGE } from "../../utils/constants";
 import { logMessage, setTaskTemplateData } from "../../utils/helpers";
 import CaseSchemaService from "../cases/schemaService";
-import { AdminTaskTemplatePayloadType, AdminTaskTemplateResponseTypes, caseStatusType, checkListTypes, CreateTaskTemplateType, ICreateChecklist, ICreateChecklistTemplate, ICreateEmailTemplate, MilestoneTypes, priorityTypes, UpdateTaskTemplateType } from "../../utils/types";
+import { AdminTaskTemplatePayloadType, AdminTaskTemplateResponseTypes, caseStatusType, checkListTypes, CreateTaskTemplateType, ICreateChecklist, ICreateChecklistTemplate, ICreateEmailTemplate, MilestoneTypes, priorityTypes, UpdateTaskTemplateType, WeightageType } from "../../utils/types";
 import { initMainDbSequelize } from "../../config/mainDataSource";
-import { fetchAdminTemplates } from "../../utils/rawQueries";
+import { fetchAdminTemplates, fetchTaskWeightage } from "../../utils/rawQueries";
 
 /**
  * Service class for managing case-related operations including case creation,
@@ -988,6 +988,23 @@ async listEmailTemplates (
     const result = await this.caseManangementSchemaService.listTasksDropdown(data);
     if(result.length > 0) return result
     else return []
+  }
+
+  async getWeightageList () {
+    const mainDb = await this.getMainDb();
+    const result = await mainDb.query<WeightageType>(fetchTaskWeightage(), {type : QueryTypes.SELECT});
+    if(result.length > 0) {
+      return {
+        statusCode : HttpStatus.SUCCESS,
+        data : result
+      }
+    } else {
+      return {
+        statusCode : HttpStatus.NOT_FOUND,
+        data : []
+      }
+    }
+
   }
 
 }
