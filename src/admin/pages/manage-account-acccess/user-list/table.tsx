@@ -59,7 +59,7 @@ export const ManageAccountUserListTable: React.FC<UserTableProps> = ({
       search: searchValue,
       page: 1,
     }));
-  }, [searchValue]);
+  }, [searchValue, appliedFilters]);
 
   const { successToast } = useToast();
   const [addedAccounts, setAddedAccounts] = useState<string[]>([]);

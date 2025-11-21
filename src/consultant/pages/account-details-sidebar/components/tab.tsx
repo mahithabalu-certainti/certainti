@@ -671,6 +671,7 @@ const TabPanel: React.FC<TabProps> = ({
                 hide={searchHidden}
                 reset={resetSearch}
                 onReset={onSearchReset}
+                setCurrentPage={setCurrentPage}
               />
             </Box>
           )}

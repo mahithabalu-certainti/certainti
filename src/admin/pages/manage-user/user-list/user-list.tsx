@@ -178,11 +178,12 @@ const UserList: React.FC = () => {
     },
     {
       label: 'Export',
-      onClick: () => exportUserList({ 
-        ...tableParams, 
-        timezone,
-        ...(searchText && { search: searchText })
-      }),
+      onClick: () =>
+        exportUserList({
+          ...tableParams,
+          timezone,
+          ...(searchText && { search: searchText }),
+        }),
       hide: !isUserExportEnable,
     },
   ];
@@ -320,6 +321,13 @@ const UserList: React.FC = () => {
             placeholder='Search'
             disabled={false}
             hide={false}
+            setCurrentPage={(pageNo) => {
+              setPage(pageNo + 1);
+              setTableParams((prev) => ({
+                ...prev,
+                page: pageNo + 1,
+              }));
+            }}
           />
           <div className='flex relative'>
             <button
@@ -360,7 +368,13 @@ const UserList: React.FC = () => {
                 setAppliedFilters={(filters) =>
                   setAppliedFilters(filters as Record<string, FilterCondition>)
                 }
-                setPage={setPage}
+                setPage={(pageNo) => {
+                  setPage(pageNo);
+                  setTableParams((prev) => ({
+                    ...prev,
+                    page: pageNo,
+                  }));
+                }}
                 handleCloseFilter={handleCloseFilter}
                 handleSorting={handleSorting}
               />
