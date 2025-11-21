@@ -321,6 +321,8 @@ export enum AllPermissions {
   CHECKLIST_VIEW_EDIT = 'checklists_view_edit',
   CHECKLIST_EXPORT = 'checklist_export',
   CHECKLIST_CREATE = 'checklist_create',
+  ACTIVITIES_OVERVIEW = 'activities_overview',
+  ACTIVITIES_TIMELINE = 'activities_timeline',
 }
 
 export interface Country {

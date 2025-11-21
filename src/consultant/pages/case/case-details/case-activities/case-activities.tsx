@@ -5,17 +5,11 @@ import {
   useParams,
   useSearchParams,
 } from 'react-router-dom';
-import { accountDetailsProps } from '../../../account-details/utils';
+import { SectionHeaderTab, SectionTabPanel } from '../../../../../components';
+import SectionHeader from '../../../../../components/details-section/section-header';
+import { ActivitiesIcon } from '../../../../../assets';
 import { AllPermissions } from '../../../../../common-service';
-import {
-  getAllActivityFilterFields,
-  getCallFilterFields,
-  getEmailFilterFields,
-  getMeetingFilterFields,
-  getTaskFilterFields,
-} from '../../../activities/activities-list/helper';
-import { ACTIVITY_CREATE } from '../../../../../routes';
-import { ActivityType } from '../../../../types';
+import { ActivityType, CaseDetails } from '../../../../types';
 import {
   getActivityAllActivityListColumns,
   getActivityCallLogListColumns,
@@ -23,11 +17,16 @@ import {
   getActivityMeetingListColumns,
   getActivityTaskListColumns,
 } from '../../../activities/activities-list/activity-columns';
-import { SectionHeaderTab, SectionTabPanel } from '../../../../../components';
-import SectionHeader from '../../../../../components/details-section/section-header';
-import { ActivitiesIcon } from '../../../../../assets';
+import {
+  getTaskFilterFields,
+  getAllActivityFilterFields,
+  getCallFilterFields,
+  getEmailFilterFields,
+  getMeetingFilterFields,
+} from '../../../activities/activities-list/helper';
 import ActivityDetails from '../../../activities/activities-details/activity-details';
 import { ActivityListTable } from '../../../activities';
+import { ACTIVITY_CREATE } from '../../../../../routes';
 
 const ActivityTabs = [
   {
@@ -43,14 +42,14 @@ const ActivityTabs = [
   },
 ];
 
-interface ActivitiesProps {
+interface CaseActivitiesProps {
   accountInActive: boolean;
-  accountDetails: accountDetailsProps;
+  caseDetails?: CaseDetails;
 }
 
-const Activities: React.FC<ActivitiesProps> = ({
+const CaseActivities: React.FC<CaseActivitiesProps> = ({
   accountInActive,
-  accountDetails,
+  caseDetails,
 }) => {
   const navigate = useNavigate();
   const [appliedFilters, setAppliedFilters] = useState<
@@ -70,16 +69,17 @@ const Activities: React.FC<ActivitiesProps> = ({
     setColumnAnchorEl(event.currentTarget);
   };
 
-  const { accountid } = useParams();
+  const { caseId } = useParams();
   const [searchParams] = useSearchParams();
+  const accountId = searchParams.get('accountID') || '';
   const activityId = searchParams.get('activity_id');
   const activityType = searchParams.get('activity_type');
   const viewDetails = !!activityId && !!activityType;
 
   const entityDetails = {
-    r_number: accountDetails?.accountById?.r_number || '',
-    module: 'account',
-    source: `Account > ${accountDetails?.accountById?.r_number || ''}`,
+    r_number: caseDetails?.r_number || '',
+    module: 'case',
+    source: `Case > ${caseDetails?.r_number || ''}`,
   };
 
   const initialTab = useMemo(() => {
@@ -134,14 +134,14 @@ const Activities: React.FC<ActivitiesProps> = ({
 
   const handleCreate = () => {
     const path = generatePath(ACTIVITY_CREATE, {
-      module: 'account',
+      module: 'case',
       type: tabParam,
     });
     const queryParams = new URLSearchParams({
-      accountId: accountid || '',
-      entityLevel: 'account',
-      entityId: accountid || '',
-      source: `Account > ${accountDetails?.accountById?.r_number || ''}`,
+      accountId,
+      entityLevel: 'case',
+      entityId: caseId || '',
+      source: `Case > ${caseDetails?.r_number || ''}`,
     });
     navigate(`${path}?${queryParams.toString()}`);
   };
@@ -196,7 +196,7 @@ const Activities: React.FC<ActivitiesProps> = ({
         filterMenu={filterFields}
         filterVisibility={!viewDetails}
         showFilter={showFilter}
-        contextKey='account-activities'
+        contextKey='case-activities'
         appliedFilters={appliedFilters}
         setAppliedFilters={setAppliedFilters}
         setCurrentPage={setCurrentPage}
@@ -250,7 +250,7 @@ const Activities: React.FC<ActivitiesProps> = ({
               searchValue={searchText}
               accountInActive={accountInActive}
               entityDetails={entityDetails}
-              entityLevel='account'
+              entityLevel='case'
             />
           )}
 
@@ -267,7 +267,7 @@ const Activities: React.FC<ActivitiesProps> = ({
               searchValue={searchText}
               accountInActive={accountInActive}
               entityDetails={entityDetails}
-              entityLevel='account'
+              entityLevel='case'
             />
           )}
 
@@ -284,7 +284,7 @@ const Activities: React.FC<ActivitiesProps> = ({
               searchValue={searchText}
               accountInActive={accountInActive}
               entityDetails={entityDetails}
-              entityLevel='account'
+              entityLevel='case'
             />
           )}
 
@@ -301,7 +301,7 @@ const Activities: React.FC<ActivitiesProps> = ({
               searchValue={searchText}
               accountInActive={accountInActive}
               entityDetails={entityDetails}
-              entityLevel='account'
+              entityLevel='case'
             />
           )}
 
@@ -318,7 +318,7 @@ const Activities: React.FC<ActivitiesProps> = ({
               searchValue={searchText}
               accountInActive={accountInActive}
               entityDetails={entityDetails}
-              entityLevel='account'
+              entityLevel='case'
             />
           )}
         </div>
@@ -327,4 +327,4 @@ const Activities: React.FC<ActivitiesProps> = ({
   );
 };
 
-export default Activities;
+export default CaseActivities;

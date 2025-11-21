@@ -111,6 +111,11 @@ export const CHECKLIST_BASE = `/:module/checklist`;
 export const CHECKLIST_CREATE = `${CHECKLIST_BASE}/create`;
 export const CHECKLIST_EDIT = `${CHECKLIST_BASE}/edit/:checklistId`;
 
+// Activities routes
+export const ACTIVITY_BASE = '/:module/activity';
+export const ACTIVITY_CREATE = `${ACTIVITY_BASE}/create/:type`;
+export const ACTIVITY_EDIT = `${ACTIVITY_BASE}/edit/:type/:activityId`;
+
 // ATTACHMENT ROUTES
 export const ATTACHMENTS = '/attachments';
 

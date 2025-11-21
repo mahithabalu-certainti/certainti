@@ -771,7 +771,12 @@ export const AccountDetails = () => {
           />
         );
       case 'activities':
-        return <Activities />;
+        return (
+          <Activities
+            accountInActive={accountInActive}
+            accountDetails={{ ...data?.data } as accountDetailsProps}
+          />
+        );
       case 'notes':
         return (
           <Notes
