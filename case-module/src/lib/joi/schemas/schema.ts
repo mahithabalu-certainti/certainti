@@ -123,6 +123,7 @@ const listActivityTaskSchema = Joi.object({
   filters: Joi.string().default("{}"),
   sortBy: Joi.string().optional(),
   sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
+  activityType:Joi.string().default("All")
 });
 
 const exportActivitySchema = Joi.object({
@@ -145,6 +146,7 @@ const exportActivitySchema = Joi.object({
   filters: Joi.string().default("{}"),
   sortBy: Joi.string().optional(),
   sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
+  activityType:Joi.string().default("All")
 });
 
 
@@ -161,7 +163,7 @@ const createCaseTeamSchema = Joi.object({
         user_rid: Joi.string().required(),
         role_rid: Joi.string().required(),
         effective_from: Joi.date().required(),
-        effective_to: Joi.date().optional(),
+        effective_to: Joi.date().optional().allow(null, ""),
         is_primary: Joi.boolean().required(),
         status_rid: Joi.string().required(),
         action_type: Joi.string().valid("add", "edit", "delete").required(),
@@ -188,6 +190,29 @@ const listReviewProjectSchema = Joi.object({
   sortBy: Joi.string().optional(),
   sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
 });
+
+const sentReviewProjectSchema = Joi.object({
+  search: Joi.string().max(255).optional(),
+  filters: Joi.object().default({}),
+  sort_by: Joi.string().optional(),
+  sort_order: Joi.string().valid("ASC", "DESC").default("ASC"),
+  to_email: Joi.array().items(Joi.string().email()).required(),
+  cc_email: Joi.array().items(Joi.string().email()).required(),
+  recipient_name: Joi.string().max(255).optional(),
+  subject: Joi.string().max(500).required(),
+  body_html: Joi.string().optional().allow("", null),
+  project_id:Joi.array().items(Joi.string()).optional(),
+  account_rid: Joi.string().required(),
+  case_rid: Joi.string().required()
+});
+
+const getEmailTemplatePreviewSchema = Joi.object({ 
+  category_name: Joi.string().required(),
+  account_rid: Joi.string().required(),
+  case_rid: Joi.string().optional()
+});
+
+
 
 const exportReviewProjectSchema = Joi.object({
   filters: Joi.string().default("{}"),
@@ -745,5 +770,7 @@ export {
   createActivityMeetingSchema,
   updateActivityMeetingSchema,
   createActivityCallSchema,
-  updateActivityCallSchema
+  updateActivityCallSchema,
+  sentReviewProjectSchema,
+  getEmailTemplatePreviewSchema
 };

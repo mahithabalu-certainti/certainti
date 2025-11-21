@@ -397,6 +397,7 @@ export const listAllCasesSummaryQuery = (
 
   export const listReviewProjectsInfo = (
   searchValue: string,
+  caseRid: string,
   whereKey: string,
   joinedConditions: string,
   sortValue: string,
@@ -435,7 +436,7 @@ LEFT JOIN LATERAL (
     
     AND pf.rid IN (
       SELECT project_fiscal_rid 
-      FROM ${schemaName}.case_projects
+      FROM ${schemaName}.case_projects where case_rid = '${caseRid}'
     ) 
 AND (
       pf.project_name IS NULL OR pf.project_name = ''

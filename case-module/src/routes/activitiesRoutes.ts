@@ -70,4 +70,9 @@ routes.get(
   checkUserStatusMiddleware("NA"),
   controller.activitiesController.fetchEmailActivityById
 );
+routes.get(
+  "/export",
+  checkUserStatusMiddleware("NA"),
+  controller.activitiesController.exportAllActivity
+);
 export default routes;
