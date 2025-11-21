@@ -215,7 +215,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
                 checklist_template_rid?: string;
               }
             ).checklist_template_rid || '',
-          tags: tagsArray.length > 0 ? tagsArray : undefined,
+          tags: tagsArray,
           workflow_connector: {},
         };
 
@@ -573,9 +573,9 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
         setAppliedFilters={setAppliedFilters}
         setCurrentPage={setCurrentPage}
         handleFilter={handleFilter}
-        handleSorting={() => {}}
+        handleSorting={() => { }}
         sortFilterCount={0}
-        setSortFilterCount={() => {}}
+        setSortFilterCount={() => { }}
         showRefresh={false}
         onRefreshClick={onRefreshClick}
         // hideTabPanel={hideSection}

@@ -560,7 +560,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
           effective_end_datetime: editedTask.endDate
             ? dayjs(editedTask.endDate).format('YYYY-MM-DD')
             : '',
-          tags: tagsArray.length > 0 ? tagsArray : undefined,
+          tags: tagsArray,
           workflow_connector: {},
         };
 
@@ -596,9 +596,9 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     setEditedTask((prev) =>
       prev
         ? {
-            ...prev,
-            status: statusName,
-          }
+          ...prev,
+          status: statusName,
+        }
         : null
     );
   };
@@ -645,9 +645,9 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       setEditedTask((prev) =>
         prev
           ? {
-              ...prev,
-              attachments: [...(prev.attachments || []), ...fileNames],
-            }
+            ...prev,
+            attachments: [...(prev.attachments || []), ...fileNames],
+          }
           : null
       );
       e.target.value = '';
@@ -687,13 +687,13 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       setEditedTask((prev) =>
         prev
           ? {
-              ...prev,
-              assignee: {
-                name: selectedUser.name,
-                initials: selectedUser.initials,
-                color: selectedUser.color,
-              },
-            }
+            ...prev,
+            assignee: {
+              name: selectedUser.name,
+              initials: selectedUser.initials,
+              color: selectedUser.color,
+            },
+          }
           : null
       );
     }
@@ -832,9 +832,8 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   return (
     <>
       <div
-        className={`fixed right-0 bottom-0 w-[650px] bg-white text-gray-900 shadow-2xl transform transition-transform duration-300 ease-in-out z-50 overflow-y-auto ${
-          isOpen ? 'translate-x-0' : 'translate-x-full'
-        }`}
+        className={`fixed right-0 bottom-0 w-[650px] bg-white text-gray-900 shadow-2xl transform transition-transform duration-300 ease-in-out z-50 overflow-y-auto ${isOpen ? 'translate-x-0' : 'translate-x-full'
+          }`}
         style={{ top: '38.1px' }}
       >
         <div className='sticky top-0 flex items-center justify-between p-[17.4px] border-b border-[#CBD6E2] bg-white z-50'>
@@ -887,7 +886,6 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                 name='assignee'
                 value={getAssigneeForSelect()}
                 onChange={handleAssigneeChange}
-                disabled={true}
                 width='200px'
                 sx={{
                   '&.Mui-disabled': {
@@ -1015,7 +1013,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                     Start Date
                   </label>
                   <DatePicker
-                    disabled={fieldDisabled.startDate}
+                    disabled={true}
                     value={formatDateForInput(editedTask?.startDate)}
                     onChange={(newValue) =>
                       handleStartDateChange(
@@ -1074,6 +1072,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                           '& .MuiOutlinedInput-root': {
                             height: '32px',
                             borderRadius: '2px',
+                            backgroundColor: '#F3F4F6',
                             '& input': {
                               fontWeight: 400,
                               fontSize: '13px',
@@ -1091,6 +1090,9 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                             '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
                               border: '2px solid #60A5FA',
                             },
+                            '&.Mui-disabled': {
+                              backgroundColor: '#F3F4F6',
+                            },
                           },
                         },
                         placeholder: 'Select start date',
@@ -1105,7 +1107,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                     Due Date
                   </label>
                   <DatePicker
-                    disabled={fieldDisabled.endDate}
+                    disabled={true}
                     value={formatDateForInput(editedTask?.endDate)}
                     onChange={(newValue) =>
                       handleEndDateChange(
@@ -1164,6 +1166,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                           '& .MuiOutlinedInput-root': {
                             height: '32px',
                             borderRadius: '2px',
+                            backgroundColor: '#F3F4F6',
                             '& input': {
                               fontWeight: 400,
                               fontSize: '13px',
@@ -1180,6 +1183,9 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                             },
                             '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
                               border: '2px solid #60A5FA',
+                            },
+                            '&.Mui-disabled': {
+                              backgroundColor: '#F3F4F6',
                             },
                           },
                         },
@@ -1198,14 +1204,11 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
             editedTask={editedTask}
             statusData={statusData}
             priorityData={priorityData}
-            roleOptions={roleOptions}
             checklistData={checklistData}
             availableTags={availableTags}
-            selectedRole={selectedRole}
             selectedChecklist={selectedChecklist}
             onStatusChange={handleStatusChange}
             onPriorityChange={handlePriorityChange}
-            onRoleChange={(value) => setSelectedRole(value)}
             onChecklistChange={(value) => setSelectedChecklist(value)}
             onTagsChange={(newTags) =>
               setEditedTask((prev) =>

@@ -9,23 +9,23 @@ interface TaskFieldsSectionProps {
   editedTask: Task | null;
   statusData: Array<{ id: string; name: string; color: string }>;
   priorityData: Array<{ id: string; name: string; color: string }>;
-  roleOptions: Array<{
-    rid: string;
-    role_name: string;
-    role_description?: string;
-    status?: string;
-  }>;
   checklistData: Array<{ id: string; name: string }>;
   availableTags: Array<{ id: string; name: string; color: string }>;
-  selectedRole: string;
+  availableUsers?: Array<{
+    id: string;
+    name: string;
+    initials: string;
+    color: string;
+  }>;
   selectedChecklist: string;
   selectedPriority?: string;
   selectedTags?: string[];
+  selectedAssignee?: string;
   onStatusChange: (statusName: string) => void;
   onPriorityChange: (priorityName: string) => void;
-  onRoleChange: (value: string) => void;
   onChecklistChange: (value: string) => void;
   onTagsChange: (newValue: string[]) => void;
+  onAssigneeChange?: (userId: string) => void;
   onAddCustomTag: (
     tags: Array<{ id: string; name: string; color: string }>
   ) => void;
@@ -35,19 +35,7 @@ interface TaskFieldsSectionProps {
   onStatusChangeCreate?: (statusName: string, statusId: string) => void;
 }
 
-// Custom User Icon SVG
-const UserIconSvg = ({ className = 'w-4 h-4 text-gray-500' }) => (
-  <svg
-    viewBox='0 0 24 24'
-    fill='none'
-    stroke='currentColor'
-    strokeWidth='2'
-    className={className}
-  >
-    <path d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'></path>
-    <circle cx='12' cy='7' r='4'></circle>
-  </svg>
-);
+
 
 const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
   fieldVisibility,
@@ -55,18 +43,18 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
   editedTask,
   statusData,
   priorityData,
-  roleOptions,
   checklistData,
   availableTags,
-  selectedRole,
+  availableUsers = [],
   selectedChecklist,
   selectedPriority,
   selectedTags,
+  selectedAssignee,
   onStatusChange,
   onPriorityChange,
-  onRoleChange,
   onChecklistChange,
   onTagsChange,
+  onAssigneeChange,
   onAddCustomTag,
   onSetEditedTask,
   mode = 'view',
@@ -109,15 +97,15 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
                 mode === 'view'
                   ? (e) => onStatusChange(e.target.value as string)
                   : (e) => {
-                      const selectedName = e.target.value as string;
-                      const statusItem = statusData?.find(
-                        (s) => s.name === selectedName
-                      );
-                      onStatusChangeCreate?.(
-                        selectedName,
-                        statusItem?.id || ''
-                      );
-                    }
+                    const selectedName = e.target.value as string;
+                    const statusItem = statusData?.find(
+                      (s) => s.name === selectedName
+                    );
+                    onStatusChangeCreate?.(
+                      selectedName,
+                      statusItem?.id || ''
+                    );
+                  }
               }
               disabled={fieldDisabled.status || mode === 'create'}
               width='200px'
@@ -263,6 +251,160 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
             </div>
           )}
 
+        {mode === 'create' &&
+          !fieldVisibility.assignee &&
+          availableUsers &&
+          availableUsers.length > 0 && (
+            <div className='flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors'>
+              <div className='flex items-center gap-2'>
+                <svg
+                  width='16'
+                  height='16'
+                  viewBox='0 0 24 24'
+                  fill='none'
+                  stroke='currentColor'
+                  strokeWidth='2'
+                  className='text-gray-500'
+                >
+                  <path d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'></path>
+                  <circle cx='12' cy='7' r='4'></circle>
+                </svg>
+                <span className='text-sm text-gray-700'>Assignee</span>
+              </div>
+              <StyledSelect
+                name='assignee'
+                value={selectedAssignee || ''}
+                onChange={(e) =>
+                  onAssigneeChange?.(e.target.value as string)
+                }
+                disabled={fieldDisabled.assignee}
+                width='200px'
+                renderValue={(selected) => {
+                  const value = Array.isArray(selected)
+                    ? selected.join(', ')
+                    : (selected as string);
+                  if (!value) {
+                    return (
+                      <span style={{ color: '#7D98B6', fontSize: '13px' }}>
+                        Choose User
+                      </span>
+                    );
+                  }
+                  const user = availableUsers.find((u) => u.id === value);
+                  if (user) {
+                    return (
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          minWidth: 0,
+                          maxWidth: 'calc(100% - 24px)',
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: '20px',
+                            height: '20px',
+                            borderRadius: '50%',
+                            backgroundColor: user.color,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '9px',
+                            fontWeight: '600',
+                            color: 'white',
+                            flexShrink: 0,
+                          }}
+                        >
+                          {user.initials}
+                        </div>
+                        <span
+                          style={{
+                            fontSize: '13px',
+                            color: 'black',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            minWidth: 0,
+                          }}
+                        >
+                          {user.name}
+                        </span>
+                      </div>
+                    );
+                  }
+                  return (
+                    <span
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        minWidth: 0,
+                        maxWidth: 'calc(100% - 24px)',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                      title={typeof value === 'string' ? value : String(value)}
+                    >
+                      {typeof value === 'string' ? value : String(value)}
+                    </span>
+                  );
+                }}
+              >
+                <MenuItem
+                  value=''
+                  sx={{
+                    color: '#425A76',
+                    fontSize: '13px',
+                    fontWeight: '500',
+                  }}
+                >
+                  Choose User
+                </MenuItem>
+                {availableUsers.map((user) => (
+                  <MenuItem
+                    sx={{
+                      color: '#425A76',
+                      fontSize: '13px',
+                      fontWeight: '500',
+                    }}
+                    key={user.id}
+                    value={user.id}
+                    title={user.name}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: '20px',
+                          height: '20px',
+                          borderRadius: '50%',
+                          backgroundColor: user.color,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '8px',
+                          fontWeight: '600',
+                          color: 'white',
+                          flexShrink: 0,
+                        }}
+                      >
+                        {user.initials}
+                      </div>
+                      {user.name}
+                    </div>
+                  </MenuItem>
+                ))}
+              </StyledSelect>
+            </div>
+          )}
+
         {!fieldVisibility.tags && (
           <div className='px-4 py-3 hover:bg-gray-50 transition-colors'>
             <div className='flex items-center justify-between mb-3'>
@@ -281,9 +423,6 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
                 </svg>
                 <span className='text-sm text-gray-700'>
                   Tags
-                  {mode === 'create' && (
-                    <span className='text-red-500'> * </span>
-                  )}
                 </span>
               </div>
               <div className='w-[200px]'>
@@ -366,114 +505,43 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
 
             {(shouldPrepopulate ? editedTask?.tags || [] : selectedTags || [])
               ?.length > 0 && (
-              <div className='flex flex-wrap items-center gap-2 mt-2'>
-                {(shouldPrepopulate
-                  ? editedTask?.tags || []
-                  : selectedTags || []
-                )?.map((tag, index) => (
-                  <div
-                    key={index}
-                    className='inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium hover:bg-blue-200 transition-colors group'
-                  >
-                    <span>{tag}</span>
-                    <button
-                      onClick={() => {
-                        const newTags =
-                          (shouldPrepopulate
-                            ? editedTask?.tags || []
-                            : selectedTags || []
-                          )?.filter((t) => t !== tag) || [];
-                        if (shouldPrepopulate) {
-                          onSetEditedTask(
-                            editedTask ? { ...editedTask, tags: newTags } : null
-                          );
-                        } else {
-                          onTagsChange(newTags);
-                        }
-                      }}
-                      className='ml-1 text-blue-600 hover:text-red-600 transition-colors'
-                      title={`Remove ${tag}`}
+                <div className='flex flex-wrap items-center gap-2 mt-2'>
+                  {(shouldPrepopulate
+                    ? editedTask?.tags || []
+                    : selectedTags || []
+                  )?.map((tag, index) => (
+                    <div
+                      key={index}
+                      className='inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium hover:bg-blue-200 transition-colors group'
                     >
-                      ×
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
+                      <span>{tag}</span>
+                      <button
+                        onClick={() => {
+                          const newTags =
+                            (shouldPrepopulate
+                              ? editedTask?.tags || []
+                              : selectedTags || []
+                            )?.filter((t) => t !== tag) || [];
+                          if (shouldPrepopulate) {
+                            onSetEditedTask(
+                              editedTask ? { ...editedTask, tags: newTags } : null
+                            );
+                          } else {
+                            onTagsChange(newTags);
+                          }
+                        }}
+                        className='ml-1 text-blue-600 hover:text-red-600 transition-colors'
+                        title={`Remove ${tag}`}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
           </div>
         )}
 
-        {!fieldVisibility.role && roleOptions && roleOptions.length > 0 && (
-          <div className='flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors'>
-            <div className='flex items-center gap-2'>
-              <UserIconSvg className='w-4 h-4 text-gray-500' />
-              <span className='text-sm text-gray-700'>
-                User Role
-                {mode === 'create' && <span className='text-red-500'> * </span>}
-              </span>
-            </div>
-            <StyledSelect
-              name='role'
-              value={selectedRole}
-              onChange={(e) => onRoleChange(e.target.value as string)}
-              disabled={fieldDisabled.role}
-              width='200px'
-              renderValue={(selected) => {
-                const value = Array.isArray(selected)
-                  ? selected.join(', ')
-                  : (selected as string);
-                if (!value) {
-                  return (
-                    <span style={{ color: '#7D98B6', fontSize: '13px' }}>
-                      Choose Role
-                    </span>
-                  );
-                }
-                return (
-                  <span
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      minWidth: 0,
-                      maxWidth: 'calc(100% - 24px)',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                    title={typeof value === 'string' ? value : String(value)}
-                  >
-                    {typeof value === 'string' ? value : String(value)}
-                  </span>
-                );
-              }}
-            >
-              <MenuItem
-                value=''
-                sx={{
-                  color: '#425A76',
-                  fontSize: '13px',
-                  fontWeight: '500',
-                }}
-              >
-                Choose Role
-              </MenuItem>
-              {roleOptions.map((role: { rid: string; role_name: string }) => (
-                <MenuItem
-                  sx={{
-                    color: '#425A76',
-                    fontSize: '13px',
-                    fontWeight: '500',
-                  }}
-                  key={role.rid}
-                  value={role.role_name}
-                  title={role.role_name}
-                >
-                  {role.role_name}
-                </MenuItem>
-              ))}
-            </StyledSelect>
-          </div>
-        )}
 
         {!fieldVisibility.checklistTemplate &&
           checklistData &&

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { MenuItem, SelectChangeEvent, Select } from '@mui/material';
+
 import dayjs from 'dayjs';
 import { CalendarIcon, CloseIcon } from '../../assets';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -81,8 +81,8 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
   checklistData = [],
   collaboratorData = [],
   availableUsers = [],
-  roleOptions = [],
-  fieldVisibility = { assignee: true },
+
+  fieldVisibility = {},
   fieldDisabled = {},
 }) => {
   const [taskTitle, setTaskTitle] = useState('');
@@ -104,12 +104,12 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
   const enrichedUsers = useMemo(() => {
     return collaboratorData && collaboratorData.length > 0
       ? collaboratorData.map((collab) => ({
-          id: collab.rid,
-          name: collab.name,
-          email: collab.email,
-          initials: generateInitials(collab.name),
-          color: generateColorFromName(collab.name),
-        }))
+        id: collab.rid,
+        name: collab.name,
+        email: collab.email,
+        initials: generateInitials(collab.name),
+        color: generateColorFromName(collab.name),
+      }))
       : availableUsers.map(enrichUserOption);
   }, [collaboratorData, availableUsers]);
 
@@ -144,8 +144,7 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
     if (!taskTitle.trim()) return;
     if (!selectedPriority || !selectedPriorityRid) return;
     if (!startDate || !endDate) return;
-    if (!selectedRole || !selectedRoleRid) return;
-    if (selectedTags.length === 0) return;
+    if (!selectedChecklist || !selectedChecklistRid) return;
 
     setIsSubmitting(true);
     try {
@@ -200,15 +199,11 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
     const hasTaskTitle = taskTitle.trim();
     const hasPriority = selectedPriority && selectedPriorityRid;
     const hasDates = startDate && endDate;
-    const hasRole = selectedRole && selectedRoleRid;
-    const hasTags = selectedTags.length > 0;
     const hasChecklist = selectedChecklist && selectedChecklistRid;
     return (
       hasTaskTitle &&
       hasPriority &&
       hasDates &&
-      hasRole &&
-      hasTags &&
       hasChecklist
     );
   };
@@ -255,190 +250,7 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
             />
           </div>
 
-          {fieldVisibility.assignee !== true && (
-            <div className='flex items-center justify-between'>
-              <span className='text-[13px] font-medium text-gray-600'>
-                Assignee
-              </span>
-              <div className='w-[200px]'>
-                <Select
-                  name='assignee'
-                  disabled={fieldDisabled.assignee}
-                  className='custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px]'
-                  onChange={(event: SelectChangeEvent<string>) =>
-                    setSelectedAssignee(event.target.value)
-                  }
-                  value={selectedAssignee}
-                  displayEmpty
-                  fullWidth
-                  size='small'
-                  MenuProps={{
-                    PaperProps: {
-                      sx: {
-                        maxWidth: 300,
-                        maxHeight: 300,
-                        marginTop: '4px',
-                        zIndex: 40,
-                        boxShadow:
-                          'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
-                        '& .MuiMenuItem-root': {
-                          fontSize: '13px',
-                          padding: '6px 12px',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                        },
-                      },
-                    },
-                  }}
-                  sx={{
-                    height: '32px',
-                    fontSize: '13px',
-                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                      border: '2px solid #60A5FA',
-                    },
-                    '& .MuiOutlinedInput-root': {
-                      '&.Mui-focused': {
-                        boxShadow: 'none',
-                      },
-                    },
-                    '.MuiSelect-select': {
-                      padding: '6px 6px',
-                      color: !selectedAssignee ? '#7D98B6' : 'black',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      width: '100%',
-                      overflow: 'auto',
-                      overflowY: 'hidden',
-                      scrollBehavior: 'smooth',
-                      '&::-webkit-scrollbar': {
-                        height: '4px',
-                      },
-                      '&::-webkit-scrollbar-track': {
-                        background: 'transparent',
-                      },
-                      '&::-webkit-scrollbar-thumb': {
-                        background: '#CBD6E2',
-                        borderRadius: '2px',
-                      },
-                    },
-                    '& .MuiOutlinedInput-notchedOutline': {
-                      border: '1px solid #CBD6E2',
-                      borderRadius: '2px',
-                    },
-                    '&:hover .MuiOutlinedInput-notchedOutline': {
-                      border: '1px solid #CBD6E2',
-                    },
-                    '& svg': {
-                      color: '#7D98B6',
-                      flexShrink: 0,
-                    },
-                  }}
-                  renderValue={(value) => {
-                    if (value) {
-                      const user = enrichedUsers.find((u) => u.id === value);
-                      if (user) {
-                        return (
-                          <div
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '8px',
-                              width: '100%',
-                              minWidth: 0,
-                            }}
-                          >
-                            <div
-                              style={{
-                                width: '20px',
-                                height: '20px',
-                                borderRadius: '50%',
-                                backgroundColor: user.color,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: '9px',
-                                fontWeight: '600',
-                                color: 'white',
-                                flexShrink: 0,
-                              }}
-                            >
-                              {user.initials}
-                            </div>
-                            <span
-                              style={{
-                                fontSize: '13px',
-                                color: 'black',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                minWidth: 0,
-                              }}
-                            >
-                              {user.name}
-                            </span>
-                          </div>
-                        );
-                      }
-                    }
-                    return (
-                      <span
-                        style={{
-                          color: '#7D98B6',
-                          fontSize: '13px',
-                          fontWeight: '400',
-                        }}
-                      >
-                        Choose User
-                      </span>
-                    );
-                  }}
-                >
-                  <MenuItem
-                    value=''
-                    sx={{
-                      color: '#425A76',
-                      fontSize: '13px',
-                      fontWeight: '500',
-                    }}
-                  >
-                    Choose User
-                  </MenuItem>
-                  {enrichedUsers.map((user) => (
-                    <MenuItem
-                      sx={{
-                        color: '#425A76',
-                        fontSize: '13px',
-                        fontWeight: '500',
-                      }}
-                      key={user.id}
-                      value={user.id}
-                      title={user.name}
-                    >
-                      <div
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px',
-                        }}
-                      >
-                        <div
-                          style={{
-                            width: '20px',
-                            height: '20px',
-                            color: 'white',
-                          }}
-                        >
-                          {user.initials}
-                        </div>
-                        {user.name}
-                      </div>
-                    </MenuItem>
-                  ))}
-                </Select>
-              </div>
-            </div>
-          )}
+
 
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <div className='grid grid-cols-2 gap-4'>
@@ -571,17 +383,17 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
               name: p.name,
               color: p.color || '#3B82F6',
             }))}
-            roleOptions={roleOptions}
             checklistData={checklistData}
             availableTags={(tagData || []).map((tag) => ({
               id: tag.id || `tag-${tag.name}`,
               name: tag.name,
               color: '#3B82F6',
             }))}
-            selectedRole={selectedRole}
+            availableUsers={enrichedUsers}
             selectedChecklist={selectedChecklist}
             selectedPriority={selectedPriority}
             selectedTags={selectedTags}
+            selectedAssignee={selectedAssignee}
             onStatusChange={(statusName: string) => {
               setSelectedStatus(statusName);
               const statusItem = statusData?.find((s) => s.name === statusName);
@@ -598,12 +410,8 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                 setSelectedPriorityRid(priorityItem.id);
               }
             }}
-            onRoleChange={(value) => {
-              setSelectedRole(value);
-              const roleItem = roleOptions?.find((r) => r.role_name === value);
-              if (roleItem) {
-                setSelectedRoleRid(roleItem.rid);
-              }
+            onAssigneeChange={(userId: string) => {
+              setSelectedAssignee(userId);
             }}
             onChecklistChange={(value) => {
               setSelectedChecklist(value);
@@ -615,8 +423,8 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
               }
             }}
             onTagsChange={setSelectedTags}
-            onAddCustomTag={() => {}}
-            onSetEditedTask={() => {}}
+            onAddCustomTag={() => { }}
+            onSetEditedTask={() => { }}
             mode='create'
             selectedStatus={selectedStatus}
             onStatusChangeCreate={(statusName, statusId) => {
