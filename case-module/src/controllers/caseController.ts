@@ -29,11 +29,13 @@ import {
   exportCaseSummarySchema,
   exportCheckListSchema,
   exportReviewProjectSchema,
+  getEmailTemplatePreviewSchema,
   listCasesAccountSchema,
   listCaseSummarySchema,
   listCaseTeamSchema,
   listCheckListSchema,
   listReviewProjectSchema,
+  sentReviewProjectSchema,
   updateCaseSchema,
   updateChecklistSchema,
   updateTaskSchema,
@@ -1202,6 +1204,91 @@ async function getReviewProjects(req: Request, res: Response): Promise<void> {
   }
 }
 
+async function sentReviewProjects(req: Request, res: Response): Promise<void> {
+  const methodName = "Sent Review Projects";
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    const value = await validateRequest(req, sentReviewProjectSchema, res);
+    if (!value) return;
+    let parsedFilters: Record<string, any> = {};
+    try {
+      parsedFilters = JSON.parse(value.filters);
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid filters format. Must be a valid JSON object."
+      );
+    }
+    const reviewProjects = await caseService.sentReviewProjects(
+      value,
+      parsedFilters,
+      userId
+    );
+    if (reviewProjects.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleCustomResponse(res, reviewProjects.data, reviewProjects.message);
+      return;
+    } else {
+      errorLog(methodName, reviewProjects.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        reviewProjects.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+async function getEmailTemplatePreview(req: Request, res: Response): Promise<void> {
+  const methodName = "Get Email Template Preview";
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    const value = await validateRequest(req, getEmailTemplatePreviewSchema, res, "GET");
+    if (!value) return;
+    const templateDetails = await caseService.getEmailTemplatePreview(
+      value,
+      userId
+    );
+    if (templateDetails.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleCustomResponse(res, templateDetails.data, templateDetails.statusMessage);
+      return;
+    } else {
+      errorLog(methodName, templateDetails.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        templateDetails.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+
 async function exportReviewProjects(req: Request, res: Response): Promise<void> {
   const methodName = "Export Review Projects";
   try {
@@ -2069,7 +2156,7 @@ async function getAllChecklists(req: Request, res: Response): Promise<void> {
         value.filters = {};
       }
     }
-    const attachments = await caseService.getAllChecklists(userId,value.attachmentLevel,value.entityId,value.accountRid,value.page,value.limit,value.search,value.filters,value.sortBy,value.sortOrder,value.fiscalYear,"download", {});
+    const attachments = await caseService.getAllChecklists(userId,value.attachmentLevel,value.entityId,value.accountRid,value.page,value.limit,value.search,value.filters,value.sortBy,value.sortOrder,value.fiscalYear,"list", {});
 
     if (attachments.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
@@ -3786,6 +3873,7 @@ export default {
   listTaskAttachments,
   getReviewProjects,
   exportReviewProjects,
+  sentReviewProjects,
   fetchTaskActivity,
   fetchTaskDetails,
   fetchCaseTaskStatus,
@@ -3797,5 +3885,6 @@ export default {
   listTaskDropdownAccountLevel,
   deleteTagsTaskLevel,
   deleteCollaboratorsTaskLevel,
-  updateChecklistItemStatus
+  updateChecklistItemStatus,
+  getEmailTemplatePreview
 };

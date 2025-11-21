@@ -250,6 +250,23 @@ getReviewProjects(
   errorMessage?: string;
   data?: { reviewProjects: any ,count: number};
 }>;
+sentReviewProjects(
+  data: any, 
+  filters: Record<string, any>,
+  userId:string
+): Promise<{
+  statusCode: number;
+  message: string;
+  errorMessage?: string;
+  data?: any;
+}>;
+getEmailTemplatePreview(data : any,userId: string) : Promise<{
+    statusCode: number;
+    statusMessage: string;
+    errorMessage?: string;
+    data: {templatePreview: any};
+}>
+
 linkTask (data : CaseTaskWorkFlowCreate) : Promise<{
     statusCode: number;
     statusMessage: string;
@@ -431,6 +448,7 @@ export interface IActivityService {
     sortOrder: string,
     fiscalYear: number,
     apiType: string,
+    activityType: string,
     graphqlData: any
   ): Promise<{
     statusCode: number;

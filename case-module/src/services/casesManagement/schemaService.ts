@@ -355,7 +355,8 @@ class CaseManagementSchemaService {
       modified_user_name: "modified_user_name",
       template_name: "template_name",
       description: "description",
-      createdAt: "created_datetime"
+      createdAt: "created_datetime",
+      category_rid: "category_name"
     };
 
     return sortMapping[sortField] || "r_number";
@@ -932,7 +933,20 @@ async fetchChecklistTemplateDetailsById(
     });
     return !response;
   }
-
+ async checkIsSameCategoryExists(
+    emailReq: any
+  ): Promise<boolean> {
+    const { EmailTemplate } = await this.caseModelService.getModels("");
+    const response = await EmailTemplate.findOne({
+      where: {
+        [Op.and]: [
+          { category_rid: emailReq.category_rid },
+          {  status_rid: emailReq.status_rid }
+        ]
+      }
+    });
+    return !response;
+  }
   async checkIsCheckListTemplateUnique(
     checklistReq: any
   ): Promise<boolean> {

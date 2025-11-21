@@ -338,6 +338,7 @@ class ActivitySchemaService {
     sortBy: string = "created_datetime",
     sortOrder: string = "DESC",
     apiType: string = "list",
+    activity_type: string = 'All',
     graphqlData?: any
   ) {
     try {
@@ -372,6 +373,12 @@ class ActivitySchemaService {
           whereClause[Op.and] = [];
         }
         whereClause[Op.and].push({ fiscal_year: fiscalYear });
+      }
+      if(activity_type != 'All'){
+        if (!whereClause[Op.and] || !Array.isArray(whereClause[Op.and])) {
+          whereClause[Op.and] = [];
+        }
+        whereClause[Op.and].push({ activity_type: activity_type });
       }
       const fetchAttachments = async (
         model: any,
@@ -1317,7 +1324,7 @@ class ActivitySchemaService {
     const { Activities } =
       await this.caseModelService.getModels(accountNumber);
     if (!this.mainDbSequelize) {
-      this.mainDbSequelize = await this.caseModelService.getSequelize();
+      this.mainDbSequelize = await this.caseModelService.getMainSequelize();
     }
     const [emailStatus]: any[] = await this.mainDbSequelize.query(
       rawQueries.fetchEmailStatusByName(activityRequest.email_status),

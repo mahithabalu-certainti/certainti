@@ -174,7 +174,11 @@ export const STATUS_MESSAGE = {
   activityCreationFailed: "Activity creation failed",
   activityUpdated: "Activity updated successfully",
   activityUpdateFailed: "Activity update failed",
-  taskWeightageListSuccess : "Task Weightage fetched successfully"
+  taskWeightageListSuccess : "Task Weightage fetched successfully",
+  emailTemplatePreviewSuccess: "Email template preview generated successfully",
+  emailTemplatePreviewFailed: "Failed to generate email template preview",
+  emailSentSuccessfully: "Email sent successfully",
+  emailSendingFailed: "Failed to send email",
 };
 
 export const caseStatuses = {
@@ -1437,6 +1441,29 @@ export const rawQueries = {
   getCaseTeamRoleName (roleRid : string) {
     return `SELECT rid, role_name FROM ${MAIN_SCHEMA_NAME}.case_team_role WHERE rid = '${roleRid}'`
   },
+  getCaseTeamRoleByName (roleName : string) {
+    return `SELECT rid, role_name FROM ${MAIN_SCHEMA_NAME}.case_team_role WHERE role_name = '${roleName}'`
+  },
+  fetchEmailRecipientsForReviewProjects(schemaName: string, caseRid: string,roleRid: string, statusActiveRid: string) {
+    return `
+    SELECT ct.user_rid
+    FROM ${schemaName}.case_team ct
+    WHERE ct.case_rid = '${caseRid}'
+    AND ct.role_rid = '${roleRid}'
+    AND ct.status_rid = '${statusActiveRid}'
+    `;
+  },
+  fetchEmailRecipientsByRids (userRids : string[]) {
+    let ids : string[] = []
+    if(userRids.length > 0) {
+      ids.push(`${userRids.map((d : any) => `'${d}'`).join(',')}`)
+      return `SELECT rid, email FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (${ids})
+      and status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active')`
+    }
+  },
+  fetchEmailTemplateByCategory (categoryName : string) {
+    return `SELECT rid, template_name, subject, body_html FROM ${MAIN_SCHEMA_NAME}.email_template WHERE category_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.email_template_category WHERE category_name ILIKE '%${categoryName}%')`
+  },
   getChecklistStatusByName (statusName : string) {
     return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.checklist_status WHERE status_name ILIKE '%${statusName}%'`;
   },
@@ -1590,7 +1617,8 @@ export const filterTypesForEmailTemplate: Record<string, any> = {
   status_rid: "string",
   template_name: "string",
   description: "string",
-  createdAt: "datetime"
+  createdAt: "datetime",
+  category_rid: "string"
 };
 
 export const filtersColumnsForEmailTemplate: Record<string, string> = {
@@ -1603,7 +1631,8 @@ export const filtersColumnsForEmailTemplate: Record<string, string> = {
   status_name: "status_name",
   createdAt: "createdAt",
   template_name: "template_name",
-  description: "description"
+  description: "description",
+  category_rid: "category_rid"
 
 };
 
@@ -1697,6 +1726,10 @@ export const relationshipTypes = {
   enables : "Enables",
   isBlockedBy : "Is Blocked By",
   isEnabledBy : "Is Enabled By"
+}
+
+export const emailCategorties = {
+  "review_projects" : "Review Projects",
 }
 
 // Common fields for activity select queries

@@ -27,7 +27,7 @@ import {
   SCHEMANAME_PREFIX,
   STATUS_MESSAGE,
 } from "../../utils/constants";
-import { buildDatetimeFilterCondition, buildNumericFilterCondition, buildStringFilterCondition, deleteFromAzureBlob, errorLog, generateSasUrl, getColumnsNamesForTaskCommentsUpdate, getColumnsNamesForTaskUpdate, logMessage, uploadToAzureBlob } from "../../utils/helpers";
+import { buildDatetimeFilterCondition, buildNumericFilterCondition, buildStringFilterCondition, decryptClientSecret, deleteFromAzureBlob, errorLog, generateSasUrl, getColumnsNamesForTaskCommentsUpdate, getColumnsNamesForTaskUpdate, logMessage, uploadToAzureBlob } from "../../utils/helpers";
 import {
   AddCommentsType,
   assignProjectType,
@@ -1443,7 +1443,8 @@ return !response;
     limit: number = 100,
     sortBy: string,
     sortOrder: string,
-    search: string = ""
+    search: string = "",
+    projectIds?: string[]
  
 ) {
    const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(
@@ -1471,6 +1472,7 @@ return !response;
     let filterQueryValues;
     let whereKey: string = ``;
     let fiscalYearQuery: string = ``;
+    let projectIdQuery: string = ``;
     let sortValue;
     let searchValue: string;
     let disablePagination: boolean = false;
@@ -1534,11 +1536,14 @@ return !response;
         : "";
       if (fiscalYear == 0) fiscalYearQuery = ``;
       else fiscalYearQuery = ` c.fiscal_year = ${fiscalYear}`;
+      if(projectIds && projectIds.length > 0){
+          projectIdQuery += `c.rid IN (${projectIds.map(id => `'${id}'`).join(",")})`;
+      }
       searchValue = search ? `%${search}%` : `%%`;
       whereKey = `1 = 1`;
       const conditions = [
         fiscalYearQuery,
-        filterQueryValues
+        filterQueryValues,projectIdQuery
       ].filter(Boolean);
 
       const joinedConditions =
@@ -1553,6 +1558,7 @@ return !response;
       sortValue = `ORDER BY ${sortColumn} ${sortDirection}`;
       let projectQuery = await listReviewProjectsInfo(
         searchValue,
+        caseRid,
         whereKey,
         joinedConditions,
         sortValue,
@@ -2137,6 +2143,90 @@ return !response;
       return [];
     }
   }
+
+  async fetchEmailRecipientsForReviewProjects(caseRid: string, accountNumber: string) {
+    if(!this.orgDbSequelize){
+      this.orgDbSequelize = await this.caseModelService.getSequelize();
+    }
+    if(!this.mainDbSequelize){
+      this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+    }
+    const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(
+      /\D/g,
+      ""
+    )}`;
+    const roleName = 'Client Finance & Tax Team';
+    const [roleRid]: any[] = await this.mainDbSequelize.query(
+      rawQueries.getCaseTeamRoleByName(roleName),
+      { type: "SELECT" }
+    );
+    const [statusActiveRid]: any[] = await this.mainDbSequelize.query(
+      rawQueries.getActiveStatusId(),
+      { type: "SELECT" }
+    );
+    const emailRecipientsQuery = rawQueries.fetchEmailRecipientsForReviewProjects(schemaName, caseRid, roleRid.rid, statusActiveRid.rid);
+    const [emailRecipientRid]: any[] = await this.orgDbSequelize.query(
+      emailRecipientsQuery,
+      { type: "SELECT" }
+    );
+    if(!emailRecipientRid || emailRecipientRid.length === 0){
+      return [];
+    }
+    else
+    {
+    if (!emailRecipientRid.user_rid) {
+      return [];
+    }
+    // Ensure user_rid is always a non-empty array of strings
+    let userRids: string[] = [];
+    if (Array.isArray(emailRecipientRid.user_rid)) {
+      userRids = emailRecipientRid.user_rid.filter((rid: any) => typeof rid === "string" && rid);
+    } else if (typeof emailRecipientRid.user_rid === "string" && emailRecipientRid.user_rid) {
+      userRids = [emailRecipientRid.user_rid];
+    }
+    if (userRids.length === 0) {
+      return [];
+    }
+    const emailRecipientsQuery = rawQueries.fetchEmailRecipientsByRids(userRids);
+    if (!emailRecipientsQuery || typeof emailRecipientsQuery !== "string") {
+      return [];
+    }
+    const emailRecipients: any = await this.mainDbSequelize.query(
+      emailRecipientsQuery,
+      { type: "SELECT" }
+    );
+    console.log("emailRecipients", emailRecipients);
+    let result = Array.isArray(emailRecipients)
+      ? emailRecipients.map((d: any) => d.email)
+      : [];
+    console.log("result", result);
+     const [caseInfo]: any[] = await this.orgDbSequelize.query(
+                rawQueries.fetchCaseInfo(schemaName,caseRid),
+                { type: "SELECT" }
+              );
+    return {
+      emails: result,
+      caseInfo: caseInfo || {}
+    };
+
+    }
+    
+  }
+
+  async getTemplateDetailsByCategory(categoryName: string) {
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize = await this.caseModelService.getMainSequelize();  
+    }
+    const [templateDetails]:any[] = await this.mainDbSequelize.query(
+      rawQueries.fetchEmailTemplateByCategory(categoryName),
+      {
+        type: "SELECT",
+      }
+    );
+
+
+    return templateDetails;  }
+  
 
   async listAllCaseSummary(
     page: number,
@@ -6534,6 +6624,39 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       );
     }
   }
+
+   async fetchSenderEmailInfoByAccountId(
+      accountNumber: string,
+      parentAccountId: string
+    ) {
+      try {
+        if (!this.orgDbSequelize) {
+          this.orgDbSequelize = await this.caseModelService.getSequelize();
+        }
+        const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+          /\D/g,
+          ""
+        )}`;
+        const [senderEmailInfo]: any[] = await this.orgDbSequelize.query(
+          rawQueries.fetchSenderEmail(schemaName, parentAccountId)
+        );
+        const clientSecret = senderEmailInfo[0]?.client_secret;
+        const decryptedSecret = await decryptClientSecret(clientSecret);
+  
+        return {
+          email:
+            senderEmailInfo[0]?.support_email,
+          clientId:
+            senderEmailInfo[0]?.client_id,
+          clientSecret:
+            decryptedSecret,
+          tenantId:
+            senderEmailInfo[0]?.tenant_id ,
+        };
+      } catch (err) {
+        logMessage(`Error fetching sender email info for account: ${err}`);
+      }
+    }
   async updateChecklistItems (data : any, accountNumber : string, transaction : Transaction) {
     if(!this.mainDbSequelize) {
       this.mainDbSequelize = await initMainDbSequelize()
