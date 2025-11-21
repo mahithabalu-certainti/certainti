@@ -166,7 +166,9 @@ export const STATUS_MESSAGE = {
   caseTaskFetchedSuccess : "Case Task fetched successfully",
   tagsCreationFailed : "Failed to add Tags",
   checklistItemsStatusSuccess : "Checklist-Item updated successfully",
-  failedToUpdate : "Failed to update"
+  failedToUpdate : "Failed to update",
+  rdCreditPreviewSuccess : "R&D Credit preview fethched successfully"
+
 };
 
 export const caseStatuses = {

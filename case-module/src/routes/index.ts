@@ -5,6 +5,7 @@ import caseManagementRoutes from "./caseManagementRoutes"
 import jurisdictionRoutes from "./jurisdictionRoutes";
 import historicalSubmissionRoutes from "./historicalSubmissionRoutes";
 import activitiesRoutes from "./activitiesRoutes";
+import financialRDCreditRoutes from "./financialRDCreditRoutes";
 
 const routes: Router = Router();
 
@@ -32,6 +33,7 @@ routes.use("/caseManagement", caseManagementRoutes);
 routes.use("/activities", activitiesRoutes);
 routes.use("/jurisdictions", jurisdictionRoutes);
 routes.use("/historicalSubmission", historicalSubmissionRoutes);
+routes.use("/financial", financialRDCreditRoutes);
 
 
 export default routes;

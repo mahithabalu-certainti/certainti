@@ -2,9 +2,10 @@ import { Logger } from "winston";
 import { CaseService } from "./cases/caseService";
 import { ICaseManagementService, ICaseService, IActivityService } from "./interfaces/interface";
 import { CaseManagementService } from "./casesManagement/caseManagementService";
-import { JurisdictionService }  from "./jurisdiction/jurisdictionServices";
-import { HistoricalSubmissionService }  from "./historicalSubmission/historicalSubmissionServices";
+import { JurisdictionService } from "./jurisdiction/jurisdictionServices";
+import { HistoricalSubmissionService } from "./historicalSubmission/historicalSubmissionServices";
 import { ActivityService } from "./activities/activityService";
+import { FinancialRDCreditService } from "./financialRDCredit/financialRDCreditService";
 
 class Services {
   private logger: Logger;
@@ -13,6 +14,7 @@ class Services {
   jurisdictionService: JurisdictionService;
   historicalSubmissionService: HistoricalSubmissionService;
   activityService: IActivityService;
+  financialRDCreditService: FinancialRDCreditService;
 
   constructor(logger: Logger) {
     this.logger = logger;
@@ -21,6 +23,7 @@ class Services {
     this.jurisdictionService = new JurisdictionService(logger);
     this.historicalSubmissionService = new HistoricalSubmissionService(logger);
     this.activityService = new ActivityService(logger);
+    this.financialRDCreditService = new FinancialRDCreditService(logger);
   }
 }
 

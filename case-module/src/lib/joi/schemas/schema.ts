@@ -600,6 +600,14 @@ const updateTaskSchema = Joi.object({
     Joi.valid(null)                    
   ).optional()
 });
+
+const rdCreditGenerationSchema = Joi.object({
+  account_rid : Joi.string().max(255).required(),
+  case_rid : Joi.string().max(255).required(),
+  effective_start: Joi.string().max(255).required(),
+  effective_end: Joi.string().max(255).required(),
+});
+
 export {
   createCaseSchema,
   updateCaseSchema,
@@ -633,5 +641,6 @@ export {
   exportEmailTemplateSchema,
   createActivitTaskSchema,
   listActivityTaskSchema,
-  exportActivitySchema
+  exportActivitySchema,
+  rdCreditGenerationSchema
 };
