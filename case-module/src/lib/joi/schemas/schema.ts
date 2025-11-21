@@ -161,7 +161,7 @@ const createCaseTeamSchema = Joi.object({
         user_rid: Joi.string().required(),
         role_rid: Joi.string().required(),
         effective_from: Joi.date().required(),
-        effective_to: Joi.date().required(),
+        effective_to: Joi.date().optional(),
         is_primary: Joi.boolean().required(),
         status_rid: Joi.string().required(),
         action_type: Joi.string().valid("add", "edit", "delete").required(),
@@ -592,14 +592,13 @@ const createActivityMeetingSchema = Joi.object({
  attachment_level : Joi.string().required(),
  fiscal_year : Joi.number().optional(),
  activity_type: Joi.string().valid("meeting").required(),
-  meeting_subject: Joi.string().max(500).required(),
-  meeting_body: Joi.string().required(),
-  meeting_start_datetime: Joi.string().required(),
-  meeting_end_datetime: Joi.string().required(),
-  invitees: Joi.array().items(Joi.string().email().required()).optional(),
-  attendees: Joi.array().items(Joi.string().email().required()).optional(),
+ subject: Joi.string().max(500).required(),
+  effective_start_datetime: Joi.date().required(),
+  effective_end_datetime: Joi.date().required(),
+  invitees: Joi.string().optional(),
+  attendees: Joi.string().required(),
   minutes_of_meeting: Joi.string().optional().allow(""),
-  meeting_platform: Joi.string().max(255).optional().allow(""),
+  meeting_platform: Joi.string().max(255).optional().allow("").default("teams"),
   meeting_url: Joi.string().max(1000).optional().allow(""),
   meeting_code: Joi.string().max(255).optional().allow(""),
 });
@@ -613,14 +612,12 @@ const updateActivityMeetingSchema = Joi.object({
  activity_type: Joi.string().valid("meeting").required(),
   meeting_subject: Joi.string().max(500).required(),
   meeting_body: Joi.string().required(),
-  meeting_start_datetime: Joi.string().required(),
-  meeting_end_datetime: Joi.string().required(),
-  invitees: Joi.array().items(Joi.string().email().required()).optional(),
-  attendees: Joi.array().items(Joi.string().email().required()).optional(),
+  effective_start_datetime: Joi.string().required(),
+  effective_end_datetime: Joi.string().required(),
+  invitees: Joi.string().optional(),
+  attendees: Joi.string().required(),
   minutes_of_meeting: Joi.string().optional().allow(""),
-  meeting_platform: Joi.string().max(255).optional().allow(""),
-  meeting_url: Joi.string().max(1000).optional().allow(""),
-  meeting_code: Joi.string().max(255).optional().allow(""),
+  meeting_participants:Joi.string().optional().allow(""),
 });
 
 const updateActivityCallSchema = Joi.object({
@@ -669,13 +666,8 @@ const updateActivityEmailSchema = Joi.object({
  attachment_level : Joi.string().required(),
   fiscal_year : Joi.number().optional(),
   activity_type: Joi.string().valid("email").required(),
-  to_email:Joi.string().email().required(),
-  /*to_email: Joi.array()
-    .items(Joi.string().email().required())
-    .min(1), */
-  ccEmail: Joi.array()
-    .items(Joi.string().email().required())
-    .optional()
+  to_email:Joi.string().required(),
+  ccEmail: Joi.string().optional(),
 });
 
 

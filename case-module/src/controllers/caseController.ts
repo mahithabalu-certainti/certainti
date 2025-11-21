@@ -2166,14 +2166,14 @@ async function exportAllChecklists(req: Request, res: Response): Promise<void> {
           : checklists.data.checklists.map((d: any) => {
               let resultMap: { [key: string]: any } = {
                 r_number: d.r_number,
-                fiscal_year: `FY-${d.fiscal_year}`,
+                fiscal_year: d?.fiscal_year == null ? "" : `FY-${d.fiscal_year}`,
                 checklist_name: d.checklist_name,
                 attachment_level: d.attachment_level,
                 attach_to: d.attach_to,
                 attached_to: d.attached_to,
-                created_by: d.created_by_name,
+                created_by_name: d.created_by_name,
                 created_datetime: formatDate(d.created_datetime),
-                modified_by: d.modified_by_name,
+                modified_by_name: d.modified_by_name,
                 modified_datetime:
                   d.modified_datetime == null
                     ? ""

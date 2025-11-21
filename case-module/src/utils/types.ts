@@ -703,8 +703,8 @@ export interface IActivityEmail {
   attach_to: string;
   attachment_level: string;
   email_status:string;
-  to_email: JSON;
-  cc_email?: JSON;
+  to_email: string[];
+  cc_email?: string[];
   subject: string;
   body_html?: string;
   sender_email?: string;
@@ -726,13 +726,16 @@ export interface IActivityMeeting {
   meeting_status:string;
   meeting_status_rid?: string;
   invitees: JSON;
+  attendees: string[];
+  subject: string;
   meeting_platform?: string;
   meeting_url?: string;
-  meeting_start_datetime: Date;
-  meeting_end_datetime?: Date;
+  effective_start_datetime: Date;
+  effective_end_datetime?: Date;
   meeting_code?: string;
   minutes_of_meeting?: string;
   account_rid?: string;
+  description?: string;
 }
 
 export interface IActivityCall {

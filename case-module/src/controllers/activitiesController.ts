@@ -572,6 +572,14 @@ async function getAllActivityTask(req: Request, res: Response) {
       return;
     }
     const userId = req.headers["x-user-id"] as string;
+     if (typeof value.filters === 'string') {
+      try {
+        value.filters = JSON.parse(value.filters);
+      } catch (err) {
+        console.error('Invalid filters JSON:', value.filters);
+        value.filters = {};
+      }
+    }
 
     if (!userId) {
       handleErrorResponse(

@@ -1005,8 +1005,7 @@ return !response;
           [Op.or]: [
             { checklist_name: { [Op.iLike]: `%${search}%` } },
             { r_number: { [Op.iLike]: `%${search}%` } },
-            { descriptions : { [Op.iLike]: `%${search}%` } },
-            { title : { [Op.iLike]: `%${search}%` } },
+            { checklist_description: { [Op.iLike]: `%${search}%` } },
             { attachment_level : { [Op.iLike]: `%${search}%` } }
           ]
         });
@@ -1031,6 +1030,7 @@ return !response;
           case 'checklist_name':
           case 'attachment_level':  
           case 'descriptions':
+          case 'checklist_description':
           case 'attached_to':
           case 'attach_to':
           case 'r_number':
@@ -2713,6 +2713,7 @@ return !response;
         where: {
           case_rid: caseReq.case_rid,
           account_rid: caseReq.account_rid,
+          is_primary: true,
         },
         raw: true,
       });
@@ -2930,7 +2931,7 @@ return !response;
 
     for (const teamMember of editOperations) {
       try {
-        const validationError = await this.validateNoOverlappingDates(
+     /*   const validationError = await this.validateNoOverlappingDates(
           CaseTeam,
           teamMember,
           caseTeamRequest
@@ -2945,6 +2946,7 @@ return !response;
             error: validationError,
           });
         } else {
+        */
           const [updatedRowsCount] = await CaseTeam.update(
             {
               role_rid: teamMember.role_rid,
@@ -2970,7 +2972,7 @@ return !response;
             role_rid: teamMember.role_rid,
             status: "success",
           });
-        }
+        //}
       } catch (memberError) {
         logMessage(
           `Error editing team member ${teamMember.user_rid}: ${memberError}`
@@ -3000,7 +3002,7 @@ return !response;
 
     for (const teamMember of addOperations) {
       try {
-        const validationError = await this.validateNoOverlappingDates(
+       /* const validationError = await this.validateNoOverlappingDates(
           CaseTeam,
           teamMember,
           caseTeamRequest
@@ -3014,7 +3016,7 @@ return !response;
             status: "failed",
             error: validationError,
           });
-        } else {
+        } else { */
           const newTeamMember = await CaseTeam.create({
             account_rid: caseTeamRequest.account_rid,
             case_rid: caseTeamRequest.case_rid,
@@ -3035,7 +3037,7 @@ return !response;
             role_rid: teamMember.role_rid,
             status: "success",
           });
-        }
+      //  }
       } catch (memberError) {
         logMessage(
           `Error adding team member ${teamMember.user_rid}: ${memberError}`
@@ -3230,6 +3232,7 @@ return !response;
           checklist_name: caseRequest.checklist_name,
           checklist_description: caseRequest.checklist_description,
           status_rid: caseRequest.status_rid,
+          fiscal_year:caseRequest.fiscal_year,
           checklist_template_rid: caseRequest?.checklist_template_rid || "",
           modified_by: caseRequest.modified_by,
           modified_datetime: new Date(),
@@ -3249,9 +3252,6 @@ return !response;
     accountNumber: string,
     accountRid: string
   ) {
-     const { CheckList } = await this.caseModelService.getModels(
-      accountNumber
-    );
     if(!this.orgDbSequelize)
     {
       this.orgDbSequelize = await this.caseModelService.getSequelize();
@@ -3319,15 +3319,17 @@ return !response;
       fiscal_year = caseInfo?.fiscal_year ?? null;
     } else if (attachmentLevel === 'account' && attachTo) {
       fiscal_year = checklistDetails?.fiscal_year ?? null;
+     } else if (attachmentLevel === 'resource' && attachTo) {
+      fiscal_year = checklistDetails?.fiscal_year ?? null;
     } else if (attachmentLevel === 'project' && attachTo) {
-      const project = await this.fetchProjectInfoById(schemaName, attachTo);
+      const project = await this.fetchProjectInfoById(accountNumber, attachTo);
       fiscal_year = project?.fiscal_year ?? null;
     }
     else if (attachmentLevel === 'project_resource' && attachTo) {
-      let projectResource:any = await this.fetchProjectResourceById(schemaName, attachTo);
+      let projectResource:any = await this.fetchProjectResourceById(accountNumber, attachTo);
       if (Array.isArray(projectResource)) projectResource = projectResource[0];
       if (projectResource && projectResource.project_fiscal_rid) {
-        const project = await this.fetchProjectInfoById(schemaName, projectResource.project_fiscal_rid);
+        const project = await this.fetchProjectInfoById(accountNumber, projectResource.project_fiscal_rid);
         fiscal_year = project?.fiscal_year ?? null;
       }
     } else if (attachmentLevel === 'project_task' && attachTo) {
@@ -3337,7 +3339,8 @@ return !response;
         const project = await this.fetchProjectInfoById(accountNumber, projectTask.project_fiscal_rid);
         fiscal_year = project?.fiscal_year ?? null;
       }
-    } else if (attachmentLevel === 'resource' && attachTo) {
+    } 
+    /*else if (attachmentLevel === 'resource' && attachTo) {
       let resource:any = await this.fetchResourceById(accountNumber, attachTo);
       if (Array.isArray(resource)) resource = resource[0];
       if (resource && resource.project_fiscal_rid) {
@@ -3366,7 +3369,7 @@ return !response;
           fiscal_year = project?.fiscal_year ?? null;
         }
       }
-    } 
+    } */
 
     const response: any = {
       attach_to: checklistDetails?.attach_to ?? "",
@@ -3649,6 +3652,10 @@ return !response;
           if (attachment.attachment_level === 'account') {
             return attachment.fiscal_year ?? null;
           }
+          if (attachment.attachment_level === 'resource' || attachment.attachment_level === 'resource_cost' || attachment.attachment_level === 'resource_skill') {
+            return attachment.fiscal_year ?? null;
+          }
+          
           // PROJECT: fetch from project info (project fiscal_year)
           if (attachment.attachment_level === 'project' && attachment.attach_to) {
             const project = await this.fetchProjectInfoById(accountNumber, attachment.attach_to);
