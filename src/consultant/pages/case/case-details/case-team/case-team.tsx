@@ -271,10 +271,7 @@ const CaseTeam: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
       setCellWidths(newWidths);
     };
 
-    // Calculate widths after a short delay to ensure table layout is complete
     const timer = setTimeout(calculateCellWidths, 100);
-
-    // Also recalculate on window resize
     const handleResize = () => calculateCellWidths();
     window.addEventListener('resize', handleResize);
 
@@ -318,6 +315,16 @@ const CaseTeam: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
         team_members: updatedMembers,
       };
     });
+
+    setErrors((prev) => {
+      const newMemberErrors = [...(prev.team_members || [])];
+      newMemberErrors.splice(index, 1);
+
+      return {
+        ...prev,
+        team_members: newMemberErrors,
+      };
+    });
   }
 
   function handleTeamMemberChange(
@@ -327,30 +334,48 @@ const CaseTeam: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
   ) {
     setFormData((prev) => {
       const updatedMembers = [...prev.team_members];
+      const oldRole = updatedMembers[index].user_role;
+      const newRole = field === 'user_role' ? (value as string) : oldRole;
+
       updatedMembers[index] = {
         ...updatedMembers[index],
         [field]: value,
       };
+
+      // Auto-mark as primary if this is the first time adding this role
+      if (field === 'user_role' && newRole && newRole !== oldRole) {
+        // Check if this role exists elsewhere (excluding current row)
+        const roleExistsElsewhere = updatedMembers.some(
+          (member, idx) =>
+            idx !== index &&
+            member.user_role === newRole &&
+            member.user_role !== ''
+        );
+
+        if (!roleExistsElsewhere) {
+          updatedMembers[index].is_primary = true;
+        } else {
+          updatedMembers[index].is_primary = false;
+        }
+      }
+
       return {
         ...prev,
         team_members: updatedMembers,
       };
     });
 
-    // Clear errors for the specific field being changed
     setErrors((prev) => {
       const newMemberErrors = [...(prev.team_members || [])];
       if (!newMemberErrors[index]) {
         newMemberErrors[index] = {};
       }
 
-      // Clear the error for the specific field
       newMemberErrors[index] = {
         ...newMemberErrors[index],
         [field]: undefined,
       };
 
-      // If clearing user_role, also clear is_primary error as it depends on role
       if (field === 'user_role') {
         newMemberErrors[index] = {
           ...newMemberErrors[index],
@@ -385,28 +410,43 @@ const CaseTeam: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
         isValid = false;
       }
 
-      // Start date validation
       if (!member.start_date) {
         memberError.start_date = 'Start date is required';
         isValid = false;
-      } else if (member.end_date && member.start_date > member.end_date) {
-        memberError.start_date = 'Start date cannot be after end date';
-        isValid = false;
+      } else {
+        const startDate = dayjs(member.start_date);
+        const today = dayjs().startOf('day');
+
+        if (startDate.isBefore(today)) {
+          memberError.start_date = 'Start date must be today or a future date';
+          isValid = false;
+        }
+
+        if (
+          member.end_date &&
+          startDate.isAfter(dayjs(member.end_date), 'day')
+        ) {
+          memberError.start_date = 'Start date cannot be after end date';
+          isValid = false;
+        }
       }
 
-      // End date validation
-      if (!member.end_date) {
-        memberError.end_date = 'End date is required';
-        isValid = false;
+      if (member.end_date) {
+        const endDate = dayjs(member.end_date);
+        const startDate = dayjs(member.start_date);
+
+        if (endDate.isBefore(startDate, 'day')) {
+          memberError.end_date =
+            'End date must be equal to or after start date';
+          isValid = false;
+        }
       }
 
-      // Status validation (required field)
       if (!member.status || !member.status.trim()) {
         memberError.status = 'Status is required';
         isValid = false;
       }
 
-      // Primary checkbox validation - check if trying to set primary when another user in same role is already primary
       if (member.is_primary && member.user_role) {
         const existingPrimary = formData.team_members.find(
           (m, i) =>
@@ -439,46 +479,69 @@ const CaseTeam: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
     const validMembers = formData.team_members.filter(
       (member) => member.user_name.trim() && member.user_role.trim()
     );
-    const teamMembersPayload = validMembers.map((member) => {
-      const userOption = userOptionsQuery.data?.find(
-        (user) => user.name === member.user_name
-      );
-      const roleOption = roleOptionsQuery.data?.find(
-        (role) => role.role_name === member.user_role
-      );
 
+    const newMembers = validMembers.filter((member) =>
+      member.user_id.startsWith('MEM_')
+    );
+    const existingMembers = validMembers.filter(
+      (member) => !member.user_id.startsWith('MEM_')
+    );
+
+    const editedExistingMembers = existingMembers.filter((member) => {
       const originalMember = originalTeamMembers.find(
-        (orig) =>
-          orig.user_id === member.user_id && !member.user_id.startsWith('MEM_')
+        (orig) => orig.user_id === member.user_id
       );
+      if (!originalMember) return true;
 
-      let actionType: 'add' | 'edit' | 'delete' = 'add';
-      let caseTeamRid: string | undefined;
-
-      if (originalMember) {
-        const hasChanges =
-          originalMember.user_name !== member.user_name ||
-          originalMember.user_role !== member.user_role ||
-          originalMember.start_date !== member.start_date ||
-          originalMember.end_date !== member.end_date ||
-          originalMember.is_primary !== member.is_primary ||
-          originalMember.status_rid !== member.status_rid;
-
-        actionType = hasChanges ? 'edit' : 'add';
-        caseTeamRid = originalMember.rid;
-      }
-
-      return {
-        ...(caseTeamRid && { case_team_rid: caseTeamRid }),
-        user_rid: userOption?.rid || '',
-        role_rid: roleOption?.rid || '',
-        effective_from: member.start_date,
-        effective_to: member.end_date,
-        is_primary: member.is_primary || false,
-        status_rid: member.status_rid || '',
-        action_type: actionType,
-      };
+      return (
+        originalMember.user_name !== member.user_name ||
+        originalMember.user_role !== member.user_role ||
+        originalMember.start_date !== member.start_date ||
+        originalMember.end_date !== member.end_date ||
+        originalMember.is_primary !== member.is_primary ||
+        originalMember.status_rid !== member.status_rid
+      );
     });
+
+    const teamMembersPayload = [
+      ...newMembers.map((member) => {
+        const userOption = userOptionsQuery.data?.find(
+          (user) => user.name === member.user_name
+        );
+        const roleOption = roleOptionsQuery.data?.find(
+          (role) => role.role_name === member.user_role
+        );
+
+        return {
+          user_rid: userOption?.rid || '',
+          role_rid: roleOption?.rid || '',
+          effective_from: member.start_date,
+          effective_to: member.end_date,
+          is_primary: member.is_primary || false,
+          status_rid: member.status_rid || '',
+          action_type: 'add' as const,
+        };
+      }),
+      ...editedExistingMembers.map((member) => {
+        const userOption = userOptionsQuery.data?.find(
+          (user) => user.name === member.user_name
+        );
+        const roleOption = roleOptionsQuery.data?.find(
+          (role) => role.role_name === member.user_role
+        );
+
+        return {
+          case_team_rid: member.rid || member.user_id,
+          user_rid: userOption?.rid || '',
+          role_rid: roleOption?.rid || '',
+          effective_from: member.start_date,
+          effective_to: member.end_date,
+          is_primary: member.is_primary || false,
+          status_rid: member.status_rid || '',
+          action_type: 'edit' as const,
+        };
+      }),
+    ];
 
     const deletedMembers = originalTeamMembers.filter(
       (original) =>
@@ -518,8 +581,6 @@ const CaseTeam: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
     updateCaseTeamMutation.mutate(payload, {
       onSuccess: () => {
         setIsLoading(false);
-        // Don't manually update originalTeamMembers here - let the API response handle it
-        // The useEffect will handle updating the state when fresh data comes from the API
       },
       onError: () => {
         setIsLoading(false);
@@ -564,10 +625,16 @@ const CaseTeam: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
         title={'Case Team'}
         titleIcon={getTitleIcon()}
         buttons={headerButtons}
-        count={formData.team_members.filter(
-          (m) =>
-            m.user_name || m.user_role || m.start_date || m.end_date || m.status
-        ).length}
+        count={
+          formData.team_members.filter(
+            (m) =>
+              m.user_name ||
+              m.user_role ||
+              m.start_date ||
+              m.end_date ||
+              m.status
+          ).length
+        }
         showItemCount={true}
         hideSection={false}
       />
@@ -726,11 +793,12 @@ const CaseTeam: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
                                             marginTop: '4px',
                                             maxHeight: '250px',
                                             borderRadius: '0px',
+                                            overflowX: 'auto',
                                             width: Math.max(
                                               cellWidths[
                                                 `user_role-${index}`
                                               ] || 0,
-                                              150 // minimum width fallback
+                                              150
                                             ),
                                             boxShadow:
                                               'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
@@ -738,11 +806,28 @@ const CaseTeam: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
                                               fontSize: '13px',
                                               fontWeight: 500,
                                               padding: '6px 12px',
+                                              paddingRight: '24px',
+                                              whiteSpace: 'nowrap',
+                                              display: 'block',
+                                              width: '100%',
+                                              minWidth: 'max-content',
                                               '&[data-value=""]': {
                                                 color: '#7D98B6',
                                               },
                                               '&:not([data-value=""])': {
                                                 color: '#425A76',
+                                              },
+                                              '&.Mui-selected': {
+                                                backgroundColor:
+                                                  'rgba(0, 0, 0, 0.08)',
+                                              },
+                                              '&.Mui-selected:hover': {
+                                                backgroundColor:
+                                                  'rgba(0, 0, 0, 0.12)',
+                                              },
+                                              '&:hover': {
+                                                backgroundColor:
+                                                  'rgba(0, 0, 0, 0.04)',
                                               },
                                             },
                                           },
@@ -757,7 +842,7 @@ const CaseTeam: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
                                           fontWeight: 500,
                                         }}
                                       >
-                                        Choose User Role
+                                        Choose Case User Role
                                       </MenuItem>
                                       {getAvailableRoleOptions(index).map(
                                         (role) => (
@@ -827,6 +912,7 @@ const CaseTeam: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
                                             marginTop: '4px',
                                             maxHeight: '250px',
                                             borderRadius: '0px',
+                                            overflowX: 'auto',
                                             width: Math.max(
                                               cellWidths[
                                                 `user_name-${index}`
@@ -839,11 +925,28 @@ const CaseTeam: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
                                               fontSize: '13px',
                                               fontWeight: 500,
                                               padding: '6px 12px',
+                                              paddingRight: '24px',
+                                              whiteSpace: 'nowrap',
+                                              display: 'block',
+                                              width: '100%',
+                                              minWidth: 'max-content',
                                               '&[data-value=""]': {
                                                 color: '#7D98B6',
                                               },
                                               '&:not([data-value=""])': {
                                                 color: '#425A76',
+                                              },
+                                              '&.Mui-selected': {
+                                                backgroundColor:
+                                                  'rgba(0, 0, 0, 0.08)',
+                                              },
+                                              '&.Mui-selected:hover': {
+                                                backgroundColor:
+                                                  'rgba(0, 0, 0, 0.12)',
+                                              },
+                                              '&:hover': {
+                                                backgroundColor:
+                                                  'rgba(0, 0, 0, 0.04)',
                                               },
                                             },
                                           },
@@ -858,7 +961,7 @@ const CaseTeam: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
                                           fontWeight: 500,
                                         }}
                                       >
-                                        Choose User
+                                        Choose Case User
                                       </MenuItem>
                                       {getAvailableUserOptions(index).map(
                                         (user) => (
@@ -886,6 +989,16 @@ const CaseTeam: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
                                       checked={member.is_primary || false}
                                       onChange={(e) => {
                                         const isChecking = e.target.checked;
+                                        if (!isChecking) {
+                                          const roleCount =
+                                            formData.team_members.filter(
+                                              (m) =>
+                                                m.user_role === member.user_role
+                                            ).length;
+                                          if (roleCount <= 1) {
+                                            return;
+                                          }
+                                        }
 
                                         // Check if trying to set primary when another user in same role is already primary
                                         if (isChecking && member.user_role) {
@@ -1035,10 +1148,11 @@ const CaseTeam: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
                                             marginTop: '4px',
                                             maxHeight: '250px',
                                             borderRadius: '0px',
+                                            overflowX: 'auto',
                                             width: Math.max(
                                               cellWidths[`status-${index}`] ||
                                                 0,
-                                              150 // minimum width fallback
+                                              150
                                             ),
                                             boxShadow:
                                               'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
@@ -1046,11 +1160,28 @@ const CaseTeam: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
                                               fontSize: '13px',
                                               fontWeight: 500,
                                               padding: '6px 12px',
+                                              paddingRight: '24px',
+                                              whiteSpace: 'nowrap',
+                                              display: 'block',
+                                              width: '100%',
+                                              minWidth: 'max-content',
                                               '&[data-value=""]': {
                                                 color: '#7D98B6',
                                               },
                                               '&:not([data-value=""])': {
                                                 color: '#425A76',
+                                              },
+                                              '&.Mui-selected': {
+                                                backgroundColor:
+                                                  'rgba(0, 0, 0, 0.08)',
+                                              },
+                                              '&.Mui-selected:hover': {
+                                                backgroundColor:
+                                                  'rgba(0, 0, 0, 0.12)',
+                                              },
+                                              '&:hover': {
+                                                backgroundColor:
+                                                  'rgba(0, 0, 0, 0.04)',
                                               },
                                             },
                                           },
@@ -1116,7 +1247,7 @@ const CaseTeam: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
                                           )
                                         }
                                         format='YYYY-MM-DD'
-                                        minDate={dayjs('1950-01-01')}
+                                        minDate={dayjs().startOf('day')}
                                         disabled={
                                           isDisabled ||
                                           !permissionMap.effective_startdate
