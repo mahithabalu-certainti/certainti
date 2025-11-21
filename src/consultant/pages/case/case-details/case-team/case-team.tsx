@@ -985,6 +985,16 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
                                         checked={member.is_primary || false}
                                         onChange={(e) => {
                                           const isChecking = e.target.checked;
+                                          if (!isChecking) {
+                                            const roleCount =
+                                              formData.team_members.filter(
+                                                (m) =>
+                                                  m.user_role === member.user_role
+                                              ).length;
+                                            if (roleCount <= 1) {
+                                              return;
+                                            }
+                                          }
 
                                           // Check if trying to set primary when another user in same role is already primary
                                           if (isChecking && member.user_role) {
