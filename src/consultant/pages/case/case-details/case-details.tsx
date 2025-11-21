@@ -59,6 +59,7 @@ import Setting from './settings/setting';
 import { ExportChecklistList } from '../../../services/checklist/checklist-service';
 import { Checklist } from './checklist';
 import { CaseInteractions } from './case-interactions';
+import HistorySubmission from './history-submission/history-submission';
 
 export const CaseDetails = () => {
   const navigate = useNavigate();
@@ -309,6 +310,12 @@ export const CaseDetails = () => {
         return (
           <div className='w-full pr-4 pl-2 py-2'>
             <CaseTeam activityMenuItems={activityMenuItems} />
+          </div>
+        );
+      case 'historical_submission':
+        return (
+          <div className='w-full pr-4 pl-2 py-2'>
+            <HistorySubmission activityMenuItems={activityMenuItems} />
           </div>
         );
       case 'caseProjects':
