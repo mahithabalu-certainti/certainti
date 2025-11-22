@@ -1709,9 +1709,10 @@ async function listUsersForCaseTeam(req: Request, res: Response): Promise<void> 
     
     // Extract account RID from request parameters to identify target account
     const accountrid = req.params.accountRid as string;
+    const userAccessScope = req.query.user_access_scope as string || 'account'
     
     // Call the service layer to fetch users eligible for case team assignment
-    const result = await caseService.listUsersForCaseTeam(accountrid);
+    const result = await caseService.listUsersForCaseTeam(accountrid,userAccessScope);
     
     // Handle successful user retrieval
     if (result.statusCode === HttpStatus.SUCCESS) {

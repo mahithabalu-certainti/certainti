@@ -694,18 +694,29 @@ export class CaseManagementService {
     try {
       // Set the user who is creating this checklist
      emailRequest.created_by = userId;
-      const isUnique = await this.caseManangementSchemaService.checkIsEmailTemplateUnique(emailRequest);
-      if (!isUnique) {
+      
+      const result = await this.caseManangementSchemaService.checkEmailTemplateUniquenessAndCategory(emailRequest);
+      if (!result.isUnique) {
         return {
           statusCode: HttpStatus.BAD_REQUEST,
           message: HttpStatus.BAD_REQUEST_MESSAGE,
           errorMessage: `An template with the name "${emailRequest.template_name}" already exists. Please choose a different name.`,
         };
       }
-     const response =
-        await this.caseManangementSchemaService.createEmailTemplate(
+      if (!result.isSameCategoryExists) {
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: HttpStatus.BAD_REQUEST_MESSAGE,
+          errorMessage: `An template with the category "${result.category_name}" already exists. Please choose a different category.`,
+        };
+      }
+
+      
+
+     const response = 
+       await this.caseManangementSchemaService.createEmailTemplate(
           emailRequest
-        );
+       ); 
 
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -739,12 +750,19 @@ export class CaseManagementService {
     emailRequest.modified_by = userId;
     if(emailRequest.template_name)
     {
-    const isUnique = await this.caseManangementSchemaService.checkisExistingTemplateUnique(emailRequest);
-    if (!isUnique) {
+    const result = await this.caseManangementSchemaService.checkisExistingTemplateUnique(emailRequest);
+    if (!result.isUnique) {
       return {
         statusCode: HttpStatus.BAD_REQUEST,
         message: HttpStatus.BAD_REQUEST_MESSAGE,
-        errorMessage: `A template with the name "${emailRequest.template_name}" and category already exists. Please choose a different name or category.`,
+        errorMessage: `A template with the name "${emailRequest.template_name}" already exists. Please choose a different name.`,
+      };
+    }
+    if (!result.isSameCategoryExists) {
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: HttpStatus.BAD_REQUEST_MESSAGE,
+        errorMessage: `A template with the category "${result.category_name}" already exists. Please choose a different category.`,
       };
     }
   }

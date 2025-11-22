@@ -794,6 +794,13 @@ export const rawQueries = {
     AND u.status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active')
 	  order by name asc`
   },
+  listAllUsers() {
+    return `  
+      SELECT u.rid, CONCAT(u.first_name, ' ', u.last_name) AS name
+      FROM ${MAIN_SCHEMA_NAME}.user u
+	  where  u.status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active')
+	  order by name asc`
+  },
   getCaseOwners() {
     return `
       SELECT u.rid, CONCAT(u.first_name, ' ', u.last_name) AS name
@@ -1730,6 +1737,7 @@ export const relationshipTypes = {
 
 export const emailCategorties = {
   "review_projects" : "Review Projects",
+  "general": "General"
 }
 
 // Common fields for activity select queries

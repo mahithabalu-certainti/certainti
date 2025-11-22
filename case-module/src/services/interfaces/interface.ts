@@ -108,7 +108,7 @@ export interface ICaseService {
     errorMessage?: string;
     data?: { caseOwners: any };
   }>;
-  listUsersForCaseTeam(accountRid: string): Promise<{
+  listUsersForCaseTeam(accountRid: string,scope:string): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
