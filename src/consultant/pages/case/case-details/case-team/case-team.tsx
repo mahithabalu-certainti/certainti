@@ -424,7 +424,10 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
           isValid = false;
         }
 
-        if (member.end_date && startDate.isAfter(dayjs(member.end_date), 'day')) {
+        if (
+          member.end_date &&
+          startDate.isAfter(dayjs(member.end_date), 'day')
+        ) {
           memberError.start_date = 'Start date cannot be after end date';
           isValid = false;
         }
@@ -435,7 +438,8 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
         const startDate = dayjs(member.start_date);
 
         if (endDate.isBefore(startDate, 'day')) {
-          memberError.end_date = 'End date must be equal to or after start date';
+          memberError.end_date =
+            'End date must be equal to or after start date';
           isValid = false;
         }
       }
@@ -816,13 +820,16 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
                                                 color: '#425A76',
                                               },
                                               '&.Mui-selected': {
-                                                backgroundColor: 'rgba(0, 0, 0, 0.08)',
+                                                backgroundColor:
+                                                  'rgba(0, 0, 0, 0.08)',
                                               },
                                               '&.Mui-selected:hover': {
-                                                backgroundColor: 'rgba(0, 0, 0, 0.12)',
+                                                backgroundColor:
+                                                  'rgba(0, 0, 0, 0.12)',
                                               },
                                               '&:hover': {
-                                                backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                                                backgroundColor:
+                                                  'rgba(0, 0, 0, 0.04)',
                                               },
                                             },
                                           },
@@ -837,7 +844,7 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
                                           fontWeight: 500,
                                         }}
                                       >
-                                        Choose User Role
+                                        Choose Case User Role
                                       </MenuItem>
                                       {getAvailableRoleOptions(index).map(
                                         (role) => (
@@ -934,13 +941,16 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
                                                   color: '#425A76',
                                                 },
                                                 '&.Mui-selected': {
-                                                  backgroundColor: 'rgba(0, 0, 0, 0.08)',
+                                                  backgroundColor:
+                                                    'rgba(0, 0, 0, 0.08)',
                                                 },
                                                 '&.Mui-selected:hover': {
-                                                  backgroundColor: 'rgba(0, 0, 0, 0.12)',
+                                                  backgroundColor:
+                                                    'rgba(0, 0, 0, 0.12)',
                                                 },
                                                 '&:hover': {
-                                                  backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                                                  backgroundColor:
+                                                    'rgba(0, 0, 0, 0.04)',
                                                 },
                                               },
                                             },
@@ -955,7 +965,7 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
                                             fontWeight: 500,
                                           }}
                                         >
-                                          Choose User
+                                          Choose Case User
                                         </MenuItem>
                                         {getAvailableUserOptions(index).map(
                                           (user) => (
@@ -975,76 +985,84 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
                                         )}
                                       </Select>
                                     </div>
-                                  )
-                                }
+                                  )}
 
-                                {
-                                  col.name === 'is_primary' && (
-                                    <div className='p-1 flex justify-center items-center'>
-                                      <Checkbox
-                                        checked={member.is_primary || false}
-                                        onChange={(e) => {
-                                          const isChecking = e.target.checked;
-
-                                          // Check if trying to set primary when another user in same role is already primary
-                                          if (isChecking && member.user_role) {
-                                            const existingPrimary =
-                                              formData.team_members.find(
-                                                (m, i) =>
-                                                  i !== index &&
-                                                  m.user_role ===
-                                                  member.user_role &&
-                                                  m.user_role !== '' &&
-                                                  m.is_primary
-                                              );
-
-                                            if (existingPrimary) {
-                                              // Set error and don't update the checkbox
-                                              setErrors((prev) => {
-                                                const newMemberErrors = [
-                                                  ...(prev.team_members || []),
-                                                ];
-                                                if (!newMemberErrors[index]) {
-                                                  newMemberErrors[index] = {};
-                                                }
-                                                newMemberErrors[index] = {
-                                                  ...newMemberErrors[index],
-                                                  is_primary:
-                                                    'Only one primary contact allowed per role.',
-                                                };
-                                                return {
-                                                  ...prev,
-                                                  team_members: newMemberErrors,
-                                                };
-                                              });
-                                              return; // Don't update the checkbox state
-                                            }
+                                {col.name === 'is_primary' && (
+                                  <div className='p-1 flex justify-center items-center'>
+                                    <Checkbox
+                                      checked={member.is_primary || false}
+                                      onChange={(e) => {
+                                        const isChecking = e.target.checked;
+                                        if (!isChecking) {
+                                          const roleCount =
+                                            formData.team_members.filter(
+                                              (m) =>
+                                                m.user_role === member.user_role
+                                            ).length;
+                                          if (roleCount <= 1) {
+                                            return;
                                           }
-
-                                          // If validation passes or unchecking, update normally
-                                          handleTeamMemberChange(
-                                            index,
-                                            'is_primary',
-                                            isChecking
-                                          );
-                                        }}
-                                        disabled={
-                                          isDisabled || !isCaseTeamEditable
                                         }
-                                        size='small'
-                                        sx={{
-                                          padding: 0,
+
+                                        // Check if trying to set primary when another user in same role is already primary
+                                        if (isChecking && member.user_role) {
+                                          const existingPrimary =
+                                            formData.team_members.find(
+                                              (m, i) =>
+                                                i !== index &&
+                                                m.user_role ===
+                                                member.user_role &&
+                                                m.user_role !== '' &&
+                                                m.is_primary
+                                            );
+
+                                          if (existingPrimary) {
+                                            // Set error and don't update the checkbox
+                                            setErrors((prev) => {
+                                              const newMemberErrors = [
+                                                ...(prev.team_members || []),
+                                              ];
+                                              if (!newMemberErrors[index]) {
+                                                newMemberErrors[index] = {};
+                                              }
+                                              newMemberErrors[index] = {
+                                                ...newMemberErrors[index],
+                                                is_primary:
+                                                  'Only one primary contact allowed per role.',
+                                              };
+                                              return {
+                                                ...prev,
+                                                team_members: newMemberErrors,
+                                              };
+                                            });
+                                            return; // Don't update the checkbox state
+                                          }
+                                        }
+
+                                        // If validation passes or unchecking, update normally
+                                        handleTeamMemberChange(
+                                          index,
+                                          'is_primary',
+                                          isChecking
+                                        );
+                                      }}
+                                      disabled={
+                                        isDisabled || !isCaseTeamEditable
+                                      }
+                                      size='small'
+                                      sx={{
+                                        padding: 0,
+                                        color: '#60A5FA',
+                                        '&.Mui-checked': {
                                           color: '#60A5FA',
-                                          '&.Mui-checked': {
-                                            color: '#60A5FA',
-                                          },
-                                          '&.Mui-disabled': {
-                                            color: '#CBD6E2',
-                                          },
-                                        }}
-                                      />
-                                    </div>
-                                  )
+                                        },
+                                        '&.Mui-disabled': {
+                                          color: '#CBD6E2',
+                                        },
+                                      }}
+                                    />
+                                  </div>
+                                )
                                 }
 
                                 {
@@ -1160,13 +1178,16 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
                                                   color: '#425A76',
                                                 },
                                                 '&.Mui-selected': {
-                                                  backgroundColor: 'rgba(0, 0, 0, 0.08)',
+                                                  backgroundColor:
+                                                    'rgba(0, 0, 0, 0.08)',
                                                 },
                                                 '&.Mui-selected:hover': {
-                                                  backgroundColor: 'rgba(0, 0, 0, 0.12)',
+                                                  backgroundColor:
+                                                    'rgba(0, 0, 0, 0.12)',
                                                 },
                                                 '&:hover': {
-                                                  backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                                                  backgroundColor:
+                                                    'rgba(0, 0, 0, 0.04)',
                                                 },
                                               },
                                             },
@@ -1204,8 +1225,7 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
                                         )}
                                       </Select>
                                     </div>
-                                  )
-                                }
+                                  )}
 
                                 {
                                   col.name === 'start_date' && (

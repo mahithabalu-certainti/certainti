@@ -30,13 +30,13 @@ export interface CaseTeamTableColumn {
 export const getCaseTeamTableColumns = (): CaseTeamTableColumn[] => [
   {
     name: 'user_role',
-    label: 'User Role',
+    label: 'Case User Role',
     width: '35%',
     required: true,
   },
   {
     name: 'user_name',
-    label: 'User Name',
+    label: 'Case User',
     width: '35%',
     required: true,
   },
