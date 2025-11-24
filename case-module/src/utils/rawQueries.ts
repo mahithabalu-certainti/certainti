@@ -664,7 +664,7 @@ export const fetchAdminTemplates = (page : number, limit : number, sort : string
                   break;
                 }
                 case "in" : {
-                  queryContainer.push(`${validKeyColumns} IN ${value.map((d : any) => `'${d}'`).join(',')}`)
+                  queryContainer.push(`${validKeyColumns} IN (${value.map((d : any) => `'${d}'`).join(',')})`)
                   break;
                 }
                 default : {
@@ -677,7 +677,7 @@ export const fetchAdminTemplates = (page : number, limit : number, sort : string
               switch (cond) {
                 case "equals" : {
                   queryContainer.push(`${validKeyColumns} = ${value}`)
-                  break;
+                  break
                 }
                 case "not_equals" : {
                   queryContainer.push(`${validKeyColumns} != ${value}`)
@@ -696,7 +696,7 @@ export const fetchAdminTemplates = (page : number, limit : number, sort : string
                   break;
                 }
                 case "between" : {
-                  queryContainer.push(`${validKeyColumns} BETWEEN ${value.map((d : any) => d).join(' AND ')}`)
+                  queryContainer.push(`${validKeyColumns} BETWEEN ${value['from']} AND ${value['to']}`)
                   break;
                 }
                 default : {
@@ -724,7 +724,7 @@ export const fetchAdminTemplates = (page : number, limit : number, sort : string
                   break;
                 }
                 case "between" : {
-                  queryContainer.push(`DATE(${validKeyColumns}) BETWEEN ${value.map((d: string) => `${d}`).join(' AND ')}`)
+                  queryContainer.push(`DATE(${validKeyColumns}) BETWEEN '${value['from']}' AND '${value['to']}'`)
                   break;
                 }
                 default : {

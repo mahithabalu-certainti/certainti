@@ -916,11 +916,18 @@ export const rawQueries = {
     caseRid: string,
     accountRid: string
   ) {
-    return `SELECT COUNT(project_fiscal_rid) OVER() AS total_projects FROM ${schemaName}.case_projects WHERE case_rid = '${caseRid}' AND account_rid = '${accountRid}'`;
+    return `SELECT COALESCE(COUNT(project_fiscal_rid), 0) AS total_projects FROM ${schemaName}.case_projects WHERE case_rid = '${caseRid}' AND account_rid = '${accountRid}'`;
+  },
+  getTotalProjectsCountInCase(
+    schemaName: string,
+    fiscalYear: number,
+    accountRid: string
+  ) {
+    return `SELECT COUNT(*) AS total_projects, COALESCE(SUM(total_cost_prj), 0.00) AS total_projects_cost, COALESCE(SUM(qre_final), 0.00) AS total_projects_qre_cost FROM ${schemaName}.project_fiscal WHERE account_rid = '${accountRid}' AND fiscal_year = ${fiscalYear}`;
   },
   getTotalProjectCost(schemaName: string, caseRid: string, accountRid: string) {
     return `
-    SELECT COALESCE(SUM(pf.total_cost_prj), 0) AS total_cost 
+    SELECT COALESCE(SUM(pf.total_cost_prj), 0.00) AS total_cost 
     FROM ${schemaName}.project_fiscal pf 
     LEFT JOIN ${schemaName}.case_projects cp ON cp.project_fiscal_rid = pf.rid
     WHERE
@@ -933,16 +940,28 @@ export const rawQueries = {
     schemaName: string,
     caseRid: string,
     totalprojects: any,
-    totalCost: any
+    totalCost: any,
+    caseTotalProjects? : any,
+    caseTotalProjectsCost? : any,
+    total_projects_qre_cost? : any
   ) {
-    return `UPDATE ${schemaName}.cases SET case_total_qualified_projects = ${totalprojects}, case_total_qualified_project_cost = ${totalCost} WHERE rid = '${caseRid}'`;
+    let dynamicQuery;
+    if(caseTotalProjects) dynamicQuery = `, case_total_projects = ${caseTotalProjects}, case_total_project_cost = ${caseTotalProjectsCost}, case_total_qre_cost = ${total_projects_qre_cost}`
+    else dynamicQuery = ` `
+    return `UPDATE ${schemaName}.cases SET case_total_qualified_projects = ${totalprojects}, case_total_qualified_project_cost = ${totalCost} ${dynamicQuery} WHERE rid = '${caseRid}'`;
   },
   updateCostCountInCaseSummary(
     caseRid: string,
     totalprojects: any,
-    totalCost: any
+    totalCost: any,
+    caseTotalProjects? : any,
+    caseTotalProjectsCost? : any,
+    total_projects_qre_cost? : any
   ) {
-    return `UPDATE ${MAIN_SCHEMA_NAME}.case_summary SET case_total_qualified_projects = ${totalprojects}, case_total_qualified_project_cost = ${totalCost} WHERE case_rid = '${caseRid}'`;
+    let dynamicQuery;
+    if(caseTotalProjects) dynamicQuery = `, case_total_projects = ${caseTotalProjects}, case_total_project_cost = ${caseTotalProjectsCost}, case_total_qre_cost = ${total_projects_qre_cost}`
+    else dynamicQuery = ` `
+    return `UPDATE ${MAIN_SCHEMA_NAME}.case_summary SET case_total_qualified_projects = ${totalprojects}, case_total_qualified_project_cost = ${totalCost} ${dynamicQuery} WHERE case_rid = '${caseRid}'`;
   },
   updateCostCountInCaseForDelete(
     schemaName: string,
@@ -1487,6 +1506,9 @@ export const rawQueries = {
   getTaskCategoryByRid (rid : string) {
     return `SELECT category_name FROM ${MAIN_SCHEMA_NAME}.task_category WHERE rid = '${rid}'`
   },
+  getProjectByIds (rid : string[], schemaName : string) {
+    return `SELECT * FROM ${schemaName}.project_fiscal WHERE rid IN (${rid.map((d : any) => `'${d}'`).join(',')})`
+  }
 };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 
 const keyContactRole = {
@@ -1688,8 +1710,8 @@ export const validColumnsForFilters : Record<string, string> = {
   effort_in_days : "t.effort_in_days",
   created_datetime : "t.created_datetime",
   modified_datetime : "t.modified_datetime",
-  created_by : "t.created_by",
-  modified_by : "t.modified_by",
+  created_by_name : "CONCAT(u.first_name,' ', u.last_name)",
+  modified_by_name : "CONCAT(uu.first_name,' ', uu.last_name)",
   sequence_no : "t.sequence_no",
   task_type_rid : "t.task_type_rid",
   task_description : "t.task_description",
@@ -1710,8 +1732,8 @@ export const validFilterColumnTypes : Record<string, string> = {
   effort_in_days : "number",
   created_datetime : "date",
   modified_datetime : "date",
-  created_by : "string",
-  modified_by : "string",
+  created_by_name : "string",
+  modified_by_name : "string",
   sequence_no : "number",
   task_type_rid : "string",
   task_description : "string",
