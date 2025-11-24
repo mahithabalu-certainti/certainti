@@ -15,6 +15,9 @@ interface CaseProjectAttributes {
   project_rid?: string;
   project_fiscal_rid?: string;
   project_group?: string;
+  project_code : string
+  fiscal_year : number
+  max_ai_interaction : number
 }
 
 export interface CaseProjectCreationAttributes
@@ -36,6 +39,9 @@ export class CaseProject
   public project_rid?: string;
   public project_fiscal_rid?: string;
   public project_group?: string;
+  public project_code! : string
+  public fiscal_year! : number
+  public max_ai_interaction! : number
 
   static initialize(
     sequelize: Sequelize,
@@ -68,6 +74,9 @@ export class CaseProject
         project_rid: { type: DataTypes.STRING(50), allowNull: true },
         project_fiscal_rid: { type: DataTypes.STRING(50), allowNull: true },
         project_group: { type: DataTypes.TEXT, allowNull: true },
+        project_code : {type : DataTypes.STRING, allowNull : true},
+        fiscal_year : {type : DataTypes.BIGINT, allowNull : true},
+        max_ai_interaction : {type : DataTypes.INTEGER, allowNull : true}
       },
       {
         sequelize,

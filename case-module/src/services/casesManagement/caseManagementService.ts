@@ -5,7 +5,7 @@ import { CaseManagementSchemaService } from "./schemaService";
 import { HttpStatus, rawQueries, STATUS_MESSAGE } from "../../utils/constants";
 import { logMessage, setTaskTemplateData } from "../../utils/helpers";
 import CaseSchemaService from "../cases/schemaService";
-import { AdminTaskTemplatePayloadType, AdminTaskTemplateResponseTypes, caseStatusType, checkListTypes, CreateTaskTemplateType, ICreateChecklist, ICreateChecklistTemplate, ICreateEmailTemplate, MilestoneTypes, priorityTypes, UpdateTaskTemplateType, WeightageType } from "../../utils/types";
+import { AdminTaskTemplatePayloadType, AdminTaskTemplateResponseTypes, caseStatusType, checkListTypes, CreateTaskTemplateType, ICreateChecklist, ICreateChecklistTemplate, ICreateEmailTemplate, MilestoneTypes, priorityTypes, TaskCategoryType, UpdateTaskTemplateType, WeightageType } from "../../utils/types";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { fetchAdminTemplates, fetchTaskWeightage } from "../../utils/rawQueries";
 
@@ -1004,7 +1004,13 @@ async listEmailTemplates (
         data : []
       }
     }
+  }
 
+  async getTaskCategoryList () {
+    const mainDb = await this.getMainDb();
+    const result = await mainDb.query<TaskCategoryType>(rawQueries.getTaskCategoryList(), {type : QueryTypes.SELECT});
+    if(result.length > 0) return result;
+    else return []
   }
 
 }

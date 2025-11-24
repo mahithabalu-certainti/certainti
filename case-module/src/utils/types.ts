@@ -206,6 +206,7 @@ export type assignProjectType = {
   modified_datetime : Date,
   case_total_projects? : number | null,
   case_total_project_cost : number | null,
+  fiscal_year : number
   projects : projectType[]
 }
 
@@ -213,6 +214,7 @@ type projectType = {
   project_rid : string,
   project_fiscal_rid : string,
   project_group : string,
+  project_code : string
 }
 
 export interface ICreateCaseTeam {
@@ -352,6 +354,7 @@ export type CreateTaskTemplateType = {
   task_description : string,
   workflow_connector : WorkflowConnectorItems
   weightage_rid : string
+  task_category_rid : string
 }
 
 export type priorityTypes = {
@@ -390,7 +393,8 @@ export type UpdateTaskTemplateType = {
   milestone_template_rid : string,
   task_description : string,
   workflow_connector : WorkflowConnectorItems,
-  weightage_rid : string
+  weightage_rid : string,
+  task_category_rid : string
 }
 
 export type AdminTaskTemplateResponseTypes = {
@@ -488,6 +492,7 @@ export type CreateCaseTaskType = {
   tags : tagTypes[],
   workflow_connector : WorkflowConnectorItemsAccountLevel,
   weightage_rid : string
+  task_category_rid : string
 }
 
 export type UpdateCaseTaskType = {
@@ -510,6 +515,7 @@ export type UpdateCaseTaskType = {
   tags : tagTypes[],
   workflow_connector : WorkflowConnectorItemsAccountLevel,
   weightage_rid : string
+  task_category_rid : string
 }
 
 export type CaseTaskQueryType = {
@@ -636,6 +642,7 @@ export type TaskCardDetailsType = {
   tags : taskTags[]
   workflow_connector :  taskWorkFlowConnector[],
   weightage_rid : string
+  task_category_rid : string
 }
 export type TaskCardResponse ={
   task_details :TaskCardDetailsType
@@ -788,4 +795,9 @@ export interface IEmailMessage {
 export type WeightageType = {
   rid : string
   weightage_value : number
+}
+
+export type TaskCategoryType = {
+  rid : string
+  category_name : string
 }

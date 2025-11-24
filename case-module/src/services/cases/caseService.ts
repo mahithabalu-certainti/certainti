@@ -1011,6 +1011,7 @@ export class CaseService {
           };
         }
       }
+      data.fiscal_year = checkCaseExists.fiscal_year
       const result = await this.caseSchemaService.assignProjectToCase(
         data,
         fetchParentRnumber[0][0].r_number,
@@ -1063,6 +1064,7 @@ export class CaseService {
           };
         }
       }
+      data.fiscal_year = checkCaseExists.fiscal_year
       const result = await this.caseSchemaService.deletedAssignedProject(
         data,
         fetchParentRnumber[0][0].r_number,
@@ -2379,6 +2381,14 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
         } else {
           weightageValue = null;
         }
+        let taskCategoryValue;
+        if(result[0]?.task_details.task_category_rid !== null) {
+          const taskCategoryQuery : any = await mainDb.query(rawQueries.getTaskCategoryByRid(result[0]?.task_details.task_category_rid!));
+          taskCategoryValue = taskCategoryQuery[0][0].category_name
+        } else {
+          taskCategoryValue = null;
+        }
+
           
         let priority;
         let taskStatusType;
@@ -2509,6 +2519,8 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
           case_team_member_role_name : findRole[0][0].role_name,
           weightage_rid : resData?.task_details.weightage_rid,
           weightage_value : weightageValue,
+          task_category_rid : resData?.task_details.task_category_rid,
+          task_category_name : taskCategoryValue,
           checklists : checkListData,
           tags : resData?.task_details.tags.filter((f : taskTags) => f.tag_rid !== null).map((d : taskTags) => {
               return {

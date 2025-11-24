@@ -624,7 +624,8 @@ class CaseManagementSchemaService {
         task_type_rid : data.task_type_rid,
         milestone_template_rid : data.milestone_template_rid,
         task_description : data.task_description,
-        weightage_rid : data.weightage_rid
+        weightage_rid : data.weightage_rid,
+        task_category_rid : data.task_category_rid
       }
     } else {
       sequenceNumber = 0
