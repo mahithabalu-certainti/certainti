@@ -1011,6 +1011,7 @@ export class CaseService {
           };
         }
       }
+      data.fiscal_year = checkCaseExists.fiscal_year
       const result = await this.caseSchemaService.assignProjectToCase(
         data,
         fetchParentRnumber[0][0].r_number,
@@ -1063,6 +1064,7 @@ export class CaseService {
           };
         }
       }
+      data.fiscal_year = checkCaseExists.fiscal_year
       const result = await this.caseSchemaService.deletedAssignedProject(
         data,
         fetchParentRnumber[0][0].r_number,

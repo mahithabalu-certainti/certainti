@@ -1814,8 +1814,13 @@ return !response;
     let iterationCount: number = 0;
     let totalCount: number = 0;
     totalCount = data.projects.length;
+    const collectProjectFiscalIds = [...new Set(data.projects.map((d : any) => d.project_fiscal_rid))];
 
+    const findProjects = await this.orgDbSequelize.query(rawQueries.getProjectByIds(collectProjectFiscalIds, schemaName))
+    const mapProjectById : Map<string, any> = new Map(findProjects[0].map((d : any) => [d.rid, d]));
     for (let p of data.projects) {
+      const projectData = mapProjectById.get(p.project_fiscal_rid);
+
       await CaseProject.create({
         case_rid: data.case_rid,
         account_rid: data.account_rid,
@@ -1824,6 +1829,9 @@ return !response;
         project_rid: p.project_rid,
         project_group: p.project_group,
         project_fiscal_rid: p.project_fiscal_rid,
+        project_code : projectData.project_code,
+        fiscal_year : projectData.fiscal_year,
+        max_ai_interaction : projectData.max_ai_interaction
       });
       iterationCount += 1;
     }
@@ -1834,6 +1842,9 @@ return !response;
           data.case_rid,
           data.account_rid
         )
+      );
+      const getTotalProjects : any = await this.orgDbSequelize.query(
+        rawQueries.getTotalProjectsCountInCase(schemaName, data.fiscal_year, data.account_rid)
       );
       const getTotalProjectCost: any = await this.orgDbSequelize.query(
         rawQueries.getTotalProjectCost(
@@ -1847,14 +1858,20 @@ return !response;
           schemaName,
           data.case_rid,
           getTotalProjectCount[0][0].total_projects,
-          getTotalProjectCost[0][0].total_cost
+          getTotalProjectCost[0][0].total_cost,
+          getTotalProjects[0][0].total_projects,
+          getTotalProjects[0][0].total_projects_cost,
+          getTotalProjects[0][0].total_projects_qre_cost
         )
       );
       await this.mainDbSequelize.query(
         rawQueries.updateCostCountInCaseSummary(
           data.case_rid,
           getTotalProjectCount[0][0].total_projects,
-          getTotalProjectCost[0][0].total_cost
+          getTotalProjectCost[0][0].total_cost,
+          getTotalProjects[0][0].total_projects,
+          getTotalProjects[0][0].total_projects_cost,
+          getTotalProjects[0][0].total_projects_qre_cost
         )
       );
       if (totalCount === 1) {

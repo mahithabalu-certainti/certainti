@@ -206,6 +206,7 @@ export type assignProjectType = {
   modified_datetime : Date,
   case_total_projects? : number | null,
   case_total_project_cost : number | null,
+  fiscal_year : number
   projects : projectType[]
 }
 
@@ -213,6 +214,7 @@ type projectType = {
   project_rid : string,
   project_fiscal_rid : string,
   project_group : string,
+  project_code : string
 }
 
 export interface ICreateCaseTeam {
