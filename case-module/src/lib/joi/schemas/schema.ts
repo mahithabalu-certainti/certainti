@@ -624,9 +624,11 @@ const createActivityMeetingSchema = Joi.object({
   invitees: Joi.string().optional(),
   attendees: Joi.string().required(),
   minutes_of_meeting: Joi.string().optional().allow(""),
-  meeting_platform: Joi.string().max(255).optional().allow("").default("teams"),
-  meeting_url: Joi.string().max(1000).optional().allow(""),
-  meeting_code: Joi.string().max(255).optional().allow(""),
+  time_zone: Joi.string().required(),
+  recurrence_type: Joi.string().valid("none", "daily", "weekly", "monthly", "yearly").required(),
+  recurrence_interval: Joi.number().optional(),
+  recurrence_days: Joi.string().optional()
+
 });
 
 const updateActivityMeetingSchema = Joi.object({
@@ -641,7 +643,6 @@ const updateActivityMeetingSchema = Joi.object({
   effective_start_datetime: Joi.string().required(),
   effective_end_datetime: Joi.string().required(),
   invitees: Joi.string().optional(),
-  attendees: Joi.string().required(),
   minutes_of_meeting: Joi.string().optional().allow(""),
   meeting_participants:Joi.string().optional().allow(""),
 });
@@ -665,21 +666,19 @@ const updateActivityCallSchema = Joi.object({
 });
 
 const createActivityCallSchema = Joi.object({
-  activity_rid: Joi.string().max(255).required(),
  account_rid : Joi.string().max(255).required(),
  attach_to : Joi.string().required(),
  attachment_level : Joi.string().required(),
  fiscal_year : Joi.number().optional(),
- activity_type: Joi.string().valid("meeting").required(),
-  call_subject: Joi.string().max(500).required(),
-  start_datetime: Joi.string().required(),
-  end_datetime: Joi.string().required(),
-  invitees: Joi.array().items(Joi.string().email().required()).optional(),
-  attendees: Joi.array().items(Joi.string().email().required()).optional(),
-  description: Joi.string().optional().allow(""),
+ activity_type: Joi.string().valid("call").required(),
+  subject: Joi.string().max(500).required(),
+  effective_start_datetime: Joi.string().required(),
+  effective_end_datetime: Joi.string().required(),
+  caller_id: Joi.string().optional(),
   call_platform: Joi.string().max(255).optional().allow(""),
-  call_url: Joi.string().max(1000).optional().allow(""),
-  call_code: Joi.string().max(255).optional().allow(""),
+  minutes_of_meeting: Joi.string().optional().allow(""),
+  call_participants:Joi.string().optional().allow(""),
+
 });
 
 const updateActivityEmailSchema = Joi.object({

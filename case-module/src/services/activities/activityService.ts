@@ -544,6 +544,15 @@ export class ActivityService {
         userId,
         files
       );
+      if (result.success === false) 
+        {
+          return {
+            statusCode: HttpStatus.FAILED,
+            message: HttpStatus.FAILED_MESSAGE,
+            errorMessage: result.error,
+        }
+      }
+    
       return {
         statusCode: HttpStatus.SUCCESS,
         message: STATUS_MESSAGE.activityCreated,
