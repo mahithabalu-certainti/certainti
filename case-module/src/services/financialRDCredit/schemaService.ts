@@ -228,6 +228,71 @@ class RDCreditSchemaService {
         });
     }
 
+    async insertRDStateCreditCalculation(accountNumber: string, case_rid: string, country_code: string, region_name: string, input_params: any, computed_fields: any) {
+        const { RdCreditStateCalculations } = await this.caseModelService.getModels(accountNumber);
+        return await RdCreditStateCalculations.create({
+            case_rid,
+            country_code,
+            input_params,
+            computed_fields
+        });
+    }
+
+
+    async getRDCreditConfigStateLevel(countryName: string, mainDbSequelize: Sequelize, effectiveStart: string, effectiveEnd: string, regionName?: string, programName?: string) {
+        try {
+            if (!this.mainDbSequelize) {
+                this.mainDbSequelize = await initMainDbSequelize();
+            }
+            const results: any[] = await this.mainDbSequelize.query(
+                `
+                SELECT 
+                    country_name,
+                    region_name,
+                    credit_program_name,
+                    credit_rate,
+                    sub_con_percent,
+                    fixed_base_percentage,
+                    elect_280c_yes,
+                    elect_280c_no,
+                    threshold_amount,
+                    tier1_rate,
+                    tier2_rate,
+                    tier2_base_add,
+                    qre_cap_rate
+                FROM ${MAIN_SCHEMA_NAME}.rd_credit_config
+                WHERE LOWER(country_name) = LOWER(:countryName)
+
+                -- ProgramName filter
+                AND (
+                    (:programName IS NOT NULL AND LOWER(credit_program_name) = LOWER(:programName))
+                    OR (:programName IS NULL)
+                )
+                
+                -- Effective date filter
+                AND (:effectiveStart IS NULL OR effective_start >= CAST(:effectiveStart AS timestamptz))
+                AND (:effectiveEnd IS NULL OR effective_end <= CAST(:effectiveEnd AS timestamptz))
+            `,
+                {
+                    replacements: {
+                        countryName: countryName,
+                        regionName: regionName || null,
+                        programName: programName || null,
+                        effectiveStart: effectiveStart || null,
+                        effectiveEnd: effectiveEnd || null
+                    },
+                    type: QueryTypes.SELECT,
+                }
+            );
+
+            logMessage(`Credit config: ${JSON.stringify(results, null, 2)}`);
+            return results || null;
+        } catch (err) {
+            logMessage(`Error fetching credit config: ${err}`);
+            throw new Error("Error fetching credit config: " + (err as Error).message);
+        }
+    }
+
 
 }
 

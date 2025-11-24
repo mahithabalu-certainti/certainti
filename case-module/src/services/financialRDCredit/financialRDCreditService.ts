@@ -10,6 +10,7 @@ import { initOrgSequelize } from "../../config/orgDataSource";
 import { Decimal } from "decimal.js";
 import { Any } from "currency.js";
 import { log } from "console";
+import { stateCalculators } from "../rd-state-calculators";
 
 /**
  * 
@@ -175,6 +176,7 @@ export class FinancialRDCreditService {
 
         //---- Line 7: Average Gross Receipts
         const line7 = prior4YearsGrossReceiptsTotal.div(priorYearsCount); // usually 4
+
         //---- Line 8: Multiply line 7 by percentage on line 6 (configRRC.fixedBasePercentage)
         const line8 = line7.mul(new Decimal(configRRC.fixed_base_percentage));
 
@@ -318,4 +320,70 @@ export class FinancialRDCreditService {
         }
     }
 
+    /**
+     * 
+     * @param accountRid 
+     * @param caseRid 
+     * @param effectiveStart 
+     * @param effectiveEnd 
+     * @returns 
+     */
+    async computeRDCreditForStateLevel(accountRid: string, caseRid: string, effectiveStart: string, effectiveEnd: string) {
+        try {
+
+            const mainDb = await this.getMainDb();
+            const orgDb = await this.getOrgDb();
+
+            const fetchParentAccountRnumber: any = await mainDb.query(
+                await rawQueries.fetchParentAccount(accountRid, mainDb)
+            );
+
+            let schemaName = rawQueries.fetchSchemaName(
+                fetchParentAccountRnumber[0][0].r_number
+            );
+
+            const accountNumber = 'ACC-00001';
+            schemaName = 'trd365_00001';
+
+            const configStateLevel = await this.rdCreditSchemaService.getRDCreditConfigStateLevel("USA", mainDb, effectiveStart, effectiveEnd, "", "State R&D Credit");
+
+            const currentYearQREs = await this.rdCreditSchemaService.getCurrentYearQREs(caseRid, schemaName, orgDb); //current yer QREs
+            logMessage(`CurrentYearQREs: ${JSON.stringify(currentYearQREs)}`);
+            const prior3YearsQREs = await this.rdCreditSchemaService.getPrior3YearQREs(accountRid, 3, schemaName, orgDb);// prior 3 years QREs
+            logMessage(`Prior3YearQREs: ${JSON.stringify(prior3YearsQREs)}`);
+
+            const annualGrossReceipts = await this.rdCreditSchemaService.getAnnualGrossReceipts(accountRid, 4, schemaName, orgDb); // prior 4 years gross receipts
+            const totalGrossReceipts = new Decimal(annualGrossReceipts.reduce(
+                (sum, r) => sum + (r.grossReceipts || 0), 0));
+            logMessage(`AnnualGrossReceipts: ${JSON.stringify(annualGrossReceipts)}`);
+
+            // Iterate through each 36 state configuration and compute credits
+            for (const config of configStateLevel) {
+                logMessage(`State Level Config: ${JSON.stringify(config)}`);
+                const calculator = stateCalculators[config.region_name];
+                if (calculator) {
+                    const result = await calculator.compute(config, currentYearQREs, annualGrossReceipts, totalGrossReceipts, prior3YearsQREs, 4);
+                    logMessage(`Result for ${config.region_name}: ${JSON.stringify(result)}`);
+                    this.rdCreditSchemaService.insertRDStateCreditCalculation(accountNumber, caseRid, "USA", config.region_name, result.inputFields, result.computedFields);
+                } else {
+                    logMessage(`No calculator implemented for state: ${config.region_name}`);
+                }
+            }
+
+            return {
+                statusCode: HttpStatus.SUCCESS,
+                message: STATUS_MESSAGE.rdCreditPreviewSuccess || "RD credit calculation generated successfully",
+                data: {},
+            };
+
+        } catch (error) {
+            logMessage(`Error fetching RD Credit : ${error}`);
+
+            return {
+                statusCode: HttpStatus.FAILED,
+                message: HttpStatus.FAILED_MESSAGE,
+                errorMessage: STATUS_MESSAGE.jurisdictionFetchedFailed || "Failed to fetch",
+            };
+        }
+    }
 }

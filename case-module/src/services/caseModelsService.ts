@@ -29,6 +29,7 @@ import { WorkflowConnectorMapping } from "../models/workflowConnectorMapModel";
 import { Activities } from "../models/activitiesModel";
 import { TaskHistory } from "../models/taskHistory";
 import { RdCreditCountryCalculations } from "../models/rdCreditCountryCalcModel";
+import { RdCreditStateCalculations } from "../models/rdCreditStateCalcModel";
 
 export class CaseModelService {
   orgDbSequelize: Sequelize | null = null;
@@ -111,6 +112,7 @@ export class CaseModelService {
     const ActivitiesModel = Activities.initialize(sequelize, schemaName);
     const TaskHistoryModel = TaskHistory.initialize(sequelize, schemaName);
     const RdCreditCountryCalculationsModel = RdCreditCountryCalculations.initialize(sequelize, schemaName);
+    const RdCreditStateCalculationsModel = RdCreditStateCalculations.initialize(sequelize, schemaName);
 
     const models = {
       Case: CaseModel,
@@ -141,7 +143,8 @@ export class CaseModelService {
       CaseTaskWorkflowConnector : CaseTaskWorkflowConnectorModel,
       WorkflowConnector : WorkflowConnectorModel,
       WorkflowConnectorMapping : WorkflowConnectorMappingModel,
-      RdCreditCountryCalculations : RdCreditCountryCalculationsModel
+      RdCreditCountryCalculations : RdCreditCountryCalculationsModel,
+      RdCreditStateCalculations : RdCreditStateCalculationsModel
     };
 
     this.modelCache.set(schemaName, models);

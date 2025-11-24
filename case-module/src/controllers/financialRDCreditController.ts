@@ -49,7 +49,8 @@ async function financialRDCredit(
     logMessage(JSON.stringify(value));
 
     // Step 4: Call service to create/update record
-    const result = await financialRDCreditService.computeRDCredit(value.account_rid, value.case_rid, value.effective_start, value.effective_end);
+    const resultFederal = await financialRDCreditService.computeRDCredit(value.account_rid, value.case_rid, value.effective_start, value.effective_end);
+    const resultState = await financialRDCreditService.computeRDCreditForStateLevel(value.account_rid, value.case_rid, value.effective_start, value.effective_end);
 
     // Step 5: Handle service response
     handleCustomResponse(
