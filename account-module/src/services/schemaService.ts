@@ -126,6 +126,7 @@ class SchemaService {
       await this.createCheckListTable(schemaName, sequelize);
       await this.createCheckListItemTable(schemaName, sequelize);
       await this.createActivitiesTable(schemaName, sequelize);
+      await this.createActivityAttachmentsTable(schemaName, sequelize);
       
       await transaction.commit();
     } catch (Err) {
@@ -1473,6 +1474,21 @@ class SchemaService {
 
     const indexQueries =
       rawQueries.getCreateActivitiesIndexesQueries(schemaName);
+    for (const query of indexQueries) {
+      await sequelize.query(query);
+    }
+  }
+ private async createActivityAttachmentsTable(schemaName: string, sequelize: any) {
+    await sequelize.query(
+      rawQueries.getActivityAttachmentsSequenceQuery(schemaName)
+    );
+
+    await sequelize.query(
+      rawQueries.getCreateActivityAttachmentsTableQuery(schemaName)
+    );
+
+    const indexQueries =
+      rawQueries.getCreateActivityAttachmentsIndexesQueries(schemaName);
     for (const query of indexQueries) {
       await sequelize.query(query);
     }

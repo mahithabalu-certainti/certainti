@@ -746,13 +746,20 @@ export interface IActivityMeeting {
   attendees: string[];
   subject: string;
   meeting_platform?: string;
-  meeting_url?: string;
+  meeting_invite?: string;
+  meeting_id?:string;
   effective_start_datetime: Date;
   effective_end_datetime?: Date;
+  effective_start_time: string;
+  effective_end_time: string;
   meeting_code?: string;
   minutes_of_meeting?: string;
   account_rid?: string;
   description?: string;
+  time_zone?: string;
+  recurrence_type?: string;
+  recurrence_interval?: number;
+  recurrence_days?: string[];
 }
 
 export interface IActivityCall {
@@ -766,17 +773,15 @@ export interface IActivityCall {
   fiscal_year: number;
   attach_to: string;
   attachment_level: string;
-  call_status:string;
-  call_status_rid?: string;
-  caller:string
-  attendees: JSON;
+  caller_id:string
+  meeting_participants: string[];
   call_platform?: string;
-  call_url?: string;
-  call_start_datetime: Date;
-  call_end_datetime?: Date;
-  call_code?: string;
-  description?: string;
+  effective_start_datetime: Date;
+  effective_end_datetime?: Date;
+  minutes_of_meeting?: string;
+  status_rid?: string;
   account_rid?: string;
+  subject?: string;
 }
 
 

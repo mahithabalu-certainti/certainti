@@ -2265,6 +2265,11 @@ export const rawQueries = {
       CREATE SEQUENCE IF NOT EXISTS "${schemaName}".activities_seq START 1;
     `;
   },
+  getActivityAttachmentsSequenceQuery(schemaName: string): string {
+    return `
+      CREATE SEQUENCE IF NOT EXISTS "${schemaName}".activities_attachments_seq START 1;
+    `;
+  },
   getCreateInteractionsTableQuery(schemaName: string): string {
     return `
       CREATE TABLE IF NOT EXISTS "${schemaName}".interactions (
@@ -2350,10 +2355,14 @@ export const rawQueries = {
     attach_to character varying(50),
     attachment_level character varying(50),
     activity_type character varying(50),
+    fiscal_year integer,
     status_rid character varying(50),
     effective_start_datetime timestamp without time zone,
     effective_end_datetime timestamp without time zone,
     subject character varying(255),
+    body_html text,
+    to_email json,
+    cc_email json,
     description text,
     email_sent_datetime timestamp without time zone,
     priority_rid character varying(50),
@@ -2370,8 +2379,31 @@ export const rawQueries = {
     event_time character varying(50),
     invitees_list text,
     attendees_list text,
-    mom text,
+    minutes_of_meeting text,
+    sender_email character varying(255),
+    meeting_participants json,
     CONSTRAINT activities_pkey PRIMARY KEY (rid)
+      );
+    `;
+  },
+  getCreateActivityAttachmentsTableQuery(schemaName: string): string {
+    return `
+      CREATE TABLE IF NOT EXISTS "${schemaName}".activities_attachments (
+        rid VARCHAR(50) DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+        r_number VARCHAR(20) UNIQUE DEFAULT 'ACT-' || LPAD(nextval('"${schemaName}".activities_attachments_seq')::TEXT, 10, '0'),
+    created_by character varying(50) NOT NULL,
+    modified_by character varying(50),
+    created_datetime timestamp without time zone NOT NULL DEFAULT now(),
+    modified_datetime timestamp without time zone,
+    account_rid character varying(50) NOT NULL,
+    activity_rid character varying(50) NOT NULL,
+    browse_file character varying(2000),
+    size character varying(50),
+    document_name character varying(64),
+    format character varying(50),
+    is_file_deleted boolean DEFAULT false,
+    CONSTRAINT activity_attachments_pkey PRIMARY KEY (rid),
+    CONSTRAINT activity_attachments_r_number_key UNIQUE (r_number)
       );
     `;
   },
@@ -2406,6 +2438,21 @@ export const rawQueries = {
       return `
         CREATE INDEX IF NOT EXISTS "${indexName}"
         ON "${schemaName}"."checklists"("${field}");
+      `;
+    });
+  },
+   getCreateActivityAttachmentsIndexesQueries(schemaName: string): string[] {
+    const fieldsToIndex = [
+      "account_rid",
+      "rid",
+      "activity_rid"
+    ];
+    
+    return fieldsToIndex.map(field => {
+      const indexName = `${schemaName}_activity_attachments_${field}_idx`;
+      return `
+        CREATE INDEX IF NOT EXISTS "${indexName}"
+        ON "${schemaName}"."activity_attachments"("${field}");
       `;
     });
   },
