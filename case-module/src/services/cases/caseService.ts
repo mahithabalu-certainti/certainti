@@ -1322,7 +1322,8 @@ export class CaseService {
     data: any,
     filters: Record<string, any>,
     userId: string,
-    apiType: string
+    apiType: string,
+    isDropdownList? : boolean
   ): Promise<{
     statusCode: number;
     message: string;
@@ -1330,6 +1331,7 @@ export class CaseService {
     data?: { caseTeamMembers: any };
   }> {
     try {
+      const mainDb = await this.getMainDb()
       const { accountNumber } =
         await this.caseSchemaService.fetchValidAccountNumberById(
           data.account_rid
@@ -1343,13 +1345,15 @@ export class CaseService {
           errorMessage: "Invalid account ID",
         };
       }
+      const activeStatusRid : any = await mainDb.query(rawQueries.getActiveStatusId());
       const caseTeamMembers = await this.caseSchemaService.listCaseTeamMembers(
         accountNumber,
         data,
         userId,
-        apiType
+        apiType,
+        isDropdownList,
+        activeStatusRid[0][0].rid
       );
-
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
@@ -1894,7 +1898,9 @@ export class CaseService {
         if(isCaseExists) {
         const [getTaskStatus] = await mainDb.query<TaskTypeResponse>(rawQueries.getSpecificTaskStatus(), {type : QueryTypes.SELECT})
         data.task_status_rid = getTaskStatus?.rid! || ''
-        const getActiveStatusId : any = await mainDb.query(rawQueries.getActiveStatusId());   
+        const getActiveStatusId : any = await mainDb.query(rawQueries.getActiveStatusId());  
+        const findUserRoleId = await this.caseSchemaService.fetchAssignedToRole(data.assigned_to, data.case_rid, data.account_rid,fetchParentNumber[0][0].r_number);
+        data.case_team_member_role_rid = findUserRoleId?.role_rid!
         const result = await this.caseSchemaService.createUserLevelTask(data, fetchParentNumber[0][0].r_number, transaction, getActiveStatusId[0][0].rid, isCaseExists.fiscal_year)
         if(result.statusCode === HttpStatus.SUCCESS) {
           await transaction.commit()
@@ -2516,7 +2522,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
           checklist_rid : resData?.task_details.checklists.rid,
           checklist_name : resData?.task_details.checklists.checklist_name,
           case_team_member_role_rid : resData?.task_details.case_team_member_role_rid,
-          case_team_member_role_name : findRole[0][0].role_name,
+          case_team_member_role_name : findRole[0][0] !== undefined ? findRole[0][0].role_name : null,
           weightage_rid : resData?.task_details.weightage_rid,
           weightage_value : weightageValue,
           task_category_rid : resData?.task_details.task_category_rid,
