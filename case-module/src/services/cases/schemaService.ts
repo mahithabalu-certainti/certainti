@@ -791,7 +791,7 @@ return !response;
                 account_name: accountInfo?.account_name,
                 country_code: accountInfo?.country_code,
                 case_name: d.case_name,
-                case_full_name: accountInfo?.account_name + ' - ' + accountInfo?.country_code + ' - ' + d.fiscal_year + ' - ' + d.case_name,
+                case_full_name: accountInfo?.account_name + '-' + accountInfo?.country_code + '-' + d.fiscal_year + '-' + d.case_name,
                 description: d.description,
                 fiscal_year: d.fiscal_year,
                 case_owner_rid: d.case_owner_rid,
@@ -822,6 +822,7 @@ return !response;
         value: any,
         field: any
       ) => {
+
         if (!conditions || !field) return data;
         const val = value[conditions];
         let result;
@@ -830,7 +831,6 @@ return !response;
             result = data.filter((d: any) => {
               const fieldValue = d[field];
               const filterValue = val;
-              logMessage(`Comparing "${fieldValue}" === "${filterValue}"`);
               return fieldValue?.toLowerCase() === filterValue?.toLowerCase();
             });
             break;

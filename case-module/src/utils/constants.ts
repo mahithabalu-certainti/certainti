@@ -1377,7 +1377,7 @@ export const rawQueries = {
     `;
   },
   fetchProjectInfoById(schemaName: string){
-    return `SELECT rid, project_code, currency_rid FROM ${schemaName}.project_fiscal WHERE rid = :projectId LIMIT 1`;
+    return `SELECT rid, project_code, currency_rid,fiscal_year FROM ${schemaName}.project_fiscal WHERE rid = :projectId LIMIT 1`;
   },
   listUsersByIds(userIds: any)
   {
@@ -1536,6 +1536,7 @@ export const filterTypesForCaseSummary: Record<string, any> = {
   total_subcon_prj: "number",
   total_nonlabor_prj: "number",
   total_fte_prj: "number",
+  case_name: "string",
   
 };
 
@@ -1609,7 +1610,7 @@ export const filtersColumnsForCaseSummary: Record<string, string> = {
   createdAt: "createdAt",
   case_owner_name: "case_owner_rid",
   filing_type_name: "filing_type_rid",
-  case_name: "case_full_name",
+  case_name: "case_name",
   submitted_datetime: "submitted_datetime",
   approved_datetime: "approved_datetime",
   case_total_project_cost: "case_total_project_cost",
