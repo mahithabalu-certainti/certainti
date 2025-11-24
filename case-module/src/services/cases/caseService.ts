@@ -2403,7 +2403,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
         let tagMap : Map<string, string> = new Map();
         let checklistItemsStatusIds : string[];
         let checkListData : any
-        let taskNameMap : Map<string, string>;
+        let taskNameMap : Map<string, string> = new Map()
         let relationshipConnectorMap : Map<string, string>;
         let sourceIds;
         let targetIds;
@@ -2415,10 +2415,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
           sourceIds = [...new Set(result[0]?.task_details.workflow_connector.map((d : taskWorkFlowConnector) => d.source_rid))]
           targetIds = [...new Set(result[0]?.task_details.workflow_connector.map((d : taskWorkFlowConnector) => d.target_rid))]
           relationshipConnectorIds = [...new Set(result[0]?.task_details.workflow_connector.map((d : taskWorkFlowConnector) => d.relationship_connector_rid))]
-          taskIds.push(sourceIds.map((d : any) => d))
-          taskIds.push(targetIds.map((d : any) => d))
-
-          
+          taskIds.push(...sourceIds, ...targetIds)
           let query = rawQueries.getTaskNames(taskIds, schemaName);
           let relationshipQuery = rawQueries.getWorkflowConnectors(relationshipConnectorIds);
           if(query) {
@@ -2489,6 +2486,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
             }) : [],
           }
         let finalWorkflowData
+        
         if(result[0]?.task_details.workflow_connector === null) {
           finalWorkflowData = []
         } else {
