@@ -16,7 +16,6 @@ export const TASK_TEMPLATE = gql`
         task_name
         sequence_no
         effort_in_days
-        reminder_interval
         effective_start_datetime
         effective_end_datetime
         role_name

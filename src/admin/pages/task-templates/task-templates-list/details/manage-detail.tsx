@@ -95,6 +95,16 @@ export const ManageDetailComponent = ({
       label: 'Status',
       value: getValueOrDefault(data?.status_name) || '-',
     },
+    {
+      // key: 'weightage_rid',
+      label: 'Task Weight Age',
+      value: getValueOrDefault(data?.weightage_value) || '-',
+    },
+    {
+      // key: 'task_category_rid',
+      label: 'Task Category',
+      value: getValueOrDefault(data?.category_name) || '-',
+    },
   ];
 
   const accessInfo: DetailItem[] = [
