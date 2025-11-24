@@ -67,7 +67,8 @@ export interface TaskTemplateDetails {
   milestone_name?: string;
   role_name?: string;
   effort_in_days?: number;
-
+  category_name?: string;
+  weightage_value?: string;
   workflow_connector?: {
     source_rid: string;
     relationship_connector_rid?: string;
@@ -106,6 +107,8 @@ export interface TaskTemplateFormData {
   checklist_rid: string;
   milestone_rid: string;
   target_rid?: string;
+  task_category_rid?: string;
+  weightage_rid?: string;
   relationship_connector_rid?: string;
   workflow_connector?: {
     source_rid: string;
@@ -128,6 +131,8 @@ export type TaskTemplateFormPayload = {
   rid?: string;
   target_rid?: string;
   relationship_connector_rid?: string;
+  weightage_rid?: string;
+  task_category_rid?: string;
   status_rid?: string;
   workflow_connector?: {
     source_rid: string;
@@ -160,6 +165,14 @@ export interface TaskcheckListType {
   rid: string;
   checklist_name: string;
 }
+export interface TaskCategoryListType {
+  rid: string;
+  category_name: string;
+}
+export interface TaskWeightAgeListType {
+  rid: string;
+  weightage_value: string;
+}
 export interface TaskRoleType {
   rid: string;
   role_name: string;
@@ -190,6 +203,20 @@ export interface TaskPriorityTypeResponse {
   statusCodeValue: string;
   statusMessage: string;
   data: TaskPriorityType[];
+}
+export interface TaskCategoryTypeResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: TaskCategoryListType[];
+}
+export interface TaskWeightAgeTypeResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: {
+    data: TaskWeightAgeListType[];
+  };
 }
 export interface TaskCheckListTypeResponse {
   statusCode: number;
