@@ -677,7 +677,7 @@ export const fetchAdminTemplates = (page : number, limit : number, sort : string
               switch (cond) {
                 case "equals" : {
                   queryContainer.push(`${validKeyColumns} = ${value}`)
-                  break;
+                  break
                 }
                 case "not_equals" : {
                   queryContainer.push(`${validKeyColumns} != ${value}`)
