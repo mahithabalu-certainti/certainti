@@ -14,6 +14,12 @@ import {
 import TaskFieldsSection from './task-fields-section';
 import type { UserOption } from './types';
 import type { RoleOption } from '../../consultant/services/case-team/case-team-service';
+import {
+  useGetTaskConnectorTypes,
+  useGetTaskTemplate,
+  useWeightageList,
+  useTaskCategoryList,
+} from '../../admin/service/task-template/task-template-service';
 
 // Form data interface
 export interface TaskFormData {
@@ -30,6 +36,14 @@ export interface TaskFormData {
   selectedRoleRid: string;
   selectedChecklist: string;
   selectedChecklistRid: string;
+  linkedType: string;
+  linkedTypeRid: string;
+  linkTaskTypes: string[];
+  linkTaskTypeRids: string[];
+  weightage: string;
+  weightageRid: string;
+  category: string;
+  categoryRid: string;
 }
 
 interface TaskCreateModalProps {
@@ -99,6 +113,14 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
   const [selectedRoleRid, setSelectedRoleRid] = useState('');
   const [selectedChecklist, setSelectedChecklist] = useState('');
   const [selectedChecklistRid, setSelectedChecklistRid] = useState('');
+  const [linkedType, setLinkedType] = useState('');
+  const [linkedTypeRid, setLinkedTypeRid] = useState('');
+  const [linkTaskTypes, setLinkTaskTypes] = useState<string[]>([]);
+  const [linkTaskTypeRids, setLinkTaskTypeRids] = useState<string[]>([]);
+  const [weightage, setWeightage] = useState('');
+  const [weightageRid, setWeightageRid] = useState('');
+  const [category, setCategory] = useState('');
+  const [categoryRid, setCategoryRid] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -113,6 +135,66 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
       }))
       : availableUsers.map(enrichUserOption);
   }, [collaboratorData, availableUsers]);
+
+  // Fetch connector types and task templates
+  const taskConnectorTypesQuery = useGetTaskConnectorTypes();
+  const taskTemplatesQuery = useGetTaskTemplate({ search: '' });
+
+  const connectorTypesData = useMemo(() => {
+    if (taskConnectorTypesQuery.data?.data && Array.isArray(taskConnectorTypesQuery.data.data)) {
+      return taskConnectorTypesQuery.data.data.map(
+        (connector: { rid: string; relationship_type: string }) => ({
+          id: connector.rid,
+          name: connector.relationship_type,
+        })
+      );
+    }
+    return [];
+  }, [taskConnectorTypesQuery.data]);
+
+  const taskTemplatesData = useMemo(() => {
+    if (taskTemplatesQuery.data?.data && Array.isArray(taskTemplatesQuery.data.data)) {
+      return taskTemplatesQuery.data.data.map(
+        (template: { rid: string; task_name: string }) => ({
+          id: template.rid,
+          name: template.task_name,
+        })
+      );
+    }
+    return [];
+  }, [taskTemplatesQuery.data]);
+
+  // Fetch weightage and category lists
+  const weightageListQuery = useWeightageList();
+  const categoryListQuery = useTaskCategoryList();
+
+  const weightageData = useMemo(() => {
+    // Handle nested data.data structure
+    const response = weightageListQuery.data as any;
+    const dataArray = response?.data?.data || response?.data;
+    if (dataArray && Array.isArray(dataArray)) {
+      return dataArray.map(
+        (item: { rid: string; weightage_value: number }) => ({
+          id: item.rid,
+          name: String(item.weightage_value),
+        })
+      );
+    }
+    return [];
+  }, [weightageListQuery.data]);
+
+  const categoryData = useMemo(() => {
+    const response = categoryListQuery.data as any;
+    if (response?.data && Array.isArray(response.data)) {
+      return response.data.map(
+        (item: { rid: string; category_name: string }) => ({
+          id: item.rid,
+          name: item.category_name,
+        })
+      );
+    }
+    return [];
+  }, [categoryListQuery.data]);
 
   // Initialize status to "To Do" when statusData changes
   useEffect(() => {
@@ -138,6 +220,14 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
     setSelectedRoleRid('');
     setSelectedChecklist('');
     setSelectedChecklistRid('');
+    setLinkedType('');
+    setLinkedTypeRid('');
+    setLinkTaskTypes([]);
+    setLinkTaskTypeRids([]);
+    setWeightage('');
+    setWeightageRid('');
+    setCategory('');
+    setCategoryRid('');
     setErrors({});
     onClose();
   };
@@ -178,6 +268,14 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
         selectedRoleRid,
         selectedChecklist,
         selectedChecklistRid,
+        linkedType,
+        linkedTypeRid,
+        linkTaskTypes,
+        linkTaskTypeRids,
+        weightage,
+        weightageRid,
+        category,
+        categoryRid,
       };
 
       console.log('Submitting form data:', formData);
@@ -423,10 +521,18 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
               color: '#3B82F6',
             }))}
             availableUsers={enrichedUsers}
+            connectorTypesData={connectorTypesData}
+            taskTemplatesData={taskTemplatesData}
+            weightageData={weightageData}
+            categoryData={categoryData}
             selectedChecklist={selectedChecklist}
             selectedPriority={selectedPriority}
             selectedTags={selectedTags}
             selectedAssignee={selectedAssignee}
+            selectedLinkedType={linkedType}
+            selectedLinkTaskTypes={linkTaskTypes}
+            selectedWeightage={weightage}
+            selectedCategory={category}
             onStatusChange={(statusName: string) => {
               setSelectedStatus(statusName);
               const statusItem = statusData?.find((s) => s.name === statusName);
@@ -455,6 +561,41 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
               if (checklistItem) {
                 setSelectedChecklistRid(checklistItem.id);
                 setErrors((prev) => ({ ...prev, checklistTemplate: '' }));
+              }
+            }}
+            onLinkedTypeChange={(value) => {
+              setLinkedType(value);
+              const connectorItem = connectorTypesData?.find(
+                (c) => c.name === value
+              );
+              if (connectorItem) {
+                setLinkedTypeRid(connectorItem.id);
+              }
+            }}
+            onLinkTaskTypesChange={(values) => {
+              setLinkTaskTypes(values);
+              const rids = values.map((value) => {
+                const template = taskTemplatesData?.find((t) => t.name === value);
+                return template?.id || '';
+              }).filter((rid) => rid !== '');
+              setLinkTaskTypeRids(rids);
+            }}
+            onWeightageChange={(value) => {
+              setWeightage(value);
+              const weightageItem = weightageData?.find(
+                (w) => w.name === value
+              );
+              if (weightageItem) {
+                setWeightageRid(weightageItem.id);
+              }
+            }}
+            onCategoryChange={(value) => {
+              setCategory(value);
+              const categoryItem = categoryData?.find(
+                (c: { id: string; name: string }) => c.name === value
+              );
+              if (categoryItem) {
+                setCategoryRid(categoryItem.id);
               }
             }}
             onTagsChange={setSelectedTags}

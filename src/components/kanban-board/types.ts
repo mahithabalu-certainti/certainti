@@ -82,6 +82,14 @@ export interface Task {
   account_rid?: string;
   case_rid?: string;
   caseTeamMemberRoleName?: string;
+  linkedType?: string;
+  linkedTypeRid?: string;
+  linkTaskTypes?: string[];
+  linkTaskTypeRids?: string[];
+  weightage?: string;
+  weightageRid?: string;
+  category?: string;
+  categoryRid?: string;
 }
 
 export interface TaskCard {

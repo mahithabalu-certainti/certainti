@@ -205,7 +205,6 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
           task_description: taskData.task_description || '',
           status_rid: statusRid,
           priority_rid: taskData.priority_rid || '',
-          case_team_member_role_rid: taskData.case_team_member_role_rid || '',
           effective_start_datetime: taskData.effective_start_datetime || '',
           effective_end_datetime: taskData.effective_end_datetime || '',
           milestone_template_rid: columnId,
@@ -213,10 +212,49 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
             (
               taskData as Partial<TaskCard> & {
                 checklist_template_rid?: string;
+                workflow_connector?: {
+                  source_rid: string;
+                  relationship_connector_rid?: string;
+                  target_rid?: string[];
+                };
+                weightage_rid?: string;
+                task_category_rid?: string;
               }
             ).checklist_template_rid || '',
           tags: tagsArray,
-          workflow_connector: {},
+          workflow_connector: (
+            taskData as Partial<TaskCard> & {
+              workflow_connector?: {
+                source_rid: string;
+                relationship_connector_rid?: string;
+                target_rid?: string[];
+              };
+            }
+          ).workflow_connector || {
+            source_rid: '',
+          },
+          ...((
+            taskData as Partial<TaskCard> & {
+              weightage_rid?: string;
+            }
+          ).weightage_rid && {
+            weightage_rid: (
+              taskData as Partial<TaskCard> & {
+                weightage_rid?: string;
+              }
+            ).weightage_rid,
+          }),
+          ...((
+            taskData as Partial<TaskCard> & {
+              task_category_rid?: string;
+            }
+          ).task_category_rid && {
+            task_category_rid: (
+              taskData as Partial<TaskCard> & {
+                task_category_rid?: string;
+              }
+            ).task_category_rid,
+          }),
         };
 
         createTaskMutation.mutate(taskPayload, {

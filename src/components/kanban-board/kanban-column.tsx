@@ -51,6 +51,13 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
       if (onCreateTask) {
         const taskData: Partial<TaskCard> & {
           checklist_template_rid?: string;
+          workflow_connector?: {
+            source_rid: string;
+            relationship_connector_rid?: string;
+            target_rid?: string[];
+          };
+          weightage_rid?: string;
+          task_category_rid?: string;
         } = {
           task_name: formData.taskTitle,
           task_description: formData.description,
@@ -64,10 +71,24 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
             'YYYY-MM-DD HH:mm:ss'
           ),
           assigned_to: formData.selectedAssignee,
-          case_team_member_role_rid: formData.selectedRoleRid,
           tags: formData.selectedTags,
           ...(formData.selectedChecklistRid && {
             checklist_template_rid: formData.selectedChecklistRid,
+          }),
+          workflow_connector: {
+            source_rid: '',
+            ...(formData.linkedTypeRid && {
+              relationship_connector_rid: formData.linkedTypeRid,
+            }),
+            ...(formData.linkTaskTypeRids && formData.linkTaskTypeRids.length > 0 && {
+              target_rid: formData.linkTaskTypeRids,
+            }),
+          },
+          ...(formData.weightageRid && {
+            weightage_rid: formData.weightageRid,
+          }),
+          ...(formData.categoryRid && {
+            task_category_rid: formData.categoryRid,
           }),
         };
 
@@ -134,11 +155,10 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
         <button
           onClick={() => setIsCreateModalOpen(true)}
           disabled={isCreateTaskDisabled}
-          className={`w-full flex items-center gap-2 p-3 rounded-lg border-2 border-dashed transition-colors duration-200 ${
-            isCreateTaskDisabled
-              ? 'border-slate-300 text-slate-400 cursor-not-allowed'
-              : 'border-slate-300 text-slate-500 hover:border-slate-400 hover:text-slate-600'
-          }`}
+          className={`w-full flex items-center gap-2 p-3 rounded-lg border-2 border-dashed transition-colors duration-200 ${isCreateTaskDisabled
+            ? 'border-slate-300 text-slate-400 cursor-not-allowed'
+            : 'border-slate-300 text-slate-500 hover:border-slate-400 hover:text-slate-600'
+            }`}
           style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
         >
           <AddIcon size={18} />

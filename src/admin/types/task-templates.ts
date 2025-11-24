@@ -76,7 +76,6 @@ export interface TaskTemplateDetails {
     target_name?: string;
     target_rid?: string;
 
-    // ⬇️ ADD THIS
     target_data?: {
       target_rid: string;
       target_name?: string;

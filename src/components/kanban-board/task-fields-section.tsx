@@ -17,15 +17,29 @@ interface TaskFieldsSectionProps {
     initials: string;
     color: string;
   }>;
+  connectorTypesData?: Array<{ id: string; name: string }>;
+  taskTemplatesData?: Array<{ id: string; name: string }>;
+  weightageData?: Array<{ id: string; name: string }>;
+  categoryData?: Array<{ id: string; name: string }>;
   selectedChecklist: string;
   selectedPriority?: string;
   selectedTags?: string[];
   selectedAssignee?: string;
+  selectedLinkedType?: string;
+  selectedLinkTaskTypes?: string[];
+  selectedWeightage?: string;
+  selectedCategory?: string;
+  userRole?: string;
   onStatusChange: (statusName: string) => void;
   onPriorityChange: (priorityName: string) => void;
   onChecklistChange: (value: string) => void;
   onTagsChange: (newValue: string[]) => void;
   onAssigneeChange?: (userId: string) => void;
+  onLinkedTypeChange?: (value: string) => void;
+  onLinkTaskTypesChange?: (values: string[]) => void;
+  onWeightageChange?: (value: string) => void;
+  onCategoryChange?: (value: string) => void;
+  onUserRoleChange?: (value: string) => void;
   onAddCustomTag: (
     tags: Array<{ id: string; name: string; color: string }>
   ) => void;
@@ -45,15 +59,29 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
   checklistData,
   availableTags,
   availableUsers = [],
+  connectorTypesData = [],
+  taskTemplatesData = [],
+  weightageData = [],
+  categoryData = [],
   selectedChecklist,
   selectedPriority,
   selectedTags,
   selectedAssignee,
+  selectedLinkedType,
+  selectedLinkTaskTypes,
+  selectedWeightage,
+  selectedCategory,
+  userRole,
   onStatusChange,
   onPriorityChange,
   onChecklistChange,
   onTagsChange,
   onAssigneeChange,
+  onLinkedTypeChange,
+  onLinkTaskTypesChange,
+  onWeightageChange,
+  onCategoryChange,
+  onUserRoleChange,
   onAddCustomTag,
   onSetEditedTask,
   mode = 'view',
@@ -278,7 +306,7 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
                 value={selectedAssignee || ''}
                 onChange={(e) => onAssigneeChange?.(e.target.value as string)}
                 disabled={fieldDisabled.assignee}
-                width='240px'
+                width='200px'
                 error={errors.assignee}
                 renderValue={(selected) => {
                   const value = Array.isArray(selected)
@@ -628,6 +656,431 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
               </StyledSelect>
             </div>
           )}
+
+        {/* Linked Type - Single Select (Create + Edit) */}
+        {connectorTypesData && connectorTypesData.length > 0 && (
+          <div className='flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors'>
+            <div className='flex items-center gap-2'>
+              <svg
+                width='16'
+                height='16'
+                viewBox='0 0 24 24'
+                fill='none'
+                stroke='currentColor'
+                strokeWidth='2'
+                className='text-gray-500'
+              >
+                <path d='M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71'></path>
+                <path d='M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71'></path>
+              </svg>
+              <span className='text-sm text-gray-700'>Linked Type</span>
+            </div>
+            <StyledSelect
+              name='linkedType'
+              value={
+                shouldPrepopulate
+                  ? editedTask?.linkedType || selectedLinkedType || ''
+                  : selectedLinkedType || ''
+              }
+              onChange={(e) => onLinkedTypeChange?.(e.target.value as string)}
+              disabled={fieldDisabled.linkedType}
+              width='200px'
+              error={errors.linkedType}
+              renderValue={(selected) => {
+                const value = Array.isArray(selected)
+                  ? selected.join(', ')
+                  : (selected as string);
+                if (!value) {
+                  return (
+                    <span style={{ color: '#7D98B6', fontSize: '13px' }}>
+                      Choose Linked Type
+                    </span>
+                  );
+                }
+                return (
+                  <span
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      minWidth: 0,
+                      maxWidth: 'calc(100% - 24px)',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                    title={typeof value === 'string' ? value : String(value)}
+                  >
+                    {typeof value === 'string' ? value : String(value)}
+                  </span>
+                );
+              }}
+            >
+              <MenuItem
+                value=''
+                sx={{
+                  color: '#425A76',
+                  fontSize: '13px',
+                  fontWeight: '500',
+                }}
+              >
+                Choose Linked Type
+              </MenuItem>
+              {connectorTypesData.map((connector) => (
+                <MenuItem
+                  sx={{
+                    color: '#425A76',
+                    fontSize: '13px',
+                    fontWeight: '500',
+                  }}
+                  key={connector.id}
+                  value={connector.name}
+                  title={connector.name}
+                >
+                  {connector.name}
+                </MenuItem>
+              ))}
+            </StyledSelect>
+          </div>
+        )}
+
+        {/* Link Task Type - Multi-Select with Checkboxes (Create + Edit) */}
+        {taskTemplatesData && taskTemplatesData.length > 0 && (
+          <div className='flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors'>
+            <div className='flex items-center gap-2'>
+              <svg
+                width='16'
+                height='16'
+                viewBox='0 0 24 24'
+                fill='none'
+                stroke='currentColor'
+                strokeWidth='2'
+                className='text-gray-500'
+              >
+                <path d='M9 11l3 3L22 4'></path>
+                <path d='M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11'></path>
+              </svg>
+              <span className='text-sm text-gray-700'>Link Task Type</span>
+            </div>
+            <StyledSelect
+              name='linkTaskType'
+              multiple
+              value={
+                shouldPrepopulate
+                  ? editedTask?.linkTaskTypes || selectedLinkTaskTypes || []
+                  : selectedLinkTaskTypes || []
+              }
+              onChange={(e) => {
+                const value = e.target.value as string[];
+                onLinkTaskTypesChange?.(value);
+              }}
+              disabled={fieldDisabled.linkTaskType}
+              width='200px'
+              error={errors.linkTaskType}
+              renderValue={(selected) => {
+                const values = Array.isArray(selected) ? selected : [];
+                if (values.length === 0) {
+                  return (
+                    <span style={{ color: '#7D98B6', fontSize: '13px' }}>
+                      Choose Link Task Types
+                    </span>
+                  );
+                }
+                return (
+                  <span
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      minWidth: 0,
+                      maxWidth: 'calc(100% - 24px)',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                    title={values.join(', ')}
+                  >
+                    {values.join(', ')}
+                  </span>
+                );
+              }}
+            >
+              {taskTemplatesData.map((template) => {
+                const selectedValues = shouldPrepopulate
+                  ? editedTask?.linkTaskTypes || selectedLinkTaskTypes || []
+                  : selectedLinkTaskTypes || [];
+                const isSelected = selectedValues.includes(template.name);
+
+                return (
+                  <MenuItem
+                    sx={{
+                      color: '#425A76',
+                      fontSize: '13px',
+                      fontWeight: '500',
+                    }}
+                    key={template.id}
+                    value={template.name}
+                  >
+                    <input
+                      type='checkbox'
+                      checked={isSelected}
+                      readOnly
+                      style={{
+                        marginRight: '8px',
+                        cursor: 'pointer',
+                      }}
+                    />
+                    {template.name}
+                  </MenuItem>
+                );
+              })}
+            </StyledSelect>
+          </div>
+        )}
+
+        {/* User Role - Single Select (Create Only) */}
+        {mode !== 'view' && userRole && (
+          <div className='flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors'>
+            <div className='flex items-center gap-2'>
+              <svg
+                width='16'
+                height='16'
+                viewBox='0 0 24 24'
+                fill='none'
+                stroke='currentColor'
+                strokeWidth='2'
+                className='text-gray-500'
+              >
+                <path d='M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2'></path>
+                <circle cx='9' cy='7' r='4'></circle>
+                <path d='M23 21v-2a4 4 0 0 0-3-3.87'></path>
+                <path d='M16 3.13a4 4 0 0 1 0 7.75'></path>
+              </svg>
+              <span className='text-sm text-gray-700'>User Role</span>
+            </div>
+            <StyledSelect
+              name='userRole'
+              value={userRole || ''}
+              onChange={(e) => onUserRoleChange?.(e.target.value as string)}
+              disabled={fieldDisabled.userRole}
+              width='200px'
+              error={errors.userRole}
+              renderValue={(selected) => {
+                const value = Array.isArray(selected)
+                  ? selected.join(', ')
+                  : (selected as string);
+                if (!value) {
+                  return (
+                    <span style={{ color: '#7D98B6', fontSize: '13px' }}>
+                      Choose User Role
+                    </span>
+                  );
+                }
+                return (
+                  <span
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      minWidth: 0,
+                      maxWidth: 'calc(100% - 24px)',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                    title={typeof value === 'string' ? value : String(value)}
+                  >
+                    {typeof value === 'string' ? value : String(value)}
+                  </span>
+                );
+              }}
+            >
+              <MenuItem
+                value=''
+                sx={{
+                  color: '#425A76',
+                  fontSize: '13px',
+                  fontWeight: '500',
+                }}
+              >
+                Choose User Role
+              </MenuItem>
+              {/* Role options would come from props if needed */}
+            </StyledSelect>
+          </div>
+        )}
+
+        {/* Weightage - Single Select (Create + Edit) */}
+        {weightageData && weightageData.length > 0 && (
+          <div className='flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors'>
+            <div className='flex items-center gap-2'>
+              <svg
+                width='16'
+                height='16'
+                viewBox='0 0 24 24'
+                fill='none'
+                stroke='currentColor'
+                strokeWidth='2'
+                className='text-gray-500'
+              >
+                <circle cx='12' cy='12' r='10'></circle>
+                <line x1='12' y1='8' x2='12' y2='12'></line>
+                <line x1='12' y1='16' x2='12.01' y2='16'></line>
+              </svg>
+              <span className='text-sm text-gray-700'>Weightage</span>
+            </div>
+            <StyledSelect
+              name='weightage'
+              value={
+                shouldPrepopulate
+                  ? editedTask?.weightage || selectedWeightage || ''
+                  : selectedWeightage || ''
+              }
+              onChange={(e) => onWeightageChange?.(e.target.value as string)}
+              disabled={fieldDisabled.weightage}
+              width='200px'
+              error={errors.weightage}
+              renderValue={(selected) => {
+                const value = Array.isArray(selected)
+                  ? selected.join(', ')
+                  : (selected as string);
+                if (!value) {
+                  return (
+                    <span style={{ color: '#7D98B6', fontSize: '13px' }}>
+                      Choose Weightage
+                    </span>
+                  );
+                }
+                return (
+                  <span
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      minWidth: 0,
+                      maxWidth: 'calc(100% - 24px)',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                    title={typeof value === 'string' ? value : String(value)}
+                  >
+                    {typeof value === 'string' ? value : String(value)}
+                  </span>
+                );
+              }}
+            >
+              <MenuItem
+                value=''
+                sx={{
+                  color: '#425A76',
+                  fontSize: '13px',
+                  fontWeight: '500',
+                }}
+              >
+                Choose Weightage
+              </MenuItem>
+              {weightageData.map((item) => (
+                <MenuItem
+                  sx={{
+                    color: '#425A76',
+                    fontSize: '13px',
+                    fontWeight: '500',
+                  }}
+                  key={item.id}
+                  value={item.name}
+                  title={item.name}
+                >
+                  {item.name}
+                </MenuItem>
+              ))}
+            </StyledSelect>
+          </div>
+        )}
+
+        {/* Category - Single Select (Create + Edit) */}
+        {categoryData && categoryData.length > 0 && (
+          <div className='flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors'>
+            <div className='flex items-center gap-2'>
+              <svg
+                width='16'
+                height='16'
+                viewBox='0 0 24 24'
+                fill='none'
+                stroke='currentColor'
+                strokeWidth='2'
+                className='text-gray-500'
+              >
+                <rect x='3' y='3' width='7' height='7'></rect>
+                <rect x='14' y='3' width='7' height='7'></rect>
+                <rect x='14' y='14' width='7' height='7'></rect>
+                <rect x='3' y='14' width='7' height='7'></rect>
+              </svg>
+              <span className='text-sm text-gray-700'>Task Category</span>
+            </div>
+            <StyledSelect
+              name='category'
+              value={
+                shouldPrepopulate
+                  ? editedTask?.category || selectedCategory || ''
+                  : selectedCategory || ''
+              }
+              onChange={(e) => onCategoryChange?.(e.target.value as string)}
+              disabled={fieldDisabled.category}
+              width='200px'
+              error={errors.category}
+              renderValue={(selected) => {
+                const value = Array.isArray(selected)
+                  ? selected.join(', ')
+                  : (selected as string);
+                if (!value) {
+                  return (
+                    <span style={{ color: '#7D98B6', fontSize: '13px' }}>
+                      Choose Category
+                    </span>
+                  );
+                }
+                return (
+                  <span
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      minWidth: 0,
+                      maxWidth: 'calc(100% - 24px)',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                    title={typeof value === 'string' ? value : String(value)}
+                  >
+                    {typeof value === 'string' ? value : String(value)}
+                  </span>
+                );
+              }}
+            >
+              <MenuItem
+                value=''
+                sx={{
+                  color: '#425A76',
+                  fontSize: '13px',
+                  fontWeight: '500',
+                }}
+              >
+                Choose Category
+              </MenuItem>
+              {categoryData.map((item) => (
+                <MenuItem
+                  sx={{
+                    color: '#425A76',
+                    fontSize: '13px',
+                    fontWeight: '500',
+                  }}
+                  key={item.id}
+                  value={item.name}
+                  title={item.name}
+                >
+                  {item.name}
+                </MenuItem>
+              ))}
+            </StyledSelect>
+          </div>
+        )}
       </div>
     </div>
   );

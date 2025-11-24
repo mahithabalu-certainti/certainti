@@ -37,6 +37,12 @@ import {
   type TaskAttachmentRaw,
 } from '../../consultant/pages/case/case-details/work-breakdown/helper';
 import { useToast } from '../../hooks';
+import {
+  useGetTaskConnectorTypes,
+  useGetTaskTemplate,
+  useWeightageList,
+  useTaskCategoryList,
+} from '../../admin/service/task-template/task-template-service';
 
 interface TaskDetailModalPropsExtended
   extends Omit<TaskDetailModalProps, 'tagData'> {
@@ -111,6 +117,10 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   );
   const [originalTask, setOriginalTask] = useState<Task | null>(null);
   const [isAddingCollaborator, setIsAddingCollaborator] = useState(false);
+  const [linkedType, setLinkedType] = useState('');
+  const [linkTaskTypes, setLinkTaskTypes] = useState<string[]>([]);
+  const [weightage, setWeightage] = useState('');
+  const [category, setCategory] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const { successToast, errorToast } = useToast();
@@ -291,6 +301,66 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       setAvailableTags(tagData);
     }
   }, [availableTagOptions, tagData]);
+
+  // Fetch connector types and task templates
+  const taskConnectorTypesQuery = useGetTaskConnectorTypes();
+  const taskTemplatesQuery = useGetTaskTemplate({ search: '' });
+
+  const connectorTypesData = useMemo(() => {
+    if (taskConnectorTypesQuery.data?.data && Array.isArray(taskConnectorTypesQuery.data.data)) {
+      return taskConnectorTypesQuery.data.data.map(
+        (connector: { rid: string; relationship_type: string }) => ({
+          id: connector.rid,
+          name: connector.relationship_type,
+        })
+      );
+    }
+    return [];
+  }, [taskConnectorTypesQuery.data]);
+
+  const taskTemplatesData = useMemo(() => {
+    if (taskTemplatesQuery.data?.data && Array.isArray(taskTemplatesQuery.data.data)) {
+      return taskTemplatesQuery.data.data.map(
+        (template: { rid: string; task_name: string }) => ({
+          id: template.rid,
+          name: template.task_name,
+        })
+      );
+    }
+    return [];
+  }, [taskTemplatesQuery.data]);
+
+  // Fetch weightage and category lists
+  const weightageListQuery = useWeightageList();
+  const categoryListQuery = useTaskCategoryList();
+
+  const weightageData = useMemo(() => {
+    // Handle nested data.data structure
+    const response = weightageListQuery.data as any;
+    const dataArray = response?.data?.data || response?.data;
+    if (dataArray && Array.isArray(dataArray)) {
+      return dataArray.map(
+        (item: { rid: string; weightage_value: number }) => ({
+          id: item.rid,
+          name: String(item.weightage_value),
+        })
+      );
+    }
+    return [];
+  }, [weightageListQuery.data]);
+
+  const categoryData = useMemo(() => {
+    const response = categoryListQuery.data as any;
+    if (response?.data && Array.isArray(response.data)) {
+      return response.data.map(
+        (item: { rid: string; category_name: string }) => ({
+          id: item.rid,
+          name: item.category_name,
+        })
+      );
+    }
+    return [];
+  }, [categoryListQuery.data]);
 
   const hasTaskChanged = () => {
     if (!task || !editedTask || !originalTask) return false;
@@ -494,9 +564,6 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       const selectedPriority = priorityData?.find(
         (p) => p.name === editedTask?.priority
       );
-      const selectedRoleObj = roleOptions?.find(
-        (r) => r.role_name === selectedRole
-      );
       const selectedChecklistObj = checklistData?.find(
         (c) => c.name === selectedChecklist
       );
@@ -557,6 +624,27 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       }
 
       if (editedTask && taskId) {
+        // Get RIDs for linked type and link task types
+        const linkedTypeRidValue = linkedType
+          ? connectorTypesData?.find((c) => c.name === linkedType)?.id || ''
+          : '';
+
+        const linkTaskTypeRidsValue = linkTaskTypes && linkTaskTypes.length > 0
+          ? linkTaskTypes.map((taskType) => {
+            const template = taskTemplatesData?.find((t) => t.name === taskType);
+            return template?.id || '';
+          }).filter((rid) => rid !== '')
+          : [];
+
+        // Get RIDs for weightage and category
+        const weightageRidValue = weightage
+          ? weightageData?.find((w) => w.name === weightage)?.id || ''
+          : '';
+
+        const categoryRidValue = category
+          ? categoryData?.find((c: { id: string; name: string }) => c.name === category)?.id || ''
+          : '';
+
         const updatePayload = {
           rid: taskId,
           case_rid: caseId,
@@ -565,7 +653,6 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
           task_description: editedTask.description || '',
           task_status_rid: selectedStatus?.id || '',
           priority_rid: selectedPriority?.id || '',
-          case_team_member_role_rid: selectedRoleObj?.rid || '',
           checklist_template_rid: selectedChecklistObj?.id || '',
           effective_start_datetime: editedTask.startDate
             ? dayjs(editedTask.startDate).format('YYYY-MM-DD')
@@ -574,7 +661,21 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
             ? dayjs(editedTask.endDate).format('YYYY-MM-DD')
             : '',
           tags: tagsArray,
-          workflow_connector: {},
+          workflow_connector: {
+            source_rid: taskId,
+            ...(linkedTypeRidValue && {
+              relationship_connector_rid: linkedTypeRidValue,
+            }),
+            ...(linkTaskTypeRidsValue.length > 0 && {
+              target_rid: linkTaskTypeRidsValue,
+            }),
+          },
+          ...(weightageRidValue && {
+            weightage_rid: weightageRidValue,
+          }),
+          ...(categoryRidValue && {
+            task_category_rid: categoryRidValue,
+          }),
         };
 
         const updateResponse =
@@ -1220,13 +1321,49 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
             priorityData={priorityData}
             checklistData={checklistData}
             availableTags={availableTags}
+            connectorTypesData={connectorTypesData}
+            taskTemplatesData={taskTemplatesData}
+            weightageData={weightageData}
+            categoryData={categoryData}
             selectedChecklist={selectedChecklist}
+            selectedLinkedType={linkedType}
+            selectedLinkTaskTypes={linkTaskTypes}
+            selectedWeightage={weightage}
+            selectedCategory={category}
+            userRole={selectedRole}
             onStatusChange={handleStatusChange}
             onPriorityChange={handlePriorityChange}
             onChecklistChange={(value) => {
               setSelectedChecklist(value);
               if (value)
                 setErrors((prev) => ({ ...prev, checklistTemplate: '' }));
+            }}
+            onLinkedTypeChange={(value) => {
+              setLinkedType(value);
+              setEditedTask((prev) =>
+                prev ? { ...prev, linkedType: value } : null
+              );
+            }}
+            onLinkTaskTypesChange={(values) => {
+              setLinkTaskTypes(values);
+              setEditedTask((prev) =>
+                prev ? { ...prev, linkTaskTypes: values } : null
+              );
+            }}
+            onWeightageChange={(value) => {
+              setWeightage(value);
+              setEditedTask((prev) =>
+                prev ? { ...prev, weightage: value } : null
+              );
+            }}
+            onCategoryChange={(value) => {
+              setCategory(value);
+              setEditedTask((prev) =>
+                prev ? { ...prev, category: value } : null
+              );
+            }}
+            onUserRoleChange={(value) => {
+              setSelectedRole(value);
             }}
             errors={errors}
             onTagsChange={(newTags) =>
