@@ -666,13 +666,16 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
           }).filter((rid) => rid !== '')
           : [];
 
-        // Get RIDs for weightage and category
         const weightageRidValue = weightage
           ? weightageData?.find((w) => w.name === weightage)?.id || ''
           : '';
 
         const categoryRidValue = category
           ? categoryData?.find((c: { id: string; name: string }) => c.name === category)?.id || ''
+          : '';
+
+        const assignedToRid = editedTask.assignee
+          ? allEnrichedUsers.find((u) => u.name === editedTask.assignee.name)?.id || ''
           : '';
 
         const updatePayload = {
@@ -705,6 +708,9 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
           }),
           ...(categoryRidValue && {
             task_category_rid: categoryRidValue,
+          }),
+          ...(assignedToRid && {
+            assigned_to: assignedToRid,
           }),
         };
 

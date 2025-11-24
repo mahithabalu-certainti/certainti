@@ -270,6 +270,9 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
               }
             ).task_category_rid,
           }),
+          ...(taskData.assigned_to && {
+            assigned_to: taskData.assigned_to,
+          }),
         };
 
         createTaskMutation.mutate(taskPayload, {
