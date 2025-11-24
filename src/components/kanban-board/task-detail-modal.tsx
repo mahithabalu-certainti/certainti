@@ -309,7 +309,9 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     return [];
   }, [tagOptionsData]);
 
-  const [availableTags, setAvailableTags] = useState<Array<{ id: string; name: string; color: string }>>([]);
+  const [availableTags, setAvailableTags] = useState<
+    Array<{ id: string; name: string; color: string; is_new_tag?: boolean }>
+  >([]);
 
   // Use ref to track if we've initialized tags to prevent infinite loops
   const prevTagsRef = useRef<string>('');
@@ -337,7 +339,10 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   const taskTemplatesQuery = useGetTaskTemplate({ search: '' });
 
   const connectorTypesData = useMemo(() => {
-    if (taskConnectorTypesQuery.data?.data && Array.isArray(taskConnectorTypesQuery.data.data)) {
+    if (
+      taskConnectorTypesQuery.data?.data &&
+      Array.isArray(taskConnectorTypesQuery.data.data)
+    ) {
       return taskConnectorTypesQuery.data.data.map(
         (connector: { rid: string; relationship_type: string }) => ({
           id: connector.rid,
@@ -349,7 +354,10 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   }, [taskConnectorTypesQuery.data]);
 
   const taskTemplatesData = useMemo(() => {
-    if (taskTemplatesQuery.data?.data && Array.isArray(taskTemplatesQuery.data.data)) {
+    if (
+      taskTemplatesQuery.data?.data &&
+      Array.isArray(taskTemplatesQuery.data.data)
+    ) {
       return taskTemplatesQuery.data.data.map(
         (template: { rid: string; task_name: string }) => ({
           id: template.rid,
@@ -366,8 +374,14 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
 
   const weightageData = useMemo(() => {
     // Handle nested data.data structure
-    const response = weightageListQuery.data as any;
-    const dataArray = response?.data?.data || response?.data;
+    const response = weightageListQuery.data as {
+      data?:
+        | { data?: Array<{ rid: string; weightage_value: number }> }
+        | Array<{ rid: string; weightage_value: number }>;
+    };
+    const dataArray = Array.isArray(response?.data)
+      ? response.data
+      : response?.data?.data;
     if (dataArray && Array.isArray(dataArray)) {
       return dataArray.map(
         (item: { rid: string; weightage_value: number }) => ({
@@ -380,7 +394,9 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   }, [weightageListQuery.data]);
 
   const categoryData = useMemo(() => {
-    const response = categoryListQuery.data as any;
+    const response = categoryListQuery.data as unknown as {
+      data?: Array<{ rid: string; category_name: string }>;
+    };
     if (response?.data && Array.isArray(response.data)) {
       return response.data.map(
         (item: { rid: string; category_name: string }) => ({
@@ -472,6 +488,32 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       .filter((id) => id !== '');
     setSelectedCollaboratorIds(ids);
   }, [editedTask, allEnrichedUsers]);
+
+  // Extract workflow connector data from task for display purposes
+  useEffect(() => {
+    interface WorkflowConnector {
+      relationship_name?: string;
+      target_task_name?: string;
+    }
+
+    if (task && 'workflow_connector' in task) {
+      const workflowConnectors = (task as Record<string, unknown>)
+        .workflow_connector;
+      if (Array.isArray(workflowConnectors) && workflowConnectors.length > 0) {
+        const workflowData = workflowConnectors[0] as WorkflowConnector;
+        if (workflowData) {
+          // Set the linked type (relationship_name)
+          if (workflowData.relationship_name) {
+            setLinkedType(workflowData.relationship_name);
+          }
+          // Set the linked task types (target_task_name)
+          if (workflowData.target_task_name) {
+            setLinkTaskTypes([workflowData.target_task_name]);
+          }
+        }
+      }
+    }
+  }, [task]);
 
   if (!isOpen || !taskId) return null;
   if (isLoadingTaskDetails || (!task && !editedTask)) {
@@ -575,12 +617,14 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       if (editedTask?.tags && editedTask.tags.length > 0) {
         editedTask.tags.forEach((tagName: string) => {
           const existingTag = availableTags?.find((t) => t.name === tagName);
-          if (existingTag) {
+          if (existingTag && !existingTag.is_new_tag) {
+            // Existing tag from server - pass its ID
             tagsArray.push({
               tag_rid: existingTag.id,
               is_new_tag: false,
             });
           } else {
+            // New tag created in this session - pass the tag name
             tagsArray.push({
               tag_rid: tagName,
               is_new_tag: true,
@@ -659,24 +703,40 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
           ? connectorTypesData?.find((c) => c.name === linkedType)?.id || ''
           : '';
 
-        const linkTaskTypeRidsValue = linkTaskTypes && linkTaskTypes.length > 0
-          ? linkTaskTypes.map((taskType) => {
-            const template = taskTemplatesData?.find((t) => t.name === taskType);
-            return template?.id || '';
-          }).filter((rid) => rid !== '')
-          : [];
+        const linkTaskTypeRidsValue =
+          linkTaskTypes && linkTaskTypes.length > 0
+            ? linkTaskTypes
+                .map((taskType) => {
+                  const template = taskTemplatesData?.find(
+                    (t) => t.name === taskType
+                  );
+                  return template?.id || '';
+                })
+                .filter((rid) => rid !== '')
+            : [];
 
         const weightageRidValue = weightage
           ? weightageData?.find((w) => w.name === weightage)?.id || ''
           : '';
 
         const categoryRidValue = category
-          ? categoryData?.find((c: { id: string; name: string }) => c.name === category)?.id || ''
+          ? categoryData?.find(
+              (c: { id: string; name: string }) => c.name === category
+            )?.id || ''
           : '';
 
         const assignedToRid = editedTask.assignee
-          ? allEnrichedUsers.find((u) => u.name === editedTask.assignee.name)?.id || ''
+          ? allEnrichedUsers.find((u) => u.name === editedTask.assignee.name)
+              ?.id || ''
           : '';
+
+        // Build workflow connector - always include, pass {} if no valid data
+        const workflowConnector: Record<string, unknown> = {};
+        if (linkedTypeRidValue && linkTaskTypeRidsValue.length > 0) {
+          workflowConnector.source_rid = taskId;
+          workflowConnector.relationship_connector_rid = linkedTypeRidValue;
+          workflowConnector.target_rid = linkTaskTypeRidsValue;
+        }
 
         const updatePayload = {
           rid: taskId,
@@ -694,15 +754,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
             ? dayjs(editedTask.endDate).format('YYYY-MM-DD')
             : '',
           tags: tagsArray,
-          workflow_connector: {
-            source_rid: taskId,
-            ...(linkedTypeRidValue && {
-              relationship_connector_rid: linkedTypeRidValue,
-            }),
-            ...(linkTaskTypeRidsValue.length > 0 && {
-              target_rid: linkTaskTypeRidsValue,
-            }),
-          },
+          workflow_connector: workflowConnector,
           ...(weightageRidValue && {
             weightage_rid: weightageRidValue,
           }),
@@ -746,9 +798,9 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     setEditedTask((prev) =>
       prev
         ? {
-          ...prev,
-          status: statusName,
-        }
+            ...prev,
+            status: statusName,
+          }
         : null
     );
     if (statusName) setErrors((prev) => ({ ...prev, status: '' }));
@@ -797,9 +849,9 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       setEditedTask((prev) =>
         prev
           ? {
-            ...prev,
-            attachments: [...(prev.attachments || []), ...fileNames],
-          }
+              ...prev,
+              attachments: [...(prev.attachments || []), ...fileNames],
+            }
           : null
       );
       e.target.value = '';
@@ -839,13 +891,13 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       setEditedTask((prev) =>
         prev
           ? {
-            ...prev,
-            assignee: {
-              name: selectedUser.name,
-              initials: selectedUser.initials,
-              color: selectedUser.color,
-            },
-          }
+              ...prev,
+              assignee: {
+                name: selectedUser.name,
+                initials: selectedUser.initials,
+                color: selectedUser.color,
+              },
+            }
           : null
       );
     }
@@ -858,8 +910,6 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     );
     return foundUser?.id || '';
   };
-
-
 
   const formatDateForInput = (date: Date | undefined) => {
     if (!date) return null;
@@ -915,9 +965,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     if (removedUserIds.length > 0 && taskId) {
       try {
         for (const removedUserId of removedUserIds) {
-          const userToRemove = allEnrichedUsers.find(
-            (u) => u.id === removedUserId
-          );
+          const userToRemove = allEnrichedUsers.find((u) => u.id === removedUserId);
           if (userToRemove) {
             await deleteCollaboratorMutation.mutateAsync({
               case_rid: caseId,
@@ -977,8 +1025,9 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   return (
     <>
       <div
-        className={`fixed right-0 bottom-0 w-[650px] bg-white text-gray-900 shadow-2xl transform transition-transform duration-300 ease-in-out z-50 overflow-y-auto ${isOpen ? 'translate-x-0' : 'translate-x-full'
-          }`}
+        className={`fixed right-0 bottom-0 w-[650px] bg-white text-gray-900 shadow-2xl transform transition-transform duration-300 ease-in-out z-50 overflow-y-auto ${
+          isOpen ? 'translate-x-0' : 'translate-x-full'
+        }`}
         style={{ top: '38.1px' }}
       >
         <div className='sticky top-0 flex items-center justify-between p-[17.4px] border-b border-[#CBD6E2] bg-white z-50'>

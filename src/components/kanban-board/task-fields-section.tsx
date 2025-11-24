@@ -41,7 +41,12 @@ interface TaskFieldsSectionProps {
   onCategoryChange?: (value: string) => void;
   onUserRoleChange?: (value: string) => void;
   onAddCustomTag: (
-    tags: Array<{ id: string; name: string; color: string }>
+    tags: Array<{
+      id: string;
+      name: string;
+      color: string;
+      is_new_tag?: boolean;
+    }>
   ) => void;
   onSetEditedTask: (task: Task | null) => void;
   mode?: 'view' | 'create';
@@ -125,15 +130,15 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
                 mode === 'view'
                   ? (e) => onStatusChange(e.target.value as string)
                   : (e) => {
-                    const selectedName = e.target.value as string;
-                    const statusItem = statusData?.find(
-                      (s) => s.name === selectedName
-                    );
-                    onStatusChangeCreate?.(
-                      selectedName,
-                      statusItem?.id || ''
-                    );
-                  }
+                      const selectedName = e.target.value as string;
+                      const statusItem = statusData?.find(
+                        (s) => s.name === selectedName
+                      );
+                      onStatusChangeCreate?.(
+                        selectedName,
+                        statusItem?.id || ''
+                      );
+                    }
               }
               disabled={fieldDisabled.status || mode === 'create'}
               width='200px'
@@ -473,9 +478,10 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
                         onAddCustomTag([
                           ...availableTags,
                           {
-                            id: `custom-${Date.now()}-${Math.random()}`,
+                            id: '',
                             name: tagName,
                             color: '#3B82F6',
+                            is_new_tag: true,
                           },
                         ]);
                       }
@@ -507,9 +513,10 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
                           borderColor: '#CBD6E2',
                           borderWidth: '1px',
                         },
-                        '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                          border: '2px solid #60A5FA',
-                        },
+                        '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline':
+                          {
+                            border: '2px solid #60A5FA',
+                          },
                       }}
                     />
                   )}
@@ -531,40 +538,40 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
 
             {(shouldPrepopulate ? editedTask?.tags || [] : selectedTags || [])
               ?.length > 0 && (
-                <div className='flex flex-wrap items-center gap-2 mt-2'>
-                  {(shouldPrepopulate
-                    ? editedTask?.tags || []
-                    : selectedTags || []
-                  )?.map((tag, index) => (
-                    <div
-                      key={index}
-                      className='inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium hover:bg-blue-200 transition-colors group'
+              <div className='flex flex-wrap items-center gap-2 mt-2'>
+                {(shouldPrepopulate
+                  ? editedTask?.tags || []
+                  : selectedTags || []
+                )?.map((tag, index) => (
+                  <div
+                    key={index}
+                    className='inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium hover:bg-blue-200 transition-colors group'
+                  >
+                    <span>{tag}</span>
+                    <button
+                      onClick={() => {
+                        const newTags =
+                          (shouldPrepopulate
+                            ? editedTask?.tags || []
+                            : selectedTags || []
+                          )?.filter((t) => t !== tag) || [];
+                        if (shouldPrepopulate) {
+                          onSetEditedTask(
+                            editedTask ? { ...editedTask, tags: newTags } : null
+                          );
+                        } else {
+                          onTagsChange(newTags);
+                        }
+                      }}
+                      className='ml-1 text-blue-600 hover:text-red-600 transition-colors'
+                      title={`Remove ${tag}`}
                     >
-                      <span>{tag}</span>
-                      <button
-                        onClick={() => {
-                          const newTags =
-                            (shouldPrepopulate
-                              ? editedTask?.tags || []
-                              : selectedTags || []
-                            )?.filter((t) => t !== tag) || [];
-                          if (shouldPrepopulate) {
-                            onSetEditedTask(
-                              editedTask ? { ...editedTask, tags: newTags } : null
-                            );
-                          } else {
-                            onTagsChange(newTags);
-                          }
-                        }}
-                        className='ml-1 text-blue-600 hover:text-red-600 transition-colors'
-                        title={`Remove ${tag}`}
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 

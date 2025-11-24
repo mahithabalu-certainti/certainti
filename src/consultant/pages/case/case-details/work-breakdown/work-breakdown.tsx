@@ -96,7 +96,6 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
     }
   }, [searchParams, navigate]);
 
-
   const caseTeamMembersQuery = useGetCaseTeamMembersDropdown(
     accountId || '',
     caseId || '',
@@ -629,9 +628,9 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
         setAppliedFilters={setAppliedFilters}
         setCurrentPage={setCurrentPage}
         handleFilter={handleFilter}
-        handleSorting={() => { }}
+        handleSorting={() => {}}
         sortFilterCount={0}
-        setSortFilterCount={() => { }}
+        setSortFilterCount={() => {}}
         showRefresh={false}
         onRefreshClick={onRefreshClick}
         // hideTabPanel={hideSection}
