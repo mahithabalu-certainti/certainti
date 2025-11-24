@@ -92,9 +92,8 @@ const TaskCollaboratorsSection: React.FC<TaskCollaboratorsSectionProps> = ({
                     borderColor: '#CBD6E2',
                     borderWidth: '1px',
                   },
-                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#60A5FA',
-                    borderWidth: '2px',
+                  '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                    border: '2px solid #60A5FA',
                   },
                 }}
               />
@@ -171,11 +170,10 @@ const TaskCollaboratorsSection: React.FC<TaskCollaboratorsSectionProps> = ({
           (editedTask?.collaborators || []).map((collab, index) => (
             <div
               key={collab.name}
-              className={`relative group transition-transform duration-200 hover:scale-110 hover:z-10 hover:-translate-y-2 ${
-                index < (editedTask?.collaborators?.length || 0) - 1
-                  ? 'peer'
-                  : ''
-              }`}
+              className={`relative group transition-transform duration-200 hover:scale-110 hover:z-10 hover:-translate-y-2 ${index < (editedTask?.collaborators?.length || 0) - 1
+                ? 'peer'
+                : ''
+                }`}
               title={collab.name}
               onMouseEnter={() => {
                 const nextProfile = document.querySelector(

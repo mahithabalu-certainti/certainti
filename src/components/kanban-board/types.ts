@@ -82,6 +82,23 @@ export interface Task {
   account_rid?: string;
   case_rid?: string;
   caseTeamMemberRoleName?: string;
+  linkedType?: string;
+  linkedTypeRid?: string;
+  linkTaskTypes?: string[];
+  linkTaskTypeRids?: string[];
+  weightage?: string;
+  weightageRid?: string;
+  category?: string;
+  categoryRid?: string;
+  workflow_connector?: Array<{
+    rid: string;
+    source_rid: string;
+    target_rid: string;
+    relationship_connector_rid: string;
+    source_task_name: string;
+    target_task_name: string;
+    relationship_name: string;
+  }>;
 }
 
 export interface TaskCard {

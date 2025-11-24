@@ -98,7 +98,7 @@ export const getTaskTemplateFilterFields = (
         !permissionMap?.['milestone_type_rid']?.read,
     },
     {
-      label: 'Assinge Role',
+      label: 'Assign Role',
       name: 'case_team_member_role_rid',
       type: 'enumSelect',
       options: taskAssigneRoleTypesTypesOptions,

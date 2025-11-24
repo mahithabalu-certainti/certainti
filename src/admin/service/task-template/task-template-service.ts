@@ -429,3 +429,61 @@ export const useGetTaskTemplate = (payload: Record<string, any>) => {
     refetchOnReconnect: false,
   });
 };
+
+// Task weightage type
+export const getTaskWeightageTypeUrl = (): string =>
+  '/api/caseManagement/taskTemplate/weightage';
+
+export const fetchTaskWeightageTypes =
+  async (): Promise<TaskLinkTypeResponse> => {
+    try {
+      const { data } = await caseServiceApi.get<TaskLinkTypeResponse>(
+        getTaskWeightageTypeUrl()
+      );
+      return data;
+    } catch (error) {
+      console.error('Error fetching task weightage types:', error);
+      throw error;
+    }
+  };
+
+export const useWeightageList = () => {
+  return useQuery<TaskLinkTypeResponse, Error>({
+    queryKey: ['task-weightage-types'],
+    queryFn: fetchTaskWeightageTypes,
+    retry: 0,
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+  });
+};
+
+// Task category type
+export const getTaskCategoryTypeUrl = (): string =>
+  '/api/caseManagement/taskTemplate/category';
+
+export const fetchTaskCategoryTypes =
+  async (): Promise<TaskLinkTypeResponse> => {
+    try {
+      const { data } = await caseServiceApi.get<TaskLinkTypeResponse>(
+        getTaskCategoryTypeUrl()
+      );
+      return data;
+    } catch (error) {
+      console.error('Error fetching task category types:', error);
+      throw error;
+    }
+  };
+
+export const useTaskCategoryList = () => {
+  return useQuery<TaskLinkTypeResponse, Error>({
+    queryKey: ['task-category-types'],
+    queryFn: fetchTaskCategoryTypes,
+    retry: 0,
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+  });
+};

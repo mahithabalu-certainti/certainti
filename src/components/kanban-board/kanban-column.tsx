@@ -1,5 +1,5 @@
 import type React from 'react';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import type { KanbanColumnProps, TaskCard } from './types';
 import { useDroppable } from '@dnd-kit/core';
 import { AddIcon } from '../../assets';
@@ -46,11 +46,29 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
     data: { type: 'Column', column },
   });
 
+  const uniqueTasks = useMemo(() => {
+    const seen = new Set();
+    return column.tasks.filter((task) => {
+      const duplicate = seen.has(task.rid);
+      seen.add(task.rid);
+      return !duplicate;
+    });
+  }, [column.tasks]);
+
   const handleCreateTask = async (columnId: string, formData: TaskFormData) => {
     try {
       if (onCreateTask) {
         const taskData: Partial<TaskCard> & {
           checklist_template_rid?: string;
+          workflow_connector?:
+          | {
+            source_rid?: string;
+            relationship_connector_rid?: string;
+            target_rid?: string[];
+          }
+          | Record<string, never>;
+          weightage_rid?: string;
+          task_category_rid?: string;
         } = {
           task_name: formData.taskTitle,
           task_description: formData.description,
@@ -64,10 +82,25 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
             'YYYY-MM-DD HH:mm:ss'
           ),
           assigned_to: formData.selectedAssignee,
-          case_team_member_role_rid: formData.selectedRoleRid,
           tags: formData.selectedTags,
           ...(formData.selectedChecklistRid && {
             checklist_template_rid: formData.selectedChecklistRid,
+          }),
+          workflow_connector:
+            formData.linkedTypeRid &&
+              formData.linkTaskTypeRids &&
+              formData.linkTaskTypeRids.length > 0
+              ? {
+                source_rid: '',
+                relationship_connector_rid: formData.linkedTypeRid,
+                target_rid: formData.linkTaskTypeRids,
+              }
+              : {},
+          ...(formData.weightageRid && {
+            weightage_rid: formData.weightageRid,
+          }),
+          ...(formData.categoryRid && {
+            task_category_rid: formData.categoryRid,
           }),
         };
 
@@ -106,12 +139,12 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
       </div>
 
       <SortableContext
-        items={column.tasks.map((t) => t.rid)}
+        items={uniqueTasks.map((t) => t.rid)}
         strategy={verticalListSortingStrategy}
         disabled={!isDragable && !isDragablebetweenBoards}
       >
         <div className='space-y-2 mb-2'>
-          {column.tasks.map((taskCard) => (
+          {uniqueTasks.map((taskCard) => (
             <TaskCardComponent
               key={taskCard.rid}
               taskId={taskCard.rid}
@@ -134,11 +167,10 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
         <button
           onClick={() => setIsCreateModalOpen(true)}
           disabled={isCreateTaskDisabled}
-          className={`w-full flex items-center gap-2 p-3 rounded-lg border-2 border-dashed transition-colors duration-200 ${
-            isCreateTaskDisabled
-              ? 'border-slate-300 text-slate-400 cursor-not-allowed'
-              : 'border-slate-300 text-slate-500 hover:border-slate-400 hover:text-slate-600'
-          }`}
+          className={`w-full flex items-center gap-2 p-3 rounded-lg border-2 border-dashed transition-colors duration-200 ${isCreateTaskDisabled
+            ? 'border-slate-300 text-slate-400 cursor-not-allowed'
+            : 'border-slate-300 text-slate-500 hover:border-slate-400 hover:text-slate-600'
+            }`}
           style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
         >
           <AddIcon size={18} />
