@@ -4925,9 +4925,11 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             } 
           }
         }
-        if(data.assigned_to !== isTaskExists.assigned_to) {
-          const findUserRoleId = await this.fetchAssignedToRole(data.assigned_to, data.case_rid, data.account_rid,accountNumber);
-          data.case_team_member_role_rid = findUserRoleId?.role_rid!
+        if(data.assigned_to !== null && data.assigned_to !== '' && data.assigned_to !== undefined) {
+          if(data.assigned_to !== isTaskExists.assigned_to) {
+            const findUserRoleId = await this.fetchAssignedToRole(data.assigned_to, data.case_rid, data.account_rid,accountNumber);
+            data.case_team_member_role_rid = findUserRoleId?.role_rid!
+          }
         }
         const [updatedResult] = await CaseTask.update(data, {
           where : {
@@ -5199,7 +5201,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
           tag_name : {
             [Op.iLike] : tagRid
           }
-        }
+        }, raw : true
       });
       if(!isTagExists) {
         const result = await Tags.create({
@@ -5280,7 +5282,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       }
     } 
     else {
-      const tagDetails = await Tags.findOne({where : {rid : tagRid}})
+      const tagDetails = await Tags.findOne({where : {rid : tagRid}, raw : true})
       const isTagMapped = await this.isTagAlreadyMapped(accountNumber, taskRid, accountRid, caseRid, tagRid);
       if(!isTagMapped) {
         const finalResult = await TaskTag.create({
@@ -5368,7 +5370,8 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       whereClause.case_rid = caseRid;
     }
     const result = await TaskTag.findOne({
-      where: whereClause
+      where: whereClause,
+      raw : true
     });
     if(result) return result;
     else return null;
