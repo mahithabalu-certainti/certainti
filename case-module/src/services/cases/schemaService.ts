@@ -3172,7 +3172,7 @@ return !response;
             role_rid: teamMember.role_rid,
             user_rid: teamMember.user_rid,
             effective_startdate: teamMember.effective_from,
-            effective_enddate: teamMember.effective_to,
+            effective_enddate: teamMember?.effective_to || null,
             created_by: userId,
             is_primary: teamMember.is_primary || false,
             status_rid: teamMember.status_rid || null,
