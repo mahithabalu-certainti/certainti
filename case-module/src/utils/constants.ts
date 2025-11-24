@@ -179,6 +179,7 @@ export const STATUS_MESSAGE = {
   emailTemplatePreviewFailed: "Failed to generate email template preview",
   emailSentSuccessfully: "Email sent successfully",
   emailSendingFailed: "Failed to send email",
+  taskCategoryListedSuccess : "Task Category fetched successfully"
 };
 
 export const caseStatuses = {
@@ -1476,7 +1477,16 @@ export const rawQueries = {
   },
   getWeightageValue (rid : string) {
     return `SELECT weightage_value FROM ${MAIN_SCHEMA_NAME}.task_weightage WHERE rid = '${rid}'`
-  }
+  },
+  getCategoryName (rid : string) {
+    return `SELECT category_name FROM ${MAIN_SCHEMA_NAME}.task_category WHERE rid = '${rid}'`
+  },
+  getTaskCategoryList () {
+    return `SELECT rid, category_name FROM ${MAIN_SCHEMA_NAME}.task_category ORDER BY category_name ASC`
+  },
+  getTaskCategoryByRid (rid : string) {
+    return `SELECT category_name FROM ${MAIN_SCHEMA_NAME}.task_category WHERE rid = '${rid}'`
+  },
 };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 
 const keyContactRole = {
@@ -1661,7 +1671,8 @@ export const validColumnsForSortFilters : Record<string, string> = {
   sequence_no : "t.sequence_no",
   task_type_name : "tt.task_type_name",
   task_description : "t.task_description",
-  weightage_value : "wt.weightage_value"
+  weightage_value : "wt.weightage_value",
+  category_name : "tc.category_name"
 }
 
 export const validColumnsForFilters : Record<string, string> = {
@@ -1682,7 +1693,8 @@ export const validColumnsForFilters : Record<string, string> = {
   sequence_no : "t.sequence_no",
   task_type_rid : "t.task_type_rid",
   task_description : "t.task_description",
-  weightage_rid : 't.weightage_rid'
+  weightage_rid : 't.weightage_rid',
+  task_category_rid : "t.task_category_rid"
 }
 
 export const validFilterColumnTypes : Record<string, string> = {

@@ -634,8 +634,8 @@ export const fetchAdminTemplates = (page : number, limit : number, sort : string
     graphqlConditions = ` `
   }
 
-  if(Object.keys(validColumnsForSortFilters).includes(sort)) finalSortOrder = `ORDER BY ${validColumnsForSortFilters[sort]} ${sortBy}`
-  else finalSortOrder = `ORDER BY t.r_number ASC`
+  if(Object.keys(validColumnsForSortFilters).includes(sort)) finalSortOrder = `ORDER BY ${validColumnsForSortFilters[sort]} ${sortBy} NULLS LAST`
+  else finalSortOrder = `ORDER BY t.r_number ASC NULLS LAST`
 
   if(Object.keys(filter).length > 0) {
     let validKeyColumns : string;
@@ -761,6 +761,7 @@ export const fetchAdminTemplates = (page : number, limit : number, sort : string
     c.checklist_name, t.checklist_template_rid, p.priority_name, t.priority_rid,
     s.status_name, t.status_rid, m.milestone_name, t.milestone_template_rid,
     t.task_type_rid, tt.task_type_name, t.task_description, wt.weightage_value, t.weightage_rid,
+    t.task_category_rid, tc.category_name,
     array_agg(jsonb_build_object(
     'source_rid', w.source_rid,
     'source_name', t.task_name,
@@ -783,6 +784,7 @@ export const fetchAdminTemplates = (page : number, limit : number, sort : string
     LEFT JOIN ${MAIN_SCHEMA_NAME}.task_template ttt ON ttt.rid = w.target_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.workflow_connector wc ON wc.rid = w.relationship_connector_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.task_weightage wt ON wt.rid = t.weightage_rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.task_category tc ON tc.rid = t.task_category_rid
     WHERE
     (t.task_name ILIKE '${searchValue}' OR t.r_number ILIKE '${searchValue}' OR 
     u.first_name ILIKE '${searchValue}' OR u.last_name ILIKE '${searchValue}' OR CONCAT(u.first_name,' ', u.last_name) ILIKE '${searchValue}' OR
@@ -800,7 +802,8 @@ export const fetchAdminTemplates = (page : number, limit : number, sort : string
     t.effective_end_datetime, r.role_name, t.case_team_member_role_rid,
     c.checklist_name, t.checklist_template_rid, p.priority_name, t.priority_rid,
     s.status_name, t.status_rid, m.milestone_name, t.milestone_template_rid,
-    t.task_type_rid, tt.task_type_name, t.task_description,wt.weightage_value, t.weightage_rid
+    t.task_type_rid, tt.task_type_name, t.task_description,wt.weightage_value, t.weightage_rid,
+    t.task_category_rid, tc.category_name
     ${finalSortOrder}
   ),
   fetch_total_result AS (
@@ -1357,7 +1360,8 @@ return query;
     'tags', ftt.tags,
     'workflow_connector', w.workflow_connector,
     'case_team_member_role_rid', ct.case_team_member_role_rid,
-    'weightage_rid', ct.weightage_rid
+    'weightage_rid', ct.weightage_rid,
+    'task_category_rid', ct.task_category_rid
     ) AS task_details
     FROM
     ${schemaName}.case_task ct

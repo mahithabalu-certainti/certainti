@@ -28,6 +28,10 @@ milestone_template_rid: String
 task_type_rid : String
 task_type_name : String
 task_description : String
+weightage_rid : String
+weightage_value : Int
+task_category_rid : String
+category_name : String
 }
 
 type finalTaskResponse {
