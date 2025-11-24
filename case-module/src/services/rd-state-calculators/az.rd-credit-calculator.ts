@@ -4,7 +4,7 @@ import { logMessage } from "../../utils/helpers";
 /**
  * Arizona RD Credit Calculator
  */
-export class AZrdCreditCalculator {
+export class RdCreditCalculatorForAZ {
 
     /**
      * 
@@ -16,8 +16,8 @@ export class AZrdCreditCalculator {
      * @returns 
      */
     async compute(config: any, currentYearQREs: any, annualGrossReceipts: any[], totalGrossReceipts: Decimal, prior3YearsQREs: { fiscalYear: number; qre: number }[], priorYearsCount: number) {
-        const rrcResult = await this.rrcAZ(config, currentYearQREs, totalGrossReceipts, priorYearsCount);
-        const ascResult = await this.ascAZ(config, currentYearQREs, prior3YearsQREs);
+        const rrcResult = await this.rrc(config, currentYearQREs, totalGrossReceipts, priorYearsCount);
+        const ascResult = await this.asc(config, currentYearQREs, prior3YearsQREs);
 
         const inputFields = await this.buildInputParams(currentYearQREs, prior3YearsQREs, annualGrossReceipts, {
             country: "USA",
@@ -41,7 +41,7 @@ export class AZrdCreditCalculator {
      * @param priorYearsCount 
      * @returns 
      */
-    async rrcAZ(config: any, currentYearQREs: any, totalGrossReceipts: Decimal, priorYearsCount: number) {
+    async rrc(config: any, currentYearQREs: any, totalGrossReceipts: Decimal, priorYearsCount: number) {
         logMessage(`Computing AZ Credit with config: ${JSON.stringify(config)}`);
         //---- Line 10: Prior year credit carryforward
         const line10 = 0;
@@ -131,7 +131,7 @@ export class AZrdCreditCalculator {
      * @param prior3YearsQREs 
      * @returns 
      */
-    async ascAZ(config: any, currentYearQREs: any, prior3YearsQREs: { fiscalYear: number; qre: number }[]) {
+    async asc(config: any, currentYearQREs: any, prior3YearsQREs: { fiscalYear: number; qre: number }[]) {
         //---- Line 77:  
         const line77 = currentYearQREs.wages || 0;
 

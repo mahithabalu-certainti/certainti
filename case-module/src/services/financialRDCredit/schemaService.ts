@@ -259,7 +259,8 @@ class RDCreditSchemaService {
                     tier1_rate,
                     tier2_rate,
                     tier2_base_add,
-                    qre_cap_rate
+                    qre_cap_rate,
+                    reduction_config
                 FROM ${MAIN_SCHEMA_NAME}.rd_credit_config
                 WHERE LOWER(country_name) = LOWER(:countryName)
 
