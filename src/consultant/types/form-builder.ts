@@ -86,6 +86,12 @@ export interface SelectOption {
   desc?: string;
   isCreate?: boolean;
 }
+export interface SelectNumberOption {
+  label: string;
+  value: number;
+  desc?: string;
+  isCreate?: boolean;
+}
 export interface SelectResourceOption {
   label: string;
   value: string;
