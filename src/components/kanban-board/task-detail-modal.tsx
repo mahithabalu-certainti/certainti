@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { TaskDetailModalProps, Task, Activity, Comment } from './types';
 import { MenuItem, SelectChangeEvent } from '@mui/material';
@@ -28,10 +28,12 @@ import {
   useDeleteTaskAttachment,
   useUpdateCaseTask,
 } from '../../consultant/services/case-task/case-task-service';
+import { useGetTagOptions } from '../../consultant/services/case-team/case-team-service';
 import {
   transformComments,
   transformActivities,
   transformAttachments,
+  transformTagData,
   type TaskCommentRaw,
   type TaskActivityRaw,
   type TaskAttachmentRaw,
@@ -182,6 +184,16 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     !!taskId && isOpen
   );
 
+  const { data: tagOptionsData } = useGetTagOptions(
+    {
+      task_rid: taskId || '',
+      account_rid: accountId,
+      case_rid: caseId,
+      action: 'update',
+    },
+    !!taskId && isOpen
+  );
+
   useEffect(() => {
     if (rawTask) {
       const enriched = enrichTask(rawTask);
@@ -291,16 +303,35 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     setIsLoadingTaskDetails(taskLoading);
   }, [taskLoading]);
 
-  const [availableTags, setAvailableTags] = useState(
-    availableTagOptions.length > 0 ? availableTagOptions : tagData
-  );
-  useEffect(() => {
-    if (availableTagOptions && availableTagOptions.length > 0) {
-      setAvailableTags(availableTagOptions);
-    } else if (tagData && tagData.length > 0) {
-      setAvailableTags(tagData);
+  const transformedTagOptions = useMemo(() => {
+    if (tagOptionsData) {
+      return transformTagData(tagOptionsData);
     }
-  }, [availableTagOptions, tagData]);
+    return [];
+  }, [tagOptionsData]);
+
+  const [availableTags, setAvailableTags] = useState<Array<{ id: string; name: string; color: string }>>([]);
+
+  // Use ref to track if we've initialized tags to prevent infinite loops
+  const prevTagsRef = useRef<string>('');
+
+  useEffect(() => {
+    let newTags: Array<{ id: string; name: string; color: string }> = [];
+
+    if (transformedTagOptions.length > 0) {
+      newTags = transformedTagOptions;
+    } else if (availableTagOptions && availableTagOptions.length > 0) {
+      newTags = availableTagOptions;
+    } else if (tagData && tagData.length > 0) {
+      newTags = tagData;
+    }
+
+    const newTagsStr = JSON.stringify(newTags);
+    if (prevTagsRef.current !== newTagsStr) {
+      prevTagsRef.current = newTagsStr;
+      setAvailableTags(newTags);
+    }
+  }, [transformedTagOptions, availableTagOptions, tagData]);
 
   // Fetch connector types and task templates
   const taskConnectorTypesQuery = useGetTaskConnectorTypes();

@@ -24,9 +24,9 @@ import {
   useDeleteTaskComment,
 } from '../../../../services/case-task/case-task-service';
 import {
-  useGetUserOptions,
   useGetRoleOptions,
   useGetTagOptions,
+  useGetCaseTeamMembersDropdown,
 } from '../../../../services/case-team/case-team-service';
 import {
   transformPriorityData,
@@ -96,7 +96,12 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
     }
   }, [searchParams, navigate]);
 
-  const userOptionsQuery = useGetUserOptions(accountId || '');
+
+  const caseTeamMembersQuery = useGetCaseTeamMembersDropdown(
+    accountId || '',
+    caseId || '',
+    !!accountId && !!caseId
+  );
   const roleOptionsQuery = useGetRoleOptions();
   const prioritiesQuery = useGetTaskPriorities();
   const statusesQuery = useGetTaskStatuses();
@@ -120,6 +125,16 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
     () => transformTagData(tagOptionsQuery.data || []),
     [tagOptionsQuery.data]
   );
+
+  const userData = useMemo(() => {
+    if (caseTeamMembersQuery.data && Array.isArray(caseTeamMembersQuery.data)) {
+      return caseTeamMembersQuery.data.map((member) => ({
+        rid: member.user_rid,
+        name: member.user_name,
+      }));
+    }
+    return [];
+  }, [caseTeamMembersQuery.data]);
 
   const checklistData = useMemo(() => {
     if (checklistQuery.data?.data && Array.isArray(checklistQuery.data.data)) {
@@ -659,7 +674,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
                 priorityData={priorityData}
                 tagData={tagData}
                 checklistData={checklistData}
-                userData={userOptionsQuery.data || []}
+                userData={userData}
                 roleOptions={roleOptionsQuery.data || []}
                 onTaskClick={setOpenTaskId}
                 onCreateTask={handleCreateTask}
@@ -682,7 +697,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
                 statusData={statusData}
                 priorityData={priorityData}
                 tagData={tagData}
-                availableUsers={userOptionsQuery.data || []}
+                availableUsers={userData}
                 roleOptions={roleOptionsQuery.data || []}
                 checklistData={checklistData}
                 fieldVisibility={{}}

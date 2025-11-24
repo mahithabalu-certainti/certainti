@@ -587,7 +587,7 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
                   <path d='M9 21V9'></path>
                 </svg>
                 <span className='text-sm text-gray-700'>
-                  Checklist Template
+                  Checklist
                   {mode === 'create' && (
                     <span className='text-red-500'> * </span>
                   )}
@@ -607,7 +607,7 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
                   if (!value) {
                     return (
                       <span style={{ color: '#7D98B6', fontSize: '13px' }}>
-                        Choose Template
+                        Choose Checklist
                       </span>
                     );
                   }
@@ -637,7 +637,7 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
                     fontWeight: '500',
                   }}
                 >
-                  Choose Template
+                  Choose Checklist
                 </MenuItem>
                 {checklistData.map((template: { id: string; name: string }) => (
                   <MenuItem

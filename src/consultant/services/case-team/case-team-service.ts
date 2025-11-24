@@ -135,6 +135,42 @@ export interface TagListPayload {
   action?: 'create' | 'update';
 }
 
+export interface CaseTeamMemberDropdown {
+  rid: string;
+  user_rid: string;
+  user_name: string;
+  role_rid: string;
+  effective_startdate: string;
+  effective_enddate: string;
+  is_primary: boolean;
+  status_rid: string;
+}
+
+export interface CaseTeamMembersDropdownResponse extends CommonApiResponse {
+  data: {
+    caseTeamMembers: CaseTeamMemberDropdown[];
+  };
+}
+
+const fetchCaseTeamMembersDropdown = async (
+  accountId: string,
+  caseId: string
+): Promise<CaseTeamMemberDropdown[]> => {
+  try {
+    const response = await caseServiceApi.get<CaseTeamMembersDropdownResponse>(
+      `/api/cases/caseTeam/list?account_rid=${accountId}&case_rid=${caseId}&is_dropdown_list=true`
+    );
+
+    if (response.data?.data?.caseTeamMembers) {
+      return response.data.data.caseTeamMembers;
+    }
+    return [];
+  } catch (error) {
+    console.error('Error fetching case team members dropdown:', error);
+    return [];
+  }
+};
+
 const fetchCaseTeam = async (
   caseId: string,
   accountId: string
@@ -339,6 +375,21 @@ export const useGetCollaboratorOptions = (
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
     enabled: enabled && !!payload?.case_rid && !!payload?.account_rid,
+  });
+};
+
+export const useGetCaseTeamMembersDropdown = (
+  accountId?: string,
+  caseId?: string,
+  enabled: boolean = true
+): UseQueryResult<CaseTeamMemberDropdown[] | undefined, Error> => {
+  return useQuery<CaseTeamMemberDropdown[] | undefined, Error>({
+    queryKey: ['case-team-members-dropdown', accountId, caseId],
+    queryFn: () => fetchCaseTeamMembersDropdown(accountId!, caseId!),
+    retry: 0,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    enabled: enabled && !!accountId && !!caseId,
   });
 };
 
