@@ -68,7 +68,6 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   tagData = [],
   availableTagOptions = [],
   availableUsers = [],
-  roleOptions = [],
   checklistData = [],
   onAddComment,
   onUpdateComment,
