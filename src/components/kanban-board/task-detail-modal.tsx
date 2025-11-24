@@ -111,6 +111,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   );
   const [originalTask, setOriginalTask] = useState<Task | null>(null);
   const [isAddingCollaborator, setIsAddingCollaborator] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const { successToast, errorToast } = useToast();
   const uploadAttachmentsMutation = useUploadTaskAttachments();
@@ -456,6 +457,18 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   }
 
   const handleSave = async () => {
+    const newErrors: Record<string, string> = {};
+    if (!editedTask?.status) newErrors.status = 'Status is required';
+    if (!editedTask?.priority) newErrors.priority = 'Priority is required';
+    if (!selectedChecklist && !fieldVisibility.checklistTemplate) {
+      newErrors.checklistTemplate = 'Checklist Template is required';
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
     setIsSaving(true);
     try {
       const tagsArray: Array<{ tag_rid: string; is_new_tag: boolean }> = [];
@@ -601,12 +614,14 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
         }
         : null
     );
+    if (statusName) setErrors((prev) => ({ ...prev, status: '' }));
   };
 
   const handlePriorityChange = (priorityName: string) => {
     setEditedTask((prev) =>
       prev ? { ...prev, priority: priorityName } : null
     );
+    if (priorityName) setErrors((prev) => ({ ...prev, priority: '' }));
   };
 
   const handleStartDateChange = (date: string) => {
@@ -707,14 +722,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     return foundUser?.id || '';
   };
 
-  const getMinEndDate = () => {
-    if (editedTask?.startDate) {
-      const minDate = new Date(editedTask.startDate);
-      minDate.setDate(minDate.getDate() + 1);
-      return dayjs(minDate);
-    }
-    return undefined;
-  };
+
 
   const formatDateForInput = (date: Date | undefined) => {
     if (!date) return null;
@@ -886,7 +894,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                 name='assignee'
                 value={getAssigneeForSelect()}
                 onChange={handleAssigneeChange}
-                width='200px'
+                width='240px'
                 sx={{
                   '&.Mui-disabled': {
                     backgroundColor: '#ffffff',
@@ -1021,7 +1029,6 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                       )
                     }
                     format='YYYY-MMM-DD'
-                    minDate={dayjs()}
                     slots={{
                       openPickerIcon: () => (
                         <CalendarIcon className='w-4 h-4' />
@@ -1072,7 +1079,6 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                           '& .MuiOutlinedInput-root': {
                             height: '32px',
                             borderRadius: '2px',
-                            backgroundColor: '#F3F4F6',
                             '& input': {
                               fontWeight: 400,
                               fontSize: '13px',
@@ -1092,6 +1098,11 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                             },
                             '&.Mui-disabled': {
                               backgroundColor: '#F3F4F6',
+                              opacity: 1,
+                              '& input': {
+                                color: 'black',
+                                WebkitTextFillColor: 'black',
+                              },
                             },
                           },
                         },
@@ -1114,7 +1125,6 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                         newValue ? dayjs(newValue).format('YYYY-MM-DD') : ''
                       )
                     }
-                    minDate={getMinEndDate()}
                     format='YYYY-MMM-DD'
                     slots={{
                       openPickerIcon: () => (
@@ -1166,7 +1176,6 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                           '& .MuiOutlinedInput-root': {
                             height: '32px',
                             borderRadius: '2px',
-                            backgroundColor: '#F3F4F6',
                             '& input': {
                               fontWeight: 400,
                               fontSize: '13px',
@@ -1186,6 +1195,11 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                             },
                             '&.Mui-disabled': {
                               backgroundColor: '#F3F4F6',
+                              opacity: 1,
+                              '& input': {
+                                color: 'black',
+                                WebkitTextFillColor: 'black',
+                              },
                             },
                           },
                         },
@@ -1209,7 +1223,12 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
             selectedChecklist={selectedChecklist}
             onStatusChange={handleStatusChange}
             onPriorityChange={handlePriorityChange}
-            onChecklistChange={(value) => setSelectedChecklist(value)}
+            onChecklistChange={(value) => {
+              setSelectedChecklist(value);
+              if (value)
+                setErrors((prev) => ({ ...prev, checklistTemplate: '' }));
+            }}
+            errors={errors}
             onTagsChange={(newTags) =>
               setEditedTask((prev) =>
                 prev ? { ...prev, tags: newTags } : null

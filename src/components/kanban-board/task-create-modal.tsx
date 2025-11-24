@@ -100,6 +100,7 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
   const [selectedChecklist, setSelectedChecklist] = useState('');
   const [selectedChecklistRid, setSelectedChecklistRid] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const enrichedUsers = useMemo(() => {
     return collaboratorData && collaboratorData.length > 0
@@ -137,14 +138,29 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
     setSelectedRoleRid('');
     setSelectedChecklist('');
     setSelectedChecklistRid('');
+    setErrors({});
     onClose();
   };
 
   const handleSubmit = async () => {
-    if (!taskTitle.trim()) return;
-    if (!selectedPriority || !selectedPriorityRid) return;
-    if (!startDate || !endDate) return;
-    if (!selectedChecklist || !selectedChecklistRid) return;
+    const newErrors: Record<string, string> = {};
+    if (!taskTitle.trim()) newErrors.taskTitle = 'Task Name is required';
+    if (!selectedPriority || !selectedPriorityRid)
+      newErrors.priority = 'Priority is required';
+    if (!startDate && !fieldVisibility.startDate)
+      newErrors.startDate = 'Start Date is required';
+    if (!endDate && !fieldVisibility.endDate)
+      newErrors.endDate = 'Due Date is required';
+    if (
+      (!selectedChecklist || !selectedChecklistRid) &&
+      !fieldVisibility.checklist
+    )
+      newErrors.checklistTemplate = 'Checklist Template is required';
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -176,6 +192,9 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
 
   const handleStartDateChange = (newValue: dayjs.Dayjs | null) => {
     setStartDate(newValue);
+    if (newValue) {
+      setErrors((prev) => ({ ...prev, startDate: '' }));
+    }
     if (endDate && newValue && endDate <= newValue) {
       setEndDate(null);
     }
@@ -186,6 +205,9 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
       return;
     }
     setEndDate(newValue);
+    if (newValue) {
+      setErrors((prev) => ({ ...prev, endDate: '' }));
+    }
   };
 
   const getMinEndDate = () => {
@@ -193,19 +215,6 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
       return startDate.add(1, 'day');
     }
     return undefined;
-  };
-
-  const isFormValid = () => {
-    const hasTaskTitle = taskTitle.trim();
-    const hasPriority = selectedPriority && selectedPriorityRid;
-    const hasDates = startDate && endDate;
-    const hasChecklist = selectedChecklist && selectedChecklistRid;
-    return (
-      hasTaskTitle &&
-      hasPriority &&
-      hasDates &&
-      hasChecklist
-    );
   };
 
   if (!isOpen) return null;
@@ -243,14 +252,22 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
             <input
               type='text'
               value={taskTitle}
-              onChange={(e) => setTaskTitle(e.target.value)}
+              onChange={(e) => {
+                setTaskTitle(e.target.value);
+                if (e.target.value.trim()) {
+                  setErrors((prev) => ({ ...prev, taskTitle: '' }));
+                }
+              }}
               placeholder='Enter task name'
-              className='w-full text-[13px] font-normal bg-transparent border-b border-gray-300 focus:border-blue-400 focus:border-b outline-none text-gray-900 placeholder-[#7D98B6] pb-2'
+              className={`w-full text-[13px] font-normal bg-transparent border-b ${errors.taskTitle ? 'border-red-500' : 'border-gray-300'} focus:border-blue-400 focus:border-b outline-none text-gray-900 placeholder-[#7D98B6] pb-2`}
               autoFocus
             />
+            {errors.taskTitle && (
+              <span className='text-xs text-red-500 mt-1'>
+                {errors.taskTitle}
+              </span>
+            )}
           </div>
-
-
 
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <div className='grid grid-cols-2 gap-4'>
@@ -276,6 +293,8 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                       textField: {
                         fullWidth: true,
                         size: 'small',
+                        error: !!errors.startDate,
+                        helperText: errors.startDate,
                         sx: {
                           '& .MuiOutlinedInput-root': {
                             height: '32px',
@@ -288,19 +307,25 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                               color: 'black !important',
                               WebkitTextFillColor: 'black !important',
                               '&::placeholder': {
-                                color: '#7D98B6',
+                                color: '#7D98B6 !important',
                                 opacity: 1,
                               },
                             },
                             '&:hover .MuiOutlinedInput-notchedOutline': {
-                              border: '1px solid #CBD6E2',
+                              border: errors.startDate
+                                ? '1px solid #EF4444'
+                                : '1px solid #CBD6E2',
                             },
                             '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                              border: '2px solid #60A5FA',
+                              border: errors.startDate
+                                ? '2px solid #EF4444'
+                                : '2px solid #60A5FA',
                             },
                           },
                           '& .MuiOutlinedInput-notchedOutline': {
-                            border: '1px solid #CBD6E2',
+                            border: errors.startDate
+                              ? '1px solid #EF4444'
+                              : '1px solid #CBD6E2',
                             borderRadius: '2px',
                           },
                         },
@@ -332,6 +357,8 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                       textField: {
                         fullWidth: true,
                         size: 'small',
+                        error: !!errors.endDate,
+                        helperText: errors.endDate,
                         sx: {
                           '& .MuiOutlinedInput-root': {
                             height: '32px',
@@ -344,19 +371,25 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                               color: 'black !important',
                               WebkitTextFillColor: 'black !important',
                               '&::placeholder': {
-                                color: '#7D98B6',
+                                color: '#7D98B6 !important',
                                 opacity: 1,
                               },
                             },
                             '&:hover .MuiOutlinedInput-notchedOutline': {
-                              border: '1px solid #CBD6E2',
+                              border: errors.endDate
+                                ? '1px solid #EF4444'
+                                : '1px solid #CBD6E2',
                             },
                             '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                              border: '2px solid #60A5FA',
+                              border: errors.endDate
+                                ? '2px solid #EF4444'
+                                : '2px solid #60A5FA',
                             },
                           },
                           '& .MuiOutlinedInput-notchedOutline': {
-                            border: '1px solid #CBD6E2',
+                            border: errors.endDate
+                              ? '1px solid #EF4444'
+                              : '1px solid #CBD6E2',
                             borderRadius: '2px',
                           },
                         },
@@ -408,6 +441,7 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
               );
               if (priorityItem) {
                 setSelectedPriorityRid(priorityItem.id);
+                setErrors((prev) => ({ ...prev, priority: '' }));
               }
             }}
             onAssigneeChange={(userId: string) => {
@@ -420,6 +454,7 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
               );
               if (checklistItem) {
                 setSelectedChecklistRid(checklistItem.id);
+                setErrors((prev) => ({ ...prev, checklistTemplate: '' }));
               }
             }}
             onTagsChange={setSelectedTags}
@@ -431,6 +466,7 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
               setSelectedStatus(statusName);
               setSelectedStatusRid(statusId);
             }}
+            errors={errors}
           />
 
           {!fieldVisibility.description && (
@@ -458,17 +494,14 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
           <TextButton
             label={isSubmitting ? 'Creating...' : 'Create Task'}
             onClick={handleSubmit}
-            disabled={!isFormValid() || isSubmitting}
+            disabled={isSubmitting}
             sx={{
               px: 1,
               py: 1,
-              backgroundColor:
-                !isFormValid() || isSubmitting ? '#D1D5DB' : '#2563EB',
-              color: !isFormValid() || isSubmitting ? '#9CA3AF' : '',
+              backgroundColor: isSubmitting ? '#D1D5DB' : '#2563EB',
+              color: isSubmitting ? '#9CA3AF' : '#FFFFFF',
               '&:hover': {
-                backgroundColor:
-                  !isFormValid() || isSubmitting ? '#D1D5DB' : '#2563EB',
-                color: !isFormValid() || isSubmitting ? '#9CA3AF' : '#FFFFFF',
+                backgroundColor: isSubmitting ? '#D1D5DB' : '#1D4ED8',
               },
             }}
           />

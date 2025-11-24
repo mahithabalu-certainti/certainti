@@ -33,9 +33,8 @@ interface TaskFieldsSectionProps {
   mode?: 'view' | 'create';
   selectedStatus?: string;
   onStatusChangeCreate?: (statusName: string, statusId: string) => void;
+  errors?: Record<string, string | undefined>;
 }
-
-
 
 const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
   fieldVisibility,
@@ -60,6 +59,7 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
   mode = 'view',
   selectedStatus,
   onStatusChangeCreate,
+  errors = {},
 }) => {
   const shouldPrepopulate = mode === 'view';
 
@@ -109,6 +109,7 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
               }
               disabled={fieldDisabled.status || mode === 'create'}
               width='200px'
+              error={errors.status}
               renderValue={(selected) => {
                 const value = Array.isArray(selected)
                   ? selected.join(', ')
@@ -194,6 +195,7 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
                 onChange={(e) => onPriorityChange(e.target.value as string)}
                 disabled={fieldDisabled.priority}
                 width='200px'
+                error={errors.priority}
                 renderValue={(selected) => {
                   const value = Array.isArray(selected)
                     ? selected.join(', ')
@@ -274,11 +276,10 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
               <StyledSelect
                 name='assignee'
                 value={selectedAssignee || ''}
-                onChange={(e) =>
-                  onAssigneeChange?.(e.target.value as string)
-                }
+                onChange={(e) => onAssigneeChange?.(e.target.value as string)}
                 disabled={fieldDisabled.assignee}
-                width='200px'
+                width='240px'
+                error={errors.assignee}
                 renderValue={(selected) => {
                   const value = Array.isArray(selected)
                     ? selected.join(', ')
@@ -421,9 +422,7 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
                   <path d='M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z'></path>
                   <line x1='7' y1='7' x2='7.01' y2='7'></line>
                 </svg>
-                <span className='text-sm text-gray-700'>
-                  Tags
-                </span>
+                <span className='text-sm text-gray-700'>Tags</span>
               </div>
               <div className='w-[200px]'>
                 <Autocomplete
@@ -480,9 +479,8 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
                           borderColor: '#CBD6E2',
                           borderWidth: '1px',
                         },
-                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                          borderColor: '#60A5FA',
-                          borderWidth: '2px',
+                        '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          border: '2px solid #60A5FA',
                         },
                       }}
                     />
@@ -542,7 +540,6 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
           </div>
         )}
 
-
         {!fieldVisibility.checklistTemplate &&
           checklistData &&
           checklistData.length > 0 && (
@@ -574,6 +571,7 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
                 onChange={(e) => onChecklistChange(e.target.value as string)}
                 disabled={fieldDisabled.checklistTemplate}
                 width='200px'
+                error={errors.checklistTemplate}
                 renderValue={(selected) => {
                   const value = Array.isArray(selected)
                     ? selected.join(', ')
