@@ -722,9 +722,9 @@ export const rawQueries = {
     return `
     SELECT rid, status_name as name FROM ${MAIN_SCHEMA_NAME}.email_status WHERE rid IN (${ids})`;
   },
-   fetchEmailStatusByName(statusName: string): string {
+   fetchActivityStatusByName(statusName: string, activityType: string): string {
     return `
-    SELECT rid, status_name as name FROM ${MAIN_SCHEMA_NAME}.email_status WHERE status_name = '${statusName}'`;
+    SELECT rid, status_name as name FROM ${MAIN_SCHEMA_NAME}.activity_status WHERE activity_type = '${activityType}' and status_name = '${statusName}'`;
   },
   fetchIndustry(industryIds: any): string {
     let ids = industryIds.map((d: any) => `'${d}'`);
@@ -788,7 +788,7 @@ export const rawQueries = {
   },
   listUsersForCaseTeam(accountRid: string) {
     return `  
-      SELECT u.rid, CONCAT(u.first_name, ' ', u.last_name) AS name
+      SELECT u.rid, CONCAT(u.first_name, ' ', u.last_name) AS name,email
       FROM ${MAIN_SCHEMA_NAME}.user u
 	  where (is_consultant_firm is true
 	  or org_id = '${accountRid}')
@@ -1773,6 +1773,12 @@ export const emailCategorties = {
   "review_projects" : "Review Projects",
   "general": "General"
 }
+
+export const activityStatus = {  
+ completed: "Completed",
+ scheduled: "Scheduled",
+};
+
 
 // Common fields for activity select queries
 export const meetingFields = [

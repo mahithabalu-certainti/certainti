@@ -40,6 +40,12 @@ export interface ActivitiesAttributes {
   fiscal_year?: number;
   body_html?: string;
   meeting_participants?: string[];
+  meeting_invite?: string;
+  meeting_id?:string;
+  call_platform?: string;
+  minutes_of_meeting?: string;
+  caller_id?: string;
+  call_participants?: string[];
 }
 
 export interface ActivitiesCreationAttributes extends Optional<ActivitiesAttributes, "rid"> {}
@@ -82,6 +88,12 @@ export class Activities extends Model<ActivitiesAttributes, ActivitiesCreationAt
   public fiscal_year?: number
   public body_html?: string;
   public meeting_participants?: string[];
+  public meeting_invite?: string;
+  public meeting_id?:string;
+  public call_platform?: string;
+  public minutes_of_meeting?: string
+  public caller_id?: string;
+  public call_participants?: string[];
 
   static initialize(sequelize: Sequelize, schemaName: string = MAIN_SCHEMA_NAME) {
     return Activities.init({
@@ -130,6 +142,12 @@ export class Activities extends Model<ActivitiesAttributes, ActivitiesCreationAt
       fiscal_year: { type: DataTypes.INTEGER, allowNull: true },
       body_html: { type: DataTypes.TEXT, allowNull: true },
       meeting_participants: { type: DataTypes.JSONB, allowNull: true },
+      meeting_invite: { type: DataTypes.TEXT, allowNull: true },
+      meeting_id: { type: DataTypes.STRING(255), allowNull: true },
+      call_platform: { type: DataTypes.STRING(255), allowNull: true },
+      minutes_of_meeting: { type: DataTypes.TEXT, allowNull: true },
+      caller_id: { type: DataTypes.STRING(255), allowNull: true },
+      call_participants: { type: DataTypes.JSONB, allowNull: true },
     }, {
       sequelize,
       schema: schemaName,

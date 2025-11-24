@@ -15,7 +15,8 @@ import {
   MAIN_SCHEMA_NAME,
   rawQueries,
   STATUS_MESSAGE,
-  meetingFields
+  meetingFields,
+  activityStatus
 } from "../../utils/constants";
 import {
   decryptClientSecret,
@@ -653,6 +654,7 @@ class ActivitySchemaService {
         "modified_by_name",
         "modified_datetime",
         "activity_type",
+        "status_name"
       ];
       const finalSortBy = validSortFields.includes(sortBy)
         ? sortBy
@@ -1327,7 +1329,7 @@ class ActivitySchemaService {
       this.mainDbSequelize = await this.caseModelService.getMainSequelize();
     }
     const [emailStatus]: any[] = await this.mainDbSequelize.query(
-      rawQueries.fetchEmailStatusByName(activityRequest.email_status),
+      rawQueries.fetchActivityStatusByName(activityRequest.email_status, activityRequest.activity_type),
       { type: "SELECT" }
     );
     let toEmailsArray: string[] = [];
@@ -1356,7 +1358,7 @@ class ActivitySchemaService {
     const activityData = {
       ...activityRequest,
       activity_type: "Email",
-      email_status_rid: emailStatus?.rid || null,
+      status_rid: emailStatus?.rid || null,
       account_rid:
         activityRequest.accountRid || activityRequest.account_rid || "",
     };
@@ -1397,7 +1399,7 @@ class ActivitySchemaService {
       this.mainDbSequelize = await this.caseModelService.getSequelize();
     }
     const [emailStatus]: any[] = await this.mainDbSequelize.query(
-      rawQueries.fetchEmailStatusByName(activityRequest.email_status),
+      rawQueries.fetchActivityStatusByName(activityRequest.email_status,activityRequest.activity_type),
       { type: "SELECT" }
     );
     if (activityRequest.email_status === "Sent") {
@@ -1411,7 +1413,7 @@ class ActivitySchemaService {
     const activityData = {
       ...activityRequest,
       activity_type: "Email",
-      email_status_rid: emailStatus?.rid || null,
+      status_rid: emailStatus?.rid || null,
       account_rid:
         activityRequest.accountRid || activityRequest.account_rid || "",
     };
@@ -1444,7 +1446,7 @@ class ActivitySchemaService {
       this.mainDbSequelize = await this.caseModelService.getMainSequelize();
     }
     const [meetingStatus]: any[] = await this.mainDbSequelize.query(
-      rawQueries.fetchEmailStatusByName(activityRequest.meeting_status),
+      rawQueries.fetchActivityStatusByName(activityStatus.scheduled, activityRequest.activity_type),
       { type: "SELECT" }
     );
     const activityData = {
@@ -1454,10 +1456,6 @@ class ActivitySchemaService {
       account_rid:
         activityRequest.accountRid || activityRequest.account_rid || "",
     };
-    const response = await Activities.create(activityData);
-    activityRequest.activity_rid = response.rid;
-
-    // Schedule meeting in Teams using util function
     try {
       const [accountInfo]: any[] = await this.mainDbSequelize.query(
       rawQueries.fetchAccountInfo(activityRequest.account_rid!),
@@ -1471,25 +1469,34 @@ class ActivitySchemaService {
     if(!senderEmailInfo){
       throw new Error("Sender email information not found for scheduling meeting.");
     } 
-    
 
-      await scheduleTeamsMeetingUtil(activityRequest, userId,senderEmailInfo);
-    } catch (err) {
-      logMessage(`Error scheduling Teams meeting: ${err}`);
+    let scheduleResponse =  await scheduleTeamsMeetingUtil(activityRequest, userId,senderEmailInfo);
+    if(scheduleResponse.success)
+    {
+      activityData.meeting_invite = scheduleResponse.webLink;
+      activityData.meeting_id = scheduleResponse.meetingId;
+      const response = await Activities.create(activityData);
+      activityRequest.activity_rid = response.rid;
+      await this.uploadActivityFiles(files, activityRequest, accountNumber);
+      await this.addTaskTimeline(
+        accountNumber,
+        activityData.activity_rid,
+        activityData.account_rid,
+        `Meeting Activity Created with subject: ${activityRequest.subject}`,
+        userId,
+        `Meeting Activity Created: ${activityRequest.subject}`,
+        "success",
+        activityData.activity_rid
+      );
+      return response;
     }
-
-    await this.uploadActivityFiles(files, activityRequest, accountNumber);
-    this.addTaskTimeline(
-      accountNumber,
-      activityData.activity_rid,
-      activityData.account_rid,
-      `Meeting Activity Created with subject: ${activityRequest.subject}`,
-      userId,
-      `Meeting Activity Created: ${activityRequest.subject}`,
-      "success",
-      activityData.activity_rid
-    );
-    return response;
+    else
+    {
+      return scheduleResponse;
+    }
+  } catch (err) {
+      logMessage(`Error scheduling Teams meeting: ${err}`);
+    }    
   }
 
   async createActivityCall(
@@ -1501,16 +1508,15 @@ class ActivitySchemaService {
     const { Activities } =
       await this.caseModelService.getModels(accountNumber);
     if (!this.mainDbSequelize) {
-      this.mainDbSequelize = await this.caseModelService.getSequelize();
+      this.mainDbSequelize = await this.caseModelService.getMainSequelize();
     }
-    const [callStatus]: any[] = await this.mainDbSequelize.query(
-      rawQueries.fetchEmailStatusByName(activityRequest.call_status),
+     const [meetingStatus]: any[] = await this.mainDbSequelize.query(
+      rawQueries.fetchActivityStatusByName(activityStatus.completed, activityRequest.activity_type),
       { type: "SELECT" }
     );
     const activityData = {
       ...activityRequest,
       activity_type: "Call",
-      call_status_rid: callStatus?.rid || null,
       account_rid:
         activityRequest.accountRid || activityRequest.account_rid || "",
     };
@@ -1521,9 +1527,9 @@ class ActivitySchemaService {
       accountNumber,
       activityData.activity_rid,
       activityData.account_rid,
-      `Call Activity Created with subject: ${activityRequest}`,
+      `Call Activity Created with subject: ${activityRequest.subject}`,
       userId,
-      `Call Activity Created: ${activityRequest}`,
+      `Call Activity Created: ${activityRequest.subject}`,
       "success",
       activityData.activity_rid
     );
@@ -1538,17 +1544,9 @@ class ActivitySchemaService {
   ) {
     const { Activities } =
       await this.caseModelService.getModels(accountNumber);
-    if (!this.mainDbSequelize) {
-      this.mainDbSequelize = await this.caseModelService.getSequelize();
-    }
-    const [callStatus]: any[] = await this.mainDbSequelize.query(
-      rawQueries.fetchEmailStatusByName(activityRequest.call_status),
-      { type: "SELECT" }
-    );
     const activityData = {
       ...activityRequest,
       activity_type: "Call",
-      call_status_rid: callStatus?.rid || null,
       account_rid:
         activityRequest.accountRid || activityRequest.account_rid || "",
     };
@@ -1561,9 +1559,9 @@ class ActivitySchemaService {
       accountNumber,
       activityRequest.activity_rid,
       activityRequest.account_rid!,
-      `Call Activity updated with subject: ${activityRequest}`,
+      `Call Activity updated with subject: ${activityRequest.subject}`,
       userId,
-      `Call Activity updated: ${activityRequest}`,
+      `Call Activity updated: ${activityRequest.subject}`,
       "success",
       activityRequest.activity_rid
     );
@@ -1582,7 +1580,7 @@ class ActivitySchemaService {
       this.mainDbSequelize = await this.caseModelService.getSequelize();
     }
     const [meetingStatus]: any[] = await this.mainDbSequelize.query(
-      rawQueries.fetchEmailStatusByName(activityRequest.meeting_status),
+      rawQueries.fetchActivityStatusByName(activityRequest.meeting_status, activityRequest.activity_type),
       { type: "SELECT" }
     );
     const activityData = {
