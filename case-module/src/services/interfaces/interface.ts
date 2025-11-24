@@ -96,7 +96,7 @@ export interface ICaseService {
     errorMessage?: string;
     data?: { caseRoles: any };
   }>;
-  listCaseTeamMembers( data: any, filters: Record<string, any>,userId:string,apiType:string): Promise<{
+  listCaseTeamMembers( data: any, filters: Record<string, any>,userId:string,apiType:string,isDropdownList? : boolean): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;

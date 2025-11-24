@@ -181,6 +181,7 @@ const listCaseTeamSchema = Joi.object({
   sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
   account_rid: Joi.string().required(),
   case_rid: Joi.string().required(),
+  is_dropdown_list : Joi.boolean().optional()
 });
 
 const listReviewProjectSchema = Joi.object({
@@ -543,7 +544,7 @@ const createTaskSchema = Joi.object({
   task_name: Joi.string().max(255).required(),
   effective_start_datetime : Joi.string().optional(),
   effective_end_datetime : Joi.string().optional(),
-  case_team_member_role_rid : Joi.string().optional(),
+  assigned_to : Joi.string().allow("").optional(),
   checklist_template_rid : Joi.string().allow("").optional(),
   status_rid : Joi.string().optional(),
   priority_rid : Joi.string().allow("").optional(),
@@ -704,7 +705,7 @@ const updateTaskSchema = Joi.object({
   task_name: Joi.string().max(255).required(),
   effective_start_datetime : Joi.string().required(),
   effective_end_datetime : Joi.string().required(),
-  case_team_member_role_rid : Joi.string().required(),
+  assigned_to : Joi.string().allow("").optional(),
   checklist_template_rid : Joi.string().allow("").optional(),
   status_rid : Joi.string().optional(),
   priority_rid : Joi.string().allow("").optional(),

@@ -3258,20 +3258,49 @@ return !response;
     accountNumber: string,
     data: any,
     userId: string,
-    type: string = "list"
+    type: string = "list",
+    isDropdownList? : boolean,
+    statusRid? : string
   ) {
     try {
+      if(!this.mainDbSequelize) {
+        this.mainDbSequelize = await initMainDbSequelize()
+      }
       const { CaseTeam } = await this.caseModelService.getModels(accountNumber);
-      const whereConditions: any = {
+      let whereConditions;
+
+      if(isDropdownList) {
+        whereConditions = {
+          case_rid : data.case_rid,
+          account_rid : data.account_rid,
+          status_rid : statusRid
+        }
+      } else {
+        whereConditions = {
         case_rid: data.case_rid,
         account_rid: data.account_rid,
       };
+      }
       const queryOptions: any = {
         where: whereConditions,
         order: [["effective_startdate", "ASC"]],
+        raw : true
       };
       const caseTeamMembers = await CaseTeam.findAll(queryOptions);
-      return caseTeamMembers;
+      if(isDropdownList) {
+        const userIds = [...new Set(caseTeamMembers.map((d : any) => d.user_rid))];
+        if(userIds.length > 0) {
+          const getUserDetails = await this.mainDbSequelize.query(rawQueries.getOwnerDetails(userIds));
+          const userMap = new Map(getUserDetails[0].map((d : any) => [d.rid, d.name]));
+          const finalData = caseTeamMembers.map((d : any) => {
+            return {
+              ...d,
+              user_name : userMap.get(d.user_rid)
+            }
+          })
+          return finalData
+        }
+      } else return caseTeamMembers;
     } catch (err) {
       logMessage(`Error in fetching case team members: ${err}`);
       errorLog("Error in fetching case team members:", (err as Error).message);
@@ -4791,6 +4820,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       effective_start_datetime : data.effective_start_datetime,
       effective_end_datetime : data.effective_end_datetime,
       case_team_member_role_rid : data.case_team_member_role_rid,
+      assigned_to : data.assigned_to,
       status_rid : data.status_rid,
       priority_rid : data.priority_rid,
       milestone_template_rid : data.milestone_template_rid,
@@ -4894,6 +4924,10 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
               statusMessage : workflowResult.statusMessage
             } 
           }
+        }
+        if(data.assigned_to !== isTaskExists.assigned_to) {
+          const findUserRoleId = await this.fetchAssignedToRole(data.assigned_to, data.case_rid, data.account_rid,accountNumber);
+          data.case_team_member_role_rid = findUserRoleId?.role_rid!
         }
         const [updatedResult] = await CaseTask.update(data, {
           where : {
@@ -6755,6 +6789,17 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       transaction.rollback()
       return result;
     }
+  }
+  async fetchAssignedToRole (assignedTo : string, caseRid : string, accountRid : string, accountNumber : string) {
+    const {CaseTeam} = await this.caseModelService.getModels(accountNumber);
+    const result = await CaseTeam.findOne({
+      where : {
+        case_rid : caseRid,
+        account_rid : accountRid,
+        user_rid : assignedTo
+      }, raw : true
+    });
+    return result;
   }
 }
 
