@@ -438,6 +438,18 @@ export const setTaskTemplateData = (dbData : TaskTemplate, reqData : any, userId
       validUpdateQuery.push(validUpdateConditions)
     }
   }
+  if(reqData.task_category_rid) {
+    if(reqData.task_category_rid !== dbData.task_category_rid) {
+      validUpdateConditions = `task_category_rid = '${reqData.task_category_rid}'`
+      validUpdateQuery.push(validUpdateConditions)
+    }
+  }
+  if(reqData.weightage_rid) {
+    if(reqData.weightage_rid !== dbData.weightage_rid) {
+      validUpdateConditions = `weightage_rid = '${reqData.weightage_rid}'`
+      validUpdateQuery.push(validUpdateConditions)
+    }
+  }
   if(validUpdateQuery.length > 0) {
     validUpdateConditions = `modified_by = '${userId}'`
     validUpdateQuery.push(validUpdateConditions)
@@ -470,6 +482,8 @@ export const getColumnsNamesForTaskUpdate = (data : UpdateCaseTaskType, dbData :
     columns.push(`task_type_rid`)
   if(data.weightage_rid !== dbData.weightage_rid)
     columns.push(`weightage_rid`)
+  if(data.task_category_rid !== dbData.task_category_rid)
+    columns.push(`task_category_rid`)
 
   return columns;
 }

@@ -4782,7 +4782,9 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       case_rid : data.case_rid,
       task_type_rid : data.task_type_rid,
       task_description : data.task_description,
-      task_status_rid : data.task_status_rid
+      task_status_rid : data.task_status_rid,
+      weightage_rid : data.weightage_rid,
+      task_category_rid : data.task_category_rid
     }, {transaction});
     if(createdTaskResult) {
       if(data?.checklist_template_rid) 
