@@ -112,6 +112,19 @@ export interface TaskDetailResponse {
   case_team_member_role_rid?: string;
   milestone_template_rid?: string;
   sequence_no?: number;
+  weightage_rid?: string;
+  weightage_value?: number;
+  task_category_rid?: string;
+  task_category_name?: string;
+  workflow_connector?: Array<{
+    rid: string;
+    source_rid: string;
+    target_rid: string;
+    relationship_connector_rid: string;
+    source_task_name: string;
+    target_task_name: string;
+    relationship_name: string;
+  }>;
 }
 
 // Helper function to generate initials from name
@@ -194,12 +207,12 @@ export const getTaskDetail = async (
       checklistName: taskDetailResponse.checklists?.checklist_name,
       checklistInfo: taskDetailResponse.checklists
         ? {
-            rid: taskDetailResponse.checklists.rid,
-            name: taskDetailResponse.checklists.checklist_name,
-            description: taskDetailResponse.checklists.checklist_description,
-            totalItems: taskDetailResponse.checklists.checklist_items_count,
-            completedItems: taskDetailResponse.checklists.completed_items_count,
-          }
+          rid: taskDetailResponse.checklists.rid,
+          name: taskDetailResponse.checklists.checklist_name,
+          description: taskDetailResponse.checklists.checklist_description,
+          totalItems: taskDetailResponse.checklists.checklist_items_count,
+          completedItems: taskDetailResponse.checklists.completed_items_count,
+        }
         : undefined,
       tags: taskDetailResponse.tags || [],
       collaborators: [],
@@ -216,6 +229,23 @@ export const getTaskDetail = async (
       statusRid: taskDetailResponse.task_status_rid,
       priorityRid: taskDetailResponse.priority_rid,
       caseTeamMemberRoleName: taskDetailResponse.case_team_member_role_name,
+      weightage: taskDetailResponse.weightage_value?.toString(),
+      weightageRid: taskDetailResponse.weightage_rid,
+      category: taskDetailResponse.task_category_name,
+      categoryRid: taskDetailResponse.task_category_rid,
+      workflow_connector: taskDetailResponse.workflow_connector,
+      linkedType:
+        taskDetailResponse.workflow_connector &&
+          taskDetailResponse.workflow_connector.length > 0
+          ? taskDetailResponse.workflow_connector[0].relationship_name
+          : undefined,
+      linkTaskTypes:
+        taskDetailResponse.workflow_connector &&
+          taskDetailResponse.workflow_connector.length > 0
+          ? taskDetailResponse.workflow_connector.map(
+            (wc) => wc.target_task_name
+          )
+          : [],
     };
 
     return task;

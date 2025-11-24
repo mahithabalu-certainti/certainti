@@ -164,7 +164,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     enabled: !!taskId && isOpen,
   });
 
-  const { data: rawActivities = [] } = useGetTaskActivities(
+  const { data: rawActivities } = useGetTaskActivities(
     accountId,
     caseId,
     taskId!,
@@ -176,7 +176,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     { enabled: !!taskId && isOpen }
   );
 
-  const { data: rawCollaborators = [] } = useGetCollaborators(
+  const { data: rawCollaborators } = useGetCollaborators(
     accountId,
     caseId,
     taskId!,
@@ -204,6 +204,18 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       }
       if (enriched.checklistName) {
         setSelectedChecklist(enriched.checklistName);
+      }
+      if (enriched.weightage) {
+        setWeightage(enriched.weightage);
+      }
+      if (enriched.category) {
+        setCategory(enriched.category);
+      }
+      if (enriched.linkedType) {
+        setLinkedType(enriched.linkedType);
+      }
+      if (enriched.linkTaskTypes) {
+        setLinkTaskTypes(enriched.linkTaskTypes);
       }
       setIsLoadingTaskDetails(false);
     }
@@ -376,8 +388,8 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     // Handle nested data.data structure
     const response = weightageListQuery.data as {
       data?:
-        | { data?: Array<{ rid: string; weightage_value: number }> }
-        | Array<{ rid: string; weightage_value: number }>;
+      | { data?: Array<{ rid: string; weightage_value: number }> }
+      | Array<{ rid: string; weightage_value: number }>;
     };
     const dataArray = Array.isArray(response?.data)
       ? response.data
@@ -417,6 +429,10 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       JSON.stringify(originalTask.checklist) !==
       JSON.stringify(editedTask.checklist);
 
+    const linkTaskTypesChanged =
+      JSON.stringify([...(linkTaskTypes || [])].sort()) !==
+      JSON.stringify([...(originalTask.linkTaskTypes || [])].sort());
+
     return (
       originalTask.title !== editedTask.title ||
       originalTask.description !== editedTask.description ||
@@ -429,6 +445,10 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       checklistChanged ||
       selectedRole !== (originalTask.caseTeamMemberRoleName || '') ||
       selectedChecklist !== (originalTask.checklistName || '') ||
+      linkedType !== (originalTask.linkedType || '') ||
+      linkTaskTypesChanged ||
+      weightage !== (originalTask.weightage || '') ||
+      category !== (originalTask.category || '') ||
       pendingAttachments.length > 0 ||
       deletedAttachmentIds.length > 0
     );
@@ -489,31 +509,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     setSelectedCollaboratorIds(ids);
   }, [editedTask, allEnrichedUsers]);
 
-  // Extract workflow connector data from task for display purposes
-  useEffect(() => {
-    interface WorkflowConnector {
-      relationship_name?: string;
-      target_task_name?: string;
-    }
 
-    if (task && 'workflow_connector' in task) {
-      const workflowConnectors = (task as Record<string, unknown>)
-        .workflow_connector;
-      if (Array.isArray(workflowConnectors) && workflowConnectors.length > 0) {
-        const workflowData = workflowConnectors[0] as WorkflowConnector;
-        if (workflowData) {
-          // Set the linked type (relationship_name)
-          if (workflowData.relationship_name) {
-            setLinkedType(workflowData.relationship_name);
-          }
-          // Set the linked task types (target_task_name)
-          if (workflowData.target_task_name) {
-            setLinkTaskTypes([workflowData.target_task_name]);
-          }
-        }
-      }
-    }
-  }, [task]);
 
   if (!isOpen || !taskId) return null;
   if (isLoadingTaskDetails || (!task && !editedTask)) {
@@ -604,6 +600,13 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     if (!editedTask?.priority) newErrors.priority = 'Priority is required';
     if (!selectedChecklist && !fieldVisibility.checklistTemplate) {
       newErrors.checklistTemplate = 'Checklist Template is required';
+    }
+
+    if (linkedType && (!linkTaskTypes || linkTaskTypes.length === 0)) {
+      newErrors.linkTaskType = 'Link Task Type is required';
+    }
+    if (!linkedType && linkTaskTypes && linkTaskTypes.length > 0) {
+      newErrors.linkedType = 'Linked Type is required';
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -706,13 +709,13 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
         const linkTaskTypeRidsValue =
           linkTaskTypes && linkTaskTypes.length > 0
             ? linkTaskTypes
-                .map((taskType) => {
-                  const template = taskTemplatesData?.find(
-                    (t) => t.name === taskType
-                  );
-                  return template?.id || '';
-                })
-                .filter((rid) => rid !== '')
+              .map((taskType) => {
+                const template = taskTemplatesData?.find(
+                  (t) => t.name === taskType
+                );
+                return template?.id || '';
+              })
+              .filter((rid) => rid !== '')
             : [];
 
         const weightageRidValue = weightage
@@ -721,13 +724,13 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
 
         const categoryRidValue = category
           ? categoryData?.find(
-              (c: { id: string; name: string }) => c.name === category
-            )?.id || ''
+            (c: { id: string; name: string }) => c.name === category
+          )?.id || ''
           : '';
 
         const assignedToRid = editedTask.assignee
           ? allEnrichedUsers.find((u) => u.name === editedTask.assignee.name)
-              ?.id || ''
+            ?.id || ''
           : '';
 
         // Build workflow connector - always include, pass {} if no valid data
@@ -798,9 +801,9 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     setEditedTask((prev) =>
       prev
         ? {
-            ...prev,
-            status: statusName,
-          }
+          ...prev,
+          status: statusName,
+        }
         : null
     );
     if (statusName) setErrors((prev) => ({ ...prev, status: '' }));
@@ -849,9 +852,9 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       setEditedTask((prev) =>
         prev
           ? {
-              ...prev,
-              attachments: [...(prev.attachments || []), ...fileNames],
-            }
+            ...prev,
+            attachments: [...(prev.attachments || []), ...fileNames],
+          }
           : null
       );
       e.target.value = '';
@@ -891,13 +894,13 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       setEditedTask((prev) =>
         prev
           ? {
-              ...prev,
-              assignee: {
-                name: selectedUser.name,
-                initials: selectedUser.initials,
-                color: selectedUser.color,
-              },
-            }
+            ...prev,
+            assignee: {
+              name: selectedUser.name,
+              initials: selectedUser.initials,
+              color: selectedUser.color,
+            },
+          }
           : null
       );
     }
@@ -1025,9 +1028,8 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   return (
     <>
       <div
-        className={`fixed right-0 bottom-0 w-[650px] bg-white text-gray-900 shadow-2xl transform transition-transform duration-300 ease-in-out z-50 overflow-y-auto ${
-          isOpen ? 'translate-x-0' : 'translate-x-full'
-        }`}
+        className={`fixed right-0 bottom-0 w-[650px] bg-white text-gray-900 shadow-2xl transform transition-transform duration-300 ease-in-out z-50 overflow-y-auto ${isOpen ? 'translate-x-0' : 'translate-x-full'
+          }`}
         style={{ top: '38.1px' }}
       >
         <div className='sticky top-0 flex items-center justify-between p-[17.4px] border-b border-[#CBD6E2] bg-white z-50'>
@@ -1428,12 +1430,26 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
               setEditedTask((prev) =>
                 prev ? { ...prev, linkedType: value } : null
               );
+              if (value) {
+                setErrors((prev) => ({ ...prev, linkedType: '' }));
+              } else {
+                if (!linkTaskTypes || linkTaskTypes.length === 0) {
+                  setErrors((prev) => ({ ...prev, linkTaskType: '' }));
+                }
+              }
             }}
             onLinkTaskTypesChange={(values) => {
               setLinkTaskTypes(values);
               setEditedTask((prev) =>
                 prev ? { ...prev, linkTaskTypes: values } : null
               );
+              if (values.length > 0) {
+                setErrors((prev) => ({ ...prev, linkTaskType: '' }));
+              } else {
+                if (!linkedType) {
+                  setErrors((prev) => ({ ...prev, linkedType: '' }));
+                }
+              }
             }}
             onWeightageChange={(value) => {
               setWeightage(value);

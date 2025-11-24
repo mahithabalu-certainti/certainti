@@ -247,6 +247,13 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
     )
       newErrors.checklistTemplate = 'Checklist Template is required';
 
+    if (linkedType && (!linkTaskTypes || linkTaskTypes.length === 0)) {
+      newErrors.linkTaskType = 'Link Task Type is required';
+    }
+    if (!linkedType && linkTaskTypes && linkTaskTypes.length > 0) {
+      newErrors.linkedType = 'Linked Type is required';
+    }
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
@@ -277,8 +284,6 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
         category,
         categoryRid,
       };
-
-      console.log('Submitting form data:', formData);
       await onCreateTask(columnId, formData);
       handleClose();
     } catch (error) {
@@ -568,35 +573,47 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
               const connectorItem = connectorTypesData?.find(
                 (c) => c.name === value
               );
-              if (connectorItem) {
-                setLinkedTypeRid(connectorItem.id);
+              setLinkedTypeRid(connectorItem?.id || '');
+              if (value) {
+                setErrors((prev) => ({ ...prev, linkedType: '' }));
+              } else {
+                if (!linkTaskTypes || linkTaskTypes.length === 0) {
+                  setErrors((prev) => ({ ...prev, linkTaskType: '' }));
+                }
               }
             }}
             onLinkTaskTypesChange={(values) => {
               setLinkTaskTypes(values);
-              const rids = values.map((value) => {
-                const template = taskTemplatesData?.find((t) => t.name === value);
-                return template?.id || '';
-              }).filter((rid) => rid !== '');
+              const rids = values
+                .map((value) => {
+                  const template = taskTemplatesData?.find(
+                    (t) => t.name === value
+                  );
+                  return template?.id || '';
+                })
+                .filter((rid) => rid !== '');
               setLinkTaskTypeRids(rids);
+              if (values.length > 0) {
+                setErrors((prev) => ({ ...prev, linkTaskType: '' }));
+              } else {
+                if (!linkedType) {
+                  setErrors((prev) => ({ ...prev, linkedType: '' }));
+                }
+              }
             }}
             onWeightageChange={(value) => {
               setWeightage(value);
               const weightageItem = weightageData?.find(
                 (w) => w.name === value
               );
-              if (weightageItem) {
-                setWeightageRid(weightageItem.id);
-              }
+              setWeightageRid(weightageItem?.id || '');
             }}
             onCategoryChange={(value) => {
               setCategory(value);
               const categoryItem = categoryData?.find(
                 (c: { id: string; name: string }) => c.name === value
               );
-              if (categoryItem) {
-                setCategoryRid(categoryItem.id);
-              }
+              setCategoryRid(categoryItem?.id || '');
             }}
             onTagsChange={setSelectedTags}
             onAddCustomTag={() => { }}
@@ -639,10 +656,9 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
             sx={{
               px: 1,
               py: 1,
-              backgroundColor: isSubmitting ? '#D1D5DB' : '#2563EB',
-              color: isSubmitting ? '#9CA3AF' : '#FFFFFF',
               '&:hover': {
-                backgroundColor: isSubmitting ? '#D1D5DB' : '#1D4ED8',
+                background:
+                  'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
               },
             }}
           />

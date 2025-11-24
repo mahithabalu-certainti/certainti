@@ -96,6 +96,24 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
 }) => {
   const shouldPrepopulate = mode === 'view';
 
+  const uniqueConnectorTypes = React.useMemo(() => {
+    const seen = new Set();
+    return connectorTypesData.filter((item) => {
+      const duplicate = seen.has(item.id);
+      seen.add(item.id);
+      return !duplicate;
+    });
+  }, [connectorTypesData]);
+
+  const uniqueTaskTemplates = React.useMemo(() => {
+    const seen = new Set();
+    return taskTemplatesData.filter((item) => {
+      const duplicate = seen.has(item.id);
+      seen.add(item.id);
+      return !duplicate;
+    });
+  }, [taskTemplatesData]);
+
   return (
     <div>
       <h3 className='text-sm font-semibold text-gray-700 mb-3'>Fields</h3>
@@ -130,15 +148,15 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
                 mode === 'view'
                   ? (e) => onStatusChange(e.target.value as string)
                   : (e) => {
-                      const selectedName = e.target.value as string;
-                      const statusItem = statusData?.find(
-                        (s) => s.name === selectedName
-                      );
-                      onStatusChangeCreate?.(
-                        selectedName,
-                        statusItem?.id || ''
-                      );
-                    }
+                    const selectedName = e.target.value as string;
+                    const statusItem = statusData?.find(
+                      (s) => s.name === selectedName
+                    );
+                    onStatusChangeCreate?.(
+                      selectedName,
+                      statusItem?.id || ''
+                    );
+                  }
               }
               disabled={fieldDisabled.status || mode === 'create'}
               width='200px'
@@ -514,9 +532,9 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
                           borderWidth: '1px',
                         },
                         '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline':
-                          {
-                            border: '2px solid #60A5FA',
-                          },
+                        {
+                          border: '2px solid #60A5FA',
+                        },
                       }}
                     />
                   )}
@@ -538,40 +556,40 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
 
             {(shouldPrepopulate ? editedTask?.tags || [] : selectedTags || [])
               ?.length > 0 && (
-              <div className='flex flex-wrap items-center gap-2 mt-2'>
-                {(shouldPrepopulate
-                  ? editedTask?.tags || []
-                  : selectedTags || []
-                )?.map((tag, index) => (
-                  <div
-                    key={index}
-                    className='inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium hover:bg-blue-200 transition-colors group'
-                  >
-                    <span>{tag}</span>
-                    <button
-                      onClick={() => {
-                        const newTags =
-                          (shouldPrepopulate
-                            ? editedTask?.tags || []
-                            : selectedTags || []
-                          )?.filter((t) => t !== tag) || [];
-                        if (shouldPrepopulate) {
-                          onSetEditedTask(
-                            editedTask ? { ...editedTask, tags: newTags } : null
-                          );
-                        } else {
-                          onTagsChange(newTags);
-                        }
-                      }}
-                      className='ml-1 text-blue-600 hover:text-red-600 transition-colors'
-                      title={`Remove ${tag}`}
+                <div className='flex flex-wrap items-center gap-2 mt-2'>
+                  {(shouldPrepopulate
+                    ? editedTask?.tags || []
+                    : selectedTags || []
+                  )?.map((tag, index) => (
+                    <div
+                      key={index}
+                      className='inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium hover:bg-blue-200 transition-colors group'
                     >
-                      ×
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
+                      <span>{tag}</span>
+                      <button
+                        onClick={() => {
+                          const newTags =
+                            (shouldPrepopulate
+                              ? editedTask?.tags || []
+                              : selectedTags || []
+                            )?.filter((t) => t !== tag) || [];
+                          if (shouldPrepopulate) {
+                            onSetEditedTask(
+                              editedTask ? { ...editedTask, tags: newTags } : null
+                            );
+                          } else {
+                            onTagsChange(newTags);
+                          }
+                        }}
+                        className='ml-1 text-blue-600 hover:text-red-600 transition-colors'
+                        title={`Remove ${tag}`}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
           </div>
         )}
 
@@ -665,7 +683,7 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
           )}
 
         {/* Linked Type - Single Select (Create + Edit) */}
-        {connectorTypesData && connectorTypesData.length > 0 && (
+        {uniqueConnectorTypes && uniqueConnectorTypes.length > 0 && (
           <div className='flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors'>
             <div className='flex items-center gap-2'>
               <svg
@@ -732,7 +750,7 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
               >
                 Choose Linked Type
               </MenuItem>
-              {connectorTypesData.map((connector) => (
+              {uniqueConnectorTypes.map((connector) => (
                 <MenuItem
                   sx={{
                     color: '#425A76',
@@ -751,7 +769,7 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
         )}
 
         {/* Link Task Type - Multi-Select with Checkboxes (Create + Edit) */}
-        {taskTemplatesData && taskTemplatesData.length > 0 && (
+        {uniqueTaskTemplates && uniqueTaskTemplates.length > 0 && (
           <div className='flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors'>
             <div className='flex items-center gap-2'>
               <svg
@@ -810,7 +828,7 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
                 );
               }}
             >
-              {taskTemplatesData.map((template) => {
+              {uniqueTaskTemplates.map((template) => {
                 const selectedValues = shouldPrepopulate
                   ? editedTask?.linkTaskTypes || selectedLinkTaskTypes || []
                   : selectedLinkTaskTypes || [];
