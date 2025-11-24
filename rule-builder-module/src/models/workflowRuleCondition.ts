@@ -1,51 +1,124 @@
-import { db } from "../config/db";
+import { Sequelize, Model, DataTypes, Optional } from "sequelize";
+import { ENV_PREFIX, MAIN_SCHEMA_NAME } from "../utils/constants";
 
-export interface Condition {
-  rid?: string;
-  logicalOperator: String;
-  fieldName: string;
+export interface ConditionAttributes {
+  rid: string;
+  eid?: string | null;
+  r_number?: string | null;
+  logical_operator: String;
+  field_name: string;
   operator: string;
   value: string;
-  dataType: string;
+  data_type: string;
   sequence: number;
-  createdDatetime?: Date;
+  created_by: string;
+  modified_by?: string;
+  created_datetime?: Date;
+  modified_datetime?: Date;
 }
 
-export const createCondition = async (data: Condition) => {
-  const query = `
-    INSERT INTO workflow_rule_condition
-    (rid,logical_operator, field_name, operator, value, data_type,sequence)
-    VALUES ($1,$2,$3,$4,$5,$6,$7)
-    RETURNING *;
-  `;
-  const values = [data.rid, data.logicalOperator, data.fieldName, data.operator, data.value, data.dataType, data.sequence];
-  const res = await db.query(query, values);
-  return res.rows[0];
-};
+export interface ConditionCreationAttributes
+  extends Optional<ConditionAttributes, "rid"> { }
 
-export const getConditionById = async (rid: number) => {
-  const res = await db.query(`SELECT * FROM workflow_rule_condition WHERE rid=$1`, [rid]);
-  return res.rows[0];
-};
+export class Condition
+  extends Model<ConditionAttributes, ConditionCreationAttributes>
+  implements ConditionAttributes {
+  public rid!: string;
+  public eid!: string;
+  public r_number!: string;
+  public logical_operator!: string;
+  public field_name!: string;
+  public operator!: string;
+  public value!: string;
+  public data_type!: string;
+  public sequence!: number;
+  public created_by!: string;
+  public modified_by?: string;
 
-// export const getConditionsByGroup = async (groupRid: number) => {
-//   const res = await db.query(`SELECT * FROM workflow_rule_condition WHERE group_rid=$1`, [groupRid]);
-//   return res.rows;
-// };
+  public readonly created_datetime!: Date;
+  public readonly modified_datetime!: Date;
 
-export const updateCondition = async (rid: number, data: Condition) => {
-  const query = `
-    UPDATE workflow_rule_condition
-    SET field_name=$1, operator=$2, value=$3, data_type=$4
-    WHERE rid=$5
-    RETURNING *;
-  `;
-  const values = [data.fieldName, data.operator, data.value, data.dataType, rid];
-  const res = await db.query(query, values);
-  return res.rows[0];
-};
+  static initialize(sequelize: Sequelize) {
+    Condition.init(
+      {
+        rid: {
+          type: DataTypes.STRING(50),
+          primaryKey: true,
+          allowNull: false,
+          defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
+        },
 
-export const deleteCondition = async (rid: number) => {
-  await db.query(`DELETE FROM workflow_rule_condition WHERE rid=$1`, [rid]);
-  return { message: "Condition deleted successfully" };
-};
+        r_number: {
+          type: DataTypes.STRING(20),
+          allowNull: true,
+          unique: true,
+        },
+
+        eid: {
+          type: DataTypes.STRING,
+          allowNull: true,
+        },
+
+        logical_operator: {
+          type: DataTypes.STRING,
+          allowNull: false,
+        },
+
+        field_name: {
+          type: DataTypes.STRING,
+          allowNull: true,
+        },
+
+        operator: {
+          type: DataTypes.STRING,
+          allowNull: false,
+        },
+
+        value: {
+          type: DataTypes.STRING,
+          allowNull: false,
+        },
+
+        data_type: {
+          type: DataTypes.STRING,
+          allowNull: true,
+        },
+
+        sequence: {
+          type: DataTypes.INTEGER,
+          allowNull: false,
+        },
+
+        created_by: {
+          type: DataTypes.INTEGER,
+          allowNull: false,
+        },
+
+        modified_by: {
+          type: DataTypes.INTEGER,
+          allowNull: true,
+        },
+
+        created_datetime: {
+          type: DataTypes.DATE,
+          allowNull: false,
+          defaultValue: DataTypes.NOW,
+        },
+
+        modified_datetime: {
+          type: DataTypes.DATE,
+          allowNull: true,
+          defaultValue: DataTypes.NOW,
+        },
+      },
+      {
+        sequelize,
+        modelName: "Condition",
+        tableName: "workflow_rule_condition",
+        schema: MAIN_SCHEMA_NAME,
+        timestamps: false, // using custom timestamp columns
+      }
+    );
+    return Condition;
+  }
+}

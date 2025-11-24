@@ -6,7 +6,7 @@ import * as AuditService from "./auditService";
  * Fetch entity (case or task) from DB.
  * Replace with real DB query.
  */
-const getEntityById = async (entityType: "case" | "task", entityId: number) => {
+const getEntityById = async (entityType: string, entityId: number) => {
   // Example mock entity
   return {
     id: entityId,
@@ -31,7 +31,7 @@ const checkConditions = async (entity: any, ruleId: string) => {
  */
 const executeActions = async (ruleId: string, entity: any, userId: number) => {
   const actions = await ActionModel.getActionsByRule(ruleId);
-  console.log(ruleId+"fetching actions");
+  console.log(ruleId + "fetching actions");
   console.log(actions);
   const executedActions: string[] = [];
 
@@ -67,19 +67,19 @@ const executeActions = async (ruleId: string, entity: any, userId: number) => {
  * Main workflow execution function
  */
 export const executeWorkflowForEntity = async (
-  entityType: "case" | "task",
+  entityType: string,
   entityId: number,
   userId: number
 ) => {
   const scopes = await ScopeModel.getScopesByEntity(entityType, entityId);
-  console.log("Scopes:", scopes); 
+  console.log("Scopes:", scopes);
   const entity = await getEntityById(entityType, entityId);
 
   const executedRules: any[] = [];
 
   for (const scope of scopes) {
     const ruleId = scope.rule_rid;
-    console.log("rrule_id"+ruleId);
+    console.log("rrule_id" + ruleId);
     const passed = await checkConditions(entity, ruleId);
 
     if (passed) {

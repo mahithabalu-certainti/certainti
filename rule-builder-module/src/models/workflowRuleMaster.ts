@@ -1,56 +1,140 @@
-import { db } from "../config/db";
+import { Sequelize, Model, DataTypes, Optional } from "sequelize";
+import { ENV_PREFIX, MAIN_SCHEMA_NAME } from "../utils/constants";
 
-export interface RuleMaster {
-  rid?: string;
-  ruleName: string;
-  description?: string;
-  triggerEvent: string;
-  triggerType: number;
-  isActive?: boolean;
-  scopeType: number;
-  scheduleOffsetType: string;
-  scheduleOffsetValue: string;
-  createdBy: number;
-  modifiedBy?: number;
-  createdDatetime?: Date;
-  modifiedDatetime?: Date;
+export interface RuleMasterAttributes {
+  rid: string;
+  eid?: string | null;
+  r_number?: string | null;
+  rule_name: string;
+  description: string;
+  trigger_event: string;
+  trigger_type: number;
+  is_active?: boolean;
+  scope_type: number;
+  schedule_offset_type?: string | null;
+  schedule_offset_value?: string | null;
+  created_by: number;
+  modified_by?: number;
+  created_datetime?: Date;
+  modified_datetime?: Date;
 }
 
-export const createRuleMaster = async (data: RuleMaster) => {
-  const query = `
-    INSERT INTO workflow_rule_master
-    (rid,rule_name, description, trigger_event, is_active, scope_type,trigger_type,schedule_offset_type,schedule_offset_value, created_by, modified_by)
-    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
-    RETURNING *;
-  `;
-  const values = [data.rid, data.ruleName, data.description ?? null, data.triggerEvent, data.isActive, data.scopeType, data.triggerType, data.scheduleOffsetType, data.scheduleOffsetValue, data.createdBy, data.createdBy];
-  const res = await db.query(query, values);
-  return res.rows[0];
-};
+export interface RuleMasterCreationAttributes
+  extends Optional<RuleMasterAttributes, "rid" | "is_active" | "created_datetime" | "modified_datetime"> { }
 
-export const getRuleMasterById = async (rid: number) => {
-  const res = await db.query(`SELECT * FROM workflow_rule_master WHERE rid=$1`, [rid]);
-  return res.rows[0];
-};
+export class RuleMaster
+  extends Model<RuleMasterAttributes, RuleMasterCreationAttributes>
+  implements RuleMasterAttributes {
+  public rid!: string;
+  public eid!: string;
+  public r_number!: string;
+  public rule_name!: string;
+  public description!: string;
+  public trigger_event!: string;
+  public trigger_type!: number;
+  public is_active?: boolean;
+  public scope_type!: number;
+  public schedule_offset_type?: string | null;
+  public schedule_offset_value?: string | null;
+  public created_by!: number;
+  public modified_by?: number;
 
-export const getAllRuleMasters = async () => {
-  const res = await db.query(`SELECT * FROM workflow_rule_master ORDER BY rid DESC`);
-  return res.rows;
-};
+  public readonly created_datetime!: Date;
+  public readonly modified_datetime!: Date;
 
-export const updateRuleMaster = async (rid: number, data: RuleMaster) => {
-  const query = `
-    UPDATE workflow_rule_master
-    SET rule_name=$1, description=$2, trigger_event=$3, modified_by=$4, modified_datetime=NOW()
-    WHERE rid=$5
-    RETURNING *;
-  `;
-  const values = [data.ruleName, data.description ?? null, data.triggerEvent, data.modifiedBy, rid];
-  const res = await db.query(query, values);
-  return res.rows[0];
-};
+  static initialize(sequelize: Sequelize) {
+    RuleMaster.init(
+      {
+        rid: {
+          type: DataTypes.STRING(50),
+          primaryKey: true,
+          allowNull: false,
+          defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
+        },
 
-export const deleteRuleMaster = async (rid: number) => {
-  await db.query(`DELETE FROM workflow_rule_master WHERE rid=$1`, [rid]);
-  return { message: "Rule deleted successfully" };
-};
+        r_number: {
+          type: DataTypes.STRING(20),
+          allowNull: true,
+          unique: true,
+        },
+
+        eid: {
+          type: DataTypes.STRING,
+          allowNull: true,
+        },
+
+        rule_name: {
+          type: DataTypes.STRING,
+          allowNull: false,
+        },
+
+        description: {
+          type: DataTypes.STRING,
+          allowNull: true,
+        },
+
+        trigger_event: {
+          type: DataTypes.STRING,
+          allowNull: false,
+        },
+
+        trigger_type: {
+          type: DataTypes.INTEGER,
+          allowNull: false,
+        },
+
+        is_active: {
+          type: DataTypes.BOOLEAN,
+          allowNull: true,
+          defaultValue: true,
+        },
+
+        scope_type: {
+          type: DataTypes.INTEGER,
+          allowNull: false,
+        },
+
+        schedule_offset_type: {
+          type: DataTypes.STRING,
+          allowNull: true,
+        },
+
+        schedule_offset_value: {
+          type: DataTypes.STRING,
+          allowNull: true,
+        },
+
+        created_by: {
+          type: DataTypes.INTEGER,
+          allowNull: false,
+        },
+
+        modified_by: {
+          type: DataTypes.INTEGER,
+          allowNull: true,
+        },
+
+        created_datetime: {
+          type: DataTypes.DATE,
+          allowNull: false,
+          defaultValue: DataTypes.NOW,
+        },
+
+        modified_datetime: {
+          type: DataTypes.DATE,
+          allowNull: true,
+          defaultValue: DataTypes.NOW,
+        },
+      },
+      {
+        sequelize,
+        modelName: "RuleMaster",
+        tableName: "workflow_rule_master",
+        schema: MAIN_SCHEMA_NAME,
+        timestamps: false, // using custom timestamp columns
+      }
+    );
+
+    return RuleMaster;
+  }
+}

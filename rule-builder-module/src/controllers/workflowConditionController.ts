@@ -1,53 +1,77 @@
 import { Request, Response } from "express";
-import * as ConditionModel from "../models/workflowRuleCondition";
+import { HttpStatus } from "../utils/constants";
+import {
+  errorLog,
+  handleErrorResponse,
+  handleSuccessResponse,
+} from "../utils/helpers";
+import * as ConditionService from "../services/workflowConditionService";
 
 export const createCondition = async (req: Request, res: Response) => {
+  const methodName = "create condition";
   try {
-    const newCondition = await ConditionModel.createCondition(req.body);
+    const newCondition = await ConditionService.createCondition(req.body);
     res.status(201).json(newCondition);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to create condition" });
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
   }
 };
 
 export const getConditionById = async (req: Request, res: Response) => {
+  const methodName = "condition details";
   try {
-    const condition = await ConditionModel.getConditionById(Number(req.params.rid));
+    const condition = await ConditionService.getConditionById(String(req.params.rid));
     if (!condition) return res.status(404).json({ error: "Condition not found" });
     res.json(condition);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to fetch condition" });
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
   }
 };
 
-// export const getConditionsByGroup = async (req: Request, res: Response) => {
-//   try {
-//     const conditions = await ConditionModel.getConditionsByGroup(Number(req.params.groupRid));
-//     res.json(conditions);
-//   } catch (err) {
-//     console.error(err);
-//     res.status(500).json({ error: "Failed to fetch conditions" });
-//   }
-// };
-
 export const updateCondition = async (req: Request, res: Response) => {
+  const methodName = "update condition";
   try {
-    const updatedCondition = await ConditionModel.updateCondition(Number(req.params.rid), req.body);
+    const updatedCondition = await ConditionService.updateCondition(String(req.params.rid), req.body);
     res.json(updatedCondition);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to update condition" });
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
   }
 };
 
 export const deleteCondition = async (req: Request, res: Response) => {
+  const methodName = "delete condition";
   try {
-    const result = await ConditionModel.deleteCondition(Number(req.params.rid));
+    const result = await ConditionService.deleteCondition(String(req.params.rid));
     res.json(result);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to delete condition" });
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
   }
 };

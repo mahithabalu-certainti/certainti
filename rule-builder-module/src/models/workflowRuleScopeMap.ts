@@ -38,7 +38,7 @@ export const getScopesByEntity = async (entityType: string, entityId: number) =>
   const query = `
     SELECT * FROM workflow_rule_scope_map
     WHERE scope_entity_type = $1
-      AND scope_entity_id = $2
+      AND scope_entity_rid = $2
       AND is_active = true
   `;
   const values = [entityType, entityId];
@@ -49,7 +49,7 @@ export const getScopesByEntity = async (entityType: string, entityId: number) =>
 export const updateRuleScope = async (rid: number, data: RuleScopeMap) => {
   const query = `
     UPDATE workflow_rule_scope_map
-    SET scope_entity_type=$1, scope_entity_id=$2, is_active=$3, modified_by=$4, modified_datetime=NOW()
+    SET scope_entity_type=$1, scope_entity_rid=$2, is_active=$3, modified_by=$4, modified_datetime=NOW()
     WHERE rid=$5
     RETURNING *;
   `;
