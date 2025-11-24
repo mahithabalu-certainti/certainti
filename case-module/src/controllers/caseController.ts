@@ -1573,7 +1573,8 @@ async function listCaseTeamMembers(req: Request, res: Response): Promise<void> {
       value,
       parsedFilters,
       userId,
-      "list"
+      "list",
+      value.is_dropdown_list
     );
     if (caseTeamMembers.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
