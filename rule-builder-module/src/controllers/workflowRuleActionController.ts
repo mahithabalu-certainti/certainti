@@ -1,53 +1,95 @@
 import { Request, Response } from "express";
-import * as ActionModel from "../models/workflowRuleAction";
+import { HttpStatus } from "../utils/constants";
+import {
+  errorLog,
+  handleErrorResponse,
+  handleSuccessResponse,
+} from "../utils/helpers";
+import * as ActionService from "../services/workflowActionService";
 
 export const createRuleAction = async (req: Request, res: Response) => {
+  const methodName = "create rule action";
   try {
-    const newAction = await ActionModel.createRuleAction(req.body);
+    const newAction = await ActionService.createRuleAction(req.body);
     res.status(201).json(newAction);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to create action" });
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
   }
 };
 
 export const getRuleActionById = async (req: Request, res: Response) => {
+  const methodName = "rule action detail";
   try {
-    const action = await ActionModel.getRuleActionById(Number(req.params.rid));
+    const action = await ActionService.getRuleActionById(String(req.params.rid));
     if (!action) return res.status(404).json({ error: "Action not found" });
     res.json(action);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to fetch action" });
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
   }
 };
 
 export const getActionsByRule = async (req: Request, res: Response) => {
+  const methodName = "rule action detail";
   try {
-    const actions = await ActionModel.getActionsByRule(String(req.params.ruleRid));
-    res.json(actions);
+    const action = await ActionService.getRuleActionByRuleRId(String(req.params.rule_rid));
+    if (!action) return res.status(404).json({ error: "Action not found" });
+    res.json(action);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to fetch actions" });
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
   }
 };
 
 export const updateRuleAction = async (req: Request, res: Response) => {
+  const methodName = "update rule action";
   try {
-    const updatedAction = await ActionModel.updateRuleAction(Number(req.params.rid), req.body);
+    const updatedAction = await ActionService.updateRuleAction(String(req.params.rid), req.body);
     res.json(updatedAction);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to update action" });
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
   }
 };
 
 export const deleteRuleAction = async (req: Request, res: Response) => {
+  const methodName = "delete rule action";
   try {
-    const result = await ActionModel.deleteRuleAction(Number(req.params.rid));
+    const result = await ActionService.deleteRuleAction(String(req.params.rid));
     res.json(result);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to delete action" });
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
   }
 };

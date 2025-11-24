@@ -1,55 +1,136 @@
-import { db } from "../config/db";
+import { Sequelize, Model, DataTypes, Optional } from "sequelize";
+import { ENV_PREFIX, MAIN_SCHEMA_NAME } from "../utils/constants";
 
-export interface RuleAction {
+export interface RuleActionAttributes {
   rid?: string;
-  ruleRid: string;
-  actionType: string; // e.g., notify_user, change_status
-  targetUser?: string;
-  newValue?: string;
-  actionOrder: number;
-  messageTemplate: string;
+  eid?: string | null;
+  r_number?: string | null;
+  rule_rid: string;
+  action_type: string; // e.g., notify_user, change_status
+  target_user: string;
+  new_value: string | null;
+  action_order: number;
+  message_template: string;
   metadata: string;
-  createdBy: number;
-  modifiedBy?: number;
-  createdDatetime?: Date;
-  modifiedDatetime?: Date;
+  created_by: string;
+  modified_by?: string;
+  created_datetime?: Date;
+  modified_datetime?: Date;
 }
 
-export const createRuleAction = async (data: RuleAction) => {
-  const query = `
-    INSERT INTO workflow_rule_action
-    (rid,rule_rid, action_type, target_user, new_value, action_order, message_template, metadata, created_by, modified_by)
-    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
-    RETURNING *;
-  `;
-  const values = [data.rid, data.ruleRid, data.actionType, data.targetUser ?? null, data.newValue ?? null, data.actionOrder, data.messageTemplate, data.metadata, data.createdBy, data.createdBy];
-  const res = await db.query(query, values);
-  return res.rows[0];
-};
+export interface RuleActionCreationAttributes
+  extends Optional<RuleActionAttributes, "rid"> { }
 
-export const getRuleActionById = async (rid: number) => {
-  const res = await db.query(`SELECT * FROM workflow_rule_action WHERE rid=$1`, [rid]);
-  return res.rows[0];
-};
+export class RuleAction
+  extends Model<RuleActionAttributes, RuleActionCreationAttributes>
+  implements RuleActionAttributes {
+  public rid!: string;
+  public eid!: string;
+  public r_number!: string;
+  public rule_rid!: string;
+  public action_type!: string;
+  public target_user!: string;
+  public new_value!: string;
+  public action_order!: number;
+  public message_template!: string;
+  public metadata!: string;
+  public created_by!: string;
+  public modified_by?: string;
 
-export const getActionsByRule = async (ruleRid: string) => {
-  const res = await db.query(`SELECT * FROM workflow_rule_action WHERE rule_rid=$1`, [ruleRid]);
-  return res.rows;
-};
+  public readonly created_datetime!: Date;
+  public readonly modified_datetime!: Date;
 
-export const updateRuleAction = async (rid: number, data: RuleAction) => {
-  const query = `
-    UPDATE workflow_rule_action
-    SET action_type=$1, target_user=$2, new_value=$3, modified_by=$4, modified_datetime=NOW()
-    WHERE rid=$5
-    RETURNING *;
-  `;
-  const values = [data.actionType, data.targetUser ?? null, data.newValue ?? null, data.modifiedBy, rid];
-  const res = await db.query(query, values);
-  return res.rows[0];
-};
+  static initialize(sequelize: Sequelize) {
+    RuleAction.init(
+      {
+        rid: {
+          type: DataTypes.STRING(50),
+          primaryKey: true,
+          allowNull: false,
+          defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
+        },
 
-export const deleteRuleAction = async (rid: number) => {
-  await db.query(`DELETE FROM workflow_rule_action WHERE rid=$1`, [rid]);
-  return { message: "Rule action deleted successfully" };
-};
+        r_number: {
+          type: DataTypes.STRING(20),
+          allowNull: true,
+          unique: true,
+        },
+
+        eid: {
+          type: DataTypes.STRING,
+          allowNull: true,
+        },
+
+        rule_rid: {
+          type: DataTypes.STRING,
+          allowNull: false,
+        },
+
+        action_type: {
+          type: DataTypes.STRING,
+          allowNull: true,
+        },
+
+        target_user: {
+          type: DataTypes.STRING,
+          allowNull: false,
+        },
+
+        new_value: {
+          type: DataTypes.STRING,
+          allowNull: true,
+        },
+
+        action_order: {
+          type: DataTypes.INTEGER,
+          allowNull: true,
+          defaultValue: true,
+        },
+
+        message_template: {
+          type: DataTypes.STRING,
+          allowNull: false,
+        },
+
+        metadata: {
+          type: DataTypes.STRING,
+          allowNull: true,
+        },
+
+        created_by: {
+          type: DataTypes.STRING,
+          allowNull: false,
+        },
+
+        modified_by: {
+          type: DataTypes.STRING,
+          allowNull: true,
+        },
+
+        created_datetime: {
+          type: DataTypes.DATE,
+          allowNull: false,
+          defaultValue: DataTypes.NOW,
+        },
+
+        modified_datetime: {
+          type: DataTypes.DATE,
+          allowNull: true,
+          defaultValue: DataTypes.NOW,
+        },
+      },
+      {
+        sequelize,
+        modelName: "RuleAction",
+        tableName: "workflow_rule_action",
+        schema: MAIN_SCHEMA_NAME,
+        timestamps: false, // using custom timestamp columns
+      }
+    );
+
+    return RuleAction;
+  }
+}
+
+
+
