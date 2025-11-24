@@ -664,7 +664,7 @@ export const fetchAdminTemplates = (page : number, limit : number, sort : string
                   break;
                 }
                 case "in" : {
-                  queryContainer.push(`${validKeyColumns} IN ${value.map((d : any) => `'${d}'`).join(',')}`)
+                  queryContainer.push(`${validKeyColumns} IN (${value.map((d : any) => `'${d}'`).join(',')})`)
                   break;
                 }
                 default : {
