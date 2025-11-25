@@ -59,6 +59,13 @@ class RDCreditSchemaService {
         }
     }
 
+    /**
+     * 
+     * @param caseRid 
+     * @param schemaName 
+     * @param orgDbSequelize 
+     * @returns 
+     */
     async getCurrentYearQREs(caseRid: string, schemaName: string, orgDbSequelize: Sequelize) {
         try {
             if (!this.orgDbSequelize) {
@@ -94,6 +101,14 @@ class RDCreditSchemaService {
         }
     }
 
+    /**
+     * 
+     * @param accountRid 
+     * @param prior 
+     * @param schemaName 
+     * @param orgDbSequelize 
+     * @returns 
+     */
     async getAnnualGrossReceipts(accountRid: string, prior: number = 4, schemaName: string, orgDbSequelize: Sequelize) {
         try {
             if (!this.orgDbSequelize) {
@@ -127,6 +142,14 @@ class RDCreditSchemaService {
         }
     }
 
+    /**
+     * 
+     * @param accountRid 
+     * @param prior 
+     * @param schemaName 
+     * @param orgDbSequelize 
+     * @returns 
+     */
     async getPrior3YearQREs(accountRid: string, prior: number = 3, schemaName: string, orgDbSequelize: Sequelize) {
         try {
             if (!this.orgDbSequelize) {
@@ -159,47 +182,50 @@ class RDCreditSchemaService {
         }
     }
 
-
-    async getRDCreditConfig(countryName: string, mainDbSequelize: Sequelize, effectiveStart: string, effectiveEnd: string, regionName?: string, programName?: string) {
+    /**
+     * 
+     * @param countryCode 
+     * @param mainDbSequelize 
+     * @param effectiveStart 
+     * @param effectiveEnd 
+     * @param regionName 
+     * @param programName 
+     * @returns 
+     */
+    async getRDCreditConfig(countryCode: string, mainDbSequelize: Sequelize, effectiveStart: string, effectiveEnd: string, regionName?: string, programName?: string) {
         try {
             if (!this.mainDbSequelize) {
                 this.mainDbSequelize = await initMainDbSequelize();
             }
             const results: any[] = await this.mainDbSequelize.query(
                 `
-                SELECT 
-                    country_name,
-                    region_name,
-                    credit_program_name,
-                    credit_rate,
-                    sub_con_percent,
-                    fixed_base_percentage,
-                    elect_280c_yes,
-                    elect_280c_no
-                FROM ${MAIN_SCHEMA_NAME}.rd_credit_config
-                WHERE LOWER(country_name) = LOWER(:countryName)
+                SELECT rdval.config_json
+                FROM ${MAIN_SCHEMA_NAME}.rd_credit_config_group rdcg
+                JOIN ${MAIN_SCHEMA_NAME}.rd_credit_parameter_key rdkey ON rdkey.credit_config_group_rid = rdcg.rid
+                JOIN ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values rdval ON rdval.credit_config_group_rid = rdcg.rid
+                WHERE LOWER(rdcg.country_code) = LOWER(:countryCode)
 
                 -- State filter
                 AND (
-                    (:regionName IS NOT NULL AND LOWER(region_name) = LOWER(:regionName))
-                    OR (:regionName IS NULL AND region_name IS NULL)
+                    (:regionName IS NOT NULL AND LOWER(rdcg.state_code) = LOWER(:regionName))
+                    OR (:regionName IS NULL AND rdcg.state_code IS NULL)
                 )
 
                 -- ProgramName filter (RRC vs ASC for USA Federal)
                 AND (
-                    (:programName IS NOT NULL AND LOWER(credit_program_name) = LOWER(:programName))
+                    (:programName IS NOT NULL AND LOWER(rdcg.credit_program_name) = LOWER(:programName))
                     OR (:programName IS NULL)
                 )
                 
                 -- Effective date filter
-                AND (:effectiveStart IS NULL OR effective_start >= CAST(:effectiveStart AS timestamptz))
-                AND (:effectiveEnd IS NULL OR effective_end <= CAST(:effectiveEnd AS timestamptz))
-
+                AND (:effectiveStart IS NULL OR rdval.effective_start >= CAST(:effectiveStart AS timestamptz))
+                AND (:effectiveEnd IS NULL OR rdval.effective_end <= CAST(:effectiveEnd AS timestamptz))
+                group by rdcg.rid, rdval.config_json
                 LIMIT 1
             `,
                 {
                     replacements: {
-                        countryName: countryName,
+                        countryCode: countryCode,
                         regionName: regionName || null,
                         programName: programName || null,
                         effectiveStart: effectiveStart || null,
@@ -228,56 +254,65 @@ class RDCreditSchemaService {
         });
     }
 
+    /**
+     * 
+     * @param accountNumber 
+     * @param case_rid 
+     * @param country_code 
+     * @param region_name 
+     * @param input_params 
+     * @param computed_fields 
+     * @returns 
+     */
     async insertRDStateCreditCalculation(accountNumber: string, case_rid: string, country_code: string, region_name: string, input_params: any, computed_fields: any) {
         const { RdCreditStateCalculations } = await this.caseModelService.getModels(accountNumber);
         return await RdCreditStateCalculations.create({
             case_rid,
             country_code,
             input_params,
-            computed_fields
+            computed_fields,
+            region_name
         });
     }
 
-
-    async getRDCreditConfigStateLevel(countryName: string, mainDbSequelize: Sequelize, effectiveStart: string, effectiveEnd: string, regionName?: string, programName?: string) {
+    /**
+     * 
+     * @param countryCode 
+     * @param mainDbSequelize 
+     * @param effectiveStart 
+     * @param effectiveEnd 
+     * @param regionName 
+     * @param programName 
+     * @returns 
+     */
+    async getRDCreditConfigStateLevel(countryCode: string, mainDbSequelize: Sequelize, effectiveStart: string, effectiveEnd: string, regionName?: string, programName?: string) {
         try {
             if (!this.mainDbSequelize) {
                 this.mainDbSequelize = await initMainDbSequelize();
             }
             const results: any[] = await this.mainDbSequelize.query(
                 `
-                SELECT 
-                    country_name,
-                    region_name,
-                    credit_program_name,
-                    credit_rate,
-                    sub_con_percent,
-                    fixed_base_percentage,
-                    elect_280c_yes,
-                    elect_280c_no,
-                    threshold_amount,
-                    tier1_rate,
-                    tier2_rate,
-                    tier2_base_add,
-                    qre_cap_rate,
-                    reduction_config
-                FROM ${MAIN_SCHEMA_NAME}.rd_credit_config
-                WHERE LOWER(country_name) = LOWER(:countryName)
-
+                SELECT rdval.config_json, rdcg.state_code
+                FROM ${MAIN_SCHEMA_NAME}.rd_credit_config_group rdcg
+                JOIN ${MAIN_SCHEMA_NAME}.rd_credit_parameter_key rdkey ON rdkey.credit_config_group_rid = rdcg.rid
+                JOIN ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values rdval ON rdval.credit_config_group_rid = rdcg.rid
+                WHERE LOWER(rdcg.country_code) = LOWER(:countryCode)
+                AND is_federal IS FALSE
                 -- ProgramName filter
                 AND (
-                    (:programName IS NOT NULL AND LOWER(credit_program_name) = LOWER(:programName))
+                    (:programName IS NOT NULL AND LOWER(rdcg.credit_program_name) = LOWER(:programName))
                     OR (:programName IS NULL)
                 )
                 
                 -- Effective date filter
-                AND (:effectiveStart IS NULL OR effective_start >= CAST(:effectiveStart AS timestamptz))
-                AND (:effectiveEnd IS NULL OR effective_end <= CAST(:effectiveEnd AS timestamptz))
+                AND (:effectiveStart IS NULL OR rdval.effective_start >= CAST(:effectiveStart AS timestamptz))
+                AND (:effectiveEnd IS NULL OR rdval.effective_end <= CAST(:effectiveEnd AS timestamptz))
+
+                group by rdcg.rid, rdval.config_json
             `,
                 {
                     replacements: {
-                        countryName: countryName,
-                        regionName: regionName || null,
+                        countryCode: countryCode,
                         programName: programName || null,
                         effectiveStart: effectiveStart || null,
                         effectiveEnd: effectiveEnd || null

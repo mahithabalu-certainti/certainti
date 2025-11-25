@@ -4,7 +4,21 @@ import { logMessage } from "../../utils/helpers";
 /**
  * Arizona RD Credit Calculator
  */
+
+export interface ConfigJson {
+    tier1_rate: number;
+    tier2_rate: number;
+    credit_rate: number;
+    qre_cap_rate: number;
+    tier2_base_add: number;
+    threshold_amount: number;
+    fixed_base_percentage: number;
+}
 export class RdCreditCalculatorForAZ {
+
+    country = "USA";
+    creditType = "State R&D Credit - AZ";
+    currency = "USD";
 
     /**
      * 
@@ -16,13 +30,15 @@ export class RdCreditCalculatorForAZ {
      * @returns 
      */
     async compute(config: any, currentYearQREs: any, annualGrossReceipts: any[], totalGrossReceipts: Decimal, prior3YearsQREs: { fiscalYear: number; qre: number }[], priorYearsCount: number) {
-        const rrcResult = await this.rrc(config, currentYearQREs, totalGrossReceipts, priorYearsCount);
-        const ascResult = await this.asc(config, currentYearQREs, prior3YearsQREs);
+        const extractConfig = this.extractConfigJson(config.config_json);
+
+        const rrcResult = await this.rrc(extractConfig, currentYearQREs, totalGrossReceipts, priorYearsCount);
+        const ascResult = await this.asc(extractConfig, currentYearQREs, prior3YearsQREs);
 
         const inputFields = await this.buildInputParams(currentYearQREs, prior3YearsQREs, annualGrossReceipts, {
-            country: "USA",
-            creditType: "State R&D Credit - AZ",
-            currency: "USD",
+            country: this.country,
+            creditType: this.creditType,
+            currency: this.currency,
         });
         const computedFields = await this.buildComputedFields(ascResult, rrcResult);
 
@@ -41,7 +57,7 @@ export class RdCreditCalculatorForAZ {
      * @param priorYearsCount 
      * @returns 
      */
-    async rrc(config: any, currentYearQREs: any, totalGrossReceipts: Decimal, priorYearsCount: number) {
+    async rrc(config: ConfigJson, currentYearQREs: any, totalGrossReceipts: Decimal, priorYearsCount: number) {
         logMessage(`Computing AZ Credit with config: ${JSON.stringify(config)}`);
         //---- Line 10: Prior year credit carryforward
         const line10 = 0;
@@ -93,7 +109,7 @@ export class RdCreditCalculatorForAZ {
         // If line 22 is more than $2,500,000, skip line 23 and complete lines 24 through 26.
         if (line22.lte(config.threshold_amount)) {
             //-- Line 23: Multiple line 22 by 24%
-            line23 = line22.mul(config.credit_rate);
+            line23 = line22.mul(config.credit_rate).toNumber();
             line27a = line23;
         } else {
             line24 = line22.minus(config.threshold_amount);
@@ -108,14 +124,14 @@ export class RdCreditCalculatorForAZ {
             supplies: line12,
             cost_to_rent: line13,
             contract: line14,
-            total_current_year_qre: line15,
-            average_gross_receipts: line16,
+            total_current_year_qre: line15.toNumber(),
+            average_gross_receipts: line16.toNumber(),
             fixed_base_percentage: line17,
-            base_amount: line18,
-            excess_qre_over_base: line19,
-            half_total_qre: line20,
-            total_section_b_credit: line21,
-            total_az_credit_before_limits: line22,
+            base_amount: line18.toNumber(),
+            excess_qre_over_base: line19.toNumber(),
+            half_total_qre: line20.toNumber(),
+            total_section_b_credit: line21.toNumber(),
+            total_az_credit_before_limits: line22.toNumber(),
             credit_if_under_threshold: line23,
             excess_amount: line24,
             credit_on_excess: line25,
@@ -131,7 +147,7 @@ export class RdCreditCalculatorForAZ {
      * @param prior3YearsQREs 
      * @returns 
      */
-    async asc(config: any, currentYearQREs: any, prior3YearsQREs: { fiscalYear: number; qre: number }[]) {
+    async asc(config: ConfigJson, currentYearQREs: any, prior3YearsQREs: { fiscalYear: number; qre: number }[]) {
         //---- Line 77:  
         const line77 = currentYearQREs.wages || 0;
 
@@ -205,9 +221,6 @@ export class RdCreditCalculatorForAZ {
             logMessage(`ASC AZ Credit not applicable due to prior 3 years QREs validation failure.`);
             return {};
         }
-
-
-
     }
 
 
@@ -276,6 +289,26 @@ export class RdCreditCalculatorForAZ {
                 asc: creditASC,
                 rrc: creditRRC
             }
+        }
+    }
+
+    /**
+     * 
+     * @param configJson 
+     * @returns 
+     */
+    extractConfigJson(configJson: any): ConfigJson {
+        // If it's already an object, just return it
+        if (typeof configJson === 'object') {
+            return configJson as ConfigJson;
+        }
+
+        // If it's a string, parse it
+        try {
+            return JSON.parse(configJson) as ConfigJson;
+        } catch (error) {
+            console.error('Failed to parse config_json:', error);
+            return {} as ConfigJson; // fallback
         }
     }
 }

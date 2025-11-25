@@ -4,16 +4,30 @@ import { logMessage } from "../../utils/helpers";
 /**
  * California RD Credit Calculator
  */
+export interface ConfigJson {
+    credit_rate: number;
+    qre_cap_rate: number;
+    fixed_base_percentage: number;
+    s_corp: number;
+    corporation: number;
+    individual: number;
+    sub_con_percent: number;
+}
 export class RdCreditCalculatorForCA {
 
+    country = "USA";
+    creditType = "State R&D Credit - CA";
+    currency = "USD";
+
     async compute(config: any, currentYearQREs: any, annualGrossReceipts: any[], totalGrossReceipts: Decimal, prior3YearsQREs: { fiscalYear: number; qre: number }[], priorYearsCount: number) {
-        const rrcResult = await this.rrc(config, currentYearQREs, totalGrossReceipts, priorYearsCount);
+        const extractConfig = this.extractConfigJson(config.config_json);
+        const rrcResult = await this.rrc(extractConfig, currentYearQREs, totalGrossReceipts, priorYearsCount);
         const ascResult = {}; //California does NOT have ASC, so return {} or null
 
         const inputFields = await this.buildInputParams(currentYearQREs, annualGrossReceipts, {
-            country: "USA",
-            creditType: "State R&D Credit - CA",
-            currency: "USD",
+            country: this.country,
+            creditType: this.creditType,
+            currency: this.creditType,
         });
         const computedFields = await this.buildComputedFields(ascResult, rrcResult);
 
@@ -31,8 +45,9 @@ export class RdCreditCalculatorForCA {
      * @param priorYearsCount 
      * @returns 
      */
-    async rrc(config: any, currentYearQREs: any, totalGrossReceipts: Decimal, priorYearsCount: number) {
+    async rrc(config: ConfigJson, currentYearQREs: any, totalGrossReceipts: Decimal, priorYearsCount: number) {
         logMessage(`Computing CA Credit with config: ${JSON.stringify(config)}`);
+        logMessage(`Current Year QREs: ${JSON.stringify(currentYearQREs)}`);
 
         //---- Line 5: wages
         const line5 = currentYearQREs.wages || 0;
@@ -44,7 +59,7 @@ export class RdCreditCalculatorForCA {
         const line7 = 0;
 
         //---- Line 8: contract
-        const line8 = currentYearQREs.contract.mul(0.65) || 0;
+        const line8 = new Decimal(currentYearQREs.contract).mul(config.sub_con_percent) || 0;
 
         //---- Line 9: total QREs   
         const line9 = new Decimal(line5).plus(new Decimal(line6)).plus(new Decimal(line7)).plus(new Decimal(line8));
@@ -73,36 +88,26 @@ export class RdCreditCalculatorForCA {
         //---- Line 17a: 
         let line17a = line16;
 
-        const entities = ["individual", "corporation", "s_corp"];
-        const reductionConfig = config.reduction_config;
-        const resultsByEntity: any = {};
-        for (const entity of entities) {
-            const multiplier = reductionConfig[entity] ?? 1;
-
-            const reducedCredit = line17a.mul(multiplier);
-
-            resultsByEntity[entity] = {
-                entityType: entity,
-                multiplier,
-                reducedCredit: reducedCredit
-            };
-        }
+        //---- Reduced credit amount by entity type
+        const s_corp_rate = line17a.mul(config.s_corp).toNumber();
+        const corporation_rate = line17a.mul(config.corporation).toNumber();
+        const individual_rate = line17a.mul(config.individual).toNumber();
 
         return {
             wages: line5,
             supplies: line6,
             cost_to_rent: line7,
-            contract: line8,
-            total_qre: line9,
-            fixed_base_percentage: line10,
-            average_gross_receipts: line11,
-            base_amount: line12,
-            excess_qre_over_base: line13,
-            half_total_qre: line14,
-            smaller_of_excess_or_half: line15,
-            credit_before_280c: line16,
-            regular_credit: line17a,
-            reduced_credit_amount: resultsByEntity
+            contract: line8.toNumber(),
+            total_qre: line9.toNumber(),
+            fixed_base_percentage: line10.toNumber(),
+            average_gross_receipts: line11.toNumber(),
+            base_amount: line12.toNumber(),
+            excess_qre_over_base: line13.toNumber(),
+            half_total_qre: line14.toNumber(),
+            smaller_of_excess_or_half: line15.toNumber(),
+            credit_before_280c: line16.toNumber(),
+            regular_credit: line17a.toNumber(),
+            reduced_credit_amount: { s_corp: s_corp_rate, corporation: corporation_rate, individual: individual_rate }
         }
 
     }
@@ -152,6 +157,26 @@ export class RdCreditCalculatorForCA {
                 asc: creditASC,
                 rrc: creditRRC
             }
+        }
+    }
+
+    /**
+     * 
+     * @param configJson 
+     * @returns 
+     */
+    extractConfigJson(configJson: any): ConfigJson {
+        // If it's already an object, just return it
+        if (typeof configJson === 'object') {
+            return configJson as ConfigJson;
+        }
+
+        // If it's a string, parse it
+        try {
+            return JSON.parse(configJson) as ConfigJson;
+        } catch (error) {
+            console.error('Failed to parse config_json:', error);
+            return {} as ConfigJson; // fallback
         }
     }
 }

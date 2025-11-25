@@ -12,6 +12,17 @@ import { Any } from "currency.js";
 import { log } from "console";
 import { stateCalculators } from "../rd-state-calculators";
 
+// Type definition for the config JSON
+export interface ConfigJson {
+    credit_rate: number;
+    elect_280c_no: number;
+    elect_280c_yes: number;
+    sub_con_percent: number;
+    fixed_base_percentage: number;
+    qre_cap_rate: number;
+}
+
+
 /**
  * 
  */
@@ -74,6 +85,7 @@ export class FinancialRDCreditService {
 
                 const currentYearQREs = await this.rdCreditSchemaService.getCurrentYearQREs(caseRid, schemaName, orgDb); //current yer QREs
                 const totalCurrentYearQRE = new Decimal(currentYearQREs.wages || 0).plus(currentYearQREs.supplies || 0).plus(currentYearQREs.contract || 0);
+                logMessage(`CurrentYearQREs: ${JSON.stringify(currentYearQREs)}`);
 
                 const prior3YearsQREs = await this.rdCreditSchemaService.getPrior3YearQREs(accountRid, 3, schemaName, orgDb);// prior 3 years QREs
 
@@ -84,18 +96,23 @@ export class FinancialRDCreditService {
                 logMessage(`AnnualGrossReceipts: ${JSON.stringify(annualGrossReceipts)}`);
 
                 const configASC = await this.rdCreditSchemaService.getRDCreditConfig("USA", mainDb, effectiveStart, effectiveEnd, "", "ASC");
-                const creditASC = await this.calculateASC(totalCurrentYearQRE, prior3YearsQREs, configASC);
-                const asc280C = await this.apply280C_ASC(creditASC, configASC);
+                const extractConfigAsc = this.extractConfigJson(configASC.config_json);
+
+                const creditASC = await this.calculateASC(totalCurrentYearQRE, prior3YearsQREs, extractConfigAsc);
+                const asc280C = await this.apply280C_ASC(creditASC, extractConfigAsc);
 
                 const configRRC = await this.rdCreditSchemaService.getRDCreditConfig("USA", mainDb, effectiveStart, effectiveEnd, "", "RRC");
-                const creditRRC = await this.calculateRRC(totalCurrentYearQRE, totalGrossReceipts, configRRC, 4);
-                const rrc280C = await this.apply280C_RRC(creditRRC, configRRC);
+                const extractConfigRRC = this.extractConfigJson(configRRC.config_json);
+
+                const creditRRC = await this.calculateRRC(totalCurrentYearQRE, totalGrossReceipts, extractConfigRRC, 4);
+                const rrc280C = await this.apply280C_RRC(creditRRC, extractConfigRRC);
 
                 const inputFields = await this.buildInputParams(currentYearQREs, prior3YearsQREs, annualGrossReceipts, {
                     country: "USA",
                     creditType: "FEDERAL_RRC_ASC",
                     currency: "USD",
                 });
+                logMessage(`Input Fields: ${JSON.stringify(inputFields)}`);
 
                 const computedFields = await this.buildComputedFields(creditASC, creditRRC, asc280C, rrc280C);
                 this.rdCreditSchemaService.insertRDCreditCalculation(accountNumber, caseRid, "USA", inputFields, computedFields);
@@ -125,7 +142,7 @@ export class FinancialRDCreditService {
      * @param configAsc 
      * @returns 
      */
-    async calculateASC(totalQRE: Decimal, prior3YearsQREs: { fiscalYear: number; qre: number }[], configAsc: any) {
+    async calculateASC(totalQRE: Decimal, prior3YearsQREs: { fiscalYear: number; qre: number }[], configAsc: ConfigJson) {
         logMessage(`Calculating ASC with totalQRE: ${totalQRE}, prior3YearsQREs: ${JSON.stringify(prior3YearsQREs)}, configAsc: ${JSON.stringify(configAsc)}`);
         // ---- Line 21: Prior 3 years QRE total ----
         const line21 = new Decimal(prior3YearsQREs.reduce((sum, y) => sum + (y.qre || 0), 0));
@@ -168,7 +185,7 @@ export class FinancialRDCreditService {
      * @param priorYearsCount 
      * @returns 
      */
-    async calculateRRC(currentYearQRE: Decimal, prior4YearsGrossReceiptsTotal: Decimal, configRRC: any, priorYearsCount: number) {
+    async calculateRRC(currentYearQRE: Decimal, prior4YearsGrossReceiptsTotal: Decimal, configRRC: ConfigJson, priorYearsCount: number) {
         logMessage(`Calculating RRC with currentYearQRE: ${currentYearQRE}, prior4YearsGrossReceiptsTotal: ${prior4YearsGrossReceiptsTotal}, configRRC: ${JSON.stringify(configRRC)}, priorYearsCount: ${priorYearsCount}`);
         // Expected: fixedBasePercentage between 0.16
         //---- Line 5: currentYearQRE
@@ -184,7 +201,7 @@ export class FinancialRDCreditService {
         const line9 = currentYearQRE.minus(line8)
 
         //---- Line 10: Multiply line 5 by 50%
-        const line10 = currentYearQRE.mul(0.50);
+        const line10 = currentYearQRE.mul(configRRC.qre_cap_rate || 0.5);
 
         //---- Line 11: Enter smaller of line 9 or line 10
         const line11 = Decimal.min(line10, line9);
@@ -207,7 +224,7 @@ export class FinancialRDCreditService {
      * @param configRRC 
      * @returns 
      */
-    async apply280C_RRC(creditRRC: any, configRRC: any) {
+    async apply280C_RRC(creditRRC: any, configRRC: ConfigJson) {
         // ASC Federal 280C reduction rules
         const rateWhenElect = configRRC.elect_280c_yes;  // elect 280C
         const rateWhenNoElect = configRRC.elect_280c_no; // do not elect 280C
@@ -235,7 +252,7 @@ export class FinancialRDCreditService {
      * @param configASC 
      * @returns 
      */
-    async apply280C_ASC(creditASC: any, configASC: any) {
+    async apply280C_ASC(creditASC: any, configASC: ConfigJson) {
         // Federal RRC 280C reduction factors
         const factorElect = configASC.elect_280c_yes;   // elect 280C → reduced credit
         const factorNoElect = configASC.elect_280c_no; // no election → full credit
@@ -322,6 +339,26 @@ export class FinancialRDCreditService {
 
     /**
      * 
+     * @param configJson 
+     * @returns 
+     */
+    extractConfigJson(configJson: any): ConfigJson {
+        // If it's already an object, just return it
+        if (typeof configJson === 'object') {
+            return configJson as ConfigJson;
+        }
+
+        // If it's a string, parse it
+        try {
+            return JSON.parse(configJson) as ConfigJson;
+        } catch (error) {
+            console.error('Failed to parse config_json:', error);
+            return {} as ConfigJson; // fallback
+        }
+    }
+
+    /**
+     * 
      * @param accountRid 
      * @param caseRid 
      * @param effectiveStart 
@@ -360,13 +397,13 @@ export class FinancialRDCreditService {
             // Iterate through each 36 state configuration and compute credits
             for (const config of configStateLevel) {
                 logMessage(`State Level Config: ${JSON.stringify(config)}`);
-                const calculator = stateCalculators[config.region_name];
+                const calculator = stateCalculators[config.state_code];
                 if (calculator) {
                     const result = await calculator.compute(config, currentYearQREs, annualGrossReceipts, totalGrossReceipts, prior3YearsQREs, 4);
-                    logMessage(`Result for ${config.region_name}: ${JSON.stringify(result)}`);
-                    this.rdCreditSchemaService.insertRDStateCreditCalculation(accountNumber, caseRid, "USA", config.region_name, result.inputFields, result.computedFields);
+                    logMessage(`Result for ${config.state_code}: ${JSON.stringify(result)}`);
+                    this.rdCreditSchemaService.insertRDStateCreditCalculation(accountNumber, caseRid, "USA", config.state_code, result.inputFields, result.computedFields);
                 } else {
-                    logMessage(`No calculator implemented for state: ${config.region_name}`);
+                    logMessage(`No calculator implemented for state: ${config.state_code}`);
                 }
             }
 
