@@ -1203,6 +1203,9 @@ export const rawQueries = {
   getStatusDetails (rid : string) {
     return `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status WHERE rid = '${rid}'`
   },
+  getActivityStatusDetails (rid : string, activityType : string) {
+    return `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.activity_status WHERE rid = '${rid}' AND lower(activity_type) = lower('${activityType}')`
+  },
   getCategoryDetails (rid : string) {
     return `SELECT rid, category_name FROM ${MAIN_SCHEMA_NAME}.email_template_category WHERE rid = '${rid}'`
   },
@@ -1251,9 +1254,13 @@ export const rawQueries = {
       return `SELECT rid, task_status_name FROM ${MAIN_SCHEMA_NAME}.case_task_status WHERE rid IN (${ids})`
     }
   },
-  getAllProjectsByAccountId(schemaName: string,accountRid: string) {
-    return `SELECT rid, project_name FROM ${schemaName}.project WHERE account_rid = '${accountRid}'
-    ORDER BY project_name ASC`
+  getAllProjectsByAccountId(schemaName: string,accountRid: string, accessibleIds: string[]) {
+    let query = `SELECT rid, project_name FROM ${schemaName}.project_fiscal WHERE account_rid = '${accountRid}'`;
+    if (Array.isArray(accessibleIds) && accessibleIds.length > 0) {
+      query += ` AND rid IN (${accessibleIds.map(id => `'${id}'`).join(',')})`;
+    }
+    query += ` ORDER BY project_name ASC`;
+    return query;
   },
   fetchProjectResourceAndFiscal(schemaName: string) {
   return `
@@ -1537,6 +1544,7 @@ export const filterTypesForCaseSummary: Record<string, any> = {
   total_nonlabor_prj: "number",
   total_fte_prj: "number",
   case_name: "string",
+  country_name: "string",
   
 };
 
@@ -1798,7 +1806,30 @@ export const meetingFields = [
   "a.r_number",
   "a.attach_to",
   "a.status_rid",
-  "a.to_email",
-  "a.cc_email",
-  "a.sender_email"
+  "a.meeting_invite",
+  "a.meeting_id",
+  "a.meeting_participants",
+  "a.activity_type",
+];
+
+export const callFields = [
+  "a.rid",
+  "a.subject",
+  "a.created_by",
+  "a.modified_by",
+  "a.account_rid",
+  "a.created_datetime",
+  "a.modified_datetime",
+  "a.fiscal_year",
+  "e.name AS attached_to",
+  "a.attachment_level",
+  "a.r_number",
+  "a.attach_to",
+  "a.status_rid",
+  "a.call_participants",
+  "a.caller_id",
+   "a.minutes_of_meeting",
+   "a.call_platform",
+   "a.activity_type"
+
 ];

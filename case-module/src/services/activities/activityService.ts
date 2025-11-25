@@ -317,6 +317,60 @@ export class ActivityService {
           errorMessage: "Invalid account ID",
         };
       }
+        const userGroupType = await this.caseSchemaService.getUserGroupType(
+              userId
+            );
+            const userProfileType = await this.caseSchemaService.getUserProfileType(
+              userId
+            );
+            const isCustomGlobal = userGroupType === "DEFAULT";
+            const isDefaultParent = userGroupType === "AUTO_ASSIGNED_PARENT";
+            const isPOCProfile =
+              userProfileType?.profileName === "Project Point of Contact";
+            let accessibleIds: string[] = [];
+            if (!isCustomGlobal) {
+              accessibleIds = await this.getAccessibleProjectIds(
+                userId,
+                isDefaultParent,
+                isPOCProfile,
+                userProfileType?.email,
+                isCustomGlobal
+              );
+              console.log("accessibleIds",accessibleIds.length === 0)
+              if (accessibleIds.length === 0) {
+                return {
+                  message: 'No accessible checklist found for the user.',
+                  statusCode: HttpStatus.NOT_FOUND,
+                  data: {
+                      totalCount: 0,
+                    activities: [],
+                  },
+                };
+              }
+            }
+      
+            if (isCustomGlobal && isPOCProfile) {
+              accessibleIds = await this.getAccessibleProjectIds(
+                userId,
+                isDefaultParent,
+                isPOCProfile,
+                userProfileType?.email,
+                isCustomGlobal
+              );
+               console.log("accessibleIds",accessibleIds.length === 0)
+              if (accessibleIds.length === 0) {
+                return {
+                  message: 'No accessible checklist found for the user.',
+                  statusCode: HttpStatus.NOT_FOUND,
+                  data: {
+                  
+                    totalCount: 0,
+                    activities: [],
+                  },
+                };
+              }
+            }
+      console.log("accessibleIds",accessibleIds)
       const checklistResponse: any =
         await this.activitySchemaService.fetchActivities(
           accountNumber,
@@ -331,7 +385,9 @@ export class ActivityService {
           sortBy,
           sortOrder,
           apiType,
+          accessibleIds,
           activityType,
+          userId,
           graphqlData
         );
 
@@ -516,7 +572,52 @@ export class ActivityService {
         },
       };
     } catch (err) {
-      logMessage(`Error fetching email activity details, ${err}`);
+      logMessage(`Error fetching meeting activity details, ${err}`);
+      return {
+        statusCode: HttpStatus.FAILED,
+        message: HttpStatus.FAILED_MESSAGE,
+        errorMessage: STATUS_MESSAGE.checkListError,
+      };
+    }
+  }
+
+  async getCallActivityDetailsById(
+    activityRid: string,
+    accountRid: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { activityDetails: any };
+  }> {
+    try {
+      const { accountNumber } =
+        await this.caseSchemaService.fetchValidAccountNumberById(accountRid);
+      const activityDetails =
+        await this.activitySchemaService.fetchCallActivityDetailsById(
+          activityRid,
+          accountNumber,
+          accountRid
+        );
+
+      if (!activityDetails) {
+        return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: "Invalid Activity ID",
+        };
+      }
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          activityDetails,
+        },
+      };
+    } catch (err) {
+      console.log(err)
+      logMessage(`Error fetching call activity details, ${err}`);
       return {
         statusCode: HttpStatus.FAILED,
         message: HttpStatus.FAILED_MESSAGE,
@@ -689,6 +790,59 @@ export class ActivityService {
         logMessage(`Error fetching email status, ${err}`);
         throw this.throwServiceError(err as Error);
       }
+    }
+  
+   async getAccessibleProjectIds(
+      userId: string,
+      isdefaultparent: boolean,
+      isPOC: boolean = false,
+      userEmail?: string,
+      isCustomGlobal: boolean = false
+    ): Promise<string[]> {
+      const mainDbSequelize = await initMainDbSequelize();
+      const MAIN_SCHEMA_NAME = "trd365";
+  
+      const replacements: any[] = [];
+  
+      let accessControlWhere = "WHERE 1=1";
+      logMessage(
+        `isCustomGlobal: ${isCustomGlobal}, isPOC: ${isPOC}, isdefaultparent: ${isdefaultparent}, userEmail: ${userEmail}, userId: ${userId}`
+      );
+  
+      if (isCustomGlobal) {
+        // If isPOC is also true, restrict to POC email
+        if (isPOC && userEmail) {
+          accessControlWhere += ` AND (ps.project_point_of_contact_email = ? OR pfs.project_point_of_contact_email = ?)`;
+          replacements.push(userEmail, userEmail);
+        }
+        // Else allow all projects (no extra access checks)
+      } else {
+        // Non-global user – apply account/project access checks
+        const accountAccessSubquery = rawQueries.GET_ACCOUNT_ACCESS;
+        replacements.push(userId, userId, userId, userId);
+        accessControlWhere += ` AND ${accountAccessSubquery}`;
+  
+        if (!isdefaultparent) {
+          // Add project-level access checks if not a parent group
+          accessControlWhere += rawQueries.GET_PROJECT_ACCESS;
+          replacements.push(userId, userId, userId, userId);
+        }
+  
+        // Only non-global users can be further filtered by POC
+        if (isPOC && userEmail) {
+          accessControlWhere += ` AND (ps.project_point_of_contact_email = ? OR pfs.project_point_of_contact_email = ?)`;
+          replacements.push(userEmail, userEmail);
+        }
+      }
+  
+      const query = rawQueries.fetchProjectFiscalSummary(accessControlWhere);
+  
+      const results = await mainDbSequelize.query(query, {
+        replacements,
+        type: "SELECT",
+      });
+  
+      return results.map((row: any) => row.project_fiscal_rid);
     }
     /**
      * Formats an error response to be returned from service methods.

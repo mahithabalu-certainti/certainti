@@ -16,7 +16,9 @@ import {
   rawQueries,
   STATUS_MESSAGE,
   meetingFields,
-  activityStatus
+  activityStatus,
+  constants,
+  callFields
 } from "../../utils/constants";
 import {
   decryptClientSecret,
@@ -326,6 +328,51 @@ class ActivitySchemaService {
     if (result) return result;
     else return null;
   }
+
+  async  checkUserAPIPermission  (
+      userId: string,
+      profileId: string,
+      permissionName: string
+    ): Promise<boolean> {
+      const sequelize = await initMainDbSequelize();
+    
+      // Get permissionId from module_permission table
+      const permissionResult = await sequelize.query(
+        constants.SQL_GET_PERMISSION,
+        {
+          replacements: { permissionName },
+          type: constants.SELECT
+        }
+      ) as Array<{ rid: string }>;
+      if (!permissionResult.length || !permissionResult[0]) return false;
+    
+      const permissionId = permissionResult[0].rid;
+    
+      // Check enable status for profile access
+      const profileAccessResult = await sequelize.query(
+        constants.SQL_GET_PROFILE_ACCESS,
+        {
+          replacements: { profileId, permissionId },
+          type: constants.SELECT
+        }
+      ) as Array<{ is_enabled: boolean }>;
+    
+      // Check enable status for user access
+      const userAccessResult = await sequelize.query(
+        constants.SQL_GET_USER_ACCESS,
+        {
+          replacements: { userId, permissionId },
+          type: constants.SELECT
+        }
+      ) as Array<{ is_enabled: boolean }>;
+    
+      const isEnabled =
+        (profileAccessResult.length > 0 && profileAccessResult[0] && profileAccessResult[0].is_enabled) ||
+        (userAccessResult.length > 0 && userAccessResult[0] && userAccessResult[0].is_enabled);
+    
+     
+      return !!isEnabled;
+    };
   async fetchActivities(
     accountNumber: string,
     fiscalYear: number,
@@ -339,7 +386,9 @@ class ActivitySchemaService {
     sortBy: string = "created_datetime",
     sortOrder: string = "DESC",
     apiType: string = "list",
+    accessibleIds: string[] = [],
     activity_type: string = 'All',
+    userId: string = '',
     graphqlData?: any
   ) {
     try {
@@ -381,6 +430,47 @@ class ActivitySchemaService {
         }
         whereClause[Op.and].push({ activity_type: activity_type });
       }
+      else
+      {
+         if (!this.mainDbSequelize) {
+            this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+         }
+
+       let  whereClauseuser = '"user".rid = :userId';
+        const [profileInfo]:any[] = await this.mainDbSequelize.query(
+        constants.SQL_GET_USER.replace("{whereClause}", whereClauseuser),
+        {
+          replacements: { userId },
+          type: constants.SELECT
+        }
+      );
+    let accessActivity = [];
+    const taskAccess = await this.checkUserAPIPermission(userId, profileInfo.profile_rid, "activity_task_view_edit");
+    const emailAccess = await this.checkUserAPIPermission(userId, profileInfo.profile_rid, "activity_email_view_edit");
+    const meetingAccess = await this.checkUserAPIPermission(userId, profileInfo.profile_rid, "activity_meeting_view_edit");
+    const callAccess = await this.checkUserAPIPermission(userId, profileInfo.profile_rid, "activity_call_view_edit");
+   if(taskAccess){
+    accessActivity.push('Task');
+  }
+  if(emailAccess){
+    accessActivity.push('Email');
+  }
+  if(meetingAccess){
+    accessActivity.push('Meeting');
+  }
+  if(callAccess){
+    accessActivity.push('Call');
+  }
+  if (accessActivity.length > 0) {
+    if (!whereClause[Op.and] || !Array.isArray(whereClause[Op.and])) {
+      whereClause[Op.and] = [];
+    }
+    whereClause[Op.and].push({ activity_type: { [Op.in]: accessActivity } });
+  } else {
+    return { activities: [], totalCount: 0 };
+  }
+      }
+
       const fetchAttachments = async (
         model: any,
         level: string,
@@ -503,7 +593,7 @@ class ActivitySchemaService {
 
         const projects = await this.caseSchemaService.getProjectsByAccountId(
           accountNumber,
-          entityId
+          entityId,accessibleIds
         );
         const projectIds = projects.map((p: { rid: any }) => p.rid);
         if (projectIds.length > 0) {
@@ -905,8 +995,8 @@ class ActivitySchemaService {
         totalCount,
       };
     } catch (err) {
-      logMessage(`Error in fetch cases checklists: ${err}`);
-      errorLog("Error in fetch cases checklists:", (err as Error).message);
+      logMessage(`Error in fetch activities: ${err}`);
+      errorLog("Error in fetch activities:", (err as Error).message);
       return [];
     }
   }
@@ -1451,16 +1541,16 @@ class ActivitySchemaService {
     );
     const activityData = {
       ...activityRequest,
-      activity_type: "Meeting",
-      meeting_status_rid: meetingStatus?.rid || null,
+      activity_type: activityRequest.activity_type,
+      status_rid: meetingStatus?.rid || null,
       account_rid:
         activityRequest.accountRid || activityRequest.account_rid || "",
     };
     try {
       const [accountInfo]: any[] = await this.mainDbSequelize.query(
-      rawQueries.fetchAccountInfo(activityRequest.account_rid!),
-      { type: "SELECT" }
-    );
+        rawQueries.fetchAccountInfo(activityRequest.account_rid!),
+        { type: "SELECT" }
+      );
 
    const senderEmailInfo = await this.fetchSenderEmailInfoByAccountId(
       accountNumber,
@@ -1510,13 +1600,14 @@ class ActivitySchemaService {
     if (!this.mainDbSequelize) {
       this.mainDbSequelize = await this.caseModelService.getMainSequelize();
     }
-     const [meetingStatus]: any[] = await this.mainDbSequelize.query(
+    const [callStatus]: any[] = await this.mainDbSequelize.query(
       rawQueries.fetchActivityStatusByName(activityStatus.completed, activityRequest.activity_type),
       { type: "SELECT" }
     );
     const activityData = {
       ...activityRequest,
       activity_type: "Call",
+      status_rid: callStatus?.rid || null,
       account_rid:
         activityRequest.accountRid || activityRequest.account_rid || "",
     };
@@ -1926,7 +2017,7 @@ class ActivitySchemaService {
     );
 
     const [statusInfo]: any[] = await this.mainDbSequelize.query(
-      rawQueries.getStatusDetails(emailDetails?.status_rid ?? ""),
+      rawQueries.getActivityStatusDetails(emailDetails?.status_rid ?? "", emailDetails?.activity_type ?? ""),
       {
         type: "SELECT",
       }
@@ -1967,12 +2058,11 @@ class ActivitySchemaService {
       activity_rid: emailDetails?.rid,
       activity_type: emailDetails?.activity_type ?? "",
       subject: emailDetails?.subject ?? "",
-      body_html: emailDetails?.body_html ?? "",
-      to_email: emailDetails?.to_email ? emailDetails.to_email.split(";") : [],
-      cc_emails: emailDetails?.cc_emails
-        ? emailDetails.cc_emails.split(";")
+      meeting_url: emailDetails?.meeting_url ?? "",
+      meeting_id: emailDetails?.meeting_id ?? "",
+      meeting_participants: emailDetails?.meeting_participants
+        ? emailDetails.meeting_participants.split(";")
         : [],
-      email_status: emailDetails?.email_status ?? "",
       r_number: emailDetails.r_number ?? "",
       status_rid: emailDetails.status_rid ?? "",
       account_rid: emailDetails.account_rid ?? "",
@@ -2004,7 +2094,7 @@ class ActivitySchemaService {
       ""
     )}`;
     const [emailDetails]: any[] = await this.orgDbSequelize.query(
-      fetchActivityDetails(schemaName, activityRid,meetingFields),
+      fetchActivityDetails(schemaName, activityRid,callFields),
       { type: "SELECT" }
     );
 
@@ -2030,7 +2120,7 @@ class ActivitySchemaService {
     );
 
     const [statusInfo]: any[] = await this.mainDbSequelize.query(
-      rawQueries.getStatusDetails(emailDetails?.status_rid ?? ""),
+    rawQueries.getActivityStatusDetails(emailDetails?.status_rid ?? "", emailDetails?.activity_type ?? ""),
       {
         type: "SELECT",
       }
@@ -2071,12 +2161,10 @@ class ActivitySchemaService {
       activity_rid: emailDetails?.rid,
       activity_type: emailDetails?.activity_type ?? "",
       subject: emailDetails?.subject ?? "",
-      body_html: emailDetails?.body_html ?? "",
-      to_email: emailDetails?.to_email ? emailDetails.to_email.split(";") : [],
-      cc_emails: emailDetails?.cc_emails
-        ? emailDetails.cc_emails.split(";")
-        : [],
-      email_status: emailDetails?.email_status ?? "",
+      call_participants: emailDetails?.call_participants ? emailDetails.call_participants.split(";") : [],
+      caller_id: emailDetails?.caller_id ?? "",
+      minutes_of_meeting: emailDetails?.minutes_of_meeting ?? "",
+      call_platform: emailDetails?.call_platform ?? "",
       r_number: emailDetails.r_number ?? "",
       status_rid: emailDetails.status_rid ?? "",
       account_rid: emailDetails.account_rid ?? "",

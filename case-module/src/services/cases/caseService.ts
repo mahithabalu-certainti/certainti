@@ -1843,6 +1843,58 @@ export class CaseService {
             errorMessage: "Invalid account ID",
           };
         }
+        const userGroupType = await this.caseSchemaService.getUserGroupType(
+        userId
+      );
+      const userProfileType = await this.caseSchemaService.getUserProfileType(
+        userId
+      );
+      const isCustomGlobal = userGroupType === "DEFAULT";
+      const isDefaultParent = userGroupType === "AUTO_ASSIGNED_PARENT";
+      const isPOCProfile =
+        userProfileType?.profileName === "Project Point of Contact";
+      let accessibleIds: string[] = [];
+
+      if (!isCustomGlobal) {
+        accessibleIds = await this.getAccessibleProjectIds(
+          userId,
+          isDefaultParent,
+          isPOCProfile,
+          userProfileType?.email,
+          isCustomGlobal
+        );
+        if (accessibleIds.length === 0) {
+          return {
+            message: 'No accessible checklist found for the user.',
+            statusCode: HttpStatus.NOT_FOUND,
+            data: {
+                totalCount: 0,
+              checklists: [],
+            },
+          };
+        }
+      }
+
+      if (isCustomGlobal && isPOCProfile) {
+        accessibleIds = await this.getAccessibleProjectIds(
+          userId,
+          isDefaultParent,
+          isPOCProfile,
+          userProfileType?.email,
+          isCustomGlobal
+        );
+        if (accessibleIds.length === 0) {
+          return {
+            message: 'No accessible checklist found for the user.',
+            statusCode: HttpStatus.NOT_FOUND,
+            data: {
+            
+              totalCount: 0,
+              checklists: [],
+            },
+          };
+        }
+      }
          const checklistResponse:any =
         await this.caseSchemaService.fetchChecklists(
           accountNumber,
@@ -1857,6 +1909,7 @@ export class CaseService {
           sortBy,
           sortOrder,
           apiType,
+          accessibleIds,
           graphqlData
         );
   
@@ -2902,6 +2955,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
         const emailPreview = await this.caseSchemaService.getTemplateDetailsByCategory(data.category_name);
         let emailInfo = {
           to_email,
+          cc_email :[],
           subject:this.replacePlaceholders(emailPreview.subject, data, keyInfo),
           body_html : this.replacePlaceholders(emailPreview.body_html, data, keyInfo)
         }
