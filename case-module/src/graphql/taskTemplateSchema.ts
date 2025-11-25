@@ -47,7 +47,7 @@ milestone_template_rid: String
 priority_rid: String
 checklist_template_rid: String
 case_team_member_role_rid: String
-effort_in_days: Int
+effort_in_days: String
 task_name : String
 task_type_rid : String
 task_description : String
