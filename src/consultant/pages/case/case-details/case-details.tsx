@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useMemo, useState, useRef } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import {
   useLocation,
   useNavigate,
@@ -309,6 +309,16 @@ export const CaseDetails = () => {
     { label: 'Log a call', onClick: () => console.log('Call') },
   ];
 
+  const handleSetCaseTaskParams = useCallback(
+    (params: Record<string, unknown>) => {
+      setCaseTaskParams((prev) => ({
+        ...prev,
+        ...params,
+      }));
+    },
+    []
+  );
+
   const renderContent = () => {
     switch (activeKey) {
       case 'workBreakdown':
@@ -316,12 +326,7 @@ export const CaseDetails = () => {
           <div className='w-full pr-4 pl-2 py-2'>
             <WorkBreakDown
               setExportType={setExportType}
-              setCaseTaskParams={(params: Record<string, unknown>) =>
-                setCaseTaskParams((prev) => ({
-                  ...prev,
-                  ...params,
-                }))
-              }
+              setCaseTaskParams={handleSetCaseTaskParams}
               activityMenuItems={activityMenuItems}
             />
           </div>
