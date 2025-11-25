@@ -34,10 +34,6 @@ export const generateColorFromName = (name: string): string => {
   return colors[Math.abs(hash) % colors.length];
 };
 
-
-
-
-
 export const enrichUserOption = (userOption: UserOption): User => {
   return {
     id: userOption.rid,
@@ -46,8 +42,6 @@ export const enrichUserOption = (userOption: UserOption): User => {
     color: generateColorFromName(userOption.name),
   };
 };
-
-
 
 export const enrichAssignee = (assignee: {
   name: string;
