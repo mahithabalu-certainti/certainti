@@ -1132,13 +1132,13 @@ export const rawQueries = {
     SELECT m.rid, m.milestone_name, m.case_filing_type_rid, c.filing_type_name
     FROM ${MAIN_SCHEMA_NAME}.milestone_template m
     LEFT JOIN ${MAIN_SCHEMA_NAME}.case_filing_type c ON c.rid = m.case_filing_type_rid
-    ORDER BY r_number ASC
+    ORDER BY m.milestone_name ASC
     `
   },
   getChecklistTypes() {
     return `SELECT rid, checklist_name FROM ${MAIN_SCHEMA_NAME}.checklist_template
      WHERE status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active')
-    ORDER BY created_datetime ASC`
+    ORDER BY checklist_name ASC`
   },
   getUserNameByIdQuery() {
     return `
