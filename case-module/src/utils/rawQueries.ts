@@ -1243,7 +1243,7 @@ return query;
     task_rid = '${taskRid}'
     AND
     case_rid = '${caseRid}'
-    ORDER BY created_datetime ASC),
+    ORDER BY created_datetime DESC),
     calculate_total AS (
     SELECT f.*, COUNT(f.rid) OVER() AS total_result FROM fetch_data f
     )

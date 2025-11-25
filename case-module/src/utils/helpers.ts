@@ -432,7 +432,7 @@ export const setTaskTemplateData = (dbData : TaskTemplate, reqData : any, userId
       validUpdateQuery.push(validUpdateConditions)
     }
   }
-  if(reqData.task_description) {
+  if(reqData.task_description != undefined) {
     if(reqData.task_description !== dbData.task_description) {
       validUpdateConditions = `task_description = '${reqData.task_description.replace(/'/g, "''")}'`
       validUpdateQuery.push(validUpdateConditions)
@@ -466,16 +466,12 @@ export const setTaskTemplateData = (dbData : TaskTemplate, reqData : any, userId
 }
 export const getColumnsNamesForTaskUpdate = (data : UpdateCaseTaskType, dbData : CaseTask) => {
   let columns : string[] = [];
-  if(data.case_team_member_role_rid !== dbData.case_team_member_role_rid) 
-    columns.push(`case_team_member_role_rid`)
   if(data.checklist_template_rid !== dbData.checklist_template_rid)
     columns.push(`checklist_template_rid`)
   if(data.effective_end_datetime !== dbData.effective_end_datetime) 
     columns.push(`effective_end_datetime`)
   if(data.effective_start_datetime !== dbData.effective_start_datetime)
     columns.push(`effective_start_datetime`)
-  if(data.milestone_template_rid !== dbData.milestone_template_rid) 
-    columns.push(`milestone_template_rid`)
   if(data.priority_rid !== dbData.priority_rid)
     columns.push(`priority_rid`)
   if(data.task_description !== dbData.task_description)
@@ -484,12 +480,12 @@ export const getColumnsNamesForTaskUpdate = (data : UpdateCaseTaskType, dbData :
     columns.push(`task_name`)
   if(data.task_status_rid !== dbData.task_status_rid)
     columns.push(`task_status_rid`)
-  if(data.task_type_rid !== dbData.task_type_rid)
-    columns.push(`task_type_rid`)
   if(data.weightage_rid !== dbData.weightage_rid)
     columns.push(`weightage_rid`)
   if(data.task_category_rid !== dbData.task_category_rid)
     columns.push(`task_category_rid`)
+  if(data.assigned_to !== dbData.assigned_to)
+    columns.push(`assigned_to`)
 
   return columns;
 }

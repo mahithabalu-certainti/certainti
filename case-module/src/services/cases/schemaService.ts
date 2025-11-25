@@ -158,6 +158,7 @@ class CaseSchemaService {
         accountId: account?.rid,
         accountName: account?.account_name,
         parentAccountId: account?.parent_account_rid,
+        currencyRid : account?.currency_rid
       };
     } catch (err) {
       logMessage(`Error fetching account: ${err}`);
@@ -4993,16 +4994,16 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             let columnMapping : Map<string, string> = new Map()
             let newValueString;
             let oldValueString;
-
+            console.log(fetchUpdatedColumns)
             for(let c of fetchUpdatedColumns) {
               oldValue = (isTaskExists as any)[c]
               newValue = (data as any)[c]
               columnName = c
-
-              if(columnName == "case_team_member_role_rid") {
-                const result : any = await this.mainDbSequelize.query(rawQueries.fetchCaseTeamRole(oldValue, newValue))
+              
+              if(columnName == "assigned_to") {
+                const result : any = await this.mainDbSequelize.query(rawQueries.fetchUserNames(oldValue, newValue))
                 for(let r of result[0]) {
-                  columnMapping.set(r.rid, r.role_name)
+                  columnMapping.set(r.rid, r.name)
                 }
                 oldValueString = columnMapping.get(oldValue)
                 newValueString = columnMapping.get(newValue)
@@ -5030,7 +5031,24 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                 }
                 oldValueString = columnMapping.get(oldValue)
                 newValueString = columnMapping.get(newValue)
-              } else {
+              } 
+              else if(columnName === "weightage_rid") {
+                const result : any = await this.mainDbSequelize.query(rawQueries.fetchTaskWeightage(oldValue, newValue));
+                for(let r of result[0]) {
+                  columnMapping.set(r.rid, r.weightage_value)
+                }
+                oldValueString = columnMapping.get(oldValue)
+                newValueString = columnMapping.get(newValue)
+              }
+              else if(columnName === "task_category_rid") {
+                const result : any = await this.mainDbSequelize.query(rawQueries.fetchTaskCategory(oldValue, newValue));
+                for(let r of result[0]) {
+                  columnMapping.set(r.rid, r.category_name)
+                }
+                oldValueString = columnMapping.get(oldValue)
+                newValueString = columnMapping.get(newValue)
+              }
+              else {
                 oldValueString = oldValue
                 newValueString = newValue
               }
