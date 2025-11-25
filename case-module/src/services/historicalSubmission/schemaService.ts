@@ -2,18 +2,27 @@ import { Sequelize, Transaction, Op } from "sequelize";
 import { CaseModelService } from "../caseModelsService";
 import CaseSchemaService from "../cases/schemaService";
 import { logMessage, errorLog } from "../../utils/helpers";
-import { ICreateHistoricalSubmission, CaseHistorySubmission } from "../../utils/types";
+import { ICreateHistoricalSubmission, CaseHistorySubmission, CurrencyType } from "../../utils/types";
 import { fetchCaseDetails } from "../../utils/rawQueries";
 import { rawQueries, SCHEMANAME_PREFIX } from "../../utils/constants";
+import { initMainDbSequelize } from "../../config/mainDataSource";
 
 export class HistoricalSubmissionSchemaService {
   private orgDbSequelize: Sequelize | null = null;
   private caseModelService: CaseModelService;
   private caseSchemaService: CaseSchemaService;
+  private mainDbSequelize : Sequelize | null = null
 
   constructor() {
     this.caseModelService = new CaseModelService();
     this.caseSchemaService = new CaseSchemaService();
+  }
+
+  async getMainDb () {
+    if(!this.mainDbSequelize) {
+      this.mainDbSequelize = await initMainDbSequelize();
+    }
+    return this.mainDbSequelize;
   }
 
   private async checkUniqueFiscalYear(
@@ -276,9 +285,11 @@ export class HistoricalSubmissionSchemaService {
     accountNumber: string,
     data: any,
     userId: string,
-    type: string = "list"
+    type: string = "list",
+    currencyRid : string
   ) {
     try {
+      
       const { CaseHistorySubmission } = await this.caseModelService.getModels(accountNumber);
       const whereConditions: any = {
         account_rid: data.account_rid,
@@ -286,8 +297,29 @@ export class HistoricalSubmissionSchemaService {
       const queryOptions: any = {
         where: whereConditions,
         order: [["fiscal_year", "ASC"]],
+        raw : true
       };
-      const historicalSubmissions = await CaseHistorySubmission.findAll(queryOptions);
+      let currencySymbol : string | null;
+      let currencyId : string | null;
+      if(currencyRid !== null) {
+        const mainDb = await this.getMainDb();
+        const getCurrencySymbol : any = await mainDb.query(rawQueries.getCurrencyDetails(currencyRid))
+        if(getCurrencySymbol[0].length > 0) {
+          currencySymbol = getCurrencySymbol[0][0].currency_symbol
+          currencyId = getCurrencySymbol[0][0].rid
+        } else {
+          currencySymbol = null
+          currencyId = null
+        }
+      }
+      let historicalSubmissions = await CaseHistorySubmission.findAll(queryOptions);
+      historicalSubmissions = historicalSubmissions.map((d : any) => {
+        return {
+          ...d,
+          currency_rid : currencyId,
+          currency_symbol : currencySymbol
+        }
+      })
       return historicalSubmissions;
     } catch (err) {
       logMessage(`Error in fetching historical submissions: ${err}`);

@@ -680,11 +680,11 @@ export const rawQueries = {
       `SELECT rid, r_number, account_name, storage_type FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`
     );
     if (checkIsSeparateDb[0][0].storage_type == STATUS_MESSAGE.separateDb) {
-      return `SELECT rid, r_number, account_name, storage_type FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`;
+      return `SELECT rid, r_number, account_name, storage_type, currency_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`;
     } else {
       return `
       with fetch_account_details AS (
-      SELECT rid, r_number, parent_account_rid FROM ${MAIN_SCHEMA_NAME}.account where rid = '${accountRid}'
+      SELECT rid, r_number, parent_account_rid, currency_rid FROM ${MAIN_SCHEMA_NAME}.account where rid = '${accountRid}'
       )
       SELECT a.rid, a.r_number, a.account_name, a.is_parent 
       FROM ${MAIN_SCHEMA_NAME}.account a
@@ -1433,6 +1433,21 @@ export const rawQueries = {
     if(oldRid === null) oldRid = ''
     if(newRid === null) newRid = ''
     return `SELECT rid, task_status_name FROM ${MAIN_SCHEMA_NAME}.case_task_status WHERE rid IN ('${oldRid}', '${newRid}')`
+  },
+  fetchTaskWeightage(oldRid : string, newRid : string) {
+    if(oldRid === null) oldRid = ''
+    if(newRid === null) newRid = ''
+    return `SELECT rid, weightage_value FROM ${MAIN_SCHEMA_NAME}.task_weightage WHERE rid IN ('${oldRid}', '${newRid}')`
+  },
+  fetchTaskCategory(oldRid : string, newRid : string) {
+    if(oldRid === null) oldRid = ''
+    if(newRid === null) newRid = ''
+    return `SELECT rid, category_name FROM ${MAIN_SCHEMA_NAME}.task_category WHERE rid IN ('${oldRid}', '${newRid}')`
+  },
+  fetchUserNames (oldRid : string, newRid : string) {
+    if(oldRid === null) oldRid = ''
+    if(newRid === null) newRid = ''
+    return `SELECT rid, CONCAT(first_name, ' ', last_name) AS name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN ('${oldRid}', '${newRid}')`
   },
   insertTimeline: (schemaName: string,tableName: string) =>
     `INSERT INTO "${schemaName}".${tableName} (event_name, event_status, event_type, entity_rid, description, created_by, event_datetime, created_datetime) VALUES (:event_name, :event_status, :event_type, :entity_rid, :description, :created_by, :event_datetime, :created_datetime)`,
