@@ -1573,7 +1573,7 @@ return query;
    export const fetchActivityDetails = (schemaName : string, rid : string,selectColumns: string[]) => {
     return `
     SELECT 
-    a.rid, ${  selectColumns  },
+    a.rid, ${  selectColumns  }
     FROM
     ${schemaName}.activities a
     LEFT JOIN LATERAL (
