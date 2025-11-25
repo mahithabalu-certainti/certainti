@@ -1738,7 +1738,8 @@ export const validFilterColumnTypes : Record<string, string> = {
   sequence_no : "number",
   task_type_rid : "string",
   task_description : "string",
-  weightage_rid : "string"
+  weightage_rid : "string",
+  task_category_rid : "string"
 }
 
 export const sortByColumnsCaseTask : any = {
