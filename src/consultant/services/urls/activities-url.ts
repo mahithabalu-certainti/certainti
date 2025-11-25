@@ -43,3 +43,6 @@ export const ActivityListURL = ({
 
   return `${baseUrl}?${searchParams.toString()}`;
 };
+
+export const createActivityEmailURL = () => `/api/activities/email/create`;
+export const updateActivityEmailURL = () => `/api/activities/email/update`;

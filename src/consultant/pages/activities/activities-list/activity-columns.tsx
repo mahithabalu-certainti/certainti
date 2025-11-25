@@ -27,7 +27,7 @@ export const getActivityAllActivityListColumns = (
           }
           className='cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
         >
-          {row.rid}
+          {row.r_number}
         </span>
       ) : (
         <span>{row.r_number}</span>
@@ -147,7 +147,7 @@ export const getActivityEmailListColumns = (
           onClick={() => handleViewActivity(row.rid, 'email')}
           className='cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
         >
-          {row.rid}
+          {row.r_number}
         </span>
       ) : (
         <span>{row.r_number}</span>
@@ -261,7 +261,7 @@ export const getActivityTaskListColumns = (
           onClick={() => handleViewActivity(row.rid, 'task')}
           className='cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
         >
-          {row.rid}
+          {row.r_number}
         </span>
       ) : (
         <span>{row.r_number}</span>

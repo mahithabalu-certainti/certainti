@@ -1,4 +1,10 @@
-import { useQuery, UseQueryResult } from '@tanstack/react-query';
+import {
+  useMutation,
+  UseMutationOptions,
+  UseMutationResult,
+  useQuery,
+  UseQueryResult,
+} from '@tanstack/react-query';
 import { caseServiceApi } from '../../../api/api';
 import {
   ActivityList,
@@ -9,7 +15,35 @@ import {
   TaskActivityDetails,
   TaskActivityDetailsResponse,
 } from '../../types';
-import { ActivityListURL } from '../urls/activities-url';
+import {
+  ActivityListURL,
+  createActivityEmailURL,
+  updateActivityEmailURL,
+} from '../urls/activities-url';
+
+export const useApiMutationSericve = <T, V = void>(
+  endpoint: string,
+  method: 'post' | 'put' | 'patch' | 'delete' = 'post',
+  options?: UseMutationOptions<T, Error, V>
+): UseMutationResult<T, Error, V> => {
+  return useMutation<T, Error, V>({
+    mutationFn: async (data) => {
+      const isFormData = data instanceof FormData;
+
+      const response = await caseServiceApi.request<T>({
+        url: endpoint,
+        method,
+        data,
+        headers: isFormData
+          ? { 'Content-Type': 'multipart/form-data' }
+          : { 'Content-Type': 'application/json' },
+      });
+
+      return response.data;
+    },
+    ...options,
+  });
+};
 
 export const fetchActivityList = async (
   params: ActivityListURLParams
@@ -92,4 +126,18 @@ export const useTaskActivityDetails = (
     gcTime: 0,
     enabled: !!activityId && !!entityId && isEnable,
   });
+};
+
+export const useCreateActivityEmail = () => {
+  return useApiMutationSericve<unknown, FormData>(
+    createActivityEmailURL(),
+    'post'
+  );
+};
+
+export const useUpdateActivityEmail = () => {
+  return useApiMutationSericve<unknown, FormData>(
+    updateActivityEmailURL(),
+    'put'
+  );
 };

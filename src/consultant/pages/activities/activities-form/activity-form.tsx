@@ -13,19 +13,21 @@ const ActivityForm: React.FC = () => {
   //    const entityLevel = searchParams.get('entityLevel') || '';
   //    const entityId = searchParams.get('entityId') || '';
   return (
-    <div>
-      {type === 'email' ? (
-        <EmailForm />
-      ) : type === 'task' ? (
-        <TaskForm />
-      ) : type === 'meeting' ? (
-        <MeetingForm />
-      ) : type === 'call' ? (
-        <CallForm />
-      ) : (
-        <div>Activity Form</div>
-      )}
-    </div>
+    <React.Suspense fallback={null}>
+      <div>
+        {type === 'email' ? (
+          <EmailForm />
+        ) : type === 'task' ? (
+          <TaskForm />
+        ) : type === 'meeting' ? (
+          <MeetingForm />
+        ) : type === 'call' ? (
+          <CallForm />
+        ) : (
+          <div>Activity Form</div>
+        )}
+      </div>
+    </React.Suspense>
   );
 };
 

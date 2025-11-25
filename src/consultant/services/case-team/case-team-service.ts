@@ -92,7 +92,7 @@ export interface RoleOptionsResponse extends CommonApiResponse {
 export interface UserOption {
   rid: string;
   name: string;
-  email?: string;
+  email: string;
   status?: string;
 }
 
@@ -208,8 +208,7 @@ export const useGetUserOptions = (
     queryKey: ['case-team-user-options', accountId],
     queryFn: () => fetchUserOptions(accountId!),
     retry: 0,
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
+    gcTime: 0,
     enabled: enabled && !!accountId,
   });
 };
