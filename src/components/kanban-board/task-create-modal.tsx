@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
+import { Tooltip } from '@mui/material';
 
 import dayjs from 'dayjs';
-import { CalendarIcon, CloseIcon } from '../../assets';
+import { CalendarIcon, CloseIcon, ErrorInfoIcon } from '../../assets';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -99,6 +100,36 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
   fieldVisibility = {},
   fieldDisabled = {},
 }) => {
+  const ErrorIconTooltip = ({ error }: { error: string }) => (
+    <Tooltip
+      title={error}
+      placement='top'
+      arrow
+      slotProps={{
+        tooltip: {
+          sx: {
+            backgroundColor: '#FEF2F2',
+            color: '#EF4444',
+            border: '1px solid #EF4444',
+            fontSize: '12px',
+          },
+        },
+        arrow: {
+          sx: {
+            color: '#FEF2F2',
+            '&:before': {
+              border: '1px solid #EF4444',
+            },
+          },
+        },
+      }}
+    >
+      <span className='cursor-pointer ml-2 inline-flex align-middle'>
+        <ErrorInfoIcon className='w-4 h-4 text-red-500' />
+      </span>
+    </Tooltip>
+  );
+
   const [taskTitle, setTaskTitle] = useState('');
   const [description, setDescription] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('To Do');
@@ -254,6 +285,17 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
       newErrors.linkedType = 'Linked Type is required';
     }
 
+    if (taskTitle.length > 2000) {
+      newErrors.taskTitle = 'Task Name too long (max 2000 characters)';
+    }
+    if (description.length > 2000) {
+      newErrors.description = 'Description too long (max 2000 characters)';
+    }
+    const longTags = selectedTags.filter((tag) => tag.length > 50);
+    if (longTags.length > 0) {
+      newErrors.tags = 'Tags too long (max 50 characters)';
+    }
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
@@ -332,7 +374,7 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
         className='fixed right-0 bottom-0 w-[650px] bg-white text-gray-900 shadow-2xl transform transition-transform duration-300 ease-in-out z-50 overflow-y-auto'
         style={{ top: '38.1px', backgroundColor: '#fff' }}
       >
-        <div className='sticky top-0 flex items-center justify-between p-[17.5px] border-b border-[#CBD6E2] bg-white z-50'>
+        <div className='sticky top-0 flex items-center justify-between p-3 border-b border-[#CBD6E2] bg-white z-50'>
           <h2
             className='text-[16px] font-semibold'
             style={{ color: '#2D3E4F' }}
@@ -347,30 +389,34 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
           </button>
         </div>
 
-        <div className='p-4 space-y-4'>
+        <div className='px-4 pt-2 pb-4 space-y-3'>
           <div>
             <label className='block text-[13px] font-medium text-gray-700 mb-2'>
               Task Name <span className='text-red-500'>*</span>
             </label>
-            <input
-              type='text'
-              value={taskTitle}
-              onChange={(e) => {
-                setTaskTitle(e.target.value);
-                if (e.target.value.trim()) {
-                  setErrors((prev) => ({ ...prev, taskTitle: '' }));
-                }
-              }}
-              placeholder='Enter task name'
-              className={`w-full text-[13px] font-normal bg-transparent border-b ${errors.taskTitle ? 'border-red-500' : 'border-gray-300'} focus:border-blue-400 focus:border-b outline-none text-gray-900 placeholder-[#7D98B6] pb-2`}
-              autoFocus
-            />
-            {errors.taskTitle && (
-              <span className='text-xs text-red-500 mt-1'>
-                {errors.taskTitle}
-              </span>
-            )}
+            <div className='relative'>
+              <input
+                type='text'
+                value={taskTitle}
+                onChange={(e) => {
+                  setTaskTitle(e.target.value);
+                  if (e.target.value.trim()) {
+                    setErrors((prev) => ({ ...prev, taskTitle: '' }));
+                  }
+                }}
+                placeholder='Enter task name'
+                className={`w-full text-[13px] font-normal bg-transparent border-b ${errors.taskTitle ? 'border-red-500' : 'border-gray-300'} focus:border-blue-400 focus:border-b outline-none text-gray-900 placeholder-[#7D98B6] pb-2 pr-8`}
+                autoFocus
+              />
+              {errors.taskTitle && (
+                <div className='absolute right-0 top-0 bottom-2 flex items-center'>
+                  <ErrorIconTooltip error={errors.taskTitle} />
+                </div>
+              )}
+            </div>
           </div>
+
+
 
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <div className='grid grid-cols-2 gap-4'>
@@ -379,63 +425,69 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                   <label className='block text-[13px] font-medium text-gray-600 mb-1'>
                     Start Date <span className='text-red-500'>*</span>
                   </label>
-                  <DatePicker
-                    disabled={fieldDisabled.startDate}
-                    value={startDate}
-                    onChange={handleStartDateChange}
-                    format='YYYY-MMM-DD'
-                    minDate={dayjs()}
-                    slots={{
-                      openPickerIcon: () => (
-                        <CalendarIcon className='w-4 h-4' />
-                      ),
-                      clearIcon: () => <CloseIcon className='w-2.5 h-2.5' />,
-                    }}
-                    slotProps={{
-                      field: { clearable: true },
-                      textField: {
-                        fullWidth: true,
-                        size: 'small',
-                        error: !!errors.startDate,
-                        helperText: errors.startDate,
-                        sx: {
-                          '& .MuiOutlinedInput-root': {
-                            height: '32px',
-                            borderRadius: '2px',
-                            '& input': {
-                              fontWeight: 400,
-                              fontSize: '13px',
-                              lineHeight: '21px',
-                              pl: '11px',
-                              color: 'black !important',
-                              WebkitTextFillColor: 'black !important',
-                              '&::placeholder': {
-                                color: '#7D98B6 !important',
-                                opacity: 1,
+                  <div className='relative'>
+                    <DatePicker
+                      disabled={fieldDisabled.startDate}
+                      value={startDate}
+                      onChange={handleStartDateChange}
+                      format='YYYY-MMM-DD'
+                      minDate={dayjs()}
+                      slots={{
+                        openPickerIcon: () => (
+                          <CalendarIcon className='w-4 h-4' />
+                        ),
+                        clearIcon: () => <CloseIcon className='w-2.5 h-2.5' />,
+                      }}
+                      slotProps={{
+                        field: { clearable: true },
+                        textField: {
+                          fullWidth: true,
+                          size: 'small',
+                          error: !!errors.startDate,
+                          sx: {
+                            '& .MuiOutlinedInput-root': {
+                              height: '32px',
+                              borderRadius: '2px',
+                              '& input': {
+                                fontWeight: 400,
+                                fontSize: '13px',
+                                lineHeight: '21px',
+                                pl: '11px',
+                                color: 'black !important',
+                                WebkitTextFillColor: 'black !important',
+                                '&::placeholder': {
+                                  color: '#7D98B6 !important',
+                                  opacity: 1,
+                                },
+                              },
+                              '&:hover .MuiOutlinedInput-notchedOutline': {
+                                border: errors.startDate
+                                  ? '1px solid #EF4444'
+                                  : '1px solid #CBD6E2',
+                              },
+                              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                border: errors.startDate
+                                  ? '2px solid #EF4444'
+                                  : '2px solid #60A5FA',
                               },
                             },
-                            '&:hover .MuiOutlinedInput-notchedOutline': {
+                            '& .MuiOutlinedInput-notchedOutline': {
                               border: errors.startDate
                                 ? '1px solid #EF4444'
                                 : '1px solid #CBD6E2',
-                            },
-                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                              border: errors.startDate
-                                ? '2px solid #EF4444'
-                                : '2px solid #60A5FA',
+                              borderRadius: '2px',
                             },
                           },
-                          '& .MuiOutlinedInput-notchedOutline': {
-                            border: errors.startDate
-                              ? '1px solid #EF4444'
-                              : '1px solid #CBD6E2',
-                            borderRadius: '2px',
-                          },
+                          placeholder: 'Choose start date',
                         },
-                        placeholder: 'Choose start date',
-                      },
-                    }}
-                  />
+                      }}
+                    />
+                    {errors.startDate && (
+                      <p className='text-xs text-red-500 mt-1'>
+                        {errors.startDate}
+                      </p>
+                    )}
+                  </div>
                 </div>
               )}
               {!fieldVisibility.endDate && (
@@ -443,67 +495,75 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                   <label className='block text-[13px] font-medium text-gray-600 mb-1'>
                     Due Date <span className='text-red-500'>*</span>
                   </label>
-                  <DatePicker
-                    disabled={fieldDisabled.endDate}
-                    value={endDate}
-                    onChange={handleEndDateChange}
-                    minDate={getMinEndDate()}
-                    format='YYYY-MMM-DD'
-                    slots={{
-                      openPickerIcon: () => (
-                        <CalendarIcon className='w-4 h-4' />
-                      ),
-                      clearIcon: () => <CloseIcon className='w-2.5 h-2.5' />,
-                    }}
-                    slotProps={{
-                      field: { clearable: true },
-                      textField: {
-                        fullWidth: true,
-                        size: 'small',
-                        error: !!errors.endDate,
-                        helperText: errors.endDate,
-                        sx: {
-                          '& .MuiOutlinedInput-root': {
-                            height: '32px',
-                            borderRadius: '2px',
-                            '& input': {
-                              fontWeight: 400,
-                              fontSize: '13px',
-                              lineHeight: '21px',
-                              pl: '11px',
-                              color: 'black !important',
-                              WebkitTextFillColor: 'black !important',
-                              '&::placeholder': {
-                                color: '#7D98B6 !important',
-                                opacity: 1,
+                  <div className='relative'>
+                    <DatePicker
+                      disabled={fieldDisabled.endDate}
+                      value={endDate}
+                      onChange={handleEndDateChange}
+                      minDate={getMinEndDate()}
+                      format='YYYY-MMM-DD'
+                      slots={{
+                        openPickerIcon: () => (
+                          <CalendarIcon className='w-4 h-4' />
+                        ),
+                        clearIcon: () => <CloseIcon className='w-2.5 h-2.5' />,
+                      }}
+                      slotProps={{
+                        field: { clearable: true },
+                        textField: {
+                          fullWidth: true,
+                          size: 'small',
+                          error: !!errors.endDate,
+                          sx: {
+                            '& .MuiOutlinedInput-root': {
+                              height: '32px',
+                              borderRadius: '2px',
+                              '& input': {
+                                fontWeight: 400,
+                                fontSize: '13px',
+                                lineHeight: '21px',
+                                pl: '11px',
+                                color: 'black !important',
+                                WebkitTextFillColor: 'black !important',
+                                '&::placeholder': {
+                                  color: '#7D98B6 !important',
+                                  opacity: 1,
+                                },
+                              },
+                              '&:hover .MuiOutlinedInput-notchedOutline': {
+                                border: errors.endDate
+                                  ? '1px solid #EF4444'
+                                  : '1px solid #CBD6E2',
+                              },
+                              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                border: errors.endDate
+                                  ? '2px solid #EF4444'
+                                  : '2px solid #60A5FA',
                               },
                             },
-                            '&:hover .MuiOutlinedInput-notchedOutline': {
+                            '& .MuiOutlinedInput-notchedOutline': {
                               border: errors.endDate
                                 ? '1px solid #EF4444'
                                 : '1px solid #CBD6E2',
-                            },
-                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                              border: errors.endDate
-                                ? '2px solid #EF4444'
-                                : '2px solid #60A5FA',
+                              borderRadius: '2px',
                             },
                           },
-                          '& .MuiOutlinedInput-notchedOutline': {
-                            border: errors.endDate
-                              ? '1px solid #EF4444'
-                              : '1px solid #CBD6E2',
-                            borderRadius: '2px',
-                          },
+                          placeholder: 'Choose end date',
                         },
-                        placeholder: 'Choose end date',
-                      },
-                    }}
-                  />
+                      }}
+                    />
+                    {errors.endDate && (
+                      <p className='text-xs text-red-500 mt-1'>
+                        {errors.endDate}
+                      </p>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
           </LocalizationProvider>
+
+          <h3 className='text-sm font-semibold text-gray-700 mb-3'>Fields</h3>
 
           <TaskFieldsSection
             fieldVisibility={fieldVisibility}
@@ -632,13 +692,20 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
               <h3 className='text-[13px] font-semibold text-gray-700 mb-3'>
                 Description
               </h3>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder='Add a description...'
-                className='w-full bg-white border border-gray-300 rounded-lg p-3 text-[13px] resize-none focus:border-blue-500 focus:outline-none text-gray-900 placeholder-[#7D98B6] min-h-[100px]'
-                disabled={fieldDisabled.description}
-              />
+              <div className='relative'>
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder='Add a description...'
+                  className='w-full bg-white border border-gray-300 rounded-lg p-3 text-[13px] resize-none focus:border-blue-500 focus:outline-none text-gray-900 placeholder-[#7D98B6] min-h-[100px] pr-8'
+                  disabled={fieldDisabled.description}
+                />
+                {errors.description && (
+                  <div className='absolute right-2 top-3'>
+                    <ErrorIconTooltip error={errors.description} />
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>

@@ -309,7 +309,10 @@ export const CaseDetails = () => {
       case 'caseTeam':
         return (
           <div className='w-full pr-4 pl-2 py-2'>
-            <CaseTeam activityMenuItems={activityMenuItems} />
+            <CaseTeam
+              activityMenuItems={activityMenuItems}
+              fiscalYear={fiscalYear}
+            />
           </div>
         );
       case 'historical_submission':
@@ -556,11 +559,10 @@ export const CaseDetails = () => {
       />
       <div className='flex flex-1 flex-row w-full border-b border-[#CBD6E2]'>
         <div
-          className={`flex transition-all ease-in-out ${
-            isCollapsed
-              ? 'w-[60px] min-w-[60px] max-w-[60px] duration-300'
-              : 'w-[220px] min-w-[220px] max-w-[220px] duration-500'
-          }`}
+          className={`flex transition-all ease-in-out ${isCollapsed
+            ? 'w-[60px] min-w-[60px] max-w-[60px] duration-300'
+            : 'w-[220px] min-w-[220px] max-w-[220px] duration-500'
+            }`}
         >
           <SideMenuPanel
             menuItems={sideMenuItems}
@@ -570,6 +572,7 @@ export const CaseDetails = () => {
             showBackIcon={true}
             isCollapsed={isCollapsed}
             onToggleCollapse={() => setIsCollapsed((prev) => !prev)}
+            enableScrollbar={true}
           />
         </div>
         <div

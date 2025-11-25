@@ -1,3 +1,4 @@
+import React from 'react';
 import { ErrorInfoIcon } from '../../assets';
 import {
   Select,
@@ -89,93 +90,99 @@ interface StyledSelectProps {
   error?: string | boolean;
 }
 
-const StyledSelect: React.FC<StyledSelectProps> = ({
-  name,
-  value,
-  onChange,
-  disabled = false,
-  multiple = false,
-  displayEmpty = true,
-  renderValue,
-  children,
-  width = '140px',
-  sx,
-  error,
-}) => {
-  const errorStyles: SxProps<Theme> = error
-    ? {
-      '& .MuiOutlinedInput-notchedOutline': {
-        border: '1px solid #EF4444 !important',
-      },
-      backgroundColor: '#FEF2F2',
-      '&:hover .MuiOutlinedInput-notchedOutline': {
-        border: '1px solid #EF4444 !important',
-      },
-      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-        border: '2px solid #EF4444 !important',
-      },
-    }
-    : {};
+const StyledSelect = React.forwardRef<HTMLDivElement, StyledSelectProps>(
+  (
+    {
+      name,
+      value,
+      onChange,
+      disabled = false,
+      multiple = false,
+      displayEmpty = true,
+      renderValue,
+      children,
+      width = '140px',
+      sx,
+      error,
+    },
+    ref
+  ) => {
+    const errorStyles: SxProps<Theme> = error
+      ? {
+        '& .MuiOutlinedInput-notchedOutline': {
+          border: '1px solid #EF4444 !important',
+        },
+        backgroundColor: '#FEF2F2',
+        '&:hover .MuiOutlinedInput-notchedOutline': {
+          border: '1px solid #EF4444 !important',
+        },
+        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+          border: '2px solid #EF4444 !important',
+        },
+      }
+      : {};
 
-  const mergedSx = {
-    ...COMMON_SELECT_STYLES,
-    ...errorStyles,
-    ...(sx || {}),
-  };
+    const mergedSx = {
+      ...COMMON_SELECT_STYLES,
+      ...errorStyles,
+      ...(sx || {}),
+    };
 
-  return (
-    <div style={{ width, position: 'relative' }}>
-      <Select
-        name={name}
-        disabled={disabled}
-        className='custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px]'
-        onChange={
-          onChange as (event: SelectChangeEvent<string | string[]>) => void
-        }
-        value={value}
-        displayEmpty={displayEmpty}
-        fullWidth
-        size='small'
-        multiple={multiple}
-        MenuProps={
-          COMMON_MENU_PROPS as Parameters<typeof Select>[0]['MenuProps']
-        }
-        renderValue={renderValue}
-        sx={mergedSx as SxProps<Theme>}
-      >
-        {children}
-      </Select>
-      {typeof error === 'string' && error && (
-        <Tooltip
-          title={error}
-          arrow
-          placement='top'
-          slotProps={{
-            tooltip: {
-              sx: {
-                backgroundColor: '#FEF2F2',
-                color: '#EF4444',
-                border: '1px solid #EF4444',
-                fontSize: '12px',
-              },
-            },
-            arrow: {
-              sx: {
-                color: '#FEF2F2',
-                '&:before': {
+    return (
+      <div style={{ width, position: 'relative' }}>
+        <Select
+          ref={ref}
+          name={name}
+          disabled={disabled}
+          className='custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px]'
+          onChange={
+            onChange as (event: SelectChangeEvent<string | string[]>) => void
+          }
+          value={value}
+          displayEmpty={displayEmpty}
+          fullWidth
+          size='small'
+          multiple={multiple}
+          MenuProps={
+            COMMON_MENU_PROPS as Parameters<typeof Select>[0]['MenuProps']
+          }
+          renderValue={renderValue}
+          sx={mergedSx as SxProps<Theme>}
+        >
+          {children}
+        </Select>
+        {typeof error === 'string' && error && (
+          <Tooltip
+            title={error}
+            arrow
+            placement='top'
+            slotProps={{
+              tooltip: {
+                sx: {
+                  backgroundColor: '#FEF2F2',
+                  color: '#EF4444',
                   border: '1px solid #EF4444',
+                  fontSize: '12px',
                 },
               },
-            },
-          }}
-        >
-          <span className='h-[28px] w-5 flex items-center justify-center absolute top-[2px] right-[25px] cursor-pointer pointer-events-auto z-10'>
-            <ErrorInfoIcon alt='error' className='w-5 h-3.5' />
-          </span>
-        </Tooltip>
-      )}
-    </div>
-  );
-};
+              arrow: {
+                sx: {
+                  color: '#FEF2F2',
+                  '&:before': {
+                    border: '1px solid #EF4444',
+                  },
+                },
+              },
+            }}
+          >
+            <span className='h-[28px] w-5 flex items-center justify-center absolute top-[2px] right-[25px] cursor-pointer pointer-events-auto z-10'>
+              <ErrorInfoIcon alt='error' className='w-5 h-3.5' />
+            </span>
+          </Tooltip>
+        )}
+      </div>
+    );
+  }
+);
 
 export default StyledSelect;

@@ -1,8 +1,12 @@
 import React, { useState, useRef, useEffect, Suspense } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../store/store';
 import { Activity, Comment, Task } from './types';
-import { PencilIcon, DeleteIcon, AddIcon } from '../../assets';
+import { PencilIcon, DeleteIcon, AddIcon, ErrorInfoIcon } from '../../assets';
+import { Tooltip } from '@mui/material';
 import TextButton from '../button/text-button';
+import { generateInitials, generateColorFromName } from './helper';
 
 interface TaskCommentsSectionProps {
   fieldVisibility: Record<string, boolean | undefined>;
@@ -25,17 +29,17 @@ interface TaskCommentsSectionProps {
     files: File[]
   ) => Promise<void>;
   onUpdateComment?:
-    | ((
-        commentId: string,
-        comment: string,
-        taskId: string,
-        files?: File[],
-        deletedFileIds?: string[]
-      ) => Promise<void>)
-    | undefined;
+  | ((
+    commentId: string,
+    comment: string,
+    taskId: string,
+    files?: File[],
+    deletedFileIds?: string[]
+  ) => Promise<void>)
+  | undefined;
   onDeleteComment:
-    | ((commentId: string, taskId: string) => Promise<void>)
-    | undefined;
+  | ((commentId: string, taskId: string) => Promise<void>)
+  | undefined;
   loadingComments?: boolean;
   loadingActivities?: boolean;
 }
@@ -51,7 +55,6 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
   editingCommentText,
   setEditingCommentId,
   setEditingCommentText,
-  task,
   accountId,
   caseId,
   taskId,
@@ -59,8 +62,46 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
   onUpdateComment,
   onDeleteComment,
 }) => {
+  const ErrorIconTooltip = ({ error }: { error: string }) => (
+    <Tooltip
+      title={error}
+      placement='top'
+      arrow
+      slotProps={{
+        tooltip: {
+          sx: {
+            backgroundColor: '#FEF2F2',
+            color: '#EF4444',
+            border: '1px solid #EF4444',
+            fontSize: '12px',
+          },
+        },
+        arrow: {
+          sx: {
+            color: '#FEF2F2',
+            '&:before': {
+              border: '1px solid #EF4444',
+            },
+          },
+        },
+      }}
+    >
+      <span className='cursor-pointer mr-2 inline-flex align-middle'>
+        <ErrorInfoIcon className='w-4 h-4 text-red-500' />
+      </span>
+    </Tooltip>
+  );
+
   const queryClient = useQueryClient();
+  const { name: loggedInUserName, userId: loggedInUserId } = useSelector((state: RootState) => state.auth);
+
+  const loggedInUser = {
+    initials: generateInitials(loggedInUserName || ''),
+    color: generateColorFromName(loggedInUserName || ''),
+  };
+
   const [comment, setComment] = useState('');
+  const [commentError, setCommentError] = useState<string | null>(null);
   const [commentFiles, setCommentFiles] = useState<File[]>([]);
   const [deleteConfirmModal, setDeleteConfirmModal] = useState<{
     isOpen: boolean;
@@ -160,7 +201,13 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
       return;
     }
 
+    if (editingCommentText.length > 2000) {
+      setCommentError('Comment too long (max 2000 characters)');
+      return;
+    }
+
     setIsUpdating(true);
+    setCommentError(null);
     try {
       await onUpdateComment(
         commentId,
@@ -191,7 +238,13 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
       return;
     }
 
+    if (comment.length > 2000) {
+      setCommentError('Comment too long (max 2000 characters)');
+      return;
+    }
+
     setIsAddingComment(true);
+    setCommentError(null);
     try {
       await onAddComment(taskId, comment.trim(), commentFiles);
       setComment('');
@@ -286,21 +339,19 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
       <div className='flex gap-6 mb-6 border-b border-gray-200'>
         <button
           onClick={() => setActiveTab('comments')}
-          className={`text-sm font-semibold pb-3 px-1 transition-all duration-200 ${
-            activeTab === 'comments'
-              ? 'text-gray-900 border-b-2 border-blue-600'
-              : 'text-gray-600 hover:text-gray-800 border-b-2 border-transparent'
-          }`}
+          className={`text-sm font-semibold pb-3 px-1 transition-all duration-200 ${activeTab === 'comments'
+            ? 'text-gray-900 border-b-2 border-blue-600'
+            : 'text-gray-600 hover:text-gray-800 border-b-2 border-transparent'
+            }`}
         >
           Comments ({comments.length})
         </button>
         <button
           onClick={() => setActiveTab('activity')}
-          className={`text-sm font-semibold pb-3 px-1 transition-all duration-200 ${
-            activeTab === 'activity'
-              ? 'text-gray-900 border-b-2 border-blue-600'
-              : 'text-gray-600 hover:text-gray-800 border-b-2 border-transparent'
-          }`}
+          className={`text-sm font-semibold pb-3 px-1 transition-all duration-200 ${activeTab === 'activity'
+            ? 'text-gray-900 border-b-2 border-blue-600'
+            : 'text-gray-600 hover:text-gray-800 border-b-2 border-transparent'
+            }`}
         >
           Activity ({activities.length})
         </button>
@@ -356,15 +407,17 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                         <div
                           className='w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 text-white'
                           style={{
-                            backgroundColor: commentItem.color || '#999',
+                            backgroundColor:
+                              commentItem.createdBy === loggedInUserId
+                                ? loggedInUser.color
+                                : commentItem.color || '#999',
                             fontSize: '8px',
                           }}
                         >
-                          {commentItem.initials ||
-                            commentItem.user
-                              .split(' ')
-                              .map((n) => n[0])
-                              .join('')}
+                          {commentItem.createdBy === loggedInUserId
+                            ? loggedInUser.initials
+                            : commentItem.initials ||
+                            generateInitials(commentItem.user)}
                         </div>
                         <div>
                           <p className='text-sm font-semibold text-gray-900'>
@@ -373,14 +426,21 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                           <p className='text-xs text-gray-500'>Editing...</p>
                         </div>
                       </div>
-                      <textarea
-                        ref={editTextareaRef}
-                        value={editingCommentText}
-                        onChange={(e) => setEditingCommentText(e.target.value)}
-                        className='w-full bg-white border border-gray-300 rounded-lg p-3 text-sm resize-none focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900 placeholder-gray-500 min-h-[100px]'
-                        placeholder='Edit your comment'
-                        disabled={isUpdating}
-                      />
+                      <div className='relative'>
+                        <textarea
+                          ref={editTextareaRef}
+                          value={editingCommentText}
+                          onChange={(e) => setEditingCommentText(e.target.value)}
+                          className='w-full bg-white border border-gray-300 rounded-lg p-3 text-sm resize-none focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900 placeholder-gray-500 min-h-[100px] pr-8'
+                          placeholder='Edit your comment'
+                          disabled={isUpdating}
+                        />
+                        {commentError && editingCommentId === commentItem.id && (
+                          <div className='absolute right-2 top-3'>
+                            <ErrorIconTooltip error={commentError} />
+                          </div>
+                        )}
+                      </div>
 
                       {/* Edit Mode Attachments */}
                       <div className='mt-3 space-y-3'>
@@ -397,11 +457,10 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                                 return (
                                   <div
                                     key={att.rid}
-                                    className={`flex items-center justify-between p-2 rounded text-xs ${
-                                      isMarkedForDeletion
-                                        ? 'bg-red-50 text-gray-400'
-                                        : 'bg-gray-50 text-gray-700'
-                                    }`}
+                                    className={`flex items-center justify-between p-2 rounded text-xs ${isMarkedForDeletion
+                                      ? 'bg-red-50 text-gray-400'
+                                      : 'bg-gray-50 text-gray-700'
+                                      }`}
                                   >
                                     <div className='flex items-center gap-2 overflow-hidden'>
                                       <span
@@ -423,17 +482,16 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                                       onClick={() =>
                                         isMarkedForDeletion
                                           ? handleUndoRemoveExistingAttachment(
-                                              att.rid
-                                            )
+                                            att.rid
+                                          )
                                           : handleRemoveExistingAttachment(
-                                              att.rid
-                                            )
+                                            att.rid
+                                          )
                                       }
-                                      className={`ml-2 p-1 rounded hover:bg-opacity-80 ${
-                                        isMarkedForDeletion
-                                          ? 'text-green-600 hover:bg-green-100'
-                                          : 'text-red-600 hover:bg-red-100'
-                                      }`}
+                                      className={`ml-2 p-1 rounded hover:bg-opacity-80 ${isMarkedForDeletion
+                                        ? 'text-green-600 hover:bg-green-100'
+                                        : 'text-red-600 hover:bg-red-100'
+                                        }`}
                                       title={
                                         isMarkedForDeletion
                                           ? 'Undo delete'
@@ -492,7 +550,7 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                           </div>
                         )}
                       </div>
-                      <div className='flex gap-2 justify-end mt-3'>
+                      <div className='flex gap-2 justify-end mt-3 items-center'>
                         <TextButton
                           label='Cancel'
                           onClick={() => {
@@ -529,15 +587,17 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                       <div
                         className='w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 text-white'
                         style={{
-                          backgroundColor: commentItem.color || '#999',
+                          backgroundColor:
+                            commentItem.createdBy === loggedInUserId
+                              ? loggedInUser.color
+                              : commentItem.color || '#999',
                           fontSize: '8px',
                         }}
                       >
-                        {commentItem.initials ||
-                          commentItem.user
-                            .split(' ')
-                            .map((n) => n[0])
-                            .join('')}
+                        {commentItem.createdBy === loggedInUserId
+                          ? loggedInUser.initials
+                          : commentItem.initials ||
+                          generateInitials(commentItem.user)}
                       </div>
                       <div className='flex-1 min-w-0'>
                         <div className='flex items-start justify-between gap-2'>
@@ -554,11 +614,10 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
 
                           {/* Action Icons - Hover Reveal */}
                           <div
-                            className={`flex gap-2 flex-shrink-0 transition-opacity duration-200 ${
-                              hoveredCommentId === commentItem.id
-                                ? 'opacity-100'
-                                : 'opacity-0'
-                            }`}
+                            className={`flex gap-2 flex-shrink-0 transition-opacity duration-200 ${hoveredCommentId === commentItem.id
+                              ? 'opacity-100'
+                              : 'opacity-0'
+                              }`}
                           >
                             <Suspense fallback={null}>
                               <button
@@ -644,7 +703,7 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                 </div>
               ))
             ) : (
-              <div className='text-center py-8'>
+              <div className='text-center py-2'>
                 <p className='text-sm text-gray-500'>No comments yet.</p>
               </div>
             )}
@@ -670,21 +729,28 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                 <div
                   className='w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 text-white'
                   style={{
-                    backgroundColor: task?.assignee?.color || '#999',
+                    backgroundColor: loggedInUser.color,
                     fontSize: '8px',
                   }}
                 >
-                  {task?.assignee?.initials || '?'}
+                  {loggedInUser.initials}
                 </div>
                 <div className='flex-1 space-y-3 min-w-0'>
-                  <textarea
-                    ref={textareaRef}
-                    value={comment}
-                    onChange={(e) => setComment(e.target.value)}
-                    placeholder='Add your comment here...'
-                    className='w-full bg-white border border-gray-300 rounded-lg p-3 text-sm resize-none focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900 placeholder-gray-500 min-h-[100px]'
-                    disabled={fieldDisabled.comments || isAddingComment}
-                  />
+                  <div className='relative'>
+                    <textarea
+                      ref={textareaRef}
+                      value={comment}
+                      onChange={(e) => setComment(e.target.value)}
+                      placeholder='Add your comment here...'
+                      className='w-full bg-white border border-gray-300 rounded-lg p-3 text-sm resize-none focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900 placeholder-gray-500 min-h-[100px] pr-8'
+                      disabled={fieldDisabled.comments || isAddingComment}
+                    />
+                    {commentError && !editingCommentId && (
+                      <div className='absolute right-2 top-3'>
+                        <ErrorIconTooltip error={commentError} />
+                      </div>
+                    )}
+                  </div>
 
                   {/* File upload area */}
                   <button
@@ -726,7 +792,7 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                   )}
 
                   {/* Action Buttons */}
-                  <div className='flex gap-2 justify-end pt-2'>
+                  <div className='flex gap-2 justify-end pt-2 items-center'>
                     <TextButton
                       label='Cancel'
                       onClick={handleCancelAdd}
@@ -739,7 +805,8 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                       disabled={
                         isAddingComment ||
                         !comment.trim() ||
-                        fieldDisabled.comments
+                        fieldDisabled.comments ||
+                        !!commentError
                       }
                       sx={{ padding: '6px 12px' }}
                     />
@@ -788,7 +855,7 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
               </div>
             ))
           ) : (
-            <div className='text-center py-8'>
+            <div className='text-center py-2'>
               <p className='text-sm text-gray-500'>No activities yet</p>
             </div>
           )}

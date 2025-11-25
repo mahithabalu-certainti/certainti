@@ -3,7 +3,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { TaskDetailModalProps, Task, Activity, Comment } from './types';
 import { MenuItem, SelectChangeEvent } from '@mui/material';
 import dayjs from 'dayjs';
-import { CalendarIcon, CloseIcon } from '../../assets';
+import { CalendarIcon, CloseIcon, ErrorInfoIcon } from '../../assets';
+import { Tooltip } from '@mui/material';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -99,7 +100,6 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     }>
   >([]);
   const [isLoadingTaskDetails, setIsLoadingTaskDetails] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
   const [editedTask, setEditedTask] = useState<Task | null>(null);
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingCommentText, setEditingCommentText] = useState('');
@@ -123,6 +123,36 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   const [weightage, setWeightage] = useState('');
   const [category, setCategory] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const ErrorIconTooltip = ({ error }: { error: string }) => (
+    <Tooltip
+      title={error}
+      placement='top'
+      arrow
+      slotProps={{
+        tooltip: {
+          sx: {
+            backgroundColor: '#FEF2F2',
+            color: '#EF4444',
+            border: '1px solid #EF4444',
+            fontSize: '12px',
+          },
+        },
+        arrow: {
+          sx: {
+            color: '#FEF2F2',
+            '&:before': {
+              border: '1px solid #EF4444',
+            },
+          },
+        },
+      }}
+    >
+      <span className='cursor-pointer ml-2 inline-flex align-middle'>
+        <ErrorInfoIcon className='w-4 h-4 text-red-500' />
+      </span>
+    </Tooltip>
+  );
 
   const { successToast, errorToast } = useToast();
   const uploadAttachmentsMutation = useUploadTaskAttachments();
@@ -609,6 +639,16 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       newErrors.linkedType = 'Linked Type is required';
     }
 
+    if (editedTask?.title && editedTask.title.length > 2000) {
+      newErrors.taskTitle = 'Task Name too long (max 2000 characters)';
+    }
+    if (editedTask?.description && editedTask.description.length > 2000) {
+      newErrors.description = 'Description too long (max 2000 characters)';
+    }
+    if (editedTask?.tags && editedTask.tags.some((tag) => tag.length > 50)) {
+      newErrors.tags = 'Tags too long (max 50 characters)';
+    }
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
@@ -772,7 +812,6 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
         const message =
           updateResponse?.statusMessage || 'Task updated successfully';
         successToast(message);
-        setIsEditing(false);
         setOriginalTask(editedTask);
       }
     } catch (error) {
@@ -1037,17 +1076,26 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   return (
     <>
       <div
-        className={`fixed right-0 bottom-0 w-[650px] bg-white text-gray-900 shadow-2xl transform transition-transform duration-300 ease-in-out z-50 overflow-y-auto ${isOpen ? 'translate-x-0' : 'translate-x-full'
+        className={`fixed right-0 bottom-0 w-[650px] bg-white text-gray-900 shadow-2xl z-50 overflow-y-auto ${isOpen ? 'translate-x-0' : 'translate-x-full'
           }`}
-        style={{ top: '38.1px' }}
+        style={{
+          top: '38.1px',
+          transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
+          transition: 'transform 300ms ease-in-out',
+        }}
       >
-        <div className='sticky top-0 flex items-center justify-between p-[17.4px] border-b border-[#CBD6E2] bg-white z-50'>
-          <button
-            onClick={onClose}
-            className='p-2 hover:bg-gray-100 rounded transition-colors'
-          >
-            <CloseIcon size={16} className='text-gray-600' />
-          </button>
+        <div className='sticky top-0 flex items-center justify-between p-3 border-b border-[#CBD6E2] bg-white z-50'>
+          <div className='flex items-center gap-1'>
+            <button
+              onClick={onClose}
+              className='p-2 hover:bg-gray-100 rounded transition-colors'
+            >
+              <CloseIcon size={16} className='text-gray-600' />
+            </button>
+            <h2 className='text-[16px] font-semibold text-[#2D3E4F] truncate max-w-[400px]'>
+              Edit {task?.title}
+            </h2>
+          </div>
 
           <TextButton
             label='Save'
@@ -1057,9 +1105,12 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
           />
         </div>
 
-        <div className='p-6 space-y-6'>
+        <div className='px-6 pt-3 pb-6 space-y-3'>
           <div>
-            {isEditing ? (
+            <div className='text-[13px] font-medium text-gray-700 mb-2'>
+              Task Name <span className='text-red-500'>*</span>
+            </div>
+            <div className='relative'>
               <input
                 type='text'
                 value={editedTask?.title || ''}
@@ -1069,17 +1120,15 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                   )
                 }
                 onKeyPress={(e) => e.key === 'Enter' && handleSave()}
-                className='text-3xl font-bold bg-transparent border-b border-gray-300 focus:border-blue-500 outline-none w-full text-gray-900'
+                className='w-full text-[13px] font-normal bg-transparent border-b border-gray-300 focus:border-blue-500 outline-none text-gray-900 pb-2 pr-8'
                 autoFocus
               />
-            ) : (
-              <h1
-                className='text-3xl font-bold cursor-pointer hover:bg-gray-50 rounded px-2 py-1 -mx-2 -my-1 transition-colors'
-                onClick={() => setIsEditing(true)}
-              >
-                {task.title}
-              </h1>
-            )}
+              {errors.taskTitle && (
+                <div className='absolute right-0 top-0 bottom-2 flex items-center'>
+                  <ErrorIconTooltip error={errors.taskTitle} />
+                </div>
+              )}
+            </div>
           </div>
 
           {!fieldVisibility.assignee && (
@@ -1209,6 +1258,8 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
               </StyledSelect>
             </div>
           )}
+
+
 
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <div className='grid grid-cols-2 gap-4'>
@@ -1409,6 +1460,8 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
             </div>
           </LocalizationProvider>
 
+          <h3 className='text-sm font-semibold text-gray-700 mb-3'>Fields</h3>
+
           <TaskFieldsSection
             fieldVisibility={fieldVisibility}
             fieldDisabled={fieldDisabled}
@@ -1528,13 +1581,20 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
               <h3 className='text-sm font-semibold text-gray-700 mb-3'>
                 Description
               </h3>
-              <textarea
-                value={editedTask?.description || ''}
-                onChange={handleDescriptionChange}
-                placeholder=''
-                className='w-full bg-white border border-gray-300 rounded-lg p-3 text-sm resize-none focus:border-blue-500 focus:outline-none text-gray-900 placeholder-gray-500 min-h-[100px]'
-                disabled={fieldDisabled.description}
-              />
+              <div className='relative'>
+                <textarea
+                  value={editedTask?.description || ''}
+                  onChange={handleDescriptionChange}
+                  placeholder=''
+                  className='w-full bg-white border border-gray-300 rounded-lg p-3 text-sm resize-none focus:border-blue-500 focus:outline-none text-gray-900 placeholder-gray-500 min-h-[100px] pr-8'
+                  disabled={fieldDisabled.description}
+                />
+                {errors.description && (
+                  <div className='absolute right-2 top-3'>
+                    <ErrorIconTooltip error={errors.description} />
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
