@@ -194,6 +194,14 @@ class CaseSchemaService {
     // Implementation for creating interactions in the database
     try {
       const { Case } = await this.caseModelService.getModels(accountNumber);
+      const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(
+        /\D/g,
+        ""
+      )}`;
+      const tableExists = await this.checkTableExists(schemaName, "cases");
+      if (!tableExists) {
+         await this.createCaseTables(accountNumber);
+      }
       await this.createCaseTables(accountNumber);
       const casecreationResponse = await Case.create(caseRequest, {
         transaction,
