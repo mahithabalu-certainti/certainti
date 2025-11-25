@@ -346,17 +346,20 @@ export const rawQueries = {
   fetchKeyContactsByCaseId(caseRid: string, schemaName: string) {
   return `
     SELECT 
-      a.project_rid, 
+      a.project_fiscal_rid, 
       b.project_code, 
       b.project_name, 
       c.key_contact_name, 
       c.key_contact_email
     FROM ${schemaName}.case_projects as a
-    LEFT JOIN ${schemaName}.project as b
-      ON a.project_rid = b.rid
+    LEFT JOIN ${schemaName}.project_fiscal as b
+      ON a.project_fiscal_rid = b.rid
     LEFT JOIN ${schemaName}.key_contact_details as c
       ON b.rid = c.entity_rid
-    WHERE a.case_rid = '${caseRid}'
+    WHERE 
+    a.case_rid = '${caseRid}'
+    AND
+    c.include_in_communication = TRUE
   `;
   },
   fetchProjectsByAccount(accountRid: string, schemaName: string,status_rid:string) {
