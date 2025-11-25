@@ -16,6 +16,7 @@ import {
   ICreateProject,
   IKeyContactDetail,
   IUpdateProject,
+  CaseStatusResult, 
 } from "../utils/types";
 import moment, { Moment } from "moment";
 import { ProjectMapper } from "../utils/projectMapper";
@@ -44,6 +45,9 @@ import { Kafka, Producer } from "kafkajs";
 import { AccountFiscalSummary } from "../models/accountFiscalSummary";
 import { logMessage } from "../utils/helpers";
 import { checkProjectMappedToProjectRes } from "../utils/rawQueries";
+import { CaseProject } from "../models/caseProjectsModel";
+import { Case } from "../models/caseModel";
+import { CaseProjectFiscalRegion } from "../models/caseProjectFiscalRegionModel";
 
 
 class ProjectIngestionService {
@@ -74,6 +78,7 @@ class ProjectIngestionService {
         typeof ProjectResourceFiscalRegion.initialize
       >;
       AccountDetails: ReturnType<typeof AccountDetails.initialize>;
+      
     }
   > = new Map();
 
@@ -179,6 +184,20 @@ class ProjectIngestionService {
       sequelize,
       schemaName
     );
+    const CaseProjectModel = await CaseProject.initialize(
+      sequelize,
+      schemaName
+    );
+    const CaseModel = await Case.initialize(
+      sequelize,
+      schemaName
+    );
+    const CaseProjectFiscalRegionModel = await CaseProjectFiscalRegion.initialize(
+      sequelize,
+      schemaName
+    );
+
+
     const ProjectResourceFiscalRegionModel =
       await ProjectResourceFiscalRegion.initialize(sequelize, schemaName);
 
@@ -190,6 +209,7 @@ class ProjectIngestionService {
       mainDbSequelize,
       ""
     );
+
 
     const models = {
       Project: ProjectModel,
@@ -207,6 +227,9 @@ class ProjectIngestionService {
       ProjectResourceFiscalRegion: ProjectResourceFiscalRegionModel,
       AccountDetails: AccountDetailsModel,
       AccountFiscalSummary: AccountFiscalSummaryModel,
+      CaseProject: CaseProjectModel,
+      Case: CaseModel, 
+      CaseProjectFiscalRegion: CaseProjectFiscalRegionModel,
     };
     this.modelCache.set(schemaName, models);
     return models;
@@ -1559,6 +1582,278 @@ class ProjectIngestionService {
 
     await this.clearRemovedRegionAggregates(accountNumber, projectData);
   }
+  async updateCaseProject(
+    accountNumber: string,
+    projectData: IUpdateProject,
+    caseProjectData: CaseProject,
+    existingProjectCode: string
+  ) {
+    const { CaseProject } = await this.getModels(accountNumber);
+
+    const startDate =
+      projectData.project_startdate !== null
+        ? moment.utc(projectData.project_startdate, "YYYY-MM-DD")
+        : null;
+    const endDate =
+      projectData.project_enddate !== null
+        ? moment.utc(projectData.project_enddate, "YYYY-MM-DD")
+        : null;
+
+    const baseData = ProjectMapper.mapToProjectFiscalUpdateModel(
+      projectData,
+      startDate,
+      endDate
+    );
+
+    const {
+      total_cost_prj: effective_cost,
+      total_effort_prj: effective_effort,
+      total_fte_prj: effective_total_fte,
+      total_subcon_prj: effective_total_subcon,
+      total_nonlabor_prj: effective_total_nonlabor,
+      total_effort_fte_prj: effective_fte_effort,
+      total_effort_subcon_prj: effective_subcon_effort,
+      total_cost_fte_prj: effective_fte_cost,
+      total_cost_subcon_prj: effective_subcon_cost,
+      total_cost_nonlabor_prj: effective_nonlabor_cost,
+    } = baseData;
+
+    await CaseProject.update(baseData, {
+      where: {
+        project_fiscal_rid: projectData.project_fiscal_id,
+        case_rid: caseProjectData.case_rid
+      },
+    });
+
+    await CaseProject.update(
+      {
+        effective_cost,
+        effective_effort,
+        effective_total_fte,
+        effective_total_subcon,
+        effective_fte_effort,
+        effective_subcon_effort,
+        effective_fte_cost,
+        effective_subcon_cost,
+        effective_nonlabor_cost,
+        effective_total_nonlabor,
+      },
+      {
+        where: {
+          project_fiscal_rid: projectData.project_fiscal_id,
+          case_rid: caseProjectData.case_rid,
+          default_metric_type: "project",
+          effective_metric_type: null,
+        },
+      }
+    );
+
+    if (
+      existingProjectCode &&
+      projectData.project_code &&
+      existingProjectCode !== projectData.project_code
+    ) {
+      await CaseProject.update(
+        { project_code: projectData.project_code },
+        {
+          where: {
+            project_code: existingProjectCode,
+            account_rid: projectData.account_id,
+            case_rid: caseProjectData.case_rid,
+          },
+        }
+      );
+
+    }
+  }
+
+  async updateCaseProjectFiscalRegion(
+    accountNumber: string,
+    projectData: IUpdateProject,
+    caseProjectData: CaseProject,
+    existingProjectCode: string
+  ) {
+    const { CaseProjectFiscalRegion, CaseProject } = await this.getModels(
+      accountNumber
+    );
+
+    const startDate = projectData.project_startdate
+      ? moment.utc(projectData.project_startdate, "YYYY-MM-DD")
+      : null;
+    const endDate = projectData.project_enddate
+      ? moment.utc(projectData.project_enddate, "YYYY-MM-DD")
+      : null;
+
+    const baseData = ProjectMapper.mapToProjectFiscalUpdateModel(
+      projectData,
+      startDate,
+      endDate
+    );
+
+    const aggregates = await CaseProject.findAll({
+      where: {
+        account_rid: projectData.account_id,
+        project_code: projectData.project_code,
+        fiscal_year: projectData.fiscal_year,
+        default_metric_type: "project",
+        effective_metric_type: null,
+      },
+      attributes: [
+        [
+          Sequelize.fn("SUM", Sequelize.col("total_cost_prj")),
+          "effective_cost",
+        ],
+        [
+          Sequelize.fn("SUM", Sequelize.col("total_effort_prj")),
+          "effective_effort",
+        ],
+        [
+          Sequelize.cast(
+            Sequelize.fn("SUM", Sequelize.col("total_fte_prj")),
+            "INTEGER"
+          ),
+          "effective_total_fte",
+        ],
+        [
+          Sequelize.cast(
+            Sequelize.fn("SUM", Sequelize.col("total_subcon_prj")),
+            "INTEGER"
+          ),
+          "effective_total_subcon",
+        ],
+        [
+          Sequelize.cast(
+            Sequelize.fn("SUM", Sequelize.col("total_nonlabor_prj")),
+            "INTEGER"
+          ),
+          "effective_total_nonlabor",
+        ],
+        [
+          Sequelize.fn("SUM", Sequelize.col("total_effort_fte_prj")),
+          "effective_fte_effort",
+        ],
+        [
+          Sequelize.fn("SUM", Sequelize.col("total_effort_subcon_prj")),
+          "effective_subcon_effort",
+        ],
+        [
+          Sequelize.fn("SUM", Sequelize.col("total_cost_fte_prj")),
+          "effective_fte_cost",
+        ],
+        [
+          Sequelize.fn("SUM", Sequelize.col("total_cost_subcon_prj")),
+          "effective_subcon_cost",
+        ],
+        [
+          Sequelize.fn("SUM", Sequelize.col("total_cost_nonlabor_prj")),
+          "effective_nonlabor_cost",
+        ],
+      ],
+      raw: true,
+    });
+
+    const aggregateValues = aggregates[0];
+
+    const matchCriteria = {
+      account_rid: projectData.account_id,
+      project_code: projectData.project_code,
+      fiscal_year: projectData.fiscal_year,
+      default_metric_type: "project",
+      effective_metric_type: null,
+    };
+
+    const existingRecord: any = await CaseProjectFiscalRegion.findOne({
+      where: matchCriteria,
+    });
+
+    if (existingRecord) {
+      // Aggregate values
+      await existingRecord.update(aggregateValues);
+    } else {
+      // Create new record
+      await CaseProjectFiscalRegion.create({
+        ...baseData,
+        case_rid: caseProjectData.case_rid,
+        case_project_rid: caseProjectData.rid,
+        account_rid: projectData.account_id,
+        project_code: projectData.project_code,
+        fiscal_year: projectData.fiscal_year,
+        default_metric_type: "project",
+        effective_metric_type: null,
+        created_by: projectData.created_by,
+        project_rid: projectData.project_id,
+        project_fiscal_rid: projectData.project_fiscal_id,
+
+        effective_cost: baseData.total_cost_prj,
+        effective_effort: baseData.total_effort_prj,
+        effective_total_fte: baseData.total_fte_prj,
+        effective_total_subcon: baseData.total_subcon_prj,
+        effective_fte_effort: baseData.total_effort_fte_prj,
+        effective_subcon_effort: baseData.total_effort_subcon_prj,
+        effective_fte_cost: baseData.total_cost_fte_prj,
+        effective_subcon_cost: baseData.total_cost_subcon_prj,
+        effective_nonlabor_cost: baseData.total_cost_nonlabor_prj,
+      });
+    }
+
+    // Handle project_code change if needed
+
+    if (
+      existingProjectCode &&
+      projectData.project_code &&
+      existingProjectCode !== projectData.project_code
+    ) {
+      await CaseProjectFiscalRegion.update(
+        { project_code: projectData.project_code },
+        {
+          where: {
+            project_code: existingProjectCode,
+            account_rid: projectData.account_id,
+          },
+        }
+      );
+    }
+
+    await this.clearRemovedCaseRegionAggregates(accountNumber, projectData);
+  }
+
+  async clearRemovedCaseRegionAggregates(
+    accountNumber: string,
+    projectData: IUpdateProject
+  ) {
+    const { CaseProjectFiscalRegion, CaseProject  } = await this.getModels(
+      accountNumber
+    );
+
+    const regionsInUse = await CaseProject.findAll({
+      attributes: ["region_rid"],
+      where: {
+        account_rid: projectData.account_id,
+        project_code: projectData.project_code,
+        fiscal_year: projectData.fiscal_year,
+        region_rid: { [Op.ne]: null },
+      },
+      group: ["region_rid"],
+    });
+
+    const activeRegionIds = regionsInUse
+      .map((r) => r.region_rid)
+      .filter((id): id is string => typeof id === "string");
+
+    await CaseProjectFiscalRegion.destroy({
+      where: {
+        account_rid: projectData.account_id,
+        project_code: projectData.project_code,
+        fiscal_year: projectData.fiscal_year,
+        region_rid: {
+          [Op.notIn]:
+            activeRegionIds.length > 0 ? activeRegionIds : ["__none__"],
+        },
+        default_metric_type: "project",
+        effective_metric_type: null,
+      },
+    });
+  }
 
   async clearRemovedRegionAggregates(
     accountNumber: string,
@@ -1674,6 +1969,60 @@ class ProjectIngestionService {
 
     return fiscalDataById;
   }
+
+  async fetchProjectFiscalCaseMapping(accountNumber: string, projectFiscalId: string) {
+    const { CaseProject } = await this.getModels(accountNumber);
+
+    const fiscalDataById = await CaseProject.findAll({
+      where: {
+          project_fiscal_rid: projectFiscalId,
+      },
+    });
+
+    return fiscalDataById;
+  }
+
+  async updateCaseTables(accountNumber: string, caseMapping: CaseProject, projectData: IUpdateProject, existingProjectCode: string) {
+    const { Case } = await this.getModels(accountNumber);
+
+    const caseData = await Case.findOne({
+      where: {
+        rid: caseMapping.case_rid,
+      },
+    });
+
+    if (!caseData) {
+      return;
+    }
+
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize = await initMainDbSequelize();
+    }
+
+    const caseStatus = await this.mainDbSequelize.query(
+      rawQueries.fetchCaseStatusByRid(caseData.status_rid),
+      {
+        type: "SELECT",
+      }
+    ) as CaseStatusResult[];
+
+    if (caseStatus[0]?.status_name === "Closed") {
+      return;
+    }
+
+    await this.updateCaseProject(
+    accountNumber,
+    projectData,
+    caseMapping,
+    existingProjectCode)
+
+    await this.updateCaseProjectFiscalRegion(
+    accountNumber,
+    projectData,
+    caseMapping,
+    existingProjectCode)
+  }
+
 
   async updateProjectFiscalSummary(
     accountNumber: string,

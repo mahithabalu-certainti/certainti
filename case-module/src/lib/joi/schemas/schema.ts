@@ -1,5 +1,9 @@
 import { time } from "console";
+import Decimal from "decimal.js";
 import Joi from "joi";
+const uuidRegex = /^[A-Z0-9]{4}-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const decimal18_2Regex = /^\d{1,16}(\.\d{1,2})?$/;
+
 
 const createCaseSchema = Joi.object({
   account_rid: Joi.string().required(),
@@ -513,6 +517,129 @@ const updateTaskSchema = Joi.object({
   )
   .optional()
 });
+
+const exportListProjectResourceSchema = Joi.object({
+  fiscalYear: Joi.number().min(1000).max(9999).optional().allow(0).messages({
+    "number.base": "Fiscal year must be a number",
+    "number.min": "Fiscal year must be a 4-digit number",
+    "number.max": "Fiscal year must be a 4-digit number",
+    "any.required": "Fiscal year is required",
+  }),
+  filters: Joi.string().default("{}"),
+  sortBy: Joi.string().default("created_datetime").optional().allow(""),
+  sortOrder: Joi.string()
+    .valid("ASC", "DESC")
+    .default("DESC")
+    .optional()
+    .allow(""),
+  timezone: Joi.string().optional(),
+  search: Joi.string()
+        .max(255)
+        .allow('')
+        .allow(null)
+        .optional()
+        .messages({
+            'string.base': 'Search must be a string',
+            'string.max': 'Search cannot exceed 255 characters'
+        })
+});
+
+const listResourceSchema = Joi.object({
+  page: Joi.string()
+    .pattern(/^[0-9]+$/)
+    .default("1"),
+  limit: Joi.string()
+    .pattern(/^[0-9]+$/)
+    .default("100"),
+  fiscalYear: Joi.number().min(1000).max(9999).optional().allow(0).messages({
+    "number.base": "Fiscal year must be a number",
+    "number.min": "Fiscal year must be a 4-digit number",
+    "number.max": "Fiscal year must be a 4-digit number",
+    "any.required": "Fiscal year is required",
+  }),
+  search: Joi.string().max(255).optional(),
+  filters: Joi.string().default("{}"),
+  globalFilters: Joi.string().default("{}"),
+  sortBy: Joi.string().default("created_datetime").optional().allow(""),
+  sortOrder: Joi.string()
+    .valid("ASC", "DESC")
+    .default("DESC")
+    .optional()
+    .allow(""),
+  bothParentAndChild: Joi.boolean().optional().default(false),
+  isFromuserGroup: Joi.boolean().optional().default(false),
+    accountRid: Joi.alternatives().try(
+    Joi.string().allow('', null),
+    Joi.array().items(Joi.string())
+  ).optional(),
+  apiSource: Joi.string().optional().default("Project"),
+  accountInteractionId: Joi.string().optional().allow(null).allow("").default(""),
+});
+
+const exportListProjectTasksSchema = Joi.object({
+  projectRid: Joi.string().pattern(uuidRegex).required(),
+  accountRid: Joi.string().pattern(uuidRegex).required(),
+    search: Joi.string()
+        .max(255)
+        .allow('')
+        .allow(null)
+        .optional()
+        .messages({
+            'string.base': 'Search must be a string',
+            'string.max': 'Search cannot exceed 255 characters'
+        }),
+    filters: Joi.string().default("{}").optional(),
+    sortBy: Joi.string().default("created_datetime").optional(),
+    sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
+})
+
+const listProjectTasksSchema = Joi.object({
+  accountRid: Joi.string().pattern(uuidRegex).required(),
+  caseRid: Joi.string().pattern(uuidRegex).optional().required(),
+    page: Joi.number()
+        .integer()
+        .min(1)
+        .required()
+        .messages({
+            'any.required': 'Page number is required',
+            'number.base': 'Page must be a number',
+            'number.integer': 'Page must be an integer',
+            'number.min': 'Page must be greater than or equal to 1'
+        }),
+    limit: Joi.number()
+        .integer()
+        .min(1)
+        .max(100)
+        .required()
+        .messages({
+            'any.required': 'Limit is required',
+            'number.base': 'Limit must be a number',
+            'number.integer': 'Limit must be an integer',
+            'number.min': 'Limit must be greater than or equal to 1',
+            'number.max': 'Limit cannot exceed 100'
+        }),
+    search: Joi.string()
+        .max(255)
+        .allow('')
+        .allow(null)
+        .optional()
+        .messages({
+            'string.base': 'Search must be a string',
+            'string.max': 'Search cannot exceed 255 characters'
+        }),
+    filters: Joi.string().default("{}").optional(),
+    sortBy: Joi.string().default("created_datetime").optional(),
+    sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
+})
+
+const projectTaskByIdSchema = Joi.object({
+  taskRid: Joi.string().pattern(uuidRegex).required(),
+  accountRid: Joi.string().pattern(uuidRegex).required(),
+})
+
+
+
+
 export {
   createCaseSchema,
   updateCaseSchema,
@@ -543,5 +670,11 @@ export {
   listHistoricalSubmissionSchema,
   createHistoricalSubmissionSchema,
   listEmailTemplateSchema,
-  exportEmailTemplateSchema
+  exportEmailTemplateSchema,
+  exportListProjectResourceSchema,
+  listResourceSchema,
+  exportListProjectTasksSchema,
+  listProjectTasksSchema,
+  projectTaskByIdSchema,
+  
 };

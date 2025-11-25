@@ -1,11 +1,14 @@
-import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
-import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constants";
+import { Model, DataTypes, Sequelize, Optional } from "sequelize";
+import { ENV_PREFIX } from "../utils/constants";
 import { Project } from "./project";
 import AccountDetails from "./accountDetails";
-export interface ProjectFiscalAttributes {
+import { ProjectFiscal } from "./projectFiscal";
+
+export interface ProjectFiscalRegionAttributes {
   rid: string;
   r_number?: string;
   project_rid: string;
+  project_fiscal_rid: string;
   eid?: string;
 
   created_datetime?: Date;
@@ -104,8 +107,7 @@ export interface ProjectFiscalAttributes {
   blended_rate_fte?: number | null;
   blended_rate_subcon?: number | null;
 
-  rd_percent_potential_ai?: number | null; 
-  rd_percent_potential_ai_updated?: number | null;
+  rd_percent_potential_ai?: number | null;
   rd_percent_adjustment?: number | null;
   rd_percent_final?: number | null;
 
@@ -140,20 +142,20 @@ export interface ProjectFiscalAttributes {
 
   comments?: string | null;
   project_description?: string | null;
-
-  is_qualified?: boolean | null;
 }
 
-interface ProjectFiscalCreationAttributes
-  extends Optional<ProjectFiscalAttributes, "rid"> {}
+interface ProjectFiscalRegionCreationAttributes
+  extends Optional<ProjectFiscalRegionAttributes, "rid"> {}
 
-export class ProjectFiscal
-  extends Model<ProjectFiscalAttributes, ProjectFiscalCreationAttributes>
-  implements ProjectFiscalAttributes
+export class ProjectFiscalRegion
+  extends Model<ProjectFiscalRegionAttributes, ProjectFiscalRegionCreationAttributes>
+  implements ProjectFiscalRegionAttributes
 {
   public rid!: string;
   public r_number?: string;
   public project_rid!: string;
+  public project_fiscal_rid!: string;
+  
   public eid?: string;
 
   public created_datetime?: Date;
@@ -252,7 +254,6 @@ export class ProjectFiscal
   public blended_rate_subcon?: number | null;
 
   public rd_percent_potential_ai?: number | null;
-  public rd_percent_potential_ai_updated?: number | null;
   public rd_percent_adjustment?: number | null;
   public rd_percent_final?: number | null;
 
@@ -279,21 +280,22 @@ export class ProjectFiscal
   public effective_nonlabor_cost?: number | null;
 
   public effective_metric_type?: string | null;
-  public efault_metric_type?: string | null;
+  public default_metric_type?: string | null;
 
   public interaction_cc_list?: string | null;
   public assessment_status?: string | null;
   public claim_status?: string | null;
   public comments?: string | null;
   public project_description?: string | null;
-  public is_qualified?: boolean | null;
 
   static initialize(sequelize: Sequelize, schema: string) {
-    ProjectFiscal.init(
+    ProjectFiscalRegion.init(
       {
         rid: {
           type: DataTypes.STRING(50),
-          defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
+          defaultValue: Sequelize.literal(
+            `'${ENV_PREFIX}' || gen_random_uuid()`
+          ),
           primaryKey: true,
         },
         r_number: {
@@ -301,7 +303,7 @@ export class ProjectFiscal
           allowNull: true,
           unique: true,
         },
-         eid: {
+        eid: {
           type: DataTypes.STRING(120),
           allowNull: true,
         },
@@ -323,6 +325,10 @@ export class ProjectFiscal
           allowNull: true,
         },
         project_rid: {
+          type: DataTypes.STRING(50),
+          allowNull: false,
+        },
+        project_fiscal_rid:{
           type: DataTypes.STRING(50),
           allowNull: false,
         },
@@ -423,11 +429,11 @@ export class ProjectFiscal
         total_subcon_prj: DataTypes.INTEGER,
         total_subcon_from_prj_res: DataTypes.INTEGER,
         total_subcon_from_tasks: DataTypes.INTEGER,
+        total_nonlabor_from_tasks : DataTypes.INTEGER,
 
         // Non-labor & Resources
         total_nonlabor_prj: DataTypes.DECIMAL(18, 2),
         total_nonlabor_from_prj_res: DataTypes.DECIMAL(18, 2),
-        total_nonlabor_from_tasks : DataTypes.INTEGER,
         total_resources_prj: DataTypes.INTEGER,
         total_resources_from_prj_res: DataTypes.INTEGER,
         total_resources_from_tasks: DataTypes.INTEGER,
@@ -472,7 +478,6 @@ export class ProjectFiscal
 
         // R&D & QRE
         rd_percent_potential_ai: DataTypes.DECIMAL(18, 2),
-        rd_percent_potential_ai_updated: DataTypes.DECIMAL(18, 2),
         rd_percent_adjustment: DataTypes.DECIMAL(18, 2),
         rd_percent_final: DataTypes.DECIMAL(18, 2),
         qre_fte: DataTypes.DECIMAL(18, 2),
@@ -498,11 +503,11 @@ export class ProjectFiscal
 
         effective_metric_type: {
           type: DataTypes.STRING(50),
-          allowNull: true
+          allowNull: true,
         },
         default_metric_type: {
           type: DataTypes.STRING(50),
-          allowNull: true
+          allowNull: true,
         },
 
         // Misc
@@ -526,50 +531,35 @@ export class ProjectFiscal
           type: DataTypes.STRING(2000),
           allowNull: true,
         },
-        is_qualified: {
-          type: DataTypes.BOOLEAN,
-          allowNull: true,
-        },
       },
       {
         sequelize,
         schema,
-        tableName: "project_fiscal",
+        tableName: "project_fiscal_region",
         timestamps: false,
         underscored: true,
       }
     );
 
-    ProjectFiscal.belongsTo(Project, {
+    ProjectFiscalRegion.belongsTo(Project, {
       foreignKey: "project_rid",
       targetKey: "rid",
-      as: "project_fiscal_project"
+      as: "project_fiscal_region_project"
     });
 
-    ProjectFiscal.belongsTo(AccountDetails, {
+    ProjectFiscalRegion.belongsTo(AccountDetails, {
       foreignKey: "account_rid",
       targetKey: "account_rid",
-      as: "project_fiscal_account"
+      as: "project_fiscal_region_account"
     });
 
-    return ProjectFiscal;
+    ProjectFiscalRegion.belongsTo(ProjectFiscal, {
+      foreignKey: "project_fiscal_rid",
+      targetKey: "rid",
+      as: "project_fiscal_region_project_fiscal"
+    });
+
+    return ProjectFiscalRegion;
   }
 }
 
-export async function setupProjectFiscal(
-  sequelize: Sequelize,
-  schemaName: string
-) {
-  try {
-    await sequelize.query(
-      `CREATE SEQUENCE IF NOT EXISTS "${schemaName}".project_fiscal_seq START 1`
-    );
-
-    await sequelize.query(`ALTER TABLE "${schemaName}".project_fiscal
-      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.PROJECT_FISCAL}-' || LPAD(nextval('"${schemaName}".project_fiscal_seq')::text, 10, '0')`);
-
-    console.log("Project fiscal sequence setup complete");
-  } catch (error) {
-    console.error("Error setting up Project fiscal sequence:", error);
-  }
-}

@@ -43,6 +43,8 @@ import AccountDetails from "../../models/accountDetails";
 import Decimal from "decimal.js";
 import currency from "currency.js";
 import { errorLog, logMessage } from "../../utils/helpers";
+import { CaseProjectResource } from "../../models/caseProjectResourceModel";
+import { CaseProjectResourceFiscal } from "../../models/caseProjectResourceFiscalModel";
 
 export class ProjectResourceSchemaService {
   private orgDbSequelize: Sequelize | null = null;
@@ -153,6 +155,18 @@ export class ProjectResourceSchemaService {
       schemaName
     );
 
+    const CaseProjectResourceModel = await CaseProjectResource.initialize(
+      sequelize,
+      schemaName
+    )
+
+    const CaseProjectResourceFiscalModel = await CaseProjectResourceFiscal.initialize(
+      sequelize,
+      schemaName
+    )
+
+
+
     ProjectResourceModel.belongsTo(AccountDetailsModel, {
       foreignKey: "account_rid",
       targetKey: "account_rid",
@@ -262,6 +276,8 @@ export class ProjectResourceSchemaService {
       AccountFiscal: AccountFiscalModel,
       ProjectFiscalRegion: ProjectFiscalRegionModel,
       AccountFiscalRegion: AccountFiscalRegionModel,
+      CaseProjectResource: CaseProjectResourceModel,
+      CaseProjectResourceFiscal: CaseProjectResourceFiscalModel
     };
     this.modelCache.set(schemaName, models);
     return models;
@@ -4898,6 +4914,64 @@ export class ProjectResourceSchemaService {
     );
 
     const updateProjectResource = await ProjectResource.update(
+      {
+        ...updateProjectData,
+        assigned_skill_role_type_rid: updatedAssignedRoleId,
+        status_rid: stausId,
+        project_resource_role: projectResourceData.project_resource_role ?? null
+      },
+      {
+        where: {
+          rid: projectResourceData.project_resource_rid,
+        },
+        transaction,
+      }
+    );
+
+    return updateProjectResource;
+  }
+
+  async updateCaseProjectResourceRecords(
+    accountNumber: string,
+    projectResourceData: IUpdateProjectResource,
+    userId: string,
+    resourceId: string,
+    projectData: any,
+    stausId: string,
+    transaction: Transaction
+  ) {
+    const { CaseProjectResource } = await this.getModels(accountNumber);
+
+    const startDate = projectResourceData.start_date
+      ? moment.utc(projectResourceData.start_date, "YYYY-MM-DD", true)
+      : null;
+
+    const endDate = projectResourceData.end_date
+      ? moment.utc(projectResourceData.end_date, "YYYY-MM-DD", true)
+      : null;
+
+    const projectResourceCode =
+      projectData.project_code + "-" + projectResourceData.resource_code;
+
+    projectResourceData.modified_by = userId;
+
+    const updatedAssignedRoleId = await this.checkSkillSubtype(
+      projectResourceData.assigned_skill_role_type_rid,
+      projectResourceData.skill_role_rid,
+      projectResourceData.skill_role_others,
+      userId
+    );
+
+    const updateProjectData = ProjectResourceMapper.mapToUpdateProjectResource(
+      projectResourceData,
+      startDate,
+      endDate,
+      projectResourceCode,
+      resourceId,
+      userId
+    );
+
+    const updateProjectResource = await CaseProjectResource.update(
       {
         ...updateProjectData,
         assigned_skill_role_type_rid: updatedAssignedRoleId,

@@ -464,3 +464,7 @@ export interface IFetchNotesDetailsInput {
   account_rid : string;
   user_rid : string
 }
+
+export interface CaseStatusResult {
+  status_name: string;
+}

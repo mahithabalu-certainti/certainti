@@ -4,17 +4,17 @@ import { logMessage } from "../utils/helpers";
 
 interface CaseProjectAttributes {
   rid: string;
-  r_number?: string;
+  r_number?: string | null;
   eid?: string;
   created_by: string;
-  modified_by?: string;
-  created_datetime?: Date;
-  modified_datetime?: Date;
+  modified_by?: string | null;
+  created_datetime?: Date | null;
+  modified_datetime?: Date | null;
   case_rid: string;
   account_rid: string;
-  project_rid?: string;
-  project_fiscal_rid?: string;
-  project_group?: string;
+  project_rid?: string | null;
+  project_fiscal_rid?: string | null;
+  project_group?: string | null;
   project_code: string;
   industry_rid?: string | null;
   industry_name?: string | null;
