@@ -40,6 +40,7 @@ import { getProjectFinancialResCostFields } from '../../../project/project-detai
 import { useGetResourceType } from '../../../../services/resource-list';
 import { FilterValue } from '../../../../types/account-filter';
 import { getReviewdProjectColumns } from './review-projects/column';
+import EmailModalTemplate from './review-projects/email-model-template';
 interface casesProjectProps {
   activeKey?: string;
   fiscalYear: number;
@@ -86,10 +87,14 @@ const CasesProjects: React.FC<casesProjectProps> = ({
   const [currentCountry, setCurrentCountry] = useState<string>('');
   const [clearSelectedRows, setClearSelectedRows] = useState<boolean>(false);
   const [searchParams] = useSearchParams();
+  const [emailModalOpen, setEmailModalOpen] = useState(false);
   const handleSorting = () => {
     // setSortFilterCount(sortFilterCount + 1);
   };
   const [selectedRows, setSelectedRows] = useState<AssignProject[]>([]);
+  const [reviewSelectedRows, setReviewSelectedRows] = useState<AssignProject[]>(
+    []
+  );
   const [columnAnchorEl, setColumnAnchorEl] =
     useState<HTMLButtonElement | null>(null);
   const navigate = useNavigate();
@@ -185,11 +190,14 @@ const CasesProjects: React.FC<casesProjectProps> = ({
   }, []);
 
   const tabParam = searchParams.get('tab') || initialTab;
+  console.log('tabParam', tabParam);
   const handleTabChange = (value: string) => {
     searchParams.set('tab', value);
     navigate({ search: searchParams.toString() }, { replace: true });
   };
-
+  // const handleCloseEmailModal = () => {
+  //   setEmailModalOpen(false);
+  // };
   const tabs = [
     { label: 'Assigned Projects', value: 'assign_projects' },
     {
@@ -249,6 +257,14 @@ const CasesProjects: React.FC<casesProjectProps> = ({
         : tabParam === 'assign_projects'
           ? false
           : true,
+    },
+    {
+      label: 'Review ',
+      variant: 'outlined' as const,
+      disabled: reviewSelectedRows.length === 0 || accountInActive,
+      hide: tabParam === 'review_projects' ? false : true,
+      onClick: () => setEmailModalOpen(true),
+      sx: { width: '70px', minWidth: '70px' },
     },
     {
       label: 'Show/Hide Fields',
@@ -398,7 +414,13 @@ const CasesProjects: React.FC<casesProjectProps> = ({
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
   >(Object.fromEntries(caseColumns.map((col) => [col.id, !col.hide])));
-
+  const [sortParams, setSortParams] = useState<{
+    sortField: string;
+    sortBy: 'ASC' | 'DESC';
+  }>({
+    sortField: 'project_code',
+    sortBy: 'ASC',
+  });
   const [columnOrder, setColumnOrder] = useState(
     caseColumns.map((col) => col.id)
   );
@@ -580,6 +602,17 @@ const CasesProjects: React.FC<casesProjectProps> = ({
             setCount={setCount}
             setExportType={setExportType}
             appliedFilters={appliedFilters}
+            setSelectedRows={setReviewSelectedRows}
+            setSortParams={setSortParams}
+          />
+          <EmailModalTemplate
+            title='Email Template'
+            isOpen={emailModalOpen}
+            onClose={() => setEmailModalOpen(false)}
+            selectedRows={reviewSelectedRows}
+            appliedFilters={appliedFilters}
+            sortBy={sortParams.sortField}
+            sortOrder={sortParams.sortBy}
           />
         </div>
       )}

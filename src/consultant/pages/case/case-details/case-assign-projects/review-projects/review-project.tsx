@@ -22,6 +22,13 @@ interface ReviewProjectProps {
   setCount: React.Dispatch<React.SetStateAction<number>>;
   setExportType?: (type: ExportType) => void;
   appliedFilters: Record<string, string | number | boolean | string[]>;
+  setSelectedRows: React.Dispatch<React.SetStateAction<AssignProject[]>>;
+  setSortParams: React.Dispatch<
+    React.SetStateAction<{
+      sortField: string;
+      sortBy: 'ASC' | 'DESC';
+    }>
+  >;
 }
 
 const ReviewProjectsList: React.FC<ReviewProjectProps> = ({
@@ -33,6 +40,8 @@ const ReviewProjectsList: React.FC<ReviewProjectProps> = ({
   setCount,
   setExportType,
   appliedFilters,
+  setSelectedRows,
+  setSortParams,
 }) => {
   const { caseId } = useParams();
   const [searchParams] = useSearchParams();
@@ -55,7 +64,13 @@ const ReviewProjectsList: React.FC<ReviewProjectProps> = ({
     const apiOrder = sortOrder.toUpperCase() as 'ASC' | 'DESC';
     setSortBy(apiOrder);
     setSortField(property);
+
+    setSortParams({
+      sortField: property,
+      sortBy: apiOrder,
+    });
   };
+
   const { data, isLoading, isError } = useReviewProjectList(
     {
       page: currentPage + 1,
@@ -99,7 +114,20 @@ const ReviewProjectsList: React.FC<ReviewProjectProps> = ({
     setExportType,
     appliedFilters,
   ]);
+
+  useEffect(() => {
+    setSortParams({
+      sortField: sortField,
+      sortBy: sortBy,
+    });
+  }, [sortField, sortBy, setSortParams]);
   const getRowId = (row: AssignProject) => row.rid;
+  const handleSelectionChange = (selectedIds: string[]) => {
+    const selectedData = data?.reviewProject?.filter((row) =>
+      selectedIds.includes(row.rid)
+    );
+    setSelectedRows(selectedData || []);
+  };
   return (
     <div>
       <ListTable
@@ -113,6 +141,7 @@ const ReviewProjectsList: React.FC<ReviewProjectProps> = ({
           maxHeight: 'calc(100vh - 380px)',
           overflow: 'auto',
         }}
+        onSelectionChange={handleSelectionChange}
         stickyHeader={true}
         stickyColumnsCount={1}
         selectable={true}

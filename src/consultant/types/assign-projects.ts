@@ -120,3 +120,56 @@ export interface ReviewProjectExportParams {
   timezone?: string;
   search?: string;
 }
+
+export interface EmailTemplatePreviewParams {
+  account_rid: string;
+  case_rid: string;
+  category_name: string;
+}
+
+export interface EmailTemplatePreview {
+  to_email: string[];
+  cc_email: string[];
+  subject: string;
+  body_html: string;
+}
+
+export interface EmailTemplatePreviewData {
+  templatePreview: EmailTemplatePreview;
+}
+
+export interface EmailTemplatePreviewResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: EmailTemplatePreviewData;
+}
+export interface SentProjectsParams {
+  case_rid: string;
+  account_rid: string;
+  to_email: string[];
+  cc_email: string[];
+  recipient_name: string;
+  subject: string;
+  body_html: string;
+  project_id: string[];
+  sort_by?: string;
+  sort_order?: string;
+  filters?: {
+    project_code?: {
+      contains: string;
+    };
+    // Add other filter types as needed
+  };
+}
+
+export interface SentProjectsResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: {
+    success: boolean;
+    message?: string;
+    // Add other response fields as per your API response
+  };
+}

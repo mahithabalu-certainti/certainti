@@ -1,9 +1,14 @@
 import { useQuery, UseQueryResult } from '@tanstack/react-query';
+import { useMutation, UseMutationResult } from '@tanstack/react-query';
 import {
+  EmailTemplatePreviewParams,
+  EmailTemplatePreviewResponse,
   ReviewListProject,
   ReviewListResponse,
   ReviewProjectExportParams,
   ReviewProjectListURLParams,
+  SentProjectsParams,
+  SentProjectsResponse,
 } from '../../types/assign-projects';
 import { caseServiceApi } from '../../../api/api';
 import { ExportCaseListResponse } from '../../types';
@@ -52,7 +57,6 @@ export const fetchReviewProjectList = async (
   const { data } = await caseServiceApi.get<ReviewListResponse>(
     getReviewProjectListURL(params, accountId, caseId)
   );
-  console.log(data.data, 'data in api');
   return {
     reviewProject: data?.data?.reviewProjects,
     count: data.data.count,
@@ -154,4 +158,71 @@ export const ExportReviewProjectList = async (
   } catch (error) {
     console.error('Export failed:', error);
   }
+};
+
+export const getEmailTemplatePreviewURL = (
+  params: EmailTemplatePreviewParams
+): string => {
+  const baseUrl = `/api/cases/emailTemplatePreview/`;
+  const searchParams = new URLSearchParams();
+
+  searchParams.set('account_rid', params.account_rid);
+  searchParams.set('case_rid', params.case_rid);
+  searchParams.set('category_name', params.category_name);
+
+  return `${baseUrl}?${searchParams.toString()}`;
+};
+
+export const fetchEmailTemplatePreview = async (
+  params: EmailTemplatePreviewParams
+): Promise<EmailTemplatePreviewResponse> => {
+  const { data } = await caseServiceApi.get<EmailTemplatePreviewResponse>(
+    getEmailTemplatePreviewURL(params)
+  );
+  return data;
+};
+
+export const useEmailTemplatePreview = (
+  params: EmailTemplatePreviewParams
+  // enabled?: boolean
+): UseQueryResult<EmailTemplatePreviewResponse, Error> => {
+  return useQuery<EmailTemplatePreviewResponse, Error>({
+    queryKey: ['email-template-preview', params],
+    queryFn: () => fetchEmailTemplatePreview(params),
+    retry: 0,
+    gcTime: 0,
+    // enabled: enabled ?? true,
+  });
+};
+
+export const getSentProjectsUrl = () => '/api/cases/sentReviewProjects';
+
+export const sendProjectsForReview = async (
+  params: SentProjectsParams
+): Promise<{ success: boolean; message?: string }> => {
+  const { data } = await caseServiceApi.post<SentProjectsResponse>(
+    getSentProjectsUrl(),
+    params
+  );
+  return {
+    success: data.data.success,
+    message: data.data.message,
+  };
+};
+
+export const useSendProjectsForReview = (): UseMutationResult<
+  { success: boolean; message?: string },
+  Error,
+  SentProjectsParams,
+  unknown
+> => {
+  return useMutation<
+    { success: boolean; message?: string },
+    Error,
+    SentProjectsParams
+  >({
+    mutationFn: sendProjectsForReview,
+    retry: 0,
+    // You can add onSuccess, onError handlers here if needed
+  });
 };
