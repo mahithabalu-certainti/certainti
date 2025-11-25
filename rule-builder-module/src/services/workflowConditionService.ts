@@ -22,6 +22,7 @@ export const createCondition = async (data: ConditionCreationAttributes) => {
         value: data.value,
         data_type: data.data_type ?? null,
         sequence: data.sequence,
+        group_id: data.group_id,
         created_by: data.created_by,
         modified_by: data.modified_by ?? data.created_by, // fallback to created_by if undefined
     });

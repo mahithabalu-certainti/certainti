@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { HttpStatus } from "../utils/constants";
 import {
   errorLog,
+  successLog,
   handleErrorResponse,
   handleSuccessResponse,
 } from "../utils/helpers";
@@ -12,7 +13,9 @@ export const createScheduleQueue = async (req: Request, res: Response) => {
   const methodName = "create schedule";
   try {
     const newSchedule = await ScheduleService.createRuleSchedule(req.body);
-    res.status(201).json(newSchedule);
+    successLog(methodName);
+    handleSuccessResponse(res, newSchedule);
+    return;
   } catch (err) {
     const error = err as Error;
     errorLog(methodName, error.message);

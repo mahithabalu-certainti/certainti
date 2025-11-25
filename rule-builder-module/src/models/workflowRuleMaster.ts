@@ -13,8 +13,8 @@ export interface RuleMasterAttributes {
   scope_type: number;
   schedule_offset_type?: string | null;
   schedule_offset_value?: string | null;
-  created_by: number;
-  modified_by?: number;
+  created_by: string;
+  modified_by?: string;
   created_datetime?: Date;
   modified_datetime?: Date;
 }
@@ -36,8 +36,8 @@ export class RuleMaster
   public scope_type!: number;
   public schedule_offset_type?: string | null;
   public schedule_offset_value?: string | null;
-  public created_by!: number;
-  public modified_by?: number;
+  public created_by!: string;
+  public modified_by?: string;
 
   public readonly created_datetime!: Date;
   public readonly modified_datetime!: Date;
@@ -105,12 +105,12 @@ export class RuleMaster
         },
 
         created_by: {
-          type: DataTypes.INTEGER,
+          type: DataTypes.STRING,
           allowNull: false,
         },
 
         modified_by: {
-          type: DataTypes.INTEGER,
+          type: DataTypes.STRING,
           allowNull: true,
         },
 

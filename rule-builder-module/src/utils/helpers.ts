@@ -9,6 +9,14 @@ import crypto from "crypto";
 function getLogger() {
   return configurations.getInstance().getLogger();
 }
+
+export function successLog(methodName: string): void {
+   getLogger().info(`Successfully retrieved ${methodName} data `, {
+    timestamp: new Date().toISOString(),
+    method: methodName,
+  });
+}
+
 export function logMessage(message: string): void {
   getLogger().info(`${message}`);
 }

@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { HttpStatus } from "../utils/constants";
 import {
   errorLog,
+  successLog,
   handleErrorResponse,
   handleSuccessResponse,
 } from "../utils/helpers";
@@ -11,7 +12,9 @@ export const createCondition = async (req: Request, res: Response) => {
   const methodName = "create condition";
   try {
     const newCondition = await ConditionService.createCondition(req.body);
-    res.status(201).json(newCondition);
+    successLog(methodName);
+    handleSuccessResponse(res, newCondition);
+    return;
   } catch (err) {
     const error = err as Error;
     errorLog(methodName, error.message);

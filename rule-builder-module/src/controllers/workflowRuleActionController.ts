@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { HttpStatus } from "../utils/constants";
 import {
   errorLog,
+  successLog,
   handleErrorResponse,
   handleSuccessResponse,
 } from "../utils/helpers";
@@ -11,7 +12,9 @@ export const createRuleAction = async (req: Request, res: Response) => {
   const methodName = "create rule action";
   try {
     const newAction = await ActionService.createRuleAction(req.body);
-    res.status(201).json(newAction);
+    successLog(methodName);
+    handleSuccessResponse(res, newAction);
+    return;
   } catch (err) {
     const error = err as Error;
     errorLog(methodName, error.message);

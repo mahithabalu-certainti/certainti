@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { HttpStatus } from "../utils/constants";
 import {
   errorLog,
+  successLog,
   handleErrorResponse,
   handleSuccessResponse,
 } from "../utils/helpers";
@@ -11,7 +12,9 @@ export const createAuditEntry = async (req: Request, res: Response) => {
   const methodName = "create Audit";
   try {
     const newAudit = await AuditService.createRuleAudit(req.body);
-    res.status(201).json(newAudit);
+    successLog(methodName);
+    handleSuccessResponse(res, newAudit);
+    return;
   } catch (err) {
     const error = err as Error;
     errorLog(methodName, error.message);

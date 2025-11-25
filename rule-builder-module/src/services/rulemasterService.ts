@@ -14,8 +14,8 @@ export const createRuleMaster = async (data: RuleMasterCreationAttributes) => {
     // Initialize model ONCE
     RuleMaster.initialize(sequelize);
     const rule = await RuleMaster.create({
-        r_number:data.r_number ?? null,
-        eid:data.eid ?? null,
+        r_number: data.r_number ?? null,
+        eid: data.eid ?? null,
         rule_name: data.rule_name,
         description: data.description ?? null,
         trigger_event: data.trigger_event,
@@ -32,11 +32,27 @@ export const createRuleMaster = async (data: RuleMasterCreationAttributes) => {
 };
 
 /** GET all RuleMasters */
-export const getAllRuleMasters = async () => {
-    const rules = await RuleMaster.findAll({
-        order: [["created_datetime", "DESC"]],
+export const getAllRuleMasters = async (page: number, size: number) => {
+    console.log("listing all rules");
+    const sequelize = new Sequelize(process.env.POSTGRES_CONNECTION_STRING!, {
+        dialect: "postgres",
+        logging: false, // optional
     });
-    return rules;
+    RuleMaster.initialize(sequelize);
+    const offset = (page - 1) * size;
+    const limit = size;
+    const { rows, count } = await RuleMaster.findAndCountAll({
+        order: [["created_datetime", "DESC"]],
+        limit,
+        offset
+    });
+    return {
+        data: rows,
+        page,
+        size,
+        totalRecords: count,
+        totalPages: Math.ceil(count / size)
+    };
 };
 
 /** GET RuleMaster by RID */

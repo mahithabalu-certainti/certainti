@@ -1,5 +1,5 @@
 import { Router } from "express";
-import * as RuleController from "../controllers/workflowRuleMasterController";
+import RuleController from "../controllers/workflowRuleMasterController";
 import * as ConditionController from "../controllers/workflowConditionController";
 import * as ActionController from "../controllers/workflowRuleActionController";
 import * as ScopeController from "../controllers/workflowRuleScopeMapController";

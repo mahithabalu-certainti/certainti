@@ -11,6 +11,7 @@ export interface ConditionAttributes {
   value: string;
   data_type: string;
   sequence: number;
+  group_id: number;
   created_by: string;
   modified_by?: string;
   created_datetime?: Date;
@@ -32,6 +33,7 @@ export class Condition
   public value!: string;
   public data_type!: string;
   public sequence!: number;
+  public group_id!: number;
   public created_by!: string;
   public modified_by?: string;
 
@@ -66,7 +68,7 @@ export class Condition
 
         field_name: {
           type: DataTypes.STRING,
-          allowNull: true,
+          allowNull: false,
         },
 
         operator: {
@@ -85,6 +87,11 @@ export class Condition
         },
 
         sequence: {
+          type: DataTypes.INTEGER,
+          allowNull: false,
+        },
+
+        group_id: {
           type: DataTypes.INTEGER,
           allowNull: false,
         },

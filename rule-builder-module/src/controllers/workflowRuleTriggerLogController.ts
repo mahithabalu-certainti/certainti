@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { HttpStatus } from "../utils/constants";
 import {
   errorLog,
+  successLog,
   handleErrorResponse,
   handleSuccessResponse,
 } from "../utils/helpers";
@@ -11,7 +12,9 @@ export const createTriggerLog = async (req: Request, res: Response) => {
   const methodName = "create trigger";
   try {
     const newLog = await LogService.createRuleTriggerLog(req.body);
-    res.status(201).json(newLog);
+    successLog(methodName);
+    handleSuccessResponse(res, newLog);
+    return;
   } catch (err) {
     const error = err as Error;
     errorLog(methodName, error.message);
