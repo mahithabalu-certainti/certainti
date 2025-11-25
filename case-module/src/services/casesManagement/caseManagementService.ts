@@ -169,6 +169,7 @@ export class CaseManagementService {
     try {
       // Set the user who is creating this checklist
       caseRequest.created_by = userId;
+     if(caseRequest.checklist_name) {
       const isUnique = await this.caseManangementSchemaService.checkisExistingChecklistTemplateUnique(caseRequest);
       if (!isUnique) {
         return {
@@ -177,6 +178,7 @@ export class CaseManagementService {
           errorMessage: `A template with the name "${caseRequest.checklist_name}" . Please choose a different name.`,
         };
       }
+    }
       // Create the main admin checklist record
       const response =
         await this.caseManangementSchemaService.updateAdminChecklist(
