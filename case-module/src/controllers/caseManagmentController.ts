@@ -988,6 +988,8 @@ async function ExportAdminTaskTemplateList (req : Request, res : Response) {
           "Assign Role": d.role_name || "-",
           "Priority": d.priority_name || "-",
           "Checklist": d.checklist_name || "-",
+          "Task Category" : d.category_name,
+          "Weightage" : d.weightage_value,
           "Status": d.status_name,
           "Task Description": d.task_description || "-",
           "Created By" : d.created_by_name || "-",
