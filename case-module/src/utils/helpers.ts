@@ -450,6 +450,12 @@ export const setTaskTemplateData = (dbData : TaskTemplate, reqData : any, userId
       validUpdateQuery.push(validUpdateConditions)
     }
   }
+  if(reqData.status_rid) {
+    if(reqData.status_rid !== dbData.status_rid) {
+      validUpdateConditions = `status_rid = '${reqData.status_rid}'`
+      validUpdateQuery.push(validUpdateConditions)
+    }
+  }
   if(validUpdateQuery.length > 0) {
     validUpdateConditions = `modified_by = '${userId}'`
     validUpdateQuery.push(validUpdateConditions)
