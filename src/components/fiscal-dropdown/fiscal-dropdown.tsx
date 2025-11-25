@@ -122,6 +122,7 @@ const FiscalYearDropdown = ({
          text-[13px] font-normal w-[107px] min-w-[107px] px-3 h-[25px] flex justify-center items-center gap-1.5 cursor-pointer focus:outline-none rounded-[2px] hover:bg-[#FFFFFF33] hover:rounded-xs whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed`}
         aria-haspopup='true'
         aria-expanded={open}
+        disabled={disabled}
       >
         {selectedLabel}
         <ArrowDownIcon
