@@ -194,6 +194,14 @@ class CaseSchemaService {
     // Implementation for creating interactions in the database
     try {
       const { Case } = await this.caseModelService.getModels(accountNumber);
+      const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(
+        /\D/g,
+        ""
+      )}`;
+      const tableExists = await this.checkTableExists(schemaName, "cases");
+      if (!tableExists) {
+         await this.createCaseTables(accountNumber);
+      }
       await this.createCaseTables(accountNumber);
       const casecreationResponse = await Case.create(caseRequest, {
         transaction,
@@ -247,8 +255,10 @@ class CaseSchemaService {
             where(
               fn("LOWER", col("case_name")),
               Op.eq,
-              caseReq.case_name.toLowerCase()
-            )
+              caseReq.case_name.toLowerCase(),
+              
+            ),
+            { fiscal_year: caseReq.fiscal_year }
           ]
         }
       });
@@ -307,6 +317,7 @@ return !response;
         caseReq.case_name.toLowerCase()
       ),
       { rid: { [Op.ne]: caseReq.case_rid } },
+       { fiscal_year: caseReq.fiscal_year }
     ]
   }
 });

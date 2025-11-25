@@ -13,6 +13,7 @@ export interface CaseTaskWorkflowConnectorAttributes {
   source_rid: string;
   target_rid: string;
   relationship_connector_rid: string;
+  r_number?: string;
 }
 
 export interface CaseTaskWorkflowConnectorCreationAttributes
@@ -35,6 +36,7 @@ export class CaseTaskWorkflowConnector
   public source_rid!: string;
   public target_rid!: string;
   public relationship_connector_rid!: string;
+  public r_number?: string;
 
   static initialize(sequelize: Sequelize, schemaName: string) {
     return CaseTaskWorkflowConnector.init(
@@ -45,6 +47,11 @@ export class CaseTaskWorkflowConnector
           defaultValue: Sequelize.literal(
             `'${ENV_PREFIX}' || gen_random_uuid()`
           ),
+        },
+        r_number: {
+          type: DataTypes.STRING(64),
+          allowNull: false,
+          unique: true,
         },
 
         created_by: {
