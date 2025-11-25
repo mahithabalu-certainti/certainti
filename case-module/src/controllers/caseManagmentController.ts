@@ -1122,12 +1122,13 @@ async function exportCheckListTemplateById(req: Request, res: Response) {
       }
     }
     const isValidTZ = data.timezone && isValidTimezone(data.timezone);
-    const formatDate = (date?: Date) =>
-      date
-        ? moment(date)
-            .tz(isValidTZ ? data.timezone : "UTC")
-            .format("YYYY-MM-DD, hh:mm:ss A")
-        : null;
+    const formatDate = (date?: Date) => {
+             if (!date) return null;
+             
+             return moment(date)
+               .tz(isValidTZ ? data.timezone : "UTC")
+               .format("YYYY-MMM-DD, hh:mm:ss A");
+           };
     const response = result.data?.checklistDetails;
     if (result.statusCode == HttpStatus.SUCCESS) {
       const workbook = new ExcelJS.Workbook();

@@ -6899,6 +6899,11 @@ function filterForCases(
 
             if (filteredColumns == "account_name") dynamicReference = `a`;
             else if (filteredColumns == "country_name") dynamicReference = `c`;
+            else if (filteredColumns == "country_rid") 
+              {
+                dynamicReference = `c`;
+                filteredColumns = "rid"
+              }
             else if (filteredColumns == "case_full_name") dynamicReference = ``;
             else dynamicReference = `cs`;
 
