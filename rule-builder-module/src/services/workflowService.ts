@@ -72,22 +72,22 @@ export const executeWorkflowForEntity = async (
   entityId: number,
   userId: number
 ) => {
-  const scopes = await ScopeModel.getScopesByEntity(entityType, entityId);
-  console.log("Scopes:", scopes);
-  const entity = await getEntityById(entityType, entityId);
+  // const scopes = await ScopeModel.getScopesByEntity(entityType, entityId);
+  // console.log("Scopes:", scopes);
+  // const entity = await getEntityById(entityType, entityId);
 
   const executedRules: any[] = [];
 
-  for (const scope of scopes) {
-    const ruleId = scope.rule_rid;
-    console.log("rrule_id" + ruleId);
-    const passed = await checkConditions(entity, ruleId);
+  // for (const scope of scopes) {
+  //   const ruleId = scope.rule_rid;
+  //   console.log("rrule_id" + ruleId);
+  //   const passed = await checkConditions(entity, ruleId);
 
-    if (passed) {
-      const actionsExecuted = await executeActions(ruleId, entity, userId);
-      executedRules.push({ ruleId, actionsExecuted });
-    }
-  }
+  //   if (passed) {
+  //     const actionsExecuted = await executeActions(ruleId, entity, userId);
+  //     executedRules.push({ ruleId, actionsExecuted });
+  //   }
+  // }
 
   return executedRules;
 };

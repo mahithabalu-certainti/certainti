@@ -52,7 +52,7 @@ import * as ScopeMapModel from "../models/workflowRuleScopeMap";
  * Fetch rules applicable for a given entity type (case/task)
  */
 export const getApplicableRulesForEntity = async (entityType: string, entityId: number) => {
-  const scopeMaps = await ScopeMapModel.getScopesByEntity(entityType, entityId);
+  // const scopeMaps = await ScopeMapModel.getScopesByEntity(entityType, entityId);
   const rules = ["test"];
 
   // for (const map of scopeMaps) {

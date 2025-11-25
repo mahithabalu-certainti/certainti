@@ -1,19 +1,32 @@
 import { Request, Response } from "express";
-import * as AuditModel from "../models/workflowRuleAudit";
+import { HttpStatus } from "../utils/constants";
+import {
+  errorLog,
+  handleErrorResponse,
+  handleSuccessResponse,
+} from "../utils/helpers";
+import * as AuditService from "../services/workflowAuditService";
 
 export const createAuditEntry = async (req: Request, res: Response) => {
+  const methodName = "create Audit";
   try {
-    const newAudit = await AuditModel.createAuditEntry(req.body);
+    const newAudit = await AuditService.createRuleAudit(req.body);
     res.status(201).json(newAudit);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to create audit entry" });
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
   }
 };
 
 export const getAuditById = async (req: Request, res: Response) => {
   try {
-    const audit = await AuditModel.getAuditById(Number(req.params.rid));
+    const audit = await AuditService.getRuleAuditById(String(req.params.rid));
     if (!audit) return res.status(404).json({ error: "Audit entry not found" });
     res.json(audit);
   } catch (err) {
@@ -24,7 +37,7 @@ export const getAuditById = async (req: Request, res: Response) => {
 
 export const getAuditsByRule = async (req: Request, res: Response) => {
   try {
-    const audits = await AuditModel.getAuditsByRule(Number(req.params.ruleRid));
+    const audits = await AuditService.getRuleAuditByRule(String(req.params.ruleRid));
     res.json(audits);
   } catch (err) {
     console.error(err);
@@ -34,7 +47,7 @@ export const getAuditsByRule = async (req: Request, res: Response) => {
 
 export const deleteAuditEntry = async (req: Request, res: Response) => {
   try {
-    const result = await AuditModel.deleteAuditEntry(Number(req.params.rid));
+    const result = await AuditService.deleteRuleAudit(String(req.params.rid));
     res.json(result);
   } catch (err) {
     console.error(err);

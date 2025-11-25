@@ -1,53 +1,94 @@
 import { Request, Response } from "express";
-import * as ScopeMapModel from "../models/workflowRuleScopeMap";
+import { HttpStatus } from "../utils/constants";
+import {
+  errorLog,
+  handleErrorResponse,
+  handleSuccessResponse,
+} from "../utils/helpers";
+import * as Scopeservice from "../services/workflowScopeMapService";
 
 export const createRuleScope = async (req: Request, res: Response) => {
+  const methodName = "create scope";
   try {
-    const newScope = await ScopeMapModel.createRuleScope(req.body);
+    const newScope = await Scopeservice.createRuleScopeMap(req.body);
     res.status(201).json(newScope);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to create rule scope" });
-  }
-};
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  };
+}
 
 export const getScopeById = async (req: Request, res: Response) => {
+  const methodName = "scope details";
   try {
-    const scope = await ScopeMapModel.getScopeById(Number(req.params.rid));
+    const scope = await Scopeservice.getRuleScopeById(String(req.params.rid));
     if (!scope) return res.status(404).json({ error: "Scope not found" });
     res.json(scope);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to fetch scope" });
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
   }
 };
 
 export const getScopesByRule = async (req: Request, res: Response) => {
+  const methodName = "scope By rule";
   try {
-    const scopes = await ScopeMapModel.getScopesByRule(Number(req.params.ruleRid));
+    const scopes = await Scopeservice.getRuleScopeByRule(String(req.params.ruleRid));
     res.json(scopes);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to fetch scopes" });
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
   }
 };
 
 export const updateRuleScope = async (req: Request, res: Response) => {
+  const methodName = "update scope";
   try {
-    const updatedScope = await ScopeMapModel.updateRuleScope(Number(req.params.rid), req.body);
+    const updatedScope = await Scopeservice.updateRuleScope(String(req.params.rid), req.body);
     res.json(updatedScope);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to update scope" });
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
   }
 };
 
 export const deleteRuleScope = async (req: Request, res: Response) => {
+  const methodName = "delete scope";
   try {
-    const result = await ScopeMapModel.deleteRuleScope(Number(req.params.rid));
+    const result = await Scopeservice.deleteRuleScope(String(req.params.rid));
     res.json(result);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to delete scope" });
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
   }
 };

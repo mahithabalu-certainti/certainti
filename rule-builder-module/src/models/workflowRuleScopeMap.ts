@@ -1,64 +1,113 @@
-import { db } from "../config/db";
+import { Sequelize, Model, DataTypes, Optional } from "sequelize";
+import { ENV_PREFIX, MAIN_SCHEMA_NAME } from "../utils/constants";
 
-export interface RuleScopeMap {
+export interface RuleScopeMapAttributes {
   rid?: string;
-  ruleRid: string;
-  scopeEntityType: string;  // e.g., "case", "task"
-  scopeEntityRid: string;
-  isActive?: boolean;
-  createdBy: number;
-  modifiedBy?: number;
-  createdDatetime?: Date;
-  modifiedDatetime?: Date;
+  eid?: string | null;
+  r_number?: string | null;
+  rule_rid: string;
+  scope_entity_type: string;  // e.g., "case", "task"
+  scope_entity_rid: string;
+  is_active?: boolean;
+  created_by: number;
+  modified_by?: number;
+  created_datetime?: Date;
+  modified_datetime?: Date;
 }
 
-export const createRuleScope = async (data: RuleScopeMap) => {
-  const query = `
-    INSERT INTO workflow_rule_scope_map
-    (rid,rule_rid, scope_entity_type, scope_entity_rid, is_active, created_by, modified_by)
-    VALUES ($1,$2,$3,$4,$5,$6,$7)
-    RETURNING *;
-  `;
-  const values = [data.rid, data.ruleRid, data.scopeEntityType, data.scopeEntityRid, data.isActive ?? true, data.createdBy, data.createdBy];
-  const res = await db.query(query, values);
-  return res.rows[0];
-};
+export interface RuleScopeMapCreationAttributes
+  extends Optional<RuleScopeMapAttributes, "rid"> { }
 
-export const getScopeById = async (rid: number) => {
-  const res = await db.query(`SELECT * FROM workflow_rule_scope_map WHERE rid=$1`, [rid]);
-  return res.rows[0];
-};
+export class RuleScopeMap
+  extends Model<RuleScopeMapAttributes, RuleScopeMapCreationAttributes>
+  implements RuleScopeMapAttributes {
+  public rid!: string;
+  public eid!: string;
+  public r_number!: string;
+  public rule_rid!: string;
+  public scope_entity_type!: string;
+  public scope_entity_rid!: string;
+  public is_active?: boolean;
+  public created_by!: number;
+  public modified_by?: number;
 
-export const getScopesByRule = async (ruleRid: number) => {
-  const res = await db.query(`SELECT * FROM workflow_rule_scope_map WHERE rule_rid=$1`, [ruleRid]);
-  return res.rows;
-};
+  public readonly created_datetime!: Date;
+  public readonly modified_datetime!: Date;
 
-export const getScopesByEntity = async (entityType: string, entityId: number) => {
-  const query = `
-    SELECT * FROM workflow_rule_scope_map
-    WHERE scope_entity_type = $1
-      AND scope_entity_rid = $2
-      AND is_active = true
-  `;
-  const values = [entityType, entityId];
-  const res = await db.query(query, values);
-  return res.rows;
-};
+  static initialize(sequelize: Sequelize) {
+    RuleScopeMap.init(
+      {
+        rid: {
+          type: DataTypes.STRING(50),
+          primaryKey: true,
+          allowNull: false,
+          defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
+        },
 
-export const updateRuleScope = async (rid: number, data: RuleScopeMap) => {
-  const query = `
-    UPDATE workflow_rule_scope_map
-    SET scope_entity_type=$1, scope_entity_rid=$2, is_active=$3, modified_by=$4, modified_datetime=NOW()
-    WHERE rid=$5
-    RETURNING *;
-  `;
-  const values = [data.scopeEntityType, data.scopeEntityRid, data.isActive ?? true, data.modifiedBy, rid];
-  const res = await db.query(query, values);
-  return res.rows[0];
-};
+        r_number: {
+          type: DataTypes.STRING(20),
+          allowNull: true,
+          unique: true,
+        },
 
-export const deleteRuleScope = async (rid: number) => {
-  await db.query(`DELETE FROM workflow_rule_scope_map WHERE rid=$1`, [rid]);
-  return { message: "Rule scope deleted successfully" };
-};
+        eid: {
+          type: DataTypes.STRING,
+          allowNull: true,
+        },
+
+        rule_rid: {
+          type: DataTypes.STRING,
+          allowNull: false,
+        },
+
+        scope_entity_type: {
+          type: DataTypes.STRING,
+          allowNull: true,
+        },
+
+        scope_entity_rid: {
+          type: DataTypes.STRING,
+          allowNull: false,
+        },
+
+        is_active: {
+          type: DataTypes.BOOLEAN,
+          allowNull: true,
+          defaultValue: true,
+        },
+
+        created_by: {
+          type: DataTypes.INTEGER,
+          allowNull: false,
+        },
+
+        modified_by: {
+          type: DataTypes.INTEGER,
+          allowNull: true,
+        },
+
+        created_datetime: {
+          type: DataTypes.DATE,
+          allowNull: false,
+          defaultValue: DataTypes.NOW,
+        },
+
+        modified_datetime: {
+          type: DataTypes.DATE,
+          allowNull: true,
+          defaultValue: DataTypes.NOW,
+        },
+      },
+      {
+        sequelize,
+        modelName: "RuleScopeMap",
+        tableName: "workflow_rule_scope_map",
+        schema: MAIN_SCHEMA_NAME,
+        timestamps: false, // using custom timestamp columns
+      }
+    );
+
+    return RuleScopeMap;
+  }
+}
+
