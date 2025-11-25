@@ -17,6 +17,8 @@ export interface Activity {
   action: string;
   date: string;
   link?: string;
+  initials?: string;
+  color?: string;
 }
 
 export interface CommentAttachment {
@@ -251,12 +253,12 @@ export interface TaskCardProps {
   taskId: string;
   showCommentCount?: boolean;
   showProfileIndicator?: boolean;
-  onEditTask?: (taskId: string, newTitle: string) => void;
+
   onTaskClick?: (taskId: string) => void;
   statusData?: Array<{ id: string; name: string; color: string }>;
   statusOptions?: StatusOption[]; // New prop for active/inactive status
   priorityData?: Array<{ id: string; name: string; color: string }>;
-  onTaskUpdate?: (taskId: string, updatedTask: Partial<Task>) => void;
+
 }
 
 export interface KanbanColumnProps {
@@ -266,14 +268,10 @@ export interface KanbanColumnProps {
   showProfileIndicator?: boolean;
   isCreateTaskDisabled?: boolean;
   isCreateTaskHide?: boolean;
-  onAddTask: (
-    columnId: string,
-    task?: TaskCard,
-    position?: 'top' | 'bottom'
-  ) => void;
-  onRenameColumn?: (columnId: string, newName: string) => void;
-  onDeleteColumn?: (columnId: string) => void;
-  onEditTask?: (taskId: string, newTitle: string) => void;
+
+
+
+
   onTaskClick?: (taskId: string) => void;
   statusData?: Array<{ id: string; name: string; color: string }>;
   statusOptions?: StatusOption[]; // New prop for active/inactive status
@@ -288,7 +286,7 @@ export interface KanbanColumnProps {
   }>;
   collaboratorData?: Array<{ rid: string; name: string; email?: string }>;
   availableUsers?: UserOption[];
-  onTaskUpdate?: (taskId: string, updatedTask: Partial<Task>) => void;
+
   onFetchTaskDetails?: (taskId: string) => Promise<Task | null>;
   onCreateTask?: (
     columnId: string,
@@ -300,7 +298,8 @@ export interface TaskDetailModalProps {
   taskId: string | null;
   isOpen: boolean;
   onClose: () => void;
-  onTaskUpdate: (taskId: string, updatedTask: Partial<Task>) => void;
+  onTaskUpdate?: () => void;
+
   statusData?: Array<{ id: string; name: string; color: string }>;
   statusOptions?: StatusOption[]; // New prop for active/inactive status
   priorityData?: Array<{ id: string; name: string; color: string }>;

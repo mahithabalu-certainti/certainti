@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState, useRef } from 'react';
 import {
   useLocation,
   useNavigate,
@@ -52,7 +52,8 @@ import { ACCOUNT } from '../../../../routes';
 import { RootState } from '../../../../store/store';
 
 import { AttachmentsListExportParams } from '../../../types/attachment';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { setFiscalYear } from '../../../../store/slices/account-slice';
 import { Attachments } from './case-attachments';
 import { exportAttachmentsData } from '../../../services/attachments/attachments-service';
 import Setting from './settings/setting';
@@ -162,6 +163,25 @@ export const CaseDetails = () => {
       setActiveKey(location.state.activeKey || listParam || 'workBreakdown');
     }
   }, [location.state, searchParams]);
+
+  const { fiscalYear: globalFiscalYear } = useSelector(
+    (state: RootState) => state.account
+  );
+  const initialFiscalYear = useRef(globalFiscalYear);
+
+  const dispatch = useDispatch();
+  useEffect(() => {
+    if (caseData?.fiscal_year) {
+      dispatch(setFiscalYear(caseData.fiscal_year.toString()));
+    }
+  }, [caseData, dispatch]);
+
+  useEffect(() => {
+    return () => {
+      dispatch(setFiscalYear(initialFiscalYear.current));
+    };
+  }, [dispatch]);
+
   const list = searchParams.get('list');
 
   // Permissions management
@@ -309,7 +329,10 @@ export const CaseDetails = () => {
       case 'caseTeam':
         return (
           <div className='w-full pr-4 pl-2 py-2'>
-            <CaseTeam activityMenuItems={activityMenuItems} />
+            <CaseTeam
+              activityMenuItems={activityMenuItems}
+              fiscalYear={fiscalYear}
+            />
           </div>
         );
       case 'historical_submission':
@@ -556,11 +579,10 @@ export const CaseDetails = () => {
       />
       <div className='flex flex-1 flex-row w-full border-b border-[#CBD6E2]'>
         <div
-          className={`flex transition-all ease-in-out ${
-            isCollapsed
-              ? 'w-[60px] min-w-[60px] max-w-[60px] duration-300'
-              : 'w-[220px] min-w-[220px] max-w-[220px] duration-500'
-          }`}
+          className={`flex transition-all ease-in-out ${isCollapsed
+            ? 'w-[60px] min-w-[60px] max-w-[60px] duration-300'
+            : 'w-[220px] min-w-[220px] max-w-[220px] duration-500'
+            }`}
         >
           <SideMenuPanel
             menuItems={sideMenuItems}
@@ -570,6 +592,7 @@ export const CaseDetails = () => {
             showBackIcon={true}
             isCollapsed={isCollapsed}
             onToggleCollapse={() => setIsCollapsed((prev) => !prev)}
+            enableScrollbar={true}
           />
         </div>
         <div

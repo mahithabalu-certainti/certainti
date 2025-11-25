@@ -4,6 +4,7 @@ import type { TaskCardProps, TaskCard } from './types';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { CommentIcon, CustomChecklistIcon } from '../../assets';
+import { generateInitials, generateColorFromName } from './helper';
 
 interface ExtendedTaskCardProps extends TaskCardProps {
   isDragable?: boolean;
@@ -59,18 +60,19 @@ const TaskCardComponent: React.FC<ExtendedTaskCardProps> = ({
     const colors = {
       status: {
         // Status colors
-        'To Do': { bg: '#F3F4F6', text: '#374151', border: '#D1D5DB' },
-        'In Progress': { bg: '#DBEAFE', text: '#1E40AF', border: '#93C5FD' },
-        Done: { bg: '#DCFCE7', text: '#166534', border: '#BBF7D0' },
-        Active: { bg: '#DCFCE7', text: '#15803D', border: '#BBF7D0' }, // green theme
-        Inactive: { bg: '#FEE2E2', text: '#DC2626', border: '#FECACA' }, // red theme
+        'To Do': { bg: '#F3F4F6', text: '#374151', border: '#E5E7EB' }, // Gray-100
+        'In Progress': { bg: '#EFF6FF', text: '#1E40AF', border: '#BFDBFE' }, // Blue-50
+        'Blocked': { bg: '#FEF2F2', text: '#991B1B', border: '#FECACA' }, // Red-50
+        'Completed': { bg: '#ECFDF5', text: '#065F46', border: '#A7F3D0' }, // Emerald-50
+        Active: { bg: '#ECFDF5', text: '#065F46', border: '#A7F3D0' }, // Emerald-50
+        Inactive: { bg: '#FEF2F2', text: '#991B1B', border: '#FECACA' }, // Red-50
       },
       priority: {
-        // Priority colors - Low (blue), Medium (yellow), High & Highest (red)
-        Low: { bg: '#EFF6FF', text: '#1E40AF', border: '#93C5FD' },
-        Medium: { bg: '#FFFBEB', text: '#92400E', border: '#FDE68A' },
-        High: { bg: '#FEE2E2', text: '#991B1B', border: '#FECACA' },
-        Highest: { bg: '#FEE2E2', text: '#991B1B', border: '#FECACA' },
+        // Priority colors
+        Low: { bg: '#F0F9FF', text: '#075985', border: '#BAE6FD' }, // Sky-50
+        Medium: { bg: '#FFFBEB', text: '#92400E', border: '#FDE68A' }, // Amber-50
+        High: { bg: '#FFF1F2', text: '#9F1239', border: '#FECDD3' }, // Rose-50
+        Highest: { bg: '#FFF1F2', text: '#9F1239', border: '#FECDD3' }, // Rose-50
       },
     } as const;
 
@@ -127,13 +129,38 @@ const TaskCardComponent: React.FC<ExtendedTaskCardProps> = ({
     >
       <div className='flex items-center gap-1 mb-3'>
         <div className='w-2 h-2 bg-slate-300 rounded-full flex-shrink-0'></div>
-        <div className='flex-1'>
+        <div className='flex-1 flex items-start justify-between gap-2'>
           <h3
             className='text-slate-800 text-[13px] font-medium leading-relaxed'
             style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
           >
             {taskData.task_name}
           </h3>
+          <div
+            onClick={(e) => {
+              e.stopPropagation();
+              // Add link click handler here if needed
+            }}
+            onDoubleClick={(e) => {
+              e.stopPropagation();
+            }}
+            className='cursor-pointer hover:bg-gray-100 rounded p-0.5'
+          >
+            <svg
+              xmlns='http://www.w3.org/2000/svg'
+              fill='none'
+              viewBox='0 0 24 24'
+              strokeWidth={1.5}
+              stroke='currentColor'
+              className='w-3.5 h-3.5 text-gray-400 flex-shrink-0'
+            >
+              <path
+                strokeLinecap='round'
+                strokeLinejoin='round'
+                d='M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244'
+              />
+            </svg>
+          </div>
         </div>
       </div>
 
@@ -170,17 +197,14 @@ const TaskCardComponent: React.FC<ExtendedTaskCardProps> = ({
           <div
             className='w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-semibold border border-white shadow-sm'
             style={{
-              backgroundColor: '#E0F2FE',
+              backgroundColor: generateColorFromName(taskData.assigned_to_name),
               color: '#374151',
               fontFamily: "'Mulish', 'Lexend', sans-serif",
               fontSize: '10px',
             }}
             title={taskData.assigned_to_name}
           >
-            {taskData.assigned_to_name
-              .split(' ')
-              .map((n) => n[0])
-              .join('')}
+            {generateInitials(taskData.assigned_to_name)}
           </div>
         )}
 

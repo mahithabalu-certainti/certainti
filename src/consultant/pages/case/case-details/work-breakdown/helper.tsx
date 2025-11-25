@@ -2,7 +2,7 @@ import {
   Activity,
   Comment,
 } from '../../../../../components/kanban-board/types';
-import { generateColorFromName } from '../../../../../components/kanban-board/helper';
+import { generateColorFromName, generateInitials } from '../../../../../components/kanban-board/helper';
 import type {
   PriorityData,
   StatusData,
@@ -92,6 +92,8 @@ export const transformActivities = (
       hour: '2-digit',
       minute: '2-digit',
     }),
+    initials: generateInitials(activity.created_by_name),
+    color: generateColorFromName(activity.created_by_name),
   }));
 };
 
@@ -129,13 +131,7 @@ export const transformComments = (
       : '';
 
     // Generate initials from user name
-    const initials =
-      userName
-        .split(' ')
-        .map((n) => n[0])
-        .join('')
-        .toUpperCase()
-        .slice(0, 2) || 'UN';
+    const initials = generateInitials(userName);
 
     const rawAttachments =
       comment.comments_attachments || comment.attachments || [];

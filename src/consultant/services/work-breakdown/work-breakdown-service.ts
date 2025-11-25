@@ -4,7 +4,7 @@ import {
   getTaskDetailURL,
 } from '../urls/work-breakdown-url';
 import type { Task } from '../../../components/kanban-board/types';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useInfiniteQuery } from '@tanstack/react-query';
 
 export interface KanbanBoardData {
   statusCode: number;
@@ -525,6 +525,84 @@ export const useGetTaskActivities = (
     queryKey: ['taskActivities', accountId, caseId, taskId],
     queryFn: () => fetchTaskActivities(accountId, caseId, taskId),
     enabled: enabled && !!accountId && !!caseId && !!taskId,
+  });
+};
+
+// Fetch Task Activities with Pagination
+export interface TaskActivitiesListParams {
+  account_rid: string;
+  case_rid: string;
+  task_rid: string;
+  page: number;
+  limit: number;
+}
+
+export const fetchTaskActivitiesWithPagination = async (
+  params: TaskActivitiesListParams
+): Promise<TaskActivitiesResponse> => {
+  try {
+    const response = await caseServiceApi.post<TaskActivitiesResponse>(
+      '/api/cases/task/activity/list',
+      params
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching task activities:', error);
+    throw error;
+  }
+};
+
+// Infinite Scrolling Task Activities (Limit: 5 per page)
+export interface InfiniteTaskActivitiesParams {
+  case_rid: string;
+  account_rid: string;
+  task_rid: string;
+}
+
+export const useInfiniteTaskActivities = (
+  params: InfiniteTaskActivitiesParams,
+  options?: {
+    enabled?: boolean;
+  }
+) => {
+  return useInfiniteQuery<TaskActivitiesResponse, Error>({
+    queryKey: ['taskActivitiesInfinite', params],
+    queryFn: async ({ pageParam = 1 }) => {
+      const response = await fetchTaskActivitiesWithPagination({
+        ...params,
+        page: pageParam as number,
+        limit: 5, // Load 5 activities per page
+      });
+      return response;
+    },
+    getNextPageParam: (
+      lastPage: TaskActivitiesResponse,
+      allPages: TaskActivitiesResponse[]
+    ) => {
+      // If the last page has no data, there are no more pages.
+      if (!lastPage.data.data || lastPage.data.data.length === 0) {
+        return undefined;
+      }
+
+      // If the number of records in the last page is less than the limit,
+      // it means we've reached the end.
+      if (lastPage.data.data.length < 5) {
+        return undefined;
+      }
+
+      // Otherwise, return the next page number
+      return allPages.length + 1;
+    },
+    initialPageParam: 1,
+    staleTime: 0,
+    gcTime: 0,
+    retry: 0,
+    enabled: !!(
+      params.case_rid &&
+      params.account_rid &&
+      params.task_rid &&
+      options?.enabled !== false
+    ),
   });
 };
 export const useGetCollaborators = (

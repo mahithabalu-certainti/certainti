@@ -64,10 +64,12 @@ const ConfigTabs: ResourceTabs[] = [
 
 interface CaseTeamProps {
   activityMenuItems: ActivityMenuItem[];
+  fiscalYear: number;
 }
 
 const CaseTeam: React.FC<CaseTeamProps> = ({
-  activityMenuItems
+  activityMenuItems,
+  fiscalYear,
 }) => {
   const [searchParams] = useSearchParams();
   const { caseId } = useParams();
@@ -417,12 +419,7 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
         isValid = false;
       } else {
         const startDate = dayjs(member.start_date);
-        const today = dayjs().startOf('day');
 
-        if (startDate.isBefore(today)) {
-          memberError.start_date = 'Start date must be today or a future date';
-          isValid = false;
-        }
 
         if (
           member.end_date &&
@@ -1254,7 +1251,11 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
                                             )
                                           }
                                           format='YYYY-MM-DD'
-                                          minDate={dayjs().startOf('day')}
+                                          minDate={
+                                            fiscalYear
+                                              ? dayjs(`${fiscalYear - 1}-04-01`)
+                                              : dayjs().startOf('day')
+                                          }
                                           disabled={
                                             isDisabled ||
                                             !permissionMap.effective_startdate
