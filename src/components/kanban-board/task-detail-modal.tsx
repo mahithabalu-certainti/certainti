@@ -764,9 +764,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
           ...(categoryRidValue && {
             task_category_rid: categoryRidValue,
           }),
-          ...(assignedToRid && {
-            assigned_to: assignedToRid,
-          }),
+          assigned_to: assignedToRid || '',
         };
 
         const updateResponse =
@@ -887,6 +885,17 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     event: SelectChangeEvent<string> | SelectChangeEvent<string[]>
   ) => {
     const selectedUserId = event.target.value as string;
+    if (!selectedUserId) {
+      setEditedTask((prev) =>
+        prev
+          ? {
+            ...prev,
+            assignee: { name: '', initials: '', color: '' },
+          }
+          : null
+      );
+      return;
+    }
     const selectedUser = allEnrichedUsers.find(
       (user) => user.id === selectedUserId
     );
@@ -907,7 +916,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   };
 
   const getAssigneeForSelect = () => {
-    if (!editedTask?.assignee) return '';
+    if (!editedTask?.assignee || editedTask.assignee.name === '') return '';
     const foundUser = allEnrichedUsers.find(
       (u) => u.name === editedTask.assignee.name
     );
@@ -1420,6 +1429,34 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
             userRole={selectedRole}
             onStatusChange={handleStatusChange}
             onPriorityChange={handlePriorityChange}
+            onAssigneeChange={(userId) => {
+              if (!userId) {
+                setEditedTask((prev) =>
+                  prev
+                    ? {
+                      ...prev,
+                      assignee: { name: '', initials: '', color: '' },
+                    }
+                    : null
+                );
+                return;
+              }
+              const selectedUser = allEnrichedUsers.find((u) => u.id === userId);
+              if (selectedUser) {
+                setEditedTask((prev) =>
+                  prev
+                    ? {
+                      ...prev,
+                      assignee: {
+                        name: selectedUser.name,
+                        initials: selectedUser.initials,
+                        color: selectedUser.color,
+                      },
+                    }
+                    : null
+                );
+              }
+            }}
             onChecklistChange={(value) => {
               setSelectedChecklist(value);
               if (value)

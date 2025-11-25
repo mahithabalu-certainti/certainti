@@ -269,9 +269,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
               }
             ).task_category_rid,
           }),
-          ...(taskData.assigned_to && {
-            assigned_to: taskData.assigned_to,
-          }),
+          assigned_to: taskData.assigned_to ?? '',
         };
 
         createTaskMutation.mutate(taskPayload, {
@@ -628,9 +626,9 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
         setAppliedFilters={setAppliedFilters}
         setCurrentPage={setCurrentPage}
         handleFilter={handleFilter}
-        handleSorting={() => {}}
+        handleSorting={() => { }}
         sortFilterCount={0}
-        setSortFilterCount={() => {}}
+        setSortFilterCount={() => { }}
         showRefresh={false}
         onRefreshClick={onRefreshClick}
         // hideTabPanel={hideSection}
