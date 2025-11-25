@@ -64,6 +64,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   taskId,
   isOpen,
   onClose,
+  onTaskUpdate,
   statusData = [],
   priorityData = [],
   tagData = [],
@@ -72,6 +73,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   checklistData = [],
   onAddComment,
   onUpdateComment,
+
   onDeleteComment,
   onAddCollaborator,
   accountId,
@@ -813,6 +815,9 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
           updateResponse?.statusMessage || 'Task updated successfully';
         successToast(message);
         setOriginalTask(editedTask);
+        if (onTaskUpdate) {
+          onTaskUpdate();
+        }
       }
     } catch (error) {
       const errorMessage =

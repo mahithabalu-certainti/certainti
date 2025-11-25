@@ -34,21 +34,9 @@ export const generateColorFromName = (name: string): string => {
   return colors[Math.abs(hash) % colors.length];
 };
 
-export const userToAssignee = (user: User): Assignee => {
-  return {
-    name: user.name,
-    initials: user.initials || generateInitials(user.name),
-    color: user.color || generateColorFromName(user.name),
-  };
-};
 
-export const enrichUser = (user: User): User => {
-  return {
-    ...user,
-    initials: user.initials || generateInitials(user.name),
-    color: user.color || generateColorFromName(user.name),
-  };
-};
+
+
 
 export const enrichUserOption = (userOption: UserOption): User => {
   return {
@@ -59,9 +47,7 @@ export const enrichUserOption = (userOption: UserOption): User => {
   };
 };
 
-export const enrichUsers = (users: User[]): User[] => {
-  return users.map(enrichUser);
-};
+
 
 export const enrichAssignee = (assignee: {
   name: string;

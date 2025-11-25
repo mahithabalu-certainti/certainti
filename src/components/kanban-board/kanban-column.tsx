@@ -32,7 +32,7 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
   statusData,
   statusOptions,
   priorityData,
-  onTaskUpdate,
+
   onCreateTask,
   roleOptions = [],
   tagData = [],
@@ -157,7 +157,7 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
               statusData={statusData}
               statusOptions={statusOptions}
               priorityData={priorityData}
-              onTaskUpdate={onTaskUpdate}
+
             />
           ))}
         </div>

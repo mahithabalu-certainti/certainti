@@ -122,14 +122,12 @@ const FiscalYearDropdown = ({
          text-[13px] font-normal w-[107px] min-w-[107px] px-3 h-[25px] flex justify-center items-center gap-1.5 cursor-pointer focus:outline-none rounded-[2px] hover:bg-[#FFFFFF33] hover:rounded-xs whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed`}
         aria-haspopup='true'
         aria-expanded={open}
-        disabled={disabled}
       >
         {selectedLabel}
         <ArrowDownIcon
           alt='dropdown arrow'
-          className={`transition-transform duration-300 ${
-            open ? 'rotate-180' : ''
-          }`}
+          className={`transition-transform duration-300 ${open ? 'rotate-180' : ''
+            }`}
           style={{
             width: 15,
             height: 15,
@@ -176,8 +174,9 @@ const FiscalYearDropdown = ({
               {isGlobal && (
                 <button
                   type='button'
-                  className={`h-[22px] w-[32px] text-[#425A76] text-[14px] font-bold cursor-pointer ${selectedYear === 'FY-All' ? 'bg-[#425A76] text-[#FFFFFF] rounded-[30px]' : ''}`}
+                  className={`h-[22px] w-[32px] text-[#425A76] text-[14px] font-bold cursor-pointer ${selectedYear === 'FY-All' ? 'bg-[#425A76] text-[#FFFFFF] rounded-[30px]' : ''} disabled:opacity-50 disabled:cursor-not-allowed`}
                   onClick={handleAllClick}
+                  disabled={disabled}
                 >
                   All
                 </button>
@@ -190,13 +189,12 @@ const FiscalYearDropdown = ({
                   className='col-span-1 mb-3 flex justify-center'
                 >
                   <button
-                    className={`w-12 h-[20px] cursor-pointer disabled:text-gray-300 text-[#425A76] text-[14px] font-medium ${
-                      Number(selectedYear) === year.value
-                        ? 'bg-[#425A76] text-[#FFFFFF] rounded-[30px]'
-                        : ''
-                    }`}
+                    className={`w-12 h-[20px] cursor-pointer disabled:text-gray-300 text-[#425A76] text-[14px] font-medium ${Number(selectedYear) === year.value
+                      ? 'bg-[#425A76] text-[#FFFFFF] rounded-[30px]'
+                      : ''
+                      }`}
                     onClick={() => handleYearClick(year.value)}
-                    disabled={year.value > currentYear}
+                    disabled={year.value > currentYear || (disabled && year.value !== Number(selectedYear))}
                   >
                     {year.value}
                   </button>
