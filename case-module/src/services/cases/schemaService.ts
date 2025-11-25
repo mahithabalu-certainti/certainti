@@ -255,8 +255,10 @@ class CaseSchemaService {
             where(
               fn("LOWER", col("case_name")),
               Op.eq,
-              caseReq.case_name.toLowerCase()
-            )
+              caseReq.case_name.toLowerCase(),
+              
+            ),
+            { fiscal_year: caseReq.fiscal_year }
           ]
         }
       });
@@ -315,6 +317,7 @@ return !response;
         caseReq.case_name.toLowerCase()
       ),
       { rid: { [Op.ne]: caseReq.case_rid } },
+       { fiscal_year: caseReq.fiscal_year }
     ]
   }
 });
