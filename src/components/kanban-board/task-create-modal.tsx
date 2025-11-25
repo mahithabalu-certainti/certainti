@@ -18,7 +18,7 @@ import {
   useGetTaskConnectorTypes,
   useGetTaskTemplate,
   useWeightageList,
-  useTaskCategoryList,
+  useGetTaskCategoryTypes,
 } from '../../admin/service/task-template/task-template-service';
 
 // Form data interface
@@ -166,7 +166,7 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
 
   // Fetch weightage and category lists
   const weightageListQuery = useWeightageList();
-  const categoryListQuery = useTaskCategoryList();
+  const categoryListQuery = useGetTaskCategoryTypes();
 
   const weightageData = useMemo(() => {
     // Handle nested data.data structure

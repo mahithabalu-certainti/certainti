@@ -43,7 +43,7 @@ import {
   useGetTaskConnectorTypes,
   useGetTaskTemplate,
   useWeightageList,
-  useTaskCategoryList,
+  useGetTaskCategoryTypes,
 } from '../../admin/service/task-template/task-template-service';
 
 interface TaskDetailModalPropsExtended
@@ -382,7 +382,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
 
   // Fetch weightage and category lists
   const weightageListQuery = useWeightageList();
-  const categoryListQuery = useTaskCategoryList();
+  const categoryListQuery = useGetTaskCategoryTypes();
 
   const weightageData = useMemo(() => {
     // Handle nested data.data structure
