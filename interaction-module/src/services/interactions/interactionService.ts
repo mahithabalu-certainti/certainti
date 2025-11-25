@@ -2004,7 +2004,7 @@ export class InteractionService {
     if (data.flag === "project") {
       entityRid = data.project_fiscal_rid;
     } else if (data.flag === "case") {
-      entityRid = ""; 
+      entityRid = data.account_rid; 
     } else {
       entityRid = data.account_rid;
     }
