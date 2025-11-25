@@ -81,7 +81,7 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
           effective_end_datetime: formData.endDate?.format(
             'YYYY-MM-DD HH:mm:ss'
           ),
-          assigned_to: formData.selectedAssignee,
+          assigned_to: formData.selectedAssignee ?? '',
           tags: formData.selectedTags,
           ...(formData.selectedChecklistRid && {
             checklist_template_rid: formData.selectedChecklistRid,

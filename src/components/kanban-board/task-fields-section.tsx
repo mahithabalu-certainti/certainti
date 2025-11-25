@@ -304,132 +304,51 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
             </div>
           )}
 
-        {mode === 'create' &&
-          !fieldVisibility.assignee &&
-          availableUsers &&
-          availableUsers.length > 0 && (
-            <div className='flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors'>
-              <div className='flex items-center gap-2'>
-                <svg
-                  width='16'
-                  height='16'
-                  viewBox='0 0 24 24'
-                  fill='none'
-                  stroke='currentColor'
-                  strokeWidth='2'
-                  className='text-gray-500'
-                >
-                  <path d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'></path>
-                  <circle cx='12' cy='7' r='4'></circle>
-                </svg>
-                <span className='text-sm text-gray-700'>Assignee</span>
-              </div>
-              <StyledSelect
-                name='assignee'
-                value={selectedAssignee || ''}
-                onChange={(e) => onAssigneeChange?.(e.target.value as string)}
-                disabled={fieldDisabled.assignee}
-                width='200px'
-                error={errors.assignee}
-                renderValue={(selected) => {
-                  const value = Array.isArray(selected)
-                    ? selected.join(', ')
-                    : (selected as string);
-                  if (!value) {
-                    return (
-                      <span style={{ color: '#7D98B6', fontSize: '13px' }}>
-                        Choose User
-                      </span>
-                    );
-                  }
-                  const user = availableUsers.find((u) => u.id === value);
-                  if (user) {
-                    return (
-                      <div
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px',
-                          minWidth: 0,
-                          maxWidth: 'calc(100% - 24px)',
-                        }}
-                      >
-                        <div
-                          style={{
-                            width: '20px',
-                            height: '20px',
-                            borderRadius: '50%',
-                            backgroundColor: user.color,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '9px',
-                            fontWeight: '600',
-                            color: 'white',
-                            flexShrink: 0,
-                          }}
-                        >
-                          {user.initials}
-                        </div>
-                        <span
-                          style={{
-                            fontSize: '13px',
-                            color: 'black',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                            minWidth: 0,
-                          }}
-                        >
-                          {user.name}
-                        </span>
-                      </div>
-                    );
-                  }
+        {!fieldVisibility.assignee && (
+          <div className='flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors'>
+            <div className='flex items-center gap-2'>
+              <svg
+                width='16'
+                height='16'
+                viewBox='0 0 24 24'
+                fill='none'
+                stroke='currentColor'
+                strokeWidth='2'
+                className='text-gray-500'
+              >
+                <path d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'></path>
+                <circle cx='12' cy='7' r='4'></circle>
+              </svg>
+              <span className='text-sm text-gray-700'>Assignee</span>
+            </div>
+            <StyledSelect
+              name='assignee'
+              value={selectedAssignee || ''}
+              onChange={(e) => onAssigneeChange?.(e.target.value as string)}
+              disabled={fieldDisabled.assignee}
+              width='200px'
+              error={errors.assignee}
+              renderValue={(selected) => {
+                const value = Array.isArray(selected)
+                  ? selected.join(', ')
+                  : (selected as string);
+                if (!value) {
                   return (
-                    <span
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        minWidth: 0,
-                        maxWidth: 'calc(100% - 24px)',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}
-                      title={typeof value === 'string' ? value : String(value)}
-                    >
-                      {typeof value === 'string' ? value : String(value)}
+                    <span style={{ color: '#7D98B6', fontSize: '13px' }}>
+                      Choose User
                     </span>
                   );
-                }}
-              >
-                <MenuItem
-                  value=''
-                  sx={{
-                    color: '#425A76',
-                    fontSize: '13px',
-                    fontWeight: '500',
-                  }}
-                >
-                  Choose User
-                </MenuItem>
-                {availableUsers.map((user) => (
-                  <MenuItem
-                    sx={{
-                      color: '#425A76',
-                      fontSize: '13px',
-                      fontWeight: '500',
-                    }}
-                    key={user.id}
-                    value={user.id}
-                    title={user.name}
-                  >
+                }
+                const user = availableUsers.find((u) => u.id === value);
+                if (user) {
+                  return (
                     <div
                       style={{
                         display: 'flex',
                         alignItems: 'center',
                         gap: '8px',
+                        minWidth: 0,
+                        maxWidth: 'calc(100% - 24px)',
                       }}
                     >
                       <div
@@ -441,7 +360,7 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          fontSize: '8px',
+                          fontSize: '9px',
                           fontWeight: '600',
                           color: 'white',
                           flexShrink: 0,
@@ -449,13 +368,91 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
                       >
                         {user.initials}
                       </div>
-                      {user.name}
+                      <span
+                        style={{
+                          fontSize: '13px',
+                          color: 'black',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          minWidth: 0,
+                        }}
+                      >
+                        {user.name}
+                      </span>
                     </div>
-                  </MenuItem>
-                ))}
-              </StyledSelect>
-            </div>
-          )}
+                  );
+                }
+                return (
+                  <span
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      minWidth: 0,
+                      maxWidth: 'calc(100% - 24px)',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                    title={typeof value === 'string' ? value : String(value)}
+                  >
+                    {typeof value === 'string' ? value : String(value)}
+                  </span>
+                );
+              }}
+            >
+              <MenuItem
+                value=''
+                sx={{
+                  color: '#425A76',
+                  fontSize: '13px',
+                  fontWeight: '500',
+                }}
+              >
+                Choose User
+              </MenuItem>
+              {availableUsers.map((user) => (
+                <MenuItem
+                  sx={{
+                    color: '#425A76',
+                    fontSize: '13px',
+                    fontWeight: '500',
+                  }}
+                  key={user.id}
+                  value={user.id}
+                  title={user.name}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: '20px',
+                        height: '20px',
+                        borderRadius: '50%',
+                        backgroundColor: user.color,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '8px',
+                        fontWeight: '600',
+                        color: 'white',
+                        flexShrink: 0,
+                      }}
+                    >
+                      {user.initials}
+                    </div>
+                    {user.name}
+                  </div>
+                </MenuItem>
+              ))}
+            </StyledSelect>
+          </div>
+        )}
 
         {!fieldVisibility.tags && (
           <div className='px-4 py-3 hover:bg-gray-50 transition-colors'>

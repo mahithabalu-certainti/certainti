@@ -167,6 +167,7 @@ export interface CreateTaskPayload {
   tags?: Array<{ tag_rid: string; is_new_tag: boolean }>;
   is_new_tag?: boolean;
   workflow_connector?: Record<string, unknown>;
+  assigned_to?: string;
   [key: string]: unknown;
 }
 
