@@ -2955,6 +2955,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
         const emailPreview = await this.caseSchemaService.getTemplateDetailsByCategory(data.category_name);
         let emailInfo = {
           to_email,
+          cc_email :[],
           subject:this.replacePlaceholders(emailPreview.subject, data, keyInfo),
           body_html : this.replacePlaceholders(emailPreview.body_html, data, keyInfo)
         }
