@@ -91,19 +91,19 @@ export const ManageDetailComponent = ({
       value: getValueOrDefault(data?.checklist_name) || '-',
     },
     {
-      key: 'status_rid',
-      label: 'Status',
-      value: getValueOrDefault(data?.status_name) || '-',
-    },
-    {
-      // key: 'weightage_rid',
-      label: 'Task Weight Age',
-      value: getValueOrDefault(data?.weightage_value) || '-',
-    },
-    {
       // key: 'task_category_rid',
       label: 'Task Category',
       value: getValueOrDefault(data?.category_name) || '-',
+    },
+    {
+      // key: 'weightage_rid',
+      label: 'Task Weightage',
+      value: getValueOrDefault(data?.weightage_value) || '-',
+    },
+    {
+      key: 'status_rid',
+      label: 'Status',
+      value: getValueOrDefault(data?.status_name) || '-',
     },
   ];
 
