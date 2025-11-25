@@ -3598,6 +3598,7 @@ return !response;
   sortBy: string = 'created_datetime',
   sortOrder: string = 'DESC',
   apiType: string = "list",
+  accessibleIds: string[] = [],
   graphqlData? : any
 ) {
   try {
@@ -3703,7 +3704,7 @@ return !response;
           const caseAttachments = await fetchAttachments(CheckList, 'case', [entityId]);
           allChecklists.push(...caseAttachments);
     
-          const projects = await this.getProjectsByAccountId(accountNumber, entityId);
+          const projects = await this.getProjectsByAccountId(accountNumber, entityId,accessibleIds);
           const projectIds = projects.map((p: { rid: any; }) => p.rid);
           if (projectIds.length > 0) {
             const projectAttachments = await fetchAttachments(CheckList, 'project', projectIds);
@@ -4387,7 +4388,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       }
     }
 
- async getProjectsByAccountId(accountNumber: string, accountRid: string) {
+ async getProjectsByAccountId(accountNumber: string, accountRid: string, accessibleIds: string[]) {
       if(!this.orgDbSequelize) {
         this.orgDbSequelize = await this.caseModelService.getSequelize(
         );
@@ -4399,7 +4400,8 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       const [results]: any[] = await this.orgDbSequelize.query(
         rawQueries.getAllProjectsByAccountId(
           schemaName,
-          accountRid
+          accountRid,
+          accessibleIds
         )
       );
       return results;

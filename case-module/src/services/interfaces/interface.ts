@@ -506,6 +506,24 @@ export interface IActivityService {
     errorMessage?: string;
     data?: { emailActivityDetails: any };
   }>;
+  getMeetingActivityDetailsById(
+    activityRid: string,
+    accountRid: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { activityDetails: any };
+  }>;
+   getCallActivityDetailsById(
+    activityRid: string,
+    accountRid: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { activityDetails: any };
+  }>;
    getEmailStatus(): Promise<{
     statusCode: number;
     message: string;

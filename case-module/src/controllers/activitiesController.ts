@@ -835,6 +835,156 @@ async function fetchEmailActivityById(
   }
 }
 
+async function fetchMeetingActivityById(
+  req: Request,
+  res: Response
+): Promise<void> {
+  const methodName = "Get meeting  details";
+  try {
+    const { activityRid, accountRid } = req.params;
+    const userId = req.headers["x-user-id"] as string;
+    logMessage(
+      `[${methodName}] Request received,  activityRid: ${activityRid} userId: ${userId}`
+    );
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+
+    if (!activityRid) {
+      errorLog(methodName, "Activity ID is required in params");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "Activity ID is required in params"
+      );
+      return;
+    }
+    if (!accountRid) {
+      errorLog(methodName, "Account RID is required in params");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "Account RID is required in params"
+      );
+      return;
+    }
+    let emailTemplateResponse;
+    emailTemplateResponse = await activityService.getMeetingActivityDetailsById(
+      activityRid,
+      accountRid
+    );
+
+    if (emailTemplateResponse.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, emailTemplateResponse.data);
+      return;
+    } else {
+      errorLog(methodName, emailTemplateResponse.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        emailTemplateResponse.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+async function fetchCallActivityById(
+  req: Request,
+  res: Response
+): Promise<void> {
+  const methodName = "Get call details";
+  try {
+    const { activityRid, accountRid } = req.params;
+    const userId = req.headers["x-user-id"] as string;
+    logMessage(
+      `[${methodName}] Request received,  activityRid: ${activityRid} userId: ${userId}`
+    );
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+
+    if (!activityRid) {
+      errorLog(methodName, "Activity ID is required in params");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "Activity ID is required in params"
+      );
+      return;
+    }
+    if (!accountRid) {
+      errorLog(methodName, "Account RID is required in params");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "Account RID is required in params"
+      );
+      return;
+    }
+    let emailTemplateResponse;
+    emailTemplateResponse = await activityService.getCallActivityDetailsById(
+      activityRid,
+      accountRid
+    );
+
+    if (emailTemplateResponse.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, emailTemplateResponse.data);
+      return;
+    } else {
+      errorLog(methodName, emailTemplateResponse.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        emailTemplateResponse.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
 async function getEmailStatus(req: Request, res: Response): Promise<void> {
   const methodName = "Get Email Status";
   try {
@@ -880,4 +1030,7 @@ export default {
   updateActivityMeeting,
   createActivityCall,
   updateActivityCall,
+  fetchMeetingActivityById,
+  fetchCallActivityById
+
 };
