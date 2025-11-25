@@ -51,6 +51,8 @@ effort_in_days: Int
 task_name : String
 task_type_rid : String
 task_description : String
+task_category_rid : String
+weightage_rid : String
 }
 
 type Mutation {
