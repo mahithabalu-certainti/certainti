@@ -14,10 +14,12 @@ import { getTaskTemplateFilterFields } from './helpers';
 import {
   ExportTaskTemplateList,
   useGetTaskAssignRoleTypes,
+  useGetTaskCategoryTypes,
   useGetTaskCheckListTypes,
   useGetTaskMilestoneTypes,
   useGetTaskPriorityTypes,
   useGetTaskTemplateTypes,
+  useGetTaskWeightAgeTypes,
 } from '../../../service/task-template/task-template-service';
 import { TaskTemplateTable } from './table/task-templates-table';
 import { SelectOption } from '../../../../consultant/types';
@@ -111,6 +113,8 @@ const TaskTemplates: React.FC = () => {
   const taskPrioritytTypes = useGetTaskPriorityTypes();
   const taskCheckListTypes = useGetTaskCheckListTypes();
   const taskAssignRoleTypes = useGetTaskAssignRoleTypes();
+  const taskWeightAgeTypes = useGetTaskWeightAgeTypes();
+  const taskCategoryTypes = useGetTaskCategoryTypes();
   const taskTemplateTypesOptions = useMemo(() => {
     return (
       taskTemplateTypes?.data?.data?.map((item) => ({
@@ -161,7 +165,22 @@ const TaskTemplates: React.FC = () => {
       })) || [],
     [statusOptions?.data?.data?.status]
   );
-
+  const taskWeightAgeTypesOptions = useMemo(() => {
+    return (
+      taskWeightAgeTypes?.data?.data?.data?.map((item) => ({
+        value: item.rid,
+        label: item.weightage_value,
+      })) || []
+    );
+  }, [taskWeightAgeTypes]);
+  const taskCategoryTypesOptions = useMemo(() => {
+    return (
+      taskCategoryTypes?.data?.data?.map((item) => ({
+        value: item.rid,
+        label: item.category_name,
+      })) || []
+    );
+  }, [taskCategoryTypes]);
   const taskTemplateFilterFields = getTaskTemplateFilterFields(
     taskTemplateTypesOptions,
     taskMilestoneTypesOptions,
@@ -169,6 +188,8 @@ const TaskTemplates: React.FC = () => {
     taskCheckListTypesTypesOptions,
     taskAssigneRoleTypesTypesOptions,
     memoizedStatus,
+    taskCategoryTypesOptions,
+    taskWeightAgeTypesOptions,
     permissionMap
   );
 

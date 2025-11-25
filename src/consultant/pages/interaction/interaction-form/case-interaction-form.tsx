@@ -858,7 +858,7 @@ const CaseInteractionForm = () => {
                     className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
                     htmlFor='account_name'
                   >
-                    Porject Code
+                    Project Code
                   </label>
                   {projectListLoading ? (
                     <Skeleton variant='rounded' width='100%' height={32} />

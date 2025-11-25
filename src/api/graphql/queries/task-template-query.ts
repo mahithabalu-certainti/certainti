@@ -31,6 +31,10 @@ export const TASK_TEMPLATE = gql`
         task_description
         task_type_name
         task_type_rid
+        task_category_rid
+        weightage_rid
+        category_name
+        weightage_value
       }
     }
   }
