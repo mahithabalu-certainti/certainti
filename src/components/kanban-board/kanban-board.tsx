@@ -1,9 +1,8 @@
 import type React from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import type {
   KanbanBoardProps,
   KanbanColumn as KanbanColumnTypes,
-  TaskCard,
 } from './types';
 import {
   closestCorners,
@@ -97,28 +96,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
 
   const effectiveStatusData = getEffectiveStatusData();
 
-  const handleAddTask = (
-    columnId: string,
-    task?: TaskCard,
-    position: 'top' | 'bottom' = 'bottom'
-  ) => {
-    if (task) {
-      setColumns(
-        columns.map((column) =>
-          column.rid === columnId
-            ? {
-              ...column,
-              tasks:
-                position === 'top'
-                  ? [task, ...column.tasks]
-                  : [...column.tasks, task],
-              task_count: column.task_count + 1,
-            }
-            : column
-        )
-      );
-    }
-  };
+
 
 
 
@@ -287,7 +265,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
     }
   };
 
-  const memoizedColumns = useMemo(() => columns, [columns]);
+
 
   if (isLoading) {
     return <LoadingSkeleton />;
@@ -308,7 +286,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
           >
             <div className='max-w-full overflow-x-auto'>
               <div className='flex items-start gap-6 pb-6'>
-                {memoizedColumns.map((column) => (
+                {columns.map((column) => (
                   <KanbanColumn
                     key={column.rid}
                     column={column}
@@ -317,7 +295,6 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
                     showProfileIndicator={showProfileIndicator}
                     isCreateTaskDisabled={isCreateTaskDisabled}
                     isCreateTaskHide={isCreateTaskHide}
-                    onAddTask={handleAddTask}
 
                     onTaskClick={handleTaskClick}
                     isDragable={isDragable}
@@ -345,7 +322,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
         >
           <div className='max-w-full overflow-x-auto'>
             <div className='flex items-start gap-6 pb-6'>
-              {memoizedColumns.map((column) => (
+              {columns.map((column) => (
                 <KanbanColumn
                   key={column.rid}
                   column={column}
@@ -354,7 +331,6 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   showProfileIndicator={showProfileIndicator}
                   isCreateTaskDisabled={isCreateTaskDisabled}
                   isCreateTaskHide={isCreateTaskHide}
-                  onAddTask={handleAddTask}
 
                   onTaskClick={handleTaskClick}
                   isDragable={isDragable}

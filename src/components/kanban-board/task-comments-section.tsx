@@ -131,8 +131,6 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
   const editFileInputRef = useRef<HTMLInputElement>(null);
   const observerTarget = useRef<HTMLDivElement>(null);
   const activityObserverTarget = useRef<HTMLDivElement>(null);
-  const commentsScrollContainerRef = useRef<HTMLDivElement>(null);
-  const activitiesScrollContainerRef = useRef<HTMLDivElement>(null);
   const {
     data: infiniteData,
     fetchNextPage,
@@ -266,12 +264,6 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
 
     const element = activityObserverTarget.current;
 
-    console.log('🔧 Setting up activities observer:', {
-      hasElement: !!element,
-      activitiesCount: activities.length,
-      activeTab
-    });
-
     if (!element) return;
 
     const observer = new IntersectionObserver(handleActivityObserver, {
@@ -288,10 +280,7 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
     };
   }, [handleActivityObserver, useInfiniteScroll, activities.length, activeTab]);
 
-  useEffect(() => {
-    if (useInfiniteScroll && infiniteActivitiesData) {
-    }
-  }, [infiniteActivitiesData, activities.length, totalActivitiesCount, hasNextActivitiesPage, isFetchingNextActivitiesPage, useInfiniteScroll]);
+
 
   useEffect(() => {
     if (editingCommentId && editTextareaRef.current) {
@@ -572,7 +561,7 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
           )}
 
           {/* Comments List */}
-          <div ref={commentsScrollContainerRef} className='space-y-3 max-h-[400px] overflow-y-auto overflow-x-hidden scrollbar-hide pr-1'>
+          <div className='space-y-3 max-h-[400px] overflow-y-auto overflow-x-hidden scrollbar-hide pr-1'>
             {comments.length > 0 ? (
               comments.map((commentItem, idx) => (
                 <div
@@ -1020,7 +1009,7 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
 
       {/* Activity Tab */}
       {activeTab === 'activity' && (
-        <div ref={activitiesScrollContainerRef} className='space-y-3 max-h-[400px] overflow-y-auto overflow-x-hidden overscroll-x-none scrollbar-hide pr-1'>
+        <div className='space-y-3 max-h-[400px] overflow-y-auto overflow-x-hidden overscroll-x-none scrollbar-hide pr-1'>
           {activities.length > 0 ? (
             activities.map((activity, idx) => (
               <div

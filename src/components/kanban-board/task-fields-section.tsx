@@ -276,9 +276,28 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
                     : (selected as string);
                   if (!value) {
                     return (
-                      <span style={{ color: '#7D98B6', fontSize: '13px' }}>
-                        Choose User
-                      </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div
+                          style={{
+                            width: '20px',
+                            height: '20px',
+                            borderRadius: '50%',
+                            backgroundColor: '#9CA3AF',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '9px',
+                            fontWeight: '600',
+                            color: 'white',
+                            flexShrink: 0,
+                          }}
+                        >
+                          UA
+                        </div>
+                        <span style={{ color: '#7D98B6', fontSize: '13px' }}>
+                          Unassigned
+                        </span>
+                      </div>
                     );
                   }
                   const user = availableUsers.find((u) => u.id === value);
@@ -320,7 +339,26 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
                 }}
               >
                 <MenuItem value='' sx={{ color: '#425A76', fontSize: '13px', fontWeight: '500' }}>
-                  Choose User
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div
+                      style={{
+                        width: '20px',
+                        height: '20px',
+                        borderRadius: '50%',
+                        backgroundColor: '#9CA3AF',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '8px',
+                        fontWeight: '600',
+                        color: 'white',
+                        flexShrink: 0,
+                      }}
+                    >
+                      UA
+                    </div>
+                    Unassigned
+                  </div>
                 </MenuItem>
                 {availableUsers.map((user) => (
                   <MenuItem

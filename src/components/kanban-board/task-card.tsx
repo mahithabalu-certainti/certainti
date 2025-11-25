@@ -4,6 +4,7 @@ import type { TaskCardProps, TaskCard } from './types';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { CommentIcon, CustomChecklistIcon } from '../../assets';
+import { generateInitials, generateColorFromName } from './helper';
 
 interface ExtendedTaskCardProps extends TaskCardProps {
   isDragable?: boolean;
@@ -59,18 +60,19 @@ const TaskCardComponent: React.FC<ExtendedTaskCardProps> = ({
     const colors = {
       status: {
         // Status colors
-        'To Do': { bg: '#F3F4F6', text: '#374151', border: '#D1D5DB' },
-        'In Progress': { bg: '#DBEAFE', text: '#1E40AF', border: '#93C5FD' },
-        Done: { bg: '#DCFCE7', text: '#166534', border: '#BBF7D0' },
-        Active: { bg: '#DCFCE7', text: '#15803D', border: '#BBF7D0' }, // green theme
-        Inactive: { bg: '#FEE2E2', text: '#DC2626', border: '#FECACA' }, // red theme
+        'To Do': { bg: '#F3F4F6', text: '#374151', border: '#E5E7EB' }, // Gray-100
+        'In Progress': { bg: '#EFF6FF', text: '#1E40AF', border: '#BFDBFE' }, // Blue-50
+        'Blocked': { bg: '#FEF2F2', text: '#991B1B', border: '#FECACA' }, // Red-50
+        'Completed': { bg: '#ECFDF5', text: '#065F46', border: '#A7F3D0' }, // Emerald-50
+        Active: { bg: '#ECFDF5', text: '#065F46', border: '#A7F3D0' }, // Emerald-50
+        Inactive: { bg: '#FEF2F2', text: '#991B1B', border: '#FECACA' }, // Red-50
       },
       priority: {
-        // Priority colors - Low (blue), Medium (yellow), High & Highest (red)
-        Low: { bg: '#EFF6FF', text: '#1E40AF', border: '#93C5FD' },
-        Medium: { bg: '#FFFBEB', text: '#92400E', border: '#FDE68A' },
-        High: { bg: '#FEE2E2', text: '#991B1B', border: '#FECACA' },
-        Highest: { bg: '#FEE2E2', text: '#991B1B', border: '#FECACA' },
+        // Priority colors
+        Low: { bg: '#F0F9FF', text: '#075985', border: '#BAE6FD' }, // Sky-50
+        Medium: { bg: '#FFFBEB', text: '#92400E', border: '#FDE68A' }, // Amber-50
+        High: { bg: '#FFF1F2', text: '#9F1239', border: '#FECDD3' }, // Rose-50
+        Highest: { bg: '#FFF1F2', text: '#9F1239', border: '#FECDD3' }, // Rose-50
       },
     } as const;
 
@@ -195,17 +197,14 @@ const TaskCardComponent: React.FC<ExtendedTaskCardProps> = ({
           <div
             className='w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-semibold border border-white shadow-sm'
             style={{
-              backgroundColor: '#E0F2FE',
+              backgroundColor: generateColorFromName(taskData.assigned_to_name),
               color: '#374151',
               fontFamily: "'Mulish', 'Lexend', sans-serif",
               fontSize: '10px',
             }}
             title={taskData.assigned_to_name}
           >
-            {taskData.assigned_to_name
-              .split(' ')
-              .map((n) => n[0])
-              .join('')}
+            {generateInitials(taskData.assigned_to_name)}
           </div>
         )}
 

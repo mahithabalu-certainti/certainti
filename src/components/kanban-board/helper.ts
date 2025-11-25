@@ -1,7 +1,7 @@
 import { Assignee, User, Task, UserOption } from './types';
 
 export const generateInitials = (name: string): string => {
-  if (!name) return 'U';
+  if (!name) return 'UA';
 
   const words = name.trim().split(' ');
   if (words.length === 1) {
@@ -12,20 +12,25 @@ export const generateInitials = (name: string): string => {
 };
 
 export const generateColorFromName = (name: string): string => {
-  const colors = [
-    '#3B82F6',
-    '#10B981',
-    '#F59E0B',
-    '#EF4444',
-    '#8B5CF6',
-    '#EC4899',
-    '#14B8A6',
-    '#F97316',
-    '#6366F1',
-    '#84CC16',
-  ];
+  if (!name) return '#9CA3AF'; // Soft Gray for Unassigned
 
-  if (!name) return colors[0];
+  const colors = [
+    '#60A5FA', // Blue-400
+    '#34D399', // Emerald-400
+    '#FBBF24', // Amber-400
+    '#F87171', // Red-400
+    '#A78BFA', // Violet-400
+    '#F472B6', // Pink-400
+    '#2DD4BF', // Teal-400
+    '#FB923C', // Orange-400
+    '#818CF8', // Indigo-400
+    '#A3E635', // Lime-400
+    '#C084FC', // Purple-400
+    '#4ADE80', // Green-400
+    '#94A3B8', // Slate-400
+    '#FB7185', // Rose-400
+    '#38BDF8', // Sky-400
+  ];
 
   const hash = name.split('').reduce((acc, char) => {
     return char.charCodeAt(0) + ((acc << 5) - acc);
