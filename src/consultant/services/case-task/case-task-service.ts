@@ -1,4 +1,4 @@
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useInfiniteQuery } from '@tanstack/react-query';
 import { caseServiceApi } from '../../../api/api';
 import { CaseExportResponse } from '../../types';
 import { CommonApiResponse } from '../../../common-service';
@@ -475,6 +475,60 @@ export const useGetTaskCommentsList = (
       options?.enabled !== false
     ),
     ...options,
+  });
+};
+
+// Infinite Scrolling Task Comments (Limit: 5 per page)
+export interface InfiniteTaskCommentsParams {
+  case_rid: string;
+  account_rid: string;
+  task_rid: string;
+}
+
+export const useInfiniteTaskCommentsList = (
+  params: InfiniteTaskCommentsParams,
+  options?: {
+    enabled?: boolean;
+  }
+) => {
+  return useInfiniteQuery<TaskCommentsApiResponse, Error>({
+    queryKey: ['taskCommentsInfinite', params],
+    queryFn: async ({ pageParam = 1 }) => {
+      const response = await fetchTaskCommentsList({
+        ...params,
+        page: pageParam as number,
+        limit: 5, // Load 5 comments per page
+      });
+      return response;
+    },
+    getNextPageParam: (
+      lastPage: TaskCommentsApiResponse,
+      allPages: TaskCommentsApiResponse[]
+    ) => {
+      // If the last page has no data, there are no more pages.
+      if (!lastPage.data.data || lastPage.data.data.length === 0) {
+        return undefined;
+      }
+
+      // If the number of records in the last page is less than the limit,
+      // it means we've reached the end.
+      if (lastPage.data.data.length < 5) {
+        return undefined;
+      }
+
+      // Otherwise, return the next page number
+      return allPages.length + 1;
+    },
+    initialPageParam: 1,
+    staleTime: 0,
+    gcTime: 0,
+    retry: 0,
+    enabled: !!(
+      params.case_rid &&
+      params.account_rid &&
+      params.task_rid &&
+      options?.enabled !== false
+    ),
   });
 };
 

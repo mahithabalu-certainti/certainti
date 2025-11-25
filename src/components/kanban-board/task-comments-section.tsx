@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, Suspense } from 'react';
+import React, { useState, useRef, useEffect, Suspense, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
@@ -6,7 +6,11 @@ import { Activity, Comment, Task } from './types';
 import { PencilIcon, DeleteIcon, AddIcon, ErrorInfoIcon } from '../../assets';
 import { Tooltip } from '@mui/material';
 import TextButton from '../button/text-button';
+import { useInfiniteTaskCommentsList } from '../../consultant/services/case-task/case-task-service';
+import { useInfiniteTaskActivities } from '../../consultant/services/work-breakdown/work-breakdown-service';
+import { transformComments, transformActivities, type TaskCommentRaw, type TaskActivityRaw } from '../../consultant/pages/case/case-details/work-breakdown/helper';
 import { generateInitials, generateColorFromName } from './helper';
+import LoadingSkeleton from './loading-skeleton';
 
 interface TaskCommentsSectionProps {
   fieldVisibility: Record<string, boolean | undefined>;
@@ -42,6 +46,7 @@ interface TaskCommentsSectionProps {
   | undefined;
   loadingComments?: boolean;
   loadingActivities?: boolean;
+  useInfiniteScroll?: boolean; // New prop to enable infinite scrolling
 }
 
 const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
@@ -49,8 +54,8 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
   fieldDisabled,
   activeTab,
   setActiveTab,
-  comments,
-  activities,
+  comments: propComments,
+  activities: propActivities,
   editingCommentId,
   editingCommentText,
   setEditingCommentId,
@@ -61,6 +66,7 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
   onAddComment,
   onUpdateComment,
   onDeleteComment,
+  useInfiniteScroll = true,
 }) => {
   const ErrorIconTooltip = ({ error }: { error: string }) => (
     <Tooltip
@@ -123,8 +129,170 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
   const editTextareaRef = useRef<HTMLTextAreaElement>(null);
   const addFileInputRef = useRef<HTMLInputElement>(null);
   const editFileInputRef = useRef<HTMLInputElement>(null);
+  const observerTarget = useRef<HTMLDivElement>(null);
+  const activityObserverTarget = useRef<HTMLDivElement>(null);
+  const commentsScrollContainerRef = useRef<HTMLDivElement>(null);
+  const activitiesScrollContainerRef = useRef<HTMLDivElement>(null);
+  const {
+    data: infiniteData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading: isLoadingInfinite,
+  } = useInfiniteTaskCommentsList(
+    {
+      case_rid: caseId || '',
+      account_rid: accountId || '',
+      task_rid: taskId || '',
+    },
+    {
+      enabled: useInfiniteScroll && !!accountId && !!caseId && !!taskId,
+    }
+  );
 
-  // Auto-focus edit textarea when entering edit mode
+  const {
+    data: infiniteActivitiesData,
+    fetchNextPage: fetchNextActivitiesPage,
+    hasNextPage: hasNextActivitiesPage,
+    isFetchingNextPage: isFetchingNextActivitiesPage,
+    isLoading: isLoadingActivitiesInfinite,
+  } = useInfiniteTaskActivities(
+    {
+      case_rid: caseId || '',
+      account_rid: accountId || '',
+      task_rid: taskId || '',
+    },
+    {
+      enabled: useInfiniteScroll && !!accountId && !!caseId && !!taskId,
+    }
+  );
+
+  const comments = React.useMemo(() => {
+    if (!useInfiniteScroll) {
+      return propComments;
+    }
+
+    if (!infiniteData?.pages) {
+      return [];
+    }
+
+    try {
+      const allRawComments = infiniteData.pages.flatMap(
+        (page) => page.data.data || []
+      );
+      return transformComments(allRawComments as TaskCommentRaw[]);
+    } catch (error) {
+      console.error('Error transforming infinite comments:', error);
+      return [];
+    }
+  }, [infiniteData, useInfiniteScroll, propComments]);
+
+  const activities = React.useMemo(() => {
+    if (!useInfiniteScroll) {
+      return propActivities;
+    }
+
+    if (!infiniteActivitiesData?.pages) {
+      return [];
+    }
+
+    try {
+      const allRawActivities = infiniteActivitiesData.pages.flatMap(
+        (page) => page.data.data || []
+      );
+      return transformActivities(allRawActivities as TaskActivityRaw[]);
+    } catch (error) {
+      console.error('Error transforming infinite activities:', error);
+      return [];
+    }
+  }, [infiniteActivitiesData, useInfiniteScroll, propActivities]);
+
+  const totalCommentsCount = React.useMemo(() => {
+    if (!useInfiniteScroll || !infiniteData?.pages || infiniteData.pages.length === 0) {
+      return 0;
+    }
+    return infiniteData.pages[0]?.data?.total_result || 0;
+  }, [infiniteData, useInfiniteScroll]);
+
+  const totalActivitiesCount = React.useMemo(() => {
+    if (!useInfiniteScroll || !infiniteActivitiesData?.pages || infiniteActivitiesData.pages.length === 0) {
+      return 0;
+    }
+    return infiniteActivitiesData.pages[0]?.data?.total_result || 0;
+  }, [infiniteActivitiesData, useInfiniteScroll]);
+
+  const handleObserver = useCallback(
+    (entries: IntersectionObserverEntry[]) => {
+      const [target] = entries;
+      if (target.isIntersecting && hasNextPage && !isFetchingNextPage) {
+        fetchNextPage();
+      }
+    },
+    [fetchNextPage, hasNextPage, isFetchingNextPage]
+  );
+
+  const handleActivityObserver = useCallback(
+    (entries: IntersectionObserverEntry[]) => {
+      const [target] = entries;
+      if (target.isIntersecting && hasNextActivitiesPage && !isFetchingNextActivitiesPage) {
+        fetchNextActivitiesPage();
+      }
+    },
+    [fetchNextActivitiesPage, hasNextActivitiesPage, isFetchingNextActivitiesPage]
+  );
+  useEffect(() => {
+    if (!useInfiniteScroll || activeTab !== 'comments') return;
+
+    const element = observerTarget.current;
+    if (!element) return;
+
+    const observer = new IntersectionObserver(handleObserver, {
+      root: null,
+      rootMargin: '100px',
+      threshold: 0.1,
+    });
+
+    observer.observe(element);
+
+    return () => {
+      if (element) {
+        observer.unobserve(element);
+      }
+    };
+  }, [handleObserver, useInfiniteScroll, activeTab]);
+
+  useEffect(() => {
+    if (!useInfiniteScroll || activeTab !== 'activity') return;
+
+    const element = activityObserverTarget.current;
+
+    console.log('🔧 Setting up activities observer:', {
+      hasElement: !!element,
+      activitiesCount: activities.length,
+      activeTab
+    });
+
+    if (!element) return;
+
+    const observer = new IntersectionObserver(handleActivityObserver, {
+      root: null, // Use viewport as root, similar to comments
+      rootMargin: '100px', // Start loading 100px before reaching the bottom
+      threshold: 0.1,
+    });
+
+    observer.observe(element);
+    return () => {
+      if (element) {
+        observer.unobserve(element);
+      }
+    };
+  }, [handleActivityObserver, useInfiniteScroll, activities.length, activeTab]);
+
+  useEffect(() => {
+    if (useInfiniteScroll && infiniteActivitiesData) {
+    }
+  }, [infiniteActivitiesData, activities.length, totalActivitiesCount, hasNextActivitiesPage, isFetchingNextActivitiesPage, useInfiniteScroll]);
+
   useEffect(() => {
     if (editingCommentId && editTextareaRef.current) {
       editTextareaRef.current.focus();
@@ -144,6 +312,7 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
 
   const invalidateCommentQueries = () => {
     if (accountId && caseId && taskId) {
+      // Invalidate regular comments query
       queryClient.invalidateQueries({
         queryKey: [
           'taskComments',
@@ -156,6 +325,19 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
           },
         ],
       });
+
+      // Invalidate infinite comments query
+      queryClient.invalidateQueries({
+        queryKey: [
+          'taskCommentsInfinite',
+          {
+            case_rid: caseId,
+            account_rid: accountId,
+            task_rid: taskId,
+          },
+        ],
+      });
+
       queryClient.invalidateQueries({
         queryKey: [
           'taskAttachments',
@@ -250,6 +432,7 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
       setComment('');
       setCommentFiles([]);
       setShowAddCommentForm(false);
+      invalidateCommentQueries();
     } catch (error) {
       console.error('Error adding comment:', error);
     } finally {
@@ -344,7 +527,7 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
             : 'text-gray-600 hover:text-gray-800 border-b-2 border-transparent'
             }`}
         >
-          Comments ({comments.length})
+          Comments {totalCommentsCount > 0 && <span className='ml-1 text-xs text-gray-500'>({totalCommentsCount})</span>}
         </button>
         <button
           onClick={() => setActiveTab('activity')}
@@ -353,7 +536,7 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
             : 'text-gray-600 hover:text-gray-800 border-b-2 border-transparent'
             }`}
         >
-          Activity ({activities.length})
+          Activity {totalActivitiesCount > 0 && <span className='ml-1 text-xs text-gray-500'>({totalActivitiesCount})</span>}
         </button>
       </div>
 
@@ -389,7 +572,7 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
           )}
 
           {/* Comments List */}
-          <div className='space-y-3 max-h-[400px] overflow-y-auto overflow-x-hidden scrollbar-hide pr-1'>
+          <div ref={commentsScrollContainerRef} className='space-y-3 max-h-[400px] overflow-y-auto overflow-x-hidden scrollbar-hide pr-1'>
             {comments.length > 0 ? (
               comments.map((commentItem, idx) => (
                 <div
@@ -702,10 +885,27 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                   )}
                 </div>
               ))
+            ) : isLoadingInfinite && useInfiniteScroll ? (
+              <LoadingSkeleton count={3} variant='comment' />
             ) : (
               <div className='text-center py-2'>
                 <p className='text-sm text-gray-500'>No comments yet.</p>
               </div>
+            )}
+
+            {/* Intersection Observer Target for Infinite Scroll */}
+            {useInfiniteScroll && comments.length > 0 && (
+              <div ref={observerTarget} className='h-4' />
+            )}
+
+            {/* Loading Next Page Indicator */}
+            {useInfiniteScroll && isFetchingNextPage && (
+              <LoadingSkeleton count={2} variant='comment' />
+            )}
+
+            {/* End of List Indicator */}
+            {useInfiniteScroll && !hasNextPage && comments.length > 0 && (
+              <></>
             )}
           </div>
 
@@ -820,7 +1020,7 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
 
       {/* Activity Tab */}
       {activeTab === 'activity' && (
-        <div className='space-y-3 max-h-[400px] overflow-y-auto overflow-x-hidden overscroll-x-none scrollbar-hide pr-1'>
+        <div ref={activitiesScrollContainerRef} className='space-y-3 max-h-[400px] overflow-y-auto overflow-x-hidden overscroll-x-none scrollbar-hide pr-1'>
           {activities.length > 0 ? (
             activities.map((activity, idx) => (
               <div
@@ -830,14 +1030,11 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                 <div
                   className='w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 text-white'
                   style={{
-                    backgroundColor: '#8B5CF6',
+                    backgroundColor: activity.color || '#8B5CF6',
                     fontSize: '8px',
                   }}
                 >
-                  {activity.user
-                    .split(' ')
-                    .map((n) => n[0])
-                    .join('')}
+                  {activity.initials || generateInitials(activity.user)}
                 </div>
                 <div className='flex-1 min-w-0'>
                   <p className='text-sm text-gray-900 break-words'>
@@ -854,10 +1051,27 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                 </div>
               </div>
             ))
+          ) : isLoadingActivitiesInfinite && useInfiniteScroll ? (
+            <LoadingSkeleton count={3} variant='activity' />
           ) : (
             <div className='text-center py-2'>
               <p className='text-sm text-gray-500'>No activities yet</p>
             </div>
+          )}
+
+          {/* Intersection Observer Target for Infinite Scroll Activities */}
+          {useInfiniteScroll && activities.length > 0 && (
+            <div ref={activityObserverTarget} className='h-4' />
+          )}
+
+          {/* Loading Next Page Indicator for Activities */}
+          {useInfiniteScroll && isFetchingNextActivitiesPage && (
+            <LoadingSkeleton count={2} variant='activity' />
+          )}
+
+          {/* End of List Indicator for Activities */}
+          {useInfiniteScroll && !hasNextActivitiesPage && activities.length > 0 && (
+            <></>
           )}
         </div>
       )}

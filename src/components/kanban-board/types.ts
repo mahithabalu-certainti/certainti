@@ -17,6 +17,8 @@ export interface Activity {
   action: string;
   date: string;
   link?: string;
+  initials?: string;
+  color?: string;
 }
 
 export interface CommentAttachment {

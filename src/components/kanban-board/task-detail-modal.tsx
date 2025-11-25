@@ -1274,7 +1274,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                     Start Date
                   </label>
                   <DatePicker
-                    disabled={true}
+                    disabled={false}
                     value={formatDateForInput(editedTask?.startDate)}
                     onChange={(newValue) =>
                       handleStartDateChange(
@@ -1371,7 +1371,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                     Due Date
                   </label>
                   <DatePicker
-                    disabled={true}
+                    disabled={false}
                     value={formatDateForInput(editedTask?.endDate)}
                     onChange={(newValue) =>
                       handleEndDateChange(
@@ -1634,6 +1634,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
               onAddComment={onAddComment}
               onUpdateComment={onUpdateComment}
               onDeleteComment={onDeleteComment}
+              useInfiniteScroll={true}
             />
           )}
 
