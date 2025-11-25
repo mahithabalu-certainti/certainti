@@ -477,6 +477,16 @@ export class CaseManagementService {
     const mainDb = await this.getMainDb();
     const isTaskExists = await this.caseManangementSchemaService.checkTaskExistsForUpdate(data.rid);
     if(isTaskExists) {
+      if(data.task_name) {
+        const checkSameTask = await this.caseManangementSchemaService.checkTaskNameExistsForUpdate(data)
+        if(checkSameTask) {
+          return {
+            statusCode : HttpStatus.BAD_REQUEST,
+            statusMessage : STATUS_MESSAGE.taskNameExistsAlready,
+            data : null
+            }
+        }
+      }
       const setData = setTaskTemplateData(isTaskExists, data, data.userId)
       if(setData.length > 0) {
         const result : any = await mainDb.query(rawQueries.updateTaskTemplate(setData, data.rid));
@@ -494,7 +504,7 @@ export class CaseManagementService {
           return {
             statusCode : HttpStatus.SUCCESS,
             statusMessage : STATUS_MESSAGE.taskTemplateSuccess,
-            data : responseData.data[0]
+            data : null
             }
           }
         }
