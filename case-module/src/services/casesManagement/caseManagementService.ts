@@ -504,7 +504,7 @@ export class CaseManagementService {
           return {
             statusCode : HttpStatus.SUCCESS,
             statusMessage : STATUS_MESSAGE.taskTemplateSuccess,
-            data : null
+            data : responseData.data[0]
             }
           }
         }
