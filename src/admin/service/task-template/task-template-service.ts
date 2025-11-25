@@ -16,6 +16,8 @@ import {
   TaskTemplateDetailsResponse,
   TaskLinkTypeResponse,
   TaskTemplateResponse,
+  TaskCategoryTypeResponse,
+  TaskWeightAgeTypeResponse,
 } from '../../types';
 import { CommonApiResponse } from '../../../common-service';
 
@@ -304,11 +306,66 @@ export const fetchTaskAssignRoleTypes =
       throw error;
     }
   };
+// Task assign role type
 
 export const useGetTaskAssignRoleTypes = () => {
   return useQuery<TaskAssigneRoleTypeResponse, Error>({
     queryKey: ['task-assignerole-types'],
     queryFn: fetchTaskAssignRoleTypes,
+    retry: 0,
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+  });
+};
+
+export const getTaskWeightAgeUrl = (): string =>
+  '/api/caseManagement/taskTemplate/weightage';
+export const fetchTaskWeightAgeTypes =
+  async (): Promise<TaskWeightAgeTypeResponse> => {
+    try {
+      const { data } = await caseServiceApi.get<TaskWeightAgeTypeResponse>(
+        getTaskWeightAgeUrl()
+      );
+      return data;
+    } catch (error) {
+      console.error('Error fetching task template types:', error);
+      throw error;
+    }
+  };
+
+export const useGetTaskWeightAgeTypes = () => {
+  return useQuery<TaskWeightAgeTypeResponse, Error>({
+    queryKey: ['task-weightAge-types'],
+    queryFn: fetchTaskWeightAgeTypes,
+    retry: 0,
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+  });
+};
+export const getTaskCategoryUrl = (): string =>
+  '/api/caseManagement/taskTemplate/category';
+export const fetchTaskCategoryTypes =
+  async (): Promise<TaskCategoryTypeResponse> => {
+    try {
+      const { data } =
+        await caseServiceApi.get<TaskCategoryTypeResponse>(
+          getTaskCategoryUrl()
+        );
+      return data;
+    } catch (error) {
+      console.error('Error fetching task template types:', error);
+      throw error;
+    }
+  };
+
+export const useGetTaskCategoryTypes = () => {
+  return useQuery<TaskCategoryTypeResponse, Error>({
+    queryKey: ['task-category-types'],
+    queryFn: fetchTaskCategoryTypes,
     retry: 0,
     staleTime: Infinity,
     gcTime: Infinity,
@@ -365,6 +422,64 @@ export const useGetTaskTemplate = (payload: Record<string, any>) => {
   return useQuery<TaskTemplateResponse, Error>({
     queryKey: ['task-template', payload],
     queryFn: () => fetchTaskTemplate(payload),
+    retry: 0,
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+  });
+};
+
+// Task weightage type
+export const getTaskWeightageTypeUrl = (): string =>
+  '/api/caseManagement/taskTemplate/weightage';
+
+export const fetchTaskWeightageTypes =
+  async (): Promise<TaskLinkTypeResponse> => {
+    try {
+      const { data } = await caseServiceApi.get<TaskLinkTypeResponse>(
+        getTaskWeightageTypeUrl()
+      );
+      return data;
+    } catch (error) {
+      console.error('Error fetching task weightage types:', error);
+      throw error;
+    }
+  };
+
+export const useWeightageList = () => {
+  return useQuery<TaskLinkTypeResponse, Error>({
+    queryKey: ['task-weightage-types'],
+    queryFn: fetchTaskWeightageTypes,
+    retry: 0,
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+  });
+};
+
+// Task category type
+export const getTaskCategoryTypeUrl = (): string =>
+  '/api/caseManagement/taskTemplate/category';
+
+export const fetchTaskCategoryTypes =
+  async (): Promise<TaskLinkTypeResponse> => {
+    try {
+      const { data } = await caseServiceApi.get<TaskLinkTypeResponse>(
+        getTaskCategoryTypeUrl()
+      );
+      return data;
+    } catch (error) {
+      console.error('Error fetching task category types:', error);
+      throw error;
+    }
+  };
+
+export const useTaskCategoryList = () => {
+  return useQuery<TaskLinkTypeResponse, Error>({
+    queryKey: ['task-category-types'],
+    queryFn: fetchTaskCategoryTypes,
     retry: 0,
     staleTime: Infinity,
     gcTime: Infinity,

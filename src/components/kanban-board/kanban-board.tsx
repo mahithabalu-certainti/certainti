@@ -63,7 +63,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
   checklistData = [],
   userData = [],
   roleOptions = [],
-  isDragable = true,
+  isDragable = false,
   isDragablebetweenBoards = false,
   isLoading = false,
   onTaskClick,
@@ -107,13 +107,13 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
         columns.map((column) =>
           column.rid === columnId
             ? {
-                ...column,
-                tasks:
-                  position === 'top'
-                    ? [task, ...column.tasks]
-                    : [...column.tasks, task],
-                task_count: column.task_count + 1,
-              }
+              ...column,
+              tasks:
+                position === 'top'
+                  ? [task, ...column.tasks]
+                  : [...column.tasks, task],
+              task_count: column.task_count + 1,
+            }
             : column
         )
       );
@@ -125,9 +125,9 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
       columns.map((column) =>
         column.rid === columnId
           ? {
-              ...column,
-              milestone_name: newName,
-            }
+            ...column,
+            milestone_name: newName,
+          }
           : column
       )
     );

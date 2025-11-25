@@ -207,7 +207,7 @@ const CasesProjects: React.FC<casesProjectProps> = ({
   const detailsTabs = [
     { label: 'Project Details', value: 'projects_details' },
     {
-      label: 'Project Fininacial Summary',
+      label: 'Project Financial Summary',
       value: 'project_financial_summary',
     },
     { label: 'Resource Cost', value: 'resource_cost' },

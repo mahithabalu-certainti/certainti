@@ -18,6 +18,8 @@ export const TaskTemplateFormFieldsData = (
   statusOptions: SelectOption[],
   taskConnecterTypesOptions: SelectOption[],
   taskTemplate: SelectOption[],
+  taskWeightAgeTypesOptions: SelectOption[],
+  taskCategoryTypesOptions: SelectOption[],
   taskType: boolean,
   permissionMap: Record<string, { read: boolean; edit: boolean }>
 ): FormType[] => {
@@ -144,6 +146,32 @@ export const TaskTemplateFormFieldsData = (
               permissionMap?.['status_rid']?.read &&
               !permissionMap?.['status_rid']?.edit,
           }),
+          createSelectField('weightage_rid', 'Task Weight Age ', {
+            options: taskWeightAgeTypesOptions || [],
+            placeholder: 'Choose Task Weight Age',
+            required: false,
+            // disabled:
+            //   isEditView &&
+            //   !permissionMap?.['weightage_rid']?.edit &&
+            //   permissionMap?.['weightage_rid']?.read,
+            // hide:
+            //   isEditView &&
+            //   !permissionMap?.['weightage_rid']?.edit &&
+            //   !permissionMap?.['weightage_rid']?.read,
+          }),
+          createSelectField('task_category_rid', 'Task Category', {
+            required: false,
+            options: taskCategoryTypesOptions || [],
+            placeholder: 'Choose Task Category',
+            // hide:
+            //   isEditView &&
+            //   !permissionMap?.['task_category_rid']?.read &&
+            //   !permissionMap?.['task_category_rid']?.edit,
+            // disabled:
+            //   isEditView &&
+            //   permissionMap?.['task_category_rid']?.read &&
+            //   !permissionMap?.['task_category_rid']?.edit,
+          }),
         ],
       },
       {
@@ -154,7 +182,7 @@ export const TaskTemplateFormFieldsData = (
           createSelectField('relationship_connector_rid', 'Linked Type', {
             options: taskConnecterTypesOptions || [],
             placeholder: 'Choose Linked Type',
-            required: true,
+            required: false,
             onChange: true,
           }),
           createMultiSelectField('target_rid', 'Linked Task Type', {

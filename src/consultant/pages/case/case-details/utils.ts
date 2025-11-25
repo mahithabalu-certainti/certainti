@@ -52,7 +52,7 @@ export const transformCaseData = (cases: CaseDetails): DisplayColumn[] => {
 
         {
           label: 'Fiscal Year',
-          value: cases?.fiscal_year?.toString() || '-',
+          value: 'FY-' + cases?.fiscal_year?.toString() || '-',
         },
 
         {
@@ -64,9 +64,9 @@ export const transformCaseData = (cases: CaseDetails): DisplayColumn[] => {
           label: 'Total Qualified Project Cost',
           value: cases?.case_total_project_cost
             ? costDisplay(
-                cases.case_total_qualified_project_cost,
-                currencySymbol
-              )
+              cases.case_total_qualified_project_cost,
+              currencySymbol
+            )
             : '-',
         },
       ],
@@ -116,7 +116,7 @@ export const transformCaseData = (cases: CaseDetails): DisplayColumn[] => {
         },
 
         {
-          label: 'Case % Completion',
+          label: 'Case Progress Percentage',
           value: cases.case_completion_percentage
             ? `${cases.case_completion_percentage}%`
             : '-',

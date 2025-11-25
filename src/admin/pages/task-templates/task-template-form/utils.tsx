@@ -19,6 +19,8 @@ export const transformTaskTemplatePayload = (
     checklist_template_rid: formData.checklist_template_rid,
     case_team_member_role_rid: formData.case_team_member_role_rid,
     status_rid: formData.status_rid,
+    task_category_rid: formData.task_category_rid,
+    weightage_rid: formData.weightage_rid,
     workflow_connector: {
       source_rid: '',
       target_rid: formData?.target_rid || '',

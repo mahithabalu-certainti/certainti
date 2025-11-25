@@ -24,9 +24,9 @@ import {
   useDeleteTaskComment,
 } from '../../../../services/case-task/case-task-service';
 import {
-  useGetUserOptions,
   useGetRoleOptions,
   useGetTagOptions,
+  useGetCaseTeamMembersDropdown,
 } from '../../../../services/case-team/case-team-service';
 import {
   transformPriorityData,
@@ -96,7 +96,11 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
     }
   }, [searchParams, navigate]);
 
-  const userOptionsQuery = useGetUserOptions(accountId || '');
+  const caseTeamMembersQuery = useGetCaseTeamMembersDropdown(
+    accountId || '',
+    caseId || '',
+    !!accountId && !!caseId
+  );
   const roleOptionsQuery = useGetRoleOptions();
   const prioritiesQuery = useGetTaskPriorities();
   const statusesQuery = useGetTaskStatuses();
@@ -120,6 +124,16 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
     () => transformTagData(tagOptionsQuery.data || []),
     [tagOptionsQuery.data]
   );
+
+  const userData = useMemo(() => {
+    if (caseTeamMembersQuery.data && Array.isArray(caseTeamMembersQuery.data)) {
+      return caseTeamMembersQuery.data.map((member) => ({
+        rid: member.user_rid,
+        name: member.user_name,
+      }));
+    }
+    return [];
+  }, [caseTeamMembersQuery.data]);
 
   const checklistData = useMemo(() => {
     if (checklistQuery.data?.data && Array.isArray(checklistQuery.data.data)) {
@@ -205,7 +219,6 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
           task_description: taskData.task_description || '',
           status_rid: statusRid,
           priority_rid: taskData.priority_rid || '',
-          case_team_member_role_rid: taskData.case_team_member_role_rid || '',
           effective_start_datetime: taskData.effective_start_datetime || '',
           effective_end_datetime: taskData.effective_end_datetime || '',
           milestone_template_rid: columnId,
@@ -213,10 +226,52 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
             (
               taskData as Partial<TaskCard> & {
                 checklist_template_rid?: string;
+                workflow_connector?: {
+                  source_rid: string;
+                  relationship_connector_rid?: string;
+                  target_rid?: string[];
+                };
+                weightage_rid?: string;
+                task_category_rid?: string;
               }
             ).checklist_template_rid || '',
-          tags: tagsArray.length > 0 ? tagsArray : undefined,
-          workflow_connector: {},
+          tags: tagsArray,
+          workflow_connector: (
+            taskData as Partial<TaskCard> & {
+              workflow_connector?: {
+                source_rid: string;
+                relationship_connector_rid?: string;
+                target_rid?: string[];
+              };
+            }
+          ).workflow_connector || {
+            source_rid: '',
+          },
+          ...((
+            taskData as Partial<TaskCard> & {
+              weightage_rid?: string;
+            }
+          ).weightage_rid && {
+            weightage_rid: (
+              taskData as Partial<TaskCard> & {
+                weightage_rid?: string;
+              }
+            ).weightage_rid,
+          }),
+          ...((
+            taskData as Partial<TaskCard> & {
+              task_category_rid?: string;
+            }
+          ).task_category_rid && {
+            task_category_rid: (
+              taskData as Partial<TaskCard> & {
+                task_category_rid?: string;
+              }
+            ).task_category_rid,
+          }),
+          ...(taskData.assigned_to && {
+            assigned_to: taskData.assigned_to,
+          }),
         };
 
         createTaskMutation.mutate(taskPayload, {
@@ -621,7 +676,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
                 priorityData={priorityData}
                 tagData={tagData}
                 checklistData={checklistData}
-                userData={userOptionsQuery.data || []}
+                userData={userData}
                 roleOptions={roleOptionsQuery.data || []}
                 onTaskClick={setOpenTaskId}
                 onCreateTask={handleCreateTask}
@@ -644,7 +699,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
                 statusData={statusData}
                 priorityData={priorityData}
                 tagData={tagData}
-                availableUsers={userOptionsQuery.data || []}
+                availableUsers={userData}
                 roleOptions={roleOptionsQuery.data || []}
                 checklistData={checklistData}
                 fieldVisibility={{}}

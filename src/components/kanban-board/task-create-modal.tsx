@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { MenuItem, SelectChangeEvent, Select } from '@mui/material';
+
 import dayjs from 'dayjs';
 import { CalendarIcon, CloseIcon } from '../../assets';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -14,6 +14,12 @@ import {
 import TaskFieldsSection from './task-fields-section';
 import type { UserOption } from './types';
 import type { RoleOption } from '../../consultant/services/case-team/case-team-service';
+import {
+  useGetTaskConnectorTypes,
+  useGetTaskTemplate,
+  useWeightageList,
+  useTaskCategoryList,
+} from '../../admin/service/task-template/task-template-service';
 
 // Form data interface
 export interface TaskFormData {
@@ -30,6 +36,14 @@ export interface TaskFormData {
   selectedRoleRid: string;
   selectedChecklist: string;
   selectedChecklistRid: string;
+  linkedType: string;
+  linkedTypeRid: string;
+  linkTaskTypes: string[];
+  linkTaskTypeRids: string[];
+  weightage: string;
+  weightageRid: string;
+  category: string;
+  categoryRid: string;
 }
 
 interface TaskCreateModalProps {
@@ -81,8 +95,8 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
   checklistData = [],
   collaboratorData = [],
   availableUsers = [],
-  roleOptions = [],
-  fieldVisibility = { assignee: true },
+
+  fieldVisibility = {},
   fieldDisabled = {},
 }) => {
   const [taskTitle, setTaskTitle] = useState('');
@@ -99,19 +113,88 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
   const [selectedRoleRid, setSelectedRoleRid] = useState('');
   const [selectedChecklist, setSelectedChecklist] = useState('');
   const [selectedChecklistRid, setSelectedChecklistRid] = useState('');
+  const [linkedType, setLinkedType] = useState('');
+  const [linkedTypeRid, setLinkedTypeRid] = useState('');
+  const [linkTaskTypes, setLinkTaskTypes] = useState<string[]>([]);
+  const [linkTaskTypeRids, setLinkTaskTypeRids] = useState<string[]>([]);
+  const [weightage, setWeightage] = useState('');
+  const [weightageRid, setWeightageRid] = useState('');
+  const [category, setCategory] = useState('');
+  const [categoryRid, setCategoryRid] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const enrichedUsers = useMemo(() => {
     return collaboratorData && collaboratorData.length > 0
       ? collaboratorData.map((collab) => ({
-          id: collab.rid,
-          name: collab.name,
-          email: collab.email,
-          initials: generateInitials(collab.name),
-          color: generateColorFromName(collab.name),
-        }))
+        id: collab.rid,
+        name: collab.name,
+        email: collab.email,
+        initials: generateInitials(collab.name),
+        color: generateColorFromName(collab.name),
+      }))
       : availableUsers.map(enrichUserOption);
   }, [collaboratorData, availableUsers]);
+
+  // Fetch connector types and task templates
+  const taskConnectorTypesQuery = useGetTaskConnectorTypes();
+  const taskTemplatesQuery = useGetTaskTemplate({ search: '' });
+
+  const connectorTypesData = useMemo(() => {
+    if (taskConnectorTypesQuery.data?.data && Array.isArray(taskConnectorTypesQuery.data.data)) {
+      return taskConnectorTypesQuery.data.data.map(
+        (connector: { rid: string; relationship_type: string }) => ({
+          id: connector.rid,
+          name: connector.relationship_type,
+        })
+      );
+    }
+    return [];
+  }, [taskConnectorTypesQuery.data]);
+
+  const taskTemplatesData = useMemo(() => {
+    if (taskTemplatesQuery.data?.data && Array.isArray(taskTemplatesQuery.data.data)) {
+      return taskTemplatesQuery.data.data.map(
+        (template: { rid: string; task_name: string }) => ({
+          id: template.rid,
+          name: template.task_name,
+        })
+      );
+    }
+    return [];
+  }, [taskTemplatesQuery.data]);
+
+  // Fetch weightage and category lists
+  const weightageListQuery = useWeightageList();
+  const categoryListQuery = useTaskCategoryList();
+
+  const weightageData = useMemo(() => {
+    // Handle nested data.data structure
+    const response = weightageListQuery.data as any;
+    const dataArray = response?.data?.data || response?.data;
+    if (dataArray && Array.isArray(dataArray)) {
+      return dataArray.map(
+        (item: { rid: string; weightage_value: number }) => ({
+          id: item.rid,
+          name: String(item.weightage_value),
+        })
+      );
+    }
+    return [];
+  }, [weightageListQuery.data]);
+
+  const categoryData = useMemo(() => {
+    const response = categoryListQuery.data as any;
+    if (response?.data && Array.isArray(response.data)) {
+      return response.data.map(
+        (item: { rid: string; category_name: string }) => ({
+          id: item.rid,
+          name: item.category_name,
+        })
+      );
+    }
+    return [];
+  }, [categoryListQuery.data]);
 
   // Initialize status to "To Do" when statusData changes
   useEffect(() => {
@@ -137,15 +220,44 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
     setSelectedRoleRid('');
     setSelectedChecklist('');
     setSelectedChecklistRid('');
+    setLinkedType('');
+    setLinkedTypeRid('');
+    setLinkTaskTypes([]);
+    setLinkTaskTypeRids([]);
+    setWeightage('');
+    setWeightageRid('');
+    setCategory('');
+    setCategoryRid('');
+    setErrors({});
     onClose();
   };
 
   const handleSubmit = async () => {
-    if (!taskTitle.trim()) return;
-    if (!selectedPriority || !selectedPriorityRid) return;
-    if (!startDate || !endDate) return;
-    if (!selectedRole || !selectedRoleRid) return;
-    if (selectedTags.length === 0) return;
+    const newErrors: Record<string, string> = {};
+    if (!taskTitle.trim()) newErrors.taskTitle = 'Task Name is required';
+    if (!selectedPriority || !selectedPriorityRid)
+      newErrors.priority = 'Priority is required';
+    if (!startDate && !fieldVisibility.startDate)
+      newErrors.startDate = 'Start Date is required';
+    if (!endDate && !fieldVisibility.endDate)
+      newErrors.endDate = 'Due Date is required';
+    if (
+      (!selectedChecklist || !selectedChecklistRid) &&
+      !fieldVisibility.checklist
+    )
+      newErrors.checklistTemplate = 'Checklist Template is required';
+
+    if (linkedType && (!linkTaskTypes || linkTaskTypes.length === 0)) {
+      newErrors.linkTaskType = 'Link Task Type is required';
+    }
+    if (!linkedType && linkTaskTypes && linkTaskTypes.length > 0) {
+      newErrors.linkedType = 'Linked Type is required';
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -163,9 +275,15 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
         selectedRoleRid,
         selectedChecklist,
         selectedChecklistRid,
+        linkedType,
+        linkedTypeRid,
+        linkTaskTypes,
+        linkTaskTypeRids,
+        weightage,
+        weightageRid,
+        category,
+        categoryRid,
       };
-
-      console.log('Submitting form data:', formData);
       await onCreateTask(columnId, formData);
       handleClose();
     } catch (error) {
@@ -177,6 +295,9 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
 
   const handleStartDateChange = (newValue: dayjs.Dayjs | null) => {
     setStartDate(newValue);
+    if (newValue) {
+      setErrors((prev) => ({ ...prev, startDate: '' }));
+    }
     if (endDate && newValue && endDate <= newValue) {
       setEndDate(null);
     }
@@ -187,6 +308,9 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
       return;
     }
     setEndDate(newValue);
+    if (newValue) {
+      setErrors((prev) => ({ ...prev, endDate: '' }));
+    }
   };
 
   const getMinEndDate = () => {
@@ -194,23 +318,6 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
       return startDate.add(1, 'day');
     }
     return undefined;
-  };
-
-  const isFormValid = () => {
-    const hasTaskTitle = taskTitle.trim();
-    const hasPriority = selectedPriority && selectedPriorityRid;
-    const hasDates = startDate && endDate;
-    const hasRole = selectedRole && selectedRoleRid;
-    const hasTags = selectedTags.length > 0;
-    const hasChecklist = selectedChecklist && selectedChecklistRid;
-    return (
-      hasTaskTitle &&
-      hasPriority &&
-      hasDates &&
-      hasRole &&
-      hasTags &&
-      hasChecklist
-    );
   };
 
   if (!isOpen) return null;
@@ -248,197 +355,22 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
             <input
               type='text'
               value={taskTitle}
-              onChange={(e) => setTaskTitle(e.target.value)}
+              onChange={(e) => {
+                setTaskTitle(e.target.value);
+                if (e.target.value.trim()) {
+                  setErrors((prev) => ({ ...prev, taskTitle: '' }));
+                }
+              }}
               placeholder='Enter task name'
-              className='w-full text-[13px] font-normal bg-transparent border-b border-gray-300 focus:border-blue-400 focus:border-b outline-none text-gray-900 placeholder-[#7D98B6] pb-2'
+              className={`w-full text-[13px] font-normal bg-transparent border-b ${errors.taskTitle ? 'border-red-500' : 'border-gray-300'} focus:border-blue-400 focus:border-b outline-none text-gray-900 placeholder-[#7D98B6] pb-2`}
               autoFocus
             />
-          </div>
-
-          {fieldVisibility.assignee !== true && (
-            <div className='flex items-center justify-between'>
-              <span className='text-[13px] font-medium text-gray-600'>
-                Assignee
+            {errors.taskTitle && (
+              <span className='text-xs text-red-500 mt-1'>
+                {errors.taskTitle}
               </span>
-              <div className='w-[200px]'>
-                <Select
-                  name='assignee'
-                  disabled={fieldDisabled.assignee}
-                  className='custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px]'
-                  onChange={(event: SelectChangeEvent<string>) =>
-                    setSelectedAssignee(event.target.value)
-                  }
-                  value={selectedAssignee}
-                  displayEmpty
-                  fullWidth
-                  size='small'
-                  MenuProps={{
-                    PaperProps: {
-                      sx: {
-                        maxWidth: 300,
-                        maxHeight: 300,
-                        marginTop: '4px',
-                        zIndex: 40,
-                        boxShadow:
-                          'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
-                        '& .MuiMenuItem-root': {
-                          fontSize: '13px',
-                          padding: '6px 12px',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                        },
-                      },
-                    },
-                  }}
-                  sx={{
-                    height: '32px',
-                    fontSize: '13px',
-                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                      border: '2px solid #60A5FA',
-                    },
-                    '& .MuiOutlinedInput-root': {
-                      '&.Mui-focused': {
-                        boxShadow: 'none',
-                      },
-                    },
-                    '.MuiSelect-select': {
-                      padding: '6px 6px',
-                      color: !selectedAssignee ? '#7D98B6' : 'black',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      width: '100%',
-                      overflow: 'auto',
-                      overflowY: 'hidden',
-                      scrollBehavior: 'smooth',
-                      '&::-webkit-scrollbar': {
-                        height: '4px',
-                      },
-                      '&::-webkit-scrollbar-track': {
-                        background: 'transparent',
-                      },
-                      '&::-webkit-scrollbar-thumb': {
-                        background: '#CBD6E2',
-                        borderRadius: '2px',
-                      },
-                    },
-                    '& .MuiOutlinedInput-notchedOutline': {
-                      border: '1px solid #CBD6E2',
-                      borderRadius: '2px',
-                    },
-                    '&:hover .MuiOutlinedInput-notchedOutline': {
-                      border: '1px solid #CBD6E2',
-                    },
-                    '& svg': {
-                      color: '#7D98B6',
-                      flexShrink: 0,
-                    },
-                  }}
-                  renderValue={(value) => {
-                    if (value) {
-                      const user = enrichedUsers.find((u) => u.id === value);
-                      if (user) {
-                        return (
-                          <div
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '8px',
-                              width: '100%',
-                              minWidth: 0,
-                            }}
-                          >
-                            <div
-                              style={{
-                                width: '20px',
-                                height: '20px',
-                                borderRadius: '50%',
-                                backgroundColor: user.color,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: '9px',
-                                fontWeight: '600',
-                                color: 'white',
-                                flexShrink: 0,
-                              }}
-                            >
-                              {user.initials}
-                            </div>
-                            <span
-                              style={{
-                                fontSize: '13px',
-                                color: 'black',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                minWidth: 0,
-                              }}
-                            >
-                              {user.name}
-                            </span>
-                          </div>
-                        );
-                      }
-                    }
-                    return (
-                      <span
-                        style={{
-                          color: '#7D98B6',
-                          fontSize: '13px',
-                          fontWeight: '400',
-                        }}
-                      >
-                        Choose User
-                      </span>
-                    );
-                  }}
-                >
-                  <MenuItem
-                    value=''
-                    sx={{
-                      color: '#425A76',
-                      fontSize: '13px',
-                      fontWeight: '500',
-                    }}
-                  >
-                    Choose User
-                  </MenuItem>
-                  {enrichedUsers.map((user) => (
-                    <MenuItem
-                      sx={{
-                        color: '#425A76',
-                        fontSize: '13px',
-                        fontWeight: '500',
-                      }}
-                      key={user.id}
-                      value={user.id}
-                      title={user.name}
-                    >
-                      <div
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px',
-                        }}
-                      >
-                        <div
-                          style={{
-                            width: '20px',
-                            height: '20px',
-                            color: 'white',
-                          }}
-                        >
-                          {user.initials}
-                        </div>
-                        {user.name}
-                      </div>
-                    </MenuItem>
-                  ))}
-                </Select>
-              </div>
-            </div>
-          )}
+            )}
+          </div>
 
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <div className='grid grid-cols-2 gap-4'>
@@ -464,6 +396,8 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                       textField: {
                         fullWidth: true,
                         size: 'small',
+                        error: !!errors.startDate,
+                        helperText: errors.startDate,
                         sx: {
                           '& .MuiOutlinedInput-root': {
                             height: '32px',
@@ -476,19 +410,25 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                               color: 'black !important',
                               WebkitTextFillColor: 'black !important',
                               '&::placeholder': {
-                                color: '#7D98B6',
+                                color: '#7D98B6 !important',
                                 opacity: 1,
                               },
                             },
                             '&:hover .MuiOutlinedInput-notchedOutline': {
-                              border: '1px solid #CBD6E2',
+                              border: errors.startDate
+                                ? '1px solid #EF4444'
+                                : '1px solid #CBD6E2',
                             },
                             '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                              border: '2px solid #60A5FA',
+                              border: errors.startDate
+                                ? '2px solid #EF4444'
+                                : '2px solid #60A5FA',
                             },
                           },
                           '& .MuiOutlinedInput-notchedOutline': {
-                            border: '1px solid #CBD6E2',
+                            border: errors.startDate
+                              ? '1px solid #EF4444'
+                              : '1px solid #CBD6E2',
                             borderRadius: '2px',
                           },
                         },
@@ -520,6 +460,8 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                       textField: {
                         fullWidth: true,
                         size: 'small',
+                        error: !!errors.endDate,
+                        helperText: errors.endDate,
                         sx: {
                           '& .MuiOutlinedInput-root': {
                             height: '32px',
@@ -532,19 +474,25 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                               color: 'black !important',
                               WebkitTextFillColor: 'black !important',
                               '&::placeholder': {
-                                color: '#7D98B6',
+                                color: '#7D98B6 !important',
                                 opacity: 1,
                               },
                             },
                             '&:hover .MuiOutlinedInput-notchedOutline': {
-                              border: '1px solid #CBD6E2',
+                              border: errors.endDate
+                                ? '1px solid #EF4444'
+                                : '1px solid #CBD6E2',
                             },
                             '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                              border: '2px solid #60A5FA',
+                              border: errors.endDate
+                                ? '2px solid #EF4444'
+                                : '2px solid #60A5FA',
                             },
                           },
                           '& .MuiOutlinedInput-notchedOutline': {
-                            border: '1px solid #CBD6E2',
+                            border: errors.endDate
+                              ? '1px solid #EF4444'
+                              : '1px solid #CBD6E2',
                             borderRadius: '2px',
                           },
                         },
@@ -571,17 +519,25 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
               name: p.name,
               color: p.color || '#3B82F6',
             }))}
-            roleOptions={roleOptions}
             checklistData={checklistData}
             availableTags={(tagData || []).map((tag) => ({
               id: tag.id || `tag-${tag.name}`,
               name: tag.name,
               color: '#3B82F6',
             }))}
-            selectedRole={selectedRole}
+            availableUsers={enrichedUsers}
+            connectorTypesData={connectorTypesData}
+            taskTemplatesData={taskTemplatesData}
+            weightageData={weightageData}
+            categoryData={categoryData}
             selectedChecklist={selectedChecklist}
             selectedPriority={selectedPriority}
             selectedTags={selectedTags}
+            selectedAssignee={selectedAssignee}
+            selectedLinkedType={linkedType}
+            selectedLinkTaskTypes={linkTaskTypes}
+            selectedWeightage={weightage}
+            selectedCategory={category}
             onStatusChange={(statusName: string) => {
               setSelectedStatus(statusName);
               const statusItem = statusData?.find((s) => s.name === statusName);
@@ -596,14 +552,11 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
               );
               if (priorityItem) {
                 setSelectedPriorityRid(priorityItem.id);
+                setErrors((prev) => ({ ...prev, priority: '' }));
               }
             }}
-            onRoleChange={(value) => {
-              setSelectedRole(value);
-              const roleItem = roleOptions?.find((r) => r.role_name === value);
-              if (roleItem) {
-                setSelectedRoleRid(roleItem.rid);
-              }
+            onAssigneeChange={(userId: string) => {
+              setSelectedAssignee(userId);
             }}
             onChecklistChange={(value) => {
               setSelectedChecklist(value);
@@ -612,17 +565,66 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
               );
               if (checklistItem) {
                 setSelectedChecklistRid(checklistItem.id);
+                setErrors((prev) => ({ ...prev, checklistTemplate: '' }));
               }
             }}
+            onLinkedTypeChange={(value) => {
+              setLinkedType(value);
+              const connectorItem = connectorTypesData?.find(
+                (c) => c.name === value
+              );
+              setLinkedTypeRid(connectorItem?.id || '');
+              if (value) {
+                setErrors((prev) => ({ ...prev, linkedType: '' }));
+              } else {
+                if (!linkTaskTypes || linkTaskTypes.length === 0) {
+                  setErrors((prev) => ({ ...prev, linkTaskType: '' }));
+                }
+              }
+            }}
+            onLinkTaskTypesChange={(values) => {
+              setLinkTaskTypes(values);
+              const rids = values
+                .map((value) => {
+                  const template = taskTemplatesData?.find(
+                    (t) => t.name === value
+                  );
+                  return template?.id || '';
+                })
+                .filter((rid) => rid !== '');
+              setLinkTaskTypeRids(rids);
+              if (values.length > 0) {
+                setErrors((prev) => ({ ...prev, linkTaskType: '' }));
+              } else {
+                if (!linkedType) {
+                  setErrors((prev) => ({ ...prev, linkedType: '' }));
+                }
+              }
+            }}
+            onWeightageChange={(value) => {
+              setWeightage(value);
+              const weightageItem = weightageData?.find(
+                (w) => w.name === value
+              );
+              setWeightageRid(weightageItem?.id || '');
+            }}
+            onCategoryChange={(value) => {
+              setCategory(value);
+              const categoryItem = categoryData?.find(
+                (c: { id: string; name: string }) => c.name === value
+              );
+              setCategoryRid(categoryItem?.id || '');
+            }}
             onTagsChange={setSelectedTags}
-            onAddCustomTag={() => {}}
-            onSetEditedTask={() => {}}
+            onAddCustomTag={() => { }}
+            onSetEditedTask={() => { }}
             mode='create'
             selectedStatus={selectedStatus}
             onStatusChangeCreate={(statusName, statusId) => {
               setSelectedStatus(statusName);
               setSelectedStatusRid(statusId);
             }}
+            errors={errors}
           />
 
           {!fieldVisibility.description && (
@@ -650,17 +652,13 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
           <TextButton
             label={isSubmitting ? 'Creating...' : 'Create Task'}
             onClick={handleSubmit}
-            disabled={!isFormValid() || isSubmitting}
+            disabled={isSubmitting}
             sx={{
               px: 1,
               py: 1,
-              backgroundColor:
-                !isFormValid() || isSubmitting ? '#D1D5DB' : '#2563EB',
-              color: !isFormValid() || isSubmitting ? '#9CA3AF' : '',
               '&:hover': {
-                backgroundColor:
-                  !isFormValid() || isSubmitting ? '#D1D5DB' : '#2563EB',
-                color: !isFormValid() || isSubmitting ? '#9CA3AF' : '#FFFFFF',
+                background:
+                  'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
               },
             }}
           />
