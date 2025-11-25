@@ -2702,7 +2702,7 @@ export class InteractionService {
         responseData.map(async (d: any) => {
           return {
             ...d,
-            uploaded_by: mapUsers.get(d.created_by),
+            uploaded_by: mapUsers.get(d.created_by) === undefined ? d.created_by : mapUsers.get(d.created_by),
             new_url: await generateSasUrl(d.download_link),
           };
         })
