@@ -3004,7 +3004,7 @@ export const rawQueries = {
   },
   getCreateNotesSequenceQuery(schemaName: string): string {
     return `
-      CREATE SEQUENCE IF NOT EXISTS "${schemaName}".notes START 1;
+      CREATE SEQUENCE IF NOT EXISTS "${schemaName}".notes_seq START 1;
     `;
   },
   getCreateNotesTableQuery(schemaName: string): string {
