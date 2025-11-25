@@ -13,6 +13,8 @@ export const getTaskTemplateColumns = (
   taskCheckListTypesTypesOptions: SelectOption[],
   taskAssigneRoleTypesTypesOptions: SelectOption[],
   memoizedStatus: SelectOption[],
+  taskCategoryTypesOptions: SelectOption[],
+  taskWeightAgeTypesOptions: SelectOption[],
   permissionMap: Record<string, { read: boolean; edit: boolean }>,
   onClick?: (row: TaskTemplateList) => void
   // permissionMap: Record<string, { read: boolean; edit: boolean }>,
@@ -196,6 +198,47 @@ export const getTaskTemplateColumns = (
       required: false,
       placeholder: 'Choose Checklist',
       options: taskCheckListTypesTypesOptions,
+    },
+  },
+  {
+    id: 'category_name',
+    editId: 'task_category_rid',
+    editable: true,
+    // permissionMap?.['task_category_rid']?.edit && permissionMap?.['task_category_rid']?.read,
+    // hide:
+    //   !permissionMap?.['task_category_rid']?.edit &&
+    //   !permissionMap?.['task_category_rid']?.read,
+    sortId: 'category_name',
+    label: 'Task Category',
+    width: 130,
+    sortable: true,
+    conditionallyEdit: [{ key: 'task_type_name', matchValue: ['Milestone'] }],
+    field: {
+      type: 'select',
+      required: false,
+      placeholder: 'Choose Catagory',
+      options: taskCategoryTypesOptions,
+    },
+  },
+  {
+    id: 'weightage_value',
+    editId: 'weightage_rid',
+    editable: true,
+    conditionallyEdit: [{ key: 'task_type_name', matchValue: ['Milestone'] }],
+    // editable:
+    //   permissionMap?.['weightage_rid']?.edit && permissionMap?.['weightage_rid']?.read,
+    // hide:
+    //   !permissionMap?.['weightage_rid']?.edit &&
+    //   !permissionMap?.['weightage_rid']?.read,
+    sortId: 'weightage_value',
+    label: 'Weightage',
+    width: 130,
+    sortable: true,
+    field: {
+      type: 'select',
+      required: false,
+      placeholder: 'Choose Weightage',
+      options: taskWeightAgeTypesOptions,
     },
   },
   {
