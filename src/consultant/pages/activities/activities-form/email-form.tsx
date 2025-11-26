@@ -47,7 +47,7 @@ icons['attachment'] = `
 `;
 
 const EmailForm: React.FC = () => {
-  const { emailId } = useParams();
+  const { activityId } = useParams();
   const [searchParams] = useSearchParams();
   const { successToast } = useToast();
   const [formData, setFormData] = useState<ActivityEmailFormData>({
@@ -92,7 +92,11 @@ const EmailForm: React.FC = () => {
   const userListOptions = useGetUserOptions(accountId, true);
   const createEmail = useCreateActivityEmail();
   const updateEmail = useUpdateActivityEmail();
-  const { data: emailData, isLoading } = useEmailActivityDetails(emailId || '');
+  const { data: emailData, isLoading } = useEmailActivityDetails(
+    entityId,
+    activityId || '',
+    true
+  );
   const commonSuccess = createEmail.isSuccess || updateEmail.isSuccess;
 
   const userOptions = useMemo(() => {
@@ -479,8 +483,8 @@ const EmailForm: React.FC = () => {
     formDataToSend.append('attach_to', entityId);
     formDataToSend.append('attachment_level', entityLevel);
     formDataToSend.append('activity_type', 'email');
-    formDataToSend.append('to_email', formData.to.join(','));
-    formDataToSend.append('cc_email', formData.cc.join(','));
+    formDataToSend.append('to_email', JSON.stringify(formData.to));
+    formDataToSend.append('cc_email', JSON.stringify(formData.cc));
     formDataToSend.append('subject', formData.subject);
     formDataToSend.append('body_html', formData.emailBody);
 
@@ -645,7 +649,7 @@ const EmailForm: React.FC = () => {
                   onChange={handleEmailBodyChange}
                   theme='snow'
                   readOnly={emailBodyDisabled}
-                  placeholder='Enter Email Body'
+                  placeholder='Enter Email Content'
                   className={`rounded-[2px] ${
                     errors?.emailBody
                       ? 'border border-red-500 bg-[#FEF2F2]'
@@ -696,7 +700,7 @@ const EmailForm: React.FC = () => {
             {/* Attachments */}
             {/* Attachments */}
             {formData.attachments.length > 0 && (
-              <div className='p-6 border-t border-[#CBD6E2]'>
+              <div className='px-10 py-6'>
                 <div className='flex items-center gap-2 mb-2'>
                   <span className='text-sm font-medium text-gray-700'>
                     Attachments ({formData.attachments.length})
