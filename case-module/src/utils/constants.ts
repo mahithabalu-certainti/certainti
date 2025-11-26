@@ -717,10 +717,10 @@ export const rawQueries = {
     return `
     SELECT rid, status_name as name FROM ${MAIN_SCHEMA_NAME}.case_status WHERE rid IN (${ids})`;
   },
-  fetchEmailStatus(statusIds: any): string {
+  fetchActivityStatus(statusIds: any): string {
     let ids = statusIds.map((d: any) => `'${d}'`);
     return `
-    SELECT rid, status_name as name FROM ${MAIN_SCHEMA_NAME}.email_status WHERE rid IN (${ids})`;
+    SELECT rid, status_name as name FROM ${MAIN_SCHEMA_NAME}.activity_status WHERE rid IN (${ids})`;
   },
    fetchActivityStatusByName(statusName: string, activityType: string): string {
     return `
