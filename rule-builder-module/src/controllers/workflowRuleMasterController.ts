@@ -5,17 +5,43 @@ import {
   successLog,
   handleErrorResponse,
   handleSuccessResponse,
+  validateRequest
 } from "../utils/helpers";
-import * as RuleService from "../services/rulemasterService";
+import {
+  listRuleSchema,
+  createRuleSchema
+} from "../lib/joi/schemas/schema";
+import configurations from "../config/config";
+
+
+const services = configurations.getInstance().getServices();
+const RuleService = services.rulemasterService;
 
 /** CREATE RuleMaster */
 async function createRuleMaster(req: Request, res: Response): Promise<void> {
   const methodName = "create rule";
   try {
-    const rule = await RuleService.createRuleMaster(req.body);
-    successLog(methodName);
-    handleSuccessResponse(res, rule);
-    return;
+    const userId = req.headers["x-user-id"] as string;
+    const value = await validateRequest(req, createRuleSchema, res, "POST");
+    if (!value) {
+      errorLog(methodName, "Request body is empty");
+      return;
+    }
+    const rule = await RuleService.createRuleMaster(value, userId);
+    if (rule.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, rule);
+      return;
+    } {
+      errorLog(methodName, rule.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        rule.errorMessage
+      );
+      return;
+    }
   } catch (err) {
     const error = err as Error;
     errorLog(methodName, error.message);
@@ -32,12 +58,45 @@ async function createRuleMaster(req: Request, res: Response): Promise<void> {
 async function getAllRuleMasters(req: Request, res: Response): Promise<void> {
   const methodName = "list rules";
   try {
-    const page = Number(req.query.page) || 1;
-    const size = Number(req.query.size) || 10;
-    const rules = await RuleService.getAllRuleMasters(page, size);
-    successLog(methodName);
-    handleSuccessResponse(res, rules);
-    return;
+    const userId = req.headers["x-user-id"] as string;
+    const value = await validateRequest(req, listRuleSchema, res, "GET");
+    if (!value) {
+      return;
+    }
+    let parsedFilters: Record<string, any> = {};
+    try {
+      if (value.filters) {
+        parsedFilters = JSON.parse(value.filters);
+      }
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid filters format. Must be a valid JSON object."
+      );
+    }
+    // if (!userId) {
+    //   return;
+    // }
+
+    const result = await RuleService.listRuleMasters(
+      value,
+      parsedFilters,
+      userId,
+      "list");
+    if (result.statusCode == HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, result);
+      return;
+    } else {
+      errorLog(methodName, "No data found");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        result.errorMessage
+      );
+      return;
+    }
   } catch (err) {
     const error = err as Error;
     errorLog(methodName, error.message);
@@ -64,17 +123,17 @@ async function getRuleMasterById(req: Request, res: Response): Promise<void> {
       );
       return;
     }
-    const rule = await RuleService.getRuleMasterById(rid);
-    if (!rule) {
-      handleErrorResponse(
-        res,
-        HttpStatus.FAILED,
-        HttpStatus.FAILED_MESSAGE,
-        "Rule not found"
-      );
-    }
-    successLog(methodName);
-    handleSuccessResponse(res, rule);
+    // const rule = await RuleService.getRuleMasterById(rid);
+    // if (!rule) {
+    //   handleErrorResponse(
+    //     res,
+    //     HttpStatus.FAILED,
+    //     HttpStatus.FAILED_MESSAGE,
+    //     "Rule not found"
+    //   );
+    // }
+    // successLog(methodName);
+    // handleSuccessResponse(res, rule);
   } catch (err) {
     const error = err as Error;
     errorLog(methodName, error.message);
@@ -101,18 +160,18 @@ async function updateRuleMaster(req: Request, res: Response): Promise<void> {
       );
       return;
     }
-    const updatedRule = await RuleService.updateRuleMaster(rid, req.body);
-    if (!updatedRule) {
-      handleErrorResponse(
-        res,
-        HttpStatus.FAILED,
-        HttpStatus.FAILED_MESSAGE,
-        "Rule not found"
-      );
-      return;
-    }
-    successLog(methodName);
-    handleSuccessResponse(res, updatedRule);
+    // const updatedRule = await RuleService.updateRuleMaster(rid, req.body);
+    // if (!updatedRule) {
+    //   handleErrorResponse(
+    //     res,
+    //     HttpStatus.FAILED,
+    //     HttpStatus.FAILED_MESSAGE,
+    //     "Rule not found"
+    //   );
+    //   return;
+    // }
+    // successLog(methodName);
+    // handleSuccessResponse(res, updatedRule);
   } catch (err) {
     const error = err as Error;
     errorLog(methodName, error.message);
@@ -139,9 +198,9 @@ async function deleteRuleMaster(req: Request, res: Response): Promise<void> {
       );
       return;
     }
-    await RuleService.deleteRuleMaster(rid);
-    //res.status(200).json({ success: true, message: "Rule deleted successfully" });
-    successLog(methodName);
+    // await RuleService.deleteRuleMaster(rid);
+    // //res.status(200).json({ success: true, message: "Rule deleted successfully" });
+    // successLog(methodName);
   } catch (err) {
     const error = err as Error;
     errorLog(methodName, error.message);

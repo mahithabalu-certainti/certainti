@@ -24,3 +24,7 @@ export const NODE_ENV = {
   DEV: "DEV",
   PROD: "PRODUCTION",
 };
+
+export const STATUS_MESSAGE = {
+  ruleCreated: "Rule created successfully",
+}

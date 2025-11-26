@@ -1,6 +1,6 @@
 import { createLogger, transports, format, Logger } from "winston";
 import { NODE_ENV } from "../utils/constants";
-//import Services from "../services";
+import Services from "../services";
 
 /**
  * @class Configurations
@@ -12,24 +12,24 @@ class Configurations {
   private static instance: Configurations | null = null;
   // private dbConfig: typeof sequelize;
   private logger: Logger;
-  //private services: Services;
+  private services: Services;
 
   private constructor() {
     // this.dbConfig = sequelize;
-    
+
     this.logger = createLogger({
       level: process.env.NODE_ENV === NODE_ENV.DEV ? "info" : "debug",
       format: format.combine(
         format.colorize({ level: true }),
         format.timestamp(),
         format.printf(({ timestamp, level, message, method, url }) => {
-            return `[${level}] -> ${message}${method ? ` | ${method}` : ""}${url ? ` | ${url}` : ""}${timestamp ? ` | ${timestamp}` : ""}`;
+          return `[${level}] -> ${message}${method ? ` | ${method}` : ""}${url ? ` | ${url}` : ""}${timestamp ? ` | ${timestamp}` : ""}`;
         })
       ),
       transports: [new transports.Console()],
     });
 
-    //this.services = new Services();
+    this.services = new Services(this.logger);
   }
 
   /**
@@ -85,9 +85,9 @@ class Configurations {
    * @description Returns the Services instance.
    * @returns {Services} - The Services instance.
    */
-//   public getServices(): Services {
-//     return this.services;
-//   }
+  public getServices(): Services {
+    return this.services;
+  }
 
   /**
    * @function getLogger
