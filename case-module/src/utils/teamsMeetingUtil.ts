@@ -2,7 +2,7 @@ import { IActivityMeeting } from "./types";
 import { ClientSecretCredential } from "@azure/identity";
 import { Client } from "@microsoft/microsoft-graph-client/lib/src/Client";
 import { logMessage } from "./helpers";
-
+import moment from "moment-timezone";
 /**
  * Schedules a meeting in Microsoft Teams using Graph API
  * @param activityRequest Meeting details
@@ -48,14 +48,29 @@ export async function scheduleTeamsMeetingUtil(
     type: "required",
   }));
 
+  // Use moment-timezone to combine start date with end time if dates differ
+  let startDateTime = activityRequest.effective_start_datetime as Date;
+  let endDateTime = activityRequest.effective_end_datetime;
+  if (
+    startDateTime &&
+    endDateTime &&
+    moment.tz(startDateTime, activityRequest.time_zone || "UTC").format("YYYY-MM-DD") !==
+      moment.tz(endDateTime, activityRequest.time_zone || "UTC").format("YYYY-MM-DD")
+  ) {
+    // Replace time in startDateTime with time from endDateTime
+    const startDate = moment.tz(startDateTime, activityRequest.time_zone || "UTC").format("YYYY-MM-DD");
+    const endTime = moment.tz(endDateTime, activityRequest.time_zone || "UTC").format("HH:mm:ss");
+    startDateTime = new Date(moment.tz(`${startDate}T${endTime}`, activityRequest.time_zone || "UTC").toISOString());
+  }
+
   const payload = {
     subject: activityRequest.subject,
     start: {
-      dateTime: activityRequest.effective_start_datetime,
+      dateTime: startDateTime,
       timeZone: activityRequest.time_zone || "UTC",
     },
     end: {
-      dateTime: activityRequest.effective_end_datetime,
+      dateTime: endDateTime,
       timeZone: activityRequest.time_zone || "UTC",
     },
     attendees,
@@ -74,12 +89,8 @@ export async function scheduleTeamsMeetingUtil(
       },
       range: {
         type: "endDate",
-        startDate: activityRequest.effective_start_datetime
-          ?.toString()
-          .split("T")[0],
-        endDate: activityRequest.effective_end_datetime
-          ?.toString()
-          .split("T")[0],
+        startDate: moment.tz(activityRequest.effective_start_datetime, activityRequest.time_zone || "UTC").format("YYYY-MM-DD"),
+        endDate: moment.tz(activityRequest.effective_end_datetime, activityRequest.time_zone || "UTC").format("YYYY-MM-DD"),
         recurrenceTimeZone: activityRequest.time_zone || "UTC",
       },
     },
