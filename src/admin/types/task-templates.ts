@@ -135,7 +135,7 @@ export type TaskTemplateFormPayload = {
   task_category_rid?: string;
   status_rid?: string;
   workflow_connector?: {
-    source_rid: string;
+    source_rid?: string;
     target_rid?: string[];
     relationship_connector_rid?: string;
   };

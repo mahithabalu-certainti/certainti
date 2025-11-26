@@ -98,6 +98,8 @@ const TaskTemplateForm: React.FC = () => {
           taskTemplateData?.workflow_connector?.target_data?.[0]?.map(
             (item: { target_rid: string }) => item.target_rid
           ) || [],
+        // Add source_rid if needed for display
+        source_rid: taskTemplateData?.workflow_connector?.source_rid || '',
       }),
     }),
     [taskTemplateData]

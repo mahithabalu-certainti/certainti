@@ -16,6 +16,23 @@ export const transformTaskTemplatePayload = (
       )
     : [];
 
+  // Check if both target_rid and relationship_connector_rid are empty
+  const hasTargetRid = filteredTargetRid.length > 0;
+  const hasRelationshipConnector = !!formData?.relationship_connector_rid;
+
+  // Create workflow_connector only if at least one field has data
+  const workflowConnector =
+    hasTargetRid || hasRelationshipConnector
+      ? {
+          source_rid:
+            isEditView && originalData?.workflow_connector?.source_rid
+              ? originalData.workflow_connector.source_rid
+              : '',
+          target_rid: filteredTargetRid,
+          relationship_connector_rid: formData?.relationship_connector_rid,
+        }
+      : {};
+
   const basePayload: TaskTemplateFormPayload = {
     task_name: formData.task_name?.trim() || '',
     task_description: formData.task_description,
@@ -28,21 +45,13 @@ export const transformTaskTemplatePayload = (
     status_rid: formData.status_rid,
     task_category_rid: formData.task_category_rid,
     weightage_rid: formData.weightage_rid,
-    workflow_connector: {
-      source_rid: '',
-      target_rid: filteredTargetRid, // Use filtered array here
-      relationship_connector_rid: formData?.relationship_connector_rid,
-    },
+    workflow_connector: workflowConnector,
   };
 
   if (isEditView && originalData) {
     return {
       ...basePayload,
       rid: originalData.rid,
-      workflow_connector: {
-        ...basePayload.workflow_connector,
-        source_rid: originalData.workflow_connector?.source_rid || '',
-      },
     };
   }
   return basePayload;
