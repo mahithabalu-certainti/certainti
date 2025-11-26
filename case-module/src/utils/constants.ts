@@ -101,7 +101,7 @@ export const STATUS_MESSAGE = {
   userIdMissingInHeader: "User ID is missing in request header.",
   jurisdictionAddedSuccess: "Jurisdiction configuration added successfully",
   jurisdictionAddedFailed: "Jurisdiction configuration addition failed",
-  taskNameExistsAlready: "Taskname already exists",
+  taskNameExistsAlready: "Task name already exists",
   taskCreatedSuccess: "Task Template created successfully",
   casePrioritySuccess: "Priority fetched successfully",
   milestonesSuccess: "Milestones fetched successfully",
