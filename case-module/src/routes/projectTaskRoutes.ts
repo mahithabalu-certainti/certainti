@@ -6,17 +6,17 @@ const routes : Router = Router()
 
 routes.get(
   "/list",
-  checkUserStatusMiddleware("NA"),
+  checkUserStatusMiddleware("projects_task_view_edit"),
   controller.projectTaskController.getProjectTasks
 );
 routes.get(
   "/list/export",
-  checkUserStatusMiddleware("NA"),
+  checkUserStatusMiddleware("projects_task_export"),
   controller.projectTaskController.exportAllProjectTasks
 );
 routes.get(
   "/detail",
-  checkUserStatusMiddleware("NA"),
+  checkUserStatusMiddleware("projects_task_view_edit"),
   controller.projectTaskController.getProjectTaskById
 );
 

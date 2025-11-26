@@ -10,6 +10,7 @@ interface CaseProjectTaskAttributes {
   modified_by?: string;
   created_datetime?: Date;
   modified_datetime?: Date;
+  project_task_rid: string;
   case_project_rid: string;
   account_rid: string;
   case_rid: string;
@@ -48,6 +49,7 @@ export class CaseProjectTask
   public modified_by?: string;
   public created_datetime?: Date;
   public modified_datetime?: Date;
+  public project_task_rid!: string;
   public case_project_rid!: string;
   public account_rid!: string;
   public case_rid!: string;
@@ -97,6 +99,7 @@ export class CaseProjectTask
           defaultValue: DataTypes.NOW,
         },
         modified_datetime: { type: DataTypes.DATE, allowNull: true },
+        project_task_rid: { type: DataTypes.STRING(50), allowNull: false },
         case_project_rid: { type: DataTypes.STRING(50), allowNull: false },
         account_rid: { type: DataTypes.STRING(50), allowNull: false },
         case_rid: { type: DataTypes.STRING(50), allowNull: false },

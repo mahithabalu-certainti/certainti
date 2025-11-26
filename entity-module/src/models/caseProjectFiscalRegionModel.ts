@@ -11,6 +11,7 @@ interface CaseProjectFiscalRegionAttributes {
   modified_by?: string | null;
   created_datetime?: Date | null;
   modified_datetime?: Date | null;
+  project_fiscal_region_rid: string;
   case_rid: string;
   case_project_rid: string;
   project_rid: string;
@@ -125,6 +126,7 @@ export class CaseProjectFiscalRegion
   public modified_by?: string | null;
   public created_datetime?: Date | null;
   public modified_datetime?: Date | null;
+  public project_fiscal_region_rid!: string;
   public case_rid!: string;
   public case_project_rid!: string;
   public project_rid!: string;
@@ -260,6 +262,10 @@ export class CaseProjectFiscalRegion
         modified_datetime: {
           type: DataTypes.DATE,
           allowNull: true,
+        },
+        project_fiscal_region_rid: {
+          type: DataTypes.STRING(50),
+          allowNull: false, 
         },
         case_rid: {
           type: DataTypes.STRING(50),

@@ -881,14 +881,16 @@ export class ProjectResourceSchemaService {
       "resource_type_rid",
       "status_name"
     ].includes(sortBy);
-
-    const dbOrder = isDbField && sortBy && sortOrder
-      ? [literal(`"${sortBy}" ${sortOrder} NULLS LAST`)]
-      : order;
+    const dbOrder =
+      isDbField && sortBy && sortOrder
+        ? [literal(`"${sortBy}" ${sortOrder} NULLS LAST`)]
+        : order;
 
     let projectResource = await CaseProjectResource.findAll({
       order: dbOrder,
-      where: whereFilters,
+      where: {
+        ...whereFilters,
+      },
     });
 
     if (projectResource && projectResource.length > 0) {
@@ -913,13 +915,11 @@ export class ProjectResourceSchemaService {
         rawFilters
       );
     }
-
     const schemaService = new SchemaService();
     const projectResourceFields = await schemaService.getAllowedExportFields(
       userId,
       "projects_resources_view_edit"
     );
-
     const allowedFieldSet = new Set<string>();
     for (const field of projectResourceFields) {
       if (field.read) {
@@ -969,45 +969,39 @@ export class ProjectResourceSchemaService {
       resource_type_rid: "Resource Type",
       resource_role: "Role",
       total_hours_pro_res: "Effort (Hours)",
-      total_cost_pro_res: "Net Resource Cost",
+      net_total_cost_pro_res: "Net Resource Cost",
       resource_designation: "Designation",
       qre_percent: "QRE %",
       qre_final: "QRE",
       status_rid: "Status",
       description: "Comments",
       project_resource_role: "Project Resource Role",
-      r_number: "Project Resource ID",
-      case_project_rid: "Case Project ID",
-      case_rid: "Case ID", // Added case_rid mapping
-      project_rid: "Project ID",
-      project_fiscal_rid: "Project Fiscal ID"
+      r_number: "Project Resource ID"
+      // "r_number": "Project Resource ID",
     };
-
-    const exportData = projectResource.map((resource: any) => {
+    let exportData = projectResource.map((resource: any) => {
       const exportData: Record<string, string> = {};
-
-      const resultMap = {
+      let resultMap = {
         resource_code: resource.resource_code || "-",
         resource_name: resource.resource_name || "-",
         country_rid: resource.country_name || "-",
         region_rid: resource.region_name || "-",
-        fiscal_year: resource.fiscal_year?.toString() || "-",
+        fiscal_year: resource.fiscal_year || "-",
         resource_type_rid: resource?.resource_type_name || "-",
         resource_role: resource.resource_role || "-",
         project_resource_role: resource.project_resource_role || "-",
-        total_hours_pro_res: resource.total_hours_pro_res?.toString() || "-",
-        total_cost_pro_res: formatNumberForExport(resource.total_cost_pro_res, resource.currency_symbol || '$') || "-",
-        qre_percent: resource.qre_percent?.toString() || "-",
-        qre_final: resource.qre_final?.toString() || "-",
+        total_hours_pro_res: resource.total_hours_pro_res || "-",
+        net_total_cost_pro_res: formatNumberForExport(resource.net_total_cost_pro_res, resource.currency_symbol || '$') || "-",
+        qre_percent: resource.qre_percent || "-",
+        qre_final: resource.qre_final || "-",
         status_rid: resource.status_name || "-",
         description: resource.description || "-",
         r_number: resource.r_number || "-",
         case_project_rid: resource.case_project_rid || "-",
-        case_rid: resource.case_rid || "-", // Added case_rid
+        case_rid: resource.case_rid || "-", 
         project_rid: resource.project_rid || "-",
         project_fiscal_rid: resource.project_fiscal_rid || "-"
       };
-
       for (const [field, value] of Object.entries(resultMap)) {
         if (allowedFieldSet.has(field)) {
           const label = labelMap[field];

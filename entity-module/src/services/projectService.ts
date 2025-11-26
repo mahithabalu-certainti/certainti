@@ -12,6 +12,7 @@ import {
   ICreateProject,
   IUpdateProject,
   IUpdateQrePecentAdjustment,
+  CaseStatusResult, 
 } from "../utils/types";
 import SchemaService from "./schemaService";
 import {
@@ -625,7 +626,7 @@ export class ProjectService {
       );
 
     for (const caseMapping of projectCaseMapping) {
-      await this.projectIngestion.updateCaseTables(
+      await this.projectIngestion.updateCaseProjectTables(
         accountNumber,
         caseMapping,
         projectData,

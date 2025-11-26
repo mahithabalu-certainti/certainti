@@ -45,6 +45,7 @@ import currency from "currency.js";
 import { errorLog, logMessage } from "../../utils/helpers";
 import { CaseProjectResource } from "../../models/caseProjectResourceModel";
 import { CaseProjectResourceFiscal } from "../../models/caseProjectResourceFiscalModel";
+import { CaseProject } from "../../models/caseProjectsModel";
 
 export class ProjectResourceSchemaService {
   private orgDbSequelize: Sequelize | null = null;
@@ -760,6 +761,29 @@ export class ProjectResourceSchemaService {
     }, {
       where: {
         rid: projectResourceId
+      },
+      transaction,
+    })
+  }
+
+  async updateCaseProjectResourceStatus(
+    accountNumber: string,
+    projectResourceId: string,
+    statusId: string,
+    userId: string,
+    transaction: Transaction,
+    caseMapping: CaseProject
+  ) {
+    const { CaseProjectResource } = await this.getModels(accountNumber);
+
+    await CaseProjectResource.update({
+      status_rid: statusId,
+      modified_by: userId,
+      modified_datetime: new Date(),
+    }, {
+      where: {
+        project_resource_rid: projectResourceId,
+        case_rid: caseMapping.case_rid
       },
       transaction,
     })
@@ -2453,6 +2477,212 @@ export class ProjectResourceSchemaService {
         transaction,
       }
     );
+  }
+
+  async updateCaseProjectResourceFiscalOnUpdateTable(
+    accountNumber: string,
+    projectResourceData: any,
+    projectId: string,
+    fiscalYear: number,
+    userId: string,
+    resourceData: any,
+    existingProjectResource: any = {},
+    statusMap: any,
+    transaction: Transaction,
+    caseMapping: CaseProject
+  ) {
+    const { CaseProjectResource, CaseProjectResourceFiscal } = await this.getModels(
+      accountNumber
+    );
+
+    const oldGroupKey = {
+      project_rid: existingProjectResource.project_rid,
+      project_fiscal_rid: existingProjectResource.project_fiscal_rid,
+      resource_rid: existingProjectResource.resource_rid,
+      country_rid: existingProjectResource.country_rid,
+      fiscal_year: existingProjectResource.fiscal_year,
+    };
+
+    const newGroupKey = {
+      project_rid: projectId,
+      project_fiscal_rid: projectResourceData.project_fiscal_rid,
+      resource_rid: resourceData.rid,
+      country_rid: projectResourceData.country_rid,
+      fiscal_year: fiscalYear,
+    };
+
+    const isGroupChanged =
+      oldGroupKey.project_fiscal_rid.toLowerCase() !==
+        newGroupKey.project_fiscal_rid.toLowerCase() ||
+      oldGroupKey.resource_rid.toLowerCase() !==
+        newGroupKey.resource_rid.toLowerCase() ||
+      oldGroupKey.fiscal_year !== newGroupKey.fiscal_year ||
+      (oldGroupKey.country_rid ?? null) !== (newGroupKey.country_rid ?? null);
+
+    // Helper to build where clause
+    const buildGroupWhere = (groupKey: any) => {
+      const where: any = {
+        account_rid: projectResourceData.account_rid,
+        fiscal_year: groupKey.fiscal_year,
+        resource_rid: groupKey.resource_rid,
+        project_fiscal_rid: groupKey.project_fiscal_rid,
+      };
+
+      if (groupKey.country_rid === null || groupKey.country_rid === undefined) {
+        where.country_rid = { [Op.is]: null };
+      } else {
+        where.country_rid = groupKey.country_rid;
+      }
+
+      return where;
+    };
+
+    // 2. If the group changed, update old group
+    if (isGroupChanged) {
+      const oldAggregates: any = await CaseProjectResource.findAll({
+        attributes: [
+          "account_rid",
+          "fiscal_year",
+          "project_rid",
+          "project_fiscal_rid",
+          "resource_rid",
+          "country_rid",
+          [
+            Sequelize.fn("SUM", Sequelize.col("total_hours_pro_res")),
+            "total_effort",
+          ],
+          [
+            Sequelize.fn("SUM", Sequelize.col("net_total_cost_pro_res")),
+            "total_cost",
+          ],
+        ],
+        group: [
+          "account_rid",
+          "fiscal_year",
+          "project_rid",
+          "project_fiscal_rid",
+          "resource_rid",
+          "country_rid",
+        ],
+        where: {
+          ...buildGroupWhere(oldGroupKey),
+          rid: { [Op.ne]: projectResourceData.project_resource_rid }, // exclude updated record
+          status_rid: {
+            [Op.in]: [
+              statusMap?.get("Active"),
+              null,
+            ].filter(Boolean) as string[],
+          }
+        },
+        raw: true,
+        transaction,
+      });
+
+      if (oldAggregates.length > 0) {
+        const oldFiscalRecord = await CaseProjectResourceFiscal.findOne({
+          where: buildGroupWhere(oldGroupKey),
+          transaction,
+        });
+
+        if (oldFiscalRecord) {
+          await CaseProjectResourceFiscal.update(
+            {
+              total_hours_pro_res: oldAggregates[0].total_effort,
+              total_cost_pro_res: oldAggregates[0].total_cost,
+            },
+            {
+              where: { rid: oldFiscalRecord.rid },
+              transaction,
+            }
+          );
+        }
+      } else {
+        await CaseProjectResourceFiscal.destroy({
+          where: buildGroupWhere(oldGroupKey),
+          transaction,
+        });
+      }
+    }
+
+    // 3. Update or create the new group aggregate
+    const newAggregates: any = await CaseProjectResource.findOne({
+      attributes: [
+        "account_rid",
+        "fiscal_year",
+        "project_rid",
+        "project_fiscal_rid",
+        "resource_rid",
+        "country_rid",
+        [
+          Sequelize.fn("SUM", Sequelize.col("total_hours_pro_res")),
+          "total_effort",
+        ],
+        [
+          Sequelize.fn("SUM", Sequelize.col("net_total_cost_pro_res")),
+          "total_cost",
+        ],
+      ],
+      group: [
+        "account_rid",
+        "fiscal_year",
+        "project_rid",
+        "project_fiscal_rid",
+        "resource_rid",
+        "country_rid",
+      ],
+      where: {
+        ...buildGroupWhere(newGroupKey),
+        status_rid: {
+          [Op.in]: [
+            statusMap?.get("Active"),
+          ].filter(Boolean) as string[],
+        }
+      },
+      raw: true,
+      transaction,
+    });
+
+    const newFiscalRecord = await CaseProjectResourceFiscal.findOne({
+      where: buildGroupWhere(newGroupKey),
+      transaction,
+    });
+
+    const baseData = ProjectResourceMapper.maptToUpdateProjectResourceFiscal(
+      projectResourceData,
+      userId
+    );
+
+    if (newFiscalRecord) {
+      // Update existing fiscal record
+      if(newAggregates){
+        await CaseProjectResourceFiscal.update(
+          {
+            ...baseData,
+            total_hours_pro_res: newAggregates.total_effort,
+            total_cost_pro_res: newAggregates.total_cost,
+          },
+          {
+            where: { project_fiscal_rid: newFiscalRecord.project_fiscal_rid },
+            transaction,
+          }
+        );
+      }
+    } else {
+      // Create new fiscal record
+      const resource = await Resources.findOne({
+        where: {
+          account_rid: projectResourceData.account_rid,
+          [Op.and]: [
+            Sequelize.where(
+              Sequelize.fn("LOWER", Sequelize.col("resource_code")),
+              Sequelize.fn("LOWER", projectResourceData.resource_code)
+            ),
+          ],
+        },
+        attributes: ["rid"],
+        transaction,
+      });
+    }
   }
 
   async updateProjectResourceFiscalOnUpdateTable(
@@ -4938,7 +5168,8 @@ export class ProjectResourceSchemaService {
     resourceId: string,
     projectData: any,
     stausId: string,
-    transaction: Transaction
+    transaction: Transaction,
+    caseMapping: CaseProject
   ) {
     const { CaseProjectResource } = await this.getModels(accountNumber);
 
@@ -4980,7 +5211,8 @@ export class ProjectResourceSchemaService {
       },
       {
         where: {
-          rid: projectResourceData.project_resource_rid,
+          project_resource_rid: projectResourceData.project_resource_rid,
+          case_rid: caseMapping.case_rid
         },
         transaction,
       }

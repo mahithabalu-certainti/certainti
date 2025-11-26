@@ -541,23 +541,23 @@ export class ProjectFiscalRegion
       }
     );
 
-    ProjectFiscalRegion.belongsTo(Project, {
-      foreignKey: "project_rid",
-      targetKey: "rid",
-      as: "project_fiscal_region_project"
-    });
+    // ProjectFiscalRegion.belongsTo(Project, {
+    //   foreignKey: "project_rid",
+    //   targetKey: "rid",
+    //   as: "project_fiscal_region_project"
+    // });
 
-    ProjectFiscalRegion.belongsTo(AccountDetails, {
-      foreignKey: "account_rid",
-      targetKey: "account_rid",
-      as: "project_fiscal_region_account"
-    });
+    // ProjectFiscalRegion.belongsTo(AccountDetails, {
+    //   foreignKey: "account_rid",
+    //   targetKey: "account_rid",
+    //   as: "project_fiscal_region_account"
+    // });
 
-    ProjectFiscalRegion.belongsTo(ProjectFiscal, {
-      foreignKey: "project_fiscal_rid",
-      targetKey: "rid",
-      as: "project_fiscal_region_project_fiscal"
-    });
+    // ProjectFiscalRegion.belongsTo(ProjectFiscal, {
+    //   foreignKey: "project_fiscal_rid",
+    //   targetKey: "rid",
+    //   as: "project_fiscal_region_project_fiscal"
+    // });
 
     return ProjectFiscalRegion;
   }

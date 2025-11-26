@@ -6,17 +6,17 @@ const routes : Router = Router()
 
 routes.get(
   "/list/:accountId/:caseId",
-  checkUserStatusMiddleware("NA"),
+  checkUserStatusMiddleware("projects_resources_view_edit"),
   controller.projectResourcesController.listProjectResource
 );
 routes.get(
   "/export/:accountId/:caseId",
-  checkUserStatusMiddleware("NA"),
+  checkUserStatusMiddleware("projects_resources_export"),
   controller.projectResourcesController.exportProjectResource
 );
 routes.get(
   "/detail/:accountId/:id",
-  checkUserStatusMiddleware("NA"),
+  checkUserStatusMiddleware("projects_resources_view_edit"),
   controller.projectResourcesController.projectResourceDetails
 );
 

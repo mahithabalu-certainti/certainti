@@ -86,7 +86,10 @@ import { setupTaskAttachmentsSequence, TaskAttachments } from "../../models/task
 import { CaseTaskWorkflowConnector, setupCaseTaskWorkflowConnectorSequence } from "../../models/caseTaskWorkflowConnectorModel";
 import { v4 as uuidv4 } from 'uuid'
 import { ProjectResourceSchemaService } from "../projectResource/schemaService";
-import { CaseProjectFiscalRegion } from "../../models/caseProjectFiscalRegionModel";
+import { CaseProjectFiscalRegion, setupCaseProjectFiscalRegionSequence } from "../../models/caseProjectFiscalRegionModel";
+import { CaseProjectResourceFiscal, setupCaseProjectResourceFiscalSequence } from "../../models/caseProjectResourceFiscalModel";
+import { CaseProjectResource, setupCaseProjectResourceSequence } from "../../models/caseProjectResourceModel";
+import { CaseProjectTask, setupCaseProjectTaskSequence } from "../../models/caseProjectTaskModel";
 
 class CaseSchemaService {
   private orgDbSequelize: Sequelize | null = null;
@@ -458,6 +461,23 @@ class CaseSchemaService {
         orgDbSequlize,
         schemaName
       )
+      const CaseProjectFiscalRegionModel = CaseProjectFiscalRegion.initialize(
+        orgDbSequlize,
+        schemaName
+      )
+      const CaseProjectResourceModel = CaseProjectResource.initialize(
+        orgDbSequlize,
+        schemaName
+      )
+      const CaseProjectResourceFiscalModel = CaseProjectResourceFiscal.initialize(
+        orgDbSequlize,
+        schemaName
+      )
+      const CaseProjectTaskModel = CaseProjectTask.initialize(
+        orgDbSequlize,
+        schemaName
+      )
+
 
       await CaseModel.sync({ force: false });
       await setupCaseSequence(orgDbSequlize, schemaName);
@@ -491,6 +511,14 @@ class CaseSchemaService {
       await setupCaseHistorySubmissionSequence(orgDbSequlize, schemaName);
       await CaseTaskWorkflowConnectorModel.sync({ force: false });
       await setupCaseTaskWorkflowConnectorSequence(orgDbSequlize, schemaName)
+      await CaseProjectFiscalRegionModel.sync({ force: false });
+      await setupCaseProjectFiscalRegionSequence(orgDbSequlize, schemaName)
+      await CaseProjectResourceModel.sync({ force: false });
+      await setupCaseProjectResourceSequence(orgDbSequlize, schemaName)
+      await CaseProjectResourceFiscalModel.sync({ force: false });
+      await setupCaseProjectResourceFiscalSequence(orgDbSequlize, schemaName)
+      await CaseProjectTaskModel.sync({ force: false });
+      await setupCaseProjectTaskSequence(orgDbSequlize, schemaName)
     } catch (err) {
       errorLog("Error creating case tables", (err as Error).message);
       return this.throwServiceError(err as Error);
@@ -1736,6 +1764,7 @@ class CaseSchemaService {
 
       if (projectFiscalRegionRecords.length > 0) {
         const caseProjectFiscalRegionData = projectFiscalRegionRecords.map(regionRecord => ({
+          project_fiscal_region_rid: regionRecord.rid,
           case_project_rid: p.project_case_rid || '',
           case_rid: data.case_rid,
           project_rid: regionRecord.project_rid,
@@ -1854,6 +1883,7 @@ class CaseSchemaService {
 
       if (projectResourceRecords.length > 0) {
         const caseProjectResourceData = projectResourceRecords.map(resourceRecord => ({
+          project_resource_rid: resourceRecord.rid,
           case_project_rid: p.project_case_rid || '',
           account_rid: resourceRecord.account_rid,
           case_rid: data.case_rid,
@@ -1903,6 +1933,7 @@ class CaseSchemaService {
 
       if (projectResourceFiscalRecords.length > 0) {
         const caseProjectResourceFiscalData = projectResourceFiscalRecords.map(fiscalRecord => ({
+          project_resource_fiscal_rid: fiscalRecord.rid,  
           case_project_rid: p.project_case_rid || '',
           account_rid: fiscalRecord.account_rid,
           case_rid: data.case_rid,
@@ -1960,6 +1991,7 @@ class CaseSchemaService {
 
       if (projectTaskRecords.length > 0) {
         const caseProjectTaskData = projectTaskRecords.map(taskRecord => ({
+          project_task_rid: taskRecord.rid,
           case_project_rid: p.project_case_rid || '',
           account_rid: taskRecord.account_rid,
           case_rid: data.case_rid,

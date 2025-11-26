@@ -13,6 +13,7 @@ interface CaseProjectResourceAttributes {
   end_date?: Date | null;
   total_hours_pro_res?: number | null;
   total_cost_pro_res?: number | null;
+  project_resource_rid: string;
   case_project_rid: string;
   case_rid: string;
   account_rid?: string | null;
@@ -75,6 +76,7 @@ export class CaseProjectResource
   public modified_by?: string;
   public created_datetime?: Date;
   public modified_datetime?: Date;
+  public project_resource_rid!: string; 
   public start_date?: Date;
   public end_date?: Date;
   public total_hours_pro_res?: number;
@@ -160,6 +162,10 @@ export class CaseProjectResource
         modified_datetime: { 
           type: DataTypes.DATE, 
           allowNull: true 
+        },
+        project_resource_rid: {
+          type: DataTypes.STRING(50), 
+          allowNull: false
         },
         start_date: { 
           type: DataTypes.DATEONLY, 

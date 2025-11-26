@@ -262,38 +262,38 @@ export class ProjectInjestionTaskService {
             const allTasks = await models.CaseProjectTaskModel.findAll({
                 where: whereClause,
                 include: [
-                    {
-                        model: models.AccountDetailsModel,
-                        attributes: ["account_name"],
-                        required: false,
-                        as: "account",
-                    },
-                    {
-                        model: models.ProjectFiscalModel,
-                        attributes: ["project_name", "project_code", "currency_rid"],
-                        required: false,
-                        as: "project",
-                    },
-                    {
-                        model: models.ResourceModel,
-                        attributes: [
-                            "resource_code",
-                            "resource_name",
-                            "resource_type_rid",
-                            "resource_role",
-                            "resource_orgname",
-                        ],
-                        required: false,
-                        as: "resource",
-                    },
-                    {
-                        model: models.ProjectResourceModel,
-                        attributes: [
-                            "project_resource_role"
-                        ],
-                        required: false,
-                        as: "project_resource"
-                    }
+                {
+                    model: models.AccountDetailsModel,
+                    attributes: ["account_name"],
+                    required: false,
+                    as: "account",
+                },
+                {
+                    model: models.ProjectFiscalModel,
+                    attributes: ["project_name", "project_code", "currency_rid"],
+                    required: false,
+                    as: "project",
+                },
+                {
+                    model: models.ResourceModel,
+                    attributes: [
+                    "resource_code",
+                    "resource_name",
+                    "resource_type_rid",
+                    "resource_role",
+                    "resource_orgname",
+                    ],
+                    required: false,
+                    as: "resource",
+                },
+                {
+                    model : models.ProjectResourceModel,
+                    attributes : [
+                    "project_resource_role"
+                    ],
+                    required : false,
+                    as : "project_resource"
+                }
                 ],
             });
 
@@ -310,11 +310,11 @@ export class ProjectInjestionTaskService {
 
             if (resourceFilter) {
                 formattedTasks = formattedTasks.filter((task) => {
-                    const resourcePass = resourceFilter
-                        ? this.applyTextFilter(task.resource_name, resourceFilter)
-                        : true;
+                const resourcePass = resourceFilter
+                    ? this.applyTextFilter(task.resource_name, resourceFilter)
+                    : true;
 
-                    return resourcePass;
+                return resourcePass;
                 });
             }
 
@@ -329,17 +329,17 @@ export class ProjectInjestionTaskService {
                 statusCode: HttpStatus.SUCCESS,
                 message: HttpStatus.SUCCESS_MESSAGE,
                 data: {
-                    tasks: formattedTasks,
-                    totalCount: total,
+                tasks: formattedTasks,
+                totalCount: total,
                 },
             };
-        } catch (error) {
+            } catch (error) {
             errorLog("projectTaskService - listProjectTasks", (error as Error).message);
             return {
                 statusCode: 500,
-                message: "Failed to fetch case project tasks",
+                message: "Failed to fetch attachments",
                 errorMessage:
-                    error instanceof Error ? error.message : "An unknown error occurred",
+                error instanceof Error ? error.message : "An unknown error occurred",
                 data: { tasks: [], totalCount: 0 },
             };
         }
