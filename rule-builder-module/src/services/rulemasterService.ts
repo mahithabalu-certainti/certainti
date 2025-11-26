@@ -4,6 +4,7 @@ import { Sequelize } from "sequelize";
 import { HttpStatus, STATUS_MESSAGE } from "../utils/constants";
 import { Logger } from "winston";
 import { ICreateRule } from "../utils/types";
+import { logMessage } from "../utils/helpers";
 
 export class RulemasterService {
     private logger: Logger;
@@ -92,41 +93,73 @@ export class RulemasterService {
     // };
 
     /** UPDATE RuleMaster by RID */
-    // export const updateRuleMaster = async (
-    //     rid: string,
-    //     data: Partial<RuleMasterCreationAttributes>
-    // ) => {
-    //     // Build update object dynamically
-    //     const updateData: Partial<RuleMasterCreationAttributes> = {
-    //         modified_datetime: new Date(), // always update timestamp
-    //     };
+    async updateRuleMaster(
+        rulerequest: ICreateRule, userId: string
+    ): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: { rules: any };
+    }> {
+        try {
+            const sequelize = new Sequelize(process.env.POSTGRES_CONNECTION_STRING!, {
+                dialect: "postgres",
+                logging: false, // optional
+            });
+            const dbInit = RuleMaster.initialize(sequelize);
+            const existingCase = await RuleMaster.findOne({
+                where: { rid: rulerequest.rule_rid },
+            });
+            const caseUpdateResponse = await RuleMaster.update(
+                {
+                    ...rulerequest,
+                    modified_by: "userId",
+                    modified_datetime: new Date(),
+                },
+                {
+                    where: { rid: rulerequest.rule_rid },
+                }
+            );
 
-    //     if (data.rule_name !== undefined) updateData.rule_name = data.rule_name;
-    //     if (data.description !== undefined) updateData.description = data.description; // can be string or undefined
-    //     if (data.trigger_event !== undefined) updateData.trigger_event = data.trigger_event;
-    //     if (data.trigger_type !== undefined) updateData.trigger_type = data.trigger_type;
-    //     if (data.is_active !== undefined) updateData.is_active = data.is_active;
-    //     if (data.scope_type !== undefined) updateData.scope_type = data.scope_type;
-    //     if (data.schedule_offset_type !== undefined) updateData.schedule_offset_type = data.schedule_offset_type;
-    //     if (data.schedule_offset_value !== undefined) updateData.schedule_offset_value = data.schedule_offset_value;
-    //     if (data.modified_by !== undefined) updateData.modified_by = data.modified_by;
-
-    //     const [updatedCount, [updatedRule]] = await RuleMaster.update(
-    //         updateData,
-    //         {
-    //             where: { rid },
-    //             returning: true,
-    //         }
-    //     );
-
-    //     return updatedRule;
-    // };
+            return {
+                statusCode: HttpStatus.SUCCESS,
+                message: STATUS_MESSAGE.ruleUpdated,
+                data: {
+                    rules: {},
+                },
+            };
+        } catch (err) {
+            logMessage(`Error updating case, ${err}`);
+            //await transaction.rollback();
+            return {
+                statusCode: HttpStatus.FAILED,
+                message: HttpStatus.FAILED_MESSAGE,
+                errorMessage: STATUS_MESSAGE.ruleCreationFailed,
+            };
+        }
+    };
 
 
     // /** DELETE RuleMaster by RID */
-    // export const deleteRuleMaster = async (rid: string) => {
-    //     await RuleMaster.destroy({ where: { rid } });
-    //     return { message: "Rule deleted successfully" };
-    // };
+    async deleteRuleMaster(data: any, userId: string) {
+        try {
+            const sequelize = new Sequelize(process.env.POSTGRES_CONNECTION_STRING!, {
+                dialect: "postgres",
+                logging: false, // optional
+            });
+            RuleMaster.initialize(sequelize);
+            await RuleMaster.destroy({ where: { rid: data.rule_rid } });
+            return {
+                statusCode: HttpStatus.SUCCESS,
+                message: STATUS_MESSAGE.ruleUpdated,
+            };
+        } catch (err) {
+            console.log(`Error deleting, ${err}`)
+            return {
+                statusCode: HttpStatus.FAILED,
+                message: STATUS_MESSAGE.ruleUpdated,
+            };
+        }
+    };
 
 }

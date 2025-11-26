@@ -14,8 +14,8 @@ const router = Router();
 router.post("/rule", RuleController.createRuleMaster);
 router.get("/rule", RuleController.getAllRuleMasters);
 // router.get("/rule/:rid", RuleController.getRuleMasterById);
-// router.put("/rule/:rid", RuleController.updateRuleMaster);
-// router.delete("/rule/:rid", RuleController.deleteRuleMaster);
+router.put("/rule/update", RuleController.updateRuleMaster);
+router.post("/rule/delete", RuleController.deleteRuleMaster);
 
 // Condition
 router.post("/condition", ConditionController.createCondition);

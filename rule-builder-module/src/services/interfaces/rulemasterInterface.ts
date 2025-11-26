@@ -21,4 +21,16 @@ export interface IRulemasterService {
         errorMessage?: string;
         data?: { rules: any; count: number };
     }>;
+
+    updateRuleMaster(
+        ruleRequest: ICreateRule,
+        userId: string
+    ): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: { rules: any };
+    }>;
+
+    deleteRuleMaster(data: any, userId: string): Promise<any>;
 }

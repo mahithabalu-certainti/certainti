@@ -27,4 +27,8 @@ export const NODE_ENV = {
 
 export const STATUS_MESSAGE = {
   ruleCreated: "Rule created successfully",
+  ruleUpdated: "Rule updated successfully",
+  ruleCreationFailed: "Rule creation failed",
+  ruleDeleteSuccess: "Rule deleted successfully",
+  ruleDeleteFailed: "Rule deletion failed",
 }

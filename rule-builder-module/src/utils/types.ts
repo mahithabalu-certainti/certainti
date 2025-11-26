@@ -1,4 +1,5 @@
 export interface ICreateRule {
+    rule_rid:string;
     rule_name: string;
     description: string;
     is_active: true;
