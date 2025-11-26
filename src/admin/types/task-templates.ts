@@ -112,7 +112,7 @@ export interface TaskTemplateFormData {
   relationship_connector_rid?: string;
   workflow_connector?: {
     source_rid: string;
-    target_rid?: string;
+    target_rid?: string[];
     relationship_connector_rid?: string;
   };
 }
@@ -136,7 +136,7 @@ export type TaskTemplateFormPayload = {
   status_rid?: string;
   workflow_connector?: {
     source_rid: string;
-    target_rid?: string;
+    target_rid?: string[];
     relationship_connector_rid?: string;
   };
 };

@@ -171,7 +171,7 @@ export const getTaskTemplateFilterFields = (
 
     {
       label: 'Created By',
-      name: 'created_user_name',
+      name: 'created_by_name',
       type: 'text',
       operatorOption: textfieldOptions,
       hide:
@@ -189,7 +189,7 @@ export const getTaskTemplateFilterFields = (
     },
     {
       label: 'Updated By',
-      name: 'modified_user_name',
+      name: 'modified_by_name',
       type: 'text',
       operatorOption: nonReqTextfieldOptions,
       hide:

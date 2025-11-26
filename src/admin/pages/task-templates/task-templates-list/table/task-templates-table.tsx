@@ -277,8 +277,8 @@ export const TaskTemplateTable: React.FC<ITaskTemplateTableProps> = ({
       const res = await updateTaskTemplate({
         variables: { data: updateData },
       });
-      console.log('res', res);
       const result = res.data?.UpdateTaskTemplateInline;
+
       if (result?.statusCode === 200 && result.data) {
         const updatedItem = result.data;
         setTaskTemplateList((prev) =>
@@ -287,7 +287,7 @@ export const TaskTemplateTable: React.FC<ITaskTemplateTableProps> = ({
           )
         );
       } else {
-        errorToast(result?.message || 'Failed to update field');
+        errorToast(result?.statusMessage || 'Failed to update field');
         setTaskTemplateList(previousTaskTemplateList);
       }
     } catch (error) {

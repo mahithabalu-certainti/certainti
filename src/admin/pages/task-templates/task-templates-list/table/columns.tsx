@@ -216,7 +216,7 @@ export const getTaskTemplateColumns = (
     field: {
       type: 'select',
       required: false,
-      placeholder: 'Choose Catagory',
+      placeholder: 'Choose Category',
       options: taskCategoryTypesOptions,
     },
   },
@@ -232,7 +232,7 @@ export const getTaskTemplateColumns = (
     //   !permissionMap?.['weightage_rid']?.read,
     sortId: 'weightage_value',
     label: 'Weightage',
-    width: 130,
+    width: 145,
     sortable: true,
     field: {
       type: 'select',
@@ -252,12 +252,12 @@ export const getTaskTemplateColumns = (
       !permissionMap?.['status_rid']?.read,
     sortId: 'status_name',
     label: 'Status',
-    width: 100,
+    width: 130,
     sortable: true,
     field: {
       type: 'select',
       required: false,
-      placeholder: ' Choose Status',
+      placeholder: 'Choose Status',
       options: memoizedStatus,
     },
   },
