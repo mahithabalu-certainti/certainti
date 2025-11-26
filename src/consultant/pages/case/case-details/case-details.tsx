@@ -60,6 +60,8 @@ import Setting from './settings/setting';
 import { ExportChecklistList } from '../../../services/checklist/checklist-service';
 import { Checklist } from './checklist';
 import { CaseInteractions } from './case-interactions';
+import { ExportReviewProjectList } from '../../../services/cases-assign-projects/review-project-service';
+import { ReviewProjectListURLParams } from '../../../types/assign-projects';
 import HistorySubmission from './history-submission/history-submission';
 
 export const CaseDetails = () => {
@@ -104,7 +106,7 @@ export const CaseDetails = () => {
     caseData?.account_status_name?.toLowerCase() !== 'active';
   const [caseProjectParams, setCaseProjectParams] =
     useState<CaseAssignedExportParams>({
-      sort: 'project_type_name',
+      sort: 'project_code',
       sort_by: 'ASC',
       filter: {},
       timezone: '',
@@ -125,6 +127,16 @@ export const CaseDetails = () => {
     case_rid: caseId ?? '',
     account_id: accountId ?? '',
   });
+  const [reviewProjectParams, setReviewProjectParams] =
+    useState<ReviewProjectListURLParams>({
+      sortOrder: 'ASC',
+      sortBy: 'project_code',
+      filters: {},
+      timezone: '',
+      page: 1,
+      limit: 10,
+      search: '',
+    });
   const fiscalYear = caseData?.fiscal_year ?? 0;
   const [attachmentParams, setAttachmentParams] =
     useState<AttachmentsListExportParams>({
@@ -249,10 +261,13 @@ export const CaseDetails = () => {
         ...checklistParams,
         ...checklistPayload,
       });
-    } else if (list === 'caseProjects') {
+    } else if (list === 'caseProjects' && exportType === 'cases_projects') {
       ExportAssignedList(caseProjectParams);
     } else if (exportType === 'case_task') {
       ExportCaseTaskList(caseTaskParams);
+    } else if (list === 'caseProjects' && exportType === 'review_projects') {
+      console.log('review_projects');
+      ExportReviewProjectList(reviewProjectParams, accountId, caseId);
     }
   };
 
@@ -353,6 +368,7 @@ export const CaseDetails = () => {
               fiscalYear={fiscalYear}
               accountInActive={accountInActive}
               setTableParams={setCaseProjectParams}
+              setReviewProjectParams={setReviewProjectParams}
               setExportType={setExportType}
             />
           </div>

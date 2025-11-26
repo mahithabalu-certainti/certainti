@@ -11,7 +11,10 @@ import {
 import SectionHeader from '../../../../../components/details-section/section-header';
 import SelectProjects from './select-project/select-projects';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { AssignProject } from '../../../../types/assign-projects';
+import {
+  AssignProject,
+  ReviewProjectListURLParams,
+} from '../../../../types/assign-projects';
 import { selectProjectFilterFields } from './select-project/helper';
 import {
   useFetchClassification,
@@ -36,12 +39,17 @@ import ProjectTab from './projects-tab';
 import { getProjectFinancialResCostFields } from '../../../project/project-details/financial-highlights/helpers';
 import { useGetResourceType } from '../../../../services/resource-list';
 import { FilterValue } from '../../../../types/account-filter';
+import { getReviewdProjectColumns } from './review-projects/column';
+import EmailModalTemplate from './review-projects/email-model-template';
 interface casesProjectProps {
   activeKey?: string;
   fiscalYear: number;
   accountInActive: boolean;
   setTableParams?: React.Dispatch<
     React.SetStateAction<CaseAssignedExportParams>
+  >;
+  setReviewProjectParams?: React.Dispatch<
+    React.SetStateAction<ReviewProjectListURLParams>
   >;
   setExportType?: (type: ExportType) => void;
 }
@@ -64,6 +72,7 @@ const CasesProjects: React.FC<casesProjectProps> = ({
   accountInActive,
   setTableParams,
   setExportType,
+  setReviewProjectParams,
 }) => {
   const { caseId } = useParams();
   const [refreshTrigger, setRefreshTrigger] = useState<number>(Date.now());
@@ -72,16 +81,17 @@ const CasesProjects: React.FC<casesProjectProps> = ({
   >({});
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [showFilter, setShowFilter] = useState<boolean>(false);
-  const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const [searchText, setSearchText] = useState<string>('');
   const [count, setCount] = useState<number>(0);
   const [currentCountry, setCurrentCountry] = useState<string>('');
   const [clearSelectedRows, setClearSelectedRows] = useState<boolean>(false);
   const [searchParams] = useSearchParams();
-  const handleSorting = () => {
-    setSortFilterCount(sortFilterCount + 1);
-  };
+  const [emailModalOpen, setEmailModalOpen] = useState(false);
+
   const [selectedRows, setSelectedRows] = useState<AssignProject[]>([]);
+  const [reviewSelectedRows, setReviewSelectedRows] = useState<AssignProject[]>(
+    []
+  );
   const [columnAnchorEl, setColumnAnchorEl] =
     useState<HTMLButtonElement | null>(null);
   const navigate = useNavigate();
@@ -148,7 +158,10 @@ const CasesProjects: React.FC<casesProjectProps> = ({
   };
 
   const handleBackToAssignedProjects = () => {
-    updateSearchParams((params) => params.delete('assignProject'));
+    updateSearchParams((params) => {
+      params.delete('assignProject');
+      return params;
+    });
   };
 
   const handleColumnVisibility = (
@@ -177,11 +190,14 @@ const CasesProjects: React.FC<casesProjectProps> = ({
   }, []);
 
   const tabParam = searchParams.get('tab') || initialTab;
+  console.log('tabParam', tabParam);
   const handleTabChange = (value: string) => {
     searchParams.set('tab', value);
     navigate({ search: searchParams.toString() }, { replace: true });
   };
-
+  // const handleCloseEmailModal = () => {
+  //   setEmailModalOpen(false);
+  // };
   const tabs = [
     { label: 'Assigned Projects', value: 'assign_projects' },
     {
@@ -189,9 +205,8 @@ const CasesProjects: React.FC<casesProjectProps> = ({
       value: 'review_projects',
     },
   ];
-  const initialDetailsTab = 'projects_details';
 
-  const DetailsTabParam = searchParams.get('detailstab') || initialDetailsTab;
+  const DetailsTabParam = searchParams.get('detailstab');
   const handleDetailsTabChange = (value: string) => {
     searchParams.set('detailstab', value);
     navigate({ search: searchParams.toString() }, { replace: true });
@@ -205,10 +220,11 @@ const CasesProjects: React.FC<casesProjectProps> = ({
     { label: 'Resource Cost', value: 'resource_cost' },
   ];
   const handleBackTocasesProjects = () => {
-    searchParams.delete('detailstab');
-    navigate({ search: searchParams.toString() }, { replace: true });
+    const newParams = new URLSearchParams(searchParams);
+    newParams.delete('detailstab');
+    newParams.delete('assignProject'); // Also remove assignProject when going back
+    navigate({ search: newParams.toString() }, { replace: true });
   };
-
   const headerButtons = [
     {
       label: isAssignProject ? 'Assign' : 'Remove',
@@ -241,6 +257,14 @@ const CasesProjects: React.FC<casesProjectProps> = ({
         : tabParam === 'assign_projects'
           ? false
           : true,
+    },
+    {
+      label: 'Review ',
+      variant: 'outlined' as const,
+      disabled: reviewSelectedRows.length === 0 || accountInActive,
+      hide: tabParam === 'review_projects' ? false : true,
+      onClick: () => setEmailModalOpen(true),
+      sx: { width: '70px', minWidth: '70px' },
     },
     {
       label: 'Show/Hide Fields',
@@ -379,17 +403,28 @@ const CasesProjects: React.FC<casesProjectProps> = ({
     return map;
   }, [projectViewEditlistFields]);
   const handleProjectDetails = (data: AssignProject) => {
-    searchParams.set('detailstab', 'projects_details');
-    searchParams.set('projectID', data.rid);
-    navigate({ search: searchParams.toString() }, { replace: true });
+    // Create new search params without assignProject
+    const newParams = new URLSearchParams(searchParams);
+    newParams.delete('assignProject'); // Remove assignProject parameter
+    newParams.set('detailstab', 'projects_details');
+    newParams.set('projectID', data.rid);
+
+    navigate({ search: newParams.toString() }, { replace: true });
   };
   const caseColumns = isAssignProject
     ? getAssignedProjectColumns(permissionMap)
     : getSelectProjectColumns(permissionMap, handleProjectDetails);
+  const reviewProjectColumns = getReviewdProjectColumns(permissionMap);
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
   >(Object.fromEntries(caseColumns.map((col) => [col.id, !col.hide])));
-
+  const [sortParams, setSortParams] = useState<{
+    sortField: string;
+    sortBy: 'ASC' | 'DESC';
+  }>({
+    sortField: 'project_code',
+    sortBy: 'ASC',
+  });
   const [columnOrder, setColumnOrder] = useState(
     caseColumns.map((col) => col.id)
   );
@@ -406,13 +441,37 @@ const CasesProjects: React.FC<casesProjectProps> = ({
     .map((id) => caseColumns.find((col) => col.id === id)!)
     .filter((col) => columnVisibility[col.id]);
 
+  const [reviewColumnVisibility, setReviewColumnVisibility] = useState<
+    Record<string, boolean>
+  >(Object.fromEntries(reviewProjectColumns.map((col) => [col.id, !col.hide])));
+
+  // State for ordering of review columns
+  const [reviewColumnOrder, setReviewColumnOrder] = useState(
+    reviewProjectColumns.map((col) => col.id)
+  );
+
+  // Handle changes to review columns (from column settings popup)
+  const handleReviewColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
+    const newVisibility = Object.fromEntries(
+      updatedColumns.map((col) => [col.id, !col.hide])
+    );
+
+    setReviewColumnVisibility(newVisibility);
+    setReviewColumnOrder(updatedColumns.map((col) => col.id));
+  };
+
+  // Generate visible review columns
+  const visibleReviewColumns = reviewColumnOrder
+    .map((id) => reviewProjectColumns.find((col) => col.id === id)!)
+    .filter((col) => reviewColumnVisibility[col.id]);
+
   const handlePopoverClose = () => {
     setColumnAnchorEl(null);
   };
 
   const RestrictedColumns = [
     {
-      id: 'r_number',
+      id: 'project_code',
       canHide: false,
       canDrag: false,
     },
@@ -434,8 +493,14 @@ const CasesProjects: React.FC<casesProjectProps> = ({
         open={isModalOpen}
         popoverId={modalId}
         onClose={handlePopoverClose}
-        columns={caseColumns}
-        onColumnsChange={handleColumnsChange}
+        columns={
+          tabParam === 'assign_projects' ? caseColumns : reviewProjectColumns
+        }
+        onColumnsChange={
+          tabParam === 'assign_projects'
+            ? handleColumnsChange
+            : handleReviewColumnsChange
+        }
         columnRestrictions={RestrictedColumns}
       />
       <SectionTabPanel
@@ -448,9 +513,8 @@ const CasesProjects: React.FC<casesProjectProps> = ({
         setAppliedFilters={setAppliedFilters}
         setCurrentPage={setCurrentPage}
         handleFilter={handleFilter}
-        handleSorting={handleSorting}
-        sortFilterCount={sortFilterCount}
-        setSortFilterCount={setSortFilterCount}
+        sortFilterCount={0}
+        setSortFilterCount={() => {}}
         showRefresh={visbleIcons}
         onRefreshClick={onRefreshClick}
         onFilterChange={handleFilterChange}
@@ -468,7 +532,13 @@ const CasesProjects: React.FC<casesProjectProps> = ({
           />
         }
         count={count}
-        showItemCount={true}
+        showItemCount={
+          DetailsTabParam === 'resource_cost'
+            ? true
+            : DetailsTabParam
+              ? false
+              : true
+        }
         buttons={headerButtons}
       />
       {!isAssignProject && !projectDetailTab && (
@@ -482,7 +552,7 @@ const CasesProjects: React.FC<casesProjectProps> = ({
         <SectionHeaderTab
           tabs={detailsTabs}
           onTabChange={handleDetailsTabChange}
-          defaultValue={DetailsTabParam}
+          defaultValue={DetailsTabParam ?? 'projects_details'}
         />
       )}
       {projectDetailTab ? (
@@ -499,7 +569,7 @@ const CasesProjects: React.FC<casesProjectProps> = ({
         <div className='border border-[#CBD6E2] border-t-0'>
           {isAssignProject ? (
             <SelectProjects
-              accountInActive={false}
+              accountInActive={accountInActive}
               refreshTrigger={refreshTrigger}
               setSelectedRows={setSelectedRows}
               currentPage={currentPage}
@@ -509,10 +579,11 @@ const CasesProjects: React.FC<casesProjectProps> = ({
               setCount={setCount}
               clearSelectedRows={clearSelectedRows}
               fiscalYear={fiscalYear}
+              appliedFilters={appliedFilters}
             />
           ) : (
             <AssignedProjects
-              accountInActive={false}
+              accountInActive={accountInActive}
               refreshTrigger={refreshTrigger}
               setSelectedRows={setSelectedRows}
               currentPage={currentPage}
@@ -523,14 +594,34 @@ const CasesProjects: React.FC<casesProjectProps> = ({
               setCount={setCount}
               clearSelectedRows={clearSelectedRows}
               fiscalYear={fiscalYear}
+              setExportType={setExportType}
+              appliedFilters={appliedFilters}
             />
           )}
         </div>
       ) : (
         <div className='border border-[#CBD6E2] border-t-0'>
           <ReviewProjectsList
-            accountInActive={false}
-            visibleColumns={visibleColumns}
+            accountInActive={accountInActive}
+            visibleColumns={visibleReviewColumns}
+            searchText={searchText}
+            refreshTrigger={refreshTrigger}
+            // fiscalYear={fiscalYear}
+            setTableParams={setReviewProjectParams}
+            setCount={setCount}
+            setExportType={setExportType}
+            appliedFilters={appliedFilters}
+            setSelectedRows={setReviewSelectedRows}
+            setSortParams={setSortParams}
+          />
+          <EmailModalTemplate
+            title='Email Template'
+            isOpen={emailModalOpen}
+            onClose={() => setEmailModalOpen(false)}
+            selectedRows={reviewSelectedRows}
+            appliedFilters={appliedFilters}
+            sortBy={sortParams.sortField}
+            sortOrder={sortParams.sortBy}
           />
         </div>
       )}

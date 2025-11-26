@@ -9,8 +9,15 @@ export const transformTaskTemplatePayload = (
   isEditView: boolean,
   originalData?: TaskTemplateDetails
 ): TaskTemplateFormPayload => {
+  // Filter out null/undefined values from target_rid array
+  const filteredTargetRid = Array.isArray(formData.target_rid)
+    ? formData.target_rid.filter(
+        (rid): rid is string => rid !== null && rid !== undefined && rid !== ''
+      )
+    : [];
+
   const basePayload: TaskTemplateFormPayload = {
-    task_name: formData.task_name,
+    task_name: formData.task_name?.trim() || '',
     task_description: formData.task_description,
     task_type_rid: formData.task_type_rid,
     effort_in_days: formData.effort_in_days,
@@ -23,7 +30,7 @@ export const transformTaskTemplatePayload = (
     weightage_rid: formData.weightage_rid,
     workflow_connector: {
       source_rid: '',
-      target_rid: formData?.target_rid || '',
+      target_rid: filteredTargetRid, // Use filtered array here
       relationship_connector_rid: formData?.relationship_connector_rid,
     },
   };

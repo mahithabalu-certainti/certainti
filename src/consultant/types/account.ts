@@ -528,7 +528,8 @@ export type ExportType =
   | 'checklist'
   | 'resource_checklist'
   | 'cases_projects'
-  | 'case_task';
+  | 'case_task'
+  | 'review_projects';
 
 export type FinancialSummaryFlag = 'all' | 'rd_qualified';
 
