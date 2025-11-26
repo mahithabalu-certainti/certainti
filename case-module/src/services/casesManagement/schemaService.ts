@@ -636,7 +636,8 @@ class CaseManagementSchemaService {
         task_description : data.task_description,
         checklist_template_rid : data.checklist_template_rid,
         priority_rid : data.priority_rid,
-        task_type_rid : data.task_type_rid
+        task_type_rid : data.task_type_rid,
+        status_rid : data.status_rid
       }
     }
     const result = await TaskTemplate.create(dynamicData);
