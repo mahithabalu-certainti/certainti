@@ -2005,10 +2005,8 @@ class ActivitySchemaService {
       activity_type: emailDetails?.activity_type ?? "",
       subject: emailDetails?.subject ?? "",
       body_html: emailDetails?.body_html ?? "",
-      to_email: emailDetails?.to_email ? emailDetails.to_email.split(";") : [],
-      cc_emails: emailDetails?.cc_emails
-        ? emailDetails.cc_emails.split(";")
-        : [],
+      to_email: emailDetails?.to_email ,
+      cc_emails: emailDetails?.cc_emails,
       email_status: emailDetails?.email_status ?? "",
       r_number: emailDetails.r_number ?? "",
       status_rid: emailDetails.status_rid ?? "",

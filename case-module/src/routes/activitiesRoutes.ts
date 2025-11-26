@@ -66,18 +66,18 @@ routes.post(
 )
 
 routes.get(
-  "/email/detail/:activityRid/:accountRid",
+  "/email/:activityRid/:accountRid",
   checkUserStatusMiddleware("activity_email_view_edit"),
   controller.activitiesController.fetchEmailActivityById
 );
 
 routes.get(
-  "/meeting/detail/:activityRid/:accountRid",
+  "/meeting/:activityRid/:accountRid",
   checkUserStatusMiddleware("activity_meeting_view_edit"),
   controller.activitiesController.fetchMeetingActivityById
 );
 routes.get(
-  "/call/detail/:activityRid/:accountRid",
+  "/call/:activityRid/:accountRid",
   checkUserStatusMiddleware("activity_call_view_edit"),
   controller.activitiesController.fetchCallActivityById
 );
