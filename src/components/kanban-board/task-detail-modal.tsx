@@ -628,11 +628,11 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
 
   const handleSave = async () => {
     const newErrors: Record<string, string> = {};
+    if (!editedTask?.title || !editedTask.title.trim()) {
+      newErrors.taskTitle = 'This field is required';
+    }
     if (!editedTask?.status) newErrors.status = 'This field is required';
     if (!editedTask?.priority) newErrors.priority = 'This field is required';
-    if (!selectedChecklist && !fieldVisibility.checklistTemplate) {
-      newErrors.checklistTemplate = 'This field is required';
-    }
 
     if (linkedType && (!linkTaskTypes || linkTaskTypes.length === 0)) {
       newErrors.linkTaskType = 'This field is required';
@@ -1119,13 +1119,16 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
               <input
                 type='text'
                 value={editedTask?.title || ''}
-                onChange={(e) =>
+                onChange={(e) => {
                   setEditedTask((prev) =>
                     prev ? { ...prev, title: e.target.value } : null
-                  )
-                }
+                  );
+                  if (e.target.value.trim()) {
+                    setErrors((prev) => ({ ...prev, taskTitle: '' }));
+                  }
+                }}
                 onKeyPress={(e) => e.key === 'Enter' && handleSave()}
-                className='w-full text-[13px] font-normal bg-transparent border-b border-gray-300 focus:border-blue-500 outline-none text-gray-900 pb-2 pr-8'
+                className={`w-full text-[13px] font-normal bg-transparent border-b ${errors.taskTitle ? 'border-red-500' : 'border-gray-300'} focus:border-blue-400 focus:border-b outline-none text-gray-900 placeholder-[#7D98B6] pb-2 pr-8`}
                 autoFocus
               />
               {errors.taskTitle && (

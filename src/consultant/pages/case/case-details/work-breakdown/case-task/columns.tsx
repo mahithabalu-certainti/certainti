@@ -1,9 +1,9 @@
 import { ListTableColumn } from '../../../../../../components/table/types';
 import { CaseTaskType } from '../../../../../services/case-task/case-task-service';
 
-export const getCaseTaskListColumns = (
-  permissionMap: Record<string, { read: boolean; edit: boolean }>
-): ListTableColumn<CaseTaskType>[] => [
+export const getCaseTaskListColumns =
+  () // permissionMap: Record<string, { read: boolean; edit: boolean }>
+  : ListTableColumn<CaseTaskType>[] => [
     {
       id: 'task_name',
       sortId: 'task_name',
@@ -20,7 +20,7 @@ export const getCaseTaskListColumns = (
         borderRight: '1px solid #CBD6E2',
         borderBottom: '1px solid #CBD6E2 !important',
       },
-      hide: !permissionMap['task_name']?.read && !permissionMap['task_name']?.edit,
+      // hide: !permissionMap['task_name']?.read && !permissionMap['task_name']?.edit,
     },
     {
       id: 'assigned_to',
@@ -29,8 +29,8 @@ export const getCaseTaskListColumns = (
       sortable: true,
       width: 120,
       render: (row: CaseTaskType) => row.assigned_to || '-',
-      hide:
-        !permissionMap['assigned_to']?.read && !permissionMap['assigned_to']?.edit,
+      // hide:
+      //   !permissionMap['assigned_to']?.read && !permissionMap['assigned_to']?.edit,
     },
     {
       id: 'effective_start_datetime',
@@ -39,9 +39,9 @@ export const getCaseTaskListColumns = (
       sortable: true,
       width: 120,
       render: (row: CaseTaskType) => row.effective_start_datetime || '-',
-      hide:
-        !permissionMap['effective_start_datetime']?.read &&
-        !permissionMap['effective_start_datetime']?.edit,
+      // hide:
+      //   !permissionMap['effective_start_datetime']?.read &&
+      //   !permissionMap['effective_start_datetime']?.edit,
     },
     {
       id: 'effective_end_datetime',
@@ -50,9 +50,9 @@ export const getCaseTaskListColumns = (
       sortable: true,
       width: 120,
       render: (row: CaseTaskType) => row.effective_end_datetime || '-',
-      hide:
-        !permissionMap['effective_end_datetime']?.read &&
-        !permissionMap['effective_end_datetime']?.edit,
+      // hide:
+      //   !permissionMap['effective_end_datetime']?.read &&
+      //   !permissionMap['effective_end_datetime']?.edit,
     },
     {
       id: 'task_status_name',
@@ -61,8 +61,8 @@ export const getCaseTaskListColumns = (
       sortable: true,
       width: 100,
       render: (row: CaseTaskType) => row.task_status_name || '-',
-      hide:
-        !permissionMap['task_status_name']?.read &&
-        !permissionMap['task_status_name']?.edit,
+      // hide:
+      //   !permissionMap['task_status_name']?.read &&
+      //   !permissionMap['task_status_name']?.edit,
     },
   ];

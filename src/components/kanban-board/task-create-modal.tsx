@@ -292,11 +292,6 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
       newErrors.startDate = 'This field is required';
     if (!endDate && !fieldVisibility.endDate)
       newErrors.endDate = 'This field is required';
-    if (
-      (!selectedChecklist || !selectedChecklistRid) &&
-      !fieldVisibility.checklist
-    )
-      newErrors.checklistTemplate = 'This field is required';
 
     if (linkedType && (!linkTaskTypes || linkTaskTypes.length === 0)) {
       newErrors.linkTaskType = 'This field is required';
