@@ -26,6 +26,7 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import { useGetUserOptions } from '../../../../../services/case-team';
 import { AssignProject } from '../../../../../types/assign-projects';
 import { SortDirection } from '../../../../../../components/table/types';
+import { useToast } from '../../../../../../hooks';
 
 // Types for placeholder suggestions
 interface PlaceholderSuggestion {
@@ -137,7 +138,7 @@ const EmailModalTemplate: React.FC<EmailModalProps> = ({
     suggestions: [],
     selectionIndex: 0,
   });
-
+  const { successToast } = useToast();
   // API hooks
   const { data } = useEmailTemplatePreview({
     account_rid: accountID || '',
@@ -222,18 +223,15 @@ const EmailModalTemplate: React.FC<EmailModalProps> = ({
       filters: appliedFilters,
     };
 
-    console.log('Sending email with params:', params);
-
     sendProjectEmail.mutate(params, {
       onSuccess: (data) => {
         console.log('Email sent successfully:', data);
-        // Close modal on success
+        successToast(data?.message || 'Email sent successfully'); // Use data.message
         handleClose();
-        // You might want to show a success toast/notification here
       },
       onError: (error) => {
         console.error('Failed to send email:', error);
-        // You might want to show an error toast/notification here
+        // You might want to show an error toast here
       },
     });
   };
@@ -1122,8 +1120,8 @@ const EmailModalTemplate: React.FC<EmailModalProps> = ({
       style={{ zIndex: 999 }}
     >
       <div
-        className='bg-white flex flex-col justify-between rounded-lg shadow-lg w-[60%] p-5'
-        style={{ minHeight: 'calc(100vh - 200px)' }}
+        className='bg-white flex flex-col justify-between rounded-lg shadow-lg w-[65%] my-1.5 p-3'
+        style={{ maxHeight: '600px' }}
       >
         <div className='flex justify-between items-center pb-1 border-b border-[#CBD6E2]'>
           <h2 className='text-[16px] font-bold text-[#2D3E4F]'>{title}</h2>
@@ -1494,7 +1492,7 @@ const EmailModalTemplate: React.FC<EmailModalProps> = ({
           </div>
 
           {/* Email Content */}
-          <div className='email-template-editor grid grid-cols-1 px-4 pt-4 relative'>
+          <div className='review-email-template-editor grid grid-cols-1 px-4 pt-4 relative'>
             <label
               htmlFor='email_body'
               className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px]'
@@ -1502,7 +1500,7 @@ const EmailModalTemplate: React.FC<EmailModalProps> = ({
               Email Content<span className='text-red-500'> *</span>
             </label>
             <div
-              className='email-body-editor w-full relative'
+              className='review-email-body-editor w-full relative'
               ref={quillContainerRef}
             >
               <ReactQuill
