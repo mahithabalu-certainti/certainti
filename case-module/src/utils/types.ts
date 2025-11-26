@@ -399,6 +399,20 @@ export type UpdateTaskTemplateType = {
   task_category_rid : string
 }
 
+export type UpdateTaskTemplateActionType = {
+  rid : string,
+  created_by : string,
+  modified_by : string,
+  created_datetime : Date,
+  modified_datetime : Date,
+  task_name : string,
+  checklist_template_rid : string,
+  status_rid : string,
+  priority_rid : string,
+  task_type_rid: string,
+  workflow_connector : WorkflowConnectorItems
+}
+
 export type AdminTaskTemplateResponseTypes = {
   rid : string,
   r_number : string,
