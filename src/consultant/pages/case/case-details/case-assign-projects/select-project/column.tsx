@@ -25,7 +25,7 @@ export const getSelectProjectColumns = (
     label: 'Project Code',
     sortable: true,
     sortId: 'project_code',
-    width: 260,
+    width: 180,
     sticky: true,
     hide:
       !permissionMap?.['project_code']?.read &&

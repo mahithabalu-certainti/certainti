@@ -1,316 +1,197 @@
-import { useEffect, useRef, useState } from 'react';
-import { KanbanColumnProps } from './types';
-import { AddIcon, ArrowDownIcon } from '../../assets';
-import TaskCard from './task-card';
+import type React from 'react';
+import { useState, useMemo } from 'react';
+import type { KanbanColumnProps, TaskCard } from './types';
+import { useDroppable } from '@dnd-kit/core';
+import { AddIcon } from '../../assets';
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import TaskCardComponent from './task-card';
+import TaskCreateModal, { TaskFormData } from './task-create-modal';
+import type { RoleOption } from '../../consultant/services/case-team/case-team-service';
 
-const KanbanColumn: React.FC<KanbanColumnProps> = ({
+interface ExtendedKanbanColumnProps extends KanbanColumnProps {
+  isDragable?: boolean;
+  isDragablebetweenBoards?: boolean;
+  roleOptions?: RoleOption[];
+  collaboratorData?: Array<{ rid: string; name: string; email?: string }>;
+  availableUsers?: Array<{ rid: string; name: string; email?: string }>;
+}
+
+const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
   column,
   showTaskCount,
   showCommentCount,
   showProfileIndicator,
   isCreateTaskDisabled,
   isCreateTaskHide,
-  onAddTask,
-  onRenameColumn,
-  onDeleteColumn,
-  onEditTask,
-  onTaskClick, // add onTaskClick prop
+  onTaskClick,
+  isDragable = false,
+  isDragablebetweenBoards = false,
+  statusData,
+  statusOptions,
+  priorityData,
+
+  onCreateTask,
+  roleOptions = [],
+  tagData = [],
+  checklistData = [],
+  collaboratorData = [],
+  availableUsers = [],
 }) => {
-  const [isAddingTaskAtTop, setIsAddingTaskAtTop] = useState(false);
-  const [isAddingTaskAtBottom, setIsAddingTaskAtBottom] = useState(false);
-  const [newTaskTitle, setNewTaskTitle] = useState('');
-  const [newBottomTaskTitle, setNewBottomTaskTitle] = useState('');
-  const [, setIsHoveringHeader] = useState(false);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isRenamingColumn, setIsRenamingColumn] = useState(false);
-  const [columnName, setColumnName] = useState(column.name);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const bottomInputRef = useRef<HTMLInputElement>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const columnNameRef = useRef<HTMLInputElement>(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const { setNodeRef } = useDroppable({
+    id: column.rid,
+    data: { type: 'Column', column },
+  });
 
-  useEffect(() => {
-    if (isAddingTaskAtTop && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [isAddingTaskAtTop]);
+  const uniqueTasks = useMemo(() => {
+    const seen = new Set();
+    return column.tasks.filter((task) => {
+      const duplicate = seen.has(task.rid);
+      seen.add(task.rid);
+      return !duplicate;
+    });
+  }, [column.tasks]);
 
-  useEffect(() => {
-    if (isAddingTaskAtBottom && bottomInputRef.current) {
-      bottomInputRef.current.focus();
-    }
-  }, [isAddingTaskAtBottom]);
+  const handleCreateTask = async (columnId: string, formData: TaskFormData) => {
+    try {
+      if (onCreateTask) {
+        const taskData: Partial<TaskCard> & {
+          checklist_template_rid?: string;
+          workflow_connector?:
+          | {
+            source_rid?: string;
+            relationship_connector_rid?: string;
+            target_rid?: string[];
+          }
+          | Record<string, never>;
+          weightage_rid?: string;
+          task_category_rid?: string;
+        } = {
+          task_name: formData.taskTitle,
+          task_description: formData.description,
+          status_rid: formData.selectedStatusRid,
+          priority_rid: formData.selectedPriorityRid,
+          priority_name: formData.selectedPriority,
+          effective_start_datetime: formData.startDate?.format(
+            'YYYY-MM-DD HH:mm:ss'
+          ),
+          effective_end_datetime: formData.endDate?.format(
+            'YYYY-MM-DD HH:mm:ss'
+          ),
+          assigned_to: formData.selectedAssignee ?? '',
+          tags: formData.selectedTags,
+          ...(formData.selectedChecklistRid && {
+            checklist_template_rid: formData.selectedChecklistRid,
+          }),
+          workflow_connector:
+            formData.linkedTypeRid &&
+              formData.linkTaskTypeRids &&
+              formData.linkTaskTypeRids.length > 0
+              ? {
+                source_rid: '',
+                relationship_connector_rid: formData.linkedTypeRid,
+                target_rid: formData.linkTaskTypeRids,
+              }
+              : {},
+          ...(formData.weightageRid && {
+            weightage_rid: formData.weightageRid,
+          }),
+          ...(formData.categoryRid && {
+            task_category_rid: formData.categoryRid,
+          }),
+        };
 
-  useEffect(() => {
-    if (isRenamingColumn && columnNameRef.current) {
-      columnNameRef.current.focus();
-      columnNameRef.current.select();
-    }
-  }, [isRenamingColumn]);
-
-  useEffect(() => {
-    setColumnName(column.name);
-  }, [column.name]);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsDropdownOpen(false);
+        await onCreateTask(columnId, taskData);
       }
-    };
-
-    if (isDropdownOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
+      setIsCreateModalOpen(false);
+    } catch (error) {
+      console.error('Failed to create task:', error);
+      throw error;
     }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isDropdownOpen]);
-
-  const handleAddTaskAtTop = () => {
-    if (newTaskTitle.trim()) {
-      const newTask = {
-        id: Date.now().toString(),
-        title: newTaskTitle,
-        status: 'To Do' as const,
-        assignee: {
-          name: 'New User',
-          initials: 'NU',
-          color: '#8B5CF6',
-        },
-        commentCount: 0,
-        createdAt: new Date(),
-      };
-
-      onAddTask(column.id, newTask, 'top');
-      setNewTaskTitle('');
-      setIsAddingTaskAtTop(false);
-    }
-  };
-
-  const handleAddTaskAtBottom = () => {
-    if (newBottomTaskTitle.trim()) {
-      const newTask = {
-        id: Date.now().toString(),
-        title: newBottomTaskTitle,
-        status: 'To Do' as const,
-        assignee: {
-          name: 'New User',
-          initials: 'NU',
-          color: '#8B5CF6',
-        },
-        commentCount: 0,
-        createdAt: new Date(),
-      };
-
-      onAddTask(column.id, newTask, 'bottom');
-      setNewBottomTaskTitle('');
-      setIsAddingTaskAtBottom(false);
-    }
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleAddTaskAtTop();
-    } else if (e.key === 'Escape') {
-      setIsAddingTaskAtTop(false);
-      setNewTaskTitle('');
-    }
-  };
-
-  const handleBottomKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleAddTaskAtBottom();
-    } else if (e.key === 'Escape') {
-      setIsAddingTaskAtBottom(false);
-      setNewBottomTaskTitle('');
-    }
-  };
-
-  const handleRenameColumn = () => {
-    setIsRenamingColumn(true);
-    setIsDropdownOpen(false);
-  };
-
-  const handleSaveColumnName = () => {
-    if (
-      columnName.trim() &&
-      columnName.trim() !== column.name &&
-      onRenameColumn
-    ) {
-      onRenameColumn(column.id, columnName.trim());
-    } else {
-      setColumnName(column.name); // Reset if no change or empty
-    }
-    setIsRenamingColumn(false);
-  };
-
-  const handleColumnNameKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSaveColumnName();
-    } else if (e.key === 'Escape') {
-      setColumnName(column.name);
-      setIsRenamingColumn(false);
-    }
-  };
-
-  const handleDeleteColumn = () => {
-    if (onDeleteColumn) {
-      onDeleteColumn(column.id);
-    }
-    setIsDropdownOpen(false);
   };
 
   return (
-    <div className='bg-[#f5f5f5] rounded-lg p-4 w-80 flex-shrink-0'>
-      <div
-        className='bg-white border border-slate-200 rounded-lg p-3 mb-2 flex items-center justify-between group'
-        onMouseEnter={() => setIsHoveringHeader(true)}
-        onMouseLeave={() => setIsHoveringHeader(false)}
-      >
+    <div
+      ref={setNodeRef}
+      className='bg-[#f5f5f5] rounded-lg p-4 w-80 flex-shrink-0'
+      style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
+    >
+      <div className='bg-white border border-slate-200 rounded-lg p-3 mb-2'>
         <div className='flex items-center gap-2'>
-          {isRenamingColumn ? (
-            <input
-              ref={columnNameRef}
-              type='text'
-              value={columnName}
-              onChange={(e) => setColumnName(e.target.value)}
-              onKeyDown={handleColumnNameKeyPress}
-              onBlur={handleSaveColumnName}
-              className='bg-white text-slate-800 text-[13px] font-semibold px-2 py-1 rounded border border-slate-300 focus:border-blue-500 focus:outline-none min-w-0'
-            />
-          ) : (
-            <h2 className='text-slate-800 text-[13px] font-semibold'>
-              {column.name}
-            </h2>
-          )}
+          <h2
+            className='text-slate-800 text-[13px] font-semibold'
+            style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
+          >
+            {column.milestone_name}
+          </h2>
           {showTaskCount && (
-            <span className='bg-slate-100 text-slate-600 px-2 py-1 rounded-full text-[13px]'>
-              {column.taskCount}
+            <span
+              className='bg-slate-100 text-slate-600 px-2 py-1 rounded-full text-[13px]'
+              style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
+            >
+              {column.task_count}
             </span>
           )}
         </div>
-
-        <div className='flex items-center gap-1'>
-          {!isCreateTaskHide && (
-            <button
-              onClick={() => setIsAddingTaskAtTop(true)}
-              disabled={isCreateTaskDisabled}
-              className={`opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1 rounded hover:bg-slate-100 ${
-                isCreateTaskDisabled ? 'cursor-not-allowed' : 'cursor-pointer'
-              }`}
-              title='Add Task'
-            >
-              <AddIcon
-                size={16}
-                className='text-slate-500 hover:text-slate-700'
-              />
-            </button>
-          )}
-
-          {!isCreateTaskHide && (
-            <div className='relative' ref={dropdownRef}>
-              <button
-                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className='opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1 rounded hover:bg-slate-100 cursor-pointer'
-                title='More options'
-              >
-                <ArrowDownIcon
-                  size={16}
-                  className='text-slate-500 hover:text-slate-700'
-                />
-              </button>
-
-              {isDropdownOpen && (
-                <div className='absolute right-0 top-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-10 min-w-[140px]'>
-                  <button
-                    onClick={handleRenameColumn}
-                    className='w-full text-left px-3 py-2 text-[13px] text-slate-700 hover:bg-slate-100 transition-colors'
-                  >
-                    Rename Section
-                  </button>
-                  <button
-                    onClick={handleDeleteColumn}
-                    className='w-full text-left px-3 py-2 text-[13px] text-red-600 hover:bg-red-50 transition-colors'
-                  >
-                    Delete Section
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
       </div>
 
-      {isAddingTaskAtTop && (
-        <div className='mb-2'>
-          <input
-            ref={inputRef}
-            type='text'
-            value={newTaskTitle}
-            onChange={(e) => setNewTaskTitle(e.target.value)}
-            onKeyDown={handleKeyPress}
-            onBlur={() => {
-              if (!newTaskTitle.trim()) {
-                setIsAddingTaskAtTop(false);
-              }
-            }}
-            placeholder='Enter task name'
-            className='w-full p-3 bg-white text-slate-800 rounded-lg border border-slate-300 focus:border-blue-500 focus:outline-none text-[13px] placeholder-slate-500'
-          />
-        </div>
-      )}
+      <SortableContext
+        items={uniqueTasks.map((t) => t.rid)}
+        strategy={verticalListSortingStrategy}
+        disabled={!isDragable && !isDragablebetweenBoards}
+      >
+        <div className='space-y-2 mb-2'>
+          {uniqueTasks.map((taskCard) => (
+            <TaskCardComponent
+              key={taskCard.rid}
+              taskId={taskCard.rid}
+              taskData={taskCard}
+              showCommentCount={showCommentCount}
+              showProfileIndicator={showProfileIndicator}
+              onTaskClick={onTaskClick}
+              isDragable={isDragable}
+              isDragablebetweenBoards={isDragablebetweenBoards}
+              statusData={statusData}
+              statusOptions={statusOptions}
+              priorityData={priorityData}
 
-      <div className='space-y-2 mb-2'>
-        {column.tasks.map((task) => (
-          <TaskCard
-            key={task.id}
-            task={task}
-            showCommentCount={showCommentCount}
-            showProfileIndicator={showProfileIndicator}
-            onEditTask={onEditTask}
-            onTaskClick={onTaskClick} // add onTaskClick handler to open task detail modal
-          />
-        ))}
-      </div>
-
-      {isAddingTaskAtBottom && (
-        <div className='mb-2'>
-          <input
-            ref={bottomInputRef}
-            type='text'
-            value={newBottomTaskTitle}
-            onChange={(e) => setNewBottomTaskTitle(e.target.value)}
-            onKeyDown={handleBottomKeyPress}
-            onBlur={() => {
-              if (!newBottomTaskTitle.trim()) {
-                setIsAddingTaskAtBottom(false);
-              }
-            }}
-            placeholder='Enter task name'
-            className='w-full p-3 bg-white text-slate-800 rounded-lg border border-slate-300 focus:border-blue-500 focus:outline-none text-[13px] placeholder-slate-500'
-          />
+            />
+          ))}
         </div>
-      )}
+      </SortableContext>
 
       {!isCreateTaskHide && (
         <button
-          onClick={() => setIsAddingTaskAtBottom(true)}
+          onClick={() => setIsCreateModalOpen(true)}
           disabled={isCreateTaskDisabled}
-          className={`w-full flex items-center gap-2 p-3 rounded-lg border-2 border-dashed transition-colors duration-200 ${
-            isCreateTaskDisabled
-              ? 'border-slate-300 text-slate-400 cursor-not-allowed'
-              : 'border-slate-300 text-slate-500 hover:border-slate-400 hover:text-slate-600'
-          }`}
+          className={`w-full flex items-center gap-2 p-3 rounded-lg border-2 border-dashed transition-colors duration-200 ${isCreateTaskDisabled
+            ? 'border-slate-300 text-slate-400 cursor-not-allowed'
+            : 'border-slate-300 text-slate-500 hover:border-slate-400 hover:text-slate-600'
+            }`}
+          style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
         >
           <AddIcon size={18} />
           <span className='text-[13px] font-medium'>Add Task</span>
         </button>
       )}
+
+      <TaskCreateModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onCreateTask={handleCreateTask}
+        columnId={column.rid}
+        columnName={column.milestone_name}
+        statusData={statusData}
+        priorityData={priorityData}
+        tagData={tagData}
+        checklistData={checklistData}
+        collaboratorData={collaboratorData}
+        availableUsers={availableUsers}
+        roleOptions={roleOptions}
+      />
     </div>
   );
 };

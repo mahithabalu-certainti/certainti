@@ -784,7 +784,7 @@ const ChecklistForm: React.FC = () => {
                 <div
                   className={`border capitalize h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-10`}
                 >
-                  Checkist Items
+                  Checklist Items
                 </div>
                 <div className='px-10'>
                   <TableContainer sx={{ overflowX: 'auto' }}>

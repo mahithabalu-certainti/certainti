@@ -1,4 +1,5 @@
 export interface FormType {
+  gridMode?: string;
   sectionName: string;
   fillType: 'half' | 'full' | 'quarter';
   fields: FormTypeFields[];
@@ -82,6 +83,12 @@ export type InputType =
 export interface SelectOption {
   label: string;
   value: string;
+  desc?: string;
+  isCreate?: boolean;
+}
+export interface SelectNumberOption {
+  label: string;
+  value: number;
   desc?: string;
   isCreate?: boolean;
 }

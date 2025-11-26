@@ -72,7 +72,7 @@ export const UserGroupTable: React.FC<IUserTableProps> = ({
   }, [userGroupViewEditFields]);
 
   const { data, isPending, isError } = useManageUserGroupList(
-    tableParams,
+    { ...tableParams, filters: appliedFilters, search: searchValue },
     refreshUserGroupTrigger
   );
 
@@ -89,16 +89,6 @@ export const UserGroupTable: React.FC<IUserTableProps> = ({
       }) || [];
     setUserGroupList(reShape);
   }, [data?.data.usergroup]);
-
-  useEffect(() => {
-    setTableParams((prev) => ({
-      ...prev,
-      page: 1,
-      filters: appliedFilters,
-      search: searchValue,
-    }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [appliedFilters, searchValue]);
 
   const totalItems = data?.data?.count || 0;
   const prefixGroupName = 'G-';
