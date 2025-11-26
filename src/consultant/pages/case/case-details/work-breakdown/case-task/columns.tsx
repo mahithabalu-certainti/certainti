@@ -23,12 +23,12 @@ export const getCaseTaskListColumns = (
       hide: !permissionMap['task_name']?.read && !permissionMap['task_name']?.edit,
     },
     {
-      id: 'assigned_to',
-      sortId: 'assigned_to',
+      id: 'assigned_to_name',
+      sortId: 'assigned_to_name',
       label: 'Assigned To',
       sortable: true,
       width: 120,
-      render: (row: CaseTaskType) => row.assigned_to || '-',
+      render: (row: CaseTaskType) => row.assigned_to_name || '-',
       hide:
         !permissionMap['assigned_to']?.read && !permissionMap['assigned_to']?.edit,
     },

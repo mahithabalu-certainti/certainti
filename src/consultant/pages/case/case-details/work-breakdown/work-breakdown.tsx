@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-// import { useSelector } from 'react-redux';
-// import { RootState } from '../../../../../store/store';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../../store/store';
 import { CaseIcon } from '../../../../../assets';
 import { SectionHeaderTab, SectionTabPanel } from '../../../../../components';
 import SectionHeader from '../../../../../components/details-section/section-header';
@@ -82,29 +82,31 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
   const [seachText, setSearchText] = useState('');
   const [resetSearch, setResetSearch] = useState(false);
 
-  // const { permission } = useSelector((state: RootState) => state.permission);
+  const { permission } = useSelector((state: RootState) => state.permission);
 
-  // const caseTaskViewEditFields = useMemo(
-  //   () =>
-  //     permission?.find(
-  //       (item) => item.name === AllPermissions.CASES_VIEW_EDIT
-  //     )?.fields ?? [],
-  //   [permission]
-  // );
+  const caseTaskViewEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.CASES_WORKBREAKDOWN_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
 
-  // const permissionMap = useMemo(() => {
-  //   const map: Record<string, { read: boolean; edit: boolean }> = {};
-  //   caseTaskViewEditFields.forEach((item) => {
-  //     map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
-  //   });
-  //   return map;
-  // }, [caseTaskViewEditFields]);
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    caseTaskViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [caseTaskViewEditFields]);
 
   const {
     data: kanbanData,
     isLoading,
     isError,
   } = useGetWorkBreakdownList(accountId || '', caseId || '');
+
+  console.log(permission)
 
   useEffect(() => {
     if (
@@ -634,74 +636,74 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
     },
   ];
 
-  // const fieldHiddenMap = useMemo(
-  //   () => ({
-  //     status:
-  //       !permissionMap['task_status_name']?.read &&
-  //       !permissionMap['task_status_name']?.edit,
-  //     priority:
-  //       !permissionMap['priority_rid']?.read &&
-  //       !permissionMap['priority_rid']?.edit,
-  //     assignee:
-  //       !permissionMap['assigned_to']?.read &&
-  //       !permissionMap['assigned_to']?.edit,
-  //     startDate:
-  //       !permissionMap['effective_start_datetime']?.read &&
-  //       !permissionMap['effective_start_datetime']?.edit,
-  //     endDate:
-  //       !permissionMap['effective_end_datetime']?.read &&
-  //       !permissionMap['effective_end_datetime']?.edit,
-  //     description:
-  //       !permissionMap['task_description']?.read &&
-  //       !permissionMap['task_description']?.edit,
-  //     checklistTemplate:
-  //       !permissionMap['checklist_template_rid']?.read &&
-  //       !permissionMap['checklist_template_rid']?.edit,
-  //     tags: !permissionMap['tags']?.read && !permissionMap['tags']?.edit,
-  //     weightage:
-  //       !permissionMap['weightage_rid']?.read &&
-  //       !permissionMap['weightage_rid']?.edit,
-  //     category:
-  //       !permissionMap['task_category_rid']?.read &&
-  //       !permissionMap['task_category_rid']?.edit,
-  //     linkedType:
-  //       !permissionMap['workflow_connector']?.read &&
-  //       !permissionMap['workflow_connector']?.edit,
-  //     linkTaskType:
-  //       !permissionMap['workflow_connector']?.read &&
-  //       !permissionMap['workflow_connector']?.edit,
-  //     attachments:
-  //       !permissionMap['attachments']?.read &&
-  //       !permissionMap['attachments']?.edit,
-  //     comments:
-  //       !permissionMap['comments']?.read && !permissionMap['comments']?.edit,
-  //     collaborators:
-  //       !permissionMap['collaborators']?.read &&
-  //       !permissionMap['collaborators']?.edit,
-  //   }),
-  //   [permissionMap]
-  // );
+  const fieldHiddenMap = useMemo(
+    () => ({
+      status:
+        !permissionMap['status_rid']?.read &&
+        !permissionMap['status_rid']?.edit,
+      priority:
+        !permissionMap['priority_rid']?.read &&
+        !permissionMap['priority_rid']?.edit,
+      assignee:
+        !permissionMap['assigned_to']?.read &&
+        !permissionMap['assigned_to']?.edit,
+      startDate:
+        !permissionMap['effective_start_datetime']?.read &&
+        !permissionMap['effective_start_datetime']?.edit,
+      endDate:
+        !permissionMap['effective_end_datetime']?.read &&
+        !permissionMap['effective_end_datetime']?.edit,
+      description:
+        !permissionMap['task_description']?.read &&
+        !permissionMap['task_description']?.edit,
+      checklistTemplate:
+        !permissionMap['checklist_template_rid']?.read &&
+        !permissionMap['checklist_template_rid']?.edit,
+      tags: !permissionMap['tags']?.read && !permissionMap['tags']?.edit,
+      weightage:
+        !permissionMap['weightage_rid']?.read &&
+        !permissionMap['weightage_rid']?.edit,
+      category:
+        !permissionMap['task_category_rid']?.read &&
+        !permissionMap['task_category_rid']?.edit,
+      linkedType:
+        !permissionMap['relationship_connector_rid']?.read &&
+        !permissionMap['relationship_connector_rid']?.edit,
+      linkTaskType:
+        !permissionMap['target_rid']?.read &&
+        !permissionMap['target_rid']?.edit,
+      attachments:
+        !permissionMap['attachments']?.read &&
+        !permissionMap['attachments']?.edit,
+      comments:
+        !permissionMap['comments']?.read && !permissionMap['comments']?.edit,
+      collaborators:
+        !permissionMap['collaborators']?.read &&
+        !permissionMap['collaborators']?.edit,
+    }),
+    [permissionMap]
+  );
 
-  // const fieldDisabledMap = useMemo(
-  //   () => ({
-  //     status: !permissionMap['task_status_name']?.edit,
-  //     priority: !permissionMap['priority_rid']?.edit,
-  //     assignee: !permissionMap['assigned_to']?.edit,
-  //     startDate: !permissionMap['effective_start_datetime']?.edit,
-  //     endDate: !permissionMap['effective_end_datetime']?.edit,
-  //     description: !permissionMap['task_description']?.edit,
-  //     checklistTemplate: !permissionMap['checklist_template_rid']?.edit,
-  //     tags: !permissionMap['tags']?.edit,
-  //     weightage: !permissionMap['weightage_rid']?.edit,
-  //     category: !permissionMap['task_category_rid']?.edit,
-  //     linkedType: !permissionMap['workflow_connector']?.edit,
-  //     linkTaskType: !permissionMap['workflow_connector']?.edit,
-  //     attachments: !permissionMap['attachments']?.edit,
-  //     comments: !permissionMap['comments']?.edit,
-  //     collaborators: !permissionMap['collaborators']?.edit,
-  //   }),
-  //   [permissionMap]
-  // );
+  const fieldDisabledMap = useMemo(
+    () => ({
+      status: !permissionMap['status_rid']?.edit,
+      priority: !permissionMap['priority_rid']?.edit,
+      assignee: !permissionMap['assigned_to']?.edit,
+      startDate: !permissionMap['effective_start_datetime']?.edit,
+      endDate: !permissionMap['effective_end_datetime']?.edit,
+      description: !permissionMap['task_description']?.edit,
+      checklistTemplate: !permissionMap['checklist_template_rid']?.edit,
+      tags: !permissionMap['tags']?.edit,
+      weightage: !permissionMap['weightage_rid']?.edit,
+      category: !permissionMap['task_category_rid']?.edit,
+      linkedType: !permissionMap['relationship_connector_rid']?.edit,
+      linkTaskType: !permissionMap['target_rid']?.edit,
+      attachments: !permissionMap['attachments']?.edit,
+      comments: !permissionMap['comments']?.edit,
+      collaborators: !permissionMap['collaborators']?.edit,
+    }),
+    [permissionMap]
+  );
 
   return (
     <>
@@ -715,9 +717,9 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
         setAppliedFilters={setAppliedFilters}
         setCurrentPage={setCurrentPage}
         handleFilter={handleFilter}
-        handleSorting={() => {}}
+        handleSorting={() => { }}
         sortFilterCount={0}
-        setSortFilterCount={() => {}}
+        setSortFilterCount={() => { }}
         showRefresh={false}
         onRefreshClick={onRefreshClick}
         // hideTabPanel={hideSection}
@@ -773,6 +775,8 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
                 onAddCollaborator={handleAddCollaborator}
                 accountId={accountId || ''}
                 caseId={caseId || ''}
+                fieldVisibility={fieldHiddenMap}
+                fieldDisabled={fieldDisabledMap}
               />
             )}
             {openTaskId && (
@@ -789,8 +793,8 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
                 availableUsers={userData}
                 roleOptions={roleOptionsQuery.data || []}
                 checklistData={checklistData}
-                // fieldVisibility={fieldHiddenMap}
-                // fieldDisabled={fieldDisabledMap}
+                fieldVisibility={fieldHiddenMap}
+                fieldDisabled={fieldDisabledMap}
                 onAddComment={handleAddComment}
                 onUpdateComment={handleUpdateComment}
                 onDeleteComment={handleDeleteComment}

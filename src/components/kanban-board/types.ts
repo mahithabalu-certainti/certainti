@@ -289,6 +289,8 @@ export interface KanbanColumnProps {
     columnId: string,
     taskData: Partial<TaskCard>
   ) => Promise<void>;
+  fieldVisibility?: FieldVisibility;
+  fieldDisabled?: FieldDisabled;
 }
 
 export interface TaskDetailModalProps {
