@@ -2056,7 +2056,6 @@ export class ProjectResourceService {
         data: updateProjectResourceRecord,
       };
     } catch (err) {
-      console.log("yoki", err);
       errorLog(`Error updating project resource, ${(err as Error).message}`);
       await transaction.rollback();
       throw this.throwServiceError(err as Error);

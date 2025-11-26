@@ -1040,7 +1040,6 @@ async function assignProjectToCase(req: Request, res: Response): Promise<any> {
     }
   } catch (err) {
     const error = err as Error;
-    console.log("yoki", error); 
     errorLog(methodName, error.message);
     handleErrorResponse(
       res,
@@ -1142,7 +1141,6 @@ async function deleteProjectFromCase(
     }
   } catch (err) {
     const error = err as Error;
-    console.log("yoki", error);
     errorLog(methodName, error.message);
     handleErrorResponse(
       res,

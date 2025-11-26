@@ -334,7 +334,6 @@ export class ProjectInjestionTaskService {
                 },
             };
             } catch (error) {
-            console.log("yoki", error);
             errorLog("projectTaskService - listProjectTasks", (error as Error).message);
             return {
                 statusCode: 500,
