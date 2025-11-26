@@ -172,7 +172,7 @@ export const getTaskTemplateColumns = (
       !permissionMap?.['priority_rid']?.read,
     sortId: 'priority_name',
     label: 'Priority',
-    width: 110,
+    width: 130,
     sortable: true,
     field: {
       type: 'select',
