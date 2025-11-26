@@ -1315,7 +1315,7 @@ return query;
     )) AS workflow_connector
     FROM
     ${schemaName}.case_task t
-    LEFT JOIN ${schemaName}.case_task_workflow_connector_mapping w ON w.source_rid = t.rid AND w.account_rid = t.account_rid AND w.case_rid = t.case_rid
+    LEFT JOIN ${schemaName}.case_task_dependency_mapping w ON w.source_rid = t.rid AND w.account_rid = t.account_rid AND w.case_rid = t.case_rid
     WHERE
     t.rid = '${taskRid}'
     AND
