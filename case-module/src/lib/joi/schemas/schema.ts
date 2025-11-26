@@ -603,15 +603,11 @@ const createActivityEmailSchema = Joi.object({
  account_rid : Joi.string().max(255).required(),
  attach_to : Joi.string().required(),
  attachment_level : Joi.string().required(),
-  fiscal_year : Joi.number().optional(),
-  activity_type: Joi.string().valid("email").required(),
-  to_email:Joi.string().email().required(),
-  /*to_email: Joi.array()
-    .items(Joi.string().email().required())
-    .min(1), */
-  ccEmail: Joi.array()
-    .items(Joi.string().email().required())
-    .optional()
+ fiscal_year : Joi.number().optional(),
+ activity_type: Joi.string().valid("email").required(),
+ to_email:Joi.string().required(),
+ cc_email:Joi.string().optional(),
+ email_status:Joi.string().required(),
 });
 
 const createActivityMeetingSchema = Joi.object({
