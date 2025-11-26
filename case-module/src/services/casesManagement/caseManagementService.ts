@@ -588,12 +588,12 @@ export class CaseManagementService {
       const caseDetails = await this.caseManangementSchemaService.getCaseDetails(caseRid, fetchParentRnumber[0][0].r_number);
       const result : any = await this.caseManangementSchemaService.fetchKanbanBoard(schemaName, caseRid, accountRid);
       if(result.array_agg[0].rid !== null) {
-        let uniquePriorityIds = [...new Set(result.array_agg.flatMap((d : any) => d.tasks.map((dd : any) => dd.priority_rid)))];
-        let uniqueAssignedToIds = [...new Set(result.array_agg.flatMap((d : any) => d.tasks.map((dd : any) => dd.assigned_to)))]
-        let uniqueTeamRoleIds = [...new Set(result.array_agg.flatMap((d : any) => d.tasks.map((dd : any) => dd.case_team_member_role_rid)))]
-        let uniqueTaskTypeIds = [...new Set(result.array_agg.flatMap((d : any) => d.tasks.map((dd : any) => dd.task_type_rid)))]
-        let statusIds = [...new Set(result.array_agg.flatMap((d : any) => d.tasks.map((dd : any) => dd.status_rid)))]
-        let taskStatusIds = [...new Set(result.array_agg.flatMap((d : any) => d.tasks.map((a : any) => a.task_status_rid)))];
+        let uniquePriorityIds = [...new Set(result.array_agg.flatMap((d : any) => d.tasks !== null ? d.tasks.map((dd : any) => dd.priority_rid) : ''))];
+        let uniqueAssignedToIds = [...new Set(result.array_agg.flatMap((d : any) => d.tasks !== null ? d.tasks.map((dd : any) => dd.assigned_to) : ''))]
+        let uniqueTeamRoleIds = [...new Set(result.array_agg.flatMap((d : any) => d.tasks !== null ? d.tasks.map((dd : any) => dd.case_team_member_role_rid) : '' ))]
+        let uniqueTaskTypeIds = [...new Set(result.array_agg.flatMap((d : any) => d.tasks !== null ? d.tasks.map((dd : any) => dd.task_type_rid) : '' ))]
+        let statusIds = [...new Set(result.array_agg.flatMap((d : any) => d.tasks !== null ? d.tasks.map((dd : any) => dd.status_rid) : ''))]
+        let taskStatusIds = [...new Set(result.array_agg.flatMap((d : any) => d.tasks !== null ? d.tasks.map((a : any) => a.task_status_rid) : '' ))];
 
         let priority;
         let assignedTo;
@@ -647,7 +647,7 @@ export class CaseManagementService {
             rid : d.rid,
             milestone_name : d.milestone_name,
             task_count : d.task_count,
-            tasks : d.tasks.map((d : any) => {
+            tasks : d.tasks !== null ? d.tasks.map((d : any) => {
               return {
                 rid: d.rid,
                 r_number: d.r_number,
@@ -674,7 +674,7 @@ export class CaseManagementService {
                 task_status_rid : d.task_status_rid,
                 task_status_name : taskStatusMap.get(d.task_status_rid) || null
               }
-            })
+            }) : []
           }
         })
         return {
