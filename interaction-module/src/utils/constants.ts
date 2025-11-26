@@ -86,6 +86,7 @@ export const filtersColumns : Record<string, string> =
     interaction_type_rid : "interaction_type_rid",
     interaction_iteration : "interaction_iteration",
     project_code : "project_code",
+    project_name : "project_name",
     fiscal_year : "fiscal_year",
     response_source_rid : "response_source_rid",
     interaction_level_rid:"interaction_level_rid",
@@ -128,6 +129,7 @@ export const filtersColumns : Record<string, string> =
     status_rid : "string",
     interaction_type_rid : "string",
     project_code : "string",
+    project_name : "string",
     fiscal_year : "number",
     response_source_rid : "string",
     parent_interaction_rid:"string",
@@ -344,17 +346,20 @@ export const rawQueries = {
   fetchKeyContactsByCaseId(caseRid: string, schemaName: string) {
   return `
     SELECT 
-      a.project_rid, 
-      project_code, 
-      project_name, 
-      key_contact_name, 
-      key_contact_email
+      a.project_fiscal_rid, 
+      b.project_code, 
+      b.project_name, 
+      c.key_contact_name, 
+      c.key_contact_email
     FROM ${schemaName}.case_projects as a
-    LEFT JOIN ${schemaName}.project as b
-      ON a.project_rid = b.rid
+    LEFT JOIN ${schemaName}.project_fiscal as b
+      ON a.project_fiscal_rid = b.rid
     LEFT JOIN ${schemaName}.key_contact_details as c
       ON b.rid = c.entity_rid
-    WHERE case_rid = '${caseRid}'
+    WHERE 
+    a.case_rid = '${caseRid}'
+    AND
+    c.include_in_communication = TRUE
   `;
   },
   fetchProjectsByAccount(accountRid: string, schemaName: string,status_rid:string) {

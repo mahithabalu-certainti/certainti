@@ -36,6 +36,9 @@ import { ProjectFiscal } from "../models/projectFiscal";
 import { ProjectFiscalRegion } from "../models/projectFiscalRegion";
 import { CaseProjectFiscalRegion } from "../models/caseProjectFiscalRegionModel";
 
+import { Activities } from "../models/activitiesModel";
+import { TaskHistory } from "../models/taskHistory";
+import { ActivityAttachments } from "../models/activitiesAttachmentModel";
 
 export class CaseModelService {
   orgDbSequelize: Sequelize | null = null;
@@ -71,6 +74,8 @@ export class CaseModelService {
       ProjectFiscal: ReturnType<typeof ProjectFiscal.initialize>
       ProjectFiscalRegion: ReturnType<typeof ProjectFiscalRegion.initialize>
       CaseProjectFiscalRegion: ReturnType<typeof CaseProjectFiscalRegion.initialize>
+      TaskHistory : ReturnType<typeof TaskHistory.initialize>;
+      ActivityAttachments : ReturnType<typeof ActivityAttachments.initialise>
     }
   > = new Map();
 
@@ -124,7 +129,6 @@ export class CaseModelService {
     const CaseHistorySubmissionModel = CaseHistorySubmission.initialize(sequelize, schemaName);
     const CaseTaskWorkflowConnectorModel = CaseTaskWorkflowConnector.initialize(sequelize, schemaName)
     const WorkflowConnectorModel = WorkflowConnector.initialize(mainDbSequelize, MAIN_SCHEMA_NAME);
-    const WorkflowConnectorMappingModel = WorkflowConnectorMapping.initialize(mainDbSequelize, MAIN_SCHEMA_NAME)
     const ProjectResourceFiscalModel = ProjectResourceFiscal.initialize(sequelize, schemaName);
     const ProjectTaskModel = ProjectTask.initialize(sequelize, schemaName);
     const CaseProjectResourceFiscalModel = CaseProjectResourceFiscal.initialize(sequelize, schemaName);
@@ -132,6 +136,11 @@ export class CaseModelService {
     const ProjectFiscalModel = ProjectFiscal.initialize(sequelize, schemaName);
     const ProjectFiscalRegionModel = ProjectFiscalRegion.initialize(sequelize, schemaName);
     const CaseProjectFiscalRegionModel = CaseProjectFiscalRegion.initialize(sequelize, schemaName);
+    const WorkflowConnectorMappingModel = WorkflowConnectorMapping.initialize(mainDbSequelize, MAIN_SCHEMA_NAME)   
+    const ActivitiesModel = Activities.initialize(sequelize, schemaName);
+    const TaskHistoryModel = TaskHistory.initialize(sequelize, schemaName);
+    const ActivityAttachmentsModel = ActivityAttachments.initialise(sequelize, schemaName);
+
     const models = {
       Case: CaseModel,
       CaseSummary: CaseSummaryModel,
@@ -157,6 +166,8 @@ export class CaseModelService {
       CommentsAttachments : CommentsAttachmentsModel,
       TaskAttachments : TaskAttachmentsModel,
       CaseHistorySubmission: CaseHistorySubmissionModel,
+      Activities: ActivitiesModel,
+      TaskHistory: TaskHistoryModel,
       CaseTaskWorkflowConnector : CaseTaskWorkflowConnectorModel,
       WorkflowConnector : WorkflowConnectorModel,
       WorkflowConnectorMapping : WorkflowConnectorMappingModel,
@@ -166,7 +177,8 @@ export class CaseModelService {
       ProjectResource: ProjectResourceModel,
       ProjectFiscal: ProjectFiscalModel,
       ProjectFiscalRegion: ProjectFiscalRegionModel,
-      CaseProjectFiscalRegion: CaseProjectFiscalRegionModel 
+      CaseProjectFiscalRegion: CaseProjectFiscalRegionModel,
+      ActivityAttachments : ActivityAttachmentsModel
     };
 
     this.modelCache.set(schemaName, models);

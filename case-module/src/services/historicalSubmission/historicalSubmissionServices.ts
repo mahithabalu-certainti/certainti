@@ -87,7 +87,7 @@ export class HistoricalSubmissionService {
     data?: { historicalSubmissions: any };
   }> {
     try {
-      const { accountNumber } =
+      const { accountNumber, currencyRid } =
         await this.caseSchemaService.fetchValidAccountNumberById(
           data.account_rid
         );
@@ -104,7 +104,8 @@ export class HistoricalSubmissionService {
         accountNumber,
         data,
         userId,
-        apiType
+        apiType,
+        currencyRid
       );
 
       return {

@@ -570,6 +570,16 @@ export class AttachmentService {
         allAttachments.push(...resourceCostSkillAttachments);
       }
 
+      // 🔷 Case logic
+      else if (attachmentLevel === "case" && entityId) {
+        const caseAttachments = await fetchAttachments(
+          AttachmentModel,
+          "case",
+          [entityId]
+        );
+        allAttachments.push(...caseAttachments);
+      }
+
       // 🔷 Other direct levels
       else {
         if (!whereClause[Op.and]) {

@@ -80,7 +80,7 @@ export class CaseTimeline
           references: {
             model: {
               tableName: 'account_details',
-              schema: 'main' // or whatever your main schema name is
+              schema: schemaName // or whatever your main schema name is
             },
             key: 'account_rid'
           },

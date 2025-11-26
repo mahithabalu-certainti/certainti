@@ -29,11 +29,13 @@ import {
   exportCaseSummarySchema,
   exportCheckListSchema,
   exportReviewProjectSchema,
+  getEmailTemplatePreviewSchema,
   listCasesAccountSchema,
   listCaseSummarySchema,
   listCaseTeamSchema,
   listCheckListSchema,
   listReviewProjectSchema,
+  sentReviewProjectSchema,
   updateCaseSchema,
   updateChecklistSchema,
   updateTaskSchema,
@@ -1204,6 +1206,91 @@ async function getReviewProjects(req: Request, res: Response): Promise<void> {
   }
 }
 
+async function sentReviewProjects(req: Request, res: Response): Promise<void> {
+  const methodName = "Sent Review Projects";
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    const value = await validateRequest(req, sentReviewProjectSchema, res);
+    if (!value) return;
+    let parsedFilters: Record<string, any> = {};
+    try {
+      parsedFilters = JSON.parse(value.filters);
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid filters format. Must be a valid JSON object."
+      );
+    }
+    const reviewProjects = await caseService.sentReviewProjects(
+      value,
+      parsedFilters,
+      userId
+    );
+    if (reviewProjects.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleCustomResponse(res, reviewProjects.data, reviewProjects.message);
+      return;
+    } else {
+      errorLog(methodName, reviewProjects.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        reviewProjects.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+async function getEmailTemplatePreview(req: Request, res: Response): Promise<void> {
+  const methodName = "Get Email Template Preview";
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    const value = await validateRequest(req, getEmailTemplatePreviewSchema, res, "GET");
+    if (!value) return;
+    const templateDetails = await caseService.getEmailTemplatePreview(
+      value,
+      userId
+    );
+    if (templateDetails.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleCustomResponse(res, templateDetails.data, templateDetails.statusMessage);
+      return;
+    } else {
+      errorLog(methodName, templateDetails.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        templateDetails.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+
 async function exportReviewProjects(req: Request, res: Response): Promise<void> {
   const methodName = "Export Review Projects";
   try {
@@ -1276,8 +1363,7 @@ async function exportReviewProjects(req: Request, res: Response): Promise<void> 
                 primary_point_of_contact_email: d.project_point_of_contact_email,
                 total_technical_summaries: d.total_technical_summaries,
 
-
-               
+  
               };
 
               // Build exportRecord using allowed fields and resultMap
@@ -1489,7 +1575,8 @@ async function listCaseTeamMembers(req: Request, res: Response): Promise<void> {
       value,
       parsedFilters,
       userId,
-      "list"
+      "list",
+      value.is_dropdown_list
     );
     if (caseTeamMembers.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
@@ -1625,9 +1712,10 @@ async function listUsersForCaseTeam(req: Request, res: Response): Promise<void> 
     
     // Extract account RID from request parameters to identify target account
     const accountrid = req.params.accountRid as string;
+    const userAccessScope = req.query.user_access_scope as string || 'account'
     
     // Call the service layer to fetch users eligible for case team assignment
-    const result = await caseService.listUsersForCaseTeam(accountrid);
+    const result = await caseService.listUsersForCaseTeam(accountrid,userAccessScope);
     
     // Handle successful user retrieval
     if (result.statusCode === HttpStatus.SUCCESS) {
@@ -2072,7 +2160,7 @@ async function getAllChecklists(req: Request, res: Response): Promise<void> {
         value.filters = {};
       }
     }
-    const attachments = await caseService.getAllChecklists(userId,value.attachmentLevel,value.entityId,value.accountRid,value.page,value.limit,value.search,value.filters,value.sortBy,value.sortOrder,value.fiscalYear,"download", {});
+    const attachments = await caseService.getAllChecklists(userId,value.attachmentLevel,value.entityId,value.accountRid,value.page,value.limit,value.search,value.filters,value.sortBy,value.sortOrder,value.fiscalYear,"list", {});
 
     if (attachments.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
@@ -2143,7 +2231,7 @@ async function exportAllChecklists(req: Request, res: Response): Promise<void> {
         value.filters = {};
       }
     }
-    const checklists = await caseService.getAllChecklists(userId,value.attachmentLevel,value.entityId,value.accountRid,value.page,value.limit,value.search,value.filters,value.sortBy,value.sortOrder,value.fiscalYear,"list", {});
+    const checklists = await caseService.getAllChecklists(userId,value.attachmentLevel,value.entityId,value.accountRid,value.page,value.limit,value.search,value.filters,value.sortBy,value.sortOrder,value.fiscalYear,"download", {});
     const fields = await caseService.getAllowedExportFields(
       userId,
       "checklists_view_edit"
@@ -2169,14 +2257,14 @@ async function exportAllChecklists(req: Request, res: Response): Promise<void> {
           : checklists.data.checklists.map((d: any) => {
               let resultMap: { [key: string]: any } = {
                 r_number: d.r_number,
-                fiscal_year: `FY-${d.fiscal_year}`,
+                fiscal_year: d?.fiscal_year == null ? "" : `FY-${d.fiscal_year}`,
                 checklist_name: d.checklist_name,
                 attachment_level: d.attachment_level,
                 attach_to: d.attach_to,
                 attached_to: d.attached_to,
-                created_by: d.created_by_name,
+                created_by_name: d.created_by_name,
                 created_datetime: formatDate(d.created_datetime),
-                modified_by: d.modified_by_name,
+                modified_by_name: d.modified_by_name,
                 modified_datetime:
                   d.modified_datetime == null
                     ? ""
@@ -2341,9 +2429,9 @@ async function updateTask (req : Request, res : Response) {
         statusMessage: result!.statusMessage
       });       
     } else if(result!.statusCode === HttpStatus.BAD_REQUEST) {
-      return res.status(HttpStatus.SUCCESS).json({
-        statusCode: HttpStatus.SUCCESS,
-        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+      return res.status(HttpStatus.BAD_REQUEST).json({
+        statusCode: HttpStatus.BAD_REQUEST,
+        statusCodeValue: HttpStatus.BAD_REQUEST_MESSAGE,
         statusMessage: result!.statusMessage,
       }); 
     } else if(result!.statusCode === HttpStatus.FAILED) {
@@ -3667,6 +3755,86 @@ async function deleteTagsTaskLevel (req : Request, res : Response) {
     );
   }
 }
+
+async function deleteCollaboratorsTaskLevel (req : Request, res : Response) {
+  const methodName = "deleteCollaboratorsTaskLevel";
+  try {
+   const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const data = req.body;
+    const result = await caseService.deleteCollaborators(data); 
+    if(result?.statusCode === HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: result.statusMessage
+      });
+    }
+    else {
+      return res.status(HttpStatus.FAILED).json({
+        statusCode: HttpStatus.FAILED,
+        statusCodeValue: HttpStatus.FAILED_MESSAGE,
+        statusMessage: result?.statusMessage
+      });
+    }
+  } catch (error: any) {
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+
+async function updateChecklistItemStatus (req : Request, res : Response) {
+  const methodName = "updateChecklistItemStatus";
+  try {
+   const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const data = req.body;
+    const result = await caseService.updateChecklistItemsStatus(data);
+    if(result?.statusCode === HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: result.statusMessage
+      });
+    }
+    else {
+      return res.status(HttpStatus.FAILED).json({
+        statusCode: HttpStatus.FAILED,
+        statusCodeValue: HttpStatus.FAILED_MESSAGE,
+        statusMessage: result?.statusMessage
+      });
+    }  
+  } catch (error: any) {
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
 export default {
   createCases,
   updateCases,
@@ -3709,6 +3877,7 @@ export default {
   listTaskAttachments,
   getReviewProjects,
   exportReviewProjects,
+  sentReviewProjects,
   fetchTaskActivity,
   fetchTaskDetails,
   fetchCaseTaskStatus,
@@ -3718,5 +3887,8 @@ export default {
   linkTask,
   linkDeleteTask,
   listTaskDropdownAccountLevel,
-  deleteTagsTaskLevel
+  deleteTagsTaskLevel,
+  deleteCollaboratorsTaskLevel,
+  updateChecklistItemStatus,
+  getEmailTemplatePreview
 };

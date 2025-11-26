@@ -1,11 +1,12 @@
 import { Logger } from "winston";
 import { CaseService } from "./cases/caseService";
-import { ICaseManagementService, ICaseService } from "./interfaces/interface";
+import { ICaseManagementService, ICaseService, IActivityService } from "./interfaces/interface";
 import { CaseManagementService } from "./casesManagement/caseManagementService";
 import { JurisdictionService } from "./jurisdiction/jurisdictionServices";
 import { HistoricalSubmissionService } from "./historicalSubmission/historicalSubmissionServices";
 import { ProjectResourceService } from "./projectResource/projectResourceService";
 import { ProjectInjestionTaskService } from "./projectTask/projectTaskService";
+import { ActivityService } from "./activities/activityService";
 
 class Services {
   private logger: Logger;
@@ -15,6 +16,7 @@ class Services {
   historicalSubmissionService: HistoricalSubmissionService;
   projectResourceService: ProjectResourceService;
   projectTaskInjestionServices: ProjectInjestionTaskService;
+  activityService: IActivityService;
 
   constructor(logger: Logger) {
     this.logger = logger;
@@ -24,8 +26,7 @@ class Services {
     this.historicalSubmissionService = new HistoricalSubmissionService(logger);
     this.projectResourceService = new ProjectResourceService(logger);
     this.projectTaskInjestionServices = new ProjectInjestionTaskService();
-
-
+    this.activityService = new ActivityService(logger);
   }
 }
 

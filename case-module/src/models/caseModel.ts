@@ -27,6 +27,8 @@ interface CaseAttributes {
   case_total_qre_cost?: number;
   case_completion_percentage?: number;
   case_total_qualified_project_cost?: number;
+  total_nonlabour_cost?: number;
+  utility_cost?: number;
   submitted_datetime?: Date;
   approved_datetime?: Date;
 }
@@ -63,6 +65,8 @@ export class Case
   public case_total_qualified_project_cost?: number;
   public submitted_datetime?: Date;
   public approved_datetime?: Date;
+  public  total_nonlabour_cost?: number;
+  public  utility_cost?: number;
 
   static initialize(
     sequelize: Sequelize,
@@ -109,6 +113,8 @@ export class Case
         case_total_qualified_project_cost: { type: DataTypes.DECIMAL, allowNull: true },
         submitted_datetime: { type: DataTypes.DATE, allowNull: true },
         approved_datetime: { type: DataTypes.DATE, allowNull: true },
+        total_nonlabour_cost: { type: DataTypes.DECIMAL, allowNull: true },
+        utility_cost: { type: DataTypes.DECIMAL, allowNull: true },
       },
       {
         sequelize,

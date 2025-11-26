@@ -14,6 +14,8 @@ export interface ICreateCases {
   planned_submission_date: Date;
   statutory_submission_date: Date;
   status_rid?: string;
+  utility_cost?: number;
+  total_nonlabour_cost?: number;
 }
 
 export type CaseHeadersColumns = {
@@ -206,6 +208,7 @@ export type assignProjectType = {
   modified_datetime : Date,
   case_total_projects? : number | null,
   case_total_project_cost : number | null,
+  fiscal_year : number
   projects : projectType[]
 }
 
@@ -214,6 +217,7 @@ type projectType = {
   project_fiscal_rid : string,
   project_group : string,
   project_case_rid? : string
+  project_code : string
 }
 
 export interface ICreateCaseTeam {
@@ -314,6 +318,26 @@ export interface ICreateChecklistItemTemplate {
   modified_datetime?: Date;
 }
 
+type WorkflowConnectorItems = {
+  source_rid : string
+  relationship_connector_rid : string
+  target_rid : string[],
+  delete_target_rids : string[]
+  created_by : string
+}
+
+type WorkflowConnectorItemsAccountLevel = {
+  case_rid : string
+  account_rid : string
+  task_rid : string
+  source_rid : string
+  delete_target_rids : string[]
+  relationship_connector_rid : string
+  target_rid : string[]
+  created_by : string
+  created_datetime : Date
+}
+
 export type CreateTaskTemplateType = {
   created_by : string,
   modified_by : string,
@@ -322,7 +346,6 @@ export type CreateTaskTemplateType = {
   task_name : string,
   sequence_no : number,
   effort_in_days : number,
-  reminder_interval : number,
   effective_start_datetime : Date,
   effective_end_datetime : Date,
   case_team_member_role_rid : string,
@@ -331,7 +354,10 @@ export type CreateTaskTemplateType = {
   priority_rid : string,
   task_type_rid: string,
   milestone_template_rid : string,
-  task_description : string
+  task_description : string,
+  workflow_connector : WorkflowConnectorItems
+  weightage_rid : string
+  task_category_rid : string
 }
 
 export type priorityTypes = {
@@ -360,7 +386,6 @@ export type UpdateTaskTemplateType = {
   task_name : string,
   sequence_no : number,
   effort_in_days : number,
-  reminder_interval : number,
   effective_start_datetime : Date,
   effective_end_datetime : Date,
   case_team_member_role_rid : string,
@@ -369,7 +394,10 @@ export type UpdateTaskTemplateType = {
   priority_rid : string,
   task_type_rid: string,
   milestone_template_rid : string,
-  task_description : string
+  task_description : string,
+  workflow_connector : WorkflowConnectorItems,
+  weightage_rid : string,
+  task_category_rid : string
 }
 
 export type AdminTaskTemplateResponseTypes = {
@@ -384,7 +412,6 @@ export type AdminTaskTemplateResponseTypes = {
   task_name : string,
   sequence_no : number,
   effort_in_days : number,
-  reminder_interval : number,
   effective_start_datetime : Date,
   effective_end_datetime : Date,
   case_team_member_role_rid : string,
@@ -423,7 +450,6 @@ export interface TaskData {
   created_by: string;
   sequence_no: number | null;
   effort_in_days: number | null;
-  reminder_interval: number | null;
   effective_start_datetime: string | Date | null;
   effective_end_datetime: string | Date | null;
   case_team_member_role_rid: string | null;
@@ -457,6 +483,7 @@ export type CreateCaseTaskType = {
   effective_start_datetime : Date,
   effective_end_datetime : Date,
   case_team_member_role_rid : string,
+  assigned_to : string,
   task_status_rid : string,
   priority_rid : string,
   milestone_template_rid : string,
@@ -466,7 +493,10 @@ export type CreateCaseTaskType = {
   task_type_rid : string,
   task_description : string,
   status_rid : string,
-  tags : tagTypes[]
+  tags : tagTypes[],
+  workflow_connector : WorkflowConnectorItemsAccountLevel,
+  weightage_rid : string
+  task_category_rid : string
 }
 
 export type UpdateCaseTaskType = {
@@ -478,6 +508,7 @@ export type UpdateCaseTaskType = {
   effective_start_datetime : Date,
   effective_end_datetime : Date,
   case_team_member_role_rid : string,
+  assigned_to : string,
   task_status_rid : string,
   priority_rid : string,
   milestone_template_rid : string,
@@ -486,7 +517,10 @@ export type UpdateCaseTaskType = {
   case_rid: string,
   task_type_rid : string,
   task_description : string
-  tags : tagTypes[]
+  tags : tagTypes[],
+  workflow_connector : WorkflowConnectorItemsAccountLevel,
+  weightage_rid : string
+  task_category_rid : string
 }
 
 export type CaseTaskQueryType = {
@@ -517,6 +551,7 @@ export type AddCommentsType = {
   account_rid : string
   task_rid : string
   comments : string
+  task_type: string
 }
 
 export type UpdateCommentsType = {
@@ -527,6 +562,7 @@ export type UpdateCommentsType = {
   task_rid : string
   rid : string,
   comments : string,
+  task_type: string,
   deleted_file_ids : string[]
 }
 export type DeleteCommentsType = {
@@ -535,7 +571,8 @@ export type DeleteCommentsType = {
   account_rid : string
   task_rid : string
   rid : string
-  deleted_file_ids : string[]
+  deleted_file_ids : string[],
+  task_type: string 
 }
 
 export type CommentsListType = {
@@ -603,9 +640,14 @@ export type TaskCardDetailsType = {
   priority_name : string
   task_status_name : string
   assigned_to_name : string
-  checklists : checklistType
+  checklists : checklistType,
+  checklist_rid : string
+  checklist_name : string
+  case_team_member_role_rid : string
   tags : taskTags[]
-  workflow_connector :  taskWorkFlowConnector[]
+  workflow_connector :  taskWorkFlowConnector[],
+  weightage_rid : string
+  task_category_rid : string
 }
 export type TaskCardResponse ={
   task_details :TaskCardDetailsType
@@ -622,11 +664,17 @@ export type TagsTypes = {
   rid : string
   tag_name : string
 }
+export type caseStatusType = {
+  rid : string,
+  status_name : string
+}
+
 export type CaseTaskWorkFlowCreate = {
   case_rid : string,
   account_rid : string,
   source_rid : string,
   target_rid : string[],
+  delete_target_rids : string[]
   relationship_connector_rid : string
   created_by : string
   created_datetime : Date
@@ -705,4 +753,124 @@ export interface IUpdateProjectTask {
   task_description?: string;
   task_type_rid?: string;
   task_classification_rid?: string;
+}
+export interface IActivityTask {
+  task_template_rid?: string;
+  task_rid: string;
+  activity_type:string
+  created_by: string;
+  modified_by?: string;
+  created_datetime?: Date;
+  modified_datetime?: Date;
+  accountRid: string;
+  fiscal_year: number;
+  attach_to: string;
+  attachment_level: string;
+  task_name: string;
+  description?: string;
+  start_datetime?: Date;
+  end_datetime?: Date;
+  priority_rid?: string;
+  assigned_to?: string;
+  status_rid?: string;
+  remainder_interval?: number;
+  account_rid?: string; 
+  checklist_rid?: string;
+  tags : tagTypes[]
+}
+
+export interface IActivityEmail {
+  activity_rid: string;
+  activity_type:string
+  created_by: string;
+  modified_by?: string;
+  created_datetime?: Date;
+  modified_datetime?: Date;
+  accountRid: string;
+  fiscal_year: number;
+  attach_to: string;
+  attachment_level: string;
+  email_status:string;
+  to_email: string[];
+  cc_email?: string[];
+  subject: string;
+  body_html?: string;
+  sender_email?: string;
+  email_status_rid?: string;
+  account_rid?: string; 
+}
+
+export interface IActivityMeeting {
+  activity_rid: string;
+  activity_type:string
+  created_by: string;
+  modified_by?: string;
+  created_datetime?: Date;
+  modified_datetime?: Date;
+  accountRid: string;
+  fiscal_year: number;
+  attach_to: string;
+  attachment_level: string;
+  meeting_status:string;
+  meeting_status_rid?: string;
+  invitees: JSON;
+  attendees: string[];
+  subject: string;
+  meeting_platform?: string;
+  meeting_invite?: string;
+  meeting_id?:string;
+  effective_start_datetime: Date;
+  effective_end_datetime?: Date;
+  effective_start_time: string;
+  effective_end_time: string;
+  meeting_code?: string;
+  minutes_of_meeting?: string;
+  account_rid?: string;
+  description?: string;
+  time_zone?: string;
+  recurrence_type?: string;
+  recurrence_interval?: number;
+  recurrence_days?: string[];
+}
+
+export interface IActivityCall {
+  activity_rid: string;
+  activity_type:string
+  created_by: string;
+  modified_by?: string;
+  created_datetime?: Date;
+  modified_datetime?: Date;
+  accountRid: string;
+  fiscal_year: number;
+  attach_to: string;
+  attachment_level: string;
+  caller_id:string
+  meeting_participants: string[];
+  call_platform?: string;
+  effective_start_datetime: Date;
+  effective_end_datetime?: Date;
+  minutes_of_meeting?: string;
+  status_rid?: string;
+  account_rid?: string;
+  subject?: string;
+}
+
+
+export interface IEmailMessage {
+  subject: string;
+  body: {
+    contentType: string;
+    content: string;
+  };
+  toRecipients: { emailAddress: { address: string } }[];
+}
+
+export type WeightageType = {
+  rid : string
+  weightage_value : number
+}
+
+export type TaskCategoryType = {
+  rid : string
+  category_name : string
 }

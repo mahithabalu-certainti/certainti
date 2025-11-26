@@ -74,6 +74,16 @@ routes.get(
   controller.caseManagementController.fetchAllTaskTypes
 );
 routes.get(
+  "/taskTemplate/weightage",
+  checkUserStatusMiddleware("NA"),
+  controller.caseManagementController.listAdminTaskWeightage
+)
+routes.get(
+  "/taskTemplate/category",
+  checkUserStatusMiddleware("NA"),
+  controller.caseManagementController.getTaskCategoryForDropdown
+)
+routes.get(
   "/taskTemplate/:rid",
   checkUserStatusMiddleware("NA"),
   controller.caseManagementController.fetchTaskTemplateDetails

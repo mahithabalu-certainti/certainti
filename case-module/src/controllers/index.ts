@@ -4,6 +4,7 @@ import jurisdictionController from "./jurisdictionController";
 import historicalSubmissionController from "./historicalSubmissionController";
 import projectResourcesController from "./projectResourceController";
 import projectTaskController from "./projectTaskController";
+import activitiesController from "./activitiesController";
 
 const controller = {
   caseController,
@@ -11,7 +12,8 @@ const controller = {
   jurisdictionController,
   historicalSubmissionController,
   projectResourcesController,
-  projectTaskController
+  projectTaskController,
+  activitiesController,
 };
 
 export default controller;

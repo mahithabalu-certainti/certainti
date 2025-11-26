@@ -14,7 +14,6 @@ interface CaseTaskAttributes {
     task_name : string,
     sequence_no : number,
     effort_in_days? : number,
-    reminder_interval? : number,
     effective_start_datetime? : Date,
     effective_end_datetime? : Date,
     case_team_member_role_rid? : string,
@@ -28,6 +27,8 @@ interface CaseTaskAttributes {
     task_description? : string,
     task_status_rid : string,
     assigned_to? : string
+    weightage_rid? : string
+    task_category_rid? : string
 }
 
 export interface CaseTaskCreationAttributesModel 
@@ -46,7 +47,6 @@ implements CaseTaskAttributes {
     public task_name! : string
     public sequence_no! : number
     public effort_in_days? : number
-    public reminder_interval? : number
     public effective_start_datetime? : Date
     public effective_end_datetime? : Date
     public case_team_member_role_rid? : string
@@ -60,6 +60,8 @@ implements CaseTaskAttributes {
     public task_description? : string
     public task_status_rid! : string
     public assigned_to? : string
+    public weightage_rid?: string;
+    public task_category_rid? : string
 
     static initialise(sequelize : Sequelize, schemaName : string) {
         return CaseTask.init({
@@ -96,7 +98,7 @@ implements CaseTaskAttributes {
                 allowNull : true
             },
             task_name : {
-                type : DataTypes.STRING(64),
+                type : DataTypes.STRING(2000),
                 allowNull : true
             },
             sequence_no : {
@@ -104,10 +106,6 @@ implements CaseTaskAttributes {
                 allowNull : true
             },
             effort_in_days : {
-                type : DataTypes.INTEGER,
-                allowNull : true
-            },
-            reminder_interval : {
                 type : DataTypes.INTEGER,
                 allowNull : true
             },
@@ -161,6 +159,14 @@ implements CaseTaskAttributes {
             },
             assigned_to : {
                 type : DataTypes.STRING(50),
+                allowNull : true
+            },
+            weightage_rid : {
+                type : DataTypes.STRING,
+                allowNull : true
+            },
+            task_category_rid : {
+                type : DataTypes.STRING,
                 allowNull : true
             }
         }, {
