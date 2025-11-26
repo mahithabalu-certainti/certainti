@@ -1503,16 +1503,25 @@ async getWorkFlowConnector () {
   }
   async listTasksDropdown (data : any) {
     const {TaskTemplate} = await this.caseModelService.getModels("");
+    const statusRid = await this.getActiveStatusRid();
     const result = await TaskTemplate.findAll({
       attributes : ['rid', 'task_name'],
       where : {
         task_name : {
           [Op.iLike] : data.search == "" ? '%%' : `%${data.search}%`
-        } 
+        },
+        status_rid : statusRid
       },
       order : [['task_name', 'ASC']]
     });
     return result;
+  }
+  async getActiveStatusRid () {
+    if(!this.mainDbSequelize)
+      this.mainDbSequelize = await initMainDbSequelize()
+
+    const result : any = await this.mainDbSequelize.query(rawQueries.getActiveStatusId());
+    return result[0][0].rid
   }
   async getCaseDetails (caseRid : string, accountNumber : string) {
     const {Case} = await this.caseModelService.getModels(accountNumber)
