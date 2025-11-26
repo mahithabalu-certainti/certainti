@@ -136,17 +136,17 @@ routes.get(
 );
 routes.get(
   "/workBreakdown/:accountRid/:caseRid",
-  checkUserStatusMiddleware("NA"),
+  checkUserStatusMiddleware("cases_workbreakdown_view_edit"),
   controller.caseController.fetchCaseKanbanBoard
 );
 routes.post(
   "/task/create",
-  checkUserStatusMiddleware("NA"),
+  checkUserStatusMiddleware("cases_workbreakdown_create"),
   controller.caseController.createTask
 );
 routes.put(
   '/task/update',
-  checkUserStatusMiddleware("NA"),
+  checkUserStatusMiddleware("cases_workbreakdown_view_edit"),
   controller.caseController.updateTask
 );
 routes.post(

@@ -961,7 +961,7 @@ async function ExportAdminTaskTemplateList (req : Request, res : Response) {
     let totalRecord = parseInt(result.data[0].total_result)
     const fields = await caseService.getAllowedExportFields(
     userId,
-    "admin_checklist_view_edit"
+    "task_templates_export"
     );
     const allowedFieldSet = new Set<string>();
     for (const field of fields) {
