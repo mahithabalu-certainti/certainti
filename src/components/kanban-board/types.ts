@@ -128,6 +128,7 @@ export interface TaskCard {
   status_name: string;
   task_status_name?: string;
   tags?: string[];
+  comments_count: number;
 }
 
 export interface KanbanColumn {
@@ -258,7 +259,6 @@ export interface TaskCardProps {
   statusData?: Array<{ id: string; name: string; color: string }>;
   statusOptions?: StatusOption[]; // New prop for active/inactive status
   priorityData?: Array<{ id: string; name: string; color: string }>;
-
 }
 
 export interface KanbanColumnProps {
@@ -268,9 +268,6 @@ export interface KanbanColumnProps {
   showProfileIndicator?: boolean;
   isCreateTaskDisabled?: boolean;
   isCreateTaskHide?: boolean;
-
-
-
 
   onTaskClick?: (taskId: string) => void;
   statusData?: Array<{ id: string; name: string; color: string }>;

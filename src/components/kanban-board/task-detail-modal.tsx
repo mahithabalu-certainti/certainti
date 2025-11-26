@@ -628,17 +628,17 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
 
   const handleSave = async () => {
     const newErrors: Record<string, string> = {};
-    if (!editedTask?.status) newErrors.status = 'Status is required';
-    if (!editedTask?.priority) newErrors.priority = 'Priority is required';
+    if (!editedTask?.status) newErrors.status = 'This field is required';
+    if (!editedTask?.priority) newErrors.priority = 'This field is required';
     if (!selectedChecklist && !fieldVisibility.checklistTemplate) {
-      newErrors.checklistTemplate = 'Checklist Template is required';
+      newErrors.checklistTemplate = 'This field is required';
     }
 
     if (linkedType && (!linkTaskTypes || linkTaskTypes.length === 0)) {
-      newErrors.linkTaskType = 'Link Task Type is required';
+      newErrors.linkTaskType = 'This field is required';
     }
     if (!linkedType && linkTaskTypes && linkTaskTypes.length > 0) {
-      newErrors.linkedType = 'Linked Type is required';
+      newErrors.linkedType = 'This field is required';
     }
 
     if (editedTask?.title && editedTask.title.length > 2000) {

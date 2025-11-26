@@ -62,8 +62,8 @@ const TaskCardComponent: React.FC<ExtendedTaskCardProps> = ({
         // Status colors
         'To Do': { bg: '#F3F4F6', text: '#374151', border: '#E5E7EB' }, // Gray-100
         'In Progress': { bg: '#EFF6FF', text: '#1E40AF', border: '#BFDBFE' }, // Blue-50
-        'Blocked': { bg: '#FEF2F2', text: '#991B1B', border: '#FECACA' }, // Red-50
-        'Completed': { bg: '#ECFDF5', text: '#065F46', border: '#A7F3D0' }, // Emerald-50
+        Blocked: { bg: '#FEF2F2', text: '#991B1B', border: '#FECACA' }, // Red-50
+        Completed: { bg: '#ECFDF5', text: '#065F46', border: '#A7F3D0' }, // Emerald-50
         Active: { bg: '#ECFDF5', text: '#065F46', border: '#A7F3D0' }, // Emerald-50
         Inactive: { bg: '#FEF2F2', text: '#991B1B', border: '#FECACA' }, // Red-50
       },
@@ -228,7 +228,7 @@ const TaskCardComponent: React.FC<ExtendedTaskCardProps> = ({
                 className='text-[13px]'
                 style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
               >
-                0
+                {taskData?.comments_count ?? 0}
               </span>
             </div>
           )}
