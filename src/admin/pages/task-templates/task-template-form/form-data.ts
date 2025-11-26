@@ -21,6 +21,7 @@ export const TaskTemplateFormFieldsData = (
   taskWeightAgeTypesOptions: SelectOption[],
   taskCategoryTypesOptions: SelectOption[],
   taskType: boolean,
+  linkedType: boolean,
   permissionMap: Record<string, { read: boolean; edit: boolean }>
 ): FormType[] => {
   return useMemo(
@@ -79,7 +80,7 @@ export const TaskTemplateFormFieldsData = (
           createSelectField('case_team_member_role_rid', 'Assign Role', {
             options: taskAssignRoleTypesTypesOptions || [],
             placeholder: 'Choose Assign Role',
-            required: false,
+            required: true,
             disabled:
               isEditView &&
               !permissionMap?.['case_team_member_role_rid']?.edit &&
@@ -133,8 +134,36 @@ export const TaskTemplateFormFieldsData = (
               !permissionMap?.['checklist']?.edit &&
               !permissionMap?.['checklist']?.read,
           }),
+          createSelectField('task_category_rid', 'Task Category', {
+            required: true,
+            options: taskCategoryTypesOptions || [],
+            placeholder: 'Choose Task Category',
+            hide: taskType,
+            // hide:
+            //   isEditView &&
+            //   !permissionMap?.['task_category_rid']?.read &&
+            //   !permissionMap?.['task_category_rid']?.edit,
+            // disabled:
+            //   isEditView &&
+            //   permissionMap?.['task_category_rid']?.read &&
+            //   !permissionMap?.['task_category_rid']?.edit,
+          }),
+          createSelectField('weightage_rid', 'Task Weightage ', {
+            options: taskWeightAgeTypesOptions || [],
+            placeholder: 'Choose Task Weightage',
+            required: true,
+            hide: taskType,
+            // disabled:
+            //   isEditView &&
+            //   !permissionMap?.['weightage_rid']?.edit &&
+            //   permissionMap?.['weightage_rid']?.read,
+            // hide:
+            //   isEditView &&
+            //   !permissionMap?.['weightage_rid']?.edit &&
+            //   !permissionMap?.['weightage_rid']?.read,
+          }),
           createSelectField('status_rid', 'Status', {
-            required: false,
+            required: true,
             options: statusOptions,
             placeholder: 'Choose Status',
             hide:
@@ -145,32 +174,6 @@ export const TaskTemplateFormFieldsData = (
               isEditView &&
               permissionMap?.['status_rid']?.read &&
               !permissionMap?.['status_rid']?.edit,
-          }),
-          createSelectField('weightage_rid', 'Task Weight Age ', {
-            options: taskWeightAgeTypesOptions || [],
-            placeholder: 'Choose Task Weight Age',
-            required: false,
-            // disabled:
-            //   isEditView &&
-            //   !permissionMap?.['weightage_rid']?.edit &&
-            //   permissionMap?.['weightage_rid']?.read,
-            // hide:
-            //   isEditView &&
-            //   !permissionMap?.['weightage_rid']?.edit &&
-            //   !permissionMap?.['weightage_rid']?.read,
-          }),
-          createSelectField('task_category_rid', 'Task Category', {
-            required: false,
-            options: taskCategoryTypesOptions || [],
-            placeholder: 'Choose Task Category',
-            // hide:
-            //   isEditView &&
-            //   !permissionMap?.['task_category_rid']?.read &&
-            //   !permissionMap?.['task_category_rid']?.edit,
-            // disabled:
-            //   isEditView &&
-            //   permissionMap?.['task_category_rid']?.read &&
-            //   !permissionMap?.['task_category_rid']?.edit,
           }),
         ],
       },
@@ -188,7 +191,7 @@ export const TaskTemplateFormFieldsData = (
           createMultiSelectField('target_rid', 'Linked Task Type', {
             options: taskTemplate || [],
             placeholder: 'Choose Linked Task Type ',
-            required: false,
+            required: linkedType,
           }),
         ],
       },

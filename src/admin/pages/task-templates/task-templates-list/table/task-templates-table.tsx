@@ -24,9 +24,11 @@ import {
 } from '../../../../../routes';
 import {
   useGetTaskAssignRoleTypes,
+  useGetTaskCategoryTypes,
   useGetTaskCheckListTypes,
   useGetTaskMilestoneTypes,
   useGetTaskPriorityTypes,
+  useGetTaskWeightAgeTypes,
   useTaskTemplateList,
 } from '../../../../service/task-template/task-template-service';
 import { TASK_TEMPLATE } from '../../../../../api/graphql/queries/task-template-query';
@@ -115,6 +117,8 @@ export const TaskTemplateTable: React.FC<ITaskTemplateTableProps> = ({
   const taskPrioritytTypes = useGetTaskPriorityTypes();
   const taskCheckListTypes = useGetTaskCheckListTypes();
   const taskAssignRoleTypes = useGetTaskAssignRoleTypes();
+  const taskWeightAgeTypes = useGetTaskWeightAgeTypes();
+  const taskCategoryTypes = useGetTaskCategoryTypes();
 
   const taskMilestoneTypesOptions = useMemo(() => {
     return (
@@ -157,6 +161,23 @@ export const TaskTemplateTable: React.FC<ITaskTemplateTableProps> = ({
       })) || [],
     [statusOptions?.data?.data?.status]
   );
+
+  const taskWeightAgeTypesOptions = useMemo(() => {
+    return (
+      taskWeightAgeTypes?.data?.data?.data?.map((item) => ({
+        value: item.rid,
+        label: item.weightage_value,
+      })) || []
+    );
+  }, [taskWeightAgeTypes]);
+  const taskCategoryTypesOptions = useMemo(() => {
+    return (
+      taskCategoryTypes?.data?.data?.map((item) => ({
+        value: item.rid,
+        label: item.category_name,
+      })) || []
+    );
+  }, [taskCategoryTypes]);
   const { permission } = useSelector((state: RootState) => state.permission);
   const taskViewEditFields = useMemo(
     () =>
@@ -185,6 +206,8 @@ export const TaskTemplateTable: React.FC<ITaskTemplateTableProps> = ({
     taskCheckListTypesTypesOptions,
     taskAssigneRoleTypesTypesOptions,
     memoizedStatus,
+    taskCategoryTypesOptions,
+    taskWeightAgeTypesOptions,
     permissionMap,
     handleViewDetails
   );
@@ -254,8 +277,8 @@ export const TaskTemplateTable: React.FC<ITaskTemplateTableProps> = ({
       const res = await updateTaskTemplate({
         variables: { data: updateData },
       });
-      console.log('res', res);
       const result = res.data?.UpdateTaskTemplateInline;
+
       if (result?.statusCode === 200 && result.data) {
         const updatedItem = result.data;
         setTaskTemplateList((prev) =>
@@ -264,7 +287,7 @@ export const TaskTemplateTable: React.FC<ITaskTemplateTableProps> = ({
           )
         );
       } else {
-        errorToast(result?.message || 'Failed to update field');
+        errorToast(result?.statusMessage || 'Failed to update field');
         setTaskTemplateList(previousTaskTemplateList);
       }
     } catch (error) {

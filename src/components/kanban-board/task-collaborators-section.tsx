@@ -49,7 +49,7 @@ const TaskCollaboratorsSection: React.FC<TaskCollaboratorsSectionProps> = ({
     <div className='border-t border-gray-200 pt-6 relative'>
       <div className='flex items-center justify-between mb-3'>
         <h3 className='text-sm font-semibold text-gray-700'>Collaborators</h3>
-        <div className='w-[280px]'>
+        <div className='w-[200px]'>
           <Autocomplete
             multiple
             disabled={isAddingCollaborator}

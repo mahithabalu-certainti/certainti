@@ -1,8 +1,16 @@
-import React, { useState, useRef, useEffect, Suspense } from 'react';
+import React, { useState, useRef, useEffect, Suspense, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../store/store';
 import { Activity, Comment, Task } from './types';
-import { PencilIcon, DeleteIcon, AddIcon } from '../../assets';
+import { PencilIcon, DeleteIcon, AddIcon, ErrorInfoIcon } from '../../assets';
+import { Tooltip } from '@mui/material';
 import TextButton from '../button/text-button';
+import { useInfiniteTaskCommentsList } from '../../consultant/services/case-task/case-task-service';
+import { useInfiniteTaskActivities } from '../../consultant/services/work-breakdown/work-breakdown-service';
+import { transformComments, transformActivities, type TaskCommentRaw, type TaskActivityRaw } from '../../consultant/pages/case/case-details/work-breakdown/helper';
+import { generateInitials, generateColorFromName } from './helper';
+import LoadingSkeleton from './loading-skeleton';
 
 interface TaskCommentsSectionProps {
   fieldVisibility: Record<string, boolean | undefined>;
@@ -25,19 +33,20 @@ interface TaskCommentsSectionProps {
     files: File[]
   ) => Promise<void>;
   onUpdateComment?:
-    | ((
-        commentId: string,
-        comment: string,
-        taskId: string,
-        files?: File[],
-        deletedFileIds?: string[]
-      ) => Promise<void>)
-    | undefined;
+  | ((
+    commentId: string,
+    comment: string,
+    taskId: string,
+    files?: File[],
+    deletedFileIds?: string[]
+  ) => Promise<void>)
+  | undefined;
   onDeleteComment:
-    | ((commentId: string, taskId: string) => Promise<void>)
-    | undefined;
+  | ((commentId: string, taskId: string) => Promise<void>)
+  | undefined;
   loadingComments?: boolean;
   loadingActivities?: boolean;
+  useInfiniteScroll?: boolean; // New prop to enable infinite scrolling
 }
 
 const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
@@ -45,22 +54,60 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
   fieldDisabled,
   activeTab,
   setActiveTab,
-  comments,
-  activities,
+  comments: propComments,
+  activities: propActivities,
   editingCommentId,
   editingCommentText,
   setEditingCommentId,
   setEditingCommentText,
-  task,
   accountId,
   caseId,
   taskId,
   onAddComment,
   onUpdateComment,
   onDeleteComment,
+  useInfiniteScroll = true,
 }) => {
+  const ErrorIconTooltip = ({ error }: { error: string }) => (
+    <Tooltip
+      title={error}
+      placement='top'
+      arrow
+      slotProps={{
+        tooltip: {
+          sx: {
+            backgroundColor: '#FEF2F2',
+            color: '#EF4444',
+            border: '1px solid #EF4444',
+            fontSize: '12px',
+          },
+        },
+        arrow: {
+          sx: {
+            color: '#FEF2F2',
+            '&:before': {
+              border: '1px solid #EF4444',
+            },
+          },
+        },
+      }}
+    >
+      <span className='cursor-pointer mr-2 inline-flex align-middle'>
+        <ErrorInfoIcon className='w-4 h-4 text-red-500' />
+      </span>
+    </Tooltip>
+  );
+
   const queryClient = useQueryClient();
+  const { name: loggedInUserName, userId: loggedInUserId } = useSelector((state: RootState) => state.auth);
+
+  const loggedInUser = {
+    initials: generateInitials(loggedInUserName || ''),
+    color: generateColorFromName(loggedInUserName || ''),
+  };
+
   const [comment, setComment] = useState('');
+  const [commentError, setCommentError] = useState<string | null>(null);
   const [commentFiles, setCommentFiles] = useState<File[]>([]);
   const [deleteConfirmModal, setDeleteConfirmModal] = useState<{
     isOpen: boolean;
@@ -82,8 +129,159 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
   const editTextareaRef = useRef<HTMLTextAreaElement>(null);
   const addFileInputRef = useRef<HTMLInputElement>(null);
   const editFileInputRef = useRef<HTMLInputElement>(null);
+  const observerTarget = useRef<HTMLDivElement>(null);
+  const activityObserverTarget = useRef<HTMLDivElement>(null);
+  const {
+    data: infiniteData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading: isLoadingInfinite,
+  } = useInfiniteTaskCommentsList(
+    {
+      case_rid: caseId || '',
+      account_rid: accountId || '',
+      task_rid: taskId || '',
+    },
+    {
+      enabled: useInfiniteScroll && !!accountId && !!caseId && !!taskId,
+    }
+  );
 
-  // Auto-focus edit textarea when entering edit mode
+  const {
+    data: infiniteActivitiesData,
+    fetchNextPage: fetchNextActivitiesPage,
+    hasNextPage: hasNextActivitiesPage,
+    isFetchingNextPage: isFetchingNextActivitiesPage,
+    isLoading: isLoadingActivitiesInfinite,
+  } = useInfiniteTaskActivities(
+    {
+      case_rid: caseId || '',
+      account_rid: accountId || '',
+      task_rid: taskId || '',
+    },
+    {
+      enabled: useInfiniteScroll && !!accountId && !!caseId && !!taskId,
+    }
+  );
+
+  const comments = React.useMemo(() => {
+    if (!useInfiniteScroll) {
+      return propComments;
+    }
+
+    if (!infiniteData?.pages) {
+      return [];
+    }
+
+    try {
+      const allRawComments = infiniteData.pages.flatMap(
+        (page) => page.data.data || []
+      );
+      return transformComments(allRawComments as TaskCommentRaw[]);
+    } catch (error) {
+      console.error('Error transforming infinite comments:', error);
+      return [];
+    }
+  }, [infiniteData, useInfiniteScroll, propComments]);
+
+  const activities = React.useMemo(() => {
+    if (!useInfiniteScroll) {
+      return propActivities;
+    }
+
+    if (!infiniteActivitiesData?.pages) {
+      return [];
+    }
+
+    try {
+      const allRawActivities = infiniteActivitiesData.pages.flatMap(
+        (page) => page.data.data || []
+      );
+      return transformActivities(allRawActivities as TaskActivityRaw[]);
+    } catch (error) {
+      console.error('Error transforming infinite activities:', error);
+      return [];
+    }
+  }, [infiniteActivitiesData, useInfiniteScroll, propActivities]);
+
+  const totalCommentsCount = React.useMemo(() => {
+    if (!useInfiniteScroll || !infiniteData?.pages || infiniteData.pages.length === 0) {
+      return 0;
+    }
+    return infiniteData.pages[0]?.data?.total_result || 0;
+  }, [infiniteData, useInfiniteScroll]);
+
+  const totalActivitiesCount = React.useMemo(() => {
+    if (!useInfiniteScroll || !infiniteActivitiesData?.pages || infiniteActivitiesData.pages.length === 0) {
+      return 0;
+    }
+    return infiniteActivitiesData.pages[0]?.data?.total_result || 0;
+  }, [infiniteActivitiesData, useInfiniteScroll]);
+
+  const handleObserver = useCallback(
+    (entries: IntersectionObserverEntry[]) => {
+      const [target] = entries;
+      if (target.isIntersecting && hasNextPage && !isFetchingNextPage) {
+        fetchNextPage();
+      }
+    },
+    [fetchNextPage, hasNextPage, isFetchingNextPage]
+  );
+
+  const handleActivityObserver = useCallback(
+    (entries: IntersectionObserverEntry[]) => {
+      const [target] = entries;
+      if (target.isIntersecting && hasNextActivitiesPage && !isFetchingNextActivitiesPage) {
+        fetchNextActivitiesPage();
+      }
+    },
+    [fetchNextActivitiesPage, hasNextActivitiesPage, isFetchingNextActivitiesPage]
+  );
+  useEffect(() => {
+    if (!useInfiniteScroll || activeTab !== 'comments') return;
+
+    const element = observerTarget.current;
+    if (!element) return;
+
+    const observer = new IntersectionObserver(handleObserver, {
+      root: null,
+      rootMargin: '100px',
+      threshold: 0.1,
+    });
+
+    observer.observe(element);
+
+    return () => {
+      if (element) {
+        observer.unobserve(element);
+      }
+    };
+  }, [handleObserver, useInfiniteScroll, activeTab]);
+
+  useEffect(() => {
+    if (!useInfiniteScroll || activeTab !== 'activity') return;
+
+    const element = activityObserverTarget.current;
+
+    if (!element) return;
+
+    const observer = new IntersectionObserver(handleActivityObserver, {
+      root: null, // Use viewport as root, similar to comments
+      rootMargin: '100px', // Start loading 100px before reaching the bottom
+      threshold: 0.1,
+    });
+
+    observer.observe(element);
+    return () => {
+      if (element) {
+        observer.unobserve(element);
+      }
+    };
+  }, [handleActivityObserver, useInfiniteScroll, activities.length, activeTab]);
+
+
+
   useEffect(() => {
     if (editingCommentId && editTextareaRef.current) {
       editTextareaRef.current.focus();
@@ -103,6 +301,7 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
 
   const invalidateCommentQueries = () => {
     if (accountId && caseId && taskId) {
+      // Invalidate regular comments query
       queryClient.invalidateQueries({
         queryKey: [
           'taskComments',
@@ -115,6 +314,19 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
           },
         ],
       });
+
+      // Invalidate infinite comments query
+      queryClient.invalidateQueries({
+        queryKey: [
+          'taskCommentsInfinite',
+          {
+            case_rid: caseId,
+            account_rid: accountId,
+            task_rid: taskId,
+          },
+        ],
+      });
+
       queryClient.invalidateQueries({
         queryKey: [
           'taskAttachments',
@@ -160,7 +372,13 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
       return;
     }
 
+    if (editingCommentText.length > 2000) {
+      setCommentError('Comment too long (max 2000 characters)');
+      return;
+    }
+
     setIsUpdating(true);
+    setCommentError(null);
     try {
       await onUpdateComment(
         commentId,
@@ -191,12 +409,19 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
       return;
     }
 
+    if (comment.length > 2000) {
+      setCommentError('Comment too long (max 2000 characters)');
+      return;
+    }
+
     setIsAddingComment(true);
+    setCommentError(null);
     try {
       await onAddComment(taskId, comment.trim(), commentFiles);
       setComment('');
       setCommentFiles([]);
       setShowAddCommentForm(false);
+      invalidateCommentQueries();
     } catch (error) {
       console.error('Error adding comment:', error);
     } finally {
@@ -286,23 +511,21 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
       <div className='flex gap-6 mb-6 border-b border-gray-200'>
         <button
           onClick={() => setActiveTab('comments')}
-          className={`text-sm font-semibold pb-3 px-1 transition-all duration-200 ${
-            activeTab === 'comments'
-              ? 'text-gray-900 border-b-2 border-blue-600'
-              : 'text-gray-600 hover:text-gray-800 border-b-2 border-transparent'
-          }`}
+          className={`text-sm font-semibold pb-3 px-1 transition-all duration-200 ${activeTab === 'comments'
+            ? 'text-gray-900 border-b-2 border-blue-600'
+            : 'text-gray-600 hover:text-gray-800 border-b-2 border-transparent'
+            }`}
         >
-          Comments ({comments.length})
+          Comments {totalCommentsCount > 0 && <span className='ml-1 text-xs text-gray-500'>({totalCommentsCount})</span>}
         </button>
         <button
           onClick={() => setActiveTab('activity')}
-          className={`text-sm font-semibold pb-3 px-1 transition-all duration-200 ${
-            activeTab === 'activity'
-              ? 'text-gray-900 border-b-2 border-blue-600'
-              : 'text-gray-600 hover:text-gray-800 border-b-2 border-transparent'
-          }`}
+          className={`text-sm font-semibold pb-3 px-1 transition-all duration-200 ${activeTab === 'activity'
+            ? 'text-gray-900 border-b-2 border-blue-600'
+            : 'text-gray-600 hover:text-gray-800 border-b-2 border-transparent'
+            }`}
         >
-          Activity ({activities.length})
+          Activity {totalActivitiesCount > 0 && <span className='ml-1 text-xs text-gray-500'>({totalActivitiesCount})</span>}
         </button>
       </div>
 
@@ -356,15 +579,17 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                         <div
                           className='w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 text-white'
                           style={{
-                            backgroundColor: commentItem.color || '#999',
+                            backgroundColor:
+                              commentItem.createdBy === loggedInUserId
+                                ? loggedInUser.color
+                                : commentItem.color || '#999',
                             fontSize: '8px',
                           }}
                         >
-                          {commentItem.initials ||
-                            commentItem.user
-                              .split(' ')
-                              .map((n) => n[0])
-                              .join('')}
+                          {commentItem.createdBy === loggedInUserId
+                            ? loggedInUser.initials
+                            : commentItem.initials ||
+                            generateInitials(commentItem.user)}
                         </div>
                         <div>
                           <p className='text-sm font-semibold text-gray-900'>
@@ -373,14 +598,21 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                           <p className='text-xs text-gray-500'>Editing...</p>
                         </div>
                       </div>
-                      <textarea
-                        ref={editTextareaRef}
-                        value={editingCommentText}
-                        onChange={(e) => setEditingCommentText(e.target.value)}
-                        className='w-full bg-white border border-gray-300 rounded-lg p-3 text-sm resize-none focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900 placeholder-gray-500 min-h-[100px]'
-                        placeholder='Edit your comment'
-                        disabled={isUpdating}
-                      />
+                      <div className='relative'>
+                        <textarea
+                          ref={editTextareaRef}
+                          value={editingCommentText}
+                          onChange={(e) => setEditingCommentText(e.target.value)}
+                          className='w-full bg-white border border-gray-300 rounded-lg p-3 text-sm resize-none focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900 placeholder-gray-500 min-h-[100px] pr-8'
+                          placeholder='Edit your comment'
+                          disabled={isUpdating}
+                        />
+                        {commentError && editingCommentId === commentItem.id && (
+                          <div className='absolute right-2 top-3'>
+                            <ErrorIconTooltip error={commentError} />
+                          </div>
+                        )}
+                      </div>
 
                       {/* Edit Mode Attachments */}
                       <div className='mt-3 space-y-3'>
@@ -397,11 +629,10 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                                 return (
                                   <div
                                     key={att.rid}
-                                    className={`flex items-center justify-between p-2 rounded text-xs ${
-                                      isMarkedForDeletion
-                                        ? 'bg-red-50 text-gray-400'
-                                        : 'bg-gray-50 text-gray-700'
-                                    }`}
+                                    className={`flex items-center justify-between p-2 rounded text-xs ${isMarkedForDeletion
+                                      ? 'bg-red-50 text-gray-400'
+                                      : 'bg-gray-50 text-gray-700'
+                                      }`}
                                   >
                                     <div className='flex items-center gap-2 overflow-hidden'>
                                       <span
@@ -423,17 +654,16 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                                       onClick={() =>
                                         isMarkedForDeletion
                                           ? handleUndoRemoveExistingAttachment(
-                                              att.rid
-                                            )
+                                            att.rid
+                                          )
                                           : handleRemoveExistingAttachment(
-                                              att.rid
-                                            )
+                                            att.rid
+                                          )
                                       }
-                                      className={`ml-2 p-1 rounded hover:bg-opacity-80 ${
-                                        isMarkedForDeletion
-                                          ? 'text-green-600 hover:bg-green-100'
-                                          : 'text-red-600 hover:bg-red-100'
-                                      }`}
+                                      className={`ml-2 p-1 rounded hover:bg-opacity-80 ${isMarkedForDeletion
+                                        ? 'text-green-600 hover:bg-green-100'
+                                        : 'text-red-600 hover:bg-red-100'
+                                        }`}
                                       title={
                                         isMarkedForDeletion
                                           ? 'Undo delete'
@@ -492,7 +722,7 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                           </div>
                         )}
                       </div>
-                      <div className='flex gap-2 justify-end mt-3'>
+                      <div className='flex gap-2 justify-end mt-3 items-center'>
                         <TextButton
                           label='Cancel'
                           onClick={() => {
@@ -529,15 +759,17 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                       <div
                         className='w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 text-white'
                         style={{
-                          backgroundColor: commentItem.color || '#999',
+                          backgroundColor:
+                            commentItem.createdBy === loggedInUserId
+                              ? loggedInUser.color
+                              : commentItem.color || '#999',
                           fontSize: '8px',
                         }}
                       >
-                        {commentItem.initials ||
-                          commentItem.user
-                            .split(' ')
-                            .map((n) => n[0])
-                            .join('')}
+                        {commentItem.createdBy === loggedInUserId
+                          ? loggedInUser.initials
+                          : commentItem.initials ||
+                          generateInitials(commentItem.user)}
                       </div>
                       <div className='flex-1 min-w-0'>
                         <div className='flex items-start justify-between gap-2'>
@@ -554,11 +786,10 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
 
                           {/* Action Icons - Hover Reveal */}
                           <div
-                            className={`flex gap-2 flex-shrink-0 transition-opacity duration-200 ${
-                              hoveredCommentId === commentItem.id
-                                ? 'opacity-100'
-                                : 'opacity-0'
-                            }`}
+                            className={`flex gap-2 flex-shrink-0 transition-opacity duration-200 ${hoveredCommentId === commentItem.id
+                              ? 'opacity-100'
+                              : 'opacity-0'
+                              }`}
                           >
                             <Suspense fallback={null}>
                               <button
@@ -643,10 +874,27 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                   )}
                 </div>
               ))
+            ) : isLoadingInfinite && useInfiniteScroll ? (
+              <LoadingSkeleton count={3} variant='comment' />
             ) : (
-              <div className='text-center py-8'>
+              <div className='text-center py-2'>
                 <p className='text-sm text-gray-500'>No comments yet.</p>
               </div>
+            )}
+
+            {/* Intersection Observer Target for Infinite Scroll */}
+            {useInfiniteScroll && comments.length > 0 && (
+              <div ref={observerTarget} className='h-4' />
+            )}
+
+            {/* Loading Next Page Indicator */}
+            {useInfiniteScroll && isFetchingNextPage && (
+              <LoadingSkeleton count={2} variant='comment' />
+            )}
+
+            {/* End of List Indicator */}
+            {useInfiniteScroll && !hasNextPage && comments.length > 0 && (
+              <></>
             )}
           </div>
 
@@ -670,21 +918,28 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                 <div
                   className='w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 text-white'
                   style={{
-                    backgroundColor: task?.assignee?.color || '#999',
+                    backgroundColor: loggedInUser.color,
                     fontSize: '8px',
                   }}
                 >
-                  {task?.assignee?.initials || '?'}
+                  {loggedInUser.initials}
                 </div>
                 <div className='flex-1 space-y-3 min-w-0'>
-                  <textarea
-                    ref={textareaRef}
-                    value={comment}
-                    onChange={(e) => setComment(e.target.value)}
-                    placeholder='Add your comment here...'
-                    className='w-full bg-white border border-gray-300 rounded-lg p-3 text-sm resize-none focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900 placeholder-gray-500 min-h-[100px]'
-                    disabled={fieldDisabled.comments || isAddingComment}
-                  />
+                  <div className='relative'>
+                    <textarea
+                      ref={textareaRef}
+                      value={comment}
+                      onChange={(e) => setComment(e.target.value)}
+                      placeholder='Add your comment here...'
+                      className='w-full bg-white border border-gray-300 rounded-lg p-3 text-sm resize-none focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900 placeholder-gray-500 min-h-[100px] pr-8'
+                      disabled={fieldDisabled.comments || isAddingComment}
+                    />
+                    {commentError && !editingCommentId && (
+                      <div className='absolute right-2 top-3'>
+                        <ErrorIconTooltip error={commentError} />
+                      </div>
+                    )}
+                  </div>
 
                   {/* File upload area */}
                   <button
@@ -726,7 +981,7 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                   )}
 
                   {/* Action Buttons */}
-                  <div className='flex gap-2 justify-end pt-2'>
+                  <div className='flex gap-2 justify-end pt-2 items-center'>
                     <TextButton
                       label='Cancel'
                       onClick={handleCancelAdd}
@@ -739,7 +994,8 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                       disabled={
                         isAddingComment ||
                         !comment.trim() ||
-                        fieldDisabled.comments
+                        fieldDisabled.comments ||
+                        !!commentError
                       }
                       sx={{ padding: '6px 12px' }}
                     />
@@ -763,14 +1019,11 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                 <div
                   className='w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 text-white'
                   style={{
-                    backgroundColor: '#8B5CF6',
+                    backgroundColor: activity.color || '#8B5CF6',
                     fontSize: '8px',
                   }}
                 >
-                  {activity.user
-                    .split(' ')
-                    .map((n) => n[0])
-                    .join('')}
+                  {activity.initials || generateInitials(activity.user)}
                 </div>
                 <div className='flex-1 min-w-0'>
                   <p className='text-sm text-gray-900 break-words'>
@@ -787,10 +1040,27 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                 </div>
               </div>
             ))
+          ) : isLoadingActivitiesInfinite && useInfiniteScroll ? (
+            <LoadingSkeleton count={3} variant='activity' />
           ) : (
-            <div className='text-center py-8'>
+            <div className='text-center py-2'>
               <p className='text-sm text-gray-500'>No activities yet</p>
             </div>
+          )}
+
+          {/* Intersection Observer Target for Infinite Scroll Activities */}
+          {useInfiniteScroll && activities.length > 0 && (
+            <div ref={activityObserverTarget} className='h-4' />
+          )}
+
+          {/* Loading Next Page Indicator for Activities */}
+          {useInfiniteScroll && isFetchingNextActivitiesPage && (
+            <LoadingSkeleton count={2} variant='activity' />
+          )}
+
+          {/* End of List Indicator for Activities */}
+          {useInfiniteScroll && !hasNextActivitiesPage && activities.length > 0 && (
+            <></>
           )}
         </div>
       )}

@@ -284,10 +284,6 @@ export const useGetTaskCheckListTypes = () => {
     queryKey: ['task-checklist-types'],
     queryFn: fetchTaskCheckListTypes,
     retry: 0,
-    staleTime: Infinity,
-    gcTime: Infinity,
-    refetchOnMount: false,
-    refetchOnReconnect: false,
   });
 };
 // Task assign role type
@@ -423,10 +419,10 @@ export const useGetTaskTemplate = (payload: Record<string, any>) => {
     queryKey: ['task-template', payload],
     queryFn: () => fetchTaskTemplate(payload),
     retry: 0,
-    staleTime: Infinity,
-    gcTime: Infinity,
-    refetchOnMount: false,
-    refetchOnReconnect: false,
+    // staleTime: Infinity,
+    // gcTime: Infinity,
+    // refetchOnMount: false,
+    // refetchOnReconnect: false,
   });
 };
 

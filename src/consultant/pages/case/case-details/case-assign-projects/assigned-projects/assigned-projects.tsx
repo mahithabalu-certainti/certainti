@@ -61,9 +61,6 @@ const AssignedProjects: React.FC<AssignedProjectsProps> = ({
     refreshTrigger
   );
   useEffect(() => {
-    if (data?.count) {
-      setCount(data?.count);
-    }
     if (setExportType) {
       setExportType('cases_projects');
     }
@@ -87,11 +84,16 @@ const AssignedProjects: React.FC<AssignedProjectsProps> = ({
     currentPage,
     caseId,
     accountID,
-    data?.count,
-    setCount,
+  ]);
+  useEffect(() => {
+    if (isLoading) {
+      setCount(0);
+    } else if (data?.count !== undefined) {
+      setCount(data.count);
+    }
     setExportType,
     appliedFilters,
-  ]);
+  }, [isLoading, data?.count, setCount]);
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
   };

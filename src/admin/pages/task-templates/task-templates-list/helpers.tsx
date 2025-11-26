@@ -42,6 +42,8 @@ export const getTaskTemplateFilterFields = (
   taskCheckListTypesTypesOptions: SelectOption[],
   taskAssigneRoleTypesTypesOptions: SelectOption[],
   memoizedStatus: SelectOption[],
+  taskCategoryTypesOptions: SelectOption[],
+  taskWeightAgeTypesOptions: SelectOption[],
   permissionMap: Record<string, { read: boolean; edit: boolean }>
 ): FieldConfig[] => {
   return [
@@ -128,6 +130,26 @@ export const getTaskTemplateFilterFields = (
         !permissionMap?.['checklist']?.read,
     },
     {
+      label: 'Task Category',
+      name: 'task_category_rid',
+      type: 'enumSelect',
+      options: taskCategoryTypesOptions,
+      operatorOption: enumOperator,
+      // hide:
+      //   !permissionMap?.['task_category_rid']?.edit &&
+      //   !permissionMap?.['task_category_rid']?.read,
+    },
+    {
+      label: 'Weightage',
+      name: 'weightage_rid',
+      type: 'enumSelect',
+      options: taskWeightAgeTypesOptions,
+      operatorOption: enumOperator,
+      // hide:
+      //   !permissionMap?.['weightage_rid']?.edit &&
+      //   !permissionMap?.['weightage_rid']?.read,
+    },
+    {
       label: 'Status',
       name: 'status_rid',
       type: 'enumSelect',
@@ -149,7 +171,7 @@ export const getTaskTemplateFilterFields = (
 
     {
       label: 'Created By',
-      name: 'created_user_name',
+      name: 'created_by_name',
       type: 'text',
       operatorOption: textfieldOptions,
       hide:
@@ -167,7 +189,7 @@ export const getTaskTemplateFilterFields = (
     },
     {
       label: 'Updated By',
-      name: 'modified_user_name',
+      name: 'modified_by_name',
       type: 'text',
       operatorOption: nonReqTextfieldOptions,
       hide:

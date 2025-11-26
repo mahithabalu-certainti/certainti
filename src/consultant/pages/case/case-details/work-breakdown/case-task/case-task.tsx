@@ -174,7 +174,7 @@ const CaseTask: React.FC<CaseTaskProps> = ({
 
   return (
     <>
-      <div className='border-t border-[#CBD6E2]'>
+      <div className='border-t border-[#CBD6E2] [&_.MuiTableContainer-root::-webkit-scrollbar]:hidden [&_.MuiTableContainer-root]:[-ms-overflow-style:none] [&_.MuiTableContainer-root]:[scrollbar-width:none]'>
         <ManageColumnsPopover
           anchorEl={columnAnchorEl}
           open={isModalOpen}

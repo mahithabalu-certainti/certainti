@@ -465,17 +465,14 @@ export const Navbar: React.FC<NavbarProps> = ({
                     <div className='border-l border-[#FFFFFF4D] h-6 mx-1' />
                   </>
                 )}
-                {!isCaseModule && (
-                  <>
-                    <GlobalFiscalYearDropdown
-                      fiscalYear={fiscalYear}
-                      fiscalYearsOptions={fiscalYearsDropDown}
-                      isGlobal={true}
-                      onChange={(e) => dispatch(setFiscalYear(e.target.value))}
-                    />
-                    <div className='border-l border-[#FFFFFF4D] ml-1 mr-2 h-6' />
-                  </>
-                )}
+                <GlobalFiscalYearDropdown
+                  fiscalYear={fiscalYear}
+                  fiscalYearsOptions={fiscalYearsDropDown}
+                  isGlobal={true}
+                  onChange={(e) => dispatch(setFiscalYear(e.target.value))}
+                  disabled={isCaseModule}
+                />
+                <div className='border-l border-[#FFFFFF4D] ml-1 mr-2 h-6' />
               </>
             )}
             {/* <IconButton size='large' color='inherit'>
