@@ -54,6 +54,7 @@ interface TaskFieldsSectionProps {
   selectedStatus?: string;
   onStatusChangeCreate?: (statusName: string, statusId: string) => void;
   errors?: Record<string, string | undefined>;
+  fiscalYear?: string | null;
 }
 
 const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
@@ -92,6 +93,7 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
   selectedStatus,
   onStatusChangeCreate,
   errors = {},
+  fiscalYear,
 }) => {
   const shouldPrepopulate = mode === 'view';
 
@@ -453,7 +455,7 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
           )}
 
         {/* Linked Type Field */}
-        {uniqueConnectorTypes && uniqueConnectorTypes.length > 0 && (
+        {!fieldVisibility.linkedType && uniqueConnectorTypes && uniqueConnectorTypes.length > 0 && (
           <div className='flex flex-col gap-2'>
             <label className='text-sm font-medium text-gray-700'>Linked Type</label>
             <StyledSelect
@@ -518,7 +520,7 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
         )}
 
         {/* Link Task Type Field */}
-        {uniqueTaskTemplates && uniqueTaskTemplates.length > 0 && (
+        {!fieldVisibility.linkTaskType && uniqueTaskTemplates && uniqueTaskTemplates.length > 0 && (
           <div className='flex flex-col gap-2'>
             <label className='text-sm font-medium text-gray-700'>Link Task Type</label>
             <StyledSelect
@@ -589,7 +591,7 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
         )}
 
         {/* Weightage Field */}
-        {weightageData && weightageData.length > 0 && (
+        {!fieldVisibility.weightage && weightageData && weightageData.length > 0 && (
           <div className='flex flex-col gap-2'>
             <label className='text-sm font-medium text-gray-700'>Weightage</label>
             <StyledSelect
@@ -648,7 +650,7 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
         )}
 
         {/* Category Field */}
-        {categoryData && categoryData.length > 0 && (
+        {!fieldVisibility.category && categoryData && categoryData.length > 0 && (
           <div className='flex flex-col gap-2'>
             <label className='text-sm font-medium text-gray-700'>Task Category</label>
             <StyledSelect
@@ -880,6 +882,34 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
                   ))}
                 </div>
               )}
+          </div>
+        )}
+        {/* Fiscal Year Field */}
+        {!fieldVisibility.fiscalYear && fiscalYear && (
+          <div className='flex flex-col gap-2'>
+            <label className='text-sm font-medium text-gray-700'>Fiscal Year</label>
+            <TextField
+              value={fiscalYear}
+              disabled
+              size='small'
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  padding: '6px',
+                  minHeight: '32px',
+                  backgroundColor: '#F3F4F6',
+                  '& input': {
+                    fontSize: '13px',
+                    padding: '0 !important',
+                    color: 'black',
+                    WebkitTextFillColor: 'black',
+                  },
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#CBD6E2',
+                    borderWidth: '1px',
+                  },
+                },
+              }}
+            />
           </div>
         )}
       </div>

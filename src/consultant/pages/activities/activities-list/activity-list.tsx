@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   generatePath,
   useNavigate,
@@ -17,6 +17,30 @@ import {
 import { useActivityList } from '../../../services/activities/activities-service';
 import { ListTable, ManageColumnsPopover } from '../../../../components/table';
 import { ACTIVITY_EDIT } from '../../../../routes';
+import TaskDetailModal from '../../../../components/kanban-board/task-detail-modal';
+import {
+  useGetTaskPriorities,
+  useGetTaskStatuses,
+} from '../../../services/work-breakdown/work-breakdown-service';
+import {
+  useAddTaskComment,
+  useUpdateTaskComment,
+  useDeleteTaskComment,
+} from '../../../services/case-task/case-task-service';
+import {
+  useGetTagOptions,
+  useGetCaseTeamMembersDropdown,
+  useGetRoleOptions,
+} from '../../../services/case-team/case-team-service';
+import {
+  transformPriorityData,
+  transformStatusData,
+  transformTagData,
+} from '../../case/case-details/work-breakdown/helper';
+import { useGetTaskCheckListTypes } from '../../../../admin/service/task-template/task-template-service';
+import { useToast } from '../../../../hooks';
+import { useQueryClient } from '@tanstack/react-query';
+import { AddCollaboratorResponse, useAddCollaborator, AddCollaboratorPayload } from '../../../services/work-breakdown/work-breakdown-service';
 
 interface ActivityListTableProps {
   refreshTrigger: number;
@@ -59,8 +83,11 @@ const ActivityListTable: React.FC<ActivityListTableProps> = ({
   const accountId = searchParams.get('accountID') || '';
   const activityId = searchParams.get('activity_id');
   const viewDetails = !!activityId;
+  const { successToast, errorToast } = useToast();
+  const queryClient = useQueryClient();
 
   const [activityData, setActivityData] = useState<ActivityList[]>([]);
+  const [selectedTask, setSelectedTask] = useState<ActivityList | null>(null);
   const [tableParams, setTableParams] = useState<ActivityListURLParams>({
     page: currentPage + 1,
     limit: 100,
@@ -80,6 +107,67 @@ const ActivityListTable: React.FC<ActivityListTableProps> = ({
     },
     !viewDetails,
     refreshTrigger
+  );
+
+  const caseTeamMembersQuery = useGetCaseTeamMembersDropdown(
+    accountId || accountid || '',
+    caseId || '',
+    !!(accountId || accountid)
+  );
+  const roleOptionsQuery = useGetRoleOptions();
+  const prioritiesQuery = useGetTaskPriorities();
+  const statusesQuery = useGetTaskStatuses();
+  const checklistQuery = useGetTaskCheckListTypes();
+  const addCommentMutation = useAddTaskComment();
+  const updateCommentMutation = useUpdateTaskComment();
+  const deleteCommentMutation = useDeleteTaskComment();
+  const addCollaboratorMutation = useAddCollaborator();
+
+  const tagOptionsQuery = useGetTagOptions(
+    {
+      task_rid: '',
+      account_rid: accountId || accountid || '',
+      case_rid: caseId || '',
+      action: 'create',
+    },
+    !!(accountId || accountid)
+  );
+
+  const tagData = useMemo(
+    () => transformTagData(tagOptionsQuery.data || []),
+    [tagOptionsQuery.data]
+  );
+
+  const userData = useMemo(() => {
+    if (caseTeamMembersQuery.data && Array.isArray(caseTeamMembersQuery.data)) {
+      return caseTeamMembersQuery.data.map((member) => ({
+        rid: member.user_rid,
+        name: member.user_name,
+      }));
+    }
+    return [];
+  }, [caseTeamMembersQuery.data]);
+
+  const checklistData = useMemo(() => {
+    if (checklistQuery.data?.data && Array.isArray(checklistQuery.data.data)) {
+      return checklistQuery.data.data.map(
+        (checklist: { rid: string; checklist_name: string }) => ({
+          id: checklist.rid,
+          name: checklist.checklist_name,
+        })
+      );
+    }
+    return [];
+  }, [checklistQuery.data]);
+
+  const priorityData = useMemo(
+    () => transformPriorityData(prioritiesQuery.data || []),
+    [prioritiesQuery.data]
+  );
+
+  const statusData = useMemo(
+    () => transformStatusData(statusesQuery.data || []),
+    [statusesQuery.data]
   );
 
   const totalItems = data?.count || 0;
@@ -117,19 +205,280 @@ const ActivityListTable: React.FC<ActivityListTableProps> = ({
   const getRowId = (row: ActivityList) => row.rid;
 
   const handleEdit = (row: ActivityList) => {
-    const path = generatePath(ACTIVITY_EDIT, {
-      module: entityDetails?.module || '',
-      activityId: row.rid,
-      type: row.activity_type?.toLowerCase() || activityType,
-    });
-    const queryParams = new URLSearchParams({
-      accountId,
-      entityLevel: row.attachment_level || entityDetails?.module || '',
-      entityId: row.attach_to || '',
-      source: entityDetails?.source || '',
-    });
-    navigate(`${path}?${queryParams.toString()}`);
+    // For task activities, open modal instead of navigating
+    if (row.activity_type?.toLowerCase() === 'task') {
+      setSelectedTask(row);
+    } else {
+      // For other activity types (email, call, meeting), navigate to edit page
+      const path = generatePath(ACTIVITY_EDIT, {
+        module: entityDetails?.module || '',
+        activityId: row.rid,
+        type: row.activity_type?.toLowerCase() || activityType,
+      });
+      const queryParams = new URLSearchParams({
+        accountId: accountId || accountid || '',
+        entityLevel: row.attachment_level || entityDetails?.module || '',
+        entityId: row.attach_to || '',
+        source: entityDetails?.source || '',
+      });
+      navigate(`${path}?${queryParams.toString()}`);
+    }
   };
+
+  const handleTaskSaved = useCallback(() => {
+    queryClient.invalidateQueries({
+      queryKey: ['activity-list'],
+    });
+  }, [queryClient]);
+
+  const handleAddComment = useCallback(
+    async (taskId: string, commentText: string, files: File[]) => {
+      if (!(accountId || accountid)) {
+        errorToast('Account ID is missing');
+        throw new Error('Missing Account ID');
+      }
+
+      return new Promise<void>((resolve, reject) => {
+        addCommentMutation.mutate(
+          {
+            account_rid: accountId || accountid || '',
+            case_rid: caseId || '',
+            task_rid: taskId,
+            comments: commentText,
+            files: files,
+          },
+          {
+            onSuccess: () => {
+              const message =
+                addCommentMutation.data?.statusMessage ||
+                'Comment added successfully';
+              successToast(message);
+              const commentsParams = {
+                account_rid: accountId || accountid || '',
+                case_rid: caseId || '',
+                task_rid: taskId,
+                page: 1,
+                limit: 100,
+              };
+              queryClient.invalidateQueries({
+                queryKey: ['taskComments', commentsParams],
+              });
+              queryClient.invalidateQueries({
+                queryKey: ['taskAttachments', commentsParams],
+              });
+              resolve();
+            },
+            onError: (error) => {
+              const errorMessage =
+                (error as { response?: { data?: { statusMessage?: string } } })
+                  ?.response?.data?.statusMessage ||
+                error?.message ||
+                'Failed to add comment';
+              errorToast(errorMessage);
+              reject(error);
+            },
+          }
+        );
+      });
+    },
+    [
+      accountId,
+      accountid,
+      caseId,
+      successToast,
+      errorToast,
+      addCommentMutation,
+      queryClient,
+    ]
+  );
+
+  const handleUpdateComment = useCallback(
+    async (
+      commentId: string,
+      commentText: string,
+      taskId: string,
+      files?: File[],
+      deletedFileIds?: string[]
+    ) => {
+      if (!(accountId || accountid)) {
+        errorToast('Account ID is missing');
+        throw new Error('Missing Account ID');
+      }
+
+      return new Promise<void>((resolve, reject) => {
+        updateCommentMutation.mutate(
+          {
+            account_rid: accountId || accountid || '',
+            case_rid: caseId || '',
+            task_rid: taskId,
+            rid: commentId,
+            comments: commentText,
+            files: files,
+            deleted_file_ids: deletedFileIds,
+          },
+          {
+            onSuccess: () => {
+              const message =
+                updateCommentMutation.data?.statusMessage ||
+                'Comment updated successfully';
+              successToast(message);
+              const commentsParams = {
+                account_rid: accountId || accountid || '',
+                case_rid: caseId || '',
+                task_rid: taskId,
+                page: 1,
+                limit: 100,
+              };
+              queryClient.invalidateQueries({
+                queryKey: ['taskComments', commentsParams],
+              });
+              resolve();
+            },
+            onError: (error) => {
+              const errorMessage =
+                (error as { response?: { data?: { statusMessage?: string } } })
+                  ?.response?.data?.statusMessage ||
+                error?.message ||
+                'Failed to update comment';
+              errorToast(errorMessage);
+              reject(error);
+            },
+          }
+        );
+      });
+    },
+    [
+      accountId,
+      accountid,
+      caseId,
+      successToast,
+      errorToast,
+      updateCommentMutation,
+      queryClient,
+    ]
+  );
+
+  const handleDeleteComment = useCallback(
+    async (commentId: string, taskId: string) => {
+      if (!(accountId || accountid)) {
+        errorToast('Account ID is missing');
+        throw new Error('Missing Account ID');
+      }
+
+      return new Promise<void>((resolve, reject) => {
+        deleteCommentMutation.mutate(
+          {
+            account_rid: accountId || accountid || '',
+            case_rid: caseId || '',
+            task_rid: taskId,
+            rid: commentId,
+            deleted_file_ids: [],
+          },
+          {
+            onSuccess: () => {
+              const message =
+                deleteCommentMutation.data?.statusMessage ||
+                'Comment deleted successfully';
+              successToast(message);
+              const commentsParams = {
+                account_rid: accountId || accountid || '',
+                case_rid: caseId || '',
+                task_rid: taskId,
+                page: 1,
+                limit: 100,
+              };
+              queryClient.invalidateQueries({
+                queryKey: ['taskComments', commentsParams],
+              });
+              resolve();
+            },
+            onError: (error) => {
+              const errorMessage =
+                (error as { response?: { data?: { statusMessage?: string } } })
+                  ?.response?.data?.statusMessage ||
+                error?.message ||
+                'Failed to delete comment';
+              errorToast(errorMessage);
+              reject(error);
+            },
+          }
+        );
+      });
+    },
+    [
+      accountId,
+      accountid,
+      caseId,
+      successToast,
+      errorToast,
+      deleteCommentMutation,
+      queryClient,
+    ]
+  );
+
+  const handleAddCollaborator = useCallback(
+    async (
+      taskId: string,
+      userId: string
+    ): Promise<AddCollaboratorResponse> => {
+      if (!(accountId || accountid)) {
+        errorToast('Account ID is missing');
+        throw new Error('Missing Account ID');
+      }
+
+      return new Promise<AddCollaboratorResponse>((resolve, reject) => {
+        const payload: AddCollaboratorPayload = {
+          case_rid: caseId || '',
+          account_rid: accountId || accountid || '',
+          rid: taskId,
+          user_rid: userId,
+          action_type: 'milestone',
+        };
+
+        addCollaboratorMutation.mutate(payload, {
+          onSuccess: (response) => {
+            if (
+              response?.statusCode === 200 ||
+              response?.statusCodeValue === 'OK'
+            ) {
+              const message =
+                response?.statusMessage || 'Collaborator added successfully';
+              successToast(message);
+              queryClient.invalidateQueries({
+                queryKey: ['collaborators', accountId || accountid, caseId, taskId],
+              });
+
+              resolve(response);
+            } else {
+              const errorMessage =
+                response?.statusMessage || 'Failed to add collaborator';
+              errorToast(errorMessage);
+              reject(new Error(errorMessage));
+            }
+          },
+          onError: (error) => {
+            const errorMessage =
+              (error as { response?: { data?: { statusMessage?: string } } })
+                ?.response?.data?.statusMessage ||
+              error?.message ||
+              'Failed to add collaborator';
+            errorToast(errorMessage);
+            console.error('Error adding collaborator:', error);
+            reject(error);
+          },
+        });
+      });
+    },
+    [
+      accountId,
+      accountid,
+      caseId,
+      addCollaboratorMutation,
+      successToast,
+      errorToast,
+      queryClient,
+    ]
+  );
 
   const actionMenuItems = [
     {
@@ -166,9 +515,38 @@ const ActivityListTable: React.FC<ActivityListTableProps> = ({
     setColumnOrder(updatedColumns.map((col) => col.id));
   };
 
-  const visibleColumns = columnOrder
-    .map((id) => columns.find((col) => col.id === id)!)
-    .filter((col) => columnVisibility[col.id]);
+  // Override R number column render for task activities to open modal
+  const modifiedColumns = useMemo(() => {
+    return columnOrder
+      .map((id) => {
+        const col = columns.find((c) => c.id === id)!;
+
+        // Override the r_number column's render to intercept task clicks
+        if (col.id === 'r_number' && col.render) {
+          const originalRender = col.render;
+          return {
+            ...col,
+            render: (row: ActivityList) => {
+              // If it's a task, create our own clickable element
+              if (row.activity_type?.toLowerCase() === 'task') {
+                return (
+                  <span
+                    onClick={() => setSelectedTask(row)}
+                    className='cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
+                  >
+                    {row.r_number}
+                  </span>
+                );
+              }
+              // For other activities, use original render
+              return originalRender(row);
+            },
+          };
+        }
+        return col;
+      })
+      .filter((col) => columnVisibility[col.id]);
+  }, [columnOrder, columns, columnVisibility, setSelectedTask]);
 
   return (
     <>
@@ -184,7 +562,7 @@ const ActivityListTable: React.FC<ActivityListTableProps> = ({
 
       <ListTable
         data={activityData}
-        columns={visibleColumns}
+        columns={modifiedColumns}
         getRowId={getRowId}
         hoverHighlight={false}
         tableStyle={{
@@ -210,6 +588,43 @@ const ActivityListTable: React.FC<ActivityListTableProps> = ({
         sortOrder={tableParams.sortOrder}
         onSort={handleSort}
       />
+
+      {selectedTask && (
+        <TaskDetailModal
+          taskId={selectedTask.rid}
+          isOpen={true}
+          onClose={() => setSelectedTask(null)}
+          accountId={accountId || accountid || ''}
+          caseId={
+            selectedTask.attachment_level?.toLowerCase() === 'case'
+              ? selectedTask.attach_to
+              : ''
+          }
+          onTaskUpdate={handleTaskSaved}
+          statusData={statusData}
+          priorityData={priorityData}
+          tagData={tagData}
+          availableUsers={userData}
+          roleOptions={roleOptionsQuery.data || []}
+          checklistData={checklistData}
+          fieldVisibility={{
+            comments: true,
+            collaborators: true,
+            checklist: true,
+            linkedType: true,
+            linkTaskType: true,
+            weightage: true,
+            fiscalYear: selectedTask.attachment_level?.toLowerCase() !== 'account',
+          }}
+          fieldDisabled={{}}
+          fiscalYear={selectedTask.fiscal_year}
+          taskType='activity'
+          onAddComment={handleAddComment}
+          onUpdateComment={handleUpdateComment}
+          onDeleteComment={handleDeleteComment}
+          onAddCollaborator={handleAddCollaborator}
+        />
+      )}
     </>
   );
 };

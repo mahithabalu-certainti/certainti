@@ -58,6 +58,8 @@ interface TaskDetailModalPropsExtended
     comment: string,
     files: File[]
   ) => Promise<void>;
+  fiscalYear?: string | null;
+  taskType?: string;
 }
 
 const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
@@ -80,6 +82,8 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   caseId,
   fieldVisibility = {},
   fieldDisabled = {},
+  fiscalYear,
+  taskType,
 }) => {
   const [task, setTask] = useState<Task | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
@@ -189,7 +193,8 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     accountId,
     caseId,
     taskId!,
-    !!taskId && isOpen
+    !!taskId && isOpen,
+    taskType
   );
 
   const { data: rawCommentsResponse } = useGetTaskCommentsList(commentsParams, {
@@ -544,7 +549,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
 
 
   if (!isOpen || !taskId) return null;
-  if (isLoadingTaskDetails || (!task && !editedTask)) {
+  if (isLoadingTaskDetails || (rawTask && !task)) {
     return (
       <div
         className='fixed right-0 bottom-0 w-[650px] bg-white text-gray-900 shadow-2xl z-50 overflow-y-auto'
@@ -1570,6 +1575,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
             onAddCustomTag={setAvailableTags}
             onSetEditedTask={setEditedTask}
             mode='view'
+            fiscalYear={fiscalYear}
           />
 
           <TaskChecklistSection
