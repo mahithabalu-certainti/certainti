@@ -197,7 +197,7 @@ const EmailModalTemplate: React.FC<EmailModalProps> = ({
     if (formData.to.length === 0) newErrors.to = 'To email is required';
     if (!formData.subject.trim()) newErrors.subject = 'Subject is required';
     if (!formData.emailBody.trim())
-      newErrors.emailBody = 'Email body is required';
+      newErrors.emailBody = 'Email Content is required';
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -1493,13 +1493,13 @@ const EmailModalTemplate: React.FC<EmailModalProps> = ({
             </Popover>
           </div>
 
-          {/* Email Body */}
+          {/* Email Content */}
           <div className='email-template-editor grid grid-cols-1 px-4 pt-4 relative'>
             <label
               htmlFor='email_body'
               className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px]'
             >
-              Email Body<span className='text-red-500'> *</span>
+              Email Content<span className='text-red-500'> *</span>
             </label>
             <div
               className='email-body-editor w-full relative'
@@ -1510,7 +1510,7 @@ const EmailModalTemplate: React.FC<EmailModalProps> = ({
                 value={formData.emailBody}
                 onChange={handleEmailBodyChange}
                 theme='snow'
-                placeholder='Enter Email Body'
+                placeholder='Enter Email Content'
                 className={`rounded-[2px] ${errors?.emailBody ? 'border border-red-500 bg-[#FEF2F2]' : 'bg-white'}`}
                 modules={{
                   toolbar: [
