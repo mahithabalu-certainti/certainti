@@ -1,6 +1,6 @@
 import { col, fn, Op, QueryTypes, Sequelize, Transaction, where } from "sequelize";
 import { CaseModelService } from "../caseModelsService";
-import { CreateTaskTemplateType, filterType, ICreateChecklistTemplate, ICreateChecklistItemTemplate, TaskType, UpdateTaskTemplateType, MilestoneResponse, ICreateEmailTemplate, WorkflowConnectorType } from "../../utils/types";
+import { CreateTaskTemplateType, filterType, ICreateChecklistTemplate, ICreateChecklistItemTemplate, TaskType, UpdateTaskTemplateType, MilestoneResponse, ICreateEmailTemplate, WorkflowConnectorType, UpdateTaskTemplateActionType } from "../../utils/types";
 import { buildDatetimeFilterCondition, buildDatetimeFilterConditionTemplates, buildNumericFilterCondition, buildStringFilterCondition, errorLog, logMessage } from "../../utils/helpers";
 import { HttpStatus, STATUS_MESSAGE, filtersColumnsForCaseSummary, filterTypesForCaseSummary, filterTypesForAdminCheckList, filtersColumnsForAdminCheckList, rawQueries, filterTypesForEmailTemplate, filtersColumnsForEmailTemplate, relationshipTypes, emailCategorties } from "../../utils/constants";
 import { fetchCaseTemplateData, listAllCheckList, listAllEmailTemplates } from "../../utils/rawQueries";
@@ -628,6 +628,13 @@ class CaseManagementSchemaService {
         task_category_rid : data.task_category_rid
       }
     } else {
+      const checkTaskNameExists = await this.checkTaskExists(data, getTaskType[0][0].rid);
+      if(checkTaskNameExists) {
+        return {
+          statusCode : HttpStatus.BAD_REQUEST,
+          statusMessage : STATUS_MESSAGE.taskNameExistsAlready
+        }
+    }
       sequenceNumber = 0
       dynamicData = {
         created_by : userId,
@@ -636,7 +643,8 @@ class CaseManagementSchemaService {
         task_description : data.task_description,
         checklist_template_rid : data.checklist_template_rid,
         priority_rid : data.priority_rid,
-        task_type_rid : data.task_type_rid
+        task_type_rid : data.task_type_rid,
+        status_rid : data.status_rid
       }
     }
     const result = await TaskTemplate.create(dynamicData);
@@ -680,8 +688,9 @@ class CaseManagementSchemaService {
     return checkTaskNameExists
   }
 
-   async updateTaskTemplate (data : UpdateTaskTemplateType, userId : string) {
-     const { TaskTemplate } = await this.caseModelService.getModels("");
+   async updateTaskTemplate (data : any, userId : string) {
+    if(!this.mainDbSequelize) 
+      this.mainDbSequelize = await initMainDbSequelize()
     const checkTaskExists = await this.checkTaskExistsForUpdate(data.rid);
     if(checkTaskExists) {
       const checkTaskNameExists = await this.checkTaskNameExistsForUpdate(data)
@@ -691,13 +700,43 @@ class CaseManagementSchemaService {
           statusMessage : STATUS_MESSAGE.taskNameExistsAlready
         }        
       }
-      data.modified_by = userId
-      data.modified_datetime = new Date()
-      const [result] = await TaskTemplate.update(data, {
-        where : {
-          rid : data.rid
+      const getTaskType : any = await this.mainDbSequelize.query(rawQueries.getTaskTypeRid(data.task_type_rid));
+      let result : number = 0
+      let dynamicData : any
+      if(getTaskType[0][0].task_type_name === 'Milestone') {
+        dynamicData = {
+          rid : data.rid,
+          modified_by : userId,
+          modified_datetime : new Date(),
+          task_name : data.task_name.toLowerCase() !== checkTaskExists.task_name.toLowerCase() ? data.task_name : checkTaskExists.task_name,
+          effort_in_days : data.effort_in_days !== checkTaskExists.effort_in_days ? data.effort_in_days : checkTaskExists.effort_in_days,
+          effective_start_datetime : data.effective_start_datetime !== checkTaskExists.effective_start_datetime ? data.effective_start_datetime : checkTaskExists.effective_start_datetime,
+          effective_end_datetime : data.effective_end_datetime !== data.effective_end_datetime ? data.effective_end_datetime : checkTaskExists.effective_end_datetime,
+          case_team_member_role_rid : data.case_team_member_role_rid !== checkTaskExists.case_team_member_role_rid ? data.case_team_member_role_rid : checkTaskExists.case_team_member_role_rid,
+          checklist_template_rid : data.checklist_template_rid !== checkTaskExists.checklist_template_rid ? data.checklist_template_rid : checkTaskExists.checklist_template_rid,
+          status_rid : data.status_rid !== checkTaskExists.status_rid ? data.status_rid : checkTaskExists.status_rid,
+          priority_rid : data.priority_rid !== checkTaskExists.priority_rid ? data.priority_rid : checkTaskExists.priority_rid,
+          task_type_rid : data.task_type_rid,
+          milestone_template_rid : data.milestone_template_rid,
+          task_description : data.task_description.toLowerCase() !== checkTaskExists.task_description?.toLowerCase() ? data.task_description : checkTaskExists.task_description,
+          weightage_rid : data.weightage_rid !== checkTaskExists.weightage_rid ? data.weightage_rid : checkTaskExists.weightage_rid,
+          task_category_rid : data.task_category_rid !== checkTaskExists.task_category_rid ? data.task_category_rid : checkTaskExists.task_category_rid
         }
-      })
+        result = await this.updateTaskTemplateMilestoneType(dynamicData)
+      } else {
+        dynamicData = {
+          rid : data.rid,
+          modified_by : userId,
+          modified_datetime : new Date(),
+          task_name : data.task_name.toLowerCase() !== checkTaskExists.task_name.toLowerCase() ? data.task_name : checkTaskExists.task_name,
+          checklist_template_rid : data.checklist_template_rid !== checkTaskExists.checklist_template_rid ? data.checklist_template_rid : checkTaskExists.checklist_template_rid,
+          status_rid : data.status_rid !== checkTaskExists.status_rid ? data.status_rid : checkTaskExists.status_rid,
+          priority_rid : data.priority_rid !== checkTaskExists.priority_rid ? data.priority_rid : checkTaskExists.priority_rid,
+          task_type_rid : data.task_type_rid,
+          task_description : data.task_description.toLowerCase() !== checkTaskExists.task_description?.toLowerCase() ? data.task_description : checkTaskExists.task_description,
+        }
+        result = await this.updateTaskTemplateActionType(dynamicData)
+      }
       if(result === 1) {
         if(Object.keys(data.workflow_connector).length > 0) {
           data.workflow_connector.created_by = userId
@@ -725,6 +764,24 @@ class CaseManagementSchemaService {
         statusMessage : STATUS_MESSAGE.dataNotAvailable
       }
     }
+  }
+  async updateTaskTemplateMilestoneType (data : UpdateTaskTemplateType) {
+    const { TaskTemplate } = await this.caseModelService.getModels("");
+    const [result] = await TaskTemplate.update(data, {
+      where : {
+        rid : data.rid
+      }
+    })
+    return result;
+  }
+  async updateTaskTemplateActionType (data : UpdateTaskTemplateActionType) {
+    const { TaskTemplate } = await this.caseModelService.getModels("");
+    const [result] = await TaskTemplate.update(data, {
+      where : {
+        rid : data.rid
+      }
+    });
+    return result;
   }
   async checkTaskExistsForUpdate (rid : string) {
     const { TaskTemplate } = await this.caseModelService.getModels("");
@@ -1454,16 +1511,25 @@ async getWorkFlowConnector () {
   }
   async listTasksDropdown (data : any) {
     const {TaskTemplate} = await this.caseModelService.getModels("");
+    const statusRid = await this.getActiveStatusRid();
     const result = await TaskTemplate.findAll({
       attributes : ['rid', 'task_name'],
       where : {
         task_name : {
           [Op.iLike] : data.search == "" ? '%%' : `%${data.search}%`
-        } 
+        },
+        status_rid : statusRid
       },
       order : [['task_name', 'ASC']]
     });
     return result;
+  }
+  async getActiveStatusRid () {
+    if(!this.mainDbSequelize)
+      this.mainDbSequelize = await initMainDbSequelize()
+
+    const result : any = await this.mainDbSequelize.query(rawQueries.getActiveStatusId());
+    return result[0][0].rid
   }
   async getCaseDetails (caseRid : string, accountNumber : string) {
     const {Case} = await this.caseModelService.getModels(accountNumber)

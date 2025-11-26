@@ -413,6 +413,9 @@ class ActivitySchemaService {
         modifiedByFilter = filters.modified_by_name;
         delete filters.modified_by_name;
       }
+      if(!this.mainDbSequelize){
+            this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+          } 
 
       const { whereClause } = this.buildRawWhereClauseActivities(
         filters,
@@ -702,6 +705,29 @@ class ActivitySchemaService {
           throw new Error("Failed to fetch attachments");
         }
       }
+       let statusIds: any[] = [
+            ...new Set(allChecklists.map((status: any) => status?.status_rid)),
+        ];
+        let fetchStatusInfo = await this.mainDbSequelize.query(
+                rawQueries.fetchActivityStatus(statusIds)
+              );
+        let statusMap: Map<string, string> = new Map(
+        fetchStatusInfo[0].map((status: any) => [status.rid, status.name])
+      );
+      let assignedUserIds: any[] = [
+            ...new Set(allChecklists.map((user: any) => user?.assigned_to)),
+        ];
+
+      const [assignedUserNames] = await Promise.all([
+        assignedUserIds.length > 0
+          ? this.mainDbSequelize.query(rawQueries.listUsersByIds(assignedUserIds), {
+              replacements: { userIds: assignedUserIds },
+              type: "SELECT",
+            })
+          : Promise.resolve([]),
+      ]);
+      const assignedUserMap = new Map(assignedUserNames.map((u: any) => [u.rid, u.full_name]));
+
       // 🔷 Fetch display names
       if (graphqlData?.document_rid) {
         allChecklists = allChecklists.filter((d: any) => d != null);
@@ -744,7 +770,8 @@ class ActivitySchemaService {
         "modified_by_name",
         "modified_datetime",
         "activity_type",
-        "status_name"
+        "status_name",
+        "assigned_to_name",
       ];
       const finalSortBy = validSortFields.includes(sortBy)
         ? sortBy
@@ -805,10 +832,9 @@ class ActivitySchemaService {
         ),
       ];
 
-      const mainSequelize = await initMainDbSequelize();
       const [users] = await Promise.all([
         userIds.length > 0
-          ? mainSequelize.query(rawQueries.listUsersByIds(userIds), {
+          ? this.mainDbSequelize.query(rawQueries.listUsersByIds(userIds), {
               replacements: { userIds },
               type: "SELECT",
             })
@@ -890,12 +916,16 @@ class ActivitySchemaService {
           const fiscal_year = await getFiscalYearForChecklist(attachment);
           return {
             ...attachment.get({ plain: true }),
+              status_name: statusMap.get(attachment.status_rid) || null,
             created_by_name:
               userMap.get(attachment.created_by) || attachment.created_by,
             modified_by_name:
               userMap.get(attachment.modified_by) || attachment.modified_by,
             attached_to: displayNames[attachment.rid] || attachment.attach_to,
             fiscal_year,
+            assigned_to_name:
+              assignedUserMap.get(attachment.assigned_to) ||
+              attachment.assigned_to,
           };
         })
       );
@@ -920,6 +950,22 @@ class ActivitySchemaService {
         checklists.sort((a, b) => {
           const aType = a.modified_by_name || "";
           const bType = b.modified_by_name || "";
+          const aEmpty = !aType || aType.trim() === "";
+          const bEmpty = !bType || bType.trim() === "";
+
+          if (aEmpty && bEmpty) return 0;
+          if (aEmpty) return finalSortOrder === "ASC" ? 1 : -1;
+          if (bEmpty) return finalSortOrder === "ASC" ? -1 : 1;
+
+          return finalSortOrder === "ASC"
+            ? aType.localeCompare(bType)
+            : bType.localeCompare(aType);
+        });
+      }
+       if (sortBy === "assigned_to_name") {
+        checklists.sort((a, b) => {
+          const aType = a.assigned_to_name || "";
+          const bType = b.assigned_to_name || "";
           const aEmpty = !aType || aType.trim() === "";
           const bEmpty = !bType || bType.trim() === "";
 
@@ -982,6 +1028,7 @@ class ActivitySchemaService {
           }
         });
       }
+
       const totalCount = checklists.length;
       if (apiType === "download") {
         return {
@@ -1057,6 +1104,8 @@ class ActivitySchemaService {
             case 'attached_to':
             case 'attach_to':
             case 'r_number':
+            case 'status_rid':
+            case 'assigned_to':
               switch (operator.toLowerCase()) {
                 case 'equals': condition[field] = { [Op.iLike]: value }; break;
                 case 'not_equals': condition[field] = { [Op.or]: [{ [Op.notILike]: value }, { [Op.is]: null }] }; break;          
@@ -1196,6 +1245,7 @@ class ActivitySchemaService {
           type: QueryTypes.INSERT,
           replacements: {
             event_name: eventName,
+            account_rid: accountRid,
             event_status: eventStatus,
             event_type: "ui handler",
             entity_rid: entity_rid || "",
@@ -1424,7 +1474,7 @@ class ActivitySchemaService {
     );
     let toEmailsArray: string[] = [];
     let ccEmailsArray: string[] = [];
-     if (Array.isArray(activityRequest.to_email)) {
+    if (Array.isArray(activityRequest.to_email)) {
     toEmailsArray = activityRequest.to_email;
   } else if (typeof activityRequest.to_email === 'string') {
     try {
@@ -1727,22 +1777,22 @@ class ActivitySchemaService {
           contentType: "HTML",
           content: activityRequest.body_html,
         },
-        toRecipients: [
-          {
-            emailAddress: {
-              address: activityRequest.to_email,
-            },
-          },
-        ],
+        toRecipients: Array.isArray(activityRequest.to_email)
+  ? activityRequest.to_email.map((email: string) => ({
+      emailAddress: { address: email }
+    }))
+  : [{
+      emailAddress: { address: activityRequest.to_email }
+    }],
         ccRecipients:
-          activityRequest.ccEmails && activityRequest.ccEmails.length > 0
-            ? activityRequest.ccEmails.map((email: any) => ({
+          activityRequest.cc_email && activityRequest.cc_email.length > 0
+            ? activityRequest.cc_email.map((email: any) => ({
                 emailAddress: { address: email },
               }))
             : [],
       },
     };
-
+   
     // Generate attachments array from uploaded files
     let attachments: any[] = Array.isArray(files)
       ? files.map((file) => ({
@@ -1955,10 +2005,8 @@ class ActivitySchemaService {
       activity_type: emailDetails?.activity_type ?? "",
       subject: emailDetails?.subject ?? "",
       body_html: emailDetails?.body_html ?? "",
-      to_email: emailDetails?.to_email ? emailDetails.to_email.split(";") : [],
-      cc_emails: emailDetails?.cc_emails
-        ? emailDetails.cc_emails.split(";")
-        : [],
+      to_email: emailDetails?.to_email ,
+      cc_emails: emailDetails?.cc_emails,
       email_status: emailDetails?.email_status ?? "",
       r_number: emailDetails.r_number ?? "",
       status_rid: emailDetails.status_rid ?? "",
