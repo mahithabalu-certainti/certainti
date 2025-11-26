@@ -727,7 +727,7 @@ class CaseManagementSchemaService {
           task_type_rid : data.task_type_rid,
           task_description : data.task_description.toLowerCase() !== checkTaskExists.task_description?.toLowerCase() ? data.task_description : checkTaskExists.task_description,
         }
-        result = await this.updateTaskTemplateActionType(dynamicData);
+        result = await this.updateTaskTemplateActionType(dynamicData)
       }
       if(result === 1) {
         if(Object.keys(data.workflow_connector).length > 0) {
