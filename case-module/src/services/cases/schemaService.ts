@@ -4730,13 +4730,14 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         if (templateChecklist) {
           const checklistData = {
             attach_to: caseRid,
-            attachment_level: "case",
+            attachment_level: "task",
             checklist_name: templateChecklist.checklist_name,
             checklist_description: templateChecklist.checklist_description,
             checklist_template_rid:task.checklist_template_rid,
             account_rid: accountRid,
             created_datetime: new Date(),
             created_by: task.created_by,
+            task_rid : task.rid
           };
           const newChecklist = await CheckList.create(checklistData, { transaction });
 
