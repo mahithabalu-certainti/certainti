@@ -263,7 +263,7 @@ class CaseManagementSchemaService {
           returning: true
         }
       );
-      console.log("affectedCount", affectedCount);
+     
 
       if (affectedCount === 0) {
         return {

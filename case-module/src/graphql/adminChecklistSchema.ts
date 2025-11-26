@@ -39,6 +39,7 @@ export const adminChecklistTypeDefs = gql`
     rid: String!
     checklist_name: String
     checklist_description: String
+    status_rid: String
   }
 
   type AdminChecklistResponse {
