@@ -72,15 +72,12 @@ const CasesProjects: React.FC<casesProjectProps> = ({
   >({});
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [showFilter, setShowFilter] = useState<boolean>(false);
-  const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const [searchText, setSearchText] = useState<string>('');
   const [count, setCount] = useState<number>(0);
   const [currentCountry, setCurrentCountry] = useState<string>('');
   const [clearSelectedRows, setClearSelectedRows] = useState<boolean>(false);
   const [searchParams] = useSearchParams();
-  const handleSorting = () => {
-    setSortFilterCount(sortFilterCount + 1);
-  };
+
   const [selectedRows, setSelectedRows] = useState<AssignProject[]>([]);
   const [columnAnchorEl, setColumnAnchorEl] =
     useState<HTMLButtonElement | null>(null);
@@ -148,7 +145,10 @@ const CasesProjects: React.FC<casesProjectProps> = ({
   };
 
   const handleBackToAssignedProjects = () => {
-    updateSearchParams((params) => params.delete('assignProject'));
+    updateSearchParams((params) => {
+      params.delete('assignProject');
+      return params;
+    });
   };
 
   const handleColumnVisibility = (
@@ -189,9 +189,8 @@ const CasesProjects: React.FC<casesProjectProps> = ({
       value: 'review_projects',
     },
   ];
-  const initialDetailsTab = 'projects_details';
 
-  const DetailsTabParam = searchParams.get('detailstab') || initialDetailsTab;
+  const DetailsTabParam = searchParams.get('detailstab');
   const handleDetailsTabChange = (value: string) => {
     searchParams.set('detailstab', value);
     navigate({ search: searchParams.toString() }, { replace: true });
@@ -205,10 +204,11 @@ const CasesProjects: React.FC<casesProjectProps> = ({
     { label: 'Resource Cost', value: 'resource_cost' },
   ];
   const handleBackTocasesProjects = () => {
-    searchParams.delete('detailstab');
-    navigate({ search: searchParams.toString() }, { replace: true });
+    const newParams = new URLSearchParams(searchParams);
+    newParams.delete('detailstab');
+    newParams.delete('assignProject'); // Also remove assignProject when going back
+    navigate({ search: newParams.toString() }, { replace: true });
   };
-
   const headerButtons = [
     {
       label: isAssignProject ? 'Assign' : 'Remove',
@@ -379,9 +379,13 @@ const CasesProjects: React.FC<casesProjectProps> = ({
     return map;
   }, [projectViewEditlistFields]);
   const handleProjectDetails = (data: AssignProject) => {
-    searchParams.set('detailstab', 'projects_details');
-    searchParams.set('projectID', data.rid);
-    navigate({ search: searchParams.toString() }, { replace: true });
+    // Create new search params without assignProject
+    const newParams = new URLSearchParams(searchParams);
+    newParams.delete('assignProject'); // Remove assignProject parameter
+    newParams.set('detailstab', 'projects_details');
+    newParams.set('projectID', data.rid);
+
+    navigate({ search: newParams.toString() }, { replace: true });
   };
   const caseColumns = isAssignProject
     ? getAssignedProjectColumns(permissionMap)
@@ -412,7 +416,7 @@ const CasesProjects: React.FC<casesProjectProps> = ({
 
   const RestrictedColumns = [
     {
-      id: 'r_number',
+      id: 'project_code',
       canHide: false,
       canDrag: false,
     },
@@ -448,9 +452,8 @@ const CasesProjects: React.FC<casesProjectProps> = ({
         setAppliedFilters={setAppliedFilters}
         setCurrentPage={setCurrentPage}
         handleFilter={handleFilter}
-        handleSorting={handleSorting}
-        sortFilterCount={sortFilterCount}
-        setSortFilterCount={setSortFilterCount}
+        sortFilterCount={0}
+        setSortFilterCount={() => {}}
         showRefresh={visbleIcons}
         onRefreshClick={onRefreshClick}
         onFilterChange={handleFilterChange}
@@ -468,7 +471,13 @@ const CasesProjects: React.FC<casesProjectProps> = ({
           />
         }
         count={count}
-        showItemCount={true}
+        showItemCount={
+          DetailsTabParam === 'resource_cost'
+            ? true
+            : DetailsTabParam
+              ? false
+              : true
+        }
         buttons={headerButtons}
       />
       {!isAssignProject && !projectDetailTab && (
@@ -482,7 +491,7 @@ const CasesProjects: React.FC<casesProjectProps> = ({
         <SectionHeaderTab
           tabs={detailsTabs}
           onTabChange={handleDetailsTabChange}
-          defaultValue={DetailsTabParam}
+          defaultValue={DetailsTabParam ?? 'projects_details'}
         />
       )}
       {projectDetailTab ? (

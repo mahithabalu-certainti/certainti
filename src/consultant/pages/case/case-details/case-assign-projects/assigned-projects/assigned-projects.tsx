@@ -57,9 +57,6 @@ const AssignedProjects: React.FC<AssignedProjectsProps> = ({
     refreshTrigger
   );
   useEffect(() => {
-    if (data?.count) {
-      setCount(data?.count);
-    }
     setTableParams?.({
       page: currentPage + 1,
       limit: rowsPerPage, // Corrected property name
@@ -80,9 +77,14 @@ const AssignedProjects: React.FC<AssignedProjectsProps> = ({
     currentPage,
     caseId,
     accountID,
-    data?.count,
-    setCount,
   ]);
+  useEffect(() => {
+    if (isLoading) {
+      setCount(0);
+    } else if (data?.count !== undefined) {
+      setCount(data.count);
+    }
+  }, [isLoading, data?.count, setCount]);
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
   };

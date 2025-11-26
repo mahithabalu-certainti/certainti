@@ -21,6 +21,7 @@ export const TaskTemplateFormFieldsData = (
   taskWeightAgeTypesOptions: SelectOption[],
   taskCategoryTypesOptions: SelectOption[],
   taskType: boolean,
+  linkedType: boolean,
   permissionMap: Record<string, { read: boolean; edit: boolean }>
 ): FormType[] => {
   return useMemo(
@@ -190,7 +191,7 @@ export const TaskTemplateFormFieldsData = (
           createMultiSelectField('target_rid', 'Linked Task Type', {
             options: taskTemplate || [],
             placeholder: 'Choose Linked Task Type ',
-            required: false,
+            required: linkedType,
           }),
         ],
       },

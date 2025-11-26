@@ -203,10 +203,4 @@ export const assignedProjectFilterFields = (
       !projectPermissionMap?.['r_number']?.read &&
       !projectPermissionMap?.['r_number']?.edit,
   },
-  {
-    name: 'Sort Options',
-    value: 'sort_options',
-    type: 'system-sort',
-    options: [{ value: 'created_datetime_desc', option: 'Recently Created' }],
-  },
 ];
