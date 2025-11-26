@@ -1771,8 +1771,6 @@ class ProjectIngestionService {
       await existingRecord.update(aggregateValues);
     }
 
-    // Handle project_code change if needed
-
     if (
       existingProjectCode &&
       projectData.project_code &&

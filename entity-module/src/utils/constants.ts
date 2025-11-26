@@ -248,8 +248,8 @@ export const rawQueries = {
   },
   fetchProjectFiscalCaseMapping(schemaName: string, data: any) {
     return `
-                SELECT * FROM ${schemaName}.case_project
-                WHERE project_fiscal_rid: '${data.project_fiscal_rid}'
+                SELECT * FROM ${schemaName}.case_projects
+                WHERE project_fiscal_rid= '${data.project_fiscal_rid}'
                 `;
   },
   updateProject(schemaName: string, project_code: string, data: any) {
@@ -551,6 +551,19 @@ export const rawQueries = {
         rid = '${data.rid}'
         AND
         account_rid = '${data.account_rid}'`;
+  },
+  updateCaseProjectTaskQuery(schemaName: string, getSetData: any, data: any, caseMapping: any) {
+    return `
+    UPDATE 
+        ${schemaName}.case_project_task 
+    SET 
+        ${getSetData.data.join(",")}
+    WHERE
+        project_task_rid = '${data.rid}'
+        AND
+        account_rid = '${data.account_rid}'
+        AND
+        case_rid = '${caseMapping.case_rid}'`;
   },
   updateAttachmentSummary(getSetData: any, data: any) {
     return `

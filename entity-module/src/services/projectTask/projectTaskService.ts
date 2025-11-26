@@ -620,9 +620,9 @@ export class ProjectInjestionTaskService {
           if (!caseData) {
             continue;
           }
-          const orgDbSequlize = await this.projectResourceSchema.getSequelize();
-        
-          const caseStatus = await orgDbSequlize.query(
+          const mainSequelize = await initMainDbSequelize();
+
+          const caseStatus = await mainSequelize.query(
             rawQueries.fetchCaseStatusByRid(caseData.status_rid),
             {
               type: "SELECT",
@@ -1391,10 +1391,9 @@ export class ProjectInjestionTaskService {
             if (!caseData) {
               continue;
             }
-            const orgDbSequlize = await this.projectResourceSchema.getSequelize();
+            const mainSequelize = await initMainDbSequelize();
           
-          
-            const caseStatus = await orgDbSequlize.query(
+            const caseStatus = await mainSequelize.query(
               rawQueries.fetchCaseStatusByRid(caseData.status_rid),
               {
                 type: "SELECT",

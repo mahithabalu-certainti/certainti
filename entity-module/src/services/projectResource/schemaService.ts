@@ -2496,6 +2496,7 @@ export class ProjectResourceSchemaService {
     );
 
     const oldGroupKey = {
+      case_rid: caseMapping.case_rid,
       project_rid: existingProjectResource.project_rid,
       project_fiscal_rid: existingProjectResource.project_fiscal_rid,
       resource_rid: existingProjectResource.resource_rid,
@@ -2504,6 +2505,7 @@ export class ProjectResourceSchemaService {
     };
 
     const newGroupKey = {
+      case_rid: caseMapping.case_rid,
       project_rid: projectId,
       project_fiscal_rid: projectResourceData.project_fiscal_rid,
       resource_rid: resourceData.rid,
@@ -2585,13 +2587,16 @@ export class ProjectResourceSchemaService {
         });
 
         if (oldFiscalRecord) {
-          await CaseProjectResourceFiscal.update(
+
+            await CaseProjectResourceFiscal.update(
             {
               total_hours_pro_res: oldAggregates[0].total_effort,
               total_cost_pro_res: oldAggregates[0].total_cost,
             },
             {
-              where: { rid: oldFiscalRecord.rid },
+              where: { project_resource_fiscal_rid: oldFiscalRecord.project_resource_fiscal_rid,
+                case_rid: caseMapping.case_rid
+               },
               transaction,
             }
           );
@@ -2662,7 +2667,9 @@ export class ProjectResourceSchemaService {
             total_cost_pro_res: newAggregates.total_cost,
           },
           {
-            where: { project_fiscal_rid: newFiscalRecord.project_fiscal_rid },
+            where: { project_resource_fiscal_rid: newFiscalRecord.project_resource_fiscal_rid,
+              case_rid: caseMapping.case_rid
+             },
             transaction,
           }
         );
@@ -5263,6 +5270,57 @@ export class ProjectResourceSchemaService {
     );
 
     const updatedResource = await ProjectResource.findOne({
+      where: { rid: project_resource_rid },
+      transaction,
+    });
+
+    return updatedResource;
+  }
+
+  async updateInlineCaseProjectResourceRecords(
+    accountNumber: string,
+    projectResourceData: IUpdateInlineProjectResource,
+    userId: string,
+    projectData: any,
+    resourceData: Resources,
+    stausId: string,
+    transaction: Transaction,
+    caseMapping: CaseProject
+  ) {
+    const { CaseProjectResource } = await this.getModels(accountNumber);
+
+    const projectResourceCode =
+      projectData.project_code + "-" + projectResourceData.resource_code;
+
+    const {
+      project_resource_rid,
+      account_rid,
+      project_fiscal_rid,
+      ...fieldsToUpdate
+    } = projectResourceData;
+
+    if (fieldsToUpdate.resource_code) {
+      fieldsToUpdate.resource_rid = resourceData.rid;
+    }
+
+    const updateProjectResource = await CaseProjectResource.update(
+      {
+        ...fieldsToUpdate,
+        project_resource_code: projectResourceCode,
+        modified_datetime: new Date(),
+        modified_by: userId,
+        status_rid: stausId
+      },
+      {
+        where: {
+          project_resource_rid: project_resource_rid,
+          case_rid: caseMapping.case_rid
+        },
+        transaction,
+      }
+    );
+
+    const updatedResource = await CaseProjectResource.findOne({
       where: { rid: project_resource_rid },
       transaction,
     });

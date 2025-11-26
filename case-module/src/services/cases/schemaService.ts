@@ -2531,8 +2531,10 @@ return !response;
           case_rid: data.case_rid,
           project_fiscal_rid: p.project_fiscal_rid,
           project_rid: p.project_rid,
-          project_group: p.project_group,
-        },
+          project_group: p.project_group === '' 
+            ? { [Op.or]: ['', null] }  
+            : p.project_group           
+        }
       });
       if (!checkProjectAlreadyMapped) {
         return {

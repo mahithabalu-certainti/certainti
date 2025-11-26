@@ -797,7 +797,7 @@ const listResourceSchema = Joi.object({
 });
 
 const exportListProjectTasksSchema = Joi.object({
-  projectRid: Joi.string().pattern(uuidRegex).required(),
+  caseRid: Joi.string().pattern(uuidRegex).required(),
   accountRid: Joi.string().pattern(uuidRegex).required(),
     search: Joi.string()
         .max(255)

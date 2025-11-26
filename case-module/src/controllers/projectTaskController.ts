@@ -65,7 +65,7 @@ async function getProjectTasks(req: Request, res: Response): Promise<void> {
     }
     const tasks = await projectTaskService.listProjectTasks(
       value.accountRid,
-      value.projectRid,
+      value.caseRid,
       value.filters,
       value.search,
       value.page,
@@ -213,7 +213,7 @@ async function exportAllProjectTasks(
     const tasks = await projectTaskService.listProjectTasksExport(
       userId,
       value.accountRid,
-      value.projectRid,
+      value.caseRid,
       value.filters,
       value.search,
       value.sortBy,

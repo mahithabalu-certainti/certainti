@@ -225,7 +225,7 @@ export class ProjectInjestionTaskService {
     */
     async listProjectTasks(
         accountRid: string,
-        projectRid: string,
+        caseRid: string,
         filters: Record<string, any> = {},
         search?: string,
         page: number = 1,
@@ -256,7 +256,7 @@ export class ProjectInjestionTaskService {
             // ✅ Build where clause with project filter
             const { whereClause } = this.buildRawWhereClause(filters, search);
             whereClause[Op.and] = whereClause[Op.and] || [];
-            whereClause[Op.and].push({ project_fiscal_rid: projectRid });
+            whereClause[Op.and].push({ case_rid: caseRid });
 
             // ✅ Get all tasks without pagination first to properly handle sorting of related data
             const allTasks = await models.CaseProjectTaskModel.findAll({
@@ -334,6 +334,7 @@ export class ProjectInjestionTaskService {
                 },
             };
             } catch (error) {
+            console.log("yoki", error);
             errorLog("projectTaskService - listProjectTasks", (error as Error).message);
             return {
                 statusCode: 500,
@@ -371,7 +372,7 @@ export class ProjectInjestionTaskService {
     async listProjectTasksExport(
         userId: string,
         accountRid: string,
-        projectRid: string,
+        caseRid: string,
         filters: Record<string, any> = {},
         search?: string,
         sortBy: string = "created_datetime",
@@ -400,7 +401,7 @@ export class ProjectInjestionTaskService {
             // ✅ Build where clause with project filter
             const { whereClause } = this.buildRawWhereClause(filters, search);
             whereClause[Op.and] = whereClause[Op.and] || [];
-            whereClause[Op.and].push({ project_fiscal_rid: projectRid });
+            whereClause[Op.and].push({ case_rid: caseRid });
 
             // ✅ Get all tasks without pagination first to properly handle sorting of related data
             const allTasks = await models.CaseProjectTaskModel.findAll({

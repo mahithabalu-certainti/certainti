@@ -271,9 +271,9 @@ export class ProjectTaskSchemaService {
         replacements: { userId },
         type: "SELECT",
       }
-    );
+    ) as any[];
 
-    const [userInfo] = userInfoResult[0] as [{ profile_rid: string }] | [];
+    const [userInfo] = userInfoResult as [{ profile_rid: string }] | [];
 
     if (!userInfo?.profile_rid) {
       return [];

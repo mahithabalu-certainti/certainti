@@ -168,7 +168,7 @@ class ProjectGraphQlServices {
                   continue;
                 }
             
-                const caseStatus = await orgSequelize.query(
+                const caseStatus = await mainSequelize.query(
                   rawQueries.fetchCaseStatusByRid(caseData.status_rid),
                   {
                     type: "SELECT",
