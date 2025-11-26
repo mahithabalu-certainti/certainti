@@ -34,7 +34,6 @@ type CaseTaskParamsType = {
 };
 
 interface CaseTaskProps {
-  reFetchData: number;
   caseId?: string;
   setCount: (value: number) => void;
   filterParams: ConfigAssignGroupsListParms | ConfigAssignUserListParms;
@@ -48,7 +47,6 @@ interface CaseTaskProps {
 }
 
 const CaseTask: React.FC<CaseTaskProps> = ({
-  reFetchData,
   caseId,
   setCount,
   filterParams,
@@ -95,10 +93,7 @@ const CaseTask: React.FC<CaseTaskProps> = ({
     ]
   );
 
-  const { data, isLoading, isError, error } = useGetCaseTaskList(
-    tableParams,
-    reFetchData
-  );
+  const { data, isLoading, isError, error } = useGetCaseTaskList(tableParams);
 
   useEffect(() => {
     if (setCaseTaskParams) {
@@ -179,7 +174,7 @@ const CaseTask: React.FC<CaseTaskProps> = ({
 
   return (
     <>
-      <div className='border-t border-[#CBD6E2]'>
+      <div className='border-t border-[#CBD6E2] [&_.MuiTableContainer-root::-webkit-scrollbar]:hidden [&_.MuiTableContainer-root]:[-ms-overflow-style:none] [&_.MuiTableContainer-root]:[scrollbar-width:none]'>
         <ManageColumnsPopover
           anchorEl={columnAnchorEl}
           open={isModalOpen}

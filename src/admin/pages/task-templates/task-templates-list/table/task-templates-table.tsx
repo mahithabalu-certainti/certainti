@@ -12,22 +12,33 @@ import {
   ManageColumnsPopover,
 } from '../../../../../components/table';
 import { getTaskTemplateColumns } from './columns';
-import { TaskTemplateList, TaskTemplateListParams } from '../../../../types';
+import {
+  TaskTemplateDetails,
+  TaskTemplateList,
+  TaskTemplateListParams,
+} from '../../../../types';
 import { generatePath, useNavigate } from 'react-router-dom';
-import { TASK_TEMPLATES_EDIT } from '../../../../../routes';
+import {
+  TASK_TEMPLATES_DETAILS,
+  TASK_TEMPLATES_EDIT,
+} from '../../../../../routes';
 import {
   useGetTaskAssignRoleTypes,
+  useGetTaskCategoryTypes,
   useGetTaskCheckListTypes,
   useGetTaskMilestoneTypes,
   useGetTaskPriorityTypes,
+  useGetTaskWeightAgeTypes,
   useTaskTemplateList,
 } from '../../../../service/task-template/task-template-service';
 import { TASK_TEMPLATE } from '../../../../../api/graphql/queries/task-template-query';
 import { useMutation } from '@apollo/client';
 import { caseClient } from '../../../../../api/graphql/clients/client';
 import { useToast } from '../../../../../hooks';
-import { useGetStatus } from '../../../../../common-service';
+import { AllPermissions, useGetStatus } from '../../../../../common-service';
 import { SelectOption } from '../../../../../consultant/types';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../../store/store';
 
 interface ITaskTemplateTableProps {
   appliedFilters: Record<string, FilterCondition>;
@@ -106,6 +117,8 @@ export const TaskTemplateTable: React.FC<ITaskTemplateTableProps> = ({
   const taskPrioritytTypes = useGetTaskPriorityTypes();
   const taskCheckListTypes = useGetTaskCheckListTypes();
   const taskAssignRoleTypes = useGetTaskAssignRoleTypes();
+  const taskWeightAgeTypes = useGetTaskWeightAgeTypes();
+  const taskCategoryTypes = useGetTaskCategoryTypes();
 
   const taskMilestoneTypesOptions = useMemo(() => {
     return (
@@ -149,12 +162,54 @@ export const TaskTemplateTable: React.FC<ITaskTemplateTableProps> = ({
     [statusOptions?.data?.data?.status]
   );
 
+  const taskWeightAgeTypesOptions = useMemo(() => {
+    return (
+      taskWeightAgeTypes?.data?.data?.data?.map((item) => ({
+        value: item.rid,
+        label: item.weightage_value,
+      })) || []
+    );
+  }, [taskWeightAgeTypes]);
+  const taskCategoryTypesOptions = useMemo(() => {
+    return (
+      taskCategoryTypes?.data?.data?.map((item) => ({
+        value: item.rid,
+        label: item.category_name,
+      })) || []
+    );
+  }, [taskCategoryTypes]);
+  const { permission } = useSelector((state: RootState) => state.permission);
+  const taskViewEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.TASK_TEMPLATE_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    taskViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [taskViewEditFields]);
+  const handleViewDetails = (row: TaskTemplateDetails) => {
+    const path = generatePath(TASK_TEMPLATES_DETAILS, {
+      templateId: row.rid,
+    });
+    navigate(path);
+  };
   const taskColumns = getTaskTemplateColumns(
     taskMilestoneTypesOptions,
     taskPrioritytTypesTypesOptions,
     taskCheckListTypesTypesOptions,
     taskAssigneRoleTypesTypesOptions,
-    memoizedStatus
+    memoizedStatus,
+    taskCategoryTypesOptions,
+    taskWeightAgeTypesOptions,
+    permissionMap,
+    handleViewDetails
   );
   const [columnOrder, setColumnOrder] = useState(
     taskColumns.map((col) => col.id)

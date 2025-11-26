@@ -155,8 +155,8 @@ const JurisdictionConfig: React.FC<JurisdictionConfigProps> = ({
       <Box
         className='bg-white'
         sx={{
-          minHeight: '180px',
-          maxHeight: '180px',
+          minHeight: '100px',
+          maxHeight: '100px',
           overflowY: 'auto',
           '& .grid': {
             display: 'grid',

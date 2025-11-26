@@ -13,7 +13,7 @@ import {
   useGetAllDocumentInfo,
   useGetDocumentCategoryType,
 } from '../../../../../common-service';
-import { ExportType, SelectOption } from '../../../../types';
+import { CaseDetails, ExportType, SelectOption } from '../../../../types';
 import {
   AttachmentList,
   AttachmentsListExportParams,
@@ -63,12 +63,14 @@ interface AttachmentsProps {
     React.SetStateAction<AttachmentsListExportParams>
   >;
   accountInActive: boolean;
+  caseDetails?: CaseDetails;
 }
 
 export const Attachments: React.FC<AttachmentsProps> = ({
   setExportType,
   setAttachmentParams,
   accountInActive,
+  caseDetails,
 }) => {
   const { errorToast } = useToast();
   const { caseId } = useParams();
@@ -105,6 +107,7 @@ export const Attachments: React.FC<AttachmentsProps> = ({
   const [updateAttachment] = useMutation(ATTACHMENT_UPDATE, {
     client: resourceClient,
   });
+  const caseFiscalYear = caseDetails?.fiscal_year || '';
 
   const { data, isLoading, isError } = useAttachmentList(
     {
@@ -208,7 +211,7 @@ export const Attachments: React.FC<AttachmentsProps> = ({
     {
       label: 'Upload file',
       variant: 'outlined' as const,
-      disabled: accountInActive,
+      disabled: accountInActive || !caseFiscalYear,
       onClick: () => handleOpen(),
       sx: { ...BUTTON_STYLES, width: '90px', minWidth: '90px' },
       hide: !attachmentCreateEnable,
@@ -453,6 +456,7 @@ export const Attachments: React.FC<AttachmentsProps> = ({
           accountId={accountId}
           attachID={caseId}
           onUploadSuccess={onRefreshClick}
+          projectFiscalYear={caseFiscalYear}
         />
       ) : (
         <>

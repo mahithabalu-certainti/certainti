@@ -18,14 +18,24 @@ export const transformTaskTemplatePayload = (
     priority_rid: formData.priority_rid,
     checklist_template_rid: formData.checklist_template_rid,
     case_team_member_role_rid: formData.case_team_member_role_rid,
-    reminder_interval: formData.reminder_interval,
     status_rid: formData.status_rid,
+    task_category_rid: formData.task_category_rid,
+    weightage_rid: formData.weightage_rid,
+    workflow_connector: {
+      source_rid: '',
+      target_rid: formData?.target_rid || '',
+      relationship_connector_rid: formData?.relationship_connector_rid,
+    },
   };
 
   if (isEditView && originalData) {
     return {
       ...basePayload,
       rid: originalData.rid,
+      workflow_connector: {
+        ...basePayload.workflow_connector,
+        source_rid: originalData.workflow_connector?.source_rid || '',
+      },
     };
   }
   return basePayload;

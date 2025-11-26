@@ -118,6 +118,7 @@ const CaseNotes: React.FC<NotesProps> = ({
     limit: 2000,
     sortBy: 'first_name',
     sortOrder: 'ASC',
+    filters: { status: { equals: 'Active' } },
   });
 
   const { data, isLoading, isError } = useNotesList(
