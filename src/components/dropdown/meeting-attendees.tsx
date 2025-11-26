@@ -23,39 +23,48 @@ interface SuggestionState {
   anchorEl: HTMLElement | null;
 }
 
-interface EmailRecipientsProps {
+interface MeetingAttendeesProps {
   label: string;
-  field: 'to' | 'cc' | 'bcc';
+  field: 'attendees' | 'call_participants' | 'caller_id' | 'organizer';
   values: string[];
   inputValue: string;
   onInputChange: (value: string) => void;
-  onAddEmail: (field: 'to' | 'cc' | 'bcc', email: string) => void;
-  onRemoveEmail: (field: 'to' | 'cc' | 'bcc', index: number) => void;
+  onAddAttendee: (
+    field: 'attendees' | 'call_participants' | 'caller_id' | 'organizer',
+    email: string
+  ) => void;
+  onRemoveAttendee: (
+    field: 'attendees' | 'call_participants' | 'caller_id' | 'organizer',
+    index: number
+  ) => void;
   onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   suggestions: SuggestionState;
   setSuggestions: (suggestions: SuggestionState) => void;
   errors?: string;
   userOptions: UserOption[];
   otherFields: {
-    to: string[];
-    cc: string[];
-    bcc?: string[];
+    attendees?: string[];
+    call_participants?: string[];
+    caller_id?: string[];
+    organizer?: string[];
   };
   required?: boolean;
   isValidEmail: (email: string) => boolean;
   hide?: boolean;
   disabled?: boolean;
   className?: string;
+  singleSelection?: boolean;
+  maxSelections?: number;
 }
 
-const EmailRecipients: React.FC<EmailRecipientsProps> = ({
+const MeetingAttendees: React.FC<MeetingAttendeesProps> = ({
   label,
   field,
   values,
   inputValue,
   onInputChange,
-  onAddEmail,
-  onRemoveEmail,
+  onAddAttendee,
+  onRemoveAttendee,
   onKeyDown,
   suggestions,
   setSuggestions,
@@ -67,19 +76,33 @@ const EmailRecipients: React.FC<EmailRecipientsProps> = ({
   hide = false,
   disabled = false,
   className = '',
+  singleSelection = false,
+  maxSelections,
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Check if field is reached maximum selections
+  const isMaxSelectionsReached = maxSelections
+    ? values.length >= maxSelections
+    : false;
+  const isSingleSelectionReached = singleSelection && values.length >= 1;
+
   const handleSuggestionClick = useCallback(
     (email: string) => {
-      onAddEmail(field, email);
+      if (isMaxSelectionsReached || isSingleSelectionReached) return;
+      onAddAttendee(field, email);
     },
-    [field, onAddEmail]
+    [field, onAddAttendee, isMaxSelectionsReached, isSingleSelectionReached]
   );
 
   const filterSuggestions = useCallback(
     (searchText: string): UserOption[] => {
-      if (!searchText.trim()) return [];
+      if (
+        !searchText.trim() ||
+        isMaxSelectionsReached ||
+        isSingleSelectionReached
+      )
+        return [];
 
       const lowerSearch = searchText.toLowerCase();
 
@@ -105,18 +128,26 @@ const EmailRecipients: React.FC<EmailRecipientsProps> = ({
       ) {
         filtered.push({
           rid: 'typed',
-          name: 'Use this email address:', // chip will show email if not matched
+          name: 'Use this email address:',
           email: typedEmail,
         });
       }
 
       return filtered;
     },
-    [userOptions, values, isValidEmail]
+    [
+      userOptions,
+      values,
+      isValidEmail,
+      isMaxSelectionsReached,
+      isSingleSelectionReached,
+    ]
   );
 
   const handleInputChange = useCallback(
     (value: string) => {
+      if (isMaxSelectionsReached || isSingleSelectionReached) return;
+
       onInputChange(value);
 
       // If only '@' → show full list
@@ -133,7 +164,7 @@ const EmailRecipients: React.FC<EmailRecipientsProps> = ({
 
       // If value starts with '@' but has more characters
       if (value.startsWith('@')) {
-        const query = value.substring(1); // Remove '@'
+        const query = value.substring(1);
         const filteredSuggestions = filterSuggestions(query);
         setSuggestions({
           suggestions: filteredSuggestions,
@@ -159,11 +190,19 @@ const EmailRecipients: React.FC<EmailRecipientsProps> = ({
         });
       }
     },
-    [onInputChange, setSuggestions, userOptions, values, filterSuggestions]
+    [
+      onInputChange,
+      setSuggestions,
+      userOptions,
+      values,
+      filterSuggestions,
+      isMaxSelectionsReached,
+      isSingleSelectionReached,
+    ]
   );
 
   const isEmailInOtherField = (
-    currentField: 'to' | 'cc' | 'bcc',
+    currentField: 'attendees' | 'call_participants' | 'caller_id' | 'organizer',
     email: string
   ): boolean => {
     return Object.entries(otherFields).some(
@@ -172,29 +211,36 @@ const EmailRecipients: React.FC<EmailRecipientsProps> = ({
     );
   };
 
-  const getOtherFieldName = (currentField: 'to' | 'cc' | 'bcc'): string => {
+  const getOtherFieldName = (
+    currentField: 'attendees' | 'call_participants' | 'caller_id' | 'organizer'
+  ): string => {
     const fieldMap = {
-      to: 'TO',
-      cc: 'CC',
-      bcc: 'BCC',
+      attendees: 'Attendees',
+      call_participants: 'Participants',
+      caller_id: 'Caller',
+      organizer: 'Organizer',
     };
 
     const otherFieldsList = Object.keys(otherFields).filter(
       (f) => f !== currentField
-    ) as Array<'to' | 'cc' | 'bcc'>;
+    ) as Array<'attendees' | 'call_participants' | 'caller_id' | 'organizer'>;
     return otherFieldsList.map((f) => fieldMap[f]).join('/');
   };
 
-  const getChipColor = (field: 'to' | 'cc' | 'bcc') => {
+  const getChipColor = (
+    field: 'attendees' | 'call_participants' | 'caller_id' | 'organizer'
+  ) => {
     switch (field) {
-      case 'to':
-        return '#B3ECFF';
-      case 'cc':
-        return '#FFE4B3';
-      case 'bcc':
-        return '#D1FFB3';
+      case 'attendees':
+        return '#E6E6FA'; // Lavender
+      case 'call_participants':
+        return '#FFF0F5'; // Lavender blush
+      case 'caller_id':
+        return '#F0FFF0'; // Honeydew
+      case 'organizer':
+        return '#F5F5DC'; // Beige
       default:
-        return '#B3ECFF';
+        return '#E6E6FA';
     }
   };
 
@@ -204,10 +250,33 @@ const EmailRecipients: React.FC<EmailRecipientsProps> = ({
   };
 
   const getFieldColorForEmail = (email: string): string => {
-    if (otherFields.to?.includes(email)) return getChipColor('to');
-    if (otherFields.cc?.includes(email)) return getChipColor('cc');
-    if (otherFields.bcc?.includes(email)) return getChipColor('bcc');
+    if (otherFields.attendees?.includes(email))
+      return getChipColor('attendees');
+    if (otherFields.call_participants?.includes(email))
+      return getChipColor('call_participants');
+    if (otherFields.caller_id?.includes(email))
+      return getChipColor('caller_id');
+    if (otherFields.organizer?.includes(email))
+      return getChipColor('organizer');
     return '#E5E7EB';
+  };
+
+  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (isMaxSelectionsReached || isSingleSelectionReached) {
+      if (e.key !== 'Backspace' && e.key !== 'Delete') {
+        e.preventDefault();
+        return;
+      }
+    }
+    onKeyDown(e);
+  };
+
+  const getPlaceholderText = () => {
+    if (isMaxSelectionsReached)
+      return `Maximum ${maxSelections} selections reached`;
+    if (isSingleSelectionReached) return 'Only one selection allowed';
+    if (values.length === 0) return 'Enter email or name...';
+    return '';
   };
 
   if (hide) {
@@ -222,6 +291,13 @@ const EmailRecipients: React.FC<EmailRecipientsProps> = ({
       >
         {label}
         {required && <span className='text-red-500'> *</span>}
+        {(maxSelections || singleSelection) && (
+          <span className='text-xs text-gray-500 ml-2'>
+            ({values.length}
+            {maxSelections ? `/${maxSelections}` : ''}
+            {singleSelection ? '/1' : ''})
+          </span>
+        )}
       </label>
       <div className='relative'>
         <div
@@ -230,11 +306,18 @@ const EmailRecipients: React.FC<EmailRecipientsProps> = ({
               ${
                 errors
                   ? 'border-red-500 bg-[#FEF2F2]'
-                  : disabled
+                  : disabled ||
+                      isMaxSelectionsReached ||
+                      isSingleSelectionReached
                     ? '!bg-gray-100 cursor-default'
                     : 'border-gray-300 hover:border-gray-300 bg-white'
               } focus-within:!border-2 focus-within:!border-blue-400`}
-          style={{ pointerEvents: disabled ? 'none' : 'all' }}
+          style={{
+            pointerEvents:
+              disabled || isMaxSelectionsReached || isSingleSelectionReached
+                ? 'none'
+                : 'all',
+          }}
         >
           {/* Display selected emails as chips */}
           {values.map((email, index) => (
@@ -242,7 +325,9 @@ const EmailRecipients: React.FC<EmailRecipientsProps> = ({
               key={index}
               label={getChipLabel(email)}
               size='small'
-              onDelete={() => onRemoveEmail(field, index)}
+              onDelete={
+                disabled ? undefined : () => onRemoveAttendee(field, index)
+              }
               sx={{
                 fontSize: '12px',
                 fontWeight: 600,
@@ -251,24 +336,27 @@ const EmailRecipients: React.FC<EmailRecipientsProps> = ({
                 borderRadius: '2px',
                 '& .MuiChip-deleteIcon': {
                   fontSize: '14px',
-                  cursor: 'pointer',
-                  '& :hover': { color: '#FA8072' },
+                  cursor: disabled ? 'default' : 'pointer',
+                  '& :hover': { color: disabled ? 'inherit' : '#FA8072' },
                 },
               }}
             />
           ))}
 
           {/* Input field */}
-          <input
-            ref={inputRef}
-            id={`${field}-input`}
-            type='text'
-            value={inputValue}
-            onChange={(e) => handleInputChange(e.target.value)}
-            onKeyDown={onKeyDown}
-            placeholder={values.length === 0 ? 'Enter email or name...' : ''}
-            className='flex-1 border-none outline-none bg-transparent text-[13px] placeholder-[#7D98B6] focus:outline-none'
-          />
+          {!(isMaxSelectionsReached || isSingleSelectionReached) && (
+            <input
+              ref={inputRef}
+              id={`${field}-input`}
+              type='text'
+              value={inputValue}
+              onChange={(e) => handleInputChange(e.target.value)}
+              onKeyDown={handleInputKeyDown}
+              placeholder={getPlaceholderText()}
+              disabled={disabled}
+              className='flex-1 border-none outline-none bg-transparent text-[13px] placeholder-[#7D98B6] focus:outline-none disabled:bg-gray-100'
+            />
+          )}
         </div>
 
         {/* Popper for suggestions */}
@@ -278,7 +366,9 @@ const EmailRecipients: React.FC<EmailRecipientsProps> = ({
           <Popper
             open={
               Boolean(suggestions.anchorEl) &&
-              suggestions.suggestions.length > 0
+              suggestions.suggestions.length > 0 &&
+              !isMaxSelectionsReached &&
+              !isSingleSelectionReached
             }
             anchorEl={suggestions.anchorEl}
             placement='bottom-start'
@@ -364,9 +454,11 @@ const EmailRecipients: React.FC<EmailRecipientsProps> = ({
         </ClickAwayListener>
       </div>
 
-      {errors && <span className='text-[12px] text-red-400'>{errors}</span>}
+      {errors && (
+        <span className='text-[12px] mt-0.5 text-red-400'>{errors}</span>
+      )}
     </div>
   );
 };
 
-export default EmailRecipients;
+export default MeetingAttendees;

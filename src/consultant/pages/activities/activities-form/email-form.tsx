@@ -20,12 +20,18 @@ import {
 } from './helper';
 import { useGetUserOptions, UserOption } from '../../../services/case-team';
 import { EmailRecipients } from '../../../../components';
+import { formatDateToYYYYMMDDWithTime } from '../../../../common-utils';
 
 // Types
 interface SuggestionState {
   suggestions: UserOption[];
   highlightedIndex: number;
   anchorEl: HTMLElement | null;
+}
+
+enum FlagTypeEnum {
+  draft = 'Draft',
+  send = 'Send',
 }
 
 const icons = Quill.import('ui/icons');
@@ -68,7 +74,7 @@ const EmailForm: React.FC = () => {
   const [toInput, setToInput] = useState<string>('');
   const [ccInput, setCcInput] = useState<string>('');
 
-  const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
+  const isEditView = location.pathname.split('/').includes('edit');
   const sourcePath = searchParams.get('source') || '';
   const accountId = searchParams.get('accountId') || '';
   const entityLevel = searchParams.get('entityLevel') || '';
@@ -123,10 +129,32 @@ const EmailForm: React.FC = () => {
     if (emailData && isEditView) {
       setFormData((prev) => ({
         ...prev,
-        // Add your data mapping here
+        to: emailData.to_email || [],
+        cc: emailData.cc_email || [],
+        subject: emailData.subject || '',
+        emailBody: emailData.body_html || '',
+        created_on: formatDateToYYYYMMDDWithTime(
+          emailData.created_datetime || ''
+        ),
+        created_by: emailData.created_by || '',
+        updated_on: formatDateToYYYYMMDDWithTime(
+          emailData.modified_datetime || ''
+        ),
+        updated_by: emailData.modified_by || '',
+        rid: emailData.activity_rid || '',
+        email_rid: emailData.activity_rid || '',
+        attachments:
+          emailData.attachments?.map((att) => ({
+            id: att.rid,
+            file: null,
+            name: `${att.document_name}${att.format}`,
+            size: `${att.size ? (Number(att.size) / (1024 * 1024)).toFixed(2) : '0.00'} MB`,
+            url: att.browse_file,
+            existing: true,
+          })) || [],
       }));
     }
-  }, [isEditView, emailData]);
+  }, [emailData, isEditView]);
 
   const isValidEmail = useCallback((email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -470,7 +498,7 @@ const EmailForm: React.FC = () => {
     },
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = (flag: FlagTypeEnum) => {
     if (!validateForm()) {
       return;
     }
@@ -487,21 +515,24 @@ const EmailForm: React.FC = () => {
     formDataToSend.append('cc_email', JSON.stringify(formData.cc));
     formDataToSend.append('subject', formData.subject);
     formDataToSend.append('body_html', formData.emailBody);
+    formDataToSend.append('email_status', flag);
 
     // Append attachments
     formData.attachments.forEach((attachment) => {
-      formDataToSend.append('files', attachment.file);
+      if (attachment.file) {
+        formDataToSend.append('files', attachment.file);
+      }
     });
 
     if (isEditView && emailData) {
-      formDataToSend.append('activity_id', emailData?.rid || '');
+      formDataToSend.append('activity_rid', emailData?.activity_rid || '');
       updateEmail.mutate(formDataToSend);
     } else {
       createEmail.mutate(formDataToSend);
     }
   };
 
-  const formLoading = isLoading;
+  const formLoading = isLoading || userListOptions.isLoading;
   const emailBodyDisabled = false;
 
   return (
@@ -531,9 +562,20 @@ const EmailForm: React.FC = () => {
         </div>
         <div className='flex gap-3'>
           <TextButton
+            label='Save As Draft'
+            loading={createEmail.isPending || updateEmail.isPending}
+            onClick={() => handleSubmit(FlagTypeEnum.draft)}
+            sx={{
+              width: '110px',
+              minWidth: '110px',
+              fontSize: '13px',
+              fontWeight: 400,
+            }}
+          />
+          <TextButton
             label='Send'
             loading={createEmail.isPending || updateEmail.isPending}
-            onClick={handleSubmit}
+            onClick={() => handleSubmit(FlagTypeEnum.send)}
             sx={{
               width: '64px',
               minWidth: '64px',
@@ -698,7 +740,6 @@ const EmailForm: React.FC = () => {
             </div>
 
             {/* Attachments */}
-            {/* Attachments */}
             {formData.attachments.length > 0 && (
               <div className='px-10 py-6'>
                 <div className='flex items-center gap-2 mb-2'>
@@ -781,7 +822,7 @@ const EmailForm: React.FC = () => {
                       <label className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px] md:text-left mt-1 block'>
                         {field.label}
                       </label>
-                      <div className='placeholder-[#7D98B6] bg-gray-100 text-black w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs flex items-center cursor-not-allowed select-none text-nowrap overflow-hidden'>
+                      <div className='placeholder-[#7D98B6] bg-gray-100 text-black w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs flex items-center cursor-default text-nowrap overflow-hidden'>
                         <span className='overflow-hidden text-ellipsis whitespace-nowrap'>
                           {field.value || '-'}
                         </span>

@@ -40,7 +40,11 @@ import {
 import { useGetTaskCheckListTypes } from '../../../../admin/service/task-template/task-template-service';
 import { useToast } from '../../../../hooks';
 import { useQueryClient } from '@tanstack/react-query';
-import { AddCollaboratorResponse, useAddCollaborator, AddCollaboratorPayload } from '../../../services/work-breakdown/work-breakdown-service';
+import {
+  AddCollaboratorResponse,
+  useAddCollaborator,
+  AddCollaboratorPayload,
+} from '../../../services/work-breakdown/work-breakdown-service';
 
 interface ActivityListTableProps {
   refreshTrigger: number;
@@ -445,7 +449,12 @@ const ActivityListTable: React.FC<ActivityListTableProps> = ({
                 response?.statusMessage || 'Collaborator added successfully';
               successToast(message);
               queryClient.invalidateQueries({
-                queryKey: ['collaborators', accountId || accountid, caseId, taskId],
+                queryKey: [
+                  'collaborators',
+                  accountId || accountid,
+                  caseId,
+                  taskId,
+                ],
               });
 
               resolve(response);
@@ -614,7 +623,8 @@ const ActivityListTable: React.FC<ActivityListTableProps> = ({
             linkedType: true,
             linkTaskType: true,
             weightage: true,
-            fiscalYear: selectedTask.attachment_level?.toLowerCase() !== 'account',
+            fiscalYear:
+              selectedTask.attachment_level?.toLowerCase() !== 'account',
           }}
           fieldDisabled={{}}
           fiscalYear={selectedTask.fiscal_year}

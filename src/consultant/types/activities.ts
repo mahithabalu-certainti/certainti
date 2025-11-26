@@ -70,28 +70,52 @@ export interface ActivityListApiResponse {
 }
 
 // Email activity details
-export interface EmailActivityDetails {
+export interface EmailAttachment {
   rid: string;
   r_number: string;
-  email_to: string | null;
-  email_status: string | null;
-  email_cc: string | null;
-  subject: string | null;
-  body: string | null;
-  description: string | null;
-  attachment_level: string | null;
-  attach_to: string | null;
+  created_by: string;
   created_datetime: string;
-  created_by_name: string;
+  modified_by: string | null;
   modified_datetime: string | null;
-  modified_by_name: string | null;
+  account_rid: string;
+  activity_rid: string;
+  browse_file: string;
+  size: string;
+  document_name: string;
+  format: string;
+  is_file_deleted: boolean;
+}
+
+export interface EmailActivityDetails {
+  attach_to: string;
+  attachment_level: string;
+  attached_to: string;
+  activity_rid: string;
+  activity_type: string;
+  subject: string;
+  body_html: string;
+  to_email: string[];
+  cc_email: string[];
+  email_status: string;
+  r_number: string;
+  status_rid: string;
+  account_rid: string;
+  fiscal_year: string | null;
+  status_name: string;
+  modified_by: string | null;
+  created_by: string;
+  created_datetime: string;
+  modified_datetime: string | null;
+  attachments: EmailAttachment[];
 }
 
 export interface EmailActivityDetailsResponse {
   statusCode: number;
   statusCodeValue: string;
   statusMessage: string;
-  data: EmailActivityDetails;
+  data: {
+    emailActivityDetails: EmailActivityDetails;
+  };
 }
 
 // Task activity details
@@ -114,4 +138,52 @@ export interface TaskActivityDetailsResponse {
   statusCodeValue: string;
   statusMessage: string;
   data: TaskActivityDetails;
+}
+
+// Meeting activity details
+export interface MeetingAttachment {
+  rid: string;
+  r_number: string;
+  created_by: string;
+  created_datetime: string;
+  modified_by: string | null;
+  modified_datetime: string | null;
+  account_rid: string;
+  activity_rid: string;
+  browse_file: string;
+  size: string;
+  document_name: string;
+  format: string;
+  is_file_deleted: boolean;
+}
+
+export interface MeetingActivityDetails {
+  attach_to: string;
+  attachment_level: string;
+  attached_to: string;
+  activity_rid: string;
+  activity_type: string;
+  subject: string;
+  meeting_url: string;
+  meeting_id: string;
+  meeting_participants: string[];
+  r_number: string;
+  status_rid: string;
+  account_rid: string;
+  fiscal_year: string | null;
+  status_name: string;
+  modified_by: string | null;
+  created_by: string;
+  created_datetime: string;
+  modified_datetime: string | null;
+  attachments: MeetingAttachment[];
+}
+
+export interface MeetingActivityDetailsResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: {
+    activityDetails: MeetingActivityDetails;
+  };
 }

@@ -234,6 +234,8 @@ const Activities: React.FC<ActivitiesProps> = ({
         <ActivityDetails
           accountInActive={accountInActive}
           tabValue={tabParam as ActivityType}
+          entityDetails={entityDetails}
+          entityLevel='account'
         />
       ) : (
         <div className='border border-t-0 border-[#CBD6E2]'>

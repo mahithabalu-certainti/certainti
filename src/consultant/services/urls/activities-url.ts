@@ -46,3 +46,6 @@ export const ActivityListURL = ({
 
 export const createActivityEmailURL = () => `/api/activities/email/create`;
 export const updateActivityEmailURL = () => `/api/activities/email/update`;
+
+export const createActivityMeetingURL = () => `/api/activities/meeting/create`;
+export const updateActivityMeetingURL = () => `/api/activities/meeting/update`;

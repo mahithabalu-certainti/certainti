@@ -234,6 +234,8 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
         <ActivityDetails
           accountInActive={accountInActive}
           tabValue={tabParam as ActivityType}
+          entityDetails={entityDetails}
+          entityLevel='case'
         />
       ) : (
         <div className='border border-t-0 border-[#CBD6E2]'>

@@ -1,5 +1,10 @@
 import React from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import {
+  generatePath,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom';
 import { Typography } from '@mui/material';
 import { useEmailActivityDetails } from '../../../services/activities/activities-service';
 import { formatDateToYYYYMMDDWithTime } from '../../../../common-utils';
@@ -10,29 +15,49 @@ import SectionHeader from '../../../../components/details-section/section-header
 import { DraftEmailIcon } from '../../../../assets';
 import DetailsSectionSkeleton from '../../../../components/skeleton-component/detailsskeleton';
 import { ActivityType } from '../../../types';
+import { ACTIVITY_EDIT } from '../../../../routes';
 
 interface EmailDetailsProps {
   accountInActive: boolean;
   tabValue: ActivityType;
+  entityDetails?: {
+    r_number: string;
+    module: string;
+    source: string;
+  };
+  entityLevel: 'account' | 'case';
 }
 
 const EmailDetails: React.FC<EmailDetailsProps> = ({
   accountInActive,
   tabValue,
+  entityDetails,
 }) => {
+  const { accountid } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const accountId = searchParams.get('accountID') || '';
   const activityId = searchParams.get('activity_id') || '';
 
   const { data, isLoading, error } = useEmailActivityDetails(
-    accountId,
+    accountId || accountid || '',
     activityId,
     true
   );
 
   const handleEdit = () => {
-    console.log('handleEdit');
+    const path = generatePath(ACTIVITY_EDIT, {
+      module: entityDetails?.module || '',
+      activityId: data?.activity_rid || activityId,
+      type: 'email',
+    });
+    const queryParams = new URLSearchParams({
+      accountId: accountid || accountId,
+      entityLevel: data?.attachment_level || entityDetails?.module || '',
+      entityId: data?.attach_to || '',
+      source: entityDetails?.source || '',
+    });
+    navigate(`${path}?${queryParams.toString()}`);
   };
 
   const handleBackClick = () => {
@@ -61,48 +86,76 @@ const EmailDetails: React.FC<EmailDetailsProps> = ({
   const emailInformation: DetailItem[] = [
     {
       label: 'Email ID',
-      value: data?.r_number,
+      value: data?.r_number ?? '',
       key: 'r_number',
     },
     {
       label: 'Email To',
-      value: data?.email_to,
+      value: data?.to_email?.join(', ') ?? '',
       key: 'email_to',
     },
     {
       label: 'Email Status',
-      value: data?.email_status,
+      value: data?.email_status ?? '',
       key: 'email_status',
     },
     {
       label: 'Email CC',
-      value: data?.email_cc,
+      value: data?.cc_email?.join(', ') ?? '',
       key: 'email_cc',
     },
     {
       label: 'Subject',
-      value: data?.subject,
+      value: data?.subject ?? '',
       key: 'subject',
-    },
-    {
-      label: 'Body',
-      value: data?.body,
-      key: 'body',
     },
   ];
 
-  const descriptionBlock: DetailItem[] = [
+  const emailBodyBlock: DetailItem[] = [
     {
-      label: 'Description',
-      value: data?.description,
-      key: 'description',
+      label: 'Body',
+      value: (
+        <div
+          className={`
+  text-[14px] text-[#425A76] font-normal 
+
+  [&_p]:mb-2
+  [&_strong]:font-bold [&_em]:italic
+  [&_u]:underline [&_s]:line-through
+
+  [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mb-3
+  [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mb-2
+  [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:mb-2
+  [&_h4]:text-base [&_h4]:font-medium [&_h4]:mb-1
+  [&_h5]:text-sm [&_h5]:font-medium [&_h5]:mb-1
+  [&_h6]:text-xs [&_h6]:font-medium [&_h6]:mb-1
+
+  [&_ul]:list-disc [&_ul]:pl-5
+  [&_ol]:list-decimal [&_ol]:pl-5
+  [&_li]:mb-1
+
+  [&_a]:text-blue-600 [&_a]:underline
+  [&_blockquote]:border-l-2 [&_blockquote]:pl-3 [&_blockquote]:italic
+
+  [&_code]:font-mono [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:rounded
+  [&_pre]:font-mono [&_pre]:bg-gray-100 [&_pre]:p-2 [&_pre]:rounded [&_pre]:overflow-x-auto
+
+  [&_img]:max-w-full [&_img]:rounded
+  [&_table]:border-collapse [&_table]:border [&_table]:border-gray-300 [&_table]:my-2
+  [&_th]:border [&_th]:border-gray-300 [&_th]:bg-gray-100 [&_th]:px-2 [&_th]:py-1
+  [&_td]:border [&_td]:border-gray-300 [&_td]:px-2 [&_td]:py-1
+`}
+          dangerouslySetInnerHTML={{ __html: data?.body_html || '' }}
+        />
+      ),
+      key: 'body',
     },
   ];
 
   const auditDetails: DetailItem[] = [
     {
       label: 'Record ID',
-      value: data?.rid || activityId,
+      value: data?.activity_rid || activityId,
       key: 'rid',
     },
     {
@@ -112,7 +165,7 @@ const EmailDetails: React.FC<EmailDetailsProps> = ({
     },
     {
       label: 'Created By',
-      value: data?.created_by_name,
+      value: data?.created_by,
       key: 'created_by_name',
     },
     {
@@ -122,14 +175,14 @@ const EmailDetails: React.FC<EmailDetailsProps> = ({
     },
     {
       label: 'Updated By',
-      value: data?.modified_by_name,
+      value: data?.modified_by,
       key: 'modified_by_name',
     },
   ];
 
   // const basicEmailInfo = applyHidePermission(emailInformation, permissionMap);
-  // const descriptionDetails = applyHidePermission(
-  //   descriptionBlock,
+  // const emailBody = applyHidePermission(
+  //   emailBodyBlock,
   //   permissionMap
   // );
   // const auditInfo = applyHidePermission(auditDetails, permissionMap);
@@ -167,7 +220,7 @@ const EmailDetails: React.FC<EmailDetailsProps> = ({
 
           <DetailsSection
             title=''
-            data={descriptionBlock}
+            data={emailBodyBlock}
             fullColumn={true}
             customStyle='pt-[1px]'
           />

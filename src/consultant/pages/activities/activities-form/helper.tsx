@@ -1,3 +1,10 @@
+export type EmailFields = 'to' | 'cc' | 'bcc';
+export type MeetingFields =
+  | 'attendees'
+  | 'call_participants'
+  | 'caller_id'
+  | 'organizer';
+
 export interface ActivityEmailFormData {
   to: string[];
   cc: string[];
@@ -24,9 +31,11 @@ export interface ActivityEmailFormErrors {
 
 export interface Attachment {
   id: string;
-  file: File;
+  file: File | null;
   name: string;
   size: string;
+  url?: string;
+  existing?: boolean;
 }
 
 export const normalizeQuillValue = (value: string): string => {

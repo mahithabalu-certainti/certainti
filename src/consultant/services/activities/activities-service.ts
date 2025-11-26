@@ -12,13 +12,17 @@ import {
   ActivityListURLParams,
   EmailActivityDetails,
   EmailActivityDetailsResponse,
+  MeetingActivityDetails,
+  MeetingActivityDetailsResponse,
   TaskActivityDetails,
   TaskActivityDetailsResponse,
 } from '../../types';
 import {
   ActivityListURL,
   createActivityEmailURL,
+  createActivityMeetingURL,
   updateActivityEmailURL,
+  updateActivityMeetingURL,
 } from '../urls/activities-url';
 
 export const useApiMutationSericve = <T, V = void>(
@@ -76,16 +80,16 @@ export const useActivityList = (
   });
 };
 
-// Email activity details
+// Email activity
 const fetchEmailActivityDetails = async (
   entityId: string,
   activityId: string
 ): Promise<EmailActivityDetails> => {
   const response = await caseServiceApi.get<EmailActivityDetailsResponse>(
-    `/api/activities/email/detail/${entityId}/${activityId}`
+    `/api/activities/email/${activityId}/${entityId}`
   );
 
-  return response.data.data;
+  return response.data.data.emailActivityDetails;
 };
 
 export const useEmailActivityDetails = (
@@ -102,7 +106,21 @@ export const useEmailActivityDetails = (
   });
 };
 
-// Task activity details
+export const useCreateActivityEmail = () => {
+  return useApiMutationSericve<unknown, FormData>(
+    createActivityEmailURL(),
+    'post'
+  );
+};
+
+export const useUpdateActivityEmail = () => {
+  return useApiMutationSericve<unknown, FormData>(
+    updateActivityEmailURL(),
+    'post'
+  );
+};
+
+// Task activity
 const fetchTaskActivityDetails = async (
   entityId: string,
   activityId: string
@@ -128,16 +146,42 @@ export const useTaskActivityDetails = (
   });
 };
 
-export const useCreateActivityEmail = () => {
+// Meeting Activity
+export const fetchMeetingActivityDetails = async (
+  entityId: string,
+  activityId: string
+): Promise<MeetingActivityDetails> => {
+  const response = await caseServiceApi.get<MeetingActivityDetailsResponse>(
+    `/api/activities/meeting/${activityId}/${entityId}`
+  );
+
+  return response.data.data.activityDetails;
+};
+
+export const useMeetingActivityDetails = (
+  entityId?: string,
+  activityId?: string,
+  isEnable?: boolean
+): UseQueryResult<MeetingActivityDetails | undefined, Error> => {
+  return useQuery<MeetingActivityDetails | undefined, Error>({
+    queryKey: ['meeting-activity-details', entityId, activityId, isEnable],
+    queryFn: () => fetchMeetingActivityDetails(entityId!, activityId!),
+    retry: 0,
+    gcTime: 0,
+    enabled: !!activityId && !!entityId && isEnable,
+  });
+};
+
+export const useCreateActivityMeeting = () => {
   return useApiMutationSericve<unknown, FormData>(
-    createActivityEmailURL(),
+    createActivityMeetingURL(),
     'post'
   );
 };
 
-export const useUpdateActivityEmail = () => {
+export const useUpdateActivityMeeting = () => {
   return useApiMutationSericve<unknown, FormData>(
-    updateActivityEmailURL(),
+    updateActivityMeetingURL(),
     'put'
   );
 };
