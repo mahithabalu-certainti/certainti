@@ -66,7 +66,7 @@ export const getReviewdProjectColumns = (
       !permissionMap?.['project_name']?.read &&
       !permissionMap?.['project_name']?.edit,
     sx: (row) => ({
-      background: row?.project_name ? '#fff' : '#f2ceef !important',
+      background: row?.project_name ? '#fff' : '#f4ecec !important',
     }),
   },
   {
@@ -80,7 +80,7 @@ export const getReviewdProjectColumns = (
       !permissionMap?.['project_type_rid']?.read &&
       !permissionMap?.['project_type_rid']?.edit,
     sx: (row) => ({
-      background: row?.project_type_name ? '#fff' : '#f2ceef !important',
+      background: row?.project_type_name ? '#fff' : '#f4ecec !important',
     }),
   },
   {
@@ -94,7 +94,7 @@ export const getReviewdProjectColumns = (
     sortId: 'fiscal_year',
     width: 130,
     sx: (row) => ({
-      background: row?.project_group ? '#fff' : '#f2ceef !important',
+      background: row?.project_group ? '#fff' : '#f4ecec !important',
       textAlign: 'left',
     }),
     render: (row: AssignProject) => {
@@ -113,7 +113,7 @@ export const getReviewdProjectColumns = (
       !permissionMap?.['project_classification_rid']?.edit,
     width: 170,
     sx: (row) => ({
-      background: row?.classification_name ? '#fff' : '#f2ceef !important',
+      background: row?.classification_name ? '#fff' : '#f4ecec !important',
     }),
   },
   {
@@ -127,7 +127,7 @@ export const getReviewdProjectColumns = (
       !permissionMap?.['project_client_group']?.read &&
       !permissionMap?.['project_client_group']?.edit,
     sx: (row) => ({
-      background: row?.project_client_group ? '#fff' : '#f2ceef !important',
+      background: row?.project_client_group ? '#fff' : '#f4ecec !important',
     }),
   },
   {
@@ -141,7 +141,7 @@ export const getReviewdProjectColumns = (
       !permissionMap?.['project_group']?.edit,
     width: 160,
     sx: (row) => ({
-      background: row?.project_group ? '#fff' : '#f2ceef !important',
+      background: row?.project_group ? '#fff' : '#f4ecec !important',
     }),
   },
   {
@@ -155,7 +155,7 @@ export const getReviewdProjectColumns = (
       !permissionMap?.['total_effort']?.read &&
       !permissionMap?.['total_effort']?.edit,
     sx: (row) => ({
-      background: row?.total_effort_prj ? '#fff' : '#f2ceef !important',
+      background: row?.total_effort_prj ? '#fff' : '#f4ecec !important',
       textAlign: 'right',
     }),
 
@@ -184,7 +184,7 @@ export const getReviewdProjectColumns = (
       !permissionMap?.['total_cost']?.read &&
       !permissionMap?.['total_cost']?.edit,
     sx: (row) => ({
-      background: row?.total_cost_prj ? '#fff' : '#f2ceef !important',
+      background: row?.total_cost_prj ? '#fff' : '#f4ecec !important',
       textAlign: 'right',
     }),
     render: (row: AssignProject) =>
@@ -202,7 +202,7 @@ export const getReviewdProjectColumns = (
       !permissionMap?.['total_cost_fte']?.read &&
       !permissionMap?.['total_cost_fte']?.edit,
     sx: (row) => ({
-      background: row?.total_cost_fte_prj ? '#fff' : '#f2ceef !important',
+      background: row?.total_cost_fte_prj ? '#fff' : '#f4ecec !important',
       textAlign: 'right',
     }),
     render: (row: AssignProject) =>
@@ -220,7 +220,7 @@ export const getReviewdProjectColumns = (
       !permissionMap?.['total_cost_subcon_prj']?.read &&
       !permissionMap?.['total_cost_subcon_prj']?.edit,
     sx: (row) => ({
-      background: row?.total_effort_prj ? '#fff' : '#f2ceef !important',
+      background: row?.total_effort_prj ? '#fff' : '#f4ecec !important',
       textAlign: 'right',
     }),
     render: (row: AssignProject) =>
@@ -241,7 +241,7 @@ export const getReviewdProjectColumns = (
     sortId: 'total_cost_nonlabor_prj',
     width: 140,
     sx: (row) => ({
-      background: row?.total_cost_nonlabor_prj ? '#fff' : '#f2ceef !important',
+      background: row?.total_cost_nonlabor_prj ? '#fff' : '#f4ecec !important',
       textAlign: 'right',
     }),
     render: (row: AssignProject) =>
@@ -256,7 +256,7 @@ export const getReviewdProjectColumns = (
     sortId: 'project_point_of_contact',
     width: 200,
     sx: (row) => ({
-      background: row?.project_point_of_contact ? '#fff' : '#f2ceef !important',
+      background: row?.project_point_of_contact ? '#fff' : '#f4ecec !important',
     }),
     hide:
       !permissionMap?.['key_contacts']?.read &&
@@ -287,7 +287,7 @@ export const getReviewdProjectColumns = (
     sx: (row) => ({
       background: row?.project_technical_point_of_contact
         ? '#fff'
-        : '#f2ceef !important',
+        : '#f4ecec !important',
     }),
     hide:
       !permissionMap?.['key_contacts']?.read &&
@@ -321,7 +321,7 @@ export const getReviewdProjectColumns = (
       !permissionMap?.['assessment_status']?.read &&
       !permissionMap?.['assessment_status']?.edit,
     sx: (row) => ({
-      background: row?.assessment_status ? '#fff' : '#f2ceef !important',
+      background: row?.assessment_status ? '#fff' : '#f4ecec !important',
     }),
   },
   {
@@ -331,7 +331,7 @@ export const getReviewdProjectColumns = (
     sortId: 'rd_percent_final',
     width: 180,
     sx: (row) => ({
-      background: row?.rd_percent_final ? '#fff' : '#f2ceef !important',
+      background: row?.rd_percent_final ? '#fff' : '#f4ecec !important',
     }),
     hide:
       !permissionMap?.['qre_final']?.read &&
@@ -346,7 +346,7 @@ export const getReviewdProjectColumns = (
     sortId: 'qre_final',
     width: 130,
     sx: (row) => ({
-      background: row?.qre_final ? '#fff' : '#f2ceef !important',
+      background: row?.qre_final ? '#fff' : '#f4ecec !important',
     }),
     hide: !permissionMap?.['qre']?.read && !permissionMap?.['qre']?.edit,
     render: (row: AssignProject) => (row.qre_final ? row.qre_final : '-'),
@@ -361,7 +361,7 @@ export const getReviewdProjectColumns = (
     hide:
       !permissionMap?.['comments']?.read && !permissionMap?.['comments']?.edit,
     sx: (row) => ({
-      background: row?.comments ? '#fff' : '#f2ceef !important',
+      background: row?.comments ? '#fff' : '#f4ecec !important',
     }),
   },
   {
@@ -371,7 +371,7 @@ export const getReviewdProjectColumns = (
     sortId: 'modified_datetime',
     width: 190,
     sx: (row) => ({
-      background: row?.modified_datetime ? '#fff' : '#f2ceef !important',
+      background: row?.modified_datetime ? '#fff' : '#f4ecec !important',
     }),
     hide:
       !permissionMap?.['modified_datetime']?.read &&

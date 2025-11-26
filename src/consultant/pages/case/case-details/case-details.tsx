@@ -176,6 +176,16 @@ export const CaseDetails = () => {
     }
   }, [location.state, searchParams]);
 
+  useEffect(() => {
+    if (searchParams.get('list') !== 'caseProjects') {
+      const newParams = new URLSearchParams(searchParams);
+      if (!newParams.get('detailstab')) {
+        newParams.delete('assignProject');
+      }
+      navigate({ search: newParams.toString() }, { replace: true });
+    }
+  }, [searchParams.get('list')]);
+
   const { fiscalYear: globalFiscalYear } = useSelector(
     (state: RootState) => state.account
   );
@@ -426,8 +436,8 @@ export const CaseDetails = () => {
         icon: ProjectsSideIcon,
       },
       {
-        name: 'Financial Workings',
-        key: 'financialWorkings',
+        name: 'Financial Highlights',
+        key: 'financialHighlights',
         id: AllMenus.FINANCIAL_HIGHLIGHTS,
         disabled: false,
         icon: FinancialIcon,
@@ -595,10 +605,11 @@ export const CaseDetails = () => {
       />
       <div className='flex flex-1 flex-row w-full border-b border-[#CBD6E2]'>
         <div
-          className={`flex transition-all ease-in-out ${isCollapsed
-            ? 'w-[60px] min-w-[60px] max-w-[60px] duration-300'
-            : 'w-[220px] min-w-[220px] max-w-[220px] duration-500'
-            }`}
+          className={`flex transition-all ease-in-out ${
+            isCollapsed
+              ? 'w-[60px] min-w-[60px] max-w-[60px] duration-300'
+              : 'w-[220px] min-w-[220px] max-w-[220px] duration-500'
+          }`}
         >
           <SideMenuPanel
             menuItems={sideMenuItems}
