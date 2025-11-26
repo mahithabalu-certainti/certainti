@@ -1196,6 +1196,7 @@ class ActivitySchemaService {
           type: QueryTypes.INSERT,
           replacements: {
             event_name: eventName,
+            account_rid: accountRid,
             event_status: eventStatus,
             event_type: "ui handler",
             entity_rid: entity_rid || "",
@@ -1424,7 +1425,7 @@ class ActivitySchemaService {
     );
     let toEmailsArray: string[] = [];
     let ccEmailsArray: string[] = [];
-     if (Array.isArray(activityRequest.to_email)) {
+    if (Array.isArray(activityRequest.to_email)) {
     toEmailsArray = activityRequest.to_email;
   } else if (typeof activityRequest.to_email === 'string') {
     try {
@@ -1727,22 +1728,22 @@ class ActivitySchemaService {
           contentType: "HTML",
           content: activityRequest.body_html,
         },
-        toRecipients: [
-          {
-            emailAddress: {
-              address: activityRequest.to_email,
-            },
-          },
-        ],
+        toRecipients: Array.isArray(activityRequest.to_email)
+  ? activityRequest.to_email.map((email: string) => ({
+      emailAddress: { address: email }
+    }))
+  : [{
+      emailAddress: { address: activityRequest.to_email }
+    }],
         ccRecipients:
-          activityRequest.ccEmails && activityRequest.ccEmails.length > 0
-            ? activityRequest.ccEmails.map((email: any) => ({
+          activityRequest.cc_email && activityRequest.cc_email.length > 0
+            ? activityRequest.cc_email.map((email: any) => ({
                 emailAddress: { address: email },
               }))
             : [],
       },
     };
-
+   
     // Generate attachments array from uploaded files
     let attachments: any[] = Array.isArray(files)
       ? files.map((file) => ({
