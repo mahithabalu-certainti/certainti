@@ -17,7 +17,7 @@ export const transformTaskTemplatePayload = (
     : [];
 
   const basePayload: TaskTemplateFormPayload = {
-    task_name: formData.task_name,
+    task_name: formData.task_name?.trim() || '',
     task_description: formData.task_description,
     task_type_rid: formData.task_type_rid,
     effort_in_days: formData.effort_in_days,

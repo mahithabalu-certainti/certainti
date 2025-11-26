@@ -24,7 +24,7 @@ export const getReviewdProjectColumns = (
     label: 'Project Code',
     sortable: true,
     sortId: 'project_code',
-    width: 260,
+    width: 180,
     sticky: true,
     hide:
       !permissionMap?.['project_code']?.read &&
@@ -54,66 +54,6 @@ export const getReviewdProjectColumns = (
         </span>
       );
     },
-  },
-  {
-    id: 'project_basic_info',
-    label: 'Project Basic Info',
-    sortable: true,
-    sortId: 'project_basic_info',
-    width: 160,
-    hide:
-      !permissionMap?.['project_name']?.read &&
-      !permissionMap?.['project_name']?.edit,
-  },
-  {
-    id: 'project_oint_of_contact',
-    label: 'Project Point of Contact',
-    sortable: true,
-    sortId: 'project_oint_of_ontact',
-    width: 210,
-    hide:
-      !permissionMap?.['project_name']?.read &&
-      !permissionMap?.['project_name']?.edit,
-  },
-  {
-    id: ' Project_financial_details',
-    label: ' Project Financial Details',
-    sortable: true,
-    sortId: 'Project_financial_details',
-    width: 210,
-    hide:
-      !permissionMap?.['project_name']?.read &&
-      !permissionMap?.['project_name']?.edit,
-  },
-  {
-    id: 'Project_resource_information',
-    label: 'Project Resource Information',
-    sortable: true,
-    sortId: 'Project_resource_information',
-    width: 220,
-    hide:
-      !permissionMap?.['project_name']?.read &&
-      !permissionMap?.['project_name']?.edit,
-  },
-  {
-    id: 'Project_task_information',
-    label: 'Project Task Information',
-    sortable: true,
-    sortId: 'Project_task_information',
-    width: 210,
-    hide:
-      !permissionMap?.['project_name']?.read &&
-      !permissionMap?.['project_name']?.edit,
-  },
-  {
-    id: 'Project_technical_details',
-    label: 'Project Technical Details',
-    sortable: true,
-    sortId: 'Project Technical Details',
-    width: 240,
-    hide:
-      !permissionMap?.['project_name']?.read &&
-      !permissionMap?.['project_name']?.edit,
   },
   {
     id: 'project_name',

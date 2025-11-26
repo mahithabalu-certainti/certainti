@@ -16,6 +16,7 @@ interface selectProjectProps {
   setCount: React.Dispatch<React.SetStateAction<number>>;
   clearSelectedRows: boolean;
   fiscalYear: number;
+  appliedFilters: Record<string, string | number | boolean | string[]>;
 }
 
 const SelectProjects: React.FC<selectProjectProps> = ({
@@ -28,6 +29,7 @@ const SelectProjects: React.FC<selectProjectProps> = ({
   setCount,
   clearSelectedRows,
   fiscalYear,
+  appliedFilters,
 }) => {
   const { caseId } = useParams();
   const [searchParams] = useSearchParams();
@@ -42,7 +44,7 @@ const SelectProjects: React.FC<selectProjectProps> = ({
       sort: sortField,
       sort_by: sortBy,
       search: searchText,
-      filter: {},
+      filter: appliedFilters,
       case_rid: caseId,
       account_rid: accountID,
       fiscal_year: fiscalYear,
