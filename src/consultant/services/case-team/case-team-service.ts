@@ -131,7 +131,7 @@ export interface CollaboratorListPayload {
 export interface TagListPayload {
   task_rid?: string;
   account_rid: string;
-  case_rid: string;
+  case_rid?: string;
   action?: 'create' | 'update';
 }
 
@@ -228,11 +228,16 @@ const fetchRoleOptions = async (): Promise<RoleOption[]> => {
   }
 };
 
-const fetchUserOptions = async (accountId: string): Promise<UserOption[]> => {
+const fetchUserOptions = async (
+  accountId: string,
+  scope?: string
+): Promise<UserOption[]> => {
   try {
-    const response = await caseServiceApi.get<UserOptionsResponse>(
-      `/api/cases/caseTeam/users/${accountId}`
-    );
+    let url = `/api/cases/caseTeam/users/${accountId}`;
+    if (scope) {
+      url += `?user_access_scope=${scope}`;
+    }
+    const response = await caseServiceApi.get<UserOptionsResponse>(url);
 
     if (response.data?.data?.users) {
       const uniqueUsers = Array.from(
@@ -327,11 +332,12 @@ export const useGetRoleOptions = (
 
 export const useGetUserOptions = (
   accountId?: string,
-  enabled: boolean = true
+  enabled: boolean = true,
+  scope?: string
 ): UseQueryResult<UserOption[] | undefined, Error> => {
   return useQuery<UserOption[] | undefined, Error>({
-    queryKey: ['case-team-user-options', accountId],
-    queryFn: () => fetchUserOptions(accountId!),
+    queryKey: ['case-team-user-options', accountId, scope],
+    queryFn: () => fetchUserOptions(accountId!, scope),
     retry: 0,
     gcTime: 0,
     enabled: enabled && !!accountId,
@@ -354,7 +360,7 @@ export const useGetTagOptions = (
     retry: 0,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
-    enabled: enabled && !!payload?.account_rid && !!payload?.case_rid,
+    enabled: enabled && !!payload?.account_rid,
   });
 };
 

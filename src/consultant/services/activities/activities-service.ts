@@ -141,3 +141,32 @@ export const useUpdateActivityEmail = () => {
     'put'
   );
 };
+
+// Create Activity Task
+export interface CreateActivityTaskPayload {
+  account_rid: string;
+  attach_to: string;
+  attachment_level: 'account' | 'project' | 'case';
+  task_name: string;
+  description?: string;
+  fiscal_year?: number;
+  effective_start_datetime?: string;
+  effective_end_datetime?: string;
+  assigned_to?: string;
+  status_rid?: string;
+  priority_rid?: string;
+  checklist_rid?: string;
+  tags?: string | Array<{ tag_rid: string; is_new_tag: boolean }>;
+}
+
+export const useCreateActivityTask = () => {
+  return useMutation<unknown, Error, CreateActivityTaskPayload>({
+    mutationFn: async (payload: CreateActivityTaskPayload) => {
+      const response = await caseServiceApi.post(
+        '/api/activities/task/create',
+        payload
+      );
+      return response.data;
+    },
+  });
+};
