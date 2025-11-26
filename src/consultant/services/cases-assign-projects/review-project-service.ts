@@ -205,8 +205,8 @@ export const sendProjectsForReview = async (
     params
   );
   return {
-    success: data.data.success,
-    message: data.data.message,
+    success: data.statusCode === 200,
+    message: data.statusMessage,
   };
 };
 

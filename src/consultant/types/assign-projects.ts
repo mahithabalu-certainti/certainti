@@ -6,6 +6,7 @@ export type AssignProject = {
   project_code: string;
   project_name: string | null;
   project_type_name: string;
+  classification_name: string;
   fiscal_year: number;
   project_classification_rid: string | null;
   project_classification_name: string | null;

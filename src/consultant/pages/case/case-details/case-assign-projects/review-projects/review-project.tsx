@@ -126,12 +126,12 @@ const ReviewProjectsList: React.FC<ReviewProjectProps> = ({
     const selectedData = data?.reviewProject?.filter((row) =>
       selectedIds.includes(row.rid)
     );
-    setSelectedRows(selectedData || []);
+    setSelectedRows((selectedData as AssignProject[]) || []);
   };
   return (
     <div>
       <ListTable
-        data={data?.reviewProject || []}
+        data={(data?.reviewProject as AssignProject[]) || []}
         columns={visibleColumns}
         getRowId={getRowId}
         hoverHighlight={false}

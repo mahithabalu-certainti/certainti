@@ -240,7 +240,7 @@ export const getAssignedProjectColumns = (
     label: 'QRE Percent Final',
     sortable: true,
     sortId: 'rd_percent_final',
-    width: 130,
+    width: 180,
     sx: {
       textAlign: 'right',
     },

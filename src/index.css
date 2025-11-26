@@ -144,6 +144,21 @@
   overflow-y: auto;
 }
 
+.review-email-template-editor .ql-container {
+  min-height: 150px !important;
+}
+
+.review-email-template-editor .ql-tooltip {
+  left: 0 !important;
+  right: auto !important;
+  transform: none !important;
+  text-align: left !important;
+}
+
+.review-email-body-editor .ql-editor {
+  max-height: 150px;
+  overflow-y: auto;
+}
 /* markdown */
 .markdown p {
   line-height: 25px;

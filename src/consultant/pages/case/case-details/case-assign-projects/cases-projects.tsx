@@ -163,6 +163,18 @@ const CasesProjects: React.FC<casesProjectProps> = ({
       return params;
     });
   };
+  useEffect(() => {
+    if (searchParams.get('list') === 'caseProjects') {
+      const newParams = new URLSearchParams(searchParams);
+      if (!newParams.get('detailstab')) {
+        newParams.delete('assignProject');
+        if (!newParams.get('tab')) {
+          newParams.set('tab', initialTab);
+        }
+      }
+      navigate({ search: newParams.toString() }, { replace: true });
+    }
+  }, [searchParams.get('list')]);
 
   const handleColumnVisibility = (
     event: React.MouseEvent<HTMLButtonElement>
@@ -190,7 +202,6 @@ const CasesProjects: React.FC<casesProjectProps> = ({
   }, []);
 
   const tabParam = searchParams.get('tab') || initialTab;
-  console.log('tabParam', tabParam);
   const handleTabChange = (value: string) => {
     searchParams.set('tab', value);
     navigate({ search: searchParams.toString() }, { replace: true });
@@ -619,6 +630,7 @@ const CasesProjects: React.FC<casesProjectProps> = ({
             isOpen={emailModalOpen}
             onClose={() => setEmailModalOpen(false)}
             selectedRows={reviewSelectedRows}
+            setSelectedRows={setReviewSelectedRows}
             appliedFilters={appliedFilters}
             sortBy={sortParams.sortField}
             sortOrder={sortParams.sortBy}

@@ -277,7 +277,7 @@ export const getTaskTemplateColumns = (
     field: {
       type: 'text',
       required: false,
-      placeholder: 'Enter Task Task Description',
+      placeholder: 'Enter Task Description',
       validation: [
         {
           regex: REGEX_PATTERNS.DESCRIPTION,
