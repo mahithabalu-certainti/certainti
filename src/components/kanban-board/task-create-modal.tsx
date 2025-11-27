@@ -158,12 +158,12 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
   const enrichedUsers = useMemo(() => {
     return collaboratorData && collaboratorData.length > 0
       ? collaboratorData.map((collab) => ({
-        id: collab.rid,
-        name: collab.name,
-        email: collab.email,
-        initials: generateInitials(collab.name),
-        color: generateColorFromName(collab.name),
-      }))
+          id: collab.rid,
+          name: collab.name,
+          email: collab.email,
+          initials: generateInitials(collab.name),
+          color: generateColorFromName(collab.name),
+        }))
       : availableUsers.map(enrichUserOption);
   }, [collaboratorData, availableUsers]);
 
@@ -172,7 +172,10 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
   const taskTemplatesQuery = useGetTaskTemplate({ search: '' });
 
   const connectorTypesData = useMemo(() => {
-    if (taskConnectorTypesQuery.data?.data && Array.isArray(taskConnectorTypesQuery.data.data)) {
+    if (
+      taskConnectorTypesQuery.data?.data &&
+      Array.isArray(taskConnectorTypesQuery.data.data)
+    ) {
       return taskConnectorTypesQuery.data.data.map(
         (connector: { rid: string; relationship_type: string }) => ({
           id: connector.rid,
@@ -184,7 +187,10 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
   }, [taskConnectorTypesQuery.data]);
 
   const taskTemplatesData = useMemo(() => {
-    if (taskTemplatesQuery.data?.data && Array.isArray(taskTemplatesQuery.data.data)) {
+    if (
+      taskTemplatesQuery.data?.data &&
+      Array.isArray(taskTemplatesQuery.data.data)
+    ) {
       return taskTemplatesQuery.data.data.map(
         (template: { rid: string; task_name: string }) => ({
           id: template.rid,
@@ -201,8 +207,18 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
 
   const weightageData = useMemo(() => {
     // Handle nested data.data structure
-    const response = weightageListQuery.data as any;
-    const dataArray = response?.data?.data || response?.data;
+    type WeightageResponse = {
+      data?:
+        | {
+            data?: Array<{ rid: string; weightage_value: number }>;
+          }
+        | Array<{ rid: string; weightage_value: number }>;
+    };
+
+    const response = weightageListQuery.data as WeightageResponse;
+    const dataArray = Array.isArray(response?.data)
+      ? response.data
+      : response?.data?.data;
     if (dataArray && Array.isArray(dataArray)) {
       return dataArray.map(
         (item: { rid: string; weightage_value: number }) => ({
@@ -214,8 +230,12 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
     return [];
   }, [weightageListQuery.data]);
 
+  type CategoryResponse = {
+    data?: Array<{ rid: string; category_name: string }>;
+  };
+
   const categoryData = useMemo(() => {
-    const response = categoryListQuery.data as any;
+    const response = categoryListQuery.data as CategoryResponse;
     if (response?.data && Array.isArray(response.data)) {
       return response.data.map(
         (item: { rid: string; category_name: string }) => ({
@@ -265,24 +285,19 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
 
   const handleSubmit = async () => {
     const newErrors: Record<string, string> = {};
-    if (!taskTitle.trim()) newErrors.taskTitle = 'Task Name is required';
+    if (!taskTitle.trim()) newErrors.taskTitle = 'This field is required';
     if (!selectedPriority || !selectedPriorityRid)
-      newErrors.priority = 'Priority is required';
+      newErrors.priority = 'This field is required';
     if (!startDate && !fieldVisibility.startDate)
-      newErrors.startDate = 'Start Date is required';
+      newErrors.startDate = 'This field is required';
     if (!endDate && !fieldVisibility.endDate)
-      newErrors.endDate = 'Due Date is required';
-    if (
-      (!selectedChecklist || !selectedChecklistRid) &&
-      !fieldVisibility.checklist
-    )
-      newErrors.checklistTemplate = 'Checklist Template is required';
+      newErrors.endDate = 'This field is required';
 
     if (linkedType && (!linkTaskTypes || linkTaskTypes.length === 0)) {
-      newErrors.linkTaskType = 'Link Task Type is required';
+      newErrors.linkTaskType = 'This field is required';
     }
     if (!linkedType && linkTaskTypes && linkTaskTypes.length > 0) {
-      newErrors.linkedType = 'Linked Type is required';
+      newErrors.linkedType = 'This field is required';
     }
 
     if (taskTitle.length > 2000) {
@@ -416,8 +431,6 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
             </div>
           </div>
 
-
-
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <div className='grid grid-cols-2 gap-4'>
               {!fieldVisibility.startDate && (
@@ -465,11 +478,12 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                                   ? '1px solid #EF4444'
                                   : '1px solid #CBD6E2',
                               },
-                              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                border: errors.startDate
-                                  ? '2px solid #EF4444'
-                                  : '2px solid #60A5FA',
-                              },
+                              '&.Mui-focused .MuiOutlinedInput-notchedOutline':
+                                {
+                                  border: errors.startDate
+                                    ? '2px solid #EF4444'
+                                    : '2px solid #60A5FA',
+                                },
                             },
                             '& .MuiOutlinedInput-notchedOutline': {
                               border: errors.startDate
@@ -535,11 +549,12 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                                   ? '1px solid #EF4444'
                                   : '1px solid #CBD6E2',
                               },
-                              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                border: errors.endDate
-                                  ? '2px solid #EF4444'
-                                  : '2px solid #60A5FA',
-                              },
+                              '&.Mui-focused .MuiOutlinedInput-notchedOutline':
+                                {
+                                  border: errors.endDate
+                                    ? '2px solid #EF4444'
+                                    : '2px solid #60A5FA',
+                                },
                             },
                             '& .MuiOutlinedInput-notchedOutline': {
                               border: errors.endDate
@@ -676,8 +691,8 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
               setCategoryRid(categoryItem?.id || '');
             }}
             onTagsChange={setSelectedTags}
-            onAddCustomTag={() => { }}
-            onSetEditedTask={() => { }}
+            onAddCustomTag={() => {}}
+            onSetEditedTask={() => {}}
             mode='create'
             selectedStatus={selectedStatus}
             onStatusChangeCreate={(statusName, statusId) => {
@@ -724,8 +739,7 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
               px: 1,
               py: 1,
               '&:hover': {
-                background:
-                  'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
+                background: 'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
               },
             }}
           />

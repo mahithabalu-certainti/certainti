@@ -33,6 +33,7 @@ export interface CaseTaskType {
   progress?: number;
   [key: string]: unknown;
   total_result: string;
+  assigned_to_name?: string;
 }
 
 export interface CaseTaskApiResponse {

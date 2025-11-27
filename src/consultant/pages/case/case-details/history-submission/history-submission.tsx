@@ -199,7 +199,7 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
       required: false,
     },
   ];
-  console.log('Historical Fields:', data);
+
   useEffect(() => {
     // Process API data when it's available
     if (data && !formLoading) {
@@ -241,6 +241,7 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
             total_qre: '',
             total_rd_credits: '',
             annual_gross_receipts: '',
+            currency_symbol: '$',
           },
         ];
         setFormData({
@@ -270,6 +271,7 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
           total_qre: '',
           total_rd_credits: '',
           annual_gross_receipts: '',
+          currency_symbol: '$',
         },
       ];
       setFormData({
@@ -331,6 +333,7 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
         total_qre: '',
         total_rd_credits: '',
         annual_gross_receipts: '',
+        currency_symbol: '$',
       };
 
       return {
@@ -890,6 +893,13 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
                                     },
                                 },
                               }}
+                              InputProps={{
+                                startAdornment: (
+                                  <span className='text-[#425A76] text-[13px] pl-1.5'>
+                                    {submission.currency_symbol || '$'}
+                                  </span>
+                                ),
+                              }}
                             />
                           </div>
                           {errors.historicalSubmissions?.[index]
@@ -971,6 +981,13 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
                                     },
                                 },
                               }}
+                              InputProps={{
+                                startAdornment: (
+                                  <span className='text-[#425A76] text-[13px] pl-1.5'>
+                                    {submission.currency_symbol || '$'}
+                                  </span>
+                                ),
+                              }}
                             />
                           </div>
                           {errors.historicalSubmissions?.[index]?.total_qre && (
@@ -1049,6 +1066,13 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
                                       border: 'none',
                                     },
                                 },
+                              }}
+                              InputProps={{
+                                startAdornment: (
+                                  <span className='text-[#425A76] text-[13px] pl-1.5'>
+                                    {submission.currency_symbol || '$'}
+                                  </span>
+                                ),
                               }}
                             />
                           </div>
@@ -1130,6 +1154,13 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
                                       border: 'none',
                                     },
                                 },
+                              }}
+                              InputProps={{
+                                startAdornment: (
+                                  <span className='text-[#425A76] text-[13px] pl-1.5'>
+                                    {submission.currency_symbol || '$'}
+                                  </span>
+                                ),
                               }}
                             />
                           </div>

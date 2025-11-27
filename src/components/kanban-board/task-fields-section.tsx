@@ -122,7 +122,7 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
     <div className='border border-gray-200 rounded-lg p-4'>
       <div className='grid grid-cols-2 gap-4'>
         {/* Status Field */}
-        {!fieldVisibility.status && statusData && statusData.length > 0 && (
+        {!fieldVisibility.status && (
           <div className='flex flex-col gap-2'>
             <label className='text-sm font-medium text-gray-700'>
               Status <span className='text-red-500'> *</span>
@@ -196,7 +196,7 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
         )}
 
         {/* Priority Field */}
-        {!fieldVisibility.priority && priorityData && priorityData.length > 0 && (
+        {!fieldVisibility.priority && (
           <div className='flex flex-col gap-2'>
             <label className='text-sm font-medium text-gray-700'>
               Priority <span className='text-red-500'> *</span>
@@ -258,9 +258,7 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
 
         {/* Assignee Field (Create Mode Only) */}
         {mode === 'create' &&
-          !fieldVisibility.assignee &&
-          availableUsers &&
-          availableUsers.length > 0 && (
+          !fieldVisibility.assignee && (
             <div className='flex flex-col gap-2'>
               <label className='text-sm font-medium text-gray-700'>Assignee</label>
               <StyledSelect
@@ -394,66 +392,64 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
           )}
 
         {/* Checklist Template Field */}
-        {!fieldVisibility.checklistTemplate &&
-          checklistData &&
-          checklistData.length > 0 && (
-            <div className='flex flex-col gap-2'>
-              <label className='text-sm font-medium text-gray-700'>
-                Checklist <span className='text-red-500'> *</span>
-              </label>
-              <StyledSelect
-                name='checklistTemplate'
-                value={selectedChecklist}
-                onChange={(e) => onChecklistChange(e.target.value as string)}
-                disabled={fieldDisabled.checklistTemplate}
-                width='100%'
-                error={errors.checklistTemplate}
-                renderValue={(selected) => {
-                  const value = Array.isArray(selected)
-                    ? selected.join(', ')
-                    : (selected as string);
-                  if (!value) {
-                    return (
-                      <span style={{ color: '#7D98B6', fontSize: '13px' }}>
-                        Choose Checklist
-                      </span>
-                    );
-                  }
+        {!fieldVisibility.checklistTemplate && (
+          <div className='flex flex-col gap-2'>
+            <label className='text-sm font-medium text-gray-700'>
+              Checklist
+            </label>
+            <StyledSelect
+              name='checklistTemplate'
+              value={selectedChecklist}
+              onChange={(e) => onChecklistChange(e.target.value as string)}
+              disabled={fieldDisabled.checklistTemplate}
+              width='100%'
+              error={errors.checklistTemplate}
+              renderValue={(selected) => {
+                const value = Array.isArray(selected)
+                  ? selected.join(', ')
+                  : (selected as string);
+                if (!value) {
                   return (
-                    <span
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}
-                      title={typeof value === 'string' ? value : String(value)}
-                    >
-                      {typeof value === 'string' ? value : String(value)}
+                    <span style={{ color: '#7D98B6', fontSize: '13px' }}>
+                      Choose Checklist
                     </span>
                   );
-                }}
-              >
-                <MenuItem value='' sx={{ color: '#425A76', fontSize: '13px', fontWeight: '500' }}>
-                  Choose Checklist
-                </MenuItem>
-                {checklistData.map((template: { id: string; name: string }) => (
-                  <MenuItem
-                    sx={{ color: '#425A76', fontSize: '13px', fontWeight: '500' }}
-                    key={template.id}
-                    value={template.name}
-                    title={template.name}
+                }
+                return (
+                  <span
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                    title={typeof value === 'string' ? value : String(value)}
                   >
-                    {template.name}
-                  </MenuItem>
-                ))}
-              </StyledSelect>
-            </div>
-          )}
+                    {typeof value === 'string' ? value : String(value)}
+                  </span>
+                );
+              }}
+            >
+              <MenuItem value='' sx={{ color: '#425A76', fontSize: '13px', fontWeight: '500' }}>
+                Choose Checklist
+              </MenuItem>
+              {checklistData.map((template: { id: string; name: string }) => (
+                <MenuItem
+                  sx={{ color: '#425A76', fontSize: '13px', fontWeight: '500' }}
+                  key={template.id}
+                  value={template.name}
+                  title={template.name}
+                >
+                  {template.name}
+                </MenuItem>
+              ))}
+            </StyledSelect>
+          </div>
+        )}
 
         {/* Linked Type Field */}
-        {uniqueConnectorTypes && uniqueConnectorTypes.length > 0 && (
+        {!fieldVisibility.linkedType && (
           <div className='flex flex-col gap-2'>
             <label className='text-sm font-medium text-gray-700'>Linked Type</label>
             <StyledSelect
@@ -518,7 +514,7 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
         )}
 
         {/* Link Task Type Field */}
-        {uniqueTaskTemplates && uniqueTaskTemplates.length > 0 && (
+        {!fieldVisibility.linkTaskType && (
           <div className='flex flex-col gap-2'>
             <label className='text-sm font-medium text-gray-700'>Link Task Type</label>
             <StyledSelect
@@ -589,7 +585,7 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
         )}
 
         {/* Weightage Field */}
-        {weightageData && weightageData.length > 0 && (
+        {!fieldVisibility.weightage && (
           <div className='flex flex-col gap-2'>
             <label className='text-sm font-medium text-gray-700'>Weightage</label>
             <StyledSelect
@@ -648,7 +644,7 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
         )}
 
         {/* Category Field */}
-        {categoryData && categoryData.length > 0 && (
+        {!fieldVisibility.category && (
           <div className='flex flex-col gap-2'>
             <label className='text-sm font-medium text-gray-700'>Task Category</label>
             <StyledSelect
