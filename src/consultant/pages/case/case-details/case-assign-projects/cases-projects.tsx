@@ -211,7 +211,6 @@ const CasesProjects: React.FC<casesProjectProps> = ({
   }, []);
 
   const tabParam = searchParams.get('tab') || initialTab;
-  console.log('tabParam', tabParam);
   const handleTabChange = (value: string) => {
     searchParams.set('tab', value);
     navigate({ search: searchParams.toString() }, { replace: true });

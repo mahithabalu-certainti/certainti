@@ -232,8 +232,6 @@ const CaseInteractionForm = () => {
         email: interactionData?.recipient_email || '',
       });
     } else {
-      console.log('working', selectedProject, ProjectList);
-      // Create view: find matching project from ProjectList
       const match = ProjectList?.find(
         (item: InteractionProjectKeyContacts) =>
           item.project_fiscal_rid === selectedProject.project_fiscal_rid
@@ -649,8 +647,6 @@ const CaseInteractionForm = () => {
     }
   };
 
-  // Enhanced validateForm function to include project code validation
-  console.log('receptints', recipiants);
   return (
     <div>
       <div className='h-[50px] flex items-center justify-between px-10 sticky top-0 z-10 bg-white'>
