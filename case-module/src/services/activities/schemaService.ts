@@ -1686,10 +1686,21 @@ class ActivitySchemaService {
       rawQueries.fetchActivityStatusByName(activityStatus.completed, activityRequest.activity_type),
       { type: "SELECT" }
     );
+    let callParticipants: string[] = [];
+    if (Array.isArray(activityRequest.call_participants)) {
+    callParticipants = activityRequest.call_participants;
+  } else if (typeof activityRequest.call_participants === 'string') {
+    try {
+      callParticipants = JSON.parse(activityRequest.call_participants);
+    } catch {
+      callParticipants = [];
+    }
+  }
     const activityData = {
       ...activityRequest,
       activity_type: "Call",
       status_rid: callStatus?.rid || null,
+      call_participants: callParticipants,
       account_rid:
         activityRequest.accountRid || activityRequest.account_rid || "",
     };
