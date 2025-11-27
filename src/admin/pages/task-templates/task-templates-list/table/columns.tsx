@@ -34,8 +34,7 @@ export const getTaskTemplateColumns = (
       borderRight: '1px solid #CBD6E2',
       borderBottom: '1px solid #CBD6E2 !important',
     },
-    editable:
-      permissionMap?.['r_number']?.edit && permissionMap?.['r_number']?.read,
+    editable: false,
     hide:
       !permissionMap?.['r_number']?.edit && !permissionMap?.['r_number']?.read,
     render: (row: TaskTemplateList) =>

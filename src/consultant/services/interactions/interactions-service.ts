@@ -33,7 +33,10 @@ export const exportInteractions = async (
   params: InteractionListURLParams
 ): Promise<void> => {
   try {
-    const filename = 'project_interactions.xlsx';
+    const filename =
+      params.flag === 'case'
+        ? 'case_interaction.xlsx'
+        : 'project_interactions.xlsx';
     const response =
       await interactionServiceApi.post<ExportInteractionResponse>(
         getInteractionExportUrl(),

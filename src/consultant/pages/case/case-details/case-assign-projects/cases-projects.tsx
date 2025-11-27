@@ -164,18 +164,22 @@ const CasesProjects: React.FC<casesProjectProps> = ({
     });
   };
   useEffect(() => {
+    // Reset to default state when entering case projects
     if (searchParams.get('list') === 'caseProjects') {
       const newParams = new URLSearchParams(searchParams);
+
+      // Only reset if we don't have detailstab (meaning we're at the main case projects view)
       if (!newParams.get('detailstab')) {
         newParams.delete('assignProject');
+        // Set default tab if not present
         if (!newParams.get('tab')) {
           newParams.set('tab', initialTab);
         }
       }
+
       navigate({ search: newParams.toString() }, { replace: true });
     }
-  }, [searchParams.get('list')]);
-
+  }, [searchParams.get('list')]); // Run when the list parameter changes
   const handleColumnVisibility = (
     event: React.MouseEvent<HTMLButtonElement>
   ) => {
@@ -202,6 +206,7 @@ const CasesProjects: React.FC<casesProjectProps> = ({
   }, []);
 
   const tabParam = searchParams.get('tab') || initialTab;
+  console.log('tabParam', tabParam);
   const handleTabChange = (value: string) => {
     searchParams.set('tab', value);
     navigate({ search: searchParams.toString() }, { replace: true });

@@ -94,7 +94,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
       {} as Record<string, string>
     )
   );
-
+  console.log('answer', formData);
   const [showOptionsPerQuestion, setShowOptionsPerQuestion] = useState<
     Record<string, boolean>
   >({});

@@ -223,20 +223,20 @@ const CaseInteractionForm = () => {
     }
   }, [accountName, caseLevelProjectCode, searchParams, source]);
 
+  // Fixed useEffect for setting recipients - removed the condition that prevented it from running during creation
   useEffect(() => {
     if (isEditView) {
+      // Edit view: use interaction data
       setRecipiants({
         name: interactionData?.recipient_name || '',
         email: interactionData?.recipient_email || '',
       });
     } else {
-      // const currentRecipients = localStorage.getItem('currentRecipients');
-      // if (currentRecipients) {
-      //   setRecipiants(JSON.parse(currentRecipients));
-      // }
+      console.log('working', selectedProject, ProjectList);
+      // Create view: find matching project from ProjectList
       const match = ProjectList?.find(
         (item: InteractionProjectKeyContacts) =>
-          item.project_rid === selectedProject.project_rid
+          item.project_fiscal_rid === selectedProject.project_fiscal_rid
       );
 
       if (match) {
@@ -245,8 +245,9 @@ const CaseInteractionForm = () => {
           email: match.key_contact_email || '',
         });
       }
+      // Don't reset to empty if no match - keep whatever was there before
     }
-  }, [isEditView, selectedProject.project_rid, ProjectList]);
+  }, [isEditView, selectedProject, formData, ProjectList, interactionData]);
 
   const isProjectInteractionLevel =
     interactionData?.interaction_level_name?.toLocaleLowerCase() === 'project';
@@ -342,6 +343,9 @@ const CaseInteractionForm = () => {
     isEditView,
     accountName,
   ]);
+  const goBack = () => {
+    window.history.back();
+  };
   useEffect(() => {
     if (commonSuccess) {
       successToast(
@@ -499,8 +503,14 @@ const CaseInteractionForm = () => {
       formData,
       searchParams.get('source')
     );
+
+    // Add project code validation
+    if (!caseLevelProjectCode) {
+      validationErrors.projectCode = 'Project Code is required';
+    }
+
     setErrors(validationErrors);
-    return isValid;
+    return isValid && !!caseLevelProjectCode;
   };
   const handleSubmit = () => {
     if (isEditView && !hasFormValuesChanged(formData, interactionData)) {
@@ -518,6 +528,8 @@ const CaseInteractionForm = () => {
     // update flow
     if (isEditView && interactionData) {
       updateInteractionComplete();
+    } else {
+      createInteractionComplete();
     }
   };
   const saveAndSend = () => {
@@ -623,9 +635,22 @@ const CaseInteractionForm = () => {
       }
     );
   };
-  const goBack = () => {
-    window.history.back();
+
+  // Handle project code change with error validation
+  const handleProjectCodeChange = (value: string) => {
+    setCaseLevelProjectCode(value);
+
+    // Clear project code error when user selects a project
+    if (value) {
+      setErrors((prev) => ({
+        ...prev,
+        projectCode: undefined,
+      }));
+    }
   };
+
+  // Enhanced validateForm function to include project code validation
+  console.log('receptints', recipiants);
   return (
     <div>
       <div className='h-[50px] flex items-center justify-between px-10 sticky top-0 z-10 bg-white'>
@@ -859,6 +884,7 @@ const CaseInteractionForm = () => {
                     htmlFor='account_name'
                   >
                     Project Code
+                    <span className='text-red-500 text-[16px]'>*</span>
                   </label>
                   {projectListLoading ? (
                     <Skeleton variant='rounded' width='100%' height={32} />
@@ -871,6 +897,7 @@ const CaseInteractionForm = () => {
                       value={caseLevelProjectCode}
                       disabled={isEditView}
                       size='small'
+                      error={!!errors.projectCode}
                       renderValue={(selected) => {
                         if (!selected) {
                           return (
@@ -923,9 +950,14 @@ const CaseInteractionForm = () => {
                         '& svg': {
                           color: '#7D98B6',
                         },
+                        ...(errors.projectCode && {
+                          '& .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#ef4444',
+                          },
+                        }),
                       }}
                       onChange={(e) => {
-                        setCaseLevelProjectCode(e.target.value);
+                        handleProjectCodeChange(e.target.value);
                       }}
                     >
                       {/* Placeholder MenuItem for internal value */}
@@ -948,6 +980,11 @@ const CaseInteractionForm = () => {
                         </MenuItem>
                       ))}
                     </Select>
+                  )}
+                  {errors.projectCode && (
+                    <p className='text-red-500 text-xs mt-1 ml-1'>
+                      {errors.projectCode}
+                    </p>
                   )}
                 </div>
 
