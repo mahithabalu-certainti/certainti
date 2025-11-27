@@ -4903,7 +4903,6 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       if(data?.checklist_template_rid) 
       {
         const response  = await this.fetchChecklistTemplateDetailsById(data.checklist_template_rid);
-        console.log("response ======> ", response)
         response.checklist_items.map((item:any) => item.action_type  = 'add');
         let caseRequest = {
           account_rid: data.account_rid!,
