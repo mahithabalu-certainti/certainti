@@ -802,6 +802,7 @@ export interface IActivityCall {
   account_rid?: string;
   subject?: string;
   deleted_file_ids : string[]
+  call_participants?: string[];
 }
 
 
