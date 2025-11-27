@@ -1513,14 +1513,15 @@ async getWorkFlowConnector () {
     const {TaskTemplate} = await this.caseModelService.getModels("");
     const statusRid = await this.getActiveStatusRid();
     const result = await TaskTemplate.findAll({
-      attributes : ['rid', 'task_name'],
+      attributes : ['rid', 'task_name', 'task_type_rid'],
       where : {
         task_name : {
           [Op.iLike] : data.search == "" ? '%%' : `%${data.search}%`
         },
         status_rid : statusRid
       },
-      order : [['task_name', 'ASC']]
+      order : [['task_name', 'ASC']],
+      raw : true
     });
     return result;
   }

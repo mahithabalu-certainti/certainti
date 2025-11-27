@@ -10,6 +10,7 @@ import {
   AddCommentsType,
   CaseOwnerType,
   CaseStatusType,
+  CaseTaskDropdownType,
   caseTaskStatusTypes,
   CaseTaskWorkFlowCreate,
   CaseTaskWorkFlowDelete,
@@ -2999,13 +3000,6 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
     const result = await this.caseSchemaService.deleteTaskWorkConnector(accountNumber[0][0].r_number, data);
     return result;
   }
-  async taskListForDropdownAccountLevel (data : any) {
-    const mainDb = await this.getMainDb();
-    const accountNumber : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
-    const result = await this.caseSchemaService.listTasksDropdownForAccountLevel(accountNumber[0][0].r_number, data);
-    if(result.length > 0) return result
-    else return []
-  }
   async deleteTagsAccountLevel (data : any) {
     const mainDb = await this.getMainDb();
     const accountNumber : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
@@ -3035,5 +3029,27 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
         statusMessage : STATUS_MESSAGE.failedToUpdate
       }
     }
+  }
+  async getTaskDropDownForDependencyMapping (data : any) {
+    const mainDb = await this.getMainDb();
+    const orgDb = await this.getOrgDb();
+    const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
+    let schemaName = rawQueries.fetchSchemaName(fetchParent[0][0].r_number);
+    const {Case} = await this.caseModelService.getModels(fetchParent[0][0].r_number);
+    const checkCaseStatus = await Case.findOne({where : {rid : data.case_rid}, raw : true});
+    let finalResult;
+    if(checkCaseStatus) {
+      const [fetchCaseStatus] = await mainDb.query<CaseStatusType>(rawQueries.getCaseStatusById(checkCaseStatus.status_rid), {type : QueryTypes.SELECT});
+      const [fetchMilestoneReview] = await mainDb.query<TaskTypeResponse>(rawQueries.getMilestoneReview(), {type : QueryTypes.SELECT});
+      if(fetchCaseStatus?.status_name === "Audit Review") {
+        if(fetchMilestoneReview !== undefined) {
+          finalResult = await orgDb.query<CaseTaskDropdownType>(rawQueries.getTaskDropdownForCaseLevel(schemaName, data.case_rid, data.account_rid, true, ''), {type : QueryTypes.SELECT});
+          return finalResult
+        } else return []
+      } else {
+        finalResult = await orgDb.query<CaseTaskDropdownType>(rawQueries.getTaskDropdownForCaseLevel(schemaName, data.case_rid, data.account_rid, false, fetchMilestoneReview!.rid), {type : QueryTypes.SELECT})
+        return finalResult
+      } 
+    } else return []
   }
 }

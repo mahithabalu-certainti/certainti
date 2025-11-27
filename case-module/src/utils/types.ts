@@ -819,3 +819,7 @@ export type TaskCategoryType = {
   rid : string
   category_name : string
 }
+export type CaseTaskDropdownType = {
+  rid : string
+  task_name : string
+}
