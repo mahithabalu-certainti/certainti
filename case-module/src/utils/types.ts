@@ -14,7 +14,7 @@ export interface ICreateCases {
   planned_submission_date: Date;
   statutory_submission_date: Date;
   status_rid?: string;
-  utility_cost?: number;
+  heat_light_power?: number;
   total_nonlabour_cost?: number;
 }
 
