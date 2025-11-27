@@ -5613,7 +5613,6 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             await TaskCollaborators.create(collaboratorPayload);
           }
         }
-        console.log(files)
         if(files.length > 0) {
           for(let f of files) {
             const uploadFile = await uploadToAzureBlob(f, data.account_rid, taskNumber, "cases");
