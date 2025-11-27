@@ -4649,7 +4649,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     let clonedData = queryResult[0][0]
     let milestoneSequenceNumber : any[] = []
     let milestoneMap : Map<string, string> = new Map();
-    if(clonedData.milestone_data !== null && clonedData.task_data !== null) {
+    if(clonedData.milestone_data !== null) {
       const finalMilestoneData = clonedData.milestone_data.map((d : any) => {
         milestoneMap.set(d.milestone_rid, d.milestone_sequence_no);
         milestoneSequenceNumber.push(d.milestone_sequence_no)
@@ -4662,7 +4662,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         }
       })
       const result = await CaseMilestone.bulkCreate(finalMilestoneData, {transaction})
-      if(clonedData.task_data.length > 0) {
+      if(clonedData.task_data !== null) {
         let startDate : Date;
         let endDate : Date;
         let startDateMap : Map<number, Date> = new Map();
@@ -4674,7 +4674,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         let validEndDate;
         let otherStartDateMap : Map<number, Date> = new Map()
         let otherEndDateMap : Map<number, Date> = new Map()
-
+        if(clonedData.task_data.length > 0) {
         for(let d of clonedData.task_data) {
           if(milestoneMap.get(d.milestone_template_rid) === "1") {
             if(d.sequence_no === 1) {
@@ -4766,6 +4766,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         await CaseTaskWorkflowConnector.bulkCreate(finalWorkFlowData, {transaction});
         await this.cloneDefaultChecklistTemplate(accountRid, caseRid, filing_type_rid, accountNumber, transaction,finalTaskData)
       }
+        }
     }
   }
   async cloneDefaultChecklistTemplate (accountRid : string, caseRid : string, filing_type_rid : string, accountNumber : string, transaction : Transaction,finalTaskData:any) {
