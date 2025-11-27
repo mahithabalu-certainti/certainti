@@ -1872,7 +1872,6 @@ return !response;
           getTotalProjectCount[0][0].total_projects,
           getTotalProjectCost[0][0].total_cost,
           getTotalProjects[0][0].total_projects,
-          getTotalProjects[0][0].total_projects_cost,
           getTotalProjects[0][0].total_projects_qre_cost
         )
       );
@@ -1882,7 +1881,6 @@ return !response;
           getTotalProjectCount[0][0].total_projects,
           getTotalProjectCost[0][0].total_cost,
           getTotalProjects[0][0].total_projects,
-          getTotalProjects[0][0].total_projects_cost,
           getTotalProjects[0][0].total_projects_qre_cost
         )
       );
