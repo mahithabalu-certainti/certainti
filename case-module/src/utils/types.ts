@@ -15,7 +15,7 @@ export interface ICreateCases {
   statutory_submission_date: Date;
   status_rid?: string;
   heat_light_power?: number;
-  total_nonlabour_cost?: number;
+  total_nonlabor_cost?: number;
 }
 
 export type CaseHeadersColumns = {
