@@ -2380,6 +2380,8 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
           delete d.total_result
           return {
             ...d,
+            old_value : d.old_value === null ? "-" : d.old_value,
+            new_value : d.new_value === null ? "-" : d.new_value,
             created_by_name : mapUser.get(d.created_by) || null
           }
         })
