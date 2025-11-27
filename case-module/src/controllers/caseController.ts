@@ -3468,7 +3468,7 @@ async function addCollaborators (req : Request, res : Response) {
       return res.status(HttpStatus.SUCCESS).json({
         statusCode: HttpStatus.SUCCESS,
         statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
-        statusMessage: STATUS_MESSAGE.caseTaskStatusListedSuccess,
+        statusMessage: result.statusMessage,
       });
     } else if (result.statusCode === HttpStatus.BAD_REQUEST) {
       return res.status(HttpStatus.BAD_REQUEST).json({
