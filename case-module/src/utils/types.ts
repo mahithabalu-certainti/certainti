@@ -743,6 +743,7 @@ export interface IActivityEmail {
   sender_email?: string;
   email_status_rid?: string;
   account_rid?: string; 
+  deleted_file_ids : string[]
 }
 
 export interface IActivityMeeting {
@@ -776,6 +777,7 @@ export interface IActivityMeeting {
   recurrence_type?: string;
   recurrence_interval?: number;
   recurrence_days?: string[];
+  deleted_file_ids : string[]
 }
 
 export interface IActivityCall {
@@ -798,6 +800,7 @@ export interface IActivityCall {
   status_rid?: string;
   account_rid?: string;
   subject?: string;
+  deleted_file_ids : string[]
 }
 
 

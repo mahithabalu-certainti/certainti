@@ -1561,6 +1561,38 @@ class ActivitySchemaService {
     const response = await Activities.update(activityData, {
       where: { rid: activityRequest.activity_rid },
     });
+    if(activityData.deleted_file_ids !== undefined) {
+      if(activityData.deleted_file_ids.length > 0) {
+        const getAllDeletedFileIds : any[] = [...new Set(activityData.deleted_file_ids.map((d : any) => d))];
+        const findAllDeletedDetails = await ActivityAttachments.findAll({
+          attributes : ['rid', 'browse_url'],
+          where : {
+            rid : {
+              [Op.in] : getAllDeletedFileIds
+            }
+          },
+          raw : true
+        });
+        if(findAllDeletedDetails.length > 0) {
+          const mapAttachments = new Map(findAllDeletedDetails.map((f : any) => [f.rid, f.browse_url]));
+          let iterationCount = 0
+          let totalIteraction = activityData.deleted_file_ids.length;
+          for(let id of activityData.deleted_file_ids) {
+            await deleteFromAzureBlob(mapAttachments.get(id));
+            iterationCount += 1
+          }
+          if(totalIteraction === iterationCount) {
+            await ActivityAttachments.destroy({
+              where : {
+                rid : {
+                  [Op.in] : activityData.deleted_file_ids
+                }
+              }
+            });
+          }
+        }
+      }
+    }
     await this.uploadActivityFiles(files, activityRequest, accountNumber);
     await this.addTaskTimeline(
       accountNumber,
@@ -1683,7 +1715,7 @@ class ActivitySchemaService {
     userId: string,
     files?: Express.Multer.File[]
   ) {
-    const { Activities } =
+    const { Activities, ActivityAttachments } =
       await this.caseModelService.getModels(accountNumber);
     const activityData = {
       ...activityRequest,
@@ -1695,6 +1727,38 @@ class ActivitySchemaService {
     const response = await Activities.update(activityData, {
       where: { rid: activityRequest.activity_rid },
     });
+    if(activityData.deleted_file_ids !== undefined) {
+      if(activityData.deleted_file_ids.length > 0) {
+        const getAllDeletedFileIds : any[] = [...new Set(activityData.deleted_file_ids.map((d : any) => d))];
+        const findAllDeletedDetails = await ActivityAttachments.findAll({
+          attributes : ['rid', 'browse_url'],
+          where : {
+            rid : {
+              [Op.in] : getAllDeletedFileIds
+            }
+          },
+          raw : true
+        });
+        if(findAllDeletedDetails.length > 0) {
+          const mapAttachments = new Map(findAllDeletedDetails.map((f : any) => [f.rid, f.browse_url]));
+          let iterationCount = 0
+          let totalIteraction = activityData.deleted_file_ids.length;
+          for(let id of activityData.deleted_file_ids) {
+            await deleteFromAzureBlob(mapAttachments.get(id));
+            iterationCount += 1
+          }
+          if(totalIteraction === iterationCount) {
+            await ActivityAttachments.destroy({
+              where : {
+                rid : {
+                  [Op.in] : activityData.deleted_file_ids
+                }
+              }
+            });
+          }
+        }
+      }
+    }
     await this.uploadActivityFiles(files, activityRequest, accountNumber);
     await this.addTaskTimeline(
       accountNumber,
@@ -1715,7 +1779,7 @@ class ActivitySchemaService {
     userId: string,
     files?: Express.Multer.File[]
   ) {
-    const { Activities } =
+    const { Activities, ActivityAttachments } =
       await this.caseModelService.getModels(accountNumber);
     if (!this.mainDbSequelize) {
       this.mainDbSequelize = await this.caseModelService.getSequelize();
@@ -1735,6 +1799,38 @@ class ActivitySchemaService {
     const response = await Activities.update(activityData, {
       where: { rid: activityRequest.activity_rid },
     });
+    if(activityData.deleted_file_ids !== undefined) {
+      if(activityData.deleted_file_ids.length > 0) {
+        const getAllDeletedFileIds = [...new Set(activityData.deleted_file_ids.map((d : any) => d))];
+        const findAllDeletedDetails = await ActivityAttachments.findAll({
+          attributes : ['rid', 'browse_url'],
+          where : {
+            rid : {
+              [Op.in] : getAllDeletedFileIds
+            }
+          },
+          raw : true
+        });
+        if(findAllDeletedDetails.length > 0) {
+          const mapAttachments = new Map(findAllDeletedDetails.map((f : any) => [f.rid, f.browse_url]));
+          let iterationCount = 0
+          let totalIteraction = activityData.deleted_file_ids.length;
+          for(let id of activityData.deleted_file_ids) {
+            await deleteFromAzureBlob(mapAttachments.get(id));
+            iterationCount += 1
+          }
+          if(totalIteraction === iterationCount) {
+            await ActivityAttachments.destroy({
+              where : {
+                rid : {
+                  [Op.in] : activityData.deleted_file_ids
+                }
+              }
+            });
+          }
+        }
+      }
+    }
     await this.uploadActivityFiles(files, activityRequest, accountNumber);
     await this.addTaskTimeline(
       accountNumber,

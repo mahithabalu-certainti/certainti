@@ -228,6 +228,9 @@ async function updateActivityEmail(req: Request, res: Response) {
       fileArray = [];
     }
     data.created_by = userId;
+    if(data.deleted_file_ids !== undefined) {
+      data.deleted_file_ids = JSON.parse(data.deleted_file_ids)
+    }
     const result = await activityService.updateActivityEmail(
       data,
       userId,
@@ -353,6 +356,9 @@ async function updateActivityMeeting(req: Request, res: Response) {
       fileArray = [];
     }
     data.created_by = userId;
+    if(data.deleted_file_ids !== undefined) {
+      data.deleted_file_ids = JSON.parse(data.deleted_file_ids)
+    }
     const result = await activityService.updateActivityMeeting(
       data,
       userId,
@@ -478,6 +484,9 @@ async function updateActivityCall(req: Request, res: Response) {
       fileArray = [];
     }
     data.created_by = userId;
+    if(data.deleted_file_ids !== undefined) {
+      data.deleted_file_ids = JSON.parse(data.deleted_file_ids)
+    }
     const result = await activityService.updateActivityCall(
       data,
       userId,
