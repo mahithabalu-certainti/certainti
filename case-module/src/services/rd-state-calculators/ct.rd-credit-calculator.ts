@@ -26,7 +26,7 @@ export class RdCreditCalculatorForCT {
 
         const part1Computation = this.part1CreditComputation(currentYearQREs, prior3YearsQREs, extractConfig);
         const part1TentativeComputation = this.part1TentativeTaxCreditComputation(currentYearQREs, part1Computation.excess_qre, extractConfig);
-        const part2Computation = this.part2CreditComputation(part1TentativeComputation.allowable_tentative_tax_credit, extractConfig);
+        const part2Computation = this.part2CreditComputation(part1TentativeComputation.allowable_tentative_tax_credit, currentYearQREs.business_tax_liability, extractConfig);
 
         const inputFields = await this.buildInputParams(part1Computation.total_qre, part1Computation.prior_year_1_qre, {
             country: this.country,
@@ -85,6 +85,7 @@ export class RdCreditCalculatorForCT {
         const supplies = currentYearQREs.supplies || 0;
         const contract = currentYearQREs.contract || 0;
 
+
         //Part I - Tentative Credit Computation
         //Line 1: Total QREs
         const tentativeTotalQREs = new Decimal(wages).plus(new Decimal(supplies)).plus(new Decimal(contract));
@@ -122,7 +123,7 @@ export class RdCreditCalculatorForCT {
      * @param allowableTentativeTaxCredit 
      * @param extractConfig 
      */
-    part2CreditComputation(allowableTentativeTaxCredit: Decimal, extractConfig: ConfigJson) {
+    part2CreditComputation(allowableTentativeTaxCredit: Decimal, business_tax_liability: number, extractConfig: ConfigJson) {
         //Part II - Credit Computation
         //Line 1 : Allowable Tentative Tax Credit for 2024 from Part 1, line 6
         const part2AllowableTentativeTaxCredit = allowableTentativeTaxCredit;
@@ -131,7 +132,7 @@ export class RdCreditCalculatorForCT {
         const part2OneThirdRate = part2AllowableTentativeTaxCredit.mul(new Decimal(extractConfig.one_third_rate || 0));
 
         //Line 3: Current Year CT Business Tax Liability 
-        const currentYearCTBusinessTaxLiability = new Decimal(0); //TODO: Placeholder as the actual value is not provided.
+        const currentYearCTBusinessTaxLiability = new Decimal(business_tax_liability); //TODO: Placeholder as the actual value is not provided.
 
         //Line 4: Multiply Line 3 by 50%
         const halfTaxLiability = currentYearCTBusinessTaxLiability.mul(new Decimal(extractConfig.half_tax_liability_rate || 0));

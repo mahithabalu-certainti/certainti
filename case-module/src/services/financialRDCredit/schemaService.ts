@@ -77,11 +77,14 @@ class RDCreditSchemaService {
                     SELECT 
                         SUM(pf.total_cost_fte_prj) AS total_wages,
                         SUM(pf.total_cost_nonlabor_prj) AS total_supplies,
-                        SUM(pf.total_cost_subcon_prj) AS total_contract
+                        SUM(pf.total_cost_subcon_prj) AS total_contract,
+                        cs.tax_liability as business_tax_liability
                     FROM ${schemaName}.case_projects cp
                     JOIN ${schemaName}.project_fiscal pf
                         ON cp.project_fiscal_rid = pf.rid
+                    JOIN ${schemaName}.cases cs ON cs.rid = cp.case_rid
                     WHERE cp.case_rid = :caseRid
+                    GROUP BY cs.tax_liability
                 `,
                 {
                     replacements: { caseRid },
@@ -94,6 +97,7 @@ class RDCreditSchemaService {
                 wages: Number(data?.total_wages || 0),
                 supplies: Number(data?.total_supplies || 0),
                 contract: Number(data?.total_contract || 0),
+                business_tax_liability : Number(data?.business_tax_liability || 0)
             };
         } catch (err) {
             logMessage(`Error fetching account: ${err}`);
