@@ -20,7 +20,10 @@ import {
   useFetchClassification,
   useFetchState,
 } from '../../../../services/account';
-import { useGetProjectType } from '../../../../services/project';
+import {
+  ProjectTriggerAI,
+  useGetProjectType,
+} from '../../../../services/project';
 import { RootState } from '../../../../../store/store';
 import { useSelector } from 'react-redux';
 import { ShowHideTableColumn } from '../../../../../components/table/types';
@@ -41,6 +44,9 @@ import { useGetResourceType } from '../../../../services/resource-list';
 import { FilterValue } from '../../../../types/account-filter';
 import { getReviewdProjectColumns } from './review-projects/column';
 import EmailModalTemplate from './review-projects/email-model-template';
+import { ProjectTriggerAIPayload } from '../../../../types/project';
+import { useToast } from '../../../../../hooks';
+import { checkPermission } from '../../../../../common-utils';
 interface casesProjectProps {
   activeKey?: string;
   fiscalYear: number;
@@ -87,7 +93,6 @@ const CasesProjects: React.FC<casesProjectProps> = ({
   const [clearSelectedRows, setClearSelectedRows] = useState<boolean>(false);
   const [searchParams] = useSearchParams();
   const [emailModalOpen, setEmailModalOpen] = useState(false);
-
   const [selectedRows, setSelectedRows] = useState<AssignProject[]>([]);
   const [reviewSelectedRows, setReviewSelectedRows] = useState<AssignProject[]>(
     []
@@ -241,7 +246,44 @@ const CasesProjects: React.FC<casesProjectProps> = ({
     newParams.delete('assignProject'); // Also remove assignProject when going back
     navigate({ search: newParams.toString() }, { replace: true });
   };
+  const { successToast } = useToast();
+  const triggerAIMutation = ProjectTriggerAI();
+  const handleTriggerAIBtn = () => {
+    const payload: ProjectTriggerAIPayload = {
+      data: [
+        {
+          account_rid: searchParams.get('accountID') ?? '',
+          project_fiscal_rid: selectedRows.map((row) => row.rid),
+        },
+      ],
+      type: 'project',
+    };
+    triggerAIMutation.mutate(payload, {
+      onSuccess: (res) => {
+        successToast(res.statusMessage);
+        // setClearTrigger((prev) => !prev);
+      },
+      onError: (err) => {
+        console.log(err);
+      },
+    });
+  };
+  const { permission } = useSelector((state: RootState) => state.permission);
+
+  const TriggerAIEnable = checkPermission(
+    permission,
+    AllPermissions.TRIGGER_AI_ASSESSMENT
+  );
   const headerButtons = [
+    {
+      label: 'RD Assessment',
+      variant: 'outlined' as const,
+      disabled: accountInActive || selectedRows.length === 0,
+      onClick: () => handleTriggerAIBtn(),
+      loading: triggerAIMutation.isPending,
+      sx: { width: '115px', minWidth: '115px' },
+      hide: !TriggerAIEnable,
+    },
     {
       label: isAssignProject ? 'Assign' : 'Remove',
       variant: 'outlined' as const,
@@ -303,7 +345,7 @@ const CasesProjects: React.FC<casesProjectProps> = ({
   const handleFilter = () => {
     setShowFilter(!showFilter);
   };
-  const { permission } = useSelector((state: RootState) => state.permission);
+
   const projectViewEditFields = useMemo(
     () =>
       permission?.find(

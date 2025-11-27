@@ -67,6 +67,10 @@ import {
   exportInteractions,
   exportInteractionsHistory,
 } from '../../../services/interactions/interactions-service';
+import { ProjectTriggerAIPayload } from '../../../types/project';
+import { useToast } from '../../../../hooks';
+import { ProjectTriggerAI } from '../../../services/project';
+import { BUTTON_STYLES } from '../../../../admin/pages/manage-user-detail/styles';
 
 export const CaseDetails = () => {
   const navigate = useNavigate();
@@ -240,7 +244,10 @@ export const CaseDetails = () => {
     permission,
     AllPermissions.INTERACTIONS_EXPORT
   );
-
+  const TriggerAIEnable = checkPermission(
+    permission,
+    AllPermissions.TRIGGER_AI_ASSESSMENT
+  );
   const handleExport = (exportType: ExportType) => {
     if (
       searchParams.get('list') !== 'attachments' &&
@@ -475,7 +482,28 @@ export const CaseDetails = () => {
         );
     }
   };
-
+  const { successToast } = useToast();
+  const triggerAIMutation = ProjectTriggerAI();
+  const handleTriggerAI = () => {
+    const payload: ProjectTriggerAIPayload = {
+      data: [
+        {
+          account_rid: accountId,
+          project_fiscal_rid: [],
+          case_rid: caseId,
+        },
+      ],
+      type: 'case',
+    };
+    triggerAIMutation.mutate(payload, {
+      onSuccess: (res) => {
+        successToast(res.statusMessage);
+      },
+      onError: (err) => {
+        console.log(err);
+      },
+    });
+  };
   const sideMenuItems = useMemo<MenuItem[]>(() => {
     const allMenus = [
       {
@@ -644,6 +672,16 @@ export const CaseDetails = () => {
           showSettings={false}
           goBack={goBack}
           backBtnLabel='Back To Cases'
+          headerButtons={[
+            {
+              label: 'RD Assessment',
+              onClick: handleTriggerAI,
+              disabled: accountInActive,
+              loading: triggerAIMutation.isPending,
+              sx: { ...BUTTON_STYLES, width: '115px', minWidth: '115px' },
+              hide: !TriggerAIEnable,
+            },
+          ]}
         />
       </div>
       <InfoSection
