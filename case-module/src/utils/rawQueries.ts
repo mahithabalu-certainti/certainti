@@ -919,7 +919,7 @@ export const fetchCaseTemplateData = (schemaName : string, caseRid : string, acc
   'effective_start_datetime', t.effective_start_datetime,
   'effective_end_datetime', t.effective_end_datetime,
   'case_team_member_role_rid', t.case_team_member_role_rid,
-  'assigned_to', ct.user_rid,
+  'assigned_to', t.assigned_to,
   'status_rid', t.status_rid,
   'priority_rid', t.priority_rid,
   'task_type_rid', t.task_type_rid,
