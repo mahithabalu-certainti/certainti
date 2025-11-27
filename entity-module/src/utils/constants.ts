@@ -266,7 +266,8 @@ export const rawQueries = {
   updateCaseProjects(
     schemaName: string,
     setProjectFiscalData: any,
-    data: any
+    data: any,
+    case_rid: string
   ) {
     return `
             UPDATE 
@@ -279,6 +280,8 @@ export const rawQueries = {
                 account_rid = '${data.account_rid}'
                 AND
                 project_rid = '${data.project_rid}'
+                AND
+                case_rid = '${case_rid}'
             `;
   },
   updateProjectFiscal(
@@ -616,7 +619,8 @@ export const rawQueries = {
     newProject_code: string,
     account_rid: string,
     project_rid: string,
-    existing_project_code: string
+    existing_project_code: string,
+    case_rid: string
   ) {
     return `
     UPDATE ${schemaName}.case_projects SET project_code = '${newProject_code.replace(
@@ -624,10 +628,13 @@ export const rawQueries = {
       "''"
     )}'
     WHERE
-    account_rid = '${account_rid}' AND project_rid = '${project_rid}' AND project_code = '${existing_project_code.replace(
+    account_rid = '${account_rid}' 
+    AND project_rid = '${project_rid}' 
+    AND project_code = '${existing_project_code.replace(
       /'/g,
       "''"
     )}'
+    AND case_rid = '${case_rid}' 
     `;
   },
   updateProjectFiscalSummaryPrjCode(
@@ -995,7 +1002,7 @@ export const rawQueries = {
       effective_metric_type IS NULL
     `;
   },
-  updateCaseProjectEffectiveDatas(schemaName: string, data: any) {
+  updateCaseProjectEffectiveDatas(schemaName: string, data: any, case_rid: string) {
     return `
     UPDATE ${schemaName}.case_projects
     SET 
@@ -1014,6 +1021,8 @@ export const rawQueries = {
       default_metric_type = 'project'
       AND
       effective_metric_type IS NULL
+      AND
+      case_rid = '${case_rid}'
     `;
   },
   fetchResourceTypeById(schemaName: string) {

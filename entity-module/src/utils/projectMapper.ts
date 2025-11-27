@@ -477,6 +477,7 @@ export class ProjectMapper {
       project_description: data.project_description || null,
       country_rid: data.country_rid || null,
       comments: data.comments || "",
+      is_qualified: data.is_qualified || false,
 
       total_fte_prj: data.total_fte || 0,
       total_subcon_prj: data.total_subcon || 0,

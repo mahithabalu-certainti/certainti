@@ -551,10 +551,13 @@ export class ProjectService {
         projectData.project_fiscal_id
       );
 
-    if (existingFiscalData && existingFiscalData.is_qualified) {
-      errorLog("Qualified project cannot be updated.");
-      throw new Error("Qualified project cannot be updated.");
+    if(projectData.is_qualified){
+      if (existingFiscalData && existingFiscalData.is_qualified) {
+        errorLog("Qualified project cannot be updated.");
+        throw new Error("Qualified project cannot be updated.");
+      }
     }
+
 
     await this.projectIngestion.updateProjectFiscal(
       accountNumber,

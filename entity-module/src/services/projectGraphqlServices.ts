@@ -182,14 +182,14 @@ class ProjectGraphQlServices {
                 if(setProjectFiscalData.length > 0) {
                     if(data.project_code) {
                         if(data.project_code !== '') {
-                        await orgSequelize.query(rawQueries.updateCaseProjectPrjCode(schemaName, data.project_code, data.account_rid, data.project_rid, findProjectFiscal[0][0].project_code))
+                        await orgSequelize.query(rawQueries.updateCaseProjectPrjCode(schemaName, data.project_code, data.account_rid, data.project_rid, findProjectFiscal[0][0].project_code, caseMapping.case_rid))
                         } 
                     }
-                    await orgSequelize.query(rawQueries.updateCaseProjects(schemaName, setProjectFiscalData, data))
+                    await orgSequelize.query(rawQueries.updateCaseProjects(schemaName, setProjectFiscalData, data,  caseMapping.case_rid))
                     await this.projectIngestion.updateCaseProjectFiscalRegion(checkAccountExists[0][0].r_number, data, caseMapping as CaseProject, findProjectFiscal[0][0].project_code)
                 }
 
-                await orgSequelize.query(rawQueries.updateCaseProjectEffectiveDatas(schemaName, updatedProjectFiscal[0][0]))
+                await orgSequelize.query(rawQueries.updateCaseProjectEffectiveDatas(schemaName, updatedProjectFiscal[0][0], caseMapping.case_rid))
             }
 
             let accountData : any = {}

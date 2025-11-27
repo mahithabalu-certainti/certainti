@@ -266,6 +266,7 @@ export interface IUpdateProject {
   key_contacts:any;
   comments?: string;
   project_fiscal_id: string;
+  is_qualified: boolean;
 }
 
 export interface IKeyContactDetail {
