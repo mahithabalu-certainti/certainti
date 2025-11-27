@@ -604,7 +604,7 @@ const createActivityEmailSchema = Joi.object({
  attach_to : Joi.string().required(),
  attachment_level : Joi.string().required(),
  fiscal_year : Joi.number().optional(),
- activity_type: Joi.string().valid("Email").required(),
+ activity_type: Joi.string().valid("email").required(),
  to_email:Joi.string().required(),
  cc_email:Joi.string().optional(),
  email_status:Joi.string().required(),
