@@ -31,9 +31,9 @@ const checkConditions = async (entity: any, ruleId: string) => {
  * Execute actions for a rule
  */
 const executeActions = async (ruleId: string, entity: any, userId: number) => {
-  const actions = await ActionService.getRuleActionByRuleRId(ruleId);
-  console.log(ruleId + "fetching actions");
-  console.log(actions);
+  // const actions = await ActionService.getRuleActionByRuleRId(ruleId);
+  // console.log(ruleId + "fetching actions");
+  // console.log(actions);
   const executedActions: string[] = [];
 
   // for (const action of actions) {

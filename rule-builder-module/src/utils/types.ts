@@ -26,3 +26,27 @@ export interface ICreateCondition {
     created_by: string,
     modified_by: string
 }
+
+export interface ICreateAction {
+    action_rid: string;
+    rule_rid: string;
+    action_type: string;
+    target_user: string;
+    new_value: string;
+    action_order: number;
+    message_template: string;
+    metadata: string;
+    created_by: string,
+    modified_by: string
+}
+
+
+export interface ICreateScope {
+    scope_rid: string;
+    rule_rid: string;
+    scope_entity_type: string;
+    scope_entity_rid: string;
+    is_active: boolean;
+    created_by: string,
+    modified_by: string
+}

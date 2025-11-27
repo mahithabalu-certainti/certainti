@@ -62,6 +62,7 @@ const updateRuleSchema = Joi.object({
     modified_by: Joi.string().optional(),
 });
 
+
 const createConditionSchema = Joi.object({
     field_name: Joi.string().required(),
     operator: Joi.string().required(),
@@ -97,11 +98,83 @@ const updateConditionSchema = Joi.object({
     modified_by: Joi.string().optional(),
 });
 
+
+const createActionSchema = Joi.object({
+    rule_rid: Joi.string().required(),
+    action_type: Joi.string().required(),
+    target_user: Joi.string().required(),
+    new_value: Joi.string().optional().allow(null),
+    action_order: Joi.number().required(),
+    message_template: Joi.string().required(),
+    metadata: Joi.string().required(),
+    created_by: Joi.string().required(),
+});
+
+const listActionSchema = Joi.object({
+    page: Joi.string().optional()
+        .pattern(/^[0-9]+$/)
+    ,
+    limit: Joi.string().optional()
+        .pattern(/^[0-9]+$/)
+    ,
+    filters: Joi.string().default("{}"),
+    sortBy: Joi.string().optional(),
+    sortOrder: Joi.string().valid("ASC", "DESC").default("ASC")
+});
+
+const updateActionSchema = Joi.object({
+    action_rid: Joi.string().required(),
+    rule_rid: Joi.string().required(),
+    action_type: Joi.string().required(),
+    target_user: Joi.string().required(),
+    new_value: Joi.string().optional().allow(null),
+    action_order: Joi.number().required(),
+    message_template: Joi.string().required(),
+    metadata: Joi.string().required(),
+    modified_by: Joi.string().optional(),
+});
+
+
+const createScopechema = Joi.object({
+    rule_rid: Joi.string().required(),
+    scope_entity_type: Joi.string().required(),
+    scope_entity_rid: Joi.string().required(),
+    is_active: Joi.boolean().required(),
+    created_by: Joi.string().required(),
+});
+
+const listScopeSchema = Joi.object({
+    page: Joi.string().optional()
+        .pattern(/^[0-9]+$/)
+    ,
+    limit: Joi.string().optional()
+        .pattern(/^[0-9]+$/)
+    ,
+    filters: Joi.string().default("{}"),
+    sortBy: Joi.string().optional(),
+    sortOrder: Joi.string().valid("ASC", "DESC").default("ASC")
+});
+
+const updateScopeSchema = Joi.object({
+    scope_rid: Joi.string().required(),
+    rule_rid: Joi.string().required(),
+    scope_entity_type: Joi.string().required(),
+    scope_entity_rid: Joi.string().required(),
+    is_active: Joi.boolean().required(),
+    modified_by: Joi.string().optional(),
+});
+
 export {
     createRuleSchema,
     listRuleSchema,
     updateRuleSchema,
     createConditionSchema,
     listConditionSchema,
-    updateConditionSchema
+    updateConditionSchema,
+    listActionSchema,
+    createActionSchema,
+    updateActionSchema,
+    listScopeSchema,
+    createScopechema,
+    updateScopeSchema
 };

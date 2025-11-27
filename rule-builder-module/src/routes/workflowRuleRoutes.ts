@@ -1,8 +1,8 @@
 import { Router } from "express";
 import RuleController from "../controllers/workflowRuleMasterController";
 import ConditionController from "../controllers/workflowConditionController";
-import * as ActionController from "../controllers/workflowRuleActionController";
-import * as ScopeController from "../controllers/workflowRuleScopeMapController";
+import ActionController from "../controllers/workflowRuleActionController";
+import ScopeController from "../controllers/workflowRuleScopeMapController";
 import * as AuditController from "../controllers/workflowRuleAuditController";
 import * as TriggerController from "../controllers/workflowRuleTriggerLogController";
 import * as ScheduleController from "../controllers/workflowRuleScheduleQueueController";
@@ -26,18 +26,18 @@ router.post("/condition/delete", ConditionController.deleteCondition);
 
 
 // Action
-router.post("/action", ActionController.createRuleAction);
-router.get("/action/:rid", ActionController.getRuleActionById);
-router.get("/action/rule/:ruleRid", ActionController.getActionsByRule);
-router.put("/action/:rid", ActionController.updateRuleAction);
-router.delete("/action/:rid", ActionController.deleteRuleAction);
+router.post("/action", ActionController.createAction);
+router.get("/action", ActionController.listActions);
+//router.get("/action/rule/:ruleRid", ActionController.getActionsByRule);
+router.put("/action/update", ActionController.updateAction);
+router.post("/action/delete", ActionController.deleteAction);
 
 // ScopeMap
 router.post("/scope", ScopeController.createRuleScope);
-router.get("/scope/:rid", ScopeController.getScopeById);
-router.get("/scope/rule/:ruleRid", ScopeController.getScopesByRule);
-router.put("/scope/:rid", ScopeController.updateRuleScope);
-router.delete("/scope/:rid", ScopeController.deleteRuleScope);
+router.get("/scope", ScopeController.listScopes);
+//router.get("/scope/rule/:ruleRid", ScopeController.getScopesByRule);
+router.put("/scope/update", ScopeController.updateScope);
+router.post("/scope/delete", ScopeController.deleteScope);
 
 // Audit
 router.post("/audit", AuditController.createAuditEntry);

@@ -9,8 +9,8 @@ export interface RuleScopeMapAttributes {
   scope_entity_type: string;  // e.g., "case", "task"
   scope_entity_rid: string;
   is_active?: boolean;
-  created_by: number;
-  modified_by?: number;
+  created_by: string;
+  modified_by?: string;
   created_datetime?: Date;
   modified_datetime?: Date;
 }
@@ -28,8 +28,8 @@ export class RuleScopeMap
   public scope_entity_type!: string;
   public scope_entity_rid!: string;
   public is_active?: boolean;
-  public created_by!: number;
-  public modified_by?: number;
+  public created_by!: string;
+  public modified_by?: string;
 
   public readonly created_datetime!: Date;
   public readonly modified_datetime!: Date;
