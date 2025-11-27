@@ -2222,6 +2222,8 @@ class ActivitySchemaService {
       created_by: userInfo.created_name ?? emailDetails.created_by,
       created_datetime: emailDetails.created_datetime ?? null,
       modified_datetime: emailDetails.modified_datetime ?? null,
+      effective_start_datetime:emailDetails.effective_start_datetime ?? null,
+      effective_end_datetime:emailDetails.effective_end_datetime ?? null,
       attachments: attachmentsDetails || [],
     };
 

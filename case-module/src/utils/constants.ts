@@ -1845,6 +1845,8 @@ export const callFields = [
   "a.caller_id",
    "a.minutes_of_meeting",
    "a.call_platform",
-   "a.activity_type"
+   "a.activity_type",
+   "a.effective_start_datetime",
+   "a.effective_end_datetime",
 
 ];
