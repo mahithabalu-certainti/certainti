@@ -101,7 +101,7 @@ export const STATUS_MESSAGE = {
   userIdMissingInHeader: "User ID is missing in request header.",
   jurisdictionAddedSuccess: "Jurisdiction configuration added successfully",
   jurisdictionAddedFailed: "Jurisdiction configuration addition failed",
-  taskNameExistsAlready: "Taskname already exists",
+  taskNameExistsAlready: "Task name already exists",
   taskCreatedSuccess: "Task Template created successfully",
   casePrioritySuccess: "Priority fetched successfully",
   milestonesSuccess: "Milestones fetched successfully",
@@ -942,26 +942,24 @@ export const rawQueries = {
     totalprojects: any,
     totalCost: any,
     caseTotalProjects? : any,
-    caseTotalProjectsCost? : any,
     total_projects_qre_cost? : any
   ) {
     let dynamicQuery;
-    if(caseTotalProjects) dynamicQuery = `, case_total_projects = ${caseTotalProjects}, case_total_project_cost = ${caseTotalProjectsCost}, case_total_qre_cost = ${total_projects_qre_cost}`
+    if(caseTotalProjects) dynamicQuery = `, case_total_qre_cost = ${total_projects_qre_cost}`
     else dynamicQuery = ` `
-    return `UPDATE ${schemaName}.cases SET case_total_qualified_projects = ${totalprojects}, case_total_qualified_project_cost = ${totalCost} ${dynamicQuery} WHERE rid = '${caseRid}'`;
+    return `UPDATE ${schemaName}.cases SET case_total_projects = ${totalprojects}, case_total_project_cost = ${totalCost} ${dynamicQuery} WHERE rid = '${caseRid}'`;
   },
   updateCostCountInCaseSummary(
     caseRid: string,
     totalprojects: any,
     totalCost: any,
     caseTotalProjects? : any,
-    caseTotalProjectsCost? : any,
     total_projects_qre_cost? : any
   ) {
     let dynamicQuery;
-    if(caseTotalProjects) dynamicQuery = `, case_total_projects = ${caseTotalProjects}, case_total_project_cost = ${caseTotalProjectsCost}, case_total_qre_cost = ${total_projects_qre_cost}`
+    if(caseTotalProjects) dynamicQuery = `, case_total_qre_cost = ${total_projects_qre_cost}`
     else dynamicQuery = ` `
-    return `UPDATE ${MAIN_SCHEMA_NAME}.case_summary SET case_total_qualified_projects = ${totalprojects}, case_total_qualified_project_cost = ${totalCost} ${dynamicQuery} WHERE case_rid = '${caseRid}'`;
+    return `UPDATE ${MAIN_SCHEMA_NAME}.case_summary SET case_total_projects = ${totalprojects}, case_total_project_cost = ${totalCost} ${dynamicQuery} WHERE case_rid = '${caseRid}'`;
   },
   updateCostCountInCaseForDelete(
     schemaName: string,
@@ -1530,7 +1528,33 @@ export const rawQueries = {
   },
   getProjectByIds (rid : string[], schemaName : string) {
     return `SELECT * FROM ${schemaName}.project_fiscal WHERE rid IN (${rid.map((d : any) => `'${d}'`).join(',')})`
-  }
+  },
+  getTaskTypes (rid : any[]) {
+    let ids : string[] = []
+    if(rid.length > 0) {
+      ids.push(`${rid.map((d : any) => `'${d}'`).join(',')}`)
+      return `SELECT rid, task_type_name FROM ${MAIN_SCHEMA_NAME}.task_type WHERE rid IN (${ids})`
+    }
+  },
+  getTaskDropdownForCaseLevel (schemaName : string, caseRid : string, accountRid : string, isAuditReviewInclude : boolean, milestoneTemplateRid : string) {
+    let query;
+    if(isAuditReviewInclude) {
+      query = `SELECT rid, task_name FROM ${schemaName}.case_task WHERE case_rid = '${caseRid}' AND account_rid = '${accountRid}' ORDER BY task_name ASC`
+    } else {
+      query = `SELECT rid, task_name FROM ${schemaName}.case_task WHERE case_rid = '${caseRid}' AND account_rid = '${accountRid}' AND milestone_template_rid != '${milestoneTemplateRid}' ORDER BY task_name ASC`
+    }
+    return query;
+  },
+  getMilestoneReview () {
+    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.milestone_template where milestone_name ILIKE '%Audit Review%'`
+  },
+  fetchAccountDetailsByRid(accountRid: string) {
+    return `
+            SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`;
+  },
+  fetchAccountInfos(schemaName: string, account_rid: string) {
+    return `SELECT * FROM ${schemaName}.account_details WHERE account_rid = '${account_rid}'`;
+  },
 };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 
 const keyContactRole = {

@@ -5,9 +5,10 @@ import { CaseManagementSchemaService } from "./schemaService";
 import { HttpStatus, rawQueries, STATUS_MESSAGE } from "../../utils/constants";
 import { logMessage, setTaskTemplateData } from "../../utils/helpers";
 import CaseSchemaService from "../cases/schemaService";
-import { AdminTaskTemplatePayloadType, AdminTaskTemplateResponseTypes, caseStatusType, checkListTypes, CreateTaskTemplateType, ICreateChecklist, ICreateChecklistTemplate, ICreateEmailTemplate, MilestoneTypes, priorityTypes, TaskCategoryType, UpdateTaskTemplateType, WeightageType } from "../../utils/types";
+import { AdminTaskTemplatePayloadType, AdminTaskTemplateResponseTypes, caseStatusType, checkListTypes, CreateTaskTemplateType, ICreateChecklist, ICreateChecklistTemplate, ICreateEmailTemplate, MilestoneTypes, priorityTypes, TaskCategoryType, TaskType, UpdateTaskTemplateType, WeightageType } from "../../utils/types";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { fetchAdminTemplates, fetchTaskWeightage } from "../../utils/rawQueries";
+import { TaskTemplate } from "../../models/caseTaskTemplateModel";
 
 /**
  * Service class for managing case-related operations including case creation,
@@ -997,9 +998,20 @@ async listEmailTemplates (
     return result;
   }
   async adminTaskListForDropdown (data : any) {
-    const result = await this.caseManangementSchemaService.listTasksDropdown(data);
-    if(result.length > 0) return result
-    else return []
+    const mainDb = await this.getMainDb();
+    let result = await this.caseManangementSchemaService.listTasksDropdown(data);
+    if(result.length > 0) {
+    const storeTypeIds = [...new Set(result.map((d : TaskTemplate) => d.task_type_rid))];
+    const findTaskType = mainDb.query<TaskType>(rawQueries.getTaskTypes(storeTypeIds)!, {type : QueryTypes.SELECT});
+    const mapType = new Map((await findTaskType).map((d : TaskType) => [d.rid, d.task_type_name]));
+    result = result.map((d : any) => {
+      return {
+        ...d,
+        task_type_name : mapType.get(d.task_type_rid)
+      }
+    })
+    return result;
+    } else return []
   }
 
   async getWeightageList () {

@@ -2933,7 +2933,38 @@ export class InteractionService {
           ? projects.map((p: any) => p.rid)
           : [];
         payload.project_id = projectIds;
-      } else {
+      }
+      else if (req.type === "case") {
+        payload.company_id = req.data[0].account_rid;
+        const { accountNumber } =
+          await this.interactionSchemaService.fetchValidAccountNumberById(
+            req.data[0].account_rid
+          );
+
+        if (!accountNumber) {
+          logMessage(`Invalid account ID in triggerAI: ${req.data[0].account_rid}`);
+          throw new Error("Invalid account ID");
+        }
+        if (!this.orgDbSequelize) {
+          this.orgDbSequelize = await initOrgSequelize();
+        }
+        const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+          /\D/g,
+          ""
+        )}`;
+
+        const [projects]: any[] = await this.orgDbSequelize.query(
+          rawQueries.fetchProjectsByCase(
+            req.data[0].case_rid,
+            schemaName
+          )
+        );
+        const projectIds = Array.isArray(projects)
+          ? projects.map((p: any) => p.project_fiscal_rid)
+          : [];
+        payload.project_id = projectIds;
+      }
+       else {
         payload.company_id = req.data[0].account_rid;
         payload.project_id = req.data[0].project_fiscal_rid;
       }

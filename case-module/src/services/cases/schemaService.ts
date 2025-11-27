@@ -1453,6 +1453,57 @@ return !response;
     }
   }
 
+  async fetchParentAccount(parentAccountId: string): Promise<string> {
+      try {
+        const sequelize = await initMainDbSequelize();
+  
+        const [account]: any[] = await sequelize.query(
+          rawQueries.fetchAccountDetailsByRid(parentAccountId),
+          {
+            type: "SELECT",
+          }
+        );
+  
+        return account?.r_number;
+      } catch (err) {
+        errorLog("Error fetching parent account : " + (err as Error).message);
+        throw new Error(
+          "Error fetching parent account : " + (err as Error).message
+        );
+      }
+    }
+
+  async getSubscriptionDetailsByProjectId(parentaccountId:string,schemaName:string,accountId:string) {
+    try {
+     let schemaNameParent = `trd365_${schemaName.replace(/\D/g, "")}`;
+     const query = rawQueries.fetchAccountInfos(schemaNameParent,accountId);
+     const sequelize = await initOrgSequelize();
+     const users: any = await sequelize.query(query, {
+       replacements: { account_rid: accountId },
+       type: "SELECT",
+     });
+     const parentquery = rawQueries.fetchAccountInfos(schemaNameParent, parentaccountId);
+     const parentSubscriptioninfo: any = await sequelize.query(parentquery, {
+       replacements: { accountId: parentaccountId },
+       type: "SELECT",
+     });
+      if(parentSubscriptioninfo && parentSubscriptioninfo.length > 0)
+      {
+        const parentDetails = parentSubscriptioninfo[0];
+        const isSubscriptionCreated = Boolean(
+        parentDetails.subscription_created &&
+        parentDetails.tenant_id &&
+        parentDetails.client_id &&
+        parentDetails.client_secret);
+        return  isSubscriptionCreated;
+      }else{
+        return false;
+      }
+    } catch (err) {
+      return false
+    }
+  }
+
   async fetchProjectsForCasesResult(
     data: any,
     orgDb: Sequelize,
@@ -1872,7 +1923,6 @@ return !response;
           getTotalProjectCount[0][0].total_projects,
           getTotalProjectCost[0][0].total_cost,
           getTotalProjects[0][0].total_projects,
-          getTotalProjects[0][0].total_projects_cost,
           getTotalProjects[0][0].total_projects_qre_cost
         )
       );
@@ -1882,7 +1932,6 @@ return !response;
           getTotalProjectCount[0][0].total_projects,
           getTotalProjectCost[0][0].total_cost,
           getTotalProjects[0][0].total_projects,
-          getTotalProjects[0][0].total_projects_cost,
           getTotalProjects[0][0].total_projects_qre_cost
         )
       );
@@ -3401,6 +3450,7 @@ return !response;
           status_rid: caseRequest.status_rid,
           //modified_by: caseRequest.modified_by,
           created_datetime: new Date(),
+          task_rid : caseRequest.task_rid
           //  modified_datetime: caseRequest.modified_datetime,
         },
         { transaction }
@@ -4599,7 +4649,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     let clonedData = queryResult[0][0]
     let milestoneSequenceNumber : any[] = []
     let milestoneMap : Map<string, string> = new Map();
-    if(clonedData.milestone_data !== null && clonedData.task_data !== null) {
+    if(clonedData.milestone_data !== null) {
       const finalMilestoneData = clonedData.milestone_data.map((d : any) => {
         milestoneMap.set(d.milestone_rid, d.milestone_sequence_no);
         milestoneSequenceNumber.push(d.milestone_sequence_no)
@@ -4612,7 +4662,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         }
       })
       const result = await CaseMilestone.bulkCreate(finalMilestoneData, {transaction})
-      if(clonedData.task_data.length > 0) {
+      if(clonedData.task_data !== null) {
         let startDate : Date;
         let endDate : Date;
         let startDateMap : Map<number, Date> = new Map();
@@ -4624,7 +4674,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         let validEndDate;
         let otherStartDateMap : Map<number, Date> = new Map()
         let otherEndDateMap : Map<number, Date> = new Map()
-
+        if(clonedData.task_data.length > 0) {
         for(let d of clonedData.task_data) {
           if(milestoneMap.get(d.milestone_template_rid) === "1") {
             if(d.sequence_no === 1) {
@@ -4716,6 +4766,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         await CaseTaskWorkflowConnector.bulkCreate(finalWorkFlowData, {transaction});
         await this.cloneDefaultChecklistTemplate(accountRid, caseRid, filing_type_rid, accountNumber, transaction,finalTaskData)
       }
+        }
     }
   }
   async cloneDefaultChecklistTemplate (accountRid : string, caseRid : string, filing_type_rid : string, accountNumber : string, transaction : Transaction,finalTaskData:any) {
@@ -4730,13 +4781,14 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         if (templateChecklist) {
           const checklistData = {
             attach_to: caseRid,
-            attachment_level: "case",
+            attachment_level: "task",
             checklist_name: templateChecklist.checklist_name,
             checklist_description: templateChecklist.checklist_description,
             checklist_template_rid:task.checklist_template_rid,
             account_rid: accountRid,
             created_datetime: new Date(),
             created_by: task.created_by,
+            task_rid : task.rid
           };
           const newChecklist = await CheckList.create(checklistData, { transaction });
 
@@ -4857,12 +4909,13 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
           checklist_name: response.checklist_name,
           checklist_description: response.description,  
           checklist_items: response.checklist_items,
-          attach_to:createdTaskResult.dataValues.rid,
+          attach_to:data.case_rid,
           attachment_level: 'task',
           created_by: data.created_by,
           created_datetime: new Date(),
           fiscal_year: fiscalYear,
-          checklist_rid: data.checklist_template_rid
+          checklist_rid: data.checklist_template_rid,
+          task_rid : createdTaskResult.dataValues.rid
         };
 
         const checklistResponse = await this.createCheckList(accountNumber, caseRequest, transaction);
@@ -5563,7 +5616,6 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             await TaskCollaborators.create(collaboratorPayload);
           }
         }
-        console.log(files)
         if(files.length > 0) {
           for(let f of files) {
             const uploadFile = await uploadToAzureBlob(f, data.account_rid, taskNumber, "cases");

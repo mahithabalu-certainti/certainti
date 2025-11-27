@@ -136,17 +136,17 @@ routes.get(
 );
 routes.get(
   "/workBreakdown/:accountRid/:caseRid",
-  checkUserStatusMiddleware("NA"),
+  checkUserStatusMiddleware("cases_workbreakdown_view_edit"),
   controller.caseController.fetchCaseKanbanBoard
 );
 routes.post(
   "/task/create",
-  checkUserStatusMiddleware("NA"),
+  checkUserStatusMiddleware("cases_workbreakdown_create"),
   controller.caseController.createTask
 );
 routes.put(
   '/task/update',
-  checkUserStatusMiddleware("NA"),
+  checkUserStatusMiddleware("cases_workbreakdown_view_edit"),
   controller.caseController.updateTask
 );
 routes.post(
@@ -275,11 +275,6 @@ routes.post(
   controller.caseController.linkDeleteTask
 )
 routes.post(
-  "/task/dropdown",
-  checkUserStatusMiddleware("NA"),
-  controller.caseController.listTaskDropdownAccountLevel
-)
-routes.post(
   "/task/collaborator/delete",
   checkUserStatusMiddleware("NA"),
   controller.caseController.deleteCollaboratorsTaskLevel
@@ -288,5 +283,10 @@ routes.put(
   "/task/checklist/status",
   checkUserStatusMiddleware("NA"),
   controller.caseController.updateChecklistItemStatus
+)
+routes.post(
+  "/task/dropDownList",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.caseLevelTaskDropdown
 )
 export default routes;

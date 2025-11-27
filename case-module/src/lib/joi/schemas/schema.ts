@@ -643,6 +643,7 @@ const updateActivityMeetingSchema = Joi.object({
   invitees: Joi.string().optional(),
   minutes_of_meeting: Joi.string().optional().allow(""),
   meeting_participants:Joi.string().optional().allow(""),
+  deleted_file_ids : Joi.array().items(Joi.string()).optional()
 });
 
 const updateActivityCallSchema = Joi.object({
@@ -659,6 +660,7 @@ const updateActivityCallSchema = Joi.object({
   call_platform: Joi.string().max(255).optional().allow(""),
   minutes_of_meeting: Joi.string().optional().allow(""),
   call_participants:Joi.string().optional().allow(""),
+  deleted_file_ids : Joi.array().items(Joi.string()).optional()
 });
 
 const createActivityCallSchema = Joi.object({
@@ -689,7 +691,8 @@ const updateActivityEmailSchema = Joi.object({
   activity_type: Joi.string().valid("email").required(),
   to_email:Joi.string().required(),
   cc_email:Joi.string().optional(),
- email_status:Joi.string().required()
+ email_status:Joi.string().required(),
+  deleted_file_ids : Joi.array().items(Joi.string()).optional()
 });
 
 

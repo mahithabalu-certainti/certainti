@@ -4,7 +4,7 @@ import { Tags } from "../../models/tagsModel";
 import { TaskCollaborators } from "../../models/taskCollaboratorsModel";
 import { TaskComments } from "../../models/taskCommentsModel";
 import { TaskTag } from "../../models/taskTagsModel";
-import { AddCommentsType, AdminTaskTemplatePayloadType, CaseTaskQueryType, CreateCaseTaskType, CreateTaskTemplateType, ICreateCases, ICreateCaseTeam, ICreateChecklist, ICreateChecklistTemplate, ICreateEmailTemplate, MilestoneResponse, UpdateCaseTaskType, UpdateTaskTemplateType, UpdateCommentsType, DeleteCommentsType, CommentsListType, ActivityType, TaskCardDetailsType, priorityTypes, caseTaskStatusTypes, WorkflowConnectorType, CaseTaskWorkFlowCreate, CaseTaskWorkFlowDelete, IActivityTask, IActivityEmail, IActivityMeeting, IActivityCall, WeightageType, TaskCategoryType } from "../../utils/types";
+import { AddCommentsType, AdminTaskTemplatePayloadType, CaseTaskQueryType, CreateCaseTaskType, CreateTaskTemplateType, ICreateCases, ICreateCaseTeam, ICreateChecklist, ICreateChecklistTemplate, ICreateEmailTemplate, MilestoneResponse, UpdateCaseTaskType, UpdateTaskTemplateType, UpdateCommentsType, DeleteCommentsType, CommentsListType, ActivityType, TaskCardDetailsType, priorityTypes, caseTaskStatusTypes, WorkflowConnectorType, CaseTaskWorkFlowCreate, CaseTaskWorkFlowDelete, IActivityTask, IActivityEmail, IActivityMeeting, IActivityCall, WeightageType, TaskCategoryType, CaseTaskDropdownType } from "../../utils/types";
 
 export interface ICaseService {
   createCase(
@@ -275,7 +275,6 @@ deleteLinkTask (data : CaseTaskWorkFlowCreate) : Promise<{
     statusCode: number;
     statusMessage: string;
 } | undefined>
-taskListForDropdownAccountLevel (data : any) : Promise<CaseTask[]>
 deleteTagsAccountLevel (data : any) : Promise<{
     statusCode: number;
     statusMessage: string;
@@ -288,6 +287,7 @@ updateChecklistItemsStatus (data : any) : Promise<{
     statusCode: number;
     statusMessage: string;
 }>
+getTaskDropDownForDependencyMapping(data : any) : Promise<CaseTaskDropdownType[]>
 }
 
 export interface ICaseManagementService {

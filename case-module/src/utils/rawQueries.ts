@@ -10,16 +10,14 @@ import {
 export const fetchCasesHeadersDatas = (schemaName: string, caseRid: string) => {
   let   query = `
     WITH fetch_fiscal_year AS (
-    SELECT fiscal_year, account_rid FROM ${schemaName}.cases where rid = '${caseRid}'
+    SELECT project_fiscal_rid FROM ${schemaName}.case_projects where case_rid = '${caseRid}'
     ),
     fetch_project_count_cost AS (
     SELECT COALESCE(COUNT(pf.rid), 0) AS total_projects, COALESCE(SUM(pf.total_cost_prj), 0.00) AS total_project_cost
     FROM ${schemaName}.project_fiscal pf
     CROSS JOIN fetch_fiscal_year f
     WHERE
-    pf.account_rid = f.account_rid
-    AND
-    pf.fiscal_year = f.fiscal_year
+    rid = f.project_fiscal_rid
     )
 
     SELECT c.rid, c.account_rid, ad.account_name, c.case_name, c.filing_type_rid,
@@ -27,7 +25,7 @@ export const fetchCasesHeadersDatas = (schemaName: string, caseRid: string) => {
     f.total_project_cost AS case_total_project_cost, c.case_total_rd_cost, c.case_total_qre_cost,c.case_completion_percentage,c.case_total_qualified_project_cost,
     c.planned_submission_date, c.statutory_submission_date, c.case_startdate,
     c.description, c.r_number, c.created_by, c.modified_by, c.created_datetime,
-    c.modified_datetime
+    c.modified_datetime, c.total_nonlabor_cost, c.heat_light_power
 
     FROM
     ${schemaName}.cases c
@@ -921,13 +919,22 @@ export const fetchCaseTemplateData = (schemaName : string, caseRid : string, acc
   'effective_start_datetime', t.effective_start_datetime,
   'effective_end_datetime', t.effective_end_datetime,
   'case_team_member_role_rid', t.case_team_member_role_rid,
-  'assigned_to', ct.user_rid,
+  'assigned_to', t.assigned_to,
   'status_rid', t.status_rid,
   'priority_rid', t.priority_rid,
   'task_type_rid', t.task_type_rid,
   'task_description', t.task_description,
   'milestone_template_rid', t.milestone_template_rid,
-  'checklists_count', (SELECT COUNT(DISTINCT chi.rid) FROM ${schemaName}.case_task ct LEFT JOIN ${schemaName}.checklists ch ON ch.checklist_template_rid = ct.checklist_template_rid LEFT JOIN ${schemaName}.checklist_items chi ON chi.checklist_rid = ch.rid WHERE ct.milestone_template_rid = cm.rid AND ct.case_rid = '${caseRid}' AND ct.account_rid = '${accountRid}' AND ct.rid = t.rid AND (ct.checklist_template_rid IS NOT NULL AND ct.checklist_template_rid != '')),
+  'checklists_count', 
+  (
+  SELECT COUNT(DISTINCT chi.rid) 
+  FROM ${schemaName}.checklists ch 
+  LEFT JOIN ${schemaName}.checklist_items chi ON chi.checklist_rid = ch.rid 
+  WHERE 
+  ch.attach_to = '${caseRid}'
+  AND ch.task_rid = t.rid
+  AND attachment_level = 'task'
+  ),
   'comments_count', (SELECT COUNT(DISTINCT tc.rid) from ${schemaName}.task_comments tc WHERE tc.task_rid = t.rid),
   'task_status_rid', t.task_status_rid
   )ORDER BY t.sequence_no ASC) AS tasks
@@ -1260,7 +1267,7 @@ return query;
     SELECT c.rid, c.account_rid, c.checklist_name, c.checklist_description, ct.rid AS task_rid
     FROM 
     ${schemaName}.case_task ct
-    LEFT JOIN ${schemaName}.checklists c ON c.attach_to = ct.rid
+    LEFT JOIN ${schemaName}.checklists c ON c.attach_to = ct.case_rid AND c.task_rid = ct.rid AND c.attachment_level = 'task'
     WHERE
     ct.rid = '${taskRid}'
     AND

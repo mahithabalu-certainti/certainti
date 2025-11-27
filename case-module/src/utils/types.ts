@@ -14,8 +14,8 @@ export interface ICreateCases {
   planned_submission_date: Date;
   statutory_submission_date: Date;
   status_rid?: string;
-  utility_cost?: number;
-  total_nonlabour_cost?: number;
+  heat_light_power?: number;
+  total_nonlabor_cost?: number;
 }
 
 export type CaseHeadersColumns = {
@@ -53,7 +53,7 @@ export type CaseHeadersColumns = {
   modified_by_name : string | null,
   account_status_rid : string,
   account_status_name : string
-
+  is_send_interaction : boolean
 }
 
 export type FilingType = {
@@ -293,6 +293,7 @@ export interface ICreateChecklist {
   modified_datetime?: Date;
   fiscal_year: number;
   checklist_items: ICreateChecklistItem[];
+  task_rid? : string
 }
 
 export interface ICreateChecklistItem{
@@ -743,6 +744,7 @@ export interface IActivityEmail {
   sender_email?: string;
   email_status_rid?: string;
   account_rid?: string; 
+  deleted_file_ids : string[]
 }
 
 export interface IActivityMeeting {
@@ -776,6 +778,7 @@ export interface IActivityMeeting {
   recurrence_type?: string;
   recurrence_interval?: number;
   recurrence_days?: string[];
+  deleted_file_ids : string[]
 }
 
 export interface IActivityCall {
@@ -798,6 +801,7 @@ export interface IActivityCall {
   status_rid?: string;
   account_rid?: string;
   subject?: string;
+  deleted_file_ids : string[]
 }
 
 
@@ -818,4 +822,8 @@ export type WeightageType = {
 export type TaskCategoryType = {
   rid : string
   category_name : string
+}
+export type CaseTaskDropdownType = {
+  rid : string
+  task_name : string
 }
