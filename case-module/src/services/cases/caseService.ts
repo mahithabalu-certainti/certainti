@@ -352,6 +352,18 @@ export class CaseService {
           orgDb
         );
       if (queryResult) {
+        let isSubscriptionCreated = false;
+        const accountData = await this.caseSchemaService.fetchAccountById(accountRid);
+        let accountRNumber = accountData.r_number;
+
+      let childRNumber = await this.caseSchemaService.fetchParentAccount(
+          accountData.parent_account_rid
+        );
+        if (accountData.storage_type === "store_in_parent") {
+          accountRNumber = childRNumber;
+        }
+        isSubscriptionCreated = (await this.caseSchemaService.getSubscriptionDetailsByProjectId(accountData.parent_account_rid, childRNumber,accountRid)) ?? false;
+        queryResult.is_send_interaction = isSubscriptionCreated
         const ids = [
           queryResult.created_by,
           queryResult.case_owner_rid,

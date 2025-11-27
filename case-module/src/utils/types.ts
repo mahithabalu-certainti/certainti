@@ -53,7 +53,7 @@ export type CaseHeadersColumns = {
   modified_by_name : string | null,
   account_status_rid : string,
   account_status_name : string
-
+  is_send_interaction : boolean
 }
 
 export type FilingType = {
