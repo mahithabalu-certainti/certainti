@@ -62,8 +62,46 @@ const updateRuleSchema = Joi.object({
     modified_by: Joi.string().optional(),
 });
 
+const createConditionSchema = Joi.object({
+    field_name: Joi.string().required(),
+    operator: Joi.string().required(),
+    value: Joi.string().required(),
+    data_type: Joi.string().required(),
+    logical_operator: Joi.string().required(),
+    sequence: Joi.number().required(),
+    group_id: Joi.number().required(),
+    created_by: Joi.string().required(),
+});
+
+const listConditionSchema = Joi.object({
+    page: Joi.string().optional()
+        .pattern(/^[0-9]+$/)
+    ,
+    limit: Joi.string().optional()
+        .pattern(/^[0-9]+$/)
+    ,
+    filters: Joi.string().default("{}"),
+    sortBy: Joi.string().optional(),
+    sortOrder: Joi.string().valid("ASC", "DESC").default("ASC")
+});
+
+const updateConditionSchema = Joi.object({
+    condition_rid: Joi.string().required(),
+    field_name: Joi.string().required(),
+    operator: Joi.string().required(),
+    value: Joi.string().required(),
+    data_type: Joi.string().required(),
+    logical_operator: Joi.string().required(),
+    sequence: Joi.number().required(),
+    group_id: Joi.number().required(),
+    modified_by: Joi.string().optional(),
+});
+
 export {
     createRuleSchema,
     listRuleSchema,
-    updateRuleSchema
+    updateRuleSchema,
+    createConditionSchema,
+    listConditionSchema,
+    updateConditionSchema
 };

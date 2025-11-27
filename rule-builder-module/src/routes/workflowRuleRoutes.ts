@@ -1,6 +1,6 @@
 import { Router } from "express";
 import RuleController from "../controllers/workflowRuleMasterController";
-import * as ConditionController from "../controllers/workflowConditionController";
+import ConditionController from "../controllers/workflowConditionController";
 import * as ActionController from "../controllers/workflowRuleActionController";
 import * as ScopeController from "../controllers/workflowRuleScopeMapController";
 import * as AuditController from "../controllers/workflowRuleAuditController";
@@ -19,9 +19,9 @@ router.post("/rule/delete", RuleController.deleteRuleMaster);
 
 // Condition
 router.post("/condition", ConditionController.createCondition);
-router.get("/condition/:rid", ConditionController.getConditionById);
-router.put("/condition/:rid", ConditionController.updateCondition);
-router.delete("/condition/:rid", ConditionController.deleteCondition);
+router.get("/condition", ConditionController.listAllConditions);
+router.put("/condition/update", ConditionController.updateCondition);
+router.post("/condition/delete", ConditionController.deleteCondition);
 // router.get("/condition/group/:groupRid", ConditionController.getConditionsByGroup);
 
 

@@ -151,13 +151,13 @@ export class RulemasterService {
             await RuleMaster.destroy({ where: { rid: data.rule_rid } });
             return {
                 statusCode: HttpStatus.SUCCESS,
-                message: STATUS_MESSAGE.ruleUpdated,
+                message: STATUS_MESSAGE.ruleDeleteSuccess,
             };
         } catch (err) {
             console.log(`Error deleting, ${err}`)
             return {
                 statusCode: HttpStatus.FAILED,
-                message: STATUS_MESSAGE.ruleUpdated,
+                message: STATUS_MESSAGE.ruleDeleteFailed,
             };
         }
     };

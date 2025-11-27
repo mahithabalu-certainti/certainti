@@ -31,4 +31,9 @@ export const STATUS_MESSAGE = {
   ruleCreationFailed: "Rule creation failed",
   ruleDeleteSuccess: "Rule deleted successfully",
   ruleDeleteFailed: "Rule deletion failed",
+  conditionCreated: "Condition created successfullt",
+  conditionCreationFail: "Condition creation failed",
+  conditionUpdated: "Condition updated successfully",
+  conditionDeleteSuccess: "Condition deleted successfully",
+  conditionDeleteFailed: "Condition deletion failed",
 }

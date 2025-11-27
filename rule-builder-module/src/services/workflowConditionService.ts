@@ -1,81 +1,151 @@
 import { Condition, ConditionCreationAttributes } from "../models/workflowRuleCondition";
 import { initSequelize } from "../config/maindbDataSource";
 import { Sequelize } from "sequelize";
+import { HttpStatus, STATUS_MESSAGE } from "../utils/constants";
+import { Logger } from "winston";
+import { ICreateCondition } from "../utils/types";
+import { logMessage } from "../utils/helpers";
 
+export class ConditionService {
 
-/** CREATE a new RuleMaster */
-export const createCondition = async (data: ConditionCreationAttributes) => {
-    //const sequelize = await initSequelize();
-    const sequelize = new Sequelize(process.env.POSTGRES_CONNECTION_STRING!, {
-        dialect: "postgres",
-        logging: false, // optional
-    });
+    private logger: Logger;
 
-    // Initialize model ONCE
-    Condition.initialize(sequelize);
-    const condition = await Condition.create({
-        r_number: data.r_number ?? null,
-        eid: data.eid ?? null,
-        logical_operator: data.logical_operator,
-        field_name: data.field_name,
-        operator: data.operator,
-        value: data.value,
-        data_type: data.data_type ?? null,
-        sequence: data.sequence,
-        group_id: data.group_id,
-        created_by: data.created_by,
-        modified_by: data.modified_by ?? data.created_by, // fallback to created_by if undefined
-    });
+    constructor(logger: Logger) {
+        this.logger = logger;
+    }
 
-    return condition;
-};
+    /** CREATE a new Condition */
+    async createCondition(conditionRequest: ICreateCondition, userId: string): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: { condition: any };
+    }> {
+        //const sequelize = await initSequelize();
+        const sequelize = new Sequelize(process.env.POSTGRES_CONNECTION_STRING!, {
+            dialect: "postgres",
+            logging: false, // optional
+        });
+        // Initialize model ONCE
+        Condition.initialize(sequelize);
+        const condition = await Condition.create({
+            logical_operator: conditionRequest.logical_operator,
+            field_name: conditionRequest.field_name,
+            operator: conditionRequest.operator,
+            value: conditionRequest.value,
+            data_type: conditionRequest.data_type ?? null,
+            sequence: conditionRequest.sequence,
+            group_id: conditionRequest.group_id,
+            created_by: conditionRequest.created_by,
+            modified_by: conditionRequest.modified_by ?? conditionRequest.created_by, // fallback to created_by if undefined
+        });
 
-/** GET all RuleMasters */
-export const getAllConditions = async () => {
-    const rules = await Condition.findAll({
-        order: [["created_datetime", "DESC"]],
-    });
-    return rules;
-};
-
-/** GET RuleMaster by RID */
-export const getConditionById = async (rid: string) => {
-    const rule = await Condition.findByPk(rid);
-    return rule;
-};
-
-/** UPDATE RuleMaster by RID */
-export const updateCondition = async (
-    rid: string,
-    data: Partial<ConditionCreationAttributes>
-) => {
-    // Build update object dynamically
-    const updateData: Partial<ConditionCreationAttributes> = {
-        modified_datetime: new Date(), // always update timestamp
+        return {
+            statusCode: HttpStatus.SUCCESS,
+            message: STATUS_MESSAGE.conditionCreated,
+            data: {
+                condition: condition,
+            },
+        };
     };
 
-    if (data.logical_operator !== undefined) updateData.logical_operator = data.logical_operator;
-    if (data.field_name !== undefined) updateData.field_name = data.field_name; // can be string or undefined
-    if (data.operator !== undefined) updateData.operator = data.operator;
-    if (data.value !== undefined) updateData.value = data.value;
-    if (data.data_type !== undefined) updateData.data_type = data.data_type;
-    if (data.sequence !== undefined) updateData.sequence = data.sequence;
-    if (data.modified_by !== undefined) updateData.modified_by = data.modified_by;
+    /** GET all Conditions */
+    async listConditions(
+        data: any,
+        filters: Record<string, any>,
+        userId: string,
+        apiType: string
+    ): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: { conditions: any; count: number };
+    }> {
+        const sequelize = new Sequelize(process.env.POSTGRES_CONNECTION_STRING!, {
+            dialect: "postgres",
+            logging: false, // optional
+        });
+        Condition.initialize(sequelize);
+        const limit = data.limit;
+        const offset = (data.page - 1) * limit;
+        const { rows, count } = await Condition.findAndCountAll({
+            order: [[data.sortBy, data.sortOrder]],
+            limit,
+            offset
+        });
+        return {
+            statusCode: HttpStatus.SUCCESS,
+            message: HttpStatus.SUCCESS_MESSAGE,
+            data: {
+                conditions: rows,
+                count: count,
+            },
+        };
+    };
 
-    const [updatedCount, [updatedRule]] = await Condition.update(
-        updateData,
-        {
-            where: { rid },
-            returning: true,
+    /** GET RuleMaster by RID */
+    // export const getConditionById = async (rid: string) => {
+    //     const rule = await Condition.findByPk(rid);
+    //     return rule;
+    // };
+
+    /** UPDATE RuleMaster by RID */
+    async updateCondition(
+        conditionRequest: ICreateCondition,
+        userId: string
+    ): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: { condition: any };
+    }> {
+        // Build update object dynamically
+        const sequelize = new Sequelize(process.env.POSTGRES_CONNECTION_STRING!, {
+            dialect: "postgres",
+            logging: false, // optional
+        });
+        const dbInit = Condition.initialize(sequelize);
+        const caseUpdateResponse = await Condition.update(
+            {
+                ...conditionRequest,
+                modified_by: "userId",
+                modified_datetime: new Date(),
+            },
+            {
+                where: { rid: conditionRequest.condition_rid },
+            }
+        );
+
+        return {
+            statusCode: HttpStatus.SUCCESS,
+            message: STATUS_MESSAGE.conditionUpdated,
+            data: {
+                condition: {},
+            },
+        };
+    };
+
+
+    /** DELETE RuleMaster by RID */
+    async deleteCondition(data: any, userId: string) {
+        try {
+            const sequelize = new Sequelize(process.env.POSTGRES_CONNECTION_STRING!, {
+                dialect: "postgres",
+                logging: false, // optional
+            });
+            Condition.initialize(sequelize);
+            await Condition.destroy({ where: { rid: data.condition_rid } });
+            return {
+                statusCode: HttpStatus.SUCCESS,
+                message: STATUS_MESSAGE.conditionDeleteSuccess,
+            };
+        } catch (err) {
+            console.log(`Error deleting, ${err}`)
+            return {
+                statusCode: HttpStatus.FAILED,
+                message: STATUS_MESSAGE.conditionDeleteFailed,
+            };
         }
-    );
+    };
 
-    return updatedRule;
-};
-
-
-/** DELETE RuleMaster by RID */
-export const deleteCondition = async (rid: string) => {
-    await Condition.destroy({ where: { rid } });
-    return { message: "Rule deleted successfully" };
-};
+}
