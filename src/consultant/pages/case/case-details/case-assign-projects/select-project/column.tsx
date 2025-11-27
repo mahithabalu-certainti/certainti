@@ -249,7 +249,7 @@ export const getSelectProjectColumns = (
   },
   {
     id: 'rd_percent_final',
-    label: 'QRE Percent Final%',
+    label: 'QRE Percent Final',
     sortable: true,
     sortId: 'rd_percent_final',
     width: 180,

@@ -42,7 +42,7 @@ const AssignedProjects: React.FC<AssignedProjectsProps> = ({
   const { caseId } = useParams();
   const [searchParams] = useSearchParams();
   const [rowsPerPage, setRowsPerPage] = useState(100);
-  const [sortField, setSortField] = useState<string>('project_type_name');
+  const [sortField, setSortField] = useState<string>('project_code');
   const [sortBy, setSortBy] = useState<'ASC' | 'DESC'>('ASC');
   // const { permission } = useSelector((state: RootState) => state.permission);
   const accountID = searchParams.get('accountID') || '';
