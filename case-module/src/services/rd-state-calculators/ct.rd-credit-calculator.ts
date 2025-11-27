@@ -132,7 +132,7 @@ export class RdCreditCalculatorForCT {
         const part2OneThirdRate = part2AllowableTentativeTaxCredit.mul(new Decimal(extractConfig.one_third_rate || 0));
 
         //Line 3: Current Year CT Business Tax Liability 
-        const currentYearCTBusinessTaxLiability = new Decimal(business_tax_liability); //TODO: Placeholder as the actual value is not provided.
+        const currentYearCTBusinessTaxLiability = new Decimal(business_tax_liability); 
 
         //Line 4: Multiply Line 3 by 50%
         const halfTaxLiability = currentYearCTBusinessTaxLiability.mul(new Decimal(extractConfig.half_tax_liability_rate || 0));

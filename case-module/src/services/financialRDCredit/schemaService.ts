@@ -83,7 +83,7 @@ class RDCreditSchemaService {
                     JOIN ${schemaName}.project_fiscal pf
                         ON cp.project_fiscal_rid = pf.rid
                     JOIN ${schemaName}.cases cs ON cs.rid = cp.case_rid
-                    WHERE cp.case_rid = :caseRid
+                    WHERE cp.case_rid = :caseRid AND cs.fiscal_year = pf.fiscal_year
                     GROUP BY cs.tax_liability
                 `,
                 {
