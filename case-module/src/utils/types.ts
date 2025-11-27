@@ -293,6 +293,7 @@ export interface ICreateChecklist {
   modified_datetime?: Date;
   fiscal_year: number;
   checklist_items: ICreateChecklistItem[];
+  task_rid? : string
 }
 
 export interface ICreateChecklistItem{
