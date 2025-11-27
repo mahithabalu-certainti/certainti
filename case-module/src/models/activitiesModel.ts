@@ -46,6 +46,9 @@ export interface ActivitiesAttributes {
   minutes_of_meeting?: string;
   caller_id?: string;
   call_participants?: string[];
+  recurrence_days?: string[];
+  recurrence_interval?: number;
+  recurrence_type?: string;
 }
 
 export interface ActivitiesCreationAttributes extends Optional<ActivitiesAttributes, "rid"> {}
@@ -94,6 +97,9 @@ export class Activities extends Model<ActivitiesAttributes, ActivitiesCreationAt
   public minutes_of_meeting?: string
   public caller_id?: string;
   public call_participants?: string[];
+  public recurrence_days?: string[];
+  public recurrence_interval?: number;
+  public recurrence_type?: string;
 
   static initialize(sequelize: Sequelize, schemaName: string = MAIN_SCHEMA_NAME) {
     return Activities.init({
@@ -148,6 +154,9 @@ export class Activities extends Model<ActivitiesAttributes, ActivitiesCreationAt
       minutes_of_meeting: { type: DataTypes.TEXT, allowNull: true },
       caller_id: { type: DataTypes.STRING(255), allowNull: true },
       call_participants: { type: DataTypes.JSONB, allowNull: true },
+      recurrence_days: { type: DataTypes.JSONB, allowNull: true },
+      recurrence_interval: { type: DataTypes.INTEGER, allowNull: true },
+      recurrence_type: { type: DataTypes.STRING(255), allowNull: true },
     }, {
       sequelize,
       schema: schemaName,

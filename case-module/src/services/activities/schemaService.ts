@@ -1686,10 +1686,21 @@ class ActivitySchemaService {
       rawQueries.fetchActivityStatusByName(activityStatus.completed, activityRequest.activity_type),
       { type: "SELECT" }
     );
+    let callParticipants: string[] = [];
+    if (Array.isArray(activityRequest.call_participants)) {
+    callParticipants = activityRequest.call_participants;
+  } else if (typeof activityRequest.call_participants === 'string') {
+    try {
+      callParticipants = JSON.parse(activityRequest.call_participants);
+    } catch {
+      callParticipants = [];
+    }
+  }
     const activityData = {
       ...activityRequest,
       activity_type: "Call",
       status_rid: callStatus?.rid || null,
+      call_participants: callParticipants,
       account_rid:
         activityRequest.accountRid || activityRequest.account_rid || "",
     };
@@ -2101,8 +2112,8 @@ class ActivitySchemaService {
       activity_type: emailDetails?.activity_type ?? "",
       subject: emailDetails?.subject ?? "",
       body_html: emailDetails?.body_html ?? "",
-      to_email: emailDetails?.to_email ,
-      cc_emails: emailDetails?.cc_emails,
+      to_email: emailDetails?.to_email || [],
+      cc_emails: emailDetails?.cc_email || [],
       email_status: emailDetails?.email_status ?? "",
       r_number: emailDetails.r_number ?? "",
       status_rid: emailDetails.status_rid ?? "",
@@ -2217,6 +2228,11 @@ class ActivitySchemaService {
       created_datetime: emailDetails.created_datetime ?? null,
       modified_datetime: emailDetails.modified_datetime ?? null,
       attachments: attachmentsDetails || [],
+      effective_start_datetime:emailDetails.effective_start_datetime ?? null,
+      effective_end_datetime:emailDetails.effective_end_datetime ?? null, 
+      recurrence_days: emailDetails.recurrence_days ? emailDetails.recurrence_days: [],
+      recurrence_interval: emailDetails.recurrence_interval ?? null,
+      recurrence_type: emailDetails.recurrence_type ?? null,
     };
 
     return response;
@@ -2305,7 +2321,7 @@ class ActivitySchemaService {
       activity_rid: emailDetails?.rid,
       activity_type: emailDetails?.activity_type ?? "",
       subject: emailDetails?.subject ?? "",
-      call_participants: emailDetails?.call_participants ? emailDetails.call_participants.split(";") : [],
+      call_participants: emailDetails?.call_participants ? emailDetails.call_participants : [],
       caller_id: emailDetails?.caller_id ?? "",
       minutes_of_meeting: emailDetails?.minutes_of_meeting ?? "",
       call_platform: emailDetails?.call_platform ?? "",
@@ -2318,6 +2334,8 @@ class ActivitySchemaService {
       created_by: userInfo.created_name ?? emailDetails.created_by,
       created_datetime: emailDetails.created_datetime ?? null,
       modified_datetime: emailDetails.modified_datetime ?? null,
+      effective_start_datetime:emailDetails.effective_start_datetime ?? null,
+      effective_end_datetime:emailDetails.effective_end_datetime ?? null,
       attachments: attachmentsDetails || [],
     };
 

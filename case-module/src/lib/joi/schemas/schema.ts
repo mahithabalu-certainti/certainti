@@ -615,7 +615,7 @@ const createActivityMeetingSchema = Joi.object({
  attach_to : Joi.string().required(),
  attachment_level : Joi.string().required(),
  fiscal_year : Joi.number().optional(),
- activity_type: Joi.string().valid("meeting").required(),
+ activity_type: Joi.string().valid("Meeting").required(),
  subject: Joi.string().max(500).required(),
   effective_start_datetime: Joi.date().required(),
   effective_end_datetime: Joi.date().required(),
@@ -690,7 +690,8 @@ const updateActivityEmailSchema = Joi.object({
   fiscal_year : Joi.number().optional(),
   activity_type: Joi.string().valid("email").required(),
   to_email:Joi.string().required(),
-  ccEmail: Joi.string().optional(),
+  cc_email:Joi.string().optional(),
+ email_status:Joi.string().required(),
   deleted_file_ids : Joi.array().items(Joi.string()).optional()
 });
 
