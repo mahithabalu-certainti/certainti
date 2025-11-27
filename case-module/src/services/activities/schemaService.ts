@@ -2121,6 +2121,11 @@ class ActivitySchemaService {
       created_datetime: emailDetails.created_datetime ?? null,
       modified_datetime: emailDetails.modified_datetime ?? null,
       attachments: attachmentsDetails || [],
+      effective_start_datetime:emailDetails.effective_start_datetime ?? null,
+      effective_end_datetime:emailDetails.effective_end_datetime ?? null, 
+      recurrence_days: emailDetails.recurrence_days ? emailDetails.recurrence_days: [],
+      recurrence_interval: emailDetails.recurrence_interval ?? null,
+      recurrence_type: emailDetails.recurrence_type ?? null,
     };
 
     return response;

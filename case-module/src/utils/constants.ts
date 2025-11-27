@@ -1825,6 +1825,11 @@ export const meetingFields = [
   "a.meeting_id",
   "a.meeting_participants",
   "a.activity_type",
+  "a.recurrence_days",
+  "a.recurrence_interval",
+  "a.recurrence_type",
+  "a.effective_end_datetime",
+  "a.effective_start_datetime"
 ];
 
 export const callFields = [
