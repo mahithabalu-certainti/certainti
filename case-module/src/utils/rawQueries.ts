@@ -10,16 +10,14 @@ import {
 export const fetchCasesHeadersDatas = (schemaName: string, caseRid: string) => {
   let   query = `
     WITH fetch_fiscal_year AS (
-    SELECT fiscal_year, account_rid FROM ${schemaName}.cases where rid = '${caseRid}'
+    SELECT project_fiscal_rid FROM ${schemaName}.case_projects where case_rid = '${caseRid}'
     ),
     fetch_project_count_cost AS (
     SELECT COALESCE(COUNT(pf.rid), 0) AS total_projects, COALESCE(SUM(pf.total_cost_prj), 0.00) AS total_project_cost
     FROM ${schemaName}.project_fiscal pf
     CROSS JOIN fetch_fiscal_year f
     WHERE
-    pf.account_rid = f.account_rid
-    AND
-    pf.fiscal_year = f.fiscal_year
+    rid = f.project_fiscal_rid
     )
 
     SELECT c.rid, c.account_rid, ad.account_name, c.case_name, c.filing_type_rid,

@@ -1547,7 +1547,14 @@ export const rawQueries = {
   },
   getMilestoneReview () {
     return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.milestone_template where milestone_name ILIKE '%Audit Review%'`
-  }
+  },
+  fetchAccountDetailsByRid(accountRid: string) {
+    return `
+            SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`;
+  },
+  fetchAccountInfos(schemaName: string, account_rid: string) {
+    return `SELECT * FROM ${schemaName}.account_details WHERE account_rid = '${account_rid}'`;
+  },
 };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 
 const keyContactRole = {

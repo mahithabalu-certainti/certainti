@@ -1453,6 +1453,57 @@ return !response;
     }
   }
 
+  async fetchParentAccount(parentAccountId: string): Promise<string> {
+      try {
+        const sequelize = await initMainDbSequelize();
+  
+        const [account]: any[] = await sequelize.query(
+          rawQueries.fetchAccountDetailsByRid(parentAccountId),
+          {
+            type: "SELECT",
+          }
+        );
+  
+        return account?.r_number;
+      } catch (err) {
+        errorLog("Error fetching parent account : " + (err as Error).message);
+        throw new Error(
+          "Error fetching parent account : " + (err as Error).message
+        );
+      }
+    }
+
+  async getSubscriptionDetailsByProjectId(parentaccountId:string,schemaName:string,accountId:string) {
+    try {
+     let schemaNameParent = `trd365_${schemaName.replace(/\D/g, "")}`;
+     const query = rawQueries.fetchAccountInfos(schemaNameParent,accountId);
+     const sequelize = await initOrgSequelize();
+     const users: any = await sequelize.query(query, {
+       replacements: { account_rid: accountId },
+       type: "SELECT",
+     });
+     const parentquery = rawQueries.fetchAccountInfos(schemaNameParent, parentaccountId);
+     const parentSubscriptioninfo: any = await sequelize.query(parentquery, {
+       replacements: { accountId: parentaccountId },
+       type: "SELECT",
+     });
+      if(parentSubscriptioninfo && parentSubscriptioninfo.length > 0)
+      {
+        const parentDetails = parentSubscriptioninfo[0];
+        const isSubscriptionCreated = Boolean(
+        parentDetails.subscription_created &&
+        parentDetails.tenant_id &&
+        parentDetails.client_id &&
+        parentDetails.client_secret);
+        return  isSubscriptionCreated;
+      }else{
+        return false;
+      }
+    } catch (err) {
+      return false
+    }
+  }
+
   async fetchProjectsForCasesResult(
     data: any,
     orgDb: Sequelize,
