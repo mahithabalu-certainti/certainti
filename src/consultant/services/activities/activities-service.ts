@@ -10,6 +10,9 @@ import {
   ActivityList,
   ActivityListApiResponse,
   ActivityListURLParams,
+  ActivityTaskFormPayload,
+  CallActivityDetails,
+  CallActivityDetailsResponse,
   EmailActivityDetails,
   EmailActivityDetailsResponse,
   MeetingActivityDetails,
@@ -19,8 +22,11 @@ import {
 } from '../../types';
 import {
   ActivityListURL,
+  createActivityCallURL,
   createActivityEmailURL,
   createActivityMeetingURL,
+  createActivityTaskURL,
+  updateActivityCallURL,
   updateActivityEmailURL,
   updateActivityMeetingURL,
 } from '../urls/activities-url';
@@ -182,32 +188,56 @@ export const useCreateActivityMeeting = () => {
 export const useUpdateActivityMeeting = () => {
   return useApiMutationSericve<unknown, FormData>(
     updateActivityMeetingURL(),
-    'put'
+    'post'
+  );
+};
+
+// Call Activity
+export const fetchCallActivityDetails = async (
+  entityId: string,
+  activityId: string
+): Promise<CallActivityDetails> => {
+  const response = await caseServiceApi.get<CallActivityDetailsResponse>(
+    `/api/activities/call/${activityId}/${entityId}`
+  );
+
+  return response.data.data.activityDetails;
+};
+
+export const useCallActivityDetails = (
+  entityId?: string,
+  activityId?: string,
+  isEnable?: boolean
+): UseQueryResult<CallActivityDetails | undefined, Error> => {
+  return useQuery<CallActivityDetails | undefined, Error>({
+    queryKey: ['call-activity-details', entityId, activityId, isEnable],
+    queryFn: () => fetchCallActivityDetails(entityId!, activityId!),
+    retry: 0,
+    gcTime: 0,
+    enabled: !!activityId && !!entityId && isEnable,
+  });
+};
+
+export const useCreateActivityCall = () => {
+  return useApiMutationSericve<unknown, FormData>(
+    createActivityCallURL(),
+    'post'
+  );
+};
+
+export const useUpdateActivityCall = () => {
+  return useApiMutationSericve<unknown, FormData>(
+    updateActivityCallURL(),
+    'post'
   );
 };
 
 // Create Activity Task
-export interface CreateActivityTaskPayload {
-  account_rid: string;
-  attach_to: string;
-  attachment_level: 'account' | 'project' | 'case';
-  task_name: string;
-  description?: string;
-  fiscal_year?: number;
-  effective_start_datetime?: string;
-  effective_end_datetime?: string;
-  assigned_to?: string;
-  status_rid?: string;
-  priority_rid?: string;
-  checklist_rid?: string;
-  tags?: string | Array<{ tag_rid: string; is_new_tag: boolean }>;
-}
-
 export const useCreateActivityTask = () => {
-  return useMutation<unknown, Error, CreateActivityTaskPayload>({
-    mutationFn: async (payload: CreateActivityTaskPayload) => {
+  return useMutation<unknown, Error, ActivityTaskFormPayload>({
+    mutationFn: async (payload: ActivityTaskFormPayload) => {
       const response = await caseServiceApi.post(
-        '/api/activities/task/create',
+        createActivityTaskURL(),
         payload
       );
       return response.data;

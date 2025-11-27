@@ -1839,6 +1839,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     '& .MuiOutlinedInput-root': {
                       height: '32px',
                       borderRadius: '2px',
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: isError
+                          ? '#EF4444 !important'
+                          : '#CBD6E2 !important',
+                      },
                       '& input': {
                         fontWeight: 400,
                         fontSize: '13px',
@@ -1852,6 +1857,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                         '&[value="YYYY-MM-DD"]': {
                           color: '#7D98B6 !important',
                           WebkitTextFillColor: '#7D98B6 !important',
+                        },
+                        '&[value=""]': {
+                          color: '#00295C !important',
+                          WebkitTextFillColor: '#00295C !important',
                         },
                       },
                       '&:hover .MuiOutlinedInput-notchedOutline': {
@@ -2258,6 +2267,85 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 ...field,
                 error: 'Invalid date',
               };
+            }
+          }
+
+          if (field.type === 'date') {
+            const dateValue = constructFormData[field.name] as string;
+            if (
+              field.name === 'effective_start_datetime' ||
+              field.name === 'effective_end_datetime'
+            ) {
+              const startDate = constructFormData[
+                'effective_start_datetime'
+              ] as string;
+              const endDate = constructFormData[
+                'effective_end_datetime'
+              ] as string;
+
+              // Future date validation for individual fields
+              if (dateValue) {
+                if (
+                  field.disableFutureDates &&
+                  dayjs(dateValue).isAfter(dayjs(), 'day')
+                ) {
+                  hasError = true;
+                  return {
+                    ...field,
+                    error: `${field.name === 'effective_start_datetime' ? 'Effective Start Date' : 'Effective End Date'} cannot be in the future`,
+                  };
+                }
+
+                const currentDate = dayjs();
+
+                if (
+                  field.name === 'effective_end_datetime' &&
+                  dayjs(dateValue).isAfter(currentDate, 'day')
+                ) {
+                  hasError = true;
+                  return {
+                    ...field,
+                    error: 'Effective End Date cannot be in the future',
+                  };
+                }
+              }
+
+              // Relationship validation between start and end dates
+              if (!startDate && endDate) {
+                hasError = true;
+                return {
+                  ...field,
+                  error:
+                    'Effective Start Date is required if Effective End Date is provided',
+                };
+              }
+
+              if (startDate && endDate) {
+                const start = dayjs(startDate);
+                const end = dayjs(endDate);
+
+                if (start.isSame(end, 'day')) {
+                  hasError = true;
+                  return {
+                    ...field,
+                    error:
+                      field.name === 'effective_start_datetime'
+                        ? 'Effective Start Date cannot be the same as Effective End Date'
+                        : 'Effective End Date cannot be the same as Effective Start Date',
+                  };
+                }
+
+                if (start.isAfter(end, 'day')) {
+                  hasError = true;
+                  return {
+                    ...field,
+                    error:
+                      field.name === 'effective_start_datetime'
+                        ? 'Effective Start Date cannot be after Effective End Date'
+                        : 'Effective End Date cannot be before Effective Start Date',
+                  };
+                }
+              }
             }
           }
 

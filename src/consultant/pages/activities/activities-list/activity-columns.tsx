@@ -1,3 +1,4 @@
+import { formatDateToYYYYMMDDWithTime } from '../../../../common-utils';
 import { ListTableColumn } from '../../../../components/table/types';
 import { ActivityList, ActivityType } from '../../../types';
 
@@ -165,7 +166,8 @@ export const getActivityEmailListColumns = (
     label: 'Created On',
     sortable: true,
     sortId: 'created_datetime',
-    width: 160,
+    width: 170,
+    render: (row) => formatDateToYYYYMMDDWithTime(row.created_datetime),
   },
   {
     id: 'attached_to',
@@ -218,7 +220,8 @@ export const getActivityMeetingListColumns = (
     label: 'Created On',
     sortable: true,
     sortId: 'created_datetime',
-    width: 160,
+    width: 170,
+    render: (row) => formatDateToYYYYMMDDWithTime(row.created_datetime),
   },
   {
     id: 'invited_by',

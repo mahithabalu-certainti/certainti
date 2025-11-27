@@ -5,7 +5,6 @@ import {
   useParams,
   useSearchParams,
 } from 'react-router-dom';
-import { accountDetailsProps } from '../../../account-details/utils';
 import { AllPermissions } from '../../../../../common-service';
 import {
   getAllActivityFilterFields,
@@ -44,14 +43,16 @@ const ActivityTabs = [
   },
 ];
 
-interface ActivitiesProps {
+interface ProjectActivitiesProps {
   accountInActive: boolean;
-  accountDetails: accountDetailsProps;
+  projectFiscalYear?: number | string;
+  projectCode?: string;
 }
 
-const Activities: React.FC<ActivitiesProps> = ({
+const ProjectActivities: React.FC<ProjectActivitiesProps> = ({
   accountInActive,
-  accountDetails,
+  projectFiscalYear,
+  projectCode,
 }) => {
   const navigate = useNavigate();
   const [appliedFilters, setAppliedFilters] = useState<
@@ -71,16 +72,18 @@ const Activities: React.FC<ActivitiesProps> = ({
     setColumnAnchorEl(event.currentTarget);
   };
 
-  const { accountid } = useParams();
+  const { projectid: projectID } = useParams();
   const [searchParams] = useSearchParams();
+  const accountId = searchParams.get('accountID') || '';
   const activityId = searchParams.get('activity_id');
   const activityType = searchParams.get('activity_type');
   const viewDetails = !!activityId && !!activityType;
 
   const entityDetails = {
-    r_number: accountDetails?.accountById?.r_number || '',
-    module: 'account',
-    source: `Account > ${accountDetails?.accountById?.r_number || ''}`,
+    r_number: projectCode || '',
+    module: 'project',
+    source: `Project > ${projectCode || ''}`,
+    fiscalYear: projectFiscalYear,
   };
 
   const initialTab = useMemo(() => {
@@ -135,14 +138,15 @@ const Activities: React.FC<ActivitiesProps> = ({
 
   const handleCreate = () => {
     const path = generatePath(ACTIVITY_CREATE, {
-      module: 'account',
+      module: 'project',
       type: tabParam,
     });
     const queryParams = new URLSearchParams({
-      accountId: accountid || '',
-      entityLevel: 'account',
-      entityId: accountid || '',
-      source: `Account > ${accountDetails?.accountById?.r_number || ''}`,
+      accountId,
+      entityLevel: 'project',
+      entityId: projectID || '',
+      projectFiscalYear: projectFiscalYear?.toString() || '',
+      source: `Project > ${projectCode || ''}`,
     });
     navigate(`${path}?${queryParams.toString()}`);
   };
@@ -199,7 +203,7 @@ const Activities: React.FC<ActivitiesProps> = ({
         filterMenu={filterFields}
         filterVisibility={!viewDetails}
         showFilter={showFilter}
-        contextKey='account-activities'
+        contextKey='project-activities'
         appliedFilters={appliedFilters}
         setAppliedFilters={setAppliedFilters}
         setCurrentPage={setCurrentPage}
@@ -237,7 +241,7 @@ const Activities: React.FC<ActivitiesProps> = ({
         <TaskDetails
           accountInActive={accountInActive}
           tabValue={tabParam as ActivityType}
-          entityLevel={'account'}
+          entityLevel={'project'}
         />
       )}
 
@@ -246,7 +250,7 @@ const Activities: React.FC<ActivitiesProps> = ({
           accountInActive={accountInActive}
           tabValue={tabParam as ActivityType}
           entityDetails={entityDetails}
-          entityLevel='account'
+          entityLevel='project'
         />
       ) : (
         <div className='border border-t-0 border-[#CBD6E2]'>
@@ -263,7 +267,7 @@ const Activities: React.FC<ActivitiesProps> = ({
               searchValue={searchText}
               accountInActive={accountInActive}
               entityDetails={entityDetails}
-              entityLevel='account'
+              entityLevel='project'
             />
           )}
 
@@ -280,7 +284,7 @@ const Activities: React.FC<ActivitiesProps> = ({
               searchValue={searchText}
               accountInActive={accountInActive}
               entityDetails={entityDetails}
-              entityLevel='account'
+              entityLevel='project'
             />
           )}
 
@@ -297,7 +301,7 @@ const Activities: React.FC<ActivitiesProps> = ({
               searchValue={searchText}
               accountInActive={accountInActive}
               entityDetails={entityDetails}
-              entityLevel='account'
+              entityLevel='project'
             />
           )}
 
@@ -314,7 +318,7 @@ const Activities: React.FC<ActivitiesProps> = ({
               searchValue={searchText}
               accountInActive={accountInActive}
               entityDetails={entityDetails}
-              entityLevel='account'
+              entityLevel='project'
             />
           )}
 
@@ -331,7 +335,7 @@ const Activities: React.FC<ActivitiesProps> = ({
               searchValue={searchText}
               accountInActive={accountInActive}
               entityDetails={entityDetails}
-              entityLevel='account'
+              entityLevel='project'
             />
           )}
         </div>
@@ -340,4 +344,4 @@ const Activities: React.FC<ActivitiesProps> = ({
   );
 };
 
-export default Activities;
+export default ProjectActivities;

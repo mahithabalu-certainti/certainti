@@ -25,7 +25,7 @@ interface EmailDetailsProps {
     module: string;
     source: string;
   };
-  entityLevel: 'account' | 'case';
+  entityLevel: 'account' | 'case' | 'project';
 }
 
 const EmailDetails: React.FC<EmailDetailsProps> = ({
@@ -84,11 +84,6 @@ const EmailDetails: React.FC<EmailDetailsProps> = ({
   ];
 
   const emailInformation: DetailItem[] = [
-    {
-      label: 'Email ID',
-      value: data?.r_number ?? '',
-      key: 'r_number',
-    },
     {
       label: 'Email To',
       value: data?.to_email?.join(', ') ?? '',
@@ -157,6 +152,11 @@ const EmailDetails: React.FC<EmailDetailsProps> = ({
       label: 'Record ID',
       value: data?.activity_rid || activityId,
       key: 'rid',
+    },
+    {
+      label: 'Email ID',
+      value: data?.r_number ?? '',
+      key: 'r_number',
     },
     {
       label: 'Created On',

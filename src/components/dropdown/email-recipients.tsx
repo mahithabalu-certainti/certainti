@@ -266,7 +266,9 @@ const EmailRecipients: React.FC<EmailRecipientsProps> = ({
             value={inputValue}
             onChange={(e) => handleInputChange(e.target.value)}
             onKeyDown={onKeyDown}
-            placeholder={values.length === 0 ? 'Enter email or name...' : ''}
+            placeholder={
+              values.length === 0 ? 'Type @ to view suggestions…' : ''
+            }
             className='flex-1 border-none outline-none bg-transparent text-[13px] placeholder-[#7D98B6] focus:outline-none'
           />
         </div>

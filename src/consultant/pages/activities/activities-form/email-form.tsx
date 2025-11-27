@@ -69,7 +69,7 @@ const EmailForm: React.FC = () => {
     updated_on: '',
     updated_by: '',
   });
-
+  const [activeFlag, setActiveFlag] = useState<FlagTypeEnum | null>(null);
   const [errors, setErrors] = useState<ActivityEmailFormErrors>({});
   const [toInput, setToInput] = useState<string>('');
   const [ccInput, setCcInput] = useState<string>('');
@@ -103,7 +103,6 @@ const EmailForm: React.FC = () => {
     activityId || '',
     true
   );
-  const commonSuccess = createEmail.isSuccess || updateEmail.isSuccess;
 
   const userOptions = useMemo(() => {
     return (
@@ -114,16 +113,6 @@ const EmailForm: React.FC = () => {
       })) || []
     );
   }, [userListOptions]);
-
-  useEffect(() => {
-    if (commonSuccess) {
-      successToast(
-        isEditView ? 'Email updated successfully' : 'Email created successfully'
-      );
-      goBack();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [commonSuccess, isEditView]);
 
   useEffect(() => {
     if (emailData && isEditView) {
@@ -148,7 +137,7 @@ const EmailForm: React.FC = () => {
             id: att.rid,
             file: null,
             name: `${att.document_name}${att.format}`,
-            size: `${att.size ? (Number(att.size) / (1024 * 1024)).toFixed(2) : '0.00'} MB`,
+            size: att.size ? `${att.size} MB` : '-',
             url: att.browse_file,
             existing: true,
           })) || [],
@@ -502,9 +491,21 @@ const EmailForm: React.FC = () => {
     if (!validateForm()) {
       return;
     }
-
+    setActiveFlag(flag);
     // Prepare FormData for API
     const formDataToSend = new FormData();
+
+    // Simple direct computation
+    let deletedFileIds: string[] = [];
+    if (isEditView && emailData?.attachments) {
+      const currentExistingIds = formData.attachments
+        .filter((att) => att.existing)
+        .map((att) => att.id);
+
+      deletedFileIds = emailData.attachments
+        .map((att) => att.rid)
+        .filter((rid) => !currentExistingIds.includes(rid));
+    }
 
     // Append basic fields
     formDataToSend.append('account_rid', accountId);
@@ -524,11 +525,44 @@ const EmailForm: React.FC = () => {
       }
     });
 
+    if (deletedFileIds.length > 0) {
+      formDataToSend.append('deleted_file_ids', JSON.stringify(deletedFileIds));
+    }
+
     if (isEditView && emailData) {
-      formDataToSend.append('activity_rid', emailData?.activity_rid || '');
-      updateEmail.mutate(formDataToSend);
+      formDataToSend.append('activity_rid', emailData.activity_rid || '');
+
+      updateEmail.mutate(formDataToSend, {
+        onSuccess: async () => {
+          setActiveFlag(null);
+          const message =
+            flag === FlagTypeEnum.draft
+              ? 'Email draft has been updated successfully.'
+              : 'Email has been sent successfully.';
+
+          successToast(message);
+          goBack();
+        },
+        onError: () => {
+          setActiveFlag(null);
+        },
+      });
     } else {
-      createEmail.mutate(formDataToSend);
+      createEmail.mutate(formDataToSend, {
+        onSuccess: async () => {
+          setActiveFlag(null);
+          const message =
+            flag === FlagTypeEnum.draft
+              ? 'Email draft has been saved successfully.'
+              : 'Email has been sent successfully.';
+
+          successToast(message);
+          goBack();
+        },
+        onError: () => {
+          setActiveFlag(null);
+        },
+      });
     }
   };
 
@@ -562,8 +596,12 @@ const EmailForm: React.FC = () => {
         </div>
         <div className='flex gap-3'>
           <TextButton
-            label='Save As Draft'
-            loading={createEmail.isPending || updateEmail.isPending}
+            label='Save as Draft'
+            loading={
+              activeFlag === FlagTypeEnum.draft &&
+              (createEmail.isPending || updateEmail.isPending)
+            }
+            disabled={activeFlag !== null && activeFlag !== FlagTypeEnum.draft}
             onClick={() => handleSubmit(FlagTypeEnum.draft)}
             sx={{
               width: '110px',
@@ -574,7 +612,11 @@ const EmailForm: React.FC = () => {
           />
           <TextButton
             label='Send'
-            loading={createEmail.isPending || updateEmail.isPending}
+            loading={
+              activeFlag === FlagTypeEnum.send &&
+              (createEmail.isPending || updateEmail.isPending)
+            }
+            disabled={activeFlag !== null && activeFlag !== FlagTypeEnum.send}
             onClick={() => handleSubmit(FlagTypeEnum.send)}
             sx={{
               width: '64px',

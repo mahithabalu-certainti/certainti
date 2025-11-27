@@ -27,6 +27,7 @@ import {
 import ActivityDetails from '../../../activities/activities-details/activity-details';
 import { ActivityListTable } from '../../../activities';
 import { ACTIVITY_CREATE } from '../../../../../routes';
+import TaskDetails from '../../../activities/activities-details/task-details';
 
 const ActivityTabs = [
   {
@@ -75,11 +76,13 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
   const activityId = searchParams.get('activity_id');
   const activityType = searchParams.get('activity_type');
   const viewDetails = !!activityId && !!activityType;
+  const caseFiscalYear = caseDetails?.fiscal_year || '';
 
   const entityDetails = {
     r_number: caseDetails?.r_number || '',
     module: 'case',
     source: `Case > ${caseDetails?.r_number || ''}`,
+    fiscalYear: caseFiscalYear,
   };
 
   const initialTab = useMemo(() => {
@@ -141,6 +144,7 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
       accountId,
       entityLevel: 'case',
       entityId: caseId || '',
+      caseFiscalYear: caseFiscalYear?.toString() || '',
       source: `Case > ${caseDetails?.r_number || ''}`,
     });
     navigate(`${path}?${queryParams.toString()}`);
@@ -166,9 +170,11 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
   ];
 
   const handleViewActivity = (rowId: string, activityType: ActivityType) => {
+    const type = activityType?.toLowerCase();
     if (rowId) {
+      searchParams.set('list', 'activities');
       searchParams.set('activity_id', rowId);
-      searchParams.set('activity_type', activityType);
+      searchParams.set('activity_type', type);
       navigate({ search: searchParams.toString() }, { replace: true });
     }
   };
@@ -230,7 +236,15 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
         defaultValue={tabParam}
       />
 
-      {viewDetails ? (
+      {viewDetails && activityType === 'task' && (
+        <TaskDetails
+          accountInActive={accountInActive}
+          tabValue={tabParam as ActivityType}
+          entityLevel={'case'}
+        />
+      )}
+
+      {viewDetails && activityType !== 'task' ? (
         <ActivityDetails
           accountInActive={accountInActive}
           tabValue={tabParam as ActivityType}

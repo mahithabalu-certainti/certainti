@@ -54,7 +54,6 @@ import { AccessRestricted } from '../../../../components/account-restricted';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
 import { checkPermission, getFiscalDateBounds } from '../../../../common-utils';
-import { NotFound } from '../../../../pages';
 import { ProjectResources } from './project-resources/project-resources';
 import { Attachments } from './attachments';
 import { exportAttachmentsData } from '../../../services/attachments/attachments-service';
@@ -86,6 +85,7 @@ import { ExportNotesList } from '../../../services/notes/notes-service';
 import { QrePercentHistory } from './qre-percent-history';
 import { ExportChecklistList } from '../../../services/checklist/checklist-service';
 import { Checklist } from './checklist';
+import ProjectActivities from './project-activities/project-activities';
 
 export const ProjectDetails = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -663,7 +663,13 @@ export const ProjectDetails = () => {
           />
         );
       case 'activities':
-        return <NotFound />;
+        return (
+          <ProjectActivities
+            accountInActive={accountInActive || projectInActive}
+            projectFiscalYear={projectData?.fiscal_year}
+            projectCode={projectData?.project_code}
+          />
+        );
       case 'notes':
         return (
           <Notes
@@ -759,13 +765,13 @@ export const ProjectDetails = () => {
         disabled: false,
         icon: TechSummaryIcon,
       },
-      // {
-      //   name: 'Activities',
-      //   key: 'activities',
-      //   id: AllModules.ACTIVITIES,
-      //   disabled: false,
-      //   icon: ActivitiesIcon,
-      // },
+      {
+        name: 'Activities',
+        key: 'activities',
+        id: AllModules.ACTIVITIES,
+        disabled: false,
+        icon: ActivitiesIcon,
+      },
       {
         name: 'QRE Percent History',
         key: 'qre-percent-history',

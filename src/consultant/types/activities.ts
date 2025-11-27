@@ -187,3 +187,69 @@ export interface MeetingActivityDetailsResponse {
     activityDetails: MeetingActivityDetails;
   };
 }
+
+// Call Activity details
+export interface CallActivityAttachment {
+  rid: string;
+  r_number: string;
+  created_by: string;
+  created_datetime: string;
+  modified_by: string | null;
+  modified_datetime: string | null;
+  account_rid: string;
+  activity_rid: string;
+  browse_file: string;
+  size: string; // API gives size as string ("0.01")
+  document_name: string;
+  format: string; // ".xlsx"
+  is_file_deleted: boolean;
+}
+
+export interface CallActivityDetails {
+  attach_to: string;
+  attachment_level: string;
+  attached_to: string;
+  activity_rid: string;
+  activity_type: string;
+  subject: string;
+  call_participants: string[];
+  caller_id: string;
+  minutes_of_meeting: string;
+  call_platform: string;
+  r_number: string;
+  status_rid: string;
+  account_rid: string;
+  fiscal_year: string | null;
+  status_name: string;
+  modified_by: string | null;
+  created_by: string;
+  created_datetime: string;
+  modified_datetime: string | null;
+  attachments: CallActivityAttachment[];
+}
+
+export interface CallActivityDetailsResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: {
+    activityDetails: CallActivityDetails;
+  };
+}
+
+// Task Activity form payload
+export interface ActivityTaskFormPayload {
+  account_rid: string;
+  attach_to: string;
+  attachment_level: string;
+  task_name: string;
+  description?: string;
+  fiscal_year?: number;
+  effective_start_datetime?: string;
+  effective_end_datetime?: string;
+  assigned_to?: string;
+  status_rid?: string;
+  priority_rid?: string;
+  checklist_rid?: string;
+  tags?: string | Array<{ tag_rid: string; is_new_tag: boolean }>;
+}

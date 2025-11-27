@@ -49,3 +49,9 @@ export const updateActivityEmailURL = () => `/api/activities/email/update`;
 
 export const createActivityMeetingURL = () => `/api/activities/meeting/create`;
 export const updateActivityMeetingURL = () => `/api/activities/meeting/update`;
+
+export const createActivityCallURL = () => `/api/activities/call/create`;
+export const updateActivityCallURL = () => `/api/activities/call/update`;
+
+export const createActivityTaskURL = () => `/api/activities/task/create`;
+export const updateActivityTaskURL = () => `/api/activities/task/update`;

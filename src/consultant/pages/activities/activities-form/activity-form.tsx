@@ -8,10 +8,6 @@ import CallForm from './call-form';
 const ActivityForm: React.FC = () => {
   const { type } = useParams();
 
-  //  const isEditView =  location.pathname.split('/').slice(-2, -1)[0] === 'edit';
-  //    const accountId = searchParams.get('accountId') || '';
-  //    const entityLevel = searchParams.get('entityLevel') || '';
-  //    const entityId = searchParams.get('entityId') || '';
   return (
     <React.Suspense fallback={null}>
       <div>

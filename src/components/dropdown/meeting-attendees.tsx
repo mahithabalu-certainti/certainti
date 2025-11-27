@@ -45,7 +45,7 @@ interface MeetingAttendeesProps {
   otherFields: {
     attendees?: string[];
     call_participants?: string[];
-    caller_id?: string[];
+    caller_id?: string[] | string;
     organizer?: string[];
   };
   required?: boolean;
@@ -53,7 +53,7 @@ interface MeetingAttendeesProps {
   hide?: boolean;
   disabled?: boolean;
   className?: string;
-  singleSelection?: boolean;
+  singleSelect?: boolean;
   maxSelections?: number;
 }
 
@@ -76,7 +76,7 @@ const MeetingAttendees: React.FC<MeetingAttendeesProps> = ({
   hide = false,
   disabled = false,
   className = '',
-  singleSelection = false,
+  singleSelect = false,
   maxSelections,
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -85,29 +85,40 @@ const MeetingAttendees: React.FC<MeetingAttendeesProps> = ({
   const isMaxSelectionsReached = maxSelections
     ? values.length >= maxSelections
     : false;
-  const isSingleSelectionReached = singleSelection && values.length >= 1;
+  const isSingleSelectReached = singleSelect && values.length >= 1;
 
   const handleSuggestionClick = useCallback(
     (email: string) => {
-      if (isMaxSelectionsReached || isSingleSelectionReached) return;
+      if (isMaxSelectionsReached || isSingleSelectReached) return;
+
+      // Call the parent handler to add the attendee
       onAddAttendee(field, email);
+
+      // Clear input and suggestions after selection
+      onInputChange('');
+      setSuggestions({
+        suggestions: [],
+        highlightedIndex: 0,
+        anchorEl: null,
+      });
     },
-    [field, onAddAttendee, isMaxSelectionsReached, isSingleSelectionReached]
+    [
+      field,
+      onAddAttendee,
+      onInputChange,
+      setSuggestions,
+      isMaxSelectionsReached,
+      isSingleSelectReached,
+    ]
   );
 
   const filterSuggestions = useCallback(
     (searchText: string): UserOption[] => {
-      if (
-        !searchText.trim() ||
-        isMaxSelectionsReached ||
-        isSingleSelectionReached
-      )
+      if (!searchText.trim() || isMaxSelectionsReached || isSingleSelectReached)
         return [];
 
       const lowerSearch = searchText.toLowerCase();
-
       const currentFieldEmails = values;
-
       const isEmailFormat = isValidEmail(searchText.trim());
 
       const filtered = userOptions.filter((user) => {
@@ -140,13 +151,13 @@ const MeetingAttendees: React.FC<MeetingAttendeesProps> = ({
       values,
       isValidEmail,
       isMaxSelectionsReached,
-      isSingleSelectionReached,
+      isSingleSelectReached,
     ]
   );
 
   const handleInputChange = useCallback(
     (value: string) => {
-      if (isMaxSelectionsReached || isSingleSelectionReached) return;
+      if (isMaxSelectionsReached || isSingleSelectReached) return;
 
       onInputChange(value);
 
@@ -197,7 +208,7 @@ const MeetingAttendees: React.FC<MeetingAttendeesProps> = ({
       values,
       filterSuggestions,
       isMaxSelectionsReached,
-      isSingleSelectionReached,
+      isSingleSelectReached,
     ]
   );
 
@@ -207,7 +218,8 @@ const MeetingAttendees: React.FC<MeetingAttendeesProps> = ({
   ): boolean => {
     return Object.entries(otherFields).some(
       ([otherField, emails]) =>
-        otherField !== currentField && (emails || []).includes(email)
+        otherField !== currentField &&
+        (Array.isArray(emails) ? emails.includes(email) : emails === email)
     );
   };
 
@@ -250,19 +262,32 @@ const MeetingAttendees: React.FC<MeetingAttendeesProps> = ({
   };
 
   const getFieldColorForEmail = (email: string): string => {
-    if (otherFields.attendees?.includes(email))
+    if (
+      Array.isArray(otherFields.attendees) &&
+      otherFields.attendees.includes(email)
+    )
       return getChipColor('attendees');
-    if (otherFields.call_participants?.includes(email))
+    if (
+      Array.isArray(otherFields.call_participants) &&
+      otherFields.call_participants.includes(email)
+    )
       return getChipColor('call_participants');
-    if (otherFields.caller_id?.includes(email))
+    if (
+      otherFields.caller_id === email ||
+      (Array.isArray(otherFields.caller_id) &&
+        otherFields.caller_id.includes(email))
+    )
       return getChipColor('caller_id');
-    if (otherFields.organizer?.includes(email))
+    if (
+      Array.isArray(otherFields.organizer) &&
+      otherFields.organizer.includes(email)
+    )
       return getChipColor('organizer');
     return '#E5E7EB';
   };
 
   const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (isMaxSelectionsReached || isSingleSelectionReached) {
+    if (isMaxSelectionsReached || isSingleSelectReached) {
       if (e.key !== 'Backspace' && e.key !== 'Delete') {
         e.preventDefault();
         return;
@@ -274,8 +299,8 @@ const MeetingAttendees: React.FC<MeetingAttendeesProps> = ({
   const getPlaceholderText = () => {
     if (isMaxSelectionsReached)
       return `Maximum ${maxSelections} selections reached`;
-    if (isSingleSelectionReached) return 'Only one selection allowed';
-    if (values.length === 0) return 'Enter email or name...';
+    if (isSingleSelectReached) return 'Only one selection allowed';
+    if (values.length === 0) return `Type @ to view suggestions…`;
     return '';
   };
 
@@ -291,32 +316,27 @@ const MeetingAttendees: React.FC<MeetingAttendeesProps> = ({
       >
         {label}
         {required && <span className='text-red-500'> *</span>}
-        {(maxSelections || singleSelection) && (
+        {(maxSelections || singleSelect) && (
           <span className='text-xs text-gray-500 ml-2'>
             ({values.length}
             {maxSelections ? `/${maxSelections}` : ''}
-            {singleSelection ? '/1' : ''})
+            {singleSelect ? '/1' : ''})
           </span>
         )}
       </label>
       <div className='relative'>
         <div
           className={`flex flex-wrap items-center gap-2 px-3 border rounded-[2px]
-              min-h-[24px] py-1.5 max-h-[95px] overflow-y-auto
+              min-h-[32px] py-1.5 max-h-[95px] overflow-y-auto
               ${
                 errors
                   ? 'border-red-500 bg-[#FEF2F2]'
-                  : disabled ||
-                      isMaxSelectionsReached ||
-                      isSingleSelectionReached
-                    ? '!bg-gray-100 cursor-default'
-                    : 'border-gray-300 hover:border-gray-300 bg-white'
+                  : disabled
+                    ? '!bg-gray-100 border-[#CBD6E2] cursor-default'
+                    : 'border-gray-300 hover:border-[#CBD6E2] bg-white'
               } focus-within:!border-2 focus-within:!border-blue-400`}
           style={{
-            pointerEvents:
-              disabled || isMaxSelectionsReached || isSingleSelectionReached
-                ? 'none'
-                : 'all',
+            pointerEvents: disabled ? 'none' : 'all',
           }}
         >
           {/* Display selected emails as chips */}
@@ -331,7 +351,7 @@ const MeetingAttendees: React.FC<MeetingAttendeesProps> = ({
               sx={{
                 fontSize: '12px',
                 fontWeight: 600,
-                height: '18px',
+                height: '20px',
                 background: getChipColor(field),
                 borderRadius: '2px',
                 '& .MuiChip-deleteIcon': {
@@ -343,8 +363,8 @@ const MeetingAttendees: React.FC<MeetingAttendeesProps> = ({
             />
           ))}
 
-          {/* Input field */}
-          {!(isMaxSelectionsReached || isSingleSelectionReached) && (
+          {/* Input field - only show if not reached limit */}
+          {!(isMaxSelectionsReached || isSingleSelectReached) && (
             <input
               ref={inputRef}
               id={`${field}-input`}
@@ -354,7 +374,7 @@ const MeetingAttendees: React.FC<MeetingAttendeesProps> = ({
               onKeyDown={handleInputKeyDown}
               placeholder={getPlaceholderText()}
               disabled={disabled}
-              className='flex-1 border-none outline-none bg-transparent text-[13px] placeholder-[#7D98B6] focus:outline-none disabled:bg-gray-100'
+              className='flex-1 min-w-[120px] border-none outline-none bg-transparent text-[13px] placeholder-[#7D98B6] focus:outline-none disabled:bg-gray-100'
             />
           )}
         </div>
@@ -368,7 +388,7 @@ const MeetingAttendees: React.FC<MeetingAttendeesProps> = ({
               Boolean(suggestions.anchorEl) &&
               suggestions.suggestions.length > 0 &&
               !isMaxSelectionsReached &&
-              !isSingleSelectionReached
+              !isSingleSelectReached
             }
             anchorEl={suggestions.anchorEl}
             placement='bottom-start'

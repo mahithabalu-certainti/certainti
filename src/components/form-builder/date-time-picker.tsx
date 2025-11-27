@@ -78,6 +78,11 @@ const StyledDateTimePicker: React.FC<StyledDateTimePickerProps> = ({
               '& .MuiOutlinedInput-root': {
                 height: '32px',
                 borderRadius: '2px',
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: error
+                    ? '#EF4444 !important'
+                    : '#CBD6E2 !important',
+                },
                 '& input': {
                   fontWeight: 400,
                   fontSize: '13px',
@@ -86,11 +91,11 @@ const StyledDateTimePicker: React.FC<StyledDateTimePickerProps> = ({
                   color: 'black !important',
                   WebkitTextFillColor: 'black !important',
                   '&[value=""]': {
-                    color: '#5A6875 !important',
-                    WebkitTextFillColor: '#5A6875 !important',
+                    color: '#00295C !important',
+                    WebkitTextFillColor: '#00295C !important',
                   },
                   '&::placeholder': {
-                    color: '#5A6875 !important',
+                    color: '#00295C !important',
                   },
                 },
                 '&:hover .MuiOutlinedInput-notchedOutline': {

@@ -1,8 +1,8 @@
 import React from 'react';
 import EmailDetails from './eamil-details';
-import TaskDetails from './task-details';
 import { useSearchParams } from 'react-router-dom';
 import { ActivityType } from '../../../types';
+import MeetingDetails from './meeting-details';
 
 interface ActivityDetailsProps {
   accountInActive: boolean;
@@ -11,8 +11,9 @@ interface ActivityDetailsProps {
     r_number: string;
     module: string;
     source: string;
+    fiscalYear?: string | number;
   };
-  entityLevel: 'account' | 'case';
+  entityLevel: 'account' | 'case' | 'project';
 }
 
 const ActivityDetails: React.FC<ActivityDetailsProps> = ({
@@ -33,8 +34,13 @@ const ActivityDetails: React.FC<ActivityDetailsProps> = ({
           entityDetails={entityDetails}
           entityLevel={entityLevel}
         />
-      ) : activityType === 'task' ? (
-        <TaskDetails accountInActive={accountInActive} tabValue={tabValue} />
+      ) : activityType === 'meeting' ? (
+        <MeetingDetails
+          accountInActive={accountInActive}
+          tabValue={tabValue}
+          entityDetails={entityDetails}
+          entityLevel={entityLevel}
+        />
       ) : (
         <div>Activity Details</div>
       )}

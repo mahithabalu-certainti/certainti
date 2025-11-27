@@ -18,6 +18,7 @@ import StyledDateTimePicker from '../../../../components/form-builder/date-time-
 import { FileList } from '../../../../components/file-list';
 import { MenuItem, Select } from '@mui/material';
 import { COMMON_MENU_PROPS, getSelectStyles } from './helper';
+import { formatDateToYYYYMMDDWithTime } from '../../../../common-utils';
 
 // Types
 interface SuggestionState {
@@ -51,6 +52,14 @@ interface MeetingFormErrors {
   effective_end_datetime?: string;
   time_zone?: string;
   recurrence_type?: string;
+}
+
+interface ExistingFile {
+  name: string;
+  url: string;
+  size: string;
+  format: string;
+  rid: string;
 }
 
 // File validation constants
@@ -98,12 +107,7 @@ const MeetingForm: React.FC = () => {
     type: 'error' | 'success';
     text: string;
   } | null>(null);
-  const [existingFile, setExistingFile] = useState<{
-    name: string;
-    url: string;
-    size: string;
-    format: string;
-  } | null>(null);
+  const [existingFiles, setExistingFiles] = useState<ExistingFile[]>([]); // Changed to array
 
   const isEditView = location.pathname.split('/').includes('edit');
   const systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -159,31 +163,38 @@ const MeetingForm: React.FC = () => {
     if (meetingData && isEditView) {
       setFormData((prev) => ({
         ...prev,
-        // attendees: meetingData.attendees || [],
-        // subject: meetingData.subject || '',
+        attendees: meetingData.meeting_participants || [],
+        subject: meetingData.subject || '',
         // effective_start_datetime: meetingData.effective_start_datetime || '',
         // effective_end_datetime: meetingData.effective_end_datetime || '',
-        // time_zone: meetingData.time_zone || 'UTC',
         // recurrence_type: meetingData.recurrence_type || 'none',
         // recurrence_interval: meetingData.recurrence_interval || '1',
         // recurrence_days: meetingData.recurrence_days || [],
-        // rid: meetingData.rid || '',
-        // meeting_rid: meetingData.meeting_rid || '',
-        // created_on: meetingData.created_on || '',
-        // created_by: meetingData.created_by || '',
-        // updated_on: meetingData.updated_on || '',
-        // updated_by: meetingData.updated_by || '',
+        rid: meetingData.activity_rid || '',
+        meeting_rid: meetingData.r_number || '',
+        created_on: formatDateToYYYYMMDDWithTime(
+          meetingData.created_datetime || ''
+        ),
+        created_by: meetingData.created_by || '',
+        updated_on: formatDateToYYYYMMDDWithTime(
+          meetingData.modified_datetime || ''
+        ),
+        updated_by: meetingData.modified_by || '',
       }));
 
-      // Set existing file data if available
-      if (meetingData?.attachments && meetingData.attachments.length > 0) {
-        const file = meetingData.attachments[0];
-        setExistingFile({
+      // Set existing file data if available - now as array
+      if (meetingData?.attachments?.length) {
+        const mappedFiles = meetingData.attachments.map((file) => ({
           name: file.document_name || '',
           url: file.browse_file || '',
           size: file.size ? `${file.size} MB` : '-',
           format: file.format || '',
-        });
+          rid: file.rid,
+        }));
+
+        setExistingFiles(mappedFiles);
+      } else {
+        setExistingFiles([]);
       }
     }
   }, [isEditView, meetingData]);
@@ -242,7 +253,7 @@ const MeetingForm: React.FC = () => {
         ...prev,
         files: [...prev.files, ...validFiles],
       }));
-      setExistingFile(null);
+      // Don't clear existing files when adding new ones
     }
   };
 
@@ -255,7 +266,6 @@ const MeetingForm: React.FC = () => {
         ...prev,
         files: [...prev.files, ...validFiles],
       }));
-      setExistingFile(null);
     }
   };
 
@@ -435,6 +445,11 @@ const MeetingForm: React.FC = () => {
     });
   };
 
+  // Remove single existing file
+  const removeExistingFile = (index: number) => {
+    setExistingFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const validateForm = (): boolean => {
     const newErrors: MeetingFormErrors = {};
 
@@ -448,11 +463,11 @@ const MeetingForm: React.FC = () => {
     }
 
     if (!formData.effective_start_datetime) {
-      newErrors.effective_start_datetime = 'Start datetime is required';
+      newErrors.effective_start_datetime = 'Field is required';
     }
 
     if (!formData.effective_end_datetime) {
-      newErrors.effective_end_datetime = 'End datetime is required';
+      newErrors.effective_end_datetime = 'Field is required';
     }
 
     if (formData.effective_start_datetime && formData.effective_end_datetime) {
@@ -493,11 +508,21 @@ const MeetingForm: React.FC = () => {
     // Prepare FormData for API
     const formDataToSend = new FormData();
 
+    let deletedFileIds: string[] = [];
+
+    if (isEditView && meetingData?.attachments) {
+      const currentExistingIds = existingFiles.map((file) => file.rid);
+
+      deletedFileIds = meetingData.attachments
+        .map((att) => att.rid)
+        .filter((rid) => !currentExistingIds.includes(rid));
+    }
+
     // Append basic fields
     formDataToSend.append('account_rid', accountId);
     formDataToSend.append('attach_to', entityId);
     formDataToSend.append('attachment_level', entityLevel);
-    formDataToSend.append('activity_type', 'meeting');
+    formDataToSend.append('activity_type', 'Meeting');
     formDataToSend.append('attendees', JSON.stringify(formData.attendees));
     formDataToSend.append('subject', formData.subject);
     formDataToSend.append(
@@ -520,6 +545,10 @@ const MeetingForm: React.FC = () => {
     formData.files.forEach((file) => {
       formDataToSend.append('files', file);
     });
+
+    if (deletedFileIds.length > 0) {
+      formDataToSend.append('deleted_file_ids', JSON.stringify(deletedFileIds));
+    }
 
     if (isEditView && meetingData) {
       formDataToSend.append('activity_rid', meetingData?.activity_rid || '');
@@ -562,7 +591,7 @@ const MeetingForm: React.FC = () => {
         <div className='flex items-center w-[80%] max-w-[80%]'>
           <MeetingIcon
             alt='meeting-icon'
-            className='w-7 h-7 p-1.5 [&>path]:stroke-white bg-[#3B82F6] rounded-[2px]'
+            className='w-7 h-7 p-1.5 [&>path]:stroke-white bg-[#FF5F5F] rounded-[2px]'
           />
           <div className='w-[90%]'>
             {isLoading ? (
@@ -639,7 +668,7 @@ const MeetingForm: React.FC = () => {
             </div>
 
             {/* Subject Field */}
-            <div className='grid md:grid-cols-1 gap-x-4 gap-y-[2px] px-10 pt-4'>
+            <div className='grid md:grid-cols-1 gap-x-4 px-10 pt-3'>
               <label
                 htmlFor='subject'
                 className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px]'
@@ -649,7 +678,6 @@ const MeetingForm: React.FC = () => {
               <input
                 type='text'
                 name='subject'
-                required
                 placeholder='Enter Subject'
                 value={formData.subject}
                 onChange={handleSubjectChange}
@@ -663,7 +691,7 @@ const MeetingForm: React.FC = () => {
               )}
             </div>
 
-            <div className='grid md:grid-cols-3 gap-x-4 gap-y-[2px] px-10 pt-4'>
+            <div className='grid md:grid-cols-3 gap-x-4 gap-y-3 px-10 pt-3'>
               {/* Start DateTime */}
               <div>
                 <label
@@ -719,7 +747,6 @@ const MeetingForm: React.FC = () => {
                     handleInputChange('recurrence_type', e.target.value)
                   }
                   displayEmpty
-                  required
                   fullWidth
                   size='small'
                   className={`custom-select-no-arrow sm:text-sm ${
@@ -764,7 +791,7 @@ const MeetingForm: React.FC = () => {
               </div>
             </div>
 
-            <div className='grid md:grid-cols-3 gap-x-4 gap-y-[2px] px-10 pt-4'>
+            <div className='grid md:grid-cols-3 gap-x-4 gap-y-3 px-10 pt-3'>
               {/* Recurrence Interval */}
               <div>
                 <label
@@ -788,7 +815,7 @@ const MeetingForm: React.FC = () => {
               {formData.recurrence_type === 'weekly' && (
                 <div className='col-span-2 mt-2'>
                   <label className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px]'>
-                    Repeat On
+                    Recurrence Days
                   </label>
 
                   <div className='flex flex-wrap gap-3 mt-2'>
@@ -826,12 +853,6 @@ const MeetingForm: React.FC = () => {
                   className={`h-[116px] w-[502px] border-[2px] border-dashed rounded-[8px] flex flex-col items-center justify-center gap-2 cursor-pointer
                     ${message?.type === 'error' ? 'border-red-600 bg-[#FEF2F2]' : 'border-[#0176D3] bg-[#F4F6F9]'}
                   `}
-                  // style={{
-                  //   pointerEvents:
-                  //     formData.files.length > 0 || existingFile
-                  //       ? 'none'
-                  //       : 'all',
-                  // }}
                 >
                   <UploadIcon alt='Upload Icon' className='w-[36px] h-[24px]' />
                   <div
@@ -880,8 +901,8 @@ const MeetingForm: React.FC = () => {
                   setSelectedFiles={(files) =>
                     handleInputChange('files', files)
                   }
-                  existingFiles={existingFile ? [existingFile] : []}
-                  onRemoveExistingFile={() => setExistingFile(null)}
+                  existingFiles={existingFiles}
+                  onRemoveExistingFile={removeExistingFile}
                   disabled={false}
                 />
               </div>
@@ -894,7 +915,7 @@ const MeetingForm: React.FC = () => {
               >
                 Audit Information
               </div>
-              <div className='grid md:grid-cols-3 gap-x-4 gap-y-[2px] px-10 pt-1 mb-4'>
+              <div className='grid md:grid-cols-3 gap-x-4 gap-y-3 px-10 pt-1 mb-4'>
                 {[
                   {
                     label: 'Record ID',
