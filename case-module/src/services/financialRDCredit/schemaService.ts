@@ -150,7 +150,7 @@ class RDCreditSchemaService {
      * @param orgDbSequelize 
      * @returns 
      */
-    async getPrior3YearQREs(accountRid: string, prior: number = 3, schemaName: string, orgDbSequelize: Sequelize) {
+    async getPrior3YearQREs(accountRid: string, prior: number = 3, schemaName: string, currentFiscalYear: number, orgDbSequelize: Sequelize) {
         try {
             if (!this.orgDbSequelize) {
                 this.orgDbSequelize = await initOrgSequelize();
@@ -161,13 +161,13 @@ class RDCreditSchemaService {
                     fiscal_year,
                     SUM(total_qre) AS total_qre
                 FROM ${schemaName}.case_history_submission
-                WHERE account_rid = :accountRid
+                WHERE account_rid = :accountRid AND fiscal_year < :currentFiscalYear
                 GROUP BY fiscal_year
                 ORDER BY fiscal_year DESC
                 LIMIT :prior
             `,
                 {
-                    replacements: { accountRid, prior: 3 },
+                    replacements: { accountRid, prior: 3 , currentFiscalYear},
                     type: QueryTypes.SELECT,
                 }
             );

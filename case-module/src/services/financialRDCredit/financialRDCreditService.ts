@@ -61,7 +61,7 @@ export class FinancialRDCreditService {
      * @param caseRid 
      * @returns 
      */
-    async computeRDCredit(accountRid: string, caseRid: string, effectiveStart: string, effectiveEnd: string) {
+    async computeRDCreditForFederalLevel(accountRid: string, caseRid: string, effectiveStart: string, effectiveEnd: string) {
         try {
 
             const mainDb = await this.getMainDb();
@@ -80,6 +80,8 @@ export class FinancialRDCreditService {
                 const accountNumber = 'ACC-00001';
                 schemaName = 'trd365_00001';
 
+                const currentFiscalYear = this.getCurrentFiscalYear();
+
                 const countryInfo = await this.rdCreditSchemaService.getCountryByAccountRid(accountRid, mainDb);
                 logMessage(`Country Info: ${JSON.stringify(countryInfo)}`);
 
@@ -87,7 +89,7 @@ export class FinancialRDCreditService {
                 const totalCurrentYearQRE = new Decimal(currentYearQREs.wages || 0).plus(currentYearQREs.supplies || 0).plus(currentYearQREs.contract || 0);
                 logMessage(`CurrentYearQREs: ${JSON.stringify(currentYearQREs)}`);
 
-                const prior3YearsQREs = await this.rdCreditSchemaService.getPrior3YearQREs(accountRid, 3, schemaName, orgDb);// prior 3 years QREs
+                const prior3YearsQREs = await this.rdCreditSchemaService.getPrior3YearQREs(accountRid, 3, schemaName, currentFiscalYear, orgDb);// prior 3 years QREs
 
                 logMessage(`Total Prior 3 Years QREs: ${JSON.stringify(prior3YearsQREs)}`);
                 const annualGrossReceipts = await this.rdCreditSchemaService.getAnnualGrossReceipts(accountRid, 4, schemaName, orgDb); // prior 4 years gross receipts
@@ -382,11 +384,14 @@ export class FinancialRDCreditService {
             const accountNumber = 'ACC-00001';
             schemaName = 'trd365_00001';
 
+            const currentFiscalYear = this.getCurrentFiscalYear();
+
             const configStateLevel = await this.rdCreditSchemaService.getRDCreditConfigStateLevel("USA", mainDb, effectiveStart, effectiveEnd, "", "State R&D Credit");
 
             const currentYearQREs = await this.rdCreditSchemaService.getCurrentYearQREs(caseRid, schemaName, orgDb); //current yer QREs
             logMessage(`CurrentYearQREs: ${JSON.stringify(currentYearQREs)}`);
-            const prior3YearsQREs = await this.rdCreditSchemaService.getPrior3YearQREs(accountRid, 3, schemaName, orgDb);// prior 3 years QREs
+            
+            const prior3YearsQREs = await this.rdCreditSchemaService.getPrior3YearQREs(accountRid, 3, schemaName, currentFiscalYear, orgDb);// prior 3 years QREs
             logMessage(`Prior3YearQREs: ${JSON.stringify(prior3YearsQREs)}`);
 
             const annualGrossReceipts = await this.rdCreditSchemaService.getAnnualGrossReceipts(accountRid, 4, schemaName, orgDb); // prior 4 years gross receipts
@@ -422,5 +427,18 @@ export class FinancialRDCreditService {
                 errorMessage: STATUS_MESSAGE.jurisdictionFetchedFailed || "Failed to fetch",
             };
         }
+    }
+
+    /**
+     * 
+     * @param date 
+     * @returns 
+     */
+    getCurrentFiscalYear(date: Date = new Date()): number {
+        const year = date.getFullYear();
+        const month = date.getMonth() + 1; // 1-12
+
+        // Fiscal year starts in April
+        return month >= 4 ? year : year - 1;
     }
 }
