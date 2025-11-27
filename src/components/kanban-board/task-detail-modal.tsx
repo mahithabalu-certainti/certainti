@@ -629,26 +629,26 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   const handleSave = async () => {
     const newErrors: Record<string, string> = {};
     if (!editedTask?.title || !editedTask.title.trim()) {
-      newErrors.taskTitle = 'This field is required';
+      newErrors.taskTitle = 'Field is required';
     }
-    if (!editedTask?.status) newErrors.status = 'This field is required';
-    if (!editedTask?.priority) newErrors.priority = 'This field is required';
+    if (!editedTask?.status) newErrors.status = 'Field is required';
+    if (!editedTask?.priority) newErrors.priority = 'Field is required';
 
     if (linkedType && (!linkTaskTypes || linkTaskTypes.length === 0)) {
-      newErrors.linkTaskType = 'This field is required';
+      newErrors.linkTaskType = 'Field is required';
     }
     if (!linkedType && linkTaskTypes && linkTaskTypes.length > 0) {
-      newErrors.linkedType = 'This field is required';
+      newErrors.linkedType = 'Field is required';
     }
 
     if (editedTask?.title && editedTask.title.length > 2000) {
-      newErrors.taskTitle = 'Task Name too long (max 2000 characters)';
+      newErrors.taskTitle = 'Maximum 2000 characters allowed';
     }
     if (editedTask?.description && editedTask.description.length > 2000) {
-      newErrors.description = 'Description too long (max 2000 characters)';
+      newErrors.description = 'Maximum 2000 characters allowed';
     }
     if (editedTask?.tags && editedTask.tags.some((tag) => tag.length > 50)) {
-      newErrors.tags = 'Tags too long (max 50 characters)';
+      newErrors.tags = 'Maximum 50 characters allowed';
     }
 
     if (Object.keys(newErrors).length > 0) {

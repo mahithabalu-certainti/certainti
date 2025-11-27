@@ -129,9 +129,9 @@ const TaskCardComponent: React.FC<ExtendedTaskCardProps> = ({
     >
       <div className='flex items-center gap-1 mb-3'>
         <div className='w-2 h-2 bg-slate-300 rounded-full flex-shrink-0'></div>
-        <div className='flex-1 flex items-start justify-between gap-2'>
+        <div className='flex-1 flex items-start justify-between gap-2 min-w-0'>
           <h3
-            className='text-slate-800 text-[13px] font-medium leading-relaxed'
+            className='text-slate-800 text-[13px] font-medium leading-relaxed break-words'
             style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
           >
             {taskData.task_name}

@@ -158,12 +158,12 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
   const enrichedUsers = useMemo(() => {
     return collaboratorData && collaboratorData.length > 0
       ? collaboratorData.map((collab) => ({
-          id: collab.rid,
-          name: collab.name,
-          email: collab.email,
-          initials: generateInitials(collab.name),
-          color: generateColorFromName(collab.name),
-        }))
+        id: collab.rid,
+        name: collab.name,
+        email: collab.email,
+        initials: generateInitials(collab.name),
+        color: generateColorFromName(collab.name),
+      }))
       : availableUsers.map(enrichUserOption);
   }, [collaboratorData, availableUsers]);
 
@@ -209,10 +209,10 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
     // Handle nested data.data structure
     type WeightageResponse = {
       data?:
-        | {
-            data?: Array<{ rid: string; weightage_value: number }>;
-          }
-        | Array<{ rid: string; weightage_value: number }>;
+      | {
+        data?: Array<{ rid: string; weightage_value: number }>;
+      }
+      | Array<{ rid: string; weightage_value: number }>;
     };
 
     const response = weightageListQuery.data as WeightageResponse;
@@ -285,30 +285,30 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
 
   const handleSubmit = async () => {
     const newErrors: Record<string, string> = {};
-    if (!taskTitle.trim()) newErrors.taskTitle = 'This field is required';
+    if (!taskTitle.trim()) newErrors.taskTitle = 'Field is required';
     if (!selectedPriority || !selectedPriorityRid)
-      newErrors.priority = 'This field is required';
+      newErrors.priority = 'Field is required';
     if (!startDate && !fieldVisibility.startDate)
-      newErrors.startDate = 'This field is required';
+      newErrors.startDate = 'Field is required';
     if (!endDate && !fieldVisibility.endDate)
-      newErrors.endDate = 'This field is required';
+      newErrors.endDate = 'Field is required';
 
     if (linkedType && (!linkTaskTypes || linkTaskTypes.length === 0)) {
-      newErrors.linkTaskType = 'This field is required';
+      newErrors.linkTaskType = 'Field is required';
     }
     if (!linkedType && linkTaskTypes && linkTaskTypes.length > 0) {
-      newErrors.linkedType = 'This field is required';
+      newErrors.linkedType = 'Field is required';
     }
 
     if (taskTitle.length > 2000) {
-      newErrors.taskTitle = 'Task Name too long (max 2000 characters)';
+      newErrors.taskTitle = 'Maximum 2000 characters allowed';
     }
     if (description.length > 2000) {
-      newErrors.description = 'Description too long (max 2000 characters)';
+      newErrors.description = 'Maximum 2000 characters allowed';
     }
     const longTags = selectedTags.filter((tag) => tag.length > 50);
     if (longTags.length > 0) {
-      newErrors.tags = 'Tags too long (max 50 characters)';
+      newErrors.tags = 'Maximum 50 characters allowed';
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -479,11 +479,11 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                                   : '1px solid #CBD6E2',
                               },
                               '&.Mui-focused .MuiOutlinedInput-notchedOutline':
-                                {
-                                  border: errors.startDate
-                                    ? '2px solid #EF4444'
-                                    : '2px solid #60A5FA',
-                                },
+                              {
+                                border: errors.startDate
+                                  ? '2px solid #EF4444'
+                                  : '2px solid #60A5FA',
+                              },
                             },
                             '& .MuiOutlinedInput-notchedOutline': {
                               border: errors.startDate
@@ -550,11 +550,11 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                                   : '1px solid #CBD6E2',
                               },
                               '&.Mui-focused .MuiOutlinedInput-notchedOutline':
-                                {
-                                  border: errors.endDate
-                                    ? '2px solid #EF4444'
-                                    : '2px solid #60A5FA',
-                                },
+                              {
+                                border: errors.endDate
+                                  ? '2px solid #EF4444'
+                                  : '2px solid #60A5FA',
+                              },
                             },
                             '& .MuiOutlinedInput-notchedOutline': {
                               border: errors.endDate
@@ -691,8 +691,8 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
               setCategoryRid(categoryItem?.id || '');
             }}
             onTagsChange={setSelectedTags}
-            onAddCustomTag={() => {}}
-            onSetEditedTask={() => {}}
+            onAddCustomTag={() => { }}
+            onSetEditedTask={() => { }}
             mode='create'
             selectedStatus={selectedStatus}
             onStatusChangeCreate={(statusName, statusId) => {

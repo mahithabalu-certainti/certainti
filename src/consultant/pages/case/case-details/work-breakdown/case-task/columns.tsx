@@ -46,7 +46,7 @@ export const getCaseTaskListColumns = (
     {
       id: 'effective_end_datetime',
       sortId: 'effective_end_datetime',
-      label: 'End Date',
+      label: 'Due Date',
       sortable: true,
       width: 120,
       render: (row: CaseTaskType) => row.effective_end_datetime || '-',
