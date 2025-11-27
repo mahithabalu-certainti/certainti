@@ -5,16 +5,41 @@ import {
   successLog,
   handleErrorResponse,
   handleSuccessResponse,
+  handleCustomResponse,
+  validateRequest
 } from "../utils/helpers";
-import * as LogService from "../services/workflowTriggerLogService";
+import {
+  createTriggerLogSchema
+} from "../lib/joi/schemas/schema";
+import configurations from "../config/config";
 
-export const createTriggerLog = async (req: Request, res: Response) => {
+const services = configurations.getInstance().getServices();
+const TriggerLogService = services.triggerService;
+
+async function createTriggerLog(req: Request, res: Response): Promise<void> {
   const methodName = "create trigger";
   try {
-    const newLog = await LogService.createRuleTriggerLog(req.body);
-    successLog(methodName);
-    handleSuccessResponse(res, newLog);
-    return;
+    const userId = req.headers["x-user-id"] as string;
+    const value = await validateRequest(req, createTriggerLogSchema, res, "POST");
+    if (!value) {
+      errorLog(methodName, "Request body is empty");
+      return;
+    }
+    const newLog = await TriggerLogService.createTriggerLog(value, userId);
+    if (newLog.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, newLog);
+      return;
+    } {
+      errorLog(methodName, newLog.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        newLog.errorMessage
+      );
+      return;
+    }
   } catch (err) {
     const error = err as Error;
     errorLog(methodName, error.message);
@@ -27,33 +52,6 @@ export const createTriggerLog = async (req: Request, res: Response) => {
   }
 };
 
-export const getTriggerLogById = async (req: Request, res: Response) => {
-  try {
-    const log = await LogService.getRuleTriggerLogById(String(req.params.rid));
-    if (!log) return res.status(404).json({ error: "Trigger log not found" });
-    res.json(log);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to fetch trigger log" });
-  }
-};
-
-export const getTriggerLogsByRule = async (req: Request, res: Response) => {
-  try {
-    const logs = await LogService.getRuleTriggerLogByRule(String(req.params.ruleRid));
-    res.json(logs);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to fetch trigger logs" });
-  }
-};
-
-export const deleteTriggerLog = async (req: Request, res: Response) => {
-  try {
-    const result = await LogService.deleteRuleTriggerLog(String(req.params.rid));
-    res.json(result);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to delete trigger log" });
-  }
-};
+export default {
+  createTriggerLog
+}

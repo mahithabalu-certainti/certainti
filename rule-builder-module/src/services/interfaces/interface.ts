@@ -1,5 +1,5 @@
 
-import { ICreateRule, ICreateCondition, ICreateAction, ICreateScope } from "../../utils/types";
+import { ICreateRule, ICreateCondition, ICreateAction, ICreateScope, ICreateSchedule, ICreateAudit, ICreateTrigger } from "../../utils/types";
 export interface IRulemasterService {
     createRuleMaster(
         ruleRequest: ICreateRule,
@@ -141,4 +141,63 @@ export interface IScopeService {
     }>;
 
     deleteScope(data: any, userId: string): Promise<any>;
+}
+
+export interface IScheduleService {
+    createSchedule(
+        scheduleRequest: ICreateSchedule,
+        userId: string
+    ): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: { schedule: any };
+    }>;
+
+    listSchedules(data: any,
+        filters: Record<string, any>,
+        userId: string,
+        apiType: string
+    ): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: { schedules: any; count: number };
+    }>;
+
+    updateSchedule(
+        scheduleRequest: ICreateSchedule,
+        userId: string
+    ): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: { schedule: any };
+    }>;
+
+    deleteSchedule(data: any, userId: string): Promise<any>;
+}
+
+export interface IAuditservice {
+    createAudit(
+        auditRequest: ICreateAudit,
+        userId: string
+    ): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: { audit: any };
+    }>;
+}
+
+export interface ITriggerservice {
+    createTriggerLog(
+        triggerRequest: ICreateTrigger,
+        userId: string
+    ): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: { trigger: any };
+    }>;
 }

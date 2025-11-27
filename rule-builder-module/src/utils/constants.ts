@@ -46,4 +46,11 @@ export const STATUS_MESSAGE = {
   scopeUpdated: "Scope updated successfully",
   scopeDeleteSuccess: "Scope deleted successfully",
   scopeDeleteFailed: "Scope deletion failed",
+  scheduleCreated: "Schedule created successfullt",
+  scheduleCreationFail: "Schedule creation failed",
+  scheduleUpdated: "Schedule updated successfully",
+  scheduleDeleteSuccess: "Schedule deleted successfully",
+  scheduleDeleteFailed: "Schedule deletion failed",
+  auditCreated: "Audit created successfullt",
+  triggerLogCreated: "Trigger Log created successfullt",
 }

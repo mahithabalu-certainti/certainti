@@ -50,3 +50,37 @@ export interface ICreateScope {
     created_by: string,
     modified_by: string
 }
+
+export interface ICreateSchedule {
+    schedule_rid: string;
+    rule_rid: string;
+    related_task_rid: string;
+    scheduled_datetime: Date;
+    executed_datetime: Date;
+    executed: boolean,
+    created_by: string,
+    modified_by: string
+}
+
+export interface ICreateAudit {
+    audit_rid: string;
+    rule_rid: string;
+    action: string;
+    old_value: string;
+    new_value: string;
+    notes: string;
+    created_by: string,
+    modified_by: string
+}
+
+export interface ICreateTrigger {
+    trigger_rid: string;
+    rule_rid: string;
+    event_name: string;
+    event_time: Date;
+    context_entity_id: string;
+    status: string;
+    message: string;
+    created_by: string,
+    modified_by: string
+}

@@ -164,6 +164,60 @@ const updateScopeSchema = Joi.object({
     modified_by: Joi.string().optional(),
 });
 
+
+const createSchedulechema = Joi.object({
+    rule_rid: Joi.string().required(),
+    related_task_rid: Joi.string().required(),
+    scheduled_datetime: Joi.date().required(),
+    executed_datetime: Joi.date().required(),
+    executed: Joi.boolean().required(),
+    created_by: Joi.string().required(),
+});
+
+const listScheduleSchema = Joi.object({
+    page: Joi.string().optional()
+        .pattern(/^[0-9]+$/)
+    ,
+    limit: Joi.string().optional()
+        .pattern(/^[0-9]+$/)
+    ,
+    filters: Joi.string().default("{}"),
+    sortBy: Joi.string().optional(),
+    sortOrder: Joi.string().valid("ASC", "DESC").default("ASC")
+});
+
+const updateScheduleSchema = Joi.object({
+    schedule_rid: Joi.string().required(),
+    rule_rid: Joi.string().required(),
+    related_task_rid: Joi.string().required(),
+    scheduled_datetime: Joi.date().required(),
+    executed_datetime: Joi.date().required(),
+    executed: Joi.boolean().required(),
+    modified_by: Joi.string().optional(),
+});
+
+
+const createAuditSchema = Joi.object({
+    rule_rid: Joi.string().required(),
+    action: Joi.string().required(),
+    old_value: Joi.string().required(),
+    new_value: Joi.string().required(),
+    notes: Joi.string().required(),
+    created_by: Joi.string().required(),
+});
+
+
+const createTriggerLogSchema = Joi.object({
+    rule_rid: Joi.string().required(),
+    event_name: Joi.string().required(),
+    event_time: Joi.string().required(),
+    context_entity_id: Joi.string().required(),
+    status: Joi.string().required(),
+    message: Joi.string().required(),
+    created_by: Joi.string().required(),
+});
+
+
 export {
     createRuleSchema,
     listRuleSchema,
@@ -176,5 +230,10 @@ export {
     updateActionSchema,
     listScopeSchema,
     createScopechema,
-    updateScopeSchema
+    updateScopeSchema,
+    listScheduleSchema,
+    createSchedulechema,
+    updateScheduleSchema,
+    createAuditSchema,
+    createTriggerLogSchema
 };

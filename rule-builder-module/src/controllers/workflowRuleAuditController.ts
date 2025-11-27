@@ -5,16 +5,41 @@ import {
   successLog,
   handleErrorResponse,
   handleSuccessResponse,
+  handleCustomResponse,
+  validateRequest
 } from "../utils/helpers";
-import * as AuditService from "../services/workflowAuditService";
+import {
+  createAuditSchema,
+} from "../lib/joi/schemas/schema";
+import configurations from "../config/config";
 
-export const createAuditEntry = async (req: Request, res: Response) => {
+const services = configurations.getInstance().getServices();
+const AuditService = services.auditService;
+
+async function createAudit(req: Request, res: Response): Promise<void> {
   const methodName = "create Audit";
   try {
-    const newAudit = await AuditService.createRuleAudit(req.body);
-    successLog(methodName);
-    handleSuccessResponse(res, newAudit);
-    return;
+    const userId = req.headers["x-user-id"] as string;
+    const value = await validateRequest(req, createAuditSchema, res, "POST");
+    if (!value) {
+      errorLog(methodName, "Request body is empty");
+      return;
+    }
+    const newAudit = await AuditService.createAudit(value, userId);
+    if (newAudit.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, newAudit);
+      return;
+    } {
+      errorLog(methodName, newAudit.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        newAudit.errorMessage
+      );
+      return;
+    }
   } catch (err) {
     const error = err as Error;
     errorLog(methodName, error.message);
@@ -27,33 +52,7 @@ export const createAuditEntry = async (req: Request, res: Response) => {
   }
 };
 
-export const getAuditById = async (req: Request, res: Response) => {
-  try {
-    const audit = await AuditService.getRuleAuditById(String(req.params.rid));
-    if (!audit) return res.status(404).json({ error: "Audit entry not found" });
-    res.json(audit);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to fetch audit entry" });
-  }
-};
 
-export const getAuditsByRule = async (req: Request, res: Response) => {
-  try {
-    const audits = await AuditService.getRuleAuditByRule(String(req.params.ruleRid));
-    res.json(audits);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to fetch audits" });
-  }
-};
-
-export const deleteAuditEntry = async (req: Request, res: Response) => {
-  try {
-    const result = await AuditService.deleteRuleAudit(String(req.params.rid));
-    res.json(result);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to delete audit entry" });
-  }
-};
+export default {
+  createAudit
+}

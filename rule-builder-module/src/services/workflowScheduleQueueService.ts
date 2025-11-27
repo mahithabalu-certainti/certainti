@@ -1,88 +1,157 @@
 import { RuleScheduleQueue, RuleScheduleQueueCreationAttributes } from "../models/workflowRuleScheduleQueue";
 import { initSequelize } from "../config/maindbDataSource";
 import { Sequelize } from "sequelize";
+import { HttpStatus, STATUS_MESSAGE } from "../utils/constants";
+import { Logger } from "winston";
+import { ICreateSchedule } from "../utils/types";
+import { logMessage } from "../utils/helpers";
 
+export class ScheduleService {
 
-/** CREATE a new RuleMaster */
-export const createRuleSchedule = async (data: RuleScheduleQueueCreationAttributes) => {
-    //const sequelize = await initSequelize();
-    const sequelize = new Sequelize(process.env.POSTGRES_CONNECTION_STRING!, {
-        dialect: "postgres",
-        logging: false, // optional
-    });
+    private logger: Logger;
 
-    // Initialize model ONCE
-    RuleScheduleQueue.initialize(sequelize);
-    const rule = await RuleScheduleQueue.create({
-        r_number: data.r_number ?? null,
-        eid: data.eid ?? null,
-        rule_rid: data.rule_rid,
-        related_task_rid: data.related_task_rid,
-        scheduled_datetime: data.scheduled_datetime,
-        executed_datetime: data.executed_datetime,
-        executed: data.executed ?? true,
-        created_by: data.created_by,
-        modified_by: data.modified_by ?? data.created_by, // fallback to created_by if undefined
-    });
+    constructor(logger: Logger) {
+        this.logger = logger;
+    }
 
-    return rule;
-};
+    /** CREATE a new Schedule */
+    async createSchedule(scheduleRequest: ICreateSchedule, userId: string): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: { schedule: any };
+    }> {
+        //const sequelize = await initSequelize();
+        const sequelize = new Sequelize(process.env.POSTGRES_CONNECTION_STRING!, {
+            dialect: "postgres",
+            logging: false, // optional
+        });
+        RuleScheduleQueue.initialize(sequelize);
+        const schedule = await RuleScheduleQueue.create({
+            rule_rid: scheduleRequest.rule_rid,
+            related_task_rid: scheduleRequest.related_task_rid,
+            scheduled_datetime: scheduleRequest.scheduled_datetime,
+            executed_datetime: scheduleRequest.executed_datetime,
+            executed: scheduleRequest.executed ?? true,
+            created_by: scheduleRequest.created_by,
+            modified_by: scheduleRequest.modified_by ?? scheduleRequest.created_by, // fallback to created_by if undefined
+        });
 
-/** GET all RuleMasters */
-export const getAllRuleScheduleQueue = async () => {
-    const queues = await RuleScheduleQueue.findAll({
-        order: [["created_datetime", "DESC"]],
-    });
-    return queues;
-};
-
-/** GET RuleMaster by RID */
-export const getRuleScheduleById = async (rid: string) => {
-    const queue = await RuleScheduleQueue.findByPk(rid);
-    return queue;
-};
-
-export const getRuleScheduleByRule = async (rule_rid: string) => {
-    const queue = await RuleScheduleQueue.findByPk(rule_rid);
-    return queue;
-};
-
-export const markScheduleExecuted = async (rule_rid: string) => {
-    const queue = await RuleScheduleQueue.findByPk(rule_rid);
-    return queue;
-};
-
-/** UPDATE RuleMaster by RID */
-export const updateRuleSchedule = async (
-    rid: string,
-    data: Partial<RuleScheduleQueueCreationAttributes>
-) => {
-    // Build update object dynamically
-    const updateData: Partial<RuleScheduleQueueCreationAttributes> = {
-        modified_datetime: new Date(), // always update timestamp
+        return {
+            statusCode: HttpStatus.SUCCESS,
+            message: STATUS_MESSAGE.scheduleCreated,
+            data: {
+                schedule: schedule,
+            },
+        };
     };
 
-    if (data.rule_rid !== undefined) updateData.rule_rid = data.rule_rid;
-    if (data.related_task_rid !== undefined) updateData.related_task_rid = data.related_task_rid; // can be string or undefined
-    if (data.scheduled_datetime !== undefined) updateData.scheduled_datetime = data.scheduled_datetime;
-    if (data.executed_datetime !== undefined) updateData.executed_datetime = data.executed_datetime;
-    if (data.executed !== undefined) updateData.executed = data.executed;
-    if (data.modified_by !== undefined) updateData.modified_by = data.modified_by;
+    /** GET all RuleMasters */
+    async listSchedules(
+        data: any,
+        filters: Record<string, any>,
+        userId: string,
+        apiType: string): Promise<{
+            statusCode: number;
+            message: string;
+            errorMessage?: string;
+            data?: { schedules: any; count: number };
+        }> {
+        const sequelize = new Sequelize(process.env.POSTGRES_CONNECTION_STRING!, {
+            dialect: "postgres",
+            logging: false, // optional
+        });
+        RuleScheduleQueue.initialize(sequelize);
+        const limit = data.limit;
+        const offset = (data.page - 1) * limit;
+        const { rows, count } = await RuleScheduleQueue.findAndCountAll({
+            order: [[data.sortBy, data.sortOrder]],
+            limit,
+            offset
+        });
+        return {
+            statusCode: HttpStatus.SUCCESS,
+            message: HttpStatus.SUCCESS_MESSAGE,
+            data: {
+                schedules: rows,
+                count: count,
+            },
+        };
+    };
 
-    const [updatedCount, [updatedRuleSchedule]] = await RuleScheduleQueue.update(
-        updateData,
-        {
-            where: { rid },
-            returning: true,
+    /** GET RuleMaster by RID */
+    // export const getRuleScheduleById = async (rid: string) => {
+    //     const queue = await RuleScheduleQueue.findByPk(rid);
+    //     return queue;
+    // };
+
+    // export const getRuleScheduleByRule = async (rule_rid: string) => {
+    //     const queue = await RuleScheduleQueue.findByPk(rule_rid);
+    //     return queue;
+    // };
+
+    // export const markScheduleExecuted = async (rule_rid: string) => {
+    //     const queue = await RuleScheduleQueue.findByPk(rule_rid);
+    //     return queue;
+    // };
+
+    /** UPDATE RuleMaster by RID */
+    async updateSchedule(
+        scopeRequest: ICreateSchedule,
+        userId: string
+    ): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: { schedule: any };
+    }> {
+        // Build update object dynamically
+        const sequelize = new Sequelize(process.env.POSTGRES_CONNECTION_STRING!, {
+            dialect: "postgres",
+            logging: false, // optional
+        });
+        const dbInit = RuleScheduleQueue.initialize(sequelize);
+        const caseUpdateResponse = await RuleScheduleQueue.update(
+            {
+                ...scopeRequest,
+                modified_by: "userId",
+                modified_datetime: new Date(),
+            },
+            {
+                where: { rid: scopeRequest.schedule_rid },
+            }
+        );
+
+        return {
+            statusCode: HttpStatus.SUCCESS,
+            message: STATUS_MESSAGE.scheduleUpdated,
+            data: {
+                schedule: {},
+            },
+        };
+    };
+
+
+    /** DELETE RuleMaster by RID */
+    async deleteSchedule(data: any, userId: string) {
+        try {
+            const sequelize = new Sequelize(process.env.POSTGRES_CONNECTION_STRING!, {
+                dialect: "postgres",
+                logging: false, // optional
+            });
+            RuleScheduleQueue.initialize(sequelize);
+            await RuleScheduleQueue.destroy({ where: { rid: data.schedule_rid } });
+            return {
+                statusCode: HttpStatus.SUCCESS,
+                message: STATUS_MESSAGE.scheduleDeleteSuccess,
+            };
+        } catch (err) {
+            console.log(`Error deleting, ${err}`)
+            return {
+                statusCode: HttpStatus.FAILED,
+                message: STATUS_MESSAGE.scheduleDeleteFailed,
+            };
         }
-    );
+    };
 
-    return updatedRuleSchedule;
-};
-
-
-/** DELETE RuleMaster by RID */
-export const deleteRuleSchedule = async (rid: string) => {
-    await RuleScheduleQueue.destroy({ where: { rid } });
-    return { message: "Schedule deleted successfully" };
-};
+}
