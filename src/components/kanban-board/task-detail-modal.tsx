@@ -665,6 +665,15 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       newErrors.tags = 'Maximum 50 characters allowed';
     }
 
+    if (editedTask?.startDate && dayjs(editedTask.startDate).isBefore(dayjs('1950-01-01'), 'day')) {
+      newErrors.startDate = 'Invalid Date';
+    }
+    if (editedTask?.endDate && dayjs(editedTask.endDate).isBefore(dayjs('1950-01-01'), 'day')) {
+      newErrors.endDate = 'Invalid Date';
+    } else if (editedTask?.startDate && editedTask?.endDate && dayjs(editedTask.endDate).isBefore(dayjs(editedTask.startDate), 'day')) {
+      newErrors.endDate = 'Invalid Date';
+    }
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
@@ -899,6 +908,9 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       }
       return updatedTask;
     });
+    if (newStartDate) {
+      setErrors((prev) => ({ ...prev, startDate: '' }));
+    }
   };
 
   const handleEndDateChange = (date: string) => {
@@ -910,6 +922,9 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       }
       return { ...prev, endDate: newEndDate };
     });
+    if (newEndDate) {
+      setErrors((prev) => ({ ...prev, endDate: '' }));
+    }
   };
 
   const handleAttachmentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1385,6 +1400,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                       textField: {
                         fullWidth: true,
                         size: 'small',
+                        error: !!errors.startDate,
                         sx: {
                           '& .MuiOutlinedInput-root': {
                             height: '32px',
@@ -1401,10 +1417,20 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                               WebkitTextFillColor: 'black !important',
                             },
                             '&:hover .MuiOutlinedInput-notchedOutline': {
-                              border: '1px solid #CBD6E2',
+                              border: errors.startDate
+                                ? '1px solid #EF4444'
+                                : '1px solid #CBD6E2',
                             },
                             '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                              border: '2px solid #60A5FA',
+                              border: errors.startDate
+                                ? '2px solid #EF4444'
+                                : '2px solid #60A5FA',
+                            },
+                            '& .MuiOutlinedInput-notchedOutline': {
+                              border: errors.startDate
+                                ? '1px solid #EF4444'
+                                : '1px solid #CBD6E2',
+                              borderRadius: '2px',
                             },
                             '&.Mui-disabled': {
                               backgroundColor: '#F3F4F6',
@@ -1420,6 +1446,11 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                       },
                     }}
                   />
+                  {errors.startDate && (
+                    <p className='text-xs text-red-500 mt-1'>
+                      {errors.startDate}
+                    </p>
+                  )}
                 </div>
               )}
               {!fieldVisibility.endDate && (
@@ -1487,6 +1518,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                       textField: {
                         fullWidth: true,
                         size: 'small',
+                        error: !!errors.endDate,
                         sx: {
                           '& .MuiOutlinedInput-root': {
                             height: '32px',
@@ -1503,10 +1535,20 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                               WebkitTextFillColor: 'black !important',
                             },
                             '&:hover .MuiOutlinedInput-notchedOutline': {
-                              border: '1px solid #CBD6E2',
+                              border: errors.endDate
+                                ? '1px solid #EF4444'
+                                : '1px solid #CBD6E2',
                             },
                             '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                              border: '2px solid #60A5FA',
+                              border: errors.endDate
+                                ? '2px solid #EF4444'
+                                : '2px solid #60A5FA',
+                            },
+                            '& .MuiOutlinedInput-notchedOutline': {
+                              border: errors.endDate
+                                ? '1px solid #EF4444'
+                                : '1px solid #CBD6E2',
+                              borderRadius: '2px',
                             },
                             '&.Mui-disabled': {
                               backgroundColor: '#F3F4F6',
@@ -1522,6 +1564,11 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                       },
                     }}
                   />
+                  {errors.endDate && (
+                    <p className='text-xs text-red-500 mt-1'>
+                      {errors.endDate}
+                    </p>
+                  )}
                 </div>
               )}
             </div>
