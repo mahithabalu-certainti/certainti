@@ -281,7 +281,7 @@ export const CaseListTable: React.FC<ICaseTableProps> = ({
           })
         );
       } else {
-        errorToast(result?.message || 'Failed to update field');
+        errorToast(result?.statusMessage || 'Failed to update field');
         setCaseList(previousCases);
       }
     } catch (error) {
