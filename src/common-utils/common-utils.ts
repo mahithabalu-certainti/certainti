@@ -714,10 +714,10 @@ export const checkError = (data: CheckError[]) => {
 export const errorHandling = (data: AxiosErrorMsg): string => {
   const errorData = data.response?.data;
   return `<p>${errorData?.statusMessage
-      ? typeof errorData.statusMessage === 'object'
-        ? Object.values(errorData.statusMessage).join(', ')
-        : errorData.statusMessage || ''
-      : errorData?.message || data.message
+    ? typeof errorData.statusMessage === 'object'
+      ? Object.values(errorData.statusMessage).join(', ')
+      : errorData.statusMessage || ''
+    : errorData?.message || data.message
     }</p>`;
 };
 
@@ -744,7 +744,7 @@ export const getDateFormatYYYYMMDD = (date?: string) => {
 };
 export const getDateFormat = (date?: string) => {
   if (!date) return '';
-  return dayjs(date).format('DD/MMM/YYYY');
+  return dayjs(date).format('YYYY-MM-DD');
 };
 export const STATUS_OPTIONS: SelectOption[] = [
   { label: 'Active', value: 'active' },

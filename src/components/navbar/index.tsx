@@ -35,7 +35,7 @@ import { RootState } from '../../store/store';
 import { setFiscalYear } from '../../store/slices/account-slice';
 import { checkPermission, fiscalYears, getFiltersFromStorage } from '../../common-utils';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { CASE, PROFILE } from '../../routes';
+import { CASE, PROFILE, PROJECT } from '../../routes';
 import { GlobalFiscalYearDropdown } from '../fiscal-dropdown';
 import GlobalFilterModal from '../global-modal/global-filter';
 import { useMsal } from '@azure/msal-react';
@@ -104,6 +104,8 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   const isFilterApplied = useMemo(() => filters.length > 0, [filters]);
   const isCaseModule = location.pathname.startsWith(`${CASE}/`);
+  const isProjectModule = location.pathname.startsWith(`${PROJECT}/`);
+  const isSpecificFYModule = isCaseModule || isProjectModule;
 
   const [globalAnchorEl, setGlobalAnchorEl] =
     useState<HTMLButtonElement | null>(null);
@@ -176,7 +178,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false;
-      if (isCaseModule) {
+      if (isSpecificFYModule) {
         savedPrevFYRef.current = 'FY-All';
         prevIsCaseRouteRef.current = true;
         return;
@@ -185,15 +187,15 @@ export const Navbar: React.FC<NavbarProps> = ({
 
     const prevIsCaseRoute = prevIsCaseRouteRef.current;
 
-    // Transitioning from non-case to case: save current fiscal year
-    if (!prevIsCaseRoute && isCaseModule) {
+    // Transitioning from non-specific to specific module: save current fiscal year
+    if (!prevIsCaseRoute && isSpecificFYModule) {
       if (savedPrevFYRef.current === null) {
         savedPrevFYRef.current = fiscalYear;
       }
     }
 
-    // Transitioning from case to non-case: restore previous fiscal year
-    if (prevIsCaseRoute && !isCaseModule) {
+    // Transitioning from specific to non-specific module: restore previous fiscal year
+    if (prevIsCaseRoute && !isSpecificFYModule) {
       if (savedPrevFYRef.current !== null) {
         dispatch(setFiscalYear(savedPrevFYRef.current));
         savedPrevFYRef.current = null;
@@ -202,9 +204,8 @@ export const Navbar: React.FC<NavbarProps> = ({
       }
     }
 
-    // Ensure we are synced with storage if we are not in a case module and not transitioning from one
-    // This handles initial load on non-case pages, or remounts (e.g. Admin module)
-    if (!prevIsCaseRoute && !isCaseModule && userId) {
+    // Ensure we are synced with storage if we are not in a specific module and not transitioning from one
+    if (!prevIsCaseRoute && !isSpecificFYModule && userId) {
       const { fiscalYear: storedFY } = getFiltersFromStorage(userId);
       if (storedFY !== fiscalYear) {
         dispatch(setFiscalYear(storedFY));
@@ -212,8 +213,8 @@ export const Navbar: React.FC<NavbarProps> = ({
     }
 
     // Update the ref for next comparison
-    prevIsCaseRouteRef.current = isCaseModule;
-  }, [location.pathname, isCaseModule, dispatch, fiscalYear, userId]);
+    prevIsCaseRouteRef.current = isSpecificFYModule;
+  }, [location.pathname, isSpecificFYModule, dispatch, fiscalYear, userId]);
 
   const handleProfileMenuOpen = useCallback(
     (event: React.MouseEvent<HTMLElement>) => {
@@ -516,7 +517,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   fiscalYearsOptions={fiscalYearsDropDown}
                   isGlobal={true}
                   onChange={(e) => dispatch(setFiscalYear(e.target.value))}
-                  disabled={isCaseModule}
+                  disabled={isSpecificFYModule}
                 />
                 <div className='border-l border-[#FFFFFF4D] ml-1 mr-2 h-6' />
               </>
