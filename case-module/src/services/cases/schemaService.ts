@@ -4918,7 +4918,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     else return null;
   }
   async createUserLevelTask (data : CreateCaseTaskType, accountNumber : string, transaction : Transaction, activeStatusRid : string, fiscalYear : number) {
-    const {CaseTask, CaseTimeline} = await this.caseModelService.getModels(accountNumber);
+    const {CaseTask, CaseTimeline, TaskSummary,Case} = await this.caseModelService.getModels(accountNumber);
     const fetchSequenceNumber = await this.fetchSequenceOrder(data.milestone_template_rid, accountNumber);
     let sequenceNo : number = 0;
     if(fetchSequenceNumber.length > 0) {
@@ -4949,6 +4949,34 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       task_category_rid : data.task_category_rid
     }, {transaction});
     if(createdTaskResult) {
+      const caseInfo = await Case.findOne({
+        where : {
+          rid : data.case_rid,
+          account_rid : data.account_rid
+        },
+        attributes : ['case_name','fiscal_year'],
+        raw : true  
+      });
+    /*  await TaskSummary.create(
+        {
+          task_rid: createdTaskResult.rid,
+          r_number: createdTaskResult.r_number || "",
+          account_rid: createdTaskResult.account_rid || "",
+          attach_to: createdTaskResult.rid || "",
+          attachment_level: "case",
+          task_name: data.task_name || "",
+          description: data.task_description || "",
+          fiscal_year: caseInfo?.fiscal_year || 0,
+          assigned_to: data.assigned_to || "",
+          status_rid: data.status_rid || "",
+          priority_rid: data.priority_rid || "",
+          effective_start_datetime: data.effective_start_datetime,
+          effective_end_datetime: data.effective_end_datetime,
+          created_by: data.created_by || "",
+          created_datetime: new Date(),
+        }
+      );
+      */
       if(data?.checklist_template_rid) 
       {
         const response  = await this.fetchChecklistTemplateDetailsById(data.checklist_template_rid);
@@ -5017,7 +5045,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     if(!this.mainDbSequelize) {
       this.mainDbSequelize = await initMainDbSequelize()
     }
-    const {CaseTask, CaseTimeline, CaseHistory, TaskCollaborators, CaseTeam} = await this.caseModelService.getModels(accountNumber);
+    const {CaseTask, CaseTimeline, CaseHistory, TaskCollaborators, TaskSummary} = await this.caseModelService.getModels(accountNumber);
     const checkCaseExists = await this.isCaseExistsForAccount(data.account_rid, data.case_rid, accountNumber);
     if(!checkCaseExists) {
       return {
@@ -5054,27 +5082,24 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             case_rid : data.case_rid
           }, transaction
         });
-        if(data?.checklist_template_rid) 
-      {
-        const response  = await this.fetchChecklistTemplateDetailsById(data.checklist_template_rid);
-        response.checklist_items.map((item:any) => item.action_type  = 'add');
-        let caseRequest = {
-          account_rid: data.account_rid!,
-          checklist_name: response.checklist_name,
-          checklist_description: response.description,  
-          checklist_items: response.checklist_items,
-          attach_to: data.rid,
-          attachment_level: 'task',
-          created_by: data.modified_by,
-          created_datetime: new Date(),
-          fiscal_year: checkCaseExists.fiscal_year,
-          checklist_rid: data.checklist_template_rid,
-          case_rid : data.case_rid
-        };
-
-        const checklistResponse = await this.createCheckList(accountNumber, caseRequest, transaction);
-        await this.manageCheckListItems(accountNumber,caseRequest,checklistResponse.rid, transaction);
+       /* await TaskSummary.update(
+        {
+          task_name: data.task_name || "",
+          description: data.task_description || "",
+          assigned_to: data.assigned_to || "",
+          status_rid: data.task_status_rid || "",
+          priority_rid: data.priority_rid || "",
+          effective_start_datetime: data.effective_start_datetime,
+          effective_end_datetime: data.effective_end_datetime,
+          modified_by: data.modified_by || "",
+          modified_datetime: new Date(),
+        },
+        {
+        where : {
+            task_rid : data.rid
+          }
       }
+      ); */
         const checkIsDifferentCollaborator = await this.isNewCollaborator(data.modified_by, accountNumber,"case_task");
         if(!checkIsDifferentCollaborator) {
           const checkCollaboratorExists = await this.isCollaboratorAlreadyAdded(data.modified_by, data.case_rid, data.account_rid, data.rid, accountNumber,"case_task");
