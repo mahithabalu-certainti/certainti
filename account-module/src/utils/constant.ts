@@ -2270,7 +2270,7 @@ export const rawQueries = {
       CREATE SEQUENCE IF NOT EXISTS "${schemaName}".activities_attachments_seq START 1;
     `;
   },
-  getCreateInteractionsTableQuery(schemaName: string): string {
+   getCreateInteractionsTableQuery(schemaName: string): string {
     return `
       CREATE TABLE IF NOT EXISTS "${schemaName}".interactions (
         rid VARCHAR(50) DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
@@ -2312,6 +2312,36 @@ export const rawQueries = {
         interaction_level_rid varchar(50),
         CONSTRAINT interactions_rid_unique UNIQUE (rid)
       );
+    `;
+  },
+  getCreateActivityHistorySequenceQuery(schemaName: string): string {
+    return `
+      CREATE SEQUENCE IF NOT EXISTS "${schemaName}".activity_history_seq START 1;
+    `;
+  },
+  getCreateActivityHistoryTableQuery(schemaName: string): string {
+    return `
+      CREATE TABLE IF NOT EXISTS "${schemaName}".activity_history (
+        rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+        r_number VARCHAR(20) UNIQUE DEFAULT 'ACH-' || LPAD(nextval('"${schemaName}".activity_history_seq')::TEXT, 10, '0'),
+        created_by varchar(50) NOT NULL,
+        modified_by varchar(50),
+        created_datetime TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+        modified_datetime TIMESTAMP WITH TIME ZONE,
+        account_rid varchar(50) NOT NULL,
+        activity_rid varchar(50) NOT NULL,
+        activity_type varchar(50),
+        attribute_name VARCHAR(100) NOT NULL,
+        old_value VARCHAR(2000),
+        new_value VARCHAR(2000)
+      );
+    `;
+  },
+  getAlterActivityHistoryForeignKeysQuery(schemaName: string): string {
+    return `
+      ALTER TABLE "${schemaName}".activity_history
+      ADD CONSTRAINT activity_history_activity_rid_fkey
+      FOREIGN KEY (activity_rid) REFERENCES "${schemaName}".activities(rid) ON UPDATE CASCADE;
     `;
   },
   getCreateChecklistTableQuery(schemaName: string): string {
