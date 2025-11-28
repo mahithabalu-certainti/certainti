@@ -198,7 +198,7 @@ class ActivitySchemaService {
   ) {
     // Implementation for creating interactions in the database
     try {
-      const { Activities } = await this.caseModelService.getModels(
+      const { Activities, TaskSummary } = await this.caseModelService.getModels(
         accountNumber
       );
 
@@ -212,6 +212,26 @@ class ActivitySchemaService {
       const casecreationResponse = await Activities.create(activityData, {
         transaction,
       });
+
+      await TaskSummary.create(
+        {
+          task_rid: casecreationResponse.rid,
+          r_number: casecreationResponse.r_number || "",
+          account_rid: taskRequest.account_rid || "",
+          attach_to: taskRequest.attach_to || "",
+          attachment_level: taskRequest.attachment_level || "",
+          task_name: taskRequest.task_name || "",
+          description: taskRequest.description || "",
+          fiscal_year: taskRequest.fiscal_year || 0,
+          assigned_to: taskRequest.assigned_to || "",
+          status_rid: taskRequest.status_rid || "",
+          priority_rid: taskRequest.priority_rid || "",
+          effective_start_datetime: taskRequest.effective_start_datetime,
+          effective_end_datetime: taskRequest.effective_end_datetime,
+          created_by: taskRequest.created_by || "",
+          created_datetime: new Date(),
+        }
+      );
 
       await this.addTaskManagementTimeline(
         accountNumber,
@@ -239,7 +259,7 @@ class ActivitySchemaService {
   ) {
     // Implementation for updating interactions in the database
     try {
-      const { Activities } = await this.caseModelService.getModels(
+      const { Activities,TaskSummary } = await this.caseModelService.getModels(
         accountNumber
       );
       const existingTask = await Activities.findOne({
@@ -252,6 +272,24 @@ class ActivitySchemaService {
         },
         transaction,
       });
+      await TaskSummary.update(
+        {
+          task_name: taskRequest.task_name || "",
+          description: taskRequest.description || "",
+          assigned_to: taskRequest.assigned_to || "",
+          status_rid: taskRequest.status_rid || "",
+          priority_rid: taskRequest.priority_rid || "",
+          effective_start_datetime: taskRequest.effective_start_datetime,
+          effective_end_datetime: taskRequest.effective_end_datetime,
+          modified_by: taskRequest.modified_by || "",
+          modified_datetime: new Date(),
+        },
+        {
+          where: {
+            task_rid: taskRequest.task_rid,
+          }
+        }
+      );
       const checkIsDifferentCollaborator = await this.isNewCollaborator(
         taskRequest.modified_by!,
         accountNumber
@@ -1630,12 +1668,34 @@ class ActivitySchemaService {
       rawQueries.fetchActivityStatusByName(activityStatus.scheduled, activityRequest.activity_type),
       { type: "SELECT" }
     );
+    let meetingParticipants: string[] = [];
+    let reOccurenceDays: string[] = [];
+     if (Array.isArray(activityRequest.meeting_participants)) {
+    meetingParticipants = activityRequest.meeting_participants;
+  } else if (typeof activityRequest.meeting_participants === 'string') {
+    try {
+      meetingParticipants = JSON.parse(activityRequest.meeting_participants);
+    } catch {
+      meetingParticipants = [];
+    }
+  }
+   if (Array.isArray(activityRequest.recurrence_days)) {
+    reOccurenceDays = activityRequest.recurrence_days;
+  } else if (typeof activityRequest.recurrence_days === 'string') {
+    try {
+      reOccurenceDays = JSON.parse(activityRequest.recurrence_days);
+    } catch {
+      reOccurenceDays = [];
+    }
+  }
     const activityData = {
       ...activityRequest,
       activity_type: activityRequest.activity_type,
       effective_start_datetime: activityRequest.effective_start_date,
       effective_end_datetime: activityRequest.effective_end_date,
       status_rid: meetingStatus?.rid || null,
+      meeting_participants: meetingParticipants,
+      recurrence_days: reOccurenceDays,
       account_rid:
         activityRequest.accountRid || activityRequest.account_rid || "",
     };
@@ -1653,7 +1713,7 @@ class ActivitySchemaService {
       throw new Error("Sender email information not found for scheduling meeting.");
     } 
 
-    let scheduleResponse =  await scheduleTeamsMeetingUtil(activityRequest, userId,senderEmailInfo);
+    let scheduleResponse =  await scheduleTeamsMeetingUtil(activityData, userId,senderEmailInfo);
     if(scheduleResponse.success)
     {
       activityData.meeting_invite = scheduleResponse.webLink;
@@ -2266,7 +2326,7 @@ class ActivitySchemaService {
       meeting_url: emailDetails?.meeting_url ?? "",
       meeting_id: emailDetails?.meeting_id ?? "",
       meeting_participants: emailDetails?.meeting_participants
-        ? emailDetails.meeting_participants.split(";")
+        ? emailDetails.meeting_participants
         : [],
       r_number: emailDetails.r_number ?? "",
       status_rid: emailDetails.status_rid ?? "",
@@ -2280,6 +2340,8 @@ class ActivitySchemaService {
       attachments: attachmentsDetails || [],
       effective_start_datetime:emailDetails.effective_start_datetime ?? null,
       effective_end_datetime:emailDetails.effective_end_datetime ?? null, 
+      efective_start_time: emailDetails.efective_start_time ?? null,
+      efective_end_time: emailDetails.efective_end_time ?? null,
       recurrence_days: emailDetails.recurrence_days ? emailDetails.recurrence_days: [],
       recurrence_interval: emailDetails.recurrence_interval ?? null,
       recurrence_type: emailDetails.recurrence_type ?? null,

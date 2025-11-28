@@ -19,34 +19,28 @@ export async function scheduleTeamsMeetingUtil(
   }
 ): Promise<any> {
   const support_email = senderEmailInfo.email;
-  // Normalize attendees
-  let attendeesArray: string[] = [];
-  if (Array.isArray(activityRequest.attendees)) {
-    attendeesArray = activityRequest.attendees;
-  } else if (typeof activityRequest.attendees === "string") {
+  // Ensure meeting_participants is always an array of strings
+  let meetingParticipants: string[] = [];
+  if (Array.isArray(activityRequest.meeting_participants)) {
+    meetingParticipants = activityRequest.meeting_participants.filter((email) => typeof email === "string" && email);
+  } else if (typeof activityRequest.meeting_participants === "string") {
     try {
-      attendeesArray = JSON.parse(activityRequest.attendees);
+      const parsed = JSON.parse(activityRequest.meeting_participants);
+      meetingParticipants = Array.isArray(parsed)
+        ? parsed.filter((email) => typeof email === "string" && email)
+        : [];
     } catch {
-      attendeesArray = [];
+      meetingParticipants = [];
     }
   }
-  let recurrenceDays: string[] = [];
-  if (activityRequest.recurrence_days) {
-    if (Array.isArray(activityRequest.recurrence_days)) {
-      recurrenceDays = activityRequest.recurrence_days;
-    } else if (typeof activityRequest.recurrence_days === "string") {
-      try {
-        recurrenceDays = JSON.parse(activityRequest.recurrence_days);
-      } catch {
-        recurrenceDays = [];
-      }
-    }
-  }
-
-  const attendees = attendeesArray.map((email) => ({
+  // Remove duplicates and trim emails
+  meetingParticipants = Array.from(new Set(meetingParticipants.map(e => e.trim())));
+  const attendees = activityRequest.meeting_participants.map((email) => ({
     emailAddress: { address: email },
     type: "required",
   }));
+
+  
 
 const startDateTime = moment(`${activityRequest.effective_start_date} ${activityRequest.effective_start_time}`,  "YYYY-MM-DD HH:mm");
 const endDateTime   = moment(`${activityRequest.effective_end_date} ${activityRequest.effective_end_time}`,      "YYYY-MM-DD HH:mm");
@@ -62,7 +56,7 @@ const payload = {
       dateTime: endDateTimepayload,
       timeZone: activityRequest.time_zone || "UTC",
     },
-    attendees,
+    attendees: attendees,
     body: {
       contentType: "HTML",
       content: activityRequest.subject || "",
@@ -73,7 +67,7 @@ const payload = {
       pattern: {
         type: activityRequest.recurrence_type || "weekly",
         interval: Number(activityRequest.recurrence_interval) || 1,
-        daysOfWeek: recurrenceDays || ["Monday"],
+        daysOfWeek: activityRequest.recurrence_days || [],
         firstDayOfWeek: "sunday",
       },
       range: {

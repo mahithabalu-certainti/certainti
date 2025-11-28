@@ -16,6 +16,7 @@ export interface ICreateCases {
   status_rid?: string;
   heat_light_power?: number;
   total_nonlabor_cost?: number;
+  tax_liability?: number
 }
 
 export type CaseHeadersColumns = {
@@ -261,6 +262,11 @@ export interface CaseHistorySubmission {
   total_qualified_project_cost: number;
   total_qre: number;
   total_rd_credits: number;
+  total_fte_cost?: number;
+  total_subcon_cost?: number;
+  total_nonlabor_cost?: number;
+  country_rid: string;
+  state_rid?: string;
   annual_gross_receipts?: number;
   action_type: "add" | "edit" | "delete";
 }
@@ -714,8 +720,8 @@ export interface IActivityTask {
   attachment_level: string;
   task_name: string;
   description?: string;
-  start_datetime?: Date;
-  end_datetime?: Date;
+  effective_start_datetime: Date;
+  effective_end_datetime: Date;
   priority_rid?: string;
   assigned_to?: string;
   status_rid?: string;
@@ -761,7 +767,7 @@ export interface IActivityMeeting {
   meeting_status:string;
   meeting_status_rid?: string;
   invitees: JSON;
-  attendees: string[];
+  meeting_participants: string[];
   subject: string;
   meeting_platform?: string;
   meeting_invite?: string;
