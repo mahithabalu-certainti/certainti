@@ -303,7 +303,8 @@ const Attachments: React.FC<AttachmentsProps> = ({
 
   const attachmentsFilterFields = getAttachmentsFilterFields(
     fieldOptions,
-    permissionMap
+    permissionMap,
+    'project'
   );
 
   const attachmentColumns = useMemo(
@@ -317,7 +318,9 @@ const Attachments: React.FC<AttachmentsProps> = ({
         permissionMap,
         isAttachmentExportEnable,
         categoryTypes.isLoading,
-        accountOrProjectInActive
+        accountOrProjectInActive,
+        undefined,
+        'project'
       ),
     [accountOrProjectInActive, memoizedDocumentTypes]
   );
