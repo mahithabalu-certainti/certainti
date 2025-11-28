@@ -52,8 +52,7 @@ const startDateTime = moment(`${activityRequest.effective_start_date} ${activity
 const endDateTime   = moment(`${activityRequest.effective_end_date} ${activityRequest.effective_end_time}`,      "YYYY-MM-DD HH:mm");
 const endDateTimepayload   = moment(`${activityRequest.effective_start_date} ${activityRequest.effective_end_time}`,      "YYYY-MM-DD HH:mm");
 
-
-  const payload = {
+const payload = {
     subject: activityRequest.subject,
     start: {
       dateTime: startDateTime,
