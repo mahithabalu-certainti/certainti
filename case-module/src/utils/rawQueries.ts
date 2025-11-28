@@ -694,7 +694,7 @@ export const fetchAdminTemplates = (page : number, limit : number, sort : string
                   break;
                 }
                 case "between" : {
-                  queryContainer.push(`${validKeyColumns} BETWEEN ${value['from']} AND ${value['to']}`)
+                  queryContainer.push(`${validKeyColumns} BETWEEN ${value.map((d : any) => `${d}`).join(' AND ')}`)
                   break;
                 }
                 default : {
@@ -823,8 +823,6 @@ export const fetchMilestoneTaskTemplate = (taskTypeRid : string, filingTypeRid :
   m.milestone_name, m.milestone_description, m.status_rid AS "milestone_status_rid", m.case_filing_type_rid
   FROM
   ${MAIN_SCHEMA_NAME}.milestone_template m
-  WHERE
-  m.case_filing_type_rid = '${filingTypeRid}'
   ORDER BY m.r_number ASC
   ),
   fetch_task_data AS (
