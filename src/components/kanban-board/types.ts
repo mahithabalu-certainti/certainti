@@ -291,6 +291,8 @@ export interface KanbanColumnProps {
   ) => Promise<void>;
   fieldVisibility?: FieldVisibility;
   fieldDisabled?: FieldDisabled;
+  accountId?: string;
+  caseId?: string;
 }
 
 export interface TaskDetailModalProps {

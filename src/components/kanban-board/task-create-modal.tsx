@@ -17,10 +17,10 @@ import type { UserOption } from './types';
 import type { RoleOption } from '../../consultant/services/case-team/case-team-service';
 import {
   useGetTaskConnectorTypes,
-  useGetTaskTemplate,
   useWeightageList,
   useGetTaskCategoryTypes,
 } from '../../admin/service/task-template/task-template-service';
+import { useGetTaskDropDownList } from '../../consultant/services/case-task/case-task-service';
 
 // Form data interface
 export interface TaskFormData {
@@ -82,6 +82,8 @@ interface TaskCreateModalProps {
     description?: boolean;
     collaborators?: boolean;
   };
+  accountId?: string;
+  caseId?: string;
 }
 
 const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
@@ -99,6 +101,8 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
 
   fieldVisibility = {},
   fieldDisabled = {},
+  accountId,
+  caseId,
 }) => {
   const ErrorIconTooltip = ({ error }: { error: string }) => (
     <Tooltip
@@ -169,7 +173,11 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
 
   // Fetch connector types and task templates
   const taskConnectorTypesQuery = useGetTaskConnectorTypes();
-  const taskTemplatesQuery = useGetTaskTemplate({ search: '' });
+  const taskTemplatesQuery = useGetTaskDropDownList({
+    case_rid: caseId || '',
+    account_rid: accountId || '',
+    search: '',
+  }, { enabled: !!caseId && !!accountId });
 
   const connectorTypesData = useMemo(() => {
     if (

@@ -28,6 +28,7 @@ import {
   useUploadTaskAttachments,
   useDeleteTaskAttachment,
   useUpdateCaseTask,
+  useGetTaskDropDownList,
 } from '../../consultant/services/case-task/case-task-service';
 import { useGetTagOptions } from '../../consultant/services/case-team/case-team-service';
 import {
@@ -42,7 +43,6 @@ import {
 import { useToast } from '../../hooks';
 import {
   useGetTaskConnectorTypes,
-  useGetTaskTemplate,
   useWeightageList,
   useGetTaskCategoryTypes,
 } from '../../admin/service/task-template/task-template-service';
@@ -380,7 +380,11 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
 
   // Fetch connector types and task templates
   const taskConnectorTypesQuery = useGetTaskConnectorTypes();
-  const taskTemplatesQuery = useGetTaskTemplate({ search: '' });
+  const taskTemplatesQuery = useGetTaskDropDownList({
+    case_rid: caseId,
+    account_rid: accountId,
+    search: '',
+  });
 
   const connectorTypesData = useMemo(() => {
     if (
@@ -402,15 +406,25 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       taskTemplatesQuery.data?.data &&
       Array.isArray(taskTemplatesQuery.data.data)
     ) {
-      return taskTemplatesQuery.data.data.map(
-        (template: { rid: string; task_name: string }) => ({
+      return taskTemplatesQuery.data.data
+        .filter((template: { rid: string; task_name: string }) => {
+          // Filter out the current task by name if available
+          if (task?.title && template.task_name === task.title) {
+            return false;
+          }
+          // Also filter by ID if possible, though the request specifically mentioned name
+          if (taskId && template.rid === taskId) {
+            return false;
+          }
+          return true;
+        })
+        .map((template: { rid: string; task_name: string }) => ({
           id: template.rid,
           name: template.task_name,
-        })
-      );
+        }));
     }
     return [];
-  }, [taskTemplatesQuery.data]);
+  }, [taskTemplatesQuery.data, task?.title, taskId]);
 
   // Fetch weightage and category lists
   const weightageListQuery = useWeightageList();
