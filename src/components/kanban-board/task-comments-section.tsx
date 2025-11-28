@@ -11,7 +11,6 @@ import { useInfiniteTaskActivities } from '../../consultant/services/work-breakd
 import { transformComments, transformActivities, type TaskCommentRaw, type TaskActivityRaw } from '../../consultant/pages/case/case-details/work-breakdown/helper';
 import { generateInitials, generateColorFromName } from './helper';
 import LoadingSkeleton from './loading-skeleton';
-import { caseServiceApi } from '../../api/api';
 
 interface TaskCommentsSectionProps {
   fieldVisibility: Record<string, boolean | undefined>;

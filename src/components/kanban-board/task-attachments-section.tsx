@@ -1,6 +1,5 @@
 import React from 'react';
 import { Task } from './types';
-import { caseServiceApi } from '../../api/api';
 
 interface TaskAttachment {
   id?: string;
