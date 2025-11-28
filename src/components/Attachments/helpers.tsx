@@ -240,8 +240,9 @@ export const getAttachmentTableColumns = (
       permissionMap?.['fiscal_year']?.read &&
       !accountOrProjectInActive,
     hide:
-      !permissionMap?.['fiscal_year']?.edit &&
-      !permissionMap?.['fiscal_year']?.read,
+      module === 'case' ||
+      (!permissionMap?.['fiscal_year']?.edit &&
+        !permissionMap?.['fiscal_year']?.read),
     field: {
       type: 'select',
       required: true,

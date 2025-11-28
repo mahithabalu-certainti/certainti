@@ -364,8 +364,9 @@ export const getNotesTableColumns = (
     },
     render: (row) => `FY-${row.fiscal_year}`,
     hide:
-      !permissionMap?.['fiscal_year']?.edit &&
-      !permissionMap?.['fiscal_year']?.read,
+      module === 'case' ||
+      (!permissionMap?.['fiscal_year']?.edit &&
+        !permissionMap?.['fiscal_year']?.read),
   },
   {
     id: 'document_name',

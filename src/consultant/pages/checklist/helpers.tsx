@@ -250,8 +250,9 @@ export const getChecklistTableColumns = (
     sortable: module !== 'case' && module !== 'project',
     render: (row) => (row.fiscal_year ? `FY-${row.fiscal_year}` : '-'),
     hide:
-      !permissionMap?.['fiscal_year']?.read &&
-      !permissionMap?.['fiscal_year']?.edit,
+      module === 'case' ||
+      (!permissionMap?.['fiscal_year']?.read &&
+        !permissionMap?.['fiscal_year']?.edit),
     editable:
       permissionMap?.['fiscal_year']?.edit &&
       permissionMap?.['fiscal_year']?.read &&
