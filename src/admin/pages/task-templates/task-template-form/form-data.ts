@@ -74,7 +74,8 @@ export const TaskTemplateFormFieldsData = (
               permissionMap?.['milestone_type_rid']?.read,
             hide:
               taskType ||
-              (!permissionMap?.['milestone_type_rid']?.read &&
+              (isEditView &&
+                !permissionMap?.['milestone_type_rid']?.read &&
                 !permissionMap?.['milestone_type_rid']?.edit),
           }),
           createSelectField('case_team_member_role_rid', 'Assign Role', {
@@ -87,7 +88,8 @@ export const TaskTemplateFormFieldsData = (
               permissionMap?.['case_team_member_role_rid']?.read,
             hide:
               taskType ||
-              (!permissionMap?.['case_team_member_role_rid']?.read &&
+              (isEditView &&
+                !permissionMap?.['case_team_member_role_rid']?.read &&
                 !permissionMap?.['case_team_member_role_rid']?.edit),
           }),
           createTextField('effort_in_days', 'Efforts In Days', {
@@ -104,7 +106,8 @@ export const TaskTemplateFormFieldsData = (
               !permissionMap?.['effort_in_days']?.edit,
             hide:
               taskType ||
-              (!permissionMap?.['effort_in_days']?.read &&
+              (isEditView &&
+                !permissionMap?.['effort_in_days']?.read &&
                 !permissionMap?.['effort_in_days']?.edit),
           }),
 
@@ -138,29 +141,30 @@ export const TaskTemplateFormFieldsData = (
             required: true,
             options: taskCategoryTypesOptions || [],
             placeholder: 'Choose Task Category',
-            hide: taskType,
-            // hide:
-            //   isEditView &&
-            //   !permissionMap?.['task_category_rid']?.read &&
-            //   !permissionMap?.['task_category_rid']?.edit,
-            // disabled:
-            //   isEditView &&
-            //   permissionMap?.['task_category_rid']?.read &&
-            //   !permissionMap?.['task_category_rid']?.edit,
+            hide:
+              taskType ||
+              (isEditView &&
+                !permissionMap?.['task_category_rid']?.edit &&
+                !permissionMap?.['task_category_rid']?.read),
+            disabled:
+              isEditView &&
+              permissionMap?.['task_category_rid']?.read &&
+              !permissionMap?.['task_category_rid']?.edit,
           }),
           createSelectField('weightage_rid', 'Task Weightage ', {
             options: taskWeightAgeTypesOptions || [],
             placeholder: 'Choose Task Weightage',
             required: true,
-            hide: taskType,
-            // disabled:
-            //   isEditView &&
-            //   !permissionMap?.['weightage_rid']?.edit &&
-            //   permissionMap?.['weightage_rid']?.read,
-            // hide:
-            //   isEditView &&
-            //   !permissionMap?.['weightage_rid']?.edit &&
-            //   !permissionMap?.['weightage_rid']?.read,
+            // hide: taskType,
+            disabled:
+              isEditView &&
+              !permissionMap?.['weightage_rid']?.edit &&
+              permissionMap?.['weightage_rid']?.read,
+            hide:
+              taskType ||
+              (isEditView &&
+                !permissionMap?.['weightage_rid']?.edit &&
+                !permissionMap?.['weightage_rid']?.read),
           }),
           createSelectField('status_rid', 'Status', {
             required: true,
@@ -187,11 +191,29 @@ export const TaskTemplateFormFieldsData = (
             placeholder: 'Choose Linked Type',
             required: false,
             onChange: true,
+            disabled:
+              isEditView &&
+              !permissionMap?.['relationship_connector_rid']?.edit &&
+              permissionMap?.['relationship_connector_rid']?.read,
+            hide:
+              taskType ||
+              (isEditView &&
+                !permissionMap?.['relationship_connector_rid']?.edit &&
+                !permissionMap?.['relationship_connector_rid']?.read),
           }),
           createMultiSelectField('target_rid', 'Linked Task Type', {
             options: taskTemplate || [],
             placeholder: 'Choose Linked Task Type ',
             required: linkedType,
+            disabled:
+              isEditView &&
+              !permissionMap?.['target_rid']?.edit &&
+              permissionMap?.['target_rid']?.read,
+            hide:
+              taskType ||
+              (isEditView &&
+                !permissionMap?.['target_rid']?.edit &&
+                !permissionMap?.['target_rid']?.read),
           }),
         ],
       },
@@ -222,7 +244,7 @@ export const TaskTemplateFormFieldsData = (
         fillType: 'half',
         hide: !isEditView,
         fields: [
-          createTextField('record_id', 'Template ID', {
+          createTextField('record_id', 'Record ID', {
             required: false,
             disabled: true,
             hide:

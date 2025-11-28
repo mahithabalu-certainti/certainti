@@ -69,24 +69,6 @@ export const getSelectProjectColumns = (
     },
   },
   {
-    id: 'fiscal_year',
-    editId: 'fiscal_year',
-    label: 'Fiscal Year',
-    sortable: true,
-    hide:
-      !permissionMap?.['fiscal_year']?.read &&
-      !permissionMap?.['fiscal_year']?.edit,
-    sortId: 'fiscal_year',
-    width: 130,
-    sx: {
-      textAlign: 'left',
-    },
-    render: (row: AssignProject) => {
-      const displayYear = row.fiscal_year ? `FY-${row.fiscal_year}` : '-';
-      return <span>{displayYear}</span>;
-    },
-  },
-  {
     id: 'classification_name',
     editId: 'project_classification_rid',
     label: 'Project Classification',

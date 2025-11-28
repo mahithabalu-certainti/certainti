@@ -281,7 +281,10 @@ const CasesProjects: React.FC<casesProjectProps> = ({
       onClick: () => handleTriggerAIBtn(),
       loading: triggerAIMutation.isPending,
       sx: { width: '115px', minWidth: '115px' },
-      hide: !TriggerAIEnable,
+      hide:
+        !(tabParam === 'assign_projects' && !isAssignProject) ||
+        projectDetailTab ||
+        !TriggerAIEnable,
     },
     {
       label: isAssignProject ? 'Assign' : 'Remove',
@@ -596,7 +599,10 @@ const CasesProjects: React.FC<casesProjectProps> = ({
               ? false
               : true
         }
-        buttons={headerButtons}
+        buttons={headerButtons.map((btn) => ({
+          ...btn,
+          hide: Boolean(btn.hide),
+        }))}
       />
       {!isAssignProject && !projectDetailTab && (
         <SectionHeaderTab
