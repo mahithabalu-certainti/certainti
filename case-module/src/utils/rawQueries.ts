@@ -933,8 +933,8 @@ export const fetchCaseTemplateData = (schemaName : string, caseRid : string, acc
   FROM ${schemaName}.checklists ch 
   LEFT JOIN ${schemaName}.checklist_items chi ON chi.checklist_rid = ch.rid 
   WHERE 
-  ch.attach_to = '${caseRid}'
-  AND ch.task_rid = t.rid
+  ch.attach_to = t.rid
+  AND ch.case_rid = '${caseRid}'
   AND attachment_level = 'task'
   ),
   'comments_count', (SELECT COUNT(DISTINCT tc.rid) from ${schemaName}.task_comments tc WHERE tc.task_rid = t.rid),
@@ -1269,7 +1269,7 @@ return query;
     SELECT c.rid, c.account_rid, c.checklist_name, c.checklist_description, ct.rid AS task_rid
     FROM 
     ${schemaName}.case_task ct
-    LEFT JOIN ${schemaName}.checklists c ON c.attach_to = ct.case_rid AND c.task_rid = ct.rid AND c.attachment_level = 'task'
+    LEFT JOIN ${schemaName}.checklists c ON c.attach_to = '${taskRid}' AND c.case_rid = '${caseRid}' AND c.attachment_level = 'task'
     WHERE
     ct.rid = '${taskRid}'
     AND

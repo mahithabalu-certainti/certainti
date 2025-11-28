@@ -3481,7 +3481,7 @@ return !response;
           status_rid: caseRequest.status_rid,
           //modified_by: caseRequest.modified_by,
           created_datetime: new Date(),
-          task_rid : caseRequest.task_rid
+          case_rid : caseRequest.task_rid
           //  modified_datetime: caseRequest.modified_datetime,
         },
         { transaction }
@@ -4829,7 +4829,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         });
         if (templateChecklist) {
           const checklistData = {
-            attach_to: caseRid,
+            attach_to: task.rid,
             attachment_level: "task",
             checklist_name: templateChecklist.checklist_name,
             checklist_description: templateChecklist.checklist_description,
@@ -4837,7 +4837,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             account_rid: accountRid,
             created_datetime: new Date(),
             created_by: task.created_by,
-            task_rid : task.rid
+            case_rid : caseRid
           };
           const newChecklist = await CheckList.create(checklistData, { transaction });
 
@@ -4958,13 +4958,13 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
           checklist_name: response.checklist_name,
           checklist_description: response.description,  
           checklist_items: response.checklist_items,
-          attach_to:data.case_rid,
+          attach_to: createdTaskResult.dataValues.rid,
           attachment_level: 'task',
           created_by: data.created_by,
           created_datetime: new Date(),
           fiscal_year: fiscalYear,
           checklist_rid: data.checklist_template_rid,
-          task_rid : createdTaskResult.dataValues.rid
+          case_rid : data.case_rid
         };
 
         const checklistResponse = await this.createCheckList(accountNumber, caseRequest, transaction);
