@@ -11,6 +11,14 @@ const textOptions: { option: string; value: string }[] = [
   // { option: 'Is-Empty', value: 'is_empty' },
 ];
 
+const textOptionsForAssignee: { option: string; value: string }[] = [
+  { option: 'Equals', value: 'equals' },
+  { option: 'Not-Equals', value: 'not_equals' },
+  { option: 'Contains', value: 'contains' },
+  // { option: 'Not-Contains', value: 'not_contains' },
+  { option: 'Is-Empty', value: 'is_empty' },
+];
+
 const dateOptions: { option: string; value: string }[] = [
   { option: 'Equals', value: 'equals' },
   { option: 'Before', value: 'before' },
@@ -36,35 +44,37 @@ export const getAssignUserFilterFields = (): FieldConfig[] => [
 export const getAssignGroupsFilterFields = (
   statusOptions: { option: string; value: string }[]
 ): FieldConfig[] => [
-  {
-    name: 'Task Name',
-    value: 'task_name',
-    type: 'text',
-    operatorOption: textOptions,
-  },
-  {
-    name: 'Assigned To',
-    value: 'assigned_to',
-    type: 'text',
-    operatorOption: textOptions,
-  },
-  {
-    name: 'Start Date',
-    value: 'effective_start_datetime',
-    type: 'date',
-    operatorOption: dateOptions,
-  },
-  {
-    name: 'End Date',
-    value: 'effective_end_datetime',
-    type: 'date',
-    operatorOption: dateOptions,
-  },
-  {
-    name: 'Status',
-    value: 'task_status_rid',
-    type: 'enum',
-    options: statusOptions,
-    operatorOption: enumOptions,
-  },
-];
+    {
+      name: 'Task Name',
+      value: 'task_name',
+      type: 'text',
+      operatorOption: textOptions,
+    },
+    {
+      name: 'Assigned To',
+      value: 'assigned_to',
+      type: 'text',
+      operatorOption: textOptionsForAssignee,
+    },
+    {
+      name: 'Start Date',
+      value: 'effective_start_datetime',
+      type: 'date',
+      operatorOption: dateOptions,
+      isFutureDateEnabled: true,
+    },
+    {
+      name: 'Due Date',
+      value: 'effective_end_datetime',
+      type: 'date',
+      operatorOption: dateOptions,
+      isFutureDateEnabled: true,
+    },
+    {
+      name: 'Status',
+      value: 'task_status_rid',
+      type: 'enum',
+      options: statusOptions,
+      operatorOption: enumOptions,
+    },
+  ];

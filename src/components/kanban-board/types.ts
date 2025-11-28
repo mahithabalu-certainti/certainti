@@ -248,6 +248,8 @@ export interface KanbanBoardProps {
   ) => Promise<void>;
   accountId?: string; // New prop for task detail modal
   caseId?: string; // New prop for task detail modal
+  caseStartDate?: string | null;
+  caseEndDate?: string | null;
 }
 
 export interface TaskCardProps {
@@ -291,6 +293,10 @@ export interface KanbanColumnProps {
   ) => Promise<void>;
   fieldVisibility?: FieldVisibility;
   fieldDisabled?: FieldDisabled;
+  accountId?: string;
+  caseId?: string;
+  caseStartDate?: string | null;
+  caseEndDate?: string | null;
 }
 
 export interface TaskDetailModalProps {
@@ -350,4 +356,6 @@ export interface TaskDetailModalProps {
   ) => Promise<AddCollaboratorResponse>;
   fieldVisibility?: FieldVisibility;
   fieldDisabled?: FieldDisabled;
+  caseStartDate?: string | null;
+  caseEndDate?: string | null;
 }

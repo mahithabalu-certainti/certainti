@@ -53,11 +53,16 @@ export const getChecklistTemplateColumns = (
         validation: [
           {
             regex: REGEX_PATTERNS.MIN_3,
-            errorMessage: 'Name must be more than 2 characters long',
+            errorMessage: 'Checklist Name must be more than 2 characters long',
           },
           {
-            regex: REGEX_PATTERNS.MAX_255,
-            errorMessage: 'Max length exceeded',
+            regex: REGEX_PATTERNS.MAX_64,
+            errorMessage: 'Checklist Name must not exceed 64 characters',
+          },
+          {
+            regex: REGEX_PATTERNS.TEMPLATE_NAME_REGEX,
+            errorMessage:
+              "Checklist Name must contain only letters, numbers, spaces, apostrophes('), and hyphens(-).",
           },
         ],
       },
@@ -83,7 +88,7 @@ export const getChecklistTemplateColumns = (
         validation: [
           {
             regex: REGEX_PATTERNS.MAX_2000,
-            errorMessage: 'Max length exceeded (2000 characters)',
+            errorMessage: 'Description must be within 2000 characters',
           },
         ],
       },
