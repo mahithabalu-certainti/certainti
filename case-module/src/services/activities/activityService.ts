@@ -336,7 +336,6 @@ export class ActivityService {
                 userProfileType?.email,
                 isCustomGlobal
               );
-              console.log("accessibleIds",accessibleIds.length === 0)
               if (accessibleIds.length === 0) {
                 return {
                   message: 'No accessible checklist found for the user.',
@@ -370,7 +369,6 @@ export class ActivityService {
                 };
               }
             }
-      console.log("accessibleIds",accessibleIds)
       const checklistResponse: any =
         await this.activitySchemaService.fetchActivities(
           accountNumber,
@@ -770,24 +768,24 @@ export class ActivityService {
       };
     }
   }
-  async getEmailStatus(): Promise<{
+  async getActivityStatus(): Promise<{
       statusCode: number;
       message: string;
       errorMessage?: string;
-      data?: { emailStatus: any };
+      data?: { activityStatus: any };
     }> {
       try {
-        const emailStatus = await this.activitySchemaService.getEmailStatus();
+        const activityStatus = await this.activitySchemaService.getActivityStatus();
   
         return {
           statusCode: HttpStatus.SUCCESS,
           message: HttpStatus.SUCCESS_MESSAGE,
           data: {
-            emailStatus,
+            activityStatus,
           },
         };
       } catch (err) {
-        logMessage(`Error fetching email status, ${err}`);
+        logMessage(`Error fetching activity status, ${err}`);
         throw this.throwServiceError(err as Error);
       }
     }

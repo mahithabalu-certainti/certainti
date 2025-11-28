@@ -18,22 +18,12 @@ export interface ActivitiesAttributes {
   effective_end_datetime?: Date;
   subject?: string;
   description?: string;
-  email_sent_datetime?: Date;
   priority_rid?: string;
   assigned_to?: string;
   task_name?: string;
   task_template_rid?: string;
-  remainder_interval?: number;
-  task_repeat_frequency?: string;
-  event_url?: string;
-  event_code?: string;
-  event_password?: string;
-  transcript?: string;
-  event_platform?: string;
-  event_time?: string;
   invitees_list?: string;
   attendees_list?: string;
-  mom?: string;
   to_email?: string[];
   cc_email?: string[];
   sender_email?: string;
@@ -49,6 +39,9 @@ export interface ActivitiesAttributes {
   recurrence_days?: string[];
   recurrence_interval?: number;
   recurrence_type?: string;
+  time_zone?: string;
+  effective_start_time?: string;
+  effective_end_time?: string;
 }
 
 export interface ActivitiesCreationAttributes extends Optional<ActivitiesAttributes, "rid"> {}
@@ -65,26 +58,16 @@ export class Activities extends Model<ActivitiesAttributes, ActivitiesCreationAt
   public attachment_level?: string;
   public activity_type?: string;
   public status_rid?: string;
-  public start_datetime?: Date;
+  public effective_start_datetime?: Date;
   public effective_end_datetime?: Date;
   public subject?: string;
   public description?: string;
-  public email_sent_datetime?: Date;
   public priority_rid?: string;
   public assigned_to?: string;
   public task_name?: string;
-  public task_template_rid?: string;
-  public remainder_interval?: number;
-  public task_repeat_frequency?: string;
-  public event_url?: string;
-  public event_code?: string;
-  public event_password?: string;
-  public transcript?: string;
-  public event_platform?: string;
-  public event_time?: string;
+  public task_template_rid?: string
   public invitees_list?: string;
   public attendees_list?: string;
-  public mom?: string;
   public to_email?: string[];
   public cc_email?: string[];
   public sender_email?: string;
@@ -100,6 +83,9 @@ export class Activities extends Model<ActivitiesAttributes, ActivitiesCreationAt
   public recurrence_days?: string[];
   public recurrence_interval?: number;
   public recurrence_type?: string;
+  public time_zone?: string;
+  public effective_start_time?: string
+  public effective_end_time?: string;
 
   static initialize(sequelize: Sequelize, schemaName: string = MAIN_SCHEMA_NAME) {
     return Activities.init({
@@ -126,22 +112,12 @@ export class Activities extends Model<ActivitiesAttributes, ActivitiesCreationAt
       effective_end_datetime: { type: DataTypes.DATE, allowNull: true },
       subject: { type: DataTypes.STRING(255), allowNull: true },
       description: { type: DataTypes.TEXT, allowNull: true },
-      email_sent_datetime: { type: DataTypes.DATE, allowNull: true },
       priority_rid: { type: DataTypes.STRING(50), allowNull: true },
       assigned_to: { type: DataTypes.STRING(50), allowNull: true },
       task_name: { type: DataTypes.STRING(255), allowNull: true },
       task_template_rid: { type: DataTypes.STRING(50), allowNull: true },
-      remainder_interval: { type: DataTypes.INTEGER, allowNull: true },
-      task_repeat_frequency: { type: DataTypes.STRING(50), allowNull: true },
-      event_url: { type: DataTypes.STRING(255), allowNull: true },
-      event_code: { type: DataTypes.STRING(50), allowNull: true },
-      event_password: { type: DataTypes.STRING(50), allowNull: true },
-      transcript: { type: DataTypes.TEXT, allowNull: true },
-      event_platform: { type: DataTypes.STRING(50), allowNull: true },
-      event_time: { type: DataTypes.STRING(50), allowNull: true },
       invitees_list: { type: DataTypes.TEXT, allowNull: true },
       attendees_list: { type: DataTypes.TEXT, allowNull: true },
-      mom: { type: DataTypes.TEXT, allowNull: true },
       to_email: { type: DataTypes.JSONB, allowNull: true },
       cc_email: { type: DataTypes.JSONB, allowNull: true },
       sender_email: { type: DataTypes.STRING(255), allowNull: true },
@@ -157,6 +133,9 @@ export class Activities extends Model<ActivitiesAttributes, ActivitiesCreationAt
       recurrence_days: { type: DataTypes.JSONB, allowNull: true },
       recurrence_interval: { type: DataTypes.INTEGER, allowNull: true },
       recurrence_type: { type: DataTypes.STRING(255), allowNull: true },
+      time_zone: { type: DataTypes.STRING(100), allowNull: true },
+      effective_start_time: { type: DataTypes.STRING(10), allowNull: true },
+      effective_end_time: { type: DataTypes.STRING(10), allowNull: true },
     }, {
       sequelize,
       schema: schemaName,

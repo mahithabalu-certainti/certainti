@@ -766,10 +766,10 @@ export interface IActivityMeeting {
   meeting_platform?: string;
   meeting_invite?: string;
   meeting_id?:string;
-  effective_start_datetime: Date;
-  effective_end_datetime?: Date;
+  effective_start_date: Date;
+  effective_end_date?: Date;
   effective_start_time: string;
-  effective_end_time: string;
+  effective_end_time:string;
   meeting_code?: string;
   minutes_of_meeting?: string;
   account_rid?: string;

@@ -724,7 +724,7 @@ export const rawQueries = {
   },
    fetchActivityStatusByName(statusName: string, activityType: string): string {
     return `
-    SELECT rid, status_name as name FROM ${MAIN_SCHEMA_NAME}.activity_status WHERE activity_type = '${activityType}' and status_name = '${statusName}'`;
+    SELECT rid, status_name as name FROM ${MAIN_SCHEMA_NAME}.activity_status WHERE lower(activity_type) = lower('${activityType}') and lower(status_name) = lower('${statusName}')`;
   },
   fetchIndustry(industryIds: any): string {
     let ids = industryIds.map((d: any) => `'${d}'`);
@@ -754,10 +754,10 @@ export const rawQueries = {
       ORDER BY filing_type_name ASC
     `;
   },
-  getEmailStatus() {
+  getActivityStatus() {
     return `
-      SELECT rid, status_name 
-      FROM ${MAIN_SCHEMA_NAME}.email_status
+      SELECT distinct status_name 
+      FROM ${MAIN_SCHEMA_NAME}.activity_status
       WHERE status = 'active'
       ORDER BY status_name ASC
     `;
@@ -1835,6 +1835,13 @@ export const emailCategorties = {
 export const activityStatus = {  
  completed: "Completed",
  scheduled: "Scheduled",
+};
+
+export const activityTypes = {  
+ email: "Email",
+ meeting: "Meeting",
+  call: "Call",
+  task: "Task",
 };
 
 

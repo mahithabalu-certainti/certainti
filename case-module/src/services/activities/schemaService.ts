@@ -18,7 +18,8 @@ import {
   meetingFields,
   activityStatus,
   constants,
-  callFields
+  callFields,
+  activityTypes
 } from "../../utils/constants";
 import {
   decryptClientSecret,
@@ -46,6 +47,7 @@ import {
 import CaseSchemaService from "../cases/schemaService";
 import { sendEmailWithAttachment } from "../emailService";
 import { scheduleTeamsMeetingUtil } from "../../utils/teamsMeetingUtil";
+import moment from "moment";
 class ActivitySchemaService {
   private orgDbSequelize: Sequelize | null = null;
   private mainDbSequelize: Sequelize | null = null;
@@ -273,6 +275,13 @@ class ActivitySchemaService {
             { transaction }
           );
         }
+         await this.addActivityHistory(
+        accountNumber,
+        taskRequest.task_rid as string,
+        { ...taskRequest, modified_by: userId },
+        existingTask,
+        activityTypes.task
+      );
       }
       await this.updateTaskHistory(
         accountNumber,
@@ -395,24 +404,36 @@ class ActivitySchemaService {
       const { Activities } = await this.caseModelService.getModels(
         accountNumber
       );
-      let allChecklists: any[] = [];
+      let allActivities: any[] = [];
 
       // Handle attached_to and uploaded_by filters separately
-      let attachedToFilter;
-      let createdByFilter;
-      let modifiedByFilter;
-      if (filters.attached_to) {
-        attachedToFilter = filters.attached_to;
-        delete filters.attached_to;
+      //let attachedToFilter;
+      // Generic filter extraction
+      const filterKeys = [
+        { key: 'attached_to', var: 'attachedToFilter' },
+        { key: 'created_by_name', var: 'createdByFilter' },
+        { key: 'modified_by_name', var: 'modifiedByFilter' },
+        { key: 'assigned_to_name', var: 'assignedToFilter' },
+        { key: 'status_name', var: 'statusFilter' }
+      ];
+      const extractedFilters: Record<string, any> = {
+        attachedToFilter: null,
+        createdByFilter: null,
+        modifiedByFilter: null,
+        assignedToFilter: null,
+        statusFilter: null
+      };
+      for (const { key, var: varName } of filterKeys) {
+        if (filters[key]) {
+          extractedFilters[varName] = filters[key];
+          delete filters[key];
+        }
       }
-      if (filters.created_by_name) {
-        createdByFilter = filters.created_by_name;
-        delete filters.created_by_name;
-      }
-      if (filters.modified_by_name) {
-        modifiedByFilter = filters.modified_by_name;
-        delete filters.modified_by_name;
-      }
+      const attachedToFilter = extractedFilters.attachedToFilter;
+      const createdByFilter = extractedFilters.createdByFilter;
+      const modifiedByFilter = extractedFilters.modifiedByFilter;
+      const assignedToFilter = extractedFilters.assignedToFilter;
+      const statusFilter = extractedFilters.statusFilter;
       if(!this.mainDbSequelize){
             this.mainDbSequelize = await this.caseModelService.getMainSequelize();
           } 
@@ -581,18 +602,18 @@ class ActivitySchemaService {
         const caseAttachments = await fetchAttachments(Activities, "case", [
           entityId,
         ]);
-        allChecklists.push(...caseAttachments);
+        allActivities.push(...caseAttachments);
       } else if (attachmentLevel === "account" && entityId) {
         const accountAttachments = await fetchAttachments(
           Activities,
           "account",
           [entityId]
         );
-        allChecklists.push(...accountAttachments);
+        allActivities.push(...accountAttachments);
         const caseAttachments = await fetchAttachments(Activities, "case", [
           entityId,
         ]);
-        allChecklists.push(...caseAttachments);
+        allActivities.push(...caseAttachments);
 
         const projects = await this.caseSchemaService.getProjectsByAccountId(
           accountNumber,
@@ -605,14 +626,14 @@ class ActivitySchemaService {
             "project",
             projectIds
           );
-          allChecklists.push(...projectAttachments);
+          allActivities.push(...projectAttachments);
 
           const projectChildAttachments =
             await fetchProjectResourceTaskAttachmentsBulk(
               Activities,
               projectIds
             );
-          allChecklists.push(...projectChildAttachments);
+          allActivities.push(...projectChildAttachments);
         }
 
         const resources = await this.caseSchemaService.getResourcesByAccountId(
@@ -626,14 +647,14 @@ class ActivitySchemaService {
             "resource",
             resourceIds
           );
-          allChecklists.push(...resourceAttachments);
+          allActivities.push(...resourceAttachments);
 
           const resourceCostSkillAttachments =
             await fetchResourceCostSkillAttachmentsBulk(
               Activities,
               resourceIds
             );
-          allChecklists.push(...resourceCostSkillAttachments);
+          allActivities.push(...resourceCostSkillAttachments);
         }
       } else if (attachmentLevel === "project" && entityId) {
         const projectAttachments = await fetchAttachments(
@@ -641,11 +662,11 @@ class ActivitySchemaService {
           "project",
           [entityId]
         );
-        allChecklists.push(...projectAttachments);
+        allActivities.push(...projectAttachments);
 
         const projectChildAttachments =
           await fetchProjectResourceTaskAttachmentsBulk(Activities, [entityId]);
-        allChecklists.push(...projectChildAttachments);
+        allActivities.push(...projectChildAttachments);
       }
       // 🔷 Project_resource logic
       else if (attachmentLevel === "project_resource" && entityId) {
@@ -654,7 +675,7 @@ class ActivitySchemaService {
           "project_resource",
           [entityId]
         );
-        allChecklists.push(...projectResourceAttachments);
+        allActivities.push(...projectResourceAttachments);
         const projectResource =
           await this.caseSchemaService.fetchProjectResourceById(
             accountNumber,
@@ -672,7 +693,7 @@ class ActivitySchemaService {
             "project_task",
             projectTaskIds
           );
-          allChecklists.push(...projectTaskAttachments);
+          allActivities.push(...projectTaskAttachments);
         }
       }
 
@@ -683,11 +704,11 @@ class ActivitySchemaService {
           "resource",
           [entityId]
         );
-        allChecklists.push(...resourceAttachments);
+        allActivities.push(...resourceAttachments);
 
         const resourceCostSkillAttachments =
           await fetchResourceCostSkillAttachmentsBulk(Activities, [entityId]);
-        allChecklists.push(...resourceCostSkillAttachments);
+        allActivities.push(...resourceCostSkillAttachments);
       } else {
         if (!whereClause[Op.and] || !Array.isArray(whereClause[Op.and])) {
           whereClause[Op.and] = [];
@@ -700,13 +721,13 @@ class ActivitySchemaService {
 
         try {
           const result = await Activities.findAll({ where: whereClause });
-          allChecklists.push(...result);
+          allActivities.push(...result);
         } catch (error) {
           throw new Error("Failed to fetch attachments");
         }
       }
        let statusIds: any[] = [
-            ...new Set(allChecklists.map((status: any) => status?.status_rid)),
+            ...new Set(allActivities.map((status: any) => status?.status_rid)),
         ];
         let fetchStatusInfo = await this.mainDbSequelize.query(
                 rawQueries.fetchActivityStatus(statusIds)
@@ -715,7 +736,7 @@ class ActivitySchemaService {
         fetchStatusInfo[0].map((status: any) => [status.rid, status.name])
       );
       let assignedUserIds: any[] = [
-            ...new Set(allChecklists.map((user: any) => user?.assigned_to)),
+            ...new Set(allActivities.map((user: any) => user?.assigned_to)),
         ];
 
       const [assignedUserNames] = await Promise.all([
@@ -730,15 +751,15 @@ class ActivitySchemaService {
 
       // 🔷 Fetch display names
       if (graphqlData?.document_rid) {
-        allChecklists = allChecklists.filter((d: any) => d != null);
+        allActivities = allActivities.filter((d: any) => d != null);
       }
       const { displayNames } =
         await this.caseSchemaService.getAttachmentDisplayNames(
-          allChecklists,
+          allActivities,
           accountNumber
         );
       if (attachedToFilter) {
-        allChecklists = allChecklists.filter((attachment) => {
+        allActivities = allActivities.filter((attachment) => {
           let displayName =
             displayNames[attachment.rid] || String(attachment.attach_to) || "";
           const displayValue = displayName.toLowerCase();
@@ -780,7 +801,7 @@ class ActivitySchemaService {
         ? sortOrder.toUpperCase()
         : "DESC";
 
-      allChecklists.sort((a, b) => {
+      allActivities.sort((a, b) => {
         // Special handling for created_datetime
         if (finalSortBy === "created_datetime") {
           const aDate = new Date(a[finalSortBy]).getTime();
@@ -819,7 +840,7 @@ class ActivitySchemaService {
           ? aVal.localeCompare(bVal)
           : bVal.localeCompare(aVal);
       });
-      const paginatedAttachments = allChecklists;
+      const paginatedAttachments = allActivities;
 
       // 🔷 Map document types and users
       const userIds = [
@@ -842,7 +863,7 @@ class ActivitySchemaService {
       ]);
       const userMap = new Map(users.map((u: any) => [u.rid, u.full_name]));
 
-      let checklists: any[];
+      let activities: any[];
       // Enhanced fiscal_year enrichment for all checklist types
       const getFiscalYearForChecklist = async (attachment: any) => {
         // CASE: fetch from Case model
@@ -911,7 +932,7 @@ class ActivitySchemaService {
         return null;
       };
 
-      checklists = await Promise.all(
+      activities = await Promise.all(
         paginatedAttachments.map(async (attachment) => {
           const fiscal_year = await getFiscalYearForChecklist(attachment);
           return {
@@ -930,7 +951,7 @@ class ActivitySchemaService {
         })
       );
       if (sortBy === "created_by_name") {
-        checklists.sort((a, b) => {
+        activities.sort((a, b) => {
           const aType = a.created_by_name || "";
           const bType = b.created_by_name || "";
           const aEmpty = !aType || aType.trim() === "";
@@ -947,7 +968,7 @@ class ActivitySchemaService {
       }
 
       if (sortBy === "modified_by_name") {
-        checklists.sort((a, b) => {
+        activities.sort((a, b) => {
           const aType = a.modified_by_name || "";
           const bType = b.modified_by_name || "";
           const aEmpty = !aType || aType.trim() === "";
@@ -963,7 +984,7 @@ class ActivitySchemaService {
         });
       }
        if (sortBy === "assigned_to_name") {
-        checklists.sort((a, b) => {
+        activities.sort((a, b) => {
           const aType = a.assigned_to_name || "";
           const bType = b.assigned_to_name || "";
           const aEmpty = !aType || aType.trim() === "";
@@ -978,67 +999,45 @@ class ActivitySchemaService {
             : bType.localeCompare(aType);
         });
       }
-      if (createdByFilter) {
-        let filterValue;
-        checklists = checklists.filter((checklist) => {
-          const uploadedBy = checklist.created_by_name?.toLowerCase() || "";
-          const operator = Object.keys(createdByFilter)[0];
-          if (operator === "is_empty") filterValue = "";
-          else
-            filterValue = (
-              operator ? createdByFilter[operator] || "" : ""
-            ).toLowerCase();
-          switch (operator) {
+     function applyActivitiesFilter(array: any[], field: string, filterObj: { [x: string]: any; }) {
+    if (!filterObj || typeof filterObj !== 'object' || Array.isArray(filterObj)) return array;
+    const operator = Object.keys(filterObj)[0];
+    if (!operator) return array;
+    let filterValue = "";
+    if (operator === "is_empty") filterValue = "";
+    else filterValue = (filterObj[operator] ?? "").toString().toLowerCase();
+    return array.filter((item) => {
+        const value = (item[field] ?? "").toString().toLowerCase();
+        switch (operator) {
             case "contains":
-              return uploadedBy.includes(filterValue);
+                return value.includes(filterValue);
             case "equals":
-              return uploadedBy === filterValue;
+                return value === filterValue;
             case "not_equals":
-              return uploadedBy !== filterValue;
+                return value !== filterValue;
             case "is_empty":
-              return uploadedBy === null || uploadedBy === "";
+                return value === "";
             default:
-              return false;
-          }
-        });
-      }
-      if (modifiedByFilter) {
-        let filterValue;
-        checklists = checklists.filter((checklist) => {
-          const uploadedBy = checklist.modified_by_name?.toLowerCase() || "";
-          const operator = Object.keys(modifiedByFilter)[0];
-          if (operator === "is_empty") filterValue = "";
-          else
-            filterValue = (
-              operator && modifiedByFilter[operator]
-                ? modifiedByFilter[operator]
-                : ""
-            ).toLowerCase();
-          switch (operator) {
-            case "contains":
-              return uploadedBy.includes(filterValue);
-            case "equals":
-              return uploadedBy === filterValue;
-            case "not_equals":
-              return uploadedBy !== filterValue;
-            case "is_empty":
-              return uploadedBy === null || uploadedBy === "";
-            default:
-              return false;
-          }
-        });
-      }
+                return false;
+        }
+    });
+}
 
-      const totalCount = checklists.length;
+      activities = applyActivitiesFilter(activities, "created_by_name", createdByFilter);
+      activities = applyActivitiesFilter(activities, "modified_by_name", modifiedByFilter);
+      activities = applyActivitiesFilter(activities, "status_name", statusFilter);
+      activities = applyActivitiesFilter(activities, "assigned_to_name", assignedToFilter);
+
+      const totalCount = activities.length;
       if (apiType === "download") {
         return {
-          checklists,
+          activities,
           totalCount,
         };
       }
-      checklists = checklists.slice((page - 1) * limit, page * limit);
+      activities = activities.slice((page - 1) * limit, page * limit);
       return {
-        activities: checklists,
+        activities,
         totalCount,
       };
     } catch (err) {
@@ -1542,6 +1541,9 @@ class ActivitySchemaService {
       rawQueries.fetchActivityStatusByName(activityRequest.email_status,activityRequest.activity_type),
       { type: "SELECT" }
     );
+    const existingActivity = await Activities.findOne({
+        where: { rid: activityRequest.activity_rid }
+      });
     if (activityRequest.email_status === "Sent") {
       await this.sendActivityEmail(
         accountNumber,
@@ -1594,6 +1596,13 @@ class ActivitySchemaService {
       }
     }
     await this.uploadActivityFiles(files, activityRequest, accountNumber);
+    await this.addActivityHistory(
+        accountNumber,
+        activityRequest.activity_rid as string,
+        { ...activityRequest, modified_by: userId },
+        existingActivity,
+       activityTypes.email
+     );
     await this.addTaskTimeline(
       accountNumber,
       activityRequest.activity_rid,
@@ -1624,6 +1633,8 @@ class ActivitySchemaService {
     const activityData = {
       ...activityRequest,
       activity_type: activityRequest.activity_type,
+      effective_start_datetime: activityRequest.effective_start_date,
+      effective_end_datetime: activityRequest.effective_end_date,
       status_rid: meetingStatus?.rid || null,
       account_rid:
         activityRequest.accountRid || activityRequest.account_rid || "",
@@ -1647,6 +1658,8 @@ class ActivitySchemaService {
     {
       activityData.meeting_invite = scheduleResponse.webLink;
       activityData.meeting_id = scheduleResponse.meetingId;
+      activityData.effective_start_datetime = activityData.effective_start_date
+      activityData.effective_end_datetime = activityData.effective_end_date
       const response = await Activities.create(activityData);
       activityRequest.activity_rid = response.rid;
       await this.uploadActivityFiles(files, activityRequest, accountNumber);
@@ -1734,6 +1747,9 @@ class ActivitySchemaService {
       account_rid:
         activityRequest.accountRid || activityRequest.account_rid || "",
     };
+    const existingActivity = await Activities.findOne({
+        where: { rid: activityRequest.activity_rid }
+      });
 
     const response = await Activities.update(activityData, {
       where: { rid: activityRequest.activity_rid },
@@ -1771,6 +1787,13 @@ class ActivitySchemaService {
       }
     }
     await this.uploadActivityFiles(files, activityRequest, accountNumber);
+    await this.addActivityHistory(
+        accountNumber,
+        activityRequest.activity_rid as string,
+        { ...activityRequest, modified_by: userId },
+        existingActivity,
+         activityTypes.call
+     );
     await this.addTaskTimeline(
       accountNumber,
       activityRequest.activity_rid,
@@ -1793,7 +1816,7 @@ class ActivitySchemaService {
     const { Activities, ActivityAttachments } =
       await this.caseModelService.getModels(accountNumber);
     if (!this.mainDbSequelize) {
-      this.mainDbSequelize = await this.caseModelService.getSequelize();
+      this.mainDbSequelize = await this.caseModelService.getMainSequelize();
     }
     const [meetingStatus]: any[] = await this.mainDbSequelize.query(
       rawQueries.fetchActivityStatusByName(activityRequest.meeting_status, activityRequest.activity_type),
@@ -1802,10 +1825,16 @@ class ActivitySchemaService {
     const activityData = {
       ...activityRequest,
       activity_type: "Meeting",
+      effective_start_datetime: activityRequest.effective_start_date,
+      effective_end_datetime: activityRequest.effective_end_date,
       meeting_status_rid: meetingStatus?.rid || null,
       account_rid:
         activityRequest.accountRid || activityRequest.account_rid || "",
     };
+    const existingActivity = await Activities.findOne({
+        where: { rid: activityRequest.activity_rid },
+        raw: true
+      });
 
     const response = await Activities.update(activityData, {
       where: { rid: activityRequest.activity_rid },
@@ -1843,13 +1872,34 @@ class ActivitySchemaService {
       }
     }
     await this.uploadActivityFiles(files, activityRequest, accountNumber);
+  if(existingActivity != null) {
+    const startDate =
+      existingActivity.effective_start_datetime !== null
+        ? moment.utc(existingActivity.effective_start_datetime).format("YYYY-MM-DD")
+        : null;
+    const endDate =
+      existingActivity.effective_end_datetime !== null
+        ? moment.utc(existingActivity.effective_end_datetime).format("YYYY-MM-DD")
+        : null;
+    await this.addActivityHistory(
+      accountNumber,
+      activityRequest.activity_rid as string,
+      { ...activityData, modified_by: userId },
+      {
+        ...existingActivity,
+        effective_start_datetime: startDate,
+        effective_end_datetime: endDate,
+      },
+      activityTypes.meeting
+    );
+  }
     await this.addTaskTimeline(
       accountNumber,
       activityRequest.activity_rid,
       activityRequest.account_rid!,
-      `Meeting Activity updated with subject: ${activityRequest}`,
+      `Meeting Activity updated with subject: ${activityRequest.subject}`,
       userId,
-      `Meeting Activity updated: ${activityRequest}`,
+      `Meeting Activity updated: ${activityRequest.subject}`,
       "success",
       activityRequest.activity_rid
     );
@@ -2070,7 +2120,7 @@ class ActivitySchemaService {
     );
 
     const [statusInfo]: any[] = await this.mainDbSequelize.query(
-      rawQueries.getStatusDetails(emailDetails?.status_rid ?? ""),
+      rawQueries.getActivityStatusDetails(emailDetails?.status_rid, emailDetails?.activity_type ?? ""),
       {
         type: "SELECT",
       }
@@ -2370,18 +2420,18 @@ class ActivitySchemaService {
     }
   }
 
-   async getEmailStatus() {
+   async getActivityStatus() {
       if (!this.mainDbSequelize) {
         this.mainDbSequelize = await this.caseModelService.getMainSequelize();
       }
-      const emailStatus = await this.mainDbSequelize.query(
-        rawQueries.getEmailStatus(),
+      const activityStatus = await this.mainDbSequelize.query(
+        rawQueries.getActivityStatus(),
         {
           type: "SELECT",
         }
       );
   
-      return emailStatus;
+      return activityStatus;
     }
   /**
    * Reusable function to fetch fiscal_year based on attachment level and attachTo
@@ -2501,5 +2551,76 @@ class ActivitySchemaService {
     }
     return null;
   }
+
+   async addActivityHistory(
+      accountNumber: string,
+      activityId: string,
+      newCaseData: any,
+      existingCaseData: any,
+      activityType?: string
+    ) {
+      console.log("Adding activity history new ...",newCaseData);
+        console.log("Adding activity history old...",existingCaseData);
+      try {
+        const { ActivityHistory } = await this.caseModelService.getModels(
+          accountNumber
+        );
+  
+        const excludedFields = [
+          "created_by",
+          "modified_by",
+          "activity_rid",
+          "account_rid",
+          "modified_datetime",
+        ];
+  
+        const cleanedNewData = Object.fromEntries(
+          Object.entries(newCaseData).filter(
+            ([key]) => !excludedFields.includes(key)
+          )
+        );
+  
+        const historyChanges = Object.entries(cleanedNewData)
+          .filter(([key, newValue]) => {
+            const oldValue = existingCaseData[key];
+            console.log(`Comparing field: ${key}, oldValue: ${oldValue}, newValue: ${newValue}`);
+  
+            if (newValue == null && oldValue == null) return false;
+  
+            if (typeof newValue === "number" || typeof oldValue === "number") {
+              return Number(newValue) !== Number(oldValue);
+            }
+  
+            return String(newValue ?? "") !== String(oldValue ?? "");
+          })
+          .map(([key, newValue]) => ({
+            activity_rid: activityId,
+            attribute_name: key,
+            old_value:
+              existingCaseData[key] !== null &&
+              existingCaseData[key] !== undefined
+                ? String(existingCaseData[key])
+                : "",
+            new_value:
+              newValue !== null && newValue !== undefined ? String(newValue) : "",
+            created_by: newCaseData["modified_by"],
+            activity_type: activityType || newCaseData["activity_type"] || "",
+          }));
+  
+        if (historyChanges.length === 0) return;
+        console.log("History Changes: ", historyChanges);
+  
+        // Use individual create operations to avoid sequence conflicts
+        for (const historyChange of historyChanges) {
+          await ActivityHistory.create(historyChange);
+        }
+      } catch (err) {
+        logMessage(`Error updating activity history : ${JSON.stringify(err)}`);
+        errorLog("Error updating activity history : " + (err as Error).message);
+        throw new Error(
+          "Error updating activity history : " + (err as Error).message
+        );
+      }
+    }
 }
 export default ActivitySchemaService;

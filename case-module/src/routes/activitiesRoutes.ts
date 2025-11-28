@@ -86,4 +86,9 @@ routes.get(
   checkUserStatusMiddleware("NA"),
   controller.activitiesController.exportAllActivity
 );
+routes.get(
+  "/activityStatus",
+  checkUserStatusMiddleware("NA"),
+  controller.activitiesController.getActivityStatus
+);
 export default routes;

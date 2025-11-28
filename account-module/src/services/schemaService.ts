@@ -127,6 +127,7 @@ class SchemaService {
       await this.createCheckListItemTable(schemaName, sequelize);
       await this.createActivitiesTable(schemaName, sequelize);
       await this.createActivityAttachmentsTable(schemaName, sequelize);
+      await this.createActivityHistoryTable(schemaName, sequelize);
       
       await transaction.commit();
     } catch (Err) {
@@ -1493,6 +1494,39 @@ class SchemaService {
       await sequelize.query(query);
     }
   }
+ private async createActivityHistoryTable(
+    schemaName: string,
+    sequelize: any
+  ) {
+    await sequelize.query(
+      rawQueries.getCreateActivityHistorySequenceQuery(schemaName)
+    );
+
+    await sequelize.query(
+      rawQueries.getCreateActivityHistoryTableQuery(schemaName)
+    );
+
+    await sequelize.query(
+      rawQueries.getAlterActivityHistoryForeignKeysQuery(schemaName)
+    );
+
+    const fieldsToIndex = [
+      "interaction_rid",
+      "interaction_item_rid",
+      "project_fiscal_rid",
+      "created_by",
+      "modified_by",
+      "created_datetime",
+      "modified_datetime"
+    ];
+  
+    for (const field of fieldsToIndex) {
+      await sequelize.query(
+        rawQueries.getInteractionHistoryIndexQuery(schemaName, field)
+      );
+    }
+  }
+
 
   async insertAccountDetails(
     account_number: string,
