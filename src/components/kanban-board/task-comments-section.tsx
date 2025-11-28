@@ -433,7 +433,7 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
     }
 
     if (comment.length > 2000) {
-      setCommentError('Comment too long (max 2000 characters)');
+      setCommentError('Maximum 2000 characters allowed');
       return;
     }
 

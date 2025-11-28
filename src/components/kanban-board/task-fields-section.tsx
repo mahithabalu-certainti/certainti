@@ -709,6 +709,7 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
             <Autocomplete
               multiple
               freeSolo
+              fullWidth
               disabled={fieldDisabled.tags}
               options={availableTags.map((tag) => tag.name)}
               value={
@@ -719,18 +720,29 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
               inputValue={tagInputValue}
               onInputChange={(_, newInputValue) => {
                 setTagInputValue(newInputValue);
-                if (localTagError) setLocalTagError(null);
+                if (newInputValue.length > 50) {
+                  setLocalTagError('Maximum 50 characters allowed');
+                } else {
+                  if (localTagError) setLocalTagError(null);
+                }
               }}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' && tagInputValue.length > 50) {
+                const val = (e.target as HTMLInputElement).value;
+                if (e.key === 'Enter' && val.length > 50) {
                   e.preventDefault();
                   e.stopPropagation();
-                  setLocalTagError('Tags too long (max 50 characters)');
+                  setLocalTagError('Maximum 50 characters allowed');
                 }
               }}
               onChange={(_, newValue) => {
+                const validValues = newValue.filter((v) => v.trim().length <= 50);
+
+                if (validValues.length !== newValue.length) {
+                  setLocalTagError('Maximum 50 characters allowed');
+                }
+
                 const cleanedValues = Array.from(
-                  new Set(newValue.filter((v) => v.trim()))
+                  new Set(validValues.filter((v) => v.trim()))
                 );
 
                 cleanedValues.forEach((tagName) => {
@@ -755,10 +767,15 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
                   {...params}
                   size='small'
                   placeholder={mode === 'create' ? 'Add Tags' : 'Add Tags'}
+                  inputProps={{
+                    ...params.inputProps,
+                  }}
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       padding: '6px',
                       minHeight: '32px',
+                      width: '100%',
+                      maxWidth: '100%',
                       '& input': {
                         fontSize: '13px',
                         padding: '0 !important',
@@ -851,7 +868,11 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
                       key={index}
                       className='inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium hover:bg-blue-200 transition-colors group'
                     >
-                      <span>{tag}</span>
+                      <Tooltip title={tag} placement='top' arrow>
+                        <span className='truncate max-w-[200px] block'>
+                          {tag}
+                        </span>
+                      </Tooltip>
                       <button
                         onClick={() => {
                           const newTags =

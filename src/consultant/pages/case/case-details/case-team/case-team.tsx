@@ -626,7 +626,7 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
   );
 
   const showAddButton = caseTeamCreatePermission
-    ? caseTeamCreatePermission.is_field_available
+    ? caseTeamCreatePermission.is_enabled
     : isCaseCreateEnable;
 
   const isAddButtonEnabled = caseTeamCreatePermission
@@ -634,7 +634,7 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
     : true;
 
   const showDeleteButton = caseTeamDeletePermission
-    ? caseTeamDeletePermission.is_field_available
+    ? caseTeamDeletePermission.is_enabled
     : true;
 
   const isDeleteButtonEnabled = caseTeamDeletePermission
