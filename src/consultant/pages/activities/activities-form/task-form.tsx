@@ -165,7 +165,7 @@ const TaskForm: React.FC = () => {
       effective_start_datetime: formValues.effective_start_datetime,
       effective_end_datetime: formValues.effective_end_datetime,
       checklist_rid: formValues.checklist_template_rid,
-      tags: JSON.stringify(tagsArray),
+      tags: tagsArray,
       assigned_to: formValues.assigned_to,
       fiscal_year: Number(formValues.fiscal_year || entityFiscalYear),
     };

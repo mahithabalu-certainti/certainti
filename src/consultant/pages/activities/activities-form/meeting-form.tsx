@@ -14,11 +14,11 @@ import {
 import { useGetUserOptions, UserOption } from '../../../services/case-team';
 import { MeetingAttendees } from '../../../../components';
 import dayjs, { Dayjs } from 'dayjs';
-import StyledDateTimePicker from '../../../../components/form-builder/date-time-picker';
 import { FileList } from '../../../../components/file-list';
 import { MenuItem, Select } from '@mui/material';
 import { COMMON_MENU_PROPS, getSelectStyles } from './helper';
 import { formatDateToYYYYMMDDWithTime } from '../../../../common-utils';
+import StyledDateTimePicker from '../../../../components/form-builder/styled-date-time-picker';
 
 // Types
 interface SuggestionState {
@@ -31,12 +31,16 @@ interface MeetingFormData {
   attendees: string[];
   subject: string;
   files: File[];
-  effective_start_datetime: string;
-  effective_end_datetime: string;
-  time_zone?: string;
+  // New fields aligned with Microsoft Teams
+  effective_startdate: string;
+  start_time: string;
+  end_time: string;
   recurrence_type: string;
   recurrence_interval: string;
   recurrence_days: string[];
+  effective_enddate: string;
+  // Legacy fields for API compatibility
+  time_zone?: string;
   rid: string;
   meeting_rid: string;
   created_on: string;
@@ -48,10 +52,13 @@ interface MeetingFormData {
 interface MeetingFormErrors {
   attendees?: string;
   subject?: string;
-  effective_start_datetime?: string;
-  effective_end_datetime?: string;
-  time_zone?: string;
+  effective_startdate?: string;
+  start_time?: string;
+  end_time?: string;
+  effective_enddate?: string;
   recurrence_type?: string;
+  recurrence_interval?: string;
+  recurrence_days?: string;
 }
 
 interface ExistingFile {
@@ -68,15 +75,15 @@ const RESTRICTED_EXTENSIONS = /\.(exe|bat|cmd|sh|bash)$/i;
 
 const ACCEPTED_FILE_TYPES = [
   'text/csv',
-  'application/vnd.ms-excel', // .xls
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
-  'application/pdf', // .pdf
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/pdf',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   'image/jpeg',
   'image/png',
   'image/gif',
   'text/plain',
-  'application/msword', // .doc
+  'application/msword',
 ];
 
 const MeetingForm: React.FC = () => {
@@ -88,11 +95,13 @@ const MeetingForm: React.FC = () => {
     attendees: [],
     subject: '',
     files: [],
-    effective_start_datetime: '',
-    effective_end_datetime: '',
+    effective_startdate: '',
+    start_time: '',
+    end_time: '',
     recurrence_type: 'none',
     recurrence_interval: '1',
     recurrence_days: [],
+    effective_enddate: '',
     rid: '',
     meeting_rid: '',
     created_on: '',
@@ -107,7 +116,7 @@ const MeetingForm: React.FC = () => {
     type: 'error' | 'success';
     text: string;
   } | null>(null);
-  const [existingFiles, setExistingFiles] = useState<ExistingFile[]>([]); // Changed to array
+  const [existingFiles, setExistingFiles] = useState<ExistingFile[]>([]);
 
   const isEditView = location.pathname.split('/').includes('edit');
   const systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -147,6 +156,132 @@ const MeetingForm: React.FC = () => {
     );
   }, [userListOptions]);
 
+  // Get weekday name from date
+  const getWeekdayName = useCallback((date: Dayjs): string => {
+    return date.format('dddd').toLowerCase(); // returns 'monday', 'tuesday', etc.
+  }, []);
+
+  // Get month options based on start date (Microsoft Teams logic)
+  const getMonthlyRecurrenceOptions = useCallback((startDate: Dayjs) => {
+    const dayOfMonth = startDate.date();
+    const weekdayName = startDate.format('dddd');
+    const weekOfMonth = Math.ceil(startDate.date() / 7);
+    const isLastWeek = startDate.add(1, 'week').month() !== startDate.month();
+
+    const position = isLastWeek
+      ? 'last'
+      : weekOfMonth === 1
+        ? 'first'
+        : weekOfMonth === 2
+          ? 'second'
+          : weekOfMonth === 3
+            ? 'third'
+            : 'fourth';
+
+    return [
+      {
+        value: `day_${dayOfMonth}`,
+        label: `Monthly on day ${dayOfMonth}`,
+      },
+      {
+        value: `${position}_${weekdayName.toLowerCase()}`,
+        label: `Monthly on the ${position} ${weekdayName}`,
+      },
+    ];
+  }, []);
+
+  // Update the monthlyRecurrenceOptions useMemo - remove auto-selection logic
+  const monthlyRecurrenceOptions = useMemo(() => {
+    if (!formData.effective_startdate) return [];
+    const startDate = dayjs(formData.effective_startdate);
+    return getMonthlyRecurrenceOptions(startDate);
+  }, [formData.effective_startdate, getMonthlyRecurrenceOptions]);
+
+  // Auto-set effective_enddate when recurrence_type is 'none'
+  useEffect(() => {
+    if (formData.recurrence_type === 'none' && formData.effective_startdate) {
+      setFormData((prev) => ({
+        ...prev,
+        effective_enddate: formData.effective_startdate,
+      }));
+    }
+  }, [formData.effective_startdate, formData.recurrence_type]);
+
+  // Update the weekly recurrence useEffect
+  useEffect(() => {
+    if (formData.recurrence_type === 'weekly' && formData.effective_startdate) {
+      const startDate = dayjs(formData.effective_startdate);
+      const weekday = getWeekdayName(startDate);
+
+      // Only add if not already present and we're not in the middle of clearing
+      if (!formData.recurrence_days.includes(weekday)) {
+        setFormData((prev) => ({
+          ...prev,
+          recurrence_days: [...prev.recurrence_days, weekday],
+        }));
+      }
+    }
+  }, [formData.effective_startdate, formData.recurrence_type, getWeekdayName]);
+
+  // Replace the monthly recurrence useEffect with this corrected version
+  useEffect(() => {
+    if (
+      formData.recurrence_type === 'monthly' &&
+      formData.effective_startdate
+    ) {
+      const startDate = dayjs(formData.effective_startdate);
+      const dayOfMonth = startDate.date();
+      const defaultOption = `day_${dayOfMonth}`;
+
+      // Always update to match the current start date's day
+      // This ensures the selection stays in sync with the start date
+      setFormData((prev) => ({
+        ...prev,
+        recurrence_days: [defaultOption],
+      }));
+    }
+  }, [formData.effective_startdate, formData.recurrence_type]);
+
+  // Auto-select all days for daily recurrence
+  useEffect(() => {
+    if (formData.recurrence_type === 'daily') {
+      setFormData((prev) => ({
+        ...prev,
+        recurrence_days: [
+          'monday',
+          'tuesday',
+          'wednesday',
+          'thursday',
+          'friday',
+          'saturday',
+          'sunday',
+        ],
+      }));
+    }
+  }, [formData.recurrence_type]);
+
+  // Add this useEffect to handle initial monthly selection when start date is already set
+  useEffect(() => {
+    if (
+      formData.recurrence_type === 'monthly' &&
+      formData.effective_startdate &&
+      formData.recurrence_days.length === 0
+    ) {
+      const startDate = dayjs(formData.effective_startdate);
+      const dayOfMonth = startDate.date();
+      const defaultOption = `day_${dayOfMonth}`;
+
+      setFormData((prev) => ({
+        ...prev,
+        recurrence_days: [defaultOption],
+      }));
+    }
+  }, [
+    formData.recurrence_type,
+    formData.effective_startdate,
+    formData.recurrence_days.length,
+  ]);
+
   useEffect(() => {
     if (commonSuccess) {
       successToast(
@@ -161,15 +296,27 @@ const MeetingForm: React.FC = () => {
 
   useEffect(() => {
     if (meetingData && isEditView) {
+      // Convert legacy datetime fields to new date/time separate fields
+      const startDatetime = meetingData.effective_start_datetime
+        ? dayjs(meetingData.effective_start_datetime)
+        : null;
+      const endDatetime = meetingData.effective_end_datetime
+        ? dayjs(meetingData.effective_end_datetime)
+        : null;
+
       setFormData((prev) => ({
         ...prev,
         attendees: meetingData.meeting_participants || [],
         subject: meetingData.subject || '',
-        // effective_start_datetime: meetingData.effective_start_datetime || '',
-        // effective_end_datetime: meetingData.effective_end_datetime || '',
-        // recurrence_type: meetingData.recurrence_type || 'none',
-        // recurrence_interval: meetingData.recurrence_interval || '1',
-        // recurrence_days: meetingData.recurrence_days || [],
+        effective_startdate: startDatetime
+          ? startDatetime.format('YYYY-MM-DD')
+          : '',
+        start_time: startDatetime ? startDatetime.format('HH:mm') : '',
+        end_time: endDatetime ? endDatetime.format('HH:mm') : '',
+        effective_enddate: endDatetime ? endDatetime.format('YYYY-MM-DD') : '',
+        recurrence_type: meetingData.recurrence_type || 'none',
+        recurrence_interval: meetingData.recurrence_interval || '1',
+        recurrence_days: meetingData.recurrence_days || [],
         rid: meetingData.activity_rid || '',
         meeting_rid: meetingData.r_number || '',
         created_on: formatDateToYYYYMMDDWithTime(
@@ -182,7 +329,7 @@ const MeetingForm: React.FC = () => {
         updated_by: meetingData.modified_by || '',
       }));
 
-      // Set existing file data if available - now as array
+      // Set existing file data if available
       if (meetingData?.attachments?.length) {
         const mappedFiles = meetingData.attachments.map((file) => ({
           name: file.document_name || '',
@@ -253,7 +400,6 @@ const MeetingForm: React.FC = () => {
         ...prev,
         files: [...prev.files, ...validFiles],
       }));
-      // Don't clear existing files when adding new ones
     }
   };
 
@@ -299,9 +445,12 @@ const MeetingForm: React.FC = () => {
 
       setAttendeesInput('');
       setAttendeesSuggestions((prev) => ({ ...prev, anchorEl: null }));
-      setErrors((prev) => ({ ...prev, attendees: '' }));
+      // Clear error only when adding attendee
+      if (errors.attendees) {
+        setErrors((prev) => ({ ...prev, attendees: '' }));
+      }
     },
-    [isValidEmail, formData.attendees]
+    [isValidEmail, formData.attendees, errors.attendees]
   );
 
   const removeAttendee = useCallback(
@@ -398,13 +547,88 @@ const MeetingForm: React.FC = () => {
     ]
   );
 
-  // Handle input changes
+  // Handle input changes with field clearing logic
   const handleInputChange = (
     field: keyof MeetingFormData,
     value: string | string[] | File[]
   ) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    setErrors((prev) => ({ ...prev, [field as keyof MeetingFormErrors]: '' }));
+    setFormData((prev) => {
+      const newFormData = { ...prev, [field]: value };
+
+      // Field clearing logic based on dependencies
+      if (field === 'effective_startdate') {
+        // When start date changes
+        newFormData.start_time = '';
+        newFormData.end_time = '';
+        if (!value) {
+          // Start date was cleared
+          // Comprehensive reset of all date/time and recurrence fields
+          newFormData.recurrence_type = 'none';
+          newFormData.recurrence_interval = '1';
+          newFormData.recurrence_days = [];
+          newFormData.effective_enddate = '';
+          newFormData.start_time = '';
+          newFormData.end_time = '';
+        } else if (prev.recurrence_type !== 'daily') {
+          // Only clear end date if not daily recurrence
+          newFormData.effective_enddate = '';
+        }
+      } else if (field === 'recurrence_type') {
+        const newRecurrenceType = value as string;
+
+        // When recurrence type changes, clear dependent fields
+        if (newRecurrenceType === 'none') {
+          // For "none", clear interval and days, set end date to start date
+          newFormData.recurrence_interval = '1';
+          newFormData.recurrence_days = [];
+          if (newFormData.effective_startdate) {
+            newFormData.effective_enddate = newFormData.effective_startdate;
+          }
+        } else if (newRecurrenceType === 'daily') {
+          // For "daily", set all days, keep interval, clear end date
+          newFormData.recurrence_days = [
+            'monday',
+            'tuesday',
+            'wednesday',
+            'thursday',
+            'friday',
+            'saturday',
+            'sunday',
+          ];
+          newFormData.effective_enddate = '';
+        } else if (newRecurrenceType === 'weekly') {
+          // For "weekly", clear days (will be auto-populated with start date's weekday), clear end date
+          newFormData.recurrence_days = [];
+          newFormData.effective_enddate = '';
+        } else if (newRecurrenceType === 'monthly') {
+          // For "monthly", set default to "day_X" option based on start date, clear end date
+          newFormData.effective_enddate = '';
+
+          // Auto-select the "day_X" option if start date is available
+          if (newFormData.effective_startdate) {
+            const startDate = dayjs(newFormData.effective_startdate);
+            const dayOfMonth = startDate.date();
+            const defaultOption = `day_${dayOfMonth}`;
+            newFormData.recurrence_days = [defaultOption];
+          } else {
+            newFormData.recurrence_days = [];
+          }
+        }
+      } else if (field === 'start_time') {
+        // When start time changes, clear end time
+        newFormData.end_time = '';
+      }
+
+      return newFormData;
+    });
+
+    // Clear error only when the field is changed
+    if (errors[field as keyof MeetingFormErrors]) {
+      setErrors((prev) => ({
+        ...prev,
+        [field as keyof MeetingFormErrors]: '',
+      }));
+    }
   };
 
   const handleSubjectChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -412,13 +636,27 @@ const MeetingForm: React.FC = () => {
     handleInputChange('subject', value);
   };
 
-  const handleDateTimeChange = (
-    field: 'effective_start_datetime' | 'effective_end_datetime',
+  // Handle date changes - NO VALIDATION ON CHANGE
+  const handleDateChange = (
+    field: 'effective_startdate' | 'effective_enddate',
     value: Dayjs | null
   ) => {
     if (value && value.isValid()) {
-      const isoString = value.toISOString();
-      handleInputChange(field, isoString);
+      const dateString = value.format('YYYY-MM-DD');
+      handleInputChange(field, dateString);
+    } else {
+      handleInputChange(field, '');
+    }
+  };
+
+  // Handle time changes - NO VALIDATION ON CHANGE
+  const handleTimeChange = (
+    field: 'start_time' | 'end_time',
+    value: Dayjs | null
+  ) => {
+    if (value && value.isValid()) {
+      const timeString = value.format('HH:mm');
+      handleInputChange(field, timeString);
     } else {
       handleInputChange(field, '');
     }
@@ -445,13 +683,56 @@ const MeetingForm: React.FC = () => {
     });
   };
 
+  // Handle monthly recurrence day selection (radio button)
+  const handleMonthlyRecurrenceChange = (value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      recurrence_days: [value], // Only one option can be selected for monthly
+    }));
+  };
+
   // Remove single existing file
   const removeExistingFile = (index: number) => {
     setExistingFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
+  // Add this function for granular time disabling
+  const getShouldDisableTime = (field: 'start_time' | 'end_time') => {
+    const now = dayjs();
+    const currentDate = now.format('YYYY-MM-DD');
+
+    return (
+      time: Dayjs,
+      type: 'year' | 'month' | 'day' | 'hours' | 'minutes' | 'seconds'
+    ) => {
+      // For start time on current date
+      if (
+        field === 'start_time' &&
+        formData.effective_startdate === currentDate
+      ) {
+        if (type === 'hours') {
+          // Disable hours that are before current hour
+          return time.hour() < now.hour();
+        } else if (type === 'minutes') {
+          // For current hour, disable minutes that are before current minute
+          if (time.hour() === now.hour()) {
+            return time.minute() < now.minute();
+          }
+          // For hours before current hour, all minutes are disabled (handled by hour disabling)
+          return false;
+        }
+      }
+
+      return false;
+    };
+  };
+
+  // VALIDATION ONLY ON SUBMIT
   const validateForm = (): boolean => {
     const newErrors: MeetingFormErrors = {};
+    const now = dayjs();
+    const currentDate = now.format('YYYY-MM-DD');
+    const currentTime = now.format('HH:mm');
 
     if (!formData.attendees || formData.attendees.length === 0) {
       newErrors.attendees =
@@ -462,21 +743,87 @@ const MeetingForm: React.FC = () => {
       newErrors.subject = 'Field is required';
     }
 
-    if (!formData.effective_start_datetime) {
-      newErrors.effective_start_datetime = 'Field is required';
+    if (!formData.effective_startdate) {
+      newErrors.effective_startdate = 'Start date is required';
     }
 
-    if (!formData.effective_end_datetime) {
-      newErrors.effective_end_datetime = 'Field is required';
+    if (!formData.start_time) {
+      newErrors.start_time = 'Start time is required';
     }
 
-    if (formData.effective_start_datetime && formData.effective_end_datetime) {
-      const start = new Date(formData.effective_start_datetime);
-      const end = new Date(formData.effective_end_datetime);
+    if (!formData.end_time) {
+      newErrors.end_time = 'End time is required';
+    }
 
-      if (end <= start) {
-        newErrors.effective_end_datetime =
-          'End datetime must be after start datetime';
+    // Validate time logic with current date/time consideration
+    if (
+      formData.start_time &&
+      formData.end_time &&
+      formData.effective_startdate
+    ) {
+      const startDateTime = dayjs(
+        `${formData.effective_startdate} ${formData.start_time}`
+      );
+      const endDateTime = dayjs(
+        `${formData.effective_startdate} ${formData.end_time}`
+      );
+
+      // Check if start date is today and start time is in the past
+      if (
+        formData.effective_startdate === currentDate &&
+        formData.start_time < currentTime
+      ) {
+        newErrors.start_time =
+          "Start time cannot be in the past for today's date";
+      }
+
+      // Check if end time is before or equal to start time
+      if (
+        endDateTime.isBefore(startDateTime) ||
+        endDateTime.isSame(startDateTime)
+      ) {
+        newErrors.end_time = 'End time must be after start time';
+      }
+    }
+
+    // Recurrence validations
+    if (formData.recurrence_type !== 'none') {
+      if (!formData.effective_enddate) {
+        newErrors.effective_enddate =
+          'End date is required for recurring meetings';
+      }
+
+      if (formData.effective_startdate && formData.effective_enddate) {
+        const startDate = dayjs(formData.effective_startdate);
+        const endDate = dayjs(formData.effective_enddate);
+
+        if (endDate.isBefore(startDate)) {
+          newErrors.effective_enddate =
+            'End date must be on or after start date';
+        }
+      }
+
+      if (
+        formData.recurrence_interval === '' ||
+        parseInt(formData.recurrence_interval) < 1
+      ) {
+        newErrors.recurrence_interval = 'Interval must be at least 1';
+      }
+
+      if (
+        formData.recurrence_type === 'weekly' &&
+        formData.recurrence_days.length === 0
+      ) {
+        newErrors.recurrence_days =
+          'At least one day must be selected for weekly recurrence';
+      }
+
+      if (
+        formData.recurrence_type === 'monthly' &&
+        formData.recurrence_days.length === 0
+      ) {
+        newErrors.recurrence_days =
+          'Please select a recurrence pattern for monthly recurrence';
       }
     }
 
@@ -505,7 +852,7 @@ const MeetingForm: React.FC = () => {
       }
     }
 
-    // Prepare FormData for API
+    // Prepare FormData for API - convert back to legacy format for API compatibility
     const formDataToSend = new FormData();
 
     let deletedFileIds: string[] = [];
@@ -518,6 +865,21 @@ const MeetingForm: React.FC = () => {
         .filter((rid) => !currentExistingIds.includes(rid));
     }
 
+    // Combine date and time for legacy API fields
+    const effective_start_datetime =
+      formData.effective_startdate && formData.start_time
+        ? dayjs(
+            `${formData.effective_startdate} ${formData.start_time}`
+          ).toISOString()
+        : '';
+
+    const effective_end_datetime =
+      formData.effective_startdate && formData.end_time
+        ? dayjs(
+            `${formData.effective_startdate} ${formData.end_time}`
+          ).toISOString()
+        : '';
+
     // Append basic fields
     formDataToSend.append('account_rid', accountId);
     formDataToSend.append('attach_to', entityId);
@@ -525,14 +887,8 @@ const MeetingForm: React.FC = () => {
     formDataToSend.append('activity_type', 'Meeting');
     formDataToSend.append('attendees', JSON.stringify(formData.attendees));
     formDataToSend.append('subject', formData.subject);
-    formDataToSend.append(
-      'effective_start_datetime',
-      formData.effective_start_datetime
-    );
-    formDataToSend.append(
-      'effective_end_datetime',
-      formData.effective_end_datetime
-    );
+    formDataToSend.append('effective_start_datetime', effective_start_datetime);
+    formDataToSend.append('effective_end_datetime', effective_end_datetime);
     formDataToSend.append('time_zone', systemTimezone);
     formDataToSend.append('recurrence_type', formData.recurrence_type);
     formDataToSend.append('recurrence_interval', formData.recurrence_interval);
@@ -561,7 +917,7 @@ const MeetingForm: React.FC = () => {
   const formLoading = isLoading || userListOptions.isLoading;
 
   const recurrenceTypes = [
-    { value: 'none', label: 'None' },
+    { value: 'none', label: 'Does not repeat' },
     { value: 'daily', label: 'Daily' },
     { value: 'weekly', label: 'Weekly' },
     { value: 'monthly', label: 'Monthly' },
@@ -578,12 +934,25 @@ const MeetingForm: React.FC = () => {
   ];
 
   // Convert string dates to Dayjs objects for DateTimePicker
-  const startDate = formData.effective_start_datetime
-    ? dayjs(formData.effective_start_datetime)
+  const startDate = formData.effective_startdate
+    ? dayjs(formData.effective_startdate)
     : null;
-  const endDate = formData.effective_end_datetime
-    ? dayjs(formData.effective_end_datetime)
+  const endDate = formData.effective_enddate
+    ? dayjs(formData.effective_enddate)
     : null;
+  const startTime = formData.start_time
+    ? dayjs(`2000-01-01 ${formData.start_time}`)
+    : null;
+  const endTime = formData.end_time
+    ? dayjs(`2000-01-01 ${formData.end_time}`)
+    : null;
+
+  // Show/hide logic based on recurrence type (Microsoft Teams behavior)
+  const showRecurrenceInterval = formData.recurrence_type !== 'none';
+  const showRecurrenceDays = formData.recurrence_type === 'weekly';
+  const showMonthlyOptions = formData.recurrence_type === 'monthly';
+  const showEffectiveEndDate = formData.recurrence_type !== 'none';
+  const isDailyRecurrence = formData.recurrence_type === 'daily';
 
   return (
     <div>
@@ -691,46 +1060,74 @@ const MeetingForm: React.FC = () => {
               )}
             </div>
 
+            {/* Date & Time Section - Microsoft Teams Layout */}
             <div className='grid md:grid-cols-3 gap-x-4 gap-y-3 px-10 pt-3'>
-              {/* Start DateTime */}
+              {/* Start Date */}
               <div>
                 <label
-                  htmlFor='effective_start_datetime'
+                  htmlFor='effective_startdate'
                   className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px]'
                 >
-                  Start Date & Time<span className='text-red-500'> *</span>
+                  Start Date<span className='text-red-500'> *</span>
                 </label>
                 <StyledDateTimePicker
+                  mode='date'
                   value={startDate}
                   onChange={(value) =>
-                    handleDateTimeChange('effective_start_datetime', value)
+                    handleDateChange('effective_startdate', value)
                   }
-                  error={!!errors?.effective_start_datetime}
-                  helperText={errors?.effective_start_datetime}
-                  disableBeforeDates={true}
+                  error={!!errors?.effective_startdate}
+                  helperText={errors?.effective_startdate}
+                  disablePast={true}
                 />
               </div>
 
-              {/* End DateTime */}
+              {/* Start Time */}
               <div>
                 <label
-                  htmlFor='effective_end_datetime'
+                  htmlFor='start_time'
                   className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px]'
                 >
-                  End Date & Time<span className='text-red-500'> *</span>
+                  Start Time<span className='text-red-500'> *</span>
                 </label>
                 <StyledDateTimePicker
-                  value={endDate}
-                  onChange={(value) =>
-                    handleDateTimeChange('effective_end_datetime', value)
+                  mode='time'
+                  value={startTime}
+                  onChange={(value) => handleTimeChange('start_time', value)}
+                  error={!!errors?.start_time}
+                  helperText={errors?.start_time}
+                  ampm={true}
+                  disablePast={
+                    formData.effective_startdate ===
+                    dayjs().format('YYYY-MM-DD')
                   }
-                  error={!!errors?.effective_end_datetime}
-                  helperText={errors?.effective_end_datetime}
-                  disableBeforeDates={true}
+                  shouldDisableTime={getShouldDisableTime('start_time')}
+                  openTo='hours' // Ensure it opens to hours first
                 />
               </div>
 
-              {/* Recurrence Type */}
+              {/* End Time */}
+              <div>
+                <label
+                  htmlFor='end_time'
+                  className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px]'
+                >
+                  End Time<span className='text-red-500'> *</span>
+                </label>
+                <StyledDateTimePicker
+                  mode='time'
+                  value={endTime}
+                  onChange={(value) => handleTimeChange('end_time', value)}
+                  error={!!errors?.end_time}
+                  helperText={errors?.end_time}
+                  ampm={true}
+                  openTo='hours' // Ensure it opens to hours first
+                />
+              </div>
+            </div>
+
+            {/* Recurrence Type */}
+            <div className='grid md:grid-cols-3 gap-x-4 gap-y-3 px-10 pt-3'>
               <div>
                 <label
                   className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
@@ -741,7 +1138,7 @@ const MeetingForm: React.FC = () => {
                 </label>
 
                 <Select
-                  name='category'
+                  name='recurrence_type'
                   value={formData.recurrence_type}
                   onChange={(e) =>
                     handleInputChange('recurrence_type', e.target.value)
@@ -749,6 +1146,7 @@ const MeetingForm: React.FC = () => {
                   displayEmpty
                   fullWidth
                   size='small'
+                  disabled={!formData.effective_startdate}
                   className={`custom-select-no-arrow sm:text-sm ${
                     formData.recurrence_type === ''
                       ? 'text-[#7D98B6]'
@@ -760,13 +1158,6 @@ const MeetingForm: React.FC = () => {
                     formData.recurrence_type === ''
                   )}
                 >
-                  <MenuItem
-                    value=''
-                    sx={{ color: '#425A76', fontSize: '13px', fontWeight: 500 }}
-                  >
-                    Choose Recurrence Type
-                  </MenuItem>
-
                   {recurrenceTypes?.map((option, i) => (
                     <MenuItem
                       key={`${option.value}-${i}`}
@@ -789,35 +1180,77 @@ const MeetingForm: React.FC = () => {
                   </span>
                 )}
               </div>
+
+              {/* Recurrence Interval - Conditionally Shown */}
+              {showRecurrenceInterval && (
+                <div>
+                  <label
+                    htmlFor='recurrence_interval'
+                    className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px]'
+                  >
+                    Recurrence Interval
+                    {/* <span className='text-[13px] text-[#2D3E4F]'>
+                      {formData.recurrence_type === 'daily'
+                        ? 'day(s)'
+                        : formData.recurrence_type === 'weekly'
+                          ? 'week(s)'
+                          : 'month(s)'}
+                    </span> */}
+                  </label>
+                  <input
+                    type='number'
+                    min='1'
+                    value={formData.recurrence_interval}
+                    onChange={handleRecurrenceIntervalChange}
+                    onKeyDown={(e) => {
+                      if (['e', 'E', '+', '-', '.'].includes(e.key))
+                        e.preventDefault();
+                    }}
+                    onPaste={(e) => {
+                      if (!/^\d+$/.test(e.clipboardData.getData('text')))
+                        e.preventDefault();
+                    }}
+                    className={`no-spinner placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] truncate overflow-hidden text-ellipsis whitespace-nowrap outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ${errors?.recurrence_interval ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
+                  />
+                  {errors?.recurrence_interval && (
+                    <span className='text-[12px] text-red-400'>
+                      {errors.recurrence_interval}
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {/* Effective End Date - Conditionally Shown */}
+              {showEffectiveEndDate && (
+                <div>
+                  <label
+                    htmlFor='effective_enddate'
+                    className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px]'
+                  >
+                    End Date<span className='text-red-500'> *</span>
+                  </label>
+                  <StyledDateTimePicker
+                    mode='date'
+                    value={endDate}
+                    onChange={(value) =>
+                      handleDateChange('effective_enddate', value)
+                    }
+                    error={!!errors?.effective_enddate}
+                    helperText={errors?.effective_enddate}
+                    disablePast={true}
+                    minDate={startDate || undefined}
+                  />
+                </div>
+              )}
             </div>
 
-            <div className='grid md:grid-cols-3 gap-x-4 gap-y-3 px-10 pt-3'>
-              {/* Recurrence Interval */}
-              <div>
-                <label
-                  htmlFor='recurrence_interval'
-                  className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px]'
-                >
-                  Recurrence Interval
-                </label>
-
-                <input
-                  type='number'
-                  min='1'
-                  value={formData.recurrence_interval}
-                  onChange={handleRecurrenceIntervalChange}
-                  disabled={formData.recurrence_type === 'none'}
-                  className='w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs disabled:bg-gray-100'
-                />
-              </div>
-
-              {/* Recurrence Days – span full width */}
-              {formData.recurrence_type === 'weekly' && (
-                <div className='col-span-2 mt-2'>
+            {/* Weekly Recurrence Days - Conditionally Shown */}
+            {showRecurrenceDays && (
+              <div className='grid md:grid-cols-1 gap-x-4 gap-y-3 px-10 pt-3'>
+                <div>
                   <label className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px]'>
                     Recurrence Days
                   </label>
-
                   <div className='flex flex-wrap gap-3 mt-2'>
                     {daysOfWeek.map((day) => (
                       <label
@@ -829,6 +1262,7 @@ const MeetingForm: React.FC = () => {
                           checked={formData.recurrence_days.includes(day.value)}
                           onChange={() => handleRecurrenceDaysChange(day.value)}
                           className='w-4 h-4 cursor-pointer'
+                          disabled={isDailyRecurrence}
                         />
                         <span className='text-[13px] text-[#2D3E4F]'>
                           {day.label}
@@ -836,9 +1270,54 @@ const MeetingForm: React.FC = () => {
                       </label>
                     ))}
                   </div>
+                  {errors?.recurrence_days && (
+                    <span className='text-[12px] text-red-400'>
+                      {errors.recurrence_days}
+                    </span>
+                  )}
                 </div>
-              )}
-            </div>
+              </div>
+            )}
+
+            {/* Monthly Recurrence Options - Conditionally Shown */}
+            {showMonthlyOptions && (
+              <div className='grid md:grid-cols-1 gap-x-4 gap-y-3 px-10 pt-3'>
+                <div>
+                  <label className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px]'>
+                    Recurrence Days
+                  </label>
+                  <div className='flex flex-col gap-2 mt-2'>
+                    {monthlyRecurrenceOptions.map((option) => (
+                      <label
+                        key={option.value}
+                        className='flex items-center gap-2 cursor-pointer'
+                      >
+                        <input
+                          type='radio'
+                          name='monthly_recurrence'
+                          value={option.value}
+                          checked={formData.recurrence_days.includes(
+                            option.value
+                          )}
+                          onChange={() =>
+                            handleMonthlyRecurrenceChange(option.value)
+                          }
+                          className='w-4 h-4 cursor-pointer'
+                        />
+                        <span className='text-[13px] text-[#2D3E4F]'>
+                          {option.label}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                  {errors?.recurrence_days && (
+                    <span className='text-[12px] text-red-400'>
+                      {errors.recurrence_days}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* File Attachments Section */}
             <div className='mt-6 border capitalize h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-10'>

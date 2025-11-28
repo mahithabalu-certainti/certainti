@@ -97,25 +97,8 @@ export const getEmailFilterFields =
       operatorOption: enumOptions,
     },
     {
-      name: 'Created On',
-      value: 'created_datetime',
-      type: 'date',
-      operatorOption: dateOptions,
-    },
-    {
       name: 'Related To',
       value: 'attached_to',
-      type: 'text',
-      operatorOption: textOptions,
-    },
-  ];
-
-export const getTaskFilterFields =
-  () //   permissionMap: Record<string, { read: boolean; edit: boolean }>
-  : FieldConfig[] => [
-    {
-      name: 'Task ID',
-      value: 'r_number',
       type: 'text',
       operatorOption: textOptions,
     },
@@ -126,24 +109,76 @@ export const getTaskFilterFields =
       operatorOption: textOptions,
     },
     {
-      name: 'Task Status',
-      value: 'status_name',
-      type: 'enum',
-      operatorOption: enumOptions,
+      name: 'Created On',
+      value: 'created_datetime',
+      type: 'date',
+      operatorOption: dateOptions,
     },
     {
-      name: 'Related To',
-      value: 'attached_to',
+      name: 'Email To',
+      value: 'to_email',
       type: 'text',
       operatorOption: textOptions,
     },
     {
-      name: 'Due Date',
-      value: 'due_date',
-      type: 'date',
-      operatorOption: dateOptions,
+      name: 'Email Sent By',
+      value: 'sender_email',
+      type: 'text',
+      operatorOption: textOptions,
+    },
+    {
+      name: 'Email Subject',
+      value: 'subject',
+      type: 'text',
+      operatorOption: textOptions,
     },
   ];
+
+export const getTaskFilterFields = (
+  userListOptions: { value: string; label: string }[]
+  //   permissionMap: Record<string, { read: boolean; edit: boolean }>
+): FieldConfig[] => [
+  {
+    name: 'Task ID',
+    value: 'r_number',
+    type: 'text',
+    operatorOption: textOptions,
+  },
+  {
+    name: 'Assigned To',
+    value: 'assigned_to_name',
+    type: 'enum',
+    options: userListOptions.map((opt) => ({
+      option: opt.label,
+      value: opt.value,
+    })),
+    operatorOption: enumOptions,
+  },
+  {
+    name: 'Created By',
+    value: 'created_by_name',
+    type: 'text',
+    operatorOption: textOptions,
+  },
+  {
+    name: 'Task Status',
+    value: 'status_name',
+    type: 'enum',
+    operatorOption: enumOptions,
+  },
+  {
+    name: 'Related To',
+    value: 'attached_to',
+    type: 'text',
+    operatorOption: textOptions,
+  },
+  {
+    name: 'Due Date',
+    value: 'due_date',
+    type: 'date',
+    operatorOption: dateOptions,
+  },
+];
 
 export const getMeetingFilterFields =
   () //   permissionMap: Record<string, { read: boolean; edit: boolean }>
@@ -206,5 +241,29 @@ export const getCallFilterFields =
       value: 'status_name',
       type: 'enum',
       operatorOption: enumOptions,
+    },
+    {
+      name: 'Call Start Date',
+      value: 'effective_start_datetime',
+      type: 'date',
+      operatorOption: dateOptions,
+    },
+    {
+      name: 'Call End Date',
+      value: 'effective_end_datetime',
+      type: 'date',
+      operatorOption: dateOptions,
+    },
+    {
+      name: 'Created By',
+      value: 'created_by_name',
+      type: 'text',
+      operatorOption: textOptions,
+    },
+    {
+      name: 'Created On',
+      value: 'created_datetime',
+      type: 'date',
+      operatorOption: dateOptions,
     },
   ];

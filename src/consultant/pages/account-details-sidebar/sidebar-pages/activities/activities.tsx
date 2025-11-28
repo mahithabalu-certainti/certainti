@@ -29,6 +29,7 @@ import { ActivitiesIcon } from '../../../../../assets';
 import ActivityDetails from '../../../activities/activities-details/activity-details';
 import { ActivityListTable } from '../../../activities';
 import TaskDetails from '../../../activities/activities-details/task-details';
+import { useGetUserOptions } from '../../../../services/case-team';
 
 const ActivityTabs = [
   {
@@ -83,6 +84,8 @@ const Activities: React.FC<ActivitiesProps> = ({
     source: `Account > ${accountDetails?.accountById?.r_number || ''}`,
   };
 
+  const userListOptions = useGetUserOptions(accountid, true);
+
   const initialTab = useMemo(() => {
     return 'all';
   }, []);
@@ -110,10 +113,19 @@ const Activities: React.FC<ActivitiesProps> = ({
     setCurrentPage(0);
   };
 
+  const userOptions = useMemo(() => {
+    return (
+      userListOptions?.data?.map((item) => ({
+        value: item.rid,
+        label: item?.name || '',
+      })) || []
+    );
+  }, [userListOptions]);
+
   const filterFields = useMemo(() => {
     switch (tabParam) {
       case 'task':
-        return getTaskFilterFields();
+        return getTaskFilterFields(userOptions);
       case 'email':
         return getEmailFilterFields();
       case 'meeting':
@@ -123,7 +135,7 @@ const Activities: React.FC<ActivitiesProps> = ({
       default:
         return getAllActivityFilterFields();
     }
-  }, [tabParam]);
+  }, [tabParam, userOptions]);
 
   const tabs = [
     { label: 'All', value: 'all' },

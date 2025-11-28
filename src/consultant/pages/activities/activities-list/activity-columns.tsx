@@ -122,6 +122,37 @@ export const getActivityCallLogListColumns = (
     sortId: 'status_name',
     width: 160,
   },
+  {
+    id: 'effective_start_datetime',
+    label: 'Call Start Date',
+    sortable: true,
+    sortId: 'effective_start_datetime',
+    width: 200,
+    render: (row) => formatDateToYYYYMMDDWithTime(row.effective_start_datetime),
+  },
+  {
+    id: 'effective_end_datetime',
+    label: 'Call End Date',
+    sortable: true,
+    sortId: 'effective_end_datetime',
+    width: 200,
+    render: (row) => formatDateToYYYYMMDDWithTime(row.effective_end_datetime),
+  },
+  {
+    id: 'created_by_name',
+    label: 'Created By',
+    sortable: true,
+    sortId: 'created_by_name',
+    width: 160,
+  },
+  {
+    id: 'created_datetime',
+    label: 'Created On',
+    sortable: true,
+    sortId: 'created_datetime',
+    width: 200,
+    render: (row) => formatDateToYYYYMMDDWithTime(row.created_datetime),
+  },
 ];
 
 export const getActivityEmailListColumns = (
@@ -162,19 +193,54 @@ export const getActivityEmailListColumns = (
     width: 160,
   },
   {
-    id: 'created_datetime',
-    label: 'Created On',
-    sortable: true,
-    sortId: 'created_datetime',
-    width: 170,
-    render: (row) => formatDateToYYYYMMDDWithTime(row.created_datetime),
-  },
-  {
     id: 'attached_to',
     label: 'Related To',
     sortable: true,
     sortId: 'attached_to',
     width: 180,
+  },
+  {
+    id: 'created_by_name',
+    label: 'Created By',
+    sortable: true,
+    sortId: 'created_by_name',
+    width: 160,
+  },
+  {
+    id: 'created_datetime',
+    label: 'Created On',
+    sortable: true,
+    sortId: 'created_datetime',
+    width: 200,
+    render: (row) => formatDateToYYYYMMDDWithTime(row.created_datetime),
+  },
+  {
+    id: 'to_email',
+    label: 'Email To',
+    sortable: true,
+    sortId: 'to_email',
+    width: 180,
+    render(row) {
+      return Array.isArray(row.to_email) && row.to_email.length > 0 ? (
+        <span>{row.to_email.join(', ')}</span>
+      ) : (
+        '-'
+      );
+    },
+  },
+  {
+    id: 'sender_email',
+    label: 'Email Sent By',
+    sortable: true,
+    sortId: 'sender_email',
+    width: 160,
+  },
+  {
+    id: 'subject',
+    label: 'Email Subject',
+    sortable: true,
+    sortId: 'subject',
+    width: 200,
   },
 ];
 
@@ -269,6 +335,13 @@ export const getActivityTaskListColumns = (
       ) : (
         <span>{row.r_number}</span>
       ),
+  },
+  {
+    id: 'assigned_to_name',
+    label: 'Assigned To',
+    sortable: true,
+    sortId: 'assigned_to_name',
+    width: 160,
   },
   {
     id: 'created_by_name',
