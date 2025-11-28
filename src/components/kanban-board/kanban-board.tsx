@@ -69,6 +69,10 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
   onCreateTask,
   fieldVisibility,
   fieldDisabled,
+  accountId,
+  caseId,
+  caseStartDate,
+  caseEndDate,
 }) => {
   const [columns, setColumns] = useState<KanbanColumnTypes[]>(data);
 
@@ -313,6 +317,10 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
                     onCreateTask={onCreateTask}
                     fieldVisibility={fieldVisibility}
                     fieldDisabled={fieldDisabled}
+                    accountId={accountId}
+                    caseId={caseId}
+                    caseStartDate={caseStartDate}
+                    caseEndDate={caseEndDate}
                   />
                 ))}
               </div>
@@ -351,6 +359,10 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   onCreateTask={onCreateTask}
                   fieldVisibility={fieldVisibility}
                   fieldDisabled={fieldDisabled}
+                  accountId={accountId}
+                  caseId={caseId}
+                  caseStartDate={caseStartDate}
+                  caseEndDate={caseEndDate}
                 />
               ))}
             </div>

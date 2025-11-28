@@ -42,6 +42,7 @@ import { ActivityMenuItem } from '../../../../types';
 import { useToast } from '../../../../../hooks';
 import { TaskCard } from '../../../../../components/kanban-board/types';
 import { useGetTaskCheckListTypes } from '../../../../../admin/service/task-template/task-template-service';
+import { checkPermission } from '../../../../../common-utils';
 
 const ConfigTabs: ResourceTabs[] = [
   {
@@ -54,12 +55,16 @@ interface WorkBreakDownProps {
   activityMenuItems: ActivityMenuItem[];
   setExportType: (type: ExportType) => void;
   setCaseTaskParams: (params: Record<string, unknown>) => void;
+  caseStartDate?: string | null;
+  caseEndDate?: string | null;
 }
 
 const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
   setExportType,
   setCaseTaskParams,
   activityMenuItems,
+  caseStartDate,
+  caseEndDate,
 }) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -106,8 +111,6 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
     isError,
   } = useGetWorkBreakdownList(accountId || '', caseId || '');
 
-  console.log(permission)
-
   useEffect(() => {
     if (
       !searchParams.get('tab') &&
@@ -118,10 +121,15 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
     }
   }, [searchParams, navigate]);
 
+  const isCaseTeamViewEnable = checkPermission(
+    permission,
+    AllPermissions.CASES_TEAM_VIEW_EDIT
+  );
+
   const caseTeamMembersQuery = useGetCaseTeamMembersDropdown(
     accountId || '',
     caseId || '',
-    !!accountId && !!caseId
+    !!accountId && !!caseId && isCaseTeamViewEnable
   );
   const roleOptionsQuery = useGetRoleOptions();
   const prioritiesQuery = useGetTaskPriorities();
@@ -777,6 +785,8 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
                 caseId={caseId || ''}
                 fieldVisibility={fieldHiddenMap}
                 fieldDisabled={fieldDisabledMap}
+                caseStartDate={caseStartDate}
+                caseEndDate={caseEndDate}
               />
             )}
             {openTaskId && (
@@ -799,6 +809,8 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
                 onUpdateComment={handleUpdateComment}
                 onDeleteComment={handleDeleteComment}
                 onAddCollaborator={handleAddCollaborator}
+                caseStartDate={caseStartDate}
+                caseEndDate={caseEndDate}
               />
             )}
           </>

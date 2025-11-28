@@ -33,6 +33,8 @@ import { SectionTabPanel } from '../../../../../components';
 import SectionHeader from '../../../../../components/details-section/section-header';
 import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
 import { AllPermissions, useGetStatus } from '../../../../../common-service';
+import { checkPermission } from '../../../../../common-utils';
+import { AccessRestricted } from '../../../../../components/account-restricted';
 import { useToast } from '../../../../../hooks';
 import { useSearchParams, useParams } from 'react-router-dom';
 import {
@@ -88,12 +90,23 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
   const [cellWidths, setCellWidths] = useState<Record<string, number>>({});
 
   const { permission } = useSelector((state: RootState) => state.permission);
+
   //Permission
   const casesTeamEditFields = useMemo(
     () =>
       permission?.find(
         (item) => item.name === AllPermissions.CASES_TEAM_VIEW_EDIT
       )?.fields ?? [],
+    [permission]
+  );
+
+  const caseTeamCreatePermission = useMemo(
+    () => permission?.find((item) => item.name === 'case_team_create'),
+    [permission]
+  );
+
+  const caseTeamDeletePermission = useMemo(
+    () => permission?.find((item) => item.name === 'case_team_delete'),
     [permission]
   );
 
@@ -602,6 +615,55 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
     return <ActionItemsIcon alt='action-items-icon' />;
   };
 
+  const isCaseTeamViewEnable = checkPermission(
+    permission,
+    AllPermissions.CASES_TEAM_VIEW_EDIT
+  );
+
+  const isCaseCreateEnable = checkPermission(
+    permission,
+    AllPermissions.CASES_CREATE
+  );
+
+  const showAddButton = caseTeamCreatePermission
+    ? caseTeamCreatePermission.is_enabled
+    : isCaseCreateEnable;
+
+  const isAddButtonEnabled = caseTeamCreatePermission
+    ? caseTeamCreatePermission.is_enabled
+    : true;
+
+  const showDeleteButton = caseTeamDeletePermission
+    ? caseTeamDeletePermission.is_enabled
+    : true;
+
+  const isDeleteButtonEnabled = caseTeamDeletePermission
+    ? caseTeamDeletePermission.is_enabled
+    : true;
+
+  if (!isCaseTeamViewEnable) return <AccessRestricted />;
+
+  const isColumnVisible = (col: CaseTeamTableColumn) => {
+    if (col.hide) return false;
+    if (col.name === 'action') return showDeleteButton;
+
+    const permissionName: Record<string, string> = {
+      user_role: 'role_rid',
+      user_name: 'user_rid',
+      start_date: 'effective_startdate',
+      end_date: 'effective_enddate',
+      is_primary: 'is_primary',
+      status: 'status_rid',
+    };
+
+    const permKey = permissionName[col.name];
+
+    if (permKey && permissionMap[permKey]) {
+      return permissionMap[permKey].read;
+    }
+    return true;
+  };
+
   return (
     <>
       <SectionTabPanel
@@ -660,7 +722,7 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
                 >
                   <TableRow sx={{ height: 29 }}>
                     {teamTableColumns
-                      .filter((col) => !col.hide)
+                      .filter(isColumnVisible)
                       .map((col: CaseTeamTableColumn) => (
                         <TableCell
                           key={col.name}
@@ -717,7 +779,7 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
                         className={''}
                       >
                         {teamTableColumns
-                          .filter((col) => !col.hide)
+                          .filter(isColumnVisible)
                           .map((col: CaseTeamTableColumn) => {
                             const isDisabled = col.disabled;
                             const isBtnDisabled = col.disabled;
@@ -1602,7 +1664,7 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
                                 }
 
                                 {
-                                  col.name === 'action' && (
+                                  col.name === 'action' && showDeleteButton && (
                                     <Tooltip
                                       title={'Remove team member'}
                                       disableHoverListener={isBtnDisabled}
@@ -1615,9 +1677,11 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
                                           handleRemoveTeamMember(index)
                                         }
                                         style={{
-                                          cursor: isBtnDisabled
-                                            ? 'default'
-                                            : 'pointer',
+                                          cursor:
+                                            isBtnDisabled ||
+                                              !isDeleteButtonEnabled
+                                              ? 'default'
+                                              : 'pointer',
                                           background: 'transparent',
                                           border: 'none',
                                           padding: 0,
@@ -1625,7 +1689,9 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
                                         }}
                                         aria-label='Remove team member' // prettier-ignore
                                         disabled={
-                                          isBtnDisabled || !isCaseTeamEditable
+                                          isBtnDisabled ||
+                                          !isCaseTeamEditable ||
+                                          !isDeleteButtonEnabled
                                         }
                                       >
                                         <React.Suspense fallback={null}>
@@ -1677,21 +1743,25 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
             </TableContainer>
           </div>
 
-          <div className='mt-2 pl-4'>
-            <button
-              className='flex items-center cursor-pointer gap-1 bg-[#EAF0F5] h-[30px] color-[#2D3E4F] px-2 text-[12px] font-semibold disabled:bg-gray-100 disabled:opacity-75 disabled:cursor-default'
-              type='button'
-              onClick={handleAddTeamMember}
-              disabled={formLoading || !isCaseTeamEditable}
-            >
-              <span>
-                <React.Suspense fallback={null}>
-                  <KeyContactAddIcon alt='add-btn' className='w-5 h-5' />
-                </React.Suspense>
-              </span>
-              Add Case Team Member
-            </button>
-          </div>
+          {showAddButton && (
+            <div className='mt-2 pl-4'>
+              <button
+                className='flex items-center cursor-pointer gap-1 bg-[#EAF0F5] h-[30px] color-[#2D3E4F] px-2 text-[12px] font-semibold disabled:bg-gray-100 disabled:opacity-75 disabled:cursor-default'
+                type='button'
+                onClick={handleAddTeamMember}
+                disabled={
+                  formLoading || !isCaseTeamEditable || !isAddButtonEnabled
+                }
+              >
+                <span>
+                  <React.Suspense fallback={null}>
+                    <KeyContactAddIcon alt='add-btn' className='w-5 h-5' />
+                  </React.Suspense>
+                </span>
+                Add Case Team Member
+              </button>
+            </div>
+          )}
         </div>
       </div >
     </>
