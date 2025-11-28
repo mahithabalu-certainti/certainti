@@ -5054,6 +5054,27 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             case_rid : data.case_rid
           }, transaction
         });
+        if(data?.checklist_template_rid) 
+      {
+        const response  = await this.fetchChecklistTemplateDetailsById(data.checklist_template_rid);
+        response.checklist_items.map((item:any) => item.action_type  = 'add');
+        let caseRequest = {
+          account_rid: data.account_rid!,
+          checklist_name: response.checklist_name,
+          checklist_description: response.description,  
+          checklist_items: response.checklist_items,
+          attach_to: data.rid,
+          attachment_level: 'task',
+          created_by: data.modified_by,
+          created_datetime: new Date(),
+          fiscal_year: checkCaseExists.fiscal_year,
+          checklist_rid: data.checklist_template_rid,
+          case_rid : data.case_rid
+        };
+
+        const checklistResponse = await this.createCheckList(accountNumber, caseRequest, transaction);
+        await this.manageCheckListItems(accountNumber,caseRequest,checklistResponse.rid, transaction);
+      }
         const checkIsDifferentCollaborator = await this.isNewCollaborator(data.modified_by, accountNumber,"case_task");
         if(!checkIsDifferentCollaborator) {
           const checkCollaboratorExists = await this.isCollaboratorAlreadyAdded(data.modified_by, data.case_rid, data.account_rid, data.rid, accountNumber,"case_task");
