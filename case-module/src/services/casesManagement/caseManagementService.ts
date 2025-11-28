@@ -492,6 +492,19 @@ export class CaseManagementService {
       }
       const setData = setTaskTemplateData(isTaskExists, data, data.userId)
       if(setData.length > 0) {
+        if(data.status_rid) {
+          if(data.status_rid !== isTaskExists.status_rid) {
+            const getAllStatus : any = await mainDb.query(rawQueries.getActiveStatusId());
+            const statusMap = new Map(getAllStatus[0].map((d : any) => [d.rid, d.status_name]));
+            if(statusMap.get(data.status_rid) === 'In-Active') {
+              const findTaskAfterDeleteData : any = await mainDb.query(rawQueries.fetchTaskBasedOnSequence(isTaskExists.sequence_no!, isTaskExists.milestone_template_rid!));
+              await this.caseManangementSchemaService.updateSequenceForInactive(findTaskAfterDeleteData)
+            } else {
+              const findTaskAfterDeleteData : any = await mainDb.query(rawQueries.fetchTaskBasedOnSequenceForActive(isTaskExists.sequence_no!, isTaskExists.milestone_template_rid!, isTaskExists.rid));
+              await this.caseManangementSchemaService.updateSequenceForActive(findTaskAfterDeleteData)
+            }
+          }
+        }
         const result : any = await mainDb.query(rawQueries.updateTaskTemplate(setData, data.rid));
         if(result[1].rowCount == 1) {
           const responsePayload : AdminTaskTemplatePayloadType = {
