@@ -87,7 +87,7 @@ export class JurisdictionService {
  */
   async getJurisdictionConfiguration(
     accountRid: string,
-    caseRid: string
+    entityRid: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -96,7 +96,7 @@ export class JurisdictionService {
   }> {
     try {
       // Step 1: Resolve account number (schema name)
-      const { accountNumber, parentAccountId } =
+      const { accountNumber} =
         await this.caseSchemaService.fetchValidAccountNumberById(accountRid);
 
       if (!accountNumber) {
@@ -108,7 +108,7 @@ export class JurisdictionService {
 
       // Step 3: Fetch jurisdiction record
       const jurisdiction = await Jurisdiction.findOne({
-        where: { account_rid: accountRid, case_rid: caseRid },
+        where: { entity_rid: entityRid },
       });
 
       // Step 4: Return success response

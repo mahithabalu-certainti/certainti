@@ -833,7 +833,7 @@ export const fetchMilestoneTaskTemplate = (taskTypeRid : string, filingTypeRid :
   t.modified_datetime AS "task_modified_datetime", t.task_name, t.sequence_no, t.effort_in_days,
   t.effective_start_datetime, t.effective_end_datetime, t.case_team_member_role_rid,
   t.checklist_template_rid, t.status_rid AS "task_status_rid", t.priority_rid, t.task_type_rid,
-  t.milestone_template_rid, t.task_description
+  t.milestone_template_rid, t.task_description, t.milestone_sequence
   FROM
   fetch_milestone_result m
   LEFT JOIN ${MAIN_SCHEMA_NAME}.task_template t ON t.milestone_template_rid = m.rid
@@ -841,7 +841,7 @@ export const fetchMilestoneTaskTemplate = (taskTypeRid : string, filingTypeRid :
   t.task_type_rid = '${taskTypeRid}'
   AND
   t.status_rid = '${statusId}'
-  ORDER BY t.sequence_no ASC
+  ORDER BY t.milestone_sequence ASC
   ),
   fetch_workflow_connector_map AS (
   SELECT w.created_by, w.created_datetime, w.source_rid, w.target_rid, w.relationship_connector_rid
@@ -859,7 +859,7 @@ export const fetchMilestoneTaskTemplate = (taskTypeRid : string, filingTypeRid :
   'milestone_description', m.milestone_description,
   'status_rid', m.milestone_status_rid,
   'case_filing_type_rid',m.case_filing_type_rid
-  )) AS milestone_data
+  )ORDER BY m.r_number ASC ) AS milestone_data
    FROM
    fetch_milestone_result m
   ),
@@ -882,7 +882,7 @@ export const fetchMilestoneTaskTemplate = (taskTypeRid : string, filingTypeRid :
     'task_type_rid', t.task_type_rid,
     'milestone_template_rid', t.milestone_template_rid,
     'task_description', t.task_description
-  )) AS task_data
+  )ORDER BY t.milestone_sequence, t.sequence_no ASC) AS task_data
   FROM fetch_task_data t
   ),
   aggregate_workflow_connector AS (
@@ -933,8 +933,8 @@ export const fetchCaseTemplateData = (schemaName : string, caseRid : string, acc
   FROM ${schemaName}.checklists ch 
   LEFT JOIN ${schemaName}.checklist_items chi ON chi.checklist_rid = ch.rid 
   WHERE 
-  ch.attach_to = '${caseRid}'
-  AND ch.task_rid = t.rid
+  ch.attach_to = t.rid
+  AND ch.case_rid = '${caseRid}'
   AND attachment_level = 'task'
   ),
   'comments_count', (SELECT COUNT(DISTINCT tc.rid) from ${schemaName}.task_comments tc WHERE tc.task_rid = t.rid),
@@ -1269,7 +1269,7 @@ return query;
     SELECT c.rid, c.account_rid, c.checklist_name, c.checklist_description, ct.rid AS task_rid
     FROM 
     ${schemaName}.case_task ct
-    LEFT JOIN ${schemaName}.checklists c ON c.attach_to = ct.case_rid AND c.task_rid = ct.rid AND c.attachment_level = 'task'
+    LEFT JOIN ${schemaName}.checklists c ON c.attach_to = '${taskRid}' AND c.case_rid = '${caseRid}' AND c.attachment_level = 'task'
     WHERE
     ct.rid = '${taskRid}'
     AND

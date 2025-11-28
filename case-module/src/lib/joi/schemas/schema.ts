@@ -466,12 +466,13 @@ const exportCheckListSchema = Joi.object({
 
 const jurisdictionSchema = Joi.object({
   account_rid: Joi.string().required(),
-  case_rid: Joi.string().required(),
+  case_rid: Joi.string(),
   is_state_level: Joi.boolean().required(),
   is_federal_level: Joi.boolean().required(),
   states: Joi.array()
     .items(Joi.string().trim().optional())
     .optional(),
+  level: Joi.string().valid("account", "case").required(), 
 })
   .custom((value, helpers) => {
     const { is_state_level, is_federal_level, states } = value;
@@ -488,6 +489,11 @@ const jurisdictionSchema = Joi.object({
       if (Array.isArray(states) && states.length > 0) {
         return helpers.error("any.statesNotAllowed");
       }
+    }
+
+    // If flag is 'case' then case_rid is required
+    if (value.level === "case" && !value.case_rid) {
+      return helpers.error("any.required");
     }
 
     return value;

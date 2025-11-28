@@ -108,7 +108,7 @@ async function getJurisdictionConfiguration(req: Request, res: Response): Promis
     );
 
     // Step 2: Extract parameters
-    const { accountRid, caseRid } = req.params;
+    const { accountRid, caseRid, level } = req.query;
     const userId = req.headers["x-user-id"] as string;
 
     // Validate required parameters
@@ -123,19 +123,43 @@ async function getJurisdictionConfiguration(req: Request, res: Response): Promis
       return;
     }
 
-    if (!accountRid || !caseRid) {
-      errorLog(methodName, "Missing accountRid or caseRid");
+    if (!accountRid) {
+      errorLog(methodName, "Missing accountRid");
       handleErrorResponse(
         res,
         HttpStatus.BAD_REQUEST,
         HttpStatus.BAD_REQUEST_MESSAGE,
-        "Both accountRid and caseRid are required"
+        "AccountRid is required"
       );
       return;
     }
 
+    if (!level) {
+      errorLog(methodName, "Missing level");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "level is required"
+      );
+      return;
+    }
+
+    if (level === "case" && !caseRid) {
+      errorLog(methodName, "Missing caseRid");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "Case RID is required"
+      );
+      return;
+    }
+
+    const entity_rid = level === "case" ? caseRid : accountRid;
+
     // Step 3: Call service
-    const result = await jurisdictionService.getJurisdictionConfiguration(accountRid, caseRid);
+    const result = await jurisdictionService.getJurisdictionConfiguration(accountRid as string, entity_rid as string);
 
     // Step 4: Handle service response
     if (result.statusCode === HttpStatus.SUCCESS) {

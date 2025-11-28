@@ -225,12 +225,43 @@ class CaseSchemaService {
           caseRequest.created_by || "",
           "created"
         );
+        await this.addJurisdiction(
+          casecreationResponse.account_rid,
+          casecreationResponse.rid,
+          accountNumber,
+          caseRequest,
+          transaction
+        );
       }
 
       return casecreationResponse;
     } catch (error) {
       logMessage(`Error creating case: ${error}`);
       throw new Error("Error creating case: " + error);
+    }
+  }
+
+  async addJurisdiction (accountRid : string, caseRid : string, accountNumber : string, caseRequest: ICreateCases, transaction: Transaction) {
+    const { Jurisdiction} = await this.caseModelService.getModels(accountNumber);
+    
+    const accountJurisdictionData = await Jurisdiction.findOne({
+      where : {
+        entity_rid : accountRid
+      }
+    })
+
+    if(accountJurisdictionData) {
+      await Jurisdiction.create(
+      {
+        created_by: caseRequest.created_by,
+        entity_rid: caseRid,
+        is_federal_level: accountJurisdictionData.is_federal_level,
+        is_state_level: accountJurisdictionData.is_state_level,
+        states: accountJurisdictionData.states,
+        level : "case",
+      },
+      { transaction }
+      );
     }
   }
 
@@ -3450,7 +3481,7 @@ return !response;
           status_rid: caseRequest.status_rid,
           //modified_by: caseRequest.modified_by,
           created_datetime: new Date(),
-          task_rid : caseRequest.task_rid
+          case_rid : caseRequest.task_rid
           //  modified_datetime: caseRequest.modified_datetime,
         },
         { transaction }
@@ -4674,21 +4705,25 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         let validEndDate;
         let otherStartDateMap : Map<number, Date> = new Map()
         let otherEndDateMap : Map<number, Date> = new Map()
-        let dataEntered : boolean = false
+        let firstMilestoneEntered : boolean = false
+        let secondMilestoneEntered : boolean = false
+        let otherMilestoneEntered : boolean = false
         if(clonedData.task_data.length > 0) {
         for(let d of clonedData.task_data) {
           if(milestoneMap.get(d.milestone_template_rid) === "1") {
-            dataEntered = true
-            if(d.sequence_no === 1) {
-              const conversion = dayjs(caseStartDate)
-              let res = conversion.add(d.effort_in_days, 'day');
-              let finalisedEnddate = res.format('YYYY-MM-DD')
-              endDate = dayjs(finalisedEnddate).toDate()
-              startDate = caseStartDate
-              startDateStorage = startDate
-              endDateStorage = endDate
-              startDateMap.set(d.task_name, startDateStorage)
-              endDateMap.set(d.task_name, endDateStorage)
+            if(!firstMilestoneEntered) {
+              if(d.sequence_no === 1) {
+                const conversion = dayjs(caseStartDate)
+                let res = conversion.add(d.effort_in_days, 'day');
+                let finalisedEnddate = res.format('YYYY-MM-DD')
+                endDate = dayjs(finalisedEnddate).toDate()
+                startDate = caseStartDate
+                startDateStorage = startDate
+                endDateStorage = endDate
+                startDateMap.set(d.task_name, startDateStorage)
+                endDateMap.set(d.task_name, endDateStorage)
+              }
+              firstMilestoneEntered = true
             } 
             else {
               const conversion = dayjs(endDateStorage)
@@ -4705,12 +4740,21 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
           } 
           else {
             if(milestoneMap.get(d.milestone_template_rid) === "2") {
-              dataEntered = true
-              validEndDate = endDateStorage
+              if(!secondMilestoneEntered) {
+                validEndDate = caseStartDate
+                secondMilestoneEntered = true
+              }
+              else {
+                validEndDate = otherMileStoneEndDateStorgae
+              }
             } else {
-              if(!dataEntered) validEndDate = caseStartDate
-              else validEndDate = otherMileStoneEndDateStorgae
-              dataEntered = false
+              if(!firstMilestoneEntered && !secondMilestoneEntered) {
+                validEndDate = caseStartDate
+                otherMilestoneEntered = true
+              }
+              else {
+                validEndDate = otherMileStoneEndDateStorgae
+              }
             }
             if(d.sequence_no === 1) {
               const conversion = dayjs(validEndDate)
@@ -4785,7 +4829,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         });
         if (templateChecklist) {
           const checklistData = {
-            attach_to: caseRid,
+            attach_to: task.rid,
             attachment_level: "task",
             checklist_name: templateChecklist.checklist_name,
             checklist_description: templateChecklist.checklist_description,
@@ -4793,7 +4837,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             account_rid: accountRid,
             created_datetime: new Date(),
             created_by: task.created_by,
-            task_rid : task.rid
+            case_rid : caseRid
           };
           const newChecklist = await CheckList.create(checklistData, { transaction });
 
@@ -4941,13 +4985,13 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
           checklist_name: response.checklist_name,
           checklist_description: response.description,  
           checklist_items: response.checklist_items,
-          attach_to:data.case_rid,
+          attach_to: createdTaskResult.dataValues.rid,
           attachment_level: 'task',
           created_by: data.created_by,
           created_datetime: new Date(),
           fiscal_year: fiscalYear,
           checklist_rid: data.checklist_template_rid,
-          task_rid : createdTaskResult.dataValues.rid
+          case_rid : data.case_rid
         };
 
         const checklistResponse = await this.createCheckList(accountNumber, caseRequest, transaction);
@@ -5037,7 +5081,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             case_rid : data.case_rid
           }, transaction
         });
-          await TaskSummary.update(
+        await TaskSummary.update(
         {
           task_name: data.task_name || "",
           description: data.task_description || "",
