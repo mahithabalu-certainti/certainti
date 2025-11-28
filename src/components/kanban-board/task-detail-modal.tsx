@@ -1331,13 +1331,14 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                   </label>
                   <DatePicker
                     disabled={false}
+                    minDate={dayjs('1950-01-01')}
                     value={formatDateForInput(editedTask?.startDate)}
                     onChange={(newValue) =>
                       handleStartDateChange(
                         newValue ? dayjs(newValue).format('YYYY-MM-DD') : ''
                       )
                     }
-                    format='YYYY-MMM-DD'
+                    format='YYYY-MM-DD'
                     slots={{
                       openPickerIcon: () => (
                         <CalendarIcon className='w-4 h-4' />
@@ -1428,13 +1429,18 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                   </label>
                   <DatePicker
                     disabled={false}
+                    minDate={
+                      editedTask?.startDate
+                        ? dayjs(editedTask.startDate).add(1, 'day')
+                        : dayjs('1950-01-01')
+                    }
                     value={formatDateForInput(editedTask?.endDate)}
                     onChange={(newValue) =>
                       handleEndDateChange(
                         newValue ? dayjs(newValue).format('YYYY-MM-DD') : ''
                       )
                     }
-                    format='YYYY-MMM-DD'
+                    format='YYYY-MM-DD'
                     slots={{
                       openPickerIcon: () => (
                         <CalendarIcon className='w-4 h-4' />

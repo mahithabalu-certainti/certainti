@@ -301,6 +301,15 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
     if (!endDate && !fieldVisibility.endDate)
       newErrors.endDate = 'Field is required';
 
+    if (startDate && startDate.isBefore(dayjs(), 'day')) {
+      newErrors.startDate = 'Invalid Date';
+    }
+    if (endDate && endDate.isBefore(dayjs(), 'day')) {
+      newErrors.endDate = 'Invalid Date';
+    } else if (startDate && endDate && endDate.isBefore(startDate, 'day')) {
+      newErrors.endDate = 'Invalid Date';
+    }
+
     if (linkedType && (!linkTaskTypes || linkTaskTypes.length === 0)) {
       newErrors.linkTaskType = 'Field is required';
     }
@@ -369,9 +378,6 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
   };
 
   const handleEndDateChange = (newValue: dayjs.Dayjs | null) => {
-    if (newValue && startDate && newValue <= startDate) {
-      return;
-    }
     setEndDate(newValue);
     if (newValue) {
       setErrors((prev) => ({ ...prev, endDate: '' }));
@@ -451,7 +457,7 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                       disabled={fieldDisabled.startDate}
                       value={startDate}
                       onChange={handleStartDateChange}
-                      format='YYYY-MMM-DD'
+                      format='YYYY-MM-DD'
                       minDate={dayjs()}
                       slots={{
                         openPickerIcon: () => (
@@ -478,6 +484,7 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                                 WebkitTextFillColor: 'black !important',
                                 '&::placeholder': {
                                   color: '#7D98B6 !important',
+                                  WebkitTextFillColor: '#7D98B6 !important',
                                   opacity: 1,
                                 },
                               },
@@ -500,7 +507,10 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                               borderRadius: '2px',
                             },
                           },
-                          placeholder: 'Choose start date',
+                          placeholder: 'Choose Start Date',
+                          inputProps: {
+                            placeholder: 'Choose Start Date',
+                          },
                         },
                       }}
                     />
@@ -523,7 +533,7 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                       value={endDate}
                       onChange={handleEndDateChange}
                       minDate={getMinEndDate()}
-                      format='YYYY-MMM-DD'
+                      format='YYYY-MM-DD'
                       slots={{
                         openPickerIcon: () => (
                           <CalendarIcon className='w-4 h-4' />
@@ -549,6 +559,7 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                                 WebkitTextFillColor: 'black !important',
                                 '&::placeholder': {
                                   color: '#7D98B6 !important',
+                                  WebkitTextFillColor: '#7D98B6 !important',
                                   opacity: 1,
                                 },
                               },
@@ -571,7 +582,10 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                               borderRadius: '2px',
                             },
                           },
-                          placeholder: 'Choose end date',
+                          placeholder: 'Choose Due Date',
+                          inputProps: {
+                            placeholder: 'Choose Due Date',
+                          },
                         },
                       }}
                     />
