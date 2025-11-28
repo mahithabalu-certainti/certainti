@@ -942,9 +942,112 @@ async function fetchAdminTaskTemplateList (req : Request, res : Response) {
   }
 }
 
-async function ExportAdminTaskTemplateList (req : Request, res : Response) {
-  const methodName = "fetch Admin TaskTemplate List"
+// async function ExportAdminTaskTemplateList (req : Request, res : Response) {
+//   const methodName = "fetch Admin TaskTemplate List"
+//   try {
+//     const userId = req.headers["x-user-id"] as string;
+//     if (!userId) {
+//       errorLog(methodName, "User ID is required in headers");
+//       handleErrorResponse(
+//         res,
+//         HttpStatus.BAD_REQUEST,
+//         HttpStatus.BAD_REQUEST_MESSAGE,
+//         "User ID is required in headers"
+//       );
+//       return;
+//     }
+//     const data = req.body;
+//     let result = await caseManagementService.fetchTaskTemplate(data, true, false, null);
+//     let totalRecord = parseInt(result.data[0].total_result)
+//     const fields = await caseService.getAllowedExportFields(
+//     userId,
+//     "task_templates_export"
+//     );
+//     const allowedFieldSet = new Set<string>();
+//     for (const field of fields) {
+//       if (field.read) {
+//         allowedFieldSet.add(field.field_name);
+//       }
+//     }
+//      const isValidTZ = data.timezone && isValidTimezone(data.timezone);
+//         const formatDate = (date?: Date) => {
+//           if (!date) return null;
+          
+//           return moment(date)
+//             .tz(isValidTZ ? data.timezone : "UTC")
+//             .format("YYYY-MMM-DD, hh:mm:ss A");
+//       };
+//     if(result.statusCode == HttpStatus.SUCCESS) {
+//       const finalData = result.data.map((d : any) => {
+//         return {
+//           "Template ID" : d.r_number,
+//           "Task Name" : d.task_name,
+//           "Efforts In Days" : d.effort_in_days || "-",
+//           "Task Type": d.task_type_name || "-",
+//           "Milestone Name": d.milestone_name || "-",
+//           "Assign Role": d.role_name || "-",
+//           "Priority": d.priority_name || "-",
+//           "Checklist": d.checklist_name || "-",
+//           "Task Category" : d.category_name,
+//           "Weightage" : d.weightage_value,
+//           "Status": d.status_name,
+//           "Task Description": d.task_description || "-",
+//           "Created By" : d.created_by_name || "-",
+//           "Created On" : d.created_datetime
+//                         ? data.timezone && isValidTimezone(data.timezone)
+//                           ? moment.tz(d.created_datetime.toISOString(), data.timezone)
+//                               .format("YYYY-MMM-DD, hh:mm:ss A")
+//                           : moment(d.created_datetime.toISOString())
+//                               .tz(data.timezone)
+//                               .format("YYYY-MMM-DD, hh:mm:ss A")
+//                         : "-",
+//           "Updated By": d.modified_by_name || "-",
+//           "Updated On": d.modified_datetime
+//                         ? data.timezone && isValidTimezone(data.timezone)
+//                           ? moment.tz(d.modified_datetime.toISOString(), data.timezone)
+//                               .format("YYYY-MMM-DD, hh:mm:ss A")
+//                           : moment(d.modified_datetime.toISOString())
+//                               .tz(data.timezone)
+//                               .format("YYYY-MMM-DD, hh:mm:ss A")
+//                         : "-"
+//         }
+//       })
+//       const generateBase64Response = await generateExcelBase64(
+//            finalData,
+//            "Task Template"
+//          );
+//       return res.status(HttpStatus.SUCCESS).send({
+//         statusCode : HttpStatus.SUCCESS,
+//         statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+//         statusMessage : STATUS_MESSAGE.taskTemplateExport,
+//         data : generateBase64Response
+//       })     
+//     } else {
+//       return res.status(HttpStatus.SUCCESS).send({
+//         statusCode : HttpStatus.SUCCESS,
+//         statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+//         statusMessage : STATUS_MESSAGE.dataNotAvailable,
+//         data : {}
+//       })  
+//     }
+//   } catch (err) {
+//     // Handle unexpected errors (system failures, network issues, etc.)
+//     const error = err as Error;
+//     errorLog(methodName, error.message);
+//     handleErrorResponse(
+//       res,
+//       HttpStatus.BAD_REQUEST,
+//       HttpStatus.BAD_REQUEST_MESSAGE,
+//       error.message
+//     );
+//     return;
+//   }
+// }
+async function ExportAdminTaskTemplateList(req: Request, res: Response) {
+  const methodName = "Export Admin TaskTemplate List";
+
   try {
+    // Validate user ID
     const userId = req.headers["x-user-id"] as string;
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
@@ -957,92 +1060,113 @@ async function ExportAdminTaskTemplateList (req : Request, res : Response) {
       return;
     }
     const data = req.body;
-    let result = await caseManagementService.fetchTaskTemplate(data, true, false, null);
-    let totalRecord = parseInt(result.data[0].total_result)
+    const result = await caseManagementService.fetchTaskTemplate(
+      data,
+      true,
+      false,
+      null
+    );
+    if (result.statusCode !== HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: STATUS_MESSAGE.dataNotAvailable,
+        data: null,
+      });
+    }
     const fields = await caseService.getAllowedExportFields(
-    userId,
-    "task_templates_export"
+      userId,
+      "task_templates_export"
     );
     const allowedFieldSet = new Set<string>();
     for (const field of fields) {
-      if (field.read) {
-        allowedFieldSet.add(field.field_name);
+      if (field.read) allowedFieldSet.add(field.field_name);
+    }
+    const isValidTZ = data.timezone && isValidTimezone(data.timezone);
+
+    const formatDate = (date?: Date) => {
+      if (!date) return null;
+
+      return moment(date)
+        .tz(isValidTZ ? data.timezone : "UTC")
+        .format("YYYY-MMM-DD, hh:mm:ss A");
+    };
+
+    // Start Excel export
+    const ExcelJS = require("exceljs");
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Task Template");
+
+    // Define field mappings
+    const taskList = result.data;
+
+    const fieldMappings: Record<string, { label: string; getValue: (x: any) => any }> = {
+      r_number: { label: "Template ID", getValue: d => d.r_number },
+      task_name: { label: "Task Name", getValue: d => d.task_name },
+      effort_in_days: { label: "Efforts In Days", getValue: d => d.effort_in_days || "-" },
+      task_type: { label: "Task Type", getValue: d => d.task_type_name || "-" },
+      milestone: { label: "Milestone Name", getValue: d => d.milestone_name || "-" },
+      assign_role: { label: "Assign Role", getValue: d => d.role_name || "-" },
+      priority: { label: "Priority", getValue: d => d.priority_name || "-" },
+      checklist: { label: "Checklist", getValue: d => d.checklist_name || "-" },
+      category: { label: "Task Category", getValue: d => d.category_name },
+      weightage: { label: "Weightage", getValue: d => d.weightage_value },
+      status: { label: "Status", getValue: d => d.status_name },
+      task_description: { label: "Task Description", getValue: d => d.task_description || "-" },
+      created_by: { label: "Created By", getValue: d => d.created_by_name || "-" },
+      created_datetime: { label: "Created On", getValue: d => formatDate(d.created_datetime) || "-" },
+      modified_by: { label: "Updated By", getValue: d => d.modified_by_name || "-" },
+      modified_datetime: { label: "Updated On", getValue: d => formatDate(d.modified_datetime) || "-" },
+    };
+
+    // Build header dynamically
+    const exportHeaders: string[] = [];
+    Object.keys(fieldMappings).forEach((key) => {
+      if (allowedFieldSet.has(key)) {
+        exportHeaders.push(fieldMappings[key]!.label);
       }
-    }
-     const isValidTZ = data.timezone && isValidTimezone(data.timezone);
-        const formatDate = (date?: Date) => {
-          if (!date) return null;
-          
-          return moment(date)
-            .tz(isValidTZ ? data.timezone : "UTC")
-            .format("YYYY-MMM-DD, hh:mm:ss A");
-      };
-    if(result.statusCode == HttpStatus.SUCCESS) {
-      const finalData = result.data.map((d : any) => {
-        return {
-          "Template ID" : d.r_number,
-          "Task Name" : d.task_name,
-          "Efforts In Days" : d.effort_in_days || "-",
-          "Task Type": d.task_type_name || "-",
-          "Milestone Name": d.milestone_name || "-",
-          "Assign Role": d.role_name || "-",
-          "Priority": d.priority_name || "-",
-          "Checklist": d.checklist_name || "-",
-          "Task Category" : d.category_name,
-          "Weightage" : d.weightage_value,
-          "Status": d.status_name,
-          "Task Description": d.task_description || "-",
-          "Created By" : d.created_by_name || "-",
-          "Created On" : d.created_datetime
-                        ? data.timezone && isValidTimezone(data.timezone)
-                          ? moment.tz(d.created_datetime.toISOString(), data.timezone)
-                              .format("YYYY-MMM-DD, hh:mm:ss A")
-                          : moment(d.created_datetime.toISOString())
-                              .tz(data.timezone)
-                              .format("YYYY-MMM-DD, hh:mm:ss A")
-                        : "-",
-          "Updated By": d.modified_by_name || "-",
-          "Updated On": d.modified_datetime
-                        ? data.timezone && isValidTimezone(data.timezone)
-                          ? moment.tz(d.modified_datetime.toISOString(), data.timezone)
-                              .format("YYYY-MMM-DD, hh:mm:ss A")
-                          : moment(d.modified_datetime.toISOString())
-                              .tz(data.timezone)
-                              .format("YYYY-MMM-DD, hh:mm:ss A")
-                        : "-"
+    });
+
+    worksheet.addRow(exportHeaders);
+    worksheet.getRow(1).eachCell((cell : any) => {
+      cell.font = { bold: true };
+    });
+
+    // Add rows
+    taskList.forEach((row: any) => {
+      const dataRow: any[] = [];
+
+      Object.keys(fieldMappings).forEach((key) => {
+        if (allowedFieldSet.has(key)) {
+          dataRow.push(fieldMappings[key]!.getValue(row));
         }
-      })
-      const generateBase64Response = await generateExcelBase64(
-           finalData,
-           "Task Template"
-         );
-      return res.status(HttpStatus.SUCCESS).send({
-        statusCode : HttpStatus.SUCCESS,
-        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
-        statusMessage : STATUS_MESSAGE.taskTemplateExport,
-        data : generateBase64Response
-      })     
-    } else {
-      return res.status(HttpStatus.SUCCESS).send({
-        statusCode : HttpStatus.SUCCESS,
-        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
-        statusMessage : STATUS_MESSAGE.dataNotAvailable,
-        data : {}
-      })  
-    }
-  } catch (err) {
-    // Handle unexpected errors (system failures, network issues, etc.)
-    const error = err as Error;
-    errorLog(methodName, error.message);
+      });
+
+      worksheet.addRow(dataRow);
+    });
+
+    // Export Excel to Base64
+    const excelBuffer = await workbook.xlsx.writeBuffer();
+    const base64Excel = Buffer.from(excelBuffer).toString("base64");
+
+    return res.status(HttpStatus.SUCCESS).send({
+      statusCode: HttpStatus.SUCCESS,
+      statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+      statusMessage: STATUS_MESSAGE.taskTemplateExport,
+      data: base64Excel,
+    });
+
+  } catch (err: any) {
+    errorLog(methodName, err.message);
     handleErrorResponse(
       res,
-      HttpStatus.BAD_REQUEST,
-      HttpStatus.BAD_REQUEST_MESSAGE,
-      error.message
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      err.message
     );
-    return;
   }
 }
+
 
 async function fetchAllTaskTypes (req : Request, res : Response) {
   const methodName = "fetchAllTaskTypes";

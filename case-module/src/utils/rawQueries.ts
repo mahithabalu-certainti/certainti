@@ -694,7 +694,7 @@ export const fetchAdminTemplates = (page : number, limit : number, sort : string
                   break;
                 }
                 case "between" : {
-                  queryContainer.push(`${validKeyColumns} BETWEEN ${value['from']} AND ${value['to']}`)
+                  queryContainer.push(`${validKeyColumns} BETWEEN ${value.map((d : any) => `${d}`).join(' AND ')}`)
                   break;
                 }
                 default : {
