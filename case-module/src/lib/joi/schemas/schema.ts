@@ -590,7 +590,12 @@ const createActivitTaskSchema = Joi.object({
   attach_to : Joi.string().required(),
   attachment_level : Joi.string().required(),
   fiscal_year : Joi.number().optional(),
-  tags: Joi.string().allow("").optional(),
+  tags: Joi.array().items(
+  Joi.object({
+    tag_rid: Joi.string().required(),
+    is_new_tag: Joi.boolean().required()
+  })
+).default([]).optional(),
   assigned_to : Joi.string().allow("").optional(),
   checklist_rid: Joi.string().allow("").optional(),
   remainder_interval: Joi.number().optional()

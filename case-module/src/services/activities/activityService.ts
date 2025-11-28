@@ -165,7 +165,7 @@ export class ActivityService {
             transaction
           );
       }
-      if (taskRequest?.tags?.length > 0) {
+      if (taskRequest?.tags.length > 0) {
         const [activeStatusRid]: any[] = await this.mainDbSequelize.query(
           rawQueries.getActiveStatusId()
         );
@@ -209,7 +209,7 @@ export class ActivityService {
       return {
         statusCode: HttpStatus.FAILED,
         message: HttpStatus.FAILED_MESSAGE,
-        errorMessage: STATUS_MESSAGE.caseCreationFailed,
+        errorMessage: STATUS_MESSAGE.taskCreateFailed,
       };
     }
   }

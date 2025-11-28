@@ -2449,14 +2449,14 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
           task_status_rid : result[0]?.task_details.task_status_rid
         }
         let weightageValue;
-        if(result[0]?.task_details.weightage_rid !== null) {
+        if(result[0]?.task_details?.weightage_rid !== null && data.task_type !== 'activity') {
           const weightageRes : any = await mainDb.query(rawQueries.getWeightageValue(result[0]?.task_details.weightage_rid!));
           weightageValue = weightageRes[0][0].weightage_value;
         } else {
           weightageValue = null;
         }
         let taskCategoryValue;
-        if(result[0]?.task_details.task_category_rid !== null) {
+        if(result[0]?.task_details?.task_category_rid !== null  && data.task_type !== 'activity') {
           const taskCategoryQuery : any = await mainDb.query(rawQueries.getTaskCategoryByRid(result[0]?.task_details.task_category_rid!));
           taskCategoryValue = taskCategoryQuery[0][0].category_name
         } else {
@@ -2495,7 +2495,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
             relationshipConnectorMap = new Map(workflowResult[0].map((d : any) => [d.rid, d.relationship_type]));
           }
         }
-        if(result[0]?.task_details.checklists.checklist_items !== null) {
+        if( result[0]?.task_details?.checklists && result[0]?.task_details?.checklists?.checklist_items !== null) {
           checklistItemsStatusIds = [...new Set(result[0]?.task_details.checklists.checklist_items.map((d : ChecklistItems) => d.status_rid))]
         } else {
           checklistItemsStatusIds = []
@@ -2533,8 +2533,8 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
         let assignedToMap : Map<string, string> = new Map(getUsers?.[0]?.map((d : any) => [d.rid, d.name]));
         let checkListItemsMap : Map<string, string> = new Map(checkListStatusName?.[0]?.map((d : any) => [d.rid, d.status_name]));
 
-        const resData = result[0]
-        if(result[0]?.task_details.checklists.rid === null) checkListData = null
+        const resData = result[0];
+        if(result[0]?.task_details.checklists ===null) checkListData = null
         else checkListData = {
             rid : resData?.task_details.checklists.rid,
             task_rid: resData?.task_details.checklists.task_rid,
@@ -2554,7 +2554,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
             }) : [],
           }
         let finalWorkflowData
-        
+        if(data.task_type !== 'activity'){
         if(result[0]?.task_details.workflow_connector === null) {
           finalWorkflowData = []
         } else {
@@ -2567,6 +2567,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
             }
           }) || []
         }
+      }
         let finalStruture = {
           rid : resData?.task_details.rid,
           r_number : resData?.task_details.r_number,
@@ -2585,13 +2586,13 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
           task_description : resData?.task_details.task_description,
           effective_start_datetime : resData?.task_details.effective_start_datetime,
           effective_end_datetime : resData?.task_details.effective_end_datetime,
-          checklist_rid : resData?.task_details.checklists.rid,
-          checklist_name : resData?.task_details.checklists.checklist_name,
+          checklist_rid : resData?.task_details?.checklists?.rid,
+          checklist_name : resData?.task_details?.checklists?.checklist_name,
           case_team_member_role_rid : resData?.task_details.case_team_member_role_rid,
           case_team_member_role_name : findRole[0][0] !== undefined ? findRole[0][0].role_name : null,
-          weightage_rid : resData?.task_details.weightage_rid,
+          weightage_rid : resData?.task_details?.weightage_rid,
           weightage_value : weightageValue,
-          task_category_rid : resData?.task_details.task_category_rid,
+          task_category_rid : resData?.task_details?.task_category_rid,
           task_category_name : taskCategoryValue,
           checklists : checkListData,
           tags : resData?.task_details.tags.filter((f : taskTags) => f.tag_rid !== null).map((d : taskTags) => {
