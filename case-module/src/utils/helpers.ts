@@ -466,27 +466,52 @@ export const setTaskTemplateData = (dbData : TaskTemplate, reqData : any, userId
 }
 export const getColumnsNamesForTaskUpdate = (data : UpdateCaseTaskType, dbData : CaseTask) => {
   let columns : string[] = [];
-  if(data.checklist_template_rid !== dbData.checklist_template_rid)
-    columns.push(`checklist_template_rid`)
-  if(data.effective_end_datetime !== dbData.effective_end_datetime) 
-    columns.push(`effective_end_datetime`)
-  if(data.effective_start_datetime !== dbData.effective_start_datetime)
-    columns.push(`effective_start_datetime`)
-  if(data.priority_rid !== dbData.priority_rid)
-    columns.push(`priority_rid`)
-  if(data.task_description !== dbData.task_description)
-    columns.push(`task_description`)
-  if(data.task_name !== dbData.task_name)
-    columns.push(`task_name`)
-  if(data.task_status_rid !== dbData.task_status_rid)
-    columns.push(`task_status_rid`)
-  if(data.weightage_rid !== dbData.weightage_rid)
-    columns.push(`weightage_rid`)
-  if(data.task_category_rid !== dbData.task_category_rid)
-    columns.push(`task_category_rid`)
-  if(data.assigned_to !== dbData.assigned_to)
-    columns.push(`assigned_to`)
-
+  if(data.checklist_template_rid !== '') {
+    if(data.checklist_template_rid !== dbData.checklist_template_rid) {
+      columns.push(`checklist_template_rid`)
+    }
+  }
+  if (data.effective_end_datetime !== dbData.effective_end_datetime) {
+    columns.push(`effective_end_datetime`);
+  }
+  if (data.effective_start_datetime !== dbData.effective_start_datetime) {
+    columns.push(`effective_start_datetime`);
+  }
+  if (data.priority_rid !== '') {
+    if (data.priority_rid !== dbData.priority_rid) {
+      columns.push(`priority_rid`);
+    }
+  }
+  if (data.task_description !== '') {
+    if (data.task_description !== dbData.task_description) {
+      columns.push(`task_description`);
+    }
+  }
+  if (data.task_name !== '') {
+    if (data.task_name !== dbData.task_name) {
+      columns.push(`task_name`);
+    }
+  }
+  if (data.task_status_rid !== '') {
+    if (data.task_status_rid !== dbData.task_status_rid) {
+      columns.push(`task_status_rid`);
+    }
+  }
+  if (data.weightage_rid !== undefined) {
+    if (data.weightage_rid !== dbData.weightage_rid) {
+      columns.push(`weightage_rid`);
+    }
+  }
+  if (data.task_category_rid !== undefined) {
+    if (data.task_category_rid !== dbData.task_category_rid) {
+      columns.push(`task_category_rid`);
+    }
+  }
+  if (data.assigned_to !== '') {
+    if (data.assigned_to !== dbData.assigned_to) {
+      columns.push(`assigned_to`);
+    }
+  }
   return columns;
 }
 
