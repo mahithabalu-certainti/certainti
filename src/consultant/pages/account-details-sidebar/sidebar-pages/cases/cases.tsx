@@ -254,7 +254,13 @@ const Cases: React.FC<CaseProps> = ({
         contextKey='Cases'
         appliedFilters={appliedFilters}
         setAppliedFilters={setAppliedFilters}
-        setCurrentPage={setPage}
+        setCurrentPage={(pageNo) => {
+          setPage(pageNo + 1);
+          setTableParams((prev) => ({
+            ...prev,
+            page: pageNo + 1,
+          }));
+        }}
         handleFilter={handleFilter}
         handleSorting={handleSorting}
         sortFilterCount={sortFilterCount}

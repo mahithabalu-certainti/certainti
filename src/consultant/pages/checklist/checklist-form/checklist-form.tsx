@@ -509,6 +509,11 @@ const ChecklistForm: React.FC = () => {
                     }
                   }}
                   value={currentTemplate}
+                  renderOption={(props, option) => (
+                    <li {...props} key={option.value} title={option.label}>
+                      {option.label}
+                    </li>
+                  )}
                   renderInput={(params) => (
                     <TextField
                       {...params}

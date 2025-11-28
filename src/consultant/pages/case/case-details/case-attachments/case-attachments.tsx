@@ -305,10 +305,13 @@ export const Attachments: React.FC<AttachmentsProps> = ({
         handleDownload,
         permissionMap,
         isAttachmentExportEnable,
-        categoryTypes.isLoading
+        categoryTypes.isLoading,
+        accountInActive,
+        undefined,
+        'case'
       ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [memoizedDocumentTypes]
+    [accountInActive, memoizedDocumentTypes]
   );
 
   const [visibleColumns, setVisibleColumns] = useState<
@@ -328,7 +331,8 @@ export const Attachments: React.FC<AttachmentsProps> = ({
 
   const attachmentsFilterFields = getAttachmentsFilterFields(
     fieldOptions,
-    permissionMap
+    permissionMap,
+    'case'
   );
 
   const getRowId = (row: AttachmentList) => row.rid;

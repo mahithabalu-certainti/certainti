@@ -46,13 +46,15 @@ const dateOptions: { option: string; value: string }[] = [
 
 export const getAttachmentsFilterFields = (
   fieldOptions?: FieldOptionType,
-  permissionMap?: Record<string, { read: boolean; edit: boolean }>
+  permissionMap?: Record<string, { read: boolean; edit: boolean }>,
+  module?: 'account' | 'project' | 'case' | 'resource'
 ): FieldConfig[] => {
   const {
     fiscalYears = [],
     docCategories = [],
     docTypes = [],
   } = fieldOptions || {};
+  const hideFiscalYear = module === 'case' || module === 'project';
   return [
     {
       name: 'Document Name',
@@ -87,8 +89,9 @@ export const getAttachmentsFilterFields = (
       options: fiscalYears.map((y) => ({ option: y.label, value: y.value })),
       operatorOption: enumOptions,
       hide:
-        !permissionMap?.['fiscal_year']?.edit &&
-        !permissionMap?.['fiscal_year']?.read,
+        hideFiscalYear ||
+        (!permissionMap?.['fiscal_year']?.edit &&
+          !permissionMap?.['fiscal_year']?.read),
     },
     {
       name: 'Document Category',
@@ -185,7 +188,8 @@ export const getAttachmentTableColumns = (
   isAttachmentExportEnable?: boolean,
   typeLoading?: boolean,
   accountOrProjectInActive?: boolean,
-  isFromGlobal?: boolean
+  isFromGlobal?: boolean,
+  module?: 'account' | 'project' | 'case' | 'resource'
 ): ListTableColumn<AttachmentList>[] => [
   {
     id: 'document_name',
@@ -230,7 +234,7 @@ export const getAttachmentTableColumns = (
     sortId: 'fiscal_year',
     label: 'Fiscal Year',
     width: 140,
-    sortable: true,
+    sortable: module !== 'case' && module !== 'project',
     editable:
       permissionMap?.['fiscal_year']?.edit &&
       permissionMap?.['fiscal_year']?.read &&

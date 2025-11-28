@@ -51,8 +51,11 @@ const fiscalYears = getFiscalYears(currentYear - minYear + 1);
 
 export const getNotesFilterFields = (
   permissionMap: Record<string, { read: boolean; edit: boolean }>,
-  userListOptions: { value: string; label: string }[]
+  userListOptions: { value: string; label: string }[],
+  module?: 'account' | 'project' | 'case' | 'resource'
 ): FieldConfig[] => {
+  const hideFiscalYear = module === 'case' || module === 'project';
+
   return [
     {
       name: 'Note ID',
@@ -117,8 +120,9 @@ export const getNotesFilterFields = (
       options: fiscalYears.map((y) => ({ option: y.label, value: y.value })),
       operatorOption: enumOptions,
       hide:
-        !permissionMap?.['fiscal_year']?.edit &&
-        !permissionMap?.['fiscal_year']?.read,
+        hideFiscalYear ||
+        (!permissionMap?.['fiscal_year']?.edit &&
+          !permissionMap?.['fiscal_year']?.read),
     },
     {
       name: 'Document Name',
@@ -199,7 +203,8 @@ export const getNotesTableColumns = (
   permissionMap?: Record<string, { read: boolean; edit: boolean }>,
   userListOptions?: { value: string; label: string }[],
   handleViewGlobalNoteDetails?: (row: NotesList) => void,
-  isFromGlobal?: boolean
+  isFromGlobal?: boolean,
+  module?: 'account' | 'project' | 'case' | 'resource'
 ): ListTableColumn<NotesList>[] => [
   {
     id: 'r_number',
@@ -281,6 +286,7 @@ export const getNotesTableColumns = (
     width: 180,
     sortable: true,
     editable:
+      !isFromGlobal &&
       permissionMap?.['notes_owner']?.edit &&
       permissionMap?.['notes_owner']?.read &&
       !inActiveEntity,
@@ -336,7 +342,7 @@ export const getNotesTableColumns = (
     sortId: 'fiscal_year',
     label: 'Fiscal Year',
     width: 110,
-    sortable: true,
+    sortable: module !== 'case' && module !== 'project',
     editable:
       permissionMap?.['fiscal_year']?.edit &&
       permissionMap?.['fiscal_year']?.read &&
