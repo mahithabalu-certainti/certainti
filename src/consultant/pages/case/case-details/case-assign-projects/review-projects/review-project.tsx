@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from 'react';
-import { mockAssignProjects } from './mockdata';
 import {
   AssignProject,
   ReviewProjectListURLParams,
@@ -29,6 +28,7 @@ interface ReviewProjectProps {
       sortBy: 'ASC' | 'DESC';
     }>
   >;
+  clearSelectedRows: boolean;
 }
 
 const ReviewProjectsList: React.FC<ReviewProjectProps> = ({
@@ -42,6 +42,7 @@ const ReviewProjectsList: React.FC<ReviewProjectProps> = ({
   appliedFilters,
   setSelectedRows,
   setSortParams,
+  clearSelectedRows,
 }) => {
   const { caseId } = useParams();
   const [searchParams] = useSearchParams();
@@ -128,6 +129,7 @@ const ReviewProjectsList: React.FC<ReviewProjectProps> = ({
     );
     setSelectedRows((selectedData as AssignProject[]) || []);
   };
+
   return (
     <div>
       <ListTable
@@ -153,12 +155,13 @@ const ReviewProjectsList: React.FC<ReviewProjectProps> = ({
         rowsPerPageOptions={[25, 50, 100]}
         rowsPerPage={rowsPerPage}
         currentPage={currentPage}
-        totalItems={mockAssignProjects.length}
+        totalItems={data?.count || 0}
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
         sortBy={sortField}
         sortOrder={sortBy}
         onSort={handleSortRequest}
+        clearSelectedRows={clearSelectedRows}
       />
     </div>
   );

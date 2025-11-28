@@ -670,6 +670,7 @@ const CasesProjects: React.FC<casesProjectProps> = ({
             appliedFilters={appliedFilters}
             setSelectedRows={setReviewSelectedRows}
             setSortParams={setSortParams}
+            clearSelectedRows={clearSelectedRows}
           />
           <EmailModalTemplate
             title='Email Template'
@@ -677,6 +678,7 @@ const CasesProjects: React.FC<casesProjectProps> = ({
             onClose={() => setEmailModalOpen(false)}
             selectedRows={reviewSelectedRows}
             setSelectedRows={setReviewSelectedRows}
+            setClearSelectedRows={setClearSelectedRows}
             appliedFilters={appliedFilters}
             sortBy={sortParams.sortField}
             sortOrder={sortParams.sortBy}
