@@ -202,11 +202,12 @@ export const getTaskTemplateColumns = (
   {
     id: 'category_name',
     editId: 'task_category_rid',
-    editable: true,
-    // permissionMap?.['task_category_rid']?.edit && permissionMap?.['task_category_rid']?.read,
-    // hide:
-    //   !permissionMap?.['task_category_rid']?.edit &&
-    //   !permissionMap?.['task_category_rid']?.read,
+    editable:
+      permissionMap?.['task_category_rid']?.edit &&
+      permissionMap?.['task_category_rid']?.read,
+    hide:
+      !permissionMap?.['task_category_rid']?.edit &&
+      !permissionMap?.['task_category_rid']?.read,
     sortId: 'category_name',
     label: 'Task Category',
     width: 130,
@@ -222,13 +223,13 @@ export const getTaskTemplateColumns = (
   {
     id: 'weightage_value',
     editId: 'weightage_rid',
-    editable: true,
     conditionallyEdit: [{ key: 'task_type_name', matchValue: ['Milestone'] }],
-    // editable:
-    //   permissionMap?.['weightage_rid']?.edit && permissionMap?.['weightage_rid']?.read,
-    // hide:
-    //   !permissionMap?.['weightage_rid']?.edit &&
-    //   !permissionMap?.['weightage_rid']?.read,
+    editable:
+      permissionMap?.['weightage_rid']?.edit &&
+      permissionMap?.['weightage_rid']?.read,
+    hide:
+      !permissionMap?.['weightage_rid']?.edit &&
+      !permissionMap?.['weightage_rid']?.read,
     sortId: 'weightage_value',
     label: 'Weightage',
     width: 145,
