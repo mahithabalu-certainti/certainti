@@ -597,8 +597,7 @@ const createActivitTaskSchema = Joi.object({
   })
 ).default([]).optional(),
   assigned_to : Joi.string().allow("").optional(),
-  checklist_rid: Joi.string().allow("").optional(),
-  remainder_interval: Joi.number().optional()
+  checklist_rid: Joi.string().allow("").optional()
 });
 
 const createActivityEmailSchema = Joi.object({
