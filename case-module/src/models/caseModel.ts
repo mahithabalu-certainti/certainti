@@ -31,6 +31,7 @@ interface CaseAttributes {
   heat_light_power?: number;
   submitted_datetime?: Date;
   approved_datetime?: Date;
+  tax_liability?: number;
 }
 
 export interface CaseCreationAttributes
@@ -67,6 +68,7 @@ export class Case
   public approved_datetime?: Date;
   public  total_nonlabor_cost?: number;
   public  heat_light_power?: number;
+  public tax_liability?: number;
 
   static initialize(
     sequelize: Sequelize,
@@ -115,6 +117,7 @@ export class Case
         approved_datetime: { type: DataTypes.DATE, allowNull: true },
         total_nonlabor_cost: { type: DataTypes.DECIMAL, allowNull: true },
         heat_light_power: { type: DataTypes.DECIMAL, allowNull: true },
+        tax_liability: { type: DataTypes.DECIMAL, allowNull: true },
       },
       {
         sequelize,

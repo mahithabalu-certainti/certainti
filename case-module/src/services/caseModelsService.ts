@@ -30,6 +30,7 @@ import { Activities } from "../models/activitiesModel";
 import { TaskHistory } from "../models/taskHistory";
 import { ActivityAttachments } from "../models/activitiesAttachmentModel";
 import { ActivityHistory } from "../models/activityHistory";
+import { TaskSummary } from "../models/taskSummaryModel";
 
 export class CaseModelService {
   orgDbSequelize: Sequelize | null = null;
@@ -59,6 +60,7 @@ export class CaseModelService {
       TaskHistory : ReturnType<typeof TaskHistory.initialize>;
       ActivityAttachments : ReturnType<typeof ActivityAttachments.initialise>
       ActivityHistory: ReturnType<typeof ActivityHistory.initialize>;
+      TaskSummary: ReturnType<typeof TaskSummary.initialize>;
     }
   > = new Map();
 
@@ -115,6 +117,7 @@ export class CaseModelService {
     const TaskHistoryModel = TaskHistory.initialize(sequelize, schemaName);
     const ActivityAttachmentsModel = ActivityAttachments.initialise(sequelize, schemaName);
     const ActivityHistoryModel = ActivityHistory.initialize(sequelize, schemaName);
+    const TaskSummaryModel = TaskSummary.initialize(sequelize, "");
 
     const models = {
       Case: CaseModel,
@@ -145,7 +148,8 @@ export class CaseModelService {
       WorkflowConnector : WorkflowConnectorModel,
       WorkflowConnectorMapping : WorkflowConnectorMappingModel,
       ActivityAttachments : ActivityAttachmentsModel,
-      ActivityHistory : ActivityHistoryModel
+      ActivityHistory : ActivityHistoryModel,
+      TaskSummary: TaskSummaryModel
     };
 
     this.modelCache.set(schemaName, models);
