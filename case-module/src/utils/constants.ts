@@ -754,10 +754,10 @@ export const rawQueries = {
       ORDER BY filing_type_name ASC
     `;
   },
-  getEmailStatus() {
+  getActivityStatus() {
     return `
-      SELECT rid, status_name 
-      FROM ${MAIN_SCHEMA_NAME}.email_status
+      SELECT distinct status_name 
+      FROM ${MAIN_SCHEMA_NAME}.activity_status
       WHERE status = 'active'
       ORDER BY status_name ASC
     `;
@@ -1826,6 +1826,13 @@ export const emailCategorties = {
 export const activityStatus = {  
  completed: "Completed",
  scheduled: "Scheduled",
+};
+
+export const activityTypes = {  
+ email: "Email",
+ meeting: "Meeting",
+  call: "Call",
+  task: "Task",
 };
 
 

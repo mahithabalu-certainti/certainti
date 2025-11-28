@@ -994,21 +994,21 @@ async function fetchCallActivityById(
   }
 }
 
-async function getEmailStatus(req: Request, res: Response): Promise<void> {
-  const methodName = "Get Email Status";
+async function getActivityStatus(req: Request, res: Response): Promise<void> {
+  const methodName = "Get Activity Status";
   try {
-    const emailStatus = await activityService.getEmailStatus();
-    if (emailStatus.statusCode === HttpStatus.SUCCESS) {
+    const activityStatus = await activityService.getActivityStatus();
+    if (activityStatus.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
-      handleSuccessResponse(res, emailStatus.data);
+      handleSuccessResponse(res, activityStatus.data);
       return;
     } else {
-      errorLog(methodName, emailStatus.errorMessage);
+      errorLog(methodName, activityStatus.errorMessage);
       handleErrorResponse(
         res,
         HttpStatus.BAD_REQUEST,
         HttpStatus.BAD_REQUEST_MESSAGE,
-        emailStatus.errorMessage
+        activityStatus.errorMessage
       );
       return;
     }
@@ -1034,7 +1034,7 @@ export default {
   deleteActivityAttachments,
   updateActivityEmail,
   fetchEmailActivityById,
-  getEmailStatus,
+  getActivityStatus,
   createActivityMeeting,
   updateActivityMeeting,
   createActivityCall,

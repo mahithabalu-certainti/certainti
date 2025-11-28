@@ -630,7 +630,7 @@ const createActivityMeetingSchema = Joi.object({
       'string.pattern.base': 'End time must be in HH:mm format (e.g., 11:00)'
     }),
   invitees: Joi.string().optional(),
-  attendees: Joi.string().required(),
+  meeting_participants: Joi.string().required(),
   minutes_of_meeting: Joi.string().optional().allow(""),
   time_zone: Joi.string().required(),
   recurrence_type: Joi.string().valid("none", "daily", "weekly", "monthly", "yearly").required(),
@@ -645,14 +645,23 @@ const updateActivityMeetingSchema = Joi.object({
  attach_to : Joi.string().required(),
  attachment_level : Joi.string().required(),
  fiscal_year : Joi.number().optional(),
- activity_type: Joi.string().valid("meeting").required(),
-  meeting_subject: Joi.string().max(500).required(),
-  meeting_body: Joi.string().required(),
-  effective_start_datetime: Joi.string().required(),
-  effective_end_datetime: Joi.string().required(),
+ activity_type: Joi.string().valid("Meeting").required(),
+ subject: Joi.string().max(500).required(),
+ effective_start_date: Joi.date().required(),
+ effective_end_date: Joi.date().required(),
+ effective_start_time: Joi.string().pattern(/^([01]\d|2[0-3]):([0-5]\d)$/).required().messages({
+      'string.pattern.base': 'Start time must be in HH:mm format (e.g., 11:00)'
+    }),
+ effective_end_time: Joi.string().pattern(/^([01]\d|2[0-3]):([0-5]\d)$/).required().messages({
+      'string.pattern.base': 'End time must be in HH:mm format (e.g., 11:00)'
+    }),
   invitees: Joi.string().optional(),
+  meeting_participants: Joi.string().required(),
   minutes_of_meeting: Joi.string().optional().allow(""),
-  meeting_participants:Joi.string().optional().allow(""),
+  time_zone: Joi.string().required(),
+  recurrence_type: Joi.string().valid("none", "daily", "weekly", "monthly", "yearly").required(),
+  recurrence_interval: Joi.number().optional(),
+  recurrence_days: Joi.string().optional(),
   deleted_file_ids : Joi.array().items(Joi.string()).optional()
 });
 

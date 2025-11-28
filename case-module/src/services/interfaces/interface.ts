@@ -524,11 +524,11 @@ export interface IActivityService {
     errorMessage?: string;
     data?: { activityDetails: any };
   }>;
-   getEmailStatus(): Promise<{
+   getActivityStatus(): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { emailStatus: any };
+    data?: { activityStatus: any };
   }>;
 }
 
