@@ -4957,7 +4957,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         attributes : ['case_name','fiscal_year'],
         raw : true  
       });
-      await TaskSummary.create(
+    /*  await TaskSummary.create(
         {
           task_rid: createdTaskResult.rid,
           r_number: createdTaskResult.r_number || "",
@@ -4976,6 +4976,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
           created_datetime: new Date(),
         }
       );
+      */
       if(data?.checklist_template_rid) 
       {
         const response  = await this.fetchChecklistTemplateDetailsById(data.checklist_template_rid);
@@ -5081,7 +5082,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             case_rid : data.case_rid
           }, transaction
         });
-        await TaskSummary.update(
+       /* await TaskSummary.update(
         {
           task_name: data.task_name || "",
           description: data.task_description || "",
@@ -5098,7 +5099,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             task_rid : data.rid
           }
       }
-      );
+      ); */
         const checkIsDifferentCollaborator = await this.isNewCollaborator(data.modified_by, accountNumber,"case_task");
         if(!checkIsDifferentCollaborator) {
           const checkCollaboratorExists = await this.isCollaboratorAlreadyAdded(data.modified_by, data.case_rid, data.account_rid, data.rid, accountNumber,"case_task");

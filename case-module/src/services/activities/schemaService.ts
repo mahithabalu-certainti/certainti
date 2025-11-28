@@ -213,7 +213,7 @@ class ActivitySchemaService {
         transaction,
       });
 
-      await TaskSummary.create(
+   /*   await TaskSummary.create(
         {
           task_rid: casecreationResponse.rid,
           r_number: casecreationResponse.r_number || "",
@@ -231,7 +231,8 @@ class ActivitySchemaService {
           created_by: taskRequest.created_by || "",
           created_datetime: new Date(),
         }
-      );
+      ); 
+      */
 
       await this.addTaskManagementTimeline(
         accountNumber,
@@ -272,7 +273,7 @@ class ActivitySchemaService {
         },
         transaction,
       });
-      await TaskSummary.update(
+     /* await TaskSummary.update(
         {
           task_name: taskRequest.task_name || "",
           description: taskRequest.description || "",
@@ -290,6 +291,7 @@ class ActivitySchemaService {
           }
         }
       );
+      */
       const checkIsDifferentCollaborator = await this.isNewCollaborator(
         taskRequest.modified_by!,
         accountNumber
