@@ -271,7 +271,6 @@ const Interaction: React.FC = () => {
             initialSearchText={searchText}
             onSearch={(value) => {
               setSearchText(value);
-              console.log('Search triggered for:', value);
             }}
             placeholder='Search'
             disabled={false}

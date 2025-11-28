@@ -146,7 +146,7 @@ const TaskTemplateForm: React.FC = () => {
       })) || []
     );
   }, [taskAssignRoleTypes]);
-  console.log(taskWeightAgeTypes, '');
+
   const taskWeightAgeTypesOptions = useMemo(() => {
     return (
       taskWeightAgeTypes?.data?.data?.data?.map((item) => ({

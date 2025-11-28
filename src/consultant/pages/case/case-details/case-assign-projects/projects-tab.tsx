@@ -46,7 +46,6 @@ const ProjectTab: React.FC<ProjectTabProps> = ({
   const { permission } = useSelector((state: RootState) => state.permission);
   const [columnAnchorEl, setColumnAnchorEl] =
     useState<HTMLButtonElement | null>(null);
-  console.log('detailTab', detailTab);
   return (
     <>
       <div>
@@ -65,18 +64,20 @@ const ProjectTab: React.FC<ProjectTabProps> = ({
           <SummayListTable projectDetails={projectData} />
         )}
         {detailTab === 'resource_cost' && (
-          <ResourceCost
-            projectDetails={projectData}
-            refreshTrigger={refreshTrigger}
-            setCount={setCount}
-            currentPage={currentPage}
-            appliedFilters={appliedFilters}
-            // setResCostExportParams={setFinancialResCostParams}
-            // setExportType={setExportType}
-            setColumnAnchorEl={setColumnAnchorEl}
-            columnAnchorEl={columnAnchorEl}
-            searchValue={searchText}
-          />
+          <div className='border border-[#CBD6E2] border-t-0'>
+            <ResourceCost
+              projectDetails={projectData}
+              refreshTrigger={refreshTrigger}
+              setCount={setCount}
+              currentPage={currentPage}
+              appliedFilters={appliedFilters}
+              // setResCostExportParams={setFinancialResCostParams}
+              // setExportType={setExportType}
+              setColumnAnchorEl={setColumnAnchorEl}
+              columnAnchorEl={columnAnchorEl}
+              searchValue={searchText}
+            />
+          </div>
         )}
       </div>
     </>

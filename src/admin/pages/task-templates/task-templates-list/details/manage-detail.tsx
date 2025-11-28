@@ -140,7 +140,7 @@ export const ManageDetailComponent = ({
     },
     {
       key: 'r_number',
-      label: 'User ID',
+      label: 'Template ID',
       value: getValueOrDefault(data?.r_number),
     },
     {

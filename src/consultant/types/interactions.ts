@@ -347,6 +347,7 @@ export interface InteractionDetailsResponse {
 }
 export interface InteractionProjectKeyContacts {
   project_rid: string;
+  project_fiscal_rid: string;
   project_code: string;
   project_name: string | null;
   key_contact_name: string;
