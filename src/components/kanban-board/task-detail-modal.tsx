@@ -1443,6 +1443,9 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                           },
                         },
                         placeholder: 'Select start date',
+                        inputProps: {
+                          readOnly: true,
+                        },
                       },
                     }}
                   />
@@ -1561,6 +1564,9 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                           },
                         },
                         placeholder: 'Select end date',
+                        inputProps: {
+                          readOnly: true,
+                        },
                       },
                     }}
                   />

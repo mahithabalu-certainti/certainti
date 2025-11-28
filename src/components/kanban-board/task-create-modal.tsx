@@ -510,6 +510,7 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                           placeholder: 'Choose Start Date',
                           inputProps: {
                             placeholder: 'Choose Start Date',
+                            readOnly: true,
                           },
                         },
                       }}
@@ -585,6 +586,7 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                           placeholder: 'Choose Due Date',
                           inputProps: {
                             placeholder: 'Choose Due Date',
+                            readOnly: true,
                           },
                         },
                       }}
