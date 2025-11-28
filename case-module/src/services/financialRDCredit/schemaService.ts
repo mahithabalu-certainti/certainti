@@ -113,7 +113,7 @@ class RDCreditSchemaService {
      * @param orgDbSequelize 
      * @returns 
      */
-    async getAnnualGrossReceipts(accountRid: string, prior: number = 4, schemaName: string, orgDbSequelize: Sequelize) {
+    async getAnnualGrossReceipts(accountRid: string, prior: number, schemaName: string, orgDbSequelize: Sequelize) {
         try {
             if (!this.orgDbSequelize) {
                 this.orgDbSequelize = await initOrgSequelize();
@@ -131,7 +131,7 @@ class RDCreditSchemaService {
                 LIMIT :prior
             `,
                 {
-                    replacements: { accountRid, prior: 4 },
+                    replacements: { accountRid, prior },
                     type: QueryTypes.SELECT,
                 }
             );

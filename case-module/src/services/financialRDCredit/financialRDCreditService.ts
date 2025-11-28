@@ -394,7 +394,7 @@ export class FinancialRDCreditService {
             const prior3YearsQREs = await this.rdCreditSchemaService.getPrior3YearQREs(accountRid, 3, schemaName, currentFiscalYear, orgDb);// prior 3 years QREs
             logMessage(`Prior3YearQREs: ${JSON.stringify(prior3YearsQREs)}`);
 
-            const annualGrossReceipts = await this.rdCreditSchemaService.getAnnualGrossReceipts(accountRid, 4, schemaName, orgDb); // prior 4 years gross receipts
+            const annualGrossReceipts = await this.rdCreditSchemaService.getAnnualGrossReceipts(accountRid, 5, schemaName, orgDb); // current year & prior 4 years gross receipts
             const totalGrossReceipts = new Decimal(annualGrossReceipts.reduce(
                 (sum, r) => sum + (r.grossReceipts || 0), 0));
             logMessage(`AnnualGrossReceipts: ${JSON.stringify(annualGrossReceipts)}`);

@@ -23,9 +23,6 @@ export class RdCreditCalculatorForIL {
     }
 
     async compute(config: any, currentYearQREs: any, annualGrossReceipts: any[], totalGrossReceipts: Decimal, prior3YearsQREs: any[], priorYearsCount: number) {
-
-        currentYearQREs = this.loadData.currentYearQREs;
-        prior3YearsQREs = this.loadData.prior3YearsQREs;
         const extractConfig = this.extractConfigJson(config.config_json);
         logMessage(`Computing CO Credit with config: ${JSON.stringify(extractConfig)}`);
         const columnABasePeriodExpenseInfo = this.columnABasePeriodExpense(currentYearQREs, prior3YearsQREs, extractConfig);
