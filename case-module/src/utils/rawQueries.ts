@@ -825,6 +825,7 @@ export const fetchMilestoneTaskTemplate = (taskTypeRid : string, filingTypeRid :
   ${MAIN_SCHEMA_NAME}.milestone_template m
   WHERE
   m.case_filing_type_rid = '${filingTypeRid}'
+  ORDER BY m.r_number ASC
   ),
   fetch_task_data AS (
   SELECT 
@@ -840,6 +841,7 @@ export const fetchMilestoneTaskTemplate = (taskTypeRid : string, filingTypeRid :
   t.task_type_rid = '${taskTypeRid}'
   AND
   t.status_rid = '${statusId}'
+  ORDER BY t.sequence_no ASC
   ),
   fetch_workflow_connector_map AS (
   SELECT w.created_by, w.created_datetime, w.source_rid, w.target_rid, w.relationship_connector_rid
@@ -857,7 +859,7 @@ export const fetchMilestoneTaskTemplate = (taskTypeRid : string, filingTypeRid :
   'milestone_description', m.milestone_description,
   'status_rid', m.milestone_status_rid,
   'case_filing_type_rid',m.case_filing_type_rid
-  )ORDER BY m.r_number ASC ) AS milestone_data
+  )) AS milestone_data
    FROM
    fetch_milestone_result m
   ),
@@ -880,7 +882,7 @@ export const fetchMilestoneTaskTemplate = (taskTypeRid : string, filingTypeRid :
     'task_type_rid', t.task_type_rid,
     'milestone_template_rid', t.milestone_template_rid,
     'task_description', t.task_description
-  )ORDER BY t.task_created_datetime ASC ) AS task_data
+  )) AS task_data
   FROM fetch_task_data t
   ),
   aggregate_workflow_connector AS (

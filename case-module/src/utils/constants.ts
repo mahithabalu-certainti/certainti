@@ -1403,7 +1403,7 @@ export const rawQueries = {
     return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.case_task_status WHERE task_status_name ILIKE '%To Do%'`
   },
   getActiveStatusId () {
-    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.status where status_name ILIKE '%Active%'`
+    return `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status where status_name ILIKE '%Active%'`
   },
   getTaskTypeRid (rid : string) {
     return `SELECT rid, task_type_name FROM ${MAIN_SCHEMA_NAME}.task_type WHERE rid = '${rid}'`
@@ -1554,6 +1554,15 @@ export const rawQueries = {
   },
   fetchAccountInfos(schemaName: string, account_rid: string) {
     return `SELECT * FROM ${schemaName}.account_details WHERE account_rid = '${account_rid}'`;
+  },
+  fetchTaskBasedOnSequence (sequenceNo : number, milestoneTemplateRid : string) {
+    return `SELECT rid, sequence_no FROM ${MAIN_SCHEMA_NAME}.task_template WHERE milestone_template_rid = '${milestoneTemplateRid}' AND sequence_no > ${sequenceNo} ORDER BY sequence_no ASC`
+  },
+  fetchTaskBasedOnSequenceForActive (sequenceNo : number, milestoneTemplateRid : string, taskRid : string) {
+    return `SELECT rid, sequence_no FROM ${MAIN_SCHEMA_NAME}.task_template WHERE milestone_template_rid = '${milestoneTemplateRid}' AND sequence_no >= ${sequenceNo} AND rid != '${taskRid}' ORDER BY sequence_no ASC`
+  },
+  getStatus () {
+    return `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status`
   },
 };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 

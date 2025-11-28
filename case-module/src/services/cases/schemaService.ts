@@ -4674,9 +4674,11 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         let validEndDate;
         let otherStartDateMap : Map<number, Date> = new Map()
         let otherEndDateMap : Map<number, Date> = new Map()
+        let dataEntered : boolean = false
         if(clonedData.task_data.length > 0) {
         for(let d of clonedData.task_data) {
           if(milestoneMap.get(d.milestone_template_rid) === "1") {
+            dataEntered = true
             if(d.sequence_no === 1) {
               const conversion = dayjs(caseStartDate)
               let res = conversion.add(d.effort_in_days, 'day');
@@ -4703,9 +4705,12 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
           } 
           else {
             if(milestoneMap.get(d.milestone_template_rid) === "2") {
+              dataEntered = true
               validEndDate = endDateStorage
             } else {
-              validEndDate = otherMileStoneEndDateStorgae
+              if(!dataEntered) validEndDate = caseStartDate
+              else validEndDate = otherMileStoneEndDateStorgae
+              dataEntered = false
             }
             if(d.sequence_no === 1) {
               const conversion = dayjs(validEndDate)

@@ -603,12 +603,12 @@ class CaseManagementSchemaService {
           statusCode : HttpStatus.BAD_REQUEST,
           statusMessage : STATUS_MESSAGE.taskNameExistsAlready
         }
-    }
+      }
       const findSequenceOrder = await this.fetchSequenceOrder(data.milestone_template_rid);
       if(findSequenceOrder.length > 0) {
         sequenceNumber = findSequenceOrder[0]?.sequence_no! + 1
       } else {
-        sequenceNumber = sequenceNumber + 1
+        sequenceNumber += 1
       }
       dynamicData = {
         created_by : userId,
@@ -704,6 +704,17 @@ class CaseManagementSchemaService {
       let result : number = 0
       let dynamicData : any
       if(getTaskType[0][0].task_type_name === 'Milestone') {
+        if(data.status_rid !== checkTaskExists.status_rid) {
+          const getAllStatus : any = await this.mainDbSequelize.query(rawQueries.getActiveStatusId());
+          const statusMap = new Map(getAllStatus[0].map((d : any) => [d.rid, d.status_name]));
+          if(statusMap.get(data.status_rid) === 'In-Active') {
+            const findTaskAfterDeleteData : any = await this.mainDbSequelize.query(rawQueries.fetchTaskBasedOnSequence(checkTaskExists.sequence_no!, checkTaskExists.milestone_template_rid!));
+            await this.updateSequenceForInactive(findTaskAfterDeleteData)
+          } else {
+            const findTaskAfterDeleteData : any = await this.mainDbSequelize.query(rawQueries.fetchTaskBasedOnSequenceForActive(checkTaskExists.sequence_no!, checkTaskExists.milestone_template_rid!, checkTaskExists.rid));
+            await this.updateSequenceForActive(findTaskAfterDeleteData)
+          }
+        }
         dynamicData = {
           rid : data.rid,
           modified_by : userId,
@@ -763,6 +774,24 @@ class CaseManagementSchemaService {
         statusCode : HttpStatus.NOT_FOUND,
         statusMessage : STATUS_MESSAGE.dataNotAvailable
       }
+    }
+  }
+  async updateSequenceForInactive (findTaskAfterDeleteData : any, ) {
+    const {TaskTemplate} = await this.caseModelService.getModels("");
+    let additionNumber = 1
+    for(let d of findTaskAfterDeleteData[0]) {
+      await TaskTemplate.update({
+        sequence_no : d.sequence_no - additionNumber
+      }, {where : {rid : d.rid}})
+    }
+  }
+  async updateSequenceForActive (findTaskAfterDeleteData : any, ) {
+    const {TaskTemplate} = await this.caseModelService.getModels("");
+    let additionNumber = 1
+    for(let d of findTaskAfterDeleteData[0]) {
+      const [result] = await TaskTemplate.update({
+        sequence_no : d.sequence_no + additionNumber
+      }, {where : {rid : d.rid}})
     }
   }
   async updateTaskTemplateMilestoneType (data : UpdateTaskTemplateType) {
