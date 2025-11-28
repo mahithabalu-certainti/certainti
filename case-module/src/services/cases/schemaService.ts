@@ -4705,21 +4705,25 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         let validEndDate;
         let otherStartDateMap : Map<number, Date> = new Map()
         let otherEndDateMap : Map<number, Date> = new Map()
-        let dataEntered : boolean = false
+        let firstMilestoneEntered : boolean = false
+        let secondMilestoneEntered : boolean = false
+        let otherMilestoneEntered : boolean = false
         if(clonedData.task_data.length > 0) {
         for(let d of clonedData.task_data) {
           if(milestoneMap.get(d.milestone_template_rid) === "1") {
-            dataEntered = true
-            if(d.sequence_no === 1) {
-              const conversion = dayjs(caseStartDate)
-              let res = conversion.add(d.effort_in_days, 'day');
-              let finalisedEnddate = res.format('YYYY-MM-DD')
-              endDate = dayjs(finalisedEnddate).toDate()
-              startDate = caseStartDate
-              startDateStorage = startDate
-              endDateStorage = endDate
-              startDateMap.set(d.task_name, startDateStorage)
-              endDateMap.set(d.task_name, endDateStorage)
+            if(!firstMilestoneEntered) {
+              if(d.sequence_no === 1) {
+                const conversion = dayjs(caseStartDate)
+                let res = conversion.add(d.effort_in_days, 'day');
+                let finalisedEnddate = res.format('YYYY-MM-DD')
+                endDate = dayjs(finalisedEnddate).toDate()
+                startDate = caseStartDate
+                startDateStorage = startDate
+                endDateStorage = endDate
+                startDateMap.set(d.task_name, startDateStorage)
+                endDateMap.set(d.task_name, endDateStorage)
+              }
+              firstMilestoneEntered = true
             } 
             else {
               const conversion = dayjs(endDateStorage)
@@ -4736,12 +4740,21 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
           } 
           else {
             if(milestoneMap.get(d.milestone_template_rid) === "2") {
-              dataEntered = true
-              validEndDate = endDateStorage
+              if(!secondMilestoneEntered) {
+                validEndDate = caseStartDate
+                secondMilestoneEntered = true
+              }
+              else {
+                validEndDate = otherMileStoneEndDateStorgae
+              }
             } else {
-              if(!dataEntered) validEndDate = caseStartDate
-              else validEndDate = otherMileStoneEndDateStorgae
-              dataEntered = false
+              if(!firstMilestoneEntered && !secondMilestoneEntered) {
+                validEndDate = caseStartDate
+                otherMilestoneEntered = true
+              }
+              else {
+                validEndDate = otherMileStoneEndDateStorgae
+              }
             }
             if(d.sequence_no === 1) {
               const conversion = dayjs(validEndDate)

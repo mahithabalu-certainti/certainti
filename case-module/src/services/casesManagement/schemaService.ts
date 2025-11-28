@@ -610,6 +610,7 @@ class CaseManagementSchemaService {
       } else {
         sequenceNumber += 1
       }
+      const findMilestoneSequence : any = await this.mainDbSequelize.query(rawQueries.getMilestoneSequence(data.milestone_template_rid));
       dynamicData = {
         created_by : userId,
         task_name : data.task_name,
@@ -625,7 +626,8 @@ class CaseManagementSchemaService {
         milestone_template_rid : data.milestone_template_rid,
         task_description : data.task_description,
         weightage_rid : data.weightage_rid,
-        task_category_rid : data.task_category_rid
+        task_category_rid : data.task_category_rid,
+        milestone_sequence : findMilestoneSequence[0][0].sequence_no
       }
     } else {
       const checkTaskNameExists = await this.checkTaskExists(data, getTaskType[0][0].rid);
