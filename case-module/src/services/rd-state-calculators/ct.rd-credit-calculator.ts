@@ -1,5 +1,7 @@
 import { Decimal } from "decimal.js";
 import { logMessage } from "../../utils/helpers";
+import FinancialRDPreviewService from "../financialRDCredit/financialRDPreviewService"
+
 
 export interface ConfigJson {
     credit_rate: number;
@@ -19,6 +21,14 @@ export class RdCreditCalculatorForCT {
     country = "USA";
     creditType = "State R&D Credit - CT";
     currency = "USD";
+
+    private financialRDPreviewService: FinancialRDPreviewService;
+    private loadData: any;
+
+    constructor() {
+        this.financialRDPreviewService = new FinancialRDPreviewService();
+        this.loadData = this.financialRDPreviewService.loadDataForCT()
+    }
 
     async compute(config: any, currentYearQREs: any, annualGrossReceipts: any[], totalGrossReceipts: Decimal, prior3YearsQREs: { fiscalYear: number; qre: number }[], priorYearsCount: number) {
         const extractConfig = this.extractConfigJson(config.config_json);

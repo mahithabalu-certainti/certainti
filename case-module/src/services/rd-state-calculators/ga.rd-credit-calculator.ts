@@ -1,5 +1,6 @@
 import { Decimal } from "decimal.js";
 import { logMessage } from "../../utils/helpers";
+import FinancialRDPreviewService from "../financialRDCredit/financialRDPreviewService"
 
 
 export interface ConfigJson {
@@ -17,6 +18,14 @@ export class RdCreditCalculatorForGA {
     creditType = "State R&D Credit - GA";
     currency = "USD";
 
+    private financialRDPreviewService: FinancialRDPreviewService;
+    private loadData: any;
+
+    constructor() {
+        this.financialRDPreviewService = new FinancialRDPreviewService();
+        this.loadData = this.financialRDPreviewService.loadDataForGA()
+    }
+
     async compute(config: any, currentYearQREs: any, annualGrossReceipts: any[], totalGrossReceipts: Decimal, prior3YearsQREs: { fiscalYear: number; qre: number }[], priorYearsCount: number) {
         const extractConfig = this.extractConfigJson(config.config_json);
         const inputInfo = this.computeInputInformation(currentYearQREs, annualGrossReceipts);
@@ -32,7 +41,7 @@ export class RdCreditCalculatorForGA {
         });
 
         const computedFields = await this.buildComputedFields(inputInfo, ratioCalculationInfo, baseAmountInfo, taxCreditInfo, creditAndCarryForwardInfo);
-        
+
         return {
             inputFields,
             computedFields
@@ -119,8 +128,8 @@ export class RdCreditCalculatorForGA {
      * @param average_ratio 
      */
     taxBaseCalculation(curent_year_gross_receipts: number, average_ratio: Decimal, config: ConfigJson) {
-        const taxBaseRate = this.round2(Decimal.min(average_ratio.div(100), config.tax_base_cap_percent));
-        const baseAmount = new Decimal(curent_year_gross_receipts).mul(taxBaseRate);
+        const taxBaseRate = this.round2(Decimal.min(average_ratio, (config.tax_base_cap_percent * 100)));
+        const baseAmount = new Decimal(curent_year_gross_receipts).mul(taxBaseRate.div(100));
         return {
             current_year_gross_receipt: curent_year_gross_receipts,
             tax_base_rate: taxBaseRate,
