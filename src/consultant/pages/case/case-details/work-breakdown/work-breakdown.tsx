@@ -55,12 +55,16 @@ interface WorkBreakDownProps {
   activityMenuItems: ActivityMenuItem[];
   setExportType: (type: ExportType) => void;
   setCaseTaskParams: (params: Record<string, unknown>) => void;
+  caseStartDate?: string | null;
+  caseEndDate?: string | null;
 }
 
 const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
   setExportType,
   setCaseTaskParams,
   activityMenuItems,
+  caseStartDate,
+  caseEndDate,
 }) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -781,6 +785,8 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
                 caseId={caseId || ''}
                 fieldVisibility={fieldHiddenMap}
                 fieldDisabled={fieldDisabledMap}
+                caseStartDate={caseStartDate}
+                caseEndDate={caseEndDate}
               />
             )}
             {openTaskId && (
@@ -803,6 +809,8 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
                 onUpdateComment={handleUpdateComment}
                 onDeleteComment={handleDeleteComment}
                 onAddCollaborator={handleAddCollaborator}
+                caseStartDate={caseStartDate}
+                caseEndDate={caseEndDate}
               />
             )}
           </>

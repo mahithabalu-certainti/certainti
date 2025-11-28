@@ -399,6 +399,8 @@ export const CaseDetails = () => {
               setExportType={setExportType}
               setCaseTaskParams={handleSetCaseTaskParams}
               activityMenuItems={activityMenuItems}
+              caseStartDate={caseData?.case_startdate}
+              caseEndDate={caseData?.statutory_submission_date}
             />
           </div>
         );

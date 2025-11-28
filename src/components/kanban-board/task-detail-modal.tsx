@@ -58,6 +58,8 @@ interface TaskDetailModalPropsExtended
     comment: string,
     files: File[]
   ) => Promise<void>;
+  caseStartDate?: string | null;
+  caseEndDate?: string | null;
 }
 
 const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
@@ -80,6 +82,8 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   caseId,
   fieldVisibility = {},
   fieldDisabled = {},
+  caseStartDate,
+  caseEndDate,
 }) => {
   const [task, setTask] = useState<Task | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
@@ -466,6 +470,14 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     return [];
   }, [categoryListQuery.data]);
 
+  const minDate = useMemo(() => {
+    return caseStartDate ? dayjs(caseStartDate) : undefined;
+  }, [caseStartDate]);
+
+  const maxDate = useMemo(() => {
+    return caseEndDate ? dayjs(caseEndDate) : undefined;
+  }, [caseEndDate]);
+
   const hasTaskChanged = () => {
     if (!task || !editedTask || !originalTask) return false;
 
@@ -665,13 +677,25 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       newErrors.tags = 'Maximum 50 characters allowed';
     }
 
-    if (editedTask?.startDate && dayjs(editedTask.startDate).isBefore(dayjs('1950-01-01'), 'day')) {
-      newErrors.startDate = 'Invalid Date';
+    if (editedTask?.startDate) {
+      if (minDate && dayjs(editedTask.startDate).isBefore(minDate, 'day')) {
+        newErrors.startDate = 'Invalid Date';
+      }
+      if (maxDate && dayjs(editedTask.startDate).isAfter(maxDate, 'day')) {
+        newErrors.startDate = 'Invalid Date';
+      }
     }
-    if (editedTask?.endDate && dayjs(editedTask.endDate).isBefore(dayjs('1950-01-01'), 'day')) {
-      newErrors.endDate = 'Invalid Date';
-    } else if (editedTask?.startDate && editedTask?.endDate && dayjs(editedTask.endDate).isBefore(dayjs(editedTask.startDate), 'day')) {
-      newErrors.endDate = 'Invalid Date';
+
+    if (editedTask?.endDate) {
+      if (minDate && dayjs(editedTask.endDate).isBefore(minDate, 'day')) {
+        newErrors.endDate = 'Invalid Date';
+      }
+      if (maxDate && dayjs(editedTask.endDate).isAfter(maxDate, 'day')) {
+        newErrors.endDate = 'Invalid Date';
+      }
+      if (editedTask?.startDate && dayjs(editedTask.endDate).isBefore(dayjs(editedTask.startDate), 'day')) {
+        newErrors.endDate = 'Invalid Date';
+      }
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -1337,7 +1361,10 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
 
 
 
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
+          <LocalizationProvider dateAdapter={AdapterDayjs} localeText={{
+            fieldMonthPlaceholder: (params) =>
+              params.contentType === 'digit' ? 'MM' : params.format,
+          }}>
             <div className='grid grid-cols-2 gap-4'>
               {!fieldVisibility.startDate && (
                 <div>
@@ -1346,14 +1373,15 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                   </label>
                   <DatePicker
                     disabled={false}
-                    minDate={dayjs('1950-01-01')}
+                    minDate={minDate}
+                    maxDate={maxDate}
                     value={formatDateForInput(editedTask?.startDate)}
                     onChange={(newValue) =>
                       handleStartDateChange(
                         newValue ? dayjs(newValue).format('YYYY-MM-DD') : ''
                       )
                     }
-                    format='YYYY-MM-DD'
+                    format='YYYY-MMM-DD'
                     slots={{
                       openPickerIcon: () => (
                         <CalendarIcon className='w-4 h-4' />
@@ -1466,15 +1494,16 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                     minDate={
                       editedTask?.startDate
                         ? dayjs(editedTask.startDate).add(1, 'day')
-                        : dayjs('1950-01-01')
+                        : minDate
                     }
+                    maxDate={maxDate}
                     value={formatDateForInput(editedTask?.endDate)}
                     onChange={(newValue) =>
                       handleEndDateChange(
                         newValue ? dayjs(newValue).format('YYYY-MM-DD') : ''
                       )
                     }
-                    format='YYYY-MM-DD'
+                    format='YYYY-MMM-DD'
                     slots={{
                       openPickerIcon: () => (
                         <CalendarIcon className='w-4 h-4' />

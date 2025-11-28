@@ -43,6 +43,8 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
   fieldDisabled,
   accountId,
   caseId,
+  caseStartDate,
+  caseEndDate,
 }) => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const { setNodeRef } = useDroppable({
@@ -199,6 +201,8 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
         fieldDisabled={fieldDisabled}
         accountId={accountId}
         caseId={caseId}
+        caseStartDate={caseStartDate}
+        caseEndDate={caseEndDate}
       />
     </div>
   );

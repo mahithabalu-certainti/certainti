@@ -744,7 +744,7 @@ export const getDateFormatYYYYMMDD = (date?: string) => {
 };
 export const getDateFormat = (date?: string) => {
   if (!date) return '';
-  return dayjs(date).format('YYYY-MM-DD');
+  return dayjs(date).format('YYYY-MMM-DD');
 };
 export const STATUS_OPTIONS: SelectOption[] = [
   { label: 'Active', value: 'active' },

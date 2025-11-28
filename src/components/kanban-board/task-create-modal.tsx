@@ -84,6 +84,8 @@ interface TaskCreateModalProps {
   };
   accountId?: string;
   caseId?: string;
+  caseStartDate?: string | null;
+  caseEndDate?: string | null;
 }
 
 const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
@@ -103,6 +105,8 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
   fieldDisabled = {},
   accountId,
   caseId,
+  caseStartDate,
+  caseEndDate,
 }) => {
   const ErrorIconTooltip = ({ error }: { error: string }) => (
     <Tooltip
@@ -255,6 +259,14 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
     return [];
   }, [categoryListQuery.data]);
 
+  const minDate = useMemo(() => {
+    return caseStartDate ? dayjs(caseStartDate) : undefined;
+  }, [caseStartDate]);
+
+  const maxDate = useMemo(() => {
+    return caseEndDate ? dayjs(caseEndDate) : undefined;
+  }, [caseEndDate]);
+
   // Initialize status to "To Do" when statusData changes
   useEffect(() => {
     const toDoStatus = statusData?.find((s) => s.name === 'To Do');
@@ -301,13 +313,25 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
     if (!endDate && !fieldVisibility.endDate)
       newErrors.endDate = 'Field is required';
 
-    if (startDate && startDate.isBefore(dayjs(), 'day')) {
-      newErrors.startDate = 'Invalid Date';
+    if (startDate) {
+      if (minDate && startDate.isBefore(minDate, 'day')) {
+        newErrors.startDate = 'Invalid Date';
+      }
+      if (maxDate && startDate.isAfter(maxDate, 'day')) {
+        newErrors.startDate = 'Invalid Date';
+      }
     }
-    if (endDate && endDate.isBefore(dayjs(), 'day')) {
-      newErrors.endDate = 'Invalid Date';
-    } else if (startDate && endDate && endDate.isBefore(startDate, 'day')) {
-      newErrors.endDate = 'Invalid Date';
+
+    if (endDate) {
+      if (minDate && endDate.isBefore(minDate, 'day')) {
+        newErrors.endDate = 'Invalid Date';
+      }
+      if (maxDate && endDate.isAfter(maxDate, 'day')) {
+        newErrors.endDate = 'Invalid Date';
+      }
+      if (startDate && endDate.isBefore(startDate, 'day')) {
+        newErrors.endDate = 'Invalid Date';
+      }
     }
 
     if (linkedType && (!linkTaskTypes || linkTaskTypes.length === 0)) {
@@ -388,7 +412,7 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
     if (startDate) {
       return startDate.add(1, 'day');
     }
-    return undefined;
+    return minDate;
   };
 
   if (!isOpen) return null;
@@ -445,7 +469,10 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
             </div>
           </div>
 
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
+          <LocalizationProvider dateAdapter={AdapterDayjs} localeText={{
+            fieldMonthPlaceholder: (params) =>
+              params.contentType === 'digit' ? 'MM' : params.format,
+          }}>
             <div className='grid grid-cols-2 gap-4'>
               {!fieldVisibility.startDate && (
                 <div>
@@ -457,8 +484,9 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                       disabled={fieldDisabled.startDate}
                       value={startDate}
                       onChange={handleStartDateChange}
-                      format='YYYY-MM-DD'
-                      minDate={dayjs()}
+                      format='YYYY-MMM-DD'
+                      minDate={minDate}
+                      maxDate={maxDate}
                       slots={{
                         openPickerIcon: () => (
                           <CalendarIcon className='w-4 h-4' />
@@ -534,7 +562,8 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                       value={endDate}
                       onChange={handleEndDateChange}
                       minDate={getMinEndDate()}
-                      format='YYYY-MM-DD'
+                      maxDate={maxDate}
+                      format='YYYY-MMM-DD'
                       slots={{
                         openPickerIcon: () => (
                           <CalendarIcon className='w-4 h-4' />
