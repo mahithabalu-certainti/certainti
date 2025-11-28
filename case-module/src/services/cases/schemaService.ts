@@ -225,12 +225,43 @@ class CaseSchemaService {
           caseRequest.created_by || "",
           "created"
         );
+        await this.addJurisdiction(
+          casecreationResponse.account_rid,
+          casecreationResponse.rid,
+          accountNumber,
+          caseRequest,
+          transaction
+        );
       }
 
       return casecreationResponse;
     } catch (error) {
       logMessage(`Error creating case: ${error}`);
       throw new Error("Error creating case: " + error);
+    }
+  }
+
+  async addJurisdiction (accountRid : string, caseRid : string, accountNumber : string, caseRequest: ICreateCases, transaction: Transaction) {
+    const { Jurisdiction} = await this.caseModelService.getModels(accountNumber);
+    
+    const accountJurisdictionData = await Jurisdiction.findOne({
+      where : {
+        entity_rid : accountRid
+      }
+    })
+
+    if(accountJurisdictionData) {
+      await Jurisdiction.create(
+      {
+        created_by: caseRequest.created_by,
+        entity_rid: caseRid,
+        is_federal_level: accountJurisdictionData.is_federal_level,
+        is_state_level: accountJurisdictionData.is_state_level,
+        states: accountJurisdictionData.states,
+        level : "case",
+      },
+      { transaction }
+      );
     }
   }
 

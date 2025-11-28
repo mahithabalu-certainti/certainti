@@ -7,10 +7,11 @@ interface IJurisdictionRequest {
   created_by: string;
   modified_by?: string;
   account_rid: string;
-  case_rid: string;
+  case_rid?: string;
   is_federal_level: boolean;
   is_state_level: boolean;
   states?: string[];
+  level: string;
 }
 
 export class JurisdictionSchemaService {
@@ -35,10 +36,11 @@ export class JurisdictionSchemaService {
       
       const { Jurisdiction } = await this.caseModelService.getModels(accountNumber);
 
+      const entity_rid = jurisdictionData.level === "case" ? jurisdictionData.case_rid : jurisdictionData.account_rid;
+
       const existing = await Jurisdiction.findOne({
         where: {
-          account_rid: jurisdictionData.account_rid,
-          case_rid: jurisdictionData.case_rid,
+          entity_rid: entity_rid
         },
         transaction,
       });
@@ -63,11 +65,11 @@ export class JurisdictionSchemaService {
         const newJurisdiction = await Jurisdiction.create(
           {
             created_by: jurisdictionData.created_by,
-            account_rid: jurisdictionData.account_rid,
-            case_rid: jurisdictionData.case_rid,
+            entity_rid: entity_rid || "",
             is_federal_level: jurisdictionData.is_federal_level,
             is_state_level: jurisdictionData.is_state_level,
             states: jurisdictionData.states,
+            level: jurisdictionData.level 
           },
           { transaction }
         );
