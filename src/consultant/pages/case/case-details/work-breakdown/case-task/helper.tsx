@@ -61,12 +61,14 @@ export const getAssignGroupsFilterFields = (
       value: 'effective_start_datetime',
       type: 'date',
       operatorOption: dateOptions,
+      isFutureDateEnabled: true,
     },
     {
       name: 'Due Date',
       value: 'effective_end_datetime',
       type: 'date',
       operatorOption: dateOptions,
+      isFutureDateEnabled: true,
     },
     {
       name: 'Status',

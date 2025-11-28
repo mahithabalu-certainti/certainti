@@ -189,17 +189,17 @@ export type FieldConfig = {
   value: string;
   hide?: boolean;
   type:
-    | 'text'
-    | 'number'
-    | 'date'
-    | 'enum'
-    | 'textCostAndSkill'
-    | 'select'
-    | 'currencySelect'
-    | 'skillTypeFilter'
-    | 'skillSubTypeFilter'
-    | 'system'
-    | 'system-sort';
+  | 'text'
+  | 'number'
+  | 'date'
+  | 'enum'
+  | 'textCostAndSkill'
+  | 'select'
+  | 'currencySelect'
+  | 'skillTypeFilter'
+  | 'skillSubTypeFilter'
+  | 'system'
+  | 'system-sort';
   options?: { option: string; value: string }[];
   required?: boolean;
   dependsOn?: string;
@@ -208,6 +208,7 @@ export type FieldConfig = {
   maxDate?: Date;
   filterOptions?: { option: string; value: string }[];
   operatorOption?: { option: string; value: string }[];
+  isFutureDateEnabled?: boolean;
 };
 
 export type FilterValue =
