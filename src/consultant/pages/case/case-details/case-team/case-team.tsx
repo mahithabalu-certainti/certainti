@@ -33,6 +33,8 @@ import { SectionTabPanel } from '../../../../../components';
 import SectionHeader from '../../../../../components/details-section/section-header';
 import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
 import { AllPermissions, useGetStatus } from '../../../../../common-service';
+import { checkPermission } from '../../../../../common-utils';
+import { AccessRestricted } from '../../../../../components/account-restricted';
 import { useToast } from '../../../../../hooks';
 import { useSearchParams, useParams } from 'react-router-dom';
 import {
@@ -601,6 +603,18 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
   const getTitleIcon = () => {
     return <ActionItemsIcon alt='action-items-icon' />;
   };
+
+  const isCaseTeamViewEnable = checkPermission(
+    permission,
+    AllPermissions.CASES_TEAM_VIEW_EDIT
+  );
+
+  const isCaseCreateEnable = checkPermission(
+    permission,
+    AllPermissions.CASES_CREATE
+  );
+
+  if (!isCaseTeamViewEnable) return <AccessRestricted />;
 
   return (
     <>
@@ -1677,21 +1691,23 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
             </TableContainer>
           </div>
 
-          <div className='mt-2 pl-4'>
-            <button
-              className='flex items-center cursor-pointer gap-1 bg-[#EAF0F5] h-[30px] color-[#2D3E4F] px-2 text-[12px] font-semibold disabled:bg-gray-100 disabled:opacity-75 disabled:cursor-default'
-              type='button'
-              onClick={handleAddTeamMember}
-              disabled={formLoading || !isCaseTeamEditable}
-            >
-              <span>
-                <React.Suspense fallback={null}>
-                  <KeyContactAddIcon alt='add-btn' className='w-5 h-5' />
-                </React.Suspense>
-              </span>
-              Add Case Team Member
-            </button>
-          </div>
+          {isCaseCreateEnable && (
+            <div className='mt-2 pl-4'>
+              <button
+                className='flex items-center cursor-pointer gap-1 bg-[#EAF0F5] h-[30px] color-[#2D3E4F] px-2 text-[12px] font-semibold disabled:bg-gray-100 disabled:opacity-75 disabled:cursor-default'
+                type='button'
+                onClick={handleAddTeamMember}
+                disabled={formLoading || !isCaseTeamEditable}
+              >
+                <span>
+                  <React.Suspense fallback={null}>
+                    <KeyContactAddIcon alt='add-btn' className='w-5 h-5' />
+                  </React.Suspense>
+                </span>
+                Add Case Team Member
+              </button>
+            </div>
+          )}
         </div>
       </div >
     </>

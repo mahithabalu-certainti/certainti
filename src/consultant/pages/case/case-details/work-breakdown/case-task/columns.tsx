@@ -1,5 +1,6 @@
 import { ListTableColumn } from '../../../../../../components/table/types';
 import { CaseTaskType } from '../../../../../services/case-task/case-task-service';
+import { getDateFormat } from '../../../../../../common-utils';
 
 export const getCaseTaskListColumns = (
   permissionMap: Record<string, { read: boolean; edit: boolean }>
@@ -38,7 +39,10 @@ export const getCaseTaskListColumns = (
       label: 'Start Date',
       sortable: true,
       width: 120,
-      render: (row: CaseTaskType) => row.effective_start_datetime || '-',
+      render: (row: CaseTaskType) =>
+        row.effective_start_datetime
+          ? getDateFormat(row.effective_start_datetime)
+          : '-',
       hide:
         !permissionMap['effective_start_datetime']?.read &&
         !permissionMap['effective_start_datetime']?.edit,
@@ -49,7 +53,10 @@ export const getCaseTaskListColumns = (
       label: 'Due Date',
       sortable: true,
       width: 120,
-      render: (row: CaseTaskType) => row.effective_end_datetime || '-',
+      render: (row: CaseTaskType) =>
+        row.effective_end_datetime
+          ? getDateFormat(row.effective_end_datetime)
+          : '-',
       hide:
         !permissionMap['effective_end_datetime']?.read &&
         !permissionMap['effective_end_datetime']?.edit,

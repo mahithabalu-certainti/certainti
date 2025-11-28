@@ -56,6 +56,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 }) => {
   const { instance } = useMsal();
   const passwordResetInstanceRef = useRef<PublicClientApplication | null>(null);
+  const isFirstRender = useRef(true);
   const prevIsCaseRouteRef = useRef<boolean>(false);
   const savedPrevFYRef = useRef<string | null>(null);
   const { successToast, errorToast } = useToast();
@@ -173,6 +174,15 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   // Route observer: Handle fiscal year reset when leaving Case module
   useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      if (isCaseModule) {
+        savedPrevFYRef.current = 'FY-All';
+        prevIsCaseRouteRef.current = true;
+        return;
+      }
+    }
+
     const prevIsCaseRoute = prevIsCaseRouteRef.current;
 
     // Transitioning from non-case to case: save current fiscal year

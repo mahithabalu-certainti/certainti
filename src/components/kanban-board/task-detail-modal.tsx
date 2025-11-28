@@ -1090,24 +1090,24 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
         }}
       >
         <div className='sticky top-0 flex items-center justify-between p-3 border-b border-[#CBD6E2] bg-white z-50'>
-          <div className='flex items-center gap-1'>
+          <h2 className='text-[16px] font-semibold text-[#2D3E4F] truncate max-w-[400px]'>
+            Edit {task?.title}
+          </h2>
+
+          <div className='flex items-center gap-2'>
+            <TextButton
+              label='Save'
+              onClick={handleSave}
+              disabled={!hasTaskChanged() || isSaving}
+              sx={{ padding: '6px 12px' }}
+            />
             <button
               onClick={onClose}
               className='p-2 hover:bg-gray-100 rounded transition-colors'
             >
               <CloseIcon size={16} className='text-gray-600' />
             </button>
-            <h2 className='text-[16px] font-semibold text-[#2D3E4F] truncate max-w-[400px]'>
-              Edit {task?.title}
-            </h2>
           </div>
-
-          <TextButton
-            label='Save'
-            onClick={handleSave}
-            disabled={!hasTaskChanged() || isSaving}
-            sx={{ padding: '6px 12px' }}
-          />
         </div>
 
         <div className='px-6 pt-3 pb-6 space-y-3'>
