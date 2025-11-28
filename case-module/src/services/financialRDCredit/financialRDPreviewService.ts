@@ -64,6 +64,29 @@ class FinancialRDPreviewService {
             currentYearQREs
         }
     }
+
+    /**
+     * 
+     * @returns 
+     */
+    loadDataForIL() {
+        const prior3YearsQREs: any[] = [
+            { fiscalYear: 2024, qre: 50000, wages: 80000, contract: 50000 },
+            { fiscalYear: 2023, qre: 60000, wages: 60000, contract: 40000 },
+            { fiscalYear: 2022, qre: 50000, wages: 50000, contract: 25000 }
+        ];
+
+        const currentYearQREs = {
+            wages: 100000,
+            supplies: 0,
+            contract: 100000
+        }
+
+        return {
+            prior3YearsQREs,
+            currentYearQREs
+        }
+    }
 }
 
 export default FinancialRDPreviewService;

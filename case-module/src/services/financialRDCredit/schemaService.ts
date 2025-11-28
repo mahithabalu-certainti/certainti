@@ -163,7 +163,10 @@ class RDCreditSchemaService {
                 `
                 SELECT 
                     fiscal_year,
-                    SUM(total_qre) AS total_qre
+                    SUM(total_qre) AS total_qre,
+                    SUM(total_cost_fte_prj) AS total_wages,
+                    SUM(total_cost_nonlabor_prj) AS total_supplies,
+                    SUM(total_cost_subcon_prj) AS total_contract
                 FROM ${schemaName}.case_history_submission
                 WHERE account_rid = :accountRid AND fiscal_year < :currentFiscalYear
                 GROUP BY fiscal_year
@@ -178,7 +181,10 @@ class RDCreditSchemaService {
 
             return result.map(r => ({
                 fiscalYear: r.fiscal_year,
-                qre: Number(r.total_qre || 0)
+                qre: Number(r.total_qre || 0),
+                wages: Number(r.total_wages || 0),
+                supplies: Number(r.total_supplies || 0),
+                contract: Number(r.total_contract || 0)
             }));
         } catch (err) {
             logMessage(`Error fetching gross receipts: ${err}`);
