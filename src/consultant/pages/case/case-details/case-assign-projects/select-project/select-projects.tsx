@@ -16,6 +16,7 @@ interface selectProjectProps {
   setCount: React.Dispatch<React.SetStateAction<number>>;
   clearSelectedRows: boolean;
   fiscalYear: number;
+  appliedFilters: Record<string, string | number | boolean | string[]>;
 }
 
 const SelectProjects: React.FC<selectProjectProps> = ({
@@ -28,14 +29,14 @@ const SelectProjects: React.FC<selectProjectProps> = ({
   setCount,
   clearSelectedRows,
   fiscalYear,
+  appliedFilters,
 }) => {
   const { caseId } = useParams();
   const [searchParams] = useSearchParams();
   const [rowsPerPage, setRowsPerPage] = useState(100);
-  const [sortField, setSortField] = useState<string>('project_type_name');
+  const [sortField, setSortField] = useState<string>('project_code');
   const [sortBy, setSortBy] = useState<'ASC' | 'DESC'>('ASC');
   const accountID = searchParams.get('accountID') || '';
-  console.log(caseId, 'caseId');
   const { data, isLoading, isError } = useSelectProjectsList(
     {
       page: currentPage + 1,
@@ -43,19 +44,21 @@ const SelectProjects: React.FC<selectProjectProps> = ({
       sort: sortField,
       sort_by: sortBy,
       search: searchText,
-      filter: {},
+      filter: appliedFilters,
       case_rid: caseId,
       account_rid: accountID,
       fiscal_year: fiscalYear,
     },
     refreshTrigger
   );
+
   useEffect(() => {
-    if (data?.count) {
-      setCount(data?.count);
+    if (isLoading) {
+      setCount(0);
+    } else if (data?.count !== undefined) {
+      setCount(data.count);
     }
-  }, [data?.count, setCount]);
-  // const projectColumns = getSelectProjectColumns(permissionMap);
+  }, [isLoading, data?.count, setCount]);
 
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
@@ -71,13 +74,16 @@ const SelectProjects: React.FC<selectProjectProps> = ({
     setSortBy(apiOrder);
     setSortField(property);
   };
+
   const handleSelectionChange = (selectedIds: string[]) => {
     const selectedData = data?.projects?.filter((row) =>
       selectedIds.includes(row.rid)
     );
     setSelectedRows(selectedData || []);
   };
+
   const getRowId = (row: AssignProject) => row.rid;
+
   return (
     <div className='border border-[#CBD6E2] border-tss'>
       <ListTable

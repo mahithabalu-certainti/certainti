@@ -21,6 +21,7 @@ export const TaskTemplateFormFieldsData = (
   taskWeightAgeTypesOptions: SelectOption[],
   taskCategoryTypesOptions: SelectOption[],
   taskType: boolean,
+  linkedType: boolean,
   permissionMap: Record<string, { read: boolean; edit: boolean }>
 ): FormType[] => {
   return useMemo(
@@ -190,7 +191,7 @@ export const TaskTemplateFormFieldsData = (
           createMultiSelectField('target_rid', 'Linked Task Type', {
             options: taskTemplate || [],
             placeholder: 'Choose Linked Task Type ',
-            required: false,
+            required: linkedType,
           }),
         ],
       },
@@ -199,10 +200,11 @@ export const TaskTemplateFormFieldsData = (
         sectionName: '',
         fillType: 'full',
         fields: [
-          createTextAreaField('task_description', 'Description', {
+          createTextAreaField('task_description', 'Task Description', {
             required: false,
-            placeholder: 'Enter Description',
-            regexErrorMessage: 'Description must be within 2000 characters',
+            placeholder: 'Enter Task Description',
+            regexErrorMessage:
+              'Task Description must be within 2000 characters',
             regex: REGEX_PATTERNS.DESCRIPTION,
             disabled:
               isEditView &&
@@ -220,7 +222,7 @@ export const TaskTemplateFormFieldsData = (
         fillType: 'half',
         hide: !isEditView,
         fields: [
-          createTextField('record_id', 'Record ID', {
+          createTextField('record_id', 'Template ID', {
             required: false,
             disabled: true,
             hide:

@@ -43,6 +43,7 @@ export interface historySummary {
   total_qre: string;
   total_rd_credits: string;
   annual_gross_receipts: string;
+  currency_symbol?: string;
 }
 
 export interface HistoryFormData {

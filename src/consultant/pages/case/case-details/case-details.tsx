@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useMemo, useState, useRef } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import {
   useLocation,
   useNavigate,
@@ -60,7 +60,17 @@ import Setting from './settings/setting';
 import { ExportChecklistList } from '../../../services/checklist/checklist-service';
 import { Checklist } from './checklist';
 import { CaseInteractions } from './case-interactions';
+import { ExportReviewProjectList } from '../../../services/cases-assign-projects/review-project-service';
+import { ReviewProjectListURLParams } from '../../../types/assign-projects';
 import HistorySubmission from './history-submission/history-submission';
+import {
+  exportInteractions,
+  exportInteractionsHistory,
+} from '../../../services/interactions/interactions-service';
+import { ProjectTriggerAIPayload } from '../../../types/project';
+import { useToast } from '../../../../hooks';
+import { ProjectTriggerAI } from '../../../services/project';
+import { BUTTON_STYLES } from '../../../../admin/pages/manage-user-detail/styles';
 import { CaseActivities } from './case-activities';
 
 export const CaseDetails = () => {
@@ -98,14 +108,17 @@ export const CaseDetails = () => {
     sortOrder: 'ASC',
     filters: {},
   });
-
+  const interactionHistoryId = searchParams.get('interaction_history_id');
+  const interactionId = searchParams.get('interaction_id');
+  const interactionRID = searchParams.get('interaction_rid');
+  const interactionsView = !!interactionId || !!interactionRID;
   const noteView = searchParams.get('note_id');
   const checklistView = searchParams.get('checklist_id');
   const accountInActive =
     caseData?.account_status_name?.toLowerCase() !== 'active';
   const [caseProjectParams, setCaseProjectParams] =
     useState<CaseAssignedExportParams>({
-      sort: 'project_type_name',
+      sort: 'project_code',
       sort_by: 'ASC',
       filter: {},
       timezone: '',
@@ -126,6 +139,16 @@ export const CaseDetails = () => {
     case_rid: caseId ?? '',
     account_id: accountId ?? '',
   });
+  const [reviewProjectParams, setReviewProjectParams] =
+    useState<ReviewProjectListURLParams>({
+      sortOrder: 'ASC',
+      sortBy: 'project_code',
+      filters: {},
+      timezone: '',
+      page: 1,
+      limit: 10,
+      search: '',
+    });
   const fiscalYear = caseData?.fiscal_year ?? 0;
   const [attachmentParams, setAttachmentParams] =
     useState<AttachmentsListExportParams>({
@@ -140,14 +163,15 @@ export const CaseDetails = () => {
       sortOrder: 'ASC',
       filters: {},
     });
-
-  const [, setInteractionsParams] = useState<InteractionListExportParams>({
-    sortBy: '',
-    sortOrder: 'ASC',
-    filters: {},
-    page: 1,
-    limit: 100,
-  });
+  const systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const [interactionsParams, setInteractionsParams] =
+    useState<InteractionListExportParams>({
+      sortBy: '',
+      sortOrder: 'ASC',
+      filters: {},
+      page: 1,
+      limit: 100,
+    });
 
   useEffect(() => {
     const list = searchParams.get('list');
@@ -164,6 +188,16 @@ export const CaseDetails = () => {
       setActiveKey(location.state.activeKey || listParam || 'workBreakdown');
     }
   }, [location.state, searchParams]);
+
+  useEffect(() => {
+    if (searchParams.get('list') !== 'caseProjects') {
+      const newParams = new URLSearchParams(searchParams);
+      if (!newParams.get('detailstab')) {
+        newParams.delete('assignProject');
+      }
+      navigate({ search: newParams.toString() }, { replace: true });
+    }
+  }, [searchParams.get('list')]);
 
   const { fiscalYear: globalFiscalYear } = useSelector(
     (state: RootState) => state.account
@@ -207,6 +241,14 @@ export const CaseDetails = () => {
     AllPermissions.CHECKLIST_EXPORT
   );
 
+  const isInteractionsExportEnable = checkPermission(
+    permission,
+    AllPermissions.INTERACTIONS_EXPORT
+  );
+  const TriggerAIEnable = checkPermission(
+    permission,
+    AllPermissions.TRIGGER_AI_ASSESSMENT
+  );
   const handleExport = (exportType: ExportType) => {
     if (
       searchParams.get('list') !== 'attachments' &&
@@ -214,7 +256,8 @@ export const CaseDetails = () => {
       searchParams.get('list') !== 'checklist' &&
       searchParams.get('list') !== 'caseProjects' &&
       searchParams.get('list') !== 'workBreakdown' &&
-      searchParams.get('tab') !== 'case_task'
+      searchParams.get('tab') !== 'case_task' &&
+      searchParams.get('list') !== 'interactions'
     ) {
       return;
     }
@@ -250,10 +293,46 @@ export const CaseDetails = () => {
         ...checklistParams,
         ...checklistPayload,
       });
-    } else if (list === 'caseProjects') {
+    } else if (list === 'caseProjects' && exportType === 'cases_projects') {
       ExportAssignedList(caseProjectParams);
     } else if (exportType === 'case_task') {
       ExportCaseTaskList(caseTaskParams);
+    } else if (list === 'caseProjects' && exportType === 'review_projects') {
+      ExportReviewProjectList(reviewProjectParams, accountId, caseId);
+    }
+    if (list === 'interactions') {
+      if (interactionHistoryId) {
+        const projectInteractionHistoryExportPayload = {
+          account_rid: accountId || '',
+          interaction_rid: interactionHistoryId,
+          page: interactionsParams?.page || 1,
+          limit: interactionsParams?.limit || 100,
+          sort: interactionsParams.sortBy || 'status_name',
+          sort_by: interactionsParams?.sortOrder || 'ASC',
+          filters: interactionsParams?.filters || {},
+          timezone: systemTimezone,
+          flag: 'project',
+          search: interactionsParams?.search || '',
+        };
+        exportInteractionsHistory(projectInteractionHistoryExportPayload);
+        return;
+      } else {
+        const projectInteractionExportPayload = {
+          account_rid: accountId || '',
+          fiscal_year: fiscalYear,
+          page: interactionsParams?.page || 1,
+          limit: interactionsParams?.limit || 100,
+          sort: interactionsParams?.sortBy || 'r_number',
+          sort_by: interactionsParams?.sortOrder || 'ASC',
+          filters: interactionsParams?.filters || {},
+          flag: 'case',
+          reminder_specific_list: true,
+          case_rid: caseId || '',
+          // search: interactionsParams?.search || '',
+        };
+        exportInteractions(projectInteractionExportPayload);
+        return;
+      }
     }
   };
 
@@ -277,6 +356,8 @@ export const CaseDetails = () => {
       return false;
     } else if (searchParams.get('tab') === 'case_task') {
       return false;
+    } else if (list === 'interactions' && !interactionsView) {
+      return !isInteractionsExportEnable;
     } else {
       return true;
     }
@@ -310,6 +391,16 @@ export const CaseDetails = () => {
     { label: 'Log a call', onClick: () => console.log('Call') },
   ];
 
+  const handleSetCaseTaskParams = useCallback(
+    (params: Record<string, unknown>) => {
+      setCaseTaskParams((prev) => ({
+        ...prev,
+        ...params,
+      }));
+    },
+    []
+  );
+
   const renderContent = () => {
     switch (activeKey) {
       case 'workBreakdown':
@@ -317,12 +408,7 @@ export const CaseDetails = () => {
           <div className='w-full pr-4 pl-2 py-2'>
             <WorkBreakDown
               setExportType={setExportType}
-              setCaseTaskParams={(params: Record<string, unknown>) =>
-                setCaseTaskParams((prev) => ({
-                  ...prev,
-                  ...params,
-                }))
-              }
+              setCaseTaskParams={handleSetCaseTaskParams}
               activityMenuItems={activityMenuItems}
             />
           </div>
@@ -349,6 +435,7 @@ export const CaseDetails = () => {
               fiscalYear={fiscalYear}
               accountInActive={accountInActive}
               setTableParams={setCaseProjectParams}
+              setReviewProjectParams={setReviewProjectParams}
               setExportType={setExportType}
             />
           </div>
@@ -392,11 +479,12 @@ export const CaseDetails = () => {
       case 'interactions':
         return (
           <CaseInteractions
-            accountInActive={false}
-            isSendInteraction={false}
+            accountInActive={accountInActive}
+            isSendInteraction={caseData?.is_send_interaction || false}
             CaseDetails={caseData || null}
             loading={false}
             setInteractionsParams={setInteractionsParams}
+            setExportType={setExportType}
           />
         );
       default:
@@ -407,7 +495,28 @@ export const CaseDetails = () => {
         );
     }
   };
-
+  const { successToast } = useToast();
+  const triggerAIMutation = ProjectTriggerAI();
+  const handleTriggerAI = () => {
+    const payload: ProjectTriggerAIPayload = {
+      data: [
+        {
+          account_rid: accountId,
+          project_fiscal_rid: [],
+          case_rid: caseId,
+        },
+      ],
+      type: 'case',
+    };
+    triggerAIMutation.mutate(payload, {
+      onSuccess: (res) => {
+        successToast(res.statusMessage);
+      },
+      onError: (err) => {
+        console.log(err);
+      },
+    });
+  };
   const sideMenuItems = useMemo<MenuItem[]>(() => {
     const allMenus = [
       {
@@ -418,8 +527,8 @@ export const CaseDetails = () => {
         icon: ProjectsSideIcon,
       },
       {
-        name: 'Financial Workings',
-        key: 'financialWorkings',
+        name: 'Financial Highlights',
+        key: 'financialHighlights',
         id: AllMenus.FINANCIAL_HIGHLIGHTS,
         disabled: false,
         icon: FinancialIcon,
@@ -576,6 +685,16 @@ export const CaseDetails = () => {
           showSettings={false}
           goBack={goBack}
           backBtnLabel='Back To Cases'
+          headerButtons={[
+            {
+              label: 'RD Assessment',
+              onClick: handleTriggerAI,
+              disabled: accountInActive,
+              loading: triggerAIMutation.isPending,
+              sx: { ...BUTTON_STYLES, width: '115px', minWidth: '115px' },
+              hide: !TriggerAIEnable,
+            },
+          ]}
         />
       </div>
       <InfoSection
@@ -587,11 +706,10 @@ export const CaseDetails = () => {
       />
       <div className='flex flex-1 flex-row w-full border-b border-[#CBD6E2]'>
         <div
-          className={`flex transition-all ease-in-out ${
-            isCollapsed
+          className={`flex transition-all ease-in-out ${isCollapsed
               ? 'w-[60px] min-w-[60px] max-w-[60px] duration-300'
               : 'w-[220px] min-w-[220px] max-w-[220px] duration-500'
-          }`}
+            }`}
         >
           <SideMenuPanel
             menuItems={sideMenuItems}

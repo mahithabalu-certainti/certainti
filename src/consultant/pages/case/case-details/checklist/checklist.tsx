@@ -283,10 +283,11 @@ const Checklist: React.FC<ChecklistProps> = ({
   const checklistColumns = getChecklistTableColumns(
     permissionMap,
     accountInActive,
-    handleChecklistView
+    handleChecklistView,
+    'case'
   );
 
-  const checklistFilterFields = getChecklistFilterFields(permissionMap);
+  const checklistFilterFields = getChecklistFilterFields(permissionMap, 'case');
 
   const getRowId = (row: ChecklistList) => row.rid;
 

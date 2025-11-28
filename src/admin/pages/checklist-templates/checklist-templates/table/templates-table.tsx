@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { FilterCondition } from '../../../../types/manage-user';
 import {
   ActionItem,
+  CellEditData,
+  FieldChangeValue,
   ShowHideTableColumn,
 } from '../../../../../components/table/types';
 import { EditIcon } from '../../../../../assets';
@@ -17,13 +19,16 @@ import {
 } from '../../../../types';
 import {
   ExportChecklistTemplate,
+  fetchChecklistTemplateDetails,
   useChecklistTemplateList,
+  useUpdateChecklistTemplateDetails,
 } from '../../../../service/checklist-templates/checklist-template-service';
 import { getChecklistTemplateColumns } from './columns';
 import { checkPermission } from '../../../../../common-utils';
 import { RootState } from '../../../../../store/store';
 import { useSelector } from 'react-redux';
 import { AllPermissions } from '../../../../../common-service';
+import { useToast } from '../../../../../hooks';
 
 interface ITemplateTableProps {
   appliedFilters: Record<string, FilterCondition>;
@@ -36,6 +41,7 @@ interface ITemplateTableProps {
   setColumnAnchorEl: React.Dispatch<
     React.SetStateAction<HTMLButtonElement | null>
   >;
+  statusOptions: { label: string; value: string }[];
 }
 
 export const TemplateTable: React.FC<ITemplateTableProps> = ({
@@ -45,8 +51,10 @@ export const TemplateTable: React.FC<ITemplateTableProps> = ({
   refreshTrigger,
   columnAnchorEl,
   setColumnAnchorEl,
+  statusOptions,
 }) => {
   const navigate = useNavigate();
+  const { errorToast } = useToast();
   const [templateList, setTemplateList] = useState<ChecklistTemplateList[]>([]);
 
   const { data, isLoading, isError } = useChecklistTemplateList(
@@ -60,6 +68,8 @@ export const TemplateTable: React.FC<ITemplateTableProps> = ({
       setTemplateList(data?.checklistTemplates || []);
     }
   }, [data?.checklistTemplates]);
+
+  const updateTemplateDetailsMutation = useUpdateChecklistTemplateDetails();
 
   // Permission
   const { permission } = useSelector((state: RootState) => state.permission);
@@ -136,6 +146,7 @@ export const TemplateTable: React.FC<ITemplateTableProps> = ({
   const checklistTemplateColumns = getChecklistTemplateColumns(
     handleDownload,
     permissionMap,
+    statusOptions,
     isChecklistTemplateExportEnable
   );
 
@@ -193,6 +204,83 @@ export const TemplateTable: React.FC<ITemplateTableProps> = ({
     ? 'checklist-template-column-visibility-popover'
     : undefined;
 
+  const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
+    const previousTemplates = [...templateList];
+
+    try {
+      // Fetch current details to get required fields like checklist_items
+      const currentDetails = await fetchChecklistTemplateDetails(rowId);
+
+      const updateData = updates.reduce<Record<string, FieldChangeValue>>(
+        (acc, item) => {
+          const key = item.editId || item.columnId;
+          acc[key] = item.value;
+          return acc;
+        },
+        {}
+      );
+
+      const payload = {
+        checklist_name:
+          (updateData.checklist_name as string) ||
+          currentDetails.checklist_name,
+        checklist_description:
+          (updateData.checklist_description as string) ||
+          currentDetails.checklist_description,
+        status_rid:
+          (updateData.status_rid as string) || currentDetails.status_rid,
+        checklist_template_rid: rowId,
+        checklist_items: currentDetails.checklist_items.map((item) => ({
+          checklist_item_name: item.checklist_item_name,
+          checklist_item_rid: item.rid,
+          description: item.description,
+          action_type: 'edit',
+        })),
+      };
+
+      const res = await updateTemplateDetailsMutation.mutateAsync(
+        payload as any
+      );
+
+      if (res?.statusCode === 200) {
+        // Refresh the list to get updated data
+        const updatedTemplate = templateList.find((t) => t.rid === rowId);
+        if (updatedTemplate) {
+          const newTemplateList = templateList.map((template) => {
+            if (template.rid === rowId) {
+              // Update the local state with the new values
+              const updatedFields: Partial<ChecklistTemplateList> = {};
+              updates.forEach((update) => {
+                const key = update.columnId as keyof ChecklistTemplateList;
+                updatedFields[key] = update.value as any;
+
+                // If status was updated, we might need to update status_name too if we have the label
+                if (key === 'status_name' as any && statusOptions) {
+                  const selectedOption = statusOptions.find(opt => opt.value === update.value);
+                  if (selectedOption) {
+                    updatedFields['status_name'] = selectedOption.label;
+                  }
+                }
+              });
+              return {
+                ...template,
+                ...updatedFields,
+              };
+            }
+            return template;
+          });
+          setTemplateList(newTemplateList);
+        }
+      } else {
+        errorToast(res?.statusMessage || 'Failed to update field');
+        setTemplateList(previousTemplates);
+      }
+    } catch (error) {
+      errorToast((error as Error)?.message || 'Failed to update field');
+      setTemplateList(previousTemplates);
+    }
+  };
+
   return (
     <>
       <ManageColumnsPopover
@@ -236,6 +324,7 @@ export const TemplateTable: React.FC<ITemplateTableProps> = ({
         sortBy={tableParams.sortBy}
         sortOrder={tableParams.sortOrder}
         onSort={handleSort}
+        onCellEdit={handleCellEdit}
       />
     </>
   );

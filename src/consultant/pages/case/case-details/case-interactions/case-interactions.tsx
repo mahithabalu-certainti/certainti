@@ -16,6 +16,7 @@ import {
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   CaseDetails,
+  ExportType,
   InteractionList,
   InteractionListExportParams,
   StatusTypeEnum,
@@ -96,6 +97,7 @@ interface InteractionsProps {
   isSendInteraction: boolean;
   loading: boolean;
   CaseDetails: CaseDetails | null;
+  setExportType?: (type: ExportType) => void;
 }
 
 const CaseInteractions: React.FC<InteractionsProps> = ({
@@ -105,6 +107,7 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
   isSendInteraction,
   loading,
   CaseDetails,
+  setExportType,
 }) => {
   const { caseId } = useParams();
   const [searchParams] = useSearchParams();
@@ -339,6 +342,9 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
 
   useEffect(() => {
     if (interactionHistoryId) return;
+    if (setExportType) {
+      setExportType('interactions');
+    }
     const updatedParams = {
       sortBy: sortField,
       filters: appliedFilters,

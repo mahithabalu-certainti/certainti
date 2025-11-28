@@ -1265,6 +1265,13 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         const fieldValue =
           constructFormData[field.name] || field.defaultValue || [];
 
+        // Ensure fieldValue is always an array and filter out any empty/null values
+        const safeFieldValue = Array.isArray(fieldValue)
+          ? fieldValue.filter(
+              (item) => item !== null && item !== undefined && item !== ''
+            )
+          : [];
+
         return (
           <div className='w-full'>
             <Select
@@ -1272,33 +1279,47 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               name={field.name}
               className={
                 'custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px] ' +
-                (!fieldValue ||
-                (typeof fieldValue === 'string' && fieldValue.length === 0)
-                  ? 'text-[#7D98B6] '
-                  : '') +
+                (safeFieldValue.length === 0 ? 'text-[#7D98B6] ' : '') +
                 isError +
                 fieldDisabled
               }
-              value={fieldValue}
+              value={safeFieldValue} // Use the safe filtered array
               onChange={(e) => {
                 const { value } = e.target;
-                handleChange(
-                  typeof value === 'string' ? value.split(',') : value
-                );
+                // Also filter the incoming values to remove empty/null
+                const filteredValue =
+                  typeof value === 'string'
+                    ? value
+                        .split(',')
+                        .filter(
+                          (item) =>
+                            item !== null && item !== undefined && item !== ''
+                        )
+                    : value.filter(
+                        (item) =>
+                          item !== null && item !== undefined && item !== ''
+                      );
+                handleChange(filteredValue);
               }}
               disabled={field.disabled}
               displayEmpty
               fullWidth
               size='small'
               renderValue={(selected) => {
-                if ((selected as string[]).length === 0 && field.placeholder) {
+                const selectedArray = selected as string[];
+                // Use the filtered selected array for display
+                const filteredSelected = selectedArray.filter(
+                  (item) => item !== null && item !== undefined && item !== ''
+                );
+
+                if (filteredSelected.length === 0 && field.placeholder) {
                   return (
                     <span style={{ color: '#7D98B6' }}>
                       {field.placeholder}
                     </span>
                   );
                 }
-                return (selected as string[])
+                return filteredSelected
                   .map(
                     (val) =>
                       field.options?.find((opt) => opt.value === val)?.label ??
@@ -1334,11 +1355,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 },
                 '.MuiSelect-select': {
                   padding: '6px 6px',
-                  color:
-                    !fieldValue ||
-                    (typeof fieldValue === 'string' && fieldValue.length === 0)
-                      ? '#7D98B6'
-                      : 'black',
+                  color: safeFieldValue.length === 0 ? '#7D98B6' : 'black',
                 },
                 '&.Mui-disabled': {
                   backgroundColor: '#f3f4f6',
@@ -1385,11 +1402,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 >
                   <Checkbox
                     size='small'
-                    checked={
-                      Array.isArray(fieldValue)
-                        ? fieldValue.indexOf(option.value) > -1
-                        : String(fieldValue).indexOf(option.value) > -1
-                    }
+                    checked={safeFieldValue.indexOf(option.value) > -1}
                     sx={{
                       color: '#CBD6E2',
                       '&.Mui-checked': {

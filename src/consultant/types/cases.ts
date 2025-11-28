@@ -141,6 +141,7 @@ export interface CaseDetails {
   country_code?: string;
   account_status_name?: string;
   account_status_rid?: string;
+  is_send_interaction?: boolean;
 }
 
 export interface CaseDetailsResponse {

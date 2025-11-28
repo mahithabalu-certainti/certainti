@@ -56,6 +56,8 @@ export const Navbar: React.FC<NavbarProps> = ({
 }) => {
   const { instance } = useMsal();
   const passwordResetInstanceRef = useRef<PublicClientApplication | null>(null);
+  const prevIsCaseRouteRef = useRef<boolean>(false);
+  const savedPrevFYRef = useRef<string | null>(null);
   const { successToast, errorToast } = useToast();
   const [searchAnchor, setSearchAnchor] = useState<null | HTMLElement>(null);
   const [notificationAnchor, setNotificationAnchor] =
@@ -168,6 +170,31 @@ export const Navbar: React.FC<NavbarProps> = ({
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [instance]);
+
+  // Route observer: Handle fiscal year reset when leaving Case module
+  useEffect(() => {
+    const prevIsCaseRoute = prevIsCaseRouteRef.current;
+
+    // Transitioning from non-case to case: save current fiscal year
+    if (!prevIsCaseRoute && isCaseModule) {
+      if (savedPrevFYRef.current === null) {
+        savedPrevFYRef.current = fiscalYear;
+      }
+    }
+
+    // Transitioning from case to non-case: restore previous fiscal year
+    if (prevIsCaseRoute && !isCaseModule) {
+      if (savedPrevFYRef.current !== null) {
+        dispatch(setFiscalYear(savedPrevFYRef.current));
+        savedPrevFYRef.current = null;
+      } else {
+        dispatch(setFiscalYear('FY-All'));
+      }
+    }
+
+    // Update the ref for next comparison
+    prevIsCaseRouteRef.current = isCaseModule;
+  }, [location.pathname, isCaseModule, dispatch, fiscalYear]);
 
   const handleProfileMenuOpen = useCallback(
     (event: React.MouseEvent<HTMLElement>) => {

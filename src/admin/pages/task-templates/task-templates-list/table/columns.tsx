@@ -34,8 +34,7 @@ export const getTaskTemplateColumns = (
       borderRight: '1px solid #CBD6E2',
       borderBottom: '1px solid #CBD6E2 !important',
     },
-    editable:
-      permissionMap?.['r_number']?.edit && permissionMap?.['r_number']?.read,
+    editable: false,
     hide:
       !permissionMap?.['r_number']?.edit && !permissionMap?.['r_number']?.read,
     render: (row: TaskTemplateList) =>
@@ -172,7 +171,7 @@ export const getTaskTemplateColumns = (
       !permissionMap?.['priority_rid']?.read,
     sortId: 'priority_name',
     label: 'Priority',
-    width: 110,
+    width: 130,
     sortable: true,
     field: {
       type: 'select',
@@ -216,7 +215,7 @@ export const getTaskTemplateColumns = (
     field: {
       type: 'select',
       required: false,
-      placeholder: 'Choose Catagory',
+      placeholder: 'Choose Category',
       options: taskCategoryTypesOptions,
     },
   },
@@ -232,7 +231,7 @@ export const getTaskTemplateColumns = (
     //   !permissionMap?.['weightage_rid']?.read,
     sortId: 'weightage_value',
     label: 'Weightage',
-    width: 130,
+    width: 145,
     sortable: true,
     field: {
       type: 'select',
@@ -252,12 +251,12 @@ export const getTaskTemplateColumns = (
       !permissionMap?.['status_rid']?.read,
     sortId: 'status_name',
     label: 'Status',
-    width: 100,
+    width: 130,
     sortable: true,
     field: {
       type: 'select',
       required: false,
-      placeholder: ' Choose Status',
+      placeholder: 'Choose Status',
       options: memoizedStatus,
     },
   },
@@ -277,7 +276,7 @@ export const getTaskTemplateColumns = (
     field: {
       type: 'text',
       required: false,
-      placeholder: 'Enter Task Task Description',
+      placeholder: 'Enter Task Description',
       validation: [
         {
           regex: REGEX_PATTERNS.DESCRIPTION,
