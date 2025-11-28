@@ -338,12 +338,16 @@ const CaseNotes: React.FC<NotesProps> = ({
     handleDownload,
     isNotesExportEnable,
     permissionMap,
-    userListOptions
+    userListOptions,
+    undefined,
+    undefined,
+    'case'
   );
 
   const notesFilterFields = getNotesFilterFields(
     permissionMap,
-    userListOptions
+    userListOptions,
+    'case'
   );
 
   const getRowId = (row: NotesList) => row.rid;
