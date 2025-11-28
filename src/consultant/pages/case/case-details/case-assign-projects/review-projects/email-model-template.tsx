@@ -49,6 +49,7 @@ interface EmailModalProps {
   onClose: () => void;
   selectedRows: AssignProject[];
   setSelectedRows: React.Dispatch<React.SetStateAction<AssignProject[]>>;
+  setClearSelectedRows?: React.Dispatch<React.SetStateAction<boolean>>;
   appliedFilters: Record<string, string | number | boolean | string[]>;
   sortBy?: string;
   sortOrder?: SortDirection;
@@ -80,6 +81,7 @@ const EmailModalTemplate: React.FC<EmailModalProps> = ({
   onClose,
   selectedRows,
   setSelectedRows,
+  setClearSelectedRows,
   appliedFilters,
   sortBy,
   sortOrder,
@@ -231,6 +233,7 @@ const EmailModalTemplate: React.FC<EmailModalProps> = ({
         successToast(data?.message || 'Email sent successfully'); // Use data.message
         handleClose();
         setSelectedRows([]);
+        setClearSelectedRows?.((prev) => !prev);
       },
       onError: (error) => {
         console.error('Failed to send email:', error);
