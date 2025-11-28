@@ -42,6 +42,7 @@ import { ActivityMenuItem } from '../../../../types';
 import { useToast } from '../../../../../hooks';
 import { TaskCard } from '../../../../../components/kanban-board/types';
 import { useGetTaskCheckListTypes } from '../../../../../admin/service/task-template/task-template-service';
+import { checkPermission } from '../../../../../common-utils';
 
 const ConfigTabs: ResourceTabs[] = [
   {
@@ -106,8 +107,6 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
     isError,
   } = useGetWorkBreakdownList(accountId || '', caseId || '');
 
-  console.log(permission)
-
   useEffect(() => {
     if (
       !searchParams.get('tab') &&
@@ -118,10 +117,15 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
     }
   }, [searchParams, navigate]);
 
+  const isCaseTeamViewEnable = checkPermission(
+    permission,
+    AllPermissions.CASES_TEAM_VIEW_EDIT
+  );
+
   const caseTeamMembersQuery = useGetCaseTeamMembersDropdown(
     accountId || '',
     caseId || '',
-    !!accountId && !!caseId
+    !!accountId && !!caseId && isCaseTeamViewEnable
   );
   const roleOptionsQuery = useGetRoleOptions();
   const prioritiesQuery = useGetTaskPriorities();

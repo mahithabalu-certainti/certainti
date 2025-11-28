@@ -166,9 +166,6 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
   const formLoading = isCaseTeamLoading;
   const yearOptions = generateYearOptions();
 
-  const currencySymbol =
-    formData.historicalSubmissions[0]?.currency_symbol || '$';
-
   // Updated form structure for historical submission with correct field mapping
   const historicalFields = [
     {
@@ -179,30 +176,30 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
     },
     {
       key: 'total_project_cost',
-      label: `Total Project Cost (${currencySymbol})`,
+      label: 'Total Project Cost',
       type: 'text',
       required: true,
     },
     {
       key: 'total_qre',
-      label: `Total QRE (${currencySymbol})`,
+      label: 'Total QRE',
       type: 'text',
       required: true,
     },
     {
       key: 'total_rd_credits',
-      label: `Total RD Credits (${currencySymbol})`,
+      label: 'Total RD Credits',
       type: 'text',
       required: true,
     },
     {
       key: 'annual_gross_receipts',
-      label: `Annual Gross Receipts (${currencySymbol})`,
+      label: 'Annual Gross Receipts',
       type: 'text',
       required: false,
     },
   ];
-
+  console.log('Historical Fields:', data);
   useEffect(() => {
     // Process API data when it's available
     if (data && !formLoading) {
@@ -244,7 +241,6 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
             total_qre: '',
             total_rd_credits: '',
             annual_gross_receipts: '',
-            currency_symbol: '$',
           },
         ];
         setFormData({
@@ -274,7 +270,6 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
           total_qre: '',
           total_rd_credits: '',
           annual_gross_receipts: '',
-          currency_symbol: '$',
         },
       ];
       setFormData({
@@ -336,7 +331,6 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
         total_qre: '',
         total_rd_credits: '',
         annual_gross_receipts: '',
-        currency_symbol: '$',
       };
 
       return {
@@ -415,9 +409,7 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
       if (!submission.total_project_cost?.trim()) {
         submissionError.total_project_cost = 'Total Project Cost is required';
         isValid = false;
-      } else if (
-        !amountRegex.test(removeCommas(submission.total_project_cost))
-      ) {
+      } else if (!amountRegex.test(removeCommas(submission.total_project_cost))) {
         submissionError.total_project_cost =
           'Total Project Cost must be 1–16 digits and up to 2 decimals';
         isValid = false;
@@ -521,18 +513,13 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
         fiscal_year: parseInt(submission.fiscal_year.toString()) || 0,
         total_project: submission.total_project || 0,
         total_qualified_project: submission.total_qualified_project || 0,
-        total_project_cost:
-          parseFloat(removeCommas(submission.total_project_cost)) || 0,
+        total_project_cost: parseFloat(removeCommas(submission.total_project_cost)) || 0,
         total_qualified_project_cost:
-          parseFloat(
-            removeCommas(submission.total_qualified_project_cost || '0')
-          ) || 0,
+          parseFloat(removeCommas(submission.total_qualified_project_cost || '0')) || 0,
         total_qre: parseFloat(removeCommas(submission.total_qre)) || 0,
-        total_rd_credits:
-          parseFloat(removeCommas(submission.total_rd_credits)) || 0,
+        total_rd_credits: parseFloat(removeCommas(submission.total_rd_credits)) || 0,
         annual_gross_receipts:
-          parseFloat(removeCommas(submission.annual_gross_receipts || '0')) ||
-          0,
+          parseFloat(removeCommas(submission.annual_gross_receipts || '0')) || 0,
         action_type: actionType,
       };
 
@@ -629,7 +616,7 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
         title={'Historical Submission'}
         titleIcon={getTitleIcon()}
         buttons={headerButtons}
-        count={data?.length || 0}
+        count={formData.historicalSubmissions.length}
         showItemCount={true}
         hideSection={false}
       />
@@ -861,9 +848,7 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
                         >
                           <div className='p-1'>
                             <TextField
-                              value={formatNumberWithCommas(
-                                submission.total_project_cost
-                              )}
+                              value={formatNumberWithCommas(submission.total_project_cost)}
                               onChange={(e) => {
                                 const rawValue = removeCommas(e.target.value);
                                 handleSubmissionChange(
@@ -895,13 +880,6 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
                                     border: 'none',
                                   },
                                 },
-                              }}
-                              InputProps={{
-                                startAdornment: (
-                                  <span className='text-[#425A76] text-[13px] pl-1.5'>
-                                    {submission.currency_symbol || '$'}
-                                  </span>
-                                ),
                               }}
                             />
                           </div>
@@ -949,9 +927,7 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
                         >
                           <div className='p-1'>
                             <TextField
-                              value={formatNumberWithCommas(
-                                submission.total_qre
-                              )}
+                              value={formatNumberWithCommas(submission.total_qre)}
                               onChange={(e) => {
                                 const rawValue = removeCommas(e.target.value);
                                 handleSubmissionChange(
@@ -983,13 +959,6 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
                                     border: 'none',
                                   },
                                 },
-                              }}
-                              InputProps={{
-                                startAdornment: (
-                                  <span className='text-[#425A76] text-[13px] pl-1.5'>
-                                    {submission.currency_symbol || '$'}
-                                  </span>
-                                ),
                               }}
                             />
                           </div>
@@ -1035,9 +1004,7 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
                         >
                           <div className='p-1'>
                             <TextField
-                              value={formatNumberWithCommas(
-                                submission.total_rd_credits
-                              )}
+                              value={formatNumberWithCommas(submission.total_rd_credits)}
                               onChange={(e) => {
                                 const rawValue = removeCommas(e.target.value);
                                 handleSubmissionChange(
@@ -1069,13 +1036,6 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
                                     border: 'none',
                                   },
                                 },
-                              }}
-                              InputProps={{
-                                startAdornment: (
-                                  <span className='text-[#425A76] text-[13px] pl-1.5'>
-                                    {submission.currency_symbol || '$'}
-                                  </span>
-                                ),
                               }}
                             />
                           </div>
@@ -1123,9 +1083,7 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
                         >
                           <div className='p-1'>
                             <TextField
-                              value={formatNumberWithCommas(
-                                submission.annual_gross_receipts
-                              )}
+                              value={formatNumberWithCommas(submission.annual_gross_receipts)}
                               onChange={(e) => {
                                 const rawValue = removeCommas(e.target.value);
                                 handleSubmissionChange(
@@ -1157,13 +1115,6 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
                                     border: 'none',
                                   },
                                 },
-                              }}
-                              InputProps={{
-                                startAdornment: (
-                                  <span className='text-[#425A76] text-[13px] pl-1.5'>
-                                    {submission.currency_symbol || '$'}
-                                  </span>
-                                ),
                               }}
                             />
                           </div>
