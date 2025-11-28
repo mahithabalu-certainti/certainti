@@ -621,8 +621,14 @@ const createActivityMeetingSchema = Joi.object({
  fiscal_year : Joi.number().optional(),
  activity_type: Joi.string().valid("Meeting").required(),
  subject: Joi.string().max(500).required(),
-  effective_start_datetime: Joi.date().required(),
-  effective_end_datetime: Joi.date().required(),
+ effective_start_date: Joi.date().required(),
+ effective_end_date: Joi.date().required(),
+ effective_start_time: Joi.string().pattern(/^([01]\d|2[0-3]):([0-5]\d)$/).required().messages({
+      'string.pattern.base': 'Start time must be in HH:mm format (e.g., 11:00)'
+    }),
+ effective_end_time: Joi.string().pattern(/^([01]\d|2[0-3]):([0-5]\d)$/).required().messages({
+      'string.pattern.base': 'End time must be in HH:mm format (e.g., 11:00)'
+    }),
   invitees: Joi.string().optional(),
   attendees: Joi.string().required(),
   minutes_of_meeting: Joi.string().optional().allow(""),

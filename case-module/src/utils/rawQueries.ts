@@ -1492,7 +1492,7 @@ return query;
     a.created_datetime, a.modified_datetime,
     a.fiscal_year, e.name AS attached_to, 
     a.attachment_level, a.r_number, a.attach_to, a.status_rid,
-    a.to_email,a.cc_email,a.sender_email
+    a.to_email,a.cc_email,a.sender_email,a.activity_type
     FROM
     ${schemaName}.activities a
     LEFT JOIN LATERAL (

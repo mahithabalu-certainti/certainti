@@ -48,20 +48,10 @@ export async function scheduleTeamsMeetingUtil(
     type: "required",
   }));
 
-  // Use moment-timezone to combine start date with end time if dates differ
-  let startDateTime = activityRequest.effective_start_datetime as Date;
-  let endDateTime = activityRequest.effective_end_datetime;
-  if (
-    startDateTime &&
-    endDateTime &&
-    moment.tz(startDateTime, activityRequest.time_zone || "UTC").format("YYYY-MM-DD") !==
-      moment.tz(endDateTime, activityRequest.time_zone || "UTC").format("YYYY-MM-DD")
-  ) {
-    // Replace time in startDateTime with time from endDateTime
-    const startDate = moment.tz(startDateTime, activityRequest.time_zone || "UTC").format("YYYY-MM-DD");
-    const endTime = moment.tz(endDateTime, activityRequest.time_zone || "UTC").format("HH:mm:ss");
-    startDateTime = new Date(moment.tz(`${startDate}T${endTime}`, activityRequest.time_zone || "UTC").toISOString());
-  }
+const startDateTime = moment(`${activityRequest.effective_start_date} ${activityRequest.effective_start_time}`,  "YYYY-MM-DD HH:mm");
+const endDateTime   = moment(`${activityRequest.effective_end_date} ${activityRequest.effective_end_time}`,      "YYYY-MM-DD HH:mm");
+const endDateTimepayload   = moment(`${activityRequest.effective_start_date} ${activityRequest.effective_end_time}`,      "YYYY-MM-DD HH:mm");
+
 
   const payload = {
     subject: activityRequest.subject,
@@ -70,7 +60,7 @@ export async function scheduleTeamsMeetingUtil(
       timeZone: activityRequest.time_zone || "UTC",
     },
     end: {
-      dateTime: endDateTime,
+      dateTime: endDateTimepayload,
       timeZone: activityRequest.time_zone || "UTC",
     },
     attendees,
@@ -89,8 +79,8 @@ export async function scheduleTeamsMeetingUtil(
       },
       range: {
         type: "endDate",
-        startDate: moment.tz(activityRequest.effective_start_datetime, activityRequest.time_zone || "UTC").format("YYYY-MM-DD"),
-        endDate: moment.tz(activityRequest.effective_end_datetime, activityRequest.time_zone || "UTC").format("YYYY-MM-DD"),
+        startDate: activityRequest.effective_start_date,
+        endDate: activityRequest.effective_end_date,
         recurrenceTimeZone: activityRequest.time_zone || "UTC",
       },
     },
@@ -115,16 +105,9 @@ export async function scheduleTeamsMeetingUtil(
 
     // Check for conflicting meetings
     // Convert to ISO string if not already
-    const startDateTimeStr =
-      typeof activityRequest.effective_start_datetime === "string"
-        ? activityRequest.effective_start_datetime
-        : new Date(activityRequest.effective_start_datetime).toISOString();
-    const endDateTimeStr =
-      typeof activityRequest.effective_end_datetime === "string"
-        ? activityRequest.effective_end_datetime
-        : activityRequest.effective_end_datetime
-        ? new Date(activityRequest.effective_end_datetime).toISOString()
-        : "";
+    // Convert moment objects to ISO string
+    const startDateTimeStr = moment(startDateTime).toISOString();
+    const endDateTimeStr = moment(endDateTime).toISOString();
 
     // Query only the exact requested time window
     const conflictResponse = await graphClient
@@ -182,7 +165,7 @@ export async function scheduleTeamsMeetingUtil(
     } else {
       logMessage("Final result: No conflict, meeting can be scheduled.");
     }
-
+    logMessage(`Scheduling meeting with payload: ${JSON.stringify(payload)}`);
     // Add sendInvitations query parameter to send invites automatically
     const event = await graphClient
       .api(`/users/${support_email}/events`)

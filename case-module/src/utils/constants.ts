@@ -724,7 +724,7 @@ export const rawQueries = {
   },
    fetchActivityStatusByName(statusName: string, activityType: string): string {
     return `
-    SELECT rid, status_name as name FROM ${MAIN_SCHEMA_NAME}.activity_status WHERE activity_type = '${activityType}' and status_name = '${statusName}'`;
+    SELECT rid, status_name as name FROM ${MAIN_SCHEMA_NAME}.activity_status WHERE lower(activity_type) = lower('${activityType}') and lower(status_name) = lower('${statusName}')`;
   },
   fetchIndustry(industryIds: any): string {
     let ids = industryIds.map((d: any) => `'${d}'`);

@@ -2070,7 +2070,7 @@ class ActivitySchemaService {
     );
 
     const [statusInfo]: any[] = await this.mainDbSequelize.query(
-      rawQueries.getStatusDetails(emailDetails?.status_rid ?? ""),
+      rawQueries.getActivityStatusDetails(emailDetails?.status_rid, emailDetails?.activity_type ?? ""),
       {
         type: "SELECT",
       }
