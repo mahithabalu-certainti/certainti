@@ -358,6 +358,7 @@ export type CreateTaskTemplateType = {
   workflow_connector : WorkflowConnectorItems
   weightage_rid : string
   task_category_rid : string
+  milestone_sequence : number
 }
 
 export type priorityTypes = {

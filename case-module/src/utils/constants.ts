@@ -1564,6 +1564,9 @@ export const rawQueries = {
   getStatus () {
     return `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status`
   },
+  getMilestoneSequence(rid : string) {
+    return `SELECT rid, r_number FROM ${MAIN_SCHEMA_NAME}.milestone_template WHERE rid = '${rid}'`
+  }
 };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 
 const keyContactRole = {

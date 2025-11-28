@@ -23,6 +23,7 @@ interface CaseTaskTemplateAttributes {
   task_description? : string
   weightage_rid? : string
   task_category_rid? : string
+  milestone_sequence? : number
 }
 
 export interface CaseTaskTemplateCreationAttributes
@@ -53,6 +54,7 @@ export class TaskTemplate
   public task_description?: string | undefined;
   public weightage_rid?: string;
   public task_category_rid? : string;
+  public milestone_sequence! : number
 
   static initialize(
     sequelize: Sequelize,
@@ -97,7 +99,8 @@ export class TaskTemplate
         milestone_template_rid: { type: DataTypes.STRING(50), allowNull: true },
         task_description : {type : DataTypes.TEXT(), allowNull : true},
         weightage_rid : {type : DataTypes.STRING, allowNull : true},
-        task_category_rid : {type : DataTypes.STRING, allowNull : true}
+        task_category_rid : {type : DataTypes.STRING, allowNull : true},
+        milestone_sequence : {type : DataTypes.INTEGER, allowNull : true}
       },
       {
         sequelize,
