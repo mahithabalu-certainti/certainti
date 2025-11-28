@@ -829,6 +829,19 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
           updateResponse?.statusMessage || 'Task updated successfully';
         successToast(message);
         setOriginalTask(editedTask);
+        queryClient.invalidateQueries({
+          queryKey: ['taskActivities', accountId, caseId, taskId],
+        });
+        queryClient.invalidateQueries({
+          queryKey: [
+            'taskActivitiesInfinite',
+            {
+              case_rid: caseId,
+              account_rid: accountId,
+              task_rid: taskId,
+            },
+          ],
+        });
         if (onTaskUpdate) {
           onTaskUpdate();
         }
@@ -1026,6 +1039,19 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
             assigned_to_name: user.name,
           }))
         );
+        queryClient.invalidateQueries({
+          queryKey: ['taskActivities', accountId, caseId, taskId],
+        });
+        queryClient.invalidateQueries({
+          queryKey: [
+            'taskActivitiesInfinite',
+            {
+              case_rid: caseId,
+              account_rid: accountId,
+              task_rid: taskId,
+            },
+          ],
+        });
       } catch (error) {
         console.error('Failed to add collaborator:', error);
       } finally {
@@ -1063,6 +1089,19 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
             assigned_to_name: user.name,
           }))
         );
+        queryClient.invalidateQueries({
+          queryKey: ['taskActivities', accountId, caseId, taskId],
+        });
+        queryClient.invalidateQueries({
+          queryKey: [
+            'taskActivitiesInfinite',
+            {
+              case_rid: caseId,
+              account_rid: accountId,
+              task_rid: taskId,
+            },
+          ],
+        });
         successToast('Collaborator removed successfully');
       } catch (error) {
         console.error('Failed to remove collaborator:', error);
@@ -1698,6 +1737,19 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                       setSelectedCollaboratorIds((prev) =>
                         prev.filter((id) => id !== userToRemove.id)
                       );
+                      queryClient.invalidateQueries({
+                        queryKey: ['taskActivities', accountId, caseId, taskId],
+                      });
+                      queryClient.invalidateQueries({
+                        queryKey: [
+                          'taskActivitiesInfinite',
+                          {
+                            case_rid: caseId,
+                            account_rid: accountId,
+                            task_rid: taskId,
+                          },
+                        ],
+                      });
                       successToast('Collaborator removed successfully');
                     },
                     onError: () => {

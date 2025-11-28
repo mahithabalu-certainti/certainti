@@ -11,6 +11,7 @@ import { useInfiniteTaskActivities } from '../../consultant/services/work-breakd
 import { transformComments, transformActivities, type TaskCommentRaw, type TaskActivityRaw } from '../../consultant/pages/case/case-details/work-breakdown/helper';
 import { generateInitials, generateColorFromName } from './helper';
 import LoadingSkeleton from './loading-skeleton';
+import { caseServiceApi } from '../../api/api';
 
 interface TaskCommentsSectionProps {
   fieldVisibility: Record<string, boolean | undefined>;
@@ -359,6 +360,22 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
             task_rid: taskId,
             page: 1,
             limit: 100,
+          },
+        ],
+      });
+
+      // Invalidate activities queries
+      queryClient.invalidateQueries({
+        queryKey: ['taskActivities', accountId, caseId, taskId],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: [
+          'taskActivitiesInfinite',
+          {
+            case_rid: caseId,
+            account_rid: accountId,
+            task_rid: taskId,
           },
         ],
       });

@@ -711,7 +711,14 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
               freeSolo
               fullWidth
               disabled={fieldDisabled.tags}
-              options={availableTags.map((tag) => tag.name)}
+              options={availableTags
+                .map((tag) => tag.name)
+                .filter((tagName) => {
+                  const currentTags = shouldPrepopulate
+                    ? editedTask?.tags || []
+                    : selectedTags || [];
+                  return !currentTags.includes(tagName);
+                })}
               value={
                 shouldPrepopulate
                   ? editedTask?.tags || []
