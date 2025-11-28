@@ -33,7 +33,7 @@ import { AllPermissions } from '../../common-service';
 import { useAuthHook, useToast } from '../../hooks';
 import { RootState } from '../../store/store';
 import { setFiscalYear } from '../../store/slices/account-slice';
-import { checkPermission, fiscalYears } from '../../common-utils';
+import { checkPermission, fiscalYears, getFiltersFromStorage } from '../../common-utils';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { CASE, PROFILE } from '../../routes';
 import { GlobalFiscalYearDropdown } from '../fiscal-dropdown';
@@ -72,7 +72,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const navigate = useNavigate();
   const location = useLocation();
   const { name } = useSelector((state: RootState) => state.auth);
-  const { fiscalYear, filters } = useSelector(
+  const { fiscalYear, filters, userId } = useSelector(
     (state: RootState) => state.account
   );
   const isAdminEnable = useSelector(
@@ -202,9 +202,18 @@ export const Navbar: React.FC<NavbarProps> = ({
       }
     }
 
+    // Ensure we are synced with storage if we are not in a case module and not transitioning from one
+    // This handles initial load on non-case pages, or remounts (e.g. Admin module)
+    if (!prevIsCaseRoute && !isCaseModule && userId) {
+      const { fiscalYear: storedFY } = getFiltersFromStorage(userId);
+      if (storedFY !== fiscalYear) {
+        dispatch(setFiscalYear(storedFY));
+      }
+    }
+
     // Update the ref for next comparison
     prevIsCaseRouteRef.current = isCaseModule;
-  }, [location.pathname, isCaseModule, dispatch, fiscalYear]);
+  }, [location.pathname, isCaseModule, dispatch, fiscalYear, userId]);
 
   const handleProfileMenuOpen = useCallback(
     (event: React.MouseEvent<HTMLElement>) => {
