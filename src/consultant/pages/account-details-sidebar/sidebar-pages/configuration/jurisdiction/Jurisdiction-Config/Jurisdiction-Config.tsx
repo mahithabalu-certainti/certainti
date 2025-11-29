@@ -2,21 +2,22 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Box } from '@mui/material';
 import { jurisdictionConfigFormFields } from './helper';
-import { FormBuilder } from '../../../../../../components';
-import { useToast } from '../../../../../../hooks';
-import { OnChange } from '../../../../../../common-service';
-import { useParams, useSearchParams } from 'react-router-dom';
-import { useFetchState } from '../../../../../services/account';
-import SkeletonForm from '../../../../../../components/form-builder/skeleton-form';
+import { useParams } from 'react-router-dom';
+import { useToast } from '../../../../../../../hooks';
 import {
   useFetchCasesConfigFields,
   useUpdateJurisdictionConfig,
-} from '../../../../../services/case-team';
-import { SelectOption } from '../../../../../types';
+} from '../../../../../../services/case-team';
+import { useFetchState } from '../../../../../../services/account';
+import { SelectOption } from '../../../../../../types';
+import { OnChange } from '../../../../../../../common-service';
+import SkeletonForm from '../../../../../../../components/form-builder/skeleton-form';
+import { FormBuilder } from '../../../../../../../components';
 
 interface JurisdictionConfigProps {
   formRef: React.RefObject<HTMLFormElement>;
   setIsFormSaving: React.Dispatch<React.SetStateAction<boolean>>;
+  countryId: string | null;
   // setIsSaveDisable: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
@@ -31,23 +32,22 @@ interface FormValues extends Record<string, FormValueType> {
 const JurisdictionConfig: React.FC<JurisdictionConfigProps> = ({
   formRef,
   setIsFormSaving,
+  countryId,
   // setIsSaveDisable,
 }) => {
   const { successToast } = useToast();
   const [stateRequried, setStateRequried] = useState<boolean>(false);
   // const [fedralRequried, setIdfedralRequried] = useState<boolean>(false);
-  const { caseId } = useParams();
-  const [searchParams] = useSearchParams();
+
   const updateconfig = useUpdateJurisdictionConfig();
-  const accountid = searchParams.get('accountID');
-  const cuurrency_rid = searchParams.get('country_rid');
-  const level = 'case';
+  const { accountid } = useParams();
+
+  const level = 'account';
   const { data, isLoading, refetch } = useFetchCasesConfigFields(
     accountid as string,
-    level,
-    caseId as string
+    level
   );
-  const states = useFetchState(cuurrency_rid);
+  const states = useFetchState(countryId);
 
   const configDetails = data?.data;
   const memoizedState: SelectOption[] = useMemo(
@@ -120,12 +120,11 @@ const JurisdictionConfig: React.FC<JurisdictionConfigProps> = ({
         : [];
 
     const payload = {
-      case_rid: caseId ?? '',
       account_rid: accountid ?? '',
       is_federal_level: isFederalLevel,
       is_state_level: isStateLevel,
       states,
-      level: 'case',
+      level: 'account',
     };
     setIsFormSaving(true);
     updateconfig.mutate(payload, {

@@ -108,26 +108,46 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
   const { permission } = useSelector((state: RootState) => state.permission);
 
   // Permission
-  // const casesTeamEditFields = useMemo(
-  //   () =>
-  //     permission?.find(
-  //       (item) => item.name === AllPermissions.CASES_TEAM_VIEW_EDIT
-  //     )?.fields ?? [],
-  //   [permission]
-  // );
+  const casesTeamEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.HISTORICAL_SUBMISSION_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
 
-  // const permissionMap = useMemo(() => {
-  //   const map: Record<string, { read: boolean; edit: boolean }> = {};
-  //   casesTeamEditFields.forEach((item) => {
-  //     map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
-  //   });
-  //   return map;
-  // }, [casesTeamEditFields]);
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    casesTeamEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [casesTeamEditFields]);
 
   const isCaseTeamEditable = useMemo(
     () =>
       permission
-        .find((item) => item.name === AllPermissions.CASES_TEAM_VIEW_EDIT)
+        .find(
+          (item) => item.name === AllPermissions.HISTORICAL_SUBMISSION_VIEW_EDIT
+        )
+        ?.fields?.some((field) => field.edit),
+    [permission]
+  );
+  const isHistoricalSubmissionCreate = useMemo(
+    () =>
+      permission
+        .find(
+          (item) => item.name === AllPermissions.HISTORICAL_SUBMISSION_CREATE
+        )
+        ?.fields?.some((field) => field.edit),
+    [permission]
+  );
+  const isHistoricalSubmissionDelete = useMemo(
+    () =>
+      permission
+        .find(
+          (item) => item.name === AllPermissions.HISTORICAL_SUBMISSION_DELETE
+        )
         ?.fields?.some((field) => field.edit),
     [permission]
   );
@@ -726,7 +746,7 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
                                   e.target.value
                                 )
                               }
-                              disabled={!isCaseTeamEditable}
+                              disabled={!permissionMap.fiscal_year?.edit}
                               size='small'
                               fullWidth
                               displayEmpty
@@ -857,7 +877,7 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
                                   rawValue
                                 );
                               }}
-                              disabled={!isCaseTeamEditable}
+                              disabled={!permissionMap.total_project_cost?.edit}
                               size='small'
                               fullWidth
                               placeholder='Enter Total Project Cost'
@@ -936,7 +956,7 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
                                   rawValue
                                 );
                               }}
-                              disabled={!isCaseTeamEditable}
+                              disabled={!permissionMap.total_qre?.edit}
                               size='small'
                               fullWidth
                               placeholder='Enter Total QRE'
@@ -1013,7 +1033,7 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
                                   rawValue
                                 );
                               }}
-                              disabled={!isCaseTeamEditable}
+                              disabled={!permissionMap.total_rd_credits?.edit}
                               size='small'
                               fullWidth
                               placeholder='Enter Total RD Credits'
@@ -1092,7 +1112,9 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
                                   rawValue
                                 );
                               }}
-                              disabled={!isCaseTeamEditable}
+                              disabled={
+                                !permissionMap.annual_gross_receipts?.edit
+                              }
                               size='small'
                               fullWidth
                               placeholder='Enter Annual Gross Receipts'
@@ -1152,7 +1174,7 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
                         <TableCell sx={{ padding: 0 }}>
                           <Tooltip
                             title={'Remove entry'}
-                            disableHoverListener={!isCaseTeamEditable}
+                            disableHoverListener={!isHistoricalSubmissionDelete}
                             arrow
                             placement='top'
                           >
@@ -1160,7 +1182,7 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
                               type='button'
                               onClick={() => handleRemoveSubmission(index)}
                               style={{
-                                cursor: !isCaseTeamEditable
+                                cursor: !isHistoricalSubmissionDelete
                                   ? 'default'
                                   : 'pointer',
                                 background: 'transparent',
@@ -1169,7 +1191,7 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
                                 marginTop: '6px',
                               }}
                               aria-label='Remove entry'
-                              disabled={!isCaseTeamEditable}
+                              disabled={!isHistoricalSubmissionDelete}
                             >
                               <React.Suspense fallback={null}>
                                 <KeyContactRemoveIcon
@@ -1196,7 +1218,7 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
               className='flex items-center cursor-pointer gap-1 bg-[#EAF0F5] h-[30px] color-[#2D3E4F] px-2 text-[12px] font-semibold disabled:bg-gray-100 disabled:opacity-75 disabled:cursor-default'
               type='button'
               onClick={handleAddSubmission}
-              disabled={formLoading || !isCaseTeamEditable}
+              disabled={formLoading || !isHistoricalSubmissionCreate}
             >
               <span>
                 <React.Suspense fallback={null}>

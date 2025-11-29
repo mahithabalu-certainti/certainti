@@ -26,6 +26,40 @@ export type AssignProject = {
   project_technical_point_of_contact: string | null;
   currency_symbol: string | undefined;
 };
+export type ReviewProject = {
+  rid: string;
+  r_number: string;
+  account_rid: string;
+  project_rid: string;
+  project_code: string;
+  project_name: string | null;
+  project_type_name: string;
+  classification_name: string;
+  fiscal_year: number;
+  project_classification_rid: string | null;
+  project_classification_name: string | null;
+  project_client_group: string | null;
+  project_group: string | null;
+  total_effort_prj: number | null;
+  total_cost_prj: number | null;
+  total_cost_fte_prj: number | null;
+  total_cost_subcon_prj: number | null;
+  total_cost_nonlabor_prj: number | null;
+  assessment_status: string | null;
+  rd_percent_final: string | null;
+  qre_final: string | null;
+  comments: string | null;
+  modified_datetime: string;
+  project_point_of_contact: string | null;
+  project_technical_point_of_contact: string | null;
+  currency_symbol: string | undefined;
+  total_subcon_prj: number | null;
+  total_nonlabor_prj: number | null;
+  total_effort_fte_prj: number | null;
+  total_resources_prj: number | null;
+  total_tasks: number | null;
+  total_technical_summaries: number | null;
+};
 
 export interface AssignProjectListURLParams {
   page: number;

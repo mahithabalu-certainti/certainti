@@ -208,6 +208,7 @@ export enum AllModules {
   CHECKLISTS = 'checklists',
   TASK_TEMPLATES = 'task_templates',
   WORKBREAKDOWN = 'workbreakdown',
+  HISTORICAL_SUBMISSION = 'case_historical_submission',
   CASES_TEAM = 'case_team',
 }
 
@@ -331,6 +332,9 @@ export enum AllPermissions {
   TASK_TEMPLATE_VIEW_EDIT = 'task_templates_view_edit',
   TASK_TEMPLATE_EXPORT = 'task_templates_export',
   CASES_WORKBREAKDOWN_VIEW_EDIT = 'cases_workbreakdown_view_edit',
+  HISTORICAL_SUBMISSION_CREATE = 'case_historical_submission_create',
+  HISTORICAL_SUBMISSION_VIEW_EDIT = 'case_historical_submission_view_edit',
+  HISTORICAL_SUBMISSION_DELETE = 'case_historical_submission_delete',
   ACTIVITIES_OVERVIEW = 'activities_overview',
   ACTIVITIES_TIMELINE = 'activities_timeline',
 }

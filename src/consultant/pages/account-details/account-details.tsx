@@ -848,7 +848,12 @@ export const AccountDetails = () => {
           />
         );
       case 'configuration':
-        return <Configuration />;
+        return (
+          <Configuration
+            countryId={data?.data.accountById.country_rid ?? null}
+          />
+        );
+
       default:
         return (
           <div className='w-full pr-4 pl-2 py-2'>
@@ -980,6 +985,14 @@ export const AccountDetails = () => {
             disabled: false,
             hide: false,
             icon: SettingIcon,
+          },
+          {
+            name: 'Jurisdiction Configuration',
+            key: 'jurisdiction_configuration',
+            id: AllMenus.MANAGE_ACCOUNT_ACCESS,
+            disabled: false,
+            hide: false,
+            icon: ResourcesIcon,
           },
         ],
       },

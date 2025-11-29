@@ -24,7 +24,7 @@ import {
 } from '../../../../../services/cases-assign-projects/review-project-service';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useGetUserOptions } from '../../../../../services/case-team';
-import { AssignProject } from '../../../../../types/assign-projects';
+import { ReviewProject } from '../../../../../types/assign-projects';
 import { SortDirection } from '../../../../../../components/table/types';
 import { useToast } from '../../../../../../hooks';
 
@@ -47,8 +47,8 @@ interface EmailModalProps {
   title: string;
   isOpen: boolean;
   onClose: () => void;
-  selectedRows: AssignProject[];
-  setSelectedRows: React.Dispatch<React.SetStateAction<AssignProject[]>>;
+  selectedRows: ReviewProject[];
+  setSelectedRows: React.Dispatch<React.SetStateAction<ReviewProject[]>>;
   setClearSelectedRows?: React.Dispatch<React.SetStateAction<boolean>>;
   appliedFilters: Record<string, string | number | boolean | string[]>;
   sortBy?: string;
