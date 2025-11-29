@@ -117,7 +117,7 @@ export class CaseModelService {
     const TaskHistoryModel = TaskHistory.initialize(sequelize, schemaName);
     const ActivityAttachmentsModel = ActivityAttachments.initialise(sequelize, schemaName);
     const ActivityHistoryModel = ActivityHistory.initialize(sequelize, schemaName);
-    const TaskSummaryModel = TaskSummary.initialize(sequelize, "");
+    const TaskSummaryModel = TaskSummary.initialize(mainDbSequelize, "");
 
     const models = {
       Case: CaseModel,

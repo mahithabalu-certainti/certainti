@@ -1038,7 +1038,8 @@ async function fetchCallActivityById(
 async function getActivityStatus(req: Request, res: Response): Promise<void> {
   const methodName = "Get Activity Status";
   try {
-    const activityStatus = await activityService.getActivityStatus();
+    const activityType = req.query.activity_type as string || 'all'
+    const activityStatus = await activityService.getActivityStatus(activityType);
     if (activityStatus.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
       handleSuccessResponse(res, activityStatus.data);

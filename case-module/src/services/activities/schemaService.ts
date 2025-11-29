@@ -198,7 +198,7 @@ class ActivitySchemaService {
   ) {
     // Implementation for creating interactions in the database
     try {
-      const { Activities, TaskSummary } = await this.caseModelService.getModels(
+      const { Activities } = await this.caseModelService.getModels(
         accountNumber
       );
 
@@ -212,27 +212,6 @@ class ActivitySchemaService {
       const casecreationResponse = await Activities.create(activityData, {
         transaction,
       });
-
-   /*   await TaskSummary.create(
-        {
-          task_rid: casecreationResponse.rid,
-          r_number: casecreationResponse.r_number || "",
-          account_rid: taskRequest.account_rid || "",
-          attach_to: taskRequest.attach_to || "",
-          attachment_level: taskRequest.attachment_level || "",
-          task_name: taskRequest.task_name || "",
-          description: taskRequest.description || "",
-          fiscal_year: taskRequest.fiscal_year || 0,
-          assigned_to: taskRequest.assigned_to || "",
-          status_rid: taskRequest.status_rid || "",
-          priority_rid: taskRequest.priority_rid || "",
-          effective_start_datetime: taskRequest.effective_start_datetime,
-          effective_end_datetime: taskRequest.effective_end_datetime,
-          created_by: taskRequest.created_by || "",
-          created_datetime: new Date(),
-        }
-      ); 
-      */
 
       await this.addTaskManagementTimeline(
         accountNumber,
@@ -251,6 +230,36 @@ class ActivitySchemaService {
       logMessage(`Error creating case: ${error}`);
       throw new Error("Error creating case: " + error);
     }
+  }
+
+  async addTaskSummary( 
+    accountNumber: string,
+    taskRequest: IActivityTask,
+    taskRid: string,
+    taskRNumber: string
+  )
+  {
+    const { TaskSummary } = await this.caseModelService.getModels("");
+       await TaskSummary.create(
+        {
+          task_rid: taskRid,
+          r_number: taskRNumber || "",
+          account_rid: taskRequest.account_rid || "",
+          attach_to: taskRequest.attach_to || "",
+          attachment_level: taskRequest.attachment_level || "",
+          task_name: taskRequest.task_name || "",
+          description: taskRequest.description || "",
+          fiscal_year: taskRequest.fiscal_year || 0,
+          assigned_to: taskRequest.assigned_to || "",
+          status_rid: taskRequest.status_rid || "",
+          priority_rid: taskRequest.priority_rid || "",
+          effective_start_datetime: taskRequest.effective_start_datetime,
+          effective_end_datetime: taskRequest.effective_end_datetime,
+          created_by: taskRequest.created_by || "",
+          created_datetime: new Date(),
+        }
+      ); 
+
   }
   async updateActivityTask(
     accountNumber: string,
@@ -277,7 +286,7 @@ class ActivitySchemaService {
         },
         transaction,
       });
-     /* await TaskSummary.update(
+      await TaskSummary.update(
         {
           task_name: taskRequest.task_name || "",
           description: taskRequest.description || "",
@@ -295,7 +304,7 @@ class ActivitySchemaService {
           }
         }
       );
-      */
+    
       const checkIsDifferentCollaborator = await this.isNewCollaborator(
         userId,
         accountNumber
@@ -2490,12 +2499,12 @@ class ActivitySchemaService {
     }
   }
 
-   async getActivityStatus() {
+   async getActivityStatus(activityType:string) {
       if (!this.mainDbSequelize) {
         this.mainDbSequelize = await this.caseModelService.getMainSequelize();
       }
       const activityStatus = await this.mainDbSequelize.query(
-        rawQueries.getActivityStatus(),
+        rawQueries.getActivityStatus(activityType),
         {
           type: "SELECT",
         }

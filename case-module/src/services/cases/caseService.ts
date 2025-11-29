@@ -2526,12 +2526,24 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
         if(fetchPriorityQuery) {
           priority = await mainDb.query(fetchPriorityQuery)
         }
-        let taskStatusQuery = rawQueries.getAllTaskStatus(taskStatusIds);
-        if(taskStatusQuery) {
-          taskStatusType = await mainDb.query(taskStatusQuery)
-        }
-
-        let taskStatusMap : Map<string, string> = new Map(taskStatusType?.[0]?.map((d : any) => [d.rid, d.task_status_name]));
+          let taskStatusQuery;
+          // let taskStatusMap : Map<string, string> = new Map(taskStatusType?.[0]?.map((d : any) => [d.rid, d.task_status_name]));
+          if(data.task_type === 'activity') {
+            taskStatusIds.push(taskStatusID.task_status_rid!);
+            taskStatusQuery = rawQueries.fetchActivityStatus(taskStatusIds);
+          } else {
+            taskStatusQuery = rawQueries.getAllTaskStatus(taskStatusIds);
+          }
+          if(taskStatusQuery) {
+            taskStatusType = await mainDb.query(taskStatusQuery);
+          }
+          let taskStatusMap: Map<string, string>;
+          if(data.task_type === 'activity') {
+            taskStatusMap = new Map(taskStatusType?.[0]?.map((d: any) => [d.rid, d.name]));
+          } else {
+            taskStatusMap = new Map(taskStatusType?.[0]?.map((d: any) => [d.rid, d.task_status_name]));
+          }
+      
         let priorityMap : Map<string, string> = new Map(priority?.[0]?.map((d : any) => [d.rid, d.priority_name]));
         let assignedToMap : Map<string, string> = new Map(getUsers?.[0]?.map((d : any) => [d.rid, d.name]));
         let checkListItemsMap : Map<string, string> = new Map(checkListStatusName?.[0]?.map((d : any) => [d.rid, d.status_name]));
