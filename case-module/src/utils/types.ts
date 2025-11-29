@@ -602,6 +602,7 @@ export type CommentsListType = {
   account_rid : string
   case_rid : string
   task_rid : string
+  task_type: string
 }
 
 export type ActivityType = {
