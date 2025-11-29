@@ -1168,9 +1168,10 @@ return query;
     return query;
   }
 
-  export const fetchTaskComments = (page : number, limit : number, taskRid : string, accountRid : string, caseRid : string, schemaName : string) => {
+  export const fetchTaskComments = (page : number, limit : number, taskRid : string, accountRid : string, caseRid : string, schemaName : string, taskType: string) => {
     let offset = (page - 1) * limit;
-    let pagination = `LIMIT ${limit} OFFSET ${offset}`
+    let pagination = `LIMIT ${limit} OFFSET ${offset}`;
+    let caseRidFilter = taskType !== 'activity' ? `AND tc.case_rid = '${caseRid}'` : '';
     let query = 
     `
     WITH calculate_total_result AS(
@@ -1178,8 +1179,7 @@ return query;
     FROM ${schemaName}.task_comments tc
     WHERE
     tc.account_rid = '${accountRid}'
-    AND
-    tc.case_rid = '${caseRid}'
+    ${caseRidFilter}
     AND
     tc.task_rid = '${taskRid}'
     ), 
@@ -1190,8 +1190,7 @@ return query;
     LEFT JOIN calculate_total_result c ON c.rid = tc.rid
     WHERE
     tc.account_rid = '${accountRid}'
-    AND
-    tc.case_rid = '${caseRid}'
+    ${caseRidFilter}
     AND
     tc.task_rid = '${taskRid}'
     ORDER BY tc.created_datetime ASC 
