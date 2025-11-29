@@ -36,7 +36,7 @@ const JurisdictionConfig: React.FC<JurisdictionConfigProps> = ({
   // setIsSaveDisable,
 }) => {
   const { successToast } = useToast();
-  const [stateRequried, setStateRequried] = useState<boolean>(false);
+  const [stateRequired, setStateRequired] = useState<boolean>(false);
   // const [fedralRequried, setIdfedralRequried] = useState<boolean>(false);
 
   const updateconfig = useUpdateJurisdictionConfig();
@@ -99,7 +99,7 @@ const JurisdictionConfig: React.FC<JurisdictionConfigProps> = ({
   );
   useEffect(() => {
     if (configDetails) {
-      setStateRequried(!!configDetails.is_state_level);
+      setStateRequired(!!configDetails.is_state_level);
     }
   }, [configDetails]);
   const handleFormSubmit = (data: object) => {
@@ -145,7 +145,7 @@ const JurisdictionConfig: React.FC<JurisdictionConfigProps> = ({
 
   const onChangeField = (data: OnChange) => {
     if (data.fieldName === 'is_state_level') {
-      setStateRequried(
+      setStateRequired(
         !!(Array.isArray(data.fieldValue) && data.fieldValue.length > 0)
       );
     }
@@ -177,7 +177,7 @@ const JurisdictionConfig: React.FC<JurisdictionConfigProps> = ({
             data={jurisdictionConfigFormFields(
               // permissionMap,
               memoizedState,
-              stateRequried
+              stateRequired
             )}
             formRef={formRef}
             outData={handleFormSubmit}
