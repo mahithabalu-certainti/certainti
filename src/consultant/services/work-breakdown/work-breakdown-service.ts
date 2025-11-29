@@ -421,15 +421,24 @@ export interface CollaboratorsResponse {
 }
 export const fetchCollaborators = async (
   accountId: string,
-  caseId: string,
-  taskId: string
+  caseId: string | undefined,
+  taskId: string,
+  taskType?: string
 ): Promise<CollaboratorData[]> => {
   try {
-    const payload = {
-      case_rid: caseId,
+    const payload: Record<string, unknown> = {
       account_rid: accountId,
       rid: taskId,
     };
+
+    if (caseId) {
+      payload.case_rid = caseId;
+    }
+
+    if (taskType) {
+      payload.task_type = taskType;
+    }
+
     const response = await caseServiceApi.post<CollaboratorsResponse>(
       '/api/cases/task/collaborator/list',
       payload
@@ -547,19 +556,35 @@ export const useGetTaskActivities = (
 // Fetch Task Activities with Pagination
 export interface TaskActivitiesListParams {
   account_rid: string;
-  case_rid: string;
+  case_rid?: string;
   task_rid: string;
   page: number;
   limit: number;
+  task_type?: string;
 }
 
 export const fetchTaskActivitiesWithPagination = async (
   params: TaskActivitiesListParams
 ): Promise<TaskActivitiesResponse> => {
   try {
+    const payload: Record<string, unknown> = {
+      account_rid: params.account_rid,
+      task_rid: params.task_rid,
+      page: params.page,
+      limit: params.limit,
+    };
+
+    if (params.case_rid) {
+      payload.case_rid = params.case_rid;
+    }
+
+    if (params.task_type) {
+      payload.task_type = params.task_type;
+    }
+
     const response = await caseServiceApi.post<TaskActivitiesResponse>(
       '/api/cases/task/activity/list',
-      params
+      payload
     );
     return response.data;
   } catch (error) {
@@ -570,9 +595,10 @@ export const fetchTaskActivitiesWithPagination = async (
 
 // Infinite Scrolling Task Activities (Limit: 5 per page)
 export interface InfiniteTaskActivitiesParams {
-  case_rid: string;
+  case_rid?: string;
   account_rid: string;
   task_rid: string;
+  task_type?: string;
 }
 
 export const useInfiniteTaskActivities = (
@@ -585,7 +611,10 @@ export const useInfiniteTaskActivities = (
     queryKey: ['taskActivitiesInfinite', params],
     queryFn: async ({ pageParam = 1 }) => {
       const response = await fetchTaskActivitiesWithPagination({
-        ...params,
+        account_rid: params.account_rid,
+        case_rid: params.case_rid,
+        task_rid: params.task_rid,
+        task_type: params.task_type,
         page: pageParam as number,
         limit: 5, // Load 5 activities per page
       });
@@ -614,7 +643,6 @@ export const useInfiniteTaskActivities = (
     gcTime: 0,
     retry: 0,
     enabled: !!(
-      params.case_rid &&
       params.account_rid &&
       params.task_rid &&
       options?.enabled !== false
@@ -623,14 +651,15 @@ export const useInfiniteTaskActivities = (
 };
 export const useGetCollaborators = (
   accountId: string,
-  caseId: string,
+  caseId: string | undefined,
   taskId: string,
-  enabled: boolean = true
+  enabled: boolean = true,
+  taskType?: string
 ): ReturnType<typeof useQuery<CollaboratorData[], Error>> => {
   return useQuery<CollaboratorData[], Error>({
-    queryKey: ['collaborators', accountId, caseId, taskId],
-    queryFn: () => fetchCollaborators(accountId, caseId, taskId),
-    enabled: enabled && !!accountId && !!caseId && !!taskId,
+    queryKey: ['collaborators', accountId, caseId, taskId, taskType],
+    queryFn: () => fetchCollaborators(accountId, caseId, taskId, taskType),
+    enabled: enabled && !!accountId && !!taskId,
   });
 };
 
