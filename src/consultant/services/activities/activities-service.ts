@@ -271,26 +271,29 @@ export const useUpdateActivityTask = () => {
 };
 
 // Activty Status
-export const getActivityStatusUrl = (): string =>
-  '/api/activities/activityStatus';
+export const getActivityStatusUrl = (activity_type?: string): string =>
+  activity_type
+    ? `/api/activities/activityStatus?activity_type=${activity_type}`
+    : '/api/activities/activityStatus';
 
-export const fetchActivityStatus =
-  async (): Promise<ActivityStatusResponse> => {
-    try {
-      const { data } = await caseServiceApi.get<ActivityStatusResponse>(
-        getActivityStatusUrl()
-      );
-      return data;
-    } catch (error) {
-      console.error('Error fetching activity statuses:', error);
-      throw error;
-    }
-  };
+export const fetchActivityStatus = async (
+  activity_type?: string
+): Promise<ActivityStatusResponse> => {
+  try {
+    const { data } = await caseServiceApi.get<ActivityStatusResponse>(
+      getActivityStatusUrl(activity_type)
+    );
+    return data;
+  } catch (error) {
+    console.error('Error fetching activity statuses:', error);
+    throw error;
+  }
+};
 
-export const useGetActivityStatus = () => {
+export const useGetActivityStatus = (activity_type?: string) => {
   return useQuery<ActivityStatusResponse, Error>({
-    queryKey: ['activity-statuses'],
-    queryFn: fetchActivityStatus,
+    queryKey: ['activity-statuses', activity_type],
+    queryFn: () => fetchActivityStatus(activity_type),
     retry: 0,
     staleTime: Infinity,
     gcTime: Infinity,
