@@ -253,7 +253,8 @@ getReviewProjects(
 sentReviewProjects(
   data: any, 
   filters: Record<string, any>,
-  userId:string
+  userId:string,
+  files? : Express.Multer.File[]
 ): Promise<{
   statusCode: number;
   message: string;
@@ -434,7 +435,16 @@ export interface IActivityService {
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { cases: any };
+    data?: { task: any };
+  }>;
+  updateActivityTask(
+    taskRequest: IActivityTask,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { task: any };
   }>;
    getAllActivities(
     userId: string,
@@ -524,7 +534,7 @@ export interface IActivityService {
     errorMessage?: string;
     data?: { activityDetails: any };
   }>;
-   getActivityStatus(): Promise<{
+   getActivityStatus(activityType: string): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;

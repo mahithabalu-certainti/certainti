@@ -1467,7 +1467,7 @@ return query;
   'assigned_to', ct.assigned_to,
   'priority_rid', ct.priority_rid,
   'description', ct.description,
-  'status_rid', ct.status_rid,
+  'task_status_rid', ct.status_rid,
   'checklists', fci.checklists,
   'tags', ftt.tags
   ) AS task_details

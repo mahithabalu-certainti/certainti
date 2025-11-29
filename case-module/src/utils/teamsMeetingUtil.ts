@@ -10,7 +10,7 @@ import moment from "moment-timezone";
  */
 export async function scheduleTeamsMeetingUtil(
   activityRequest: IActivityMeeting,
-  userId: string,
+  userEmail: string,
   senderEmailInfo: {
     email: string;
     clientId: string;
@@ -35,11 +35,49 @@ export async function scheduleTeamsMeetingUtil(
   }
   // Remove duplicates and trim emails
   meetingParticipants = Array.from(new Set(meetingParticipants.map(e => e.trim())));
-  const attendees = activityRequest.meeting_participants.map((email) => ({
+  // Add userEmail to attendees if not already present
+  if (userEmail && !meetingParticipants.includes(userEmail)) {
+    meetingParticipants.push(userEmail);
+  }
+  const attendees = meetingParticipants.map((email) => ({
     emailAddress: { address: email },
     type: "required",
   }));
+  let recurrentpattern =  {} 
+   if(activityRequest.recurrence_type === "daily"){
+  recurrentpattern =  {
+        type: activityRequest.recurrence_type,
+        interval: Number(activityRequest.recurrence_interval) || 1,
+      };
+    }
 
+    if(activityRequest.recurrence_type === "weekly"){
+    recurrentpattern =  {
+        type: activityRequest.recurrence_type || "weekly",
+        interval: Number(activityRequest.recurrence_interval) || 1,
+        daysOfWeek: activityRequest.recurrence_days || [],
+        firstDayOfWeek: "sunday",
+      };
+    }
+  if(activityRequest.recurrence_type === "monthly"){
+    if(activityRequest.recurrence_day_of_month != undefined && activityRequest.recurrence_day_of_month > 0){
+    recurrentpattern =  {
+        type: "absoluteMonthly",
+        interval: Number(activityRequest.recurrence_interval) || 1,
+        dayOfMonth: Number(activityRequest.recurrence_day_of_month) || 1,
+      };
+    }
+    else{
+      recurrentpattern =  {
+        type: "relativeMonthly",
+        interval: Number(activityRequest.recurrence_interval) || 1,
+        daysOfWeek: activityRequest.recurrence_days || [],
+        index: activityRequest.recurrence_monthly_index || "first",
+        firstDayOfWeek: "sunday",
+      };
+    }
+
+  }
   
 
 const startDateTime = moment(`${activityRequest.effective_start_date} ${activityRequest.effective_start_time}`,  "YYYY-MM-DD HH:mm");
@@ -64,12 +102,7 @@ const payload = {
     isOnlineMeeting: true,
     onlineMeetingProvider: "teamsForBusiness",
     recurrence: {
-      pattern: {
-        type: activityRequest.recurrence_type || "weekly",
-        interval: Number(activityRequest.recurrence_interval) || 1,
-        daysOfWeek: activityRequest.recurrence_days || [],
-        firstDayOfWeek: "sunday",
-      },
+      pattern:recurrentpattern,
       range: {
         type: "endDate",
         startDate: activityRequest.effective_start_date,

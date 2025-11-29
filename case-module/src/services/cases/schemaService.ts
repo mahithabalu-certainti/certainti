@@ -69,7 +69,7 @@ import {
   CaseHistory,
   setupCaseHistorySequence,
 } from "../../models/caseHistory";
-import { CaseTeam, setupCaseTeamSequence } from "../../models/caseTeamModel";
+import { CaseTeam } from "../../models/caseTeamModel";
 import { Jurisdiction } from "../../models/jurisdiction";
 import { CaseHistorySubmission, setupCaseHistorySubmissionSequence } from "../../models/caseHistorySubmissionModel";
 import { log } from "console";
@@ -599,7 +599,6 @@ return !response;
       await caseHistoryModel.sync({ force: false });
       await setupCaseHistorySequence(orgDbSequlize, schemaName);
       await caseTeamModel.sync({ force: false });
-      await setupCaseTeamSequence(orgDbSequlize, schemaName);
       await jurisdictionModel.sync({ force: false });
       await checkListModel.sync({ force: false });
       await setupCheckListSequence(orgDbSequlize, schemaName);
