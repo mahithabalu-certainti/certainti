@@ -9,12 +9,16 @@ import { caseServiceApi } from '../../../api/api';
 import {
   ActivityList,
   ActivityListApiResponse,
+  ActivityListExportURLParams,
   ActivityListURLParams,
+  ActivityStatusResponse,
   ActivityTaskFormPayload,
+  ActivityType,
   CallActivityDetails,
   CallActivityDetailsResponse,
   EmailActivityDetails,
   EmailActivityDetailsResponse,
+  ExportAcivityListResponse,
   MeetingActivityDetails,
   MeetingActivityDetailsResponse,
   TaskActivityDetails,
@@ -26,6 +30,7 @@ import {
   createActivityEmailURL,
   createActivityMeetingURL,
   createActivityTaskURL,
+  getActivityExportListURL,
   updateActivityCallURL,
   updateActivityEmailURL,
   updateActivityMeetingURL,
@@ -243,4 +248,74 @@ export const useCreateActivityTask = () => {
       return response.data;
     },
   });
+};
+
+// Activty Status
+export const getActivityStatusUrl = (): string =>
+  '/api/activities/activityStatus';
+
+export const fetchActivityStatus =
+  async (): Promise<ActivityStatusResponse> => {
+    try {
+      const { data } = await caseServiceApi.get<ActivityStatusResponse>(
+        getActivityStatusUrl()
+      );
+      return data;
+    } catch (error) {
+      console.error('Error fetching activity statuses:', error);
+      throw error;
+    }
+  };
+
+export const useGetActivityStatus = () => {
+  return useQuery<ActivityStatusResponse, Error>({
+    queryKey: ['activity-statuses'],
+    queryFn: fetchActivityStatus,
+    retry: 0,
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+  });
+};
+
+// Export Activity List
+export const ExportActivityList = async (
+  params: ActivityListExportURLParams,
+  activityType: ActivityType
+): Promise<void> => {
+  try {
+    const filename = `${activityType}_activity_list.xlsx`;
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+    const response = await caseServiceApi.get<ExportAcivityListResponse>(
+      getActivityExportListURL({ ...params, timezone })
+    );
+
+    const base64Data = response.data?.data;
+
+    if (!base64Data) {
+      console.error('No base64 data found in the response.');
+      return;
+    }
+
+    const binary = atob(base64Data);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+
+    const blob = new Blob([bytes], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error('Export failed:', error);
+  }
 };

@@ -1,4 +1,7 @@
-import { formatDateToYYYYMMDDWithTime } from '../../../../common-utils';
+import {
+  formatDateToYYYYMMDDWithTime,
+  formatTimeToAMPM,
+} from '../../../../common-utils';
 import { ListTableColumn } from '../../../../components/table/types';
 import { ActivityList, ActivityType } from '../../../types';
 
@@ -102,10 +105,10 @@ export const getActivityCallLogListColumns = (
       ),
   },
   {
-    id: 'activity_type',
-    label: 'Call Type',
+    id: 'call_platform',
+    label: 'Call Platform',
     sortable: true,
-    sortId: 'activity_type',
+    sortId: 'call_platform',
     width: 160,
   },
   {
@@ -229,13 +232,6 @@ export const getActivityEmailListColumns = (
     },
   },
   {
-    id: 'sender_email',
-    label: 'Email Sent By',
-    sortable: true,
-    sortId: 'sender_email',
-    width: 160,
-  },
-  {
     id: 'subject',
     label: 'Email Subject',
     sortable: true,
@@ -286,7 +282,7 @@ export const getActivityMeetingListColumns = (
     label: 'Created On',
     sortable: true,
     sortId: 'created_datetime',
-    width: 170,
+    width: 200,
     render: (row) => formatDateToYYYYMMDDWithTime(row.created_datetime),
   },
   {
@@ -295,6 +291,22 @@ export const getActivityMeetingListColumns = (
     sortable: true,
     sortId: 'invited_by',
     width: 160,
+  },
+  {
+    id: 'effective_start_time',
+    label: 'Meeting Start Time',
+    sortable: true,
+    sortId: 'effective_start_time',
+    width: 160,
+    render: (row) => formatTimeToAMPM(row.effective_start_time),
+  },
+  {
+    id: 'effective_end_time',
+    label: 'Meeting End Time',
+    sortable: true,
+    sortId: 'effective_end_time',
+    width: 160,
+    render: (row) => formatTimeToAMPM(row.effective_end_time),
   },
   {
     id: 'attached_to',
@@ -337,20 +349,6 @@ export const getActivityTaskListColumns = (
       ),
   },
   {
-    id: 'assigned_to_name',
-    label: 'Assigned To',
-    sortable: true,
-    sortId: 'assigned_to_name',
-    width: 160,
-  },
-  {
-    id: 'created_by_name',
-    label: 'Created By',
-    sortable: true,
-    sortId: 'created_by_name',
-    width: 160,
-  },
-  {
     id: 'status_name',
     label: 'Task Status',
     sortable: true,
@@ -365,10 +363,41 @@ export const getActivityTaskListColumns = (
     width: 180,
   },
   {
-    id: 'due_date',
+    id: 'created_by_name',
+    label: 'Created By',
+    sortable: true,
+    sortId: 'created_by_name',
+    width: 160,
+  },
+  {
+    id: 'created_datetime',
+    label: 'Created On',
+    sortable: true,
+    sortId: 'created_datetime',
+    width: 200,
+    render: (row) => formatDateToYYYYMMDDWithTime(row.created_datetime),
+  },
+  {
+    id: 'description',
+    editId: 'description',
+    sortId: 'description',
+    label: 'Description',
+    width: 200,
+    sortable: true,
+  },
+  {
+    id: 'effective_end_datetime',
     label: 'Due Date',
     sortable: true,
-    sortId: 'due_date',
+    sortId: 'effective_end_datetime',
+    width: 200,
+    render: (row) => formatDateToYYYYMMDDWithTime(row.effective_end_datetime),
+  },
+  {
+    id: 'assigned_to_name',
+    label: 'Assigned To',
+    sortable: true,
+    sortId: 'assigned_to_name',
     width: 160,
   },
 ];

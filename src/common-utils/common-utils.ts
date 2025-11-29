@@ -1,6 +1,8 @@
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
+import customParseFormat from 'dayjs/plugin/customParseFormat';
+dayjs.extend(customParseFormat);
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
@@ -1096,4 +1098,13 @@ export const getIntersection = (
   return start <= end
     ? { start: start.toISOString(), end: end.toISOString() }
     : null;
+};
+
+export const formatTimeToAMPM = (time?: string | null): string => {
+  if (!time || typeof time !== 'string') return '-';
+  const trimmed = time.trim();
+  // Accept common time formats
+  const parsed = dayjs(trimmed, ['HH:mm', 'HH:mm:ss', 'H:mm'], true);
+  if (!parsed.isValid()) return '-';
+  return parsed.format('hh:mm A'); // AM/PM
 };

@@ -15,7 +15,11 @@ import {
   getTaskFilterFields,
 } from '../../../activities/activities-list/helper';
 import { ACTIVITY_CREATE } from '../../../../../routes';
-import { ActivityType } from '../../../../types';
+import {
+  ActivityListExportURLParams,
+  ActivityType,
+  ExportType,
+} from '../../../../types';
 import {
   getActivityAllActivityListColumns,
   getActivityCallLogListColumns,
@@ -30,6 +34,7 @@ import ActivityDetails from '../../../activities/activities-details/activity-det
 import { ActivityListTable } from '../../../activities';
 import TaskDetails from '../../../activities/activities-details/task-details';
 import { useGetUserOptions } from '../../../../services/case-team';
+import { useGetActivityStatus } from '../../../../services/activities/activities-service';
 
 const ActivityTabs = [
   {
@@ -46,11 +51,17 @@ const ActivityTabs = [
 ];
 
 interface ActivitiesProps {
+  setExportType?: (type: ExportType) => void;
+  setActivityParams: React.Dispatch<
+    React.SetStateAction<ActivityListExportURLParams>
+  >;
   accountInActive: boolean;
   accountDetails: accountDetailsProps;
 }
 
 const Activities: React.FC<ActivitiesProps> = ({
+  setActivityParams,
+  setExportType,
   accountInActive,
   accountDetails,
 }) => {
@@ -85,6 +96,7 @@ const Activities: React.FC<ActivitiesProps> = ({
   };
 
   const userListOptions = useGetUserOptions(accountid, true);
+  const activityStatus = useGetActivityStatus();
 
   const initialTab = useMemo(() => {
     return 'all';
@@ -122,20 +134,29 @@ const Activities: React.FC<ActivitiesProps> = ({
     );
   }, [userListOptions]);
 
+  const activityStatusOptions = useMemo(() => {
+    return (
+      activityStatus?.data?.data?.activityStatus?.map((item) => ({
+        value: item.status_name,
+        label: item.status_name,
+      })) || []
+    );
+  }, [activityStatus]);
+
   const filterFields = useMemo(() => {
     switch (tabParam) {
       case 'task':
-        return getTaskFilterFields(userOptions);
+        return getTaskFilterFields(userOptions, activityStatusOptions);
       case 'email':
-        return getEmailFilterFields();
+        return getEmailFilterFields(activityStatusOptions);
       case 'meeting':
-        return getMeetingFilterFields();
+        return getMeetingFilterFields(activityStatusOptions);
       case 'call':
-        return getCallFilterFields();
+        return getCallFilterFields(activityStatusOptions);
       default:
-        return getAllActivityFilterFields();
+        return getAllActivityFilterFields(activityStatusOptions);
     }
-  }, [tabParam, userOptions]);
+  }, [tabParam, userOptions, activityStatusOptions]);
 
   const tabs = [
     { label: 'All', value: 'all' },
@@ -276,6 +297,8 @@ const Activities: React.FC<ActivitiesProps> = ({
               accountInActive={accountInActive}
               entityDetails={entityDetails}
               entityLevel='account'
+              setExportType={setExportType}
+              setActivityParams={setActivityParams}
             />
           )}
 
@@ -293,6 +316,8 @@ const Activities: React.FC<ActivitiesProps> = ({
               accountInActive={accountInActive}
               entityDetails={entityDetails}
               entityLevel='account'
+              setExportType={setExportType}
+              setActivityParams={setActivityParams}
             />
           )}
 
@@ -310,6 +335,8 @@ const Activities: React.FC<ActivitiesProps> = ({
               accountInActive={accountInActive}
               entityDetails={entityDetails}
               entityLevel='account'
+              setExportType={setExportType}
+              setActivityParams={setActivityParams}
             />
           )}
 
@@ -327,6 +354,8 @@ const Activities: React.FC<ActivitiesProps> = ({
               accountInActive={accountInActive}
               entityDetails={entityDetails}
               entityLevel='account'
+              setExportType={setExportType}
+              setActivityParams={setActivityParams}
             />
           )}
 
@@ -344,6 +373,8 @@ const Activities: React.FC<ActivitiesProps> = ({
               accountInActive={accountInActive}
               entityDetails={entityDetails}
               entityLevel='account'
+              setExportType={setExportType}
+              setActivityParams={setActivityParams}
             />
           )}
         </div>

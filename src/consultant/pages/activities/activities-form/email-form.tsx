@@ -119,7 +119,7 @@ const EmailForm: React.FC = () => {
       setFormData((prev) => ({
         ...prev,
         to: emailData.to_email || [],
-        cc: emailData.cc_email || [],
+        cc: emailData.cc_emails || [],
         subject: emailData.subject || '',
         emailBody: emailData.body_html || '',
         created_on: formatDateToYYYYMMDDWithTime(
@@ -789,7 +789,7 @@ const EmailForm: React.FC = () => {
                     Attachments ({formData.attachments.length})
                   </span>
                 </div>
-                <div className='space-y-2'>
+                <div className='space-y-2 max-h-[130px] overflow-y-auto'>
                   {formData.attachments.map((attachment) => (
                     <div
                       key={attachment.id}

@@ -34,108 +34,113 @@ const dateOptions: { option: string; value: string }[] = [
 //   { option: 'Between', value: 'between' },
 // ];
 
-export const getAllActivityFilterFields =
-  () //   permissionMap: Record<string, { read: boolean; edit: boolean }>
-  : FieldConfig[] => [
-    {
-      name: 'Activity ID',
-      value: 'r_number',
-      type: 'text',
-      operatorOption: textOptions,
-    },
-    {
-      name: 'Activity Type',
-      value: 'activity_type',
-      type: 'enum',
-      operatorOption: enumOptions,
-      options: [
-        { option: 'Email', value: 'Email' },
-        { option: 'Task', value: 'Task' },
-        { option: 'Meeting', value: 'Meeting' },
-        { option: 'Call', value: 'Call' },
-      ],
-    },
-    {
-      name: 'Created By',
-      value: 'created_by_name',
-      type: 'text',
-      operatorOption: textOptions,
-    },
-    {
-      name: 'Status',
-      value: 'status_name',
-      type: 'text',
-      operatorOption: textOptions,
-    },
-    {
-      name: 'Related To',
-      value: 'attached_to',
-      type: 'text',
-      operatorOption: textOptions,
-    },
-    {
-      name: 'Due Date',
-      value: 'due_date',
-      type: 'date',
-      operatorOption: dateOptions,
-    },
-  ];
+export const getAllActivityFilterFields = (
+  activityStatusOptions: { value: string; label: string }[]
+  //   permissionMap: Record<string, { read: boolean; edit: boolean }>
+): FieldConfig[] => [
+  {
+    name: 'Activity ID',
+    value: 'r_number',
+    type: 'text',
+    operatorOption: textOptions,
+  },
+  {
+    name: 'Activity Type',
+    value: 'activity_type',
+    type: 'enum',
+    operatorOption: enumOptions,
+    options: [
+      { option: 'Email', value: 'Email' },
+      { option: 'Task', value: 'Task' },
+      { option: 'Meeting', value: 'Meeting' },
+      { option: 'Call', value: 'Call' },
+    ],
+  },
+  {
+    name: 'Created By',
+    value: 'created_by_name',
+    type: 'text',
+    operatorOption: textOptions,
+  },
+  {
+    name: 'Status',
+    value: 'status_name',
+    type: 'enum',
+    operatorOption: enumOptions,
+    options: activityStatusOptions.map((opt) => ({
+      option: opt.label,
+      value: opt.value,
+    })),
+  },
+  {
+    name: 'Related To',
+    value: 'attached_to',
+    type: 'text',
+    operatorOption: textOptions,
+  },
+  {
+    name: 'Due Date',
+    value: 'due_date',
+    type: 'date',
+    operatorOption: dateOptions,
+  },
+];
 
-export const getEmailFilterFields =
-  () //   permissionMap: Record<string, { read: boolean; edit: boolean }>
-  : FieldConfig[] => [
-    {
-      name: 'Email ID',
-      value: 'r_number',
-      type: 'text',
-      operatorOption: textOptions,
-    },
-    {
-      name: 'Email Status',
-      value: 'status_name',
-      type: 'text',
-      operatorOption: enumOptions,
-    },
-    {
-      name: 'Related To',
-      value: 'attached_to',
-      type: 'text',
-      operatorOption: textOptions,
-    },
-    {
-      name: 'Created By',
-      value: 'created_by_name',
-      type: 'text',
-      operatorOption: textOptions,
-    },
-    {
-      name: 'Created On',
-      value: 'created_datetime',
-      type: 'date',
-      operatorOption: dateOptions,
-    },
-    {
-      name: 'Email To',
-      value: 'to_email',
-      type: 'text',
-      operatorOption: textOptions,
-    },
-    {
-      name: 'Email Sent By',
-      value: 'sender_email',
-      type: 'text',
-      operatorOption: textOptions,
-    },
-    {
-      name: 'Email Subject',
-      value: 'subject',
-      type: 'text',
-      operatorOption: textOptions,
-    },
-  ];
+export const getEmailFilterFields = (
+  activityStatusOptions: { value: string; label: string }[]
+  //   permissionMap: Record<string, { read: boolean; edit: boolean }>
+): FieldConfig[] => [
+  {
+    name: 'Email ID',
+    value: 'r_number',
+    type: 'text',
+    operatorOption: textOptions,
+  },
+  {
+    name: 'Email Status',
+    value: 'status_name',
+    type: 'enum',
+    operatorOption: enumOptions,
+    options: activityStatusOptions.map((opt) => ({
+      option: opt.label,
+      value: opt.value,
+    })),
+  },
+  {
+    name: 'Related To',
+    value: 'attached_to',
+    type: 'text',
+    operatorOption: textOptions,
+  },
+  {
+    name: 'Created By',
+    value: 'created_by_name',
+    type: 'text',
+    operatorOption: textOptions,
+  },
+  {
+    name: 'Created On',
+    value: 'created_datetime',
+    type: 'date',
+    operatorOption: dateOptions,
+  },
+  {
+    name: 'Email To',
+    value: 'to_email',
+    type: 'text',
+    operatorOption: textOptions,
+  },
+  {
+    name: 'Email Subject',
+    value: 'subject',
+    type: 'text',
+    operatorOption: textOptions,
+  },
+];
 
 export const getTaskFilterFields = (
-  userListOptions: { value: string; label: string }[]
+  userListOptions: { value: string; label: string }[],
+  activityStatusOptions: { value: string; label: string }[]
   //   permissionMap: Record<string, { read: boolean; edit: boolean }>
 ): FieldConfig[] => [
   {
@@ -165,6 +170,10 @@ export const getTaskFilterFields = (
     value: 'status_name',
     type: 'enum',
     operatorOption: enumOptions,
+    options: activityStatusOptions.map((opt) => ({
+      option: opt.label,
+      value: opt.value,
+    })),
   },
   {
     name: 'Related To',
@@ -180,90 +189,100 @@ export const getTaskFilterFields = (
   },
 ];
 
-export const getMeetingFilterFields =
-  () //   permissionMap: Record<string, { read: boolean; edit: boolean }>
-  : FieldConfig[] => [
-    {
-      name: 'Meeting ID',
-      value: 'r_number',
-      type: 'text',
-      operatorOption: textOptions,
-    },
-    {
-      name: 'Meeting Status',
-      value: 'status_name',
-      type: 'enum',
-      operatorOption: enumOptions,
-    },
-    {
-      name: 'Created On',
-      value: 'created_datetime',
-      type: 'date',
-      operatorOption: dateOptions,
-    },
-    {
-      name: 'Invited By',
-      value: 'created_by_name',
-      type: 'text',
-      operatorOption: textOptions,
-    },
-    {
-      name: 'Related To',
-      value: 'attached_to',
-      type: 'text',
-      operatorOption: textOptions,
-    },
-  ];
+export const getMeetingFilterFields = (
+  activityStatusOptions: { value: string; label: string }[]
+  //   permissionMap: Record<string, { read: boolean; edit: boolean }>
+): FieldConfig[] => [
+  {
+    name: 'Meeting ID',
+    value: 'r_number',
+    type: 'text',
+    operatorOption: textOptions,
+  },
+  {
+    name: 'Meeting Status',
+    value: 'status_name',
+    type: 'enum',
+    operatorOption: enumOptions,
+    options: activityStatusOptions.map((opt) => ({
+      option: opt.label,
+      value: opt.value,
+    })),
+  },
+  {
+    name: 'Created On',
+    value: 'created_datetime',
+    type: 'date',
+    operatorOption: dateOptions,
+  },
+  {
+    name: 'Invited By',
+    value: 'created_by_name',
+    type: 'text',
+    operatorOption: textOptions,
+  },
+  {
+    name: 'Related To',
+    value: 'attached_to',
+    type: 'text',
+    operatorOption: textOptions,
+  },
+];
 
-export const getCallFilterFields =
-  () //   permissionMap: Record<string, { read: boolean; edit: boolean }>
-  : FieldConfig[] => [
-    {
-      name: 'Call ID',
-      value: 'r_number',
-      type: 'text',
-      operatorOption: textOptions,
-    },
-    {
-      name: 'Call Type',
-      value: 'activity_type',
-      type: 'enum',
-      operatorOption: enumOptions,
-    },
-    {
-      name: 'Related To',
-      value: 'attached_to',
-      type: 'text',
-      operatorOption: textOptions,
-    },
-    {
-      name: 'Call Status',
-      value: 'status_name',
-      type: 'enum',
-      operatorOption: enumOptions,
-    },
-    {
-      name: 'Call Start Date',
-      value: 'effective_start_datetime',
-      type: 'date',
-      operatorOption: dateOptions,
-    },
-    {
-      name: 'Call End Date',
-      value: 'effective_end_datetime',
-      type: 'date',
-      operatorOption: dateOptions,
-    },
-    {
-      name: 'Created By',
-      value: 'created_by_name',
-      type: 'text',
-      operatorOption: textOptions,
-    },
-    {
-      name: 'Created On',
-      value: 'created_datetime',
-      type: 'date',
-      operatorOption: dateOptions,
-    },
-  ];
+export const getCallFilterFields = (
+  activityStatusOptions: { value: string; label: string }[]
+  //   permissionMap: Record<string, { read: boolean; edit: boolean }>
+): FieldConfig[] => [
+  {
+    name: 'Call ID',
+    value: 'r_number',
+    type: 'text',
+    operatorOption: textOptions,
+  },
+  {
+    name: 'Call Platform',
+    value: 'call_platform',
+    type: 'text',
+    operatorOption: textOptions,
+  },
+  {
+    name: 'Related To',
+    value: 'attached_to',
+    type: 'text',
+    operatorOption: textOptions,
+  },
+  {
+    name: 'Call Status',
+    value: 'status_name',
+    type: 'enum',
+    operatorOption: enumOptions,
+    options: activityStatusOptions.map((opt) => ({
+      option: opt.label,
+      value: opt.value,
+    })),
+  },
+  {
+    name: 'Call Start Date',
+    value: 'effective_start_datetime',
+    type: 'date',
+    operatorOption: dateOptions,
+  },
+  {
+    name: 'Call End Date',
+    value: 'effective_end_datetime',
+    type: 'date',
+    operatorOption: dateOptions,
+  },
+  {
+    name: 'Created By',
+    value: 'created_by_name',
+    type: 'text',
+    operatorOption: textOptions,
+  },
+  {
+    name: 'Created On',
+    value: 'created_datetime',
+    type: 'date',
+    operatorOption: dateOptions,
+  },
+];

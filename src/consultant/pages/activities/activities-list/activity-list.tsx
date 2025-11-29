@@ -7,8 +7,10 @@ import {
 } from 'react-router-dom';
 import {
   ActivityList,
+  ActivityListExportURLParams,
   ActivityListURLParams,
   ActivityType,
+  ExportType,
 } from '../../../types';
 import {
   ListTableColumn,
@@ -37,6 +39,10 @@ interface ActivityListTableProps {
     fiscalYear?: string | number;
   };
   entityLevel: 'account' | 'case' | 'project';
+  setExportType?: (type: ExportType) => void;
+  setActivityParams: React.Dispatch<
+    React.SetStateAction<ActivityListExportURLParams>
+  >;
 }
 
 const ActivityListTable: React.FC<ActivityListTableProps> = ({
@@ -52,6 +58,8 @@ const ActivityListTable: React.FC<ActivityListTableProps> = ({
   accountInActive,
   entityDetails,
   entityLevel,
+  setActivityParams,
+  setExportType,
 }) => {
   const navigate = useNavigate();
   const { caseId, accountid, projectid } = useParams();
@@ -101,6 +109,26 @@ const ActivityListTable: React.FC<ActivityListTableProps> = ({
     }));
   }, [currentPage, appliedFilters, searchValue]);
 
+  useEffect(() => {
+    if (setExportType) {
+      setExportType('activities');
+    }
+    setActivityParams({
+      sortBy: tableParams.sortBy,
+      sortOrder: tableParams.sortOrder,
+      filters: appliedFilters,
+      search: searchValue,
+      activity_type: activityType,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    appliedFilters,
+    searchValue,
+    tableParams.sortBy,
+    tableParams.sortOrder,
+    activityType,
+  ]);
+
   const handleSort = (sortBy: string, sortOrder: 'asc' | 'desc') => {
     const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
     setTableParams((prev) => ({ ...prev, sortBy, sortOrder: apiOrder }));
@@ -140,7 +168,16 @@ const ActivityListTable: React.FC<ActivityListTableProps> = ({
   const actionMenuItems = [
     {
       label: 'Edit',
-      disabled: accountInActive,
+      disabled: (row: ActivityList) => {
+        if (row?.activity_type?.toLowerCase() === 'email') {
+          return (
+            row?.status_name?.toLowerCase() === 'sent' ||
+            accountInActive ||
+            false
+          );
+        }
+        return accountInActive ?? false;
+      },
       onClick: (row: ActivityList) => handleEdit(row),
       hide: false,
     },

@@ -14,7 +14,11 @@ import {
   getTaskFilterFields,
 } from '../../../activities/activities-list/helper';
 import { ACTIVITY_CREATE } from '../../../../../routes';
-import { ActivityType } from '../../../../types';
+import {
+  ActivityListExportURLParams,
+  ActivityType,
+  ExportType,
+} from '../../../../types';
 import {
   getActivityAllActivityListColumns,
   getActivityCallLogListColumns,
@@ -28,6 +32,8 @@ import { ActivitiesIcon } from '../../../../../assets';
 import ActivityDetails from '../../../activities/activities-details/activity-details';
 import { ActivityListTable } from '../../../activities';
 import TaskDetails from '../../../activities/activities-details/task-details';
+import { useGetUserOptions } from '../../../../services/case-team';
+import { useGetActivityStatus } from '../../../../services/activities/activities-service';
 
 const ActivityTabs = [
   {
@@ -47,12 +53,18 @@ interface ProjectActivitiesProps {
   accountInActive: boolean;
   projectFiscalYear?: number | string;
   projectCode?: string;
+  setExportType?: (type: ExportType) => void;
+  setActivityParams: React.Dispatch<
+    React.SetStateAction<ActivityListExportURLParams>
+  >;
 }
 
 const ProjectActivities: React.FC<ProjectActivitiesProps> = ({
   accountInActive,
   projectFiscalYear,
   projectCode,
+  setActivityParams,
+  setExportType,
 }) => {
   const navigate = useNavigate();
   const [appliedFilters, setAppliedFilters] = useState<
@@ -86,6 +98,9 @@ const ProjectActivities: React.FC<ProjectActivitiesProps> = ({
     fiscalYear: projectFiscalYear,
   };
 
+  const userListOptions = useGetUserOptions(accountId, true);
+  const activityStatus = useGetActivityStatus();
+
   const initialTab = useMemo(() => {
     return 'all';
   }, []);
@@ -113,20 +128,38 @@ const ProjectActivities: React.FC<ProjectActivitiesProps> = ({
     setCurrentPage(0);
   };
 
+  const userOptions = useMemo(() => {
+    return (
+      userListOptions?.data?.map((item) => ({
+        value: item.rid,
+        label: item?.name || '',
+      })) || []
+    );
+  }, [userListOptions]);
+
+  const activityStatusOptions = useMemo(() => {
+    return (
+      activityStatus?.data?.data?.activityStatus?.map((item) => ({
+        value: item.status_name,
+        label: item.status_name,
+      })) || []
+    );
+  }, [activityStatus]);
+
   const filterFields = useMemo(() => {
     switch (tabParam) {
       case 'task':
-        return getTaskFilterFields();
+        return getTaskFilterFields(userOptions, activityStatusOptions);
       case 'email':
-        return getEmailFilterFields();
+        return getEmailFilterFields(activityStatusOptions);
       case 'meeting':
-        return getMeetingFilterFields();
+        return getMeetingFilterFields(activityStatusOptions);
       case 'call':
-        return getCallFilterFields();
+        return getCallFilterFields(activityStatusOptions);
       default:
-        return getAllActivityFilterFields();
+        return getAllActivityFilterFields(activityStatusOptions);
     }
-  }, [tabParam]);
+  }, [tabParam, userOptions, activityStatusOptions]);
 
   const tabs = [
     { label: 'All', value: 'all' },
@@ -268,6 +301,8 @@ const ProjectActivities: React.FC<ProjectActivitiesProps> = ({
               accountInActive={accountInActive}
               entityDetails={entityDetails}
               entityLevel='project'
+              setExportType={setExportType}
+              setActivityParams={setActivityParams}
             />
           )}
 
@@ -285,6 +320,8 @@ const ProjectActivities: React.FC<ProjectActivitiesProps> = ({
               accountInActive={accountInActive}
               entityDetails={entityDetails}
               entityLevel='project'
+              setExportType={setExportType}
+              setActivityParams={setActivityParams}
             />
           )}
 
@@ -302,6 +339,8 @@ const ProjectActivities: React.FC<ProjectActivitiesProps> = ({
               accountInActive={accountInActive}
               entityDetails={entityDetails}
               entityLevel='project'
+              setExportType={setExportType}
+              setActivityParams={setActivityParams}
             />
           )}
 
@@ -319,6 +358,8 @@ const ProjectActivities: React.FC<ProjectActivitiesProps> = ({
               accountInActive={accountInActive}
               entityDetails={entityDetails}
               entityLevel='project'
+              setExportType={setExportType}
+              setActivityParams={setActivityParams}
             />
           )}
 
@@ -336,6 +377,8 @@ const ProjectActivities: React.FC<ProjectActivitiesProps> = ({
               accountInActive={accountInActive}
               entityDetails={entityDetails}
               entityLevel='project'
+              setExportType={setExportType}
+              setActivityParams={setActivityParams}
             />
           )}
         </div>

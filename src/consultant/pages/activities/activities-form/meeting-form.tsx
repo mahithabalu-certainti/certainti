@@ -221,6 +221,7 @@ const MeetingForm: React.FC = () => {
         }));
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formData.effective_startdate, formData.recurrence_type, getWeekdayName]);
 
   // Replace the monthly recurrence useEffect with this corrected version
@@ -309,13 +310,13 @@ const MeetingForm: React.FC = () => {
         attendees: meetingData.meeting_participants || [],
         subject: meetingData.subject || '',
         effective_startdate: startDatetime
-          ? startDatetime.format('YYYY-MM-DD')
+          ? startDatetime.format('YYYY-MMM-DD')
           : '',
         start_time: startDatetime ? startDatetime.format('HH:mm') : '',
         end_time: endDatetime ? endDatetime.format('HH:mm') : '',
-        effective_enddate: endDatetime ? endDatetime.format('YYYY-MM-DD') : '',
+        effective_enddate: endDatetime ? endDatetime.format('YYYY-MMM-DD') : '',
         recurrence_type: meetingData.recurrence_type || 'none',
-        recurrence_interval: meetingData.recurrence_interval || '1',
+        recurrence_interval: String(meetingData.recurrence_interval || '1'),
         recurrence_days: meetingData.recurrence_days || [],
         rid: meetingData.activity_rid || '',
         meeting_rid: meetingData.r_number || '',
@@ -865,30 +866,20 @@ const MeetingForm: React.FC = () => {
         .filter((rid) => !currentExistingIds.includes(rid));
     }
 
-    // Combine date and time for legacy API fields
-    const effective_start_datetime =
-      formData.effective_startdate && formData.start_time
-        ? dayjs(
-            `${formData.effective_startdate} ${formData.start_time}`
-          ).toISOString()
-        : '';
-
-    const effective_end_datetime =
-      formData.effective_startdate && formData.end_time
-        ? dayjs(
-            `${formData.effective_startdate} ${formData.end_time}`
-          ).toISOString()
-        : '';
-
     // Append basic fields
     formDataToSend.append('account_rid', accountId);
     formDataToSend.append('attach_to', entityId);
     formDataToSend.append('attachment_level', entityLevel);
     formDataToSend.append('activity_type', 'Meeting');
-    formDataToSend.append('attendees', JSON.stringify(formData.attendees));
+    formDataToSend.append(
+      'meeting_participants',
+      JSON.stringify(formData.attendees)
+    );
     formDataToSend.append('subject', formData.subject);
-    formDataToSend.append('effective_start_datetime', effective_start_datetime);
-    formDataToSend.append('effective_end_datetime', effective_end_datetime);
+    formDataToSend.append('effective_start_date', formData.effective_startdate);
+    formDataToSend.append('effective_end_date', formData.effective_enddate);
+    formDataToSend.append('effective_start_time', formData.start_time);
+    formDataToSend.append('effective_end_time', formData.end_time);
     formDataToSend.append('time_zone', systemTimezone);
     formDataToSend.append('recurrence_type', formData.recurrence_type);
     formDataToSend.append('recurrence_interval', formData.recurrence_interval);

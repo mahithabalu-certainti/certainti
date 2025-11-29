@@ -36,6 +36,8 @@ import {
   ProjectTriggerAIPayload,
 } from '../../../types/project';
 import {
+  ActivityListExportURLParams,
+  ActivityType,
   ChecklistListExportParams,
   ExportType,
   FiscalDates,
@@ -86,6 +88,7 @@ import { QrePercentHistory } from './qre-percent-history';
 import { ExportChecklistList } from '../../../services/checklist/checklist-service';
 import { Checklist } from './checklist';
 import ProjectActivities from './project-activities/project-activities';
+import { ExportActivityList } from '../../../services/activities/activities-service';
 
 export const ProjectDetails = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -156,6 +159,14 @@ export const ProjectDetails = () => {
       filters: {},
     });
 
+  const [activityParams, setActivityParams] =
+    useState<ActivityListExportURLParams>({
+      sortBy: 'r_number',
+      sortOrder: 'ASC',
+      filters: {},
+      activity_type: 'all',
+    });
+
   const [fiscalDate, setFiscalDate] = useState<FormFiscalDateType>({
     year: 0,
   });
@@ -207,6 +218,10 @@ export const ProjectDetails = () => {
   const technicalSummaryId = searchParams.get('technical_summary_id');
   const noteView = searchParams.get('note_id');
   const checklistView = searchParams.get('checklist_id');
+
+  const activityId = searchParams.get('activity_id');
+  const activityType = searchParams.get('activity_type');
+  const activityViewDetails = !!activityId && !!activityType;
 
   const { data, isLoading, isError, refetch, isPending } = useProjectDetail(
     accountID,
@@ -330,6 +345,8 @@ export const ProjectDetails = () => {
       return !isNotesExportEnable;
     } else if (list === 'checklist' && !checklistView) {
       return !isChecklistsExportEnable;
+    } else if (list === 'activities' && !activityViewDetails) {
+      return false;
     } else if (list === 'projectsTask') {
       return !isTaskExportViewEnable;
     } else if (list === 'financial' && tab === 'resource_cost') {
@@ -363,6 +380,7 @@ export const ProjectDetails = () => {
       list !== 'attachments' &&
       list !== 'notes' &&
       list !== 'checklist' &&
+      list !== 'activities' &&
       list !== 'financial' &&
       list !== 'projectResources' &&
       list !== 'projectsTask' &&
@@ -408,6 +426,18 @@ export const ProjectDetails = () => {
         ...checklistParams,
         ...checklistPayload,
       });
+      return;
+    }
+    if (exportType === 'activities') {
+      const activityPayload = {
+        accountRid: accountID,
+        entityId: projectID,
+        attachmentLevel: 'project',
+      };
+      ExportActivityList(
+        { ...activityParams, ...activityPayload },
+        activityType as ActivityType
+      );
       return;
     }
 
@@ -668,6 +698,8 @@ export const ProjectDetails = () => {
             accountInActive={accountInActive || projectInActive}
             projectFiscalYear={projectData?.fiscal_year}
             projectCode={projectData?.project_code}
+            setExportType={setExportType}
+            setActivityParams={setActivityParams}
           />
         );
       case 'notes':

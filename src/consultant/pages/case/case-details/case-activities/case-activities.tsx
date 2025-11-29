@@ -9,7 +9,12 @@ import { SectionHeaderTab, SectionTabPanel } from '../../../../../components';
 import SectionHeader from '../../../../../components/details-section/section-header';
 import { ActivitiesIcon } from '../../../../../assets';
 import { AllPermissions } from '../../../../../common-service';
-import { ActivityType, CaseDetails } from '../../../../types';
+import {
+  ActivityListExportURLParams,
+  ActivityType,
+  CaseDetails,
+  ExportType,
+} from '../../../../types';
 import {
   getActivityAllActivityListColumns,
   getActivityCallLogListColumns,
@@ -28,6 +33,8 @@ import ActivityDetails from '../../../activities/activities-details/activity-det
 import { ActivityListTable } from '../../../activities';
 import { ACTIVITY_CREATE } from '../../../../../routes';
 import TaskDetails from '../../../activities/activities-details/task-details';
+import { useGetUserOptions } from '../../../../services/case-team';
+import { useGetActivityStatus } from '../../../../services/activities/activities-service';
 
 const ActivityTabs = [
   {
@@ -46,11 +53,17 @@ const ActivityTabs = [
 interface CaseActivitiesProps {
   accountInActive: boolean;
   caseDetails?: CaseDetails;
+  setExportType?: (type: ExportType) => void;
+  setActivityParams: React.Dispatch<
+    React.SetStateAction<ActivityListExportURLParams>
+  >;
 }
 
 const CaseActivities: React.FC<CaseActivitiesProps> = ({
   accountInActive,
   caseDetails,
+  setExportType,
+  setActivityParams,
 }) => {
   const navigate = useNavigate();
   const [appliedFilters, setAppliedFilters] = useState<
@@ -85,6 +98,9 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
     fiscalYear: caseFiscalYear,
   };
 
+  const userListOptions = useGetUserOptions(accountId, true);
+  const activityStatus = useGetActivityStatus();
+
   const initialTab = useMemo(() => {
     return 'all';
   }, []);
@@ -112,20 +128,38 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
     setCurrentPage(0);
   };
 
+  const userOptions = useMemo(() => {
+    return (
+      userListOptions?.data?.map((item) => ({
+        value: item.rid,
+        label: item?.name || '',
+      })) || []
+    );
+  }, [userListOptions]);
+
+  const activityStatusOptions = useMemo(() => {
+    return (
+      activityStatus?.data?.data?.activityStatus?.map((item) => ({
+        value: item.status_name,
+        label: item.status_name,
+      })) || []
+    );
+  }, [activityStatus]);
+
   const filterFields = useMemo(() => {
     switch (tabParam) {
       case 'task':
-        return getTaskFilterFields();
+        return getTaskFilterFields(userOptions, activityStatusOptions);
       case 'email':
-        return getEmailFilterFields();
+        return getEmailFilterFields(activityStatusOptions);
       case 'meeting':
-        return getMeetingFilterFields();
+        return getMeetingFilterFields(activityStatusOptions);
       case 'call':
-        return getCallFilterFields();
+        return getCallFilterFields(activityStatusOptions);
       default:
-        return getAllActivityFilterFields();
+        return getAllActivityFilterFields(activityStatusOptions);
     }
-  }, [tabParam]);
+  }, [tabParam, userOptions, activityStatusOptions]);
 
   const tabs = [
     { label: 'All', value: 'all' },
@@ -267,6 +301,8 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
               accountInActive={accountInActive}
               entityDetails={entityDetails}
               entityLevel='case'
+              setExportType={setExportType}
+              setActivityParams={setActivityParams}
             />
           )}
 
@@ -284,6 +320,8 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
               accountInActive={accountInActive}
               entityDetails={entityDetails}
               entityLevel='case'
+              setExportType={setExportType}
+              setActivityParams={setActivityParams}
             />
           )}
 
@@ -301,6 +339,8 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
               accountInActive={accountInActive}
               entityDetails={entityDetails}
               entityLevel='case'
+              setExportType={setExportType}
+              setActivityParams={setActivityParams}
             />
           )}
 
@@ -318,6 +358,8 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
               accountInActive={accountInActive}
               entityDetails={entityDetails}
               entityLevel='case'
+              setExportType={setExportType}
+              setActivityParams={setActivityParams}
             />
           )}
 
@@ -335,6 +377,8 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
               accountInActive={accountInActive}
               entityDetails={entityDetails}
               entityLevel='case'
+              setExportType={setExportType}
+              setActivityParams={setActivityParams}
             />
           )}
         </div>

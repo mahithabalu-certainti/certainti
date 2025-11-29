@@ -70,7 +70,7 @@ const EmailDetails: React.FC<EmailDetailsProps> = ({
     {
       label: 'Edit',
       variant: 'outlined' as const,
-      disabled: accountInActive,
+      disabled: accountInActive || data?.status_name?.toLowerCase() === 'sent',
       onClick: handleEdit,
       sx: { width: '48px', minWidth: '48px' },
       hide: false,
@@ -96,7 +96,7 @@ const EmailDetails: React.FC<EmailDetailsProps> = ({
     },
     {
       label: 'Email CC',
-      value: data?.cc_email?.join(', ') ?? '',
+      value: data?.cc_emails?.join(', ') ?? '',
       key: 'email_cc',
     },
     {

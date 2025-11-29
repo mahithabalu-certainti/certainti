@@ -108,18 +108,18 @@ const StyledDateTimePicker: React.FC<StyledDateTimePickerProps> = ({
 
   // Default placeholders based on mode
   const defaultPlaceholders: Record<'date' | 'time' | 'datetime', string> = {
-    date: 'YYYY-MM-DD',
+    date: 'YYYY-MMM-DD',
     time: 'hh:mm aa',
-    datetime: 'YYYY-MM-DD hh:mm aa',
+    datetime: 'YYYY-MMM-DD hh:mm aa',
   };
 
   const finalPlaceholder = placeholder || defaultPlaceholders[mode];
 
   // Default formats based on mode
   const defaultFormats: Record<'date' | 'time' | 'datetime', string> = {
-    date: 'YYYY-MM-DD',
+    date: 'YYYY-MMM-DD',
     time: ampm ? 'hh:mm A' : 'HH:mm',
-    datetime: ampm ? 'YYYY-MM-DD hh:mm A' : 'YYYY-MM-DD HH:mm',
+    datetime: ampm ? 'YYYY-MMM-DD hh:mm A' : 'YYYY-MMM-DD HH:mm',
   };
 
   const finalFormat = format || defaultFormats[mode];

@@ -13,8 +13,20 @@ export interface ActivityListURLParams {
   attachmentLevel?: string;
 }
 
+export interface ActivityListExportURLParams {
+  sortBy: string;
+  sortOrder: 'ASC' | 'DESC';
+  filters?: object;
+  activity_type?: ActivityType;
+  search?: string;
+  entityId?: string;
+  accountRid?: string;
+  attachmentLevel?: string;
+  timezone?: string;
+}
+
 export type ActivityList = {
-  // Required fields (always present in your data)
+  // Required fields
   rid: string;
   created_by: string;
   created_datetime: string;
@@ -25,11 +37,12 @@ export type ActivityList = {
   created_by_name: string;
   attached_to: string;
 
-  // Optional fields (may be null or missing in some objects)
+  // Optional fields
   r_number?: string | null;
   modified_by?: string | null;
   modified_datetime?: string | null;
   status_rid?: string | null;
+  status_name?: string | null;
   effective_start_datetime?: string | null;
   effective_end_datetime?: string | null;
   subject?: string | null;
@@ -50,13 +63,28 @@ export type ActivityList = {
   invitees_list?: string | null;
   attendees_list?: string | null;
   mom?: string | null;
-  to_email?: string | null;
-  cc_email?: string | null;
+  to_email?: string | null | string[];
+  cc_email?: string | null | string[];
   sender_email?: string | null;
-  fiscal_year?: string | null;
+  fiscal_year?: string | number | null;
   body_html?: string | null;
   meeting_participants?: string | null;
   modified_by_name?: string | null;
+
+  // missing fields
+  meeting_id?: string | null;
+  meeting_invite?: string | null;
+  call_platform?: string | null;
+  minutes_of_meeting?: string | null;
+  caller_id?: string | null;
+  call_participants?: string[] | string | null;
+  recurrence_days?: string | null;
+  recurrence_interval?: number | null;
+  recurrence_type?: string | null;
+  time_zone?: string | null;
+  effective_start_time?: string | null;
+  effective_end_time?: string | null;
+  assigned_to_name?: string | null;
 };
 
 export interface ActivityListApiResponse {
@@ -95,7 +123,7 @@ export interface EmailActivityDetails {
   subject: string;
   body_html: string;
   to_email: string[];
-  cc_email: string[];
+  cc_emails: string[];
   email_status: string;
   r_number: string;
   status_rid: string;
@@ -141,7 +169,7 @@ export interface TaskActivityDetailsResponse {
 }
 
 // Meeting activity details
-export interface MeetingAttachment {
+export interface MeetingActivityAttachment {
   rid: string;
   r_number: string;
   created_by: string;
@@ -176,7 +204,13 @@ export interface MeetingActivityDetails {
   created_by: string;
   created_datetime: string;
   modified_datetime: string | null;
-  attachments: MeetingAttachment[];
+  attachments: MeetingActivityAttachment[];
+  effective_start_datetime: string;
+  effective_end_datetime: string;
+  recurrence_days: string[];
+
+  recurrence_interval: number;
+  recurrence_type: string;
 }
 
 export interface MeetingActivityDetailsResponse {
@@ -199,9 +233,9 @@ export interface CallActivityAttachment {
   account_rid: string;
   activity_rid: string;
   browse_file: string;
-  size: string; // API gives size as string ("0.01")
+  size: string;
   document_name: string;
-  format: string; // ".xlsx"
+  format: string;
   is_file_deleted: boolean;
 }
 
@@ -225,6 +259,8 @@ export interface CallActivityDetails {
   created_by: string;
   created_datetime: string;
   modified_datetime: string | null;
+  effective_start_datetime: string;
+  effective_end_datetime: string;
   attachments: CallActivityAttachment[];
 }
 
@@ -252,4 +288,27 @@ export interface ActivityTaskFormPayload {
   priority_rid?: string;
   checklist_rid?: string;
   tags?: string | Array<{ tag_rid: string; is_new_tag: boolean }>;
+}
+
+//Activity status
+export interface ActivityStatus {
+  rid?: string;
+  status_name: string;
+}
+
+export interface ActivityStatusResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: {
+    activityStatus: ActivityStatus[];
+  };
+}
+
+// Export type
+export interface ExportAcivityListResponse {
+  statusCode: number;
+  statusMessage: string;
+  statusCodeValue?: string;
+  data: string;
 }

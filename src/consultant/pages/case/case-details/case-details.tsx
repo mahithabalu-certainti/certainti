@@ -17,6 +17,8 @@ import {
   MenuItem,
   NotesListExportParams,
   InteractionListExportParams,
+  ActivityListExportURLParams,
+  ActivityType,
 } from '../../../types';
 import {
   AllMenus,
@@ -62,6 +64,7 @@ import { Checklist } from './checklist';
 import { CaseInteractions } from './case-interactions';
 import HistorySubmission from './history-submission/history-submission';
 import { CaseActivities } from './case-activities';
+import { ExportActivityList } from '../../../services/activities/activities-service';
 
 export const CaseDetails = () => {
   const navigate = useNavigate();
@@ -149,6 +152,18 @@ export const CaseDetails = () => {
     limit: 100,
   });
 
+  const [activityParams, setActivityParams] =
+    useState<ActivityListExportURLParams>({
+      sortBy: 'r_number',
+      sortOrder: 'ASC',
+      filters: {},
+      activity_type: 'all',
+    });
+
+  const activityId = searchParams.get('activity_id');
+  const activityType = searchParams.get('activity_type');
+  const activityViewDetails = !!activityId && !!activityType;
+
   useEffect(() => {
     const list = searchParams.get('list');
     if (list) {
@@ -212,6 +227,7 @@ export const CaseDetails = () => {
       searchParams.get('list') !== 'attachments' &&
       searchParams.get('list') !== 'notes' &&
       searchParams.get('list') !== 'checklist' &&
+      searchParams.get('list') !== 'activities' &&
       searchParams.get('list') !== 'caseProjects' &&
       searchParams.get('list') !== 'workBreakdown' &&
       searchParams.get('tab') !== 'case_task'
@@ -233,6 +249,12 @@ export const CaseDetails = () => {
       timezone,
     };
 
+    const activityPayload = {
+      accountRid: accountId,
+      entityId: caseId,
+      attachmentLevel: 'case',
+    };
+
     if (exportType === 'notes') {
       ExportNotesList('notes', { ...notesParams, ...notesPayload });
     } else if (exportType === 'attachments') {
@@ -250,6 +272,11 @@ export const CaseDetails = () => {
         ...checklistParams,
         ...checklistPayload,
       });
+    } else if (exportType === 'activities') {
+      ExportActivityList(
+        { ...activityParams, ...activityPayload },
+        activityType as ActivityType
+      );
     } else if (list === 'caseProjects') {
       ExportAssignedList(caseProjectParams);
     } else if (exportType === 'case_task') {
@@ -273,6 +300,8 @@ export const CaseDetails = () => {
       return !isNotesExportEnable;
     } else if (list === 'checklist' && !checklistView) {
       return !isChecklistsExportEnable;
+    } else if (list === 'activities' && !activityViewDetails) {
+      return false;
     } else if (list === 'caseProjects' && !isAssignProject && !projectDetails) {
       return false;
     } else if (searchParams.get('tab') === 'case_task') {
@@ -378,6 +407,8 @@ export const CaseDetails = () => {
           <CaseActivities
             accountInActive={accountInActive}
             caseDetails={caseData}
+            setExportType={setExportType}
+            setActivityParams={setActivityParams}
           />
         );
       case 'checklist':

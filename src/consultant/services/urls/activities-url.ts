@@ -1,5 +1,8 @@
 import { capitalize } from '@mui/material';
-import { ActivityListURLParams } from '../../types';
+import {
+  ActivityListExportURLParams,
+  ActivityListURLParams,
+} from '../../types';
 
 export const ActivityListURL = ({
   page,
@@ -55,3 +58,43 @@ export const updateActivityCallURL = () => `/api/activities/call/update`;
 
 export const createActivityTaskURL = () => `/api/activities/task/create`;
 export const updateActivityTaskURL = () => `/api/activities/task/update`;
+
+export const getActivityExportListURL = ({
+  sortBy,
+  sortOrder,
+  filters,
+  timezone,
+  entityId,
+  accountRid,
+  attachmentLevel,
+  search,
+  activity_type,
+}: ActivityListExportURLParams): string => {
+  const baseUrl = '/api/activities/tasks/export';
+  const searchParams = new URLSearchParams();
+
+  if (filters && Object.keys(filters).length > 0) {
+    searchParams.set('filters', JSON.stringify(filters));
+  }
+  if (sortBy !== undefined) searchParams.set('sortBy', sortBy);
+  if (sortOrder !== undefined) searchParams.set('sortOrder', sortOrder);
+
+  if (attachmentLevel !== undefined) {
+    searchParams.set('attachmentLevel', attachmentLevel.toString());
+  }
+  if (entityId !== undefined) {
+    searchParams.set('entityId', entityId.toString());
+  }
+  if (activity_type !== undefined) {
+    searchParams.set('activityType', capitalize(activity_type));
+  }
+  if (accountRid !== undefined) {
+    searchParams.set('accountRid', accountRid.toString());
+  }
+  if (search) {
+    searchParams.set('search', search);
+  }
+  if (timezone !== undefined) searchParams.set('timezone', timezone);
+  const queryString = searchParams.toString();
+  return queryString ? `${baseUrl}?${queryString}` : baseUrl;
+};

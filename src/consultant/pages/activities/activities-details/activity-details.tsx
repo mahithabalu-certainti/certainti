@@ -3,6 +3,7 @@ import EmailDetails from './eamil-details';
 import { useSearchParams } from 'react-router-dom';
 import { ActivityType } from '../../../types';
 import MeetingDetails from './meeting-details';
+import CallDetails from './call-details';
 
 interface ActivityDetailsProps {
   accountInActive: boolean;
@@ -36,6 +37,13 @@ const ActivityDetails: React.FC<ActivityDetailsProps> = ({
         />
       ) : activityType === 'meeting' ? (
         <MeetingDetails
+          accountInActive={accountInActive}
+          tabValue={tabValue}
+          entityDetails={entityDetails}
+          entityLevel={entityLevel}
+        />
+      ) : activityType === 'call' ? (
+        <CallDetails
           accountInActive={accountInActive}
           tabValue={tabValue}
           entityDetails={entityDetails}
