@@ -10,7 +10,7 @@ import {
   isValidTimezone,
   logMessage,
 } from "../utils/helpers";
-import { HttpStatus, activityFieldMappings, callactivityFieldMappings, emailactivityFieldMappings, meetingactivityFieldMappings } from "../utils/constants";
+import { HttpStatus, activityFieldMappings, callactivityFieldMappings, emailactivityFieldMappings, meetingactivityFieldMappings, taskactivityFieldMappings } from "../utils/constants";
 import {
   listActivityTaskSchema,
   exportActivitySchema,
@@ -735,8 +735,19 @@ async function exportAllActivity(req: Request, res: Response): Promise<void> {
                 attachment_level: d.attachment_level,
                 attach_to: d.attach_to,
                 attached_to: d.attached_to,
+                status_name: d.status_name,
                 created_by: d.created_by_name,
+                description: d.description,
                 created_datetime: formatDate(d.created_datetime),
+                effective_start_datetime: formatDate(d.effective_start_datetime),
+                effective_end_datetime: formatDate(d.effective_end_datetime),
+                activity_type: d.activity_type,
+                created_by_name: d.created_by_name,
+                call_platform: d.call_platform,
+                to_email: d.to_email,
+                effective_start_time: d.effective_start_time,
+                effective_end_time: d.effective_end_time,
+                subject: d.subject,
                 modified_by: d.modified_by_name,
                 modified_datetime:
                   d.modified_datetime == null
@@ -767,12 +778,17 @@ async function exportAllActivity(req: Request, res: Response): Promise<void> {
                     resultMap[mapping.dataField];
                 }
               });
-              } else {
-                 activityFieldMappings.forEach((mapping) => {
+              } else if(value.activityType && value.activityType.toLowerCase() === "task") {
+                 taskactivityFieldMappings.forEach((mapping) => {
                 if (allowedFieldSet.has(mapping.permissionField)) {
                   exportRecord[mapping.exportField] =
                     resultMap[mapping.dataField];
                 }
+              });
+              } else {
+                 activityFieldMappings.forEach((mapping) => {
+                  exportRecord[mapping.exportField] =
+                    resultMap[mapping.dataField];
               });
               }
              

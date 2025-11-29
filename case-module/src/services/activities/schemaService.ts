@@ -542,25 +542,7 @@ class ActivitySchemaService {
     return { activities: [], totalCount: 0 };
   }
       }
-       const tableSortFields = [
-        "r_number",
-        "attachment_level",
-        "attached_to",
-        "effective_start_datetime",
-        "effective_end_datetime",
-        "created_datetime",
-        "fiscal_year",
-        "modified_datetime",
-        "activity_type",
-        "call_platform"
-      ];
-      const sortByFinal = tableSortFields.includes(sortBy)
-        ? sortBy
-        : "created_datetime";
       
-      const sortOrderFinal = ["ASC", "DESC"].includes(sortOrder.toUpperCase())
-        ? sortOrder.toUpperCase()
-        : "DESC";
 
       const fetchAttachments = async (
         model: any,
@@ -577,8 +559,7 @@ class ActivitySchemaService {
           ],
         };
         return model.findAll({
-          where,
-          order: [[sortByFinal, sortOrderFinal]]
+          where
         });
       };
       // 🔷 Optimized project resource + task attachments fetch for multiple projects
@@ -856,6 +837,17 @@ class ActivitySchemaService {
         "modified_by_name",
          "effective_start_datetime",
         "effective_end_datetime",
+        "status_name",
+        "activity_type",
+         "r_number",
+        "attachment_level",
+        "effective_start_datetime",
+        "effective_end_datetime",
+        "created_datetime",
+        "fiscal_year",
+        "modified_datetime",
+        
+        "call_platform"
       ];
       const finalSortBy = validSortFields.includes(sortBy)
         ? sortBy
@@ -864,8 +856,6 @@ class ActivitySchemaService {
       const finalSortOrder = ["ASC", "DESC"].includes(sortOrder.toUpperCase())
         ? sortOrder.toUpperCase()
         : "DESC";
-      console.log('finalSortBy', finalSortBy);
-      console.log('finalSortOrder', finalSortOrder);
 
       allActivities.sort((a, b) => {
         // Special handling for created_datetime
@@ -1055,6 +1045,22 @@ class ActivitySchemaService {
         activities.sort((a, b) => {
           const aType = a.assigned_to_name || "";
           const bType = b.assigned_to_name || "";
+          const aEmpty = !aType || aType.trim() === "";
+          const bEmpty = !bType || bType.trim() === "";
+
+          if (aEmpty && bEmpty) return 0;
+          if (aEmpty) return finalSortOrder === "ASC" ? 1 : -1;
+          if (bEmpty) return finalSortOrder === "ASC" ? -1 : 1;
+
+          return finalSortOrder === "ASC"
+            ? aType.localeCompare(bType)
+            : bType.localeCompare(aType);
+        });
+      }
+      if (sortBy === "status_name") {
+        activities.sort((a, b) => {
+          const aType = a.status_name || "";
+          const bType = b.status_name || "";
           const aEmpty = !aType || aType.trim() === "";
           const bEmpty = !bType || bType.trim() === "";
 
