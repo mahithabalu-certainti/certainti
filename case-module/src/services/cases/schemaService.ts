@@ -6361,14 +6361,18 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     }
     let offset = (data.page - 1) * data.limit;
     const {TaskAttachments} = await this.caseModelService.getModels(accountNumber)
+    let whereClause: any = {
+      account_rid: data.account_rid,
+      task_rid: data.task_rid,
+      is_file_deleted: false
+    };
+    if (data.task_type !== 'activity') {
+      whereClause.case_rid = data.case_rid;
+    }
     let fetchAllTaskAttachments = await TaskAttachments.findAll({
-      where : {
-        account_rid : data.account_rid,
-        case_rid : data.case_rid,
-        task_rid : data.task_rid,
-        is_file_deleted : false
-      }, raw : true,
-    }); 
+      where: whereClause,
+      raw: true,
+    });
     if(fetchAllTaskAttachments.length > 0) {
       const total = fetchAllTaskAttachments.length
       fetchAllTaskAttachments = fetchAllTaskAttachments.slice(offset, data.page * data.limit);
