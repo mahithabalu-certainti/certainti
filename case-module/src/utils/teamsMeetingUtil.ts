@@ -52,7 +52,7 @@ export async function scheduleTeamsMeetingUtil(
     }
 
     if(activityRequest.recurrence_type === "weekly"){
-  recurrentpattern =  {
+    recurrentpattern =  {
         type: activityRequest.recurrence_type || "weekly",
         interval: Number(activityRequest.recurrence_interval) || 1,
         daysOfWeek: activityRequest.recurrence_days || [],
