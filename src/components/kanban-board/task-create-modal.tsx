@@ -535,9 +535,9 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                               borderRadius: '2px',
                             },
                           },
-                          placeholder: 'Choose Start Date',
+                          placeholder: 'YYYY-MMM-DD',
                           inputProps: {
-                            placeholder: 'Choose Start Date',
+                            placeholder: 'YYYY-MMM-DD',
                             readOnly: true,
                           },
                         },
@@ -612,9 +612,9 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                               borderRadius: '2px',
                             },
                           },
-                          placeholder: 'Choose Due Date',
+                          placeholder: 'YYYY-MMM-DD',
                           inputProps: {
-                            placeholder: 'Choose Due Date',
+                            placeholder: 'YYYY-MMM-DD',
                             readOnly: true,
                           },
                         },
