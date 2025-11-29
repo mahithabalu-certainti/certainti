@@ -33,6 +33,29 @@ const TaskAttachmentsSection: React.FC<TaskAttachmentsSectionProps> = ({
 }) => {
   if (fieldVisibility.attachments) return null;
 
+  const handleDownload = async (
+    e: React.MouseEvent<HTMLAnchorElement>,
+    url: string,
+    fileName: string
+  ) => {
+    e.preventDefault();
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error('Download failed:', error);
+      window.open(url, '_blank');
+    }
+  };
+
   return (
     <div>
       <h3 className='text-sm font-semibold text-gray-700 mb-3'>Attachments</h3>
@@ -63,9 +86,19 @@ const TaskAttachmentsSection: React.FC<TaskAttachmentsSectionProps> = ({
               >
                 <span>📎</span>
                 <div className='flex-1'>
-                  <p className='font-medium text-gray-700'>
+                  <a
+                    href={attachment.filePath}
+                    onClick={(e) =>
+                      handleDownload(
+                        e,
+                        attachment.filePath || '',
+                        attachment.fileName
+                      )
+                    }
+                    className='font-medium text-blue-600 hover:underline block truncate'
+                  >
                     {attachment.fileName}
-                  </p>
+                  </a>
                   <p className='text-gray-500 text-xs mt-1'>
                     Uploaded by {attachment.uploadedBy} on{' '}
                     {attachment.uploadedDate}

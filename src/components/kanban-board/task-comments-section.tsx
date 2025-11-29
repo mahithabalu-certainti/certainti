@@ -107,6 +107,29 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
   };
 
   const [comment, setComment] = useState('');
+
+  const handleDownload = async (
+    e: React.MouseEvent<HTMLAnchorElement>,
+    url: string,
+    fileName: string
+  ) => {
+    e.preventDefault();
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error('Download failed:', error);
+      window.open(url, '_blank');
+    }
+  };
   const [commentError, setCommentError] = useState<string | null>(null);
   const [commentFiles, setCommentFiles] = useState<File[]>([]);
   const [deleteConfirmModal, setDeleteConfirmModal] = useState<{
@@ -339,6 +362,22 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
           },
         ],
       });
+
+      // Invalidate activities queries
+      queryClient.invalidateQueries({
+        queryKey: ['taskActivities', accountId, caseId, taskId],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: [
+          'taskActivitiesInfinite',
+          {
+            case_rid: caseId,
+            account_rid: accountId,
+            task_rid: taskId,
+          },
+        ],
+      });
     }
   };
 
@@ -373,7 +412,7 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
     }
 
     if (editingCommentText.length > 2000) {
-      setCommentError('Comment too long (max 2000 characters)');
+      setCommentError('Maximum 2000 characters allowed');
       return;
     }
 
@@ -410,7 +449,7 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
     }
 
     if (comment.length > 2000) {
-      setCommentError('Comment too long (max 2000 characters)');
+      setCommentError('Maximum 2000 characters allowed');
       return;
     }
 
@@ -849,8 +888,13 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                                     <div className='flex-1 min-w-0'>
                                       <a
                                         href={att.browseFile}
-                                        target='_blank'
-                                        rel='noopener noreferrer'
+                                        onClick={(e) =>
+                                          handleDownload(
+                                            e,
+                                            att.browseFile,
+                                            att.documentName
+                                          )
+                                        }
                                         className='text-sm text-blue-600 hover:underline font-medium block truncate'
                                       >
                                         {att.documentName}

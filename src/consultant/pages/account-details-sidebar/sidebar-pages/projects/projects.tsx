@@ -280,7 +280,6 @@ const Projects: React.FC<ProjectsProps> = ({
   );
 
   const handleselectedList = (id: string[]) => {
-    console.log(id);
     const childIds = id.filter((_, index) => index % 2 === 0);
     setSelectedTableIds(childIds);
   };

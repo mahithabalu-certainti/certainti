@@ -5,6 +5,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { CommentIcon, CustomChecklistIcon } from '../../assets';
 import { generateInitials, generateColorFromName } from './helper';
+import { Tooltip } from '@mui/material';
 
 interface ExtendedTaskCardProps extends TaskCardProps {
   isDragable?: boolean;
@@ -62,8 +63,8 @@ const TaskCardComponent: React.FC<ExtendedTaskCardProps> = ({
         // Status colors
         'To Do': { bg: '#F3F4F6', text: '#374151', border: '#E5E7EB' }, // Gray-100
         'In Progress': { bg: '#EFF6FF', text: '#1E40AF', border: '#BFDBFE' }, // Blue-50
-        'Blocked': { bg: '#FEF2F2', text: '#991B1B', border: '#FECACA' }, // Red-50
-        'Completed': { bg: '#ECFDF5', text: '#065F46', border: '#A7F3D0' }, // Emerald-50
+        Blocked: { bg: '#FEF2F2', text: '#991B1B', border: '#FECACA' }, // Red-50
+        Completed: { bg: '#ECFDF5', text: '#065F46', border: '#A7F3D0' }, // Emerald-50
         Active: { bg: '#ECFDF5', text: '#065F46', border: '#A7F3D0' }, // Emerald-50
         Inactive: { bg: '#FEF2F2', text: '#991B1B', border: '#FECACA' }, // Red-50
       },
@@ -129,13 +130,15 @@ const TaskCardComponent: React.FC<ExtendedTaskCardProps> = ({
     >
       <div className='flex items-center gap-1 mb-3'>
         <div className='w-2 h-2 bg-slate-300 rounded-full flex-shrink-0'></div>
-        <div className='flex-1 flex items-start justify-between gap-2'>
-          <h3
-            className='text-slate-800 text-[13px] font-medium leading-relaxed'
-            style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
-          >
-            {taskData.task_name}
-          </h3>
+        <div className='flex-1 flex items-start justify-between gap-2 min-w-0'>
+          <Tooltip title={taskData.task_name} arrow placement='top'>
+            <h3
+              className='text-slate-800 text-[13px] font-medium leading-relaxed truncate cursor-pointer'
+              style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
+            >
+              {taskData.task_name}
+            </h3>
+          </Tooltip>
           <div
             onClick={(e) => {
               e.stopPropagation();
@@ -228,7 +231,7 @@ const TaskCardComponent: React.FC<ExtendedTaskCardProps> = ({
                 className='text-[13px]'
                 style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
               >
-                0
+                {taskData?.comments_count ?? 0}
               </span>
             </div>
           )}

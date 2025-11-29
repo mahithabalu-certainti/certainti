@@ -38,7 +38,8 @@ const currentYear = new Date().getFullYear();
 const fiscalYears = getFiscalYears(currentYear - minYear + 1);
 
 export const getChecklistFilterFields = (
-  permissionMap: Record<string, { read: boolean; edit: boolean }>
+  permissionMap: Record<string, { read: boolean; edit: boolean }>,
+  module?: 'account' | 'project' | 'case' | 'resource'
 ): FieldConfig[] => [
   {
     name: 'Checklist ID',
@@ -91,8 +92,10 @@ export const getChecklistFilterFields = (
     options: fiscalYears.map((y) => ({ option: y.label, value: y.value })),
     operatorOption: enumOptions,
     hide:
-      !permissionMap?.['fiscal_year']?.read &&
-      !permissionMap?.['fiscal_year']?.edit,
+      module === 'case' ||
+      module === 'project' ||
+      (!permissionMap?.['fiscal_year']?.read &&
+        !permissionMap?.['fiscal_year']?.edit),
   },
   {
     name: 'Created By',
@@ -141,7 +144,8 @@ export const getChecklistFilterFields = (
 export const getChecklistTableColumns = (
   permissionMap: Record<string, { read: boolean; edit: boolean }>,
   inActiveEntity: boolean,
-  handleChecklistView?: (rowId: string) => void
+  handleChecklistView?: (rowId: string) => void,
+  module?: 'account' | 'project' | 'case' | 'resource'
 ): ListTableColumn<ChecklistList>[] => [
   {
     id: 'r_number',
@@ -243,11 +247,12 @@ export const getChecklistTableColumns = (
     sortId: 'fiscal_year',
     label: 'Fiscal Year',
     width: 120,
-    sortable: true,
+    sortable: module !== 'case' && module !== 'project',
     render: (row) => (row.fiscal_year ? `FY-${row.fiscal_year}` : '-'),
     hide:
-      !permissionMap?.['fiscal_year']?.read &&
-      !permissionMap?.['fiscal_year']?.edit,
+      module === 'case' ||
+      (!permissionMap?.['fiscal_year']?.read &&
+        !permissionMap?.['fiscal_year']?.edit),
     editable:
       permissionMap?.['fiscal_year']?.edit &&
       permissionMap?.['fiscal_year']?.read &&

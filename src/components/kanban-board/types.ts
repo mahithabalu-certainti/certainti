@@ -128,6 +128,7 @@ export interface TaskCard {
   status_name: string;
   task_status_name?: string;
   tags?: string[];
+  comments_count: number;
 }
 
 export interface KanbanColumn {
@@ -247,6 +248,8 @@ export interface KanbanBoardProps {
   ) => Promise<void>;
   accountId?: string; // New prop for task detail modal
   caseId?: string; // New prop for task detail modal
+  caseStartDate?: string | null;
+  caseEndDate?: string | null;
 }
 
 export interface TaskCardProps {
@@ -258,7 +261,6 @@ export interface TaskCardProps {
   statusData?: Array<{ id: string; name: string; color: string }>;
   statusOptions?: StatusOption[]; // New prop for active/inactive status
   priorityData?: Array<{ id: string; name: string; color: string }>;
-
 }
 
 export interface KanbanColumnProps {
@@ -268,9 +270,6 @@ export interface KanbanColumnProps {
   showProfileIndicator?: boolean;
   isCreateTaskDisabled?: boolean;
   isCreateTaskHide?: boolean;
-
-
-
 
   onTaskClick?: (taskId: string) => void;
   statusData?: Array<{ id: string; name: string; color: string }>;
@@ -292,6 +291,12 @@ export interface KanbanColumnProps {
     columnId: string,
     taskData: Partial<TaskCard>
   ) => Promise<void>;
+  fieldVisibility?: FieldVisibility;
+  fieldDisabled?: FieldDisabled;
+  accountId?: string;
+  caseId?: string;
+  caseStartDate?: string | null;
+  caseEndDate?: string | null;
 }
 
 export interface TaskDetailModalProps {
@@ -351,4 +356,6 @@ export interface TaskDetailModalProps {
   ) => Promise<AddCollaboratorResponse>;
   fieldVisibility?: FieldVisibility;
   fieldDisabled?: FieldDisabled;
+  caseStartDate?: string | null;
+  caseEndDate?: string | null;
 }

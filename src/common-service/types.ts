@@ -207,6 +207,7 @@ export enum AllModules {
   CHECKLIST_TEMPLATES = 'checklist_templates',
   CHECKLISTS = 'checklists',
   TASK_TEMPLATES = 'task_templates',
+  WORKBREAKDOWN = 'workbreakdown',
 }
 
 export enum AllPermissions {
@@ -326,6 +327,7 @@ export enum AllPermissions {
   CREATE_TASK_TEMPLATE = 'task_templates_create',
   TASK_TEMPLATE_VIEW_EDIT = 'task_templates_view_edit',
   TASK_TEMPLATE_EXPORT = 'task_templates_export',
+  CASES_WORKBREAKDOWN_VIEW_EDIT = 'cases_workbreakdown_view_edit',
   ACTIVITIES_OVERVIEW = 'activities_overview',
   ACTIVITIES_TIMELINE = 'activities_timeline',
 }

@@ -7,7 +7,6 @@ import {
 } from '../../../../account-details-sidebar/components/filter/filterType';
 import {
   fiscalOptions,
-  fiscalYearOptions,
   nonMadatoryOptions,
 } from '../../../../account-details-sidebar/sidebar-pages/projects/utils';
 
@@ -44,16 +43,6 @@ export const assignedProjectFilterFields = (
     hide:
       !projectPermissionMap?.['project_type_rid']?.read &&
       !projectPermissionMap?.['project_type_rid']?.edit,
-  },
-  {
-    name: 'Fiscal Year',
-    value: 'fiscal_year',
-    type: 'enum',
-    options: fiscalYearOptions,
-    operatorOption: fiscalOptions,
-    hide:
-      !projectPermissionMap?.['fiscal_year']?.read &&
-      !projectPermissionMap?.['fiscal_year']?.edit,
   },
   {
     name: 'Project Classification',
@@ -202,11 +191,5 @@ export const assignedProjectFilterFields = (
     hide:
       !projectPermissionMap?.['r_number']?.read &&
       !projectPermissionMap?.['r_number']?.edit,
-  },
-  {
-    name: 'Sort Options',
-    value: 'sort_options',
-    type: 'system-sort',
-    options: [{ value: 'created_datetime_desc', option: 'Recently Created' }],
   },
 ];

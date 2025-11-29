@@ -39,6 +39,12 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
   checklistData = [],
   collaboratorData = [],
   availableUsers = [],
+  fieldVisibility,
+  fieldDisabled,
+  accountId,
+  caseId,
+  caseStartDate,
+  caseEndDate,
 }) => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const { setNodeRef } = useDroppable({
@@ -191,6 +197,12 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
         collaboratorData={collaboratorData}
         availableUsers={availableUsers}
         roleOptions={roleOptions}
+        fieldVisibility={fieldVisibility}
+        fieldDisabled={fieldDisabled}
+        accountId={accountId}
+        caseId={caseId}
+        caseStartDate={caseStartDate}
+        caseEndDate={caseEndDate}
       />
     </div>
   );

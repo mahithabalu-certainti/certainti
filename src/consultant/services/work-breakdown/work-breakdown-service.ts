@@ -48,6 +48,7 @@ export interface TaskCard {
   task_type_rid: string;
   effort_in_days: number;
   checklists_count: number;
+  comments_count: number;
   task_description: string | null;
   reminder_interval: number;
   effective_end_datetime: string;

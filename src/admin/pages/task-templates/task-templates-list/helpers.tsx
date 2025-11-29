@@ -135,9 +135,9 @@ export const getTaskTemplateFilterFields = (
       type: 'enumSelect',
       options: taskCategoryTypesOptions,
       operatorOption: enumOperator,
-      // hide:
-      //   !permissionMap?.['task_category_rid']?.edit &&
-      //   !permissionMap?.['task_category_rid']?.read,
+      hide:
+        !permissionMap?.['task_category_rid']?.edit &&
+        !permissionMap?.['task_category_rid']?.read,
     },
     {
       label: 'Weightage',
@@ -145,9 +145,9 @@ export const getTaskTemplateFilterFields = (
       type: 'enumSelect',
       options: taskWeightAgeTypesOptions,
       operatorOption: enumOperator,
-      // hide:
-      //   !permissionMap?.['weightage_rid']?.edit &&
-      //   !permissionMap?.['weightage_rid']?.read,
+      hide:
+        !permissionMap?.['weightage_rid']?.edit &&
+        !permissionMap?.['weightage_rid']?.read,
     },
     {
       label: 'Status',
@@ -171,7 +171,7 @@ export const getTaskTemplateFilterFields = (
 
     {
       label: 'Created By',
-      name: 'created_user_name',
+      name: 'created_by_name',
       type: 'text',
       operatorOption: textfieldOptions,
       hide:
@@ -189,7 +189,7 @@ export const getTaskTemplateFilterFields = (
     },
     {
       label: 'Updated By',
-      name: 'modified_user_name',
+      name: 'modified_by_name',
       type: 'text',
       operatorOption: nonReqTextfieldOptions,
       hide:

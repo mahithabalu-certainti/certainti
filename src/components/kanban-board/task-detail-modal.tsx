@@ -28,6 +28,7 @@ import {
   useUploadTaskAttachments,
   useDeleteTaskAttachment,
   useUpdateCaseTask,
+  useGetTaskDropDownList,
 } from '../../consultant/services/case-task/case-task-service';
 import { useGetTagOptions } from '../../consultant/services/case-team/case-team-service';
 import {
@@ -42,7 +43,6 @@ import {
 import { useToast } from '../../hooks';
 import {
   useGetTaskConnectorTypes,
-  useGetTaskTemplate,
   useWeightageList,
   useGetTaskCategoryTypes,
 } from '../../admin/service/task-template/task-template-service';
@@ -58,6 +58,8 @@ interface TaskDetailModalPropsExtended
     comment: string,
     files: File[]
   ) => Promise<void>;
+  caseStartDate?: string | null;
+  caseEndDate?: string | null;
   fiscalYear?: string | null;
   taskType?: string;
 }
@@ -82,6 +84,8 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   caseId,
   fieldVisibility = {},
   fieldDisabled = {},
+  caseStartDate,
+  caseEndDate,
   fiscalYear,
   taskType,
 }) => {
@@ -385,7 +389,11 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
 
   // Fetch connector types and task templates
   const taskConnectorTypesQuery = useGetTaskConnectorTypes();
-  const taskTemplatesQuery = useGetTaskTemplate({ search: '' });
+  const taskTemplatesQuery = useGetTaskDropDownList({
+    case_rid: caseId,
+    account_rid: accountId,
+    search: '',
+  });
 
   const connectorTypesData = useMemo(() => {
     if (
@@ -407,15 +415,25 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       taskTemplatesQuery.data?.data &&
       Array.isArray(taskTemplatesQuery.data.data)
     ) {
-      return taskTemplatesQuery.data.data.map(
-        (template: { rid: string; task_name: string }) => ({
+      return taskTemplatesQuery.data.data
+        .filter((template: { rid: string; task_name: string }) => {
+          // Filter out the current task by name if available
+          if (task?.title && template.task_name === task.title) {
+            return false;
+          }
+          // Also filter by ID if possible, though the request specifically mentioned name
+          if (taskId && template.rid === taskId) {
+            return false;
+          }
+          return true;
+        })
+        .map((template: { rid: string; task_name: string }) => ({
           id: template.rid,
           name: template.task_name,
-        })
-      );
+        }));
     }
     return [];
-  }, [taskTemplatesQuery.data]);
+  }, [taskTemplatesQuery.data, task?.title, taskId]);
 
   // Fetch weightage and category lists
   const weightageListQuery = useWeightageList();
@@ -425,8 +443,8 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     // Handle nested data.data structure
     const response = weightageListQuery.data as {
       data?:
-      | { data?: Array<{ rid: string; weightage_value: number }> }
-      | Array<{ rid: string; weightage_value: number }>;
+        | { data?: Array<{ rid: string; weightage_value: number }> }
+        | Array<{ rid: string; weightage_value: number }>;
     };
     const dataArray = Array.isArray(response?.data)
       ? response.data
@@ -456,6 +474,14 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     }
     return [];
   }, [categoryListQuery.data]);
+
+  const minDate = useMemo(() => {
+    return caseStartDate ? dayjs(caseStartDate) : undefined;
+  }, [caseStartDate]);
+
+  const maxDate = useMemo(() => {
+    return caseEndDate ? dayjs(caseEndDate) : undefined;
+  }, [caseEndDate]);
 
   const hasTaskChanged = () => {
     if (!task || !editedTask || !originalTask) return false;
@@ -546,8 +572,6 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     setSelectedCollaboratorIds(ids);
   }, [editedTask, allEnrichedUsers]);
 
-
-
   if (!isOpen || !taskId) return null;
   if (isLoadingTaskDetails || (rawTask && !task)) {
     return (
@@ -633,27 +657,51 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
 
   const handleSave = async () => {
     const newErrors: Record<string, string> = {};
-    if (!editedTask?.status) newErrors.status = 'Status is required';
-    if (!editedTask?.priority) newErrors.priority = 'Priority is required';
-    if (!selectedChecklist && !fieldVisibility.checklistTemplate) {
-      newErrors.checklistTemplate = 'Checklist Template is required';
+    if (!editedTask?.title || !editedTask.title.trim()) {
+      newErrors.taskTitle = 'Field is required';
     }
+    if (!editedTask?.status) newErrors.status = 'Field is required';
+    if (!editedTask?.priority) newErrors.priority = 'Field is required';
 
     if (linkedType && (!linkTaskTypes || linkTaskTypes.length === 0)) {
-      newErrors.linkTaskType = 'Link Task Type is required';
+      newErrors.linkTaskType = 'Field is required';
     }
     if (!linkedType && linkTaskTypes && linkTaskTypes.length > 0) {
-      newErrors.linkedType = 'Linked Type is required';
+      newErrors.linkedType = 'Field is required';
     }
 
     if (editedTask?.title && editedTask.title.length > 2000) {
-      newErrors.taskTitle = 'Task Name too long (max 2000 characters)';
+      newErrors.taskTitle = 'Maximum 2000 characters allowed';
     }
     if (editedTask?.description && editedTask.description.length > 2000) {
-      newErrors.description = 'Description too long (max 2000 characters)';
+      newErrors.description = 'Maximum 2000 characters allowed';
     }
     if (editedTask?.tags && editedTask.tags.some((tag) => tag.length > 50)) {
-      newErrors.tags = 'Tags too long (max 50 characters)';
+      newErrors.tags = 'Maximum 50 characters allowed';
+    }
+
+    if (editedTask?.startDate) {
+      if (minDate && dayjs(editedTask.startDate).isBefore(minDate, 'day')) {
+        newErrors.startDate = 'Invalid Date';
+      }
+      if (maxDate && dayjs(editedTask.startDate).isAfter(maxDate, 'day')) {
+        newErrors.startDate = 'Invalid Date';
+      }
+    }
+
+    if (editedTask?.endDate) {
+      if (minDate && dayjs(editedTask.endDate).isBefore(minDate, 'day')) {
+        newErrors.endDate = 'Invalid Date';
+      }
+      if (maxDate && dayjs(editedTask.endDate).isAfter(maxDate, 'day')) {
+        newErrors.endDate = 'Invalid Date';
+      }
+      if (
+        editedTask?.startDate &&
+        dayjs(editedTask.endDate).isBefore(dayjs(editedTask.startDate), 'day')
+      ) {
+        newErrors.endDate = 'Invalid Date';
+      }
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -756,13 +804,13 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
         const linkTaskTypeRidsValue =
           linkTaskTypes && linkTaskTypes.length > 0
             ? linkTaskTypes
-              .map((taskType) => {
-                const template = taskTemplatesData?.find(
-                  (t) => t.name === taskType
-                );
-                return template?.id || '';
-              })
-              .filter((rid) => rid !== '')
+                .map((taskType) => {
+                  const template = taskTemplatesData?.find(
+                    (t) => t.name === taskType
+                  );
+                  return template?.id || '';
+                })
+                .filter((rid) => rid !== '')
             : [];
 
         const weightageRidValue = weightage
@@ -771,13 +819,13 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
 
         const categoryRidValue = category
           ? categoryData?.find(
-            (c: { id: string; name: string }) => c.name === category
-          )?.id || ''
+              (c: { id: string; name: string }) => c.name === category
+            )?.id || ''
           : '';
 
         const assignedToRid = editedTask.assignee
           ? allEnrichedUsers.find((u) => u.name === editedTask.assignee.name)
-            ?.id || ''
+              ?.id || ''
           : '';
 
         // Build workflow connector - always include, pass {} if no valid data
@@ -820,6 +868,19 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
           updateResponse?.statusMessage || 'Task updated successfully';
         successToast(message);
         setOriginalTask(editedTask);
+        queryClient.invalidateQueries({
+          queryKey: ['taskActivities', accountId, caseId, taskId],
+        });
+        queryClient.invalidateQueries({
+          queryKey: [
+            'taskActivitiesInfinite',
+            {
+              case_rid: caseId,
+              account_rid: accountId,
+              task_rid: taskId,
+            },
+          ],
+        });
         if (onTaskUpdate) {
           onTaskUpdate();
         }
@@ -848,9 +909,9 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     setEditedTask((prev) =>
       prev
         ? {
-          ...prev,
-          status: statusName,
-        }
+            ...prev,
+            status: statusName,
+          }
         : null
     );
     if (statusName) setErrors((prev) => ({ ...prev, status: '' }));
@@ -877,6 +938,9 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       }
       return updatedTask;
     });
+    if (newStartDate) {
+      setErrors((prev) => ({ ...prev, startDate: '' }));
+    }
   };
 
   const handleEndDateChange = (date: string) => {
@@ -888,6 +952,9 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       }
       return { ...prev, endDate: newEndDate };
     });
+    if (newEndDate) {
+      setErrors((prev) => ({ ...prev, endDate: '' }));
+    }
   };
 
   const handleAttachmentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -899,9 +966,9 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       setEditedTask((prev) =>
         prev
           ? {
-            ...prev,
-            attachments: [...(prev.attachments || []), ...fileNames],
-          }
+              ...prev,
+              attachments: [...(prev.attachments || []), ...fileNames],
+            }
           : null
       );
       e.target.value = '';
@@ -938,9 +1005,9 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       setEditedTask((prev) =>
         prev
           ? {
-            ...prev,
-            assignee: { name: '', initials: '', color: '' },
-          }
+              ...prev,
+              assignee: { name: '', initials: '', color: '' },
+            }
           : null
       );
       return;
@@ -952,13 +1019,13 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       setEditedTask((prev) =>
         prev
           ? {
-            ...prev,
-            assignee: {
-              name: selectedUser.name,
-              initials: selectedUser.initials,
-              color: selectedUser.color,
-            },
-          }
+              ...prev,
+              assignee: {
+                name: selectedUser.name,
+                initials: selectedUser.initials,
+                color: selectedUser.color,
+              },
+            }
           : null
       );
     }
@@ -1017,6 +1084,19 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
             assigned_to_name: user.name,
           }))
         );
+        queryClient.invalidateQueries({
+          queryKey: ['taskActivities', accountId, caseId, taskId],
+        });
+        queryClient.invalidateQueries({
+          queryKey: [
+            'taskActivitiesInfinite',
+            {
+              case_rid: caseId,
+              account_rid: accountId,
+              task_rid: taskId,
+            },
+          ],
+        });
       } catch (error) {
         console.error('Failed to add collaborator:', error);
       } finally {
@@ -1026,7 +1106,9 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     if (removedUserIds.length > 0 && taskId) {
       try {
         for (const removedUserId of removedUserIds) {
-          const userToRemove = allEnrichedUsers.find((u) => u.id === removedUserId);
+          const userToRemove = allEnrichedUsers.find(
+            (u) => u.id === removedUserId
+          );
           if (userToRemove) {
             await deleteCollaboratorMutation.mutateAsync({
               case_rid: caseId,
@@ -1054,6 +1136,19 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
             assigned_to_name: user.name,
           }))
         );
+        queryClient.invalidateQueries({
+          queryKey: ['taskActivities', accountId, caseId, taskId],
+        });
+        queryClient.invalidateQueries({
+          queryKey: [
+            'taskActivitiesInfinite',
+            {
+              case_rid: caseId,
+              account_rid: accountId,
+              task_rid: taskId,
+            },
+          ],
+        });
         successToast('Collaborator removed successfully');
       } catch (error) {
         console.error('Failed to remove collaborator:', error);
@@ -1086,8 +1181,9 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   return (
     <>
       <div
-        className={`fixed right-0 bottom-0 w-[650px] bg-white text-gray-900 shadow-2xl z-50 overflow-y-auto ${isOpen ? 'translate-x-0' : 'translate-x-full'
-          }`}
+        className={`fixed right-0 bottom-0 w-[650px] bg-white text-gray-900 shadow-2xl z-50 overflow-y-auto ${
+          isOpen ? 'translate-x-0' : 'translate-x-full'
+        }`}
         style={{
           top: '38.1px',
           transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
@@ -1095,24 +1191,24 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
         }}
       >
         <div className='sticky top-0 flex items-center justify-between p-3 border-b border-[#CBD6E2] bg-white z-50'>
-          <div className='flex items-center gap-1'>
+          <h2 className='text-[16px] font-semibold text-[#2D3E4F] truncate max-w-[400px]'>
+            Edit {task?.title}
+          </h2>
+
+          <div className='flex items-center gap-2'>
+            <TextButton
+              label='Save'
+              onClick={handleSave}
+              disabled={!hasTaskChanged() || isSaving}
+              sx={{ padding: '6px 12px' }}
+            />
             <button
               onClick={onClose}
               className='p-2 hover:bg-gray-100 rounded transition-colors'
             >
               <CloseIcon size={16} className='text-gray-600' />
             </button>
-            <h2 className='text-[16px] font-semibold text-[#2D3E4F] truncate max-w-[400px]'>
-              Edit {task?.title}
-            </h2>
           </div>
-
-          <TextButton
-            label='Save'
-            onClick={handleSave}
-            disabled={!hasTaskChanged() || isSaving}
-            sx={{ padding: '6px 12px' }}
-          />
         </div>
 
         <div className='px-6 pt-3 pb-6 space-y-3'>
@@ -1124,13 +1220,16 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
               <input
                 type='text'
                 value={editedTask?.title || ''}
-                onChange={(e) =>
+                onChange={(e) => {
                   setEditedTask((prev) =>
                     prev ? { ...prev, title: e.target.value } : null
-                  )
-                }
+                  );
+                  if (e.target.value.trim()) {
+                    setErrors((prev) => ({ ...prev, taskTitle: '' }));
+                  }
+                }}
                 onKeyPress={(e) => e.key === 'Enter' && handleSave()}
-                className='w-full text-[13px] font-normal bg-transparent border-b border-gray-300 focus:border-blue-500 outline-none text-gray-900 pb-2 pr-8'
+                className={`w-full text-[13px] font-normal bg-transparent border-b ${errors.taskTitle ? 'border-red-500' : 'border-gray-300'} focus:border-blue-400 focus:border-b outline-none text-gray-900 placeholder-[#7D98B6] pb-2 pr-8`}
                 autoFocus
               />
               {errors.taskTitle && (
@@ -1269,9 +1368,13 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
             </div>
           )}
 
-
-
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
+          <LocalizationProvider
+            dateAdapter={AdapterDayjs}
+            localeText={{
+              fieldMonthPlaceholder: (params) =>
+                params.contentType === 'digit' ? 'MM' : params.format,
+            }}
+          >
             <div className='grid grid-cols-2 gap-4'>
               {!fieldVisibility.startDate && (
                 <div>
@@ -1280,6 +1383,8 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                   </label>
                   <DatePicker
                     disabled={false}
+                    minDate={minDate}
+                    maxDate={maxDate}
                     value={formatDateForInput(editedTask?.startDate)}
                     onChange={(newValue) =>
                       handleStartDateChange(
@@ -1333,6 +1438,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                       textField: {
                         fullWidth: true,
                         size: 'small',
+                        error: !!errors.startDate,
                         sx: {
                           '& .MuiOutlinedInput-root': {
                             height: '32px',
@@ -1349,10 +1455,20 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                               WebkitTextFillColor: 'black !important',
                             },
                             '&:hover .MuiOutlinedInput-notchedOutline': {
-                              border: '1px solid #CBD6E2',
+                              border: errors.startDate
+                                ? '1px solid #EF4444'
+                                : '1px solid #CBD6E2',
                             },
                             '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                              border: '2px solid #60A5FA',
+                              border: errors.startDate
+                                ? '2px solid #EF4444'
+                                : '2px solid #60A5FA',
+                            },
+                            '& .MuiOutlinedInput-notchedOutline': {
+                              border: errors.startDate
+                                ? '1px solid #EF4444'
+                                : '1px solid #CBD6E2',
+                              borderRadius: '2px',
                             },
                             '&.Mui-disabled': {
                               backgroundColor: '#F3F4F6',
@@ -1365,9 +1481,17 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                           },
                         },
                         placeholder: 'Select start date',
+                        inputProps: {
+                          readOnly: true,
+                        },
                       },
                     }}
                   />
+                  {errors.startDate && (
+                    <p className='text-xs text-red-500 mt-1'>
+                      {errors.startDate}
+                    </p>
+                  )}
                 </div>
               )}
               {!fieldVisibility.endDate && (
@@ -1377,6 +1501,12 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                   </label>
                   <DatePicker
                     disabled={false}
+                    minDate={
+                      editedTask?.startDate
+                        ? dayjs(editedTask.startDate).add(1, 'day')
+                        : minDate
+                    }
+                    maxDate={maxDate}
                     value={formatDateForInput(editedTask?.endDate)}
                     onChange={(newValue) =>
                       handleEndDateChange(
@@ -1430,6 +1560,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                       textField: {
                         fullWidth: true,
                         size: 'small',
+                        error: !!errors.endDate,
                         sx: {
                           '& .MuiOutlinedInput-root': {
                             height: '32px',
@@ -1446,10 +1577,20 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                               WebkitTextFillColor: 'black !important',
                             },
                             '&:hover .MuiOutlinedInput-notchedOutline': {
-                              border: '1px solid #CBD6E2',
+                              border: errors.endDate
+                                ? '1px solid #EF4444'
+                                : '1px solid #CBD6E2',
                             },
                             '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                              border: '2px solid #60A5FA',
+                              border: errors.endDate
+                                ? '2px solid #EF4444'
+                                : '2px solid #60A5FA',
+                            },
+                            '& .MuiOutlinedInput-notchedOutline': {
+                              border: errors.endDate
+                                ? '1px solid #EF4444'
+                                : '1px solid #CBD6E2',
+                              borderRadius: '2px',
                             },
                             '&.Mui-disabled': {
                               backgroundColor: '#F3F4F6',
@@ -1462,9 +1603,17 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                           },
                         },
                         placeholder: 'Select end date',
+                        inputProps: {
+                          readOnly: true,
+                        },
                       },
                     }}
                   />
+                  {errors.endDate && (
+                    <p className='text-xs text-red-500 mt-1'>
+                      {errors.endDate}
+                    </p>
+                  )}
                 </div>
               )}
             </div>
@@ -1497,25 +1646,27 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                 setEditedTask((prev) =>
                   prev
                     ? {
-                      ...prev,
-                      assignee: { name: '', initials: '', color: '' },
-                    }
+                        ...prev,
+                        assignee: { name: '', initials: '', color: '' },
+                      }
                     : null
                 );
                 return;
               }
-              const selectedUser = allEnrichedUsers.find((u) => u.id === userId);
+              const selectedUser = allEnrichedUsers.find(
+                (u) => u.id === userId
+              );
               if (selectedUser) {
                 setEditedTask((prev) =>
                   prev
                     ? {
-                      ...prev,
-                      assignee: {
-                        name: selectedUser.name,
-                        initials: selectedUser.initials,
-                        color: selectedUser.color,
-                      },
-                    }
+                        ...prev,
+                        assignee: {
+                          name: selectedUser.name,
+                          initials: selectedUser.initials,
+                          color: selectedUser.color,
+                        },
+                      }
                     : null
                 );
               }
@@ -1687,6 +1838,19 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                       setSelectedCollaboratorIds((prev) =>
                         prev.filter((id) => id !== userToRemove.id)
                       );
+                      queryClient.invalidateQueries({
+                        queryKey: ['taskActivities', accountId, caseId, taskId],
+                      });
+                      queryClient.invalidateQueries({
+                        queryKey: [
+                          'taskActivitiesInfinite',
+                          {
+                            case_rid: caseId,
+                            account_rid: accountId,
+                            task_rid: taskId,
+                          },
+                        ],
+                      });
                       successToast('Collaborator removed successfully');
                     },
                     onError: () => {

@@ -37,6 +37,7 @@ import { RootState } from '../../../../store/store';
 const TaskTemplateForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
   const [taskType, setTaskType] = useState(false);
+  const [isLinkedType, setIsLinkedType] = useState(false);
   const { successToast } = useToast();
   const location = useLocation();
   const { templateId } = useParams();
@@ -97,6 +98,8 @@ const TaskTemplateForm: React.FC = () => {
           taskTemplateData?.workflow_connector?.target_data?.[0]?.map(
             (item: { target_rid: string }) => item.target_rid
           ) || [],
+        // Add source_rid if needed for display
+        source_rid: taskTemplateData?.rid || '',
       }),
     }),
     [taskTemplateData]
@@ -143,7 +146,7 @@ const TaskTemplateForm: React.FC = () => {
       })) || []
     );
   }, [taskAssignRoleTypes]);
-  console.log(taskWeightAgeTypes, '');
+
   const taskWeightAgeTypesOptions = useMemo(() => {
     return (
       taskWeightAgeTypes?.data?.data?.data?.map((item) => ({
@@ -179,13 +182,23 @@ const TaskTemplateForm: React.FC = () => {
   }, [taskConecterTypes]);
 
   const taskTemplate = useMemo(() => {
+    if (isEditView && taskTemplateData?.task_name) {
+      return (
+        tasktemplates?.data?.data
+          ?.filter((item) => item.task_name !== taskTemplateData.task_name)
+          ?.map((item) => ({
+            value: item.rid,
+            label: item.task_name,
+          })) || []
+      );
+    }
     return (
       tasktemplates?.data?.data?.map((item) => ({
         value: item.rid,
         label: item.task_name,
       })) || []
     );
-  }, [tasktemplates]);
+  }, [tasktemplates, isEditView, taskTemplateData?.task_name]);
   const submitData = (formValues: Partial<TaskTemplateFormData>) => {
     const payload = transformTaskTemplatePayload(
       formValues,
@@ -209,6 +222,9 @@ const TaskTemplateForm: React.FC = () => {
       );
 
       setTaskType(selectedIndustry?.label.toLowerCase() === TaskType.Action);
+    }
+    if (data.fieldName === 'relationship_connector_rid') {
+      setIsLinkedType(!!data.fieldValue);
     }
   };
 
@@ -248,6 +264,9 @@ const TaskTemplateForm: React.FC = () => {
 
       setTaskType(selectedType?.label.toLowerCase() === TaskType.Action);
     }
+    if (taskTemplateFormData?.relationship_connector_rid) {
+      setIsLinkedType(!!taskTemplateFormData.relationship_connector_rid);
+    }
   }, [taskTemplateFormData, taskTemplateTypesOptions]);
 
   const formConfig = TaskTemplateFormFieldsData(
@@ -263,6 +282,7 @@ const TaskTemplateForm: React.FC = () => {
     taskWeightAgeTypesOptions,
     taskCategoryTypesOptions,
     taskType,
+    isLinkedType,
     permissionMap
   );
 

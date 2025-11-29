@@ -1,9 +1,4 @@
-import {
-  costDisplay,
-  formatDateToYYYYMMDDWithTime,
-  valueDisplay,
-  REGEX_PATTERNS,
-} from '../../../../../../common-utils';
+import { costDisplay, valueDisplay } from '../../../../../../common-utils';
 import { ListTableColumn } from '../../../../../../components/table/types';
 import { AssignProject } from '../../../../../types/assign-projects';
 
@@ -24,7 +19,7 @@ export const getReviewdProjectColumns = (
     label: 'Project Code',
     sortable: true,
     sortId: 'project_code',
-    width: 260,
+    width: 180,
     sticky: true,
     hide:
       !permissionMap?.['project_code']?.read &&
@@ -41,79 +36,8 @@ export const getReviewdProjectColumns = (
       const displayCode = row.fiscal_year
         ? `FY${row.fiscal_year} - ${row.project_code}`
         : row.project_code;
-      return (
-        <span
-        //   onClick={() => onClick(row)}
-        //   className={
-        //     row.fiscal_year
-        //       ? 'cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
-        //       : ''
-        //   }
-        >
-          {displayCode}
-        </span>
-      );
+      return <span>{displayCode}</span>;
     },
-  },
-  {
-    id: 'project_basic_info',
-    label: 'Project Basic Info',
-    sortable: true,
-    sortId: 'project_basic_info',
-    width: 160,
-    hide:
-      !permissionMap?.['project_name']?.read &&
-      !permissionMap?.['project_name']?.edit,
-  },
-  {
-    id: 'project_oint_of_contact',
-    label: 'Project Point of Contact',
-    sortable: true,
-    sortId: 'project_oint_of_ontact',
-    width: 210,
-    hide:
-      !permissionMap?.['project_name']?.read &&
-      !permissionMap?.['project_name']?.edit,
-  },
-  {
-    id: ' Project_financial_details',
-    label: ' Project Financial Details',
-    sortable: true,
-    sortId: 'Project_financial_details',
-    width: 210,
-    hide:
-      !permissionMap?.['project_name']?.read &&
-      !permissionMap?.['project_name']?.edit,
-  },
-  {
-    id: 'Project_resource_information',
-    label: 'Project Resource Information',
-    sortable: true,
-    sortId: 'Project_resource_information',
-    width: 220,
-    hide:
-      !permissionMap?.['project_name']?.read &&
-      !permissionMap?.['project_name']?.edit,
-  },
-  {
-    id: 'Project_task_information',
-    label: 'Project Task Information',
-    sortable: true,
-    sortId: 'Project_task_information',
-    width: 210,
-    hide:
-      !permissionMap?.['project_name']?.read &&
-      !permissionMap?.['project_name']?.edit,
-  },
-  {
-    id: 'Project_technical_details',
-    label: 'Project Technical Details',
-    sortable: true,
-    sortId: 'Project Technical Details',
-    width: 240,
-    hide:
-      !permissionMap?.['project_name']?.read &&
-      !permissionMap?.['project_name']?.edit,
   },
   {
     id: 'project_name',
@@ -125,6 +49,9 @@ export const getReviewdProjectColumns = (
     hide:
       !permissionMap?.['project_name']?.read &&
       !permissionMap?.['project_name']?.edit,
+    sx: (row) => ({
+      background: row?.project_name ? '#fff' : '#f4ecec !important',
+    }),
   },
   {
     id: 'project_type_name',
@@ -136,24 +63,9 @@ export const getReviewdProjectColumns = (
     hide:
       !permissionMap?.['project_type_rid']?.read &&
       !permissionMap?.['project_type_rid']?.edit,
-  },
-  {
-    id: 'fiscal_year',
-    editId: 'fiscal_year',
-    label: 'Fiscal Year',
-    sortable: true,
-    hide:
-      !permissionMap?.['fiscal_year']?.read &&
-      !permissionMap?.['fiscal_year']?.edit,
-    sortId: 'fiscal_year',
-    width: 130,
-    sx: {
-      textAlign: 'left',
-    },
-    render: (row: AssignProject) => {
-      const displayYear = row.fiscal_year ? `FY-${row.fiscal_year}` : '-';
-      return <span>{displayYear}</span>;
-    },
+    sx: (row) => ({
+      background: row?.project_type_name ? '#fff' : '#f4ecec !important',
+    }),
   },
   {
     id: 'classification_name',
@@ -165,17 +77,9 @@ export const getReviewdProjectColumns = (
       !permissionMap?.['project_classification_rid']?.read &&
       !permissionMap?.['project_classification_rid']?.edit,
     width: 170,
-  },
-  {
-    id: 'project_client_group',
-    editId: 'project_client_group',
-    label: 'Customer Group',
-    sortable: true,
-    sortId: 'project_client_group',
-    width: 160,
-    hide:
-      !permissionMap?.['project_client_group']?.read &&
-      !permissionMap?.['project_client_group']?.edit,
+    sx: (row) => ({
+      background: row?.classification_name ? '#fff' : '#f4ecec !important',
+    }),
   },
   {
     id: 'project_group',
@@ -187,64 +91,163 @@ export const getReviewdProjectColumns = (
       !permissionMap?.['project_group']?.read &&
       !permissionMap?.['project_group']?.edit,
     width: 160,
+    sx: (row) => ({
+      background: row?.project_group ? '#fff' : '#f4ecec !important',
+    }),
   },
+  {
+    id: 'industry_name',
+    label: 'Industry',
+    sortable: true,
+    sortId: 'industry_name',
+    // hide:
+    //   !permissionMap?.['industry_rid']?.read &&
+    //   !permissionMap?.['industry_rid']?.edit,
+    width: 160,
+  },
+  {
+    id: 'project_point_of_contact',
+    label: 'Primary Point of Contact',
+    sortable: true,
+    sortId: 'project_point_of_contact',
+    // hide:
+    //   !permissionMap?.['project_point_of_contact']?.read &&
+    //   !permissionMap?.['project_point_of_contact']?.edit,
+    width: 210,
+  },
+  {
+    id: 'project_point_of_contact_email',
+    label: 'Primary Point of Contact Email',
+    sortable: true,
+    sortId: 'project_point_of_contact_email',
+    // hide:
+    //   !permissionMap?.['project_point_of_contact_email']?.read &&
+    //   !permissionMap?.['project_point_of_contact_email']?.edit,
+    width: 230,
+  },
+
   {
     id: 'total_effort_prj',
     editId: 'total_effort',
-    label: 'Project Effort (Hours)',
+    label: 'Total FTE Count',
     sortable: true,
     sortId: 'total_effort',
     width: 170,
     hide:
       !permissionMap?.['total_effort']?.read &&
       !permissionMap?.['total_effort']?.edit,
-    sx: {
+    sx: (row) => ({
+      background: row?.total_effort_prj ? '#fff' : '#f4ecec !important',
       textAlign: 'right',
-    },
+    }),
+
     render: (row: AssignProject) =>
       row.total_effort_prj ? valueDisplay(row.total_effort_prj) : '-',
-    field: {
-      type: 'text',
-      required: false,
-      placeholder: 'Enter Project Effort',
-      validation: [
-        {
-          regex: REGEX_PATTERNS.EFFORTS_NUMBER,
-          errorMessage:
-            'Only positive numbers allowed, up to 16 digits and 2 decimal places',
-        },
-      ],
-    },
   },
+  {
+    id: 'total_effort_prj',
+    editId: 'total_effort',
+    label: 'Total Sub Con Count',
+    sortable: true,
+    sortId: 'total_effort',
+    width: 170,
+    hide:
+      !permissionMap?.['total_effort']?.read &&
+      !permissionMap?.['total_effort']?.edit,
+    sx: (row) => ({
+      background: row?.total_effort_prj ? '#fff' : '#f4ecec !important',
+      textAlign: 'right',
+    }),
+
+    render: (row: AssignProject) =>
+      row.total_effort_prj ? valueDisplay(row.total_effort_prj) : '-',
+  },
+  {
+    id: 'total_effort_prj',
+    editId: 'total_effort',
+    label: 'Total Non Labor Count',
+    sortable: true,
+    sortId: 'total_effort',
+    width: 170,
+    hide:
+      !permissionMap?.['total_effort']?.read &&
+      !permissionMap?.['total_effort']?.edit,
+    sx: (row) => ({
+      background: row?.total_effort_prj ? '#fff' : '#f4ecec !important',
+      textAlign: 'right',
+    }),
+
+    render: (row: AssignProject) =>
+      row.total_effort_prj ? valueDisplay(row.total_effort_prj) : '-',
+  },
+  {
+    id: 'total_effort_prj',
+    editId: 'total_effort',
+    label: 'Total FTE Effort',
+    sortable: true,
+    sortId: 'total_effort',
+    width: 170,
+    hide:
+      !permissionMap?.['total_effort']?.read &&
+      !permissionMap?.['total_effort']?.edit,
+    sx: (row) => ({
+      background: row?.total_effort_prj ? '#fff' : '#f4ecec !important',
+      textAlign: 'right',
+    }),
+
+    render: (row: AssignProject) =>
+      row.total_effort_prj ? valueDisplay(row.total_effort_prj) : '-',
+  },
+  {
+    id: 'total_effort_prj',
+    editId: 'total_effort',
+    label: 'Total Sub Con Effort',
+    sortable: true,
+    sortId: 'total_effort',
+    width: 170,
+    hide:
+      !permissionMap?.['total_effort']?.read &&
+      !permissionMap?.['total_effort']?.edit,
+    sx: (row) => ({
+      background: row?.total_effort_prj ? '#fff' : '#f4ecec !important',
+      textAlign: 'right',
+    }),
+
+    render: (row: AssignProject) =>
+      row.total_effort_prj ? valueDisplay(row.total_effort_prj) : '-',
+  },
+  {
+    id: 'total_effort_prj',
+    editId: 'total_effort',
+    label: 'Total Effort in Hrs',
+    sortable: true,
+    sortId: 'total_effort',
+    width: 170,
+    hide:
+      !permissionMap?.['total_effort']?.read &&
+      !permissionMap?.['total_effort']?.edit,
+    sx: (row) => ({
+      background: row?.total_effort_prj ? '#fff' : '#f4ecec !important',
+      textAlign: 'right',
+    }),
+
+    render: (row: AssignProject) =>
+      row.total_effort_prj ? valueDisplay(row.total_effort_prj) : '-',
+  },
+
   {
     id: 'total_cost_prj',
-    label: 'Project Cost',
+    label: 'Total FTE Cost',
     sortable: true,
     sortId: 'total_cost_prj',
-    width: 130,
-    hide:
-      !permissionMap?.['total_cost']?.read &&
-      !permissionMap?.['total_cost']?.edit,
-    sx: {
-      textAlign: 'right',
-    },
-    render: (row: AssignProject) =>
-      row.total_cost_prj
-        ? costDisplay(row.total_cost_prj, row.currency_symbol)
-        : '-',
-  },
-  {
-    id: 'total_cost_fte_prj',
-    label: 'FTE Cost',
-    sortable: true,
-    sortId: 'total_cost_fte_prj',
     width: 140,
     hide:
-      !permissionMap?.['total_cost_fte']?.read &&
-      !permissionMap?.['total_cost_fte']?.edit,
-    sx: {
+      !permissionMap?.['total_cost_prj']?.read &&
+      !permissionMap?.['total_cost_prj']?.edit,
+    sx: (row) => ({
+      background: row?.total_cost_fte_prj ? '#fff' : '#f4ecec !important',
       textAlign: 'right',
-    },
+    }),
     render: (row: AssignProject) =>
       row.total_cost_fte_prj
         ? costDisplay(row.total_cost_fte_prj, row.currency_symbol)
@@ -252,16 +255,17 @@ export const getReviewdProjectColumns = (
   },
   {
     id: 'total_cost_subcon_prj',
-    label: 'SubCon Cost',
+    label: 'Total Sub Con Cost',
     sortable: true,
     sortId: 'total_cost_subcon_prj',
     width: 140,
     hide:
-      !permissionMap?.['total_cost_subcon']?.read &&
-      !permissionMap?.['total_cost_subcon']?.edit,
-    sx: {
+      !permissionMap?.['total_cost_subcon_prj']?.read &&
+      !permissionMap?.['total_cost_subcon_prj']?.edit,
+    sx: (row) => ({
+      background: row?.total_effort_prj ? '#fff' : '#f4ecec !important',
       textAlign: 'right',
-    },
+    }),
     render: (row: AssignProject) =>
       row.total_cost_subcon_prj
         ? costDisplay(row.total_cost_subcon_prj, row.currency_symbol)
@@ -269,146 +273,82 @@ export const getReviewdProjectColumns = (
   },
   {
     id: 'total_cost_nonlabor_prj',
-    label: 'Non-Labor Cost',
+    label: 'Total Non Labor Cost',
     sortable: true,
     editable:
-      permissionMap?.['total_cost_nonlabor']?.read &&
-      permissionMap?.['total_cost_nonlabor']?.edit,
+      permissionMap?.['total_cost_nonlabor_prj']?.read &&
+      permissionMap?.['total_cost_nonlabor_prj']?.edit,
     hide:
-      !permissionMap?.['total_cost_nonlabor']?.read &&
-      !permissionMap?.['total_cost_nonlabor']?.edit,
+      !permissionMap?.['total_cost_nonlabor_prj']?.read &&
+      !permissionMap?.['total_cost_nonlabor_prj']?.edit,
     sortId: 'total_cost_nonlabor_prj',
     width: 140,
-    sx: {
+    sx: (row) => ({
+      background: row?.total_cost_nonlabor_prj ? '#fff' : '#f4ecec !important',
       textAlign: 'right',
-    },
+    }),
     render: (row: AssignProject) =>
       row.total_cost_nonlabor_prj
         ? costDisplay(row.total_cost_nonlabor_prj, row.currency_symbol)
         : '-',
   },
   {
-    id: 'project_point_of_contact',
-    label: 'Project Point of Contact',
+    id: 'total_cost_prj',
+    label: 'Total Cost',
     sortable: true,
-    sortId: 'project_point_of_contact',
-    width: 200,
-    hide:
-      !permissionMap?.['key_contacts']?.read &&
-      !permissionMap?.['key_contacts']?.edit,
-    render: (row: AssignProject & { _level?: number }) => {
-      const isClickable =
-        permissionMap?.['key_contacts']?.read &&
-        permissionMap?.['key_contacts']?.edit &&
-        row._level !== undefined &&
-        row._level === 1;
-      return isClickable ? (
-        <div className='!h-[31px] !min-h[31px] pt-1.5'>
-          {row.project_point_of_contact}
-        </div>
-      ) : (
-        <span>
-          {row.project_point_of_contact ? row.project_point_of_contact : '-'}
-        </span>
-      );
-    },
-  },
-  {
-    id: 'project_technical_point_of_contact',
-    label: 'Technical Point of Contact',
-    sortable: true,
-    sortId: 'project_technical_point_of_contact',
-    width: 210,
-    hide:
-      !permissionMap?.['key_contacts']?.read &&
-      !permissionMap?.['key_contacts']?.edit,
-    render: (row: AssignProject & { _level?: number }) => {
-      const isClickable =
-        permissionMap?.['key_contacts']?.read &&
-        permissionMap?.['key_contacts']?.edit &&
-        row._level !== undefined &&
-        row._level === 1;
-      return isClickable ? (
-        <div className='!h-[31px] !min-h[31px] pt-1.5'>
-          {row.project_technical_point_of_contact}
-        </div>
-      ) : (
-        <span>
-          {row.project_technical_point_of_contact
-            ? row.project_technical_point_of_contact
-            : '-'}
-        </span>
-      );
-    },
-  },
-  {
-    id: 'assessment_status',
-    label: 'Assessment Status',
-    sortable: true,
-    sortId: 'assessment_status',
-    width: 180,
-    hide:
-      !permissionMap?.['assessment_status']?.read &&
-      !permissionMap?.['assessment_status']?.edit,
-  },
-  {
-    id: 'rd_percent_final',
-    label: 'QRE %',
-    sortable: true,
-    sortId: 'rd_percent_final',
+    sortId: 'total_cost_prj',
     width: 130,
-    sx: {
+    hide:
+      !permissionMap?.['total_cost']?.read &&
+      !permissionMap?.['total_cost']?.edit,
+    sx: (row) => ({
+      background: row?.total_cost_prj ? '#fff' : '#f4ecec !important',
       textAlign: 'right',
-    },
-    hide:
-      !permissionMap?.['qre_final']?.read &&
-      !permissionMap?.['qre_final']?.edit,
+    }),
     render: (row: AssignProject) =>
-      row.rd_percent_final ? row.rd_percent_final : '-',
-  },
-  {
-    id: 'qre_final',
-    label: 'QRE',
-    sortable: true,
-    sortId: 'qre_final',
-    width: 130,
-    sx: {
-      textAlign: 'right',
-    },
-    hide: !permissionMap?.['qre']?.read && !permissionMap?.['qre']?.edit,
-    render: (row: AssignProject) => (row.qre_final ? row.qre_final : '-'),
-  },
-  {
-    id: 'comments',
-    editId: 'comments',
-    label: 'Comments',
-    sortable: true,
-    sortId: 'comments',
-    width: 200,
-    hide:
-      !permissionMap?.['comments']?.read && !permissionMap?.['comments']?.edit,
-  },
-  {
-    id: 'modified_datetime',
-    label: 'Last Modified',
-    sortable: true,
-    sortId: 'modified_datetime',
-    width: 190,
-    hide:
-      !permissionMap?.['modified_datetime']?.read &&
-      !permissionMap?.['modified_datetime']?.edit,
-    render: (row: AssignProject) =>
-      row.modified_datetime
-        ? formatDateToYYYYMMDDWithTime(row.modified_datetime)
+      row.total_cost_prj
+        ? costDisplay(row.total_cost_prj, row.currency_symbol)
         : '-',
   },
   {
-    id: 'r_number',
-    label: 'Project ID',
+    id: 'project_point_of_contact',
+    label: 'Number of Project Resource',
     sortable: true,
-    sortId: 'r_number',
-    width: 140,
+    sortId: 'project_point_of_contact',
+    width: 200,
+    sx: (row) => ({
+      background: row?.project_point_of_contact ? '#fff' : '#f4ecec!important',
+      textAlign: 'right',
+    }),
     hide:
-      !permissionMap?.['r_number']?.read && !permissionMap?.['r_number']?.edit,
+      !permissionMap?.['key_contacts']?.read &&
+      !permissionMap?.['key_contacts']?.edit,
+  },
+  {
+    id: 'project_technical_point_of_contact',
+    label: 'Number of Project Task',
+    sortable: true,
+    sortId: 'project_technical_point_of_contact',
+    width: 210,
+    sx: (row) => ({
+      background: row?.total_cost_fte_prj ? '#fff' : '#f4ecec !important',
+      textAlign: 'right',
+    }),
+    hide:
+      !permissionMap?.['key_contacts']?.read &&
+      !permissionMap?.['key_contacts']?.edit,
+  },
+  {
+    id: 'assessment_status',
+    label: 'Number of Technical Summary Generated',
+    sortable: true,
+    sortId: 'assessment_status',
+    width: 310,
+    hide:
+      !permissionMap?.['assessment_status']?.read &&
+      !permissionMap?.['assessment_status']?.edit,
+    sx: (row) => ({
+      background: row?.assessment_status ? '#fff' : '#f4ecec !important',
+    }),
   },
 ];

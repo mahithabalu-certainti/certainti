@@ -33,6 +33,7 @@ export interface CaseTaskType {
   progress?: number;
   [key: string]: unknown;
   total_result: string;
+  assigned_to_name?: string;
 }
 
 export interface CaseTaskApiResponse {
@@ -226,6 +227,7 @@ export const getUploadTaskAttachmentsUrl = () =>
   '/api/cases/task/attachments/add';
 export const getDeleteTaskAttachmentUrl = () =>
   '/api/cases/task/attachments/delete';
+export const getTaskDropDownListUrl = () => '/api/cases/task/dropDownList';
 
 // Comment URL
 export const getAddCommentUrl = () => '/api/cases/task/comments/add';
@@ -655,4 +657,53 @@ export const ExportCaseTaskList = async (
   } catch (error) {
     console.error('Export failed:', error);
   }
+};
+
+// Task Drop Down List Types
+export interface TaskDropDownListParams {
+  case_rid: string;
+  account_rid: string;
+  search?: string;
+}
+
+export interface TaskDropDownListResponse {
+  data: Array<{
+    rid: string;
+    task_name: string;
+  }>;
+  status: string;
+  message: string;
+}
+
+// Fetch Task Drop Down List
+export const fetchTaskDropDownList = async (
+  params: TaskDropDownListParams
+): Promise<TaskDropDownListResponse> => {
+  const { data } = await caseServiceApi.post<TaskDropDownListResponse>(
+    getTaskDropDownListUrl(),
+    params
+  );
+  return data;
+};
+
+// Hook for Task Drop Down List
+export const useGetTaskDropDownList = (
+  params: TaskDropDownListParams,
+  options?: {
+    enabled?: boolean;
+  }
+) => {
+  return useQuery<TaskDropDownListResponse, Error>({
+    queryKey: ['taskDropDownList', params],
+    queryFn: () => fetchTaskDropDownList(params),
+    staleTime: 0,
+    gcTime: 0,
+    retry: 0,
+    enabled: !!(
+      params.case_rid &&
+      params.account_rid &&
+      options?.enabled !== false
+    ),
+    ...options,
+  });
 };

@@ -17,10 +17,10 @@ import type { UserOption } from './types';
 import type { RoleOption } from '../../consultant/services/case-team/case-team-service';
 import {
   useGetTaskConnectorTypes,
-  useGetTaskTemplate,
   useWeightageList,
   useGetTaskCategoryTypes,
 } from '../../admin/service/task-template/task-template-service';
+import { useGetTaskDropDownList } from '../../consultant/services/case-task/case-task-service';
 
 // Form data interface
 export interface TaskFormData {
@@ -82,6 +82,10 @@ interface TaskCreateModalProps {
     description?: boolean;
     collaborators?: boolean;
   };
+  accountId?: string;
+  caseId?: string;
+  caseStartDate?: string | null;
+  caseEndDate?: string | null;
 }
 
 const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
@@ -99,6 +103,10 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
 
   fieldVisibility = {},
   fieldDisabled = {},
+  accountId,
+  caseId,
+  caseStartDate,
+  caseEndDate,
 }) => {
   const ErrorIconTooltip = ({ error }: { error: string }) => (
     <Tooltip
@@ -169,10 +177,17 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
 
   // Fetch connector types and task templates
   const taskConnectorTypesQuery = useGetTaskConnectorTypes();
-  const taskTemplatesQuery = useGetTaskTemplate({ search: '' });
+  const taskTemplatesQuery = useGetTaskDropDownList({
+    case_rid: caseId || '',
+    account_rid: accountId || '',
+    search: '',
+  }, { enabled: !!caseId && !!accountId });
 
   const connectorTypesData = useMemo(() => {
-    if (taskConnectorTypesQuery.data?.data && Array.isArray(taskConnectorTypesQuery.data.data)) {
+    if (
+      taskConnectorTypesQuery.data?.data &&
+      Array.isArray(taskConnectorTypesQuery.data.data)
+    ) {
       return taskConnectorTypesQuery.data.data.map(
         (connector: { rid: string; relationship_type: string }) => ({
           id: connector.rid,
@@ -184,7 +199,10 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
   }, [taskConnectorTypesQuery.data]);
 
   const taskTemplatesData = useMemo(() => {
-    if (taskTemplatesQuery.data?.data && Array.isArray(taskTemplatesQuery.data.data)) {
+    if (
+      taskTemplatesQuery.data?.data &&
+      Array.isArray(taskTemplatesQuery.data.data)
+    ) {
       return taskTemplatesQuery.data.data.map(
         (template: { rid: string; task_name: string }) => ({
           id: template.rid,
@@ -201,8 +219,18 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
 
   const weightageData = useMemo(() => {
     // Handle nested data.data structure
-    const response = weightageListQuery.data as any;
-    const dataArray = response?.data?.data || response?.data;
+    type WeightageResponse = {
+      data?:
+      | {
+        data?: Array<{ rid: string; weightage_value: number }>;
+      }
+      | Array<{ rid: string; weightage_value: number }>;
+    };
+
+    const response = weightageListQuery.data as WeightageResponse;
+    const dataArray = Array.isArray(response?.data)
+      ? response.data
+      : response?.data?.data;
     if (dataArray && Array.isArray(dataArray)) {
       return dataArray.map(
         (item: { rid: string; weightage_value: number }) => ({
@@ -214,8 +242,12 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
     return [];
   }, [weightageListQuery.data]);
 
+  type CategoryResponse = {
+    data?: Array<{ rid: string; category_name: string }>;
+  };
+
   const categoryData = useMemo(() => {
-    const response = categoryListQuery.data as any;
+    const response = categoryListQuery.data as CategoryResponse;
     if (response?.data && Array.isArray(response.data)) {
       return response.data.map(
         (item: { rid: string; category_name: string }) => ({
@@ -226,6 +258,14 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
     }
     return [];
   }, [categoryListQuery.data]);
+
+  const minDate = useMemo(() => {
+    return caseStartDate ? dayjs(caseStartDate) : undefined;
+  }, [caseStartDate]);
+
+  const maxDate = useMemo(() => {
+    return caseEndDate ? dayjs(caseEndDate) : undefined;
+  }, [caseEndDate]);
 
   // Initialize status to "To Do" when statusData changes
   useEffect(() => {
@@ -265,35 +305,51 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
 
   const handleSubmit = async () => {
     const newErrors: Record<string, string> = {};
-    if (!taskTitle.trim()) newErrors.taskTitle = 'Task Name is required';
+    if (!taskTitle.trim()) newErrors.taskTitle = 'Field is required';
     if (!selectedPriority || !selectedPriorityRid)
-      newErrors.priority = 'Priority is required';
+      newErrors.priority = 'Field is required';
     if (!startDate && !fieldVisibility.startDate)
-      newErrors.startDate = 'Start Date is required';
+      newErrors.startDate = 'Field is required';
     if (!endDate && !fieldVisibility.endDate)
-      newErrors.endDate = 'Due Date is required';
-    if (
-      (!selectedChecklist || !selectedChecklistRid) &&
-      !fieldVisibility.checklist
-    )
-      newErrors.checklistTemplate = 'Checklist Template is required';
+      newErrors.endDate = 'Field is required';
+
+    if (startDate) {
+      if (minDate && startDate.isBefore(minDate, 'day')) {
+        newErrors.startDate = 'Invalid Date';
+      }
+      if (maxDate && startDate.isAfter(maxDate, 'day')) {
+        newErrors.startDate = 'Invalid Date';
+      }
+    }
+
+    if (endDate) {
+      if (minDate && endDate.isBefore(minDate, 'day')) {
+        newErrors.endDate = 'Invalid Date';
+      }
+      if (maxDate && endDate.isAfter(maxDate, 'day')) {
+        newErrors.endDate = 'Invalid Date';
+      }
+      if (startDate && endDate.isBefore(startDate, 'day')) {
+        newErrors.endDate = 'Invalid Date';
+      }
+    }
 
     if (linkedType && (!linkTaskTypes || linkTaskTypes.length === 0)) {
-      newErrors.linkTaskType = 'Link Task Type is required';
+      newErrors.linkTaskType = 'Field is required';
     }
     if (!linkedType && linkTaskTypes && linkTaskTypes.length > 0) {
-      newErrors.linkedType = 'Linked Type is required';
+      newErrors.linkedType = 'Field is required';
     }
 
     if (taskTitle.length > 2000) {
-      newErrors.taskTitle = 'Task Name too long (max 2000 characters)';
+      newErrors.taskTitle = 'Maximum 2000 characters allowed';
     }
     if (description.length > 2000) {
-      newErrors.description = 'Description too long (max 2000 characters)';
+      newErrors.description = 'Maximum 2000 characters allowed';
     }
     const longTags = selectedTags.filter((tag) => tag.length > 50);
     if (longTags.length > 0) {
-      newErrors.tags = 'Tags too long (max 50 characters)';
+      newErrors.tags = 'Maximum 50 characters allowed';
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -346,9 +402,6 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
   };
 
   const handleEndDateChange = (newValue: dayjs.Dayjs | null) => {
-    if (newValue && startDate && newValue <= startDate) {
-      return;
-    }
     setEndDate(newValue);
     if (newValue) {
       setErrors((prev) => ({ ...prev, endDate: '' }));
@@ -359,7 +412,7 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
     if (startDate) {
       return startDate.add(1, 'day');
     }
-    return undefined;
+    return minDate;
   };
 
   if (!isOpen) return null;
@@ -416,9 +469,10 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
             </div>
           </div>
 
-
-
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
+          <LocalizationProvider dateAdapter={AdapterDayjs} localeText={{
+            fieldMonthPlaceholder: (params) =>
+              params.contentType === 'digit' ? 'MM' : params.format,
+          }}>
             <div className='grid grid-cols-2 gap-4'>
               {!fieldVisibility.startDate && (
                 <div>
@@ -431,7 +485,8 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                       value={startDate}
                       onChange={handleStartDateChange}
                       format='YYYY-MMM-DD'
-                      minDate={dayjs()}
+                      minDate={minDate}
+                      maxDate={maxDate}
                       slots={{
                         openPickerIcon: () => (
                           <CalendarIcon className='w-4 h-4' />
@@ -457,6 +512,7 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                                 WebkitTextFillColor: 'black !important',
                                 '&::placeholder': {
                                   color: '#7D98B6 !important',
+                                  WebkitTextFillColor: '#7D98B6 !important',
                                   opacity: 1,
                                 },
                               },
@@ -465,7 +521,8 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                                   ? '1px solid #EF4444'
                                   : '1px solid #CBD6E2',
                               },
-                              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                              '&.Mui-focused .MuiOutlinedInput-notchedOutline':
+                              {
                                 border: errors.startDate
                                   ? '2px solid #EF4444'
                                   : '2px solid #60A5FA',
@@ -478,7 +535,11 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                               borderRadius: '2px',
                             },
                           },
-                          placeholder: 'Choose start date',
+                          placeholder: 'Choose Start Date',
+                          inputProps: {
+                            placeholder: 'Choose Start Date',
+                            readOnly: true,
+                          },
                         },
                       }}
                     />
@@ -501,6 +562,7 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                       value={endDate}
                       onChange={handleEndDateChange}
                       minDate={getMinEndDate()}
+                      maxDate={maxDate}
                       format='YYYY-MMM-DD'
                       slots={{
                         openPickerIcon: () => (
@@ -527,6 +589,7 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                                 WebkitTextFillColor: 'black !important',
                                 '&::placeholder': {
                                   color: '#7D98B6 !important',
+                                  WebkitTextFillColor: '#7D98B6 !important',
                                   opacity: 1,
                                 },
                               },
@@ -535,7 +598,8 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                                   ? '1px solid #EF4444'
                                   : '1px solid #CBD6E2',
                               },
-                              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                              '&.Mui-focused .MuiOutlinedInput-notchedOutline':
+                              {
                                 border: errors.endDate
                                   ? '2px solid #EF4444'
                                   : '2px solid #60A5FA',
@@ -548,7 +612,11 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                               borderRadius: '2px',
                             },
                           },
-                          placeholder: 'Choose end date',
+                          placeholder: 'Choose Due Date',
+                          inputProps: {
+                            placeholder: 'Choose Due Date',
+                            readOnly: true,
+                          },
                         },
                       }}
                     />
@@ -724,8 +792,7 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
               px: 1,
               py: 1,
               '&:hover': {
-                background:
-                  'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
+                background: 'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
               },
             }}
           />

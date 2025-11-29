@@ -38,7 +38,7 @@ export const ManageTaskDetails: React.FC = () => {
           <ManageUserIcon alt='manage user' className='h-7 w-7 rounded' />
           <div className='flex flex-col mx-2.5 pb-1'>
             <div className={HEADER_STYLES.adminPermission}>
-              {`Admin Permission > Manage Task Template > ${userDetail?.task_name}`}
+              {`Admin Permission > Task Template > ${userDetail?.task_name}`}
             </div>
             <div className={HEADER_STYLES.manageUser}>
               View Task Template Details

@@ -38,10 +38,6 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
   // projectDetails,
   isSendInteraction,
 }) => {
-  // const { projectid } = useParams();
-
-  const projectid = 'D001-551d36b6-7d41-43b4-a242-95ac37404744';
-
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const accountId = searchParams.get('accountID') || '';
@@ -56,8 +52,9 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     interactionId,
     projectFiscalRid as string
   );
-  const { data: projectDetails, isLoading: projectDetailsLoading } =
+  const { data: projectData, isLoading: projectDetailsLoading } =
     useProjectDetail(accountId, projectFiscalRid || '');
+  const projectDetails = projectData?.data?.project;
   const interactionFieldsEditable = useMemo(
     () =>
       permission
@@ -110,10 +107,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       account_rid: projectDetails?.account_rid || '',
       project_rid: projectDetails?.project_rid || '',
       project_fiscal_rid:
-        projectDetails?.project_fiscal_rid ||
-        projectid ||
-        projectDetails?.rid ||
-        '',
+        projectDetails?.project_fiscal_rid || projectDetails?.rid || '',
     };
     const path = generatePath(INTERACTIONS_EDIT, {
       module: 'project',
@@ -133,7 +127,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       {
         interaction_rid: data?.interaction_rid || interactionId || '',
         project_fiscal_rid:
-          data?.project_fiscal_rid || projectDetails?.rid || projectid || '',
+          data?.project_fiscal_rid || projectDetails?.rid || '',
       },
     ];
 
@@ -337,11 +331,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
           formData={{
             account_rid: projectDetails?.account_rid || '',
             project_rid: projectDetails?.project_rid || '',
-            project_fiscal_rid:
-              projectDetails?.project_fiscal_rid ||
-              projectid ||
-              projectDetails?.rid ||
-              '',
+            project_fiscal_rid: projectDetails?.rid || '',
             interaction_rid: data?.interaction_rid || interactionId || '',
           }}
         />
