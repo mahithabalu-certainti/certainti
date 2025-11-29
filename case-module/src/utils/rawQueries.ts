@@ -1487,7 +1487,8 @@ return query;
   'description', ct.description,
   'task_status_rid', ct.status_rid,
   'checklists', fci.checklists,
-  'tags', ftt.tags
+  'tags', ftt.tags,
+  'fiscal_year', ct.fiscal_year
   ) AS task_details
   FROM
   ${schemaName}.activities ct

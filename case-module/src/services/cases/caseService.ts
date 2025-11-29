@@ -2588,6 +2588,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
           r_number : resData?.task_details.r_number,
           task_name : resData?.task_details.task_name,
           created_by : resData?.task_details.created_by,
+          fiscal_year : resData?.task_details.fiscal_year || null,
           created_by_name : assignedToMap.get(resData?.task_details.created_by!) || null,
           assigned_to : resData?.task_details.assigned_to,
           assigned_to_name :  assignedToMap.get(resData?.task_details.assigned_to!) || null,
