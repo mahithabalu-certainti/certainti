@@ -78,7 +78,8 @@ export type InputType =
   | 'emptyFeild'
   | 'website'
   | 'iconButton'
-  | 'file';
+  | 'file'
+  | 'custom';
 
 export interface SelectOption {
   label: string;

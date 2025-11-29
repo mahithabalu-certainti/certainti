@@ -30,6 +30,7 @@ import {
   useUpdateCaseTask,
   useGetTaskDropDownList,
 } from '../../consultant/services/case-task/case-task-service';
+import { useUpdateActivityTask } from '../../consultant/services/activities/activities-service';
 import {
   useGetTagOptions,
   useDeleteTag,
@@ -63,6 +64,9 @@ interface TaskDetailModalPropsExtended
   ) => Promise<void>;
   caseStartDate?: string | null;
   caseEndDate?: string | null;
+  fiscalYear?: string | null;
+  fiscalYears?: string[];
+  taskType?: string;
 }
 
 const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
@@ -87,6 +91,9 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   fieldDisabled = {},
   caseStartDate,
   caseEndDate,
+  fiscalYear,
+  fiscalYears,
+  taskType,
 }) => {
   const [task, setTask] = useState<Task | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
@@ -167,6 +174,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   const uploadAttachmentsMutation = useUploadTaskAttachments();
   const deleteAttachmentMutation = useDeleteTaskAttachment();
   const updateTaskMutation = useUpdateCaseTask();
+  const updateActivityTaskMutation = useUpdateActivityTask();
   const deleteCollaboratorMutation = useDeleteCollaborator();
   const deleteTagMutation = useDeleteTag();
   const queryClient = useQueryClient();
@@ -174,12 +182,13 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   const commentsParams = useMemo(
     () => ({
       account_rid: accountId,
-      case_rid: caseId,
+      ...(taskType !== 'activity' && { case_rid: caseId }),
       task_rid: taskId!,
       page: 1,
       limit: 100,
+      ...(taskType === 'activity' && { task_type: 'activity' }),
     }),
-    [accountId, caseId, taskId]
+    [accountId, caseId, taskId, taskType]
   );
 
   const attachmentsParams = useMemo(
@@ -197,7 +206,8 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     accountId,
     caseId,
     taskId!,
-    !!taskId && isOpen
+    !!taskId && isOpen,
+    taskType
   );
 
   const { data: rawCommentsResponse } = useGetTaskCommentsList(commentsParams, {
@@ -511,6 +521,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       linkTaskTypesChanged ||
       weightage !== (originalTask.weightage || '') ||
       category !== (originalTask.category || '') ||
+      originalTask.fiscal_year !== editedTask.fiscal_year ||
       pendingAttachments.length > 0 ||
       deletedAttachmentIds.length > 0
     );
@@ -571,10 +582,8 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     setSelectedCollaboratorIds(ids);
   }, [editedTask, allEnrichedUsers]);
 
-
-
   if (!isOpen || !taskId) return null;
-  if (isLoadingTaskDetails || (!task && !editedTask)) {
+  if (isLoadingTaskDetails || (rawTask && !task)) {
     return (
       <div
         className='fixed right-0 bottom-0 w-[650px] bg-white text-gray-900 shadow-2xl z-50 overflow-y-auto'
@@ -697,7 +706,10 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       if (maxDate && dayjs(editedTask.endDate).isAfter(maxDate, 'day')) {
         newErrors.endDate = 'Invalid Date';
       }
-      if (editedTask?.startDate && dayjs(editedTask.endDate).isBefore(dayjs(editedTask.startDate), 'day')) {
+      if (
+        editedTask?.startDate &&
+        dayjs(editedTask.endDate).isBefore(dayjs(editedTask.startDate), 'day')
+      ) {
         newErrors.endDate = 'Invalid Date';
       }
     }
@@ -844,10 +856,16 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
 
         const workflowConnector: Record<string, unknown> = {};
 
-        const originalTargetRids = originalTask?.workflow_connector?.map(wc => wc.target_rid) || [];
-        const deleteTargetRids = originalTargetRids.filter(rid => !linkTaskTypeRidsValue.includes(rid));
+        const originalTargetRids =
+          originalTask?.workflow_connector?.map((wc) => wc.target_rid) || [];
+        const deleteTargetRids = originalTargetRids.filter(
+          (rid) => !linkTaskTypeRidsValue.includes(rid)
+        );
 
-        if (linkedTypeRidValue && (linkTaskTypeRidsValue.length > 0 || deleteTargetRids.length > 0)) {
+        if (
+          linkedTypeRidValue &&
+          (linkTaskTypeRidsValue.length > 0 || deleteTargetRids.length > 0)
+        ) {
           workflowConnector.source_rid = taskId;
           workflowConnector.relationship_connector_rid = linkedTypeRidValue;
           workflowConnector.target_rid = linkTaskTypeRidsValue;
@@ -856,13 +874,15 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
 
         const updatePayload = {
           rid: taskId,
-          case_rid: caseId,
+          ...(caseId ? { case_rid: caseId } : {}),
           account_rid: accountId,
           task_name: editedTask.title || '',
           task_description: editedTask.description || '',
           task_status_rid: selectedStatus?.id || '',
           priority_rid: selectedPriority?.id || '',
-          checklist_template_rid: selectedChecklistObj?.id || '',
+          ...(caseId || selectedChecklistObj?.id
+            ? { checklist_template_rid: selectedChecklistObj?.id || '' }
+            : {}),
           effective_start_datetime: editedTask.startDate
             ? dayjs(editedTask.startDate).format('YYYY-MM-DD')
             : '',
@@ -870,7 +890,9 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
             ? dayjs(editedTask.endDate).format('YYYY-MM-DD')
             : '',
           tags: tagsArray,
-          workflow_connector: workflowConnector,
+          ...(caseId || Object.keys(workflowConnector).length > 0
+            ? { workflow_connector: workflowConnector }
+            : {}),
           ...(weightageRidValue && {
             weightage_rid: weightageRidValue,
           }),
@@ -878,12 +900,43 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
             task_category_rid: categoryRidValue,
           }),
           assigned_to: assignedToRid || '',
+          fiscal_year: editedTask.fiscal_year,
         };
 
-        const updateResponse =
-          await updateTaskMutation.mutateAsync(updatePayload);
+        let updateResponse;
+
+        if (taskType === 'activity') {
+          // Use activities API for tasks opened from activities page
+          const activityPayload = {
+            task_rid: taskId,
+            attach_to: editedTask.case_rid || caseId || accountId,
+            attachment_level:
+              editedTask.case_rid || caseId ? 'case' : 'account',
+            account_rid: accountId,
+            task_name: editedTask.title || '',
+            task_description: editedTask.description || '',
+            task_status_rid: selectedStatus?.id || '',
+            priority_rid: selectedPriority?.id || '',
+            effective_start_datetime: editedTask.startDate
+              ? dayjs(editedTask.startDate).format('YYYY-MM-DD')
+              : '',
+            effective_end_datetime: editedTask.endDate
+              ? dayjs(editedTask.endDate).format('YYYY-MM-DD')
+              : '',
+            tags: tagsArray,
+            assigned_to: assignedToRid || '',
+            fiscal_year: editedTask.fiscal_year,
+          };
+          updateResponse =
+            await updateActivityTaskMutation.mutateAsync(activityPayload);
+        } else {
+          // Use case task API for tasks opened from work breakdown
+          updateResponse = await updateTaskMutation.mutateAsync(updatePayload);
+        }
+
         const message =
-          updateResponse?.statusMessage || 'Task updated successfully';
+          (updateResponse as { statusMessage?: string })?.statusMessage ||
+          'Task updated successfully';
         successToast(message);
         setOriginalTask(editedTask);
         queryClient.invalidateQueries({
@@ -1141,7 +1194,9 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     if (removedUserIds.length > 0 && taskId) {
       try {
         for (const removedUserId of removedUserIds) {
-          const userToRemove = allEnrichedUsers.find((u) => u.id === removedUserId);
+          const userToRemove = allEnrichedUsers.find(
+            (u) => u.id === removedUserId
+          );
           if (userToRemove) {
             await deleteCollaboratorMutation.mutateAsync({
               case_rid: caseId,
@@ -1400,12 +1455,13 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
             </div>
           )}
 
-
-
-          <LocalizationProvider dateAdapter={AdapterDayjs} localeText={{
-            fieldMonthPlaceholder: (params) =>
-              params.contentType === 'digit' ? 'MM' : params.format,
-          }}>
+          <LocalizationProvider
+            dateAdapter={AdapterDayjs}
+            localeText={{
+              fieldMonthPlaceholder: (params) =>
+                params.contentType === 'digit' ? 'MM' : params.format,
+            }}
+          >
             <div className='grid grid-cols-2 gap-4'>
               {!fieldVisibility.startDate && (
                 <div>
@@ -1684,7 +1740,9 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                 );
                 return;
               }
-              const selectedUser = allEnrichedUsers.find((u) => u.id === userId);
+              const selectedUser = allEnrichedUsers.find(
+                (u) => u.id === userId
+              );
               if (selectedUser) {
                 setEditedTask((prev) =>
                   prev
@@ -1741,6 +1799,13 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
               setCategory(value);
               setEditedTask((prev) =>
                 prev ? { ...prev, category: value } : null
+              );
+            }}
+            fiscalYear={editedTask?.fiscal_year || fiscalYear}
+            fiscalYears={fiscalYears}
+            onFiscalYearChange={(value) => {
+              setEditedTask((prev) =>
+                prev ? { ...prev, fiscal_year: value } : null
               );
             }}
             onUserRoleChange={(value) => {

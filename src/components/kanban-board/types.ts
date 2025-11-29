@@ -102,6 +102,7 @@ export interface Task {
     target_task_name: string;
     relationship_name: string;
   }>;
+  fiscal_year?: string;
 }
 
 export interface TaskCard {

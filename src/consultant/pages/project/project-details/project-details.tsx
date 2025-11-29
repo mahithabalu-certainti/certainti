@@ -36,6 +36,8 @@ import {
   ProjectTriggerAIPayload,
 } from '../../../types/project';
 import {
+  ActivityListExportURLParams,
+  ActivityType,
   ChecklistListExportParams,
   ExportType,
   FiscalDates,
@@ -55,7 +57,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { setTemporaryFiscalYear } from '../../../../store/slices/account-slice';
 import { RootState } from '../../../../store/store';
 import { checkPermission, getFiscalDateBounds } from '../../../../common-utils';
-import { NotFound } from '../../../../pages';
 import { ProjectResources } from './project-resources/project-resources';
 import { Attachments } from './attachments';
 import { exportAttachmentsData } from '../../../services/attachments/attachments-service';
@@ -87,6 +88,8 @@ import { ExportNotesList } from '../../../services/notes/notes-service';
 import { QrePercentHistory } from './qre-percent-history';
 import { ExportChecklistList } from '../../../services/checklist/checklist-service';
 import { Checklist } from './checklist';
+import ProjectActivities from './project-activities/project-activities';
+import { ExportActivityList } from '../../../services/activities/activities-service';
 
 export const ProjectDetails = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -157,6 +160,14 @@ export const ProjectDetails = () => {
       filters: {},
     });
 
+  const [activityParams, setActivityParams] =
+    useState<ActivityListExportURLParams>({
+      sortBy: 'r_number',
+      sortOrder: 'ASC',
+      filters: {},
+      activity_type: 'all',
+    });
+
   const [fiscalDate, setFiscalDate] = useState<FormFiscalDateType>({
     year: 0,
   });
@@ -208,6 +219,10 @@ export const ProjectDetails = () => {
   const technicalSummaryId = searchParams.get('technical_summary_id');
   const noteView = searchParams.get('note_id');
   const checklistView = searchParams.get('checklist_id');
+
+  const activityId = searchParams.get('activity_id');
+  const activityType = searchParams.get('activity_type');
+  const activityViewDetails = !!activityId && !!activityType;
 
   const { data, isLoading, isError, refetch, isPending } = useProjectDetail(
     accountID,
@@ -338,6 +353,8 @@ export const ProjectDetails = () => {
       return !isNotesExportEnable;
     } else if (list === 'checklist' && !checklistView) {
       return !isChecklistsExportEnable;
+    } else if (list === 'activities' && !activityViewDetails) {
+      return false;
     } else if (list === 'projectsTask') {
       return !isTaskExportViewEnable;
     } else if (list === 'financial' && tab === 'resource_cost') {
@@ -371,6 +388,7 @@ export const ProjectDetails = () => {
       list !== 'attachments' &&
       list !== 'notes' &&
       list !== 'checklist' &&
+      list !== 'activities' &&
       list !== 'financial' &&
       list !== 'projectResources' &&
       list !== 'projectsTask' &&
@@ -416,6 +434,18 @@ export const ProjectDetails = () => {
         ...checklistParams,
         ...checklistPayload,
       });
+      return;
+    }
+    if (exportType === 'activities') {
+      const activityPayload = {
+        accountRid: accountID,
+        entityId: projectID,
+        attachmentLevel: 'project',
+      };
+      ExportActivityList(
+        { ...activityParams, ...activityPayload },
+        activityType as ActivityType
+      );
       return;
     }
 
@@ -671,7 +701,15 @@ export const ProjectDetails = () => {
           />
         );
       case 'activities':
-        return <NotFound />;
+        return (
+          <ProjectActivities
+            accountInActive={accountInActive || projectInActive}
+            projectFiscalYear={projectData?.fiscal_year}
+            projectCode={projectData?.project_code}
+            setExportType={setExportType}
+            setActivityParams={setActivityParams}
+          />
+        );
       case 'notes':
         return (
           <Notes
@@ -767,13 +805,13 @@ export const ProjectDetails = () => {
         disabled: false,
         icon: TechSummaryIcon,
       },
-      // {
-      //   name: 'Activities',
-      //   key: 'activities',
-      //   id: AllModules.ACTIVITIES,
-      //   disabled: false,
-      //   icon: ActivitiesIcon,
-      // },
+      {
+        name: 'Activities',
+        key: 'activities',
+        id: AllModules.ACTIVITIES,
+        disabled: false,
+        icon: ActivitiesIcon,
+      },
       {
         name: 'QRE Percent History',
         key: 'qre-percent-history',

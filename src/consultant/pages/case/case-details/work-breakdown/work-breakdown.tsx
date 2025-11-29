@@ -695,6 +695,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
       collaborators:
         !permissionMap['collaborators']?.read &&
         !permissionMap['collaborators']?.edit,
+      fiscalYear: true,
     }),
     [permissionMap]
   );

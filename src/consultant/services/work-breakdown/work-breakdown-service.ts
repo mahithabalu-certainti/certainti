@@ -26,7 +26,7 @@ export interface KanbanColumn {
 }
 
 export interface AddCollaboratorPayload {
-  case_rid: string;
+  case_rid?: string;
   account_rid: string;
   rid: string;
   user_rid: string;
@@ -131,6 +131,7 @@ export interface TaskDetailResponse {
     target_task_name: string;
     relationship_name: string;
   }>;
+  fiscal_year?: string;
 }
 
 // Helper function to generate initials from name
@@ -168,11 +169,17 @@ const generateColorFromName = (name: string): string => {
 export const getTaskDetail = async (
   accountId: string,
   caseId: string,
-  taskId: string
+  taskId: string,
+  taskType?: string
 ): Promise<Task | null> => {
   try {
     // Fetch task details from API
-    const taskDetailResponse = await fetchTaskDetail(accountId, caseId, taskId);
+    const taskDetailResponse = await fetchTaskDetail(
+      accountId,
+      caseId,
+      taskId,
+      taskType
+    );
 
     if (!taskDetailResponse) {
       return null;
@@ -253,6 +260,7 @@ export const getTaskDetail = async (
             (wc) => wc.target_task_name
           )
           : [],
+      fiscal_year: taskDetailResponse.fiscal_year,
     };
 
     return task;
@@ -265,14 +273,15 @@ export const getTaskDetail = async (
 export const fetchTaskDetail = async (
   accountId: string,
   caseId: string,
-  taskId: string
+  taskId: string,
+  taskType?: string
 ): Promise<TaskDetailResponse> => {
   try {
     const url = getTaskDetailURL();
     const payload = {
       task_rid: taskId,
       account_rid: accountId,
-      case_rid: caseId,
+      ...(taskType ? { task_type: taskType } : { case_rid: caseId }),
     };
     const response = await caseServiceApi.post<{
       statusCode: number;
@@ -629,37 +638,39 @@ export const useGetTaskDetail = (
   accountId: string,
   caseId: string,
   taskId: string,
-  enabled: boolean = true
+  enabled: boolean = true,
+  taskType?: string
 ): ReturnType<typeof useQuery<Task | null, Error>> => {
   return useQuery<Task | null, Error>({
-    queryKey: ['taskDetail', accountId, caseId, taskId],
-    queryFn: () => getTaskDetail(accountId, caseId, taskId),
-    enabled: enabled && !!accountId && !!caseId && !!taskId,
+    queryKey: ['taskDetail', accountId, caseId, taskId, taskType],
+    queryFn: () => getTaskDetail(accountId, caseId, taskId, taskType),
+    enabled: enabled && !!accountId && (!!caseId || !!taskType) && !!taskId,
   });
 };
 export const useGetTaskDetailData = (
   accountId: string,
   caseId: string,
   taskId: string,
-  enabled: boolean = true
+  enabled: boolean = true,
+  taskType?: string
 ): ReturnType<typeof useQuery<TaskDetailResponse | null, Error>> => {
   return useQuery<TaskDetailResponse | null, Error>({
-    queryKey: ['taskDetailData', accountId, caseId, taskId],
+    queryKey: ['taskDetailData', accountId, caseId, taskId, taskType],
     queryFn: async () => {
       try {
-        return await fetchTaskDetail(accountId, caseId, taskId);
+        return await fetchTaskDetail(accountId, caseId, taskId, taskType);
       } catch (error) {
         console.error(`Error fetching task detail data for ${taskId}: `, error);
         return null;
       }
     },
-    enabled: enabled && !!accountId && !!caseId && !!taskId,
+    enabled: enabled && !!accountId && (!!caseId || !!taskType) && !!taskId,
   });
 };
 
 export interface UpdateChecklistStatusPayload {
   task_rid: string;
-  case_rid: string;
+  case_rid?: string;
   account_rid: string;
   checklist_rid: string;
   rid: string;

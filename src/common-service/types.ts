@@ -331,6 +331,8 @@ export enum AllPermissions {
   TASK_TEMPLATE_VIEW_EDIT = 'task_templates_view_edit',
   TASK_TEMPLATE_EXPORT = 'task_templates_export',
   CASES_WORKBREAKDOWN_VIEW_EDIT = 'cases_workbreakdown_view_edit',
+  ACTIVITIES_OVERVIEW = 'activities_overview',
+  ACTIVITIES_TIMELINE = 'activities_timeline',
 }
 
 export interface Country {
