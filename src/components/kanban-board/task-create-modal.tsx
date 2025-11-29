@@ -353,7 +353,9 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
     }
 
     if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
+      requestAnimationFrame(() => {
+        setErrors(newErrors);
+      });
       return;
     }
 
@@ -415,17 +417,27 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
     return minDate;
   };
 
-  if (!isOpen) return null;
-
   return (
     <>
       <div
-        className='fixed inset-0  bg-opacity-50 z-40'
+        className='fixed inset-0 bg-opacity-50 z-40'
         onClick={handleClose}
+        style={{
+          display: isOpen ? 'block' : 'none',
+          pointerEvents: isOpen ? 'auto' : 'none',
+        }}
       />
       <div
-        className='fixed right-0 bottom-0 w-[650px] bg-white text-gray-900 shadow-2xl transform transition-transform duration-300 ease-in-out z-50 overflow-y-auto'
-        style={{ top: '38.1px', backgroundColor: '#fff' }}
+        className='fixed right-0 bottom-0 w-[650px] bg-white text-gray-900 shadow-2xl z-50 overflow-y-auto'
+        style={{
+          top: '38.1px',
+          backgroundColor: '#fff',
+          display: isOpen ? 'block' : 'none',
+          pointerEvents: isOpen ? 'auto' : 'none',
+          transform: 'translateZ(0)',
+          willChange: 'contents',
+          backfaceVisibility: 'hidden'
+        }}
       >
         <div className='sticky top-0 flex items-center justify-between p-3 border-b border-[#CBD6E2] bg-white z-50'>
           <h2
@@ -461,11 +473,15 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                 className={`w-full text-[13px] font-normal bg-transparent border-b ${errors.taskTitle ? 'border-red-500' : 'border-gray-300'} focus:border-blue-400 focus:border-b outline-none text-gray-900 placeholder-[#7D98B6] pb-2 pr-8`}
                 autoFocus
               />
-              {errors.taskTitle && (
-                <div className='absolute right-0 top-0 bottom-2 flex items-center'>
-                  <ErrorIconTooltip error={errors.taskTitle} />
-                </div>
-              )}
+              <div
+                className='absolute right-0 top-0 bottom-2 flex items-center'
+                style={{
+                  opacity: errors.taskTitle ? 1 : 0,
+                  pointerEvents: errors.taskTitle ? 'auto' : 'none'
+                }}
+              >
+                {errors.taskTitle && <ErrorIconTooltip error={errors.taskTitle} />}
+              </div>
             </div>
           </div>
 
@@ -543,11 +559,13 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                         },
                       }}
                     />
-                    {errors.startDate && (
-                      <p className='text-xs text-red-500 mt-1'>
-                        {errors.startDate}
-                      </p>
-                    )}
+                    <div className='min-h-[20px] mt-1'>
+                      {errors.startDate && (
+                        <p className='text-xs text-red-500'>
+                          {errors.startDate}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
@@ -620,11 +638,13 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                         },
                       }}
                     />
-                    {errors.endDate && (
-                      <p className='text-xs text-red-500 mt-1'>
-                        {errors.endDate}
-                      </p>
-                    )}
+                    <div className='min-h-[20px] mt-1'>
+                      {errors.endDate && (
+                        <p className='text-xs text-red-500'>
+                          {errors.endDate}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
@@ -768,11 +788,15 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                   className='w-full bg-white border border-gray-300 rounded-lg p-3 text-[13px] resize-none focus:border-blue-500 focus:outline-none text-gray-900 placeholder-[#7D98B6] min-h-[100px] pr-8'
                   disabled={fieldDisabled.description}
                 />
-                {errors.description && (
-                  <div className='absolute right-2 top-3'>
-                    <ErrorIconTooltip error={errors.description} />
-                  </div>
-                )}
+                <div
+                  className='absolute right-2 top-3'
+                  style={{
+                    opacity: errors.description ? 1 : 0,
+                    pointerEvents: errors.description ? 'auto' : 'none'
+                  }}
+                >
+                  {errors.description && <ErrorIconTooltip error={errors.description} />}
+                </div>
               </div>
             </div>
           )}
