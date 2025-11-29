@@ -1219,10 +1219,17 @@ async function sentReviewProjects(req: Request, res: Response): Promise<void> {
         "Invalid filters format. Must be a valid JSON object."
       );
     }
+      let fileArray: Express.Multer.File[] | [];
+    if (Array.isArray(req.files)) {
+      fileArray = req.files;
+    } else {
+      fileArray = [];
+    }
     const reviewProjects = await caseService.sentReviewProjects(
       value,
       parsedFilters,
-      userId
+      userId,
+      fileArray
     );
     if (reviewProjects.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);

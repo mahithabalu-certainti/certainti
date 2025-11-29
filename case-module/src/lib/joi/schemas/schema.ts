@@ -87,6 +87,9 @@ const createHistoricalSubmissionSchema = Joi.object({
         total_qre: Joi.number().precision(2).required(),
         total_rd_credits: Joi.number().precision(2).required(),
         annual_gross_receipts: Joi.number().precision(2).optional(),
+        total_fte_cost: Joi.number().optional(),
+        total_subcon_cost: Joi.number().optional(),
+        total_nonlabor_cost: Joi.number().optional(),
         eid: Joi.string().optional(),
         action_type: Joi.string().valid("add", "edit", "delete").required(),
       })
@@ -643,7 +646,9 @@ const createActivityMeetingSchema = Joi.object({
   time_zone: Joi.string().required(),
   recurrence_type: Joi.string().valid("none", "daily", "weekly", "monthly", "yearly").required(),
   recurrence_interval: Joi.number().optional(),
-  recurrence_days: Joi.string().optional()
+  recurrence_days: Joi.string().optional(),
+  recurrence_monthly_index: Joi.string().optional(),
+  recurrence_day_of_month: Joi.number().optional()
 
 });
 
@@ -670,6 +675,8 @@ const updateActivityMeetingSchema = Joi.object({
   recurrence_type: Joi.string().valid("none", "daily", "weekly", "monthly", "yearly").required(),
   recurrence_interval: Joi.number().optional(),
   recurrence_days: Joi.string().optional(),
+  recurrence_monthly_index: Joi.string().optional(),
+  recurrence_day_of_month: Joi.number().optional(),
   deleted_file_ids : Joi.array().items(Joi.string()).optional()
 });
 

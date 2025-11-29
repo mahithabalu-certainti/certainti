@@ -253,7 +253,8 @@ getReviewProjects(
 sentReviewProjects(
   data: any, 
   filters: Record<string, any>,
-  userId:string
+  userId:string,
+  files? : Express.Multer.File[]
 ): Promise<{
   statusCode: number;
   message: string;

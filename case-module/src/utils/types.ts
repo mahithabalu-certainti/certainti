@@ -785,6 +785,8 @@ export interface IActivityMeeting {
   recurrence_type?: string;
   recurrence_interval?: number;
   recurrence_days?: string[];
+  recurrence_day_of_month?: number;
+  recurrence_monthly_index?: string;
   deleted_file_ids : string[]
 }
 

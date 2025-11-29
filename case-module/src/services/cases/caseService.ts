@@ -2495,7 +2495,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
             relationshipConnectorMap = new Map(workflowResult[0].map((d : any) => [d.rid, d.relationship_type]));
           }
         }
-        if( result[0]?.task_details?.checklists && result[0]?.task_details?.checklists?.checklist_items !== null) {
+        if( result[0]?.task_details.checklists && result[0]?.task_details?.checklists?.checklist_items !== null) {
           checklistItemsStatusIds = [...new Set(result[0]?.task_details.checklists.checklist_items.map((d : ChecklistItems) => d.status_rid))]
         } else {
           checklistItemsStatusIds = []
@@ -2715,7 +2715,8 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
     async sentReviewProjects(
     data: any,
     filters: Record<string, any>,
-    userId: string
+    userId: string,
+    files: Express.Multer.File[]
   ): Promise<{
     statusCode: number;
     message: string;
@@ -2845,7 +2846,8 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
         data,
         excelAttachment,
         senderEmailInfo,
-        caseInfo
+        caseInfo,
+        files // Pass files to sendEmailWithAttachment
       );
            
           }
@@ -2872,7 +2874,8 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
        tenantId: string;
        clientSecret: string;
      },
-     caseInfo: any
+     caseInfo: any,
+     files: Express.Multer.File[]
    ) {
      let emailResponse = false;
      try {
@@ -2887,6 +2890,15 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
              contentBytes: excelAttachment.content,
              contentType: excelAttachment.contentType,
            },
+           // Add additional files as attachments
+           ...(files && files.length > 0
+             ? files.map((file) => ({
+                 "@odata.type": "#microsoft.graph.fileAttachment",
+                 name: file.originalname || file.filename,
+                 contentBytes: file.buffer ? file.buffer.toString("base64") : "",
+                 contentType: file.mimetype || "application/octet-stream",
+               }))
+             : []),
          ],
          senderEmailInfo: senderEmailInfo,
        });

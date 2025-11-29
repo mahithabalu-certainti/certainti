@@ -39,7 +39,41 @@ export async function scheduleTeamsMeetingUtil(
     emailAddress: { address: email },
     type: "required",
   }));
+  let recurrentpattern =  {} 
+   if(activityRequest.recurrence_type === "daily"){
+  recurrentpattern =  {
+        type: activityRequest.recurrence_type,
+        interval: Number(activityRequest.recurrence_interval) || 1,
+      };
+    }
 
+    if(activityRequest.recurrence_type === "weekly"){
+  recurrentpattern =  {
+        type: activityRequest.recurrence_type || "weekly",
+        interval: Number(activityRequest.recurrence_interval) || 1,
+        daysOfWeek: activityRequest.recurrence_days || [],
+        firstDayOfWeek: "sunday",
+      };
+    }
+  if(activityRequest.recurrence_type === "monthly"){
+    if(activityRequest.recurrence_day_of_month != undefined && activityRequest.recurrence_day_of_month > 0){
+    recurrentpattern =  {
+        type: "absoluteMonthly",
+        interval: Number(activityRequest.recurrence_interval) || 1,
+        dayOfMonth: Number(activityRequest.recurrence_day_of_month) || 1,
+      };
+    }
+    else{
+      recurrentpattern =  {
+        type: "relativeMonthly",
+        interval: Number(activityRequest.recurrence_interval) || 1,
+        daysOfWeek: activityRequest.recurrence_days || [],
+        index: activityRequest.recurrence_monthly_index || "first",
+        firstDayOfWeek: "sunday",
+      };
+    }
+
+  }
   
 
 const startDateTime = moment(`${activityRequest.effective_start_date} ${activityRequest.effective_start_time}`,  "YYYY-MM-DD HH:mm");
@@ -64,12 +98,7 @@ const payload = {
     isOnlineMeeting: true,
     onlineMeetingProvider: "teamsForBusiness",
     recurrence: {
-      pattern: {
-        type: activityRequest.recurrence_type || "weekly",
-        interval: Number(activityRequest.recurrence_interval) || 1,
-        daysOfWeek: activityRequest.recurrence_days || [],
-        firstDayOfWeek: "sunday",
-      },
+      pattern:recurrentpattern,
       range: {
         type: "endDate",
         startDate: activityRequest.effective_start_date,
