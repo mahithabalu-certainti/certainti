@@ -5665,7 +5665,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     }
     const createComments = await TaskComments.create(commentPayload);
     if(createComments) {
-      const checkIsDifferentCollaborator = await this.isNewCollaborator(data.created_by, accountNumber,"case_task", data.case_rid, data.task_rid);
+      const checkIsDifferentCollaborator = await this.isNewCollaborator(data.created_by, accountNumber,data.task_type, data.case_rid, data.task_rid);
       if(!checkIsDifferentCollaborator) {
         const checkCollaboratorExists = await this.isCollaboratorAlreadyAdded(data.created_by, data.case_rid, data.account_rid, data.task_rid, accountNumber,data.task_type);
         if(!checkCollaboratorExists) {
