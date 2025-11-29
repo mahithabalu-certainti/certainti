@@ -672,9 +672,8 @@ const createActivityMeetingSchema = Joi.object({
   recurrence_type: Joi.string().valid("none", "daily", "weekly", "monthly", "yearly").required(),
   recurrence_interval: Joi.number().optional(),
   recurrence_days: Joi.string().optional(),
-  recurrence_monthly_index: Joi.string().optional(),
-  recurrence_day_of_month: Joi.number().optional()
-
+  recurrence_monthly_index: Joi.string().optional().allow("", null),
+  recurrence_day_of_month: Joi.number().optional().allow(null),
 });
 
 const updateActivityMeetingSchema = Joi.object({
@@ -700,8 +699,8 @@ const updateActivityMeetingSchema = Joi.object({
   recurrence_type: Joi.string().valid("none", "daily", "weekly", "monthly", "yearly").required(),
   recurrence_interval: Joi.number().optional(),
   recurrence_days: Joi.string().optional(),
-  recurrence_monthly_index: Joi.string().optional(),
-  recurrence_day_of_month: Joi.number().optional(),
+  recurrence_monthly_index: Joi.string().optional().allow("", null),
+  recurrence_day_of_month: Joi.number().optional().allow(null),
   deleted_file_ids : Joi.string().optional()
 });
 

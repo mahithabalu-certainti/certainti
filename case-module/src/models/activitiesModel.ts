@@ -42,6 +42,8 @@ export interface ActivitiesAttributes {
   time_zone?: string;
   effective_start_time?: string;
   effective_end_time?: string;
+  recurrence_day_of_month?: number;
+  recurrence_monthly_index?: string;
 }
 
 export interface ActivitiesCreationAttributes extends Optional<ActivitiesAttributes, "rid"> {}
@@ -86,6 +88,8 @@ export class Activities extends Model<ActivitiesAttributes, ActivitiesCreationAt
   public time_zone?: string;
   public effective_start_time?: string
   public effective_end_time?: string;
+  public recurrence_day_of_month?: number;
+  public recurrence_monthly_index?: string;
 
   static initialize(sequelize: Sequelize, schemaName: string = MAIN_SCHEMA_NAME) {
     return Activities.init({
@@ -136,6 +140,8 @@ export class Activities extends Model<ActivitiesAttributes, ActivitiesCreationAt
       time_zone: { type: DataTypes.STRING(100), allowNull: true },
       effective_start_time: { type: DataTypes.STRING(10), allowNull: true },
       effective_end_time: { type: DataTypes.STRING(10), allowNull: true },
+      recurrence_day_of_month: { type: DataTypes.INTEGER, allowNull: true },
+      recurrence_monthly_index: { type: DataTypes.STRING(50), allowNull: true },
     }, {
       sequelize,
       schema: schemaName,

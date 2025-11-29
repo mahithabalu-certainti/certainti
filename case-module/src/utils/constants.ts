@@ -901,6 +901,11 @@ export const rawQueries = {
     return `
     SELECT rid, first_name, last_name,email FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (${ids})`;
   },
+  fetchUserDetails(data: string) {
+   
+    return `
+    SELECT rid, first_name, last_name, email FROM ${MAIN_SCHEMA_NAME}.user WHERE rid = '${data}'`;
+  },
   fetchAccountAndCountryDetails(accountRid: string) {
     return `SELECT r_number, account_name, country_rid,c.country_code, currency_rid FROM ${MAIN_SCHEMA_NAME}.account 
     LEFT JOIN ${MAIN_SCHEMA_NAME}.country c ON c.rid = account.country_rid
@@ -2073,7 +2078,10 @@ export const meetingFields = [
   "a.recurrence_interval",
   "a.recurrence_type",
   "a.effective_end_datetime",
-  "a.effective_start_datetime"
+  "a.effective_start_datetime",
+  "a.recurrence_monthly_index",
+  "a.recurrence_day_of_month",
+
 ];
 
 export const callFields = [
