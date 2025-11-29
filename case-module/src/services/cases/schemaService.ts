@@ -539,10 +539,6 @@ return !response;
         orgDbSequlize,
         schemaName
       );
-      const jurisdictionModel = await Jurisdiction.initialize(
-        orgDbSequlize,
-        schemaName
-      );
       const caseHistorySubmissionModel = await CaseHistorySubmission.initialize(
         orgDbSequlize,
         schemaName
@@ -599,7 +595,6 @@ return !response;
       await caseHistoryModel.sync({ force: false });
       await setupCaseHistorySequence(orgDbSequlize, schemaName);
       await caseTeamModel.sync({ force: false });
-      await jurisdictionModel.sync({ force: false });
       await checkListModel.sync({ force: false });
       await setupCheckListSequence(orgDbSequlize, schemaName);
       await checkListItemModel.sync({ force: false });
@@ -1936,7 +1931,7 @@ return !response;
         )
       );
       const getTotalProjects : any = await this.orgDbSequelize.query(
-        rawQueries.getTotalProjectsCountInCase(schemaName, data.fiscal_year, data.account_rid)
+        rawQueries.getTotalProjectsCountInCase(schemaName, data.fiscal_year, data.account_rid, data.case_rid)
       );
       const getTotalProjectCost: any = await this.orgDbSequelize.query(
         rawQueries.getTotalProjectCost(
@@ -2083,6 +2078,9 @@ return !response;
           data.account_rid
         )
       );
+      const getTotalProjects : any = await this.orgDbSequelize.query(
+        rawQueries.getTotalProjectsCountInCase(schemaName, data.fiscal_year, data.account_rid, data.case_rid)
+      );
       const getTotalProjectCost: any = await this.orgDbSequelize.query(
         rawQueries.getTotalProjectCost(
           schemaName,
@@ -2095,14 +2093,18 @@ return !response;
           schemaName,
           data.case_rid,
           getTotalProjectCount[0][0].total_projects,
-          getTotalProjectCost[0][0].total_cost
+          getTotalProjectCost[0][0].total_cost,
+          getTotalProjects[0][0].total_projects,
+          getTotalProjects[0][0].total_projects_qre_cost
         )
       );
       await this.mainDbSequelize.query(
         rawQueries.updateCostCountInCaseSummary(
           data.case_rid,
           getTotalProjectCount[0][0].total_projects,
-          getTotalProjectCost[0][0].total_cost
+          getTotalProjectCost[0][0].total_cost,
+          getTotalProjects[0][0].total_projects,
+          getTotalProjects[0][0].total_projects_qre_cost
         )
       );
       if (totalCount === 1) {

@@ -1130,9 +1130,18 @@ export const rawQueries = {
   getTotalProjectsCountInCase(
     schemaName: string,
     fiscalYear: number,
-    accountRid: string
+    accountRid: string,
+    caseRid: string
   ) {
-    return `SELECT COUNT(*) AS total_projects, COALESCE(SUM(total_cost_prj), 0.00) AS total_projects_cost, COALESCE(SUM(qre_final), 0.00) AS total_projects_qre_cost FROM ${schemaName}.project_fiscal WHERE account_rid = '${accountRid}' AND fiscal_year = ${fiscalYear}`;
+    return `SELECT COUNT(*) AS total_projects,
+    COALESCE(SUM(pf.total_cost_prj), 0.00) AS total_projects_cost, 
+    COALESCE(SUM(pf.qre_final), 0.00) AS total_projects_qre_cost 
+    FROM ${schemaName}.project_fiscal pf
+    LEFT JOIN ${schemaName}.case_projects cp ON cp.project_fiscal_rid = pf.rid
+    WHERE
+    cp.case_rid = '${caseRid}'
+    AND
+    cp.account_rid = '${accountRid}'`;
   },
   getTotalProjectCost(schemaName: string, caseRid: string, accountRid: string) {
     return `

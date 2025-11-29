@@ -3059,6 +3059,34 @@ export const rawQueries = {
       );
     `;
   },
+  getCreateJurisdictionTableQuery(schemaName: string): string {
+    return `
+      CREATE TABLE IF NOT EXISTS "${schemaName}".jurisdictions
+      (
+        rid character varying(50) COLLATE  NOT NULL DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+        created_by character varying(50) COLLATE  NOT NULL,
+        modified_by character varying(50) COLLATE ,
+        created_datetime timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        modified_datetime timestamp with time zone,
+        entity_rid character varying(50) COLLATE  NOT NULL,
+        is_federal_level boolean NOT NULL DEFAULT false,
+        is_state_level boolean NOT NULL DEFAULT false,
+        states text[] COLLATE ,
+        level character varying(50) COLLATE  NOT NULL,
+        CONSTRAINT jurisdictions_pkey PRIMARY KEY (rid)
+      )
+    `;
+  },
+  getCreateJurisdictionsIndexes(schemaName: string): string[] {
+    const fieldsToIndex = [
+      "entity_rid",
+    ];
+  
+    return fieldsToIndex.map(field => `
+      CREATE INDEX IF NOT EXISTS "idx_jurisdictions_${field}"
+      ON "${schemaName}"."notes"("${field}");
+    `);
+  },
   getCreateNotesIndexes(schemaName: string): string[] {
     const fieldsToIndex = [
       "r_number",
