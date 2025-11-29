@@ -899,7 +899,7 @@ export const rawQueries = {
   fetchUser(data: any) {
     let ids = data.map((d: any) => `'${d}'`);
     return `
-    SELECT rid, first_name, last_name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (${ids})`;
+    SELECT rid, first_name, last_name,email FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (${ids})`;
   },
   fetchAccountAndCountryDetails(accountRid: string) {
     return `SELECT r_number, account_name, country_rid,c.country_code, currency_rid FROM ${MAIN_SCHEMA_NAME}.account 

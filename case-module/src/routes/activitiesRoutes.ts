@@ -11,6 +11,11 @@ routes.post(
   checkUserStatusMiddleware("activity_task_view_edit"),
   controller.activitiesController.createActivityTask
 );
+routes.post(
+  "/task/update",
+  checkUserStatusMiddleware("activity_task_view_edit"),
+  controller.activitiesController.updateActivityTask
+);
 
 routes.get(
   "/tasks/list",

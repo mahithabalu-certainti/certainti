@@ -10,7 +10,7 @@ import moment from "moment-timezone";
  */
 export async function scheduleTeamsMeetingUtil(
   activityRequest: IActivityMeeting,
-  userId: string,
+  userEmail: string,
   senderEmailInfo: {
     email: string;
     clientId: string;
@@ -35,7 +35,11 @@ export async function scheduleTeamsMeetingUtil(
   }
   // Remove duplicates and trim emails
   meetingParticipants = Array.from(new Set(meetingParticipants.map(e => e.trim())));
-  const attendees = activityRequest.meeting_participants.map((email) => ({
+  // Add userEmail to attendees if not already present
+  if (userEmail && !meetingParticipants.includes(userEmail)) {
+    meetingParticipants.push(userEmail);
+  }
+  const attendees = meetingParticipants.map((email) => ({
     emailAddress: { address: email },
     type: "required",
   }));

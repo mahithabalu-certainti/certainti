@@ -53,20 +53,20 @@ const listCasesAccountSchema = Joi.object({
 });
 
 const listCaseSummarySchema = Joi.object({
-  page: Joi.string().optional().pattern(/^[0-9]+$/),
-  limit: Joi.string().optional().pattern(/^[0-9]+$/),
-  filters: Joi.string().default("{}"),
-  globalFilters: Joi.string().default("{}"),
-  fiscal_year: Joi.string().optional(),
+  page: Joi.number().optional(),
+  limit: Joi.number().optional(),
+  filters: Joi.object().default({}),
+  globalFilters: Joi.object().default({}),
+  fiscal_year: Joi.number().optional(),
   search: Joi.string().max(255).optional(),
   sortBy: Joi.string().optional(),
   sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
 });
 
 const exportCaseSummarySchema = Joi.object({
-  filters: Joi.string().default("{}"),
-  globalFilters: Joi.string().default("{}"),
-  fiscal_year: Joi.string().optional(),
+ filters: Joi.object().default({}),
+  globalFilters: Joi.object().default({}),
+  fiscal_year: Joi.number().optional(),
   search: Joi.string().max(255).optional(),
   sortBy: Joi.string().optional(),
   sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
@@ -555,7 +555,7 @@ const createTaskSchema = Joi.object({
   task_name: Joi.string().max(255).required(),
   effective_start_datetime : Joi.string().optional(),
   effective_end_datetime : Joi.string().optional(),
-  assigned_to : Joi.string().allow("").optional(),
+  assigned_to : Joi.string().allow("",null).optional(),
   checklist_template_rid : Joi.string().allow("").optional(),
   status_rid : Joi.string().optional(),
   priority_rid : Joi.string().allow("").optional(),
@@ -587,7 +587,32 @@ const createTaskSchema = Joi.object({
   ).optional()
 });
 
-const createActivitTaskSchema = Joi.object({
+const updateActivityTaskSchema = Joi.object({
+  task_rid: Joi.string().max(255).required(),
+  task_name: Joi.string().max(255).required(),
+  effort_in_days : Joi.number().optional(),
+  effective_start_datetime : Joi.string().optional(),
+  effective_end_datetime : Joi.string().optional(),
+  checklist_template_rid : Joi.string().allow("").optional(),
+  status_rid : Joi.string().optional(),
+  priority_rid : Joi.string().allow("").optional(),
+  task_description : Joi.string().allow("").optional(),
+  task_status_rid : Joi.string().allow("").optional(),
+  account_rid : Joi.string().max(255).required(),
+  attach_to : Joi.string().required(),
+  attachment_level : Joi.string().required(),
+  fiscal_year : Joi.number().optional(),
+  tags: Joi.array().items(
+  Joi.object({
+    tag_rid: Joi.string().required(),
+    is_new_tag: Joi.boolean().required()
+  })
+).default([]).optional(),
+  assigned_to : Joi.string().allow("",null).optional(),
+  checklist_rid: Joi.string().allow("").optional()
+});
+
+const createActivityTaskSchema = Joi.object({
   task_name: Joi.string().max(255).required(),
   effort_in_days : Joi.number().optional(),
   effective_start_datetime : Joi.string().optional(),
@@ -798,7 +823,8 @@ export {
   createHistoricalSubmissionSchema,
   listEmailTemplateSchema,
   exportEmailTemplateSchema,
-  createActivitTaskSchema,
+  createActivityTaskSchema,
+  updateActivityTaskSchema,
   listActivityTaskSchema,
   exportActivitySchema,
   createActivityEmailSchema,

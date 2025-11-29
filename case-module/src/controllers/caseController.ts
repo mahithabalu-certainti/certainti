@@ -728,28 +728,12 @@ async function listAllCasesSummary(req: Request, res: Response) {
     const methodName = "List All Cases Summary";
 
     const userId = req.headers["x-user-id"] as string;
-    const value = await validateRequest(req, listCaseSummarySchema, res, "GET");
+    const value = await validateRequest(req, listCaseSummarySchema, res);
     if (!value) return;
     let parsedFilters: Record<string, any> = {};
     let parsedGlobalFilters: Record<string, string[]> = {};
 
-    try {
-      parsedFilters = JSON.parse(value.filters);
-    } catch (error) {
-      errorLog(
-        methodName,
-        "Invalid filters format. Must be a valid JSON object."
-      );
-    }
-
-    try {
-      parsedGlobalFilters = JSON.parse(value.globalFilters);
-    } catch (error) {
-      errorLog(
-        methodName,
-        "Invalid globalFilters format. Must be a valid JSON object."
-      );
-    }
+   
 
     logMessage(
       `[${methodName}] Request received, ${JSON.stringify(
@@ -770,8 +754,8 @@ async function listAllCasesSummary(req: Request, res: Response) {
     // Create modified data object with parsed globalFilters
     const dataWithParsedGlobalFilters = {
       ...value,
-      globalFilters: parsedGlobalFilters,
-      parsedFilters: parsedFilters,
+      globalFilters: value.globalFilters,
+      parsedFilters: value.filters,
     };
 
     const result = await caseService.listAllCasesSummary(
@@ -834,29 +818,11 @@ async function exportAllCasesSummary(req: Request, res: Response) {
       req,
       exportCaseSummarySchema,
       res,
-      "GET"
+      "POST"
     );
     if (!value) return;
     let parsedFilters: Record<string, any> = {};
     let parsedGlobalFilters: Record<string, string[]> = {};
-
-    try {
-      parsedFilters = JSON.parse(value.filters);
-    } catch (error) {
-      errorLog(
-        methodName,
-        "Invalid filters format. Must be a valid JSON object."
-      );
-    }
-
-    try {
-      parsedGlobalFilters = JSON.parse(value.globalFilters);
-    } catch (error) {
-      errorLog(
-        methodName,
-        "Invalid globalFilters format. Must be a valid JSON object."
-      );
-    }
 
     logMessage(
       `[${methodName}] Request received, ${JSON.stringify(
@@ -877,8 +843,8 @@ async function exportAllCasesSummary(req: Request, res: Response) {
     // Create modified data object with parsed globalFilters
     const dataWithParsedGlobalFilters = {
       ...value,
-      globalFilters: parsedGlobalFilters,
-      parsedFilters: parsedFilters,
+      globalFilters: value.globalFilters,
+      parsedFilters: value.filters,
     };
 
     const result = await caseService.listAllCasesSummary(

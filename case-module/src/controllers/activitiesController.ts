@@ -12,7 +12,6 @@ import {
 } from "../utils/helpers";
 import { HttpStatus, activityFieldMappings, callactivityFieldMappings, emailactivityFieldMappings, meetingactivityFieldMappings } from "../utils/constants";
 import {
-  createActivitTaskSchema,
   listActivityTaskSchema,
   exportActivitySchema,
   createActivityEmailSchema,
@@ -21,6 +20,8 @@ import {
   createActivityMeetingSchema,
   updateActivityCallSchema,
   createActivityCallSchema,
+  updateActivityTaskSchema,
+  createActivityTaskSchema,
 } from "../lib/joi/schemas/schema";
 import configurations from "../config/config";
 import moment from "moment";
@@ -34,7 +35,7 @@ async function createActivityTask(req: Request, res: Response) {
   try {
     const value = await validateRequest(
       req,
-      createActivitTaskSchema,
+      createActivityTaskSchema,
       res,
       "POST"
     );
@@ -87,7 +88,7 @@ async function updateActivityTask(req: Request, res: Response) {
   try {
     const value = await validateRequest(
       req,
-      createActivitTaskSchema,
+      updateActivityTaskSchema,
       res,
       "POST"
     );
@@ -107,7 +108,7 @@ async function updateActivityTask(req: Request, res: Response) {
     }
     const data = req.body;
     data.created_by = userId;
-    const result = await activityService.createActivityTask(data, userId);
+    const result = await activityService.updateActivityTask(data, userId);
     if (result.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
       handleCustomResponse(res, result.data, result.message);

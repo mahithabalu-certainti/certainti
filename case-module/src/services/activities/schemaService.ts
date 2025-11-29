@@ -267,6 +267,10 @@ class ActivitySchemaService {
         where: { rid: taskRequest.task_rid },
         transaction,
       });
+      // Fix: assigned_to should not be undefined or empty string
+      if (taskRequest.assigned_to === "" || typeof taskRequest.assigned_to === "undefined") {
+        taskRequest.assigned_to = null;
+      }
       const [updatedResult] = await Activities.update(taskRequest, {
         where: {
           rid: taskRequest.task_rid,
@@ -293,12 +297,12 @@ class ActivitySchemaService {
       );
       */
       const checkIsDifferentCollaborator = await this.isNewCollaborator(
-        taskRequest.modified_by!,
+        userId,
         accountNumber
       );
       if (!checkIsDifferentCollaborator && taskRequest?.modified_by) {
         const checkCollaboratorExists = await this.isCollaboratorAlreadyAdded(
-          taskRequest.modified_by!,
+          userId,
           taskRequest.task_rid,
           taskRequest.account_rid!,
           accountNumber
@@ -309,7 +313,7 @@ class ActivitySchemaService {
               account_rid: taskRequest.account_rid!,
               task_rid: taskRequest.task_rid,
               assigned_to: taskRequest?.modified_by,
-              created_by: taskRequest.modified_by,
+              created_by: userId,
               created_datetime: new Date(),
             },
             { transaction }
@@ -323,12 +327,6 @@ class ActivitySchemaService {
         activityTypes.task
       );
       }
-      await this.updateTaskHistory(
-        accountNumber,
-        taskRequest.task_rid as string,
-        { ...taskRequest, modified_by: userId },
-        existingTask
-      );
       await this.addTaskManagementTimeline(
         accountNumber,
         taskRequest.task_rid,
@@ -342,8 +340,9 @@ class ActivitySchemaService {
 
       return updatedResult;
     } catch (error) {
-      logMessage(`Error creating case: ${error}`);
-      throw new Error("Error creating case: " + error);
+      console.log(error)
+      logMessage(`Error updating task: ${error}`);
+      throw new Error("Error updating task: " + error);
     }
   }
   async isNewCollaborator(rid: string, accountNumber: string) {
@@ -687,7 +686,6 @@ class ActivitySchemaService {
             "resource",
             resourceIds
           );
-          allActivities.push(...resourceAttachments);
 
           const resourceCostSkillAttachments =
             await fetchResourceCostSkillAttachmentsBulk(
@@ -1693,6 +1691,7 @@ class ActivitySchemaService {
   }
     const activityData = {
       ...activityRequest,
+      invited_by: userId,
       activity_type: activityRequest.activity_type,
       effective_start_datetime: activityRequest.effective_start_date,
       effective_end_datetime: activityRequest.effective_end_date,
@@ -1715,10 +1714,16 @@ class ActivitySchemaService {
     if(!senderEmailInfo){
       throw new Error("Sender email information not found for scheduling meeting.");
     } 
+  
+   const [userInfo]: any[] = await this.mainDbSequelize.query(
+        rawQueries.fetchUser(userId),
+        { type: "SELECT" }
+      );
 
-    let scheduleResponse =  await scheduleTeamsMeetingUtil(activityData, userId,senderEmailInfo);
+    let scheduleResponse =  await scheduleTeamsMeetingUtil(activityData, userInfo.email,senderEmailInfo);
     if(scheduleResponse.success)
     {
+      activityData.invited_by = userInfo.email;
       activityData.meeting_invite = scheduleResponse.webLink;
       activityData.meeting_id = scheduleResponse.meetingId;
       activityData.effective_start_datetime = activityData.effective_start_date

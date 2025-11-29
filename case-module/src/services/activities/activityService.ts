@@ -97,7 +97,7 @@ export class ActivityService {
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { cases: any };
+    data?: { task: any };
   }> {
     if (!this.mainDbSequelize) {
       this.mainDbSequelize = await this.getMainDb();
@@ -200,7 +200,7 @@ export class ActivityService {
         statusCode: HttpStatus.SUCCESS,
         message: STATUS_MESSAGE.caseCreated,
         data: {
-          cases: taskResponse,
+          task: taskResponse,
         },
       };
     } catch (err) {
@@ -220,7 +220,7 @@ export class ActivityService {
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { tasks: any };
+    data?: { task: any };
   }> {
     const dbInit = await this.caseModelService.getSequelize();
     const transaction = await dbInit.transaction();
@@ -228,7 +228,7 @@ export class ActivityService {
       taskRequest.created_by = userId;
       const { accountNumber, parentAccountId } =
         await this.caseSchemaService.fetchValidAccountNumberById(
-          taskRequest.accountRid
+          taskRequest.account_rid!
         );
 
       if (!accountNumber) {
@@ -269,18 +269,18 @@ export class ActivityService {
 
       return {
         statusCode: HttpStatus.SUCCESS,
-        message: STATUS_MESSAGE.caseCreated,
+        message: STATUS_MESSAGE.taskUpdatedSuccess,
         data: {
-          tasks: response,
+          task: response,
         },
       };
     } catch (err) {
-      logMessage(`Error creating activity task, ${err}`);
+      logMessage(`Error updating activity task, ${err}`);
       await transaction.rollback();
       return {
         statusCode: HttpStatus.FAILED,
         message: HttpStatus.FAILED_MESSAGE,
-        errorMessage: STATUS_MESSAGE.caseCreationFailed,
+        errorMessage: STATUS_MESSAGE.taskUpdateFailed,
       };
     }
   }

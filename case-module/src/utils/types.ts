@@ -724,7 +724,7 @@ export interface IActivityTask {
   effective_start_datetime: Date;
   effective_end_datetime: Date;
   priority_rid?: string;
-  assigned_to?: string;
+  assigned_to?: string | null;
   status_rid?: string;
   remainder_interval?: number;
   account_rid?: string; 
@@ -788,6 +788,7 @@ export interface IActivityMeeting {
   recurrence_day_of_month?: number;
   recurrence_monthly_index?: string;
   deleted_file_ids : string[]
+  invited_by:string
 }
 
 export interface IActivityCall {
