@@ -25,7 +25,7 @@ export const fetchCasesHeadersDatas = (schemaName: string, caseRid: string) => {
     f.total_project_cost AS case_total_project_cost, c.case_total_rd_cost, c.case_total_qre_cost,c.case_completion_percentage,c.case_total_qualified_project_cost,
     c.planned_submission_date, c.statutory_submission_date, c.case_startdate,
     c.description, c.r_number, c.created_by, c.modified_by, c.created_datetime,
-    c.modified_datetime, c.total_nonlabor_cost, c.heat_light_power
+    c.modified_datetime, c.total_nonlabor_cost, c.heat_light_power,c.tax_liability
 
     FROM
     ${schemaName}.cases c
