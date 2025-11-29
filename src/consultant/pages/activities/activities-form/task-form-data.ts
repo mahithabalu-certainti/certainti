@@ -84,11 +84,11 @@ export const TaskFormData = (
         ],
       },
       {
-        sectionName: 'Description',
+        sectionName: '',
         fillType: 'full',
         fields: [
           createTextAreaField('description', 'Description', {
-            placeholder: 'Add a description...',
+            placeholder: 'Add a description',
             required: false,
             regex: /^[\s\S]{0,2000}$/,
             regexErrorMessage: 'Maximum 2000 characters allowed',
