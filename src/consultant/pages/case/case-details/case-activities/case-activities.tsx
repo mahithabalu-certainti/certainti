@@ -275,6 +275,7 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
           accountInActive={accountInActive}
           tabValue={tabParam as ActivityType}
           entityLevel={'case'}
+          caseId={caseId}
         />
       )}
 

@@ -21,7 +21,7 @@ export interface KanbanColumn {
 }
 
 export interface AddCollaboratorPayload {
-  case_rid: string;
+  case_rid?: string;
   account_rid: string;
   rid: string;
   user_rid: string;
@@ -636,7 +636,7 @@ export const useGetTaskDetail = (
   return useQuery<Task | null, Error>({
     queryKey: ['taskDetail', accountId, caseId, taskId, taskType],
     queryFn: () => getTaskDetail(accountId, caseId, taskId, taskType),
-    enabled: enabled && !!accountId && !!caseId && !!taskId,
+    enabled: enabled && !!accountId && (!!caseId || !!taskType) && !!taskId,
   });
 };
 export const useGetTaskDetailData = (
@@ -656,13 +656,13 @@ export const useGetTaskDetailData = (
         return null;
       }
     },
-    enabled: enabled && !!accountId && !!caseId && !!taskId,
+    enabled: enabled && !!accountId && (!!caseId || !!taskType) && !!taskId,
   });
 };
 
 export interface UpdateChecklistStatusPayload {
   task_rid: string;
-  case_rid: string;
+  case_rid?: string;
   account_rid: string;
   checklist_rid: string;
   rid: string;

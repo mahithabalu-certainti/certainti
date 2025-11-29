@@ -50,11 +50,12 @@ export interface CaseTaskApiResponse {
 
 // Task Comments Types
 export interface TaskCommentsListParams {
-  case_rid: string;
+  case_rid?: string;
   account_rid: string;
   task_rid: string;
   page: number;
   limit: number;
+  task_type?: string;
 }
 
 export interface TaskComment {
@@ -87,11 +88,12 @@ export interface TaskCommentsApiResponse {
 
 // Task Attachments Types
 export interface TaskAttachmentsListParams {
-  case_rid: string;
+  case_rid?: string;
   account_rid: string;
   task_rid: string;
   page: number;
   limit: number;
+  task_type?: string;
 }
 
 export interface TaskAttachment {
@@ -152,7 +154,7 @@ export interface DeleteTaskAttachmentResponse extends CommonApiResponse {
 
 // Create Task Types
 export interface CreateTaskPayload {
-  case_rid: string;
+  case_rid?: string;
   account_rid: string;
   task_name: string;
   case_team_member_role_rid?: string;
@@ -183,28 +185,31 @@ export interface CreateTaskResponse extends CommonApiResponse {
 // Comment Management Types
 export interface AddCommentPayload {
   account_rid: string;
-  case_rid: string;
+  case_rid?: string;
   task_rid: string;
   comments: string;
   files?: File[];
+  task_type?: string;
 }
 
 export interface UpdateCommentPayload {
   account_rid: string;
-  case_rid: string;
+  case_rid?: string;
   task_rid: string;
   rid: string; // Comment ID
   comments: string;
   files?: File[];
   deleted_file_ids?: string[];
+  task_type?: string;
 }
 
 export interface DeleteCommentPayload {
   account_rid: string;
-  case_rid: string;
+  case_rid?: string;
   task_rid: string;
   rid: string; // Comment ID
   deleted_file_ids?: string[];
+  task_type?: string;
 }
 
 export interface CommentResponse extends CommonApiResponse {
@@ -274,7 +279,12 @@ export const addTaskComment = async (
   try {
     const formData = new FormData();
     formData.append('account_rid', payload.account_rid);
-    formData.append('case_rid', payload.case_rid);
+    if (payload.case_rid) {
+      formData.append('case_rid', payload.case_rid);
+    }
+    if (payload.task_type) {
+      formData.append('task_type', payload.task_type);
+    }
     formData.append('task_rid', payload.task_rid);
     formData.append('comments', payload.comments);
 
@@ -308,7 +318,12 @@ export const updateTaskComment = async (
   try {
     const formData = new FormData();
     formData.append('account_rid', payload.account_rid);
-    formData.append('case_rid', payload.case_rid);
+    if (payload.case_rid) {
+      formData.append('case_rid', payload.case_rid);
+    }
+    if (payload.task_type) {
+      formData.append('task_type', payload.task_type);
+    }
     formData.append('task_rid', payload.task_rid);
     formData.append('rid', payload.rid);
     formData.append('comments', payload.comments);
@@ -471,7 +486,6 @@ export const useGetTaskCommentsList = (
     gcTime: 0,
     retry: 0,
     enabled: !!(
-      params.case_rid &&
       params.account_rid &&
       params.task_rid &&
       options?.enabled !== false
@@ -482,9 +496,10 @@ export const useGetTaskCommentsList = (
 
 // Infinite Scrolling Task Comments (Limit: 5 per page)
 export interface InfiniteTaskCommentsParams {
-  case_rid: string;
+  case_rid?: string;
   account_rid: string;
   task_rid: string;
+  task_type?: string;
 }
 
 export const useInfiniteTaskCommentsList = (
@@ -526,7 +541,6 @@ export const useInfiniteTaskCommentsList = (
     gcTime: 0,
     retry: 0,
     enabled: !!(
-      params.case_rid &&
       params.account_rid &&
       params.task_rid &&
       options?.enabled !== false
@@ -550,7 +564,6 @@ export const useGetTaskAttachmentsList = (
     gcTime: 0,
     retry: 0,
     enabled: !!(
-      params.case_rid &&
       params.account_rid &&
       params.task_rid &&
       options?.enabled !== false
