@@ -52,8 +52,10 @@ import moment from "moment";
 import { CaseManagementSchemaService } from "../casesManagement/schemaService";
 import { fetchTaskActivities, fetchTaskComments, listAllTaskStatus, taskCardDetails,taskCardDetailsActivityTask } from "../../utils/rawQueries";
 import { sendEmailWithAttachment } from "../emailService";
+import ActivitySchemaService from "../activities/schemaService";
 export class CaseService {
   private caseSchemaService: CaseSchemaService;
+  private activitySchemaService: ActivitySchemaService; // Assuming this is defined somewhere in your code
   private caseModelService: CaseModelService; // Assuming this is defined somewhere in your code
   private caseManagementService : CaseManagementSchemaService
   private logger: Logger;
@@ -63,6 +65,7 @@ export class CaseService {
   constructor(logger: Logger) {
     this.logger = logger;
     this.caseSchemaService = new CaseSchemaService();
+    this.activitySchemaService = new ActivitySchemaService();
     this.caseModelService = new CaseModelService(); // Initialize your model service here
     this.caseManagementService = new CaseManagementSchemaService()
   }
@@ -2495,7 +2498,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
             relationshipConnectorMap = new Map(workflowResult[0].map((d : any) => [d.rid, d.relationship_type]));
           }
         }
-        if( result[0]?.task_details?.checklists && result[0]?.task_details?.checklists?.checklist_items !== null) {
+        if( result[0]?.task_details.checklists && result[0]?.task_details?.checklists?.checklist_items !== null) {
           checklistItemsStatusIds = [...new Set(result[0]?.task_details.checklists.checklist_items.map((d : ChecklistItems) => d.status_rid))]
         } else {
           checklistItemsStatusIds = []
@@ -2715,7 +2718,8 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
     async sentReviewProjects(
     data: any,
     filters: Record<string, any>,
-    userId: string
+    userId: string,
+    files: Express.Multer.File[]
   ): Promise<{
     statusCode: number;
     message: string;
@@ -2736,6 +2740,17 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
           errorMessage: "Invalid account ID",
         };
       }
+        let projectArray: string[] = [];
+    if (Array.isArray(data.project_id)) {
+    projectArray = data.project_id;
+  } else if (typeof data.project_id === 'string') {
+    try {
+      projectArray = JSON.parse(data.project_id);
+    } catch {
+      projectArray = [];
+    }
+  }
+      data.project_id = projectArray;
       const response :any= await this.caseSchemaService.listReviewProjectsInfo(
         accountNumber,
         data.case_rid,
@@ -2841,12 +2856,69 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
           message: "Sender email information not found",
         };
       } 
+       let toEmailsArray: string[] = [];
+    let ccEmailsArray: string[] = [];
+    if (Array.isArray(data.to_email)) {
+    toEmailsArray = data.to_email;
+  } else if (typeof data.to_email === 'string') {
+    try {
+      toEmailsArray = JSON.parse(data.to_email);
+    } catch {
+      toEmailsArray = [];
+    }
+  }
+   if (Array.isArray(data.cc_email)) {
+    ccEmailsArray = data.cc_email;
+  } else if (typeof data.cc_email === 'string') {
+    try {
+      ccEmailsArray = JSON.parse(data.cc_email);
+    } catch {
+      ccEmailsArray = [];
+    }
+  }
+    data.cc_email = ccEmailsArray;
+    data.to_email = toEmailsArray;
       await this.sendEmailWithAttachment(
         data,
         excelAttachment,
         senderEmailInfo,
-        caseInfo
+        caseInfo,
+        files // Pass files to sendEmailWithAttachment
       );
+       const [emailStatus]: any[] = await mainDb.query(
+             rawQueries.fetchActivityStatusByName("Sent", "Email"),
+             { type: "SELECT" }
+           );
+        const { Activities } = await this.caseModelService.getModels(accountNumber);
+        const activityData = {
+            activity_type: "Review Projects Sent",
+            status_rid: emailStatus.rid,
+            created_by: userId,
+            modified_by: userId,
+            case_rid: data.case_rid,
+            to_email: data.to_email,
+            cc_email: data.cc_email,
+            subject: data.subject,
+            body_html: data.body_html,
+            attach_to:data.case_rid,
+            attachment_level: "case",
+            account_rid: data.account_rid,
+            activity_rid: "",
+          };
+     const activityresponse = await Activities.create(activityData);
+    activityData.activity_rid = activityresponse.rid;
+    await this.activitySchemaService.uploadActivityFiles(files, activityData, accountNumber);
+      await this.caseSchemaService.addCaseTimeline(
+        accountNumber,
+        data.case_rid,
+        data.account_rid,
+        "Sent Review Projects",
+        userId,
+        "success",
+        "Review Projects sent via email from UI",
+        "ui handler"
+      );
+      
            
           }
       return {
@@ -2872,7 +2944,8 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
        tenantId: string;
        clientSecret: string;
      },
-     caseInfo: any
+     caseInfo: any,
+     files: Express.Multer.File[]
    ) {
      let emailResponse = false;
      try {
@@ -2887,6 +2960,15 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
              contentBytes: excelAttachment.content,
              contentType: excelAttachment.contentType,
            },
+           // Add additional files as attachments
+           ...(files && files.length > 0
+             ? files.map((file) => ({
+                 "@odata.type": "#microsoft.graph.fileAttachment",
+                 name: file.originalname || file.filename,
+                 contentBytes: file.buffer ? file.buffer.toString("base64") : "",
+                 contentType: file.mimetype || "application/octet-stream",
+               }))
+             : []),
          ],
          senderEmailInfo: senderEmailInfo,
        });

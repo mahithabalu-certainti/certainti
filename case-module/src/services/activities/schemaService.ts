@@ -1145,6 +1145,7 @@ class ActivitySchemaService {
             case 'r_number':
             case 'status_rid':
             case 'assigned_to':
+            case 'call_platform':
               switch (operator.toLowerCase()) {
                 case 'equals': condition[field] = { [Op.iLike]: value }; break;
                 case 'not_equals': condition[field] = { [Op.or]: [{ [Op.notILike]: value }, { [Op.is]: null }] }; break;          

@@ -10,7 +10,7 @@ import {
   isValidTimezone,
   logMessage,
 } from "../utils/helpers";
-import { HttpStatus, activityFieldMappings } from "../utils/constants";
+import { HttpStatus, activityFieldMappings, callactivityFieldMappings, emailactivityFieldMappings, meetingactivityFieldMappings } from "../utils/constants";
 import {
   createActivitTaskSchema,
   listActivityTaskSchema,
@@ -688,9 +688,25 @@ async function exportAllActivity(req: Request, res: Response): Promise<void> {
       value.activityType,
       {}
     );
+    let permissionName = "activity_task_view_edit";
+    if (value.activityType && value.activityType.toLowerCase() === "email") {
+      permissionName = "activity_email_view_edit";
+    } else if (
+      value.activityType &&
+      value.activityType.toLowerCase() === "meeting"
+    ) {
+      permissionName = "activity_meeting_view_edit";
+    } else if (
+      value.activityType &&
+      value.activityType.toLowerCase() === "call"
+    ) {
+      permissionName = "activity_call_view_edit";
+    } else {
+      permissionName = "activity_task_view_edit";
+    }
     const fields = await caseService.getAllowedExportFields(
       userId,
-      "activity_task_view_edit"
+      permissionName
     );
     const allowedFieldSet = new Set<string>();
     for (const field of fields) {
@@ -729,12 +745,36 @@ async function exportAllActivity(req: Request, res: Response): Promise<void> {
 
               // Build exportRecord using allowed fields and resultMap
               const exportRecord: Record<string, any> = {};
-              activityFieldMappings.forEach((mapping) => {
+              if(value.activityType && value.activityType.toLowerCase() === "email") {
+                emailactivityFieldMappings.forEach((mapping) => {
                 if (allowedFieldSet.has(mapping.permissionField)) {
                   exportRecord[mapping.exportField] =
                     resultMap[mapping.dataField];
                 }
               });
+              } else if(value.activityType && value.activityType.toLowerCase() === "meeting") {
+                meetingactivityFieldMappings.forEach((mapping) => {
+                if (allowedFieldSet.has(mapping.permissionField)) {
+                  exportRecord[mapping.exportField] =
+                    resultMap[mapping.dataField];
+                }
+              });
+              } else if(value.activityType && value.activityType.toLowerCase() === "call") {
+                 callactivityFieldMappings.forEach((mapping) => {
+                if (allowedFieldSet.has(mapping.permissionField)) {
+                  exportRecord[mapping.exportField] =
+                    resultMap[mapping.dataField];
+                }
+              });
+              } else {
+                 activityFieldMappings.forEach((mapping) => {
+                if (allowedFieldSet.has(mapping.permissionField)) {
+                  exportRecord[mapping.exportField] =
+                    resultMap[mapping.dataField];
+                }
+              });
+              }
+             
 
               return exportRecord;
             });

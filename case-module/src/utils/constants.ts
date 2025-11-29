@@ -594,6 +594,124 @@ export const activityFieldMappings = [
     exportField: "Activity Type",
     dataField: "activity_type",
   },
+   {
+    permissionField: "created_by",
+    exportField: "Created By",
+    dataField: "created_by_name",
+  },
+   {
+    permissionField: "status_rid",
+    exportField: "Status",
+    dataField: "status_name",
+  },
+   {
+    permissionField: "attached_to",
+    exportField: "Related To Name",
+    dataField: "attached_to",
+  },
+  {
+    permissionField: "effective_end_datetime",
+    exportField: "Due Date",
+    dataField: "effective_end_datetime",
+  },
+ 
+          
+];
+export const taskactivityFieldMappings = [
+  {
+    permissionField: "r_number",
+    exportField: "Task ID",
+    dataField: "r_number",
+  },
+   {
+    permissionField: "created_by",
+    exportField: "Created By",
+    dataField: "created_by_name",
+  },
+  {
+    permissionField: "status_rid",
+    exportField: "Status",
+    dataField: "status_name",
+  },
+   {
+    permissionField: "attached_to",
+    exportField: "Related To Name",
+    dataField: "attached_to",
+  },
+  {
+    permissionField: "effective_end_datetime",
+    exportField: "Due Date",
+    dataField: "effective_end_datetime",
+  },
+   {
+    permissionField: "assigned_to",
+    exportField: "Assigned To",
+    dataField: "assigned_to_name",
+  },
+          
+];
+export const emailactivityFieldMappings = [
+  {
+    permissionField: "r_number",
+    exportField: "Email ID",
+    dataField: "r_number",
+  },
+  {
+    permissionField: "status_rid",
+    exportField: "Email Status",
+    dataField: "status_name",
+  },
+  {
+    permissionField: "created_datetime",
+    exportField: "Created On",
+    dataField: "created_datetime",
+  },
+   {
+    permissionField: "attached_to",
+    exportField: "Related To Name",
+    dataField: "attached_to",
+  }
+          
+];
+export const callactivityFieldMappings = [
+    {
+    permissionField: "r_number",
+    exportField: "Call ID",
+    dataField: "r_number",
+  },
+  {
+    permissionField: "call_platform",
+    exportField: "Call Platform",
+    dataField: "call_platform",
+  },
+  {
+    permissionField: "status_rid",
+    exportField: "Call Status",
+    dataField: "status_name",
+  },
+  {
+    permissionField: "created_datetime",
+    exportField: "Created On",
+    dataField: "created_datetime",
+  },
+   {
+    permissionField: "attached_to",
+    exportField: "Related To Name",
+    dataField: "attached_to",
+  }
+
+];
+export const meetingactivityFieldMappings = [
+  {
+    permissionField: "r_number",
+    exportField: "Meeting ID",
+    dataField: "r_number",
+  },
+  {
+    permissionField: "activity_type",
+    exportField: "Activity Type",
+    dataField: "activity_type",
+  },
   {
     permissionField: "attachment_level",
     exportField: "Related Entity",
@@ -637,7 +755,6 @@ export const activityFieldMappings = [
   }
           
 ];
-
 export const reviewProjectsFieldMappings = [
   {
     permissionField: "project_code",

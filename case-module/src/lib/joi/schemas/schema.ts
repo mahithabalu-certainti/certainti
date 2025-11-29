@@ -87,6 +87,9 @@ const createHistoricalSubmissionSchema = Joi.object({
         total_qre: Joi.number().precision(2).required(),
         total_rd_credits: Joi.number().precision(2).required(),
         annual_gross_receipts: Joi.number().precision(2).optional(),
+        total_fte_cost: Joi.number().optional(),
+        total_subcon_cost: Joi.number().optional(),
+        total_nonlabor_cost: Joi.number().optional(),
         eid: Joi.string().optional(),
         action_type: Joi.string().valid("add", "edit", "delete").required(),
       })
@@ -196,15 +199,15 @@ const listReviewProjectSchema = Joi.object({
 
 const sentReviewProjectSchema = Joi.object({
   search: Joi.string().max(255).optional(),
-  filters: Joi.object().default({}),
+  filters: Joi.string().default("{}"),
   sort_by: Joi.string().optional(),
   sort_order: Joi.string().valid("ASC", "DESC").default("ASC"),
-  to_email: Joi.array().items(Joi.string().email()).required(),
-  cc_email: Joi.array().items(Joi.string().email()).required(),
+  to_email:Joi.string().required(),
+  cc_email:Joi.string().optional(),
   recipient_name: Joi.string().max(255).optional(),
   subject: Joi.string().max(500).required(),
   body_html: Joi.string().optional().allow("", null),
-  project_id:Joi.array().items(Joi.string()).optional(),
+  project_id:Joi.string().optional().optional(),
   account_rid: Joi.string().required(),
   case_rid: Joi.string().required()
 });
@@ -643,7 +646,9 @@ const createActivityMeetingSchema = Joi.object({
   time_zone: Joi.string().required(),
   recurrence_type: Joi.string().valid("none", "daily", "weekly", "monthly", "yearly").required(),
   recurrence_interval: Joi.number().optional(),
-  recurrence_days: Joi.string().optional()
+  recurrence_days: Joi.string().optional(),
+  recurrence_monthly_index: Joi.string().optional(),
+  recurrence_day_of_month: Joi.number().optional()
 
 });
 
@@ -670,7 +675,9 @@ const updateActivityMeetingSchema = Joi.object({
   recurrence_type: Joi.string().valid("none", "daily", "weekly", "monthly", "yearly").required(),
   recurrence_interval: Joi.number().optional(),
   recurrence_days: Joi.string().optional(),
-  deleted_file_ids : Joi.array().items(Joi.string()).optional()
+  recurrence_monthly_index: Joi.string().optional(),
+  recurrence_day_of_month: Joi.number().optional(),
+  deleted_file_ids : Joi.string().optional()
 });
 
 const updateActivityCallSchema = Joi.object({
@@ -687,7 +694,7 @@ const updateActivityCallSchema = Joi.object({
   call_platform: Joi.string().max(255).optional().allow(""),
   minutes_of_meeting: Joi.string().optional().allow(""),
   call_participants:Joi.string().optional().allow(""),
-  deleted_file_ids : Joi.array().items(Joi.string()).optional()
+  deleted_file_ids : Joi.string().optional()
 });
 
 const createActivityCallSchema = Joi.object({
@@ -719,7 +726,7 @@ const updateActivityEmailSchema = Joi.object({
   to_email:Joi.string().required(),
   cc_email:Joi.string().optional(),
  email_status:Joi.string().required(),
-  deleted_file_ids : Joi.array().items(Joi.string()).optional()
+  deleted_file_ids : Joi.string().optional()
 });
 
 
