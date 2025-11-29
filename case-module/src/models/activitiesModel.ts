@@ -19,10 +19,10 @@ export interface ActivitiesAttributes {
   subject?: string;
   description?: string;
   priority_rid?: string;
-  assigned_to?: string;
+  assigned_to?: string | null;
   task_name?: string;
   task_template_rid?: string;
-  invitees_list?: string;
+  invited_by?: string;
   attendees_list?: string;
   to_email?: string[];
   cc_email?: string[];
@@ -66,7 +66,7 @@ export class Activities extends Model<ActivitiesAttributes, ActivitiesCreationAt
   public assigned_to?: string;
   public task_name?: string;
   public task_template_rid?: string
-  public invitees_list?: string;
+  public invited_by?: string;
   public attendees_list?: string;
   public to_email?: string[];
   public cc_email?: string[];
@@ -116,7 +116,7 @@ export class Activities extends Model<ActivitiesAttributes, ActivitiesCreationAt
       assigned_to: { type: DataTypes.STRING(50), allowNull: true },
       task_name: { type: DataTypes.STRING(255), allowNull: true },
       task_template_rid: { type: DataTypes.STRING(50), allowNull: true },
-      invitees_list: { type: DataTypes.TEXT, allowNull: true },
+      invited_by: { type: DataTypes.TEXT, allowNull: true },
       attendees_list: { type: DataTypes.TEXT, allowNull: true },
       to_email: { type: DataTypes.JSONB, allowNull: true },
       cc_email: { type: DataTypes.JSONB, allowNull: true },

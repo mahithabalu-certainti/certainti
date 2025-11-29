@@ -46,7 +46,7 @@ routes.get(
   checkUserStatusMiddleware("cases_view_edit"),
   controller.caseController.listAllCasesAccount
 );
-routes.get(
+routes.post(
   "/list/caseSummary",
   checkUserStatusMiddleware("cases_view_edit"),
   controller.caseController.listAllCasesSummary

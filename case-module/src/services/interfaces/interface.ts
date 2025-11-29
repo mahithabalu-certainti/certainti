@@ -435,7 +435,16 @@ export interface IActivityService {
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { cases: any };
+    data?: { task: any };
+  }>;
+  updateActivityTask(
+    taskRequest: IActivityTask,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { task: any };
   }>;
    getAllActivities(
     userId: string,
