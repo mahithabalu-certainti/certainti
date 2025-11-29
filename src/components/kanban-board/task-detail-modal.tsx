@@ -771,10 +771,6 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
               rid: attachmentId,
             });
           }
-          const message =
-            deleteAttachmentMutation.data?.statusMessage ||
-            'Attachments deleted successfully';
-          successToast(message);
           setDeletedAttachmentIds([]);
         } catch (error) {
           const errorMessage =
@@ -789,16 +785,12 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       }
       if (pendingAttachments.length > 0 && taskId) {
         try {
-          const uploadResponse = await uploadAttachmentsMutation.mutateAsync({
+          await uploadAttachmentsMutation.mutateAsync({
             account_rid: accountId,
             case_rid: caseId,
             task_rid: taskId,
             files: pendingAttachments,
           });
-          const message =
-            uploadResponse?.statusMessage ||
-            'Attachments uploaded successfully';
-          successToast(message);
           setPendingAttachments([]);
           setEditedTask((prev) => (prev ? { ...prev, attachments: [] } : null));
 
