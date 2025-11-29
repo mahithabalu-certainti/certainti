@@ -542,6 +542,25 @@ class ActivitySchemaService {
     return { activities: [], totalCount: 0 };
   }
       }
+       const tableSortFields = [
+        "r_number",
+        "attachment_level",
+        "attached_to",
+        "effective_start_datetime",
+        "effective_end_datetime",
+        "created_datetime",
+        "fiscal_year",
+        "modified_datetime",
+        "activity_type",
+        "call_platform"
+      ];
+      const sortByFinal = tableSortFields.includes(sortBy)
+        ? sortBy
+        : "created_datetime";
+      
+      const sortOrderFinal = ["ASC", "DESC"].includes(sortOrder.toUpperCase())
+        ? sortOrder.toUpperCase()
+        : "DESC";
 
       const fetchAttachments = async (
         model: any,
@@ -557,7 +576,10 @@ class ActivitySchemaService {
             ...(whereClause[Op.and] || []),
           ],
         };
-        return model.findAll({ where });
+        return model.findAll({
+          where,
+          order: [[sortByFinal, sortOrderFinal]]
+        });
       };
       // 🔷 Optimized project resource + task attachments fetch for multiple projects
       const fetchProjectResourceTaskAttachmentsBulk = async (
@@ -829,24 +851,19 @@ class ActivitySchemaService {
 
       // 🔷 Sort
       const validSortFields = [
-        "r_number",
-        "attachment_level",
         "attached_to",
-        "created_datetime",
         "created_by_name",
-        "fiscal_year",
-        "modified_by_name",
-        "modified_datetime",
-        "activity_type",
-        "status_name",
-        "assigned_to_name",
+        "modified_by_name"
       ];
       const finalSortBy = validSortFields.includes(sortBy)
         ? sortBy
         : "created_datetime";
+      
       const finalSortOrder = ["ASC", "DESC"].includes(sortOrder.toUpperCase())
         ? sortOrder.toUpperCase()
         : "DESC";
+      console.log('finalSortBy', finalSortBy);
+      console.log('finalSortOrder', finalSortOrder);
 
       allActivities.sort((a, b) => {
         // Special handling for created_datetime
@@ -1589,6 +1606,29 @@ class ActivitySchemaService {
       rawQueries.fetchActivityStatusByName(activityRequest.email_status,activityRequest.activity_type),
       { type: "SELECT" }
     );
+     let toEmailsArray: string[] = [];
+    let ccEmailsArray: string[] = [];
+    if (Array.isArray(activityRequest.to_email)) {
+    toEmailsArray = activityRequest.to_email;
+  } else if (typeof activityRequest.to_email === 'string') {
+    try {
+      toEmailsArray = JSON.parse(activityRequest.to_email);
+    } catch {
+      toEmailsArray = [];
+    }
+  }
+   if (Array.isArray(activityRequest.cc_email)) {
+    ccEmailsArray = activityRequest.cc_email;
+  } else if (typeof activityRequest.cc_email === 'string') {
+    try {
+      ccEmailsArray = JSON.parse(activityRequest.cc_email);
+    } catch {
+      ccEmailsArray = [];
+    }
+  }
+    activityRequest.cc_email = ccEmailsArray;
+    activityRequest.to_email = toEmailsArray;
+    
     const existingActivity = await Activities.findOne({
         where: { rid: activityRequest.activity_rid }
       });
@@ -1827,6 +1867,17 @@ class ActivitySchemaService {
     const existingActivity = await Activities.findOne({
         where: { rid: activityRequest.activity_rid }
       });
+     let callParticipants: string[] = [];
+    if (Array.isArray(activityRequest.call_participants)) {
+    callParticipants = activityRequest.call_participants;
+  } else if (typeof activityRequest.call_participants === 'string') {
+    try {
+      callParticipants = JSON.parse(activityRequest.call_participants);
+    } catch {
+      callParticipants = [];
+    }
+  }
+  activityData.call_participants = callParticipants;
 
     const response = await Activities.update(activityData, {
       where: { rid: activityRequest.activity_rid },
@@ -1899,12 +1950,34 @@ class ActivitySchemaService {
       rawQueries.fetchActivityStatusByName(activityRequest.meeting_status, activityRequest.activity_type),
       { type: "SELECT" }
     );
+      let meetingParticipants: string[] = [];
+    let reOccurenceDays: string[] = [];
+     if (Array.isArray(activityRequest.meeting_participants)) {
+    meetingParticipants = activityRequest.meeting_participants;
+  } else if (typeof activityRequest.meeting_participants === 'string') {
+    try {
+      meetingParticipants = JSON.parse(activityRequest.meeting_participants);
+    } catch {
+      meetingParticipants = [];
+    }
+  }
+   if (Array.isArray(activityRequest.recurrence_days)) {
+    reOccurenceDays = activityRequest.recurrence_days;
+  } else if (typeof activityRequest.recurrence_days === 'string') {
+    try {
+      reOccurenceDays = JSON.parse(activityRequest.recurrence_days);
+    } catch {
+      reOccurenceDays = [];
+    }
+  }
     const activityData = {
       ...activityRequest,
       activity_type: "Meeting",
       effective_start_datetime: activityRequest.effective_start_date,
       effective_end_datetime: activityRequest.effective_end_date,
       meeting_status_rid: meetingStatus?.rid || null,
+      meeting_participants: meetingParticipants,
+      recurrence_days: reOccurenceDays,
       account_rid:
         activityRequest.accountRid || activityRequest.account_rid || "",
     };
