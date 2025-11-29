@@ -4782,6 +4782,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             }
           } 
           else {
+            let day : any
             if(milestoneMap.get(d.milestone_template_rid) === "2") {
               if(!secondMilestoneEntered) {
                 validEndDate = caseStartDate
@@ -4791,12 +4792,15 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                 validEndDate = otherMileStoneEndDateStorgae
               }
             } else {
-              if(!firstMilestoneEntered && !secondMilestoneEntered) {
+              if(!firstMilestoneEntered && !secondMilestoneEntered && !otherMilestoneEntered) {
                 validEndDate = caseStartDate
                 otherMilestoneEntered = true
+                day = dayjs(validEndDate)
               }
               else {
                 validEndDate = otherMileStoneEndDateStorgae
+                day = dayjs(validEndDate)
+                day = day.add(1, 'day')
               }
             }
             if(d.sequence_no === 1) {
@@ -4804,8 +4808,6 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
               let res = conversion.add(d.effort_in_days, 'day');
               let finalisedEnddate = res.format('YYYY-MM-DD')
               endDate = dayjs(finalisedEnddate).toDate()
-              let day = dayjs(validEndDate)
-              day = day.add(1, 'day')
               let finalDay = day.toDate()
               otherMileStoneStartDateStorage = day
               otherMileStoneEndDateStorgae = endDate

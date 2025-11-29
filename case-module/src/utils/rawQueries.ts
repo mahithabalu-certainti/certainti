@@ -831,7 +831,7 @@ export const fetchMilestoneTaskTemplate = (taskTypeRid : string, filingTypeRid :
   t.modified_datetime AS "task_modified_datetime", t.task_name, t.sequence_no, t.effort_in_days,
   t.effective_start_datetime, t.effective_end_datetime, t.case_team_member_role_rid,
   t.checklist_template_rid, t.status_rid AS "task_status_rid", t.priority_rid, t.task_type_rid,
-  t.milestone_template_rid, t.task_description, t.milestone_sequence
+  t.milestone_template_rid, t.task_description, t.milestone_sequence, t.weightage_rid, t.task_category_rid
   FROM
   fetch_milestone_result m
   LEFT JOIN ${MAIN_SCHEMA_NAME}.task_template t ON t.milestone_template_rid = m.rid
@@ -879,7 +879,9 @@ export const fetchMilestoneTaskTemplate = (taskTypeRid : string, filingTypeRid :
     'priority_rid', t.priority_rid,
     'task_type_rid', t.task_type_rid,
     'milestone_template_rid', t.milestone_template_rid,
-    'task_description', t.task_description
+    'task_description', t.task_description,
+    'weightage_rid', t.weightage_rid,
+    'task_category_rid', t.task_category_rid
   )ORDER BY t.milestone_sequence, t.sequence_no ASC) AS task_data
   FROM fetch_task_data t
   ),
