@@ -2079,6 +2079,8 @@ export const meetingFields = [
   "a.recurrence_type",
   "a.effective_end_datetime",
   "a.effective_start_datetime",
+  "a.effective_end_time",
+  "a.effective_start_time",
   "a.recurrence_monthly_index",
   "a.recurrence_day_of_month",
 
