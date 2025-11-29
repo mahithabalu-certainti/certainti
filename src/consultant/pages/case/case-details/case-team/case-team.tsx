@@ -1319,7 +1319,7 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
                                                 : ''
                                             )
                                           }
-                                          format='YYYY-MM-DD'
+                                          format='YYYY-MMM-DD'
                                           minDate={
                                             fiscalYear
                                               ? dayjs(`${fiscalYear - 1}-04-01`)
@@ -1435,7 +1435,7 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
                                             textField: {
                                               size: 'small',
                                               error: !!error,
-                                              placeholder: 'Start Date',
+                                              placeholder: 'YYYY-MMM-DD',
                                               InputProps: {
                                                 disabled: true,
                                                 onPaste: (
@@ -1508,7 +1508,7 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
                                                 : ''
                                             )
                                           }
-                                          format='YYYY-MM-DD'
+                                          format='YYYY-MMM-DD'
                                           minDate={
                                             member.start_date
                                               ? dayjs(member.start_date)
@@ -1623,7 +1623,7 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
                                             textField: {
                                               size: 'small',
                                               error: !!error,
-                                              placeholder: 'End Date',
+                                              placeholder: 'YYYY-MMM-DD',
                                               InputProps: {
                                                 disabled: true,
                                                 onPaste: (
