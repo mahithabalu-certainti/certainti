@@ -670,6 +670,7 @@ export type TaskCardDetailsType = {
   workflow_connector :  taskWorkFlowConnector[],
   weightage_rid : string
   task_category_rid : string
+  fiscal_year : number
 }
 export type TaskCardResponse ={
   task_details :TaskCardDetailsType

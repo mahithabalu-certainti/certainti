@@ -685,20 +685,36 @@ export const callactivityFieldMappings = [
     dataField: "call_platform",
   },
   {
+    permissionField: "attached_to",
+    exportField: "Related To Name",
+    dataField: "attached_to",
+  },
+  {
     permissionField: "status_rid",
     exportField: "Call Status",
     dataField: "status_name",
+  },
+   {
+    permissionField: "effective_start_datetime",
+    exportField: "Call Start Date",
+    dataField: "effective_start_datetime",
+  },
+  {
+    permissionField: "effective_end_datetime",
+    exportField: "Call End Date",
+    dataField: "effective_end_datetime",
+  },
+  {
+    permissionField: "created_user_name",
+    exportField: "Created By",
+    dataField: "created_user_name",
   },
   {
     permissionField: "created_datetime",
     exportField: "Created On",
     dataField: "created_datetime",
   },
-   {
-    permissionField: "attached_to",
-    exportField: "Related To Name",
-    dataField: "attached_to",
-  }
+   
 
 ];
 export const meetingactivityFieldMappings = [
@@ -708,51 +724,38 @@ export const meetingactivityFieldMappings = [
     dataField: "r_number",
   },
   {
-    permissionField: "activity_type",
-    exportField: "Activity Type",
-    dataField: "activity_type",
+    permissionField: "status_rid",
+    exportField: "Meeting Status",
+    dataField: "status_name",
   },
-  {
-    permissionField: "attachment_level",
-    exportField: "Related Entity",
-    dataField: "attachment_level",
-  },
-  {
-    permissionField: "attach_to",
-    exportField: "Related To ID",
-    dataField: "attach_to",
-  },
-  {
-    permissionField: "attached_to",
-    exportField: "Related To Name",
-    dataField: "attached_to",
-  },
-  {
-    permissionField: "fiscal_year",
-    exportField: "Fiscal Year",
-    dataField: "fiscal_year",
-  },
-   
    {
-    permissionField: "created_by",
-    exportField: "Created By",
-    dataField: "created_by_name",
-  },
-  {
     permissionField: "created_datetime",
     exportField: "Created On",
     dataField: "created_datetime",
   },
   {
-    permissionField: "updated_by",
-    exportField: "Updated By",
-    dataField: "modified_by_name",
+    permissionField: "invited_by",
+    exportField: "Invited By",
+    dataField: "invited_by",
+  },
+   {
+    permissionField: "effective_start_time",
+    exportField: "Meeting Start Time",
+    dataField: "effective_start_time",
   },
   {
-    permissionField: "updated_datetime",
-    exportField: "Updated On",
-    dataField: "updated_datetime",
-  }
+    permissionField: "effective_end_time",
+    exportField: "Meeting End Time",
+    dataField: "effective_end_time",
+  },
+    {
+    permissionField: "attached_to",
+    exportField: "Related To Name",
+    dataField: "attached_to_name",
+  },
+  
+
+
           
 ];
 export const reviewProjectsFieldMappings = [
