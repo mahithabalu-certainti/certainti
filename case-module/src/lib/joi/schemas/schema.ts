@@ -674,7 +674,6 @@ const createActivityMeetingSchema = Joi.object({
   recurrence_days: Joi.string().optional(),
   recurrence_monthly_index: Joi.string().optional().allow("", null),
   recurrence_day_of_month: Joi.number().optional().allow(null),
-
 });
 
 const updateActivityMeetingSchema = Joi.object({
