@@ -31,7 +31,7 @@ const updateCaseSchema = Joi.object({
   statutory_submission_date: Joi.date().required(),
   country_rid: Joi.string().optional(),
   tax_liability: Joi.number().optional().allow(null,""),
-   heat_light_power:Joi.number().integer(),
+  heat_light_power:Joi.number().integer(),
   total_nonlabor_cost:Joi.number().integer(),
 });
 
