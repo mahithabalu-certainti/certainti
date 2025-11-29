@@ -2312,7 +2312,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
       const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
       let schemaName = rawQueries.fetchSchemaName(fetchParent[0][0].r_number);
       
-      const result : any = await orgDb.query(fetchTaskComments(data.page, data.limit, data.task_rid, data.account_rid, data.case_rid, schemaName,data?.task_type || 'milestone'), {type : QueryTypes.SELECT});
+      const result : any = await orgDb.query(fetchTaskComments(data.page, data.limit, data.task_rid, data.account_rid, data.case_rid, schemaName,data?.task_type || 'milestone'));
       if(result[0][0].comments !== null) {
         const total = result[0][0].comments[0].total_result
         const userIds = [...new Set(result[0][0].comments.map((d : any) => d.created_by))];
