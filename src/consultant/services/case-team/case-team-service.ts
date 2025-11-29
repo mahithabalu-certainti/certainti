@@ -423,29 +423,33 @@ export const useUpdateCaseTeam = () => {
   });
 };
 
-export const caseConfigDetailUrl = (accountId: string, caseId?: string) =>
-  `/api/jurisdictions/details/${accountId}/${caseId}`;
+export const caseConfigDetailUrl = (
+  accountId: string,
+  level: string,
+  caseId?: string
+) =>
+  `/api/jurisdictions/details/?accountRid=${accountId}&level=${level}${caseId ? `&caseRid=${caseId}` : ''}`;
 
 export const fetchConfigFields = async (
-  acctounId: string,
+  accountId: string,
+  level: string,
   caseId?: string
 ): Promise<CaseConfigDetailsResponse> => {
   const { data } = await caseServiceApi.get<CaseConfigDetailsResponse>(
-    caseConfigDetailUrl(acctounId, caseId)
+    caseConfigDetailUrl(accountId, level, caseId)
   );
-  // await new Promise((resolve) => setTimeout(resolve, 2000));
-  // return mockAccountDetails;
   return data;
 };
 
 export const useFetchCasesConfigFields = (
   accountId: string,
+  level: string,
   caseId?: string
 ) => {
   return useQuery<CaseConfigDetailsResponse, Error>({
-    queryKey: ['configFields', accountId, caseId],
-    queryFn: () => fetchConfigFields(accountId, caseId),
-    enabled: !!accountId && !!caseId, // Only fetch if accountId exists
+    queryKey: ['configFields', accountId, level, caseId],
+    queryFn: () => fetchConfigFields(accountId, level, caseId),
+    enabled: !!accountId, // Only fetch if accountId exists
     staleTime: 0, // No cache
     gcTime: 0, // Immediately remove from cache
     retry: 0,

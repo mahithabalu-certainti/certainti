@@ -128,6 +128,72 @@ export const CaseFormData = (
             type: '',
             required: false,
           }),
+          createTextField('heat_light_power', 'Heat Light Power', {
+            required: false,
+            placeholder: 'Enter Heat Light Power',
+            // errorHandling: [
+            //   {
+            //     regex: REGEX_PATTERNS.MIN_3,
+            //     errorMessage: 'Case Name must be more than 2 characters long',
+            //   },
+            //   {
+            //     regex: REGEX_PATTERNS.MAX_255,
+            //     errorMessage: 'Case Name must be within 255 characters',
+            //   },
+            // ],
+            disabled:
+              isEditView &&
+              !permissionMap?.['case_name']?.edit &&
+              permissionMap?.['case_name']?.read,
+            hide:
+              isEditView &&
+              !permissionMap?.['case_name']?.edit &&
+              !permissionMap?.['case_name']?.read,
+          }),
+          createTextField('total_nonlabor_cost', 'Total NonLabor Cost', {
+            required: false,
+            placeholder: 'Enter Total NonLabor Cost',
+            // errorHandling: [
+            //   {
+            //     regex: REGEX_PATTERNS.MIN_3,
+            //     errorMessage: 'Case Name must be more than 2 characters long',
+            //   },
+            //   {
+            //     regex: REGEX_PATTERNS.MAX_255,
+            //     errorMessage: 'Case Name must be within 255 characters',
+            //   },
+            // ],
+            disabled:
+              isEditView &&
+              !permissionMap?.['case_name']?.edit &&
+              permissionMap?.['case_name']?.read,
+            hide:
+              isEditView &&
+              !permissionMap?.['case_name']?.edit &&
+              !permissionMap?.['case_name']?.read,
+          }),
+          createTextField('tax_liability', 'Tax Liability', {
+            required: false,
+            placeholder: 'Enter Tax Liability',
+            // errorHandling: [
+            //   {
+            //     regex: REGEX_PATTERNS.MIN_3,
+            //     errorMessage: 'Case Name must be more than 2 characters long',
+            //   },
+            //   {
+            //     regex: REGEX_PATTERNS.MAX_255,
+            //     errorMessage: 'Case Name must be within 255 characters',
+            //   },
+            // ],
+            disabled:
+              isEditView &&
+              !permissionMap?.['case_name']?.edit &&
+              permissionMap?.['case_name']?.read,
+            hide:
+              isEditView &&
+              !permissionMap?.['case_name']?.edit &&
+              !permissionMap?.['case_name']?.read,
+          }),
           createDateField('case_startdate', 'Start Date', {
             required: true,
             onChange: true,

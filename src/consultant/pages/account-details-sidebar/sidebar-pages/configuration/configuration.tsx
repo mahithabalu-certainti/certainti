@@ -15,7 +15,10 @@ import {
 import { RootState } from '../../../../../store/store';
 import { useSelector } from 'react-redux';
 import { checkPermission } from '../../../../../common-utils';
-
+import JurisdictionSetting from './jurisdiction/setting';
+interface ConfigurationProps {
+  countryId: string | null;
+}
 const ConfigTabs: ResourceTabs[] = [
   {
     id: AllPermissions.ACCOUNT_ATTACHMENT_OVERVIEW,
@@ -30,7 +33,7 @@ const ConfigTabs: ResourceTabs[] = [
   // },
 ];
 
-const Configuration: React.FC = () => {
+const Configuration: React.FC<ConfigurationProps> = ({ countryId }) => {
   const [searchParams] = useSearchParams();
   const [isFormSaving, setIsFormSaving] = useState<boolean>(false);
   const [isSaveDisable, setIsSaveDisable] = useState<boolean>(false);
@@ -108,6 +111,8 @@ const Configuration: React.FC = () => {
             setIsSaveDisable={setIsSaveDisable}
           />
         );
+      case 'jurisdiction_configuration':
+        return <JurisdictionSetting countryId={countryId} />;
       default:
         return (
           <div className='flex items-center justify-center h-full'>
@@ -179,39 +184,43 @@ const Configuration: React.FC = () => {
 
   return (
     <div className='flex flex-col w-full pt-2 pl-2 pr-4'>
-      <SectionTabPanel
-        tabs={ConfigTabs}
-        filterMenu={filterFields}
-        filterVisibility={list !== 'settings'}
-        showFilter={showFilter}
-        contextKey={`account-settings-${tabParam}`}
-        appliedFilters={appliedFilters}
-        setAppliedFilters={setAppliedFilters}
-        setCurrentPage={setCurrentPage}
-        handleFilter={handleFilter}
-        handleSorting={() => {}}
-        sortFilterCount={0}
-        setSortFilterCount={() => {}}
-        showRefresh={list !== 'settings'}
-        onRefreshClick={onRefreshClick}
-        hideTabPanel={hideSection}
-        showSearch={list === 'users' ? true : false}
-        searchDisabled={false}
-        searchPlaceholder='Search'
-        onSearch={(text) => setSearchText(text)}
-        searchReset={resetSearch}
-        onSearchReset={handleSearchReset}
-      />
-      <SectionHeader
-        title={list ? list.charAt(0).toUpperCase() + list.slice(1) : ''}
-        titleIcon={getTitleIcon()}
-        buttons={headerButtons}
-        count={count}
-        showItemCount={list !== 'settings'}
-        hideSection={hideSection}
-        iconBg={list === 'users' ? '#7785ff' : '#D7E5FF'}
-        bgType='circle'
-      />
+      {list !== 'jurisdiction_configuration' && (
+        <div>
+          <SectionTabPanel
+            tabs={ConfigTabs}
+            filterMenu={filterFields}
+            filterVisibility={list !== 'settings'}
+            showFilter={showFilter}
+            contextKey={`account-settings-${tabParam}`}
+            appliedFilters={appliedFilters}
+            setAppliedFilters={setAppliedFilters}
+            setCurrentPage={setCurrentPage}
+            handleFilter={handleFilter}
+            handleSorting={() => {}}
+            sortFilterCount={0}
+            setSortFilterCount={() => {}}
+            showRefresh={list !== 'settings'}
+            onRefreshClick={onRefreshClick}
+            hideTabPanel={hideSection}
+            showSearch={list === 'users' ? true : false}
+            searchDisabled={false}
+            searchPlaceholder='Search'
+            onSearch={(text) => setSearchText(text)}
+            searchReset={resetSearch}
+            onSearchReset={handleSearchReset}
+          />
+          <SectionHeader
+            title={list ? list.charAt(0).toUpperCase() + list.slice(1) : ''}
+            titleIcon={getTitleIcon()}
+            buttons={headerButtons}
+            count={count}
+            showItemCount={list !== 'settings'}
+            hideSection={hideSection}
+            iconBg={list === 'users' ? '#7785ff' : '#D7E5FF'}
+            bgType='circle'
+          />
+        </div>
+      )}
       {renderContent()}
     </div>
   );

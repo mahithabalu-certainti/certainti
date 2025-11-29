@@ -164,6 +164,9 @@ export interface CaseFormFields {
   case_startdate?: string;
   planned_submission_date?: string;
   statutory_submission_date?: string;
+  heat_light_power?: string;
+  total_nonlabor_cost?: string;
+  tax_liability?: string;
 }
 
 export interface CaseFormPayload {
@@ -178,14 +181,18 @@ export interface CaseFormPayload {
   case_startdate: string;
   planned_submission_date: string;
   statutory_submission_date: string;
+  heat_light_power?: string;
+  total_nonlabor_cost?: string;
+  tax_liability?: string;
 }
 
 export interface updateCaseJurisdictionPayload {
-  case_rid: string;
+  case_rid?: string;
   account_rid: string;
   is_federal_level: boolean;
   is_state_level: boolean;
   states: string[];
+  level?: string;
 }
 
 export interface CreateCaseApiResponse {

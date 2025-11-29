@@ -13,11 +13,13 @@ import SelectProjects from './select-project/select-projects';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   AssignProject,
+  ReviewProject,
   ReviewProjectListURLParams,
 } from '../../../../types/assign-projects';
 import { selectProjectFilterFields } from './select-project/helper';
 import {
   useFetchClassification,
+  useFetchIndustrys,
   useFetchState,
 } from '../../../../services/account';
 import {
@@ -47,6 +49,7 @@ import EmailModalTemplate from './review-projects/email-model-template';
 import { ProjectTriggerAIPayload } from '../../../../types/project';
 import { useToast } from '../../../../../hooks';
 import { checkPermission } from '../../../../../common-utils';
+import { reviewProjectFilterFields } from './review-projects/helper';
 interface casesProjectProps {
   activeKey?: string;
   fiscalYear: number;
@@ -94,7 +97,7 @@ const CasesProjects: React.FC<casesProjectProps> = ({
   const [searchParams] = useSearchParams();
   const [emailModalOpen, setEmailModalOpen] = useState(false);
   const [selectedRows, setSelectedRows] = useState<AssignProject[]>([]);
-  const [reviewSelectedRows, setReviewSelectedRows] = useState<AssignProject[]>(
+  const [reviewSelectedRows, setReviewSelectedRows] = useState<ReviewProject[]>(
     []
   );
   const [columnAnchorEl, setColumnAnchorEl] =
@@ -377,6 +380,7 @@ const CasesProjects: React.FC<casesProjectProps> = ({
     }
   };
   const countriesList = useGetAllCountries();
+  const industry = useFetchIndustrys();
   const region = useFetchState(currentCountry);
   const resourceTypeOptions = useGetResourceType();
   const memoizedStatus = useMemo(
@@ -423,13 +427,20 @@ const CasesProjects: React.FC<casesProjectProps> = ({
       })) || [],
     [region.data?.data.states]
   );
-
+  const allIndustries = useMemo(
+    () =>
+      industry.data?.data.industries.map((industry) => ({
+        option: industry.industry_name,
+        value: industry.industry_name,
+      })) || [],
+    [industry.data?.data.industries]
+  );
   const filterFields = getProjectFinancialResCostFields(
     memoizedCountry,
     memoizedRegion,
     memoizedResourceType
   );
-  const projectFilterFields = isAssignProject
+  const assignFilterFields = isAssignProject
     ? selectProjectFilterFields(
         memoizedClassification.map((item) => ({
           label: item.option,
@@ -448,6 +459,17 @@ const CasesProjects: React.FC<casesProjectProps> = ({
         memoizedStatus,
         projectPermissionMap
       );
+  const reviewFilterFields = reviewProjectFilterFields(
+    memoizedClassification.map((item) => ({
+      label: item.option,
+      value: item.value,
+    })),
+    memoizedProjectTypes,
+    allIndustries,
+    projectPermissionMap
+  );
+  const projectFilterFields =
+    tabParam === 'assign_projects' ? assignFilterFields : reviewFilterFields;
 
   const projectViewEditlistFields = useMemo(
     () =>

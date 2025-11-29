@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from 'react';
 import {
-  AssignProject,
+  ReviewProject,
   ReviewProjectListURLParams,
 } from '../../../../../types/assign-projects';
 import { ListTable } from '../../../../../../components/table';
@@ -21,7 +21,7 @@ interface ReviewProjectProps {
   setCount: React.Dispatch<React.SetStateAction<number>>;
   setExportType?: (type: ExportType) => void;
   appliedFilters: Record<string, string | number | boolean | string[]>;
-  setSelectedRows: React.Dispatch<React.SetStateAction<AssignProject[]>>;
+  setSelectedRows: React.Dispatch<React.SetStateAction<ReviewProject[]>>;
   setSortParams: React.Dispatch<
     React.SetStateAction<{
       sortField: string;
@@ -122,18 +122,18 @@ const ReviewProjectsList: React.FC<ReviewProjectProps> = ({
       sortBy: sortBy,
     });
   }, [sortField, sortBy, setSortParams]);
-  const getRowId = (row: AssignProject) => row.rid;
+  const getRowId = (row: ReviewProject) => row.rid;
   const handleSelectionChange = (selectedIds: string[]) => {
     const selectedData = data?.reviewProject?.filter((row) =>
       selectedIds.includes(row.rid)
     );
-    setSelectedRows((selectedData as AssignProject[]) || []);
+    setSelectedRows((selectedData as ReviewProject[]) || []);
   };
 
   return (
     <div>
       <ListTable
-        data={(data?.reviewProject as AssignProject[]) || []}
+        data={(data?.reviewProject as ReviewProject[]) || []}
         columns={visibleColumns}
         getRowId={getRowId}
         hoverHighlight={false}
