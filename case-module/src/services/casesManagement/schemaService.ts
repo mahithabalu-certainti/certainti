@@ -627,7 +627,7 @@ class CaseManagementSchemaService {
         task_description : data.task_description,
         weightage_rid : data.weightage_rid,
         task_category_rid : data.task_category_rid,
-        milestone_sequence : findMilestoneSequence[0][0].sequence_no
+        milestone_sequence : findMilestoneSequence[0][0].r_number
       }
     } else {
       const checkTaskNameExists = await this.checkTaskExists(data, getTaskType[0][0].rid);

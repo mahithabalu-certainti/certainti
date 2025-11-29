@@ -4750,13 +4750,16 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         let firstMilestoneEntered : boolean = false
         let secondMilestoneEntered : boolean = false
         let otherMilestoneEntered : boolean = false
+        let firstMilestoneDatePicker : boolean = false
+        let firstMilestoneForSecondDatePicker : boolean = false
         if(clonedData.task_data.length > 0) {
-        for(let d of clonedData.task_data) {
+        for(let d of clonedData.task_data) {          
           if(milestoneMap.get(d.milestone_template_rid) === "1") {
             if(!firstMilestoneEntered) {
+              firstMilestoneEntered = true
               if(d.sequence_no === 1) {
                 const conversion = dayjs(caseStartDate)
-                let res = conversion.add(d.effort_in_days, 'day');
+                let res = conversion.add(d.effort_in_days - 1, 'day');
                 let finalisedEnddate = res.format('YYYY-MM-DD')
                 endDate = dayjs(finalisedEnddate).toDate()
                 startDate = caseStartDate
@@ -4765,7 +4768,6 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                 startDateMap.set(d.task_name, startDateStorage)
                 endDateMap.set(d.task_name, endDateStorage)
               }
-              firstMilestoneEntered = true
             } 
             else {
               const conversion = dayjs(endDateStorage)
@@ -4783,18 +4785,33 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
           else {
             let day : any
             if(milestoneMap.get(d.milestone_template_rid) === "2") {
-              if(!secondMilestoneEntered) {
+              if(!firstMilestoneEntered && !secondMilestoneEntered) {
                 validEndDate = caseStartDate
                 secondMilestoneEntered = true
+                day = dayjs(validEndDate)
               }
+              else if(firstMilestoneEntered && !firstMilestoneForSecondDatePicker) {
+                validEndDate = endDateStorage
+                day = dayjs(validEndDate)
+                day = day.add(1, 'day')
+                firstMilestoneForSecondDatePicker = true
+              } 
               else {
                 validEndDate = otherMileStoneEndDateStorgae
+                day = dayjs(validEndDate)
+                day = day.add(1, 'day')
               }
             } else {
               if(!firstMilestoneEntered && !secondMilestoneEntered && !otherMilestoneEntered) {
                 validEndDate = caseStartDate
                 otherMilestoneEntered = true
                 day = dayjs(validEndDate)
+              }
+              else if (firstMilestoneEntered && !secondMilestoneEntered && !firstMilestoneDatePicker) {
+                validEndDate = endDateStorage
+                day = dayjs(validEndDate)
+                day = day.add(1, 'day')
+                firstMilestoneDatePicker = true
               }
               else {
                 validEndDate = otherMileStoneEndDateStorgae
@@ -4804,7 +4821,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             }
             if(d.sequence_no === 1) {
               const conversion = dayjs(validEndDate)
-              let res = conversion.add(d.effort_in_days, 'day');
+              let res = conversion.add(d.effort_in_days - 1, 'day');
               let finalisedEnddate = res.format('YYYY-MM-DD')
               endDate = dayjs(finalisedEnddate).toDate()
               let finalDay = day.toDate()
@@ -5167,7 +5184,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
           }
       }
       ); */
-        const checkIsDifferentCollaborator = await this.isNewCollaborator(data.modified_by, accountNumber,"case_task");
+        const checkIsDifferentCollaborator = await this.isNewCollaborator(data.modified_by, accountNumber,"case_task", data.case_rid, data.rid);
         if(!checkIsDifferentCollaborator) {
           const checkCollaboratorExists = await this.isCollaboratorAlreadyAdded(data.modified_by, data.case_rid, data.account_rid, data.rid, accountNumber,"case_task");
           if(!checkCollaboratorExists) {
@@ -5410,7 +5427,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       return []
     }
   }
-  async isNewCollaborator (rid : string, accountNumber : string, taskType : string) {
+  async isNewCollaborator (rid : string, accountNumber : string, taskType : string, caseRid? : string, taskRid? : string) {
     const {CaseTask, Activities} = await this.caseModelService.getModels(accountNumber);
     let result;
     if (taskType === 'activity') {
@@ -5423,7 +5440,9 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     } else {
       result = await CaseTask.findOne({
         where: {
-          assigned_to: rid
+          assigned_to: rid,
+          case_rid : caseRid,
+          rid : taskRid
         },
         raw: true
       });
@@ -5646,7 +5665,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     }
     const createComments = await TaskComments.create(commentPayload);
     if(createComments) {
-      const checkIsDifferentCollaborator = await this.isNewCollaborator(data.created_by, accountNumber,data.task_type);
+      const checkIsDifferentCollaborator = await this.isNewCollaborator(data.created_by, accountNumber,"case_task", data.case_rid, data.task_rid);
       if(!checkIsDifferentCollaborator) {
         const checkCollaboratorExists = await this.isCollaboratorAlreadyAdded(data.created_by, data.case_rid, data.account_rid, data.task_rid, accountNumber,data.task_type);
         if(!checkCollaboratorExists) {
@@ -5771,7 +5790,16 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         }
       });
       if(updateComments === 1) {
-        const checkIsDifferentCollaborator = await this.isNewCollaborator(data.modified_by, accountNumber,data.task_type);
+        await CaseHistory.create({
+        created_by : data.modified_by,
+        created_datetime : new Date(),
+        case_rid : data.case_rid,
+        task_rid : data.task_rid,
+        attribute_name : "Comments",
+        old_value : isCommentExists.comments,
+        new_value : data.comments
+      })
+        const checkIsDifferentCollaborator = await this.isNewCollaborator(data.modified_by, accountNumber, "case_task", data.case_rid, data.task_rid);
         if(!checkIsDifferentCollaborator) {
           const checkCollaboratorExists = await this.isCollaboratorAlreadyAdded(data.modified_by, data.case_rid, data.account_rid, data.task_rid, accountNumber,data.task_type);
           if(!checkCollaboratorExists) {
@@ -6159,7 +6187,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
           })
         const deleteComments = await TaskComments.destroy({ where : {rid : data.rid}});
         if(deleteComments === 1) {
-        const checkIsDifferentCollaborator = await this.isNewCollaborator(data.modified_by, accountNumber,data.task_type);
+        const checkIsDifferentCollaborator = await this.isNewCollaborator(data.modified_by, accountNumber,'case_task', data.case_rid, data.task_rid);
         if(!checkIsDifferentCollaborator) {
           const checkCollaboratorExists = await this.isCollaboratorAlreadyAdded(data.modified_by, data.case_rid, data.account_rid, data.task_rid, accountNumber,data.task_type);
           if(!checkCollaboratorExists) {
@@ -6386,7 +6414,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
   }
   async addCollaborators (data : any,accountNumber : string) {
     const {TaskCollaborators} = await this.caseModelService.getModels(accountNumber);
-    const checkIsDifferentCollaborator = await this.isNewCollaborator(data.user_rid, accountNumber,data.task_type);
+    const checkIsDifferentCollaborator = await this.isNewCollaborator(data.user_rid, accountNumber,data.task_type, data.case_rid, data.rid);
     if(!checkIsDifferentCollaborator) {
       const checkCollaboratorExists = await this.isCollaboratorAlreadyAdded(data.user_rid, data.case_rid, data.account_rid, data.rid, accountNumber,data.task_type);
       if(!checkCollaboratorExists) {
