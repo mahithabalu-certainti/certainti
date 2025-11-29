@@ -176,7 +176,7 @@ const TaskForm: React.FC = () => {
       attach_to: entityId,
       attachment_level: entityLevel,
       task_name: formValues.task_name || '',
-      task_description: formValues.task_description,
+      description: formValues.task_description,
       status_rid: formValues.status_rid,
       priority_rid: formValues.priority_rid,
       effective_start_datetime: formValues.effective_start_datetime,
