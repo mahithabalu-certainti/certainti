@@ -199,15 +199,15 @@ const listReviewProjectSchema = Joi.object({
 
 const sentReviewProjectSchema = Joi.object({
   search: Joi.string().max(255).optional(),
-  filters: Joi.object().default({}),
+  filters: Joi.string().default("{}"),
   sort_by: Joi.string().optional(),
   sort_order: Joi.string().valid("ASC", "DESC").default("ASC"),
-  to_email: Joi.array().items(Joi.string().email()).required(),
-  cc_email: Joi.array().items(Joi.string().email()).required(),
+  to_email:Joi.string().required(),
+  cc_email:Joi.string().optional(),
   recipient_name: Joi.string().max(255).optional(),
   subject: Joi.string().max(500).required(),
   body_html: Joi.string().optional().allow("", null),
-  project_id:Joi.array().items(Joi.string()).optional(),
+  project_id:Joi.string().optional().optional(),
   account_rid: Joi.string().required(),
   case_rid: Joi.string().required()
 });
