@@ -25,7 +25,7 @@ export const fetchCasesHeadersDatas = (schemaName: string, caseRid: string) => {
     f.total_project_cost AS case_total_project_cost, c.case_total_rd_cost, c.case_total_qre_cost,c.case_completion_percentage,c.case_total_qualified_project_cost,
     c.planned_submission_date, c.statutory_submission_date, c.case_startdate,
     c.description, c.r_number, c.created_by, c.modified_by, c.created_datetime,
-    c.modified_datetime, c.total_nonlabor_cost, c.heat_light_power
+    c.modified_datetime, c.total_nonlabor_cost, c.heat_light_power,c.tax_liability
 
     FROM
     ${schemaName}.cases c
@@ -1238,11 +1238,30 @@ return query;
     return query;
   }
 
-  export const fetchTaskActivities = (page : number, limit : number ,schemaName : string, caseRid : string, taskRid : string) => {
+  export const fetchTaskActivities = (page : number, limit : number ,schemaName : string, caseRid : string, taskRid : string,taskType: string) => {
     const offset = (page - 1) * limit;
-    let pagination = `LIMIT ${limit} OFFSET ${offset}`
+    let pagination = `LIMIT ${limit} OFFSET ${offset}`;
+    let query = ``;
+    if(taskType === 'activity')
+    {
+      query = 
+    `
+    WITH fetch_data AS (SELECT 
+    rid, r_number, created_by, created_datetime, attribute_name, old_value, new_value, task_rid
+    FROM ${schemaName}.task_history
+    WHERE
+    task_rid = '${taskRid}'
 
-    let query = 
+    ORDER BY created_datetime DESC),
+    calculate_total AS (
+    SELECT f.*, COUNT(f.rid) OVER() AS total_result FROM fetch_data f
+    )
+    SELECT * FROM calculate_total ${pagination}
+    `
+    }
+    else
+    {
+       query = 
     `
     WITH fetch_data AS (SELECT 
     rid, r_number, created_by, case_rid, created_datetime, attribute_name, old_value, new_value, task_rid
@@ -1256,8 +1275,8 @@ return query;
     SELECT f.*, COUNT(f.rid) OVER() AS total_result FROM fetch_data f
     )
     SELECT * FROM calculate_total ${pagination}
-    
     `
+    }
     return query;
   }
 

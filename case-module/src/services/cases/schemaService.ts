@@ -5786,6 +5786,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         }
       });
       if(updateComments === 1) {
+        if(data.task_type !== 'activity'){
         await CaseHistory.create({
         created_by : data.modified_by,
         created_datetime : new Date(),
@@ -5795,7 +5796,8 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         old_value : isCommentExists.comments,
         new_value : data.comments
       })
-        const checkIsDifferentCollaborator = await this.isNewCollaborator(data.modified_by, accountNumber, "case_task", data.case_rid, data.task_rid);
+    }
+        const checkIsDifferentCollaborator = await this.isNewCollaborator(data.modified_by, accountNumber, data.task_type || 'case_task', data.case_rid, data.task_rid);
         if(!checkIsDifferentCollaborator) {
           const checkCollaboratorExists = await this.isCollaboratorAlreadyAdded(data.modified_by, data.case_rid, data.account_rid, data.task_rid, accountNumber,data.task_type);
           if(!checkCollaboratorExists) {
@@ -6182,7 +6184,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
           })
         const deleteComments = await TaskComments.destroy({ where : {rid : data.rid}});
         if(deleteComments === 1) {
-        const checkIsDifferentCollaborator = await this.isNewCollaborator(data.modified_by, accountNumber,'case_task', data.case_rid, data.task_rid);
+        const checkIsDifferentCollaborator = await this.isNewCollaborator(data.modified_by, accountNumber,data.task_type || 'case_task', data.case_rid, data.task_rid);
         if(!checkIsDifferentCollaborator) {
           const checkCollaboratorExists = await this.isCollaboratorAlreadyAdded(data.modified_by, data.case_rid, data.account_rid, data.task_rid, accountNumber,data.task_type);
           if(!checkCollaboratorExists) {
@@ -6219,7 +6221,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
 
   async addAttachmentForTask (data : any, accountNumber : string, files : Express.Multer.File[], userId : string) {
     const {TaskAttachments,TaskHistory} = await this.caseModelService.getModels(accountNumber)
-    const findTaskDetails = await this.findTaskById(data.task_rid, data.account_rid, data.case_rid, accountNumber);
+    const findTaskDetails = await this.findTaskById(data.task_rid, data.account_rid, data.case_rid, accountNumber,data.task_type || 'case_task');
     if(files != undefined) {
       if(Array.isArray(files)) {
         for(let f of files) {
@@ -6298,7 +6300,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
 
   async deleteAttachment (accountNumber : string, data : any, userId : string) {
     const {TaskAttachments} = await this.caseModelService.getModels(accountNumber)
-    const findTaskDetails = await this.findTaskById(data.task_rid, data.account_rid, data.case_rid, accountNumber);
+    const findTaskDetails = await this.findTaskById(data.task_rid, data.account_rid, data.case_rid, accountNumber,data.task_type || 'case_task');
     const checkIsFileExists = await TaskAttachments.findOne({
       where : {
         rid : data.rid,
@@ -6455,14 +6457,17 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
   }
   async fetchCollaboratorsList (accountNumber : string, data : any) {
     const {TaskCollaborators} = await this.caseModelService.getModels(accountNumber);
+    let whereClause: any = {
+      account_rid: data.account_rid,
+      task_rid: data.rid
+    };
+    if (data.task_type !== 'activity') {
+      whereClause.case_rid = data.case_rid;
+    }
     const result = await TaskCollaborators.findAll({
-      attributes : ['assigned_to'],
-      where : {
-        case_rid : data.case_rid,
-        account_rid : data.account_rid,
-        task_rid : data.rid
-      },
-      raw : true
+      attributes: ['assigned_to'],
+      where: whereClause,
+      raw: true
     });
     if(result.length > 0) return result;
     else return []
