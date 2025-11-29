@@ -30,7 +30,10 @@ import {
   useUpdateCaseTask,
   useGetTaskDropDownList,
 } from '../../consultant/services/case-task/case-task-service';
-import { useGetTagOptions } from '../../consultant/services/case-team/case-team-service';
+import {
+  useGetTagOptions,
+  useDeleteTag,
+} from '../../consultant/services/case-team/case-team-service';
 import {
   transformComments,
   transformActivities,
@@ -165,6 +168,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   const deleteAttachmentMutation = useDeleteTaskAttachment();
   const updateTaskMutation = useUpdateCaseTask();
   const deleteCollaboratorMutation = useDeleteCollaborator();
+  const deleteTagMutation = useDeleteTag();
   const queryClient = useQueryClient();
 
   const commentsParams = useMemo(
@@ -705,6 +709,30 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
 
     setIsSaving(true);
     try {
+      // Identify removed tags and delete them
+      const removedTags: string[] = [];
+      if (originalTask?.tagsDetails) {
+        originalTask.tagsDetails.forEach((detail) => {
+          // If the tag name is no longer in the edited tags list, it was removed
+          if (!editedTask?.tags?.includes(detail.name)) {
+            removedTags.push(detail.id);
+          }
+        });
+      }
+
+      if (removedTags.length > 0 && taskId) {
+        try {
+          await deleteTagMutation.mutateAsync({
+            task_rid: taskId,
+            account_rid: accountId,
+            case_rid: caseId,
+            tag_rid: removedTags,
+          });
+        } catch (error) {
+          console.error('Error deleting tags:', error);
+        }
+      }
+
       const tagsArray: Array<{ tag_rid: string; is_new_tag: boolean }> = [];
       if (editedTask?.tags && editedTask.tags.length > 0) {
         editedTask.tags.forEach((tagName: string) => {
@@ -878,6 +906,9 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
               task_rid: taskId,
             },
           ],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ['taskDetail', accountId, caseId, taskId],
         });
         if (onTaskUpdate) {
           onTaskUpdate();

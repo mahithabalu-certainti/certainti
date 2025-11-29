@@ -72,6 +72,7 @@ export interface Task {
     completedItems: number;
   };
   tags?: string[];
+  tagsDetails?: Array<{ id: string; name: string }>;
   collaborators?: Assignee[];
   startDate?: Date;
   endDate?: Date;

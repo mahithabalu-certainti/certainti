@@ -1,8 +1,13 @@
+
 import { caseServiceApi } from '../../../api/api';
 import {
   getWorkBreakdownURL,
   getTaskDetailURL,
 } from '../urls/work-breakdown-url';
+import {
+  normalizeTags,
+  normalizeTagsDetails,
+} from '../../../components/kanban-board/helper';
 import type { Task } from '../../../components/kanban-board/types';
 import { useQuery, useMutation, useInfiniteQuery } from '@tanstack/react-query';
 
@@ -215,7 +220,8 @@ export const getTaskDetail = async (
           completedItems: taskDetailResponse.checklists.completed_items_count,
         }
         : undefined,
-      tags: taskDetailResponse.tags || [],
+      tags: normalizeTags(taskDetailResponse.tags || []),
+      tagsDetails: normalizeTagsDetails(taskDetailResponse.tags || []),
       collaborators: [],
       startDate: taskDetailResponse.effective_start_datetime
         ? new Date(taskDetailResponse.effective_start_datetime)
@@ -251,7 +257,7 @@ export const getTaskDetail = async (
 
     return task;
   } catch (error) {
-    console.error(`Error fetching task details for ${taskId}:`, error);
+    console.error(`Error fetching task details for ${taskId}: `, error);
     return null;
   }
 };
@@ -277,7 +283,7 @@ export const fetchTaskDetail = async (
 
     return response.data.data;
   } catch (error) {
-    console.error(`Error fetching task details for ${taskId}:`, error);
+    console.error(`Error fetching task details for ${taskId}: `, error);
     throw error;
   }
 };
@@ -333,7 +339,7 @@ export const fetchTaskActivities = async (
     }
     return [];
   } catch (error) {
-    console.error(`Error fetching task activities for ${taskId}:`, error);
+    console.error(`Error fetching task activities for ${taskId}: `, error);
     return [];
   }
 };
@@ -429,7 +435,7 @@ export const fetchCollaborators = async (
     console.log('No collaborators data found in response:', response.data);
     return [];
   } catch (error) {
-    console.error(`Error fetching collaborators for task ${taskId}:`, error);
+    console.error(`Error fetching collaborators for task ${taskId}: `, error);
     throw error;
   }
 };
@@ -643,7 +649,7 @@ export const useGetTaskDetailData = (
       try {
         return await fetchTaskDetail(accountId, caseId, taskId);
       } catch (error) {
-        console.error(`Error fetching task detail data for ${taskId}:`, error);
+        console.error(`Error fetching task detail data for ${taskId}: `, error);
         return null;
       }
     },

@@ -470,3 +470,30 @@ export const useUpdateJurisdictionConfig = () => {
     mutationFn: (body) => updateCaseJurisdictionConfig({ ...body }),
   });
 };
+export interface DeleteTagPayload {
+  task_rid: string;
+  account_rid: string;
+  case_rid: string;
+  tag_rid: string[];
+}
+
+export const deleteTag = async (
+  payload: DeleteTagPayload
+): Promise<CommonApiResponse> => {
+  try {
+    const response = await caseServiceApi.post<CommonApiResponse>(
+      '/api/cases/tag/delete',
+      payload
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error deleting tag:', error);
+    throw error;
+  }
+};
+
+export const useDeleteTag = () => {
+  return useMutation<CommonApiResponse, Error, DeleteTagPayload>({
+    mutationFn: (payload) => deleteTag(payload),
+  });
+};
