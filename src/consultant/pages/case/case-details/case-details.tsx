@@ -565,7 +565,7 @@ export const CaseDetails = () => {
       {
         name: 'Case Team',
         key: 'caseTeam',
-        id: AllMenus.FINANCIAL_HIGHLIGHTS,
+        id: AllModules.CASES_TEAM,
         disabled: false,
         icon: CasesIcon,
       },

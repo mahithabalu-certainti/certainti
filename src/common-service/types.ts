@@ -208,6 +208,7 @@ export enum AllModules {
   CHECKLISTS = 'checklists',
   TASK_TEMPLATES = 'task_templates',
   WORKBREAKDOWN = 'workbreakdown',
+  CASES_TEAM = 'case_team',
 }
 
 export enum AllPermissions {
@@ -311,6 +312,8 @@ export enum AllPermissions {
   CASES_TIMELINE = 'cases_timeline',
   CASES_VIEW_EDIT = 'cases_view_edit',
   CASES_TEAM_VIEW_EDIT = 'case_team_view_edit',
+  CASES_TEAM_CREATE = 'case_team_create',
+  CASES_TEAM_DELETE = 'case_team_delete',
   CASES_EXPORT = 'cases_export',
   CASES_CREATE = 'cases_create',
   CASES_DELETE = 'cases_delete',
