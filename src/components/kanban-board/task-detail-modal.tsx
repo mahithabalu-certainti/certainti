@@ -1046,6 +1046,20 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     setEditedTask((prev) =>
       prev ? { ...prev, checklist: updatedChecklist } : null
     );
+
+    queryClient.invalidateQueries({
+      queryKey: ['taskActivities', accountId, caseId, taskId],
+    });
+    queryClient.invalidateQueries({
+      queryKey: [
+        'taskActivitiesInfinite',
+        {
+          case_rid: caseId,
+          account_rid: accountId,
+          task_rid: taskId,
+        },
+      ],
+    });
   };
 
   const handleCollaboratorsChange = async (selectedIds: string[]) => {
