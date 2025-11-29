@@ -133,6 +133,16 @@ export class ActivityService {
         transaction
       );
 
+      if(taskResponse)
+      {
+        await this.activitySchemaService.addTaskSummary(
+          accountNumber,
+          taskRequest,
+          taskResponse.rid,
+          taskResponse.get("r_number") || ""
+        )
+      }
+        
       if (taskRequest?.checklist_rid) {
         const response =
           await this.caseManagementService.fetchChecklistTemplateDetailsById(
@@ -768,14 +778,14 @@ export class ActivityService {
       };
     }
   }
-  async getActivityStatus(): Promise<{
+  async getActivityStatus(activityType: string): Promise<{
       statusCode: number;
       message: string;
       errorMessage?: string;
       data?: { activityStatus: any };
     }> {
       try {
-        const activityStatus = await this.activitySchemaService.getActivityStatus();
+        const activityStatus = await this.activitySchemaService.getActivityStatus(activityType);
   
         return {
           statusCode: HttpStatus.SUCCESS,

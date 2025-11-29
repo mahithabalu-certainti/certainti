@@ -534,7 +534,7 @@ export interface IActivityService {
     errorMessage?: string;
     data?: { activityDetails: any };
   }>;
-   getActivityStatus(): Promise<{
+   getActivityStatus(activityType: string): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;

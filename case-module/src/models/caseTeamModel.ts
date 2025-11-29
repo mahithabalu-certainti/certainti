@@ -79,21 +79,3 @@ export class CaseTeam
     );
   }
 }
-
-export async function setupCaseTeamSequence(
-  sequelize: Sequelize,
-  schemaName: string
-) {
-  try {
-    await sequelize.query(
-      `CREATE SEQUENCE IF NOT EXISTS "${schemaName}".case_team_seq START 1`
-    );
-
-    await sequelize.query(`ALTER TABLE "${schemaName}".case_team
-      ALTER COLUMN r_number SET DEFAULT 'CASTEAM-' || LPAD(nextval('"${schemaName}".case_team_seq')::text, 10, '0')`);
-
-    logMessage("Case team sequence setup complete");
-  } catch (error) {
-    logMessage(`Error setting up Case team sequence: ${error}`);
-  }
-}

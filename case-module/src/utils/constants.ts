@@ -955,11 +955,11 @@ export const rawQueries = {
       ORDER BY filing_type_name ASC
     `;
   },
-  getActivityStatus() {
+  getActivityStatus(activityType: string) {
     return `
-      SELECT distinct status_name 
+      SELECT distinct status_name ,rid
       FROM ${MAIN_SCHEMA_NAME}.activity_status
-      WHERE status = 'active'
+      WHERE status = 'active'${activityType && activityType !== "All" ? ` AND activity_type = '${activityType}'` : ""}
       ORDER BY status_name ASC
     `;
   },
