@@ -1765,7 +1765,7 @@ class ActivitySchemaService {
     } 
   
    const [userInfo]: any[] = await this.mainDbSequelize.query(
-        rawQueries.fetchUser(userId),
+        rawQueries.fetchUserDetails(userId),
         { type: "SELECT" }
       );
 
@@ -2435,6 +2435,8 @@ class ActivitySchemaService {
       recurrence_days: emailDetails.recurrence_days ? emailDetails.recurrence_days: [],
       recurrence_interval: emailDetails.recurrence_interval ?? null,
       recurrence_type: emailDetails.recurrence_type ?? null,
+      recurrence_day_of_month: emailDetails.recurrence_day_of_month ?? null,
+      recurrence_monthly_index: emailDetails.recurrence_monthly_index ?? null,
     };
 
     return response;
