@@ -308,7 +308,7 @@ export const ExportActivityList = async (
   activityType: ActivityType
 ): Promise<void> => {
   try {
-    const filename = `${activityType}_activity_list.xlsx`;
+    const filename = `${activityType || params.activity_type}_activity_list.xlsx`;
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
     const response = await caseServiceApi.get<ExportAcivityListResponse>(

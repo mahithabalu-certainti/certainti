@@ -1,7 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useCallback, useMemo } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { useTaskActivityDetails, fetchTaskActivityDetails } from '../../../services/activities/activities-service';
+import {
+  useTaskActivityDetails,
+  fetchTaskActivityDetails,
+} from '../../../services/activities/activities-service';
 import { ActivityType } from '../../../types';
 import {
   useGetCaseTeamMembersDropdown,
@@ -29,9 +33,7 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '../../../../hooks';
 import TaskDetailModal from '../../../../components/kanban-board/task-detail-modal';
-import {
-  AllPermissions,
-} from '../../../../common-service';
+import { AllPermissions } from '../../../../common-service';
 import { fiscalYears as commonFiscalYears } from '../../../../common-utils/common-utils';
 import { RootState } from '../../../../store/store';
 
@@ -43,7 +45,7 @@ interface TaskDetailsProps {
 }
 
 const TaskDetails: React.FC<TaskDetailsProps> = ({
-  entityLevel,
+  // entityLevel,
   caseId: propCaseId,
 }) => {
   const navigate = useNavigate();
@@ -57,7 +59,8 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
   const { permission } = useSelector((state: RootState) => state.permission);
 
   const fiscalYearOptions = useMemo(
-    () => commonFiscalYears.map((fy: { value: string; label: string }) => fy.value),
+    () =>
+      commonFiscalYears.map((fy: { value: string; label: string }) => fy.value),
     []
   );
 
@@ -520,11 +523,11 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
                 name: response.assigned_to_name || 'Unassigned',
                 initials: response.assigned_to_name
                   ? response.assigned_to_name
-                    .split(' ')
-                    .map((n) => n[0])
-                    .join('')
-                    .toUpperCase()
-                    .slice(0, 2)
+                      .split(' ')
+                      .map((n) => n[0])
+                      .join('')
+                      .toUpperCase()
+                      .slice(0, 2)
                   : 'UA',
                 color: '#9CA3AF', // Default color
               },
@@ -541,12 +544,13 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
               checklistName: response.checklist_name || undefined,
               checklistInfo: response.checklists
                 ? {
-                  rid: response.checklists.rid,
-                  name: response.checklists.checklist_name,
-                  description: response.checklists.checklist_description || '',
-                  totalItems: response.checklists.checklist_items_count,
-                  completedItems: response.checklists.completed_items_count,
-                }
+                    rid: response.checklists.rid,
+                    name: response.checklists.checklist_name,
+                    description:
+                      response.checklists.checklist_description || '',
+                    totalItems: response.checklists.checklist_items_count,
+                    completedItems: response.checklists.completed_items_count,
+                  }
                 : undefined,
               tags: response.tags,
               startDate: response.effective_start_datetime
