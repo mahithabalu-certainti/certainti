@@ -677,7 +677,7 @@ const updateActivityMeetingSchema = Joi.object({
   recurrence_days: Joi.string().optional(),
   recurrence_monthly_index: Joi.string().optional(),
   recurrence_day_of_month: Joi.number().optional(),
-  deleted_file_ids : Joi.array().items(Joi.string()).optional()
+  deleted_file_ids : Joi.string().optional()
 });
 
 const updateActivityCallSchema = Joi.object({
@@ -694,7 +694,7 @@ const updateActivityCallSchema = Joi.object({
   call_platform: Joi.string().max(255).optional().allow(""),
   minutes_of_meeting: Joi.string().optional().allow(""),
   call_participants:Joi.string().optional().allow(""),
-  deleted_file_ids : Joi.array().items(Joi.string()).optional()
+  deleted_file_ids : Joi.string().optional()
 });
 
 const createActivityCallSchema = Joi.object({
@@ -726,7 +726,7 @@ const updateActivityEmailSchema = Joi.object({
   to_email:Joi.string().required(),
   cc_email:Joi.string().optional(),
  email_status:Joi.string().required(),
-  deleted_file_ids : Joi.array().items(Joi.string()).optional()
+  deleted_file_ids : Joi.string().optional()
 });
 
 
