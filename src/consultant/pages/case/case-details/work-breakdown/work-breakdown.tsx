@@ -196,6 +196,13 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
     [statusesQuery?.data]
   );
 
+  // Refetch assignees when task modal opens (create or edit)
+  useEffect(() => {
+    if (openTaskId !== null && isCaseTeamViewEnable) {
+      caseTeamMembersQuery.refetch();
+    }
+  }, [openTaskId, isCaseTeamViewEnable, caseTeamMembersQuery]);
+
   const handleTaskSaved = useCallback(() => {
     queryClient.invalidateQueries({
       queryKey: ['kanbanBoardData', accountId, caseId],

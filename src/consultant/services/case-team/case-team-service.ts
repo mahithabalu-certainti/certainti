@@ -387,8 +387,8 @@ export const useGetCaseTeamMembersDropdown = (
     queryKey: ['case-team-members-dropdown', accountId, caseId],
     queryFn: () => fetchCaseTeamMembersDropdown(accountId!, caseId!),
     retry: 0,
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
+    staleTime: 0, // Always fetch fresh data since users change often
+    gcTime: 0,
     enabled: enabled && !!accountId && !!caseId,
   });
 };
