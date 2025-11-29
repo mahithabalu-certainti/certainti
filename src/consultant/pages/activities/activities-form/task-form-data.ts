@@ -6,6 +6,7 @@ import {
   createTextField,
   createTextAreaField,
   getFiscalYears,
+  REGEX_PATTERNS,
 } from '../../../../common-utils';
 import { FormType, SelectOption } from '../../../types';
 
@@ -30,13 +31,16 @@ export const TaskFormData = (
           createTextField('task_name', 'Task Name', {
             required: true,
             placeholder: 'Enter Task Name',
-            lengthRequired: {
-              key: 'task_name',
-              minMatchedValue: /^.{1,}$/,
-              maxMatchedValue: /^.{0,2000}$/,
-              minErrorMessage: 'Field is required',
-              maxErrorMessage: 'Maximum 2000 characters allowed',
-            },
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MIN_3,
+                errorMessage: 'Task Name must be more than 2 characters long',
+              },
+              {
+                regex: REGEX_PATTERNS.MAX_250,
+                errorMessage: 'Task Name must not exceed 250 characters',
+              },
+            ],
           }),
           createSelectField('status_rid', 'Status', {
             options: statusOptions,
@@ -74,28 +78,20 @@ export const TaskFormData = (
             required: false,
             placeholder: 'Choose Checklist Template',
           }),
-          {
-            type: 'custom',
-            name: 'tags',
-            label: 'Tags',
-            required: false,
-            width: '32%',
-          },
         ],
       },
       {
         sectionName: '',
         fillType: 'full',
         fields: [
-          createTextAreaField('description', 'Description', {
-            placeholder: 'Add a description',
+          createTextAreaField('task_description', 'Description', {
             required: false,
-            regex: /^[\s\S]{0,2000}$/,
-            regexErrorMessage: 'Maximum 2000 characters allowed',
+            placeholder: 'Enter Description',
+            regex: REGEX_PATTERNS.MAX_2000,
+            regexErrorMessage: 'Description must be within 2000 characters',
           }),
         ],
       },
-
     ],
     [
       statusOptions,

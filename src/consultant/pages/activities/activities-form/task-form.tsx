@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { FormBuilder } from '../../../../components';
-import { Autocomplete, TextField, Tooltip } from '@mui/material';
+import { FormBuilder, TagsInput } from '../../../../components';
 import { Layout } from '../../../../common-service';
 import { TaskFormData } from './task-form-data';
 import {
@@ -20,7 +19,7 @@ import { useGetTaskCheckListTypes } from '../../../../admin/service/task-templat
 import { transformTagData } from '../../case/case-details/work-breakdown/helper';
 import { useToast } from '../../../../hooks';
 import TextButton from '../../../../components/button/text-button';
-import { TaskCreateIcon, ErrorInfoIcon } from '../../../../assets';
+import { TaskCreateIcon } from '../../../../assets';
 
 // Types
 interface TagOption {
@@ -60,38 +59,6 @@ const TaskForm: React.FC = () => {
 
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [availableTags, setAvailableTags] = useState<TagOption[]>([]);
-  const ErrorIconTooltip = ({ error }: { error: string }) => (
-    <Tooltip
-      title={error}
-      placement='top'
-      arrow
-      slotProps={{
-        tooltip: {
-          sx: {
-            backgroundColor: '#FEF2F2',
-            color: '#EF4444',
-            border: '1px solid #EF4444',
-            fontSize: '12px',
-          },
-        },
-        arrow: {
-          sx: {
-            color: '#FEF2F2',
-            '&:before': {
-              border: '1px solid #EF4444',
-            },
-          },
-        },
-      }}
-    >
-      <span className='cursor-pointer ml-2 inline-flex align-middle'>
-        <ErrorInfoIcon className='w-4 h-4 text-red-500' />
-      </span>
-    </Tooltip>
-  );
-
-  const [tagInputValue, setTagInputValue] = useState('');
-  const [localTagError, setLocalTagError] = useState<string | null>(null);
 
   // Mutations
   const createTaskMutation = useCreateActivityTask();
@@ -209,7 +176,7 @@ const TaskForm: React.FC = () => {
       attach_to: entityId,
       attachment_level: entityLevel,
       task_name: formValues.task_name || '',
-      task_description: formValues.description,
+      task_description: formValues.task_description,
       status_rid: formValues.status_rid,
       priority_rid: formValues.priority_rid,
       effective_start_datetime: formValues.effective_start_datetime,
@@ -286,163 +253,17 @@ const TaskForm: React.FC = () => {
           layout={Layout.TYPE_1}
           keyStart='effective_start_datetime'
           keyEnd='effective_end_datetime'
-          customFields={{
-            tags: (
-              <div className='flex flex-col gap-2'>
-                <Autocomplete
-                  multiple
-                  freeSolo
-                  fullWidth
-                  options={availableTags
-                    .map((tag) => tag.name)
-                    .filter((tagName) => !selectedTags.includes(tagName))}
-                  value={selectedTags}
-                  inputValue={tagInputValue}
-                  onInputChange={(_, newInputValue) => {
-                    setTagInputValue(newInputValue);
-                    if (localTagError && newInputValue.length <= 50) {
-                      setLocalTagError(null);
-                    }
-                  }}
-                  onKeyDown={(e) => {
-                    const val = (e.target as HTMLInputElement).value;
-                    if (val.length >= 50 && e.key !== 'Backspace' && e.key !== 'Delete') {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setLocalTagError('Maximum 50 characters allowed');
-                    }
-                  }}
-                  onChange={(_, newValue) => {
-                    const validValues = newValue.filter(
-                      (tag) => tag.length <= 50
-                    );
-
-                    if (validValues.length !== newValue.length) {
-                      setLocalTagError('Maximum 50 characters allowed');
-                    }
-
-                    const cleanedValues = Array.from(
-                      new Set(validValues.filter((v) => v.trim()))
-                    );
-
-                    const newTagsToAdd: TagOption[] = [];
-                    cleanedValues.forEach((tagName) => {
-                      if (!availableTags.find((t) => t.name === tagName)) {
-                        newTagsToAdd.push({
-                          id: '',
-                          name: tagName,
-                          color: '#3B82F6',
-                          is_new_tag: true,
-                        });
-                      }
-                    });
-
-                    if (newTagsToAdd.length > 0) {
-                      handleAddCustomTag([...availableTags, ...newTagsToAdd]);
-                    }
-
-                    handleTagsChange(cleanedValues);
-                  }}
-                  renderTags={() => null}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      size='small'
-                      placeholder='Add Tags'
-                      inputProps={{
-                        ...params.inputProps,
-                      }}
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          padding: '6px',
-                          minHeight: '32px',
-                          width: '100%',
-                          maxWidth: '100%',
-                          '& input': {
-                            fontSize: '13px',
-                            padding: '0 !important',
-                            color: '#7D98B6',
-                          },
-                          ...(localTagError
-                            ? {
-                              '& .MuiOutlinedInput-notchedOutline': {
-                                borderColor: '#EF4444 !important',
-                                borderWidth: '1px !important',
-                              },
-                              backgroundColor: '#FEF2F2',
-                            }
-                            : {}),
-                        },
-                        '& .MuiOutlinedInput-notchedOutline': {
-                          borderColor: '#CBD6E2',
-                          borderWidth: '1px',
-                        },
-                        '&:hover .MuiOutlinedInput-notchedOutline': {
-                          borderColor: '#CBD6E2',
-                          borderWidth: '1px',
-                        },
-                        '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline':
-                        {
-                          border: '2px solid #60A5FA',
-                        },
-                      }}
-                      InputProps={{
-                        ...params.InputProps,
-                        endAdornment: (
-                          <>
-                            {localTagError ? (
-                              <ErrorIconTooltip error={localTagError} />
-                            ) : null}
-                            {params.InputProps.endAdornment}
-                          </>
-                        ),
-                      }}
-                    />
-                  )}
-                  ListboxProps={{
-                    style: {
-                      maxHeight: '300px',
-                      fontSize: '13px',
-                    },
-                  }}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      padding: '6px',
-                      fontSize: '13px',
-                    },
-                  }}
-                />
-
-                {selectedTags.length > 0 && (
-                  <div className='flex flex-wrap items-center gap-2 mt-1'>
-                    {selectedTags.map((tag, index) => (
-                      <div
-                        key={index}
-                        className='inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium hover:bg-blue-200 transition-colors group'
-                      >
-                        <Tooltip title={tag} placement='top' arrow>
-                          <span className='truncate max-w-[200px] block'>
-                            {tag}
-                          </span>
-                        </Tooltip>
-                        <button
-                          onClick={() => {
-                            const newTags = selectedTags.filter((t) => t !== tag);
-                            handleTagsChange(newTags);
-                          }}
-                          className='ml-1 text-blue-600 hover:text-red-600 transition-colors'
-                          title={`Remove ${tag}`}
-                        >
-                          ×
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ),
-          }}
         />
+
+        <div className='px-10'>
+          <TagsInput
+            label='Tags'
+            values={selectedTags}
+            availableTags={availableTags}
+            onTagsChange={handleTagsChange}
+            onAddCustomTag={handleAddCustomTag}
+          />
+        </div>
       </div>
     </div>
   );
