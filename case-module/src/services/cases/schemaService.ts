@@ -6221,7 +6221,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
 
   async addAttachmentForTask (data : any, accountNumber : string, files : Express.Multer.File[], userId : string) {
     const {TaskAttachments,TaskHistory} = await this.caseModelService.getModels(accountNumber)
-    const findTaskDetails = await this.findTaskById(data.task_rid, data.account_rid, data.case_rid, accountNumber);
+    const findTaskDetails = await this.findTaskById(data.task_rid, data.account_rid, data.case_rid, accountNumber,data.task_type || 'case_task');
     if(files != undefined) {
       if(Array.isArray(files)) {
         for(let f of files) {
@@ -6300,7 +6300,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
 
   async deleteAttachment (accountNumber : string, data : any, userId : string) {
     const {TaskAttachments} = await this.caseModelService.getModels(accountNumber)
-    const findTaskDetails = await this.findTaskById(data.task_rid, data.account_rid, data.case_rid, accountNumber);
+    const findTaskDetails = await this.findTaskById(data.task_rid, data.account_rid, data.case_rid, accountNumber,data.task_type || 'case_task');
     const checkIsFileExists = await TaskAttachments.findOne({
       where : {
         rid : data.rid,
@@ -6457,14 +6457,17 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
   }
   async fetchCollaboratorsList (accountNumber : string, data : any) {
     const {TaskCollaborators} = await this.caseModelService.getModels(accountNumber);
+    let whereClause: any = {
+      account_rid: data.account_rid,
+      task_rid: data.rid
+    };
+    if (data.task_type !== 'activity') {
+      whereClause.case_rid = data.case_rid;
+    }
     const result = await TaskCollaborators.findAll({
-      attributes : ['assigned_to'],
-      where : {
-        case_rid : data.case_rid,
-        account_rid : data.account_rid,
-        task_rid : data.rid
-      },
-      raw : true
+      attributes: ['assigned_to'],
+      where: whereClause,
+      raw: true
     });
     if(result.length > 0) return result;
     else return []
