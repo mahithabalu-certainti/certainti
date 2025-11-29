@@ -52,7 +52,7 @@ export const getAssignGroupsFilterFields = (
     },
     {
       name: 'Assigned To',
-      value: 'assigned_to',
+      value: 'assigned_to_name',
       type: 'text',
       operatorOption: textOptionsForAssignee,
     },
