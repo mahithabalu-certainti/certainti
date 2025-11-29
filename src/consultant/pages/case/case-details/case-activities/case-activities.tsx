@@ -115,7 +115,7 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
   const filterFields = useMemo(() => {
     switch (tabParam) {
       case 'task':
-        return getTaskFilterFields();
+      // return getTaskFilterFields();
       case 'email':
         return getEmailFilterFields();
       case 'meeting':
@@ -208,7 +208,7 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
         setCurrentPage={setCurrentPage}
         handleFilter={handleFilter}
         sortFilterCount={0}
-        setSortFilterCount={() => {}}
+        setSortFilterCount={() => { }}
         showRefresh={!viewDetails}
         onRefreshClick={handleRefresh}
         showSearch={!viewDetails}
@@ -241,6 +241,7 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
           accountInActive={accountInActive}
           tabValue={tabParam as ActivityType}
           entityLevel={'case'}
+          caseId={caseId}
         />
       )}
 

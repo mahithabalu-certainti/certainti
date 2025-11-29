@@ -36,35 +36,34 @@ export const getAssignUserFilterFields = (): FieldConfig[] => [
 export const getAssignGroupsFilterFields = (
   statusOptions: { option: string; value: string }[]
 ): FieldConfig[] => [
-  {
-    name: 'Task Name',
-    value: 'task_name',
-    type: 'text',
-    operatorOption: textOptions,
-  },
-  {
-    name: 'Assigned To',
-    value: 'assigned_to',
-    type: 'text',
-    operatorOption: textOptions,
-  },
-  {
-    name: 'Start Date',
-    value: 'effective_start_datetime',
-    type: 'date',
-    operatorOption: dateOptions,
-  },
-  {
-    name: 'End Date',
-    value: 'effective_end_datetime',
-    type: 'date',
-    operatorOption: dateOptions,
-  },
-  {
-    name: 'Status',
-    value: 'task_status_rid',
-    type: 'enum',
-    options: statusOptions,
-    operatorOption: enumOptions,
-  },
-];
+    {
+      name: 'Task Name',
+      value: 'task_name',
+      type: 'text',
+      operatorOption: textOptions,
+    },
+    {
+      name: 'Assigned To',
+      value: 'assigned_to',
+      type: 'text',
+      operatorOption: textOptions,
+    },
+    {
+      name: 'Start Date',
+      value: 'effective_start_datetime',
+      type: 'date',
+      operatorOption: dateOptions,
+    },
+    {
+      name: 'End Date',
+      value: 'effective_end_datetime',
+      type: 'date',
+      operatorOption: dateOptions,
+    },
+    {
+      name: 'Status',
+      value: 'task_status_rid',
+      type: 'enum',
+      options: statusOptions,
+      operatorOption: enumOptions,
+    }]

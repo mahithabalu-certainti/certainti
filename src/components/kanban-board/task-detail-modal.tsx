@@ -29,6 +29,7 @@ import {
   useDeleteTaskAttachment,
   useUpdateCaseTask,
 } from '../../consultant/services/case-task/case-task-service';
+import { useUpdateActivityTask } from '../../consultant/services/activities/activities-service';
 import { useGetTagOptions } from '../../consultant/services/case-team/case-team-service';
 import {
   transformComments,
@@ -59,6 +60,7 @@ interface TaskDetailModalPropsExtended
     files: File[]
   ) => Promise<void>;
   fiscalYear?: string | null;
+  fiscalYears?: string[];
   taskType?: string;
 }
 
@@ -83,6 +85,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   fieldVisibility = {},
   fieldDisabled = {},
   fiscalYear,
+  fiscalYears,
   taskType,
 }) => {
   const [task, setTask] = useState<Task | null>(null);
@@ -164,6 +167,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   const uploadAttachmentsMutation = useUploadTaskAttachments();
   const deleteAttachmentMutation = useDeleteTaskAttachment();
   const updateTaskMutation = useUpdateCaseTask();
+  const updateActivityTaskMutation = useUpdateActivityTask();
   const deleteCollaboratorMutation = useDeleteCollaborator();
   const queryClient = useQueryClient();
 
@@ -486,6 +490,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       linkTaskTypesChanged ||
       weightage !== (originalTask.weightage || '') ||
       category !== (originalTask.category || '') ||
+      originalTask.fiscal_year !== editedTask.fiscal_year ||
       pendingAttachments.length > 0 ||
       deletedAttachmentIds.length > 0
     );
@@ -790,13 +795,15 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
 
         const updatePayload = {
           rid: taskId,
-          case_rid: caseId,
+          ...(caseId ? { case_rid: caseId } : {}),
           account_rid: accountId,
           task_name: editedTask.title || '',
           task_description: editedTask.description || '',
           task_status_rid: selectedStatus?.id || '',
           priority_rid: selectedPriority?.id || '',
-          checklist_template_rid: selectedChecklistObj?.id || '',
+          ...((caseId || selectedChecklistObj?.id)
+            ? { checklist_template_rid: selectedChecklistObj?.id || '' }
+            : {}),
           effective_start_datetime: editedTask.startDate
             ? dayjs(editedTask.startDate).format('YYYY-MM-DD')
             : '',
@@ -804,7 +811,9 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
             ? dayjs(editedTask.endDate).format('YYYY-MM-DD')
             : '',
           tags: tagsArray,
-          workflow_connector: workflowConnector,
+          ...((caseId || Object.keys(workflowConnector).length > 0)
+            ? { workflow_connector: workflowConnector }
+            : {}),
           ...(weightageRidValue && {
             weightage_rid: weightageRidValue,
           }),
@@ -812,12 +821,39 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
             task_category_rid: categoryRidValue,
           }),
           assigned_to: assignedToRid || '',
+          fiscal_year: editedTask.fiscal_year,
         };
 
-        const updateResponse =
-          await updateTaskMutation.mutateAsync(updatePayload);
+        let updateResponse;
+
+        if (taskType === 'activity') {
+          // Use activities API for tasks opened from activities page
+          const activityPayload = {
+            task_rid: taskId,
+            attach_to: editedTask.case_rid || caseId || accountId,
+            attachment_level: editedTask.case_rid || caseId ? 'case' : 'account',
+            account_rid: accountId,
+            task_name: editedTask.title || '',
+            task_description: editedTask.description || '',
+            task_status_rid: selectedStatus?.id || '',
+            priority_rid: selectedPriority?.id || '',
+            effective_start_datetime: editedTask.startDate
+              ? dayjs(editedTask.startDate).format('YYYY-MM-DD')
+              : '',
+            effective_end_datetime: editedTask.endDate
+              ? dayjs(editedTask.endDate).format('YYYY-MM-DD')
+              : '',
+            tags: tagsArray,
+            assigned_to: assignedToRid || '',
+          };
+          updateResponse = await updateActivityTaskMutation.mutateAsync(activityPayload);
+        } else {
+          // Use case task API for tasks opened from work breakdown
+          updateResponse = await updateTaskMutation.mutateAsync(updatePayload);
+        }
+
         const message =
-          updateResponse?.statusMessage || 'Task updated successfully';
+          (updateResponse as { statusMessage?: string })?.statusMessage || 'Task updated successfully';
         successToast(message);
         setOriginalTask(editedTask);
         if (onTaskUpdate) {
@@ -1579,6 +1615,12 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
             onSetEditedTask={setEditedTask}
             mode='view'
             fiscalYear={fiscalYear}
+            fiscalYears={fiscalYears}
+            onFiscalYearChange={(value) => {
+              setEditedTask((prev) =>
+                prev ? { ...prev, fiscal_year: value } : null
+              );
+            }}
           />
 
           <TaskChecklistSection

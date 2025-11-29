@@ -122,15 +122,44 @@ export interface EmailActivityDetailsResponse {
 export interface TaskActivityDetails {
   rid: string;
   r_number: string;
-  task_status: string;
+  task_name: string;
+  created_by: string;
   created_by_name: string;
+  assigned_to: string | null;
+  assigned_to_name: string | null;
+  modified_by: string | null;
+  modified_by_name: string | null;
+  priority_rid: string | null;
+  priority_name: string | null;
+  task_status_name: string | null;
   created_datetime: string;
-  modified_by_name?: string;
-  modified_datetime?: string;
-  due_date?: string;
-  subject?: string;
-  description?: string;
+  effective_start_datetime: string | null;
+  effective_end_datetime: string | null;
+  checklist_rid: string | null;
+  checklist_name: string | null;
+  case_team_member_role_name: string | null;
+  weightage_value: string | null;
+  task_category_name: string | null;
+  checklists?: {
+    rid: string;
+    task_rid: string;
+    checklist_name: string;
+    checklist_description: string | null;
+    checklist_items_count: number;
+    completed_items_count: number;
+    checklist_items: Array<{
+      rid: string;
+      status_rid: string;
+      checklist_item_status_name: string;
+      checklist_item_name: string;
+      checklist_item_description: string | null;
+    }>;
+  };
+  tags: string[];
+  task_description?: string;
+  attach_to?: string;
   attached_to?: string;
+  fiscal_year?: string;
 }
 
 export interface TaskActivityDetailsResponse {
@@ -243,12 +272,12 @@ export interface ActivityTaskFormPayload {
   attach_to: string;
   attachment_level: string;
   task_name: string;
-  description?: string;
+  task_description?: string;
   fiscal_year?: number;
   effective_start_datetime?: string;
   effective_end_datetime?: string;
   assigned_to?: string;
-  status_rid?: string;
+  task_status_rid?: string;
   priority_rid?: string;
   checklist_rid?: string;
   tags?: string | Array<{ tag_rid: string; is_new_tag: boolean }>;

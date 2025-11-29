@@ -29,6 +29,7 @@ import {
   updateActivityCallURL,
   updateActivityEmailURL,
   updateActivityMeetingURL,
+  updateActivityTaskURL,
 } from '../urls/activities-url';
 
 export const useApiMutationSericve = <T, V = void>(
@@ -127,7 +128,7 @@ export const useUpdateActivityEmail = () => {
 };
 
 // Task activity
-const fetchTaskActivityDetails = async (
+export const fetchTaskActivityDetails = async (
   entityId: string,
   activityId: string
 ): Promise<TaskActivityDetails> => {
@@ -238,6 +239,19 @@ export const useCreateActivityTask = () => {
     mutationFn: async (payload: ActivityTaskFormPayload) => {
       const response = await caseServiceApi.post(
         createActivityTaskURL(),
+        payload
+      );
+      return response.data;
+    },
+  });
+};
+
+// Update Activity Task
+export const useUpdateActivityTask = () => {
+  return useMutation<unknown, Error, ActivityTaskFormPayload & { task_rid: string }>({
+    mutationFn: async (payload: ActivityTaskFormPayload & { task_rid: string }) => {
+      const response = await caseServiceApi.post(
+        updateActivityTaskURL(),
         payload
       );
       return response.data;
