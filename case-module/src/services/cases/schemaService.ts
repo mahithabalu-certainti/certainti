@@ -3469,6 +3469,47 @@ return !response;
     try {
       const { CheckList } = await this.caseModelService.getModels(accountNumber);
       const createdChecklist = await CheckList.create(
+      {
+        account_rid: caseRequest.account_rid,
+        attach_to: caseRequest.attach_to,
+        attachment_level: caseRequest.attachment_level,
+        checklist_name: caseRequest.checklist_name,
+        checklist_description: caseRequest.checklist_description,
+        checklist_template_rid: caseRequest?.checklist_template_rid || "",
+        fiscal_year:caseRequest.fiscal_year,
+        created_by: caseRequest.created_by,
+        status_rid: caseRequest.status_rid,
+        //modified_by: caseRequest.modified_by,
+        created_datetime: new Date(),
+        case_rid : caseRequest.case_rid
+        //  modified_datetime: caseRequest.modified_datetime,
+      },
+      { transaction }
+    );
+    return createdChecklist;
+    } catch (error) {
+      logMessage(`Error creating checklist: ${error}`);
+      throw new Error("Error creating checklist: " + error);
+    }
+  }
+
+  async createCheckListForTask(
+    accountNumber: string,
+    caseRequest: ICreateChecklist,
+    transaction: Transaction
+  ) {
+    // Implementation for creating checklist in the database
+    try {
+      const { CheckList } = await this.caseModelService.getModels(accountNumber);
+      const findCheckListAlreadyCreated = await CheckList.findOne({
+        where : {
+          attach_to : caseRequest.attach_to,
+          attachment_level : "task",
+          case_rid : caseRequest.case_rid
+        }, raw : true
+      });
+      if(!findCheckListAlreadyCreated) {
+        const createdChecklist = await CheckList.create(
         {
           account_rid: caseRequest.account_rid,
           attach_to: caseRequest.attach_to,
@@ -3481,13 +3522,15 @@ return !response;
           status_rid: caseRequest.status_rid,
           //modified_by: caseRequest.modified_by,
           created_datetime: new Date(),
-          case_rid : caseRequest.task_rid
+          case_rid : caseRequest.case_rid
           //  modified_datetime: caseRequest.modified_datetime,
         },
         { transaction }
       );
-
       return createdChecklist;
+      } else {
+        return null;
+      }
     } catch (error) {
       logMessage(`Error creating checklist: ${error}`);
       throw new Error("Error creating checklist: " + error);
@@ -4739,6 +4782,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             }
           } 
           else {
+            let day : any
             if(milestoneMap.get(d.milestone_template_rid) === "2") {
               if(!secondMilestoneEntered) {
                 validEndDate = caseStartDate
@@ -4748,12 +4792,15 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                 validEndDate = otherMileStoneEndDateStorgae
               }
             } else {
-              if(!firstMilestoneEntered && !secondMilestoneEntered) {
+              if(!firstMilestoneEntered && !secondMilestoneEntered && !otherMilestoneEntered) {
                 validEndDate = caseStartDate
                 otherMilestoneEntered = true
+                day = dayjs(validEndDate)
               }
               else {
                 validEndDate = otherMileStoneEndDateStorgae
+                day = dayjs(validEndDate)
+                day = day.add(1, 'day')
               }
             }
             if(d.sequence_no === 1) {
@@ -4761,8 +4808,6 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
               let res = conversion.add(d.effort_in_days, 'day');
               let finalisedEnddate = res.format('YYYY-MM-DD')
               endDate = dayjs(finalisedEnddate).toDate()
-              let day = dayjs(validEndDate)
-              day = day.add(1, 'day')
               let finalDay = day.toDate()
               otherMileStoneStartDateStorage = day
               otherMileStoneEndDateStorgae = endDate
@@ -4995,8 +5040,9 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
           case_rid : data.case_rid
         };
 
-        const checklistResponse = await this.createCheckList(accountNumber, caseRequest, transaction);
-        await this.manageCheckListItems(accountNumber,caseRequest,checklistResponse.rid, transaction);
+        const checklistResponse = await this.createCheckListForTask(accountNumber, caseRequest, transaction);
+        if(checklistResponse)
+          await this.manageCheckListItems(accountNumber,caseRequest,checklistResponse.rid, transaction);
       }
       if(data.tags.length > 0) {
         for(let d of data.tags) {
@@ -5082,6 +5128,28 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             case_rid : data.case_rid
           }, transaction
         });
+        if(data?.checklist_template_rid) 
+      {
+        const response  = await this.fetchChecklistTemplateDetailsById(data.checklist_template_rid);
+        response.checklist_items.map((item:any) => item.action_type  = 'add');
+        let caseRequest = {
+          account_rid: data.account_rid!,
+          checklist_name: response.checklist_name,
+          checklist_description: response.description,  
+          checklist_items: response.checklist_items,
+          attach_to: data.rid,
+          attachment_level: 'task',
+          created_by: data.modified_by,
+          created_datetime: new Date(),
+          fiscal_year: checkCaseExists.fiscal_year,
+          checklist_rid: data.checklist_template_rid,
+          case_rid : data.case_rid
+        };
+
+        const checklistResponse = await this.createCheckListForTask(accountNumber, caseRequest, transaction);
+        if(checklistResponse)
+          await this.manageCheckListItems(accountNumber,caseRequest,checklistResponse.rid, transaction);
+      }
        /* await TaskSummary.update(
         {
           task_name: data.task_name || "",
@@ -5142,13 +5210,14 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             let columnMapping : Map<string, string> = new Map()
             let newValueString;
             let oldValueString;
-            console.log(fetchUpdatedColumns)
+            let labelName;
             for(let c of fetchUpdatedColumns) {
               oldValue = (isTaskExists as any)[c]
               newValue = (data as any)[c]
               columnName = c
               
               if(columnName == "assigned_to") {
+                labelName = "Assigned To"
                 const result : any = await this.mainDbSequelize.query(rawQueries.fetchUserNames(oldValue, newValue))
                 for(let r of result[0]) {
                   columnMapping.set(r.rid, r.name)
@@ -5157,6 +5226,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                 newValueString = columnMapping.get(newValue)
               }
               else if(columnName === "checklist_template_rid") {
+                labelName = "Checklist"
                 const result : any = await this.mainDbSequelize.query(rawQueries.fetchCheckLists(oldValue, newValue));
                 for(let r of result[0]) {
                   columnMapping.set(r.rid, r.checklist_name)
@@ -5165,6 +5235,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                 newValueString = columnMapping.get(newValue)
               }
               else if(columnName === "priority_rid") {
+                labelName = "Priority"
                 const result : any = await this.mainDbSequelize.query(rawQueries.fetchPriority(oldValue, newValue));
                 for(let r of result[0]) {
                   columnMapping.set(r.rid, r.priority_name)
@@ -5173,6 +5244,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                 newValueString = columnMapping.get(newValue)
               }
               else if(columnName === "task_status_rid") {
+                labelName = "Status"
                 const result : any = await this.mainDbSequelize.query(rawQueries.fetchTaskStatus(oldValue, newValue));
                 for(let r of result[0]) {
                   columnMapping.set(r.rid, r.task_status_name)
@@ -5181,6 +5253,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                 newValueString = columnMapping.get(newValue)
               } 
               else if(columnName === "weightage_rid") {
+                labelName = "Weightage"
                 const result : any = await this.mainDbSequelize.query(rawQueries.fetchTaskWeightage(oldValue, newValue));
                 for(let r of result[0]) {
                   columnMapping.set(r.rid, r.weightage_value)
@@ -5189,6 +5262,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                 newValueString = columnMapping.get(newValue)
               }
               else if(columnName === "task_category_rid") {
+                labelName = "Task Category"
                 const result : any = await this.mainDbSequelize.query(rawQueries.fetchTaskCategory(oldValue, newValue));
                 for(let r of result[0]) {
                   columnMapping.set(r.rid, r.category_name)
@@ -5197,6 +5271,10 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                 newValueString = columnMapping.get(newValue)
               }
               else {
+                if(c === 'task_name') labelName = "Task Name"
+                if(c === 'task_description') labelName = "Task Description"
+                if(c === 'effective_start_datetime') labelName = "Start Date"
+                if(c === 'effective_end_datetime') labelName = "Due Date"
                 oldValueString = oldValue
                 newValueString = newValue
               }
@@ -5204,7 +5282,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                 created_by : data.modified_by,
                 created_datetime : new Date(),
                 case_rid : data.case_rid,
-                attribute_name : columnName,
+                attribute_name : labelName!,
                 old_value : oldValueString,
                 new_value : newValueString,
                 task_rid : data.rid
@@ -5420,7 +5498,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             case_rid : caseRid,
             created_by : userId,
             created_datetime : new Date(),
-            attribute_name : "tag_rid",
+            attribute_name : "Tags",
             new_value : result.tag_name,
             task_rid : taskRid
           })
@@ -5432,7 +5510,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             task_rid : taskRid,
             created_by : userId,
             created_datetime : new Date(),
-            attribute_name : "tag_rid",
+            attribute_name : "Tags",
             new_value : result.tag_name
           })
         }

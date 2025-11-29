@@ -2363,14 +2363,14 @@ async function createTask (req : Request, res : Response) {
         data: result.data,
       });       
     } else if(result.statusCode === HttpStatus.BAD_REQUEST) {
-      return res.status(HttpStatus.SUCCESS).json({
-        statusCode: HttpStatus.SUCCESS,
-        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+      return res.status(HttpStatus.BAD_REQUEST).json({
+        statusCode: HttpStatus.BAD_REQUEST,
+        statusCodeValue: HttpStatus.BAD_REQUEST_MESSAGE,
         statusMessage: result.statusMessage,
         data: result.data,
       }); 
     } else if(result.statusCode === HttpStatus.FAILED) {
-      return res.status(HttpStatus.SUCCESS).json({
+      return res.status(HttpStatus.FAILED).json({
         statusCode: HttpStatus.FAILED,
         statusCodeValue: HttpStatus.FAILED_MESSAGE,
         statusMessage: result.statusMessage,

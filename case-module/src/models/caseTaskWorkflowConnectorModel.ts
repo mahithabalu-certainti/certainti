@@ -50,7 +50,7 @@ export class CaseTaskWorkflowConnector
         },
         r_number: {
           type: DataTypes.STRING(64),
-          allowNull: false,
+          allowNull: true,
           unique: true,
         },
 

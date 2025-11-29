@@ -499,6 +499,90 @@ export const checklistsFieldMappings = [
           
 ];
 
+export const taskTemplateFieldMappings = [
+  {
+    permissionField: "r_number",
+    exportField: "Template ID",
+    dataField: "r_number",
+  },
+  {
+    permissionField: "task_name",
+    exportField: "Task Name",
+    dataField: "task_name",
+  },
+  {
+    permissionField: "effort_in_days",
+    exportField: "Effort In Days",
+    dataField: "effort_in_days",
+  },
+  {
+    permissionField: "task_type_rid",
+    exportField: "Task Type",
+    dataField: "task_type_name",
+  },
+  {
+    permissionField: "milestone_type_rid",
+    exportField: "Milestone Name",
+    dataField: "milestone_name",
+  },
+  {
+    permissionField: "case_team_member_role_rid",
+    exportField: "Assign Role",
+    dataField: "role_name",
+  },
+  {
+    permissionField: "priority_rid",
+    exportField: "Priority",
+    dataField: "priority_name",
+  },
+  {
+    permissionField: "checklist",
+    exportField: "Checklist",
+    dataField: "checklist_name",
+  },
+  {
+    permissionField: "task_category_rid",
+    exportField: "Task Category",
+    dataField: "category_name",
+  },
+  {
+    permissionField: "weightage_rid",
+    exportField: "Task Weightage",
+    dataField: "weightage_value",
+  },
+  {
+    permissionField: "status_rid",
+    exportField: "Status",
+    dataField: "status_name",
+  },
+  {
+    permissionField: "task_description",
+    exportField: "Task Description",
+    dataField: "task_description",
+  },
+  {
+    permissionField: "created_by",
+    exportField: "Created By",
+    dataField: "created_by_name",
+  },
+  {
+    permissionField: "created_datetime",
+    exportField: "Created On",
+    dataField: "created_datetime",
+  },
+  {
+    permissionField: "modified_by",
+    exportField: "Updated By",
+    dataField: "modified_by",
+  },
+  {
+    permissionField: "modified_datetime",
+    exportField: "Updated On",
+    dataField: "modified_datetime",
+  }
+];
+
+
 export const activityFieldMappings = [
   {
     permissionField: "r_number",
