@@ -822,12 +822,16 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
             ?.id || ''
           : '';
 
-        // Build workflow connector - always include, pass {} if no valid data
         const workflowConnector: Record<string, unknown> = {};
-        if (linkedTypeRidValue && linkTaskTypeRidsValue.length > 0) {
+
+        const originalTargetRids = originalTask?.workflow_connector?.map(wc => wc.target_rid) || [];
+        const deleteTargetRids = originalTargetRids.filter(rid => !linkTaskTypeRidsValue.includes(rid));
+
+        if (linkedTypeRidValue && (linkTaskTypeRidsValue.length > 0 || deleteTargetRids.length > 0)) {
           workflowConnector.source_rid = taskId;
           workflowConnector.relationship_connector_rid = linkedTypeRidValue;
           workflowConnector.target_rid = linkTaskTypeRidsValue;
+          workflowConnector.delete_target_rids = deleteTargetRids;
         }
 
         const updatePayload = {
