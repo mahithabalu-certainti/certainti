@@ -4,7 +4,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import {
   useTaskActivityDetails,
-  fetchTaskActivityDetails,
+  fetchTaskActivityDetails, useGetActivityStatus,
 } from '../../../services/activities/activities-service';
 import { ActivityType } from '../../../types';
 import {
@@ -17,7 +17,6 @@ import {
   AddCollaboratorResponse,
   useAddCollaborator,
   useGetTaskPriorities,
-  useGetTaskStatuses,
 } from '../../../services/work-breakdown/work-breakdown-service';
 import { useGetTaskCheckListTypes } from '../../../../admin/service/task-template/task-template-service';
 import {
@@ -151,12 +150,12 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
 
   const caseTeamMembersQuery = useGetCaseTeamMembersDropdown(
     accountid || accountId || '',
-    effectiveCaseId,
-    !!(accountId || accountid) && !!effectiveCaseId
+    effectiveCaseId || accountId || '',
+    !!(accountId || accountid)
   );
   const roleOptionsQuery = useGetRoleOptions();
   const prioritiesQuery = useGetTaskPriorities();
-  const statusesQuery = useGetTaskStatuses();
+  const statusesQuery = useGetActivityStatus('Task');
   const checklistQuery = useGetTaskCheckListTypes();
   const addCommentMutation = useAddTaskComment();
   const updateCommentMutation = useUpdateTaskComment();
@@ -205,10 +204,18 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
     [prioritiesQuery.data]
   );
 
-  const statusData = useMemo(
-    () => transformStatusData(statusesQuery.data || []),
-    [statusesQuery.data]
-  );
+  const statusData = useMemo(() => {
+    if (statusesQuery.data?.data?.activityStatus) {
+      const mappedStatuses = statusesQuery.data.data.activityStatus.map(
+        (s) => ({
+          rid: s.rid || '',
+          task_status_name: s.status_name,
+        })
+      );
+      return transformStatusData(mappedStatuses);
+    }
+    return [];
+  }, [statusesQuery.data]);
 
   const handleTaskSaved = useCallback(() => {
     queryClient.invalidateQueries({
@@ -227,7 +234,6 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
         addCommentMutation.mutate(
           {
             account_rid: accountId || accountid || '',
-            ...(effectiveCaseId && { case_rid: effectiveCaseId }),
             task_rid: taskId,
             comments: commentText,
             files: files,
@@ -241,7 +247,6 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
               successToast(message);
               const commentsParams = {
                 account_rid: accountId || accountid || '',
-                ...(effectiveCaseId && { case_rid: effectiveCaseId }),
                 task_rid: taskId,
                 page: 1,
                 limit: 100,
@@ -271,7 +276,6 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
     [
       accountId,
       accountid,
-      effectiveCaseId,
       successToast,
       errorToast,
       addCommentMutation,
@@ -296,7 +300,6 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
         updateCommentMutation.mutate(
           {
             account_rid: accountId || accountid || '',
-            ...(effectiveCaseId && { case_rid: effectiveCaseId }),
             task_rid: taskId,
             rid: commentId,
             comments: commentText,
@@ -312,7 +315,6 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
               successToast(message);
               const commentsParams = {
                 account_rid: accountId || accountid || '',
-                ...(effectiveCaseId && { case_rid: effectiveCaseId }),
                 task_rid: taskId,
                 page: 1,
                 limit: 100,
@@ -339,7 +341,6 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
     [
       accountId,
       accountid,
-      effectiveCaseId,
       successToast,
       errorToast,
       updateCommentMutation,
@@ -358,7 +359,6 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
         deleteCommentMutation.mutate(
           {
             account_rid: accountId || accountid || '',
-            ...(effectiveCaseId && { case_rid: effectiveCaseId }),
             task_rid: taskId,
             rid: commentId,
             deleted_file_ids: [],
@@ -372,7 +372,6 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
               successToast(message);
               const commentsParams = {
                 account_rid: accountId || accountid || '',
-                ...(effectiveCaseId && { case_rid: effectiveCaseId }),
                 task_rid: taskId,
                 page: 1,
                 limit: 100,
@@ -399,7 +398,6 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
     [
       accountId,
       accountid,
-      effectiveCaseId,
       successToast,
       errorToast,
       deleteCommentMutation,
@@ -500,7 +498,7 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
         checklistData={checklistData}
         fieldVisibility={fieldHiddenMap}
         fieldDisabled={fieldDisabledMap}
-        fiscalYear={'2025'}
+        fiscalYear={data?.fiscal_year || null}
         fiscalYears={fiscalYearOptions}
         taskType='activity'
         onAddComment={handleAddComment}
@@ -523,11 +521,11 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
                 name: response.assigned_to_name || 'Unassigned',
                 initials: response.assigned_to_name
                   ? response.assigned_to_name
-                      .split(' ')
-                      .map((n) => n[0])
-                      .join('')
-                      .toUpperCase()
-                      .slice(0, 2)
+                    .split(' ')
+                    .map((n) => n[0])
+                    .join('')
+                    .toUpperCase()
+                    .slice(0, 2)
                   : 'UA',
                 color: '#9CA3AF', // Default color
               },
@@ -544,13 +542,13 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
               checklistName: response.checklist_name || undefined,
               checklistInfo: response.checklists
                 ? {
-                    rid: response.checklists.rid,
-                    name: response.checklists.checklist_name,
-                    description:
-                      response.checklists.checklist_description || '',
-                    totalItems: response.checklists.checklist_items_count,
-                    completedItems: response.checklists.completed_items_count,
-                  }
+                  rid: response.checklists.rid,
+                  name: response.checklists.checklist_name,
+                  description:
+                    response.checklists.checklist_description || '',
+                  totalItems: response.checklists.checklist_items_count,
+                  completedItems: response.checklists.completed_items_count,
+                }
                 : undefined,
               tags: response.tags,
               startDate: response.effective_start_datetime

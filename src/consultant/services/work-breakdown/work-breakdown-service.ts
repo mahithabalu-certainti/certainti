@@ -131,6 +131,7 @@ export interface TaskDetailResponse {
     target_task_name: string;
     relationship_name: string;
   }>;
+  fiscal_year?: string;
 }
 
 // Helper function to generate initials from name
@@ -259,6 +260,7 @@ export const getTaskDetail = async (
             (wc) => wc.target_task_name
           )
           : [],
+      fiscal_year: taskDetailResponse.fiscal_year,
     };
 
     return task;

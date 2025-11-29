@@ -182,12 +182,13 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   const commentsParams = useMemo(
     () => ({
       account_rid: accountId,
-      case_rid: caseId,
+      ...(taskType !== 'activity' && { case_rid: caseId }),
       task_rid: taskId!,
       page: 1,
       limit: 100,
+      ...(taskType === 'activity' && { task_type: 'activity' }),
     }),
-    [accountId, caseId, taskId]
+    [accountId, caseId, taskId, taskType]
   );
 
   const attachmentsParams = useMemo(
@@ -451,8 +452,8 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     // Handle nested data.data structure
     const response = weightageListQuery.data as {
       data?:
-        | { data?: Array<{ rid: string; weightage_value: number }> }
-        | Array<{ rid: string; weightage_value: number }>;
+      | { data?: Array<{ rid: string; weightage_value: number }> }
+      | Array<{ rid: string; weightage_value: number }>;
     };
     const dataArray = Array.isArray(response?.data)
       ? response.data
@@ -829,13 +830,13 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
         const linkTaskTypeRidsValue =
           linkTaskTypes && linkTaskTypes.length > 0
             ? linkTaskTypes
-                .map((taskType) => {
-                  const template = taskTemplatesData?.find(
-                    (t) => t.name === taskType
-                  );
-                  return template?.id || '';
-                })
-                .filter((rid) => rid !== '')
+              .map((taskType) => {
+                const template = taskTemplatesData?.find(
+                  (t) => t.name === taskType
+                );
+                return template?.id || '';
+              })
+              .filter((rid) => rid !== '')
             : [];
 
         const weightageRidValue = weightage
@@ -844,13 +845,13 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
 
         const categoryRidValue = category
           ? categoryData?.find(
-              (c: { id: string; name: string }) => c.name === category
-            )?.id || ''
+            (c: { id: string; name: string }) => c.name === category
+          )?.id || ''
           : '';
 
         const assignedToRid = editedTask.assignee
           ? allEnrichedUsers.find((u) => u.name === editedTask.assignee.name)
-              ?.id || ''
+            ?.id || ''
           : '';
 
         const workflowConnector: Record<string, unknown> = {};
@@ -924,6 +925,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
               : '',
             tags: tagsArray,
             assigned_to: assignedToRid || '',
+            fiscal_year: editedTask.fiscal_year,
           };
           updateResponse =
             await updateActivityTaskMutation.mutateAsync(activityPayload);
@@ -981,9 +983,9 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     setEditedTask((prev) =>
       prev
         ? {
-            ...prev,
-            status: statusName,
-          }
+          ...prev,
+          status: statusName,
+        }
         : null
     );
     if (statusName) setErrors((prev) => ({ ...prev, status: '' }));
@@ -1038,9 +1040,9 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       setEditedTask((prev) =>
         prev
           ? {
-              ...prev,
-              attachments: [...(prev.attachments || []), ...fileNames],
-            }
+            ...prev,
+            attachments: [...(prev.attachments || []), ...fileNames],
+          }
           : null
       );
       e.target.value = '';
@@ -1077,9 +1079,9 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       setEditedTask((prev) =>
         prev
           ? {
-              ...prev,
-              assignee: { name: '', initials: '', color: '' },
-            }
+            ...prev,
+            assignee: { name: '', initials: '', color: '' },
+          }
           : null
       );
       return;
@@ -1091,13 +1093,13 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       setEditedTask((prev) =>
         prev
           ? {
-              ...prev,
-              assignee: {
-                name: selectedUser.name,
-                initials: selectedUser.initials,
-                color: selectedUser.color,
-              },
-            }
+            ...prev,
+            assignee: {
+              name: selectedUser.name,
+              initials: selectedUser.initials,
+              color: selectedUser.color,
+            },
+          }
           : null
       );
     }
@@ -1267,9 +1269,8 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   return (
     <>
       <div
-        className={`fixed right-0 bottom-0 w-[650px] bg-white text-gray-900 shadow-2xl z-50 overflow-y-auto ${
-          isOpen ? 'translate-x-0' : 'translate-x-full'
-        }`}
+        className={`fixed right-0 bottom-0 w-[650px] bg-white text-gray-900 shadow-2xl z-50 overflow-y-auto ${isOpen ? 'translate-x-0' : 'translate-x-full'
+          }`}
         style={{
           top: '38.1px',
           transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
@@ -1732,9 +1733,9 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                 setEditedTask((prev) =>
                   prev
                     ? {
-                        ...prev,
-                        assignee: { name: '', initials: '', color: '' },
-                      }
+                      ...prev,
+                      assignee: { name: '', initials: '', color: '' },
+                    }
                     : null
                 );
                 return;
@@ -1746,13 +1747,13 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                 setEditedTask((prev) =>
                   prev
                     ? {
-                        ...prev,
-                        assignee: {
-                          name: selectedUser.name,
-                          initials: selectedUser.initials,
-                          color: selectedUser.color,
-                        },
-                      }
+                      ...prev,
+                      assignee: {
+                        name: selectedUser.name,
+                        initials: selectedUser.initials,
+                        color: selectedUser.color,
+                      },
+                    }
                     : null
                 );
               }
@@ -1800,6 +1801,13 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                 prev ? { ...prev, category: value } : null
               );
             }}
+            fiscalYear={editedTask?.fiscal_year || fiscalYear}
+            fiscalYears={fiscalYears}
+            onFiscalYearChange={(value) => {
+              setEditedTask((prev) =>
+                prev ? { ...prev, fiscal_year: value } : null
+              );
+            }}
             onUserRoleChange={(value) => {
               setSelectedRole(value);
             }}
@@ -1812,13 +1820,6 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
             onAddCustomTag={setAvailableTags}
             onSetEditedTask={setEditedTask}
             mode='view'
-            fiscalYear={fiscalYear}
-            fiscalYears={fiscalYears}
-            onFiscalYearChange={(value) => {
-              setEditedTask((prev) =>
-                prev ? { ...prev, fiscal_year: value } : null
-              );
-            }}
           />
 
           <TaskChecklistSection

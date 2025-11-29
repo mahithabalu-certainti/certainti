@@ -314,7 +314,7 @@ export interface ActivityTaskFormPayload {
   attachment_level: string;
   task_name: string;
   task_description?: string;
-  fiscal_year?: number;
+  fiscal_year?: string | number;
   effective_start_datetime?: string;
   effective_end_datetime?: string;
   assigned_to?: string;
