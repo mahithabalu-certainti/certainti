@@ -1701,8 +1701,7 @@ return !response;
         schemaName,
         pointOfContactRoleid
       );
-      console.log("projectQuery", projectQuery);
-    
+      
       const [projectInfo]: any[] = await this.orgDbSequelize.query(
         projectQuery,
         { type: "SELECT" }
@@ -2345,11 +2344,9 @@ return !response;
       emailRecipientsQuery,
       { type: "SELECT" }
     );
-    console.log("emailRecipients", emailRecipients);
     let result = Array.isArray(emailRecipients)
       ? emailRecipients.map((d: any) => d.email)
       : [];
-    console.log("result", result);
      const [caseInfo]: any[] = await this.orgDbSequelize.query(
                 rawQueries.fetchCaseInfo(schemaName,caseRid),
                 { type: "SELECT" }
@@ -3901,7 +3898,6 @@ return !response;
             const result = await CheckList.findAll({ where: whereClause });
             allChecklists.push(...result);
           } catch (error) {
-            console.error('Error fetching attachments:', error);
             throw new Error('Failed to fetch attachments');
           }
         }
@@ -6027,7 +6023,6 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             ""
           )}`;
           let insertQuery = "";
-        console.log("In add task timeline...", entity_rid, accountRid, attachmentLevel);
         if (attachmentLevel === "case") {
           /*const { CaseTimeline } = await this.caseModelService.getModels(
             accountNumber
