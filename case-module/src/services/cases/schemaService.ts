@@ -5786,6 +5786,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         }
       });
       if(updateComments === 1) {
+        if(data.task_type !== 'activity'){
         await CaseHistory.create({
         created_by : data.modified_by,
         created_datetime : new Date(),
@@ -5795,7 +5796,8 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         old_value : isCommentExists.comments,
         new_value : data.comments
       })
-        const checkIsDifferentCollaborator = await this.isNewCollaborator(data.modified_by, accountNumber, "case_task", data.case_rid, data.task_rid);
+    }
+        const checkIsDifferentCollaborator = await this.isNewCollaborator(data.modified_by, accountNumber, data.task_type || 'case_task', data.case_rid, data.task_rid);
         if(!checkIsDifferentCollaborator) {
           const checkCollaboratorExists = await this.isCollaboratorAlreadyAdded(data.modified_by, data.case_rid, data.account_rid, data.task_rid, accountNumber,data.task_type);
           if(!checkCollaboratorExists) {
@@ -6182,7 +6184,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
           })
         const deleteComments = await TaskComments.destroy({ where : {rid : data.rid}});
         if(deleteComments === 1) {
-        const checkIsDifferentCollaborator = await this.isNewCollaborator(data.modified_by, accountNumber,'case_task', data.case_rid, data.task_rid);
+        const checkIsDifferentCollaborator = await this.isNewCollaborator(data.modified_by, accountNumber,data.task_type || 'case_task', data.case_rid, data.task_rid);
         if(!checkIsDifferentCollaborator) {
           const checkCollaboratorExists = await this.isCollaboratorAlreadyAdded(data.modified_by, data.case_rid, data.account_rid, data.task_rid, accountNumber,data.task_type);
           if(!checkCollaboratorExists) {

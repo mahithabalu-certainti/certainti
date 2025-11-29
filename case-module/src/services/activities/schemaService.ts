@@ -853,7 +853,9 @@ class ActivitySchemaService {
       const validSortFields = [
         "attached_to",
         "created_by_name",
-        "modified_by_name"
+        "modified_by_name",
+         "effective_start_datetime",
+        "effective_end_datetime",
       ];
       const finalSortBy = validSortFields.includes(sortBy)
         ? sortBy
@@ -867,7 +869,9 @@ class ActivitySchemaService {
 
       allActivities.sort((a, b) => {
         // Special handling for created_datetime
-        if (finalSortBy === "created_datetime") {
+        if (finalSortBy === "created_datetime" ||
+            finalSortBy === "effective_start_datetime" || finalSortBy === "effective_end_datetime") {
+          console.log('Sorting by date field:', finalSortBy);
           const aDate = new Date(a[finalSortBy]).getTime();
           const bDate = new Date(b[finalSortBy]).getTime();
           return finalSortOrder === "ASC" ? aDate - bDate : bDate - aDate;

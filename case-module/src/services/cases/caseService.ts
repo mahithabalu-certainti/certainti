@@ -2274,7 +2274,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
       const mainDb = await this.getMainDb();
       const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
       data.modified_by = userId
-      const fetchTaskDetails = await this.caseSchemaService.findTaskById(data.task_rid,data.account_rid, data.case_rid ,fetchParent[0][0].r_number);
+      const fetchTaskDetails = await this.caseSchemaService.findTaskById(data.task_rid,data.account_rid, data.case_rid ,fetchParent[0][0].r_number,data.task_type);
       const result = await this.caseSchemaService.updateComments(data, fetchParent[0][0].r_number, fetchTaskDetails?.r_number!, files);
       if(result?.statusCode === HttpStatus.SUCCESS) {
         return {
