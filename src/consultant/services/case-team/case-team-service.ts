@@ -157,8 +157,12 @@ const fetchCaseTeamMembersDropdown = async (
   caseId: string
 ): Promise<CaseTeamMemberDropdown[]> => {
   try {
+    let url = `/api/cases/caseTeam/list?account_rid=${accountId}&is_dropdown_list=true`;
+    if (caseId) {
+      url += `&case_rid=${caseId}`;
+    }
     const response = await caseServiceApi.get<CaseTeamMembersDropdownResponse>(
-      `/api/cases/caseTeam/list?account_rid=${accountId}&case_rid=${caseId}&is_dropdown_list=true`
+      url
     );
 
     if (response.data?.data?.caseTeamMembers) {
