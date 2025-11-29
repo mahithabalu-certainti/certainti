@@ -16,6 +16,7 @@ import { DraftEmailIcon } from '../../../../assets';
 import DetailsSectionSkeleton from '../../../../components/skeleton-component/detailsskeleton';
 import { ActivityType } from '../../../types';
 import { ACTIVITY_EDIT } from '../../../../routes';
+import { parseToStringArray } from '../activities-list/helper';
 
 interface EmailDetailsProps {
   accountInActive: boolean;
@@ -86,7 +87,7 @@ const EmailDetails: React.FC<EmailDetailsProps> = ({
   const emailInformation: DetailItem[] = [
     {
       label: 'Email To',
-      value: data?.to_email?.join(', ') ?? '',
+      value: parseToStringArray(data?.to_email)?.join(', ') ?? '',
       key: 'email_to',
     },
     {
@@ -96,7 +97,7 @@ const EmailDetails: React.FC<EmailDetailsProps> = ({
     },
     {
       label: 'Email CC',
-      value: data?.cc_emails?.join(', ') ?? '',
+      value: parseToStringArray(data?.cc_emails)?.join(', ') ?? '',
       key: 'email_cc',
     },
     {

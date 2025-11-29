@@ -236,10 +236,15 @@ export interface MeetingActivityDetails {
   attachments: MeetingActivityAttachment[];
   effective_start_datetime: string;
   effective_end_datetime: string;
+  // Time fields (note the spelling with single 'f')
+  efective_start_time: string | null;
+  efective_end_time: string | null;
   recurrence_days: string[];
-
   recurrence_interval: number;
   recurrence_type: string;
+  // New monthly recurrence fields
+  recurrence_day_of_month?: string | null;
+  recurrence_monthly_index?: string | null;
 }
 
 export interface MeetingActivityDetailsResponse {

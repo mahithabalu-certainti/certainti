@@ -286,3 +286,57 @@ export const getCallFilterFields = (
     operatorOption: dateOptions,
   },
 ];
+
+export const parseToStringArray = (value: unknown): string[] => {
+  if (!value) return [];
+
+  // 1) If it's already an array → normalize and flatten
+  if (Array.isArray(value)) {
+    return value
+      .flatMap((item) => parseToStringArray(item)) // recursively unwrap nested structures
+      .map(String)
+      .filter(Boolean);
+  }
+
+  // 2) If it's a string
+  if (typeof value === 'string') {
+    let trimmed = value.trim();
+    if (!trimmed) return [];
+
+    // Keep unwrapping JSON until it stops parsing
+    while (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+      try {
+        const parsed = JSON.parse(trimmed);
+
+        // If parsed is an array → recursively flatten & return
+        if (Array.isArray(parsed)) {
+          return parsed.flatMap((item) => parseToStringArray(item));
+        }
+
+        // If parsed is a string → unwrap deeper
+        if (typeof parsed === 'string') {
+          trimmed = parsed.trim();
+          continue;
+        }
+
+        break;
+      } catch {
+        break;
+      }
+    }
+
+    // Comma-separated fallback
+    if (trimmed.includes(',')) {
+      return trimmed
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+    }
+
+    // Single non-empty string
+    return trimmed ? [trimmed] : [];
+  }
+
+  // 3) Anything else (boolean, number, object)
+  return [String(value)];
+};

@@ -17,8 +17,12 @@ import dayjs, { Dayjs } from 'dayjs';
 import { FileList } from '../../../../components/file-list';
 import { MenuItem, Select } from '@mui/material';
 import { COMMON_MENU_PROPS, getSelectStyles } from './helper';
-import { formatDateToYYYYMMDDWithTime } from '../../../../common-utils';
+import {
+  formatDateToYYYYMMDDWithTime,
+  REGEX_PATTERNS,
+} from '../../../../common-utils';
 import StyledDateTimePicker from '../../../../components/form-builder/styled-date-time-picker';
+import { parseToStringArray } from '../activities-list/helper';
 
 // Types
 interface SuggestionState {
@@ -39,6 +43,9 @@ interface MeetingFormData {
   recurrence_interval: string;
   recurrence_days: string[];
   effective_enddate: string;
+  // New monthly recurrence fields
+  recurrence_day_of_month: string;
+  recurrence_monthly_index: string;
   // Legacy fields for API compatibility
   time_zone?: string;
   rid: string;
@@ -75,15 +82,10 @@ const RESTRICTED_EXTENSIONS = /\.(exe|bat|cmd|sh|bash)$/i;
 
 const ACCEPTED_FILE_TYPES = [
   'text/csv',
-  'application/vnd.ms-excel',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  'application/pdf',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'image/jpeg',
-  'image/png',
-  'image/gif',
-  'text/plain',
-  'application/msword',
+  'application/vnd.ms-excel', // .xls
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+  'application/pdf', // .pdf
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
 ];
 
 const MeetingForm: React.FC = () => {
@@ -102,6 +104,9 @@ const MeetingForm: React.FC = () => {
     recurrence_interval: '1',
     recurrence_days: [],
     effective_enddate: '',
+    // New monthly recurrence fields
+    recurrence_day_of_month: '',
+    recurrence_monthly_index: '',
     rid: '',
     meeting_rid: '',
     created_on: '',
@@ -164,7 +169,7 @@ const MeetingForm: React.FC = () => {
   // Get month options based on start date (Microsoft Teams logic)
   const getMonthlyRecurrenceOptions = useCallback((startDate: Dayjs) => {
     const dayOfMonth = startDate.date();
-    const weekdayName = startDate.format('dddd');
+    const weekdayName = startDate.format('dddd').toLowerCase();
     const weekOfMonth = Math.ceil(startDate.date() / 7);
     const isLastWeek = startDate.add(1, 'week').month() !== startDate.month();
 
@@ -181,16 +186,21 @@ const MeetingForm: React.FC = () => {
     return [
       {
         value: `day_${dayOfMonth}`,
-        label: `Monthly on day ${dayOfMonth}`,
+        label: `On day ${dayOfMonth}`,
+        type: 'day_of_month' as const,
+        day: dayOfMonth,
       },
       {
-        value: `${position}_${weekdayName.toLowerCase()}`,
-        label: `Monthly on the ${position} ${weekdayName}`,
+        value: `${position}_${weekdayName}`,
+        label: `On the ${position} ${weekdayName}`,
+        type: 'monthly_index' as const,
+        index: position,
+        weekday: weekdayName,
       },
     ];
   }, []);
 
-  // Update the monthlyRecurrenceOptions useMemo - remove auto-selection logic
+  // Update the monthlyRecurrenceOptions useMemo
   const monthlyRecurrenceOptions = useMemo(() => {
     if (!formData.effective_startdate) return [];
     const startDate = dayjs(formData.effective_startdate);
@@ -226,22 +236,32 @@ const MeetingForm: React.FC = () => {
 
   // Replace the monthly recurrence useEffect with this corrected version
   useEffect(() => {
+    // Only run this for NEW meetings (not edit view) or when there's no existing data
     if (
       formData.recurrence_type === 'monthly' &&
-      formData.effective_startdate
+      formData.effective_startdate &&
+      !isEditView // Only for new meetings
     ) {
       const startDate = dayjs(formData.effective_startdate);
       const dayOfMonth = startDate.date();
       const defaultOption = `day_${dayOfMonth}`;
 
-      // Always update to match the current start date's day
-      // This ensures the selection stays in sync with the start date
-      setFormData((prev) => ({
-        ...prev,
-        recurrence_days: [defaultOption],
-      }));
+      // Only set default if no selection exists
+      if (formData.recurrence_days.length === 0) {
+        setFormData((prev) => ({
+          ...prev,
+          recurrence_days: [defaultOption], // Keep option value for UI
+          recurrence_day_of_month: String(dayOfMonth),
+          recurrence_monthly_index: '',
+        }));
+      }
     }
-  }, [formData.effective_startdate, formData.recurrence_type]);
+  }, [
+    formData.effective_startdate,
+    formData.recurrence_type,
+    formData.recurrence_days.length,
+    isEditView,
+  ]);
 
   // Auto-select all days for daily recurrence
   useEffect(() => {
@@ -266,7 +286,8 @@ const MeetingForm: React.FC = () => {
     if (
       formData.recurrence_type === 'monthly' &&
       formData.effective_startdate &&
-      formData.recurrence_days.length === 0
+      formData.recurrence_days.length === 0 &&
+      !isEditView // Only for new meetings
     ) {
       const startDate = dayjs(formData.effective_startdate);
       const dayOfMonth = startDate.date();
@@ -274,13 +295,16 @@ const MeetingForm: React.FC = () => {
 
       setFormData((prev) => ({
         ...prev,
-        recurrence_days: [defaultOption],
+        recurrence_days: [defaultOption], // Keep option value for UI
+        recurrence_day_of_month: String(dayOfMonth),
+        recurrence_monthly_index: '',
       }));
     }
   }, [
     formData.recurrence_type,
     formData.effective_startdate,
     formData.recurrence_days.length,
+    isEditView, // Add isEditView to dependencies
   ]);
 
   useEffect(() => {
@@ -305,19 +329,63 @@ const MeetingForm: React.FC = () => {
         ? dayjs(meetingData.effective_end_datetime)
         : null;
 
+      // Determine monthly recurrence fields based on recurrence_type and available data
+      let recurrence_day_of_month = meetingData.recurrence_day_of_month
+        ? String(meetingData.recurrence_day_of_month)
+        : '';
+      let recurrence_monthly_index = meetingData.recurrence_monthly_index || '';
+      let recurrence_days =
+        parseToStringArray(meetingData.recurrence_days) || [];
+
+      // If it's monthly recurrence, set the appropriate fields based on API data
+      if (meetingData.recurrence_type === 'monthly') {
+        // CASE 1: If we have monthly_index, this means "On the first Thursday" pattern
+        if (meetingData.recurrence_monthly_index) {
+          // Get the weekday from recurrence_days or from start date
+          let weekday = '';
+          if (recurrence_days.length > 0) {
+            weekday = recurrence_days[0]; // Use the first weekday from recurrence_days
+          } else if (startDatetime) {
+            weekday = getWeekdayName(startDatetime); // Fallback to start date weekday
+          }
+
+          if (weekday) {
+            recurrence_days = [
+              `${meetingData.recurrence_monthly_index}_${weekday}`,
+            ];
+            recurrence_day_of_month = ''; // Clear day_of_month for monthly_index pattern
+          }
+        }
+        // CASE 2: If we have day_of_month, this means "On day X" pattern
+        else if (meetingData.recurrence_day_of_month) {
+          recurrence_days = [`day_${meetingData.recurrence_day_of_month}`];
+          recurrence_monthly_index = '';
+        }
+        // CASE 3: Default to day of month based on start date
+        else if (startDatetime) {
+          const dayOfMonth = startDatetime.date();
+          recurrence_day_of_month = String(dayOfMonth);
+          recurrence_days = [`day_${dayOfMonth}`];
+        }
+      }
+
       setFormData((prev) => ({
         ...prev,
-        attendees: meetingData.meeting_participants || [],
+        attendees: parseToStringArray(meetingData.meeting_participants) || [],
         subject: meetingData.subject || '',
         effective_startdate: startDatetime
-          ? startDatetime.format('YYYY-MMM-DD')
+          ? startDatetime.format('YYYY-MM-DD')
           : '',
-        start_time: startDatetime ? startDatetime.format('HH:mm') : '',
-        end_time: endDatetime ? endDatetime.format('HH:mm') : '',
-        effective_enddate: endDatetime ? endDatetime.format('YYYY-MMM-DD') : '',
+        // Use the separate time fields from API
+        start_time: meetingData.efective_start_time || '',
+        end_time: meetingData.efective_end_time || '',
+        effective_enddate: endDatetime ? endDatetime.format('YYYY-MM-DD') : '',
         recurrence_type: meetingData.recurrence_type || 'none',
         recurrence_interval: String(meetingData.recurrence_interval || '1'),
-        recurrence_days: meetingData.recurrence_days || [],
+        recurrence_days: recurrence_days,
+        // New monthly recurrence fields - use API data directly
+        recurrence_day_of_month: recurrence_day_of_month,
+        recurrence_monthly_index: recurrence_monthly_index,
         rid: meetingData.activity_rid || '',
         meeting_rid: meetingData.r_number || '',
         created_on: formatDateToYYYYMMDDWithTime(
@@ -345,10 +413,11 @@ const MeetingForm: React.FC = () => {
         setExistingFiles([]);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEditView, meetingData]);
 
   const isValidEmail = useCallback((email: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailRegex = REGEX_PATTERNS.EMAIL;
     return emailRegex.test(email.trim());
   }, []);
 
@@ -366,11 +435,11 @@ const MeetingForm: React.FC = () => {
 
       const isAcceptedType =
         ACCEPTED_FILE_TYPES.includes(file.type) ||
-        /\.(csv|xls|xlsx|pdf|docx|doc|jpeg|jpg|png|gif|txt)$/i.test(file.name);
+        /\.(csv|xls|xlsx|pdf|docx)$/i.test(file.name);
 
       if (!isAcceptedType) {
         showError(
-          `"${file.name}" is not a valid file. Only .csv, .xls, .xlsx, .pdf, .doc, .docx, images, or .txt files are allowed.`
+          `"${file.name}" is not a valid file. Only .csv, .xls, .xlsx, .pdf, or .docx files are allowed.`
         );
         continue;
       }
@@ -570,6 +639,9 @@ const MeetingForm: React.FC = () => {
           newFormData.effective_enddate = '';
           newFormData.start_time = '';
           newFormData.end_time = '';
+          // Clear monthly recurrence fields
+          newFormData.recurrence_day_of_month = '';
+          newFormData.recurrence_monthly_index = '';
         } else if (prev.recurrence_type !== 'daily') {
           // Only clear end date if not daily recurrence
           newFormData.effective_enddate = '';
@@ -582,6 +654,9 @@ const MeetingForm: React.FC = () => {
           // For "none", clear interval and days, set end date to start date
           newFormData.recurrence_interval = '1';
           newFormData.recurrence_days = [];
+          // Clear monthly recurrence fields
+          newFormData.recurrence_day_of_month = '';
+          newFormData.recurrence_monthly_index = '';
           if (newFormData.effective_startdate) {
             newFormData.effective_enddate = newFormData.effective_startdate;
           }
@@ -597,22 +672,36 @@ const MeetingForm: React.FC = () => {
             'sunday',
           ];
           newFormData.effective_enddate = '';
+          // Clear monthly recurrence fields
+          newFormData.recurrence_day_of_month = '';
+          newFormData.recurrence_monthly_index = '';
         } else if (newRecurrenceType === 'weekly') {
           // For "weekly", clear days (will be auto-populated with start date's weekday), clear end date
           newFormData.recurrence_days = [];
           newFormData.effective_enddate = '';
+          // Clear monthly recurrence fields
+          newFormData.recurrence_day_of_month = '';
+          newFormData.recurrence_monthly_index = '';
         } else if (newRecurrenceType === 'monthly') {
           // For "monthly", set default to "day_X" option based on start date, clear end date
           newFormData.effective_enddate = '';
 
-          // Auto-select the "day_X" option if start date is available
-          if (newFormData.effective_startdate) {
-            const startDate = dayjs(newFormData.effective_startdate);
-            const dayOfMonth = startDate.date();
-            const defaultOption = `day_${dayOfMonth}`;
-            newFormData.recurrence_days = [defaultOption];
-          } else {
-            newFormData.recurrence_days = [];
+          // Only auto-set defaults for new meetings, not edit view
+          if (!isEditView) {
+            // Clear monthly recurrence fields initially
+            newFormData.recurrence_day_of_month = '';
+            newFormData.recurrence_monthly_index = '';
+
+            // Auto-select the "day_X" option if start date is available
+            if (newFormData.effective_startdate) {
+              const startDate = dayjs(newFormData.effective_startdate);
+              const dayOfMonth = startDate.date();
+              const defaultOption = `day_${dayOfMonth}`;
+              newFormData.recurrence_days = [defaultOption]; // Keep option value for UI
+              newFormData.recurrence_day_of_month = String(dayOfMonth);
+            } else {
+              newFormData.recurrence_days = []; // Empty array if no start date
+            }
           }
         }
       } else if (field === 'start_time') {
@@ -684,12 +773,31 @@ const MeetingForm: React.FC = () => {
     });
   };
 
-  // Handle monthly recurrence day selection (radio button)
+  // Handle monthly recurrence day selection (radio button) - UPDATED
   const handleMonthlyRecurrenceChange = (value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      recurrence_days: [value], // Only one option can be selected for monthly
-    }));
+    const selectedOption = monthlyRecurrenceOptions.find(
+      (opt) => opt.value === value
+    );
+
+    if (selectedOption) {
+      if (selectedOption.type === 'day_of_month') {
+        // For "On day X" option
+        setFormData((prev) => ({
+          ...prev,
+          recurrence_days: [value], // Keep the option value for UI selection
+          recurrence_day_of_month: String(selectedOption.day),
+          recurrence_monthly_index: '',
+        }));
+      } else if (selectedOption.type === 'monthly_index') {
+        // For "On the first Thursday" option
+        setFormData((prev) => ({
+          ...prev,
+          recurrence_days: [value], // Keep the option value for UI selection
+          recurrence_day_of_month: '',
+          recurrence_monthly_index: selectedOption.index,
+        }));
+      }
+    }
   };
 
   // Remove single existing file
@@ -745,15 +853,15 @@ const MeetingForm: React.FC = () => {
     }
 
     if (!formData.effective_startdate) {
-      newErrors.effective_startdate = 'Start date is required';
+      newErrors.effective_startdate = 'Field is required';
     }
 
     if (!formData.start_time) {
-      newErrors.start_time = 'Start time is required';
+      newErrors.start_time = 'Field is required';
     }
 
     if (!formData.end_time) {
-      newErrors.end_time = 'End time is required';
+      newErrors.end_time = 'Field is required';
     }
 
     // Validate time logic with current date/time consideration
@@ -775,7 +883,7 @@ const MeetingForm: React.FC = () => {
         formData.start_time < currentTime
       ) {
         newErrors.start_time =
-          "Start time cannot be in the past for today's date";
+          "Start Time cannot be in the past for today's date";
       }
 
       // Check if end time is before or equal to start time
@@ -783,7 +891,7 @@ const MeetingForm: React.FC = () => {
         endDateTime.isBefore(startDateTime) ||
         endDateTime.isSame(startDateTime)
       ) {
-        newErrors.end_time = 'End time must be after start time';
+        newErrors.end_time = 'End Time must be after Start Time';
       }
     }
 
@@ -791,7 +899,7 @@ const MeetingForm: React.FC = () => {
     if (formData.recurrence_type !== 'none') {
       if (!formData.effective_enddate) {
         newErrors.effective_enddate =
-          'End date is required for recurring meetings';
+          'End Date is required for recurring meetings';
       }
 
       if (formData.effective_startdate && formData.effective_enddate) {
@@ -883,10 +991,50 @@ const MeetingForm: React.FC = () => {
     formDataToSend.append('time_zone', systemTimezone);
     formDataToSend.append('recurrence_type', formData.recurrence_type);
     formDataToSend.append('recurrence_interval', formData.recurrence_interval);
-    formDataToSend.append(
-      'recurrence_days',
-      JSON.stringify(formData.recurrence_days)
-    );
+
+    // Handle recurrence_days based on recurrence type and monthly selection
+    if (formData.recurrence_type === 'monthly') {
+      // For monthly recurrence with monthly_index (e.g., "first thursday"), send the weekday
+      if (formData.recurrence_monthly_index) {
+        // Extract the weekday from the selected option
+        const selectedOption = monthlyRecurrenceOptions.find((opt) =>
+          formData.recurrence_days.includes(opt.value)
+        );
+        if (selectedOption && selectedOption.type === 'monthly_index') {
+          formDataToSend.append(
+            'recurrence_days',
+            JSON.stringify([selectedOption.weekday])
+          );
+        } else {
+          // Fallback: send empty array
+          formDataToSend.append('recurrence_days', JSON.stringify([]));
+        }
+      } else {
+        // For monthly recurrence with day_of_month, send empty array
+        formDataToSend.append('recurrence_days', JSON.stringify([]));
+      }
+    } else {
+      // For other recurrence types, send the actual recurrence_days
+      formDataToSend.append(
+        'recurrence_days',
+        JSON.stringify(formData.recurrence_days)
+      );
+    }
+
+    // Append new monthly recurrence fields only when they have values
+    if (formData.recurrence_day_of_month) {
+      formDataToSend.append(
+        'recurrence_day_of_month',
+        formData.recurrence_day_of_month
+      );
+    }
+
+    if (formData.recurrence_monthly_index) {
+      formDataToSend.append(
+        'recurrence_monthly_index',
+        formData.recurrence_monthly_index
+      );
+    }
 
     // Append files
     formData.files.forEach((file) => {
@@ -908,7 +1056,7 @@ const MeetingForm: React.FC = () => {
   const formLoading = isLoading || userListOptions.isLoading;
 
   const recurrenceTypes = [
-    { value: 'none', label: 'Does not repeat' },
+    { value: 'none', label: 'None' },
     { value: 'daily', label: 'Daily' },
     { value: 'weekly', label: 'Weekly' },
     { value: 'monthly', label: 'Monthly' },
@@ -1180,13 +1328,6 @@ const MeetingForm: React.FC = () => {
                     className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px]'
                   >
                     Recurrence Interval
-                    {/* <span className='text-[13px] text-[#2D3E4F]'>
-                      {formData.recurrence_type === 'daily'
-                        ? 'day(s)'
-                        : formData.recurrence_type === 'weekly'
-                          ? 'week(s)'
-                          : 'month(s)'}
-                    </span> */}
                   </label>
                   <input
                     type='number'
@@ -1289,7 +1430,7 @@ const MeetingForm: React.FC = () => {
                           value={option.value}
                           checked={formData.recurrence_days.includes(
                             option.value
-                          )}
+                          )} // Check by option value
                           onChange={() =>
                             handleMonthlyRecurrenceChange(option.value)
                           }
@@ -1342,7 +1483,7 @@ const MeetingForm: React.FC = () => {
                   </div>
                   <input
                     type='file'
-                    accept='.csv,.xls,.xlsx,.pdf,.doc,.docx,.jpeg,.jpg,.png,.gif,.txt'
+                    accept='.csv,.xls,.xlsx,.pdf,.docx'
                     className='hidden'
                     ref={fileInputRef}
                     onChange={handleFileSelect}
@@ -1365,16 +1506,18 @@ const MeetingForm: React.FC = () => {
                   )}
                 </div>
 
-                <FileList
-                  fileInputRef={fileInputRef}
-                  selectedFiles={formData.files}
-                  setSelectedFiles={(files) =>
-                    handleInputChange('files', files)
-                  }
-                  existingFiles={existingFiles}
-                  onRemoveExistingFile={removeExistingFile}
-                  disabled={false}
-                />
+                <div className='max-h-[150px] overflow-y-auto'>
+                  <FileList
+                    fileInputRef={fileInputRef}
+                    selectedFiles={formData.files}
+                    setSelectedFiles={(files) =>
+                      handleInputChange('files', files)
+                    }
+                    existingFiles={existingFiles}
+                    onRemoveExistingFile={removeExistingFile}
+                    disabled={false}
+                  />
+                </div>
               </div>
             </div>
 

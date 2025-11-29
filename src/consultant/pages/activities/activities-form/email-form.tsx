@@ -20,7 +20,11 @@ import {
 } from './helper';
 import { useGetUserOptions, UserOption } from '../../../services/case-team';
 import { EmailRecipients } from '../../../../components';
-import { formatDateToYYYYMMDDWithTime } from '../../../../common-utils';
+import {
+  formatDateToYYYYMMDDWithTime,
+  REGEX_PATTERNS,
+} from '../../../../common-utils';
+import { parseToStringArray } from '../activities-list/helper';
 
 // Types
 interface SuggestionState {
@@ -118,8 +122,8 @@ const EmailForm: React.FC = () => {
     if (emailData && isEditView) {
       setFormData((prev) => ({
         ...prev,
-        to: emailData.to_email || [],
-        cc: emailData.cc_emails || [],
+        to: parseToStringArray(emailData.to_email) || [],
+        cc: parseToStringArray(emailData.cc_emails) || [],
         subject: emailData.subject || '',
         emailBody: emailData.body_html || '',
         created_on: formatDateToYYYYMMDDWithTime(
@@ -146,7 +150,7 @@ const EmailForm: React.FC = () => {
   }, [emailData, isEditView]);
 
   const isValidEmail = useCallback((email: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailRegex = REGEX_PATTERNS.EMAIL;
     return emailRegex.test(email.trim());
   }, []);
 

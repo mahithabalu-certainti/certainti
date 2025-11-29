@@ -16,6 +16,7 @@ import { ACTIVITY_EDIT } from '../../../../routes';
 import { ActivityType } from '../../../types';
 import { useCallActivityDetails } from '../../../services/activities/activities-service';
 import { CallLogIcon } from '../../../../assets';
+import { parseToStringArray } from '../activities-list/helper';
 
 interface CallDetailsProps {
   accountInActive: boolean;
@@ -102,7 +103,7 @@ const CallDetails: React.FC<CallDetailsProps> = ({
     },
     {
       label: 'Call Participants',
-      value: call?.call_participants?.join(',') ?? '-',
+      value: parseToStringArray(call?.call_participants)?.join(',') ?? '-',
       key: 'call_participants',
     },
     {
@@ -115,7 +116,7 @@ const CallDetails: React.FC<CallDetailsProps> = ({
       value: formatDateToYYYYMMDDWithTime(call?.effective_end_datetime),
       key: 'end_time',
     },
-    { label: 'Caller', value: call?.caller_id ?? '-', key: 'caller' },
+    { label: 'Caller ID', value: call?.caller_id ?? '-', key: 'caller' },
   ];
 
   const description: DetailItem[] = [

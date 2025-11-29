@@ -70,7 +70,7 @@ export const getActivityExportListURL = ({
   search,
   activity_type,
 }: ActivityListExportURLParams): string => {
-  const baseUrl = '/api/activities/tasks/export';
+  const baseUrl = '/api/activities/export';
   const searchParams = new URLSearchParams();
 
   if (filters && Object.keys(filters).length > 0) {

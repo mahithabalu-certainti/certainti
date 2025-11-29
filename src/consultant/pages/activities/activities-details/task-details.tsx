@@ -1,7 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useCallback, useMemo } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { useTaskActivityDetails, fetchTaskActivityDetails, useGetActivityStatus } from '../../../services/activities/activities-service';
+import {
+  useTaskActivityDetails,
+  fetchTaskActivityDetails, useGetActivityStatus,
+} from '../../../services/activities/activities-service';
 import { ActivityType } from '../../../types';
 import {
   useGetCaseTeamMembersDropdown,
@@ -28,9 +32,7 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '../../../../hooks';
 import TaskDetailModal from '../../../../components/kanban-board/task-detail-modal';
-import {
-  AllPermissions,
-} from '../../../../common-service';
+import { AllPermissions } from '../../../../common-service';
 import { fiscalYears as commonFiscalYears } from '../../../../common-utils/common-utils';
 import { RootState } from '../../../../store/store';
 
@@ -42,7 +44,7 @@ interface TaskDetailsProps {
 }
 
 const TaskDetails: React.FC<TaskDetailsProps> = ({
-  entityLevel,
+  // entityLevel,
   caseId: propCaseId,
 }) => {
   const navigate = useNavigate();
@@ -56,7 +58,8 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
   const { permission } = useSelector((state: RootState) => state.permission);
 
   const fiscalYearOptions = useMemo(
-    () => commonFiscalYears.map((fy: { value: string; label: string }) => fy.value),
+    () =>
+      commonFiscalYears.map((fy: { value: string; label: string }) => fy.value),
     []
   );
 
@@ -541,7 +544,8 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
                 ? {
                   rid: response.checklists.rid,
                   name: response.checklists.checklist_name,
-                  description: response.checklists.checklist_description || '',
+                  description:
+                    response.checklists.checklist_description || '',
                   totalItems: response.checklists.checklist_items_count,
                   completedItems: response.checklists.completed_items_count,
                 }

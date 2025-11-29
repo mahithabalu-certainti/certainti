@@ -16,6 +16,7 @@ import { formatDateToYYYYMMDDWithTime } from '../../../../common-utils';
 import { ACTIVITY_EDIT } from '../../../../routes';
 import { ActivityType } from '../../../types';
 import { useMeetingActivityDetails } from '../../../services/activities/activities-service';
+import { parseToStringArray } from '../activities-list/helper';
 
 interface MeetingDetailsProps {
   accountInActive: boolean;
@@ -93,18 +94,9 @@ const MeetingDetails: React.FC<MeetingDetailsProps> = ({
   const meetingInformation: DetailItem[] = [
     { label: 'Subject', value: meeting?.subject ?? '', key: 'subject' },
     {
-      label: 'Meeting URL',
-      value: meeting?.meeting_url ?? '',
-      key: 'meeting_url',
-    },
-    {
-      label: 'Meeting Code',
-      value: meeting?.meeting_id ?? '',
-      key: 'meeting_code',
-    },
-    {
       label: 'Participants',
-      value: meeting?.meeting_participants?.join(', ') ?? '',
+      value:
+        parseToStringArray(meeting?.meeting_participants)?.join(', ') ?? '',
       key: 'meeting_participants',
     },
     {
@@ -113,9 +105,14 @@ const MeetingDetails: React.FC<MeetingDetailsProps> = ({
       key: 'status',
     },
     {
-      label: 'Fiscal Year',
-      value: meeting?.fiscal_year ?? '',
-      key: 'fiscal_year',
+      label: 'Meeting URL',
+      value: meeting?.meeting_url ?? '',
+      key: 'meeting_url',
+    },
+    {
+      label: 'Meeting Code',
+      value: meeting?.meeting_id ?? '',
+      key: 'meeting_code',
     },
   ];
 

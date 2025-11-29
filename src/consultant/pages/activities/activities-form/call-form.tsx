@@ -15,7 +15,11 @@ import { useGetUserOptions, UserOption } from '../../../services/case-team';
 import { FileList, MeetingAttendees } from '../../../../components';
 import dayjs, { Dayjs } from 'dayjs';
 import StyledDateTimePicker from '../../../../components/form-builder/date-time-picker';
-import { formatDateToYYYYMMDDWithTime } from '../../../../common-utils';
+import {
+  formatDateToYYYYMMDDWithTime,
+  REGEX_PATTERNS,
+} from '../../../../common-utils';
+import { parseToStringArray } from '../activities-list/helper';
 
 // Types
 interface SuggestionState {
@@ -70,11 +74,6 @@ const ACCEPTED_FILE_TYPES = [
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
   'application/pdf', // .pdf
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
-  'image/jpeg',
-  'image/png',
-  'image/gif',
-  'text/plain',
-  'application/msword', // .doc
 ];
 
 const CallForm: React.FC = () => {
@@ -164,7 +163,7 @@ const CallForm: React.FC = () => {
     if (callData && isEditView) {
       setFormData((prev) => ({
         ...prev,
-        call_participants: callData.call_participants || [],
+        call_participants: parseToStringArray(callData.call_participants) || [],
         caller_id: callData.caller_id || '',
         subject: callData.subject || '',
         effective_start_datetime: callData.effective_start_datetime || '',
@@ -200,7 +199,7 @@ const CallForm: React.FC = () => {
   }, [isEditView, callData]);
 
   const isValidEmail = useCallback((email: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailRegex = REGEX_PATTERNS.EMAIL;
     return emailRegex.test(email.trim());
   }, []);
 
@@ -218,11 +217,11 @@ const CallForm: React.FC = () => {
 
       const isAcceptedType =
         ACCEPTED_FILE_TYPES.includes(file.type) ||
-        /\.(csv|xls|xlsx|pdf|docx|doc|jpeg|jpg|png|gif|txt)$/i.test(file.name);
+        /\.(csv|xls|xlsx|pdf|docx)$/i.test(file.name);
 
       if (!isAcceptedType) {
         showError(
-          `"${file.name}" is not a valid file. Only .csv, .xls, .xlsx, .pdf, .doc, .docx, images, or .txt files are allowed.`
+          `"${file.name}" is not a valid file. Only .csv, .xls, .xlsx, .pdf, or .docx files are allowed.`
         );
         continue;
       }
@@ -568,7 +567,7 @@ const CallForm: React.FC = () => {
 
       if (end <= start) {
         newErrors.effective_end_datetime =
-          'End datetime must be after start datetime';
+          'End Date & Time must be after Start Date & Time';
       }
     }
 
@@ -916,7 +915,7 @@ const CallForm: React.FC = () => {
                     </div>
                     <input
                       type='file'
-                      accept='.csv,.xls,.xlsx,.pdf,.doc,.docx,.jpeg,.jpg,.png,.gif,.txt'
+                      accept='.csv,.xls,.xlsx,.pdf,.docx'
                       className='hidden'
                       ref={fileInputRef}
                       onChange={handleFileSelect}
@@ -938,16 +937,18 @@ const CallForm: React.FC = () => {
                     )}
                   </div>
 
-                  <FileList
-                    fileInputRef={fileInputRef}
-                    selectedFiles={formData.files}
-                    setSelectedFiles={(files) =>
-                      handleInputChange('files', files)
-                    }
-                    existingFiles={existingFiles}
-                    onRemoveExistingFile={removeExistingFile}
-                    disabled={false}
-                  />
+                  <div className='max-h-[150px] overflow-y-auto'>
+                    <FileList
+                      fileInputRef={fileInputRef}
+                      selectedFiles={formData.files}
+                      setSelectedFiles={(files) =>
+                        handleInputChange('files', files)
+                      }
+                      existingFiles={existingFiles}
+                      onRemoveExistingFile={removeExistingFile}
+                      disabled={false}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
