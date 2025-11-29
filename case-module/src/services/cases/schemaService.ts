@@ -4790,6 +4790,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                 validEndDate = caseStartDate
                 secondMilestoneEntered = true
                 day = dayjs(validEndDate)
+                d.effort_in_days = d.effort_in_days - 1
               }
               else if(firstMilestoneEntered && !firstMilestoneForSecondDatePicker) {
                 validEndDate = endDateStorage
@@ -4807,22 +4808,23 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                 validEndDate = caseStartDate
                 otherMilestoneEntered = true
                 day = dayjs(validEndDate)
+                d.effort_in_days = d.effort_in_days - 1
               }
-              else if (firstMilestoneEntered && !secondMilestoneEntered && !firstMilestoneDatePicker) {
+              else if (!secondMilestoneEntered) {
+                validEndDate = otherMileStoneEndDateStorgae
+                day = dayjs(validEndDate)
+                day = day.add(1, 'day')
+              }
+              else {
                 validEndDate = endDateStorage
                 day = dayjs(validEndDate)
                 day = day.add(1, 'day')
                 firstMilestoneDatePicker = true
               }
-              else {
-                validEndDate = otherMileStoneEndDateStorgae
-                day = dayjs(validEndDate)
-                day = day.add(1, 'day')
-              }
             }
             if(d.sequence_no === 1) {
               const conversion = dayjs(validEndDate)
-              let res = conversion.add(d.effort_in_days - 1, 'day');
+              let res = conversion.add(d.effort_in_days, 'day');
               let finalisedEnddate = res.format('YYYY-MM-DD')
               endDate = dayjs(finalisedEnddate).toDate()
               let finalDay = day.toDate()
