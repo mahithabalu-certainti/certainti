@@ -32,7 +32,7 @@ import dayjs from 'dayjs';
 import { SectionTabPanel } from '../../../../../components';
 import SectionHeader from '../../../../../components/details-section/section-header';
 import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
-import { AllPermissions, useGetStatus } from '../../../../../common-service';
+import { AllModules, AllPermissions, useGetStatus } from '../../../../../common-service';
 import { checkPermission } from '../../../../../common-utils';
 import { AccessRestricted } from '../../../../../components/account-restricted';
 import { useToast } from '../../../../../hooks';
@@ -89,7 +89,7 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
   const cellRefs = useRef<Record<string, HTMLTableCellElement | null>>({});
   const [cellWidths, setCellWidths] = useState<Record<string, number>>({});
 
-  const { permission } = useSelector((state: RootState) => state.permission);
+  const { permission, modules } = useSelector((state: RootState) => state.permission);
 
   //Permission
   const casesTeamEditFields = useMemo(
@@ -101,12 +101,12 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
   );
 
   const caseTeamCreatePermission = useMemo(
-    () => permission?.find((item) => item.name === 'case_team_create'),
+    () => permission?.find((item) => item.name === AllPermissions.CASES_TEAM_CREATE),
     [permission]
   );
 
   const caseTeamDeletePermission = useMemo(
-    () => permission?.find((item) => item.name === 'case_team_delete'),
+    () => permission?.find((item) => item.name === AllPermissions.CASES_TEAM_DELETE),
     [permission]
   );
 
@@ -125,6 +125,20 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
         ?.fields?.some((field) => field.edit),
     [permission]
   );
+
+  const isCaseTeamViewEnable = checkPermission(
+    permission,
+    AllPermissions.CASES_TEAM_VIEW_EDIT
+  );
+
+  const isCaseCreateEnable = checkPermission(
+    permission,
+    AllPermissions.CASES_CREATE
+  );
+
+  const showAddButton = caseTeamCreatePermission
+    ? caseTeamCreatePermission.is_enabled
+    : isCaseCreateEnable;
 
   useEffect(() => {
     if (formData.team_members.length !== originalTeamMembers.length) {
@@ -228,7 +242,7 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
       setOriginalTeamMembers([...teamMembers]);
 
       const finalTeamMembers =
-        teamMembers.length === 0
+        teamMembers.length === 0 && showAddButton
           ? [
             {
               user_id: 'MEM_1',
@@ -417,18 +431,18 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
 
       // User name validation
       if (!member.user_name.trim()) {
-        memberError.user_name = 'User name is required';
+        memberError.user_name = 'Field is required';
         isValid = false;
       }
 
       // User role validation
       if (!member.user_role.trim()) {
-        memberError.user_role = 'User role is required';
+        memberError.user_role = 'Field is required';
         isValid = false;
       }
 
       if (!member.start_date) {
-        memberError.start_date = 'Start date is required';
+        memberError.start_date = 'Field is required';
         isValid = false;
       } else {
         const startDate = dayjs(member.start_date);
@@ -438,7 +452,7 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
           member.end_date &&
           startDate.isAfter(dayjs(member.end_date), 'day')
         ) {
-          memberError.start_date = 'Start date cannot be after end date';
+          memberError.start_date = 'Invalid Date';
           isValid = false;
         }
       }
@@ -449,13 +463,13 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
 
         if (endDate.isBefore(startDate, 'day')) {
           memberError.end_date =
-            'End date must be equal to or after start date';
+            'Invalid Date';
           isValid = false;
         }
       }
 
       if (!member.status || !member.status.trim()) {
-        memberError.status = 'Status is required';
+        memberError.status = 'Field is required';
         isValid = false;
       }
 
@@ -615,19 +629,7 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
     return <ActionItemsIcon alt='action-items-icon' />;
   };
 
-  const isCaseTeamViewEnable = checkPermission(
-    permission,
-    AllPermissions.CASES_TEAM_VIEW_EDIT
-  );
 
-  const isCaseCreateEnable = checkPermission(
-    permission,
-    AllPermissions.CASES_CREATE
-  );
-
-  const showAddButton = caseTeamCreatePermission
-    ? caseTeamCreatePermission.is_enabled
-    : isCaseCreateEnable;
 
   const isAddButtonEnabled = caseTeamCreatePermission
     ? caseTeamCreatePermission.is_enabled
@@ -641,7 +643,12 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
     ? caseTeamDeletePermission.is_enabled
     : true;
 
-  if (!isCaseTeamViewEnable) return <AccessRestricted />;
+  const isCaseTeamModuleEnabled = useMemo(
+    () => modules?.find((item) => item.name === AllModules.CASES_TEAM)?.is_enabled,
+    [modules]
+  );
+
+  if (!isCaseTeamViewEnable || !isCaseTeamModuleEnabled) return <AccessRestricted />;
 
   const isColumnVisible = (col: CaseTeamTableColumn) => {
     if (col.hide) return false;

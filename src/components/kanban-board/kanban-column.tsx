@@ -17,6 +17,7 @@ interface ExtendedKanbanColumnProps extends KanbanColumnProps {
   roleOptions?: RoleOption[];
   collaboratorData?: Array<{ rid: string; name: string; email?: string }>;
   availableUsers?: Array<{ rid: string; name: string; email?: string }>;
+  onCreateModalOpen?: () => void;
 }
 
 const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
@@ -45,6 +46,7 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
   caseId,
   caseStartDate,
   caseEndDate,
+  onCreateModalOpen,
 }) => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const { setNodeRef } = useDroppable({
@@ -171,7 +173,10 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
 
       {!isCreateTaskHide && (
         <button
-          onClick={() => setIsCreateModalOpen(true)}
+          onClick={() => {
+            setIsCreateModalOpen(true);
+            onCreateModalOpen?.();
+          }}
           disabled={isCreateTaskDisabled}
           className={`w-full flex items-center gap-2 p-3 rounded-lg border-2 border-dashed transition-colors duration-200 ${isCreateTaskDisabled
             ? 'border-slate-300 text-slate-400 cursor-not-allowed'

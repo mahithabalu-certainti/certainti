@@ -387,8 +387,8 @@ export const useGetCaseTeamMembersDropdown = (
     queryKey: ['case-team-members-dropdown', accountId, caseId],
     queryFn: () => fetchCaseTeamMembersDropdown(accountId!, caseId!),
     retry: 0,
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
+    staleTime: 0, // Always fetch fresh data since users change often
+    gcTime: 0,
     enabled: enabled && !!accountId && !!caseId,
   });
 };
@@ -468,5 +468,32 @@ export const useUpdateJurisdictionConfig = () => {
     Partial<updateCaseJurisdictionPayload>
   >({
     mutationFn: (body) => updateCaseJurisdictionConfig({ ...body }),
+  });
+};
+export interface DeleteTagPayload {
+  task_rid: string;
+  account_rid: string;
+  case_rid: string;
+  tag_rid: string[];
+}
+
+export const deleteTag = async (
+  payload: DeleteTagPayload
+): Promise<CommonApiResponse> => {
+  try {
+    const response = await caseServiceApi.post<CommonApiResponse>(
+      '/api/cases/tag/delete',
+      payload
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error deleting tag:', error);
+    throw error;
+  }
+};
+
+export const useDeleteTag = () => {
+  return useMutation<CommonApiResponse, Error, DeleteTagPayload>({
+    mutationFn: (payload) => deleteTag(payload),
   });
 };

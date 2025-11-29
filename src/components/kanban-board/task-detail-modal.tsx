@@ -30,7 +30,10 @@ import {
   useUpdateCaseTask,
   useGetTaskDropDownList,
 } from '../../consultant/services/case-task/case-task-service';
-import { useGetTagOptions } from '../../consultant/services/case-team/case-team-service';
+import {
+  useGetTagOptions,
+  useDeleteTag,
+} from '../../consultant/services/case-team/case-team-service';
 import {
   transformComments,
   transformActivities,
@@ -165,6 +168,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   const deleteAttachmentMutation = useDeleteTaskAttachment();
   const updateTaskMutation = useUpdateCaseTask();
   const deleteCollaboratorMutation = useDeleteCollaborator();
+  const deleteTagMutation = useDeleteTag();
   const queryClient = useQueryClient();
 
   const commentsParams = useMemo(
@@ -705,6 +709,30 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
 
     setIsSaving(true);
     try {
+      // Identify removed tags and delete them
+      const removedTags: string[] = [];
+      if (originalTask?.tagsDetails) {
+        originalTask.tagsDetails.forEach((detail) => {
+          // If the tag name is no longer in the edited tags list, it was removed
+          if (!editedTask?.tags?.includes(detail.name)) {
+            removedTags.push(detail.id);
+          }
+        });
+      }
+
+      if (removedTags.length > 0 && taskId) {
+        try {
+          await deleteTagMutation.mutateAsync({
+            task_rid: taskId,
+            account_rid: accountId,
+            case_rid: caseId,
+            tag_rid: removedTags,
+          });
+        } catch (error) {
+          console.error('Error deleting tags:', error);
+        }
+      }
+
       const tagsArray: Array<{ tag_rid: string; is_new_tag: boolean }> = [];
       if (editedTask?.tags && editedTask.tags.length > 0) {
         editedTask.tags.forEach((tagName: string) => {
@@ -743,10 +771,6 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
               rid: attachmentId,
             });
           }
-          const message =
-            deleteAttachmentMutation.data?.statusMessage ||
-            'Attachments deleted successfully';
-          successToast(message);
           setDeletedAttachmentIds([]);
         } catch (error) {
           const errorMessage =
@@ -761,16 +785,12 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       }
       if (pendingAttachments.length > 0 && taskId) {
         try {
-          const uploadResponse = await uploadAttachmentsMutation.mutateAsync({
+          await uploadAttachmentsMutation.mutateAsync({
             account_rid: accountId,
             case_rid: caseId,
             task_rid: taskId,
             files: pendingAttachments,
           });
-          const message =
-            uploadResponse?.statusMessage ||
-            'Attachments uploaded successfully';
-          successToast(message);
           setPendingAttachments([]);
           setEditedTask((prev) => (prev ? { ...prev, attachments: [] } : null));
 
@@ -822,12 +842,16 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
             ?.id || ''
           : '';
 
-        // Build workflow connector - always include, pass {} if no valid data
         const workflowConnector: Record<string, unknown> = {};
-        if (linkedTypeRidValue && linkTaskTypeRidsValue.length > 0) {
+
+        const originalTargetRids = originalTask?.workflow_connector?.map(wc => wc.target_rid) || [];
+        const deleteTargetRids = originalTargetRids.filter(rid => !linkTaskTypeRidsValue.includes(rid));
+
+        if (linkedTypeRidValue && (linkTaskTypeRidsValue.length > 0 || deleteTargetRids.length > 0)) {
           workflowConnector.source_rid = taskId;
           workflowConnector.relationship_connector_rid = linkedTypeRidValue;
           workflowConnector.target_rid = linkTaskTypeRidsValue;
+          workflowConnector.delete_target_rids = deleteTargetRids;
         }
 
         const updatePayload = {
@@ -874,6 +898,9 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
               task_rid: taskId,
             },
           ],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ['taskDetail', accountId, caseId, taskId],
         });
         if (onTaskUpdate) {
           onTaskUpdate();
@@ -1046,6 +1073,20 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     setEditedTask((prev) =>
       prev ? { ...prev, checklist: updatedChecklist } : null
     );
+
+    queryClient.invalidateQueries({
+      queryKey: ['taskActivities', accountId, caseId, taskId],
+    });
+    queryClient.invalidateQueries({
+      queryKey: [
+        'taskActivitiesInfinite',
+        {
+          case_rid: caseId,
+          account_rid: accountId,
+          task_rid: taskId,
+        },
+      ],
+    });
   };
 
   const handleCollaboratorsChange = async (selectedIds: string[]) => {
