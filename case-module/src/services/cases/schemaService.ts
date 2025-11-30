@@ -6173,13 +6173,17 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             }
           }
         } else {
+          let whereClause: any = {
+            account_rid: data.account_rid,
+            task_rid: data.task_rid,
+            comments_rid: data.rid
+          };
+          if (data.task_type !== 'activity') {
+            whereClause.case_rid = data.case_rid;
+          }
           const fetchCommentsAttachmentDetails = await CommentsAttachments.findAll({
-            where : {
-              account_rid : data.account_rid,
-              case_rid : data.case_rid,
-              task_rid : data.task_rid,
-              comments_rid : data.rid 
-            }, raw : true
+            where: whereClause,
+            raw: true
           });
           if(fetchCommentsAttachmentDetails.length > 0) {
             for(let d of fetchCommentsAttachmentDetails) {
@@ -6192,6 +6196,8 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                   is_file_deleted : false
                 }
               })
+              if(data.task_type !== 'activity')
+                {
               await CaseTimeline.create({
                 created_by : data.modified_by,
                 created_datetime : new Date(),
@@ -6204,8 +6210,23 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                 description : `Task Comments : ${d.document_name}`
               }) 
             }
+              else
+              {
+                  await this.addTaskTimeline(
+                     accountNumber,
+                    d.rid,
+                    data.account_rid,
+                   `Task Comments : ${d.document_name}`,
+                    data.modified_by,
+                   "Task Comments Attachments deleted",
+                    "success",
+                   data.task_rid
+                  )
+              }
+            }
           }
         }
+        if(data.task_type !== 'activity'){
         await CaseTimeline.create({
           created_by : data.modified_by,
           created_datetime : new Date(),
@@ -6217,20 +6238,38 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
           event_datetime : new Date(),
           description : `Task Comments Deleted : ${isCommentExists.comments}`
           })
+        }
+        else
+        {
+           await this.addTaskTimeline(
+                    accountNumber,
+                    data.rid,
+                    data.account_rid,
+                   `Task Comments Deleted : ${isCommentExists.comments}`,
+                    data.modified_by,
+                   "Task Comments  deleted",
+                    "success",
+                   data.task_rid
+                  )
+
+        }
         const deleteComments = await TaskComments.destroy({ where : {rid : data.rid}});
         if(deleteComments === 1) {
         const checkIsDifferentCollaborator = await this.isNewCollaborator(data.modified_by, accountNumber,data.task_type || 'case_task', data.case_rid, data.task_rid);
         if(!checkIsDifferentCollaborator) {
           const checkCollaboratorExists = await this.isCollaboratorAlreadyAdded(data.modified_by, data.case_rid, data.account_rid, data.task_rid, accountNumber,data.task_type);
           if(!checkCollaboratorExists) {
-            await TaskCollaborators.create({
-              case_rid : data.case_rid,
-              account_rid : data.account_rid,
-              task_rid : data.task_rid,
-              assigned_to : data.modified_by,
-              created_by : data.modified_by,
-              created_datetime : new Date()
-            });
+                const collaboratorPayload: any = {
+                  account_rid: data.account_rid,
+                  task_rid: data.task_rid,
+                  assigned_to: data.modified_by,
+                  created_by: data.modified_by,
+                  created_datetime: new Date()
+                };
+                if (data.task_type !== 'activity') {
+                  collaboratorPayload.case_rid = data.case_rid;
+                }
+                await TaskCollaborators.create(collaboratorPayload);
           }
         }
         return {
@@ -6791,13 +6830,16 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
   }
   async deleteCollaborators (accountNumber : string, data : any) {
     const {TaskCollaborators} = await this.caseModelService.getModels(accountNumber);
+    const whereClause: any = {
+      account_rid: data.account_rid,
+      task_rid: data.rid,
+      assigned_to: data.assigned_to
+    };
+    if (data.task_type !== 'activity') {
+      whereClause.case_rid = data.case_rid;
+    }
     const result = await TaskCollaborators.destroy({
-      where : {
-        account_rid : data.account_rid,
-        case_rid : data.case_rid,
-        task_rid : data.rid,
-        assigned_to : data.assigned_to
-      }
+      where: whereClause
     });
     if(result > 0) {
       return {
