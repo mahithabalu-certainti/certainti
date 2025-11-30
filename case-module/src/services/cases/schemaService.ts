@@ -539,10 +539,6 @@ return !response;
         orgDbSequlize,
         schemaName
       );
-      const jurisdictionModel = await Jurisdiction.initialize(
-        orgDbSequlize,
-        schemaName
-      );
       const caseHistorySubmissionModel = await CaseHistorySubmission.initialize(
         orgDbSequlize,
         schemaName
@@ -599,7 +595,6 @@ return !response;
       await caseHistoryModel.sync({ force: false });
       await setupCaseHistorySequence(orgDbSequlize, schemaName);
       await caseTeamModel.sync({ force: false });
-      await jurisdictionModel.sync({ force: false });
       await checkListModel.sync({ force: false });
       await setupCheckListSequence(orgDbSequlize, schemaName);
       await checkListItemModel.sync({ force: false });
@@ -1701,8 +1696,7 @@ return !response;
         schemaName,
         pointOfContactRoleid
       );
-      console.log("projectQuery", projectQuery);
-    
+      
       const [projectInfo]: any[] = await this.orgDbSequelize.query(
         projectQuery,
         { type: "SELECT" }
@@ -1937,7 +1931,7 @@ return !response;
         )
       );
       const getTotalProjects : any = await this.orgDbSequelize.query(
-        rawQueries.getTotalProjectsCountInCase(schemaName, data.fiscal_year, data.account_rid)
+        rawQueries.getTotalProjectsCountInCase(schemaName, data.fiscal_year, data.account_rid, data.case_rid)
       );
       const getTotalProjectCost: any = await this.orgDbSequelize.query(
         rawQueries.getTotalProjectCost(
@@ -2084,6 +2078,9 @@ return !response;
           data.account_rid
         )
       );
+      const getTotalProjects : any = await this.orgDbSequelize.query(
+        rawQueries.getTotalProjectsCountInCase(schemaName, data.fiscal_year, data.account_rid, data.case_rid)
+      );
       const getTotalProjectCost: any = await this.orgDbSequelize.query(
         rawQueries.getTotalProjectCost(
           schemaName,
@@ -2096,14 +2093,18 @@ return !response;
           schemaName,
           data.case_rid,
           getTotalProjectCount[0][0].total_projects,
-          getTotalProjectCost[0][0].total_cost
+          getTotalProjectCost[0][0].total_cost,
+          getTotalProjects[0][0].total_projects,
+          getTotalProjects[0][0].total_projects_qre_cost
         )
       );
       await this.mainDbSequelize.query(
         rawQueries.updateCostCountInCaseSummary(
           data.case_rid,
           getTotalProjectCount[0][0].total_projects,
-          getTotalProjectCost[0][0].total_cost
+          getTotalProjectCost[0][0].total_cost,
+          getTotalProjects[0][0].total_projects,
+          getTotalProjects[0][0].total_projects_qre_cost
         )
       );
       if (totalCount === 1) {
@@ -2345,11 +2346,9 @@ return !response;
       emailRecipientsQuery,
       { type: "SELECT" }
     );
-    console.log("emailRecipients", emailRecipients);
     let result = Array.isArray(emailRecipients)
       ? emailRecipients.map((d: any) => d.email)
       : [];
-    console.log("result", result);
      const [caseInfo]: any[] = await this.orgDbSequelize.query(
                 rawQueries.fetchCaseInfo(schemaName,caseRid),
                 { type: "SELECT" }
@@ -3902,7 +3901,6 @@ return !response;
             const result = await CheckList.findAll({ where: whereClause });
             allChecklists.push(...result);
           } catch (error) {
-            console.error('Error fetching attachments:', error);
             throw new Error('Failed to fetch attachments');
           }
         }
@@ -5698,7 +5696,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     }
     const createComments = await TaskComments.create(commentPayload);
     if(createComments) {
-      const checkIsDifferentCollaborator = await this.isNewCollaborator(data.created_by, accountNumber,"case_task", data.case_rid, data.task_rid);
+      const checkIsDifferentCollaborator = await this.isNewCollaborator(data.created_by, accountNumber,data.task_type, data.case_rid, data.task_rid);
       if(!checkIsDifferentCollaborator) {
         const checkCollaboratorExists = await this.isCollaboratorAlreadyAdded(data.created_by, data.case_rid, data.account_rid, data.task_rid, accountNumber,data.task_type);
         if(!checkCollaboratorExists) {
@@ -5823,6 +5821,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         }
       });
       if(updateComments === 1) {
+        if(data.task_type !== 'activity'){
         await CaseHistory.create({
         created_by : data.modified_by,
         created_datetime : new Date(),
@@ -5832,7 +5831,8 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         old_value : isCommentExists.comments,
         new_value : data.comments
       })
-        const checkIsDifferentCollaborator = await this.isNewCollaborator(data.modified_by, accountNumber, "case_task", data.case_rid, data.task_rid);
+    }
+        const checkIsDifferentCollaborator = await this.isNewCollaborator(data.modified_by, accountNumber, data.task_type || 'case_task', data.case_rid, data.task_rid);
         if(!checkIsDifferentCollaborator) {
           const checkCollaboratorExists = await this.isCollaboratorAlreadyAdded(data.modified_by, data.case_rid, data.account_rid, data.task_rid, accountNumber,data.task_type);
           if(!checkCollaboratorExists) {
@@ -6060,7 +6060,6 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             ""
           )}`;
           let insertQuery = "";
-        console.log("In add task timeline...", entity_rid, accountRid, attachmentLevel);
         if (attachmentLevel === "case") {
           /*const { CaseTimeline } = await this.caseModelService.getModels(
             accountNumber
@@ -6220,7 +6219,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
           })
         const deleteComments = await TaskComments.destroy({ where : {rid : data.rid}});
         if(deleteComments === 1) {
-        const checkIsDifferentCollaborator = await this.isNewCollaborator(data.modified_by, accountNumber,'case_task', data.case_rid, data.task_rid);
+        const checkIsDifferentCollaborator = await this.isNewCollaborator(data.modified_by, accountNumber,data.task_type || 'case_task', data.case_rid, data.task_rid);
         if(!checkIsDifferentCollaborator) {
           const checkCollaboratorExists = await this.isCollaboratorAlreadyAdded(data.modified_by, data.case_rid, data.account_rid, data.task_rid, accountNumber,data.task_type);
           if(!checkCollaboratorExists) {
@@ -6257,7 +6256,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
 
   async addAttachmentForTask (data : any, accountNumber : string, files : Express.Multer.File[], userId : string) {
     const {TaskAttachments,TaskHistory} = await this.caseModelService.getModels(accountNumber)
-    const findTaskDetails = await this.findTaskById(data.task_rid, data.account_rid, data.case_rid, accountNumber);
+    const findTaskDetails = await this.findTaskById(data.task_rid, data.account_rid, data.case_rid, accountNumber,data.task_type || 'case_task');
     if(files != undefined) {
       if(Array.isArray(files)) {
         for(let f of files) {
@@ -6336,7 +6335,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
 
   async deleteAttachment (accountNumber : string, data : any, userId : string) {
     const {TaskAttachments} = await this.caseModelService.getModels(accountNumber)
-    const findTaskDetails = await this.findTaskById(data.task_rid, data.account_rid, data.case_rid, accountNumber);
+    const findTaskDetails = await this.findTaskById(data.task_rid, data.account_rid, data.case_rid, accountNumber,data.task_type || 'case_task');
     const checkIsFileExists = await TaskAttachments.findOne({
       where : {
         rid : data.rid,
@@ -6399,14 +6398,18 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     }
     let offset = (data.page - 1) * data.limit;
     const {TaskAttachments} = await this.caseModelService.getModels(accountNumber)
+    let whereClause: any = {
+      account_rid: data.account_rid,
+      task_rid: data.task_rid,
+      is_file_deleted: false
+    };
+    if (data.task_type !== 'activity') {
+      whereClause.case_rid = data.case_rid;
+    }
     let fetchAllTaskAttachments = await TaskAttachments.findAll({
-      where : {
-        account_rid : data.account_rid,
-        case_rid : data.case_rid,
-        task_rid : data.task_rid,
-        is_file_deleted : false
-      }, raw : true,
-    }); 
+      where: whereClause,
+      raw: true,
+    });
     if(fetchAllTaskAttachments.length > 0) {
       const total = fetchAllTaskAttachments.length
       fetchAllTaskAttachments = fetchAllTaskAttachments.slice(offset, data.page * data.limit);
@@ -6489,14 +6492,17 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
   }
   async fetchCollaboratorsList (accountNumber : string, data : any) {
     const {TaskCollaborators} = await this.caseModelService.getModels(accountNumber);
+    let whereClause: any = {
+      account_rid: data.account_rid,
+      task_rid: data.rid
+    };
+    if (data.task_type !== 'activity') {
+      whereClause.case_rid = data.case_rid;
+    }
     const result = await TaskCollaborators.findAll({
-      attributes : ['assigned_to'],
-      where : {
-        case_rid : data.case_rid,
-        account_rid : data.account_rid,
-        task_rid : data.rid
-      },
-      raw : true
+      attributes: ['assigned_to'],
+      where: whereClause,
+      raw: true
     });
     if(result.length > 0) return result;
     else return []

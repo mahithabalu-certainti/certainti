@@ -47,16 +47,8 @@ import {
   rawQueries,
   MAIN_SCHEMA_NAME,
 } from "../../utils/constants";
-import { query } from "express";
-import currency from "currency.js";
-import moment from "moment";
 import { CaseManagementSchemaService } from "../casesManagement/schemaService";
-import {
-  fetchTaskActivities,
-  fetchTaskComments,
-  listAllTaskStatus,
-  taskCardDetails,
-} from "../../utils/rawQueries";
+
 import ActivitySchemaService from "./schemaService";
 import CaseSchemaService from "../cases/schemaService";
 export class ActivityService {

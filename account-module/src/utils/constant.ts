@@ -2319,6 +2319,11 @@ export const rawQueries = {
       CREATE SEQUENCE IF NOT EXISTS "${schemaName}".activity_history_seq START 1;
     `;
   },
+   getCreateTaskHistorySequenceQuery(schemaName: string): string {
+    return `
+      CREATE SEQUENCE IF NOT EXISTS "${schemaName}".task_history_seq START 1;
+    `;
+  },
   getCreateActivityHistoryTableQuery(schemaName: string): string {
     return `
       CREATE TABLE IF NOT EXISTS "${schemaName}".activity_history (
@@ -2331,6 +2336,22 @@ export const rawQueries = {
         account_rid varchar(50) NOT NULL,
         activity_rid varchar(50) NOT NULL,
         activity_type varchar(50),
+        attribute_name VARCHAR(100) NOT NULL,
+        old_value VARCHAR(2000),
+        new_value VARCHAR(2000)
+      );
+    `;
+  },
+   getCreateTaskHistoryTableQuery(schemaName: string): string {
+    return `
+      CREATE TABLE IF NOT EXISTS "${schemaName}".task_history (
+        rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+        r_number VARCHAR(20) UNIQUE DEFAULT 'TCH-' || LPAD(nextval('"${schemaName}".task_history_seq')::TEXT, 10, '0'),
+        created_by varchar(50) NOT NULL,
+        modified_by varchar(50),
+        created_datetime TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+        modified_datetime TIMESTAMP WITH TIME ZONE,
+        task_rid varchar(50) NOT NULL,
         attribute_name VARCHAR(100) NOT NULL,
         old_value VARCHAR(2000),
         new_value VARCHAR(2000)
@@ -2387,31 +2408,35 @@ export const rawQueries = {
     activity_type character varying(50),
     fiscal_year integer,
     status_rid character varying(50),
-    effective_start_datetime timestamp without time zone,
-    effective_end_datetime timestamp without time zone,
+    effective_start_datetime timestamp with time zone,
+    effective_end_datetime timestamp with time zone,
     subject character varying(255),
     body_html text,
     to_email json,
     cc_email json,
     description text,
-    email_sent_datetime timestamp without time zone,
     priority_rid character varying(50),
     assigned_to character varying(50),
     task_name character varying(255),
     task_template_rid character varying(50),
-    remainder_interval integer,
-    task_repeat_frequency character varying(50),
-    event_url character varying(255),
-    event_code character varying(50),
-    event_password character varying(50),
-    transcript text,
-    event_platform character varying(50),
-    event_time character varying(50),
-    invitees_list text,
     attendees_list text,
-    minutes_of_meeting text,
     sender_email character varying(255),
     meeting_participants json,
+    meeting_invite text,
+    meeting_id character varying(255),
+    call_platform character varying(255),
+    minutes_of_meeting text,
+    caller_id character varying(50),
+    call_participants json,
+    recurrence_days json,
+    recurrence_interval integer,
+    recurrence_type character varying(50),
+    time_zone character varying(50),
+    effective_start_time character varying(50),
+    effective_end_time character varying(50),
+    invited_by character varying(50),
+    recurrence_day_of_month integer,
+    recurrence_monthly_index character varying(50),
     CONSTRAINT activities_pkey PRIMARY KEY (rid)
       );
     `;
@@ -3058,6 +3083,34 @@ export const rawQueries = {
         descriptions VARCHAR(2000)
       );
     `;
+  },
+  getCreateJurisdictionTableQuery(schemaName: string): string {
+    return `
+      CREATE TABLE IF NOT EXISTS "${schemaName}".jurisdictions
+      (
+        rid character varying(50) COLLATE  NOT NULL DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+        created_by character varying(50) COLLATE  NOT NULL,
+        modified_by character varying(50) COLLATE ,
+        created_datetime timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        modified_datetime timestamp with time zone,
+        entity_rid character varying(50) COLLATE  NOT NULL,
+        is_federal_level boolean NOT NULL DEFAULT false,
+        is_state_level boolean NOT NULL DEFAULT false,
+        states text[] COLLATE ,
+        level character varying(50) COLLATE  NOT NULL,
+        CONSTRAINT jurisdictions_pkey PRIMARY KEY (rid)
+      )
+    `;
+  },
+  getCreateJurisdictionsIndexes(schemaName: string): string[] {
+    const fieldsToIndex = [
+      "entity_rid",
+    ];
+  
+    return fieldsToIndex.map(field => `
+      CREATE INDEX IF NOT EXISTS "idx_jurisdictions_${field}"
+      ON "${schemaName}"."notes"("${field}");
+    `);
   },
   getCreateNotesIndexes(schemaName: string): string[] {
     const fieldsToIndex = [

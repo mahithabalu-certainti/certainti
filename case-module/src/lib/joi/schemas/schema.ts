@@ -12,6 +12,8 @@ const createCaseSchema = Joi.object({
   case_startdate: Joi.date().required(),
   planned_submission_date: Joi.date().required(),
   statutory_submission_date: Joi.date().required(),
+  heat_light_power:Joi.number().integer(),
+  total_nonlabor_cost:Joi.number().integer(),
   tax_liability: Joi.number().optional().allow(null,"")
 });
 
@@ -28,7 +30,9 @@ const updateCaseSchema = Joi.object({
   planned_submission_date: Joi.date().required(),
   statutory_submission_date: Joi.date().required(),
   country_rid: Joi.string().optional(),
-  tax_liability: Joi.number().optional().allow(null,"")
+  tax_liability: Joi.number().optional().allow(null,""),
+  heat_light_power:Joi.number().integer(),
+  total_nonlabor_cost:Joi.number().integer(),
 });
 
 const exportCasesAccountSchema = Joi.object({

@@ -128,6 +128,9 @@ class SchemaService {
       await this.createActivitiesTable(schemaName, sequelize);
       await this.createActivityAttachmentsTable(schemaName, sequelize);
       await this.createActivityHistoryTable(schemaName, sequelize);
+      await this.createTaskHistoryTable(schemaName, sequelize);
+
+      await this.createJustificationTable(schemaName, sequelize);
       
       await transaction.commit();
     } catch (Err) {
@@ -1411,6 +1414,14 @@ class SchemaService {
     }
   }
 
+  private async createJustificationTable(schemaName: string, sequelize: Sequelize) {
+    await sequelize.query(rawQueries.getCreateJurisdictionTableQuery(schemaName));
+
+    for (const indexQuery of rawQueries.getCreateJurisdictionsIndexes(schemaName)) {
+      await sequelize.query(indexQuery);
+    }
+  }
+
   private async createNotesTimeline(schemaName: string, sequelize: Sequelize) {
     await sequelize.query(
       rawQueries.getCreateNotesTimelineSequenceQuery(schemaName)
@@ -1511,9 +1522,36 @@ class SchemaService {
     );
 
     const fieldsToIndex = [
-      "interaction_rid",
-      "interaction_item_rid",
-      "project_fiscal_rid",
+      "activity_rid",
+      "account_rid",
+      "activity_type",
+      "created_by",
+      "modified_by",
+      "created_datetime",
+      "modified_datetime"
+    ];
+  
+    for (const field of fieldsToIndex) {
+      await sequelize.query(
+        rawQueries.getInteractionHistoryIndexQuery(schemaName, field)
+      );
+    }
+  }
+
+   private async createTaskHistoryTable(
+    schemaName: string,
+    sequelize: any
+  ) {
+    await sequelize.query(
+      rawQueries.getCreateTaskHistorySequenceQuery(schemaName)
+    );
+
+    await sequelize.query(
+      rawQueries.getCreateTaskHistoryTableQuery(schemaName)
+    );
+
+    const fieldsToIndex = [
+      "task_rid",
       "created_by",
       "modified_by",
       "created_datetime",

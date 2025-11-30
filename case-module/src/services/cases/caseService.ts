@@ -2274,7 +2274,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
       const mainDb = await this.getMainDb();
       const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
       data.modified_by = userId
-      const fetchTaskDetails = await this.caseSchemaService.findTaskById(data.task_rid,data.account_rid, data.case_rid ,fetchParent[0][0].r_number);
+      const fetchTaskDetails = await this.caseSchemaService.findTaskById(data.task_rid,data.account_rid, data.case_rid ,fetchParent[0][0].r_number,data.task_type);
       const result = await this.caseSchemaService.updateComments(data, fetchParent[0][0].r_number, fetchTaskDetails?.r_number!, files);
       if(result?.statusCode === HttpStatus.SUCCESS) {
         return {
@@ -2312,7 +2312,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
       const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
       let schemaName = rawQueries.fetchSchemaName(fetchParent[0][0].r_number);
       
-      const result : any = await orgDb.query(fetchTaskComments(data.page, data.limit, data.task_rid, data.account_rid, data.case_rid, schemaName));
+      const result : any = await orgDb.query(fetchTaskComments(data.page, data.limit, data.task_rid, data.account_rid, data.case_rid, schemaName,data?.task_type || 'milestone'));
       if(result[0][0].comments !== null) {
         const total = result[0][0].comments[0].total_result
         const userIds = [...new Set(result[0][0].comments.map((d : any) => d.created_by))];
@@ -2386,7 +2386,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
       const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
       let schemaName = rawQueries.fetchSchemaName(fetchParent[0][0].r_number);
 
-      const result = await orgDb.query<ActivityType>(fetchTaskActivities(data.page, data.limit, schemaName, data.case_rid, data.task_rid), {type : QueryTypes.SELECT});
+      const result = await orgDb.query<ActivityType>(fetchTaskActivities(data.page, data.limit, schemaName, data.case_rid, data.task_rid,data.task_type), {type : QueryTypes.SELECT});
       if(result.length > 0) {
         const userIds = [...new Set(result.map((d : any) => d.created_by))];
         const findUsers : any = await mainDb.query(rawQueries.getOwnerDetails(userIds));
@@ -2588,6 +2588,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
           r_number : resData?.task_details.r_number,
           task_name : resData?.task_details.task_name,
           created_by : resData?.task_details.created_by,
+          fiscal_year : resData?.task_details.fiscal_year || null,
           created_by_name : assignedToMap.get(resData?.task_details.created_by!) || null,
           assigned_to : resData?.task_details.assigned_to,
           assigned_to_name :  assignedToMap.get(resData?.task_details.assigned_to!) || null,

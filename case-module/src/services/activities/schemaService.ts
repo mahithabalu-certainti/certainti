@@ -542,25 +542,7 @@ class ActivitySchemaService {
     return { activities: [], totalCount: 0 };
   }
       }
-       const tableSortFields = [
-        "r_number",
-        "attachment_level",
-        "attached_to",
-        "effective_start_datetime",
-        "effective_end_datetime",
-        "created_datetime",
-        "fiscal_year",
-        "modified_datetime",
-        "activity_type",
-        "call_platform"
-      ];
-      const sortByFinal = tableSortFields.includes(sortBy)
-        ? sortBy
-        : "created_datetime";
       
-      const sortOrderFinal = ["ASC", "DESC"].includes(sortOrder.toUpperCase())
-        ? sortOrder.toUpperCase()
-        : "DESC";
 
       const fetchAttachments = async (
         model: any,
@@ -577,8 +559,7 @@ class ActivitySchemaService {
           ],
         };
         return model.findAll({
-          where,
-          order: [[sortByFinal, sortOrderFinal]]
+          where
         });
       };
       // 🔷 Optimized project resource + task attachments fetch for multiple projects
@@ -853,7 +834,20 @@ class ActivitySchemaService {
       const validSortFields = [
         "attached_to",
         "created_by_name",
-        "modified_by_name"
+        "modified_by_name",
+         "effective_start_datetime",
+        "effective_end_datetime",
+        "status_name",
+        "activity_type",
+         "r_number",
+        "attachment_level",
+        "effective_start_datetime",
+        "effective_end_datetime",
+        "created_datetime",
+        "fiscal_year",
+        "modified_datetime",
+        
+        "call_platform"
       ];
       const finalSortBy = validSortFields.includes(sortBy)
         ? sortBy
@@ -862,12 +856,12 @@ class ActivitySchemaService {
       const finalSortOrder = ["ASC", "DESC"].includes(sortOrder.toUpperCase())
         ? sortOrder.toUpperCase()
         : "DESC";
-      console.log('finalSortBy', finalSortBy);
-      console.log('finalSortOrder', finalSortOrder);
 
       allActivities.sort((a, b) => {
         // Special handling for created_datetime
-        if (finalSortBy === "created_datetime") {
+        if (finalSortBy === "created_datetime" ||
+            finalSortBy === "effective_start_datetime" || finalSortBy === "effective_end_datetime") {
+          console.log('Sorting by date field:', finalSortBy);
           const aDate = new Date(a[finalSortBy]).getTime();
           const bDate = new Date(b[finalSortBy]).getTime();
           return finalSortOrder === "ASC" ? aDate - bDate : bDate - aDate;
@@ -1051,6 +1045,22 @@ class ActivitySchemaService {
         activities.sort((a, b) => {
           const aType = a.assigned_to_name || "";
           const bType = b.assigned_to_name || "";
+          const aEmpty = !aType || aType.trim() === "";
+          const bEmpty = !bType || bType.trim() === "";
+
+          if (aEmpty && bEmpty) return 0;
+          if (aEmpty) return finalSortOrder === "ASC" ? 1 : -1;
+          if (bEmpty) return finalSortOrder === "ASC" ? -1 : 1;
+
+          return finalSortOrder === "ASC"
+            ? aType.localeCompare(bType)
+            : bType.localeCompare(aType);
+        });
+      }
+      if (sortBy === "status_name") {
+        activities.sort((a, b) => {
+          const aType = a.status_name || "";
+          const bType = b.status_name || "";
           const aEmpty = !aType || aType.trim() === "";
           const bEmpty = !bType || bType.trim() === "";
 
@@ -2430,8 +2440,8 @@ class ActivitySchemaService {
       attachments: attachmentsDetails || [],
       effective_start_datetime:emailDetails.effective_start_datetime ?? null,
       effective_end_datetime:emailDetails.effective_end_datetime ?? null, 
-      efective_start_time: emailDetails.efective_start_time ?? null,
-      efective_end_time: emailDetails.efective_end_time ?? null,
+      efective_start_time: emailDetails.effective_start_time ?? null,
+      efective_end_time: emailDetails.effective_end_time ?? null,
       recurrence_days: emailDetails.recurrence_days ? emailDetails.recurrence_days: [],
       recurrence_interval: emailDetails.recurrence_interval ?? null,
       recurrence_type: emailDetails.recurrence_type ?? null,

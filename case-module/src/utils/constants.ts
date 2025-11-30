@@ -606,7 +606,7 @@ export const activityFieldMappings = [
   },
    {
     permissionField: "attached_to",
-    exportField: "Related To Name",
+    exportField: "Related To",
     dataField: "attached_to",
   },
   {
@@ -623,11 +623,6 @@ export const taskactivityFieldMappings = [
     exportField: "Task ID",
     dataField: "r_number",
   },
-   {
-    permissionField: "created_by",
-    exportField: "Created By",
-    dataField: "created_by_name",
-  },
   {
     permissionField: "status_rid",
     exportField: "Status",
@@ -635,8 +630,23 @@ export const taskactivityFieldMappings = [
   },
    {
     permissionField: "attached_to",
-    exportField: "Related To Name",
+    exportField: "Related To",
     dataField: "attached_to",
+  },
+   {
+    permissionField: "created_by",
+    exportField: "Created By",
+    dataField: "created_by",
+  },
+   {
+    permissionField: "created_datetime",
+    exportField: "Created On",
+    dataField: "created_datetime",
+  },
+  {
+    permissionField: "description",
+    exportField: "Description",
+    dataField: "description",
   },
   {
     permissionField: "effective_end_datetime",
@@ -661,16 +671,34 @@ export const emailactivityFieldMappings = [
     exportField: "Email Status",
     dataField: "status_name",
   },
+   {
+    permissionField: "attached_to",
+    exportField: "Related To",
+    dataField: "attached_to",
+  },
+  {
+    permissionField: "created_by_name",
+    exportField: "Created By",
+    dataField: "created_by_name",
+  },
+
   {
     permissionField: "created_datetime",
     exportField: "Created On",
     dataField: "created_datetime",
   },
    {
-    permissionField: "attached_to",
-    exportField: "Related To Name",
-    dataField: "attached_to",
+    permissionField: "to_email",
+    exportField: "Email To",
+    dataField: "to_email",
+  },
+    {
+    permissionField: "subject",
+    exportField: "Email Subject",
+    dataField: "subject",
   }
+
+  
           
 ];
 export const callactivityFieldMappings = [
@@ -685,20 +713,36 @@ export const callactivityFieldMappings = [
     dataField: "call_platform",
   },
   {
+    permissionField: "attached_to",
+    exportField: "Related To",
+    dataField: "attached_to",
+  },
+  {
     permissionField: "status_rid",
     exportField: "Call Status",
     dataField: "status_name",
+  },
+   {
+    permissionField: "effective_start_datetime",
+    exportField: "Call Start Date",
+    dataField: "effective_start_datetime",
+  },
+  {
+    permissionField: "effective_end_datetime",
+    exportField: "Call End Date",
+    dataField: "effective_end_datetime",
+  },
+  {
+    permissionField: "created_by_name",
+    exportField: "Created By",
+    dataField: "created_by_name",
   },
   {
     permissionField: "created_datetime",
     exportField: "Created On",
     dataField: "created_datetime",
   },
-   {
-    permissionField: "attached_to",
-    exportField: "Related To Name",
-    dataField: "attached_to",
-  }
+   
 
 ];
 export const meetingactivityFieldMappings = [
@@ -708,51 +752,38 @@ export const meetingactivityFieldMappings = [
     dataField: "r_number",
   },
   {
-    permissionField: "activity_type",
-    exportField: "Activity Type",
-    dataField: "activity_type",
+    permissionField: "status_rid",
+    exportField: "Meeting Status",
+    dataField: "status_name",
   },
-  {
-    permissionField: "attachment_level",
-    exportField: "Related Entity",
-    dataField: "attachment_level",
-  },
-  {
-    permissionField: "attach_to",
-    exportField: "Related To ID",
-    dataField: "attach_to",
-  },
-  {
-    permissionField: "attached_to",
-    exportField: "Related To Name",
-    dataField: "attached_to",
-  },
-  {
-    permissionField: "fiscal_year",
-    exportField: "Fiscal Year",
-    dataField: "fiscal_year",
-  },
-   
    {
-    permissionField: "created_by",
-    exportField: "Created By",
-    dataField: "created_by_name",
-  },
-  {
     permissionField: "created_datetime",
     exportField: "Created On",
     dataField: "created_datetime",
   },
   {
-    permissionField: "updated_by",
-    exportField: "Updated By",
-    dataField: "modified_by_name",
+    permissionField: "invited_by",
+    exportField: "Invited By",
+    dataField: "invited_by",
+  },
+   {
+    permissionField: "effective_start_time",
+    exportField: "Meeting Start Time",
+    dataField: "effective_start_time",
   },
   {
-    permissionField: "updated_datetime",
-    exportField: "Updated On",
-    dataField: "updated_datetime",
-  }
+    permissionField: "effective_end_time",
+    exportField: "Meeting End Time",
+    dataField: "effective_end_time",
+  },
+    {
+    permissionField: "attached_to",
+    exportField: "Related To",
+    dataField: "attached_to",
+  },
+  
+
+
           
 ];
 export const reviewProjectsFieldMappings = [
@@ -1127,9 +1158,18 @@ export const rawQueries = {
   getTotalProjectsCountInCase(
     schemaName: string,
     fiscalYear: number,
-    accountRid: string
+    accountRid: string,
+    caseRid: string
   ) {
-    return `SELECT COUNT(*) AS total_projects, COALESCE(SUM(total_cost_prj), 0.00) AS total_projects_cost, COALESCE(SUM(qre_final), 0.00) AS total_projects_qre_cost FROM ${schemaName}.project_fiscal WHERE account_rid = '${accountRid}' AND fiscal_year = ${fiscalYear}`;
+    return `SELECT COUNT(*) AS total_projects,
+    COALESCE(SUM(pf.total_cost_prj), 0.00) AS total_projects_cost, 
+    COALESCE(SUM(pf.qre_final), 0.00) AS total_projects_qre_cost 
+    FROM ${schemaName}.project_fiscal pf
+    LEFT JOIN ${schemaName}.case_projects cp ON cp.project_fiscal_rid = pf.rid
+    WHERE
+    cp.case_rid = '${caseRid}'
+    AND
+    cp.account_rid = '${accountRid}'`;
   },
   getTotalProjectCost(schemaName: string, caseRid: string, accountRid: string) {
     return `
@@ -1415,6 +1455,9 @@ export const rawQueries = {
   },
   getEmailTemplateCategory() {
     return `SELECT rid, category_name FROM ${MAIN_SCHEMA_NAME}.email_template_category ORDER BY category_name ASC`
+  },
+  getEmailTemplateCategoryByName(categoryName: string) {
+    return `SELECT rid, category_name FROM ${MAIN_SCHEMA_NAME}.email_template_category where category_name = '${categoryName}' ORDER BY category_name ASC`
   },
   getAllPriorityTypes (rid : any[]) {
     let ids : string[] = []
@@ -2079,6 +2122,8 @@ export const meetingFields = [
   "a.recurrence_type",
   "a.effective_end_datetime",
   "a.effective_start_datetime",
+  "a.effective_end_time",
+  "a.effective_start_time",
   "a.recurrence_monthly_index",
   "a.recurrence_day_of_month",
 
