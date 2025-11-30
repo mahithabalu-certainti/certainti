@@ -2979,7 +2979,7 @@ return !response;
       for (const member of teamMembers) {
         await CaseTask.update(
           {
-            assigned_to: enrichedTeamMembers.find(etm => etm.user_rid === member.user_rid)?.user_name || null,
+            assigned_to: enrichedTeamMembers.find(etm => etm.user_rid === member.user_rid)?.user_rid || null,
           },
           {
             where: {
