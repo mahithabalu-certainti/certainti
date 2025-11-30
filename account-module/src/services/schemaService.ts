@@ -129,6 +129,8 @@ class SchemaService {
       await this.createActivityAttachmentsTable(schemaName, sequelize);
       await this.createActivityHistoryTable(schemaName, sequelize);
       await this.createTaskHistoryTable(schemaName, sequelize);
+
+      await this.createJustificationTable(schemaName, sequelize);
       
       await transaction.commit();
     } catch (Err) {
@@ -1408,6 +1410,14 @@ class SchemaService {
     await sequelize.query(rawQueries.getCreateNotesTableQuery(schemaName));
 
     for (const indexQuery of rawQueries.getCreateNotesIndexes(schemaName)) {
+      await sequelize.query(indexQuery);
+    }
+  }
+
+  private async createJustificationTable(schemaName: string, sequelize: Sequelize) {
+    await sequelize.query(rawQueries.getCreateJurisdictionTableQuery(schemaName));
+
+    for (const indexQuery of rawQueries.getCreateJurisdictionsIndexes(schemaName)) {
       await sequelize.query(indexQuery);
     }
   }

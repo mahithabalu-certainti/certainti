@@ -1107,7 +1107,7 @@ return query;
                 if(cond === 'contains')
                   filterQueryArray.push(`ct.${validKey} ILIKE '%${values}%'`)
                 if(cond === 'is_empty') 
-                  filterQueryArray.push(`ct.${validKey} IS NULL`)
+                  filterQueryArray.push(`(ct.${validKey} IS NULL OR ct.${validKey} = '')`)
                 if(cond === 'in')
                   filterQueryArray.push(`ct.${validKey} IN (${values.map((d : any) => `'${d}'`).join(',')})`)
                 break;
