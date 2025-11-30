@@ -284,6 +284,7 @@ export interface CaseStatusResponse {
 export interface CaseOwner {
   rid: string;
   name: string;
+  email: string;
 }
 
 export interface CaseOwnersResponse {

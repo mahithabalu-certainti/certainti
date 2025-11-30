@@ -92,7 +92,7 @@ export interface RoleOptionsResponse extends CommonApiResponse {
 export interface UserOption {
   rid: string;
   name: string;
-  email?: string;
+  email: string;
   status?: string;
 }
 
@@ -131,7 +131,7 @@ export interface CollaboratorListPayload {
 export interface TagListPayload {
   task_rid?: string;
   account_rid: string;
-  case_rid: string;
+  case_rid?: string;
   action?: 'create' | 'update';
 }
 
@@ -157,8 +157,12 @@ const fetchCaseTeamMembersDropdown = async (
   caseId: string
 ): Promise<CaseTeamMemberDropdown[]> => {
   try {
+    let url = `/api/cases/caseTeam/list?account_rid=${accountId}&is_dropdown_list=true`;
+    if (caseId) {
+      url += `&case_rid=${caseId}`;
+    }
     const response = await caseServiceApi.get<CaseTeamMembersDropdownResponse>(
-      `/api/cases/caseTeam/list?account_rid=${accountId}&case_rid=${caseId}&is_dropdown_list=true`
+      url
     );
 
     if (response.data?.data?.caseTeamMembers) {
@@ -228,11 +232,16 @@ const fetchRoleOptions = async (): Promise<RoleOption[]> => {
   }
 };
 
-const fetchUserOptions = async (accountId: string): Promise<UserOption[]> => {
+const fetchUserOptions = async (
+  accountId: string,
+  scope?: string
+): Promise<UserOption[]> => {
   try {
-    const response = await caseServiceApi.get<UserOptionsResponse>(
-      `/api/cases/caseTeam/users/${accountId}`
-    );
+    let url = `/api/cases/caseTeam/users/${accountId}`;
+    if (scope) {
+      url += `?user_access_scope=${scope}`;
+    }
+    const response = await caseServiceApi.get<UserOptionsResponse>(url);
 
     if (response.data?.data?.users) {
       const uniqueUsers = Array.from(
@@ -327,14 +336,14 @@ export const useGetRoleOptions = (
 
 export const useGetUserOptions = (
   accountId?: string,
-  enabled: boolean = true
+  enabled: boolean = true,
+  scope?: string
 ): UseQueryResult<UserOption[] | undefined, Error> => {
   return useQuery<UserOption[] | undefined, Error>({
-    queryKey: ['case-team-user-options', accountId],
-    queryFn: () => fetchUserOptions(accountId!),
+    queryKey: ['case-team-user-options', accountId, scope],
+    queryFn: () => fetchUserOptions(accountId!, scope),
     retry: 0,
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
+    gcTime: 0,
     enabled: enabled && !!accountId,
   });
 };
@@ -355,7 +364,7 @@ export const useGetTagOptions = (
     retry: 0,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
-    enabled: enabled && !!payload?.account_rid && !!payload?.case_rid,
+    enabled: enabled && !!payload?.account_rid,
   });
 };
 
@@ -387,8 +396,8 @@ export const useGetCaseTeamMembersDropdown = (
     queryKey: ['case-team-members-dropdown', accountId, caseId],
     queryFn: () => fetchCaseTeamMembersDropdown(accountId!, caseId!),
     retry: 0,
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
+    staleTime: 0, // Always fetch fresh data since users change often
+    gcTime: 0,
     enabled: enabled && !!accountId && !!caseId,
   });
 };
@@ -468,5 +477,32 @@ export const useUpdateJurisdictionConfig = () => {
     Partial<updateCaseJurisdictionPayload>
   >({
     mutationFn: (body) => updateCaseJurisdictionConfig({ ...body }),
+  });
+};
+export interface DeleteTagPayload {
+  task_rid: string;
+  account_rid: string;
+  case_rid: string;
+  tag_rid: string[];
+}
+
+export const deleteTag = async (
+  payload: DeleteTagPayload
+): Promise<CommonApiResponse> => {
+  try {
+    const response = await caseServiceApi.post<CommonApiResponse>(
+      '/api/cases/tag/delete',
+      payload
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error deleting tag:', error);
+    throw error;
+  }
+};
+
+export const useDeleteTag = () => {
+  return useMutation<CommonApiResponse, Error, DeleteTagPayload>({
+    mutationFn: (payload) => deleteTag(payload),
   });
 };

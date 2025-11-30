@@ -24,10 +24,7 @@ export const transformTaskTemplatePayload = (
   const workflowConnector =
     hasTargetRid || hasRelationshipConnector
       ? {
-          source_rid:
-            isEditView && originalData?.workflow_connector?.source_rid
-              ? originalData.workflow_connector.source_rid
-              : '',
+          source_rid: isEditView ? originalData?.rid : '',
           target_rid: filteredTargetRid,
           relationship_connector_rid: formData?.relationship_connector_rid,
         }

@@ -151,35 +151,43 @@ const StyledSelect = React.forwardRef<HTMLDivElement, StyledSelectProps>(
         >
           {children}
         </Select>
-        {typeof error === 'string' && error && (
-          <Tooltip
-            title={error}
-            arrow
-            placement='top'
-            slotProps={{
-              tooltip: {
-                sx: {
-                  backgroundColor: '#FEF2F2',
-                  color: '#EF4444',
-                  border: '1px solid #EF4444',
-                  fontSize: '12px',
-                },
-              },
-              arrow: {
-                sx: {
-                  color: '#FEF2F2',
-                  '&:before': {
+        <div
+          className='h-[28px] w-5 flex items-center justify-center absolute top-[2px] right-[25px] pointer-events-auto z-10'
+          style={{
+            opacity: (typeof error === 'string' && error) ? 1 : 0,
+            pointerEvents: (typeof error === 'string' && error) ? 'auto' : 'none',
+          }}
+        >
+          {typeof error === 'string' && error && (
+            <Tooltip
+              title={error}
+              arrow
+              placement='top'
+              slotProps={{
+                tooltip: {
+                  sx: {
+                    backgroundColor: '#FEF2F2',
+                    color: '#EF4444',
                     border: '1px solid #EF4444',
+                    fontSize: '12px',
                   },
                 },
-              },
-            }}
-          >
-            <span className='h-[28px] w-5 flex items-center justify-center absolute top-[2px] right-[25px] cursor-pointer pointer-events-auto z-10'>
-              <ErrorInfoIcon alt='error' className='w-5 h-3.5' />
-            </span>
-          </Tooltip>
-        )}
+                arrow: {
+                  sx: {
+                    color: '#FEF2F2',
+                    '&:before': {
+                      border: '1px solid #EF4444',
+                    },
+                  },
+                },
+              }}
+            >
+              <span className='cursor-pointer flex items-center justify-center'>
+                <ErrorInfoIcon alt='error' className='w-5 h-3.5' />
+              </span>
+            </Tooltip>
+          )}
+        </div>
       </div>
     );
   }

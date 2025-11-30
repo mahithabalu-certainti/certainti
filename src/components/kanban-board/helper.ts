@@ -61,7 +61,7 @@ export const enrichAssignee = (assignee: {
 };
 
 export const normalizeTags = (
-  tags: (string | { tag_name?: string; name?: string; tag_rid?: string })[]
+  tags: (string | { tag_name?: string; name?: string; tag_rid?: string; rid?: string })[]
 ): string[] => {
   if (!Array.isArray(tags)) return [];
   return tags
@@ -72,6 +72,22 @@ export const normalizeTags = (
       return '';
     })
     .filter(Boolean);
+};
+
+export const normalizeTagsDetails = (
+  tags: (string | { tag_name?: string; name?: string; tag_rid?: string; rid?: string })[]
+): Array<{ id: string; name: string }> => {
+  if (!Array.isArray(tags)) return [];
+  return tags
+    .map((tag) => {
+      if (typeof tag === 'object') {
+        const id = tag.tag_rid || tag.rid;
+        const name = tag.tag_name || tag.name;
+        if (id && name) return { id, name };
+      }
+      return null;
+    })
+    .filter((t): t is { id: string; name: string } => t !== null);
 };
 
 export const enrichTask = (task: Task): Task => {
@@ -85,8 +101,10 @@ export const enrichTask = (task: Task): Task => {
     enrichedTask.collaborators = enrichedTask.collaborators.map(enrichAssignee);
   }
 
-  if (enrichedTask.tags) {
-    enrichedTask.tags = normalizeTags(enrichedTask.tags);
+  if (enrichedTask.tags && enrichedTask.tags.length > 0 && typeof enrichedTask.tags[0] === 'object') {
+    // Populate tagsDetails first because normalizeTags modifies the array to strings (if it was objects)
+    enrichedTask.tagsDetails = normalizeTagsDetails(enrichedTask.tags as any);
+    enrichedTask.tags = normalizeTags(enrichedTask.tags as any);
   }
 
   return enrichedTask;

@@ -18,3 +18,4 @@ export * from './timesheet';
 export * from './technical-summary';
 export * from './notes';
 export * from './checklist';
+export * from './activities';

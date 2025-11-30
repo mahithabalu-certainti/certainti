@@ -54,6 +54,9 @@ interface TaskFieldsSectionProps {
   selectedStatus?: string;
   onStatusChangeCreate?: (statusName: string, statusId: string) => void;
   errors?: Record<string, string | undefined>;
+  fiscalYear?: string | null;
+  fiscalYears?: string[];
+  onFiscalYearChange?: (value: string) => void;
 }
 
 const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
@@ -92,6 +95,9 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
   selectedStatus,
   onStatusChangeCreate,
   errors = {},
+  fiscalYear,
+  fiscalYears,
+  onFiscalYearChange,
 }) => {
   const shouldPrepopulate = mode === 'view';
 
@@ -138,15 +144,15 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
                 mode === 'view'
                   ? (e) => onStatusChange(e.target.value as string)
                   : (e) => {
-                    const selectedName = e.target.value as string;
-                    const statusItem = statusData?.find(
-                      (s) => s.name === selectedName
-                    );
-                    onStatusChangeCreate?.(
-                      selectedName,
-                      statusItem?.id || ''
-                    );
-                  }
+                      const selectedName = e.target.value as string;
+                      const statusItem = statusData?.find(
+                        (s) => s.name === selectedName
+                      );
+                      onStatusChangeCreate?.(
+                        selectedName,
+                        statusItem?.id || ''
+                      );
+                    }
               }
               disabled={fieldDisabled.status || mode === 'create'}
               width='100%'
@@ -178,7 +184,10 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
                 );
               }}
             >
-              <MenuItem value='' sx={{ color: '#425A76', fontSize: '13px', fontWeight: '500' }}>
+              <MenuItem
+                value=''
+                sx={{ color: '#425A76', fontSize: '13px', fontWeight: '500' }}
+              >
                 Choose Status
               </MenuItem>
               {statusData.map((status) => (
@@ -239,7 +248,10 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
                 );
               }}
             >
-              <MenuItem value='' sx={{ color: '#425A76', fontSize: '13px', fontWeight: '500' }}>
+              <MenuItem
+                value=''
+                sx={{ color: '#425A76', fontSize: '13px', fontWeight: '500' }}
+              >
                 Choose Priority
               </MenuItem>
               {priorityData.map((priority) => (
@@ -256,116 +268,129 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
           </div>
         )}
 
-        {/* Assignee Field (Create Mode Only) */}
-        {mode === 'create' &&
-          !fieldVisibility.assignee && (
-            <div className='flex flex-col gap-2'>
-              <label className='text-sm font-medium text-gray-700'>Assignee</label>
-              <StyledSelect
-                name='assignee'
-                value={selectedAssignee || ''}
-                onChange={(e) => onAssigneeChange?.(e.target.value as string)}
-                disabled={fieldDisabled.assignee}
-                width='100%'
-                error={errors.assignee}
-                renderValue={(selected) => {
-                  const value = Array.isArray(selected)
-                    ? selected.join(', ')
-                    : (selected as string);
-                  if (!value) {
-                    return (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <div
-                          style={{
-                            width: '20px',
-                            height: '20px',
-                            borderRadius: '50%',
-                            backgroundColor: '#9CA3AF',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '9px',
-                            fontWeight: '600',
-                            color: 'white',
-                            flexShrink: 0,
-                          }}
-                        >
-                          UA
-                        </div>
-                        <span style={{ color: '#7D98B6', fontSize: '13px' }}>
-                          Unassigned
-                        </span>
-                      </div>
-                    );
-                  }
-                  const user = availableUsers.find((u) => u.id === value);
-                  if (user) {
-                    return (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <div
-                          style={{
-                            width: '20px',
-                            height: '20px',
-                            borderRadius: '50%',
-                            backgroundColor: user.color,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '9px',
-                            fontWeight: '600',
-                            color: 'white',
-                            flexShrink: 0,
-                          }}
-                        >
-                          {user.initials}
-                        </div>
-                        <span
-                          style={{
-                            fontSize: '13px',
-                            color: 'black',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          {user.name}
-                        </span>
-                      </div>
-                    );
-                  }
-                  return <span>{value}</span>;
-                }}
+        {/* Fiscal Year Field */}
+        {!fieldVisibility.fiscalYear && (
+          <div className='flex flex-col gap-2'>
+            <label className='text-sm font-medium text-gray-700'>
+              Fiscal Year
+            </label>
+            <StyledSelect
+              name='fiscalYear'
+              value={
+                shouldPrepopulate
+                  ? editedTask?.fiscal_year || fiscalYear || ''
+                  : fiscalYear || ''
+              }
+              onChange={(e) => onFiscalYearChange?.(e.target.value as string)}
+              disabled={fieldDisabled.fiscalYear}
+              width='100%'
+              error={errors.fiscalYear}
+              renderValue={(selected) => {
+                const value = Array.isArray(selected)
+                  ? selected.join(', ')
+                  : (selected as string);
+                if (!value) {
+                  return (
+                    <span style={{ color: '#7D98B6', fontSize: '13px' }}>
+                      Choose Fiscal Year
+                    </span>
+                  );
+                }
+                return (
+                  <span
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                    title={typeof value === 'string' ? value : String(value)}
+                  >
+                    {typeof value === 'string' ? value : String(value)}
+                  </span>
+                );
+              }}
+            >
+              <MenuItem
+                value=''
+                sx={{ color: '#425A76', fontSize: '13px', fontWeight: '500' }}
               >
-                <MenuItem value='' sx={{ color: '#425A76', fontSize: '13px', fontWeight: '500' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                Choose Fiscal Year
+              </MenuItem>
+              {fiscalYears?.map((year) => (
+                <MenuItem
+                  sx={{ color: '#425A76', fontSize: '13px', fontWeight: '500' }}
+                  key={year}
+                  value={year}
+                  title={year}
+                >
+                  {year}
+                </MenuItem>
+              ))}
+            </StyledSelect>
+          </div>
+        )}
+
+        {/* Assignee Field (Create Mode Only) */}
+        {mode === 'create' && !fieldVisibility.assignee && (
+          <div className='flex flex-col gap-2'>
+            <label className='text-sm font-medium text-gray-700'>
+              Assignee
+            </label>
+            <StyledSelect
+              name='assignee'
+              value={selectedAssignee || ''}
+              onChange={(e) => onAssigneeChange?.(e.target.value as string)}
+              disabled={fieldDisabled.assignee}
+              width='100%'
+              error={errors.assignee}
+              renderValue={(selected) => {
+                const value = Array.isArray(selected)
+                  ? selected.join(', ')
+                  : (selected as string);
+                if (!value) {
+                  return (
                     <div
                       style={{
-                        width: '20px',
-                        height: '20px',
-                        borderRadius: '50%',
-                        backgroundColor: '#9CA3AF',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '8px',
-                        fontWeight: '600',
-                        color: 'white',
-                        flexShrink: 0,
+                        gap: '8px',
                       }}
                     >
-                      UA
+                      <div
+                        style={{
+                          width: '20px',
+                          height: '20px',
+                          borderRadius: '50%',
+                          backgroundColor: '#9CA3AF',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '9px',
+                          fontWeight: '600',
+                          color: 'white',
+                          flexShrink: 0,
+                        }}
+                      >
+                        UA
+                      </div>
+                      <span style={{ color: '#7D98B6', fontSize: '13px' }}>
+                        Unassigned
+                      </span>
                     </div>
-                    Unassigned
-                  </div>
-                </MenuItem>
-                {availableUsers.map((user) => (
-                  <MenuItem
-                    sx={{ color: '#425A76', fontSize: '13px', fontWeight: '500' }}
-                    key={user.id}
-                    value={user.id}
-                    title={user.name}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  );
+                }
+                const user = availableUsers.find((u) => u.id === value);
+                if (user) {
+                  return (
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                      }}
+                    >
                       <div
                         style={{
                           width: '20px',
@@ -375,7 +400,7 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          fontSize: '8px',
+                          fontSize: '9px',
                           fontWeight: '600',
                           color: 'white',
                           flexShrink: 0,
@@ -383,13 +408,88 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
                       >
                         {user.initials}
                       </div>
-                      {user.name}
+                      <span
+                        style={{
+                          fontSize: '13px',
+                          color: 'black',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {user.name}
+                      </span>
                     </div>
-                  </MenuItem>
-                ))}
-              </StyledSelect>
-            </div>
-          )}
+                  );
+                }
+                return <span>{value}</span>;
+              }}
+            >
+              <MenuItem
+                value=''
+                sx={{ color: '#425A76', fontSize: '13px', fontWeight: '500' }}
+              >
+                <div
+                  style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                >
+                  <div
+                    style={{
+                      width: '20px',
+                      height: '20px',
+                      borderRadius: '50%',
+                      backgroundColor: '#9CA3AF',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '8px',
+                      fontWeight: '600',
+                      color: 'white',
+                      flexShrink: 0,
+                    }}
+                  >
+                    UA
+                  </div>
+                  Unassigned
+                </div>
+              </MenuItem>
+              {availableUsers.map((user) => (
+                <MenuItem
+                  sx={{ color: '#425A76', fontSize: '13px', fontWeight: '500' }}
+                  key={user.id}
+                  value={user.id}
+                  title={user.name}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: '20px',
+                        height: '20px',
+                        borderRadius: '50%',
+                        backgroundColor: user.color,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '8px',
+                        fontWeight: '600',
+                        color: 'white',
+                        flexShrink: 0,
+                      }}
+                    >
+                      {user.initials}
+                    </div>
+                    {user.name}
+                  </div>
+                </MenuItem>
+              ))}
+            </StyledSelect>
+          </div>
+        )}
 
         {/* Checklist Template Field */}
         {!fieldVisibility.checklistTemplate && (
@@ -431,7 +531,10 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
                 );
               }}
             >
-              <MenuItem value='' sx={{ color: '#425A76', fontSize: '13px', fontWeight: '500' }}>
+              <MenuItem
+                value=''
+                sx={{ color: '#425A76', fontSize: '13px', fontWeight: '500' }}
+              >
                 Choose Checklist
               </MenuItem>
               {checklistData.map((template: { id: string; name: string }) => (
@@ -451,7 +554,9 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
         {/* Linked Type Field */}
         {!fieldVisibility.linkedType && (
           <div className='flex flex-col gap-2'>
-            <label className='text-sm font-medium text-gray-700'>Linked Type</label>
+            <label className='text-sm font-medium text-gray-700'>
+              Linked Type
+            </label>
             <StyledSelect
               name='linkedType'
               ref={linkedTypeRef}
@@ -496,7 +601,10 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
                 );
               }}
             >
-              <MenuItem value='' sx={{ color: '#425A76', fontSize: '13px', fontWeight: '500' }}>
+              <MenuItem
+                value=''
+                sx={{ color: '#425A76', fontSize: '13px', fontWeight: '500' }}
+              >
                 Choose Linked Type
               </MenuItem>
               {uniqueConnectorTypes.map((connector) => (
@@ -516,7 +624,9 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
         {/* Link Task Type Field */}
         {!fieldVisibility.linkTaskType && (
           <div className='flex flex-col gap-2'>
-            <label className='text-sm font-medium text-gray-700'>Link Task Type</label>
+            <label className='text-sm font-medium text-gray-700'>
+              Link Task Type
+            </label>
             <StyledSelect
               name='linkTaskType'
               ref={linkTaskTypeRef}
@@ -566,7 +676,11 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
 
                 return (
                   <MenuItem
-                    sx={{ color: '#425A76', fontSize: '13px', fontWeight: '500' }}
+                    sx={{
+                      color: '#425A76',
+                      fontSize: '13px',
+                      fontWeight: '500',
+                    }}
                     key={template.id}
                     value={template.name}
                   >
@@ -587,7 +701,9 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
         {/* Weightage Field */}
         {!fieldVisibility.weightage && (
           <div className='flex flex-col gap-2'>
-            <label className='text-sm font-medium text-gray-700'>Weightage</label>
+            <label className='text-sm font-medium text-gray-700'>
+              Weightage
+            </label>
             <StyledSelect
               name='weightage'
               value={
@@ -626,7 +742,10 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
                 );
               }}
             >
-              <MenuItem value='' sx={{ color: '#425A76', fontSize: '13px', fontWeight: '500' }}>
+              <MenuItem
+                value=''
+                sx={{ color: '#425A76', fontSize: '13px', fontWeight: '500' }}
+              >
                 Choose Weightage
               </MenuItem>
               {weightageData.map((item) => (
@@ -646,7 +765,9 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
         {/* Category Field */}
         {!fieldVisibility.category && (
           <div className='flex flex-col gap-2'>
-            <label className='text-sm font-medium text-gray-700'>Task Category</label>
+            <label className='text-sm font-medium text-gray-700'>
+              Task Category
+            </label>
             <StyledSelect
               name='category'
               value={
@@ -685,7 +806,10 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
                 );
               }}
             >
-              <MenuItem value='' sx={{ color: '#425A76', fontSize: '13px', fontWeight: '500' }}>
+              <MenuItem
+                value=''
+                sx={{ color: '#425A76', fontSize: '13px', fontWeight: '500' }}
+              >
                 Choose Category
               </MenuItem>
               {categoryData.map((item) => (
@@ -720,9 +844,7 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
                   return !currentTags.includes(tagName);
                 })}
               value={
-                shouldPrepopulate
-                  ? editedTask?.tags || []
-                  : selectedTags || []
+                shouldPrepopulate ? editedTask?.tags || [] : selectedTags || []
               }
               inputValue={tagInputValue}
               onInputChange={(_, newInputValue) => {
@@ -742,7 +864,9 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
                 }
               }}
               onChange={(_, newValue) => {
-                const validValues = newValue.filter((v) => v.trim().length <= 50);
+                const validValues = newValue.filter(
+                  (v) => v.trim().length <= 50
+                );
 
                 if (validValues.length !== newValue.length) {
                   setLocalTagError('Maximum 50 characters allowed');
@@ -790,12 +914,12 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
                       },
                       ...(localTagError || errors.tags
                         ? {
-                          '& .MuiOutlinedInput-notchedOutline': {
-                            borderColor: '#EF4444 !important',
-                            borderWidth: '1px !important',
-                          },
-                          backgroundColor: '#FEF2F2',
-                        }
+                            '& .MuiOutlinedInput-notchedOutline': {
+                              borderColor: '#EF4444 !important',
+                              borderWidth: '1px !important',
+                            },
+                            backgroundColor: '#FEF2F2',
+                          }
                         : {}),
                     },
                     '& .MuiOutlinedInput-notchedOutline': {
@@ -807,9 +931,9 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
                       borderWidth: '1px',
                     },
                     '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline':
-                    {
-                      border: '2px solid #60A5FA',
-                    },
+                      {
+                        border: '2px solid #60A5FA',
+                      },
                   }}
                   InputProps={{
                     ...params.InputProps,
@@ -866,44 +990,74 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
 
             {(shouldPrepopulate ? editedTask?.tags || [] : selectedTags || [])
               ?.length > 0 && (
-                <div className='flex flex-wrap items-center gap-2 mt-1'>
-                  {(shouldPrepopulate
-                    ? editedTask?.tags || []
-                    : selectedTags || []
-                  )?.map((tag, index) => (
-                    <div
-                      key={index}
-                      className='inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium hover:bg-blue-200 transition-colors group'
+              <div className='flex flex-wrap items-center gap-2 mt-1'>
+                {(shouldPrepopulate
+                  ? editedTask?.tags || []
+                  : selectedTags || []
+                )?.map((tag, index) => (
+                  <div
+                    key={index}
+                    className='inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium hover:bg-blue-200 transition-colors group'
+                  >
+                    <Tooltip title={tag} placement='top' arrow>
+                      <span className='truncate max-w-[200px] block'>
+                        {tag}
+                      </span>
+                    </Tooltip>
+                    <button
+                      onClick={() => {
+                        const newTags =
+                          (shouldPrepopulate
+                            ? editedTask?.tags || []
+                            : selectedTags || []
+                          )?.filter((t) => t !== tag) || [];
+                        if (shouldPrepopulate) {
+                          onSetEditedTask(
+                            editedTask ? { ...editedTask, tags: newTags } : null
+                          );
+                        } else {
+                          onTagsChange(newTags);
+                        }
+                      }}
+                      className='ml-1 text-blue-600 hover:text-red-600 transition-colors'
+                      title={`Remove ${tag}`}
                     >
-                      <Tooltip title={tag} placement='top' arrow>
-                        <span className='truncate max-w-[200px] block'>
-                          {tag}
-                        </span>
-                      </Tooltip>
-                      <button
-                        onClick={() => {
-                          const newTags =
-                            (shouldPrepopulate
-                              ? editedTask?.tags || []
-                              : selectedTags || []
-                            )?.filter((t) => t !== tag) || [];
-                          if (shouldPrepopulate) {
-                            onSetEditedTask(
-                              editedTask ? { ...editedTask, tags: newTags } : null
-                            );
-                          } else {
-                            onTagsChange(newTags);
-                          }
-                        }}
-                        className='ml-1 text-blue-600 hover:text-red-600 transition-colors'
-                        title={`Remove ${tag}`}
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+        {/* Fiscal Year Field */}
+        {!fieldVisibility.fiscalYear && fiscalYear && (
+          <div className='flex flex-col gap-2'>
+            <label className='text-sm font-medium text-gray-700'>
+              Fiscal Year
+            </label>
+            <TextField
+              value={fiscalYear}
+              disabled
+              size='small'
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  padding: '6px',
+                  minHeight: '32px',
+                  backgroundColor: '#F3F4F6',
+                  '& input': {
+                    fontSize: '13px',
+                    padding: '0 !important',
+                    color: 'black',
+                    WebkitTextFillColor: 'black',
+                  },
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#CBD6E2',
+                    borderWidth: '1px',
+                  },
+                },
+              }}
+            />
           </div>
         )}
       </div>
