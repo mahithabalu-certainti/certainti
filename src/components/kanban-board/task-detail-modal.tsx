@@ -194,12 +194,13 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   const attachmentsParams = useMemo(
     () => ({
       account_rid: accountId,
-      case_rid: caseId,
+      ...(taskType !== 'activity' && { case_rid: caseId }),
       task_rid: taskId!,
       page: 1,
       limit: 100,
+      ...(taskType === 'activity' && { task_type: 'activity' }),
     }),
-    [accountId, caseId, taskId]
+    [accountId, caseId, taskId, taskType]
   );
 
   const { data: rawTask, isLoading: taskLoading } = useGetTaskDetail(
@@ -230,7 +231,8 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     accountId,
     caseId,
     taskId!,
-    !!taskId && isOpen
+    !!taskId && isOpen,
+    taskType
   );
 
   const { data: tagOptionsData } = useGetTagOptions(
@@ -778,9 +780,10 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
           for (const attachmentId of deletedAttachmentIds) {
             await deleteAttachmentMutation.mutateAsync({
               account_rid: accountId,
-              case_rid: caseId,
+              ...(taskType !== 'activity' && { case_rid: caseId }),
               task_rid: taskId,
               rid: attachmentId,
+              ...(taskType === 'activity' && { task_type: 'activity' }),
             });
           }
           setDeletedAttachmentIds([]);
@@ -799,9 +802,10 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
         try {
           await uploadAttachmentsMutation.mutateAsync({
             account_rid: accountId,
-            case_rid: caseId,
+            ...(taskType !== 'activity' && { case_rid: caseId }),
             task_rid: taskId,
             files: pendingAttachments,
+            ...(taskType === 'activity' && { task_type: 'activity' }),
           });
           setPendingAttachments([]);
           setEditedTask((prev) => (prev ? { ...prev, attachments: [] } : null));
@@ -1885,6 +1889,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
               onUpdateComment={onUpdateComment}
               onDeleteComment={onDeleteComment}
               useInfiniteScroll={true}
+              taskType={taskType}
             />
           )}
 
