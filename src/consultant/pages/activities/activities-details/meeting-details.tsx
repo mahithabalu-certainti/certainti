@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   generatePath,
   useNavigate,
@@ -12,11 +12,20 @@ import DetailsSection, {
   DetailItem,
 } from '../../../../components/details-section/details';
 import DetailsSectionSkeleton from '../../../../components/skeleton-component/detailsskeleton';
-import { formatDateToYYYYMMDDWithTime } from '../../../../common-utils';
+import {
+  applyHidePermission,
+  formatDateToYYYYMMDDWithTime,
+} from '../../../../common-utils';
 import { ACTIVITY_EDIT } from '../../../../routes';
 import { ActivityType } from '../../../types';
 import { useMeetingActivityDetails } from '../../../services/activities/activities-service';
-import { parseToStringArray } from '../activities-list/helper';
+import {
+  getPermissionMap,
+  parseToStringArray,
+} from '../activities-list/helper';
+import { RootState } from '../../../../store/store';
+import { useSelector } from 'react-redux';
+import { AllPermissions } from '../../../../common-service';
 
 interface MeetingDetailsProps {
   accountInActive: boolean;
@@ -41,12 +50,29 @@ const MeetingDetails: React.FC<MeetingDetailsProps> = ({
   const accountId = searchParams.get('accountID') || '';
   const activityId = searchParams.get('activity_id') || '';
 
+  const { permission } = useSelector((state: RootState) => state.permission);
+
   // Fetch Meeting Details
   const {
     data: meeting,
     isLoading,
     error,
   } = useMeetingActivityDetails(accountId || accountid || '', activityId, true);
+
+  // Permission
+  const meetingPermissionMap = useMemo(
+    () =>
+      getPermissionMap(permission, AllPermissions.ACTIVITY_MEETING_VIEW_EDIT),
+    [permission]
+  );
+
+  const meetingActivityFieldsEditable = useMemo(
+    () =>
+      permission
+        .find((item) => item.name === AllPermissions.ACTIVITY_MEETING_VIEW_EDIT)
+        ?.fields?.some((field) => field.edit),
+    [permission]
+  );
 
   // Edit handler
   const handleEdit = () => {
@@ -80,7 +106,7 @@ const MeetingDetails: React.FC<MeetingDetailsProps> = ({
       disabled: accountInActive,
       onClick: handleEdit,
       sx: { width: '48px', minWidth: '48px' },
-      hide: false,
+      hide: !meetingActivityFieldsEditable,
     },
     {
       label: tabValue === 'all' ? 'Back To All' : 'Back To Meeting',
@@ -102,17 +128,12 @@ const MeetingDetails: React.FC<MeetingDetailsProps> = ({
     {
       label: 'Status',
       value: meeting?.status_name ?? '',
-      key: 'status',
+      key: 'status_rid',
     },
     {
-      label: 'Meeting URL',
+      label: 'Meeting Invite',
       value: meeting?.meeting_url ?? '',
-      key: 'meeting_url',
-    },
-    {
-      label: 'Meeting Code',
-      value: meeting?.meeting_id ?? '',
-      key: 'meeting_code',
+      key: 'meeting_invite',
     },
   ];
 
@@ -146,6 +167,12 @@ const MeetingDetails: React.FC<MeetingDetailsProps> = ({
     },
   ];
 
+  const basicInfo = applyHidePermission(
+    meetingInformation,
+    meetingPermissionMap
+  );
+  const auditInfo = applyHidePermission(auditDetails, meetingPermissionMap);
+
   return (
     <div>
       <SectionHeader
@@ -173,13 +200,13 @@ const MeetingDetails: React.FC<MeetingDetailsProps> = ({
         <>
           <DetailsSection
             title='Meeting Information'
-            data={meetingInformation}
+            data={basicInfo}
             customStyle='pt-0 mt-0'
           />
 
           <DetailsSection
             title='Audit Information'
-            data={auditDetails}
+            data={auditInfo}
             customStyle='pt-0 mt-0'
             isAudit={true}
           />

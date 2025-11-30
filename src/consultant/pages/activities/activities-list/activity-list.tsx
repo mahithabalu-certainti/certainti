@@ -9,6 +9,7 @@ import {
   ActivityList,
   ActivityListExportURLParams,
   ActivityListURLParams,
+  ActivityModuleType,
   ActivityType,
   ExportType,
 } from '../../../types';
@@ -19,6 +20,7 @@ import {
 import { useActivityList } from '../../../services/activities/activities-service';
 import { ListTable, ManageColumnsPopover } from '../../../../components/table';
 import { ACTIVITY_EDIT } from '../../../../routes';
+
 interface ActivityListTableProps {
   refreshTrigger: number;
   currentPage: number;
@@ -43,6 +45,8 @@ interface ActivityListTableProps {
   setActivityParams: React.Dispatch<
     React.SetStateAction<ActivityListExportURLParams>
   >;
+  editButtonEnable?: boolean;
+  activityEditPermissionByType?: Record<ActivityModuleType, boolean>;
 }
 
 const ActivityListTable: React.FC<ActivityListTableProps> = ({
@@ -60,6 +64,8 @@ const ActivityListTable: React.FC<ActivityListTableProps> = ({
   entityLevel,
   setActivityParams,
   setExportType,
+  editButtonEnable = true,
+  activityEditPermissionByType,
 }) => {
   const navigate = useNavigate();
   const { caseId, accountid, projectid } = useParams();
@@ -165,21 +171,31 @@ const ActivityListTable: React.FC<ActivityListTableProps> = ({
     }
   };
 
+  const shouldDisableEdit = (row: ActivityList): boolean => {
+    const type = row.activity_type.toLowerCase() as ActivityModuleType;
+
+    // 1️⃣ For ALL tab → check permission by activity type
+    if (activityType === 'all') {
+      if (!activityEditPermissionByType?.[type]) return true;
+    }
+
+    // 2️⃣ Disable when account is inactive
+    if (accountInActive) return true;
+
+    // 3️⃣ Email: disable when already sent
+    if (type === 'email' && row.status_name?.toLowerCase() === 'sent') {
+      return true;
+    }
+
+    return false;
+  };
+
   const actionMenuItems = [
     {
       label: 'Edit',
-      disabled: (row: ActivityList) => {
-        if (row?.activity_type?.toLowerCase() === 'email') {
-          return (
-            row?.status_name?.toLowerCase() === 'sent' ||
-            accountInActive ||
-            false
-          );
-        }
-        return accountInActive ?? false;
-      },
+      disabled: (row: ActivityList) => shouldDisableEdit(row),
       onClick: (row: ActivityList) => handleEdit(row),
-      hide: false,
+      hide: activityType !== 'all' && !editButtonEnable,
     },
   ];
 

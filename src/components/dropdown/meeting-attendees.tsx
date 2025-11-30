@@ -333,7 +333,7 @@ const MeetingAttendees: React.FC<MeetingAttendeesProps> = ({
                   ? 'border-red-500 bg-[#FEF2F2]'
                   : disabled
                     ? '!bg-gray-100 border-[#CBD6E2] cursor-default'
-                    : 'border-gray-300 hover:border-[#CBD6E2] bg-white'
+                    : 'border-[#CBD6E2] hover:border-[#CBD6E2] bg-white'
               } focus-within:!border-2 focus-within:!border-blue-400`}
           style={{
             pointerEvents: disabled ? 'none' : 'all',

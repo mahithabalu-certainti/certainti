@@ -439,6 +439,7 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
                   accountId || accountid,
                   effectiveCaseId,
                   taskId,
+                  'activity',
                 ],
               });
 

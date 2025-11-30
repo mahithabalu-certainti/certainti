@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   generatePath,
   useNavigate,
@@ -7,7 +7,10 @@ import {
 } from 'react-router-dom';
 import { Typography } from '@mui/material';
 import { useEmailActivityDetails } from '../../../services/activities/activities-service';
-import { formatDateToYYYYMMDDWithTime } from '../../../../common-utils';
+import {
+  applyHidePermission,
+  formatDateToYYYYMMDDWithTime,
+} from '../../../../common-utils';
 import DetailsSection, {
   DetailItem,
 } from '../../../../components/details-section/details';
@@ -16,7 +19,13 @@ import { DraftEmailIcon } from '../../../../assets';
 import DetailsSectionSkeleton from '../../../../components/skeleton-component/detailsskeleton';
 import { ActivityType } from '../../../types';
 import { ACTIVITY_EDIT } from '../../../../routes';
-import { parseToStringArray } from '../activities-list/helper';
+import {
+  getPermissionMap,
+  parseToStringArray,
+} from '../activities-list/helper';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../store/store';
+import { AllPermissions } from '../../../../common-service';
 
 interface EmailDetailsProps {
   accountInActive: boolean;
@@ -40,10 +49,26 @@ const EmailDetails: React.FC<EmailDetailsProps> = ({
   const accountId = searchParams.get('accountID') || '';
   const activityId = searchParams.get('activity_id') || '';
 
+  const { permission } = useSelector((state: RootState) => state.permission);
+
   const { data, isLoading, error } = useEmailActivityDetails(
     accountId || accountid || '',
     activityId,
     true
+  );
+
+  // Permission
+  const emailPermissionMap = useMemo(
+    () => getPermissionMap(permission, AllPermissions.ACTIVITY_EMAIL_VIEW_EDIT),
+    [permission]
+  );
+
+  const emailActivityFieldsEditable = useMemo(
+    () =>
+      permission
+        .find((item) => item.name === AllPermissions.ACTIVITY_EMAIL_VIEW_EDIT)
+        ?.fields?.some((field) => field.edit),
+    [permission]
   );
 
   const handleEdit = () => {
@@ -74,7 +99,7 @@ const EmailDetails: React.FC<EmailDetailsProps> = ({
       disabled: accountInActive || data?.status_name?.toLowerCase() === 'sent',
       onClick: handleEdit,
       sx: { width: '48px', minWidth: '48px' },
-      hide: false,
+      hide: !emailActivityFieldsEditable,
     },
     {
       label: tabValue === 'all' ? 'Back To All' : 'Back To Email',
@@ -88,17 +113,17 @@ const EmailDetails: React.FC<EmailDetailsProps> = ({
     {
       label: 'Email To',
       value: parseToStringArray(data?.to_email)?.join(', ') ?? '',
-      key: 'email_to',
+      key: 'to_email',
     },
     {
       label: 'Email Status',
       value: data?.email_status ?? '',
-      key: 'email_status',
+      key: 'status_rid',
     },
     {
       label: 'Email CC',
       value: parseToStringArray(data?.cc_emails)?.join(', ') ?? '',
-      key: 'email_cc',
+      key: 'cc_email',
     },
     {
       label: 'Subject',
@@ -144,7 +169,7 @@ const EmailDetails: React.FC<EmailDetailsProps> = ({
           dangerouslySetInnerHTML={{ __html: data?.body_html || '' }}
         />
       ),
-      key: 'body',
+      key: 'body_html',
     },
   ];
 
@@ -181,12 +206,12 @@ const EmailDetails: React.FC<EmailDetailsProps> = ({
     },
   ];
 
-  // const basicEmailInfo = applyHidePermission(emailInformation, permissionMap);
-  // const emailBody = applyHidePermission(
-  //   emailBodyBlock,
-  //   permissionMap
-  // );
-  // const auditInfo = applyHidePermission(auditDetails, permissionMap);
+  const basicEmailInfo = applyHidePermission(
+    emailInformation,
+    emailPermissionMap
+  );
+  const emailBody = applyHidePermission(emailBodyBlock, emailPermissionMap);
+  const auditInfo = applyHidePermission(auditDetails, emailPermissionMap);
 
   return (
     <div>
@@ -215,20 +240,20 @@ const EmailDetails: React.FC<EmailDetailsProps> = ({
         <>
           <DetailsSection
             title='Email Information'
-            data={emailInformation}
+            data={basicEmailInfo}
             customStyle='pt-0 mt-0'
           />
 
           <DetailsSection
             title=''
-            data={emailBodyBlock}
+            data={emailBody}
             fullColumn={true}
             customStyle='pt-[1px]'
           />
 
           <DetailsSection
             title='Audit Information'
-            data={auditDetails}
+            data={auditInfo}
             customStyle='pt-0 mt-0'
             isAudit={true}
           />

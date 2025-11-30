@@ -1,4 +1,5 @@
 export type ActivityType = 'all' | 'task' | 'email' | 'meeting' | 'call';
+export type ActivityModuleType = 'task' | 'email' | 'meeting' | 'call';
 
 export interface ActivityListURLParams {
   page: number;
@@ -345,4 +346,20 @@ export interface ExportAcivityListResponse {
   statusMessage: string;
   statusCodeValue?: string;
   data: string;
+}
+
+// Email templates list
+export interface EamilTemplateItem {
+  rid: string;
+  template_name: string;
+  category_rid?: string;
+}
+
+export interface EamilTemplateItemsResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: {
+    emailTemplates: EamilTemplateItem[];
+  };
 }

@@ -16,6 +16,7 @@ import {
   ActivityType,
   CallActivityDetails,
   CallActivityDetailsResponse,
+  EamilTemplateItemsResponse,
   EmailActivityDetails,
   EmailActivityDetailsResponse,
   ExportAcivityListResponse,
@@ -341,4 +342,53 @@ export const ExportActivityList = async (
   } catch (error) {
     console.error('Export failed:', error);
   }
+};
+
+// -------------------- EMAIL TEMPLATES ITEMS LIST --------------------
+
+export const getEmailTemplateItemsUrl = (): string =>
+  '/api/caseManagement/emailTemplatesByCategory';
+
+export const fetchEmailTemplateItems =
+  async (): Promise<EamilTemplateItemsResponse> => {
+    try {
+      // const { data } = await caseServiceApi.get<EamilTemplateItemsResponse>(
+      //   getEmailTemplateItemsUrl()
+      // );
+      // return data;
+      return {
+        statusCode: 200,
+        statusCodeValue: '200',
+        statusMessage: 'success',
+        data: {
+          emailTemplates: [
+            {
+              rid: 'D001-8ca8d081-06ac-4000-bc10-8c47474161d7',
+              template_name: 'REVIEW PROJECTS',
+            },
+            {
+              rid: 'D001-62eaaeb4-5293-4675-91ae-56c2b73666b8',
+              template_name: 'Interaction 25',
+            },
+            {
+              rid: 'D001-5f5f1153-1c59-4c8a-b806-992a501d6305',
+              template_name: 'General Note',
+            },
+          ],
+        },
+      };
+    } catch (error) {
+      console.error('Error fetching email template items:', error);
+      throw error;
+    }
+  };
+
+export const useGetEmailTemplateItems = () => {
+  return useQuery<EamilTemplateItemsResponse, Error>({
+    queryKey: ['email-template-items'],
+    queryFn: fetchEmailTemplateItems,
+    retry: 0,
+    gcTime: 0,
+    enabled: true,
+  });
 };

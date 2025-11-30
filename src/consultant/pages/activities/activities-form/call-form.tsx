@@ -19,7 +19,14 @@ import {
   formatDateToYYYYMMDDWithTime,
   REGEX_PATTERNS,
 } from '../../../../common-utils';
-import { parseToStringArray } from '../activities-list/helper';
+import {
+  getPermissionMap,
+  parseToStringArray,
+} from '../activities-list/helper';
+import { RootState } from '../../../../store/store';
+import { useSelector } from 'react-redux';
+import { AllPermissions } from '../../../../common-service';
+import { shouldDisableField, shouldHideField } from './helper';
 
 // Types
 interface SuggestionState {
@@ -128,6 +135,15 @@ const CallForm: React.FC = () => {
 
   // File input ref
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Permission
+  const { permission } = useSelector((state: RootState) => state.permission);
+  const permissionMap = useMemo(
+    () => getPermissionMap(permission, AllPermissions.ACTIVITY_CALL_VIEW_EDIT),
+    [permission]
+  );
+
+  console.log(permissionMap);
 
   const userListOptions = useGetUserOptions(accountId, true);
   const createCall = useCreateActivityCall();
@@ -662,6 +678,17 @@ const CallForm: React.FC = () => {
     ? dayjs(formData.effective_end_datetime)
     : null;
 
+  const hideAttachments = shouldHideField(
+    'attachments',
+    isEditView,
+    permissionMap
+  );
+  const disableAttachments = shouldDisableField(
+    'attachments',
+    isEditView,
+    permissionMap
+  );
+
   return (
     <div>
       <div className='h-[50px] flex items-center justify-between px-10 sticky top-0 z-10 bg-white border-b border-[#CBD6E2]'>
@@ -741,6 +768,16 @@ const CallForm: React.FC = () => {
                 }}
                 required={true}
                 isValidEmail={isValidEmail}
+                disabled={shouldDisableField(
+                  'call_participants',
+                  isEditView,
+                  permissionMap
+                )}
+                hide={shouldHideField(
+                  'call_participants',
+                  isEditView,
+                  permissionMap
+                )}
               />
             </div>
 
@@ -767,8 +804,20 @@ const CallForm: React.FC = () => {
                 isValidEmail={isValidEmail}
                 singleSelect={true}
                 className='!pt-0'
+                disabled={shouldDisableField(
+                  'caller_id',
+                  isEditView,
+                  permissionMap
+                )}
+                hide={shouldHideField('caller_id', isEditView, permissionMap)}
               />
-              <div>
+              <div
+                style={{
+                  display: shouldHideField('subject', isEditView, permissionMap)
+                    ? 'none'
+                    : 'block',
+                }}
+              >
                 <label
                   htmlFor='subject'
                   className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px]'
@@ -782,6 +831,11 @@ const CallForm: React.FC = () => {
                   value={formData.subject}
                   onChange={handleSubjectChange}
                   autoComplete='off'
+                  disabled={shouldDisableField(
+                    'subject',
+                    isEditView,
+                    permissionMap
+                  )}
                   className={`placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] truncate overflow-hidden text-ellipsis whitespace-nowrap outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ${errors?.subject ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
                 />
                 {errors?.subject && (
@@ -792,7 +846,17 @@ const CallForm: React.FC = () => {
               </div>
 
               {/* Call Platform Field */}
-              <div>
+              <div
+                style={{
+                  display: shouldHideField(
+                    'call_platform',
+                    isEditView,
+                    permissionMap
+                  )
+                    ? 'none'
+                    : 'block',
+                }}
+              >
                 <label
                   htmlFor='call_platform'
                   className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px]'
@@ -806,6 +870,11 @@ const CallForm: React.FC = () => {
                   value={formData.call_platform}
                   onChange={handleCallPlatformChange}
                   autoComplete='off'
+                  disabled={shouldDisableField(
+                    'call_platform',
+                    isEditView,
+                    permissionMap
+                  )}
                   className={`placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] truncate overflow-hidden text-ellipsis whitespace-nowrap outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ${errors?.call_platform ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
                 />
                 {errors?.call_platform && (
@@ -815,7 +884,17 @@ const CallForm: React.FC = () => {
                 )}
               </div>
 
-              <div>
+              <div
+                style={{
+                  display: shouldHideField(
+                    'effective_start_datetime',
+                    isEditView,
+                    permissionMap
+                  )
+                    ? 'none'
+                    : 'block',
+                }}
+              >
                 <label
                   htmlFor='effective_start_datetime'
                   className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px]'
@@ -830,10 +909,25 @@ const CallForm: React.FC = () => {
                   error={!!errors?.effective_start_datetime}
                   helperText={errors?.effective_start_datetime}
                   disableBeforeDates={true}
+                  disabled={shouldDisableField(
+                    'effective_start_datetime',
+                    isEditView,
+                    permissionMap
+                  )}
                 />
               </div>
 
-              <div>
+              <div
+                style={{
+                  display: shouldHideField(
+                    'effective_end_datetime',
+                    isEditView,
+                    permissionMap
+                  )
+                    ? 'none'
+                    : 'block',
+                }}
+              >
                 <label
                   htmlFor='effective_end_datetime'
                   className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px]'
@@ -848,12 +942,28 @@ const CallForm: React.FC = () => {
                   error={!!errors?.effective_end_datetime}
                   helperText={errors?.effective_end_datetime}
                   disableBeforeDates={true}
+                  disabled={shouldDisableField(
+                    'effective_end_datetime',
+                    isEditView,
+                    permissionMap
+                  )}
                 />
               </div>
             </div>
 
             {/* Minutes of Meeting Field */}
-            <div className='grid md:grid-cols-1 gap-x-4 gap-y-[2px] px-10 pt-3'>
+            <div
+              className='grid md:grid-cols-1 gap-x-4 gap-y-[2px] px-10 pt-3'
+              style={{
+                display: shouldHideField(
+                  'minutes_of_meeting',
+                  isEditView,
+                  permissionMap
+                )
+                  ? 'none'
+                  : 'block',
+              }}
+            >
               <label
                 htmlFor='minutes_of_meeting'
                 className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px]'
@@ -866,6 +976,11 @@ const CallForm: React.FC = () => {
                 value={formData.minutes_of_meeting}
                 onChange={handleMinutesOfMeetingChange}
                 autoComplete='off'
+                disabled={shouldDisableField(
+                  'minutes_of_meeting',
+                  isEditView,
+                  permissionMap
+                )}
                 className={`outline-none placeholder-custom-color h-[95px] w-full sm:text-sm py-2 px-3 resize-none focus:border-2 focus:border-blue-400 border border-[#CBD6E2] rounded-xs ${
                   errors?.minutes_of_meeting
                     ? 'border-red-500 bg-[#FEF2F2] focus:!bg-[#FEF2F2]'
@@ -880,7 +995,12 @@ const CallForm: React.FC = () => {
             </div>
 
             {/* File Attachments Section */}
-            <div>
+            <div
+              className={`mt-6 ${hideAttachments ? 'hidden' : 'block'}`}
+              style={{
+                pointerEvents: disableAttachments ? 'none' : 'all',
+              }}
+            >
               <div className='mt-6 border capitalize h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-10'>
                 Attachments
               </div>
@@ -891,7 +1011,7 @@ const CallForm: React.FC = () => {
                     onDragOver={handleDragOver}
                     onClick={openFileDialog}
                     className={`h-[116px] w-[502px] border-[2px] border-dashed rounded-[8px] flex flex-col items-center justify-center gap-2 cursor-pointer
-                    ${message?.type === 'error' ? 'border-red-600 bg-[#FEF2F2]' : 'border-[#0176D3] bg-[#F4F6F9]'}
+                    ${message?.type === 'error' ? 'border-red-600 bg-[#FEF2F2]' : 'border-[#0176D3] bg-[#F4F6F9]'} ${disableAttachments ? 'opacity-50' : 'opacity-100'}
                   `}
                   >
                     <UploadIcon
@@ -946,7 +1066,7 @@ const CallForm: React.FC = () => {
                       }
                       existingFiles={existingFiles}
                       onRemoveExistingFile={removeExistingFile}
-                      disabled={false}
+                      disabled={disableAttachments}
                     />
                   </div>
                 </div>
@@ -965,32 +1085,52 @@ const CallForm: React.FC = () => {
                   {
                     label: 'Record ID',
                     value: formData.rid,
-                    hide: false,
+                    hide: shouldHideField('rid', isEditView, permissionMap),
                   },
                   {
                     label: 'Created On',
                     value: formData.created_on,
-                    hide: false,
+                    hide: shouldHideField(
+                      'created_datetime',
+                      isEditView,
+                      permissionMap
+                    ),
                   },
                   {
                     label: 'Created By',
                     value: formData.created_by,
-                    hide: false,
+                    hide: shouldHideField(
+                      'created_by_name',
+                      isEditView,
+                      permissionMap
+                    ),
                   },
                   {
                     label: 'Call ID',
                     value: formData.call_rid,
-                    hide: false,
+                    hide: shouldHideField(
+                      'r_number',
+                      isEditView,
+                      permissionMap
+                    ),
                   },
                   {
                     label: 'Updated On',
                     value: formData.updated_on,
-                    hide: false,
+                    hide: shouldHideField(
+                      'modified_datetime',
+                      isEditView,
+                      permissionMap
+                    ),
                   },
                   {
                     label: 'Updated By',
                     value: formData.updated_by,
-                    hide: false,
+                    hide: shouldHideField(
+                      'modified_by_name',
+                      isEditView,
+                      permissionMap
+                    ),
                   },
                 ]
                   .filter((field) => !field.hide)

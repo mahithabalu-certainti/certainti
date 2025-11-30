@@ -18,6 +18,7 @@ export interface ActivityEmailFormData {
   created_by: string;
   updated_on: string;
   updated_by: string;
+  email_template_rid?: string;
 }
 
 export interface ActivityEmailFormErrors {
@@ -131,6 +132,44 @@ export const getSelectStyles = (hasError: boolean, isEmpty: boolean) => ({
   },
   '&:hover .MuiOutlinedInput-notchedOutline': {
     border: hasError ? '1px solid #ef4444' : '1px solid #CBD6E2',
+  },
+});
+
+export const getAutocompleteStyles = (hasError: boolean, isEmpty: boolean) => ({
+  height: '25px',
+  fontSize: '12px',
+  width: '160px',
+
+  '& .MuiOutlinedInput-root': {
+    height: '25px !important',
+    padding: '0 4px',
+    '& fieldset': {
+      border: hasError ? '1px solid #ef4444' : '1px solid #CBD6E2',
+      borderRadius: '2px',
+    },
+    '&:hover fieldset': {
+      border: hasError ? '1px solid #ef4444' : '1px solid #CBD6E2',
+    },
+    '&.Mui-focused fieldset': {
+      border: '2px solid #60A5FA',
+    },
+    '&.Mui-focused': {
+      boxShadow: 'none',
+    },
+  },
+
+  '& .MuiInputBase-input': {
+    padding: '6px',
+    color: isEmpty ? '#7D98B6' : 'black',
+    fontSize: '12px',
+  },
+
+  '& .MuiSvgIcon-root': {
+    color: '#7D98B6',
+  },
+
+  '&.Mui-disabled': {
+    backgroundColor: '#f3f4f6',
   },
 });
 
