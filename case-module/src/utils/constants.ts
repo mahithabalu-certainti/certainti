@@ -1447,6 +1447,9 @@ export const rawQueries = {
   getEmailTemplateCategory() {
     return `SELECT rid, category_name FROM ${MAIN_SCHEMA_NAME}.email_template_category ORDER BY category_name ASC`
   },
+  getEmailTemplateCategoryByName(categoryName: string) {
+    return `SELECT rid, category_name FROM ${MAIN_SCHEMA_NAME}.email_template_category where category_name = '${categoryName}' ORDER BY category_name ASC`
+  },
   getAllPriorityTypes (rid : any[]) {
     let ids : string[] = []
     if(rid.length > 0) {

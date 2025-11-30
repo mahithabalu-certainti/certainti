@@ -1195,6 +1195,36 @@ async  checkisExistingChecklistTemplateUnique(checklistReq: any): Promise<boolea
         return [];
       }
     }
+  async listEmailTemplatesByCategory(
+  ) {
+    try { 
+      if(!this.mainDbSequelize) {
+        this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+      }
+      const { EmailTemplate } = await this.caseModelService.getModels("");
+      const [templateDetails]:any[] = await this.mainDbSequelize.query(
+            rawQueries.getEmailTemplateCategoryByName(emailCategorties.general),
+            {
+              type: "SELECT",
+            }
+          );
+      const templateResponse = await EmailTemplate.findAll({
+              attributes: ['rid', 'template_name', 'category_rid'],
+              where: {
+                category_rid: templateDetails.rid
+              },
+              raw: true,
+            });
+      return templateResponse;
+    } catch (err) {
+      logMessage(`Error in fetching email templates by category: ${err}`);
+      errorLog(
+        "Error in fetching email templates by category:",
+        (err as Error).message
+      );
+      return [];
+    } 
+  }
   async listEmailTemplates(
   page: number,
   limit: number,
