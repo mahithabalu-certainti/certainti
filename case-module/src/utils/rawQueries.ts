@@ -937,7 +937,7 @@ export const fetchCaseTemplateData = (schemaName : string, caseRid : string, acc
   AND ch.case_rid = '${caseRid}'
   AND attachment_level = 'task'
   ),
-  'comments_count', (SELECT COUNT(DISTINCT tc.rid) from ${schemaName}.task_comments tc WHERE tc.task_rid = t.rid),
+  'comments_count', (SELECT COUNT(DISTINCT tc.rid) from ${schemaName}.task_comments tc WHERE tc.task_rid = t.rid AND tc.case_rid = '${caseRid}'),
   'task_status_rid', t.task_status_rid
   )ORDER BY t.sequence_no ASC) AS tasks
   FROM 
