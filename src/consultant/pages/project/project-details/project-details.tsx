@@ -338,6 +338,33 @@ export const ProjectDetails = () => {
     AllPermissions.CHECKLIST_EXPORT
   );
 
+  const isActivityTaskExportEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_TASK_EXPORT
+  );
+
+  const isActivityCallExportEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_CALL_EXPORT
+  );
+
+  const isActivityEmailExportEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_EMAIL_EXPORT
+  );
+
+  const isActivityMeetingExportEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_MEETING_EXPORT
+  );
+
+  const activityExportPermissionMap: Record<string, boolean> = {
+    task: !!isActivityTaskExportEnable,
+    email: !!isActivityEmailExportEnable,
+    meeting: !!isActivityMeetingExportEnable,
+    call: !!isActivityCallExportEnable,
+  };
+
   const checkExport = () => {
     const list = searchParams.get('list');
     const tab = searchParams.get('tab');
@@ -354,7 +381,17 @@ export const ProjectDetails = () => {
     } else if (list === 'checklist' && !checklistView) {
       return !isChecklistsExportEnable;
     } else if (list === 'activities' && !activityViewDetails) {
-      return false;
+      const tab = searchParams.get('tab') || 'all';
+      if (tab === 'all') {
+        const canExportAll =
+          isActivityTaskExportEnable ||
+          isActivityEmailExportEnable ||
+          isActivityMeetingExportEnable ||
+          isActivityCallExportEnable;
+
+        return !canExportAll;
+      }
+      return !activityExportPermissionMap[tab];
     } else if (list === 'projectsTask') {
       return !isTaskExportViewEnable;
     } else if (list === 'financial' && tab === 'resource_cost') {
@@ -898,10 +935,10 @@ export const ProjectDetails = () => {
           primaryButton={
             isProjectFieldsEditable && !detailPageView
               ? {
-                label: 'Edit',
-                onClick: handleEditAccount,
-                disabled: accountInActive,
-              }
+                  label: 'Edit',
+                  onClick: handleEditAccount,
+                  disabled: accountInActive,
+                }
               : undefined
           }
           onActionsClick={handleActionsClick}
@@ -920,10 +957,11 @@ export const ProjectDetails = () => {
       />
       <div className='flex flex-row flex-1 w-full border-b border-[#CBD6E2]'>
         <div
-          className={`flex transition-all duration-300 ease-in-out ${isCollapsed
+          className={`flex transition-all duration-300 ease-in-out ${
+            isCollapsed
               ? 'w-[60px] min-w-[60px] max-w-[60px]'
               : 'w-[220px] min-w-[220px] max-w-[220px]'
-            }`}
+          }`}
         >
           <SideMenuPanel
             menuItems={sideMenuItems}

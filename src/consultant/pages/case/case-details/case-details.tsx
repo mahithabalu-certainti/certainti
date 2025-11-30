@@ -253,6 +253,34 @@ export const CaseDetails = () => {
     permission,
     AllPermissions.TRIGGER_AI_ASSESSMENT
   );
+
+  const isActivityTaskExportEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_TASK_EXPORT
+  );
+
+  const isActivityCallExportEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_CALL_EXPORT
+  );
+
+  const isActivityEmailExportEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_EMAIL_EXPORT
+  );
+
+  const isActivityMeetingExportEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_MEETING_EXPORT
+  );
+
+  const activityExportPermissionMap: Record<string, boolean> = {
+    task: !!isActivityTaskExportEnable,
+    email: !!isActivityEmailExportEnable,
+    meeting: !!isActivityMeetingExportEnable,
+    call: !!isActivityCallExportEnable,
+  };
+
   const handleExport = (exportType: ExportType) => {
     if (
       searchParams.get('list') !== 'attachments' &&
@@ -369,7 +397,17 @@ export const CaseDetails = () => {
     } else if (list === 'checklist' && !checklistView) {
       return !isChecklistsExportEnable;
     } else if (list === 'activities' && !activityViewDetails) {
-      return false;
+      const tab = searchParams.get('tab') || 'all';
+      if (tab === 'all') {
+        const canExportAll =
+          isActivityTaskExportEnable ||
+          isActivityEmailExportEnable ||
+          isActivityMeetingExportEnable ||
+          isActivityCallExportEnable;
+
+        return !canExportAll;
+      }
+      return !activityExportPermissionMap[tab];
     } else if (list === 'caseProjects' && !isAssignProject && !projectDetails) {
       return false;
     } else if (searchParams.get('tab') === 'case_task') {

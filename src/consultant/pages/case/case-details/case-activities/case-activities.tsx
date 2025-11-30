@@ -8,9 +8,10 @@ import {
 import { SectionHeaderTab, SectionTabPanel } from '../../../../../components';
 import SectionHeader from '../../../../../components/details-section/section-header';
 import { ActivitiesIcon } from '../../../../../assets';
-import { AllPermissions } from '../../../../../common-service';
+import { AllModules, AllPermissions } from '../../../../../common-service';
 import {
   ActivityListExportURLParams,
+  ActivityModuleType,
   ActivityType,
   CaseDetails,
   ExportType,
@@ -28,6 +29,7 @@ import {
   getCallFilterFields,
   getEmailFilterFields,
   getMeetingFilterFields,
+  getPermissionMap,
 } from '../../../activities/activities-list/helper';
 import ActivityDetails from '../../../activities/activities-details/activity-details';
 import { ActivityListTable } from '../../../activities';
@@ -35,6 +37,10 @@ import { ACTIVITY_CREATE } from '../../../../../routes';
 import TaskDetails from '../../../activities/activities-details/task-details';
 import { useGetUserOptions } from '../../../../services/case-team';
 import { useGetActivityStatus } from '../../../../services/activities/activities-service';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../../store/store';
+import { AccessRestricted } from '../../../../../components/account-restricted';
+import { checkPermission } from '../../../../../common-utils';
 
 const ActivityTabs = [
   {
@@ -77,6 +83,10 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
   const [searchText, setSearchText] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState<number>(Date.now());
 
+  const { permission, modules } = useSelector(
+    (state: RootState) => state.permission
+  );
+
   const handleColumnVisibility = (
     event: React.MouseEvent<HTMLButtonElement>
   ) => {
@@ -98,12 +108,117 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
     fiscalYear: caseFiscalYear,
   };
 
+  // Permissions management
+  const activitiesTaskEnable = checkPermission(
+    modules,
+    AllModules.ACTIVITIES_TASK
+  );
+  const activitiesEmailEnable = checkPermission(
+    modules,
+    AllModules.ACTIVITIES_EMAIL
+  );
+  const activitiesMeetingEnable = checkPermission(
+    modules,
+    AllModules.ACTIVITIES_MEETING
+  );
+  const activitiesCallEnable = checkPermission(
+    modules,
+    AllModules.ACTIVITIES_CALL
+  );
+
+  // Create Permission
+  const isActivityTaskCreateEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_TASK_CREATE
+  );
+  const isActivityCallCreateEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_CALL_CREATE
+  );
+  const isActivityEmailCreateEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_EMAIL_CREATE
+  );
+  const isActivityMeetingCreateEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_MEETING_CREATE
+  );
+
+  const allActivitiesEnabled =
+    activitiesCallEnable ||
+    activitiesEmailEnable ||
+    activitiesMeetingEnable ||
+    activitiesTaskEnable;
+
+  // Edit / View Permission
+  const taskPermissionMap = useMemo(
+    () => getPermissionMap(permission, AllPermissions.ACTIVITY_TASK_VIEW_EDIT),
+    [permission]
+  );
+
+  const emailPermissionMap = useMemo(
+    () => getPermissionMap(permission, AllPermissions.ACTIVITY_EMAIL_VIEW_EDIT),
+    [permission]
+  );
+
+  const meetingPermissionMap = useMemo(
+    () =>
+      getPermissionMap(permission, AllPermissions.ACTIVITY_MEETING_VIEW_EDIT),
+    [permission]
+  );
+
+  const callPermissionMap = useMemo(
+    () => getPermissionMap(permission, AllPermissions.ACTIVITY_CALL_VIEW_EDIT),
+    [permission]
+  );
+
+  // Edit button permission check
+  const emailActivityFieldsEditable = useMemo(
+    () =>
+      permission
+        .find((item) => item.name === AllPermissions.ACTIVITY_EMAIL_VIEW_EDIT)
+        ?.fields?.some((field) => field.edit),
+    [permission]
+  );
+  const taskActivityFieldsEditable = useMemo(
+    () =>
+      permission
+        .find((item) => item.name === AllPermissions.ACTIVITY_TASK_VIEW_EDIT)
+        ?.fields?.some((field) => field.edit),
+    [permission]
+  );
+  const meetingActivityFieldsEditable = useMemo(
+    () =>
+      permission
+        .find((item) => item.name === AllPermissions.ACTIVITY_MEETING_VIEW_EDIT)
+        ?.fields?.some((field) => field.edit),
+    [permission]
+  );
+  const callActivityFieldsEditable = useMemo(
+    () =>
+      permission
+        .find((item) => item.name === AllPermissions.ACTIVITY_CALL_VIEW_EDIT)
+        ?.fields?.some((field) => field.edit),
+    [permission]
+  );
+
   const userListOptions = useGetUserOptions(accountId, true);
   const activityStatus = useGetActivityStatus();
 
   const initialTab = useMemo(() => {
+    if (allActivitiesEnabled) return 'all';
+    if (activitiesTaskEnable) return 'task';
+    if (activitiesEmailEnable) return 'eamil';
+    if (activitiesCallEnable) return 'call';
+    if (activitiesMeetingEnable) return 'meeting';
     return 'all';
-  }, []);
+  }, [
+    activitiesCallEnable,
+    activitiesEmailEnable,
+    activitiesMeetingEnable,
+    activitiesTaskEnable,
+    allActivitiesEnabled,
+  ]);
 
   useEffect(() => {
     if (searchParams.get('list') === 'activities' && !searchParams.get('tab')) {
@@ -146,27 +261,61 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
     );
   }, [activityStatus]);
 
+  const allActivityPermissionMaps = useMemo(
+    () => [
+      taskPermissionMap,
+      emailPermissionMap,
+      meetingPermissionMap,
+      callPermissionMap,
+    ],
+    [
+      taskPermissionMap,
+      emailPermissionMap,
+      meetingPermissionMap,
+      callPermissionMap,
+    ]
+  );
+
   const filterFields = useMemo(() => {
     switch (tabParam) {
       case 'task':
-        return getTaskFilterFields(userOptions, activityStatusOptions);
+        return getTaskFilterFields(
+          userOptions,
+          activityStatusOptions,
+          taskPermissionMap
+        );
       case 'email':
-        return getEmailFilterFields(activityStatusOptions);
+        return getEmailFilterFields(activityStatusOptions, emailPermissionMap);
       case 'meeting':
-        return getMeetingFilterFields(activityStatusOptions);
+        return getMeetingFilterFields(
+          activityStatusOptions,
+          meetingPermissionMap
+        );
       case 'call':
-        return getCallFilterFields(activityStatusOptions);
+        return getCallFilterFields(activityStatusOptions, callPermissionMap);
       default:
-        return getAllActivityFilterFields(activityStatusOptions);
+        return getAllActivityFilterFields(
+          activityStatusOptions,
+          allActivityPermissionMaps
+        );
     }
-  }, [tabParam, userOptions, activityStatusOptions]);
+  }, [
+    tabParam,
+    userOptions,
+    activityStatusOptions,
+    taskPermissionMap,
+    emailPermissionMap,
+    meetingPermissionMap,
+    callPermissionMap,
+    allActivityPermissionMaps,
+  ]);
 
   const tabs = [
-    { label: 'All', value: 'all' },
-    { label: 'Task', value: 'task' },
-    { label: 'Email', value: 'email' },
-    { label: 'Meeting', value: 'meeting' },
-    { label: 'Call', value: 'call' },
+    { label: 'All', value: 'all', hide: !allActivitiesEnabled },
+    { label: 'Task', value: 'task', hide: !activitiesTaskEnable },
+    { label: 'Email', value: 'email', hide: !activitiesEmailEnable },
+    { label: 'Meeting', value: 'meeting', hide: !activitiesMeetingEnable },
+    { label: 'Call', value: 'call', hide: !activitiesCallEnable },
   ];
 
   const handleCreate = () => {
@@ -184,6 +333,18 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
     navigate(`${path}?${queryParams.toString()}`);
   };
 
+  // Permission → Create Button Mapping
+  const createPermissionMap: Record<string, boolean> = {
+    task: !!isActivityTaskCreateEnable,
+    email: !!isActivityEmailCreateEnable,
+    meeting: !!isActivityMeetingCreateEnable,
+    call: !!isActivityCallCreateEnable,
+  };
+
+  // Show/Hide Create Button
+  const showCreateButton =
+    tabParam !== 'all' && !viewDetails && createPermissionMap[tabParam];
+
   const headerButtons = [
     {
       label: 'New',
@@ -191,7 +352,7 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
       disabled: accountInActive,
       onClick: () => handleCreate(),
       sx: { width: '48px', minWidth: '48px' },
-      hide: tabParam === 'all' || viewDetails,
+      hide: !showCreateButton,
     },
     {
       label: 'Show/Hide Fields',
@@ -216,18 +377,55 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
   const tableColumns = useMemo(() => {
     switch (tabParam) {
       case 'task':
-        return getActivityTaskListColumns(handleViewActivity);
+        return getActivityTaskListColumns(
+          handleViewActivity,
+          taskPermissionMap
+        );
       case 'email':
-        return getActivityEmailListColumns(handleViewActivity);
+        return getActivityEmailListColumns(
+          handleViewActivity,
+          emailPermissionMap
+        );
       case 'meeting':
-        return getActivityMeetingListColumns(handleViewActivity);
+        return getActivityMeetingListColumns(
+          handleViewActivity,
+          meetingPermissionMap
+        );
       case 'call':
-        return getActivityCallLogListColumns(handleViewActivity);
-      default: // 'all'
-        return getActivityAllActivityListColumns(handleViewActivity);
+        return getActivityCallLogListColumns(
+          handleViewActivity,
+          callPermissionMap
+        );
+      default:
+        return getActivityAllActivityListColumns(
+          handleViewActivity,
+          allActivityPermissionMaps
+        );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tabParam]);
+  }, [
+    callPermissionMap,
+    emailPermissionMap,
+    meetingPermissionMap,
+    tabParam,
+    taskPermissionMap,
+    allActivityPermissionMaps,
+  ]);
+
+  const activityEditPermissionByType: Record<ActivityModuleType, boolean> = {
+    email: emailActivityFieldsEditable ?? false,
+    task: taskActivityFieldsEditable ?? false,
+    meeting: meetingActivityFieldsEditable ?? false,
+    call: callActivityFieldsEditable ?? false,
+  };
+
+  if (
+    !activitiesCallEnable &&
+    !activitiesEmailEnable &&
+    !activitiesMeetingEnable &&
+    !activitiesTaskEnable
+  )
+    return <AccessRestricted />;
 
   return (
     <div className='w-full pt-2 pl-2 pr-4 mb-1'>
@@ -288,7 +486,7 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
         />
       ) : (
         <div className='border border-t-0 border-[#CBD6E2]'>
-          {tabParam === 'all' && (
+          {tabParam === 'all' && allActivitiesEnabled && (
             <ActivityListTable
               activityType='all'
               columns={tableColumns}
@@ -304,10 +502,11 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
               entityLevel='case'
               setExportType={setExportType}
               setActivityParams={setActivityParams}
+              activityEditPermissionByType={activityEditPermissionByType}
             />
           )}
 
-          {tabParam === 'task' && (
+          {tabParam === 'task' && activitiesTaskEnable && (
             <ActivityListTable
               activityType='task'
               columns={tableColumns}
@@ -323,10 +522,11 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
               entityLevel='case'
               setExportType={setExportType}
               setActivityParams={setActivityParams}
+              editButtonEnable={taskActivityFieldsEditable}
             />
           )}
 
-          {tabParam === 'email' && (
+          {tabParam === 'email' && activitiesEmailEnable && (
             <ActivityListTable
               activityType='email'
               columns={tableColumns}
@@ -342,10 +542,11 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
               entityLevel='case'
               setExportType={setExportType}
               setActivityParams={setActivityParams}
+              editButtonEnable={emailActivityFieldsEditable}
             />
           )}
 
-          {tabParam === 'meeting' && (
+          {tabParam === 'meeting' && activitiesMeetingEnable && (
             <ActivityListTable
               activityType='meeting'
               columns={tableColumns}
@@ -361,10 +562,11 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
               entityLevel='case'
               setExportType={setExportType}
               setActivityParams={setActivityParams}
+              editButtonEnable={meetingActivityFieldsEditable}
             />
           )}
 
-          {tabParam === 'call' && (
+          {tabParam === 'call' && activitiesCallEnable && (
             <ActivityListTable
               activityType='call'
               columns={tableColumns}
@@ -380,6 +582,7 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
               entityLevel='case'
               setExportType={setExportType}
               setActivityParams={setActivityParams}
+              editButtonEnable={callActivityFieldsEditable}
             />
           )}
         </div>
