@@ -274,7 +274,7 @@ export const fetchProjectsForCases = (
     ), 
 
     fetch_projects AS (
-    SELECT pf.rid, pf.project_code, pf.project_name, pf.project_type_rid, 
+    SELECT DISTINCT pf.rid, pf.project_code, pf.project_name, pf.project_type_rid, 
     pf.fiscal_year, pf.project_classification_rid, pf.project_client_group,
     pf.project_group, pf.total_effort_prj, pf.total_cost_prj, pf.total_cost_fte_prj,
     pf.total_cost_subcon_prj, pf.total_cost_nonlabor_prj, pf.assessment_status,
