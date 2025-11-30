@@ -3503,7 +3503,8 @@ return !response;
         where : {
           attach_to : caseRequest.attach_to,
           attachment_level : "task",
-          case_rid : caseRequest.case_rid
+          case_rid : caseRequest.case_rid,
+          checklist_template_rid : caseRequest.checklist_rid
         }, raw : true
       });
       if(!findCheckListAlreadyCreated) {
@@ -3514,7 +3515,7 @@ return !response;
           attachment_level: caseRequest.attachment_level,
           checklist_name: caseRequest.checklist_name,
           checklist_description: caseRequest.checklist_description,
-          checklist_template_rid: caseRequest?.checklist_template_rid || "",
+          checklist_template_rid: caseRequest.checklist_rid || "",
           fiscal_year:caseRequest.fiscal_year,
           created_by: caseRequest.created_by,
           status_rid: caseRequest.status_rid,
@@ -4787,39 +4788,45 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                 validEndDate = caseStartDate
                 secondMilestoneEntered = true
                 day = dayjs(validEndDate)
+                d.effort_in_days = d.effort_in_days - 1
               }
               else if(firstMilestoneEntered && !firstMilestoneForSecondDatePicker) {
                 validEndDate = endDateStorage
                 day = dayjs(validEndDate)
                 day = day.add(1, 'day')
                 firstMilestoneForSecondDatePicker = true
+                d.effort_in_days = d.effort_in_days
               } 
               else {
                 validEndDate = otherMileStoneEndDateStorgae
                 day = dayjs(validEndDate)
                 day = day.add(1, 'day')
+                d.effort_in_days = d.effort_in_days
               }
             } else {
               if(!firstMilestoneEntered && !secondMilestoneEntered && !otherMilestoneEntered) {
                 validEndDate = caseStartDate
                 otherMilestoneEntered = true
                 day = dayjs(validEndDate)
+                d.effort_in_days = d.effort_in_days - 1
               }
-              else if (firstMilestoneEntered && !secondMilestoneEntered && !firstMilestoneDatePicker) {
+              else if (!secondMilestoneEntered) {
+                validEndDate = otherMileStoneEndDateStorgae
+                day = dayjs(validEndDate)
+                day = day.add(1, 'day')
+                d.effort_in_days = d.effort_in_days
+              }
+              else {
                 validEndDate = endDateStorage
                 day = dayjs(validEndDate)
                 day = day.add(1, 'day')
                 firstMilestoneDatePicker = true
-              }
-              else {
-                validEndDate = otherMileStoneEndDateStorgae
-                day = dayjs(validEndDate)
-                day = day.add(1, 'day')
+                d.effort_in_days = d.effort_in_days
               }
             }
             if(d.sequence_no === 1) {
               const conversion = dayjs(validEndDate)
-              let res = conversion.add(d.effort_in_days - 1, 'day');
+              let res = conversion.add(d.effort_in_days, 'day');
               let finalisedEnddate = res.format('YYYY-MM-DD')
               endDate = dayjs(finalisedEnddate).toDate()
               let finalDay = day.toDate()
@@ -5105,7 +5112,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     if(!this.mainDbSequelize) {
       this.mainDbSequelize = await initMainDbSequelize()
     }
-    const {CaseTask, CaseTimeline, CaseHistory, TaskCollaborators, TaskSummary} = await this.caseModelService.getModels(accountNumber);
+    const {CaseTask, CaseTimeline, CaseHistory, TaskCollaborators, TaskSummary, CheckList, CheckListItem} = await this.caseModelService.getModels(accountNumber);
     const checkCaseExists = await this.isCaseExistsForAccount(data.account_rid, data.case_rid, accountNumber);
     if(!checkCaseExists) {
       return {
@@ -5144,25 +5151,51 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         });
         if(data?.checklist_template_rid) 
       {
-        const response  = await this.fetchChecklistTemplateDetailsById(data.checklist_template_rid);
-        response.checklist_items.map((item:any) => item.action_type  = 'add');
-        let caseRequest = {
-          account_rid: data.account_rid!,
-          checklist_name: response.checklist_name,
-          checklist_description: response.description,  
-          checklist_items: response.checklist_items,
-          attach_to: data.rid,
-          attachment_level: 'task',
-          created_by: data.modified_by,
-          created_datetime: new Date(),
-          fiscal_year: checkCaseExists.fiscal_year,
-          checklist_rid: data.checklist_template_rid,
-          case_rid : data.case_rid
-        };
-
-        const checklistResponse = await this.createCheckListForTask(accountNumber, caseRequest, transaction);
-        if(checklistResponse)
-          await this.manageCheckListItems(accountNumber,caseRequest,checklistResponse.rid, transaction);
+        if(data.checklist_template_rid !== isTaskExists.checklist_template_rid) {
+          if(isTaskExists.checklist_template_rid !== null && isTaskExists.checklist_template_rid !== '') {
+            const checklistResult = await CheckList.findOne({
+            where : {
+              attach_to : data.rid,
+              case_rid : data.case_rid,
+              attachment_level : 'task',
+              checklist_template_rid : isTaskExists.checklist_template_rid
+            }, raw : true
+          })
+          if(checklistResult) {
+            await CheckListItem.destroy({
+              where : {
+                checklist_rid : checklistResult.rid
+              }
+            })
+            await CheckList.destroy({
+              where : {
+                attach_to : data.rid,
+                case_rid : data.case_rid,
+                attachment_level : 'task',
+                checklist_template_rid : isTaskExists.checklist_template_rid
+              }
+            })
+            }
+          }
+          const response  = await this.fetchChecklistTemplateDetailsById(data.checklist_template_rid);
+          response.checklist_items.map((item:any) => item.action_type  = 'add');
+          let caseRequest : any = {
+            account_rid: data.account_rid!,
+            checklist_name: response.checklist_name,
+            checklist_description: response.description,  
+            checklist_items: response.checklist_items,
+            attach_to: data.rid,
+            attachment_level: 'task',
+            created_by: data.modified_by,
+            created_datetime: new Date(),
+            fiscal_year: checkCaseExists.fiscal_year,
+            checklist_rid: data.checklist_template_rid,
+            case_rid : data.case_rid
+          };
+          const checklistResponse = await this.createCheckListForTask(accountNumber, caseRequest, transaction);
+          if(checklistResponse)
+            await this.manageCheckListItems(accountNumber,caseRequest,checklistResponse.rid, transaction);
+          }
       }
        /* await TaskSummary.update(
         {
