@@ -785,12 +785,27 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
           }
           setDeletedAttachmentIds([]);
         } catch (error) {
-          const errorMessage =
-            (error as { response?: { data?: { statusMessage?: string } } })
-              ?.response?.data?.statusMessage ||
-            (error instanceof Error
-              ? error.message
-              : 'Failed to delete attachments');
+          let errorMessage = 'Failed to delete attachments';
+
+          if (error && typeof error === 'object') {
+            const err = error as any;
+            const statusMsg = err?.response?.data?.statusMessage;
+
+            if (statusMsg && typeof statusMsg === 'object' && !Array.isArray(statusMsg)) {
+              const fieldErrors = Object.entries(statusMsg)
+                .map(([field, message]) => `${field}: ${message}`)
+                .join(', ');
+              errorMessage = fieldErrors || 'Validation error';
+            } else {
+              errorMessage =
+                statusMsg ||
+                err?.response?.data?.message ||
+                err?.statusMessage ||
+                err?.message ||
+                'Failed to delete attachments';
+            }
+          }
+
           errorToast(errorMessage);
           console.error('Error deleting attachments:', error);
         }
@@ -810,12 +825,27 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
             queryKey: ['taskAttachments', attachmentsParams],
           });
         } catch (error) {
-          const errorMessage =
-            (error as { response?: { data?: { statusMessage?: string } } })
-              ?.response?.data?.statusMessage ||
-            (error instanceof Error
-              ? error.message
-              : 'Failed to upload attachments');
+          let errorMessage = 'Failed to upload attachments';
+
+          if (error && typeof error === 'object') {
+            const err = error as any;
+            const statusMsg = err?.response?.data?.statusMessage;
+
+            if (statusMsg && typeof statusMsg === 'object' && !Array.isArray(statusMsg)) {
+              const fieldErrors = Object.entries(statusMsg)
+                .map(([field, message]) => `${field}: ${message}`)
+                .join(', ');
+              errorMessage = fieldErrors || 'Validation error';
+            } else {
+              errorMessage =
+                statusMsg ||
+                err?.response?.data?.message ||
+                err?.statusMessage ||
+                err?.message ||
+                'Failed to upload attachments';
+            }
+          }
+
           errorToast(errorMessage);
           console.error('Error uploading attachments:', error);
         }
@@ -899,8 +929,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
           ...(categoryRidValue && {
             task_category_rid: categoryRidValue,
           }),
-          assigned_to: assignedToRid || '',
-          fiscal_year: editedTask.fiscal_year,
+          assigned_to: assignedToRid || ''
         };
 
         let updateResponse;
@@ -960,10 +989,27 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
         }
       }
     } catch (error) {
-      const errorMessage =
-        (error as { response?: { data?: { statusMessage?: string } } })
-          ?.response?.data?.statusMessage ||
-        (error instanceof Error ? error.message : 'Failed to update task');
+      let errorMessage = 'Failed to update task';
+
+      if (error && typeof error === 'object') {
+        const err = error as any;
+        const statusMsg = err?.response?.data?.statusMessage;
+
+        if (statusMsg && typeof statusMsg === 'object' && !Array.isArray(statusMsg)) {
+          const fieldErrors = Object.entries(statusMsg)
+            .map(([field, message]) => `${field}: ${message}`)
+            .join(', ');
+          errorMessage = fieldErrors || 'Validation error';
+        } else {
+          errorMessage =
+            statusMsg ||
+            err?.response?.data?.message ||
+            err?.statusMessage ||
+            err?.message ||
+            'Failed to update task';
+        }
+      }
+
       errorToast(errorMessage);
       console.error('Error updating task:', error);
     } finally {
