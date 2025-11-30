@@ -358,7 +358,7 @@ export const fetchTaskCategoryTypes =
     }
   };
 
-export const useGetTaskCategoryTypes = () => {
+export const useGetTaskCategoryTypes = (options?: { enabled?: boolean }) => {
   return useQuery<TaskCategoryTypeResponse, Error>({
     queryKey: ['task-category-types'],
     queryFn: fetchTaskCategoryTypes,
@@ -367,6 +367,7 @@ export const useGetTaskCategoryTypes = () => {
     gcTime: Infinity,
     refetchOnMount: false,
     refetchOnReconnect: false,
+    enabled: options?.enabled !== false,
   });
 };
 
@@ -443,7 +444,7 @@ export const fetchTaskWeightageTypes =
     }
   };
 
-export const useWeightageList = () => {
+export const useWeightageList = (options?: { enabled?: boolean }) => {
   return useQuery<TaskLinkTypeResponse, Error>({
     queryKey: ['task-weightage-types'],
     queryFn: fetchTaskWeightageTypes,
@@ -452,5 +453,6 @@ export const useWeightageList = () => {
     gcTime: Infinity,
     refetchOnMount: false,
     refetchOnReconnect: false,
+    enabled: options?.enabled !== false,
   });
 };

@@ -446,9 +446,9 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     return [];
   }, [taskTemplatesQuery.data, task?.title, taskId]);
 
-  // Fetch weightage and category lists
-  const weightageListQuery = useWeightageList();
-  const categoryListQuery = useGetTaskCategoryTypes();
+  // Fetch weightage and category lists (only for case tasks, not activities)
+  const weightageListQuery = useWeightageList({ enabled: taskType !== 'activity' });
+  const categoryListQuery = useGetTaskCategoryTypes({ enabled: taskType !== 'activity' });
 
   const weightageData = useMemo(() => {
     // Handle nested data.data structure
@@ -1249,10 +1249,11 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
           );
           if (userToRemove) {
             await deleteCollaboratorMutation.mutateAsync({
-              case_rid: caseId,
+              ...(taskType !== 'activity' && { case_rid: caseId }),
               account_rid: accountId,
               rid: taskId,
               assigned_to: removedUserId,
+              ...(taskType === 'activity' && { task_type: 'activity' }),
             });
           }
         }
@@ -1959,10 +1960,11 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
 
                 deleteCollaboratorMutation.mutate(
                   {
-                    case_rid: caseId,
+                    ...(taskType !== 'activity' && { case_rid: caseId }),
                     account_rid: accountId,
                     rid: taskId,
                     assigned_to: userToRemove.id,
+                    ...(taskType === 'activity' && { task_type: 'activity' }),
                   },
                   {
                     onSuccess: () => {

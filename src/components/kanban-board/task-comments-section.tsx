@@ -336,22 +336,7 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
 
   const invalidateCommentQueries = () => {
     if (accountId && (caseId || taskType === 'activity') && taskId) {
-      // Invalidate regular comments query
-      queryClient.invalidateQueries({
-        queryKey: [
-          'taskComments',
-          {
-            account_rid: accountId,
-            ...(taskType !== 'activity' && { case_rid: caseId }),
-            task_rid: taskId,
-            page: 1,
-            limit: 100,
-            ...(taskType === 'activity' && { task_type: 'activity' }),
-          },
-        ],
-      });
-
-      // Invalidate infinite comments query
+      // Only invalidate infinite comments query (used by this component)
       queryClient.invalidateQueries({
         queryKey: [
           'taskCommentsInfinite',
@@ -364,24 +349,7 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
         ],
       });
 
-      queryClient.invalidateQueries({
-        queryKey: [
-          'taskAttachments',
-          {
-            account_rid: accountId,
-            case_rid: caseId,
-            task_rid: taskId,
-            page: 1,
-            limit: 100,
-          },
-        ],
-      });
-
-      // Invalidate activities queries
-      queryClient.invalidateQueries({
-        queryKey: ['taskActivities', accountId, caseId, taskId],
-      });
-
+      // Only invalidate infinite activities query (used by this component)
       queryClient.invalidateQueries({
         queryKey: [
           'taskActivitiesInfinite',
@@ -389,6 +357,7 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
             case_rid: caseId || '',
             account_rid: accountId,
             task_rid: taskId,
+            task_type: taskType,
           },
         ],
       });
