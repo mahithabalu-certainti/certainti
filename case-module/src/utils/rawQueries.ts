@@ -906,7 +906,7 @@ export const fetchMilestoneTaskTemplate = (taskTypeRid : string, filingTypeRid :
   return query;
 }
 
-export const fetchCaseTemplateData = (schemaName : string, caseRid : string, accountRid : string) => {
+export const fetchCaseTemplateData = (schemaName : string, caseRid : string, accountRid : string, statusRid : string) => {
   let query = 
   `
   WITH fetch_task AS (
@@ -921,7 +921,7 @@ export const fetchCaseTemplateData = (schemaName : string, caseRid : string, acc
   'effective_start_datetime', t.effective_start_datetime,
   'effective_end_datetime', t.effective_end_datetime,
   'case_team_member_role_rid', t.case_team_member_role_rid,
-  'assigned_to', t.assigned_to,
+  'assigned_to', ct.user_rid,
   'status_rid', t.status_rid,
   'priority_rid', t.priority_rid,
   'task_type_rid', t.task_type_rid,
@@ -943,7 +943,7 @@ export const fetchCaseTemplateData = (schemaName : string, caseRid : string, acc
   FROM 
   ${schemaName}.case_milestone cm
   LEFT JOIN ${schemaName}.case_task t ON t.milestone_template_rid = cm.rid
-  LEFT JOIN ${schemaName}.case_team ct ON ct.role_rid = t.case_team_member_role_rid AND ct.case_rid = '${caseRid}' AND ct.account_rid = '${accountRid}'
+  LEFT JOIN ${schemaName}.case_team ct ON ct.user_rid = t.assigned_to AND ct.role_rid = t.case_team_member_role_rid AND ct.case_rid = '${caseRid}' AND ct.account_rid = '${accountRid}' AND ct.status_rid = '${statusRid}'
   WHERE
   t.milestone_template_rid = cm.rid
   AND

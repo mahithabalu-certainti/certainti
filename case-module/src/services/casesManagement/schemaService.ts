@@ -968,8 +968,11 @@ async fetchChecklistTemplateDetailsById(
     if(!this.orgDbSequelize) {
       this.orgDbSequelize = await initOrgSequelize();
     }
-
-    const result : any = await this.orgDbSequelize.query(fetchCaseTemplateData(schemaName,caseRid, accountRid));
+    if(!this.mainDbSequelize) {
+      this.mainDbSequelize = await initMainDbSequelize();
+    }
+    const getActiveStatusId : any = await this.mainDbSequelize.query(rawQueries.getActiveStatusId())
+    const result : any = await this.orgDbSequelize.query(fetchCaseTemplateData(schemaName,caseRid, accountRid, getActiveStatusId[0][0].rid));
     
     if(result[0].length > 0) {
       return result[0][0]
