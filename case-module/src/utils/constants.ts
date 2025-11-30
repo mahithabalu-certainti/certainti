@@ -606,7 +606,7 @@ export const activityFieldMappings = [
   },
    {
     permissionField: "attached_to",
-    exportField: "Related To Name",
+    exportField: "Related To",
     dataField: "attached_to",
   },
   {
@@ -623,11 +623,6 @@ export const taskactivityFieldMappings = [
     exportField: "Task ID",
     dataField: "r_number",
   },
-   {
-    permissionField: "created_by",
-    exportField: "Created By",
-    dataField: "created_by_name",
-  },
   {
     permissionField: "status_rid",
     exportField: "Status",
@@ -635,8 +630,23 @@ export const taskactivityFieldMappings = [
   },
    {
     permissionField: "attached_to",
-    exportField: "Related To Name",
+    exportField: "Related To",
     dataField: "attached_to",
+  },
+   {
+    permissionField: "created_by",
+    exportField: "Created By",
+    dataField: "created_by",
+  },
+   {
+    permissionField: "created_datetime",
+    exportField: "Created On",
+    dataField: "created_datetime",
+  },
+  {
+    permissionField: "description",
+    exportField: "Description",
+    dataField: "description",
   },
   {
     permissionField: "effective_end_datetime",
@@ -661,16 +671,34 @@ export const emailactivityFieldMappings = [
     exportField: "Email Status",
     dataField: "status_name",
   },
+   {
+    permissionField: "attached_to",
+    exportField: "Related To",
+    dataField: "attached_to",
+  },
+  {
+    permissionField: "created_by_name",
+    exportField: "Created By",
+    dataField: "created_by_name",
+  },
+
   {
     permissionField: "created_datetime",
     exportField: "Created On",
     dataField: "created_datetime",
   },
    {
-    permissionField: "attached_to",
-    exportField: "Related To Name",
-    dataField: "attached_to",
+    permissionField: "to_email",
+    exportField: "Email To",
+    dataField: "to_email",
+  },
+    {
+    permissionField: "subject",
+    exportField: "Email Subject",
+    dataField: "subject",
   }
+
+  
           
 ];
 export const callactivityFieldMappings = [
@@ -686,7 +714,7 @@ export const callactivityFieldMappings = [
   },
   {
     permissionField: "attached_to",
-    exportField: "Related To Name",
+    exportField: "Related To",
     dataField: "attached_to",
   },
   {
@@ -705,9 +733,9 @@ export const callactivityFieldMappings = [
     dataField: "effective_end_datetime",
   },
   {
-    permissionField: "created_user_name",
+    permissionField: "created_by_name",
     exportField: "Created By",
-    dataField: "created_user_name",
+    dataField: "created_by_name",
   },
   {
     permissionField: "created_datetime",
@@ -750,8 +778,8 @@ export const meetingactivityFieldMappings = [
   },
     {
     permissionField: "attached_to",
-    exportField: "Related To Name",
-    dataField: "attached_to_name",
+    exportField: "Related To",
+    dataField: "attached_to",
   },
   
 
@@ -1427,6 +1455,9 @@ export const rawQueries = {
   },
   getEmailTemplateCategory() {
     return `SELECT rid, category_name FROM ${MAIN_SCHEMA_NAME}.email_template_category ORDER BY category_name ASC`
+  },
+  getEmailTemplateCategoryByName(categoryName: string) {
+    return `SELECT rid, category_name FROM ${MAIN_SCHEMA_NAME}.email_template_category where category_name = '${categoryName}' ORDER BY category_name ASC`
   },
   getAllPriorityTypes (rid : any[]) {
     let ids : string[] = []

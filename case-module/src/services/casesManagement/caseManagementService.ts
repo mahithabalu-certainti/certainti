@@ -437,6 +437,34 @@ export class CaseManagementService {
       }  
     }
   }
+
+  async listEmailTemplatesByCategory (
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { emailTemplates: any; };
+  }> {
+    const result = await this.caseManangementSchemaService.listEmailTemplatesByCategory();
+    if (result != null) {
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          emailTemplates: result
+        },
+      };
+    } else {
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.NOT_FOUND_MESSAGE,
+        data: {
+          emailTemplates: []
+        },
+      };
+    }
+  }
+     
   async updateTaskTemplate (data : UpdateTaskTemplateType, userId : string)  {
     const result = await this.caseManangementSchemaService.updateTaskTemplate(data, userId);
     if(result?.statusCode == HttpStatus.SUCCESS) {

@@ -1518,6 +1518,68 @@ async function listEmailTemplates(req: Request, res: Response) {
   }
 }
 
+async function listAllEmailTemplatesByCategory(req: Request, res: Response) {
+  try {
+    const methodName = "List Email Templates By Category";
+
+    const userId = req.headers["x-user-id"] as string;
+    const value = await validateRequest(req, listEmailTemplateSchema, res, "GET");
+    if (!value) return;
+    let parsedFilters: Record<string, any> = {};
+
+    try {
+      parsedFilters = JSON.parse(value.filters);
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid filters format. Must be a valid JSON object."
+      );
+    }
+
+    logMessage(
+      `[${methodName}] Request received, ${JSON.stringify(
+        req.body
+      )} userId: ${userId}`
+    );
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    
+    const result = await caseManagementService.listEmailTemplatesByCategory(
+      value,
+      userId
+    );
+    if (result.statusCode == HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, result.data);
+      return;
+    } else {
+      errorLog(methodName, "No data found");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        result.errorMessage
+      );
+      return;
+    }
+  } catch (error: any) {
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+
 async function exportEmailTemplates(req: Request, res: Response) {
   try {
     const methodName = "Export Email Templates";
@@ -2018,6 +2080,7 @@ export default {
   updateEmailTemplate,
   getEmailPlaceHolders,
   listEmailTemplates,
+  listAllEmailTemplatesByCategory,
   getEmailTemplateDetailsById,
   exportEmailTemplates,
   getEmailCategoryPlaceHolders,

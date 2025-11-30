@@ -336,6 +336,15 @@ export interface ICaseManagementService {
     errorMessage?: string;
     data?: { emailTemplates: any; count: number };
   }>;
+   listEmailTemplatesByCategory(
+    data: any,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { emailTemplates: any;};
+  }>;
   updateAdminCheckList(
     checklistRequest: ICreateChecklistTemplate,
     userId: string
