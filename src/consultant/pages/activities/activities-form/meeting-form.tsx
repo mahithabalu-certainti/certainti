@@ -16,13 +16,24 @@ import { MeetingAttendees } from '../../../../components';
 import dayjs, { Dayjs } from 'dayjs';
 import { FileList } from '../../../../components/file-list';
 import { MenuItem, Select } from '@mui/material';
-import { COMMON_MENU_PROPS, getSelectStyles } from './helper';
+import {
+  COMMON_MENU_PROPS,
+  getSelectStyles,
+  shouldDisableField,
+  shouldHideField,
+} from './helper';
 import {
   formatDateToYYYYMMDDWithTime,
   REGEX_PATTERNS,
 } from '../../../../common-utils';
 import StyledDateTimePicker from '../../../../components/form-builder/styled-date-time-picker';
-import { parseToStringArray } from '../activities-list/helper';
+import {
+  getPermissionMap,
+  parseToStringArray,
+} from '../activities-list/helper';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../store/store';
+import { AllPermissions } from '../../../../common-service';
 
 // Types
 interface SuggestionState {
@@ -139,6 +150,14 @@ const MeetingForm: React.FC = () => {
 
   // File input ref
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Permission
+  const { permission } = useSelector((state: RootState) => state.permission);
+  const permissionMap = useMemo(
+    () =>
+      getPermissionMap(permission, AllPermissions.ACTIVITY_MEETING_VIEW_EDIT),
+    [permission]
+  );
 
   // Refs
   const userListOptions = useGetUserOptions(accountId, true);
@@ -1093,6 +1112,17 @@ const MeetingForm: React.FC = () => {
   const showEffectiveEndDate = formData.recurrence_type !== 'none';
   const isDailyRecurrence = formData.recurrence_type === 'daily';
 
+  const hideAttachments = shouldHideField(
+    'attachments',
+    isEditView,
+    permissionMap
+  );
+  const disableAttachments = shouldDisableField(
+    'attachments',
+    isEditView,
+    permissionMap
+  );
+
   return (
     <div>
       <div className='h-[50px] flex items-center justify-between px-10 sticky top-0 z-10 bg-white border-b border-[#CBD6E2]'>
@@ -1155,7 +1185,7 @@ const MeetingForm: React.FC = () => {
             {/* Attendees Field */}
             <div className='px-10'>
               <MeetingAttendees
-                label='Attendees'
+                label='Meeting Participants'
                 field='attendees'
                 values={formData.attendees}
                 inputValue={attendeesInput}
@@ -1172,11 +1202,24 @@ const MeetingForm: React.FC = () => {
                 }}
                 required={true}
                 isValidEmail={isValidEmail}
+                disabled={shouldDisableField(
+                  'meeting_participants',
+                  isEditView,
+                  permissionMap
+                )}
+                hide={shouldHideField('to_email', isEditView, permissionMap)}
               />
             </div>
 
             {/* Subject Field */}
-            <div className='grid md:grid-cols-1 gap-x-4 px-10 pt-3'>
+            <div
+              className='grid md:grid-cols-1 gap-x-4 px-10 pt-3'
+              style={{
+                display: shouldHideField('subject', isEditView, permissionMap)
+                  ? 'none'
+                  : 'block',
+              }}
+            >
               <label
                 htmlFor='subject'
                 className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px]'
@@ -1190,6 +1233,11 @@ const MeetingForm: React.FC = () => {
                 value={formData.subject}
                 onChange={handleSubjectChange}
                 autoComplete='off'
+                disabled={shouldDisableField(
+                  'subject',
+                  isEditView,
+                  permissionMap
+                )}
                 className={`placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] truncate overflow-hidden text-ellipsis whitespace-nowrap outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ${errors?.subject ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
               />
               {errors?.subject && (
@@ -1202,7 +1250,17 @@ const MeetingForm: React.FC = () => {
             {/* Date & Time Section - Microsoft Teams Layout */}
             <div className='grid md:grid-cols-3 gap-x-4 gap-y-3 px-10 pt-3'>
               {/* Start Date */}
-              <div>
+              <div
+                style={{
+                  display: shouldHideField(
+                    'effective_start_datetime',
+                    isEditView,
+                    permissionMap
+                  )
+                    ? 'none'
+                    : 'block',
+                }}
+              >
                 <label
                   htmlFor='effective_startdate'
                   className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px]'
@@ -1218,11 +1276,26 @@ const MeetingForm: React.FC = () => {
                   error={!!errors?.effective_startdate}
                   helperText={errors?.effective_startdate}
                   disablePast={true}
+                  disabled={shouldDisableField(
+                    'effective_start_datetime',
+                    isEditView,
+                    permissionMap
+                  )}
                 />
               </div>
 
               {/* Start Time */}
-              <div>
+              <div
+                style={{
+                  display: shouldHideField(
+                    'effective_start_time',
+                    isEditView,
+                    permissionMap
+                  )
+                    ? 'none'
+                    : 'block',
+                }}
+              >
                 <label
                   htmlFor='start_time'
                   className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px]'
@@ -1242,11 +1315,26 @@ const MeetingForm: React.FC = () => {
                   }
                   shouldDisableTime={getShouldDisableTime('start_time')}
                   openTo='hours' // Ensure it opens to hours first
+                  disabled={shouldDisableField(
+                    'effective_start_time',
+                    isEditView,
+                    permissionMap
+                  )}
                 />
               </div>
 
               {/* End Time */}
-              <div>
+              <div
+                style={{
+                  display: shouldHideField(
+                    'effective_end_time',
+                    isEditView,
+                    permissionMap
+                  )
+                    ? 'none'
+                    : 'block',
+                }}
+              >
                 <label
                   htmlFor='end_time'
                   className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px]'
@@ -1261,13 +1349,28 @@ const MeetingForm: React.FC = () => {
                   helperText={errors?.end_time}
                   ampm={true}
                   openTo='hours' // Ensure it opens to hours first
+                  disabled={shouldDisableField(
+                    'effective_end_time',
+                    isEditView,
+                    permissionMap
+                  )}
                 />
               </div>
             </div>
 
             {/* Recurrence Type */}
             <div className='grid md:grid-cols-3 gap-x-4 gap-y-3 px-10 pt-3'>
-              <div>
+              <div
+                style={{
+                  display: shouldHideField(
+                    'recurrence_type',
+                    isEditView,
+                    permissionMap
+                  )
+                    ? 'none'
+                    : 'block',
+                }}
+              >
                 <label
                   className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
                   htmlFor='recurrence_type'
@@ -1285,7 +1388,14 @@ const MeetingForm: React.FC = () => {
                   displayEmpty
                   fullWidth
                   size='small'
-                  disabled={!formData.effective_startdate}
+                  disabled={
+                    !formData.effective_startdate ||
+                    shouldDisableField(
+                      'recurrence_type',
+                      isEditView,
+                      permissionMap
+                    )
+                  }
                   className={`custom-select-no-arrow sm:text-sm ${
                     formData.recurrence_type === ''
                       ? 'text-[#7D98B6]'
@@ -1322,7 +1432,17 @@ const MeetingForm: React.FC = () => {
 
               {/* Recurrence Interval - Conditionally Shown */}
               {showRecurrenceInterval && (
-                <div>
+                <div
+                  style={{
+                    display: shouldHideField(
+                      'recurrence_interval',
+                      isEditView,
+                      permissionMap
+                    )
+                      ? 'none'
+                      : 'block',
+                  }}
+                >
                   <label
                     htmlFor='recurrence_interval'
                     className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px]'
@@ -1342,6 +1462,11 @@ const MeetingForm: React.FC = () => {
                       if (!/^\d+$/.test(e.clipboardData.getData('text')))
                         e.preventDefault();
                     }}
+                    disabled={shouldDisableField(
+                      'recurrence_interval',
+                      isEditView,
+                      permissionMap
+                    )}
                     className={`no-spinner placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] truncate overflow-hidden text-ellipsis whitespace-nowrap outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ${errors?.recurrence_interval ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
                   />
                   {errors?.recurrence_interval && (
@@ -1354,7 +1479,17 @@ const MeetingForm: React.FC = () => {
 
               {/* Effective End Date - Conditionally Shown */}
               {showEffectiveEndDate && (
-                <div>
+                <div
+                  style={{
+                    display: shouldHideField(
+                      'effective_end_datetime',
+                      isEditView,
+                      permissionMap
+                    )
+                      ? 'none'
+                      : 'block',
+                  }}
+                >
                   <label
                     htmlFor='effective_enddate'
                     className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px]'
@@ -1371,6 +1506,11 @@ const MeetingForm: React.FC = () => {
                     helperText={errors?.effective_enddate}
                     disablePast={true}
                     minDate={startDate || undefined}
+                    disabled={shouldDisableField(
+                      'effective_end_datetime',
+                      isEditView,
+                      permissionMap
+                    )}
                   />
                 </div>
               )}
@@ -1378,8 +1518,18 @@ const MeetingForm: React.FC = () => {
 
             {/* Weekly Recurrence Days - Conditionally Shown */}
             {showRecurrenceDays && (
-              <div className='grid md:grid-cols-1 gap-x-4 gap-y-3 px-10 pt-3'>
-                <div>
+              <div
+                style={{
+                  display: shouldHideField(
+                    'recurrence_days',
+                    isEditView,
+                    permissionMap
+                  )
+                    ? 'none'
+                    : 'block',
+                }}
+              >
+                <div className='grid md:grid-cols-1 gap-x-4 gap-y-3 px-10 pt-3'>
                   <label className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px]'>
                     Recurrence Days
                   </label>
@@ -1394,7 +1544,14 @@ const MeetingForm: React.FC = () => {
                           checked={formData.recurrence_days.includes(day.value)}
                           onChange={() => handleRecurrenceDaysChange(day.value)}
                           className='w-4 h-4 cursor-pointer'
-                          disabled={isDailyRecurrence}
+                          disabled={
+                            isDailyRecurrence ||
+                            shouldDisableField(
+                              'recurrence_days',
+                              isEditView,
+                              permissionMap
+                            )
+                          }
                         />
                         <span className='text-[13px] text-[#2D3E4F]'>
                           {day.label}
@@ -1413,8 +1570,18 @@ const MeetingForm: React.FC = () => {
 
             {/* Monthly Recurrence Options - Conditionally Shown */}
             {showMonthlyOptions && (
-              <div className='grid md:grid-cols-1 gap-x-4 gap-y-3 px-10 pt-3'>
-                <div>
+              <div
+                style={{
+                  display: shouldHideField(
+                    'recurrence_days',
+                    isEditView,
+                    permissionMap
+                  )
+                    ? 'none'
+                    : 'block',
+                }}
+              >
+                <div className='grid md:grid-cols-1 gap-x-4 gap-y-3 px-10 pt-3'>
                   <label className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px]'>
                     Recurrence Days
                   </label>
@@ -1434,6 +1601,11 @@ const MeetingForm: React.FC = () => {
                           onChange={() =>
                             handleMonthlyRecurrenceChange(option.value)
                           }
+                          disabled={shouldDisableField(
+                            'recurrence_days',
+                            isEditView,
+                            permissionMap
+                          )}
                           className='w-4 h-4 cursor-pointer'
                         />
                         <span className='text-[13px] text-[#2D3E4F]'>
@@ -1452,71 +1624,81 @@ const MeetingForm: React.FC = () => {
             )}
 
             {/* File Attachments Section */}
-            <div className='mt-6 border capitalize h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-10'>
-              Attachments
-            </div>
-            <div className='px-10 mt-3'>
-              <div className='flex flex-col items-center justify-center gap-4 px-4 py-5'>
-                <div
-                  onDrop={handleDrop}
-                  onDragOver={handleDragOver}
-                  onClick={openFileDialog}
-                  className={`h-[116px] w-[502px] border-[2px] border-dashed rounded-[8px] flex flex-col items-center justify-center gap-2 cursor-pointer
-                    ${message?.type === 'error' ? 'border-red-600 bg-[#FEF2F2]' : 'border-[#0176D3] bg-[#F4F6F9]'}
-                  `}
-                >
-                  <UploadIcon alt='Upload Icon' className='w-[36px] h-[24px]' />
+            <div
+              className={`mt-6 ${hideAttachments ? 'hidden' : 'block'}`}
+              style={{
+                pointerEvents: disableAttachments ? 'none' : 'all',
+              }}
+            >
+              <div className='border capitalize h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-10'>
+                Attachments
+              </div>
+              <div className='px-10 mt-3'>
+                <div className='flex flex-col items-center justify-center gap-4 px-4 py-5'>
                   <div
-                    className='text-[14px] text-[#0B0B0B]'
-                    style={{ whiteSpace: 'nowrap' }}
+                    onDrop={handleDrop}
+                    onDragOver={handleDragOver}
+                    onClick={openFileDialog}
+                    className={`h-[116px] w-[502px] border-[2px] border-dashed rounded-[8px] flex flex-col items-center justify-center gap-2 cursor-pointer
+                    ${message?.type === 'error' ? 'border-red-600 bg-[#FEF2F2]' : 'border-[#0176D3] bg-[#F4F6F9]'}  ${disableAttachments ? 'opacity-50' : 'opacity-100'}
+                  `}
                   >
-                    Drag your file or{' '}
-                    <span
-                      className='text-[#0176D3] underline'
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openFileDialog();
-                      }}
-                    >
-                      browse
-                    </span>
-                  </div>
-                  <input
-                    type='file'
-                    accept='.csv,.xls,.xlsx,.pdf,.docx'
-                    className='hidden'
-                    ref={fileInputRef}
-                    onChange={handleFileSelect}
-                    multiple
-                  />
-                </div>
-
-                {/* Reserved space for error messages to prevent button movement */}
-                <div className='w-[502px] max-w-[502px] mt-2'>
-                  {message && (
+                    <UploadIcon
+                      alt='Upload Icon'
+                      className='w-[36px] h-[24px]'
+                    />
                     <div
-                      className={`text-sm ${
-                        message.type === 'error'
-                          ? 'text-red-600'
-                          : 'text-green-600'
-                      }`}
+                      className='text-[14px] text-[#0B0B0B]'
+                      style={{ whiteSpace: 'nowrap' }}
                     >
-                      {message.text}
+                      Drag your file or{' '}
+                      <span
+                        className='text-[#0176D3] underline'
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openFileDialog();
+                        }}
+                      >
+                        browse
+                      </span>
                     </div>
-                  )}
-                </div>
+                    <input
+                      type='file'
+                      accept='.csv,.xls,.xlsx,.pdf,.docx'
+                      className='hidden'
+                      ref={fileInputRef}
+                      onChange={handleFileSelect}
+                      multiple
+                    />
+                  </div>
 
-                <div className='max-h-[150px] overflow-y-auto'>
-                  <FileList
-                    fileInputRef={fileInputRef}
-                    selectedFiles={formData.files}
-                    setSelectedFiles={(files) =>
-                      handleInputChange('files', files)
-                    }
-                    existingFiles={existingFiles}
-                    onRemoveExistingFile={removeExistingFile}
-                    disabled={false}
-                  />
+                  {/* Reserved space for error messages to prevent button movement */}
+                  <div className='w-[502px] max-w-[502px] mt-2'>
+                    {message && (
+                      <div
+                        className={`text-sm ${
+                          message.type === 'error'
+                            ? 'text-red-600'
+                            : 'text-green-600'
+                        }`}
+                      >
+                        {message.text}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className='max-h-[150px] overflow-y-auto'>
+                    <FileList
+                      fileInputRef={fileInputRef}
+                      selectedFiles={formData.files}
+                      setSelectedFiles={(files) =>
+                        handleInputChange('files', files)
+                      }
+                      existingFiles={existingFiles}
+                      onRemoveExistingFile={removeExistingFile}
+                      disabled={disableAttachments}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -1533,32 +1715,52 @@ const MeetingForm: React.FC = () => {
                   {
                     label: 'Record ID',
                     value: formData.rid,
-                    hide: false,
+                    hide: shouldHideField('rid', isEditView, permissionMap),
                   },
                   {
                     label: 'Created On',
                     value: formData.created_on,
-                    hide: false,
+                    hide: shouldHideField(
+                      'created_datetime',
+                      isEditView,
+                      permissionMap
+                    ),
                   },
                   {
                     label: 'Created By',
                     value: formData.created_by,
-                    hide: false,
+                    hide: shouldHideField(
+                      'created_by_name',
+                      isEditView,
+                      permissionMap
+                    ),
                   },
                   {
                     label: 'Meeting ID',
                     value: formData.meeting_rid,
-                    hide: false,
+                    hide: shouldHideField(
+                      'r_number',
+                      isEditView,
+                      permissionMap
+                    ),
                   },
                   {
                     label: 'Updated On',
                     value: formData.updated_on,
-                    hide: false,
+                    hide: shouldHideField(
+                      'modified_datetime',
+                      isEditView,
+                      permissionMap
+                    ),
                   },
                   {
                     label: 'Updated By',
                     value: formData.updated_by,
-                    hide: false,
+                    hide: shouldHideField(
+                      'modified_by_name',
+                      isEditView,
+                      permissionMap
+                    ),
                   },
                 ]
                   .filter((field) => !field.hide)

@@ -8,6 +8,7 @@ import ReactQuill, { Quill } from 'react-quill';
 import {
   useCreateActivityEmail,
   useEmailActivityDetails,
+  useGetEmailTemplateItems,
   useUpdateActivityEmail,
 } from '../../../services/activities/activities-service';
 import { useParams, useSearchParams } from 'react-router-dom';
@@ -15,7 +16,10 @@ import { useToast } from '../../../../hooks';
 import {
   ActivityEmailFormData,
   ActivityEmailFormErrors,
+  getAutocompleteStyles,
   normalizeQuillValue,
+  shouldDisableField,
+  shouldHideField,
   validateActivityEmailForm,
 } from './helper';
 import { useGetUserOptions, UserOption } from '../../../services/case-team';
@@ -24,7 +28,17 @@ import {
   formatDateToYYYYMMDDWithTime,
   REGEX_PATTERNS,
 } from '../../../../common-utils';
-import { parseToStringArray } from '../activities-list/helper';
+import {
+  getPermissionMap,
+  parseToStringArray,
+} from '../activities-list/helper';
+import { useEmailTemplateDetails } from '../../../../admin/service/email-template/email-template-service';
+import { Autocomplete, Skeleton, TextField } from '@mui/material';
+import { ArrowDropDownIcon } from '@mui/x-date-pickers';
+import ConfirmationPopup from '../../../../common-utils/confirmation-popup';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../store/store';
+import { AllPermissions } from '../../../../common-service';
 
 // Types
 interface SuggestionState {
@@ -72,6 +86,7 @@ const EmailForm: React.FC = () => {
     created_by: '',
     updated_on: '',
     updated_by: '',
+    email_template_rid: '',
   });
   const [activeFlag, setActiveFlag] = useState<FlagTypeEnum | null>(null);
   const [errors, setErrors] = useState<ActivityEmailFormErrors>({});
@@ -95,6 +110,32 @@ const EmailForm: React.FC = () => {
     anchorEl: null,
   });
 
+  const [currentTemplate, setCurrentTemplate] = useState<{
+    label: string;
+    value: string;
+  }>({
+    label: 'Choose Template',
+    value: '',
+  });
+  const [confirmationState, setConfirmationState] = useState<{
+    isOpen: boolean;
+    message: string;
+    onConfirm: () => void;
+    onCancel: () => void;
+  }>({
+    isOpen: false,
+    message: '',
+    onConfirm: () => {},
+    onCancel: () => {},
+  });
+
+  // Permission
+  const { permission } = useSelector((state: RootState) => state.permission);
+  const permissionMap = useMemo(
+    () => getPermissionMap(permission, AllPermissions.ACTIVITY_EMAIL_VIEW_EDIT),
+    [permission]
+  );
+
   // Refs
   const quillRef = useRef<ReactQuill>(null);
   const quillContainerRef = useRef<HTMLDivElement>(null);
@@ -108,6 +149,12 @@ const EmailForm: React.FC = () => {
     true
   );
 
+  // Email templates
+  const emailTemplates = useGetEmailTemplateItems();
+
+  const { data: templateDetails, isLoading: templateLoading } =
+    useEmailTemplateDetails(currentTemplate.value);
+
   const userOptions = useMemo(() => {
     return (
       userListOptions?.data?.map((item) => ({
@@ -117,6 +164,15 @@ const EmailForm: React.FC = () => {
       })) || []
     );
   }, [userListOptions]);
+
+  const templateOptions = useMemo(
+    () =>
+      emailTemplates.data?.data?.emailTemplates?.map((template) => ({
+        label: template.template_name,
+        value: template.rid,
+      })) || [],
+    [emailTemplates.data?.data]
+  );
 
   useEffect(() => {
     if (emailData && isEditView) {
@@ -148,6 +204,18 @@ const EmailForm: React.FC = () => {
       }));
     }
   }, [emailData, isEditView]);
+
+  // Handle template selection and populate form
+  useEffect(() => {
+    if (templateDetails && currentTemplate.value && !isEditView) {
+      setFormData((prev) => ({
+        ...prev,
+        subject: templateDetails.subject,
+        emailBody: templateDetails.body_html,
+        email_template_rid: currentTemplate.value,
+      }));
+    }
+  }, [templateDetails, currentTemplate.value, isEditView]);
 
   const isValidEmail = useCallback((email: string): boolean => {
     const emailRegex = REGEX_PATTERNS.EMAIL;
@@ -571,10 +639,25 @@ const EmailForm: React.FC = () => {
   };
 
   const formLoading = isLoading || userListOptions.isLoading;
-  const emailBodyDisabled = false;
+  const emailBodyDisabled = shouldDisableField(
+    'body_html',
+    isEditView,
+    permissionMap
+  );
+
+  const hideAttachments = shouldHideField(
+    'attachments',
+    isEditView,
+    permissionMap
+  );
+  const disableAttachments = shouldDisableField(
+    'attachments',
+    isEditView,
+    permissionMap
+  );
 
   return (
-    <div>
+    <div className={`${templateLoading ? 'pointer-events-none' : ''}`}>
       <div className='h-[50px] flex items-center justify-between px-10 sticky top-0 z-10 bg-white border-b border-[#CBD6E2]'>
         <div className='flex items-center w-[80%] max-w-[80%]'>
           <DraftEmailIcon
@@ -599,6 +682,79 @@ const EmailForm: React.FC = () => {
           </div>
         </div>
         <div className='flex gap-3'>
+          {!isEditView &&
+            (emailTemplates?.isLoading ? (
+              <Skeleton
+                variant='rounded'
+                width='160px'
+                height={25}
+                sx={{ borderRadius: '2px' }}
+              />
+            ) : (
+              <Autocomplete
+                disableClearable
+                forcePopupIcon
+                popupIcon={<ArrowDropDownIcon />}
+                slotProps={{
+                  paper: { style: { fontSize: '12px' } },
+                  popupIndicator: {
+                    disableRipple: true,
+                    disableFocusRipple: true,
+                    sx: {
+                      transition: 'transform 0.25s ease-in-out',
+                      backgroundColor: 'transparent !important',
+                      '&:hover': {
+                        backgroundColor: 'transparent !important',
+                      },
+                      '&.MuiAutocomplete-popupIndicatorOpen': {
+                        transform: 'rotate(180deg)',
+                      },
+                    },
+                  },
+                }}
+                options={templateOptions}
+                size='small'
+                sx={getAutocompleteStyles(false, currentTemplate.value === '')}
+                onChange={(_e, newValue) => {
+                  if (currentTemplate.value) {
+                    setConfirmationState({
+                      isOpen: true,
+                      message:
+                        'The current subject and email content will be replaced with template content. Are you sure you want to continue?',
+                      onConfirm: () => {
+                        setCurrentTemplate(newValue);
+                      },
+                      onCancel: () => {
+                        setCurrentTemplate(currentTemplate);
+                      },
+                    });
+                  } else {
+                    setCurrentTemplate(newValue);
+                  }
+                }}
+                value={currentTemplate}
+                renderOption={(props, option) => (
+                  <li {...props} key={option.value} title={option.label}>
+                    {option.label}
+                  </li>
+                )}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    variant='outlined'
+                    size='small'
+                    placeholder={currentTemplate.label || 'Choose Template'}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 0,
+                        fontSize: '12px',
+                        height: '25px',
+                      },
+                    }}
+                  />
+                )}
+              />
+            ))}
           <TextButton
             label='Save as Draft'
             loading={
@@ -672,6 +828,12 @@ const EmailForm: React.FC = () => {
                 }}
                 required={true}
                 isValidEmail={isValidEmail}
+                disabled={shouldDisableField(
+                  'to_email',
+                  isEditView,
+                  permissionMap
+                )}
+                hide={shouldHideField('to_email', isEditView, permissionMap)}
               />
               <EmailRecipients
                 label='CC'
@@ -691,11 +853,24 @@ const EmailForm: React.FC = () => {
                   cc: formData.cc,
                 }}
                 isValidEmail={isValidEmail}
+                disabled={shouldDisableField(
+                  'cc_email',
+                  isEditView,
+                  permissionMap
+                )}
+                hide={shouldHideField('cc_email', isEditView, permissionMap)}
               />
             </div>
 
             {/* Subject Field */}
-            <div className='grid md:grid-cols-1 gap-x-4 gap-y-[2px] px-10 pt-4'>
+            <div
+              className='grid md:grid-cols-1 gap-x-4 gap-y-[2px] px-10 pt-4'
+              style={{
+                display: shouldHideField('subject', isEditView, permissionMap)
+                  ? 'none'
+                  : 'block',
+              }}
+            >
               <label
                 htmlFor='subject'
                 className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px]'
@@ -710,6 +885,11 @@ const EmailForm: React.FC = () => {
                 value={formData.subject}
                 onChange={handleSubjectChange}
                 autoComplete='off'
+                disabled={shouldDisableField(
+                  'subject',
+                  isEditView,
+                  permissionMap
+                )}
                 className={`placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] truncate overflow-hidden text-ellipsis whitespace-nowrap outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ${errors?.subject ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
               />
               {errors?.subject && (
@@ -720,7 +900,14 @@ const EmailForm: React.FC = () => {
             </div>
 
             {/* Email Body */}
-            <div className='email-template-editor grid grid-cols-1 px-10 pt-4 relative'>
+            <div
+              className='email-template-editor grid grid-cols-1 px-10 pt-4 relative'
+              style={{
+                display: shouldHideField('body_html', isEditView, permissionMap)
+                  ? 'none'
+                  : 'block',
+              }}
+            >
               <label
                 htmlFor='email_body'
                 className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px]'
@@ -787,7 +974,9 @@ const EmailForm: React.FC = () => {
 
             {/* Attachments */}
             {formData.attachments.length > 0 && (
-              <div className='px-10 py-6'>
+              <div
+                className={`px-10 py-6 ${hideAttachments ? 'hidden' : 'block'}`}
+              >
                 <div className='flex items-center gap-2 mb-2'>
                   <span className='text-sm font-medium text-gray-700'>
                     Attachments ({formData.attachments.length})
@@ -812,7 +1001,8 @@ const EmailForm: React.FC = () => {
                       </div>
                       <button
                         onClick={() => removeAttachment(attachment.id)}
-                        className='flex items-center justify-center h-6 w-6 hover:bg-gray-200 rounded-full cursor-pointer transition-colors'
+                        disabled={disableAttachments}
+                        className='flex items-center justify-center h-6 w-6 hover:bg-gray-200 rounded-full cursor-pointer disabled:cursor-default disabled:hover:bg-transparent transition-colors'
                       >
                         <CloseIcon className='w-3 h-3' />
                       </button>
@@ -834,32 +1024,52 @@ const EmailForm: React.FC = () => {
                   {
                     label: 'Record ID',
                     value: formData.rid,
-                    hide: false,
+                    hide: shouldHideField('rid', isEditView, permissionMap),
                   },
                   {
                     label: 'Created On',
                     value: formData.created_on,
-                    hide: false,
+                    hide: shouldHideField(
+                      'created_datetime',
+                      isEditView,
+                      permissionMap
+                    ),
                   },
                   {
                     label: 'Created By',
                     value: formData.created_by,
-                    hide: false,
+                    hide: shouldHideField(
+                      'created_by_name',
+                      isEditView,
+                      permissionMap
+                    ),
                   },
                   {
                     label: 'Email ID',
                     value: formData.email_rid,
-                    hide: false,
+                    hide: shouldHideField(
+                      'r_number',
+                      isEditView,
+                      permissionMap
+                    ),
                   },
                   {
                     label: 'Updated On',
                     value: formData.updated_on,
-                    hide: false,
+                    hide: shouldHideField(
+                      'modified_datetime',
+                      isEditView,
+                      permissionMap
+                    ),
                   },
                   {
                     label: 'Updated By',
                     value: formData.updated_by,
-                    hide: false,
+                    hide: shouldHideField(
+                      'modified_by_name',
+                      isEditView,
+                      permissionMap
+                    ),
                   },
                 ]
                   .filter((field) => !field.hide)
@@ -880,6 +1090,26 @@ const EmailForm: React.FC = () => {
           </form>
         )}
       </div>
+      <ConfirmationPopup
+        isOpen={confirmationState.isOpen}
+        message={confirmationState.message}
+        onConfirm={() => {
+          confirmationState.onConfirm();
+          setConfirmationState((prev) => ({
+            ...prev,
+            isOpen: false,
+            message: '',
+          }));
+        }}
+        onCancel={() => {
+          confirmationState.onCancel();
+          setConfirmationState((prev) => ({
+            ...prev,
+            isOpen: false,
+            message: '',
+          }));
+        }}
+      />
     </div>
   );
 };

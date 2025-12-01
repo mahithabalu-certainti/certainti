@@ -373,6 +373,8 @@ export const getInitialStateForField = (
       };
     case 'date':
       return { date: { option: 'equals', value: { from: '', to: '' } } };
+    case 'time':
+      return { time: { option: 'equals', value: { from: '', to: '' } } };
     case 'enum':
       return { enum: { option: 'equals', value: [] } };
     case 'currencySelect':

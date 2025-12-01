@@ -125,9 +125,10 @@ export interface TaskAttachmentsApiResponse {
 // Task Attachments Upload Types
 export interface UploadTaskAttachmentsPayload {
   account_rid: string;
-  case_rid: string;
+  case_rid?: string;
   task_rid: string;
   files: File[];
+  task_type?: string;
 }
 
 export interface UploadTaskAttachmentsResponse extends CommonApiResponse {
@@ -140,9 +141,10 @@ export interface UploadTaskAttachmentsResponse extends CommonApiResponse {
 // Task Attachments Delete Types
 export interface DeleteTaskAttachmentPayload {
   account_rid: string;
-  case_rid: string;
+  case_rid?: string;
   task_rid: string;
   rid: string;
+  task_type?: string;
 }
 
 export interface DeleteTaskAttachmentResponse extends CommonApiResponse {
@@ -265,9 +267,24 @@ export const fetchTaskCommentsList = async (
 export const fetchTaskAttachmentsList = async (
   params: TaskAttachmentsListParams
 ): Promise<TaskAttachmentsApiResponse> => {
+  const payload: Record<string, unknown> = {
+    account_rid: params.account_rid,
+    task_rid: params.task_rid,
+    page: params.page,
+    limit: params.limit,
+  };
+
+  if (params.case_rid) {
+    payload.case_rid = params.case_rid;
+  }
+
+  if (params.task_type) {
+    payload.task_type = params.task_type;
+  }
+
   const { data } = await caseServiceApi.post<TaskAttachmentsApiResponse>(
     getTaskAttachmentsListUrl(),
-    params
+    payload
   );
   return data;
 };
@@ -376,9 +393,23 @@ export const deleteTaskAttachment = async (
   payload: DeleteTaskAttachmentPayload
 ): Promise<DeleteTaskAttachmentResponse> => {
   try {
+    const requestPayload: Record<string, unknown> = {
+      account_rid: payload.account_rid,
+      task_rid: payload.task_rid,
+      rid: payload.rid,
+    };
+
+    if (payload.case_rid) {
+      requestPayload.case_rid = payload.case_rid;
+    }
+
+    if (payload.task_type) {
+      requestPayload.task_type = payload.task_type;
+    }
+
     const { data } = await caseServiceApi.post<DeleteTaskAttachmentResponse>(
       getDeleteTaskAttachmentUrl(),
-      payload
+      requestPayload
     );
     return data;
   } catch (error) {
@@ -394,8 +425,15 @@ export const uploadTaskAttachments = async (
   try {
     const formData = new FormData();
     formData.append('account_rid', payload.account_rid);
-    formData.append('case_rid', payload.case_rid);
     formData.append('task_rid', payload.task_rid);
+
+    if (payload.case_rid) {
+      formData.append('case_rid', payload.case_rid);
+    }
+
+    if (payload.task_type) {
+      formData.append('task_type', payload.task_type);
+    }
 
     // Add all files to the payload
     payload.files.forEach((file) => {

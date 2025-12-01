@@ -210,6 +210,10 @@ export enum AllModules {
   WORKBREAKDOWN = 'workbreakdown',
   HISTORICAL_SUBMISSION = 'case_historical_submission',
   CASES_TEAM = 'case_team',
+  ACTIVITIES_EMAIL = 'activity_email',
+  ACTIVITIES_TASK = 'activity_task',
+  ACTIVITIES_MEETING = 'activity_meeting',
+  ACTIVITIES_CALL = 'activity_call',
 }
 
 export enum AllPermissions {
@@ -338,6 +342,21 @@ export enum AllPermissions {
   HISTORICAL_SUBMISSION_DELETE = 'case_historical_submission_delete',
   ACTIVITIES_OVERVIEW = 'activities_overview',
   ACTIVITIES_TIMELINE = 'activities_timeline',
+  ACTIVITY_TASK_CREATE = 'activity_task_create',
+  ACTIVITY_TASK_DELETE = 'activity_task_delete',
+  ACTIVITY_TASK_EXPORT = 'activity_task_export',
+  ACTIVITY_TASK_VIEW_EDIT = 'activity_task_view_edit',
+  ACTIVITY_CALL_CREATE = 'activity_call_create',
+  ACTIVITY_CALL_EXPORT = 'activity_call_export',
+  ACTIVITY_CALL_VIEW_EDIT = 'activity_call_view_edit',
+  ACTIVITY_EMAIL_CREATE = 'activity_email_create',
+  ACTIVITY_EMAIL_DELETE = 'activity_email_delete',
+  ACTIVITY_EMAIL_EXPORT = 'activity_email_export',
+  ACTIVITY_EMAIL_VIEW_EDIT = 'activity_email_view_edit',
+  ACTIVITY_MEETING_CREATE = 'activity_meeting_create',
+  ACTIVITY_MEETING_DELETE = 'activity_meeting_delete',
+  ACTIVITY_MEETING_EXPORT = 'activity_meeting_export',
+  ACTIVITY_MEETING_VIEW_EDIT = 'activity_meeting_view_edit',
 }
 
 export interface Country {

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   generatePath,
   useNavigate,
@@ -11,12 +11,21 @@ import DetailsSection, {
   DetailItem,
 } from '../../../../components/details-section/details';
 import DetailsSectionSkeleton from '../../../../components/skeleton-component/detailsskeleton';
-import { formatDateToYYYYMMDDWithTime } from '../../../../common-utils';
+import {
+  applyHidePermission,
+  formatDateToYYYYMMDDWithTime,
+} from '../../../../common-utils';
 import { ACTIVITY_EDIT } from '../../../../routes';
 import { ActivityType } from '../../../types';
 import { useCallActivityDetails } from '../../../services/activities/activities-service';
 import { CallLogIcon } from '../../../../assets';
-import { parseToStringArray } from '../activities-list/helper';
+import {
+  getPermissionMap,
+  parseToStringArray,
+} from '../activities-list/helper';
+import { RootState } from '../../../../store/store';
+import { useSelector } from 'react-redux';
+import { AllPermissions } from '../../../../common-service';
 
 interface CallDetailsProps {
   accountInActive: boolean;
@@ -38,6 +47,8 @@ const CallDetails: React.FC<CallDetailsProps> = ({
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
+  const { permission } = useSelector((state: RootState) => state.permission);
+
   const accountId = searchParams.get('accountID') || '';
   const activityId = searchParams.get('activity_id') || '';
 
@@ -47,6 +58,20 @@ const CallDetails: React.FC<CallDetailsProps> = ({
     isLoading,
     error,
   } = useCallActivityDetails(accountId || accountid || '', activityId, true);
+
+  // Permission
+  const callPermissionMap = useMemo(
+    () => getPermissionMap(permission, AllPermissions.ACTIVITY_CALL_VIEW_EDIT),
+    [permission]
+  );
+
+  const callActivityFieldsEditable = useMemo(
+    () =>
+      permission
+        .find((item) => item.name === AllPermissions.ACTIVITY_CALL_VIEW_EDIT)
+        ?.fields?.some((field) => field.edit),
+    [permission]
+  );
 
   // Edit handler
   const handleEdit = () => {
@@ -79,6 +104,7 @@ const CallDetails: React.FC<CallDetailsProps> = ({
       disabled: accountInActive,
       onClick: handleEdit,
       sx: { width: '48px', minWidth: '48px' },
+      hide: !callActivityFieldsEditable,
     },
     {
       label: tabValue === 'all' ? 'Back To All' : 'Back To Call',
@@ -88,18 +114,30 @@ const CallDetails: React.FC<CallDetailsProps> = ({
     },
   ];
 
-  const basicInfo: DetailItem[] = [
-    { label: 'Related To', value: call?.attached_to ?? '-', key: 'related_to' },
-    { label: 'Call Status', value: call?.status_name ?? '-', key: 'status' },
+  const basicDetails: DetailItem[] = [
+    {
+      label: 'Related To',
+      value: call?.attached_to ?? '-',
+      key: 'attached_to',
+    },
+    {
+      label: 'Call Status',
+      value: call?.status_name ?? '-',
+      key: 'status_rid',
+    },
     { label: 'Call Subject', value: call?.subject ?? '-', key: 'subject' },
-    { label: 'Call Type', value: call?.activity_type ?? '-', key: 'type' },
+    {
+      label: 'Call Type',
+      value: call?.activity_type ?? '-',
+      key: 'activity_type',
+    },
   ];
 
-  const scheduleInfo: DetailItem[] = [
+  const scheduleDetails: DetailItem[] = [
     {
       label: 'Call Platform',
       value: call?.call_platform ?? '-',
-      key: 'platform',
+      key: 'call_platform',
     },
     {
       label: 'Call Participants',
@@ -109,33 +147,45 @@ const CallDetails: React.FC<CallDetailsProps> = ({
     {
       label: 'Call Start Date',
       value: formatDateToYYYYMMDDWithTime(call?.effective_start_datetime),
-      key: 'start_time',
+      key: 'effective_start_datetime',
     },
     {
       label: 'Call End Date',
       value: formatDateToYYYYMMDDWithTime(call?.effective_end_datetime),
-      key: 'end_time',
+      key: 'effective_end_datetime',
     },
-    { label: 'Caller ID', value: call?.caller_id ?? '-', key: 'caller' },
+    { label: 'Caller ID', value: call?.caller_id ?? '-', key: 'caller_id' },
   ];
 
   const description: DetailItem[] = [
     {
       label: 'Description',
       value: call?.minutes_of_meeting ?? '-',
-      key: 'mom',
+      key: 'minutes_of_meeting',
     },
   ];
 
   const auditDetails: DetailItem[] = [
-    { label: 'Record ID', value: call?.activity_rid || '-', key: 'rid' },
-    { label: 'Call ID', value: call?.r_number ?? '-', key: 'r_number' },
+    {
+      label: 'Record ID',
+      value: call?.activity_rid || activityId,
+      key: 'rid',
+    },
+    {
+      label: 'Call ID',
+      value: call?.r_number ?? '',
+      key: 'r_number',
+    },
     {
       label: 'Created On',
       value: formatDateToYYYYMMDDWithTime(call?.created_datetime),
       key: 'created_datetime',
     },
-    { label: 'Created By', value: call?.created_by ?? '-', key: 'created_by' },
+    {
+      label: 'Created By',
+      value: call?.created_by,
+      key: 'created_by_name',
+    },
     {
       label: 'Updated On',
       value: formatDateToYYYYMMDDWithTime(call?.modified_datetime),
@@ -143,10 +193,16 @@ const CallDetails: React.FC<CallDetailsProps> = ({
     },
     {
       label: 'Updated By',
-      value: call?.modified_by ?? '-',
-      key: 'modified_by',
+      value: call?.modified_by,
+      key: 'modified_by_name',
     },
   ];
+  console.log(callPermissionMap);
+
+  const basicInfo = applyHidePermission(basicDetails, callPermissionMap);
+  const scheduleInfo = applyHidePermission(scheduleDetails, callPermissionMap);
+  const descriptionInfo = applyHidePermission(description, callPermissionMap);
+  const auditInfo = applyHidePermission(auditDetails, callPermissionMap);
 
   return (
     <div>
@@ -185,12 +241,12 @@ const CallDetails: React.FC<CallDetailsProps> = ({
           <DetailsSection
             title=''
             fullColumn={true}
-            data={description}
+            data={descriptionInfo}
             customStyle='pt-[1px]'
           />
           <DetailsSection
             title='Audit Information'
-            data={auditDetails}
+            data={auditInfo}
             customStyle='pt-0 mt-0'
             isAudit
           />

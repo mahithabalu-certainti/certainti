@@ -129,6 +129,30 @@ export const resourceTypeOptions: { option: string; value: string }[] = [
   { option: 'Non-Labor', value: 'Non-Labor' },
 ];
 
+export type TimeFilterOption =
+  | 'Equals'
+  | 'Before'
+  | 'After'
+  | 'Between'
+  | 'Is Empty';
+
+export const timeOptions: { option: string; value: string }[] = [
+  { option: 'Equals', value: 'equals' },
+  { option: 'Before', value: 'before' },
+  { option: 'After', value: 'after' },
+  { option: 'Between', value: 'between' },
+  { option: 'Is Empty', value: 'is_empty' },
+];
+
+// Add to FilterState interface
+export interface TimeFilterState {
+  option: TimeFilterOption;
+  value: {
+    from?: string;
+    to?: string;
+  };
+}
+
 // Define filter state types for each field type
 export interface TextFilterState {
   option: TextFilterOption;
@@ -176,6 +200,7 @@ export type FilterState = {
   text?: TextFilterState;
   number?: NumberFilterState;
   date?: DateFilterState;
+  time?: TimeFilterState;
   enum?: EnumFilterState;
   textCostAndSkill?: TextFilterStateForCostAndSkill;
   select?: StatusFilterState;
@@ -189,26 +214,31 @@ export type FieldConfig = {
   value: string;
   hide?: boolean;
   type:
-  | 'text'
-  | 'number'
-  | 'date'
-  | 'enum'
-  | 'textCostAndSkill'
-  | 'select'
-  | 'currencySelect'
-  | 'skillTypeFilter'
-  | 'skillSubTypeFilter'
-  | 'system'
-  | 'system-sort';
+    | 'text'
+    | 'number'
+    | 'date'
+    | 'time'
+    | 'enum'
+    | 'textCostAndSkill'
+    | 'select'
+    | 'currencySelect'
+    | 'skillTypeFilter'
+    | 'skillSubTypeFilter'
+    | 'system'
+    | 'system-sort';
   options?: { option: string; value: string }[];
   required?: boolean;
   dependsOn?: string;
   onChange?: boolean;
+  minTime?: string;
+  maxTime?: string;
   minDate?: Date;
   maxDate?: Date;
   filterOptions?: { option: string; value: string }[];
   operatorOption?: { option: string; value: string }[];
   isFutureDateEnabled?: boolean;
+  timeFormat?: '12h' | '24h';
+  minutesStep?: number;
 };
 
 export type FilterValue =

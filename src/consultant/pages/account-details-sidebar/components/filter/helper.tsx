@@ -19,6 +19,7 @@ import {
   OPERATOR_STYLE,
   SELECT_STYLES,
 } from '../../../../../components';
+import { ClockIcon, renderTimeViewClock, TimePicker } from '@mui/x-date-pickers';
 
 function formatString(str: string | undefined): string {
   if (!str) return '';
@@ -860,7 +861,7 @@ export const formatFilterForApi = (
       const choosenOption = state.text.option;
       const value =
         formatString(choosenOption) === 'Is Empty' ||
-          formatString(choosenOption) === 'Is Not Empty'
+        formatString(choosenOption) === 'Is Not Empty'
           ? true
           : state.text.value?.toString().trim();
       if (value) {
@@ -871,8 +872,8 @@ export const formatFilterForApi = (
       const value =
         formatString(choosenOption) === 'Is Empty'
           ? // ||
-          //   formatString(choosenOption) === 'Is Not Empty'
-          true
+            //   formatString(choosenOption) === 'Is Not Empty'
+            true
           : state.textCostAndSkill.value?.toString().trim();
       if (value) {
         formattedFilters[fieldKey] = { [choosenOption]: value };
@@ -897,7 +898,7 @@ export const formatFilterForApi = (
       const value =
         formatString(choosenOption) === 'Is Empty'
           ? // ||formatString(choosenOption) === 'Is Not Empty'
-          true
+            true
           : state.enum.value;
       if (value && (Array.isArray(value) ? value.length > 0 : true)) {
         formattedFilters[fieldKey] = {
@@ -909,7 +910,7 @@ export const formatFilterForApi = (
       const value =
         formatString(choosenOption) === 'Is Empty'
           ? // ||formatString(choosenOption) === 'Is Not Empty'
-          true
+            true
           : state.currencySelect.value;
       if (value && (Array.isArray(value) ? value.length > 0 : true)) {
         formattedFilters[fieldKey] = {
@@ -926,6 +927,21 @@ export const formatFilterForApi = (
       // formatString(option) === 'This Quarter' ||
       // formatString(option) === 'Last 7 Days' ||
       // formatString(option) === 'Last 30 Days';
+      if (value?.from || value?.to || boolOptions) {
+        formattedFilters[fieldKey] = {
+          [option]:
+            formatString(option) === 'Between'
+              ? [value.from?.toString(), value.to?.toString()]
+              : boolOptions
+                ? true
+                : value.from?.toString(),
+        };
+      }
+    } else if (state.time) {
+      const option = state.time.option;
+      const value = state.time.value;
+      const boolOptions = formatString(option) === 'Is Empty';
+
       if (value?.from || value?.to || boolOptions) {
         formattedFilters[fieldKey] = {
           [option]:
@@ -1077,5 +1093,229 @@ export const SkillTypeFilterControl: React.FC<SkillTypeFilterControlProps> = ({
         </Select>
       </FormControl>
     </Box>
+  );
+};
+
+export const TimeFilterControl: React.FC<{
+  filterStates: Record<string, FilterState>;
+  menuOption: { option: string; value: string }[];
+  fieldName: string;
+  state: FilterState;
+  onOptionChange: (fieldName: string, event: SelectChangeEvent<any>) => void;
+  onValueChange: (
+    type: 'from' | 'to',
+    fieldName: string,
+    timeValue: string
+  ) => void;
+  timeFormat?: '12h' | '24h';
+  minutesStep?: number;
+  minTime?: string;
+  maxTime?: string;
+}> = ({
+  filterStates,
+  menuOption,
+  fieldName,
+  state,
+  onOptionChange,
+  onValueChange,
+  timeFormat = '12h',
+  minutesStep = 1,
+  minTime,
+  maxTime,
+}) => {
+  const option = formatString(filterStates?.[fieldName]?.time?.option);
+  const isBetween = option === 'Between';
+  const disableInput = option === 'Is Empty';
+
+  const commonProps = {
+    disabled: disableInput,
+    readOnly: false,
+    reduceAnimations: true,
+    slots: {
+      openPickerIcon: () => <ClockIcon sx={{ color: '#B4C3D5', fontSize: 16 }} />,
+    },
+    slotProps: {
+      // Prevent form submission
+      field: {
+        clearable: false,
+        onKeyDown: (e: React.KeyboardEvent) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            e.stopPropagation();
+          }
+        },
+      },
+      textField: {
+        fullWidth: true,
+        size: 'small' as const,
+        disabled: disableInput,
+        onKeyDown: (e: React.KeyboardEvent) => {
+          // Prevent form submission on Enter key
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            e.stopPropagation();
+          }
+          
+          if (e.key.length === 1 && /[a-zA-Z]/.test(e.key)) {
+            e.preventDefault();
+          }
+        },
+        sx: {
+          '& .MuiOutlinedInput-root': {
+            height: '28px',
+            borderRadius: '2px',
+            '& .MuiOutlinedInput-notchedOutline': {
+              borderColor: '#CBD6E2 !important',
+            },
+            '& input': {
+              fontWeight: 400,
+              fontSize: '12px',
+              lineHeight: '21px',
+              paddingLeft: '11px',
+              color: disableInput ? '#6B7280 !important' : '#425A76 !important',
+              WebkitTextFillColor: disableInput ? '#6B7280 !important' : '#425A76 !important',
+              '&[value=""]': {
+                color: '#00295C !important',
+                WebkitTextFillColor: '#00295C !important',
+              },
+              '&::placeholder': {
+                color: '#00295C !important',
+              },
+            },
+            '&:hover .MuiOutlinedInput-notchedOutline': {
+              border: '1px solid #CBD6E2',
+            },
+            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+              border: '2px solid #60A5FA',
+            },
+            '&.Mui-disabled input': {
+              color: '#6B7280',
+              WebkitTextFillColor: '#6B7280',
+            },
+          },
+        },
+      },
+    },
+  };
+
+  return (
+    <div className='flex items-center gap-2'>
+      <Select
+        value={state.time?.option || 'equals'}
+        onChange={(e) => onOptionChange(fieldName, e)}
+        className='min-w-[110px] max-w-[110px] h-[28px]'
+        IconComponent={(props) => <ArrowIcon alt='arrowIcon' {...props} />}
+        sx={{ ...SELECT_STYLES, ...OPERATOR_STYLE }}
+        MenuProps={MENU_PROPS}
+        // Prevent form submission
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+          }
+        }}
+      >
+        {menuOption &&
+          menuOption.map((menu) => (
+            <MenuItem
+              key={menu.option}
+              value={menu.value}
+              sx={{
+                fontSize: '12px',
+                color: '#425A76',
+                fontWeight: 600,
+                py: '1px',
+              }}
+            >
+              {menu.option}
+            </MenuItem>
+          ))}
+      </Select>
+      <div className='flex gap-2'>
+        {!disableInput && (
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <TimePicker
+              {...commonProps}
+              value={
+                state.time?.value.from
+                  ? dayjs(`1970-01-01T${state.time.value.from}`)
+                  : null
+              }
+              onChange={(newValue) => {
+                onValueChange(
+                  'from',
+                  fieldName,
+                  newValue ? newValue.format('HH:mm:ss') : ''
+                );
+              }}
+              format={timeFormat === '12h' ? 'hh:mm A' : 'HH:mm'}
+              ampm={timeFormat === '12h'}
+              minutesStep={minutesStep}
+              minTime={minTime ? dayjs(`1970-01-01T${minTime}`) : undefined}
+              maxTime={maxTime ? dayjs(`1970-01-01T${maxTime}`) : undefined}
+              views={['hours', 'minutes']}
+              openTo='hours'
+              // Enable clock view
+              viewRenderers={{
+                hours: renderTimeViewClock,
+                minutes: renderTimeViewClock,
+                seconds: renderTimeViewClock,
+              }}
+              slotProps={{
+                ...commonProps.slotProps,
+                textField: {
+                  ...commonProps.slotProps.textField,
+                  placeholder: timeFormat === '12h' ? 'HH:MM' : 'HH:MM',
+                },
+                popper: {
+                  placement: 'bottom-start',
+                },
+              }}
+            />
+          </LocalizationProvider>
+        )}
+        {isBetween && (
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <TimePicker
+              {...commonProps}
+              value={
+                state.time?.value.to
+                  ? dayjs(`1970-01-01T${state.time.value.to}`)
+                  : null
+              }
+              onChange={(newValue) => {
+                onValueChange(
+                  'to',
+                  fieldName,
+                  newValue ? newValue.format('HH:mm:ss') : ''
+                );
+              }}
+              format={timeFormat === '12h' ? 'hh:mm A' : 'HH:mm'}
+              ampm={timeFormat === '12h'}
+              minutesStep={minutesStep}
+              minTime={minTime ? dayjs(`1970-01-01T${minTime}`) : undefined}
+              maxTime={maxTime ? dayjs(`1970-01-01T${maxTime}`) : undefined}
+              views={['hours', 'minutes']}
+              openTo='hours'
+              // Enable clock view
+              viewRenderers={{
+                hours: renderTimeViewClock,
+                minutes: renderTimeViewClock,
+                seconds: renderTimeViewClock,
+              }}
+              slotProps={{
+                ...commonProps.slotProps,
+                textField: {
+                  ...commonProps.slotProps.textField,
+                  placeholder: timeFormat === '12h' ? 'HH:MM' : 'HH:MM',
+                },
+                popper: {
+                  placement: 'bottom-start',
+                },
+              }}
+            />
+          </LocalizationProvider>
+        )}
+      </div>
+    </div>
   );
 };

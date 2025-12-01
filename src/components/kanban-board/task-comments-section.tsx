@@ -47,6 +47,7 @@ interface TaskCommentsSectionProps {
   loadingComments?: boolean;
   loadingActivities?: boolean;
   useInfiniteScroll?: boolean; // New prop to enable infinite scrolling
+  taskType?: string;
 }
 
 const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
@@ -67,6 +68,7 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
   onUpdateComment,
   onDeleteComment,
   useInfiniteScroll = true,
+  taskType,
 }) => {
   const ErrorIconTooltip = ({ error }: { error: string }) => (
     <Tooltip
@@ -165,9 +167,14 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
       case_rid: caseId || '',
       account_rid: accountId || '',
       task_rid: taskId || '',
+      task_type: taskType,
     },
     {
-      enabled: useInfiniteScroll && !!accountId && !!caseId && !!taskId,
+      enabled:
+        useInfiniteScroll &&
+        !!accountId &&
+        (!!caseId || taskType === 'activity') &&
+        !!taskId,
     }
   );
 
@@ -182,9 +189,14 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
       case_rid: caseId || '',
       account_rid: accountId || '',
       task_rid: taskId || '',
+      task_type: taskType,
     },
     {
-      enabled: useInfiniteScroll && !!accountId && !!caseId && !!taskId,
+      enabled:
+        useInfiniteScroll &&
+        !!accountId &&
+        (!!caseId || taskType === 'activity') &&
+        !!taskId,
     }
   );
 
@@ -323,17 +335,18 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
   }, [showAddCommentForm]);
 
   const invalidateCommentQueries = () => {
-    if (accountId && caseId && taskId) {
+    if (accountId && (caseId || taskType === 'activity') && taskId) {
       // Invalidate regular comments query
       queryClient.invalidateQueries({
         queryKey: [
           'taskComments',
           {
             account_rid: accountId,
-            case_rid: caseId,
+            ...(taskType !== 'activity' && { case_rid: caseId }),
             task_rid: taskId,
             page: 1,
             limit: 100,
+            ...(taskType === 'activity' && { task_type: 'activity' }),
           },
         ],
       });
@@ -343,9 +356,10 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
         queryKey: [
           'taskCommentsInfinite',
           {
-            case_rid: caseId,
+            case_rid: caseId || '',
             account_rid: accountId,
             task_rid: taskId,
+            task_type: taskType,
           },
         ],
       });
@@ -372,7 +386,7 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
         queryKey: [
           'taskActivitiesInfinite',
           {
-            case_rid: caseId,
+            case_rid: caseId || '',
             account_rid: accountId,
             task_rid: taskId,
           },
@@ -406,7 +420,7 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
       !editingCommentText.trim() ||
       !taskId ||
       !accountId ||
-      !caseId
+      (!caseId && taskType !== 'activity')
     ) {
       return;
     }

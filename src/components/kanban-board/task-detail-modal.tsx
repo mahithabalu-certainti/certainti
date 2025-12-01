@@ -194,12 +194,13 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   const attachmentsParams = useMemo(
     () => ({
       account_rid: accountId,
-      case_rid: caseId,
+      ...(taskType !== 'activity' && { case_rid: caseId }),
       task_rid: taskId!,
       page: 1,
       limit: 100,
+      ...(taskType === 'activity' && { task_type: 'activity' }),
     }),
-    [accountId, caseId, taskId]
+    [accountId, caseId, taskId, taskType]
   );
 
   const { data: rawTask, isLoading: taskLoading } = useGetTaskDetail(
@@ -230,7 +231,8 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     accountId,
     caseId,
     taskId!,
-    !!taskId && isOpen
+    !!taskId && isOpen,
+    taskType
   );
 
   const { data: tagOptionsData } = useGetTagOptions(
@@ -778,19 +780,35 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
           for (const attachmentId of deletedAttachmentIds) {
             await deleteAttachmentMutation.mutateAsync({
               account_rid: accountId,
-              case_rid: caseId,
+              ...(taskType !== 'activity' && { case_rid: caseId }),
               task_rid: taskId,
               rid: attachmentId,
+              ...(taskType === 'activity' && { task_type: 'activity' }),
             });
           }
           setDeletedAttachmentIds([]);
         } catch (error) {
-          const errorMessage =
-            (error as { response?: { data?: { statusMessage?: string } } })
-              ?.response?.data?.statusMessage ||
-            (error instanceof Error
-              ? error.message
-              : 'Failed to delete attachments');
+          let errorMessage = 'Failed to delete attachments';
+
+          if (error && typeof error === 'object') {
+            const err = error as any;
+            const statusMsg = err?.response?.data?.statusMessage;
+
+            if (statusMsg && typeof statusMsg === 'object' && !Array.isArray(statusMsg)) {
+              const fieldErrors = Object.entries(statusMsg)
+                .map(([field, message]) => `${field}: ${message}`)
+                .join(', ');
+              errorMessage = fieldErrors || 'Validation error';
+            } else {
+              errorMessage =
+                statusMsg ||
+                err?.response?.data?.message ||
+                err?.statusMessage ||
+                err?.message ||
+                'Failed to delete attachments';
+            }
+          }
+
           errorToast(errorMessage);
           console.error('Error deleting attachments:', error);
         }
@@ -799,9 +817,10 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
         try {
           await uploadAttachmentsMutation.mutateAsync({
             account_rid: accountId,
-            case_rid: caseId,
+            ...(taskType !== 'activity' && { case_rid: caseId }),
             task_rid: taskId,
             files: pendingAttachments,
+            ...(taskType === 'activity' && { task_type: 'activity' }),
           });
           setPendingAttachments([]);
           setEditedTask((prev) => (prev ? { ...prev, attachments: [] } : null));
@@ -810,12 +829,27 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
             queryKey: ['taskAttachments', attachmentsParams],
           });
         } catch (error) {
-          const errorMessage =
-            (error as { response?: { data?: { statusMessage?: string } } })
-              ?.response?.data?.statusMessage ||
-            (error instanceof Error
-              ? error.message
-              : 'Failed to upload attachments');
+          let errorMessage = 'Failed to upload attachments';
+
+          if (error && typeof error === 'object') {
+            const err = error as any;
+            const statusMsg = err?.response?.data?.statusMessage;
+
+            if (statusMsg && typeof statusMsg === 'object' && !Array.isArray(statusMsg)) {
+              const fieldErrors = Object.entries(statusMsg)
+                .map(([field, message]) => `${field}: ${message}`)
+                .join(', ');
+              errorMessage = fieldErrors || 'Validation error';
+            } else {
+              errorMessage =
+                statusMsg ||
+                err?.response?.data?.message ||
+                err?.statusMessage ||
+                err?.message ||
+                'Failed to upload attachments';
+            }
+          }
+
           errorToast(errorMessage);
           console.error('Error uploading attachments:', error);
         }
@@ -899,8 +933,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
           ...(categoryRidValue && {
             task_category_rid: categoryRidValue,
           }),
-          assigned_to: assignedToRid || '',
-          fiscal_year: editedTask.fiscal_year,
+          assigned_to: assignedToRid || ''
         };
 
         let updateResponse;
@@ -960,10 +993,27 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
         }
       }
     } catch (error) {
-      const errorMessage =
-        (error as { response?: { data?: { statusMessage?: string } } })
-          ?.response?.data?.statusMessage ||
-        (error instanceof Error ? error.message : 'Failed to update task');
+      let errorMessage = 'Failed to update task';
+
+      if (error && typeof error === 'object') {
+        const err = error as any;
+        const statusMsg = err?.response?.data?.statusMessage;
+
+        if (statusMsg && typeof statusMsg === 'object' && !Array.isArray(statusMsg)) {
+          const fieldErrors = Object.entries(statusMsg)
+            .map(([field, message]) => `${field}: ${message}`)
+            .join(', ');
+          errorMessage = fieldErrors || 'Validation error';
+        } else {
+          errorMessage =
+            statusMsg ||
+            err?.response?.data?.message ||
+            err?.statusMessage ||
+            err?.message ||
+            'Failed to update task';
+        }
+      }
+
       errorToast(errorMessage);
       console.error('Error updating task:', error);
     } finally {
@@ -1885,6 +1935,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
               onUpdateComment={onUpdateComment}
               onDeleteComment={onDeleteComment}
               useInfiniteScroll={true}
+              taskType={taskType}
             />
           )}
 
