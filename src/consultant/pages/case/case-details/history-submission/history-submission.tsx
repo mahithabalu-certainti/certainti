@@ -337,8 +337,7 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
           currency_symbol: item.currency_symbol || '',
         }));
 
-        // Set region from first submission if available, or use selected region
-        const regionFromData = apiData[0]?.state_rid || selectedRegion;
+        const regionFromData = selectedRegion;
 
         setFormData({
           historicalSubmissions: mappedSubmissions.map((m) => ({

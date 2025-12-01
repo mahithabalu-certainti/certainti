@@ -3,12 +3,12 @@ import {
   enumOptions,
   FieldConfig,
   numberOptions,
-  textOptions,
 } from '../../../../account-details-sidebar/components/filter/filterType';
 import {
   fiscalOptions,
   nonMadatoryOptions,
 } from '../../../../account-details-sidebar/sidebar-pages/projects/utils';
+import { requiredFieldFilterOptionsForText } from '../../../../project/project-details/project-task/filters/filter-fields';
 
 export const reviewProjectFilterFields = (
   classificationOption: FilterSelectOption[],
@@ -20,7 +20,7 @@ export const reviewProjectFilterFields = (
     name: 'Project Code',
     value: 'project_code',
     type: 'text',
-    operatorOption: textOptions,
+    operatorOption: requiredFieldFilterOptionsForText,
     hide:
       !projectPermissionMap?.['project_code']?.read &&
       !projectPermissionMap?.['project_code']?.edit,

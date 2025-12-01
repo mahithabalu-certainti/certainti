@@ -130,16 +130,9 @@ export const CaseFormData = (
           createTextField('heat_light_power', 'Heat Light Power', {
             required: false,
             placeholder: 'Enter Heat Light Power',
-            // errorHandling: [
-            //   {
-            //     regex: REGEX_PATTERNS.MIN_3,
-            //     errorMessage: 'Case Name must be more than 2 characters long',
-            //   },
-            //   {
-            //     regex: REGEX_PATTERNS.MAX_255,
-            //     errorMessage: 'Case Name must be within 255 characters',
-            //   },
-            // ],
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isEditView &&
               !permissionMap?.['case_name']?.edit &&
@@ -152,16 +145,9 @@ export const CaseFormData = (
           createTextField('total_nonlabor_cost', 'Total NonLabor Cost', {
             required: false,
             placeholder: 'Enter Total NonLabor Cost',
-            // errorHandling: [
-            //   {
-            //     regex: REGEX_PATTERNS.MIN_3,
-            //     errorMessage: 'Case Name must be more than 2 characters long',
-            //   },
-            //   {
-            //     regex: REGEX_PATTERNS.MAX_255,
-            //     errorMessage: 'Case Name must be within 255 characters',
-            //   },
-            // ],
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isEditView &&
               !permissionMap?.['case_name']?.edit &&
@@ -174,16 +160,9 @@ export const CaseFormData = (
           createTextField('tax_liability', 'Tax Liability', {
             required: false,
             placeholder: 'Enter Tax Liability',
-            // errorHandling: [
-            //   {
-            //     regex: REGEX_PATTERNS.MIN_3,
-            //     errorMessage: 'Case Name must be more than 2 characters long',
-            //   },
-            //   {
-            //     regex: REGEX_PATTERNS.MAX_255,
-            //     errorMessage: 'Case Name must be within 255 characters',
-            //   },
-            // ],
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isEditView &&
               !permissionMap?.['case_name']?.edit &&
