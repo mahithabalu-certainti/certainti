@@ -4966,7 +4966,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     else return null;
   }
   async createUserLevelTask (data : CreateCaseTaskType, accountNumber : string, transaction : Transaction, activeStatusRid : string, fiscalYear : number) {
-    const {CaseTask, CaseTimeline, TaskSummary,Case} = await this.caseModelService.getModels(accountNumber);
+    const {CaseTask, CaseTimeline, TaskSummary,Case, CaseHistory} = await this.caseModelService.getModels(accountNumber);
     const fetchSequenceNumber = await this.fetchSequenceOrder(data.milestone_template_rid, accountNumber);
     let sequenceNo : number = 0;
     if(fetchSequenceNumber.length > 0) {
@@ -5071,13 +5071,22 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         created_by : data.created_by,
         created_datetime : new Date(),
         account_rid : data.account_rid,
-        entity_rid : createdTaskResult.rid,
+        entity_rid : createdTaskResult.dataValues.rid,
         event_name : "Task Created",
         event_type : "ui handler",
         event_status : "success",
         event_datetime : new Date(),
         description : `Task created with title : ${createdTaskResult.task_name}`
       }, {transaction}) 
+      await CaseHistory.create({
+        created_by : data.created_by,
+        created_datetime : new Date(),
+        case_rid : data.case_rid,
+        task_rid : createdTaskResult.dataValues.rid,
+        attribute_name : "Task",
+        old_value : "CREATE",
+        new_value : `added a task ${createdTaskResult.task_name}`
+      })
       return {
         statusCode : HttpStatus.SUCCESS,
         data : createdTaskResult
@@ -5221,12 +5230,15 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             data.workflow_connector.created_by = data.modified_by
             data.workflow_connector.case_rid = data.case_rid
             data.workflow_connector.account_rid = data.account_rid
-            if(data.workflow_connector.target_rid.length > 0) {
-              await this.taskWorkflowConnector(accountNumber, data.workflow_connector, transaction);
+            if(data.workflow_connector.target_rid !== undefined) {
+              if(data.workflow_connector.target_rid.length > 0)
+                await this.taskWorkflowConnector(accountNumber, data.workflow_connector, transaction);
             }
             if(data.workflow_connector.delete_target_rids !== undefined) {
-              if(data.workflow_connector.delete_target_rids.length > 0)
+              if(data.workflow_connector.delete_target_rids.length > 0) {
+                data.workflow_connector.source_rid = data.rid
                 await this.deleteTaskWorkConnector(accountNumber, data.workflow_connector)
+              }
             }
           }
           const fetchUpdatedColumns = getColumnsNamesForTaskUpdate(data, isTaskExists as any);
@@ -5530,13 +5542,14 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             
           })
           await CaseHistory.create({
-            case_rid : caseRid,
             created_by : userId,
             created_datetime : new Date(),
             attribute_name : "Tags",
-            new_value : result.tag_name,
+            old_value : `CREATE`,
+            new_value : `added the following tags ${result.dataValues.tag_name}`,
+            case_rid : caseRid,
             task_rid : taskRid
-          })
+          });
         }
         else
         {
@@ -5741,8 +5754,9 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
               created_by: data.created_by,
               created_datetime: new Date(),
               attribute_name: "comments_attachments",
-              new_value: uploadFile.url,
-              task_rid: data.task_rid
+              old_value : "CREATE",
+              new_value: "added a comment with attachment",
+              task_rid: data.task_rid,
             };
             if (data.task_type !== 'activity') {
               caseHistoryPayload.case_rid = data.case_rid;
@@ -5867,7 +5881,8 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                 created_by: data.modified_by,
                 created_datetime: new Date(),
                 attribute_name: "comments_attachments",
-                new_value: uploadFile.url,
+                old_value : "CREATE",
+                new_value: "added an attachment",
                 task_rid: data.task_rid
               };
               if (data.task_type !== 'activity') {
@@ -5915,7 +5930,15 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                           "success",
                          data.task_rid
                         )
-   
+                        await CaseHistory.create({
+                          created_by: data.modified_by,
+                          created_datetime: new Date(),
+                          attribute_name: "comments_attachments",
+                          old_value : "CREATE",
+                          new_value: "deleted an attachment in comment",
+                          task_rid: data.task_rid,
+                          case_rid : data.case_rid
+                        })
                     }
                   else
                   {
@@ -6474,7 +6497,10 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     }
   }
   async addCollaborators (data : any,accountNumber : string) {
-    const {TaskCollaborators} = await this.caseModelService.getModels(accountNumber);
+    if(!this.mainDbSequelize) {
+      this.mainDbSequelize = await initMainDbSequelize()
+    }
+    const {TaskCollaborators, CaseHistory} = await this.caseModelService.getModels(accountNumber);
     const checkIsDifferentCollaborator = await this.isNewCollaborator(data.user_rid, accountNumber,data.task_type, data.case_rid, data.rid);
     if(!checkIsDifferentCollaborator) {
       const checkCollaboratorExists = await this.isCollaboratorAlreadyAdded(data.user_rid, data.case_rid, data.account_rid, data.rid, accountNumber,data.task_type);
@@ -6488,6 +6514,16 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         };
         if (data.task_type !== 'activity') {
           collaboratorPayload.case_rid = data.case_rid;
+          const findUser: any = await this.mainDbSequelize.query(rawQueries.getUserById(data.user_rid));
+          await CaseHistory.create({
+            created_by : data.created_by,
+            created_datetime : new Date(),
+            attribute_name : "Collaborator",
+            old_value : `CREATE`,
+            new_value : `added a collaborator ${findUser[0][0].name}`,
+            case_rid : data.case_rid,
+            task_rid : data.rid
+          });
         }
         const result = await TaskCollaborators.create(collaboratorPayload);
         if(result) {
@@ -6545,6 +6581,29 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         rid : data.relationship_connector_rid
       }, raw : true
     })
+    const findExistingData = await CaseTaskWorkflowConnector.findOne({
+      attributes : ['relationship_connector_rid', 'source_rid', 'target_rid'],
+      where : {
+        case_rid : data.case_rid,
+        source_rid : data.source_rid
+      }
+    });
+    if(findExistingData) {
+      if(findExistingData.relationship_connector_rid !== data.relationship_connector_rid) {
+        await CaseTaskWorkflowConnector.destroy({
+          where : {
+            case_rid : data.case_rid,
+            source_rid : findExistingData.target_rid
+          }
+        })
+        await CaseTaskWorkflowConnector.destroy({
+          where : {
+            case_rid : data.case_rid,
+            source_rid : data.source_rid
+          }
+        })
+      }
+    }
     let workFlowConnectorDetails;
     let dynamicRelationTypeName : string = ``
     if(workFlowConnectorData) {
@@ -6561,19 +6620,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     workFlowConnectorDetails = await WorkflowConnector.findOne({where : {relationship_type : dynamicRelationTypeName}, raw : true})
     for(let d of data.target_rid) {
       iterationCount += 1
-      taskIds.push(data.source_rid)
-      taskIds.push(d)
-      const pushToSetIds = [...new Set(taskIds.map((d : string) => d))]
-      const fetchTasks = await CaseTask.findAll({
-        attributes : ['rid', 'task_name'],
-        where : {
-          rid : {
-            [Op.in] : pushToSetIds
-          }
-        }, raw : true
-      })
-      if(fetchTasks.length > 0 && workFlowConnectorData) {
-        const taskMap = new Map(fetchTasks.map((d : any) => [d.rid, d.task_name]));
+      if(workFlowConnectorData) {
         const checkIsAlreadyMapped = await CaseTaskWorkflowConnector.findOne({
           where : {
             case_rid : data.case_rid,
@@ -6619,25 +6666,6 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                 }, {transaction});
               }
             }
-            await CaseTimeline.create({
-              created_by : data.created_by,
-              created_datetime : new Date(),
-              account_rid : data.account_rid,
-              entity_rid : data.source_rid,
-              event_name : 
-              `Case Task Workflow Connector created`,
-              event_type : "ui handler",
-              event_status : "success",
-              event_datetime : new Date(),
-              description : `${taskMap.get(data.source_rid)} ${workFlowConnectorData.relationship_type} ${taskMap.get(d)}`
-            }, {transaction});
-            await CaseHistory.create({
-              created_by : data.created_by,
-              created_datetime : new Date(),
-              case_rid : data.case_rid,
-              attribute_name : data.relationship_connector_rid,
-              new_value : `${taskMap.get(data.source_rid)} ${workFlowConnectorData.relationship_type} ${taskMap.get(d)}`
-            }, {transaction});
           }
         }
     } 
@@ -6650,6 +6678,27 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     }
   }
   if(iterationCount === totalIteration) {
+    await CaseTimeline.create({
+      created_by : data.created_by,
+      created_datetime : new Date(),
+      account_rid : data.account_rid,
+      entity_rid : data.source_rid,
+      event_name : 
+      `Case Task Workflow Connector created`,
+      event_type : "ui handler",
+      event_status : "success",
+      event_datetime : new Date(),
+      description : `Case Task Workflow Connector created`
+    }, {transaction});
+     await CaseHistory.create({
+      created_by : data.created_by,
+      created_datetime : new Date(),
+      case_rid : data.case_rid,
+      attribute_name : "Linked Items",
+      old_value : "CREATE",
+      new_value : `added a linked task type`,
+      task_rid : data.source_rid
+    }, {transaction});
     return {
       statusCode : HttpStatus.SUCCESS,
       statusMessage : STATUS_MESSAGE.workflowConnectorMappedSuccess
@@ -6663,7 +6712,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
 }
 
   async deleteTaskWorkConnector (accountNumber : string, data : CaseTaskWorkFlowCreate) {
-    const {CaseTaskWorkflowConnector, CaseTimeline, WorkflowConnector} = await this.caseModelService.getModels(accountNumber);
+    const {CaseTaskWorkflowConnector, CaseTimeline, WorkflowConnector, CaseTask} = await this.caseModelService.getModels(accountNumber);
     if(data.delete_target_rids.length > 0) {
       let workFlowConnectorDetails;
       let deletedId : string;
@@ -6689,6 +6738,18 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
               relationship_type : dynamicRelationTypeName
             }, raw : true
           })
+        const taskNames = await CaseTask.findAll({
+          attributes : ['task_name'],
+          where : {
+            rid : {
+              [Op.in] : data.delete_target_rids.map((d : any) => d)
+            },
+            case_rid : data.case_rid
+          }, raw : true
+        })
+        let dynamicTask;
+        if(taskNames.length === 1) dynamicTask = "task"
+        else if(taskNames.length > 1) dynamicTask = "tasks"
         for(let d of data.delete_target_rids) {
           const checkDataExists = await CaseTaskWorkflowConnector.findOne({
             where : {
@@ -6733,10 +6794,6 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                   event_datetime : new Date(),
                   description : ``
                 });
-                return {
-                  statusCode : HttpStatus.SUCCESS,
-                  statusMessage : STATUS_MESSAGE.workflowConnectorMappedDeleted
-                }
               } else {
                 return {
                   statusCode : HttpStatus.FAILED,
@@ -6749,6 +6806,21 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             statusCode : HttpStatus.NOT_FOUND,
             statusMessage : STATUS_MESSAGE.dataNotAvailable
           }
+        }
+      }
+      if(taskNames.length > 0) {
+        await CaseHistory.create({
+          created_by : data.created_by,
+          created_datetime : new Date(),
+          case_rid : data.case_rid,
+          attribute_name : "Linked Items",
+          old_value : "CREATE",
+          new_value : `deleted the linked ${dynamicTask} ${taskNames.map((d : any) => d.task_name).join(',')}`,
+          task_rid : data.source_rid
+        });
+        return {
+          statusCode : HttpStatus.SUCCESS,
+          statusMessage : STATUS_MESSAGE.workflowConnectorMappedDeleted
         }
       }
     }
@@ -6781,17 +6853,32 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     return result
   }
 
-  async deleteTags (accountNumber : string, caseRid : string, accountRid : string, taskRid : string, tagRid : string[]) {
-    const {TaskTag} = await this.caseModelService.getModels(accountNumber);
+  async deleteTags (accountNumber : string, caseRid : string, accountRid : string, taskRid : string, tagRid : string[], userId : string) {
+    const {TaskTag, Tags} = await this.caseModelService.getModels(accountNumber);
     let responseMessage : string
-    if(tagRid.length == 1) responseMessage = STATUS_MESSAGE.tagDeletedSuccess
-    else responseMessage = STATUS_MESSAGE.multipleTagDeletedSuccess
+    let dynamicTagName : string
+    if(tagRid.length == 1) {
+      responseMessage = STATUS_MESSAGE.tagDeletedSuccess
+      dynamicTagName = "Tag"
+    }
+    else {
+      responseMessage = STATUS_MESSAGE.multipleTagDeletedSuccess
+      dynamicTagName = "Tags"
+    }
     if(tagRid.length == 0) {
       return {
         statusCode : HttpStatus.BAD_REQUEST,
         statusMessage : STATUS_MESSAGE.tagRequired
       }
     }
+    const findTagName = await Tags.findAll({
+      attributes : ['tag_name'],
+      where : {
+        rid : {
+          [Op.in] : tagRid.map((d : any) => d)
+        }
+      }, raw : true
+    })
     const result = await TaskTag.destroy({
       where : {
         case_rid : caseRid,
@@ -6803,6 +6890,17 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       }
     });
     if(result > 0) {
+      if(findTagName.length > 0) {
+        await CaseHistory.create({
+          created_by : userId,
+          created_datetime : new Date(),
+          attribute_name : "Tags",
+          old_value : `CREATE`,
+          new_value : `deleted the following ${dynamicTagName} ${findTagName.map((d : any) => d.tag_name).join(' , ')}`,
+          case_rid : caseRid,
+          task_rid : taskRid
+        });
+      }
       return {
         statusCode : HttpStatus.SUCCESS,
         statusMessage : responseMessage
@@ -6815,6 +6913,9 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     }
   }
   async deleteCollaborators (accountNumber : string, data : any) {
+     if(!this.mainDbSequelize) {
+      this.mainDbSequelize = await initMainDbSequelize()
+    }
     const {TaskCollaborators} = await this.caseModelService.getModels(accountNumber);
     const whereClause: any = {
       account_rid: data.account_rid,
@@ -6823,6 +6924,16 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     };
     if (data.task_type !== 'activity') {
       whereClause.case_rid = data.case_rid;
+      const findUser: any = await this.mainDbSequelize.query(rawQueries.getUserById(data.user_rid));
+      await CaseHistory.create({
+        created_by : data.created_by,
+        created_datetime : new Date(),
+        attribute_name : "Collaborator",
+        old_value : `CREATE`,
+        new_value : `deleted a collaborator ${findUser[0][0].name}`,
+        case_rid : data.case_rid,
+        task_rid : data.rid
+      });
     }
     const result = await TaskCollaborators.destroy({
       where: whereClause
