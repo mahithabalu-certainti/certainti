@@ -31,6 +31,7 @@ export interface AddCollaboratorPayload {
   rid: string;
   user_rid: string;
   action_type?: string;
+  task_type?: string;
 }
 export interface AddCollaboratorResponse {
   statusCode: number;
@@ -717,10 +718,11 @@ export const updateChecklistStatus = async (
 };
 
 export interface DeleteCollaboratorPayload {
-  case_rid: string;
+  case_rid?: string;
   account_rid: string;
   rid: string;
   assigned_to: string;
+  task_type?: string;
 }
 
 export interface DeleteCollaboratorResponse {
@@ -737,9 +739,23 @@ export const deleteCollaborator = async (
   payload: DeleteCollaboratorPayload
 ): Promise<DeleteCollaboratorResponse> => {
   try {
+    const requestPayload: Record<string, unknown> = {
+      account_rid: payload.account_rid,
+      rid: payload.rid,
+      assigned_to: payload.assigned_to,
+    };
+
+    if (payload.case_rid) {
+      requestPayload.case_rid = payload.case_rid;
+    }
+
+    if (payload.task_type) {
+      requestPayload.task_type = payload.task_type;
+    }
+
     const response = await caseServiceApi.post<DeleteCollaboratorResponse>(
       '/api/cases/task/collaborator/delete',
-      payload
+      requestPayload
     );
     return response.data;
   } catch (error) {

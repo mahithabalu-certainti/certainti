@@ -328,8 +328,6 @@ export const useGetRoleOptions = (
     queryKey: ['case-team-role-options'],
     queryFn: () => fetchRoleOptions(),
     retry: 0,
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
     enabled,
   });
 };
@@ -362,8 +360,6 @@ export const useGetTagOptions = (
     ],
     queryFn: () => fetchTagOptions(payload!),
     retry: 0,
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
     enabled: enabled && !!payload?.account_rid,
   });
 };
@@ -381,8 +377,6 @@ export const useGetCollaboratorOptions = (
     ],
     queryFn: () => fetchCollaboratorOptions(payload!),
     retry: 0,
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
     enabled: enabled && !!payload?.case_rid && !!payload?.account_rid,
   });
 };
@@ -398,7 +392,7 @@ export const useGetCaseTeamMembersDropdown = (
     retry: 0,
     staleTime: 0, // Always fetch fresh data since users change often
     gcTime: 0,
-    enabled: enabled && !!accountId && !!caseId,
+    enabled: enabled && !!accountId,
   });
 };
 

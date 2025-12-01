@@ -3,14 +3,13 @@ import React, { useCallback, useMemo } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import {
-  useTaskActivityDetails,
-  fetchTaskActivityDetails, useGetActivityStatus,
+  useGetActivityStatus,
 } from '../../../services/activities/activities-service';
 import { ActivityType } from '../../../types';
 import {
-  useGetCaseTeamMembersDropdown,
   useGetRoleOptions,
   useGetTagOptions,
+  useGetUserOptions,
 } from '../../../services/case-team';
 import {
   AddCollaboratorPayload,
@@ -44,7 +43,7 @@ interface TaskDetailsProps {
 }
 
 const TaskDetails: React.FC<TaskDetailsProps> = ({
-  // entityLevel,
+  entityLevel,
   caseId: propCaseId,
 }) => {
   const navigate = useNavigate();
@@ -116,9 +115,9 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
       collaborators:
         !permissionMap['collaborators']?.read &&
         !permissionMap['collaborators']?.edit,
-      fiscalYear: false, // Force visible
+      fiscalYear: entityLevel !== 'account', // Force visible
     }),
-    [permissionMap]
+    [permissionMap, entityLevel]
   );
 
   const fieldDisabledMap = useMemo(
@@ -143,16 +142,9 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
     [permissionMap]
   );
 
-  const { data } = useTaskActivityDetails(accountId, activityId, true);
+  const effectiveCaseId = propCaseId;
 
-  const effectiveCaseId =
-    propCaseId || data?.attach_to || data?.attached_to || '';
-
-  const caseTeamMembersQuery = useGetCaseTeamMembersDropdown(
-    accountid || accountId || '',
-    effectiveCaseId || accountId || '',
-    !!(accountId || accountid)
-  );
+  const userOptionsQuery = useGetUserOptions(accountid || accountId || '', true);
   const roleOptionsQuery = useGetRoleOptions();
   const prioritiesQuery = useGetTaskPriorities();
   const statusesQuery = useGetActivityStatus('Task');
@@ -178,14 +170,14 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
   );
 
   const userData = useMemo(() => {
-    if (caseTeamMembersQuery.data && Array.isArray(caseTeamMembersQuery.data)) {
-      return caseTeamMembersQuery.data.map((member) => ({
-        rid: member.user_rid,
-        name: member.user_name,
+    if (userOptionsQuery.data && Array.isArray(userOptionsQuery.data)) {
+      return userOptionsQuery.data.map((member) => ({
+        rid: member.rid,
+        name: member.name,
       }));
     }
     return [];
-  }, [caseTeamMembersQuery.data]);
+  }, [userOptionsQuery.data]);
 
   const checklistData = useMemo(() => {
     if (checklistQuery.data?.data && Array.isArray(checklistQuery.data.data)) {
@@ -421,7 +413,7 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
           account_rid: accountId || accountid || '',
           rid: taskId,
           user_rid: userId,
-          action_type: 'milestone',
+          task_type: 'activity',
         };
 
         addCollaboratorMutation.mutate(payload, {
@@ -499,76 +491,13 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
         checklistData={checklistData}
         fieldVisibility={fieldHiddenMap}
         fieldDisabled={fieldDisabledMap}
-        fiscalYear={data?.fiscal_year || null}
+        fiscalYear={null}
         fiscalYears={fiscalYearOptions}
         taskType='activity'
         onAddComment={handleAddComment}
         onUpdateComment={handleUpdateComment}
         onDeleteComment={handleDeleteComment}
         onAddCollaborator={handleAddCollaborator}
-        onFetchTaskDetails={async (taskId) => {
-          if (!accountId) return null;
-          try {
-            const response = await fetchTaskActivityDetails(accountId, taskId);
-            // Map TaskActivityDetails to Task
-            const mappedTask: any = {
-              id: response.rid,
-              r_number: response.r_number,
-              title: response.task_name,
-              status: response.task_status_name || 'Open', // Default to Open if null
-              priority: response.priority_name || 'Medium',
-              priorityRid: response.priority_rid || undefined,
-              assignee: {
-                name: response.assigned_to_name || 'Unassigned',
-                initials: response.assigned_to_name
-                  ? response.assigned_to_name
-                    .split(' ')
-                    .map((n) => n[0])
-                    .join('')
-                    .toUpperCase()
-                    .slice(0, 2)
-                  : 'UA',
-                color: '#9CA3AF', // Default color
-              },
-              commentCount: 0, // Not in response
-              createdAt: new Date(response.created_datetime),
-              createdBy: response.created_by_name,
-              modifiedBy: response.modified_by_name || undefined,
-              description: response.task_description,
-              checklist: response.checklists?.checklist_items?.map((item) => ({
-                id: item.rid,
-                text: item.checklist_item_name,
-                completed: item.checklist_item_status_name === 'Completed',
-              })),
-              checklistName: response.checklist_name || undefined,
-              checklistInfo: response.checklists
-                ? {
-                  rid: response.checklists.rid,
-                  name: response.checklists.checklist_name,
-                  description:
-                    response.checklists.checklist_description || '',
-                  totalItems: response.checklists.checklist_items_count,
-                  completedItems: response.checklists.completed_items_count,
-                }
-                : undefined,
-              tags: response.tags,
-              startDate: response.effective_start_datetime
-                ? new Date(response.effective_start_datetime)
-                : undefined,
-              endDate: response.effective_end_datetime
-                ? new Date(response.effective_end_datetime)
-                : undefined,
-              case_rid: response.attach_to || response.attached_to,
-              fiscal_year: response.fiscal_year,
-              weightage: response.weightage_value || undefined,
-              category: response.task_category_name || undefined,
-            };
-            return mappedTask;
-          } catch (error) {
-            console.error('Error fetching task details:', error);
-            return null;
-          }
-        }}
       />
     </div>
   );
