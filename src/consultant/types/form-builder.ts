@@ -33,6 +33,7 @@ export interface FormTypeFields {
   resetDependsFields?: string[];
   prefixValue?: string;
   disableFutureDates?: boolean;
+  allowFutureDates?: boolean;
   lengthRequired?: {
     key: string;
     minMatchedValue: RegExp;
@@ -124,6 +125,7 @@ export interface FieldType {
   placeholder?: string;
   requiredErrorMessage?: string;
   disableFutureDates?: boolean;
+  allowFutureDates?: boolean;
   disabled?: boolean;
   defaultValue?: string;
   greaterThan?: Record<string, string>;

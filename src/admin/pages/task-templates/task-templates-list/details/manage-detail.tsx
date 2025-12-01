@@ -123,6 +123,7 @@ export const ManageDetailComponent = ({
           ?.map((item) => item.target_name)
           ?.join(', ') || '-'
       ),
+      colSpan: 2,
     },
   ];
   const DescrptionInfo: DetailItem[] = [

@@ -404,6 +404,7 @@ export const createDateField = (
     disabled?: boolean;
     hide?: boolean;
     disableFutureDates?: boolean;
+    allowFutureDates?: boolean;
     resetDependsFields?: string[];
     minDate?: Date;
     maxDate?: Date;
@@ -429,6 +430,7 @@ export const createDateField = (
   hide: others.hide,
   onChange: others.onChange,
   disableFutureDates: others.disableFutureDates,
+  allowFutureDates: others.allowFutureDates,
   greaterThan: others.greaterThan,
   dateRangeError: others.dateRangeError,
   startValue: others.startValue,
@@ -715,12 +717,13 @@ export const checkError = (data: CheckError[]) => {
 
 export const errorHandling = (data: AxiosErrorMsg): string => {
   const errorData = data.response?.data;
-  return `<p>${errorData?.statusMessage
-    ? typeof errorData.statusMessage === 'object'
-      ? Object.values(errorData.statusMessage).join(', ')
-      : errorData.statusMessage || ''
-    : errorData?.message || data.message
-    }</p>`;
+  return `<p>${
+    errorData?.statusMessage
+      ? typeof errorData.statusMessage === 'object'
+        ? Object.values(errorData.statusMessage).join(', ')
+        : errorData.statusMessage || ''
+      : errorData?.message || data.message
+  }</p>`;
 };
 
 export const formatAddress = (userDatas?: UserDetail) => {
