@@ -62,7 +62,7 @@ const listCaseSummarySchema = Joi.object({
   filters: Joi.object().default({}),
   globalFilters: Joi.object().default({}),
   fiscal_year: Joi.number().optional(),
-  search: Joi.string().max(255).optional(),
+  search: Joi.string().max(255).optional().allow("",null),
   sortBy: Joi.string().optional(),
   sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
 });
