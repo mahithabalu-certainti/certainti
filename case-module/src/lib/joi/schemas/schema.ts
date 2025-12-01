@@ -1,5 +1,7 @@
 import { time } from "console";
 import Joi from "joi";
+import Decimal from "decimal.js";
+const decimal18_2Regex = /^\d{1,16}(\.\d{1,2})?$/;
 
 const createCaseSchema = Joi.object({
   account_rid: Joi.string().required(),
@@ -12,9 +14,69 @@ const createCaseSchema = Joi.object({
   case_startdate: Joi.date().required(),
   planned_submission_date: Joi.date().required(),
   statutory_submission_date: Joi.date().required(),
-  heat_light_power:Joi.number().integer(),
-  total_nonlabor_cost:Joi.number().integer(),
-  tax_liability: Joi.number().optional().allow(null,"")
+  heat_light_power:Joi.string()
+  .pattern(decimal18_2Regex)
+  .messages({
+    "string.pattern.base": "Heat Light Powermust have up to 16 digits before the decimal and up to 2 decimal places",
+  })
+  .custom((value, helpers) => {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
+      return helpers.error("any.invalid");
+    }
+  })
+  .messages({
+    "any.invalid": "Total Effort must be a valid positive number",
+  })
+  .optional()
+  .allow(null),
+  total_nonlabor_cost:Joi.string()
+  .pattern(decimal18_2Regex)
+  .messages({
+    "string.pattern.base": "Heat Light Powermust have up to 16 digits before the decimal and up to 2 decimal places",
+  })
+  .custom((value, helpers) => {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
+      return helpers.error("any.invalid");
+    }
+  })
+  .messages({
+    "any.invalid": "Total Effort must be a valid positive number",
+  })
+  .optional()
+  .allow(null),
+  tax_liability: Joi.string()
+  .pattern(decimal18_2Regex)
+  .messages({
+    "string.pattern.base": "Heat Light Powermust have up to 16 digits before the decimal and up to 2 decimal places",
+  })
+  .custom((value, helpers) => {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
+      return helpers.error("any.invalid");
+    }
+  })
+  .messages({
+    "any.invalid": "Total Effort must be a valid positive number",
+  })
+  .optional()
+  .allow(null),
 });
 
 const updateCaseSchema = Joi.object({
@@ -30,9 +92,69 @@ const updateCaseSchema = Joi.object({
   planned_submission_date: Joi.date().required(),
   statutory_submission_date: Joi.date().required(),
   country_rid: Joi.string().optional(),
-  tax_liability: Joi.number().optional().allow(null,""),
-  heat_light_power:Joi.number().integer(),
-  total_nonlabor_cost:Joi.number().integer(),
+ heat_light_power:Joi.string()
+  .pattern(decimal18_2Regex)
+  .messages({
+    "string.pattern.base": "Heat Light Powermust have up to 16 digits before the decimal and up to 2 decimal places",
+  })
+  .custom((value, helpers) => {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
+      return helpers.error("any.invalid");
+    }
+  })
+  .messages({
+    "any.invalid": "Total Effort must be a valid positive number",
+  })
+  .optional()
+  .allow(null),
+  total_nonlabor_cost:Joi.string()
+  .pattern(decimal18_2Regex)
+  .messages({
+    "string.pattern.base": "Heat Light Powermust have up to 16 digits before the decimal and up to 2 decimal places",
+  })
+  .custom((value, helpers) => {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
+      return helpers.error("any.invalid");
+    }
+  })
+  .messages({
+    "any.invalid": "Total Effort must be a valid positive number",
+  })
+  .optional()
+  .allow(null),
+  tax_liability: Joi.string()
+  .pattern(decimal18_2Regex)
+  .messages({
+    "string.pattern.base": "Heat Light Powermust have up to 16 digits before the decimal and up to 2 decimal places",
+  })
+  .custom((value, helpers) => {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
+      return helpers.error("any.invalid");
+    }
+  })
+  .messages({
+    "any.invalid": "Total Effort must be a valid positive number",
+  })
+  .optional()
+  .allow(null),
 });
 
 const exportCasesAccountSchema = Joi.object({
