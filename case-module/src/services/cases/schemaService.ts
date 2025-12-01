@@ -1924,39 +1924,23 @@ return !response;
       iterationCount += 1;
     }
     if (totalCount === iterationCount) {
-      const getTotalProjectCount: any = await this.orgDbSequelize.query(
-        rawQueries.getTotalProjectsCount(
-          schemaName,
-          data.case_rid,
-          data.account_rid
-        )
-      );
       const getTotalProjects : any = await this.orgDbSequelize.query(
         rawQueries.getTotalProjectsCountInCase(schemaName, data.fiscal_year, data.account_rid, data.case_rid)
-      );
-      const getTotalProjectCost: any = await this.orgDbSequelize.query(
-        rawQueries.getTotalProjectCost(
-          schemaName,
-          data.case_rid,
-          data.account_rid
-        )
-      );
+      )
       await this.orgDbSequelize.query(
         rawQueries.updateCostCountInCase(
           schemaName,
           data.case_rid,
-          getTotalProjectCount[0][0].total_projects,
-          getTotalProjectCost[0][0].total_cost,
           getTotalProjects[0][0].total_projects,
+          getTotalProjects[0][0].total_projects_cost,
           getTotalProjects[0][0].total_projects_qre_cost
         )
       );
       await this.mainDbSequelize.query(
         rawQueries.updateCostCountInCaseSummary(
           data.case_rid,
-          getTotalProjectCount[0][0].total_projects,
-          getTotalProjectCost[0][0].total_cost,
           getTotalProjects[0][0].total_projects,
+          getTotalProjects[0][0].total_projects_cost,
           getTotalProjects[0][0].total_projects_qre_cost
         )
       );
@@ -2072,39 +2056,23 @@ return !response;
       iterationCount += 1;
     }
     if (totalCount === iterationCount) {
-      const getTotalProjectCount: any = await this.orgDbSequelize.query(
-        rawQueries.getTotalProjectsCount(
-          schemaName,
-          data.case_rid,
-          data.account_rid
-        )
-      );
       const getTotalProjects : any = await this.orgDbSequelize.query(
         rawQueries.getTotalProjectsCountInCase(schemaName, data.fiscal_year, data.account_rid, data.case_rid)
-      );
-      const getTotalProjectCost: any = await this.orgDbSequelize.query(
-        rawQueries.getTotalProjectCost(
-          schemaName,
-          data.case_rid,
-          data.account_rid
-        )
       );
       await this.orgDbSequelize.query(
         rawQueries.updateCostCountInCase(
           schemaName,
           data.case_rid,
-          getTotalProjectCount[0][0].total_projects,
-          getTotalProjectCost[0][0].total_cost,
           getTotalProjects[0][0].total_projects,
+          getTotalProjects[0][0].total_projects_cost,
           getTotalProjects[0][0].total_projects_qre_cost
         )
       );
       await this.mainDbSequelize.query(
         rawQueries.updateCostCountInCaseSummary(
           data.case_rid,
-          getTotalProjectCount[0][0].total_projects,
-          getTotalProjectCost[0][0].total_cost,
           getTotalProjects[0][0].total_projects,
+          getTotalProjects[0][0].total_projects_cost,
           getTotalProjects[0][0].total_projects_qre_cost
         )
       );

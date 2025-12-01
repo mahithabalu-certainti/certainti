@@ -56,7 +56,7 @@ export const fetchProjectsForCases = (
   isExport : boolean
 ) => {
   let pagination : string = ``
-  if(isExport) {
+  if(!isExport) {
     const offset = (page - 1) * limit;
     pagination = `LIMIT ${limit} OFFSET ${offset}`;
   } else {
@@ -1690,4 +1690,20 @@ return query;
     return `SELECT rid, weightage_value FROM ${MAIN_SCHEMA_NAME}.task_weightage ORDER BY weightage_value ASC`
   }
 
+  export const fetchCaseProjects = (caseRid : string, accountRid : string, schemaName : string) => {
+    return `
+    SELECT pf.total_cost_prj, pf.qre_final 
+    FROM ${schemaName}.project_fiscal pf 
+    LEFT JOIN ${schemaName}.case_projects cp ON cp.project_fiscal_rid = pf.rid
+    WHERE
+    cp.case_rid = '${caseRid}'
+    AND
+    cp.account_rid = '${accountRid}'
+    `
+  }
+
+  export const updateCaseAggregatedValue = (totalCostPrj : any, totalQreCost : any, schemaName : string, caseRid : string, accountRid : string) => {
+    return `UPDATE ${schemaName}.cases SET case_total_project_cost = ${totalCostPrj}, case_total_qre_cost = ${totalQreCost} 
+    WHERE rid = '${caseRid}' AND account_rid = '${accountRid}'`
+  }
  
