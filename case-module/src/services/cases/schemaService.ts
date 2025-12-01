@@ -1595,7 +1595,8 @@ return !response;
       this.mainDbSequelize = await this.caseModelService.getMainSequelize();
     }
     let [pointOfContactRoleid]:any[] = await this.mainDbSequelize.query(
-        rawQueries.fetchPOCRoleId()
+        rawQueries.fetchPOCRoleId(),
+        { type: "SELECT" }
       );
     let filteredQueryArray: string[] = [];
     let andConditions = ``;
@@ -1694,7 +1695,7 @@ return !response;
         sortValue,
         pagination,
         schemaName,
-        pointOfContactRoleid
+        pointOfContactRoleid.rid
       );
       
       const [projectInfo]: any[] = await this.orgDbSequelize.query(
@@ -3479,7 +3480,7 @@ return !response;
         status_rid: caseRequest.status_rid,
         //modified_by: caseRequest.modified_by,
         created_datetime: new Date(),
-        case_rid : caseRequest.case_rid
+        case_rid : caseRequest?.case_rid || "",
         //  modified_datetime: caseRequest.modified_datetime,
       },
       { transaction }

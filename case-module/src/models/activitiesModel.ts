@@ -44,6 +44,7 @@ export interface ActivitiesAttributes {
   effective_end_time?: string;
   recurrence_day_of_month?: number;
   recurrence_monthly_index?: string;
+  checklist_rid?: string;
 }
 
 export interface ActivitiesCreationAttributes extends Optional<ActivitiesAttributes, "rid"> {}
@@ -90,6 +91,7 @@ export class Activities extends Model<ActivitiesAttributes, ActivitiesCreationAt
   public effective_end_time?: string;
   public recurrence_day_of_month?: number;
   public recurrence_monthly_index?: string;
+  public checklist_rid?: string;
 
   static initialize(sequelize: Sequelize, schemaName: string = MAIN_SCHEMA_NAME) {
     return Activities.init({
@@ -120,6 +122,7 @@ export class Activities extends Model<ActivitiesAttributes, ActivitiesCreationAt
       assigned_to: { type: DataTypes.STRING(50), allowNull: true },
       task_name: { type: DataTypes.STRING(255), allowNull: true },
       task_template_rid: { type: DataTypes.STRING(50), allowNull: true },
+      checklist_rid: { type: DataTypes.STRING(50), allowNull: true },
       invited_by: { type: DataTypes.TEXT, allowNull: true },
       attendees_list: { type: DataTypes.TEXT, allowNull: true },
       to_email: { type: DataTypes.JSONB, allowNull: true },
