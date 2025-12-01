@@ -1,5 +1,6 @@
 import { RedisClientType, createClient } from "redis";
 import crypto from "crypto";
+import { logMessage } from "../utils/helpers";
 
 export class RedisService {
   private client: RedisClientType;
@@ -9,11 +10,11 @@ export class RedisService {
     this.client = createClient({ url: "redis://localhost:6379" });
 
     this.client.on("connect", () => {
-      console.log("Redis connected");
+      logMessage("Redis connected");
     });
 
     this.client.on("error", (err) => {
-      console.error("Redis error:", err);
+      logMessage(`Redis error: ${err}`);
     });
 
     this.isConnected = false;

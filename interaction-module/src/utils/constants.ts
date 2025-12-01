@@ -45,6 +45,8 @@ export const interactionType = {
 };
 export const ENV_PREFIX = process.env.NODE_ENV_DB_PREFIX || 'D001-';
 export const MAIN_SCHEMA_NAME = "trd365";
+export const SCHEMANAME_PREFIX = "trd365_";
+
 export const constants = {
   SQL_GET_USER: `SELECT status_description as status, "user".rid, email, profile_rid FROM ${MAIN_SCHEMA_NAME}."user" as "user" ,${MAIN_SCHEMA_NAME}."status" as status WHERE  "user".status_rid = status.rid and {whereClause} LIMIT 1`,
   SQL_GET_PERMISSION: `SELECT rid FROM ${MAIN_SCHEMA_NAME}."module_permission" WHERE permission_name = :permissionName LIMIT 1`,
@@ -84,6 +86,7 @@ export const filtersColumns : Record<string, string> =
     interaction_type_rid : "interaction_type_rid",
     interaction_iteration : "interaction_iteration",
     project_code : "project_code",
+    project_name : "project_name",
     fiscal_year : "fiscal_year",
     response_source_rid : "response_source_rid",
     interaction_level_rid:"interaction_level_rid",
@@ -126,6 +129,7 @@ export const filtersColumns : Record<string, string> =
     status_rid : "string",
     interaction_type_rid : "string",
     project_code : "string",
+    project_name : "string",
     fiscal_year : "number",
     response_source_rid : "string",
     parent_interaction_rid:"string",
@@ -151,7 +155,8 @@ export const filtersColumns : Record<string, string> =
 
 export const interactionFlag = {
   account : "account",
-  project : "project"
+  project : "project",
+  case : "case"
 }
 
 export const mainTableFilters : Record<any, any> = {
@@ -338,10 +343,34 @@ export const rawQueries = {
     return `
     SELECT rid, project_name,project_code,r_number,fiscal_year,project_rid,max_ai_interaction FROM ${schemaName}.project_fiscal WHERE rid = '${rid}'`;
   },
+  fetchKeyContactsByCaseId(caseRid: string, schemaName: string) {
+  return `
+    SELECT 
+      a.project_fiscal_rid, 
+      b.project_code, 
+      b.project_name, 
+      c.key_contact_name, 
+      c.key_contact_email
+    FROM ${schemaName}.case_projects as a
+    LEFT JOIN ${schemaName}.project_fiscal as b
+      ON a.project_fiscal_rid = b.rid
+    LEFT JOIN ${schemaName}.key_contact_details as c
+      ON b.rid = c.entity_rid
+    WHERE 
+    a.case_rid = '${caseRid}'
+    AND
+    c.include_in_communication = TRUE
+  `;
+  },
   fetchProjectsByAccount(accountRid: string, schemaName: string,status_rid:string) {
     return `
     SELECT rid, project_rid FROM ${schemaName}.project_fiscal WHERE account_rid = '${accountRid}' and status_rid='${status_rid}'`;
   },
+  fetchProjectsByCase(caseRid: string, schemaName: string) {
+    return `
+    SELECT a.project_fiscal_rid FROM ${schemaName}.case_projects as a WHERE a.case_rid = '${caseRid}'
+    `
+    },
   updateQreInfo(rid: string, schemaName: string, qrePercent: number, data: any) {
     return `
       UPDATE ${schemaName}.project_fiscal
@@ -475,6 +504,10 @@ export const rawQueries = {
     return `
     SELECT  key_contact_name,key_contact_email FROM ${schemaName}.key_contact_details WHERE lower(entity_type) = 'account' and include_in_communication is true and entity_rid = '${accountRid}' and status_rid = '${statusRid}'`;
   },
+  fetchInteractionCCRecipientAccount(accountRid: string,statusRid:string,schemaName: string) {
+    return `
+    SELECT  key_contact_name,key_contact_email FROM ${schemaName}.key_contact_details WHERE lower(entity_type) = 'account' and interaction_cc_recipient is true and entity_rid = '${accountRid}' and status_rid = '${statusRid}'`;
+  },
   fetchRemainderEmailInfo(interactionRid: string, schemaName: string) {
     return `
     SELECT recipient_name, recipient_email FROM ${schemaName}.interactions WHERE rid = '${interactionRid}' `
@@ -502,7 +535,7 @@ export const rawQueries = {
   },
    fetchInteractionLevelRidByName(type: string) {
     return `
-    SELECT rid FROM ${MAIN_SCHEMA_NAME}.interaction_level WHERE interaction_level_name = '${type}' LIMIT 1`;
+    SELECT rid, interaction_level_name FROM ${MAIN_SCHEMA_NAME}.interaction_level WHERE interaction_level_name = '${type}' LIMIT 1`;
   },
   fetchAllParentRNumber() {
     let query = `SELECT r_number FROM ${MAIN_SCHEMA_NAME}.account WHERE storage_type = '${STATUS_MESSAGE.separateDb}' AND parent_account_rid IS NULL
@@ -774,7 +807,151 @@ export const rawQueries = {
   },
   fetchKeyContactForInteraction(schemaName : string, id : string) {
     return `SELECT key_contact_name, key_contact_email FROM ${schemaName}.key_contact_details where entity_rid = '${id}' AND include_in_communication = TRUE`
-  }
+  },
+  fetchProfServConsultantDetails (schemaName : string, accountRid : string, keyContactRoleId : string) {
+    return `SELECT * FROM ${schemaName}.key_contact_details WHERE entity_rid = '${accountRid}' AND key_contact_role = '${keyContactRoleId}'`
+  },
+  fetchProfServConsultantRid () {
+    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.key_contact_role WHERE role_name = '${keyContactRoleName.professionalServiceConsultant}'`
+  },
+  fetchProjectDetails (schemaName : string, projectFiscalRid : string) {
+    return `SELECT project_name, project_code, fiscal_year FROM ${schemaName}.project_fiscal
+    WHERE rid = '${projectFiscalRid}'`
+  },
+  fetchInteractionLevelById (interactionLevelRid : string) {
+    return `SELECT * FROM ${MAIN_SCHEMA_NAME}.interaction_level WHERE rid = '${interactionLevelRid}'`
+  },
+  getAccountDetailsQuery(schemaName: string) {
+    return `
+      SELECT * 
+      FROM ${schemaName}.account_details 
+      WHERE account_rid = :accountRid
+    `;
+  },
+  getAccountsWithSubscriptionQuery() {
+    return `
+      SELECT * 
+      FROM ${MAIN_SCHEMA_NAME}.account 
+      WHERE subscription_id IS NOT NULL
+    `;
+  },
+  getUserNameByIdQuery() {
+    return `
+      SELECT first_name, middle_name, last_name 
+      FROM ${MAIN_SCHEMA_NAME}."user" 
+      WHERE rid = :userId
+    `;
+  },
+  getStatusByIdQuery() {
+    return `
+      SELECT rid, status_name 
+      FROM ${MAIN_SCHEMA_NAME}.status 
+      WHERE rid = :id
+    `;
+  },
+  getInteractionTypeByIdQuery() {
+    return `
+      SELECT rid, interaction_type_name 
+      FROM ${MAIN_SCHEMA_NAME}.interaction_type 
+      WHERE rid = :id
+    `;
+  },
+  getInteractionStatusByIdQuery() {
+    return `
+      SELECT rid, status_name 
+      FROM ${MAIN_SCHEMA_NAME}.interaction_status 
+      WHERE rid = :id
+    `;
+  },
+  getInteractionSourceByNameQuery() {
+    return `
+      SELECT rid, interaction_source_name 
+      FROM ${MAIN_SCHEMA_NAME}.interaction_source 
+      WHERE interaction_source_name = :type 
+      LIMIT 1
+    `;
+  },
+  getInteractionLevelNameByIdQuery() {
+    return `
+      SELECT interaction_level_name 
+      FROM ${MAIN_SCHEMA_NAME}.interaction_level 
+      WHERE rid = :type 
+      LIMIT 1
+    `;
+  },
+  getActiveInteractionTypesQuery() {
+    return `
+      SELECT rid, interaction_type_name 
+      FROM ${MAIN_SCHEMA_NAME}.interaction_type 
+      WHERE status = 'active' 
+      ORDER BY interaction_type_name ASC
+    `;
+  },
+  getActiveInteractionSourcesQuery() {
+    return `
+      SELECT rid, interaction_source_name 
+      FROM ${MAIN_SCHEMA_NAME}.interaction_source 
+      WHERE status = 'active' 
+      ORDER BY interaction_source_name ASC
+    `;
+  },
+  getActiveInteractionResponseSourcesQuery() {
+    return `
+      SELECT rid, response_source_name 
+      FROM ${MAIN_SCHEMA_NAME}.interaction_response_source 
+      WHERE status = 'active' 
+      ORDER BY response_source_name ASC
+    `;
+  },
+  getProjectSummaryWithFiscalAccessQuery(accessControlWhere: any) {
+    return `
+      SELECT DISTINCT ps.project_rid
+      FROM ${MAIN_SCHEMA_NAME}.project_summary AS ps
+      LEFT JOIN ${MAIN_SCHEMA_NAME}.project_fiscal_summary AS pfs ON ps.project_rid = pfs.project_rid
+      ${accessControlWhere}
+    `;
+  },
+  getAccountByRNumberQuery() {
+    return `
+      SELECT * 
+      FROM ${MAIN_SCHEMA_NAME}.account 
+      WHERE r_number = :r_number
+    `;
+  },
+  checkProjectFiscalExistsQuery(schemaName: string) {
+    return `
+      SELECT 1 
+      FROM "${schemaName}".project_fiscal 
+      WHERE r_number = :projectId 
+      LIMIT 1;
+    `;
+  },
+  checkProjectFiscalByNameExistsQuery(schemaName: string) {
+    return `
+      SELECT 1 
+      FROM "${schemaName}".project_fiscal 
+      WHERE project_name = :projectName 
+      LIMIT 1;
+    `;
+  },
+  checkProjectFiscalByCodeExistsQuery(schemaName: string) {
+    return `
+      SELECT 1 
+      FROM "${schemaName}".project_fiscal 
+      WHERE project_code = :projectCode 
+      LIMIT 1;
+    `;
+  },
+  checkProjectFiscalExistsByAnyQuery(schemaName: string) {
+    return `
+      SELECT 1 
+      FROM "${schemaName}".project_fiscal 
+      WHERE project_rid = :projectId 
+         OR project_name = :projectName 
+         OR project_code = :projectCode
+      LIMIT 1;
+    `;
+  }  
 };
 
 export const filterTypesForSummaryInteractions : Record<string, any> = 
@@ -928,4 +1105,8 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
     interactionAge : "interaction_age",
     interaction : "interactions",
     attachments : "attachments"
+  }
+
+  export const keyContactRoleName = {
+    professionalServiceConsultant : "Professional Services Consultant"
   }

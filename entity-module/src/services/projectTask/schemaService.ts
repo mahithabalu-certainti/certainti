@@ -20,12 +20,13 @@ import {
   setupProjectTaskTimelineSeq,
 } from "../../models/projectTaskTimeline";
 import { ProjectResource } from "../../models/projectResource";
-import { MAIN_SCHEMA_NAME, rawQueries } from "../../utils/constants";
+import { MAIN_SCHEMA_NAME, SCHEMANAME_PREFIX, rawQueries } from "../../utils/constants";
 import { ProjectFiscalRegion } from "../../models/projectFiscalRegion";
 import { Project } from "../../models/project";
 import { AccountFiscal } from "../../models/accountFiscal";
 import { AccountFiscalRegion } from "../../models/accountFiscalRegion";
 import { ProjectTaskHistory, setupProjectTaskHistorySequence } from "../../models/projectTaskHiistory";
+import { logMessage } from "../../utils/helpers";
 
 export class ProjectTaskSchemaService {
   private orgDbSequelize: Sequelize | null = null;
@@ -72,7 +73,7 @@ export class ProjectTaskSchemaService {
   }
 
   private async getModels(accountNumber: string) {
-    const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
+    const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
 
     const sequelize = await this.getSequelize();
     this.mainDbSequelize = await this.getMainSequelize();
@@ -189,12 +190,13 @@ export class ProjectTaskSchemaService {
       await ProjectTaskTimeline.sync({ force: false });
       await ProjectTaskHistory.sync({ force: false });
       if (this.orgDbSequelize) {
-        const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
+        const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
         await setupProjectTaskSequence(this.orgDbSequelize, schemaName);
         await setupProjectTaskTimelineSeq(this.orgDbSequelize, schemaName);
         await setupProjectTaskHistorySequence(this.orgDbSequelize, schemaName);
       }
     } catch (err) {
+      logMessage(`Error creating project resources table: ${(err as Error).message}`);
       throw new Error("Error creating project resources table");
     }
   }
@@ -343,8 +345,8 @@ export class ProjectTaskSchemaService {
         }
       );
     } catch (err) {
-      console.log("Error addinng timelne", err);
-      throw new Error("Error creating project resource timline");
+      logMessage(`Error creating project resource timeline: ${(err as Error).message}`);
+      throw new Error("Error creating project resource timeline");
     }
   }
 
@@ -371,7 +373,7 @@ export class ProjectTaskSchemaService {
         },
       );
     } catch (err) {
-      console.log("Error addinng timelne", err);
+      logMessage(`Error adding timeline for inline edit: ${(err as Error).message}`);
       throw new Error("Error creating project resource timline");
     }
   }
@@ -1072,6 +1074,7 @@ export class ProjectTaskSchemaService {
           ),
           "total_cost",
         ],
+        [Sequelize.fn("COUNT", Sequelize.col("rid")), "count"],
       ],
       where: {
         account_rid,
@@ -1101,6 +1104,7 @@ export class ProjectTaskSchemaService {
           ),
           "total_cost",
         ],
+        [Sequelize.fn("COUNT", Sequelize.col("ProjectTask.rid")), "count"],
       ],
       include: [
         {
@@ -1121,11 +1125,19 @@ export class ProjectTaskSchemaService {
       transaction,
     });
 
+    if (!totalAggregate) return;
+
+    if (!totalAggregate || totalAggregate.length === 0) return;
+
     // Initialize
     let total_effort_fte_from_tasks = null;
     let total_cost_fte_from_tasks = null;
     let total_effort_subcon_from_tasks = null;
     let total_cost_subcon_from_tasks = null;
+
+    let total_fte_from_tasks = 0;
+    let total_subcon_from_tasks= 0;
+    let total_nonlabor_from_tasks = 0;
 
     for (const row of byTypeAggregates) {
       const resourceTypeId = row.resource_type_rid;
@@ -1139,9 +1151,13 @@ export class ProjectTaskSchemaService {
       if (typeName === "full-time") {
         total_effort_fte_from_tasks = row.total_effort;
         total_cost_fte_from_tasks = row.total_cost;
+        total_fte_from_tasks =  Number(row.count || 0);
       } else if (typeName === "sub con") {
         total_effort_subcon_from_tasks = row.total_effort;
         total_cost_subcon_from_tasks = row.total_cost;
+        total_subcon_from_tasks = Number(row.count || 0);
+      } else if (typeName === "non-labor") {
+        total_nonlabor_from_tasks = Number(row.count || 0)
       }
     }
 
@@ -1156,6 +1172,9 @@ export class ProjectTaskSchemaService {
           total_cost_subcon_from_tasks,
           total_effort_fte_from_tasks,
           total_effort_subcon_from_tasks,
+          total_fte_from_tasks : total_fte_from_tasks,
+          total_subcon_from_tasks : total_subcon_from_tasks,
+          total_nonlabor_from_tasks : total_nonlabor_from_tasks
         },
         {
           where: {
@@ -1214,6 +1233,7 @@ export class ProjectTaskSchemaService {
           ),
           "total_cost",
         ],
+        [Sequelize.fn("COUNT", Sequelize.col("rid")), "count"],
       ],
       where: {
         account_rid,
@@ -1244,6 +1264,7 @@ export class ProjectTaskSchemaService {
           ),
           "total_cost",
         ],
+        [Sequelize.fn("COUNT", Sequelize.col("ProjectTask.rid")), "count"],
       ],
       include: [
         {
@@ -1269,6 +1290,10 @@ export class ProjectTaskSchemaService {
     let total_cost_fte_from_tasks: number | null = 0;
     let total_effort_subcon_from_tasks: number | null = 0;
     let total_cost_subcon_from_tasks: number | null = 0;
+    
+    let total_fte_from_tasks = 0;
+    let total_subcon_from_tasks= 0;
+    let total_nonlabor_from_tasks = 0;
 
     for (const row of byTypeAggregates) {
       const resourceTypeId = row.resource_type_rid;
@@ -1284,9 +1309,13 @@ export class ProjectTaskSchemaService {
       if (typeName === "full-time") {
         total_effort_fte_from_tasks += effort;
         total_cost_fte_from_tasks += cost;
+        total_fte_from_tasks = Number(row.count || 0)
       } else if (typeName === "sub con") {
         total_effort_subcon_from_tasks += effort;
         total_cost_subcon_from_tasks += cost;
+        total_subcon_from_tasks = Number(row.count || 0)
+      } else if (typeName === "non-labor") {
+        total_nonlabor_from_tasks = Number(row.count || 0)
       }
     }
 
@@ -1343,6 +1372,9 @@ export class ProjectTaskSchemaService {
             project_client_group: projectData.project_client_group || null,
             project_description: projectData.project_description || null,
             status_rid: projectData.status_rid || "",
+            total_fte_from_tasks : total_fte_from_tasks,
+            total_subcon_from_tasks : total_subcon_from_tasks,
+            total_nonlabor_from_tasks : total_nonlabor_from_tasks
           },
           { transaction }
         );
@@ -1356,6 +1388,9 @@ export class ProjectTaskSchemaService {
             total_cost_subcon_from_tasks,
             total_effort_fte_from_tasks,
             total_effort_subcon_from_tasks,
+            total_fte_from_tasks : total_fte_from_tasks,
+            total_subcon_from_tasks : total_subcon_from_tasks,
+            total_nonlabor_from_tasks : total_nonlabor_from_tasks
           },
           {
             where: {
@@ -1380,8 +1415,6 @@ export class ProjectTaskSchemaService {
     const { ProjectFiscal, Project } = await this.getModels(accountNumber);
     const { account_rid } = projectTaskData;
     const { project_rid } = projectData;
-
-    console.log("Entity IDS", project_rid, account_rid);
 
     // Aggregate from project_fiscal
     const fiscalAggregates: any = await ProjectFiscal.findOne({
@@ -2055,6 +2088,7 @@ export class ProjectTaskSchemaService {
     ]);
   
     if (!newResource || !oldResource) {
+      logMessage('Resource not found for given resource_rid');
       throw new Error('Unable to resolve resource_rid to region_rid');
     }
   
@@ -2352,6 +2386,7 @@ export class ProjectTaskSchemaService {
     ]);
   
     if (!resourceData || !oldResource) {
+      logMessage('Resource not found for given resource_rid');
       throw new Error('Unable to resolve region_rid from resource');
     }
   
@@ -2521,6 +2556,7 @@ export class ProjectTaskSchemaService {
     });
   
     if (!resourceData || !oldResource) {
+      logMessage('Unable to resolve region_rid for resource');
       throw new Error('Unable to resolve region_rid for resource');
     }
   
@@ -2771,6 +2807,7 @@ export class ProjectTaskSchemaService {
     });
   
     if (!resourceData || !oldResource) {
+      logMessage('Unable to resolve region_rid for resource');
       throw new Error('Unable to resolve region_rid for resource');
     }
   
@@ -2992,7 +3029,7 @@ export class ProjectTaskSchemaService {
     }
 
     const results = await this.mainDbSequelize.query(
-      `SELECT * FROM ${MAIN_SCHEMA_NAME}.resource_type WHERE rid = :resourceTypeId`,
+      rawQueries.fetchSpecificResourceTypeById(),
       {
         replacements: { resourceTypeId },
         type: "SELECT",
@@ -3017,6 +3054,7 @@ export class ProjectTaskSchemaService {
     });
 
     if (!projectTaskData) {
+      logMessage("Project task does not exist for the given account");
       throw new Error("Project task does not exist for the given account");
     }
 
@@ -3139,25 +3177,58 @@ export class ProjectTaskSchemaService {
 
     return projectTaskData;
   }
-    async updateProjectTaskStatus(
-      accountNumber: string,
-      projectTaskId: string,
-      statusId: string,
-      userId: string,
-      transaction: Transaction
-    ) {
-      const { ProjectTask } = await this.getModels(accountNumber);
-      const sequelize = await this.getSequelize();
-  
-      await ProjectTask.update({
-        status_rid: statusId,
-        modified_by: userId,
-        modified_datetime: new Date(),
-      }, {
-        where: {
-          rid: projectTaskId
-        },
-        transaction,
-      })
+    
+  async updateProjectTaskStatus(
+    accountNumber: string,
+    projectTaskId: string,
+    statusId: string,
+    userId: string,
+    transaction: Transaction
+  ) {
+    const { ProjectTask } = await this.getModels(accountNumber);
+    const sequelize = await this.getSequelize();
+
+    await ProjectTask.update({
+      status_rid: statusId,
+      modified_by: userId,
+      modified_datetime: new Date(),
+    }, {
+      where: {
+        rid: projectTaskId
+      },
+      transaction,
+    })
+  }
+
+  async fetchProjectTaskTypes(){
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize = await this.getMainSequelize();
     }
+
+    const query = rawQueries.fetchProjecTaskType();
+    const result: any[] = await this.mainDbSequelize.query(
+      query,
+      {
+        type: "SELECT"
+      }
+    );
+
+    return result;
+  }
+
+  async fetchProjectTaskClassification(){
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize = await this.getMainSequelize();
+    }
+
+    const query = rawQueries.fetchProjetClassificationQuery();
+    const result: any[] = await this.mainDbSequelize.query(
+      query,
+      {
+        type: "SELECT"
+      }
+    );
+
+    return result;
+  }
 }

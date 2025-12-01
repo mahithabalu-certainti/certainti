@@ -1,0 +1,294 @@
+import { Router } from "express";
+import controller from "../controllers";
+
+import multer from "multer";
+import { checkUserStatusMiddleware } from "../middlewares/authmiddleware";
+
+const routes: Router = Router();
+const upload = multer({storage : multer.memoryStorage()})
+routes.post(
+  "/new",
+  checkUserStatusMiddleware("cases_create"),
+  controller.caseController.createCases
+);
+routes.get(
+  "/details/:accountRid/:caseRid",
+  checkUserStatusMiddleware("cases_view_edit"),
+  controller.caseController.getCaseHeadersDetails
+);
+routes.put(
+  "/update",
+  checkUserStatusMiddleware("cases_view_edit"),
+  controller.caseController.updateCases
+);
+routes.get(
+  "/caseFilingType",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.getCaseFilingType
+);
+routes.get(
+  "/caseStatus",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.getCaseStatus
+);
+routes.get(
+  "/checkListStatus",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.getChecklistStatus
+);
+routes.get(
+  "/caseTeamRoles",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.getCaseTeamRoles
+);
+routes.get(
+  "/list",
+  checkUserStatusMiddleware("cases_view_edit"),
+  controller.caseController.listAllCasesAccount
+);
+routes.post(
+  "/list/caseSummary",
+  checkUserStatusMiddleware("cases_view_edit"),
+  controller.caseController.listAllCasesSummary
+);
+routes.get(
+  "/export",
+  checkUserStatusMiddleware("cases_export"),
+  controller.caseController.exportAllCasesAccount
+);
+routes.get(
+  "/export/caseSummary",
+  checkUserStatusMiddleware("cases_export"),
+  controller.caseController.exportAllCasesSummary
+);
+routes.post(
+  "/projects",
+  checkUserStatusMiddleware("projects_view_edit"),
+  controller.caseController.fetchProjectForAssign
+);
+routes.post(
+  "/projects/assign",
+  checkUserStatusMiddleware("projects_view_edit"),
+  controller.caseController.assignProjectToCase
+);
+
+routes.post(
+  "/assignedProjects",
+  checkUserStatusMiddleware("projects_view_edit"),
+  controller.caseController.fetchAssignedprojects
+);
+
+routes.post(
+  "/projects/delete",
+  checkUserStatusMiddleware("projects_view_edit"),
+  controller.caseController.deleteProjectFromCase
+);
+
+routes.post(
+  "/createCaseTeam",
+  checkUserStatusMiddleware("case_team_create"),
+  controller.caseController.createCaseTeam
+);
+routes.get(
+  "/caseTeam/list",
+  checkUserStatusMiddleware("case_team_view_edit"),
+  controller.caseController.listCaseTeamMembers
+);
+routes.post(
+  "/assignedProjects/export",
+  checkUserStatusMiddleware("projects_view_edit"),
+  controller.caseController.exportAllAssignedProjects
+)
+routes.get(
+  "/caseTeam/users/:accountRid",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.listUsersForCaseTeam
+);
+routes.get(
+  "/caseOwners",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.listUserForCaseOwner
+);
+routes.post(
+  "/checklist/create",
+  checkUserStatusMiddleware("checklist_create"),
+  controller.caseController.createCheckList
+);
+routes.post(
+  "/checklist/update",
+  checkUserStatusMiddleware("checklists_view_edit"),
+  controller.caseController.updateCheckList
+);
+routes.get(
+  "/checklist/detail/:checkListRid",
+  checkUserStatusMiddleware("checklists_view_edit"),
+  controller.caseController.getCheckListDetailsById
+);
+routes.get(
+  "/checklist/list",
+  checkUserStatusMiddleware("checklists_view_edit"),
+  controller.caseController.getAllChecklists
+);
+routes.get(
+  "/checklist/export",
+  checkUserStatusMiddleware("checklists_view_edit"),
+  controller.caseController.exportAllChecklists
+);
+routes.get(
+  "/workBreakdown/:accountRid/:caseRid",
+  checkUserStatusMiddleware("cases_workbreakdown_view_edit"),
+  controller.caseController.fetchCaseKanbanBoard
+);
+routes.post(
+  "/task/create",
+  checkUserStatusMiddleware("cases_workbreakdown_create"),
+  controller.caseController.createTask
+);
+routes.put(
+  '/task/update',
+  checkUserStatusMiddleware("cases_workbreakdown_view_edit"),
+  controller.caseController.updateTask
+);
+routes.post(
+  "/task/list",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.fetchCaseTaskList
+)
+routes.post(
+  "/tag/add",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.createOrMapTags
+)
+routes.post(
+  "/tag/list",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.fetchAllTags
+)
+routes.post(
+  "/tag/delete",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.deleteTagsTaskLevel
+)
+routes.post(
+  "/task/comments/add",
+  checkUserStatusMiddleware("NA"),
+  upload.array('files'),
+  controller.caseController.addCommentsToSpecificTask
+)
+routes.post(
+  "/task/export",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.exportCaseTask
+)
+routes.put(
+  "/task/comments/update",
+  checkUserStatusMiddleware("NA"),
+  upload.array('files'),
+  controller.caseController.updateTaskComments
+)
+routes.post(
+  "/task/comments/delete",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.deleteTaskComments
+)
+routes.post(
+  "/task/comments/list",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.fetchTaskCommentsList
+)
+routes.post(
+  "/task/attachments/add",
+  checkUserStatusMiddleware("NA"),
+  upload.array('files'),
+  controller.caseController.addTaskAttachments
+)
+routes.post(
+  "/task/attachments/delete",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.deleteTaskAttachments
+)
+routes.post(
+  "/task/attachments/list",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.listTaskAttachments
+)
+routes.post(
+  "/task/activity/list",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.fetchTaskActivity
+)
+routes.post(
+  "/task/details",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.fetchTaskDetails
+)
+routes.get(
+  "/task/priority",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.fetchCasePriority
+)
+routes.get(
+  "/task/status",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.fetchCaseTaskStatus
+)
+routes.post(
+  "/task/collaborator/add",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.addCollaborators
+)
+routes.post(
+  "/task/collaborator/list",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.listCollaborators
+)
+
+routes.get(
+  "/reviewProjects/:accountRid/:caseRid",
+  checkUserStatusMiddleware("case_review_projects_view_edit"),
+  controller.caseController.getReviewProjects
+)
+routes.get(
+  "/exportReviewProjects/:accountRid/:caseRid",
+  checkUserStatusMiddleware("case_review_projects_export"),
+  controller.caseController.exportReviewProjects
+)
+
+routes.post(
+  "/sentReviewProjects",
+  checkUserStatusMiddleware("case_review_projects_export"),
+  upload.array('files'),
+  controller.caseController.sentReviewProjects
+)
+routes.get(
+  "/emailTemplatePreview",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.getEmailTemplatePreview
+)
+
+routes.post(
+  "/task/workflowConnector/add",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.linkTask
+)
+routes.post(
+  "/task/workflowConnector/delete",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.linkDeleteTask
+)
+routes.post(
+  "/task/collaborator/delete",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.deleteCollaboratorsTaskLevel
+)
+routes.put(
+  "/task/checklist/status",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.updateChecklistItemStatus
+)
+routes.post(
+  "/task/dropDownList",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.caseLevelTaskDropdown
+)
+export default routes;

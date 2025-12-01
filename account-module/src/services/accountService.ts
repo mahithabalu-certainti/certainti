@@ -8,16 +8,18 @@ import {
 } from "sequelize";
 import { HttpStatus, primaryKeyContacts, rawQueries } from "../utils/constant";
 import { IAccount, IUpdateAccount, AccountAttributes } from "../utils/types";
-import { getTableSchemaByEntity, uploadToAzureBlob } from "../utils/helpers";
+import { errorLog, getTableSchemaByEntity, logMessage, uploadToAzureBlob } from "../utils/helpers";
 import SchemaService from "./schemaService";
-import { models } from "../models";
+import { Account } from "../models/accountModel";
+import { Country } from "../models/countryModel";
+import { Currency } from "../models/currencyModel";
+import { Industry } from "../models/industryModel";
+import { AccountFiscalSummary } from "../models/accountFiscalSummaryModel";
 import Decimal from "decimal.js";
 import { States } from "../models/stateModel";
 import currency from "currency.js";
 import { Status } from "../models/statusModel";
 import { initSequelize } from "../config/maindbDataSource";
-
-const { Account, Country, Currency, Industry } = models;
 
 class AccountService {
   private accountRepository: typeof Account | null;
@@ -50,7 +52,7 @@ class AccountService {
    * @returns {Promise<{ statusCode: number, message: string, data?: { account: any } }>}
    * - An object containing the status code, message, and retrieved account data.
    */
-  async accountList(
+async accountList(
     page: number = 1,
     limit: number = 10,
     search: string,
@@ -238,7 +240,14 @@ class AccountService {
             ...childWhereClause,
           },
           include: this.buildChildIncludes(),
-          order,
+          order: [
+            ...order,
+            [
+              { model: AccountFiscalSummary, as: "projects_by_fiscal_year" },
+              "fiscal_year",
+              "DESC"
+            ]
+          ],
           attributes: [
             "rid",
             "account_name",
@@ -293,8 +302,6 @@ class AccountService {
           childAccountsByParent.get(account.rid) || []
         );
       });
-
-      // Get full account data only for the needed records
       let updatedAccount = await this.schemaService.insertFiscalInfoOnly(
         parentAccounts,
         filters,
@@ -323,7 +330,7 @@ class AccountService {
           parent.hasAccountAccess = true;
           return parent;
         });
-      };
+      }
 
       // Optimize count query
       let totalCount = await this.getOptimizedCount(
@@ -336,7 +343,6 @@ class AccountService {
         updatedAccount.total = updatedAccount.data.length;
         totalCount = updatedAccount.data.length;
       }
-
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
@@ -346,6 +352,7 @@ class AccountService {
         },
       };
     } catch (err) {
+      errorLog("accountList", err instanceof Error ? err.message : String(err));
       return this.throwServiceError(err as Error);
     }
   }
@@ -438,7 +445,7 @@ class AccountService {
     ];
   }
 
-  private buildChildIncludes() {
+  private buildChildIncludes(): any[] {
     return [
       {
         model: Country,
@@ -467,6 +474,23 @@ class AccountService {
         attributes: ["status_name"],
         required: true,
       },
+      {
+        model: AccountFiscalSummary,
+        as: "projects_by_fiscal_year",
+        attributes: [
+          "rid",
+          [Sequelize.literal("'FY-' || fiscal_year"), "fiscal_year"],
+          "account_rid",
+          "total_projects",
+          "total_project_hours",
+          "total_project_cost",
+          "qualifying_project_hours_fed",
+          "qualifying_project_qre_fed",
+          "qualifying_project_rd_credits_fed",
+          "total_projects_rd_credits"
+        ],
+        required: false,
+      }
     ];
   }
 
@@ -539,7 +563,10 @@ class AccountService {
     errorMessage?: string;
     data?: { account: any };
   }> {
-    try {
+     try {
+      logMessage(
+        `exportAccountList params: sortBy=${sortBy}, sortOrder=${sortOrder}, fiscalYear=${fiscalYear}, userId=${userId}, filters=${JSON.stringify(filters)}, globalFilters=${JSON.stringify(globalFilters)}`  
+      );
       const repository = this.getAccountRepository();
       const userGroupType = await this.schemaService.getUserGroupType(userId);
       const isCustomGlobal = userGroupType === "DEFAULT";
@@ -553,6 +580,7 @@ class AccountService {
           (acc) => acc.id
         );
         if (accessibleAccountIds.length === 0) {
+          logMessage("No accessible accounts found for user: " + userId);
           return {
             statusCode: HttpStatus.SUCCESS,
             message: "No accessible accounts found",
@@ -628,6 +656,9 @@ class AccountService {
         "qualifying_project_qre_fed",
         "qualifying_project_rd_credits_fed",
         "industry_name_other",
+        "professional_services_consultant",
+        "finance_lead",
+        "finance_executive",
       ];
       const baseFields = [
         "rid",
@@ -644,14 +675,7 @@ class AccountService {
       const order = this.buildOrderClause(
         finalSortBy,
         finalSortOrder,
-        [
-          "country",
-          "currency",
-          "industry",
-          "professional_services_consultant",
-          "finance_executive",
-          "finance_lead",
-        ],
+        ["country", "currency", "industry"],
         [
           "total_projects",
           "total_project_cost",
@@ -660,9 +684,6 @@ class AccountService {
           "qualifying_project_qre_fed",
           "qualifying_project_rd_credits_fed",
           "total_projects_rd_credits",
-          "professional_services_consultant",
-          "finance_lead",
-          "finance_executive",
         ]
       );
 
@@ -706,7 +727,14 @@ class AccountService {
             ...childWhereClause,
           },
           include: this.buildChildIncludes(),
-          order,
+          order: [
+            ...order,
+            [
+              { model: AccountFiscalSummary, as: "projects_by_fiscal_year" },
+              "fiscal_year",
+              "DESC"
+            ]
+          ],
           attributes: [
             "rid",
             "account_name",
@@ -731,11 +759,6 @@ class AccountService {
 
         // Set USD currency for child accounts
         this.setDefaultCurrency(childAccounts, usdCurrency);
-      } else {
-        // If no parent accounts found, set empty child_accounts array
-        parentAccounts.forEach((account: any) => {
-          account.setDataValue("child_accounts", []);
-        });
       }
 
       // Group child accounts by parent - optimized with Map
@@ -766,19 +789,14 @@ class AccountService {
           childAccountsByParent.get(account.rid) || []
         );
       });
-      // Get full account data only for the needed records
-      let updatedAccount = await this.schemaService.insertFiscalInfoOnly(
-        parentAccounts,
-        filters,
-        0,
-        0,
-        finalSortBy,
-        finalSortOrder,
-        "download",
-        fiscalYear
-      );
+      
+      let updatedAccount = { data: parentAccounts,total:0 };
+      if(search){
+        updatedAccount.data = updatedAccount.data.filter((val: any) => val?.dataValues?.child_accounts?.length > 0);
+      }
+
       if (!isCustomGlobal) {
-        updatedAccount.data = updatedAccount.data.map((parent: any) => {
+        updatedAccount.data = parentAccounts.map((parent: any) => {
           if (parentIdsOnlyThroughChildren.includes(parent.rid)) {
             restrictedFields.forEach((field) => {
               parent[field] = null;
@@ -892,13 +910,14 @@ class AccountService {
           // Replace "0.00" in pattern with our real number
           return pattern.replace("0.00", formattedNumber);
         } catch (error) {
-          console.error("Error formatting number:", error);
+         errorLog("formatNumberForExport", error instanceof Error ? error.message : String(error));
           return "-";
         }
       };
       const exportDetails: Record<string, string>[] = [];
 
-      cleanedUsers.forEach((account: any) => {
+      cleanedUsers.forEach((accounts: any) => {
+        const account = accounts.dataValues;
         const currency_symbol = account?.currency?.currency_symbol;
         const baseRow = {
           "Account Name": account?.account_name || "-",
@@ -1046,10 +1065,25 @@ class AccountService {
         },
       };
     } catch (err) {
+      errorLog("Error in exportAccountList", err instanceof Error ? err.message : String(err));
       return this.throwServiceError(err as Error);
     }
   }
 
+  /**
+ * Creates a new organization account with the provided data and optional logo file.
+ *
+ * @param {IAccount} accountData The data required to create the account (name, contacts, etc.).
+ * @param {string} userId The ID of the user creating the account.
+ * @param {Express.Multer.File} file Optional uploaded file (e.g. account logo).
+ * @returns {Promise<{ statusCode: number, message: string, errorMessage?: string, data?: { account: any } }>}
+ * A promise resolving to the result of the operation, including account data on success.
+ *
+ * This method:
+ * - Validates input and ensures uniqueness.
+ * - Handles parent account logic and contact role mapping.
+ * - Creates the account, uploads the logo (if any), and sets up schema and contact links.
+ */
   async createAccount(
     accountData: IAccount,
     userId: string,
@@ -1061,6 +1095,7 @@ class AccountService {
     data?: { account: any };
   }> {
     try {
+      logMessage(`createAccount params: userId=${userId}, accountData=${JSON.stringify(accountData)}`);
       const repository = this.getAccountRepository();
       let parent_account = null;
       const {
@@ -1248,7 +1283,7 @@ class AccountService {
         },
       };
     } catch (err) {
-      console.error(err);
+      errorLog("createAccount", err instanceof Error ? err.message : String(err));
       return {
         statusCode: HttpStatus.FAILED,
         message: HttpStatus.FAILED_MESSAGE,
@@ -1256,10 +1291,12 @@ class AccountService {
       };
     }
   }
+
   async insertClientTemplateDetails(
     account_number: string,
     account_rid: string
   ) {
+    logMessage(`insertClientTemplateDetails params: account_number=${account_number}, account_rid=${account_rid}`);
     const entityTypes = [
       "resource",
       "resource_cost",
@@ -1290,12 +1327,27 @@ class AccountService {
           account_rid
         );
       } catch (error) {
-        console.error(`Error processing entity "${entity}":`, error);
+        errorLog("insertClientTemplateDetails", `Error processing entity "${entity}": ${error instanceof Error ? error.message : String(error)}`);
         throw error; // Propagate the error if needed
       }
     }
   }
 
+  /**
+ * Updates an existing organization account with the provided data.
+ *
+ * @param {IUpdateAccount} accountData The updated account data (name, contacts, region, etc.).
+ * @param {string} userId The ID of the user performing the update.
+ * @returns {Promise<{ statusCode: number, message: string, errorMessage?: string, data?: { affectedCounts: number } }>}
+ * A promise resolving to the result of the update operation, including affected record count on success.
+ *
+ * This method:
+ * - Validates account and organization name uniqueness.
+ * - Handles parent account lookup and storage type logic.
+ * - Extracts and maps key contacts based on their roles.
+ * - Updates the account record and related schema/contact data.
+ * - Updates the associated user group name if the account name changes.
+ */
   async updateAccount(
     accountData: IUpdateAccount,
     userId: string
@@ -1306,6 +1358,7 @@ class AccountService {
     data?: { affectedCounts: number };
   }> {
     try {
+      logMessage(`updateAccount params: userId=${userId}, accountData=${JSON.stringify(accountData)}`);
       const repository = this.getAccountRepository();
       const {
         account_rid,
@@ -1511,6 +1564,7 @@ class AccountService {
         },
       };
     } catch (err) {
+      errorLog("updateAccount", err instanceof Error ? err.message : String(err));
       if (err instanceof UniqueConstraintError) {
         return {
           statusCode: HttpStatus.BAD_REQUEST,
@@ -1526,6 +1580,17 @@ class AccountService {
     }
   }
 
+  /**
+ * Retrieves all global accounts (i.e., accounts without a parent).
+ *
+ * @returns {Promise<{ statusCode: number, message: string, errorMessage?: string, data?: { globalAccount: any; count: number } }>}
+ * A promise resolving to a list of global accounts and their total count.
+ *
+ * This method:
+ * - Fetches all accounts where `parent_account_rid` is null (indicating top-level accounts).
+ * - Returns each account's `rid` and `account_name`, sorted alphabetically.
+ * - Handles errors and returns a structured error response if needed.
+ */
   async globalAccounts(): Promise<{
     statusCode: number;
     message: string;
@@ -1543,6 +1608,7 @@ class AccountService {
         attributes: ["rid", "account_name"],
         order: [["account_name", "ASC"]],
       });
+      logMessage(`Fetched ${globalAccount.length} global accounts`);
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
@@ -1552,10 +1618,26 @@ class AccountService {
         },
       };
     } catch (err) {
+      errorLog("globalAccounts", err instanceof Error ? err.message : String(err));
       return this.throwServiceError(err as Error);
     }
   }
 
+  /**
+ * Fetches detailed information for a specific account by its ID.
+ *
+ * @param {string} account_id The unique identifier of the account.
+ * @returns {Promise<{ statusCode: number, message: string, errorMessage?: string, data?: { accountById: any; accountDetails: any } }>}
+ * A promise resolving to the account's full data, including metadata, child/parent info, contacts, and attachments.
+ *
+ * This method:
+ * - Retrieves the account by ID along with related models (country, region, status, etc.).
+ * - Ensures currency is assigned (defaults to USD if missing).
+ * - Handles logic based on whether the account is stored independently or under a parent.
+ * - Fetches and combines account details, key contacts, attachments, and uploader info.
+ * - Maps attachment metadata (type, category, uploader, size) for clarity.
+ * - Returns the complete account object and associated enriched details.
+ */
   async accountById(account_id: string): Promise<{
     statusCode: number;
     message: string;
@@ -1563,6 +1645,7 @@ class AccountService {
     data?: { accountById: any; accountDetails: any };
   }> {
     try {
+      logMessage(`accountById params: account_id=${account_id}`);
       const repository = this.getAccountRepository();
       let accountById = await repository.findOne({
         where: { rid: account_id },
@@ -1735,10 +1818,23 @@ class AccountService {
         },
       };
     } catch (err) {
+      errorLog("accountById", err instanceof Error ? err.message : String(err));
       return this.throwServiceError(err as Error);
     }
   }
 
+  /**
+ * Fetches key contact roles for a specified entity type.
+ *
+ * @param {string} entity_type The type of entity to retrieve key contact roles for.
+ * @returns {Promise<{ statusCode: number; message: string; errorMessage?: string; data?: { keyContactRoles: any } }>} 
+ * A promise resolving with the list of key contact roles.
+ *
+ * This method performs the following steps:
+ * - Calls the schema service to fetch key contact roles based on the entity type.
+ * - Returns the roles along with a success status.
+ * - Handles and returns errors via a centralized error handler.
+ */
   async getKeyContactRoles(entity_type: string): Promise<{
     statusCode: number;
     message: string;
@@ -1757,6 +1853,7 @@ class AccountService {
         },
       };
     } catch (err) {
+      errorLog("getKeyContactRoles", err instanceof Error ? err.message : String(err));
       return this.throwServiceError(err as Error);
     }
   }
@@ -1777,6 +1874,7 @@ class AccountService {
 
     try {
       // Fetch created_by user name if ID exists
+      logMessage(`fetchUserNames params: userIds=${JSON.stringify(userIds)}`);
       if (userIds.created_by) {
         const [createdByUser] = await this.schemaService.fetchUserNames(
           userIds.created_by
@@ -1796,12 +1894,19 @@ class AccountService {
         }
       }
     } catch (error) {
-      console.error("Error fetching user names:", error);
+      errorLog("fetchUserNames", error instanceof Error ? error.message : String(error));
       // Return empty strings if there's an error
     }
 
     return result;
   }
+
+  /**
+ * Retrieves all active accounts with organization names along with additional organization info.
+ * @returns {Promise<{ statusCode: number; message: string; errorMessage?: string; data?: { accountData: any; orgData: any; count?: number } }>}
+ * Retrieves all active accounts with organization names and additional organization info.
+ * Returns status, message, and combined account and organization data.
+ */
   async listAllAccounts(): Promise<{
     statusCode: number;
     message: string;
@@ -1842,10 +1947,32 @@ class AccountService {
         },
       };
     } catch (err) {
+      errorLog("listAllAccounts", err instanceof Error ? err.message : String(err));  
       return this.throwServiceError(err as Error);
     }
   }
 
+  /**
+ * Retrieves global accounts accessible to the specified user, supporting pagination, sorting, and filtering.
+ *
+ * @param {string} userId The ID of the user requesting the accounts.
+ * @param {number | undefined} page The page number for paginated results.
+ * @param {number | undefined} limit The number of results per page.
+ * @param {string} [sortBy="account_name"] The field to sort the results by.
+ * @param {string} [sortOrder="ASC"] The order direction for sorting (ASC or DESC).
+ * @param {Record<string, string[]>} [globalFilters={}] Optional filters to apply to the account list.
+ * @returns {Promise<{ statusCode: number; message: string; errorMessage?: string; data?: { gloablAcconunt: any[]; count: number } }>} 
+ * A promise resolving with the filtered, sorted, and paginated global accounts and total count.
+ *
+ * This method performs the following steps:
+ * - Validates the presence of the user ID.
+ * - Determines the user's group type to decide access scope.
+ * - Retrieves accessible accounts, differentiating parent and child accounts.
+ * - Applies global filters and pagination options.
+ * - Fetches the accounts with their child accounts, sorted as specified.
+ * - Returns the results or appropriate messages if no accounts are accessible.
+ * - Handles errors using a centralized error handler.
+ */
   async listGlobalAccounts(
     userId: string,
     page: number | undefined,
@@ -1862,6 +1989,8 @@ class AccountService {
     try {
       const userGroupType = await this.schemaService.getUserGroupType(userId);
       const isCustomGlobal = userGroupType === "DEFAULT";
+      logMessage(`listGlobalAccounts params: userId=${userId}, page=${page}, limit=${limit}, sortBy=${sortBy}, sortOrder=${sortOrder}, isCustomGlobal=${isCustomGlobal}, globalFilters=${JSON.stringify(globalFilters)},userGroupType=${userGroupType} `);
+
       if (!userId) {
         return {
           statusCode: HttpStatus.SUCCESS,
@@ -1991,6 +2120,7 @@ class AccountService {
         },
       };
     } catch (err) {
+      errorLog("listGlobalAccounts", err instanceof Error ? err.message : String(err));
       return this.throwServiceError(err as Error);
     }
   }
@@ -2411,8 +2541,6 @@ class AccountService {
         }
       }
     }
-    console.log(parentWhereClause);
-    console.log(childWhereClause);
     return {
       parentWhereClause,
       childWhereClause,

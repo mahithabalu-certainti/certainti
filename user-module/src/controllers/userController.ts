@@ -12,7 +12,11 @@ import {
 import { errorResponse } from "../utils/apiResponse";
 import { constants } from "../utils/constant";
 import configurations from "../config/config";
-import { createAzureB2CUser, updateAzureUser ,deleteAzureB2CUser} from "../services/manageUser";
+import {
+  createAzureB2CUser,
+  updateAzureUser,
+  deleteAzureB2CUser,
+} from "../services/manageUser";
 import { generateSecurePassword } from "../utils/generatePassword";
 import { sendEmail } from "../services/emailService";
 import { mailTemplate } from "../utils/mailTemplate";
@@ -74,7 +78,7 @@ async function createUser(req: Request, res: Response): Promise<void> {
       res
     );
 
-    const userId = req.headers['x-user-id'] as string;
+    const userId = req.headers["x-user-id"] as string;
     if (!userId) {
       handleErrorResponse(
         res,
@@ -88,7 +92,9 @@ async function createUser(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    const existingUser = await services.userServices.getUserByEmail(value.email);
+    const existingUser = await services.userServices.getUserByEmail(
+      value.email
+    );
     if (existingUser) {
       handleErrorResponse(
         res,
@@ -112,12 +118,19 @@ async function createUser(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    const user = await services.userServices.createUser(value, azureUser.id, userId);
+    const user = await services.userServices.createUser(
+      value,
+      azureUser.id,
+      userId
+    );
     const mailContent = mailTemplate(value, password);
     await sendEmail(mailContent);
 
     if (user.statusCode === constants.SUCCESS) {
-     await services.userGroupService.assignUserToUserGroups(user?.data?.user,userId);
+      await services.userGroupService.assignUserToUserGroups(
+        user?.data?.user,
+        userId
+      );
       successLog(methodName);
       handleSuccessResponse(res, user);
       return;
@@ -186,8 +199,8 @@ async function updateUser(req: Request, res: Response): Promise<void> {
       res
     );
 
-    const userId = req.headers['x-user-id'] as string;
-    if(!userId){
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
       handleErrorResponse(
         res,
         constants.BAD_REQUEST,
@@ -212,20 +225,22 @@ async function updateUser(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    const user = await services.userServices.updateUser(value, value.rid, userId);
+    const user = await services.userServices.updateUser(
+      value,
+      value.rid,
+      userId
+    );
 
     if (user.statusCode === constants.SUCCESS) {
       successLog(methodName);
       handleSuccessResponse(res, user.data);
       return;
-    } 
-     if (user.statusCode === constants.CONFLICT) {
+    }
+    if (user.statusCode === constants.CONFLICT) {
       successLog(methodName);
-      handleCustomResponse(res, user.errorMessage,user.requiresConfimration);
+      handleCustomResponse(res, user.errorMessage, user.requiresConfimration);
       return;
-    } 
-    
-    else {
+    } else {
       errorLog(methodName, user.message);
       handleErrorResponse(
         res,
@@ -268,7 +283,7 @@ async function listUsers(req: Request, res: Response): Promise<void> {
 
     let parsedFilters: Record<string, any> = {};
 
-    if(!value){
+    if (!value) {
       return;
     }
 
@@ -398,7 +413,7 @@ async function exportUsers(req: Request, res: Response): Promise<void> {
 
     let parsedFilters: Record<string, any> = {};
 
-    if(!value){
+    if (!value) {
       return;
     }
 
@@ -410,7 +425,7 @@ async function exportUsers(req: Request, res: Response): Promise<void> {
         "Invalid filters format. Must be a valid JSON object."
       );
     }
-    const userId = req.headers['x-user-id'] as string;
+    const userId = req.headers["x-user-id"] as string;
 
     const result = await services.userServices.exportUsers(
       value.search,
@@ -424,7 +439,10 @@ async function exportUsers(req: Request, res: Response): Promise<void> {
 
     if (result.statusCode === constants.SUCCESS) {
       successLog(methodName);
-      handleSuccessResponse(res, await generateExcelBase64(result?.data?.users,'Users'));
+      handleSuccessResponse(
+        res,
+        await generateExcelBase64(result?.data?.users, "Users")
+      );
       return;
     } else {
       errorLog(methodName, result.errorMessage);

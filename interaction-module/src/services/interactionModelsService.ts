@@ -6,7 +6,7 @@ import { InteractionItem } from "../models/interactionItem";
 import { InteractionHistory } from "../models/interactionHistory";
 import { InteractionTimeline } from "../models/interactionTimeline";
 import { InteractionType } from "../models/interactionType";
-import { MAIN_SCHEMA_NAME } from "../utils/constants";
+import { MAIN_SCHEMA_NAME, SCHEMANAME_PREFIX } from "../utils/constants";
 import { InteractionSummary } from "../models/interactionSummary";
 import { InteractionResponseHistory } from "../models/interactionResponseHistory";
 import { InteractionAttachment } from "../models/interactionAttachment";
@@ -63,7 +63,7 @@ export class InteractionModelService {
   }
 
   async getModels(accountNumber: string) {
-    const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
+    const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
 
     const sequelize = await initOrgSequelize();
     const mainDbSequelize = await this.getMainSequelize();

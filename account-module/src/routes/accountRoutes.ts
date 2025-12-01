@@ -6,7 +6,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 const routes: Router = Router();
 
-routes.get('/list', checkUserStatusMiddleware("accounts_view_edit"), controller.accountController.accounts);
+routes.post('/list', checkUserStatusMiddleware("accounts_view_edit"), controller.accountController.accounts);
 routes.get('/listOrgAccounts', checkUserStatusMiddleware("accounts_view_edit"), controller.accountController.listOrgAccounts);
 routes.get('/list/global',checkUserStatusMiddleware("NA"), controller.accountController.ListGlobalAccounts);
 routes.get('/export', checkUserStatusMiddleware("accounts_export"), controller.accountController.exportAccounts);

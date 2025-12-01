@@ -1,3 +1,4 @@
+import { logMessage } from "./helpers";
 import { IEmailMessage } from "./types";
 
 function surveyMailTemplate(
@@ -46,8 +47,7 @@ function surveyMailTemplate(
 function interactionMailTemplate(
   emailInfo: {name:string, email:string},
 ): { message: IEmailMessage } {
-  console.log("Email info");
-  console.log(emailInfo);
+ logMessage(`Inside interaction mail template: ${emailInfo.name}, ${emailInfo.email}`);
   const emailMessage: any = {
     message: {
       subject: "Security Alert: Your OTP for Account Verification",

@@ -289,7 +289,89 @@ export const rawQuery = {
       (u.first_name ILIKE '${searchValue}' OR u.email ILIKE '${searchValue}')
       ${whereClause}
     `
-  }
+  },
+  getAccountsWithGroupAccessQuery() {
+    return `
+      SELECT a.rid, a.account_name, true as has_access
+      FROM ${MAIN_SCHEMA_NAME}.account a
+      INNER JOIN ${MAIN_SCHEMA_NAME}.user_group_account_mapping uga 
+        ON uga.account_rid = a.rid
+      WHERE uga.group_rid = :group_rid
+    `;
+  },
+  getOrganizationInfoByRidQuery() {
+    return `
+      SELECT organisation_name, logo_url 
+      FROM ${MAIN_SCHEMA_NAME}.account 
+      WHERE rid = :rid
+    `;
+  },
+  getCountryNameByRidQuery() {
+    return `
+      SELECT country_name 
+      FROM ${MAIN_SCHEMA_NAME}.country 
+      WHERE rid = :rid
+    `;
+  },
+  getStateNameByRidQuery() {
+    return `
+      SELECT state_name 
+      FROM ${MAIN_SCHEMA_NAME}.state 
+      WHERE rid = :rid
+    `;
+  },
+  getCityNameByRidQuery() {
+    return `
+      SELECT city_name 
+      FROM ${MAIN_SCHEMA_NAME}.city 
+      WHERE rid = :rid
+    `;
+  },
+  getProfileFieldAccessQuery() {
+    return `
+      SELECT pf.field_desc, pf.field_name, pfa.read, pfa.edit
+      FROM ${MAIN_SCHEMA_NAME}.profile_fields_access pfa
+      JOIN ${MAIN_SCHEMA_NAME}.permission_fields pf ON pfa.permission_field_id = pf.rid
+      JOIN ${MAIN_SCHEMA_NAME}.module_permission mp ON pf.module_permission_id = mp.rid
+      WHERE mp.permission_name = :permissionName
+        AND pfa.profile_id = :profileId
+    `;
+  },
+  getUserFieldAccessQuery() {
+    return `
+      SELECT pf.field_desc, pf.field_name, ufa.read, ufa.edit
+      FROM ${MAIN_SCHEMA_NAME}.user_fields_access ufa
+      JOIN ${MAIN_SCHEMA_NAME}.permission_fields pf ON ufa.permission_field_id = pf.rid
+      JOIN ${MAIN_SCHEMA_NAME}.module_permission mp ON pf.module_permission_id = mp.rid
+      WHERE mp.permission_name = :permissionName
+        AND ufa.user_id = :userId
+    `;
+  },
+  getUserFullNameByIdQuery() {
+    return `
+      SELECT first_name || ' ' || last_name AS full_name 
+      FROM ${MAIN_SCHEMA_NAME}."user" 
+      WHERE rid = :userId 
+      LIMIT 1
+    `;
+  } ,
+  getUserExtendedPermissionsQuery() {
+    return  `
+        select distinct  m.rid as menu_id, mm.rid as module_id, mp.rid as module_permission_id, mp.permission_name,mp.permission_desc,
+        mm.module_name,mm.module_desc,m.menu_name,m.menu_desc,mp.is_field_available,mm.sort_order,m.sort_order as menu_order
+    from 
+    ${MAIN_SCHEMA_NAME}.user_permission_access ua , 
+    ${MAIN_SCHEMA_NAME}.module_permission mp,
+    ${MAIN_SCHEMA_NAME}.menu_module mm,
+    ${MAIN_SCHEMA_NAME}.menu m
+    where mp.rid = ua.module_permission_id
+    and mp.menu_module_id = mm.rid
+    and m.rid = mm.menu_id
+    and ua.is_enabled = true
+    and ua.user_id = :userId
+    order by menu_order,mm.sort_order, mp.permission_desc asc
+        `;
+}
 }
 
 export const statusMessage = {

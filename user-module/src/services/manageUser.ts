@@ -4,7 +4,6 @@ import configurations from "../config/config";
 import { Logger } from "winston";
 import { Status } from "../models/statusModel";
 
-
 function getLogger() {
   return configurations.getInstance().getLogger();
 }
@@ -25,17 +24,17 @@ interface UpdateUser {
 
 /**
  * Creates a new user in Azure B2C.
- * 
- * This function checks if the user already exists in Azure B2C by their email. If the user does not exist, 
- * it creates a new user with the provided user information and password. It also assigns the user to a given 
+ *
+ * This function checks if the user already exists in Azure B2C by their email. If the user does not exist,
+ * it creates a new user with the provided user information and password. It also assigns the user to a given
  * Azure B2C tenant and forces the user to change their password at the next sign-in.
- * 
+ *
  * @param {User} users - The user object containing the necessary information to create the user in Azure B2C.
  * @param {string} password - The password for the new user.
- * 
+ *
  * @returns {Promise<any>} - A promise that resolves to the newly created user object if the user is successfully created.
- * 
- * @throws {Error} - If the user already exists, or if any of the required parameters are missing, or if there 
+ *
+ * @throws {Error} - If the user already exists, or if any of the required parameters are missing, or if there
  * is any failure in communication with Azure B2C.
  */
 const createAzureB2CUser = async (users: User, password: string) => {
@@ -100,15 +99,15 @@ const createAzureB2CUser = async (users: User, password: string) => {
 
 /**
  * Updates an existing user in Azure B2C.
- * 
+ *
  * This function updates the user's display name, given name, and surname in Azure B2C using their Azure ID.
  * The function first checks if the user exists in Azure B2C. If the user exists, it performs the update.
- * 
+ *
  * @param {UpdateUser} users - The user object containing the information to update for the existing user in Azure B2C.
- * 
+ *
  * @returns {Promise<any>} - A promise that resolves to the updated user object if the update is successful.
- * 
- * @throws {Error} - If the user does not exist, or if any of the required parameters are missing, or if there 
+ *
+ * @throws {Error} - If the user does not exist, or if any of the required parameters are missing, or if there
  * is any failure in communication with Azure B2C.
  */
 const updateAzureUser = async (users: UpdateUser) => {
@@ -138,17 +137,20 @@ const updateAzureUser = async (users: UpdateUser) => {
     let statusRecord = null;
     if (users.status_rid) {
       statusRecord = await Status.findOne({
-      where: { rid: users.status_rid },
+        where: { rid: users.status_rid },
       });
     }
     // Build userPayload dynamically based on provided fields
     const userPayload: any = {};
-    if (users.first_name !== undefined) userPayload.givenName = users.first_name;
+    if (users.first_name !== undefined)
+      userPayload.givenName = users.first_name;
     if (users.last_name !== undefined) userPayload.surname = users.last_name;
     if (users.first_name !== undefined || users.last_name !== undefined) {
-      userPayload.displayName = `${users.first_name ?? existingUser.givenName} ${users.last_name ?? existingUser.surname}`;
+      userPayload.displayName = `${
+        users.first_name ?? existingUser.givenName
+      } ${users.last_name ?? existingUser.surname}`;
     }
-    if (users.status_rid && statusRecord?.status_description === 'inactive') {
+    if (users.status_rid && statusRecord?.status_description === "inactive") {
       userPayload.accountEnabled = false;
     } else if (users.status_rid) {
       userPayload.accountEnabled = true;
@@ -163,6 +165,19 @@ const updateAzureUser = async (users: UpdateUser) => {
   }
 };
 
+/**
+ * Deletes a user from Azure B2C based on the user's email.
+ *
+ * This function first retrieves an access token for Azure B2C, then searches for the user by their email address.
+ * If the user exists, it deletes the user from Azure B2C.
+ *
+ * @param {User} users - The user object containing at least the email address of the user to be deleted.
+ *
+ * @returns {Promise<{ success: boolean; message: string }>} - A promise that resolves with a success message if the deletion is successful.
+ *
+ * @throws {Error} - Throws an error if the email is missing, if the access token cannot be retrieved,
+ * if the user is not found in Azure B2C, or if the deletion operation fails.
+ */
 const deleteAzureB2CUser = async (users: User) => {
   try {
     if (!users.email) {
@@ -191,14 +206,17 @@ const deleteAzureB2CUser = async (users: User) => {
     }
 
     const userId = existingUser.value[0].id;
-    
+
     // Delete the user
     await client.api(`/users/${userId}`).delete();
 
-    return { success: true, message: `User ${users.email} deleted successfully` };
+    return {
+      success: true,
+      message: `User ${users.email} deleted successfully`,
+    };
   } catch (error: any) {
     throw new Error(`Failed to delete Azure B2C user: ${error.message}`);
   }
 };
 
-export { createAzureB2CUser, updateAzureUser,deleteAzureB2CUser };
+export { createAzureB2CUser, updateAzureUser, deleteAzureB2CUser };

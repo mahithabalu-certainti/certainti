@@ -1,6 +1,7 @@
 import { Model, DataTypes, Sequelize, Optional } from "sequelize";
 import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constants";
 import AccountDetails from "./accountDetails";
+import { errorLog, logMessage } from "../utils/helpers";
 
 export interface AccountFiscalAttributes {
   rid: string;
@@ -15,6 +16,7 @@ export interface AccountFiscalAttributes {
   total_projects: number | null;
   total_fte?: number | null;
   total_subcon?: number | null;
+  total_nonlabor?: number | null;
   total_project_hours_fte?: number | null;
   total_project_hours_subcon?: number | null;
   total_project_hours?: number | null;
@@ -89,6 +91,7 @@ export class AccountFiscal
   public total_projects!: number | null;
   public total_fte?: number | null;
   public total_subcon?: number | null;
+  public total_nonlabor?: number | null;
 
   public total_project_hours_fte?: number | null;
   public total_project_hours_subcon?: number | null;
@@ -203,6 +206,10 @@ export class AccountFiscal
           allowNull: true,
         },
         total_subcon: {
+          type: DataTypes.INTEGER,
+          allowNull: true,
+        },
+        total_nonlabor: {
           type: DataTypes.INTEGER,
           allowNull: true,
         },
@@ -372,8 +379,8 @@ export async function setupAccountFiscalSequence(
     await sequelize.query(`ALTER TABLE "${schemaName}".account_fiscal
       ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.ACCOUNT_FISCAL}-' || LPAD(nextval('"${schemaName}".account_fiscal_seq')::text, 10, '0')`);
 
-    console.log("Project sequence setup complete");
+    logMessage("Project sequence setup complete");
   } catch (error) {
-    console.error("Error setting up Project sequence:", error);
+    errorLog("Error setting up Project sequence:", (error as Error).message);
   }
 }

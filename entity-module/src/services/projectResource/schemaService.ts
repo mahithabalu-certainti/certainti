@@ -36,13 +36,13 @@ import { ResourceFiscalRegion } from "../../models/resourceFiscalRegion";
 import { AccountFiscal } from "../../models/accountFiscal";
 import { ProjectFiscalRegion } from "../../models/projectFiscalRegion";
 import { AccountFiscalRegion } from "../../models/accountFiscalRegion";
-import { MAIN_SCHEMA_NAME } from "../../utils/constants";
-import { collapseTextChangeRangesAcrossMultipleVersions } from "typescript";
+import { MAIN_SCHEMA_NAME, SCHEMANAME_PREFIX, rawQueries } from "../../utils/constants";
 import SchemaService from "../schemaService";
-import { getCurrencyDetailsQuery } from "../../utils/rawQueries";
+import { fetchProjectById, fetchResCodesForPrjRes, getCurrencyDetailsQuery } from "../../utils/rawQueries";
 import AccountDetails from "../../models/accountDetails";
 import Decimal from "decimal.js";
 import currency from "currency.js";
+import { errorLog, logMessage } from "../../utils/helpers";
 
 export class ProjectResourceSchemaService {
   private orgDbSequelize: Sequelize | null = null;
@@ -92,7 +92,7 @@ export class ProjectResourceSchemaService {
   }
 
   private async getModels(accountNumber: string) {
-    const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
+    const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
 
     const sequelize = await this.getSequelize();
     this.mainDbSequelize = await this.getMainSequelize();
@@ -288,7 +288,7 @@ export class ProjectResourceSchemaService {
       await ProjectFiscalRegion.sync({ force: false });
       await AccountFiscalRegion.sync({ force: false });
       if (this.orgDbSequelize) {
-        const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
+        const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
         await setupProjectResourceSequence(this.orgDbSequelize, schemaName);
         await setupProjectResourceFiscalSequence(
           this.orgDbSequelize,
@@ -308,6 +308,7 @@ export class ProjectResourceSchemaService {
         );
       }
     } catch (err) {
+      errorLog(`Error creating project resources table, ${(err as Error).message}`);
       throw new Error("Error creating project resources table");
     }
   }
@@ -319,9 +320,8 @@ export class ProjectResourceSchemaService {
       }
 
       const [account]: any[] = await this.mainDbSequelize.query(
-        `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
+        rawQueries.fetchAccountDetailsByRid(accountId),
         {
-          replacements: { rid: accountId },
           type: "SELECT",
         }
       );
@@ -330,7 +330,7 @@ export class ProjectResourceSchemaService {
 
       if (account?.storage_type === "store_in_parent") {
         const [accountData]: any[] = await this.mainDbSequelize.query(
-          `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
+          rawQueries.fetchAccountDetailsByRid(account?.parent_account_rid),
           {
             replacements: { rid: account?.parent_account_rid },
             type: "SELECT",
@@ -345,6 +345,7 @@ export class ProjectResourceSchemaService {
         accountName: account?.account_name,
       };
     } catch (err) {
+      errorLog(`Error fetching account, ${(err as Error).message}`);
       throw new Error("Error fetching account : " + (err as Error).message);
     }
   }
@@ -391,6 +392,7 @@ export class ProjectResourceSchemaService {
       },
     });
     if (!projectData) {
+      errorLog("Error fetching project fiscal", "Invalid project ID: Project doesn't exists");
       throw new Error("Invalid project ID: Project doesn't exists");
     }
     return projectData;
@@ -667,7 +669,7 @@ export class ProjectResourceSchemaService {
 
     if (currency_rid) {
       [currencyResult] = await this.mainDbSequelize.query(
-        `SELECT currency_threshold FROM ${MAIN_SCHEMA_NAME}.currency WHERE rid = :currency_rid`,
+        rawQueries.fetchCurrencyThresold(),
         {
           replacements: { currency_rid },
           type: "SELECT",
@@ -675,7 +677,7 @@ export class ProjectResourceSchemaService {
       );
     } else {
       [currencyResult] = await this.mainDbSequelize.query(
-        `SELECT currency_threshold FROM ${MAIN_SCHEMA_NAME}.currency WHERE currency_code = 'USD'`,
+        rawQueries.fetchDefualtCurrencyThresold(),
         {
           type: "SELECT",
         }
@@ -690,7 +692,7 @@ export class ProjectResourceSchemaService {
       if (!this.mainDbSequelize) {
         this.mainDbSequelize = await this.getMainSequelize();
       }
-      const resourceStatus = `SELECT rid, resource_status_name FROM ${MAIN_SCHEMA_NAME}.resource_status`;
+      const resourceStatus = rawQueries.fetchAllResourceStatus();
       const results = await this.mainDbSequelize.query(resourceStatus, {
         type: "SELECT",
       });
@@ -706,7 +708,7 @@ export class ProjectResourceSchemaService {
 
       return statusMap;
     } catch (error) {
-      console.error("Error fetching resource statuses:", error);
+      errorLog("Error fetching resource statuses:",(error as Error).message);
       return null;
     }
   }
@@ -1028,6 +1030,7 @@ export class ProjectResourceSchemaService {
     });
 
     if (!resourceData) {
+      logMessage(`Resource with code ${projectResourceData.resource_code} not found for account ${accountId}`);
       throw new Error(
         `Resource with code ${projectResourceData.resource_code} not found for account ${accountId}`
       );
@@ -1090,6 +1093,7 @@ export class ProjectResourceSchemaService {
     });
 
     if (!resourceData) {
+      logMessage(`Resource with code ${projectResourceData.resource_code} not found for account ${accountId}`);
       throw new Error(
         `Resource with code ${projectResourceData.resource_code} not found for account ${accountId}`
       );
@@ -1410,12 +1414,14 @@ export class ProjectResourceSchemaService {
     );
 
     if (!resourceType) {
+      logMessage(`Invalid resource type ID: ${""}`); // need to add resource fiscal
       throw new Error(
         `Invalid resource type ID: ${""}` // need to add resource fiscal
       );
     }
 
     if (!projectData) {
+      logMessage(`Project not found for code: ${projectCode}`);
       throw new Error(`Project not found for code: ${projectCode}`);
     }
 
@@ -1474,6 +1480,7 @@ export class ProjectResourceSchemaService {
           projectResourceData.net_total_cost_pro_res || null;
         break;
       default:
+        logMessage(`Unhandled resource type code: ${typeCode}`);
         throw new Error(`Unhandled resource type code: ${typeCode}`);
     }
 
@@ -1536,12 +1543,14 @@ export class ProjectResourceSchemaService {
     );
 
     if (!resourceType) {
+      logMessage(`Invalid resource type ID: ${""}`); // need to add resource fiscal
       throw new Error(
         `Invalid resource type ID: ${""}` // need to add resource fiscal
       );
     }
 
     if (!projectData) {
+      logMessage(`Project not found for code: ${projectCode}`); 
       throw new Error(`Project not found for code: ${projectCode}`);
     }
 
@@ -1585,6 +1594,7 @@ export class ProjectResourceSchemaService {
           projectResourceData.net_total_cost_pro_res || null;
         break;
       default:
+        logMessage(`Unhandled resource type code: ${typeCode}`);
         throw new Error(`Unhandled resource type code: ${typeCode}`);
     }
 
@@ -1661,12 +1671,14 @@ export class ProjectResourceSchemaService {
     );
 
     if (!resourceType) {
+      logMessage(`Invalid resource type ID: ${""}`); // need to add resource fiscal
       throw new Error(
         `Invalid resource type ID: ${""}` // need to add resource fiscal
       );
     }
 
     if (!projectData) {
+      logMessage(`Project not found for code: ${projectCode}`);
       throw new Error(`Project not found for code: ${projectCode}`);
     }
 
@@ -1710,6 +1722,7 @@ export class ProjectResourceSchemaService {
           projectResourceData.net_total_cost_pro_res || null;
         break;
       default:
+        logMessage(`Unhandled resource type code: ${typeCode}`);
         throw new Error(`Unhandled resource type code: ${typeCode}`);
     }
 
@@ -1770,6 +1783,7 @@ export class ProjectResourceSchemaService {
     });
 
     if (!projectData) {
+      logMessage(`Project not found for code: ${projectCode}`);
       throw new Error(`Project not found for code: ${projectCode}`);
     }
 
@@ -1789,6 +1803,7 @@ export class ProjectResourceSchemaService {
       resourceData.resource_type_rid
     ); // need to add resource fiscal
     if (!resourceType) {
+      logMessage(`Invalid resource type ID: ${resourceData.resource_type_rid}`);
       throw new Error(
         `Invalid resource type ID: ${resourceData.resource_type_rid}`
       ); // need to add resource fiscal
@@ -2027,7 +2042,7 @@ export class ProjectResourceSchemaService {
     }
 
     const results = await this.mainDbSequelize.query(
-      `SELECT * FROM ${MAIN_SCHEMA_NAME}.resource_type WHERE rid = :resourceTypeId`,
+      rawQueries.fetchSpecificResourceTypeById(),
       {
         replacements: { resourceTypeId },
         type: "SELECT",
@@ -2162,9 +2177,7 @@ export class ProjectResourceSchemaService {
     if (!skillTypeId) return null;
 
     const resourceRoles: any = await this.mainDbSequelize.query(
-      `SELECT rid, skill_role_rid, sub_type_name 
-       FROM ${MAIN_SCHEMA_NAME}.skill_role_sub_type 
-       WHERE rid = :skillTypeId`,
+      rawQueries.fetchSkillRoleSubType(),
       {
         type: "SELECT",
         replacements: { skillTypeId },
@@ -2177,10 +2190,7 @@ export class ProjectResourceSchemaService {
       resourceRoles[0].sub_type_name === "Other"
     ) {
       const existingSubType: any = await this.mainDbSequelize.query(
-        `SELECT rid FROM ${MAIN_SCHEMA_NAME}.skill_role_sub_type
-         WHERE skill_role_rid = :skill_role_rid
-         AND sub_type_name = :sub_type_name
-         LIMIT 1`,
+        rawQueries.fetchSkillRoleSubTypeByName(),
         {
           type: "SELECT",
           replacements: {
@@ -2205,9 +2215,7 @@ export class ProjectResourceSchemaService {
       const timestamp = new Date().toISOString();
 
       await this.mainDbSequelize.query(
-        `INSERT INTO ${MAIN_SCHEMA_NAME}.skill_role_sub_type
-        (rid, created_by, created_datetime, skill_role_rid, sub_type_name, status)
-        VALUES (:rid, :created_by, :created_datetime, :skill_role_rid, :sub_type_name, 'active')`,
+        rawQueries.insertSkillRoleSubType(),
         {
           replacements: {
             rid: newRid,
@@ -2252,6 +2260,9 @@ export class ProjectResourceSchemaService {
     });
 
     if (!createdProjectResource || !resource) {
+      logMessage(
+        "Missing related resource or project resource entry to complete insertion"
+      );
       throw new Error(
         "Missing related resource or project resource entry to complete insertion"
       );
@@ -2309,6 +2320,7 @@ export class ProjectResourceSchemaService {
     });
 
     if (!createdProjectResource || !resource) {
+      logMessage("Missing related resource entry to complete insertion");
       throw new Error("Missing related resource entry to complete insertion");
     }
 
@@ -2359,6 +2371,7 @@ export class ProjectResourceSchemaService {
     });
 
     if (!projectFiscalData) {
+      logMessage("Project Fiscal Not Found");
       throw new Error("Project Fiscal Not Found");
     }
 
@@ -3046,8 +3059,8 @@ export class ProjectResourceSchemaService {
         }
       );
     } catch (err) {
-      console.log("Error addinng timelne", err);
-      throw new Error("Error creating project resource timline");
+      errorLog("Error adding timeline", (err as Error).message);
+      throw new Error("Error creating project resource timeline");
     }
   }
 
@@ -3077,7 +3090,7 @@ export class ProjectResourceSchemaService {
         }
       );
     } catch (err) {
-      console.log("Error addinng timelne", err);
+      errorLog("Error adding timeline", (err as Error).message);
       throw new Error("Error creating project resource timline");
     }
   }
@@ -3215,7 +3228,7 @@ export class ProjectResourceSchemaService {
             projectResourceData.net_total_cost_pro_res || null;
           break;
         default:
-          console.warn(`Unknown resource_type_rid: ${typeCode}`);
+        logMessage(`Unknown resource_type_rid: ${typeCode}`);
           break;
       }
     }
@@ -3670,7 +3683,7 @@ export class ProjectResourceSchemaService {
           total_nonlabor_count = count;
           break;
         default:
-          console.warn(`Unknown resource_type_rid: ${row.resource_type_rid}`);
+          logMessage(`Unknown resource_type_rid: ${row.resource_type_rid}`);
           break;
       }
     }
@@ -3841,7 +3854,7 @@ export class ProjectResourceSchemaService {
           total_nonlabor_count = count;
           break;
         default:
-          console.warn(`Unknown resource_type_rid: ${row.resource_type_rid}`);
+          logMessage(`Unknown resource_type_rid: ${row.resource_type_rid}`);
           break;
       }
     }
@@ -5014,7 +5027,7 @@ export class ProjectResourceSchemaService {
 
       if (countryId) {
         const result = await this.mainDbSequelize.query(
-          `SELECT rid, country_name, country_code FROM ${MAIN_SCHEMA_NAME}.country WHERE rid = :id`,
+          rawQueries.fetchCountryById(),
           {
             replacements: { id: countryId },
             type: "SELECT",
@@ -5026,7 +5039,7 @@ export class ProjectResourceSchemaService {
 
       if (regionId) {
         const result = await this.mainDbSequelize.query(
-          `SELECT rid, state_name FROM ${MAIN_SCHEMA_NAME}.state WHERE rid = :id`,
+          rawQueries.fetchStateById(),
           {
             replacements: { id: regionId },
             type: "SELECT",
@@ -5038,7 +5051,7 @@ export class ProjectResourceSchemaService {
 
       if (currencyId) {
         const result = await this.mainDbSequelize.query(
-          `SELECT rid, currency_name, currency_code, currency_symbol FROM ${MAIN_SCHEMA_NAME}.currency WHERE rid = :id`,
+          rawQueries.fetchCurrencyById(),
           {
             replacements: { id: currencyId },
             type: "SELECT",
@@ -5059,6 +5072,7 @@ export class ProjectResourceSchemaService {
 
       return projectResource;
     } catch (err) {
+      errorLog("Error fetching geo data", (err as Error).message);
       throw new Error("Error fetching geo data: " + (err as Error).message);
     }
   }
@@ -5076,7 +5090,7 @@ export class ProjectResourceSchemaService {
         if (!userId) return null;
 
         const [results]: any = await this.mainDbSequelize?.query(
-          `SELECT first_name, middle_name, last_name FROM ${MAIN_SCHEMA_NAME}."user" WHERE rid = :userId`,
+          rawQueries.fetchUserById(),
           {
             replacements: { userId },
             type: "SELECT",
@@ -5098,6 +5112,7 @@ export class ProjectResourceSchemaService {
         modified_name: modifiedName || null,
       };
     } catch (err) {
+      errorLog("Error adding user details", (err as Error).message);
       throw new Error("Error adding user details" + (err as Error).message);
     }
   }
@@ -5110,7 +5125,7 @@ export class ProjectResourceSchemaService {
 
       if (projectResource.status_rid) {
         const statusResult: any = await this.mainDbSequelize?.query(
-          `SELECT resource_status_name FROM ${MAIN_SCHEMA_NAME}.resource_status WHERE rid = :id`,
+          rawQueries.fetchResourceStatusById(),
           {
             replacements: { id: projectResource.status_rid },
             type: "SELECT",
@@ -5124,9 +5139,9 @@ export class ProjectResourceSchemaService {
       }
       if (projectResource.resource_type_rid) {
         const projectTypeResult: any = await this.mainDbSequelize?.query(
-          `SELECT resource_type_name FROM ${MAIN_SCHEMA_NAME}.resource_type WHERE rid = :id`,
+          rawQueries.fetchSpecificResourceTypeById(),
           {
-            replacements: { id: projectResource.resource_type_rid },
+            replacements: { resourceTypeId: projectResource.resource_type_rid },
             type: "SELECT",
           }
         );
@@ -5138,6 +5153,7 @@ export class ProjectResourceSchemaService {
 
       return projectResource;
     } catch (err) {
+      errorLog("Error enriching key roles", (err as Error).message);
       throw new Error("Error enriching key roles: " + (err as Error).message);
     }
   }
@@ -5149,9 +5165,9 @@ export class ProjectResourceSchemaService {
 
       if (projectResource.assigned_skill_role_type_rid) {
         const skillResult: any = await this.mainDbSequelize?.query(
-          `SELECT sub_type_name FROM ${MAIN_SCHEMA_NAME}.skill_role_sub_type WHERE rid = :id`,
+          rawQueries.fetchSkillRoleSubType(),
           {
-            replacements: { id: projectResource.assigned_skill_role_type_rid },
+            replacements: { skillTypeId: projectResource.assigned_skill_role_type_rid },
             type: "SELECT",
           }
         );
@@ -5164,6 +5180,7 @@ export class ProjectResourceSchemaService {
 
       return projectResource;
     } catch (err) {
+      errorLog("Error enriching key roles", (err as Error).message);
       throw new Error("Error enriching key roles: " + (err as Error).message);
     }
   }
@@ -5213,6 +5230,7 @@ export class ProjectResourceSchemaService {
         resource_type_name: resourceTypeName,
       };
     } catch (err) {
+      errorLog("Error fetching resource details", (err as Error).message);  
       throw new Error(
         "Error fetching resource details: " + (err as Error).message
       );
@@ -5524,7 +5542,7 @@ export class ProjectResourceSchemaService {
 
       if (uniqueRegionIds.length > 0) {
         const regionsResult: any = await this.mainDbSequelize.query(
-          `SELECT rid, state_name FROM ${MAIN_SCHEMA_NAME}.state WHERE rid IN (:ids)`,
+          rawQueries.fetchStatesByIds(),
           {
             replacements: { ids: uniqueRegionIds },
             type: "SELECT",
@@ -5538,9 +5556,9 @@ export class ProjectResourceSchemaService {
 
       if (uniqueCountryIds.length > 0) {
         const countriesResult: any = await this.mainDbSequelize.query(
-          `SELECT rid, country_name FROM ${MAIN_SCHEMA_NAME}.country WHERE rid IN (:ids)`,
+          rawQueries.GET_COUNTRIES,
           {
-            replacements: { ids: uniqueCountryIds },
+            replacements: { countryRid: uniqueCountryIds },
             type: "SELECT",
           }
         );
@@ -5582,7 +5600,7 @@ export class ProjectResourceSchemaService {
 
       return enrichedResources;
     } catch (err) {
-      console.log(err);
+      errorLog("Error fetching region data", (err as Error).message);
       throw new Error("Error fetching region data: " + (err as Error).message);
     }
   }
@@ -5645,7 +5663,7 @@ export class ProjectResourceSchemaService {
 
       return enrichedResources;
     } catch (err) {
-      console.error(err);
+      errorLog("Error fetching currency data", (err as Error).message);
       throw new Error(
         "Error fetching currency data: " + (err as Error).message
       );
@@ -5708,34 +5726,35 @@ export class ProjectResourceSchemaService {
 
       // Step 3: Fetch resource_type_rid → resource_type_name mapping
       const typeResult: any[] = await this.mainDbSequelize.query(
-        `SELECT rid AS resource_type_rid, resource_type_name FROM ${MAIN_SCHEMA_NAME}.resource_type WHERE rid IN (:ids)`,
+        rawQueries.GET_RESOURCE_TYPES,
         {
-          replacements: { ids: Array.from(uniqueTypeIds) },
+          replacements: { resourceTypeRid: Array.from(uniqueTypeIds) },
           type: "SELECT",
         }
       );
 
       const typeMap = new Map<string, string>();
       for (const type of typeResult) {
-        typeMap.set(type.resource_type_rid, type.resource_type_name);
+        typeMap.set(type.rid, type.resource_type_name);
       }
 
       // Step 4: Enrich project resources with resource_type_name, resource_name, and resource_role
       const enrichedResources = projectResources.map((resource) => {
         const resData = resourceMap.get(resource.resource_rid) || {};
-        const typeName = typeMap.get(resData.resource_type_rid || "") || null;
+        const typeName = typeMap.get(resData.rid || "") || null;
 
         return {
           ...(resource.dataValues ?? resource),
           resource_type_name: typeName,
           resource_name: resData.resource_name ?? null,
           resource_role: resData.resource_role ?? null,
-          resource_type_rid: resData.resource_type_rid ?? null,
+          resource_type_rid: resData.rid ?? null,
         };
       });
 
       return enrichedResources;
     } catch (err) {
+      errorLog("Error fetching resource type data", (err as Error).message);
       throw new Error(
         "Error fetching resource type data: " + (err as Error).message
       );
@@ -5784,6 +5803,7 @@ export class ProjectResourceSchemaService {
 
       return enrichedResources;
     } catch (err) {
+      errorLog("Error fetching resource code data", (err as Error).message);
       throw new Error(
         "Error fetching resource code data: " + (err as Error).message
       );
@@ -5805,11 +5825,9 @@ export class ProjectResourceSchemaService {
 
     // Fetch status names from DB
     const statusResults: any[] = await this.mainDbSequelize.query(
-      `SELECT rid, resource_status_name 
-       FROM ${MAIN_SCHEMA_NAME}.resource_status 
-       WHERE rid IN (:ids)`,
+      rawQueries.fetchResourceStatus,
       {
-        replacements: { ids: Array.from(uniqueStatusIds) },
+        replacements: { projectTaskStatusId: Array.from(uniqueStatusIds) },
         type: "SELECT",
       }
     );
@@ -5921,36 +5939,21 @@ export class ProjectResourceSchemaService {
   async listResourceCodes(
     accountNumber: string,
     accountId: string,
-    search: string | null
+    projectFiscalRid : string,
+    search: string
   ) {
-    const { Resources } = await this.getModels(accountNumber);
+    let schemaName = rawQueries.fetchSchemaName(accountNumber)
+    const orgDb = await initOrgSequelize()
+    const projectDates : any = await orgDb.query(fetchProjectById(schemaName, projectFiscalRid))
+    const formattedStartDate = projectDates[0][0].project_startdate !== null ? moment(projectDates[0][0].project_startdate ).format("YYYY-MM-DD") : null
+    const formattedEndDate = projectDates[0][0].project_enddate !== null ? moment(projectDates[0][0].project_enddate ).format("YYYY-MM-DD") : null
+    let resourceCodes : any = await orgDb.query(fetchResCodesForPrjRes(schemaName, search, accountId, formattedStartDate, formattedEndDate))
 
-    const whereClause: any = {
-      account_rid: accountId,
-    };
-
-    if (search) {
-      whereClause.resource_code = {
-        [Op.iLike]: `%${search}%`,
-      };
+    if (resourceCodes[0] && resourceCodes[0].length > 0) {
+      resourceCodes[0] = await this.insertResourceTypeName(resourceCodes[0]);
     }
 
-    let resourceCodes = await Resources.findAll({
-      attributes: [
-        "rid",
-        "resource_code",
-        "resource_type_rid",
-        "resource_name",
-      ],
-      where: whereClause,
-      order: [["resource_code", "ASC"]],
-    });
-
-    if (resourceCodes && resourceCodes.length > 0) {
-      resourceCodes = await this.insertResourceTypeName(resourceCodes);
-    }
-
-    return resourceCodes;
+    return resourceCodes[0];
   }
 
   async listAssignedResourceCodes(
@@ -6007,9 +6010,9 @@ export class ProjectResourceSchemaService {
 
     // Step 2: Query resource_type table for names
     const typeResult: any[] = await this.mainDbSequelize.query(
-      `SELECT rid AS resource_type_rid, resource_type_name FROM ${MAIN_SCHEMA_NAME}.resource_type WHERE rid IN (:ids)`,
+      rawQueries.GET_RESOURCE_TYPES,
       {
-        replacements: { ids: uniqueTypeIds },
+        replacements: { resourceTypeRid: uniqueTypeIds },
         type: "SELECT",
       }
     );
@@ -6017,7 +6020,7 @@ export class ProjectResourceSchemaService {
     // Step 3: Build lookup map
     const typeMap = new Map<string, string>();
     for (const type of typeResult) {
-      typeMap.set(type.resource_type_rid, type.resource_type_name);
+      typeMap.set(type.rid, type.resource_type_name);
     }
 
     // Step 4: Enrich resourceCodes with resource_type_name
@@ -6038,7 +6041,7 @@ export class ProjectResourceSchemaService {
     }
 
     const resourceRoles = await this.mainDbSequelize.query(
-      `Select rid, skill_role_name from ${MAIN_SCHEMA_NAME}.skill_role WHERE status = 'active'`,
+      rawQueries.fetchSkillRole(),
       {
         type: "SELECT",
       }
@@ -6053,7 +6056,7 @@ export class ProjectResourceSchemaService {
     }
 
     const resourceRoles = await this.mainDbSequelize.query(
-      `Select rid, skill_role_rid, sub_type_name from ${MAIN_SCHEMA_NAME}.skill_role_sub_type WHERE status = 'active'`,
+      rawQueries.fetchActiveSkillRoleSubType(),
       {
         type: "SELECT",
       }
@@ -6072,7 +6075,7 @@ export class ProjectResourceSchemaService {
     }
 
     const results = await this.mainDbSequelize.query(
-      `SELECT * FROM ${MAIN_SCHEMA_NAME}.resource_type`,
+      rawQueries.fetchAllResourceTypes(),
       {
         type: "SELECT",
       }
@@ -6088,13 +6091,7 @@ export class ProjectResourceSchemaService {
       const sequelize = await initMainDbSequelize();
 
       const result = await sequelize.query(
-        `
-      SELECT 
-        a.*
-      FROM "${MAIN_SCHEMA_NAME}"."attachment_summary" a
-      WHERE a.attach_to = :project_resource_rid
-      ORDER BY a.created_datetime DESC
-    `,
+        rawQueries.fetchAttachmentSummary(),
         {
           replacements: { project_resource_rid },
           type: "SELECT",
@@ -6103,7 +6100,10 @@ export class ProjectResourceSchemaService {
 
       return result;
     } catch (error) {
-      console.error("Error fetching attachments:", error);
+      errorLog(
+        "Error fetching attachments",
+        (error as Error).message
+      );
       throw new Error("Failed to fetch attachments");
     }
   }
