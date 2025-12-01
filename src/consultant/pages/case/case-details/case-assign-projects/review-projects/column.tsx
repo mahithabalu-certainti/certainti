@@ -66,8 +66,8 @@ export const getReviewdProjectColumns = (
     }),
   },
   {
-    id: 'classification_name',
-    label: 'Project Classification',
+    id: 'project_classification_name',
+    label: 'Classification',
     sortable: true,
     sortId: 'classification_name',
     hide:
@@ -111,6 +111,9 @@ export const getReviewdProjectColumns = (
       !permissionMap?.['primary_point_of_contact']?.read &&
       !permissionMap?.['primary_point_of_contact']?.edit,
     width: 210,
+    sx: (row) => ({
+      background: row?.project_point_of_contact ? '#fff' : '#f4ecec !important',
+    }),
   },
   {
     id: 'project_point_of_contact_email',
@@ -121,24 +124,29 @@ export const getReviewdProjectColumns = (
       !permissionMap?.['primary_point_of_contact_email']?.read &&
       !permissionMap?.['primary_point_of_contact_email']?.edit,
     width: 230,
+    sx: (row) => ({
+      background: row?.primary_point_of_contact_email
+        ? '#fff'
+        : '#f4ecec !important',
+    }),
   },
 
   {
-    id: 'total_effort_prj',
+    id: 'total_fte_prj',
     label: 'Total FTE Count',
     sortable: true,
-    sortId: 'total_effort_prj',
+    sortId: 'total_fte_prj',
     width: 170,
     hide:
       !permissionMap?.['total_fte_prj']?.read &&
       !permissionMap?.['total_fte_prj']?.edit,
     sx: (row) => ({
-      background: row?.total_effort_prj ? '#fff' : '#f4ecec !important',
+      background: row?.total_fte_prj ? '#fff' : '#f4ecec !important',
       textAlign: 'right',
     }),
 
     render: (row: ReviewProject) =>
-      row.total_effort_prj ? valueDisplay(row.total_effort_prj) : '-',
+      row.total_fte_prj ? valueDisplay(row.total_fte_prj) : '-',
   },
   {
     id: 'total_subcon_prj',
@@ -182,9 +190,9 @@ export const getReviewdProjectColumns = (
     sortable: true,
     sortId: 'total_effort_fte_prj"',
     width: 170,
-    hide:
-      !permissionMap?.['total_effort_fte_prj"']?.read &&
-      !permissionMap?.['total_effort_fte_prj"']?.edit,
+    // hide:
+    //   !permissionMap?.['total_effort_fte_prj"']?.read &&
+    //   !permissionMap?.['total_effort_fte_prj"']?.edit,
     sx: (row) => ({
       background: row?.total_effort_fte_prj ? '#fff' : '#f4ecec !important',
       textAlign: 'right',
@@ -194,17 +202,16 @@ export const getReviewdProjectColumns = (
       row.total_effort_fte_prj ? valueDisplay(row.total_effort_fte_prj) : '-',
   },
   {
-    id: 'total_cost_subcon_prj',
-    editId: 'total_cost_subcon_prj',
+    id: 'total_effort_subcon_prj',
     label: 'Total Sub Con Effort',
     sortable: true,
-    sortId: 'total_cost_subcon_prj',
+    sortId: 'total_effort_subcon_prj',
     width: 170,
     hide:
       !permissionMap?.['total_effort_subcon_prj']?.read &&
       !permissionMap?.['total_effort_subcon_prj']?.edit,
     sx: (row) => ({
-      background: row?.total_cost_subcon_prj ? '#fff' : '#f4ecec !important',
+      background: row?.total_effort_subcon_prj ? '#fff' : '#f4ecec !important',
       textAlign: 'right',
     }),
 
@@ -251,7 +258,7 @@ export const getReviewdProjectColumns = (
     label: 'Total Sub Con Cost',
     sortable: true,
     sortId: 'total_cost_subcon_prj',
-    width: 140,
+    width: 170,
     hide:
       !permissionMap?.['total_cost_subcon_prj']?.read &&
       !permissionMap?.['total_cost_subcon_prj']?.edit,

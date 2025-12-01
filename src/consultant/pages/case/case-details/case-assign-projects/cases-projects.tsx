@@ -459,17 +459,6 @@ const CasesProjects: React.FC<casesProjectProps> = ({
         memoizedStatus,
         projectPermissionMap
       );
-  const reviewFilterFields = reviewProjectFilterFields(
-    memoizedClassification.map((item) => ({
-      label: item.option,
-      value: item.value,
-    })),
-    memoizedProjectTypes,
-    allIndustries,
-    projectPermissionMap
-  );
-  const projectFilterFields =
-    tabParam === 'assign_projects' ? assignFilterFields : reviewFilterFields;
 
   const projectViewEditlistFields = useMemo(
     () =>
@@ -507,6 +496,7 @@ const CasesProjects: React.FC<casesProjectProps> = ({
 
     navigate({ search: newParams.toString() }, { replace: true });
   };
+
   const caseColumns = isAssignProject
     ? getAssignedProjectColumns(permissionMap)
     : getSelectProjectColumns(permissionMap, handleProjectDetails);
@@ -524,7 +514,18 @@ const CasesProjects: React.FC<casesProjectProps> = ({
   const [columnOrder, setColumnOrder] = useState(
     caseColumns.map((col) => col.id)
   );
+  const reviewFilterFields = reviewProjectFilterFields(
+    memoizedClassification.map((item) => ({
+      label: item.option,
+      value: item.value,
+    })),
+    memoizedProjectTypes,
+    allIndustries,
+    permissionMapReview
+  );
 
+  const projectFilterFields =
+    tabParam === 'assign_projects' ? assignFilterFields : reviewFilterFields;
   const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
     const newVisibility = Object.fromEntries(
       updatedColumns.map((col) => [col.id, !col.hide])
