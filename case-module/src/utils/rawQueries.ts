@@ -1063,7 +1063,7 @@ return query;
     `
   }
 
-  export const fetchCaseSpecificTaskQuery = (page : number, limit : number, search : string, sort : string, sortBy : string, filter : FilterType, doSorting : boolean, caseRid : string, accountRid : string, schemaName : string, isExport : boolean) => {
+  export const fetchCaseSpecificTaskQuery = (page : number, limit : number, search : string, sort : string, sortBy : string, filter : FilterType, doSorting : boolean, caseRid : string, accountRid : string, schemaName : string, isExport : boolean, statusId : string) => {
     let searchValue : string = ``
     let sortValue : string = ``
     let filterQueryArray : string[] = []
@@ -1151,6 +1151,8 @@ return query;
     FROM
     ${schemaName}.case_task ct
     WHERE
+    ct.status_rid = '${statusId}'
+    AND
     ct.case_rid = '${caseRid}'
     AND
     ct.account_rid = '${accountRid}'
