@@ -61,6 +61,7 @@ export const typeDefs = gql`
     filing_type_rid: String
     case_owner_rid: String
     status_rid: String
+    fiscal_year: Int!
   }
 
   type CaseResponse {

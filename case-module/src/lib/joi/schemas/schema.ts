@@ -94,6 +94,8 @@ const createHistoricalSubmissionSchema = Joi.object({
         total_fte_cost: Joi.number().optional(),
         total_subcon_cost: Joi.number().optional(),
         total_nonlabor_cost: Joi.number().optional(),
+        country_rid: Joi.string().required(),
+        state_rid : Joi.string().optional().allow("", null),
         eid: Joi.string().optional(),
         action_type: Joi.string().valid("add", "edit", "delete").required(),
       })
@@ -104,6 +106,8 @@ const createHistoricalSubmissionSchema = Joi.object({
 
 const listHistoricalSubmissionSchema = Joi.object({
   account_rid: Joi.string().required(),
+  country_rid: Joi.string().required(),
+  state_rid: Joi.string().optional().allow("", null),
   page: Joi.string().optional().pattern(/^[0-9]+$/),
   limit: Joi.string().optional().pattern(/^[0-9]+$/),
   filters: Joi.string().default("{}"),

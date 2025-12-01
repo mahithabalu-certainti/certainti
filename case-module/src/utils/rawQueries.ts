@@ -1411,7 +1411,7 @@ return query;
   let query =
   `
   WITH fetch_checklists AS (
-  SELECT c.rid, c.account_rid, c.checklist_name, c.checklist_description, ct.rid AS task_rid
+  SELECT c.rid, c.account_rid, c.checklist_name, c.checklist_description, ct.rid AS task_rid,ct.checklist_rid
   FROM 
   ${schemaName}.activities ct
   LEFT JOIN ${schemaName}.checklists c ON c.attach_to = ct.rid
@@ -1484,6 +1484,7 @@ return query;
   'task_name', ct.task_name,
   'effective_start_datetime', ct.effective_start_datetime,
   'effective_end_datetime', ct.effective_end_datetime,
+  'checklist_rid', ct.checklist_rid,
   'assigned_to', ct.assigned_to,
   'priority_rid', ct.priority_rid,
   'description', ct.description,

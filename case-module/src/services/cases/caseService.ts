@@ -2612,7 +2612,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
           task_description : resData?.task_details.task_description,
           effective_start_datetime : resData?.task_details.effective_start_datetime,
           effective_end_datetime : resData?.task_details.effective_end_datetime,
-          checklist_rid : resData?.task_details?.checklists?.rid,
+          checklist_rid : data.task_type === 'activity' ? resData?.task_details?.checklist_rid : resData?.task_details?.checklists?.rid,
           checklist_name : resData?.task_details?.checklists?.checklist_name,
           case_team_member_role_rid : resData?.task_details.case_team_member_role_rid,
           case_team_member_role_name : findRole[0][0] !== undefined ? findRole[0][0].role_name : null,
@@ -3120,7 +3120,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
   async deleteTagsAccountLevel (data : any) {
     const mainDb = await this.getMainDb();
     const accountNumber : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
-    const result = await this.caseSchemaService.deleteTags(accountNumber[0][0].r_number, data.case_rid, data.account_rid, data.task_rid, data.tag_rid);
+    const result = await this.caseSchemaService.deleteTags(accountNumber[0][0].r_number, data.case_rid, data.account_rid, data.task_rid, data.tag_rid, data.userId);
     return result;
   }
   async deleteCollaborators (data : any) {
