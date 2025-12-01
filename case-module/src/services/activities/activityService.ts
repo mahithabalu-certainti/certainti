@@ -228,6 +228,7 @@ export class ActivityService {
     const transaction = await dbInit.transaction();
     try {
       taskRequest.created_by = userId;
+      taskRequest.modified_by = userId;
       const { accountNumber, parentAccountId } =
         await this.caseSchemaService.fetchValidAccountNumberById(
           taskRequest.account_rid!
