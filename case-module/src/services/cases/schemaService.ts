@@ -881,6 +881,15 @@ return !response;
               d[field]?.toLowerCase().includes(val?.toLowerCase())
             );
             break;
+          case ALPHANUMERIC_CONDITIONS.IN:
+            if (Array.isArray(val)) {
+              result = data.filter((d: any) =>
+                val.map((v: any) => v?.toLowerCase()).includes(d[field]?.toLowerCase())
+              );
+            } else {
+              result = data;
+            }
+            break;
           case ALPHANUMERIC_CONDITIONS.isEmpty:
             result = data.filter((d: any) => d[field] == null);
             break;
@@ -1811,6 +1820,10 @@ return !response;
             );
           case ALPHANUMERIC_CONDITIONS.isEmpty:
             return data.filter((d: any) => d[field] == null);
+          case ALPHANUMERIC_CONDITIONS.IN:
+            return data.filter((d: any) =>
+              val .includes(d[field])
+            );
           default:
             return data;
         }
