@@ -652,19 +652,21 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
                     </span>
                   );
                 }
+                const displayText = values.join(', ');
                 return (
-                  <span
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                    title={values.join(', ')}
-                  >
-                    {values.join(', ')}
-                  </span>
+                  <Tooltip title={displayText} arrow placement='top'>
+                    <span
+                      style={{
+                        display: 'block',
+                        width: '100%',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {displayText}
+                    </span>
+                  </Tooltip>
                 );
               }}
             >

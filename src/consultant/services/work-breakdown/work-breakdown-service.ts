@@ -31,6 +31,7 @@ export interface AddCollaboratorPayload {
   rid: string;
   user_rid: string;
   action_type?: string;
+  task_type?: string;
 }
 export interface AddCollaboratorResponse {
   statusCode: number;

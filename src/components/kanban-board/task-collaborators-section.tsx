@@ -117,6 +117,7 @@ const TaskCollaboratorsSection: React.FC<TaskCollaboratorsSectionProps> = ({
                   <input
                     type='checkbox'
                     checked={selected}
+                    readOnly
                     style={{
                       cursor: 'pointer',
                       width: '16px',

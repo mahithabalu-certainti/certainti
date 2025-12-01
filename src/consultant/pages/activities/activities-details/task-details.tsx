@@ -413,7 +413,7 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
           account_rid: accountId || accountid || '',
           rid: taskId,
           user_rid: userId,
-          action_type: 'milestone',
+          task_type: 'activity',
         };
 
         addCollaboratorMutation.mutate(payload, {
