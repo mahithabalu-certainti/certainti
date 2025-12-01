@@ -222,7 +222,18 @@ const createRuleMapSchema = Joi.object({
     scope_type_rid: Joi.string().required(),
     rule_rid: Joi.string().required(),
     apply_type: Joi.number().required(),
-    scope_entity_rid: Joi.array().optional(),
+    scope_entity_rid: Joi.when("apply_type", {
+        is: 2,
+        then: Joi.array()
+            .items(Joi.string())
+            .min(1)
+            .required()
+            .messages({
+                "any.required": "scope_entity_rid is required when apply_type = 2",
+                "array.min": "scope_entity_rid must contain at least one value when apply_type = 2"
+            }),
+        otherwise: Joi.array().items(Joi.string()).optional()
+    }),
     created_by: Joi.string().required(),
 });
 
