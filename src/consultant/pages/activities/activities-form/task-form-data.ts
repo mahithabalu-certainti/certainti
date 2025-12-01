@@ -10,7 +10,7 @@ import {
 } from '../../../../common-utils';
 import { FormType, SelectOption } from '../../../types';
 
-const currentDate = new Date();
+
 const minYear = 1950;
 const currentYear = new Date().getFullYear();
 const fiscalYears = getFiscalYears(currentYear - minYear + 1);
@@ -76,8 +76,7 @@ export const TaskFormData = (
           }),
           createDateField('effective_start_datetime', 'Effective Start Date', {
             required: true,
-            maxDate: currentDate,
-            disableFutureDates: true,
+            allowFutureDates: true,
             disabled: !permissionMap['effective_start_datetime']?.edit,
             hide:
               !permissionMap['effective_start_datetime']?.read &&
@@ -85,7 +84,7 @@ export const TaskFormData = (
           }),
           createDateField('effective_end_datetime', 'Effective End Date', {
             required: true,
-            maxDate: currentDate,
+            allowFutureDates: true,
             disabled: !permissionMap['effective_end_datetime']?.edit,
             hide:
               !permissionMap['effective_end_datetime']?.read &&
