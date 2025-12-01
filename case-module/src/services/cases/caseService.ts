@@ -2831,7 +2831,6 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
       
                     return exportRecord;
                   });
-            console.log("finalStructuredData",finalStructuredData);
             const generateBase64Response = await generateExcelBase64WithEmptyCheck(
               finalStructuredData,
               "Review Projects"
