@@ -1,6 +1,6 @@
 import { RuleAction, RuleActionCreationAttributes } from "../models/workflowRuleAction";
 import { initSequelize } from "../config/maindbDataSource";
-import { Sequelize } from "sequelize";
+import { Sequelize, Op } from "sequelize";
 import { HttpStatus, STATUS_MESSAGE } from "../utils/constants";
 import { Logger } from "winston";
 import { ICreateAction } from "../utils/types";
@@ -67,7 +67,23 @@ export class ActionService {
         RuleAction.initialize(sequelize);
         const limit = data.limit;
         const offset = (data.page - 1) * limit;
+        const where: any = {};
+
+        if (filters && Object.keys(filters).length > 0) {
+            for (const key in filters) {
+                if (filters[key] !== undefined && filters[key] !== null) {
+                    // You can also add LIKE support here if needed
+                    if (key === "action_type") {
+                        where[key] = { [Op.iLike]: `%${filters[key]}%` };
+                    } else {
+                        where[key] = filters[key];
+                    }
+                }
+            }
+        }
+
         const { rows, count } = await RuleAction.findAndCountAll({
+            where,
             order: [[data.sortBy, data.sortOrder]],
             limit,
             offset

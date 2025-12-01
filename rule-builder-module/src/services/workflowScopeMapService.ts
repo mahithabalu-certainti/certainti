@@ -1,6 +1,6 @@
 import { RuleScopeMap, RuleScopeMapCreationAttributes } from "../models/workflowRuleScopeMap";
 import { initSequelize } from "../config/maindbDataSource";
-import { Sequelize } from "sequelize";
+import { Sequelize, Op } from "sequelize";
 import { HttpStatus, STATUS_MESSAGE } from "../utils/constants";
 import { Logger } from "winston";
 import { ICreateScope } from "../utils/types";
@@ -63,7 +63,17 @@ export class ScopeService {
         RuleScopeMap.initialize(sequelize);
         const limit = data.limit;
         const offset = (data.page - 1) * limit;
+        const where: any = {};
+
+        if (filters && Object.keys(filters).length > 0) {
+            for (const key in filters) {
+                if (filters[key] !== undefined && filters[key] !== null) {
+                    where[key] = filters[key];
+                }
+            }
+        }
         const { rows, count } = await RuleScopeMap.findAndCountAll({
+            where,
             order: [[data.sortBy, data.sortOrder]],
             limit,
             offset
