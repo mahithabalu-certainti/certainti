@@ -836,6 +836,7 @@ return !response;
                 country_rid: d.country_rid,
                 case_total_projects: d.case_total_projects,
                 case_total_qualified_projects: d.case_total_qualified_projects,
+                case_total_qualified_project_cost: d.case_total_qualified_project_cost,
                 case_total_project_cost: d.case_total_project_cost,
                 case_total_rd_cost: d.case_total_rd_cost,
                 case_total_qre_cost: d.case_total_qre_cost,
@@ -880,6 +881,15 @@ return !response;
             result = data.filter((d: any) =>
               d[field]?.toLowerCase().includes(val?.toLowerCase())
             );
+            break;
+          case ALPHANUMERIC_CONDITIONS.IN:
+            if (Array.isArray(val)) {
+              result = data.filter((d: any) =>
+                val.map((v: any) => v?.toLowerCase()).includes(d[field]?.toLowerCase())
+              );
+            } else {
+              result = data;
+            }
             break;
           case ALPHANUMERIC_CONDITIONS.isEmpty:
             result = data.filter((d: any) => d[field] == null);
@@ -1811,6 +1821,10 @@ return !response;
             );
           case ALPHANUMERIC_CONDITIONS.isEmpty:
             return data.filter((d: any) => d[field] == null);
+          case ALPHANUMERIC_CONDITIONS.IN:
+            return data.filter((d: any) =>
+              val .includes(d[field])
+            );
           default:
             return data;
         }

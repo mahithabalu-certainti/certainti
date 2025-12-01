@@ -216,10 +216,27 @@ export const casesFieldMappings = [
     dataField: "case_owner_name",
   },
   {
+    permissionField: "case_total_projects",
+    exportField: "No of Projects",
+    dataField: "case_total_projects",
+  },
+  {
     permissionField: "case_total_project_cost",
     exportField: "Total Project Cost",
     dataField: "case_total_project_cost",
   },
+  
+  {
+    permissionField: "case_total_qualified_projects",
+    exportField: "No of Qualified Projects",
+    dataField: "case_total_qualified_projects",
+  },
+   {
+    permissionField: "case_total_qualified_project_cost",
+    exportField: "Total Qualified Project Cost",
+    dataField: "case_total_qualified_project_cost",
+  },
+  
   {
     permissionField: "case_total_qre_cost",
     exportField: "Total QRE",
@@ -230,16 +247,7 @@ export const casesFieldMappings = [
     exportField: "Total RD Credits",
     dataField: "case_total_rd_cost",
   },
-  {
-    permissionField: "case_total_projects",
-    exportField: "No of Projects",
-    dataField: "case_total_projects",
-  },
-  {
-    permissionField: "case_total_qualified_projects",
-    exportField: "No of Qualified Projects",
-    dataField: "case_total_qualified_projects",
-  },
+  
   // { permissionField: 'created_by', exportField: 'Created By', dataField: 'created_by' },
   {
     permissionField: "created_datetime",
@@ -1831,6 +1839,7 @@ export const filterTypesForReviewProjects: Record<string, any> = {
   status_rid: "string",
   fiscal_year: "number",
   createdAt: "datetime",
+  total_cost_prj: "number",
   total_effort_prj: "number",
   total_subcon_prj: "number",
   total_cost_fte_prj: "number",
@@ -1841,7 +1850,7 @@ export const filterTypesForReviewProjects: Record<string, any> = {
   total_cost_nonlabor_prj: "number",
   total_effort_subcon_prj: "number",
   project_classification_rid: "string",
-  project_type_rid: "string",
+  project_type_name: "string",
   total_tasks: "number",
   project_group: "string",
   project_name: "string",
@@ -1875,6 +1884,7 @@ export const filtersColumnsForReviewProjects: Record<string, string> = {
     total_tasks: "total_tasks",
     total_technical_summaries: "total_technical_summaries",
     industry_rid: "industry_rid",
+    project_type_name: "project_type_rid",
     project_point_of_contact_email: "project_point_of_contact_email",
     project_point_of_contact: "project_point_of_contact",
 };
