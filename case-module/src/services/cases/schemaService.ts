@@ -3479,7 +3479,7 @@ return !response;
         status_rid: caseRequest.status_rid,
         //modified_by: caseRequest.modified_by,
         created_datetime: new Date(),
-        case_rid : caseRequest.case_rid
+        case_rid : caseRequest?.case_rid || "",
         //  modified_datetime: caseRequest.modified_datetime,
       },
       { transaction }
