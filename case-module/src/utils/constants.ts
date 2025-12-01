@@ -1789,7 +1789,14 @@ export const rawQueries = {
   },
   getMilestoneSequence(rid : string) {
     return `SELECT rid, r_number FROM ${MAIN_SCHEMA_NAME}.milestone_template WHERE rid = '${rid}'`
-  }
+  },
+  getUserById(userId : string) {
+    return `
+      SELECT CONCAT(first_name,' ',last_name) AS name
+      FROM ${MAIN_SCHEMA_NAME}."user" 
+      WHERE rid = '${userId}'
+    `;
+  },
 };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 
 const keyContactRole = {
