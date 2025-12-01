@@ -282,7 +282,7 @@ class ActivitySchemaService {
       if (taskRequest.assigned_to === "" || typeof taskRequest.assigned_to === "undefined") {
         taskRequest.assigned_to = null;
       }
-             if(taskRequest?.checklist_rid) 
+      if(taskRequest?.checklist_rid) 
             {
               if(taskRequest.checklist_rid !== existingTask?.checklist_rid) {
                 if(existingTask?.checklist_rid !== null && existingTask?.checklist_rid !== '') {
@@ -334,26 +334,9 @@ class ActivitySchemaService {
         },
         transaction,
       });
-      await TaskSummary.update(
-        {
-          task_name: taskRequest.task_name || "",
-          description: taskRequest.description || "",
-          assigned_to: taskRequest.assigned_to || "",
-          status_rid: taskRequest.status_rid || "",
-          priority_rid: taskRequest.priority_rid || "",
-          effective_start_datetime: taskRequest.effective_start_datetime,
-          effective_end_datetime: taskRequest.effective_end_datetime,
-          modified_by: taskRequest.modified_by || "",
-          modified_datetime: new Date(),
-        },
-        {
-          where: {
-            task_rid: taskRequest.task_rid,
-          }
-        }
-      );
-    
-      const checkIsDifferentCollaborator = await this.isNewCollaborator(
+     
+    if(updatedResult > 0) {
+       const checkIsDifferentCollaborator = await this.isNewCollaborator(
         userId,
         accountNumber
       );
@@ -384,6 +367,47 @@ class ActivitySchemaService {
         activityTypes.task
       );
       }
+       await TaskSummary.update(
+        {
+          task_name: taskRequest.task_name || "",
+          description: taskRequest.description || "",
+          assigned_to: taskRequest.assigned_to || "",
+          status_rid: taskRequest.status_rid || "",
+          priority_rid: taskRequest.priority_rid || "",
+          effective_start_datetime: taskRequest.effective_start_datetime,
+          effective_end_datetime: taskRequest.effective_end_datetime,
+          modified_by: taskRequest.modified_by || "",
+          modified_datetime: new Date(),
+        },
+        {
+          where: {
+            task_rid: taskRequest.task_rid,
+          }
+        }
+      );
+      if(!this.mainDbSequelize)
+        {
+          this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+        }
+      const [activeStatusRid]: any[] = await this.mainDbSequelize.query(
+                rawQueries.getActiveStatusId()
+              );
+        if(taskRequest.tags.length > 0) {
+            for(let d of taskRequest.tags) {
+              await this.caseSchemaService.createOrUpdateTags(
+            taskRequest.task_rid,
+            taskRequest.account_rid!,
+            "",
+            d.tag_rid,
+            d.is_new_tag,
+            accountNumber,
+            taskRequest.created_by,
+            activeStatusRid,
+            "activity"
+          );
+            }
+          }
+        }
       await this.addTaskManagementTimeline(
         accountNumber,
         taskRequest.task_rid,

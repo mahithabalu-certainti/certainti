@@ -94,6 +94,8 @@ const createHistoricalSubmissionSchema = Joi.object({
         total_fte_cost: Joi.number().optional(),
         total_subcon_cost: Joi.number().optional(),
         total_nonlabor_cost: Joi.number().optional(),
+        country_rid: Joi.string().required(),
+        state_rid : Joi.string().optional().allow("", null),
         eid: Joi.string().optional(),
         action_type: Joi.string().valid("add", "edit", "delete").required(),
       })
