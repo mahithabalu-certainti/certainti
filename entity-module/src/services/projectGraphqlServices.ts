@@ -314,6 +314,7 @@ class ProjectGraphQlServices {
                             total_cost_nonlabor: d.total_cost_nonlabor,
                             project_type_name: d.project_type_name,
                             currency_symbol: d.currency_symbol,
+                            qre_final : d.qre_final
                         }
                     })
                     }
