@@ -50,7 +50,7 @@ import { query } from "express";
 import currency from "currency.js";
 import moment from "moment";
 import { CaseManagementSchemaService } from "../casesManagement/schemaService";
-import { fetchTaskActivities, fetchTaskComments, listAllTaskStatus, taskCardDetails,taskCardDetailsActivityTask } from "../../utils/rawQueries";
+import { fetchCaseProjects, fetchTaskActivities, fetchTaskComments, listAllTaskStatus, taskCardDetails,taskCardDetailsActivityTask, updateCaseAggregatedValue } from "../../utils/rawQueries";
 import { sendEmailWithAttachment } from "../emailService";
 import ActivitySchemaService from "../activities/schemaService";
 export class CaseService {
@@ -870,6 +870,16 @@ export class CaseService {
         );
 
       if (queryResult.length > 0) {
+        const aggregatedResult : any = await orgDb.query(fetchCaseProjects(data.case_rid, data.account_rid, schemaName));
+        const totals = aggregatedResult[0].reduce((acc : any, curr : any) => {
+          acc.total_cost_prj = acc.total_cost_prj + Number(curr.total_cost_prj || 0.00)
+          acc.qre_final = acc.qre_final + Number(curr.qre_final || 0.00)
+          return acc
+        }, {
+          total_cost_prj : 0.00,
+          qre_final : 0.00
+        })
+        await orgDb.query(updateCaseAggregatedValue(totals.total_cost_prj, totals.qre_final, schemaName, data.case_rid, data.account_rid));
         const classificationIds: any = [
           ...new Set(queryResult.map((d: any) => d.project_classification_rid)),
         ];

@@ -742,6 +742,7 @@ jobs:
         run: |
           scp -o StrictHostKeyChecking=no .env.extinteractionmodule adminuser@${{ secrets.DEVELOPMENT_BACKEND_VM_HOST }}:/tmp/
         working-directory: ext-interaction-module
+
       - name: SSH into VM and deploy
         run: |
           ssh -o StrictHostKeyChecking=no adminuser@${{ secrets.DEVELOPMENT_BACKEND_VM_HOST }} << 'EOF'
