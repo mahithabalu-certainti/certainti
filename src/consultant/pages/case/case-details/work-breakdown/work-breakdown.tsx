@@ -6,7 +6,8 @@ import { CaseIcon } from '../../../../../assets';
 import { SectionHeaderTab, SectionTabPanel } from '../../../../../components';
 import SectionHeader from '../../../../../components/details-section/section-header';
 import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
-import { AllPermissions } from '../../../../../common-service';
+import { AccessRestricted } from '../../../../../components/account-restricted';
+import { AllModules, AllPermissions } from '../../../../../common-service';
 import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
 import KanbanBoard from '../../../../../components/kanban-board/kanban-board';
 import TaskDetailModal from '../../../../../components/kanban-board/task-detail-modal';
@@ -87,7 +88,21 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
   const [seachText, setSearchText] = useState('');
   const [resetSearch, setResetSearch] = useState(false);
 
-  const { permission } = useSelector((state: RootState) => state.permission);
+  const { permission, modules } = useSelector(
+    (state: RootState) => state.permission
+  );
+
+  const isWorkBreakdownEnable = checkPermission(
+    modules,
+    AllModules.WORKBREAKDOWN
+  );
+  const isCreateTaskEnabled = checkPermission(
+    permission,
+    AllPermissions.CASES_WORKBREAKDOWN_CREATE
+  );
+
+  if (!isWorkBreakdownEnable)
+    return <AccessRestricted />;
 
   const caseTaskViewEditFields = useMemo(
     () =>
@@ -653,6 +668,8 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
 
   const fieldHiddenMap = useMemo(
     () => ({
+      taskName:
+        !permissionMap['task_name']?.read && !permissionMap['task_name']?.edit,
       status:
         !permissionMap['status_rid']?.read &&
         !permissionMap['status_rid']?.edit,
@@ -702,6 +719,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
 
   const fieldDisabledMap = useMemo(
     () => ({
+      taskName: !permissionMap['task_name']?.edit,
       status: !permissionMap['status_rid']?.edit,
       priority: !permissionMap['priority_rid']?.edit,
       assignee: !permissionMap['assigned_to']?.edit,
@@ -784,6 +802,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
                 userData={userData}
                 roleOptions={roleOptionsQuery.data || []}
                 onTaskClick={setOpenTaskId}
+                isCreateTaskHide={!isCreateTaskEnabled}
                 onCreateTask={handleCreateTask}
                 onAddComment={handleAddComment}
                 onUpdateComment={handleUpdateComment}

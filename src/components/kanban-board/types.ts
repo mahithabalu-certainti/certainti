@@ -172,6 +172,7 @@ export interface FieldDisabled {
   checklist?: boolean;
   role?: boolean;
   checklistTemplate?: boolean;
+  taskName?: boolean;
   [key: string]: boolean | undefined;
 }
 

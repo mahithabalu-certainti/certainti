@@ -178,6 +178,7 @@ export enum AllMenus {
   PROJECT_SETTINGS = 'manage_project_settings',
   MANAGE_ACCOUNT_ACCESS = 'manage_account_access',
   FINANCIAL_HIGHLIGHTS = 'financial_highlights',
+  WORKBREAKDOWN = 'workbreakdown',
 }
 
 export enum AllModules {
@@ -337,6 +338,9 @@ export enum AllPermissions {
   TASK_TEMPLATE_VIEW_EDIT = 'task_templates_view_edit',
   TASK_TEMPLATE_EXPORT = 'task_templates_export',
   CASES_WORKBREAKDOWN_VIEW_EDIT = 'cases_workbreakdown_view_edit',
+  CASES_WORKBREAKDOWN_CREATE = 'cases_workbreakdown_create',
+  CASES_WORKBREAKDOWN_DELETE = 'cases_workbreakdown_delete',
+  CASES_WORKBREAKDOWN_EXPORT = 'cases_workbreakdown_export',
   HISTORICAL_SUBMISSION_CREATE = 'case_historical_submission_create',
   HISTORICAL_SUBMISSION_VIEW_EDIT = 'case_historical_submission_view_edit',
   HISTORICAL_SUBMISSION_DELETE = 'case_historical_submission_delete',

@@ -814,30 +814,34 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                               }`}
                           >
                             <Suspense fallback={null}>
-                              <button
-                                onClick={() => {
-                                  setEditingCommentId(commentItem.id || null);
-                                  setEditingCommentText(commentItem.text);
-                                  setEditingNewFiles([]);
-                                  setEditingDeletedFileIds([]);
-                                }}
-                                className='p-1.5 hover:bg-blue-100 rounded-md transition-colors group/edit'
-                                title='Edit comment'
-                              >
-                                <PencilIcon className='w-4 h-4 text-blue-600' />
-                              </button>
-                              <button
-                                onClick={() => {
-                                  setDeleteConfirmModal({
-                                    isOpen: true,
-                                    commentId: commentItem.id || null,
-                                  });
-                                }}
-                                className='p-1.5 hover:bg-red-100 rounded-md transition-colors group/delete'
-                                title='Delete comment'
-                              >
-                                <DeleteIcon className='w-4 h-4 text-red-600' />
-                              </button>
+                              {!fieldDisabled.comments && (
+                                <>
+                                  <button
+                                    onClick={() => {
+                                      setEditingCommentId(commentItem.id || null);
+                                      setEditingCommentText(commentItem.text);
+                                      setEditingNewFiles([]);
+                                      setEditingDeletedFileIds([]);
+                                    }}
+                                    className='p-1.5 hover:bg-blue-100 rounded-md transition-colors group/edit'
+                                    title='Edit comment'
+                                  >
+                                    <PencilIcon className='w-4 h-4 text-blue-600' />
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      setDeleteConfirmModal({
+                                        isOpen: true,
+                                        commentId: commentItem.id || null,
+                                      });
+                                    }}
+                                    className='p-1.5 hover:bg-red-100 rounded-md transition-colors group/delete'
+                                    title='Delete comment'
+                                  >
+                                    <DeleteIcon className='w-4 h-4 text-red-600' />
+                                  </button>
+                                </>
+                              )}
                             </Suspense>
                           </div>
                         </div>
