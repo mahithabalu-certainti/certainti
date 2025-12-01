@@ -919,12 +919,17 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
           (rid) => !linkTaskTypeRidsValue.includes(rid)
         );
 
+        const originalRelationshipConnectorRid =
+          originalTask?.workflow_connector?.[0]?.relationship_connector_rid || '';
+
         if (
-          linkedTypeRidValue &&
-          (linkTaskTypeRidsValue.length > 0 || deleteTargetRids.length > 0)
+          (linkedTypeRidValue &&
+            (linkTaskTypeRidsValue.length > 0 || deleteTargetRids.length > 0)) ||
+          deleteTargetRids.length > 0
         ) {
           workflowConnector.source_rid = taskId;
-          workflowConnector.relationship_connector_rid = linkedTypeRidValue;
+          workflowConnector.relationship_connector_rid =
+            linkedTypeRidValue || originalRelationshipConnectorRid;
           workflowConnector.target_rid = linkTaskTypeRidsValue;
           workflowConnector.delete_target_rids = deleteTargetRids;
         }
@@ -1794,6 +1799,10 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                     if (values.length > 0) {
                       setErrors((prev) => ({ ...prev, linkTaskType: '' }));
                     } else {
+                      setLinkedType('');
+                      setEditedTask((prev) =>
+                        prev ? { ...prev, linkedType: '' } : null
+                      );
                       if (!linkedType) {
                         setErrors((prev) => ({ ...prev, linkedType: '' }));
                       }
