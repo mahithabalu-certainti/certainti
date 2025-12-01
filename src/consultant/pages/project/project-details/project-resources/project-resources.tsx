@@ -214,7 +214,7 @@ export const ProjectResources = ({
     });
     return map;
   }, [projectViewEditFields]);
-  console.log(permissionMap, 'per');
+
   const {
     data: resourceDetails,
     isLoading: isDetailsLoading,
@@ -592,8 +592,6 @@ export const ProjectResources = ({
       (pro) => pro.rid === rowId
     );
     if (!selectedProject) return;
-
-    console.log('selectedProject', selectedProject);
 
     let netCost = '';
 

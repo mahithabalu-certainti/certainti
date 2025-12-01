@@ -78,21 +78,21 @@ export const reviewProjectFilterFields = (
   },
   {
     name: 'Primary Point of Contact',
-    value: 'project_point_of_contact',
+    value: 'primary_point_of_contact',
     type: 'text',
     operatorOption: nonMadatoryOptions,
     hide:
-      !projectPermissionMap?.['project_point_of_contact']?.read &&
-      !projectPermissionMap?.['project_point_of_contact']?.edit,
+      !projectPermissionMap?.['primary_point_of_contact']?.read &&
+      !projectPermissionMap?.['primary_point_of_contact']?.edit,
   },
   {
     name: 'Primary Point of Contact Email',
-    value: 'project_point_of_contact_email',
+    value: 'primary_point_of_contact_email',
     type: 'text',
     operatorOption: nonMadatoryOptions,
     hide:
-      !projectPermissionMap?.['project_point_of_contact_email']?.read &&
-      !projectPermissionMap?.['project_point_of_contact_email']?.edit,
+      !projectPermissionMap?.['primary_point_of_contact_email']?.read &&
+      !projectPermissionMap?.['primary_point_of_contact_email']?.edit,
   },
   {
     name: 'Total FTE Count',
