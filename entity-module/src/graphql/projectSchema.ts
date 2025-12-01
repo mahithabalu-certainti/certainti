@@ -171,6 +171,7 @@ type projectNewResponse {
     blended_rate: String
     is_rd_qualified: String
     qre: String
+    qre_final : String
     project_rid: String
     technical_point_of_contact: String
     financial_consultant: String
