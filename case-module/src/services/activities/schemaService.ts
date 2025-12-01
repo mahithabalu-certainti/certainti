@@ -33,7 +33,8 @@ import {
   IActivityCall,
   IActivityEmail,
   IActivityMeeting,
-  IActivityTask
+  IActivityTask,
+  ICreateChecklist
 } from "../../utils/types";
 
 import {
@@ -227,8 +228,8 @@ class ActivitySchemaService {
 
       return casecreationResponse;
     } catch (error) {
-      logMessage(`Error creating case: ${error}`);
-      throw new Error("Error creating case: " + error);
+      logMessage(`Error creating activity: ${error}`);
+      throw new Error("Error creating activity: " + error);
     }
   }
 
@@ -269,17 +270,64 @@ class ActivitySchemaService {
   ) {
     // Implementation for updating interactions in the database
     try {
-      const { Activities,TaskSummary } = await this.caseModelService.getModels(
+      const { Activities,TaskSummary, CheckList, CheckListItem } = await this.caseModelService.getModels(
         accountNumber
       );
       const existingTask = await Activities.findOne({
         where: { rid: taskRequest.task_rid },
+        raw: true,
         transaction,
       });
       // Fix: assigned_to should not be undefined or empty string
       if (taskRequest.assigned_to === "" || typeof taskRequest.assigned_to === "undefined") {
         taskRequest.assigned_to = null;
       }
+             if(taskRequest?.checklist_rid) 
+            {
+              if(taskRequest.checklist_rid !== existingTask?.checklist_rid) {
+                if(existingTask?.checklist_rid !== null && existingTask?.checklist_rid !== '') {
+                  const checklistResult = await CheckList.findOne({
+                  where : {
+                    attach_to : taskRequest.task_rid,
+                    attachment_level : 'task',
+                    checklist_template_rid : existingTask?.checklist_rid
+                  }, raw : true
+                })
+
+                if(checklistResult) {
+                  await CheckListItem.destroy({
+                    where : {
+                      checklist_rid : checklistResult.rid
+                    }
+                  })
+                  await CheckList.destroy({
+                    where : {
+                      attach_to : taskRequest.task_rid,
+                      attachment_level : 'task',
+                      checklist_template_rid : existingTask?.checklist_rid
+                    }
+                  })
+                  }
+                }
+                const response  = await this.caseSchemaService.fetchChecklistTemplateDetailsById(taskRequest.checklist_rid);
+                response.checklist_items.map((item:any) => item.action_type  = 'add');
+                let caseRequest : any = {
+                  account_rid: taskRequest.account_rid!,
+                  checklist_name: response.checklist_name,
+                  checklist_description: response.description,  
+                  checklist_items: response.checklist_items,
+                  attach_to: taskRequest.task_rid,
+                  attachment_level: 'task',
+                  created_by: userId,
+                  created_datetime: new Date(),
+                  fiscal_year: taskRequest.fiscal_year,
+                  checklist_rid: taskRequest.checklist_rid,
+                };
+                const checklistResponse = await this.createCheckListForTask(accountNumber, caseRequest, transaction);
+                if(checklistResponse)
+                  await this.caseSchemaService.manageCheckListItems(accountNumber,caseRequest,checklistResponse.rid, transaction);
+                }
+            }
       const [updatedResult] = await Activities.update(taskRequest, {
         where: {
           rid: taskRequest.task_rid,
@@ -385,6 +433,48 @@ class ActivitySchemaService {
     if (result) return result;
     else return null;
   }
+    async createCheckListForTask(
+      accountNumber: string,
+      caseRequest: ICreateChecklist,
+      transaction: Transaction
+    ) {
+      // Implementation for creating checklist in the database
+      try {
+        const { CheckList } = await this.caseModelService.getModels(accountNumber);
+        const findCheckListAlreadyCreated = await CheckList.findOne({
+          where : {
+            attach_to : caseRequest.attach_to,
+            attachment_level : "task",
+            checklist_template_rid : caseRequest.checklist_rid
+          }, raw : true
+        });
+        if(!findCheckListAlreadyCreated) {
+          const createdChecklist = await CheckList.create(
+          {
+            account_rid: caseRequest.account_rid,
+            attach_to: caseRequest.attach_to,
+            attachment_level: caseRequest.attachment_level,
+            checklist_name: caseRequest.checklist_name,
+            checklist_description: caseRequest.checklist_description,
+            checklist_template_rid: caseRequest.checklist_rid || "",
+            fiscal_year:caseRequest.fiscal_year,
+            created_by: caseRequest.created_by,
+            status_rid: caseRequest.status_rid,
+            created_datetime: new Date(),
+           
+          },
+          { transaction }
+        );
+        return createdChecklist;
+        } else {
+          return null;
+        }
+      } catch (error) {
+        console.log(error)
+        logMessage(`Error creating checklist: ${error}`);
+        throw new Error("Error creating checklist: " + error);
+      }
+    }
 
   async  checkUserAPIPermission  (
       userId: string,
