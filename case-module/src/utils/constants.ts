@@ -216,10 +216,27 @@ export const casesFieldMappings = [
     dataField: "case_owner_name",
   },
   {
+    permissionField: "case_total_projects",
+    exportField: "No of Projects",
+    dataField: "case_total_projects",
+  },
+  {
     permissionField: "case_total_project_cost",
     exportField: "Total Project Cost",
     dataField: "case_total_project_cost",
   },
+  
+  {
+    permissionField: "case_total_qualified_projects",
+    exportField: "No of Qualified Projects",
+    dataField: "case_total_qualified_projects",
+  },
+   {
+    permissionField: "case_total_qualified_project_cost",
+    exportField: "Total Qualified Project Cost",
+    dataField: "case_total_qualified_project_cost",
+  },
+  
   {
     permissionField: "case_total_qre_cost",
     exportField: "Total QRE",
@@ -230,16 +247,7 @@ export const casesFieldMappings = [
     exportField: "Total RD Credits",
     dataField: "case_total_rd_cost",
   },
-  {
-    permissionField: "case_total_projects",
-    exportField: "No of Projects",
-    dataField: "case_total_projects",
-  },
-  {
-    permissionField: "case_total_qualified_projects",
-    exportField: "No of Qualified Projects",
-    dataField: "case_total_qualified_projects",
-  },
+  
   // { permissionField: 'created_by', exportField: 'Created By', dataField: 'created_by' },
   {
     permissionField: "created_datetime",

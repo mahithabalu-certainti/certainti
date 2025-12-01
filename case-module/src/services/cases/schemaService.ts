@@ -836,6 +836,7 @@ return !response;
                 country_rid: d.country_rid,
                 case_total_projects: d.case_total_projects,
                 case_total_qualified_projects: d.case_total_qualified_projects,
+                case_total_qualified_project_cost: d.case_total_qualified_project_cost,
                 case_total_project_cost: d.case_total_project_cost,
                 case_total_rd_cost: d.case_total_rd_cost,
                 case_total_qre_cost: d.case_total_qre_cost,
