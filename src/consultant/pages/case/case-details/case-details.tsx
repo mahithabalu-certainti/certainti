@@ -95,6 +95,7 @@ export const CaseDetails = () => {
   } = useCaseDetails(caseId ?? '', accountId ?? '');
   const isAssignProject = searchParams.get('assignProject');
   const projectDetails = searchParams.get('detailstab');
+  const tabParam = searchParams.get('tab');
   const caseHeaderDetails = useMemo(() => {
     if (caseData) {
       return transformCaseData(caseData);
@@ -273,6 +274,14 @@ export const CaseDetails = () => {
     permission,
     AllPermissions.ACTIVITY_MEETING_EXPORT
   );
+  const isReviewProjectExportEnable = checkPermission(
+    permission,
+    AllPermissions.REVIEW_PROJECTS_EXPORT
+  );
+  const isProjectExportEnable = checkPermission(
+    permission,
+    AllPermissions.PROJECTS_EXPORT
+  );
 
   const activityExportPermissionMap: Record<string, boolean> = {
     task: !!isActivityTaskExportEnable,
@@ -409,7 +418,11 @@ export const CaseDetails = () => {
       }
       return !activityExportPermissionMap[tab];
     } else if (list === 'caseProjects' && !isAssignProject && !projectDetails) {
-      return false;
+      if (tabParam === 'review_projects') {
+        return !isReviewProjectExportEnable;
+      } else {
+        return !isProjectExportEnable;
+      }
     } else if (searchParams.get('tab') === 'case_task') {
       return false;
     } else if (list === 'interactions' && !interactionsView) {
@@ -483,7 +496,10 @@ export const CaseDetails = () => {
       case 'historical_submission':
         return (
           <div className='w-full pr-4 pl-2 py-2'>
-            <HistorySubmission activityMenuItems={activityMenuItems} />
+            <HistorySubmission
+              activityMenuItems={activityMenuItems}
+              caseDetails={caseData}
+            />
           </div>
         );
       case 'caseProjects':
@@ -766,10 +782,11 @@ export const CaseDetails = () => {
       />
       <div className='flex flex-1 flex-row w-full border-b border-[#CBD6E2]'>
         <div
-          className={`flex transition-all ease-in-out ${isCollapsed
-            ? 'w-[60px] min-w-[60px] max-w-[60px] duration-300'
-            : 'w-[220px] min-w-[220px] max-w-[220px] duration-500'
-            }`}
+          className={`flex transition-all ease-in-out ${
+            isCollapsed
+              ? 'w-[60px] min-w-[60px] max-w-[60px] duration-300'
+              : 'w-[220px] min-w-[220px] max-w-[220px] duration-500'
+          }`}
         >
           <SideMenuPanel
             menuItems={sideMenuItems}
