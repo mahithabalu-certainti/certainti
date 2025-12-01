@@ -302,19 +302,9 @@ async accountList(
           childAccountsByParent.get(account.rid) || []
         );
       });
-      let updatedAccount = await this.schemaService.insertFiscalInfoOnly(
-        parentAccounts,
-        filters,
-        limit,
-        offset,
-        finalSortBy,
-        finalSortOrder,
-        "create",
-        fiscalYear
-      );
-
+      let updatedAccount = { data: parentAccounts,total:0 };
       if (!isCustomGlobal) {
-        updatedAccount.data = updatedAccount.data.map((parent: any) => {
+        updatedAccount.data = parentAccounts.map((parent: any) => {
           if (parentIdsOnlyThroughChildren.includes(parent.rid)) {
             restrictedFields.forEach((field) => {
               parent[field] = null;
@@ -347,7 +337,7 @@ async accountList(
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
         data: {
-          account: updatedAccount,
+          account: {data: updatedAccount.data},
           count: !hasKeyContactFilter ? totalCount : updatedAccount?.total,
         },
       };
