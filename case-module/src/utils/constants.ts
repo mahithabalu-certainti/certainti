@@ -1148,20 +1148,13 @@ export const rawQueries = {
       return `SELECT rid, project_type_name FROM ${MAIN_SCHEMA_NAME}.project_type WHERE rid IN ('')`;
     }
   },
-  getTotalProjectsCount(
-    schemaName: string,
-    caseRid: string,
-    accountRid: string
-  ) {
-    return `SELECT COALESCE(COUNT(project_fiscal_rid), 0) AS total_projects FROM ${schemaName}.case_projects WHERE case_rid = '${caseRid}' AND account_rid = '${accountRid}'`;
-  },
   getTotalProjectsCountInCase(
     schemaName: string,
     fiscalYear: number,
     accountRid: string,
     caseRid: string
   ) {
-    return `SELECT COUNT(*) AS total_projects,
+    return `SELECT COUNT(cp.project_fiscal_rid) AS total_projects,
     COALESCE(SUM(pf.total_cost_prj), 0.00) AS total_projects_cost, 
     COALESCE(SUM(pf.qre_final), 0.00) AS total_projects_qre_cost 
     FROM ${schemaName}.project_fiscal pf
@@ -1171,41 +1164,22 @@ export const rawQueries = {
     AND
     cp.account_rid = '${accountRid}'`;
   },
-  getTotalProjectCost(schemaName: string, caseRid: string, accountRid: string) {
-    return `
-    SELECT COALESCE(SUM(pf.total_cost_prj), 0.00) AS total_cost 
-    FROM ${schemaName}.project_fiscal pf 
-    LEFT JOIN ${schemaName}.case_projects cp ON cp.project_fiscal_rid = pf.rid
-    WHERE
-    cp.case_rid = '${caseRid}'
-    AND
-    cp.account_rid = '${accountRid}'
-    `;
-  },
   updateCostCountInCase(
     schemaName: string,
     caseRid: string,
     totalprojects: any,
     totalCost: any,
-    caseTotalProjects? : any,
-    total_projects_qre_cost? : any
+    total_projects_qre_cost : any
   ) {
-    let dynamicQuery;
-    if(caseTotalProjects) dynamicQuery = `, case_total_qre_cost = ${total_projects_qre_cost}`
-    else dynamicQuery = ` `
-    return `UPDATE ${schemaName}.cases SET case_total_projects = ${totalprojects}, case_total_project_cost = ${totalCost} ${dynamicQuery} WHERE rid = '${caseRid}'`;
+    return `UPDATE ${schemaName}.cases SET case_total_projects = ${totalprojects}, case_total_project_cost = ${totalCost}, case_total_qre_cost = ${total_projects_qre_cost} WHERE rid = '${caseRid}'`;
   },
   updateCostCountInCaseSummary(
     caseRid: string,
     totalprojects: any,
     totalCost: any,
-    caseTotalProjects? : any,
-    total_projects_qre_cost? : any
+    total_projects_qre_cost : any
   ) {
-    let dynamicQuery;
-    if(caseTotalProjects) dynamicQuery = `, case_total_qre_cost = ${total_projects_qre_cost}`
-    else dynamicQuery = ` `
-    return `UPDATE ${MAIN_SCHEMA_NAME}.case_summary SET case_total_projects = ${totalprojects}, case_total_project_cost = ${totalCost} ${dynamicQuery} WHERE case_rid = '${caseRid}'`;
+    return `UPDATE ${MAIN_SCHEMA_NAME}.case_summary SET case_total_projects = ${totalprojects}, case_total_project_cost = ${totalCost}, case_total_qre_cost = ${total_projects_qre_cost} WHERE case_rid = '${caseRid}'`;
   },
   updateCostCountInCaseForDelete(
     schemaName: string,
