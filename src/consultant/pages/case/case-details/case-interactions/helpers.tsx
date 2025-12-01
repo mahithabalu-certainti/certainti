@@ -44,6 +44,22 @@ export const getCaseInteractionFilterFields = (
     //     !permissionMap?.['interaction_iteration']?.read,
     // },
     {
+      name: 'Project Code',
+      value: 'project_code',
+      type: 'text',
+      // hide:
+      //   !permissionMap?.['project_code']?.edit &&
+      //   !permissionMap?.['project_code']?.read,
+    },
+    {
+      name: 'Project Name',
+      value: 'project_name',
+      type: 'text',
+      // hide:
+      //   !permissionMap?.['project_name']?.edit &&
+      //   !permissionMap?.['project_name']?.read,
+    },
+    {
       name: 'Age (Days)',
       value: 'interaction_age',
       type: 'number',

@@ -97,9 +97,9 @@ export const getReviewdProjectColumns = (
     label: 'Industry',
     sortable: true,
     sortId: 'industry_name',
-    // hide:
-    //   !permissionMap?.['industry_rid']?.read &&
-    //   !permissionMap?.['industry_rid']?.edit,
+    hide:
+      !permissionMap?.['industry_rid']?.read &&
+      !permissionMap?.['industry_rid']?.edit,
     width: 160,
   },
   {
@@ -107,9 +107,9 @@ export const getReviewdProjectColumns = (
     label: 'Primary Point of Contact',
     sortable: true,
     sortId: 'project_point_of_contact',
-    // hide:
-    //   !permissionMap?.['project_point_of_contact']?.read &&
-    //   !permissionMap?.['project_point_of_contact']?.edit,
+    hide:
+      !permissionMap?.['primary_point_of_contact']?.read &&
+      !permissionMap?.['primary_point_of_contact']?.edit,
     width: 210,
   },
   {
@@ -117,9 +117,9 @@ export const getReviewdProjectColumns = (
     label: 'Primary Point of Contact Email',
     sortable: true,
     sortId: 'project_point_of_contact_email',
-    // hide:
-    //   !permissionMap?.['project_point_of_contact_email']?.read &&
-    //   !permissionMap?.['project_point_of_contact_email']?.edit,
+    hide:
+      !permissionMap?.['primary_point_of_contact_email']?.read &&
+      !permissionMap?.['primary_point_of_contact_email']?.edit,
     width: 230,
   },
 
@@ -129,9 +129,9 @@ export const getReviewdProjectColumns = (
     sortable: true,
     sortId: 'total_effort_prj',
     width: 170,
-    // hide:
-    //   !permissionMap?.['total_effort']?.read &&
-    //   !permissionMap?.['total_effort']?.edit,
+    hide:
+      !permissionMap?.['total_fte_prj']?.read &&
+      !permissionMap?.['total_fte_prj']?.edit,
     sx: (row) => ({
       background: row?.total_effort_prj ? '#fff' : '#f4ecec !important',
       textAlign: 'right',
@@ -146,9 +146,9 @@ export const getReviewdProjectColumns = (
     sortable: true,
     sortId: 'total_subcon_prj',
     width: 170,
-    // hide:
-    //   !permissionMap?.['total_subcon_prj']?.read &&
-    //   !permissionMap?.['total_subcon_prj']?.edit,
+    hide:
+      !permissionMap?.['total_subcon_prj']?.read &&
+      !permissionMap?.['total_subcon_prj']?.edit,
     sx: (row) => ({
       background: row?.total_subcon_prj ? '#fff' : '#f4ecec !important',
       textAlign: 'right',
@@ -164,9 +164,9 @@ export const getReviewdProjectColumns = (
     sortable: true,
     sortId: 'total_nonlabor_prj',
     width: 220,
-    // hide:
-    //   !permissionMap?.['total_nonlabor_prj']?.read &&
-    //   !permissionMap?.['total_nonlabor_prj']?.edit,
+    hide:
+      !permissionMap?.['total_nonlabor_prj']?.read &&
+      !permissionMap?.['total_nonlabor_prj']?.edit,
     sx: (row) => ({
       background: row?.total_nonlabor_prj ? '#fff' : '#f4ecec !important',
       textAlign: 'right',
@@ -201,8 +201,8 @@ export const getReviewdProjectColumns = (
     sortId: 'total_cost_subcon_prj',
     width: 170,
     hide:
-      !permissionMap?.['total_cost_subcon_prj']?.read &&
-      !permissionMap?.['total_cost_subcon_prj']?.edit,
+      !permissionMap?.['total_effort_subcon_prj']?.read &&
+      !permissionMap?.['total_effort_subcon_prj']?.edit,
     sx: (row) => ({
       background: row?.total_cost_subcon_prj ? '#fff' : '#f4ecec !important',
       textAlign: 'right',
@@ -217,9 +217,9 @@ export const getReviewdProjectColumns = (
     sortable: true,
     sortId: 'total_effort_prj',
     width: 170,
-    // hide:
-    //   !permissionMap?.['total_effort_prj']?.read &&
-    //   !permissionMap?.['total_effort_prj']?.edit,
+    hide:
+      !permissionMap?.['total_effort_prj']?.read &&
+      !permissionMap?.['total_effort_prj']?.edit,
     sx: (row) => ({
       background: row?.total_effort_prj ? '#fff' : '#f4ecec !important',
       textAlign: 'right',
@@ -234,9 +234,9 @@ export const getReviewdProjectColumns = (
     sortable: true,
     sortId: 'total_cost_fte_prj',
     width: 140,
-    // hide:
-    //   !permissionMap?.['total_cost_fte_prj']?.read &&
-    //   !permissionMap?.['total_cost_fte_prj']?.edit,
+    hide:
+      !permissionMap?.['total_cost_fte_prj']?.read &&
+      !permissionMap?.['total_cost_fte_prj']?.edit,
     sx: (row) => ({
       background: row?.total_cost_fte_prj ? '#fff' : '#f4ecec !important',
       textAlign: 'right',
@@ -252,9 +252,9 @@ export const getReviewdProjectColumns = (
     sortable: true,
     sortId: 'total_cost_subcon_prj',
     width: 140,
-    // hide:
-    //   !permissionMap?.['total_cost_subcon_prj']?.read &&
-    //   !permissionMap?.['total_cost_subcon_prj']?.edit,
+    hide:
+      !permissionMap?.['total_cost_subcon_prj']?.read &&
+      !permissionMap?.['total_cost_subcon_prj']?.edit,
     sx: (row) => ({
       background: row?.total_effort_prj ? '#fff' : '#f4ecec !important',
       textAlign: 'right',
@@ -268,9 +268,9 @@ export const getReviewdProjectColumns = (
     id: 'total_cost_nonlabor_prj',
     label: 'Total Non Labor Cost',
     sortable: true,
-    // hide:
-    //   !permissionMap?.['total_cost_nonlabor_prj']?.read &&
-    //   !permissionMap?.['total_cost_nonlabor_prj']?.edit,
+    hide:
+      !permissionMap?.['total_cost_nonlabor_prj']?.read &&
+      !permissionMap?.['total_cost_nonlabor_prj']?.edit,
     sortId: 'total_cost_nonlabor_prj',
     width: 180,
     sx: (row) => ({
@@ -288,9 +288,9 @@ export const getReviewdProjectColumns = (
     sortable: true,
     sortId: 'total_cost_prj',
     width: 130,
-    // hide:
-    //   !permissionMap?.['total_cost_prj']?.read &&
-    //   !permissionMap?.['total_cost_prj']?.edit,
+    hide:
+      !permissionMap?.['total_cost_prj']?.read &&
+      !permissionMap?.['total_cost_prj']?.edit,
     sx: (row) => ({
       background: row?.total_cost_prj ? '#fff' : '#f4ecec !important',
       textAlign: 'right',
@@ -310,9 +310,9 @@ export const getReviewdProjectColumns = (
       background: row?.total_resources_prj ? '#fff' : '#f4ecec!important',
       textAlign: 'right',
     }),
-    // hide:
-    //   !permissionMap?.['total_resources_prj']?.read &&
-    //   !permissionMap?.['total_resources_prj']?.edit,
+    hide:
+      !permissionMap?.['total_resources_prj']?.read &&
+      !permissionMap?.['total_resources_prj']?.edit,
   },
   {
     id: 'total_tasks',
@@ -324,9 +324,9 @@ export const getReviewdProjectColumns = (
       background: row?.total_tasks ? '#fff' : '#f4ecec !important',
       textAlign: 'right',
     }),
-    // hide:
-    //   !permissionMap?.['total_tasks']?.read &&
-    //   !permissionMap?.['total_tasks']?.edit,
+    hide:
+      !permissionMap?.['total_tasks']?.read &&
+      !permissionMap?.['total_tasks']?.edit,
   },
   {
     id: 'total_technical_summaries',
@@ -334,9 +334,9 @@ export const getReviewdProjectColumns = (
     sortable: true,
     sortId: 'total_technical_summaries',
     width: 310,
-    // hide:
-    //   !permissionMap?.['total_technical_summaries']?.read &&
-    //   !permissionMap?.['total_technical_summaries']?.edit,
+    hide:
+      !permissionMap?.['total_technical_summaries']?.read &&
+      !permissionMap?.['total_technical_summaries']?.edit,
     sx: (row) => ({
       background: row?.total_technical_summaries
         ? '#fff'

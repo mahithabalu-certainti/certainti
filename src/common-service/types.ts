@@ -250,6 +250,7 @@ export enum AllPermissions {
   PROJECTS_EXPORT = 'projects_export',
   ACCOUNTS_EXPORT = 'accounts_export',
   PROJECTS_VIEW_EDIT = 'projects_view_edit',
+  REVIEW_PROJECTS_VIEW_EDIT = 'case_review_projects_view_edit',
   USER_VIEW_EDIT = 'user_view_edit',
   USER_GROUP_VIEW_EDIT = 'user_group_view_edit',
   PROFILE_VIEW_EDIT = 'profile_view_edit',

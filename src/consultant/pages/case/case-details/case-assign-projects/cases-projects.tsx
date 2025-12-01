@@ -477,6 +477,13 @@ const CasesProjects: React.FC<casesProjectProps> = ({
         ?.fields ?? [],
     [permission]
   );
+  const reviewProjectViewEditListFields = useMemo(
+    () =>
+      permission.find(
+        (item) => item.name === AllPermissions.REVIEW_PROJECTS_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
   const permissionMap = useMemo(() => {
     const map: Record<string, { read: boolean; edit: boolean }> = {};
     projectViewEditlistFields.forEach((item) => {
@@ -484,6 +491,13 @@ const CasesProjects: React.FC<casesProjectProps> = ({
     });
     return map;
   }, [projectViewEditlistFields]);
+  const permissionMapReview = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    reviewProjectViewEditListFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [reviewProjectViewEditListFields]);
   const handleProjectDetails = (data: AssignProject) => {
     // Create new search params without assignProject
     const newParams = new URLSearchParams(searchParams);
@@ -496,7 +510,7 @@ const CasesProjects: React.FC<casesProjectProps> = ({
   const caseColumns = isAssignProject
     ? getAssignedProjectColumns(permissionMap)
     : getSelectProjectColumns(permissionMap, handleProjectDetails);
-  const reviewProjectColumns = getReviewdProjectColumns(permissionMap);
+  const reviewProjectColumns = getReviewdProjectColumns(permissionMapReview);
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
   >(Object.fromEntries(caseColumns.map((col) => [col.id, !col.hide])));

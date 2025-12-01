@@ -542,7 +542,7 @@ export const CaseDetails = () => {
             accountInActive={accountInActive}
             isSendInteraction={caseData?.is_send_interaction || false}
             CaseDetails={caseData || null}
-            loading={false}
+            loading={isLoading}
             setInteractionsParams={setInteractionsParams}
             setExportType={setExportType}
           />
