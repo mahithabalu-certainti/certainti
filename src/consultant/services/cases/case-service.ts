@@ -53,9 +53,20 @@ export const useCaseList = (
 export const fetchGlobalCaseList = async (
   params: CaseListParams
 ): Promise<{ cases: CaseGlobalList[]; count: number }> => {
-  const { data } = await caseServiceApi.get<CaseGlobalListResponse>(
-    getCaseListURL(params)
+  const { data } = await caseServiceApi.post<CaseGlobalListResponse>(
+    `/api/cases/list/caseSummary`,
+    {
+      page: params.page,
+      limit: params.limit,
+      sortBy: params.sortBy,
+      sortOrder: params.sortOrder,
+      fiscal_year: params.fiscalYear,
+      filters: params.filters,
+      globalFilters: params.globalFilters,
+      search: params.search,
+    }
   );
+
   return {
     cases: data.data.caseInfo,
     count: data.data.count,

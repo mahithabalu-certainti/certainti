@@ -98,7 +98,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     message: string;
     onConfirm: () => void;
     confirmLabel?: string;
-  }>({ isOpen: false, message: '', onConfirm: () => { }, confirmLabel: '' });
+  }>({ isOpen: false, message: '', onConfirm: () => {}, confirmLabel: '' });
   const [expandedParents, setExpandedParents] = React.useState<string[]>([]);
   const [menuOpen, setMenuOpen] = React.useState(false);
   const toggleExpand = (parentId: string) => {
@@ -997,10 +997,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 <div
                   className={`flex-shrink-0 max-w-[35%] pl-3 pr-1 py-1.5 h-[32px] flex items-center text-[13px]
         rounded-l-xs border border-r overflow-hidden text-ellipsis whitespace-nowrap cursor-default
-        ${field.error
-                      ? 'border-red-500 bg-gray-100 text-gray-600'
-                      : 'border-[#CBD6E2] bg-gray-100 text-gray-600'
-                    }
+        ${
+          field.error
+            ? 'border-red-500 bg-gray-100 text-gray-600'
+            : 'border-[#CBD6E2] bg-gray-100 text-gray-600'
+        }
       `}
                 >
                   <span className='block overflow-hidden text-ellipsis whitespace-nowrap'>
@@ -1017,10 +1018,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               autoComplete='off'
               className={`placeholder-[#7D98B6] outline-none w-full sm:text-sm px-3 h-[32px]
       ${field.prefixValue ? 'border-y border-r border-[#CBD6E2] rounded-r-xs' : 'border border-[#CBD6E2] rounded-xs focus:border-2 focus:border-blue-400'}
-      ${isError} ${fieldDisabled} ${field.disabled
-                  ? ' truncate overflow-hidden text-ellipsis whitespace-nowrap'
-                  : ''
-                }`}
+      ${isError} ${fieldDisabled} ${
+        field.disabled
+          ? ' truncate overflow-hidden text-ellipsis whitespace-nowrap'
+          : ''
+      }`}
               disabled={field.disabled}
               onChange={(e) => {
                 const inputValue = e.target.value;
@@ -1268,8 +1270,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         // Ensure fieldValue is always an array and filter out any empty/null values
         const safeFieldValue = Array.isArray(fieldValue)
           ? fieldValue.filter(
-            (item) => item !== null && item !== undefined && item !== ''
-          )
+              (item) => item !== null && item !== undefined && item !== ''
+            )
           : [];
 
         return (
@@ -1290,15 +1292,15 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 const filteredValue =
                   typeof value === 'string'
                     ? value
-                      .split(',')
-                      .filter(
+                        .split(',')
+                        .filter(
+                          (item) =>
+                            item !== null && item !== undefined && item !== ''
+                        )
+                    : value.filter(
                         (item) =>
                           item !== null && item !== undefined && item !== ''
-                      )
-                    : value.filter(
-                      (item) =>
-                        item !== null && item !== undefined && item !== ''
-                    );
+                      );
                 handleChange(filteredValue);
               }}
               disabled={field.disabled}
@@ -1436,26 +1438,28 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 tabIndex={0}
                 className={`w-full h-[32px] px-3 py-1.5 border rounded-[2px] text-[13px] flex items-center justify-between
                 ${field.error ? isError : 'border-[#CBD6E2]'} 
-                ${field.disabled
+                ${
+                  field.disabled
                     ? 'bg-gray-100 cursor-default'
                     : 'cursor-pointer focus:outline-none focus:!border-2 focus:border-[#60A5FA]'
-                  }`}
+                }`}
                 onClick={() => !field.disabled && setMenuOpen(!menuOpen)}
               >
                 <span
-                  className={`block truncate text-[13px] ${fieldValue ? 'text-black' : 'text-[#7D98B6]'
-                    }`}
+                  className={`block truncate text-[13px] ${
+                    fieldValue ? 'text-black' : 'text-[#7D98B6]'
+                  }`}
                 >
                   {fieldValue
                     ? (() => {
-                      for (const parent of field?.expandOptions || []) {
-                        const child = parent.childList?.find(
-                          (c) => c.child_value === fieldValue
-                        );
-                        if (child) return child.child_label;
-                      }
-                      return field.placeholder;
-                    })()
+                        for (const parent of field?.expandOptions || []) {
+                          const child = parent.childList?.find(
+                            (c) => c.child_value === fieldValue
+                          );
+                          if (child) return child.child_label;
+                        }
+                        return field.placeholder;
+                      })()
                     : field.placeholder || 'Select'}
                 </span>
 
@@ -1622,9 +1626,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   opacity: 1,
                 },
                 '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline':
-                {
-                  border: '2px solid #60A5FA',
-                },
+                  {
+                    border: '2px solid #60A5FA',
+                  },
                 '& .MuiOutlinedInput-root': {
                   '&.Mui-focused': {
                     boxShadow: 'none',
@@ -1764,6 +1768,17 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         })();
 
         const customMaxDate: Dayjs | undefined = (() => {
+          const hasMax = !!field?.maxDate;
+          const maxDate = hasMax ? dayjs(field.maxDate) : undefined;
+
+          // If allowFutureDates = true
+          if (field.allowFutureDates) {
+            // Case 2: maxDate provided → highest priority
+            if (hasMax) return maxDate;
+
+            // Case 1: allow all future dates
+            return undefined;
+          }
           if (isEndDateField && startDateValue) {
             return field?.maxDate
               ? dayjs(field.maxDate).isBefore(today)
@@ -2378,14 +2393,14 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 const fiscalYearStart = field.minDate
                   ? dayjs(field.minDate, 'YYYY-MM-DD').startOf('day')
                   : dayjs(`${selectedFiscalYear}-01-01`, 'YYYY-MM-DD').startOf(
-                    'day'
-                  );
+                      'day'
+                    );
 
                 const fiscalYearEnd = field.maxDate
                   ? dayjs(field.maxDate, 'YYYY-MM-DD').endOf('day')
                   : dayjs(`${selectedFiscalYear}-12-31`, 'YYYY-MM-DD').endOf(
-                    'day'
-                  );
+                      'day'
+                    );
 
                 if (dateValue) {
                   const currentDate = dayjs(dateValue, 'YYYY-MM-DD');
@@ -3050,7 +3065,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                               maxWidth: `${field.width}`,
                               paddingLeft:
                                 `${field.type}` === 'iconButton' ||
-                                  `${field.type}` === 'radio'
+                                `${field.type}` === 'radio'
                                   ? '10px !important'
                                   : 'none',
                               verticalAlign:
@@ -3082,9 +3097,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                               },
                               '& .MuiOutlinedInput-root': {
                                 '&.Mui-focused .MuiOutlinedInput-notchedOutline':
-                                {
-                                  border: '1px solid #60A5FA !important',
-                                },
+                                  {
+                                    border: '1px solid #60A5FA !important',
+                                  },
                               },
                             }}
                             key={colIndex}
@@ -3371,11 +3386,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   : section.sectionName === 'key_contacts_list'
                     ? loadKeyContactSection(section)
                     : loadDefaultSections(
-                      section,
-                      isHalf,
-                      i
-                      // isFirstOneRestTwo
-                    )}
+                        section,
+                        isHalf,
+                        i
+                        // isFirstOneRestTwo
+                      )}
               </>
             </div>
           );

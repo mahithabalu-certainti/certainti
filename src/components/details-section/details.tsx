@@ -6,6 +6,7 @@ interface DetailItem {
   label?: string;
   value?: React.ReactNode;
   hide?: boolean;
+  colSpan?: number;
 }
 
 const DetailsSection: React.FC<{
@@ -15,11 +16,12 @@ const DetailsSection: React.FC<{
   fullColumn?: boolean;
   isAudit?: boolean;
 }> = ({ title, data, customStyle, fullColumn, isAudit }) => {
+  const styleName = customStyle ? customStyle : ' pt-2 mt-3  ';
+  const visibleData = data.filter((item) => !item.hide);
+
   const leftColumn: DetailItem[] = [];
   const middleColumn: DetailItem[] = [];
   const rightColumn: DetailItem[] = [];
-  const styleName = customStyle ? customStyle : ' pt-2 mt-3  ';
-  const visibleData = data.filter((item) => !item.hide);
 
   if (isAudit) {
     visibleData.forEach((item, index) => {
@@ -87,7 +89,7 @@ const DetailsSection: React.FC<{
         {fullColumn
           ? visibleData.map((item, index) => (
               <div
-                key={index}
+                key={item.key || index}
                 className='grid grid-cols-[100px_auto] sm:grid-cols-[200px_auto] gap-x-2'
               >
                 <div className='text-left font-semibold text-[13px] text-[#425A76] pr-1'>
@@ -106,52 +108,102 @@ const DetailsSection: React.FC<{
                 </div>
               </div>
             ))
-          : leftColumn.map((leftItem, index) => {
-              const midItem = middleColumn[index];
-              const rightItem = isAudit ? undefined : rightColumn[index];
+          : isAudit
+            ? leftColumn.map((leftItem, index) => {
+                const midItem = middleColumn[index];
 
-              const itemsToRender = isAudit
-                ? [leftItem, midItem]
-                : [leftItem, midItem, rightItem];
+                return (
+                  <div
+                    key={index}
+                    className='grid grid-cols-1 gap-6 md:grid-cols-2 w-full'
+                  >
+                    {[leftItem, midItem].map(
+                      (item, idx) =>
+                        item && (
+                          <div
+                            key={item.key || idx}
+                            className={`grid grid-cols-[100px_auto] sm:grid-cols-[200px_auto] gap-x-2 min-w-0 ${
+                              item.colSpan && item.colSpan > 1
+                                ? `md:col-span-${item.colSpan}`
+                                : ''
+                            }`}
+                            style={{
+                              gridColumn:
+                                item.colSpan && item.colSpan > 1
+                                  ? `span ${Math.min(item.colSpan, 2)}`
+                                  : undefined,
+                            }}
+                          >
+                            <div className='text-left font-semibold text-[13px] text-[#425A76] pr-1'>
+                              {item.label}
+                            </div>
+                            <div className='font-medium text-[13px] truncate min-w-0'>
+                              <TruncateWithTooltip
+                                maxWidth={'100%'}
+                                className='truncate inline-block max-w-full'
+                                alwaysShowTooltip={
+                                  !!item.value &&
+                                  item.value !== 'empty' &&
+                                  item.value !== '-'
+                                }
+                              >
+                                {renderValue(item.value, item.label)}
+                              </TruncateWithTooltip>
+                            </div>
+                          </div>
+                        )
+                    )}
+                  </div>
+                );
+              })
+            : leftColumn.map((leftItem, index) => {
+                const midItem = middleColumn[index];
+                const rightItem = rightColumn[index];
 
-              return (
-                <div
-                  key={index}
-                  className={`grid grid-cols-1 gap-6 ${
-                    isAudit ? 'md:grid-cols-2 w-full' : 'md:grid-cols-3'
-                  }`}
-                >
-                  {itemsToRender.map(
-                    (item, idx) =>
-                      item && (
-                        <div
-                          key={idx}
-                          className='grid grid-cols-[100px_auto] sm:grid-cols-[200px_auto] gap-x-2 min-w-0'
-                        >
-                          <div className='text-left font-semibold text-[13px] text-[#425A76] pr-1'>
-                            {item.label}
+                return (
+                  <div
+                    key={index}
+                    className='grid grid-cols-1 gap-6 md:grid-cols-3 w-full'
+                  >
+                    {[leftItem, midItem, rightItem].map(
+                      (item, idx) =>
+                        item && (
+                          <div
+                            key={item.key || idx}
+                            className={`grid grid-cols-[100px_auto] sm:grid-cols-[200px_auto] gap-x-2 min-w-0 ${
+                              item.colSpan && item.colSpan > 1
+                                ? `md:col-span-${Math.min(item.colSpan, 3)}`
+                                : ''
+                            }`}
+                            style={{
+                              gridColumn:
+                                item.colSpan && item.colSpan > 1
+                                  ? `span ${Math.min(item.colSpan, 3)}`
+                                  : undefined,
+                            }}
+                          >
+                            <div className='text-left font-semibold text-[13px] text-[#425A76] pr-1'>
+                              {item.label}
+                            </div>
+                            <div className='font-medium text-[13px] truncate min-w-0'>
+                              <TruncateWithTooltip
+                                maxWidth={'100%'}
+                                className='truncate inline-block max-w-full'
+                                alwaysShowTooltip={
+                                  !!item.value &&
+                                  item.value !== 'empty' &&
+                                  item.value !== '-'
+                                }
+                              >
+                                {renderValue(item.value, item.label)}
+                              </TruncateWithTooltip>
+                            </div>
                           </div>
-                          <div className='font-medium text-[13px] truncate min-w-0'>
-                            <TruncateWithTooltip
-                              maxWidth={'100%'}
-                              className='truncate inline-block max-w-full'
-                              alwaysShowTooltip={
-                                item.value &&
-                                item.value !== 'empty' &&
-                                item.value !== '-'
-                                  ? true
-                                  : false
-                              }
-                            >
-                              {renderValue(item.value, item.label)}
-                            </TruncateWithTooltip>
-                          </div>
-                        </div>
-                      )
-                  )}
-                </div>
-              );
-            })}
+                        )
+                    )}
+                  </div>
+                );
+              })}
       </div>
     </div>
   );

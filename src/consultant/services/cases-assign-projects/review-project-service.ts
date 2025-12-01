@@ -1,4 +1,8 @@
-import { useQuery, UseQueryResult } from '@tanstack/react-query';
+import {
+  useQuery,
+  UseQueryResult,
+  UseMutationOptions,
+} from '@tanstack/react-query';
 import { useMutation, UseMutationResult } from '@tanstack/react-query';
 import {
   EmailTemplatePreviewParams,
@@ -7,11 +11,34 @@ import {
   ReviewListResponse,
   ReviewProjectExportParams,
   ReviewProjectListURLParams,
-  SentProjectsParams,
   SentProjectsResponse,
 } from '../../types/assign-projects';
 import { caseServiceApi } from '../../../api/api';
 import { ExportCaseListResponse } from '../../types';
+
+export const useApiMutationSericve = <T, V = void>(
+  endpoint: string,
+  method: 'post' | 'put' | 'patch' | 'delete' = 'post',
+  options?: UseMutationOptions<T, Error, V>
+): UseMutationResult<T, Error, V> => {
+  return useMutation<T, Error, V>({
+    mutationFn: async (data) => {
+      const isFormData = data instanceof FormData;
+
+      const response = await caseServiceApi.request<T>({
+        url: endpoint,
+        method,
+        data,
+        headers: isFormData
+          ? { 'Content-Type': 'multipart/form-data' }
+          : { 'Content-Type': 'application/json' },
+      });
+
+      return response.data;
+    },
+    ...options,
+  });
+};
 
 export const getReviewProjectListURL = (
   {
@@ -197,32 +224,9 @@ export const useEmailTemplatePreview = (
 
 export const getSentProjectsUrl = () => '/api/cases/sentReviewProjects';
 
-export const sendProjectsForReview = async (
-  params: SentProjectsParams
-): Promise<{ success: boolean; message?: string }> => {
-  const { data } = await caseServiceApi.post<SentProjectsResponse>(
+export const useSendProjectsForReview = () => {
+  return useApiMutationSericve<SentProjectsResponse, FormData>(
     getSentProjectsUrl(),
-    params
+    'post'
   );
-  return {
-    success: data.statusCode === 200,
-    message: data.statusMessage,
-  };
-};
-
-export const useSendProjectsForReview = (): UseMutationResult<
-  { success: boolean; message?: string },
-  Error,
-  SentProjectsParams,
-  unknown
-> => {
-  return useMutation<
-    { success: boolean; message?: string },
-    Error,
-    SentProjectsParams
-  >({
-    mutationFn: sendProjectsForReview,
-    retry: 0,
-    // You can add onSuccess, onError handlers here if needed
-  });
 };
