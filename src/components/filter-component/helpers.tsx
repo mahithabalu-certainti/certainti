@@ -120,11 +120,13 @@ export const NewDateFilterControl: React.FC<{
               </Select>
             </FormControl>
           ) : (
-            <LocalizationProvider dateAdapter={AdapterDayjs}
-            localeText={{
-              fieldMonthPlaceholder: (params) =>
-                params.contentType === 'digit' ? 'MM' : params.format,
-            }}>
+            <LocalizationProvider
+              dateAdapter={AdapterDayjs}
+              localeText={{
+                fieldMonthPlaceholder: (params) =>
+                  params.contentType === 'digit' ? 'MM' : params.format,
+              }}
+            >
               <DatePicker
                 name='from'
                 maxDate={dayjs(today)}
@@ -185,11 +187,13 @@ export const NewDateFilterControl: React.FC<{
             </LocalizationProvider>
           ))}
         {isBetween && (
-          <LocalizationProvider dateAdapter={AdapterDayjs}
-          localeText={{
-            fieldMonthPlaceholder: (params) =>
-              params.contentType === 'digit' ? 'MM' : params.format,
-          }}>
+          <LocalizationProvider
+            dateAdapter={AdapterDayjs}
+            localeText={{
+              fieldMonthPlaceholder: (params) =>
+                params.contentType === 'digit' ? 'MM' : params.format,
+            }}
+          >
             <DatePicker
               name='to'
               maxDate={dayjs(today)}
@@ -413,7 +417,7 @@ export const NewNumberFilterControl: React.FC<{
 }> = ({ fieldName, state, menuOption, onOptionChange, onValueChange }) => {
   const option = state.number?.option || 'greater_than';
   const value = state.number?.value;
-  const hasError = state.number?.error ?? false;
+  // const hasError = state.number?.error ?? false;
 
   const selectedOption = state.number?.option;
   const hideInput = selectedOption === 'is_empty';
@@ -457,11 +461,11 @@ export const NewNumberFilterControl: React.FC<{
                   placeholder={i === 0 ? 'Min' : 'Max'}
                   value={Array.isArray(value) ? value[i] : ''}
                   onChange={(e) => onValueChange(fieldName, e, i)}
-                  error={
-                    hasError &&
-                    (!value ||
-                      (Array.isArray(value) && value[i]?.trim() === ''))
-                  }
+                  // error={
+                  //   hasError &&
+                  //   (!value ||
+                  //     (Array.isArray(value) && value[i]?.trim() === ''))
+                  // }
                   inputProps={{ min: 0 }}
                   onKeyDown={(e) => {
                     if (e.key === '-' || e.key === 'e') e.preventDefault();
@@ -505,7 +509,7 @@ export const NewNumberFilterControl: React.FC<{
               value={typeof value === 'string' ? value : ''}
               onChange={(e) => onValueChange(fieldName, e)}
               placeholder='Enter a number'
-              error={hasError && !value}
+              // error={hasError && !value}
               inputProps={{ min: 0 }}
               onKeyDown={(e) => {
                 if (e.key === '-' || e.key === 'e') e.preventDefault();
