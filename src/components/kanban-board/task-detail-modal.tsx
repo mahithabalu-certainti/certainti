@@ -528,6 +528,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       deletedAttachmentIds.length > 0
     );
   };
+
   const collaboratorUsers = useMemo(
     () =>
       collaborators.map((collab) =>
@@ -538,14 +539,10 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       ),
     [collaborators]
   );
-  const allEnrichedUsers = useMemo(
-    () => [
-      ...collaboratorUsers,
-      ...(availableUsers
-        ?.filter((user) => !collaboratorUsers.find((cu) => cu.id === user.rid))
-        .map((user) => enrichUserOption(user)) || []),
-    ],
-    [collaboratorUsers, availableUsers]
+
+  const assigneeUsers = useMemo(
+    () => availableUsers?.map((user) => enrichUserOption(user)) || [],
+    [availableUsers]
   );
 
   useEffect(() => {
@@ -577,12 +574,12 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     if (!editedTask) return;
     const ids = (editedTask.collaborators || [])
       .map((collab) => {
-        const user = allEnrichedUsers.find((u) => u.name === collab.name);
+        const user = collaboratorUsers.find((u) => u.name === collab.name);
         return user?.id || '';
       })
       .filter((id) => id !== '');
     setSelectedCollaboratorIds(ids);
-  }, [editedTask, allEnrichedUsers]);
+  }, [editedTask, collaboratorUsers]);
 
   if (!isOpen || !taskId) return null;
   if (isLoadingTaskDetails || (rawTask && !task)) {
@@ -884,7 +881,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
           : '';
 
         const assignedToRid = editedTask.assignee
-          ? allEnrichedUsers.find((u) => u.name === editedTask.assignee.name)
+          ? assigneeUsers.find((u) => u.name === editedTask.assignee.name)
             ?.id || ''
           : '';
 
@@ -948,7 +945,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
             account_rid: accountId,
             task_name: editedTask.title || '',
             task_description: editedTask.description || '',
-            task_status_rid: selectedStatus?.id || '',
+            status_rid: selectedStatus?.id || '',
             priority_rid: selectedPriority?.id || '',
             effective_start_datetime: editedTask.startDate
               ? dayjs(editedTask.startDate).format('YYYY-MM-DD')
@@ -959,6 +956,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
             tags: tagsArray,
             assigned_to: assignedToRid || '',
             fiscal_year: editedTask.fiscal_year,
+            checklist_rid: selectedChecklistObj?.id || "",
           };
           updateResponse =
             await updateActivityTaskMutation.mutateAsync(activityPayload);
@@ -1136,7 +1134,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       );
       return;
     }
-    const selectedUser = allEnrichedUsers.find(
+    const selectedUser = assigneeUsers.find(
       (user) => user.id === selectedUserId
     );
     if (selectedUser) {
@@ -1157,7 +1155,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
 
   const getAssigneeForSelect = () => {
     if (!editedTask?.assignee || editedTask.assignee.name === '') return '';
-    const foundUser = allEnrichedUsers.find(
+    const foundUser = assigneeUsers.find(
       (u) => u.name === editedTask.assignee.name
     );
     return foundUser?.id || '';
@@ -1206,7 +1204,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
           await onAddCollaborator(taskId, newUserId);
         }
         setSelectedCollaboratorIds(selectedIds);
-        const selectedUsers = allEnrichedUsers.filter((user) =>
+        const selectedUsers = collaboratorUsers.filter((user) =>
           selectedIds.includes(user.id)
         );
         const collaborators = selectedUsers.map((user) => ({
@@ -1244,7 +1242,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     if (removedUserIds.length > 0 && taskId) {
       try {
         for (const removedUserId of removedUserIds) {
-          const userToRemove = allEnrichedUsers.find(
+          const userToRemove = collaboratorUsers.find(
             (u) => u.id === removedUserId
           );
           if (userToRemove) {
@@ -1259,7 +1257,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
         }
 
         setSelectedCollaboratorIds(selectedIds);
-        const selectedUsers = allEnrichedUsers.filter((user) =>
+        const selectedUsers = collaboratorUsers.filter((user) =>
           selectedIds.includes(user.id)
         );
         const collaborators = selectedUsers.map((user) => ({
@@ -1298,7 +1296,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       removedUserIds.length === 0
     ) {
       setSelectedCollaboratorIds(selectedIds);
-      const selectedUsers = allEnrichedUsers.filter((user) =>
+      const selectedUsers = collaboratorUsers.filter((user) =>
         selectedIds.includes(user.id)
       );
       const collaborators = selectedUsers.map((user) => ({
@@ -1463,7 +1461,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                 >
                   Select User
                 </MenuItem>
-                {allEnrichedUsers.map((user) => (
+                {assigneeUsers.map((user) => (
                   <MenuItem
                     sx={{
                       color: '#425A76',
@@ -1791,7 +1789,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                 );
                 return;
               }
-              const selectedUser = allEnrichedUsers.find(
+              const selectedUser = assigneeUsers.find(
                 (u) => u.id === userId
               );
               if (selectedUser) {
@@ -1945,7 +1943,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
               fieldVisibility={fieldVisibility}
               editedTask={editedTask}
               selectedCollaboratorIds={selectedCollaboratorIds}
-              allEnrichedUsers={allEnrichedUsers}
+              allEnrichedUsers={collaboratorUsers}
               onCollaboratorsChange={handleCollaboratorsChange}
               isAddingCollaborator={isAddingCollaborator}
               onRemoveCollaborator={(name) => {
@@ -1953,7 +1951,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                   (c) => c.name === name
                 );
                 if (!collaboratorToRemove) return;
-                const userToRemove = allEnrichedUsers.find(
+                const userToRemove = collaboratorUsers.find(
                   (u) => u.name === name
                 );
                 if (!userToRemove || !taskId) return;
