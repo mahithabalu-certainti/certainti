@@ -265,6 +265,7 @@ export const CaseListTable: React.FC<ICaseTableProps> = ({
       {
         case_rid: rowId,
         account_rid: accountid,
+        fiscal_year: rowData?.fiscal_year,
       }
     );
 

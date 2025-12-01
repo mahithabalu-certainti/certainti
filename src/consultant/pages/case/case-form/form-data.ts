@@ -10,7 +10,6 @@ import {
   getFiscalYears,
 } from '../../../../common-utils';
 
-const currentDate = new Date();
 const minYear = 1950;
 const currentYear = new Date().getFullYear();
 const fiscalYears = getFiscalYears(currentYear - minYear + 1);
@@ -197,8 +196,7 @@ export const CaseFormData = (
           createDateField('case_startdate', 'Start Date', {
             required: true,
             onChange: true,
-            maxDate: currentDate,
-            disableFutureDates: true,
+            allowFutureDates: true,
             disabled:
               isEditView &&
               !permissionMap?.['start_date']?.edit &&
@@ -213,14 +211,14 @@ export const CaseFormData = (
             'Planned Submission Date',
             {
               required: true,
-              disableFutureDates: true,
               onChange: true,
+              allowFutureDates: true,
               minDate: dateConstraints?.planned_min
                 ? new Date(dateConstraints.planned_min)
                 : undefined,
               maxDate: dateConstraints?.planned_max
                 ? new Date(dateConstraints.planned_max)
-                : currentDate,
+                : undefined,
               disabled:
                 isEditView &&
                 !permissionMap?.['planned_submission_date']?.edit &&
@@ -237,13 +235,13 @@ export const CaseFormData = (
             {
               required: true,
               onChange: true,
-              disableFutureDates: true,
+              allowFutureDates: true,
               minDate: dateConstraints?.statutory_min
                 ? new Date(dateConstraints.statutory_min)
                 : undefined,
               maxDate: dateConstraints?.statutory_max
                 ? new Date(dateConstraints.statutory_max)
-                : currentDate,
+                : undefined,
               disabled:
                 isEditView &&
                 !permissionMap?.['statutory_submission_date']?.edit &&

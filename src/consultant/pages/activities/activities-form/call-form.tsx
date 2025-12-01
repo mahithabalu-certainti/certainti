@@ -552,6 +552,8 @@ const CallForm: React.FC = () => {
 
   const validateForm = (): boolean => {
     const newErrors: CallFormErrors = {};
+    const now = new Date();
+    const maxCallDurationHours = 24;
 
     if (
       !formData.call_participants ||
@@ -571,19 +573,56 @@ const CallForm: React.FC = () => {
 
     if (!formData.effective_start_datetime) {
       newErrors.effective_start_datetime = 'Field is required';
+    } else {
+      const start = new Date(formData.effective_start_datetime);
+
+      if (start > now) {
+        newErrors.effective_start_datetime =
+          'Future dates are not allowed for Start Date & Time';
+      }
+
+      // Optional: Validate not too far in the past (e.g., within 1 year)
+      const oneYearAgo = new Date();
+      oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+      if (start < oneYearAgo) {
+        newErrors.effective_start_datetime =
+          'Start Date & Time cannot be more than 1 year ago';
+      }
     }
 
     if (!formData.effective_end_datetime) {
       newErrors.effective_end_datetime = 'Field is required';
-    }
-
-    if (formData.effective_start_datetime && formData.effective_end_datetime) {
-      const start = new Date(formData.effective_start_datetime);
+    } else {
       const end = new Date(formData.effective_end_datetime);
+      const start = formData.effective_start_datetime
+        ? new Date(formData.effective_start_datetime)
+        : null;
 
-      if (end <= start) {
+      // Check if end date is in the future
+      if (end > now) {
+        newErrors.effective_end_datetime =
+          'Future dates are not allowed for End Date & Time';
+      }
+
+      // Check if end date is after start date
+      if (start && end <= start) {
         newErrors.effective_end_datetime =
           'End Date & Time must be after Start Date & Time';
+      }
+
+      // Optional: Validate call duration is reasonable
+      if (start) {
+        const durationMs = end.getTime() - start.getTime();
+        const durationHours = durationMs / (1000 * 60 * 60);
+
+        if (durationHours > maxCallDurationHours) {
+          newErrors.effective_end_datetime = `Call duration cannot exceed ${maxCallDurationHours} hours`;
+        }
+
+        if (durationHours <= 0) {
+          newErrors.effective_end_datetime =
+            'End Time must be after Start Time';
+        }
       }
     }
 
@@ -908,12 +947,13 @@ const CallForm: React.FC = () => {
                   }
                   error={!!errors?.effective_start_datetime}
                   helperText={errors?.effective_start_datetime}
-                  disableBeforeDates={true}
+                  disableFutureDates={true}
                   disabled={shouldDisableField(
                     'effective_start_datetime',
                     isEditView,
                     permissionMap
                   )}
+                  maxDate={dayjs()}
                 />
               </div>
 
@@ -941,12 +981,13 @@ const CallForm: React.FC = () => {
                   }
                   error={!!errors?.effective_end_datetime}
                   helperText={errors?.effective_end_datetime}
-                  disableBeforeDates={true}
+                  disableFutureDates={true}
                   disabled={shouldDisableField(
                     'effective_end_datetime',
                     isEditView,
                     permissionMap
                   )}
+                  maxDate={dayjs()}
                 />
               </div>
             </div>
