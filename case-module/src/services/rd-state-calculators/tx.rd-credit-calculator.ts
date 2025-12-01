@@ -42,9 +42,6 @@ export class RdCreditCalculatorForTX {
         const extractConfig = this.extractConfigJson(config.config_json);
         logMessage(`Computing CO Credit with config: ${JSON.stringify(extractConfig)}`);
 
-        currentYearQREs = this.loadData.currentYearQREs;
-        prior3YearsQREs = this.loadData.prior3YearsQREs;
-
         const qretInfo = this.creditCalculationQRET(currentYearQREs, prior3YearsQREs, extractConfig)
         const precedingWithQretInfo = this.precedingCalculationWithQRET(qretInfo, extractConfig);
         const precedingWithNoQretInfo = this.precedingCalculationWithNoQRET(qretInfo, precedingWithQretInfo.average_prev_year_qre, extractConfig);
