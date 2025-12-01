@@ -483,7 +483,10 @@ export const CaseDetails = () => {
       case 'historical_submission':
         return (
           <div className='w-full pr-4 pl-2 py-2'>
-            <HistorySubmission activityMenuItems={activityMenuItems} />
+            <HistorySubmission
+              activityMenuItems={activityMenuItems}
+              caseDetails={caseData}
+            />
           </div>
         );
       case 'caseProjects':
