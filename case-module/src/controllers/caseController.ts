@@ -3654,6 +3654,7 @@ async function deleteTagsTaskLevel (req : Request, res : Response) {
       return;
     }
     const data = req.body;
+    data.userId = userId
     const result = await caseService.deleteTagsAccountLevel(data); 
     if(result.statusCode === HttpStatus.SUCCESS) {
       return res.status(HttpStatus.SUCCESS).json({
