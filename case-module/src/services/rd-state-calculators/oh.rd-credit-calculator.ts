@@ -3,19 +3,17 @@ import { logMessage } from "../../utils/helpers";
 import FinancialRDPreviewService from "../financialRDCredit/financialRDPreviewService"
 
 export interface ConfigJson {
-    credit_rate: number;
     sub_con_percent: number;
-    fixed_base_percent: number;
+    credit_earned_percent: number;
 }
 
 /**
  * 
  */
-
-export class RdCreditCalculatorForNJ {
+export class RdCreditCalculatorForOH {
 
     country = "USA";
-    creditType = "State R&D Credit - NJ";
+    creditType = "State R&D Credit - OH";
     currency = "USD";
 
     private financialRDPreviewService: FinancialRDPreviewService;
@@ -23,7 +21,7 @@ export class RdCreditCalculatorForNJ {
 
     constructor() {
         this.financialRDPreviewService = new FinancialRDPreviewService();
-        this.loadData = this.financialRDPreviewService.loadDataForNJ()
+        this.loadData = this.financialRDPreviewService.loadDataForOH()
     }
 
     /**
@@ -34,78 +32,57 @@ export class RdCreditCalculatorForNJ {
      * @param totalGrossReceipts 
      * @param prior3YearsQREs 
      * @param priorYearsCount 
-     * @returns 
      */
-    async compute(config: any, currentYearQREs: any, annualGrossReceipts: any[], totalGrossReceipts: Decimal, prior3YearsQREs: { fiscalYear: number; qre: number }[], priorYearsCount: number) {
+    async compute(config: any, currentYearQREs: any, annualGrossReceipts: any[], totalGrossReceipts: Decimal, prior3YearsQREs: any[], priorYearsCount: number) {
         const extractConfig = this.extractConfigJson(config.config_json);
         logMessage(`Computing CO Credit with config: ${JSON.stringify(extractConfig)}`);
-        const part4ASCCreditCalculationInfo = this.part4ASCCreditCalculation(currentYearQREs, prior3YearsQREs, extractConfig);
-        const part5DevelopmentTaxCreditCalculationInfo = this.part5DevelopmentTaxCreditCalculation(new Decimal(part4ASCCreditCalculationInfo.final_credit), extractConfig);
-
-        const inputFields = await this.buildInputParams(currentYearQREs, prior3YearsQREs, {
-            country: this.country,
-            creditType: this.creditType,
-            currency: this.currency,
-        });
-
-        const computedFields = await this.buildComputedFields(part4ASCCreditCalculationInfo, part5DevelopmentTaxCreditCalculationInfo);
-
-        return {
-            inputFields,
-            computedFields
-        }
-
-    }
-
-    /**
-     * 
-     * @param currentYearQREs 
-     * @param prior3YearsQREs 
-     * @param config 
-     * @returns 
-     */
-    part4ASCCreditCalculation(currentYearQREs: any, prior3YearsQREs: any[], config: ConfigJson) {
 
         const current_year_wages = new Decimal(currentYearQREs.wages || 0);
-        const current_year_contract = new Decimal(currentYearQREs.contract).mul(config.sub_con_percent) || 0;
-
+        const current_year_contract = new Decimal(currentYearQREs.contract).mul(extractConfig.sub_con_percent) || 0;
         const total_current_year_qre = current_year_wages.plus(current_year_contract);
 
         const qreSum = prior3YearsQREs.map(item => ({
             fiscalYear: item.fiscalYear,
             wagesContractSum: new Decimal(item.wages || 0).plus(Number(item.contract || 0))
         }));
+        logMessage(`${JSON.stringify(qreSum)}`)
+        const prev1_qre = new Decimal(qreSum[0]?.wagesContractSum || 0);
+        const prev2_qre = new Decimal(qreSum[1]?.wagesContractSum || 0);
+        const prev3_qre = new Decimal(qreSum[2]?.wagesContractSum || 0);
 
-        const total_prev_qre = new Decimal(qreSum.reduce((sum, item) => sum + Number(item.wagesContractSum), 0));
-        const average_tot_prev_qre = total_prev_qre.div(config.fixed_base_percent * 100);
-        const sub_credit = total_current_year_qre.minus(average_tot_prev_qre);
-        const final_credit = sub_credit.gt(0) ? sub_credit : 0;
+        const tot_prev_year_qre = prev1_qre.plus(prev2_qre).plus(prev3_qre);
+        const average_tot_prev_qre = tot_prev_year_qre.div(3);
 
-        return {
-            current_year_wages,
-            current_year_contract,
-            total_current_year_qre,
-            total_prev_qre,
+        const excess_qre = total_current_year_qre.minus(average_tot_prev_qre);
+        logMessage(`EXCESS_${excess_qre}`)
+        const final_excess_qre = new Decimal(excess_qre.lt(0) ? 0 : excess_qre);
+
+        const final_credits_earned = final_excess_qre.mul(extractConfig.credit_earned_percent);
+
+         const inputFields = await this.buildInputParams(currentYearQREs, prior3YearsQREs, {
+            country: this.country,
+            creditType: this.creditType,
+            currency: this.currency,
+        });
+
+        const computeFieldsResp = {
+            prev1_qre,
+            prev2_qre,
+            prev3_qre,
             average_tot_prev_qre: this.round2(average_tot_prev_qre),
-            sub_credit: this.round2(sub_credit),
-            final_credit: this.round2(final_credit)
+            total_current_year_qre,
+            tot_prev_year_qre,
+            final_excess_qre : this.round2(final_excess_qre),
+            final_credits_earned: this.round2(final_credits_earned)
         }
-    }
-
-    /**
-     * 
-     * @param part4_final_credit 
-     * @param config 
-     * @returns 
-     */
-    part5DevelopmentTaxCreditCalculation(part4_final_credit: Decimal, config: ConfigJson) {
-        const tot_credit = this.round2(part4_final_credit.mul(config.credit_rate));
+        const computedFields = await this.buildComputedFields(computeFieldsResp);
 
         return {
-            part4_final_credit: this.round2(part4_final_credit),
-            tot_credit,
-            tot_available_credit: tot_credit
+            inputFields,
+            computedFields
         }
+
+
     }
 
     /**
@@ -141,7 +118,6 @@ export class RdCreditCalculatorForNJ {
     * 
     * @param currentYearQREs 
     * @param prior3YearsQREs 
-    * @param annualGrossReceipts 
     * @param metadata 
     * @returns 
     */
@@ -175,11 +151,10 @@ export class RdCreditCalculatorForNJ {
      * @param part5DevelopmentTaxCreditCalculationInfo 
      * @returns 
      */
-    buildComputedFields(part4ASCCreditCalculationInfo: any, part5DevelopmentTaxCreditCalculationInfo: any) {
+    buildComputedFields(computeFieldsResp: any) {
         return {
             computed_fields: {
-                part4_asc_credit: part4ASCCreditCalculationInfo,
-                part5_dev_tax_credit: part5DevelopmentTaxCreditCalculationInfo
+                credit_calculation: computeFieldsResp
             }
         }
     }

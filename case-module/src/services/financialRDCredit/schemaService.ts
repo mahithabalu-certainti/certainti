@@ -164,9 +164,9 @@ class RDCreditSchemaService {
                 SELECT 
                     fiscal_year,
                     SUM(total_qre) AS total_qre,
-                    SUM(total_cost_fte_prj) AS total_wages,
-                    SUM(total_cost_nonlabor_prj) AS total_supplies,
-                    SUM(total_cost_subcon_prj) AS total_contract
+                    SUM(total_fte_cost) AS total_wages,
+                    SUM(total_nonlabor_cost) AS total_supplies,
+                    SUM(total_subcon_cost) AS total_contract
                 FROM ${schemaName}.case_history_submission
                 WHERE account_rid = :accountRid AND fiscal_year < :currentFiscalYear
                 GROUP BY fiscal_year

@@ -6,6 +6,7 @@ import { RdCreditCalculatorForCT } from "./ct.rd-credit-calculator";
 import { RdCreditCalculatorForGA } from "./ga.rd-credit-calculator";
 import { RdCreditCalculatorForIL } from "./il.rd-credit-calculator";
 import { RdCreditCalculatorForMA } from "./ma.rd-credit-calculator";
+import { RdCreditCalculatorForOH } from "./oh.rd-credit-calculator";
 
 export const stateCalculators: any = {
     "AZ": new RdCreditCalculatorForAZ(),
@@ -15,5 +16,6 @@ export const stateCalculators: any = {
     "GA": new RdCreditCalculatorForGA(),
     "IL": new RdCreditCalculatorForIL(),
     "MA": new RdCreditCalculatorForMA(),
-    "NJ": new RdCreditCalculatorForNJ()
+    "NJ": new RdCreditCalculatorForNJ(),
+    "OH": new RdCreditCalculatorForOH()
 };
