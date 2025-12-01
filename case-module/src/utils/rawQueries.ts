@@ -1282,7 +1282,7 @@ return query;
     return query;
   }
 
-  export const taskCardDetails = (schemaName : string, taskRid : string, accountRid : string, caseRid : string, checklistItemsStatusRid : string) => {
+  export const taskCardDetails = (schemaName : string, taskRid : string, accountRid : string, caseRid : string, checklistItemsStatusRid : string, activeStatusId : string) => {
     let query =
     `
     WITH fetch_checklists AS (
@@ -1381,7 +1381,7 @@ return query;
     'task_name', ct.task_name,
     'effective_start_datetime', ct.effective_start_datetime,
     'effective_end_datetime', ct.effective_end_datetime,
-    'assigned_to', ct.assigned_to,
+    'assigned_to', ctt.user_rid,
     'priority_rid', ct.priority_rid,
     'task_description', ct.task_description,
     'task_status_rid', ct.task_status_rid,
@@ -1397,6 +1397,7 @@ return query;
     LEFT JOIN aggregate_checklists fci ON fci.task_rid = ct.rid
     LEFT JOIN fetch_task_tags ftt ON ftt.rid = ct.rid
     LEFT JOIN aggregate_workflow_connector w ON w.rid = ct.rid
+    LEFT JOIN ${schemaName}.case_team ctt ON ctt.user_rid = ct.assigned_to AND ctt.role_rid = ct.case_team_member_role_rid AND ctt.case_rid = '${caseRid}' AND ctt.account_rid = '${accountRid}' AND ctt.status_rid = '${activeStatusId}'
     WHERE
     ct.rid = '${taskRid}'
     AND
