@@ -5420,7 +5420,11 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     if(!this.orgDbSequelize) {
       this.orgDbSequelize = await initOrgSequelize()
     }
-    const result = await this.orgDbSequelize.query<CaseTaskQueryType>(fetchCaseSpecificTaskQuery(page, limit, search, sort, sortBy, filter, doSorting, caseRid, accountRid, schemaName, isExport), {type : QueryTypes.SELECT});
+    if(!this.mainDbSequelize) {
+      this.mainDbSequelize = await initMainDbSequelize()
+    }
+    const activeStatusId  : any = await this.mainDbSequelize.query(rawQueries.getActiveStatusId());
+    const result = await this.orgDbSequelize.query<CaseTaskQueryType>(fetchCaseSpecificTaskQuery(page, limit, search, sort, sortBy, filter, doSorting, caseRid, accountRid, schemaName, isExport, activeStatusId[0][0].rid), {type : QueryTypes.SELECT});
     if(result.length > 0) {
       return result;
     } else {
