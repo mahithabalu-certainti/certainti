@@ -1,5 +1,5 @@
 
-import { ICreateRule, ICreateCondition, ICreateAction, ICreateScope, ICreateSchedule, ICreateAudit, ICreateTrigger } from "../../utils/types";
+import { ICreateRule, ICreateCondition, ICreateAction, ICreateScope, ICreateSchedule, ICreateAudit, ICreateTrigger, ICreateRuleMap, ICreateRuleMapWithScope } from "../../utils/types";
 export interface IRulemasterService {
     createRuleMaster(
         ruleRequest: ICreateRule,
@@ -199,5 +199,31 @@ export interface ITriggerservice {
         message: string;
         errorMessage?: string;
         data?: { trigger: any };
+    }>;
+}
+
+
+export interface IRuleMapService {
+    createRuleMap(
+        rulemapRequest: ICreateRuleMap,
+        userId: string
+    ): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: { ruleMap: any };
+    }>;
+}
+
+
+export interface IWorkFlowService {
+    createRuleMapWithScope(
+        rulemapRequest: ICreateRuleMapWithScope,
+        userId: string
+    ): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: { ruleMap: any };
     }>;
 }

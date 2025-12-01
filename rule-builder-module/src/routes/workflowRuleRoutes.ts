@@ -6,7 +6,7 @@ import ScopeController from "../controllers/workflowRuleScopeMapController";
 import AuditController from "../controllers/workflowRuleAuditController";
 import TriggerController from "../controllers/workflowRuleTriggerLogController";
 import ScheduleController from "../controllers/workflowRuleScheduleQueueController";
-import { executeWorkflow } from "../controllers/workflowController";
+import WorkFlowController from "../controllers/workFlowController";
 
 const router = Router();
 
@@ -56,7 +56,7 @@ router.put("/schedule/update", ScheduleController.updateSchedule);
 router.post("/schedule/delete", ScheduleController.deleteSchedule);
 
 //execute
-router.post("/execute", executeWorkflow);
+router.post("/createRuleMap", WorkFlowController.createRuleMapWithScope);
 
 // ConditionGroup
 // router.post("/condition-group", ConditionGroupController.createConditionGroup);

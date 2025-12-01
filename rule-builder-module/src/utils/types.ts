@@ -84,3 +84,21 @@ export interface ICreateTrigger {
     created_by: string,
     modified_by: string
 }
+
+export interface ICreateRuleMap {
+    rule_rid: string;
+    scope_type_rid: string;
+    apply_type: number;
+    created_by: string,
+    modified_by: string
+}
+
+
+export interface ICreateRuleMapWithScope {
+    rule_rid: string;
+    scope_type_rid: string;
+    apply_type: number;
+    scope_entity_rid: string[];
+    created_by: string,
+    modified_by: string
+}

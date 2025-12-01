@@ -16,7 +16,7 @@ export class ScopeService {
     }
 
     /** CREATE a new scope */
-    async createScope(actionRequest: ICreateScope, userId: string): Promise<{
+    async createScope(scopeRequest: ICreateScope, userId: string): Promise<{
         statusCode: number;
         message: string;
         errorMessage?: string;
@@ -29,12 +29,12 @@ export class ScopeService {
         });
         RuleScopeMap.initialize(sequelize);
         const scope = await RuleScopeMap.create({
-            rule_rid: actionRequest.rule_rid,
-            scope_entity_type: actionRequest.scope_entity_type ?? null,
-            scope_entity_rid: actionRequest.scope_entity_rid,
-            is_active: actionRequest.is_active ?? true,
-            created_by: actionRequest.created_by,
-            modified_by: actionRequest.modified_by ?? actionRequest.created_by,
+            rule_rid: scopeRequest.rule_rid,
+            scope_entity_type: scopeRequest.scope_entity_type ?? null,
+            scope_entity_rid: scopeRequest.scope_entity_rid,
+            is_active: scopeRequest.is_active ?? true,
+            created_by: scopeRequest.created_by,
+            modified_by: scopeRequest.modified_by ?? scopeRequest.created_by,
         });
 
         return {

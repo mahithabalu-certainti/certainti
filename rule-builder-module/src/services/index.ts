@@ -1,5 +1,5 @@
 import { Logger } from "winston";
-import { IRulemasterService, IConditionService, IActionService, IScopeService, IScheduleService, IAuditservice, ITriggerservice } from "./interfaces/interface";
+import { IRulemasterService, IConditionService, IActionService, IScopeService, IScheduleService, IAuditservice, ITriggerservice, IRuleMapService, IWorkFlowService } from "./interfaces/interface";
 import { RulemasterService } from "../services/rulemasterService";
 import { ConditionService } from "../services/workflowConditionService";
 import { ActionService } from "../services/workflowActionService";
@@ -7,6 +7,8 @@ import { ScopeService } from "../services/workflowScopeMapService";
 import { ScheduleService } from "../services/workflowScheduleQueueService";
 import { AuditService } from "../services/workflowAuditService";
 import { TriggerService } from "../services/workflowTriggerLogService";
+import { RuleMapService } from "../services/workflowRuleMapService";
+import { WorkFlowService } from "../services/workflowService";
 
 class Services {
   private logger: Logger;
@@ -17,6 +19,8 @@ class Services {
   scheduleService: IScheduleService;
   auditService: IAuditservice;
   triggerService: ITriggerservice;
+  ruleMapService: IRuleMapService;
+  workFlowService: IWorkFlowService;
 
   constructor(logger: Logger) {
     this.logger = logger;
@@ -27,6 +31,8 @@ class Services {
     this.scheduleService = new ScheduleService(logger);
     this.auditService = new AuditService(logger);
     this.triggerService = new TriggerService(logger);
+    this.ruleMapService = new RuleMapService(logger);
+    this.workFlowService = new WorkFlowService(logger);
   }
 }
 

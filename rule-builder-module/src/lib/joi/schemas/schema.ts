@@ -218,6 +218,14 @@ const createTriggerLogSchema = Joi.object({
 });
 
 
+const createRuleMapSchema = Joi.object({
+    scope_type_rid: Joi.string().required(),
+    rule_rid: Joi.string().required(),
+    apply_type: Joi.number().required(),
+    scope_entity_rid: Joi.array().optional(),
+    created_by: Joi.string().required(),
+});
+
 export {
     createRuleSchema,
     listRuleSchema,
@@ -235,5 +243,6 @@ export {
     createSchedulechema,
     updateScheduleSchema,
     createAuditSchema,
-    createTriggerLogSchema
+    createTriggerLogSchema,
+    createRuleMapSchema
 };
