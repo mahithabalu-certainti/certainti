@@ -424,7 +424,7 @@ LEFT JOIN LATERAL (
   WHERE 
         kcd.entity_rid = pf.rid
     AND kcd.is_primary_contact = true
-    AND kcd.key_contact_role= '"${pointOfContactRoleid}"'
+    AND kcd.key_contact_role= '${pointOfContactRoleid}'
   LIMIT 1
 ) AS primary_contact ON true
 
