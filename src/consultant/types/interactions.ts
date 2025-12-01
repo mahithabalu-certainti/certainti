@@ -173,6 +173,8 @@ export type InteractionList = {
   project_count?: string;
   modified_user_name?: string;
   interaction_level_name?: string;
+  project_code?: string;
+  project_name?: string;
 };
 
 export type InteractionTemplateList = {
