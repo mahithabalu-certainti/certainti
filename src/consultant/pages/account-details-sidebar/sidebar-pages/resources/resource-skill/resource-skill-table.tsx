@@ -1,7 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useMemo, useState } from 'react';
 import React from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import {
+  generatePath,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom';
 import { convertResourceSkill } from './resource-skill-type';
 import { ResourceSkillList } from '../../../../../types/resource-skill';
 import {
@@ -13,7 +18,11 @@ import {
 import { useMutation } from '@apollo/client';
 import { UPDATE_RESOURCE_SKILL } from '../../../../../../api/graphql/queries/resource-query';
 import { resourceClient } from '../../../../../../api/graphql/clients/client';
-import { RESOURCESKILL } from '../../../../../../routes';
+import {
+  CHECKLIST_CREATE,
+  NOTES_CREATE,
+  RESOURCESKILL,
+} from '../../../../../../routes';
 import {
   ListTable,
   ManageColumnsPopover,
@@ -54,6 +63,8 @@ interface ResourceSkillTableProps {
   setColumnAnchorEl: React.Dispatch<
     React.SetStateAction<HTMLButtonElement | null>
   >;
+  searchValue?: string;
+  resourceNumber?: string;
 }
 const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
   appliedFilters,
@@ -71,6 +82,8 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
   resourceInActive,
   columnAnchorEl,
   setColumnAnchorEl,
+  searchValue,
+  // resourceNumber,
 }) => {
   const navigate = useNavigate();
   const { accountid } = useParams();
@@ -90,6 +103,8 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
   const apiOrder = skillOrder.toUpperCase() as 'ASC' | 'DESC';
   const { permission } = useSelector((state: RootState) => state.permission);
 
+  const activeMenuPath = searchParams.get('activeMenu') || '';
+
   const {
     data: skillList,
     isLoading,
@@ -101,6 +116,7 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
       sortBy: skillOrderBy,
       sortOrder: apiOrder,
       filters: appliedFilters,
+      search: searchValue,
       accountNumber: accountDetails?.data?.accountById?.r_number,
       resourceRid,
     },
@@ -122,6 +138,16 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
   const attachmentCreateEnable = checkPermission(
     permission || [],
     AllPermissions.ATTACHMENT_CREATE
+  );
+
+  const isNoteCreateEnable = checkPermission(
+    permission,
+    AllPermissions.NOTES_CREATE
+  );
+
+  const isChecklistCreateEnable = checkPermission(
+    permission,
+    AllPermissions.CHECKLIST_CREATE
   );
 
   //permissions
@@ -232,6 +258,36 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
     setSelectedRowId(rowId);
   };
 
+  const handleCreateNote = (row: ResourceSkillList) => {
+    const accountId = accountid ?? '';
+    const path = generatePath(NOTES_CREATE, {
+      module: 'account',
+    });
+    const queryParams = new URLSearchParams({
+      accountId,
+      entityLevel: 'resource_skill',
+      entityId: row.rid || '',
+      source: `Resource Skill > ${row.r_number}`,
+      ...(!activeMenuPath ? {} : { activeMenu: activeMenuPath }),
+    });
+    navigate(`${path}?${queryParams.toString()}`);
+  };
+
+  const handleCreateChecklist = (row: ResourceSkillList) => {
+    const accountId = accountid ?? '';
+    const path = generatePath(CHECKLIST_CREATE, {
+      module: 'account',
+    });
+    const queryParams = new URLSearchParams({
+      accountId,
+      entityLevel: 'resource_skill',
+      entityId: row.rid || '',
+      source: `Resource Skill > ${row.r_number}`,
+      ...(!activeMenuPath ? {} : { activeMenu: activeMenuPath }),
+    });
+    navigate(`${path}?${queryParams.toString()}`);
+  };
+
   const resourceSkillColumns = useMemo(
     () =>
       getResourceSkillColumns(
@@ -244,8 +300,12 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
         permissionMap,
         accountInActive,
         handleAttachmentClick,
+        handleCreateNote,
+        handleCreateChecklist,
         resourceInActive,
-        attachmentCreateEnable
+        attachmentCreateEnable,
+        isNoteCreateEnable,
+        isChecklistCreateEnable
       ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [accountInActive, memoizedSkillSubType, resourceInActive]

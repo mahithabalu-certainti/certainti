@@ -1,3 +1,4 @@
+import { formatMonthDay } from '../../../common-utils';
 import { AccountDetailsResponse } from '../../types';
 import { AttachmentList } from '../../types/attachment';
 
@@ -159,7 +160,9 @@ export const transformAccountData = (
         },
         {
           label: 'Fiscal Start',
-          value: accountDetails?.fiscal_start_date || '-',
+          value: accountDetails?.fiscal_start_date
+            ? formatMonthDay(accountDetails?.fiscal_start_date)
+            : '-',
           // className: `${status === 'active' ? 'text-[#199806]' : 'text-[#f44336]'}`,
           hide:
             !permissionMap?.['fiscal_start_date']?.read &&
@@ -178,7 +181,9 @@ export const transformAccountData = (
         },
         {
           label: 'Fiscal End',
-          value: accountDetails?.fiscal_end_date || '-',
+          value: accountDetails?.fiscal_end_date
+            ? formatMonthDay(accountDetails?.fiscal_end_date)
+            : '-',
           // className: `${status === 'active' ? 'text-[#199806]' : 'text-[#f44336]'}`,
           hide:
             !permissionMap?.['fiscal_end_date']?.read &&
@@ -316,6 +321,7 @@ export interface accountByIdProps {
     industry_name: string;
   };
   business_details: string;
+  country_rid?: string;
   is_parent: boolean;
   parent_account: {
     account_name: string;
@@ -326,6 +332,7 @@ export interface accountByIdProps {
   annual_revenue: string;
   country: {
     country_name: string;
+    country_code: string;
   };
   region_details: {
     state_name: string;

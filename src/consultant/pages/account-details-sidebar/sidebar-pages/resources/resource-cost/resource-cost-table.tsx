@@ -1,7 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useMemo, useState } from 'react';
 import React from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import {
+  generatePath,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom';
 import { useMutation } from '@apollo/client';
 import { UPDATE_RESOURCE_COST } from '../../../../../../api/graphql/queries/resource-query';
 import { ResourceCostList } from '../../../../../types/resource-cost';
@@ -16,7 +21,11 @@ import {
   ShowHideTableColumn,
 } from '../../../../../../components/table/types';
 import { resourceClient } from '../../../../../../api/graphql/clients/client';
-import { RESOURCECOST } from '../../../../../../routes';
+import {
+  CHECKLIST_CREATE,
+  NOTES_CREATE,
+  RESOURCECOST,
+} from '../../../../../../routes';
 import {
   ListTable,
   ManageColumnsPopover,
@@ -60,6 +69,13 @@ interface ResourceCostTableProps {
   setColumnAnchorEl: React.Dispatch<
     React.SetStateAction<HTMLButtonElement | null>
   >;
+  searchValue?: string;
+  resourceNumber?: string;
+}
+
+enum ActionEnum {
+  ACCEPT = 'accept',
+  REJECT = 'reject',
 }
 
 const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
@@ -80,6 +96,8 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
   resourceInActive,
   columnAnchorEl,
   setColumnAnchorEl,
+  searchValue,
+  // resourceNumber,
 }) => {
   const navigate = useNavigate();
   const { accountid } = useParams();
@@ -103,9 +121,12 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
     message: string;
     onConfirm: () => void;
   }>({ isOpen: false, message: '', onConfirm: () => {} });
+  const [actionFlag, setActionFlag] = useState<null | ActionEnum>(null);
   const [fiscalDate, setFiscalDate] = useState<FormFiscalDateType>({
     year: 0,
   });
+
+  const activeMenuPath = searchParams.get('activeMenu') || '';
 
   const account = accountDetails?.data?.accountDetails;
   const accountFiscalDates = {
@@ -125,6 +146,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
       sortBy: costorderBy,
       sortOrder: apiOrder,
       filters: appliedFilters,
+      search: searchValue,
       accountNumber: accountDetails?.data?.accountById?.r_number,
       fiscalYear,
       resourceRid,
@@ -178,6 +200,16 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
     AllPermissions.ATTACHMENT_CREATE
   );
 
+  const isNoteCreateEnable = checkPermission(
+    permission,
+    AllPermissions.NOTES_CREATE
+  );
+
+  const isChecklistCreateEnable = checkPermission(
+    permission,
+    AllPermissions.CHECKLIST_CREATE
+  );
+
   const handleEdit = (cost: ResourceCostList) => {
     const data = convertResourceCost(cost);
     navigate(RESOURCECOST + '/edit/' + cost.r_number, {
@@ -217,21 +249,25 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
   ];
 
   const handleAccept = (row: ResourceCostList) => {
+    setActionFlag(ActionEnum.ACCEPT);
     const payload = {
       rid: row?.rid,
       accountNumber: accountDetails?.data?.accountById?.r_number,
       action: 'accept',
       type: row?.status_name,
     };
+
     updateStatusAccept.mutate(payload, {
       onSuccess: (data) => {
         successToast(data?.statusMessage || 'Status updated successfully');
         refetch();
+        setActionFlag(null);
       },
     });
   };
 
   const handleReject = (row: ResourceCostList) => {
+    setActionFlag(ActionEnum.REJECT);
     const payload = {
       rid: row?.rid,
       accountNumber: accountDetails?.data?.accountById?.r_number,
@@ -242,6 +278,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
       onSuccess: (data) => {
         successToast(data?.statusMessage || 'Status updated successfully');
         refetch();
+        setActionFlag(null);
       },
     });
   };
@@ -264,15 +301,21 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
         label: statusLabel ? `Accept ${statusLabel}` : 'Accept',
         onClick: handleAccept,
         icon: AcceptIcon,
+        loading:
+          actionFlag === ActionEnum.ACCEPT && updateStatusAccept.isPending,
+        disabled: updateStatusAccept.isPending,
         className:
-          'inline-flex items-center gap-1 px-2 py-1 rounded text-[12px] cursor-pointer h-[24px] bg-[#3EA72F1A] hover:bg-[#3EA72F] hover:text-[#fff]',
+          'inline-flex items-center gap-1 px-2 py-1 rounded text-[12px] min-w-[140px] max-w-[140px] cursor-pointer h-[24px] bg-[#3EA72F1A] hover:bg-[#3EA72F] hover:text-[#fff] disabled:opacity-60 disabled:cursor-default',
       },
       {
         label: statusLabel ? `Reject ${statusLabel}` : 'Reject',
         onClick: handleReject,
+        loading:
+          actionFlag === ActionEnum.REJECT && updateStatusAccept.isPending,
+        disabled: updateStatusAccept.isPending,
         icon: RejectIcon,
         className:
-          'inline-flex items-center gap-1 px-2 py-1 rounded text-[12px] cursor-pointer h-[24px] bg-[#FF3C031A] hover:bg-[#FF3C03] hover:text-[#fff]',
+          'inline-flex items-center gap-1 px-2 py-1 rounded text-[12px] cursor-pointer  min-w-[140px] max-w-[140px] h-[24px] bg-[#FF3C031A] hover:bg-[#FF3C03] hover:text-[#fff] disabled:opacity-60 disabled:cursor-default  ',
       },
     ];
   };
@@ -304,6 +347,36 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
 
   const getRowId = (row: ResourceCostList) => row?.rid || '';
 
+  const handleCreateNote = (row: ResourceCostList) => {
+    const accountId = accountid ?? '';
+    const path = generatePath(NOTES_CREATE, {
+      module: 'account',
+    });
+    const queryParams = new URLSearchParams({
+      accountId,
+      entityLevel: 'resource_cost',
+      entityId: row.rid || '',
+      source: `Resource Cost > ${row.r_number}`,
+      ...(!activeMenuPath ? {} : { activeMenu: activeMenuPath }),
+    });
+    navigate(`${path}?${queryParams.toString()}`);
+  };
+
+  const handleCreateChecklist = (row: ResourceCostList) => {
+    const accountId = accountid ?? '';
+    const path = generatePath(CHECKLIST_CREATE, {
+      module: 'account',
+    });
+    const queryParams = new URLSearchParams({
+      accountId,
+      entityLevel: 'resource_cost',
+      entityId: row.rid || '',
+      source: `Resource Cost > ${row.r_number}`,
+      ...(!activeMenuPath ? {} : { activeMenu: activeMenuPath }),
+    });
+    navigate(`${path}?${queryParams.toString()}`);
+  };
+
   const resourceCostColumns = useMemo(
     () =>
       getResourceCostColumns(
@@ -312,10 +385,14 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
         permissionMap,
         accountInActive,
         handleAttachmentClick,
+        handleCreateNote,
+        handleCreateChecklist,
         resourceInActive,
         attachmentCreateEnable,
         handleGetFiscalYear,
-        fiscalDate
+        fiscalDate,
+        isNoteCreateEnable,
+        isChecklistCreateEnable
       ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [accountInActive, fiscalDate, resourceInActive]

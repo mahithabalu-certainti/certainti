@@ -11,7 +11,6 @@ import { PageHeader, SideMenuPanel } from '../../../../components';
 import {
   // ActivitiesIcon,
   AttachmentsSideIcon,
-  CasesIcon,
   ChecklistIcon,
   DetailsIcon,
   FinancialIcon,
@@ -23,6 +22,7 @@ import {
   SettingIcon,
   TechSummaryIcon,
   ConfigIcon,
+  ActivitiesIcon,
 } from '../../../../assets';
 import { useProjectDetail, ProjectTriggerAI } from '../../../services/project';
 import {
@@ -36,10 +36,14 @@ import {
   ProjectTriggerAIPayload,
 } from '../../../types/project';
 import {
+  ActivityListExportURLParams,
+  ActivityType,
+  ChecklistListExportParams,
   ExportType,
   FiscalDates,
   FormFiscalDateType,
   MenuItem,
+  NotesListURLParams,
   ProjectFinancialResourceExportParams,
   TechnicalSummaryExportListParams,
 } from '../../../types';
@@ -49,10 +53,10 @@ import {
   AllPermissions,
 } from '../../../../common-service';
 import { AccessRestricted } from '../../../../components/account-restricted';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { setTemporaryFiscalYear } from '../../../../store/slices/account-slice';
 import { RootState } from '../../../../store/store';
 import { checkPermission, getFiscalDateBounds } from '../../../../common-utils';
-import { NotFound } from '../../../../pages';
 import { ProjectResources } from './project-resources/project-resources';
 import { Attachments } from './attachments';
 import { exportAttachmentsData } from '../../../services/attachments/attachments-service';
@@ -79,6 +83,13 @@ import { resourceClient } from '../../../../api/graphql/clients/client';
 import { UPDATE_QRE_ADJUSTMENT } from '../../../../api/graphql/queries/project-query';
 import { useMutation } from '@apollo/client';
 import { ProjectQreAdjustmentResponse } from '../utils';
+import { Notes } from './notes';
+import { ExportNotesList } from '../../../services/notes/notes-service';
+import { QrePercentHistory } from './qre-percent-history';
+import { ExportChecklistList } from '../../../services/checklist/checklist-service';
+import { Checklist } from './checklist';
+import ProjectActivities from './project-activities/project-activities';
+import { ExportActivityList } from '../../../services/activities/activities-service';
 
 export const ProjectDetails = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -91,6 +102,9 @@ export const ProjectDetails = () => {
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
   const [exportType, setExportType] = useState<ExportType>('attachments');
   const systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+  const detailPageView = activeKey === 'projectDetails';
+
   const [interactionsParams, setInteractionsParams] =
     useState<AttachmentsListExportParams>({
       sortBy: '',
@@ -117,6 +131,7 @@ export const ProjectDetails = () => {
       sortBy: 'resource_code',
       sortOrder: 'ASC',
       filters: {},
+      search: '',
     });
   const [projectResourceParams, setProjectResourceParams] =
     useState<AttachmentsListExportParams>({
@@ -130,6 +145,29 @@ export const ProjectDetails = () => {
       sortOrder: 'ASC',
       filters: {},
     });
+  const [notesParams, setNotesParams] = useState<NotesListURLParams>({
+    page: 1,
+    limit: 100,
+    sortBy: 'r_number',
+    sortOrder: 'ASC',
+    filters: {},
+  });
+
+  const [checklistParams, setChecklistParams] =
+    useState<ChecklistListExportParams>({
+      sortBy: 'r_number',
+      sortOrder: 'ASC',
+      filters: {},
+    });
+
+  const [activityParams, setActivityParams] =
+    useState<ActivityListExportURLParams>({
+      sortBy: 'r_number',
+      sortOrder: 'ASC',
+      filters: {},
+      activity_type: 'all',
+    });
+
   const [fiscalDate, setFiscalDate] = useState<FormFiscalDateType>({
     year: 0,
   });
@@ -179,8 +217,14 @@ export const ProjectDetails = () => {
   const interactionRID = searchParams.get('interaction_rid');
   const interactionsView = !!interactionId || !!interactionRID;
   const technicalSummaryId = searchParams.get('technical_summary_id');
+  const noteView = searchParams.get('note_id');
+  const checklistView = searchParams.get('checklist_id');
 
-  const { data, isLoading, isError, refetch } = useProjectDetail(
+  const activityId = searchParams.get('activity_id');
+  const activityType = searchParams.get('activity_type');
+  const activityViewDetails = !!activityId && !!activityType;
+
+  const { data, isLoading, isError, refetch, isPending } = useProjectDetail(
     accountID,
     projectID || ''
   );
@@ -204,6 +248,13 @@ export const ProjectDetails = () => {
       });
     }
   }, [data]);
+
+  const dispatch = useDispatch();
+  useEffect(() => {
+    if (projectData?.fiscal_year) {
+      dispatch(setTemporaryFiscalYear(projectData.fiscal_year.toString()));
+    }
+  }, [projectData, dispatch]);
 
   const handleQreAdjustmentUpdated = (result: ProjectQreAdjustmentResponse) => {
     const updatedProject = mergeAdjustmentResponse(
@@ -276,6 +327,44 @@ export const ProjectDetails = () => {
     permission,
     AllPermissions.PROJECT_TECHNICAL_SUMMARY_EXPORT
   );
+
+  const isNotesExportEnable = checkPermission(
+    permission,
+    AllPermissions.NOTES_EXPORT
+  );
+
+  const isChecklistsExportEnable = checkPermission(
+    permission,
+    AllPermissions.CHECKLIST_EXPORT
+  );
+
+  const isActivityTaskExportEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_TASK_EXPORT
+  );
+
+  const isActivityCallExportEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_CALL_EXPORT
+  );
+
+  const isActivityEmailExportEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_EMAIL_EXPORT
+  );
+
+  const isActivityMeetingExportEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_MEETING_EXPORT
+  );
+
+  const activityExportPermissionMap: Record<string, boolean> = {
+    task: !!isActivityTaskExportEnable,
+    email: !!isActivityEmailExportEnable,
+    meeting: !!isActivityMeetingExportEnable,
+    call: !!isActivityCallExportEnable,
+  };
+
   const checkExport = () => {
     const list = searchParams.get('list');
     const tab = searchParams.get('tab');
@@ -287,6 +376,22 @@ export const ProjectDetails = () => {
 
     if (list === 'attachments') {
       return !isAttachmentExportEnable;
+    } else if (list === 'notes' && !noteView) {
+      return !isNotesExportEnable;
+    } else if (list === 'checklist' && !checklistView) {
+      return !isChecklistsExportEnable;
+    } else if (list === 'activities' && !activityViewDetails) {
+      const tab = searchParams.get('tab') || 'all';
+      if (tab === 'all') {
+        const canExportAll =
+          isActivityTaskExportEnable ||
+          isActivityEmailExportEnable ||
+          isActivityMeetingExportEnable ||
+          isActivityCallExportEnable;
+
+        return !canExportAll;
+      }
+      return !activityExportPermissionMap[tab];
     } else if (list === 'projectsTask') {
       return !isTaskExportViewEnable;
     } else if (list === 'financial' && tab === 'resource_cost') {
@@ -318,6 +423,9 @@ export const ProjectDetails = () => {
 
     if (
       list !== 'attachments' &&
+      list !== 'notes' &&
+      list !== 'checklist' &&
+      list !== 'activities' &&
       list !== 'financial' &&
       list !== 'projectResources' &&
       list !== 'projectsTask' &&
@@ -337,6 +445,44 @@ export const ProjectDetails = () => {
         ...attachmentParams,
         ...attachmentPayload,
       });
+      return;
+    }
+
+    if (list === 'notes' && exportType === 'notes') {
+      const notePayload = {
+        accountRid: accountID,
+        entityId: projectID,
+        attachmentLevel: 'project',
+      };
+      ExportNotesList('notes', {
+        ...notesParams,
+        ...notePayload,
+      });
+      return;
+    }
+
+    if (list === 'checklist' && exportType === 'checklist') {
+      const checklistPayload = {
+        accountRid: accountID,
+        entityId: projectID,
+        attachmentLevel: 'project',
+      };
+      ExportChecklistList('checklist', {
+        ...checklistParams,
+        ...checklistPayload,
+      });
+      return;
+    }
+    if (exportType === 'activities') {
+      const activityPayload = {
+        accountRid: accountID,
+        entityId: projectID,
+        attachmentLevel: 'project',
+      };
+      ExportActivityList(
+        { ...activityParams, ...activityPayload },
+        activityType as ActivityType
+      );
       return;
     }
 
@@ -391,6 +537,7 @@ export const ProjectDetails = () => {
           filters: interactionsParams?.filters || {},
           timezone: systemTimezone,
           flag: 'project',
+          search: interactionsParams?.search || '',
         };
         exportInteractionsHistory(projectInteractionHistoryExportPayload);
         return;
@@ -407,6 +554,7 @@ export const ProjectDetails = () => {
           filters: interactionsParams?.filters || {},
           timezone: systemTimezone,
           flag: 'project',
+          search: interactionsParams?.search || '',
         };
         exportInteractions(projectInteractionExportPayload);
         return;
@@ -517,7 +665,7 @@ export const ProjectDetails = () => {
       case 'projectDetails':
         return (
           <ProjectDetailsData
-            accountInActive={accountInActive || projectInActive}
+            accountInActive={accountInActive}
             projectDetails={{
               ...projectData!,
               attachment: data?.data?.attachment || [],
@@ -543,6 +691,7 @@ export const ProjectDetails = () => {
             setExportType={setExportType}
             setAttachmentParams={setProjectResourceParams}
             projectCode={projectData?.project_code}
+            projectFiscalYear={projectData?.fiscal_year}
           />
         );
       case 'projectsTask':
@@ -559,9 +708,17 @@ export const ProjectDetails = () => {
             setExportType={setExportType}
             setProjectTaskParams={setProjectTaskParams}
             projectCode={projectData?.project_code}
+            projectFiscalYear={projectData?.fiscal_year}
           />
         );
-
+      case 'qre-percent-history':
+        return (
+          <QrePercentHistory
+            refetchAccountDetails={refetch}
+            accountID={accountID}
+            projectID={projectID}
+          />
+        );
       case 'interactions':
         return (
           <Interactions
@@ -569,6 +726,7 @@ export const ProjectDetails = () => {
             projectDetails={projectData}
             setInteractionsParams={setInteractionsParams}
             isSendInteraction={data?.data?.project?.is_send_interaction}
+            loading={isPending}
           />
         );
       case 'technicalSummary':
@@ -579,12 +737,26 @@ export const ProjectDetails = () => {
             setTechnicalSummaryParams={setTechnicalSummaryParams}
           />
         );
-      case 'cases':
-        return <NotFound />;
       case 'activities':
-        return <NotFound />;
+        return (
+          <ProjectActivities
+            accountInActive={accountInActive || projectInActive}
+            projectFiscalYear={projectData?.fiscal_year}
+            projectCode={projectData?.project_code}
+            setExportType={setExportType}
+            setActivityParams={setActivityParams}
+          />
+        );
       case 'notes':
-        return <NotFound />;
+        return (
+          <Notes
+            accountInActive={accountInActive || projectInActive}
+            setExportType={setExportType}
+            setNotesParams={setNotesParams}
+            projectFiscalYear={projectData?.fiscal_year}
+            projectCode={projectData?.project_code}
+          />
+        );
       case 'attachments':
         return (
           <Attachments
@@ -595,8 +767,16 @@ export const ProjectDetails = () => {
             projectFiscalYear={projectData?.fiscal_year}
           />
         );
-      case 'checklists':
-        return <NotFound />;
+      case 'checklist':
+        return (
+          <Checklist
+            setExportType={setExportType}
+            setChecklistParams={setChecklistParams}
+            accountOrProjectInActive={accountInActive || projectInActive}
+            projectFiscalYear={projectData?.fiscal_year}
+            projectCode={projectData?.project_code}
+          />
+        );
       case 'configuration':
         return <Configuration />;
       default:
@@ -663,19 +843,19 @@ export const ProjectDetails = () => {
         icon: TechSummaryIcon,
       },
       {
-        name: 'Cases',
-        key: 'cases',
-        id: AllMenus.CASES,
+        name: 'Activities',
+        key: 'activities',
+        id: AllModules.ACTIVITIES,
         disabled: false,
-        icon: CasesIcon,
+        icon: ActivitiesIcon,
       },
-      // {
-      //   name: 'Activities',
-      //   key: 'activities',
-      //   id: AllModules.ACTIVITIES,
-      //   disabled: false,
-      //   icon: ActivitiesIcon,
-      // },
+      {
+        name: 'QRE Percent History',
+        key: 'qre-percent-history',
+        id: AllModules.ACTIVITIES,
+        disabled: false,
+        icon: ActivitiesIcon,
+      },
       {
         name: 'Notes',
         key: 'notes',
@@ -692,7 +872,7 @@ export const ProjectDetails = () => {
       },
       {
         name: 'Checklists',
-        key: 'checklists',
+        key: 'checklist',
         id: AllMenus.CHECKLISTS,
         disabled: false,
         icon: ChecklistIcon,
@@ -746,14 +926,14 @@ export const ProjectDetails = () => {
             {
               label: 'RD Assessment',
               onClick: handleTriggerAI,
-              disabled: accountInActive,
+              disabled: accountInActive || projectInActive,
               loading: triggerAIMutation.isPending,
               sx: { ...BUTTON_STYLES, width: '115px', minWidth: '115px' },
               hide: !TriggerAIEnable,
             },
           ]}
           primaryButton={
-            isProjectFieldsEditable
+            isProjectFieldsEditable && !detailPageView
               ? {
                   label: 'Edit',
                   onClick: handleEditAccount,
@@ -775,7 +955,7 @@ export const ProjectDetails = () => {
         loading={isLoading}
         onAdjustmentFactorChange={handleAdjustmentFactor}
       />
-      <div className='flex flex-row flex-1 w-full'>
+      <div className='flex flex-row flex-1 w-full border-b border-[#CBD6E2]'>
         <div
           className={`flex transition-all duration-300 ease-in-out ${
             isCollapsed
@@ -796,7 +976,7 @@ export const ProjectDetails = () => {
         </div>
         <div
           className='flex-1'
-          style={{ maxHeight: 'calc(100vh - 240px)', overflow: 'auto' }}
+          style={{ maxHeight: 'calc(100vh - 283px)', overflow: 'auto' }}
         >
           <Suspense fallback={null}>{renderContent()}</Suspense>
         </div>

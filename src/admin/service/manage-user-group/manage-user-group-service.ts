@@ -5,7 +5,6 @@ import { getUserGroupListUrl } from '../urls';
 import {
   ActiveUserForGroupApiResponse,
   FetchUsersByAccountBody,
-  ProjectListByAccountsApiResponse,
   UserGroupApiResponse,
   UserGroupDetails,
   UserGroupDetailsApiResponse,
@@ -22,6 +21,7 @@ export const fetchManageUserGroupList = async (params: UserListParams = {}) => {
     sortBy: params.sortBy || 'createdAt',
     sortOrder: params.sortOrder || 'DESC',
     filters: params.filters || {},
+    search: params.search || '',
     ...(params.filters && { filters: params.filters }),
     ...(params.searchTerm && { search: params.searchTerm }),
   };
@@ -103,20 +103,6 @@ export const useGetUsersByAccount = () => {
     FetchUsersByAccountBody
   >({
     mutationFn: (body) => fetchUsersByAccount(body),
-  });
-};
-
-export const fetchProjectsByAccount = async (body: UserGroupParam) => {
-  const response = await userServiceApi.post<ProjectListByAccountsApiResponse>(
-    `/api/user_group/projects-of-accounts`,
-    body
-  );
-  return response.data;
-};
-
-export const useGetprojectByAccount = () => {
-  return useMutation<ProjectListByAccountsApiResponse, Error, UserGroupParam>({
-    mutationFn: (body) => fetchProjectsByAccount(body),
   });
 };
 

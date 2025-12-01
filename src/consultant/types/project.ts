@@ -16,6 +16,7 @@ export interface ProjectListParams {
   timezone?: string;
   bothParentAndChild?: boolean;
   apiSource?: string;
+  search?: string;
   accountInteractionId?: string;
 }
 export enum Status {
@@ -49,6 +50,7 @@ export interface NewProjectData {
   r_number?: string;
   account_name: string;
   industry_rid_name?: string;
+  total_nonlabor: string | null;
   start_date?: string | null;
   end_date?: string | null;
   classification?: string | null;
@@ -114,6 +116,7 @@ export interface NewProjectData {
   total_effort_subcon?: string | null;
   total_cost_fte?: string | null;
   total_cost_subcon?: string | null;
+  total_nonlabor_prj?: string | null;
   auto_send_ai_interaction?: boolean | string;
   auto_assessment?: boolean | string;
   auto_access_rd?: boolean;
@@ -213,6 +216,7 @@ export type Project = {
   _level?: number;
   currency_rid?: string;
   rd_percent_final?: string;
+  is_project_exists: boolean;
 };
 export type ProjectFiscalSummary = {
   account_status_name?: string;
@@ -246,10 +250,10 @@ export type ProjectFiscalSummary = {
 };
 
 interface InteractionKeyRecipients {
-  rid: string
-  key_contact_name: string
-  key_contact_email: string
-  is_primary_contact: boolean
+  rid: string;
+  key_contact_name: string;
+  key_contact_email: string;
+  is_primary_contact: boolean;
 }
 
 export type FiscalYearType = {
@@ -266,6 +270,7 @@ export type ProjectTiggerAIResponse = {
 interface ProjectItem {
   account_rid: string;
   project_fiscal_rid: string[];
+  case_rid?: string;
 }
 export type ProjectTriggerAIPayload = {
   data: ProjectItem[];

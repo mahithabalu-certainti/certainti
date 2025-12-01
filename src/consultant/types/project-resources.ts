@@ -15,6 +15,7 @@ export interface ProjectResourcesListParams {
   fiscalYear?: string | number;
   id?: string;
   projectid?: string;
+  search?: string;
 }
 
 export type ProjectResourcesListType = {
@@ -157,19 +158,41 @@ export interface ProjectResourceCodeResponse extends CommonApiResponse {
 export interface ProjectResourceTaskCodeResponse extends CommonApiResponse {
   data: ProjectResourceTaskCodeData[];
 }
-
 interface ProjectResourceCodeData {
   resource_type_rid?: string;
   resource_type_name?: string;
   rid: string;
   resource_code: string;
   resource_name: string;
+  start_date: string;
+  end_date: string;
 }
-interface ProjectResourceTaskCodeData {
+export interface ProjectResourceTaskTypeResponse extends CommonApiResponse {
+  data: {
+    projectTaskTypes?: ProjectResourceType[];
+    projectTaskClassification?: ProjectResourceType[];
+  };
+}
+interface ProjectResourceType {
+  rid: string;
+  modified_by: string;
+  created_by: string;
+  modified_datetime: string;
+  created_datetime: string;
+  project_task_type_name: string;
+  project_task_type_description: string;
+  status: string;
+  classification_name?: string;
+  classification_description?: string;
+  classification_status?: string;
+}
+export interface ProjectResourceTaskCodeData {
   rid: string;
   resource_code: string;
   resource_name: string;
   project_resource_role: string;
+  start_date: string;
+  end_date: string;
 }
 // skill type
 export interface PRSkillSubTypeResponse extends CommonApiResponse {

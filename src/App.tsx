@@ -6,6 +6,7 @@ import { AppLayout, Toast } from './components';
 import { IApp } from './consultant/types';
 import { useToast } from './hooks';
 import { useAuthHook } from './hooks/use-auth';
+import { ErrorBoundary } from './components/error-boundary';
 import {
   ACCOUNT,
   ACCOUNT_CREATE,
@@ -46,6 +47,8 @@ import {
   RESOURCESKILL_CREATE,
   RESOURCESKILL_EDIT,
   USER_EXTENDED_PERMISSION,
+  CASE,
+  CASE_DETAILS,
   INTERACTIONS_CREATE,
   INTERACTIONS_EDIT,
   INTERACTIONS,
@@ -58,12 +61,38 @@ import {
   INTERACTION_TEMPLATES,
   INTERACTION_TEMPLATES_CREATE,
   INTERACTION_TEMPLATES_EDIT,
+  NOTES,
+  NOTES_CREATE,
+  NOTES_EDIT,
+  GLOBAL_NOTES_EDIT,
+  IMPORT_TEMPLATES,
+  EMAIL_TEMPLATES,
+  EMAIL_TEMPLATES_CREATE,
+  EMAIL_TEMPLATES_EDIT,
+  CASE_CREATE,
+  CASE_EDIT,
+  TASK_TEMPLATES,
+  TASK_TEMPLATES_CREATE,
+  TASK_TEMPLATES_EDIT,
+  CHECKLIST_TEMPLATES,
+  CHECKLIST_TEMPLATES_CREATE,
+  CHECKLIST_TEMPLATES_EDIT,
+  CHECKLIST_CREATE,
+  CHECKLIST_EDIT,
+  CASE_INTERACTIONS_CREATE,
+  CASE_INTERACTIONS_EDIT,
+  TASK_TEMPLATES_DETAILS,
+  ACTIVITY_CREATE,
+  ACTIVITY_EDIT,
 } from './routes';
 import { RootState } from './store/store';
 import ProjectTaskForm from './consultant/pages/project/project-details/project-task/form/project-task-form';
 // import { ProjectTask } from './consultant/pages/project/project-details/project-task';
 import ProjectResourceForm from './consultant/pages/project/project-details/project-resources/project-resource-form/project-resource-form';
 import { Attachments } from './consultant/pages';
+import ImportTemplatesList from './admin/pages/import-templates/import-templates';
+import CaseInteractionForm from './consultant/pages/interaction/interaction-form/case-interaction-form';
+import ManageTaskDetails from './admin/pages/task-templates/task-templates-list/details/taskDetails';
 
 // Lazy load all page components
 const ExtendedPermission = lazy(
@@ -161,6 +190,67 @@ const InteractionTemplateForm = lazy(
     import('./admin/pages/interaction-templates/create-template/template-form')
 );
 
+const Notes = lazy(() => import('./consultant/pages/notes/notes-list/notes'));
+const NotesForm = lazy(
+  () => import('./consultant/pages/notes/notes-form/notes-form')
+);
+
+const EmailTemplateList = lazy(
+  () =>
+    import(
+      './admin/pages/email-templates/email-templates-list/email-templates-list'
+    )
+);
+
+const EmailTemplateForm = lazy(
+  () =>
+    import(
+      './admin/pages/email-templates/email-template-form/email-template-form'
+    )
+);
+
+const Case = lazy(() => import('./consultant/pages/case/case-list/cases'));
+const CaseForm = lazy(
+  () => import('./consultant/pages/case/case-form/create-cases')
+);
+const CaseDetails = lazy(
+  () => import('./consultant/pages/case/case-details/case-details')
+);
+
+const ChecklistTemplates = lazy(
+  () =>
+    import(
+      './admin/pages/checklist-templates/checklist-templates/templates-list'
+    )
+);
+
+const ChecklistTemplateForm = lazy(
+  () =>
+    import(
+      './admin/pages/checklist-templates/checklist-template-form/template-form'
+    )
+);
+
+const TaskTemplateList = lazy(
+  () =>
+    import(
+      './admin/pages/task-templates/task-templates-list/task-templates-list'
+    )
+);
+
+const TaskTemplateForm = lazy(
+  () =>
+    import('./admin/pages/task-templates/task-template-form/task-template-form')
+);
+
+const CheckListForm = lazy(
+  () => import('./consultant/pages/checklist/checklist-form/checklist-form')
+);
+
+const ActivityForm = lazy(
+  () => import('./consultant/pages/activities/activities-form/activity-form')
+);
+
 // Loading component for Suspense fallback
 const Loading = () => (
   <div className='flex h-screen w-full items-center justify-center'>
@@ -175,140 +265,218 @@ export const App: React.FC<IApp> = ({ instance }) => {
   const toastProps = useSelector((state: RootState) => state.toast);
 
   return (
-    <MsalProvider instance={instance}>
-      <Suspense fallback={<Loading />}>
-        <BrowserRouter>
-          <Routes>
-            <Route
-              path={LOGIN}
-              element={
-                _isAuthenticated ? (
-                  <Navigate to={MAIN_ROUTE} replace />
-                ) : (
-                  <Login />
-                )
-              }
-            />
+    <ErrorBoundary>
+      <MsalProvider instance={instance}>
+        <Suspense fallback={<Loading />}>
+          <BrowserRouter>
+            <Routes>
+              <Route
+                path={LOGIN}
+                element={
+                  _isAuthenticated ? (
+                    <Navigate to={MAIN_ROUTE} replace />
+                  ) : (
+                    <Login />
+                  )
+                }
+              />
 
-            <Route path={EMAIL_INTERACTION} element={<EmailInteraction />} />
+              <Route path={EMAIL_INTERACTION} element={<EmailInteraction />} />
 
-            <Route element={<ProtectedRoute />}>
-              <Route element={<AppLayout />}>
-                <Route index element={<HomePage />} />
-                <Route index path={ACCOUNT} element={<Accounts />} />
-                <Route path={ACCOUNT_CREATE} element={<AccountForm />} />
-                <Route path={ACCOUNT_EDIT} element={<AccountForm />} />
-                <Route path={ACCOUNT_DETAILS} element={<AccountDetails />} />
-                <Route path={PROJECT} element={<Projects />} />
-                <Route path={PROJECT_DETAILS} element={<ProjectDetails />} />
-                <Route path={PROJECT_CREATE} element={<ProjectForm />} />
-                <Route path={PROJECT_EDIT} element={<ProjectForm />} />
-                <Route path={RESOURCE_CREATE} element={<ResourceForm />} />
-                <Route path={RESOURCE_EDIT} element={<ResourceForm />} />
-                <Route path={RESOURCECOST_CREATE} element={<ResourceForm />} />
-                <Route path={RESOURCESKILL_CREATE} element={<ResourceForm />} />
-                <Route path={RESOURCECOST_EDIT} element={<ResourceForm />} />
-                <Route path={RESOURCESKILL_EDIT} element={<ResourceForm />} />
-                <Route path={RESOURCE} element={<Resource />} />
-                <Route path={PROFILE} element={<Profile />} />
-                <Route
-                  path={PROJECT_TASK_CREATE}
-                  element={<ProjectTaskForm />}
-                />
-                <Route path={PROJECT_TASK_EDIT} element={<ProjectTaskForm />} />
-                <Route
-                  path={PROJECT_RESOURCE_CREATE}
-                  element={<ProjectResourceForm />}
-                />
-                <Route
-                  path={PROJECT_RESOURCE_EDIT}
-                  element={<ProjectResourceForm />}
-                />
-                <Route path={INTERACTIONS} element={<Interaction />} />
-                <Route
-                  path={INTERACTIONS_DETAILS}
-                  element={<ProjectDetails />}
-                />
-                <Route
-                  path={INTERACTIONS_CREATE}
-                  element={<InteractionForm />}
-                />
-                <Route
-                  path={ACCOUNT_INTERACTIONS_CREATE}
-                  element={<AccountInteractionForm />}
-                />
-                <Route
-                  path={GLOBAL_INTERACTIONS_CREATE}
-                  element={<InteractionForm />}
-                />
-                <Route path={INTERACTIONS_EDIT} element={<InteractionForm />} />
-                <Route
-                  path={GLOBAL_INTERACTIONS_EDIT}
-                  element={<InteractionForm />}
-                />
-                <Route path={ATTACHMENTS} element={<Attachments />} />
-                <Route
-                  path={INTERACTION_TEMPLATES}
-                  element={<InteractionTemplates />}
-                />
-                <Route
-                  path={INTERACTION_TEMPLATES_CREATE}
-                  element={<InteractionTemplateForm />}
-                />
-                <Route
-                  path={INTERACTION_TEMPLATES_EDIT}
-                  element={<InteractionTemplateForm />}
-                />
+              <Route element={<ProtectedRoute />}>
+                <Route element={<AppLayout />}>
+                  <Route index element={<HomePage />} />
+                  <Route index path={ACCOUNT} element={<Accounts />} />
+                  <Route path={ACCOUNT_CREATE} element={<AccountForm />} />
+                  <Route path={ACCOUNT_EDIT} element={<AccountForm />} />
+                  <Route path={ACCOUNT_DETAILS} element={<AccountDetails />} />
+                  <Route path={PROJECT} element={<Projects />} />
+                  <Route path={PROJECT_DETAILS} element={<ProjectDetails />} />
+                  <Route path={PROJECT_CREATE} element={<ProjectForm />} />
+                  <Route path={PROJECT_EDIT} element={<ProjectForm />} />
+                  <Route path={RESOURCE_CREATE} element={<ResourceForm />} />
+                  <Route path={RESOURCE_EDIT} element={<ResourceForm />} />
+                  <Route
+                    path={RESOURCECOST_CREATE}
+                    element={<ResourceForm />}
+                  />
+                  <Route
+                    path={RESOURCESKILL_CREATE}
+                    element={<ResourceForm />}
+                  />
+                  <Route path={RESOURCECOST_EDIT} element={<ResourceForm />} />
+                  <Route path={RESOURCESKILL_EDIT} element={<ResourceForm />} />
+                  <Route path={RESOURCE} element={<Resource />} />
+                  <Route path={PROFILE} element={<Profile />} />
+                  <Route path={CASE} element={<Case />} />
+                  <Route path={CASE_DETAILS} element={<CaseDetails />} />
+                  <Route path={CASE_CREATE} element={<CaseForm />} />
+                  <Route path={CASE_EDIT} element={<CaseForm />} />
+                  <Route
+                    path={PROJECT_TASK_CREATE}
+                    element={<ProjectTaskForm />}
+                  />
+                  <Route
+                    path={PROJECT_TASK_EDIT}
+                    element={<ProjectTaskForm />}
+                  />
+                  <Route
+                    path={PROJECT_RESOURCE_CREATE}
+                    element={<ProjectResourceForm />}
+                  />
+                  <Route
+                    path={PROJECT_RESOURCE_EDIT}
+                    element={<ProjectResourceForm />}
+                  />
+                  <Route path={INTERACTIONS} element={<Interaction />} />
+                  <Route
+                    path={INTERACTIONS_DETAILS}
+                    element={<ProjectDetails />}
+                  />
+                  <Route
+                    path={INTERACTIONS_CREATE}
+                    element={<InteractionForm />}
+                  />
+                  <Route
+                    path={ACCOUNT_INTERACTIONS_CREATE}
+                    element={<AccountInteractionForm />}
+                  />
+                  <Route
+                    path={GLOBAL_INTERACTIONS_CREATE}
+                    element={<InteractionForm />}
+                  />
+                  <Route
+                    path={INTERACTIONS_EDIT}
+                    element={<InteractionForm />}
+                  />
+                  <Route
+                    path={GLOBAL_INTERACTIONS_EDIT}
+                    element={<InteractionForm />}
+                  />
+                  <Route
+                    path={CASE_INTERACTIONS_CREATE}
+                    element={<CaseInteractionForm />}
+                  />
+                  <Route
+                    path={CASE_INTERACTIONS_EDIT}
+                    element={<CaseInteractionForm />}
+                  />
+                  <Route path={ATTACHMENTS} element={<Attachments />} />
+                  <Route path={NOTES} element={<Notes />} />
+                  <Route path={NOTES_CREATE} element={<NotesForm />} />
+                  <Route path={NOTES_EDIT} element={<NotesForm />} />
+                  <Route path={GLOBAL_NOTES_EDIT} element={<NotesForm />} />
+                  <Route path={CHECKLIST_CREATE} element={<CheckListForm />} />
+                  <Route path={CHECKLIST_EDIT} element={<CheckListForm />} />
+                  <Route path={ACTIVITY_CREATE} element={<ActivityForm />} />
+                  <Route path={ACTIVITY_EDIT} element={<ActivityForm />} />
+                  {/* Page not found */}
+                  <Route path={NOT_MATCH} element={<NotFound />} />
+                </Route>
+              </Route>
+
+              {/* Admin protected routes */}
+              <Route element={<ProtectedRoute requireAdmin />}>
+                <Route element={<AppLayout />}>
+                  <Route path={ADMIN_MANAGE_USER} element={<UserList />} />
+                  <Route
+                    path={MANAGE_ACCOUNT_ACCESS}
+                    element={<ManageAccountAccess />}
+                  />
+                  <Route
+                    path={MANAGE_SETTINGS}
+                    element={<ConfigureManageSetting />}
+                  />
+                  <Route
+                    path={ADMIN_MANAGE_USER_DETAILS}
+                    element={<ManageUserDetails />}
+                  />
+                  <Route path={ADMIN_CREATE_USER} element={<CreateUser />} />
+                  <Route path={ADMIN_EDIT_USER} element={<CreateUser />} />
+                  <Route
+                    path={USER_EXTENDED_PERMISSION}
+                    element={<ExtendedPermission />}
+                  />
+                  <Route path={MANAGE_PROFILE} element={<ProfileList />} />
+                  <Route
+                    path={MANAGE_PROFILE_CREATE}
+                    element={<CreateProfile />}
+                  />
+                  <Route
+                    path={MANAGE_PROFILE_EDIT}
+                    element={<CreateProfile />}
+                  />
+                  <Route path={MANAGE_USER_GROUP} element={<UserGroupList />} />
+                  <Route
+                    path={MANAGE_USER_GROUP_CREATE}
+                    element={<CreateUserGroup />}
+                  />
+                  <Route
+                    path={MANAGE_USER_GROUP_EDIT}
+                    element={<CreateUserGroup />}
+                  />
+                  <Route
+                    path={INTERACTION_TEMPLATES}
+                    element={<InteractionTemplates />}
+                  />
+                  <Route
+                    path={INTERACTION_TEMPLATES_CREATE}
+                    element={<InteractionTemplateForm />}
+                  />
+                  <Route
+                    path={INTERACTION_TEMPLATES_EDIT}
+                    element={<InteractionTemplateForm />}
+                  />
+                  <Route
+                    path={IMPORT_TEMPLATES}
+                    element={<ImportTemplatesList />}
+                  />
+                  <Route
+                    path={EMAIL_TEMPLATES}
+                    element={<EmailTemplateList />}
+                  />
+                  <Route
+                    path={EMAIL_TEMPLATES_CREATE}
+                    element={<EmailTemplateForm />}
+                  />
+                  <Route
+                    path={EMAIL_TEMPLATES_EDIT}
+                    element={<EmailTemplateForm />}
+                  />
+                  <Route
+                    path={CHECKLIST_TEMPLATES}
+                    element={<ChecklistTemplates />}
+                  />
+                  <Route
+                    path={CHECKLIST_TEMPLATES_CREATE}
+                    element={<ChecklistTemplateForm />}
+                  />
+                  <Route
+                    path={CHECKLIST_TEMPLATES_EDIT}
+                    element={<ChecklistTemplateForm />}
+                  />
+                  <Route path={TASK_TEMPLATES} element={<TaskTemplateList />} />
+                  <Route
+                    path={TASK_TEMPLATES_CREATE}
+                    element={<TaskTemplateForm />}
+                  />
+                  <Route
+                    path={TASK_TEMPLATES_EDIT}
+                    element={<TaskTemplateForm />}
+                  />
+                  <Route
+                    path={TASK_TEMPLATES_DETAILS}
+                    element={<ManageTaskDetails />}
+                  />
+                </Route>
                 {/* Page not found */}
                 <Route path={NOT_MATCH} element={<NotFound />} />
               </Route>
-            </Route>
-
-            {/* Admin protected routes */}
-            <Route element={<ProtectedRoute requireAdmin />}>
-              <Route element={<AppLayout />}>
-                <Route path={ADMIN_MANAGE_USER} element={<UserList />} />
-                <Route
-                  path={MANAGE_ACCOUNT_ACCESS}
-                  element={<ManageAccountAccess />}
-                />
-                <Route
-                  path={MANAGE_SETTINGS}
-                  element={<ConfigureManageSetting />}
-                />
-                <Route
-                  path={ADMIN_MANAGE_USER_DETAILS}
-                  element={<ManageUserDetails />}
-                />
-                <Route path={ADMIN_CREATE_USER} element={<CreateUser />} />
-                <Route path={ADMIN_EDIT_USER} element={<CreateUser />} />
-                <Route
-                  path={USER_EXTENDED_PERMISSION}
-                  element={<ExtendedPermission />}
-                />
-                <Route path={MANAGE_PROFILE} element={<ProfileList />} />
-                <Route
-                  path={MANAGE_PROFILE_CREATE}
-                  element={<CreateProfile />}
-                />
-                <Route path={MANAGE_PROFILE_EDIT} element={<CreateProfile />} />
-                <Route path={MANAGE_USER_GROUP} element={<UserGroupList />} />
-                <Route
-                  path={MANAGE_USER_GROUP_CREATE}
-                  element={<CreateUserGroup />}
-                />
-                <Route
-                  path={MANAGE_USER_GROUP_EDIT}
-                  element={<CreateUserGroup />}
-                />
-              </Route>
-              {/* Page not found */}
-              <Route path={NOT_MATCH} element={<NotFound />} />
-            </Route>
-          </Routes>
-        </BrowserRouter>
-      </Suspense>
-      <Toast onClose={hideToast} {...toastProps} />
-    </MsalProvider>
+            </Routes>
+          </BrowserRouter>
+        </Suspense>
+        <Toast onClose={hideToast} {...toastProps} />
+      </MsalProvider>
+    </ErrorBoundary>
   );
 };

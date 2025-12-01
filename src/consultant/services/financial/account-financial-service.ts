@@ -15,7 +15,7 @@ export const fetchProjectCostList = async (
   const response = await resourceServiceApi.get(url);
   return {
     costs: response.data.data.summaries,
-    count: response.data.data.count,
+    count: response.data.data.totalCount,
   };
 };
 export const useProjectCostList = (

@@ -15,6 +15,7 @@ export const ResourceListURL = ({
   filters,
   limit,
   accountNumber,
+  search,
 }: ResourceListURLParams) => {
   const searchParams = new URLSearchParams();
 
@@ -26,6 +27,7 @@ export const ResourceListURL = ({
   if (filters && Object.keys(filters).length > 0) {
     searchParams.set('filters', JSON.stringify(filters));
   }
+  if (search) searchParams.set('search', search);
 
   return `${baseUrl}/api/resources/list/${accountNumber}/?${searchParams.toString()}`;
 };
@@ -35,6 +37,7 @@ export const ExportResourcelUrl = ({
   fiscalYear,
   rNumber,
   filter,
+  search,
 }: ExportModule): string => {
   const baseUrl = `entityService/api/resources/export/${rNumber}/`;
   const searchParams = new URLSearchParams();
@@ -43,6 +46,7 @@ export const ExportResourcelUrl = ({
   if (sortOrder !== undefined) searchParams.set('sortOrder', sortOrder);
   if (fiscalYear !== undefined) searchParams.set('fiscalYear', fiscalYear);
   if (filter !== undefined) searchParams.set('filters', JSON.stringify(filter));
+  if (search) searchParams.set('search', search);
   const queryString = searchParams.toString();
   return queryString ? `${baseUrl}?${queryString}` : baseUrl;
 };

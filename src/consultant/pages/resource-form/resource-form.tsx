@@ -649,6 +649,7 @@ const ResourceForm: React.FC = () => {
         resource_code: resource?.data.resourceDetails.resource_code,
         user_preference: confirmationState.message ? 'accept' : '',
       };
+
       const costData = transformCostData(updateFormValues, isEditView);
       if (isEditView) {
         updateResourceCost.mutate(costData, {
@@ -931,7 +932,8 @@ const ResourceForm: React.FC = () => {
     fiscalDate,
     resourcePermissionMap,
     resourceCostPermissionMap,
-    resourceSKillPermissionMap
+    resourceSKillPermissionMap,
+    resourceDetails?.is_resource_exists
   );
 
   const isFormLoading =

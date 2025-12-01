@@ -96,7 +96,7 @@ const TableSkeleton: React.FC<TableSkeletonProps> = ({
                 left: selectable ? SELECTABLE_WIDTH : 0,
                 zIndex: 3,
                 background: '#fff',
-                borderLeft: '1px solid #cbd6e2',
+                // borderLeft: '1px solid #cbd6e2',
               }}
             >
               <Box
@@ -106,6 +106,7 @@ const TableSkeleton: React.FC<TableSkeletonProps> = ({
                   borderRadius: '4px',
                   animation: 'pulse 1.5s ease-in-out infinite',
                   bgcolor: '#E4E6E7',
+                  ml: '6px',
                 }}
               />
             </TableCell>

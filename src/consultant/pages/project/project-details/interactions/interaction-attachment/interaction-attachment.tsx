@@ -18,11 +18,13 @@ import {
 interface InteractionAttachmentProps {
   handleBackClick: () => void;
   refresh?: number;
+  searchValue?: string;
 }
 
 const InteractionAttachment: React.FC<InteractionAttachmentProps> = ({
   handleBackClick,
   refresh,
+  searchValue,
 }) => {
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [rowsPerPage, setRowsPerPage] = useState(100);
@@ -47,6 +49,7 @@ const InteractionAttachment: React.FC<InteractionAttachmentProps> = ({
       limit: rowsPerPage,
       account_rid: accountId,
       interaction_rid: interactionId || '',
+      search: searchValue,
     },
     refresh
   );
@@ -162,7 +165,7 @@ const InteractionAttachment: React.FC<InteractionAttachmentProps> = ({
             selectable={false}
             actionWidth={80}
             loading={isLoading}
-            loadindRowCount={4}
+            loadingRowCount={4}
             error={isError ? 'Failed to load data' : undefined}
             rowsPerPageOptions={[25, 50, 100]}
             rowsPerPage={rowsPerPage}

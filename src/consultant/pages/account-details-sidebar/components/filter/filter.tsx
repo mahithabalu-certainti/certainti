@@ -24,6 +24,8 @@ import {
   TextFilterOptionForCostAndSkill,
   textOptionForCostAndSkill,
   textOptions,
+  TimeFilterOption,
+  timeOptions,
 } from './filterType';
 import {
   CurrencySelectFilterControl,
@@ -34,6 +36,7 @@ import {
   StatusFilterControl,
   TextFilterControl,
   TextFilterControlForCostAndSKill,
+  TimeFilterControl,
 } from './helper';
 import {
   applyFilterOnChanges,
@@ -188,6 +191,7 @@ const Filter: React.FC<FilterComponentProps> = ({
     const unListen = () => {
       if (window.location.pathname !== currentPathname) {
         localStorage.removeItem(`allProjects`);
+        clearFilters(value);
         setSelectedSystemFilters([]);
         setCurrentSort(null);
         handleSorting?.('', 'desc');
@@ -323,6 +327,17 @@ const Filter: React.FC<FilterComponentProps> = ({
               date: {
                 ...currentState.date!,
                 option: event.target.value as DateFilterOption,
+              },
+            },
+          };
+        case 'time':
+          return {
+            ...prev,
+            [fieldName]: {
+              ...currentState,
+              time: {
+                ...currentState.time!,
+                option: event.target.value as TimeFilterOption,
               },
             },
           };
@@ -501,6 +516,29 @@ const Filter: React.FC<FilterComponentProps> = ({
     }
   };
 
+  const handleTimeChange = (type: string, fieldName: string, value: string) => {
+    const fieldConfig = filterMenu.find((f) => f.value === fieldName);
+    setFilterStates((prev: any) => {
+      return {
+        ...prev,
+        [fieldName]: {
+          ...prev[fieldName],
+          time: {
+            ...prev[fieldName].time,
+            value: {
+              ...prev[fieldName].time.value,
+              [type]: value,
+            },
+          },
+        },
+      };
+    });
+    // Call onChange if configured
+    if (fieldConfig?.onChange && !fieldConfig.hide) {
+      onFilterChange?.(fieldName, value);
+    }
+  };
+
   const disableDependantFilterFields = (
     filterFieldName: string,
     field: FieldConfig,
@@ -629,7 +667,23 @@ const Filter: React.FC<FilterComponentProps> = ({
             onOptionChange={handleFilterOptionChange}
             onValueChange={handleDateChange}
             mode={mode as 'date' | 'year'}
+            isFutureDateEnabled={field.isFutureDateEnabled}
             // onChange={handleBooleanChange}
+          />
+        );
+      case 'time':
+        return (
+          <TimeFilterControl
+            filterStates={filterStates}
+            menuOption={field.operatorOption || timeOptions}
+            fieldName={field.value}
+            state={fieldState}
+            onOptionChange={handleFilterOptionChange}
+            onValueChange={handleTimeChange}
+            timeFormat={field.timeFormat}
+            minutesStep={field.minutesStep}
+            minTime={field.minTime}
+            maxTime={field.maxTime}
           />
         );
       case 'select':
@@ -715,11 +769,10 @@ const Filter: React.FC<FilterComponentProps> = ({
                     systemFilter.options?.map((field: any) => (
                       <button
                         key={field.value}
-                        className={`border rounded-full px-1.5 h-[24px] text-[12px] font-normal flex items-center gap-0.5 cursor-pointer ${
-                          selectedSystemFilters.includes(field.value)
+                        className={`border rounded-full px-1.5 h-[24px] text-[12px] font-normal flex items-center gap-0.5 cursor-pointer ${selectedSystemFilters.includes(field.value)
                             ? 'bg-[#E6F9EA] border-[#34C759] text-[#0F5132]'
                             : 'border-[#CBD6E2] text-[#425A76] hover:bg-gray-50'
-                        }`}
+                          }`}
                         onClick={() =>
                           handleSystemFilter('system_filter', field.value)
                         }
@@ -745,11 +798,10 @@ const Filter: React.FC<FilterComponentProps> = ({
                     sortFilter.options?.map((field: any) => (
                       <button
                         key={field.value}
-                        className={`border rounded-full px-1.5 h-[24px] text-[12px] font-normal flex items-center gap-0.5 cursor-pointer ${
-                          currentSort === field.value
+                        className={`border rounded-full px-1.5 h-[24px] text-[12px] font-normal flex items-center gap-0.5 cursor-pointer ${currentSort === field.value
                             ? 'bg-[#E6F9EA] border-[#34C759] text-[#0F5132]'
                             : 'border-[#CBD6E2] text-[#425A76] hover:bg-gray-50'
-                        }`}
+                          }`}
                         onClick={() => handleSortingSelection(field.value)}
                       >
                         <CheckedIcon

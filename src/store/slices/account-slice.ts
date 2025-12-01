@@ -56,6 +56,9 @@ export const accountSlice = createSlice({
     setRefetchGlobalAccounts: (state, action: PayloadAction<boolean>) => {
       state.refetchGlobalAccounts = action.payload;
     },
+    setTemporaryFiscalYear(state, action: PayloadAction<string>) {
+      state.fiscalYear = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -81,4 +84,5 @@ export const {
   setFiscalYear,
   resetFilters,
   setRefetchGlobalAccounts,
+  setTemporaryFiscalYear,
 } = accountSlice.actions;

@@ -99,6 +99,7 @@ const Attachments: React.FC<AttachmentsProps> = ({
   const [currentCategory, setCurrentCategory] = useState<string>('');
   const [columnAnchorEl, setColumnAnchorEl] =
     React.useState<HTMLButtonElement | null>(null);
+  const [searchText, setSearchText] = useState('');
 
   const isModalOpen = Boolean(columnAnchorEl);
   const handleColumnVisibility = (
@@ -125,6 +126,7 @@ const Attachments: React.FC<AttachmentsProps> = ({
       accountRid: accountID || '',
       entityId: projectid || '',
       fiscalYear: convertedFiscalYear,
+      search: searchText,
     },
     refreshAttachments
   );
@@ -145,8 +147,9 @@ const Attachments: React.FC<AttachmentsProps> = ({
       sortOrder: sortOrder,
       filters: appliedFilters,
       fiscalYear: convertedFiscalYear,
+      search: searchText,
     });
-  }, [sortField, sortOrder, appliedFilters, convertedFiscalYear]);
+  }, [sortField, sortOrder, appliedFilters, convertedFiscalYear, searchText]);
 
   const handleFilter = () => {
     setShowFilter(!showFilter);
@@ -300,7 +303,8 @@ const Attachments: React.FC<AttachmentsProps> = ({
 
   const attachmentsFilterFields = getAttachmentsFilterFields(
     fieldOptions,
-    permissionMap
+    permissionMap,
+    'project'
   );
 
   const attachmentColumns = useMemo(
@@ -314,7 +318,9 @@ const Attachments: React.FC<AttachmentsProps> = ({
         permissionMap,
         isAttachmentExportEnable,
         categoryTypes.isLoading,
-        accountOrProjectInActive
+        accountOrProjectInActive,
+        undefined,
+        'project'
       ),
     [accountOrProjectInActive, memoizedDocumentTypes]
   );
@@ -451,6 +457,8 @@ const Attachments: React.FC<AttachmentsProps> = ({
         showRefresh={showUploads ? false : true}
         onRefreshClick={onRefreshClick}
         onFilterChange={handleCategory}
+        showSearch={showUploads ? false : true}
+        onSearch={(text) => setSearchText(text)}
       />
       {showUploads ? (
         <Uploads

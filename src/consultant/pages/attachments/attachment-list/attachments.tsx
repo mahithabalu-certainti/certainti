@@ -17,20 +17,26 @@ import {
   useGetAllDocumentInfo,
   useGetDocumentCategoryType,
 } from '../../../../common-service';
-import { checkPermission, getFiscalYears } from '../../../../common-utils';
-import { SelectOption } from '../../../types';
+import {
+  checkPermission,
+  getFiscalYears,
+  reshapeGlobalFilter,
+} from '../../../../common-utils';
+import { FilterState, SelectOption } from '../../../types';
 import { getAttachmentsFilterFields } from '../../../../components/Attachments/helpers';
 import { exportAttachmentsData } from '../../../services/attachments/attachments-service';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
 import { FilterValue } from '../../account-details-sidebar/components/filter/filterType';
 import { AccessRestricted } from '../../../../components/account-restricted';
+import SearchBar from '../../../../components/search/search-bar';
 
 export const Attachments: React.FC = () => {
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({});
   const [page, setPage] = useState<number>(1);
   const [totalCount, setTotalCount] = useState<number>(0);
   const [refreshTrigger, setRefreshTrigger] = useState(Date.now());
+  const [searchText, setSearchText] = useState<string>('');
   const [tableParams, setTableParams] = useState<AttachmentsListURLParams>({
     page: page,
     limit: 100,
@@ -43,6 +49,12 @@ export const Attachments: React.FC = () => {
   const [currentCategory, setCurrentCategory] = useState<string>('');
   const [columnAnchorEl, setColumnAnchorEl] =
     React.useState<HTMLButtonElement | null>(null);
+
+  const { fiscalYear, filters } = useSelector<
+    RootState,
+    { filters: unknown; fiscalYear: string }
+  >((state: RootState) => state.account);
+  const newFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
 
   const onRefreshClick = () => {
     setRefreshTrigger(Date.now());
@@ -109,8 +121,9 @@ export const Attachments: React.FC = () => {
       sortBy: tableParams.sortBy,
       sortOrder: tableParams.sortOrder,
       filters: appliedFilters,
-      fiscalYear: tableParams.fiscalYear,
-      globalFilters: tableParams.globalFilters,
+      fiscalYear: newFiscalYear,
+      globalFilters: reshapeGlobalFilter(filters as FilterState),
+      search: searchText || undefined,
     };
     exportAttachmentsData('all_attachments', projectParams);
   };
@@ -232,6 +245,31 @@ export const Attachments: React.FC = () => {
       </div>
       <div className='flex items-center justify-end h-[34px] min-h-[34px] px-4'>
         <div className='flex gap-1 relative'>
+          <SearchBar
+            initialSearchText={searchText}
+            onSearch={(value) => {
+              setSearchText(value);
+              setTableParams((prevParams) => {
+                const newParams = { ...prevParams };
+                if (value) {
+                  newParams.search = value;
+                } else {
+                  delete newParams.search;
+                }
+                return newParams;
+              });
+            }}
+            placeholder='Search'
+            disabled={false}
+            hide={false}
+            setCurrentPage={(pageNo) => {
+              setPage(pageNo + 1);
+              setTableParams((prev) => ({
+                ...prev,
+                page: pageNo + 1,
+              }));
+            }}
+          />
           <button
             aria-describedby={modalId}
             className={`w-[120px] h-[24px] text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative border border-[#CBD6E2] px-0 py-0 normal-case ${isModalOpen ? 'bg-[#F3F3F3]' : 'bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)]'} hover:text-[#425A76] transition-colors duration-150`}
@@ -270,7 +308,13 @@ export const Attachments: React.FC = () => {
               filterMenu={attachmentsFilterFields}
               setAppliedFilters={setAppliedFilters}
               handleCloseFilter={handleCloseFilter}
-              setCurrentPage={setPage}
+              setCurrentPage={(pageNo) => {
+                setPage(pageNo + 1);
+                setTableParams((prev) => ({
+                  ...prev,
+                  page: pageNo + 1,
+                }));
+              }}
               handleSorting={handleSorting}
               onFilterChange={handleCategory}
             />
@@ -289,6 +333,7 @@ export const Attachments: React.FC = () => {
           setCurrentCategory={setCurrentCategory}
           setColumnAnchorEl={setColumnAnchorEl}
           columnAnchorEl={columnAnchorEl}
+          searchValue={searchText}
         />
       </div>
     </div>

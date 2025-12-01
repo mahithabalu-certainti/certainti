@@ -30,6 +30,7 @@ interface UserTableProps {
   setColumnAnchorEl: React.Dispatch<
     React.SetStateAction<HTMLButtonElement | null>
   >;
+  searchValue?: string;
 }
 export const ManageAccountUserGroupTable: React.FC<UserTableProps> = ({
   appliedFilters,
@@ -38,6 +39,7 @@ export const ManageAccountUserGroupTable: React.FC<UserTableProps> = ({
   hide,
   columnAnchorEl,
   setColumnAnchorEl,
+  searchValue,
 }) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -45,9 +47,18 @@ export const ManageAccountUserGroupTable: React.FC<UserTableProps> = ({
     sortBy: 'frist_name',
     sortOrder: 'ASC',
     entity_type: 'Account',
+    search: searchValue,
     page: 1,
     limit: 100,
   });
+
+  useEffect(() => {
+    setTableParams((prev) => ({
+      ...prev,
+      search: searchValue,
+      page: 1,
+    }));
+  }, [searchValue, appliedFilters]);
 
   const [addedAccounts, setAddedAccounts] = useState<string[]>([]);
   const [groupList, setGroupList] = useState<ManageAccountsGroupList[]>([]);
@@ -63,6 +74,7 @@ export const ManageAccountUserGroupTable: React.FC<UserTableProps> = ({
       sortOrder: tableParams.sortOrder,
       entity_type: 'Account',
       filters: appliedFilters,
+      search: tableParams.search,
     },
     accountId
   );
@@ -241,7 +253,7 @@ export const ManageAccountUserGroupTable: React.FC<UserTableProps> = ({
           hoverHighlight={false}
           tableStyle={{
             height: '100%',
-            maxHeight: 'calc(100vh - 180px)',
+            maxHeight: 'calc(100vh - 230px)',
             overflow: 'auto',
           }}
           stickyHeader
