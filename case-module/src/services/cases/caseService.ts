@@ -2110,7 +2110,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
       else doSorting = true
       const result = await this.caseSchemaService.fetchTaskForCases(data.page, data.limit, data.search, data.sort, data.sort_by, data.filter, doSorting, data.case_rid, data.account_rid, schemaName, isExport);
       if(result.length > 0) {
-        let allFilteredUsers;
+        let allFilteredUsers
         let allCaseTaskStatus;
         const userIds = [...new Set(result.map((d : any) => d.assigned_to))];
         const taskStatusIds = [...new Set(result.map((d : any) => d.task_status_rid))];
