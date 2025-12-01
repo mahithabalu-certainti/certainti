@@ -123,6 +123,15 @@ class SchemaService {
       await this.createNotesTable(schemaName, sequelize);
       await this.createNotesTimeline(schemaName, sequelize);
 
+      await this.createCheckListTable(schemaName, sequelize);
+      await this.createCheckListItemTable(schemaName, sequelize);
+      await this.createActivitiesTable(schemaName, sequelize);
+      await this.createActivityAttachmentsTable(schemaName, sequelize);
+      await this.createActivityHistoryTable(schemaName, sequelize);
+      await this.createTaskHistoryTable(schemaName, sequelize);
+
+      await this.createJustificationTable(schemaName, sequelize);
+      
       await transaction.commit();
     } catch (Err) {
       errorLog("Error creating account tables:", (Err as Error).message);
@@ -1405,6 +1414,14 @@ class SchemaService {
     }
   }
 
+  private async createJustificationTable(schemaName: string, sequelize: Sequelize) {
+    await sequelize.query(rawQueries.getCreateJurisdictionTableQuery(schemaName));
+
+    for (const indexQuery of rawQueries.getCreateJurisdictionsIndexes(schemaName)) {
+      await sequelize.query(indexQuery);
+    }
+  }
+
   private async createNotesTimeline(schemaName: string, sequelize: Sequelize) {
     await sequelize.query(
       rawQueries.getCreateNotesTimelineSequenceQuery(schemaName)
@@ -1429,6 +1446,125 @@ class SchemaService {
       );
     }
   }
+
+  private async createCheckListTable(schemaName: string, sequelize: any) {
+    await sequelize.query(
+      rawQueries.getCheckListSequenceQuery(schemaName)
+    );
+
+    await sequelize.query(
+      rawQueries.getCreateChecklistTableQuery(schemaName)
+    );
+
+    const indexQueries =
+      rawQueries.getCreateChecklistIndexesQueries(schemaName);
+    for (const query of indexQueries) {
+      await sequelize.query(query);
+    }
+  }
+  private async createCheckListItemTable(schemaName: string, sequelize: any) {
+
+  await sequelize.query(
+    rawQueries.getCreateCheckListItemTableQuery(schemaName)
+  );
+
+  const indexQueries =
+    rawQueries.getCreateCheckListItemIndexesQueries(schemaName);
+  for (const query of indexQueries) {
+    await sequelize.query(query);
+  }
+}
+
+ private async createActivitiesTable(schemaName: string, sequelize: any) {
+    await sequelize.query(
+      rawQueries.getActivitiesSequenceQuery(schemaName)
+    );
+
+    await sequelize.query(
+      rawQueries.getCreateActivitiesTableQuery(schemaName)
+    );
+
+    const indexQueries =
+      rawQueries.getCreateActivitiesIndexesQueries(schemaName);
+    for (const query of indexQueries) {
+      await sequelize.query(query);
+    }
+  }
+ private async createActivityAttachmentsTable(schemaName: string, sequelize: any) {
+    await sequelize.query(
+      rawQueries.getActivityAttachmentsSequenceQuery(schemaName)
+    );
+
+    await sequelize.query(
+      rawQueries.getCreateActivityAttachmentsTableQuery(schemaName)
+    );
+
+    const indexQueries =
+      rawQueries.getCreateActivityAttachmentsIndexesQueries(schemaName);
+    for (const query of indexQueries) {
+      await sequelize.query(query);
+    }
+  }
+ private async createActivityHistoryTable(
+    schemaName: string,
+    sequelize: any
+  ) {
+    await sequelize.query(
+      rawQueries.getCreateActivityHistorySequenceQuery(schemaName)
+    );
+
+    await sequelize.query(
+      rawQueries.getCreateActivityHistoryTableQuery(schemaName)
+    );
+
+    await sequelize.query(
+      rawQueries.getAlterActivityHistoryForeignKeysQuery(schemaName)
+    );
+
+    const fieldsToIndex = [
+      "activity_rid",
+      "account_rid",
+      "activity_type",
+      "created_by",
+      "modified_by",
+      "created_datetime",
+      "modified_datetime"
+    ];
+  
+    for (const field of fieldsToIndex) {
+      await sequelize.query(
+        rawQueries.getInteractionHistoryIndexQuery(schemaName, field)
+      );
+    }
+  }
+
+   private async createTaskHistoryTable(
+    schemaName: string,
+    sequelize: any
+  ) {
+    await sequelize.query(
+      rawQueries.getCreateTaskHistorySequenceQuery(schemaName)
+    );
+
+    await sequelize.query(
+      rawQueries.getCreateTaskHistoryTableQuery(schemaName)
+    );
+
+    const fieldsToIndex = [
+      "task_rid",
+      "created_by",
+      "modified_by",
+      "created_datetime",
+      "modified_datetime"
+    ];
+  
+    for (const field of fieldsToIndex) {
+      await sequelize.query(
+        rawQueries.getInteractionHistoryIndexQuery(schemaName, field)
+      );
+    }
+  }
+
 
   async insertAccountDetails(
     account_number: string,

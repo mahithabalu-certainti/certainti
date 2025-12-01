@@ -570,6 +570,16 @@ export class AttachmentService {
         allAttachments.push(...resourceCostSkillAttachments);
       }
 
+      // 🔷 Case logic
+      else if (attachmentLevel === "case" && entityId) {
+        const caseAttachments = await fetchAttachments(
+          AttachmentModel,
+          "case",
+          [entityId]
+        );
+        allAttachments.push(...caseAttachments);
+      }
+
       // 🔷 Other direct levels
       else {
         if (!whereClause[Op.and]) {
@@ -2367,7 +2377,11 @@ private async getAttachmentDisplayNames(attachments: any[], schemaNumber: string
         case 'resource_skill': 
           const resourceSkill = await this.projectIngestionService.fetchResourceSkillById(schemaNumber, attachment.attach_to);
           displayNames[attachment.rid] = (resourceSkill as { r_number?: string })?.r_number || attachment.attach_to;
-          break;       
+          break;     
+        case 'case': 
+          const cases = await this.projectIngestionService.fetchCaseById(schemaNumber, attachment.attach_to);
+          displayNames[attachment.rid] = (cases as { case_name?: string })?.case_name || attachment.attach_to;
+          break;     
         default:
           displayNames[attachment.rid] = attachment.attach_to;
       }

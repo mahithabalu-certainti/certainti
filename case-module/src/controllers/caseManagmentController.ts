@@ -14,16 +14,22 @@ import {
 } from "../utils/helpers";
 import {
   adminCheckListMappings,
+  emailTemplateMappings,
   HttpStatus,
   STATUS_MESSAGE,
+  taskTemplateFieldMappings,
 } from "../utils/constants";
 import {
   adminChecklistSchema,
   createCaseSchema,
+  createEmailTemplateSchema,
   createTaskTemplateSchema,
   exportAdminCheckListByIdSchema,
+  exportEmailTemplateSchema,
   listAdminCheckListSchema,
+  listEmailTemplateSchema,
   updateAdminChecklistSchema,
+  updateEmailTemplateSchema,
   updateTaskTemplateSchema,
 } from "../lib/joi/schemas/schema";
 import configurations from "../config/config";
@@ -399,25 +405,14 @@ async function exportAdminCheckList(req: Request, res: Response) {
            allowedFieldSet.add(field.field_name);
          }
        }
-       const isValidTZ = value.timezone && isValidTimezone(value.timezone);
-
-       
-       const formatDate = (date?: Date | string) => {
-        if (!date) return null;
-        
-        // Convert string to Date object if needed
-        const dateObj = typeof date === 'string' ? new Date(date) : date;
-        
-        // Check if the date is valid
-        if (isNaN(dateObj.getTime())) return null;
-        
-        const offsetMs = (5 * 60 + 30) * 60 * 1000;
-        const convertedDate = new Date(dateObj.getTime() + offsetMs);
-        return moment
-          .utc(convertedDate)
-          .tz(isValidTZ ? value.timezone : "UTC")
-          .format("YYYY-MMM-DD, hh:mm:ss A");
-       };
+        const isValidTZ = value.timezone && isValidTimezone(value.timezone);
+           const formatDate = (date?: Date) => {
+             if (!date) return null;
+             
+             return moment(date)
+               .tz(isValidTZ ? value.timezone : "UTC")
+               .format("YYYY-MMM-DD, hh:mm:ss A");
+           };
        if (result.statusCode === HttpStatus.SUCCESS) {
          const finalStructuredData =
            result?.data?.checklist.length < 1
@@ -612,7 +607,7 @@ async function createTaskTemplate (req : Request, res : Response) : Promise<any>
       }`
     );
     // Validate request body against the defined schema
-    const value = await validateRequest(req, createTaskTemplateSchema, res);
+    const value = req.body
      const userId = req.headers["x-user-id"] as string;
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
@@ -797,7 +792,7 @@ async function updateTaskTemplate (req : Request, res : Response) : Promise<any>
       }`
     );
     // Validate request body against the defined schema
-    const value = await validateRequest(req, updateTaskTemplateSchema, res);
+    const value = req.body;
      const userId = req.headers["x-user-id"] as string;
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
@@ -903,11 +898,11 @@ async function fetchAdminTaskTemplateList (req : Request, res : Response) {
     }
     const data = req.body;
     let result = await caseManagementService.fetchTaskTemplate(data, false, false, null);
-    let totalRecord = parseInt(result.data[0].total_result)
-    result.data.forEach((d : any) => {
-      delete d.total_result
-    })
     if(result.statusCode == HttpStatus.SUCCESS) {
+      let totalRecord = parseInt(result.data[0].total_result)
+      result.data.forEach((d : any) => {
+        delete d.total_result
+      })
       const finalData = {
         page : data.page,
         limit : data.limit,
@@ -964,10 +959,9 @@ async function ExportAdminTaskTemplateList (req : Request, res : Response) {
     }
     const data = req.body;
     let result = await caseManagementService.fetchTaskTemplate(data, true, false, null);
-    let totalRecord = parseInt(result.data[0].total_result)
     const fields = await caseService.getAllowedExportFields(
     userId,
-    "admin_checklist_view_edit"
+    "task_templates_view_edit"
     );
     const allowedFieldSet = new Set<string>();
     for (const field of fields) {
@@ -975,43 +969,55 @@ async function ExportAdminTaskTemplateList (req : Request, res : Response) {
         allowedFieldSet.add(field.field_name);
       }
     }
-    const isValidTZ = data.timezone && isValidTimezone(data.timezone);
-    const formatDate = (date?: Date) => {
-      const offsetMs = (5 * 60 + 30) * 60 * 1000;
-      const convertedDate = new Date(date?.getTime() ?? "" + offsetMs);
-      return date
-        ? moment
-            .utc(convertedDate)
+     const isValidTZ = data.timezone && isValidTimezone(data.timezone);
+        const formatDate = (date?: Date) => {
+          if (!date) return null;
+          
+          return moment(date)
             .tz(isValidTZ ? data.timezone : "UTC")
-            .utcOffset("-05:30")
-            .format("YYYY-MMM-DD, hh:mm:ss A")
-        : null;
-    };
+            .format("YYYY-MMM-DD, hh:mm:ss A");
+      };    
     if(result.statusCode == HttpStatus.SUCCESS) {
       const finalData = result.data.map((d : any) => {
-        return {
+        let resultMap : { [key: string]: any } =  {
           "Template ID" : d.r_number,
           "Task Name" : d.task_name,
-          "Efforts (Hrs)" : d.effort_in_days || "-",
+          "Effort In Days": d.effort_in_days || "-",
+          "Task Type": d.task_type_name || "-",
+          "Milestone Name": d.milestone_name || "-",
+          "Assign Role": d.role_name || "-",
+          "Priority": d.priority_name || "-",
+          "Checklist": d.checklist_name || "-",
+          "Task Category" : d.category_name,
+          "Task Weightage": d.weightage_value || "-",
+          "Status": d.status_name,
+          "Task Description": d.task_description || "-",
           "Created By" : d.created_by_name || "-",
           "Created On" : d.created_datetime
-                        ? data.timezone && isValidTimezone(data.timezone)
-                          ? moment.tz(d.created_datetime.toISOString(), data.timezone)
-                              .format("YYYY-MMM-DD, hh:mm:ss A")
-                          : moment(d.created_datetime.toISOString())
-                              .tz(data.timezone)
-                              .format("YYYY-MMM-DD, hh:mm:ss A")
-                        : "-",
-          "Modified By": d.modified_by_name || "-",
+          ? data.timezone && isValidTimezone(data.timezone)
+            ? moment.tz(d.created_datetime.toISOString(), data.timezone)
+                .format("YYYY-MMM-DD, hh:mm:ss A")
+            : moment(d.created_datetime.toISOString())
+                .tz(data.timezone)
+                .format("YYYY-MMM-DD, hh:mm:ss A")
+          : "-",
+          "Updated By": d.modified_by_name || "-",
           "Updated On": d.modified_datetime
-                        ? data.timezone && isValidTimezone(data.timezone)
-                          ? moment.tz(d.modified_datetime.toISOString(), data.timezone)
-                              .format("YYYY-MMM-DD, hh:mm:ss A")
-                          : moment(d.modified_datetime.toISOString())
-                              .tz(data.timezone)
-                              .format("YYYY-MMM-DD, hh:mm:ss A")
-                        : "-"
+          ? data.timezone && isValidTimezone(data.timezone)
+            ? moment.tz(d.modified_datetime.toISOString(), data.timezone)
+                .format("YYYY-MMM-DD, hh:mm:ss A")
+            : moment(d.modified_datetime.toISOString())
+                .tz(data.timezone)
+                .format("YYYY-MMM-DD, hh:mm:ss A")
+          : "-"
         }
+        const exportRecord: Record<string, any> = {};
+        taskTemplateFieldMappings.forEach((mapping) => {
+          if (allowedFieldSet.has(mapping.permissionField)) {
+            exportRecord[mapping.exportField] = resultMap[mapping.exportField];
+          }
+        });
+        return exportRecord;
       })
       const generateBase64Response = await generateExcelBase64(
            finalData,
@@ -1032,7 +1038,6 @@ async function ExportAdminTaskTemplateList (req : Request, res : Response) {
       })  
     }
   } catch (err) {
-    // Handle unexpected errors (system failures, network issues, etc.)
     const error = err as Error;
     errorLog(methodName, error.message);
     handleErrorResponse(
@@ -1044,6 +1049,7 @@ async function ExportAdminTaskTemplateList (req : Request, res : Response) {
     return;
   }
 }
+
 
 async function fetchAllTaskTypes (req : Request, res : Response) {
   const methodName = "fetchAllTaskTypes";
@@ -1123,12 +1129,13 @@ async function exportCheckListTemplateById(req: Request, res: Response) {
       }
     }
     const isValidTZ = data.timezone && isValidTimezone(data.timezone);
-    const formatDate = (date?: Date) =>
-      date
-        ? moment(date)
-            .tz(isValidTZ ? data.timezone : "UTC")
-            .format("YYYY-MM-DD, hh:mm:ss A")
-        : null;
+    const formatDate = (date?: Date) => {
+             if (!date) return null;
+             
+             return moment(date)
+               .tz(isValidTZ ? data.timezone : "UTC")
+               .format("YYYY-MMM-DD, hh:mm:ss A");
+           };
     const response = result.data?.checklistDetails;
     if (result.statusCode == HttpStatus.SUCCESS) {
       const workbook = new ExcelJS.Workbook();
@@ -1250,6 +1257,808 @@ async function fetchTaskTemplateDetails (req : Request, res : Response) {
   }
 }
 
+async function createEmailTemplate(req: Request, res: Response): Promise<void> {
+  const methodName = "Create email template";
+  try {
+    // Log the incoming request for audit and debugging purposes
+    logMessage(
+      `[${methodName}] Request received, ${JSON.stringify(req.body)} userId: ${
+        req.headers["x-user-id"]
+      }`
+    );
+    
+    // Validate request body against the defined schema
+    const value = await validateRequest(req, createEmailTemplateSchema, res);
+    
+    // Extract and validate user ID from request headers
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    
+    // Ensure request body validation passed
+    if (!value) {
+      errorLog(methodName, "Request body is empty");
+      return;
+    }
+    
+    // Call the service layer to create the email template
+    const cases = await caseManagementService.createEmailTemplate(value, userId);
+    
+    // Handle successful checklist creation
+    if (cases.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleCustomResponse(res, cases.data, cases.message);
+      return;
+    } else {
+      // Handle service-level errors (business logic failures)
+      errorLog(methodName, cases.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        cases.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    // Handle unexpected errors (system failures, network issues, etc.)
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+async function updateEmailTemplate(req: Request, res: Response): Promise<void> {
+  const methodName = "Update email template";
+  try {
+    // Log the incoming request for audit and debugging purposes
+    logMessage(
+      `[${methodName}] Request received, ${JSON.stringify(req.body)} userId: ${
+        req.headers["x-user-id"]
+      }`
+    );
+    
+    // Validate request body against the defined schema
+    const value = await validateRequest(req, updateEmailTemplateSchema, res);
+    
+    // Extract and validate user ID from request headers
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    
+    // Ensure request body validation passed
+    if (!value) {
+      errorLog(methodName, "Request body is empty");
+      return;
+    }
+    
+    // Call the service layer to update the email template
+    const cases = await caseManagementService.updateEmailTemplate(value, userId);
+    
+    // Handle successful email template update
+    if (cases.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleCustomResponse(res, cases.data, cases.message);
+      return;
+    } else {
+      // Handle service-level errors (business logic failures)
+      errorLog(methodName, cases.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        cases.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    // Handle unexpected errors (system failures, network issues, etc.)
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+async function getEmailPlaceHolders(req : Request, res : Response) {
+  const methodName = "Get Email PlaceHolders";
+  try {
+    const result = await caseManagementService.getEmailPlaceHolders();
+    if(result.statusCode == HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.categoryPlaceHolderSuccess,
+        data : result.data
+      })
+    } else {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.dataNotAvailable,
+        data : []
+      })    
+    }
+  } catch (err) {
+    // Handle unexpected errors (system failures, network issues, etc.)
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+async function getEmailTemplateCategory(req : Request, res : Response) {
+  const methodName = "Get Email PlaceHolders";
+  try {
+    const result = await caseManagementService.getEmailTemplateCategory();
+    if(result.statusCode == HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.categoryPlaceHolderSuccess,
+        data : result.data
+      })
+    } else {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.dataNotAvailable,
+        data : []
+      })    
+    }
+  } catch (err) {
+    // Handle unexpected errors (system failures, network issues, etc.)
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+
+async function listEmailTemplates(req: Request, res: Response) {
+  try {
+    const methodName = "List Email Templates";
+
+    const userId = req.headers["x-user-id"] as string;
+    const value = await validateRequest(req, listEmailTemplateSchema, res, "GET");
+    if (!value) return;
+    let parsedFilters: Record<string, any> = {};
+
+    try {
+      parsedFilters = JSON.parse(value.filters);
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid filters format. Must be a valid JSON object."
+      );
+    }
+
+    logMessage(
+      `[${methodName}] Request received, ${JSON.stringify(
+        req.body
+      )} userId: ${userId}`
+    );
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    
+    const result = await caseManagementService.listEmailTemplates(
+      value,
+      parsedFilters,
+      userId,
+      "list"
+    );
+    if (result.statusCode == HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, result.data);
+      return;
+    } else {
+      errorLog(methodName, "No data found");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        result.errorMessage
+      );
+      return;
+    }
+  } catch (error: any) {
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+
+async function listAllEmailTemplatesByCategory(req: Request, res: Response) {
+  try {
+    const methodName = "List Email Templates By Category";
+
+    const userId = req.headers["x-user-id"] as string;
+    const value = await validateRequest(req, listEmailTemplateSchema, res, "GET");
+    if (!value) return;
+    let parsedFilters: Record<string, any> = {};
+
+    try {
+      parsedFilters = JSON.parse(value.filters);
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid filters format. Must be a valid JSON object."
+      );
+    }
+
+    logMessage(
+      `[${methodName}] Request received, ${JSON.stringify(
+        req.body
+      )} userId: ${userId}`
+    );
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    
+    const result = await caseManagementService.listEmailTemplatesByCategory(
+      value,
+      userId
+    );
+    if (result.statusCode == HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, result.data);
+      return;
+    } else {
+      errorLog(methodName, "No data found");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        result.errorMessage
+      );
+      return;
+    }
+  } catch (error: any) {
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+
+async function exportEmailTemplates(req: Request, res: Response) {
+  try {
+    const methodName = "Export Email Templates";
+    const userId = req.headers["x-user-id"] as string;
+    const value = await validateRequest(req, exportEmailTemplateSchema, res, "GET");
+    if (!value) return;
+    let parsedFilters: Record<string, any> = {};
+
+    try {
+      parsedFilters = JSON.parse(value.filters);
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid filters format. Must be a valid JSON object."
+      );
+    }
+
+    logMessage(
+      `[${methodName}] Request received, ${JSON.stringify(
+        req.body
+      )} userId: ${userId}`
+    );
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+
+    const result = await caseManagementService.listEmailTemplates(
+      value,
+      parsedFilters,
+      userId,
+      "download"
+    );
+     const fields = await caseService.getAllowedExportFields(
+         userId,
+         "email_templates_view_edit"
+       );
+       const allowedFieldSet = new Set<string>();
+       for (const field of fields) {
+         if (field.read) {
+           allowedFieldSet.add(field.field_name);
+         }
+       }
+       const isValidTZ = value.timezone && isValidTimezone(value.timezone);
+
+       
+       const formatDate = (date?: Date) => {
+             if (!date) return null;
+             
+             return moment(date)
+               .tz(isValidTZ ? value.timezone : "UTC")
+               .format("YYYY-MMM-DD, hh:mm:ss A");
+           };
+       if (result.statusCode === HttpStatus.SUCCESS) {
+         const finalStructuredData =
+           result?.data?.emailTemplates.length < 1
+             ? []
+             : result?.data?.emailTemplates.map((d: any) => {
+                 let resultMap: { [key: string]: any } = {
+                   r_number: d.r_number,
+                   status_name: d.status_name,
+                   email_template_name: d.template_name,
+                   description: d.description,
+                   category_rid: d.category_name,
+                   created_by: d.created_user_name,
+                   created_datetime: formatDate(d?.created_datetime),
+                   modified_by: d.modified_user_name,
+                   modified_datetime:
+                     d?.modified_datetime == null
+                       ? ""
+                       : formatDate(d.modified_datetime) 
+                 };
+   
+                 // Build exportRecord using allowed fields and resultMap
+                 const exportRecord: Record<string, any> = {};
+                 emailTemplateMappings.forEach((mapping) => {
+                   if (allowedFieldSet.has(mapping.permissionField)) {
+                     exportRecord[mapping.exportField] =
+                       resultMap[mapping.dataField];
+                   }
+                 });
+   
+                 return exportRecord;
+               });
+   
+         const generateBase64Response = await generateExcelBase64(
+           finalStructuredData,
+           "EmailTemplates"
+         );
+         handleSuccessResponse(res, generateBase64Response);
+       } else {
+         errorLog(methodName, "No data found");
+         handleErrorResponse(
+           res,
+           HttpStatus.BAD_REQUEST,
+           HttpStatus.BAD_REQUEST_MESSAGE,
+           result.errorMessage
+         );
+        }
+  } catch (error: any) {
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+
+async function getEmailTemplateDetailsById(
+  req: Request,
+  res: Response
+): Promise<void> {
+  const methodName = "Get email template details";
+  try {
+    const { emailTemplateRid } = req.params;
+    const userId = req.headers["x-user-id"] as string;
+    logMessage(`[${methodName}] Request received,  emailTemplateRid: ${emailTemplateRid} userId: ${userId}`);
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+
+    if (!emailTemplateRid) {
+      errorLog(methodName, "Email Template ID is required in params");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "Email Template ID is required in params"
+      );
+      return;
+    }
+    let emailTemplateResponse;
+   emailTemplateResponse =
+        await caseManagementService.getEmailTemplateDetailsById(
+          emailTemplateRid
+        );
+
+    if (emailTemplateResponse.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, emailTemplateResponse.data);
+      return;
+    } else {
+      errorLog(methodName, emailTemplateResponse.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        emailTemplateResponse.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+async function getEmailCategoryPlaceHolders(req : Request, res : Response) {
+  const methodName = "Get Email Category PlaceHolders";
+  try {
+    const { categoryRid } = req.params;
+    if (!categoryRid) {
+      errorLog(methodName, "Category RID is required in params");
+      handleErrorResponse(  
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "Category RID is required in params"
+      );
+      return;
+    }
+    const result = await caseManagementService.getEmailCategoryPlaceHolders(categoryRid);
+    if(result.statusCode == HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.categoryPlaceHolderSuccess,
+        data : result.data
+      })
+    } else {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.dataNotAvailable,
+        data : []
+      })    
+    }
+  } catch (err) {
+    // Handle unexpected errors (system failures, network issues, etc.)
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+async function getWorkFlowConnector (req : Request, res : Response) {
+  const methodName = "getWorkFlowConnector"
+  try {
+    const userId = req.headers["x-user-id"] as string;    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const result = await caseManagementService.getWorkflowConnetorData();
+    if(result.statusCode == HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.workflowConnectorListSuccess,
+        data : result.data
+      })
+    } else {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.dataNotAvailable,
+        data : []
+      })    
+    }    
+  } catch (error) {
+    
+  }
+}
+
+async function linkAdminTask (req : Request, res : Response) {
+  const methodName = "linkAdminTask";
+  try {
+   const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const data = req.body;
+    data.created_by = userId
+    const result = await caseManagementService.linkTask(data); 
+    if(result.statusCode === HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: result.statusMessage,
+      });
+    } 
+    else if (result.statusCode === HttpStatus.NOT_FOUND) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: result.statusMessage,
+      });
+    }
+    else if (result.statusCode === HttpStatus.BAD_REQUEST) {
+      return res.status(HttpStatus.BAD_REQUEST).json({
+        statusCode: HttpStatus.BAD_REQUEST,
+        statusCodeValue: HttpStatus.BAD_REQUEST_MESSAGE,
+        statusMessage: result.statusMessage,
+      });
+    }
+    else {
+      return res.status(HttpStatus.FAILED).json({
+        statusCode: HttpStatus.FAILED,
+        statusCodeValue: HttpStatus.FAILED_MESSAGE,
+        statusMessage: result.statusMessage,
+      });
+    }
+  } catch (error: any) {
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+
+async function linkAdminDeleteTask (req : Request, res : Response) {
+  const methodName = "linkAdminDeleteTask";
+  try {
+   const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const data = req.body;
+    data.created_by = userId
+    const result = await caseManagementService.deleteLinkTask(data); 
+    if(result?.statusCode === HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: result.statusMessage,
+      });
+    } 
+    else if (result?.statusCode === HttpStatus.NOT_FOUND) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: result.statusMessage,
+      });
+    }
+    else {
+      return res.status(HttpStatus.FAILED).json({
+        statusCode: HttpStatus.FAILED,
+        statusCodeValue: HttpStatus.FAILED_MESSAGE,
+        statusMessage: result?.statusMessage,
+      });
+    }
+  } catch (error: any) {
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+
+async function listAdminTaskDropdown (req : Request, res : Response) {
+  const methodName = "listAdminTaskDropdown";
+  try {
+   const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const data = req.body;
+    const result = await caseManagementService.adminTaskListForDropdown(data); 
+    if(result.length > 0) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: STATUS_MESSAGE.taskTemplateSuccess,
+        data : result
+      });
+    } 
+    else {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: STATUS_MESSAGE.dataNotAvailable,
+        data : []
+      });
+    }
+  } catch (error: any) {
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+async function listAdminTaskWeightage (req : Request, res : Response) {
+  const methodName = "listAdminTaskWeightage";
+  try {
+   const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const result = await caseManagementService.getWeightageList(); 
+    if(result.statusCode === HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: STATUS_MESSAGE.taskWeightageListSuccess,
+        data : result
+      });
+    } 
+    else {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: STATUS_MESSAGE.dataNotAvailable,
+        data : []
+      });
+    }
+  } catch (error: any) {
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+
+async function getTaskCategoryForDropdown (req : Request, res : Response) {
+  const methodName = "getTaskCategoryForDropdown";
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const result = await caseManagementService.getTaskCategoryList();
+    if(result.length > 0) {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.taskCategoryListedSuccess,
+        data : result
+      })
+    } else {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.dataNotAvailable,
+        data : result
+      })
+    }
+  } catch (error: any) {
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
 // Export the controller functions for use in route definitions
 export default {
   createAdminCheckList,
@@ -1266,5 +2075,20 @@ export default {
   exportCheckListTemplateById,
   fetchAllTaskTypes,
   updateAdminCheckList,
-  fetchTaskTemplateDetails
+  fetchTaskTemplateDetails,
+  createEmailTemplate,
+  updateEmailTemplate,
+  getEmailPlaceHolders,
+  listEmailTemplates,
+  listAllEmailTemplatesByCategory,
+  getEmailTemplateDetailsById,
+  exportEmailTemplates,
+  getEmailCategoryPlaceHolders,
+  getEmailTemplateCategory,
+  getWorkFlowConnector,
+  linkAdminDeleteTask,
+  linkAdminTask,
+  listAdminTaskDropdown,
+  listAdminTaskWeightage,
+  getTaskCategoryForDropdown
 };

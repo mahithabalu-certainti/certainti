@@ -86,6 +86,7 @@ export const filtersColumns : Record<string, string> =
     interaction_type_rid : "interaction_type_rid",
     interaction_iteration : "interaction_iteration",
     project_code : "project_code",
+    project_name : "project_name",
     fiscal_year : "fiscal_year",
     response_source_rid : "response_source_rid",
     interaction_level_rid:"interaction_level_rid",
@@ -128,6 +129,7 @@ export const filtersColumns : Record<string, string> =
     status_rid : "string",
     interaction_type_rid : "string",
     project_code : "string",
+    project_name : "string",
     fiscal_year : "number",
     response_source_rid : "string",
     parent_interaction_rid:"string",
@@ -153,7 +155,8 @@ export const filtersColumns : Record<string, string> =
 
 export const interactionFlag = {
   account : "account",
-  project : "project"
+  project : "project",
+  case : "case"
 }
 
 export const mainTableFilters : Record<any, any> = {
@@ -340,10 +343,34 @@ export const rawQueries = {
     return `
     SELECT rid, project_name,project_code,r_number,fiscal_year,project_rid,max_ai_interaction FROM ${schemaName}.project_fiscal WHERE rid = '${rid}'`;
   },
+  fetchKeyContactsByCaseId(caseRid: string, schemaName: string) {
+  return `
+    SELECT 
+      a.project_fiscal_rid, 
+      b.project_code, 
+      b.project_name, 
+      c.key_contact_name, 
+      c.key_contact_email
+    FROM ${schemaName}.case_projects as a
+    LEFT JOIN ${schemaName}.project_fiscal as b
+      ON a.project_fiscal_rid = b.rid
+    LEFT JOIN ${schemaName}.key_contact_details as c
+      ON b.rid = c.entity_rid
+    WHERE 
+    a.case_rid = '${caseRid}'
+    AND
+    c.include_in_communication = TRUE
+  `;
+  },
   fetchProjectsByAccount(accountRid: string, schemaName: string,status_rid:string) {
     return `
     SELECT rid, project_rid FROM ${schemaName}.project_fiscal WHERE account_rid = '${accountRid}' and status_rid='${status_rid}'`;
   },
+  fetchProjectsByCase(caseRid: string, schemaName: string) {
+    return `
+    SELECT a.project_fiscal_rid FROM ${schemaName}.case_projects as a WHERE a.case_rid = '${caseRid}'
+    `
+    },
   updateQreInfo(rid: string, schemaName: string, qrePercent: number, data: any) {
     return `
       UPDATE ${schemaName}.project_fiscal

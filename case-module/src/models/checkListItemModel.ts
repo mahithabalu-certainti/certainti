@@ -9,7 +9,7 @@ interface CheckListItemAttributes {
   created_datetime?: Date;
   modified_datetime?: Date;
   account_rid: string;
-  case_checklist_rid: string;
+  checklist_rid: string;
   checklist_item_name: string;
   checklist_item_description?: string;
   status_rid?: string;
@@ -28,7 +28,7 @@ export class CheckListItem
   public created_datetime?: Date;
   public modified_datetime?: Date;
   public account_rid!: string;
-  public case_checklist_rid!: string;
+  public checklist_rid!: string;
   public checklist_item_name!: string;
   public checklist_item_description?: string;
   public status_rid?: string;
@@ -55,7 +55,7 @@ export class CheckListItem
         },
         modified_datetime: { type: DataTypes.DATE, allowNull: true },
         account_rid: { type: DataTypes.STRING(50), allowNull: false },
-        case_checklist_rid: { type: DataTypes.STRING(50), allowNull: false },
+        checklist_rid: { type: DataTypes.STRING(50), allowNull: false },
         checklist_item_name: { type: DataTypes.STRING(255), allowNull: false },
         checklist_item_description: { type: DataTypes.TEXT, allowNull: true },
         status_rid: { type: DataTypes.STRING(50), allowNull: true },
@@ -76,8 +76,8 @@ export class CheckListItem
             fields: ["rid"],
           },
           {
-            name: "idx_checklist_items_case_checklist_rid",
-            fields: ["case_checklist_rid"],
+            name: "idx_checklist_items_checklist_rid",
+            fields: ["checklist_rid"],
           },
           {
             name: "idx_checklist_items_status_rid",

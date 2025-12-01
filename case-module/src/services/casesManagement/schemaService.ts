@@ -1,9 +1,11 @@
-import { Op, QueryTypes, Sequelize, Transaction } from "sequelize";
+import { col, fn, Op, QueryTypes, Sequelize, Transaction, where } from "sequelize";
 import { CaseModelService } from "../caseModelsService";
-import { CreateTaskTemplateType, filterType, ICreateChecklistTemplate, ICreateChecklistItemTemplate, TaskType, UpdateTaskTemplateType } from "../../utils/types";
-import { buildDatetimeFilterCondition, buildNumericFilterCondition, buildStringFilterCondition, errorLog, logMessage } from "../../utils/helpers";
-import { HttpStatus, STATUS_MESSAGE, filtersColumnsForCaseSummary, filterTypesForCaseSummary, filterTypesForAdminCheckList, filtersColumnsForAdminCheckList, rawQueries } from "../../utils/constants";
-import { listAllCheckList } from "../../utils/rawQueries";
+import { CreateTaskTemplateType, filterType, ICreateChecklistTemplate, ICreateChecklistItemTemplate, TaskType, UpdateTaskTemplateType, MilestoneResponse, ICreateEmailTemplate, WorkflowConnectorType, UpdateTaskTemplateActionType } from "../../utils/types";
+import { buildDatetimeFilterCondition, buildDatetimeFilterConditionTemplates, buildNumericFilterCondition, buildStringFilterCondition, errorLog, logMessage } from "../../utils/helpers";
+import { HttpStatus, STATUS_MESSAGE, filtersColumnsForCaseSummary, filterTypesForCaseSummary, filterTypesForAdminCheckList, filtersColumnsForAdminCheckList, rawQueries, filterTypesForEmailTemplate, filtersColumnsForEmailTemplate, relationshipTypes, emailCategorties } from "../../utils/constants";
+import { fetchCaseTemplateData, listAllCheckList, listAllEmailTemplates } from "../../utils/rawQueries";
+import { initOrgSequelize } from "../../config/orgDataSource";
+import { initMainDbSequelize } from "../../config/mainDataSource";
 
 
 
@@ -242,6 +244,7 @@ class CaseManagementSchemaService {
       const updateData: any = {
         modified_by: userId,
         modified_datetime: new Date(),
+        status_rid: data.status_rid
       };
 
       if (data.checklist_name !== undefined) {
@@ -260,6 +263,7 @@ class CaseManagementSchemaService {
           returning: true
         }
       );
+     
 
       if (affectedCount === 0) {
         return {
@@ -330,12 +334,29 @@ class CaseManagementSchemaService {
       r_number: "r_number",
       created_datetime: "created_datetime",
       modified_datetime: "modified_datetime",
-      status_name: "status_name",
+      status_rid: "status_name",
       created_user_name: "created_user_name",
-      updated_user_name: "modified_user_name",
+      modified_user_name: "modified_user_name",
       checklist_name: "checklist_name",
       checklist_description: "checklist_description",
       createdAt: "created_datetime"
+    };
+
+    return sortMapping[sortField] || "r_number";
+  };
+
+  getSortColumnForEmailTemplate = (sortField: string): string => {
+    const sortMapping: Record<string, string> = {
+      r_number: "r_number",
+      created_datetime: "created_datetime",
+      modified_datetime: "modified_datetime",
+      status_rid: "status_name",
+      created_user_name: "created_user_name",
+      modified_user_name: "modified_user_name",
+      template_name: "template_name",
+      description: "description",
+      createdAt: "created_datetime",
+      category_rid: "category_name"
     };
 
     return sortMapping[sortField] || "r_number";
@@ -393,7 +414,7 @@ class CaseManagementSchemaService {
             }
             case "datetime": {
               let dynamicReference = `ct`;
-              const datetimeCondition = buildDatetimeFilterCondition(
+              const datetimeCondition = buildDatetimeFilterConditionTemplates(
                 condition,
                 values,
                 filteredColumns!,
@@ -421,6 +442,76 @@ class CaseManagementSchemaService {
     }
   }
   
+  filterForEmailTemplate(
+    filters: filterType,
+    andConditions: string,
+    filteredQueryArray: string[],
+    filterTypes: any,
+    filterColumns: any
+  ) {
+    let filteredColumns: string | undefined;
+    if (filters && Object.keys(filters).length > 0) {
+      for (let [key, conditions] of Object.entries(filters)) {
+        if (Object.keys(filterTypes).includes(key)) {
+          filteredColumns = filterColumns[key];
+          andConditions = ` AND `;
+        }
+        for (let [condition, values] of Object.entries(conditions)) {
+          switch (filterTypes[key]) {
+            case "string": {
+              let dynamicReference = `et`;
+  
+              const stringCondition = buildStringFilterCondition(
+                condition,
+                values,
+                filteredColumns!,
+                dynamicReference
+              );
+              if (stringCondition) {
+                filteredQueryArray.push(stringCondition);
+              }
+              break;
+            }
+            case "number": {
+              const numericCondition = buildNumericFilterCondition(
+                condition,
+                values,
+                filteredColumns!
+              );
+              if (numericCondition) {
+                filteredQueryArray.push(numericCondition);
+              }
+              break;
+            }
+            case "datetime": {
+              let dynamicReference = `et`;
+              const datetimeCondition = buildDatetimeFilterConditionTemplates(
+                condition,
+                values,
+                filteredColumns!,
+                dynamicReference
+              );
+              if (datetimeCondition) {
+                filteredQueryArray.push(datetimeCondition);
+              }
+              break;
+            }
+          }
+        }
+      }
+      return {
+        filteredQueryArray,
+        andConditions,
+      };
+    } else {
+      filteredQueryArray = [];
+      andConditions = ` `;
+      return {
+        filteredQueryArray,
+        andConditions,
+      };
+    }
+  }
 
    async listAdminCheckList(
       page: number,
@@ -498,37 +589,76 @@ class CaseManagementSchemaService {
       }
     }
   async createTaskTemplate (data : CreateTaskTemplateType, userId : string) {
-    const { TaskTemplate } = await this.caseModelService.getModels("");
-    const findSequenceOrder = await this.fetchSequenceOrder(data.milestone_template_rid);
-    let sequenceNumber : number = 0;
-    if(findSequenceOrder.length > 0) {
-      sequenceNumber = findSequenceOrder[0]?.sequence_no! + 1
-    } else {
-      sequenceNumber = sequenceNumber + 1
+    if(!this.mainDbSequelize) {
+      this.mainDbSequelize = await initMainDbSequelize();
     }
-    const checkTaskNameExists = await this.checkTaskExists(data);
-    if(checkTaskNameExists) {
-      return {
-        statusCode : HttpStatus.BAD_REQUEST,
-        statusMessage : STATUS_MESSAGE.taskNameExistsAlready
+    const { TaskTemplate } = await this.caseModelService.getModels("");
+    let sequenceNumber = 0
+    let dynamicData;
+    const getTaskType : any = await this.mainDbSequelize.query(rawQueries.getTaskTypeRid(data.task_type_rid));
+    if(getTaskType[0][0].task_type_name === 'Milestone') {
+      const checkTaskNameExists = await this.checkTaskExists(data, getTaskType[0][0].rid);
+      if(checkTaskNameExists) {
+        return {
+          statusCode : HttpStatus.BAD_REQUEST,
+          statusMessage : STATUS_MESSAGE.taskNameExistsAlready
+        }
+      }
+      const findSequenceOrder = await this.fetchSequenceOrder(data.milestone_template_rid);
+      if(findSequenceOrder.length > 0) {
+        sequenceNumber = findSequenceOrder[0]?.sequence_no! + 1
+      } else {
+        sequenceNumber += 1
+      }
+      const findMilestoneSequence : any = await this.mainDbSequelize.query(rawQueries.getMilestoneSequence(data.milestone_template_rid));
+      dynamicData = {
+        created_by : userId,
+        task_name : data.task_name,
+        sequence_no : sequenceNumber,
+        effort_in_days : data.effort_in_days,
+        effective_start_datetime : data.effective_start_datetime,
+        effective_end_datetime : data.effective_end_datetime,
+        case_team_member_role_rid : data.case_team_member_role_rid,
+        checklist_template_rid : data.checklist_template_rid,
+        status_rid : data.status_rid,
+        priority_rid : data.priority_rid,
+        task_type_rid : data.task_type_rid,
+        milestone_template_rid : data.milestone_template_rid,
+        task_description : data.task_description,
+        weightage_rid : data.weightage_rid,
+        task_category_rid : data.task_category_rid,
+        milestone_sequence : findMilestoneSequence[0][0].r_number
+      }
+    } else {
+      const checkTaskNameExists = await this.checkTaskExists(data, getTaskType[0][0].rid);
+      if(checkTaskNameExists) {
+        return {
+          statusCode : HttpStatus.BAD_REQUEST,
+          statusMessage : STATUS_MESSAGE.taskNameExistsAlready
+        }
+    }
+      sequenceNumber = 0
+      dynamicData = {
+        created_by : userId,
+        task_name : data.task_name,
+        sequence_no : sequenceNumber,
+        task_description : data.task_description,
+        checklist_template_rid : data.checklist_template_rid,
+        priority_rid : data.priority_rid,
+        task_type_rid : data.task_type_rid,
+        status_rid : data.status_rid
       }
     }
-    await TaskTemplate.create({
-      created_by : userId,
-      task_name : data.task_name,
-      sequence_no : sequenceNumber,
-      effort_in_days : data.effort_in_days,
-      reminder_interval : data.reminder_interval,
-      effective_start_datetime : data.effective_start_datetime,
-      effective_end_datetime : data.effective_end_datetime,
-      case_team_member_role_rid : data.case_team_member_role_rid,
-      checklist_template_rid : data.checklist_template_rid,
-      status_rid : data.status_rid,
-      priority_rid : data.priority_rid,
-      task_type_rid : data.task_type_rid,
-      milestone_template_rid : data.milestone_template_rid,
-      task_description : data.task_description
-    })
+    const result = await TaskTemplate.create(dynamicData);
+    if(result) {
+      if(Object.keys(data.workflow_connector).length > 0) {
+        data.workflow_connector.source_rid = result.dataValues.rid
+        data.workflow_connector.created_by = userId
+        if(data.workflow_connector.target_rid.length > 0) {
+          await this.taskWorkflowConnector(data.workflow_connector);
+        }
+      }
+    }
     return {
       statusCode : HttpStatus.SUCCESS,
       statusMessage : STATUS_MESSAGE.taskCreatedSuccess
@@ -546,21 +676,23 @@ class CaseManagementSchemaService {
     })
     return findSequenceOrder;
   }
-  async checkTaskExists (data : any) {
+  async checkTaskExists (data : any, taskTypeRid : string) {
     const { TaskTemplate } = await this.caseModelService.getModels("");
     const checkTaskNameExists = await TaskTemplate.findOne({
       attributes : ['task_name'],
       where : {
         task_name : {
           [Op.iLike] : data.task_name
-        }
+        },
+        task_type_rid : taskTypeRid
       },raw : true
     })
     return checkTaskNameExists
   }
 
-   async updateTaskTemplate (data : UpdateTaskTemplateType, userId : string) {
-     const { TaskTemplate } = await this.caseModelService.getModels("");
+   async updateTaskTemplate (data : any, userId : string) {
+    if(!this.mainDbSequelize) 
+      this.mainDbSequelize = await initMainDbSequelize()
     const checkTaskExists = await this.checkTaskExistsForUpdate(data.rid);
     if(checkTaskExists) {
       const checkTaskNameExists = await this.checkTaskNameExistsForUpdate(data)
@@ -570,14 +702,65 @@ class CaseManagementSchemaService {
           statusMessage : STATUS_MESSAGE.taskNameExistsAlready
         }        
       }
-      data.modified_by = userId
-      data.modified_datetime = new Date()
-      const [result] = await TaskTemplate.update(data, {
-        where : {
-          rid : data.rid
+      const getTaskType : any = await this.mainDbSequelize.query(rawQueries.getTaskTypeRid(data.task_type_rid));
+      let result : number = 0
+      let dynamicData : any
+      if(getTaskType[0][0].task_type_name === 'Milestone') {
+        if(data.status_rid !== checkTaskExists.status_rid) {
+          const getAllStatus : any = await this.mainDbSequelize.query(rawQueries.getActiveStatusId());
+          const statusMap = new Map(getAllStatus[0].map((d : any) => [d.rid, d.status_name]));
+          if(statusMap.get(data.status_rid) === 'In-Active') {
+            const findTaskAfterDeleteData : any = await this.mainDbSequelize.query(rawQueries.fetchTaskBasedOnSequence(checkTaskExists.sequence_no!, checkTaskExists.milestone_template_rid!));
+            await this.updateSequenceForInactive(findTaskAfterDeleteData)
+          } else {
+            const findTaskAfterDeleteData : any = await this.mainDbSequelize.query(rawQueries.fetchTaskBasedOnSequenceForActive(checkTaskExists.sequence_no!, checkTaskExists.milestone_template_rid!, checkTaskExists.rid));
+            await this.updateSequenceForActive(findTaskAfterDeleteData)
+          }
         }
-      })
+        dynamicData = {
+          rid : data.rid,
+          modified_by : userId,
+          modified_datetime : new Date(),
+          task_name : data.task_name.toLowerCase() !== checkTaskExists.task_name.toLowerCase() ? data.task_name : checkTaskExists.task_name,
+          effort_in_days : data.effort_in_days !== checkTaskExists.effort_in_days ? data.effort_in_days : checkTaskExists.effort_in_days,
+          effective_start_datetime : data.effective_start_datetime !== checkTaskExists.effective_start_datetime ? data.effective_start_datetime : checkTaskExists.effective_start_datetime,
+          effective_end_datetime : data.effective_end_datetime !== data.effective_end_datetime ? data.effective_end_datetime : checkTaskExists.effective_end_datetime,
+          case_team_member_role_rid : data.case_team_member_role_rid !== checkTaskExists.case_team_member_role_rid ? data.case_team_member_role_rid : checkTaskExists.case_team_member_role_rid,
+          checklist_template_rid : data.checklist_template_rid !== checkTaskExists.checklist_template_rid ? data.checklist_template_rid : checkTaskExists.checklist_template_rid,
+          status_rid : data.status_rid !== checkTaskExists.status_rid ? data.status_rid : checkTaskExists.status_rid,
+          priority_rid : data.priority_rid !== checkTaskExists.priority_rid ? data.priority_rid : checkTaskExists.priority_rid,
+          task_type_rid : data.task_type_rid,
+          milestone_template_rid : data.milestone_template_rid,
+          task_description : data.task_description.toLowerCase() !== checkTaskExists.task_description?.toLowerCase() ? data.task_description : checkTaskExists.task_description,
+          weightage_rid : data.weightage_rid !== checkTaskExists.weightage_rid ? data.weightage_rid : checkTaskExists.weightage_rid,
+          task_category_rid : data.task_category_rid !== checkTaskExists.task_category_rid ? data.task_category_rid : checkTaskExists.task_category_rid
+        }
+        result = await this.updateTaskTemplateMilestoneType(dynamicData)
+      } else {
+        dynamicData = {
+          rid : data.rid,
+          modified_by : userId,
+          modified_datetime : new Date(),
+          task_name : data.task_name.toLowerCase() !== checkTaskExists.task_name.toLowerCase() ? data.task_name : checkTaskExists.task_name,
+          checklist_template_rid : data.checklist_template_rid !== checkTaskExists.checklist_template_rid ? data.checklist_template_rid : checkTaskExists.checklist_template_rid,
+          status_rid : data.status_rid !== checkTaskExists.status_rid ? data.status_rid : checkTaskExists.status_rid,
+          priority_rid : data.priority_rid !== checkTaskExists.priority_rid ? data.priority_rid : checkTaskExists.priority_rid,
+          task_type_rid : data.task_type_rid,
+          task_description : data.task_description.toLowerCase() !== checkTaskExists.task_description?.toLowerCase() ? data.task_description : checkTaskExists.task_description,
+        }
+        result = await this.updateTaskTemplateActionType(dynamicData)
+      }
       if(result === 1) {
+        if(Object.keys(data.workflow_connector).length > 0) {
+          data.workflow_connector.created_by = userId
+          if(data.workflow_connector.target_rid.length > 0) {
+            await this.taskWorkflowConnector(data.workflow_connector);
+          }
+          if(data.workflow_connector.delete_target_rids != undefined) {
+            if(data.workflow_connector.delete_target_rids.length > 0)
+              await this.deleteTaskWorkConnector(data.workflow_connector)
+          }
+        }
         return {
           statusCode : HttpStatus.SUCCESS,
           statusMessage : STATUS_MESSAGE.taskUpdatedSuccess
@@ -594,6 +777,42 @@ class CaseManagementSchemaService {
         statusMessage : STATUS_MESSAGE.dataNotAvailable
       }
     }
+  }
+  async updateSequenceForInactive (findTaskAfterDeleteData : any, ) {
+    const {TaskTemplate} = await this.caseModelService.getModels("");
+    let additionNumber = 1
+    for(let d of findTaskAfterDeleteData[0]) {
+      await TaskTemplate.update({
+        sequence_no : d.sequence_no - additionNumber
+      }, {where : {rid : d.rid}})
+    }
+  }
+  async updateSequenceForActive (findTaskAfterDeleteData : any, ) {
+    const {TaskTemplate} = await this.caseModelService.getModels("");
+    let additionNumber = 1
+    for(let d of findTaskAfterDeleteData[0]) {
+      const [result] = await TaskTemplate.update({
+        sequence_no : d.sequence_no + additionNumber
+      }, {where : {rid : d.rid}})
+    }
+  }
+  async updateTaskTemplateMilestoneType (data : UpdateTaskTemplateType) {
+    const { TaskTemplate } = await this.caseModelService.getModels("");
+    const [result] = await TaskTemplate.update(data, {
+      where : {
+        rid : data.rid
+      }
+    })
+    return result;
+  }
+  async updateTaskTemplateActionType (data : UpdateTaskTemplateActionType) {
+    const { TaskTemplate } = await this.caseModelService.getModels("");
+    const [result] = await TaskTemplate.update(data, {
+      where : {
+        rid : data.rid
+      }
+    });
+    return result;
   }
   async checkTaskExistsForUpdate (rid : string) {
     const { TaskTemplate } = await this.caseModelService.getModels("");
@@ -745,5 +964,648 @@ async fetchChecklistTemplateDetailsById(
     const result = await this.mainDbSequelize.query<TaskType>(rawQueries.getTaskType(), {type : QueryTypes.SELECT});
     return result;
   }
+  async fetchKanbanBoard (schemaName : string, caseRid : string, accountRid : string) {
+    if(!this.orgDbSequelize) {
+      this.orgDbSequelize = await initOrgSequelize();
+    }
+    if(!this.mainDbSequelize) {
+      this.mainDbSequelize = await initMainDbSequelize();
+    }
+    const getActiveStatusId : any = await this.mainDbSequelize.query(rawQueries.getActiveStatusId())
+    const result : any = await this.orgDbSequelize.query(fetchCaseTemplateData(schemaName,caseRid, accountRid, getActiveStatusId[0][0].rid));
+    
+    if(result[0].length > 0) {
+      return result[0][0]
+    } else {
+      return []
+    }
+
+  }
+  async createEmailTemplate(
+    emailRequest: ICreateEmailTemplate
+  ) {
+    // Implementation for creating checklist in the database
+    try {
+      const { EmailTemplate } = await this.caseModelService.getModels("");
+      const emailTemplate = await EmailTemplate.create(
+        {
+          template_name: emailRequest.template_name,
+          description: emailRequest.description,
+          status_rid: emailRequest.status_rid,
+          created_by: emailRequest.created_by!,
+          subject: emailRequest.subject,
+          body_html: emailRequest.body_html,
+          created_datetime: new Date(),
+          category_rid: emailRequest.category_rid
+        }
+      );
+
+      return emailTemplate;
+    } catch (error) {
+      logMessage(`Error creating email template: ${error}`);
+      throw new Error("Error creating email template: " + error);
+    }
+  }
+
+  
+  async checkEmailTemplateUniquenessAndCategory(emailReq: any): Promise<{
+    isUnique: boolean;
+    isSameCategoryExists: boolean;
+    category_name?: string;
+  }> {
+    // Check uniqueness by template name and category
+    const { EmailTemplate } = await this.caseModelService.getModels("");
+    const uniqueResponse = await EmailTemplate.findOne({
+      where: {
+        [Op.and]: [
+          where(
+            fn("LOWER", col("template_name")),
+            Op.eq,
+            emailReq.template_name.toLowerCase()
+          ),
+          { category_rid: emailReq.category_rid }
+        ]
+      }
+    });
+    let isUnique = !uniqueResponse;
+
+    // Check if same category exists (not for 'general')
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+    }
+    const [categoryInfo]: any[] = await this.mainDbSequelize.query(rawQueries.getCategoryDetails(emailReq.category_rid), { type: QueryTypes.SELECT });
+    const [statusInfo]: any[] = await this.mainDbSequelize.query(rawQueries.getActiveStatusId(), { type: QueryTypes.SELECT });
+    let isSameCategoryExists = true;
+    let category_name = categoryInfo?.category_name;
+    if (categoryInfo?.category_name !== emailCategorties.general) {
+      const categoryResponse = await EmailTemplate.findOne({
+        where: {
+          [Op.and]: [
+            { category_rid: emailReq.category_rid },
+            { status_rid: statusInfo.rid }
+          ]
+        }
+      });
+      isSameCategoryExists = !categoryResponse;
+    }
+    return {
+      isUnique,
+      isSameCategoryExists,
+      category_name
+    };
+  }
+  async checkIsCheckListTemplateUnique(
+    checklistReq: any
+  ): Promise<boolean> {
+    const { AdminChecklist } = await this.caseModelService.getModels("");
+    const response = await AdminChecklist.findOne({
+      where: {
+        [Op.and]: [
+          where(
+            fn("LOWER", col("checklist_name")),
+            Op.eq,
+            checklistReq.checklist_name.toLowerCase()
+          )
+        ]
+      }
+    });
+    return !response;
+  }
+
+
+
+/**
+   * Checks both uniqueness (excluding current) and same category existence for email template update.
+   */
+  async checkisExistingTemplateUnique(emailReq: any): Promise<{
+    isUnique: boolean;
+    isSameCategoryExists: boolean;
+    category_name?: string;
+  }> {
+    const { EmailTemplate } = await this.caseModelService.getModels("");
+    // Uniqueness: template name, category, and exclude current rid
+    const uniqueResponse = await EmailTemplate.findOne({
+      where: {
+        [Op.and]: [
+          where(
+            fn("LOWER", col("template_name")),
+            Op.eq,
+            emailReq.template_name.toLowerCase()
+          ),
+          { category_rid: emailReq.category_rid },
+          { rid: { [Op.ne]: emailReq.email_template_rid } },
+        ]
+      }
+    });
+    let isUnique = !uniqueResponse;
+
+    // Category existence (not for 'general')
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+    }
+    const [categoryInfo]: any[] = await this.mainDbSequelize.query(rawQueries.getCategoryDetails(emailReq.category_rid), { type: QueryTypes.SELECT });
+    const [statusInfo]: any[] = await this.mainDbSequelize.query(rawQueries.getActiveStatusId(), { type: QueryTypes.SELECT });
+    let isSameCategoryExists = true;
+    let category_name = categoryInfo?.category_name;
+    if (categoryInfo?.category_name !== emailCategorties.general) {
+      const categoryResponse = await EmailTemplate.findOne({
+        where: {
+          [Op.and]: [
+            { category_rid: emailReq.category_rid },
+            { status_rid: statusInfo.rid },
+            { rid: { [Op.ne]: emailReq.email_template_rid } },
+          ]
+        }
+      });
+      isSameCategoryExists = !categoryResponse;
+    }
+    return {
+      isUnique,
+      isSameCategoryExists,
+      category_name
+    };
+  }
+
+
+async  checkisExistingChecklistTemplateUnique(checklistReq: any): Promise<boolean> {
+  const { AdminChecklist } = await this.caseModelService.getModels("");
+  const response = await AdminChecklist.findOne({
+    where: {
+      [Op.and]: [
+        where(
+          fn("LOWER", col("checklist_name")),
+          Op.eq,
+          checklistReq.checklist_name.toLowerCase()
+        ),
+        { rid: { [Op.ne]: checklistReq.checklist_template_rid } },
+      ]
+    }
+  });
+  console.log("response checkisExistingChecklistTemplateUnique", response);
+  return !response;
 }
+
+  async updateEmailTemplate(
+    emailRequest: ICreateEmailTemplate
+  ) {
+    // Implementation for creating checklist in the database
+    try {
+      const { EmailTemplate } = await this.caseModelService.getModels("");
+      const emailTemplate = await EmailTemplate.update(
+        {
+          template_name: emailRequest.template_name,
+          description: emailRequest.description,
+          status_rid: emailRequest.status_rid,
+          modified_by: emailRequest.modified_by,
+          subject: emailRequest.subject,
+          body_html: emailRequest.body_html,
+          modified_datetime: new Date(),
+          category_rid: emailRequest.category_rid
+        },
+        {
+          where: {
+            rid: emailRequest.email_template_rid
+          }
+        } 
+      );
+
+      return emailTemplate;
+    } catch (error) {
+      logMessage(`Error updating email template: ${error}`);
+      throw new Error("Error updating email template: " + error);
+    }
+  }
+
+  async getEmailPlaceHolders(
+  ) {
+     try {
+        if (!this.mainDbSequelize) {
+          this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+        }
+        const users = await this.mainDbSequelize.query(
+          rawQueries.getEmailPlaceHolders(),
+          {
+            type: "SELECT",
+          }
+        );
+        return users;
+      } catch (err) {
+        logMessage(`Error in fetching users for case team: ${err}`);
+        errorLog(
+          "Error in fetching users for case team:",
+          (err as Error).message
+        );
+        return [];
+      }
+    }
+  async listEmailTemplatesByCategory(
+  ) {
+    try { 
+      if(!this.mainDbSequelize) {
+        this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+      }
+      const { EmailTemplate } = await this.caseModelService.getModels("");
+      const [templateDetails]:any[] = await this.mainDbSequelize.query(
+            rawQueries.getEmailTemplateCategoryByName(emailCategorties.general),
+            {
+              type: "SELECT",
+            }
+          );
+      const templateResponse = await EmailTemplate.findAll({
+              attributes: ['rid', 'template_name', 'category_rid'],
+              where: {
+                category_rid: templateDetails.rid
+              },
+              raw: true,
+            });
+      return templateResponse;
+    } catch (err) {
+      logMessage(`Error in fetching email templates by category: ${err}`);
+      errorLog(
+        "Error in fetching email templates by category:",
+        (err as Error).message
+      );
+      return [];
+    } 
+  }
+  async listEmailTemplates(
+  page: number,
+  limit: number,
+  apiType: string,
+  filters: filterType,
+  search: string,
+  sortBy: string,
+  sortOrder: string,
+  email_template_rid?: string,
+) {
+  try {
+    // Ensure filters is not null or undefined
+    filters = filters || {};
+    let offset = (page - 1) * limit;
+    let pagination = `LIMIT ${limit} OFFSET ${offset}`;
+    if (apiType === "download") {
+      pagination = ``;
+    }
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+    }
+    let filteredQueryArray: string[] = [];
+    let andConditions = ``;
+    let filterQueryValues;
+    let whereKey: string = ``;
+    let sortValue;
+    let searchValue: string;
+    let templateQuery: string = ``;
+    let filterDatas = this.filterForEmailTemplate(
+      filters,
+      andConditions,
+      filteredQueryArray,
+      filterTypesForEmailTemplate,
+      filtersColumnsForEmailTemplate
+    );
+    // Optimize filter query processing
+    filterQueryValues = filterDatas?.filteredQueryArray?.length
+      ? filterDatas.filteredQueryArray.join(" AND ")
+      : "";
+
+    
+    searchValue = search ? `%${search}%` : `%%`;
+    whereKey = `1 = 1`;
+
+    if (apiType === "graphql") {
+        templateQuery = ` et.rid = '${email_template_rid}'`;
+      }
+
+    // Optimized conditions joining
+    const conditions = [
+      filterQueryValues,
+      templateQuery
+    ].filter(Boolean);
+
+    const joinedConditions =
+      conditions.length > 0 ? " AND " + conditions.join(" AND ") : "";
+
+    // Optimized sorting logic using extracted utility function
+    const sortColumn = this.getSortColumnForEmailTemplate(sortBy);
+    const sortDirection = sortOrder || "ASC";
+    logMessage(
+      `Sorting by column: ${sortColumn}, direction: ${sortDirection}`
+    );
+    sortValue = `ORDER BY ${sortColumn} ${sortDirection}`;
+    let caseSummaryQuery = await listAllEmailTemplates(
+      searchValue,
+      whereKey,
+      joinedConditions,
+      sortValue,
+      pagination
+    );
+    const [result]: any[] = await this.mainDbSequelize.query(
+      caseSummaryQuery,
+      { type: "SELECT" }
+    );
+    return result.admin_checklists;
+  } catch (err) {
+    logMessage(`Error in fetching email template: ${err}`);
+    errorLog("Error in fetching email template:", (err as Error).message);
+    return [];
+  }
+}
+
+async fetchEmailTemplateDetailsById(
+  emailTemplateId: string
+) {``
+  if (!this.mainDbSequelize) {
+    this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+  }
+
+  const [emailTemplateDetails] = await this.mainDbSequelize.query(rawQueries.fetchEmailTemplates, {
+    replacements: { emailTemplateId },
+    type: "SELECT"
+  }) as [any[], any];
+
+  if (!emailTemplateDetails || emailTemplateDetails.length === 0) {
+    return null;
+  }
+
+  const emailTemplateDetailsResult = emailTemplateDetails as any;
+
+   const userInfo = await this.insertUserDetails(
+     emailTemplateDetailsResult.created_by ?? "",
+     emailTemplateDetailsResult.modified_by ?? ""
+   );
+
+   const [statusInfo]: any[] = await this.mainDbSequelize.query(
+         rawQueries.getStatusDetails(emailTemplateDetailsResult?.status_rid ?? ""),
+         {
+           type: "SELECT",
+         }
+       );
+   const [categoryInfo]: any[] = await this.mainDbSequelize.query(
+         rawQueries.getCategoryDetails(emailTemplateDetailsResult?.category_rid ?? ""),
+         {
+           type: "SELECT",
+         }
+       );
+
+  const response: any = {
+    email_template_rid: emailTemplateDetailsResult?.rid,
+    email_template_name: emailTemplateDetailsResult?.template_name ?? "",
+    email_template_description: emailTemplateDetailsResult?.description ?? "",
+    r_number: emailTemplateDetailsResult.r_number ?? "",
+    status_rid: emailTemplateDetailsResult.status_rid ?? "",
+    status_name: statusInfo.status_name ?? "",
+    subject: emailTemplateDetailsResult.subject ?? "",
+    body_html: emailTemplateDetailsResult.body_html ?? "",
+    category_rid: emailTemplateDetailsResult.category_rid ?? "",
+    category_name: categoryInfo.category_name ?? "",
+    modified_by: userInfo.modified_name ?? emailTemplateDetailsResult.modified_by,
+    created_by: userInfo.created_name ?? emailTemplateDetailsResult.created_by,
+    created_datetime: emailTemplateDetailsResult.created_datetime ?? null,
+    modified_datetime: emailTemplateDetailsResult.modified_datetime ?? null
+  };
+
+  return response;
+  }
+
+async fetchEmailCategoryPlaceHolders(categoryRid: string
+) {
+    try {
+      if (!this.mainDbSequelize) {
+        this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+      }
+      const response = await this.mainDbSequelize.query(
+        rawQueries.getEmailCategoryPlaceHolders(categoryRid),
+        {
+          type: "SELECT",
+        }
+      );
+      return response;
+    } catch (err) {
+      logMessage(`Error in fetching users for case team: ${err}`);
+      errorLog(
+        "Error in fetching users for case team:",
+        (err as Error).message
+      );
+      return [];
+    }
+  }
+async getEmailTemplateCategory(
+  ) {
+     try {
+        if (!this.mainDbSequelize) {
+          this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+        }
+        const users = await this.mainDbSequelize.query(
+          rawQueries.getEmailTemplateCategory(),
+          {
+            type: "SELECT",
+          }
+        );
+        return users;
+      } catch (err) {
+        logMessage(`Error in fetching users for case team: ${err}`);
+        errorLog(
+          "Error in fetching users for case team:",
+          (err as Error).message
+        );
+        return [];
+      }
+    }
+async getWorkFlowConnector () {
+  if(!this.mainDbSequelize) {
+    this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+  }
+  const result = await this.mainDbSequelize.query<WorkflowConnectorType>(rawQueries.fetchWorkFlowConnector(), {type : QueryTypes.SELECT});
+  if(result.length > 0) {
+    return result
+  } 
+  else return []
+}
+  async taskWorkflowConnector (data : any) {
+    if(!this.mainDbSequelize) {
+      this.mainDbSequelize = await initMainDbSequelize()
+    }
+    const {WorkflowConnector, WorkflowConnectorMapping} = await this.caseModelService.getModels("");
+    let iterationCount : number = 0;
+    let workFlowConnectorDetails;
+    let dynamicRelationTypeName : string = ``
+    let totalIteration = data.target_rid.length
+    const workFlowConnectorData = await WorkflowConnector.findOne({
+      where : {
+        rid : data.relationship_connector_rid
+      }, raw : true
+    })
+    if(workFlowConnectorData) {
+        if(workFlowConnectorData.relationship_type === 'Blocks') {
+          dynamicRelationTypeName = relationshipTypes.isBlockedBy
+        } else if (workFlowConnectorData.relationship_type === 'Enables') {
+          dynamicRelationTypeName = relationshipTypes.isEnabledBy
+        } else if (workFlowConnectorData.relationship_type === 'Is Enabled By') {
+          dynamicRelationTypeName = relationshipTypes.enables
+        } else if (workFlowConnectorData.relationship_type === 'Is Blocked By') {
+          dynamicRelationTypeName = relationshipTypes.blocks
+        }
+      }
+    workFlowConnectorDetails = await WorkflowConnector.findOne({where : {relationship_type : dynamicRelationTypeName}, raw : true})
+    for(let d of data.target_rid) {
+      if(workFlowConnectorData) {
+        const checkIsAlreadyMapped = await WorkflowConnectorMapping.findOne({
+          where : {
+            source_rid : data.source_rid,
+            target_rid : d,
+            relationship_connector_rid : data.relationship_connector_rid
+          }, raw : true
+        });
+        if(!checkIsAlreadyMapped) {
+          const ids : any[] = []
+          ids.push(data.relationship_connector_rid)
+          ids.push(workFlowConnectorDetails!.rid)
+          const result = await WorkflowConnectorMapping.create({
+            created_by : data.created_by,
+            created_datetime : new Date(),
+            source_rid : data.source_rid,
+            target_rid : d,
+            relationship_connector_rid : data.relationship_connector_rid
+          });
+          if(result) {
+            workFlowConnectorDetails = await WorkflowConnector.findOne({
+              where : {
+                relationship_type : dynamicRelationTypeName
+              }, raw : true
+            })
+            if(workFlowConnectorDetails) {
+              await WorkflowConnectorMapping.create({
+                created_by : data.created_by,
+                created_datetime : new Date(),
+                source_rid : d,
+                target_rid : data.source_rid,
+                relationship_connector_rid : workFlowConnectorDetails.rid!
+              });
+            }
+          }
+        }
+      } 
+      else 
+        {
+          return {
+            statusCode : HttpStatus.NOT_FOUND,
+            statusMessage : STATUS_MESSAGE.taskNotFound
+        }
+      }
+      iterationCount += 1
+    }
+    if(iterationCount === totalIteration) {
+      return {
+        statusCode : HttpStatus.SUCCESS,
+        statusMessage : STATUS_MESSAGE.workflowConnectorMappedSuccess
+      }
+    } else {
+      return {
+        statusCode : HttpStatus.FAILED,
+        statusMessage : STATUS_MESSAGE.workflowConnectorMappedFailed
+      }
+    }
+  }
+
+  async deleteTaskWorkConnector (data : any) {
+    const {WorkflowConnector, WorkflowConnectorMapping} = await this.caseModelService.getModels("");
+    if(data.delete_target_rids.length > 0) {
+      let workFlowConnectorDetails;
+      let dynamicRelationTypeName : string = ``
+      const workFlowConnectorData = await WorkflowConnector.findOne({
+        where : {
+          rid : data.relationship_connector_rid
+        }, raw : true
+      })
+      if(workFlowConnectorData) {
+        if(workFlowConnectorData.relationship_type === 'Blocks') {
+          dynamicRelationTypeName = relationshipTypes.isBlockedBy
+        } else if (workFlowConnectorData.relationship_type === 'Enables') {
+          dynamicRelationTypeName = relationshipTypes.isEnabledBy
+        } else if (workFlowConnectorData.relationship_type === 'Is Enabled By') {
+          dynamicRelationTypeName = relationshipTypes.enables
+        } else if (workFlowConnectorData.relationship_type === 'Is Blocked By') {
+          dynamicRelationTypeName = relationshipTypes.blocks
+        }
+      }
+      workFlowConnectorDetails = await WorkflowConnector.findOne({
+        where : {
+          relationship_type : dynamicRelationTypeName
+        }, raw : true
+      })
+      
+      for(let d of data.delete_target_rids) {
+        const checkDataExists = await WorkflowConnectorMapping.findOne({
+          where : {
+            source_rid : data.source_rid,
+            target_rid : d,
+            relationship_connector_rid : data.relationship_connector_rid
+          }, raw : true
+        });
+      if(checkDataExists) {
+        if(workFlowConnectorDetails) {
+          const deleteData = await WorkflowConnectorMapping.destroy({
+            where : {
+              source_rid : checkDataExists.target_rid,
+              target_rid : checkDataExists.source_rid,
+              relationship_connector_rid : workFlowConnectorDetails.rid
+            }
+          });
+          if(deleteData === 1) {
+            await WorkflowConnectorMapping.destroy({
+              where : {
+                rid : checkDataExists.rid
+              }
+            })
+          } else {
+            return {
+              statusCode : HttpStatus.FAILED,
+              statusMessage : STATUS_MESSAGE.workflowConnectorMappedDeletedFailed
+            }
+          }
+        }
+      } else {
+          return {
+            statusCode : HttpStatus.NOT_FOUND,
+            statusMessage : STATUS_MESSAGE.dataNotAvailable
+          }
+        }
+      }
+    }
+  }
+  async listTasksDropdown (data : any) {
+    const {TaskTemplate} = await this.caseModelService.getModels("");
+    const statusRid = await this.getActiveStatusRid();
+    const result = await TaskTemplate.findAll({
+      attributes : ['rid', 'task_name', 'task_type_rid'],
+      where : {
+        task_name : {
+          [Op.iLike] : data.search == "" ? '%%' : `%${data.search}%`
+        },
+        status_rid : statusRid
+      },
+      order : [['task_name', 'ASC']],
+      raw : true
+    });
+    return result;
+  }
+  async getActiveStatusRid () {
+    if(!this.mainDbSequelize)
+      this.mainDbSequelize = await initMainDbSequelize()
+
+    const result : any = await this.mainDbSequelize.query(rawQueries.getActiveStatusId());
+    return result[0][0].rid
+  }
+  async getCaseDetails (caseRid : string, accountNumber : string) {
+    const {Case} = await this.caseModelService.getModels(accountNumber)
+    const result = await Case.findOne({
+      attributes : ['status_rid'],
+      where : {
+        rid : caseRid
+      }, raw : true
+    });
+    return result;
+  }
+}
+
 export { CaseManagementSchemaService };

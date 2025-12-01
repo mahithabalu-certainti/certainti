@@ -2168,7 +2168,7 @@ export const filterColumnsTypesForQreHistory : any = {
 
 export const numericConditionsForQRE : any = {
   equals: "equals",
-  notEquals: "not_equals",
+  not_equals: "not_equals",
   is_empty: "is_empty",
   less_than: "less_than",
   greater_than: "greater_than",

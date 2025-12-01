@@ -48,6 +48,7 @@ class ProjectGraphQlServices {
             }
         }
             if(data.fiscal_year) {
+                data.global_fiscal_year = data.fiscal_year;
                 let checkDuplicateYear = await orgSequelize.query(rawQueries.checkForDuplicateFiscalYear(schemaName, data))
                 if(checkDuplicateYear[0].length > 0) {
                 return {
@@ -313,6 +314,7 @@ class ProjectGraphQlServices {
                             total_cost_nonlabor: d.total_cost_nonlabor,
                             project_type_name: d.project_type_name,
                             currency_symbol: d.currency_symbol,
+                            qre_final : d.qre_final
                         }
                     })
                     }
@@ -321,6 +323,13 @@ class ProjectGraphQlServices {
                 statusMessage : STATUS_MESSAGE.projectUpdateSuccess,
                 data : finalData
             }
+            }
+            else {
+                return {
+                    statusCode : HttpStatus.SUCCESS,
+                    statusMessage : STATUS_MESSAGE.projectUpdateSuccess,
+                    data : null
+                }
             }
             } else {
             return {

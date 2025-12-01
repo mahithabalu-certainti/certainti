@@ -35,20 +35,23 @@ const accountServices = services.accountServices;
 async function accounts(req: Request, res: Response): Promise<void> {
   const methodName = "list user";
   try {
-    const value = await validateRequest(req, listAccountSchema, res, "GET");
+    const value = await validateRequest(req, listAccountSchema, res, "POST");
     let parsedFilters: Record<string, any> = {};
     let parsedGlobalFilters: Record<string, string[]> = {};
 
     if (!value) {
       return;
     }
-
     try {
-      if (value.filters) {
+      if (value.filters && typeof value.filters === 'string') {
         parsedFilters = JSON.parse(value.filters);
+      } else if (value.filters && typeof value.filters === 'object') {
+        parsedFilters = value.filters;
       }
-      if (value.globalFilters) {
+      if (value.globalFilters && typeof value.globalFilters === 'string') {
         parsedGlobalFilters = JSON.parse(value.globalFilters);
+      } else if (value.globalFilters && typeof value.globalFilters === 'object') {
+        parsedGlobalFilters = value.globalFilters;
       }
     } catch (error) {
       errorLog(

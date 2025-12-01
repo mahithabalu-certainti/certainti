@@ -14,6 +14,8 @@ interface CaseTeamAttributes {
   user_rid: string;
   effective_startdate: Date;
   effective_enddate?: Date;
+  is_primary: boolean;
+  status_rid: string;
 }
 
 export interface CaseTeamCreationAttributes
@@ -34,6 +36,8 @@ export class CaseTeam
   public user_rid!: string;
   public effective_startdate!: Date;
   public effective_enddate?: Date;
+  public is_primary!: boolean;
+  public status_rid!: string;
 
   static initialize(
     sequelize: Sequelize,
@@ -62,6 +66,8 @@ export class CaseTeam
         user_rid: { type: DataTypes.STRING(50), allowNull: false },
         effective_startdate: { type: DataTypes.DATEONLY, allowNull: false },
         effective_enddate: { type: DataTypes.DATEONLY, allowNull: true },
+        is_primary: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+        status_rid: { type: DataTypes.STRING(50), allowNull: false },
       },
       {
         sequelize,
@@ -71,23 +77,5 @@ export class CaseTeam
         underscored: true,
       }
     );
-  }
-}
-
-export async function setupCaseTeamSequence(
-  sequelize: Sequelize,
-  schemaName: string
-) {
-  try {
-    await sequelize.query(
-      `CREATE SEQUENCE IF NOT EXISTS "${schemaName}".case_team_seq START 1`
-    );
-
-    await sequelize.query(`ALTER TABLE "${schemaName}".case_team
-      ALTER COLUMN r_number SET DEFAULT 'CASTEAM-' || LPAD(nextval('"${schemaName}".case_team_seq')::text, 10, '0')`);
-
-    logMessage("Case team sequence setup complete");
-  } catch (error) {
-    logMessage(`Error setting up Case team sequence: ${error}`);
   }
 }

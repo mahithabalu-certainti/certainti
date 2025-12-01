@@ -879,7 +879,7 @@ export const rawQueries = {
         project_rid VARCHAR(50) NOT NULL,
         attribute_name VARCHAR(100) NOT NULL,
         old_value VARCHAR(2000),
-        new_value VARCHAR(2000) NOT NULL
+        new_value VARCHAR(2000)
       );
     `;
   },
@@ -1145,7 +1145,8 @@ export const rawQueries = {
         target_ai_records_processed INT,
         target_ai_error_records_count INT,
         total_staging_warning_count INT,
-        fiscal_year INT
+        fiscal_year INT,
+        email_status varchar(20)
       );
     `;
   },
@@ -2254,7 +2255,22 @@ export const rawQueries = {
       CREATE SEQUENCE IF NOT EXISTS "${schemaName}".interactions_seq START 1;
     `;
   },
-  getCreateInteractionsTableQuery(schemaName: string): string {
+  getCheckListSequenceQuery(schemaName: string): string {
+    return `
+      CREATE SEQUENCE IF NOT EXISTS "${schemaName}".checklist_seq START 1;
+    `;
+  },
+  getActivitiesSequenceQuery(schemaName: string): string {
+    return `
+      CREATE SEQUENCE IF NOT EXISTS "${schemaName}".activities_seq START 1;
+    `;
+  },
+  getActivityAttachmentsSequenceQuery(schemaName: string): string {
+    return `
+      CREATE SEQUENCE IF NOT EXISTS "${schemaName}".activities_attachments_seq START 1;
+    `;
+  },
+   getCreateInteractionsTableQuery(schemaName: string): string {
     return `
       CREATE TABLE IF NOT EXISTS "${schemaName}".interactions (
         rid VARCHAR(50) DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
@@ -2297,6 +2313,239 @@ export const rawQueries = {
         CONSTRAINT interactions_rid_unique UNIQUE (rid)
       );
     `;
+  },
+  getCreateActivityHistorySequenceQuery(schemaName: string): string {
+    return `
+      CREATE SEQUENCE IF NOT EXISTS "${schemaName}".activity_history_seq START 1;
+    `;
+  },
+   getCreateTaskHistorySequenceQuery(schemaName: string): string {
+    return `
+      CREATE SEQUENCE IF NOT EXISTS "${schemaName}".task_history_seq START 1;
+    `;
+  },
+  getCreateActivityHistoryTableQuery(schemaName: string): string {
+    return `
+      CREATE TABLE IF NOT EXISTS "${schemaName}".activity_history (
+        rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+        r_number VARCHAR(20) UNIQUE DEFAULT 'ACH-' || LPAD(nextval('"${schemaName}".activity_history_seq')::TEXT, 10, '0'),
+        created_by varchar(50) NOT NULL,
+        modified_by varchar(50),
+        created_datetime TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+        modified_datetime TIMESTAMP WITH TIME ZONE,
+        account_rid varchar(50) NOT NULL,
+        activity_rid varchar(50) NOT NULL,
+        activity_type varchar(50),
+        attribute_name VARCHAR(100) NOT NULL,
+        old_value VARCHAR(2000),
+        new_value VARCHAR(2000)
+      );
+    `;
+  },
+   getCreateTaskHistoryTableQuery(schemaName: string): string {
+    return `
+      CREATE TABLE IF NOT EXISTS "${schemaName}".task_history (
+        rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+        r_number VARCHAR(20) UNIQUE DEFAULT 'TCH-' || LPAD(nextval('"${schemaName}".task_history_seq')::TEXT, 10, '0'),
+        created_by varchar(50) NOT NULL,
+        modified_by varchar(50),
+        created_datetime TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+        modified_datetime TIMESTAMP WITH TIME ZONE,
+        task_rid varchar(50) NOT NULL,
+        attribute_name VARCHAR(100) NOT NULL,
+        old_value VARCHAR(2000),
+        new_value VARCHAR(2000)
+      );
+    `;
+  },
+  getAlterActivityHistoryForeignKeysQuery(schemaName: string): string {
+    return `
+      ALTER TABLE "${schemaName}".activity_history
+      ADD CONSTRAINT activity_history_activity_rid_fkey
+      FOREIGN KEY (activity_rid) REFERENCES "${schemaName}".activities(rid) ON UPDATE CASCADE;
+    `;
+  },
+  getCreateChecklistTableQuery(schemaName: string): string {
+    return `
+      CREATE TABLE IF NOT EXISTS "${schemaName}".checklists (
+        rid VARCHAR(50) DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+        r_number VARCHAR(20) UNIQUE DEFAULT 'CHK-' || LPAD(nextval('"${schemaName}".checklist_seq')::TEXT, 10, '0'),
+        created_by character varying(50) NOT NULL,
+        modified_by character varying(50),
+        created_datetime timestamp with time zone NOT NULL DEFAULT NOW(),
+        modified_datetime timestamp with time zone,
+        account_rid character varying(50) NOT NULL,
+        attach_to character varying(50),
+        attachment_level character varying(50),
+        fiscal_year integer,
+        checklist_template_rid character varying(50) NOT NULL,
+        checklist_name character varying(255) NOT NULL,
+        checklist_description character varying(2000),
+        assigned_to character varying(50),
+        status_rid character varying(50),
+        CONSTRAINT checklists_rid_unique UNIQUE (rid)
+          CONSTRAINT checklists_pkey PRIMARY KEY (rid),
+    CONSTRAINT checklists_r_number_key UNIQUE (r_number),
+    CONSTRAINT checklists_account_rid_fkey FOREIGN KEY (account_rid)
+        REFERENCES ${schemaName}.account_details (account_rid) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE NO ACTION
+      );
+    `;
+  },
+  getCreateActivitiesTableQuery(schemaName: string): string {
+    return `
+      CREATE TABLE IF NOT EXISTS "${schemaName}".activities (
+        rid VARCHAR(50) DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+        r_number VARCHAR(20) UNIQUE DEFAULT 'ACT-' || LPAD(nextval('"${schemaName}".activities_seq')::TEXT, 10, '0'),
+    created_by character varying(50) NOT NULL,
+    modified_by character varying(50),
+    created_datetime timestamp without time zone NOT NULL DEFAULT now(),
+    modified_datetime timestamp without time zone,
+    account_rid character varying(50) NOT NULL,
+    attach_to character varying(50),
+    attachment_level character varying(50),
+    activity_type character varying(50),
+    fiscal_year integer,
+    status_rid character varying(50),
+    effective_start_datetime timestamp with time zone,
+    effective_end_datetime timestamp with time zone,
+    subject character varying(255),
+    body_html text,
+    to_email json,
+    cc_email json,
+    description text,
+    priority_rid character varying(50),
+    assigned_to character varying(50),
+    task_name character varying(255),
+    task_template_rid character varying(50),
+    attendees_list text,
+    sender_email character varying(255),
+    meeting_participants json,
+    meeting_invite text,
+    meeting_id character varying(255),
+    call_platform character varying(255),
+    minutes_of_meeting text,
+    caller_id character varying(50),
+    call_participants json,
+    recurrence_days json,
+    recurrence_interval integer,
+    recurrence_type character varying(50),
+    time_zone character varying(50),
+    effective_start_time character varying(50),
+    effective_end_time character varying(50),
+    invited_by character varying(50),
+    recurrence_day_of_month integer,
+    recurrence_monthly_index character varying(50),
+    CONSTRAINT activities_pkey PRIMARY KEY (rid)
+      );
+    `;
+  },
+  getCreateActivityAttachmentsTableQuery(schemaName: string): string {
+    return `
+      CREATE TABLE IF NOT EXISTS "${schemaName}".activities_attachments (
+        rid VARCHAR(50) DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+        r_number VARCHAR(20) UNIQUE DEFAULT 'ACT-' || LPAD(nextval('"${schemaName}".activities_attachments_seq')::TEXT, 10, '0'),
+    created_by character varying(50) NOT NULL,
+    modified_by character varying(50),
+    created_datetime timestamp without time zone NOT NULL DEFAULT now(),
+    modified_datetime timestamp without time zone,
+    account_rid character varying(50) NOT NULL,
+    activity_rid character varying(50) NOT NULL,
+    browse_file character varying(2000),
+    size character varying(50),
+    document_name character varying(64),
+    format character varying(50),
+    is_file_deleted boolean DEFAULT false,
+    CONSTRAINT activity_attachments_pkey PRIMARY KEY (rid),
+    CONSTRAINT activity_attachments_r_number_key UNIQUE (r_number)
+      );
+    `;
+  },
+   getCreateChecklistIndexesQueries(schemaName: string): string[] {
+    const fieldsToIndex = [
+      "account_rid",
+      "rid",
+      "fiscal_year",
+      "attach_to",
+      "attachment_level"
+    ];
+    
+    return fieldsToIndex.map(field => {
+      const indexName = `${schemaName}_checklists_${field}_idx`;
+      return `
+        CREATE INDEX IF NOT EXISTS "${indexName}"
+        ON "${schemaName}"."checklists"("${field}");
+      `;
+    });
+  },
+   getCreateActivitiesIndexesQueries(schemaName: string): string[] {
+    const fieldsToIndex = [
+      "account_rid",
+      "rid",
+      "fiscal_year",
+      "attach_to",
+      "attachment_level"
+    ];
+    
+    return fieldsToIndex.map(field => {
+      const indexName = `${schemaName}_checklists_${field}_idx`;
+      return `
+        CREATE INDEX IF NOT EXISTS "${indexName}"
+        ON "${schemaName}"."checklists"("${field}");
+      `;
+    });
+  },
+   getCreateActivityAttachmentsIndexesQueries(schemaName: string): string[] {
+    const fieldsToIndex = [
+      "account_rid",
+      "rid",
+      "activity_rid"
+    ];
+    
+    return fieldsToIndex.map(field => {
+      const indexName = `${schemaName}_activity_attachments_${field}_idx`;
+      return `
+        CREATE INDEX IF NOT EXISTS "${indexName}"
+        ON "${schemaName}"."activity_attachments"("${field}");
+      `;
+    });
+  },
+   getCreateCheckListItemTableQuery(schemaName: string): string {
+    return `
+      CREATE TABLE IF NOT EXISTS "${schemaName}".checklist_items (
+        rid VARCHAR(50) DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+        created_by character varying(50) NOT NULL,
+        modified_by character varying(50),
+        created_datetime timestamp with time zone NOT NULL DEFAULT NOW(),
+        modified_datetime timestamp with time zone,
+        account_rid character varying(50) NOT NULL,
+        checklist_rid character varying(50) NOT NULL,
+        checklist_item_name character varying(255) NOT NULL,
+        checklist_item_description character varying(2000),
+        status_rid character varying(50),
+        CONSTRAINT checklist_items_pkey UNIQUE (rid)
+        CONSTRAINT checklist_items_account_rid_fkey FOREIGN KEY (account_rid)
+        REFERENCES ${schemaName}.account_details (account_rid) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE NO ACTION
+      );
+    `;
+  },
+   getCreateCheckListItemIndexesQueries(schemaName: string): string[] {
+    const fieldsToIndex = [
+      "account_rid",
+      "checklist_rid",
+      "rid"
+    ];
+    
+    return fieldsToIndex.map(field => {
+      const indexName = `${schemaName}_checklist_items_${field}_idx`;
+      return `
+        CREATE INDEX IF NOT EXISTS "${indexName}"
+        ON "${schemaName}"."checklist_items"("${field}");
+      `;
+    });
   },
   getCreateInteractionsIndexesQueries(schemaName: string): string[] {
     const fieldsToIndex = [
@@ -2572,7 +2821,6 @@ export const rawQueries = {
         technical_summary TEXT,
         version INT DEFAULT 1,
         status_rid VARCHAR(50),
-        entity_transaction_rid VARCHAR(50),
         technical_summary_refinement_prompt TEXT
       );
     `;
@@ -2674,8 +2922,8 @@ export const rawQueries = {
         rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
         created_by varchar(50) NOT NULL,
         modified_by varchar(50),
-        created_datetime TIMESTAMP NOT NULL DEFAULT NOW(),
-        modified_datetime TIMESTAMP,
+        created_datetime TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+        modified_datetime TIMESTAMP WITH TIME ZONE,
         transaction_id VARCHAR(50) NOT NULL,
         project_fiscal_rid VARCHAR(50) NOT NULL,
         project_rid VARCHAR(50),
@@ -2810,7 +3058,7 @@ export const rawQueries = {
   },
   getCreateNotesSequenceQuery(schemaName: string): string {
     return `
-      CREATE SEQUENCE IF NOT EXISTS "${schemaName}".notes START 1;
+      CREATE SEQUENCE IF NOT EXISTS "${schemaName}".notes_seq START 1;
     `;
   },
   getCreateNotesTableQuery(schemaName: string): string {
@@ -2835,6 +3083,34 @@ export const rawQueries = {
         descriptions VARCHAR(2000)
       );
     `;
+  },
+  getCreateJurisdictionTableQuery(schemaName: string): string {
+    return `
+      CREATE TABLE IF NOT EXISTS "${schemaName}".jurisdictions
+      (
+        rid character varying(50) COLLATE  NOT NULL DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+        created_by character varying(50) COLLATE  NOT NULL,
+        modified_by character varying(50) COLLATE ,
+        created_datetime timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        modified_datetime timestamp with time zone,
+        entity_rid character varying(50) COLLATE  NOT NULL,
+        is_federal_level boolean NOT NULL DEFAULT false,
+        is_state_level boolean NOT NULL DEFAULT false,
+        states text[] COLLATE ,
+        level character varying(50) COLLATE  NOT NULL,
+        CONSTRAINT jurisdictions_pkey PRIMARY KEY (rid)
+      )
+    `;
+  },
+  getCreateJurisdictionsIndexes(schemaName: string): string[] {
+    const fieldsToIndex = [
+      "entity_rid",
+    ];
+  
+    return fieldsToIndex.map(field => `
+      CREATE INDEX IF NOT EXISTS "idx_jurisdictions_${field}"
+      ON "${schemaName}"."notes"("${field}");
+    `);
   },
   getCreateNotesIndexes(schemaName: string): string[] {
     const fieldsToIndex = [

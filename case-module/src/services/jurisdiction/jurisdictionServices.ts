@@ -87,7 +87,7 @@ export class JurisdictionService {
  */
   async getJurisdictionConfiguration(
     accountRid: string,
-    caseRid: string
+    entityRid: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -96,7 +96,7 @@ export class JurisdictionService {
   }> {
     try {
       // Step 1: Resolve account number (schema name)
-      const { accountNumber, parentAccountId } =
+      const { accountNumber} =
         await this.caseSchemaService.fetchValidAccountNumberById(accountRid);
 
       if (!accountNumber) {
@@ -108,22 +108,14 @@ export class JurisdictionService {
 
       // Step 3: Fetch jurisdiction record
       const jurisdiction = await Jurisdiction.findOne({
-        where: { account_rid: accountRid, case_rid: caseRid },
+        where: { entity_rid: entityRid },
       });
-
-      if (!jurisdiction) {
-        return {
-          statusCode: HttpStatus.NOT_FOUND,
-          message: STATUS_MESSAGE.jurisdictionNotFound || "Jurisdiction configuration not found",
-          data: null,
-        };
-      }
 
       // Step 4: Return success response
       return {
         statusCode: HttpStatus.SUCCESS,
         message: STATUS_MESSAGE.jurisdictionFetchedSuccess || "Jurisdiction configuration fetched successfully",
-        data: jurisdiction,
+        data: jurisdiction || {},
       };
     } catch (error) {
       logMessage(`Error fetching jurisdiction configuration: ${error}`);

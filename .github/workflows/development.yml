@@ -1038,6 +1038,8 @@ jobs:
           NODE_ENV_DB_PREFIX="D001-"
           SYSTEM_USER_ID = "D001-477aac5d-3d92-4420-8e65-4153af4f3aed"
           VITE_CASE_URL=/caseService
+          CLIENT_SECRET_ENCRYPTION_KEY='client-secret-encryption-key'
+          CLIENT_SECRET_ENCRYPTION_LENGTH=16
           EOF
           echo "$ENV_FILE file created successfully!"
       - name: Copy .env file to VM

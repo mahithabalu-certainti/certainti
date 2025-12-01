@@ -35,7 +35,7 @@ routes.get(
 );
 routes.post(
   "/taskTemplate/create",
-  checkUserStatusMiddleware("NA"),
+  checkUserStatusMiddleware("task_templates_create"),
   controller.caseManagementController.createTaskTemplate
 );
 routes.get(
@@ -60,12 +60,12 @@ routes.put(
 );
 routes.post(
   "/taskTemplate/list",
-  checkUserStatusMiddleware("NA"),
+  checkUserStatusMiddleware("task_templates_view_edit"),
   controller.caseManagementController.fetchAdminTaskTemplateList
 );
 routes.post(
   "/taskTemplate/export",
-  checkUserStatusMiddleware("NA"),
+  checkUserStatusMiddleware("task_templates_export"),
   controller.caseManagementController.ExportAdminTaskTemplateList
 );
 routes.get(
@@ -74,10 +74,84 @@ routes.get(
   controller.caseManagementController.fetchAllTaskTypes
 );
 routes.get(
-  "/taskTemplate/:rid",
+  "/taskTemplate/weightage",
   checkUserStatusMiddleware("NA"),
+  controller.caseManagementController.listAdminTaskWeightage
+)
+routes.get(
+  "/taskTemplate/category",
+  checkUserStatusMiddleware("NA"),
+  controller.caseManagementController.getTaskCategoryForDropdown
+)
+routes.get(
+  "/taskTemplate/:rid",
+  checkUserStatusMiddleware("task_templates_view_edit"),
   controller.caseManagementController.fetchTaskTemplateDetails
 );
-
+routes.post(
+  "/emailTemplate/create",
+  checkUserStatusMiddleware("email_templates_create"),
+  controller.caseManagementController.createEmailTemplate
+);
+routes.post(
+  "/emailTemplate/update",
+  checkUserStatusMiddleware("email_templates_view_edit"),
+  controller.caseManagementController.updateEmailTemplate
+);
+routes.get(
+  "/emailPlaceHolders",
+  checkUserStatusMiddleware("NA"),
+  controller.caseManagementController.getEmailPlaceHolders
+);
+routes.get(
+  "/emailTemplate/detail/:emailTemplateRid",
+  checkUserStatusMiddleware("email_templates_view_edit"),
+  controller.caseManagementController.getEmailTemplateDetailsById
+);
+routes.get(
+  "/emailTemplate/list",
+  checkUserStatusMiddleware("email_templates_view_edit"),
+  controller.caseManagementController.listEmailTemplates
+);
+routes.get(
+  "/emailTemplatesByCategory",
+  checkUserStatusMiddleware("email_templates_view_edit"),
+  controller.caseManagementController.listAllEmailTemplatesByCategory
+);
+routes.get(
+  "/emailTemplate/export",
+  checkUserStatusMiddleware("email_templates_view_edit"),
+  controller.caseManagementController.exportEmailTemplates
+);
+routes.get(
+  "/categoryPlaceHolders/:categoryRid",
+  checkUserStatusMiddleware("NA"),
+  controller.caseManagementController.getEmailCategoryPlaceHolders
+);
+routes.get(
+  "/emailTemplate/categories",
+  checkUserStatusMiddleware("NA"),
+  controller.caseManagementController.getEmailTemplateCategory
+);
+routes.get(
+  "/workflowConnector/list",
+  checkUserStatusMiddleware("NA"),
+  controller.caseManagementController.getWorkFlowConnector
+)
+routes.post(
+  "/workflowConnector/add",
+  checkUserStatusMiddleware("NA"),
+  controller.caseManagementController.linkAdminTask
+)
+routes.post(
+  "/workflowConnector/delete",
+  checkUserStatusMiddleware("NA"),
+  controller.caseManagementController.linkAdminDeleteTask
+)
+routes.post(
+  "/taskTemplate/dropdown",
+  checkUserStatusMiddleware("NA"),
+  controller.caseManagementController.listAdminTaskDropdown
+)
 
 export default routes;

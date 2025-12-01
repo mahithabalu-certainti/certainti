@@ -24,6 +24,7 @@ export const fetchInteractionForProjectLevelQuery = (
   account_rid: string,
   project_id: string,
   project_fiscal_rid: string,
+  case_rid: string,
   fiscal_year: number,
   sort: string,
   sortBy: string,
@@ -67,6 +68,18 @@ export const fetchInteractionForProjectLevelQuery = (
     aggregatedQuery = `
         ,'key_contact_name', i.key_contact_name,
         'key_contact_email', i.key_contact_email`
+  } else if (flag == interactionFlag.case) {
+    accountLevelkeyContactQuery = `kcd.key_contact_name, kcd.key_contact_email,`
+    aggregatedQuery = `
+        ,'key_contact_name', i.key_contact_name,
+        'key_contact_email', i.key_contact_email`
+    whereConditions = `
+        i.account_rid = '${account_rid}' 
+        AND i.project_rid IN (
+          SELECT project_rid 
+          FROM ${schemaName}.case_projects 
+          WHERE case_rid = '${case_rid}'
+        )`;
   } else {
     accountLevelkeyContactQuery = `kcd.key_contact_name, kcd.key_contact_email,`
     aggregatedQuery = `
@@ -123,6 +136,8 @@ export const fetchInteractionForProjectLevelQuery = (
     sortValue = `ORDER BY i.modified_datetime ${sortBy}`;
   else if (sort === filtersColumns.project_code)
     sortValue = `ORDER BY pf.project_code ${sortBy}`;
+  else if (sort === filtersColumns.project_name )
+    sortValue = `ORDER BY pf.project_name ${sortBy}`;
   else if (sort === filtersColumns.fiscal_year)
     sortValue = `ORDER BY i.fiscal_year ${sortBy}`;
   else if (sort === filtersColumns.parent_interaction_rid)
@@ -160,7 +175,7 @@ export const fetchInteractionForProjectLevelQuery = (
             i.interaction_url,i.project_fiscal_rid,
             COUNT(i.rid) OVER() AS total_records, i.interaction_age,
             i.interaction_source_rid, i.interaction_type_rid, i.attachment_count,i.interaction_level_rid,
-            pf.project_code,
+            pf.project_code,pf.project_name,
             CASE 
                 WHEN i.project_fiscal_rid IS NULL THEN i.fiscal_year
                 ELSE pf.fiscal_year
@@ -249,6 +264,7 @@ export const fetchInteractionForProjectLevelQuery = (
         'interaction_level', i.interaction_level_rid,
         'attachment_count', i.attachment_count,
         'project_code', i.project_code,
+        'project_name', i.project_name, 
         'has_email_recipient', i.has_email_recipient,
         'has_account_recipient', i.has_account_recipient
         ${aggregatedQuery}
@@ -631,6 +647,7 @@ const filterForInteractions = (
           case "string": {
             let dynamicReference = ``;
             if (filteredColumns == "project_code") dynamicReference = `pf`;
+            else if (filteredColumns == "project_name") dynamicReference = `pf`;
             else if (filteredColumns == "account_name") dynamicReference = `a`;
             else if (filteredColumns == "fiscal_year") dynamicReference = `pf`;
             else if (filteredColumns == "parent_interaction_rid") {

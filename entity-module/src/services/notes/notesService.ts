@@ -396,6 +396,11 @@ export class NotesService {
           const resourceCostSkillAttachments = await fetchResourceCostSkillAttachmentsBulk(NotesModel, [entityId]);
           allNotes.push(...resourceCostSkillAttachments);
         }
+
+        else if (attachmentLevel === 'case' && entityId) {
+          const caseAttachments = await fetchAttachments(NotesModel, 'case', [entityId]);
+          allNotes.push(...caseAttachments);
+        }
     
         // 🔷 Other direct levels
         else {

@@ -6,6 +6,12 @@ import { CheckList } from "./checkListModel";
 import { CheckListItem } from "./checkListItemModel";
 import { Jurisdiction } from "./jurisdiction";
 import { logMessage } from "../utils/helpers";
+import { TaskCollaborators } from "./taskCollaboratorsModel";
+import { TaskTag } from "./taskTagsModel";
+import { TaskComments } from "./taskCommentsModel";
+import { CommentsAttachments } from "./commentsAttachmentModel";
+import { TaskAttachments } from "./taskAttachmentModel";
+import { CaseTaskWorkflowConnector } from "./caseTaskWorkflowConnectorModel";
 
 export const models = {
   Case,
@@ -13,7 +19,13 @@ export const models = {
   CaseProject,
   CheckList,
   CheckListItem,
-  Jurisdiction
+  Jurisdiction,
+  TaskCollaborators,
+  TaskTag,
+  TaskComments,
+  CommentsAttachments,
+  TaskAttachments,
+  CaseTaskWorkflowConnector
 };
 
 export async function initModels() {
