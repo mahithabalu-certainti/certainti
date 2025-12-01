@@ -45,7 +45,7 @@ export const reviewProjectFilterFields = (
       !projectPermissionMap?.['project_type_rid']?.edit,
   },
   {
-    name: 'Project Classification',
+    name: 'Classification',
     value: 'classification_name',
     type: 'enum',
     options: classificationOption.map((item) => ({
@@ -99,116 +99,116 @@ export const reviewProjectFilterFields = (
     value: 'total_effort_prj',
     type: 'number',
     operatorOption: numberOptions,
-    // hide:
-    //   !projectPermissionMap?.['total_effort']?.read &&
-    //   !projectPermissionMap?.['total_effort']?.edit,
+    hide:
+      !projectPermissionMap?.['total_fte_prj"']?.read &&
+      !projectPermissionMap?.['total_fte_prj"']?.edit,
   },
   {
     name: 'Total Sub Con Count',
     value: 'total_subcon_prj',
     type: 'number',
     operatorOption: numberOptions,
-    // hide:
-    //   !projectPermissionMap?.['total_subcon_prj']?.read &&
-    //   !projectPermissionMap?.['total_subcon_prj']?.edit,
+    hide:
+      !projectPermissionMap?.['total_subcon_prj']?.read &&
+      !projectPermissionMap?.['total_subcon_prj']?.edit,
   },
   {
     name: 'Total Non Labor Count',
     value: 'total_nonlabor_prj',
     type: 'number',
     operatorOption: numberOptions,
-    // hide:
-    //   !projectPermissionMap?.['total_nonlabor_prj']?.read &&
-    //   !projectPermissionMap?.['total_nonlabor_prj']?.edit,
+    hide:
+      !projectPermissionMap?.['total_nonlabor_prj']?.read &&
+      !projectPermissionMap?.['total_nonlabor_prj']?.edit,
   },
   {
     name: 'Total FTE Effort',
     value: 'total_effort_fte_prj',
     type: 'number',
     operatorOption: numberOptions,
-    // hide:
-    //   !projectPermissionMap?.['total_effort_fte_prj']?.read &&
-    //   !projectPermissionMap?.['total_effort_fte_prj']?.edit,
+    hide:
+      !projectPermissionMap?.['total_effort_fte_prj']?.read &&
+      !projectPermissionMap?.['total_effort_fte_prj']?.edit,
   },
   {
     name: 'Total Sub Con Effort',
-    value: 'total_cost_subcon_prj',
+    value: 'total_effort_subcon_prj',
     type: 'number',
     operatorOption: numberOptions,
-    // hide:
-    //   !projectPermissionMap?.['total_cost_subcon_prj']?.read &&
-    //   !projectPermissionMap?.['total_cost_subcon_prj']?.edit,
+    hide:
+      !projectPermissionMap?.['total_effort_subcon_prj']?.read &&
+      !projectPermissionMap?.['total_effort_subcon_prj']?.edit,
   },
   {
     name: 'Total Effort in Hrs',
     value: 'total_effort_prj',
     type: 'number',
     operatorOption: numberOptions,
-    // hide:
-    //   !projectPermissionMap?.['total_effort_prj']?.read &&
-    //   !projectPermissionMap?.['total_effort_prj']?.edit,
+    hide:
+      !projectPermissionMap?.['total_effort_prj']?.read &&
+      !projectPermissionMap?.['total_effort_prj']?.edit,
   },
   {
     name: 'Total FTE Cost',
     value: 'total_cost_fte_prj',
     type: 'number',
     operatorOption: numberOptions,
-    // hide:
-    //   !projectPermissionMap?.['total_cost_fte_prj']?.read &&
-    //   !projectPermissionMap?.['total_cost_fte_prj']?.edit,
+    hide:
+      !projectPermissionMap?.['total_cost_fte_prj']?.read &&
+      !projectPermissionMap?.['total_cost_fte_prj']?.edit,
   },
   {
     name: 'Total Sub Con Cost',
     value: 'total_cost_subcon_prj',
     type: 'number',
     operatorOption: numberOptions,
-    // hide:
-    //   !projectPermissionMap?.['total_cost_subcon_prj']?.read &&
-    //   !projectPermissionMap?.['total_cost_subcon_prj']?.edit,
+    hide:
+      !projectPermissionMap?.['total_cost_subcon_prj']?.read &&
+      !projectPermissionMap?.['total_cost_subcon_prj']?.edit,
   },
   {
     name: 'Total Non Labor Cost',
     value: 'total_cost_nonlabor_prj',
     type: 'number',
     operatorOption: numberOptions,
-    // hide:
-    //   !projectPermissionMap?.['total_cost_nonlabor_prj']?.read &&
-    //   !projectPermissionMap?.['total_cost_nonlabor_prj']?.edit,
+    hide:
+      !projectPermissionMap?.['total_cost_nonlabor_prj']?.read &&
+      !projectPermissionMap?.['total_cost_nonlabor_prj']?.edit,
   },
   {
     name: 'Total Cost',
     value: 'total_cost_prj',
     type: 'number',
     operatorOption: numberOptions,
-    // hide:
-    //   !projectPermissionMap?.['total_cost_prj']?.read &&
-    //   !projectPermissionMap?.['total_cost_prj']?.edit,
+    hide:
+      !projectPermissionMap?.['total_cost_prj']?.read &&
+      !projectPermissionMap?.['total_cost_prj']?.edit,
   },
   {
     name: 'Number of Project Resource',
     value: 'total_resources_prj',
     type: 'number',
     operatorOption: numberOptions,
-    // hide:
-    //   !projectPermissionMap?.['total_resources_prj']?.read &&
-    //   !projectPermissionMap?.['total_resources_prj']?.edit,
+    hide:
+      !projectPermissionMap?.['total_resources_prj']?.read &&
+      !projectPermissionMap?.['total_resources_prj']?.edit,
   },
   {
     name: 'Number of Project Task',
     value: 'total_tasks',
     type: 'number',
     operatorOption: numberOptions,
-    // hide:
-    //   !projectPermissionMap?.['total_tasks']?.read &&
-    //   !projectPermissionMap?.['total_tasks']?.edit,
+    hide:
+      !projectPermissionMap?.['total_tasks']?.read &&
+      !projectPermissionMap?.['total_tasks']?.edit,
   },
   {
     name: 'Number of Technical Summary Generated',
     value: 'total_technical_summaries',
     type: 'number',
     operatorOption: numberOptions,
-    // hide:
-    //   !projectPermissionMap?.['total_technical_summaries']?.read &&
-    //   !projectPermissionMap?.['total_technical_summaries']?.edit,
+    hide:
+      !projectPermissionMap?.['total_technical_summaries']?.read &&
+      !projectPermissionMap?.['total_technical_summaries']?.edit,
   },
 ];

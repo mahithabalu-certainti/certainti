@@ -130,7 +130,10 @@ export const ProjectResources = ({
   const [currentCountry, setCurrentCountry] = useState<string>('');
   const [columnAnchorEl, setColumnAnchorEl] =
     React.useState<HTMLButtonElement | null>(null);
-  const [actionFlag, setActionFlag] = useState<null | ActionEnum>(null);
+  // const [actionFlag, setActionFlag] = useState<null | ActionEnum>(null);
+  const [loadingRows, setLoadingRows] = useState<
+    Record<string, ActionEnum | null>
+  >({});
   const isModalOpen = Boolean(columnAnchorEl);
   const handleColumnVisibility = (
     event: React.MouseEvent<HTMLButtonElement>
@@ -211,7 +214,7 @@ export const ProjectResources = ({
     });
     return map;
   }, [projectViewEditFields]);
-
+  console.log(permissionMap, 'per');
   const {
     data: resourceDetails,
     isLoading: isDetailsLoading,
@@ -697,7 +700,12 @@ export const ProjectResources = ({
     .map((id) => projectResourcesColumns.find((col) => col.id === id)!)
     .filter((col) => columnVisibility[col.id]);
   const handleAccept = (row: ProjectResourcesListType) => {
-    setActionFlag(ActionEnum.ACCEPT);
+    // Set loading for this specific row
+    setLoadingRows((prev) => ({
+      ...prev,
+      [row.rid as string]: ActionEnum.ACCEPT,
+    }));
+
     const payload = {
       rid: row?.rid || '',
       accountId: accountData?.accountID || '',
@@ -705,17 +713,28 @@ export const ProjectResources = ({
       type: row?.status_name || '',
       resourceCode: row?.resource_code,
     };
+
     updateStatusAccept.mutate(payload, {
       onSuccess: (data) => {
         successToast(data?.statusMessage || 'Status updated successfully');
         refetch();
-        setActionFlag(null);
+        // Clear loading for this specific row
+        setLoadingRows((prev) => ({ ...prev, [row.rid as string]: null }));
+      },
+      onError: () => {
+        // Clear loading for this specific row on error too
+        setLoadingRows((prev) => ({ ...prev, [row.rid as string]: null }));
       },
     });
   };
 
   const handleReject = (row: ProjectResourcesListType) => {
-    setActionFlag(ActionEnum.REJECT);
+    // Set loading for this specific row
+    setLoadingRows((prev) => ({
+      ...prev,
+      [row.rid as string]: ActionEnum.REJECT,
+    }));
+
     const payload = {
       rid: row?.rid || '',
       accountId: accountData?.accountID || '',
@@ -723,11 +742,17 @@ export const ProjectResources = ({
       type: row?.status_name || '',
       resourceCode: row?.resource_code,
     };
+
     updateStatusAccept.mutate(payload, {
       onSuccess: (data) => {
         successToast(data?.statusMessage || 'Status updated successfully');
         refetch();
-        setActionFlag(null);
+        // Clear loading for this specific row
+        setLoadingRows((prev) => ({ ...prev, [row.rid as string]: null }));
+      },
+      onError: () => {
+        // Clear loading for this specific row on error too
+        setLoadingRows((prev) => ({ ...prev, [row.rid as string]: null }));
       },
     });
   };
@@ -748,24 +773,26 @@ export const ProjectResources = ({
         return [];
     }
 
+    // Get the loading state for this specific row
+    const rowAction = loadingRows[row.rid as string];
+    const isRowLoading = !!rowAction;
+
     return [
       {
         label: statusLabel ? `Accept ${statusLabel}` : 'Accept',
-        onClick: handleAccept,
+        onClick: () => handleAccept(row),
         icon: AcceptIcon,
-        loading:
-          actionFlag === ActionEnum.ACCEPT && updateStatusAccept.isPending,
-        disabled: updateStatusAccept.isPending,
+        loading: rowAction === ActionEnum.ACCEPT,
+        disabled: isRowLoading || updateStatusAccept.isPending,
         className:
           'inline-flex items-center gap-1 px-2 py-1 rounded text-[12px] cursor-pointer h-[24px] bg-[#3EA72F1A] hover:bg-[#3EA72F] hover:text-[#fff] min-w-[140px] max-w-[140px] disabled:opacity-60 disabled:cursor-default',
       },
       {
         label: statusLabel ? `Reject ${statusLabel}` : 'Reject',
-        onClick: handleReject,
+        onClick: () => handleReject(row),
         icon: RejectIcon,
-        loading:
-          actionFlag === ActionEnum.REJECT && updateStatusAccept.isPending,
-        disabled: updateStatusAccept.isPending,
+        loading: rowAction === ActionEnum.REJECT,
+        disabled: isRowLoading || updateStatusAccept.isPending,
         className:
           'inline-flex items-center gap-1 px-2 py-1 rounded text-[12px] cursor-pointer h-[24px] bg-[#FF3C031A] hover:bg-[#FF3C03] hover:text-[#fff]min-w-[140px] max-w-[140px] disabled:opacity-60 disabled:cursor-default',
       },

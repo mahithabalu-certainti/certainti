@@ -44,6 +44,8 @@ export type ReviewProject = {
   total_cost_prj: number | null;
   total_cost_fte_prj: number | null;
   total_cost_subcon_prj: number | null;
+  total_fte_prj: number | null;
+  total_effort_subcon_prj: number | null;
   total_cost_nonlabor_prj: number | null;
   assessment_status: string | null;
   rd_percent_final: string | null;
@@ -52,6 +54,8 @@ export type ReviewProject = {
   modified_datetime: string;
   project_point_of_contact: string | null;
   project_technical_point_of_contact: string | null;
+  primary_point_of_contact_email: string;
+  primary_point_of_contact_name: string;
   currency_symbol: string | undefined;
   total_subcon_prj: number | null;
   total_nonlabor_prj: number | null;
