@@ -1187,11 +1187,6 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     return foundUser?.id || '';
   };
 
-  const formatDateForInput = (date: Date | undefined) => {
-    if (!date) return null;
-    return date instanceof Date ? dayjs(date) : dayjs(date);
-  };
-
   const handleChecklistToggle = (itemId: string) => {
     const updatedChecklist = (editedTask.checklist || []).map((item) =>
       item.id === itemId ? { ...item, completed: !item.completed } : item
