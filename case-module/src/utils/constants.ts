@@ -1827,6 +1827,9 @@ export const filterTypesForCaseSummary: Record<string, any> = {
   total_fte_prj: "number",
   case_name: "string",
   country_name: "string",
+  filing_type_name: "string",
+  account_name: "string",
+  case_owner_name: "string",
   
 };
 
