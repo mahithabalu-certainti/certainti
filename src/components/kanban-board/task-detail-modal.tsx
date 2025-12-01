@@ -1909,6 +1909,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
           {!fieldVisibility.collaborators && (
             <TaskCollaboratorsSection
               fieldVisibility={fieldVisibility}
+              fieldDisabled={enhancedFieldDisabled}
               editedTask={editedTask}
               selectedCollaboratorIds={selectedCollaboratorIds}
               allEnrichedUsers={allEnrichedUsers}

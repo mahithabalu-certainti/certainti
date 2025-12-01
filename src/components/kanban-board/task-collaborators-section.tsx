@@ -4,6 +4,7 @@ import { Assignee, User } from './types';
 
 interface TaskCollaboratorsSectionProps {
   fieldVisibility: Record<string, boolean | undefined>;
+  fieldDisabled: Record<string, boolean | undefined>;
   editedTask: {
     collaborators?: Assignee[];
   } | null;
@@ -20,6 +21,7 @@ interface TaskCollaboratorsSectionProps {
 
 const TaskCollaboratorsSection: React.FC<TaskCollaboratorsSectionProps> = ({
   fieldVisibility,
+  fieldDisabled,
   editedTask,
   selectedCollaboratorIds,
   allEnrichedUsers,
@@ -52,7 +54,7 @@ const TaskCollaboratorsSection: React.FC<TaskCollaboratorsSectionProps> = ({
         <div className='w-[200px]'>
           <Autocomplete
             multiple
-            disabled={isAddingCollaborator}
+            disabled={isAddingCollaborator || fieldDisabled.collaborators}
             options={allEnrichedUsers}
             getOptionLabel={(option) => option.name}
             value={allEnrichedUsers.filter((user) =>
@@ -202,16 +204,18 @@ const TaskCollaboratorsSection: React.FC<TaskCollaboratorsSectionProps> = ({
                 }}
               >
                 {collab.initials}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onRemoveCollaborator(collab.name);
-                  }}
-                  className='absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-red-500 hover:bg-red-600 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 ease-in-out scale-0 group-hover:scale-100 shadow-sm'
-                  title={`Remove ${collab.name}`}
-                >
-                  ×
-                </button>
+                {!fieldDisabled.collaborators && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onRemoveCollaborator(collab.name);
+                    }}
+                    className='absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-red-500 hover:bg-red-600 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 ease-in-out scale-0 group-hover:scale-100 shadow-sm'
+                    title={`Remove ${collab.name}`}
+                  >
+                    ×
+                  </button>
+                )}
               </div>
             </div>
           ))
