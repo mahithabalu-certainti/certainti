@@ -446,9 +446,9 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     return [];
   }, [taskTemplatesQuery.data, task?.title, taskId]);
 
-  // Fetch weightage and category lists
-  const weightageListQuery = useWeightageList();
-  const categoryListQuery = useGetTaskCategoryTypes();
+  // Fetch weightage and category lists (only for case tasks, not activities)
+  const weightageListQuery = useWeightageList({ enabled: taskType !== 'activity' });
+  const categoryListQuery = useGetTaskCategoryTypes({ enabled: taskType !== 'activity' });
 
   const weightageData = useMemo(() => {
     // Handle nested data.data structure
@@ -528,24 +528,36 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       deletedAttachmentIds.length > 0
     );
   };
-  const collaboratorUsers = useMemo(
-    () =>
-      collaborators.map((collab) =>
-        enrichUserOption({
-          rid: collab.assigned_to,
-          name: collab.assigned_to_name,
-        })
-      ),
-    [collaborators]
-  );
+
+  const collaboratorUsers = useMemo(() => {
+    const enrichedCollaborators = collaborators.map((collab) =>
+      enrichUserOption({
+        rid: collab.assigned_to,
+        name: collab.assigned_to_name,
+      })
+    );
+    const uniqueCollaborators = enrichedCollaborators.filter(
+      (user, index, self) => self.findIndex((u) => u.id === user.id) === index
+    );
+    return uniqueCollaborators;
+  }, [collaborators]);
+
+  const assigneeUsers = useMemo(() => {
+    const enrichedUsers = availableUsers?.map((user) => enrichUserOption(user)) || [];
+    const uniqueUsers = enrichedUsers.filter(
+      (user, index, self) => self.findIndex((u) => u.id === user.id) === index
+    );
+    return uniqueUsers;
+  }, [availableUsers]);
+
   const allEnrichedUsers = useMemo(
     () => [
       ...collaboratorUsers,
-      ...(availableUsers
-        ?.filter((user) => !collaboratorUsers.find((cu) => cu.id === user.rid))
-        .map((user) => enrichUserOption(user)) || []),
+      ...(assigneeUsers.filter(
+        (user) => !collaboratorUsers.find((cu) => cu.id === user.id)
+      ) || []),
     ],
-    [collaboratorUsers, availableUsers]
+    [collaboratorUsers, assigneeUsers]
   );
 
   useEffect(() => {
@@ -583,6 +595,17 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       .filter((id) => id !== '');
     setSelectedCollaboratorIds(ids);
   }, [editedTask, allEnrichedUsers]);
+
+  // Disable checklist template if any checklist item has been completed
+  const enhancedFieldDisabled = useMemo(() => {
+    const hasCompletedItems = (editedTask?.checklist || []).some(
+      (item) => item.completed
+    );
+    return {
+      ...fieldDisabled,
+      checklistTemplate: fieldDisabled.checklistTemplate || hasCompletedItems,
+    };
+  }, [fieldDisabled, editedTask?.checklist]);
 
   if (!isOpen || !taskId) return null;
   if (isLoadingTaskDetails || (rawTask && !task)) {
@@ -884,7 +907,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
           : '';
 
         const assignedToRid = editedTask.assignee
-          ? allEnrichedUsers.find((u) => u.name === editedTask.assignee.name)
+          ? assigneeUsers.find((u) => u.name === editedTask.assignee.name)
             ?.id || ''
           : '';
 
@@ -948,7 +971,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
             account_rid: accountId,
             task_name: editedTask.title || '',
             task_description: editedTask.description || '',
-            task_status_rid: selectedStatus?.id || '',
+            status_rid: selectedStatus?.id || '',
             priority_rid: selectedPriority?.id || '',
             effective_start_datetime: editedTask.startDate
               ? dayjs(editedTask.startDate).format('YYYY-MM-DD')
@@ -959,6 +982,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
             tags: tagsArray,
             assigned_to: assignedToRid || '',
             fiscal_year: editedTask.fiscal_year,
+            checklist_rid: selectedChecklistObj?.id || "",
           };
           updateResponse =
             await updateActivityTaskMutation.mutateAsync(activityPayload);
@@ -1136,7 +1160,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       );
       return;
     }
-    const selectedUser = allEnrichedUsers.find(
+    const selectedUser = assigneeUsers.find(
       (user) => user.id === selectedUserId
     );
     if (selectedUser) {
@@ -1157,7 +1181,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
 
   const getAssigneeForSelect = () => {
     if (!editedTask?.assignee || editedTask.assignee.name === '') return '';
-    const foundUser = allEnrichedUsers.find(
+    const foundUser = assigneeUsers.find(
       (u) => u.name === editedTask.assignee.name
     );
     return foundUser?.id || '';
@@ -1249,10 +1273,11 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
           );
           if (userToRemove) {
             await deleteCollaboratorMutation.mutateAsync({
-              case_rid: caseId,
+              ...(taskType !== 'activity' && { case_rid: caseId }),
               account_rid: accountId,
               rid: taskId,
               assigned_to: removedUserId,
+              ...(taskType === 'activity' && { task_type: 'activity' }),
             });
           }
         }
@@ -1462,7 +1487,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                 >
                   Select User
                 </MenuItem>
-                {allEnrichedUsers.map((user) => (
+                {assigneeUsers.map((user) => (
                   <MenuItem
                     sx={{
                       color: '#425A76',
@@ -1760,7 +1785,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
 
           <TaskFieldsSection
             fieldVisibility={fieldVisibility}
-            fieldDisabled={fieldDisabled}
+            fieldDisabled={enhancedFieldDisabled}
             editedTask={editedTask}
             statusData={statusData}
             priorityData={priorityData}
@@ -1790,7 +1815,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                 );
                 return;
               }
-              const selectedUser = allEnrichedUsers.find(
+              const selectedUser = assigneeUsers.find(
                 (u) => u.id === userId
               );
               if (selectedUser) {
@@ -1874,7 +1899,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
 
           <TaskChecklistSection
             fieldVisibility={fieldVisibility}
-            fieldDisabled={fieldDisabled}
+            fieldDisabled={enhancedFieldDisabled}
             editedTask={editedTask}
             onChecklistToggle={handleChecklistToggle}
             caseId={caseId}
@@ -1892,7 +1917,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                   onChange={handleDescriptionChange}
                   placeholder=''
                   className='w-full bg-white border border-gray-300 rounded-lg p-3 text-sm resize-none focus:border-blue-500 focus:outline-none text-gray-900 placeholder-gray-500 min-h-[100px] pr-8'
-                  disabled={fieldDisabled.description}
+                  disabled={enhancedFieldDisabled.description}
                 />
                 {errors.description && (
                   <div className='absolute right-2 top-3'>
@@ -1906,7 +1931,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
           {!fieldVisibility.attachments && (
             <TaskAttachmentsSection
               fieldVisibility={fieldVisibility}
-              fieldDisabled={fieldDisabled}
+              fieldDisabled={enhancedFieldDisabled}
               editedTask={editedTask}
               taskAttachments={taskAttachments}
               onAttachmentChange={handleAttachmentChange}
@@ -1918,7 +1943,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
           {!fieldVisibility.comments && (
             <TaskCommentsSection
               fieldVisibility={fieldVisibility}
-              fieldDisabled={fieldDisabled}
+              fieldDisabled={enhancedFieldDisabled}
               activeTab={activeTab}
               setActiveTab={setActiveTab}
               comments={comments}
@@ -1959,10 +1984,11 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
 
                 deleteCollaboratorMutation.mutate(
                   {
-                    case_rid: caseId,
+                    ...(taskType !== 'activity' && { case_rid: caseId }),
                     account_rid: accountId,
                     rid: taskId,
                     assigned_to: userToRemove.id,
+                    ...(taskType === 'activity' && { task_type: 'activity' }),
                   },
                   {
                     onSuccess: () => {
