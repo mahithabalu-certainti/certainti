@@ -10,7 +10,6 @@ import {
   getFiscalYears,
 } from '../../../../common-utils';
 
-const currentDate = new Date();
 const minYear = 1950;
 const currentYear = new Date().getFullYear();
 const fiscalYears = getFiscalYears(currentYear - minYear + 1);
@@ -131,16 +130,9 @@ export const CaseFormData = (
           createTextField('heat_light_power', 'Heat Light Power', {
             required: false,
             placeholder: 'Enter Heat Light Power',
-            // errorHandling: [
-            //   {
-            //     regex: REGEX_PATTERNS.MIN_3,
-            //     errorMessage: 'Case Name must be more than 2 characters long',
-            //   },
-            //   {
-            //     regex: REGEX_PATTERNS.MAX_255,
-            //     errorMessage: 'Case Name must be within 255 characters',
-            //   },
-            // ],
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isEditView &&
               !permissionMap?.['case_name']?.edit &&
@@ -153,16 +145,9 @@ export const CaseFormData = (
           createTextField('total_nonlabor_cost', 'Total NonLabor Cost', {
             required: false,
             placeholder: 'Enter Total NonLabor Cost',
-            // errorHandling: [
-            //   {
-            //     regex: REGEX_PATTERNS.MIN_3,
-            //     errorMessage: 'Case Name must be more than 2 characters long',
-            //   },
-            //   {
-            //     regex: REGEX_PATTERNS.MAX_255,
-            //     errorMessage: 'Case Name must be within 255 characters',
-            //   },
-            // ],
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isEditView &&
               !permissionMap?.['case_name']?.edit &&
@@ -175,16 +160,9 @@ export const CaseFormData = (
           createTextField('tax_liability', 'Tax Liability', {
             required: false,
             placeholder: 'Enter Tax Liability',
-            // errorHandling: [
-            //   {
-            //     regex: REGEX_PATTERNS.MIN_3,
-            //     errorMessage: 'Case Name must be more than 2 characters long',
-            //   },
-            //   {
-            //     regex: REGEX_PATTERNS.MAX_255,
-            //     errorMessage: 'Case Name must be within 255 characters',
-            //   },
-            // ],
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
               isEditView &&
               !permissionMap?.['case_name']?.edit &&
@@ -197,8 +175,7 @@ export const CaseFormData = (
           createDateField('case_startdate', 'Start Date', {
             required: true,
             onChange: true,
-            maxDate: currentDate,
-            disableFutureDates: true,
+            allowFutureDates: true,
             disabled:
               isEditView &&
               !permissionMap?.['start_date']?.edit &&
@@ -213,14 +190,14 @@ export const CaseFormData = (
             'Planned Submission Date',
             {
               required: true,
-              disableFutureDates: true,
               onChange: true,
+              allowFutureDates: true,
               minDate: dateConstraints?.planned_min
                 ? new Date(dateConstraints.planned_min)
                 : undefined,
               maxDate: dateConstraints?.planned_max
                 ? new Date(dateConstraints.planned_max)
-                : currentDate,
+                : undefined,
               disabled:
                 isEditView &&
                 !permissionMap?.['planned_submission_date']?.edit &&
@@ -237,13 +214,13 @@ export const CaseFormData = (
             {
               required: true,
               onChange: true,
-              disableFutureDates: true,
+              allowFutureDates: true,
               minDate: dateConstraints?.statutory_min
                 ? new Date(dateConstraints.statutory_min)
                 : undefined,
               maxDate: dateConstraints?.statutory_max
                 ? new Date(dateConstraints.statutory_max)
-                : currentDate,
+                : undefined,
               disabled:
                 isEditView &&
                 !permissionMap?.['statutory_submission_date']?.edit &&

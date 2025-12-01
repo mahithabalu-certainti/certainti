@@ -4,7 +4,7 @@ import type { TaskCardProps, TaskCard } from './types';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { CommentIcon, CustomChecklistIcon } from '../../assets';
-import { generateInitials, generateColorFromName } from './helper';
+import { generateInitials } from './helper';
 import { Tooltip } from '@mui/material';
 
 interface ExtendedTaskCardProps extends TaskCardProps {
@@ -200,8 +200,8 @@ const TaskCardComponent: React.FC<ExtendedTaskCardProps> = ({
           <div
             className='w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-semibold border border-white shadow-sm'
             style={{
-              backgroundColor: generateColorFromName(taskData.assigned_to_name),
-              color: '#374151',
+              backgroundColor: '#F3E8FF',
+              color: '#6B21A8',
               fontFamily: "'Mulish', 'Lexend', sans-serif",
               fontSize: '10px',
             }}

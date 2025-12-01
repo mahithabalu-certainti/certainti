@@ -919,12 +919,17 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
           (rid) => !linkTaskTypeRidsValue.includes(rid)
         );
 
+        const originalRelationshipConnectorRid =
+          originalTask?.workflow_connector?.[0]?.relationship_connector_rid || '';
+
         if (
-          linkedTypeRidValue &&
-          (linkTaskTypeRidsValue.length > 0 || deleteTargetRids.length > 0)
+          (linkedTypeRidValue &&
+            (linkTaskTypeRidsValue.length > 0 || deleteTargetRids.length > 0)) ||
+          deleteTargetRids.length > 0
         ) {
           workflowConnector.source_rid = taskId;
-          workflowConnector.relationship_connector_rid = linkedTypeRidValue;
+          workflowConnector.relationship_connector_rid =
+            linkedTypeRidValue || originalRelationshipConnectorRid;
           workflowConnector.target_rid = linkTaskTypeRidsValue;
           workflowConnector.delete_target_rids = deleteTargetRids;
         }
@@ -1187,11 +1192,6 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     return foundUser?.id || '';
   };
 
-  const formatDateForInput = (date: Date | undefined) => {
-    if (!date) return null;
-    return date instanceof Date ? dayjs(date) : dayjs(date);
-  };
-
   const handleChecklistToggle = (itemId: string) => {
     const updatedChecklist = (editedTask.checklist || []).map((item) =>
       item.id === itemId ? { ...item, completed: !item.completed } : item
@@ -1374,33 +1374,36 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
         </div>
 
         <div className='px-6 pt-3 pb-6 space-y-3'>
-          <div>
-            <div className='text-[13px] font-medium text-gray-700 mb-2'>
-              Task Name <span className='text-red-500'>*</span>
+          {!fieldVisibility.taskName && (
+            <div>
+              <div className='text-[13px] font-medium text-gray-700 mb-2'>
+                Task Name <span className='text-red-500'>*</span>
+              </div>
+              <div className='relative'>
+                <input
+                  type='text'
+                  value={editedTask?.title || ''}
+                  onChange={(e) => {
+                    setEditedTask((prev) =>
+                      prev ? { ...prev, title: e.target.value } : null
+                    );
+                    if (e.target.value.trim()) {
+                      setErrors((prev) => ({ ...prev, taskTitle: '' }));
+                    }
+                  }}
+                  onKeyPress={(e) => e.key === 'Enter' && handleSave()}
+                  disabled={fieldDisabled.taskName}
+                  className={`w-full text-[13px] font-normal bg-transparent border-b ${errors.taskTitle ? 'border-red-500' : 'border-gray-300'} focus:border-blue-400 focus:border-b outline-none text-gray-900 placeholder-[#7D98B6] pb-2 pr-8`}
+                  autoFocus
+                />
+                {errors.taskTitle && (
+                  <div className='absolute right-0 top-0 bottom-2 flex items-center'>
+                    <ErrorIconTooltip error={errors.taskTitle} />
+                  </div>
+                )}
+              </div>
             </div>
-            <div className='relative'>
-              <input
-                type='text'
-                value={editedTask?.title || ''}
-                onChange={(e) => {
-                  setEditedTask((prev) =>
-                    prev ? { ...prev, title: e.target.value } : null
-                  );
-                  if (e.target.value.trim()) {
-                    setErrors((prev) => ({ ...prev, taskTitle: '' }));
-                  }
-                }}
-                onKeyPress={(e) => e.key === 'Enter' && handleSave()}
-                className={`w-full text-[13px] font-normal bg-transparent border-b ${errors.taskTitle ? 'border-red-500' : 'border-gray-300'} focus:border-blue-400 focus:border-b outline-none text-gray-900 placeholder-[#7D98B6] pb-2 pr-8`}
-                autoFocus
-              />
-              {errors.taskTitle && (
-                <div className='absolute right-0 top-0 bottom-2 flex items-center'>
-                  <ErrorIconTooltip error={errors.taskTitle} />
-                </div>
-              )}
-            </div>
-          </div>
+          )}
 
           {!fieldVisibility.assignee && (
             <div className='flex items-center justify-between'>
@@ -1411,6 +1414,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                 name='assignee'
                 value={getAssigneeForSelect()}
                 onChange={handleAssigneeChange}
+                disabled={fieldDisabled.assignee}
                 width='240px'
                 sx={{
                   '&.Mui-disabled': {
@@ -1421,7 +1425,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                   },
                 }}
                 renderValue={() => {
-                  if (editedTask?.assignee) {
+                  if (editedTask?.assignee && editedTask.assignee.name) {
                     return (
                       <div
                         style={{
@@ -1544,13 +1548,15 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                     Start Date
                   </label>
                   <DatePicker
-                    disabled={false}
+                    disabled={fieldDisabled.startDate}
                     minDate={minDate}
                     maxDate={maxDate}
-                    value={formatDateForInput(editedTask?.startDate)}
+                    value={
+                      editedTask.startDate ? dayjs(editedTask.startDate) : null
+                    }
                     onChange={(newValue) =>
                       handleStartDateChange(
-                        newValue ? dayjs(newValue).format('YYYY-MM-DD') : ''
+                        newValue ? newValue.format('YYYY-MM-DD') : ''
                       )
                     }
                     format='YYYY-MMM-DD'
@@ -1562,41 +1568,6 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                     }}
                     slotProps={{
                       field: { clearable: true },
-                      clearButton: { tabIndex: -1 },
-                      openPickerButton: { tabIndex: -1 },
-                      popper: {
-                        placement: 'bottom-start',
-                        sx: {
-                          '& .MuiPaper-root': {
-                            width: 'auto !important',
-                            minWidth: '280px !important',
-                            maxWidth: '320px !important',
-                          },
-                        },
-                        modifiers: [
-                          {
-                            name: 'flip',
-                            enabled: true,
-                            options: {
-                              altBoundary: true,
-                              rootBoundary: 'viewport',
-                              padding: 8,
-                            },
-                          },
-                          {
-                            name: 'preventOverflow',
-                            enabled: true,
-                            options: {
-                              altAxis: true,
-                              altBoundary: true,
-                              tether: true,
-                              rootBoundary: 'viewport',
-                              padding: 8,
-                            },
-                          },
-                          { name: 'offset', options: { offset: [0, 4] } },
-                        ],
-                      },
                       textField: {
                         fullWidth: true,
                         size: 'small',
@@ -1610,11 +1581,13 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                               fontSize: '13px',
                               lineHeight: '21px',
                               pl: '11px',
-                              '& ::placeholder': {
-                                color: '#7D98B6 !important',
-                              },
                               color: 'black !important',
                               WebkitTextFillColor: 'black !important',
+                              '&::placeholder': {
+                                color: '#7D98B6 !important',
+                                WebkitTextFillColor: '#7D98B6 !important',
+                                opacity: 1,
+                              },
                             },
                             '&:hover .MuiOutlinedInput-notchedOutline': {
                               border: errors.startDate
@@ -1626,34 +1599,27 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                                 ? '2px solid #EF4444'
                                 : '2px solid #60A5FA',
                             },
-                            '& .MuiOutlinedInput-notchedOutline': {
-                              border: errors.startDate
-                                ? '1px solid #EF4444'
-                                : '1px solid #CBD6E2',
-                              borderRadius: '2px',
-                            },
-                            '&.Mui-disabled': {
-                              backgroundColor: '#F3F4F6',
-                              opacity: 1,
-                              '& input': {
-                                color: 'black',
-                                WebkitTextFillColor: 'black',
-                              },
-                            },
+                          },
+                          '& .MuiOutlinedInput-notchedOutline': {
+                            border: errors.startDate
+                              ? '1px solid #EF4444'
+                              : '1px solid #CBD6E2',
+                            borderRadius: '2px',
                           },
                         },
-                        placeholder: 'Select start date',
+                        placeholder: 'YYYY-MMM-DD',
                         inputProps: {
+                          placeholder: 'YYYY-MMM-DD',
                           readOnly: true,
                         },
                       },
                     }}
                   />
-                  {errors.startDate && (
-                    <p className='text-xs text-red-500 mt-1'>
-                      {errors.startDate}
-                    </p>
-                  )}
+                  <div className='min-h-[20px] mt-1'>
+                    {errors.startDate && (
+                      <p className='text-xs text-red-500'>{errors.startDate}</p>
+                    )}
+                  </div>
                 </div>
               )}
               {!fieldVisibility.endDate && (
@@ -1662,17 +1628,19 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                     Due Date
                   </label>
                   <DatePicker
-                    disabled={false}
+                    disabled={fieldDisabled.endDate}
                     minDate={
                       editedTask?.startDate
                         ? dayjs(editedTask.startDate).add(1, 'day')
                         : minDate
                     }
                     maxDate={maxDate}
-                    value={formatDateForInput(editedTask?.endDate)}
+                    value={
+                      editedTask.endDate ? dayjs(editedTask.endDate) : null
+                    }
                     onChange={(newValue) =>
                       handleEndDateChange(
-                        newValue ? dayjs(newValue).format('YYYY-MM-DD') : ''
+                        newValue ? newValue.format('YYYY-MM-DD') : ''
                       )
                     }
                     format='YYYY-MMM-DD'
@@ -1684,41 +1652,6 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                     }}
                     slotProps={{
                       field: { clearable: true },
-                      clearButton: { tabIndex: -1 },
-                      openPickerButton: { tabIndex: -1 },
-                      popper: {
-                        placement: 'bottom-start',
-                        sx: {
-                          '& .MuiPaper-root': {
-                            width: 'auto !important',
-                            minWidth: '280px !important',
-                            maxWidth: '320px !important',
-                          },
-                        },
-                        modifiers: [
-                          {
-                            name: 'flip',
-                            enabled: true,
-                            options: {
-                              altBoundary: true,
-                              rootBoundary: 'viewport',
-                              padding: 8,
-                            },
-                          },
-                          {
-                            name: 'preventOverflow',
-                            enabled: true,
-                            options: {
-                              altAxis: true,
-                              altBoundary: true,
-                              tether: true,
-                              rootBoundary: 'viewport',
-                              padding: 8,
-                            },
-                          },
-                          { name: 'offset', options: { offset: [0, 4] } },
-                        ],
-                      },
                       textField: {
                         fullWidth: true,
                         size: 'small',
@@ -1732,11 +1665,13 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                               fontSize: '13px',
                               lineHeight: '21px',
                               pl: '11px',
-                              '& ::placeholder': {
-                                color: '#7D98B6 !important',
-                              },
                               color: 'black !important',
                               WebkitTextFillColor: 'black !important',
+                              '&::placeholder': {
+                                color: '#7D98B6 !important',
+                                WebkitTextFillColor: '#7D98B6 !important',
+                                opacity: 1,
+                              },
                             },
                             '&:hover .MuiOutlinedInput-notchedOutline': {
                               border: errors.endDate
@@ -1748,154 +1683,165 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                                 ? '2px solid #EF4444'
                                 : '2px solid #60A5FA',
                             },
-                            '& .MuiOutlinedInput-notchedOutline': {
-                              border: errors.endDate
-                                ? '1px solid #EF4444'
-                                : '1px solid #CBD6E2',
-                              borderRadius: '2px',
-                            },
-                            '&.Mui-disabled': {
-                              backgroundColor: '#F3F4F6',
-                              opacity: 1,
-                              '& input': {
-                                color: 'black',
-                                WebkitTextFillColor: 'black',
-                              },
-                            },
+                          },
+                          '& .MuiOutlinedInput-notchedOutline': {
+                            border: errors.endDate
+                              ? '1px solid #EF4444'
+                              : '1px solid #CBD6E2',
+                            borderRadius: '2px',
                           },
                         },
-                        placeholder: 'Select end date',
+                        placeholder: 'YYYY-MMM-DD',
                         inputProps: {
+                          placeholder: 'YYYY-MMM-DD',
                           readOnly: true,
                         },
                       },
                     }}
                   />
-                  {errors.endDate && (
-                    <p className='text-xs text-red-500 mt-1'>
-                      {errors.endDate}
-                    </p>
-                  )}
+                  <div className='min-h-[20px] mt-1'>
+                    {errors.endDate && (
+                      <p className='text-xs text-red-500'>{errors.endDate}</p>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
           </LocalizationProvider>
 
-          <h3 className='text-sm font-semibold text-gray-700 mb-3'>Fields</h3>
+          {!(
+            fieldVisibility.status &&
+            fieldVisibility.priority &&
+            fieldVisibility.fiscalYear &&
+            fieldVisibility.checklistTemplate &&
+            fieldVisibility.linkedType &&
+            fieldVisibility.linkTaskType &&
+            fieldVisibility.weightage &&
+            fieldVisibility.category &&
+            fieldVisibility.tags
+          ) && (
+              <>
+                <h3 className='text-sm font-semibold text-gray-700 mb-3'>Fields</h3>
 
-          <TaskFieldsSection
-            fieldVisibility={fieldVisibility}
-            fieldDisabled={enhancedFieldDisabled}
-            editedTask={editedTask}
-            statusData={statusData}
-            priorityData={priorityData}
-            checklistData={checklistData}
-            availableTags={availableTags}
-            connectorTypesData={connectorTypesData}
-            taskTemplatesData={taskTemplatesData}
-            weightageData={weightageData}
-            categoryData={categoryData}
-            selectedChecklist={selectedChecklist}
-            selectedLinkedType={linkedType}
-            selectedLinkTaskTypes={linkTaskTypes}
-            selectedWeightage={weightage}
-            selectedCategory={category}
-            userRole={selectedRole}
-            onStatusChange={handleStatusChange}
-            onPriorityChange={handlePriorityChange}
-            onAssigneeChange={(userId) => {
-              if (!userId) {
-                setEditedTask((prev) =>
-                  prev
-                    ? {
-                      ...prev,
-                      assignee: { name: '', initials: '', color: '' },
+                <TaskFieldsSection
+                  fieldVisibility={fieldVisibility}
+                  fieldDisabled={enhancedFieldDisabled}
+                  editedTask={editedTask}
+                  statusData={statusData}
+                  priorityData={priorityData}
+                  checklistData={checklistData}
+                  availableTags={availableTags}
+                  connectorTypesData={connectorTypesData}
+                  taskTemplatesData={taskTemplatesData}
+                  weightageData={weightageData}
+                  categoryData={categoryData}
+                  selectedChecklist={selectedChecklist}
+                  selectedLinkedType={linkedType}
+                  selectedLinkTaskTypes={linkTaskTypes}
+                  selectedWeightage={weightage}
+                  selectedCategory={category}
+                  userRole={selectedRole}
+                  onStatusChange={handleStatusChange}
+                  onPriorityChange={handlePriorityChange}
+                  onAssigneeChange={(userId) => {
+                    if (!userId) {
+                      setEditedTask((prev) =>
+                        prev
+                          ? {
+                            ...prev,
+                            assignee: { name: '', initials: '', color: '' },
+                          }
+                          : null
+                      );
+                      return;
                     }
-                    : null
-                );
-                return;
-              }
-              const selectedUser = assigneeUsers.find(
-                (u) => u.id === userId
-              );
-              if (selectedUser) {
-                setEditedTask((prev) =>
-                  prev
-                    ? {
-                      ...prev,
-                      assignee: {
-                        name: selectedUser.name,
-                        initials: selectedUser.initials,
-                        color: selectedUser.color,
-                      },
+                    const selectedUser = assigneeUsers.find(
+                      (u) => u.id === userId
+                    );
+                    if (selectedUser) {
+                      setEditedTask((prev) =>
+                        prev
+                          ? {
+                            ...prev,
+                            assignee: {
+                              name: selectedUser.name,
+                              initials: selectedUser.initials,
+                              color: selectedUser.color,
+                            },
+                          }
+                          : null
+                      );
                     }
-                    : null
-                );
-              }
-            }}
-            onChecklistChange={(value) => {
-              setSelectedChecklist(value);
-              if (value)
-                setErrors((prev) => ({ ...prev, checklistTemplate: '' }));
-            }}
-            onLinkedTypeChange={(value) => {
-              setLinkedType(value);
-              setEditedTask((prev) =>
-                prev ? { ...prev, linkedType: value } : null
-              );
-              if (value) {
-                setErrors((prev) => ({ ...prev, linkedType: '' }));
-              } else {
-                if (!linkTaskTypes || linkTaskTypes.length === 0) {
-                  setErrors((prev) => ({ ...prev, linkTaskType: '' }));
-                }
-              }
-            }}
-            onLinkTaskTypesChange={(values) => {
-              setLinkTaskTypes(values);
-              setEditedTask((prev) =>
-                prev ? { ...prev, linkTaskTypes: values } : null
-              );
-              if (values.length > 0) {
-                setErrors((prev) => ({ ...prev, linkTaskType: '' }));
-              } else {
-                if (!linkedType) {
-                  setErrors((prev) => ({ ...prev, linkedType: '' }));
-                }
-              }
-            }}
-            onWeightageChange={(value) => {
-              setWeightage(value);
-              setEditedTask((prev) =>
-                prev ? { ...prev, weightage: value } : null
-              );
-            }}
-            onCategoryChange={(value) => {
-              setCategory(value);
-              setEditedTask((prev) =>
-                prev ? { ...prev, category: value } : null
-              );
-            }}
-            fiscalYear={editedTask?.fiscal_year || fiscalYear}
-            fiscalYears={fiscalYears}
-            onFiscalYearChange={(value) => {
-              setEditedTask((prev) =>
-                prev ? { ...prev, fiscal_year: value } : null
-              );
-            }}
-            onUserRoleChange={(value) => {
-              setSelectedRole(value);
-            }}
-            errors={errors}
-            onTagsChange={(newTags) =>
-              setEditedTask((prev) =>
-                prev ? { ...prev, tags: newTags } : null
-              )
-            }
-            onAddCustomTag={setAvailableTags}
-            onSetEditedTask={setEditedTask}
-            mode='view'
-          />
+                  }}
+                  onChecklistChange={(value) => {
+                    setSelectedChecklist(value);
+                    if (value)
+                      setErrors((prev) => ({ ...prev, checklistTemplate: '' }));
+                  }}
+                  onLinkedTypeChange={(value) => {
+                    setLinkedType(value);
+                    setEditedTask((prev) =>
+                      prev ? { ...prev, linkedType: value } : null
+                    );
+                    if (value) {
+                      setErrors((prev) => ({ ...prev, linkedType: '' }));
+                    } else {
+                      if (!linkTaskTypes || linkTaskTypes.length === 0) {
+                        setErrors((prev) => ({ ...prev, linkTaskType: '' }));
+                      }
+                    }
+                  }}
+                  onLinkTaskTypesChange={(values) => {
+                    setLinkTaskTypes(values);
+                    setEditedTask((prev) =>
+                      prev ? { ...prev, linkTaskTypes: values } : null
+                    );
+                    if (values.length > 0) {
+                      setErrors((prev) => ({ ...prev, linkTaskType: '' }));
+                    } else {
+                      setLinkedType('');
+                      setEditedTask((prev) =>
+                        prev ? { ...prev, linkedType: '' } : null
+                      );
+                      if (!linkedType) {
+                        setErrors((prev) => ({ ...prev, linkedType: '' }));
+                      }
+                    }
+                  }}
+                  onWeightageChange={(value) => {
+                    setWeightage(value);
+                    setEditedTask((prev) =>
+                      prev ? { ...prev, weightage: value } : null
+                    );
+                  }}
+                  onCategoryChange={(value) => {
+                    setCategory(value);
+                    setEditedTask((prev) =>
+                      prev ? { ...prev, category: value } : null
+                    );
+                  }}
+                  fiscalYear={editedTask?.fiscal_year || fiscalYear}
+                  fiscalYears={fiscalYears}
+                  onFiscalYearChange={(value) => {
+                    setEditedTask((prev) =>
+                      prev ? { ...prev, fiscal_year: value } : null
+                    );
+                  }}
+                  onUserRoleChange={(value) => {
+                    setSelectedRole(value);
+                  }}
+                  errors={errors}
+                  onTagsChange={(newTags) =>
+                    setEditedTask((prev) =>
+                      prev ? { ...prev, tags: newTags } : null
+                    )
+                  }
+                  onAddCustomTag={setAvailableTags}
+                  onSetEditedTask={setEditedTask}
+                  mode='view'
+                />
+              </>
+            )}
 
           <TaskChecklistSection
             fieldVisibility={fieldVisibility}
@@ -1967,6 +1913,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
           {!fieldVisibility.collaborators && (
             <TaskCollaboratorsSection
               fieldVisibility={fieldVisibility}
+              fieldDisabled={enhancedFieldDisabled}
               editedTask={editedTask}
               selectedCollaboratorIds={selectedCollaboratorIds}
               allEnrichedUsers={allEnrichedUsers}

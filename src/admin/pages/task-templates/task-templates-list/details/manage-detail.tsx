@@ -91,12 +91,12 @@ export const ManageDetailComponent = ({
       value: getValueOrDefault(data?.checklist_name) || '-',
     },
     {
-      // key: 'task_category_rid',
+      key: 'task_category_rid',
       label: 'Task Category',
       value: getValueOrDefault(data?.category_name) || '-',
     },
     {
-      // key: 'weightage_rid',
+      key: 'weightage_rid',
       label: 'Task Weightage',
       value: getValueOrDefault(data?.weightage_value) || '-',
     },
@@ -109,20 +109,21 @@ export const ManageDetailComponent = ({
 
   const accessInfo: DetailItem[] = [
     {
-      //   key: 'profile_rid',
+      key: 'relationship_connector_rid',
       label: 'Linked Type',
       value: getValueOrDefault(
         data?.workflow_connector?.relationship_type_name
       ),
     },
     {
-      //   key: 'profile_rid',
+      key: 'target_rid',
       label: 'Linked Task',
       value: getValueOrDefault(
         data?.workflow_connector?.target_data?.[0]
           ?.map((item) => item.target_name)
           ?.join(', ') || '-'
       ),
+      colSpan: 2,
     },
   ];
   const DescrptionInfo: DetailItem[] = [

@@ -50,6 +50,7 @@ import { ProjectTriggerAIPayload } from '../../../../types/project';
 import { useToast } from '../../../../../hooks';
 import { checkPermission } from '../../../../../common-utils';
 import { reviewProjectFilterFields } from './review-projects/helper';
+import { AccessRestricted } from '../../../../../components/account-restricted';
 interface casesProjectProps {
   activeKey?: string;
   fiscalYear: number;
@@ -459,17 +460,6 @@ const CasesProjects: React.FC<casesProjectProps> = ({
         memoizedStatus,
         projectPermissionMap
       );
-  const reviewFilterFields = reviewProjectFilterFields(
-    memoizedClassification.map((item) => ({
-      label: item.option,
-      value: item.value,
-    })),
-    memoizedProjectTypes,
-    allIndustries,
-    projectPermissionMap
-  );
-  const projectFilterFields =
-    tabParam === 'assign_projects' ? assignFilterFields : reviewFilterFields;
 
   const projectViewEditlistFields = useMemo(
     () =>
@@ -498,6 +488,7 @@ const CasesProjects: React.FC<casesProjectProps> = ({
     });
     return map;
   }, [reviewProjectViewEditListFields]);
+
   const handleProjectDetails = (data: AssignProject) => {
     // Create new search params without assignProject
     const newParams = new URLSearchParams(searchParams);
@@ -507,6 +498,7 @@ const CasesProjects: React.FC<casesProjectProps> = ({
 
     navigate({ search: newParams.toString() }, { replace: true });
   };
+
   const caseColumns = isAssignProject
     ? getAssignedProjectColumns(permissionMap)
     : getSelectProjectColumns(permissionMap, handleProjectDetails);
@@ -524,7 +516,18 @@ const CasesProjects: React.FC<casesProjectProps> = ({
   const [columnOrder, setColumnOrder] = useState(
     caseColumns.map((col) => col.id)
   );
+  const reviewFilterFields = reviewProjectFilterFields(
+    memoizedClassification.map((item) => ({
+      label: item.option,
+      value: item.value,
+    })),
+    memoizedProjectTypes,
+    allIndustries,
+    permissionMapReview
+  );
 
+  const projectFilterFields =
+    tabParam === 'assign_projects' ? assignFilterFields : reviewFilterFields;
   const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
     const newVisibility = Object.fromEntries(
       updatedColumns.map((col) => [col.id, !col.hide])
@@ -581,6 +584,18 @@ const CasesProjects: React.FC<casesProjectProps> = ({
       : projectDetailTab === 'project_financial_summary'
         ? false
         : true;
+
+  const isReviewProjectEnable = checkPermission(
+    permission,
+    AllPermissions.REVIEW_PROJECTS_VIEW_EDIT
+  );
+  const isProjectEnable = checkPermission(
+    permission,
+    AllPermissions.PROJECTS_VIEW_EDIT
+  );
+  if (!isProjectEnable && !isReviewProjectEnable) {
+    return <AccessRestricted />;
+  }
 
   return (
     <div className='w-full pt-2 pl-2 pr-4'>
@@ -665,47 +680,53 @@ const CasesProjects: React.FC<casesProjectProps> = ({
           />
         </div>
       ) : tabParam === 'assign_projects' ? (
-        <div className='border border-[#CBD6E2] border-t-0'>
-          {isAssignProject ? (
-            <SelectProjects
-              accountInActive={accountInActive}
-              refreshTrigger={refreshTrigger}
-              setSelectedRows={setSelectedRows}
-              currentPage={currentPage}
-              setCurrentPage={setCurrentPage}
-              visibleColumns={visibleColumns}
-              searchText={searchText}
-              setCount={setCount}
-              clearSelectedRows={clearSelectedRows}
-              fiscalYear={fiscalYear}
-              appliedFilters={appliedFilters}
-            />
-          ) : (
-            <AssignedProjects
-              accountInActive={accountInActive}
-              refreshTrigger={refreshTrigger}
-              setSelectedRows={setSelectedRows}
-              currentPage={currentPage}
-              setCurrentPage={setCurrentPage}
-              visibleColumns={visibleColumns}
-              searchText={searchText}
-              setTableParams={setTableParams}
-              setCount={setCount}
-              clearSelectedRows={clearSelectedRows}
-              fiscalYear={fiscalYear}
-              setExportType={setExportType}
-              appliedFilters={appliedFilters}
-            />
-          )}
-        </div>
-      ) : (
+        // Only render Assign Projects section if user has PROJECTS_VIEW_EDIT permission
+        isProjectEnable ? (
+          <div className='border border-[#CBD6E2] border-t-0'>
+            {isAssignProject ? (
+              <SelectProjects
+                accountInActive={accountInActive}
+                refreshTrigger={refreshTrigger}
+                setSelectedRows={setSelectedRows}
+                currentPage={currentPage}
+                setCurrentPage={setCurrentPage}
+                visibleColumns={visibleColumns}
+                searchText={searchText}
+                setCount={setCount}
+                clearSelectedRows={clearSelectedRows}
+                fiscalYear={fiscalYear}
+                appliedFilters={appliedFilters}
+              />
+            ) : (
+              <AssignedProjects
+                accountInActive={accountInActive}
+                refreshTrigger={refreshTrigger}
+                setSelectedRows={setSelectedRows}
+                currentPage={currentPage}
+                setCurrentPage={setCurrentPage}
+                visibleColumns={visibleColumns}
+                searchText={searchText}
+                setTableParams={setTableParams}
+                setCount={setCount}
+                clearSelectedRows={clearSelectedRows}
+                fiscalYear={fiscalYear}
+                setExportType={setExportType}
+                appliedFilters={appliedFilters}
+              />
+            )}
+          </div>
+        ) : (
+          // Show AccessRestricted only for this section if permission is missing
+          <AccessRestricted />
+        )
+      ) : // Only render Review Projects section if user has REVIEW_PROJECTS_VIEW_EDIT permission
+      isReviewProjectEnable ? (
         <div className='border border-[#CBD6E2] border-t-0'>
           <ReviewProjectsList
             accountInActive={accountInActive}
             visibleColumns={visibleReviewColumns}
             searchText={searchText}
             refreshTrigger={refreshTrigger}
-            // fiscalYear={fiscalYear}
             setTableParams={setReviewProjectParams}
             setCount={setCount}
             setExportType={setExportType}
@@ -726,6 +747,9 @@ const CasesProjects: React.FC<casesProjectProps> = ({
             sortOrder={sortParams.sortBy}
           />
         </div>
+      ) : (
+        // Show AccessRestricted only for this section if permission is missing
+        <AccessRestricted />
       )}
     </div>
   );

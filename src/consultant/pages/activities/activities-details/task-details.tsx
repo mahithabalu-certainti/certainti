@@ -66,11 +66,10 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
     () =>
       permission?.find(
         (item: { name: string; fields?: any[] }) =>
-          item.name === AllPermissions.CASES_WORKBREAKDOWN_VIEW_EDIT
+          item.name === AllPermissions.ACTIVITY_TASK_VIEW_EDIT
       )?.fields ?? [],
     [permission]
   );
-
   const permissionMap = useMemo(() => {
     const map: Record<string, { read: boolean; edit: boolean }> = {};
     caseTaskViewEditFields.forEach((item) => {
@@ -81,6 +80,8 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
 
   const fieldHiddenMap = useMemo(
     () => ({
+      taskName:
+        !permissionMap['task_name']?.read && !permissionMap['task_name']?.edit,
       status:
         !permissionMap['status_rid']?.read &&
         !permissionMap['status_rid']?.edit,
@@ -97,11 +98,14 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
         !permissionMap['effective_end_datetime']?.read &&
         !permissionMap['effective_end_datetime']?.edit,
       description:
-        !permissionMap['task_description']?.read &&
-        !permissionMap['task_description']?.edit,
+        !permissionMap['description']?.read &&
+        !permissionMap['description']?.edit,
       checklistTemplate:
-        !permissionMap['checklist_template_rid']?.read &&
-        !permissionMap['checklist_template_rid']?.edit,
+        !permissionMap['checklists']?.read &&
+        !permissionMap['checklists']?.edit,
+      checklist:
+        !permissionMap['checklists']?.read &&
+        !permissionMap['checklists']?.edit,
       tags: !permissionMap['tags']?.read && !permissionMap['tags']?.edit,
       weightage: true,
       category: true,
@@ -115,20 +119,25 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
       collaborators:
         !permissionMap['collaborators']?.read &&
         !permissionMap['collaborators']?.edit,
-      fiscalYear: entityLevel !== 'account', // Force visible
+      fiscalYear:
+        entityLevel !== 'account' ||
+        (!permissionMap['fiscal_year']?.read &&
+          !permissionMap['fiscal_year']?.edit),
     }),
     [permissionMap, entityLevel]
   );
 
   const fieldDisabledMap = useMemo(
     () => ({
+      taskName: !permissionMap['task_name']?.edit,
       status: !permissionMap['status_rid']?.edit,
       priority: !permissionMap['priority_rid']?.edit,
       assignee: !permissionMap['assigned_to']?.edit,
       startDate: !permissionMap['effective_start_datetime']?.edit,
       endDate: !permissionMap['effective_end_datetime']?.edit,
-      description: !permissionMap['task_description']?.edit,
-      checklistTemplate: !permissionMap['checklist_template_rid']?.edit,
+      description: !permissionMap['description']?.edit,
+      checklistTemplate: !permissionMap['checklists']?.edit,
+      checklist: !permissionMap['checklists']?.edit,
       tags: !permissionMap['tags']?.edit,
       weightage: !permissionMap['weightage_rid']?.edit,
       category: !permissionMap['task_category_rid']?.edit,
@@ -137,7 +146,7 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
       attachments: !permissionMap['attachments']?.edit,
       comments: !permissionMap['comments']?.edit,
       collaborators: !permissionMap['collaborators']?.edit,
-      fiscalYear: false, // Force editable
+      fiscalYear: !permissionMap['fiscal_year']?.edit,
     }),
     [permissionMap]
   );

@@ -154,7 +154,7 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
                     );
                   }
               }
-              disabled={fieldDisabled.status || mode === 'create'}
+              disabled={fieldDisabled.status}
               width='100%'
               error={errors.status}
               renderValue={(selected) => {
