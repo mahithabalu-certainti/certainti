@@ -336,7 +336,7 @@ export class HistoricalSubmissionSchemaService {
       })
       return historicalSubmissions;
     } catch (err) {
-      logMessage(`Error in fetching historical submissions: ${err}`);
+      logMessage(`Error in fetching historical submissions : ${err}`);
       errorLog("Error in fetching historical submissions:", (err as Error).message);
       return [];
     }
