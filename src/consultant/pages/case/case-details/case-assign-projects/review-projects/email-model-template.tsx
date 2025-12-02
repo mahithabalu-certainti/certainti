@@ -972,7 +972,7 @@ const EmailModalTemplate: React.FC<EmailModalProps> = ({
           ) {
             insertSubjectPlaceholder(
               subjectMentionState.suggestions[
-                subjectMentionState.selectionIndex
+              subjectMentionState.selectionIndex
               ]
             );
           }
@@ -994,7 +994,7 @@ const EmailModalTemplate: React.FC<EmailModalProps> = ({
           ) {
             insertSubjectPlaceholder(
               subjectMentionState.suggestions[
-                subjectMentionState.selectionIndex
+              subjectMentionState.selectionIndex
               ]
             );
           }
@@ -1190,9 +1190,9 @@ const EmailModalTemplate: React.FC<EmailModalProps> = ({
                 anchorPosition={
                   subjectMentionState.position
                     ? {
-                        top: subjectMentionState.position.top,
-                        left: subjectMentionState.position.left,
-                      }
+                      top: subjectMentionState.position.top,
+                      left: subjectMentionState.position.left,
+                    }
                     : undefined
                 }
                 transformOrigin={{
@@ -1329,9 +1329,9 @@ const EmailModalTemplate: React.FC<EmailModalProps> = ({
                   anchorPosition={
                     mentionState.position
                       ? {
-                          top: mentionState.position.top,
-                          left: mentionState.position.left,
-                        }
+                        top: mentionState.position.top,
+                        left: mentionState.position.left,
+                      }
                       : undefined
                   }
                   transformOrigin={{
@@ -1423,41 +1423,44 @@ const EmailModalTemplate: React.FC<EmailModalProps> = ({
             </div>
 
             {/* Attachments Section - Similar to EmailForm */}
-            {formData.attachments.length > 0 && (
-              <div className='px-4 py-4'>
-                <div className='flex items-center gap-2 mb-2'>
-                  <span className='text-sm font-medium text-gray-700'>
-                    Attachments ({formData.attachments.length})
-                  </span>
-                </div>
-                <div className='space-y-2 max-h-[130px] overflow-y-auto'>
-                  {formData.attachments.map((attachment: Attachment) => (
-                    <div
-                      key={attachment.id}
-                      className='flex items-center justify-between p-2 bg-gray-50 border border-gray-200 rounded-md'
-                    >
-                      <div className='flex items-center gap-2'>
-                        <DocumentIcon className='w-6 h-6' />
-                        <div className='flex flex-col'>
-                          <span className='text-sm font-medium text-gray-700 truncate max-w-[300px]'>
-                            {attachment.name}
-                          </span>
-                          <span className='text-xs text-gray-500'>
-                            {attachment.size}
-                          </span>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => removeAttachment(attachment.id)}
-                        className='flex items-center justify-center h-6 w-6 hover:bg-gray-200 rounded-full cursor-pointer disabled:cursor-default disabled:hover:bg-transparent transition-colors'
+            {/* Attachments Section - Similar to EmailForm */}
+            <div className='min-h-[20px]'>
+              {formData.attachments.length > 0 && (
+                <div className='px-4 py-4'>
+                  <div className='flex items-center gap-2 mb-2'>
+                    <span className='text-sm font-medium text-gray-700'>
+                      Attachments ({formData.attachments.length})
+                    </span>
+                  </div>
+                  <div className='space-y-2 max-h-[130px] overflow-y-auto'>
+                    {formData.attachments.map((attachment: Attachment) => (
+                      <div
+                        key={attachment.id}
+                        className='flex items-center justify-between p-2 bg-gray-50 border border-gray-200 rounded-md'
                       >
-                        <CloseIcon className='w-3 h-3' />
-                      </button>
-                    </div>
-                  ))}
+                        <div className='flex items-center gap-2'>
+                          <DocumentIcon className='w-6 h-6' />
+                          <div className='flex flex-col'>
+                            <span className='text-sm font-medium text-gray-700 truncate max-w-[300px]'>
+                              {attachment.name}
+                            </span>
+                            <span className='text-xs text-gray-500'>
+                              {attachment.size}
+                            </span>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => removeAttachment(attachment.id)}
+                          className='flex items-center justify-center h-6 w-6 hover:bg-gray-200 rounded-full cursor-pointer disabled:cursor-default disabled:hover:bg-transparent transition-colors'
+                        >
+                          <CloseIcon className='w-3 h-3' />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
           <div className='flex gap-3 mt-6 justify-end'>
