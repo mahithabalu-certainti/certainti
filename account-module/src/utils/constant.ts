@@ -3033,8 +3033,8 @@ export const rawQueries = {
   
       ALTER TABLE "${schemaName}".otp_entries_history
         ADD CONSTRAINT fk_otp_entries_history_interaction_rid
-        FOREIGN KEY (interaction_rid, project_fiscal_rid)
-        REFERENCES "${schemaName}".interactions(rid, project_fiscal_rid)
+        FOREIGN KEY (interaction_rid)
+        REFERENCES "${schemaName}".interactions(rid)
         ON DELETE SET NULL;
     `;
   },
