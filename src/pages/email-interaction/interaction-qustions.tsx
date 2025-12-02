@@ -74,7 +74,7 @@ interface InteractionQuesProps {
   };
   isEditEnable?: boolean;
   headerData?: HeaderData;
-  isAccountlevel?: boolean
+  isAccountlevel?: boolean;
 }
 enum FlagTypeEnum {
   draft = 'draft',
@@ -99,7 +99,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
   parseToken,
   // isEditEnable,
   headerData,
-  isAccountlevel
+  isAccountlevel,
 }) => {
   const { successToast, errorToast } = useToast();
   const [isEditing, setIsEditing] = useState<boolean>(true);

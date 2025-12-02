@@ -181,7 +181,7 @@ export const getAccountColumns = (
       !permissionMap?.['total_projects']?.read &&
       !permissionMap?.['total_projects']?.edit,
     render: (row: AccountList) =>
-      row.total_projects ? (row.total_projects).toLocaleString() : '-',
+      row.total_projects ? row.total_projects.toLocaleString() : '-',
   },
   {
     id: 'total_project_hours',

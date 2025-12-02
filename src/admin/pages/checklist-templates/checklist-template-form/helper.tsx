@@ -106,40 +106,40 @@ export enum QuestionUpdate {
 }
 
 export const getQuestionTableColumns = () // isEditView: boolean
-  : ChecklistTemplateFormTableColumn[] => [
-    {
-      name: 'questionNo',
-      label: 'Question No.',
-      width: '10%',
-      hide: true,
-    },
-    {
-      name: 'question',
-      label: 'Checklist Items',
-      width: '40%',
-      required: true,
-    },
-    {
-      name: 'comments',
-      label: 'Comments',
-      width: '40%',
-      required: false,
-    },
-    // { name: 'mandatory', label: 'Mandatory', width: '5%' },
-    // {
-    //   name: 'notes',
-    //   label: 'Notes',
-    //   width: '23%',
-    //   hide: false,
-    // },
-    {
-      name: 'action',
-      label: 'Action',
-      width: '5%',
-      align: 'center',
-      hide: false,
-    },
-  ];
+: ChecklistTemplateFormTableColumn[] => [
+  {
+    name: 'questionNo',
+    label: 'Question No.',
+    width: '10%',
+    hide: true,
+  },
+  {
+    name: 'question',
+    label: 'Checklist Items',
+    width: '40%',
+    required: true,
+  },
+  {
+    name: 'comments',
+    label: 'Comments',
+    width: '40%',
+    required: false,
+  },
+  // { name: 'mandatory', label: 'Mandatory', width: '5%' },
+  // {
+  //   name: 'notes',
+  //   label: 'Notes',
+  //   width: '23%',
+  //   hide: false,
+  // },
+  {
+    name: 'action',
+    label: 'Action',
+    width: '5%',
+    align: 'center',
+    hide: false,
+  },
+];
 
 export const shouldHideField = (
   fieldName: string,

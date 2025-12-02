@@ -14,10 +14,12 @@ export class ErrorBoundary extends React.Component<
   }
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState | null {
-    if (error.message?.includes('Failed to fetch dynamically imported module')) {
+    if (
+      error.message?.includes('Failed to fetch dynamically imported module')
+    ) {
       return { hasError: true };
     }
-    return { hasError: true };  
+    return { hasError: true };
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
@@ -31,7 +33,7 @@ export class ErrorBoundary extends React.Component<
     }
   }
 
-  render() { 
+  render() {
     return this.props.children;
   }
 }

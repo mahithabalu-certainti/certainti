@@ -769,10 +769,11 @@ const Filter: React.FC<FilterComponentProps> = ({
                     systemFilter.options?.map((field: any) => (
                       <button
                         key={field.value}
-                        className={`border rounded-full px-1.5 h-[24px] text-[12px] font-normal flex items-center gap-0.5 cursor-pointer ${selectedSystemFilters.includes(field.value)
+                        className={`border rounded-full px-1.5 h-[24px] text-[12px] font-normal flex items-center gap-0.5 cursor-pointer ${
+                          selectedSystemFilters.includes(field.value)
                             ? 'bg-[#E6F9EA] border-[#34C759] text-[#0F5132]'
                             : 'border-[#CBD6E2] text-[#425A76] hover:bg-gray-50'
-                          }`}
+                        }`}
                         onClick={() =>
                           handleSystemFilter('system_filter', field.value)
                         }
@@ -798,10 +799,11 @@ const Filter: React.FC<FilterComponentProps> = ({
                     sortFilter.options?.map((field: any) => (
                       <button
                         key={field.value}
-                        className={`border rounded-full px-1.5 h-[24px] text-[12px] font-normal flex items-center gap-0.5 cursor-pointer ${currentSort === field.value
+                        className={`border rounded-full px-1.5 h-[24px] text-[12px] font-normal flex items-center gap-0.5 cursor-pointer ${
+                          currentSort === field.value
                             ? 'bg-[#E6F9EA] border-[#34C759] text-[#0F5132]'
                             : 'border-[#CBD6E2] text-[#425A76] hover:bg-gray-50'
-                          }`}
+                        }`}
                         onClick={() => handleSortingSelection(field.value)}
                       >
                         <CheckedIcon

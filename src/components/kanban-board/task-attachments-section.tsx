@@ -74,7 +74,8 @@ const TaskAttachmentsSection: React.FC<TaskAttachmentsSectionProps> = ({
           disabled={fieldDisabled.attachments}
         />
         <p className='text-sm text-gray-600 flex items-center justify-center gap-2'>
-          <PaperclipIcon className='w-3 h-3 text-gray-600' /> Click to upload attachments
+          <PaperclipIcon className='w-3 h-3 text-gray-600' /> Click to upload
+          attachments
         </p>
       </label>
 
@@ -135,7 +136,9 @@ const TaskAttachmentsSection: React.FC<TaskAttachmentsSectionProps> = ({
               className='text-xs text-gray-600 bg-green-50 p-3 rounded flex items-center gap-2 border border-green-200'
             >
               <PaperclipIcon className='w-3 h-3 text-gray-600 flex-shrink-0' />
-              <span className='flex-1 truncate' title={file}>{file}</span>
+              <span className='flex-1 truncate' title={file}>
+                {file}
+              </span>
               {/* <span className='text-green-600 text-xs font-medium'>
                 (Pending Upload)
               </span> */}

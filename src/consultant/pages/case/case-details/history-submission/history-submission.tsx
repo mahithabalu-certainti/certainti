@@ -50,7 +50,11 @@ import {
   COMMON_MENU_PROPS,
   getSelectStyles,
 } from '../../../activities/activities-form/helper';
-import { checkPermission } from '../../../../../common-utils/common-utils';
+import {
+  checkPermission,
+  costDisplay,
+  valueDisplay,
+} from '../../../../../common-utils/common-utils';
 import { AccessRestricted } from '../../../../../components/account-restricted';
 
 const ConfigTabs: ResourceTabs[] = [
@@ -84,17 +88,9 @@ interface FormSubmission extends Omit<historySummary, 'fiscal_year'> {
   fiscal_year: string; // Keep as string for form handling, convert to number for API
 }
 
-const formatNumberWithCommas = (value: string): string => {
-  if (!value) return '';
-  const numericValue = value.replace(/,/g, '');
-  if (!/^\d*\.?\d*$/.test(numericValue)) return value;
-  const parts = numericValue.split('.');
-  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-  return parts.join('.');
-};
-
 const removeCommas = (value: string): string => {
-  return value.replace(/,/g, '');
+  // Remove currency symbol and spaces first, then commas
+  return value.replace(/[^0-9.,]/g, '').replace(/,/g, '');
 };
 
 const HistorySubmission: React.FC<CaseTeamProps> = ({
@@ -1319,8 +1315,9 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
                               >
                                 <div>
                                   <TextField
-                                    value={formatNumberWithCommas(
-                                      submission.total_fte_cost || ''
+                                    value={costDisplay(
+                                      submission.total_fte_cost || '',
+                                      submission.currency_symbol
                                     )}
                                     onChange={(e) => {
                                       const rawValue = removeCommas(
@@ -1410,8 +1407,9 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
                               >
                                 <div>
                                   <TextField
-                                    value={formatNumberWithCommas(
-                                      submission.total_subcon_cost || ''
+                                    value={costDisplay(
+                                      submission.total_subcon_cost || '',
+                                      submission.currency_symbol
                                     )}
                                     onChange={(e) => {
                                       const rawValue = removeCommas(
@@ -1501,8 +1499,9 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
                               >
                                 <div>
                                   <TextField
-                                    value={formatNumberWithCommas(
-                                      submission.total_nonlabor_cost || ''
+                                    value={costDisplay(
+                                      submission.total_nonlabor_cost || '',
+                                      submission.currency_symbol
                                     )}
                                     onChange={(e) => {
                                       const rawValue = removeCommas(
@@ -1592,8 +1591,9 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
                               >
                                 <div>
                                   <TextField
-                                    value={formatNumberWithCommas(
-                                      submission.total_project_cost
+                                    value={costDisplay(
+                                      submission.total_project_cost || '',
+                                      submission.currency_symbol
                                     )}
                                     onChange={(e) => {
                                       const rawValue = removeCommas(
@@ -1683,8 +1683,9 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
                               >
                                 <div>
                                   <TextField
-                                    value={formatNumberWithCommas(
-                                      submission.total_qre
+                                    value={costDisplay(
+                                      submission.total_qre || '',
+                                      submission.currency_symbol
                                     )}
                                     onChange={(e) => {
                                       const rawValue = removeCommas(
@@ -1771,8 +1772,8 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
                               >
                                 <div>
                                   <TextField
-                                    value={formatNumberWithCommas(
-                                      submission.total_rd_credits
+                                    value={valueDisplay(
+                                      submission.total_rd_credits || ''
                                     )}
                                     onChange={(e) => {
                                       const rawValue = removeCommas(
@@ -1862,8 +1863,8 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
                               >
                                 <div>
                                   <TextField
-                                    value={formatNumberWithCommas(
-                                      submission.annual_gross_receipts
+                                    value={valueDisplay(
+                                      submission.annual_gross_receipts || ''
                                     )}
                                     onChange={(e) => {
                                       const rawValue = removeCommas(

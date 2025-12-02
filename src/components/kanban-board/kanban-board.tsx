@@ -102,17 +102,11 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
 
   const effectiveStatusData = getEffectiveStatusData();
 
-
-
-
-
   const handleTaskClick = (taskId: string) => {
     if (onTaskClick) {
       onTaskClick(taskId);
     }
   };
-
-
 
   const handleDragOver = (event: DragOverEvent) => {
     if (!isDragablebetweenBoards) return;
@@ -271,8 +265,6 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
     }
   };
 
-
-
   if (isLoading) {
     return <LoadingSkeleton />;
   }
@@ -301,7 +293,6 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
                     showProfileIndicator={showProfileIndicator}
                     isCreateTaskDisabled={isCreateTaskDisabled}
                     isCreateTaskHide={isCreateTaskHide}
-
                     onTaskClick={handleTaskClick}
                     isDragable={isDragable}
                     isDragablebetweenBoards={isDragablebetweenBoards}
@@ -313,7 +304,6 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
                     checklistData={checklistData}
                     collaboratorData={[]}
                     availableUsers={userData}
-
                     onCreateTask={onCreateTask}
                     fieldVisibility={fieldVisibility}
                     fieldDisabled={fieldDisabled}
@@ -343,7 +333,6 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   showProfileIndicator={showProfileIndicator}
                   isCreateTaskDisabled={isCreateTaskDisabled}
                   isCreateTaskHide={isCreateTaskHide}
-
                   onTaskClick={handleTaskClick}
                   isDragable={isDragable}
                   isDragablebetweenBoards={isDragablebetweenBoards}
@@ -355,7 +344,6 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   checklistData={checklistData}
                   collaboratorData={[]}
                   availableUsers={userData}
-
                   onCreateTask={onCreateTask}
                   fieldVisibility={fieldVisibility}
                   fieldDisabled={fieldDisabled}

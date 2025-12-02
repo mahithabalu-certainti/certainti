@@ -111,18 +111,20 @@ const TaskChecklistSection: React.FC<TaskChecklistSectionProps> = ({
 
       <div className='border border-gray-200 rounded-lg'>
         <div
-          className={`space-y-0 ${getFilteredChecklistItems().length > 6
+          className={`space-y-0 ${
+            getFilteredChecklistItems().length > 6
               ? 'max-h-64 overflow-y-auto'
               : ''
-            }`}
+          }`}
         >
           {getFilteredChecklistItems().map((item, index) => (
             <div
               key={item.id}
-              className={`flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors ${index !== getFilteredChecklistItems().length - 1
+              className={`flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors ${
+                index !== getFilteredChecklistItems().length - 1
                   ? 'border-b border-gray-200'
                   : ''
-                }`}
+              }`}
             >
               <input
                 type='checkbox'
@@ -132,10 +134,11 @@ const TaskChecklistSection: React.FC<TaskChecklistSectionProps> = ({
                 disabled={fieldDisabled.checklist}
               />
               <span
-                className={`flex-1 text-sm transition-all duration-200 cursor-pointer ${item.completed
+                className={`flex-1 text-sm transition-all duration-200 cursor-pointer ${
+                  item.completed
                     ? 'line-through text-gray-500'
                     : 'text-gray-700'
-                  }`}
+                }`}
                 style={{ fontSize: '13px' }}
                 onClick={() =>
                   !fieldDisabled.checklist && handleChecklistItemToggle(item.id)

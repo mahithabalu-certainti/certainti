@@ -161,9 +161,8 @@ const fetchCaseTeamMembersDropdown = async (
     if (caseId) {
       url += `&case_rid=${caseId}`;
     }
-    const response = await caseServiceApi.get<CaseTeamMembersDropdownResponse>(
-      url
-    );
+    const response =
+      await caseServiceApi.get<CaseTeamMembersDropdownResponse>(url);
 
     if (response.data?.data?.caseTeamMembers) {
       return response.data.data.caseTeamMembers;
