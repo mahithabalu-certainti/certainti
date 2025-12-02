@@ -180,3 +180,37 @@
 .no-spinner {
   -moz-appearance: textfield;
 }
+
+/* global CSS file (index.css / global.css) */
+.side-menu-scrollbar {
+  /* make sure element can scroll */
+  overflow: auto;
+  /* optional sensible default if JS maxHeight is wrong */
+  max-height: 400px;
+}
+
+/* WebKit/Blink (Chrome, Edge, Safari) */
+.side-menu-scrollbar::-webkit-scrollbar {
+  width: 8px; /* visible width */
+  height: 8px;
+}
+
+.side-menu-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.side-menu-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(203, 214, 226, 0.2);
+  border-radius: 4px;
+  min-height: 24px;
+}
+
+.side-menu-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(203, 214, 226, 0.4);
+}
+
+/* Firefox fallback */
+.side-menu-scrollbar {
+  scrollbar-width: thin; /* auto | thin | none */
+  scrollbar-color: rgba(203, 214, 226, 0.2) transparent;
+}
