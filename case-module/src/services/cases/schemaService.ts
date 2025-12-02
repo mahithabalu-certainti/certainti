@@ -5249,7 +5249,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                 created_by : data.modified_by,
                 created_datetime : new Date(),
                 account_rid : data.account_rid,
-                entity_rid : data.rid,
+                entity_rid : data.case_rid,
                 event_name : 
                 `Case Task Workflow Connector updated`,
                 event_type : "ui handler",
