@@ -314,7 +314,7 @@ export const getMeetingFilterFields = (
     value: 'effective_start_time',
     type: 'time',
     operatorOption: dateOptions,
-     timeFormat: '12h',
+    timeFormat: '12h',
     hide:
       !permissionMap?.['effective_start_time']?.edit &&
       !permissionMap?.['effective_start_time']?.read,
@@ -324,7 +324,7 @@ export const getMeetingFilterFields = (
     value: 'effective_end_datetime',
     type: 'time',
     operatorOption: dateOptions,
-     timeFormat: '12h',
+    timeFormat: '12h',
     hide:
       !permissionMap?.['effective_start_time']?.edit &&
       !permissionMap?.['effective_start_time']?.read,

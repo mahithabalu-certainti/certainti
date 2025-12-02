@@ -109,17 +109,17 @@ const StyledSelect = React.forwardRef<HTMLDivElement, StyledSelectProps>(
   ) => {
     const errorStyles: SxProps<Theme> = error
       ? {
-        '& .MuiOutlinedInput-notchedOutline': {
-          border: '1px solid #EF4444 !important',
-        },
-        backgroundColor: '#FEF2F2',
-        '&:hover .MuiOutlinedInput-notchedOutline': {
-          border: '1px solid #EF4444 !important',
-        },
-        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-          border: '2px solid #EF4444 !important',
-        },
-      }
+          '& .MuiOutlinedInput-notchedOutline': {
+            border: '1px solid #EF4444 !important',
+          },
+          backgroundColor: '#FEF2F2',
+          '&:hover .MuiOutlinedInput-notchedOutline': {
+            border: '1px solid #EF4444 !important',
+          },
+          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+            border: '2px solid #EF4444 !important',
+          },
+        }
       : {};
 
     const mergedSx = {
@@ -154,8 +154,8 @@ const StyledSelect = React.forwardRef<HTMLDivElement, StyledSelectProps>(
         <div
           className='h-[28px] w-5 flex items-center justify-center absolute top-[2px] right-[25px] pointer-events-auto z-10'
           style={{
-            opacity: (typeof error === 'string' && error) ? 1 : 0,
-            pointerEvents: (typeof error === 'string' && error) ? 'auto' : 'none',
+            opacity: typeof error === 'string' && error ? 1 : 0,
+            pointerEvents: typeof error === 'string' && error ? 'auto' : 'none',
           }}
         >
           {typeof error === 'string' && error && (

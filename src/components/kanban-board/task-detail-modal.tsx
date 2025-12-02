@@ -447,15 +447,19 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   }, [taskTemplatesQuery.data, task?.title, taskId]);
 
   // Fetch weightage and category lists (only for case tasks, not activities)
-  const weightageListQuery = useWeightageList({ enabled: taskType !== 'activity' });
-  const categoryListQuery = useGetTaskCategoryTypes({ enabled: taskType !== 'activity' });
+  const weightageListQuery = useWeightageList({
+    enabled: taskType !== 'activity',
+  });
+  const categoryListQuery = useGetTaskCategoryTypes({
+    enabled: taskType !== 'activity',
+  });
 
   const weightageData = useMemo(() => {
     // Handle nested data.data structure
     const response = weightageListQuery.data as {
       data?:
-      | { data?: Array<{ rid: string; weightage_value: number }> }
-      | Array<{ rid: string; weightage_value: number }>;
+        | { data?: Array<{ rid: string; weightage_value: number }> }
+        | Array<{ rid: string; weightage_value: number }>;
     };
     const dataArray = Array.isArray(response?.data)
       ? response.data
@@ -543,7 +547,8 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   }, [collaborators]);
 
   const assigneeUsers = useMemo(() => {
-    const enrichedUsers = availableUsers?.map((user) => enrichUserOption(user)) || [];
+    const enrichedUsers =
+      availableUsers?.map((user) => enrichUserOption(user)) || [];
     const uniqueUsers = enrichedUsers.filter(
       (user, index, self) => self.findIndex((u) => u.id === user.id) === index
     );
@@ -817,7 +822,11 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
             const err = error as any;
             const statusMsg = err?.response?.data?.statusMessage;
 
-            if (statusMsg && typeof statusMsg === 'object' && !Array.isArray(statusMsg)) {
+            if (
+              statusMsg &&
+              typeof statusMsg === 'object' &&
+              !Array.isArray(statusMsg)
+            ) {
               const fieldErrors = Object.entries(statusMsg)
                 .map(([field, message]) => `${field}: ${message}`)
                 .join(', ');
@@ -858,7 +867,11 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
             const err = error as any;
             const statusMsg = err?.response?.data?.statusMessage;
 
-            if (statusMsg && typeof statusMsg === 'object' && !Array.isArray(statusMsg)) {
+            if (
+              statusMsg &&
+              typeof statusMsg === 'object' &&
+              !Array.isArray(statusMsg)
+            ) {
               const fieldErrors = Object.entries(statusMsg)
                 .map(([field, message]) => `${field}: ${message}`)
                 .join(', ');
@@ -887,13 +900,13 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
         const linkTaskTypeRidsValue =
           linkTaskTypes && linkTaskTypes.length > 0
             ? linkTaskTypes
-              .map((taskType) => {
-                const template = taskTemplatesData?.find(
-                  (t) => t.name === taskType
-                );
-                return template?.id || '';
-              })
-              .filter((rid) => rid !== '')
+                .map((taskType) => {
+                  const template = taskTemplatesData?.find(
+                    (t) => t.name === taskType
+                  );
+                  return template?.id || '';
+                })
+                .filter((rid) => rid !== '')
             : [];
 
         const weightageRidValue = weightage
@@ -902,13 +915,13 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
 
         const categoryRidValue = category
           ? categoryData?.find(
-            (c: { id: string; name: string }) => c.name === category
-          )?.id || ''
+              (c: { id: string; name: string }) => c.name === category
+            )?.id || ''
           : '';
 
         const assignedToRid = editedTask.assignee
           ? assigneeUsers.find((u) => u.name === editedTask.assignee.name)
-            ?.id || ''
+              ?.id || ''
           : '';
 
         const workflowConnector: Record<string, unknown> = {};
@@ -920,7 +933,8 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
         );
 
         const originalRelationshipConnectorRid =
-          originalTask?.workflow_connector?.[0]?.relationship_connector_rid || '';
+          originalTask?.workflow_connector?.[0]?.relationship_connector_rid ||
+          '';
 
         const isLinkedTypeChanged =
           linkedTypeRidValue !== originalRelationshipConnectorRid;
@@ -931,7 +945,8 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
 
         if (
           (linkedTypeRidValue &&
-            (linkTaskTypeRidsValue.length > 0 || deleteTargetRids.length > 0)) ||
+            (linkTaskTypeRidsValue.length > 0 ||
+              deleteTargetRids.length > 0)) ||
           deleteTargetRids.length > 0
         ) {
           workflowConnector.source_rid = taskId;
@@ -973,7 +988,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
           ...(categoryRidValue && {
             task_category_rid: categoryRidValue,
           }),
-          assigned_to: assignedToRid || ''
+          assigned_to: assignedToRid || '',
         };
 
         let updateResponse;
@@ -999,7 +1014,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
             tags: tagsArray,
             assigned_to: assignedToRid || '',
             fiscal_year: editedTask.fiscal_year,
-            checklist_rid: selectedChecklistObj?.id || "",
+            checklist_rid: selectedChecklistObj?.id || '',
           };
           updateResponse =
             await updateActivityTaskMutation.mutateAsync(activityPayload);
@@ -1040,7 +1055,11 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
         const err = error as any;
         const statusMsg = err?.response?.data?.statusMessage;
 
-        if (statusMsg && typeof statusMsg === 'object' && !Array.isArray(statusMsg)) {
+        if (
+          statusMsg &&
+          typeof statusMsg === 'object' &&
+          !Array.isArray(statusMsg)
+        ) {
           const fieldErrors = Object.entries(statusMsg)
             .map(([field, message]) => `${field}: ${message}`)
             .join(', ');
@@ -1074,9 +1093,9 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     setEditedTask((prev) =>
       prev
         ? {
-          ...prev,
-          status: statusName,
-        }
+            ...prev,
+            status: statusName,
+          }
         : null
     );
     if (statusName) setErrors((prev) => ({ ...prev, status: '' }));
@@ -1131,9 +1150,9 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       setEditedTask((prev) =>
         prev
           ? {
-            ...prev,
-            attachments: [...(prev.attachments || []), ...fileNames],
-          }
+              ...prev,
+              attachments: [...(prev.attachments || []), ...fileNames],
+            }
           : null
       );
       e.target.value = '';
@@ -1170,9 +1189,9 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       setEditedTask((prev) =>
         prev
           ? {
-            ...prev,
-            assignee: { name: '', initials: '', color: '' },
-          }
+              ...prev,
+              assignee: { name: '', initials: '', color: '' },
+            }
           : null
       );
       return;
@@ -1184,13 +1203,13 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       setEditedTask((prev) =>
         prev
           ? {
-            ...prev,
-            assignee: {
-              name: selectedUser.name,
-              initials: selectedUser.initials,
-              color: selectedUser.color,
-            },
-          }
+              ...prev,
+              assignee: {
+                name: selectedUser.name,
+                initials: selectedUser.initials,
+                color: selectedUser.color,
+              },
+            }
           : null
       );
     }
@@ -1356,8 +1375,9 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   return (
     <>
       <div
-        className={`fixed right-0 bottom-0 w-[650px] bg-white text-gray-900 shadow-2xl z-50 overflow-y-auto ${isOpen ? 'translate-x-0' : 'translate-x-full'
-          }`}
+        className={`fixed right-0 bottom-0 w-[650px] bg-white text-gray-900 shadow-2xl z-50 overflow-y-auto ${
+          isOpen ? 'translate-x-0' : 'translate-x-full'
+        }`}
         style={{
           top: '38.1px',
           transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
@@ -1732,48 +1752,50 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
             fieldVisibility.category &&
             fieldVisibility.tags
           ) && (
-              <>
-                <h3 className='text-sm font-semibold text-gray-700 mb-3'>Fields</h3>
+            <>
+              <h3 className='text-sm font-semibold text-gray-700 mb-3'>
+                Fields
+              </h3>
 
-                <TaskFieldsSection
-                  fieldVisibility={fieldVisibility}
-                  fieldDisabled={enhancedFieldDisabled}
-                  editedTask={editedTask}
-                  statusData={statusData}
-                  priorityData={priorityData}
-                  checklistData={checklistData}
-                  availableTags={availableTags}
-                  connectorTypesData={connectorTypesData}
-                  taskTemplatesData={taskTemplatesData}
-                  weightageData={weightageData}
-                  categoryData={categoryData}
-                  selectedChecklist={selectedChecklist}
-                  selectedLinkedType={linkedType}
-                  selectedLinkTaskTypes={linkTaskTypes}
-                  selectedWeightage={weightage}
-                  selectedCategory={category}
-                  userRole={selectedRole}
-                  onStatusChange={handleStatusChange}
-                  onPriorityChange={handlePriorityChange}
-                  onAssigneeChange={(userId) => {
-                    if (!userId) {
-                      setEditedTask((prev) =>
-                        prev
-                          ? {
+              <TaskFieldsSection
+                fieldVisibility={fieldVisibility}
+                fieldDisabled={enhancedFieldDisabled}
+                editedTask={editedTask}
+                statusData={statusData}
+                priorityData={priorityData}
+                checklistData={checklistData}
+                availableTags={availableTags}
+                connectorTypesData={connectorTypesData}
+                taskTemplatesData={taskTemplatesData}
+                weightageData={weightageData}
+                categoryData={categoryData}
+                selectedChecklist={selectedChecklist}
+                selectedLinkedType={linkedType}
+                selectedLinkTaskTypes={linkTaskTypes}
+                selectedWeightage={weightage}
+                selectedCategory={category}
+                userRole={selectedRole}
+                onStatusChange={handleStatusChange}
+                onPriorityChange={handlePriorityChange}
+                onAssigneeChange={(userId) => {
+                  if (!userId) {
+                    setEditedTask((prev) =>
+                      prev
+                        ? {
                             ...prev,
                             assignee: { name: '', initials: '', color: '' },
                           }
-                          : null
-                      );
-                      return;
-                    }
-                    const selectedUser = assigneeUsers.find(
-                      (u) => u.id === userId
+                        : null
                     );
-                    if (selectedUser) {
-                      setEditedTask((prev) =>
-                        prev
-                          ? {
+                    return;
+                  }
+                  const selectedUser = assigneeUsers.find(
+                    (u) => u.id === userId
+                  );
+                  if (selectedUser) {
+                    setEditedTask((prev) =>
+                      prev
+                        ? {
                             ...prev,
                             assignee: {
                               name: selectedUser.name,
@@ -1781,79 +1803,79 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                               color: selectedUser.color,
                             },
                           }
-                          : null
-                      );
-                    }
-                  }}
-                  onChecklistChange={(value) => {
-                    setSelectedChecklist(value);
-                    if (value)
-                      setErrors((prev) => ({ ...prev, checklistTemplate: '' }));
-                  }}
-                  onLinkedTypeChange={(value) => {
-                    setLinkedType(value);
-                    setEditedTask((prev) =>
-                      prev ? { ...prev, linkedType: value } : null
+                        : null
                     );
-                    if (value) {
-                      setErrors((prev) => ({ ...prev, linkedType: '' }));
-                    } else {
-                      if (!linkTaskTypes || linkTaskTypes.length === 0) {
-                        setErrors((prev) => ({ ...prev, linkTaskType: '' }));
-                      }
-                    }
-                  }}
-                  onLinkTaskTypesChange={(values) => {
-                    setLinkTaskTypes(values);
-                    setEditedTask((prev) =>
-                      prev ? { ...prev, linkTaskTypes: values } : null
-                    );
-                    if (values.length > 0) {
-                      setErrors((prev) => ({ ...prev, linkTaskType: '' }));
-                    } else {
-                      setLinkedType('');
-                      setEditedTask((prev) =>
-                        prev ? { ...prev, linkedType: '' } : null
-                      );
-                      if (!linkedType) {
-                        setErrors((prev) => ({ ...prev, linkedType: '' }));
-                      }
-                    }
-                  }}
-                  onWeightageChange={(value) => {
-                    setWeightage(value);
-                    setEditedTask((prev) =>
-                      prev ? { ...prev, weightage: value } : null
-                    );
-                  }}
-                  onCategoryChange={(value) => {
-                    setCategory(value);
-                    setEditedTask((prev) =>
-                      prev ? { ...prev, category: value } : null
-                    );
-                  }}
-                  fiscalYear={editedTask?.fiscal_year || fiscalYear}
-                  fiscalYears={fiscalYears}
-                  onFiscalYearChange={(value) => {
-                    setEditedTask((prev) =>
-                      prev ? { ...prev, fiscal_year: value } : null
-                    );
-                  }}
-                  onUserRoleChange={(value) => {
-                    setSelectedRole(value);
-                  }}
-                  errors={errors}
-                  onTagsChange={(newTags) =>
-                    setEditedTask((prev) =>
-                      prev ? { ...prev, tags: newTags } : null
-                    )
                   }
-                  onAddCustomTag={setAvailableTags}
-                  onSetEditedTask={setEditedTask}
-                  mode='view'
-                />
-              </>
-            )}
+                }}
+                onChecklistChange={(value) => {
+                  setSelectedChecklist(value);
+                  if (value)
+                    setErrors((prev) => ({ ...prev, checklistTemplate: '' }));
+                }}
+                onLinkedTypeChange={(value) => {
+                  setLinkedType(value);
+                  setEditedTask((prev) =>
+                    prev ? { ...prev, linkedType: value } : null
+                  );
+                  if (value) {
+                    setErrors((prev) => ({ ...prev, linkedType: '' }));
+                  } else {
+                    if (!linkTaskTypes || linkTaskTypes.length === 0) {
+                      setErrors((prev) => ({ ...prev, linkTaskType: '' }));
+                    }
+                  }
+                }}
+                onLinkTaskTypesChange={(values) => {
+                  setLinkTaskTypes(values);
+                  setEditedTask((prev) =>
+                    prev ? { ...prev, linkTaskTypes: values } : null
+                  );
+                  if (values.length > 0) {
+                    setErrors((prev) => ({ ...prev, linkTaskType: '' }));
+                  } else {
+                    setLinkedType('');
+                    setEditedTask((prev) =>
+                      prev ? { ...prev, linkedType: '' } : null
+                    );
+                    if (!linkedType) {
+                      setErrors((prev) => ({ ...prev, linkedType: '' }));
+                    }
+                  }
+                }}
+                onWeightageChange={(value) => {
+                  setWeightage(value);
+                  setEditedTask((prev) =>
+                    prev ? { ...prev, weightage: value } : null
+                  );
+                }}
+                onCategoryChange={(value) => {
+                  setCategory(value);
+                  setEditedTask((prev) =>
+                    prev ? { ...prev, category: value } : null
+                  );
+                }}
+                fiscalYear={editedTask?.fiscal_year || fiscalYear}
+                fiscalYears={fiscalYears}
+                onFiscalYearChange={(value) => {
+                  setEditedTask((prev) =>
+                    prev ? { ...prev, fiscal_year: value } : null
+                  );
+                }}
+                onUserRoleChange={(value) => {
+                  setSelectedRole(value);
+                }}
+                errors={errors}
+                onTagsChange={(newTags) =>
+                  setEditedTask((prev) =>
+                    prev ? { ...prev, tags: newTags } : null
+                  )
+                }
+                onAddCustomTag={setAvailableTags}
+                onSetEditedTask={setEditedTask}
+                mode='view'
+              />
+            </>
+          )}
 
           <TaskChecklistSection
             fieldVisibility={fieldVisibility}

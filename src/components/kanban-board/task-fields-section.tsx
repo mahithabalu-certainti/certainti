@@ -144,15 +144,15 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
                 mode === 'view'
                   ? (e) => onStatusChange(e.target.value as string)
                   : (e) => {
-                    const selectedName = e.target.value as string;
-                    const statusItem = statusData?.find(
-                      (s) => s.name === selectedName
-                    );
-                    onStatusChangeCreate?.(
-                      selectedName,
-                      statusItem?.id || ''
-                    );
-                  }
+                      const selectedName = e.target.value as string;
+                      const statusItem = statusData?.find(
+                        (s) => s.name === selectedName
+                      );
+                      onStatusChangeCreate?.(
+                        selectedName,
+                        statusItem?.id || ''
+                      );
+                    }
               }
               disabled={fieldDisabled.status}
               width='100%'
@@ -626,9 +626,7 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
           <div className='flex flex-col gap-2'>
             <label className='text-sm font-medium text-gray-700'>
               Link Task Type
-              {selectedLinkedType && (
-                <span className='text-red-500'> *</span>
-              )}
+              {selectedLinkedType && <span className='text-red-500'> *</span>}
             </label>
             <StyledSelect
               name='linkTaskType'
@@ -919,12 +917,12 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
                       },
                       ...(localTagError || errors.tags
                         ? {
-                          '& .MuiOutlinedInput-notchedOutline': {
-                            borderColor: '#EF4444 !important',
-                            borderWidth: '1px !important',
-                          },
-                          backgroundColor: '#FEF2F2',
-                        }
+                            '& .MuiOutlinedInput-notchedOutline': {
+                              borderColor: '#EF4444 !important',
+                              borderWidth: '1px !important',
+                            },
+                            backgroundColor: '#FEF2F2',
+                          }
                         : {}),
                     },
                     '& .MuiOutlinedInput-notchedOutline': {
@@ -936,9 +934,9 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
                       borderWidth: '1px',
                     },
                     '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline':
-                    {
-                      border: '2px solid #60A5FA',
-                    },
+                      {
+                        border: '2px solid #60A5FA',
+                      },
                   }}
                   InputProps={{
                     ...params.InputProps,
@@ -995,44 +993,44 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
 
             {(shouldPrepopulate ? editedTask?.tags || [] : selectedTags || [])
               ?.length > 0 && (
-                <div className='flex flex-wrap items-center gap-2 mt-1'>
-                  {(shouldPrepopulate
-                    ? editedTask?.tags || []
-                    : selectedTags || []
-                  )?.map((tag, index) => (
-                    <div
-                      key={index}
-                      className='inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium hover:bg-blue-200 transition-colors group'
+              <div className='flex flex-wrap items-center gap-2 mt-1'>
+                {(shouldPrepopulate
+                  ? editedTask?.tags || []
+                  : selectedTags || []
+                )?.map((tag, index) => (
+                  <div
+                    key={index}
+                    className='inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium hover:bg-blue-200 transition-colors group'
+                  >
+                    <Tooltip title={tag} placement='top' arrow>
+                      <span className='truncate max-w-[200px] block'>
+                        {tag}
+                      </span>
+                    </Tooltip>
+                    <button
+                      onClick={() => {
+                        const newTags =
+                          (shouldPrepopulate
+                            ? editedTask?.tags || []
+                            : selectedTags || []
+                          )?.filter((t) => t !== tag) || [];
+                        if (shouldPrepopulate) {
+                          onSetEditedTask(
+                            editedTask ? { ...editedTask, tags: newTags } : null
+                          );
+                        } else {
+                          onTagsChange(newTags);
+                        }
+                      }}
+                      className='ml-1 text-blue-600 hover:text-red-600 transition-colors'
+                      title={`Remove ${tag}`}
                     >
-                      <Tooltip title={tag} placement='top' arrow>
-                        <span className='truncate max-w-[200px] block'>
-                          {tag}
-                        </span>
-                      </Tooltip>
-                      <button
-                        onClick={() => {
-                          const newTags =
-                            (shouldPrepopulate
-                              ? editedTask?.tags || []
-                              : selectedTags || []
-                            )?.filter((t) => t !== tag) || [];
-                          if (shouldPrepopulate) {
-                            onSetEditedTask(
-                              editedTask ? { ...editedTask, tags: newTags } : null
-                            );
-                          } else {
-                            onTagsChange(newTags);
-                          }
-                        }}
-                        className='ml-1 text-blue-600 hover:text-red-600 transition-colors'
-                        title={`Remove ${tag}`}
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>

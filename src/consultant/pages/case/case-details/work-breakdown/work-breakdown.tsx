@@ -101,8 +101,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
     AllPermissions.CASES_WORKBREAKDOWN_CREATE
   );
 
-  if (!isWorkBreakdownEnable)
-    return <AccessRestricted />;
+  if (!isWorkBreakdownEnable) return <AccessRestricted />;
 
   const caseTaskViewEditFields = useMemo(
     () =>
@@ -288,16 +287,17 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
               }
             ).checklist_template_rid || '',
           tags: tagsArray,
-          workflow_connector: (
-            taskData as Partial<TaskCard> & {
-              workflow_connector?: {
-                source_rid: string;
-                relationship_connector_rid?: string;
-                target_rid?: string[];
-                is_new_changes?: boolean;
-              };
-            }
-          ).workflow_connector || {},
+          workflow_connector:
+            (
+              taskData as Partial<TaskCard> & {
+                workflow_connector?: {
+                  source_rid: string;
+                  relationship_connector_rid?: string;
+                  target_rid?: string[];
+                  is_new_changes?: boolean;
+                };
+              }
+            ).workflow_connector || {},
           ...((
             taskData as Partial<TaskCard> & {
               weightage_rid?: string;
@@ -750,9 +750,9 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
         setAppliedFilters={setAppliedFilters}
         setCurrentPage={setCurrentPage}
         handleFilter={handleFilter}
-        handleSorting={() => { }}
+        handleSorting={() => {}}
         sortFilterCount={0}
-        setSortFilterCount={() => { }}
+        setSortFilterCount={() => {}}
         showRefresh={false}
         onRefreshClick={onRefreshClick}
         // hideTabPanel={hideSection}

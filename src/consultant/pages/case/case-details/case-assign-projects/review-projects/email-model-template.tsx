@@ -972,7 +972,7 @@ const EmailModalTemplate: React.FC<EmailModalProps> = ({
           ) {
             insertSubjectPlaceholder(
               subjectMentionState.suggestions[
-              subjectMentionState.selectionIndex
+                subjectMentionState.selectionIndex
               ]
             );
           }
@@ -994,7 +994,7 @@ const EmailModalTemplate: React.FC<EmailModalProps> = ({
           ) {
             insertSubjectPlaceholder(
               subjectMentionState.suggestions[
-              subjectMentionState.selectionIndex
+                subjectMentionState.selectionIndex
               ]
             );
           }
@@ -1190,9 +1190,9 @@ const EmailModalTemplate: React.FC<EmailModalProps> = ({
                 anchorPosition={
                   subjectMentionState.position
                     ? {
-                      top: subjectMentionState.position.top,
-                      left: subjectMentionState.position.left,
-                    }
+                        top: subjectMentionState.position.top,
+                        left: subjectMentionState.position.left,
+                      }
                     : undefined
                 }
                 transformOrigin={{
@@ -1329,9 +1329,9 @@ const EmailModalTemplate: React.FC<EmailModalProps> = ({
                   anchorPosition={
                     mentionState.position
                       ? {
-                        top: mentionState.position.top,
-                        left: mentionState.position.left,
-                      }
+                          top: mentionState.position.top,
+                          left: mentionState.position.left,
+                        }
                       : undefined
                   }
                   transformOrigin={{

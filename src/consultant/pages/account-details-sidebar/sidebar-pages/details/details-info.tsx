@@ -218,7 +218,9 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
 
     {
       label: 'Fiscal End',
-      value: accountDetails?.fiscal_end_date ? formatMonthDay(accountDetails?.fiscal_end_date) : '-',
+      value: accountDetails?.fiscal_end_date
+        ? formatMonthDay(accountDetails?.fiscal_end_date)
+        : '-',
       key: 'fiscal_end_date',
     },
     { label: 'Data Residency', value: dataResidency, key: 'data_storage' },

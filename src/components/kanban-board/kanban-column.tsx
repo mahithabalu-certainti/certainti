@@ -95,14 +95,14 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
           }),
           workflow_connector:
             formData.linkedTypeRid &&
-              formData.linkTaskTypeRids &&
-              formData.linkTaskTypeRids.length > 0
+            formData.linkTaskTypeRids &&
+            formData.linkTaskTypeRids.length > 0
               ? {
-                source_rid: '',
-                relationship_connector_rid: formData.linkedTypeRid,
-                target_rid: formData.linkTaskTypeRids,
-                is_new_changes: true,
-              }
+                  source_rid: '',
+                  relationship_connector_rid: formData.linkedTypeRid,
+                  target_rid: formData.linkTaskTypeRids,
+                  is_new_changes: true,
+                }
               : {},
           ...(formData.weightageRid && {
             weightage_rid: formData.weightageRid,
@@ -165,7 +165,6 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
               statusData={statusData}
               statusOptions={statusOptions}
               priorityData={priorityData}
-
             />
           ))}
         </div>
@@ -178,10 +177,11 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
             onCreateModalOpen?.();
           }}
           disabled={isCreateTaskDisabled}
-          className={`w-full flex items-center gap-2 p-3 rounded-lg border-2 border-dashed transition-colors duration-200 ${isCreateTaskDisabled
-            ? 'border-slate-300 text-slate-400 cursor-not-allowed'
-            : 'border-slate-300 text-slate-500 hover:border-slate-400 hover:text-slate-600'
-            }`}
+          className={`w-full flex items-center gap-2 p-3 rounded-lg border-2 border-dashed transition-colors duration-200 ${
+            isCreateTaskDisabled
+              ? 'border-slate-300 text-slate-400 cursor-not-allowed'
+              : 'border-slate-300 text-slate-500 hover:border-slate-400 hover:text-slate-600'
+          }`}
           style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
         >
           <AddIcon size={18} />
