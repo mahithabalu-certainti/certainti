@@ -37,7 +37,7 @@ const SelectProjects: React.FC<selectProjectProps> = ({
   const [sortField, setSortField] = useState<string>('project_code');
   const [sortBy, setSortBy] = useState<'ASC' | 'DESC'>('ASC');
   const accountID = searchParams.get('accountID') || '';
-  const [selectProjects, setSelectProjects] = useState<AssignProject[]>([]);
+
   const { data, isLoading, isError } = useSelectProjectsList(
     {
       page: currentPage + 1,
@@ -53,22 +53,14 @@ const SelectProjects: React.FC<selectProjectProps> = ({
     refreshTrigger
   );
 
+  // Combine both effects into one to avoid race conditions
   useEffect(() => {
     if (isLoading) {
       setCount(0);
-      setSelectProjects([]);
     } else if (data?.count !== undefined) {
       setCount(data.count);
     }
   }, [isLoading, data?.count, setCount]);
-
-  useEffect(() => {
-    if (data?.projects) {
-      setSelectProjects(data?.projects);
-    } else {
-      setSelectProjects([]);
-    }
-  }, [data?.projects]);
 
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
@@ -76,7 +68,7 @@ const SelectProjects: React.FC<selectProjectProps> = ({
 
   const handleRowsPerPageChange = (newPageSize: number) => {
     setRowsPerPage(newPageSize);
-    setCurrentPage(1);
+    setCurrentPage(0); // Changed from 1 to 0 to match page index
   };
 
   const handleSortRequest = (property: string, sortOrder: 'asc' | 'desc') => {
@@ -97,7 +89,8 @@ const SelectProjects: React.FC<selectProjectProps> = ({
   return (
     <div className='border border-[#CBD6E2] border-tss'>
       <ListTable
-        data={selectProjects || []}
+        // Use data?.projects directly instead of state duplication
+        data={data?.projects || []}
         columns={visibleColumns}
         getRowId={getRowId}
         hoverHighlight={false}

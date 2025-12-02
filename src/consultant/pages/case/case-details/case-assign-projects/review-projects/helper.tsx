@@ -46,7 +46,7 @@ export const reviewProjectFilterFields = (
   },
   {
     name: 'Classification',
-    value: 'classification_name',
+    value: 'project_classification_name',
     type: 'enum',
     options: classificationOption.map((item) => ({
       option: item.label,
@@ -78,7 +78,7 @@ export const reviewProjectFilterFields = (
   },
   {
     name: 'Primary Point of Contact',
-    value: 'primary_point_of_contact',
+    value: 'project_point_of_contact',
     type: 'text',
     operatorOption: nonMadatoryOptions,
     hide:
@@ -87,7 +87,7 @@ export const reviewProjectFilterFields = (
   },
   {
     name: 'Primary Point of Contact Email',
-    value: 'primary_point_of_contact_email',
+    value: 'project_point_of_contact_email',
     type: 'text',
     operatorOption: nonMadatoryOptions,
     hide:
@@ -100,8 +100,8 @@ export const reviewProjectFilterFields = (
     type: 'number',
     operatorOption: numberOptions,
     hide:
-      !projectPermissionMap?.['total_fte_prj"']?.read &&
-      !projectPermissionMap?.['total_fte_prj"']?.edit,
+      !projectPermissionMap?.['total_fte_prj']?.read &&
+      !projectPermissionMap?.['total_fte_prj']?.edit,
   },
   {
     name: 'Total Sub Con Count',

@@ -69,13 +69,15 @@ export const getReviewdProjectColumns = (
     id: 'project_classification_name',
     label: 'Classification',
     sortable: true,
-    sortId: 'classification_name',
+    sortId: 'project_classification_name',
     hide:
       !permissionMap?.['project_classification_rid']?.read &&
       !permissionMap?.['project_classification_rid']?.edit,
     width: 170,
     sx: (row) => ({
-      background: row?.classification_name ? '#fff' : '#f4ecec !important',
+      background: row?.project_classification_name
+        ? '#fff'
+        : '#f4ecec !important',
     }),
   },
   {
@@ -101,6 +103,9 @@ export const getReviewdProjectColumns = (
       !permissionMap?.['industry_rid']?.read &&
       !permissionMap?.['industry_rid']?.edit,
     width: 160,
+    sx: (row) => ({
+      background: row?.industry_name ? '#fff' : '#f4ecec !important',
+    }),
   },
   {
     id: 'project_point_of_contact',
@@ -125,7 +130,7 @@ export const getReviewdProjectColumns = (
       !permissionMap?.['primary_point_of_contact_email']?.edit,
     width: 230,
     sx: (row) => ({
-      background: row?.primary_point_of_contact_email
+      background: row?.project_point_of_contact_email
         ? '#fff'
         : '#f4ecec !important',
     }),
@@ -190,9 +195,9 @@ export const getReviewdProjectColumns = (
     sortable: true,
     sortId: 'total_effort_fte_prj"',
     width: 170,
-    // hide:
-    //   !permissionMap?.['total_effort_fte_prj"']?.read &&
-    //   !permissionMap?.['total_effort_fte_prj"']?.edit,
+    hide:
+      !permissionMap?.['total_effort_fte_prj']?.read &&
+      !permissionMap?.['total_effort_fte_prj']?.edit,
     sx: (row) => ({
       background: row?.total_effort_fte_prj ? '#fff' : '#f4ecec !important',
       textAlign: 'right',
@@ -216,7 +221,9 @@ export const getReviewdProjectColumns = (
     }),
 
     render: (row: ReviewProject) =>
-      row.total_cost_subcon_prj ? valueDisplay(row.total_cost_subcon_prj) : '-',
+      row.total_effort_subcon_prj
+        ? valueDisplay(row.total_effort_subcon_prj)
+        : '-',
   },
   {
     id: 'total_effort_prj',
