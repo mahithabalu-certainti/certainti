@@ -3346,6 +3346,7 @@ export const rawQueries = {
       ON "${schemaName}"."task_history"("${field}");
     `;
   },
+  
   getAiTechnicalSummaryIndexQuery(schemaName: string, field: string): string {
     const indexName = `${schemaName}_ai_technical_summary_${field}_idx`;
     return `
