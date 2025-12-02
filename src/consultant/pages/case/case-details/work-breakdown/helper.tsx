@@ -2,7 +2,10 @@ import {
   Activity,
   Comment,
 } from '../../../../../components/kanban-board/types';
-import { generateColorFromName, generateInitials } from '../../../../../components/kanban-board/helper';
+import {
+  generateColorFromName,
+  generateInitials,
+} from '../../../../../components/kanban-board/helper';
 import type {
   PriorityData,
   StatusData,
@@ -131,12 +134,12 @@ export const transformComments = (
 
     const formattedDate = commentDate
       ? new Date(commentDate).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      })
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        })
       : '';
 
     // Generate initials from user name
@@ -159,12 +162,12 @@ export const transformComments = (
       uploadedBy: att.created_by_name || commentUploadedBy,
       uploadedDate: att.created_datetime
         ? new Date(att.created_datetime).toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-        })
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+          })
         : commentUploadedDate,
     }));
 
@@ -197,25 +200,33 @@ export const transformAttachments = (
   uploadedDate: string;
 }> => {
   return attachmentsData.map((attachment) => {
-    const uploadDate = attachment.created_datetime || attachment.uploaded_date || attachment.created_date;
+    const uploadDate =
+      attachment.created_datetime ||
+      attachment.uploaded_date ||
+      attachment.created_date;
     const formattedUploadDate = uploadDate
       ? new Date(uploadDate).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      })
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        })
       : 'Recently uploaded';
 
     return {
       id: attachment.id || attachment.attachment_rid || attachment.rid,
       fileName: attachment.file_name || attachment.document_name || '',
       filePath: attachment.file_path || attachment.browse_file,
-      fileSize: attachment.file_size || (attachment.size ? parseFloat(attachment.size) : undefined),
+      fileSize:
+        attachment.file_size ||
+        (attachment.size ? parseFloat(attachment.size) : undefined),
       fileType: attachment.file_type || attachment.format,
       uploadedBy:
-        attachment.created_by_name || attachment.uploaded_by_name || attachment.uploaded_by || 'Unknown',
+        attachment.created_by_name ||
+        attachment.uploaded_by_name ||
+        attachment.uploaded_by ||
+        'Unknown',
       uploadedDate: formattedUploadDate,
     };
   });

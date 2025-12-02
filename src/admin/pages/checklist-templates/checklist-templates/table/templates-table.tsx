@@ -242,41 +242,40 @@ export const TemplateTable: React.FC<ITemplateTableProps> = ({
         payload as any
       );
 
-      if (res?.statusCode === 200) {
-        // Refresh the list to get updated data
-        const updatedTemplate = templateList.find((t) => t.rid === rowId);
-        if (updatedTemplate) {
-          const newTemplateList = templateList.map((template) => {
-            if (template.rid === rowId) {
-              // Update the local state with the new values
-              const updatedFields: Partial<ChecklistTemplateList> = {};
-              updates.forEach((update) => {
-                const key = update.columnId as keyof ChecklistTemplateList;
-                updatedFields[key] = update.value as any;
+      if (res?.statusCode === 200 && res?.data?.checklist?.data) {
+        const updatedItem = res.data.checklist.data;
 
-                // If status was updated, we might need to update status_name too if we have the label
-                if (key === 'status_name' as any && statusOptions) {
-                  const selectedOption = statusOptions.find(opt => opt.value === update.value);
-                  if (selectedOption) {
-                    updatedFields['status_name'] = selectedOption.label;
-                  }
-                }
-              });
-              return {
+        setTemplateList((prev) =>
+          prev.map((template) => {
+            if (template.rid === rowId) {
+              const newTemplate = {
                 ...template,
-                ...updatedFields,
+                ...updatedItem,
               };
+              if (updatedItem.status_rid && statusOptions) {
+                const selectedOption = statusOptions.find(
+                  (opt) => opt.value === updatedItem.status_rid
+                );
+                if (selectedOption) {
+                  newTemplate.status_name = selectedOption.label;
+                }
+              }
+
+              return newTemplate;
             }
             return template;
-          });
-          setTemplateList(newTemplateList);
-        }
+          })
+        );
       } else {
         errorToast(res?.statusMessage || 'Failed to update field');
         setTemplateList(previousTemplates);
       }
-    } catch (error) {
-      errorToast((error as Error)?.message || 'Failed to update field');
+    } catch (error: any) {
+      const errorMessage =
+        error?.response?.data?.statusMessage ||
+        (error as Error)?.message ||
+        'Failed to update field';
+      errorToast(errorMessage);
       setTemplateList(previousTemplates);
     }
   };

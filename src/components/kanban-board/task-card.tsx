@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import type { TaskCardProps, TaskCard } from './types';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { CommentIcon, CustomChecklistIcon } from '../../assets';
+import { CommentIcon, CustomChecklistIcon, LinkTaskIcon } from '../../assets';
 import { generateInitials } from './helper';
 import { Tooltip } from '@mui/material';
 
@@ -147,22 +147,9 @@ const TaskCardComponent: React.FC<ExtendedTaskCardProps> = ({
             onDoubleClick={(e) => {
               e.stopPropagation();
             }}
-            className='cursor-pointer hover:bg-gray-100 rounded p-0.5'
+            className='cursor-pointer hover:bg-gray-100 rounded p-0.5 opacity-0 group-hover:opacity-100 transition-opacity'
           >
-            <svg
-              xmlns='http://www.w3.org/2000/svg'
-              fill='none'
-              viewBox='0 0 24 24'
-              strokeWidth={1.5}
-              stroke='currentColor'
-              className='w-3.5 h-3.5 text-gray-400 flex-shrink-0'
-            >
-              <path
-                strokeLinecap='round'
-                strokeLinejoin='round'
-                d='M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244'
-              />
-            </svg>
+            <LinkTaskIcon className='w-3.5 h-3.5 text-gray-400 flex-shrink-0' />
           </div>
         </div>
       </div>

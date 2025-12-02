@@ -593,6 +593,15 @@ export const CaseDetails = () => {
       },
     });
   };
+
+  const isReviewProjectEnable = checkPermission(
+    permission,
+    AllPermissions.REVIEW_PROJECTS_VIEW_EDIT
+  );
+  const isProjectEnable = checkPermission(
+    permission,
+    AllPermissions.PROJECTS_VIEW_EDIT
+  );
   const sideMenuItems = useMemo<MenuItem[]>(() => {
     const allMenus = [
       {
@@ -626,7 +635,8 @@ export const CaseDetails = () => {
       {
         name: 'Case Projects',
         key: 'caseProjects',
-        id: AllMenus.FINANCIAL_HIGHLIGHTS,
+        id: AllMenus.FALLBACK,
+        hide: !isReviewProjectEnable && !isProjectEnable,
         disabled: false,
         icon: CasesIcon,
       },
@@ -647,7 +657,7 @@ export const CaseDetails = () => {
       {
         name: 'Historical Submission',
         key: 'historical_submission',
-        id: AllModules.PROJECT_INTERACTIONS,
+        id: AllModules.HISTORICAL_SUBMISSION,
         disabled: false,
         icon: InteractionsIcon,
       },
@@ -797,12 +807,13 @@ export const CaseDetails = () => {
             isCollapsed={isCollapsed}
             onToggleCollapse={() => setIsCollapsed((prev) => !prev)}
             enableScrollbar={true}
+            maxHeight={292}
           />
         </div>
         <div
           className='flex-1'
           style={{
-            maxHeight: 'calc(100vh - 140px)',
+            maxHeight: 'calc(100vh - 283px)',
             overflow: 'auto',
           }}
         >

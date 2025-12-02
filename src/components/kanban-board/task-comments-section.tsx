@@ -1,14 +1,31 @@
-import React, { useState, useRef, useEffect, Suspense, useCallback } from 'react';
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  Suspense,
+  useCallback,
+} from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
 import { Activity, Comment, Task } from './types';
-import { PencilIcon, DeleteIcon, AddIcon, ErrorInfoIcon, PaperclipIcon } from '../../assets';
+import {
+  PencilIcon,
+  DeleteIcon,
+  AddIcon,
+  ErrorInfoIcon,
+  PaperclipIcon,
+} from '../../assets';
 import { Tooltip } from '@mui/material';
 import TextButton from '../button/text-button';
 import { useInfiniteTaskCommentsList } from '../../consultant/services/case-task/case-task-service';
 import { useInfiniteTaskActivities } from '../../consultant/services/work-breakdown/work-breakdown-service';
-import { transformComments, transformActivities, type TaskCommentRaw, type TaskActivityRaw } from '../../consultant/pages/case/case-details/work-breakdown/helper';
+import {
+  transformComments,
+  transformActivities,
+  type TaskCommentRaw,
+  type TaskActivityRaw,
+} from '../../consultant/pages/case/case-details/work-breakdown/helper';
 import { generateInitials, generateColorFromName } from './helper';
 import LoadingSkeleton from './loading-skeleton';
 
@@ -33,17 +50,17 @@ interface TaskCommentsSectionProps {
     files: File[]
   ) => Promise<void>;
   onUpdateComment?:
-  | ((
-    commentId: string,
-    comment: string,
-    taskId: string,
-    files?: File[],
-    deletedFileIds?: string[]
-  ) => Promise<void>)
-  | undefined;
+    | ((
+        commentId: string,
+        comment: string,
+        taskId: string,
+        files?: File[],
+        deletedFileIds?: string[]
+      ) => Promise<void>)
+    | undefined;
   onDeleteComment:
-  | ((commentId: string, taskId: string) => Promise<void>)
-  | undefined;
+    | ((commentId: string, taskId: string) => Promise<void>)
+    | undefined;
   loadingComments?: boolean;
   loadingActivities?: boolean;
   useInfiniteScroll?: boolean; // New prop to enable infinite scrolling
@@ -101,7 +118,9 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
   );
 
   const queryClient = useQueryClient();
-  const { name: loggedInUserName, userId: loggedInUserId } = useSelector((state: RootState) => state.auth);
+  const { name: loggedInUserName, userId: loggedInUserId } = useSelector(
+    (state: RootState) => state.auth
+  );
 
   const loggedInUser = {
     initials: generateInitials(loggedInUserName || ''),
@@ -241,14 +260,22 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
   }, [infiniteActivitiesData, useInfiniteScroll, propActivities]);
 
   const totalCommentsCount = React.useMemo(() => {
-    if (!useInfiniteScroll || !infiniteData?.pages || infiniteData.pages.length === 0) {
+    if (
+      !useInfiniteScroll ||
+      !infiniteData?.pages ||
+      infiniteData.pages.length === 0
+    ) {
       return 0;
     }
     return infiniteData.pages[0]?.data?.total_result || 0;
   }, [infiniteData, useInfiniteScroll]);
 
   const totalActivitiesCount = React.useMemo(() => {
-    if (!useInfiniteScroll || !infiniteActivitiesData?.pages || infiniteActivitiesData.pages.length === 0) {
+    if (
+      !useInfiniteScroll ||
+      !infiniteActivitiesData?.pages ||
+      infiniteActivitiesData.pages.length === 0
+    ) {
       return 0;
     }
     return infiniteActivitiesData.pages[0]?.data?.total_result || 0;
@@ -267,11 +294,19 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
   const handleActivityObserver = useCallback(
     (entries: IntersectionObserverEntry[]) => {
       const [target] = entries;
-      if (target.isIntersecting && hasNextActivitiesPage && !isFetchingNextActivitiesPage) {
+      if (
+        target.isIntersecting &&
+        hasNextActivitiesPage &&
+        !isFetchingNextActivitiesPage
+      ) {
         fetchNextActivitiesPage();
       }
     },
-    [fetchNextActivitiesPage, hasNextActivitiesPage, isFetchingNextActivitiesPage]
+    [
+      fetchNextActivitiesPage,
+      hasNextActivitiesPage,
+      isFetchingNextActivitiesPage,
+    ]
   );
   useEffect(() => {
     if (!useInfiniteScroll || activeTab !== 'comments') return;
@@ -314,8 +349,6 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
       }
     };
   }, [handleActivityObserver, useInfiniteScroll, activities.length, activeTab]);
-
-
 
   useEffect(() => {
     if (editingCommentId && editTextareaRef.current) {
@@ -540,21 +573,33 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
       <div className='flex gap-6 mb-6 border-b border-gray-200'>
         <button
           onClick={() => setActiveTab('comments')}
-          className={`text-sm font-semibold pb-3 px-1 transition-all duration-200 ${activeTab === 'comments'
-            ? 'text-gray-900 border-b-2 border-blue-600'
-            : 'text-gray-600 hover:text-gray-800 border-b-2 border-transparent'
-            }`}
+          className={`text-sm font-semibold pb-3 px-1 transition-all duration-200 ${
+            activeTab === 'comments'
+              ? 'text-gray-900 border-b-2 border-blue-600'
+              : 'text-gray-600 hover:text-gray-800 border-b-2 border-transparent'
+          }`}
         >
-          Comments {totalCommentsCount > 0 && <span className='ml-1 text-xs text-gray-500'>({totalCommentsCount})</span>}
+          Comments{' '}
+          {totalCommentsCount > 0 && (
+            <span className='ml-1 text-xs text-gray-500'>
+              ({totalCommentsCount})
+            </span>
+          )}
         </button>
         <button
           onClick={() => setActiveTab('activity')}
-          className={`text-sm font-semibold pb-3 px-1 transition-all duration-200 ${activeTab === 'activity'
-            ? 'text-gray-900 border-b-2 border-blue-600'
-            : 'text-gray-600 hover:text-gray-800 border-b-2 border-transparent'
-            }`}
+          className={`text-sm font-semibold pb-3 px-1 transition-all duration-200 ${
+            activeTab === 'activity'
+              ? 'text-gray-900 border-b-2 border-blue-600'
+              : 'text-gray-600 hover:text-gray-800 border-b-2 border-transparent'
+          }`}
         >
-          Activity {totalActivitiesCount > 0 && <span className='ml-1 text-xs text-gray-500'>({totalActivitiesCount})</span>}
+          Activity{' '}
+          {totalActivitiesCount > 0 && (
+            <span className='ml-1 text-xs text-gray-500'>
+              ({totalActivitiesCount})
+            </span>
+          )}
         </button>
       </div>
 
@@ -618,7 +663,7 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                           {commentItem.createdBy === loggedInUserId
                             ? loggedInUser.initials
                             : commentItem.initials ||
-                            generateInitials(commentItem.user)}
+                              generateInitials(commentItem.user)}
                         </div>
                         <div>
                           <p className='text-sm font-semibold text-gray-900'>
@@ -631,16 +676,19 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                         <textarea
                           ref={editTextareaRef}
                           value={editingCommentText}
-                          onChange={(e) => setEditingCommentText(e.target.value)}
+                          onChange={(e) =>
+                            setEditingCommentText(e.target.value)
+                          }
                           className='w-full bg-white border border-gray-300 rounded-lg p-3 text-sm resize-none focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900 placeholder-gray-500 min-h-[100px] pr-8'
                           placeholder='Edit your comment'
                           disabled={isUpdating}
                         />
-                        {commentError && editingCommentId === commentItem.id && (
-                          <div className='absolute right-2 top-3'>
-                            <ErrorIconTooltip error={commentError} />
-                          </div>
-                        )}
+                        {commentError &&
+                          editingCommentId === commentItem.id && (
+                            <div className='absolute right-2 top-3'>
+                              <ErrorIconTooltip error={commentError} />
+                            </div>
+                          )}
                       </div>
 
                       {/* Edit Mode Attachments */}
@@ -658,18 +706,20 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                                 return (
                                   <div
                                     key={att.rid}
-                                    className={`flex items-center justify-between p-2 rounded text-xs ${isMarkedForDeletion
-                                      ? 'bg-red-50 text-gray-400'
-                                      : 'bg-gray-50 text-gray-700'
-                                      }`}
+                                    className={`flex items-center justify-between p-2 rounded text-xs ${
+                                      isMarkedForDeletion
+                                        ? 'bg-red-50 text-gray-400'
+                                        : 'bg-gray-50 text-gray-700'
+                                    }`}
                                   >
                                     <div className='flex items-center gap-2 overflow-hidden min-w-0'>
                                       <PaperclipIcon className='w-3 h-3 text-gray-600 flex-shrink-0' />
                                       <span
-                                        className={`truncate ${isMarkedForDeletion
-                                          ? 'line-through'
-                                          : ''
-                                          }`}
+                                        className={`truncate ${
+                                          isMarkedForDeletion
+                                            ? 'line-through'
+                                            : ''
+                                        }`}
                                         title={att.documentName}
                                       >
                                         {att.documentName}
@@ -684,16 +734,17 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                                       onClick={() =>
                                         isMarkedForDeletion
                                           ? handleUndoRemoveExistingAttachment(
-                                            att.rid
-                                          )
+                                              att.rid
+                                            )
                                           : handleRemoveExistingAttachment(
-                                            att.rid
-                                          )
+                                              att.rid
+                                            )
                                       }
-                                      className={`ml-2 p-1 rounded hover:bg-opacity-80 ${isMarkedForDeletion
-                                        ? 'text-green-600 hover:bg-green-100'
-                                        : 'text-red-600 hover:bg-red-100'
-                                        }`}
+                                      className={`ml-2 p-1 rounded hover:bg-opacity-80 ${
+                                        isMarkedForDeletion
+                                          ? 'text-green-600 hover:bg-green-100'
+                                          : 'text-red-600 hover:bg-red-100'
+                                      }`}
                                       title={
                                         isMarkedForDeletion
                                           ? 'Undo delete'
@@ -718,7 +769,8 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                             disabled={isUpdating}
                           >
                             <p className='text-xs text-gray-600 font-medium flex items-center justify-center gap-2'>
-                              <PaperclipIcon className='w-3 h-3 text-gray-600' /> Click to upload attachments
+                              <PaperclipIcon className='w-3 h-3 text-gray-600' />{' '}
+                              Click to upload attachments
                             </p>
                           </button>
                         </div>
@@ -733,7 +785,10 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                               >
                                 <div className='flex items-center gap-2 min-w-0'>
                                   <PaperclipIcon className='w-3 h-3 text-gray-600 flex-shrink-0' />
-                                  <span className='truncate break-all min-w-0' title={file.name}>
+                                  <span
+                                    className='truncate break-all min-w-0'
+                                    title={file.name}
+                                  >
                                     {file.name}
                                   </span>
                                 </div>
@@ -773,9 +828,9 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                             isUpdating ||
                             (!editingCommentText.trim() &&
                               (commentItem.attachments?.length || 0) -
-                              editingDeletedFileIds.length +
-                              editingNewFiles.length <=
-                              0) ||
+                                editingDeletedFileIds.length +
+                                editingNewFiles.length <=
+                                0) ||
                             (!editingNewFiles.length &&
                               !editingDeletedFileIds.length &&
                               isCommentUnchanged(
@@ -803,7 +858,7 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                         {commentItem.createdBy === loggedInUserId
                           ? loggedInUser.initials
                           : commentItem.initials ||
-                          generateInitials(commentItem.user)}
+                            generateInitials(commentItem.user)}
                       </div>
                       <div className='flex-1 min-w-0'>
                         <div className='flex items-start justify-between gap-2'>
@@ -820,17 +875,20 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
 
                           {/* Action Icons - Hover Reveal */}
                           <div
-                            className={`flex gap-2 flex-shrink-0 transition-opacity duration-200 ${hoveredCommentId === commentItem.id
-                              ? 'opacity-100'
-                              : 'opacity-0'
-                              }`}
+                            className={`flex gap-2 flex-shrink-0 transition-opacity duration-200 ${
+                              hoveredCommentId === commentItem.id
+                                ? 'opacity-100'
+                                : 'opacity-0'
+                            }`}
                           >
                             <Suspense fallback={null}>
                               {!fieldDisabled.comments && (
                                 <>
                                   <button
                                     onClick={() => {
-                                      setEditingCommentId(commentItem.id || null);
+                                      setEditingCommentId(
+                                        commentItem.id || null
+                                      );
                                       setEditingCommentText(commentItem.text);
                                       setEditingNewFiles([]);
                                       setEditingDeletedFileIds([]);
@@ -925,9 +983,7 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
             )}
 
             {/* End of List Indicator */}
-            {useInfiniteScroll && !hasNextPage && comments.length > 0 && (
-              <></>
-            )}
+            {useInfiniteScroll && !hasNextPage && comments.length > 0 && <></>}
           </div>
 
           {/* Add Comment Section */}
@@ -981,7 +1037,8 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                     disabled={fieldDisabled.comments || isAddingComment}
                   >
                     <p className='text-xs text-gray-600 font-medium flex items-center justify-center gap-2'>
-                      <PaperclipIcon className='w-3 h-3 text-gray-600' /> Click to upload attachments
+                      <PaperclipIcon className='w-3 h-3 text-gray-600' /> Click
+                      to upload attachments
                     </p>
                   </button>
 
@@ -995,7 +1052,10 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                         >
                           <div className='flex items-center gap-2 min-w-0'>
                             <PaperclipIcon className='w-3 h-3 text-gray-600 flex-shrink-0' />
-                            <span className='truncate break-all min-w-0' title={file.name}>
+                            <span
+                              className='truncate break-all min-w-0'
+                              title={file.name}
+                            >
                               {file.name}
                             </span>
                           </div>
@@ -1091,9 +1151,9 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
           )}
 
           {/* End of List Indicator for Activities */}
-          {useInfiniteScroll && !hasNextActivitiesPage && activities.length > 0 && (
-            <></>
-          )}
+          {useInfiniteScroll &&
+            !hasNextActivitiesPage &&
+            activities.length > 0 && <></>}
         </div>
       )}
     </div>

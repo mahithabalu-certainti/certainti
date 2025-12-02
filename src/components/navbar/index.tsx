@@ -33,7 +33,11 @@ import { AllPermissions } from '../../common-service';
 import { useAuthHook, useToast } from '../../hooks';
 import { RootState } from '../../store/store';
 import { setFiscalYear } from '../../store/slices/account-slice';
-import { checkPermission, fiscalYears, getFiltersFromStorage } from '../../common-utils';
+import {
+  checkPermission,
+  fiscalYears,
+  getFiltersFromStorage,
+} from '../../common-utils';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { CASE, PROFILE, PROJECT } from '../../routes';
 import { GlobalFiscalYearDropdown } from '../fiscal-dropdown';

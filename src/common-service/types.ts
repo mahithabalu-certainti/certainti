@@ -179,6 +179,7 @@ export enum AllMenus {
   MANAGE_ACCOUNT_ACCESS = 'manage_account_access',
   FINANCIAL_HIGHLIGHTS = 'financial_highlights',
   WORKBREAKDOWN = 'workbreakdown',
+  FALLBACK = 'fallback',
 }
 
 export enum AllModules {

@@ -149,7 +149,7 @@ const HistoryTable: React.FC<HistoryTableProps> = ({
   const isModalOpen = Boolean(columnAnchorEl);
   const modalId = isModalOpen
     ? 'interaction-response-history-visibility-popover'
-    : undefined;    
+    : undefined;
 
   return (
     <div>

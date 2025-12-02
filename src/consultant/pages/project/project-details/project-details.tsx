@@ -972,6 +972,7 @@ export const ProjectDetails = () => {
             isCollapsed={isCollapsed}
             onToggleCollapse={() => setIsCollapsed((prev) => !prev)}
             isLoading={isLoading}
+            maxHeight={292}
           />
         </div>
         <div

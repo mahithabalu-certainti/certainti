@@ -127,5 +127,10 @@ export interface CreateTemplateResponse extends CommonApiResponse {
   data: {
     checklist_rid?: string;
     message?: string;
+    checklist?: {
+      statusCode: number;
+      message: string;
+      data: any;
+    };
   };
 }

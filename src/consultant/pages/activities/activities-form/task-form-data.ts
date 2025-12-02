@@ -10,7 +10,6 @@ import {
 } from '../../../../common-utils';
 import { FormType, SelectOption } from '../../../types';
 
-
 const minYear = 1950;
 const currentYear = new Date().getFullYear();
 const fiscalYears = getFiscalYears(currentYear - minYear + 1);

@@ -6,6 +6,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
 import { MenuItem } from '../../consultant/types';
 import { Skeleton, Tooltip } from '@mui/material';
+import { TruncateWithTooltip } from '../truncate-with-tooltip';
 
 interface SideMenuPanelProps {
   menuItems: MenuItem[];
@@ -17,6 +18,7 @@ interface SideMenuPanelProps {
   onToggleCollapse?: () => void;
   isLoading?: boolean;
   enableScrollbar?: boolean;
+  maxHeight?: number;
 }
 
 const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
@@ -28,7 +30,7 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
   isCollapsed,
   onToggleCollapse,
   isLoading = false,
-  enableScrollbar = false,
+  maxHeight = 220,
 }) => {
   const [accountMenus, setAccountMenus] = useState<MenuItem[]>(menuItems);
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
@@ -268,13 +270,15 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
               hasSubmenus ? toggleExpanded(item.key) : handleSelect(item.key)
             }
             disabled={item.disabled}
-            className={`${isActive || hasActiveSubmenu ? 'bg-[#0BBFB726] !font-bold' : ''
-              } group w-full flex items-center text-[14px] font-semibold gap-2 text-[#2D3E4F]
+            className={`${
+              isActive || hasActiveSubmenu ? 'bg-[#0BBFB726] !font-bold' : ''
+            } group w-full flex items-center text-[14px] font-semibold gap-2 text-[#2D3E4F]
               text-left hover:bg-[#0BBFB726] ${item.disabled ? 'cursor-not-allowed' : 'cursor-pointer'}
               ${paddingLeft} py-1.5 pr-3 justify-start`}
             style={{
-              transition: `background-color 0.3s ease-in-out, padding-left ${isCollapsed ? '300ms' : '500ms'
-                } ease-in-out`,
+              transition: `background-color 0.3s ease-in-out, padding-left ${
+                isCollapsed ? '300ms' : '500ms'
+              } ease-in-out`,
             }}
           >
             <Tooltip
@@ -301,20 +305,24 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
                 opacity: isCollapsed ? 0 : 1,
                 maxWidth: isCollapsed ? 0 : '100%',
                 transform: isCollapsed ? 'translateX(-10px)' : 'translateX(0)',
-                transition: `opacity ${isCollapsed ? '200ms' : '400ms'
-                  } ease-in-out ${isCollapsed ? '0ms' : '100ms'}, transform ${isCollapsed ? '200ms' : '400ms'
-                  } ease-in-out ${isCollapsed ? '0ms' : '100ms'}, max-width ${isCollapsed ? '300ms' : '500ms'
-                  } ease-in-out`,
+                transition: `opacity ${
+                  isCollapsed ? '200ms' : '400ms'
+                } ease-in-out ${isCollapsed ? '0ms' : '100ms'}, transform ${
+                  isCollapsed ? '200ms' : '400ms'
+                } ease-in-out ${isCollapsed ? '0ms' : '100ms'}, max-width ${
+                  isCollapsed ? '300ms' : '500ms'
+                } ease-in-out`,
               }}
             >
-              {item.name}
+              <TruncateWithTooltip text={item.name} enableCopy={false} />
             </span>
             {!isCollapsed && (
               <AdminSubmenuActiveIcon
-                className={`w-[12px] h-[12px] flex-shrink-0 ${isActive
-                  ? 'opacity-100'
-                  : `opacity-0 ${!hasSubmenus ? 'group-hover:opacity-100' : ''}`
-                  }`}
+                className={`w-[12px] h-[12px] flex-shrink-0 ${
+                  isActive
+                    ? 'opacity-100'
+                    : `opacity-0 ${!hasSubmenus ? 'group-hover:opacity-100' : ''}`
+                }`}
                 style={{
                   transition: 'opacity 250ms ease-in-out',
                 }}
@@ -352,15 +360,18 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
                 <button
                   onClick={() => handleSelect(submenu.key, item.key)}
                   disabled={submenu.disabled}
-                  className={`${localActiveKey === submenu.key
-                    ? 'bg-[#0BBFB726] !font-bold'
-                    : ''
-                    } group w-full flex items-center text-[14px] font-semibold gap-2 text-[#2D3E4F]
-        text-left hover:bg-[#0BBFB726] ${submenu.disabled ? 'cursor-not-allowed' : 'cursor-pointer'
-                    } ${isCollapsed ? 'pl-[15px]' : 'pl-9'} py-1.5 pr-3 justify-start`}
+                  className={`${
+                    localActiveKey === submenu.key
+                      ? 'bg-[#0BBFB726] !font-bold'
+                      : ''
+                  } group w-full flex items-center text-[14px] font-semibold gap-2 text-[#2D3E4F]
+        text-left hover:bg-[#0BBFB726] ${
+          submenu.disabled ? 'cursor-not-allowed' : 'cursor-pointer'
+        } ${isCollapsed ? 'pl-[15px]' : 'pl-9'} py-1.5 pr-3 justify-start`}
                   style={{
-                    transition: `background-color 0.3s ease-in-out, padding-left ${isCollapsed ? '300ms' : '500ms'
-                      } ease-in-out`,
+                    transition: `background-color 0.3s ease-in-out, padding-left ${
+                      isCollapsed ? '300ms' : '500ms'
+                    } ease-in-out`,
                   }}
                 >
                   <Tooltip
@@ -390,20 +401,27 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
                       transform: isCollapsed
                         ? 'translateX(-10px)'
                         : 'translateX(0)',
-                      transition: `opacity ${isCollapsed ? '200ms' : '400ms'
-                        } ease-in-out ${isCollapsed ? '0ms' : '100ms'}, transform ${isCollapsed ? '200ms' : '400ms'
-                        } ease-in-out ${isCollapsed ? '0ms' : '100ms'}, max-width ${isCollapsed ? '300ms' : '500ms'
-                        } ease-in-out`,
+                      transition: `opacity ${
+                        isCollapsed ? '200ms' : '400ms'
+                      } ease-in-out ${isCollapsed ? '0ms' : '100ms'}, transform ${
+                        isCollapsed ? '200ms' : '400ms'
+                      } ease-in-out ${isCollapsed ? '0ms' : '100ms'}, max-width ${
+                        isCollapsed ? '300ms' : '500ms'
+                      } ease-in-out`,
                     }}
                   >
-                    {submenu.name}
+                    <TruncateWithTooltip
+                      text={submenu.name}
+                      enableCopy={false}
+                    />
                   </span>
                   {!isCollapsed && (
                     <AdminSubmenuActiveIcon
-                      className={`w-[12px] h-[12px] flex-shrink-0 ${localActiveKey === submenu.key
-                        ? 'opacity-100'
-                        : 'opacity-0 group-hover:opacity-100'
-                        }`}
+                      className={`w-[12px] h-[12px] flex-shrink-0 ${
+                        localActiveKey === submenu.key
+                          ? 'opacity-100'
+                          : 'opacity-0 group-hover:opacity-100'
+                      }`}
                       style={{
                         transition: 'opacity 250ms ease-in-out',
                       }}
@@ -419,104 +437,84 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
   };
 
   return (
-    <>
-      {enableScrollbar && (
-        <style>
-          {`
-            .side-menu-scrollbar::-webkit-scrollbar {
-              width: 2px;
-            }
-            .side-menu-scrollbar::-webkit-scrollbar-track {
-              background: transparent;
-            }
-            .side-menu-scrollbar::-webkit-scrollbar-thumb {
-              background: rgba(203, 214, 226, 0.2);
-              border-radius: 1px;
-            }
-            .side-menu-scrollbar::-webkit-scrollbar-thumb:hover {
-              background: rgba(203, 214, 226, 0.4);
-            }
-          `}
-        </style>
-      )}
+    <div
+      className='w-full h-full bg-white border-r border-[#CBD6E2] overflow-hidden'
+      style={{
+        transition: 'width 500ms cubic-bezier(0.4, 0, 0.2, 1)',
+        transitionDuration: isCollapsed ? '300ms' : '500ms',
+      }}
+    >
+      {/* Header */}
       <div
-        className='w-full h-full bg-white border-r border-[#CBD6E2] overflow-hidden'
-        style={{
-          transition: 'width 500ms cubic-bezier(0.4, 0, 0.2, 1)',
-          transitionDuration: isCollapsed ? '300ms' : '500ms',
-        }}
+        className={`flex items-center h-[30px] mb-1 ${
+          isCollapsed ? 'justify-center' : ''
+        } ${isCollapsed ? 'px-3 ml-2' : 'px-[18px]'}`}
       >
-        {/* Header */}
         <div
-          className={`flex items-center h-[30px] mb-1 ${isCollapsed ? 'justify-center' : ''
-            } ${isCollapsed ? 'px-3 ml-2' : 'px-[18px]'}`}
+          className={`flex items-center ${
+            !isCollapsed ? 'justify-between w-full' : 'gap-0'
+          }`}
         >
-          <div
-            className={`flex items-center ${!isCollapsed ? 'justify-between w-full' : 'gap-0'
-              }`}
-          >
-            <div className='flex items-center'>
-              <span
-                className='text-[15px] text-[#2D3E4F] font-bold whitespace-nowrap'
-                style={{
-                  opacity: isCollapsed ? 0 : 1,
-                  transform: isCollapsed ? 'translateX(-10px)' : 'translateX(0)',
-                  transition:
-                    'opacity 300ms ease-in-out, transform 300ms ease-in-out, max-width 400ms ease-in-out',
-                  transitionDelay: isCollapsed ? '0ms' : '100ms',
-                  maxWidth: isCollapsed ? 0 : '150px',
-                  overflow: 'hidden',
-                }}
-              >
-                {headerTitle}
-              </span>
-              <span
-                className='text-[15px] text-[#2D3E4F] font-bold whitespace-nowrap'
-                style={{
-                  marginLeft: isCollapsed ? '5px' : '0',
-                  opacity: isCollapsed ? 1 : 0,
-                  maxWidth: isCollapsed ? '150px' : 0,
-                  overflow: 'hidden',
-                }}
-              >
-                {getShortName(headerTitle)}
-              </span>
-            </div>
-            {showBackIcon && (
-              <div
-                className='w-[18px] h-[18px] cursor-pointer flex-shrink-0'
-                style={{
-                  transform: `rotate(${isCollapsed ? 180 : 0}deg)`,
-                  transition: 'transform 300ms ease-in-out',
-                }}
-                onClick={onToggleCollapse}
-              >
-                <React.Suspense fallback={null}>
-                  <BackIcon className='w-[18px] h-[18px]' />
-                </React.Suspense>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {isLoading ? (
-          renderSkeletonItem()
-        ) : (
-          <React.Suspense fallback={null}>
-            <ul
-              className={`overflow-y-auto ${enableScrollbar ? 'side-menu-scrollbar' : ''}`}
-              style={enableScrollbar ? {
-                maxHeight: 'calc(100vh - 100px)',
-                scrollbarWidth: 'thin',
-                scrollbarColor: 'rgba(203, 214, 226, 0.3) transparent',
-              } : {}}
+          <div className='flex items-center'>
+            <span
+              className='text-[15px] text-[#2D3E4F] font-bold whitespace-nowrap'
+              style={{
+                opacity: isCollapsed ? 0 : 1,
+                transform: isCollapsed ? 'translateX(-10px)' : 'translateX(0)',
+                transition:
+                  'opacity 300ms ease-in-out, transform 300ms ease-in-out, max-width 400ms ease-in-out',
+                transitionDelay: isCollapsed ? '0ms' : '100ms',
+                maxWidth: isCollapsed ? 0 : '150px',
+                overflow: 'hidden',
+              }}
             >
-              {accountMenus.map((item) => renderMenuItem(item))}
-            </ul>
-          </React.Suspense>
-        )}
+              {headerTitle}
+            </span>
+            <span
+              className='text-[15px] text-[#2D3E4F] font-bold whitespace-nowrap'
+              style={{
+                marginLeft: isCollapsed ? '5px' : '0',
+                opacity: isCollapsed ? 1 : 0,
+                maxWidth: isCollapsed ? '150px' : 0,
+                overflow: 'hidden',
+              }}
+            >
+              {getShortName(headerTitle)}
+            </span>
+          </div>
+          {showBackIcon && (
+            <div
+              className='w-[18px] h-[18px] cursor-pointer flex-shrink-0'
+              style={{
+                transform: `rotate(${isCollapsed ? 180 : 0}deg)`,
+                transition: 'transform 300ms ease-in-out',
+              }}
+              onClick={onToggleCollapse}
+            >
+              <React.Suspense fallback={null}>
+                <BackIcon className='w-[18px] h-[18px]' />
+              </React.Suspense>
+            </div>
+          )}
+        </div>
       </div>
-    </>
+
+      {isLoading ? (
+        renderSkeletonItem()
+      ) : (
+        <React.Suspense fallback={null}>
+          <ul
+            className='side-menu-scrollbar'
+            style={{
+              maxHeight: `calc(100vh - ${maxHeight + 25}px)`,
+              overflow: 'auto',
+            }}
+          >
+            {accountMenus.map((item) => renderMenuItem(item))}
+          </ul>
+        </React.Suspense>
+      )}
+    </div>
   );
 };
 

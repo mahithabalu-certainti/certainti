@@ -1,4 +1,8 @@
-import { costDisplay, formatDateToYYYYMMDDWithTime, valueDisplay } from '../../../../common-utils';
+import {
+  costDisplay,
+  formatDateToYYYYMMDDWithTime,
+  valueDisplay,
+} from '../../../../common-utils';
 import { ListTableColumn } from '../../../../components/table/types';
 import { Project } from '../../../../consultant/types/project';
 import { UserGroupList } from '../../../types';
@@ -400,7 +404,8 @@ export const getProjectColumns = (
     hide:
       !permissionMap?.['qre_final']?.read &&
       !permissionMap?.['qre_final']?.edit,
-    render: (row: Project) => (row.rd_percent_final ? row.rd_percent_final : '-'),
+    render: (row: Project) =>
+      row.rd_percent_final ? row.rd_percent_final : '-',
   },
   {
     id: 'qre_final',
