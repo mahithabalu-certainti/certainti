@@ -51,6 +51,7 @@ import { useToast } from '../../../../../hooks';
 import { checkPermission } from '../../../../../common-utils';
 import { reviewProjectFilterFields } from './review-projects/helper';
 import { AccessRestricted } from '../../../../../components/account-restricted';
+import { TabItem } from '../../../../../components/side-menu-panel/section-header-tab';
 interface casesProjectProps {
   activeKey?: string;
   fiscalYear: number;
@@ -132,7 +133,6 @@ const CasesProjects: React.FC<casesProjectProps> = ({
         }
       },
     });
-    onRefreshClick();
   };
 
   const handleRemoveProjects = () => {
@@ -222,13 +222,6 @@ const CasesProjects: React.FC<casesProjectProps> = ({
   // const handleCloseEmailModal = () => {
   //   setEmailModalOpen(false);
   // };
-  const tabs = [
-    { label: 'Assigned Projects', value: 'assign_projects' },
-    {
-      label: 'Review Projects',
-      value: 'review_projects',
-    },
-  ];
 
   const DetailsTabParam = searchParams.get('detailstab');
   const handleDetailsTabChange = (value: string) => {
@@ -593,6 +586,15 @@ const CasesProjects: React.FC<casesProjectProps> = ({
     permission,
     AllPermissions.PROJECTS_VIEW_EDIT
   );
+  const tabs = [
+    isProjectEnable && { label: 'Assigned Projects', value: 'assign_projects' },
+
+    isReviewProjectEnable && {
+      label: 'Review Projects',
+      value: 'review_projects',
+    },
+  ];
+
   if (!isProjectEnable && !isReviewProjectEnable) {
     return <AccessRestricted />;
   }
@@ -657,7 +659,7 @@ const CasesProjects: React.FC<casesProjectProps> = ({
       />
       {!isAssignProject && !projectDetailTab && (
         <SectionHeaderTab
-          tabs={tabs}
+          tabs={tabs.filter((tab): tab is TabItem => Boolean(tab))}
           onTabChange={handleTabChange}
           defaultValue={tabParam}
         />

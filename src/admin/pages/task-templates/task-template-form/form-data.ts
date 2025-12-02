@@ -191,6 +191,7 @@ export const TaskTemplateFormFieldsData = (
             placeholder: 'Choose Linked Type',
             required: false,
             onChange: true,
+            resetDependsFields: linkedType ? ['target_rid'] : [],
             disabled:
               isEditView &&
               !permissionMap?.['relationship_connector_rid']?.edit &&
@@ -205,6 +206,7 @@ export const TaskTemplateFormFieldsData = (
             options: taskTemplate || [],
             placeholder: 'Choose Linked Task Type ',
             required: linkedType,
+            onChange: true,
             disabled:
               isEditView &&
               !permissionMap?.['target_rid']?.edit &&
@@ -297,9 +299,11 @@ export const TaskTemplateFormFieldsData = (
     ],
     [
       isEditView,
+      linkedType,
       permissionMap,
       statusOptions,
       taskAssignRoleTypesTypesOptions,
+      taskCategoryTypesOptions,
       taskCheckListTypesTypesOptions,
       taskConnecterTypesOptions,
       taskMilestoneTypesOptions,
@@ -307,6 +311,7 @@ export const TaskTemplateFormFieldsData = (
       taskTemplate,
       taskTemplateTypesOptions,
       taskType,
+      taskWeightAgeTypesOptions,
     ]
   );
 };

@@ -224,10 +224,14 @@ const TaskTemplateForm: React.FC = () => {
       setTaskType(selectedIndustry?.label.toLowerCase() === TaskType.Action);
     }
     if (data.fieldName === 'relationship_connector_rid') {
-      setIsLinkedType(!!data.fieldValue);
+      if (data.fieldValue) {
+        setIsLinkedType(true);
+      } else {
+        setIsLinkedType(false);
+      }
     }
   };
-
+  console.log(isLinkedType, 'isLinkedType');
   const goBack = () => {
     window.history.back();
   };
@@ -256,18 +260,18 @@ const TaskTemplateForm: React.FC = () => {
   }, [taskViewEditFields]);
 
   useEffect(() => {
-    if (taskTemplateFormData?.task_type) {
+    if (taskTemplateData && isEditView) {
       const selectedType = taskTemplateTypesOptions.find(
         (option) =>
-          String(option.value) === String(taskTemplateFormData.task_type)
+          String(option.value) === String(taskTemplateData.task_type_rid)
       );
 
       setTaskType(selectedType?.label.toLowerCase() === TaskType.Action);
     }
-    if (taskTemplateFormData?.relationship_connector_rid) {
-      setIsLinkedType(!!taskTemplateFormData.relationship_connector_rid);
+    if (taskTemplateData?.workflow_connector?.relationship_connector_rid) {
+      setIsLinkedType(true);
     }
-  }, [taskTemplateFormData, taskTemplateTypesOptions]);
+  }, [taskTemplateData, isEditView]);
 
   const formConfig = TaskTemplateFormFieldsData(
     isEditView,
