@@ -74,7 +74,7 @@ export const STATUS_MESSAGE = {
   caseUpdateFailed: "Case update failed",
   caseCreationFailed: "Case creation failed",
   caseTeamCreationFailed: "Case team creation failed",
-  separateDb: "SEPARATE_DB",
+  separateDb: "separate_db",
   caseDetailsFetchedSuccess: "Case details fetched successfully",
   dataNotAvailable: "Data not available",
   projectsFetchedSuccess: "Project fetched successfully",
@@ -1162,9 +1162,13 @@ export const rawQueries = {
     accountRid: string,
     caseRid: string
   ) {
-    return `SELECT COUNT(cp.project_fiscal_rid) AS total_projects,
-    COALESCE(SUM(pf.total_cost_prj), 0.00) AS total_projects_cost, 
-    COALESCE(SUM(pf.qre_final), 0.00) AS total_projects_qre_cost 
+    return `SELECT 
+    CASE 
+        WHEN COUNT(cp.project_fiscal_rid) = 0 THEN NULL 
+        ELSE COUNT(cp.project_fiscal_rid) 
+    END AS total_projects,
+    SUM(pf.total_cost_prj) AS total_projects_cost,
+    SUM(pf.qre_final) AS total_projects_qre_cost
     FROM ${schemaName}.project_fiscal pf
     LEFT JOIN ${schemaName}.case_projects cp ON cp.project_fiscal_rid = pf.rid
     WHERE
