@@ -294,11 +294,10 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
                 source_rid: string;
                 relationship_connector_rid?: string;
                 target_rid?: string[];
+                is_new_changes?: boolean;
               };
             }
-          ).workflow_connector || {
-            source_rid: '',
-          },
+          ).workflow_connector || {},
           ...((
             taskData as Partial<TaskCard> & {
               weightage_rid?: string;

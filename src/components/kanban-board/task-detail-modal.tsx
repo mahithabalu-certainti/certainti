@@ -922,6 +922,13 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
         const originalRelationshipConnectorRid =
           originalTask?.workflow_connector?.[0]?.relationship_connector_rid || '';
 
+        const isLinkedTypeChanged =
+          linkedTypeRidValue !== originalRelationshipConnectorRid;
+        const isLinkTaskTypesChanged =
+          JSON.stringify([...linkTaskTypeRidsValue].sort()) !==
+          JSON.stringify([...originalTargetRids].sort());
+        const isWorkflowChanged = isLinkedTypeChanged || isLinkTaskTypesChanged;
+
         if (
           (linkedTypeRidValue &&
             (linkTaskTypeRidsValue.length > 0 || deleteTargetRids.length > 0)) ||
@@ -932,6 +939,11 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
             linkedTypeRidValue || originalRelationshipConnectorRid;
           workflowConnector.target_rid = linkTaskTypeRidsValue;
           workflowConnector.delete_target_rids = deleteTargetRids;
+        }
+        if (isWorkflowChanged) {
+          workflowConnector.is_new_changes = true;
+        } else if (Object.keys(workflowConnector).length > 0) {
+          workflowConnector.is_new_changes = false;
         }
 
         const updatePayload = {

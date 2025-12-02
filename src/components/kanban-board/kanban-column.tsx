@@ -68,13 +68,12 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
       if (onCreateTask) {
         const taskData: Partial<TaskCard> & {
           checklist_template_rid?: string;
-          workflow_connector?:
-          | {
+          workflow_connector?: {
             source_rid?: string;
             relationship_connector_rid?: string;
             target_rid?: string[];
-          }
-          | Record<string, never>;
+            is_new_changes?: boolean;
+          };
           weightage_rid?: string;
           task_category_rid?: string;
         } = {
@@ -102,6 +101,7 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
                 source_rid: '',
                 relationship_connector_rid: formData.linkedTypeRid,
                 target_rid: formData.linkTaskTypeRids,
+                is_new_changes: true,
               }
               : {},
           ...(formData.weightageRid && {
@@ -203,7 +203,7 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
         availableUsers={availableUsers}
         roleOptions={roleOptions}
         fieldVisibility={fieldVisibility}
-        fieldDisabled={fieldDisabled}
+        fieldDisabled={{ ...fieldDisabled, status: true }}
         accountId={accountId}
         caseId={caseId}
         caseStartDate={caseStartDate}
