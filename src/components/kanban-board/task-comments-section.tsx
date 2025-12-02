@@ -664,7 +664,7 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                                       }`}
                                   >
                                     <div className='flex items-center gap-2 overflow-hidden min-w-0'>
-                                      <PaperclipIcon className='w-3 h-3 text-gray-500 flex-shrink-0' />
+                                      <PaperclipIcon className='w-3 h-3 text-gray-600 flex-shrink-0' />
                                       <span
                                         className={`truncate ${isMarkedForDeletion
                                           ? 'line-through'
@@ -718,7 +718,7 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                             disabled={isUpdating}
                           >
                             <p className='text-xs text-gray-600 font-medium flex items-center justify-center gap-2'>
-                              <PaperclipIcon className='w-3 h-3 text-gray-500' /> Click to upload attachments
+                              <PaperclipIcon className='w-3 h-3 text-gray-600' /> Click to upload attachments
                             </p>
                           </button>
                         </div>
@@ -732,7 +732,7 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                                 className='text-xs text-blue-900 bg-blue-50 p-2 rounded flex items-center gap-2 justify-between min-w-0'
                               >
                                 <div className='flex items-center gap-2 min-w-0'>
-                                  <PaperclipIcon className='w-3 h-3 text-gray-500 flex-shrink-0' />
+                                  <PaperclipIcon className='w-3 h-3 text-gray-600 flex-shrink-0' />
                                   <span className='truncate break-all min-w-0' title={file.name}>
                                     {file.name}
                                   </span>
@@ -871,7 +871,7 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                                   className='bg-gray-50 p-2 rounded border border-gray-200'
                                 >
                                   <div className='flex items-center gap-2'>
-                                    <PaperclipIcon className='w-3 h-3 text-gray-400 flex-shrink-0' />
+                                    <PaperclipIcon className='w-3 h-3 text-gray-500 flex-shrink-0' />
                                     <div className='flex-1 min-w-0'>
                                       <a
                                         href={att.browseFile}
@@ -981,7 +981,7 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                     disabled={fieldDisabled.comments || isAddingComment}
                   >
                     <p className='text-xs text-gray-600 font-medium flex items-center justify-center gap-2'>
-                      <PaperclipIcon className='w-3 h-3 text-gray-500' /> Click to upload attachments
+                      <PaperclipIcon className='w-3 h-3 text-gray-600' /> Click to upload attachments
                     </p>
                   </button>
 
@@ -994,7 +994,7 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                           className='text-xs text-gray-700 bg-gray-100 p-2.5 rounded flex items-center gap-2 justify-between min-w-0'
                         >
                           <div className='flex items-center gap-2 min-w-0'>
-                            <PaperclipIcon className='w-3 h-3 text-gray-500 flex-shrink-0' />
+                            <PaperclipIcon className='w-3 h-3 text-gray-600 flex-shrink-0' />
                             <span className='truncate break-all min-w-0' title={file.name}>
                               {file.name}
                             </span>
