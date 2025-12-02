@@ -16,9 +16,26 @@ export const transformTaskTemplatePayload = (
       )
     : [];
 
+  // Get original target_rid values for comparison (edit mode only)
+  const originalTargetRid =
+    isEditView && originalData?.workflow_connector?.target_data?.[0]
+      ? originalData.workflow_connector.target_data[0]
+          .map((item: { target_rid: string }) => item.target_rid)
+          .filter((rid): rid is string => rid !== null && rid !== undefined)
+      : [];
+
+  // Find target_rid values that exist in original data but NOT in current form data
+  const deletedTargetRid =
+    isEditView && originalData
+      ? originalTargetRid.filter(
+          (rid: string) => !filteredTargetRid.includes(rid)
+        )
+      : [];
+
   // Check if both target_rid and relationship_connector_rid are empty
   const hasTargetRid = filteredTargetRid.length > 0;
   const hasRelationshipConnector = !!formData?.relationship_connector_rid;
+  const hasDeletions = deletedTargetRid.length > 0;
 
   // Create workflow_connector only if at least one field has data
   const workflowConnector =
@@ -27,6 +44,10 @@ export const transformTaskTemplatePayload = (
           source_rid: isEditView ? originalData?.rid : '',
           target_rid: filteredTargetRid,
           relationship_connector_rid: formData?.relationship_connector_rid,
+          // Add delete_rid only in edit mode when there are deletions
+          ...(isEditView && hasDeletions
+            ? { delete_target_rids: deletedTargetRid }
+            : {}),
         }
       : {};
 
