@@ -593,6 +593,15 @@ export const CaseDetails = () => {
       },
     });
   };
+
+  const isReviewProjectEnable = checkPermission(
+    permission,
+    AllPermissions.REVIEW_PROJECTS_VIEW_EDIT
+  );
+  const isProjectEnable = checkPermission(
+    permission,
+    AllPermissions.PROJECTS_VIEW_EDIT
+  );
   const sideMenuItems = useMemo<MenuItem[]>(() => {
     const allMenus = [
       {
@@ -626,7 +635,8 @@ export const CaseDetails = () => {
       {
         name: 'Case Projects',
         key: 'caseProjects',
-        id: AllMenus.FINANCIAL_HIGHLIGHTS,
+        id: AllMenus.FALLBACK,
+        hide: !isReviewProjectEnable && !isProjectEnable,
         disabled: false,
         icon: CasesIcon,
       },
