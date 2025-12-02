@@ -72,7 +72,6 @@ import {
 import { CaseTeam } from "../../models/caseTeamModel";
 import { Jurisdiction } from "../../models/jurisdiction";
 import { CaseHistorySubmission, setupCaseHistorySubmissionSequence } from "../../models/caseHistorySubmissionModel";
-import { log } from "console";
 import { CheckList, setupCheckListSequence } from "../../models/checkListModel";
 import { CheckListItem } from "../../models/checkListItemModel";
 import { CaseTask, setupCaseTaskSequence } from "../../models/caseTaskModel";
@@ -836,6 +835,7 @@ return !response;
                 country_rid: d.country_rid,
                 case_total_projects: d.case_total_projects,
                 case_total_qualified_projects: d.case_total_qualified_projects,
+                case_total_qualified_project_cost: d.case_total_qualified_project_cost,
                 case_total_project_cost: d.case_total_project_cost,
                 case_total_rd_cost: d.case_total_rd_cost,
                 case_total_qre_cost: d.case_total_qre_cost,
@@ -880,6 +880,15 @@ return !response;
             result = data.filter((d: any) =>
               d[field]?.toLowerCase().includes(val?.toLowerCase())
             );
+            break;
+          case ALPHANUMERIC_CONDITIONS.IN:
+            if (Array.isArray(val)) {
+              result = data.filter((d: any) =>
+                val.map((v: any) => v?.toLowerCase()).includes(d[field]?.toLowerCase())
+              );
+            } else {
+              result = data;
+            }
             break;
           case ALPHANUMERIC_CONDITIONS.isEmpty:
             result = data.filter((d: any) => d[field] == null);
@@ -1811,6 +1820,10 @@ return !response;
             );
           case ALPHANUMERIC_CONDITIONS.isEmpty:
             return data.filter((d: any) => d[field] == null);
+          case ALPHANUMERIC_CONDITIONS.IN:
+            return data.filter((d: any) =>
+              val .includes(d[field])
+            );
           default:
             return data;
         }
@@ -6129,7 +6142,6 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                 rid : id
               }, raw : true
             });
-            console.log("fetchCommentsAttachmentDetails ====> ", fetchCommentsAttachmentDetails)
             if(fetchCommentsAttachmentDetails) {
               await deleteFromAzureBlob(fetchCommentsAttachmentDetails.browse_file);
               const [deleteCommentsAttachRes] = await CommentsAttachments.update({is_file_deleted : true},{where : {rid : id}})

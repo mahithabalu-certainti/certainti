@@ -227,7 +227,7 @@ export class ActivityService {
     const dbInit = await this.caseModelService.getSequelize();
     const transaction = await dbInit.transaction();
     try {
-      taskRequest.created_by = userId;
+      taskRequest.modified_by = userId;
       const { accountNumber, parentAccountId } =
         await this.caseSchemaService.fetchValidAccountNumberById(
           taskRequest.account_rid!
@@ -358,7 +358,6 @@ export class ActivityService {
                 userProfileType?.email,
                 isCustomGlobal
               );
-               console.log("accessibleIds",accessibleIds.length === 0)
               if (accessibleIds.length === 0) {
                 return {
                   message: 'No accessible checklist found for the user.',
@@ -400,7 +399,6 @@ export class ActivityService {
         },
       };
     } catch (error) {
-      console.log(error);
       logMessage(`Error fetching activities task, ${error}`);
       return {
         statusCode: 500,
@@ -436,7 +434,7 @@ export class ActivityService {
         data: result,
       };
     } catch (err) {
-      logMessage(`Error adding comments to task, ${err}`);
+      logMessage(`Error updating activity email, ${err}`);
       return {
         statusCode: HttpStatus.FAILED,
         message: HttpStatus.FAILED_MESSAGE,
@@ -469,7 +467,7 @@ export class ActivityService {
         data: result,
       };
     } catch (err) {
-      logMessage(`Error adding comments to task, ${err}`);
+      logMessage(`Error updating activity email, ${err}`);
       return {
         statusCode: HttpStatus.FAILED,
         message: HttpStatus.FAILED_MESSAGE,
@@ -616,7 +614,6 @@ export class ActivityService {
         },
       };
     } catch (err) {
-      console.log(err)
       logMessage(`Error fetching call activity details, ${err}`);
       return {
         statusCode: HttpStatus.FAILED,

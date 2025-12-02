@@ -1603,7 +1603,7 @@ async function exportAllAssignedProjects(req: Request, res: Response) {
     if (result.statusCode == HttpStatus.SUCCESS) {
       const generateBase64Response = await generateExcelBase64(
         result.data,
-        "Cases"
+        "Case Assigned Projects"
       );
       handleSuccessResponse(res, generateBase64Response);
     } else {
@@ -2256,7 +2256,7 @@ async function exportAllChecklists(req: Request, res: Response): Promise<void> {
 
       const generateBase64Response = await generateExcelBase64(
         finalStructuredData,
-        "Cases"
+        "Checklists"
       );
       successLog(methodName);
       handleSuccessResponse(res, generateBase64Response);

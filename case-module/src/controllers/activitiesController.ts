@@ -798,7 +798,7 @@ async function exportAllActivity(req: Request, res: Response): Promise<void> {
 
       const generateBase64Response = await generateExcelBase64(
         finalStructuredData,
-        "Cases"
+        "Activities"
       );
       successLog(methodName);
       handleSuccessResponse(res, generateBase64Response);

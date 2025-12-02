@@ -2381,6 +2381,7 @@ export const rawQueries = {
         checklist_template_rid character varying(50) NOT NULL,
         checklist_name character varying(255) NOT NULL,
         checklist_description character varying(2000),
+        case_rid character varying(50),
         assigned_to character varying(50),
         status_rid character varying(50),
         CONSTRAINT checklists_rid_unique UNIQUE (rid)
@@ -3134,6 +3135,30 @@ export const rawQueries = {
       CREATE INDEX IF NOT EXISTS "${schemaName}_notes_${field}_idx"
       ON "${schemaName}"."notes"("${field}");
     `);
+  },
+   getCreateAccountTimelineSequenceQuery(schemaName: string): string {
+    return `
+      CREATE SEQUENCE IF NOT EXISTS "${schemaName}".account_timeline_seq START 1;
+    `;
+  },
+  getCreateAccountTimelineTableQuery(schemaName: string): string {
+    return `
+      CREATE TABLE IF NOT EXISTS "${schemaName}".account_timeline (
+        rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+        r_number VARCHAR(20) UNIQUE DEFAULT ('ACT-' || LPAD(nextval('"${schemaName}".account_timeline_seq')::TEXT, 10, '0')),
+        created_by VARCHAR(50) NOT NULL,
+        modified_by VARCHAR(50),
+        document_name VARCHAR(255) NULL,
+        title VARCHAR(64) NOT NULL,
+        attach_to VARCHAR(50) NOT NULL,
+        attachment_level VARCHAR(50) NOT NULL,
+        event_type VARCHAR(50) NOT NULL,
+        event_status VARCHAR(50) NOT NULL,
+        event_name VARCHAR(255),
+        event_datetime TIMESTAMPTZ NOT NULL,
+        descriptions VARCHAR(2000)
+      );
+    `;
   },
   getCreateNotesTimelineSequenceQuery(schemaName: string): string {
     return `
