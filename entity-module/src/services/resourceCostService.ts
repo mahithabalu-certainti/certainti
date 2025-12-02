@@ -1517,7 +1517,7 @@ class ResourceCostService {
         }
       );
       let dynamicResKey : string = ``
-      if(resourceCostStatus == 'Anomaly') dynamicResKey = "Anomaly"
+      if(type == 'Anomaly') dynamicResKey = "Anomaly"
       else dynamicResKey = "Duplicate"
 
     return {
