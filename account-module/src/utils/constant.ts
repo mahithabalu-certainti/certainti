@@ -3088,16 +3088,16 @@ export const rawQueries = {
     return `
       CREATE TABLE IF NOT EXISTS "${schemaName}".jurisdictions
       (
-        rid character varying(50) COLLATE  NOT NULL DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
-        created_by character varying(50) COLLATE  NOT NULL,
-        modified_by character varying(50) COLLATE ,
+        rid character varying(50) NOT NULL DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+        created_by character varying(50) NOT NULL,
+        modified_by character varying(50),
         created_datetime timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
         modified_datetime timestamp with time zone,
-        entity_rid character varying(50) COLLATE  NOT NULL,
+        entity_rid character varying(50) NOT NULL,
         is_federal_level boolean NOT NULL DEFAULT false,
         is_state_level boolean NOT NULL DEFAULT false,
-        states text[] COLLATE ,
-        level character varying(50) COLLATE  NOT NULL,
+        states text[],
+        level character varying(50) NOT NULL,
         CONSTRAINT jurisdictions_pkey PRIMARY KEY (rid)
       )
     `;
@@ -3109,7 +3109,7 @@ export const rawQueries = {
   
     return fieldsToIndex.map(field => `
       CREATE INDEX IF NOT EXISTS "idx_jurisdictions_${field}"
-      ON "${schemaName}"."notes"("${field}");
+      ON "${schemaName}"."jurisdictions"("${field}");
     `);
   },
   getCreateNotesIndexes(schemaName: string): string[] {
