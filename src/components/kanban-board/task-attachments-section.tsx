@@ -1,6 +1,5 @@
 import React from 'react';
 import { Task } from './types';
-
 import { PaperclipIcon } from '../../assets';
 
 interface TaskAttachment {
