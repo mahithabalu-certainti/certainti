@@ -384,14 +384,14 @@ export const adminCheckListMappings = [
     dataField: "created_datetime",
   },
   {
-    permissionField: "updated_by",
+    permissionField: "modified_by",
     exportField: "Updated By",
-    dataField: "updated_by",
+    dataField: "modified_by",
   },
   {
-    permissionField: "updated_datetime",
+    permissionField: "modified_datetime",
     exportField: "Updated On",
-    dataField: "updated_datetime",
+    dataField: "modified_datetime",
   },
   {
     permissionField: "status_rid",

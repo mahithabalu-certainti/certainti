@@ -55,6 +55,7 @@ import {
   fetchCaseDetails,
   fetchCasesHeadersDatas,
   fetchCaseSpecificTaskQuery,
+  fetchChecklistAttachToDetails,
   fetchMilestoneTaskTemplate,
   fetchProjectsForCases,
   listAllCasesSummaryQuery,
@@ -3572,7 +3573,7 @@ return !response;
     }
     const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, "")}`;
     const [checklistDetails] : any[] = await this.orgDbSequelize.query(fetchCaseDetails(schemaName,checklistId),{ type: 'SELECT' });
-    
+    const [attach_toDetails] : any[] = await this.orgDbSequelize.query(fetchChecklistAttachToDetails(schemaName,checklistDetails.attach_to,checklistDetails.attachment_level,checklistId),{ type: 'SELECT' });
     if(!checklistDetails){
       throw new Error("Checklist not found");
     }
@@ -3684,7 +3685,7 @@ return !response;
     const response: any = {
       attach_to: checklistDetails?.attach_to ?? "",
       attachment_level: checklistDetails?.attachment_level ?? "",
-      attached_to: attached_to ?? "",
+      attached_to: attach_toDetails?.name ?? "",
       checklist_rid: checklistDetails?.rid,
       checklist_name: checklistDetails?.checklist_name ?? "",
       checklist_description: checklistDetails?.checklist_description ?? "",

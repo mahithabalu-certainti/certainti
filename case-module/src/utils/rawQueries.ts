@@ -995,91 +995,40 @@ return query;
     c.rid, c.checklist_description,
     c.created_by, c.modified_by, c.account_rid, 
     c.created_datetime, c.modified_datetime,
-    c.checklist_name, c.fiscal_year, e.name AS attached_to, 
+    c.checklist_name, c.fiscal_year,
     c.attachment_level, c.r_number, c.attach_to, c.status_rid
     FROM
     ${schemaName}.checklists c
-    LEFT JOIN LATERAL (
-    SELECT ad.account_rid, ad.account_name AS name 
-    FROM ${schemaName}.account_details ad 
-    WHERE
-    LOWER(c.attachment_level) = 'account'
-    AND
-    ad.account_rid = c.attach_to
-
-    UNION ALL
-
-    SELECT pf.rid, pf.project_code AS name 
-    FROM
-    ${schemaName}.project_fiscal pf
-    WHERE
-    LOWER(c.attachment_level) = 'project'
-    AND
-    pf.rid = c.attach_to
-
-    UNION ALL
-
-    SELECT cd.rid, cd.case_name AS name 
-    FROM
-    ${schemaName}.cases cd
-    WHERE
-    LOWER(c.attachment_level) = 'case'
-    AND
-    cd.rid = c.attach_to
-
-    UNION ALL
-
-    SELECT r.rid, r.resource_code AS name
-    FROM
-    ${schemaName}.resources r
-    WHERE
-    LOWER(c.attachment_level) = 'resource'
-    AND
-    r.rid = c.attach_to
-    
-    UNION ALL
-
-    SELECT rc.rid, rc.r_number AS name
-    FROM
-    ${schemaName}.resource_cost rc
-    WHERE
-    LOWER(c.attachment_level) = 'resource_cost'
-    AND
-    rc.rid = c.attach_to
-
-    UNION ALL
-
-    SELECT rs.rid, rs.r_number AS name
-    FROM
-    ${schemaName}.resource_skill rs
-    WHERE
-    LOWER(c.attachment_level) = 'resource_skill'
-    AND
-    rs.rid = c.attach_to
-    UNION ALL
-
-    SELECT pt.rid, pt.r_number AS name
-    FROM
-    ${schemaName}.project_task pt
-    WHERE
-    LOWER(c.attachment_level) = 'project_task'
-    AND
-    pt.rid = c.attach_to
-
-    UNION ALL
-
-    SELECT pr.rid, pr.r_number AS name
-    FROM
-    ${schemaName}.project_resource pr
-    WHERE
-    LOWER(c.attachment_level) = 'project_resource'
-    AND
-    pr.rid = c.attach_to
-    ) e ON true
     WHERE
     c.rid = '${rid}'
     `
   }
+  /**
+ * Returns the query to fetch attach_to details based on attachment level.
+ */
+export function fetchChecklistAttachToDetails(schemaName: string, attachTo: string, attachmentLevel: string, checklistId: string): string {
+  switch (attachmentLevel.toLowerCase()) {
+    case 'account':
+      return `SELECT ad.account_rid, ad.account_name AS name FROM ${schemaName}.account_details ad WHERE ad.account_rid = '${attachTo}'`;
+    case 'project':
+      return `SELECT pf.rid, pf.project_code AS name  AS name FROM ${schemaName}.project_fiscal pf WHERE pf.rid = '${attachTo}'`;
+    case 'case':
+      return `SELECT cd.rid, cd.case_name AS name  AS name FROM ${schemaName}.cases cd WHERE cd.rid = '${attachTo}'`;
+    case 'resource':
+      return `SELECT r.rid, r.resource_code AS name FROM ${schemaName}.resources r WHERE r.rid = '${attachTo}'`;
+    case 'resource_cost':
+      return `SELECT rc.rid, rc.r_number AS name FROM ${schemaName}.resource_cost rc WHERE rc.rid = '${attachTo}'`;
+    case 'resource_skill':
+      return `SELECT rs.rid, rs.r_number AS name FROM ${schemaName}.resource_skill rs WHERE rs.rid = '${attachTo}'`;
+    case 'project_task':
+      return `SELECT pt.rid, pt.r_number AS name FROM ${schemaName}.project_task pt WHERE pt.rid = '${attachTo}'`;
+    case 'project_resource':
+      return `SELECT pr.rid, pr.r_number AS name FROM ${schemaName}.project_resource pr WHERE pr.rid = '${attachTo}'`;
+    default:
+      return `SELECT NULL AS name`;
+  }
+}
+  
 
   export const fetchCaseSpecificTaskQuery = (page : number, limit : number, search : string, sort : string, sortBy : string, filter : FilterType, doSorting : boolean, caseRid : string, accountRid : string, schemaName : string, isExport : boolean, statusId : string) => {
     let searchValue : string = ``
