@@ -33,7 +33,7 @@ import { useSearchParams } from 'react-router-dom';
 import { TableSkeleton } from '../../../../../components/table';
 import { RootState } from '../../../../../store/store';
 import { useSelector } from 'react-redux';
-import { ActivityMenuItem } from '../../../../types';
+import { ActivityMenuItem, CaseDetails } from '../../../../types';
 import {
   useGetHistoricalSubmission,
   useUpdateHistorySubmission,
@@ -45,6 +45,12 @@ import {
   HistoryFormErrors,
   historySummary,
 } from '../../../../types/history-submission';
+import { useFetchState } from '../../../../services/account';
+import {
+  COMMON_MENU_PROPS,
+  getSelectStyles,
+} from '../../../activities/activities-form/helper';
+import { checkPermission } from '../../../../../common-utils/common-utils';
 
 const ConfigTabs: ResourceTabs[] = [
   {
@@ -56,6 +62,7 @@ const ConfigTabs: ResourceTabs[] = [
 
 interface CaseTeamProps {
   activityMenuItems: ActivityMenuItem[];
+  caseDetails?: CaseDetails;
 }
 
 // Generate years from 1950 to current year
@@ -89,11 +96,15 @@ const removeCommas = (value: string): string => {
   return value.replace(/,/g, '');
 };
 
-const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
+const HistorySubmission: React.FC<CaseTeamProps> = ({
+  activityMenuItems,
+  caseDetails,
+}) => {
   const [searchParams] = useSearchParams();
   const { successToast, errorToast } = useToast();
   const [formData, setFormData] = useState<HistoryFormData>({
     historicalSubmissions: [],
+    region: '', // Region selection - empty initially for country-based data
   });
   const [errors, setErrors] = useState<HistoryFormErrors>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -102,10 +113,30 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
     historySummary[]
   >([]);
   const [isFormChanged, setIsFormChanged] = useState(false);
+  const [selectedRegion, setSelectedRegion] = useState<string>(''); // Track selected region
   const cellRefs = useRef<Record<string, HTMLTableCellElement | null>>({});
   const [cellWidths, setCellWidths] = useState<Record<string, number>>({});
 
   const { permission } = useSelector((state: RootState) => state.permission);
+
+  const caseCountryDetails = {
+    country_name: caseDetails?.country_name || '',
+    country_code: caseDetails?.country_code || '',
+    country_id: caseDetails?.country_rid || '',
+  };
+
+  const regionsOptions = useFetchState(
+    caseDetails?.country_rid || caseCountryDetails?.country_id || ''
+  );
+
+  const regionListOptions = useMemo(
+    () =>
+      regionsOptions.data?.data?.states.map((region) => ({
+        label: region?.state_name,
+        value: region.rid,
+      })) || [],
+    [regionsOptions.data?.data?.states]
+  );
 
   // Permission
   const casesTeamEditFields = useMemo(
@@ -133,30 +164,23 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
         ?.fields?.some((field) => field.edit),
     [permission]
   );
-  const isHistoricalSubmissionCreate = useMemo(
-    () =>
-      permission
-        .find(
-          (item) => item.name === AllPermissions.HISTORICAL_SUBMISSION_CREATE
-        )
-        ?.fields?.some((field) => field.edit),
-    [permission]
+
+  const isHistoricalSubmissionCreate = checkPermission(
+    permission,
+    AllPermissions.HISTORICAL_SUBMISSION_CREATE
   );
-  const isHistoricalSubmissionDelete = useMemo(
-    () =>
-      permission
-        .find(
-          (item) => item.name === AllPermissions.HISTORICAL_SUBMISSION_DELETE
-        )
-        ?.fields?.some((field) => field.edit),
-    [permission]
+  const isHistoricalSubmissionDelete = checkPermission(
+    permission,
+    AllPermissions.HISTORICAL_SUBMISSION_DELETE
   );
 
+  // Check if form is changed
   useEffect(() => {
     if (formData.historicalSubmissions.length !== originalSubmissions.length) {
       setIsFormChanged(true);
       return;
     }
+
     for (let i = 0; i < formData.historicalSubmissions.length; i++) {
       const a = formData.historicalSubmissions[i];
       const b = originalSubmissions[i];
@@ -165,61 +189,128 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
         a.total_project_cost !== b.total_project_cost ||
         a.total_qre !== b.total_qre ||
         a.total_rd_credits !== b.total_rd_credits ||
-        a.annual_gross_receipts !== b.annual_gross_receipts
+        a.annual_gross_receipts !== b.annual_gross_receipts ||
+        a.total_nonlabor_cost !== b.total_nonlabor_cost ||
+        a.total_subcon_cost !== b.total_subcon_cost ||
+        a.total_fte_cost !== b.total_fte_cost
       ) {
         setIsFormChanged(true);
         return;
       }
     }
     setIsFormChanged(false);
-  }, [formData.historicalSubmissions, originalSubmissions]);
+  }, [formData, originalSubmissions]);
 
   const accountId = searchParams.get('accountID') || '';
 
+  // Fetch historical data based on account ID and selected region
   const {
     data,
-    isLoading: isCaseTeamLoading,
+    isLoading: isDataLoading,
+    isPending: isDataPending,
     refetch,
-  } = useGetHistoricalSubmission(accountId);
+  } = useGetHistoricalSubmission(
+    accountId,
+    caseDetails?.country_rid || '',
+    selectedRegion
+  );
 
   const updateHistorySubmissionMutation = useUpdateHistorySubmission();
-  const formLoading = isCaseTeamLoading;
+  const formLoading = isDataLoading;
   const yearOptions = generateYearOptions();
 
-  // Updated form structure for historical submission with correct field mapping
+  // Handle region selection change
+  const handleRegionChange = (value: string) => {
+    setSelectedRegion(value);
+    setFormData((prev) => ({
+      ...prev,
+      region: value,
+    }));
+
+    // Clear region error when user selects a region
+    setErrors((prev) => ({
+      ...prev,
+      region: '',
+    }));
+
+    // Reset form data when region changes
+    setFormData((prev) => ({
+      ...prev,
+      historicalSubmissions: [],
+    }));
+    setOriginalSubmissions([]);
+    setIsDataLoaded(false);
+  };
+
+  // Updated form structure for historical submission with new order
   const historicalFields = [
     {
       key: 'fiscal_year',
       label: 'Fiscal Year',
       type: 'dropdown',
       required: true,
+      width: '180px',
+      sticky: true,
+      sx: {
+        position: 'sticky' as const,
+        left: 0,
+        background: '#fff',
+        borderRight: '1px solid #CBD6E2',
+        borderBottom: '1px solid #CBD6E2 !important',
+        zIndex: 10,
+      },
+    },
+    {
+      key: 'total_fte_cost',
+      label: 'Total FTE Cost',
+      type: 'text',
+      required: true,
+      width: '180px',
+    },
+    {
+      key: 'total_subcon_cost',
+      label: 'Total Subcon Cost',
+      type: 'text',
+      required: true,
+      width: '180px',
+    },
+    {
+      key: 'total_nonlabor_cost',
+      label: 'Total Nonlabor Cost',
+      type: 'text',
+      required: true,
+      width: '180px',
     },
     {
       key: 'total_project_cost',
       label: 'Total Project Cost',
       type: 'text',
       required: true,
+      width: '180px',
     },
     {
       key: 'total_qre',
       label: 'Total QRE',
       type: 'text',
       required: true,
+      width: '180px',
     },
     {
       key: 'total_rd_credits',
       label: 'Total RD Credits',
       type: 'text',
       required: true,
+      width: '180px',
     },
     {
       key: 'annual_gross_receipts',
       label: 'Annual Gross Receipts',
       type: 'text',
       required: false,
+      width: '200px',
     },
   ];
-  console.log('Historical Fields:', data);
+
   useEffect(() => {
     // Process API data when it's available
     if (data && !formLoading) {
@@ -231,14 +322,36 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
           ...item,
           user_id: item.rid || `MEM_${item.fiscal_year}`, // Temporary ID for form management
           fiscal_year: item.fiscal_year?.toString() || '', // Convert to string for form
+          // Map the new fields from API response
+          total_nonlabor_cost: item.total_nonlabor_cost || '',
+          total_subcon_cost: item.total_subcon_cost || '',
+          total_fte_cost: item.total_fte_cost || '',
+          // Map other fields that might have different names in API
+          total_project: item.total_project || 0,
+          total_qualified_project: item.total_qualified_project || 0,
+          total_project_cost: item.total_project_cost || '',
+          total_qualified_project_cost: item.total_qualified_project_cost || '',
+          total_qre: item.total_qre || '',
+          total_rd_credits: item.total_rd_credits || '',
+          annual_gross_receipts: item.annual_gross_receipts || '',
+          currency_symbol: item.currency_symbol || '',
         }));
+
+        const regionFromData = selectedRegion;
 
         setFormData({
           historicalSubmissions: mappedSubmissions.map((m) => ({
             ...m,
             fiscal_year: Number(m.fiscal_year),
           })),
+          region: regionFromData, // Set the selected region
         });
+
+        // Also update selectedRegion if not already set
+        if (regionFromData && !selectedRegion) {
+          setSelectedRegion(regionFromData);
+        }
+
         setOriginalSubmissions(apiData);
       } else if (apiData.length === 0) {
         // Initialize with empty data if no API data
@@ -261,10 +374,19 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
             total_qre: '',
             total_rd_credits: '',
             annual_gross_receipts: '',
+            total_nonlabor_cost: '', // Initialize new fields
+            total_subcon_cost: '',
+            total_fte_cost: '',
+            // Add fields from API response
+            country_rid: null,
+            state_rid: null,
+            currency_rid: '',
+            currency_symbol: '',
           },
         ];
         setFormData({
           historicalSubmissions: initialSubmissions,
+          region: selectedRegion, // Set the selected region
         });
         setOriginalSubmissions([]);
       }
@@ -290,15 +412,24 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
           total_qre: '',
           total_rd_credits: '',
           annual_gross_receipts: '',
+          total_nonlabor_cost: '', // Initialize new fields
+          total_subcon_cost: '',
+          total_fte_cost: '',
+          // Add fields from API response
+          country_rid: null,
+          state_rid: null,
+          currency_rid: '',
+          currency_symbol: '',
         },
       ];
       setFormData({
         historicalSubmissions: initialSubmissions,
+        region: selectedRegion, // Set the selected region
       });
       setOriginalSubmissions([]);
       setIsDataLoaded(true);
     }
-  }, [data, isDataLoaded, formLoading, accountId]);
+  }, [data, isDataLoaded, formLoading, accountId, selectedRegion]);
 
   useLayoutEffect(() => {
     const calculateCellWidths = () => {
@@ -351,6 +482,14 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
         total_qre: '',
         total_rd_credits: '',
         annual_gross_receipts: '',
+        total_nonlabor_cost: '', // Initialize new fields
+        total_subcon_cost: '',
+        total_fte_cost: '',
+        // Add fields from API response
+        country_rid: null,
+        state_rid: selectedRegion || null,
+        currency_rid: '',
+        currency_symbol: '',
       };
 
       return {
@@ -370,11 +509,27 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
         historicalSubmissions: updatedSubmissions,
       };
     });
+
+    // Clear errors for the removed row
+    setErrors((prev) => {
+      const newSubmissionErrors = [...(prev.historicalSubmissions || [])];
+      newSubmissionErrors.splice(index, 1);
+
+      return {
+        ...prev,
+        historicalSubmissions: newSubmissionErrors,
+      };
+    });
   }
 
   function handleSubmissionChange(
     index: number,
-    field: keyof historySummary | 'user_id',
+    field:
+      | keyof historySummary
+      | 'user_id'
+      | 'total_nonlabor_cost'
+      | 'total_subcon_cost'
+      | 'total_fte_cost',
     value: string | number
   ) {
     setFormData((prev) => {
@@ -413,6 +568,9 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
     const submissionErrors: HistoryErrors[] = [];
     let isValid = true;
 
+    // Validate region is NOT required (can be empty for country-based data)
+    // Region is optional - can be empty for country-based submissions
+
     // Regex: 1–16 digits, optional . with up to 2 decimal places
     const amountRegex = /^\d{1,16}(\.\d{1,2})?$/;
 
@@ -425,11 +583,49 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
         isValid = false;
       }
 
+      // Total FTE Cost validation
+      if (!submission.total_fte_cost?.trim()) {
+        submissionError.total_fte_cost = 'Total FTE Cost is required';
+        isValid = false;
+      } else if (
+        !amountRegex.test(removeCommas(submission.total_fte_cost || ''))
+      ) {
+        submissionError.total_fte_cost =
+          'Total FTE Cost must be 1–16 digits and up to 2 decimals';
+        isValid = false;
+      }
+
+      // Total Subcon Cost validation
+      if (!submission.total_subcon_cost?.trim()) {
+        submissionError.total_subcon_cost = 'Total Subcon Cost is required';
+        isValid = false;
+      } else if (
+        !amountRegex.test(removeCommas(submission.total_subcon_cost || ''))
+      ) {
+        submissionError.total_subcon_cost =
+          'Total Subcon Cost must be 1–16 digits and up to 2 decimals';
+        isValid = false;
+      }
+
+      // Total Nonlabor Cost validation
+      if (!submission.total_nonlabor_cost?.trim()) {
+        submissionError.total_nonlabor_cost = 'Total Nonlabor Cost is required';
+        isValid = false;
+      } else if (
+        !amountRegex.test(removeCommas(submission.total_nonlabor_cost || ''))
+      ) {
+        submissionError.total_nonlabor_cost =
+          'Total Nonlabor Cost must be 1–16 digits and up to 2 decimals';
+        isValid = false;
+      }
+
       // Total Project Cost validation
       if (!submission.total_project_cost?.trim()) {
         submissionError.total_project_cost = 'Total Project Cost is required';
         isValid = false;
-      } else if (!amountRegex.test(removeCommas(submission.total_project_cost))) {
+      } else if (
+        !amountRegex.test(removeCommas(submission.total_project_cost))
+      ) {
         submissionError.total_project_cost =
           'Total Project Cost must be 1–16 digits and up to 2 decimals';
         isValid = false;
@@ -493,14 +689,19 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
     // Check if there are any changes
     const hasChanges =
       currentSubmission.fiscal_year !==
-      originalSubmission.fiscal_year?.toString() ||
+        originalSubmission.fiscal_year?.toString() ||
+      currentSubmission.total_fte_cost !== originalSubmission.total_fte_cost ||
+      currentSubmission.total_subcon_cost !==
+        originalSubmission.total_subcon_cost ||
+      currentSubmission.total_nonlabor_cost !==
+        originalSubmission.total_nonlabor_cost ||
       currentSubmission.total_project_cost !==
-      originalSubmission.total_project_cost ||
+        originalSubmission.total_project_cost ||
       currentSubmission.total_qre !== originalSubmission.total_qre ||
       currentSubmission.total_rd_credits !==
-      originalSubmission.total_rd_credits ||
+        originalSubmission.total_rd_credits ||
       currentSubmission.annual_gross_receipts !==
-      originalSubmission.annual_gross_receipts;
+        originalSubmission.annual_gross_receipts;
 
     return hasChanges ? 'edit' : 'edit'; // Default to edit if no changes but exists
   }
@@ -533,14 +734,27 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
         fiscal_year: parseInt(submission.fiscal_year.toString()) || 0,
         total_project: submission.total_project || 0,
         total_qualified_project: submission.total_qualified_project || 0,
-        total_project_cost: parseFloat(removeCommas(submission.total_project_cost)) || 0,
+        total_project_cost:
+          parseFloat(removeCommas(submission.total_project_cost)) || 0,
         total_qualified_project_cost:
-          parseFloat(removeCommas(submission.total_qualified_project_cost || '0')) || 0,
+          parseFloat(
+            removeCommas(submission.total_qualified_project_cost || '0')
+          ) || 0,
+        total_nonlabor_cost:
+          parseFloat(removeCommas(submission.total_nonlabor_cost || '0')) || 0,
+        total_subcon_cost:
+          parseFloat(removeCommas(submission.total_subcon_cost || '0')) || 0,
+        total_fte_cost:
+          parseFloat(removeCommas(submission.total_fte_cost || '0')) || 0,
         total_qre: parseFloat(removeCommas(submission.total_qre)) || 0,
-        total_rd_credits: parseFloat(removeCommas(submission.total_rd_credits)) || 0,
+        total_rd_credits:
+          parseFloat(removeCommas(submission.total_rd_credits)) || 0,
         annual_gross_receipts:
-          parseFloat(removeCommas(submission.annual_gross_receipts || '0')) || 0,
+          parseFloat(removeCommas(submission.annual_gross_receipts || '0')) ||
+          0,
         action_type: actionType,
+        country_rid: caseCountryDetails.country_id, // Always include country_rid
+        state_rid: selectedRegion || '', // Include region_rid if selected, otherwise empty
       };
 
       // Add history_submission_rid for edit and delete actions
@@ -567,11 +781,20 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
           total_qualified_project_cost: parseFloat(
             originalSubmission.total_qualified_project_cost
           ),
+          total_nonlabor_cost: parseFloat(
+            originalSubmission.total_nonlabor_cost || '0'
+          ),
+          total_subcon_cost: parseFloat(
+            originalSubmission.total_subcon_cost || '0'
+          ),
+          total_fte_cost: parseFloat(originalSubmission.total_fte_cost || '0'),
           total_qre: parseFloat(originalSubmission.total_qre),
           total_rd_credits: parseFloat(originalSubmission.total_rd_credits),
           annual_gross_receipts: parseFloat(
             originalSubmission.annual_gross_receipts
           ),
+          country_rid: caseCountryDetails.country_id,
+          state_rid: selectedRegion || '',
           action_type: 'delete',
         });
       }
@@ -581,15 +804,37 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
 
     // Call the mutation
     updateHistorySubmissionMutation.mutate(payload, {
-      onSuccess: () => {
+      onSuccess: (response) => {
         setIsLoading(false);
-        successToast('Historical submission saved successfully');
-        refetch();
-        setIsDataLoaded(false);
-        refetch().then(() => {
-          // After refetch completes, ensure data gets loaded
-          setIsDataLoaded(true); // This will trigger the useEffect to process new data
-        });
+
+        // Check if there are any errors in the data array
+        const hasErrors =
+          response.data &&
+          response.data.length > 0 &&
+          response.data.some((item) => item.error);
+
+        if (hasErrors) {
+          // Extract error messages from the data array
+          const errorMessages = response.data
+            .filter((item) => item.error)
+            .map((item) => `Fiscal Year ${item.fiscal_year}: ${item.error}`)
+            .join('\n');
+
+          errorToast(`Failed to save historical submission:\n${errorMessages}`);
+
+          // Still refetch data even if there were partial errors
+          setIsDataLoaded(false);
+          refetch().then(() => {
+            setIsDataLoaded(true);
+          });
+        } else {
+          // No errors in the data array - complete success
+          successToast('Historical submission saved successfully');
+          setIsDataLoaded(false);
+          refetch().then(() => {
+            setIsDataLoaded(true);
+          });
+        }
       },
       onError: (error) => {
         setIsLoading(false);
@@ -622,12 +867,12 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
         showFilter={true}
         contextKey={`case`}
         appliedFilters={{}}
-        setAppliedFilters={() => { }}
+        setAppliedFilters={() => {}}
         setCurrentPage={() => 0}
-        handleFilter={() => { }}
-        handleSorting={() => { }}
+        handleFilter={() => {}}
+        handleSorting={() => {}}
         sortFilterCount={0}
-        setSortFilterCount={() => { }}
+        setSortFilterCount={() => {}}
         showRefresh={false}
         showAddActivity={true}
         activityMenuItems={activityMenuItems}
@@ -641,14 +886,109 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
         hideSection={false}
       />
 
-      <div className='flex flex-col gap-0 border border-[#CBD6E2] pt-5'>
+      <div className='flex flex-col gap-0 border border-[#CBD6E2]'>
         <div className='w-full mb-5'>
-          <div className='px-4'>
-            <TableContainer sx={{ overflowX: 'auto', width: '100%' }}>
-              <Table
-                className='border-l border-t border-[#CBD6E2]'
-                sx={{ minWidth: 800 }}
+          <div className='capitalize h-[30px] border-b border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-3.5'>
+            Jurisdiction Information
+          </div>
+          <div className='grid md:grid-cols-2 gap-x-4 gap-y-3 px-4 py-3'>
+            <div>
+              <label
+                className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
+                htmlFor='country_name'
               >
+                Country <span className='text-red-500'> *</span>
+              </label>
+              <input
+                type='text'
+                name='country_name'
+                placeholder='-'
+                autoComplete='off'
+                className={`placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ${errors?.country && 'border-red-500 disabled:!bg-[#FEF2F2] bg-[#FEF2F2]'}`}
+                disabled={true}
+                value={caseCountryDetails.country_name}
+              />
+              {errors?.country && (
+                <span className='text-[12px] text-red-400 col-span-full'>
+                  {errors.country}
+                </span>
+              )}
+            </div>
+
+            <div>
+              <label
+                className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
+                htmlFor='region'
+              >
+                Region
+                {/* Region is optional, so no required asterisk */}
+              </label>
+
+              <Select
+                name='region'
+                value={selectedRegion}
+                onChange={(e) => handleRegionChange(e.target.value)}
+                displayEmpty
+                fullWidth
+                size='small'
+                className={`custom-select-no-arrow sm:text-sm ${
+                  selectedRegion === '' ? 'text-[#7D98B6]' : 'text-black'
+                } ${errors?.region ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
+                MenuProps={COMMON_MENU_PROPS}
+                sx={getSelectStyles(!!errors?.region, selectedRegion === '')}
+                disabled={!isCaseTeamEditable} // Disable based on permission
+              >
+                <MenuItem
+                  value=''
+                  sx={{
+                    color: '#7D98B6',
+                    fontSize: '13px',
+                    fontWeight: 500,
+                  }}
+                >
+                  Choose Region
+                </MenuItem>
+                {regionListOptions?.map((option, i) => (
+                  <MenuItem
+                    key={`${option.value}-${i}`}
+                    value={option.value}
+                    title={option.label}
+                    sx={{
+                      color: '#425A76',
+                      fontSize: '13px',
+                      fontWeight: 500,
+                    }}
+                  >
+                    {option.label}
+                  </MenuItem>
+                ))}
+              </Select>
+
+              {errors?.region && (
+                <span className='text-[12px] text-red-400 col-span-full'>
+                  {errors.region}
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className='capitalize mb-4 h-[30px] border-b border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-3.5'>
+            Historical Information
+            {selectedRegion ? ' (Region Level)' : ' (Country Level)'}
+          </div>
+          <div className='px-3.5'>
+            <TableContainer
+              sx={{
+                overflowX: 'auto',
+                maxHeight: 'calc(100vh - 400px)',
+                position: 'relative',
+                border: '1px solid #CBD6E2 !important',
+                '& .MuiTableRow-root > .MuiTableCell-root:last-of-type': {
+                  borderRight: 'none',
+                },
+              }}
+            >
+              <Table stickyHeader>
                 <TableHead
                   sx={{
                     '& .MuiTableCell-root': {
@@ -666,8 +1006,12 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
                       <TableCell
                         key={field.key}
                         style={{
+                          width: field.width,
+                          minWidth: field.width,
+                          maxWidth: field.width,
                           textAlign: 'left',
                           textWrap: 'nowrap',
+                          ...(field.sx || {}),
                         }}
                       >
                         {field.label}{' '}
@@ -676,7 +1020,7 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
                         )}
                       </TableCell>
                     ))}
-                    <TableCell style={{ width: '80px' }}>Actions</TableCell>
+                    <TableCell style={{ width: '140px' }}>Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody
@@ -695,141 +1039,155 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
                         '&:disabled': {
                           backgroundColor: '#f3f4f6',
                           color: '#6b7280',
-                          WebkitTextFillColor: '#6b7280',
                         },
                         '&:focus': {
                           border: '1px solid #60a5fa',
                           backgroundColor: 'white',
                         },
                       },
+                      '& radio': {
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      },
                     },
                   }}
                 >
-                  {formLoading ? (
+                  {formLoading || isDataPending || !caseDetails?.country_rid ? (
                     <TableSkeleton
                       rowsPerPage={4}
                       columnsCount={historicalFields.length + 1}
                     />
-                  ) : (
-                    formData.historicalSubmissions.map((submission, index) => (
-                      <TableRow
-                        key={submission.user_id}
-                        sx={{
-                          position: 'relative',
-                          p: 0,
-                        }}
-                        className={''}
-                      >
-                        {/* Fiscal Year Dropdown */}
-                        <TableCell
-                          ref={(el: HTMLTableCellElement | null) => {
-                            if (el)
-                              cellRefs.current[`fiscal_year-${index}`] = el;
-                          }}
-                          style={{
+                  ) : formData.historicalSubmissions.length > 0 ? (
+                    formData.historicalSubmissions.map(
+                      (submission, rowIndex) => (
+                        <TableRow
+                          key={submission.user_id}
+                          sx={{
                             position: 'relative',
-                            backgroundColor: errors.historicalSubmissions?.[
-                              index
-                            ]?.fiscal_year
-                              ? '#FEF2F2'
-                              : 'transparent',
+                            p: 0,
                           }}
-                          sx={{ padding: 0 }}
                         >
-                          <div className='p-1'>
-                            <Select
-                              value={submission.fiscal_year}
-                              onChange={(e) =>
-                                handleSubmissionChange(
-                                  index,
-                                  'fiscal_year',
-                                  e.target.value
-                                )
-                              }
-                              disabled={!permissionMap.fiscal_year?.edit}
-                              size='small'
-                              fullWidth
-                              displayEmpty
-                              className='h-[28px]'
-                              sx={{
-                                width: '100%',
-                                '& .MuiSelect-select': {
-                                  fontSize: '13px',
-                                  fontWeight: 500,
-                                  color: submission.fiscal_year
-                                    ? '#425A76'
-                                    : '#7D98B6',
-                                  padding: '4px 6px',
-                                },
-                                '& .MuiOutlinedInput-notchedOutline': {
-                                  border: 'none',
-                                  borderColor: '#CBD6E2',
-                                },
-                                '&:hover .MuiOutlinedInput-notchedOutline': {
-                                  borderColor: '#CBD6E2',
-                                },
-                                '&.Mui-focused .MuiOutlinedInput-notchedOutline':
-                                {
-                                  borderColor: '#CBD6E2',
-                                },
-                              }}
-                              MenuProps={{
-                                PaperProps: {
-                                  sx: {
-                                    marginTop: '4px',
-                                    maxHeight: '250px',
-                                    borderRadius: '0px',
-                                    width: Math.max(
-                                      cellWidths[`fiscal_year-${index}`] || 0,
-                                      150
-                                    ),
-                                    boxShadow:
-                                      'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
-                                    '& .MuiMenuItem-root': {
-                                      fontSize: '13px',
-                                      fontWeight: 500,
-                                      padding: '6px 12px',
-                                      '&[data-value=""]': {
-                                        color: '#7D98B6',
-                                      },
-                                      '&:not([data-value=""])': {
-                                        color: '#425A76',
+                          {/* Fiscal Year Dropdown - Sticky First Column */}
+                          <TableCell
+                            ref={(el: HTMLTableCellElement | null) => {
+                              if (el)
+                                cellRefs.current[`fiscal_year-${rowIndex}`] =
+                                  el;
+                            }}
+                            style={{
+                              position: 'relative',
+                            }}
+                            sx={{
+                              padding: '0px !important',
+                              position: 'sticky !important',
+                              left: 0,
+                              backgroundColor: errors.historicalSubmissions?.[
+                                rowIndex
+                              ]?.fiscal_year
+                                ? '#FEF2F2 !important'
+                                : '#fff !important',
+                              borderRight: '1px solid #CBD6E2',
+                              borderBottom: '1px solid #CBD6E2 !important',
+                              zIndex: 6,
+                            }}
+                          >
+                            <div>
+                              <Select
+                                value={submission.fiscal_year}
+                                onChange={(e) =>
+                                  handleSubmissionChange(
+                                    rowIndex,
+                                    'fiscal_year',
+                                    e.target.value
+                                  )
+                                }
+                                disabled={!permissionMap.fiscal_year?.edit}
+                                size='small'
+                                fullWidth
+                                displayEmpty
+                                className='h-[28px]'
+                                sx={{
+                                  width: '100%',
+                                  '& .MuiSelect-select': {
+                                    fontSize: '13px',
+                                    fontWeight: 500,
+                                    color: submission.fiscal_year
+                                      ? '#425A76'
+                                      : '#7D98B6',
+                                    padding: '4px 8px',
+                                  },
+                                  '& .MuiOutlinedInput-notchedOutline': {
+                                    border: 'none',
+                                    borderColor: '#CBD6E2',
+                                  },
+                                  '&:hover .MuiOutlinedInput-notchedOutline': {
+                                    borderColor: '#CBD6E2',
+                                  },
+                                  '&.Mui-focused .MuiOutlinedInput-notchedOutline':
+                                    {
+                                      borderColor: '#CBD6E2',
+                                    },
+                                }}
+                                MenuProps={{
+                                  PaperProps: {
+                                    sx: {
+                                      marginTop: '4px',
+                                      maxHeight: '250px',
+                                      borderRadius: '0px',
+                                      width: Math.max(
+                                        cellWidths[`fiscal_year-${rowIndex}`] ||
+                                          0,
+                                        150
+                                      ),
+                                      boxShadow:
+                                        'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
+                                      '& .MuiMenuItem-root': {
+                                        fontSize: '13px',
+                                        fontWeight: 500,
+                                        padding: '6px 12px',
+                                        '&[data-value=""]': {
+                                          color: '#7D98B6',
+                                        },
+                                        '&:not([data-value=""])': {
+                                          color: '#425A76',
+                                        },
                                       },
                                     },
                                   },
-                                },
-                              }}
-                            >
-                              <MenuItem
-                                value=''
-                                sx={{
-                                  fontSize: '13px',
-                                  color: '#7D98B6 !important',
-                                  fontWeight: 500,
                                 }}
                               >
-                                Choose Fiscal Year
-                              </MenuItem>
-                              {yearOptions.map((year) => (
                                 <MenuItem
-                                  key={year.value}
-                                  value={year.value.toString()}
+                                  value=''
                                   sx={{
                                     fontSize: '13px',
-                                    color: '#425A76 !important',
+                                    color: '#7D98B6 !important',
                                     fontWeight: 500,
                                   }}
                                 >
-                                  {year.label}
+                                  Choose Fiscal Year
                                 </MenuItem>
-                              ))}
-                            </Select>
-                          </div>
-                          {errors.historicalSubmissions?.[index]
-                            ?.fiscal_year && (
+                                {yearOptions.map((year) => (
+                                  <MenuItem
+                                    key={year.value}
+                                    value={year.value.toString()}
+                                    sx={{
+                                      fontSize: '13px',
+                                      color: '#425A76 !important',
+                                      fontWeight: 500,
+                                    }}
+                                  >
+                                    {year.label}
+                                  </MenuItem>
+                                ))}
+                              </Select>
+                            </div>
+                            {errors.historicalSubmissions?.[rowIndex]
+                              ?.fiscal_year && (
                               <Tooltip
                                 title={
-                                  errors.historicalSubmissions[index].fiscal_year
+                                  errors.historicalSubmissions[rowIndex]
+                                    .fiscal_year
                                 }
                                 arrow
                                 placement='top'
@@ -852,62 +1210,315 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
                                 </span>
                               </Tooltip>
                             )}
-                        </TableCell>
+                          </TableCell>
 
-                        {/* Total Project Cost Text Field */}
-                        <TableCell
-                          style={{
-                            position: 'relative',
-                            backgroundColor: errors.historicalSubmissions?.[
-                              index
-                            ]?.total_project_cost
-                              ? '#FEF2F2'
-                              : 'transparent',
-                          }}
-                          sx={{ padding: 0 }}
-                        >
-                          <div className='p-1'>
-                            <TextField
-                              value={formatNumberWithCommas(submission.total_project_cost)}
-                              onChange={(e) => {
-                                const rawValue = removeCommas(e.target.value);
-                                handleSubmissionChange(
-                                  index,
-                                  'total_project_cost',
-                                  rawValue
-                                );
-                              }}
-                              disabled={!permissionMap.total_project_cost?.edit}
-                              size='small'
-                              fullWidth
-                              placeholder='Enter Total Project Cost'
-                              sx={{
-                                '& .MuiInputBase-root': {
-                                  height: '28px',
-                                  fontSize: '13px',
-                                  '& input': {
-                                    padding: '4px 6px',
-                                    color: '#425A76',
+                          {/* Total FTE Cost Text Field */}
+                          <TableCell
+                            style={{
+                              position: 'relative',
+                              backgroundColor: errors.historicalSubmissions?.[
+                                rowIndex
+                              ]?.total_fte_cost
+                                ? '#FEF2F2'
+                                : 'transparent',
+                            }}
+                            sx={{ padding: '0px !important' }}
+                          >
+                            <div>
+                              <TextField
+                                value={formatNumberWithCommas(
+                                  submission.total_fte_cost || ''
+                                )}
+                                onChange={(e) => {
+                                  const rawValue = removeCommas(e.target.value);
+                                  handleSubmissionChange(
+                                    rowIndex,
+                                    'total_fte_cost',
+                                    rawValue
+                                  );
+                                }}
+                                // disabled={!permissionMap.total_fte_cost?.edit}
+                                size='small'
+                                fullWidth
+                                placeholder='Enter Total FTE Cost'
+                                sx={{
+                                  '& .MuiInputBase-root': {
+                                    height: '28px',
+                                    fontSize: '13px',
+                                    '& input': {
+                                      padding: '4px 8px',
+                                      color: '#425A76',
+                                    },
+                                    '& .MuiOutlinedInput-notchedOutline': {
+                                      border: 'none',
+                                    },
+                                    '&:hover .MuiOutlinedInput-notchedOutline':
+                                      {
+                                        border: 'none',
+                                      },
+                                    '&.Mui-focused .MuiOutlinedInput-notchedOutline':
+                                      {
+                                        border: 'none',
+                                      },
                                   },
-                                  '& .MuiOutlinedInput-notchedOutline': {
-                                    border: 'none',
-                                  },
-                                  '&:hover .MuiOutlinedInput-notchedOutline': {
-                                    border: 'none',
-                                  },
-                                  '&.Mui-focused .MuiOutlinedInput-notchedOutline':
-                                  {
-                                    border: 'none',
-                                  },
-                                },
-                              }}
-                            />
-                          </div>
-                          {errors.historicalSubmissions?.[index]
-                            ?.total_project_cost && (
+                                }}
+                              />
+                            </div>
+                            {errors.historicalSubmissions?.[rowIndex]
+                              ?.total_fte_cost && (
                               <Tooltip
                                 title={
-                                  errors.historicalSubmissions[index]
+                                  errors.historicalSubmissions[rowIndex]
+                                    .total_fte_cost
+                                }
+                                arrow
+                                placement='top'
+                                slotProps={{
+                                  tooltip: {
+                                    sx: {
+                                      backgroundColor: '#FEF2F2',
+                                      mr: 1,
+                                    },
+                                  },
+                                }}
+                              >
+                                <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
+                                  <React.Suspense fallback={null}>
+                                    <ErrorInfoIcon
+                                      alt='error'
+                                      className='w-5 h-3.5'
+                                    />
+                                  </React.Suspense>
+                                </span>
+                              </Tooltip>
+                            )}
+                          </TableCell>
+
+                          {/* Total Subcon Cost Text Field */}
+                          <TableCell
+                            style={{
+                              position: 'relative',
+                              backgroundColor: errors.historicalSubmissions?.[
+                                rowIndex
+                              ]?.total_subcon_cost
+                                ? '#FEF2F2'
+                                : 'transparent',
+                            }}
+                            sx={{ padding: '0px !important' }}
+                          >
+                            <div>
+                              <TextField
+                                value={formatNumberWithCommas(
+                                  submission.total_subcon_cost || ''
+                                )}
+                                onChange={(e) => {
+                                  const rawValue = removeCommas(e.target.value);
+                                  handleSubmissionChange(
+                                    rowIndex,
+                                    'total_subcon_cost',
+                                    rawValue
+                                  );
+                                }}
+                                // disabled={!permissionMap.total_subcon_cost?.edit}
+                                size='small'
+                                fullWidth
+                                placeholder='Enter Total Subcon Cost'
+                                sx={{
+                                  '& .MuiInputBase-root': {
+                                    height: '28px',
+                                    fontSize: '13px',
+                                    '& input': {
+                                      padding: '4px 8px',
+                                      color: '#425A76',
+                                    },
+                                    '& .MuiOutlinedInput-notchedOutline': {
+                                      border: 'none',
+                                    },
+                                    '&:hover .MuiOutlinedInput-notchedOutline':
+                                      {
+                                        border: 'none',
+                                      },
+                                    '&.Mui-focused .MuiOutlinedInput-notchedOutline':
+                                      {
+                                        border: 'none',
+                                      },
+                                  },
+                                }}
+                              />
+                            </div>
+                            {errors.historicalSubmissions?.[rowIndex]
+                              ?.total_subcon_cost && (
+                              <Tooltip
+                                title={
+                                  errors.historicalSubmissions[rowIndex]
+                                    .total_subcon_cost
+                                }
+                                arrow
+                                placement='top'
+                                slotProps={{
+                                  tooltip: {
+                                    sx: {
+                                      backgroundColor: '#FEF2F2',
+                                      mr: 1,
+                                    },
+                                  },
+                                }}
+                              >
+                                <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
+                                  <React.Suspense fallback={null}>
+                                    <ErrorInfoIcon
+                                      alt='error'
+                                      className='w-5 h-3.5'
+                                    />
+                                  </React.Suspense>
+                                </span>
+                              </Tooltip>
+                            )}
+                          </TableCell>
+
+                          {/* Total Nonlabor Cost Text Field */}
+                          <TableCell
+                            style={{
+                              position: 'relative',
+                              backgroundColor: errors.historicalSubmissions?.[
+                                rowIndex
+                              ]?.total_nonlabor_cost
+                                ? '#FEF2F2'
+                                : 'transparent',
+                            }}
+                            sx={{ padding: '0px !important' }}
+                          >
+                            <div>
+                              <TextField
+                                value={formatNumberWithCommas(
+                                  submission.total_nonlabor_cost || ''
+                                )}
+                                onChange={(e) => {
+                                  const rawValue = removeCommas(e.target.value);
+                                  handleSubmissionChange(
+                                    rowIndex,
+                                    'total_nonlabor_cost',
+                                    rawValue
+                                  );
+                                }}
+                                // disabled={
+                                //   !permissionMap.total_nonlabor_cost?.edit
+                                // }
+                                size='small'
+                                fullWidth
+                                placeholder='Enter Total Nonlabor Cost'
+                                sx={{
+                                  '& .MuiInputBase-root': {
+                                    height: '28px',
+                                    fontSize: '13px',
+                                    '& input': {
+                                      padding: '4px 8px',
+                                      color: '#425A76',
+                                    },
+                                    '& .MuiOutlinedInput-notchedOutline': {
+                                      border: 'none',
+                                    },
+                                    '&:hover .MuiOutlinedInput-notchedOutline':
+                                      {
+                                        border: 'none',
+                                      },
+                                    '&.Mui-focused .MuiOutlinedInput-notchedOutline':
+                                      {
+                                        border: 'none',
+                                      },
+                                  },
+                                }}
+                              />
+                            </div>
+                            {errors.historicalSubmissions?.[rowIndex]
+                              ?.total_nonlabor_cost && (
+                              <Tooltip
+                                title={
+                                  errors.historicalSubmissions[rowIndex]
+                                    .total_nonlabor_cost
+                                }
+                                arrow
+                                placement='top'
+                                slotProps={{
+                                  tooltip: {
+                                    sx: {
+                                      backgroundColor: '#FEF2F2',
+                                      mr: 1,
+                                    },
+                                  },
+                                }}
+                              >
+                                <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
+                                  <React.Suspense fallback={null}>
+                                    <ErrorInfoIcon
+                                      alt='error'
+                                      className='w-5 h-3.5'
+                                    />
+                                  </React.Suspense>
+                                </span>
+                              </Tooltip>
+                            )}
+                          </TableCell>
+
+                          {/* Total Project Cost Text Field */}
+                          <TableCell
+                            style={{
+                              position: 'relative',
+                              backgroundColor: errors.historicalSubmissions?.[
+                                rowIndex
+                              ]?.total_project_cost
+                                ? '#FEF2F2'
+                                : 'transparent',
+                            }}
+                            sx={{ padding: '0px !important' }}
+                          >
+                            <div>
+                              <TextField
+                                value={formatNumberWithCommas(
+                                  submission.total_project_cost
+                                )}
+                                onChange={(e) => {
+                                  const rawValue = removeCommas(e.target.value);
+                                  handleSubmissionChange(
+                                    rowIndex,
+                                    'total_project_cost',
+                                    rawValue
+                                  );
+                                }}
+                                disabled={
+                                  !permissionMap.total_project_cost?.edit
+                                }
+                                size='small'
+                                fullWidth
+                                placeholder='Enter Total Project Cost'
+                                sx={{
+                                  '& .MuiInputBase-root': {
+                                    height: '28px',
+                                    fontSize: '13px',
+                                    '& input': {
+                                      padding: '4px 8px',
+                                      color: '#425A76',
+                                    },
+                                    '& .MuiOutlinedInput-notchedOutline': {
+                                      border: 'none',
+                                    },
+                                    '&:hover .MuiOutlinedInput-notchedOutline':
+                                      {
+                                        border: 'none',
+                                      },
+                                    '&.Mui-focused .MuiOutlinedInput-notchedOutline':
+                                      {
+                                        border: 'none',
+                                      },
+                                  },
+                                }}
+                              />
+                            </div>
+                            {errors.historicalSubmissions?.[rowIndex]
+                              ?.total_project_cost && (
+                              <Tooltip
+                                title={
+                                  errors.historicalSubmissions[rowIndex]
                                     .total_project_cost
                                 }
                                 arrow
@@ -931,139 +1542,147 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
                                 </span>
                               </Tooltip>
                             )}
-                        </TableCell>
+                          </TableCell>
 
-                        {/* Total QRE Text Field */}
-                        <TableCell
-                          style={{
-                            position: 'relative',
-                            backgroundColor: errors.historicalSubmissions?.[
-                              index
-                            ]?.total_qre
-                              ? '#FEF2F2'
-                              : 'transparent',
-                          }}
-                          sx={{ padding: 0 }}
-                        >
-                          <div className='p-1'>
-                            <TextField
-                              value={formatNumberWithCommas(submission.total_qre)}
-                              onChange={(e) => {
-                                const rawValue = removeCommas(e.target.value);
-                                handleSubmissionChange(
-                                  index,
-                                  'total_qre',
-                                  rawValue
-                                );
-                              }}
-                              disabled={!permissionMap.total_qre?.edit}
-                              size='small'
-                              fullWidth
-                              placeholder='Enter Total QRE'
-                              sx={{
-                                '& .MuiInputBase-root': {
-                                  height: '28px',
-                                  fontSize: '13px',
-                                  '& input': {
-                                    padding: '4px 6px',
-                                    color: '#425A76',
+                          {/* Total QRE Text Field */}
+                          <TableCell
+                            style={{
+                              position: 'relative',
+                              backgroundColor: errors.historicalSubmissions?.[
+                                rowIndex
+                              ]?.total_qre
+                                ? '#FEF2F2'
+                                : 'transparent',
+                            }}
+                            sx={{ padding: '0px !important' }}
+                          >
+                            <div>
+                              <TextField
+                                value={formatNumberWithCommas(
+                                  submission.total_qre
+                                )}
+                                onChange={(e) => {
+                                  const rawValue = removeCommas(e.target.value);
+                                  handleSubmissionChange(
+                                    rowIndex,
+                                    'total_qre',
+                                    rawValue
+                                  );
+                                }}
+                                disabled={!permissionMap.total_qre?.edit}
+                                size='small'
+                                fullWidth
+                                placeholder='Enter Total QRE'
+                                sx={{
+                                  '& .MuiInputBase-root': {
+                                    height: '28px',
+                                    fontSize: '13px',
+                                    '& input': {
+                                      padding: '4px 8px',
+                                      color: '#425A76',
+                                    },
+                                    '& .MuiOutlinedInput-notchedOutline': {
+                                      border: 'none',
+                                    },
+                                    '&:hover .MuiOutlinedInput-notchedOutline':
+                                      {
+                                        border: 'none',
+                                      },
+                                    '&.Mui-focused .MuiOutlinedInput-notchedOutline':
+                                      {
+                                        border: 'none',
+                                      },
                                   },
-                                  '& .MuiOutlinedInput-notchedOutline': {
-                                    border: 'none',
-                                  },
-                                  '&:hover .MuiOutlinedInput-notchedOutline': {
-                                    border: 'none',
-                                  },
-                                  '&.Mui-focused .MuiOutlinedInput-notchedOutline':
-                                  {
-                                    border: 'none',
-                                  },
-                                },
-                              }}
-                            />
-                          </div>
-                          {errors.historicalSubmissions?.[index]?.total_qre && (
-                            <Tooltip
-                              title={
-                                errors.historicalSubmissions[index].total_qre
-                              }
-                              arrow
-                              placement='top'
-                              slotProps={{
-                                tooltip: {
-                                  sx: {
-                                    backgroundColor: '#FEF2F2',
-                                    mr: 1,
-                                  },
-                                },
-                              }}
-                            >
-                              <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
-                                <React.Suspense fallback={null}>
-                                  <ErrorInfoIcon
-                                    alt='error'
-                                    className='w-5 h-3.5'
-                                  />
-                                </React.Suspense>
-                              </span>
-                            </Tooltip>
-                          )}
-                        </TableCell>
-
-                        {/* Total RD Credits Text Field */}
-                        <TableCell
-                          style={{
-                            position: 'relative',
-                            backgroundColor: errors.historicalSubmissions?.[
-                              index
-                            ]?.total_rd_credits
-                              ? '#FEF2F2'
-                              : 'transparent',
-                          }}
-                          sx={{ padding: 0 }}
-                        >
-                          <div className='p-1'>
-                            <TextField
-                              value={formatNumberWithCommas(submission.total_rd_credits)}
-                              onChange={(e) => {
-                                const rawValue = removeCommas(e.target.value);
-                                handleSubmissionChange(
-                                  index,
-                                  'total_rd_credits',
-                                  rawValue
-                                );
-                              }}
-                              disabled={!permissionMap.total_rd_credits?.edit}
-                              size='small'
-                              fullWidth
-                              placeholder='Enter Total RD Credits'
-                              sx={{
-                                '& .MuiInputBase-root': {
-                                  height: '28px',
-                                  fontSize: '13px',
-                                  '& input': {
-                                    padding: '4px 6px',
-                                    color: '#425A76',
-                                  },
-                                  '& .MuiOutlinedInput-notchedOutline': {
-                                    border: 'none',
-                                  },
-                                  '&:hover .MuiOutlinedInput-notchedOutline': {
-                                    border: 'none',
-                                  },
-                                  '&.Mui-focused .MuiOutlinedInput-notchedOutline':
-                                  {
-                                    border: 'none',
-                                  },
-                                },
-                              }}
-                            />
-                          </div>
-                          {errors.historicalSubmissions?.[index]
-                            ?.total_rd_credits && (
+                                }}
+                              />
+                            </div>
+                            {errors.historicalSubmissions?.[rowIndex]
+                              ?.total_qre && (
                               <Tooltip
                                 title={
-                                  errors.historicalSubmissions[index]
+                                  errors.historicalSubmissions[rowIndex]
+                                    .total_qre
+                                }
+                                arrow
+                                placement='top'
+                                slotProps={{
+                                  tooltip: {
+                                    sx: {
+                                      backgroundColor: '#FEF2F2',
+                                      mr: 1,
+                                    },
+                                  },
+                                }}
+                              >
+                                <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
+                                  <React.Suspense fallback={null}>
+                                    <ErrorInfoIcon
+                                      alt='error'
+                                      className='w-5 h-3.5'
+                                    />
+                                  </React.Suspense>
+                                </span>
+                              </Tooltip>
+                            )}
+                          </TableCell>
+
+                          {/* Total RD Credits Text Field */}
+                          <TableCell
+                            style={{
+                              position: 'relative',
+                              backgroundColor: errors.historicalSubmissions?.[
+                                rowIndex
+                              ]?.total_rd_credits
+                                ? '#FEF2F2'
+                                : 'transparent',
+                            }}
+                            sx={{ padding: '0px !important' }}
+                          >
+                            <div>
+                              <TextField
+                                value={formatNumberWithCommas(
+                                  submission.total_rd_credits
+                                )}
+                                onChange={(e) => {
+                                  const rawValue = removeCommas(e.target.value);
+                                  handleSubmissionChange(
+                                    rowIndex,
+                                    'total_rd_credits',
+                                    rawValue
+                                  );
+                                }}
+                                disabled={!permissionMap.total_rd_credits?.edit}
+                                size='small'
+                                fullWidth
+                                placeholder='Enter Total RD Credits'
+                                sx={{
+                                  '& .MuiInputBase-root': {
+                                    height: '28px',
+                                    fontSize: '13px',
+                                    '& input': {
+                                      padding: '4px 8px',
+                                      color: '#425A76',
+                                    },
+                                    '& .MuiOutlinedInput-notchedOutline': {
+                                      border: 'none',
+                                    },
+                                    '&:hover .MuiOutlinedInput-notchedOutline':
+                                      {
+                                        border: 'none',
+                                      },
+                                    '&.Mui-focused .MuiOutlinedInput-notchedOutline':
+                                      {
+                                        border: 'none',
+                                      },
+                                  },
+                                }}
+                              />
+                            </div>
+                            {errors.historicalSubmissions?.[rowIndex]
+                              ?.total_rd_credits && (
+                              <Tooltip
+                                title={
+                                  errors.historicalSubmissions[rowIndex]
                                     .total_rd_credits
                                 }
                                 arrow
@@ -1087,64 +1706,67 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
                                 </span>
                               </Tooltip>
                             )}
-                        </TableCell>
+                          </TableCell>
 
-                        {/* Annual Gross Receipts Text Field */}
-                        <TableCell
-                          style={{
-                            position: 'relative',
-                            backgroundColor: errors.historicalSubmissions?.[
-                              index
-                            ]?.annual_gross_receipts
-                              ? '#FEF2F2'
-                              : 'transparent',
-                          }}
-                          sx={{ padding: 0 }}
-                        >
-                          <div className='p-1'>
-                            <TextField
-                              value={formatNumberWithCommas(submission.annual_gross_receipts)}
-                              onChange={(e) => {
-                                const rawValue = removeCommas(e.target.value);
-                                handleSubmissionChange(
-                                  index,
-                                  'annual_gross_receipts',
-                                  rawValue
-                                );
-                              }}
-                              disabled={
-                                !permissionMap.annual_gross_receipts?.edit
-                              }
-                              size='small'
-                              fullWidth
-                              placeholder='Enter Annual Gross Receipts'
-                              sx={{
-                                '& .MuiInputBase-root': {
-                                  height: '28px',
-                                  fontSize: '13px',
-                                  '& input': {
-                                    padding: '4px 6px',
-                                    color: '#425A76',
+                          {/* Annual Gross Receipts Text Field */}
+                          <TableCell
+                            style={{
+                              position: 'relative',
+                              backgroundColor: errors.historicalSubmissions?.[
+                                rowIndex
+                              ]?.annual_gross_receipts
+                                ? '#FEF2F2'
+                                : 'transparent',
+                            }}
+                            sx={{ padding: '0px !important' }}
+                          >
+                            <div>
+                              <TextField
+                                value={formatNumberWithCommas(
+                                  submission.annual_gross_receipts
+                                )}
+                                onChange={(e) => {
+                                  const rawValue = removeCommas(e.target.value);
+                                  handleSubmissionChange(
+                                    rowIndex,
+                                    'annual_gross_receipts',
+                                    rawValue
+                                  );
+                                }}
+                                disabled={
+                                  !permissionMap.annual_gross_receipts?.edit
+                                }
+                                size='small'
+                                fullWidth
+                                placeholder='Enter Annual Gross Receipts'
+                                sx={{
+                                  '& .MuiInputBase-root': {
+                                    height: '28px',
+                                    fontSize: '13px',
+                                    '& input': {
+                                      padding: '4px 8px',
+                                      color: '#425A76',
+                                    },
+                                    '& .MuiOutlinedInput-notchedOutline': {
+                                      border: 'none',
+                                    },
+                                    '&:hover .MuiOutlinedInput-notchedOutline':
+                                      {
+                                        border: 'none',
+                                      },
+                                    '&.Mui-focused .MuiOutlinedInput-notchedOutline':
+                                      {
+                                        border: 'none',
+                                      },
                                   },
-                                  '& .MuiOutlinedInput-notchedOutline': {
-                                    border: 'none',
-                                  },
-                                  '&:hover .MuiOutlinedInput-notchedOutline': {
-                                    border: 'none',
-                                  },
-                                  '&.Mui-focused .MuiOutlinedInput-notchedOutline':
-                                  {
-                                    border: 'none',
-                                  },
-                                },
-                              }}
-                            />
-                          </div>
-                          {errors.historicalSubmissions?.[index]
-                            ?.annual_gross_receipts && (
+                                }}
+                              />
+                            </div>
+                            {errors.historicalSubmissions?.[rowIndex]
+                              ?.annual_gross_receipts && (
                               <Tooltip
                                 title={
-                                  errors.historicalSubmissions[index]
+                                  errors.historicalSubmissions[rowIndex]
                                     .annual_gross_receipts
                                 }
                                 arrow
@@ -1168,45 +1790,65 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
                                 </span>
                               </Tooltip>
                             )}
-                        </TableCell>
+                          </TableCell>
 
-                        {/* Actions Column */}
-                        <TableCell sx={{ padding: 0 }}>
-                          <Tooltip
-                            title={'Remove entry'}
-                            disableHoverListener={!isHistoricalSubmissionDelete}
-                            arrow
-                            placement='top'
-                          >
-                            <button
-                              type='button'
-                              onClick={() => handleRemoveSubmission(index)}
-                              style={{
-                                cursor: !isHistoricalSubmissionDelete
-                                  ? 'default'
-                                  : 'pointer',
-                                background: 'transparent',
-                                border: 'none',
-                                padding: 0,
-                                marginTop: '6px',
-                              }}
-                              aria-label='Remove entry'
-                              disabled={!isHistoricalSubmissionDelete}
+                          {/* Actions Column */}
+                          <TableCell sx={{ width: '140px', padding: 0 }}>
+                            <Tooltip
+                              title={'Remove entry'}
+                              disableHoverListener={
+                                !isHistoricalSubmissionDelete
+                              }
+                              arrow
+                              placement='top'
                             >
-                              <React.Suspense fallback={null}>
-                                <KeyContactRemoveIcon
-                                  alt='Remove'
-                                  style={{
-                                    width: 20,
-                                    height: 20,
-                                  }}
-                                />
-                              </React.Suspense>
-                            </button>
-                          </Tooltip>
-                        </TableCell>
-                      </TableRow>
-                    ))
+                              <button
+                                type='button'
+                                onClick={() => handleRemoveSubmission(rowIndex)}
+                                style={{
+                                  cursor: !isHistoricalSubmissionDelete
+                                    ? 'default'
+                                    : 'pointer',
+                                  background: 'transparent',
+                                  border: 'none',
+                                  padding: 0,
+                                  marginTop: '6px',
+                                }}
+                                aria-label='Remove entry'
+                                className='ml-4'
+                                disabled={!isHistoricalSubmissionDelete}
+                              >
+                                <React.Suspense fallback={null}>
+                                  <KeyContactRemoveIcon
+                                    alt='Remove'
+                                    style={{
+                                      width: 20,
+                                      height: 20,
+                                    }}
+                                  />
+                                </React.Suspense>
+                              </button>
+                            </Tooltip>
+                          </TableCell>
+                        </TableRow>
+                      )
+                    )
+                  ) : (
+                    <TableRow sx={{ height: '32px' }}>
+                      <TableCell
+                        colSpan={historicalFields.length + 1}
+                        align='center'
+                        sx={{
+                          borderBottom: '1px solid #CBD6E2',
+                          height: '32px',
+                          color: '#425A76',
+                          fontSize: '14px',
+                          fontWeight: 500,
+                        }}
+                      >
+                        No data available
+                      </TableCell>
+                    </TableRow>
                   )}
                 </TableBody>
               </Table>
@@ -1215,10 +1857,15 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
 
           <div className='mt-2 pl-4'>
             <button
-              className='flex items-center cursor-pointer gap-1 bg-[#EAF0F5] h-[30px] color-[#2D3E4F] px-2 text-[12px] font-semibold disabled:bg-gray-100 disabled:opacity-75 disabled:cursor-default'
+              className='flex items-center cursor-pointer gap-1 bg-[#EAF0F5] h-[30px] color-[#2D3E4F] px-2 text-[12px] font-semibold disabled:bg-gray-100 disabled:opacity-50 disabled:cursor-default'
               type='button'
               onClick={handleAddSubmission}
-              disabled={formLoading || !isHistoricalSubmissionCreate}
+              disabled={
+                formLoading ||
+                !isHistoricalSubmissionCreate ||
+                isDataPending ||
+                !caseDetails?.country_rid
+              }
             >
               <span>
                 <React.Suspense fallback={null}>
