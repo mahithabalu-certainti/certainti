@@ -403,21 +403,38 @@ export const listAllCasesSummaryQuery = (
   schemaName: string,
   pointOfContactRoleid: string
 ) => `
-    WITH fetch_all_cases AS 
+    WITH 
+    task_cnt AS (
+  SELECT project_fiscal_rid, COUNT(*) AS cnt
+  FROM trd365_00001.project_task
+  GROUP BY project_fiscal_rid
+),
+ats_cnt AS (
+  SELECT project_fiscal_rid, COUNT(*) AS cnt
+  FROM trd365_00001.ai_technical_summary
+  GROUP BY project_fiscal_rid
+),
+res_cnt AS (
+  SELECT project_fiscal_rid, COUNT(*) AS cnt
+  FROM trd365_00001.project_resource
+  GROUP BY project_fiscal_rid
+),
+    fetch_all_cases AS 
     (select pf.rid,pf.project_rid,pf.account_rid,pf.r_number,pf.created_by,pf.modified_by,pf.created_datetime,pf.modified_datetime,
 pf.project_code,pf.fiscal_year,pf.project_name,pf.project_type_rid,pf.project_classification_rid,pf.project_classification_other,
 pf.project_group,pf.industry_rid,pf.industry_name,pf.status_rid,pf.total_fte_prj,pf.total_subcon_prj,pf.total_nonlabor_prj,
 pf.total_effort_fte_prj,pf.total_effort_subcon_prj,
 pf.total_effort_prj,
 pf.total_cost_fte_prj,pf.total_cost_subcon_prj,pf.total_cost_nonlabor_prj,pf.total_cost_prj,
-COUNT(prs.rid) AS total_resources_prj,
-COUNT(pt.rid) AS total_tasks,
-COUNT(ats.rid) AS total_technical_summaries,primary_contact.key_contact_name AS project_point_of_contact,
-	primary_contact.key_contact_email as project_point_of_contact_email
+ COALESCE(res_cnt.cnt, 0) AS total_resources_prj,
+  COALESCE(task_cnt.cnt, 0) AS total_tasks,
+  COALESCE(ats_cnt.cnt, 0)  AS total_technical_summaries,
+primary_contact.key_contact_name AS project_point_of_contact,
+    primary_contact.key_contact_email as project_point_of_contact_email
 from ${schemaName}.project_fiscal pf
-LEFT JOIN ${schemaName}.project_task pt ON pt.project_fiscal_rid = pf.rid
-LEFT JOIN ${schemaName}.ai_technical_summary ats ON ats.project_fiscal_rid = pf.rid
-LEFT JOIN ${schemaName}.project_resource prs ON prs.project_fiscal_rid = pf.rid
+LEFT JOIN res_cnt ON res_cnt.project_fiscal_rid = pf.rid
+LEFT JOIN task_cnt ON task_cnt.project_fiscal_rid = pf.rid
+LEFT JOIN ats_cnt ON ats_cnt.project_fiscal_rid = pf.rid
 LEFT JOIN LATERAL (
   SELECT kcd.key_contact_name,
          kcd.key_contact_email
@@ -443,7 +460,7 @@ AND (
       OR pf.fiscal_year IS NULL
       OR pf.industry_rid IS NULL
       OR pf.total_cost_prj IS NULL
-      OR pf.total_resources_prj IS NULL
+      OR COALESCE(res_cnt.cnt, 0) IS NULL
       OR pf.total_effort_prj IS NULL
       OR pf.project_type_rid IS NULL
       OR pf.project_classification_rid IS NULL
@@ -459,7 +476,7 @@ AND (
       or pf.total_cost_subcon_prj IS NULL
       or pf.total_cost_nonlabor_prj IS NULL
     )
-      GROUP BY pf.rid ,primary_contact.key_contact_name,primary_contact.key_contact_email
+      GROUP BY pf.rid, primary_contact.key_contact_name, primary_contact.key_contact_email, res_cnt.cnt, task_cnt.cnt, ats_cnt.cnt
     ),
     paginated_data AS (
     SELECT * FROM fetch_all_cases c  where 1 = 1  ${joinedConditions} ${sortValue} ${pagination}

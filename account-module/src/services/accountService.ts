@@ -329,15 +329,15 @@ async accountList(
       );
 
       if(search){
-        updatedAccount.data = updatedAccount.data.filter((val: any) => val.child_accounts.length > 0);
-        updatedAccount.total = updatedAccount.data.length;
-        totalCount = updatedAccount.data.length;
+        updatedAccount.data = updatedAccount.data?.filter((val: any) => val.child_accounts?.length > 0);
+        updatedAccount.total = updatedAccount?.data?.length;
+        totalCount = updatedAccount?.data?.length;
       }
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
         data: {
-          account: {data: updatedAccount.data},
+          account: {data: updatedAccount.data, total: updatedAccount.data?.length},
           count: !hasKeyContactFilter ? totalCount : updatedAccount?.total,
         },
       };
