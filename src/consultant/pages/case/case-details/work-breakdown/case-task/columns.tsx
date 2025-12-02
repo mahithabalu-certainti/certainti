@@ -41,7 +41,7 @@ export const getCaseTaskListColumns = (
       width: 120,
       render: (row: CaseTaskType) =>
         row.effective_start_datetime
-          ? dayjs(row.effective_start_datetime).format('YYYY-MMM-D')
+          ? dayjs(row.effective_start_datetime).format('YYYY-MMM-DD')
           : '',
 
       hide:
@@ -56,7 +56,7 @@ export const getCaseTaskListColumns = (
       width: 120,
       render: (row: CaseTaskType) =>
         row.effective_end_datetime
-          ? dayjs(row.effective_end_datetime).format('YYYY-MMM-D')
+          ? dayjs(row.effective_end_datetime).format('YYYY-MMM-DD')
           : '',
       hide:
         !permissionMap['effective_end_datetime']?.read &&
