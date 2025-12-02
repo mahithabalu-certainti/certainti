@@ -1141,7 +1141,6 @@ async  checkisExistingChecklistTemplateUnique(checklistReq: any): Promise<boolea
       ]
     }
   });
-  console.log("response checkisExistingChecklistTemplateUnique", response);
   return !response;
 }
 

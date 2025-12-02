@@ -2446,7 +2446,8 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
       if(data.task_type === 'activity') {
         result = await orgDb.query<TaskCardResponse>(taskCardDetailsActivityTask(schemaName, data.task_rid, data.account_rid, fetchChecklistStatusRid[0][0].rid),{type : QueryTypes.SELECT});
       } else {
-        result = await orgDb.query<TaskCardResponse>(taskCardDetails(schemaName, data.task_rid, data.account_rid, data.case_rid, fetchChecklistStatusRid[0][0].rid),{type : QueryTypes.SELECT});
+        const getActiveId : any = await mainDb.query(rawQueries.getActiveStatusId());
+        result = await orgDb.query<TaskCardResponse>(taskCardDetails(schemaName, data.task_rid, data.account_rid, data.case_rid, fetchChecklistStatusRid[0][0].rid, getActiveId[0][0].rid),{type : QueryTypes.SELECT});
       }
       if(result.length > 0) {
         const findRole : any = await mainDb.query(rawQueries.getCaseTeamRoleName(result[0]?.task_details.case_team_member_role_rid!));
@@ -3093,7 +3094,6 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
         };
       }
       catch (error) {
-        console.log(error)
         logMessage(`Error generating email preview: ${error}`);
          return {
           statusCode: HttpStatus.SUCCESS,

@@ -4852,15 +4852,19 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             rid : d.task_rid
           }
         })
-        const finalWorkFlowData = clonedData.workflow_data.map((d : any) => {
-          return {
-            ...d,
-            account_rid : accountRid,
-            case_rid : caseRid
-          }
-        })
+        let finalWorkFlowData;
+        if(clonedData.workflow_data !== null) {
+          finalWorkFlowData = clonedData.workflow_data.map((d : any) => {
+            return {
+              ...d,
+              account_rid : accountRid,
+              case_rid : caseRid
+            }
+          })
+         await CaseTaskWorkflowConnector.bulkCreate(finalWorkFlowData, {transaction});
+        }
+        
         await CaseTask.bulkCreate(finalTaskData, {transaction})
-        await CaseTaskWorkflowConnector.bulkCreate(finalWorkFlowData, {transaction});
         await this.cloneDefaultChecklistTemplate(accountRid, caseRid, filing_type_rid, accountNumber, transaction,finalTaskData)
       }
         }
@@ -6138,7 +6142,6 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                 rid : id
               }, raw : true
             });
-            console.log("fetchCommentsAttachmentDetails ====> ", fetchCommentsAttachmentDetails)
             if(fetchCommentsAttachmentDetails) {
               await deleteFromAzureBlob(fetchCommentsAttachmentDetails.browse_file);
               const [deleteCommentsAttachRes] = await CommentsAttachments.update({is_file_deleted : true},{where : {rid : id}})

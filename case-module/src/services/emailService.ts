@@ -75,7 +75,6 @@ export async function sendEmailWithAttachment(emailMessage: {
 
     return true;
   } catch (error: any) {
-    console.log(`Error sending email with attachment: ${error}`);
     logMessage(`Error sending email with attachment: ${error}`);
     return false
   }

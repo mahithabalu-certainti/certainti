@@ -122,7 +122,8 @@ class SchemaService {
       await this.createEmailWebhookHistory(schemaName, sequelize);
       await this.createNotesTable(schemaName, sequelize);
       await this.createNotesTimeline(schemaName, sequelize);
-
+      
+      await this.createAccountTimelineTable(schemaName, sequelize);
       await this.createCheckListTable(schemaName, sequelize);
       await this.createCheckListItemTable(schemaName, sequelize);
       await this.createActivitiesTable(schemaName, sequelize);
@@ -1429,6 +1430,31 @@ class SchemaService {
 
     await sequelize.query(
       rawQueries.getCreateNotesTimelineTableQuery(schemaName)
+    );
+
+    const fieldsToIndex = [
+      "created_by",
+      "modified_by",
+      "attachment_level",
+      "event_type",
+      "event_status",
+      "event_datetime"
+    ];
+  
+    for (const field of fieldsToIndex) {
+      await sequelize.query(
+        rawQueries.getNotesTimelineIndexQuery(schemaName, field)
+      );
+    }
+  }
+
+   private async createAccountTimelineTable(schemaName: string, sequelize: Sequelize) {
+    await sequelize.query(
+      rawQueries.getCreateAccountTimelineSequenceQuery(schemaName)
+    );
+
+    await sequelize.query(
+      rawQueries.getCreateAccountTimelineTableQuery(schemaName)
     );
 
     const fieldsToIndex = [

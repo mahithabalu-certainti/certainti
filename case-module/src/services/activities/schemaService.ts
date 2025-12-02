@@ -328,13 +328,20 @@ class ActivitySchemaService {
                   await this.caseSchemaService.manageCheckListItems(accountNumber,caseRequest,checklistResponse.rid, transaction);
                 }
             }
-      const [updatedResult] = await Activities.update(taskRequest, {
-        where: {
-          rid: taskRequest.task_rid,
+      // Combine update: include modified_by and modified_datetime in the same update
+      const [updatedResult] = await Activities.update(
+        {
+          ...taskRequest,
+          modified_by: taskRequest.modified_by || userId,
+          modified_datetime: new Date(),
         },
-        transaction,
-      });
-     
+        {
+          where: {
+            rid: taskRequest.task_rid,
+          },
+          transaction,
+        }
+      );
     if(updatedResult > 0) {
        const checkIsDifferentCollaborator = await this.isNewCollaborator(
         userId,
@@ -421,7 +428,6 @@ class ActivitySchemaService {
 
       return updatedResult;
     } catch (error) {
-      console.log(error)
       logMessage(`Error updating task: ${error}`);
       throw new Error("Error updating task: " + error);
     }
@@ -494,7 +500,6 @@ class ActivitySchemaService {
           return null;
         }
       } catch (error) {
-        console.log(error)
         logMessage(`Error creating checklist: ${error}`);
         throw new Error("Error creating checklist: " + error);
       }
@@ -975,7 +980,6 @@ class ActivitySchemaService {
         // Special handling for created_datetime
         if (finalSortBy === "created_datetime" ||
             finalSortBy === "effective_start_datetime" || finalSortBy === "effective_end_datetime") {
-          console.log('Sorting by date field:', finalSortBy);
           const aDate = new Date(a[finalSortBy]).getTime();
           const bDate = new Date(b[finalSortBy]).getTime();
           return finalSortOrder === "ASC" ? aDate - bDate : bDate - aDate;
@@ -1724,7 +1728,7 @@ class ActivitySchemaService {
     const { Activities, ActivityAttachments } =
       await this.caseModelService.getModels(accountNumber);
     if (!this.mainDbSequelize) {
-      this.mainDbSequelize = await this.caseModelService.getSequelize();
+      this.mainDbSequelize = await this.caseModelService.getMainSequelize();
     }
     const [emailStatus]: any[] = await this.mainDbSequelize.query(
       rawQueries.fetchActivityStatusByName(activityRequest.email_status,activityRequest.activity_type),
@@ -1767,6 +1771,8 @@ class ActivitySchemaService {
     const activityData = {
       ...activityRequest,
       activity_type: "Email",
+      modified_by: userId,
+      modified_datetime: new Date(),
       status_rid: emailStatus?.rid || null,
       account_rid:
         activityRequest.accountRid || activityRequest.account_rid || "",
@@ -1985,6 +1991,8 @@ class ActivitySchemaService {
     const activityData = {
       ...activityRequest,
       activity_type: "Call",
+      modified_by: userId,
+      modified_datetime: new Date(),
       account_rid:
         activityRequest.accountRid || activityRequest.account_rid || "",
     };
@@ -2101,6 +2109,8 @@ class ActivitySchemaService {
       effective_end_datetime: activityRequest.effective_end_date,
       meeting_status_rid: meetingStatus?.rid || null,
       meeting_participants: meetingParticipants,
+      modified_by: userId,
+      modified_datetime: new Date(),
       recurrence_days: reOccurenceDays,
       account_rid:
         activityRequest.accountRid || activityRequest.account_rid || "",
@@ -2837,8 +2847,6 @@ class ActivitySchemaService {
       existingCaseData: any,
       activityType?: string
     ) {
-      console.log("Adding activity history new ...",newCaseData);
-        console.log("Adding activity history old...",existingCaseData);
       try {
         const { ActivityHistory } = await this.caseModelService.getModels(
           accountNumber
@@ -2861,8 +2869,7 @@ class ActivitySchemaService {
         const historyChanges = Object.entries(cleanedNewData)
           .filter(([key, newValue]) => {
             const oldValue = existingCaseData[key];
-            console.log(`Comparing field: ${key}, oldValue: ${oldValue}, newValue: ${newValue}`);
-  
+           
             if (newValue == null && oldValue == null) return false;
   
             if (typeof newValue === "number" || typeof oldValue === "number") {
@@ -2872,6 +2879,7 @@ class ActivitySchemaService {
             return String(newValue ?? "") !== String(oldValue ?? "");
           })
           .map(([key, newValue]) => ({
+            account_rid: newCaseData["account_rid"],
             activity_rid: activityId,
             attribute_name: key,
             old_value:
@@ -2886,7 +2894,7 @@ class ActivitySchemaService {
           }));
   
         if (historyChanges.length === 0) return;
-        console.log("History Changes: ", historyChanges);
+
   
         // Use individual create operations to avoid sequence conflicts
         for (const historyChange of historyChanges) {
