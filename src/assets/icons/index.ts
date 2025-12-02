@@ -131,6 +131,7 @@ const icons = {
   draftEmailIcon: () => import('./draft-email-icon.svg?react'),
   meetingIcon: () => import('./meeting-icon.svg?react'),
   taskCreateIcon: () => import('./task-create-icon.svg?react'),
+  paperclipIcon: () => import('./PaperclipIcon.svg?react'),
 };
 
 function createLazySvgIcon(name: keyof typeof icons) {
@@ -269,3 +270,4 @@ export const CallLogIcon = createLazySvgIcon('callLogIcon');
 export const DraftEmailIcon = createLazySvgIcon('draftEmailIcon');
 export const MeetingIcon = createLazySvgIcon('meetingIcon');
 export const TaskCreateIcon = createLazySvgIcon('taskCreateIcon');
+export const PaperclipIcon = createLazySvgIcon('paperclipIcon');
