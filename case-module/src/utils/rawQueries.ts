@@ -410,13 +410,14 @@ pf.project_group,pf.industry_rid,pf.industry_name,pf.status_rid,pf.total_fte_prj
 pf.total_effort_fte_prj,pf.total_effort_subcon_prj,
 pf.total_effort_prj,
 pf.total_cost_fte_prj,pf.total_cost_subcon_prj,pf.total_cost_nonlabor_prj,pf.total_cost_prj,
-pf.total_resources_prj,
+COUNT(prs.rid) AS total_resources_prj,
 COUNT(pt.rid) AS total_tasks,
 COUNT(ats.rid) AS total_technical_summaries,primary_contact.key_contact_name AS project_point_of_contact,
 	primary_contact.key_contact_email as project_point_of_contact_email
 from ${schemaName}.project_fiscal pf
 LEFT JOIN ${schemaName}.project_task pt ON pt.project_fiscal_rid = pf.rid
 LEFT JOIN ${schemaName}.ai_technical_summary ats ON ats.project_fiscal_rid = pf.rid
+LEFT JOIN ${schemaName}.project_resource prs ON prs.project_fiscal_rid = pf.rid
 LEFT JOIN LATERAL (
   SELECT kcd.key_contact_name,
          kcd.key_contact_email

@@ -6142,7 +6142,6 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                 rid : id
               }, raw : true
             });
-            console.log("fetchCommentsAttachmentDetails ====> ", fetchCommentsAttachmentDetails)
             if(fetchCommentsAttachmentDetails) {
               await deleteFromAzureBlob(fetchCommentsAttachmentDetails.browse_file);
               const [deleteCommentsAttachRes] = await CommentsAttachments.update({is_file_deleted : true},{where : {rid : id}})

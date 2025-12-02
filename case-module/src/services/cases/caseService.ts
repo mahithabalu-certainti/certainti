@@ -3094,7 +3094,6 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
         };
       }
       catch (error) {
-        console.log(error)
         logMessage(`Error generating email preview: ${error}`);
          return {
           statusCode: HttpStatus.SUCCESS,

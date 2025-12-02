@@ -119,7 +119,6 @@ export class CaseManagementService {
         },
       };
     } catch (err) {
-      console.log(err);
       logMessage(`Error creating admin checklist: ${err}`);
       await transaction.rollback();
       return {
