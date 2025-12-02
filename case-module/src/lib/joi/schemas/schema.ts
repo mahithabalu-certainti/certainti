@@ -17,7 +17,7 @@ const createCaseSchema = Joi.object({
   heat_light_power:Joi.string()
   .pattern(decimal18_2Regex)
   .messages({
-    "string.pattern.base": "Heat Light Powermust have up to 16 digits before the decimal and up to 2 decimal places",
+    "string.pattern.base": "Heat Light Power must have up to 16 digits before the decimal and up to 2 decimal places",
   })
   .custom((value, helpers) => {
     try {
@@ -31,14 +31,14 @@ const createCaseSchema = Joi.object({
     }
   })
   .messages({
-    "any.invalid": "Total Effort must be a valid positive number",
+    "any.invalid": "Heat Light Power must be a valid positive number",
   })
   .optional()
   .allow(null),
   total_nonlabor_cost:Joi.string()
   .pattern(decimal18_2Regex)
   .messages({
-    "string.pattern.base": "Heat Light Powermust have up to 16 digits before the decimal and up to 2 decimal places",
+    "string.pattern.base": "Total Nonlabor Cost must have up to 16 digits before the decimal and up to 2 decimal places",
   })
   .custom((value, helpers) => {
     try {
@@ -52,14 +52,14 @@ const createCaseSchema = Joi.object({
     }
   })
   .messages({
-    "any.invalid": "Total Effort must be a valid positive number",
+    "any.invalid": "Total Nonlabor Cost must be a valid positive number",
   })
   .optional()
   .allow(null),
   tax_liability: Joi.string()
   .pattern(decimal18_2Regex)
   .messages({
-    "string.pattern.base": "Heat Light Powermust have up to 16 digits before the decimal and up to 2 decimal places",
+    "string.pattern.base": "Tax Liability must have up to 16 digits before the decimal and up to 2 decimal places",
   })
   .custom((value, helpers) => {
     try {
@@ -73,7 +73,7 @@ const createCaseSchema = Joi.object({
     }
   })
   .messages({
-    "any.invalid": "Total Effort must be a valid positive number",
+    "any.invalid": "Tax Liability must be a valid positive number",
   })
   .optional()
   .allow(null),
@@ -95,7 +95,7 @@ const updateCaseSchema = Joi.object({
  heat_light_power:Joi.string()
   .pattern(decimal18_2Regex)
   .messages({
-    "string.pattern.base": "Heat Light Powermust have up to 16 digits before the decimal and up to 2 decimal places",
+    "string.pattern.base": "Heat Light Power must have up to 16 digits before the decimal and up to 2 decimal places",
   })
   .custom((value, helpers) => {
     try {
@@ -109,14 +109,14 @@ const updateCaseSchema = Joi.object({
     }
   })
   .messages({
-    "any.invalid": "Total Effort must be a valid positive number",
+    "any.invalid": "Heat Light Power must be a valid positive number",
   })
   .optional()
   .allow(null),
   total_nonlabor_cost:Joi.string()
   .pattern(decimal18_2Regex)
   .messages({
-    "string.pattern.base": "Heat Light Powermust have up to 16 digits before the decimal and up to 2 decimal places",
+    "string.pattern.base": "Total Nonlabor Cost must have up to 16 digits before the decimal and up to 2 decimal places",
   })
   .custom((value, helpers) => {
     try {
@@ -130,14 +130,14 @@ const updateCaseSchema = Joi.object({
     }
   })
   .messages({
-    "any.invalid": "Total Effort must be a valid positive number",
+    "any.invalid": "Total Nonlabor Cost must be a valid positive number",
   })
   .optional()
   .allow(null),
   tax_liability: Joi.string()
   .pattern(decimal18_2Regex)
   .messages({
-    "string.pattern.base": "Heat Light Powermust have up to 16 digits before the decimal and up to 2 decimal places",
+    "string.pattern.base": "Tax Liability must have up to 16 digits before the decimal and up to 2 decimal places",
   })
   .custom((value, helpers) => {
     try {
@@ -151,7 +151,7 @@ const updateCaseSchema = Joi.object({
     }
   })
   .messages({
-    "any.invalid": "Total Effort must be a valid positive number",
+    "any.invalid": "Tax Liability must be a valid positive number",
   })
   .optional()
   .allow(null),
