@@ -982,9 +982,9 @@ export class CaseService {
             project_point_of_contact: d.project_point_of_contact,
             project_technical_point_of_contact:
               d.project_technical_point_of_contact,
-            currency_rid: fetchCurrencyDetails.rid,
-            currency_code: fetchCurrencyDetails.currency_code,
-            currency_symbol: fetchCurrencyDetails.currency_symbol,
+            currency_rid: fetchCurrencyDetails == null ? null : fetchCurrencyDetails.rid,
+            currency_code: fetchCurrencyDetails == null ? null : fetchCurrencyDetails.currency_code,
+            currency_symbol: fetchCurrencyDetails == null ? null : fetchCurrencyDetails.currency_symbol,
           };
         });
         return {
