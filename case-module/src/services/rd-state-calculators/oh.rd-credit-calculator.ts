@@ -129,10 +129,14 @@ export class RdCreditCalculatorForOH {
             contract: currentYearQREs.contract
         };
 
-        // Add prior 3 years QREs
-        prior3YearsQREs.forEach((item, i) => {
-            qreSummary[`prior_year_qre_${i + 1}`] = item.qre || 0;
+        prior3YearsQREs.forEach((item) => {
+            qreSummary[`${item.fiscalYear}`] = {
+                wages: item.wages,
+                contract: item.contract,
+                sum: new Decimal(item.wages || 0).plus(Number(item.contract || 0))
+            }
         });
+
 
 
         return {

@@ -219,10 +219,14 @@ export class RdCreditCalculatorForMA {
             qreSummary[`prior_year_gross_receipts_${i + 1}`] = item.grossReceipts || 0;
         });
 
-        // Add prior 3 years QREs
-        prior3YearsQREs.forEach((item, i) => {
-            qreSummary[`prior_year_qre_${i + 1}`] = item.qre || 0;
+        prior3YearsQREs.forEach((item) => {
+            qreSummary[`${item.fiscalYear}`] = {
+                wages: item.wages,
+                contract: item.contract,
+                sum: new Decimal(item.wages || 0).plus(Number(item.contract || 0))
+            }
         });
+
 
 
         return {

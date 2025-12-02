@@ -1,20 +1,22 @@
 import { Decimal } from "decimal.js";
 import { logMessage } from "../../utils/helpers";
 import FinancialRDPreviewService from "../financialRDCredit/financialRDPreviewService"
+import { diff } from "util";
 
 export interface ConfigJson {
-    credit_rate: number;
-    carry_forward_credit_rate: number;
     sub_con_percent: number;
+    credit_rate: number;
+    fixed_base_percentage: number;
+    credit_earned: number;
 }
 
 /**
  * 
  */
-export class RdCreditCalculatorForSC {
+export class RdCreditCalculatorForID {
 
     country = "USA";
-    creditType = "State R&D Credit - SC";
+    creditType = "State R&D Credit - ID";
     currency = "USD";
 
     private financialRDPreviewService: FinancialRDPreviewService;
@@ -22,7 +24,7 @@ export class RdCreditCalculatorForSC {
 
     constructor() {
         this.financialRDPreviewService = new FinancialRDPreviewService();
-        this.loadData = this.financialRDPreviewService.loadDataForSC()
+        this.loadData = this.financialRDPreviewService.loadDataForID()
     }
 
     /**
@@ -38,19 +40,11 @@ export class RdCreditCalculatorForSC {
         const extractConfig = this.extractConfigJson(config.config_json);
         logMessage(`Computing CO Credit with config: ${JSON.stringify(extractConfig)}`);
 
-        const current_year_wages = new Decimal(currentYearQREs.wages || 0);
-        const current_year_contract = new Decimal(currentYearQREs.contract).mul(extractConfig.sub_con_percent) || 0;
-        const total_current_year_qre = current_year_wages.plus(current_year_contract);
+         currentYearQREs = this.loadData.currentYearQREs;
+        prior3YearsQREs = this.loadData.prior3YearsQREs;
 
-        const current_year_credit = total_current_year_qre.mul(extractConfig.credit_rate);
-        const tot_qre_credit = current_year_credit;
-        const total_tax_liability = new Decimal(currentYearQREs.business_tax_liability);
 
-        const tot_all_credits_other_than_qre = 0;
-        const net_base_amount = total_tax_liability.minus(tot_all_credits_other_than_qre);
-
-        const fifty_percent_credit = net_base_amount.mul(extractConfig.carry_forward_credit_rate);
-        const final_credit = Decimal.min(tot_qre_credit, fifty_percent_credit);
+        const qreCalInfo = this.qreCreditCalculation(currentYearQREs, extractConfig);
 
         const inputFields = await this.buildInputParams(currentYearQREs, prior3YearsQREs, {
             country: this.country,
@@ -58,21 +52,50 @@ export class RdCreditCalculatorForSC {
             currency: this.currency,
         });
 
-        const computeFieldsResp = {
-            total_current_year_qre,
-            current_year_credit,
-            tot_qre_credit,
-            total_tax_liability,
-            net_base_amount,
-            fifty_percent_credit,
-            final_credit
-
-        }
-        const computedFields = await this.buildComputedFields(computeFieldsResp);
+        const computedFields = await this.buildComputedFields(qreCalInfo);
 
         return {
             inputFields,
             computedFields
+        }
+    }
+
+    /**
+     * 
+     * @param currentYearQREs 
+     * @param config 
+     */
+    qreCreditCalculation(currentYearQREs: any, config: ConfigJson) {
+        const current_year_wages = new Decimal(currentYearQREs.wages || 0);
+        const current_year_contract = new Decimal(currentYearQREs.contract).mul(config.sub_con_percent) || 0;
+
+        const supplies = 0;
+        const cost_to_rent = 0;
+
+        const total_current_year_qre = current_year_wages.plus(current_year_contract);
+        const fixed_base_percentage = config.fixed_base_percentage * 100;
+        const average_annual_gross_receipts = 0;
+        const base_amount = new Decimal(0);
+        const difference = total_current_year_qre.minus(base_amount);
+        const credit_rate_percent = total_current_year_qre.mul(config.credit_rate);
+        const min_credit_rate = Decimal.min(difference, credit_rate_percent);
+        const tot_base_amount = base_amount.plus(credit_rate_percent);
+        const credit_earned = tot_base_amount.mul(config.credit_earned);
+        const final_credit = credit_earned;
+        const tot_credit_avail = final_credit;
+
+        return {
+            current_year_wages,
+            current_year_contract,
+            total_current_year_qre,
+            fixed_base_percentage,
+            difference,
+            credit_rate_percent,
+            min_credit_rate,
+            tot_base_amount,
+            credit_earned,
+            final_credit,
+            tot_credit_avail
         }
 
     }
@@ -107,12 +130,12 @@ export class RdCreditCalculatorForSC {
     }
 
     /**
-   * 
-   * @param currentYearQREs 
-   * @param prior3YearsQREs 
-   * @param metadata 
-   * @returns 
-   */
+     * 
+     * @param currentYearQREs 
+     * @param prior3YearsQREs 
+     * @param metadata 
+     * @returns 
+     */
     async buildInputParams(currentYearQREs: any, prior3YearsQREs: any[], metadata: any = {}) {
 
         const qreSummary: Record<string, any> = {
@@ -121,6 +144,7 @@ export class RdCreditCalculatorForSC {
             contract: currentYearQREs.contract
         };
 
+        // Add prior 3 years QREs
         prior3YearsQREs.forEach((item) => {
             qreSummary[`${item.fiscalYear}`] = {
                 wages: item.wages,
@@ -128,7 +152,6 @@ export class RdCreditCalculatorForSC {
                 sum: new Decimal(item.wages || 0).plus(Number(item.contract || 0))
             }
         });
-
 
         return {
             metadata: {
@@ -146,10 +169,10 @@ export class RdCreditCalculatorForSC {
      * @param part5DevelopmentTaxCreditCalculationInfo 
      * @returns 
      */
-    buildComputedFields(computeFieldsResp: any) {
+    buildComputedFields(qretInfo: any) {
         return {
             computed_fields: {
-                credit_calculation: computeFieldsResp
+                qre: qretInfo
             }
         }
     }

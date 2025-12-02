@@ -230,6 +230,32 @@ class FinancialRDPreviewService {
         }
 
     }
+
+    loadDataForID() {
+        //This can used inside the compute method
+        // currentYearQREs = this.loadData.currentYearQREs;
+        // prior3YearsQREs = this.loadData.prior3YearsQREs;
+
+
+        const prior3YearsQREs: any[] = [
+            { fiscalYear: 2024, wages: 80000, contract: 50000 },
+            { fiscalYear: 2023, wages: 60000, contract: 40000 },
+            { fiscalYear: 2022, wages: 50000, contract: 25000 }
+        ];
+
+        const currentYearQREs = {
+            wages: 100000,
+            supplies: 0,
+            contract: 100000,
+            business_tax_liability: 0
+        }
+
+        return {
+            prior3YearsQREs,
+            currentYearQREs
+        }
+
+    }
 }
 
 export default FinancialRDPreviewService;

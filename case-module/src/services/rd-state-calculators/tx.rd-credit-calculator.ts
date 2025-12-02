@@ -123,12 +123,12 @@ export class RdCreditCalculatorForTX {
         const credit_eq_zero = new Decimal(qretInfo.qret_high_edu_contract).eq(0) ? difference.mul(config.qre_rate_5pct) : "N/A";
         const credit_gt_zero = new Decimal(qretInfo.qret_high_edu_contract).gt(0) ? difference.mul(config.qre_rate_6_25pct) : "N/A";
         return {
-            average_prev_year_qre : this.round2(average_prev_year_qre),
+            average_prev_year_qre: this.round2(average_prev_year_qre),
             average_qret_rate_50pct: this.round2(average_qret_rate_50pct),
             difference: this.round2(difference),
-            credit_eq_zero : credit_eq_zero instanceof Decimal ? this.round2(credit_eq_zero).toNumber() : credit_eq_zero,
-            credit_gt_zero : credit_gt_zero instanceof Decimal ? this.round2(credit_gt_zero).toNumber() : credit_gt_zero
-          
+            credit_eq_zero: credit_eq_zero instanceof Decimal ? this.round2(credit_eq_zero).toNumber() : credit_eq_zero,
+            credit_gt_zero: credit_gt_zero instanceof Decimal ? this.round2(credit_gt_zero).toNumber() : credit_gt_zero
+
         }
 
     }
@@ -144,8 +144,8 @@ export class RdCreditCalculatorForTX {
         const credit_eq_zero = new Decimal(qretInfo.qret_high_edu_contract).eq(0) ? average_prev_year_qre.mul(config.wages_rate_2_5pct) : "N/A";
         const credit_gt_zero = new Decimal(qretInfo.qret_high_edu_contract).gt(0) ? average_prev_year_qre.mul(config.wages_rate_3_125pct) : "N/A";
         return {
-            credit_eq_zero : credit_eq_zero instanceof Decimal ? this.round2(credit_eq_zero).toNumber() : credit_eq_zero,
-            credit_gt_zero : credit_gt_zero instanceof Decimal ? this.round2(credit_gt_zero).toNumber() : credit_gt_zero
+            credit_eq_zero: credit_eq_zero instanceof Decimal ? this.round2(credit_eq_zero).toNumber() : credit_eq_zero,
+            credit_gt_zero: credit_gt_zero instanceof Decimal ? this.round2(credit_gt_zero).toNumber() : credit_gt_zero
         }
     }
 
@@ -224,8 +224,12 @@ export class RdCreditCalculatorForTX {
         };
 
         // Add prior 3 years QREs
-        prior3YearsQREs.forEach((item, i) => {
-            qreSummary[`prior_year_qre_${i + 1}`] = item.qre || 0;
+        prior3YearsQREs.forEach((item) => {
+            qreSummary[`${item.fiscalYear}`] = {
+                wages: item.wages,
+                contract: item.contract,
+                sum: new Decimal(item.wages || 0).plus(Number(item.contract || 0))
+            }
         });
 
 
