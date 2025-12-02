@@ -182,9 +182,9 @@ export interface CaseFormPayload {
   case_startdate: string;
   planned_submission_date: string;
   statutory_submission_date: string;
-  heat_light_power?: string;
-  total_nonlabor_cost?: string;
-  tax_liability?: string;
+  heat_light_power?: string | null;
+  total_nonlabor_cost?: string | null;
+  tax_liability?: string | null;
 }
 
 export interface updateCaseJurisdictionPayload {
