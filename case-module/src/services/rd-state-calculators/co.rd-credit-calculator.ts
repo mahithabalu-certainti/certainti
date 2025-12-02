@@ -1,5 +1,7 @@
 import { Decimal } from "decimal.js";
 import { logMessage } from "../../utils/helpers";
+import { StateRDData } from "../financialRDCredit/rdCreditTypes";
+import { StateMockDataLoadMap } from "../financialRDCredit/rdDataLoadMockService";
 
 /**
  * Colorado RD Credit Calculator
@@ -15,20 +17,30 @@ export class RdCreditCalculatorForCO {
     creditType = "State R&D Credit - CO";
     currency = "USD";
 
-    async compute(config: ConfigJson, currentYearQREs: any, annualGrossReceipts: any[], totalGrossReceipts: Decimal, prior3YearsQREs: { fiscalYear: number; qre: number }[], priorYearsCount: number) {
-        const wages = currentYearQREs.wages || 0;
-        const supplies = currentYearQREs.supplies || 0;
+    /**
+     * 
+     * @param config 
+     * @param stateRdData 
+     * @param totalGrossReceipts 
+     * @param priorYearsCount 
+     * To load mock Data : stateRdData = StateMockDataLoadMap["CO"]!;
+     * @returns 
+     */
+    async compute(config: ConfigJson, stateRdData: StateRDData, totalGrossReceipts: Decimal, priorYearsCount: number) {
+        stateRdData = StateMockDataLoadMap["CO"]!;
+        const wages = stateRdData.currentYearQREs.wages || 0;
+        const supplies = stateRdData.currentYearQREs.supplies || 0;
         const costToRent = 0;
-        const contract = currentYearQREs.contract || 0;
+        const contract = stateRdData.currentYearQREs.contract || 0;
 
         //---- Line A: Total QREs
         const totalQREs = new Decimal(wages).plus(new Decimal(supplies)).plus(new Decimal(costToRent)).plus(new Decimal(contract));
 
         //---- Line B: PriorYear 1 QREs
-        const priorYear1QREs = new Decimal(prior3YearsQREs[0]?.qre ?? 0);
+        const priorYear1QREs = new Decimal(stateRdData.prior3YearsQREs[0]?.qre ?? 0);
 
         //---- Line C: PriorYear 2 QREs
-        const priorYear2QREs = new Decimal(prior3YearsQREs[1]?.qre ?? 0);
+        const priorYear2QREs = new Decimal(stateRdData.prior3YearsQREs[1]?.qre ?? 0);
 
         //---- Line D: Sum of Prior Year 1 and 2 QREs
         const sumPriorTwoYears = new Decimal(priorYear1QREs).plus(new Decimal(priorYear2QREs));

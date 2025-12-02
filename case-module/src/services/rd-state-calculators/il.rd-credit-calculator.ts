@@ -1,6 +1,5 @@
 import { Decimal } from "decimal.js";
-import { logMessage } from "../../utils/helpers";
-import FinancialRDPreviewService from "../financialRDCredit/financialRDPreviewService"
+import { QRE, StateRDData } from "../financialRDCredit/rdCreditTypes";
 
 
 export interface ConfigJson {
@@ -14,19 +13,20 @@ export class RdCreditCalculatorForIL {
     creditType = "State R&D Credit - IL";
     currency = "USD";
 
-    private financialRDPreviewService: FinancialRDPreviewService;
-    private loadData: any;
+    /**
+     * 
+     * @param config 
+     * @param stateRdData 
+     * @param totalGrossReceipts 
+     * @param priorYearsCount 
+     * To load mock Data : stateRdData = StateMockDataLoadMap["IL"]!;
+     * @returns 
+     */
+    async compute(config: ConfigJson, stateRdData: StateRDData, totalGrossReceipts: Decimal, priorYearsCount: number) {
+        const columnABasePeriodExpenseInfo = this.columnABasePeriodExpense(stateRdData.currentYearQREs, stateRdData.prior3YearsQREs, config);
+        const columnBCurrentYearExpenseInfo = this.columnBCurrentYearExpense(stateRdData.currentYearQREs, columnABasePeriodExpenseInfo.total_qres, config);
 
-    constructor() {
-        this.financialRDPreviewService = new FinancialRDPreviewService();
-        this.loadData = this.financialRDPreviewService.loadDataForIL()
-    }
-
-    async compute(config: ConfigJson, currentYearQREs: any, annualGrossReceipts: any[], totalGrossReceipts: Decimal, prior3YearsQREs: any[], priorYearsCount: number) {
-        const columnABasePeriodExpenseInfo = this.columnABasePeriodExpense(currentYearQREs, prior3YearsQREs, config);
-        const columnBCurrentYearExpenseInfo = this.columnBCurrentYearExpense(currentYearQREs, columnABasePeriodExpenseInfo.total_qres, config);
-
-        const inputFields = await this.buildInputParams(currentYearQREs, prior3YearsQREs, {
+        const inputFields = await this.buildInputParams(stateRdData.currentYearQREs, stateRdData.prior3YearsQREs, {
             country: this.country,
             creditType: this.creditType,
             currency: this.currency,
@@ -47,7 +47,7 @@ export class RdCreditCalculatorForIL {
      * @param config 
      * @returns 
      */
-    columnABasePeriodExpense(currentYearQREs: any, prior3YearsQREs: any[], config: ConfigJson) {
+    columnABasePeriodExpense(currentYearQREs: QRE, prior3YearsQREs: QRE[], config: ConfigJson) {
 
         //Prior Year wages
         const priorYear1Wages = new Decimal(prior3YearsQREs[0]?.wages ?? 0);
@@ -82,9 +82,9 @@ export class RdCreditCalculatorForIL {
      * @param config 
      * @returns 
      */
-    columnBCurrentYearExpense(currentYearQREs: any, final_total_qres_column_a: number, config: ConfigJson) {
+    columnBCurrentYearExpense(currentYearQREs: QRE, final_total_qres_column_a: number, config: ConfigJson) {
         const current_year_wages = new Decimal(currentYearQREs.wages || 0);
-        const current_year_contract = new Decimal(currentYearQREs.contract).mul(config.sub_con_percent) || 0;
+        const current_year_contract = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent) || 0;
 
         //---Line 28 : D16
         const total_qre = current_year_wages.plus(current_year_contract);
@@ -111,7 +111,7 @@ export class RdCreditCalculatorForIL {
      * @param metadata 
      * @returns 
      */
-    async buildInputParams(currentYearQREs: any, prior3YearsQREs: any[], metadata: any = {}) {
+    async buildInputParams(currentYearQREs: QRE, prior3YearsQREs: QRE[], metadata: any = {}) {
 
         const qreSummary: Record<string, any> = {
             wages: currentYearQREs.wages,
@@ -173,11 +173,11 @@ export class RdCreditCalculatorForIL {
         }
     }
 
-     /**
-     * 
-     * @param value 
-     * @returns 
-     */
+    /**
+    * 
+    * @param value 
+    * @returns 
+    */
     round2(value: Decimal | number): Decimal {
         return new Decimal(value).toDecimalPlaces(2);
     }

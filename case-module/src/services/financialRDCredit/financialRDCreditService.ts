@@ -11,6 +11,7 @@ import { Decimal } from "decimal.js";
 import { Any } from "currency.js";
 import { log } from "console";
 import { stateCalculators } from "../rd-state-calculators";
+import { AnnualGrossReceipt, QRE, StateRDData } from "./rdCreditTypes";
 
 // Type definition for the config JSON
 export interface ConfigJson {
@@ -21,7 +22,6 @@ export interface ConfigJson {
     fixed_base_percentage: number;
     qre_cap_rate: number;
 }
-
 
 /**
  * 
@@ -144,7 +144,7 @@ export class FinancialRDCreditService {
      * @param configAsc 
      * @returns 
      */
-    async calculateASC(totalQRE: Decimal, prior3YearsQREs: { fiscalYear: number; qre: number }[], configAsc: ConfigJson) {
+    async calculateASC(totalQRE: Decimal, prior3YearsQREs: QRE[], configAsc: ConfigJson) {
         logMessage(`Calculating ASC with totalQRE: ${totalQRE}, prior3YearsQREs: ${JSON.stringify(prior3YearsQREs)}, configAsc: ${JSON.stringify(configAsc)}`);
         // ---- Line 21: Prior 3 years QRE total ----
         const line21 = new Decimal(prior3YearsQREs.reduce((sum, y) => sum + (y.qre || 0), 0));
@@ -292,7 +292,7 @@ export class FinancialRDCreditService {
      * @param metadata 
      * @returns 
      */
-    async buildInputParams(currentYearQREs: any, prior3YearsQREs: any[], annualGrossReceipts: any[], metadata: any = {}) {
+    async buildInputParams(currentYearQREs: QRE, prior3YearsQREs: QRE[], annualGrossReceipts: AnnualGrossReceipt[], metadata: any = {}) {
 
         const qreSummary: Record<string, any> = {
             wages: currentYearQREs.wages,
@@ -390,7 +390,7 @@ export class FinancialRDCreditService {
 
             const currentYearQREs = await this.rdCreditSchemaService.getCurrentYearQREs(caseRid, schemaName, orgDb); //current yer QREs
             logMessage(`CurrentYearQREs: ${JSON.stringify(currentYearQREs)}`);
-            
+
             const prior3YearsQREs = await this.rdCreditSchemaService.getPrior3YearQREs(accountRid, 3, schemaName, currentFiscalYear, orgDb);// prior 3 years QREs
             logMessage(`Prior3YearQREs: ${JSON.stringify(prior3YearsQREs)}`);
 
@@ -399,14 +399,16 @@ export class FinancialRDCreditService {
                 (sum, r) => sum + (r.grossReceipts || 0), 0));
             logMessage(`AnnualGrossReceipts: ${JSON.stringify(annualGrossReceipts)}`);
 
+            const stateRDData = await this.getStateRDData(currentYearQREs, prior3YearsQREs, annualGrossReceipts);
+
             // Iterate through each 36 state configuration and compute credits
             for (const config of configStateLevel) {
-                const calculator = stateCalculators[config.state_code];
+                const stateComputation = stateCalculators[config.state_code];
                 const extractConfig = this.extractConfigJson(config.config_json);
                 logMessage(`Computing credit with config: ${JSON.stringify(extractConfig)}`);
 
-                if (calculator) {
-                    const result = await calculator.compute(extractConfig, currentYearQREs, annualGrossReceipts, totalGrossReceipts, prior3YearsQREs, 4);
+                if (stateComputation) {
+                    const result = await stateComputation.compute(extractConfig, stateRDData , totalGrossReceipts, 4);
                     logMessage(`Result for ${config.state_code}: ${JSON.stringify(result)}`);
                     this.rdCreditSchemaService.insertRDStateCreditCalculation(accountNumber, caseRid, "USA", config.state_code, result.inputFields, result.computedFields);
                 } else {
@@ -428,6 +430,21 @@ export class FinancialRDCreditService {
                 message: HttpStatus.FAILED_MESSAGE,
                 errorMessage: STATUS_MESSAGE.jurisdictionFetchedFailed || "Failed to fetch",
             };
+        }
+    }
+
+    /**
+     * 
+     * @param currentYearQREs 
+     * @param prior3YearsQREs 
+     * @param annualGrossReceipts 
+     * @returns 
+     */
+    async getStateRDData(currentYearQREs: QRE, prior3YearsQREs: QRE[], annualGrossReceipts: AnnualGrossReceipt[]): Promise<StateRDData> {
+        return {
+            currentYearQREs,
+            prior3YearsQREs,
+            annualGrossReceipts
         }
     }
 

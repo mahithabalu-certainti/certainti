@@ -6,6 +6,7 @@ import { initOrgSequelize } from "../../config/orgDataSource";
 import {
     MAIN_SCHEMA_NAME,
 } from "../../utils/constants";
+import { QRE, AnnualGrossReceipt } from "./rdCreditTypes";
 
 class RDCreditSchemaService {
     private caseModelService: CaseModelService;
@@ -66,7 +67,7 @@ class RDCreditSchemaService {
      * @param orgDbSequelize 
      * @returns 
      */
-    async getCurrentYearQREs(caseRid: string, schemaName: string, orgDbSequelize: Sequelize) {
+    async getCurrentYearQREs(caseRid: string, schemaName: string, orgDbSequelize: Sequelize): Promise<QRE> {
         try {
             if (!this.orgDbSequelize) {
                 this.orgDbSequelize = await initOrgSequelize();
@@ -113,7 +114,7 @@ class RDCreditSchemaService {
      * @param orgDbSequelize 
      * @returns 
      */
-    async getAnnualGrossReceipts(accountRid: string, prior: number, schemaName: string, orgDbSequelize: Sequelize) {
+    async getAnnualGrossReceipts(accountRid: string, prior: number, schemaName: string, orgDbSequelize: Sequelize) : Promise<AnnualGrossReceipt[]>{
         try {
             if (!this.orgDbSequelize) {
                 this.orgDbSequelize = await initOrgSequelize();
@@ -154,7 +155,7 @@ class RDCreditSchemaService {
      * @param orgDbSequelize 
      * @returns 
      */
-    async getPrior3YearQREs(accountRid: string, prior: number = 3, schemaName: string, currentFiscalYear: number, orgDbSequelize: Sequelize) {
+    async getPrior3YearQREs(accountRid: string, prior: number = 3, schemaName: string, currentFiscalYear: number, orgDbSequelize: Sequelize): Promise<QRE[]> {
         try {
             if (!this.orgDbSequelize) {
                 this.orgDbSequelize = await initOrgSequelize();

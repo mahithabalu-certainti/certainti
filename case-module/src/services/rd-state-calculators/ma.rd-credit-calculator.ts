@@ -1,6 +1,5 @@
 import { Decimal } from "decimal.js";
-import { logMessage } from "../../utils/helpers";
-import FinancialRDPreviewService from "../financialRDCredit/financialRDPreviewService"
+import { AnnualGrossReceipt, QRE, StateRDData } from "../financialRDCredit/rdCreditTypes";
 
 
 export interface ConfigJson {
@@ -19,15 +18,6 @@ export class RdCreditCalculatorForMA {
     creditType = "State R&D Credit - MA";
     currency = "USD";
 
-
-    private financialRDPreviewService: FinancialRDPreviewService;
-    private loadData: any;
-
-    constructor() {
-        this.financialRDPreviewService = new FinancialRDPreviewService();
-        this.loadData = this.financialRDPreviewService.loadDataForMA()
-    }
-
     /**
      * 
      * @param config 
@@ -36,14 +26,15 @@ export class RdCreditCalculatorForMA {
      * @param totalGrossReceipts 
      * @param prior3YearsQREs 
      * @param priorYearsCount 
+     * To load mock Data : stateRdData = StateMockDataLoadMap["MA"]!;
      * @returns 
      */
-    async compute(config: ConfigJson, currentYearQREs: any, annualGrossReceipts: any[], totalGrossReceipts: Decimal, prior3YearsQREs: any[], priorYearsCount: number) {    
-        const part1QualifiedResearchExpenseInfo = this.part1QualifiedResearchExpense(currentYearQREs, config);
-        const part2ASCCreditCalculationInfo = this.part2ASCCreditCalculation(prior3YearsQREs, part1QualifiedResearchExpenseInfo.total_qre, part1QualifiedResearchExpenseInfo.total_qre_aggregate, config);
-        const part3CreditCalInfo = this.part3CreditCalculation(annualGrossReceipts, part2ASCCreditCalculationInfo.aggregate_group_credit_percent, config);
+    async compute(config: ConfigJson, stateRdData: StateRDData, totalGrossReceipts: Decimal, priorYearsCount: number) {
+        const part1QualifiedResearchExpenseInfo = this.part1QualifiedResearchExpense(stateRdData.currentYearQREs, config);
+        const part2ASCCreditCalculationInfo = this.part2ASCCreditCalculation(stateRdData.prior3YearsQREs, part1QualifiedResearchExpenseInfo.total_qre, part1QualifiedResearchExpenseInfo.total_qre_aggregate, config);
+        const part3CreditCalInfo = this.part3CreditCalculation(stateRdData.annualGrossReceipts || [], part2ASCCreditCalculationInfo.aggregate_group_credit_percent, config);
 
-        const inputFields = await this.buildInputParams(currentYearQREs, prior3YearsQREs, annualGrossReceipts, {
+        const inputFields = await this.buildInputParams(stateRdData.currentYearQREs, stateRdData.prior3YearsQREs, stateRdData.annualGrossReceipts || [], {
             country: this.country,
             creditType: this.creditType,
             currency: this.currency,
@@ -64,9 +55,9 @@ export class RdCreditCalculatorForMA {
      * @param config 
      * @returns 
      */
-    part1QualifiedResearchExpense(currentYearQREs: any, config: ConfigJson) {
+    part1QualifiedResearchExpense(currentYearQREs: QRE, config: ConfigJson) {
         const current_year_wages = new Decimal(currentYearQREs.wages || 0);
-        const current_year_contract = new Decimal(currentYearQREs.contract).mul(config.sub_con_percent) || 0;
+        const current_year_contract = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent) || 0;
 
         const total_qre = current_year_wages.plus(current_year_contract);
 
@@ -88,7 +79,7 @@ export class RdCreditCalculatorForMA {
      * @param config 
      * @returns 
      */
-    part2ASCCreditCalculation(prior3YearsQREs: any[], part1TotalQre: Decimal, part1TotalQreAgg: Decimal, config: ConfigJson) {
+    part2ASCCreditCalculation(prior3YearsQREs: QRE[], part1TotalQre: Decimal, part1TotalQreAgg: Decimal, config: ConfigJson) {
 
         const qreSum = prior3YearsQREs.map(item => ({
             fiscalYear: item.fiscalYear,
@@ -128,7 +119,7 @@ export class RdCreditCalculatorForMA {
      * @param config 
      * @returns 
      */
-    part3CreditCalculation(annualGrossReceipts: any[], aggregate_group_credit_percent: Decimal, config: ConfigJson) {
+    part3CreditCalculation(annualGrossReceipts: AnnualGrossReceipt[], aggregate_group_credit_percent: Decimal, config: ConfigJson) {
 
         const currentFiscalYear = this.getCurrentFiscalYear();
         // Filter out current year
@@ -204,7 +195,7 @@ export class RdCreditCalculatorForMA {
     * @param metadata 
     * @returns 
     */
-    async buildInputParams(currentYearQREs: any, prior3YearsQREs: any[], annualGrossReceipts: any[], metadata: any = {}) {
+    async buildInputParams(currentYearQREs: QRE, prior3YearsQREs: QRE[], annualGrossReceipts: any[], metadata: any = {}) {
 
         const qreSummary: Record<string, any> = {
             wages: currentYearQREs.wages,

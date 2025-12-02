@@ -1,6 +1,5 @@
 import { Decimal } from "decimal.js";
-import { logMessage } from "../../utils/helpers";
-import FinancialRDPreviewService from "../financialRDCredit/financialRDPreviewService"
+import { AnnualGrossReceipt, QRE, StateRDData } from "../financialRDCredit/rdCreditTypes";
 
 
 export interface ConfigJson {
@@ -18,22 +17,23 @@ export class RdCreditCalculatorForGA {
     creditType = "State R&D Credit - GA";
     currency = "USD";
 
-    private financialRDPreviewService: FinancialRDPreviewService;
-    private loadData: any;
-
-    constructor() {
-        this.financialRDPreviewService = new FinancialRDPreviewService();
-        this.loadData = this.financialRDPreviewService.loadDataForGA()
-    }
-
-    async compute(config: ConfigJson, currentYearQREs: any, annualGrossReceipts: any[], totalGrossReceipts: Decimal, prior3YearsQREs: { fiscalYear: number; qre: number }[], priorYearsCount: number) {
-        const inputInfo = this.computeInputInformation(currentYearQREs, annualGrossReceipts);
-        const ratioCalculationInfo = this.ratioCalculation(prior3YearsQREs, annualGrossReceipts);
+    /**
+     * 
+     * @param config 
+     * @param stateRdData 
+     * @param totalGrossReceipts 
+     * @param priorYearsCount 
+     * To load mock Data : stateRdData = StateMockDataLoadMap["GA"]!;
+     * @returns 
+     */
+    async compute(config: ConfigJson, stateRdData: StateRDData, totalGrossReceipts: Decimal, priorYearsCount: number) {
+        const inputInfo = this.computeInputInformation(stateRdData.currentYearQREs, stateRdData.annualGrossReceipts || []);
+        const ratioCalculationInfo = this.ratioCalculation(stateRdData.prior3YearsQREs, stateRdData.annualGrossReceipts || []);
         const baseAmountInfo = this.taxBaseCalculation(inputInfo.curent_year_gross_receipts, ratioCalculationInfo.average_ratio, config);
         const taxCreditInfo = this.taxCreditCalculation(inputInfo.current_year_qre, baseAmountInfo.base_amount, config);
         const creditAndCarryForwardInfo = this.creditAndCreditForwardCalculation(inputInfo.current_year_tax_liability, new Decimal(taxCreditInfo.tax_credit), config);
 
-        const inputFields = await this.buildInputParams(currentYearQREs, prior3YearsQREs, annualGrossReceipts, {
+        const inputFields = await this.buildInputParams(stateRdData.currentYearQREs, stateRdData.prior3YearsQREs, stateRdData.annualGrossReceipts || [], {
             country: this.country,
             creditType: this.creditType,
             currency: this.currency,
@@ -53,7 +53,7 @@ export class RdCreditCalculatorForGA {
      * @param annualGrossReceipts 
      * @returns 
      */
-    computeInputInformation(currentYearQREs: any, annualGrossReceipts: any[]) {
+    computeInputInformation(currentYearQREs: QRE, annualGrossReceipts: AnnualGrossReceipt[]) {
         const wages = currentYearQREs.wages || 0;
         const supplies = currentYearQREs.supplies || 0;
         const contract = currentYearQREs.contract || 0;
@@ -91,7 +91,7 @@ export class RdCreditCalculatorForGA {
      * @param annualGrossReceipts 
      * @returns 
      */
-    ratioCalculation(prior3YearsQREs: { fiscalYear: number; qre: number }[], annualGrossReceipts: any[]) {
+    ratioCalculation(prior3YearsQREs: QRE[], annualGrossReceipts: AnnualGrossReceipt[]) {
 
         const details = prior3YearsQREs.map(qreItem => {
 
@@ -226,7 +226,7 @@ export class RdCreditCalculatorForGA {
      * @param metadata 
      * @returns 
      */
-    async buildInputParams(currentYearQREs: any, prior3YearsQREs: any[], annualGrossReceipts: any[], metadata: any = {}) {
+    async buildInputParams(currentYearQREs: QRE, prior3YearsQREs: QRE[], annualGrossReceipts: AnnualGrossReceipt[], metadata: any = {}) {
 
         const qreSummary: Record<string, any> = {
             wages: currentYearQREs.wages,

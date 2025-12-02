@@ -1,7 +1,6 @@
 import { Decimal } from "decimal.js";
 import { logMessage } from "../../utils/helpers";
-import FinancialRDPreviewService from "../financialRDCredit/financialRDPreviewService"
-import { diff } from "util";
+import { QRE, StateRDData } from "../financialRDCredit/rdCreditTypes";
 
 export interface ConfigJson {
     average_qret_rate_50pct: number;
@@ -21,14 +20,6 @@ export class RdCreditCalculatorForTX {
     creditType = "State R&D Credit - TX";
     currency = "USD";
 
-    private financialRDPreviewService: FinancialRDPreviewService;
-    private loadData: any;
-
-    constructor() {
-        this.financialRDPreviewService = new FinancialRDPreviewService();
-        this.loadData = this.financialRDPreviewService.loadDataForTX()
-    }
-
     /**
      * 
      * @param config 
@@ -37,15 +28,16 @@ export class RdCreditCalculatorForTX {
      * @param totalGrossReceipts 
      * @param prior3YearsQREs 
      * @param priorYearsCount 
+     * To load mock Data : stateRdData = StateMockDataLoadMap["TX"]!;
      */
-    async compute(config: ConfigJson, currentYearQREs: any, annualGrossReceipts: any[], totalGrossReceipts: Decimal, prior3YearsQREs: any[], priorYearsCount: number) {
-       
-        const qretInfo = this.creditCalculationQRET(currentYearQREs, prior3YearsQREs, config)
+    async compute(config: ConfigJson, stateRdData: StateRDData, totalGrossReceipts: Decimal, priorYearsCount: number) {
+
+        const qretInfo = this.creditCalculationQRET(stateRdData.currentYearQREs, stateRdData.prior3YearsQREs, config)
         const precedingWithQretInfo = this.precedingCalculationWithQRET(qretInfo, config);
         const precedingWithNoQretInfo = this.precedingCalculationWithNoQRET(qretInfo, precedingWithQretInfo.average_prev_year_qre, config);
         const qreActivitiesCreditInfo = this.qreActivitiesCredit(precedingWithQretInfo.credit_eq_zero, precedingWithQretInfo.credit_gt_zero, precedingWithNoQretInfo.credit_eq_zero, precedingWithNoQretInfo.credit_gt_zero);
 
-        const inputFields = await this.buildInputParams(currentYearQREs, prior3YearsQREs, {
+        const inputFields = await this.buildInputParams(stateRdData.currentYearQREs, stateRdData.prior3YearsQREs, {
             country: this.country,
             creditType: this.creditType,
             currency: this.currency,
@@ -65,9 +57,9 @@ export class RdCreditCalculatorForTX {
      * @param prior3YearsQREs 
      * @param config 
      */
-    creditCalculationQRET(currentYearQREs: any, prior3YearsQREs: any[], config: ConfigJson) {
+    creditCalculationQRET(currentYearQREs: QRE, prior3YearsQREs: QRE[], config: ConfigJson) {
         const current_year_wages = new Decimal(currentYearQREs.wages || 0);
-        const current_year_contract = new Decimal(currentYearQREs.contract).mul(config.sub_con_percent) || 0;
+        const current_year_contract = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent) || 0;
 
         //-----Line1a: Enter Current year QRE for TX State
         const total_current_year_qre = current_year_wages.plus(current_year_contract);
@@ -213,7 +205,7 @@ export class RdCreditCalculatorForTX {
    * @param metadata 
    * @returns 
    */
-    async buildInputParams(currentYearQREs: any, prior3YearsQREs: any[], metadata: any = {}) {
+    async buildInputParams(currentYearQREs: QRE, prior3YearsQREs: QRE[], metadata: any = {}) {
 
         const qreSummary: Record<string, any> = {
             wages: currentYearQREs.wages,

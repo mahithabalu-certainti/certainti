@@ -1,7 +1,7 @@
 import { Decimal } from "decimal.js";
 import { logMessage } from "../../utils/helpers";
-import FinancialRDPreviewService from "../financialRDCredit/financialRDPreviewService"
-
+import { QRE, StateRDData } from "../financialRDCredit/rdCreditTypes";
+import { StateMockDataLoadMap } from "../financialRDCredit/rdDataLoadMockService";
 
 export interface ConfigJson {
     credit_rate: number;
@@ -22,18 +22,20 @@ export class RdCreditCalculatorForCT {
     creditType = "State R&D Credit - CT";
     currency = "USD";
 
-    private financialRDPreviewService: FinancialRDPreviewService;
-    private loadData: any;
-
-    constructor() {
-        this.financialRDPreviewService = new FinancialRDPreviewService();
-        this.loadData = this.financialRDPreviewService.loadDataForCT()
-    }
-
-    async compute(config: ConfigJson, currentYearQREs: any, annualGrossReceipts: any[], totalGrossReceipts: Decimal, prior3YearsQREs: { fiscalYear: number; qre: number }[], priorYearsCount: number) {
-        const part1Computation = this.part1CreditComputation(currentYearQREs, prior3YearsQREs, config);
-        const part1TentativeComputation = this.part1TentativeTaxCreditComputation(currentYearQREs, part1Computation.excess_qre, config);
-        const part2Computation = this.part2CreditComputation(part1TentativeComputation.allowable_tentative_tax_credit, currentYearQREs.business_tax_liability, config);
+    /**
+     * 
+     * @param config 
+     * @param stateRdData 
+     * @param totalGrossReceipts 
+     * @param priorYearsCount 
+     * To load mock Data : stateRdData = StateMockDataLoadMap["CT"]!;
+     * @returns 
+     */
+    async compute(config: ConfigJson, stateRdData: StateRDData, totalGrossReceipts: Decimal, priorYearsCount: number) {
+        stateRdData = StateMockDataLoadMap["CT"]!;
+        const part1Computation = this.part1CreditComputation(stateRdData.currentYearQREs, stateRdData.prior3YearsQREs, config);
+        const part1TentativeComputation = this.part1TentativeTaxCreditComputation(stateRdData.currentYearQREs, part1Computation.excess_qre, config);
+        const part2Computation = this.part2CreditComputation(part1TentativeComputation.allowable_tentative_tax_credit, stateRdData.currentYearQREs.business_tax_liability || 0, config);
 
         const inputFields = await this.buildInputParams(part1Computation.total_qre, part1Computation.prior_year_1_qre, {
             country: this.country,
@@ -54,7 +56,7 @@ export class RdCreditCalculatorForCT {
      * @param prior3YearsQREs 
      * @param extractConfig 
      */
-    part1CreditComputation(currentYearQREs: any, prior3YearsQREs: { fiscalYear: number; qre: number }[], extractConfig: ConfigJson) {
+    part1CreditComputation(currentYearQREs: QRE, prior3YearsQREs: QRE[], extractConfig: ConfigJson) {
         const wages = currentYearQREs.wages || 0;
         const supplies = currentYearQREs.supplies || 0;
         const contract = currentYearQREs.contract || 0;
@@ -87,7 +89,7 @@ export class RdCreditCalculatorForCT {
      * @param extractConfig 
      * @returns 
      */
-    part1TentativeTaxCreditComputation(currentYearQREs: any, excessQRE: Decimal, extractConfig: ConfigJson) {
+    part1TentativeTaxCreditComputation(currentYearQREs: QRE, excessQRE: Decimal, extractConfig: ConfigJson) {
         const wages = currentYearQREs.wages || 0;
         const supplies = currentYearQREs.supplies || 0;
         const contract = currentYearQREs.contract || 0;
@@ -139,7 +141,7 @@ export class RdCreditCalculatorForCT {
         const part2OneThirdRate = part2AllowableTentativeTaxCredit.mul(new Decimal(extractConfig.one_third_rate || 0));
 
         //Line 3: Current Year CT Business Tax Liability 
-        const currentYearCTBusinessTaxLiability = new Decimal(business_tax_liability); 
+        const currentYearCTBusinessTaxLiability = new Decimal(business_tax_liability);
 
         //Line 4: Multiply Line 3 by 50%
         const halfTaxLiability = currentYearCTBusinessTaxLiability.mul(new Decimal(extractConfig.half_tax_liability_rate || 0));

@@ -1,6 +1,7 @@
 import { Decimal } from "decimal.js";
 import { logMessage } from "../../utils/helpers";
-import FinancialRDPreviewService from "../financialRDCredit/financialRDPreviewService"
+import { QRE, StateRDData } from "../financialRDCredit/rdCreditTypes";
+
 
 export interface ConfigJson {
     sub_con_percent: number;
@@ -16,14 +17,6 @@ export class RdCreditCalculatorForOH {
     creditType = "State R&D Credit - OH";
     currency = "USD";
 
-    private financialRDPreviewService: FinancialRDPreviewService;
-    private loadData: any;
-
-    constructor() {
-        this.financialRDPreviewService = new FinancialRDPreviewService();
-        this.loadData = this.financialRDPreviewService.loadDataForOH()
-    }
-
     /**
      * 
      * @param config 
@@ -32,13 +25,14 @@ export class RdCreditCalculatorForOH {
      * @param totalGrossReceipts 
      * @param prior3YearsQREs 
      * @param priorYearsCount 
+     * To load mock Data : stateRdData = StateMockDataLoadMap["OH"]!;
      */
-    async compute(config: ConfigJson, currentYearQREs: any, annualGrossReceipts: any[], totalGrossReceipts: Decimal, prior3YearsQREs: any[], priorYearsCount: number) {
-        const current_year_wages = new Decimal(currentYearQREs.wages || 0);
-        const current_year_contract = new Decimal(currentYearQREs.contract).mul(config.sub_con_percent) || 0;
+    async compute(config: ConfigJson, stateRdData: StateRDData, totalGrossReceipts: Decimal, priorYearsCount: number) {
+        const current_year_wages = new Decimal(stateRdData.currentYearQREs.wages || 0);
+        const current_year_contract = new Decimal(stateRdData.currentYearQREs.contract || 0).mul(config.sub_con_percent) || 0;
         const total_current_year_qre = current_year_wages.plus(current_year_contract);
 
-        const qreSum = prior3YearsQREs.map(item => ({
+        const qreSum = stateRdData.prior3YearsQREs.map(item => ({
             fiscalYear: item.fiscalYear,
             wagesContractSum: new Decimal(item.wages || 0).plus(Number(item.contract || 0))
         }));
@@ -56,7 +50,7 @@ export class RdCreditCalculatorForOH {
 
         const final_credits_earned = final_excess_qre.mul(config.credit_earned_percent);
 
-         const inputFields = await this.buildInputParams(currentYearQREs, prior3YearsQREs, {
+        const inputFields = await this.buildInputParams(stateRdData.currentYearQREs, stateRdData.prior3YearsQREs, {
             country: this.country,
             creditType: this.creditType,
             currency: this.currency,
@@ -69,7 +63,7 @@ export class RdCreditCalculatorForOH {
             average_tot_prev_qre: this.round2(average_tot_prev_qre),
             total_current_year_qre,
             tot_prev_year_qre,
-            final_excess_qre : this.round2(final_excess_qre),
+            final_excess_qre: this.round2(final_excess_qre),
             final_credits_earned: this.round2(final_credits_earned)
         }
         const computedFields = await this.buildComputedFields(computeFieldsResp);
@@ -118,7 +112,7 @@ export class RdCreditCalculatorForOH {
     * @param metadata 
     * @returns 
     */
-    async buildInputParams(currentYearQREs: any, prior3YearsQREs: any[], metadata: any = {}) {
+    async buildInputParams(currentYearQREs: QRE, prior3YearsQREs: QRE[], metadata: any = {}) {
 
         const qreSummary: Record<string, any> = {
             wages: currentYearQREs.wages,

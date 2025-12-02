@@ -1,5 +1,7 @@
 import { Decimal } from "decimal.js";
 import { logMessage } from "../../utils/helpers";
+import { AnnualGrossReceipt, QRE, StateRDData } from "../financialRDCredit/rdCreditTypes";
+import { StateMockDataLoadMap } from "../financialRDCredit/rdDataLoadMockService";
 
 /**
  * Arizona RD Credit Calculator
@@ -29,11 +31,11 @@ export class RdCreditCalculatorForAZ {
      * @param priorYearsCount 
      * @returns 
      */
-    async compute(config: ConfigJson, currentYearQREs: any, annualGrossReceipts: any[], totalGrossReceipts: Decimal, prior3YearsQREs: { fiscalYear: number; qre: number }[], priorYearsCount: number) {
-        const rrcResult = await this.rrc(config, currentYearQREs, totalGrossReceipts, priorYearsCount);
-        const ascResult = await this.asc(config, currentYearQREs, prior3YearsQREs);
+    async compute(config: ConfigJson, stateRdData: StateRDData, totalGrossReceipts: Decimal, priorYearsCount: number) {
+        const rrcResult = await this.rrc(config, stateRdData.currentYearQREs, totalGrossReceipts, priorYearsCount);
+        const ascResult = await this.asc(config, stateRdData.currentYearQREs, stateRdData.prior3YearsQREs);
 
-        const inputFields = await this.buildInputParams(currentYearQREs, prior3YearsQREs, annualGrossReceipts, {
+        const inputFields = await this.buildInputParams(stateRdData.currentYearQREs, stateRdData.prior3YearsQREs, stateRdData.annualGrossReceipts || [], {
             country: this.country,
             creditType: this.creditType,
             currency: this.currency,
@@ -145,7 +147,7 @@ export class RdCreditCalculatorForAZ {
      * @param prior3YearsQREs 
      * @returns 
      */
-    async asc(config: ConfigJson, currentYearQREs: any, prior3YearsQREs: { fiscalYear: number; qre: number }[]) {
+    async asc(config: ConfigJson, currentYearQREs: any, prior3YearsQREs: QRE[]) {
         //---- Line 77:  
         const line77 = currentYearQREs.wages || 0;
 
@@ -228,7 +230,7 @@ export class RdCreditCalculatorForAZ {
      * QREs in any one of those three years, STOP! You do not qualify for the ASC
      * @param prior3YearsQREs 
      */
-    async ascRuleValidation(prior3YearsQREs: { fiscalYear: number; qre: number }[]) {
+    async ascRuleValidation(prior3YearsQREs: QRE[]) {
         // ASC rule validation
         const lessThan3Years = prior3YearsQREs.length < 3;
         const hasZeroQRE = prior3YearsQREs.some(y => y.qre === 0);
@@ -245,7 +247,7 @@ export class RdCreditCalculatorForAZ {
      * @param metadata 
      * @returns 
      */
-    async buildInputParams(currentYearQREs: any, prior3YearsQREs: any[], annualGrossReceipts: any[], metadata: any = {}) {
+    async buildInputParams(currentYearQREs: QRE, prior3YearsQREs: QRE[], annualGrossReceipts: AnnualGrossReceipt[], metadata: any = {}) {
 
         const qreSummary: Record<string, any> = {
             wages: currentYearQREs.wages,

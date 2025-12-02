@@ -1,5 +1,6 @@
 import { Decimal } from "decimal.js";
 import { logMessage } from "../../utils/helpers";
+import { AnnualGrossReceipt, QRE, StateRDData } from "../financialRDCredit/rdCreditTypes";
 
 /**
  * California RD Credit Calculator
@@ -19,11 +20,19 @@ export class RdCreditCalculatorForCA {
     creditType = "State R&D Credit - CA";
     currency = "USD";
 
-    async compute(config: ConfigJson, currentYearQREs: any, annualGrossReceipts: any[], totalGrossReceipts: Decimal, prior3YearsQREs: { fiscalYear: number; qre: number }[], priorYearsCount: number) {
-        const rrcResult = await this.rrc(config, currentYearQREs, totalGrossReceipts, priorYearsCount);
+    /**
+     * 
+     * @param config 
+     * @param stateRdData 
+     * @param totalGrossReceipts 
+     * @param priorYearsCount 
+     * @returns 
+     */
+    async compute(config: ConfigJson, stateRdData: StateRDData, totalGrossReceipts: Decimal, priorYearsCount: number) {
+        const rrcResult = await this.rrc(config, stateRdData.currentYearQREs, totalGrossReceipts, priorYearsCount);
         const ascResult = {}; //California does NOT have ASC, so return {} or null
 
-        const inputFields = await this.buildInputParams(currentYearQREs, annualGrossReceipts, {
+        const inputFields = await this.buildInputParams(stateRdData.currentYearQREs, stateRdData.annualGrossReceipts || [], {
             country: this.country,
             creditType: this.creditType,
             currency: this.creditType,
@@ -44,7 +53,7 @@ export class RdCreditCalculatorForCA {
      * @param priorYearsCount 
      * @returns 
      */
-    async rrc(config: ConfigJson, currentYearQREs: any, totalGrossReceipts: Decimal, priorYearsCount: number) {
+    async rrc(config: ConfigJson, currentYearQREs: QRE, totalGrossReceipts: Decimal, priorYearsCount: number) {
         logMessage(`Computing CA Credit with config: ${JSON.stringify(config)}`);
         logMessage(`Current Year QREs: ${JSON.stringify(currentYearQREs)}`);
 
@@ -58,7 +67,7 @@ export class RdCreditCalculatorForCA {
         const line7 = 0;
 
         //---- Line 8: contract
-        const line8 = new Decimal(currentYearQREs.contract).mul(config.sub_con_percent) || 0;
+        const line8 = new Decimal(currentYearQREs.contract || 0).mul(config.sub_con_percent) || 0;
 
         //---- Line 9: total QREs   
         const line9 = new Decimal(line5).plus(new Decimal(line6)).plus(new Decimal(line7)).plus(new Decimal(line8));
