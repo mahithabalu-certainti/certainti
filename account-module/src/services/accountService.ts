@@ -327,7 +327,6 @@ async accountList(
         repository,
         parentWhereClause
       );
-
       if(search){
         updatedAccount.data = updatedAccount.data?.filter((val: any) => val.child_accounts?.length > 0);
         updatedAccount.total = updatedAccount?.data?.length;
