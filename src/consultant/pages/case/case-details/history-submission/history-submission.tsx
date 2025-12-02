@@ -50,7 +50,7 @@ import {
   COMMON_MENU_PROPS,
   getSelectStyles,
 } from '../../../activities/activities-form/helper';
-import { checkPermission } from '../../../../../common-utils/common-utils';
+import { checkPermission, costDisplay, valueDisplay } from '../../../../../common-utils/common-utils';
 
 const ConfigTabs: ResourceTabs[] = [
   {
@@ -83,17 +83,11 @@ interface FormSubmission extends Omit<historySummary, 'fiscal_year'> {
   fiscal_year: string; // Keep as string for form handling, convert to number for API
 }
 
-const formatNumberWithCommas = (value: string): string => {
-  if (!value) return '';
-  const numericValue = value.replace(/,/g, '');
-  if (!/^\d*\.?\d*$/.test(numericValue)) return value;
-  const parts = numericValue.split('.');
-  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-  return parts.join('.');
-};
+
 
 const removeCommas = (value: string): string => {
-  return value.replace(/,/g, '');
+  // Remove currency symbol and spaces first, then commas
+  return value.replace(/[^0-9.,]/g, '').replace(/,/g, '');
 };
 
 const HistorySubmission: React.FC<CaseTeamProps> = ({
@@ -689,19 +683,19 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
     // Check if there are any changes
     const hasChanges =
       currentSubmission.fiscal_year !==
-        originalSubmission.fiscal_year?.toString() ||
+      originalSubmission.fiscal_year?.toString() ||
       currentSubmission.total_fte_cost !== originalSubmission.total_fte_cost ||
       currentSubmission.total_subcon_cost !==
-        originalSubmission.total_subcon_cost ||
+      originalSubmission.total_subcon_cost ||
       currentSubmission.total_nonlabor_cost !==
-        originalSubmission.total_nonlabor_cost ||
+      originalSubmission.total_nonlabor_cost ||
       currentSubmission.total_project_cost !==
-        originalSubmission.total_project_cost ||
+      originalSubmission.total_project_cost ||
       currentSubmission.total_qre !== originalSubmission.total_qre ||
       currentSubmission.total_rd_credits !==
-        originalSubmission.total_rd_credits ||
+      originalSubmission.total_rd_credits ||
       currentSubmission.annual_gross_receipts !==
-        originalSubmission.annual_gross_receipts;
+      originalSubmission.annual_gross_receipts;
 
     return hasChanges ? 'edit' : 'edit'; // Default to edit if no changes but exists
   }
@@ -867,12 +861,12 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
         showFilter={true}
         contextKey={`case`}
         appliedFilters={{}}
-        setAppliedFilters={() => {}}
+        setAppliedFilters={() => { }}
         setCurrentPage={() => 0}
-        handleFilter={() => {}}
-        handleSorting={() => {}}
+        handleFilter={() => { }}
+        handleSorting={() => { }}
         sortFilterCount={0}
-        setSortFilterCount={() => {}}
+        setSortFilterCount={() => { }}
         showRefresh={false}
         showAddActivity={true}
         activityMenuItems={activityMenuItems}
@@ -931,9 +925,8 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
                 displayEmpty
                 fullWidth
                 size='small'
-                className={`custom-select-no-arrow sm:text-sm ${
-                  selectedRegion === '' ? 'text-[#7D98B6]' : 'text-black'
-                } ${errors?.region ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
+                className={`custom-select-no-arrow sm:text-sm ${selectedRegion === '' ? 'text-[#7D98B6]' : 'text-black'
+                  } ${errors?.region ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
                 MenuProps={COMMON_MENU_PROPS}
                 sx={getSelectStyles(!!errors?.region, selectedRegion === '')}
                 disabled={!isCaseTeamEditable} // Disable based on permission
@@ -1125,9 +1118,9 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
                                     borderColor: '#CBD6E2',
                                   },
                                   '&.Mui-focused .MuiOutlinedInput-notchedOutline':
-                                    {
-                                      borderColor: '#CBD6E2',
-                                    },
+                                  {
+                                    borderColor: '#CBD6E2',
+                                  },
                                 }}
                                 MenuProps={{
                                   PaperProps: {
@@ -1137,7 +1130,7 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
                                       borderRadius: '0px',
                                       width: Math.max(
                                         cellWidths[`fiscal_year-${rowIndex}`] ||
-                                          0,
+                                        0,
                                         150
                                       ),
                                       boxShadow:
@@ -1184,32 +1177,32 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
                             </div>
                             {errors.historicalSubmissions?.[rowIndex]
                               ?.fiscal_year && (
-                              <Tooltip
-                                title={
-                                  errors.historicalSubmissions[rowIndex]
-                                    .fiscal_year
-                                }
-                                arrow
-                                placement='top'
-                                slotProps={{
-                                  tooltip: {
-                                    sx: {
-                                      backgroundColor: '#FEF2F2',
-                                      mr: 1,
+                                <Tooltip
+                                  title={
+                                    errors.historicalSubmissions[rowIndex]
+                                      .fiscal_year
+                                  }
+                                  arrow
+                                  placement='top'
+                                  slotProps={{
+                                    tooltip: {
+                                      sx: {
+                                        backgroundColor: '#FEF2F2',
+                                        mr: 1,
+                                      },
                                     },
-                                  },
-                                }}
-                              >
-                                <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
-                                  <React.Suspense fallback={null}>
-                                    <ErrorInfoIcon
-                                      alt='error'
-                                      className='w-5 h-3.5'
-                                    />
-                                  </React.Suspense>
-                                </span>
-                              </Tooltip>
-                            )}
+                                  }}
+                                >
+                                  <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
+                                    <React.Suspense fallback={null}>
+                                      <ErrorInfoIcon
+                                        alt='error'
+                                        className='w-5 h-3.5'
+                                      />
+                                    </React.Suspense>
+                                  </span>
+                                </Tooltip>
+                              )}
                           </TableCell>
 
                           {/* Total FTE Cost Text Field */}
@@ -1226,8 +1219,9 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
                           >
                             <div>
                               <TextField
-                                value={formatNumberWithCommas(
-                                  submission.total_fte_cost || ''
+                                value={costDisplay(
+                                  submission.total_fte_cost || '',
+                                  submission.currency_symbol
                                 )}
                                 onChange={(e) => {
                                   const rawValue = removeCommas(e.target.value);
@@ -1253,45 +1247,45 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
                                       border: 'none',
                                     },
                                     '&:hover .MuiOutlinedInput-notchedOutline':
-                                      {
-                                        border: 'none',
-                                      },
+                                    {
+                                      border: 'none',
+                                    },
                                     '&.Mui-focused .MuiOutlinedInput-notchedOutline':
-                                      {
-                                        border: 'none',
-                                      },
+                                    {
+                                      border: 'none',
+                                    },
                                   },
                                 }}
                               />
                             </div>
                             {errors.historicalSubmissions?.[rowIndex]
                               ?.total_fte_cost && (
-                              <Tooltip
-                                title={
-                                  errors.historicalSubmissions[rowIndex]
-                                    .total_fte_cost
-                                }
-                                arrow
-                                placement='top'
-                                slotProps={{
-                                  tooltip: {
-                                    sx: {
-                                      backgroundColor: '#FEF2F2',
-                                      mr: 1,
+                                <Tooltip
+                                  title={
+                                    errors.historicalSubmissions[rowIndex]
+                                      .total_fte_cost
+                                  }
+                                  arrow
+                                  placement='top'
+                                  slotProps={{
+                                    tooltip: {
+                                      sx: {
+                                        backgroundColor: '#FEF2F2',
+                                        mr: 1,
+                                      },
                                     },
-                                  },
-                                }}
-                              >
-                                <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
-                                  <React.Suspense fallback={null}>
-                                    <ErrorInfoIcon
-                                      alt='error'
-                                      className='w-5 h-3.5'
-                                    />
-                                  </React.Suspense>
-                                </span>
-                              </Tooltip>
-                            )}
+                                  }}
+                                >
+                                  <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
+                                    <React.Suspense fallback={null}>
+                                      <ErrorInfoIcon
+                                        alt='error'
+                                        className='w-5 h-3.5'
+                                      />
+                                    </React.Suspense>
+                                  </span>
+                                </Tooltip>
+                              )}
                           </TableCell>
 
                           {/* Total Subcon Cost Text Field */}
@@ -1308,8 +1302,9 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
                           >
                             <div>
                               <TextField
-                                value={formatNumberWithCommas(
-                                  submission.total_subcon_cost || ''
+                                value={costDisplay(
+                                  submission.total_subcon_cost || '',
+                                  submission.currency_symbol
                                 )}
                                 onChange={(e) => {
                                   const rawValue = removeCommas(e.target.value);
@@ -1335,45 +1330,45 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
                                       border: 'none',
                                     },
                                     '&:hover .MuiOutlinedInput-notchedOutline':
-                                      {
-                                        border: 'none',
-                                      },
+                                    {
+                                      border: 'none',
+                                    },
                                     '&.Mui-focused .MuiOutlinedInput-notchedOutline':
-                                      {
-                                        border: 'none',
-                                      },
+                                    {
+                                      border: 'none',
+                                    },
                                   },
                                 }}
                               />
                             </div>
                             {errors.historicalSubmissions?.[rowIndex]
                               ?.total_subcon_cost && (
-                              <Tooltip
-                                title={
-                                  errors.historicalSubmissions[rowIndex]
-                                    .total_subcon_cost
-                                }
-                                arrow
-                                placement='top'
-                                slotProps={{
-                                  tooltip: {
-                                    sx: {
-                                      backgroundColor: '#FEF2F2',
-                                      mr: 1,
+                                <Tooltip
+                                  title={
+                                    errors.historicalSubmissions[rowIndex]
+                                      .total_subcon_cost
+                                  }
+                                  arrow
+                                  placement='top'
+                                  slotProps={{
+                                    tooltip: {
+                                      sx: {
+                                        backgroundColor: '#FEF2F2',
+                                        mr: 1,
+                                      },
                                     },
-                                  },
-                                }}
-                              >
-                                <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
-                                  <React.Suspense fallback={null}>
-                                    <ErrorInfoIcon
-                                      alt='error'
-                                      className='w-5 h-3.5'
-                                    />
-                                  </React.Suspense>
-                                </span>
-                              </Tooltip>
-                            )}
+                                  }}
+                                >
+                                  <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
+                                    <React.Suspense fallback={null}>
+                                      <ErrorInfoIcon
+                                        alt='error'
+                                        className='w-5 h-3.5'
+                                      />
+                                    </React.Suspense>
+                                  </span>
+                                </Tooltip>
+                              )}
                           </TableCell>
 
                           {/* Total Nonlabor Cost Text Field */}
@@ -1390,8 +1385,9 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
                           >
                             <div>
                               <TextField
-                                value={formatNumberWithCommas(
-                                  submission.total_nonlabor_cost || ''
+                                value={costDisplay(
+                                  submission.total_nonlabor_cost || '',
+                                  submission.currency_symbol
                                 )}
                                 onChange={(e) => {
                                   const rawValue = removeCommas(e.target.value);
@@ -1419,45 +1415,45 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
                                       border: 'none',
                                     },
                                     '&:hover .MuiOutlinedInput-notchedOutline':
-                                      {
-                                        border: 'none',
-                                      },
+                                    {
+                                      border: 'none',
+                                    },
                                     '&.Mui-focused .MuiOutlinedInput-notchedOutline':
-                                      {
-                                        border: 'none',
-                                      },
+                                    {
+                                      border: 'none',
+                                    },
                                   },
                                 }}
                               />
                             </div>
                             {errors.historicalSubmissions?.[rowIndex]
                               ?.total_nonlabor_cost && (
-                              <Tooltip
-                                title={
-                                  errors.historicalSubmissions[rowIndex]
-                                    .total_nonlabor_cost
-                                }
-                                arrow
-                                placement='top'
-                                slotProps={{
-                                  tooltip: {
-                                    sx: {
-                                      backgroundColor: '#FEF2F2',
-                                      mr: 1,
+                                <Tooltip
+                                  title={
+                                    errors.historicalSubmissions[rowIndex]
+                                      .total_nonlabor_cost
+                                  }
+                                  arrow
+                                  placement='top'
+                                  slotProps={{
+                                    tooltip: {
+                                      sx: {
+                                        backgroundColor: '#FEF2F2',
+                                        mr: 1,
+                                      },
                                     },
-                                  },
-                                }}
-                              >
-                                <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
-                                  <React.Suspense fallback={null}>
-                                    <ErrorInfoIcon
-                                      alt='error'
-                                      className='w-5 h-3.5'
-                                    />
-                                  </React.Suspense>
-                                </span>
-                              </Tooltip>
-                            )}
+                                  }}
+                                >
+                                  <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
+                                    <React.Suspense fallback={null}>
+                                      <ErrorInfoIcon
+                                        alt='error'
+                                        className='w-5 h-3.5'
+                                      />
+                                    </React.Suspense>
+                                  </span>
+                                </Tooltip>
+                              )}
                           </TableCell>
 
                           {/* Total Project Cost Text Field */}
@@ -1474,8 +1470,9 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
                           >
                             <div>
                               <TextField
-                                value={formatNumberWithCommas(
-                                  submission.total_project_cost
+                                value={costDisplay(
+                                  submission.total_project_cost || '',
+                                  submission.currency_symbol
                                 )}
                                 onChange={(e) => {
                                   const rawValue = removeCommas(e.target.value);
@@ -1503,45 +1500,45 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
                                       border: 'none',
                                     },
                                     '&:hover .MuiOutlinedInput-notchedOutline':
-                                      {
-                                        border: 'none',
-                                      },
+                                    {
+                                      border: 'none',
+                                    },
                                     '&.Mui-focused .MuiOutlinedInput-notchedOutline':
-                                      {
-                                        border: 'none',
-                                      },
+                                    {
+                                      border: 'none',
+                                    },
                                   },
                                 }}
                               />
                             </div>
                             {errors.historicalSubmissions?.[rowIndex]
                               ?.total_project_cost && (
-                              <Tooltip
-                                title={
-                                  errors.historicalSubmissions[rowIndex]
-                                    .total_project_cost
-                                }
-                                arrow
-                                placement='top'
-                                slotProps={{
-                                  tooltip: {
-                                    sx: {
-                                      backgroundColor: '#FEF2F2',
-                                      mr: 1,
+                                <Tooltip
+                                  title={
+                                    errors.historicalSubmissions[rowIndex]
+                                      .total_project_cost
+                                  }
+                                  arrow
+                                  placement='top'
+                                  slotProps={{
+                                    tooltip: {
+                                      sx: {
+                                        backgroundColor: '#FEF2F2',
+                                        mr: 1,
+                                      },
                                     },
-                                  },
-                                }}
-                              >
-                                <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
-                                  <React.Suspense fallback={null}>
-                                    <ErrorInfoIcon
-                                      alt='error'
-                                      className='w-5 h-3.5'
-                                    />
-                                  </React.Suspense>
-                                </span>
-                              </Tooltip>
-                            )}
+                                  }}
+                                >
+                                  <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
+                                    <React.Suspense fallback={null}>
+                                      <ErrorInfoIcon
+                                        alt='error'
+                                        className='w-5 h-3.5'
+                                      />
+                                    </React.Suspense>
+                                  </span>
+                                </Tooltip>
+                              )}
                           </TableCell>
 
                           {/* Total QRE Text Field */}
@@ -1558,8 +1555,9 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
                           >
                             <div>
                               <TextField
-                                value={formatNumberWithCommas(
-                                  submission.total_qre
+                                value={costDisplay(
+                                  submission.total_qre || '',
+                                  submission.currency_symbol
                                 )}
                                 onChange={(e) => {
                                   const rawValue = removeCommas(e.target.value);
@@ -1585,45 +1583,45 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
                                       border: 'none',
                                     },
                                     '&:hover .MuiOutlinedInput-notchedOutline':
-                                      {
-                                        border: 'none',
-                                      },
+                                    {
+                                      border: 'none',
+                                    },
                                     '&.Mui-focused .MuiOutlinedInput-notchedOutline':
-                                      {
-                                        border: 'none',
-                                      },
+                                    {
+                                      border: 'none',
+                                    },
                                   },
                                 }}
                               />
                             </div>
                             {errors.historicalSubmissions?.[rowIndex]
                               ?.total_qre && (
-                              <Tooltip
-                                title={
-                                  errors.historicalSubmissions[rowIndex]
-                                    .total_qre
-                                }
-                                arrow
-                                placement='top'
-                                slotProps={{
-                                  tooltip: {
-                                    sx: {
-                                      backgroundColor: '#FEF2F2',
-                                      mr: 1,
+                                <Tooltip
+                                  title={
+                                    errors.historicalSubmissions[rowIndex]
+                                      .total_qre
+                                  }
+                                  arrow
+                                  placement='top'
+                                  slotProps={{
+                                    tooltip: {
+                                      sx: {
+                                        backgroundColor: '#FEF2F2',
+                                        mr: 1,
+                                      },
                                     },
-                                  },
-                                }}
-                              >
-                                <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
-                                  <React.Suspense fallback={null}>
-                                    <ErrorInfoIcon
-                                      alt='error'
-                                      className='w-5 h-3.5'
-                                    />
-                                  </React.Suspense>
-                                </span>
-                              </Tooltip>
-                            )}
+                                  }}
+                                >
+                                  <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
+                                    <React.Suspense fallback={null}>
+                                      <ErrorInfoIcon
+                                        alt='error'
+                                        className='w-5 h-3.5'
+                                      />
+                                    </React.Suspense>
+                                  </span>
+                                </Tooltip>
+                              )}
                           </TableCell>
 
                           {/* Total RD Credits Text Field */}
@@ -1640,8 +1638,8 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
                           >
                             <div>
                               <TextField
-                                value={formatNumberWithCommas(
-                                  submission.total_rd_credits
+                                value={valueDisplay(
+                                  submission.total_rd_credits || ''
                                 )}
                                 onChange={(e) => {
                                   const rawValue = removeCommas(e.target.value);
@@ -1667,45 +1665,45 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
                                       border: 'none',
                                     },
                                     '&:hover .MuiOutlinedInput-notchedOutline':
-                                      {
-                                        border: 'none',
-                                      },
+                                    {
+                                      border: 'none',
+                                    },
                                     '&.Mui-focused .MuiOutlinedInput-notchedOutline':
-                                      {
-                                        border: 'none',
-                                      },
+                                    {
+                                      border: 'none',
+                                    },
                                   },
                                 }}
                               />
                             </div>
                             {errors.historicalSubmissions?.[rowIndex]
                               ?.total_rd_credits && (
-                              <Tooltip
-                                title={
-                                  errors.historicalSubmissions[rowIndex]
-                                    .total_rd_credits
-                                }
-                                arrow
-                                placement='top'
-                                slotProps={{
-                                  tooltip: {
-                                    sx: {
-                                      backgroundColor: '#FEF2F2',
-                                      mr: 1,
+                                <Tooltip
+                                  title={
+                                    errors.historicalSubmissions[rowIndex]
+                                      .total_rd_credits
+                                  }
+                                  arrow
+                                  placement='top'
+                                  slotProps={{
+                                    tooltip: {
+                                      sx: {
+                                        backgroundColor: '#FEF2F2',
+                                        mr: 1,
+                                      },
                                     },
-                                  },
-                                }}
-                              >
-                                <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
-                                  <React.Suspense fallback={null}>
-                                    <ErrorInfoIcon
-                                      alt='error'
-                                      className='w-5 h-3.5'
-                                    />
-                                  </React.Suspense>
-                                </span>
-                              </Tooltip>
-                            )}
+                                  }}
+                                >
+                                  <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
+                                    <React.Suspense fallback={null}>
+                                      <ErrorInfoIcon
+                                        alt='error'
+                                        className='w-5 h-3.5'
+                                      />
+                                    </React.Suspense>
+                                  </span>
+                                </Tooltip>
+                              )}
                           </TableCell>
 
                           {/* Annual Gross Receipts Text Field */}
@@ -1722,8 +1720,8 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
                           >
                             <div>
                               <TextField
-                                value={formatNumberWithCommas(
-                                  submission.annual_gross_receipts
+                                value={valueDisplay(
+                                  submission.annual_gross_receipts || ''
                                 )}
                                 onChange={(e) => {
                                   const rawValue = removeCommas(e.target.value);
@@ -1751,45 +1749,45 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
                                       border: 'none',
                                     },
                                     '&:hover .MuiOutlinedInput-notchedOutline':
-                                      {
-                                        border: 'none',
-                                      },
+                                    {
+                                      border: 'none',
+                                    },
                                     '&.Mui-focused .MuiOutlinedInput-notchedOutline':
-                                      {
-                                        border: 'none',
-                                      },
+                                    {
+                                      border: 'none',
+                                    },
                                   },
                                 }}
                               />
                             </div>
                             {errors.historicalSubmissions?.[rowIndex]
                               ?.annual_gross_receipts && (
-                              <Tooltip
-                                title={
-                                  errors.historicalSubmissions[rowIndex]
-                                    .annual_gross_receipts
-                                }
-                                arrow
-                                placement='top'
-                                slotProps={{
-                                  tooltip: {
-                                    sx: {
-                                      backgroundColor: '#FEF2F2',
-                                      mr: 1,
+                                <Tooltip
+                                  title={
+                                    errors.historicalSubmissions[rowIndex]
+                                      .annual_gross_receipts
+                                  }
+                                  arrow
+                                  placement='top'
+                                  slotProps={{
+                                    tooltip: {
+                                      sx: {
+                                        backgroundColor: '#FEF2F2',
+                                        mr: 1,
+                                      },
                                     },
-                                  },
-                                }}
-                              >
-                                <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
-                                  <React.Suspense fallback={null}>
-                                    <ErrorInfoIcon
-                                      alt='error'
-                                      className='w-5 h-3.5'
-                                    />
-                                  </React.Suspense>
-                                </span>
-                              </Tooltip>
-                            )}
+                                  }}
+                                >
+                                  <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
+                                    <React.Suspense fallback={null}>
+                                      <ErrorInfoIcon
+                                        alt='error'
+                                        className='w-5 h-3.5'
+                                      />
+                                    </React.Suspense>
+                                  </span>
+                                </Tooltip>
+                              )}
                           </TableCell>
 
                           {/* Actions Column */}
