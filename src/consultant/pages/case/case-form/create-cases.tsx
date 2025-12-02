@@ -11,7 +11,7 @@ import { CaseFormData } from './form-data';
 import TextButton from '../../../../components/button/text-button';
 import SkeletonForm from '../../../../components/form-builder/skeleton-form';
 import { FormBuilder } from '../../../../components';
-import { CaseFormPayload } from '../../../types';
+import { CaseFormFields, CaseFormPayload } from '../../../types';
 import {
   useCaseDetails,
   useCreateCase,
@@ -235,7 +235,7 @@ export const CreateCases: React.FC = () => {
   const submitData = (formValues: Partial<CaseFormPayload>) => {
     const payload = transformCaseFormPayload(
       accountId,
-      formValues,
+      formValues as CaseFormFields,
       isEditView,
       caseData
     );

@@ -54,7 +54,7 @@ export type ReviewProject = {
   modified_datetime: string;
   project_point_of_contact: string | null;
   project_technical_point_of_contact: string | null;
-  primary_point_of_contact_email: string;
+  project_point_of_contact_email: string;
   primary_point_of_contact_name: string;
   currency_symbol: string | undefined;
   total_subcon_prj: number | null;
@@ -63,6 +63,7 @@ export type ReviewProject = {
   total_resources_prj: number | null;
   total_tasks: number | null;
   total_technical_summaries: number | null;
+  industry_name: string;
 };
 
 export interface AssignProjectListURLParams {
