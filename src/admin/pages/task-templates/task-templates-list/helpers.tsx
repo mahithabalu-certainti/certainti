@@ -189,7 +189,7 @@ export const getTaskTemplateFilterFields = (
     },
     {
       label: 'Updated By',
-      name: 'modified_by_name',
+      name: 'updated_by_name',
       type: 'text',
       operatorOption: nonReqTextfieldOptions,
       hide:

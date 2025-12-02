@@ -81,20 +81,29 @@ export interface TagOption {
 export const transformActivities = (
   activitiesData: TaskActivityRaw[]
 ): Activity[] => {
-  return activitiesData.map((activity) => ({
-    id: activity.rid,
-    user: activity.created_by_name,
-    action: `changed ${activity.attribute_name} from "${activity.old_value}" to "${activity.new_value}"`,
-    date: new Date(activity.created_datetime).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    }),
-    initials: generateInitials(activity.created_by_name),
-    color: generateColorFromName(activity.created_by_name),
-  }));
+  return activitiesData.map((activity) => {
+    let action = '';
+    if (activity.old_value === 'CREATE') {
+      action = activity.new_value;
+    } else {
+      action = `changed ${activity.attribute_name} from "${activity.old_value}" to "${activity.new_value}"`;
+    }
+
+    return {
+      id: activity.rid,
+      user: activity.created_by_name,
+      action: action,
+      date: new Date(activity.created_datetime).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
+      initials: generateInitials(activity.created_by_name),
+      color: generateColorFromName(activity.created_by_name),
+    };
+  });
 };
 
 /**

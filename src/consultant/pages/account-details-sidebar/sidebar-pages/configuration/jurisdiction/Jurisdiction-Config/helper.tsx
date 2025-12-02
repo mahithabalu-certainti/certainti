@@ -34,10 +34,10 @@ export const jurisdictionConfigFormFields = (
             },
           ],
         }),
-        createMultiSelectField('states', 'State', {
+        createMultiSelectField('states', isEnable ? 'State' : 'State', {
           options: memoizedState || [],
           placeholder: 'Choose Region',
-          required: false,
+          required: !!isEnable,
           disabled: !isEnable,
           // isLoading: stateLoading,
           // hide:
