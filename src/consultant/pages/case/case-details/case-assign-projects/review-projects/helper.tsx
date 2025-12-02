@@ -96,7 +96,7 @@ export const reviewProjectFilterFields = (
   },
   {
     name: 'Total FTE Count',
-    value: 'total_effort_prj',
+    value: 'total_fte_prj',
     type: 'number',
     operatorOption: numberOptions,
     hide:

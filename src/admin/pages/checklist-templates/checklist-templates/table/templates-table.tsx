@@ -255,8 +255,10 @@ export const TemplateTable: React.FC<ITemplateTableProps> = ({
                 updatedFields[key] = update.value as any;
 
                 // If status was updated, we might need to update status_name too if we have the label
-                if (key === 'status_name' as any && statusOptions) {
-                  const selectedOption = statusOptions.find(opt => opt.value === update.value);
+                if (key === ('status_name' as any) && statusOptions) {
+                  const selectedOption = statusOptions.find(
+                    (opt) => opt.value === update.value
+                  );
                   if (selectedOption) {
                     updatedFields['status_name'] = selectedOption.label;
                   }

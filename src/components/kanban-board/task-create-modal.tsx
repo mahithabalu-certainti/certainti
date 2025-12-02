@@ -174,22 +174,25 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
   const enrichedUsers = useMemo(() => {
     return collaboratorData && collaboratorData.length > 0
       ? collaboratorData.map((collab) => ({
-        id: collab.rid,
-        name: collab.name,
-        email: collab.email,
-        initials: generateInitials(collab.name),
-        color: generateColorFromName(collab.name),
-      }))
+          id: collab.rid,
+          name: collab.name,
+          email: collab.email,
+          initials: generateInitials(collab.name),
+          color: generateColorFromName(collab.name),
+        }))
       : availableUsers.map(enrichUserOption);
   }, [collaboratorData, availableUsers]);
 
   // Fetch connector types and task templates
   const taskConnectorTypesQuery = useGetTaskConnectorTypes();
-  const taskTemplatesQuery = useGetTaskDropDownList({
-    case_rid: caseId || '',
-    account_rid: accountId || '',
-    search: '',
-  }, { enabled: !!caseId && !!accountId });
+  const taskTemplatesQuery = useGetTaskDropDownList(
+    {
+      case_rid: caseId || '',
+      account_rid: accountId || '',
+      search: '',
+    },
+    { enabled: !!caseId && !!accountId }
+  );
 
   const connectorTypesData = useMemo(() => {
     if (
@@ -229,10 +232,10 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
     // Handle nested data.data structure
     type WeightageResponse = {
       data?:
-      | {
-        data?: Array<{ rid: string; weightage_value: number }>;
-      }
-      | Array<{ rid: string; weightage_value: number }>;
+        | {
+            data?: Array<{ rid: string; weightage_value: number }>;
+          }
+        | Array<{ rid: string; weightage_value: number }>;
     };
 
     const response = weightageListQuery.data as WeightageResponse;
@@ -444,7 +447,7 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
           pointerEvents: isOpen ? 'auto' : 'none',
           transform: 'translateZ(0)',
           willChange: 'contents',
-          backfaceVisibility: 'hidden'
+          backfaceVisibility: 'hidden',
         }}
       >
         <div className='flex-none flex items-center justify-between p-3 border-b border-[#CBD6E2] bg-white z-50'>
@@ -487,19 +490,24 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                   className='absolute right-0 top-0 bottom-2 flex items-center'
                   style={{
                     opacity: errors.taskTitle ? 1 : 0,
-                    pointerEvents: errors.taskTitle ? 'auto' : 'none'
+                    pointerEvents: errors.taskTitle ? 'auto' : 'none',
                   }}
                 >
-                  {errors.taskTitle && <ErrorIconTooltip error={errors.taskTitle} />}
+                  {errors.taskTitle && (
+                    <ErrorIconTooltip error={errors.taskTitle} />
+                  )}
                 </div>
               </div>
             </div>
           )}
 
-          <LocalizationProvider dateAdapter={AdapterDayjs} localeText={{
-            fieldMonthPlaceholder: (params) =>
-              params.contentType === 'digit' ? 'MM' : params.format,
-          }}>
+          <LocalizationProvider
+            dateAdapter={AdapterDayjs}
+            localeText={{
+              fieldMonthPlaceholder: (params) =>
+                params.contentType === 'digit' ? 'MM' : params.format,
+            }}
+          >
             <div className='grid grid-cols-2 gap-4'>
               {!fieldVisibility.startDate && (
                 <div>
@@ -549,11 +557,11 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                                   : '1px solid #CBD6E2',
                               },
                               '&.Mui-focused .MuiOutlinedInput-notchedOutline':
-                              {
-                                border: errors.startDate
-                                  ? '2px solid #EF4444'
-                                  : '2px solid #60A5FA',
-                              },
+                                {
+                                  border: errors.startDate
+                                    ? '2px solid #EF4444'
+                                    : '2px solid #60A5FA',
+                                },
                             },
                             '& .MuiOutlinedInput-notchedOutline': {
                               border: errors.startDate
@@ -628,11 +636,11 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                                   : '1px solid #CBD6E2',
                               },
                               '&.Mui-focused .MuiOutlinedInput-notchedOutline':
-                              {
-                                border: errors.endDate
-                                  ? '2px solid #EF4444'
-                                  : '2px solid #60A5FA',
-                              },
+                                {
+                                  border: errors.endDate
+                                    ? '2px solid #EF4444'
+                                    : '2px solid #60A5FA',
+                                },
                             },
                             '& .MuiOutlinedInput-notchedOutline': {
                               border: errors.endDate
@@ -651,9 +659,7 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                     />
                     <div className='min-h-[20px] mt-1'>
                       {errors.endDate && (
-                        <p className='text-xs text-red-500'>
-                          {errors.endDate}
-                        </p>
+                        <p className='text-xs text-red-500'>{errors.endDate}</p>
                       )}
                     </div>
                   </div>
@@ -674,132 +680,136 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
             fieldVisibility.category &&
             fieldVisibility.tags
           ) && (
-              <>
-                <h3 className='text-sm font-semibold text-gray-700 mb-3'>Fields</h3>
+            <>
+              <h3 className='text-sm font-semibold text-gray-700 mb-3'>
+                Fields
+              </h3>
 
-                <TaskFieldsSection
-                  fieldVisibility={fieldVisibility}
-                  fieldDisabled={fieldDisabled}
-                  editedTask={null}
-                  statusData={(statusData || []).map((s) => ({
-                    id: s.id,
-                    name: s.name,
-                    color: s.color || '#3B82F6',
-                  }))}
-                  priorityData={(priorityData || []).map((p) => ({
-                    id: p.id,
-                    name: p.name,
-                    color: p.color || '#3B82F6',
-                  }))}
-                  checklistData={checklistData}
-                  availableTags={(tagData || []).map((tag) => ({
-                    id: tag.id || `tag-${tag.name}`,
-                    name: tag.name,
-                    color: '#3B82F6',
-                  }))}
-                  availableUsers={enrichedUsers}
-                  connectorTypesData={connectorTypesData}
-                  taskTemplatesData={taskTemplatesData}
-                  weightageData={weightageData}
-                  categoryData={categoryData}
-                  selectedChecklist={selectedChecklist}
-                  selectedPriority={selectedPriority}
-                  selectedTags={selectedTags}
-                  selectedAssignee={selectedAssignee}
-                  selectedLinkedType={linkedType}
-                  selectedLinkTaskTypes={linkTaskTypes}
-                  selectedWeightage={weightage}
-                  selectedCategory={category}
-                  onStatusChange={(statusName: string) => {
-                    setSelectedStatus(statusName);
-                    const statusItem = statusData?.find((s) => s.name === statusName);
-                    if (statusItem) {
-                      setSelectedStatusRid(statusItem.id);
-                    }
-                  }}
-                  onPriorityChange={(priorityName: string) => {
-                    setSelectedPriority(priorityName);
-                    const priorityItem = priorityData?.find(
-                      (p) => p.name === priorityName
-                    );
-                    if (priorityItem) {
-                      setSelectedPriorityRid(priorityItem.id);
-                      setErrors((prev) => ({ ...prev, priority: '' }));
-                    }
-                  }}
-                  onAssigneeChange={(userId: string) => {
-                    setSelectedAssignee(userId);
-                  }}
-                  onChecklistChange={(value) => {
-                    setSelectedChecklist(value);
-                    const checklistItem = checklistData?.find(
-                      (c) => c.name === value
-                    );
-                    if (checklistItem) {
-                      setSelectedChecklistRid(checklistItem.id);
-                      setErrors((prev) => ({ ...prev, checklistTemplate: '' }));
-                    }
-                  }}
-                  onLinkedTypeChange={(value) => {
-                    setLinkedType(value);
-                    const connectorItem = connectorTypesData?.find(
-                      (c) => c.name === value
-                    );
-                    setLinkedTypeRid(connectorItem?.id || '');
-                    if (value) {
-                      setErrors((prev) => ({ ...prev, linkedType: '' }));
-                    } else {
-                      if (!linkTaskTypes || linkTaskTypes.length === 0) {
-                        setErrors((prev) => ({ ...prev, linkTaskType: '' }));
-                      }
-                    }
-                  }}
-                  onLinkTaskTypesChange={(values) => {
-                    setLinkTaskTypes(values);
-                    const rids = values
-                      .map((value) => {
-                        const template = taskTemplatesData?.find(
-                          (t) => t.name === value
-                        );
-                        return template?.id || '';
-                      })
-                      .filter((rid) => rid !== '');
-                    setLinkTaskTypeRids(rids);
-                    if (values.length > 0) {
+              <TaskFieldsSection
+                fieldVisibility={fieldVisibility}
+                fieldDisabled={fieldDisabled}
+                editedTask={null}
+                statusData={(statusData || []).map((s) => ({
+                  id: s.id,
+                  name: s.name,
+                  color: s.color || '#3B82F6',
+                }))}
+                priorityData={(priorityData || []).map((p) => ({
+                  id: p.id,
+                  name: p.name,
+                  color: p.color || '#3B82F6',
+                }))}
+                checklistData={checklistData}
+                availableTags={(tagData || []).map((tag) => ({
+                  id: tag.id || `tag-${tag.name}`,
+                  name: tag.name,
+                  color: '#3B82F6',
+                }))}
+                availableUsers={enrichedUsers}
+                connectorTypesData={connectorTypesData}
+                taskTemplatesData={taskTemplatesData}
+                weightageData={weightageData}
+                categoryData={categoryData}
+                selectedChecklist={selectedChecklist}
+                selectedPriority={selectedPriority}
+                selectedTags={selectedTags}
+                selectedAssignee={selectedAssignee}
+                selectedLinkedType={linkedType}
+                selectedLinkTaskTypes={linkTaskTypes}
+                selectedWeightage={weightage}
+                selectedCategory={category}
+                onStatusChange={(statusName: string) => {
+                  setSelectedStatus(statusName);
+                  const statusItem = statusData?.find(
+                    (s) => s.name === statusName
+                  );
+                  if (statusItem) {
+                    setSelectedStatusRid(statusItem.id);
+                  }
+                }}
+                onPriorityChange={(priorityName: string) => {
+                  setSelectedPriority(priorityName);
+                  const priorityItem = priorityData?.find(
+                    (p) => p.name === priorityName
+                  );
+                  if (priorityItem) {
+                    setSelectedPriorityRid(priorityItem.id);
+                    setErrors((prev) => ({ ...prev, priority: '' }));
+                  }
+                }}
+                onAssigneeChange={(userId: string) => {
+                  setSelectedAssignee(userId);
+                }}
+                onChecklistChange={(value) => {
+                  setSelectedChecklist(value);
+                  const checklistItem = checklistData?.find(
+                    (c) => c.name === value
+                  );
+                  if (checklistItem) {
+                    setSelectedChecklistRid(checklistItem.id);
+                    setErrors((prev) => ({ ...prev, checklistTemplate: '' }));
+                  }
+                }}
+                onLinkedTypeChange={(value) => {
+                  setLinkedType(value);
+                  const connectorItem = connectorTypesData?.find(
+                    (c) => c.name === value
+                  );
+                  setLinkedTypeRid(connectorItem?.id || '');
+                  if (value) {
+                    setErrors((prev) => ({ ...prev, linkedType: '' }));
+                  } else {
+                    if (!linkTaskTypes || linkTaskTypes.length === 0) {
                       setErrors((prev) => ({ ...prev, linkTaskType: '' }));
-                    } else {
-                      if (!linkedType) {
-                        setErrors((prev) => ({ ...prev, linkedType: '' }));
-                      }
                     }
-                  }}
-                  onWeightageChange={(value) => {
-                    setWeightage(value);
-                    const weightageItem = weightageData?.find(
-                      (w) => w.name === value
-                    );
-                    setWeightageRid(weightageItem?.id || '');
-                  }}
-                  onCategoryChange={(value) => {
-                    setCategory(value);
-                    const categoryItem = categoryData?.find(
-                      (c: { id: string; name: string }) => c.name === value
-                    );
-                    setCategoryRid(categoryItem?.id || '');
-                  }}
-                  onTagsChange={setSelectedTags}
-                  onAddCustomTag={() => { }}
-                  onSetEditedTask={() => { }}
-                  mode='create'
-                  selectedStatus={selectedStatus}
-                  onStatusChangeCreate={(statusName, statusId) => {
-                    setSelectedStatus(statusName);
-                    setSelectedStatusRid(statusId);
-                  }}
-                  errors={errors}
-                />
-              </>
-            )}
+                  }
+                }}
+                onLinkTaskTypesChange={(values) => {
+                  setLinkTaskTypes(values);
+                  const rids = values
+                    .map((value) => {
+                      const template = taskTemplatesData?.find(
+                        (t) => t.name === value
+                      );
+                      return template?.id || '';
+                    })
+                    .filter((rid) => rid !== '');
+                  setLinkTaskTypeRids(rids);
+                  if (values.length > 0) {
+                    setErrors((prev) => ({ ...prev, linkTaskType: '' }));
+                  } else {
+                    if (!linkedType) {
+                      setErrors((prev) => ({ ...prev, linkedType: '' }));
+                    }
+                  }
+                }}
+                onWeightageChange={(value) => {
+                  setWeightage(value);
+                  const weightageItem = weightageData?.find(
+                    (w) => w.name === value
+                  );
+                  setWeightageRid(weightageItem?.id || '');
+                }}
+                onCategoryChange={(value) => {
+                  setCategory(value);
+                  const categoryItem = categoryData?.find(
+                    (c: { id: string; name: string }) => c.name === value
+                  );
+                  setCategoryRid(categoryItem?.id || '');
+                }}
+                onTagsChange={setSelectedTags}
+                onAddCustomTag={() => {}}
+                onSetEditedTask={() => {}}
+                mode='create'
+                selectedStatus={selectedStatus}
+                onStatusChangeCreate={(statusName, statusId) => {
+                  setSelectedStatus(statusName);
+                  setSelectedStatusRid(statusId);
+                }}
+                errors={errors}
+              />
+            </>
+          )}
 
           {!fieldVisibility.description && (
             <div>
@@ -818,10 +828,12 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                   className='absolute right-2 top-3'
                   style={{
                     opacity: errors.description ? 1 : 0,
-                    pointerEvents: errors.description ? 'auto' : 'none'
+                    pointerEvents: errors.description ? 'auto' : 'none',
                   }}
                 >
-                  {errors.description && <ErrorIconTooltip error={errors.description} />}
+                  {errors.description && (
+                    <ErrorIconTooltip error={errors.description} />
+                  )}
                 </div>
               </div>
             </div>

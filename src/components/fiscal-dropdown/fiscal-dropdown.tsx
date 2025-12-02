@@ -127,8 +127,9 @@ const FiscalYearDropdown = ({
         {selectedLabel}
         <ArrowDownIcon
           alt='dropdown arrow'
-          className={`transition-transform duration-300 ${open ? 'rotate-180' : ''
-            }`}
+          className={`transition-transform duration-300 ${
+            open ? 'rotate-180' : ''
+          }`}
           style={{
             width: 15,
             height: 15,
@@ -190,12 +191,16 @@ const FiscalYearDropdown = ({
                   className='col-span-1 mb-3 flex justify-center'
                 >
                   <button
-                    className={`w-12 h-[20px] cursor-pointer disabled:text-gray-300 text-[#425A76] text-[14px] font-medium ${Number(selectedYear) === year.value
-                      ? 'bg-[#425A76] text-[#FFFFFF] rounded-[30px]'
-                      : ''
-                      }`}
+                    className={`w-12 h-[20px] cursor-pointer disabled:text-gray-300 text-[#425A76] text-[14px] font-medium ${
+                      Number(selectedYear) === year.value
+                        ? 'bg-[#425A76] text-[#FFFFFF] rounded-[30px]'
+                        : ''
+                    }`}
                     onClick={() => handleYearClick(year.value)}
-                    disabled={year.value > currentYear || (disabled && year.value !== Number(selectedYear))}
+                    disabled={
+                      year.value > currentYear ||
+                      (disabled && year.value !== Number(selectedYear))
+                    }
                   >
                     {year.value}
                   </button>

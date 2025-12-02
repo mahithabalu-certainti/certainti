@@ -2,9 +2,7 @@
 import React, { useCallback, useMemo } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import {
-  useGetActivityStatus,
-} from '../../../services/activities/activities-service';
+import { useGetActivityStatus } from '../../../services/activities/activities-service';
 import { ActivityType } from '../../../types';
 import {
   useGetRoleOptions,
@@ -153,7 +151,10 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
 
   const effectiveCaseId = propCaseId;
 
-  const userOptionsQuery = useGetUserOptions(accountid || accountId || '', true);
+  const userOptionsQuery = useGetUserOptions(
+    accountid || accountId || '',
+    true
+  );
   const roleOptionsQuery = useGetRoleOptions();
   const prioritiesQuery = useGetTaskPriorities();
   const statusesQuery = useGetActivityStatus('Task');
