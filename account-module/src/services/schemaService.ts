@@ -1559,7 +1559,7 @@ class SchemaService {
   
     for (const field of fieldsToIndex) {
       await sequelize.query(
-        rawQueries.getInteractionHistoryIndexQuery(schemaName, field)
+        rawQueries.getActivityHistoryIndexQuery(schemaName, field)
       );
     }
   }
@@ -1586,7 +1586,7 @@ class SchemaService {
   
     for (const field of fieldsToIndex) {
       await sequelize.query(
-        rawQueries.getInteractionHistoryIndexQuery(schemaName, field)
+        rawQueries.getTaskHistoryIndexQuery(schemaName, field)
       );
     }
   }

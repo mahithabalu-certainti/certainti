@@ -2444,7 +2444,7 @@ export const rawQueries = {
   },
   getCreateActivityAttachmentsTableQuery(schemaName: string): string {
     return `
-      CREATE TABLE IF NOT EXISTS "${schemaName}".activities_attachments (
+      CREATE TABLE IF NOT EXISTS "${schemaName}".activity_attachments (
         rid VARCHAR(50) DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
         r_number VARCHAR(20) UNIQUE DEFAULT 'ACT-' || LPAD(nextval('"${schemaName}".activity_attachments_seq')::TEXT, 10, '0'),
     created_by character varying(50) NOT NULL,
@@ -3206,6 +3206,13 @@ export const rawQueries = {
       ON "${schemaName}"."project_history"("${field}");
     `;
   },
+   getActivityHistoryIndexQuery(schemaName: string, field: string): string {
+    const indexName = `${schemaName}_activity_history_${field}_idx`;
+    return `
+      CREATE INDEX IF NOT EXISTS "${indexName}"
+      ON "${schemaName}"."activity_history"("${field}");
+    `;
+  },
   getProjectFiscalRegionIndexQuery(schemaName: string, field: string): string {
     const indexName = `${schemaName}_project_fiscal_region_${field}_idx`;
     return `
@@ -3330,6 +3337,13 @@ export const rawQueries = {
     return `
       CREATE INDEX IF NOT EXISTS "${indexName}"
       ON "${schemaName}"."interaction_history"("${field}");
+    `;
+  },
+  getTaskHistoryIndexQuery(schemaName: string, field: string): string {
+    const indexName = `${schemaName}_task_history_${field}_idx`;
+    return `
+      CREATE INDEX IF NOT EXISTS "${indexName}"
+      ON "${schemaName}"."task_history"("${field}");
     `;
   },
   getAiTechnicalSummaryIndexQuery(schemaName: string, field: string): string {
