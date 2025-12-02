@@ -2455,7 +2455,7 @@ export const rawQueries = {
     activity_rid character varying(50) NOT NULL,
     browse_file character varying(2000),
     size character varying(50),
-    document_name character varying(64),
+    document_name character varying(255),
     format character varying(50),
     is_file_deleted boolean DEFAULT false,
     CONSTRAINT activity_attachments_pkey PRIMARY KEY (rid),
