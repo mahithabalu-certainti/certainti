@@ -74,7 +74,7 @@ export const STATUS_MESSAGE = {
   caseUpdateFailed: "Case update failed",
   caseCreationFailed: "Case creation failed",
   caseTeamCreationFailed: "Case team creation failed",
-  separateDb: "SEPARATE_DB",
+  separateDb: "separate_db",
   caseDetailsFetchedSuccess: "Case details fetched successfully",
   dataNotAvailable: "Data not available",
   projectsFetchedSuccess: "Project fetched successfully",
