@@ -1109,6 +1109,7 @@ export const AccountDetails = () => {
             isCollapsed={isCollapsed}
             onToggleCollapse={() => setIsCollapsed((prev) => !prev)}
             isLoading={isPending}
+            maxHeight={220}
           />
         </div>
         <div
