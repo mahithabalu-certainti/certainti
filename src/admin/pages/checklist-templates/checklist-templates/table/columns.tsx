@@ -146,7 +146,7 @@ export const getChecklistTemplateColumns = (
     editId: 'status_rid',
     sortId: 'status_rid',
     label: 'Status',
-    width: 100,
+    width: 120,
     sortable: true,
     editable:
       permissionMap?.['status_rid']?.read &&
