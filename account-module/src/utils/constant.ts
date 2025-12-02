@@ -3030,7 +3030,6 @@ export const rawQueries = {
         FOREIGN KEY (account_rid)
         REFERENCES "${schemaName}".account_details(account_rid)
         ON DELETE SET NULL;
-  
       ALTER TABLE "${schemaName}".otp_entries_history
         ADD CONSTRAINT fk_otp_entries_history_interaction_rid
         FOREIGN KEY (interaction_rid)
