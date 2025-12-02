@@ -84,7 +84,7 @@ implements ActivityAttachmentsAttributes {
                 allowNull : true
             },
             document_name : {
-                type : DataTypes.STRING(64),
+                type : DataTypes.STRING(255),
                 allowNull : true
             },
             format : {
