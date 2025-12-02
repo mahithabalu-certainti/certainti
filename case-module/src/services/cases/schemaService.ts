@@ -5075,7 +5075,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         created_by : data.created_by,
         created_datetime : new Date(),
         account_rid : data.account_rid,
-        entity_rid : createdTaskResult.dataValues.rid,
+        entity_rid : data.case_rid,
         event_name : "Task Created",
         event_type : "ui handler",
         event_status : "success",
@@ -5234,15 +5234,38 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             data.workflow_connector.created_by = data.modified_by
             data.workflow_connector.case_rid = data.case_rid
             data.workflow_connector.account_rid = data.account_rid
-            if(data.workflow_connector.target_rid !== undefined) {
+            if(data.workflow_connector.target_rid !== undefined && data.workflow_connector.is_new_changes) {
               if(data.workflow_connector.target_rid.length > 0)
                 await this.taskWorkflowConnector(accountNumber, data.workflow_connector, transaction);
             }
             if(data.workflow_connector.delete_target_rids !== undefined) {
-              if(data.workflow_connector.delete_target_rids.length > 0) {
+              if(data.workflow_connector.delete_target_rids.length > 0 && data.workflow_connector.is_new_changes) {
                 data.workflow_connector.source_rid = data.rid
                 await this.deleteTaskWorkConnector(accountNumber, data.workflow_connector)
               }
+            }
+            if(data.workflow_connector.is_new_changes) {
+              await CaseTimeline.create({
+                created_by : data.modified_by,
+                created_datetime : new Date(),
+                account_rid : data.account_rid,
+                entity_rid : data.case_rid,
+                event_name : 
+                `Case Task Workflow Connector updated`,
+                event_type : "ui handler",
+                event_status : "success",
+                event_datetime : new Date(),
+                description : `Case Task Workflow Connector updated`
+              }, {transaction});
+              await CaseHistory.create({
+                created_by : data.modified_by,
+                created_datetime : new Date(),
+                case_rid : data.case_rid,
+                attribute_name : "Linked Items",
+                old_value : "CREATE",
+                new_value : `updated a linked task type`,
+                task_rid : data.rid
+              }, {transaction});
             }
           }
           const fetchUpdatedColumns = getColumnsNamesForTaskUpdate(data, isTaskExists as any);
@@ -5341,7 +5364,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
               created_by : data.modified_by,
               created_datetime : new Date(),
               account_rid : data.account_rid,
-              entity_rid : data.rid,
+              entity_rid : data.case_rid,
               event_name : "Task Updated",
               event_type : "ui handler",
               event_status : "success",
@@ -6681,27 +6704,6 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     }
   }
   if(iterationCount === totalIteration) {
-    await CaseTimeline.create({
-      created_by : data.created_by,
-      created_datetime : new Date(),
-      account_rid : data.account_rid,
-      entity_rid : data.source_rid,
-      event_name : 
-      `Case Task Workflow Connector created`,
-      event_type : "ui handler",
-      event_status : "success",
-      event_datetime : new Date(),
-      description : `Case Task Workflow Connector created`
-    }, {transaction});
-     await CaseHistory.create({
-      created_by : data.created_by,
-      created_datetime : new Date(),
-      case_rid : data.case_rid,
-      attribute_name : "Linked Items",
-      old_value : "CREATE",
-      new_value : `added a linked task type`,
-      task_rid : data.source_rid
-    }, {transaction});
     return {
       statusCode : HttpStatus.SUCCESS,
       statusMessage : STATUS_MESSAGE.workflowConnectorMappedSuccess
