@@ -676,7 +676,13 @@ export const fetchAdminTemplates = (page : number, limit : number, sort : string
                   break;
                 }
                 case "is_empty" : {
-                  queryContainer.push(`${validKeyColumns} IS NULL`)
+                  let newCol : string;
+                  if(validKeyColumns === `CONCAT(u.first_name,' ', u.last_name)`)
+                    newCol = `(u.first_name IS NULL AND u.last_name IS NULL)`
+                  else if (validKeyColumns == `CONCAT(uu.first_name,' ', uu.last_name)`)
+                    newCol = `(uu.first_name IS NULL AND uu.last_name IS NULL)`
+                  else newCol = `${validKeyColumns} IS NULL`
+                  queryContainer.push(newCol)
                   break;
                 }
                 case "in" : {

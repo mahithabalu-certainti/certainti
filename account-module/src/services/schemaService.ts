@@ -102,6 +102,7 @@ class SchemaService {
       await this.createProjectResourcesHistoryTable(schemaName, sequelize);
       await this.createProjectResourceFiscalTable(schemaName, sequelize);
       await this.createProjectResourceFiscalRegionTable(schemaName, sequelize);
+      await this.createJustificationTable(schemaName, sequelize);
 
       await this.createProjectTaskTable(schemaName, sequelize);
       await this.createProjectTaskTimeLineTable(schemaName, sequelize);
@@ -131,7 +132,6 @@ class SchemaService {
       await this.createActivityHistoryTable(schemaName, sequelize);
       await this.createTaskHistoryTable(schemaName, sequelize);
 
-      await this.createJustificationTable(schemaName, sequelize);
       
       await transaction.commit();
     } catch (Err) {

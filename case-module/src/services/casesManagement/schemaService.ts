@@ -755,12 +755,12 @@ class CaseManagementSchemaService {
             data.workflow_connector.created_by = userId
             if(data.workflow_connector.target_rid !== undefined) {
               if(data.workflow_connector.target_rid.length > 0)
-                await this.taskWorkflowConnector(data);
+                await this.taskWorkflowConnector(data.workflow_connector);
             }
             if(data.workflow_connector.delete_target_rids !== undefined) {
               if(data.workflow_connector.delete_target_rids.length > 0) {
                 data.workflow_connector.source_rid = data.rid
-                await this.deleteTaskWorkConnector(data)
+                await this.deleteTaskWorkConnector(data.workflow_connector)
               }
             }
           }
