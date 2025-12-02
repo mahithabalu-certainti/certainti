@@ -6,6 +6,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
 import { MenuItem } from '../../consultant/types';
 import { Skeleton, Tooltip } from '@mui/material';
+import { TruncateWithTooltip } from '../truncate-with-tooltip';
 
 interface SideMenuPanelProps {
   menuItems: MenuItem[];
@@ -313,7 +314,7 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
                 } ease-in-out`,
               }}
             >
-              {item.name}
+              <TruncateWithTooltip text={item.name} enableCopy={false} />
             </span>
             {!isCollapsed && (
               <AdminSubmenuActiveIcon
@@ -409,7 +410,10 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
                       } ease-in-out`,
                     }}
                   >
-                    {submenu.name}
+                    <TruncateWithTooltip
+                      text={submenu.name}
+                      enableCopy={false}
+                    />
                   </span>
                   {!isCollapsed && (
                     <AdminSubmenuActiveIcon
