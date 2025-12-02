@@ -113,7 +113,7 @@ async function exportAllTaskSummary(req: Request, res: Response): Promise<void> 
 
     if (attachments.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
-      handleSuccessResponse(res, await generateExcelBase64(attachments?.data?.notes, "All Attachments Summary"));
+      handleSuccessResponse(res, await generateExcelBase64(attachments?.data?.tasks, "All Attachments Summary"));
       return;
     } else {
       errorLog(methodName, attachments.errorMessage);
@@ -207,7 +207,7 @@ async function updateTask(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    const attachment = await notesService.updateNotes(value, userId, req?.file, value.is_file_deleted);
+    const attachment = await taskService.updateNotes(value, userId, req?.file, value.is_file_deleted);
 
     if (attachment.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);

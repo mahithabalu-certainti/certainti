@@ -1046,3 +1046,31 @@ export interface INotesGraphqlServices {
     data?: { notes: any };
   }>;
 }
+
+export interface EnrichedTask extends Record<string, any>  {
+  rid: string;
+  r_number: string;
+  created_by: string;
+  modified_by?: string | null;
+  created_datetime: Date;
+  modified_datetime?: Date | null;
+  account_rid: string;
+  attach_to: string;
+  attachment_level: string;
+  task_name: string;
+  description?: string | null;
+  fiscal_year: number;
+  assigned_to: string;
+  status_rid: string;
+  priority_rid: string;
+  effective_start_datetime: Date;
+  effective_end_datetime: Date;
+  task_rid: string;
+  created_by_name: string;
+  modified_by_name?: string;
+  status_name: string;
+  priority_name: string;
+  assigned_to_name: string;
+  account_status_rid?: string;
+  account_status_name?: string;
+}
