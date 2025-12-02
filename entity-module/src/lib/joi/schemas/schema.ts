@@ -2967,7 +2967,8 @@ const listNotesSummarySchema = Joi.object({
             'string.base': 'Search must be a string',
             'string.max': 'Search cannot exceed 255 characters'
         }),
-    filters: Joi.string().default("{}").optional(),
+    filters: Joi.object().default({}),
+    globalFilters: Joi.object().default({}),
     fiscalYear: Joi.number()
     .integer()
     .min(1000)
@@ -2980,7 +2981,6 @@ const listNotesSummarySchema = Joi.object({
       "number.max": "Fiscal year must be a 4-digit number",
       "any.required": "Fiscal year is required",
     }),
-    globalFilters: Joi.string().default("{}").optional(),
     sortBy: Joi.string().default("created_datetime").optional(),
     sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
 })
@@ -2996,7 +2996,6 @@ const exportListNotesSummarySchema = Joi.object({
             'string.base': 'Search must be a string',
             'string.max': 'Search cannot exceed 255 characters'
         }),
-    filters: Joi.string().default("{}").optional(),
     fiscalYear: Joi.number()
     .integer()
     .min(1000)
@@ -3009,7 +3008,8 @@ const exportListNotesSummarySchema = Joi.object({
       "number.max": "Fiscal year must be a 4-digit number",
       "any.required": "Fiscal year is required",
     }),
-    globalFilters: Joi.string().default("{}").optional(),
+     filters: Joi.object().default({}),
+    globalFilters: Joi.object().default({}),
     sortBy: Joi.string().default("created_datetime").optional(),
     sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
 })
