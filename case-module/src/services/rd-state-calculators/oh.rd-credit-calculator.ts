@@ -33,12 +33,9 @@ export class RdCreditCalculatorForOH {
      * @param prior3YearsQREs 
      * @param priorYearsCount 
      */
-    async compute(config: any, currentYearQREs: any, annualGrossReceipts: any[], totalGrossReceipts: Decimal, prior3YearsQREs: any[], priorYearsCount: number) {
-        const extractConfig = this.extractConfigJson(config.config_json);
-        logMessage(`Computing CO Credit with config: ${JSON.stringify(extractConfig)}`);
-
+    async compute(config: ConfigJson, currentYearQREs: any, annualGrossReceipts: any[], totalGrossReceipts: Decimal, prior3YearsQREs: any[], priorYearsCount: number) {
         const current_year_wages = new Decimal(currentYearQREs.wages || 0);
-        const current_year_contract = new Decimal(currentYearQREs.contract).mul(extractConfig.sub_con_percent) || 0;
+        const current_year_contract = new Decimal(currentYearQREs.contract).mul(config.sub_con_percent) || 0;
         const total_current_year_qre = current_year_wages.plus(current_year_contract);
 
         const qreSum = prior3YearsQREs.map(item => ({
@@ -57,7 +54,7 @@ export class RdCreditCalculatorForOH {
         logMessage(`EXCESS_${excess_qre}`)
         const final_excess_qre = new Decimal(excess_qre.lt(0) ? 0 : excess_qre);
 
-        const final_credits_earned = final_excess_qre.mul(extractConfig.credit_earned_percent);
+        const final_credits_earned = final_excess_qre.mul(config.credit_earned_percent);
 
          const inputFields = await this.buildInputParams(currentYearQREs, prior3YearsQREs, {
             country: this.country,

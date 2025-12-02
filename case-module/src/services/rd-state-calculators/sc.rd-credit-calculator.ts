@@ -34,22 +34,19 @@ export class RdCreditCalculatorForSC {
      * @param prior3YearsQREs 
      * @param priorYearsCount 
      */
-    async compute(config: any, currentYearQREs: any, annualGrossReceipts: any[], totalGrossReceipts: Decimal, prior3YearsQREs: any[], priorYearsCount: number) {
-        const extractConfig = this.extractConfigJson(config.config_json);
-        logMessage(`Computing CO Credit with config: ${JSON.stringify(extractConfig)}`);
-
+    async compute(config: ConfigJson, currentYearQREs: any, annualGrossReceipts: any[], totalGrossReceipts: Decimal, prior3YearsQREs: any[], priorYearsCount: number) {
         const current_year_wages = new Decimal(currentYearQREs.wages || 0);
-        const current_year_contract = new Decimal(currentYearQREs.contract).mul(extractConfig.sub_con_percent) || 0;
+        const current_year_contract = new Decimal(currentYearQREs.contract).mul(config.sub_con_percent) || 0;
         const total_current_year_qre = current_year_wages.plus(current_year_contract);
 
-        const current_year_credit = total_current_year_qre.mul(extractConfig.credit_rate);
+        const current_year_credit = total_current_year_qre.mul(config.credit_rate);
         const tot_qre_credit = current_year_credit;
         const total_tax_liability = new Decimal(currentYearQREs.business_tax_liability);
 
         const tot_all_credits_other_than_qre = 0;
         const net_base_amount = total_tax_liability.minus(tot_all_credits_other_than_qre);
 
-        const fifty_percent_credit = net_base_amount.mul(extractConfig.carry_forward_credit_rate);
+        const fifty_percent_credit = net_base_amount.mul(config.carry_forward_credit_rate);
         const final_credit = Decimal.min(tot_qre_credit, fifty_percent_credit);
 
         const inputFields = await this.buildInputParams(currentYearQREs, prior3YearsQREs, {

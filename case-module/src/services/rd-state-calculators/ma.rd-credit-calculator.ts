@@ -38,12 +38,10 @@ export class RdCreditCalculatorForMA {
      * @param priorYearsCount 
      * @returns 
      */
-    async compute(config: any, currentYearQREs: any, annualGrossReceipts: any[], totalGrossReceipts: Decimal, prior3YearsQREs: any[], priorYearsCount: number) {    
-        const extractConfig = this.extractConfigJson(config.config_json);
-        logMessage(`Computing CO Credit with config: ${JSON.stringify(extractConfig)}`);
-        const part1QualifiedResearchExpenseInfo = this.part1QualifiedResearchExpense(currentYearQREs, extractConfig);
-        const part2ASCCreditCalculationInfo = this.part2ASCCreditCalculation(prior3YearsQREs, part1QualifiedResearchExpenseInfo.total_qre, part1QualifiedResearchExpenseInfo.total_qre_aggregate, extractConfig);
-        const part3CreditCalInfo = this.part3CreditCalculation(annualGrossReceipts, part2ASCCreditCalculationInfo.aggregate_group_credit_percent, extractConfig);
+    async compute(config: ConfigJson, currentYearQREs: any, annualGrossReceipts: any[], totalGrossReceipts: Decimal, prior3YearsQREs: any[], priorYearsCount: number) {    
+        const part1QualifiedResearchExpenseInfo = this.part1QualifiedResearchExpense(currentYearQREs, config);
+        const part2ASCCreditCalculationInfo = this.part2ASCCreditCalculation(prior3YearsQREs, part1QualifiedResearchExpenseInfo.total_qre, part1QualifiedResearchExpenseInfo.total_qre_aggregate, config);
+        const part3CreditCalInfo = this.part3CreditCalculation(annualGrossReceipts, part2ASCCreditCalculationInfo.aggregate_group_credit_percent, config);
 
         const inputFields = await this.buildInputParams(currentYearQREs, prior3YearsQREs, annualGrossReceipts, {
             country: this.country,

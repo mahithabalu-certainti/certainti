@@ -36,15 +36,12 @@ export class RdCreditCalculatorForID {
      * @param prior3YearsQREs 
      * @param priorYearsCount 
      */
-    async compute(config: any, currentYearQREs: any, annualGrossReceipts: any[], totalGrossReceipts: Decimal, prior3YearsQREs: any[], priorYearsCount: number) {
-        const extractConfig = this.extractConfigJson(config.config_json);
-        logMessage(`Computing CO Credit with config: ${JSON.stringify(extractConfig)}`);
-
-         currentYearQREs = this.loadData.currentYearQREs;
+    async compute(config: ConfigJson, currentYearQREs: any, annualGrossReceipts: any[], totalGrossReceipts: Decimal, prior3YearsQREs: any[], priorYearsCount: number) {
+        currentYearQREs = this.loadData.currentYearQREs;
         prior3YearsQREs = this.loadData.prior3YearsQREs;
 
 
-        const qreCalInfo = this.qreCreditCalculation(currentYearQREs, extractConfig);
+        const qreCalInfo = this.qreCreditCalculation(currentYearQREs, config);
 
         const inputFields = await this.buildInputParams(currentYearQREs, prior3YearsQREs, {
             country: this.country,

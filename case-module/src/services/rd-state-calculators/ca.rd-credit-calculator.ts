@@ -19,9 +19,8 @@ export class RdCreditCalculatorForCA {
     creditType = "State R&D Credit - CA";
     currency = "USD";
 
-    async compute(config: any, currentYearQREs: any, annualGrossReceipts: any[], totalGrossReceipts: Decimal, prior3YearsQREs: { fiscalYear: number; qre: number }[], priorYearsCount: number) {
-        const extractConfig = this.extractConfigJson(config.config_json);
-        const rrcResult = await this.rrc(extractConfig, currentYearQREs, totalGrossReceipts, priorYearsCount);
+    async compute(config: ConfigJson, currentYearQREs: any, annualGrossReceipts: any[], totalGrossReceipts: Decimal, prior3YearsQREs: { fiscalYear: number; qre: number }[], priorYearsCount: number) {
+        const rrcResult = await this.rrc(config, currentYearQREs, totalGrossReceipts, priorYearsCount);
         const ascResult = {}; //California does NOT have ASC, so return {} or null
 
         const inputFields = await this.buildInputParams(currentYearQREs, annualGrossReceipts, {

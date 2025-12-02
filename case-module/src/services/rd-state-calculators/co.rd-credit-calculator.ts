@@ -15,9 +15,7 @@ export class RdCreditCalculatorForCO {
     creditType = "State R&D Credit - CO";
     currency = "USD";
 
-    async compute(config: any, currentYearQREs: any, annualGrossReceipts: any[], totalGrossReceipts: Decimal, prior3YearsQREs: { fiscalYear: number; qre: number }[], priorYearsCount: number) {
-        const extractConfig = this.extractConfigJson(config.config_json);
-        logMessage(`Computing CO Credit with config: ${JSON.stringify(config)}`);
+    async compute(config: ConfigJson, currentYearQREs: any, annualGrossReceipts: any[], totalGrossReceipts: Decimal, prior3YearsQREs: { fiscalYear: number; qre: number }[], priorYearsCount: number) {
         const wages = currentYearQREs.wages || 0;
         const supplies = currentYearQREs.supplies || 0;
         const costToRent = 0;
@@ -36,13 +34,13 @@ export class RdCreditCalculatorForCO {
         const sumPriorTwoYears = new Decimal(priorYear1QREs).plus(new Decimal(priorYear2QREs));
 
         //---- Line E: 50% of Sum of Prior Year 1 and 2 QREs
-        const fiftyPercentOfPriorTwoYears = sumPriorTwoYears.mul(extractConfig.qre_cap_rate || 0);
+        const fiftyPercentOfPriorTwoYears = sumPriorTwoYears.mul(config.qre_cap_rate || 0);
 
         //---- Line F: Excess QREs
         const excessQRE = Decimal.max(totalQREs.minus(fiftyPercentOfPriorTwoYears), 0);
 
         //---- Line G: Allowable Credit
-        const allowableCredit = excessQRE.mul(new Decimal(extractConfig.credit_rate || 0));
+        const allowableCredit = excessQRE.mul(new Decimal(config.credit_rate || 0));
 
 
         const inputFields = await this.buildInputParams(totalQREs, priorYear1QREs, priorYear2QREs, {

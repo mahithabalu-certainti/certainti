@@ -26,13 +26,12 @@ export class RdCreditCalculatorForGA {
         this.loadData = this.financialRDPreviewService.loadDataForGA()
     }
 
-    async compute(config: any, currentYearQREs: any, annualGrossReceipts: any[], totalGrossReceipts: Decimal, prior3YearsQREs: { fiscalYear: number; qre: number }[], priorYearsCount: number) {
-        const extractConfig = this.extractConfigJson(config.config_json);
+    async compute(config: ConfigJson, currentYearQREs: any, annualGrossReceipts: any[], totalGrossReceipts: Decimal, prior3YearsQREs: { fiscalYear: number; qre: number }[], priorYearsCount: number) {
         const inputInfo = this.computeInputInformation(currentYearQREs, annualGrossReceipts);
         const ratioCalculationInfo = this.ratioCalculation(prior3YearsQREs, annualGrossReceipts);
-        const baseAmountInfo = this.taxBaseCalculation(inputInfo.curent_year_gross_receipts, ratioCalculationInfo.average_ratio, extractConfig);
-        const taxCreditInfo = this.taxCreditCalculation(inputInfo.current_year_qre, baseAmountInfo.base_amount, extractConfig);
-        const creditAndCarryForwardInfo = this.creditAndCreditForwardCalculation(inputInfo.current_year_tax_liability, new Decimal(taxCreditInfo.tax_credit), extractConfig);
+        const baseAmountInfo = this.taxBaseCalculation(inputInfo.curent_year_gross_receipts, ratioCalculationInfo.average_ratio, config);
+        const taxCreditInfo = this.taxCreditCalculation(inputInfo.current_year_qre, baseAmountInfo.base_amount, config);
+        const creditAndCarryForwardInfo = this.creditAndCreditForwardCalculation(inputInfo.current_year_tax_liability, new Decimal(taxCreditInfo.tax_credit), config);
 
         const inputFields = await this.buildInputParams(currentYearQREs, prior3YearsQREs, annualGrossReceipts, {
             country: this.country,

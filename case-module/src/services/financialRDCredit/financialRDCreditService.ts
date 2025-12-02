@@ -401,10 +401,12 @@ export class FinancialRDCreditService {
 
             // Iterate through each 36 state configuration and compute credits
             for (const config of configStateLevel) {
-                logMessage(`State Level Config: ${JSON.stringify(config)}`);
                 const calculator = stateCalculators[config.state_code];
+                const extractConfig = this.extractConfigJson(config.config_json);
+                logMessage(`Computing credit with config: ${JSON.stringify(extractConfig)}`);
+
                 if (calculator) {
-                    const result = await calculator.compute(config, currentYearQREs, annualGrossReceipts, totalGrossReceipts, prior3YearsQREs, 4);
+                    const result = await calculator.compute(extractConfig, currentYearQREs, annualGrossReceipts, totalGrossReceipts, prior3YearsQREs, 4);
                     logMessage(`Result for ${config.state_code}: ${JSON.stringify(result)}`);
                     this.rdCreditSchemaService.insertRDStateCreditCalculation(accountNumber, caseRid, "USA", config.state_code, result.inputFields, result.computedFields);
                 } else {

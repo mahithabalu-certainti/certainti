@@ -36,11 +36,9 @@ export class RdCreditCalculatorForNJ {
      * @param priorYearsCount 
      * @returns 
      */
-    async compute(config: any, currentYearQREs: any, annualGrossReceipts: any[], totalGrossReceipts: Decimal, prior3YearsQREs: { fiscalYear: number; qre: number }[], priorYearsCount: number) {
-        const extractConfig = this.extractConfigJson(config.config_json);
-        logMessage(`Computing CO Credit with config: ${JSON.stringify(extractConfig)}`);
-        const part4ASCCreditCalculationInfo = this.part4ASCCreditCalculation(currentYearQREs, prior3YearsQREs, extractConfig);
-        const part5DevelopmentTaxCreditCalculationInfo = this.part5DevelopmentTaxCreditCalculation(new Decimal(part4ASCCreditCalculationInfo.final_credit), extractConfig);
+    async compute(config: ConfigJson, currentYearQREs: any, annualGrossReceipts: any[], totalGrossReceipts: Decimal, prior3YearsQREs: { fiscalYear: number; qre: number }[], priorYearsCount: number) {
+        const part4ASCCreditCalculationInfo = this.part4ASCCreditCalculation(currentYearQREs, prior3YearsQREs, config);
+        const part5DevelopmentTaxCreditCalculationInfo = this.part5DevelopmentTaxCreditCalculation(new Decimal(part4ASCCreditCalculationInfo.final_credit), config);
 
         const inputFields = await this.buildInputParams(currentYearQREs, prior3YearsQREs, {
             country: this.country,

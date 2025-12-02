@@ -29,11 +29,9 @@ export class RdCreditCalculatorForAZ {
      * @param priorYearsCount 
      * @returns 
      */
-    async compute(config: any, currentYearQREs: any, annualGrossReceipts: any[], totalGrossReceipts: Decimal, prior3YearsQREs: { fiscalYear: number; qre: number }[], priorYearsCount: number) {
-        const extractConfig = this.extractConfigJson(config.config_json);
-
-        const rrcResult = await this.rrc(extractConfig, currentYearQREs, totalGrossReceipts, priorYearsCount);
-        const ascResult = await this.asc(extractConfig, currentYearQREs, prior3YearsQREs);
+    async compute(config: ConfigJson, currentYearQREs: any, annualGrossReceipts: any[], totalGrossReceipts: Decimal, prior3YearsQREs: { fiscalYear: number; qre: number }[], priorYearsCount: number) {
+        const rrcResult = await this.rrc(config, currentYearQREs, totalGrossReceipts, priorYearsCount);
+        const ascResult = await this.asc(config, currentYearQREs, prior3YearsQREs);
 
         const inputFields = await this.buildInputParams(currentYearQREs, prior3YearsQREs, annualGrossReceipts, {
             country: this.country,

@@ -38,13 +38,11 @@ export class RdCreditCalculatorForTX {
      * @param prior3YearsQREs 
      * @param priorYearsCount 
      */
-    async compute(config: any, currentYearQREs: any, annualGrossReceipts: any[], totalGrossReceipts: Decimal, prior3YearsQREs: any[], priorYearsCount: number) {
-        const extractConfig = this.extractConfigJson(config.config_json);
-        logMessage(`Computing CO Credit with config: ${JSON.stringify(extractConfig)}`);
-
-        const qretInfo = this.creditCalculationQRET(currentYearQREs, prior3YearsQREs, extractConfig)
-        const precedingWithQretInfo = this.precedingCalculationWithQRET(qretInfo, extractConfig);
-        const precedingWithNoQretInfo = this.precedingCalculationWithNoQRET(qretInfo, precedingWithQretInfo.average_prev_year_qre, extractConfig);
+    async compute(config: ConfigJson, currentYearQREs: any, annualGrossReceipts: any[], totalGrossReceipts: Decimal, prior3YearsQREs: any[], priorYearsCount: number) {
+       
+        const qretInfo = this.creditCalculationQRET(currentYearQREs, prior3YearsQREs, config)
+        const precedingWithQretInfo = this.precedingCalculationWithQRET(qretInfo, config);
+        const precedingWithNoQretInfo = this.precedingCalculationWithNoQRET(qretInfo, precedingWithQretInfo.average_prev_year_qre, config);
         const qreActivitiesCreditInfo = this.qreActivitiesCredit(precedingWithQretInfo.credit_eq_zero, precedingWithQretInfo.credit_gt_zero, precedingWithNoQretInfo.credit_eq_zero, precedingWithNoQretInfo.credit_gt_zero);
 
         const inputFields = await this.buildInputParams(currentYearQREs, prior3YearsQREs, {

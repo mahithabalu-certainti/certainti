@@ -30,13 +30,10 @@ export class RdCreditCalculatorForCT {
         this.loadData = this.financialRDPreviewService.loadDataForCT()
     }
 
-    async compute(config: any, currentYearQREs: any, annualGrossReceipts: any[], totalGrossReceipts: Decimal, prior3YearsQREs: { fiscalYear: number; qre: number }[], priorYearsCount: number) {
-        const extractConfig = this.extractConfigJson(config.config_json);
-        logMessage(`Computing CO Credit with config: ${JSON.stringify(config)}`);
-
-        const part1Computation = this.part1CreditComputation(currentYearQREs, prior3YearsQREs, extractConfig);
-        const part1TentativeComputation = this.part1TentativeTaxCreditComputation(currentYearQREs, part1Computation.excess_qre, extractConfig);
-        const part2Computation = this.part2CreditComputation(part1TentativeComputation.allowable_tentative_tax_credit, currentYearQREs.business_tax_liability, extractConfig);
+    async compute(config: ConfigJson, currentYearQREs: any, annualGrossReceipts: any[], totalGrossReceipts: Decimal, prior3YearsQREs: { fiscalYear: number; qre: number }[], priorYearsCount: number) {
+        const part1Computation = this.part1CreditComputation(currentYearQREs, prior3YearsQREs, config);
+        const part1TentativeComputation = this.part1TentativeTaxCreditComputation(currentYearQREs, part1Computation.excess_qre, config);
+        const part2Computation = this.part2CreditComputation(part1TentativeComputation.allowable_tentative_tax_credit, currentYearQREs.business_tax_liability, config);
 
         const inputFields = await this.buildInputParams(part1Computation.total_qre, part1Computation.prior_year_1_qre, {
             country: this.country,
