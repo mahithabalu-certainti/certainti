@@ -2267,7 +2267,7 @@ export const rawQueries = {
   },
   getActivityAttachmentsSequenceQuery(schemaName: string): string {
     return `
-      CREATE SEQUENCE IF NOT EXISTS "${schemaName}".activities_attachments_seq START 1;
+      CREATE SEQUENCE IF NOT EXISTS "${schemaName}".activity_attachments_seq START 1;
     `;
   },
    getCreateInteractionsTableQuery(schemaName: string): string {
@@ -2384,7 +2384,7 @@ export const rawQueries = {
         case_rid character varying(50),
         assigned_to character varying(50),
         status_rid character varying(50),
-        CONSTRAINT checklists_rid_unique UNIQUE (rid)
+        CONSTRAINT checklists_rid_unique UNIQUE (rid),
           CONSTRAINT checklists_pkey PRIMARY KEY (rid),
     CONSTRAINT checklists_r_number_key UNIQUE (r_number),
     CONSTRAINT checklists_account_rid_fkey FOREIGN KEY (account_rid)
@@ -2444,9 +2444,9 @@ export const rawQueries = {
   },
   getCreateActivityAttachmentsTableQuery(schemaName: string): string {
     return `
-      CREATE TABLE IF NOT EXISTS "${schemaName}".activities_attachments (
+      CREATE TABLE IF NOT EXISTS "${schemaName}".activity_attachments (
         rid VARCHAR(50) DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
-        r_number VARCHAR(20) UNIQUE DEFAULT 'ACT-' || LPAD(nextval('"${schemaName}".activities_attachments_seq')::TEXT, 10, '0'),
+        r_number VARCHAR(20) UNIQUE DEFAULT 'ACT-' || LPAD(nextval('"${schemaName}".activity_attachments_seq')::TEXT, 10, '0'),
     created_by character varying(50) NOT NULL,
     modified_by character varying(50),
     created_datetime timestamp without time zone NOT NULL DEFAULT now(),
@@ -2455,7 +2455,7 @@ export const rawQueries = {
     activity_rid character varying(50) NOT NULL,
     browse_file character varying(2000),
     size character varying(50),
-    document_name character varying(64),
+    document_name character varying(255),
     format character varying(50),
     is_file_deleted boolean DEFAULT false,
     CONSTRAINT activity_attachments_pkey PRIMARY KEY (rid),
@@ -2525,7 +2525,7 @@ export const rawQueries = {
         checklist_item_name character varying(255) NOT NULL,
         checklist_item_description character varying(2000),
         status_rid character varying(50),
-        CONSTRAINT checklist_items_pkey UNIQUE (rid)
+        CONSTRAINT checklist_items_pkey UNIQUE (rid),
         CONSTRAINT checklist_items_account_rid_fkey FOREIGN KEY (account_rid)
         REFERENCES ${schemaName}.account_details (account_rid) MATCH SIMPLE
         ON UPDATE CASCADE
@@ -3030,11 +3030,10 @@ export const rawQueries = {
         FOREIGN KEY (account_rid)
         REFERENCES "${schemaName}".account_details(account_rid)
         ON DELETE SET NULL;
-  
       ALTER TABLE "${schemaName}".otp_entries_history
         ADD CONSTRAINT fk_otp_entries_history_interaction_rid
-        FOREIGN KEY (interaction_rid, project_fiscal_rid)
-        REFERENCES "${schemaName}".interactions(rid, project_fiscal_rid)
+        FOREIGN KEY (interaction_rid)
+        REFERENCES "${schemaName}".interactions(rid)
         ON DELETE SET NULL;
     `;
   },
@@ -3207,6 +3206,13 @@ export const rawQueries = {
       ON "${schemaName}"."project_history"("${field}");
     `;
   },
+   getActivityHistoryIndexQuery(schemaName: string, field: string): string {
+    const indexName = `${schemaName}_activity_history_${field}_idx`;
+    return `
+      CREATE INDEX IF NOT EXISTS "${indexName}"
+      ON "${schemaName}"."activity_history"("${field}");
+    `;
+  },
   getProjectFiscalRegionIndexQuery(schemaName: string, field: string): string {
     const indexName = `${schemaName}_project_fiscal_region_${field}_idx`;
     return `
@@ -3333,6 +3339,14 @@ export const rawQueries = {
       ON "${schemaName}"."interaction_history"("${field}");
     `;
   },
+  getTaskHistoryIndexQuery(schemaName: string, field: string): string {
+    const indexName = `${schemaName}_task_history_${field}_idx`;
+    return `
+      CREATE INDEX IF NOT EXISTS "${indexName}"
+      ON "${schemaName}"."task_history"("${field}");
+    `;
+  },
+  
   getAiTechnicalSummaryIndexQuery(schemaName: string, field: string): string {
     const indexName = `${schemaName}_ai_technical_summary_${field}_idx`;
     return `
