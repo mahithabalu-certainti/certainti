@@ -406,17 +406,17 @@ export const listAllCasesSummaryQuery = (
     WITH 
     task_cnt AS (
   SELECT project_fiscal_rid, COUNT(*) AS cnt
-  FROM trd365_00001.project_task
+  FROM ${schemaName}.project_task
   GROUP BY project_fiscal_rid
 ),
 ats_cnt AS (
   SELECT project_fiscal_rid, COUNT(*) AS cnt
-  FROM trd365_00001.ai_technical_summary
+  FROM ${schemaName}.ai_technical_summary
   GROUP BY project_fiscal_rid
 ),
 res_cnt AS (
   SELECT project_fiscal_rid, COUNT(*) AS cnt
-  FROM trd365_00001.project_resource
+  FROM ${schemaName}.project_resource
   GROUP BY project_fiscal_rid
 ),
     fetch_all_cases AS 

@@ -2822,6 +2822,7 @@ export const rawQueries = {
         technical_summary TEXT,
         version INT DEFAULT 1,
         status_rid VARCHAR(50),
+        entity_transaction_rid VARCHAR(50),
         technical_summary_refinement_prompt TEXT
       );
     `;
