@@ -186,7 +186,7 @@ export class CaseManagementService {
         );
 
       // If checklist creation was successful, manage associated checklist items (add/edit/delete)
-      if (response) {
+      if (response && caseRequest?.checklist_items) {
         await this.caseManangementSchemaService.manageAdminCheckListItems(
           caseRequest,
           caseRequest.checklist_template_rid!,
