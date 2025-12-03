@@ -395,8 +395,7 @@ export class FinancialRDCreditService {
             logMessage(`Prior3YearQREs: ${JSON.stringify(prior3YearsQREs)}`);
 
             const annualGrossReceipts = await this.rdCreditSchemaService.getAnnualGrossReceipts(accountRid, 5, schemaName, orgDb); // current year & prior 4 years gross receipts
-            const totalGrossReceipts = new Decimal(annualGrossReceipts.reduce(
-                (sum, r) => sum + (r.grossReceipts || 0), 0));
+            
             logMessage(`AnnualGrossReceipts: ${JSON.stringify(annualGrossReceipts)}`);
 
             const stateRDData = await this.getStateRDData(currentYearQREs, prior3YearsQREs, annualGrossReceipts);
@@ -408,7 +407,7 @@ export class FinancialRDCreditService {
                 logMessage(`Computing credit with config: ${JSON.stringify(extractConfig)}`);
 
                 if (stateComputation) {
-                    const result = await stateComputation.compute(extractConfig, stateRDData , totalGrossReceipts, 4);
+                    const result = await stateComputation.compute(extractConfig, stateRDData);
                     logMessage(`Result for ${config.state_code}: ${JSON.stringify(result)}`);
                     this.rdCreditSchemaService.insertRDStateCreditCalculation(accountNumber, caseRid, "USA", config.state_code, result.inputFields, result.computedFields);
                 } else {

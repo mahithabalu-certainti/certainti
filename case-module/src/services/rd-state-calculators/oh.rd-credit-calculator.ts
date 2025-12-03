@@ -27,7 +27,7 @@ export class RdCreditCalculatorForOH {
      * @param priorYearsCount 
      * To load mock Data : stateRdData = StateMockDataLoadMap["OH"]!;
      */
-    async compute(config: ConfigJson, stateRdData: StateRDData, totalGrossReceipts: Decimal, priorYearsCount: number) {
+    async compute(config: ConfigJson, stateRdData: StateRDData) {
         const current_year_wages = new Decimal(stateRdData.currentYearQREs.wages || 0);
         const current_year_contract = new Decimal(stateRdData.currentYearQREs.contract || 0).mul(config.sub_con_percent) || 0;
         const total_current_year_qre = current_year_wages.plus(current_year_contract);
@@ -74,26 +74,6 @@ export class RdCreditCalculatorForOH {
         }
 
 
-    }
-
-    /**
-     * 
-     * @param configJson 
-     * @returns 
-     */
-    extractConfigJson(configJson: any): ConfigJson {
-        // If it's already an object, just return it
-        if (typeof configJson === 'object') {
-            return configJson as ConfigJson;
-        }
-
-        // If it's a string, parse it
-        try {
-            return JSON.parse(configJson) as ConfigJson;
-        } catch (error) {
-            console.error('Failed to parse config_json:', error);
-            return {} as ConfigJson; // fallback
-        }
     }
 
     /**

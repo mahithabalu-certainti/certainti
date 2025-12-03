@@ -1,7 +1,5 @@
 import { Decimal } from "decimal.js";
-import { logMessage } from "../../utils/helpers";
 import { StateRDData } from "../financialRDCredit/rdCreditTypes";
-import { StateMockDataLoadMap } from "../financialRDCredit/rdDataLoadMockService";
 
 /**
  * Colorado RD Credit Calculator
@@ -26,8 +24,7 @@ export class RdCreditCalculatorForCO {
      * To load mock Data : stateRdData = StateMockDataLoadMap["CO"]!;
      * @returns 
      */
-    async compute(config: ConfigJson, stateRdData: StateRDData, totalGrossReceipts: Decimal, priorYearsCount: number) {
-        stateRdData = StateMockDataLoadMap["CO"]!;
+    async compute(config: ConfigJson, stateRdData: StateRDData) {
         const wages = stateRdData.currentYearQREs.wages || 0;
         const supplies = stateRdData.currentYearQREs.supplies || 0;
         const costToRent = 0;
@@ -111,26 +108,6 @@ export class RdCreditCalculatorForCO {
                 fifty_percent_of_prior_two_years: data.fiftyPercentOfPriorTwoYears.toNumber(),
                 excess_qre: data.excessQRE.toNumber()
             }
-        }
-    }
-
-    /**
-     * 
-     * @param configJson 
-     * @returns 
-     */
-    extractConfigJson(configJson: any): ConfigJson {
-        // If it's already an object, just return it
-        if (typeof configJson === 'object') {
-            return configJson as ConfigJson;
-        }
-
-        // If it's a string, parse it
-        try {
-            return JSON.parse(configJson) as ConfigJson;
-        } catch (error) {
-            console.error('Failed to parse config_json:', error);
-            return {} as ConfigJson; // fallback
         }
     }
 }

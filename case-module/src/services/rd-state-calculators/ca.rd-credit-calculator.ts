@@ -1,6 +1,6 @@
 import { Decimal } from "decimal.js";
 import { logMessage } from "../../utils/helpers";
-import { AnnualGrossReceipt, QRE, StateRDData } from "../financialRDCredit/rdCreditTypes";
+import { QRE, StateRDData } from "../financialRDCredit/rdCreditTypes";
 
 /**
  * California RD Credit Calculator
@@ -28,7 +28,12 @@ export class RdCreditCalculatorForCA {
      * @param priorYearsCount 
      * @returns 
      */
-    async compute(config: ConfigJson, stateRdData: StateRDData, totalGrossReceipts: Decimal, priorYearsCount: number) {
+    async compute(config: ConfigJson, stateRdData: StateRDData) {
+
+        const priorYearsCount = 4;
+        const totalGrossReceipts = new Decimal((stateRdData.annualGrossReceipts || []).reduce(
+            (sum, r) => sum + (r.grossReceipts || 0), 0));
+
         const rrcResult = await this.rrc(config, stateRdData.currentYearQREs, totalGrossReceipts, priorYearsCount);
         const ascResult = {}; //California does NOT have ASC, so return {} or null
 
@@ -165,26 +170,6 @@ export class RdCreditCalculatorForCA {
                 asc: creditASC,
                 rrc: creditRRC
             }
-        }
-    }
-
-    /**
-     * 
-     * @param configJson 
-     * @returns 
-     */
-    extractConfigJson(configJson: any): ConfigJson {
-        // If it's already an object, just return it
-        if (typeof configJson === 'object') {
-            return configJson as ConfigJson;
-        }
-
-        // If it's a string, parse it
-        try {
-            return JSON.parse(configJson) as ConfigJson;
-        } catch (error) {
-            console.error('Failed to parse config_json:', error);
-            return {} as ConfigJson; // fallback
         }
     }
 }

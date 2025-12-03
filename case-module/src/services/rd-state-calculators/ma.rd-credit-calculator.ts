@@ -29,7 +29,7 @@ export class RdCreditCalculatorForMA {
      * To load mock Data : stateRdData = StateMockDataLoadMap["MA"]!;
      * @returns 
      */
-    async compute(config: ConfigJson, stateRdData: StateRDData, totalGrossReceipts: Decimal, priorYearsCount: number) {
+    async compute(config: ConfigJson, stateRdData: StateRDData) {
         const part1QualifiedResearchExpenseInfo = this.part1QualifiedResearchExpense(stateRdData.currentYearQREs, config);
         const part2ASCCreditCalculationInfo = this.part2ASCCreditCalculation(stateRdData.prior3YearsQREs, part1QualifiedResearchExpenseInfo.total_qre, part1QualifiedResearchExpenseInfo.total_qre_aggregate, config);
         const part3CreditCalInfo = this.part3CreditCalculation(stateRdData.annualGrossReceipts || [], part2ASCCreditCalculationInfo.aggregate_group_credit_percent, config);
@@ -143,26 +143,6 @@ export class RdCreditCalculatorForMA {
             aggregate_group_credit_percent
         }
 
-    }
-
-    /**
-     * 
-     * @param configJson 
-     * @returns 
-     */
-    extractConfigJson(configJson: any): ConfigJson {
-        // If it's already an object, just return it
-        if (typeof configJson === 'object') {
-            return configJson as ConfigJson;
-        }
-
-        // If it's a string, parse it
-        try {
-            return JSON.parse(configJson) as ConfigJson;
-        } catch (error) {
-            console.error('Failed to parse config_json:', error);
-            return {} as ConfigJson; // fallback
-        }
     }
 
     /**

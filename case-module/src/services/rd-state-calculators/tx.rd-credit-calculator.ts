@@ -30,7 +30,7 @@ export class RdCreditCalculatorForTX {
      * @param priorYearsCount 
      * To load mock Data : stateRdData = StateMockDataLoadMap["TX"]!;
      */
-    async compute(config: ConfigJson, stateRdData: StateRDData, totalGrossReceipts: Decimal, priorYearsCount: number) {
+    async compute(config: ConfigJson, stateRdData: StateRDData) {
 
         const qretInfo = this.creditCalculationQRET(stateRdData.currentYearQREs, stateRdData.prior3YearsQREs, config)
         const precedingWithQretInfo = this.precedingCalculationWithQRET(qretInfo, config);
@@ -167,26 +167,6 @@ export class RdCreditCalculatorForTX {
             rd_credit_activities_avail: this.round2(rd_credit_activities_avail)
         }
 
-    }
-
-    /**
-         * 
-         * @param configJson 
-         * @returns 
-         */
-    extractConfigJson(configJson: any): ConfigJson {
-        // If it's already an object, just return it
-        if (typeof configJson === 'object') {
-            return configJson as ConfigJson;
-        }
-
-        // If it's a string, parse it
-        try {
-            return JSON.parse(configJson) as ConfigJson;
-        } catch (error) {
-            console.error('Failed to parse config_json:', error);
-            return {} as ConfigJson; // fallback
-        }
     }
 
     /**

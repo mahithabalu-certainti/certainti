@@ -22,7 +22,7 @@ export class RdCreditCalculatorForIL {
      * To load mock Data : stateRdData = StateMockDataLoadMap["IL"]!;
      * @returns 
      */
-    async compute(config: ConfigJson, stateRdData: StateRDData, totalGrossReceipts: Decimal, priorYearsCount: number) {
+    async compute(config: ConfigJson, stateRdData: StateRDData) {
         const columnABasePeriodExpenseInfo = this.columnABasePeriodExpense(stateRdData.currentYearQREs, stateRdData.prior3YearsQREs, config);
         const columnBCurrentYearExpenseInfo = this.columnBCurrentYearExpense(stateRdData.currentYearQREs, columnABasePeriodExpenseInfo.total_qres, config);
 
@@ -151,26 +151,6 @@ export class RdCreditCalculatorForIL {
             column_b: columnBCurrentYearExpenseInfo
         }
 
-    }
-
-    /**
-     * 
-     * @param configJson 
-     * @returns 
-     */
-    extractConfigJson(configJson: any): ConfigJson {
-        // If it's already an object, just return it
-        if (typeof configJson === 'object') {
-            return configJson as ConfigJson;
-        }
-
-        // If it's a string, parse it
-        try {
-            return JSON.parse(configJson) as ConfigJson;
-        } catch (error) {
-            console.error('Failed to parse config_json:', error);
-            return {} as ConfigJson; // fallback
-        }
     }
 
     /**

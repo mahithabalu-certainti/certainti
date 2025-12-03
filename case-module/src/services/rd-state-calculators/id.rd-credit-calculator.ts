@@ -28,7 +28,7 @@ export class RdCreditCalculatorForID {
      * @param priorYearsCount 
      * To load mock Data : stateRdData = StateMockDataLoadMap["ID"]!;
      */
-    async compute(config: ConfigJson, stateRdData: StateRDData, totalGrossReceipts: Decimal, priorYearsCount: number) {
+    async compute(config: ConfigJson, stateRdData: StateRDData) {
         const qreCalInfo = this.qreCreditCalculation(stateRdData.currentYearQREs, config);
 
         const inputFields = await this.buildInputParams(stateRdData.currentYearQREs, stateRdData.prior3YearsQREs, {
@@ -83,26 +83,6 @@ export class RdCreditCalculatorForID {
             tot_credit_avail
         }
 
-    }
-
-    /**
-     * 
-     * @param configJson 
-     * @returns 
-     */
-    extractConfigJson(configJson: any): ConfigJson {
-        // If it's already an object, just return it
-        if (typeof configJson === 'object') {
-            return configJson as ConfigJson;
-        }
-
-        // If it's a string, parse it
-        try {
-            return JSON.parse(configJson) as ConfigJson;
-        } catch (error) {
-            console.error('Failed to parse config_json:', error);
-            return {} as ConfigJson; // fallback
-        }
     }
 
     /**

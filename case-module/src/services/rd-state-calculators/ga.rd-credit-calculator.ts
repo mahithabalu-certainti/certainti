@@ -26,7 +26,7 @@ export class RdCreditCalculatorForGA {
      * To load mock Data : stateRdData = StateMockDataLoadMap["GA"]!;
      * @returns 
      */
-    async compute(config: ConfigJson, stateRdData: StateRDData, totalGrossReceipts: Decimal, priorYearsCount: number) {
+    async compute(config: ConfigJson, stateRdData: StateRDData) {
         const inputInfo = this.computeInputInformation(stateRdData.currentYearQREs, stateRdData.annualGrossReceipts || []);
         const ratioCalculationInfo = this.ratioCalculation(stateRdData.prior3YearsQREs, stateRdData.annualGrossReceipts || []);
         const baseAmountInfo = this.taxBaseCalculation(inputInfo.curent_year_gross_receipts, ratioCalculationInfo.average_ratio, config);
@@ -182,26 +182,6 @@ export class RdCreditCalculatorForGA {
             total_tax_credit,
             credit_claimed_return,
             unused_credit
-        }
-    }
-
-    /**
-         * 
-         * @param configJson 
-         * @returns 
-         */
-    extractConfigJson(configJson: any): ConfigJson {
-        // If it's already an object, just return it
-        if (typeof configJson === 'object') {
-            return configJson as ConfigJson;
-        }
-
-        // If it's a string, parse it
-        try {
-            return JSON.parse(configJson) as ConfigJson;
-        } catch (error) {
-            console.error('Failed to parse config_json:', error);
-            return {} as ConfigJson; // fallback
         }
     }
 

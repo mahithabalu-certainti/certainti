@@ -1,5 +1,4 @@
 import { Decimal } from "decimal.js";
-import { logMessage } from "../../utils/helpers";
 import { QRE, StateRDData } from "../financialRDCredit/rdCreditTypes";
 import { StateMockDataLoadMap } from "../financialRDCredit/rdDataLoadMockService";
 
@@ -31,7 +30,7 @@ export class RdCreditCalculatorForCT {
      * To load mock Data : stateRdData = StateMockDataLoadMap["CT"]!;
      * @returns 
      */
-    async compute(config: ConfigJson, stateRdData: StateRDData, totalGrossReceipts: Decimal, priorYearsCount: number) {
+    async compute(config: ConfigJson, stateRdData: StateRDData) {
         stateRdData = StateMockDataLoadMap["CT"]!;
         const part1Computation = this.part1CreditComputation(stateRdData.currentYearQREs, stateRdData.prior3YearsQREs, config);
         const part1TentativeComputation = this.part1TentativeTaxCreditComputation(stateRdData.currentYearQREs, part1Computation.excess_qre, config);
@@ -172,26 +171,6 @@ export class RdCreditCalculatorForCT {
             allowable_credit: allowableCredit,
             final_credit: finalCredit
         };
-    }
-
-    /**
-         * 
-         * @param configJson 
-         * @returns 
-         */
-    extractConfigJson(configJson: any): ConfigJson {
-        // If it's already an object, just return it
-        if (typeof configJson === 'object') {
-            return configJson as ConfigJson;
-        }
-
-        // If it's a string, parse it
-        try {
-            return JSON.parse(configJson) as ConfigJson;
-        } catch (error) {
-            console.error('Failed to parse config_json:', error);
-            return {} as ConfigJson; // fallback
-        }
     }
 
     /**
