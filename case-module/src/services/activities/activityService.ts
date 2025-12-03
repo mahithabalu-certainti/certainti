@@ -517,6 +517,19 @@ export class ActivityService {
           errorMessage: "Invalid Email Template ID",
         };
       }
+      let isSubscriptionCreated = false;
+        const accountData = await this.caseSchemaService.fetchAccountById(accountRid);
+        let accountRNumber = accountData.r_number;
+
+      let childRNumber = await this.caseSchemaService.fetchParentAccount(
+          accountData.parent_account_rid
+        );
+        if (accountData.storage_type === "store_in_parent") {
+          accountRNumber = childRNumber;
+        }
+        isSubscriptionCreated = (await this.caseSchemaService.getSubscriptionDetailsByProjectId(accountData.parent_account_rid, childRNumber,accountRid)) ?? false;
+        emailActivityDetails.is_email_configured = isSubscriptionCreated
+
 
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -561,6 +574,18 @@ export class ActivityService {
           errorMessage: "Invalid Activity ID",
         };
       }
+      let isSubscriptionCreated = false;
+        const accountData = await this.caseSchemaService.fetchAccountById(accountRid);
+        let accountRNumber = accountData.r_number;
+
+      let childRNumber = await this.caseSchemaService.fetchParentAccount(
+          accountData.parent_account_rid
+        );
+        if (accountData.storage_type === "store_in_parent") {
+          accountRNumber = childRNumber;
+        }
+        isSubscriptionCreated = (await this.caseSchemaService.getSubscriptionDetailsByProjectId(accountData.parent_account_rid, childRNumber,accountRid)) ?? false;
+        activityDetails.is_email_configured = isSubscriptionCreated
 
       return {
         statusCode: HttpStatus.SUCCESS,
