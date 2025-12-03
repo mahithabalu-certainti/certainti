@@ -167,7 +167,7 @@ async function renewExpiringSubscriptions() {
             // }
           }
         } else {
-          logMessage(` Missing or invalid credentials for account ${r_number}`);
+          logMessage(`Missing or invalid credentials for account ${r_number}`);
         }
       }
     }
