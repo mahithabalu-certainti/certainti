@@ -745,6 +745,8 @@ export const ProjectDetails = () => {
             projectCode={projectData?.project_code}
             setExportType={setExportType}
             setActivityParams={setActivityParams}
+            isDetailLoading={isPending}
+            isEmailConfigured={data?.data?.project?.is_send_interaction}
           />
         );
       case 'notes':

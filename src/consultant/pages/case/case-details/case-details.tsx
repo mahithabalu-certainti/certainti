@@ -92,6 +92,7 @@ export const CaseDetails = () => {
     data: caseData,
     isLoading,
     isError,
+    isPending,
   } = useCaseDetails(caseId ?? '', accountId ?? '');
   const isAssignProject = searchParams.get('assignProject');
   const projectDetails = searchParams.get('detailstab');
@@ -546,6 +547,7 @@ export const CaseDetails = () => {
             caseDetails={caseData}
             setExportType={setExportType}
             setActivityParams={setActivityParams}
+            isDetailLoading={isPending}
           />
         );
       case 'checklist':
