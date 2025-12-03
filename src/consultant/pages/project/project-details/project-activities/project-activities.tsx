@@ -379,7 +379,6 @@ const ProjectActivities: React.FC<ProjectActivitiesProps> = ({
       searchParams.set('list', 'activities');
       searchParams.set('activity_id', rowId);
       searchParams.set('activity_type', type);
-      searchParams.set('is_email_configured', String(!!isEmailConfigured));
       navigate({ search: searchParams.toString() }, { replace: true });
     }
   };
