@@ -6608,27 +6608,35 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         rid : data.relationship_connector_rid
       }, raw : true
     })
-    const findExistingData = await CaseTaskWorkflowConnector.findOne({
+    const findExistingData = await CaseTaskWorkflowConnector.findAll({
       attributes : ['relationship_connector_rid', 'source_rid', 'target_rid'],
       where : {
         case_rid : data.case_rid,
-        source_rid : data.source_rid
-      }
+        source_rid : data.source_rid,
+        target_rid : {
+          [Op.in] : data.target_rid.map((d : any) => d)
+        }
+      }, raw : true
     });
-    if(findExistingData) {
-      if(findExistingData.relationship_connector_rid !== data.relationship_connector_rid) {
-        await CaseTaskWorkflowConnector.destroy({
-          where : {
-            case_rid : data.case_rid,
-            source_rid : findExistingData.target_rid
-          }
-        })
-        await CaseTaskWorkflowConnector.destroy({
-          where : {
-            case_rid : data.case_rid,
-            source_rid : data.source_rid
-          }
-        })
+    if(findExistingData.length > 0) {
+      for(let d of findExistingData) {
+        if(d.relationship_connector_rid !== data.relationship_connector_rid) {
+          await CaseTaskWorkflowConnector.destroy({
+            where : {
+              case_rid : data.case_rid,
+              source_rid : d.target_rid,
+              target_rid : d.source_rid
+            }
+          })
+          await CaseTaskWorkflowConnector.destroy({
+            where : {
+              case_rid : data.case_rid,
+              source_rid : d.source_rid,
+              target_rid : d.target_rid
+
+            }
+          })
+        }
       }
     }
     let workFlowConnectorDetails;
