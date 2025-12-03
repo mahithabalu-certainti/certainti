@@ -3701,6 +3701,7 @@ async function deleteCollaboratorsTaskLevel (req : Request, res : Response) {
       return;
     }
     const data = req.body;
+    data.user_rid = userId
     const result = await caseService.deleteCollaborators(data); 
     if(result?.statusCode === HttpStatus.SUCCESS) {
       return res.status(HttpStatus.SUCCESS).json({
