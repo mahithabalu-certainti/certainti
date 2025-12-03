@@ -141,7 +141,7 @@ export default class SettingService {
       const parentAccountForSettings : any = await mainDb.query(rawQueries.getAccountDetails(parentRid));
       let schemaForSetting = rawQueries.fetchSchemaName(parentAccountForSettings[0][0].r_number);
 
-      let subscriptionId = fetchParent[0][0].subscription_id ?? "";
+      let subscriptionId = parentAccountForSettings[0][0].subscription_id ?? "";
       const fetchExistingSettings: any = await rawQueries.fetchSettings(
         schemaForSetting,
         orgDb,
