@@ -842,6 +842,7 @@ export const AccountDetails = () => {
             setActivityParams={setActivityParams}
             accountInActive={accountInActive}
             accountDetails={{ ...data?.data } as accountDetailsProps}
+            isDetailLoading={isPending}
           />
         );
       case 'notes':

@@ -342,6 +342,8 @@ export const useGetUserOptions = (
     retry: 0,
     gcTime: 0,
     enabled: enabled && !!accountId,
+    refetchOnWindowFocus: false,
+    staleTime: Infinity,
   });
 };
 

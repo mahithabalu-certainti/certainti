@@ -218,6 +218,8 @@ export const useEmailTemplatePreview = (
     queryFn: () => fetchEmailTemplatePreview(params),
     retry: 0,
     gcTime: 0,
+    refetchOnWindowFocus: false,
+    staleTime: Infinity,
     // enabled: enabled ?? true,
   });
 };
