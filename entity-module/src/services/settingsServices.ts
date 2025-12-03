@@ -135,11 +135,17 @@ export default class SettingService {
         };
       }
     } else {
+      let parentRid;
+      if(fetchParent[0][0].is_parent === true) parentRid = fetchParent[0][0].rid
+      else parentRid = fetchParent[0][0].parent_account_rid
+      const parentAccountForSettings : any = await mainDb.query(rawQueries.getAccountDetails(parentRid));
+      let schemaForSetting = rawQueries.fetchSchemaName(parentAccountForSettings[0][0].r_number);
+
       let subscriptionId = fetchParent[0][0].subscription_id ?? "";
       const fetchExistingSettings: any = await rawQueries.fetchSettings(
-        schemaName,
+        schemaForSetting,
         orgDb,
-        parentAccountID
+        parentRid
       );
 
       const existingSettings = fetchExistingSettings[0];
@@ -177,9 +183,9 @@ export default class SettingService {
         }
       }else{
         const fetchExistingSettings: any = await rawQueries.fetchSettings(
-          schemaName,
+          schemaForSetting,
           orgDb,
-          parentAccountID
+          parentRid
         );
 
         if(fetchExistingSettings && fetchExistingSettings.length > 0 && fetchParent[0][0]?.is_parent && !data.support_email){
@@ -243,9 +249,10 @@ export default class SettingService {
         data,
         orgDb,
         mainDb,
-        parentAccountID,
+        parentRid,
         subscriptionId,
-        fetchParent[0][0]?.is_parent
+        parentAccountForSettings[0][0]?.is_parent,
+        schemaForSetting
       );
 
       return {
