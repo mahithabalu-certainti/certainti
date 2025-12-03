@@ -233,10 +233,9 @@ async function fetchPlatformSettings() {
 // Cron Job (Runs every day at 2AM on even days)
 // -----------------------------
 export async function scheduleSubscriptionRenewal() {
-  const schdulerExpression =  `0 14 * * *`;
-   // (await getSecret(process.env.SUBSCRIPTION_RENEW_TIMER as string)) ||
-   // `0 10 * * *`;
-  logMessage(`Scheduling subscription renewal with expression: ${schdulerExpression}`);
+  const schdulerExpression =
+    (await getSecret(process.env.SUBSCRIPTION_RENEW_TIMER as string)) ||
+    `0 10 * * *`;
   cron.schedule(schdulerExpression, async () => {
     const today = new Date();
     const dayOfMonth = today.getDate();
