@@ -77,7 +77,7 @@ const generateYearOptions = () => {
   for (let year = 1950; year <= currentYear; year++) {
     years.push({
       value: year,
-      label: `FY - ${year}`,
+      label: `FY-${year}`,
     });
   }
   return years.reverse();
@@ -262,7 +262,7 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
       label: 'Fiscal Year',
       type: 'dropdown',
       required: true,
-      width: '180px',
+      width: '140px',
       sticky: true,
       sx: {
         position: 'sticky' as const,
