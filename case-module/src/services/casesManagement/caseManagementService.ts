@@ -175,7 +175,7 @@ export class CaseManagementService {
         return {
           statusCode: HttpStatus.BAD_REQUEST,
           message: HttpStatus.BAD_REQUEST_MESSAGE,
-          errorMessage: `A template with the name "${caseRequest.checklist_name}" . Please choose a different name.`,
+          errorMessage: `A checklisttemplate with the name "${caseRequest.checklist_name}" already exists . Please choose a different name.`,
         };
       }
     }
