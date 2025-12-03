@@ -136,6 +136,7 @@ export interface EmailActivityDetails {
   created_datetime: string;
   modified_datetime: string | null;
   attachments: EmailAttachment[];
+  is_email_configured: boolean;
 }
 
 export interface EmailActivityDetailsResponse {

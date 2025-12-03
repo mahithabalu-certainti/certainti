@@ -30,7 +30,10 @@ import {
 } from '../../../activities/activities-list/activity-columns';
 import { SectionHeaderTab, SectionTabPanel } from '../../../../../components';
 import SectionHeader from '../../../../../components/details-section/section-header';
-import { ActivitiesIcon } from '../../../../../assets';
+import {
+  ActivitiesIcon,
+  DetailsKeyContactErrorIcon,
+} from '../../../../../assets';
 import ActivityDetails from '../../../activities/activities-details/activity-details';
 import { ActivityListTable } from '../../../activities';
 import TaskDetails from '../../../activities/activities-details/task-details';
@@ -63,6 +66,8 @@ interface ProjectActivitiesProps {
   setActivityParams: React.Dispatch<
     React.SetStateAction<ActivityListExportURLParams>
   >;
+  isEmailConfigured: boolean;
+  isDetailLoading?: boolean;
 }
 
 const ProjectActivities: React.FC<ProjectActivitiesProps> = ({
@@ -71,6 +76,8 @@ const ProjectActivities: React.FC<ProjectActivitiesProps> = ({
   projectCode,
   setActivityParams,
   setExportType,
+  isEmailConfigured,
+  isDetailLoading,
 }) => {
   const navigate = useNavigate();
   const [appliedFilters, setAppliedFilters] = useState<
@@ -329,6 +336,7 @@ const ProjectActivities: React.FC<ProjectActivitiesProps> = ({
       entityId: projectID || '',
       projectFiscalYear: projectFiscalYear?.toString() || '',
       source: `Project > ${projectCode || ''}`,
+      isEmailConfigured: String(!!isEmailConfigured),
     });
     navigate(`${path}?${queryParams.toString()}`);
   };
@@ -349,7 +357,8 @@ const ProjectActivities: React.FC<ProjectActivitiesProps> = ({
     {
       label: 'New',
       variant: 'outlined' as const,
-      disabled: accountInActive,
+      disabled:
+        accountInActive || (tabParam === 'meeting' && !isEmailConfigured),
       onClick: () => handleCreate(),
       sx: { width: '48px', minWidth: '48px' },
       hide: !showCreateButton,
@@ -370,6 +379,7 @@ const ProjectActivities: React.FC<ProjectActivitiesProps> = ({
       searchParams.set('list', 'activities');
       searchParams.set('activity_id', rowId);
       searchParams.set('activity_type', type);
+      searchParams.set('is_email_configured', String(!!isEmailConfigured));
       navigate({ search: searchParams.toString() }, { replace: true });
     }
   };
@@ -428,164 +438,186 @@ const ProjectActivities: React.FC<ProjectActivitiesProps> = ({
     return <AccessRestricted />;
 
   return (
-    <div className='w-full pt-2 pl-2 pr-4 mb-1'>
-      <SectionTabPanel
-        tabs={ActivityTabs}
-        filterMenu={filterFields}
-        filterVisibility={!viewDetails}
-        showFilter={showFilter}
-        contextKey='project-activities'
-        appliedFilters={appliedFilters}
-        setAppliedFilters={setAppliedFilters}
-        setCurrentPage={setCurrentPage}
-        handleFilter={handleFilter}
-        sortFilterCount={0}
-        setSortFilterCount={() => {}}
-        showRefresh={!viewDetails}
-        onRefreshClick={handleRefresh}
-        showSearch={!viewDetails}
-        onSearch={(text) => setSearchText(text)}
-      />
+    <div className='w-full'>
+      {!isEmailConfigured &&
+        !isDetailLoading &&
+        (tabParam === 'email' || tabParam === 'meeting') && (
+          <div className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] px-3 py-2 border-box'>
+            <div>
+              <DetailsKeyContactErrorIcon alt='key-contact' />
+            </div>
+            <div>
+              <span className='font-bold mr-1 capitalize'>
+                Activities Details
+              </span>
+              -
+              <span className='ml-1 font-medium'>
+                {tabParam === 'email'
+                  ? 'Global account email configuration is missing. Please set it to enable sending emails.'
+                  : 'Global account email configuration is missing. Please set it to enable creating meetings.'}
+              </span>
+            </div>
+          </div>
+        )}
+      <div className='w-full pt-2 pl-2 pr-4 mb-1'>
+        <SectionTabPanel
+          tabs={ActivityTabs}
+          filterMenu={filterFields}
+          filterVisibility={!viewDetails}
+          showFilter={showFilter}
+          contextKey='project-activities'
+          appliedFilters={appliedFilters}
+          setAppliedFilters={setAppliedFilters}
+          setCurrentPage={setCurrentPage}
+          handleFilter={handleFilter}
+          sortFilterCount={0}
+          setSortFilterCount={() => {}}
+          showRefresh={!viewDetails}
+          onRefreshClick={handleRefresh}
+          showSearch={!viewDetails}
+          onSearch={(text) => setSearchText(text)}
+        />
 
-      <SectionHeader
-        title='Activities'
-        titleIcon={
-          <ActivitiesIcon
-            alt='activity-header-icon'
-            className='[&>path]:stroke-[#FF5F5F]'
+        <SectionHeader
+          title='Activities'
+          titleIcon={
+            <ActivitiesIcon
+              alt='activity-header-icon'
+              className='[&>path]:stroke-[#FF5F5F]'
+            />
+          }
+          count={count}
+          showItemCount={!viewDetails}
+          iconBg='#FFE9E9'
+          bgType='circle'
+          buttons={headerButtons}
+        />
+
+        <SectionHeaderTab
+          tabs={tabs}
+          onTabChange={handleTabChange}
+          defaultValue={tabParam}
+        />
+
+        {viewDetails && activityType === 'task' && (
+          <TaskDetails
+            accountInActive={accountInActive}
+            tabValue={tabParam as ActivityType}
+            entityLevel={'project'}
           />
-        }
-        count={count}
-        showItemCount={!viewDetails}
-        iconBg='#FFE9E9'
-        bgType='circle'
-        buttons={headerButtons}
-      />
+        )}
 
-      <SectionHeaderTab
-        tabs={tabs}
-        onTabChange={handleTabChange}
-        defaultValue={tabParam}
-      />
+        {viewDetails && activityType !== 'task' ? (
+          <ActivityDetails
+            accountInActive={accountInActive}
+            tabValue={tabParam as ActivityType}
+            entityDetails={entityDetails}
+            entityLevel='project'
+          />
+        ) : (
+          <div className='border border-t-0 border-[#CBD6E2]'>
+            {tabParam === 'all' && allActivitiesEnabled && (
+              <ActivityListTable
+                activityType='all'
+                columns={tableColumns}
+                refreshTrigger={refreshTrigger}
+                currentPage={currentPage}
+                appliedFilters={appliedFilters}
+                setCount={setCount}
+                columnAnchorEl={columnAnchorEl}
+                setColumnAnchorEl={setColumnAnchorEl}
+                searchValue={searchText}
+                accountInActive={accountInActive}
+                entityDetails={entityDetails}
+                entityLevel='project'
+                setExportType={setExportType}
+                setActivityParams={setActivityParams}
+                activityEditPermissionByType={activityEditPermissionByType}
+              />
+            )}
 
-      {viewDetails && activityType === 'task' && (
-        <TaskDetails
-          accountInActive={accountInActive}
-          tabValue={tabParam as ActivityType}
-          entityLevel={'project'}
-        />
-      )}
+            {tabParam === 'task' && activitiesTaskEnable && (
+              <ActivityListTable
+                activityType='task'
+                columns={tableColumns}
+                refreshTrigger={refreshTrigger}
+                currentPage={currentPage}
+                appliedFilters={appliedFilters}
+                setCount={setCount}
+                columnAnchorEl={columnAnchorEl}
+                setColumnAnchorEl={setColumnAnchorEl}
+                searchValue={searchText}
+                accountInActive={accountInActive}
+                entityDetails={entityDetails}
+                entityLevel='project'
+                setExportType={setExportType}
+                setActivityParams={setActivityParams}
+                editButtonEnable={taskActivityFieldsEditable}
+              />
+            )}
 
-      {viewDetails && activityType !== 'task' ? (
-        <ActivityDetails
-          accountInActive={accountInActive}
-          tabValue={tabParam as ActivityType}
-          entityDetails={entityDetails}
-          entityLevel='project'
-        />
-      ) : (
-        <div className='border border-t-0 border-[#CBD6E2]'>
-          {tabParam === 'all' && allActivitiesEnabled && (
-            <ActivityListTable
-              activityType='all'
-              columns={tableColumns}
-              refreshTrigger={refreshTrigger}
-              currentPage={currentPage}
-              appliedFilters={appliedFilters}
-              setCount={setCount}
-              columnAnchorEl={columnAnchorEl}
-              setColumnAnchorEl={setColumnAnchorEl}
-              searchValue={searchText}
-              accountInActive={accountInActive}
-              entityDetails={entityDetails}
-              entityLevel='project'
-              setExportType={setExportType}
-              setActivityParams={setActivityParams}
-              activityEditPermissionByType={activityEditPermissionByType}
-            />
-          )}
+            {tabParam === 'email' && activitiesEmailEnable && (
+              <ActivityListTable
+                activityType='email'
+                columns={tableColumns}
+                refreshTrigger={refreshTrigger}
+                currentPage={currentPage}
+                appliedFilters={appliedFilters}
+                setCount={setCount}
+                columnAnchorEl={columnAnchorEl}
+                setColumnAnchorEl={setColumnAnchorEl}
+                searchValue={searchText}
+                accountInActive={accountInActive}
+                entityDetails={entityDetails}
+                entityLevel='project'
+                setExportType={setExportType}
+                setActivityParams={setActivityParams}
+                editButtonEnable={emailActivityFieldsEditable}
+              />
+            )}
 
-          {tabParam === 'task' && activitiesTaskEnable && (
-            <ActivityListTable
-              activityType='task'
-              columns={tableColumns}
-              refreshTrigger={refreshTrigger}
-              currentPage={currentPage}
-              appliedFilters={appliedFilters}
-              setCount={setCount}
-              columnAnchorEl={columnAnchorEl}
-              setColumnAnchorEl={setColumnAnchorEl}
-              searchValue={searchText}
-              accountInActive={accountInActive}
-              entityDetails={entityDetails}
-              entityLevel='project'
-              setExportType={setExportType}
-              setActivityParams={setActivityParams}
-              editButtonEnable={taskActivityFieldsEditable}
-            />
-          )}
+            {tabParam === 'meeting' && activitiesMeetingEnable && (
+              <ActivityListTable
+                activityType='meeting'
+                columns={tableColumns}
+                refreshTrigger={refreshTrigger}
+                currentPage={currentPage}
+                appliedFilters={appliedFilters}
+                setCount={setCount}
+                columnAnchorEl={columnAnchorEl}
+                setColumnAnchorEl={setColumnAnchorEl}
+                searchValue={searchText}
+                accountInActive={accountInActive}
+                entityDetails={entityDetails}
+                entityLevel='project'
+                setExportType={setExportType}
+                setActivityParams={setActivityParams}
+                editButtonEnable={meetingActivityFieldsEditable}
+              />
+            )}
 
-          {tabParam === 'email' && activitiesEmailEnable && (
-            <ActivityListTable
-              activityType='email'
-              columns={tableColumns}
-              refreshTrigger={refreshTrigger}
-              currentPage={currentPage}
-              appliedFilters={appliedFilters}
-              setCount={setCount}
-              columnAnchorEl={columnAnchorEl}
-              setColumnAnchorEl={setColumnAnchorEl}
-              searchValue={searchText}
-              accountInActive={accountInActive}
-              entityDetails={entityDetails}
-              entityLevel='project'
-              setExportType={setExportType}
-              setActivityParams={setActivityParams}
-              editButtonEnable={emailActivityFieldsEditable}
-            />
-          )}
-
-          {tabParam === 'meeting' && activitiesMeetingEnable && (
-            <ActivityListTable
-              activityType='meeting'
-              columns={tableColumns}
-              refreshTrigger={refreshTrigger}
-              currentPage={currentPage}
-              appliedFilters={appliedFilters}
-              setCount={setCount}
-              columnAnchorEl={columnAnchorEl}
-              setColumnAnchorEl={setColumnAnchorEl}
-              searchValue={searchText}
-              accountInActive={accountInActive}
-              entityDetails={entityDetails}
-              entityLevel='project'
-              setExportType={setExportType}
-              setActivityParams={setActivityParams}
-              editButtonEnable={meetingActivityFieldsEditable}
-            />
-          )}
-
-          {tabParam === 'call' && activitiesCallEnable && (
-            <ActivityListTable
-              activityType='call'
-              columns={tableColumns}
-              refreshTrigger={refreshTrigger}
-              currentPage={currentPage}
-              appliedFilters={appliedFilters}
-              setCount={setCount}
-              columnAnchorEl={columnAnchorEl}
-              setColumnAnchorEl={setColumnAnchorEl}
-              searchValue={searchText}
-              accountInActive={accountInActive}
-              entityDetails={entityDetails}
-              entityLevel='project'
-              setExportType={setExportType}
-              setActivityParams={setActivityParams}
-              editButtonEnable={callActivityFieldsEditable}
-            />
-          )}
-        </div>
-      )}
+            {tabParam === 'call' && activitiesCallEnable && (
+              <ActivityListTable
+                activityType='call'
+                columns={tableColumns}
+                refreshTrigger={refreshTrigger}
+                currentPage={currentPage}
+                appliedFilters={appliedFilters}
+                setCount={setCount}
+                columnAnchorEl={columnAnchorEl}
+                setColumnAnchorEl={setColumnAnchorEl}
+                searchValue={searchText}
+                accountInActive={accountInActive}
+                entityDetails={entityDetails}
+                entityLevel='project'
+                setExportType={setExportType}
+                setActivityParams={setActivityParams}
+                editButtonEnable={callActivityFieldsEditable}
+              />
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
