@@ -29,7 +29,7 @@ const createRuleSchema = Joi.object({
     rule_name: Joi.string().required(),
     description: Joi.string().required(),
     is_active: Joi.boolean().required(),
-    scope_type: Joi.number().required(),
+    scope_type_rid: Joi.string().required(),
     trigger_type: Joi.number().optional(),
     trigger_event: Joi.string().optional(),
     schedule_offset_type: Joi.string().optional().allow(null),
@@ -237,6 +237,19 @@ const createRuleMapSchema = Joi.object({
     created_by: Joi.string().required(),
 });
 
+const listScopesSchema = Joi.object({
+    page: Joi.string().optional()
+        .pattern(/^[0-9]+$/)
+    ,
+    limit: Joi.string().optional()
+        .pattern(/^[0-9]+$/)
+    ,
+    filters: Joi.string().default("{}"),
+    sortBy: Joi.string().optional(),
+    sortOrder: Joi.string().valid("ASC", "DESC").default("ASC")
+});
+
+
 export {
     createRuleSchema,
     listRuleSchema,
@@ -255,5 +268,6 @@ export {
     updateScheduleSchema,
     createAuditSchema,
     createTriggerLogSchema,
+    listScopesSchema,
     createRuleMapSchema
 };

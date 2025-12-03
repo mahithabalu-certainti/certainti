@@ -10,7 +10,7 @@ export interface RuleMasterAttributes {
   trigger_event: string;
   trigger_type: number;
   is_active?: boolean;
-  scope_type: number;
+  scope_type_rid: string;
   schedule_offset_type?: string | null;
   schedule_offset_value?: string | null;
   created_by: string;
@@ -33,7 +33,7 @@ export class RuleMaster
   public trigger_event!: string;
   public trigger_type!: number;
   public is_active?: boolean;
-  public scope_type!: number;
+  public scope_type_rid!: string;
   public schedule_offset_type?: string | null;
   public schedule_offset_value?: string | null;
   public created_by!: string;
@@ -89,8 +89,8 @@ export class RuleMaster
           defaultValue: true,
         },
 
-        scope_type: {
-          type: DataTypes.INTEGER,
+        scope_type_rid: {
+          type: DataTypes.STRING,
           allowNull: false,
         },
 

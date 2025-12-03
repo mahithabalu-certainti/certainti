@@ -3,7 +3,7 @@ export interface ICreateRule {
     rule_name: string;
     description: string;
     is_active: true;
-    scope_type: number;
+    scope_type_rid: string;
     trigger_type: number;
     trigger_event: string;
     schedule_offset_type: string | null;

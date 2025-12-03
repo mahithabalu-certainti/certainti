@@ -1,3 +1,4 @@
+import { RuleScope } from "../models/ruleScope";
 import { initSequelize } from "../config/maindbDataSource";
 import { Sequelize, Op } from "sequelize";
 import { HttpStatus, STATUS_MESSAGE } from "../utils/constants";
@@ -16,12 +17,109 @@ export class WorkFlowService {
     private ruleMapService: RuleMapService;
     private scopeService: ScopeService;
 
-
     constructor(logger: Logger) {
         this.logger = logger;
         this.ruleMapService = new RuleMapService(this.logger);
         this.scopeService = new ScopeService(this.logger);
     }
+
+    //list scopes
+    async listScopes(
+        data: any,
+        filters: Record<string, any>,
+        userId: string,
+        apiType: string
+    ): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: { scopes: any; count: number };
+    }> {
+        const sequelize = new Sequelize(process.env.POSTGRES_CONNECTION_STRING!, {
+            dialect: "postgres",
+            logging: false, // optional
+        });
+        RuleScope.initialize(sequelize);
+        const limit = data.limit;
+        const offset = (data.page - 1) * limit;
+        const where: any = {};
+
+        if (filters && Object.keys(filters).length > 0) {
+            for (const key in filters) {
+                if (filters[key] !== undefined && filters[key] !== null) {
+                    // You can also add LIKE support here if needed
+                    if (key === "field_name") {
+                        where[key] = { [Op.iLike]: `%${filters[key]}%` };
+                    } else {
+                        where[key] = filters[key];
+                    }
+                }
+            }
+        }
+        const { rows, count } = await RuleScope.findAndCountAll({
+            where,
+            order: [[data.sortBy, data.sortOrder]],
+            limit,
+            offset
+        });
+        return {
+            statusCode: HttpStatus.SUCCESS,
+            message: HttpStatus.SUCCESS_MESSAGE,
+            data: {
+                scopes: rows,
+                count: count,
+            },
+        };
+    };
+
+    //list scope events based on scope/all
+    async listScopeEvents(
+        data: any,
+        filters: Record<string, any>,
+        userId: string,
+        apiType: string
+    ): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: { scopes: any; count: number };
+    }> {
+        const sequelize = new Sequelize(process.env.POSTGRES_CONNECTION_STRING!, {
+            dialect: "postgres",
+            logging: false, // optional
+        });
+        RuleScope.initialize(sequelize);
+        const limit = data.limit;
+        const offset = (data.page - 1) * limit;
+        const where: any = {};
+
+        if (filters && Object.keys(filters).length > 0) {
+            for (const key in filters) {
+                if (filters[key] !== undefined && filters[key] !== null) {
+                    // You can also add LIKE support here if needed
+                    if (key === "field_name") {
+                        where[key] = { [Op.iLike]: `%${filters[key]}%` };
+                    } else {
+                        where[key] = filters[key];
+                    }
+                }
+            }
+        }
+        const { rows, count } = await RuleScope.findAndCountAll({
+            where,
+            order: [[data.sortBy, data.sortOrder]],
+            limit,
+            offset
+        });
+        return {
+            statusCode: HttpStatus.SUCCESS,
+            message: HttpStatus.SUCCESS_MESSAGE,
+            data: {
+                scopes: rows,
+                count: count,
+            },
+        };
+    };
 
     async createRuleMapWithScope(rulemapRequest: ICreateRuleMapWithScope, userId: string): Promise<{
         statusCode: number;

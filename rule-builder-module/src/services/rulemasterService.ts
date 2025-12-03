@@ -1,6 +1,6 @@
-import { RuleMaster, RuleMasterCreationAttributes } from "../models/workflowRuleMaster";
+import { RuleMaster } from "../models/workflowRuleMaster";
 import { initSequelize } from "../config/maindbDataSource";
-import { Sequelize ,Op } from "sequelize";
+import { Sequelize, Op } from "sequelize";
 import { HttpStatus, STATUS_MESSAGE } from "../utils/constants";
 import { Logger } from "winston";
 import { ICreateRule } from "../utils/types";
@@ -34,7 +34,7 @@ export class RulemasterService {
             trigger_event: ruleRequest.trigger_event,
             trigger_type: ruleRequest.trigger_type,
             is_active: ruleRequest.is_active ?? true,
-            scope_type: ruleRequest.scope_type,
+            scope_type_rid: ruleRequest.scope_type_rid,
             schedule_offset_type: ruleRequest.schedule_offset_type ?? null,
             schedule_offset_value: ruleRequest.schedule_offset_value ?? null,
             created_by: ruleRequest.created_by,

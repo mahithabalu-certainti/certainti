@@ -10,11 +10,66 @@ import {
 } from "../utils/helpers";
 import {
     createRuleMapSchema,
+    listScopesSchema
 } from "../lib/joi/schemas/schema";
 import configurations from "../config/config";
 
 const services = configurations.getInstance().getServices();
 const workFlowService = services.workFlowService;
+
+
+async function listScopes(req: Request, res: Response): Promise<void> {
+    const methodName = "scope list";
+    try {
+        const userId = req.headers["x-user-id"] as string;
+        const value = await validateRequest(req, listScopesSchema, res, "GET");
+        if (!value) {
+            return;
+        }
+        let parsedFilters: Record<string, any> = {};
+        try {
+            if (value.filters) {
+                parsedFilters = JSON.parse(value.filters);
+            }
+        } catch (error) {
+            errorLog(
+                methodName,
+                "Invalid filters format. Must be a valid JSON object."
+            );
+        }
+        // if (!userId) {
+        //   return;
+        // }
+        const result = await workFlowService.listScopes(
+            value,
+            parsedFilters,
+            userId,
+            "list");
+        if (result.statusCode == HttpStatus.SUCCESS) {
+            successLog(methodName);
+            handleSuccessResponse(res, result);
+            return;
+        } else {
+            errorLog(methodName, "No data found");
+            handleErrorResponse(
+                res,
+                HttpStatus.BAD_REQUEST,
+                HttpStatus.BAD_REQUEST_MESSAGE,
+                result.errorMessage
+            );
+            return;
+        }
+    } catch (err) {
+        const error = err as Error;
+        errorLog(methodName, error.message);
+        handleErrorResponse(
+            res,
+            HttpStatus.FAILED,
+            HttpStatus.FAILED_MESSAGE,
+            error.message
+        );
+    }
+};
 
 async function createRuleMapWithScope(req: Request, res: Response): Promise<void> {
     const methodName = "create condition";
@@ -77,5 +132,6 @@ async function createRuleMapWithScope(req: Request, res: Response): Promise<void
 
 
 export default {
+    listScopes,
     createRuleMapWithScope
 }
