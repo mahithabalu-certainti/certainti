@@ -246,6 +246,15 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   );
 
   useEffect(() => {
+    if (isOpen) {
+      setPendingAttachments([]);
+      setDeletedAttachmentIds([]);
+      setErrors({});
+      setIsAddingCollaborator(false);
+    }
+  }, [isOpen, taskId]);
+
+  useEffect(() => {
     if (rawTask) {
       const enriched = enrichTask(rawTask);
       setTask(enriched);
@@ -815,6 +824,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
             });
           }
           setDeletedAttachmentIds([]);
+          successToast('Attachment deleted successfully');
         } catch (error) {
           let errorMessage = 'Failed to delete attachments';
 
@@ -860,6 +870,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
           queryClient.invalidateQueries({
             queryKey: ['taskAttachments', attachmentsParams],
           });
+          successToast('Attachment uploaded successfully');
         } catch (error) {
           let errorMessage = 'Failed to upload attachments';
 
@@ -891,7 +902,35 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
         }
       }
 
-      if (editedTask && taskId) {
+      const tagsChanged =
+        JSON.stringify(originalTask?.tags) !== JSON.stringify(editedTask?.tags);
+      const checklistChanged =
+        JSON.stringify(originalTask?.checklist) !==
+        JSON.stringify(editedTask?.checklist);
+
+      const linkTaskTypesChanged =
+        JSON.stringify([...(linkTaskTypes || [])].sort()) !==
+        JSON.stringify([...(originalTask?.linkTaskTypes || [])].sort());
+
+      const hasOtherChanges =
+        originalTask?.title !== editedTask?.title ||
+        originalTask?.description !== editedTask?.description ||
+        originalTask?.status !== editedTask?.status ||
+        originalTask?.priority !== editedTask?.priority ||
+        originalTask?.startDate !== editedTask?.startDate ||
+        originalTask?.endDate !== editedTask?.endDate ||
+        originalTask?.assignee?.name !== editedTask?.assignee?.name ||
+        tagsChanged ||
+        checklistChanged ||
+        selectedRole !== (originalTask?.caseTeamMemberRoleName || '') ||
+        selectedChecklist !== (originalTask?.checklistName || '') ||
+        linkedType !== (originalTask?.linkedType || '') ||
+        linkTaskTypesChanged ||
+        weightage !== (originalTask?.weightage || '') ||
+        category !== (originalTask?.category || '') ||
+        originalTask?.fiscal_year !== editedTask?.fiscal_year;
+
+      if (editedTask && taskId && hasOtherChanges) {
         // Get RIDs for linked type and link task types
         const linkedTypeRidValue = linkedType
           ? connectorTypesData?.find((c) => c.name === linkedType)?.id || ''
