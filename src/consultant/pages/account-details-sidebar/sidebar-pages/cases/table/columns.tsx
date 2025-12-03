@@ -241,20 +241,6 @@ export const getCaseListColumns = (
           ? costDisplay(row.case_total_rd_cost, currencySymbol)
           : '-',
     },
-
-    {
-      id: 'case_total_qualified_projects',
-      label: 'No. of Qualified Projects',
-      width: 190,
-      sortable: true,
-      sortId: 'case_total_qualified_projects',
-      sx: {
-        textAlign: 'right',
-      },
-      hide:
-        !permissionMap?.['case_total_qualified_projects']?.edit &&
-        !permissionMap?.['case_total_qualified_projects']?.read,
-    },
     {
       id: 'created_datetime',
       label: 'Created On',
