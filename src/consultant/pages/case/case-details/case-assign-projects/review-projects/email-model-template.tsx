@@ -1445,7 +1445,9 @@ const EmailModalTemplate: React.FC<EmailModalProps> = ({
                         className='flex items-center justify-between p-2 bg-gray-50 border border-gray-200 rounded-md'
                       >
                         <div className='flex items-center gap-2'>
-                          <DocumentIcon className='w-6 h-6' />
+                          <React.Suspense fallback={null}>
+                            <DocumentIcon className='w-6 h-6' />
+                          </React.Suspense>
                           <div className='flex flex-col'>
                             <span className='text-sm font-medium text-gray-700 truncate max-w-[300px]'>
                               {attachment.name}
@@ -1459,7 +1461,9 @@ const EmailModalTemplate: React.FC<EmailModalProps> = ({
                           onClick={() => removeAttachment(attachment.id)}
                           className='flex items-center justify-center h-6 w-6 hover:bg-gray-200 rounded-full cursor-pointer disabled:cursor-default disabled:hover:bg-transparent transition-colors'
                         >
-                          <CloseIcon className='w-3 h-3' />
+                          <React.Suspense fallback={null}>
+                            <CloseIcon className='w-3 h-3' />
+                          </React.Suspense>
                         </button>
                       </div>
                     ))}
