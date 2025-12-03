@@ -271,6 +271,7 @@ const ChecklistTemplates: React.FC = () => {
           refreshTrigger={refreshTrigger}
           setColumnAnchorEl={setColumnAnchorEl}
           columnAnchorEl={columnAnchorEl}
+          statusOptions={statusOptions}
         />
       </div>
     </div>

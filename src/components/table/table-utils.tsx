@@ -178,9 +178,13 @@ export const renderFields = <T extends RowData>({
     case 'text':
       return (
         <div className='relative'>
-          <TextField {...commonProps} type='text' autoFocus onChange={(e) => {
+          <TextField
+            {...commonProps}
+            type='text'
+            autoFocus
+            onChange={(e) => {
               const inputValue = e.target.value;
- 
+
               if (column.field?.formatCostNumber) {
                 const cleanValue = removeFormatCostValue(inputValue);
                 if (/^\d*\.?\d*$/.test(cleanValue)) {
@@ -190,7 +194,7 @@ export const renderFields = <T extends RowData>({
                 handleChange(e);
               }
             }}
-            />
+          />
           {column.field.prefix && (
             <span className='absolute left-0 top-1/2 -translate-y-1/2 text-sm border-r border-r-[#d1d5dc] px-1 py-1 pl-[10px]'>
               {column.field.prefix}
@@ -329,11 +333,13 @@ export const renderFields = <T extends RowData>({
 
       return (
         <div onKeyDown={handleKeyDown}>
-          <LocalizationProvider dateAdapter={AdapterDayjs}
-          localeText={{
-            fieldMonthPlaceholder: (params) =>
-              params.contentType === 'digit' ? 'MM' : params.format,
-          }}>
+          <LocalizationProvider
+            dateAdapter={AdapterDayjs}
+            localeText={{
+              fieldMonthPlaceholder: (params) =>
+                params.contentType === 'digit' ? 'MM' : params.format,
+            }}
+          >
             <DatePicker
               value={editingCell.value ? dayjs(editingCell.value) : null}
               onChange={(newValue) => {

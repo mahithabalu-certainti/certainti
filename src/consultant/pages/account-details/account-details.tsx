@@ -56,6 +56,8 @@ import { AccountState } from '../../../store/type';
 import {
   AccountDetailsResponse,
   AccountFieldsApiResponse,
+  ActivityListExportURLParams,
+  ActivityType,
   CaseListExportParams,
   ChecklistListExportParams,
   ExportType,
@@ -95,6 +97,7 @@ import { useToast } from '../../../hooks';
 import { ExportNotesList } from '../../services/notes/notes-service';
 import { ExportCaseList } from '../../services/cases/case-service';
 import { ExportChecklistList } from '../../services/checklist/checklist-service';
+import { ExportActivityList } from '../../services/activities/activities-service';
 
 export const AccountDetails = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -123,6 +126,9 @@ export const AccountDetails = () => {
   const interactionsView = !!interactionId || !!interactionRID;
   const noteView = searchParams.get('note_id');
   const checklistView = searchParams.get('checklist_id');
+  const activityId = searchParams.get('activity_id');
+  const activityType = searchParams.get('activity_type');
+  const activityViewDetails = !!activityId && !!activityType;
 
   // Permission Mangement
   const accountIsEnable = checkPermission(modules, AllModules.ACCOUNTS);
@@ -203,6 +209,33 @@ export const AccountDetails = () => {
     permission,
     AllPermissions.ACCOUNT_TIMESHEET_EXPORT
   );
+
+  const isActivityTaskExportEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_TASK_EXPORT
+  );
+
+  const isActivityCallExportEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_CALL_EXPORT
+  );
+
+  const isActivityEmailExportEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_EMAIL_EXPORT
+  );
+
+  const isActivityMeetingExportEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_MEETING_EXPORT
+  );
+
+  const activityExportPermissionMap: Record<string, boolean> = {
+    task: !!isActivityTaskExportEnable,
+    email: !!isActivityEmailExportEnable,
+    meeting: !!isActivityMeetingExportEnable,
+    call: !!isActivityCallExportEnable,
+  };
 
   const isAccountFieldsEditable = useMemo(
     () =>
@@ -331,6 +364,14 @@ export const AccountDetails = () => {
     fiscalYear: convertedFiscalYear,
   });
 
+  const [activityParams, setActivityParams] =
+    useState<ActivityListExportURLParams>({
+      sortBy: 'r_number',
+      sortOrder: 'ASC',
+      filters: {},
+      activity_type: 'all',
+    });
+
   useEffect(() => {
     const list = searchParams.get('list');
     const tabParams = searchParams.get('tab');
@@ -354,6 +395,7 @@ export const AccountDetails = () => {
       searchParams.get('list') !== 'resources' &&
       searchParams.get('list') !== 'projects' &&
       searchParams.get('list') !== 'attachments' &&
+      searchParams.get('list') !== 'activities' &&
       searchParams.get('list') !== 'notes' &&
       searchParams.get('list') !== 'checklist' &&
       searchParams.get('list') !== 'cases' &&
@@ -441,6 +483,12 @@ export const AccountDetails = () => {
       accountRid: accountid,
     };
 
+    const activityPayload = {
+      accountRid: accountid,
+      entityId: accountid,
+      attachmentLevel: 'account',
+    };
+
     if (exportType === 'project') {
       exportProjectData(exportType, {
         ...projectParams,
@@ -457,6 +505,11 @@ export const AccountDetails = () => {
       });
     } else if (exportType === 'notes' || exportType === 'resource_notes') {
       ExportNotesList('notes', { ...notesParams, ...notesPayload });
+    } else if (exportType === 'activities') {
+      ExportActivityList(
+        { ...activityParams, ...activityPayload },
+        activityType as ActivityType
+      );
     } else if (
       exportType === 'checklist' ||
       exportType === 'resource_checklist'
@@ -612,6 +665,18 @@ export const AccountDetails = () => {
       return !isChecklistsExportEnable;
     } else if (list === 'checklist' && !checklistView) {
       return !isChecklistsExportEnable;
+    } else if (list === 'activities' && !activityViewDetails) {
+      const tab = searchParams.get('tab') || 'all';
+      if (tab === 'all') {
+        const canExportAll =
+          isActivityTaskExportEnable ||
+          isActivityEmailExportEnable ||
+          isActivityMeetingExportEnable ||
+          isActivityCallExportEnable;
+
+        return !canExportAll;
+      }
+      return !activityExportPermissionMap[tab];
     } else if (list === 'projects') {
       return !isProjectExportEnable;
     } else if (list === 'attachments') {
@@ -771,7 +836,14 @@ export const AccountDetails = () => {
           />
         );
       case 'activities':
-        return <Activities />;
+        return (
+          <Activities
+            setExportType={setExportType}
+            setActivityParams={setActivityParams}
+            accountInActive={accountInActive}
+            accountDetails={{ ...data?.data } as accountDetailsProps}
+          />
+        );
       case 'notes':
         return (
           <Notes
@@ -813,7 +885,12 @@ export const AccountDetails = () => {
           />
         );
       case 'configuration':
-        return <Configuration />;
+        return (
+          <Configuration
+            countryId={data?.data.accountById.country_rid ?? null}
+          />
+        );
+
       default:
         return (
           <div className='w-full pr-4 pl-2 py-2'>
@@ -946,6 +1023,14 @@ export const AccountDetails = () => {
             hide: false,
             icon: SettingIcon,
           },
+          {
+            name: 'Jurisdiction Configuration',
+            key: 'jurisdiction_configuration',
+            id: AllMenus.MANAGE_ACCOUNT_ACCESS,
+            disabled: false,
+            hide: false,
+            icon: ResourcesIcon,
+          },
         ],
       },
     ];
@@ -1024,6 +1109,7 @@ export const AccountDetails = () => {
             isCollapsed={isCollapsed}
             onToggleCollapse={() => setIsCollapsed((prev) => !prev)}
             isLoading={isPending}
+            maxHeight={220}
           />
         </div>
         <div

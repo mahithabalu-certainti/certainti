@@ -8,7 +8,10 @@ export interface DisplayColumn {
     hide?: boolean;
   }>;
 }
-export const transformInteractionData = (data: HeaderData, isAccountlevel?: boolean): DisplayColumn[] => {
+export const transformInteractionData = (
+  data: HeaderData,
+  isAccountlevel?: boolean
+): DisplayColumn[] => {
   const interaction = data;
   return [
     {

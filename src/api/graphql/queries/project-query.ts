@@ -51,6 +51,7 @@ export const UPDATE_PROJECT = gql`
         blended_rate
         is_rd_qualified
         qre
+        qre_final
         project_rid
         technical_point_of_contact
         financial_consultant

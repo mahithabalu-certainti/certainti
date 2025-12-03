@@ -24,7 +24,7 @@ export const getAssignedProjectColumns = (
     label: 'Project Code',
     sortable: true,
     sortId: 'project_code',
-    width: 260,
+    width: 180,
     sticky: true,
     hide:
       !permissionMap?.['project_code']?.read &&
@@ -56,24 +56,7 @@ export const getAssignedProjectColumns = (
       return row.project_type_name;
     },
   },
-  {
-    id: 'fiscal_year',
-    editId: 'fiscal_year',
-    label: 'Fiscal Year',
-    sortable: true,
-    hide:
-      !permissionMap?.['fiscal_year']?.read &&
-      !permissionMap?.['fiscal_year']?.edit,
-    sortId: 'fiscal_year',
-    width: 130,
-    sx: {
-      textAlign: 'left',
-    },
-    render: (row: AssignProject) => {
-      const displayYear = row.fiscal_year ? `FY-${row.fiscal_year}` : '-';
-      return <span>{displayYear}</span>;
-    },
-  },
+
   {
     id: 'classification_name',
     editId: 'project_classification_rid',
@@ -237,10 +220,10 @@ export const getAssignedProjectColumns = (
   },
   {
     id: 'rd_percent_final',
-    label: 'QRE %',
+    label: 'QRE Percent Final',
     sortable: true,
     sortId: 'rd_percent_final',
-    width: 130,
+    width: 180,
     sx: {
       textAlign: 'right',
     },
@@ -252,7 +235,7 @@ export const getAssignedProjectColumns = (
   },
   {
     id: 'qre_final',
-    label: 'QRE',
+    label: 'QRE Final',
     sortable: true,
     sortId: 'qre_final',
     width: 130,

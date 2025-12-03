@@ -186,7 +186,10 @@ export enum OthersEnum {
   Other = 'other',
   Others = 'others',
 }
-
+export enum TaskType {
+  Action = 'action',
+  Milestone = 'milestone',
+}
 export enum ResourceType {
   full_time = 'full-time',
 }
@@ -524,7 +527,10 @@ export type ExportType =
   | 'cases'
   | 'checklist'
   | 'resource_checklist'
-  | 'cases_projects';
+  | 'cases_projects'
+  | 'case_task'
+  | 'review_projects'
+  | 'activities';
 
 export type FinancialSummaryFlag = 'all' | 'rd_qualified';
 
@@ -552,4 +558,11 @@ export interface FinancialStateProps {
   accountId: string;
   countryId: string;
   fiscalYear: string;
+}
+
+export interface ActivityMenuItem {
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+  hide?: boolean;
 }

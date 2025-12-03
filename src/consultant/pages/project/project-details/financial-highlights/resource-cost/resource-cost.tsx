@@ -88,14 +88,15 @@ const ResourceCost: React.FC<FinancialResourceCostProps> = ({
   );
 
   const totalItems = data?.count;
+
   useEffect(() => {
-    if (data) {
+    if (isLoading) {
+      setCount(0);
+    } else if (data?.count !== undefined) {
       setResourceCostList(data.projectResourceFiscal || []);
       setCount(data.count || 0);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data]);
-
+  }, [isLoading, data?.count, setCount]);
   useEffect(() => {
     setTableParams((prev) => ({
       ...prev,

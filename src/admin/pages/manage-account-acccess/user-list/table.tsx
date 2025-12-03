@@ -59,7 +59,7 @@ export const ManageAccountUserListTable: React.FC<UserTableProps> = ({
       search: searchValue,
       page: 1,
     }));
-  }, [searchValue]);
+  }, [searchValue, appliedFilters]);
 
   const { successToast } = useToast();
   const [addedAccounts, setAddedAccounts] = useState<string[]>([]);
@@ -256,7 +256,7 @@ export const ManageAccountUserListTable: React.FC<UserTableProps> = ({
         hoverHighlight={false}
         tableStyle={{
           height: '100%',
-          maxHeight: 'calc(100vh - 180px)',
+          maxHeight: 'calc(100vh - 230px)',
           overflow: 'auto',
         }}
         stickyHeader={true}

@@ -19,3 +19,4 @@ export * from './side-menu-panel';
 export * from './file-list';
 export * from './interaction';
 export * from './error-boundary';
+export * from './email-modal';

@@ -52,7 +52,7 @@ export const transformCaseData = (cases: CaseDetails): DisplayColumn[] => {
 
         {
           label: 'Fiscal Year',
-          value: cases?.fiscal_year?.toString() || '-',
+          value: 'FY-' + cases?.fiscal_year?.toString() || '-',
         },
 
         {
@@ -116,7 +116,7 @@ export const transformCaseData = (cases: CaseDetails): DisplayColumn[] => {
         },
 
         {
-          label: 'Case % Completion',
+          label: 'Case Progress Percentage',
           value: cases.case_completion_percentage
             ? `${cases.case_completion_percentage}%`
             : '-',

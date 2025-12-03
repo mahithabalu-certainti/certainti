@@ -29,6 +29,7 @@ export type CaseList = {
   case_owner_name: string;
   case_total_projects: number | null;
   case_total_project_cost: string | null;
+  case_total_qualified_projects_cost: string | null;
   case_total_rd_cost: string | null;
   case_total_qre_cost: string | null;
   filing_type_rid: string;
@@ -141,6 +142,7 @@ export interface CaseDetails {
   country_code?: string;
   account_status_name?: string;
   account_status_rid?: string;
+  is_send_interaction?: boolean;
 }
 
 export interface CaseDetailsResponse {
@@ -163,6 +165,9 @@ export interface CaseFormFields {
   case_startdate?: string;
   planned_submission_date?: string;
   statutory_submission_date?: string;
+  heat_light_power?: string;
+  total_nonlabor_cost?: string;
+  tax_liability?: string;
 }
 
 export interface CaseFormPayload {
@@ -177,6 +182,18 @@ export interface CaseFormPayload {
   case_startdate: string;
   planned_submission_date: string;
   statutory_submission_date: string;
+  heat_light_power?: string | null;
+  total_nonlabor_cost?: string | null;
+  tax_liability?: string | null;
+}
+
+export interface updateCaseJurisdictionPayload {
+  case_rid?: string;
+  account_rid: string;
+  is_federal_level: boolean;
+  is_state_level: boolean;
+  states: string[];
+  level?: string;
 }
 
 export interface CreateCaseApiResponse {
@@ -200,6 +217,20 @@ export interface CaseListExportParams {
   isGlobal?: boolean;
   search?: string;
 }
+export interface CaseTaskExportParams {
+  page: number;
+  limit: number;
+  sort: string;
+  sort_by: 'ASC' | 'DESC';
+  filter?: object;
+  account_rid?: string;
+  case_rid?: string;
+  fiscal_year?: number;
+  search?: string;
+  timezone?: string;
+  account_id?: string;
+}
+
 export interface CaseAssignedExportParams {
   page: number;
   limit: number;
@@ -261,6 +292,7 @@ export interface CaseStatusResponse {
 export interface CaseOwner {
   rid: string;
   name: string;
+  email: string;
 }
 
 export interface CaseOwnersResponse {

@@ -1,4 +1,4 @@
-import { UserDetailPermissions } from "../../common-service";
+import { UserDetailPermissions } from '../../common-service';
 
 export interface Detail {
   label: string;
@@ -56,7 +56,7 @@ export type User = {
   phone: string;
   is_consultant_firm: string;
   org_name: string;
-  permissions?: UserDetailPermissions[]
+  permissions?: UserDetailPermissions[];
 };
 
 // Response status types

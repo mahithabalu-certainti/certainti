@@ -57,6 +57,28 @@ export const fetchNotesList = async (
   };
 };
 
+export const fetchAllNotesList = async (
+  params: NotesListURLParams
+): Promise<{ notes: NotesList[]; count: number }> => {
+  const response = await resourceServiceApi.post<NotesListResponse>(
+    'api/notes/list/summary',
+    {
+      page: params.page,
+      limit: params.limit,
+      sortBy: params.sortBy,
+      sortOrder: params.sortOrder,
+      fiscalYear: params.fiscalYear,
+      filters: params.filters,
+      globalFilters: params.globalFilters,
+      search: params.search,
+    }
+  );
+  return {
+    notes: response.data.data.notes,
+    count: response.data.data.totalCount,
+  };
+};
+
 export const useNotesList = (
   params: NotesListURLParams,
   shouldFetchList: boolean,
@@ -81,7 +103,7 @@ export const useAllNotesList = (
 ): UseQueryResult<{ notes: NotesList[]; count: number }, Error> => {
   return useQuery<{ notes: NotesList[]; count: number }, Error>({
     queryKey: ['allNotesList', params, refreshTrigger],
-    queryFn: () => fetchNotesList(params),
+    queryFn: () => fetchAllNotesList(params),
     retry: 0,
     gcTime: 0,
   });

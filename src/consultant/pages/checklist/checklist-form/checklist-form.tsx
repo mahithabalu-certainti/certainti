@@ -509,6 +509,11 @@ const ChecklistForm: React.FC = () => {
                     }
                   }}
                   value={currentTemplate}
+                  renderOption={(props, option) => (
+                    <li {...props} key={option.value} title={option.label}>
+                      {option.label}
+                    </li>
+                  )}
                   renderInput={(params) => (
                     <TextField
                       {...params}
@@ -645,11 +650,15 @@ const ChecklistForm: React.FC = () => {
                 </div>
 
                 <div
-                // style={{
-                //   display: shouldHideField('status', isEditView, permissionMap)
-                //     ? 'none'
-                //     : 'block',
-                // }}
+                  style={{
+                    display: shouldHideField(
+                      'status_rid',
+                      isEditView,
+                      permissionMap
+                    )
+                      ? 'none'
+                      : 'block',
+                  }}
                 >
                   <label
                     className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
@@ -669,11 +678,11 @@ const ChecklistForm: React.FC = () => {
                     required
                     fullWidth
                     size='small'
-                    // disabled={shouldDisableField(
-                    //   'status',
-                    //   isEditView,
-                    //   permissionMap
-                    // )}
+                    disabled={shouldDisableField(
+                      'status_rid',
+                      isEditView,
+                      permissionMap
+                    )}
                     className={`custom-select-no-arrow sm:text-sm ${
                       formData.status === '' ? 'text-[#7D98B6]' : 'text-black'
                     } ${errors?.status ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
@@ -767,20 +776,20 @@ const ChecklistForm: React.FC = () => {
 
               <div
                 className='w-full mb-5 mt-5'
-                // style={{
-                //   display: shouldHideField(
-                //     'checklist_items',
-                //     isEditView,
-                //     permissionMap
-                //   )
-                //     ? 'none'
-                //     : 'block',
-                // }}
+                style={{
+                  display: shouldHideField(
+                    'checklists',
+                    isEditView,
+                    permissionMap
+                  )
+                    ? 'none'
+                    : 'block',
+                }}
               >
                 <div
                   className={`border capitalize h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-10`}
                 >
-                  Checkist Items
+                  Checklist Items
                 </div>
                 <div className='px-10'>
                   <TableContainer sx={{ overflowX: 'auto' }}>
@@ -845,17 +854,16 @@ const ChecklistForm: React.FC = () => {
                               position: 'relative',
                               p: 0,
                             }}
-                            // className={`${shouldDisableField('checklist_items', isEditView, permissionMap) ? 'bg-[#f3f4f6] cursor-default' : ''}`}
+                            className={`${shouldDisableField('checklists', isEditView, permissionMap) ? 'bg-[#f3f4f6] cursor-default' : ''}`}
                           >
                             {checklistTableColumns
                               .filter((col) => !col.hide)
                               .map((col: ChecklistFormTableColumn) => {
-                                // const permissionDisabled = shouldDisableField(
-                                //   'checklist_items',
-                                //   isEditView,
-                                //   permissionMap
-                                // );
-                                const permissionDisabled = false;
+                                const permissionDisabled = shouldDisableField(
+                                  'checklists',
+                                  isEditView,
+                                  permissionMap
+                                );
                                 const isDisabled =
                                   permissionDisabled || col.disabled;
                                 const isBtnDisabled =
@@ -1147,11 +1155,11 @@ const ChecklistForm: React.FC = () => {
                     className='flex items-center cursor-pointer gap-1 bg-[#EAF0F5] h-[30px] rounded-[2px] color-[#2D3E4F] px-2 text-[12px] font-semibold disabled:bg-gray-100 disabled:opacity-75 disabled:cursor-default'
                     type='button'
                     onClick={handleAddItem}
-                    // disabled={shouldDisableField(
-                    //   'checklist_items',
-                    //   isEditView,
-                    //   permissionMap
-                    // )}
+                    disabled={shouldDisableField(
+                      'checklists',
+                      isEditView,
+                      permissionMap
+                    )}
                   >
                     <span>
                       <React.Suspense fallback={null}>
