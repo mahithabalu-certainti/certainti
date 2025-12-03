@@ -943,7 +943,11 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                   const template = taskTemplatesData?.find(
                     (t) => t.name === taskType
                   );
-                  return template?.id || '';
+                  if (template) return template.id;
+                  const originalLink = originalTask?.workflow_connector?.find(
+                    (wc) => wc.target_task_name === taskType
+                  );
+                  return originalLink?.target_rid || '';
                 })
                 .filter((rid) => rid !== '')
             : [];
