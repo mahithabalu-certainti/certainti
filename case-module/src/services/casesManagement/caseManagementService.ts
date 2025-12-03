@@ -196,7 +196,6 @@ export class CaseManagementService {
 
       // Commit the transaction after all operations succeed
       await transaction.commit();
-
       return {
         statusCode: HttpStatus.SUCCESS,
         message: STATUS_MESSAGE.adminChecklistCreated,
