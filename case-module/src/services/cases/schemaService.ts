@@ -6932,7 +6932,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       whereClause.case_rid = data.case_rid;
       const findUser: any = await this.mainDbSequelize.query(rawQueries.getUserById(data.user_rid));
       await CaseHistory.create({
-        created_by : data.created_by,
+        created_by : data.user_rid,
         created_datetime : new Date(),
         attribute_name : "Collaborator",
         old_value : `CREATE`,
