@@ -1822,6 +1822,11 @@ export const validateNotesInput = (data: any) => {
   if (!data.rid) return STATUS_MESSAGE.notesIdMissing;
 };
 
+export const validateTaskSummaryInput = (data: any) => {
+  if (!data.account_rid) return STATUS_MESSAGE.accountIdMissing;
+  if (!data.rid) return STATUS_MESSAGE.notesIdMissing;
+};
+
 export async function deleteFromAzureBlob(blobUrl: string | null): Promise<void> {
   if (!blobUrl) return;
 
@@ -1853,3 +1858,54 @@ export async function deleteFromAzureBlob(blobUrl: string | null): Promise<void>
     console.log(`Blob not found: ${blobName}`);
   }
 }
+
+export const setInlineForTaskSummary = (existingData: any, newData: any) => {
+  const editableFields = [
+    'task_name',
+    'description',
+    'fiscal_year',
+    'status_rid',
+    'priority_rid',
+    'effective_start_datetime',
+    'effective_end_datetime'
+  ];
+
+  const setClause: string[] = [];
+  const values: any = {};
+  let statusMessage = null;
+
+  editableFields.forEach(field => {
+    if (newData[field] !== undefined && newData[field] !== existingData[field]) {
+      // Type-specific validations
+      if (field === 'fiscal_year' && typeof newData[field] !== 'number') {
+        statusMessage = `Invalid fiscal year format`;
+        return;
+      }
+
+      if (field === 'effective_start_datetime' || field === 'effective_end_datetime') {
+        try {
+          new Date(newData[field]);
+        } catch (error) {
+          statusMessage = `Invalid date format for ${field}`;
+          return;
+        }
+      }
+
+      setClause.push(`${field} = :${field}`);
+      values[field] = newData[field];
+    }
+  });
+
+  // Always update modified fields
+  setClause.push('modified_by = :modified_by');
+  values.modified_by = newData.userId || newData.modified_by;
+  
+  setClause.push('modified_datetime = :modified_datetime');
+  values.modified_datetime = new Date().toISOString();
+
+  return {
+    setClause: setClause.join(', '),
+    values,
+    statusMessage
+  };
+};

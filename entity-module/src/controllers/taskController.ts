@@ -188,63 +188,9 @@ async function fetchTaskDetailsById(req: Request, res: Response): Promise<any> {
   }
 }
 
-async function updateTask(req: Request, res: Response): Promise<void> {
-  const methodName = "updateNotes";
-  try {
-    const value = await validateRequest(req, updateTaskSchema, res);
-    if (!value) {
-      return;
-    }
-    const userId = req.headers['x-user-id'] as string;
-
-    if (!userId) {
-      handleErrorResponse(
-        res,
-        HttpStatus.BAD_REQUEST,
-        HttpStatus.BAD_REQUEST_MESSAGE,
-        "User id is required"
-      );
-      return;
-    }
-
-    const attachment = await taskService.updateNotes(value, userId, req?.file, value.is_file_deleted);
-
-    if (attachment.statusCode === HttpStatus.SUCCESS) {
-      successLog(methodName);
-      res.status(attachment.statusCode).json({
-        statusCode: attachment.statusCode,
-        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
-        statusMessage: "Notes updated successfully.",
-        data: attachment.data,
-      });
-      return;
-    } else {
-      errorLog(methodName, attachment.errorMessage);
-      handleErrorResponse(
-        res,
-        HttpStatus.BAD_REQUEST,
-        HttpStatus.BAD_REQUEST_MESSAGE,
-        attachment.errorMessage
-      );
-      return;
-    }
-  } catch (err) {
-    const error = err as Error;
-    errorLog(methodName, error.message);
-    handleErrorResponse(
-      res,
-      HttpStatus.BAD_REQUEST,
-      HttpStatus.BAD_REQUEST_MESSAGE,
-      error.message
-    );
-    return;
-  }
-
-}
 
 export default {
   getAllTaskSummary,
   exportAllTaskSummary,
-  fetchTaskDetailsById,
-  updateTask
+  fetchTaskDetailsById
 };

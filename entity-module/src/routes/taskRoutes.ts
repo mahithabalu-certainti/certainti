@@ -4,11 +4,8 @@ import { checkUserStatusMiddleware } from "../middlewares/authMiddleware";
 
 const routes: Router = Router();
 
-routes.get("/list/summary/export", checkUserStatusMiddleware("notes_view_edit"), controller.taskController.exportAllTaskSummary);
-routes.get("/list/summary", checkUserStatusMiddleware("notes_view_edit"), controller.taskController.getAllTaskSummary);
-routes.get("/list/details", checkUserStatusMiddleware("notes_view_edit"), controller.taskController.fetchTaskDetailsById)
-routes.put("/update", checkUserStatusMiddleware("notes_view_edit"), controller.taskController.updateTask)
-
-
+routes.get("/list/summary/export", checkUserStatusMiddleware("NA"), controller.taskController.exportAllTaskSummary);
+routes.get("/list/summary", checkUserStatusMiddleware("NA"), controller.taskController.getAllTaskSummary);
+routes.get("/list/details", checkUserStatusMiddleware("NA"), controller.taskController.fetchTaskDetailsById);
 
 export default routes;

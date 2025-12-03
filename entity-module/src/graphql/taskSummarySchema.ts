@@ -1,0 +1,44 @@
+import {gql} from 'graphql-tag'
+
+const typeDefs = gql
+`
+type taskResponse {
+rid: String
+r_number: String
+created_datetime: Date
+created_by: String
+modified_datetime: Date
+modified_by: String
+account_rid: String
+attach_to: String
+attachment_level: String
+task_name: String
+description: String
+fiscal_year: Int
+assigned_to: String
+status_rid: String
+priority_rid: String
+effective_start_datetime: Date
+effective_end_datetime: Date
+task_rid: String
+}
+
+
+type taskFinalresponse {
+statusCode : Int
+statusCodeValue : String
+statusMessage : String
+data : taskResponse
+}
+
+input taskInlineInput {
+rid : String!
+account_rid : String!
+attachment_level: String
+}
+
+type Mutation {
+updateTaskSummaryInline(data : taskInlineInput) : taskFinalresponse
+}
+`
+export default typeDefs

@@ -88,6 +88,7 @@ export const STATUS_MESSAGE = {
   projectUpdateSuccess: "Field updated successfully",
   projectIdMissing: "Project RID missing",
   projectTaskIdMissing: "Project Task RID is missing",
+  taskIdMissing: "Task RID is missing",
   fiscalIdMissing: "Project-Fiscal RID is missing",
   projectCodeMissing: "Project-Code missing",
   resourceNotFound: "Resource not found",
@@ -161,7 +162,9 @@ export const STATUS_MESSAGE = {
   notesFetchedSuccess: "Notes fetched successfully",
   templateUploadedSuccess : "Template uploaded successfully",
   qreHistoryFetchedSuccess : "Qre-History fetched successfully",
-  noDataFound : "Data not available"
+  noDataFound : "Data not available",
+  taskSummaryNotFound: "Task Summary not found",
+  attachedTaskNotFound: "No attached Task found",
 };
 
 export const TYPES = {
@@ -498,6 +501,10 @@ export const rawQueries = {
   findProjectTaskDetails(schemaName: string, rid: string, account_rid: string) {
     return `
       SELECT * FROM ${schemaName}.project_task WHERE rid = '${rid}' AND account_rid = '${account_rid}'`;
+  },
+  findCaseTaskDetails(schemaName: string, rid: string, account_rid: string) {
+    return `
+      SELECT * FROM ${schemaName}.case_task WHERE rid = '${rid}' AND account_rid = '${account_rid}'`;
   },
   fetchSchemaName(r_number: string) {
     return `${MAIN_SCHEMA_NAME}_${r_number.replace("ACC-", "")}`;
@@ -2017,7 +2024,88 @@ export const rawQueries = {
       WHERE mp.permission_name = :permissionName
         AND ufa.user_id = :userId
     `;
-  }  
+  },
+  fetchChecklistStatus () {
+    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.checklist_status WHERE status_name ILIKE '%Done%'`
+  },  
+    getCaseTeamRoleName (roleRid : string) {
+      return `SELECT rid, role_name FROM ${MAIN_SCHEMA_NAME}.case_team_role WHERE rid = '${roleRid}'`
+    },
+      getWeightageValue (rid : string) {
+    return `SELECT weightage_value FROM ${MAIN_SCHEMA_NAME}.task_weightage WHERE rid = '${rid}'`
+  },
+    getTaskCategoryByRid (rid : string) {
+    return `SELECT category_name FROM ${MAIN_SCHEMA_NAME}.task_category WHERE rid = '${rid}'`
+  },
+    getTaskNames (rid : any[], schemaName : string) {
+    let ids : string[] = []
+    if(rid.length > 0) {
+      ids.push(`${rid.map((d : any) => `'${d}'`).join(',')}`)
+      return `SELECT rid, task_name FROM ${schemaName}.case_task WHERE rid IN (${ids})`
+    }
+  },
+    getWorkflowConnectors (rid : any[]) {
+    let ids : string[] = []
+    if(rid.length > 0) {
+      ids.push(`${rid.map((d : any) => `'${d}'`).join(',')}`)
+      return `SELECT rid, relationship_type FROM ${MAIN_SCHEMA_NAME}.workflow_connector WHERE rid IN (${ids})`
+    }
+  },
+    getAllTagsName (rid : any[]) {
+      let ids : string[] = []
+      if(rid.length > 0) {
+        ids.push(`${rid.map((d : any) => `'${d}'`).join(',')}`)
+        return `SELECT rid, tag_name FROM ${MAIN_SCHEMA_NAME}.tags WHERE rid IN (${ids})`
+      }
+    },
+      getOwnerDetails(caseOwnerRid: any[]) {
+    return `SELECT rid, CONCAT(first_name,' ',last_name) AS name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (${caseOwnerRid.map(
+      (d: any) => `'${d}'`
+    )})`;
+  },
+    getAllPriorityTypes (rid : any[]) {
+    let ids : string[] = []
+    if(rid.length > 0) {
+      ids.push(`${rid.map((d : any) => `'${d}'`).join(',')}`)
+      return `SELECT rid, priority_name FROM ${MAIN_SCHEMA_NAME}.case_priority WHERE rid IN (${ids})`
+    }
+  },
+    fetchCheckListStatusNamesByRids(schemaName: string, statusRids: string[]) {
+  const ridsList = statusRids.map(rid => `'${rid}'`).join(",");
+  if(ridsList.length > 0) {
+    return `SELECT rid, status_name FROM ${schemaName}.checklist_status WHERE rid IN (${ridsList})`;
+  } else {
+    return `SELECT rid, status_name FROM ${schemaName}.checklist_status WHERE rid IN ('')`
+  }
+  },
+    getAllTaskStatus (rid : any) {
+    let ids : string[] = []
+    if(rid.length > 0) {
+      ids.push(`${rid.map((d : any) => `'${d}'`).join(',')}`)
+      return `SELECT rid, task_status_name FROM ${MAIN_SCHEMA_NAME}.case_task_status WHERE rid IN (${ids})`
+    }
+  },
+    findTaskSummaryDetails: (schemaName: string, rid: string, accountRid: string) => {
+    return `SELECT ts.*, 
+                   s.status_name,
+                   p.priority_name,
+                   r.resource_name as assigned_to_name
+            FROM ${schemaName}.task_summary ts
+            LEFT JOIN trd365.task_status s ON ts.status_rid = s.rid
+            LEFT JOIN trd365.priority p ON ts.priority_rid = p.rid
+            LEFT JOIN ${schemaName}.resources r ON ts.assigned_to = r.rid
+            WHERE ts.rid = '${rid}' AND ts.account_rid = '${accountRid}'`;
+  },
+
+  updateTaskSummaryQuery: (schemaName: string, getSetData: any, data: any) => {
+    const { setClause, values } = getSetData;
+    const whereClause = `rid = '${data.rid}' AND account_rid = '${data.account_rid}'`;
+    
+    return `UPDATE ${schemaName}.task_summary 
+            SET ${setClause} 
+            WHERE ${whereClause} 
+            RETURNING *`;
+  },
 };
 
 export const IMPORT_FILTER_COLUMNS: any = {

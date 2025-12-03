@@ -464,3 +464,75 @@ export interface IFetchNotesDetailsInput {
   account_rid : string;
   user_rid : string
 }
+
+export interface IFetchTaskDetailsInput {
+  rid : string;
+  account_rid : string;
+  user_rid : string;
+  level: string;
+  attach_to: string;  
+}
+
+export type ChecklistItems = {
+  rid : string
+  checklist_item_name : string
+  checklist_item_description : string
+  status_rid : string
+  checklist_item_status_name : string
+}
+
+export type checklistType = {
+  rid : string
+  checklist_name : string
+  checklist_description : string
+  task_rid : string,
+  checklist_items_count : string
+  completed_items_count : string
+  checklist_items : ChecklistItems[]
+}
+
+export type taskTags = {
+  tag_rid : string
+}
+
+export type taskWorkFlowConnector = {
+  rid : string
+  source_rid : string
+  target_rid : string
+  relationship_connector_rid : string
+}
+
+export type TaskCardDetailsType = {
+  rid : string
+  r_number  : string
+  created_by : string
+  modified_by : string
+  created_datetime : Date
+  task_name  : string
+  effective_start_datetime : Date
+  effective_end_datetime : Date
+  assigned_to : string
+  priority_rid : string
+  task_description : string
+  task_status_rid : string
+  priority_name : string
+  task_status_name : string
+  assigned_to_name : string
+  checklists : checklistType,
+  checklist_rid : string
+  checklist_name : string
+  case_team_member_role_rid : string
+  tags : taskTags[]
+  workflow_connector :  taskWorkFlowConnector[],
+  weightage_rid : string
+  task_category_rid : string
+}
+
+export type TaskCardResponse ={
+  task_details :TaskCardDetailsType
+}
+
+export type TagsTypes = {
+  rid : string
+  tag_name : string
+}
