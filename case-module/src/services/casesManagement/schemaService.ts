@@ -1437,6 +1437,33 @@ async getWorkFlowConnector () {
         rid : data.relationship_connector_rid
       }, raw : true
     })
+    const findExistingData = await WorkflowConnectorMapping.findAll({
+      attributes : ['relationship_connector_rid', 'source_rid', 'target_rid'],
+      where : {
+        source_rid : data.source_rid,
+        target_rid : {
+          [Op.in] : data.target_rid.map((d : any) => d)
+        }
+      }, raw : true
+    });
+    if(findExistingData.length > 0) {
+      for(let d of findExistingData) {
+         if(d.relationship_connector_rid !== data.relationship_connector_rid) {
+          await WorkflowConnectorMapping.destroy({
+            where : {
+              source_rid : d.target_rid,
+              target_rid : data.source_rid,
+            }
+          })
+          await WorkflowConnectorMapping.destroy({
+            where : {
+              source_rid : data.source_rid,
+              target_rid : d.target_rid
+            }
+          })
+        }
+      }
+    }
     if(workFlowConnectorData) {
         if(workFlowConnectorData.relationship_type === 'Blocks') {
           dynamicRelationTypeName = relationshipTypes.isBlockedBy
