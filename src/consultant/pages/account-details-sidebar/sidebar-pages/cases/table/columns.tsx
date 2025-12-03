@@ -199,9 +199,9 @@ export const getCaseListColumns = (
       sx: {
         textAlign: 'right',
       },
-      // hide:
-      //   !permissionMap?.['case_total_qualified_projects_cost']?.edit &&
-      //   !permissionMap?.['case_total_qualified_projects_cost']?.read,
+      hide:
+        !permissionMap?.['case_total_qualified_project_cost']?.edit &&
+        !permissionMap?.['case_total_qualified_project_cost']?.read,
       render: (row) =>
         row.case_total_qualified_projects_cost
           ? costDisplay(row.case_total_qualified_projects_cost, currencySymbol)
