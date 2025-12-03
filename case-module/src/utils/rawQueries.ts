@@ -460,7 +460,9 @@ AND (
       OR pf.fiscal_year IS NULL
       OR pf.industry_rid IS NULL
       OR pf.total_cost_prj IS NULL
-      OR COALESCE(res_cnt.cnt, 0) IS NULL
+      OR COALESCE(res_cnt.cnt, 0) = 0
+      OR COALESCE(task_cnt.cnt, 0) = 0
+      OR COALESCE(ats_cnt.cnt, 0) = 0
       OR pf.total_effort_prj IS NULL
       OR pf.project_type_rid IS NULL
       OR pf.project_classification_rid IS NULL
