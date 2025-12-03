@@ -283,6 +283,11 @@ export const CaseDetails = () => {
     AllPermissions.PROJECTS_EXPORT
   );
 
+  const isCaseTaskExportEnable = checkPermission(
+    permission,
+    AllPermissions.CASES_WORKBREAKDOWN_EXPORT
+  );
+
   const activityExportPermissionMap: Record<string, boolean> = {
     task: !!isActivityTaskExportEnable,
     email: !!isActivityEmailExportEnable,
@@ -424,7 +429,7 @@ export const CaseDetails = () => {
         return !isProjectExportEnable;
       }
     } else if (searchParams.get('tab') === 'case_task') {
-      return false;
+      return !isCaseTaskExportEnable;
     } else if (list === 'interactions' && !interactionsView) {
       return !isInteractionsExportEnable;
     } else {
@@ -792,11 +797,10 @@ export const CaseDetails = () => {
       />
       <div className='flex flex-1 flex-row w-full border-b border-[#CBD6E2]'>
         <div
-          className={`flex transition-all ease-in-out ${
-            isCollapsed
+          className={`flex transition-all ease-in-out ${isCollapsed
               ? 'w-[60px] min-w-[60px] max-w-[60px] duration-300'
               : 'w-[220px] min-w-[220px] max-w-[220px] duration-500'
-          }`}
+            }`}
         >
           <SideMenuPanel
             menuItems={sideMenuItems}

@@ -76,6 +76,31 @@ interface Attachment {
   existing?: boolean;
 }
 
+// Formats for Quill editor
+const formats = [
+  'header',
+  'font',
+  'size',
+  'bold',
+  'italic',
+  'underline',
+  'strike',
+  'color',
+  'background',
+  'script',
+  'blockquote',
+  'code-block',
+  'list',
+  'bullet',
+  'indent',
+  'direction',
+  'align',
+  'link',
+  'image',
+  'video',
+  'clean',
+];
+
 const EmailModalTemplate: React.FC<EmailModalProps> = ({
   title,
   isOpen,
@@ -123,6 +148,7 @@ const EmailModalTemplate: React.FC<EmailModalProps> = ({
   const quillContainerRef = useRef<HTMLDivElement>(null);
   const subjectInputRef = useRef<HTMLInputElement>(null);
   const subjectMentionPopoverRef = useRef<HTMLDivElement>(null);
+  const hasPopulatedRef = useRef(false);
 
   // Mention state management
   const [mentionState, setMentionState] = useState<MentionState>({
@@ -171,7 +197,7 @@ const EmailModalTemplate: React.FC<EmailModalProps> = ({
 
   // Populate form with API data when modal opens and data is available
   useEffect(() => {
-    if (isOpen && templateData) {
+    if (isOpen && templateData && !hasPopulatedRef.current) {
       console.log('Populating form with template data:', templateData);
 
       setFormData({
@@ -182,12 +208,14 @@ const EmailModalTemplate: React.FC<EmailModalProps> = ({
         rid: '',
         attachments: [],
       });
+      hasPopulatedRef.current = true;
     }
   }, [isOpen, templateData]);
 
   // Reset form when closing modal
   useEffect(() => {
     if (!isOpen) {
+      hasPopulatedRef.current = false;
       setFormData({
         to: [],
         cc: [],
@@ -972,7 +1000,7 @@ const EmailModalTemplate: React.FC<EmailModalProps> = ({
           ) {
             insertSubjectPlaceholder(
               subjectMentionState.suggestions[
-                subjectMentionState.selectionIndex
+              subjectMentionState.selectionIndex
               ]
             );
           }
@@ -994,7 +1022,7 @@ const EmailModalTemplate: React.FC<EmailModalProps> = ({
           ) {
             insertSubjectPlaceholder(
               subjectMentionState.suggestions[
-                subjectMentionState.selectionIndex
+              subjectMentionState.selectionIndex
               ]
             );
           }
@@ -1190,9 +1218,9 @@ const EmailModalTemplate: React.FC<EmailModalProps> = ({
                 anchorPosition={
                   subjectMentionState.position
                     ? {
-                        top: subjectMentionState.position.top,
-                        left: subjectMentionState.position.left,
-                      }
+                      top: subjectMentionState.position.top,
+                      left: subjectMentionState.position.left,
+                    }
                     : undefined
                 }
                 transformOrigin={{
@@ -1298,29 +1326,7 @@ const EmailModalTemplate: React.FC<EmailModalProps> = ({
                   placeholder='Enter Email Content'
                   className={`rounded-[2px] ${errors?.emailBody ? 'border border-red-500 bg-[#FEF2F2]' : 'bg-white'}`}
                   modules={modules}
-                  formats={[
-                    'header',
-                    'font',
-                    'size',
-                    'bold',
-                    'italic',
-                    'underline',
-                    'strike',
-                    'color',
-                    'background',
-                    'script',
-                    'blockquote',
-                    'code-block',
-                    'list',
-                    'bullet',
-                    'indent',
-                    'direction',
-                    'align',
-                    'link',
-                    'image',
-                    'video',
-                    'clean',
-                  ]}
+                  formats={formats}
                 />
 
                 <Popover
@@ -1329,9 +1335,9 @@ const EmailModalTemplate: React.FC<EmailModalProps> = ({
                   anchorPosition={
                     mentionState.position
                       ? {
-                          top: mentionState.position.top,
-                          left: mentionState.position.left,
-                        }
+                        top: mentionState.position.top,
+                        left: mentionState.position.left,
+                      }
                       : undefined
                   }
                   transformOrigin={{

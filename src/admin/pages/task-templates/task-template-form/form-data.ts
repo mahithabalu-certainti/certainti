@@ -191,7 +191,7 @@ export const TaskTemplateFormFieldsData = (
             placeholder: 'Choose Linked Type',
             required: false,
             onChange: true,
-            resetDependsFields: linkedType ? ['target_rid'] : [],
+            // resetDependsFields: linkedType ? ['target_rid'] : [],
             disabled:
               isEditView &&
               !permissionMap?.['relationship_connector_rid']?.edit &&
