@@ -136,7 +136,8 @@ export default class SettingService {
       }
     } else {
       let parentRid;
-      if(fetchParent[0][0].is_parent === true) parentRid = fetchParent[0][0].rid
+      if(data.level === 'parent') {
+        if(fetchParent[0][0].is_parent === true) parentRid = fetchParent[0][0].rid
       else parentRid = fetchParent[0][0].parent_account_rid
       const parentAccountForSettings : any = await mainDb.query(rawQueries.getAccountDetails(parentRid));
       let schemaForSetting = rawQueries.fetchSchemaName(parentAccountForSettings[0][0].r_number);
@@ -147,7 +148,6 @@ export default class SettingService {
         orgDb,
         parentRid
       );
-
       const existingSettings = fetchExistingSettings[0];
       let descyptedSecret = "";
 
@@ -243,7 +243,6 @@ export default class SettingService {
             }
         }
       }
-
       mainUpdatedResult = await rawQueries.updateSetting(
         schemaName,
         data,
@@ -254,6 +253,18 @@ export default class SettingService {
         parentAccountForSettings[0][0]?.is_parent,
         schemaForSetting
       );
+      } else {
+        mainUpdatedResult = await rawQueries.updateSetting(
+        schemaName,
+        data,
+        orgDb,
+        mainDb,
+        '',
+        '',
+        false,
+        ''
+      );
+      }
 
       return {
         statusCode: HttpStatus.SUCCESS,
