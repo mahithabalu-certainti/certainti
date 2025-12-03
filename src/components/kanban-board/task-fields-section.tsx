@@ -3,6 +3,7 @@ import { MenuItem, Autocomplete, TextField, Tooltip } from '@mui/material';
 import { ErrorInfoIcon } from '../../assets';
 import StyledSelect from './styled-select';
 import { Task } from './types';
+import FormFiscalYearDropdown from '../fiscal-dropdown/form-fiscal-dropdown';
 
 interface TaskFieldsSectionProps {
   fieldVisibility: Record<string, boolean | undefined>;
@@ -274,61 +275,19 @@ const TaskFieldsSection: React.FC<TaskFieldsSectionProps> = ({
             <label className='text-sm font-medium text-gray-700'>
               Fiscal Year
             </label>
-            <StyledSelect
-              name='fiscalYear'
-              value={
+            <FormFiscalYearDropdown
+              fiscalYear={
                 shouldPrepopulate
                   ? editedTask?.fiscal_year || fiscalYear || ''
                   : fiscalYear || ''
               }
-              onChange={(e) => onFiscalYearChange?.(e.target.value as string)}
+              fiscalYearsOptions={
+                fiscalYears?.map((year) => ({ label: year, value: year })) || []
+              }
+              onChange={(e) => onFiscalYearChange?.(e.target.value)}
               disabled={fieldDisabled.fiscalYear}
-              width='100%'
-              error={errors.fiscalYear}
-              renderValue={(selected) => {
-                const value = Array.isArray(selected)
-                  ? selected.join(', ')
-                  : (selected as string);
-                if (!value) {
-                  return (
-                    <span style={{ color: '#7D98B6', fontSize: '13px' }}>
-                      Choose Fiscal Year
-                    </span>
-                  );
-                }
-                return (
-                  <span
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                    title={typeof value === 'string' ? value : String(value)}
-                  >
-                    {typeof value === 'string' ? value : String(value)}
-                  </span>
-                );
-              }}
-            >
-              <MenuItem
-                value=''
-                sx={{ color: '#425A76', fontSize: '13px', fontWeight: '500' }}
-              >
-                Choose Fiscal Year
-              </MenuItem>
-              {fiscalYears?.map((year) => (
-                <MenuItem
-                  sx={{ color: '#425A76', fontSize: '13px', fontWeight: '500' }}
-                  key={year}
-                  value={year}
-                  title={year}
-                >
-                  {year}
-                </MenuItem>
-              ))}
-            </StyledSelect>
+              isError={!!errors.fiscalYear}
+            />
           </div>
         )}
 
