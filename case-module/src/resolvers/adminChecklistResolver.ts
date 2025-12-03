@@ -123,7 +123,7 @@ export const adminChecklistResolver: IResolvers = {
           modified_datetime: new Date(),
         };
 
-        const result = await ctx.services.caseManagementService.updateAdminChecklist(
+        const result = await ctx.services.caseManagementService.updateAdminCheckList(
           checklistUpdateData,
           userId
         );
