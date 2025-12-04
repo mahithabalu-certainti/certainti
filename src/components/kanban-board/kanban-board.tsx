@@ -73,6 +73,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
   caseId,
   caseStartDate,
   caseEndDate,
+  isExpanded,
 }) => {
   const [columns, setColumns] = useState<KanbanColumnTypes[]>(data);
 
@@ -279,11 +280,11 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
           onDragEnd={handleDragEnd}
         >
           <div
-            className='p-4 font-[13px]'
+            className={`p-4 font-[13px] ${isExpanded ? 'h-[calc(100vh-210px)] overflow-hidden' : ''}`}
             style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
           >
-            <div className='max-w-full overflow-x-auto'>
-              <div className='flex items-start gap-2 pb-30'>
+            <div className={`max-w-full overflow-x-auto ${isExpanded ? 'h-full' : ''}`}>
+              <div className={`flex items-start gap-2 ${isExpanded ? 'h-full' : 'pb-30'}`}>
                 {columns.map((column) => (
                   <KanbanColumn
                     key={column.rid}
@@ -319,11 +320,11 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
         </DndContext>
       ) : (
         <div
-          className='p-4 font-[13px]'
+          className={`p-4 font-[13px] ${isExpanded ? 'h-[calc(100vh-210px)] overflow-hidden' : ''}`}
           style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
         >
-          <div className='max-w-full overflow-x-auto'>
-            <div className='flex items-start gap-2 pb-30'>
+          <div className={`max-w-full overflow-x-auto ${isExpanded ? 'h-full' : ''}`}>
+            <div className={`flex items-start gap-2 ${isExpanded ? 'h-full' : 'pb-30'}`}>
               {columns.map((column) => (
                 <KanbanColumn
                   key={column.rid}

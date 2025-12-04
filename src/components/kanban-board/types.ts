@@ -253,6 +253,7 @@ export interface KanbanBoardProps {
   caseId?: string; // New prop for task detail modal
   caseStartDate?: string | null;
   caseEndDate?: string | null;
+  isExpanded?: boolean;
 }
 
 export interface TaskCardProps {

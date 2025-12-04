@@ -124,7 +124,7 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
   return (
     <div
       ref={setNodeRef}
-      className='bg-[#f5f5f5] rounded-lg p-2 w-68 flex-shrink-0'
+      className='bg-[#f5f5f5] rounded-lg p-2 w-67 flex-shrink-0'
       style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
     >
       <div className='bg-white border border-slate-200 rounded-lg p-2 mb-2'>

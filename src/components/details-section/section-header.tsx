@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { SxProps } from '@mui/material';
 import { Theme } from '@emotion/react';
 import TextButton from '../button/text-button';
 import { ActionsDropdown } from '../actions-dropdown';
 import { ActionsDropdownItem } from '../../common-utils';
+import { ExpandViewIcon, CollapseViewIcon } from '../../assets';
 
 interface SectionHeaderButton {
   label: string;
@@ -31,6 +32,8 @@ interface SectionHeaderProps {
   className?: string;
   iconBg?: string;
   bgType?: 'circle' | 'react';
+  isExpanded?: boolean;
+  onToggleExpand?: () => void;
 }
 
 const SectionHeader: React.FC<SectionHeaderProps> = ({
@@ -47,6 +50,8 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({
   className,
   iconBg,
   bgType,
+  isExpanded,
+  onToggleExpand,
 }) => {
   if (hideSection) {
     return null;
@@ -87,7 +92,7 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({
           )}
 
           <div>
-            <div className='flex'>
+            <div className='flex items-center'>
               <h1 className='text-[13px] font-semibold text-[#2D3E4F]'>
                 {title}
               </h1>
@@ -132,6 +137,20 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({
                   disabled={button.disabled}
                 />
               )
+            )}
+            {onToggleExpand && (
+              <div
+                onClick={onToggleExpand}
+                className='cursor-pointer flex items-center justify-center w-[24px] h-[24px]'
+              >
+                <Suspense fallback={null}>
+                  {isExpanded ? (
+                    <CollapseViewIcon className='w-5 h-5' />
+                  ) : (
+                    <ExpandViewIcon className='w-5 h-5' />
+                  )}
+                </Suspense>
+              </div>
             )}
           </div>
         </div>

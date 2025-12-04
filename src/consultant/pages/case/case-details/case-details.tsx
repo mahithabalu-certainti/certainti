@@ -107,6 +107,7 @@ export const CaseDetails = () => {
   const defaultTab = searchParams.get('list') ?? 'workBreakdown';
   const [activeKey, setActiveKey] = useState(defaultTab as string);
   const [exportType, setExportType] = useState<ExportType>('notes');
+  const [isActionItemsExpanded, setIsActionItemsExpanded] = useState(false);
 
   const [notesParams, setNotesParams] = useState<NotesListExportParams>({
     sortBy: 'r_number',
@@ -222,6 +223,10 @@ export const CaseDetails = () => {
       dispatch(setTemporaryFiscalYear(caseData.fiscal_year.toString()));
     }
   }, [caseData, dispatch]);
+
+  useEffect(() => {
+    setIsActionItemsExpanded(false);
+  }, [activeKey, tabParam]);
 
   const list = searchParams.get('list');
 
@@ -487,6 +492,8 @@ export const CaseDetails = () => {
               activityMenuItems={activityMenuItems}
               caseStartDate={caseData?.case_startdate}
               caseEndDate={caseData?.statutory_submission_date}
+              isActionItemsExpanded={isActionItemsExpanded}
+              setIsActionItemsExpanded={setIsActionItemsExpanded}
             />
           </div>
         );
@@ -790,20 +797,21 @@ export const CaseDetails = () => {
           ]}
         />
       </div>
-      <InfoSection
-        columns={caseHeaderDetails}
-        loading={isLoading}
-        loadingRows={4}
-        error={isError}
-        className={!isError ? 'max-h-[140px] min-h-[140px]' : ''}
-      />
+      {!isActionItemsExpanded && (
+        <InfoSection
+          columns={caseHeaderDetails}
+          loading={isLoading}
+          loadingRows={4}
+          error={isError}
+          className={!isError ? 'max-h-[140px] min-h-[140px]' : ''}
+        />
+      )}
       <div className='flex flex-1 flex-row w-full border-b border-[#CBD6E2]'>
         <div
-          className={`flex transition-all ease-in-out ${
-            isCollapsed
-              ? 'w-[60px] min-w-[60px] max-w-[60px] duration-300'
-              : 'w-[220px] min-w-[220px] max-w-[220px] duration-500'
-          }`}
+          className={`flex transition-all ease-in-out ${isCollapsed
+            ? 'w-[60px] min-w-[60px] max-w-[60px] duration-300'
+            : 'w-[220px] min-w-[220px] max-w-[220px] duration-500'
+            }`}
         >
           <SideMenuPanel
             menuItems={sideMenuItems}

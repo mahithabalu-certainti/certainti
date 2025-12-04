@@ -58,6 +58,8 @@ interface WorkBreakDownProps {
   setCaseTaskParams: (params: Record<string, unknown>) => void;
   caseStartDate?: string | null;
   caseEndDate?: string | null;
+  isActionItemsExpanded?: boolean;
+  setIsActionItemsExpanded?: (expanded: boolean) => void;
 }
 
 const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
@@ -66,6 +68,8 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
   activityMenuItems,
   caseStartDate,
   caseEndDate,
+  isActionItemsExpanded,
+  setIsActionItemsExpanded,
 }) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -750,9 +754,9 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
         setAppliedFilters={setAppliedFilters}
         setCurrentPage={setCurrentPage}
         handleFilter={handleFilter}
-        handleSorting={() => {}}
+        handleSorting={() => { }}
         sortFilterCount={0}
-        setSortFilterCount={() => {}}
+        setSortFilterCount={() => { }}
         showRefresh={false}
         onRefreshClick={onRefreshClick}
         // hideTabPanel={hideSection}
@@ -772,6 +776,12 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
         count={count}
         showItemCount={tabParam === 'case_task'}
         hideSection={false}
+        isExpanded={isActionItemsExpanded}
+        onToggleExpand={
+          tabParam === 'milestone' && setIsActionItemsExpanded
+            ? () => setIsActionItemsExpanded(!isActionItemsExpanded)
+            : undefined
+        }
       />
       <SectionHeaderTab
         tabs={tabs}
@@ -798,6 +808,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
                 priorityData={priorityData}
                 tagData={tagData}
                 checklistData={checklistData}
+                isExpanded={isActionItemsExpanded}
                 userData={userData}
                 roleOptions={roleOptionsQuery.data || []}
                 onTaskClick={setOpenTaskId}
