@@ -1484,6 +1484,22 @@ export function fetchChecklistAttachToDetails(schemaName: string, attachTo: stri
     return `SELECT rid, task_status_name FROM ${MAIN_SCHEMA_NAME}.case_task_status ORDER BY task_status_level ASC`
   }
 
+  export const getCurrencyDetailsQuery = (
+    schemaName: string,
+    currencyIds: string[]
+  ) => {
+    const query = `
+      SELECT rid, currency_name, currency_symbol, currency_code
+      FROM ${schemaName}.currency
+      WHERE rid IN (:ids)
+    `;
+  
+    const replacements = {
+      ids: currencyIds,
+    };
+  
+    return { query, replacements };
+  };
   export const fetchEmailActivityDetails = (schemaName : string, rid : string) => {
     return `
     SELECT 
