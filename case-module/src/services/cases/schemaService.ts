@@ -306,10 +306,8 @@ class CaseSchemaService {
         rawQueries.fetchCaseStatusByType('In Progress'),
         { type: QueryTypes.SELECT }
       );
-      console.log("caseStatus", caseStatus);
       let caseWithSameStatus = null;
       if (caseStatus && caseStatus.rid) {
-        console.log("caseStatus.rid", caseStatus.rid);  
         caseWithSameStatus = await Case.findOne({
           where: {
             [Op.and]: [
