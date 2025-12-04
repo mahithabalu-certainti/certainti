@@ -30,7 +30,7 @@ import { ProjectHistory } from "../models/projectHistory";
 import currency from "currency.js";
 import { isValidTimezone } from "../utils/valideTimeChecker";
 import { Logger } from "winston";
-import { MAIN_SCHEMA_NAME, rawQueries } from "../utils/constants";
+import { DEFAULT_PROJECT_DETAILS, MAIN_SCHEMA_NAME, rawQueries } from "../utils/constants";
 import {
   ProjectFiscalRegion,
 } from "../models/projectFiscalRegion";
@@ -1526,6 +1526,7 @@ class ProjectIngestionService {
         created_by: projectData.created_by,
         project_rid: projectData.project_id,
         project_fiscal_rid: projectData.project_fiscal_id,
+        max_ai_interaction : DEFAULT_PROJECT_DETAILS.maxAiInteraction,
 
         effective_cost: baseData.total_cost_prj,
         effective_effort: baseData.total_effort_prj,
