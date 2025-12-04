@@ -2873,8 +2873,17 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
             rawQueries.fetchCaseInfo(schemaName,data.case_rid!),
             { type: "SELECT" }
           );
+        let parentAccountNumber = accountNumber;
+      if(accountInfo.storage_type === 'separate_db') {
+         const [parentAccountInfo]: any[] =
+            await mainDb.query(
+            rawQueries.fetchAccountInfo(accountInfo.parent_account_rid!),
+            { type: "SELECT" }
+          );
+        parentAccountNumber = parentAccountInfo.r_number;
+      }
       const senderEmailInfo = await this.caseSchemaService.fetchSenderEmailInfoByAccountId(
-            accountNumber,
+            parentAccountNumber,
             accountInfo.parent_account_rid
           );
       if (!senderEmailInfo) {

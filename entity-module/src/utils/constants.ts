@@ -2110,7 +2110,7 @@ export const rawQueries = {
     `;
   },
   getAccountDetails (accountRid : string) {
-    return `SELECT rid, r_number FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`
+    return `SELECT rid, r_number, subscription_id, is_parent FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`
   } 
 };
 
