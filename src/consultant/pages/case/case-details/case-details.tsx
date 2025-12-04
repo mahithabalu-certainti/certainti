@@ -481,6 +481,30 @@ export const CaseDetails = () => {
     []
   );
 
+  const handleToggleActionItems = (
+    value: boolean | ((prevState: boolean) => boolean)
+  ) => {
+    setIsActionItemsExpanded((prev) => {
+      const newState = typeof value === 'function' ? value(prev) : value;
+      if (newState) {
+        setIsCollapsed(true);
+      } else {
+        setIsCollapsed(false);
+      }
+      return newState;
+    });
+  };
+
+  const handleToggleSideMenu = () => {
+    setIsCollapsed((prev) => {
+      const newState = !prev;
+      if (!newState) {
+        setIsActionItemsExpanded(false);
+      }
+      return newState;
+    });
+  };
+
   const renderContent = () => {
     switch (activeKey) {
       case 'workBreakdown':
@@ -493,7 +517,7 @@ export const CaseDetails = () => {
               caseStartDate={caseData?.case_startdate}
               caseEndDate={caseData?.statutory_submission_date}
               isActionItemsExpanded={isActionItemsExpanded}
-              setIsActionItemsExpanded={setIsActionItemsExpanded}
+              setIsActionItemsExpanded={handleToggleActionItems}
             />
           </div>
         );
@@ -820,7 +844,7 @@ export const CaseDetails = () => {
             headerTitle='Related List'
             showBackIcon={true}
             isCollapsed={isCollapsed}
-            onToggleCollapse={() => setIsCollapsed((prev) => !prev)}
+            onToggleCollapse={handleToggleSideMenu}
             enableScrollbar={true}
             maxHeight={292}
           />
