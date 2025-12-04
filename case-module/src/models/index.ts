@@ -2,6 +2,8 @@ import { initMainDbSequelize } from "../config/mainDataSource";
 import { Case } from "./caseModel";
 import { CaseTeam } from "./caseTeamModel";
 import { CaseProject } from "./caseProjectsModel";
+import { CaseProjectResource } from "./caseProjectResourceModel";
+import { CaseProjectTask } from "./caseProjectTaskModel";
 import { CheckList } from "./checkListModel";
 import { CheckListItem } from "./checkListItemModel";
 import { Jurisdiction } from "./jurisdiction";
@@ -12,6 +14,8 @@ import { TaskComments } from "./taskCommentsModel";
 import { CommentsAttachments } from "./commentsAttachmentModel";
 import { TaskAttachments } from "./taskAttachmentModel";
 import { CaseTaskWorkflowConnector } from "./caseTaskWorkflowConnectorModel";
+import { ProjectResourceFiscal } from "./projectResourceFiscal";
+import { ProjectTask } from "./projectTask";
 
 export const models = {
   Case,
@@ -25,7 +29,11 @@ export const models = {
   TaskComments,
   CommentsAttachments,
   TaskAttachments,
-  CaseTaskWorkflowConnector
+  CaseTaskWorkflowConnector,
+  CaseProjectResource,
+  CaseProjectTask,
+  ProjectResourceFiscal,
+  ProjectTask,  
 };
 
 export async function initModels() {

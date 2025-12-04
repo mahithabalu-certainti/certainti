@@ -8,6 +8,7 @@ import {
   AccountType,
   ActivityType,
   AddCommentsType,
+  assignProjectType,
   CaseOwnerType,
   CaseStatusType,
   CaseTaskDropdownType,
@@ -1037,13 +1038,19 @@ export class CaseService {
           };
         }
       }
+      
       data.fiscal_year = checkCaseExists.fiscal_year
-      const result = await this.caseSchemaService.assignProjectToCase(
+      let caseSchemaServiceResult = await this.caseSchemaService.assignProjectToCase(
         data,
         fetchParentRnumber[0][0].r_number,
         schemaName
       );
-      if (result.statusCode == HttpStatus.SUCCESS) {
+      if (caseSchemaServiceResult.statusCode == HttpStatus.SUCCESS) {
+        const result = await this.caseSchemaService.insertCaseTabels(
+          caseSchemaServiceResult.data as assignProjectType,
+          fetchParentRnumber[0][0].r_number,
+          schemaName
+        );
         return {
           statusCode: HttpStatus.SUCCESS,
           statusMessage: result.statusMessage,
@@ -1051,7 +1058,7 @@ export class CaseService {
       } else {
         return {
           statusCode: HttpStatus.FAILED,
-          statusMessage: result.statusMessage,
+          statusMessage: caseSchemaServiceResult.statusMessage,
         };
       }
     } else {
