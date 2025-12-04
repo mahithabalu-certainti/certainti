@@ -155,6 +155,10 @@ const EmailForm: React.FC = () => {
   const { data: templateDetails, isLoading: templateLoading } =
     useEmailTemplateDetails(currentTemplate.value);
 
+  const isEmailConfigured =
+    searchParams.get('isEmailConfigured') === 'true' ||
+    emailData?.is_email_configured;
+
   const userOptions = useMemo(() => {
     return (
       userListOptions?.data?.map((item) => ({
@@ -776,7 +780,10 @@ const EmailForm: React.FC = () => {
               activeFlag === FlagTypeEnum.send &&
               (createEmail.isPending || updateEmail.isPending)
             }
-            disabled={activeFlag !== null && activeFlag !== FlagTypeEnum.send}
+            disabled={
+              !isEmailConfigured ||
+              (activeFlag !== null && activeFlag !== FlagTypeEnum.send)
+            }
             onClick={() => handleSubmit(FlagTypeEnum.send)}
             sx={{
               width: '64px',

@@ -19,7 +19,7 @@ import KanbanColumn from './kanban-column';
 
 const LoadingSkeleton: React.FC = () => (
   <div
-    className='min-h-screen p-4 font-[13px]'
+    className='p-4 font-[13px]'
     style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
   >
     <div className='max-w-full overflow-x-auto'>
@@ -279,7 +279,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
           onDragEnd={handleDragEnd}
         >
           <div
-            className='min-h-screen p-4 font-[13px]'
+            className='p-4 font-[13px]'
             style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
           >
             <div className='max-w-full overflow-x-auto'>
@@ -319,7 +319,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
         </DndContext>
       ) : (
         <div
-          className='min-h-screen p-4 font-[13px]'
+          className='p-4 font-[13px]'
           style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
         >
           <div className='max-w-full overflow-x-auto'>

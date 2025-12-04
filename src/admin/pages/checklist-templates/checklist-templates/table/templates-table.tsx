@@ -19,9 +19,7 @@ import {
 } from '../../../../types';
 import {
   ExportChecklistTemplate,
-  fetchChecklistTemplateDetails,
   useChecklistTemplateList,
-  useUpdateChecklistTemplateDetails,
 } from '../../../../service/checklist-templates/checklist-template-service';
 import { getChecklistTemplateColumns } from './columns';
 import { checkPermission } from '../../../../../common-utils';
@@ -29,6 +27,9 @@ import { RootState } from '../../../../../store/store';
 import { useSelector } from 'react-redux';
 import { AllPermissions } from '../../../../../common-service';
 import { useToast } from '../../../../../hooks';
+import { useMutation } from '@apollo/client';
+import { caseClient } from '../../../../../api/graphql/clients/client';
+import { ADMIN_CHECKLIST_UPDATE } from '../../../../../api/graphql/queries/checklist-query';
 
 interface ITemplateTableProps {
   appliedFilters: Record<string, FilterCondition>;
@@ -69,7 +70,9 @@ export const TemplateTable: React.FC<ITemplateTableProps> = ({
     }
   }, [data?.checklistTemplates]);
 
-  const updateTemplateDetailsMutation = useUpdateChecklistTemplateDetails();
+  const [updateAdminChecklist] = useMutation(ADMIN_CHECKLIST_UPDATE, {
+    client: caseClient,
+  });
 
   // Permission
   const { permission } = useSelector((state: RootState) => state.permission);
@@ -207,43 +210,26 @@ export const TemplateTable: React.FC<ITemplateTableProps> = ({
   const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
     const previousTemplates = [...templateList];
 
+    const updateData = updates.reduce<Record<string, FieldChangeValue>>(
+      (acc, item) => {
+        const key = item.editId || item.columnId;
+        acc[key] = item.value;
+        return acc;
+      },
+      {
+        rid: rowId,
+      }
+    );
+
     try {
-      // Fetch current details to get required fields like checklist_items
-      const currentDetails = await fetchChecklistTemplateDetails(rowId);
+      const res = await updateAdminChecklist({
+        variables: { data: updateData },
+      });
 
-      const updateData = updates.reduce<Record<string, FieldChangeValue>>(
-        (acc, item) => {
-          const key = item.editId || item.columnId;
-          acc[key] = item.value;
-          return acc;
-        },
-        {}
-      );
+      const result = res.data?.updateAdminChecklist;
 
-      const payload = {
-        checklist_name:
-          (updateData.checklist_name as string) ||
-          currentDetails.checklist_name,
-        checklist_description:
-          (updateData.checklist_description as string) ||
-          currentDetails.checklist_description,
-        status_rid:
-          (updateData.status_rid as string) || currentDetails.status_rid,
-        checklist_template_rid: rowId,
-        checklist_items: currentDetails.checklist_items.map((item) => ({
-          checklist_item_name: item.checklist_item_name,
-          checklist_item_rid: item.rid,
-          description: item.description,
-          action_type: 'edit',
-        })),
-      };
-
-      const res = await updateTemplateDetailsMutation.mutateAsync(
-        payload as any
-      );
-
-      if (res?.statusCode === 200 && res?.data?.checklist?.data) {
-        const updatedItem = res.data.checklist.data;
+      if (result?.statusCode === 200 && result?.data) {
+        const updatedItem = result.data;
 
         setTemplateList((prev) =>
           prev.map((template) => {
@@ -267,7 +253,7 @@ export const TemplateTable: React.FC<ITemplateTableProps> = ({
           })
         );
       } else {
-        errorToast(res?.statusMessage || 'Failed to update field');
+        errorToast(result?.statusMessage || 'Failed to update field');
         setTemplateList(previousTemplates);
       }
     } catch (error: any) {

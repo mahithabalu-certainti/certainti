@@ -77,7 +77,7 @@ const generateYearOptions = () => {
   for (let year = 1950; year <= currentYear; year++) {
     years.push({
       value: year,
-      label: `FY - ${year}`,
+      label: `FY-${year}`,
     });
   }
   return years.reverse();
@@ -262,7 +262,7 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
       label: 'Fiscal Year',
       type: 'dropdown',
       required: true,
-      width: '180px',
+      width: '140px',
       sticky: true,
       sx: {
         position: 'sticky' as const,
@@ -1315,10 +1315,14 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
                               >
                                 <div>
                                   <TextField
-                                    value={costDisplay(
-                                      submission.total_fte_cost || '',
-                                      submission.currency_symbol
-                                    )}
+                                    value={
+                                      submission.total_fte_cost
+                                        ? costDisplay(
+                                            submission.total_fte_cost || '',
+                                            submission.currency_symbol
+                                          )
+                                        : ''
+                                    }
                                     onChange={(e) => {
                                       const rawValue = removeCommas(
                                         e.target.value
@@ -1407,10 +1411,14 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
                               >
                                 <div>
                                   <TextField
-                                    value={costDisplay(
-                                      submission.total_subcon_cost || '',
-                                      submission.currency_symbol
-                                    )}
+                                    value={
+                                      submission.total_subcon_cost
+                                        ? costDisplay(
+                                            submission.total_subcon_cost || '',
+                                            submission.currency_symbol
+                                          )
+                                        : ''
+                                    }
                                     onChange={(e) => {
                                       const rawValue = removeCommas(
                                         e.target.value
@@ -1499,10 +1507,15 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
                               >
                                 <div>
                                   <TextField
-                                    value={costDisplay(
-                                      submission.total_nonlabor_cost || '',
-                                      submission.currency_symbol
-                                    )}
+                                    value={
+                                      submission.total_nonlabor_cost
+                                        ? costDisplay(
+                                            submission.total_nonlabor_cost ||
+                                              '',
+                                            submission.currency_symbol
+                                          )
+                                        : ''
+                                    }
                                     onChange={(e) => {
                                       const rawValue = removeCommas(
                                         e.target.value
@@ -1591,10 +1604,14 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
                               >
                                 <div>
                                   <TextField
-                                    value={costDisplay(
-                                      submission.total_project_cost || '',
-                                      submission.currency_symbol
-                                    )}
+                                    value={
+                                      submission.total_project_cost
+                                        ? costDisplay(
+                                            submission.total_project_cost || '',
+                                            submission.currency_symbol
+                                          )
+                                        : ''
+                                    }
                                     onChange={(e) => {
                                       const rawValue = removeCommas(
                                         e.target.value
@@ -1683,10 +1700,14 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
                               >
                                 <div>
                                   <TextField
-                                    value={costDisplay(
-                                      submission.total_qre || '',
-                                      submission.currency_symbol
-                                    )}
+                                    value={
+                                      submission.total_qre
+                                        ? costDisplay(
+                                            submission.total_qre || '',
+                                            submission.currency_symbol
+                                          )
+                                        : ''
+                                    }
                                     onChange={(e) => {
                                       const rawValue = removeCommas(
                                         e.target.value
@@ -1772,9 +1793,13 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
                               >
                                 <div>
                                   <TextField
-                                    value={valueDisplay(
-                                      submission.total_rd_credits || ''
-                                    )}
+                                    value={
+                                      submission.total_rd_credits
+                                        ? valueDisplay(
+                                            submission.total_rd_credits || ''
+                                          )
+                                        : ''
+                                    }
                                     onChange={(e) => {
                                       const rawValue = removeCommas(
                                         e.target.value
@@ -1863,9 +1888,14 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
                               >
                                 <div>
                                   <TextField
-                                    value={valueDisplay(
-                                      submission.annual_gross_receipts || ''
-                                    )}
+                                    value={
+                                      submission.annual_gross_receipts
+                                        ? valueDisplay(
+                                            submission.annual_gross_receipts ||
+                                              ''
+                                          )
+                                        : ''
+                                    }
                                     onChange={(e) => {
                                       const rawValue = removeCommas(
                                         e.target.value

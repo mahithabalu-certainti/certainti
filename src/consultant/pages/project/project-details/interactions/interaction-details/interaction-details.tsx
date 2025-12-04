@@ -86,6 +86,22 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
   ].includes((data?.status_name || '').toLowerCase() as StatusTypeEnum);
 
   //permission
+  const projectViewEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.PROJECTS_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const projectPermissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    projectViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [projectViewEditFields]);
+
   const interactionsViewEditFields = useMemo(
     () =>
       permission?.find(
@@ -197,14 +213,14 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       value: data?.project_name,
       key: 'project_name',
     },
+  ];
+
+  const InteractionInfo: DetailItem[] = [
     {
       label: 'Fiscal Year',
       value: data?.fiscal_year,
       key: 'fiscal_year',
     },
-  ];
-
-  const InteractionInfo: DetailItem[] = [
     {
       label: 'Interaction Type',
       value: data?.interaction_type_name,
@@ -276,7 +292,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     },
   ];
 
-  const basicDetails = applyHidePermission(basicInfo, permissionMap);
+  const basicDetails = applyHidePermission(basicInfo, projectPermissionMap);
   const interactionDetails = applyHidePermission(
     InteractionInfo,
     permissionMap

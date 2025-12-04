@@ -191,7 +191,7 @@
 
 /* WebKit/Blink (Chrome, Edge, Safari) */
 .side-menu-scrollbar::-webkit-scrollbar {
-  width: 8px; /* visible width */
+  width: 8px;
   height: 8px;
 }
 
@@ -200,17 +200,17 @@
 }
 
 .side-menu-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(203, 214, 226, 0.2);
+  background: #b1b0b0b2; /* ← Your desired color */
   border-radius: 4px;
   min-height: 24px;
 }
 
 .side-menu-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(203, 214, 226, 0.4);
+  background: #9e9e9e; /* slightly darker hover */
 }
 
-/* Firefox fallback */
+/* Firefox */
 .side-menu-scrollbar {
-  scrollbar-width: thin; /* auto | thin | none */
-  scrollbar-color: rgba(203, 214, 226, 0.2) transparent;
+  scrollbar-width: thin;
+  scrollbar-color: #b1b0b0b2 transparent; /* thumb | track */
 }

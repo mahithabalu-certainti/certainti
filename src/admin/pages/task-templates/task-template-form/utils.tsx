@@ -37,13 +37,23 @@ export const transformTaskTemplatePayload = (
   const hasRelationshipConnector = !!formData?.relationship_connector_rid;
   const hasDeletions = deletedTargetRid.length > 0;
 
+  // Determine the relationship_connector_rid to use
+  const relationshipConnectorRid =
+    formData?.relationship_connector_rid !== undefined &&
+    formData?.relationship_connector_rid !== null &&
+    formData?.relationship_connector_rid !== ''
+      ? formData.relationship_connector_rid // Use form data if it has a value
+      : isEditView
+        ? originalData?.workflow_connector?.relationship_connector_rid
+        : '';
+
   // Create workflow_connector only if at least one field has data
   const workflowConnector =
-    hasTargetRid || hasRelationshipConnector
+    hasTargetRid || hasRelationshipConnector || hasDeletions
       ? {
           source_rid: isEditView ? originalData?.rid : '',
           target_rid: filteredTargetRid,
-          relationship_connector_rid: formData?.relationship_connector_rid,
+          relationship_connector_rid: relationshipConnectorRid,
           // Add delete_rid only in edit mode when there are deletions
           ...(isEditView && hasDeletions
             ? { delete_target_rids: deletedTargetRid }

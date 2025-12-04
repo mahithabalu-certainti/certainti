@@ -93,6 +93,7 @@ export const CaseDetails = () => {
     data: caseData,
     isLoading,
     isError,
+    isPending,
   } = useCaseDetails(caseId ?? '', accountId ?? '');
   const isAssignProject = searchParams.get('assignProject');
   const projectDetails = searchParams.get('detailstab');
@@ -284,6 +285,11 @@ export const CaseDetails = () => {
     AllPermissions.PROJECTS_EXPORT
   );
 
+  const isCaseTaskExportEnable = checkPermission(
+    permission,
+    AllPermissions.CASES_WORKBREAKDOWN_EXPORT
+  );
+
   const activityExportPermissionMap: Record<string, boolean> = {
     task: !!isActivityTaskExportEnable,
     email: !!isActivityEmailExportEnable,
@@ -425,7 +431,7 @@ export const CaseDetails = () => {
         return !isProjectExportEnable;
       }
     } else if (searchParams.get('tab') === 'case_task') {
-      return false;
+      return !isCaseTaskExportEnable;
     } else if (list === 'interactions' && !interactionsView) {
       return !isInteractionsExportEnable;
     } else {
@@ -552,6 +558,7 @@ export const CaseDetails = () => {
             caseDetails={caseData}
             setExportType={setExportType}
             setActivityParams={setActivityParams}
+            isDetailLoading={isPending}
           />
         );
       case 'checklist':
