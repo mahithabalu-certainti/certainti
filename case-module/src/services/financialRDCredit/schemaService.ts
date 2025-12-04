@@ -98,7 +98,7 @@ class RDCreditSchemaService {
                 wages: Number(data?.total_wages || 0),
                 supplies: Number(data?.total_supplies || 0),
                 contract: Number(data?.total_contract || 0),
-                business_tax_liability : Number(data?.business_tax_liability || 0)
+                business_tax_liability: Number(data?.business_tax_liability || 0)
             };
         } catch (err) {
             logMessage(`Error fetching account: ${err}`);
@@ -114,7 +114,7 @@ class RDCreditSchemaService {
      * @param orgDbSequelize 
      * @returns 
      */
-    async getAnnualGrossReceipts(accountRid: string, prior: number, schemaName: string, orgDbSequelize: Sequelize) : Promise<AnnualGrossReceipt[]>{
+    async getAnnualGrossReceipts(accountRid: string, prior: number, schemaName: string, orgDbSequelize: Sequelize): Promise<AnnualGrossReceipt[]> {
         try {
             if (!this.orgDbSequelize) {
                 this.orgDbSequelize = await initOrgSequelize();
@@ -175,7 +175,7 @@ class RDCreditSchemaService {
                 LIMIT :prior
             `,
                 {
-                    replacements: { accountRid, prior: 3 , currentFiscalYear},
+                    replacements: { accountRid, prior: 3, currentFiscalYear },
                     type: QueryTypes.SELECT,
                 }
             );
@@ -283,6 +283,28 @@ class RDCreditSchemaService {
             input_params,
             computed_fields,
             region_name
+        });
+    }
+
+    /**
+     * 
+     * @param accountNumber 
+     * @param case_rid 
+     * @param region_name 
+     * @returns 
+     */
+    async getRDStateCreditCalculation(
+        accountNumber: string,
+        case_rid: string,
+        region_name: string
+    ) {
+        const { RdCreditStateCalculations } = await this.caseModelService.getModels(accountNumber);
+
+        return await RdCreditStateCalculations.findOne({
+            where: {
+                case_rid,
+                region_name
+            }
         });
     }
 

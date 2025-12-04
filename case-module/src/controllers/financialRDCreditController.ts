@@ -55,8 +55,70 @@ async function financialRDCredit(
     // Step 5: Handle service response
     handleCustomResponse(
       res,
-      HttpStatus.SUCCESS,
-      HttpStatus.SUCCESS_MESSAGE
+      resultState.statusCode,
+      resultState.message
+    );
+  } catch (err) {
+    // Step 6: Catch unexpected errors
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+
+/**
+ * 
+ * @param req 
+ * @param res 
+ * @returns 
+ */
+async function getRDCreditResultsByCaseAndState(
+  req: Request,
+  res: Response
+): Promise<void> {
+  const methodName = "getRDCreditResultsByCaseAndState";
+  try {
+   // Step 1: Log request
+    logMessage(
+      `[${methodName}] Request received: ${JSON.stringify(
+        req.body
+      )}, userId: ${req.headers["x-user-id"]}`
+    );
+
+    // Step 2: Validate request body
+    const value = await validateRequest(req, rdCreditGenerationSchema, res);
+    if (!value) {
+      errorLog(methodName, "Invalid request body");
+      return;
+    }
+
+    // Step 3: Validate userId
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID missing in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+
+    logMessage(JSON.stringify(value));
+
+    const resultState = await financialRDCreditService.getComputationResultsByIDAndState(value.accountRid, value.caseRid, value.stateCode);
+
+    // Step 5: Handle service response
+    handleCustomResponse(
+      res,
+      resultState.statusCode,
+      resultState.message
     );
   } catch (err) {
     // Step 6: Catch unexpected errors
@@ -73,5 +135,6 @@ async function financialRDCredit(
 
 // Export controller
 export default {
-  financialRDCredit
+  financialRDCredit,
+  getRDCreditResultsByCaseAndState
 };

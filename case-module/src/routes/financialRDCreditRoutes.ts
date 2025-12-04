@@ -6,7 +6,7 @@ import { checkUserStatusMiddleware } from "../middlewares/authmiddleware";
 
 const routes: Router = Router();
 
-routes.post("/rd-credit/generation", checkUserStatusMiddleware("rd_credit_cal"), controller.financialRDCreditController.financialRDCredit
-);
+routes.post("/rd-credit/generation", checkUserStatusMiddleware("rd_credit_cal"), controller.financialRDCreditController.financialRDCredit);
+routes.post("/rd-credit/:accountRid/cases/:caseRid/states/:stateCode/preview", checkUserStatusMiddleware("rd_credit_view"), controller.financialRDCreditController.getRDCreditResultsByCaseAndState);
 
 export default routes;

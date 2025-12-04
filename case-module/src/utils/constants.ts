@@ -167,7 +167,8 @@ export const STATUS_MESSAGE = {
   tagsCreationFailed : "Failed to add Tags",
   checklistItemsStatusSuccess : "Checklist-Item updated successfully",
   failedToUpdate : "Failed to update",
-  rdCreditPreviewSuccess : "R&D Credit preview fethched successfully"
+  rdCreditPreviewSuccess : "R&D Credit preview fethched successfully",
+  rdCreditPreview: "RD credit calculation results retrieved"
 
 };
 

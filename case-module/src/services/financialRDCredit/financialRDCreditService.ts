@@ -395,29 +395,34 @@ export class FinancialRDCreditService {
             logMessage(`Prior3YearQREs: ${JSON.stringify(prior3YearsQREs)}`);
 
             const annualGrossReceipts = await this.rdCreditSchemaService.getAnnualGrossReceipts(accountRid, 5, schemaName, orgDb); // current year & prior 4 years gross receipts
-            
+
             logMessage(`AnnualGrossReceipts: ${JSON.stringify(annualGrossReceipts)}`);
 
             const stateRDData = await this.getStateRDData(currentYearQREs, prior3YearsQREs, annualGrossReceipts);
 
-            // Iterate through each 36 state configuration and compute credits
-            for (const config of configStateLevel) {
-                const stateComputation = stateCalculators[config.state_code];
-                const extractConfig = this.extractConfigJson(config.config_json);
-                logMessage(`Computing credit with config: ${JSON.stringify(extractConfig)}`);
+            // Run background process without blocking response
+            (async () => {
+                for (const config of configStateLevel) {
+                    try {
+                        const stateComputation = stateCalculators[config.state_code];
+                        const extractConfig = this.extractConfigJson(config.config_json);
 
-                if (stateComputation) {
-                    const result = await stateComputation.compute(extractConfig, stateRDData);
-                    logMessage(`Result for ${config.state_code}: ${JSON.stringify(result)}`);
-                    this.rdCreditSchemaService.insertRDStateCreditCalculation(accountNumber, caseRid, "USA", config.state_code, result.inputFields, result.computedFields);
-                } else {
-                    logMessage(`No calculator implemented for state: ${config.state_code}`);
+                        if (stateComputation) {
+                            const result = await stateComputation.compute(extractConfig, stateRDData);
+                            await this.rdCreditSchemaService.insertRDStateCreditCalculation(
+                                accountNumber, caseRid, "USA", config.state_code,
+                                result.inputFields, result.computedFields
+                            );
+                        }
+                    } catch (err) {
+                        logMessage(`Error processing state ${config.state_code}: ${err}`);
+                    }
                 }
-            }
+            })();
 
             return {
                 statusCode: HttpStatus.SUCCESS,
-                message: STATUS_MESSAGE.rdCreditPreviewSuccess || "RD credit calculation generated successfully",
+                message: STATUS_MESSAGE.rdCreditPreviewSuccess || "RD credit calculation initiated successfully",
                 data: {},
             };
 
@@ -444,6 +449,46 @@ export class FinancialRDCreditService {
             currentYearQREs,
             prior3YearsQREs,
             annualGrossReceipts
+        }
+    }
+
+    /**
+     * 
+     * @param accountRid 
+     * @param caseRid 
+     * @param stateCode 
+     * @returns 
+     */
+    async getComputationResultsByIDAndState(accountRid: string, caseRid: string, stateCode: string) {
+        try {
+
+            const mainDb = await this.getMainDb();
+            const orgDb = await this.getOrgDb();
+
+            const fetchParentAccountRnumber: any = await mainDb.query(
+                await rawQueries.fetchParentAccount(accountRid, mainDb)
+            );
+
+            let schemaName = rawQueries.fetchSchemaName(
+                fetchParentAccountRnumber[0][0].r_number
+            );
+
+            const accountNumber = 'ACC-00001';
+            schemaName = 'trd365_00001';
+            const results = this.rdCreditSchemaService.getRDStateCreditCalculation(accountNumber, caseRid, stateCode);
+            return {
+                statusCode: HttpStatus.SUCCESS,
+                message: STATUS_MESSAGE.rdCreditPreview,
+                data: results,
+            };
+        } catch (error) {
+            logMessage(`Error fetching RD Credit : ${error}`);
+
+            return {
+                statusCode: HttpStatus.FAILED,
+                message: HttpStatus.FAILED_MESSAGE,
+                errorMessage: STATUS_MESSAGE.jurisdictionFetchedFailed || "Failed to fetch",
+            };
         }
     }
 
