@@ -130,8 +130,15 @@ export class CaseService {
         throw new Error("Invalid account ID");
       }
       
-       const isUnique = await this.caseSchemaService.checkIsCaseNameUnique(caseRequest,accountNumber);
-      if (!isUnique) {
+       const validation = await this.caseSchemaService.checkIsCaseNameUnique(caseRequest,accountNumber);
+       if (!validation.isCaseUnique) {
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: HttpStatus.BAD_REQUEST_MESSAGE,
+          errorMessage: `A case with the name "${caseRequest.case_name}" already exists for FY-${caseRequest.fiscal_year }. Please choose a different year.`,
+        };
+      }
+       if (!validation.isunique) {
         return {
           statusCode: HttpStatus.BAD_REQUEST,
           message: HttpStatus.BAD_REQUEST_MESSAGE,
