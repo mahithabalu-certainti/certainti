@@ -79,7 +79,7 @@ const InfoSection: React.FC<InfoSectionProps> = ({
       className={`flex flex-col gap-3 px-4 py-2 border-b border-[#CBD6E2] bg-white ${className}`}
       style={{
         maxHeight: singleLineView ? '80px' : '160px',
-        minHeight: singleLineView ? '40px' : '60px',
+        minHeight: singleLineView ? '40px' : '75px',
       }}
     >
       {loading ? (

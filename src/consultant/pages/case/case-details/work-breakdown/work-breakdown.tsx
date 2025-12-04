@@ -750,9 +750,9 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
         setAppliedFilters={setAppliedFilters}
         setCurrentPage={setCurrentPage}
         handleFilter={handleFilter}
-        handleSorting={() => { }}
+        handleSorting={() => {}}
         sortFilterCount={0}
-        setSortFilterCount={() => { }}
+        setSortFilterCount={() => {}}
         showRefresh={false}
         onRefreshClick={onRefreshClick}
         // hideTabPanel={hideSection}
@@ -809,8 +809,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
                 onAddCollaborator={handleAddCollaborator}
                 accountId={accountId || ''}
                 caseId={caseId || ''}
-                // fieldVisibility={fieldHiddenMap}
-                // fieldDisabled={fieldDisabledMap}
+                fieldVisibility={{ fiscalYear: true }}
                 caseStartDate={caseStartDate}
                 caseEndDate={caseEndDate}
               />
