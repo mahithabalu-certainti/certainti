@@ -135,7 +135,7 @@ export class CaseService {
         return {
           statusCode: HttpStatus.BAD_REQUEST,
           message: HttpStatus.BAD_REQUEST_MESSAGE,
-          errorMessage: `A case with the name "${caseRequest.case_name}" already exists for FY-${caseRequest.fiscal_year }. Please choose a different year.`,
+          errorMessage: `A case is  already in progress for FY-${caseRequest.fiscal_year }. Please choose a different year.`,
         };
       }
        if (!validation.isunique) {
