@@ -260,15 +260,22 @@ export class CaseService {
         transaction
       );
 
-      await transaction.commit();
-
-      return {
-        statusCode: HttpStatus.SUCCESS,
-        message: STATUS_MESSAGE.caseUpdated,
-        data: {
-          cases: {},
-        },
-      };
+      if(response.statusCode === HttpStatus.BAD_REQUEST) {
+        return {
+          statusCode : HttpStatus.BAD_REQUEST,
+          message : HttpStatus.BAD_REQUEST_MESSAGE,
+          errorMessage : response.statusMessage
+        }
+      } else {
+        await transaction.commit();
+        return {
+          statusCode: HttpStatus.SUCCESS,
+          message: STATUS_MESSAGE.caseUpdated,
+          data: {
+            cases: {},
+          },
+        };
+      }
     } catch (err) {
       logMessage(`Error updating case, ${err}`);
       await transaction.rollback();
