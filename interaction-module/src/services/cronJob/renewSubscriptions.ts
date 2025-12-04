@@ -236,7 +236,6 @@ export async function scheduleSubscriptionRenewal() {
   const schdulerExpression =
     (await getSecret(process.env.SUBSCRIPTION_RENEW_TIMER as string)) ||
     `0 10 * * *`;
-  logMessage(`Scheduling subscription renewal with expression: ${schdulerExpression}`);
   cron.schedule(schdulerExpression, async () => {
     const today = new Date();
     const dayOfMonth = today.getDate();
