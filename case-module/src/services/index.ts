@@ -5,7 +5,10 @@ import { CaseManagementService } from "./casesManagement/caseManagementService";
 import { JurisdictionService } from "./jurisdiction/jurisdictionServices";
 import { HistoricalSubmissionService } from "./historicalSubmission/historicalSubmissionServices";
 import { ActivityService } from "./activities/activityService";
-import { FinancialRDCreditService } from "./financialRDCredit/financialRDCreditService";
+import { StateComputationService } from "../services/rdComputation/state.computation.service";
+import { FederalComputationService } from "../services/rdComputation/federal.computation.service";
+import { ComputationService } from "./rdComputation/computation.service";
+
 
 class Services {
   private logger: Logger;
@@ -14,7 +17,9 @@ class Services {
   jurisdictionService: JurisdictionService;
   historicalSubmissionService: HistoricalSubmissionService;
   activityService: IActivityService;
-  financialRDCreditService: FinancialRDCreditService;
+  stateComputationService: StateComputationService;
+  federalComputationService: FederalComputationService;
+  computationService: ComputationService;
 
   constructor(logger: Logger) {
     this.logger = logger;
@@ -23,7 +28,9 @@ class Services {
     this.jurisdictionService = new JurisdictionService(logger);
     this.historicalSubmissionService = new HistoricalSubmissionService(logger);
     this.activityService = new ActivityService(logger);
-    this.financialRDCreditService = new FinancialRDCreditService(logger);
+    this.stateComputationService = new StateComputationService();
+    this.federalComputationService = new FederalComputationService();
+    this.computationService = new ComputationService();
   }
 }
 

@@ -1,5 +1,11 @@
-import { StateRDData } from "./rdCreditTypes";
+import { FederalRDData, StateRDData } from "./rdCreditTypes";
 
+/**
+ * Mock Data for State RD Computation
+ * To load mock Data :
+ * import { StateMockDataLoadMap } from "../financialRDCredit/rdDataLoadMockService";
+ * stateRdData = StateMockDataLoadMap["CT"]!;
+ */
 export const StateMockDataLoadMap: Record<string, StateRDData> = {
     CO: {
         prior3YearsQREs: [
@@ -153,3 +159,19 @@ export const StateMockDataLoadMap: Record<string, StateRDData> = {
         }
     }
 };
+
+export const FederalMockDataLoadMap: Record<string, FederalRDData> = {
+    USA: {
+        prior3YearsQREs: [
+            { fiscalYear: 2024, qre:  3823236.75  },
+            { fiscalYear: 2023, qre:  3751258.87  },
+            { fiscalYear: 2022, qre:  3368174.98  }
+        ],
+        currentYearQREs: {
+            wages:  2263944.15 ,
+            supplies: 0,
+            contract:  795909.20 ,
+            business_tax_liability: 0
+        }
+    }
+}

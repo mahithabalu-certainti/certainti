@@ -1,5 +1,5 @@
 import { Decimal } from "decimal.js";
-import { AnnualGrossReceipt, QRE, StateRDData } from "../financialRDCredit/rdCreditTypes";
+import { AnnualGrossReceipt, QRE, StateRDData } from "../rdComputation/rdCreditTypes";
 
 
 export interface ConfigJson {
@@ -23,7 +23,6 @@ export class RdCreditCalculatorForGA {
      * @param stateRdData 
      * @param totalGrossReceipts 
      * @param priorYearsCount 
-     * To load mock Data : stateRdData = StateMockDataLoadMap["GA"]!;
      * @returns 
      */
     async compute(config: ConfigJson, stateRdData: StateRDData) {

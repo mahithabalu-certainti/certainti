@@ -168,7 +168,9 @@ export const STATUS_MESSAGE = {
   checklistItemsStatusSuccess : "Checklist-Item updated successfully",
   failedToUpdate : "Failed to update",
   rdCreditPreviewSuccess : "R&D Credit preview fethched successfully",
-  rdCreditPreview: "RD credit calculation results retrieved"
+  rdCreditPreview: "RD credit calculation results retrieved",
+  rdCreditProcessInitiatedSuccess : "RD credit calculation initiated successfully",
+  rdCreditProcessInitiationFailed: "Failed to initiate RD credit process"
 
 };
 

@@ -1,5 +1,5 @@
 import { Decimal } from "decimal.js";
-import { StateRDData } from "../financialRDCredit/rdCreditTypes";
+import { StateRDData } from "../rdComputation/rdCreditTypes";
 
 /**
  * Colorado RD Credit Calculator
@@ -21,7 +21,6 @@ export class RdCreditCalculatorForCO {
      * @param stateRdData 
      * @param totalGrossReceipts 
      * @param priorYearsCount 
-     * To load mock Data : stateRdData = StateMockDataLoadMap["CO"]!;
      * @returns 
      */
     async compute(config: ConfigJson, stateRdData: StateRDData) {

@@ -1,6 +1,6 @@
 import { Decimal } from "decimal.js";
 import { logMessage } from "../../utils/helpers";
-import { AnnualGrossReceipt, QRE, StateRDData } from "../financialRDCredit/rdCreditTypes";
+import { AnnualGrossReceipt, QRE, StateRDData } from "../rdComputation/rdCreditTypes";
 
 /**
  * Arizona RD Credit Calculator

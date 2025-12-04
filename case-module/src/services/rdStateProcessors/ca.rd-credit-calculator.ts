@@ -1,6 +1,6 @@
 import { Decimal } from "decimal.js";
 import { logMessage } from "../../utils/helpers";
-import { QRE, StateRDData } from "../financialRDCredit/rdCreditTypes";
+import { QRE, StateRDData } from "../rdComputation/rdCreditTypes";
 
 /**
  * California RD Credit Calculator

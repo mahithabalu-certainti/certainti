@@ -3,11 +3,12 @@ import { CaseModelService } from "../caseModelsService";
 import { logMessage } from "../../utils/helpers";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
-import {
-    MAIN_SCHEMA_NAME,
-} from "../../utils/constants";
+import { MAIN_SCHEMA_NAME } from "../../utils/constants";
 import { QRE, AnnualGrossReceipt } from "./rdCreditTypes";
 
+/**
+ * Schema Service for Financial RD Credit
+ */
 class RDCreditSchemaService {
     private caseModelService: CaseModelService;
     private orgDbSequelize: Sequelize | null = null;
@@ -148,7 +149,7 @@ class RDCreditSchemaService {
     }
 
     /**
-     * 
+     * Get prior 3 years QREs
      * @param accountRid 
      * @param prior 
      * @param schemaName 
@@ -194,7 +195,7 @@ class RDCreditSchemaService {
     }
 
     /**
-     * 
+     * Get RD Credit Config
      * @param countryCode 
      * @param mainDbSequelize 
      * @param effectiveStart 
@@ -255,6 +256,15 @@ class RDCreditSchemaService {
         }
     }
 
+    /**
+     * Insert RD Country Credit Calculation
+     * @param accountNumber 
+     * @param case_rid 
+     * @param country_code 
+     * @param input_params 
+     * @param computed_fields 
+     * @returns 
+     */
     async insertRDCreditCalculation(accountNumber: string, case_rid: string, country_code: string, input_params: any, computed_fields: any) {
         const { RdCreditCountryCalculations } = await this.caseModelService.getModels(accountNumber);
         return await RdCreditCountryCalculations.create({
@@ -266,7 +276,7 @@ class RDCreditSchemaService {
     }
 
     /**
-     * 
+     * Insert RD State Credit Calculation
      * @param accountNumber 
      * @param case_rid 
      * @param country_code 
@@ -361,6 +371,53 @@ class RDCreditSchemaService {
             throw new Error("Error fetching credit config: " + (err as Error).message);
         }
     }
+
+    /**
+     * 
+     * @param accountNumber 
+     * @param case_rid 
+     * @returns 
+     */
+    async markAsInitiated(accountNumber: string, case_rid: string): Promise<string> {
+        const { RdCreditProcess } = await this.caseModelService.getModels(accountNumber);
+        const createdRecord = await RdCreditProcess.create({
+            case_rid,
+            status: 'INITIATED'
+        });
+        return createdRecord.rid!;
+    }
+
+    /**
+     * 
+     * @param accountNumber 
+     * @param rid 
+     * @returns 
+     */
+    async markAsInProgress(accountNumber: string, rid: string) {
+        const { RdCreditProcess } = await this.caseModelService.getModels(accountNumber);
+
+        return await RdCreditProcess.update(
+            { status: 'INPROGRESS' },
+            { where: { rid } }
+        );
+    }
+
+    /**
+     * 
+     * @param accountNumber 
+     * @param rid 
+     * @returns 
+     */
+    async markAsCompleted(accountNumber: string, rid: string) {
+        const { RdCreditProcess } = await this.caseModelService.getModels(accountNumber);
+
+        return await RdCreditProcess.update(
+            { status: 'COMPLETED' },
+            { where: { rid } }
+        );
+    }
+
+
 
 
 }

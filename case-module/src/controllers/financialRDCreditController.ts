@@ -10,16 +10,19 @@ import {
 import { HttpStatus } from "../utils/constants";
 import { rdCreditGenerationSchema } from "../lib/joi/schemas/schema";
 import Configurations from "../config/config";
-const Services = Configurations.getInstance().getServices();
-const financialRDCreditService = Services.financialRDCreditService;
 
-async function financialRDCredit(
+const Services = Configurations.getInstance().getServices();
+const federalComputationService = Services.federalComputationService;
+const stateComputationService = Services.stateComputationService;
+const computationService = Services.computationService;
+
+async function financialRDCreditFederal(
   req: Request,
   res: Response
 ): Promise<void> {
-  const methodName = "financialRDCredit";
+  const methodName = "financialRDCreditFederal";
   try {
-   // Step 1: Log request
+    // Step 1: Log request
     logMessage(
       `[${methodName}] Request received: ${JSON.stringify(
         req.body
@@ -49,9 +52,62 @@ async function financialRDCredit(
     logMessage(JSON.stringify(value));
 
     // Step 4: Call service to create/update record
-    const resultFederal = await financialRDCreditService.computeRDCreditForFederalLevel(value.account_rid, value.case_rid, value.effective_start, value.effective_end);
-    const resultState = await financialRDCreditService.computeRDCreditForStateLevel(value.account_rid, value.case_rid, value.effective_start, value.effective_end);
+    const resultFederal = await federalComputationService.runFederalComputation(value.account_rid, value.case_rid, value.effective_start, value.effective_end);
 
+    // Step 5: Handle service response
+    handleCustomResponse(
+      res,
+      resultFederal.statusCode,
+      resultFederal.message
+    );
+  } catch (err) {
+    // Step 6: Catch unexpected errors
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+
+async function initiateRDCreditProcess(
+  req: Request,
+  res: Response
+): Promise<void> {
+  const methodName = "initiateRDCreditProcess";
+  try {
+    // Step 1: Log request
+    logMessage(
+      `[${methodName}] Request received: ${JSON.stringify(
+        req.body
+      )}, userId: ${req.headers["x-user-id"]}`
+    );
+
+    // Step 2: Validate request body
+    const value = await validateRequest(req, rdCreditGenerationSchema, res);
+    if (!value) {
+      errorLog(methodName, "Invalid request body");
+      return;
+    }
+
+    // Step 3: Validate userId
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID missing in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+
+    logMessage(JSON.stringify(value));
+    const resultState = await stateComputationService.initiateRDCreditProcess(value.account_rid, value.case_rid, value.effective_start, value.effective_end)
     // Step 5: Handle service response
     handleCustomResponse(
       res,
@@ -83,7 +139,7 @@ async function getRDCreditResultsByCaseAndState(
 ): Promise<void> {
   const methodName = "getRDCreditResultsByCaseAndState";
   try {
-   // Step 1: Log request
+    // Step 1: Log request
     logMessage(
       `[${methodName}] Request received: ${JSON.stringify(
         req.body
@@ -112,7 +168,7 @@ async function getRDCreditResultsByCaseAndState(
 
     logMessage(JSON.stringify(value));
 
-    const resultState = await financialRDCreditService.getComputationResultsByIDAndState(value.accountRid, value.caseRid, value.stateCode);
+    const resultState = await computationService.getComputationResultsByIDAndState(value.accountRid, value.caseRid, value.stateCode);
 
     // Step 5: Handle service response
     handleCustomResponse(
@@ -135,6 +191,7 @@ async function getRDCreditResultsByCaseAndState(
 
 // Export controller
 export default {
-  financialRDCredit,
-  getRDCreditResultsByCaseAndState
+  financialRDCreditFederal,
+  getRDCreditResultsByCaseAndState,
+  initiateRDCreditProcess
 };

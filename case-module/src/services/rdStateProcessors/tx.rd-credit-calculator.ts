@@ -1,6 +1,6 @@
 import { Decimal } from "decimal.js";
 import { logMessage } from "../../utils/helpers";
-import { QRE, StateRDData } from "../financialRDCredit/rdCreditTypes";
+import { QRE, StateRDData } from "../rdComputation/rdCreditTypes";
 
 export interface ConfigJson {
     average_qret_rate_50pct: number;
@@ -28,7 +28,6 @@ export class RdCreditCalculatorForTX {
      * @param totalGrossReceipts 
      * @param prior3YearsQREs 
      * @param priorYearsCount 
-     * To load mock Data : stateRdData = StateMockDataLoadMap["TX"]!;
      */
     async compute(config: ConfigJson, stateRdData: StateRDData) {
 
