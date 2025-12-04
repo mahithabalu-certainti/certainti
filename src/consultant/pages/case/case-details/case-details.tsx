@@ -828,7 +828,9 @@ export const CaseDetails = () => {
         <div
           className='flex-1'
           style={{
-            maxHeight: 'calc(100vh - 283px)',
+            maxHeight: isActionItemsExpanded
+              ? 'calc(100vh - 143px)'
+              : 'calc(100vh - 283px)',
             overflow: 'auto',
           }}
         >
