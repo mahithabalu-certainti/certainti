@@ -268,33 +268,64 @@ class CaseSchemaService {
   async checkIsCaseNameUnique(
       caseReq: any,
       accountNumber: string
-    ): Promise<boolean> {
+    ): Promise<{isunique : boolean,isCaseUnique : boolean}> {
       const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(
         /\D/g,
         ""
       )}`;
+      if(!this.mainDbSequelize) {
+        this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+      }
       const tableExists = await this.checkTableExists(schemaName, "cases");
       if (!tableExists) {
         logMessage(
           `Cases table does not exist for account ${accountNumber}, returning empty result`
         );
-        return true;
+        return {
+          isunique: true,
+          isCaseUnique: true
+        };
       }
       const { Case } = await this.caseModelService.getModels(accountNumber);
-      const response = await Case.findOne({
+      // Check for case name uniqueness (case-insensitive, same fiscal year)
+      const uniqueResponse = await Case.findOne({
         where: {
           [Op.and]: [
             where(
               fn("LOWER", col("case_name")),
               Op.eq,
               caseReq.case_name.toLowerCase(),
-              
             ),
             { fiscal_year: caseReq.fiscal_year }
           ]
         }
       });
-      return !response;
+
+      // Always fetch status from mainDb using status name
+      const [caseStatus]: any[] = await this.mainDbSequelize.query(
+        rawQueries.fetchCaseStatusByType('In Progress'),
+        { type: QueryTypes.SELECT }
+      );
+      console.log("caseStatus", caseStatus);
+      let caseWithSameStatus = null;
+      if (caseStatus && caseStatus.rid) {
+        console.log("caseStatus.rid", caseStatus.rid);  
+        caseWithSameStatus = await Case.findOne({
+          where: {
+            [Op.and]: [
+              { fiscal_year: caseReq.fiscal_year },
+              { status_rid: { [Op.eq]: caseStatus.rid } },
+            ]
+          }
+        });
+      }
+
+      // If a case exists in the given fiscal year with the same status, do not allow
+      const isCaseUnique = !caseWithSameStatus;
+      return {
+        isunique: !uniqueResponse,
+        isCaseUnique: isCaseUnique
+      };
     }
     async checkIsChecklistNameUnique(
       caseReq: any,
