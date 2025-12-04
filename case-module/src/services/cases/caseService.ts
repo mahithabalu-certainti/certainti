@@ -2868,7 +2868,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
           );
         let parentAccountNumber = accountNumber;
       if(accountInfo.storage_type === 'separate_db') {
-         const [parentAccountInfo]: any[] =
+        const [parentAccountInfo]: any[] =
             await mainDb.query(
             rawQueries.fetchAccountInfo(accountInfo.parent_account_rid!),
             { type: "SELECT" }
