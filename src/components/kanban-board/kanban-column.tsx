@@ -95,14 +95,14 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
           }),
           workflow_connector:
             formData.linkedTypeRid &&
-            formData.linkTaskTypeRids &&
-            formData.linkTaskTypeRids.length > 0
+              formData.linkTaskTypeRids &&
+              formData.linkTaskTypeRids.length > 0
               ? {
-                  source_rid: '',
-                  relationship_connector_rid: formData.linkedTypeRid,
-                  target_rid: formData.linkTaskTypeRids,
-                  is_new_changes: true,
-                }
+                source_rid: '',
+                relationship_connector_rid: formData.linkedTypeRid,
+                target_rid: formData.linkTaskTypeRids,
+                is_new_changes: true,
+              }
               : {},
           ...(formData.weightageRid && {
             weightage_rid: formData.weightageRid,
@@ -124,10 +124,10 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
   return (
     <div
       ref={setNodeRef}
-      className='bg-[#f5f5f5] rounded-lg p-4 w-80 flex-shrink-0'
+      className='bg-[#f5f5f5] rounded-lg p-2 w-68 flex-shrink-0'
       style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
     >
-      <div className='bg-white border border-slate-200 rounded-lg p-3 mb-2'>
+      <div className='bg-white border border-slate-200 rounded-lg p-2 mb-2'>
         <div className='flex items-center gap-2'>
           <h2
             className='text-slate-800 text-[13px] font-semibold'
@@ -151,7 +151,7 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
         strategy={verticalListSortingStrategy}
         disabled={!isDragable && !isDragablebetweenBoards}
       >
-        <div className='space-y-2 mb-2'>
+        <div className='space-y-1.5 mb-2'>
           {uniqueTasks.map((taskCard) => (
             <TaskCardComponent
               key={taskCard.rid}
@@ -177,11 +177,10 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
             onCreateModalOpen?.();
           }}
           disabled={isCreateTaskDisabled}
-          className={`w-full flex items-center gap-2 p-3 rounded-lg border-2 border-dashed transition-colors duration-200 ${
-            isCreateTaskDisabled
-              ? 'border-slate-300 text-slate-400 cursor-not-allowed'
-              : 'border-slate-300 text-slate-500 hover:border-slate-400 hover:text-slate-600'
-          }`}
+          className={`w-full flex items-center gap-2 p-2 rounded-lg border-2 border-dashed transition-colors duration-200 ${isCreateTaskDisabled
+            ? 'border-slate-300 text-slate-400 cursor-not-allowed'
+            : 'border-slate-300 text-slate-500 hover:border-slate-400 hover:text-slate-600'
+            }`}
           style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
         >
           <AddIcon size={18} />

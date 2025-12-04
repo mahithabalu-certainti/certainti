@@ -23,19 +23,19 @@ const LoadingSkeleton: React.FC = () => (
     style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
   >
     <div className='max-w-full overflow-x-auto'>
-      <div className='flex items-start gap-6 pb-6'>
+      <div className='flex items-start gap-3 pb-6'>
         {[1, 2, 3, 4].map((i) => (
           <div
             key={i}
-            className='bg-[#f5f5f5] rounded-lg p-4 w-80 flex-shrink-0'
+            className='bg-[#f5f5f5] rounded-lg p-2 w-72 flex-shrink-0'
           >
-            <div className='bg-white border border-[#E4E6E7] rounded-lg p-3 mb-2 animate-pulse'>
+            <div className='bg-white border border-[#E4E6E7] rounded-lg p-2 mb-2 animate-pulse'>
               <div className='h-4 bg-[#E4E6E7] rounded w-3/4'></div>
             </div>
             {[1, 2, 3].map((j) => (
               <div
                 key={j}
-                className='bg-white border border-[#E4E6E7] rounded-lg p-3 mb-2 animate-pulse'
+                className='bg-white border border-[#E4E6E7] rounded-lg p-2 mb-2 animate-pulse'
               >
                 <div className='h-4 bg-[#E4E6E7] rounded w-3/4 mb-2'></div>
                 <div className='h-3 bg-[#E4E6E7] rounded w-1/2'></div>
@@ -283,7 +283,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
             style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
           >
             <div className='max-w-full overflow-x-auto'>
-              <div className='flex items-start gap-6 pb-6'>
+              <div className='flex items-start gap-2 pb-30'>
                 {columns.map((column) => (
                   <KanbanColumn
                     key={column.rid}
@@ -323,7 +323,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
           style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
         >
           <div className='max-w-full overflow-x-auto'>
-            <div className='flex items-start gap-6 pb-6'>
+            <div className='flex items-start gap-2 pb-30'>
               {columns.map((column) => (
                 <KanbanColumn
                   key={column.rid}

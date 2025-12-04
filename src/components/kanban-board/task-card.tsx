@@ -126,9 +126,9 @@ const TaskCardComponent: React.FC<ExtendedTaskCardProps> = ({
         : {})}
       onClick={handleCardClick}
       onDoubleClick={handleCardClick}
-      className='bg-white border border-slate-200 rounded-lg p-3 mb-2 hover:bg-slate-50 transition-colors duration-200 group cursor-pointer'
+      className='bg-white border border-slate-200 rounded-lg p-2 mb-1.5 hover:bg-slate-50 transition-colors duration-200 group cursor-pointer'
     >
-      <div className='flex items-center gap-1 mb-3'>
+      <div className='flex items-center gap-1 mb-2'>
         <div className='w-2 h-2 bg-slate-300 rounded-full flex-shrink-0'></div>
         <div className='flex-1 flex items-start justify-between gap-2 min-w-0'>
           <Tooltip title={taskData.task_name} arrow placement='top'>
@@ -154,7 +154,7 @@ const TaskCardComponent: React.FC<ExtendedTaskCardProps> = ({
         </div>
       </div>
 
-      <div className='flex items-center gap-2 mb-3'>
+      <div className='flex items-center gap-2 mb-2'>
         <div
           className='w-auto px-3 py-1 rounded text-[11px] font-medium'
           style={{
