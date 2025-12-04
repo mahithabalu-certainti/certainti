@@ -31,6 +31,7 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
   onToggleCollapse,
   isLoading = false,
   maxHeight = 220,
+  enableScrollbar = false,
 }) => {
   const [accountMenus, setAccountMenus] = useState<MenuItem[]>(menuItems);
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
@@ -506,7 +507,9 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
           <ul
             className='side-menu-scrollbar'
             style={{
-              maxHeight: `calc(100vh - ${maxHeight + 25}px)`,
+              maxHeight: enableScrollbar
+                ? `calc(100vh - ${maxHeight + 25}px)`
+                : '100%',
               overflow: 'auto',
             }}
           >

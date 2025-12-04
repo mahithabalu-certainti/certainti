@@ -76,6 +76,31 @@ interface Attachment {
   existing?: boolean;
 }
 
+// Formats for Quill editor
+const formats = [
+  'header',
+  'font',
+  'size',
+  'bold',
+  'italic',
+  'underline',
+  'strike',
+  'color',
+  'background',
+  'script',
+  'blockquote',
+  'code-block',
+  'list',
+  'bullet',
+  'indent',
+  'direction',
+  'align',
+  'link',
+  'image',
+  'video',
+  'clean',
+];
+
 const EmailModalTemplate: React.FC<EmailModalProps> = ({
   title,
   isOpen,
@@ -123,6 +148,7 @@ const EmailModalTemplate: React.FC<EmailModalProps> = ({
   const quillContainerRef = useRef<HTMLDivElement>(null);
   const subjectInputRef = useRef<HTMLInputElement>(null);
   const subjectMentionPopoverRef = useRef<HTMLDivElement>(null);
+  const hasPopulatedRef = useRef(false);
 
   // Mention state management
   const [mentionState, setMentionState] = useState<MentionState>({
@@ -171,7 +197,7 @@ const EmailModalTemplate: React.FC<EmailModalProps> = ({
 
   // Populate form with API data when modal opens and data is available
   useEffect(() => {
-    if (isOpen && templateData) {
+    if (isOpen && templateData && !hasPopulatedRef.current) {
       console.log('Populating form with template data:', templateData);
 
       setFormData({
@@ -182,12 +208,14 @@ const EmailModalTemplate: React.FC<EmailModalProps> = ({
         rid: '',
         attachments: [],
       });
+      hasPopulatedRef.current = true;
     }
   }, [isOpen, templateData]);
 
   // Reset form when closing modal
   useEffect(() => {
     if (!isOpen) {
+      hasPopulatedRef.current = false;
       setFormData({
         to: [],
         cc: [],
@@ -1298,29 +1326,7 @@ const EmailModalTemplate: React.FC<EmailModalProps> = ({
                   placeholder='Enter Email Content'
                   className={`rounded-[2px] ${errors?.emailBody ? 'border border-red-500 bg-[#FEF2F2]' : 'bg-white'}`}
                   modules={modules}
-                  formats={[
-                    'header',
-                    'font',
-                    'size',
-                    'bold',
-                    'italic',
-                    'underline',
-                    'strike',
-                    'color',
-                    'background',
-                    'script',
-                    'blockquote',
-                    'code-block',
-                    'list',
-                    'bullet',
-                    'indent',
-                    'direction',
-                    'align',
-                    'link',
-                    'image',
-                    'video',
-                    'clean',
-                  ]}
+                  formats={formats}
                 />
 
                 <Popover
@@ -1439,7 +1445,9 @@ const EmailModalTemplate: React.FC<EmailModalProps> = ({
                         className='flex items-center justify-between p-2 bg-gray-50 border border-gray-200 rounded-md'
                       >
                         <div className='flex items-center gap-2'>
-                          <DocumentIcon className='w-6 h-6' />
+                          <React.Suspense fallback={null}>
+                            <DocumentIcon className='w-6 h-6' />
+                          </React.Suspense>
                           <div className='flex flex-col'>
                             <span className='text-sm font-medium text-gray-700 truncate max-w-[300px]'>
                               {attachment.name}
@@ -1453,7 +1461,9 @@ const EmailModalTemplate: React.FC<EmailModalProps> = ({
                           onClick={() => removeAttachment(attachment.id)}
                           className='flex items-center justify-center h-6 w-6 hover:bg-gray-200 rounded-full cursor-pointer disabled:cursor-default disabled:hover:bg-transparent transition-colors'
                         >
-                          <CloseIcon className='w-3 h-3' />
+                          <React.Suspense fallback={null}>
+                            <CloseIcon className='w-3 h-3' />
+                          </React.Suspense>
                         </button>
                       </div>
                     ))}

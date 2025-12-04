@@ -38,6 +38,7 @@ const TaskTemplateForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
   const [taskType, setTaskType] = useState(false);
   const [isLinkedType, setIsLinkedType] = useState(false);
+  const [isLikedTaskType, setIsLinkedTAskType] = useState(false);
   const { successToast } = useToast();
   const location = useLocation();
   const { templateId } = useParams();
@@ -230,6 +231,18 @@ const TaskTemplateForm: React.FC = () => {
         setIsLinkedType(false);
       }
     }
+    if (data.fieldName === 'target_rid') {
+      console.log(data.fieldValue, 'data.fieldValue');
+      if (
+        data.fieldValue &&
+        Array.isArray(data.fieldValue) &&
+        data.fieldValue.length > 0
+      ) {
+        setIsLinkedTAskType(true);
+      } else {
+        setIsLinkedTAskType(false);
+      }
+    }
   };
   console.log(isLinkedType, 'isLinkedType');
   const goBack = () => {
@@ -287,6 +300,7 @@ const TaskTemplateForm: React.FC = () => {
     taskCategoryTypesOptions,
     taskType,
     isLinkedType,
+    isLikedTaskType,
     permissionMap
   );
 

@@ -22,6 +22,7 @@ export const TaskTemplateFormFieldsData = (
   taskCategoryTypesOptions: SelectOption[],
   taskType: boolean,
   linkedType: boolean,
+  isLikedTaskType: boolean,
   permissionMap: Record<string, { read: boolean; edit: boolean }>
 ): FormType[] => {
   return useMemo(
@@ -189,9 +190,9 @@ export const TaskTemplateFormFieldsData = (
           createSelectField('relationship_connector_rid', 'Linked Type', {
             options: taskConnecterTypesOptions || [],
             placeholder: 'Choose Linked Type',
-            required: false,
+            required: isLikedTaskType,
             onChange: true,
-            resetDependsFields: linkedType ? ['target_rid'] : [],
+            // resetDependsFields: linkedType ? ['target_rid'] : [],
             disabled:
               isEditView &&
               !permissionMap?.['relationship_connector_rid']?.edit &&
@@ -300,6 +301,7 @@ export const TaskTemplateFormFieldsData = (
     [
       isEditView,
       linkedType,
+      isLikedTaskType,
       permissionMap,
       statusOptions,
       taskAssignRoleTypesTypesOptions,
