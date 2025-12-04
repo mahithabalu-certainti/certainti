@@ -16,6 +16,8 @@ import {
 } from '@dnd-kit/core';
 import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import KanbanColumn from './kanban-column';
+import TaskCreateModal, { TaskFormData } from './task-create-modal';
+import { TaskCard } from './types';
 
 const LoadingSkeleton: React.FC = () => (
   <div
@@ -76,6 +78,15 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
   isExpanded,
 }) => {
   const [columns, setColumns] = useState<KanbanColumnTypes[]>(data);
+  const [createModalState, setCreateModalState] = useState<{
+    isOpen: boolean;
+    columnId: string;
+    columnName: string;
+  }>({
+    isOpen: false,
+    columnId: '',
+    columnName: '',
+  });
 
   useEffect(() => {
     setColumns(data);
@@ -106,6 +117,79 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
   const handleTaskClick = (taskId: string) => {
     if (onTaskClick) {
       onTaskClick(taskId);
+    }
+  };
+
+  const handleOpenCreateModal = (columnId: string, columnName: string) => {
+    setCreateModalState({
+      isOpen: true,
+      columnId,
+      columnName,
+    });
+  };
+
+  const handleCloseCreateModal = () => {
+    setCreateModalState((prev) => ({ ...prev, isOpen: false }));
+  };
+
+  const handleCreateTaskWrapper = async (
+    columnId: string,
+    formData: TaskFormData
+  ) => {
+    try {
+      if (onCreateTask) {
+        const taskData: Partial<TaskCard> & {
+          checklist_template_rid?: string;
+          workflow_connector?: {
+            source_rid?: string;
+            relationship_connector_rid?: string;
+            target_rid?: string[];
+            is_new_changes?: boolean;
+          };
+          weightage_rid?: string;
+          task_category_rid?: string;
+        } = {
+          task_name: formData.taskTitle,
+          task_description: formData.description,
+          status_rid: formData.selectedStatusRid,
+          priority_rid: formData.selectedPriorityRid,
+          priority_name: formData.selectedPriority,
+          effective_start_datetime: formData.startDate?.format(
+            'YYYY-MM-DD HH:mm:ss'
+          ),
+          effective_end_datetime: formData.endDate?.format(
+            'YYYY-MM-DD HH:mm:ss'
+          ),
+          assigned_to: formData.selectedAssignee ?? '',
+          tags: formData.selectedTags,
+          ...(formData.selectedChecklistRid && {
+            checklist_template_rid: formData.selectedChecklistRid,
+          }),
+          workflow_connector:
+            formData.linkedTypeRid &&
+              formData.linkTaskTypeRids &&
+              formData.linkTaskTypeRids.length > 0
+              ? {
+                source_rid: '',
+                relationship_connector_rid: formData.linkedTypeRid,
+                target_rid: formData.linkTaskTypeRids,
+                is_new_changes: true,
+              }
+              : {},
+          ...(formData.weightageRid && {
+            weightage_rid: formData.weightageRid,
+          }),
+          ...(formData.categoryRid && {
+            task_category_rid: formData.categoryRid,
+          }),
+        };
+
+        await onCreateTask(columnId, taskData);
+      }
+      handleCloseCreateModal();
+    } catch (error) {
+      console.error('Failed to create task:', error);
+      throw error;
     }
   };
 
@@ -283,8 +367,12 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
             className={`p-4 font-[13px] ${isExpanded ? 'h-[calc(100vh-210px)] overflow-hidden' : ''}`}
             style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
           >
-            <div className={`max-w-full overflow-x-auto ${isExpanded ? 'h-full' : ''}`}>
-              <div className={`flex items-start gap-2 ${isExpanded ? 'h-full' : 'pb-30'}`}>
+            <div
+              className={`max-w-full overflow-x-auto ${isExpanded ? 'h-full' : ''}`}
+            >
+              <div
+                className={`flex items-start gap-2 ${isExpanded ? 'h-full' : 'pb-30'}`}
+              >
                 {columns.map((column) => (
                   <KanbanColumn
                     key={column.rid}
@@ -306,6 +394,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
                     collaboratorData={[]}
                     availableUsers={userData}
                     onCreateTask={onCreateTask}
+                    onOpenCreateTask={handleOpenCreateModal}
                     fieldVisibility={fieldVisibility}
                     fieldDisabled={fieldDisabled}
                     accountId={accountId}
@@ -323,8 +412,12 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
           className={`p-4 font-[13px] ${isExpanded ? 'h-[calc(100vh-210px)] overflow-hidden' : ''}`}
           style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
         >
-          <div className={`max-w-full overflow-x-auto ${isExpanded ? 'h-full' : ''}`}>
-            <div className={`flex items-start gap-2 ${isExpanded ? 'h-full' : 'pb-30'}`}>
+          <div
+            className={`max-w-full overflow-x-auto ${isExpanded ? 'h-full' : ''}`}
+          >
+            <div
+              className={`flex items-start gap-2 ${isExpanded ? 'h-full' : 'pb-30'}`}
+            >
               {columns.map((column) => (
                 <KanbanColumn
                   key={column.rid}
@@ -346,6 +439,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   collaboratorData={[]}
                   availableUsers={userData}
                   onCreateTask={onCreateTask}
+                  onOpenCreateTask={handleOpenCreateModal}
                   fieldVisibility={fieldVisibility}
                   fieldDisabled={fieldDisabled}
                   accountId={accountId}
@@ -357,6 +451,28 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
             </div>
           </div>
         </div>
+      )}
+      {createModalState.isOpen && (
+        <TaskCreateModal
+          isOpen={createModalState.isOpen}
+          onClose={handleCloseCreateModal}
+          onCreateTask={handleCreateTaskWrapper}
+          columnId={createModalState.columnId}
+          columnName={createModalState.columnName}
+          statusData={effectiveStatusData}
+          priorityData={priorityData}
+          tagData={tagData}
+          checklistData={checklistData}
+          collaboratorData={[]}
+          availableUsers={userData}
+          roleOptions={roleOptions}
+          fieldVisibility={fieldVisibility}
+          fieldDisabled={{ ...fieldDisabled, status: true }}
+          accountId={accountId}
+          caseId={caseId}
+          caseStartDate={caseStartDate}
+          caseEndDate={caseEndDate}
+        />
       )}
     </>
   );
