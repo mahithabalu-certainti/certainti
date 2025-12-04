@@ -238,13 +238,6 @@ const createRuleMapSchema = Joi.object({
 });
 
 const listScopesSchema = Joi.object({
-    page: Joi.string().optional()
-        .pattern(/^[0-9]+$/)
-    ,
-    limit: Joi.string().optional()
-        .pattern(/^[0-9]+$/)
-    ,
-    filters: Joi.string().default("{}"),
     sortBy: Joi.string().optional(),
     sortOrder: Joi.string().valid("ASC", "DESC").default("ASC")
 });

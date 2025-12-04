@@ -54,3 +54,24 @@ export const STATUS_MESSAGE = {
   auditCreated: "Audit created successfullt",
   triggerLogCreated: "Trigger Log created successfullt",
 }
+
+
+export const rawQueries = {
+  fetchScopeEvents(scope_type_rid: string, status_rid: string): string {
+    let query =  `SELECT  st.name AS scope_type_name,
+    se.rid , se.event_name, se.description FROM scopes st JOIN scope_events se ON se.scope_type_rid = st.rid `;
+    const conditions:string[] = [];
+    if (scope_type_rid) {
+      conditions.push(`se.scope_type_rid = '${scope_type_rid}'`);
+    }
+    if (status_rid) {
+      conditions.push(`se.status_rid = '${status_rid}'`);
+    }
+    if (conditions.length > 0) {
+      query += ` WHERE ${conditions.join(' AND ')}`;
+    }
+    query += ` ORDER BY st.name;`;
+    return query;
+  },
+
+}

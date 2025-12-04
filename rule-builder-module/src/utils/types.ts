@@ -107,3 +107,10 @@ export interface IListSCopeEvent {
     scope_type_rid: string;
     status_rid: string;
 }
+
+export type ScopeEventRows = {
+    rid: string
+    event_name: string,
+    description: string,
+    scope_type_name: string,
+}

@@ -27,28 +27,16 @@ async function listScopes(req: Request, res: Response): Promise<void> {
         if (!value) {
             return;
         }
-        let parsedFilters: Record<string, any> = {};
-        try {
-            if (value.filters) {
-                parsedFilters = JSON.parse(value.filters);
-            }
-        } catch (error) {
-            errorLog(
-                methodName,
-                "Invalid filters format. Must be a valid JSON object."
-            );
-        }
         // if (!userId) {
         //   return;
         // }
         const result = await workFlowService.listScopes(
             value,
-            parsedFilters,
             userId,
             "list");
         if (result.statusCode == HttpStatus.SUCCESS) {
             successLog(methodName);
-            handleSuccessResponse(res, result);
+            handleSuccessResponse(res, result.data);
             return;
         } else {
             errorLog(methodName, "No data found");
@@ -90,7 +78,7 @@ async function listScopeEvents(req: Request, res: Response): Promise<void> {
             "list");
         if (result.statusCode == HttpStatus.SUCCESS) {
             successLog(methodName);
-            handleSuccessResponse(res, result);
+            handleSuccessResponse(res, result.data);
             return;
         } else {
             errorLog(methodName, "No data found");

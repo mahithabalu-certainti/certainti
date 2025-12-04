@@ -219,14 +219,13 @@ export interface IRuleMapService {
 export interface IWorkFlowService {
 
     listScopes(data: any,
-        filters: Record<string, any>,
         userId: string,
         apiType: string
     ): Promise<{
         statusCode: number;
         message: string;
         errorMessage?: string;
-        data?: { scopes: any; count: number };
+        data?: { scopes: any; };
     }>;
 
     listScopeEvents(listRequest: IListSCopeEvent,
@@ -236,7 +235,7 @@ export interface IWorkFlowService {
         statusCode: number;
         message: string;
         errorMessage?: string;
-        data?: { data: any; };
+        data?: any;
     }>;
 
     createRuleMapWithScope(

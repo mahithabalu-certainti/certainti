@@ -2,12 +2,13 @@ import { RuleScope } from "../models/ruleScope";
 import { ScopeEvent } from "../models/scopeEvents";
 import { initSequelize } from "../config/maindbDataSource";
 import { Sequelize, Op, QueryTypes } from "sequelize";
-import { HttpStatus, STATUS_MESSAGE } from "../utils/constants";
+import { HttpStatus, STATUS_MESSAGE, rawQueries } from "../utils/constants";
 import { Logger } from "winston";
 import { ICreateRuleMapWithScope, IListSCopeEvent } from "../utils/types";
 import { logMessage } from "../utils/helpers";
 import { RuleMapService } from "../services/workflowRuleMapService";
 import { ScopeService } from "../services/workflowScopeMapService";
+import { ScopeEventRows } from "../utils/types";
 
 /**
  * Evaluate a rule for a given entity (case or task)
@@ -35,45 +36,24 @@ export class WorkFlowService {
     //list scopes
     async listScopes(
         data: any,
-        filters: Record<string, any>,
         userId: string,
         apiType: string
     ): Promise<{
         statusCode: number;
         message: string;
         errorMessage?: string;
-        data?: { scopes: any; count: number };
+        data?: { scopes: any; };
     }> {
         const mainDb = await this.getMainDb();
         RuleScope.initialize(mainDb);
-        const limit = data.limit;
-        const offset = (data.page - 1) * limit;
-        const where: any = {};
-
-        if (filters && Object.keys(filters).length > 0) {
-            for (const key in filters) {
-                if (filters[key] !== undefined && filters[key] !== null) {
-                    // You can also add LIKE support here if needed
-                    if (key === "field_name") {
-                        where[key] = { [Op.iLike]: `%${filters[key]}%` };
-                    } else {
-                        where[key] = filters[key];
-                    }
-                }
-            }
-        }
-        const { rows, count } = await RuleScope.findAndCountAll({
-            where,
-            order: [[data.sortBy, data.sortOrder]],
-            limit,
-            offset
+        const scopes = await RuleScope.findAll({
+            attributes: ['rid', 'name']
         });
         return {
             statusCode: HttpStatus.SUCCESS,
             message: HttpStatus.SUCCESS_MESSAGE,
             data: {
-                scopes: rows,
-                count: count,
+                scopes: scopes,
             },
         };
     };
@@ -87,65 +67,36 @@ export class WorkFlowService {
         statusCode: number;
         message: string;
         errorMessage?: string;
-        data?: { data: any; };
+        data:any;
     }> {
-        const sequelize = await initSequelize();
-        ScopeEvent.initialize(sequelize);
-        const whereConditions: any = {};
+        const mainDb = await this.getMainDb();
+        const events: ScopeEventRows[] = await mainDb.query<ScopeEventRows>(
+            rawQueries.fetchScopeEvents(
+                listRequest.scope_type_rid,
+                listRequest.status_rid
+            ),
+            { type: QueryTypes.SELECT }
+        );
 
-        // If scopeTypeRid is provided, add it to the conditions
-        if (listRequest.scope_type_rid) {
-            whereConditions.scope_type_rid = listRequest.scope_type_rid;
-        }
+        type GroupedEvents = {
+            [key: string]: Omit<ScopeEventRows, 'scope_type_name'>[];
+        };
 
-        // If statusRid is provided, add it to the conditions
-        if (listRequest.status_rid) {
-            whereConditions.status_rid = listRequest.status_rid;
-        }
+        const grouped: GroupedEvents = events.reduce((acc, event) => {
+            const key = event.scope_type_name.toLowerCase(); // normalize key
 
-        // If no filters are provided, return all scope events
-        const events = await ScopeEvent.findAll({
-            where: whereConditions,
-        });
-
-        //     const results = await sequelize.query(
-        //         `
-        // SELECT jsonb_object_agg(key, value) AS result
-        // FROM (
-        //     SELECT 
-        //         lower(replace(rs.name, ' ', '_')) AS key,
-        //         jsonb_agg(
-        //             jsonb_build_object(
-        //                 'rid', se.rid,
-        //                 'eid', se.eid,
-        //                 'event_name', se.event_name,
-        //                 'description', se.description,
-        //                 'scope_type_rid', se.scope_type_rid,
-        //                 'status_rid', se.status_rid,
-        //                 'created_by', se.created_by,
-        //                 'modified_by', se.modified_by
-        //             )
-        //         ) AS value
-        //     FROM scope_events se
-        //     JOIN scopes rs ON rs.rid = se.scope_type_rid
-        //     WHERE 
-        //         ($1 IS NULL OR se.scope_type_rid = $1)
-        //         AND ($2 IS NULL OR se.status_rid = $2)
-        //     GROUP BY rs.name
-        // ) grouped;
-        // `,
-        //         {
-        //             bind: [listRequest.scope_type_rid || null, listRequest.status_rid || null],
-        //             type: QueryTypes.SELECT
-        //         }
-        //     );
+            if (!acc[key]) {
+                acc[key] = [];
+            }
+            const { scope_type_name, ...rest } = event;
+            acc[key].push(rest);
+            return acc;
+        }, {} as GroupedEvents);
 
         return {
             statusCode: HttpStatus.SUCCESS,
             message: HttpStatus.SUCCESS_MESSAGE,
-            data: {
-                data: events,
-            },
+            data:grouped
         };
     };
 
