@@ -1,9 +1,10 @@
 import { RuleScope } from "../models/ruleScope";
+import { ScopeEvent } from "../models/scopeEvents";
 import { initSequelize } from "../config/maindbDataSource";
-import { Sequelize, Op } from "sequelize";
+import { Sequelize, Op, QueryTypes } from "sequelize";
 import { HttpStatus, STATUS_MESSAGE } from "../utils/constants";
 import { Logger } from "winston";
-import { ICreateRuleMapWithScope } from "../utils/types";
+import { ICreateRuleMapWithScope, IListSCopeEvent } from "../utils/types";
 import { logMessage } from "../utils/helpers";
 import { RuleMapService } from "../services/workflowRuleMapService";
 import { ScopeService } from "../services/workflowScopeMapService";
@@ -16,11 +17,19 @@ export class WorkFlowService {
     private logger: Logger;
     private ruleMapService: RuleMapService;
     private scopeService: ScopeService;
+    private mainDbSequelize: Sequelize | null = null;
 
     constructor(logger: Logger) {
         this.logger = logger;
         this.ruleMapService = new RuleMapService(this.logger);
         this.scopeService = new ScopeService(this.logger);
+    }
+
+    private async getMainDb() {
+        if (!this.mainDbSequelize) {
+            this.mainDbSequelize = await initSequelize();
+        }
+        return this.mainDbSequelize;
     }
 
     //list scopes
@@ -35,11 +44,8 @@ export class WorkFlowService {
         errorMessage?: string;
         data?: { scopes: any; count: number };
     }> {
-        const sequelize = new Sequelize(process.env.POSTGRES_CONNECTION_STRING!, {
-            dialect: "postgres",
-            logging: false, // optional
-        });
-        RuleScope.initialize(sequelize);
+        const mainDb = await this.getMainDb();
+        RuleScope.initialize(mainDb);
         const limit = data.limit;
         const offset = (data.page - 1) * limit;
         const where: any = {};
@@ -74,49 +80,71 @@ export class WorkFlowService {
 
     //list scope events based on scope/all
     async listScopeEvents(
-        data: any,
-        filters: Record<string, any>,
+        listRequest: IListSCopeEvent,
         userId: string,
         apiType: string
     ): Promise<{
         statusCode: number;
         message: string;
         errorMessage?: string;
-        data?: { scopes: any; count: number };
+        data?: { data: any; };
     }> {
-        const sequelize = new Sequelize(process.env.POSTGRES_CONNECTION_STRING!, {
-            dialect: "postgres",
-            logging: false, // optional
-        });
-        RuleScope.initialize(sequelize);
-        const limit = data.limit;
-        const offset = (data.page - 1) * limit;
-        const where: any = {};
+        const sequelize = await initSequelize();
+        ScopeEvent.initialize(sequelize);
+        const whereConditions: any = {};
 
-        if (filters && Object.keys(filters).length > 0) {
-            for (const key in filters) {
-                if (filters[key] !== undefined && filters[key] !== null) {
-                    // You can also add LIKE support here if needed
-                    if (key === "field_name") {
-                        where[key] = { [Op.iLike]: `%${filters[key]}%` };
-                    } else {
-                        where[key] = filters[key];
-                    }
-                }
-            }
+        // If scopeTypeRid is provided, add it to the conditions
+        if (listRequest.scope_type_rid) {
+            whereConditions.scope_type_rid = listRequest.scope_type_rid;
         }
-        const { rows, count } = await RuleScope.findAndCountAll({
-            where,
-            order: [[data.sortBy, data.sortOrder]],
-            limit,
-            offset
+
+        // If statusRid is provided, add it to the conditions
+        if (listRequest.status_rid) {
+            whereConditions.status_rid = listRequest.status_rid;
+        }
+
+        // If no filters are provided, return all scope events
+        const events = await ScopeEvent.findAll({
+            where: whereConditions,
         });
+
+        //     const results = await sequelize.query(
+        //         `
+        // SELECT jsonb_object_agg(key, value) AS result
+        // FROM (
+        //     SELECT 
+        //         lower(replace(rs.name, ' ', '_')) AS key,
+        //         jsonb_agg(
+        //             jsonb_build_object(
+        //                 'rid', se.rid,
+        //                 'eid', se.eid,
+        //                 'event_name', se.event_name,
+        //                 'description', se.description,
+        //                 'scope_type_rid', se.scope_type_rid,
+        //                 'status_rid', se.status_rid,
+        //                 'created_by', se.created_by,
+        //                 'modified_by', se.modified_by
+        //             )
+        //         ) AS value
+        //     FROM scope_events se
+        //     JOIN scopes rs ON rs.rid = se.scope_type_rid
+        //     WHERE 
+        //         ($1 IS NULL OR se.scope_type_rid = $1)
+        //         AND ($2 IS NULL OR se.status_rid = $2)
+        //     GROUP BY rs.name
+        // ) grouped;
+        // `,
+        //         {
+        //             bind: [listRequest.scope_type_rid || null, listRequest.status_rid || null],
+        //             type: QueryTypes.SELECT
+        //         }
+        //     );
+
         return {
             statusCode: HttpStatus.SUCCESS,
             message: HttpStatus.SUCCESS_MESSAGE,
             data: {
-                scopes: rows,
-                count: count,
+                data: events,
             },
         };
     };
@@ -167,61 +195,5 @@ export class WorkFlowService {
         };
 
     };
-
-    //export const evaluateRuleForEntity = async (ruleRid: string, entity: any, userId: number) => {
-    //   const conditionGroups = await ConditionGroupModel.getConditionGroupsByRule(ruleRid);
-
-    //   let ruleSatisfied = false;
-
-    //   for (const group of conditionGroups) {
-    //     const conditions = await ConditionModel.getConditionsByGroup(group.rid!);
-    //     let groupResult = group.groupOperator === "AND";
-
-    //       for (const condition of conditions) {
-    //         const entityValue = entity[condition.fieldName];
-    //         const conditionMatch = ActionService.checkCondition(entityValue, condition.operator, condition.value, condition.dataType);
-
-    //         if (group.groupOperator === "AND") groupResult = groupResult && conditionMatch;
-    //         else groupResult = groupResult || conditionMatch;
-    //       }
-
-    //       if (groupResult) {
-    //         ruleSatisfied = true;
-    //         break; // Stop if any group satisfies
-    //       }
-    //   }
-
-    //   if (ruleSatisfied) {
-    //     const actions = await ActionService.getActionsByRule(ruleRid);
-    //     for (const action of actions) {
-    //       await ActionService.executeAction(action, entity, userId);
-    //       await AuditService.createAuditEntry({
-    //         ruleRid,
-    //         action: action.actionType,
-    //         oldValue: entity[action.fieldName],
-    //         newValue: action.newValue,
-    //         notes: `Executed action ${action.actionType} for entity ${entity.id}`,
-    //         createdBy: userId,
-    //       });
-    //     }
-    //   }
-
-    //   return ruleSatisfied;
-    //};
-
-    /**
-     * Fetch rules applicable for a given entity type (case/task)
-     */
-    //export const getApplicableRulesForEntity = async (entityType: string, entityId: number) => {
-    // const scopeMaps = await ScopeMapModel.getScopesByEntity(entityType, entityId);
-    //const rules = ["test"];
-
-    // for (const map of scopeMaps) {
-    //   const rule = await RuleMasterModel.getRuleMasterById(map.ruleId);
-    //   if (rule?.isActive) rules.push(rule);
-    // }
-
-    //return rules;
-    //};
 
 }

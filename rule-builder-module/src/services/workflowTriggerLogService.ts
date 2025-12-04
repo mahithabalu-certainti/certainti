@@ -9,11 +9,18 @@ import { logMessage } from "../utils/helpers";
 export class TriggerService {
 
     private logger: Logger;
+    private mainDbSequelize: Sequelize | null = null;
 
     constructor(logger: Logger) {
         this.logger = logger;
     }
 
+    private async getMainDb() {
+        if (!this.mainDbSequelize) {
+            this.mainDbSequelize = await initSequelize();
+        }
+        return this.mainDbSequelize;
+    }
 
     /** CREATE a new RuleMaster */
     async createTriggerLog(triggerRequest: ICreateTrigger, userId: string): Promise<{
@@ -22,12 +29,8 @@ export class TriggerService {
         errorMessage?: string;
         data?: { trigger: any };
     }> {
-        //const sequelize = await initSequelize();
-        const sequelize = new Sequelize(process.env.POSTGRES_CONNECTION_STRING!, {
-            dialect: "postgres",
-            logging: false, // optional
-        });
-        RuleTriggerLog.initialize(sequelize);
+        const mainDb = await this.getMainDb();
+        RuleTriggerLog.initialize(mainDb);
         const trigger = await RuleTriggerLog.create({
             rule_rid: triggerRequest.rule_rid,
             event_name: triggerRequest.event_name,
@@ -47,35 +50,4 @@ export class TriggerService {
             },
         };
     };
-
-    /** GET all RuleMasters */
-    // export const getAllRuleTriggerLogs = async () => {
-
-    // };
-
-    // /** GET RuleMaster by RID */
-    // export const getRuleTriggerLogById = async (rid: string) => {
-    //     const logDetail = await RuleTriggerLog.findByPk(rid);
-    //     return logDetail;
-    // };
-
-    // export const getRuleTriggerLogByRule = async (rule_rid: string) => {
-    //     const logDetail = await RuleTriggerLog.findByPk(rule_rid);
-    //     return logDetail;
-    // };
-
-    // /** UPDATE RuleMaster by RID */
-    // export const updateRuleTriggerLog = async (
-    //     rid: string,
-    //     data: Partial<RuleTriggerLogCreationAttributes>
-    // ) => {
-    // }
-
-
-    // /** DELETE RuleMaster by RID */
-    // export const deleteRuleTriggerLog = async (rid: string) => {
-    //     await RuleTriggerLog.destroy({ where: { rid } });
-    //     return { message: "TriggerLog deleted successfully" };
-    // };
-
 }

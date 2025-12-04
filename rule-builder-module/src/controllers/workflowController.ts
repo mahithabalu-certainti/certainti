@@ -10,7 +10,8 @@ import {
 } from "../utils/helpers";
 import {
     createRuleMapSchema,
-    listScopesSchema
+    listScopesSchema,
+    listScopeEventSchema
 } from "../lib/joi/schemas/schema";
 import configurations from "../config/config";
 
@@ -43,6 +44,48 @@ async function listScopes(req: Request, res: Response): Promise<void> {
         const result = await workFlowService.listScopes(
             value,
             parsedFilters,
+            userId,
+            "list");
+        if (result.statusCode == HttpStatus.SUCCESS) {
+            successLog(methodName);
+            handleSuccessResponse(res, result);
+            return;
+        } else {
+            errorLog(methodName, "No data found");
+            handleErrorResponse(
+                res,
+                HttpStatus.BAD_REQUEST,
+                HttpStatus.BAD_REQUEST_MESSAGE,
+                result.errorMessage
+            );
+            return;
+        }
+    } catch (err) {
+        const error = err as Error;
+        errorLog(methodName, error.message);
+        handleErrorResponse(
+            res,
+            HttpStatus.FAILED,
+            HttpStatus.FAILED_MESSAGE,
+            error.message
+        );
+    }
+};
+
+
+async function listScopeEvents(req: Request, res: Response): Promise<void> {
+    const methodName = "scope event list";
+    try {
+        const userId = req.headers["x-user-id"] as string;
+        const value = await validateRequest(req, listScopeEventSchema, res, "POST");
+        if (!value) {
+            return;
+        }
+        // if (!userId) {
+        //   return;
+        // }
+        const result = await workFlowService.listScopeEvents(
+            value,
             userId,
             "list");
         if (result.statusCode == HttpStatus.SUCCESS) {
@@ -133,5 +176,6 @@ async function createRuleMapWithScope(req: Request, res: Response): Promise<void
 
 export default {
     listScopes,
+    listScopeEvents,
     createRuleMapWithScope
 }

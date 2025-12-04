@@ -9,9 +9,17 @@ import { logMessage } from "../utils/helpers";
 export class ScheduleService {
 
     private logger: Logger;
+    private mainDbSequelize: Sequelize | null = null;
 
     constructor(logger: Logger) {
         this.logger = logger;
+    }
+
+    private async getMainDb() {
+        if (!this.mainDbSequelize) {
+            this.mainDbSequelize = await initSequelize();
+        }
+        return this.mainDbSequelize;
     }
 
     /** CREATE a new Schedule */
@@ -21,12 +29,8 @@ export class ScheduleService {
         errorMessage?: string;
         data?: { schedule: any };
     }> {
-        //const sequelize = await initSequelize();
-        const sequelize = new Sequelize(process.env.POSTGRES_CONNECTION_STRING!, {
-            dialect: "postgres",
-            logging: false, // optional
-        });
-        RuleScheduleQueue.initialize(sequelize);
+        const mainDb = await this.getMainDb();
+        RuleScheduleQueue.initialize(mainDb);
         const schedule = await RuleScheduleQueue.create({
             rule_rid: scheduleRequest.rule_rid,
             related_task_rid: scheduleRequest.related_task_rid,
@@ -57,11 +61,8 @@ export class ScheduleService {
             errorMessage?: string;
             data?: { schedules: any; count: number };
         }> {
-        const sequelize = new Sequelize(process.env.POSTGRES_CONNECTION_STRING!, {
-            dialect: "postgres",
-            logging: false, // optional
-        });
-        RuleScheduleQueue.initialize(sequelize);
+        const mainDb = await this.getMainDb();
+        RuleScheduleQueue.initialize(mainDb);
         const limit = data.limit;
         const offset = (data.page - 1) * limit;
 
@@ -93,22 +94,6 @@ export class ScheduleService {
         };
     };
 
-    /** GET RuleMaster by RID */
-    // export const getRuleScheduleById = async (rid: string) => {
-    //     const queue = await RuleScheduleQueue.findByPk(rid);
-    //     return queue;
-    // };
-
-    // export const getRuleScheduleByRule = async (rule_rid: string) => {
-    //     const queue = await RuleScheduleQueue.findByPk(rule_rid);
-    //     return queue;
-    // };
-
-    // export const markScheduleExecuted = async (rule_rid: string) => {
-    //     const queue = await RuleScheduleQueue.findByPk(rule_rid);
-    //     return queue;
-    // };
-
     /** UPDATE RuleMaster by RID */
     async updateSchedule(
         scopeRequest: ICreateSchedule,
@@ -120,11 +105,8 @@ export class ScheduleService {
         data?: { schedule: any };
     }> {
         // Build update object dynamically
-        const sequelize = new Sequelize(process.env.POSTGRES_CONNECTION_STRING!, {
-            dialect: "postgres",
-            logging: false, // optional
-        });
-        const dbInit = RuleScheduleQueue.initialize(sequelize);
+        const mainDb = await this.getMainDb();
+        const dbInit = RuleScheduleQueue.initialize(mainDb);
         const caseUpdateResponse = await RuleScheduleQueue.update(
             {
                 ...scopeRequest,
@@ -145,15 +127,11 @@ export class ScheduleService {
         };
     };
 
-
     /** DELETE RuleMaster by RID */
     async deleteSchedule(data: any, userId: string) {
         try {
-            const sequelize = new Sequelize(process.env.POSTGRES_CONNECTION_STRING!, {
-                dialect: "postgres",
-                logging: false, // optional
-            });
-            RuleScheduleQueue.initialize(sequelize);
+            const mainDb = await this.getMainDb();
+            RuleScheduleQueue.initialize(mainDb);
             await RuleScheduleQueue.destroy({ where: { rid: data.schedule_rid } });
             return {
                 statusCode: HttpStatus.SUCCESS,

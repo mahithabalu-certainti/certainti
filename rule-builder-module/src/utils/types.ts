@@ -102,3 +102,8 @@ export interface ICreateRuleMapWithScope {
     created_by: string,
     modified_by: string
 }
+
+export interface IListSCopeEvent {
+    scope_type_rid: string;
+    status_rid: string;
+}

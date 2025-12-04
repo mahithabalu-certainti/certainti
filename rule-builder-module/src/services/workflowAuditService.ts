@@ -9,9 +9,17 @@ import { logMessage } from "../utils/helpers";
 export class AuditService {
 
     private logger: Logger;
+    private mainDbSequelize: Sequelize | null = null;
 
     constructor(logger: Logger) {
         this.logger = logger;
+    }
+
+    private async getMainDb() {
+        if (!this.mainDbSequelize) {
+            this.mainDbSequelize = await initSequelize();
+        }
+        return this.mainDbSequelize;
     }
 
     /** CREATE a new Audit */
@@ -21,12 +29,8 @@ export class AuditService {
         errorMessage?: string;
         data?: { audit: any };
     }> {
-        //const sequelize = await initSequelize();
-        const sequelize = new Sequelize(process.env.POSTGRES_CONNECTION_STRING!, {
-            dialect: "postgres",
-            logging: false, // optional
-        });
-        RuleAudit.initialize(sequelize);
+        const mainDb = await this.getMainDb();
+        RuleAudit.initialize(mainDb);
         const audit = await RuleAudit.create({
             rule_rid: auditRequest.rule_rid,
             action: auditRequest.action,

@@ -9,9 +9,17 @@ import { logMessage } from "../utils/helpers";
 export class ActionService {
 
     private logger: Logger;
+    private mainDbSequelize: Sequelize | null = null;
 
     constructor(logger: Logger) {
         this.logger = logger;
+    }
+
+    private async getMainDb() {
+        if (!this.mainDbSequelize) {
+            this.mainDbSequelize = await initSequelize();
+        }
+        return this.mainDbSequelize;
     }
 
     /** CREATE a new Action */
@@ -21,12 +29,8 @@ export class ActionService {
         errorMessage?: string;
         data?: { action: any };
     }> {
-        //const sequelize = await initSequelize();
-        const sequelize = new Sequelize(process.env.POSTGRES_CONNECTION_STRING!, {
-            dialect: "postgres",
-            logging: false, // optional
-        });
-        RuleAction.initialize(sequelize);
+        const mainDb = await this.getMainDb();
+        RuleAction.initialize(mainDb);
         const action = await RuleAction.create({
             rule_rid: actionRequest.rule_rid,
             action_type: actionRequest.action_type,
@@ -60,11 +64,8 @@ export class ActionService {
         errorMessage?: string;
         data?: { actions: any; count: number };
     }> {
-        const sequelize = new Sequelize(process.env.POSTGRES_CONNECTION_STRING!, {
-            dialect: "postgres",
-            logging: false, // optional
-        });
-        RuleAction.initialize(sequelize);
+        const mainDb = await this.getMainDb();
+        RuleAction.initialize(mainDb);
         const limit = data.limit;
         const offset = (data.page - 1) * limit;
         const where: any = {};
@@ -98,17 +99,6 @@ export class ActionService {
         };
     };
 
-    /** GET RuleMaster by RID */
-    // export const getRuleActionById = async (rid: string) => {
-    //     const actionDetail = await RuleAction.findByPk(rid);
-    //     return actionDetail;
-    // };
-
-    // export const getRuleActionByRuleRId = async (rule_rid: string) => {
-    //     const actionDetail = await RuleAction.findByPk(rule_rid);
-    //     return actionDetail;
-    // };
-
     /** UPDATE RuleMaster by RID */
     async updateAction(
         actionRequest: ICreateAction,
@@ -119,11 +109,8 @@ export class ActionService {
         errorMessage?: string;
         data?: { action: any };
     }> {
-        const sequelize = new Sequelize(process.env.POSTGRES_CONNECTION_STRING!, {
-            dialect: "postgres",
-            logging: false, // optional
-        });
-        const dbInit = RuleAction.initialize(sequelize);
+        const mainDb = await this.getMainDb();
+        const dbInit = RuleAction.initialize(mainDb);
         const UpdateResponse = await RuleAction.update(
             {
                 ...actionRequest,
@@ -148,11 +135,8 @@ export class ActionService {
     /** DELETE RuleMaster by RID */
     async deleteAction(data: any, userId: string) {
         try {
-            const sequelize = new Sequelize(process.env.POSTGRES_CONNECTION_STRING!, {
-                dialect: "postgres",
-                logging: false, // optional
-            });
-            RuleAction.initialize(sequelize);
+            const mainDb = await this.getMainDb();
+            RuleAction.initialize(mainDb);
             await RuleAction.destroy({ where: { rid: data.action_rid } });
             return {
                 statusCode: HttpStatus.SUCCESS,

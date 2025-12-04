@@ -7,10 +7,19 @@ import { ICreateRule } from "../utils/types";
 import { logMessage } from "../utils/helpers";
 
 export class RulemasterService {
+
     private logger: Logger;
+    private mainDbSequelize: Sequelize | null = null;
 
     constructor(logger: Logger) {
         this.logger = logger;
+    }
+
+    private async getMainDb() {
+        if (!this.mainDbSequelize) {
+            this.mainDbSequelize = await initSequelize();
+        }
+        return this.mainDbSequelize;
     }
 
     /** CREATE a new RuleMaster */
@@ -20,14 +29,8 @@ export class RulemasterService {
         errorMessage?: string;
         data?: { rules: any };
     }> {
-        //const sequelize = await initSequelize();
-        const sequelize = new Sequelize(process.env.POSTGRES_CONNECTION_STRING!, {
-            dialect: "postgres",
-            logging: false, // optional
-        });
-
-        // Initialize model ONCE
-        RuleMaster.initialize(sequelize);
+        const mainDb = await this.getMainDb();
+        RuleMaster.initialize(mainDb);
         const rulem = await RuleMaster.create({
             rule_name: ruleRequest.rule_name,
             description: ruleRequest.description ?? null,
@@ -63,11 +66,8 @@ export class RulemasterService {
         data?: { rules: any; count: number };
     }> {
         console.log("listing all rules");
-        const sequelize = new Sequelize(process.env.POSTGRES_CONNECTION_STRING!, {
-            dialect: "postgres",
-            logging: false, // optional
-        });
-        RuleMaster.initialize(sequelize);
+        const mainDb = await this.getMainDb();
+        RuleMaster.initialize(mainDb);
         const limit = data.limit;
         const offset = (data.page - 1) * limit;
 
@@ -104,12 +104,6 @@ export class RulemasterService {
         };
     };
 
-    /** GET RuleMaster by RID */
-    // export const getRuleMasterById = async (rid: string) => {
-    //     const rule = await RuleMaster.findByPk(rid);
-    //     return rule;
-    // };
-
     /** UPDATE RuleMaster by RID */
     async updateRuleMaster(
         rulerequest: ICreateRule, userId: string
@@ -120,11 +114,8 @@ export class RulemasterService {
         data?: { rules: any };
     }> {
         try {
-            const sequelize = new Sequelize(process.env.POSTGRES_CONNECTION_STRING!, {
-                dialect: "postgres",
-                logging: false, // optional
-            });
-            const dbInit = RuleMaster.initialize(sequelize);
+            const mainDb = await this.getMainDb();
+            RuleMaster.initialize(mainDb);
             const existingCase = await RuleMaster.findOne({
                 where: { rid: rulerequest.rule_rid },
             });
@@ -161,11 +152,8 @@ export class RulemasterService {
     // /** DELETE RuleMaster by RID */
     async deleteRuleMaster(data: any, userId: string) {
         try {
-            const sequelize = new Sequelize(process.env.POSTGRES_CONNECTION_STRING!, {
-                dialect: "postgres",
-                logging: false, // optional
-            });
-            RuleMaster.initialize(sequelize);
+            const mainDb = await this.getMainDb();
+            RuleMaster.initialize(mainDb);
             await RuleMaster.destroy({ where: { rid: data.rule_rid } });
             return {
                 statusCode: HttpStatus.SUCCESS,

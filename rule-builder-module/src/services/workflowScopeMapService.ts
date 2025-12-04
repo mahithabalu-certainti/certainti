@@ -10,9 +10,17 @@ import { logMessage } from "../utils/helpers";
 export class ScopeService {
 
     private logger: Logger;
+    private mainDbSequelize: Sequelize | null = null;
 
     constructor(logger: Logger) {
         this.logger = logger;
+    }
+
+    private async getMainDb() {
+        if (!this.mainDbSequelize) {
+            this.mainDbSequelize = await initSequelize();
+        }
+        return this.mainDbSequelize;
     }
 
     /** CREATE a new scope */
@@ -22,12 +30,8 @@ export class ScopeService {
         errorMessage?: string;
         data?: { scope: any };
     }> {
-        //const sequelize = await initSequelize();
-        const sequelize = new Sequelize(process.env.POSTGRES_CONNECTION_STRING!, {
-            dialect: "postgres",
-            logging: false, // optional
-        });
-        RuleScopeMap.initialize(sequelize);
+        const mainDb = await this.getMainDb();
+        RuleScopeMap.initialize(mainDb);
         const scope = await RuleScopeMap.create({
             rule_rid: scopeRequest.rule_rid,
             scope_entity_type: scopeRequest.scope_entity_type ?? null,
@@ -56,11 +60,8 @@ export class ScopeService {
             errorMessage?: string;
             data?: { scopes: any; count: number };
         }> {
-        const sequelize = new Sequelize(process.env.POSTGRES_CONNECTION_STRING!, {
-            dialect: "postgres",
-            logging: false, // optional
-        });
-        RuleScopeMap.initialize(sequelize);
+        const mainDb = await this.getMainDb();
+        RuleScopeMap.initialize(mainDb);
         const limit = data.limit;
         const offset = (data.page - 1) * limit;
         const where: any = {};
@@ -88,17 +89,6 @@ export class ScopeService {
         };
     };
 
-    /** GET RuleMaster by RID */
-    // export const getRuleScopeById = async (rid: string) => {
-    //     const rule = await RuleScopeMap.findByPk(rid);
-    //     return rule;
-    // };
-
-    // export const getRuleScopeByRule = async (rule_rid: string) => {
-    //     const rule = await RuleScopeMap.findByPk(rule_rid);
-    //     return rule;
-    // };
-
     /** UPDATE RuleMaster by RID */
     async updateScope(scopeRequest: ICreateScope,
         userId: string): Promise<{
@@ -108,11 +98,8 @@ export class ScopeService {
             data?: { scope: any };
         }> {
         // Build update object dynamically
-        const sequelize = new Sequelize(process.env.POSTGRES_CONNECTION_STRING!, {
-            dialect: "postgres",
-            logging: false, // optional
-        });
-        const dbInit = RuleScopeMap.initialize(sequelize);
+        const mainDb = await this.getMainDb();
+        const dbInit = RuleScopeMap.initialize(mainDb);
         const caseUpdateResponse = await RuleScopeMap.update(
             {
                 ...scopeRequest,
@@ -137,11 +124,8 @@ export class ScopeService {
     /** DELETE RuleMaster by RID */
     async deleteScope(data: any, userId: string) {
         try {
-            const sequelize = new Sequelize(process.env.POSTGRES_CONNECTION_STRING!, {
-                dialect: "postgres",
-                logging: false, // optional
-            });
-            RuleScopeMap.initialize(sequelize);
+            const mainDb = await this.getMainDb();
+            RuleScopeMap.initialize(mainDb);
             await RuleScopeMap.destroy({ where: { rid: data.scope_rid } });
             return {
                 statusCode: HttpStatus.SUCCESS,

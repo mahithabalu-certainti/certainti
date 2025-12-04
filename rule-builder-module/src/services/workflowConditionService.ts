@@ -9,9 +9,17 @@ import { logMessage } from "../utils/helpers";
 export class ConditionService {
 
     private logger: Logger;
+    private mainDbSequelize: Sequelize | null = null;
 
     constructor(logger: Logger) {
         this.logger = logger;
+    }
+
+    private async getMainDb() {
+        if (!this.mainDbSequelize) {
+            this.mainDbSequelize = await initSequelize();
+        }
+        return this.mainDbSequelize;
     }
 
     /** CREATE a new Condition */
@@ -21,13 +29,8 @@ export class ConditionService {
         errorMessage?: string;
         data?: { condition: any };
     }> {
-        //const sequelize = await initSequelize();
-        const sequelize = new Sequelize(process.env.POSTGRES_CONNECTION_STRING!, {
-            dialect: "postgres",
-            logging: false, // optional
-        });
-        // Initialize model ONCE
-        Condition.initialize(sequelize);
+        const mainDb = await this.getMainDb();
+        Condition.initialize(mainDb);
         const condition = await Condition.create({
             logical_operator: conditionRequest.logical_operator,
             field_name: conditionRequest.field_name,
@@ -61,11 +64,8 @@ export class ConditionService {
         errorMessage?: string;
         data?: { conditions: any; count: number };
     }> {
-        const sequelize = new Sequelize(process.env.POSTGRES_CONNECTION_STRING!, {
-            dialect: "postgres",
-            logging: false, // optional
-        });
-        Condition.initialize(sequelize);
+        const mainDb = await this.getMainDb();
+        Condition.initialize(mainDb);
         const limit = data.limit;
         const offset = (data.page - 1) * limit;
         const where: any = {};
@@ -98,12 +98,6 @@ export class ConditionService {
         };
     };
 
-    /** GET RuleMaster by RID */
-    // export const getConditionById = async (rid: string) => {
-    //     const rule = await Condition.findByPk(rid);
-    //     return rule;
-    // };
-
     /** UPDATE RuleMaster by RID */
     async updateCondition(
         conditionRequest: ICreateCondition,
@@ -114,12 +108,8 @@ export class ConditionService {
         errorMessage?: string;
         data?: { condition: any };
     }> {
-        // Build update object dynamically
-        const sequelize = new Sequelize(process.env.POSTGRES_CONNECTION_STRING!, {
-            dialect: "postgres",
-            logging: false, // optional
-        });
-        const dbInit = Condition.initialize(sequelize);
+        const mainDb = await this.getMainDb();
+        const dbInit = Condition.initialize(mainDb);
         const caseUpdateResponse = await Condition.update(
             {
                 ...conditionRequest,
@@ -140,15 +130,11 @@ export class ConditionService {
         };
     };
 
-
     /** DELETE RuleMaster by RID */
     async deleteCondition(data: any, userId: string) {
         try {
-            const sequelize = new Sequelize(process.env.POSTGRES_CONNECTION_STRING!, {
-                dialect: "postgres",
-                logging: false, // optional
-            });
-            Condition.initialize(sequelize);
+            const mainDb = await this.getMainDb();
+            Condition.initialize(mainDb);
             await Condition.destroy({ where: { rid: data.condition_rid } });
             return {
                 statusCode: HttpStatus.SUCCESS,

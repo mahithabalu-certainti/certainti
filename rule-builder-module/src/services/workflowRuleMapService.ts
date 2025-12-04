@@ -6,16 +6,23 @@ import { Logger } from "winston";
 import { ICreateRuleMap } from "../utils/types";
 import { logMessage } from "../utils/helpers";
 
-
 /**
  * Evaluate a rule for a given entity (case or task)
  */
 export class RuleMapService {
 
   private logger: Logger;
+  private mainDbSequelize: Sequelize | null = null;
 
   constructor(logger: Logger) {
     this.logger = logger;
+  }
+
+  private async getMainDb() {
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize = await initSequelize();
+    }
+    return this.mainDbSequelize;
   }
 
   async createRuleMap(rulemapRequest: ICreateRuleMap, userId: string): Promise<{
@@ -24,13 +31,8 @@ export class RuleMapService {
     errorMessage?: string;
     data?: { ruleMap: any };
   }> {
-    //const sequelize = await initSequelize();
-    const sequelize = new Sequelize(process.env.POSTGRES_CONNECTION_STRING!, {
-      dialect: "postgres",
-      logging: false, // optional
-    });
-    // Initialize model ONCE
-    RuleMap.initialize(sequelize);
+    const mainDb = await this.getMainDb();
+    RuleMap.initialize(mainDb);
     const condition = await RuleMap.create({
       rule_rid: rulemapRequest.rule_rid,
       scope_type_rid: rulemapRequest.scope_type_rid,
