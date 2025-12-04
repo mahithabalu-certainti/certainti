@@ -416,7 +416,8 @@ return !response;
   ) {
     // Implementation for creating interactions in the database
     try {
-      const { Case, CaseSummary } = await this.caseModelService.getModels(
+      if(!this.mainDbSequelize) this.mainDbSequelize = await initMainDbSequelize();
+      const { Case, CaseSummary, CaseTask } = await this.caseModelService.getModels(
         accountNumber
       );
 
@@ -436,14 +437,29 @@ return !response;
           transaction,
         }
       );
-      const caseDateValidation = await this.caseDateChangeAllow(existingCase!, caseRequest, accountNumber);
-      if(caseDateValidation) {
+      if(existingCase?.case_startdate.toISOString().split('T')[0] !== caseRequest.case_startdate.toISOString().split('T')[0] || existingCase?.statutory_submission_date.toISOString().split('T')[0] !== caseRequest.statutory_submission_date.toISOString().split('T')[0] 
+      || existingCase?.planned_submission_date.toISOString().split('T')[0] !== caseRequest.planned_submission_date.toISOString().split('T')[0]
+    ) {
+    const [fetchToDoStatus] = await this.mainDbSequelize.query<TaskTypeResponse>(rawQueries.checkCaseTaskStatusToDo(), {type : QueryTypes.SELECT});
+    if(fetchToDoStatus) {
+      const checkStatusChanged = await CaseTask.findOne({
+        where : {
+          case_rid : caseRequest.case_rid,
+          account_rid : caseRequest.account_rid,
+          task_status_rid : {
+            [Op.ne] : fetchToDoStatus.rid
+          }
+        }, raw : true
+      })
+      if(checkStatusChanged) {
         return {
         statusCode : HttpStatus.BAD_REQUEST,
-        statusMessage : caseDateValidation,
+        statusMessage : STATUS_MESSAGE.caseDateChangeNotAllowed,
         data : null
       };
       } 
+    }
+  }
       await CaseSummary.update(
         {
           ...caseRequest,
