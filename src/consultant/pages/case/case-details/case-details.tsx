@@ -821,7 +821,14 @@ export const CaseDetails = () => {
           ]}
         />
       </div>
-      {!isActionItemsExpanded && (
+      <div
+        className={`transition-all duration-300 ease-in-out overflow-hidden ${isActionItemsExpanded
+          ? 'max-h-0 opacity-0'
+          : isError
+            ? 'max-h-[60px] opacity-100'
+            : 'max-h-[140px] opacity-100'
+          }`}
+      >
         <InfoSection
           columns={caseHeaderDetails}
           loading={isLoading}
@@ -829,7 +836,7 @@ export const CaseDetails = () => {
           error={isError}
           className={!isError ? 'max-h-[140px] min-h-[140px]' : ''}
         />
-      )}
+      </div>
       <div className='flex flex-1 flex-row w-full border-b border-[#CBD6E2]'>
         <div
           className={`flex transition-all ease-in-out ${isCollapsed
@@ -850,7 +857,7 @@ export const CaseDetails = () => {
           />
         </div>
         <div
-          className='flex-1'
+          className='flex-1 transition-all duration-500 ease-in-out'
           style={{
             maxHeight: isActionItemsExpanded
               ? 'calc(100vh - 143px)'
