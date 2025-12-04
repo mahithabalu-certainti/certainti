@@ -14,8 +14,9 @@ export interface ICreateCases {
   planned_submission_date: Date;
   statutory_submission_date: Date;
   status_rid?: string;
-  utility_cost?: number;
-  total_nonlabour_cost?: number;
+  heat_light_power?: number;
+  total_nonlabor_cost?: number;
+  tax_liability?: number
 }
 
 export type CaseHeadersColumns = {
@@ -53,7 +54,7 @@ export type CaseHeadersColumns = {
   modified_by_name : string | null,
   account_status_rid : string,
   account_status_name : string
-
+  is_send_interaction : boolean
 }
 
 export type FilingType = {
@@ -262,6 +263,11 @@ export interface CaseHistorySubmission {
   total_qualified_project_cost: number;
   total_qre: number;
   total_rd_credits: number;
+  total_fte_cost?: number;
+  total_subcon_cost?: number;
+  total_nonlabor_cost?: number;
+  country_rid: string;
+  state_rid?: string;
   annual_gross_receipts?: number;
   action_type: "add" | "edit" | "delete";
 }
@@ -294,6 +300,7 @@ export interface ICreateChecklist {
   modified_datetime?: Date;
   fiscal_year: number;
   checklist_items: ICreateChecklistItem[];
+  case_rid? : string
 }
 
 export interface ICreateChecklistItem{
@@ -336,6 +343,7 @@ type WorkflowConnectorItemsAccountLevel = {
   target_rid : string[]
   created_by : string
   created_datetime : Date
+  is_new_changes : boolean
 }
 
 export type CreateTaskTemplateType = {
@@ -358,6 +366,7 @@ export type CreateTaskTemplateType = {
   workflow_connector : WorkflowConnectorItems
   weightage_rid : string
   task_category_rid : string
+  milestone_sequence : number
 }
 
 export type priorityTypes = {
@@ -595,6 +604,7 @@ export type CommentsListType = {
   account_rid : string
   case_rid : string
   task_rid : string
+  task_type: string
 }
 
 export type ActivityType = {
@@ -662,6 +672,7 @@ export type TaskCardDetailsType = {
   workflow_connector :  taskWorkFlowConnector[],
   weightage_rid : string
   task_category_rid : string
+  fiscal_year : number
 }
 export type TaskCardResponse ={
   task_details :TaskCardDetailsType
@@ -782,10 +793,10 @@ export interface IActivityTask {
   attachment_level: string;
   task_name: string;
   description?: string;
-  start_datetime?: Date;
-  end_datetime?: Date;
+  effective_start_datetime: Date;
+  effective_end_datetime: Date;
   priority_rid?: string;
-  assigned_to?: string;
+  assigned_to?: string | null;
   status_rid?: string;
   remainder_interval?: number;
   account_rid?: string; 
@@ -812,6 +823,7 @@ export interface IActivityEmail {
   sender_email?: string;
   email_status_rid?: string;
   account_rid?: string; 
+  deleted_file_ids : string[]
 }
 
 export interface IActivityMeeting {
@@ -828,15 +840,15 @@ export interface IActivityMeeting {
   meeting_status:string;
   meeting_status_rid?: string;
   invitees: JSON;
-  attendees: string[];
+  meeting_participants: string[];
   subject: string;
   meeting_platform?: string;
   meeting_invite?: string;
   meeting_id?:string;
-  effective_start_datetime: Date;
-  effective_end_datetime?: Date;
+  effective_start_date: Date;
+  effective_end_date?: Date;
   effective_start_time: string;
-  effective_end_time: string;
+  effective_end_time:string;
   meeting_code?: string;
   minutes_of_meeting?: string;
   account_rid?: string;
@@ -845,6 +857,10 @@ export interface IActivityMeeting {
   recurrence_type?: string;
   recurrence_interval?: number;
   recurrence_days?: string[];
+  recurrence_day_of_month?: number;
+  recurrence_monthly_index?: string;
+  deleted_file_ids : string[]
+  invited_by:string
 }
 
 export interface IActivityCall {
@@ -867,6 +883,8 @@ export interface IActivityCall {
   status_rid?: string;
   account_rid?: string;
   subject?: string;
+  deleted_file_ids : string[]
+  call_participants?: string[];
 }
 
 
@@ -887,4 +905,8 @@ export type WeightageType = {
 export type TaskCategoryType = {
   rid : string
   category_name : string
+}
+export type CaseTaskDropdownType = {
+  rid : string
+  task_name : string
 }

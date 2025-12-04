@@ -10,7 +10,7 @@ import moment from "moment-timezone";
  */
 export async function scheduleTeamsMeetingUtil(
   activityRequest: IActivityMeeting,
-  userId: string,
+  userEmail: string,
   senderEmailInfo: {
     email: string;
     clientId: string;
@@ -19,61 +19,82 @@ export async function scheduleTeamsMeetingUtil(
   }
 ): Promise<any> {
   const support_email = senderEmailInfo.email;
-  // Normalize attendees
-  let attendeesArray: string[] = [];
-  if (Array.isArray(activityRequest.attendees)) {
-    attendeesArray = activityRequest.attendees;
-  } else if (typeof activityRequest.attendees === "string") {
+  // Ensure meeting_participants is always an array of strings
+  let meetingParticipants: string[] = [];
+  if (Array.isArray(activityRequest.meeting_participants)) {
+    meetingParticipants = activityRequest.meeting_participants.filter((email) => typeof email === "string" && email);
+  } else if (typeof activityRequest.meeting_participants === "string") {
     try {
-      attendeesArray = JSON.parse(activityRequest.attendees);
+      const parsed = JSON.parse(activityRequest.meeting_participants);
+      meetingParticipants = Array.isArray(parsed)
+        ? parsed.filter((email) => typeof email === "string" && email)
+        : [];
     } catch {
-      attendeesArray = [];
+      meetingParticipants = [];
     }
   }
-  let recurrenceDays: string[] = [];
-  if (activityRequest.recurrence_days) {
-    if (Array.isArray(activityRequest.recurrence_days)) {
-      recurrenceDays = activityRequest.recurrence_days;
-    } else if (typeof activityRequest.recurrence_days === "string") {
-      try {
-        recurrenceDays = JSON.parse(activityRequest.recurrence_days);
-      } catch {
-        recurrenceDays = [];
-      }
-    }
+  // Remove duplicates and trim emails
+  meetingParticipants = Array.from(new Set(meetingParticipants.map(e => e.trim())));
+  // Add userEmail to attendees if not already present
+  if (userEmail && !meetingParticipants.includes(userEmail)) {
+    meetingParticipants.push(userEmail);
   }
-
-  const attendees = attendeesArray.map((email) => ({
+  const attendees = meetingParticipants.map((email) => ({
     emailAddress: { address: email },
     type: "required",
   }));
+  let recurrentpattern =  {} 
+   if(activityRequest.recurrence_type === "daily"){
+  recurrentpattern =  {
+        type: activityRequest.recurrence_type,
+        interval: Number(activityRequest.recurrence_interval) || 1,
+      };
+    }
 
-  // Use moment-timezone to combine start date with end time if dates differ
-  let startDateTime = activityRequest.effective_start_datetime as Date;
-  let endDateTime = activityRequest.effective_end_datetime;
-  if (
-    startDateTime &&
-    endDateTime &&
-    moment.tz(startDateTime, activityRequest.time_zone || "UTC").format("YYYY-MM-DD") !==
-      moment.tz(endDateTime, activityRequest.time_zone || "UTC").format("YYYY-MM-DD")
-  ) {
-    // Replace time in startDateTime with time from endDateTime
-    const startDate = moment.tz(startDateTime, activityRequest.time_zone || "UTC").format("YYYY-MM-DD");
-    const endTime = moment.tz(endDateTime, activityRequest.time_zone || "UTC").format("HH:mm:ss");
-    startDateTime = new Date(moment.tz(`${startDate}T${endTime}`, activityRequest.time_zone || "UTC").toISOString());
+    if(activityRequest.recurrence_type === "weekly"){
+    recurrentpattern =  {
+        type: activityRequest.recurrence_type || "weekly",
+        interval: Number(activityRequest.recurrence_interval) || 1,
+        daysOfWeek: activityRequest.recurrence_days || [],
+        firstDayOfWeek: "sunday",
+      };
+    }
+  if(activityRequest.recurrence_type === "monthly"){
+    if(activityRequest.recurrence_day_of_month != undefined && activityRequest.recurrence_day_of_month > 0){
+    recurrentpattern =  {
+        type: "absoluteMonthly",
+        interval: Number(activityRequest.recurrence_interval) || 1,
+        dayOfMonth: Number(activityRequest.recurrence_day_of_month) || 1,
+      };
+    }
+    else{
+      recurrentpattern =  {
+        type: "relativeMonthly",
+        interval: Number(activityRequest.recurrence_interval) || 1,
+        daysOfWeek: activityRequest.recurrence_days || [],
+        index: activityRequest.recurrence_monthly_index || "first",
+        firstDayOfWeek: "sunday",
+      };
+    }
+
   }
+  
 
-  const payload = {
+const startDateTime = moment(`${activityRequest.effective_start_date} ${activityRequest.effective_start_time}`,  "YYYY-MM-DD HH:mm");
+const endDateTime   = moment(`${activityRequest.effective_end_date} ${activityRequest.effective_end_time}`,      "YYYY-MM-DD HH:mm");
+const endDateTimepayload   = moment(`${activityRequest.effective_start_date} ${activityRequest.effective_end_time}`,      "YYYY-MM-DD HH:mm");
+
+const payload = {
     subject: activityRequest.subject,
     start: {
       dateTime: startDateTime,
       timeZone: activityRequest.time_zone || "UTC",
     },
     end: {
-      dateTime: endDateTime,
+      dateTime: endDateTimepayload,
       timeZone: activityRequest.time_zone || "UTC",
     },
-    attendees,
+    attendees: attendees,
     body: {
       contentType: "HTML",
       content: activityRequest.subject || "",
@@ -81,16 +102,11 @@ export async function scheduleTeamsMeetingUtil(
     isOnlineMeeting: true,
     onlineMeetingProvider: "teamsForBusiness",
     recurrence: {
-      pattern: {
-        type: activityRequest.recurrence_type || "weekly",
-        interval: Number(activityRequest.recurrence_interval) || 1,
-        daysOfWeek: recurrenceDays || ["Monday"],
-        firstDayOfWeek: "sunday",
-      },
+      pattern:recurrentpattern,
       range: {
         type: "endDate",
-        startDate: moment.tz(activityRequest.effective_start_datetime, activityRequest.time_zone || "UTC").format("YYYY-MM-DD"),
-        endDate: moment.tz(activityRequest.effective_end_datetime, activityRequest.time_zone || "UTC").format("YYYY-MM-DD"),
+        startDate: activityRequest.effective_start_date,
+        endDate: activityRequest.effective_end_date,
         recurrenceTimeZone: activityRequest.time_zone || "UTC",
       },
     },
@@ -115,16 +131,9 @@ export async function scheduleTeamsMeetingUtil(
 
     // Check for conflicting meetings
     // Convert to ISO string if not already
-    const startDateTimeStr =
-      typeof activityRequest.effective_start_datetime === "string"
-        ? activityRequest.effective_start_datetime
-        : new Date(activityRequest.effective_start_datetime).toISOString();
-    const endDateTimeStr =
-      typeof activityRequest.effective_end_datetime === "string"
-        ? activityRequest.effective_end_datetime
-        : activityRequest.effective_end_datetime
-        ? new Date(activityRequest.effective_end_datetime).toISOString()
-        : "";
+    // Convert moment objects to ISO string
+    const startDateTimeStr = moment(startDateTime).toISOString();
+    const endDateTimeStr = moment(endDateTime).toISOString();
 
     // Query only the exact requested time window
     const conflictResponse = await graphClient
@@ -182,7 +191,7 @@ export async function scheduleTeamsMeetingUtil(
     } else {
       logMessage("Final result: No conflict, meeting can be scheduled.");
     }
-
+    logMessage(`Scheduling meeting with payload: ${JSON.stringify(payload)}`);
     // Add sendInvitations query parameter to send invites automatically
     const event = await graphClient
       .api(`/users/${support_email}/events`)

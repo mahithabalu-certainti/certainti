@@ -18,7 +18,8 @@ import {
   meetingFields,
   activityStatus,
   constants,
-  callFields
+  callFields,
+  activityTypes
 } from "../../utils/constants";
 import {
   decryptClientSecret,
@@ -32,7 +33,8 @@ import {
   IActivityCall,
   IActivityEmail,
   IActivityMeeting,
-  IActivityTask
+  IActivityTask,
+  ICreateChecklist
 } from "../../utils/types";
 
 import {
@@ -46,6 +48,7 @@ import {
 import CaseSchemaService from "../cases/schemaService";
 import { sendEmailWithAttachment } from "../emailService";
 import { scheduleTeamsMeetingUtil } from "../../utils/teamsMeetingUtil";
+import moment from "moment";
 class ActivitySchemaService {
   private orgDbSequelize: Sequelize | null = null;
   private mainDbSequelize: Sequelize | null = null;
@@ -225,9 +228,39 @@ class ActivitySchemaService {
 
       return casecreationResponse;
     } catch (error) {
-      logMessage(`Error creating case: ${error}`);
-      throw new Error("Error creating case: " + error);
+      logMessage(`Error creating activity: ${error}`);
+      throw new Error("Error creating activity: " + error);
     }
+  }
+
+  async addTaskSummary( 
+    accountNumber: string,
+    taskRequest: IActivityTask,
+    taskRid: string,
+    taskRNumber: string
+  )
+  {
+    const { TaskSummary } = await this.caseModelService.getModels("");
+       await TaskSummary.create(
+        {
+          task_rid: taskRid,
+          r_number: taskRNumber || "",
+          account_rid: taskRequest.account_rid || "",
+          attach_to: taskRequest.attach_to || "",
+          attachment_level: taskRequest.attachment_level || "",
+          task_name: taskRequest.task_name || "",
+          description: taskRequest.description || "",
+          fiscal_year: taskRequest.fiscal_year || 0,
+          assigned_to: taskRequest.assigned_to || "",
+          status_rid: taskRequest.status_rid || "",
+          priority_rid: taskRequest.priority_rid || "",
+          effective_start_datetime: taskRequest.effective_start_datetime,
+          effective_end_datetime: taskRequest.effective_end_datetime,
+          created_by: taskRequest.created_by || "",
+          created_datetime: new Date(),
+        }
+      ); 
+
   }
   async updateActivityTask(
     accountNumber: string,
@@ -237,26 +270,86 @@ class ActivitySchemaService {
   ) {
     // Implementation for updating interactions in the database
     try {
-      const { Activities } = await this.caseModelService.getModels(
+      const { Activities,TaskSummary, CheckList, CheckListItem } = await this.caseModelService.getModels(
         accountNumber
       );
       const existingTask = await Activities.findOne({
         where: { rid: taskRequest.task_rid },
+        raw: true,
         transaction,
       });
-      const [updatedResult] = await Activities.update(taskRequest, {
-        where: {
-          rid: taskRequest.task_rid,
+      // Fix: assigned_to should not be undefined or empty string
+      if (taskRequest.assigned_to === "" || typeof taskRequest.assigned_to === "undefined") {
+        taskRequest.assigned_to = null;
+      }
+      if(taskRequest?.checklist_rid) 
+            {
+              if(taskRequest.checklist_rid !== existingTask?.checklist_rid) {
+                if(existingTask?.checklist_rid !== null && existingTask?.checklist_rid !== '') {
+                  const checklistResult = await CheckList.findOne({
+                  where : {
+                    attach_to : taskRequest.task_rid,
+                    attachment_level : 'task',
+                    checklist_template_rid : existingTask?.checklist_rid
+                  }, raw : true
+                })
+
+                if(checklistResult) {
+                  await CheckListItem.destroy({
+                    where : {
+                      checklist_rid : checklistResult.rid
+                    }
+                  })
+                  await CheckList.destroy({
+                    where : {
+                      attach_to : taskRequest.task_rid,
+                      attachment_level : 'task',
+                      checklist_template_rid : existingTask?.checklist_rid
+                    }
+                  })
+                  }
+                }
+                const response  = await this.caseSchemaService.fetchChecklistTemplateDetailsById(taskRequest.checklist_rid);
+                response.checklist_items.map((item:any) => item.action_type  = 'add');
+                let caseRequest : any = {
+                  account_rid: taskRequest.account_rid!,
+                  checklist_name: response.checklist_name,
+                  checklist_description: response.description,  
+                  checklist_items: response.checklist_items,
+                  attach_to: taskRequest.task_rid,
+                  attachment_level: 'task',
+                  created_by: userId,
+                  created_datetime: new Date(),
+                  fiscal_year: taskRequest.fiscal_year,
+                  checklist_rid: taskRequest.checklist_rid,
+                };
+                const checklistResponse = await this.createCheckListForTask(accountNumber, caseRequest, transaction);
+                if(checklistResponse)
+                  await this.caseSchemaService.manageCheckListItems(accountNumber,caseRequest,checklistResponse.rid, transaction);
+                }
+            }
+      // Combine update: include modified_by and modified_datetime in the same update
+      const [updatedResult] = await Activities.update(
+        {
+          ...taskRequest,
+          modified_by: taskRequest.modified_by || userId,
+          modified_datetime: new Date(),
         },
-        transaction,
-      });
-      const checkIsDifferentCollaborator = await this.isNewCollaborator(
-        taskRequest.modified_by!,
+        {
+          where: {
+            rid: taskRequest.task_rid,
+          },
+          transaction,
+        }
+      );
+    if(updatedResult > 0) {
+       const checkIsDifferentCollaborator = await this.isNewCollaborator(
+        userId,
         accountNumber
       );
       if (!checkIsDifferentCollaborator && taskRequest?.modified_by) {
         const checkCollaboratorExists = await this.isCollaboratorAlreadyAdded(
-          taskRequest.modified_by!,
+          userId,
           taskRequest.task_rid,
           taskRequest.account_rid!,
           accountNumber
@@ -267,19 +360,61 @@ class ActivitySchemaService {
               account_rid: taskRequest.account_rid!,
               task_rid: taskRequest.task_rid,
               assigned_to: taskRequest?.modified_by,
-              created_by: taskRequest.modified_by,
+              created_by: userId,
               created_datetime: new Date(),
             },
             { transaction }
           );
         }
-      }
-      await this.updateTaskHistory(
+         await this.addActivityHistory(
         accountNumber,
         taskRequest.task_rid as string,
         { ...taskRequest, modified_by: userId },
-        existingTask
+        existingTask,
+        activityTypes.task
       );
+      }
+       await TaskSummary.update(
+        {
+          task_name: taskRequest.task_name || "",
+          description: taskRequest.description || "",
+          assigned_to: taskRequest.assigned_to || "",
+          status_rid: taskRequest.status_rid || "",
+          priority_rid: taskRequest.priority_rid || "",
+          effective_start_datetime: taskRequest.effective_start_datetime,
+          effective_end_datetime: taskRequest.effective_end_datetime,
+          modified_by: taskRequest.modified_by || "",
+          modified_datetime: new Date(),
+        },
+        {
+          where: {
+            task_rid: taskRequest.task_rid,
+          }
+        }
+      );
+      if(!this.mainDbSequelize)
+        {
+          this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+        }
+      const [activeStatusRid]: any[] = await this.mainDbSequelize.query(
+                rawQueries.getActiveStatusId()
+              );
+        if(taskRequest.tags.length > 0) {
+            for(let d of taskRequest.tags) {
+              await this.caseSchemaService.createOrUpdateTags(
+            taskRequest.task_rid,
+            taskRequest.account_rid!,
+            "",
+            d.tag_rid,
+            d.is_new_tag,
+            accountNumber,
+            taskRequest.created_by,
+            activeStatusRid,
+            "activity"
+          );
+            }
+          }
+        }
       await this.addTaskManagementTimeline(
         accountNumber,
         taskRequest.task_rid,
@@ -293,8 +428,8 @@ class ActivitySchemaService {
 
       return updatedResult;
     } catch (error) {
-      logMessage(`Error creating case: ${error}`);
-      throw new Error("Error creating case: " + error);
+      logMessage(`Error updating task: ${error}`);
+      throw new Error("Error updating task: " + error);
     }
   }
   async isNewCollaborator(rid: string, accountNumber: string) {
@@ -328,6 +463,47 @@ class ActivitySchemaService {
     if (result) return result;
     else return null;
   }
+    async createCheckListForTask(
+      accountNumber: string,
+      caseRequest: ICreateChecklist,
+      transaction: Transaction
+    ) {
+      // Implementation for creating checklist in the database
+      try {
+        const { CheckList } = await this.caseModelService.getModels(accountNumber);
+        const findCheckListAlreadyCreated = await CheckList.findOne({
+          where : {
+            attach_to : caseRequest.attach_to,
+            attachment_level : "task",
+            checklist_template_rid : caseRequest.checklist_rid
+          }, raw : true
+        });
+        if(!findCheckListAlreadyCreated) {
+          const createdChecklist = await CheckList.create(
+          {
+            account_rid: caseRequest.account_rid,
+            attach_to: caseRequest.attach_to,
+            attachment_level: caseRequest.attachment_level,
+            checklist_name: caseRequest.checklist_name,
+            checklist_description: caseRequest.checklist_description,
+            checklist_template_rid: caseRequest.checklist_rid || "",
+            fiscal_year:caseRequest.fiscal_year,
+            created_by: caseRequest.created_by,
+            status_rid: caseRequest.status_rid,
+            created_datetime: new Date(),
+           
+          },
+          { transaction }
+        );
+        return createdChecklist;
+        } else {
+          return null;
+        }
+      } catch (error) {
+        logMessage(`Error creating checklist: ${error}`);
+        throw new Error("Error creating checklist: " + error);
+      }
+    }
 
   async  checkUserAPIPermission  (
       userId: string,
@@ -395,24 +571,36 @@ class ActivitySchemaService {
       const { Activities } = await this.caseModelService.getModels(
         accountNumber
       );
-      let allChecklists: any[] = [];
+      let allActivities: any[] = [];
 
       // Handle attached_to and uploaded_by filters separately
-      let attachedToFilter;
-      let createdByFilter;
-      let modifiedByFilter;
-      if (filters.attached_to) {
-        attachedToFilter = filters.attached_to;
-        delete filters.attached_to;
+      //let attachedToFilter;
+      // Generic filter extraction
+      const filterKeys = [
+        { key: 'attached_to', var: 'attachedToFilter' },
+        { key: 'created_by_name', var: 'createdByFilter' },
+        { key: 'modified_by_name', var: 'modifiedByFilter' },
+        { key: 'assigned_to_name', var: 'assignedToFilter' },
+        { key: 'status_name', var: 'statusFilter' }
+      ];
+      const extractedFilters: Record<string, any> = {
+        attachedToFilter: null,
+        createdByFilter: null,
+        modifiedByFilter: null,
+        assignedToFilter: null,
+        statusFilter: null
+      };
+      for (const { key, var: varName } of filterKeys) {
+        if (filters[key]) {
+          extractedFilters[varName] = filters[key];
+          delete filters[key];
+        }
       }
-      if (filters.created_by_name) {
-        createdByFilter = filters.created_by_name;
-        delete filters.created_by_name;
-      }
-      if (filters.modified_by_name) {
-        modifiedByFilter = filters.modified_by_name;
-        delete filters.modified_by_name;
-      }
+      const attachedToFilter = extractedFilters.attachedToFilter;
+      const createdByFilter = extractedFilters.createdByFilter;
+      const modifiedByFilter = extractedFilters.modifiedByFilter;
+      const assignedToFilter = extractedFilters.assignedToFilter;
+      const statusFilter = extractedFilters.statusFilter;
       if(!this.mainDbSequelize){
             this.mainDbSequelize = await this.caseModelService.getMainSequelize();
           } 
@@ -473,6 +661,7 @@ class ActivitySchemaService {
     return { activities: [], totalCount: 0 };
   }
       }
+      
 
       const fetchAttachments = async (
         model: any,
@@ -488,7 +677,9 @@ class ActivitySchemaService {
             ...(whereClause[Op.and] || []),
           ],
         };
-        return model.findAll({ where });
+        return model.findAll({
+          where
+        });
       };
       // 🔷 Optimized project resource + task attachments fetch for multiple projects
       const fetchProjectResourceTaskAttachmentsBulk = async (
@@ -581,18 +772,18 @@ class ActivitySchemaService {
         const caseAttachments = await fetchAttachments(Activities, "case", [
           entityId,
         ]);
-        allChecklists.push(...caseAttachments);
+        allActivities.push(...caseAttachments);
       } else if (attachmentLevel === "account" && entityId) {
         const accountAttachments = await fetchAttachments(
           Activities,
           "account",
           [entityId]
         );
-        allChecklists.push(...accountAttachments);
+        allActivities.push(...accountAttachments);
         const caseAttachments = await fetchAttachments(Activities, "case", [
           entityId,
         ]);
-        allChecklists.push(...caseAttachments);
+        allActivities.push(...caseAttachments);
 
         const projects = await this.caseSchemaService.getProjectsByAccountId(
           accountNumber,
@@ -605,14 +796,14 @@ class ActivitySchemaService {
             "project",
             projectIds
           );
-          allChecklists.push(...projectAttachments);
+          allActivities.push(...projectAttachments);
 
           const projectChildAttachments =
             await fetchProjectResourceTaskAttachmentsBulk(
               Activities,
               projectIds
             );
-          allChecklists.push(...projectChildAttachments);
+          allActivities.push(...projectChildAttachments);
         }
 
         const resources = await this.caseSchemaService.getResourcesByAccountId(
@@ -626,14 +817,13 @@ class ActivitySchemaService {
             "resource",
             resourceIds
           );
-          allChecklists.push(...resourceAttachments);
 
           const resourceCostSkillAttachments =
             await fetchResourceCostSkillAttachmentsBulk(
               Activities,
               resourceIds
             );
-          allChecklists.push(...resourceCostSkillAttachments);
+          allActivities.push(...resourceCostSkillAttachments);
         }
       } else if (attachmentLevel === "project" && entityId) {
         const projectAttachments = await fetchAttachments(
@@ -641,11 +831,11 @@ class ActivitySchemaService {
           "project",
           [entityId]
         );
-        allChecklists.push(...projectAttachments);
+        allActivities.push(...projectAttachments);
 
         const projectChildAttachments =
           await fetchProjectResourceTaskAttachmentsBulk(Activities, [entityId]);
-        allChecklists.push(...projectChildAttachments);
+        allActivities.push(...projectChildAttachments);
       }
       // 🔷 Project_resource logic
       else if (attachmentLevel === "project_resource" && entityId) {
@@ -654,7 +844,7 @@ class ActivitySchemaService {
           "project_resource",
           [entityId]
         );
-        allChecklists.push(...projectResourceAttachments);
+        allActivities.push(...projectResourceAttachments);
         const projectResource =
           await this.caseSchemaService.fetchProjectResourceById(
             accountNumber,
@@ -672,7 +862,7 @@ class ActivitySchemaService {
             "project_task",
             projectTaskIds
           );
-          allChecklists.push(...projectTaskAttachments);
+          allActivities.push(...projectTaskAttachments);
         }
       }
 
@@ -683,11 +873,11 @@ class ActivitySchemaService {
           "resource",
           [entityId]
         );
-        allChecklists.push(...resourceAttachments);
+        allActivities.push(...resourceAttachments);
 
         const resourceCostSkillAttachments =
           await fetchResourceCostSkillAttachmentsBulk(Activities, [entityId]);
-        allChecklists.push(...resourceCostSkillAttachments);
+        allActivities.push(...resourceCostSkillAttachments);
       } else {
         if (!whereClause[Op.and] || !Array.isArray(whereClause[Op.and])) {
           whereClause[Op.and] = [];
@@ -700,13 +890,13 @@ class ActivitySchemaService {
 
         try {
           const result = await Activities.findAll({ where: whereClause });
-          allChecklists.push(...result);
+          allActivities.push(...result);
         } catch (error) {
           throw new Error("Failed to fetch attachments");
         }
       }
        let statusIds: any[] = [
-            ...new Set(allChecklists.map((status: any) => status?.status_rid)),
+            ...new Set(allActivities.map((status: any) => status?.status_rid)),
         ];
         let fetchStatusInfo = await this.mainDbSequelize.query(
                 rawQueries.fetchActivityStatus(statusIds)
@@ -715,7 +905,7 @@ class ActivitySchemaService {
         fetchStatusInfo[0].map((status: any) => [status.rid, status.name])
       );
       let assignedUserIds: any[] = [
-            ...new Set(allChecklists.map((user: any) => user?.assigned_to)),
+            ...new Set(allActivities.map((user: any) => user?.assigned_to)),
         ];
 
       const [assignedUserNames] = await Promise.all([
@@ -730,15 +920,15 @@ class ActivitySchemaService {
 
       // 🔷 Fetch display names
       if (graphqlData?.document_rid) {
-        allChecklists = allChecklists.filter((d: any) => d != null);
+        allActivities = allActivities.filter((d: any) => d != null);
       }
       const { displayNames } =
         await this.caseSchemaService.getAttachmentDisplayNames(
-          allChecklists,
+          allActivities,
           accountNumber
         );
       if (attachedToFilter) {
-        allChecklists = allChecklists.filter((attachment) => {
+        allActivities = allActivities.filter((attachment) => {
           let displayName =
             displayNames[attachment.rid] || String(attachment.attach_to) || "";
           const displayValue = displayName.toLowerCase();
@@ -761,28 +951,35 @@ class ActivitySchemaService {
 
       // 🔷 Sort
       const validSortFields = [
-        "r_number",
-        "attachment_level",
         "attached_to",
-        "created_datetime",
         "created_by_name",
-        "fiscal_year",
         "modified_by_name",
-        "modified_datetime",
-        "activity_type",
+         "effective_start_datetime",
+        "effective_end_datetime",
         "status_name",
-        "assigned_to_name",
+        "activity_type",
+         "r_number",
+        "attachment_level",
+        "effective_start_datetime",
+        "effective_end_datetime",
+        "created_datetime",
+        "fiscal_year",
+        "modified_datetime",
+        
+        "call_platform"
       ];
       const finalSortBy = validSortFields.includes(sortBy)
         ? sortBy
         : "created_datetime";
+      
       const finalSortOrder = ["ASC", "DESC"].includes(sortOrder.toUpperCase())
         ? sortOrder.toUpperCase()
         : "DESC";
 
-      allChecklists.sort((a, b) => {
+      allActivities.sort((a, b) => {
         // Special handling for created_datetime
-        if (finalSortBy === "created_datetime") {
+        if (finalSortBy === "created_datetime" ||
+            finalSortBy === "effective_start_datetime" || finalSortBy === "effective_end_datetime") {
           const aDate = new Date(a[finalSortBy]).getTime();
           const bDate = new Date(b[finalSortBy]).getTime();
           return finalSortOrder === "ASC" ? aDate - bDate : bDate - aDate;
@@ -819,7 +1016,7 @@ class ActivitySchemaService {
           ? aVal.localeCompare(bVal)
           : bVal.localeCompare(aVal);
       });
-      const paginatedAttachments = allChecklists;
+      const paginatedAttachments = allActivities;
 
       // 🔷 Map document types and users
       const userIds = [
@@ -842,7 +1039,7 @@ class ActivitySchemaService {
       ]);
       const userMap = new Map(users.map((u: any) => [u.rid, u.full_name]));
 
-      let checklists: any[];
+      let activities: any[];
       // Enhanced fiscal_year enrichment for all checklist types
       const getFiscalYearForChecklist = async (attachment: any) => {
         // CASE: fetch from Case model
@@ -911,7 +1108,7 @@ class ActivitySchemaService {
         return null;
       };
 
-      checklists = await Promise.all(
+      activities = await Promise.all(
         paginatedAttachments.map(async (attachment) => {
           const fiscal_year = await getFiscalYearForChecklist(attachment);
           return {
@@ -930,7 +1127,7 @@ class ActivitySchemaService {
         })
       );
       if (sortBy === "created_by_name") {
-        checklists.sort((a, b) => {
+        activities.sort((a, b) => {
           const aType = a.created_by_name || "";
           const bType = b.created_by_name || "";
           const aEmpty = !aType || aType.trim() === "";
@@ -947,7 +1144,7 @@ class ActivitySchemaService {
       }
 
       if (sortBy === "modified_by_name") {
-        checklists.sort((a, b) => {
+        activities.sort((a, b) => {
           const aType = a.modified_by_name || "";
           const bType = b.modified_by_name || "";
           const aEmpty = !aType || aType.trim() === "";
@@ -963,7 +1160,7 @@ class ActivitySchemaService {
         });
       }
        if (sortBy === "assigned_to_name") {
-        checklists.sort((a, b) => {
+        activities.sort((a, b) => {
           const aType = a.assigned_to_name || "";
           const bType = b.assigned_to_name || "";
           const aEmpty = !aType || aType.trim() === "";
@@ -978,67 +1175,61 @@ class ActivitySchemaService {
             : bType.localeCompare(aType);
         });
       }
-      if (createdByFilter) {
-        let filterValue;
-        checklists = checklists.filter((checklist) => {
-          const uploadedBy = checklist.created_by_name?.toLowerCase() || "";
-          const operator = Object.keys(createdByFilter)[0];
-          if (operator === "is_empty") filterValue = "";
-          else
-            filterValue = (
-              operator ? createdByFilter[operator] || "" : ""
-            ).toLowerCase();
-          switch (operator) {
-            case "contains":
-              return uploadedBy.includes(filterValue);
-            case "equals":
-              return uploadedBy === filterValue;
-            case "not_equals":
-              return uploadedBy !== filterValue;
-            case "is_empty":
-              return uploadedBy === null || uploadedBy === "";
-            default:
-              return false;
-          }
-        });
-      }
-      if (modifiedByFilter) {
-        let filterValue;
-        checklists = checklists.filter((checklist) => {
-          const uploadedBy = checklist.modified_by_name?.toLowerCase() || "";
-          const operator = Object.keys(modifiedByFilter)[0];
-          if (operator === "is_empty") filterValue = "";
-          else
-            filterValue = (
-              operator && modifiedByFilter[operator]
-                ? modifiedByFilter[operator]
-                : ""
-            ).toLowerCase();
-          switch (operator) {
-            case "contains":
-              return uploadedBy.includes(filterValue);
-            case "equals":
-              return uploadedBy === filterValue;
-            case "not_equals":
-              return uploadedBy !== filterValue;
-            case "is_empty":
-              return uploadedBy === null || uploadedBy === "";
-            default:
-              return false;
-          }
-        });
-      }
+      if (sortBy === "status_name") {
+        activities.sort((a, b) => {
+          const aType = a.status_name || "";
+          const bType = b.status_name || "";
+          const aEmpty = !aType || aType.trim() === "";
+          const bEmpty = !bType || bType.trim() === "";
 
-      const totalCount = checklists.length;
+          if (aEmpty && bEmpty) return 0;
+          if (aEmpty) return finalSortOrder === "ASC" ? 1 : -1;
+          if (bEmpty) return finalSortOrder === "ASC" ? -1 : 1;
+
+          return finalSortOrder === "ASC"
+            ? aType.localeCompare(bType)
+            : bType.localeCompare(aType);
+        });
+      }
+     function applyActivitiesFilter(array: any[], field: string, filterObj: { [x: string]: any; }) {
+    if (!filterObj || typeof filterObj !== 'object' || Array.isArray(filterObj)) return array;
+    const operator = Object.keys(filterObj)[0];
+    if (!operator) return array;
+    let filterValue = "";
+    if (operator === "is_empty") filterValue = "";
+    else filterValue = (filterObj[operator] ?? "").toString().toLowerCase();
+    return array.filter((item) => {
+        const value = (item[field] ?? "").toString().toLowerCase();
+        switch (operator) {
+            case "contains":
+                return value.includes(filterValue);
+            case "equals":
+                return value === filterValue;
+            case "not_equals":
+                return value !== filterValue;
+            case "is_empty":
+                return value === "";
+            default:
+                return false;
+        }
+    });
+}
+
+      activities = applyActivitiesFilter(activities, "created_by_name", createdByFilter);
+      activities = applyActivitiesFilter(activities, "modified_by_name", modifiedByFilter);
+      activities = applyActivitiesFilter(activities, "status_name", statusFilter);
+      activities = applyActivitiesFilter(activities, "assigned_to_name", assignedToFilter);
+
+      const totalCount = activities.length;
       if (apiType === "download") {
         return {
-          checklists,
+          activities,
           totalCount,
         };
       }
-      checklists = checklists.slice((page - 1) * limit, page * limit);
+      activities = activities.slice((page - 1) * limit, page * limit);
       return {
-        activities: checklists,
+        activities,
         totalCount,
       };
     } catch (err) {
@@ -1106,6 +1297,7 @@ class ActivitySchemaService {
             case 'r_number':
             case 'status_rid':
             case 'assigned_to':
+            case 'call_platform':
               switch (operator.toLowerCase()) {
                 case 'equals': condition[field] = { [Op.iLike]: value }; break;
                 case 'not_equals': condition[field] = { [Op.or]: [{ [Op.notILike]: value }, { [Op.is]: null }] }; break;          
@@ -1536,12 +1728,38 @@ class ActivitySchemaService {
     const { Activities, ActivityAttachments } =
       await this.caseModelService.getModels(accountNumber);
     if (!this.mainDbSequelize) {
-      this.mainDbSequelize = await this.caseModelService.getSequelize();
+      this.mainDbSequelize = await this.caseModelService.getMainSequelize();
     }
     const [emailStatus]: any[] = await this.mainDbSequelize.query(
       rawQueries.fetchActivityStatusByName(activityRequest.email_status,activityRequest.activity_type),
       { type: "SELECT" }
     );
+     let toEmailsArray: string[] = [];
+    let ccEmailsArray: string[] = [];
+    if (Array.isArray(activityRequest.to_email)) {
+    toEmailsArray = activityRequest.to_email;
+  } else if (typeof activityRequest.to_email === 'string') {
+    try {
+      toEmailsArray = JSON.parse(activityRequest.to_email);
+    } catch {
+      toEmailsArray = [];
+    }
+  }
+   if (Array.isArray(activityRequest.cc_email)) {
+    ccEmailsArray = activityRequest.cc_email;
+  } else if (typeof activityRequest.cc_email === 'string') {
+    try {
+      ccEmailsArray = JSON.parse(activityRequest.cc_email);
+    } catch {
+      ccEmailsArray = [];
+    }
+  }
+    activityRequest.cc_email = ccEmailsArray;
+    activityRequest.to_email = toEmailsArray;
+    
+    const existingActivity = await Activities.findOne({
+        where: { rid: activityRequest.activity_rid }
+      });
     if (activityRequest.email_status === "Sent") {
       await this.sendActivityEmail(
         accountNumber,
@@ -1553,6 +1771,8 @@ class ActivitySchemaService {
     const activityData = {
       ...activityRequest,
       activity_type: "Email",
+      modified_by: userId,
+      modified_datetime: new Date(),
       status_rid: emailStatus?.rid || null,
       account_rid:
         activityRequest.accountRid || activityRequest.account_rid || "",
@@ -1561,7 +1781,46 @@ class ActivitySchemaService {
     const response = await Activities.update(activityData, {
       where: { rid: activityRequest.activity_rid },
     });
+    if(activityData.deleted_file_ids !== undefined) {
+      if(activityData.deleted_file_ids.length > 0) {
+        const getAllDeletedFileIds : any[] = [...new Set(activityData.deleted_file_ids.map((d : any) => d))];
+        const findAllDeletedDetails = await ActivityAttachments.findAll({
+          attributes : ['rid', 'browse_url'],
+          where : {
+            rid : {
+              [Op.in] : getAllDeletedFileIds
+            }
+          },
+          raw : true
+        });
+        if(findAllDeletedDetails.length > 0) {
+          const mapAttachments = new Map(findAllDeletedDetails.map((f : any) => [f.rid, f.browse_url]));
+          let iterationCount = 0
+          let totalIteraction = activityData.deleted_file_ids.length;
+          for(let id of activityData.deleted_file_ids) {
+            await deleteFromAzureBlob(mapAttachments.get(id));
+            iterationCount += 1
+          }
+          if(totalIteraction === iterationCount) {
+            await ActivityAttachments.destroy({
+              where : {
+                rid : {
+                  [Op.in] : activityData.deleted_file_ids
+                }
+              }
+            });
+          }
+        }
+      }
+    }
     await this.uploadActivityFiles(files, activityRequest, accountNumber);
+    await this.addActivityHistory(
+        accountNumber,
+        activityRequest.activity_rid as string,
+        { ...activityRequest, modified_by: userId },
+        existingActivity,
+       activityTypes.email
+     );
     await this.addTaskTimeline(
       accountNumber,
       activityRequest.activity_rid,
@@ -1589,10 +1848,35 @@ class ActivitySchemaService {
       rawQueries.fetchActivityStatusByName(activityStatus.scheduled, activityRequest.activity_type),
       { type: "SELECT" }
     );
+    let meetingParticipants: string[] = [];
+    let reOccurenceDays: string[] = [];
+     if (Array.isArray(activityRequest.meeting_participants)) {
+    meetingParticipants = activityRequest.meeting_participants;
+  } else if (typeof activityRequest.meeting_participants === 'string') {
+    try {
+      meetingParticipants = JSON.parse(activityRequest.meeting_participants);
+    } catch {
+      meetingParticipants = [];
+    }
+  }
+   if (Array.isArray(activityRequest.recurrence_days)) {
+    reOccurenceDays = activityRequest.recurrence_days;
+  } else if (typeof activityRequest.recurrence_days === 'string') {
+    try {
+      reOccurenceDays = JSON.parse(activityRequest.recurrence_days);
+    } catch {
+      reOccurenceDays = [];
+    }
+  }
     const activityData = {
       ...activityRequest,
+      invited_by: userId,
       activity_type: activityRequest.activity_type,
+      effective_start_datetime: activityRequest.effective_start_date,
+      effective_end_datetime: activityRequest.effective_end_date,
       status_rid: meetingStatus?.rid || null,
+      meeting_participants: meetingParticipants,
+      recurrence_days: reOccurenceDays,
       account_rid:
         activityRequest.accountRid || activityRequest.account_rid || "",
     };
@@ -1609,12 +1893,20 @@ class ActivitySchemaService {
     if(!senderEmailInfo){
       throw new Error("Sender email information not found for scheduling meeting.");
     } 
+  
+   const [userInfo]: any[] = await this.mainDbSequelize.query(
+        rawQueries.fetchUserDetails(userId),
+        { type: "SELECT" }
+      );
 
-    let scheduleResponse =  await scheduleTeamsMeetingUtil(activityRequest, userId,senderEmailInfo);
+    let scheduleResponse =  await scheduleTeamsMeetingUtil(activityData, userInfo.email,senderEmailInfo);
     if(scheduleResponse.success)
     {
+      activityData.invited_by = userInfo.email;
       activityData.meeting_invite = scheduleResponse.webLink;
       activityData.meeting_id = scheduleResponse.meetingId;
+      activityData.effective_start_datetime = activityData.effective_start_date
+      activityData.effective_end_datetime = activityData.effective_end_date
       const response = await Activities.create(activityData);
       activityRequest.activity_rid = response.rid;
       await this.uploadActivityFiles(files, activityRequest, accountNumber);
@@ -1654,10 +1946,21 @@ class ActivitySchemaService {
       rawQueries.fetchActivityStatusByName(activityStatus.completed, activityRequest.activity_type),
       { type: "SELECT" }
     );
+    let callParticipants: string[] = [];
+    if (Array.isArray(activityRequest.call_participants)) {
+    callParticipants = activityRequest.call_participants;
+  } else if (typeof activityRequest.call_participants === 'string') {
+    try {
+      callParticipants = JSON.parse(activityRequest.call_participants);
+    } catch {
+      callParticipants = [];
+    }
+  }
     const activityData = {
       ...activityRequest,
       activity_type: "Call",
       status_rid: callStatus?.rid || null,
+      call_participants: callParticipants,
       account_rid:
         activityRequest.accountRid || activityRequest.account_rid || "",
     };
@@ -1683,19 +1986,74 @@ class ActivitySchemaService {
     userId: string,
     files?: Express.Multer.File[]
   ) {
-    const { Activities } =
+    const { Activities, ActivityAttachments } =
       await this.caseModelService.getModels(accountNumber);
     const activityData = {
       ...activityRequest,
       activity_type: "Call",
+      modified_by: userId,
+      modified_datetime: new Date(),
       account_rid:
         activityRequest.accountRid || activityRequest.account_rid || "",
     };
+    const existingActivity = await Activities.findOne({
+        where: { rid: activityRequest.activity_rid }
+      });
+     let callParticipants: string[] = [];
+    if (Array.isArray(activityRequest.call_participants)) {
+    callParticipants = activityRequest.call_participants;
+  } else if (typeof activityRequest.call_participants === 'string') {
+    try {
+      callParticipants = JSON.parse(activityRequest.call_participants);
+    } catch {
+      callParticipants = [];
+    }
+  }
+  activityData.call_participants = callParticipants;
 
     const response = await Activities.update(activityData, {
       where: { rid: activityRequest.activity_rid },
     });
+    if(activityData.deleted_file_ids !== undefined) {
+      if(activityData.deleted_file_ids.length > 0) {
+        const getAllDeletedFileIds : any[] = [...new Set(activityData.deleted_file_ids.map((d : any) => d))];
+        const findAllDeletedDetails = await ActivityAttachments.findAll({
+          attributes : ['rid', 'browse_url'],
+          where : {
+            rid : {
+              [Op.in] : getAllDeletedFileIds
+            }
+          },
+          raw : true
+        });
+        if(findAllDeletedDetails.length > 0) {
+          const mapAttachments = new Map(findAllDeletedDetails.map((f : any) => [f.rid, f.browse_url]));
+          let iterationCount = 0
+          let totalIteraction = activityData.deleted_file_ids.length;
+          for(let id of activityData.deleted_file_ids) {
+            await deleteFromAzureBlob(mapAttachments.get(id));
+            iterationCount += 1
+          }
+          if(totalIteraction === iterationCount) {
+            await ActivityAttachments.destroy({
+              where : {
+                rid : {
+                  [Op.in] : activityData.deleted_file_ids
+                }
+              }
+            });
+          }
+        }
+      }
+    }
     await this.uploadActivityFiles(files, activityRequest, accountNumber);
+    await this.addActivityHistory(
+        accountNumber,
+        activityRequest.activity_rid as string,
+        { ...activityRequest, modified_by: userId },
+        existingActivity,
+         activityTypes.call
+     );
     await this.addTaskTimeline(
       accountNumber,
       activityRequest.activity_rid,
@@ -1715,34 +2073,117 @@ class ActivitySchemaService {
     userId: string,
     files?: Express.Multer.File[]
   ) {
-    const { Activities } =
+    const { Activities, ActivityAttachments } =
       await this.caseModelService.getModels(accountNumber);
     if (!this.mainDbSequelize) {
-      this.mainDbSequelize = await this.caseModelService.getSequelize();
+      this.mainDbSequelize = await this.caseModelService.getMainSequelize();
     }
     const [meetingStatus]: any[] = await this.mainDbSequelize.query(
       rawQueries.fetchActivityStatusByName(activityRequest.meeting_status, activityRequest.activity_type),
       { type: "SELECT" }
     );
+      let meetingParticipants: string[] = [];
+    let reOccurenceDays: string[] = [];
+     if (Array.isArray(activityRequest.meeting_participants)) {
+    meetingParticipants = activityRequest.meeting_participants;
+  } else if (typeof activityRequest.meeting_participants === 'string') {
+    try {
+      meetingParticipants = JSON.parse(activityRequest.meeting_participants);
+    } catch {
+      meetingParticipants = [];
+    }
+  }
+   if (Array.isArray(activityRequest.recurrence_days)) {
+    reOccurenceDays = activityRequest.recurrence_days;
+  } else if (typeof activityRequest.recurrence_days === 'string') {
+    try {
+      reOccurenceDays = JSON.parse(activityRequest.recurrence_days);
+    } catch {
+      reOccurenceDays = [];
+    }
+  }
     const activityData = {
       ...activityRequest,
       activity_type: "Meeting",
+      effective_start_datetime: activityRequest.effective_start_date,
+      effective_end_datetime: activityRequest.effective_end_date,
       meeting_status_rid: meetingStatus?.rid || null,
+      meeting_participants: meetingParticipants,
+      modified_by: userId,
+      modified_datetime: new Date(),
+      recurrence_days: reOccurenceDays,
       account_rid:
         activityRequest.accountRid || activityRequest.account_rid || "",
     };
+    const existingActivity = await Activities.findOne({
+        where: { rid: activityRequest.activity_rid },
+        raw: true
+      });
 
     const response = await Activities.update(activityData, {
       where: { rid: activityRequest.activity_rid },
     });
+    if(activityData.deleted_file_ids !== undefined) {
+      if(activityData.deleted_file_ids.length > 0) {
+        const getAllDeletedFileIds = [...new Set(activityData.deleted_file_ids.map((d : any) => d))];
+        const findAllDeletedDetails = await ActivityAttachments.findAll({
+          attributes : ['rid', 'browse_url'],
+          where : {
+            rid : {
+              [Op.in] : getAllDeletedFileIds
+            }
+          },
+          raw : true
+        });
+        if(findAllDeletedDetails.length > 0) {
+          const mapAttachments = new Map(findAllDeletedDetails.map((f : any) => [f.rid, f.browse_url]));
+          let iterationCount = 0
+          let totalIteraction = activityData.deleted_file_ids.length;
+          for(let id of activityData.deleted_file_ids) {
+            await deleteFromAzureBlob(mapAttachments.get(id));
+            iterationCount += 1
+          }
+          if(totalIteraction === iterationCount) {
+            await ActivityAttachments.destroy({
+              where : {
+                rid : {
+                  [Op.in] : activityData.deleted_file_ids
+                }
+              }
+            });
+          }
+        }
+      }
+    }
     await this.uploadActivityFiles(files, activityRequest, accountNumber);
+  if(existingActivity != null) {
+    const startDate =
+      existingActivity.effective_start_datetime !== null
+        ? moment.utc(existingActivity.effective_start_datetime).format("YYYY-MM-DD")
+        : null;
+    const endDate =
+      existingActivity.effective_end_datetime !== null
+        ? moment.utc(existingActivity.effective_end_datetime).format("YYYY-MM-DD")
+        : null;
+    await this.addActivityHistory(
+      accountNumber,
+      activityRequest.activity_rid as string,
+      { ...activityData, modified_by: userId },
+      {
+        ...existingActivity,
+        effective_start_datetime: startDate,
+        effective_end_datetime: endDate,
+      },
+      activityTypes.meeting
+    );
+  }
     await this.addTaskTimeline(
       accountNumber,
       activityRequest.activity_rid,
       activityRequest.account_rid!,
-      `Meeting Activity updated with subject: ${activityRequest}`,
+      `Meeting Activity updated with subject: ${activityRequest.subject}`,
       userId,
-      `Meeting Activity updated: ${activityRequest}`,
+      `Meeting Activity updated: ${activityRequest.subject}`,
       "success",
       activityRequest.activity_rid
     );
@@ -1963,7 +2404,7 @@ class ActivitySchemaService {
     );
 
     const [statusInfo]: any[] = await this.mainDbSequelize.query(
-      rawQueries.getStatusDetails(emailDetails?.status_rid ?? ""),
+      rawQueries.getActivityStatusDetails(emailDetails?.status_rid, emailDetails?.activity_type ?? ""),
       {
         type: "SELECT",
       }
@@ -2005,8 +2446,8 @@ class ActivitySchemaService {
       activity_type: emailDetails?.activity_type ?? "",
       subject: emailDetails?.subject ?? "",
       body_html: emailDetails?.body_html ?? "",
-      to_email: emailDetails?.to_email ,
-      cc_emails: emailDetails?.cc_emails,
+      to_email: emailDetails?.to_email || [],
+      cc_emails: emailDetails?.cc_email || [],
       email_status: emailDetails?.email_status ?? "",
       r_number: emailDetails.r_number ?? "",
       status_rid: emailDetails.status_rid ?? "",
@@ -2109,7 +2550,7 @@ class ActivitySchemaService {
       meeting_url: emailDetails?.meeting_url ?? "",
       meeting_id: emailDetails?.meeting_id ?? "",
       meeting_participants: emailDetails?.meeting_participants
-        ? emailDetails.meeting_participants.split(";")
+        ? emailDetails.meeting_participants
         : [],
       r_number: emailDetails.r_number ?? "",
       status_rid: emailDetails.status_rid ?? "",
@@ -2121,6 +2562,15 @@ class ActivitySchemaService {
       created_datetime: emailDetails.created_datetime ?? null,
       modified_datetime: emailDetails.modified_datetime ?? null,
       attachments: attachmentsDetails || [],
+      effective_start_datetime:emailDetails.effective_start_datetime ?? null,
+      effective_end_datetime:emailDetails.effective_end_datetime ?? null, 
+      efective_start_time: emailDetails.effective_start_time ?? null,
+      efective_end_time: emailDetails.effective_end_time ?? null,
+      recurrence_days: emailDetails.recurrence_days ? emailDetails.recurrence_days: [],
+      recurrence_interval: emailDetails.recurrence_interval ?? null,
+      recurrence_type: emailDetails.recurrence_type ?? null,
+      recurrence_day_of_month: emailDetails.recurrence_day_of_month ?? null,
+      recurrence_monthly_index: emailDetails.recurrence_monthly_index ?? null,
     };
 
     return response;
@@ -2209,7 +2659,7 @@ class ActivitySchemaService {
       activity_rid: emailDetails?.rid,
       activity_type: emailDetails?.activity_type ?? "",
       subject: emailDetails?.subject ?? "",
-      call_participants: emailDetails?.call_participants ? emailDetails.call_participants.split(";") : [],
+      call_participants: emailDetails?.call_participants ? emailDetails.call_participants : [],
       caller_id: emailDetails?.caller_id ?? "",
       minutes_of_meeting: emailDetails?.minutes_of_meeting ?? "",
       call_platform: emailDetails?.call_platform ?? "",
@@ -2222,6 +2672,8 @@ class ActivitySchemaService {
       created_by: userInfo.created_name ?? emailDetails.created_by,
       created_datetime: emailDetails.created_datetime ?? null,
       modified_datetime: emailDetails.modified_datetime ?? null,
+      effective_start_datetime:emailDetails.effective_start_datetime ?? null,
+      effective_end_datetime:emailDetails.effective_end_datetime ?? null,
       attachments: attachmentsDetails || [],
     };
 
@@ -2256,18 +2708,18 @@ class ActivitySchemaService {
     }
   }
 
-   async getEmailStatus() {
+   async getActivityStatus(activityType:string) {
       if (!this.mainDbSequelize) {
         this.mainDbSequelize = await this.caseModelService.getMainSequelize();
       }
-      const emailStatus = await this.mainDbSequelize.query(
-        rawQueries.getEmailStatus(),
+      const activityStatus = await this.mainDbSequelize.query(
+        rawQueries.getActivityStatus(activityType),
         {
           type: "SELECT",
         }
       );
   
-      return emailStatus;
+      return activityStatus;
     }
   /**
    * Reusable function to fetch fiscal_year based on attachment level and attachTo
@@ -2387,5 +2839,74 @@ class ActivitySchemaService {
     }
     return null;
   }
+
+   async addActivityHistory(
+      accountNumber: string,
+      activityId: string,
+      newCaseData: any,
+      existingCaseData: any,
+      activityType?: string
+    ) {
+      try {
+        const { ActivityHistory } = await this.caseModelService.getModels(
+          accountNumber
+        );
+  
+        const excludedFields = [
+          "created_by",
+          "modified_by",
+          "activity_rid",
+          "account_rid",
+          "modified_datetime",
+        ];
+  
+        const cleanedNewData = Object.fromEntries(
+          Object.entries(newCaseData).filter(
+            ([key]) => !excludedFields.includes(key)
+          )
+        );
+  
+        const historyChanges = Object.entries(cleanedNewData)
+          .filter(([key, newValue]) => {
+            const oldValue = existingCaseData[key];
+           
+            if (newValue == null && oldValue == null) return false;
+  
+            if (typeof newValue === "number" || typeof oldValue === "number") {
+              return Number(newValue) !== Number(oldValue);
+            }
+  
+            return String(newValue ?? "") !== String(oldValue ?? "");
+          })
+          .map(([key, newValue]) => ({
+            account_rid: newCaseData["account_rid"],
+            activity_rid: activityId,
+            attribute_name: key,
+            old_value:
+              existingCaseData[key] !== null &&
+              existingCaseData[key] !== undefined
+                ? String(existingCaseData[key])
+                : "",
+            new_value:
+              newValue !== null && newValue !== undefined ? String(newValue) : "",
+            created_by: newCaseData["modified_by"],
+            activity_type: activityType || newCaseData["activity_type"] || "",
+          }));
+  
+        if (historyChanges.length === 0) return;
+
+  
+        // Use individual create operations to avoid sequence conflicts
+        for (const historyChange of historyChanges) {
+          await ActivityHistory.create(historyChange);
+        }
+      } catch (err) {
+        logMessage(`Error updating activity history : ${JSON.stringify(err)}`);
+        errorLog("Error updating activity history : " + (err as Error).message);
+        throw new Error(
+          "Error updating activity history : " + (err as Error).message
+        );
+      }
+    }
 }
 export default ActivitySchemaService;

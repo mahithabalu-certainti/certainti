@@ -366,6 +366,11 @@ export const rawQueries = {
     return `
     SELECT rid, project_rid FROM ${schemaName}.project_fiscal WHERE account_rid = '${accountRid}' and status_rid='${status_rid}'`;
   },
+  fetchProjectsByCase(caseRid: string, schemaName: string) {
+    return `
+    SELECT a.project_fiscal_rid FROM ${schemaName}.case_projects as a WHERE a.case_rid = '${caseRid}'
+    `
+    },
   updateQreInfo(rid: string, schemaName: string, qrePercent: number, data: any) {
     return `
       UPDATE ${schemaName}.project_fiscal

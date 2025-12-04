@@ -2267,10 +2267,10 @@ export const rawQueries = {
   },
   getActivityAttachmentsSequenceQuery(schemaName: string): string {
     return `
-      CREATE SEQUENCE IF NOT EXISTS "${schemaName}".activities_attachments_seq START 1;
+      CREATE SEQUENCE IF NOT EXISTS "${schemaName}".activity_attachments_seq START 1;
     `;
   },
-  getCreateInteractionsTableQuery(schemaName: string): string {
+   getCreateInteractionsTableQuery(schemaName: string): string {
     return `
       CREATE TABLE IF NOT EXISTS "${schemaName}".interactions (
         rid VARCHAR(50) DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
@@ -2314,6 +2314,57 @@ export const rawQueries = {
       );
     `;
   },
+  getCreateActivityHistorySequenceQuery(schemaName: string): string {
+    return `
+      CREATE SEQUENCE IF NOT EXISTS "${schemaName}".activity_history_seq START 1;
+    `;
+  },
+   getCreateTaskHistorySequenceQuery(schemaName: string): string {
+    return `
+      CREATE SEQUENCE IF NOT EXISTS "${schemaName}".task_history_seq START 1;
+    `;
+  },
+  getCreateActivityHistoryTableQuery(schemaName: string): string {
+    return `
+      CREATE TABLE IF NOT EXISTS "${schemaName}".activity_history (
+        rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+        r_number VARCHAR(20) UNIQUE DEFAULT 'ACH-' || LPAD(nextval('"${schemaName}".activity_history_seq')::TEXT, 10, '0'),
+        created_by varchar(50) NOT NULL,
+        modified_by varchar(50),
+        created_datetime TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+        modified_datetime TIMESTAMP WITH TIME ZONE,
+        account_rid varchar(50) NOT NULL,
+        activity_rid varchar(50) NOT NULL,
+        activity_type varchar(50),
+        attribute_name VARCHAR(100) NOT NULL,
+        old_value VARCHAR(2000),
+        new_value VARCHAR(2000)
+      );
+    `;
+  },
+   getCreateTaskHistoryTableQuery(schemaName: string): string {
+    return `
+      CREATE TABLE IF NOT EXISTS "${schemaName}".task_history (
+        rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+        r_number VARCHAR(20) UNIQUE DEFAULT 'TCH-' || LPAD(nextval('"${schemaName}".task_history_seq')::TEXT, 10, '0'),
+        created_by varchar(50) NOT NULL,
+        modified_by varchar(50),
+        created_datetime TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+        modified_datetime TIMESTAMP WITH TIME ZONE,
+        task_rid varchar(50) NOT NULL,
+        attribute_name VARCHAR(100) NOT NULL,
+        old_value VARCHAR(2000),
+        new_value VARCHAR(2000)
+      );
+    `;
+  },
+  getAlterActivityHistoryForeignKeysQuery(schemaName: string): string {
+    return `
+      ALTER TABLE "${schemaName}".activity_history
+      ADD CONSTRAINT activity_history_activity_rid_fkey
+      FOREIGN KEY (activity_rid) REFERENCES "${schemaName}".activities(rid) ON UPDATE CASCADE;
+    `;
+  },
   getCreateChecklistTableQuery(schemaName: string): string {
     return `
       CREATE TABLE IF NOT EXISTS "${schemaName}".checklists (
@@ -2330,9 +2381,10 @@ export const rawQueries = {
         checklist_template_rid character varying(50) NOT NULL,
         checklist_name character varying(255) NOT NULL,
         checklist_description character varying(2000),
+        case_rid character varying(50),
         assigned_to character varying(50),
         status_rid character varying(50),
-        CONSTRAINT checklists_rid_unique UNIQUE (rid)
+        CONSTRAINT checklists_rid_unique UNIQUE (rid),
           CONSTRAINT checklists_pkey PRIMARY KEY (rid),
     CONSTRAINT checklists_r_number_key UNIQUE (r_number),
     CONSTRAINT checklists_account_rid_fkey FOREIGN KEY (account_rid)
@@ -2357,40 +2409,44 @@ export const rawQueries = {
     activity_type character varying(50),
     fiscal_year integer,
     status_rid character varying(50),
-    effective_start_datetime timestamp without time zone,
-    effective_end_datetime timestamp without time zone,
+    effective_start_datetime timestamp with time zone,
+    effective_end_datetime timestamp with time zone,
     subject character varying(255),
     body_html text,
     to_email json,
     cc_email json,
     description text,
-    email_sent_datetime timestamp without time zone,
     priority_rid character varying(50),
     assigned_to character varying(50),
     task_name character varying(255),
     task_template_rid character varying(50),
-    remainder_interval integer,
-    task_repeat_frequency character varying(50),
-    event_url character varying(255),
-    event_code character varying(50),
-    event_password character varying(50),
-    transcript text,
-    event_platform character varying(50),
-    event_time character varying(50),
-    invitees_list text,
     attendees_list text,
-    minutes_of_meeting text,
     sender_email character varying(255),
     meeting_participants json,
+    meeting_invite text,
+    meeting_id character varying(255),
+    call_platform character varying(255),
+    minutes_of_meeting text,
+    caller_id character varying(50),
+    call_participants json,
+    recurrence_days json,
+    recurrence_interval integer,
+    recurrence_type character varying(50),
+    time_zone character varying(50),
+    effective_start_time character varying(50),
+    effective_end_time character varying(50),
+    invited_by character varying(50),
+    recurrence_day_of_month integer,
+    recurrence_monthly_index character varying(50),
     CONSTRAINT activities_pkey PRIMARY KEY (rid)
       );
     `;
   },
   getCreateActivityAttachmentsTableQuery(schemaName: string): string {
     return `
-      CREATE TABLE IF NOT EXISTS "${schemaName}".activities_attachments (
+      CREATE TABLE IF NOT EXISTS "${schemaName}".activity_attachments (
         rid VARCHAR(50) DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
-        r_number VARCHAR(20) UNIQUE DEFAULT 'ACT-' || LPAD(nextval('"${schemaName}".activities_attachments_seq')::TEXT, 10, '0'),
+        r_number VARCHAR(20) UNIQUE DEFAULT 'ACT-' || LPAD(nextval('"${schemaName}".activity_attachments_seq')::TEXT, 10, '0'),
     created_by character varying(50) NOT NULL,
     modified_by character varying(50),
     created_datetime timestamp without time zone NOT NULL DEFAULT now(),
@@ -2399,7 +2455,7 @@ export const rawQueries = {
     activity_rid character varying(50) NOT NULL,
     browse_file character varying(2000),
     size character varying(50),
-    document_name character varying(64),
+    document_name character varying(255),
     format character varying(50),
     is_file_deleted boolean DEFAULT false,
     CONSTRAINT activity_attachments_pkey PRIMARY KEY (rid),
@@ -2469,7 +2525,7 @@ export const rawQueries = {
         checklist_item_name character varying(255) NOT NULL,
         checklist_item_description character varying(2000),
         status_rid character varying(50),
-        CONSTRAINT checklist_items_pkey UNIQUE (rid)
+        CONSTRAINT checklist_items_pkey UNIQUE (rid),
         CONSTRAINT checklist_items_account_rid_fkey FOREIGN KEY (account_rid)
         REFERENCES ${schemaName}.account_details (account_rid) MATCH SIMPLE
         ON UPDATE CASCADE
@@ -2974,11 +3030,10 @@ export const rawQueries = {
         FOREIGN KEY (account_rid)
         REFERENCES "${schemaName}".account_details(account_rid)
         ON DELETE SET NULL;
-  
       ALTER TABLE "${schemaName}".otp_entries_history
         ADD CONSTRAINT fk_otp_entries_history_interaction_rid
-        FOREIGN KEY (interaction_rid, project_fiscal_rid)
-        REFERENCES "${schemaName}".interactions(rid, project_fiscal_rid)
+        FOREIGN KEY (interaction_rid)
+        REFERENCES "${schemaName}".interactions(rid)
         ON DELETE SET NULL;
     `;
   },
@@ -3029,6 +3084,34 @@ export const rawQueries = {
       );
     `;
   },
+  getCreateJurisdictionTableQuery(schemaName: string): string {
+    return `
+      CREATE TABLE IF NOT EXISTS "${schemaName}".jurisdictions
+      (
+        rid character varying(50) NOT NULL DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+        created_by character varying(50) NOT NULL,
+        modified_by character varying(50),
+        created_datetime timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        modified_datetime timestamp with time zone,
+        entity_rid character varying(50) NOT NULL,
+        is_federal_level boolean NOT NULL DEFAULT false,
+        is_state_level boolean NOT NULL DEFAULT false,
+        states text[],
+        level character varying(50) NOT NULL,
+        CONSTRAINT jurisdictions_pkey PRIMARY KEY (rid)
+      )
+    `;
+  },
+  getCreateJurisdictionsIndexes(schemaName: string): string[] {
+    const fieldsToIndex = [
+      "entity_rid",
+    ];
+  
+    return fieldsToIndex.map(field => `
+      CREATE INDEX IF NOT EXISTS "idx_jurisdictions_${field}"
+      ON "${schemaName}"."jurisdictions"("${field}");
+    `);
+  },
   getCreateNotesIndexes(schemaName: string): string[] {
     const fieldsToIndex = [
       "r_number",
@@ -3051,6 +3134,30 @@ export const rawQueries = {
       CREATE INDEX IF NOT EXISTS "${schemaName}_notes_${field}_idx"
       ON "${schemaName}"."notes"("${field}");
     `);
+  },
+   getCreateAccountTimelineSequenceQuery(schemaName: string): string {
+    return `
+      CREATE SEQUENCE IF NOT EXISTS "${schemaName}".account_timeline_seq START 1;
+    `;
+  },
+  getCreateAccountTimelineTableQuery(schemaName: string): string {
+    return `
+      CREATE TABLE IF NOT EXISTS "${schemaName}".account_timeline (
+        rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+        r_number VARCHAR(20) UNIQUE DEFAULT ('ACT-' || LPAD(nextval('"${schemaName}".account_timeline_seq')::TEXT, 10, '0')),
+        created_by VARCHAR(50) NOT NULL,
+        modified_by VARCHAR(50),
+        document_name VARCHAR(255) NULL,
+        title VARCHAR(64) NOT NULL,
+        attach_to VARCHAR(50) NOT NULL,
+        attachment_level VARCHAR(50) NOT NULL,
+        event_type VARCHAR(50) NOT NULL,
+        event_status VARCHAR(50) NOT NULL,
+        event_name VARCHAR(255),
+        event_datetime TIMESTAMPTZ NOT NULL,
+        descriptions VARCHAR(2000)
+      );
+    `;
   },
   getCreateNotesTimelineSequenceQuery(schemaName: string): string {
     return `
@@ -3097,6 +3204,13 @@ export const rawQueries = {
     return `
       CREATE INDEX IF NOT EXISTS "${indexName}"
       ON "${schemaName}"."project_history"("${field}");
+    `;
+  },
+   getActivityHistoryIndexQuery(schemaName: string, field: string): string {
+    const indexName = `${schemaName}_activity_history_${field}_idx`;
+    return `
+      CREATE INDEX IF NOT EXISTS "${indexName}"
+      ON "${schemaName}"."activity_history"("${field}");
     `;
   },
   getProjectFiscalRegionIndexQuery(schemaName: string, field: string): string {
@@ -3225,6 +3339,14 @@ export const rawQueries = {
       ON "${schemaName}"."interaction_history"("${field}");
     `;
   },
+  getTaskHistoryIndexQuery(schemaName: string, field: string): string {
+    const indexName = `${schemaName}_task_history_${field}_idx`;
+    return `
+      CREATE INDEX IF NOT EXISTS "${indexName}"
+      ON "${schemaName}"."task_history"("${field}");
+    `;
+  },
+  
   getAiTechnicalSummaryIndexQuery(schemaName: string, field: string): string {
     const indexName = `${schemaName}_ai_technical_summary_${field}_idx`;
     return `

@@ -5,9 +5,10 @@ import { CaseManagementSchemaService } from "./schemaService";
 import { HttpStatus, rawQueries, STATUS_MESSAGE } from "../../utils/constants";
 import { logMessage, setTaskTemplateData } from "../../utils/helpers";
 import CaseSchemaService from "../cases/schemaService";
-import { AdminTaskTemplatePayloadType, AdminTaskTemplateResponseTypes, caseStatusType, checkListTypes, CreateTaskTemplateType, ICreateChecklist, ICreateChecklistTemplate, ICreateEmailTemplate, MilestoneTypes, priorityTypes, TaskCategoryType, UpdateTaskTemplateType, WeightageType } from "../../utils/types";
+import { AdminTaskTemplatePayloadType, AdminTaskTemplateResponseTypes, caseStatusType, checkListTypes, CreateTaskTemplateType, ICreateChecklist, ICreateChecklistTemplate, ICreateEmailTemplate, MilestoneTypes, priorityTypes, TaskCategoryType, TaskType, UpdateTaskTemplateType, WeightageType } from "../../utils/types";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { fetchAdminTemplates, fetchTaskWeightage } from "../../utils/rawQueries";
+import { TaskTemplate } from "../../models/caseTaskTemplateModel";
 
 /**
  * Service class for managing case-related operations including case creation,
@@ -118,7 +119,6 @@ export class CaseManagementService {
         },
       };
     } catch (err) {
-      console.log(err);
       logMessage(`Error creating admin checklist: ${err}`);
       await transaction.rollback();
       return {
@@ -175,7 +175,7 @@ export class CaseManagementService {
         return {
           statusCode: HttpStatus.BAD_REQUEST,
           message: HttpStatus.BAD_REQUEST_MESSAGE,
-          errorMessage: `A template with the name "${caseRequest.checklist_name}" . Please choose a different name.`,
+          errorMessage: `A checklist template with the name "${caseRequest.checklist_name}" already exists . Please choose a different name.`,
         };
       }
     }
@@ -196,7 +196,6 @@ export class CaseManagementService {
 
       // Commit the transaction after all operations succeed
       await transaction.commit();
-
       return {
         statusCode: HttpStatus.SUCCESS,
         message: STATUS_MESSAGE.adminChecklistCreated,
@@ -436,6 +435,34 @@ export class CaseManagementService {
       }  
     }
   }
+
+  async listEmailTemplatesByCategory (
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { emailTemplates: any; };
+  }> {
+    const result = await this.caseManangementSchemaService.listEmailTemplatesByCategory();
+    if (result != null) {
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          emailTemplates: result
+        },
+      };
+    } else {
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.NOT_FOUND_MESSAGE,
+        data: {
+          emailTemplates: []
+        },
+      };
+    }
+  }
+     
   async updateTaskTemplate (data : UpdateTaskTemplateType, userId : string)  {
     const result = await this.caseManangementSchemaService.updateTaskTemplate(data, userId);
     if(result?.statusCode == HttpStatus.SUCCESS) {
@@ -491,6 +518,19 @@ export class CaseManagementService {
       }
       const setData = setTaskTemplateData(isTaskExists, data, data.userId)
       if(setData.length > 0) {
+        if(data.status_rid) {
+          if(data.status_rid !== isTaskExists.status_rid) {
+            const getAllStatus : any = await mainDb.query(rawQueries.getActiveStatusId());
+            const statusMap = new Map(getAllStatus[0].map((d : any) => [d.rid, d.status_name]));
+            if(statusMap.get(data.status_rid) === 'In-Active') {
+              const findTaskAfterDeleteData : any = await mainDb.query(rawQueries.fetchTaskBasedOnSequence(isTaskExists.sequence_no!, isTaskExists.milestone_template_rid!));
+              await this.caseManangementSchemaService.updateSequenceForInactive(findTaskAfterDeleteData)
+            } else {
+              const findTaskAfterDeleteData : any = await mainDb.query(rawQueries.fetchTaskBasedOnSequenceForActive(isTaskExists.sequence_no!, isTaskExists.milestone_template_rid!, isTaskExists.rid));
+              await this.caseManangementSchemaService.updateSequenceForActive(findTaskAfterDeleteData)
+            }
+          }
+        }
         const result : any = await mainDb.query(rawQueries.updateTaskTemplate(setData, data.rid));
         if(result[1].rowCount == 1) {
           const responsePayload : AdminTaskTemplatePayloadType = {
@@ -997,9 +1037,20 @@ async listEmailTemplates (
     return result;
   }
   async adminTaskListForDropdown (data : any) {
-    const result = await this.caseManangementSchemaService.listTasksDropdown(data);
-    if(result.length > 0) return result
-    else return []
+    const mainDb = await this.getMainDb();
+    let result = await this.caseManangementSchemaService.listTasksDropdown(data);
+    if(result.length > 0) {
+    const storeTypeIds = [...new Set(result.map((d : TaskTemplate) => d.task_type_rid))];
+    const findTaskType = mainDb.query<TaskType>(rawQueries.getTaskTypes(storeTypeIds)!, {type : QueryTypes.SELECT});
+    const mapType = new Map((await findTaskType).map((d : TaskType) => [d.rid, d.task_type_name]));
+    result = result.map((d : any) => {
+      return {
+        ...d,
+        task_type_name : mapType.get(d.task_type_rid)
+      }
+    })
+    return result;
+    } else return []
   }
 
   async getWeightageList () {

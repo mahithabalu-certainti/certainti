@@ -4,7 +4,7 @@ import { Tags } from "../../models/tagsModel";
 import { TaskCollaborators } from "../../models/taskCollaboratorsModel";
 import { TaskComments } from "../../models/taskCommentsModel";
 import { TaskTag } from "../../models/taskTagsModel";
-import { AddCommentsType, AdminTaskTemplatePayloadType, CaseTaskQueryType, CreateCaseTaskType, CreateTaskTemplateType, ICreateCases, ICreateCaseTeam, ICreateChecklist, ICreateChecklistTemplate, ICreateEmailTemplate, MilestoneResponse, UpdateCaseTaskType, UpdateTaskTemplateType, UpdateCommentsType, DeleteCommentsType, CommentsListType, ActivityType, TaskCardDetailsType, priorityTypes, caseTaskStatusTypes, WorkflowConnectorType, CaseTaskWorkFlowCreate, CaseTaskWorkFlowDelete, IActivityTask, IActivityEmail, IActivityMeeting, IActivityCall, WeightageType, TaskCategoryType } from "../../utils/types";
+import { AddCommentsType, AdminTaskTemplatePayloadType, CaseTaskQueryType, CreateCaseTaskType, CreateTaskTemplateType, ICreateCases, ICreateCaseTeam, ICreateChecklist, ICreateChecklistTemplate, ICreateEmailTemplate, MilestoneResponse, UpdateCaseTaskType, UpdateTaskTemplateType, UpdateCommentsType, DeleteCommentsType, CommentsListType, ActivityType, TaskCardDetailsType, priorityTypes, caseTaskStatusTypes, WorkflowConnectorType, CaseTaskWorkFlowCreate, CaseTaskWorkFlowDelete, IActivityTask, IActivityEmail, IActivityMeeting, IActivityCall, WeightageType, TaskCategoryType, CaseTaskDropdownType } from "../../utils/types";
 
 export interface ICaseService {
   createCase(
@@ -253,7 +253,8 @@ getReviewProjects(
 sentReviewProjects(
   data: any, 
   filters: Record<string, any>,
-  userId:string
+  userId:string,
+  files? : Express.Multer.File[]
 ): Promise<{
   statusCode: number;
   message: string;
@@ -275,7 +276,6 @@ deleteLinkTask (data : CaseTaskWorkFlowCreate) : Promise<{
     statusCode: number;
     statusMessage: string;
 } | undefined>
-taskListForDropdownAccountLevel (data : any) : Promise<CaseTask[]>
 deleteTagsAccountLevel (data : any) : Promise<{
     statusCode: number;
     statusMessage: string;
@@ -288,6 +288,7 @@ updateChecklistItemsStatus (data : any) : Promise<{
     statusCode: number;
     statusMessage: string;
 }>
+getTaskDropDownForDependencyMapping(data : any) : Promise<CaseTaskDropdownType[]>
 }
 
 export interface ICaseManagementService {
@@ -334,6 +335,15 @@ export interface ICaseManagementService {
     message: string;
     errorMessage?: string;
     data?: { emailTemplates: any; count: number };
+  }>;
+   listEmailTemplatesByCategory(
+    data: any,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { emailTemplates: any;};
   }>;
   updateAdminCheckList(
     checklistRequest: ICreateChecklistTemplate,
@@ -434,7 +444,16 @@ export interface IActivityService {
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { cases: any };
+    data?: { task: any };
+  }>;
+  updateActivityTask(
+    taskRequest: IActivityTask,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { task: any };
   }>;
    getAllActivities(
     userId: string,
@@ -524,11 +543,11 @@ export interface IActivityService {
     errorMessage?: string;
     data?: { activityDetails: any };
   }>;
-   getEmailStatus(): Promise<{
+   getActivityStatus(activityType: string): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { emailStatus: any };
+    data?: { activityStatus: any };
   }>;
 }
 

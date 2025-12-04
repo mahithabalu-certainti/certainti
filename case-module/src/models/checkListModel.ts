@@ -18,7 +18,7 @@ interface CheckListAttributes {
   checklist_description?: string;
   assigned_to?: string;
   status_rid?: string;
-  task_rid? : string
+  case_rid? : string
 }
 
 export interface CheckListCreationAttributes
@@ -43,7 +43,7 @@ export class CheckList
   public checklist_description?: string;
   public assigned_to?: string;
   public status_rid?: string;
-  public task_rid? : string
+  public case_rid? : string
 
   static initialize(
     sequelize: Sequelize,
@@ -89,7 +89,7 @@ export class CheckList
         checklist_description: { type: DataTypes.TEXT, allowNull: true },
         assigned_to: { type: DataTypes.STRING(50), allowNull: true },
         status_rid: { type: DataTypes.STRING(50), allowNull: true },
-        task_rid : { type: DataTypes.STRING(50), allowNull: true }
+        case_rid : { type: DataTypes.STRING(50), allowNull: true }
       },
       {
         sequelize,

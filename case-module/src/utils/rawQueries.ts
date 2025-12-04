@@ -10,16 +10,14 @@ import {
 export const fetchCasesHeadersDatas = (schemaName: string, caseRid: string) => {
   let   query = `
     WITH fetch_fiscal_year AS (
-    SELECT fiscal_year, account_rid FROM ${schemaName}.cases where rid = '${caseRid}'
+    SELECT project_fiscal_rid FROM ${schemaName}.case_projects where case_rid = '${caseRid}'
     ),
     fetch_project_count_cost AS (
     SELECT COALESCE(COUNT(pf.rid), 0) AS total_projects, COALESCE(SUM(pf.total_cost_prj), 0.00) AS total_project_cost
     FROM ${schemaName}.project_fiscal pf
     CROSS JOIN fetch_fiscal_year f
     WHERE
-    pf.account_rid = f.account_rid
-    AND
-    pf.fiscal_year = f.fiscal_year
+    rid = f.project_fiscal_rid
     )
 
     SELECT c.rid, c.account_rid, ad.account_name, c.case_name, c.filing_type_rid,
@@ -27,7 +25,7 @@ export const fetchCasesHeadersDatas = (schemaName: string, caseRid: string) => {
     f.total_project_cost AS case_total_project_cost, c.case_total_rd_cost, c.case_total_qre_cost,c.case_completion_percentage,c.case_total_qualified_project_cost,
     c.planned_submission_date, c.statutory_submission_date, c.case_startdate,
     c.description, c.r_number, c.created_by, c.modified_by, c.created_datetime,
-    c.modified_datetime
+    c.modified_datetime, c.total_nonlabor_cost, c.heat_light_power,c.tax_liability
 
     FROM
     ${schemaName}.cases c
@@ -58,7 +56,7 @@ export const fetchProjectsForCases = (
   isExport : boolean
 ) => {
   let pagination : string = ``
-  if(isExport) {
+  if(!isExport) {
     const offset = (page - 1) * limit;
     pagination = `LIMIT ${limit} OFFSET ${offset}`;
   } else {
@@ -276,7 +274,7 @@ export const fetchProjectsForCases = (
     ), 
 
     fetch_projects AS (
-    SELECT pf.rid, pf.project_code, pf.project_name, pf.project_type_rid, 
+    SELECT DISTINCT pf.rid, pf.project_code, pf.project_name, pf.project_type_rid, 
     pf.fiscal_year, pf.project_classification_rid, pf.project_client_group,
     pf.project_group, pf.total_effort_prj, pf.total_cost_prj, pf.total_cost_fte_prj,
     pf.total_cost_subcon_prj, pf.total_cost_nonlabor_prj, pf.assessment_status,
@@ -405,20 +403,38 @@ export const listAllCasesSummaryQuery = (
   schemaName: string,
   pointOfContactRoleid: string
 ) => `
-    WITH fetch_all_cases AS 
+    WITH 
+    task_cnt AS (
+  SELECT project_fiscal_rid, COUNT(*) AS cnt
+  FROM ${schemaName}.project_task
+  GROUP BY project_fiscal_rid
+),
+ats_cnt AS (
+  SELECT project_fiscal_rid, COUNT(*) AS cnt
+  FROM ${schemaName}.ai_technical_summary
+  GROUP BY project_fiscal_rid
+),
+res_cnt AS (
+  SELECT project_fiscal_rid, COUNT(*) AS cnt
+  FROM ${schemaName}.project_resource
+  GROUP BY project_fiscal_rid
+),
+    fetch_all_cases AS 
     (select pf.rid,pf.project_rid,pf.account_rid,pf.r_number,pf.created_by,pf.modified_by,pf.created_datetime,pf.modified_datetime,
 pf.project_code,pf.fiscal_year,pf.project_name,pf.project_type_rid,pf.project_classification_rid,pf.project_classification_other,
 pf.project_group,pf.industry_rid,pf.industry_name,pf.status_rid,pf.total_fte_prj,pf.total_subcon_prj,pf.total_nonlabor_prj,
 pf.total_effort_fte_prj,pf.total_effort_subcon_prj,
 pf.total_effort_prj,
 pf.total_cost_fte_prj,pf.total_cost_subcon_prj,pf.total_cost_nonlabor_prj,pf.total_cost_prj,
-pf.total_resources_prj,
-COUNT(pt.rid) AS total_tasks,
-COUNT(ats.rid) AS total_technical_summaries,primary_contact.key_contact_name AS project_point_of_contact,
-	primary_contact.key_contact_email as project_point_of_contact_email
+ COALESCE(res_cnt.cnt, 0) AS total_resources_prj,
+  COALESCE(task_cnt.cnt, 0) AS total_tasks,
+  COALESCE(ats_cnt.cnt, 0)  AS total_technical_summaries,
+primary_contact.key_contact_name AS project_point_of_contact,
+    primary_contact.key_contact_email as project_point_of_contact_email
 from ${schemaName}.project_fiscal pf
-LEFT JOIN ${schemaName}.project_task pt ON pt.project_fiscal_rid = pf.rid
-LEFT JOIN ${schemaName}.ai_technical_summary ats ON ats.project_fiscal_rid = pf.rid
+LEFT JOIN res_cnt ON res_cnt.project_fiscal_rid = pf.rid
+LEFT JOIN task_cnt ON task_cnt.project_fiscal_rid = pf.rid
+LEFT JOIN ats_cnt ON ats_cnt.project_fiscal_rid = pf.rid
 LEFT JOIN LATERAL (
   SELECT kcd.key_contact_name,
          kcd.key_contact_email
@@ -426,7 +442,7 @@ LEFT JOIN LATERAL (
   WHERE 
         kcd.entity_rid = pf.rid
     AND kcd.is_primary_contact = true
-    AND kcd.key_contact_role= '"${pointOfContactRoleid}"'
+    AND kcd.key_contact_role= '${pointOfContactRoleid}'
   LIMIT 1
 ) AS primary_contact ON true
 
@@ -444,7 +460,9 @@ AND (
       OR pf.fiscal_year IS NULL
       OR pf.industry_rid IS NULL
       OR pf.total_cost_prj IS NULL
-      OR pf.total_resources_prj IS NULL
+      OR COALESCE(res_cnt.cnt, 0) = 0
+      OR COALESCE(task_cnt.cnt, 0) = 0
+      OR COALESCE(ats_cnt.cnt, 0) = 0
       OR pf.total_effort_prj IS NULL
       OR pf.project_type_rid IS NULL
       OR pf.project_classification_rid IS NULL
@@ -460,7 +478,7 @@ AND (
       or pf.total_cost_subcon_prj IS NULL
       or pf.total_cost_nonlabor_prj IS NULL
     )
-      GROUP BY pf.rid ,primary_contact.key_contact_name,primary_contact.key_contact_email
+      GROUP BY pf.rid, primary_contact.key_contact_name, primary_contact.key_contact_email, res_cnt.cnt, task_cnt.cnt, ats_cnt.cnt
     ),
     paginated_data AS (
     SELECT * FROM fetch_all_cases c  where 1 = 1  ${joinedConditions} ${sortValue} ${pagination}
@@ -660,7 +678,13 @@ export const fetchAdminTemplates = (page : number, limit : number, sort : string
                   break;
                 }
                 case "is_empty" : {
-                  queryContainer.push(`${validKeyColumns} IS NULL`)
+                  let newCol : string;
+                  if(validKeyColumns === `CONCAT(u.first_name,' ', u.last_name)`)
+                    newCol = `(u.first_name IS NULL AND u.last_name IS NULL)`
+                  else if (validKeyColumns == `CONCAT(uu.first_name,' ', uu.last_name)`)
+                    newCol = `(uu.first_name IS NULL AND uu.last_name IS NULL)`
+                  else newCol = `${validKeyColumns} IS NULL`
+                  queryContainer.push(newCol)
                   break;
                 }
                 case "in" : {
@@ -696,7 +720,7 @@ export const fetchAdminTemplates = (page : number, limit : number, sort : string
                   break;
                 }
                 case "between" : {
-                  queryContainer.push(`${validKeyColumns} BETWEEN ${value['from']} AND ${value['to']}`)
+                  queryContainer.push(`${validKeyColumns} BETWEEN ${value.map((d : any) => `${d}`).join(' AND ')}`)
                   break;
                 }
                 default : {
@@ -825,8 +849,7 @@ export const fetchMilestoneTaskTemplate = (taskTypeRid : string, filingTypeRid :
   m.milestone_name, m.milestone_description, m.status_rid AS "milestone_status_rid", m.case_filing_type_rid
   FROM
   ${MAIN_SCHEMA_NAME}.milestone_template m
-  WHERE
-  m.case_filing_type_rid = '${filingTypeRid}'
+  ORDER BY m.r_number ASC
   ),
   fetch_task_data AS (
   SELECT 
@@ -834,7 +857,7 @@ export const fetchMilestoneTaskTemplate = (taskTypeRid : string, filingTypeRid :
   t.modified_datetime AS "task_modified_datetime", t.task_name, t.sequence_no, t.effort_in_days,
   t.effective_start_datetime, t.effective_end_datetime, t.case_team_member_role_rid,
   t.checklist_template_rid, t.status_rid AS "task_status_rid", t.priority_rid, t.task_type_rid,
-  t.milestone_template_rid, t.task_description
+  t.milestone_template_rid, t.task_description, t.milestone_sequence, t.weightage_rid, t.task_category_rid
   FROM
   fetch_milestone_result m
   LEFT JOIN ${MAIN_SCHEMA_NAME}.task_template t ON t.milestone_template_rid = m.rid
@@ -842,6 +865,7 @@ export const fetchMilestoneTaskTemplate = (taskTypeRid : string, filingTypeRid :
   t.task_type_rid = '${taskTypeRid}'
   AND
   t.status_rid = '${statusId}'
+  ORDER BY t.milestone_sequence ASC
   ),
   fetch_workflow_connector_map AS (
   SELECT w.created_by, w.created_datetime, w.source_rid, w.target_rid, w.relationship_connector_rid
@@ -881,8 +905,10 @@ export const fetchMilestoneTaskTemplate = (taskTypeRid : string, filingTypeRid :
     'priority_rid', t.priority_rid,
     'task_type_rid', t.task_type_rid,
     'milestone_template_rid', t.milestone_template_rid,
-    'task_description', t.task_description
-  )ORDER BY t.task_created_datetime ASC ) AS task_data
+    'task_description', t.task_description,
+    'weightage_rid', t.weightage_rid,
+    'task_category_rid', t.task_category_rid
+  )ORDER BY t.milestone_sequence, t.sequence_no ASC) AS task_data
   FROM fetch_task_data t
   ),
   aggregate_workflow_connector AS (
@@ -906,7 +932,7 @@ export const fetchMilestoneTaskTemplate = (taskTypeRid : string, filingTypeRid :
   return query;
 }
 
-export const fetchCaseTemplateData = (schemaName : string, caseRid : string, accountRid : string) => {
+export const fetchCaseTemplateData = (schemaName : string, caseRid : string, accountRid : string, statusRid : string) => {
   let query = 
   `
   WITH fetch_task AS (
@@ -930,22 +956,20 @@ export const fetchCaseTemplateData = (schemaName : string, caseRid : string, acc
   'checklists_count', 
   (
   SELECT COUNT(DISTINCT chi.rid) 
-  FROM ${schemaName}.case_task ct 
-  LEFT JOIN ${schemaName}.checklists ch ON ch.checklist_template_rid = ct.checklist_template_rid AND ch.task_rid = ct.rid AND ch.attach_to = ct.case_rid AND ch.attachment_level = 'task' 
+  FROM ${schemaName}.checklists ch 
   LEFT JOIN ${schemaName}.checklist_items chi ON chi.checklist_rid = ch.rid 
-  WHERE ct.milestone_template_rid = cm.rid 
-  AND ct.case_rid = '${caseRid}' 
-  AND ct.account_rid = '${accountRid}' 
-  AND ct.rid = t.rid 
-  AND (ct.checklist_template_rid IS NOT NULL AND ct.checklist_template_rid != '')
+  WHERE 
+  ch.attach_to = t.rid
+  AND ch.case_rid = '${caseRid}'
+  AND attachment_level = 'task'
   ),
-  'comments_count', (SELECT COUNT(DISTINCT tc.rid) from ${schemaName}.task_comments tc WHERE tc.task_rid = t.rid),
+  'comments_count', (SELECT COUNT(DISTINCT tc.rid) from ${schemaName}.task_comments tc WHERE tc.task_rid = t.rid AND tc.case_rid = '${caseRid}'),
   'task_status_rid', t.task_status_rid
   )ORDER BY t.sequence_no ASC) AS tasks
   FROM 
   ${schemaName}.case_milestone cm
   LEFT JOIN ${schemaName}.case_task t ON t.milestone_template_rid = cm.rid
-  LEFT JOIN ${schemaName}.case_team ct ON ct.role_rid = t.case_team_member_role_rid AND ct.case_rid = '${caseRid}' AND ct.account_rid = '${accountRid}'
+  LEFT JOIN ${schemaName}.case_team ct ON ct.user_rid = t.assigned_to AND ct.role_rid = t.case_team_member_role_rid AND ct.case_rid = '${caseRid}' AND ct.account_rid = '${accountRid}' AND ct.status_rid = '${statusRid}'
   WHERE
   t.milestone_template_rid = cm.rid
   AND
@@ -979,93 +1003,42 @@ return query;
     c.rid, c.checklist_description,
     c.created_by, c.modified_by, c.account_rid, 
     c.created_datetime, c.modified_datetime,
-    c.checklist_name, c.fiscal_year, e.name AS attached_to, 
+    c.checklist_name, c.fiscal_year,
     c.attachment_level, c.r_number, c.attach_to, c.status_rid
     FROM
     ${schemaName}.checklists c
-    LEFT JOIN LATERAL (
-    SELECT ad.account_rid, ad.account_name AS name 
-    FROM ${schemaName}.account_details ad 
-    WHERE
-    LOWER(c.attachment_level) = 'account'
-    AND
-    ad.account_rid = c.attach_to
-
-    UNION ALL
-
-    SELECT pf.rid, pf.project_code AS name 
-    FROM
-    ${schemaName}.project_fiscal pf
-    WHERE
-    LOWER(c.attachment_level) = 'project'
-    AND
-    pf.rid = c.attach_to
-
-    UNION ALL
-
-    SELECT cd.rid, cd.case_name AS name 
-    FROM
-    ${schemaName}.cases cd
-    WHERE
-    LOWER(c.attachment_level) = 'case'
-    AND
-    cd.rid = c.attach_to
-
-    UNION ALL
-
-    SELECT r.rid, r.resource_code AS name
-    FROM
-    ${schemaName}.resources r
-    WHERE
-    LOWER(c.attachment_level) = 'resource'
-    AND
-    r.rid = c.attach_to
-    
-    UNION ALL
-
-    SELECT rc.rid, rc.r_number AS name
-    FROM
-    ${schemaName}.resource_cost rc
-    WHERE
-    LOWER(c.attachment_level) = 'resource_cost'
-    AND
-    rc.rid = c.attach_to
-
-    UNION ALL
-
-    SELECT rs.rid, rs.r_number AS name
-    FROM
-    ${schemaName}.resource_skill rs
-    WHERE
-    LOWER(c.attachment_level) = 'resource_skill'
-    AND
-    rs.rid = c.attach_to
-    UNION ALL
-
-    SELECT pt.rid, pt.r_number AS name
-    FROM
-    ${schemaName}.project_task pt
-    WHERE
-    LOWER(c.attachment_level) = 'project_task'
-    AND
-    pt.rid = c.attach_to
-
-    UNION ALL
-
-    SELECT pr.rid, pr.r_number AS name
-    FROM
-    ${schemaName}.project_resource pr
-    WHERE
-    LOWER(c.attachment_level) = 'project_resource'
-    AND
-    pr.rid = c.attach_to
-    ) e ON true
     WHERE
     c.rid = '${rid}'
     `
   }
+  /**
+ * Returns the query to fetch attach_to details based on attachment level.
+ */
+export function fetchChecklistAttachToDetails(schemaName: string, attachTo: string, attachmentLevel: string, checklistId: string): string {
+  switch (attachmentLevel.toLowerCase()) {
+    case 'account':
+      return `SELECT ad.account_rid, ad.account_name AS name FROM ${schemaName}.account_details ad WHERE ad.account_rid = '${attachTo}'`;
+    case 'project':
+      return `SELECT pf.rid, pf.project_code AS name  AS name FROM ${schemaName}.project_fiscal pf WHERE pf.rid = '${attachTo}'`;
+    case 'case':
+      return `SELECT cd.rid, cd.case_name AS name  AS name FROM ${schemaName}.cases cd WHERE cd.rid = '${attachTo}'`;
+    case 'resource':
+      return `SELECT r.rid, r.resource_code AS name FROM ${schemaName}.resources r WHERE r.rid = '${attachTo}'`;
+    case 'resource_cost':
+      return `SELECT rc.rid, rc.r_number AS name FROM ${schemaName}.resource_cost rc WHERE rc.rid = '${attachTo}'`;
+    case 'resource_skill':
+      return `SELECT rs.rid, rs.r_number AS name FROM ${schemaName}.resource_skill rs WHERE rs.rid = '${attachTo}'`;
+    case 'project_task':
+      return `SELECT pt.rid, pt.r_number AS name FROM ${schemaName}.project_task pt WHERE pt.rid = '${attachTo}'`;
+    case 'project_resource':
+      return `SELECT pr.rid, pr.r_number AS name FROM ${schemaName}.project_resource pr WHERE pr.rid = '${attachTo}'`;
+    default:
+      return `SELECT NULL AS name`;
+  }
+}
+  
 
-  export const fetchCaseSpecificTaskQuery = (page : number, limit : number, search : string, sort : string, sortBy : string, filter : FilterType, doSorting : boolean, caseRid : string, accountRid : string, schemaName : string, isExport : boolean) => {
+  export const fetchCaseSpecificTaskQuery = (page : number, limit : number, search : string, sort : string, sortBy : string, filter : FilterType, doSorting : boolean, caseRid : string, accountRid : string, schemaName : string, isExport : boolean, statusId : string) => {
     let searchValue : string = ``
     let sortValue : string = ``
     let filterQueryArray : string[] = []
@@ -1109,7 +1082,7 @@ return query;
                 if(cond === 'contains')
                   filterQueryArray.push(`ct.${validKey} ILIKE '%${values}%'`)
                 if(cond === 'is_empty') 
-                  filterQueryArray.push(`ct.${validKey} IS NULL`)
+                  filterQueryArray.push(`(ct.${validKey} IS NULL OR ct.${validKey} = '')`)
                 if(cond === 'in')
                   filterQueryArray.push(`ct.${validKey} IN (${values.map((d : any) => `'${d}'`).join(',')})`)
                 break;
@@ -1153,6 +1126,8 @@ return query;
     FROM
     ${schemaName}.case_task ct
     WHERE
+    ct.status_rid = '${statusId}'
+    AND
     ct.case_rid = '${caseRid}'
     AND
     ct.account_rid = '${accountRid}'
@@ -1170,9 +1145,10 @@ return query;
     return query;
   }
 
-  export const fetchTaskComments = (page : number, limit : number, taskRid : string, accountRid : string, caseRid : string, schemaName : string) => {
+  export const fetchTaskComments = (page : number, limit : number, taskRid : string, accountRid : string, caseRid : string, schemaName : string, taskType: string) => {
     let offset = (page - 1) * limit;
-    let pagination = `LIMIT ${limit} OFFSET ${offset}`
+    let pagination = `LIMIT ${limit} OFFSET ${offset}`;
+    let caseRidFilter = taskType !== 'activity' ? `AND tc.case_rid = '${caseRid}'` : '';
     let query = 
     `
     WITH calculate_total_result AS(
@@ -1180,8 +1156,7 @@ return query;
     FROM ${schemaName}.task_comments tc
     WHERE
     tc.account_rid = '${accountRid}'
-    AND
-    tc.case_rid = '${caseRid}'
+    ${caseRidFilter}
     AND
     tc.task_rid = '${taskRid}'
     ), 
@@ -1192,8 +1167,7 @@ return query;
     LEFT JOIN calculate_total_result c ON c.rid = tc.rid
     WHERE
     tc.account_rid = '${accountRid}'
-    AND
-    tc.case_rid = '${caseRid}'
+    ${caseRidFilter}
     AND
     tc.task_rid = '${taskRid}'
     ORDER BY tc.created_datetime ASC 
@@ -1241,11 +1215,30 @@ return query;
     return query;
   }
 
-  export const fetchTaskActivities = (page : number, limit : number ,schemaName : string, caseRid : string, taskRid : string) => {
+  export const fetchTaskActivities = (page : number, limit : number ,schemaName : string, caseRid : string, taskRid : string,taskType: string) => {
     const offset = (page - 1) * limit;
-    let pagination = `LIMIT ${limit} OFFSET ${offset}`
+    let pagination = `LIMIT ${limit} OFFSET ${offset}`;
+    let query = ``;
+    if(taskType === 'activity')
+    {
+      query = 
+    `
+    WITH fetch_data AS (SELECT 
+    rid, r_number, created_by, created_datetime, attribute_name, old_value, new_value, task_rid
+    FROM ${schemaName}.task_history
+    WHERE
+    task_rid = '${taskRid}'
 
-    let query = 
+    ORDER BY created_datetime DESC),
+    calculate_total AS (
+    SELECT f.*, COUNT(f.rid) OVER() AS total_result FROM fetch_data f
+    )
+    SELECT * FROM calculate_total ${pagination}
+    `
+    }
+    else
+    {
+       query = 
     `
     WITH fetch_data AS (SELECT 
     rid, r_number, created_by, case_rid, created_datetime, attribute_name, old_value, new_value, task_rid
@@ -1259,19 +1252,19 @@ return query;
     SELECT f.*, COUNT(f.rid) OVER() AS total_result FROM fetch_data f
     )
     SELECT * FROM calculate_total ${pagination}
-    
     `
+    }
     return query;
   }
 
-  export const taskCardDetails = (schemaName : string, taskRid : string, accountRid : string, caseRid : string, checklistItemsStatusRid : string) => {
+  export const taskCardDetails = (schemaName : string, taskRid : string, accountRid : string, caseRid : string, checklistItemsStatusRid : string, activeStatusId : string) => {
     let query =
     `
     WITH fetch_checklists AS (
     SELECT c.rid, c.account_rid, c.checklist_name, c.checklist_description, ct.rid AS task_rid
     FROM 
     ${schemaName}.case_task ct
-    LEFT JOIN ${schemaName}.checklists c ON c.attach_to = ct.case_rid AND c.task_rid = ct.rid AND c.attachment_level = 'task'
+    LEFT JOIN ${schemaName}.checklists c ON c.attach_to = '${taskRid}' AND c.case_rid = '${caseRid}' AND c.attachment_level = 'task'
     WHERE
     ct.rid = '${taskRid}'
     AND
@@ -1363,7 +1356,7 @@ return query;
     'task_name', ct.task_name,
     'effective_start_datetime', ct.effective_start_datetime,
     'effective_end_datetime', ct.effective_end_datetime,
-    'assigned_to', ct.assigned_to,
+    'assigned_to', ctt.user_rid,
     'priority_rid', ct.priority_rid,
     'task_description', ct.task_description,
     'task_status_rid', ct.task_status_rid,
@@ -1379,6 +1372,7 @@ return query;
     LEFT JOIN aggregate_checklists fci ON fci.task_rid = ct.rid
     LEFT JOIN fetch_task_tags ftt ON ftt.rid = ct.rid
     LEFT JOIN aggregate_workflow_connector w ON w.rid = ct.rid
+    LEFT JOIN ${schemaName}.case_team ctt ON ctt.user_rid = ct.assigned_to AND ctt.role_rid = ct.case_team_member_role_rid AND ctt.case_rid = '${caseRid}' AND ctt.account_rid = '${accountRid}' AND ctt.status_rid = '${activeStatusId}'
     WHERE
     ct.rid = '${taskRid}'
     AND
@@ -1393,7 +1387,7 @@ return query;
   let query =
   `
   WITH fetch_checklists AS (
-  SELECT c.rid, c.account_rid, c.checklist_name, c.checklist_description, ct.rid AS task_rid
+  SELECT c.rid, c.account_rid, c.checklist_name, c.checklist_description, ct.rid AS task_rid,ct.checklist_rid
   FROM 
   ${schemaName}.activities ct
   LEFT JOIN ${schemaName}.checklists c ON c.attach_to = ct.rid
@@ -1466,12 +1460,14 @@ return query;
   'task_name', ct.task_name,
   'effective_start_datetime', ct.effective_start_datetime,
   'effective_end_datetime', ct.effective_end_datetime,
+  'checklist_rid', ct.checklist_rid,
   'assigned_to', ct.assigned_to,
   'priority_rid', ct.priority_rid,
   'description', ct.description,
-  'status_rid', ct.status_rid,
+  'task_status_rid', ct.status_rid,
   'checklists', fci.checklists,
-  'tags', ftt.tags
+  'tags', ftt.tags,
+  'fiscal_year', ct.fiscal_year
   ) AS task_details
   FROM
   ${schemaName}.activities ct
@@ -1512,7 +1508,7 @@ return query;
     a.created_datetime, a.modified_datetime,
     a.fiscal_year, e.name AS attached_to, 
     a.attachment_level, a.r_number, a.attach_to, a.status_rid,
-    a.to_email,a.cc_email,a.sender_email
+    a.to_email,a.cc_email,a.sender_email,a.activity_type
     FROM
     ${schemaName}.activities a
     LEFT JOIN LATERAL (
@@ -1689,4 +1685,20 @@ return query;
     return `SELECT rid, weightage_value FROM ${MAIN_SCHEMA_NAME}.task_weightage ORDER BY weightage_value ASC`
   }
 
+  export const fetchCaseProjects = (caseRid : string, accountRid : string, schemaName : string) => {
+    return `
+    SELECT pf.total_cost_prj, pf.qre_final 
+    FROM ${schemaName}.project_fiscal pf 
+    LEFT JOIN ${schemaName}.case_projects cp ON cp.project_fiscal_rid = pf.rid
+    WHERE
+    cp.case_rid = '${caseRid}'
+    AND
+    cp.account_rid = '${accountRid}'
+    `
+  }
+
+  export const updateCaseAggregatedValue = (totalCostPrj : any, totalQreCost : any, schemaName : string, caseRid : string, accountRid : string) => {
+    return `UPDATE ${schemaName}.cases SET case_total_project_cost = ${totalCostPrj}, case_total_qre_cost = ${totalQreCost} 
+    WHERE rid = '${caseRid}' AND account_rid = '${accountRid}'`
+  }
  

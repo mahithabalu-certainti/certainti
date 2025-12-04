@@ -11,6 +11,11 @@ routes.post(
   checkUserStatusMiddleware("activity_task_view_edit"),
   controller.activitiesController.createActivityTask
 );
+routes.post(
+  "/task/update",
+  checkUserStatusMiddleware("activity_task_view_edit"),
+  controller.activitiesController.updateActivityTask
+);
 
 routes.get(
   "/tasks/list",
@@ -85,5 +90,10 @@ routes.get(
   "/export",
   checkUserStatusMiddleware("NA"),
   controller.activitiesController.exportAllActivity
+);
+routes.get(
+  "/activityStatus",
+  checkUserStatusMiddleware("NA"),
+  controller.activitiesController.getActivityStatus
 );
 export default routes;

@@ -47,16 +47,8 @@ import {
   rawQueries,
   MAIN_SCHEMA_NAME,
 } from "../../utils/constants";
-import { query } from "express";
-import currency from "currency.js";
-import moment from "moment";
 import { CaseManagementSchemaService } from "../casesManagement/schemaService";
-import {
-  fetchTaskActivities,
-  fetchTaskComments,
-  listAllTaskStatus,
-  taskCardDetails,
-} from "../../utils/rawQueries";
+
 import ActivitySchemaService from "./schemaService";
 import CaseSchemaService from "../cases/schemaService";
 export class ActivityService {
@@ -97,7 +89,7 @@ export class ActivityService {
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { cases: any };
+    data?: { task: any };
   }> {
     if (!this.mainDbSequelize) {
       this.mainDbSequelize = await this.getMainDb();
@@ -133,6 +125,16 @@ export class ActivityService {
         transaction
       );
 
+      if(taskResponse)
+      {
+        await this.activitySchemaService.addTaskSummary(
+          accountNumber,
+          taskRequest,
+          taskResponse.rid,
+          taskResponse.get("r_number") || ""
+        )
+      }
+        
       if (taskRequest?.checklist_rid) {
         const response =
           await this.caseManagementService.fetchChecklistTemplateDetailsById(
@@ -165,7 +167,7 @@ export class ActivityService {
             transaction
           );
       }
-      if (taskRequest?.tags?.length > 0) {
+      if (taskRequest?.tags.length > 0) {
         const [activeStatusRid]: any[] = await this.mainDbSequelize.query(
           rawQueries.getActiveStatusId()
         );
@@ -200,7 +202,7 @@ export class ActivityService {
         statusCode: HttpStatus.SUCCESS,
         message: STATUS_MESSAGE.caseCreated,
         data: {
-          cases: taskResponse,
+          task: taskResponse,
         },
       };
     } catch (err) {
@@ -209,7 +211,7 @@ export class ActivityService {
       return {
         statusCode: HttpStatus.FAILED,
         message: HttpStatus.FAILED_MESSAGE,
-        errorMessage: STATUS_MESSAGE.caseCreationFailed,
+        errorMessage: STATUS_MESSAGE.taskCreateFailed,
       };
     }
   }
@@ -220,15 +222,15 @@ export class ActivityService {
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { tasks: any };
+    data?: { task: any };
   }> {
     const dbInit = await this.caseModelService.getSequelize();
     const transaction = await dbInit.transaction();
     try {
-      taskRequest.created_by = userId;
+      taskRequest.modified_by = userId;
       const { accountNumber, parentAccountId } =
         await this.caseSchemaService.fetchValidAccountNumberById(
-          taskRequest.accountRid
+          taskRequest.account_rid!
         );
 
       if (!accountNumber) {
@@ -269,18 +271,18 @@ export class ActivityService {
 
       return {
         statusCode: HttpStatus.SUCCESS,
-        message: STATUS_MESSAGE.caseCreated,
+        message: STATUS_MESSAGE.taskUpdatedSuccess,
         data: {
-          tasks: response,
+          task: response,
         },
       };
     } catch (err) {
-      logMessage(`Error creating activity task, ${err}`);
+      logMessage(`Error updating activity task, ${err}`);
       await transaction.rollback();
       return {
         statusCode: HttpStatus.FAILED,
         message: HttpStatus.FAILED_MESSAGE,
-        errorMessage: STATUS_MESSAGE.caseCreationFailed,
+        errorMessage: STATUS_MESSAGE.taskUpdateFailed,
       };
     }
   }
@@ -336,7 +338,6 @@ export class ActivityService {
                 userProfileType?.email,
                 isCustomGlobal
               );
-              console.log("accessibleIds",accessibleIds.length === 0)
               if (accessibleIds.length === 0) {
                 return {
                   message: 'No accessible checklist found for the user.',
@@ -357,7 +358,6 @@ export class ActivityService {
                 userProfileType?.email,
                 isCustomGlobal
               );
-               console.log("accessibleIds",accessibleIds.length === 0)
               if (accessibleIds.length === 0) {
                 return {
                   message: 'No accessible checklist found for the user.',
@@ -370,7 +370,6 @@ export class ActivityService {
                 };
               }
             }
-      console.log("accessibleIds",accessibleIds)
       const checklistResponse: any =
         await this.activitySchemaService.fetchActivities(
           accountNumber,
@@ -400,7 +399,6 @@ export class ActivityService {
         },
       };
     } catch (error) {
-      console.log(error);
       logMessage(`Error fetching activities task, ${error}`);
       return {
         statusCode: 500,
@@ -436,7 +434,7 @@ export class ActivityService {
         data: result,
       };
     } catch (err) {
-      logMessage(`Error adding comments to task, ${err}`);
+      logMessage(`Error updating activity email, ${err}`);
       return {
         statusCode: HttpStatus.FAILED,
         message: HttpStatus.FAILED_MESSAGE,
@@ -469,7 +467,7 @@ export class ActivityService {
         data: result,
       };
     } catch (err) {
-      logMessage(`Error adding comments to task, ${err}`);
+      logMessage(`Error updating activity email, ${err}`);
       return {
         statusCode: HttpStatus.FAILED,
         message: HttpStatus.FAILED_MESSAGE,
@@ -519,6 +517,19 @@ export class ActivityService {
           errorMessage: "Invalid Email Template ID",
         };
       }
+      let isSubscriptionCreated = false;
+        const accountData = await this.caseSchemaService.fetchAccountById(accountRid);
+        let accountRNumber = accountData.r_number;
+
+      let childRNumber = await this.caseSchemaService.fetchParentAccount(
+          accountData.parent_account_rid
+        );
+        if (accountData.storage_type === "store_in_parent") {
+          accountRNumber = childRNumber;
+        }
+        isSubscriptionCreated = (await this.caseSchemaService.getSubscriptionDetailsByProjectId(accountData.parent_account_rid, childRNumber,accountRid)) ?? false;
+        emailActivityDetails.is_email_configured = isSubscriptionCreated
+
 
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -563,6 +574,18 @@ export class ActivityService {
           errorMessage: "Invalid Activity ID",
         };
       }
+      let isSubscriptionCreated = false;
+        const accountData = await this.caseSchemaService.fetchAccountById(accountRid);
+        let accountRNumber = accountData.r_number;
+
+      let childRNumber = await this.caseSchemaService.fetchParentAccount(
+          accountData.parent_account_rid
+        );
+        if (accountData.storage_type === "store_in_parent") {
+          accountRNumber = childRNumber;
+        }
+        isSubscriptionCreated = (await this.caseSchemaService.getSubscriptionDetailsByProjectId(accountData.parent_account_rid, childRNumber,accountRid)) ?? false;
+        activityDetails.is_email_configured = isSubscriptionCreated
 
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -616,7 +639,6 @@ export class ActivityService {
         },
       };
     } catch (err) {
-      console.log(err)
       logMessage(`Error fetching call activity details, ${err}`);
       return {
         statusCode: HttpStatus.FAILED,
@@ -770,24 +792,24 @@ export class ActivityService {
       };
     }
   }
-  async getEmailStatus(): Promise<{
+  async getActivityStatus(activityType: string): Promise<{
       statusCode: number;
       message: string;
       errorMessage?: string;
-      data?: { emailStatus: any };
+      data?: { activityStatus: any };
     }> {
       try {
-        const emailStatus = await this.activitySchemaService.getEmailStatus();
+        const activityStatus = await this.activitySchemaService.getActivityStatus(activityType);
   
         return {
           statusCode: HttpStatus.SUCCESS,
           message: HttpStatus.SUCCESS_MESSAGE,
           data: {
-            emailStatus,
+            activityStatus,
           },
         };
       } catch (err) {
-        logMessage(`Error fetching email status, ${err}`);
+        logMessage(`Error fetching activity status, ${err}`);
         throw this.throwServiceError(err as Error);
       }
     }

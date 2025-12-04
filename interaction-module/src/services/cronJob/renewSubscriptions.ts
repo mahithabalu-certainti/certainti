@@ -167,7 +167,7 @@ async function renewExpiringSubscriptions() {
             // }
           }
         } else {
-          logMessage(` Missing or invalid credentials for account ${r_number}`);
+          logMessage(`Missing or invalid credentials for account ${r_number}`);
         }
       }
     }
@@ -239,6 +239,8 @@ export async function scheduleSubscriptionRenewal() {
   cron.schedule(schdulerExpression, async () => {
     const today = new Date();
     const dayOfMonth = today.getDate();
+    logMessage(`Subscription renewal cron triggered on ${today.toISOString()}`);
+    logMessage(`Day of month: ${dayOfMonth}`);
 
     if (dayOfMonth % 2 === 0) {
       logMessage(`[${today.toISOString()}] Running subscription renewal task`);

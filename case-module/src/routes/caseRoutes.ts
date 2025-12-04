@@ -46,7 +46,7 @@ routes.get(
   checkUserStatusMiddleware("cases_view_edit"),
   controller.caseController.listAllCasesAccount
 );
-routes.get(
+routes.post(
   "/list/caseSummary",
   checkUserStatusMiddleware("cases_view_edit"),
   controller.caseController.listAllCasesSummary
@@ -253,9 +253,11 @@ routes.get(
   checkUserStatusMiddleware("case_review_projects_export"),
   controller.caseController.exportReviewProjects
 )
+
 routes.post(
   "/sentReviewProjects",
   checkUserStatusMiddleware("case_review_projects_export"),
+  upload.array('files'),
   controller.caseController.sentReviewProjects
 )
 routes.get(
@@ -275,11 +277,6 @@ routes.post(
   controller.caseController.linkDeleteTask
 )
 routes.post(
-  "/task/dropdown",
-  checkUserStatusMiddleware("NA"),
-  controller.caseController.listTaskDropdownAccountLevel
-)
-routes.post(
   "/task/collaborator/delete",
   checkUserStatusMiddleware("NA"),
   controller.caseController.deleteCollaboratorsTaskLevel
@@ -288,5 +285,10 @@ routes.put(
   "/task/checklist/status",
   checkUserStatusMiddleware("NA"),
   controller.caseController.updateChecklistItemStatus
+)
+routes.post(
+  "/task/dropDownList",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.caseLevelTaskDropdown
 )
 export default routes;

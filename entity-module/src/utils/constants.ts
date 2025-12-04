@@ -182,13 +182,13 @@ export const rawQueries = {
       `SELECT rid, r_number, account_name, storage_type,is_parent, subscription_id FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`
     );
     if (checkIsSeparateDb[0][0].storage_type == STATUS_MESSAGE.separateDb) {
-      return `SELECT rid, r_number, account_name, storage_type,is_parent, subscription_id FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`;
+      return `SELECT rid, r_number, account_name, storage_type,is_parent, subscription_id, parent_account_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`;
     } else {
       return `
       with fetch_account_details AS (
       SELECT rid, r_number, parent_account_rid,is_parent, subscription_id FROM ${MAIN_SCHEMA_NAME}.account where rid = '${accountRid}'
       )
-      SELECT a.rid, a.r_number, a.account_name, a.is_parent , a.subscription_id
+      SELECT a.rid, a.r_number, a.account_name, a.is_parent , a.subscription_id, a.parent_account_rid
       FROM ${MAIN_SCHEMA_NAME}.account a
       LEFT JOIN fetch_account_details ad ON ad.parent_account_rid = a.rid
       WHERE a.rid = ad.parent_account_rid`;
@@ -858,7 +858,8 @@ export const rawQueries = {
     mainDb: Sequelize,
     parentAccountID: string,
     subscriptionId?: string,
-    isParentAccount: boolean = false
+    isParentAccount: boolean = false,
+    parenSchema? : string
   ) {
     let tableName: string[];
     let whereParams: string = ``;
@@ -930,7 +931,7 @@ export const rawQueries = {
             data.client_secret
           );
           let query = `
-        UPDATE ${schema}.${t}
+        UPDATE ${parenSchema}.${t}
         SET
         support_email = '${data.support_email}',
         tenant_id = '${data.tenant_id}',
@@ -2107,7 +2108,10 @@ export const rawQueries = {
       WHERE mp.permission_name = :permissionName
         AND ufa.user_id = :userId
     `;
-  }  
+  },
+  getAccountDetails (accountRid : string) {
+    return `SELECT rid, r_number FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`
+  } 
 };
 
 export const IMPORT_FILTER_COLUMNS: any = {

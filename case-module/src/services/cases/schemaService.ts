@@ -55,6 +55,7 @@ import {
   fetchCaseDetails,
   fetchCasesHeadersDatas,
   fetchCaseSpecificTaskQuery,
+  fetchChecklistAttachToDetails,
   fetchMilestoneTaskTemplate,
   fetchProjectsForCases,
   listAllCasesSummaryQuery,
@@ -69,10 +70,9 @@ import {
   CaseHistory,
   setupCaseHistorySequence,
 } from "../../models/caseHistory";
-import { CaseTeam, setupCaseTeamSequence } from "../../models/caseTeamModel";
+import { CaseTeam } from "../../models/caseTeamModel";
 import { Jurisdiction } from "../../models/jurisdiction";
 import { CaseHistorySubmission, setupCaseHistorySubmissionSequence } from "../../models/caseHistorySubmissionModel";
-import { log } from "console";
 import { CheckList, setupCheckListSequence } from "../../models/checkListModel";
 import { CheckListItem } from "../../models/checkListItemModel";
 import { CaseTask, setupCaseTaskSequence } from "../../models/caseTaskModel";
@@ -229,12 +229,43 @@ class CaseSchemaService {
           caseRequest.created_by || "",
           "created"
         );
+        await this.addJurisdiction(
+          casecreationResponse.account_rid,
+          casecreationResponse.rid,
+          accountNumber,
+          caseRequest,
+          transaction
+        );
       }
 
       return casecreationResponse;
     } catch (error) {
       logMessage(`Error creating case: ${error}`);
       throw new Error("Error creating case: " + error);
+    }
+  }
+
+  async addJurisdiction (accountRid : string, caseRid : string, accountNumber : string, caseRequest: ICreateCases, transaction: Transaction) {
+    const { Jurisdiction} = await this.caseModelService.getModels(accountNumber);
+    
+    const accountJurisdictionData = await Jurisdiction.findOne({
+      where : {
+        entity_rid : accountRid
+      }
+    })
+
+    if(accountJurisdictionData) {
+      await Jurisdiction.create(
+      {
+        created_by: caseRequest.created_by,
+        entity_rid: caseRid,
+        is_federal_level: accountJurisdictionData.is_federal_level,
+        is_state_level: accountJurisdictionData.is_state_level,
+        states: accountJurisdictionData.states,
+        level : "case",
+      },
+      { transaction }
+      );
     }
   }
 
@@ -512,10 +543,6 @@ return !response;
         orgDbSequlize,
         schemaName
       );
-      const jurisdictionModel = await Jurisdiction.initialize(
-        orgDbSequlize,
-        schemaName
-      );
       const caseHistorySubmissionModel = await CaseHistorySubmission.initialize(
         orgDbSequlize,
         schemaName
@@ -588,8 +615,6 @@ return !response;
       await caseHistoryModel.sync({ force: false });
       await setupCaseHistorySequence(orgDbSequlize, schemaName);
       await caseTeamModel.sync({ force: false });
-      await setupCaseTeamSequence(orgDbSequlize, schemaName);
-      await jurisdictionModel.sync({ force: false });
       await checkListModel.sync({ force: false });
       await setupCheckListSequence(orgDbSequlize, schemaName);
       await checkListItemModel.sync({ force: false });
@@ -839,6 +864,7 @@ return !response;
                 country_rid: d.country_rid,
                 case_total_projects: d.case_total_projects,
                 case_total_qualified_projects: d.case_total_qualified_projects,
+                case_total_qualified_project_cost: d.case_total_qualified_project_cost,
                 case_total_project_cost: d.case_total_project_cost,
                 case_total_rd_cost: d.case_total_rd_cost,
                 case_total_qre_cost: d.case_total_qre_cost,
@@ -883,6 +909,15 @@ return !response;
             result = data.filter((d: any) =>
               d[field]?.toLowerCase().includes(val?.toLowerCase())
             );
+            break;
+          case ALPHANUMERIC_CONDITIONS.IN:
+            if (Array.isArray(val)) {
+              result = data.filter((d: any) =>
+                val.map((v: any) => v?.toLowerCase()).includes(d[field]?.toLowerCase())
+              );
+            } else {
+              result = data;
+            }
             break;
           case ALPHANUMERIC_CONDITIONS.isEmpty:
             result = data.filter((d: any) => d[field] == null);
@@ -1481,6 +1516,57 @@ return !response;
     }
   }
 
+  async fetchParentAccount(parentAccountId: string): Promise<string> {
+      try {
+        const sequelize = await initMainDbSequelize();
+  
+        const [account]: any[] = await sequelize.query(
+          rawQueries.fetchAccountDetailsByRid(parentAccountId),
+          {
+            type: "SELECT",
+          }
+        );
+  
+        return account?.r_number;
+      } catch (err) {
+        errorLog("Error fetching parent account : " + (err as Error).message);
+        throw new Error(
+          "Error fetching parent account : " + (err as Error).message
+        );
+      }
+    }
+
+  async getSubscriptionDetailsByProjectId(parentaccountId:string,schemaName:string,accountId:string) {
+    try {
+     let schemaNameParent = `trd365_${schemaName.replace(/\D/g, "")}`;
+     const query = rawQueries.fetchAccountInfos(schemaNameParent,accountId);
+     const sequelize = await initOrgSequelize();
+     const users: any = await sequelize.query(query, {
+       replacements: { account_rid: accountId },
+       type: "SELECT",
+     });
+     const parentquery = rawQueries.fetchAccountInfos(schemaNameParent, parentaccountId);
+     const parentSubscriptioninfo: any = await sequelize.query(parentquery, {
+       replacements: { accountId: parentaccountId },
+       type: "SELECT",
+     });
+      if(parentSubscriptioninfo && parentSubscriptioninfo.length > 0)
+      {
+        const parentDetails = parentSubscriptioninfo[0];
+        const isSubscriptionCreated = Boolean(
+        parentDetails.subscription_created &&
+        parentDetails.tenant_id &&
+        parentDetails.client_id &&
+        parentDetails.client_secret);
+        return  isSubscriptionCreated;
+      }else{
+        return false;
+      }
+    } catch (err) {
+      return false
+    }
+  }
+
   async fetchProjectsForCasesResult(
     data: any,
     orgDb: Sequelize,
@@ -1547,7 +1633,8 @@ return !response;
       this.mainDbSequelize = await this.caseModelService.getMainSequelize();
     }
     let [pointOfContactRoleid]:any[] = await this.mainDbSequelize.query(
-        rawQueries.fetchPOCRoleId()
+        rawQueries.fetchPOCRoleId(),
+        { type: "SELECT" }
       );
     let filteredQueryArray: string[] = [];
     let andConditions = ``;
@@ -1646,10 +1733,9 @@ return !response;
         sortValue,
         pagination,
         schemaName,
-        pointOfContactRoleid
+        pointOfContactRoleid.rid
       );
-      console.log("projectQuery", projectQuery);
-    
+      
       const [projectInfo]: any[] = await this.orgDbSequelize.query(
         projectQuery,
         { type: "SELECT" }
@@ -1763,6 +1849,10 @@ return !response;
             );
           case ALPHANUMERIC_CONDITIONS.isEmpty:
             return data.filter((d: any) => d[field] == null);
+          case ALPHANUMERIC_CONDITIONS.IN:
+            return data.filter((d: any) =>
+              val .includes(d[field])
+            );
           default:
             return data;
         }
@@ -1836,207 +1926,6 @@ return !response;
       };
 
 }
-
-  async assignProjectToCase(
-      data: assignProjectType,
-      accountNumber: string,
-      schemaName: string
-  ) {
-      const { CaseProject, Case, CaseSummary, ProjectFiscal } =
-          await this.caseModelService.getModels(accountNumber);
-      if (!this.mainDbSequelize) {
-          this.mainDbSequelize = await this.caseModelService.getMainSequelize();
-      }
-      if (!this.orgDbSequelize) {
-          this.orgDbSequelize = await this.caseModelService.getSequelize();
-      }
-      // await this.createCaseProjectTables(accountNumber);
-      let iterationCount: number = 0;
-      let totalCount: number = 0;
-      totalCount = data.projects.length;
-      const collectProjectFiscalIds = [...new Set(data.projects.map((d: any) => d.project_fiscal_rid))];
-
-      const findProjects = await this.orgDbSequelize.query(rawQueries.getProjectByIds(collectProjectFiscalIds, schemaName))
-      const mapProjectById: Map<string, any> = new Map(findProjects[0].map((d: any) => [d.rid, d]));
-      for (let p of data.projects) {
-
-          // Insert CaseProjectResource data
-          const projectFiscalRecords = await ProjectFiscal.findAll({
-              where: {
-                  project_rid: p.project_rid,
-                  rid: p.project_fiscal_rid,
-                  account_rid: data.account_rid
-              }
-          });
-
-          const projectFiscal = projectFiscalRecords.length > 0 ? projectFiscalRecords[0] : null;
-
-          const createdCaseProject = await CaseProject.create({
-              case_rid: data.case_rid,
-              account_rid: data.account_rid,
-              created_by: data.created_by,
-              created_datetime: new Date(),
-              project_rid: p.project_rid,
-              project_group: p.project_group,
-              project_fiscal_rid: p.project_fiscal_rid,
-              project_code: projectFiscal?.project_code || '',
-              industry_rid: projectFiscal?.industry_rid,
-              industry_name: projectFiscal?.industry_name,
-              fiscal_year: projectFiscal?.fiscal_year,
-              project_name: projectFiscal?.project_name,
-              program_name: projectFiscal?.program_name,
-              project_classification_rid: projectFiscal?.project_classification_rid,
-              project_classification_other: projectFiscal?.project_classification_other,
-              project_client_group: projectFiscal?.project_client_group,
-              auto_send_ai_interaction: projectFiscal?.auto_send_ai_interaction || false,
-              country_rid: projectFiscal?.country_rid,
-              region_rid: projectFiscal?.region_rid,
-              currency_rid: projectFiscal?.currency_rid,
-              max_ai_interaction: projectFiscal?.max_ai_interaction || 0,
-              expiry_duration: projectFiscal?.expiry_duration,
-              auto_access_rd: projectFiscal?.auto_access_rd,
-              project_startdate: projectFiscal?.project_startdate,
-              project_enddate: projectFiscal?.project_enddate,
-              total_fte_prj: projectFiscal?.total_fte_prj || 0,
-              total_fte_from_prj_res: projectFiscal?.total_fte_from_prj_res || 0,
-              total_fte_from_tasks: projectFiscal?.total_fte_from_tasks || 0,
-              total_subcon_prj: projectFiscal?.total_subcon_prj || 0,
-              total_subcon_from_prj_res: projectFiscal?.total_subcon_from_prj_res || 0,
-              total_subcon_from_tasks: projectFiscal?.total_subcon_from_tasks || 0,
-              total_nonlabor_prj: projectFiscal?.total_nonlabor_prj || 0,
-              total_nonlabor_from_prj_res: projectFiscal?.total_nonlabor_from_prj_res || 0,
-              total_resources_prj: projectFiscal?.total_resources_prj || 0,
-              total_resources_from_prj_res: projectFiscal?.total_resources_from_prj_res || 0,
-              total_resources_from_tasks: projectFiscal?.total_resources_from_tasks || 0,
-              total_effort_prj: projectFiscal?.total_effort_prj || 0,
-              total_effort_fte_prj: projectFiscal?.total_effort_fte_prj || 0,
-              total_effort_subcon_prj: projectFiscal?.total_effort_subcon_prj || 0,
-              total_effort_from_prj_res: projectFiscal?.total_effort_from_prj_res || 0,
-              total_effort_fte_from_prj_res: projectFiscal?.total_effort_fte_from_prj_res || 0,
-              total_effort_subcon_from_prj_res: projectFiscal?.total_effort_subcon_from_prj_res || 0,
-              total_effort_from_tasks: projectFiscal?.total_effort_from_tasks || 0,
-              total_effort_fte_from_tasks: projectFiscal?.total_effort_fte_from_tasks || 0,
-              total_effort_subcon_from_tasks: projectFiscal?.total_effort_subcon_from_tasks || 0,
-              total_cost_prj: projectFiscal?.total_cost_prj || 0,
-              total_cost_fte_prj: projectFiscal?.total_cost_fte_prj || 0,
-              total_cost_subcon_prj: projectFiscal?.total_cost_subcon_prj || 0,
-              total_cost_nonlabor_prj: projectFiscal?.total_cost_nonlabor_prj || 0,
-              total_cost_from_prj_res: projectFiscal?.total_cost_from_prj_res || 0,
-              total_cost_fte_from_prj_res: projectFiscal?.total_cost_fte_from_prj_res || 0,
-              total_cost_subcon_from_prj_res: projectFiscal?.total_cost_subcon_from_prj_res || 0,
-              total_cost_nonlabor_from_prj_res: projectFiscal?.total_cost_nonlabor_from_prj_res || 0,
-              total_cost_from_tasks: projectFiscal?.total_cost_from_tasks || 0,
-              total_cost_fte_from_tasks: projectFiscal?.total_cost_fte_from_tasks || 0,
-              total_cost_subcon_from_tasks: projectFiscal?.total_cost_subcon_from_tasks || 0,
-              total_cost_prj_blended: projectFiscal?.total_cost_prj_blended || 0,
-              total_cost_fte_prj_blended: projectFiscal?.total_cost_fte_prj_blended || 0,
-              total_cost_subcon_prj_blended: projectFiscal?.total_cost_subcon_prj_blended || 0,
-              total_cost_from_prj_res_blended: projectFiscal?.total_cost_from_prj_res_blended || 0,
-              total_cost_fte_from_prj_res_blended: projectFiscal?.total_cost_fte_from_prj_res_blended || 0,
-              total_cost_subcon_from_prj_res_blended: projectFiscal?.total_cost_subcon_from_prj_res_blended || 0,
-              total_cost_from_tasks_blended: projectFiscal?.total_cost_from_tasks_blended || 0,
-              total_cost_fte_from_tasks_blended: projectFiscal?.total_cost_fte_from_tasks_blended || 0,
-              total_cost_subcon_from_tasks_blended: projectFiscal?.total_cost_subcon_from_tasks_blended || 0,
-              blended_rate_fte: projectFiscal?.blended_rate_fte || 0,
-              blended_rate_subcon: projectFiscal?.blended_rate_subcon || 0,
-              rd_percent_potential_ai: projectFiscal?.rd_percent_potential_ai || 0,
-              rd_percent_adjustment: projectFiscal?.rd_percent_adjustment || 0,
-              rd_percent_final: projectFiscal?.rd_percent_final || 0,
-              qre_fte: projectFiscal?.qre_fte || 0,
-              qre_subcon: projectFiscal?.qre_subcon || 0,
-              qre_nonlabor: projectFiscal?.qre_nonlabor || 0,
-              qre_final: projectFiscal?.qre_final || 0,
-              rd_credits_fte_fed_level: projectFiscal?.rd_credits_fte_fed_level || 0,
-              rd_credits_subcon_fed_level: projectFiscal?.rd_credits_subcon_fed_level || 0,
-              rd_credits_nonlabor_fed_level: projectFiscal?.rd_credits_nonlabor_fed_level || 0,
-              rd_credits_fed_level: projectFiscal?.rd_credits_fed_level || 0,
-              rd_credits_total: projectFiscal?.rd_credits_total || 0,
-              interaction_cc_list: projectFiscal?.interaction_cc_list,
-              assessment_status: projectFiscal?.assessment_status,
-              claim_status: projectFiscal?.claim_status,
-              comments: projectFiscal?.comments,
-              project_description: projectFiscal?.project_description,
-              status_rid: projectFiscal?.status_rid,
-              project_type_rid: projectFiscal?.project_type_rid,
-              effective_total_fte: projectFiscal?.effective_total_fte || 0,
-              effective_total_subcon: projectFiscal?.effective_total_subcon || 0,
-              effective_total_nonlabor: projectFiscal?.effective_total_nonlabor || 0,
-              effective_cost: projectFiscal?.effective_cost || 0,
-              effective_effort: projectFiscal?.effective_effort || 0,
-              effective_fte_cost: projectFiscal?.effective_fte_cost || 0,
-              effective_fte_effort: projectFiscal?.effective_fte_effort || 0,
-              effective_subcon_cost: projectFiscal?.effective_subcon_cost || 0,
-              effective_subcon_effort: projectFiscal?.effective_subcon_effort || 0,
-              effective_nonlabor_cost: projectFiscal?.effective_nonlabor_cost || 0,
-              effective_metric_type: projectFiscal?.effective_metric_type,
-              default_metric_type: projectFiscal?.default_metric_type,
-              // is_rd_claim_qualified: projectFiscal?.is_rd_claim_qualified || false,
-              rd_percent_potential_ai_updated: projectFiscal?.rd_percent_potential_ai_updated || 0,
-              total_nonlabor_from_tasks: projectFiscal?.total_nonlabor_from_tasks || 0,
-
-          });
-          p.project_case_rid = createdCaseProject.rid;
-          iterationCount += 1;
-      }
-      if (totalCount === iterationCount) {
-          const getTotalProjectCount: any = await this.orgDbSequelize.query(
-              rawQueries.getTotalProjectsCount(
-                  schemaName,
-                  data.case_rid,
-                  data.account_rid
-              )
-          );
-          const getTotalProjects: any = await this.orgDbSequelize.query(
-              rawQueries.getTotalProjectsCountInCase(schemaName, data.fiscal_year, data.account_rid)
-          );
-          const getTotalProjectCost: any = await this.orgDbSequelize.query(
-              rawQueries.getTotalProjectCost(
-                  schemaName,
-                  data.case_rid,
-                  data.account_rid
-              )
-          );
-          await this.orgDbSequelize.query(
-              rawQueries.updateCostCountInCase(
-                  schemaName,
-                  data.case_rid,
-                  getTotalProjectCount[0][0].total_projects,
-                  getTotalProjectCost[0][0].total_cost,
-                  getTotalProjects[0][0].total_projects,
-                  getTotalProjects[0][0].total_projects_cost,
-                  getTotalProjects[0][0].total_projects_qre_cost
-              )
-          );
-          await this.mainDbSequelize.query(
-              rawQueries.updateCostCountInCaseSummary(
-                  data.case_rid,
-                  getTotalProjectCount[0][0].total_projects,
-                  getTotalProjectCost[0][0].total_cost,
-                  getTotalProjects[0][0].total_projects,
-                  getTotalProjects[0][0].total_projects_cost,
-                  getTotalProjects[0][0].total_projects_qre_cost
-              )
-          );
-          if (totalCount === 1) {
-              return {
-                  statusCode: HttpStatus.SUCCESS,
-                  statusMessage: STATUS_MESSAGE.singleProjectAssignedSuccess,
-                  data,
-              };
-          } else {
-              return {
-                  statusCode: HttpStatus.SUCCESS,
-                  statusMessage: STATUS_MESSAGE.multipleProjectAssignedSuccess,
-                  data,
-              };
-          }
-      } else {
-          return {
-              statusCode: HttpStatus.FAILED,
-              statusMessage: STATUS_MESSAGE.multipleProjectAssignedSuccess,
-          };
-      }
-  }
 
   async insertCaseTabels(
       data: assignProjectType,
@@ -2343,8 +2232,190 @@ return !response;
           return {
               statusCode: HttpStatus.FAILED,
               statusMessage: STATUS_MESSAGE.projectAssignFailed,
-          };
+          }}}
+            
+  async assignProjectToCase(
+      data: assignProjectType,
+      accountNumber: string,
+      schemaName: string
+  ) {      
+
+    const { CaseProject, Case, CaseSummary, ProjectFiscal } =
+      await this.caseModelService.getModels(accountNumber);
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+    }
+    if (!this.orgDbSequelize) {
+      this.orgDbSequelize = await this.caseModelService.getSequelize();
+    }
+    // await this.createCaseProjectTables(accountNumber);
+    let iterationCount: number = 0;
+    let totalCount: number = 0;
+    totalCount = data.projects.length;
+    const collectProjectFiscalIds = [...new Set(data.projects.map((d : any) => d.project_fiscal_rid))];
+
+    const findProjects = await this.orgDbSequelize.query(rawQueries.getProjectByIds(collectProjectFiscalIds, schemaName))
+    const mapProjectById : Map<string, any> = new Map(findProjects[0].map((d : any) => [d.rid, d]));
+    for (let p of data.projects) {
+          // Insert CaseProjectResource data
+          const projectFiscalRecords = await ProjectFiscal.findAll({
+              where: {
+                  project_rid: p.project_rid,
+                  rid: p.project_fiscal_rid,
+                  account_rid: data.account_rid
+              }
+          });
+
+          const projectFiscal = projectFiscalRecords.length > 0 ? projectFiscalRecords[0] : null;
+
+          const createdCaseProject = await CaseProject.create({
+              case_rid: data.case_rid,
+              account_rid: data.account_rid,
+              created_by: data.created_by,
+              created_datetime: new Date(),
+              project_rid: p.project_rid,
+              project_group: p.project_group,
+              project_fiscal_rid: p.project_fiscal_rid,
+              project_code: projectFiscal?.project_code || '',
+              industry_rid: projectFiscal?.industry_rid,
+              industry_name: projectFiscal?.industry_name,
+              fiscal_year: projectFiscal?.fiscal_year,
+              project_name: projectFiscal?.project_name,
+              program_name: projectFiscal?.program_name,
+              project_classification_rid: projectFiscal?.project_classification_rid,
+              project_classification_other: projectFiscal?.project_classification_other,
+              project_client_group: projectFiscal?.project_client_group,
+              auto_send_ai_interaction: projectFiscal?.auto_send_ai_interaction || false,
+              country_rid: projectFiscal?.country_rid,
+              region_rid: projectFiscal?.region_rid,
+              currency_rid: projectFiscal?.currency_rid,
+              max_ai_interaction: projectFiscal?.max_ai_interaction || 0,
+              expiry_duration: projectFiscal?.expiry_duration,
+              auto_access_rd: projectFiscal?.auto_access_rd,
+              project_startdate: projectFiscal?.project_startdate,
+              project_enddate: projectFiscal?.project_enddate,
+              total_fte_prj: projectFiscal?.total_fte_prj || 0,
+              total_fte_from_prj_res: projectFiscal?.total_fte_from_prj_res || 0,
+              total_fte_from_tasks: projectFiscal?.total_fte_from_tasks || 0,
+              total_subcon_prj: projectFiscal?.total_subcon_prj || 0,
+              total_subcon_from_prj_res: projectFiscal?.total_subcon_from_prj_res || 0,
+              total_subcon_from_tasks: projectFiscal?.total_subcon_from_tasks || 0,
+              total_nonlabor_prj: projectFiscal?.total_nonlabor_prj || 0,
+              total_nonlabor_from_prj_res: projectFiscal?.total_nonlabor_from_prj_res || 0,
+              total_resources_prj: projectFiscal?.total_resources_prj || 0,
+              total_resources_from_prj_res: projectFiscal?.total_resources_from_prj_res || 0,
+              total_resources_from_tasks: projectFiscal?.total_resources_from_tasks || 0,
+              total_effort_prj: projectFiscal?.total_effort_prj || 0,
+              total_effort_fte_prj: projectFiscal?.total_effort_fte_prj || 0,
+              total_effort_subcon_prj: projectFiscal?.total_effort_subcon_prj || 0,
+              total_effort_from_prj_res: projectFiscal?.total_effort_from_prj_res || 0,
+              total_effort_fte_from_prj_res: projectFiscal?.total_effort_fte_from_prj_res || 0,
+              total_effort_subcon_from_prj_res: projectFiscal?.total_effort_subcon_from_prj_res || 0,
+              total_effort_from_tasks: projectFiscal?.total_effort_from_tasks || 0,
+              total_effort_fte_from_tasks: projectFiscal?.total_effort_fte_from_tasks || 0,
+              total_effort_subcon_from_tasks: projectFiscal?.total_effort_subcon_from_tasks || 0,
+              total_cost_prj: projectFiscal?.total_cost_prj || 0,
+              total_cost_fte_prj: projectFiscal?.total_cost_fte_prj || 0,
+              total_cost_subcon_prj: projectFiscal?.total_cost_subcon_prj || 0,
+              total_cost_nonlabor_prj: projectFiscal?.total_cost_nonlabor_prj || 0,
+              total_cost_from_prj_res: projectFiscal?.total_cost_from_prj_res || 0,
+              total_cost_fte_from_prj_res: projectFiscal?.total_cost_fte_from_prj_res || 0,
+              total_cost_subcon_from_prj_res: projectFiscal?.total_cost_subcon_from_prj_res || 0,
+              total_cost_nonlabor_from_prj_res: projectFiscal?.total_cost_nonlabor_from_prj_res || 0,
+              total_cost_from_tasks: projectFiscal?.total_cost_from_tasks || 0,
+              total_cost_fte_from_tasks: projectFiscal?.total_cost_fte_from_tasks || 0,
+              total_cost_subcon_from_tasks: projectFiscal?.total_cost_subcon_from_tasks || 0,
+              total_cost_prj_blended: projectFiscal?.total_cost_prj_blended || 0,
+              total_cost_fte_prj_blended: projectFiscal?.total_cost_fte_prj_blended || 0,
+              total_cost_subcon_prj_blended: projectFiscal?.total_cost_subcon_prj_blended || 0,
+              total_cost_from_prj_res_blended: projectFiscal?.total_cost_from_prj_res_blended || 0,
+              total_cost_fte_from_prj_res_blended: projectFiscal?.total_cost_fte_from_prj_res_blended || 0,
+              total_cost_subcon_from_prj_res_blended: projectFiscal?.total_cost_subcon_from_prj_res_blended || 0,
+              total_cost_from_tasks_blended: projectFiscal?.total_cost_from_tasks_blended || 0,
+              total_cost_fte_from_tasks_blended: projectFiscal?.total_cost_fte_from_tasks_blended || 0,
+              total_cost_subcon_from_tasks_blended: projectFiscal?.total_cost_subcon_from_tasks_blended || 0,
+              blended_rate_fte: projectFiscal?.blended_rate_fte || 0,
+              blended_rate_subcon: projectFiscal?.blended_rate_subcon || 0,
+              rd_percent_potential_ai: projectFiscal?.rd_percent_potential_ai || 0,
+              rd_percent_adjustment: projectFiscal?.rd_percent_adjustment || 0,
+              rd_percent_final: projectFiscal?.rd_percent_final || 0,
+              qre_fte: projectFiscal?.qre_fte || 0,
+              qre_subcon: projectFiscal?.qre_subcon || 0,
+              qre_nonlabor: projectFiscal?.qre_nonlabor || 0,
+              qre_final: projectFiscal?.qre_final || 0,
+              rd_credits_fte_fed_level: projectFiscal?.rd_credits_fte_fed_level || 0,
+              rd_credits_subcon_fed_level: projectFiscal?.rd_credits_subcon_fed_level || 0,
+              rd_credits_nonlabor_fed_level: projectFiscal?.rd_credits_nonlabor_fed_level || 0,
+              rd_credits_fed_level: projectFiscal?.rd_credits_fed_level || 0,
+              rd_credits_total: projectFiscal?.rd_credits_total || 0,
+              interaction_cc_list: projectFiscal?.interaction_cc_list,
+              assessment_status: projectFiscal?.assessment_status,
+              claim_status: projectFiscal?.claim_status,
+              comments: projectFiscal?.comments,
+              project_description: projectFiscal?.project_description,
+              status_rid: projectFiscal?.status_rid,
+              project_type_rid: projectFiscal?.project_type_rid,
+              effective_total_fte: projectFiscal?.effective_total_fte || 0,
+              effective_total_subcon: projectFiscal?.effective_total_subcon || 0,
+              effective_total_nonlabor: projectFiscal?.effective_total_nonlabor || 0,
+              effective_cost: projectFiscal?.effective_cost || 0,
+              effective_effort: projectFiscal?.effective_effort || 0,
+              effective_fte_cost: projectFiscal?.effective_fte_cost || 0,
+              effective_fte_effort: projectFiscal?.effective_fte_effort || 0,
+              effective_subcon_cost: projectFiscal?.effective_subcon_cost || 0,
+              effective_subcon_effort: projectFiscal?.effective_subcon_effort || 0,
+              effective_nonlabor_cost: projectFiscal?.effective_nonlabor_cost || 0,
+              effective_metric_type: projectFiscal?.effective_metric_type,
+              default_metric_type: projectFiscal?.default_metric_type,
+              // is_rd_claim_qualified: projectFiscal?.is_rd_claim_qualified || false,
+              rd_percent_potential_ai_updated: projectFiscal?.rd_percent_potential_ai_updated || 0,
+              total_nonlabor_from_tasks: projectFiscal?.total_nonlabor_from_tasks || 0,
+
+          });
+          p.project_case_rid = createdCaseProject.rid;
+          iterationCount += 1;
+    }
+    if (totalCount === iterationCount) {
+      const getTotalProjects : any = await this.orgDbSequelize.query(
+        rawQueries.getTotalProjectsCountInCase(schemaName, data.fiscal_year, data.account_rid, data.case_rid)
+      )
+      await this.orgDbSequelize.query(
+        rawQueries.updateCostCountInCase(
+          schemaName,
+          data.case_rid,
+          getTotalProjects[0][0].total_projects,
+          getTotalProjects[0][0].total_projects_cost,
+          getTotalProjects[0][0].total_projects_qre_cost
+        )
+      );
+      await this.mainDbSequelize.query(
+        rawQueries.updateCostCountInCaseSummary(
+          data.case_rid,
+          getTotalProjects[0][0].total_projects,
+          getTotalProjects[0][0].total_projects_cost,
+          getTotalProjects[0][0].total_projects_qre_cost
+        )
+      );
+      if (totalCount === 1) {
+        return {
+          statusCode: HttpStatus.SUCCESS,
+          statusMessage: STATUS_MESSAGE.singleProjectAssignedSuccess,
+          data: data,
+        };
+      } else {
+        return {
+          statusCode: HttpStatus.SUCCESS,
+          statusMessage: STATUS_MESSAGE.multipleProjectAssignedSuccess,
+          data: data,
+        };
       }
+    }
+    else {
+      return {
+        statusCode: HttpStatus.FAILED,
+        statusMessage: STATUS_MESSAGE.projectAssignFailed,
+      };
+    }
   }
 
   async createCaseProjectTables(accountNumber: string) {
@@ -2415,106 +2486,97 @@ return !response;
       accountNumber: string,
       schemaName: string
   ) {
-      const { CaseProject, CaseProjectTask, CaseProjectResource, CaseProjectResourceFiscal } = await this.caseModelService.getModels(
-          accountNumber
+    const { CaseProject } = await this.caseModelService.getModels(
+      accountNumber
+    );
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+    }
+    if (!this.orgDbSequelize) {
+      this.orgDbSequelize = await this.caseModelService.getSequelize();
+    }
+    //  await this.createCaseProjectTables(accountNumber);
+    let iterationCount: number = 0;
+    let totalCount: number = 0;
+    totalCount = data.projects.length;
+
+    for (let p of data.projects) {
+      await CaseProjectTask.destroy({
+        where: {
+            case_rid: data.case_rid,
+            account_rid: data.account_rid,
+            project_fiscal_rid: p.project_fiscal_rid,
+        },
+      });
+      await CaseProjectResourceFiscal.destroy({
+        where: {
+            case_rid: data.case_rid,
+            account_rid: data.account_rid,
+            project_fiscal_rid: p.project_fiscal_rid,
+        },
+      })
+      await CaseProjectResource.destroy({
+        where: {
+            case_rid: data.case_rid,
+            account_rid: data.account_rid,
+            project_fiscal_rid: p.project_fiscal_rid,
+        },
+      });
+      await CaseProjectFiscalRegion.destroy({
+        where: {
+            case_rid: data.case_rid,
+            account_rid: data.account_rid,
+            project_fiscal_rid: p.project_fiscal_rid,
+        },
+      });
+      await CaseProject.destroy({
+        where: {
+          case_rid: data.case_rid,
+          account_rid: data.account_rid,
+          project_fiscal_rid: p.project_fiscal_rid,
+        },
+      });
+      iterationCount += 1;
+    }
+    if (totalCount === iterationCount) {
+      const getTotalProjects : any = await this.orgDbSequelize.query(
+        rawQueries.getTotalProjectsCountInCase(schemaName, data.fiscal_year, data.account_rid, data.case_rid)
       );
-      if (!this.mainDbSequelize) {
-          this.mainDbSequelize = await this.caseModelService.getMainSequelize();
-      }
-      if (!this.orgDbSequelize) {
-          this.orgDbSequelize = await this.caseModelService.getSequelize();
-      }
-      //  await this.createCaseProjectTables(accountNumber);
-      let iterationCount: number = 0;
-      let totalCount: number = 0;
-      totalCount = data.projects.length;
-
-      for (let p of data.projects) {
-
-          await CaseProjectTask.destroy({
-              where: {
-                  case_rid: data.case_rid,
-                  account_rid: data.account_rid,
-                  project_fiscal_rid: p.project_fiscal_rid,
-              },
-          });
-          await CaseProjectResourceFiscal.destroy({
-              where: {
-                  case_rid: data.case_rid,
-                  account_rid: data.account_rid,
-                  project_fiscal_rid: p.project_fiscal_rid,
-              },
-          })
-          await CaseProjectResource.destroy({
-              where: {
-                  case_rid: data.case_rid,
-                  account_rid: data.account_rid,
-                  project_fiscal_rid: p.project_fiscal_rid,
-              },
-          });
-          await CaseProjectFiscalRegion.destroy({
-              where: {
-                  case_rid: data.case_rid,
-                  account_rid: data.account_rid,
-                  project_fiscal_rid: p.project_fiscal_rid,
-              },
-          });
-          await CaseProject.destroy({
-              where: {
-                  case_rid: data.case_rid,
-                  account_rid: data.account_rid,
-                  project_fiscal_rid: p.project_fiscal_rid,
-              },
-          });
-          iterationCount += 1;
-      }
-      if (totalCount === iterationCount) {
-          const getTotalProjectCount: any = await this.orgDbSequelize.query(
-              rawQueries.getTotalProjectsCount(
-                  schemaName,
-                  data.case_rid,
-                  data.account_rid
-              )
-          );
-          const getTotalProjectCost: any = await this.orgDbSequelize.query(
-              rawQueries.getTotalProjectCost(
-                  schemaName,
-                  data.case_rid,
-                  data.account_rid
-              )
-          );
-          await this.orgDbSequelize.query(
-              rawQueries.updateCostCountInCase(
-                  schemaName,
-                  data.case_rid,
-                  getTotalProjectCount[0][0].total_projects,
-                  getTotalProjectCost[0][0].total_cost
-              )
-          );
-          await this.mainDbSequelize.query(
-              rawQueries.updateCostCountInCaseSummary(
-                  data.case_rid,
-                  getTotalProjectCount[0][0].total_projects,
-                  getTotalProjectCost[0][0].total_cost
-              )
-          );
-          if (totalCount === 1) {
-              return {
-                  statusCode: HttpStatus.SUCCESS,
-                  statusMessage: STATUS_MESSAGE.singleProjectDeletedSuccess,
-              };
-          } else {
-              return {
-                  statusCode: HttpStatus.SUCCESS,
-                  statusMessage: STATUS_MESSAGE.multipleProjectDeletedSuccess,
-              };
-          }
+      await this.orgDbSequelize.query(
+        rawQueries.updateCostCountInCase(
+          schemaName,
+          data.case_rid,
+          getTotalProjects[0][0].total_projects,
+          getTotalProjects[0][0].total_projects_cost,
+          getTotalProjects[0][0].total_projects_qre_cost
+        )
+      );
+      await this.mainDbSequelize.query(
+        rawQueries.updateCostCountInCaseSummary(
+          data.case_rid,
+          getTotalProjects[0][0].total_projects,
+          getTotalProjects[0][0].total_projects_cost,
+          getTotalProjects[0][0].total_projects_qre_cost
+        )
+      );
+      if (totalCount === 1) {
+        return {
+          statusCode: HttpStatus.SUCCESS,
+          statusMessage: STATUS_MESSAGE.singleProjectDeletedSuccess,
+        };
       } else {
-          return {
-              statusCode: HttpStatus.FAILED,
-              statusMessage: STATUS_MESSAGE.projectAssignFailed,
-          };
+        return {
+          statusCode: HttpStatus.SUCCESS,
+          statusMessage: STATUS_MESSAGE.multipleProjectDeletedSuccess,
+        };
       }
+    }
+    else {
+      return {
+          statusCode: HttpStatus.FAILED,
+          statusMessage: STATUS_MESSAGE.projectAssignFailed,
+      };
+    }
   }
 
   async isProjectAssignedInCase(
@@ -2739,11 +2801,9 @@ return !response;
       emailRecipientsQuery,
       { type: "SELECT" }
     );
-    console.log("emailRecipients", emailRecipients);
     let result = Array.isArray(emailRecipients)
       ? emailRecipients.map((d: any) => d.email)
       : [];
-    console.log("result", result);
      const [caseInfo]: any[] = await this.orgDbSequelize.query(
                 rawQueries.fetchCaseInfo(schemaName,caseRid),
                 { type: "SELECT" }
@@ -3374,7 +3434,7 @@ return !response;
       for (const member of teamMembers) {
         await CaseTask.update(
           {
-            assigned_to: enrichedTeamMembers.find(etm => etm.user_rid === member.user_rid)?.user_name || null,
+            assigned_to: enrichedTeamMembers.find(etm => etm.user_rid === member.user_rid)?.user_rid || null,
           },
           {
             where: {
@@ -3586,7 +3646,7 @@ return !response;
               role_rid: teamMember.role_rid,
               user_rid: teamMember.user_rid,
               effective_startdate: teamMember.effective_from,
-              effective_enddate: teamMember.effective_to,
+              effective_enddate: teamMember.effective_to || null,
               is_primary: teamMember.is_primary || false,
               status_rid: teamMember.status_rid || null,
               modified_by: userId,
@@ -3862,24 +3922,69 @@ return !response;
     try {
       const { CheckList } = await this.caseModelService.getModels(accountNumber);
       const createdChecklist = await CheckList.create(
+      {
+        account_rid: caseRequest.account_rid,
+        attach_to: caseRequest.attach_to,
+        attachment_level: caseRequest.attachment_level,
+        checklist_name: caseRequest.checklist_name,
+        checklist_description: caseRequest.checklist_description,
+        checklist_template_rid: caseRequest?.checklist_template_rid || "",
+        fiscal_year:caseRequest.fiscal_year,
+        created_by: caseRequest.created_by,
+        status_rid: caseRequest.status_rid,
+        //modified_by: caseRequest.modified_by,
+        created_datetime: new Date(),
+        case_rid : caseRequest?.case_rid || "",
+        //  modified_datetime: caseRequest.modified_datetime,
+      },
+      { transaction }
+    );
+    return createdChecklist;
+    } catch (error) {
+      logMessage(`Error creating checklist: ${error}`);
+      throw new Error("Error creating checklist: " + error);
+    }
+  }
+
+  async createCheckListForTask(
+    accountNumber: string,
+    caseRequest: ICreateChecklist,
+    transaction: Transaction
+  ) {
+    // Implementation for creating checklist in the database
+    try {
+      const { CheckList } = await this.caseModelService.getModels(accountNumber);
+      const findCheckListAlreadyCreated = await CheckList.findOne({
+        where : {
+          attach_to : caseRequest.attach_to,
+          attachment_level : "task",
+          case_rid : caseRequest.case_rid,
+          checklist_template_rid : caseRequest.checklist_rid
+        }, raw : true
+      });
+      if(!findCheckListAlreadyCreated) {
+        const createdChecklist = await CheckList.create(
         {
           account_rid: caseRequest.account_rid,
           attach_to: caseRequest.attach_to,
           attachment_level: caseRequest.attachment_level,
           checklist_name: caseRequest.checklist_name,
           checklist_description: caseRequest.checklist_description,
-          checklist_template_rid: caseRequest?.checklist_template_rid || "",
+          checklist_template_rid: caseRequest.checklist_rid || "",
           fiscal_year:caseRequest.fiscal_year,
           created_by: caseRequest.created_by,
           status_rid: caseRequest.status_rid,
           //modified_by: caseRequest.modified_by,
           created_datetime: new Date(),
+          case_rid : caseRequest.case_rid
           //  modified_datetime: caseRequest.modified_datetime,
         },
         { transaction }
       );
-
       return createdChecklist;
+      } else {
+        return null;
+      }
     } catch (error) {
       logMessage(`Error creating checklist: ${error}`);
       throw new Error("Error creating checklist: " + error);
@@ -3940,7 +4045,7 @@ return !response;
     }
     const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, "")}`;
     const [checklistDetails] : any[] = await this.orgDbSequelize.query(fetchCaseDetails(schemaName,checklistId),{ type: 'SELECT' });
-    
+    const [attach_toDetails] : any[] = await this.orgDbSequelize.query(fetchChecklistAttachToDetails(schemaName,checklistDetails.attach_to,checklistDetails.attachment_level,checklistId),{ type: 'SELECT' });
     if(!checklistDetails){
       throw new Error("Checklist not found");
     }
@@ -4052,7 +4157,7 @@ return !response;
     const response: any = {
       attach_to: checklistDetails?.attach_to ?? "",
       attachment_level: checklistDetails?.attachment_level ?? "",
-      attached_to: attached_to ?? "",
+      attached_to: attach_toDetails?.name ?? "",
       checklist_rid: checklistDetails?.rid,
       checklist_name: checklistDetails?.checklist_name ?? "",
       checklist_description: checklistDetails?.checklist_description ?? "",
@@ -4251,7 +4356,6 @@ return !response;
             const result = await CheckList.findAll({ where: whereClause });
             allChecklists.push(...result);
           } catch (error) {
-            console.error('Error fetching attachments:', error);
             throw new Error('Failed to fetch attachments');
           }
         }
@@ -5072,7 +5176,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     let clonedData = queryResult[0][0]
     let milestoneSequenceNumber : any[] = []
     let milestoneMap : Map<string, string> = new Map();
-    if(clonedData.milestone_data !== null && clonedData.task_data !== null) {
+    if(clonedData.milestone_data !== null) {
       const finalMilestoneData = clonedData.milestone_data.map((d : any) => {
         milestoneMap.set(d.milestone_rid, d.milestone_sequence_no);
         milestoneSequenceNumber.push(d.milestone_sequence_no)
@@ -5085,7 +5189,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         }
       })
       const result = await CaseMilestone.bulkCreate(finalMilestoneData, {transaction})
-      if(clonedData.task_data.length > 0) {
+      if(clonedData.task_data !== null) {
         let startDate : Date;
         let endDate : Date;
         let startDateMap : Map<number, Date> = new Map();
@@ -5097,19 +5201,27 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         let validEndDate;
         let otherStartDateMap : Map<number, Date> = new Map()
         let otherEndDateMap : Map<number, Date> = new Map()
-
-        for(let d of clonedData.task_data) {
+        let firstMilestoneEntered : boolean = false
+        let secondMilestoneEntered : boolean = false
+        let otherMilestoneEntered : boolean = false
+        let firstMilestoneDatePicker : boolean = false
+        let firstMilestoneForSecondDatePicker : boolean = false
+        if(clonedData.task_data.length > 0) {
+        for(let d of clonedData.task_data) {          
           if(milestoneMap.get(d.milestone_template_rid) === "1") {
-            if(d.sequence_no === 1) {
-              const conversion = dayjs(caseStartDate)
-              let res = conversion.add(d.effort_in_days, 'day');
-              let finalisedEnddate = res.format('YYYY-MM-DD')
-              endDate = dayjs(finalisedEnddate).toDate()
-              startDate = caseStartDate
-              startDateStorage = startDate
-              endDateStorage = endDate
-              startDateMap.set(d.task_name, startDateStorage)
-              endDateMap.set(d.task_name, endDateStorage)
+            if(!firstMilestoneEntered) {
+              firstMilestoneEntered = true
+              if(d.sequence_no === 1) {
+                const conversion = dayjs(caseStartDate)
+                let res = conversion.add(d.effort_in_days - 1, 'day');
+                let finalisedEnddate = res.format('YYYY-MM-DD')
+                endDate = dayjs(finalisedEnddate).toDate()
+                startDate = caseStartDate
+                startDateStorage = startDate
+                endDateStorage = endDate
+                startDateMap.set(d.task_name, startDateStorage)
+                endDateMap.set(d.task_name, endDateStorage)
+              }
             } 
             else {
               const conversion = dayjs(endDateStorage)
@@ -5125,18 +5237,53 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             }
           } 
           else {
+            let day : any
             if(milestoneMap.get(d.milestone_template_rid) === "2") {
-              validEndDate = endDateStorage
+              if(!firstMilestoneEntered && !secondMilestoneEntered) {
+                validEndDate = caseStartDate
+                secondMilestoneEntered = true
+                day = dayjs(validEndDate)
+                d.effort_in_days = d.effort_in_days - 1
+              }
+              else if(firstMilestoneEntered && !firstMilestoneForSecondDatePicker) {
+                validEndDate = endDateStorage
+                day = dayjs(validEndDate)
+                day = day.add(1, 'day')
+                firstMilestoneForSecondDatePicker = true
+                d.effort_in_days = d.effort_in_days
+              } 
+              else {
+                validEndDate = otherMileStoneEndDateStorgae
+                day = dayjs(validEndDate)
+                day = day.add(1, 'day')
+                d.effort_in_days = d.effort_in_days
+              }
             } else {
-              validEndDate = otherMileStoneEndDateStorgae
+              if(!firstMilestoneEntered && !secondMilestoneEntered && !otherMilestoneEntered) {
+                validEndDate = caseStartDate
+                otherMilestoneEntered = true
+                day = dayjs(validEndDate)
+                d.effort_in_days = d.effort_in_days - 1
+              }
+              else if (!secondMilestoneEntered) {
+                validEndDate = otherMileStoneEndDateStorgae
+                day = dayjs(validEndDate)
+                day = day.add(1, 'day')
+                d.effort_in_days = d.effort_in_days
+              }
+              else {
+                validEndDate = endDateStorage
+                day = dayjs(validEndDate)
+                day = day.add(1, 'day')
+                firstMilestoneDatePicker = true
+                d.effort_in_days = d.effort_in_days
+              }
             }
             if(d.sequence_no === 1) {
               const conversion = dayjs(validEndDate)
               let res = conversion.add(d.effort_in_days, 'day');
               let finalisedEnddate = res.format('YYYY-MM-DD')
               endDate = dayjs(finalisedEnddate).toDate()
-              let day = dayjs(validEndDate)
-              day = day.add(1, 'day')
               let finalDay = day.toDate()
               otherMileStoneStartDateStorage = day
               otherMileStoneEndDateStorgae = endDate
@@ -5178,17 +5325,22 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             rid : d.task_rid
           }
         })
-        const finalWorkFlowData = clonedData.workflow_data.map((d : any) => {
-          return {
-            ...d,
-            account_rid : accountRid,
-            case_rid : caseRid
-          }
-        })
+        let finalWorkFlowData;
+        if(clonedData.workflow_data !== null) {
+          finalWorkFlowData = clonedData.workflow_data.map((d : any) => {
+            return {
+              ...d,
+              account_rid : accountRid,
+              case_rid : caseRid
+            }
+          })
+         await CaseTaskWorkflowConnector.bulkCreate(finalWorkFlowData, {transaction});
+        }
+        
         await CaseTask.bulkCreate(finalTaskData, {transaction})
-        await CaseTaskWorkflowConnector.bulkCreate(finalWorkFlowData, {transaction});
         await this.cloneDefaultChecklistTemplate(accountRid, caseRid, filing_type_rid, accountNumber, transaction,finalTaskData)
       }
+        }
     }
   }
   async cloneDefaultChecklistTemplate (accountRid : string, caseRid : string, filing_type_rid : string, accountNumber : string, transaction : Transaction,finalTaskData:any) {
@@ -5202,7 +5354,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         });
         if (templateChecklist) {
           const checklistData = {
-            attach_to: caseRid,
+            attach_to: task.rid,
             attachment_level: "task",
             checklist_name: templateChecklist.checklist_name,
             checklist_description: templateChecklist.checklist_description,
@@ -5210,7 +5362,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             account_rid: accountRid,
             created_datetime: new Date(),
             created_by: task.created_by,
-            task_rid : task.rid
+            case_rid : caseRid
           };
           const newChecklist = await CheckList.create(checklistData, { transaction });
 
@@ -5291,7 +5443,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     else return null;
   }
   async createUserLevelTask (data : CreateCaseTaskType, accountNumber : string, transaction : Transaction, activeStatusRid : string, fiscalYear : number) {
-    const {CaseTask, CaseTimeline} = await this.caseModelService.getModels(accountNumber);
+    const {CaseTask, CaseTimeline, TaskSummary,Case, CaseHistory} = await this.caseModelService.getModels(accountNumber);
     const fetchSequenceNumber = await this.fetchSequenceOrder(data.milestone_template_rid, accountNumber);
     let sequenceNo : number = 0;
     if(fetchSequenceNumber.length > 0) {
@@ -5322,6 +5474,34 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       task_category_rid : data.task_category_rid
     }, {transaction});
     if(createdTaskResult) {
+      const caseInfo = await Case.findOne({
+        where : {
+          rid : data.case_rid,
+          account_rid : data.account_rid
+        },
+        attributes : ['case_name','fiscal_year'],
+        raw : true  
+      });
+    /*  await TaskSummary.create(
+        {
+          task_rid: createdTaskResult.rid,
+          r_number: createdTaskResult.r_number || "",
+          account_rid: createdTaskResult.account_rid || "",
+          attach_to: createdTaskResult.rid || "",
+          attachment_level: "case",
+          task_name: data.task_name || "",
+          description: data.task_description || "",
+          fiscal_year: caseInfo?.fiscal_year || 0,
+          assigned_to: data.assigned_to || "",
+          status_rid: data.status_rid || "",
+          priority_rid: data.priority_rid || "",
+          effective_start_datetime: data.effective_start_datetime,
+          effective_end_datetime: data.effective_end_datetime,
+          created_by: data.created_by || "",
+          created_datetime: new Date(),
+        }
+      );
+      */
       if(data?.checklist_template_rid) 
       {
         const response  = await this.fetchChecklistTemplateDetailsById(data.checklist_template_rid);
@@ -5331,16 +5511,18 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
           checklist_name: response.checklist_name,
           checklist_description: response.description,  
           checklist_items: response.checklist_items,
-          attach_to:createdTaskResult.dataValues.rid,
+          attach_to: createdTaskResult.dataValues.rid,
           attachment_level: 'task',
           created_by: data.created_by,
           created_datetime: new Date(),
           fiscal_year: fiscalYear,
-          checklist_rid: data.checklist_template_rid
+          checklist_rid: data.checklist_template_rid,
+          case_rid : data.case_rid
         };
 
-        const checklistResponse = await this.createCheckList(accountNumber, caseRequest, transaction);
-        await this.manageCheckListItems(accountNumber,caseRequest,checklistResponse.rid, transaction);
+        const checklistResponse = await this.createCheckListForTask(accountNumber, caseRequest, transaction);
+        if(checklistResponse)
+          await this.manageCheckListItems(accountNumber,caseRequest,checklistResponse.rid, transaction);
       }
       if(data.tags.length > 0) {
         for(let d of data.tags) {
@@ -5366,13 +5548,22 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         created_by : data.created_by,
         created_datetime : new Date(),
         account_rid : data.account_rid,
-        entity_rid : createdTaskResult.rid,
+        entity_rid : data.case_rid,
         event_name : "Task Created",
         event_type : "ui handler",
         event_status : "success",
         event_datetime : new Date(),
         description : `Task created with title : ${createdTaskResult.task_name}`
       }, {transaction}) 
+      await CaseHistory.create({
+        created_by : data.created_by,
+        created_datetime : new Date(),
+        case_rid : data.case_rid,
+        task_rid : createdTaskResult.dataValues.rid,
+        attribute_name : "Task",
+        old_value : "CREATE",
+        new_value : `added a task ${createdTaskResult.task_name}`
+      })
       return {
         statusCode : HttpStatus.SUCCESS,
         data : createdTaskResult
@@ -5389,7 +5580,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     if(!this.mainDbSequelize) {
       this.mainDbSequelize = await initMainDbSequelize()
     }
-    const {CaseTask, CaseTimeline, CaseHistory, TaskCollaborators, CaseTeam} = await this.caseModelService.getModels(accountNumber);
+    const {CaseTask, CaseTimeline, CaseHistory, TaskCollaborators, TaskSummary, CheckList, CheckListItem} = await this.caseModelService.getModels(accountNumber);
     const checkCaseExists = await this.isCaseExistsForAccount(data.account_rid, data.case_rid, accountNumber);
     if(!checkCaseExists) {
       return {
@@ -5426,7 +5617,73 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             case_rid : data.case_rid
           }, transaction
         });
-        const checkIsDifferentCollaborator = await this.isNewCollaborator(data.modified_by, accountNumber,"case_task");
+        if(data?.checklist_template_rid) 
+      {
+        if(data.checklist_template_rid !== isTaskExists.checklist_template_rid) {
+          if(isTaskExists.checklist_template_rid !== null && isTaskExists.checklist_template_rid !== '') {
+            const checklistResult = await CheckList.findOne({
+            where : {
+              attach_to : data.rid,
+              case_rid : data.case_rid,
+              attachment_level : 'task',
+              checklist_template_rid : isTaskExists.checklist_template_rid
+            }, raw : true
+          })
+          if(checklistResult) {
+            await CheckListItem.destroy({
+              where : {
+                checklist_rid : checklistResult.rid
+              }
+            })
+            await CheckList.destroy({
+              where : {
+                attach_to : data.rid,
+                case_rid : data.case_rid,
+                attachment_level : 'task',
+                checklist_template_rid : isTaskExists.checklist_template_rid
+              }
+            })
+            }
+          }
+          const response  = await this.fetchChecklistTemplateDetailsById(data.checklist_template_rid);
+          response.checklist_items.map((item:any) => item.action_type  = 'add');
+          let caseRequest : any = {
+            account_rid: data.account_rid!,
+            checklist_name: response.checklist_name,
+            checklist_description: response.description,  
+            checklist_items: response.checklist_items,
+            attach_to: data.rid,
+            attachment_level: 'task',
+            created_by: data.modified_by,
+            created_datetime: new Date(),
+            fiscal_year: checkCaseExists.fiscal_year,
+            checklist_rid: data.checklist_template_rid,
+            case_rid : data.case_rid
+          };
+          const checklistResponse = await this.createCheckListForTask(accountNumber, caseRequest, transaction);
+          if(checklistResponse)
+            await this.manageCheckListItems(accountNumber,caseRequest,checklistResponse.rid, transaction);
+          }
+      }
+       /* await TaskSummary.update(
+        {
+          task_name: data.task_name || "",
+          description: data.task_description || "",
+          assigned_to: data.assigned_to || "",
+          status_rid: data.task_status_rid || "",
+          priority_rid: data.priority_rid || "",
+          effective_start_datetime: data.effective_start_datetime,
+          effective_end_datetime: data.effective_end_datetime,
+          modified_by: data.modified_by || "",
+          modified_datetime: new Date(),
+        },
+        {
+        where : {
+            task_rid : data.rid
+          }
+      }
+      ); */
+        const checkIsDifferentCollaborator = await this.isNewCollaborator(data.modified_by, accountNumber,"case_task", data.case_rid, data.rid);
         if(!checkIsDifferentCollaborator) {
           const checkCollaboratorExists = await this.isCollaboratorAlreadyAdded(data.modified_by, data.case_rid, data.account_rid, data.rid, accountNumber,"case_task");
           if(!checkCollaboratorExists) {
@@ -5450,12 +5707,38 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             data.workflow_connector.created_by = data.modified_by
             data.workflow_connector.case_rid = data.case_rid
             data.workflow_connector.account_rid = data.account_rid
-            if(data.workflow_connector.target_rid.length > 0) {
-              await this.taskWorkflowConnector(accountNumber, data.workflow_connector, transaction);
+            if(data.workflow_connector.target_rid !== undefined && data.workflow_connector.is_new_changes) {
+              if(data.workflow_connector.target_rid.length > 0)
+                await this.taskWorkflowConnector(accountNumber, data.workflow_connector, transaction);
             }
             if(data.workflow_connector.delete_target_rids !== undefined) {
-              if(data.workflow_connector.delete_target_rids.length > 0)
+              if(data.workflow_connector.delete_target_rids.length > 0 && data.workflow_connector.is_new_changes) {
+                data.workflow_connector.source_rid = data.rid
                 await this.deleteTaskWorkConnector(accountNumber, data.workflow_connector)
+              }
+            }
+            if(data.workflow_connector.is_new_changes) {
+              await CaseTimeline.create({
+                created_by : data.modified_by,
+                created_datetime : new Date(),
+                account_rid : data.account_rid,
+                entity_rid : data.case_rid,
+                event_name : 
+                `Case Task Workflow Connector updated`,
+                event_type : "ui handler",
+                event_status : "success",
+                event_datetime : new Date(),
+                description : `Case Task Workflow Connector updated`
+              }, {transaction});
+              await CaseHistory.create({
+                created_by : data.modified_by,
+                created_datetime : new Date(),
+                case_rid : data.case_rid,
+                attribute_name : "Linked Items",
+                old_value : "CREATE",
+                new_value : `updated a linked task type`,
+                task_rid : data.rid
+              }, {transaction});
             }
           }
           const fetchUpdatedColumns = getColumnsNamesForTaskUpdate(data, isTaskExists as any);
@@ -5468,13 +5751,14 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             let columnMapping : Map<string, string> = new Map()
             let newValueString;
             let oldValueString;
-            console.log(fetchUpdatedColumns)
+            let labelName;
             for(let c of fetchUpdatedColumns) {
               oldValue = (isTaskExists as any)[c]
               newValue = (data as any)[c]
               columnName = c
               
               if(columnName == "assigned_to") {
+                labelName = "Assigned To"
                 const result : any = await this.mainDbSequelize.query(rawQueries.fetchUserNames(oldValue, newValue))
                 for(let r of result[0]) {
                   columnMapping.set(r.rid, r.name)
@@ -5483,6 +5767,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                 newValueString = columnMapping.get(newValue)
               }
               else if(columnName === "checklist_template_rid") {
+                labelName = "Checklist"
                 const result : any = await this.mainDbSequelize.query(rawQueries.fetchCheckLists(oldValue, newValue));
                 for(let r of result[0]) {
                   columnMapping.set(r.rid, r.checklist_name)
@@ -5491,6 +5776,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                 newValueString = columnMapping.get(newValue)
               }
               else if(columnName === "priority_rid") {
+                labelName = "Priority"
                 const result : any = await this.mainDbSequelize.query(rawQueries.fetchPriority(oldValue, newValue));
                 for(let r of result[0]) {
                   columnMapping.set(r.rid, r.priority_name)
@@ -5499,6 +5785,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                 newValueString = columnMapping.get(newValue)
               }
               else if(columnName === "task_status_rid") {
+                labelName = "Status"
                 const result : any = await this.mainDbSequelize.query(rawQueries.fetchTaskStatus(oldValue, newValue));
                 for(let r of result[0]) {
                   columnMapping.set(r.rid, r.task_status_name)
@@ -5507,6 +5794,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                 newValueString = columnMapping.get(newValue)
               } 
               else if(columnName === "weightage_rid") {
+                labelName = "Weightage"
                 const result : any = await this.mainDbSequelize.query(rawQueries.fetchTaskWeightage(oldValue, newValue));
                 for(let r of result[0]) {
                   columnMapping.set(r.rid, r.weightage_value)
@@ -5515,6 +5803,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                 newValueString = columnMapping.get(newValue)
               }
               else if(columnName === "task_category_rid") {
+                labelName = "Task Category"
                 const result : any = await this.mainDbSequelize.query(rawQueries.fetchTaskCategory(oldValue, newValue));
                 for(let r of result[0]) {
                   columnMapping.set(r.rid, r.category_name)
@@ -5523,6 +5812,10 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                 newValueString = columnMapping.get(newValue)
               }
               else {
+                if(c === 'task_name') labelName = "Task Name"
+                if(c === 'task_description') labelName = "Task Description"
+                if(c === 'effective_start_datetime') labelName = "Start Date"
+                if(c === 'effective_end_datetime') labelName = "Due Date"
                 oldValueString = oldValue
                 newValueString = newValue
               }
@@ -5530,7 +5823,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                 created_by : data.modified_by,
                 created_datetime : new Date(),
                 case_rid : data.case_rid,
-                attribute_name : columnName,
+                attribute_name : labelName!,
                 old_value : oldValueString,
                 new_value : newValueString,
                 task_rid : data.rid
@@ -5544,7 +5837,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
               created_by : data.modified_by,
               created_datetime : new Date(),
               account_rid : data.account_rid,
-              entity_rid : data.rid,
+              entity_rid : data.case_rid,
               event_name : "Task Updated",
               event_type : "ui handler",
               event_status : "success",
@@ -5652,14 +5945,18 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     if(!this.orgDbSequelize) {
       this.orgDbSequelize = await initOrgSequelize()
     }
-    const result = await this.orgDbSequelize.query<CaseTaskQueryType>(fetchCaseSpecificTaskQuery(page, limit, search, sort, sortBy, filter, doSorting, caseRid, accountRid, schemaName, isExport), {type : QueryTypes.SELECT});
+    if(!this.mainDbSequelize) {
+      this.mainDbSequelize = await initMainDbSequelize()
+    }
+    const activeStatusId  : any = await this.mainDbSequelize.query(rawQueries.getActiveStatusId());
+    const result = await this.orgDbSequelize.query<CaseTaskQueryType>(fetchCaseSpecificTaskQuery(page, limit, search, sort, sortBy, filter, doSorting, caseRid, accountRid, schemaName, isExport, activeStatusId[0][0].rid), {type : QueryTypes.SELECT});
     if(result.length > 0) {
       return result;
     } else {
       return []
     }
   }
-  async isNewCollaborator (rid : string, accountNumber : string, taskType : string) {
+  async isNewCollaborator (rid : string, accountNumber : string, taskType : string, caseRid? : string, taskRid? : string) {
     const {CaseTask, Activities} = await this.caseModelService.getModels(accountNumber);
     let result;
     if (taskType === 'activity') {
@@ -5672,7 +5969,9 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     } else {
       result = await CaseTask.findOne({
         where: {
-          assigned_to: rid
+          assigned_to: rid,
+          case_rid : caseRid,
+          rid : taskRid
         },
         raw: true
       });
@@ -5734,7 +6033,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             created_by : userId,
             created_datetime : new Date(),
             account_rid : accountRid,
-            entity_rid : finalResult.dataValues.rid,
+            entity_rid : caseRid,
             event_name : `Tag added for Task`,
             event_type : "ui handler",
             event_status : "success",
@@ -5743,13 +6042,14 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             
           })
           await CaseHistory.create({
-            case_rid : caseRid,
             created_by : userId,
             created_datetime : new Date(),
-            attribute_name : "tag_rid",
-            new_value : result.tag_name,
+            attribute_name : "Tags",
+            old_value : `CREATE`,
+            new_value : `added the following tags ${result.dataValues.tag_name}`,
+            case_rid : caseRid,
             task_rid : taskRid
-          })
+          });
         }
         else
         {
@@ -5758,7 +6058,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             task_rid : taskRid,
             created_by : userId,
             created_datetime : new Date(),
-            attribute_name : "tag_rid",
+            attribute_name : "Tags",
             new_value : result.tag_name
           })
         }
@@ -5804,7 +6104,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             created_by : userId,
             created_datetime : new Date(),
             account_rid : accountRid,
-            entity_rid : finalResult.dataValues.rid,
+            entity_rid : caseRid,
             event_name : `Tag added for Task`,
             event_type : "ui handler",
             event_status : "success",
@@ -5895,7 +6195,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     }
     const createComments = await TaskComments.create(commentPayload);
     if(createComments) {
-      const checkIsDifferentCollaborator = await this.isNewCollaborator(data.created_by, accountNumber,data.task_type);
+      const checkIsDifferentCollaborator = await this.isNewCollaborator(data.created_by, accountNumber,data.task_type, data.case_rid, data.task_rid);
       if(!checkIsDifferentCollaborator) {
         const checkCollaboratorExists = await this.isCollaboratorAlreadyAdded(data.created_by, data.case_rid, data.account_rid, data.task_rid, accountNumber,data.task_type);
         if(!checkCollaboratorExists) {
@@ -5954,8 +6254,9 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
               created_by: data.created_by,
               created_datetime: new Date(),
               attribute_name: "comments_attachments",
-              new_value: uploadFile.url,
-              task_rid: data.task_rid
+              old_value : "CREATE",
+              new_value: "added a comment with attachment",
+              task_rid: data.task_rid,
             };
             if (data.task_type !== 'activity') {
               caseHistoryPayload.case_rid = data.case_rid;
@@ -5971,7 +6272,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         created_by : data.created_by,
         created_datetime : new Date(),
         account_rid : data.account_rid,
-        entity_rid : createComments.dataValues.rid,
+        entity_rid : data.case_rid,
         event_name : "Task Comments Created",
         event_type : "ui handler",
         event_status : "success",
@@ -6020,7 +6321,18 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         }
       });
       if(updateComments === 1) {
-        const checkIsDifferentCollaborator = await this.isNewCollaborator(data.modified_by, accountNumber,data.task_type);
+        if(data.task_type !== 'activity'){
+        await CaseHistory.create({
+        created_by : data.modified_by,
+        created_datetime : new Date(),
+        case_rid : data.case_rid,
+        task_rid : data.task_rid,
+        attribute_name : "Comments",
+        old_value : isCommentExists.comments,
+        new_value : data.comments
+      })
+    }
+        const checkIsDifferentCollaborator = await this.isNewCollaborator(data.modified_by, accountNumber, data.task_type || 'case_task', data.case_rid, data.task_rid);
         if(!checkIsDifferentCollaborator) {
           const checkCollaboratorExists = await this.isCollaboratorAlreadyAdded(data.modified_by, data.case_rid, data.account_rid, data.task_rid, accountNumber,data.task_type);
           if(!checkCollaboratorExists) {
@@ -6037,7 +6349,6 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             await TaskCollaborators.create(collaboratorPayload);
           }
         }
-        console.log(files)
         if(files.length > 0) {
           for(let f of files) {
             const uploadFile = await uploadToAzureBlob(f, data.account_rid, taskNumber, "cases");
@@ -6070,7 +6381,8 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                 created_by: data.modified_by,
                 created_datetime: new Date(),
                 attribute_name: "comments_attachments",
-                new_value: uploadFile.url,
+                old_value : "CREATE",
+                new_value: "added an attachment",
                 task_rid: data.task_rid
               };
               if (data.task_type !== 'activity') {
@@ -6118,7 +6430,15 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                           "success",
                          data.task_rid
                         )
-   
+                        await CaseHistory.create({
+                          created_by: data.modified_by,
+                          created_datetime: new Date(),
+                          attribute_name: "comments_attachments",
+                          old_value : "CREATE",
+                          new_value: "deleted an attachment in comment",
+                          task_rid: data.task_rid,
+                          case_rid : data.case_rid
+                        })
                     }
                   else
                   {
@@ -6126,7 +6446,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                     created_by : data.modified_by,
                     created_datetime : new Date(),
                     account_rid : data.account_rid,
-                    entity_rid : fetchCommentsAttachmentDetails.rid,
+                    entity_rid : data.case_rid,
                     event_name : "Task Comments Attachments deleted",
                     event_type : "ui handler",
                     event_status : "success",
@@ -6182,7 +6502,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
               created_by : data.modified_by,
               created_datetime : new Date(),
               account_rid : data.account_rid,
-              entity_rid : data.rid,
+              entity_rid : data.case_rid,
               event_name : "Task Comments Updated",
               event_type : "ui handler",
               event_status : "success",
@@ -6249,7 +6569,6 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             ""
           )}`;
           let insertQuery = "";
-        console.log("In add task timeline...", entity_rid, accountRid, attachmentLevel);
         if (attachmentLevel === "case") {
           /*const { CaseTimeline } = await this.caseModelService.getModels(
             accountNumber
@@ -6319,7 +6638,6 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                 rid : id
               }, raw : true
             });
-            console.log("fetchCommentsAttachmentDetails ====> ", fetchCommentsAttachmentDetails)
             if(fetchCommentsAttachmentDetails) {
               await deleteFromAzureBlob(fetchCommentsAttachmentDetails.browse_file);
               const [deleteCommentsAttachRes] = await CommentsAttachments.update({is_file_deleted : true},{where : {rid : id}})
@@ -6336,7 +6654,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                   created_by : data.modified_by,
                   created_datetime : new Date(),
                   account_rid : data.account_rid,
-                  entity_rid : fetchCommentsAttachmentDetails.rid,
+                  entity_rid : data.case_rid,
                   event_name : "Task Comments Attachments deleted",
                   event_type : "ui handler",
                   event_status : "success",
@@ -6363,13 +6681,17 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             }
           }
         } else {
+          let whereClause: any = {
+            account_rid: data.account_rid,
+            task_rid: data.task_rid,
+            comments_rid: data.rid
+          };
+          if (data.task_type !== 'activity') {
+            whereClause.case_rid = data.case_rid;
+          }
           const fetchCommentsAttachmentDetails = await CommentsAttachments.findAll({
-            where : {
-              account_rid : data.account_rid,
-              case_rid : data.case_rid,
-              task_rid : data.task_rid,
-              comments_rid : data.rid 
-            }, raw : true
+            where: whereClause,
+            raw: true
           });
           if(fetchCommentsAttachmentDetails.length > 0) {
             for(let d of fetchCommentsAttachmentDetails) {
@@ -6382,11 +6704,13 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                   is_file_deleted : false
                 }
               })
+              if(data.task_type !== 'activity')
+                {
               await CaseTimeline.create({
                 created_by : data.modified_by,
                 created_datetime : new Date(),
                 account_rid : data.account_rid,
-                entity_rid : d.rid,
+                entity_rid : data.case_rid,
                 event_name : "Task Comments Attachments deleted",
                 event_type : "ui handler",
                 event_status : "success",
@@ -6394,33 +6718,66 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                 description : `Task Comments : ${d.document_name}`
               }) 
             }
+              else
+              {
+                  await this.addTaskTimeline(
+                     accountNumber,
+                    d.rid,
+                    data.account_rid,
+                   `Task Comments : ${d.document_name}`,
+                    data.modified_by,
+                   "Task Comments Attachments deleted",
+                    "success",
+                   data.task_rid
+                  )
+              }
+            }
           }
         }
+        if(data.task_type !== 'activity'){
         await CaseTimeline.create({
           created_by : data.modified_by,
           created_datetime : new Date(),
           account_rid : data.account_rid,
-          entity_rid : data.rid,
+          entity_rid : data.case_rid,
           event_name : "Task Comment Deleted",
           event_type : "ui handler",
           event_status : "success",
           event_datetime : new Date(),
           description : `Task Comments Deleted : ${isCommentExists.comments}`
           })
+        }
+        else
+        {
+           await this.addTaskTimeline(
+                    accountNumber,
+                    data.rid,
+                    data.account_rid,
+                   `Task Comments Deleted : ${isCommentExists.comments}`,
+                    data.modified_by,
+                   "Task Comments  deleted",
+                    "success",
+                   data.task_rid
+                  )
+
+        }
         const deleteComments = await TaskComments.destroy({ where : {rid : data.rid}});
         if(deleteComments === 1) {
-        const checkIsDifferentCollaborator = await this.isNewCollaborator(data.modified_by, accountNumber,data.task_type);
+        const checkIsDifferentCollaborator = await this.isNewCollaborator(data.modified_by, accountNumber,data.task_type || 'case_task', data.case_rid, data.task_rid);
         if(!checkIsDifferentCollaborator) {
           const checkCollaboratorExists = await this.isCollaboratorAlreadyAdded(data.modified_by, data.case_rid, data.account_rid, data.task_rid, accountNumber,data.task_type);
           if(!checkCollaboratorExists) {
-            await TaskCollaborators.create({
-              case_rid : data.case_rid,
-              account_rid : data.account_rid,
-              task_rid : data.task_rid,
-              assigned_to : data.modified_by,
-              created_by : data.modified_by,
-              created_datetime : new Date()
-            });
+                const collaboratorPayload: any = {
+                  account_rid: data.account_rid,
+                  task_rid: data.task_rid,
+                  assigned_to: data.modified_by,
+                  created_by: data.modified_by,
+                  created_datetime: new Date()
+                };
+                if (data.task_type !== 'activity') {
+                  collaboratorPayload.case_rid = data.case_rid;
+                }
+                await TaskCollaborators.create(collaboratorPayload);
           }
         }
         return {
@@ -6446,7 +6803,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
 
   async addAttachmentForTask (data : any, accountNumber : string, files : Express.Multer.File[], userId : string) {
     const {TaskAttachments,TaskHistory} = await this.caseModelService.getModels(accountNumber)
-    const findTaskDetails = await this.findTaskById(data.task_rid, data.account_rid, data.case_rid, accountNumber);
+    const findTaskDetails = await this.findTaskById(data.task_rid, data.account_rid, data.case_rid, accountNumber,data.task_type || 'case_task');
     if(files != undefined) {
       if(Array.isArray(files)) {
         for(let f of files) {
@@ -6474,7 +6831,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
               created_by : userId,
               created_datetime : new Date(),
               account_rid : data.account_rid,
-              entity_rid : result.dataValues.rid,
+              entity_rid : data.case_rid,
               event_name : `Attachment added for task ${findTaskDetails?.task_name}`,
               event_type : "ui handler",
               event_status : "success",
@@ -6525,7 +6882,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
 
   async deleteAttachment (accountNumber : string, data : any, userId : string) {
     const {TaskAttachments} = await this.caseModelService.getModels(accountNumber)
-    const findTaskDetails = await this.findTaskById(data.task_rid, data.account_rid, data.case_rid, accountNumber);
+    const findTaskDetails = await this.findTaskById(data.task_rid, data.account_rid, data.case_rid, accountNumber,data.task_type || 'case_task');
     const checkIsFileExists = await TaskAttachments.findOne({
       where : {
         rid : data.rid,
@@ -6542,7 +6899,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
           created_by : userId,
           created_datetime : new Date(),
           account_rid : data.account_rid,
-          entity_rid : checkIsFileExists.rid,
+          entity_rid : data.case_rid,
           event_name : `Attachment deleted for task ${findTaskDetails?.task_name}`,
           event_type : "ui handler",
           event_status : "success",
@@ -6588,14 +6945,18 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     }
     let offset = (data.page - 1) * data.limit;
     const {TaskAttachments} = await this.caseModelService.getModels(accountNumber)
+    let whereClause: any = {
+      account_rid: data.account_rid,
+      task_rid: data.task_rid,
+      is_file_deleted: false
+    };
+    if (data.task_type !== 'activity') {
+      whereClause.case_rid = data.case_rid;
+    }
     let fetchAllTaskAttachments = await TaskAttachments.findAll({
-      where : {
-        account_rid : data.account_rid,
-        case_rid : data.case_rid,
-        task_rid : data.task_rid,
-        is_file_deleted : false
-      }, raw : true,
-    }); 
+      where: whereClause,
+      raw: true,
+    });
     if(fetchAllTaskAttachments.length > 0) {
       const total = fetchAllTaskAttachments.length
       fetchAllTaskAttachments = fetchAllTaskAttachments.slice(offset, data.page * data.limit);
@@ -6635,8 +6996,11 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     }
   }
   async addCollaborators (data : any,accountNumber : string) {
-    const {TaskCollaborators} = await this.caseModelService.getModels(accountNumber);
-    const checkIsDifferentCollaborator = await this.isNewCollaborator(data.user_rid, accountNumber,data.task_type);
+    if(!this.mainDbSequelize) {
+      this.mainDbSequelize = await initMainDbSequelize()
+    }
+    const {TaskCollaborators, CaseHistory} = await this.caseModelService.getModels(accountNumber);
+    const checkIsDifferentCollaborator = await this.isNewCollaborator(data.user_rid, accountNumber,data.task_type, data.case_rid, data.rid);
     if(!checkIsDifferentCollaborator) {
       const checkCollaboratorExists = await this.isCollaboratorAlreadyAdded(data.user_rid, data.case_rid, data.account_rid, data.rid, accountNumber,data.task_type);
       if(!checkCollaboratorExists) {
@@ -6649,6 +7013,16 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         };
         if (data.task_type !== 'activity') {
           collaboratorPayload.case_rid = data.case_rid;
+          const findUser: any = await this.mainDbSequelize.query(rawQueries.getUserById(data.user_rid));
+          await CaseHistory.create({
+            created_by : data.created_by,
+            created_datetime : new Date(),
+            attribute_name : "Collaborator",
+            old_value : `CREATE`,
+            new_value : `added a collaborator ${findUser[0][0].name}`,
+            case_rid : data.case_rid,
+            task_rid : data.rid
+          });
         }
         const result = await TaskCollaborators.create(collaboratorPayload);
         if(result) {
@@ -6678,14 +7052,17 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
   }
   async fetchCollaboratorsList (accountNumber : string, data : any) {
     const {TaskCollaborators} = await this.caseModelService.getModels(accountNumber);
+    let whereClause: any = {
+      account_rid: data.account_rid,
+      task_rid: data.rid
+    };
+    if (data.task_type !== 'activity') {
+      whereClause.case_rid = data.case_rid;
+    }
     const result = await TaskCollaborators.findAll({
-      attributes : ['assigned_to'],
-      where : {
-        case_rid : data.case_rid,
-        account_rid : data.account_rid,
-        task_rid : data.rid
-      },
-      raw : true
+      attributes: ['assigned_to'],
+      where: whereClause,
+      raw: true
     });
     if(result.length > 0) return result;
     else return []
@@ -6703,6 +7080,37 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         rid : data.relationship_connector_rid
       }, raw : true
     })
+    const findExistingData = await CaseTaskWorkflowConnector.findAll({
+      attributes : ['relationship_connector_rid', 'source_rid', 'target_rid'],
+      where : {
+        case_rid : data.case_rid,
+        source_rid : data.source_rid,
+        target_rid : {
+          [Op.in] : data.target_rid.map((d : any) => d)
+        }
+      }, raw : true
+    });
+    if(findExistingData.length > 0) {
+      for(let d of findExistingData) {
+        if(d.relationship_connector_rid !== data.relationship_connector_rid) {
+          await CaseTaskWorkflowConnector.destroy({
+            where : {
+              case_rid : data.case_rid,
+              source_rid : d.target_rid,
+              target_rid : d.source_rid
+            }
+          })
+          await CaseTaskWorkflowConnector.destroy({
+            where : {
+              case_rid : data.case_rid,
+              source_rid : d.source_rid,
+              target_rid : d.target_rid
+
+            }
+          })
+        }
+      }
+    }
     let workFlowConnectorDetails;
     let dynamicRelationTypeName : string = ``
     if(workFlowConnectorData) {
@@ -6719,19 +7127,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     workFlowConnectorDetails = await WorkflowConnector.findOne({where : {relationship_type : dynamicRelationTypeName}, raw : true})
     for(let d of data.target_rid) {
       iterationCount += 1
-      taskIds.push(data.source_rid)
-      taskIds.push(d)
-      const pushToSetIds = [...new Set(taskIds.map((d : string) => d))]
-      const fetchTasks = await CaseTask.findAll({
-        attributes : ['rid', 'task_name'],
-        where : {
-          rid : {
-            [Op.in] : pushToSetIds
-          }
-        }, raw : true
-      })
-      if(fetchTasks.length > 0 && workFlowConnectorData) {
-        const taskMap = new Map(fetchTasks.map((d : any) => [d.rid, d.task_name]));
+      if(workFlowConnectorData) {
         const checkIsAlreadyMapped = await CaseTaskWorkflowConnector.findOne({
           where : {
             case_rid : data.case_rid,
@@ -6777,25 +7173,6 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                 }, {transaction});
               }
             }
-            await CaseTimeline.create({
-              created_by : data.created_by,
-              created_datetime : new Date(),
-              account_rid : data.account_rid,
-              entity_rid : data.source_rid,
-              event_name : 
-              `Case Task Workflow Connector created`,
-              event_type : "ui handler",
-              event_status : "success",
-              event_datetime : new Date(),
-              description : `${taskMap.get(data.source_rid)} ${workFlowConnectorData.relationship_type} ${taskMap.get(d)}`
-            }, {transaction});
-            await CaseHistory.create({
-              created_by : data.created_by,
-              created_datetime : new Date(),
-              case_rid : data.case_rid,
-              attribute_name : data.relationship_connector_rid,
-              new_value : `${taskMap.get(data.source_rid)} ${workFlowConnectorData.relationship_type} ${taskMap.get(d)}`
-            }, {transaction});
           }
         }
     } 
@@ -6821,7 +7198,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
 }
 
   async deleteTaskWorkConnector (accountNumber : string, data : CaseTaskWorkFlowCreate) {
-    const {CaseTaskWorkflowConnector, CaseTimeline, WorkflowConnector} = await this.caseModelService.getModels(accountNumber);
+    const {CaseTaskWorkflowConnector, CaseTimeline, WorkflowConnector, CaseTask} = await this.caseModelService.getModels(accountNumber);
     if(data.delete_target_rids.length > 0) {
       let workFlowConnectorDetails;
       let deletedId : string;
@@ -6847,6 +7224,18 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
               relationship_type : dynamicRelationTypeName
             }, raw : true
           })
+        const taskNames = await CaseTask.findAll({
+          attributes : ['task_name'],
+          where : {
+            rid : {
+              [Op.in] : data.delete_target_rids.map((d : any) => d)
+            },
+            case_rid : data.case_rid
+          }, raw : true
+        })
+        let dynamicTask;
+        if(taskNames.length === 1) dynamicTask = "task"
+        else if(taskNames.length > 1) dynamicTask = "tasks"
         for(let d of data.delete_target_rids) {
           const checkDataExists = await CaseTaskWorkflowConnector.findOne({
             where : {
@@ -6883,7 +7272,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                   created_by : data.created_by,
                   created_datetime : new Date(),
                   account_rid : data.account_rid,
-                  entity_rid : deletedId,
+                  entity_rid : data.case_rid,
                   event_name : 
                   `Case Task Workflow Connector deleted`,
                   event_type : "ui handler",
@@ -6891,10 +7280,6 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                   event_datetime : new Date(),
                   description : ``
                 });
-                return {
-                  statusCode : HttpStatus.SUCCESS,
-                  statusMessage : STATUS_MESSAGE.workflowConnectorMappedDeleted
-                }
               } else {
                 return {
                   statusCode : HttpStatus.FAILED,
@@ -6907,6 +7292,21 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             statusCode : HttpStatus.NOT_FOUND,
             statusMessage : STATUS_MESSAGE.dataNotAvailable
           }
+        }
+      }
+      if(taskNames.length > 0) {
+        await CaseHistory.create({
+          created_by : data.created_by,
+          created_datetime : new Date(),
+          case_rid : data.case_rid,
+          attribute_name : "Linked Items",
+          old_value : "CREATE",
+          new_value : `deleted the linked ${dynamicTask} ${taskNames.map((d : any) => d.task_name).join(',')}`,
+          task_rid : data.source_rid
+        });
+        return {
+          statusCode : HttpStatus.SUCCESS,
+          statusMessage : STATUS_MESSAGE.workflowConnectorMappedDeleted
         }
       }
     }
@@ -6939,17 +7339,32 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     return result
   }
 
-  async deleteTags (accountNumber : string, caseRid : string, accountRid : string, taskRid : string, tagRid : string[]) {
-    const {TaskTag} = await this.caseModelService.getModels(accountNumber);
+  async deleteTags (accountNumber : string, caseRid : string, accountRid : string, taskRid : string, tagRid : string[], userId : string) {
+    const {TaskTag, Tags} = await this.caseModelService.getModels(accountNumber);
     let responseMessage : string
-    if(tagRid.length == 1) responseMessage = STATUS_MESSAGE.tagDeletedSuccess
-    else responseMessage = STATUS_MESSAGE.multipleTagDeletedSuccess
+    let dynamicTagName : string
+    if(tagRid.length == 1) {
+      responseMessage = STATUS_MESSAGE.tagDeletedSuccess
+      dynamicTagName = "Tag"
+    }
+    else {
+      responseMessage = STATUS_MESSAGE.multipleTagDeletedSuccess
+      dynamicTagName = "Tags"
+    }
     if(tagRid.length == 0) {
       return {
         statusCode : HttpStatus.BAD_REQUEST,
         statusMessage : STATUS_MESSAGE.tagRequired
       }
     }
+    const findTagName = await Tags.findAll({
+      attributes : ['tag_name'],
+      where : {
+        rid : {
+          [Op.in] : tagRid.map((d : any) => d)
+        }
+      }, raw : true
+    })
     const result = await TaskTag.destroy({
       where : {
         case_rid : caseRid,
@@ -6961,6 +7376,17 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       }
     });
     if(result > 0) {
+      if(findTagName.length > 0) {
+        await CaseHistory.create({
+          created_by : userId,
+          created_datetime : new Date(),
+          attribute_name : "Tags",
+          old_value : `CREATE`,
+          new_value : `deleted the following ${dynamicTagName} ${findTagName.map((d : any) => d.tag_name).join(' , ')}`,
+          case_rid : caseRid,
+          task_rid : taskRid
+        });
+      }
       return {
         statusCode : HttpStatus.SUCCESS,
         statusMessage : responseMessage
@@ -6973,14 +7399,30 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     }
   }
   async deleteCollaborators (accountNumber : string, data : any) {
+     if(!this.mainDbSequelize) {
+      this.mainDbSequelize = await initMainDbSequelize()
+    }
     const {TaskCollaborators} = await this.caseModelService.getModels(accountNumber);
-    const result = await TaskCollaborators.destroy({
-      where : {
-        account_rid : data.account_rid,
+    const whereClause: any = {
+      account_rid: data.account_rid,
+      task_rid: data.rid,
+      assigned_to: data.assigned_to
+    };
+    if (data.task_type !== 'activity') {
+      whereClause.case_rid = data.case_rid;
+      const findUser: any = await this.mainDbSequelize.query(rawQueries.getUserById(data.user_rid));
+      await CaseHistory.create({
+        created_by : data.user_rid,
+        created_datetime : new Date(),
+        attribute_name : "Collaborator",
+        old_value : `CREATE`,
+        new_value : `deleted a collaborator ${findUser[0][0].name}`,
         case_rid : data.case_rid,
-        task_rid : data.rid,
-        assigned_to : data.assigned_to
-      }
+        task_rid : data.rid
+      });
+    }
+    const result = await TaskCollaborators.destroy({
+      where: whereClause
     });
     if(result > 0) {
       return {

@@ -143,6 +143,11 @@ export class HistoricalSubmissionSchemaService {
             total_qualified_project_cost: submission.total_qualified_project_cost,
             total_qre: submission.total_qre,
             total_rd_credits: submission.total_rd_credits,
+            total_fte_cost: submission.total_fte_cost,
+            total_subcon_cost: submission.total_subcon_cost,
+            total_nonlabor_cost: submission.total_nonlabor_cost,
+            country_rid: submission.country_rid,
+            state_rid: submission.state_rid,
             annual_gross_receipts: submission.annual_gross_receipts,
             modified_by: userId,
             modified_datetime: new Date(),
@@ -217,6 +222,11 @@ export class HistoricalSubmissionSchemaService {
           total_qre: submission.total_qre,
           total_rd_credits: submission.total_rd_credits,
           annual_gross_receipts: submission.annual_gross_receipts,
+          total_fte_cost: submission.total_fte_cost,
+          total_subcon_cost: submission.total_subcon_cost,
+          total_nonlabor_cost: submission.total_nonlabor_cost,
+          country_rid: submission.country_rid,
+          state_rid: submission.state_rid,
           created_by: userId,
           created_datetime: new Date(),
         });
@@ -290,10 +300,14 @@ export class HistoricalSubmissionSchemaService {
   ) {
     try {
       
-      const { CaseHistorySubmission } = await this.caseModelService.getModels(accountNumber);
+      const { CaseHistorySubmission } = await this.caseModelService.getModels(accountNumber); 
       const whereConditions: any = {
         account_rid: data.account_rid,
+        country_rid: data.country_rid
       };
+      if (data.state_rid != null) {
+        whereConditions.state_rid = data.state_rid;
+      }
       const queryOptions: any = {
         where: whereConditions,
         order: [["fiscal_year", "ASC"]],
@@ -322,7 +336,7 @@ export class HistoricalSubmissionSchemaService {
       })
       return historicalSubmissions;
     } catch (err) {
-      logMessage(`Error in fetching historical submissions: ${err}`);
+      logMessage(`Error in fetching historical submissions : ${err}`);
       errorLog("Error in fetching historical submissions:", (err as Error).message);
       return [];
     }
