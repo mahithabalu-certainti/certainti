@@ -971,8 +971,28 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
 
         const originalTargetRids =
           originalTask?.workflow_connector?.map((wc) => wc.target_rid) || [];
+
+        // Robust check: Ensure we don't delete RIDs if their names are still in linkTaskTypes
+        const preservedRids = originalTargetRids.filter((rid) => {
+          const wc = originalTask?.workflow_connector?.find(
+            (w) => w.target_rid === rid
+          );
+          if (!wc) return false;
+          // Check if the name is still in the selected list (handling potential whitespace issues)
+          return (linkTaskTypes || []).some(
+            (t) =>
+              t &&
+              wc.target_task_name &&
+              t.trim() === wc.target_task_name.trim()
+          );
+        });
+
+        const finalLinkTaskTypeRids = [
+          ...new Set([...linkTaskTypeRidsValue, ...preservedRids]),
+        ];
+
         const deleteTargetRids = originalTargetRids.filter(
-          (rid) => !linkTaskTypeRidsValue.includes(rid)
+          (rid) => !finalLinkTaskTypeRids.includes(rid)
         );
 
         const originalRelationshipConnectorRid =
@@ -982,20 +1002,20 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
         const isLinkedTypeChanged =
           linkedTypeRidValue !== originalRelationshipConnectorRid;
         const isLinkTaskTypesChanged =
-          JSON.stringify([...linkTaskTypeRidsValue].sort()) !==
+          JSON.stringify([...finalLinkTaskTypeRids].sort()) !==
           JSON.stringify([...originalTargetRids].sort());
         const isWorkflowChanged = isLinkedTypeChanged || isLinkTaskTypesChanged;
 
         if (
           (linkedTypeRidValue &&
-            (linkTaskTypeRidsValue.length > 0 ||
+            (finalLinkTaskTypeRids.length > 0 ||
               deleteTargetRids.length > 0)) ||
           deleteTargetRids.length > 0
         ) {
           workflowConnector.source_rid = taskId;
           workflowConnector.relationship_connector_rid =
             linkedTypeRidValue || originalRelationshipConnectorRid;
-          workflowConnector.target_rid = linkTaskTypeRidsValue;
+          workflowConnector.target_rid = finalLinkTaskTypeRids;
           workflowConnector.delete_target_rids = deleteTargetRids;
         }
         if (isWorkflowChanged) {
