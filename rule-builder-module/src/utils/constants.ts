@@ -58,8 +58,8 @@ export const STATUS_MESSAGE = {
 
 export const rawQueries = {
   fetchScopeEvents(scope_type_rid: string, status_rid: string): string {
-    let query =  `SELECT  st.name AS scope_type_name,
-    se.rid , se.event_name, se.description FROM scopes st JOIN scope_events se ON se.scope_type_rid = st.rid `;
+    let query =  `SELECT se.rid , se.event_name, se.description,st.name AS scope_type_name, st.rid as scope_type_rid 
+    FROM scopes st JOIN scope_events se ON se.scope_type_rid = st.rid `;
     const conditions:string[] = [];
     if (scope_type_rid) {
       conditions.push(`se.scope_type_rid = '${scope_type_rid}'`);

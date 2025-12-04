@@ -113,4 +113,5 @@ export type ScopeEventRows = {
     event_name: string,
     description: string,
     scope_type_name: string,
+    scope_type_rid:string,
 }

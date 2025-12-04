@@ -77,26 +77,24 @@ export class WorkFlowService {
             ),
             { type: QueryTypes.SELECT }
         );
-
-        type GroupedEvents = {
-            [key: string]: Omit<ScopeEventRows, 'scope_type_name'>[];
-        };
-
-        const grouped: GroupedEvents = events.reduce((acc, event) => {
-            const key = event.scope_type_name.toLowerCase(); // normalize key
-
-            if (!acc[key]) {
-                acc[key] = [];
-            }
-            const { scope_type_name, ...rest } = event;
-            acc[key].push(rest);
-            return acc;
-        }, {} as GroupedEvents);
+        // in case if response needed as scope name grouped , uncomment this
+        // type GroupedEvents = {
+        //     [key: string]: Omit<ScopeEventRows, 'scope_type_name'>[];
+        // };
+        // const grouped: GroupedEvents = events.reduce((acc, event) => {
+        //     const key = event.scope_type_name.toLowerCase(); // normalize key
+        //     if (!acc[key]) {
+        //         acc[key] = [];
+        //     }
+        //     const { scope_type_name, ...rest } = event;
+        //     acc[key].push(rest);
+        //     return acc;
+        // }, {} as GroupedEvents);
 
         return {
             statusCode: HttpStatus.SUCCESS,
             message: HttpStatus.SUCCESS_MESSAGE,
-            data:grouped
+            data:events
         };
     };
 
