@@ -77,7 +77,7 @@ export class ScopeActionType
             {
                 sequelize,
                 modelName: "ActionType",
-                tableName: "action_types",
+                tableName: "scope_action_types",
                 schema: MAIN_SCHEMA_NAME,
                 timestamps: false, // using custom timestamp columns
             }

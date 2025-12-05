@@ -75,7 +75,7 @@ export const rawQueries = {
   },
 
   fetchEventConditions(event_rid: string, status_rid: string): string {
-    let query = `SELECT ec.rid, ec.name as condition_name, ec.description FROM event_conditions ec JOIN event_conditions_map ecm 
+    let query = `SELECT ec.rid, ec.name as condition_name, ec.description,ec.type as condition_type  FROM event_conditions ec JOIN event_conditions_map ecm 
     ON ec.rid = ecm.condition_rid `;
     const conditions: string[] = [];
     conditions.push(`ecm.event_rid = '${event_rid}'`);
@@ -117,6 +117,30 @@ export const rawQueries = {
     conditions.push(`vcm.category_rid = '${category_rid}'`);
     if (status_rid) {
       conditions.push(`rv.status_rid = '${status_rid}'`);
+    }
+    query += ` WHERE ${conditions.join(' AND ')}`;
+    return query;
+  },
+
+  fetchActionTypes(scope_rid: string, status_rid: string): string {
+    let query = `SELECT sat.rid, sat.name FROM scope_action_types sat JOIN scope_actiontype_map sam 
+    ON sat.rid = sam.actiontype_rid `;
+    const conditions: string[] = [];
+    conditions.push(`sam.scope_rid = '${scope_rid}'`);
+    if (status_rid) {
+      conditions.push(`sat.status_rid = '${status_rid}'`);
+    }
+    query += ` WHERE ${conditions.join(' AND ')}`;
+    return query;
+  },
+
+  fetchActions(action_type_rid: string, status_rid: string): string {
+    let query = `SELECT sa.rid, sa.name FROM scope_actions sa JOIN scope_actions_map sam 
+    ON sa.rid = sam.action_rid `;
+    const conditions: string[] = [];
+    conditions.push(`sam.action_type_rid = '${action_type_rid}'`);
+    if (status_rid) {
+      conditions.push(`sa.status_rid = '${status_rid}'`);
     }
     query += ` WHERE ${conditions.join(' AND ')}`;
     return query;

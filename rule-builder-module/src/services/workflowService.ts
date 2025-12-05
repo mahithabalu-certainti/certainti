@@ -4,11 +4,11 @@ import { initSequelize } from "../config/maindbDataSource";
 import { Sequelize, Op, QueryTypes } from "sequelize";
 import { HttpStatus, STATUS_MESSAGE, rawQueries } from "../utils/constants";
 import { Logger } from "winston";
-import { ICreateRuleMapWithScope, IListSCopeEvent } from "../utils/types";
+import { actions, ICreateRuleMapWithScope, IListSCopeEvent } from "../utils/types";
 import { logMessage } from "../utils/helpers";
 import { RuleMapService } from "../services/workflowRuleMapService";
 import { ScopeService } from "../services/workflowScopeMapService";
-import { ScopeEventRows, EventConditions, ConditionCategory, Operators, Values } from "../utils/types";
+import { ScopeEventRows, EventConditions, ConditionCategory, Operators, Values, actionTypes } from "../utils/types";
 
 /**
  * Evaluate a rule for a given entity (case or task)
@@ -199,6 +199,58 @@ export class WorkFlowService {
             statusCode: HttpStatus.SUCCESS,
             message: HttpStatus.SUCCESS_MESSAGE,
             data: values
+        };
+    };
+
+    async listActionTypes(
+        listRequest: any,
+        userId: string,
+        apiType: string
+    ): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data: any;
+    }> {
+        const mainDb = await this.getMainDb();
+        const actionTypes: actionTypes[] = await mainDb.query<actionTypes>(
+            rawQueries.fetchActionTypes(
+                listRequest.scope_rid,
+                listRequest.status_rid
+            ),
+            { type: QueryTypes.SELECT }
+        );
+
+        return {
+            statusCode: HttpStatus.SUCCESS,
+            message: HttpStatus.SUCCESS_MESSAGE,
+            data: actionTypes
+        };
+    };
+
+    async listActions(
+        listRequest: any,
+        userId: string,
+        apiType: string
+    ): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data: any;
+    }> {
+        const mainDb = await this.getMainDb();
+        const actionTypes: actions[] = await mainDb.query<actions>(
+            rawQueries.fetchActions(
+                listRequest.action_type_rid,
+                listRequest.status_rid
+            ),
+            { type: QueryTypes.SELECT }
+        );
+
+        return {
+            statusCode: HttpStatus.SUCCESS,
+            message: HttpStatus.SUCCESS_MESSAGE,
+            data: actionTypes
         };
     };
 

@@ -120,6 +120,7 @@ export type EventConditions = {
     rid: string;
     condition_name: string;
     description: string;
+    condition_type: string;
 }
 
 export type ConditionCategory = {
@@ -136,4 +137,15 @@ export type Operators = {
 export type Values = {
     rid: string;
     name: string;
+}
+
+export type actionTypes = {
+    rid: string;
+    name: string;
+}
+
+export type actions = {
+    rid: string;
+    name: string;
+    description: string;
 }

@@ -15,7 +15,9 @@ import {
     listScopeEventConditionSchema,
     listScopeConditionCategorySchema,
     listScopeOperatorSchema,
-    listScopeValueSchema
+    listScopeValueSchema,
+    listScopeActionTypeSchema,
+    listScopeActionsSchema
 } from "../lib/joi/schemas/schema";
 import configurations from "../config/config";
 
@@ -189,7 +191,7 @@ async function listConditionCategory(req: Request, res: Response): Promise<void>
 };
 
 async function listOperators(req: Request, res: Response): Promise<void> {
-    const methodName = "event condition list";
+    const methodName = "operators list";
     try {
         const userId = req.headers["x-user-id"] as string;
         const value = await validateRequest(req, listScopeOperatorSchema, res, "POST");
@@ -230,7 +232,7 @@ async function listOperators(req: Request, res: Response): Promise<void> {
 };
 
 async function listValues(req: Request, res: Response): Promise<void> {
-    const methodName = "event condition list";
+    const methodName = "values list";
     try {
         const userId = req.headers["x-user-id"] as string;
         const value = await validateRequest(req, listScopeValueSchema, res, "POST");
@@ -269,6 +271,90 @@ async function listValues(req: Request, res: Response): Promise<void> {
         );
     }
 };
+
+async function listActionTypes(req: Request, res: Response): Promise<void> {
+    const methodName = "action types list";
+    try {
+        const userId = req.headers["x-user-id"] as string;
+        const value = await validateRequest(req, listScopeActionTypeSchema, res, "POST");
+        if (!value) {
+            return;
+        }
+        // if (!userId) {
+        //   return;
+        // }
+        const result = await workFlowService.listActionTypes(
+            value,
+            userId,
+            "list");
+        if (result.statusCode == HttpStatus.SUCCESS) {
+            successLog(methodName);
+            handleSuccessResponse(res, result.data);
+            return;
+        } else {
+            errorLog(methodName, "No data found");
+            handleErrorResponse(
+                res,
+                HttpStatus.BAD_REQUEST,
+                HttpStatus.BAD_REQUEST_MESSAGE,
+                result.errorMessage
+            );
+            return;
+        }
+    } catch (err) {
+        const error = err as Error;
+        errorLog(methodName, error.message);
+        handleErrorResponse(
+            res,
+            HttpStatus.FAILED,
+            HttpStatus.FAILED_MESSAGE,
+            error.message
+        );
+    }
+};
+
+
+async function listActions(req: Request, res: Response): Promise<void> {
+    const methodName = "actions list";
+    try {
+        const userId = req.headers["x-user-id"] as string;
+        const value = await validateRequest(req, listScopeActionsSchema, res, "POST");
+        if (!value) {
+            return;
+        }
+        // if (!userId) {
+        //   return;
+        // }
+        const result = await workFlowService.listActions(
+            value,
+            userId,
+            "list");
+        if (result.statusCode == HttpStatus.SUCCESS) {
+            successLog(methodName);
+            handleSuccessResponse(res, result.data);
+            return;
+        } else {
+            errorLog(methodName, "No data found");
+            handleErrorResponse(
+                res,
+                HttpStatus.BAD_REQUEST,
+                HttpStatus.BAD_REQUEST_MESSAGE,
+                result.errorMessage
+            );
+            return;
+        }
+    } catch (err) {
+        const error = err as Error;
+        errorLog(methodName, error.message);
+        handleErrorResponse(
+            res,
+            HttpStatus.FAILED,
+            HttpStatus.FAILED_MESSAGE,
+            error.message
+        );
+    }
+};
+
 async function createRuleMapWithScope(req: Request, res: Response): Promise<void> {
     const methodName = "create condition";
     try {
@@ -313,5 +399,7 @@ export default {
     listConditionCategory,
     listOperators,
     listValues,
+    listActionTypes,
+    listActions,
     createRuleMapWithScope
 }

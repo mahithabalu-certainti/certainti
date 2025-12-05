@@ -278,6 +278,26 @@ export interface IWorkFlowService {
         data?: any;
     }>;
 
+    listActionTypes(listRequest: any,
+        userId: string,
+        apiType: string
+    ): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: any;
+    }>;
+
+    listActions(listRequest: any,
+        userId: string,
+        apiType: string
+    ): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: any;
+    }>;
+
     createRuleMapWithScope(
         rulemapRequest: ICreateRuleMapWithScope,
         userId: string
