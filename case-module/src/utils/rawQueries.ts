@@ -1228,7 +1228,6 @@ export function fetchChecklistAttachToDetails(schemaName: string, attachTo: stri
     FROM ${schemaName}.activity_history
     WHERE
     activity_rid = '${taskRid}'
-
     ORDER BY created_datetime DESC),
     calculate_total AS (
     SELECT f.*, COUNT(f.rid) OVER() AS total_result FROM fetch_data f
