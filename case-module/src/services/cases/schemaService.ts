@@ -5202,7 +5202,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         } 
       } else {
         if(isTaskExists.task_status_rid !== data.task_status_rid) {
-          const workflowResult = await this.checkTaskWorkFlow(accountNumber, data.rid, data.task_status_rid);
+          const workflowResult = await this.checkTaskWorkFlow(accountNumber, data.rid, data.task_status_rid, data.case_rid, data.workflow_connector.target_rid);
           if(workflowResult?.success) {
             return {
               statusCode : HttpStatus.BAD_REQUEST,
@@ -7048,50 +7048,62 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       }
     }
   }
-  async checkTaskWorkFlow (accountNumber : string, taskRid : string, statusRid : string) {
+  async checkTaskWorkFlow (accountNumber : string, taskRid : string, statusRid : string, caseRid : string, targetRids : any) {
     if(!this.mainDbSequelize) {
       this.mainDbSequelize = await initMainDbSequelize()
     }
     const {CaseTaskWorkflowConnector} = await this.caseModelService.getModels(accountNumber);
     const findTaskDependency = await CaseTaskWorkflowConnector.findAll({
       where : {
-        source_rid : taskRid
+        source_rid : taskRid,
+        target_rid : {
+          [Op.in] : targetRids
+        },
+        case_rid : caseRid
       }, raw : true
     });
     if(findTaskDependency.length > 0) {
-      const result = await this.sourceTaskValidation(accountNumber, findTaskDependency, taskRid, statusRid);
-      if(result?.success) {
-        return {
-          success : true,
-          statusMessage : result.statusMessage 
-        }
-      }
-      else {
-        const findTargetTaskDependency = await CaseTaskWorkflowConnector.findAll({
-            where : {
-              target_rid : taskRid
-            }, raw : true
-          });
-        if(findTaskDependency.length > 0) {
-          const result = await this.targetTaskValidation(accountNumber, findTargetTaskDependency, taskRid, statusRid);
-          if(result?.success) {
-            return {
-              success : true,
-              statusMessage : result.statusMessage 
-            }
+      const result = await this.sourceTaskValidation(accountNumber, findTaskDependency, taskRid, statusRid, caseRid);
+      if(result !== undefined) {
+        if(result.success) {
+          return {
+            success : true,
+            statusMessage : result.statusMessage 
           }
-          else {
+        }
+      } else {
             return {
               success : false,
               statusMessage : null
             }
           } 
-        }
-      } 
+      // else {
+      //   const findTargetTaskDependency = await CaseTaskWorkflowConnector.findAll({
+      //       where : {
+      //         target_rid : taskRid,
+      //         case_rid : caseRid
+      //       }, raw : true
+      //     });
+      //   if(findTaskDependency.length > 0) {
+      //     const result = await this.targetTaskValidation(accountNumber, findTargetTaskDependency, taskRid, statusRid, caseRid);
+      //     if(result?.success) {
+      //       return {
+      //         success : true,
+      //         statusMessage : result.statusMessage 
+      //       }
+      //     }
+      //     else {
+      //       return {
+      //         success : false,
+      //         statusMessage : null
+      //       }
+      //     } 
+      //   }
+      // } 
     }
   }
 
-  private async sourceTaskValidation (accountNumber : string, findTaskDependency: CaseTaskWorkflowConnector[], sourceRid : string, statusRid : string) {
+  private async sourceTaskValidation (accountNumber : string, findTaskDependency: CaseTaskWorkflowConnector[], sourceRid : string, statusRid : string, caseRid : string) {
     if(!this.mainDbSequelize) {
       this.mainDbSequelize = await initMainDbSequelize()
     }
@@ -7101,7 +7113,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       where : {
         rid : {
           [Op.in] : relationIds
-        }
+        },
       }, raw : true
     });
     if(findRelationshipConnector.length > 0) {
@@ -7112,7 +7124,8 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         where : {
           rid : {
             [Op.in] : targetIds
-          }
+          },
+          case_rid : caseRid
         }, raw : true
       });
       if(findCaseTasks.length > 0) {
@@ -7157,7 +7170,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       }
     }
   }
-  private async targetTaskValidation (accountNumber : string, findTaskDependency: CaseTaskWorkflowConnector[], targetRid : string, statusRid : string) {
+  private async targetTaskValidation (accountNumber : string, findTaskDependency: CaseTaskWorkflowConnector[], targetRid : string, statusRid : string, caseRid : string) {
     if(!this.mainDbSequelize) {
       this.mainDbSequelize = await initMainDbSequelize()
     }
@@ -7178,7 +7191,8 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         where : {
           rid : {
             [Op.in] : sourceIds
-          }
+          },
+          case_rid : caseRid
         }, raw : true
       });
       if(findCaseTasks.length > 0) {
