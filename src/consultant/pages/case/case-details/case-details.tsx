@@ -19,6 +19,7 @@ import {
   InteractionListExportParams,
   ActivityListExportURLParams,
   ActivityType,
+  ProjectResourcesListParams,
 } from '../../../types';
 import {
   AllMenus,
@@ -76,6 +77,7 @@ import { BUTTON_STYLES } from '../../../../admin/pages/manage-user-detail/styles
 import { CaseActivities } from './case-activities';
 import { ExportActivityList } from '../../../services/activities/activities-service';
 import { CaseProjectTask } from './case-project-task';
+import { ExportCaseProjectTasktList } from '../../../services/case-project-task/case-project-task-service';
 
 export const CaseDetails = () => {
   const navigate = useNavigate();
@@ -151,6 +153,14 @@ export const CaseDetails = () => {
       sortBy: 'project_code',
       filters: {},
       timezone: '',
+      page: 1,
+      limit: 10,
+      search: '',
+    });
+  const [projectTaskParams, setProjectTaskParams] =
+    useState<ProjectResourcesListParams>({
+      sortOrder: 'ASC',
+      sortBy: 'resource_code',
       page: 1,
       limit: 10,
       search: '',
@@ -284,6 +294,10 @@ export const CaseDetails = () => {
     permission,
     AllPermissions.PROJECTS_EXPORT
   );
+  const isProjectTaskExportEnable = checkPermission(
+    permission,
+    AllPermissions.PROJECTS_EXPORT
+  );
 
   const isCaseTaskExportEnable = checkPermission(
     permission,
@@ -306,7 +320,8 @@ export const CaseDetails = () => {
       searchParams.get('list') !== 'caseProjects' &&
       searchParams.get('list') !== 'workBreakdown' &&
       searchParams.get('tab') !== 'case_task' &&
-      searchParams.get('list') !== 'interactions'
+      searchParams.get('list') !== 'interactions' &&
+      searchParams.get('list') !== 'projectTask'
     ) {
       return;
     }
@@ -359,6 +374,8 @@ export const CaseDetails = () => {
       ExportCaseTaskList(caseTaskParams);
     } else if (list === 'caseProjects' && exportType === 'review_projects') {
       ExportReviewProjectList(reviewProjectParams, accountId, caseId);
+    } else if (list === 'projectTask' && exportType === 'projectTask') {
+      ExportCaseProjectTasktList(projectTaskParams, accountId, caseId);
     }
     if (list === 'interactions') {
       if (interactionHistoryId) {
@@ -434,6 +451,8 @@ export const CaseDetails = () => {
       return !isCaseTaskExportEnable;
     } else if (list === 'interactions' && !interactionsView) {
       return !isInteractionsExportEnable;
+    } else if (list === 'projectTask') {
+      return !isProjectTaskExportEnable;
     } else {
       return true;
     }
@@ -527,6 +546,7 @@ export const CaseDetails = () => {
             <CaseProjectTask
               accountInActive={accountInActive}
               // setTableParams={setCaseProjectParams}
+              setProjectTaskParams={setProjectTaskParams}
               setExportType={setExportType}
             />
           </div>

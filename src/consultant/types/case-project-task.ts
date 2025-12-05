@@ -10,14 +10,14 @@ export interface CaseProjectTaskListURLParams {
   search: string;
   case_rid: string;
   accountRid: string;
-  fiscalYear: number;
+  fiscalYear?: number;
 }
 
 export type CaseProjectTaskList = ProjectTasksListType;
 
 export interface CaseProjectTaskListResponse {
   data: {
-    projectTasks: CaseProjectTaskList[];
+    tasks: CaseProjectTaskList[];
     count: number;
     totalCount: number;
   };

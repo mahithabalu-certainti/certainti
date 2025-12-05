@@ -1,13 +1,27 @@
 import { CaseProjectTaskListURLParams } from '../../types/case-project-task';
 
+export const getCaseProjectTasksUrl = (): string => `/api/caseProjectTask/list`;
+
 const returnURL = (
   baseURL: string,
   params: CaseProjectTaskListURLParams
 ): string => {
-  const { page, limit, sortBy, sortOrder, filters, fiscalYear, search } =
-    params;
+  const {
+    page,
+    limit,
+    sortBy,
+    sortOrder,
+    filters,
+    fiscalYear,
+    search,
+    accountRid,
+    case_rid,
+  } = params;
 
   const searchParams = new URLSearchParams();
+
+  if (accountRid) searchParams.set('accountRid', accountRid);
+  if (case_rid) searchParams.set('caseRid', case_rid);
 
   if (page !== undefined) searchParams.set('page', String(page));
   if (limit !== undefined) searchParams.set('limit', String(limit));
@@ -15,15 +29,13 @@ const returnURL = (
   if (sortOrder) searchParams.set('sortOrder', sortOrder);
   if (fiscalYear) searchParams.set('fiscalYear', String(fiscalYear));
   if (search) searchParams.set('search', search);
+
   if (filters && Object.keys(filters).length > 0) {
     searchParams.set('filters', JSON.stringify(filters));
   }
 
   return `${baseURL}?${searchParams.toString()}`;
 };
-
-export const getCaseProjectTasksUrl = (case_rid: string) =>
-  `/api/cases/${case_rid}/project_tasks`;
 
 export const CaseProjectTasksURL = ({
   page,
@@ -36,7 +48,8 @@ export const CaseProjectTasksURL = ({
   search,
   accountRid,
 }: CaseProjectTaskListURLParams): string => {
-  const base = getCaseProjectTasksUrl(case_rid);
+  const base = getCaseProjectTasksUrl();
+
   return returnURL(base, {
     page,
     limit,
