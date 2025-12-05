@@ -2015,13 +2015,17 @@ return !response;
       const getTotalProjects : any = await this.orgDbSequelize.query(
         rawQueries.getTotalProjectsCountInCase(schemaName, data.fiscal_year, data.account_rid, data.case_rid)
       )
+      // If value is zero, update as null
+      const totalProjects = getTotalProjects[0][0].total_projects === 0 ? null : getTotalProjects[0][0].total_projects;
+      const totalProjectsCost = getTotalProjects[0][0].total_projects_cost === 0 ? null : getTotalProjects[0][0].total_projects_cost;
+      const totalProjectsQreCost = getTotalProjects[0][0].total_projects_qre_cost === 0 ? null : getTotalProjects[0][0].total_projects_qre_cost;
       await this.orgDbSequelize.query(
         rawQueries.updateCostCountInCase(
           schemaName,
           data.case_rid,
-          getTotalProjects[0][0].total_projects,
-          getTotalProjects[0][0].total_projects_cost,
-          getTotalProjects[0][0].total_projects_qre_cost
+          totalProjects,
+          totalProjectsCost,
+          totalProjectsQreCost
         )
       );
       await this.mainDbSequelize.query(
