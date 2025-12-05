@@ -1,0 +1,351 @@
+import { useState, useMemo } from 'react';
+import { SearchIcon } from '../../../../../assets';
+import { Action, Rule } from '../helper';
+import {
+  useGetActionCategoryTypes,
+  useGetActionTypes,
+} from '../../../../service/workflow-builder/workflow-builder-service';
+import { ActionCard } from './data-card';
+
+interface ActionManagerProps {
+  rule: Rule;
+  actions: Action[];
+  onAddAction: (action: Action) => void;
+  onUpdateAction?: (actionId: string, updatedAction: Action) => void;
+  onDeleteAction?: (actionId: string) => void;
+  selectedActionId?: string | null;
+}
+
+const ActionManager = ({
+  rule,
+  actions: propActions,
+  onAddAction,
+  onDeleteAction,
+}: ActionManagerProps) => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+
+  // Prepare payload for action category types - use trigger ID as scope_rid
+  const actionCategoryParams = useMemo(
+    () => ({
+      scope_rid: rule.trigger?.id || '',
+      status_rid: '',
+    }),
+    [rule.trigger?.id]
+  );
+
+  // Fetch action category types based on trigger ID
+  const { data: actionCategoryData, isLoading: isLoadingCategories } =
+    useGetActionCategoryTypes(actionCategoryParams, !!rule.trigger?.id);
+
+  // Prepare payload for action types - use selected category RID
+  const actionTypeParams = useMemo(
+    () => ({
+      action_type_rid: selectedCategory === 'all' ? '' : selectedCategory,
+      status_rid: '',
+    }),
+    [selectedCategory]
+  );
+
+  // Fetch action types based on selected category
+  const { data: actionTypeData, isLoading: isLoadingActionTypes } =
+    useGetActionTypes(actionTypeParams);
+
+  console.log('actionTypeData', actionTypeData);
+
+  // Transform action category data to categories
+  const actionCategories = useMemo(() => {
+    if (!actionCategoryData?.data)
+      return [{ id: 'all', label: 'All Actions', rid: '' }];
+
+    const categories = actionCategoryData.data.map((category) => ({
+      id: category.rid,
+      label: category.name,
+      rid: category.rid,
+    }));
+
+    return [{ id: 'all', label: 'All', rid: '' }, ...categories];
+  }, [actionCategoryData]);
+
+  // Transform action type data to actions (main data source) - FIXED!
+  const actionsData = useMemo(() => {
+    if (!actionTypeData?.data) return [];
+
+    return actionTypeData.data.map((actionType) => ({
+      id: actionType.rid,
+      name: actionType.name,
+      description: actionType.description || '',
+      category: actionType.action_type_rid || 'uncategorized', // Use actual category ID from backend
+      categoryName: actionType.action_type_name || 'Uncategorized', // Use actual category name
+    }));
+  }, [actionTypeData]);
+
+  // Filter actions (client-side search)
+  const filteredActions = useMemo(() => {
+    return actionsData.filter((action) => {
+      const matchesSearch =
+        action.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        action.description.toLowerCase().includes(searchQuery.toLowerCase());
+
+      // When "all" is selected, show all actions (no category filter)
+      // When a specific category is selected, filter by category
+      const matchesCategory =
+        selectedCategory === 'all' || action.category === selectedCategory;
+
+      return matchesSearch && matchesCategory;
+    });
+  }, [actionsData, searchQuery, selectedCategory]);
+
+  // Group by category (only when "All" is selected)
+  const groupedActions = useMemo(() => {
+    const grouped: Record<string, typeof actionsData> = {};
+
+    filteredActions.forEach((action) => {
+      // Use category ID for grouping
+      const categoryId = action.category;
+      if (!grouped[categoryId]) grouped[categoryId] = [];
+      grouped[categoryId].push(action);
+    });
+
+    return grouped;
+  }, [filteredActions]);
+
+  const isActionAlreadyAdded = (actionId: string) =>
+    propActions.some((action) => action.id === actionId);
+
+  const handleActionSelect = (action: Action) => {
+    if (isActionAlreadyAdded(action.id)) {
+      // if already added, toggle remove
+      onDeleteAction?.(action.id);
+    } else {
+      onAddAction(action);
+    }
+  };
+
+  // Show full loader only on initial load
+  if (isLoadingCategories) {
+    return (
+      <div className='h-full flex flex-col items-center justify-center p-6'>
+        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500'></div>
+        <p className='mt-3 text-[#425A76]'>Loading actions...</p>
+      </div>
+    );
+  }
+
+  // Show message if no trigger is selected
+  if (!rule.trigger?.id) {
+    return (
+      <div className='h-full flex flex-col items-center justify-center p-6'>
+        <div className='text-center'>
+          <div className='w-16 h-16 mx-auto mb-4 flex items-center justify-center rounded-full bg-gray-200'>
+            <svg
+              className='w-8 h-8 text-gray-400'
+              fill='none'
+              stroke='currentColor'
+              viewBox='0 0 24 24'
+            >
+              <path
+                strokeLinecap='round'
+                strokeLinejoin='round'
+                strokeWidth={2}
+                d='M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
+              />
+            </svg>
+          </div>
+          <h3 className='text-lg font-medium text-[#425A76] mb-2'>
+            Select a Trigger First
+          </h3>
+          <p className='text-sm text-gray-500'>
+            Please select a trigger to see available actions.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Helper function to get category name by ID
+  const getCategoryNameById = (categoryId: string) => {
+    if (categoryId === 'all' || categoryId === '') return 'All Actions';
+    if (categoryId === 'uncategorized') return 'Uncategorized';
+
+    const category = actionCategories.find((c) => c.id === categoryId);
+    return category?.label || categoryId;
+  };
+
+  return (
+    <div className='h-full flex flex-col'>
+      {/* Header */}
+      <div className='p-6 border-b border-[#CBD6E2] sticky top-0 z-20'>
+        <div className='flex items-center justify-between mb-3'>
+          <h2 className='text-2xl text-[#425A76] font-bold'>Add Actions</h2>
+          {propActions.length > 0 && (
+            <div className='text-sm text-green-600 font-medium bg-green-50 px-3 py-1 rounded-full border border-green-200'>
+              {propActions.length} Action{propActions.length !== 1 ? 's' : ''}{' '}
+              Added
+            </div>
+          )}
+        </div>
+
+        {/* Search box */}
+        <div className='relative mb-3'>
+          <SearchIcon className='absolute left-3 top-1/2 transform -translate-y-1/2 [&>path]:stroke-[#425A76]' />
+          <input
+            type='text'
+            placeholder='Search Actions...'
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className='w-full pl-9 pr-3 py-2 rounded-[2px] text-[12px] border border-[#CBD6E2] text-[#425A76] 
+                       focus:outline-none focus:ring-1 focus:ring-blue-500'
+            disabled={isLoadingActionTypes}
+          />
+        </div>
+
+        {/* Category tabs */}
+        <div className='flex flex-wrap gap-2'>
+          {actionCategories.map((category) => (
+            <button
+              key={category.id}
+              onClick={() =>
+                !isLoadingActionTypes && setSelectedCategory(category.id)
+              }
+              disabled={isLoadingActionTypes}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-[2px] border transition-all cursor-pointer
+                ${
+                  selectedCategory === category.id
+                    ? 'bg-blue-100 text-blue-700 border-blue-600'
+                    : 'border-[#CBD6E2] text-[#425A76] hover:bg-gray-50'
+                }
+                ${isLoadingActionTypes ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              {category.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Action list with skeleton loading */}
+      <div className='flex-1 overflow-y-auto space-y-4 pb-4'>
+        {/* Selected actions highlight section */}
+        {propActions.length > 0 && !isLoadingActionTypes && (
+          <div className='px-6 pt-6'>
+            <h3 className='text-sm font-semibold text-[#425A76] mb-3 uppercase'>
+              Added Actions
+            </h3>
+            <div className='grid grid-cols-1 md:grid-cols-4 gap-3'>
+              {propActions.map((action) => (
+                <ActionCard
+                  key={action.id}
+                  action={action}
+                  onSelect={() => handleActionSelect(action)}
+                  isSelected={true}
+                  isAlreadyAdded={true}
+                  onDelete={() => onDeleteAction?.(action.id)}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Loading skeleton */}
+        {isLoadingActionTypes ? (
+          <div className='px-6 py-3'>
+            {[...Array(2)].map((_, outerIndex) => (
+              <div key={outerIndex} className='space-y-4 mb-6'>
+                {/* Skeleton for category header */}
+                <div className='h-4 bg-gray-200 rounded w-1/4'></div>
+
+                <div className='grid grid-cols-1 md:grid-cols-4 gap-3'>
+                  {[...Array(8)].map((_, i) => (
+                    <div
+                      key={i}
+                      className='w-full flex items-start gap-3 p-3 rounded-md border border-[#CBD6E2] bg-gray-50 animate-pulse'
+                    >
+                      <div className='mt-0.5 p-1.5 rounded-md w-7 h-7 flex-shrink-0 bg-gray-300'></div>
+                      <div className='flex-1 min-w-0 space-y-2'>
+                        <div className='h-3 bg-gray-300 rounded w-3/4'></div>
+                        <div className='h-2 bg-gray-200 rounded w-full'></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <>
+            {/* When "All" is selected - Show grouped by category */}
+            {selectedCategory === 'all' ? (
+              Object.entries(groupedActions).map(([categoryId, list]) => {
+                // Filter out already added actions for this category
+                const availableActions = list.filter(
+                  (action) => !isActionAlreadyAdded(action.id)
+                );
+
+                // Don't show category if no available actions
+                if (availableActions.length === 0) return null;
+
+                // Get category name for display
+                const categoryName = getCategoryNameById(categoryId);
+
+                return (
+                  <div key={categoryId} className='px-6 space-y-2'>
+                    <h3
+                      className='text-sm font-semibold text-[#425A76] uppercase sticky top-0
+                                 bg-gray-50 z-10 py-2'
+                    >
+                      {categoryName}
+                    </h3>
+                    <div className='grid grid-cols-1 md:grid-cols-4 gap-3'>
+                      {availableActions.map((action) => (
+                        <ActionCard
+                          key={action.id}
+                          action={action}
+                          onSelect={(item) =>
+                            handleActionSelect(item as Action)
+                          }
+                          isAlreadyAdded={isActionAlreadyAdded(action.id)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })
+            ) : filteredActions.filter(
+                (action) => !isActionAlreadyAdded(action.id)
+              ).length > 0 ? (
+              // When specific category is selected - Show all actions in that category
+              <div className='px-6 space-y-2'>
+                <h3
+                  className='text-sm font-semibold text-[#425A76] uppercase sticky top-0
+                             bg-gray-50 z-10 py-2'
+                >
+                  {actionCategories.find((c) => c.id === selectedCategory)
+                    ?.label || selectedCategory}
+                </h3>
+                <div className='grid grid-cols-1 md:grid-cols-4 gap-3'>
+                  {filteredActions
+                    .filter((action) => !isActionAlreadyAdded(action.id))
+                    .map((action) => (
+                      <ActionCard
+                        key={action.id}
+                        action={action}
+                        onSelect={(item) => handleActionSelect(item as Action)}
+                        isAlreadyAdded={isActionAlreadyAdded(action.id)}
+                      />
+                    ))}
+                </div>
+              </div>
+            ) : (
+              <div className='text-center py-10 text-[#425A76] text-sm'>
+                No actions found{' '}
+                {searchQuery ? 'for your search' : 'in this category'}.
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default ActionManager;

@@ -52,6 +52,11 @@ export const CHECKLIST_TEMPLATES = `${ADMIN}/checklist-templates`;
 export const CHECKLIST_TEMPLATES_CREATE = `${CHECKLIST_TEMPLATES}/create`;
 export const CHECKLIST_TEMPLATES_EDIT = `${CHECKLIST_TEMPLATES}/edit/:caseId`;
 
+/** ADMIN WORKFLOW BUILDER ROUTES */
+export const WORKFLOW_BUILDER = `${ADMIN}/workflow-builder`;
+export const WORKFLOW_BUILDER_CREATE = `${WORKFLOW_BUILDER}/create`;
+export const WORKFLOW_BUILDER_EDIT = `${WORKFLOW_BUILDER}/edit/:ruleId`;
+
 /** ACCOUNT ROUTES */
 export const ACCOUNT = '/account';
 export const ACCOUNT_CREATE = `${ACCOUNT}/create`;

@@ -84,6 +84,9 @@ import {
   TASK_TEMPLATES_DETAILS,
   ACTIVITY_CREATE,
   ACTIVITY_EDIT,
+  WORKFLOW_BUILDER,
+  WORKFLOW_BUILDER_CREATE,
+  WORKFLOW_BUILDER_EDIT,
 } from './routes';
 import { RootState } from './store/store';
 import ProjectTaskForm from './consultant/pages/project/project-details/project-task/form/project-task-form';
@@ -249,6 +252,17 @@ const CheckListForm = lazy(
 
 const ActivityForm = lazy(
   () => import('./consultant/pages/activities/activities-form/activity-form')
+);
+
+const WorkflowBuilder = lazy(
+  () =>
+    import(
+      './admin/pages/workflow-builder/workflow-builder-list/workflow-builder'
+    )
+);
+
+const WorkflowBuilderForm = lazy(
+  () => import('./admin/pages/workflow-builder/form/workflow-builder-form')
 );
 
 // Loading component for Suspense fallback
@@ -467,6 +481,18 @@ export const App: React.FC<IApp> = ({ instance }) => {
                   <Route
                     path={TASK_TEMPLATES_DETAILS}
                     element={<ManageTaskDetails />}
+                  />
+                  <Route
+                    path={WORKFLOW_BUILDER}
+                    element={<WorkflowBuilder />}
+                  />
+                  <Route
+                    path={WORKFLOW_BUILDER_CREATE}
+                    element={<WorkflowBuilderForm />}
+                  />
+                  <Route
+                    path={WORKFLOW_BUILDER_EDIT}
+                    element={<WorkflowBuilderForm />}
                   />
                 </Route>
                 {/* Page not found */}
