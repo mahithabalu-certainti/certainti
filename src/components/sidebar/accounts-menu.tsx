@@ -19,6 +19,7 @@ import {
   NOT_FOUND,
   NOTES,
   PROJECT,
+  TASKS,
 } from '../../routes';
 
 export const accountNavItems: INavItem[] = [
@@ -93,6 +94,15 @@ export const accountNavItems: INavItem[] = [
     type: 'link',
     matchLink: ATTACHMENTS,
     activePath: 'attachments',
+  },
+  {
+    id: MenuOption.TASKS,
+    icon: AttachmentIcon,
+    name: 'Tasks',
+    link: TASKS,
+    type: 'link',
+    matchLink: TASKS,
+    activePath: 'tasks',
   },
   {
     id: '',
