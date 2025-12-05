@@ -1,4 +1,5 @@
 export interface FormType {
+  gridMode?: string;
   sectionName: string;
   fillType: 'half' | 'full' | 'quarter';
   fields: FormTypeFields[];
@@ -32,6 +33,7 @@ export interface FormTypeFields {
   resetDependsFields?: string[];
   prefixValue?: string;
   disableFutureDates?: boolean;
+  allowFutureDates?: boolean;
   lengthRequired?: {
     key: string;
     minMatchedValue: RegExp;
@@ -64,6 +66,7 @@ export interface FormTypeFields {
 export type InputType =
   | 'text'
   | 'select'
+  | 'multiSelect'
   | 'expandselect'
   | 'autocomplete'
   | 'textarea'
@@ -76,11 +79,18 @@ export type InputType =
   | 'emptyFeild'
   | 'website'
   | 'iconButton'
-  | 'file';
+  | 'file'
+  | 'custom';
 
 export interface SelectOption {
   label: string;
   value: string;
+  desc?: string;
+  isCreate?: boolean;
+}
+export interface SelectNumberOption {
+  label: string;
+  value: number;
   desc?: string;
   isCreate?: boolean;
 }
@@ -115,6 +125,7 @@ export interface FieldType {
   placeholder?: string;
   requiredErrorMessage?: string;
   disableFutureDates?: boolean;
+  allowFutureDates?: boolean;
   disabled?: boolean;
   defaultValue?: string;
   greaterThan?: Record<string, string>;

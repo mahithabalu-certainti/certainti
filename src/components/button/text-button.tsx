@@ -31,7 +31,12 @@ const StyledButton = styled(Button)(() => {
   };
 });
 
-const TextButton: React.FC<TextButtonProps> = ({ label, children, hide, ...rest }) => {
+const TextButton: React.FC<TextButtonProps> = ({
+  label,
+  children,
+  hide,
+  ...rest
+}) => {
   if (hide) return null;
   return <StyledButton {...rest}>{children || label}</StyledButton>;
 };

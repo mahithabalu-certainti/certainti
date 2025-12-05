@@ -17,8 +17,12 @@ import {
   useGetAllDocumentInfo,
   useGetDocumentCategoryType,
 } from '../../../../common-service';
-import { checkPermission, getFiscalYears } from '../../../../common-utils';
-import { SelectOption } from '../../../types';
+import {
+  checkPermission,
+  getFiscalYears,
+  reshapeGlobalFilter,
+} from '../../../../common-utils';
+import { FilterState, SelectOption } from '../../../types';
 import { getAttachmentsFilterFields } from '../../../../components/Attachments/helpers';
 import { exportAttachmentsData } from '../../../services/attachments/attachments-service';
 import { useSelector } from 'react-redux';
@@ -45,6 +49,12 @@ export const Attachments: React.FC = () => {
   const [currentCategory, setCurrentCategory] = useState<string>('');
   const [columnAnchorEl, setColumnAnchorEl] =
     React.useState<HTMLButtonElement | null>(null);
+
+  const { fiscalYear, filters } = useSelector<
+    RootState,
+    { filters: unknown; fiscalYear: string }
+  >((state: RootState) => state.account);
+  const newFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
 
   const onRefreshClick = () => {
     setRefreshTrigger(Date.now());
@@ -111,8 +121,8 @@ export const Attachments: React.FC = () => {
       sortBy: tableParams.sortBy,
       sortOrder: tableParams.sortOrder,
       filters: appliedFilters,
-      fiscalYear: tableParams.fiscalYear,
-      globalFilters: tableParams.globalFilters,
+      fiscalYear: newFiscalYear,
+      globalFilters: reshapeGlobalFilter(filters as FilterState),
       search: searchText || undefined,
     };
     exportAttachmentsData('all_attachments', projectParams);
@@ -252,6 +262,13 @@ export const Attachments: React.FC = () => {
             placeholder='Search'
             disabled={false}
             hide={false}
+            setCurrentPage={(pageNo) => {
+              setPage(pageNo + 1);
+              setTableParams((prev) => ({
+                ...prev,
+                page: pageNo + 1,
+              }));
+            }}
           />
           <button
             aria-describedby={modalId}
@@ -291,7 +308,13 @@ export const Attachments: React.FC = () => {
               filterMenu={attachmentsFilterFields}
               setAppliedFilters={setAppliedFilters}
               handleCloseFilter={handleCloseFilter}
-              setCurrentPage={setPage}
+              setCurrentPage={(pageNo) => {
+                setPage(pageNo + 1);
+                setTableParams((prev) => ({
+                  ...prev,
+                  page: pageNo + 1,
+                }));
+              }}
               handleSorting={handleSorting}
               onFilterChange={handleCategory}
             />

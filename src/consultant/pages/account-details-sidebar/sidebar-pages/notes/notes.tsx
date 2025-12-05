@@ -44,7 +44,7 @@ import { useToast } from '../../../../../hooks';
 import { accountDetailsProps } from '../../../account-details/utils';
 import { checkPermission } from '../../../../../common-utils';
 import { AccessRestricted } from '../../../../../components/account-restricted';
-import { useManageUserList } from '../../../../../admin/service';
+import { useGetUserOptions } from '../../../../services/case-team';
 
 const NotesTabs: OverviewTabs[] = [
   {
@@ -116,12 +116,7 @@ const Notes: React.FC<NotesProps> = ({
   const activeMenuPath = searchParams.get('activeMenu') || '';
 
   // User List Api
-  const { data: userListData } = useManageUserList({
-    page: 1,
-    limit: 2000,
-    sortBy: 'first_name',
-    sortOrder: 'ASC',
-  });
+  const userListData = useGetUserOptions(accountid);
 
   const { data, isLoading, isError } = useNotesList(
     {
@@ -163,9 +158,9 @@ const Notes: React.FC<NotesProps> = ({
 
   const userListOptions = useMemo(() => {
     return (
-      userListData?.data?.users?.map((item) => ({
+      userListData?.data?.map((item) => ({
         value: item.rid,
-        label: `${item.first_name} ${item.last_name}`,
+        label: item.name,
       })) || []
     );
   }, [userListData]);

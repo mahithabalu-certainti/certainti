@@ -121,10 +121,8 @@ export function transformPayloadforUpdateResource(
     region_rid: rawData.state || existingResource?.state || '',
     city_rid: rawData.city || existingResource?.city || '',
     comments: rawData.comments || existingResource?.comments || '',
-    effective_from_date:
-      rawData.resource_startdate || '',
-    effective_end_date:
-      rawData.resource_enddate || '',
+    effective_from_date: rawData.resource_startdate || '',
+    effective_end_date: rawData.resource_enddate || '',
     resource_designation:
       rawData.designation || existingResource?.designation || '',
     total_years_experience: safeParseNumber(

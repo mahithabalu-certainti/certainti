@@ -26,7 +26,7 @@ import {
   useGetAllCountries,
   useGetStatus,
 } from '../../../../common-service';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useParams, useSearchParams } from 'react-router-dom';
 import {
   useGetResourceStatus,
   useGetResourceType,
@@ -50,7 +50,8 @@ import { projectTaskFilterFields } from '../../project/project-details/project-t
 import { FormFiscalDateType } from '../../../types';
 import SearchBar from '../../../../components/search/search-bar';
 import { getNotesFilterFields } from '../../notes/helpers';
-import { useManageUserList } from '../../../../admin/service';
+import { getChecklistFilterFields } from '../../checklist/helpers';
+import { useGetUserOptions } from '../../../services/case-team';
 interface TabProps {
   resourceTab?: ResourceTabs[];
   filterVisibility: boolean;
@@ -120,6 +121,9 @@ const TabPanel: React.FC<TabProps> = ({
   resetSearch,
   onSearchReset,
 }) => {
+  const { accountid } = useParams();
+  const [searchParams] = useSearchParams();
+  const accountId = searchParams.get('accountID') || '';
   const [tabValue, setTabValue] = useState('');
   const location = useLocation();
   const [sortAnchorEl, setSortAnchorEl] = useState<null | HTMLElement>(null);
@@ -173,18 +177,13 @@ const TabPanel: React.FC<TabProps> = ({
   );
 
   // User List Api
-  const { data: userListData } = useManageUserList({
-    page: 1,
-    limit: 2000,
-    sortBy: 'first_name',
-    sortOrder: 'ASC',
-  });
+  const userListData = useGetUserOptions(accountid || accountId);
 
   const userListOptions = useMemo(() => {
     return (
-      userListData?.data?.users?.map((item) => ({
+      userListData?.data?.map((item) => ({
         value: item.rid,
-        label: `${item.first_name} ${item.last_name}`,
+        label: item.name,
       })) || []
     );
   }, [userListData]);
@@ -297,6 +296,22 @@ const TabPanel: React.FC<TabProps> = ({
     });
     return map;
   }, [resourceNotesEditFields]);
+
+  const resourceChecklistsEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.CHECKLIST_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const resourceChecklistsPermissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    resourceChecklistsEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [resourceChecklistsEditFields]);
 
   const resourcepermissionMap = useMemo(() => {
     const map: Record<string, { read: boolean; edit: boolean }> = {};
@@ -510,6 +525,8 @@ const TabPanel: React.FC<TabProps> = ({
       return getAttachmentsFilterFields(fieldOptions, attachmentPermissionMap);
     if (value === 'notes')
       return getNotesFilterFields(resourceNotesPermissionMap, userListOptions);
+    if (value === 'checklists')
+      return getChecklistFilterFields(resourceChecklistsPermissionMap);
     return value === 'cost'
       ? getCostFilterFields(
           memoizedCurrency,
@@ -543,6 +560,7 @@ const TabPanel: React.FC<TabProps> = ({
     attachmentPermissionMap,
     resourceNotesPermissionMap,
     userListOptions,
+    resourceChecklistsPermissionMap,
     memoizedCurrency,
     resourceCostpermissionMap,
     memoizedSkillType,
@@ -651,6 +669,7 @@ const TabPanel: React.FC<TabProps> = ({
                 hide={searchHidden}
                 reset={resetSearch}
                 onReset={onSearchReset}
+                setCurrentPage={setCurrentPage}
               />
             </Box>
           )}

@@ -9,11 +9,10 @@ import {
 export const fetchQrePercentHistory = async (
   params: QrePercentHistoryParams
 ): Promise<QrePercentHistoryResponse> => {
-  const { data } =
-    await resourceServiceApi.post<QrePercentHistoryResponse>(
-      QrePercentHistoryURL(),
-      params
-    );
+  const { data } = await resourceServiceApi.post<QrePercentHistoryResponse>(
+    QrePercentHistoryURL(),
+    params
+  );
   return data;
 };
 

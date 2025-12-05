@@ -271,11 +271,17 @@ const Interaction: React.FC = () => {
             initialSearchText={searchText}
             onSearch={(value) => {
               setSearchText(value);
-              console.log('Search triggered for:', value);
             }}
             placeholder='Search'
             disabled={false}
             hide={false}
+            setCurrentPage={(pageNo) => {
+              setPage(pageNo + 1);
+              setTableParams((prev) => ({
+                ...prev,
+                page: pageNo + 1,
+              }));
+            }}
           />
           <button
             aria-describedby={modalId}
@@ -315,7 +321,13 @@ const Interaction: React.FC = () => {
               filterMenu={filterFields}
               setAppliedFilters={setAppliedFilters}
               handleCloseFilter={handleCloseFilter}
-              setCurrentPage={setPage}
+              setCurrentPage={(pageNo) => {
+                setPage(pageNo + 1);
+                setTableParams((prev) => ({
+                  ...prev,
+                  page: pageNo + 1,
+                }));
+              }}
               handleSorting={handleSorting}
             />
           </Suspense>

@@ -21,7 +21,7 @@ import { NotesFormDataPayload } from '../../../types';
 import { useToast } from '../../../../hooks';
 import { RootState } from '../../../../store/store';
 import { useSelector } from 'react-redux';
-import { useManageUserList } from '../../../../admin/service';
+import { useGetUserOptions } from '../../../services/case-team';
 
 const MAX_FILE_SIZE_MB = 100;
 const RESTRICTED_EXTENSIONS = /\.(exe|bat|cmd|sh|bash)$/i;
@@ -81,6 +81,7 @@ const NotesForm: React.FC = () => {
 
   const isFromGlobalNotes = sourcePath?.toLowerCase() === 'notes';
 
+  const userListData = useGetUserOptions(accountId);
   const createNote = useCreateNote();
   const updateNote = useUpdateNote();
   const { data: noteData, isLoading } = useNoteDetails(
@@ -88,14 +89,6 @@ const NotesForm: React.FC = () => {
     noteId,
     isEditView
   );
-
-  // User List Api
-  const { data: userListData, isLoading: userListLoading } = useManageUserList({
-    page: 1,
-    limit: 2000,
-    sortBy: 'first_name',
-    sortOrder: 'ASC',
-  });
 
   const minYear = 1950;
   const currentYear = new Date().getFullYear();
@@ -145,9 +138,9 @@ const NotesForm: React.FC = () => {
 
   const userListOptions = useMemo(() => {
     return (
-      userListData?.data?.users?.map((item) => ({
+      userListData?.data?.map((item) => ({
         value: item.rid,
-        label: `${item.first_name} ${item.last_name}`,
+        label: item.name,
       })) || []
     );
   }, [userListData]);
@@ -156,6 +149,8 @@ const NotesForm: React.FC = () => {
     if (isEditView && noteData) {
       const disableLevel =
         noteData?.attachment_level?.toLowerCase() === 'project' ||
+        noteData?.attachment_level?.toLowerCase() === 'project_resource' ||
+        noteData?.attachment_level?.toLowerCase() === 'project_task' ||
         noteData?.attachment_level?.toLowerCase() === 'case';
       setDisableFiscalYear(disableLevel);
     }
@@ -340,7 +335,7 @@ const NotesForm: React.FC = () => {
     window.history.back();
   };
 
-  const formLoading = isLoading || userListLoading;
+  const formLoading = isLoading || userListData.isLoading;
 
   const hideAttachments =
     isEditView &&

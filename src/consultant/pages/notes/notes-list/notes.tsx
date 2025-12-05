@@ -228,6 +228,13 @@ export const Notes: React.FC = () => {
             placeholder='Search'
             disabled={false}
             hide={false}
+            setCurrentPage={(pageNo) => {
+              setPage(pageNo + 1);
+              setTableParams((prev) => ({
+                ...prev,
+                page: pageNo + 1,
+              }));
+            }}
           />
           <button
             aria-describedby={modalId}
@@ -267,7 +274,13 @@ export const Notes: React.FC = () => {
               filterMenu={notesFilterFields}
               setAppliedFilters={setAppliedFilters}
               handleCloseFilter={handleCloseFilter}
-              setCurrentPage={setPage}
+              setCurrentPage={(pageNo) => {
+                setPage(pageNo + 1);
+                setTableParams((prev) => ({
+                  ...prev,
+                  page: pageNo + 1,
+                }));
+              }}
               handleSorting={handleSorting}
             />
           </Suspense>

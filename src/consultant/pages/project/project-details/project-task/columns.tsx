@@ -25,6 +25,7 @@ export const getProjectTaskColumns = (
   onClick: (row: ProjectTaskListType) => void,
   handleAttachmentClick: (rowId: string) => void,
   handleCreateNote: (row: ProjectTaskListType) => void,
+  handleCreateChecklist: (row: ProjectTaskListType) => void,
   memoizedProjectResourceCode: SelectOption[],
   TaskTypeOptions: SelectOption[],
   classificationOptions: SelectOption[],
@@ -35,7 +36,8 @@ export const getProjectTaskColumns = (
   accountOrProjectInActive?: boolean,
   fiscalDate?: FormFiscalDateType,
   isAttachmentCreateEnable?: boolean,
-  isNoteCreateEnable?: boolean
+  isNoteCreateEnable?: boolean,
+  isChecklistCreateEnable?: boolean
 ): ListTableColumn<ProjectTaskListType>[] => [
   {
     id: 'resource_code',
@@ -418,6 +420,25 @@ export const getProjectTaskColumns = (
         disabled={accountOrProjectInActive}
         sx={{ width: '45px', minWidth: '45px', maxWidth: '45px' }}
         onClick={() => handleCreateNote(row)}
+      />
+    ),
+  },
+  {
+    id: 'checklists',
+    sortId: 'checklists',
+    label: 'Checklists',
+    width: 80,
+    sortable: false,
+    hide: !isChecklistCreateEnable,
+    sx: {
+      textAlign: 'center',
+    },
+    render: (row) => (
+      <TextButton
+        label='Add'
+        disabled={accountOrProjectInActive}
+        sx={{ width: '45px', minWidth: '45px', maxWidth: '45px' }}
+        onClick={() => handleCreateChecklist(row)}
       />
     ),
   },

@@ -60,10 +60,7 @@ export const getCaseListColumns = (
       sortable: true,
       sortId: 'filing_type_name',
       editId: 'filing_type_rid',
-      editable:
-        permissionMap?.['filing_type_rid']?.edit &&
-        permissionMap?.['filing_type_rid']?.read &&
-        !accountInActive,
+      editable: false,
       hide:
         !permissionMap?.['filing_type_rid']?.edit &&
         !permissionMap?.['filing_type_rid']?.read,
@@ -151,9 +148,22 @@ export const getCaseListColumns = (
       },
     },
     {
+      id: 'case_total_projects',
+      label: 'Total Assigned Project',
+      width: 200,
+      sortable: true,
+      sortId: 'case_total_projects',
+      sx: {
+        textAlign: 'right',
+      },
+      hide:
+        !permissionMap?.['case_total_projects']?.edit &&
+        !permissionMap?.['case_total_projects']?.read,
+    },
+    {
       id: 'case_total_project_cost',
-      label: 'Total Project Cost',
-      width: 180,
+      label: 'Total Assigned Project Cost',
+      width: 220,
       sortable: true,
       sortId: 'case_total_project_cost',
       sx: {
@@ -165,6 +175,36 @@ export const getCaseListColumns = (
       render: (row) =>
         row.case_total_project_cost
           ? costDisplay(row.case_total_project_cost, currencySymbol)
+          : '-',
+    },
+    {
+      id: 'case_total_qualified_projects',
+      label: 'Total Qualified Project',
+      width: 200,
+      sortable: true,
+      sortId: 'case_total_qualified_projects',
+      sx: {
+        textAlign: 'right',
+      },
+      hide:
+        !permissionMap?.['case_total_projects']?.edit &&
+        !permissionMap?.['case_total_projects']?.read,
+    },
+    {
+      id: 'case_total_qualified_projects_cost',
+      label: 'Total Qualified Project Cost',
+      width: 220,
+      sortable: true,
+      sortId: 'case_total_qualified_projects_cost',
+      sx: {
+        textAlign: 'right',
+      },
+      hide:
+        !permissionMap?.['case_total_qualified_project_cost']?.edit &&
+        !permissionMap?.['case_total_qualified_project_cost']?.read,
+      render: (row) =>
+        row.case_total_qualified_projects_cost
+          ? costDisplay(row.case_total_qualified_projects_cost, currencySymbol)
           : '-',
     },
     {
@@ -200,32 +240,6 @@ export const getCaseListColumns = (
         row.case_total_rd_cost
           ? costDisplay(row.case_total_rd_cost, currencySymbol)
           : '-',
-    },
-    {
-      id: 'case_total_projects',
-      label: 'No. of Projects',
-      width: 160,
-      sortable: true,
-      sortId: 'case_total_projects',
-      sx: {
-        textAlign: 'right',
-      },
-      hide:
-        !permissionMap?.['case_total_projects']?.edit &&
-        !permissionMap?.['case_total_projects']?.read,
-    },
-    {
-      id: 'case_total_qualified_projects',
-      label: 'No. of Qualified Projects',
-      width: 190,
-      sortable: true,
-      sortId: 'case_total_qualified_projects',
-      sx: {
-        textAlign: 'right',
-      },
-      hide:
-        !permissionMap?.['case_total_qualified_projects']?.edit &&
-        !permissionMap?.['case_total_qualified_projects']?.read,
     },
     {
       id: 'created_datetime',

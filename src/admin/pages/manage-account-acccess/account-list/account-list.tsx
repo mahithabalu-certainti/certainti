@@ -387,6 +387,13 @@ const AccountList = () => {
               placeholder='Search'
               disabled={false}
               hide={false}
+              setCurrentPage={(pageNo) => {
+                setPage(pageNo + 1);
+                setTableParams((prev) => ({
+                  ...prev,
+                  page: pageNo + 1,
+                }));
+              }}
             />
             {groupId ? (
               <TextButton
@@ -442,7 +449,17 @@ const AccountList = () => {
                 filterId={filterId}
                 filterFields={filtercolumn || []}
                 setAppliedFilters={setAppliedFilters}
-                setPage={setPage}
+                setPage={(pageNo) => {
+                  setPage(pageNo);
+                  setTableParams((prev) => ({
+                    ...prev,
+                    page: pageNo,
+                  }));
+                  setUserParams((prev) => ({
+                    ...prev,
+                    page: pageNo,
+                  }));
+                }}
                 handleCloseFilter={handleCloseFilter}
                 handleSorting={handleSorting}
               />
@@ -519,7 +536,7 @@ const AccountList = () => {
             hoverHighlight={false}
             tableStyle={{
               height: '100%',
-              maxHeight: 'calc(100vh - 195px)',
+              maxHeight: 'calc(100vh - 210px)',
               overflow: 'auto',
             }}
             selectable={false}

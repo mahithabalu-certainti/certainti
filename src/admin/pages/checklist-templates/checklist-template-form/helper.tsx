@@ -67,6 +67,7 @@ export interface ChecklistTemplateFormData {
 export interface ChecklistTemplateFormQuestion {
   question_seq_num: string;
   question: string;
+  comments: string;
   description: string;
   // is_mandatory: boolean;
   // is_editable?: boolean;
@@ -83,6 +84,7 @@ export interface ChecklistTemplateFormErrors {
 
 export interface ChecklistTemplateQuestionErrors {
   question?: string;
+  comments?: string;
   // mandatory?: string;
   // notes?: string;
 }
@@ -118,10 +120,10 @@ export const getQuestionTableColumns = () // isEditView: boolean
     required: true,
   },
   {
-    name: 'description',
-    label: 'Description',
+    name: 'comments',
+    label: 'Comments',
     width: '40%',
-    required: true,
+    required: false,
   },
   // { name: 'mandatory', label: 'Mandatory', width: '5%' },
   // {
@@ -220,14 +222,16 @@ export const validateTemplateForm = (
 
     if (!REGEX_PATTERNS.MAX_2000.test(question.question)) {
       currentQuestionErrors.question =
-        'Checklist Question must be within 2000 characters';
+        'Checklist Item must be within 2000 characters';
       isValid = false;
     }
 
-    // if (!REGEX_PATTERNS.MAX_2000.test(question.notes)) {
-    //   currentQuestionErrors.notes = 'Notes must be within 2000 characters';
-    //   isValid = false;
-    // }
+    // Add validation for comments field with 2000 character limit
+    if (!REGEX_PATTERNS.MAX_2000.test(question.comments)) {
+      currentQuestionErrors.comments =
+        'Comments must be within 2000 characters';
+      isValid = false;
+    }
 
     questionErrors.push(currentQuestionErrors);
   });
@@ -316,7 +320,7 @@ export const transformToNewCreateTemplatePayload = (
     status_rid: formData.status,
     checklist_items: formData.questions.map((question) => ({
       checklist_item_name: question.question,
-      description: question.description || question.question,
+      description: question.comments || '',
       action_type: 'add' as const,
     })),
   };
@@ -347,29 +351,18 @@ export const transformToEditTemplatePayload = (
 
         if (existingQuestion) {
           existingQuestionsMap.delete(q.rid);
-          if (
-            q.question.trim() !== existingQuestion.checklist_item_name.trim() ||
-            q.description.trim() !== (existingQuestion.description || '').trim()
-          ) {
-            return {
-              checklist_item_rid: q.rid,
-              checklist_item_name: q.question,
-              description: q.description,
-              action_type: 'edit',
-            };
-          } else {
-            return {
-              checklist_item_rid: q.rid,
-              checklist_item_name: q.question,
-              description: q.description,
-              action_type: 'edit',
-            };
-          }
+          // Always allow editing of comments field and other fields
+          return {
+            checklist_item_rid: q.rid,
+            checklist_item_name: q.question,
+            description: q.comments,
+            action_type: 'edit',
+          };
         }
       } else if (q.question.trim() !== '') {
         return {
           checklist_item_name: q.question,
-          description: q.description,
+          description: q.comments,
           action_type: 'add',
         };
       }

@@ -1258,7 +1258,8 @@ const AccountInteractionForm = () => {
                       <span className='font-bold mr-1'>Projects List </span> -{' '}
                       <span className='ml-1 font-medium'>
                         {' '}
-                        Please add a project to an account in order to create a new interaction.
+                        Please add a project to an account in order to create a
+                        new interaction.
                       </span>
                     </Box>
                   </Box>

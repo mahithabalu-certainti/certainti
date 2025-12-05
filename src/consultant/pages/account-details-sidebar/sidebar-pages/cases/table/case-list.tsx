@@ -265,6 +265,7 @@ export const CaseListTable: React.FC<ICaseTableProps> = ({
       {
         case_rid: rowId,
         account_rid: accountid,
+        fiscal_year: rowData?.fiscal_year,
       }
     );
 
@@ -287,7 +288,7 @@ export const CaseListTable: React.FC<ICaseTableProps> = ({
           })
         );
       } else {
-        errorToast(result?.message || 'Failed to update field');
+        errorToast(result?.statusMessage || 'Failed to update field');
         setCaseList(previousCases);
       }
     } catch (error) {

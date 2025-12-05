@@ -195,6 +195,12 @@ export const getProjectColumns = (
       placeholder: '',
       options: fiscalYears,
     },
+    conditionallyEdit: [
+      {
+        key: 'is_project_exists' as keyof Project,
+        matchValue: false,
+      },
+    ],
   },
   {
     id: 'classification_name',
@@ -627,7 +633,7 @@ export const getProjectColumns = (
     hide: !permissionMap?.['qre']?.read && !permissionMap?.['qre']?.edit,
     render: (row: Project) => {
       const isChild = row._level !== undefined && row._level === 1;
-      return isChild ? row.qre_final : '-';
+      return isChild ? costDisplay(row.qre_final, row.currency_symbol) : '-';
     },
   },
   {

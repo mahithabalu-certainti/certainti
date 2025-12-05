@@ -71,9 +71,19 @@ import {
   EMAIL_TEMPLATES_EDIT,
   CASE_CREATE,
   CASE_EDIT,
+  TASK_TEMPLATES,
+  TASK_TEMPLATES_CREATE,
+  TASK_TEMPLATES_EDIT,
   CHECKLIST_TEMPLATES,
   CHECKLIST_TEMPLATES_CREATE,
   CHECKLIST_TEMPLATES_EDIT,
+  CHECKLIST_CREATE,
+  CHECKLIST_EDIT,
+  CASE_INTERACTIONS_CREATE,
+  CASE_INTERACTIONS_EDIT,
+  TASK_TEMPLATES_DETAILS,
+  ACTIVITY_CREATE,
+  ACTIVITY_EDIT,
 } from './routes';
 import { RootState } from './store/store';
 import ProjectTaskForm from './consultant/pages/project/project-details/project-task/form/project-task-form';
@@ -81,6 +91,8 @@ import ProjectTaskForm from './consultant/pages/project/project-details/project-
 import ProjectResourceForm from './consultant/pages/project/project-details/project-resources/project-resource-form/project-resource-form';
 import { Attachments } from './consultant/pages';
 import ImportTemplatesList from './admin/pages/import-templates/import-templates';
+import CaseInteractionForm from './consultant/pages/interaction/interaction-form/case-interaction-form';
+import ManageTaskDetails from './admin/pages/task-templates/task-templates-list/details/taskDetails';
 
 // Lazy load all page components
 const ExtendedPermission = lazy(
@@ -219,6 +231,26 @@ const ChecklistTemplateForm = lazy(
     )
 );
 
+const TaskTemplateList = lazy(
+  () =>
+    import(
+      './admin/pages/task-templates/task-templates-list/task-templates-list'
+    )
+);
+
+const TaskTemplateForm = lazy(
+  () =>
+    import('./admin/pages/task-templates/task-template-form/task-template-form')
+);
+
+const CheckListForm = lazy(
+  () => import('./consultant/pages/checklist/checklist-form/checklist-form')
+);
+
+const ActivityForm = lazy(
+  () => import('./consultant/pages/activities/activities-form/activity-form')
+);
+
 // Loading component for Suspense fallback
 const Loading = () => (
   <div className='flex h-screen w-full items-center justify-center'>
@@ -321,11 +353,23 @@ export const App: React.FC<IApp> = ({ instance }) => {
                     path={GLOBAL_INTERACTIONS_EDIT}
                     element={<InteractionForm />}
                   />
+                  <Route
+                    path={CASE_INTERACTIONS_CREATE}
+                    element={<CaseInteractionForm />}
+                  />
+                  <Route
+                    path={CASE_INTERACTIONS_EDIT}
+                    element={<CaseInteractionForm />}
+                  />
                   <Route path={ATTACHMENTS} element={<Attachments />} />
                   <Route path={NOTES} element={<Notes />} />
                   <Route path={NOTES_CREATE} element={<NotesForm />} />
                   <Route path={NOTES_EDIT} element={<NotesForm />} />
                   <Route path={GLOBAL_NOTES_EDIT} element={<NotesForm />} />
+                  <Route path={CHECKLIST_CREATE} element={<CheckListForm />} />
+                  <Route path={CHECKLIST_EDIT} element={<CheckListForm />} />
+                  <Route path={ACTIVITY_CREATE} element={<ActivityForm />} />
+                  <Route path={ACTIVITY_EDIT} element={<ActivityForm />} />
                   {/* Page not found */}
                   <Route path={NOT_MATCH} element={<NotFound />} />
                 </Route>
@@ -410,6 +454,19 @@ export const App: React.FC<IApp> = ({ instance }) => {
                   <Route
                     path={CHECKLIST_TEMPLATES_EDIT}
                     element={<ChecklistTemplateForm />}
+                  />
+                  <Route path={TASK_TEMPLATES} element={<TaskTemplateList />} />
+                  <Route
+                    path={TASK_TEMPLATES_CREATE}
+                    element={<TaskTemplateForm />}
+                  />
+                  <Route
+                    path={TASK_TEMPLATES_EDIT}
+                    element={<TaskTemplateForm />}
+                  />
+                  <Route
+                    path={TASK_TEMPLATES_DETAILS}
+                    element={<ManageTaskDetails />}
                   />
                 </Route>
                 {/* Page not found */}

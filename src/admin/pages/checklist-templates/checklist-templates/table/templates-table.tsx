@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { FilterCondition } from '../../../../types/manage-user';
 import {
   ActionItem,
+  CellEditData,
+  FieldChangeValue,
   ShowHideTableColumn,
 } from '../../../../../components/table/types';
 import { EditIcon } from '../../../../../assets';
@@ -24,6 +26,10 @@ import { checkPermission } from '../../../../../common-utils';
 import { RootState } from '../../../../../store/store';
 import { useSelector } from 'react-redux';
 import { AllPermissions } from '../../../../../common-service';
+import { useToast } from '../../../../../hooks';
+import { useMutation } from '@apollo/client';
+import { caseClient } from '../../../../../api/graphql/clients/client';
+import { ADMIN_CHECKLIST_UPDATE } from '../../../../../api/graphql/queries/checklist-query';
 
 interface ITemplateTableProps {
   appliedFilters: Record<string, FilterCondition>;
@@ -36,6 +42,7 @@ interface ITemplateTableProps {
   setColumnAnchorEl: React.Dispatch<
     React.SetStateAction<HTMLButtonElement | null>
   >;
+  statusOptions: { label: string; value: string }[];
 }
 
 export const TemplateTable: React.FC<ITemplateTableProps> = ({
@@ -45,8 +52,10 @@ export const TemplateTable: React.FC<ITemplateTableProps> = ({
   refreshTrigger,
   columnAnchorEl,
   setColumnAnchorEl,
+  statusOptions,
 }) => {
   const navigate = useNavigate();
+  const { errorToast } = useToast();
   const [templateList, setTemplateList] = useState<ChecklistTemplateList[]>([]);
 
   const { data, isLoading, isError } = useChecklistTemplateList(
@@ -60,6 +69,10 @@ export const TemplateTable: React.FC<ITemplateTableProps> = ({
       setTemplateList(data?.checklistTemplates || []);
     }
   }, [data?.checklistTemplates]);
+
+  const [updateAdminChecklist] = useMutation(ADMIN_CHECKLIST_UPDATE, {
+    client: caseClient,
+  });
 
   // Permission
   const { permission } = useSelector((state: RootState) => state.permission);
@@ -136,6 +149,7 @@ export const TemplateTable: React.FC<ITemplateTableProps> = ({
   const checklistTemplateColumns = getChecklistTemplateColumns(
     handleDownload,
     permissionMap,
+    statusOptions,
     isChecklistTemplateExportEnable
   );
 
@@ -193,6 +207,65 @@ export const TemplateTable: React.FC<ITemplateTableProps> = ({
     ? 'checklist-template-column-visibility-popover'
     : undefined;
 
+  const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
+    const previousTemplates = [...templateList];
+
+    const updateData = updates.reduce<Record<string, FieldChangeValue>>(
+      (acc, item) => {
+        const key = item.editId || item.columnId;
+        acc[key] = item.value;
+        return acc;
+      },
+      {
+        rid: rowId,
+      }
+    );
+
+    try {
+      const res = await updateAdminChecklist({
+        variables: { data: updateData },
+      });
+
+      const result = res.data?.updateAdminChecklist;
+
+      if (result?.statusCode === 200 && result?.data) {
+        const updatedItem = result.data;
+
+        setTemplateList((prev) =>
+          prev.map((template) => {
+            if (template.rid === rowId) {
+              const newTemplate = {
+                ...template,
+                ...updatedItem,
+              };
+              if (updatedItem.status_rid && statusOptions) {
+                const selectedOption = statusOptions.find(
+                  (opt) => opt.value === updatedItem.status_rid
+                );
+                if (selectedOption) {
+                  newTemplate.status_name = selectedOption.label;
+                }
+              }
+
+              return newTemplate;
+            }
+            return template;
+          })
+        );
+      } else {
+        errorToast(result?.statusMessage || 'Failed to update field');
+        setTemplateList(previousTemplates);
+      }
+    } catch (error: any) {
+      const errorMessage =
+        error?.response?.data?.statusMessage ||
+        (error as Error)?.message ||
+        'Failed to update field';
+      errorToast(errorMessage);
+      setTemplateList(previousTemplates);
+    }
+  };
+
   return (
     <>
       <ManageColumnsPopover
@@ -236,6 +309,7 @@ export const TemplateTable: React.FC<ITemplateTableProps> = ({
         sortBy={tableParams.sortBy}
         sortOrder={tableParams.sortOrder}
         onSort={handleSort}
+        onCellEdit={handleCellEdit}
       />
     </>
   );

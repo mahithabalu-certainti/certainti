@@ -1,6 +1,8 @@
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
+import customParseFormat from 'dayjs/plugin/customParseFormat';
+dayjs.extend(customParseFormat);
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
@@ -135,6 +137,8 @@ export const createCheckboxField = (
     required?: boolean;
     checkboxOptions: SelectOption[];
     defaultValue?: string;
+    onChange?: boolean;
+    resetDependsFields?: string[];
   }
 ): FieldType => ({
   type: 'checkbox',
@@ -143,6 +147,8 @@ export const createCheckboxField = (
   required: options.required ?? false,
   options: options.checkboxOptions,
   defaultValue: options.defaultValue,
+  onChange: options.onChange,
+  resetDependsFields: options.resetDependsFields,
 });
 
 export const createRadioField = (
@@ -263,6 +269,44 @@ export const createSelectField = (
   dependantLabel: others.dependantLabel,
   isFiscalYear: others.isFiscalYear,
 });
+export const createMultiSelectField = (
+  name: string,
+  label: string,
+  others: {
+    options: SelectOption[];
+    required: boolean;
+    width?: string;
+    placeholder?: string;
+    requiredErrorMessage?: string;
+    disabled?: boolean;
+    clearValue?: Record<string, string>;
+    onChange?: boolean;
+    isLoading?: boolean;
+    hide?: boolean;
+    resetDependsFields?: string[];
+    defaultValue?: string;
+    assignDefaultValue?: boolean;
+    dependantLabel?: string;
+  }
+): FieldType => ({
+  type: 'multiSelect',
+  name,
+  label,
+  required: others.required,
+  options: others.options,
+  width: others.width,
+  disabled: others.disabled,
+  placeholder: others.placeholder,
+  requiredErrorMessage: others.requiredErrorMessage,
+  clearValue: others.clearValue,
+  onChange: others.onChange,
+  isLoading: others.isLoading,
+  hide: others.hide,
+  defaultValue: others.defaultValue,
+  resetDependsFields: others.resetDependsFields,
+  assignDefaultValue: others.assignDefaultValue,
+  dependantLabel: others.dependantLabel,
+});
 
 export const createAutoCompleteField = (
   name: string,
@@ -360,6 +404,7 @@ export const createDateField = (
     disabled?: boolean;
     hide?: boolean;
     disableFutureDates?: boolean;
+    allowFutureDates?: boolean;
     resetDependsFields?: string[];
     minDate?: Date;
     maxDate?: Date;
@@ -385,6 +430,7 @@ export const createDateField = (
   hide: others.hide,
   onChange: others.onChange,
   disableFutureDates: others.disableFutureDates,
+  allowFutureDates: others.allowFutureDates,
   greaterThan: others.greaterThan,
   dateRangeError: others.dateRangeError,
   startValue: others.startValue,
@@ -462,6 +508,7 @@ export const REGEX_PATTERNS = {
   EFFORTS_NUMBER: /^(?:[0-9]{1,16})(?:\.[0-9]{1,2})?$/,
   EFFORTS_INTEGER_NUMBER: /^[0-9]{1,16}$/,
   EFFORTS_INTEGER_9: /^[0-9]{1,9}$/,
+  ALLOW_ONE_TO_99: /^[1-9][0-9]?$/,
   DESCRIPTION: /^.{0,500}$/,
   RESOURCE_DESCRIPTION: /^.{0,1000}$/,
   ACCOUNT_DESCRIPTION: /^[\s\S]{0,2000}$/,
@@ -536,6 +583,7 @@ export const REGEX_PATTERNS = {
   ACCOUNT_ORG_NAME: /^[A-Za-z0-9 -&.,']+$/,
   MAX_ORG_NAME_LEGNTH: /^.{7,125}/,
   MIN_ORG_NAME_LEGNTH: /^.{7,}/,
+  EMAIL_SUBJECT: /^[A-Za-z0-9\s&\-.'",{}_]+$/,
 };
 export const PROJECT_RESOURCE_REGEX = {
   // UUID VALIDATION STANDARD FORMAT
@@ -1052,4 +1100,13 @@ export const getIntersection = (
   return start <= end
     ? { start: start.toISOString(), end: end.toISOString() }
     : null;
+};
+
+export const formatTimeToAMPM = (time?: string | null): string => {
+  if (!time || typeof time !== 'string') return '-';
+  const trimmed = time.trim();
+  // Accept common time formats
+  const parsed = dayjs(trimmed, ['HH:mm', 'HH:mm:ss', 'H:mm'], true);
+  if (!parsed.isValid()) return '-';
+  return parsed.format('hh:mm A'); // AM/PM
 };

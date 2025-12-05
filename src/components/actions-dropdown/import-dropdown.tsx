@@ -6,6 +6,8 @@ import { AddIcon, ArrowUpIcon } from '../../assets';
 interface ImportDropdownItem {
   label: string;
   onClick: () => void;
+  disabled?: boolean;
+  hide?: boolean;
 }
 
 interface ImportDropdownItemProps {
@@ -63,10 +65,11 @@ const ActionImportDropdown: React.FC<ImportDropdownItemProps> = ({
       >
         <Box
           component='span'
-          sx={{ flexGrow: 1, color: '#425A76' }}
-          className='flex gap-1.5 items-center pl-2'
+          sx={{ color: '#425A76' }}
+          className='flex gap-1.5 items-center px-2'
         >
-          {variant === 'filled' && <AddIcon className='w-3 p-[1px]' />} {label}
+          {variant === 'filled' && <AddIcon className='w-3.5 h-3.5 p-[1px]' />}
+          {label}
         </Box>
         {split === 'true' && (
           <Box
@@ -82,7 +85,7 @@ const ActionImportDropdown: React.FC<ImportDropdownItemProps> = ({
 
         <ArrowUpIcon
           alt='arrow'
-          className={`mx-1 transition-transform duration-300 ${!open ? 'rotate-180' : 'rotate-0'}`}
+          className={`mr-1 transition-transform duration-300 ${!open ? 'rotate-180' : 'rotate-0'}`}
           onClick={(event: React.MouseEvent) =>
             handleClick(event as React.MouseEvent<HTMLButtonElement>)
           }
@@ -99,24 +102,27 @@ const ActionImportDropdown: React.FC<ImportDropdownItemProps> = ({
           },
         }}
       >
-        {actions.map((action, index) => (
-          <MenuItem
-            key={index}
-            onClick={() => {
-              handleClose();
-              action.onClick();
-            }}
-            sx={{
-              minWidth: '130px',
-              fontSize: '14px',
-              color: '#2D3E4F',
-              borderBottom:
-                index !== actions.length - 1 ? '1px solid #CBD6E2' : 'none',
-            }}
-          >
-            {action.label}
-          </MenuItem>
-        ))}
+        {actions
+          .filter((action) => !action.hide)
+          .map((action, index) => (
+            <MenuItem
+              key={index}
+              onClick={() => {
+                handleClose();
+                action.onClick();
+              }}
+              disabled={action.disabled}
+              sx={{
+                minWidth: '130px',
+                fontSize: '14px',
+                color: '#2D3E4F',
+                borderBottom:
+                  index !== actions.length - 1 ? '1px solid #CBD6E2' : 'none',
+              }}
+            >
+              {action.label}
+            </MenuItem>
+          ))}
       </Menu>
     </Box>
   );
