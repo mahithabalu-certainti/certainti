@@ -366,14 +366,7 @@ class ActivitySchemaService {
             { transaction }
           );
         }
-         await this.addActivityHistory(
-        accountNumber,
-        taskRequest.task_rid as string,
-        { ...taskRequest, modified_by: userId },
-        existingTask,
-        activityTypes.task
-      );
-      }
+             }
        await TaskSummary.update(
         {
           task_name: taskRequest.task_name || "",
@@ -391,6 +384,13 @@ class ActivitySchemaService {
             task_rid: taskRequest.task_rid,
           }
         }
+      );
+      await this.addActivityTaskHistory(
+        accountNumber,
+        taskRequest.task_rid as string,
+        { ...taskRequest, modified_by: userId },
+        existingTask,
+        activityTypes.task
       );
       if(!this.mainDbSequelize)
         {
@@ -968,6 +968,9 @@ class ActivitySchemaService {
         
         "call_platform"
       ];
+      if(sortBy === 'createdAt') {
+        sortBy = 'created_datetime';
+      }
       const finalSortBy = validSortFields.includes(sortBy)
         ? sortBy
         : "created_datetime";
@@ -1544,70 +1547,7 @@ class ActivitySchemaService {
     return dateObj.toISOString().split("T")[0] || "invalid-date";
   }
 
-  async updateTaskHistory(
-    accountNumber: string,
-    taskId: string,
-    newTaskData: any,
-    existingTaskData: any
-  ) {
-    try {
-      const { TaskHistory } = await this.caseModelService.getModels(
-        accountNumber
-      );
 
-      const excludedFields = [
-        "created_by",
-        "modified_by",
-        "task_rid",
-        "account_rid",
-        "modified_datetime",
-      ];
-
-      const cleanedNewData = Object.fromEntries(
-        Object.entries(newTaskData).filter(
-          ([key]) => !excludedFields.includes(key)
-        )
-      );
-
-      const historyChanges = Object.entries(cleanedNewData)
-        .filter(([key, newValue]) => {
-          const oldValue = existingTaskData[key];
-
-          if (newValue == null && oldValue == null) return false;
-
-          if (typeof newValue === "number" || typeof oldValue === "number") {
-            return Number(newValue) !== Number(oldValue);
-          }
-
-          return String(newValue ?? "") !== String(oldValue ?? "");
-        })
-        .map(([key, newValue]) => ({
-          task_rid: taskId,
-          attribute_name: key,
-          old_value:
-            existingTaskData[key] !== null &&
-            existingTaskData[key] !== undefined
-              ? String(existingTaskData[key])
-              : "",
-          new_value:
-            newValue !== null && newValue !== undefined ? String(newValue) : "",
-          created_by: newTaskData["modified_by"],
-        }));
-
-      if (historyChanges.length === 0) return;
-
-      // Use individual create operations to avoid sequence conflicts
-      for (const historyChange of historyChanges) {
-        await TaskHistory.create(historyChange);
-      }
-    } catch (err) {
-      logMessage(`Error updating project history : ${JSON.stringify(err)}`);
-      errorLog("Error updating project history : " + (err as Error).message);
-      throw new Error(
-        "Error updating project history : " + (err as Error).message
-      );
-    }
-  }
 
   async checkIsActivityTaskUnique(
     taskReq: any,
@@ -2875,6 +2815,12 @@ class ActivitySchemaService {
             if (typeof newValue === "number" || typeof oldValue === "number") {
               return Number(newValue) !== Number(oldValue);
             }
+            if (key === 'effective_start_datetime' || key === 'effective_end_datetime') {
+              const newDate = newValue ? moment.utc(newValue).format("YYYY-MM-DD") : null;
+              const oldDate = oldValue ? moment.utc(oldValue).format("YYYY-MM-DD") : null;
+              existingCaseData[key] = oldDate;
+              return String(newDate ?? "") !== String(oldDate ?? "");
+            }
   
             return String(newValue ?? "") !== String(oldValue ?? "");
           })
@@ -2902,6 +2848,166 @@ class ActivitySchemaService {
         }
       } catch (err) {
         logMessage(`Error updating activity history : ${JSON.stringify(err)}`);
+        errorLog("Error updating activity history : " + (err as Error).message);
+        throw new Error(
+          "Error updating activity history : " + (err as Error).message
+        );
+      }
+    }
+  async addActivityTaskHistory(
+      accountNumber: string,
+      activityId: string,
+      newCaseData: any,
+      existingCaseData: any,
+      activityType?: string
+    ) {
+      try {
+        const { ActivityHistory } = await this.caseModelService.getModels(
+          accountNumber
+        );
+  
+        const excludedFields = [
+          "created_by",
+          "modified_by",
+          "activity_rid",
+          "account_rid",
+          "modified_datetime",
+          "task_rid"
+        ];
+  
+        const cleanedNewData = Object.fromEntries(
+          Object.entries(newCaseData).filter(
+            ([key]) => !excludedFields.includes(key)
+          )
+        );
+  
+        // Prepare mapping for assigned_to values
+        const columnMapping = new Map();
+        let assignedToOldValueString = null;
+        let assignedToNewValueString = null;
+        if (cleanedNewData.hasOwnProperty('assigned_to')) {
+          const oldValue = existingCaseData['assigned_to'];
+          const newValue = cleanedNewData['assigned_to'];
+          if (oldValue || newValue) {
+            if(!this.mainDbSequelize) {
+              this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+            }
+            const result = await this.mainDbSequelize.query(rawQueries.fetchUserNames(String(oldValue || ''), String(newValue || '')));
+            for (let r of result[0]) {
+              columnMapping.set((r as any)?.rid, (r as any)?.name);
+            }
+            assignedToOldValueString = columnMapping.get(oldValue);
+            assignedToNewValueString = columnMapping.get(newValue);
+          }
+        }
+        const statusMapping = new Map();
+        let statusOldValueString = null;
+        let statusNewValueString = null;
+        if (cleanedNewData.hasOwnProperty('status_rid')) {
+          const oldValue = existingCaseData['status_rid'];
+          const newValue = cleanedNewData['status_rid'];
+          if (oldValue || newValue) {
+            if(!this.mainDbSequelize) {
+              this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+            }
+            const result = await this.mainDbSequelize.query(rawQueries.fetchActivityStatusById(String(oldValue || ''), String(newValue || '')));
+            for (let r of result[0]) {
+              statusMapping.set((r as any)?.rid, (r as any)?.name);
+            }
+            statusOldValueString = statusMapping.get(oldValue);
+            statusNewValueString = statusMapping.get(newValue);
+          }
+
+        }
+
+        // Prepare mapping for priority_rid values
+        const priorityMapping = new Map();
+        let priorityOldValueString = null;
+        let priorityNewValueString = null;
+        if (cleanedNewData.hasOwnProperty('priority_rid')) {
+          const oldValue = existingCaseData['priority_rid'];
+          const newValue = cleanedNewData['priority_rid'];
+          if (oldValue || newValue) {
+            if(!this.mainDbSequelize) {
+              this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+            }
+            // Assuming rawQueries.fetchPriorityNames returns [{ rid, name }]
+            const result = await this.mainDbSequelize.query(rawQueries.fetchPriority(String(oldValue || ''), String(newValue || '')));
+            for (let r of result[0]) {
+              priorityMapping.set((r as any)?.rid, (r as any)?.pr);
+            }
+            priorityOldValueString = priorityMapping.get(oldValue);
+            priorityNewValueString = priorityMapping.get(newValue);
+          }
+        }
+
+       
+
+        const historyChanges = await Promise.all(Object.entries(cleanedNewData)
+          .filter(([key, newValue]) => {
+            const oldValue = existingCaseData[key];
+            if (newValue == null && oldValue == null) return false;
+            if (typeof newValue === "number" || typeof oldValue === "number") {
+              return Number(newValue) !== Number(oldValue);
+            }
+            if (key === 'effective_start_datetime' || key === 'effective_end_datetime') {
+              const newDate = newValue ? moment.utc(newValue).format("YYYY-MM-DD") : null;
+              const oldDate = oldValue ? moment.utc(oldValue).format("YYYY-MM-DD") : null;
+              existingCaseData[key] = oldDate;
+              return String(newDate ?? "") !== String(oldDate ?? "");
+            }
+            if (key === "assigned_to") {
+              return assignedToOldValueString !== assignedToNewValueString;
+            }
+            if (key === "priority_rid") {
+              return priorityOldValueString !== priorityNewValueString;
+            }
+            if (key === "status_rid") {
+              return statusOldValueString !== statusNewValueString;
+            }
+            return String(newValue ?? "") !== String(oldValue ?? "");
+          })
+          .map(async ([key, newValue]) => {
+            // Map keys for display-friendly attribute names
+            let mappedKey = key;
+            let oldValueStr = existingCaseData[key] !== null && existingCaseData[key] !== undefined ? String(existingCaseData[key]) : "";
+            let newValueStr = newValue !== null && newValue !== undefined ? String(newValue) : "";
+            if (key === 'priority_rid') {
+              mappedKey = 'Priority';
+              oldValueStr = priorityOldValueString ?? oldValueStr;
+              newValueStr = priorityNewValueString ?? newValueStr;
+            } else if (key === 'effective_start_datetime') {
+              mappedKey = 'Effective Start Date';
+            } else if (key === 'effective_end_datetime') {
+              mappedKey = 'Effective End Date';
+            } else if (key === 'assigned_to') {
+              mappedKey = 'Assigned To';
+              oldValueStr = assignedToOldValueString ?? oldValueStr;
+              newValueStr = assignedToNewValueString ?? newValueStr;
+            } else if (key === "status_rid") {
+              mappedKey = "Status";
+              oldValueStr = statusOldValueString ?? oldValueStr;
+              newValueStr = statusNewValueString ?? newValueStr;
+            }
+            return {
+              account_rid: newCaseData["account_rid"],
+              activity_rid: activityId,
+              attribute_name: mappedKey,
+              old_value: oldValueStr,
+              new_value: newValueStr,
+              created_by: newCaseData["modified_by"],
+              activity_type: activityType || newCaseData["activity_type"] || "",
+            };
+          }));
+  
+        if (historyChanges.length === 0) return;
+
+  
+        // Use individual create operations to avoid sequence conflicts
+        for (const historyChange of historyChanges) {
+          await ActivityHistory.create(historyChange);
+        }
+      } catch (err) {
         errorLog("Error updating activity history : " + (err as Error).message);
         throw new Error(
           "Error updating activity history : " + (err as Error).message

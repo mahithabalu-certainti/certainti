@@ -131,8 +131,15 @@ export class CaseService {
         throw new Error("Invalid account ID");
       }
       
-       const isUnique = await this.caseSchemaService.checkIsCaseNameUnique(caseRequest,accountNumber);
-      if (!isUnique) {
+       const validation = await this.caseSchemaService.checkIsCaseNameUnique(caseRequest,accountNumber);
+       if (!validation.isCaseUnique) {
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: HttpStatus.BAD_REQUEST_MESSAGE,
+          errorMessage: `A case is  already in progress for FY-${caseRequest.fiscal_year }. Please choose a different year.`,
+        };
+      }
+       if (!validation.isunique) {
         return {
           statusCode: HttpStatus.BAD_REQUEST,
           message: HttpStatus.BAD_REQUEST_MESSAGE,
@@ -254,15 +261,22 @@ export class CaseService {
         transaction
       );
 
-      await transaction.commit();
-
-      return {
-        statusCode: HttpStatus.SUCCESS,
-        message: STATUS_MESSAGE.caseUpdated,
-        data: {
-          cases: {},
-        },
-      };
+      if(response.statusCode === HttpStatus.BAD_REQUEST) {
+        return {
+          statusCode : HttpStatus.BAD_REQUEST,
+          message : HttpStatus.BAD_REQUEST_MESSAGE,
+          errorMessage : response.statusMessage
+        }
+      } else {
+        await transaction.commit();
+        return {
+          statusCode: HttpStatus.SUCCESS,
+          message: STATUS_MESSAGE.caseUpdated,
+          data: {
+            cases: {},
+          },
+        };
+      }
     } catch (err) {
       logMessage(`Error updating case, ${err}`);
       await transaction.rollback();
@@ -2875,7 +2889,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
           );
         let parentAccountNumber = accountNumber;
       if(accountInfo.storage_type === 'separate_db') {
-         const [parentAccountInfo]: any[] =
+        const [parentAccountInfo]: any[] =
             await mainDb.query(
             rawQueries.fetchAccountInfo(accountInfo.parent_account_rid!),
             { type: "SELECT" }

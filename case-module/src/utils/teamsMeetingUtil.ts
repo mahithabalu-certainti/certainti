@@ -84,7 +84,7 @@ const startDateTime = moment(`${activityRequest.effective_start_date} ${activity
 const endDateTime   = moment(`${activityRequest.effective_end_date} ${activityRequest.effective_end_time}`,      "YYYY-MM-DD HH:mm");
 const endDateTimepayload   = moment(`${activityRequest.effective_start_date} ${activityRequest.effective_end_time}`,      "YYYY-MM-DD HH:mm");
 
-const payload = {
+const payload: any = {
     subject: activityRequest.subject,
     start: {
       dateTime: startDateTime,
@@ -101,16 +101,21 @@ const payload = {
     },
     isOnlineMeeting: true,
     onlineMeetingProvider: "teamsForBusiness",
-    recurrence: {
-      pattern:recurrentpattern,
-      range: {
-        type: "endDate",
-        startDate: activityRequest.effective_start_date,
-        endDate: activityRequest.effective_end_date,
-        recurrenceTimeZone: activityRequest.time_zone || "UTC",
-      },
+
+};
+
+// Only add recurrence if recurrence_type is set and not 'none'
+if (activityRequest.recurrence_type && activityRequest.recurrence_type !== 'none') {
+  payload.recurrence = {
+    pattern: recurrentpattern,
+    range: {
+      type: "endDate",
+      startDate: activityRequest.effective_start_date,
+      endDate: activityRequest.effective_end_date,
+      recurrenceTimeZone: activityRequest.time_zone || "UTC",
     },
   };
+}
   try {
     const credential = new ClientSecretCredential(
       senderEmailInfo.tenantId,
@@ -202,7 +207,7 @@ const payload = {
 
     return {
       success: true,
-      webLink: event.webLink ? event.webLink : "",
+      webLink: event.onlineMeeting ? event.onlineMeeting.joinUrl : "",
       meetingId: event.id,
     };
   } catch (err: any) {

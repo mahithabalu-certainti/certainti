@@ -180,6 +180,7 @@ export const STATUS_MESSAGE = {
   emailSentSuccessfully: "Email sent successfully",
   emailSendingFailed: "Failed to send email",
   taskCategoryListedSuccess : "Task Category fetched successfully",
+  caseDateChangeNotAllowed : "Date changes are not allowed after case tasks transition to In Progress.",
   fiscalIdMissing: "Project Resource RID is required",
   projectIdMissing: "Project RID is required",
   noDataToUpdate: "No data provided to update",
@@ -1686,6 +1687,11 @@ export const rawQueries = {
     if(newRid === null) newRid = ''
     return `SELECT rid, CONCAT(first_name, ' ', last_name) AS name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN ('${oldRid}', '${newRid}')`
   },
+  fetchActivityStatusById(oldRid : string, newRid : string) {
+    if(oldRid === null) oldRid = ''
+    if(newRid === null) newRid = ''
+    return `SELECT rid, status_name as name FROM ${MAIN_SCHEMA_NAME}.activity_status WHERE activity_type ='Task' AND rid IN ('${oldRid}', '${newRid}')`
+  },
   insertTimeline: (schemaName: string,tableName: string) =>
     `INSERT INTO "${schemaName}".${tableName} (event_name, event_status, event_type, entity_rid,account_rid, description, created_by, event_datetime, created_datetime) VALUES (:event_name, :event_status, :event_type, :entity_rid, :account_rid, :description, :created_by, :event_datetime, :created_datetime)`,
   fetchChecklistStatus () {
@@ -1957,6 +1963,24 @@ export const rawQueries = {
       WHERE rid = '${userId}'
     `;
   },
+  checkCaseStatusChanged (schemaName : string, caseRid : string, accountRid : string, toDoStatusRid : string) {
+    return `
+    SELECT rid FROM ${schemaName}.case_task 
+    WHERE
+    case_rid = '${caseRid}'
+    AND
+    account_rid = '${accountRid}'
+    AND
+    task_status_rid !='${toDoStatusRid}'
+    `
+  },
+  checkCaseTaskStatusToDo () {
+    return `
+    SELECT rid FROM ${MAIN_SCHEMA_NAME}.case_task_status 
+    WHERE
+    task_status_name ILIKE '%To Do%'
+    `
+  }
 };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 
 const keyContactRole = {

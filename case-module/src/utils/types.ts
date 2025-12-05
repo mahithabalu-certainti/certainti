@@ -343,7 +343,8 @@ type WorkflowConnectorItemsAccountLevel = {
   target_rid : string[]
   created_by : string
   created_datetime : Date
-  is_new_changes : boolean
+  is_new_changes : boolean,
+  key_name? : string
 }
 
 export type CreateTaskTemplateType = {

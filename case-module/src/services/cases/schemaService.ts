@@ -272,33 +272,62 @@ class CaseSchemaService {
   async checkIsCaseNameUnique(
       caseReq: any,
       accountNumber: string
-    ): Promise<boolean> {
+    ): Promise<{isunique : boolean,isCaseUnique : boolean}> {
       const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(
         /\D/g,
         ""
       )}`;
+      if(!this.mainDbSequelize) {
+        this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+      }
       const tableExists = await this.checkTableExists(schemaName, "cases");
       if (!tableExists) {
         logMessage(
           `Cases table does not exist for account ${accountNumber}, returning empty result`
         );
-        return true;
+        return {
+          isunique: true,
+          isCaseUnique: true
+        };
       }
       const { Case } = await this.caseModelService.getModels(accountNumber);
-      const response = await Case.findOne({
+      // Check for case name uniqueness (case-insensitive, same fiscal year)
+      const uniqueResponse = await Case.findOne({
         where: {
           [Op.and]: [
             where(
               fn("LOWER", col("case_name")),
               Op.eq,
               caseReq.case_name.toLowerCase(),
-              
             ),
             { fiscal_year: caseReq.fiscal_year }
           ]
         }
       });
-      return !response;
+
+      // Always fetch status from mainDb using status name
+      const [caseStatus]: any[] = await this.mainDbSequelize.query(
+        rawQueries.fetchCaseStatusByType('In Progress'),
+        { type: QueryTypes.SELECT }
+      );
+      let caseWithSameStatus = null;
+      if (caseStatus && caseStatus.rid) {
+        caseWithSameStatus = await Case.findOne({
+          where: {
+            [Op.and]: [
+              { fiscal_year: caseReq.fiscal_year },
+              { status_rid: { [Op.eq]: caseStatus.rid } },
+            ]
+          }
+        });
+      }
+
+      // If a case exists in the given fiscal year with the same status, do not allow
+      const isCaseUnique = !caseWithSameStatus;
+      return {
+        isunique: !uniqueResponse,
+        isCaseUnique: isCaseUnique
+      };
     }
     async checkIsChecklistNameUnique(
       caseReq: any,
@@ -391,7 +420,8 @@ return !response;
   ) {
     // Implementation for creating interactions in the database
     try {
-      const { Case, CaseSummary } = await this.caseModelService.getModels(
+      if(!this.mainDbSequelize) this.mainDbSequelize = await initMainDbSequelize();
+      const { Case, CaseSummary, CaseTask } = await this.caseModelService.getModels(
         accountNumber
       );
 
@@ -411,6 +441,29 @@ return !response;
           transaction,
         }
       );
+      if(existingCase?.case_startdate.toISOString().split('T')[0] !== caseRequest.case_startdate.toISOString().split('T')[0] || existingCase?.statutory_submission_date.toISOString().split('T')[0] !== caseRequest.statutory_submission_date.toISOString().split('T')[0] 
+      || existingCase?.planned_submission_date.toISOString().split('T')[0] !== caseRequest.planned_submission_date.toISOString().split('T')[0]
+    ) {
+    const [fetchToDoStatus] = await this.mainDbSequelize.query<TaskTypeResponse>(rawQueries.checkCaseTaskStatusToDo(), {type : QueryTypes.SELECT});
+    if(fetchToDoStatus) {
+      const checkStatusChanged = await CaseTask.findOne({
+        where : {
+          case_rid : caseRequest.case_rid,
+          account_rid : caseRequest.account_rid,
+          task_status_rid : {
+            [Op.ne] : fetchToDoStatus.rid
+          }
+        }, raw : true
+      })
+      if(checkStatusChanged) {
+        return {
+        statusCode : HttpStatus.BAD_REQUEST,
+        statusMessage : STATUS_MESSAGE.caseDateChangeNotAllowed,
+        data : null
+      };
+      } 
+    }
+  }
       await CaseSummary.update(
         {
           ...caseRequest,
@@ -444,11 +497,32 @@ return !response;
         );
       }
 
-      return caseUpdateResponse;
+      return {
+        statusCode : HttpStatus.SUCCESS,
+        statusMessage : '',
+        data : caseUpdateResponse
+      };
     } catch (error) {
       logMessage(`Error updating cases: ${error}`);
       throw new Error("Error updating cases: " + error);
     }
+  }
+
+  async caseDateChangeAllow (existingCase : Case, caseRequest : ICreateCases, accountNumber : string) {
+    if(!this.mainDbSequelize) this.mainDbSequelize = await initMainDbSequelize();
+    if(!this.orgDbSequelize) this.orgDbSequelize = await initOrgSequelize();
+    if(existingCase?.case_startdate.toISOString().split('T')[0] !== caseRequest.case_startdate.toISOString().split('T')[0] || existingCase.statutory_submission_date.toISOString().split('T')[0] !== caseRequest.statutory_submission_date.toISOString().split('T')[0] 
+      || existingCase.planned_submission_date.toISOString().split('T')[0] !== caseRequest.planned_submission_date.toISOString().split('T')[0]
+    ) {
+    const [fetchToDoStatus] = await this.mainDbSequelize.query<TaskTypeResponse>(rawQueries.checkCaseTaskStatusToDo(), {type : QueryTypes.SELECT});
+    if(fetchToDoStatus) {
+      let schemaName = rawQueries.fetchSchemaName(accountNumber)
+      const checkStatusChanged = await this.orgDbSequelize.query<TaskTypeResponse>(rawQueries.checkCaseStatusChanged(schemaName, caseRequest.case_rid!, caseRequest.account_rid, fetchToDoStatus.rid), {type : QueryTypes.SELECT});
+      if(checkStatusChanged.length > 0) {
+        return STATUS_MESSAGE.caseDateChangeNotAllowed
+        }
+      }
+    } else return null
   }
 
   async updateCaseHistory(
@@ -2379,13 +2453,17 @@ return !response;
       const getTotalProjects : any = await this.orgDbSequelize.query(
         rawQueries.getTotalProjectsCountInCase(schemaName, data.fiscal_year, data.account_rid, data.case_rid)
       )
+      // If value is zero, update as null
+      const totalProjects = getTotalProjects[0][0].total_projects === 0 ? null : getTotalProjects[0][0].total_projects;
+      const totalProjectsCost = getTotalProjects[0][0].total_projects_cost === 0 ? null : getTotalProjects[0][0].total_projects_cost;
+      const totalProjectsQreCost = getTotalProjects[0][0].total_projects_qre_cost === 0 ? null : getTotalProjects[0][0].total_projects_qre_cost;
       await this.orgDbSequelize.query(
         rawQueries.updateCostCountInCase(
           schemaName,
           data.case_rid,
-          getTotalProjects[0][0].total_projects,
-          getTotalProjects[0][0].total_projects_cost,
-          getTotalProjects[0][0].total_projects_qre_cost
+          totalProjects,
+          totalProjectsCost,
+          totalProjectsQreCost
         )
       );
       await this.mainDbSequelize.query(
@@ -5596,7 +5674,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         } 
       } else {
         if(isTaskExists.task_status_rid !== data.task_status_rid) {
-          const workflowResult = await this.checkTaskWorkFlow(accountNumber, data.rid, data.task_status_rid);
+          const workflowResult = await this.checkTaskWorkFlow(accountNumber, data.rid, data.task_status_rid, data.case_rid, data.workflow_connector.target_rid);
           if(workflowResult?.success) {
             return {
               statusCode : HttpStatus.BAD_REQUEST,
@@ -5736,7 +5814,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                 case_rid : data.case_rid,
                 attribute_name : "Linked Items",
                 old_value : "CREATE",
-                new_value : `updated a linked task type`,
+                new_value : `updated the ${data.workflow_connector.key_name}`,
                 task_rid : data.rid
               }, {transaction});
             }
@@ -5997,7 +6075,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     else return null;
   }
   async createOrUpdateTags (taskRid : string, accountRid : string, caseRid: string, tagRid : string, isNewTag : boolean, accountNumber : string, userId : string, activeStatusRid : string, taskType? : string) {
-    const {Tags, TaskTag, CaseHistory, CaseTimeline} = await this.caseModelService.getModels(accountNumber)
+    const {Tags, TaskTag, CaseHistory, CaseTimeline, ActivityHistory} = await this.caseModelService.getModels(accountNumber)
 
     if(isNewTag) {
       const isTagExists = await Tags.findOne({
@@ -6054,8 +6132,8 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         else
         {
           await this.addTaskTimeline(accountNumber, taskRid, accountRid, `Tag added for task : ${result.tag_name}`, userId, "Tag added for Task", "success", taskRid);
-          await TaskHistory.create({
-            task_rid : taskRid,
+          await ActivityHistory.create({
+            activity_rid : taskRid,
             created_by : userId,
             created_datetime : new Date(),
             attribute_name : "Tags",
@@ -6182,7 +6260,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     else return null;
   }
   async addComments (data : AddCommentsType, accountNumber : string,  taskNumber : string, files : Express.Multer.File[]) {
-    const {TaskComments, CommentsAttachments, TaskAttachments, CaseTimeline, TaskCollaborators,Activities,TaskHistory} = await this.caseModelService.getModels(accountNumber);
+    const {TaskComments, CommentsAttachments, TaskAttachments, CaseTimeline, TaskCollaborators,Activities,ActivityHistory} = await this.caseModelService.getModels(accountNumber);
     const commentPayload: any = {
       created_by: data.created_by,
       created_datetime: new Date(),
@@ -6263,7 +6341,11 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                await CaseHistory.create(caseHistoryPayload);
             }
             else
-             await TaskHistory.create(caseHistoryPayload);
+            {
+              caseHistoryPayload.activity_rid = data.task_rid;
+              await ActivityHistory.create(caseHistoryPayload);
+            }
+             
           }
         }
       }
@@ -6308,7 +6390,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
   }
 
   async updateComments (data : UpdateCommentsType, accountNumber : string,  taskNumber : string, files : Express.Multer.File[]) {
-    const {TaskComments, CommentsAttachments, TaskAttachments, TaskCollaborators, CaseHistory, CaseTimeline,TaskHistory} = await this.caseModelService.getModels(accountNumber);
+    const {TaskComments, CommentsAttachments, TaskAttachments, TaskCollaborators, CaseHistory, CaseTimeline,ActivityHistory} = await this.caseModelService.getModels(accountNumber);
     const isCommentExists = await TaskComments.findOne({
       where : {
         rid : data.rid
@@ -6393,7 +6475,8 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
               }
               else
               {
-                await TaskHistory.create(caseHistoryPayload)
+                caseHistoryPayload.activity_rid = data.task_rid;
+                await ActivityHistory.create(caseHistoryPayload)
               }
               await CommentsAttachments.create(commentsAttachmentPayload);
               await TaskAttachments.create(taskAttachmentPayload);
@@ -6487,7 +6570,8 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
               }
               else
               {
-                await TaskHistory.create(historyPayload);
+                historyPayload.activity_rid = data.task_rid;
+                await ActivityHistory.create(historyPayload);
               }
              
               
@@ -6802,7 +6886,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
   }
 
   async addAttachmentForTask (data : any, accountNumber : string, files : Express.Multer.File[], userId : string) {
-    const {TaskAttachments,TaskHistory} = await this.caseModelService.getModels(accountNumber)
+    const {TaskAttachments,ActivityHistory} = await this.caseModelService.getModels(accountNumber)
     const findTaskDetails = await this.findTaskById(data.task_rid, data.account_rid, data.case_rid, accountNumber,data.task_type || 'case_task');
     if(files != undefined) {
       if(Array.isArray(files)) {
@@ -6859,12 +6943,12 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                 "success",
                data.task_rid
               )
-              await TaskHistory.create({
+              await ActivityHistory.create({
                 created_by : userId,
                 created_datetime : new Date(),
                 attribute_name : "task_attachments",
                 new_value : uploadFile.url,
-                task_rid : data.task_rid
+                activity_rid : data.task_rid
               })
             }
           }
@@ -7436,50 +7520,62 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       }
     }
   }
-  async checkTaskWorkFlow (accountNumber : string, taskRid : string, statusRid : string) {
+  async checkTaskWorkFlow (accountNumber : string, taskRid : string, statusRid : string, caseRid : string, targetRids : any) {
     if(!this.mainDbSequelize) {
       this.mainDbSequelize = await initMainDbSequelize()
     }
     const {CaseTaskWorkflowConnector} = await this.caseModelService.getModels(accountNumber);
     const findTaskDependency = await CaseTaskWorkflowConnector.findAll({
       where : {
-        source_rid : taskRid
+        source_rid : taskRid,
+        target_rid : {
+          [Op.in] : targetRids
+        },
+        case_rid : caseRid
       }, raw : true
     });
     if(findTaskDependency.length > 0) {
-      const result = await this.sourceTaskValidation(accountNumber, findTaskDependency, taskRid, statusRid);
-      if(result?.success) {
-        return {
-          success : true,
-          statusMessage : result.statusMessage 
-        }
-      }
-      else {
-        const findTargetTaskDependency = await CaseTaskWorkflowConnector.findAll({
-            where : {
-              target_rid : taskRid
-            }, raw : true
-          });
-        if(findTaskDependency.length > 0) {
-          const result = await this.targetTaskValidation(accountNumber, findTargetTaskDependency, taskRid, statusRid);
-          if(result?.success) {
-            return {
-              success : true,
-              statusMessage : result.statusMessage 
-            }
+      const result = await this.sourceTaskValidation(accountNumber, findTaskDependency, taskRid, statusRid, caseRid);
+      if(result !== undefined) {
+        if(result.success) {
+          return {
+            success : true,
+            statusMessage : result.statusMessage 
           }
-          else {
+        }
+      } else {
             return {
               success : false,
               statusMessage : null
             }
           } 
-        }
-      } 
+      // else {
+      //   const findTargetTaskDependency = await CaseTaskWorkflowConnector.findAll({
+      //       where : {
+      //         target_rid : taskRid,
+      //         case_rid : caseRid
+      //       }, raw : true
+      //     });
+      //   if(findTaskDependency.length > 0) {
+      //     const result = await this.targetTaskValidation(accountNumber, findTargetTaskDependency, taskRid, statusRid, caseRid);
+      //     if(result?.success) {
+      //       return {
+      //         success : true,
+      //         statusMessage : result.statusMessage 
+      //       }
+      //     }
+      //     else {
+      //       return {
+      //         success : false,
+      //         statusMessage : null
+      //       }
+      //     } 
+      //   }
+      // } 
     }
   }
 
-  private async sourceTaskValidation (accountNumber : string, findTaskDependency: CaseTaskWorkflowConnector[], sourceRid : string, statusRid : string) {
+  private async sourceTaskValidation (accountNumber : string, findTaskDependency: CaseTaskWorkflowConnector[], sourceRid : string, statusRid : string, caseRid : string) {
     if(!this.mainDbSequelize) {
       this.mainDbSequelize = await initMainDbSequelize()
     }
@@ -7489,7 +7585,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       where : {
         rid : {
           [Op.in] : relationIds
-        }
+        },
       }, raw : true
     });
     if(findRelationshipConnector.length > 0) {
@@ -7500,7 +7596,8 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         where : {
           rid : {
             [Op.in] : targetIds
-          }
+          },
+          case_rid : caseRid
         }, raw : true
       });
       if(findCaseTasks.length > 0) {
@@ -7545,7 +7642,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       }
     }
   }
-  private async targetTaskValidation (accountNumber : string, findTaskDependency: CaseTaskWorkflowConnector[], targetRid : string, statusRid : string) {
+  private async targetTaskValidation (accountNumber : string, findTaskDependency: CaseTaskWorkflowConnector[], targetRid : string, statusRid : string, caseRid : string) {
     if(!this.mainDbSequelize) {
       this.mainDbSequelize = await initMainDbSequelize()
     }
@@ -7566,7 +7663,8 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         where : {
           rid : {
             [Op.in] : sourceIds
-          }
+          },
+          case_rid : caseRid
         }, raw : true
       });
       if(findCaseTasks.length > 0) {
