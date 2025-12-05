@@ -33,10 +33,14 @@ export const CreateCases: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
 
   const { successToast } = useToast();
+  const currentYear = new Date().getFullYear();
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const { caseId } = useParams();
   const [caseNamePrefix, setCaseNamePrefix] = useState<string>('');
+  const [selectedFiscalYear, setSelectedFiscalYear] = useState<string>(
+    currentYear.toString()
+  );
   const [dateConstraints, setDateConstraints] = useState<{
     planned_min: string;
     planned_max: string;
@@ -54,7 +58,6 @@ export const CreateCases: React.FC = () => {
   );
   const { permission } = useSelector((state: RootState) => state.permission);
 
-  const currentYear = new Date().getFullYear();
   const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
   const accountId = searchParams.get('accountId') || '';
   const accountNumber = searchParams.get('account_number') || '';
@@ -229,6 +232,7 @@ export const CreateCases: React.FC = () => {
       // Update prefix when fiscal year changes
       const newPrefix = generateCaseNamePrefix(accName, country, year);
       setCaseNamePrefix(newPrefix);
+      setSelectedFiscalYear(year);
     }
   };
 
@@ -262,7 +266,8 @@ export const CreateCases: React.FC = () => {
     caseOwnersOptions,
     countryOptions,
     dateConstraints,
-    caseNamePrefix
+    caseNamePrefix,
+    selectedFiscalYear
   );
 
   const formLoading =
