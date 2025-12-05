@@ -59,6 +59,8 @@ router.post("/schedule/delete", ScheduleController.deleteSchedule);
 //workflow
 router.get("/scopeList", WorkFlowController.listScopes);
 router.post("/scopeEventList", WorkFlowController.listScopeEvents);
+router.post("/eventConditions", WorkFlowController.listEventConditions);
+router.post("/conditionCategory", WorkFlowController.listConditionCategory);
 router.post("/createRuleMap", WorkFlowController.createRuleMapWithScope);
 
 // ConditionGroup

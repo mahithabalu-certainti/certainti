@@ -8,7 +8,7 @@ import { ICreateRuleMapWithScope, IListSCopeEvent } from "../utils/types";
 import { logMessage } from "../utils/helpers";
 import { RuleMapService } from "../services/workflowRuleMapService";
 import { ScopeService } from "../services/workflowScopeMapService";
-import { ScopeEventRows } from "../utils/types";
+import { ScopeEventRows, EventConditions, ConditionCategory } from "../utils/types";
 
 /**
  * Evaluate a rule for a given entity (case or task)
@@ -67,7 +67,7 @@ export class WorkFlowService {
         statusCode: number;
         message: string;
         errorMessage?: string;
-        data:any;
+        data: any;
     }> {
         const mainDb = await this.getMainDb();
         const events: ScopeEventRows[] = await mainDb.query<ScopeEventRows>(
@@ -94,7 +94,59 @@ export class WorkFlowService {
         return {
             statusCode: HttpStatus.SUCCESS,
             message: HttpStatus.SUCCESS_MESSAGE,
-            data:events
+            data: events
+        };
+    };
+
+    async listEventConditions(
+        listRequest: any,
+        userId: string,
+        apiType: string
+    ): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data: any;
+    }> {
+        const mainDb = await this.getMainDb();
+        const conditions: EventConditions[] = await mainDb.query<EventConditions>(
+            rawQueries.fetchEventConditions(
+                listRequest.event_rid,
+                listRequest.status_rid
+            ),
+            { type: QueryTypes.SELECT }
+        );
+
+        return {
+            statusCode: HttpStatus.SUCCESS,
+            message: HttpStatus.SUCCESS_MESSAGE,
+            data: conditions
+        };
+    };
+
+    async listConditionCategory(
+        listRequest: any,
+        userId: string,
+        apiType: string
+    ): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data: any;
+    }> {
+        const mainDb = await this.getMainDb();
+        const categories: ConditionCategory[] = await mainDb.query<ConditionCategory>(
+            rawQueries.fetchConditionCategory(
+                listRequest.condition_rid,
+                listRequest.status_rid
+            ),
+            { type: QueryTypes.SELECT }
+        );
+
+        return {
+            statusCode: HttpStatus.SUCCESS,
+            message: HttpStatus.SUCCESS_MESSAGE,
+            data: categories
         };
     };
 

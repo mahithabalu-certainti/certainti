@@ -238,6 +238,26 @@ export interface IWorkFlowService {
         data?: any;
     }>;
 
+    listEventConditions(listRequest: any,
+        userId: string,
+        apiType: string
+    ): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: any;
+    }>;
+
+     listConditionCategory(listRequest: any,
+        userId: string,
+        apiType: string
+    ): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: any;
+    }>;
+
     createRuleMapWithScope(
         rulemapRequest: ICreateRuleMapWithScope,
         userId: string

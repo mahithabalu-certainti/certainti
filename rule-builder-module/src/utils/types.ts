@@ -115,3 +115,15 @@ export type ScopeEventRows = {
     scope_type_name: string,
     scope_type_rid:string,
 }
+
+export type EventConditions = {
+    rid: string
+    condition_name: string,
+    description: string,
+}
+
+export type ConditionCategory = {
+    rid: string
+    category_name: string,
+    description: string,
+}

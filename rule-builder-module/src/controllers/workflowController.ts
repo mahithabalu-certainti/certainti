@@ -11,7 +11,9 @@ import {
 import {
     createRuleMapSchema,
     listScopesSchema,
-    listScopeEventSchema
+    listScopeEventSchema,
+    listScopeEventConditionSchema,
+    listScopeConditionCategorySchema
 } from "../lib/joi/schemas/schema";
 import configurations from "../config/config";
 
@@ -102,6 +104,88 @@ async function listScopeEvents(req: Request, res: Response): Promise<void> {
     }
 };
 
+async function listEventConditions(req: Request, res: Response): Promise<void> {
+    const methodName = "event condition list";
+    try {
+        const userId = req.headers["x-user-id"] as string;
+        const value = await validateRequest(req, listScopeEventConditionSchema, res, "POST");
+        if (!value) {
+            return;
+        }
+        // if (!userId) {
+        //   return;
+        // }
+        const result = await workFlowService.listEventConditions(
+            value,
+            userId,
+            "list");
+        if (result.statusCode == HttpStatus.SUCCESS) {
+            successLog(methodName);
+            handleSuccessResponse(res, result.data);
+            return;
+        } else {
+            errorLog(methodName, "No data found");
+            handleErrorResponse(
+                res,
+                HttpStatus.BAD_REQUEST,
+                HttpStatus.BAD_REQUEST_MESSAGE,
+                result.errorMessage
+            );
+            return;
+        }
+    } catch (err) {
+        const error = err as Error;
+        errorLog(methodName, error.message);
+        handleErrorResponse(
+            res,
+            HttpStatus.FAILED,
+            HttpStatus.FAILED_MESSAGE,
+            error.message
+        );
+    }
+};
+
+async function listConditionCategory(req: Request, res: Response): Promise<void> {
+    const methodName = "event condition list";
+    try {
+        const userId = req.headers["x-user-id"] as string;
+        const value = await validateRequest(req, listScopeConditionCategorySchema, res, "POST");
+        if (!value) {
+            return;
+        }
+        // if (!userId) {
+        //   return;
+        // }
+        const result = await workFlowService.listConditionCategory(
+            value,
+            userId,
+            "list");
+        if (result.statusCode == HttpStatus.SUCCESS) {
+            successLog(methodName);
+            handleSuccessResponse(res, result.data);
+            return;
+        } else {
+            errorLog(methodName, "No data found");
+            handleErrorResponse(
+                res,
+                HttpStatus.BAD_REQUEST,
+                HttpStatus.BAD_REQUEST_MESSAGE,
+                result.errorMessage
+            );
+            return;
+        }
+    } catch (err) {
+        const error = err as Error;
+        errorLog(methodName, error.message);
+        handleErrorResponse(
+            res,
+            HttpStatus.FAILED,
+            HttpStatus.FAILED_MESSAGE,
+            error.message
+        );
+    }
+};
+
 async function createRuleMapWithScope(req: Request, res: Response): Promise<void> {
     const methodName = "create condition";
     try {
@@ -137,33 +221,12 @@ async function createRuleMapWithScope(req: Request, res: Response): Promise<void
         );
     }
 };
-/**
- * POST /api/workflow/execute
- * Trigger workflow for a case or task
- * Payload: { entityType: "case" | "task", entityId: number, userId: number }
- */
-// export const executeWorkflow = async (req: Request, res: Response) => {
-//   try {
-//     const { entityType, entityId, userId } = req.body;
-
-//     if (!entityType || !entityId || !userId) {
-//       return res.status(400).json({ error: "entityType, entityId, and userId are required" });
-//     }
-
-//     const result = await WorkflowService.executeWorkflowForEntity(entityType, entityId, userId);
-
-//     res.status(200).json({
-//       message: "Workflow executed successfully",
-//       executedRules: result
-//     });
-//   } catch (err) {
-//     res.status(500).json({ error: (err as Error).message });
-//   }
-// };
 
 
 export default {
     listScopes,
     listScopeEvents,
+    listEventConditions,
+    listConditionCategory,
     createRuleMapWithScope
 }
