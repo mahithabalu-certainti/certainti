@@ -93,7 +93,16 @@ implements CaseMilestoneAttributes {
             },
             case_rid : {
                 type : DataTypes.STRING(50),
-                allowNull : true
+                allowNull : true,
+                references: {
+                    model: {
+                        tableName: "cases",
+                        schema: schemaName
+                    },
+                    key: "rid"
+                },
+                onUpdate: "CASCADE",
+                onDelete: "SET NULL"
             }
         }, {
             sequelize,

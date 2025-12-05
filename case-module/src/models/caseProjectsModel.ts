@@ -69,7 +69,19 @@ export class CaseProject
           defaultValue: DataTypes.NOW,
         },
         modified_datetime: { type: DataTypes.DATE, allowNull: true },
-        case_rid: { type: DataTypes.STRING(50), allowNull: false },
+        case_rid: {
+          type: DataTypes.STRING(50),
+          allowNull: false,
+          references: {
+            model: {
+              tableName: "cases",
+              schema: schemaName
+            },
+            key: "rid"
+          },
+          onUpdate: "CASCADE",
+          onDelete: "CASCADE"
+        },
         account_rid: { type: DataTypes.STRING(50), allowNull: false },
         project_rid: { type: DataTypes.STRING(50), allowNull: true },
         project_fiscal_rid: { type: DataTypes.STRING(50), allowNull: true },

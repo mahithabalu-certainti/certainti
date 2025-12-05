@@ -2338,7 +2338,8 @@ export const rawQueries = {
         activity_type varchar(50),
         attribute_name VARCHAR(100) NOT NULL,
         old_value VARCHAR(2000),
-        new_value VARCHAR(2000)
+        new_value VARCHAR(2000),
+        CONSTRAINT activity_history_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE ON DELETE NO ACTION
       );
     `;
   },
@@ -2386,7 +2387,6 @@ export const rawQueries = {
         status_rid character varying(50),
         CONSTRAINT checklists_rid_unique UNIQUE (rid),
           CONSTRAINT checklists_pkey PRIMARY KEY (rid),
-    CONSTRAINT checklists_r_number_key UNIQUE (r_number),
     CONSTRAINT checklists_account_rid_fkey FOREIGN KEY (account_rid)
         REFERENCES ${schemaName}.account_details (account_rid) MATCH SIMPLE
         ON UPDATE CASCADE
@@ -2401,8 +2401,8 @@ export const rawQueries = {
         r_number VARCHAR(20) UNIQUE DEFAULT 'ACT-' || LPAD(nextval('"${schemaName}".activities_seq')::TEXT, 10, '0'),
     created_by character varying(50) NOT NULL,
     modified_by character varying(50),
-    created_datetime timestamp without time zone NOT NULL DEFAULT now(),
-    modified_datetime timestamp without time zone,
+    created_datetime timestamp with time zone NOT NULL DEFAULT now(),
+    modified_datetime timestamp with time zone,
     account_rid character varying(50) NOT NULL,
     attach_to character varying(50),
     attachment_level character varying(50),
@@ -2439,7 +2439,11 @@ export const rawQueries = {
     recurrence_day_of_month integer,
     recurrence_monthly_index character varying(50),
     checklist_rid character varying(50),
-    CONSTRAINT activities_pkey PRIMARY KEY (rid)
+    CONSTRAINT activities_pkey PRIMARY KEY (rid),
+    CONSTRAINT activities_account_rid_fkey FOREIGN KEY (account_rid)
+        REFERENCES ${schemaName}.account_details (account_rid) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE NO ACTION
       );
     `;
   },
@@ -2450,8 +2454,8 @@ export const rawQueries = {
         r_number VARCHAR(20) UNIQUE DEFAULT 'ACT-' || LPAD(nextval('"${schemaName}".activity_attachments_seq')::TEXT, 10, '0'),
     created_by character varying(50) NOT NULL,
     modified_by character varying(50),
-    created_datetime timestamp without time zone NOT NULL DEFAULT now(),
-    modified_datetime timestamp without time zone,
+    created_datetime timestamp with time zone NOT NULL DEFAULT now(),
+    modified_datetime timestamp with time zone,
     account_rid character varying(50) NOT NULL,
     activity_rid character varying(50) NOT NULL,
     browse_file character varying(2000),
@@ -2460,7 +2464,15 @@ export const rawQueries = {
     format character varying(50),
     is_file_deleted boolean DEFAULT false,
     CONSTRAINT activity_attachments_pkey PRIMARY KEY (rid),
-    CONSTRAINT activity_attachments_r_number_key UNIQUE (r_number)
+    CONSTRAINT activity_attachments_r_number_key UNIQUE (r_number),
+    CONSTRAINT activity_attachments_account_rid_fkey FOREIGN KEY (account_rid)
+        REFERENCES ${schemaName}.account_details (account_rid) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE NO ACTION,
+    CONSTRAINT activity_attachments_activity_rid_fkey FOREIGN KEY (activity_rid)
+        REFERENCES ${schemaName}.activities (rid) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE NO ACTION
       );
     `;
   },
@@ -2529,6 +2541,10 @@ export const rawQueries = {
         CONSTRAINT checklist_items_pkey UNIQUE (rid),
         CONSTRAINT checklist_items_account_rid_fkey FOREIGN KEY (account_rid)
         REFERENCES ${schemaName}.account_details (account_rid) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE NO ACTION,
+         CONSTRAINT checklist_items_checklist_rid_fkey FOREIGN KEY (checklist_rid)
+        REFERENCES ${schemaName}.checklists (rid) MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE NO ACTION
       );

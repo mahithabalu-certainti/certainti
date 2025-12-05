@@ -143,7 +143,16 @@ implements CaseTaskAttributes {
             },
             case_rid : {
                 type : DataTypes.STRING(50),
-                allowNull : true
+                allowNull : true,
+                references: {
+                    model: {
+                        tableName: "cases",
+                        schema: schemaName
+                    },
+                    key: "rid"
+                },
+                onUpdate: "CASCADE",
+                onDelete: "CASCADE"
             },
             task_type_rid : {
                 type : DataTypes.STRING(50),
