@@ -32,7 +32,42 @@ const TaskAttachmentsSection: React.FC<TaskAttachmentsSectionProps> = ({
   onRemoveAttachment,
   onRemoveExistingAttachment,
 }) => {
+  const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
+
   if (fieldVisibility.attachments) return null;
+
+  const handleLocalAttachmentChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const files = e.target.files;
+    setErrorMessage(null);
+    if (files && files.length > 0) {
+      const dt = new DataTransfer();
+      let hasError = false;
+      Array.from(files).forEach((file) => {
+        const lastDotIndex = file.name.lastIndexOf('.');
+        const nameWithoutExtension =
+          lastDotIndex > 0 ? file.name.substring(0, lastDotIndex) : file.name;
+
+        if (nameWithoutExtension.length > 100) {
+          setErrorMessage('Document name cannot exceed 100 characters');
+          hasError = true;
+        } else {
+          dt.items.add(file);
+        }
+      });
+
+      if (hasError) {
+        e.target.files = dt.files;
+      }
+
+      if (dt.files.length > 0) {
+        onAttachmentChange(e);
+      } else {
+        e.target.value = '';
+      }
+    }
+  };
 
   const handleDownload = async (
     e: React.MouseEvent<HTMLAnchorElement>,
@@ -68,7 +103,7 @@ const TaskAttachmentsSection: React.FC<TaskAttachmentsSectionProps> = ({
           type='file'
           multiple
           accept='*/*'
-          onChange={onAttachmentChange}
+          onChange={handleLocalAttachmentChange}
           className='hidden'
           id='attachments-input'
           disabled={fieldDisabled.attachments}
@@ -78,6 +113,11 @@ const TaskAttachmentsSection: React.FC<TaskAttachmentsSectionProps> = ({
           attachments
         </p>
       </label>
+      {errorMessage && (
+        <div className='text-red-500 text-xs mt-2 text-center'>
+          {errorMessage}
+        </div>
+      )}
 
       {/* Existing attachments from response */}
       {taskAttachments && taskAttachments.length > 0 && (

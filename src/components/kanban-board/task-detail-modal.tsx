@@ -1020,6 +1020,15 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
         }
         if (isWorkflowChanged) {
           workflowConnector.is_new_changes = true;
+
+          // Determine key_name based on what changed
+          if (isLinkedTypeChanged && isLinkTaskTypesChanged) {
+            workflowConnector.key_name = 'Linked Type & Linked Task Type';
+          } else if (isLinkedTypeChanged) {
+            workflowConnector.key_name = 'Linked Type';
+          } else if (isLinkTaskTypesChanged) {
+            workflowConnector.key_name = 'Linked Task Type';
+          }
         } else if (Object.keys(workflowConnector).length > 0) {
           workflowConnector.is_new_changes = false;
         }
