@@ -1200,7 +1200,9 @@ class InteractionSchemaService {
     filters: Record<string, string>,
     sortBy: string = "created_datetime",
     sortOrder: string = "ASC",
-    type: string = "list"
+    type: string = "list",
+    caseRid? : string,
+    accountRid? : string
   ) {
     try {
       const offset = (page - 1) * limit;
@@ -1240,11 +1242,43 @@ class InteractionSchemaService {
       }
 
       // Fetch technical summaries and count
-      const { rows: technicalSummary, count } = await AiTechnicalSummary.findAndCountAll({
-        where: {
+      let whereCondition;
+      if(caseRid !== undefined && caseRid !== '') {
+        let schemaName = rawQueries.fetchSchemaName(accountNumber)
+        const versionFilter = Sequelize.literal(`
+          "AiTechnicalSummary".version = (
+            SELECT MAX(version)
+            FROM ${schemaName}.ai_technical_summary AS t2
+            WHERE t2.rid = "AiTechnicalSummary".rid
+          )
+        `);
+        whereCondition = {
+          account_rid : accountRid,
+          // project_fiscal_rid: projectFiscalRid,
+          case_rid : caseRid,
+          [Op.and]: Sequelize.where(
+        Sequelize.col('"AiTechnicalSummary".version'),
+        '=',
+        Sequelize.literal(`
+          (
+            SELECT MAX(t2.version)
+            FROM ${schemaName}.ai_technical_summary AS t2
+            WHERE 
+                t2.account_rid = "AiTechnicalSummary".account_rid
+                AND t2.project_fiscal_rid = "AiTechnicalSummary".project_fiscal_rid
+                AND t2.case_rid = "AiTechnicalSummary".case_rid
+          )
+        `)),
+          ...whereClause
+        }
+      } else {
+        whereCondition = {
           project_fiscal_rid: projectFiscalRid,
           ...whereClause
-        },
+        }
+      }
+      const { rows: technicalSummary, count } = await AiTechnicalSummary.findAndCountAll({
+        where: whereCondition,
         order: [[finalSortBy, finalSortOrder]],
         ...(disablePagination
           ? {}
