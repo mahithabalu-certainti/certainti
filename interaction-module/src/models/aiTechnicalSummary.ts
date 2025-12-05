@@ -19,6 +19,7 @@ export interface AiTechnicalSummaryAttributes {
   status_rid?: string;
   entity_transaction_rid?: string;
   technical_summary_refinement_prompt?: string;
+  case_rid? : string
 }
 
 export interface AiTechnicalSummaryCreationAttributes
@@ -44,6 +45,7 @@ export class AiTechnicalSummary
   public status_rid?: string;
   public entity_transaction_rid?: string;
   public technical_summary_refinement_prompt?: string;
+  public case_rid? : string
 
   static initialize(
     sequelize: Sequelize,
@@ -76,6 +78,7 @@ export class AiTechnicalSummary
         status_rid: { type: DataTypes.STRING(50), allowNull: true },
         entity_transaction_rid: { type: DataTypes.STRING(50), allowNull: true },
         technical_summary_refinement_prompt: { type: DataTypes.TEXT, allowNull: true },
+        case_rid : {type : DataTypes.STRING(50), allowNull : true}
       },
       {
         sequelize,
