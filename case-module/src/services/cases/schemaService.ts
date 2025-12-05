@@ -416,7 +416,8 @@ return !response;
   ) {
     // Implementation for creating interactions in the database
     try {
-      const { Case, CaseSummary } = await this.caseModelService.getModels(
+      if(!this.mainDbSequelize) this.mainDbSequelize = await initMainDbSequelize();
+      const { Case, CaseSummary, CaseTask } = await this.caseModelService.getModels(
         accountNumber
       );
 
@@ -436,6 +437,29 @@ return !response;
           transaction,
         }
       );
+      if(existingCase?.case_startdate.toISOString().split('T')[0] !== caseRequest.case_startdate.toISOString().split('T')[0] || existingCase?.statutory_submission_date.toISOString().split('T')[0] !== caseRequest.statutory_submission_date.toISOString().split('T')[0] 
+      || existingCase?.planned_submission_date.toISOString().split('T')[0] !== caseRequest.planned_submission_date.toISOString().split('T')[0]
+    ) {
+    const [fetchToDoStatus] = await this.mainDbSequelize.query<TaskTypeResponse>(rawQueries.checkCaseTaskStatusToDo(), {type : QueryTypes.SELECT});
+    if(fetchToDoStatus) {
+      const checkStatusChanged = await CaseTask.findOne({
+        where : {
+          case_rid : caseRequest.case_rid,
+          account_rid : caseRequest.account_rid,
+          task_status_rid : {
+            [Op.ne] : fetchToDoStatus.rid
+          }
+        }, raw : true
+      })
+      if(checkStatusChanged) {
+        return {
+        statusCode : HttpStatus.BAD_REQUEST,
+        statusMessage : STATUS_MESSAGE.caseDateChangeNotAllowed,
+        data : null
+      };
+      } 
+    }
+  }
       await CaseSummary.update(
         {
           ...caseRequest,
@@ -469,11 +493,32 @@ return !response;
         );
       }
 
-      return caseUpdateResponse;
+      return {
+        statusCode : HttpStatus.SUCCESS,
+        statusMessage : '',
+        data : caseUpdateResponse
+      };
     } catch (error) {
       logMessage(`Error updating cases: ${error}`);
       throw new Error("Error updating cases: " + error);
     }
+  }
+
+  async caseDateChangeAllow (existingCase : Case, caseRequest : ICreateCases, accountNumber : string) {
+    if(!this.mainDbSequelize) this.mainDbSequelize = await initMainDbSequelize();
+    if(!this.orgDbSequelize) this.orgDbSequelize = await initOrgSequelize();
+    if(existingCase?.case_startdate.toISOString().split('T')[0] !== caseRequest.case_startdate.toISOString().split('T')[0] || existingCase.statutory_submission_date.toISOString().split('T')[0] !== caseRequest.statutory_submission_date.toISOString().split('T')[0] 
+      || existingCase.planned_submission_date.toISOString().split('T')[0] !== caseRequest.planned_submission_date.toISOString().split('T')[0]
+    ) {
+    const [fetchToDoStatus] = await this.mainDbSequelize.query<TaskTypeResponse>(rawQueries.checkCaseTaskStatusToDo(), {type : QueryTypes.SELECT});
+    if(fetchToDoStatus) {
+      let schemaName = rawQueries.fetchSchemaName(accountNumber)
+      const checkStatusChanged = await this.orgDbSequelize.query<TaskTypeResponse>(rawQueries.checkCaseStatusChanged(schemaName, caseRequest.case_rid!, caseRequest.account_rid, fetchToDoStatus.rid), {type : QueryTypes.SELECT});
+      if(checkStatusChanged.length > 0) {
+        return STATUS_MESSAGE.caseDateChangeNotAllowed
+        }
+      }
+    } else return null
   }
 
   async updateCaseHistory(
@@ -5293,7 +5338,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                 case_rid : data.case_rid,
                 attribute_name : "Linked Items",
                 old_value : "CREATE",
-                new_value : `updated a linked task type`,
+                new_value : `updated the ${data.workflow_connector.key_name}`,
                 task_rid : data.rid
               }, {transaction});
             }

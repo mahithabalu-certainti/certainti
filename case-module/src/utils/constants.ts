@@ -179,7 +179,8 @@ export const STATUS_MESSAGE = {
   emailTemplatePreviewFailed: "Failed to generate email template preview",
   emailSentSuccessfully: "Email sent successfully",
   emailSendingFailed: "Failed to send email",
-  taskCategoryListedSuccess : "Task Category fetched successfully"
+  taskCategoryListedSuccess : "Task Category fetched successfully",
+  caseDateChangeNotAllowed : "Date changes are not allowed after case tasks transition to In Progress."
 };
 
 export const caseStatuses = {
@@ -1809,6 +1810,24 @@ export const rawQueries = {
       WHERE rid = '${userId}'
     `;
   },
+  checkCaseStatusChanged (schemaName : string, caseRid : string, accountRid : string, toDoStatusRid : string) {
+    return `
+    SELECT rid FROM ${schemaName}.case_task 
+    WHERE
+    case_rid = '${caseRid}'
+    AND
+    account_rid = '${accountRid}'
+    AND
+    task_status_rid !='${toDoStatusRid}'
+    `
+  },
+  checkCaseTaskStatusToDo () {
+    return `
+    SELECT rid FROM ${MAIN_SCHEMA_NAME}.case_task_status 
+    WHERE
+    task_status_name ILIKE '%To Do%'
+    `
+  }
 };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 
 const keyContactRole = {
