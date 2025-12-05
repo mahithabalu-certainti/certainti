@@ -61,6 +61,8 @@ router.get("/scopeList", WorkFlowController.listScopes);
 router.post("/scopeEventList", WorkFlowController.listScopeEvents);
 router.post("/eventConditions", WorkFlowController.listEventConditions);
 router.post("/conditionCategory", WorkFlowController.listConditionCategory);
+router.post("/ruleOperators", WorkFlowController.listOperators);
+router.post("/ruleValues", WorkFlowController.listValues);
 router.post("/createRuleMap", WorkFlowController.createRuleMapWithScope);
 
 // ConditionGroup

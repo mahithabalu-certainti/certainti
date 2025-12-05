@@ -8,7 +8,7 @@ import { ICreateRuleMapWithScope, IListSCopeEvent } from "../utils/types";
 import { logMessage } from "../utils/helpers";
 import { RuleMapService } from "../services/workflowRuleMapService";
 import { ScopeService } from "../services/workflowScopeMapService";
-import { ScopeEventRows, EventConditions, ConditionCategory } from "../utils/types";
+import { ScopeEventRows, EventConditions, ConditionCategory, Operators, Values } from "../utils/types";
 
 /**
  * Evaluate a rule for a given entity (case or task)
@@ -147,6 +147,58 @@ export class WorkFlowService {
             statusCode: HttpStatus.SUCCESS,
             message: HttpStatus.SUCCESS_MESSAGE,
             data: categories
+        };
+    };
+
+    async listOperators(
+        listRequest: any,
+        userId: string,
+        apiType: string
+    ): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data: any;
+    }> {
+        const mainDb = await this.getMainDb();
+        const operators: Operators[] = await mainDb.query<Operators>(
+            rawQueries.fetchOperators(
+                listRequest.category_rid,
+                listRequest.status_rid
+            ),
+            { type: QueryTypes.SELECT }
+        );
+
+        return {
+            statusCode: HttpStatus.SUCCESS,
+            message: HttpStatus.SUCCESS_MESSAGE,
+            data: operators
+        };
+    };
+
+    async listValues(
+        listRequest: any,
+        userId: string,
+        apiType: string
+    ): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data: any;
+    }> {
+        const mainDb = await this.getMainDb();
+        const values: Values[] = await mainDb.query<Values>(
+            rawQueries.fetchValues(
+                listRequest.category_rid,
+                listRequest.status_rid
+            ),
+            { type: QueryTypes.SELECT }
+        );
+
+        return {
+            statusCode: HttpStatus.SUCCESS,
+            message: HttpStatus.SUCCESS_MESSAGE,
+            data: values
         };
     };
 

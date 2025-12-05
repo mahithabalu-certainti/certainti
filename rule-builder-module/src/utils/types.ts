@@ -109,21 +109,31 @@ export interface IListSCopeEvent {
 }
 
 export type ScopeEventRows = {
-    rid: string
-    event_name: string,
-    description: string,
-    scope_type_name: string,
-    scope_type_rid:string,
+    rid: string;
+    event_name: string;
+    description: string;
+    scope_type_name: string;
+    scope_type_rid: string;
 }
 
 export type EventConditions = {
-    rid: string
-    condition_name: string,
-    description: string,
+    rid: string;
+    condition_name: string;
+    description: string;
 }
 
 export type ConditionCategory = {
-    rid: string
-    category_name: string,
-    description: string,
+    rid: string;
+    category_name: string;
+    description: string;
+}
+
+export type Operators = {
+    rid: string;
+    name: string;
+}
+
+export type Values = {
+    rid: string;
+    name: string;
 }

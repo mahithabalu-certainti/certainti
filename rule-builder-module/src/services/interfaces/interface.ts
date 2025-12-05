@@ -248,7 +248,27 @@ export interface IWorkFlowService {
         data?: any;
     }>;
 
-     listConditionCategory(listRequest: any,
+    listConditionCategory(listRequest: any,
+        userId: string,
+        apiType: string
+    ): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: any;
+    }>;
+
+    listOperators(listRequest: any,
+        userId: string,
+        apiType: string
+    ): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: any;
+    }>;
+
+    listValues(listRequest: any,
         userId: string,
         apiType: string
     ): Promise<{

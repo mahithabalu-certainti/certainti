@@ -263,6 +263,21 @@ const listScopeConditionCategorySchema = Joi.object({
     sortOrder: Joi.string().valid("ASC", "DESC").default("ASC")
 });
 
+const listScopeOperatorSchema = Joi.object({
+    category_rid: Joi.string().required(),
+    status_rid: Joi.string().required().allow(""),
+    sortBy: Joi.string().optional(),
+    sortOrder: Joi.string().valid("ASC", "DESC").default("ASC")
+});
+
+const listScopeValueSchema = Joi.object({
+    category_rid: Joi.string().required(),
+    status_rid: Joi.string().required().allow(""),
+    sortBy: Joi.string().optional(),
+    sortOrder: Joi.string().valid("ASC", "DESC").default("ASC")
+});
+
+
 export {
     createRuleSchema,
     listRuleSchema,
@@ -285,5 +300,7 @@ export {
     listScopeEventSchema,
     listScopeEventConditionSchema,
     listScopeConditionCategorySchema,
+    listScopeOperatorSchema,
+    listScopeValueSchema,
     createRuleMapSchema
 };
