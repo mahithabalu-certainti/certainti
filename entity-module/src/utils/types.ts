@@ -536,3 +536,55 @@ export type TagsTypes = {
   rid : string
   tag_name : string
 }
+
+type tagTypes = {
+  tag_rid : string
+  is_new_tag : boolean
+}
+
+type WorkflowConnectorItemsAccountLevel = {
+  case_rid : string
+  account_rid : string
+  task_rid : string
+  source_rid : string
+  delete_target_rids : string[]
+  relationship_connector_rid : string
+  target_rid : string[]
+  created_by : string
+  created_datetime : Date
+}
+
+export type UpdateCaseTaskType = {
+  rid : string
+  modified_by : string,
+  modified_datetime : Date,
+  task_name : string,
+  sequence_no : number,
+  effective_start_datetime : Date,
+  effective_end_datetime : Date,
+  case_team_member_role_rid : string,
+  assigned_to : string,
+  task_status_rid : string,
+  priority_rid : string,
+  milestone_template_rid : string,
+  checklist_template_rid : string,
+  account_rid : string,
+  case_rid: string,
+  task_type_rid : string,
+  task_description : string
+  tags : tagTypes[],
+  workflow_connector : WorkflowConnectorItemsAccountLevel,
+  weightage_rid : string
+  task_category_rid : string
+}
+
+export type CaseTaskWorkFlowCreate = {
+  case_rid : string,
+  account_rid : string,
+  source_rid : string,
+  target_rid : string[],
+  delete_target_rids : string[]
+  relationship_connector_rid : string
+  created_by : string
+  created_datetime : Date
+}

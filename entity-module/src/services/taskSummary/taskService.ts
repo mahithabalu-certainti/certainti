@@ -1197,17 +1197,17 @@ export class TaskService {
 
   }
 
-  async fetchTaskCardDetailsList(account_rid: any, task_rid: any, case_rid: any) {
+  async fetchTaskCardDetailsList(account_rid: any, task_rid: any, case_rid: any, task_type?: any) {
     const mainDb = await this.fetchMainDb();
     const orgDb = await this.fetchOrgDb();
 
-    const data : any = {}
+    // const data : any = {}
 
     const parentNumber: any = await mainDb.query(await rawQueries.fetchParentAccount(account_rid, mainDb));
     let schemaName = rawQueries.fetchSchemaName(parentNumber[0][0].r_number);
     const fetchChecklistStatusRid: any = await mainDb.query(rawQueries.fetchChecklistStatus());
     let result = [];
-    if (data.task_type === 'activity') {
+    if (task_type === 'activity') {
       result = await orgDb.query<TaskCardResponse>(taskCardDetailsActivityTask(schemaName, task_rid, account_rid, fetchChecklistStatusRid[0][0].rid), { type: QueryTypes.SELECT });
     } else {
       result = await orgDb.query<TaskCardResponse>(taskCardDetails(schemaName, task_rid, account_rid, case_rid, fetchChecklistStatusRid[0][0].rid), { type: QueryTypes.SELECT });
@@ -1226,14 +1226,14 @@ export class TaskService {
         task_status_rid: result[0]?.task_details.task_status_rid
       }
       let weightageValue;
-      if (result[0]?.task_details?.weightage_rid !== null && data.task_type !== 'activity') {
+      if (result[0]?.task_details?.weightage_rid !== null && task_type !== 'activity') {
         const weightageRes: any = await mainDb.query(rawQueries.getWeightageValue(result[0]?.task_details.weightage_rid!));
         weightageValue = weightageRes[0][0].weightage_value;
       } else {
         weightageValue = null;
       }
       let taskCategoryValue;
-      if (result[0]?.task_details?.task_category_rid !== null && data.task_type !== 'activity') {
+      if (result[0]?.task_details?.task_category_rid !== null && task_type !== 'activity') {
         const taskCategoryQuery: any = await mainDb.query(rawQueries.getTaskCategoryByRid(result[0]?.task_details.task_category_rid!));
         taskCategoryValue = taskCategoryQuery[0][0].category_name
       } else {
@@ -1256,7 +1256,7 @@ export class TaskService {
       let relationshipConnectorIds;
       let taskNameResult;
       let workflowResult;
-      if (result[0]?.task_details.workflow_connector !== null && data.task_type !== 'activity') {
+      if (result[0]?.task_details.workflow_connector !== null && task_type !== 'activity') {
         sourceIds = [...new Set(result[0]?.task_details.workflow_connector.map((d: taskWorkFlowConnector) => d.source_rid))]
         targetIds = [...new Set(result[0]?.task_details.workflow_connector.map((d: taskWorkFlowConnector) => d.target_rid))]
         relationshipConnectorIds = [...new Set(result[0]?.task_details.workflow_connector.map((d: taskWorkFlowConnector) => d.relationship_connector_rid))]
@@ -1331,7 +1331,7 @@ export class TaskService {
         }) : [],
       }
       let finalWorkflowData
-      if (data.task_type !== 'activity') {
+      if (task_type !== 'activity') {
         if (result[0]?.task_details.workflow_connector === null) {
           finalWorkflowData = []
         } else {
@@ -1392,162 +1392,6 @@ export class TaskService {
     }
   }
 
-  // async updateNotes (notesData : IUpdateNotesSchema, userId: string, file?: Express.Multer.File, isFileDeleted? : boolean) : Promise<any> {
-  //   try {
-  //     const sequelize = await initOrgSequelize();
-  //     const mainDdSequilze = await initMainDbSequelize();
-  //     const { account_rid, attachment_level } = notesData;
-  //     const accountData = await this.schemaService.fetchAccountById(account_rid);
-
-  //     if (!accountData) {
-  //     throw new Error("Notes updation failed: Invalid account ID");
-  //     }
-
-  //     if (accountData.status !== "active") {
-  //     throw new Error(
-  //         "Notes updation failed: The selected account is inactive. Please choose an active account."
-  //     );
-  //     }
-  //     let accountNumber = accountData.r_number;
-  //     if (accountData.is_parent && attachment_level !== "account") {
-  //         throw new Error("Notes updation failed: Invalid account ID");
-  //     }
-
-  //     if (accountData.storage_type === "store_in_parent") {
-  //         accountNumber = await this.schemaService.fetchParentAccount(
-  //         accountData.parent_account_rid
-  //         );
-  //     }
-  //     const isExists = await this.schemaService.checkIfSchemaExists(
-  //         accountNumber
-  //     );
-
-  //     if (!isExists) {
-  //         throw new Error("Notes updation failed: schema doesn't exists");
-  //     }
-
-  //     const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
-  //     const NotesModel = Notes.initialize(sequelize, schemaName)
-  //     const NotesTimelineModel = NotesTimeline.initialize(sequelize, schemaName)
-  //     const TaskSummaryModel = TaskSummary.initialize(mainDdSequilze)
-
-  //     const isNotesExists = await Notes.findOne({
-  //       where : {
-  //         rid : notesData.rid
-  //       }
-  //     })
-
-  //     if(!isNotesExists) {
-  //       return {
-  //         statusCode: HttpStatus.NOT_FOUND,
-  //         message: HttpStatus.NOT_FOUND_MESSAGE,
-  //         data: { affectedCount : 0 }
-  //     };
-  //     } 
-  //     else {
-  //       let name : string | null = null
-  //       let url : string | null = null
-  //       let extension : string | null = null
-  //       let size : number | null = null
-  //       if(isFileDeleted && file == undefined) {
-  //         await deleteFromAzureBlob(isNotesExists.browse_file)
-  //         name = null
-  //         url = null
-  //         extension = null
-  //         size = null
-  //       }
-  //       else if(file && !isFileDeleted) {
-  //         await deleteFromAzureBlob(isNotesExists.browse_file)
-  //         const uploadResult = await uploadToAzureBlob(file, account_rid, "notes");
-  //       if(uploadResult.name.length > 100) {
-  //         throw new Error("Document name cannot exceed 100 characters");
-  //       }  
-  //         name = uploadResult.name
-  //         url = uploadResult.url
-  //         extension = uploadResult.extension
-  //         size = uploadResult.size
-  //     } else {
-  //         name = isNotesExists.document_name
-  //         url = isNotesExists.browse_file
-  //         extension = isNotesExists.format
-  //         size = isNotesExists.size_in_mb
-  //     }      
-  //     const [affectedCount] = await NotesModel.update({
-  //       browse_file: url,
-  //       document_name: name,
-  //       attach_to: notesData.attach_to,
-  //       attachment_level: notesData.attachment_level,
-  //       fiscal_year: notesData.fiscal_year,
-  //       account_rid: account_rid,
-  //       format: extension,
-  //       size_in_mb: size,
-  //       title: notesData.title,
-  //       notes_owner: notesData.notes_owner,
-  //       descriptions: notesData.descriptions || null,
-  //       modified_by: userId,
-  //       modified_datetime : new Date()
-  //   }, {
-  //     where : {
-  //       rid : isNotesExists.rid
-  //     }
-  //     });
-  //     if(affectedCount > 0) {
-  //       await NotesTimelineModel.create({
-  //           notes_rid : notesData.rid,
-  //           document_name: name,
-  //           title : notesData.title,
-  //           descriptions: notesData.descriptions || null,
-  //           notes_owner : notesData.notes_owner,
-  //           created_by: userId,
-  //           modified_by: userId,
-  //           attach_to: notesData.attach_to,
-  //           attachment_level: notesData.attachment_level,
-  //           event_type: 'ui handler',
-  //           event_status: 'success',
-  //           event_name: 'update',
-  //           event_datetime: new Date(),
-  //       })
-
-  //       await TaskSummaryModel.update({
-  //           browse_file: url,
-  //           document_name: name,
-  //           attach_to: notesData.attach_to,
-  //           attachment_level: notesData.attachment_level,
-  //           fiscal_year: notesData.fiscal_year,
-  //           account_rid: account_rid,
-  //           format: extension,
-  //           size_in_mb: size,
-  //           title: notesData.title,
-  //           notes_owner : notesData.notes_owner,
-  //           descriptions : notesData.descriptions || null,
-  //           modified_by : userId,
-  //           modified_datetime : new Date()
-  //       }, {
-  //         where : {
-  //           notes_rid : notesData.rid
-  //         }
-  //       });
-
-  //       return {
-  //           statusCode: HttpStatus.SUCCESS,
-  //           message: HttpStatus.SUCCESS_MESSAGE,
-  //           data: { affectedCount: affectedCount }
-  //         };
-  //       }
-  //     }
-  //   }
-  //   catch (error) {
-  //     console.error('Error updating notes:', error);
-
-  //     return {
-  //         statusCode: 500,
-  //         message: 'Failed to update Notes',
-  //         errorMessage: error instanceof Error ? error.message : 'An unknown error occurred'
-  //     };
-  //   }
-  // }
-
-
-
+  
 
 }

@@ -165,6 +165,21 @@ export const STATUS_MESSAGE = {
   noDataFound : "Data not available",
   taskSummaryNotFound: "Task Summary not found",
   attachedTaskNotFound: "No attached Task found",
+  taskSummaryUpdatedSuccess: "Task Summary updated successfully",
+  updateFailed: "Update failed",
+  taskNameExistsAlready: "Task name already exists",
+  accountNotFound: "Account not found",
+  taskUpdatedFailed: "Task update failed",
+  caseNotFound: "Case not found",
+  taskNotFound: "Task not found",
+  taskUpdatedSuccess: "Task updated successfully",
+  taskUpdateFailed: "Task update failed",
+  tagMappedAlready: "Tag is already mapped to other tasks",
+  workflowConnectorMappedFailed: "Workflow Connector mapping failed",
+  workflowConnectorMappedSuccess: "Workflow Connector mapped successfully",
+  dataNotAvailable: "Data not available",
+  workflowConnectorMappedDeletedFailed: "Workflow Connector mapping deletion failed",
+  workflowConnectorMappedDeleted: "Workflow Connector mapping deleted successfully",
 };
 
 export const TYPES = {
@@ -503,6 +518,10 @@ export const rawQueries = {
       SELECT * FROM ${schemaName}.project_task WHERE rid = '${rid}' AND account_rid = '${account_rid}'`;
   },
   findCaseTaskDetails(schemaName: string, rid: string, account_rid: string) {
+    return `
+      SELECT * FROM ${schemaName}.case_task WHERE rid = '${rid}' AND account_rid = '${account_rid}'`;
+  },
+  findAccountTaskDetails(schemaName: string, rid: string, account_rid: string) {
     return `
       SELECT * FROM ${schemaName}.case_task WHERE rid = '${rid}' AND account_rid = '${account_rid}'`;
   },
@@ -2097,15 +2116,56 @@ export const rawQueries = {
             WHERE ts.rid = '${rid}' AND ts.account_rid = '${accountRid}'`;
   },
 
-  updateTaskSummaryQuery: (schemaName: string, getSetData: any, data: any) => {
+  updateTaskSummaryQuery: (getSetData: any, data: any) => {
     const { setClause, values } = getSetData;
     const whereClause = `rid = '${data.rid}' AND account_rid = '${data.account_rid}'`;
     
-    return `UPDATE ${schemaName}.task_summary 
+    return `UPDATE ${MAIN_SCHEMA_NAME}.task_summary 
             SET ${setClause} 
             WHERE ${whereClause} 
             RETURNING *`;
   },
+  fetchTaskSummaryDetails: ( rid: string, accountRid: string) => {
+    return `SELECT *
+            FROM ${MAIN_SCHEMA_NAME}.task_summary ts
+            where ts.rid = '${rid}' AND ts.account_rid = '${accountRid}'`;
+  },
+  getActiveStatusId () {
+    return `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status where status_name ILIKE '%Active%'`
+  },
+  fetchUserNames (oldRid : string, newRid : string) {
+    if(oldRid === null) oldRid = ''
+    if(newRid === null) newRid = ''
+    return `SELECT rid, CONCAT(first_name, ' ', last_name) AS name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN ('${oldRid}', '${newRid}')`
+  },
+  fetchCheckLists(oldRid : string, newRid : string) {
+    if(oldRid === null) oldRid = ''
+    if(newRid === null) newRid = ''
+    return `SELECT rid, checklist_name FROM ${MAIN_SCHEMA_NAME}.checklist_template WHERE rid IN ('${oldRid}', '${newRid}')`
+  },
+  fetchPriority(oldRid : string, newRid : string) {
+    if(oldRid === null) oldRid = ''
+    if(newRid === null) newRid = ''
+    return `SELECT rid, priority_name FROM ${MAIN_SCHEMA_NAME}.case_priority WHERE rid IN ('${oldRid}', '${newRid}')`
+  },
+  fetchTaskStatus(oldRid : string, newRid : string) {
+    if(oldRid === null) oldRid = ''
+    if(newRid === null) newRid = ''
+    return `SELECT rid, task_status_name FROM ${MAIN_SCHEMA_NAME}.case_task_status WHERE rid IN ('${oldRid}', '${newRid}')`
+  },
+  fetchTaskWeightage(oldRid : string, newRid : string) {
+    if(oldRid === null) oldRid = ''
+    if(newRid === null) newRid = ''
+    return `SELECT rid, weightage_value FROM ${MAIN_SCHEMA_NAME}.task_weightage WHERE rid IN ('${oldRid}', '${newRid}')`
+  },
+  fetchTaskCategory(oldRid : string, newRid : string) {
+  if(oldRid === null) oldRid = ''
+  if(newRid === null) newRid = ''
+  return `SELECT rid, category_name FROM ${MAIN_SCHEMA_NAME}.task_category WHERE rid IN ('${oldRid}', '${newRid}')`
+  },
+  insertTimeline: (schemaName: string,tableName: string) =>
+  `INSERT INTO "${schemaName}".${tableName} (event_name, event_status, event_type, entity_rid,account_rid, description, created_by, event_datetime, created_datetime) VALUES (:event_name, :event_status, :event_type, :entity_rid, :account_rid, :description, :created_by, :event_datetime, :created_datetime)`,
+
 };
 
 export const IMPORT_FILTER_COLUMNS: any = {
@@ -2270,3 +2330,10 @@ export const dateConditionsForQRE : any = {
   after: "after",
   is_empty: "is_empty",
 };
+
+export const relationshipTypes = {
+  blocks : "Blocks",
+  enables : "Enables",
+  isBlockedBy : "Is Blocked By",
+  isEnabledBy : "Is Enabled By"
+}

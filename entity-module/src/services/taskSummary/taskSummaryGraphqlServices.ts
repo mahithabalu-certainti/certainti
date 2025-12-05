@@ -8,16 +8,36 @@ import {
 } from "../../utils/constants";
 import { logMessage, setInlineForTaskSummary } from "../../utils/helpers";
 import Decimal from "decimal.js";
+import { TaskService } from "./taskService";
+import { ProjectInjestionTaskService } from "../projectTask/projectTaskService";
+import { CaseService } from "../cases/caseService";
+import { Logger } from "winston";
+import {
+  IFetchTaskDetailsInput,
+  IUpdateProjectTask,
+  UpdateCaseTaskType
+} from "../../utils/types";
+
 
 
 const services = Configurations.getInstance().getServices();
+// const taskService = services.taskService;
+// const projectTaskService = services.projectTaskService;
 // const taskSummarySchemaService = new TaskSummarySchemaService();
 
 export default class TaskSummaryGraphqlServices {
-//   private taskInjestionService: TaskInjestionService;
-//   private taskSummarySchema: TaskSummarySchemaService;
+  private logger: Logger;
+  private taskService: TaskService
+  private projectInjestionTaskService: ProjectInjestionTaskService
+  private caseService: CaseService
+  //   private taskInjestionService: TaskInjestionService;
+  //   private taskSummarySchema: TaskSummarySchemaService;
 
-  constructor() {
+  constructor(logger: Logger) {
+    this.logger = logger;
+    this.taskService = new TaskService(logger);
+    this.projectInjestionTaskService = new ProjectInjestionTaskService();
+    this.caseService = new CaseService(logger);
     // this.taskInjestionService = new TaskInjestionService();
     // this.taskSummarySchema = new TaskSummarySchemaService();
   }
@@ -62,6 +82,21 @@ export default class TaskSummaryGraphqlServices {
     // Validate attached task exists based on attachment level
     let attachedTaskExists = false;
     let attachedTaskDetails = null;
+    let projectTaskUpdateResult = null;
+    let caseTaskUpdateResult = null;
+
+    // Define editable fields from task summary
+    const editableFields = [
+      'task_name',
+      'description',
+      'fiscal_year',
+      'status_rid',
+      'priority_rid',
+      'effective_start_datetime',
+      'effective_end_datetime'
+    ];
+
+    let fieldsToPropagate: string[] = [];
 
     if (data.attachment_level === "project") {
       const projectTaskQuery: any = await orgSequelize.query(
@@ -69,13 +104,285 @@ export default class TaskSummaryGraphqlServices {
       );
       attachedTaskExists = projectTaskQuery[0].length > 0;
       attachedTaskDetails = projectTaskQuery[0][0];
-    } else if (data.attachment_level === "case") {
+
+      // Check if any editable fields from task summary need to be propagated to project task
+      fieldsToPropagate = editableFields.filter(field =>
+        data[field] !== undefined && data[field] !== null
+      );
+
+      // Always propagate if there are date changes (for validation)
+      const hasDateChanges = data.effective_start_datetime || data.effective_end_datetime;
+
+      if (fieldsToPropagate.length > 0 || hasDateChanges) {
+        try {
+          // Extract userId from context or data
+          const userId = data.user_id || data.modified_by;
+          const userPreference = data.user_preference || '';
+
+          // Map task summary fields to project task fields
+          const projectTaskUpdateData: IUpdateProjectTask = {
+            // Required fields from existing project task
+            project_task_rid: data.task_rid,
+            account_rid: data.account_rid,
+            project_fiscal_rid: attachedTaskDetails.project_fiscal_rid,
+            project_resource_rid: attachedTaskDetails.project_resource_rid,
+            resource_id: attachedTaskDetails.resource_id,
+            resource_code: attachedTaskDetails.resource_code,
+            fiscal_year: attachedTaskDetails.fiscal_year,
+            country_rid: attachedTaskDetails.country_rid,
+            region_rid: attachedTaskDetails.region_rid,
+            currency_rid: attachedTaskDetails.currency_rid,
+            status_rid: attachedTaskDetails.status_rid,
+            created_by: attachedTaskDetails.created_by,
+            modified_by: userId,
+
+            // Optional fields from existing project task
+            total_hours_pro_task: attachedTaskDetails.total_hours_pro_task,
+            total_cost_pro_task: attachedTaskDetails.total_cost_pro_task,
+            start_date: attachedTaskDetails.start_date,
+            end_date: attachedTaskDetails.end_date,
+            comments: attachedTaskDetails.comments,
+            task_name: attachedTaskDetails.task_name,
+            task_description: attachedTaskDetails.task_description,
+            task_type_rid: attachedTaskDetails.task_type_rid,
+            task_classification_rid: attachedTaskDetails.task_classification_rid,
+          };
+
+          // Override with prioritized task summary data
+          fieldsToPropagate.forEach(field => {
+            switch (field) {
+              case 'task_name':
+                // Map task_name from summary to task_name in project task
+                projectTaskUpdateData.task_name = data.task_name;
+                break;
+              case 'description':
+                // Map description from summary to task_description in project task
+                projectTaskUpdateData.task_description = data.description;
+                break;
+              case 'fiscal_year':
+                // Map fiscal_year from summary to fiscal_year in project task
+                projectTaskUpdateData.fiscal_year = data.fiscal_year;
+                break;
+              case 'status_rid':
+                // Map status_rid from summary to status_rid in project task
+                projectTaskUpdateData.status_rid = data.status_rid;
+                break;
+              case 'effective_start_datetime':
+                // Convert datetime to date format for project task
+                if (data.effective_start_datetime) {
+                  projectTaskUpdateData.start_date = new Date(data.effective_start_datetime).toISOString().split('T')[0];
+                }
+                break;
+              case 'effective_end_datetime':
+                // Convert datetime to date format for project task
+                if (data.effective_end_datetime) {
+                  projectTaskUpdateData.end_date = new Date(data.effective_end_datetime).toISOString().split('T')[0];
+                }
+                break;
+              case 'priority_rid':
+                // Priority might not have a direct mapping to project task
+                // Log it but don't propagate unless there's a corresponding field
+                logMessage(`Priority update in task summary (rid: ${data.priority_rid}) - check if project task needs priority mapping`);
+                break;
+            }
+          });
+
+          logMessage(`Propagating task summary changes to project task: ${JSON.stringify({
+            fieldsPropagated: fieldsToPropagate,
+            projectTaskData: {
+              task_name: projectTaskUpdateData.task_name,
+              task_description: projectTaskUpdateData.task_description,
+              fiscal_year: projectTaskUpdateData.fiscal_year,
+              status_rid: projectTaskUpdateData.status_rid,
+              start_date: projectTaskUpdateData.start_date,
+              end_date: projectTaskUpdateData.end_date
+            }
+          })}`);
+
+          // Call updateProjectTask with merged data
+          const updateResult = await this.projectInjestionTaskService.updateProjectTask(
+            projectTaskUpdateData,
+            userId,
+            userPreference
+          );
+
+          projectTaskUpdateResult = updateResult;
+
+          if (updateResult.statusCode !== HttpStatus.SUCCESS &&
+            updateResult.statusCode !== HttpStatus.PROMPT) {
+            return {
+              statusCode: updateResult.statusCode,
+              statusMessage: updateResult.message || STATUS_MESSAGE.updateFailed,
+              data: null,
+            };
+          }
+
+          // If PROMPT status, return prompt response immediately
+          if (updateResult.statusCode === HttpStatus.PROMPT) {
+            return {
+              statusCode: HttpStatus.PROMPT,
+              statusMessage: updateResult.message,
+              data: {
+                projectTask: updateResult.data?.projectTask,
+                requiresConfirmation: true
+              },
+            };
+          }
+
+          // If successful, update attached task details with the result
+          if (updateResult.data?.projectTask) {
+            attachedTaskDetails = updateResult.data.projectTask;
+          }
+
+        } catch (error) {
+          logMessage(`Error updating project task: ${error}`);
+          return {
+            statusCode: HttpStatus.FAILED,
+            statusMessage: "Failed to update associated project task",
+            data: null,
+          };
+        }
+      }
+    } else if (data.attachment_level === "case" || data.attachment_level === "account") {
       const caseTaskQuery: any = await orgSequelize.query(
         rawQueries.findCaseTaskDetails(schemaName, data.task_rid, data.account_rid)
       );
       attachedTaskExists = caseTaskQuery[0].length > 0;
       attachedTaskDetails = caseTaskQuery[0][0];
+
+      // Check if any editable fields from task summary need to be propagated to case task
+      fieldsToPropagate = editableFields.filter(field =>
+        data[field] !== undefined && data[field] !== null
+      );
+
+      // Always propagate if there are date changes (for validation)
+      const hasDateChanges = data.effective_start_datetime || data.effective_end_datetime;
+
+      if (fieldsToPropagate.length > 0 || hasDateChanges) {
+        try {
+          // Extract userId from context or data
+          const userId = data.user_id || data.modified_by;
+          const currentDate = new Date();
+
+          // We need to fetch more complete case task details to get all required fields
+          // Assuming we have a query to fetch full case task details
+          // For now, using what we have and adding defaults for missing fields
+          const fullCaseTaskDetails = attachedTaskDetails;
+
+          // Create the UpdateCaseTaskType object by merging existing data with task summary updates
+          const caseTaskUpdateData: UpdateCaseTaskType = {
+            // Required fields from existing case task
+            rid: data.task_rid, // Case task RID
+            account_rid: data.account_rid,
+            case_rid: fullCaseTaskDetails.case_rid || data.attach_to,
+
+            // Fields that can be overridden from task summary
+            task_name: data.task_name || fullCaseTaskDetails.task_name,
+            task_description: data.description || fullCaseTaskDetails.description || fullCaseTaskDetails.task_description,
+
+            // Map status fields - need to handle status_name to status_rid conversion if needed
+            // Assuming data.status_rid is already set or we need to fetch status map
+            task_status_rid: data.status_rid || fullCaseTaskDetails.task_status_rid || fullCaseTaskDetails.status_rid,
+
+            // Priority mapping
+            priority_rid: data.priority_rid || fullCaseTaskDetails.priority_rid,
+
+            // Date fields - convert format if needed
+            effective_start_datetime: data.effective_start_datetime
+              ? new Date(data.effective_start_datetime)
+              : (fullCaseTaskDetails.effective_start_datetime ? new Date(fullCaseTaskDetails.effective_start_datetime) : currentDate),
+
+            effective_end_datetime: data.effective_end_datetime
+              ? new Date(data.effective_end_datetime)
+              : (fullCaseTaskDetails.effective_end_datetime ? new Date(fullCaseTaskDetails.effective_end_datetime) : null),
+
+            // Fields from existing case task (not editable from task summary)
+            modified_by: userId,
+            modified_datetime: currentDate,
+            sequence_no: fullCaseTaskDetails.sequence_no || 0,
+            case_team_member_role_rid: fullCaseTaskDetails.case_team_member_role_rid,
+            assigned_to: fullCaseTaskDetails.assigned_to,
+            milestone_template_rid: fullCaseTaskDetails.milestone_template_rid,
+            checklist_template_rid: fullCaseTaskDetails.checklist_template_rid,
+            task_type_rid: fullCaseTaskDetails.task_type_rid,
+            tags: fullCaseTaskDetails.tags || [],
+            workflow_connector: fullCaseTaskDetails.workflow_connector,
+            weightage_rid: fullCaseTaskDetails.weightage_rid,
+            task_category_rid: fullCaseTaskDetails.task_category_rid,
+
+            // Handle fiscal year - check if it needs conversion
+            ...(data.fiscal_year && { fiscal_year: data.fiscal_year }),
+          };
+
+          // If status_name is provided but status_rid is not, we need to convert it
+          // if (data.status_name && !data.status_rid) {
+          //   try {
+          //     const statusMap = await this.getTaskStatusMap(mainSequelize);
+          //     if (statusMap.has(data.status_name)) {
+          //       caseTaskUpdateData.task_status_rid = statusMap.get(data.status_name);
+          //     }
+          //   } catch (error) {
+          //     logMessage(`Error fetching status map for case task: ${error}`);
+          //   }
+          // }
+
+          logMessage(`Propagating task summary changes to case task: ${JSON.stringify({
+            fieldsPropagated: fieldsToPropagate,
+            caseTaskData: {
+              rid: caseTaskUpdateData.rid,
+              task_name: caseTaskUpdateData.task_name,
+              task_description: caseTaskUpdateData.task_description,
+              task_status_rid: caseTaskUpdateData.task_status_rid,
+              priority_rid: caseTaskUpdateData.priority_rid,
+              effective_start_datetime: caseTaskUpdateData.effective_start_datetime,
+              effective_end_datetime: caseTaskUpdateData.effective_end_datetime
+            }
+          })}`);
+
+          // Call updateUserLevelTask with the prepared data
+          const updateResult = await this.caseService.updateUserLevelTask(caseTaskUpdateData);
+
+          caseTaskUpdateResult = updateResult;
+
+          if (updateResult.statusCode !== HttpStatus.SUCCESS) {
+            return {
+              statusCode: updateResult.statusCode,
+              statusMessage: updateResult.statusMessage || STATUS_MESSAGE.updateFailed,
+              data: null,
+            };
+          }
+
+          // If successful, update attached task details
+          // Note: updateUserLevelTask doesn't return the updated task in the response
+          // You might need to fetch it again or adjust the method to return it
+          if (updateResult.statusCode === HttpStatus.SUCCESS) {
+            // Fetch updated case task details
+            const updatedCaseTaskQuery: any = await orgSequelize.query(
+              rawQueries.findCaseTaskDetails(schemaName, data.task_rid, data.account_rid)
+            );
+            if (updatedCaseTaskQuery[0].length > 0) {
+              attachedTaskDetails = updatedCaseTaskQuery[0][0];
+            }
+          }
+
+        } catch (error) {
+          logMessage(`Error updating case task: ${error}`);
+          return {
+            statusCode: HttpStatus.FAILED,
+            statusMessage: "Failed to update associated case task",
+            data: null,
+          };
+        }
+      }
+    } else if (data.attachment_level === "account") {
+      const accTaskQuery: any = await orgSequelize.query(
+        rawQueries.findAccountTaskDetails(schemaName, data.task_rid, data.account_rid)
+      );
+      attachedTaskExists = accTaskQuery[0].length > 0;
+      attachedTaskDetails = accTaskQuery[0][0];
+
     }
+
 
     if (!attachedTaskExists) {
       return {
@@ -85,12 +392,16 @@ export default class TaskSummaryGraphqlServices {
       };
     }
 
-    // Date validations
-    if (data.effective_start_datetime && data.effective_end_datetime) {
-      const newStartDate = new Date(data.effective_start_datetime);
-      const newEndDate = new Date(data.effective_end_datetime);
-      
-      if (newStartDate > newEndDate) {
+    // Date validations (only if we're not already updating the attached task)
+    // OR if dates are being updated in task summary only
+    const hasDateChangesInSummary = data.effective_start_datetime || data.effective_end_datetime;
+
+    if (hasDateChangesInSummary) {
+      const newStartDate = data.effective_start_datetime ? new Date(data.effective_start_datetime) : null;
+      const newEndDate = data.effective_end_datetime ? new Date(data.effective_end_datetime) : null;
+
+      // Validate start date <= end date if both provided
+      if (newStartDate && newEndDate && newStartDate > newEndDate) {
         return {
           statusCode: HttpStatus.BAD_REQUEST,
           statusMessage: STATUS_MESSAGE.startDateLessThanEndDate,
@@ -98,20 +409,20 @@ export default class TaskSummaryGraphqlServices {
         };
       }
 
-      // Validate against attached task dates
+      // Validate against attached task dates (after update)
       if (attachedTaskDetails) {
         const attachedStart = attachedTaskDetails.start_date || attachedTaskDetails.effective_start_datetime;
         const attachedEnd = attachedTaskDetails.end_date || attachedTaskDetails.effective_end_datetime;
-        
-        if (attachedStart && newStartDate < new Date(attachedStart)) {
+
+        if (attachedStart && newStartDate && newStartDate < new Date(attachedStart)) {
           return {
             statusCode: HttpStatus.BAD_REQUEST,
             statusMessage: "Task summary start date cannot be before attached task start date",
             data: null,
           };
         }
-        
-        if (attachedEnd && newEndDate > new Date(attachedEnd)) {
+
+        if (attachedEnd && newEndDate && newEndDate > new Date(attachedEnd)) {
           return {
             statusCode: HttpStatus.BAD_REQUEST,
             statusMessage: "Task summary end date cannot be after attached task end date",
@@ -119,52 +430,34 @@ export default class TaskSummaryGraphqlServices {
           };
         }
       }
-    }
 
-    // Single date updates with validation
-    if (data.effective_start_datetime && !data.effective_end_datetime) {
-      const newStartDate = new Date(data.effective_start_datetime);
-      const existingEndDate = existingTaskSummary.effective_end_datetime 
-        ? new Date(existingTaskSummary.effective_end_datetime)
-        : null;
-      
-      if (existingEndDate && newStartDate > existingEndDate) {
-        return {
-          statusCode: HttpStatus.BAD_REQUEST,
-          statusMessage: STATUS_MESSAGE.startDateLessThanEndDate,
-          data: null,
-        };
+      // Single date updates with validation against existing task summary dates
+      if (newStartDate && !newEndDate) {
+        const existingEndDate = existingTaskSummary.effective_end_datetime
+          ? new Date(existingTaskSummary.effective_end_datetime)
+          : null;
+
+        if (existingEndDate && newStartDate > existingEndDate) {
+          return {
+            statusCode: HttpStatus.BAD_REQUEST,
+            statusMessage: STATUS_MESSAGE.startDateLessThanEndDate,
+            data: null,
+          };
+        }
       }
-    }
 
-    if (data.effective_end_datetime && !data.effective_start_datetime) {
-      const newEndDate = new Date(data.effective_end_datetime);
-      const existingStartDate = existingTaskSummary.effective_start_datetime 
-        ? new Date(existingTaskSummary.effective_start_datetime)
-        : null;
-      
-      if (existingStartDate && newEndDate < existingStartDate) {
-        return {
-          statusCode: HttpStatus.BAD_REQUEST,
-          statusMessage: STATUS_MESSAGE.startDateLessThanEndDate,
-          data: null,
-        };
-      }
-    }
+      if (newEndDate && !newStartDate) {
+        const existingStartDate = existingTaskSummary.effective_start_datetime
+          ? new Date(existingTaskSummary.effective_start_datetime)
+          : null;
 
-    // Fetch status map
-    const statusMap = await this.getTaskStatusMap(mainSequelize);
-    
-    // Update status_rid if status name provided
-    if (data.status_name && statusMap.has(data.status_name)) {
-      data.status_rid = statusMap.get(data.status_name);
-    }
-
-    // Update priority_rid if priority name provided
-    if (data.priority_name) {
-      const priorityMap = await this.getPriorityMap(mainSequelize);
-      if (priorityMap.has(data.priority_name)) {
-        data.priority_rid = priorityMap.get(data.priority_name);
+        if (existingStartDate && newEndDate < existingStartDate) {
+          return {
+            statusCode: HttpStatus.BAD_REQUEST,
+            statusMessage: STATUS_MESSAGE.startDateLessThanEndDate,
+            data: null,
+          };
+        }
       }
     }
 
@@ -180,41 +473,14 @@ export default class TaskSummaryGraphqlServices {
     }
 
     // Update task summary
-    const updatedTaskSummary = await orgSequelize.query(
-      rawQueries.updateTaskSummaryQuery(schemaName, getSetData, data)
+    const updatedTaskSummary = await mainSequelize.query(
+      rawQueries.updateTaskSummaryQuery(getSetData, data)
     );
 
     if (updatedTaskSummary) {
       // Fetch latest updated data
-      const fetchLatestUpdatedData = await this.taskSummarySchema.getTaskSummaryById(
-        data.account_rid,
-        data.rid
-      );
-
-      // Add timeline entry
-      await taskSummarySchemaService.addTaskSummaryTimelineForInlineEdit(
-        accountNumber,
-        "update",
-        data.account_rid,
-        data.rid,
-        data.userId
-      );
-
-      // Run aggregation/injestion after update
-      await this.taskInjestionService.runAggregationAfterInlineUpdate(
-        accountNumber,
-        data,
-        existingTaskSummary,
-        data.userId
-      );
-
-      // Add history entry
-      await taskSummarySchemaService.addTaskSummaryHistoryForInline(
-        accountNumber,
-        data,
-        existingTaskSummary,
-        data.rid,
-        data.userId
+      const fetchLatestUpdatedData: any = await mainSequelize.query(
+        await rawQueries.fetchTaskSummaryDetails(data.rid, data.account_rid)
       );
 
       // Structure response
@@ -234,18 +500,18 @@ export default class TaskSummaryGraphqlServices {
         status_name: latestData.status_name,
         priority_rid: latestData.priority_rid,
         priority_name: latestData.priority_name,
-        effective_start_datetime: latestData.effective_start_datetime 
-          ? new Date(latestData.effective_start_datetime).toISOString() 
+        effective_start_datetime: latestData.effective_start_datetime
+          ? new Date(latestData.effective_start_datetime).toISOString()
           : null,
-        effective_end_datetime: latestData.effective_end_datetime 
-          ? new Date(latestData.effective_end_datetime).toISOString() 
+        effective_end_datetime: latestData.effective_end_datetime
+          ? new Date(latestData.effective_end_datetime).toISOString()
           : null,
         task_rid: latestData.task_rid,
         task_details: latestData.task_details,
         created_by: latestData.created_by,
         modified_by: latestData.modified_by,
         created_datetime: latestData.created_datetime,
-        modified_datetime: latestData.modified_datetime
+        modified_datetime: latestData.modified_datetime,
       };
 
       return {
@@ -256,35 +522,10 @@ export default class TaskSummaryGraphqlServices {
     }
 
     return {
-      statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+      statusCode: HttpStatus.FAILED,
       statusMessage: STATUS_MESSAGE.updateFailed,
       data: null,
     };
   }
 
-  private async getTaskStatusMap(mainSequelize: any): Promise<Map<string, string>> {
-    const statusQuery: any = await mainSequelize.query(
-      rawQueries.fetchTaskStatuses()
-    );
-    
-    const statusMap = new Map<string, string>();
-    statusQuery[0].forEach((status: any) => {
-      statusMap.set(status.status_name, status.rid);
-    });
-    
-    return statusMap;
-  }
-
-  private async getPriorityMap(mainSequelize: any): Promise<Map<string, string>> {
-    const priorityQuery: any = await mainSequelize.query(
-      rawQueries.fetchPriorities()
-    );
-    
-    const priorityMap = new Map<string, string>();
-    priorityQuery[0].forEach((priority: any) => {
-      priorityMap.set(priority.priority_name, priority.rid);
-    });
-    
-    return priorityMap;
-  }
 }
