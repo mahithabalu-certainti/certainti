@@ -1496,6 +1496,10 @@ export const rawQueries = {
     query += ` ORDER BY project_name ASC`;
     return query;
   },
+    getAllCasesByAccountId(schemaName: string,accountRid: string) {
+    let query = `SELECT rid FROM ${schemaName}.cases WHERE account_rid = '${accountRid}'`;
+    return query;
+  },
   fetchProjectResourceAndFiscal(schemaName: string) {
   return `
     SELECT 
