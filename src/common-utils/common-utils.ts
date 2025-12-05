@@ -417,6 +417,7 @@ export const createDateField = (
     startValue?: boolean;
     errorMessage?: string;
     clearDate?: string;
+    customDateOpen?: Date;
   }
 ): FieldType => ({
   type: 'date',
@@ -440,6 +441,7 @@ export const createDateField = (
   errorMessage: others.errorMessage,
   clearDate: others.clearDate,
   resetDependsFields: others.resetDependsFields,
+  customDateOpen: others.customDateOpen,
 });
 
 export const createFiscalDateField = (

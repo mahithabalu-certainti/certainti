@@ -251,6 +251,8 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       setDeletedAttachmentIds([]);
       setErrors({});
       setIsAddingCollaborator(false);
+      setLinkedType('');
+      setLinkTaskTypes([]);
     }
   }, [isOpen, taskId]);
 
@@ -272,12 +274,9 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       if (enriched.category) {
         setCategory(enriched.category);
       }
-      if (enriched.linkedType) {
-        setLinkedType(enriched.linkedType);
-      }
-      if (enriched.linkTaskTypes) {
-        setLinkTaskTypes(enriched.linkTaskTypes);
-      }
+      // Always set linkedType and linkTaskTypes to clear previous task's data
+      setLinkedType(enriched.linkedType || '');
+      setLinkTaskTypes(enriched.linkTaskTypes || []);
       setIsLoadingTaskDetails(false);
     }
   }, [rawTask]);
