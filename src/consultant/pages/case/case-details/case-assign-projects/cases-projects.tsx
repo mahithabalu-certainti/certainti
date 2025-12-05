@@ -162,12 +162,16 @@ const CasesProjects: React.FC<casesProjectProps> = ({
     navigate({ search: newParams.toString() }, { replace: true });
   };
   const handleAssignProject = () => {
+    setSearchText('');
+    setSearchReset(true);
     updateSearchParams((params) =>
       params.set('assignProject', 'assigned_to_list')
     );
   };
 
   const handleBackToAssignedProjects = () => {
+    setSearchText('');
+    setSearchReset(true);
     updateSearchParams((params) => {
       params.delete('assignProject');
       return params;
