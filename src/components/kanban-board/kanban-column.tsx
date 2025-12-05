@@ -73,6 +73,7 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
             relationship_connector_rid?: string;
             target_rid?: string[];
             is_new_changes?: boolean;
+            key_name?: string;
           };
           weightage_rid?: string;
           task_category_rid?: string;
@@ -102,6 +103,13 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
                   relationship_connector_rid: formData.linkedTypeRid,
                   target_rid: formData.linkTaskTypeRids,
                   is_new_changes: true,
+                  key_name:
+                    formData.linkedTypeRid &&
+                    formData.linkTaskTypeRids.length > 0
+                      ? 'Linked Type & Linked Task Type'
+                      : formData.linkedTypeRid
+                        ? 'Linked Type'
+                        : 'Linked Task Type',
                 }
               : {},
           ...(formData.weightageRid && {
