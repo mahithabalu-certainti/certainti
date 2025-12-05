@@ -1,7 +1,7 @@
 import { useSelector } from 'react-redux';
 import { TaskList, TasksListURLParams } from '../../../../types/task';
 import { RootState } from '../../../../../store/store';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAllTasksList } from '../../../../services/tasks/tasks-service';
 import {
   ListTableColumn,
@@ -12,12 +12,12 @@ import {
   ManageColumnsPopover,
 } from '../../../../../components/table';
 import {
-  checkPermission,
+  // checkPermission,
   reshapeGlobalFilter,
 } from '../../../../../common-utils';
 import { FilterState } from '../../../../types';
-import { useToast } from '../../../../../hooks';
-import { AllPermissions } from '../../../../../common-service';
+// import { useToast } from '../../../../../hooks';
+// import { AllPermissions } from '../../../../../common-service';
 import { getTaskTableColumns } from './columns';
 
 interface ITaskTableProps {
@@ -45,13 +45,13 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
   columnAnchorEl,
   searchValue,
 }) => {
-  const { errorToast } = useToast();
+  // const { errorToast } = useToast();
   const { fiscalYear, filters } = useSelector<
     RootState,
     { filters: unknown; fiscalYear: string }
   >((state: RootState) => state.account);
   const [taskList, setTaskList] = useState<TaskList[]>([]);
-  const { permission } = useSelector((state: RootState) => state.permission);
+  // const { permission } = useSelector((state: RootState) => state.permission);
   const newFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
 
   const { data, isLoading, isError } = useAllTasksList(
@@ -99,30 +99,30 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
   };
 
   // Permissions
-  const taskViewEditFields = useMemo(
-    () =>
-      permission?.find(
-        (item) => item.name === AllPermissions.ATTACHMENT_VIEW_EDIT
-      )?.fields ?? [],
-    [permission]
-  );
+  // const taskViewEditFields = useMemo(
+  //   () =>
+  //     permission?.find(
+  //       (item) => item.name === AllPermissions.ATTACHMENT_VIEW_EDIT
+  //     )?.fields ?? [],
+  //   [permission]
+  // );
 
-  const isTaskExportEnable = checkPermission(
-    permission,
-    AllPermissions.ATTACHMENT_EXPORT
-  );
+  // const isTaskExportEnable = checkPermission(
+  //   permission,
+  //   AllPermissions.ATTACHMENT_EXPORT
+  // );
 
-  const permissionMap = useMemo(() => {
-    const map: Record<string, { read: boolean; edit: boolean }> = {};
-    taskViewEditFields.forEach((item) => {
-      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
-    });
-    return map;
-  }, [taskViewEditFields]);
+  // const permissionMap = useMemo(() => {
+  //   const map: Record<string, { read: boolean; edit: boolean }> = {};
+  //   taskViewEditFields.forEach((item) => {
+  //     map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+  //   });
+  //   return map;
+  // }, [taskViewEditFields]);
 
   const getRowId = (row: TaskList) => row.task_rid;
 
-  const tasksColumns = getTaskTableColumns(permissionMap);
+  const tasksColumns = getTaskTableColumns();
 
   const [visibleColumns, setVisibleColumns] = useState<
     ListTableColumn<TaskList>[]

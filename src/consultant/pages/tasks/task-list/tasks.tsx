@@ -23,13 +23,13 @@ import {
   reshapeGlobalFilter,
 } from '../../../../common-utils';
 import { FilterState, SelectOption } from '../../../types';
-import { getAttachmentsFilterFields } from '../../../../components/Attachments/helpers';
 import { exportTasksData } from '../../../services/tasks/tasks-service';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
 import { FilterValue } from '../../account-details-sidebar/components/filter/filterType';
 import { AccessRestricted } from '../../../../components/account-restricted';
 import SearchBar from '../../../../components/search/search-bar';
+import { getTaskFilterFields } from './table/filter-fields';
 
 export const Tasks: React.FC = () => {
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({});
@@ -166,26 +166,23 @@ export const Tasks: React.FC = () => {
   };
 
   // Permissions
-  const attachmentEditFields = useMemo(
-    () =>
-      permission?.find(
-        (item) => item.name === AllPermissions.ATTACHMENT_VIEW_EDIT
-      )?.fields ?? [],
-    [permission]
-  );
+  // const attachmentEditFields = useMemo(
+  //   () =>
+  //     permission?.find(
+  //       (item) => item.name === AllPermissions.ATTACHMENT_VIEW_EDIT
+  //     )?.fields ?? [],
+  //   [permission]
+  // );
 
-  const permissionMap = useMemo(() => {
-    const map: Record<string, { read: boolean; edit: boolean }> = {};
-    attachmentEditFields.forEach((item) => {
-      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
-    });
-    return map;
-  }, [attachmentEditFields]);
+  // const permissionMap = useMemo(() => {
+  //   const map: Record<string, { read: boolean; edit: boolean }> = {};
+  //   attachmentEditFields.forEach((item) => {
+  //     map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+  //   });
+  //   return map;
+  // }, [attachmentEditFields]);
 
-  const attachmentsFilterFields = getAttachmentsFilterFields(
-    fieldOptions,
-    permissionMap
-  );
+  const TaskFilterFields = getTaskFilterFields();
 
   const menuItems = [
     {
@@ -303,7 +300,7 @@ export const Tasks: React.FC = () => {
               isOpen={isFilterOpen}
               filterAnchorEl={anchorEl}
               filterId={filterId}
-              filterMenu={attachmentsFilterFields}
+              filterMenu={TaskFilterFields}
               setAppliedFilters={setAppliedFilters}
               handleCloseFilter={handleCloseFilter}
               setCurrentPage={(pageNo) => {
