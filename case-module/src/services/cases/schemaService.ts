@@ -85,6 +85,10 @@ import { CommentsAttachments, setupCommentsAttachmentsSequence } from "../../mod
 import { setupTaskAttachmentsSequence, TaskAttachments } from "../../models/taskAttachmentModel";
 import { CaseTaskWorkflowConnector, setupCaseTaskWorkflowConnectorSequence } from "../../models/caseTaskWorkflowConnectorModel";
 import {v4 as uuidv4} from 'uuid'
+import { CaseProjectFiscalRegion, setupCaseProjectFiscalRegionSequence } from "../../models/caseProjectFiscalRegionModel";
+import { CaseProjectResourceFiscal, setupCaseProjectResourceFiscalSequence } from "../../models/caseProjectResourceFiscalModel";
+import { CaseProjectResource, setupCaseProjectResourceSequence } from "../../models/caseProjectResourceModel";
+import { CaseProjectTask, setupCaseProjectTaskSequence } from "../../models/caseProjectTaskModel";
 import { TaskHistory } from "../../models/taskHistory";
 import { WorkflowConnector } from "../../models/workflowConnectorModel";
 
@@ -659,6 +663,22 @@ return !response;
         orgDbSequlize,
         schemaName
       )
+      const CaseProjectFiscalRegionModel = CaseProjectFiscalRegion.initialize(
+        orgDbSequlize,
+        schemaName
+      )
+      const CaseProjectResourceModel = CaseProjectResource.initialize(
+        orgDbSequlize,
+        schemaName
+      )
+      const CaseProjectResourceFiscalModel = CaseProjectResourceFiscal.initialize(
+        orgDbSequlize,
+        schemaName
+      )
+      const CaseProjectTaskModel = CaseProjectTask.initialize(
+        orgDbSequlize,
+        schemaName
+      )
 
       await CaseModel.sync({ force: false });
       await setupCaseSequence(orgDbSequlize, schemaName);
@@ -690,6 +710,14 @@ return !response;
       await setupCaseHistorySubmissionSequence(orgDbSequlize, schemaName);
       await CaseTaskWorkflowConnectorModel.sync({force : false});
       await setupCaseTaskWorkflowConnectorSequence(orgDbSequlize, schemaName)
+      await CaseProjectFiscalRegionModel.sync({ force: false });
+      await setupCaseProjectFiscalRegionSequence(orgDbSequlize, schemaName)
+      await CaseProjectResourceModel.sync({ force: false });
+      await setupCaseProjectResourceSequence(orgDbSequlize, schemaName)
+      await CaseProjectResourceFiscalModel.sync({ force: false });
+      await setupCaseProjectResourceFiscalSequence(orgDbSequlize, schemaName)
+      await CaseProjectTaskModel.sync({ force: false });
+      await setupCaseProjectTaskSequence(orgDbSequlize, schemaName)
     } catch (err) {
       console.log(err)
       errorLog("Error creating case tables", (err as Error).message);
@@ -1973,12 +2001,320 @@ return !response;
 
 }
 
-  async assignProjectToCase(
-    data: assignProjectType,
-    accountNumber: string,
-    schemaName: string
+  async insertCaseTabels(
+      data: assignProjectType,
+      accountNumber: string,
+      schemaName: string
   ) {
-    const { CaseProject, Case, CaseSummary } =
+      const { CaseProjectResource, CaseProjectResourceFiscal, ProjectResource, ProjectResourceFiscal, CaseProjectTask, ProjectTask, CaseProjectFiscalRegion, ProjectFiscalRegion } =
+          await this.caseModelService.getModels(accountNumber);
+
+      if (!this.mainDbSequelize) {
+          this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+      }
+      if (!this.orgDbSequelize) {
+          this.orgDbSequelize = await this.caseModelService.getSequelize();
+      }
+
+      let iterationCount = 0;
+      const totalCount = data.projects.length;
+
+      for (const p of data.projects) {
+
+          const projectFiscalRegionRecords = await ProjectFiscalRegion.findAll({
+              where: {
+                  project_rid: p.project_rid,
+                  project_fiscal_rid: p.project_fiscal_rid,
+                  account_rid: data.account_rid
+              }
+          });
+
+          if (projectFiscalRegionRecords.length > 0) {
+              const caseProjectFiscalRegionData = projectFiscalRegionRecords.map(regionRecord => ({
+                  project_fiscal_region_rid: regionRecord.rid,
+                  case_project_rid: p.project_case_rid || '',
+                  case_rid: data.case_rid,
+                  project_rid: regionRecord.project_rid,
+                  project_code: regionRecord.project_code || '',
+                  project_fiscal_rid: regionRecord.project_fiscal_rid,
+                  fiscal_year: regionRecord.fiscal_year,
+                  created_by: data.created_by,
+                  created_datetime: new Date(),
+                  eid: regionRecord.eid,
+                  industry_rid: regionRecord.industry_rid,
+                  industry_name: regionRecord.industry_name,
+                  project_name: regionRecord.project_name,
+                  program_name: regionRecord.program_name,
+                  project_type_rid: regionRecord.project_type_rid,
+                  project_classification_rid: regionRecord.project_classification_rid,
+                  project_classification_other: regionRecord.project_classification_other,
+                  project_client_group: regionRecord.project_client_group,
+                  project_group: regionRecord.project_group,
+                  auto_send_ai_interaction: regionRecord.auto_send_ai_interaction || false,
+                  account_rid: regionRecord.account_rid,
+                  country_rid: regionRecord.country_rid,
+                  region_rid: regionRecord.region_rid,
+                  currency_rid: regionRecord.currency_rid,
+                  max_ai_interaction: regionRecord.max_ai_interaction || 0,
+                  expiry_duration: regionRecord.expiry_duration,
+                  auto_access_rd: regionRecord.auto_access_rd,
+                  status_rid: regionRecord.status_rid || '',
+                  project_startdate: regionRecord.project_startdate,
+                  project_enddate: regionRecord.project_enddate,
+                  total_fte_prj: regionRecord.total_fte_prj,
+                  total_fte_from_prj_res: regionRecord.total_fte_from_prj_res,
+                  total_fte_from_tasks: regionRecord.total_fte_from_tasks,
+                  total_subcon_prj: regionRecord.total_subcon_prj,
+                  total_subcon_from_prj_res: regionRecord.total_subcon_from_prj_res,
+                  total_subcon_from_tasks: regionRecord.total_subcon_from_tasks,
+                  total_nonlabor_prj: regionRecord.total_nonlabor_prj,
+                  total_nonlabor_from_prj_res: regionRecord.total_nonlabor_from_prj_res,
+                  total_resources_prj: regionRecord.total_resources_prj,
+                  total_resources_from_prj_res: regionRecord.total_resources_from_prj_res,
+                  total_resources_from_tasks: regionRecord.total_resources_from_tasks,
+                  total_effort_prj: regionRecord.total_effort_prj,
+                  total_effort_fte_prj: regionRecord.total_effort_fte_prj,
+                  total_effort_subcon_prj: regionRecord.total_effort_subcon_prj,
+                  total_effort_from_prj_res: regionRecord.total_effort_from_prj_res,
+                  total_effort_fte_from_prj_res: regionRecord.total_effort_fte_from_prj_res,
+                  total_effort_subcon_from_prj_res: regionRecord.total_effort_subcon_from_prj_res,
+                  total_effort_from_tasks: regionRecord.total_effort_from_tasks,
+                  total_effort_fte_from_tasks: regionRecord.total_effort_fte_from_tasks,
+                  total_effort_subcon_from_tasks: regionRecord.total_effort_subcon_from_tasks,
+                  total_cost_prj: regionRecord.total_cost_prj,
+                  total_cost_fte_prj: regionRecord.total_cost_fte_prj,
+                  total_cost_subcon_prj: regionRecord.total_cost_subcon_prj,
+                  total_cost_nonlabor_prj: regionRecord.total_cost_nonlabor_prj,
+                  total_cost_from_prj_res: regionRecord.total_cost_from_prj_res,
+                  total_cost_fte_from_prj_res: regionRecord.total_cost_fte_from_prj_res,
+                  total_cost_subcon_from_prj_res: regionRecord.total_cost_subcon_from_prj_res,
+                  total_cost_nonlabor_from_prj_res: regionRecord.total_cost_nonlabor_from_prj_res,
+                  total_cost_from_tasks: regionRecord.total_cost_from_tasks,
+                  total_cost_fte_from_tasks: regionRecord.total_cost_fte_from_tasks,
+                  total_cost_subcon_from_tasks: regionRecord.total_cost_subcon_from_tasks,
+                  total_cost_prj_blended: regionRecord.total_cost_prj_blended,
+                  total_cost_fte_prj_blended: regionRecord.total_cost_fte_prj_blended,
+                  total_cost_subcon_prj_blended: regionRecord.total_cost_subcon_prj_blended,
+                  total_cost_from_prj_res_blended: regionRecord.total_cost_from_prj_res_blended,
+                  total_cost_fte_from_prj_res_blended: regionRecord.total_cost_fte_from_prj_res_blended,
+                  total_cost_subcon_from_prj_res_blended: regionRecord.total_cost_subcon_from_prj_res_blended,
+                  total_cost_from_tasks_blended: regionRecord.total_cost_from_tasks_blended,
+                  total_cost_fte_from_tasks_blended: regionRecord.total_cost_fte_from_tasks_blended,
+                  total_cost_subcon_from_tasks_blended: regionRecord.total_cost_subcon_from_tasks_blended,
+                  blended_rate_fte: regionRecord.blended_rate_fte,
+                  blended_rate_subcon: regionRecord.blended_rate_subcon,
+                  rd_percent_potential_ai: regionRecord.rd_percent_potential_ai,
+                  rd_percent_adjustment: regionRecord.rd_percent_adjustment,
+                  rd_percent_final: regionRecord.rd_percent_final,
+                  qre_fte: regionRecord.qre_fte,
+                  qre_subcon: regionRecord.qre_subcon,
+                  qre_nonlabor: regionRecord.qre_nonlabor,
+                  qre_final: regionRecord.qre_final,
+                  rd_credits_fte_fed_level: regionRecord.rd_credits_fte_fed_level,
+                  rd_credits_subcon_fed_level: regionRecord.rd_credits_subcon_fed_level,
+                  rd_credits_nonlabor_fed_level: regionRecord.rd_credits_nonlabor_fed_level,
+                  rd_credits_fed_level: regionRecord.rd_credits_fed_level,
+                  rd_credits_total: regionRecord.rd_credits_total,
+                  effective_total_fte: regionRecord.effective_total_fte,
+                  effective_total_subcon: regionRecord.effective_total_subcon,
+                  effective_total_nonlabor: regionRecord.effective_total_nonlabor,
+                  effective_cost: regionRecord.effective_cost,
+                  effective_effort: regionRecord.effective_effort,
+                  effective_fte_cost: regionRecord.effective_fte_cost,
+                  effective_fte_effort: regionRecord.effective_fte_effort,
+                  effective_subcon_cost: regionRecord.effective_subcon_cost,
+                  effective_subcon_effort: regionRecord.effective_subcon_effort,
+                  effective_nonlabor_cost: regionRecord.effective_nonlabor_cost,
+                  effective_metric_type: regionRecord.effective_metric_type,
+                  default_metric_type: regionRecord.default_metric_type,
+                  interaction_cc_list: regionRecord.interaction_cc_list,
+                  assessment_status: regionRecord.assessment_status,
+                  claim_status: regionRecord.claim_status,
+                  comments: regionRecord.comments,
+                  project_description: regionRecord.project_description,
+                  total_nonlabor_from_tasks: regionRecord.total_nonlabor_from_tasks,
+              }));
+
+              await CaseProjectFiscalRegion.bulkCreate(caseProjectFiscalRegionData);
+          }
+
+
+          // Insert CaseProjectResource data
+          const projectResourceRecords = await ProjectResource.findAll({
+              where: {
+                  project_rid: p.project_rid,
+                  project_fiscal_rid: p.project_fiscal_rid,
+                  account_rid: data.account_rid
+              }
+          });
+
+          if (projectResourceRecords.length > 0) {
+              const caseProjectResourceData = projectResourceRecords.map(resourceRecord => ({
+                  project_resource_rid: resourceRecord.rid,
+                  case_project_rid: p.project_case_rid || '',
+                  account_rid: resourceRecord.account_rid,
+                  case_rid: data.case_rid,
+                  project_rid: resourceRecord.project_rid,
+                  project_fiscal_rid: resourceRecord.project_fiscal_rid,
+                  project_resource_code: resourceRecord.project_resource_code,
+                  resource_rid: resourceRecord.resource_rid,
+                  fiscal_year: resourceRecord.fiscal_year,
+                  created_by: data.created_by,
+                  created_datetime: new Date(),
+                  eid: resourceRecord.eid,
+                  start_date: resourceRecord.start_date,
+                  end_date: resourceRecord.end_date,
+                  country_rid: resourceRecord.country_rid,
+                  region_rid: resourceRecord.region_rid,
+                  currency_rid: resourceRecord.currency_rid,
+                  total_hours_pro_res: resourceRecord.total_hours_pro_res,
+                  total_cost_pro_res: resourceRecord.total_cost_pro_res,
+                  description: resourceRecord.description,
+                  status_rid: resourceRecord.status_rid,
+                  salary: resourceRecord.salary,
+                  bonus: resourceRecord.bonus,
+                  insurance: resourceRecord.insurance,
+                  deductions: resourceRecord.deductions,
+                  assigned_skill_role_type_rid: resourceRecord.assigned_skill_role_type_rid,
+                  qre_percent: resourceRecord.qre_percent,
+                  project_resource_role: resourceRecord.project_resource_role,
+                  net_total_cost_pro_res: resourceRecord.net_total_cost_pro_res,
+                  effort_project_resource_level: resourceRecord.effort_project_resource_level,
+                  cost_project_resource_level: resourceRecord.cost_project_resource_level,
+                  total_hours_from_tasks: resourceRecord.total_hours_from_tasks,
+                  total_cost_from_tasks: resourceRecord.total_cost_from_tasks,
+                  qre_final: resourceRecord.qre_final,
+              }));
+
+              await CaseProjectResource.bulkCreate(caseProjectResourceData);
+          }
+
+          // Insert CaseProjectResourceFiscal data
+          const projectResourceFiscalRecords = await ProjectResourceFiscal.findAll({
+              where: {
+                  project_rid: p.project_rid,
+                  project_fiscal_rid: p.project_fiscal_rid,
+                  account_rid: data.account_rid
+              }
+          });
+
+          if (projectResourceFiscalRecords.length > 0) {
+              const caseProjectResourceFiscalData = projectResourceFiscalRecords.map(fiscalRecord => ({
+                  project_resource_fiscal_rid: fiscalRecord.rid,
+                  case_project_rid: p.project_case_rid || '',
+                  account_rid: fiscalRecord.account_rid,
+                  case_rid: data.case_rid,
+                  project_rid: fiscalRecord.project_rid,
+                  project_fiscal_rid: fiscalRecord.project_fiscal_rid,
+                  resource_rid: fiscalRecord.resource_rid,
+                  fiscal_year: fiscalRecord.fiscal_year,
+                  created_by: data.created_by,
+                  created_datetime: new Date(),
+                  eid: fiscalRecord.eid,
+                  total_hours_pro_res: fiscalRecord.total_hours_pro_res,
+                  total_cost_pro_res: fiscalRecord.total_cost_pro_res,
+                  status_rid: fiscalRecord.status_rid,
+                  country_rid: fiscalRecord.country_rid,
+                  region_rid: fiscalRecord.region_rid,
+                  currency_rid: fiscalRecord.currency_rid,
+                  description: fiscalRecord.description,
+                  effort_project_resource_level: fiscalRecord.effort_project_resource_level,
+                  cost_project_resource_level: fiscalRecord.cost_project_resource_level,
+                  cost_project_task_level: fiscalRecord.cost_project_task_level,
+                  blended_cost_project_task_level: fiscalRecord.blended_cost_project_task_level,
+                  blended_cost_project_resource_level: fiscalRecord.blended_cost_project_resource_level,
+                  effort_project_task_level: fiscalRecord.effort_project_task_level,
+                  total_hours_from_tasks: fiscalRecord.total_hours_from_tasks,
+                  total_cost_from_tasks: fiscalRecord.total_cost_from_tasks,
+                  total_cost_from_tasks_blended: fiscalRecord.total_cost_from_tasks_blended,
+                  rd_percent_potential_ai: fiscalRecord.rd_percent_potential_ai,
+                  rd_percent_adjustment: fiscalRecord.rd_percent_adjustment,
+                  rd_percent_final: fiscalRecord.rd_percent_final,
+                  qre_fte: fiscalRecord.qre_fte,
+                  qre_subcon: fiscalRecord.qre_subcon,
+                  qre_nonlabor: fiscalRecord.qre_nonlabor,
+                  qre_final: fiscalRecord.qre_final,
+                  rd_credits_fte_region_level: fiscalRecord.rd_credits_fte_region_level,
+                  rd_credits_subcon_region_level: fiscalRecord.rd_credits_subcon_region_level,
+                  rd_credits_nonlabor_region_level: fiscalRecord.rd_credits_nonlabor_region_level,
+                  rd_credits_region_level: fiscalRecord.rd_credits_region_level,
+                  rd_credits_fte_fed_level: fiscalRecord.rd_credits_fte_fed_level,
+                  rd_credits_subcon_fed_level: fiscalRecord.rd_credits_subcon_fed_level,
+                  rd_credits_nonlabor_fed_level: fiscalRecord.rd_credits_nonlabor_fed_level,
+                  rd_credits_fed_level: fiscalRecord.rd_credits_fed_level,
+                  rd_credits_total: fiscalRecord.rd_credits_total
+              }));
+
+              await CaseProjectResourceFiscal.bulkCreate(caseProjectResourceFiscalData);
+          }
+
+          const projectTaskRecords = await ProjectTask.findAll({
+              where: {
+                  project_rid: p.project_rid,
+                  project_fiscal_rid: p.project_fiscal_rid,
+                  account_rid: data.account_rid,
+              }
+          });
+
+          if (projectTaskRecords.length > 0) {
+              const caseProjectTaskData = projectTaskRecords.map(taskRecord => ({
+                  project_task_rid: taskRecord.rid,
+                  case_project_rid: p.project_case_rid || '',
+                  account_rid: taskRecord.account_rid,
+                  case_rid: data.case_rid,
+                  project_rid: taskRecord.project_rid,
+                  project_fiscal_rid: taskRecord.project_fiscal_rid,
+                  project_resource_code: taskRecord.project_resource_code,
+                  resource_rid: taskRecord.resource_rid,
+                  fiscal_year: taskRecord.fiscal_year,
+                  created_by: data.created_by,
+                  created_datetime: new Date(),
+                  eid: taskRecord.eid,
+                  task_name: taskRecord.task_name,
+                  task_description: taskRecord.task_description,
+                  task_type_rid: taskRecord.task_type_rid,
+                  task_classification_rid: taskRecord.task_classification_rid,
+                  start_date: taskRecord.start_date,
+                  end_date: taskRecord.end_date,
+                  country_rid: taskRecord.country_rid,
+                  region_rid: taskRecord.region_rid,
+                  currency_rid: taskRecord.currency_rid,
+                  total_hours_pro_task: taskRecord.total_hours_pro_task,
+                  total_cost_pro_task: taskRecord.total_cost_pro_task,
+                  comments: taskRecord.comments,
+                  status_rid: taskRecord.status_rid,
+                  project_resource_rid: taskRecord.project_resource_rid
+              }));
+
+
+              await CaseProjectTask.bulkCreate(caseProjectTaskData);
+          }
+
+          iterationCount++;
+      }
+
+      if (totalCount === iterationCount) {
+          const statusMessage = totalCount === 1
+              ? STATUS_MESSAGE.singleProjectAssignedSuccess
+              : STATUS_MESSAGE.multipleProjectAssignedSuccess;
+
+          return {
+              statusCode: HttpStatus.SUCCESS,
+              statusMessage
+          };
+      } else {
+          return {
+              statusCode: HttpStatus.FAILED,
+              statusMessage: STATUS_MESSAGE.projectAssignFailed,
+          }}}
+            
+  async assignProjectToCase(
+      data: assignProjectType,
+      accountNumber: string,
+      schemaName: string
+  ) {      
+
+    const { CaseProject, Case, CaseSummary, ProjectFiscal } =
       await this.caseModelService.getModels(accountNumber);
     if (!this.mainDbSequelize) {
       this.mainDbSequelize = await this.caseModelService.getMainSequelize();
@@ -1995,21 +2331,123 @@ return !response;
     const findProjects = await this.orgDbSequelize.query(rawQueries.getProjectByIds(collectProjectFiscalIds, schemaName))
     const mapProjectById : Map<string, any> = new Map(findProjects[0].map((d : any) => [d.rid, d]));
     for (let p of data.projects) {
-      const projectData = mapProjectById.get(p.project_fiscal_rid);
+          // Insert CaseProjectResource data
+          const projectFiscalRecords = await ProjectFiscal.findAll({
+              where: {
+                  project_rid: p.project_rid,
+                  rid: p.project_fiscal_rid,
+                  account_rid: data.account_rid
+              }
+          });
 
-      await CaseProject.create({
-        case_rid: data.case_rid,
-        account_rid: data.account_rid,
-        created_by: data.created_by,
-        created_datetime: new Date(),
-        project_rid: p.project_rid,
-        project_group: p.project_group,
-        project_fiscal_rid: p.project_fiscal_rid,
-        project_code : projectData.project_code,
-        fiscal_year : projectData.fiscal_year,
-        max_ai_interaction : projectData.max_ai_interaction
-      });
-      iterationCount += 1;
+          const projectFiscal = projectFiscalRecords.length > 0 ? projectFiscalRecords[0] : null;
+
+          const createdCaseProject = await CaseProject.create({
+              case_rid: data.case_rid,
+              account_rid: data.account_rid,
+              created_by: data.created_by,
+              created_datetime: new Date(),
+              project_rid: p.project_rid,
+              project_group: p.project_group,
+              project_fiscal_rid: p.project_fiscal_rid,
+              project_code: projectFiscal?.project_code || '',
+              industry_rid: projectFiscal?.industry_rid,
+              industry_name: projectFiscal?.industry_name,
+              fiscal_year: projectFiscal?.fiscal_year,
+              project_name: projectFiscal?.project_name,
+              program_name: projectFiscal?.program_name,
+              project_classification_rid: projectFiscal?.project_classification_rid,
+              project_classification_other: projectFiscal?.project_classification_other,
+              project_client_group: projectFiscal?.project_client_group,
+              auto_send_ai_interaction: projectFiscal?.auto_send_ai_interaction || false,
+              country_rid: projectFiscal?.country_rid,
+              region_rid: projectFiscal?.region_rid,
+              currency_rid: projectFiscal?.currency_rid,
+              max_ai_interaction: projectFiscal?.max_ai_interaction || 0,
+              expiry_duration: projectFiscal?.expiry_duration,
+              auto_access_rd: projectFiscal?.auto_access_rd,
+              project_startdate: projectFiscal?.project_startdate,
+              project_enddate: projectFiscal?.project_enddate,
+              total_fte_prj: projectFiscal?.total_fte_prj || 0,
+              total_fte_from_prj_res: projectFiscal?.total_fte_from_prj_res || 0,
+              total_fte_from_tasks: projectFiscal?.total_fte_from_tasks || 0,
+              total_subcon_prj: projectFiscal?.total_subcon_prj || 0,
+              total_subcon_from_prj_res: projectFiscal?.total_subcon_from_prj_res || 0,
+              total_subcon_from_tasks: projectFiscal?.total_subcon_from_tasks || 0,
+              total_nonlabor_prj: projectFiscal?.total_nonlabor_prj || 0,
+              total_nonlabor_from_prj_res: projectFiscal?.total_nonlabor_from_prj_res || 0,
+              total_resources_prj: projectFiscal?.total_resources_prj || 0,
+              total_resources_from_prj_res: projectFiscal?.total_resources_from_prj_res || 0,
+              total_resources_from_tasks: projectFiscal?.total_resources_from_tasks || 0,
+              total_effort_prj: projectFiscal?.total_effort_prj || 0,
+              total_effort_fte_prj: projectFiscal?.total_effort_fte_prj || 0,
+              total_effort_subcon_prj: projectFiscal?.total_effort_subcon_prj || 0,
+              total_effort_from_prj_res: projectFiscal?.total_effort_from_prj_res || 0,
+              total_effort_fte_from_prj_res: projectFiscal?.total_effort_fte_from_prj_res || 0,
+              total_effort_subcon_from_prj_res: projectFiscal?.total_effort_subcon_from_prj_res || 0,
+              total_effort_from_tasks: projectFiscal?.total_effort_from_tasks || 0,
+              total_effort_fte_from_tasks: projectFiscal?.total_effort_fte_from_tasks || 0,
+              total_effort_subcon_from_tasks: projectFiscal?.total_effort_subcon_from_tasks || 0,
+              total_cost_prj: projectFiscal?.total_cost_prj || 0,
+              total_cost_fte_prj: projectFiscal?.total_cost_fte_prj || 0,
+              total_cost_subcon_prj: projectFiscal?.total_cost_subcon_prj || 0,
+              total_cost_nonlabor_prj: projectFiscal?.total_cost_nonlabor_prj || 0,
+              total_cost_from_prj_res: projectFiscal?.total_cost_from_prj_res || 0,
+              total_cost_fte_from_prj_res: projectFiscal?.total_cost_fte_from_prj_res || 0,
+              total_cost_subcon_from_prj_res: projectFiscal?.total_cost_subcon_from_prj_res || 0,
+              total_cost_nonlabor_from_prj_res: projectFiscal?.total_cost_nonlabor_from_prj_res || 0,
+              total_cost_from_tasks: projectFiscal?.total_cost_from_tasks || 0,
+              total_cost_fte_from_tasks: projectFiscal?.total_cost_fte_from_tasks || 0,
+              total_cost_subcon_from_tasks: projectFiscal?.total_cost_subcon_from_tasks || 0,
+              total_cost_prj_blended: projectFiscal?.total_cost_prj_blended || 0,
+              total_cost_fte_prj_blended: projectFiscal?.total_cost_fte_prj_blended || 0,
+              total_cost_subcon_prj_blended: projectFiscal?.total_cost_subcon_prj_blended || 0,
+              total_cost_from_prj_res_blended: projectFiscal?.total_cost_from_prj_res_blended || 0,
+              total_cost_fte_from_prj_res_blended: projectFiscal?.total_cost_fte_from_prj_res_blended || 0,
+              total_cost_subcon_from_prj_res_blended: projectFiscal?.total_cost_subcon_from_prj_res_blended || 0,
+              total_cost_from_tasks_blended: projectFiscal?.total_cost_from_tasks_blended || 0,
+              total_cost_fte_from_tasks_blended: projectFiscal?.total_cost_fte_from_tasks_blended || 0,
+              total_cost_subcon_from_tasks_blended: projectFiscal?.total_cost_subcon_from_tasks_blended || 0,
+              blended_rate_fte: projectFiscal?.blended_rate_fte || 0,
+              blended_rate_subcon: projectFiscal?.blended_rate_subcon || 0,
+              rd_percent_potential_ai: projectFiscal?.rd_percent_potential_ai || 0,
+              rd_percent_adjustment: projectFiscal?.rd_percent_adjustment || 0,
+              rd_percent_final: projectFiscal?.rd_percent_final || 0,
+              qre_fte: projectFiscal?.qre_fte || 0,
+              qre_subcon: projectFiscal?.qre_subcon || 0,
+              qre_nonlabor: projectFiscal?.qre_nonlabor || 0,
+              qre_final: projectFiscal?.qre_final || 0,
+              rd_credits_fte_fed_level: projectFiscal?.rd_credits_fte_fed_level || 0,
+              rd_credits_subcon_fed_level: projectFiscal?.rd_credits_subcon_fed_level || 0,
+              rd_credits_nonlabor_fed_level: projectFiscal?.rd_credits_nonlabor_fed_level || 0,
+              rd_credits_fed_level: projectFiscal?.rd_credits_fed_level || 0,
+              rd_credits_total: projectFiscal?.rd_credits_total || 0,
+              interaction_cc_list: projectFiscal?.interaction_cc_list,
+              assessment_status: projectFiscal?.assessment_status,
+              claim_status: projectFiscal?.claim_status,
+              comments: projectFiscal?.comments,
+              project_description: projectFiscal?.project_description,
+              status_rid: projectFiscal?.status_rid,
+              project_type_rid: projectFiscal?.project_type_rid,
+              effective_total_fte: projectFiscal?.effective_total_fte || 0,
+              effective_total_subcon: projectFiscal?.effective_total_subcon || 0,
+              effective_total_nonlabor: projectFiscal?.effective_total_nonlabor || 0,
+              effective_cost: projectFiscal?.effective_cost || 0,
+              effective_effort: projectFiscal?.effective_effort || 0,
+              effective_fte_cost: projectFiscal?.effective_fte_cost || 0,
+              effective_fte_effort: projectFiscal?.effective_fte_effort || 0,
+              effective_subcon_cost: projectFiscal?.effective_subcon_cost || 0,
+              effective_subcon_effort: projectFiscal?.effective_subcon_effort || 0,
+              effective_nonlabor_cost: projectFiscal?.effective_nonlabor_cost || 0,
+              effective_metric_type: projectFiscal?.effective_metric_type,
+              default_metric_type: projectFiscal?.default_metric_type,
+              // is_rd_claim_qualified: projectFiscal?.is_rd_claim_qualified || false,
+              rd_percent_potential_ai_updated: projectFiscal?.rd_percent_potential_ai_updated || 0,
+              total_nonlabor_from_tasks: projectFiscal?.total_nonlabor_from_tasks || 0,
+
+          });
+          p.project_case_rid = createdCaseProject.rid;
+          iterationCount += 1;
     }
     if (totalCount === iterationCount) {
       const getTotalProjects : any = await this.orgDbSequelize.query(
@@ -2040,17 +2478,20 @@ return !response;
         return {
           statusCode: HttpStatus.SUCCESS,
           statusMessage: STATUS_MESSAGE.singleProjectAssignedSuccess,
+          data: data,
         };
       } else {
         return {
           statusCode: HttpStatus.SUCCESS,
           statusMessage: STATUS_MESSAGE.multipleProjectAssignedSuccess,
+          data: data,
         };
       }
-    } else {
+    }
+    else {
       return {
         statusCode: HttpStatus.FAILED,
-        statusMessage: STATUS_MESSAGE.multipleProjectAssignedSuccess,
+        statusMessage: STATUS_MESSAGE.projectAssignFailed,
       };
     }
   }
@@ -2119,9 +2560,9 @@ return !response;
   }
 
   async deletedAssignedProject(
-    data: assignProjectType,
-    accountNumber: string,
-    schemaName: string
+      data: assignProjectType,
+      accountNumber: string,
+      schemaName: string
   ) {
     const { CaseProject } = await this.caseModelService.getModels(
       accountNumber
@@ -2138,6 +2579,34 @@ return !response;
     totalCount = data.projects.length;
 
     for (let p of data.projects) {
+      await CaseProjectTask.destroy({
+        where: {
+            case_rid: data.case_rid,
+            account_rid: data.account_rid,
+            project_fiscal_rid: p.project_fiscal_rid,
+        },
+      });
+      await CaseProjectResourceFiscal.destroy({
+        where: {
+            case_rid: data.case_rid,
+            account_rid: data.account_rid,
+            project_fiscal_rid: p.project_fiscal_rid,
+        },
+      })
+      await CaseProjectResource.destroy({
+        where: {
+            case_rid: data.case_rid,
+            account_rid: data.account_rid,
+            project_fiscal_rid: p.project_fiscal_rid,
+        },
+      });
+      await CaseProjectFiscalRegion.destroy({
+        where: {
+            case_rid: data.case_rid,
+            account_rid: data.account_rid,
+            project_fiscal_rid: p.project_fiscal_rid,
+        },
+      });
       await CaseProject.destroy({
         where: {
           case_rid: data.case_rid,
@@ -2179,10 +2648,11 @@ return !response;
           statusMessage: STATUS_MESSAGE.multipleProjectDeletedSuccess,
         };
       }
-    } else {
+    }
+    else {
       return {
-        statusCode: HttpStatus.FAILED,
-        statusMessage: STATUS_MESSAGE.projectAssignFailed,
+          statusCode: HttpStatus.FAILED,
+          statusMessage: STATUS_MESSAGE.projectAssignFailed,
       };
     }
   }
@@ -2201,8 +2671,10 @@ return !response;
           case_rid: data.case_rid,
           project_fiscal_rid: p.project_fiscal_rid,
           project_rid: p.project_rid,
-          project_group: p.project_group,
-        },
+          project_group: p.project_group === '' 
+            ? { [Op.or]: ['', null] }  
+            : p.project_group           
+        }
       });
       if (!checkProjectAlreadyMapped) {
         return {
