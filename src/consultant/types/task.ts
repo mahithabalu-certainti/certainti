@@ -1,22 +1,29 @@
 export type TaskList = {
-  task_rid: string;
-  task_id: string;
-  task_name: string;
-  task_description: string | null;
-  fiscal_year: number;
-  assignee: string | null;
-  assignee_rid: string | null;
-  priority: string | null;
-  priority_rid: string | null;
-  status: string;
-  status_rid: string;
-  related_entity: string | null;
-  related_to_id: string | null;
-  related_to_name: string | null;
+  rid: string;
+  r_number: string;
   created_by: string;
-  created_on: string;
   modified_by: string | null;
-  modified_on: string | null;
+  created_datetime: string;
+  modified_datetime: string | null;
+  account_rid: string;
+  attach_to: string;
+  attachment_level: string;
+  task_name: string;
+  description: string;
+  fiscal_year: number;
+  assigned_to: string;
+  status_rid: string;
+  priority_rid: string;
+  effective_start_datetime: string;
+  effective_end_datetime: string;
+  task_rid: string;
+  created_by_name: string;
+  modified_by_name: string | null;
+  status_name: string | null;
+  priority_name: string | null;
+  assigned_to_name: string;
+  account_status_rid: string;
+  account_status_name: string;
 };
 
 export interface GlobalFilters {

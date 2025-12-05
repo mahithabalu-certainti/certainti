@@ -117,28 +117,6 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
     taskViewEditFields.forEach((item) => {
       map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
     });
-    // Default permissions for task columns
-    const defaultColumns = [
-      'task_id',
-      'task_name',
-      'task_description',
-      'fiscal_year',
-      'assignee',
-      'priority',
-      'status',
-      'related_entity',
-      'related_to_id',
-      'related_to_name',
-      'created_by',
-      'created_on',
-      'modified_by',
-      'modified_on',
-    ];
-    defaultColumns.forEach((col) => {
-      if (!map[col]) {
-        map[col] = { read: true, edit: false };
-      }
-    });
     return map;
   }, [taskViewEditFields]);
 
@@ -162,7 +140,7 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
 
   const RestrictedColumns = [
     {
-      id: 'task_id',
+      id: 'r_number',
       canHide: false,
       canDrag: false,
     },

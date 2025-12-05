@@ -1,141 +1,172 @@
 import { useQuery, UseQueryResult } from '@tanstack/react-query';
+import { caseServiceApi } from '../../../api/api';
+import { TasksListURL, TasksExportListURL } from '../urls/tasks-url';
 import {
   TaskList,
-  TasksListURLParams,
+  TaskListResponse,
   TasksListExportParams,
+  TasksListURLParams,
 } from '../../types/task';
 
-// Mock data generator
-const generateMockTasks = (count: number = 50): TaskList[] => {
-  const mockTasks: TaskList[] = [];
-  const priorities = ['High', 'Medium', 'Low'];
-  const statuses = ['Not Started', 'In Progress', 'Completed', 'On Hold'];
-  const relatedEntities = ['Project', 'Case', 'Account', null];
-  const assignees = [
-    'John Doe',
-    'Jane Smith',
-    'Bob Johnson',
-    'Alice Williams',
-    null,
-  ];
+// TODO: Remove mock data when API is deployed
+const mockTasksData: TaskList[] = [
+  {
+    rid: 'D001-4adedb04-04e3-4fb2-bbb4-78fa6c0bf039',
+    r_number: 'ACT-0000000218',
+    created_by: 'D001-1682d813-3f67-4874-b7a9-5c3b24d8c529',
+    modified_by: null,
+    created_datetime: '2025-12-05T08:37:21.867Z',
+    modified_datetime: null,
+    account_rid: 'D001-060a9a07-ce96-4c4b-8072-00fec00c9ac3',
+    attach_to: 'Gamma CASE',
+    attachment_level: 'case',
+    task_name: 'Internal Review',
+    description: '',
+    fiscal_year: 2023,
+    assigned_to: 'D001-ddef1245-b58c-40d6-a88e-b00dea8dbedd',
+    status_rid: 'D001-e8450e3f-edcb-44fb-a22c-15d279162b11',
+    priority_rid: 'D001-bfddbba3-79d6-4f90-a459-f9c2420f0973',
+    effective_start_datetime: '2023-03-01T00:00:00.000Z',
+    effective_end_datetime: '2023-10-25T00:00:00.000Z',
+    task_rid: 'D001-a0c271f4-b75e-4a0f-98be-b2921a8df374',
+    created_by_name: 'Vishnu Varshini',
+    modified_by_name: null,
+    status_name: null,
+    priority_name: null,
+    assigned_to_name: 'D001-ddef1245-b58c-40d6-a88e-b00dea8dbedd',
+    account_status_rid: 'D001-5c952c6a-7f05-4e99-be04-97ea50bcf87b',
+    account_status_name: 'Active',
+  },
+  {
+    rid: 'D001-1fcbc333-7fdf-47ff-aafb-233766b78f7b',
+    r_number: 'ACT-0000000195',
+    created_by: 'D001-09c06141-8832-472f-9a88-74cd917a45bb',
+    modified_by: null,
+    created_datetime: '2025-12-01T11:11:25.172Z',
+    modified_datetime: null,
+    account_rid: 'D001-f5f3d900-8688-4f17-a578-8ab539f6fdb9',
+    attach_to: 'Brilliant',
+    attachment_level: 'account',
+    task_name: 'Test123',
+    description: 'Test',
+    fiscal_year: 2025,
+    assigned_to: 'D001-775fa634-bde0-47d7-b59b-c37a9a27bfd8',
+    status_rid: 'D001-abdb8f37-77c7-467b-a476-179fc62906cc',
+    priority_rid: 'D001-0af56b99-c383-4b8b-90af-e54a249247b5',
+    effective_start_datetime: '2025-11-18T00:00:00.000Z',
+    effective_end_datetime: '2025-11-21T00:00:00.000Z',
+    task_rid: 'D001-94b5ef85-d5fe-4d92-8f43-94b8112ed381',
+    created_by_name: 'Super User Certainti',
+    modified_by_name: null,
+    status_name: null,
+    priority_name: null,
+    assigned_to_name: 'D001-775fa634-bde0-47d7-b59b-c37a9a27bfd8',
+    account_status_rid: 'D001-5c952c6a-7f05-4e99-be04-97ea50bcf87b',
+    account_status_name: 'Active',
+  },
+  {
+    rid: 'D001-8692adf8-d8a7-410e-a8b8-b799772797b0',
+    r_number: 'ACT-0000000188',
+    created_by: 'D001-09c06141-8832-472f-9a88-74cd917a45bb',
+    modified_by: 'D001-caace427-6365-469d-b8e5-d6322da67d40',
+    created_datetime: '2025-12-01T07:31:12.681Z',
+    modified_datetime: '2025-12-01T08:18:42.288Z',
+    account_rid: 'D001-f5f3d900-8688-4f17-a578-8ab539f6fdb9',
+    attach_to: 'Brilliant',
+    attachment_level: 'account',
+    task_name: 'test',
+    description: '',
+    fiscal_year: 2021,
+    assigned_to: 'D001-0f338c28-e420-4922-9ae2-b8c87b67db75',
+    status_rid: 'D001-e8450e3f-edcb-44fb-a22c-15d279162b11',
+    priority_rid: 'D001-0af56b99-c383-4b8b-90af-e54a249247b5',
+    effective_start_datetime: '2025-11-02T00:00:00.000Z',
+    effective_end_datetime: '2025-12-01T00:00:00.000Z',
+    task_rid: 'D001-1f9a55e8-29e9-450b-b27a-f52b00b74d66',
+    created_by_name: 'Super User Certainti',
+    modified_by_name: 'Dhivya Sivasamy',
+    status_name: null,
+    priority_name: null,
+    assigned_to_name: 'D001-0f338c28-e420-4922-9ae2-b8c87b67db75',
+    account_status_rid: 'D001-5c952c6a-7f05-4e99-be04-97ea50bcf87b',
+    account_status_name: 'Active',
+  },
+  {
+    rid: 'D001-54ab4206-cf50-4290-bf3b-f0b7e462a61d',
+    r_number: 'ACT-0000000187',
+    created_by: 'D001-09c06141-8832-472f-9a88-74cd917a45bb',
+    modified_by: '',
+    created_datetime: '2025-12-01T06:40:13.393Z',
+    modified_datetime: '2025-12-01T06:48:18.959Z',
+    account_rid: 'D001-f5f3d900-8688-4f17-a578-8ab539f6fdb9',
+    attach_to: 'Brilliant',
+    attachment_level: 'account',
+    task_name: 'test',
+    description: '',
+    fiscal_year: 2020,
+    assigned_to: 'D001-9e3cc824-157e-41ac-b90a-187c163b3680',
+    status_rid: 'D001-e8450e3f-edcb-44fb-a22c-15d279162b11',
+    priority_rid: 'D001-0af56b99-c383-4b8b-90af-e54a249247b5',
+    effective_start_datetime: '2025-11-02T00:00:00.000Z',
+    effective_end_datetime: '2025-11-30T00:00:00.000Z',
+    task_rid: 'D001-159607d6-7aaa-4b60-88de-0e4e1f743e60',
+    created_by_name: 'Super User Certainti',
+    modified_by_name: '',
+    status_name: null,
+    priority_name: null,
+    assigned_to_name: 'D001-9e3cc824-157e-41ac-b90a-187c163b3680',
+    account_status_rid: 'D001-5c952c6a-7f05-4e99-be04-97ea50bcf87b',
+    account_status_name: 'Active',
+  },
+  {
+    rid: 'D001-77394b8f-2ba0-4aa7-8351-3026569a4592',
+    r_number: 'ACT-0000000003',
+    created_by: 'D001-caace427-6365-469d-b8e5-d6322da67d40',
+    modified_by: null,
+    created_datetime: '2025-12-01T06:37:12.630Z',
+    modified_datetime: null,
+    account_rid: 'D001-5d9f3cf1-1aed-4c20-9268-b755c7a8fb24',
+    attach_to: 'freshwork-USA',
+    attachment_level: 'account',
+    task_name: 'Test',
+    description: 'Test',
+    fiscal_year: 2025,
+    assigned_to: 'D001-5e333040-c8e8-4f9e-888b-d9f0614b5f0a',
+    status_rid: 'D001-e8450e3f-edcb-44fb-a22c-15d279162b11',
+    priority_rid: 'D001-0af56b99-c383-4b8b-90af-e54a249247b5',
+    effective_start_datetime: '2025-11-11T00:00:00.000Z',
+    effective_end_datetime: '2025-11-13T00:00:00.000Z',
+    task_rid: 'D001-05552407-a07f-4df3-86b1-d41485a0bde9',
+    created_by_name: 'Dhivya Sivasamy',
+    modified_by_name: null,
+    status_name: null,
+    priority_name: null,
+    assigned_to_name: 'D001-5e333040-c8e8-4f9e-888b-d9f0614b5f0a',
+    account_status_rid: 'D001-5c952c6a-7f05-4e99-be04-97ea50bcf87b',
+    account_status_name: 'Active',
+  },
+];
 
-  for (let i = 1; i <= count; i++) {
-    const priorityIndex = Math.floor(Math.random() * priorities.length);
-    const statusIndex = Math.floor(Math.random() * statuses.length);
-    const entityIndex = Math.floor(Math.random() * relatedEntities.length);
-    const assigneeIndex = Math.floor(Math.random() * assignees.length);
-
-    mockTasks.push({
-      task_rid: `task-rid-${i}`,
-      task_id: `TASK-${String(i).padStart(4, '0')}`,
-      task_name: `Task ${i}: Sample Task Name`,
-      task_description: i % 3 === 0 ? null : `Description for task ${i}`,
-      fiscal_year: 2024 + Math.floor(i / 20),
-      assignee: assignees[assigneeIndex],
-      assignee_rid: assignees[assigneeIndex]
-        ? `assignee-rid-${assigneeIndex}`
-        : null,
-      priority: priorities[priorityIndex],
-      priority_rid: `priority-rid-${priorityIndex}`,
-      status: statuses[statusIndex],
-      status_rid: `status-rid-${statusIndex}`,
-      related_entity: relatedEntities[entityIndex],
-      related_to_id: relatedEntities[entityIndex]
-        ? `entity-id-${Math.floor(Math.random() * 100)}`
-        : null,
-      related_to_name: relatedEntities[entityIndex]
-        ? `${relatedEntities[entityIndex]} Name ${Math.floor(Math.random() * 100)}`
-        : null,
-      created_by: 'System Admin',
-      created_on: new Date(
-        Date.now() - Math.random() * 90 * 24 * 60 * 60 * 1000
-      ).toISOString(),
-      modified_by: i % 4 === 0 ? null : 'John Doe',
-      modified_on:
-        i % 4 === 0
-          ? null
-          : new Date(
-              Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000
-            ).toISOString(),
-    });
-  }
-
-  return mockTasks;
-};
-
-// Mock data storage
-let mockTasksData = generateMockTasks(100);
-
-// Fetch tasks list with filtering, sorting, and pagination
 export const fetchTasksList = async (
   params: TasksListURLParams
 ): Promise<{ tasks: TaskList[]; count: number }> => {
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 500));
+  // TODO: Uncomment when API is deployed
+  // const response = await caseServiceApi.get<TaskListResponse>(
+  //   TasksListURL(params)
+  // );
+  // return {
+  //   tasks: response.data.data.tasks,
+  //   count: response.data.data.count || response.data.data.totalCount,
+  // };
 
-  let filteredTasks = [...mockTasksData];
-
-  // Apply search filter
-  if (params.search) {
-    const searchLower = params.search.toLowerCase();
-    filteredTasks = filteredTasks.filter(
-      (task) =>
-        task.task_id.toLowerCase().includes(searchLower) ||
-        task.task_name.toLowerCase().includes(searchLower) ||
-        task.task_description?.toLowerCase().includes(searchLower) ||
-        task.assignee?.toLowerCase().includes(searchLower)
-    );
-  }
-
-  // Apply fiscal year filter
-  if (params.fiscalYear && params.fiscalYear !== 0) {
-    filteredTasks = filteredTasks.filter(
-      (task) => task.fiscal_year === Number(params.fiscalYear)
-    );
-  }
-
-  // Apply sorting
-  if (params.sortBy) {
-    filteredTasks.sort((a, b) => {
-      const aValue = a[params.sortBy as keyof TaskList];
-      const bValue = b[params.sortBy as keyof TaskList];
-
-      if (aValue === null) return 1;
-      if (bValue === null) return -1;
-
-      const comparison = aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
-
-      return params.sortOrder === 'ASC' ? comparison : -comparison;
-    });
-  }
-
-  const totalCount = filteredTasks.length;
-
-  // Apply pagination
-  const startIndex = (params.page - 1) * params.limit;
-  const endIndex = startIndex + params.limit;
-  const paginatedTasks = filteredTasks.slice(startIndex, endIndex);
-
+  // Mock response - Remove when API is deployed
+  await new Promise((resolve) => setTimeout(resolve, 300));
   return {
-    tasks: paginatedTasks,
-    count: totalCount,
+    tasks: mockTasksData,
+    count: mockTasksData.length,
   };
 };
 
-// Hook for fetching all tasks list
-export const useAllTasksList = (
-  params: TasksListURLParams,
-  refreshTrigger?: number
-): UseQueryResult<{ tasks: TaskList[]; count: number }, Error> => {
-  return useQuery<{ tasks: TaskList[]; count: number }, Error>({
-    queryKey: ['allTasksList', params, refreshTrigger],
-    queryFn: () => fetchTasksList(params),
-    retry: 0,
-    gcTime: 0,
-  });
-};
-
-// Hook for fetching tasks list with specific conditions
 export const useTasksList = (
   params: TasksListURLParams,
   refreshTasks?: number
@@ -149,69 +180,68 @@ export const useTasksList = (
   });
 };
 
-// Export tasks data
+export const useAllTasksList = (
+  params: TasksListURLParams,
+  refreshTrigger?: number
+): UseQueryResult<{ tasks: TaskList[]; count: number }, Error> => {
+  return useQuery<{ tasks: TaskList[]; count: number }, Error>({
+    queryKey: ['allTasksList', params, refreshTrigger],
+    queryFn: () => fetchTasksList(params),
+    retry: 0,
+    gcTime: 0,
+  });
+};
+
 type ExportType = 'tasks' | 'all_tasks';
 export const exportTasksData = async (
   type: ExportType,
   params: TasksListExportParams
 ) => {
-  // This is a placeholder for actual export functionality
-  // In a real implementation, this would call an API endpoint
-  console.log('Exporting tasks data:', type, params);
+  let url = '';
+  let filename = '';
 
-  // Simulate export by creating a mock CSV
-  const tasks = await fetchTasksList({
-    page: 1,
-    limit: 1000,
-    sortBy: params.sortBy || 'task_id',
-    sortOrder: params.sortOrder || 'ASC',
-    search: params.search,
-    fiscalYear: params.fiscalYear,
-  });
+  const systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-  const csvContent = [
-    [
-      'Task ID',
-      'Task Name',
-      'Task Description',
-      'Fiscal Year',
-      'Assignee',
-      'Priority',
-      'Status',
-      'Related Entity',
-      'Related To ID',
-      'Related To Name',
-      'Created By',
-      'Created On',
-      'Modified By',
-      'Modified On',
-    ].join(','),
-    ...tasks.tasks.map((task) =>
-      [
-        task.task_id,
-        `"${task.task_name}"`,
-        `"${task.task_description || ''}"`,
-        task.fiscal_year,
-        task.assignee || '',
-        task.priority || '',
-        task.status,
-        task.related_entity || '',
-        task.related_to_id || '',
-        task.related_to_name || '',
-        task.created_by,
-        task.created_on,
-        task.modified_by || '',
-        task.modified_on || '',
-      ].join(',')
-    ),
-  ].join('\n');
+  switch (type) {
+    case 'tasks':
+      url = TasksExportListURL({ ...params, timezone: systemTimezone });
+      filename = 'tasks_records.xlsx';
+      break;
+    case 'all_tasks':
+      url = TasksExportListURL({ ...params, timezone: systemTimezone });
+      filename = 'all_tasks_records.xlsx';
+      break;
+    default:
+      console.error('Invalid export type');
+      return;
+  }
 
-  const blob = new Blob([csvContent], { type: 'text/csv' });
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.download =
-    type === 'all_tasks' ? 'all_tasks_records.csv' : 'tasks_records.csv';
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+  try {
+    const response = await caseServiceApi.get(url);
+    const base64Data = response.data?.data;
+
+    if (!base64Data) {
+      console.error('No base64 data found in the response.');
+      return;
+    }
+
+    const binary = atob(base64Data);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+
+    const blob = new Blob([bytes], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error('Export failed:', error);
+  }
 };
