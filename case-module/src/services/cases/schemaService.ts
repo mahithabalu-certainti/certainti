@@ -3897,7 +3897,9 @@ return !response;
         else if (attachmentLevel === 'account' && entityId) {
           const accountAttachments = await fetchAttachments(CheckList, 'account', [entityId]);
           allChecklists.push(...accountAttachments);
-          const caseAttachments = await fetchAttachments(CheckList, 'case', [entityId]);
+          const cases = await this.getCasesByAccountId(accountNumber, entityId);
+          const caseIds = cases.map((c: { rid: any; }) => c.rid);
+          const caseAttachments = await fetchAttachments(CheckList, 'case', caseIds);
           allChecklists.push(...caseAttachments);
     
           const projects = await this.getProjectsByAccountId(accountNumber, entityId,accessibleIds);
@@ -4597,6 +4599,24 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
           schemaName,
           accountRid,
           accessibleIds
+        )
+      );
+      return results;
+  }
+
+  async getCasesByAccountId(accountNumber: string, accountRid: string) {
+      if(!this.orgDbSequelize) {
+        this.orgDbSequelize = await this.caseModelService.getSequelize(
+        );
+      }
+       const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(
+        /\D/g,
+        ""
+      )}`;
+      const [results]: any[] = await this.orgDbSequelize.query(
+        rawQueries.getAllCasesByAccountId(
+          schemaName,
+          accountRid
         )
       );
       return results;

@@ -780,9 +780,12 @@ class ActivitySchemaService {
           [entityId]
         );
         allActivities.push(...accountAttachments);
-        const caseAttachments = await fetchAttachments(Activities, "case", [
-          entityId,
-        ]);
+         const cases = await this.caseSchemaService.getCasesByAccountId(
+          accountNumber,
+          entityId
+        );
+         const caseIds = cases.map((r:any) => (r as { rid: string }).rid);
+        const caseAttachments = await fetchAttachments(Activities, "case", caseIds);
         allActivities.push(...caseAttachments);
 
         const projects = await this.caseSchemaService.getProjectsByAccountId(
