@@ -366,14 +366,7 @@ class ActivitySchemaService {
             { transaction }
           );
         }
-         await this.addActivityTaskHistory(
-        accountNumber,
-        taskRequest.task_rid as string,
-        { ...taskRequest, modified_by: userId },
-        existingTask,
-        activityTypes.task
-      );
-      }
+             }
        await TaskSummary.update(
         {
           task_name: taskRequest.task_name || "",
@@ -391,6 +384,13 @@ class ActivitySchemaService {
             task_rid: taskRequest.task_rid,
           }
         }
+      );
+      await this.addActivityTaskHistory(
+        accountNumber,
+        taskRequest.task_rid as string,
+        { ...taskRequest, modified_by: userId },
+        existingTask,
+        activityTypes.task
       );
       if(!this.mainDbSequelize)
         {
@@ -2900,6 +2900,48 @@ class ActivitySchemaService {
             assignedToNewValueString = columnMapping.get(newValue);
           }
         }
+        const statusMapping = new Map();
+        let statusOldValueString = null;
+        let statusNewValueString = null;
+        if (cleanedNewData.hasOwnProperty('status_rid')) {
+          const oldValue = existingCaseData['status_rid'];
+          const newValue = cleanedNewData['status_rid'];
+          if (oldValue || newValue) {
+            if(!this.mainDbSequelize) {
+              this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+            }
+            const result = await this.mainDbSequelize.query(rawQueries.fetchActivityStatusById(String(oldValue || ''), String(newValue || '')));
+            for (let r of result[0]) {
+              statusMapping.set((r as any)?.rid, (r as any)?.name);
+            }
+            statusOldValueString = statusMapping.get(oldValue);
+            statusNewValueString = statusMapping.get(newValue);
+          }
+
+        }
+
+        // Prepare mapping for priority_rid values
+        const priorityMapping = new Map();
+        let priorityOldValueString = null;
+        let priorityNewValueString = null;
+        if (cleanedNewData.hasOwnProperty('priority_rid')) {
+          const oldValue = existingCaseData['priority_rid'];
+          const newValue = cleanedNewData['priority_rid'];
+          if (oldValue || newValue) {
+            if(!this.mainDbSequelize) {
+              this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+            }
+            // Assuming rawQueries.fetchPriorityNames returns [{ rid, name }]
+            const result = await this.mainDbSequelize.query(rawQueries.fetchPriority(String(oldValue || ''), String(newValue || '')));
+            for (let r of result[0]) {
+              priorityMapping.set((r as any)?.rid, (r as any)?.pr);
+            }
+            priorityOldValueString = priorityMapping.get(oldValue);
+            priorityNewValueString = priorityMapping.get(newValue);
+          }
+        }
+
+       
 
         const historyChanges = await Promise.all(Object.entries(cleanedNewData)
           .filter(([key, newValue]) => {
@@ -2917,6 +2959,12 @@ class ActivitySchemaService {
             if (key === "assigned_to") {
               return assignedToOldValueString !== assignedToNewValueString;
             }
+            if (key === "priority_rid") {
+              return priorityOldValueString !== priorityNewValueString;
+            }
+            if (key === "status_rid") {
+              return statusOldValueString !== statusNewValueString;
+            }
             return String(newValue ?? "") !== String(oldValue ?? "");
           })
           .map(async ([key, newValue]) => {
@@ -2924,13 +2972,22 @@ class ActivitySchemaService {
             let mappedKey = key;
             let oldValueStr = existingCaseData[key] !== null && existingCaseData[key] !== undefined ? String(existingCaseData[key]) : "";
             let newValueStr = newValue !== null && newValue !== undefined ? String(newValue) : "";
-            if (key === 'priority_rid') mappedKey = 'priority';
-            else if (key === 'effective_start_datetime') mappedKey = 'Effective Start Date';
-            else if (key === 'effective_end_datetime') mappedKey = 'Effective End Date';
-            else if (key === 'assigned_to') {
+            if (key === 'priority_rid') {
+              mappedKey = 'Priority';
+              oldValueStr = priorityOldValueString ?? oldValueStr;
+              newValueStr = priorityNewValueString ?? newValueStr;
+            } else if (key === 'effective_start_datetime') {
+              mappedKey = 'Effective Start Date';
+            } else if (key === 'effective_end_datetime') {
+              mappedKey = 'Effective End Date';
+            } else if (key === 'assigned_to') {
               mappedKey = 'Assigned To';
               oldValueStr = assignedToOldValueString ?? oldValueStr;
               newValueStr = assignedToNewValueString ?? newValueStr;
+            } else if (key === "status_rid") {
+              mappedKey = "Status";
+              oldValueStr = statusOldValueString ?? oldValueStr;
+              newValueStr = statusNewValueString ?? newValueStr;
             }
             return {
               account_rid: newCaseData["account_rid"],
