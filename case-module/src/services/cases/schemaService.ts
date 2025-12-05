@@ -5603,7 +5603,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     else return null;
   }
   async createOrUpdateTags (taskRid : string, accountRid : string, caseRid: string, tagRid : string, isNewTag : boolean, accountNumber : string, userId : string, activeStatusRid : string, taskType? : string) {
-    const {Tags, TaskTag, CaseHistory, CaseTimeline} = await this.caseModelService.getModels(accountNumber)
+    const {Tags, TaskTag, CaseHistory, CaseTimeline, ActivityHistory} = await this.caseModelService.getModels(accountNumber)
 
     if(isNewTag) {
       const isTagExists = await Tags.findOne({
@@ -5660,8 +5660,8 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         else
         {
           await this.addTaskTimeline(accountNumber, taskRid, accountRid, `Tag added for task : ${result.tag_name}`, userId, "Tag added for Task", "success", taskRid);
-          await TaskHistory.create({
-            task_rid : taskRid,
+          await ActivityHistory.create({
+            activity_rid : taskRid,
             created_by : userId,
             created_datetime : new Date(),
             attribute_name : "Tags",
@@ -5788,7 +5788,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     else return null;
   }
   async addComments (data : AddCommentsType, accountNumber : string,  taskNumber : string, files : Express.Multer.File[]) {
-    const {TaskComments, CommentsAttachments, TaskAttachments, CaseTimeline, TaskCollaborators,Activities,TaskHistory} = await this.caseModelService.getModels(accountNumber);
+    const {TaskComments, CommentsAttachments, TaskAttachments, CaseTimeline, TaskCollaborators,Activities,ActivityHistory} = await this.caseModelService.getModels(accountNumber);
     const commentPayload: any = {
       created_by: data.created_by,
       created_datetime: new Date(),
@@ -5869,7 +5869,11 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                await CaseHistory.create(caseHistoryPayload);
             }
             else
-             await TaskHistory.create(caseHistoryPayload);
+            {
+              caseHistoryPayload.activity_rid = data.task_rid;
+              await ActivityHistory.create(caseHistoryPayload);
+            }
+             
           }
         }
       }
@@ -5914,7 +5918,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
   }
 
   async updateComments (data : UpdateCommentsType, accountNumber : string,  taskNumber : string, files : Express.Multer.File[]) {
-    const {TaskComments, CommentsAttachments, TaskAttachments, TaskCollaborators, CaseHistory, CaseTimeline,TaskHistory} = await this.caseModelService.getModels(accountNumber);
+    const {TaskComments, CommentsAttachments, TaskAttachments, TaskCollaborators, CaseHistory, CaseTimeline,ActivityHistory} = await this.caseModelService.getModels(accountNumber);
     const isCommentExists = await TaskComments.findOne({
       where : {
         rid : data.rid
@@ -5999,7 +6003,8 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
               }
               else
               {
-                await TaskHistory.create(caseHistoryPayload)
+                caseHistoryPayload.activity_rid = data.task_rid;
+                await ActivityHistory.create(caseHistoryPayload)
               }
               await CommentsAttachments.create(commentsAttachmentPayload);
               await TaskAttachments.create(taskAttachmentPayload);
@@ -6093,7 +6098,8 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
               }
               else
               {
-                await TaskHistory.create(historyPayload);
+                historyPayload.activity_rid = data.task_rid;
+                await ActivityHistory.create(historyPayload);
               }
              
               
@@ -6408,7 +6414,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
   }
 
   async addAttachmentForTask (data : any, accountNumber : string, files : Express.Multer.File[], userId : string) {
-    const {TaskAttachments,TaskHistory} = await this.caseModelService.getModels(accountNumber)
+    const {TaskAttachments,ActivityHistory} = await this.caseModelService.getModels(accountNumber)
     const findTaskDetails = await this.findTaskById(data.task_rid, data.account_rid, data.case_rid, accountNumber,data.task_type || 'case_task');
     if(files != undefined) {
       if(Array.isArray(files)) {
@@ -6465,12 +6471,12 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                 "success",
                data.task_rid
               )
-              await TaskHistory.create({
+              await ActivityHistory.create({
                 created_by : userId,
                 created_datetime : new Date(),
                 attribute_name : "task_attachments",
                 new_value : uploadFile.url,
-                task_rid : data.task_rid
+                activity_rid : data.task_rid
               })
             }
           }
