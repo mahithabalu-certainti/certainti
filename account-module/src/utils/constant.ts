@@ -836,7 +836,8 @@ export const rawQueries = {
         assessment_status TEXT,
         claim_status TEXT,
         comments VARCHAR(2000),
-        project_description VARCHAR(2000)
+        project_description VARCHAR(2000),
+        is_qualified BOOLEAN DEFAULT false
       );
     `;
   },

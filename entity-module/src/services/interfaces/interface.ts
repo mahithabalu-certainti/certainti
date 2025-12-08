@@ -1038,6 +1038,14 @@ export interface ITemplates {
     data?: any;
   }>;
 }
+export interface ITaskSummaryGraphqlServices {
+  updateInlineTaskSummary(data: any): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: any;
+  }>;
+}
 export interface INotesGraphqlServices {
   updateInlineNotes(data: any): Promise<{
     statusCode: number;

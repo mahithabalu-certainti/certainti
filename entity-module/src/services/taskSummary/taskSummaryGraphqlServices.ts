@@ -65,8 +65,8 @@ export default class TaskSummaryGraphqlServices {
     const schemaName = rawQueries.fetchSchemaName(accountNumber);
 
     // Validate task summary exists
-    const checkForExistingData: any = await orgSequelize.query(
-      rawQueries.findTaskSummaryDetails(schemaName, data.rid, data.account_rid)
+    const checkForExistingData: any = await mainSequelize.query(
+      rawQueries.findTaskSummaryDetails(data.rid, data.account_rid)
     );
 
     if (checkForExistingData[0].length < 1) {
@@ -97,6 +97,7 @@ export default class TaskSummaryGraphqlServices {
     ];
 
     let fieldsToPropagate: string[] = [];
+    data.task_rid = data.rid;
 
     if (data.attachment_level === "project") {
       const projectTaskQuery: any = await orgSequelize.query(
@@ -374,7 +375,8 @@ export default class TaskSummaryGraphqlServices {
           };
         }
       }
-    } else if (data.attachment_level === "account") {
+    }
+     else if (data.attachment_level === "account") {
       const accTaskQuery: any = await orgSequelize.query(
         rawQueries.findAccountTaskDetails(schemaName, data.task_rid, data.account_rid)
       );

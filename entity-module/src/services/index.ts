@@ -19,7 +19,8 @@ import {
   IProjectTaskIngestionService,
   INotesService,
   ITemplates,
-  INotesGraphqlServices
+  INotesGraphqlServices,
+  ITaskSummaryGraphqlServices
 } from "./interfaces/interface";
 import { ProjectService } from "./projectService";
 import ResourceCostService from "./resourceCostService";
@@ -59,6 +60,7 @@ class Services implements IServiceContainer {
   private _settingService? : ISettingsServices;
   private _financialHighlightServices? : IFinancialHighlights;
   private _notesGraphqlServices? : INotesGraphqlServices
+  private _taskSummaryGraphqlServices? : ITaskSummaryGraphqlServices
   notesService : INotesService;
   taskService : TaskService
 
@@ -167,6 +169,14 @@ class Services implements IServiceContainer {
       this._notesGraphqlServices = new NotesGraphqlServies
     }
     return this._notesGraphqlServices!
+  }
+
+  get taskSummaryGraphqlServices() : ITaskSummaryGraphqlServices {
+    if(!this._taskSummaryGraphqlServices) {
+      const {default : TaskSummaryGraphqlServices} = require('../services/taskSummary/taskSummaryGraphqlServices')
+      this._taskSummaryGraphqlServices = new TaskSummaryGraphqlServices
+    }
+    return this._taskSummaryGraphqlServices!
   }
 
 }

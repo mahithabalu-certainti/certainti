@@ -523,7 +523,7 @@ export const rawQueries = {
   },
   findAccountTaskDetails(schemaName: string, rid: string, account_rid: string) {
     return `
-      SELECT * FROM ${schemaName}.case_task WHERE rid = '${rid}' AND account_rid = '${account_rid}'`;
+      SELECT * FROM ${schemaName}.activities WHERE rid = '${rid}' AND account_rid = '${account_rid}'`;
   },
   fetchSchemaName(r_number: string) {
     return `${MAIN_SCHEMA_NAME}_${r_number.replace("ACC-", "")}`;
@@ -2104,15 +2104,9 @@ export const rawQueries = {
       return `SELECT rid, task_status_name FROM ${MAIN_SCHEMA_NAME}.case_task_status WHERE rid IN (${ids})`
     }
   },
-    findTaskSummaryDetails: (schemaName: string, rid: string, accountRid: string) => {
-    return `SELECT ts.*, 
-                   s.status_name,
-                   p.priority_name,
-                   r.resource_name as assigned_to_name
-            FROM ${schemaName}.task_summary ts
-            LEFT JOIN trd365.task_status s ON ts.status_rid = s.rid
-            LEFT JOIN trd365.priority p ON ts.priority_rid = p.rid
-            LEFT JOIN ${schemaName}.resources r ON ts.assigned_to = r.rid
+    findTaskSummaryDetails: (rid: string, accountRid: string) => {
+    return `SELECT ts.*
+            FROM ${MAIN_SCHEMA_NAME}.task_summary ts
             WHERE ts.rid = '${rid}' AND ts.account_rid = '${accountRid}'`;
   },
 
