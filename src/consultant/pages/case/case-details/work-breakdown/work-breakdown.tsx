@@ -817,7 +817,13 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
         defaultValue={tabParam}
       />
 
-      <div className='border border-t-0 border-[#CBD6E2]'>
+      <div
+        className={`border border-t-0 border-[#CBD6E2] ${
+          isActionItemsExpanded
+            ? 'max-h-[calc(100vh-280px)]'
+            : 'max-h-[calc(100vh-418px)]'
+        } overflow-auto`}
+      >
         {tabParam === 'milestone' && (
           <>
             {isError ? (

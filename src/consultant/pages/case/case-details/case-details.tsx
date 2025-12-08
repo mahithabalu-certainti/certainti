@@ -855,7 +855,7 @@ export const CaseDetails = () => {
             isCollapsed={isCollapsed}
             onToggleCollapse={handleToggleSideMenu}
             enableScrollbar={true}
-            maxHeight={292}
+            maxHeight={isActionItemsExpanded ? 155 : 292}
           />
         </div>
         <div
