@@ -822,7 +822,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
       <div
         className={`border border-t-0 border-[#CBD6E2] ${
           isActionItemsExpanded
-            ? 'max-h-[calc(100vh-185px)]'
+            ? 'max-h-[calc(100vh-200px)]'
             : 'max-h-[calc(100vh-418px)]'
         } overflow-auto`}
       >

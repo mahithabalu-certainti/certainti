@@ -855,14 +855,14 @@ export const CaseDetails = () => {
             isCollapsed={isCollapsed}
             onToggleCollapse={handleToggleSideMenu}
             enableScrollbar={true}
-            maxHeight={isActionItemsExpanded ? 155 : 292}
+            maxHeight={isActionItemsExpanded ? 150 : 292}
           />
         </div>
         <div
           className='flex-1 transition-all duration-500 ease-in-out'
           style={{
             maxHeight: isActionItemsExpanded
-              ? 'calc(100vh - 143px)'
+              ? 'calc(100vh - 150px)'
               : 'calc(100vh - 283px)',
             overflow: 'auto',
           }}
