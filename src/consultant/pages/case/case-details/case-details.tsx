@@ -545,7 +545,6 @@ export const CaseDetails = () => {
           <div>
             <CaseProjectTask
               accountInActive={accountInActive}
-              // setTableParams={setCaseProjectParams}
               setProjectTaskParams={setProjectTaskParams}
               setExportType={setExportType}
             />

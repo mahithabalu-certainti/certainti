@@ -26,6 +26,7 @@ export interface CaseProjectTaskRow extends RowData {
 
 export const getCaseProjectTaskColumns = (
   permissionMap: Record<string, { read: boolean; edit: boolean }>,
+  projectPermissionMap: Record<string, { read: boolean; edit: boolean }>,
   onClick: (row: CaseProjectTaskRow) => void
 ): ListTableColumn<CaseProjectTaskRow>[] => [
   {
@@ -54,6 +55,9 @@ export const getCaseProjectTaskColumns = (
         </span>
       );
     },
+    hide:
+      !projectPermissionMap?.['project_code']?.read &&
+      !projectPermissionMap?.['project_code']?.edit,
   },
   {
     id: 'project_name',
@@ -61,6 +65,9 @@ export const getCaseProjectTaskColumns = (
     label: 'Project Name',
     width: 200,
     sortable: true,
+    hide:
+      !projectPermissionMap?.['project_name']?.read &&
+      !projectPermissionMap?.['project_name']?.edit,
   },
   {
     id: 'resource_code',
@@ -68,6 +75,9 @@ export const getCaseProjectTaskColumns = (
     label: 'Resource Code',
     width: 160,
     sortable: true,
+    hide:
+      !permissionMap?.['resource_code']?.read &&
+      !permissionMap?.['resource_code']?.edit,
   },
   {
     id: 'resource_orgname',
@@ -75,6 +85,9 @@ export const getCaseProjectTaskColumns = (
     label: 'Resource Name',
     width: 180,
     sortable: true,
+    hide:
+      !permissionMap?.['resource_name']?.read &&
+      !permissionMap?.['resource_name']?.edit,
   },
   {
     id: 'task_name',
@@ -82,6 +95,9 @@ export const getCaseProjectTaskColumns = (
     label: 'Task Name',
     width: 160,
     sortable: true,
+    hide:
+      !permissionMap?.['task_name']?.read &&
+      !permissionMap?.['task_name']?.edit,
   },
   {
     id: 'resource_type_name',
@@ -89,6 +105,9 @@ export const getCaseProjectTaskColumns = (
     label: 'Resource Type',
     width: 160,
     sortable: true,
+    hide:
+      !permissionMap?.['resource_type_name']?.read &&
+      !permissionMap?.['resource_type_name']?.edit,
   },
   {
     id: 'resource_role',
@@ -96,6 +115,9 @@ export const getCaseProjectTaskColumns = (
     label: 'Project Resource Role',
     width: 200,
     sortable: true,
+    hide:
+      !permissionMap?.['project_resource_role']?.read &&
+      !permissionMap?.['project_resource_role']?.edit,
   },
   {
     id: 'task_type_name',
@@ -103,6 +125,9 @@ export const getCaseProjectTaskColumns = (
     label: 'Task Type',
     width: 160,
     sortable: true,
+    hide:
+      !permissionMap?.['task_type_rid']?.read &&
+      !permissionMap?.['task_type_rid']?.edit,
   },
   {
     id: 'task_classification_name',
@@ -110,6 +135,9 @@ export const getCaseProjectTaskColumns = (
     label: 'Classification Type',
     width: 180,
     sortable: true,
+    hide:
+      !permissionMap?.['task_classification_rid']?.read &&
+      !permissionMap?.['task_classification_rid']?.edit,
   },
   {
     id: 'start_date',
@@ -117,6 +145,9 @@ export const getCaseProjectTaskColumns = (
     label: 'Start Date',
     width: 140,
     sortable: true,
+    hide:
+      !permissionMap?.['start_date']?.read &&
+      !permissionMap?.['start_date']?.edit,
   },
   {
     id: 'end_date',
@@ -124,6 +155,8 @@ export const getCaseProjectTaskColumns = (
     label: 'End Date',
     width: 140,
     sortable: true,
+    hide:
+      !permissionMap?.['end_date']?.read && !permissionMap?.['end_date']?.edit,
   },
   {
     id: 'total_cost_pro_task',
@@ -132,6 +165,9 @@ export const getCaseProjectTaskColumns = (
     width: 140,
     sortable: true,
     render: (row) => costDisplay(row.cost),
+    hide:
+      !permissionMap?.['total_cost_pro_task']?.read &&
+      !permissionMap?.['total_cost_pro_task']?.edit,
   },
   {
     id: 'total_hours_pro_task',
@@ -139,6 +175,9 @@ export const getCaseProjectTaskColumns = (
     label: 'Effort in Hrs',
     width: 160,
     sortable: true,
+    hide:
+      !permissionMap?.['total_cost_pro_task']?.read &&
+      !permissionMap?.['total_cost_pro_task']?.edit,
   },
   {
     id: 'status_name',
@@ -146,6 +185,9 @@ export const getCaseProjectTaskColumns = (
     label: 'Status',
     width: 140,
     sortable: true,
+    // hide:
+    //   !permissionMap?.['status_rid']?.edit &&
+    //   !permissionMap?.['status_rid']?.read,
   },
   {
     id: 'comments',
@@ -153,6 +195,8 @@ export const getCaseProjectTaskColumns = (
     label: 'Comments',
     width: 200,
     sortable: true,
+    hide:
+      !permissionMap?.['comments']?.read && !permissionMap?.['comments']?.edit,
   },
   {
     id: 'r_number',
@@ -160,5 +204,7 @@ export const getCaseProjectTaskColumns = (
     label: 'Project Task ID',
     width: 200,
     sortable: true,
+    hide:
+      !permissionMap?.['r_number']?.read && !permissionMap?.['r_number']?.edit,
   },
 ];

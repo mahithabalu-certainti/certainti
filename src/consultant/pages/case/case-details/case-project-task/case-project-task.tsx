@@ -33,21 +33,19 @@ const CasesProjectTaskTabs: ResourceTabs[] = [
 ];
 
 interface projectTaskProps {
-  setExportType?: (type: ExportType) => void;
-  // setAttachmentParams?: React.Dispatch<
-  //   React.SetStateAction<AttachmentsListExportParams>
-  // >;
+  accountInActive?: boolean;
   setProjectTaskParams?: React.Dispatch<
     React.SetStateAction<ProjectResourcesListParams>
   >;
-  accountInActive?: boolean;
+  setExportType?: (type: ExportType) => void;
   refetchAccountDetails?: () => void;
 }
 
 const CaseProjectTask: React.FC<projectTaskProps> = ({
+  accountInActive,
+  setProjectTaskParams,
   setExportType,
-  // setProjectTaskParams,
-  // accountInActive,
+
   // refetchAccountDetails,
 }) => {
   const { caseId } = useParams();
@@ -90,16 +88,45 @@ const CaseProjectTask: React.FC<projectTaskProps> = ({
     },
     refreshAttachments
   );
+  console.log(data);
+  // useEffect(() => {
+  //   setExportType?.('projectTask');
+  //   if (data) {
+  //     setTotalItems(data?.count || 0);
+  //     setResourceRowList(data.tasks || []);
+  //   } else {
+  //     setResourceRowList([]);
+  //   }
+  // }, [data]);
 
   useEffect(() => {
-    setExportType?.('projectTask');
-    if (data?.count) {
-      setTotalItems(data?.count || 0);
-      setResourceRowList(data.projectTask || []);
-    } else {
-      setResourceRowList([]);
+    if (data) {
+      setTotalItems(data?.count);
+      setResourceRowList(data.tasks || []);
     }
-  }, [data]);
+    if (setExportType) {
+      setExportType('projectTask');
+    }
+    setProjectTaskParams?.({
+      page: currentPage + 1,
+      limit: rowsPerPage,
+      sortOrder: sortOrder,
+      sortBy: sortField,
+      search: searchText,
+      filters: {},
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    sortField,
+    sortOrder,
+    searchText,
+    rowsPerPage,
+    currentPage,
+    caseId,
+    data?.count,
+    setExportType,
+    appliedFilters,
+  ]);
 
   const taskId = searchParams.get('caseProjectTask');
   const accountID = searchParams.get('accountID');
@@ -151,7 +178,7 @@ const CaseProjectTask: React.FC<projectTaskProps> = ({
     {
       label: 'Show/Hide Fields',
       variant: 'outlined' as const,
-      disabled: false,
+      disabled: accountInActive,
       onClick: handleColumnVisibility,
       sx: { ...BUTTON_STYLES, width: '125px', minWidth: '125px' },
       hide: taskId ? true : false,
@@ -180,14 +207,27 @@ const CaseProjectTask: React.FC<projectTaskProps> = ({
     setSortField(property);
   };
   const { permission } = useSelector((state: RootState) => state.permission);
-  const projectViewEditFields = useMemo(
+  const projectTaskViewEditFields = useMemo(
     () =>
       permission.find(
         (item) => item.name === AllPermissions.PROJECTS_TASK_VIEW_EDIT
       )?.fields ?? [],
     [permission]
   );
-  const permissionMapTaskTableColumn = useMemo(() => {
+  const permissionMapProjectTaskTableColumn = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    projectTaskViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [projectTaskViewEditFields]);
+  const projectViewEditFields = useMemo(
+    () =>
+      permission.find((item) => item.name === AllPermissions.PROJECTS_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+  const permissionMapProjectTableColumn = useMemo(() => {
     const map: Record<string, { read: boolean; edit: boolean }> = {};
     projectViewEditFields.forEach((item) => {
       map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
@@ -202,7 +242,10 @@ const CaseProjectTask: React.FC<projectTaskProps> = ({
     navigate({ search: newParams.toString() }, { replace: true });
   };
 
-  const projectTaskFilterFields = caseProjectTaskFilterFields();
+  const projectTaskFilterFields = caseProjectTaskFilterFields(
+    permissionMapProjectTaskTableColumn,
+    permissionMapProjectTableColumn
+  );
 
   const getRowId = (row: CaseProjectTaskRow) => row.rid;
 
@@ -218,7 +261,8 @@ const CaseProjectTask: React.FC<projectTaskProps> = ({
     setColumnAnchorEl(null);
   };
   const caseProjectTaskColumn = getCaseProjectTaskColumns(
-    permissionMapTaskTableColumn,
+    permissionMapProjectTaskTableColumn,
+    permissionMapProjectTableColumn,
     handleProjectDetails
   );
   const [columnVisibility, setColumnVisibility] = useState<

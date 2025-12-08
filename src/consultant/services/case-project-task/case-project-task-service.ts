@@ -2,6 +2,7 @@ import { useQuery, UseQueryResult } from '@tanstack/react-query';
 import { caseServiceApi } from '../../../api/api';
 import {
   CaseProjectTaskListResponse,
+  CaseProjectTaskListUIResponse,
   CaseProjectTaskListURLParams,
 } from '../../types/case-project-task';
 import { CaseProjectTasksURL } from './case-project-task-url';
@@ -13,11 +14,10 @@ import { ProjectTaskDetailsApiResponse } from '../../types/project-task';
 
 export const fetchCaseProjectTaskList = async (
   params: CaseProjectTaskListURLParams
-): Promise<CaseProjectTaskListResponse> => {
+): Promise<CaseProjectTaskListUIResponse> => {
   const response = await caseServiceApi.get<CaseProjectTaskListResponse>(
     CaseProjectTasksURL(params)
   );
-  // console.log('response', response);s
   return {
     tasks: response.data.data.tasks,
     count: response.data.data.totalCount,
@@ -27,8 +27,8 @@ export const fetchCaseProjectTaskList = async (
 export const useCaseProjectTaskList = (
   params: CaseProjectTaskListURLParams,
   refreshAttachments?: number
-): UseQueryResult<CaseProjectTaskListResponse, Error> => {
-  return useQuery<CaseProjectTaskListResponse, Error>({
+): UseQueryResult<CaseProjectTaskListUIResponse, Error> => {
+  return useQuery<CaseProjectTaskListUIResponse, Error>({
     queryKey: ['caseProjectTaskList', params, refreshAttachments],
     queryFn: () => fetchCaseProjectTaskList(params),
     retry: 0,

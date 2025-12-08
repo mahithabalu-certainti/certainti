@@ -16,9 +16,15 @@ export interface CaseProjectTaskListURLParams {
 export type CaseProjectTaskList = ProjectTasksListType;
 
 export interface CaseProjectTaskListResponse {
+  statusCode: number;
+  statusMessage: string;
+  statusCodeValue?: string;
   data: {
     tasks: CaseProjectTaskList[];
-    count: number;
     totalCount: number;
   };
+}
+export interface CaseProjectTaskListUIResponse {
+  tasks: CaseProjectTaskList[];
+  count: number;
 }
