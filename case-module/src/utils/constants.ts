@@ -1836,8 +1836,11 @@ export const rawQueries = {
     WHERE
     task_status_name ILIKE '%To Do%'
     `
+  },
+  getChecklistOpenStatusId () {
+    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.checklist_status WHERE status_name ILIKE '%Done%'`
   }
-};
+ };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 
 const keyContactRole = {
   pocName: "Project Point of Contact",

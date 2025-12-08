@@ -975,7 +975,8 @@ async fetchChecklistTemplateDetailsById(
       this.mainDbSequelize = await initMainDbSequelize();
     }
     const getActiveStatusId : any = await this.mainDbSequelize.query(rawQueries.getActiveStatusId())
-    const result : any = await this.orgDbSequelize.query(fetchCaseTemplateData(schemaName,caseRid, accountRid, getActiveStatusId[0][0].rid));
+    const getChecklistItemsStatusId : any = await this.mainDbSequelize.query(rawQueries.getChecklistOpenStatusId());
+    const result : any = await this.orgDbSequelize.query(fetchCaseTemplateData(schemaName,caseRid, accountRid, getActiveStatusId[0][0].rid, getChecklistItemsStatusId[0][0].rid));
     
     if(result[0].length > 0) {
       return result[0][0]
