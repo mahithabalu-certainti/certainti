@@ -316,9 +316,8 @@ async accountList(
           return parent;
         });
       } else {
-        updatedAccount.data = updatedAccount.data.map((parent: any) => {
+        updatedAccount.data.forEach((parent: any) => {
           parent.hasAccountAccess = true;
-          return parent;
         });
       }
 
@@ -328,8 +327,7 @@ async accountList(
         parentWhereClause
       );
       if(search){
-        updatedAccount.data = updatedAccount.data?.filter((val: any) => val.child_accounts?.length > 0);
-        updatedAccount.total = updatedAccount?.data?.length;
+        updatedAccount.data = updatedAccount.data?.filter((val: any) => val?.dataValues?.child_accounts?.length > 0);        updatedAccount.total = updatedAccount?.data?.length;
         totalCount = updatedAccount?.data?.length;
       }
       return {
