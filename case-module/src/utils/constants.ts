@@ -1838,7 +1838,7 @@ export const rawQueries = {
     `
   },
   getChecklistOpenStatusId () {
-    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.checklist_status WHERE status_name ILIKE '%Open%'`
+    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.checklist_status WHERE status_name ILIKE '%Done%'`
   }
  };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 
