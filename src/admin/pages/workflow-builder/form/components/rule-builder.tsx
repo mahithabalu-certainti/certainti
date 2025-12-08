@@ -319,7 +319,7 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({ rule, setRule, ruleId }) => {
                         : 'bg-blue-200 border border-blue-500'
                     }`}
                   >
-                    <span>⏻</span>
+                    <span className='text-[#425A76]'>⏻</span>
                   </div>
                   <div className='flex-1'>
                     <h3 className='text-sm font-semibold text-gray-900 mb-1'>
@@ -395,7 +395,7 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({ rule, setRule, ruleId }) => {
                           ? 'text-blue-700'
                           : rule.conditions.length > 0
                             ? 'text-amber-700'
-                            : 'text-gray-700'
+                            : 'text-[#425A76]'
                       }`}
                     >
                       ≈

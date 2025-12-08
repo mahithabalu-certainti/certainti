@@ -38,7 +38,7 @@ const PageSkeleton: React.FC<PageSkeletonProps> = ({
 
                 {/* Connector — no space above or below, only if NOT last */}
                 {index < 2 && (
-                  <div className='pl-[15px]'>
+                  <div className='pl-[28px]'>
                     <div className='w-[1px] h-8 bg-gray-300'></div>
                   </div>
                 )}

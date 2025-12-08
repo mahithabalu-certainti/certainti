@@ -114,11 +114,10 @@ const ActionManager = ({
 
   const handleActionSelect = (action: Action) => {
     if (isActionAlreadyAdded(action.id)) {
-      // if already added, toggle remove
-      onDeleteAction?.(action.id);
-    } else {
-      onAddAction(action);
+      // If already added, disable click - don't remove
+      return;
     }
+    onAddAction(action);
   };
 
   // Show full loader only on initial load
@@ -230,7 +229,7 @@ const ActionManager = ({
                 <ActionCard
                   key={action.id}
                   action={action}
-                  onSelect={() => handleActionSelect(action)}
+                  onSelect={() => {}}
                   isSelected={true}
                   isAlreadyAdded={true}
                   onDelete={() => onDeleteAction?.(action.id)}
@@ -255,17 +254,10 @@ const ActionManager = ({
             {/* When "All" is selected - Show grouped by category */}
             {selectedCategory === 'all' ? (
               Object.entries(groupedActions).map(([categoryId, list]) => {
-                // Filter out already added actions for this category
-                const availableActions = list.filter(
-                  (action) => !isActionAlreadyAdded(action.id)
-                );
-
-                // Don't show category if no available actions
-                if (availableActions.length === 0) return null;
-
                 // Get category name for display
                 const categoryName = getCategoryNameById(categoryId);
 
+                // Show all actions in category, including already added ones
                 return (
                   <div key={categoryId} className='px-6 space-y-2'>
                     <h3
@@ -275,23 +267,25 @@ const ActionManager = ({
                       {categoryName}
                     </h3>
                     <div className='grid grid-cols-1 md:grid-cols-4 gap-3'>
-                      {availableActions.map((action) => (
-                        <ActionCard
-                          key={action.id}
-                          action={action}
-                          onSelect={(item) =>
-                            handleActionSelect(item as Action)
-                          }
-                          isAlreadyAdded={isActionAlreadyAdded(action.id)}
-                        />
-                      ))}
+                      {list.map((action) => {
+                        const isAlreadyAdded = propActions.some(
+                          (a) => a.id === action.id
+                        );
+                        return (
+                          <ActionCard
+                            key={action.id}
+                            action={action}
+                            onSelect={() => handleActionSelect(action)}
+                            isAlreadyAdded={isAlreadyAdded}
+                            disabled={isAlreadyAdded} // Disable if already added
+                          />
+                        );
+                      })}
                     </div>
                   </div>
                 );
               })
-            ) : filteredActions.filter(
-                (action) => !isActionAlreadyAdded(action.id)
-              ).length > 0 ? (
+            ) : filteredActions.length > 0 ? (
               // When specific category is selected - Show all actions in that category
               <div className='px-6 space-y-2'>
                 <h3
@@ -302,16 +296,20 @@ const ActionManager = ({
                     ?.label || selectedCategory}
                 </h3>
                 <div className='grid grid-cols-1 md:grid-cols-4 gap-3'>
-                  {filteredActions
-                    .filter((action) => !isActionAlreadyAdded(action.id))
-                    .map((action) => (
+                  {filteredActions.map((action) => {
+                    const isAlreadyAdded = propActions.some(
+                      (a) => a.id === action.id
+                    );
+                    return (
                       <ActionCard
                         key={action.id}
                         action={action}
-                        onSelect={(item) => handleActionSelect(item as Action)}
-                        isAlreadyAdded={isActionAlreadyAdded(action.id)}
+                        onSelect={() => handleActionSelect(action)}
+                        isAlreadyAdded={isAlreadyAdded}
+                        disabled={isAlreadyAdded} // Disable if already added
                       />
-                    ))}
+                    );
+                  })}
                 </div>
               </div>
             ) : (
