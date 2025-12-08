@@ -144,7 +144,7 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({
             )}
             {showRefresh && onRefreshClick && (
               <button
-                className='flex border border-[#CBD6E2] w-[20px] h-[18px] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] justify-center items-center cursor-pointer'
+                className='flex border border-[#CBD6E2] w-[20px] h-[20px] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] justify-center items-center cursor-pointer'
                 onClick={onRefreshClick}
                 title='Refresh'
               >
@@ -152,18 +152,19 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({
               </button>
             )}
             {onToggleExpand && (
-              <div
+              <button
                 onClick={onToggleExpand}
-                className='cursor-pointer flex items-center justify-center w-[24px] h-[24px]'
+                className='flex border border-[#CBD6E2] w-[20px] h-[20px] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] justify-center items-center cursor-pointer'
+                title={isExpanded ? 'Collapse' : 'Expand'}
               >
                 <Suspense fallback={null}>
                   {isExpanded ? (
-                    <CollapseViewIcon className='w-5 h-5' />
+                    <CollapseViewIcon className='w-4 h-4' />
                   ) : (
-                    <ExpandViewIcon className='w-5 h-5' />
+                    <ExpandViewIcon className='w-4 h-4' />
                   )}
                 </Suspense>
-              </div>
+              </button>
             )}
           </div>
         </div>
