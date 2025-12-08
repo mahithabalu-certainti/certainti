@@ -608,6 +608,17 @@ const rdCreditGenerationSchema = Joi.object({
   effective_end: Joi.string().max(255).required(),
 });
 
+const rdCreditProcessSchema = Joi.object({
+  accountRid: Joi.string().max(255).required(),
+  caseRid: Joi.string().max(255).required(),
+});
+
+const rdCreditDataSchema = Joi.object({
+  accountRid: Joi.string().max(255).required(),
+  caseRid: Joi.string().max(255).required(),
+  stateCode: Joi.string().length(2).required(),
+});
+
 export {
   createCaseSchema,
   updateCaseSchema,
@@ -642,5 +653,7 @@ export {
   createActivitTaskSchema,
   listActivityTaskSchema,
   exportActivitySchema,
-  rdCreditGenerationSchema
+  rdCreditGenerationSchema,
+  rdCreditProcessSchema,
+  rdCreditDataSchema
 };

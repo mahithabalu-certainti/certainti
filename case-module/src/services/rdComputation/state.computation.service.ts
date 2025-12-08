@@ -51,7 +51,7 @@ export class StateComputationService {
      * @param effectiveEnd 
      * @returns 
      */
-    async initiateRDCreditProcess(accountRid: string, caseRid: string, effectiveStart: string, effectiveEnd: string) {
+    async initiateRDCreditStateProcess(accountRid: string, caseRid: string, effectiveStart: string, effectiveEnd: string) {
         try {
             const mainDb = await this.getMainDb();
 

@@ -204,6 +204,57 @@ class RDCreditSchemaService {
      * @param programName 
      * @returns 
      */
+    async findAvailableConfigLevels(countryCode: string, mainDbSequelize: Sequelize, effectiveStart: string, effectiveEnd: string) {
+        try {
+            if (!this.mainDbSequelize) {
+                this.mainDbSequelize = await initMainDbSequelize();
+            }
+            const results: any[] = await this.mainDbSequelize.query(
+                `
+                SELECT ctry.country_code, rdcg.is_federal
+                FROM ${MAIN_SCHEMA_NAME}.rd_credit_config_group rdcg
+                JOIN ${MAIN_SCHEMA_NAME}.rd_credit_parameter_key rdkey ON rdkey.credit_config_group_rid = rdcg.rid
+                JOIN ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values rdval ON rdval.credit_config_group_rid = rdcg.rid
+                JOIN ${MAIN_SCHEMA_NAME}.country ctry ON ctry.rid = rdcg.country_rid
+                LEFT JOIN ${MAIN_SCHEMA_NAME}.state st ON st.rid = rdcg.state_rid AND st.country_rid = ctry.rid
+                WHERE LOWER(ctry.country_code) = LOWER(:countryCode)
+                
+                -- Effective date filter
+                AND (:effectiveStart IS NULL OR rdval.effective_start >= CAST(:effectiveStart AS timestamptz))
+                AND (:effectiveEnd IS NULL OR rdval.effective_end <= CAST(:effectiveEnd AS timestamptz))
+            
+            `,
+                {
+                    replacements: {
+                        countryCode: countryCode,
+                        effectiveStart: effectiveStart || null,
+                        effectiveEnd: effectiveEnd || null
+                    },
+                    type: QueryTypes.SELECT,
+                }
+            );
+
+            const config = results?.[0] || null;
+            logMessage(`Find Available Config Levels: ${JSON.stringify(config, null, 2)}`);
+
+            const flags = results.map(r => r.is_federal);
+            return flags || [];
+        } catch (err) {
+            logMessage(`Error fetching credit config: ${err}`);
+            throw new Error("Error fetching credit config: " + (err as Error).message);
+        }
+    }
+
+    /**
+     * Get RD Credit Config
+     * @param countryCode 
+     * @param mainDbSequelize 
+     * @param effectiveStart 
+     * @param effectiveEnd 
+     * @param regionName 
+     * @param programName 
+     * @returns 
+     */
     async getRDCreditConfig(countryCode: string, mainDbSequelize: Sequelize, effectiveStart: string, effectiveEnd: string, regionName?: string, programName?: string) {
         try {
             if (!this.mainDbSequelize) {
@@ -215,12 +266,14 @@ class RDCreditSchemaService {
                 FROM ${MAIN_SCHEMA_NAME}.rd_credit_config_group rdcg
                 JOIN ${MAIN_SCHEMA_NAME}.rd_credit_parameter_key rdkey ON rdkey.credit_config_group_rid = rdcg.rid
                 JOIN ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values rdval ON rdval.credit_config_group_rid = rdcg.rid
-                WHERE LOWER(rdcg.country_code) = LOWER(:countryCode)
+                JOIN ${MAIN_SCHEMA_NAME}.country ctry ON ctry.rid = rdcg.country_rid
+                LEFT JOIN ${MAIN_SCHEMA_NAME}.state st ON st.rid = rdcg.state_rid AND st.country_rid = ctry.rid
+                WHERE LOWER(ctry.country_code) = LOWER(:countryCode)
 
                 -- State filter
                 AND (
-                    (:regionName IS NOT NULL AND LOWER(rdcg.state_code) = LOWER(:regionName))
-                    OR (:regionName IS NULL AND rdcg.state_code IS NULL)
+                    (:regionName IS NOT NULL AND LOWER(st.state_code) = LOWER(:regionName))
+                    OR (:regionName IS NULL AND st.state_code IS NULL)
                 )
 
                 -- ProgramName filter (RRC vs ASC for USA Federal)
@@ -232,7 +285,7 @@ class RDCreditSchemaService {
                 -- Effective date filter
                 AND (:effectiveStart IS NULL OR rdval.effective_start >= CAST(:effectiveStart AS timestamptz))
                 AND (:effectiveEnd IS NULL OR rdval.effective_end <= CAST(:effectiveEnd AS timestamptz))
-                group by rdcg.rid, rdval.config_json
+                group by rdcg.rid, rdval.config_json, st.state_code
                 LIMIT 1
             `,
                 {
@@ -314,7 +367,9 @@ class RDCreditSchemaService {
             where: {
                 case_rid,
                 region_name
-            }
+            },
+            order: [['created_datetime', 'DESC']]
+
         });
     }
 
@@ -335,11 +390,13 @@ class RDCreditSchemaService {
             }
             const results: any[] = await this.mainDbSequelize.query(
                 `
-                SELECT rdval.config_json, rdcg.state_code
+                SELECT rdval.config_json, st.state_code
                 FROM ${MAIN_SCHEMA_NAME}.rd_credit_config_group rdcg
                 JOIN ${MAIN_SCHEMA_NAME}.rd_credit_parameter_key rdkey ON rdkey.credit_config_group_rid = rdcg.rid
                 JOIN ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values rdval ON rdval.credit_config_group_rid = rdcg.rid
-                WHERE LOWER(rdcg.country_code) = LOWER(:countryCode)
+                JOIN ${MAIN_SCHEMA_NAME}.country ctry ON ctry.rid = rdcg.country_rid
+                JOIN ${MAIN_SCHEMA_NAME}.state st ON st.rid = rdcg.state_rid AND st.country_rid = ctry.rid
+                WHERE LOWER(ctry.country_code) = LOWER(:countryCode)
                 AND is_federal IS FALSE
                 -- ProgramName filter
                 AND (
@@ -351,7 +408,7 @@ class RDCreditSchemaService {
                 AND (:effectiveStart IS NULL OR rdval.effective_start >= CAST(:effectiveStart AS timestamptz))
                 AND (:effectiveEnd IS NULL OR rdval.effective_end <= CAST(:effectiveEnd AS timestamptz))
 
-                group by rdcg.rid, rdval.config_json
+                group by rdcg.rid, rdval.config_json, st.state_code
             `,
                 {
                     replacements: {
@@ -415,6 +472,23 @@ class RDCreditSchemaService {
             { status: 'COMPLETED' },
             { where: { rid } }
         );
+    }
+
+    /**
+     * 
+     * @param accountNumber 
+     * @param case_rid 
+     * @returns 
+     */
+    async findProcessStatusByCaseRid(accountNumber: string, case_rid: string) {
+        const { RdCreditProcess } = await this.caseModelService.getModels(accountNumber);
+
+        const result =  await RdCreditProcess.findOne({
+            where: { case_rid },
+            order: [['created_datetime', 'DESC']],
+            attributes: ['status'],
+        });
+        return result?.status || null;
     }
 
 

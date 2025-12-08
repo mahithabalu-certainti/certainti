@@ -33,7 +33,7 @@ routes.use("/caseManagement", caseManagementRoutes);
 routes.use("/activities", activitiesRoutes);
 routes.use("/jurisdictions", jurisdictionRoutes);
 routes.use("/historicalSubmission", historicalSubmissionRoutes);
-routes.use("/financial", financialRDCreditRoutes);
+routes.use("/rd-credit", financialRDCreditRoutes);
 
 
 export default routes;
