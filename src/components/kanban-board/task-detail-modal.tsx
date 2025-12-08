@@ -1316,6 +1316,10 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
         },
       ],
     });
+    // Refetch kanban board to update checklist counts
+    queryClient.invalidateQueries({
+      queryKey: ['kanbanBoardData', accountId, caseId],
+    });
   };
 
   const handleCollaboratorsChange = async (selectedIds: string[]) => {
@@ -1360,6 +1364,10 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
               task_rid: taskId,
             },
           ],
+        });
+        // Refetch kanban board to update task data
+        queryClient.invalidateQueries({
+          queryKey: ['kanbanBoardData', accountId, caseId],
         });
       } catch (error) {
         console.error('Failed to add collaborator:', error);
@@ -1413,6 +1421,10 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
               task_rid: taskId,
             },
           ],
+        });
+        // Refetch kanban board to update task data
+        queryClient.invalidateQueries({
+          queryKey: ['kanbanBoardData', accountId, caseId],
         });
         successToast('Collaborator removed successfully');
       } catch (error) {

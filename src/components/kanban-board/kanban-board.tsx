@@ -16,6 +16,8 @@ import {
 } from '@dnd-kit/core';
 import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import KanbanColumn from './kanban-column';
+import TaskCreateModal, { TaskFormData } from './task-create-modal';
+import { TaskCard } from './types';
 
 const LoadingSkeleton: React.FC = () => (
   <div
@@ -23,19 +25,19 @@ const LoadingSkeleton: React.FC = () => (
     style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
   >
     <div className='max-w-full overflow-x-auto'>
-      <div className='flex items-start gap-6 pb-6'>
+      <div className='flex items-start gap-3 pb-6'>
         {[1, 2, 3, 4].map((i) => (
           <div
             key={i}
-            className='bg-[#f5f5f5] rounded-lg p-4 w-80 flex-shrink-0'
+            className='bg-[#f5f5f5] rounded-lg p-2 w-72 flex-shrink-0'
           >
-            <div className='bg-white border border-[#E4E6E7] rounded-lg p-3 mb-2 animate-pulse'>
+            <div className='bg-white border border-[#E4E6E7] rounded-lg p-2 mb-2 animate-pulse'>
               <div className='h-4 bg-[#E4E6E7] rounded w-3/4'></div>
             </div>
             {[1, 2, 3].map((j) => (
               <div
                 key={j}
-                className='bg-white border border-[#E4E6E7] rounded-lg p-3 mb-2 animate-pulse'
+                className='bg-white border border-[#E4E6E7] rounded-lg p-2 mb-2 animate-pulse'
               >
                 <div className='h-4 bg-[#E4E6E7] rounded w-3/4 mb-2'></div>
                 <div className='h-3 bg-[#E4E6E7] rounded w-1/2'></div>
@@ -73,8 +75,18 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
   caseId,
   caseStartDate,
   caseEndDate,
+  isExpanded,
 }) => {
   const [columns, setColumns] = useState<KanbanColumnTypes[]>(data);
+  const [createModalState, setCreateModalState] = useState<{
+    isOpen: boolean;
+    columnId: string;
+    columnName: string;
+  }>({
+    isOpen: false,
+    columnId: '',
+    columnName: '',
+  });
 
   useEffect(() => {
     setColumns(data);
@@ -105,6 +117,79 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
   const handleTaskClick = (taskId: string) => {
     if (onTaskClick) {
       onTaskClick(taskId);
+    }
+  };
+
+  const handleOpenCreateModal = (columnId: string, columnName: string) => {
+    setCreateModalState({
+      isOpen: true,
+      columnId,
+      columnName,
+    });
+  };
+
+  const handleCloseCreateModal = () => {
+    setCreateModalState((prev) => ({ ...prev, isOpen: false }));
+  };
+
+  const handleCreateTaskWrapper = async (
+    columnId: string,
+    formData: TaskFormData
+  ) => {
+    try {
+      if (onCreateTask) {
+        const taskData: Partial<TaskCard> & {
+          checklist_template_rid?: string;
+          workflow_connector?: {
+            source_rid?: string;
+            relationship_connector_rid?: string;
+            target_rid?: string[];
+            is_new_changes?: boolean;
+          };
+          weightage_rid?: string;
+          task_category_rid?: string;
+        } = {
+          task_name: formData.taskTitle,
+          task_description: formData.description,
+          status_rid: formData.selectedStatusRid,
+          priority_rid: formData.selectedPriorityRid,
+          priority_name: formData.selectedPriority,
+          effective_start_datetime: formData.startDate?.format(
+            'YYYY-MM-DD HH:mm:ss'
+          ),
+          effective_end_datetime: formData.endDate?.format(
+            'YYYY-MM-DD HH:mm:ss'
+          ),
+          assigned_to: formData.selectedAssignee ?? '',
+          tags: formData.selectedTags,
+          ...(formData.selectedChecklistRid && {
+            checklist_template_rid: formData.selectedChecklistRid,
+          }),
+          workflow_connector:
+            formData.linkedTypeRid &&
+            formData.linkTaskTypeRids &&
+            formData.linkTaskTypeRids.length > 0
+              ? {
+                  source_rid: '',
+                  relationship_connector_rid: formData.linkedTypeRid,
+                  target_rid: formData.linkTaskTypeRids,
+                  is_new_changes: true,
+                }
+              : {},
+          ...(formData.weightageRid && {
+            weightage_rid: formData.weightageRid,
+          }),
+          ...(formData.categoryRid && {
+            task_category_rid: formData.categoryRid,
+          }),
+        };
+
+        await onCreateTask(columnId, taskData);
+      }
+      handleCloseCreateModal();
+    } catch (error) {
+      console.error('Failed to create task:', error);
+      throw error;
     }
   };
 
@@ -279,11 +364,13 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
           onDragEnd={handleDragEnd}
         >
           <div
-            className='p-4 font-[13px]'
+            className={`p-4 font-[13px]`}
             style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
           >
-            <div className='max-w-full overflow-x-auto'>
-              <div className='flex items-start gap-6 pb-6'>
+            <div className={`max-w-full`}>
+              <div
+                className={`flex items-start gap-2 ${isExpanded ? 'h-full' : 'pb-30'}`}
+              >
                 {columns.map((column) => (
                   <KanbanColumn
                     key={column.rid}
@@ -305,6 +392,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
                     collaboratorData={[]}
                     availableUsers={userData}
                     onCreateTask={onCreateTask}
+                    onOpenCreateTask={handleOpenCreateModal}
                     fieldVisibility={fieldVisibility}
                     fieldDisabled={fieldDisabled}
                     accountId={accountId}
@@ -319,11 +407,13 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
         </DndContext>
       ) : (
         <div
-          className='p-4 font-[13px]'
+          className={`p-4 font-[13px]`}
           style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
         >
-          <div className='max-w-full overflow-x-auto'>
-            <div className='flex items-start gap-6 pb-6'>
+          <div className={`max-w-full`}>
+            <div
+              className={`flex items-start gap-2 ${isExpanded ? 'h-full' : 'pb-30'}`}
+            >
               {columns.map((column) => (
                 <KanbanColumn
                   key={column.rid}
@@ -345,6 +435,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   collaboratorData={[]}
                   availableUsers={userData}
                   onCreateTask={onCreateTask}
+                  onOpenCreateTask={handleOpenCreateModal}
                   fieldVisibility={fieldVisibility}
                   fieldDisabled={fieldDisabled}
                   accountId={accountId}
@@ -356,6 +447,28 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
             </div>
           </div>
         </div>
+      )}
+      {createModalState.isOpen && (
+        <TaskCreateModal
+          isOpen={createModalState.isOpen}
+          onClose={handleCloseCreateModal}
+          onCreateTask={handleCreateTaskWrapper}
+          columnId={createModalState.columnId}
+          columnName={createModalState.columnName}
+          statusData={effectiveStatusData}
+          priorityData={priorityData}
+          tagData={tagData}
+          checklistData={checklistData}
+          collaboratorData={[]}
+          availableUsers={userData}
+          roleOptions={roleOptions}
+          fieldVisibility={fieldVisibility}
+          fieldDisabled={{ ...fieldDisabled, status: true }}
+          accountId={accountId}
+          caseId={caseId}
+          caseStartDate={caseStartDate}
+          caseEndDate={caseEndDate}
+        />
       )}
     </>
   );
