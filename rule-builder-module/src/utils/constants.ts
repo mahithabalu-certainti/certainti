@@ -135,14 +135,18 @@ export const rawQueries = {
   },
 
   fetchActions(action_type_rid: string, status_rid: string): string {
-    let query = `SELECT sa.rid, sa.name FROM scope_actions sa JOIN scope_actions_map sam 
-    ON sa.rid = sam.action_rid `;
+    let query = `SELECT sa.rid, sa.name,sa.description,sam.action_type_rid,sat.name as action_type_name FROM scope_actions sa JOIN scope_actions_map sam 
+    ON sa.rid = sam.action_rid JOIN scope_action_types sat ON sat.rid = sam.action_type_rid `;
     const conditions: string[] = [];
-    conditions.push(`sam.action_type_rid = '${action_type_rid}'`);
+    if (action_type_rid) {
+      conditions.push(`sam.action_type_rid = '${action_type_rid}'`);
+    }
     if (status_rid) {
       conditions.push(`sa.status_rid = '${status_rid}'`);
     }
-    query += ` WHERE ${conditions.join(' AND ')}`;
+    if (conditions.length > 0) {
+      query += ` WHERE ${conditions.join(' AND ')}`;
+    }
     return query;
   }
 }

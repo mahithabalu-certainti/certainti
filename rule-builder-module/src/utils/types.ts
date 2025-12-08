@@ -148,4 +148,6 @@ export type actions = {
     rid: string;
     name: string;
     description: string;
+    action_type_name:string;
+    action_type_rid:string;
 }
