@@ -91,6 +91,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
     React.useState<HTMLButtonElement | null>(null);
   const [seachText, setSearchText] = useState('');
   const [resetSearch, setResetSearch] = useState(false);
+  const [isManualRefresh, setIsManualRefresh] = useState(false);
 
   const { permission, modules } = useSelector(
     (state: RootState) => state.permission
@@ -127,7 +128,15 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
     data: kanbanData,
     isLoading,
     isError,
+    isFetching,
   } = useGetWorkBreakdownList(accountId || '', caseId || '');
+
+  // Reset manual refresh flag when fetching completes
+  useEffect(() => {
+    if (!isFetching && isManualRefresh) {
+      setIsManualRefresh(false);
+    }
+  }, [isFetching, isManualRefresh]);
 
   useEffect(() => {
     if (
@@ -404,6 +413,10 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
               queryClient.invalidateQueries({
                 queryKey: ['taskAttachments', commentsParams],
               });
+              // Refetch kanban board to update comment counts
+              queryClient.invalidateQueries({
+                queryKey: ['kanbanBoardData', accountId, caseId],
+              });
               resolve();
             },
             onError: (error) => {
@@ -469,6 +482,10 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
               queryClient.invalidateQueries({
                 queryKey: ['taskComments', commentsParams],
               });
+              // Refetch kanban board to update comment counts
+              queryClient.invalidateQueries({
+                queryKey: ['kanbanBoardData', accountId, caseId],
+              });
               resolve();
             },
             onError: (error) => {
@@ -526,6 +543,10 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
               queryClient.invalidateQueries({
                 queryKey: ['taskComments', commentsParams],
               });
+              // Refetch kanban board to update comment counts
+              queryClient.invalidateQueries({
+                queryKey: ['kanbanBoardData', accountId, caseId],
+              });
               resolve();
             },
             onError: (error) => {
@@ -581,6 +602,10 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
               successToast(message);
               queryClient.invalidateQueries({
                 queryKey: ['collaborators', accountId, caseId, taskId],
+              });
+              // Refetch kanban board to update task data
+              queryClient.invalidateQueries({
+                queryKey: ['kanbanBoardData', accountId, caseId],
               });
 
               resolve(response);
@@ -647,6 +672,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
   };
 
   const onRefreshClick = () => {
+    setIsManualRefresh(true);
     queryClient.invalidateQueries({
       queryKey: ['kanbanBoardData', accountId, caseId],
     });
@@ -782,6 +808,8 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
             ? () => setIsActionItemsExpanded(!isActionItemsExpanded)
             : undefined
         }
+        onRefreshClick={tabParam === 'milestone' ? onRefreshClick : undefined}
+        showRefresh={tabParam === 'milestone'}
       />
       <SectionHeaderTab
         tabs={tabs}
@@ -803,7 +831,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
             ) : (
               <KanbanBoard
                 data={kanbanData?.data || []}
-                isLoading={isLoading}
+                isLoading={isLoading || isManualRefresh}
                 statusData={statusData}
                 priorityData={priorityData}
                 tagData={tagData}

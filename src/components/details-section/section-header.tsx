@@ -4,7 +4,7 @@ import { Theme } from '@emotion/react';
 import TextButton from '../button/text-button';
 import { ActionsDropdown } from '../actions-dropdown';
 import { ActionsDropdownItem } from '../../common-utils';
-import { ExpandViewIcon, CollapseViewIcon } from '../../assets';
+import { ExpandViewIcon, CollapseViewIcon, RefreshIcon } from '../../assets';
 
 interface SectionHeaderButton {
   label: string;
@@ -34,6 +34,8 @@ interface SectionHeaderProps {
   bgType?: 'circle' | 'react';
   isExpanded?: boolean;
   onToggleExpand?: () => void;
+  onRefreshClick?: () => void;
+  showRefresh?: boolean;
 }
 
 const SectionHeader: React.FC<SectionHeaderProps> = ({
@@ -52,6 +54,8 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({
   bgType,
   isExpanded,
   onToggleExpand,
+  onRefreshClick,
+  showRefresh = false,
 }) => {
   if (hideSection) {
     return null;
@@ -137,6 +141,15 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({
                   disabled={button.disabled}
                 />
               )
+            )}
+            {showRefresh && onRefreshClick && (
+              <button
+                className='flex border border-[#CBD6E2] w-[20px] h-[18px] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] justify-center items-center cursor-pointer'
+                onClick={onRefreshClick}
+                title='Refresh'
+              >
+                <RefreshIcon alt='refresh-icon' className='h-3' />
+              </button>
             )}
             {onToggleExpand && (
               <div

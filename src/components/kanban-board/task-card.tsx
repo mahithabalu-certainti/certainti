@@ -214,7 +214,7 @@ const TaskCardComponent: React.FC<ExtendedTaskCardProps> = ({
                 className='text-[13px]'
                 style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
               >
-                {taskData.checklists_count}
+                {`${taskData.completed_checklist_items_count} / ${taskData.checklists_count}`}
               </span>
             </div>
           )}
