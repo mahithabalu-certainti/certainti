@@ -822,12 +822,13 @@ export const CaseDetails = () => {
         />
       </div>
       <div
-        className={`transition-all duration-300 ease-in-out overflow-hidden ${isActionItemsExpanded
-          ? 'max-h-0 opacity-0'
-          : isError
-            ? 'max-h-[60px] opacity-100'
-            : 'max-h-[140px] opacity-100'
-          }`}
+        className={`transition-all duration-300 ease-in-out overflow-hidden ${
+          isActionItemsExpanded
+            ? 'max-h-0 opacity-0'
+            : isError
+              ? 'max-h-[60px] opacity-100'
+              : 'max-h-[140px] opacity-100'
+        }`}
       >
         <InfoSection
           columns={caseHeaderDetails}
@@ -839,10 +840,11 @@ export const CaseDetails = () => {
       </div>
       <div className='flex flex-1 flex-row w-full border-b border-[#CBD6E2]'>
         <div
-          className={`flex transition-all ease-in-out ${isCollapsed
-            ? 'w-[60px] min-w-[60px] max-w-[60px] duration-300'
-            : 'w-[220px] min-w-[220px] max-w-[220px] duration-500'
-            }`}
+          className={`flex transition-all ease-in-out ${
+            isCollapsed
+              ? 'w-[60px] min-w-[60px] max-w-[60px] duration-300'
+              : 'w-[220px] min-w-[220px] max-w-[220px] duration-500'
+          }`}
         >
           <SideMenuPanel
             menuItems={sideMenuItems}

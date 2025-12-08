@@ -53,10 +53,10 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
   return (
     <div
       ref={setNodeRef}
-      className='bg-[#f5f5f5] rounded-lg p-2 w-60 flex-shrink-0'
+      className='bg-[#f5f5f5] rounded-lg p-0.5 w-60 flex-shrink-0'
       style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
     >
-      <div className='bg-white border border-slate-200 rounded-lg p-2 mb-2'>
+      <div className='bg-white border border-slate-200 rounded-lg p-2 mb-1'>
         <div className='flex items-center gap-2'>
           <h2
             className='text-slate-800 text-[13px] font-semibold'
@@ -108,10 +108,11 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
             onCreateModalOpen?.();
           }}
           disabled={isCreateTaskDisabled}
-          className={`w-full flex items-center gap-2 p-2 rounded-lg border-2 border-dashed transition-colors duration-200 ${isCreateTaskDisabled
-            ? 'border-slate-300 text-slate-400 cursor-not-allowed'
-            : 'border-slate-300 text-slate-500 hover:border-slate-400 hover:text-slate-600'
-            }`}
+          className={`w-full flex items-center gap-2 p-2 rounded-lg border-2 border-dashed transition-colors duration-200 ${
+            isCreateTaskDisabled
+              ? 'border-slate-300 text-slate-400 cursor-not-allowed'
+              : 'border-slate-300 text-slate-500 hover:border-slate-400 hover:text-slate-600'
+          }`}
           style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
         >
           <AddIcon size={18} />

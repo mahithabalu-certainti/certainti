@@ -167,14 +167,14 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
           }),
           workflow_connector:
             formData.linkedTypeRid &&
-              formData.linkTaskTypeRids &&
-              formData.linkTaskTypeRids.length > 0
+            formData.linkTaskTypeRids &&
+            formData.linkTaskTypeRids.length > 0
               ? {
-                source_rid: '',
-                relationship_connector_rid: formData.linkedTypeRid,
-                target_rid: formData.linkTaskTypeRids,
-                is_new_changes: true,
-              }
+                  source_rid: '',
+                  relationship_connector_rid: formData.linkedTypeRid,
+                  target_rid: formData.linkTaskTypeRids,
+                  is_new_changes: true,
+                }
               : {},
           ...(formData.weightageRid && {
             weightage_rid: formData.weightageRid,
