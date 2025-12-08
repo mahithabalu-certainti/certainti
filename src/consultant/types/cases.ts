@@ -135,6 +135,7 @@ export interface CaseDetails {
   modified_by_name: string | null;
   status_name: string;
   currency_code: string;
+  currency_symbol: string;
   currency_rid: string;
   case_completion_percentage: string | null;
   case_total_qualified_projects: string | number | null;
