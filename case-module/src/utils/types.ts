@@ -660,6 +660,7 @@ export type TaskCardDetailsType = {
   assigned_to : string
   priority_rid : string
   task_description : string
+  description : string
   task_status_rid : string
   priority_name : string
   task_status_name : string
@@ -725,6 +726,7 @@ export interface IActivityTask {
   attachment_level: string;
   task_name: string;
   description?: string;
+  task_description?: string;
   effective_start_datetime: Date;
   effective_end_datetime: Date;
   priority_rid?: string;

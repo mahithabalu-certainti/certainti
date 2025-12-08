@@ -332,6 +332,7 @@ class ActivitySchemaService {
       const [updatedResult] = await Activities.update(
         {
           ...taskRequest,
+          description: taskRequest.task_description,
           modified_by: taskRequest.modified_by || userId,
           modified_datetime: new Date(),
         },
@@ -2875,7 +2876,8 @@ class ActivitySchemaService {
           "activity_rid",
           "account_rid",
           "modified_datetime",
-          "task_rid"
+          "task_rid",
+          "tags"
         ];
   
         const cleanedNewData = Object.fromEntries(
