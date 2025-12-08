@@ -5582,12 +5582,12 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         attributes : ['case_name','fiscal_year'],
         raw : true  
       });
-    /*  await TaskSummary.create(
+      await TaskSummary.create(
         {
-          task_rid: createdTaskResult.rid,
+          task_rid: createdTaskResult.dataValues.rid,
           r_number: createdTaskResult.r_number || "",
           account_rid: createdTaskResult.account_rid || "",
-          attach_to: createdTaskResult.rid || "",
+          attach_to: data.case_rid || "",
           attachment_level: "case",
           task_name: data.task_name || "",
           description: data.task_description || "",
@@ -5598,10 +5598,9 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
           effective_start_datetime: data.effective_start_datetime,
           effective_end_datetime: data.effective_end_datetime,
           created_by: data.created_by || "",
-          created_datetime: new Date(),
+          created_datetime: new Date()
         }
       );
-      */
       if(data?.checklist_template_rid) 
       {
         const response  = await this.fetchChecklistTemplateDetailsById(data.checklist_template_rid);
@@ -5765,7 +5764,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             await this.manageCheckListItems(accountNumber,caseRequest,checklistResponse.rid, transaction);
           }
       }
-       /* await TaskSummary.update(
+       await TaskSummary.update(
         {
           task_name: data.task_name || "",
           description: data.task_description || "",
@@ -5779,10 +5778,11 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         },
         {
         where : {
-            task_rid : data.rid
+            task_rid : data.rid,
+            attach_to : data.case_rid
           }
       }
-      ); */
+      );
         const checkIsDifferentCollaborator = await this.isNewCollaborator(data.modified_by, accountNumber,"case_task", data.case_rid, data.rid);
         if(!checkIsDifferentCollaborator) {
           const checkCollaboratorExists = await this.isCollaboratorAlreadyAdded(data.modified_by, data.case_rid, data.account_rid, data.rid, accountNumber,"case_task");
