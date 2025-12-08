@@ -1,7 +1,7 @@
 import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
-import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constants";
-import { Project } from "./project";
-import AccountDetails from "./accountDetails";
+import { ENV_PREFIX } from "../utils/constants";
+// import { Project } from "./project";
+// import AccountDetails from "./accountDetails";
 export interface ProjectFiscalAttributes {
   rid: string;
   r_number?: string;
@@ -140,8 +140,6 @@ export interface ProjectFiscalAttributes {
 
   comments?: string | null;
   project_description?: string | null;
-
-  is_qualified?: boolean | null;
 }
 
 interface ProjectFiscalCreationAttributes
@@ -279,14 +277,13 @@ export class ProjectFiscal
   public effective_nonlabor_cost?: number | null;
 
   public effective_metric_type?: string | null;
-  public efault_metric_type?: string | null;
+  public default_metric_type?: string | null;
 
   public interaction_cc_list?: string | null;
   public assessment_status?: string | null;
   public claim_status?: string | null;
   public comments?: string | null;
   public project_description?: string | null;
-  public is_qualified?: boolean | null;
 
   static initialize(sequelize: Sequelize, schema: string) {
     ProjectFiscal.init(
@@ -526,10 +523,6 @@ export class ProjectFiscal
           type: DataTypes.STRING(2000),
           allowNull: true,
         },
-        is_qualified: {
-          type: DataTypes.BOOLEAN,
-          allowNull: true,
-        },
       },
       {
         sequelize,
@@ -540,36 +533,20 @@ export class ProjectFiscal
       }
     );
 
-    ProjectFiscal.belongsTo(Project, {
-      foreignKey: "project_rid",
-      targetKey: "rid",
-      as: "project_fiscal_project"
-    });
+    // ProjectFiscal.belongsTo(Project, {
+    //   foreignKey: "project_rid",
+    //   targetKey: "rid",
+    //   as: "project_fiscal_project"
+    // });
 
-    ProjectFiscal.belongsTo(AccountDetails, {
-      foreignKey: "account_rid",
-      targetKey: "account_rid",
-      as: "project_fiscal_account"
-    });
+    // ProjectFiscal.belongsTo(AccountDetails, {
+    //   foreignKey: "account_rid",
+    //   targetKey: "account_rid",
+    //   as: "project_fiscal_account"
+    // });
 
     return ProjectFiscal;
   }
 }
 
-export async function setupProjectFiscal(
-  sequelize: Sequelize,
-  schemaName: string
-) {
-  try {
-    await sequelize.query(
-      `CREATE SEQUENCE IF NOT EXISTS "${schemaName}".project_fiscal_seq START 1`
-    );
 
-    await sequelize.query(`ALTER TABLE "${schemaName}".project_fiscal
-      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.PROJECT_FISCAL}-' || LPAD(nextval('"${schemaName}".project_fiscal_seq')::text, 10, '0')`);
-
-    console.log("Project fiscal sequence setup complete");
-  } catch (error) {
-    console.error("Error setting up Project fiscal sequence:", error);
-  }
-}
