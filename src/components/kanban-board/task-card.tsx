@@ -126,9 +126,9 @@ const TaskCardComponent: React.FC<ExtendedTaskCardProps> = ({
         : {})}
       onClick={handleCardClick}
       onDoubleClick={handleCardClick}
-      className='bg-white border border-slate-200 rounded-lg p-3 mb-2 hover:bg-slate-50 transition-colors duration-200 group cursor-pointer'
+      className='bg-white border border-slate-200 rounded-lg p-2 mb-1 hover:bg-slate-50 transition-colors duration-200 group cursor-pointer'
     >
-      <div className='flex items-center gap-1 mb-3'>
+      <div className='flex items-center gap-1 mb-2'>
         <div className='w-2 h-2 bg-slate-300 rounded-full flex-shrink-0'></div>
         <div className='flex-1 flex items-start justify-between gap-2 min-w-0'>
           <Tooltip title={taskData.task_name} arrow placement='top'>
@@ -154,33 +154,41 @@ const TaskCardComponent: React.FC<ExtendedTaskCardProps> = ({
         </div>
       </div>
 
-      <div className='flex items-center gap-2 mb-3'>
-        <div
-          className='w-auto px-3 py-1 rounded text-[11px] font-medium'
-          style={{
-            backgroundColor: statusColor.bg,
-            color: statusColor.text,
-            border: `0.5px solid ${statusColor.border}`,
-            fontFamily: "'Mulish', 'Lexend', sans-serif",
-            fontSize: '13px',
-          }}
-        >
-          {taskData.task_status_name || taskData.status_name}
-        </div>
+      {(taskData.task_status_name ||
+        taskData.status_name ||
+        taskData.priority_name) && (
+          <div className='flex items-center gap-2 mb-2'>
+            {(taskData.task_status_name || taskData.status_name) && (
+              <div
+                className='w-auto px-3 py-1 rounded text-[11px] font-medium'
+                style={{
+                  backgroundColor: statusColor.bg,
+                  color: statusColor.text,
+                  border: `0.5px solid ${statusColor.border}`,
+                  fontFamily: "'Mulish', 'Lexend', sans-serif",
+                  fontSize: '13px',
+                }}
+              >
+                {taskData.task_status_name || taskData.status_name}
+              </div>
+            )}
 
-        <div
-          className='w-auto px-3 py-1 rounded text-[11px] font-medium'
-          style={{
-            backgroundColor: priorityColor.bg,
-            color: priorityColor.text,
-            border: `0.5px solid ${priorityColor.border}`,
-            fontFamily: "'Mulish', 'Lexend', sans-serif",
-            fontSize: '13px',
-          }}
-        >
-          {taskData.priority_name}
-        </div>
-      </div>
+            {taskData.priority_name && (
+              <div
+                className='w-auto px-3 py-1 rounded text-[11px] font-medium'
+                style={{
+                  backgroundColor: priorityColor.bg,
+                  color: priorityColor.text,
+                  border: `0.5px solid ${priorityColor.border}`,
+                  fontFamily: "'Mulish', 'Lexend', sans-serif",
+                  fontSize: '13px',
+                }}
+              >
+                {taskData.priority_name}
+              </div>
+            )}
+          </div>
+        )}
 
       <div className='flex items-center justify-between'>
         {showProfileIndicator && taskData.assigned_to_name && (
@@ -199,17 +207,34 @@ const TaskCardComponent: React.FC<ExtendedTaskCardProps> = ({
         )}
 
         <div className='flex items-center gap-2 ml-auto'>
-          {taskData.checklists_count > 0 && (
-            <div className='flex items-center gap-1 text-gray-400'>
-              <CustomChecklistIcon className='w-3 h-3 text-gray-400' />
-              <span
-                className='text-[13px]'
-                style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
-              >
-                {taskData.checklists_count}
-              </span>
-            </div>
-          )}
+          {taskData.checklists_count > 0 &&
+            (() => {
+              const isCompleted =
+                taskData.completed_checklist_items_count ===
+                taskData.checklists_count;
+
+              return (
+                <div className='flex items-center gap-1'>
+                  <div
+                    className='w-3.5 h-3.5 flex items-center justify-center'
+                    style={{
+                      backgroundColor: isCompleted ? '#D2FFE3' : 'transparent',
+                    }}
+                  >
+                    <CustomChecklistIcon
+                      className='w-3 h-3'
+                      style={{ color: isCompleted ? '#15803D' : '#9CA3AF' }}
+                    />
+                  </div>
+                  <span
+                    className='text-[13px] text-gray-400'
+                    style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
+                  >
+                    {`${taskData.completed_checklist_items_count} / ${taskData.checklists_count}`}
+                  </span>
+                </div>
+              );
+            })()}
 
           {showCommentCount && (
             <div className='flex items-center gap-1 text-gray-400'>
