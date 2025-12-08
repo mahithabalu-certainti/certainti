@@ -330,7 +330,8 @@ export class TaskService {
           effective_start_datetime: taskData.effective_start_datetime,
           effective_end_datetime: taskData.effective_end_datetime,
           attachment_level: taskData.attachment_level,
-          attach_to: attachmentDisplayNames[taskData.rid] || taskData.attach_to,
+          attach_to_name: attachmentDisplayNames[taskData.rid] || taskData.attach_to,
+          attach_to: taskData.attach_to,
           task_rid: taskData.task_rid
         };
       }));
@@ -951,7 +952,7 @@ export class TaskService {
       });
 
       // Apply field-level access control for export
-      const allowedFieldsForExport = await this.schemaService.getAllowedExportFields(userId, "tasks_view_edit");
+      const allowedFieldsForExport = await this.schemaService.getAllowedExportFields(userId, "cases_workbreakdown_view_edit");
       const allowedFieldSet = new Set<string>();
       for (const field of allowedFieldsForExport) {
         if (field.read) {
@@ -1274,10 +1275,8 @@ export class TaskService {
     statusMessage: string,
     data: any
   }> {
-    console.log("data", data);
     if (data.attachment_level === 'project') {
       const response = await this.projectTaskService.getProjectTaskById(data.account_rid, data.task_rid);
-      console.log("yoki", response);
       if (response.statusCode !== HttpStatus.SUCCESS) {
         return {
           statusCode: response.statusCode,
