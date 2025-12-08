@@ -154,14 +154,14 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({
             {onToggleExpand && (
               <button
                 onClick={onToggleExpand}
-                className='flex border border-[#CBD6E2] w-[20px] h-[20px] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] justify-center items-center cursor-pointer'
+                className='flex border border-[#CBD6E2] w-[22px] h-[22px] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] justify-center items-center cursor-pointer'
                 title={isExpanded ? 'Collapse' : 'Expand'}
               >
                 <Suspense fallback={null}>
                   {isExpanded ? (
-                    <CollapseViewIcon className='w-4 h-4' />
+                    <CollapseViewIcon className='w-5 h-5' />
                   ) : (
-                    <ExpandViewIcon className='w-4 h-4' />
+                    <ExpandViewIcon className='w-5 h-5' />
                   )}
                 </Suspense>
               </button>
