@@ -453,6 +453,7 @@ export class CaseService {
         if (getCurrencyDetails) {
           queryResult.currency_code = getCurrencyDetails.currency_code;
           queryResult.currency_rid = getAccountDetails!.currency_rid;
+          queryResult.currency_symbol = getCurrencyDetails.currency_symbol
         } else {
           queryResult.currency_code = null;
           queryResult.currency_rid = null;
