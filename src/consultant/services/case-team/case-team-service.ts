@@ -483,7 +483,7 @@ export interface DeleteTagPayload {
   account_rid: string;
   case_rid?: string;
   tag_rid: string[];
-  action_type?: string;
+  task_type?: string;
 }
 
 export const deleteTag = async (

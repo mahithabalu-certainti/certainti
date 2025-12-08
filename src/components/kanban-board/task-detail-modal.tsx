@@ -777,7 +777,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
             account_rid: accountId,
             tag_rid: removedTags,
             ...(taskType === 'activity'
-              ? { action_type: 'activity' }
+              ? { task_type: 'activity' }
               : { case_rid: caseId }),
           };
           await deleteTagMutation.mutateAsync(payload);
