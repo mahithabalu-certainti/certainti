@@ -157,38 +157,38 @@ const TaskCardComponent: React.FC<ExtendedTaskCardProps> = ({
       {(taskData.task_status_name ||
         taskData.status_name ||
         taskData.priority_name) && (
-          <div className='flex items-center gap-2 mb-2'>
-            {(taskData.task_status_name || taskData.status_name) && (
-              <div
-                className='w-auto px-3 py-1 rounded text-[11px] font-medium'
-                style={{
-                  backgroundColor: statusColor.bg,
-                  color: statusColor.text,
-                  border: `0.5px solid ${statusColor.border}`,
-                  fontFamily: "'Mulish', 'Lexend', sans-serif",
-                  fontSize: '13px',
-                }}
-              >
-                {taskData.task_status_name || taskData.status_name}
-              </div>
-            )}
+        <div className='flex items-center gap-2 mb-2'>
+          {(taskData.task_status_name || taskData.status_name) && (
+            <div
+              className='w-auto px-3 py-1 rounded text-[11px] font-medium'
+              style={{
+                backgroundColor: statusColor.bg,
+                color: statusColor.text,
+                border: `0.5px solid ${statusColor.border}`,
+                fontFamily: "'Mulish', 'Lexend', sans-serif",
+                fontSize: '13px',
+              }}
+            >
+              {taskData.task_status_name || taskData.status_name}
+            </div>
+          )}
 
-            {taskData.priority_name && (
-              <div
-                className='w-auto px-3 py-1 rounded text-[11px] font-medium'
-                style={{
-                  backgroundColor: priorityColor.bg,
-                  color: priorityColor.text,
-                  border: `0.5px solid ${priorityColor.border}`,
-                  fontFamily: "'Mulish', 'Lexend', sans-serif",
-                  fontSize: '13px',
-                }}
-              >
-                {taskData.priority_name}
-              </div>
-            )}
-          </div>
-        )}
+          {taskData.priority_name && (
+            <div
+              className='w-auto px-3 py-1 rounded text-[11px] font-medium'
+              style={{
+                backgroundColor: priorityColor.bg,
+                color: priorityColor.text,
+                border: `0.5px solid ${priorityColor.border}`,
+                fontFamily: "'Mulish', 'Lexend', sans-serif",
+                fontSize: '13px',
+              }}
+            >
+              {taskData.priority_name}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className='flex items-center justify-between'>
         {showProfileIndicator && taskData.assigned_to_name && (

@@ -108,10 +108,11 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
             onCreateModalOpen?.();
           }}
           disabled={isCreateTaskDisabled}
-          className={`w-full flex items-center gap-2 p-2 rounded-lg border-2 border-dashed transition-colors duration-200 ${isCreateTaskDisabled
+          className={`w-full flex items-center gap-2 p-2 rounded-lg border-2 border-dashed transition-colors duration-200 ${
+            isCreateTaskDisabled
               ? 'border-slate-300 text-slate-400 cursor-not-allowed'
               : 'border-slate-300 text-slate-500 hover:border-slate-400 hover:text-slate-600'
-            }`}
+          }`}
           style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
         >
           <AddIcon size={18} />
