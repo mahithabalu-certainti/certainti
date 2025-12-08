@@ -1829,9 +1829,18 @@ class ActivitySchemaService {
         rawQueries.fetchAccountInfo(activityRequest.account_rid!),
         { type: "SELECT" }
       );
+     let parentAccountNumber = accountNumber;
+          if(accountInfo.storage_type === 'separate_db') {
+            const [parentAccountInfo]: any[] =
+                await this.mainDbSequelize.query(
+                rawQueries.fetchAccountInfo(accountInfo.parent_account_rid!),
+                { type: "SELECT" }
+              );
+            parentAccountNumber = parentAccountInfo.r_number;
+          }
 
    const senderEmailInfo = await this.fetchSenderEmailInfoByAccountId(
-      accountNumber,
+      parentAccountNumber,
       accountInfo.parent_account_rid
     );
     if(!senderEmailInfo){
@@ -2150,9 +2159,17 @@ class ActivitySchemaService {
       rawQueries.fetchAccountInfo(activityRequest.account_rid),
       { type: "SELECT" }
     );
-
+  let parentAccountNumber = accountNumber;
+          if(accountInfo.storage_type === 'separate_db') {
+            const [parentAccountInfo]: any[] =
+                await this.mainDbSequelize.query(
+                rawQueries.fetchAccountInfo(accountInfo.parent_account_rid!),
+                { type: "SELECT" }
+              );
+            parentAccountNumber = parentAccountInfo.r_number;
+          }
     const senderEmailInfo = await this.fetchSenderEmailInfoByAccountId(
-      accountNumber,
+      parentAccountNumber,
       accountInfo.parent_account_rid
     );
     const emailContent = {
