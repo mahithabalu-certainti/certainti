@@ -772,12 +772,15 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
 
       if (removedTags.length > 0 && taskId) {
         try {
-          await deleteTagMutation.mutateAsync({
+          const payload = {
             task_rid: taskId,
             account_rid: accountId,
-            case_rid: caseId,
             tag_rid: removedTags,
-          });
+            ...(taskType === 'activity'
+              ? { action_type: 'activity' }
+              : { case_rid: caseId }),
+          };
+          await deleteTagMutation.mutateAsync(payload);
         } catch (error) {
           console.error('Error deleting tags:', error);
         }
