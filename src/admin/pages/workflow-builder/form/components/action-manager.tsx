@@ -1,45 +1,27 @@
 import { useState, useMemo } from 'react';
 import { SearchIcon } from '../../../../../assets';
-import { Action, Rule } from '../helper';
-import {
-  useGetActionCategoryTypes,
-  useGetActionTypes,
-} from '../../../../service/workflow-builder/workflow-builder-service';
+import { Action } from '../helper';
 import { ActionCard } from './data-card';
 import PageSkeleton from './page-skeleton';
+import { useWorkflowContext } from '../workflow-context';
+import { useGetActionTypes } from '../../../../service/workflow-builder/workflow-builder-service';
+import { ActionCategoryTypeResponse } from '../../../../types';
 
 interface ActionManagerProps {
-  rule: Rule;
-  actions: Action[];
-  onAddAction: (action: Action) => void;
-  onUpdateAction?: (actionId: string, updatedAction: Action) => void;
-  onDeleteAction?: (actionId: string) => void;
-  selectedActionId?: string | null;
+  actionCategoryData?:ActionCategoryTypeResponse;
+  isLoadingActionCategories?: boolean;
 }
 
 const ActionManager = ({
-  rule,
-  actions: propActions,
-  onAddAction,
-  onDeleteAction,
+  actionCategoryData,
+  isLoadingActionCategories,
 }: ActionManagerProps) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  
+  const { rule, addAction, deleteAction } = useWorkflowContext();
 
-  // Prepare payload for action category types - use trigger ID as scope_rid
-  const actionCategoryParams = useMemo(
-    () => ({
-      scope_rid: rule.trigger?.id || '',
-      status_rid: '',
-    }),
-    [rule.trigger?.id]
-  );
-
-  // Fetch action category types based on trigger ID
-  const { data: actionCategoryData, isLoading: isLoadingCategories } =
-    useGetActionCategoryTypes(actionCategoryParams, !!rule.trigger?.id);
-
-  // Prepare payload for action types - use selected category RID
+  // Dynamically fetch action types based on selected category
   const actionTypeParams = useMemo(
     () => ({
       action_type_rid: selectedCategory === 'all' ? '' : selectedCategory,
@@ -47,10 +29,8 @@ const ActionManager = ({
     }),
     [selectedCategory]
   );
-
-  // Fetch action types based on selected category
-  const { data: actionTypeData, isLoading: isLoadingActionTypes } =
-    useGetActionTypes(actionTypeParams);
+  
+  const { data: actionTypeData, isLoading: isLoadingActionTypes } = useGetActionTypes(actionTypeParams);
 
   // Transform action category data to categories
   const actionCategories = useMemo(() => {
@@ -66,7 +46,7 @@ const ActionManager = ({
     return [{ id: 'all', label: 'All Actions', rid: '' }, ...categories];
   }, [actionCategoryData]);
 
-  // Transform action type data to actions (main data source) - FIXED!
+  // Transform action type data to actions (main data source)
   const actionsData = useMemo(() => {
     if (!actionTypeData?.data) return [];
 
@@ -74,8 +54,8 @@ const ActionManager = ({
       id: actionType.rid,
       name: actionType.name,
       description: actionType.description || '',
-      category: actionType.action_type_rid || 'uncategorized', // Use actual category ID from backend
-      categoryName: actionType.action_type_name || 'Uncategorized', // Use actual category name
+      category: actionType.action_type_rid || 'uncategorized',
+      categoryName: actionType.action_type_name || 'Uncategorized',
     }));
   }, [actionTypeData]);
 
@@ -110,18 +90,18 @@ const ActionManager = ({
   }, [filteredActions]);
 
   const isActionAlreadyAdded = (actionId: string) =>
-    propActions.some((action) => action.id === actionId);
+    rule.actions.some((action) => action.id === actionId);
 
   const handleActionSelect = (action: Action) => {
     if (isActionAlreadyAdded(action.id)) {
       // If already added, disable click - don't remove
       return;
     }
-    onAddAction(action);
+    addAction(action);
   };
 
   // Show full loader only on initial load
-  if (isLoadingCategories) {
+  if (isLoadingActionCategories) {
     return <PageSkeleton />;
   }
 
@@ -171,9 +151,9 @@ const ActionManager = ({
       <div className='p-6 border-b border-[#CBD6E2] sticky top-0 z-20'>
         <div className='flex items-center justify-between mb-3'>
           <h2 className='text-2xl text-[#425A76] font-bold'>Add Actions</h2>
-          {propActions.length > 0 && (
+          {rule.actions.length > 0 && (
             <div className='text-sm text-green-600 font-medium bg-green-50 px-3 py-1 rounded-full border border-green-200'>
-              {propActions.length} Action{propActions.length !== 1 ? 's' : ''}{' '}
+              {rule.actions.length} Action{rule.actions.length !== 1 ? 's' : ''}{' '}
               Added
             </div>
           )}
@@ -219,20 +199,20 @@ const ActionManager = ({
       {/* Action list with skeleton loading */}
       <div className='flex-1 overflow-y-auto space-y-4 pb-4'>
         {/* Selected actions highlight section */}
-        {propActions.length > 0 && !isLoadingActionTypes && (
+        {rule.actions.length > 0 && !isLoadingActionTypes && (
           <div className='px-6 pt-6'>
             <h3 className='text-sm font-semibold text-[#425A76] mb-3 uppercase'>
               Added Actions
             </h3>
             <div className='grid grid-cols-1 md:grid-cols-4 gap-3'>
-              {propActions.map((action) => (
+              {rule.actions.map((action) => (
                 <ActionCard
                   key={action.id}
                   action={action}
                   onSelect={() => {}}
                   isSelected={true}
                   isAlreadyAdded={true}
-                  onDelete={() => onDeleteAction?.(action.id)}
+                  onDelete={() => deleteAction(action.id)}
                 />
               ))}
             </div>
@@ -268,7 +248,7 @@ const ActionManager = ({
                     </h3>
                     <div className='grid grid-cols-1 md:grid-cols-4 gap-3'>
                       {list.map((action) => {
-                        const isAlreadyAdded = propActions.some(
+                        const isAlreadyAdded = rule.actions.some(
                           (a) => a.id === action.id
                         );
                         return (
@@ -297,7 +277,7 @@ const ActionManager = ({
                 </h3>
                 <div className='grid grid-cols-1 md:grid-cols-4 gap-3'>
                   {filteredActions.map((action) => {
-                    const isAlreadyAdded = propActions.some(
+                    const isAlreadyAdded = rule.actions.some(
                       (a) => a.id === action.id
                     );
                     return (

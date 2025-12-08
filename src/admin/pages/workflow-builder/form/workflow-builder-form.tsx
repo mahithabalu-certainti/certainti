@@ -1,36 +1,104 @@
-import React, { useState } from 'react';
+import React, { useMemo } from 'react';
 import { SettingIcon } from '../../../../assets';
 import SingleSkeleton from '../../../../components/skeleton-component/singleskeleton';
 import TextButton from '../../../../components/button/text-button';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { WORKFLOW_BUILDER } from '../../../../routes';
 import { RuleBuilder } from './components';
-import { Rule } from './helper';
+import { WorkflowProvider, useWorkflowContext } from './workflow-context';
+import {
+  useGetScopeList,
+  useGetConditionList,
+  useGetActionCategoryTypes,
+} from '../../../service/workflow-builder/workflow-builder-service';
 
-const WorkflowBuilderForm: React.FC = () => {
+// Inner component that uses the context
+const WorkflowBuilderFormContent: React.FC = () => {
   const navigate = useNavigate();
-  const [rule, setRule] = useState<Rule>({
-    id: crypto.randomUUID(),
-    name: 'Untitled rule',
-    trigger: null,
-    conditions: [],
-    actions: [],
-    conditionType: null,
-    isActive: false,
-  });
+  const location = useLocation();
+  const { rule } = useWorkflowContext();
+
+  // ========== CENTRALIZED API CALLS ==========
+  
+  // 1. Fetch scope list (trigger categories)
+  const { data: scopeListData, isLoading: isLoadingScopeList } = useGetScopeList();
+
+  // NOTE: Scope event list (triggers) API call is now managed inside TriggerManager
+  // because it depends on selectedScope which is local to TriggerManager
+
+  // 2. Fetch condition list (condition types) - only when trigger is selected
+  const conditionListParams = useMemo(
+    () => ({
+      event_rid: rule.trigger?.id || '',
+      status_rid: '',
+    }),
+    [rule.trigger?.id]
+  );
+  const { data: conditionListData, isLoading: isLoadingConditionTypes } = useGetConditionList(
+    conditionListParams,
+    !!rule.trigger?.id
+  );
+
+  // NOTE: Condition categories API call is now managed inside ConditionManager
+  // because it depends on selectedConditionRid which is local to ConditionManager
+
+  // 3. Fetch action category types - only when trigger is selected
+  const actionCategoryParams = useMemo(
+    () => ({
+      scope_rid: rule.trigger?.id || '',
+      status_rid: '',
+    }),
+    [rule.trigger?.id]
+  );
+  const { data: actionCategoryData, isLoading: isLoadingActionCategories } = useGetActionCategoryTypes(
+    actionCategoryParams,
+    !!rule.trigger?.id
+  );
+
+  // NOTE: Action types API call is now managed inside ActionManager
+  // because it depends on selectedCategory which is local to ActionManager
+
+  // ========== HANDLERS ==========
 
   const goBack = () => {
     navigate(WORKFLOW_BUILDER);
   };
 
   const handleSubmit = () => {
-    console.log('API Payload:', rule);
+    // Transform rule to API payload format
+    const apiPayload = {
+      rule_id: rule.id,
+      rule_name: rule.name,
+      trigger_id: rule.trigger?.id,
+      condition_type_id: rule.conditionType?.rid,
+      conditions: rule.conditions.map((condition) => ({
+        condition_id: condition.id,
+        category_id: condition.category,
+        field: condition.field,
+        operator: condition.operator,
+        value: condition.value,
+        logical_operator: condition.logicalOperator,
+      })),
+      actions: rule.actions.map((action) => ({
+        action_id: action.id,
+        category_id: action.category,
+      })),
+      is_active: rule.isActive,
+    };
+
+    console.log('API Payload:', apiPayload);
+    
+    // TODO: Call create/update API here
+    // if (isEditView) {
+    //   await updateWorkflowRule(apiPayload);
+    // } else {
+    //   await createWorkflowRule(apiPayload);
+    // }
+    
     navigate(WORKFLOW_BUILDER);
   };
 
-  const isLoading = false;
-  const isEditView =
-    location.pathname.split('/').slice(-2, -1)[0] === 'edit-rule';
+  const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit-rule';
 
   const isSaveEnabled =
     rule.name.trim() !== '' &&
@@ -38,6 +106,17 @@ const WorkflowBuilderForm: React.FC = () => {
     rule.conditions.length > 0 &&
     rule.actions.length > 0 &&
     rule.conditionType !== null;
+
+  const isInitialLoading = isLoadingScopeList;
+
+  // Pass all fetched data to RuleBuilder (excluding dynamic API data)
+  const apiData = {
+    scopeListData,
+    conditionListData,
+    actionCategoryData,
+    isLoadingConditionTypes,
+    isLoadingActionCategories,
+  };
 
   return (
     <div className='flex flex-col h-full'>
@@ -49,7 +128,7 @@ const WorkflowBuilderForm: React.FC = () => {
               className='h-7 w-7 p-0.5 rounded [&>path]:fill-[#fff] [&>path]:stroke-[#EA0084] bg-[#EA0084]'
             />
             <div className='w-[90%]'>
-              {isLoading ? (
+              {isInitialLoading ? (
                 <div className='ml-2'>
                   <SingleSkeleton width={150} height={12} />
                 </div>
@@ -94,10 +173,23 @@ const WorkflowBuilderForm: React.FC = () => {
       {/* Main Content Area */}
       <div className='flex-1'>
         <React.Suspense fallback={null}>
-          <RuleBuilder rule={rule} setRule={setRule} />
+          <RuleBuilder apiData={apiData} isInitialLoading={isInitialLoading} />
         </React.Suspense>
       </div>
     </div>
+  );
+};
+
+// Main component that provides the context
+const WorkflowBuilderForm: React.FC = () => {
+  // TODO: For edit mode, fetch existing rule data and pass as initialRule
+  // const { ruleId } = useParams();
+  // const { data: existingRule } = useGetWorkflowRule(ruleId);
+
+  return (
+    <WorkflowProvider>
+      <WorkflowBuilderFormContent />
+    </WorkflowProvider>
   );
 };
 

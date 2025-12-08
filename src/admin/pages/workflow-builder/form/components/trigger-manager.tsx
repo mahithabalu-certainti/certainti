@@ -1,26 +1,26 @@
 import { useState, useMemo } from 'react';
 import { SearchIcon } from '../../../../../assets';
-import { useGetScopeEventList } from '../../../../service/workflow-builder/workflow-builder-service';
 import { Trigger } from '../helper';
 import { TriggerCard } from './data-card';
 import PageSkeleton from './page-skeleton';
+import { useWorkflowContext } from '../workflow-context';
+import { useGetScopeEventList } from '../../../../service/workflow-builder/workflow-builder-service';
 import { ScopeListResponse } from '../../../../types';
 
 interface TriggerManagerProps {
-  onSelect: (trigger: Trigger) => void;
-  selectedTriggerId?: string | null;
   scopeListData?: ScopeListResponse;
+  onSelect: (trigger: Trigger) => void;
 }
 
 const TriggerManager: React.FC<TriggerManagerProps> = ({
-  onSelect,
-  selectedTriggerId,
   scopeListData,
+  onSelect,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedScope, setSelectedScope] = useState('all');
+  const { rule } = useWorkflowContext();
 
-  // Prepare payload for scope event list
+  // Dynamically fetch scope event list (triggers) based on selected scope
   const eventListPayload = useMemo(
     () => ({
       scope_type_rid: selectedScope === 'all' ? '' : selectedScope,
@@ -29,7 +29,6 @@ const TriggerManager: React.FC<TriggerManagerProps> = ({
     [selectedScope]
   );
 
-  // Fetch scope event list (triggers)
   const { data: eventListData, isLoading: isLoadingEvents } =
     useGetScopeEventList(eventListPayload);
 
@@ -41,8 +40,8 @@ const TriggerManager: React.FC<TriggerManagerProps> = ({
       id: event.rid,
       name: event.event_name,
       description: event.description || '',
-      category: event.scope_type_rid, // Using scope_type_rid as category ID
-      badge: undefined, // No badge from API, can be added if needed
+      category: event.scope_type_rid,
+      badge: undefined,
     }));
   }, [eventListData]);
 
@@ -83,7 +82,7 @@ const TriggerManager: React.FC<TriggerManagerProps> = ({
 
   // Check if a trigger is selected
   const isTriggerSelected = (triggerId: string) => {
-    return selectedTriggerId === triggerId;
+    return rule.trigger?.id === triggerId;
   };
 
   return (
@@ -92,7 +91,7 @@ const TriggerManager: React.FC<TriggerManagerProps> = ({
       <div className='p-6 border-b border-[#CBD6E2] sticky top-0 z-20'>
         <div className='flex items-center justify-between mb-3'>
           <h2 className='text-2xl text-[#425A76] font-bold'>Add a Trigger</h2>
-          {selectedTriggerId && (
+          {rule.trigger && (
             <div className='text-sm text-green-600 font-medium bg-green-50 px-3 py-1 rounded-full border border-green-200'>
               ✓ Trigger Selected
             </div>
@@ -136,23 +135,19 @@ const TriggerManager: React.FC<TriggerManagerProps> = ({
 
       {/* Trigger list with skeleton loading */}
       <div className='flex-1 overflow-y-auto space-y-4 pb-4'>
-        {/* Selected trigger highlight section */}
-        {selectedTriggerId && !isLoadingEvents && (
+        {/* Selected trigger highlight section - Always show if trigger is selected */}
+        {rule.trigger && !isLoadingEvents && (
           <div className='px-6 pt-6'>
             <h3 className='text-sm font-semibold text-[#425A76] mb-3 uppercase'>
               Currently Selected
             </h3>
             <div className='grid grid-cols-1 md:grid-cols-4 gap-3'>
-              {triggers
-                .filter((t) => t.id === selectedTriggerId)
-                .map((trigger) => (
-                  <TriggerCard
-                    key={trigger.id}
-                    trigger={trigger}
-                    onSelect={(trigger) => onSelect(trigger as Trigger)}
-                    isSelected={true}
-                  />
-                ))}
+              <TriggerCard
+                key={rule.trigger.id}
+                trigger={rule.trigger}
+                onSelect={(trigger) => onSelect(trigger as Trigger)}
+                isSelected={true}
+              />
             </div>
           </div>
         )}
@@ -179,7 +174,7 @@ const TriggerManager: React.FC<TriggerManagerProps> = ({
 
                 // Filter out already selected trigger from this category
                 const filteredList = list.filter(
-                  (trigger) => trigger.id !== selectedTriggerId
+                  (trigger) => trigger.id !== rule.trigger?.id
                 );
                 if (filteredList.length === 0) return null;
 
@@ -214,7 +209,7 @@ const TriggerManager: React.FC<TriggerManagerProps> = ({
                 </h3>
                 <div className='grid grid-cols-1 md:grid-cols-4 gap-3'>
                   {groupedTriggers[selectedScope]
-                    .filter((trigger) => trigger.id !== selectedTriggerId) // Exclude already selected
+                    .filter((trigger) => trigger.id !== rule.trigger?.id) // Exclude already selected
                     .map((trigger) => (
                       <TriggerCard
                         key={trigger.id}

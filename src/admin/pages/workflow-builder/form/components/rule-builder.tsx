@@ -7,144 +7,72 @@ import {
   PageSkeleton,
   TriggerManager,
 } from '.';
-import { Condition, Rule, Trigger, getDynamicSvgIcon } from '../helper';
-import { useRuleBuilderStepper } from '../rule-builder-stepper';
-import { useGetScopeList } from '../../../../service/workflow-builder/workflow-builder-service';
+import { getDynamicSvgIcon, Trigger } from '../helper';
+import { useWorkflowContext } from '../workflow-context';
+import {
+  ActionCategoryTypeResponse,
+  ConditionListResponse,
+  ScopeListResponse,
+} from '../../../../types';
 
 interface RuleBuilderProps {
-  rule: Rule;
-  setRule: React.Dispatch<React.SetStateAction<Rule>>;
-  ruleId?: string;
+  apiData: {
+    scopeListData?: ScopeListResponse;
+    conditionListData?: ConditionListResponse;
+    actionCategoryData?: ActionCategoryTypeResponse;
+    isLoadingConditionTypes?: boolean;
+    isLoadingActionCategories?: boolean;
+  };
+  isInitialLoading: boolean;
 }
 
-const RuleBuilder: React.FC<RuleBuilderProps> = ({ rule, setRule, ruleId }) => {
+const RuleBuilder: React.FC<RuleBuilderProps> = ({
+  apiData,
+  isInitialLoading,
+}) => {
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const {
+    rule,
     currentStep,
-    selectedTriggerId,
-    goToTriggerStep,
-    goToConditionsStep,
-    goToActionsStep,
+    selectTrigger,
+    removeTrigger,
+    updateRuleName,
+    goToStep,
     canProceedToConditions,
     canProceedToActions,
-    clearTriggerData,
-  } = useRuleBuilderStepper({ ruleId });
-
-  // Fetch scope list (categories) - only load once
-  const { data: scopeListData, isLoading: isLoadingScopes } = useGetScopeList();
+  } = useWorkflowContext();
 
   const handleSelectTrigger = (trigger: Trigger) => {
-    // Check if we're changing to a different trigger
-    const isChangingTrigger =
-      selectedTriggerId && selectedTriggerId !== trigger.id;
-
-    if (isChangingTrigger) {
-      // Clear all conditions and actions when changing triggers
-      setRule((prev) => ({
-        ...prev,
-        trigger: trigger,
-        conditions: [], // Clear all conditions
-        actions: [], // Clear all actions
-        componentType: null,
-      }));
-    } else {
-      // First time selecting a trigger
-      setRule((prev) => ({
-        ...prev,
-        trigger: trigger,
-      }));
-    }
-
-    // Navigate to conditions step
-    goToConditionsStep(trigger.id);
+    selectTrigger(trigger);
   };
 
   const handleRemoveTrigger = () => {
-    // Clear all data
-    setRule((prev) => ({
-      ...prev,
-      trigger: null,
-      conditions: [],
-      actions: [],
-      componentType: null,
-    }));
-
-    // Use clearTriggerData to completely reset (including trigger selection)
-    clearTriggerData();
-  };
-
-  // Handle adding a new condition
-  const handleAddCondition = (condition: Condition) => {
-    setRule((prev) => ({
-      ...prev,
-      conditions: [
-        ...prev.conditions,
-        {
-          ...condition,
-          logicalOperator: prev.conditions.length === 0 ? undefined : 'AND',
-        },
-      ],
-    }));
-  };
-
-  // Handle updating an existing condition
-  const handleUpdateCondition = (
-    conditionId: string,
-    updatedCondition: Condition
-  ) => {
-    setRule((prev) => ({
-      ...prev,
-      conditions: prev.conditions.map((cond) =>
-        cond.id === conditionId ? updatedCondition : cond
-      ),
-    }));
-  };
-
-  // Handle deleting a condition
-  const handleDeleteCondition = (conditionId: string) => {
-    setRule((prev) => ({
-      ...prev,
-      conditions: prev.conditions.filter((c) => c.id !== conditionId),
-    }));
-  };
-
-  const handleLogicalOperatorChange = (
-    conditionId: string,
-    operator: 'AND' | 'OR'
-  ) => {
-    setRule((prev) => ({
-      ...prev,
-      conditions: prev.conditions.map((condition) =>
-        condition.id === conditionId
-          ? { ...condition, logicalOperator: operator }
-          : condition
-      ),
-    }));
+    removeTrigger();
   };
 
   const handleBack = () => {
     switch (currentStep) {
       case 'conditions':
-        goToTriggerStep();
+        goToStep('trigger');
         break;
       case 'actions':
-        goToConditionsStep(selectedTriggerId!);
+        goToStep('conditions');
         break;
       default:
-        goToTriggerStep();
+        goToStep('trigger');
     }
   };
 
   const handleNext = () => {
     switch (currentStep) {
       case 'trigger':
-        if (canProceedToConditions && selectedTriggerId) {
-          goToConditionsStep(selectedTriggerId);
+        if (canProceedToConditions) {
+          goToStep('conditions');
         }
         break;
       case 'conditions':
-        if (canProceedToActions(rule.conditions.length)) {
-          goToActionsStep();
+        if (canProceedToActions) {
+          goToStep('actions');
         }
         break;
       case 'actions':
@@ -155,18 +83,20 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({ rule, setRule, ruleId }) => {
   };
 
   const renderStepContent = () => {
-    switch (currentStep) {
-      case 'trigger':
-        return (
+    return (
+      <>
+        {/* Trigger Step - Always mounted, visibility controlled by CSS */}
+        <div style={{ display: currentStep === 'trigger' ? 'block' : 'none' }}>
           <TriggerManager
-            scopeListData={scopeListData}
+            scopeListData={apiData.scopeListData}
             onSelect={handleSelectTrigger}
-            selectedTriggerId={selectedTriggerId}
           />
-        );
+        </div>
 
-      case 'conditions':
-        return (
+        {/* Conditions Step - Always mounted, visibility controlled by CSS */}
+        <div
+          style={{ display: currentStep === 'conditions' ? 'block' : 'none' }}
+        >
           <div className='p-6 relative'>
             <div className='flex items-start justify-between gap-3 mb-3'>
               <div className='flex items-center gap-2'>
@@ -190,48 +120,23 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({ rule, setRule, ruleId }) => {
             </div>
 
             <ConditionManager
-              rule={rule}
-              setRule={setRule}
-              conditions={rule.conditions}
-              onAddCondition={handleAddCondition}
-              onUpdateCondition={handleUpdateCondition}
-              onDeleteCondition={handleDeleteCondition}
-              onLogicalOperatorChange={handleLogicalOperatorChange}
+              conditionListData={apiData.conditionListData}
+              isLoadingConditionTypes={apiData.isLoadingConditionTypes}
             />
           </div>
-        );
+        </div>
 
-      case 'actions':
-        return (
+        {/* Actions Step - Always mounted, visibility controlled by CSS */}
+        <div style={{ display: currentStep === 'actions' ? 'block' : 'none' }}>
           <div className='relative'>
             <ActionManager
-              rule={rule}
-              actions={rule.actions}
-              onAddAction={(action) => {
-                setRule((prev) => ({
-                  ...prev,
-                  actions: [...prev.actions, action],
-                }));
-              }}
-              onDeleteAction={(actionId) => {
-                setRule((prev) => ({
-                  ...prev,
-                  actions: prev.actions.filter((a) => a.id !== actionId),
-                }));
-              }}
+              actionCategoryData={apiData.actionCategoryData}
+              isLoadingActionCategories={apiData.isLoadingActionCategories}
             />
           </div>
-        );
-
-      default:
-        return (
-          <div className='p-6 text-center py-12'>
-            <p className='text-gray-500 text-sm'>
-              Select a trigger to configure your rule
-            </p>
-          </div>
-        );
-    }
+        </div>
+      </>
+    );
   };
 
   const isNextButtonDisabled = () => {
@@ -239,15 +144,13 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({ rule, setRule, ruleId }) => {
       case 'trigger':
         return !canProceedToConditions;
       case 'conditions':
-        return !canProceedToActions(rule.conditions.length);
+        return !canProceedToActions;
       case 'actions':
         return rule.actions.length === 0;
       default:
         return true;
     }
   };
-
-  const isLoading = isLoadingScopes || false;
 
   return (
     <div>
@@ -258,9 +161,7 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({ rule, setRule, ruleId }) => {
               type='text'
               value={rule.name}
               autoFocus
-              onChange={(e) =>
-                setRule((prev) => ({ ...prev, name: e.target.value }))
-              }
+              onChange={(e) => updateRuleName(e.target.value)}
               onBlur={() => setIsEditing(false)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') setIsEditing(false);
@@ -288,7 +189,7 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({ rule, setRule, ruleId }) => {
           </span>
         </div>
       </div>
-      {isLoading ? (
+      {isInitialLoading ? (
         <div className='w-full flex h-full bg-gray-50'>
           <PageSkeleton showLeftPanel={true} />
           <div className='flex-1 border-l border-[#CBD6E2] min-h-[calc(100vh-182px)] max-h-[calc(100vh-182px)] overflow-y-auto'>
@@ -305,21 +206,21 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({ rule, setRule, ruleId }) => {
                 className={`border rounded-lg p-4 cursor-pointer transition-all ${
                   currentStep === 'trigger'
                     ? 'border-blue-500 bg-blue-50'
-                    : selectedTriggerId
+                    : rule.trigger
                       ? 'border border-[#98fb98] bg-[#E0FEE0]'
                       : 'border-gray-300 bg-white'
                 }`}
-                onClick={() => currentStep !== 'trigger' && goToTriggerStep()}
+                onClick={() => currentStep !== 'trigger' && goToStep('trigger')}
               >
                 <div className='flex items-start gap-3'>
                   <div
                     className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 border ${
-                      selectedTriggerId
-                        ? 'bg-green-200 border-green-500'
-                        : 'bg-blue-200 border border-blue-500'
+                      rule.trigger
+                        ? 'bg-green-200 border-green-500 text-green-700'
+                        : 'bg-blue-200 border border-blue-500 text-blue-700'
                     }`}
                   >
-                    <span className='text-[#425A76]'>⏻</span>
+                    <span>⏻</span>
                   </div>
                   <div className='flex-1'>
                     <h3 className='text-sm font-semibold text-gray-900 mb-1'>
@@ -336,7 +237,7 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({ rule, setRule, ruleId }) => {
                         : 'An event that triggers the rule to run'}
                     </p>
                   </div>
-                  {selectedTriggerId && (
+                  {rule.trigger && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -352,7 +253,7 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({ rule, setRule, ruleId }) => {
 
               <ConnectorLine
                 active={Boolean(
-                  selectedTriggerId &&
+                  rule.trigger &&
                     currentStep === 'conditions' &&
                     !rule.conditions.length
                 )}
@@ -361,7 +262,7 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({ rule, setRule, ruleId }) => {
               {/* Conditions Block */}
               <div
                 className={`border rounded-lg p-4 ${
-                  selectedTriggerId && currentStep !== 'conditions'
+                  rule.trigger && currentStep !== 'conditions'
                     ? 'cursor-pointer'
                     : 'cursor-default'
                 } transition-all ${
@@ -372,9 +273,9 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({ rule, setRule, ruleId }) => {
                       : 'border-gray-300 bg-white'
                 }`}
                 onClick={() =>
-                  selectedTriggerId &&
+                  rule.trigger &&
                   currentStep !== 'conditions' &&
-                  goToConditionsStep(selectedTriggerId)
+                  goToStep('conditions')
                 }
               >
                 <div className='flex items-start gap-3'>
@@ -438,7 +339,7 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({ rule, setRule, ruleId }) => {
 
                               {/* Connector + logical operator — show if NOT last item */}
                               {index < arr.length - 1 && (
-                                <div className='flex flex-col items-center w-[20%]'>
+                                <div className='flex flex-col items-center w-[25%]'>
                                   <div className='w-[1px] h-2 bg-gray-400'></div>
 
                                   {/* Use next condition’s logicalOperator */}
@@ -453,9 +354,9 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({ rule, setRule, ruleId }) => {
                           ))}
 
                         {/* More count */}
-                        {rule.conditions.length > 4 && (
+                        {rule.conditions.length > 3 && (
                           <div className='text-xs text-gray-500'>
-                            +{rule.conditions.length - 4} more conditions
+                            +{rule.conditions.length - 3} more conditions
                           </div>
                         )}
                       </div>
@@ -488,7 +389,7 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({ rule, setRule, ruleId }) => {
                 onClick={() =>
                   rule.conditions.length > 0 &&
                   currentStep !== 'actions' &&
-                  goToActionsStep()
+                  goToStep('actions')
                 }
               >
                 <div className='flex items-start gap-3'>
@@ -503,14 +404,21 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({ rule, setRule, ruleId }) => {
                   >
                     <span
                       className={`text-sm ${
-                        currentStep === 'actions'
+                        currentStep === 'actions' && rule.actions.length === 0
                           ? 'text-blue-700'
                           : rule.actions.length > 0
                             ? 'text-yellow-700'
                             : 'text-gray-700'
                       }`}
                     >
-                      ⚡
+                      <svg
+                        xmlns='http://www.w3.org/2000/svg'
+                        viewBox='0 0 24 24'
+                        fill='currentColor'
+                        className='w-4 h-4'
+                      >
+                        <path d='M13 2L3 14h7l-1 8 10-12h-7l1-8z' />
+                      </svg>
                     </span>
                   </div>
                   <div className='flex-1'>

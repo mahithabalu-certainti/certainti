@@ -90,7 +90,7 @@ export const ConditionListMockData: ConditionListResponse = {
   statusMessage: 'Operation completed successfully!',
   data: [
     {
-      rid: 'D001-00016d03-3333-48d1-a247-64a5139daef9',
+      rid: 'D001-00016d03-3333-48d1-a247-64a5139daef8',
       condition_name: 'if(Add a condition)',
       description: 'used to check condition',
       condition_type: 'if',

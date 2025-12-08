@@ -1,15 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import {
   COMMON_MENU_PROPS,
   Condition,
   ConditionType,
   getDynamicSvgIcon,
   getSelectStyles,
-  LogicalOperator,
-  Rule,
 } from '../helper';
 import { ArrowRightIcon } from '@mui/x-date-pickers/icons';
-import { DeleteIcon, AddIcon, SwapIcon } from '../../../../../assets';
+import { AddIcon, SwapIcon, CloseIcon } from '../../../../../assets';
 import {
   Autocomplete,
   Box,
@@ -20,32 +18,18 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import {
-  useGetConditionList,
-  useGetConditionCategoryList,
-} from '../../../../service/workflow-builder/workflow-builder-service';
+import { useWorkflowContext } from '../workflow-context';
+import { ConditionListResponse } from '../../../../types';
+import { useGetConditionCategoryList } from '../../../../service/workflow-builder/workflow-builder-service';
 
 interface ConditionManagerProps {
-  rule: Rule;
-  setRule: React.Dispatch<React.SetStateAction<Rule>>;
-  conditions: Condition[];
-  onAddCondition: (condition: Condition) => void;
-  onUpdateCondition: (conditionId: string, updatedCondition: Condition) => void;
-  onDeleteCondition: (conditionId: string) => void;
-  onLogicalOperatorChange: (
-    conditionId: string,
-    operator: LogicalOperator
-  ) => void;
+  conditionListData?: ConditionListResponse;
+  isLoadingConditionTypes?: boolean;
 }
 
 const ConditionManager: React.FC<ConditionManagerProps> = ({
-  rule,
-  setRule,
-  conditions,
-  onAddCondition,
-  onUpdateCondition,
-  onDeleteCondition,
-  onLogicalOperatorChange,
+  conditionListData,
+  isLoadingConditionTypes,
 }) => {
   const [showConditionTypeSelector, setShowConditionTypeSelector] =
     useState(false);
@@ -54,48 +38,61 @@ const ConditionManager: React.FC<ConditionManagerProps> = ({
     string | null
   >(null);
   const [expandedConditionIds, setExpandedConditionIds] = useState<Set<string>>(
-    new Set(conditions.length > 0 ? [conditions[conditions.length - 1].id] : [])
+    new Set()
   );
 
-  // Fetch condition type list when trigger is selected
-  const conditionListParams = {
-    event_rid: rule.trigger?.id || '',
-    status_rid: '',
-  };
+  const {
+    rule,
+    addCondition,
+    updateCondition,
+    deleteCondition,
+    updateLogicalOperator,
+    setConditionType,
+  } = useWorkflowContext();
 
-  const { data: conditionListData, isLoading: isLoadingConditionTypes } =
-    useGetConditionList(
-      conditionListParams,
-      !!rule.trigger?.id && showConditionTypeSelector
-    );
-
-  // Fetch condition categories when a condition type is selected
-  const categoryListParams = {
-    condition_rid: selectedConditionRid || '',
-    status_rid: '',
-  };
+  // Dynamically fetch condition categories based on selected condition type
+  const categoryListParams = useMemo(
+    () => ({
+      condition_rid: selectedConditionRid || '',
+      status_rid: '',
+    }),
+    [selectedConditionRid]
+  );
 
   const { data: categoryListData, isLoading: isLoadingCategories } =
-    useGetConditionCategoryList(
-      categoryListParams,
-      !!selectedConditionRid && showCategorySelector
-    );
+    useGetConditionCategoryList(categoryListParams, !!selectedConditionRid);
+
+  useEffect(() => {
+    // Initialize expanded IDs with the last condition
+    if (rule.conditions.length > 0) {
+      setExpandedConditionIds(
+        new Set([rule.conditions[rule.conditions.length - 1].id])
+      );
+    }
+  }, [rule.conditions]);
 
   useEffect(() => {
     // Show condition type selector only for the first condition
-    if (conditions.length === 0 && rule.trigger?.id && !rule.conditionType) {
+    if (
+      rule.conditions.length === 0 &&
+      rule.trigger?.id &&
+      !rule.conditionType
+    ) {
       setShowConditionTypeSelector(true);
     }
-  }, [conditions.length, rule.trigger?.id, rule.conditionType]);
+  }, [rule.conditions.length, rule.trigger?.id, rule.conditionType]);
 
   const handleAddConditionClick = () => {
-    if (conditions.length === 0 && !rule.conditionType) {
+    if (rule.conditions.length === 0 && !rule.conditionType) {
       // First condition - show condition type selector
       setShowConditionTypeSelector(true);
     } else {
       // Subsequent conditions - directly show category selector using the already selected condition type
       if (rule.conditionType) {
-        setSelectedConditionRid(rule.conditionType.rid);
+        // Only set if it's different to avoid unnecessary re-render
+        if (selectedConditionRid !== rule.conditionType.rid) {
+          setSelectedConditionRid(rule.conditionType.rid);
+        }
         setShowCategorySelector(true);
       }
     }
@@ -104,25 +101,11 @@ const ConditionManager: React.FC<ConditionManagerProps> = ({
 
   const handleConditionTypeSelect = (conditionType: ConditionType) => {
     // Update the rule with the selected condition type
-    setRule((prevRule) => ({
-      ...prevRule,
-      conditionType: conditionType,
-    }));
-
+    setConditionType(conditionType);
     setSelectedConditionRid(conditionType.rid);
     setShowConditionTypeSelector(false);
     setShowCategorySelector(true);
   };
-
-  // const handleCancelConditionTypeSelection = () => {
-  //   setShowConditionTypeSelector(false);
-  //   setSelectedConditionRid(null);
-  //   // Clear condition type from rule if user cancels
-  //   setRule((prevRule) => ({
-  //     ...prevRule,
-  //     conditionType: null,
-  //   }));
-  // };
 
   const handleCategorySelect = (category: {
     rid: string;
@@ -138,19 +121,19 @@ const ConditionManager: React.FC<ConditionManagerProps> = ({
       value: '',
       fieldType: 'text',
       conditionTypeId: rule.conditionType?.rid || '',
-      logicalOperator: conditions.length > 0 ? 'AND' : undefined,
+      logicalOperator: rule.conditions.length > 0 ? 'AND' : undefined,
     };
-    onAddCondition(newCondition);
+    addCondition(newCondition);
     setShowCategorySelector(false);
-    setSelectedConditionRid(null);
+    // Don't reset selectedConditionRid - keep it for caching!
     setExpandedConditionIds(new Set([newCondition.id]));
   };
 
   const handleCancelCategorySelection = () => {
     setShowCategorySelector(false);
-    setSelectedConditionRid(null);
-    if (conditions.length === 0) {
+    if (rule.conditions.length === 0) {
       // If no conditions added yet, show condition type selector again
+      setSelectedConditionRid(null);
       setShowConditionTypeSelector(true);
     }
   };
@@ -168,26 +151,22 @@ const ConditionManager: React.FC<ConditionManagerProps> = ({
   };
 
   const handleDeleteCondition = (conditionId: string) => {
-    onDeleteCondition(conditionId);
-    if (conditions.length === 1) {
-      setRule((prev) => ({
-        ...prev,
-        actions: [],
-      }));
-      // Reset condition type if all conditions are removed
-      setRule((prevRule) => ({
-        ...prevRule,
-        conditionType: null,
-      }));
+    deleteCondition(conditionId);
+
+    // Check if this is the last condition being deleted
+    const remainingConditions = rule.conditions.filter(
+      (c) => c.id !== conditionId
+    );
+    if (remainingConditions.length === 0) {
+      // Reset selectedConditionRid when all conditions are deleted
+      setSelectedConditionRid(null);
     }
+
     setExpandedConditionIds((prev) => {
       const newSet = new Set(prev);
       newSet.delete(conditionId);
 
-      if (newSet.size === 0 && conditions.length > 1) {
-        const remainingConditions = conditions.filter(
-          (c) => c.id !== conditionId
-        );
+      if (newSet.size === 0 && rule.conditions.length > 1) {
         if (remainingConditions.length > 0) {
           newSet.add(remainingConditions[remainingConditions.length - 1].id);
         }
@@ -221,7 +200,7 @@ const ConditionManager: React.FC<ConditionManagerProps> = ({
   return (
     <div>
       {/* Existing Conditions */}
-      {conditions.map((condition, index) => (
+      {rule.conditions.map((condition, index) => (
         <div key={condition.id}>
           {index > 0 && (
             <div className='relative flex justify-center'>
@@ -233,7 +212,7 @@ const ConditionManager: React.FC<ConditionManagerProps> = ({
                     onClick={() => {
                       const newOperator =
                         condition.logicalOperator === 'OR' ? 'AND' : 'OR';
-                      onLogicalOperatorChange?.(condition.id, newOperator);
+                      updateLogicalOperator(condition.id, newOperator);
                     }}
                     sx={{
                       textTransform: 'none',
@@ -284,14 +263,14 @@ const ConditionManager: React.FC<ConditionManagerProps> = ({
             condition={condition}
             isExpanded={isExpanded(condition.id)}
             onToggleExpand={() => handleToggleExpand(condition.id)}
-            onChange={(updated) => onUpdateCondition(condition.id, updated)}
+            onChange={(updated) => updateCondition(condition.id, updated)}
             onDelete={() => handleDeleteCondition(condition.id)}
           />
         </div>
       ))}
 
       {/* Show connector line when adding new condition (CategorySelector is shown) */}
-      {conditions.length > 0 && showCategorySelector && (
+      {rule.conditions.length > 0 && showCategorySelector && (
         <div className='relative flex justify-center'>
           <div className='w-[1px] bg-gray-400 h-18 relative'>
             <div className='absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2'>
@@ -313,8 +292,8 @@ const ConditionManager: React.FC<ConditionManagerProps> = ({
           ) : (
             <ConditionTypeSelector
               conditionTypes={conditionTypes}
+              selectedConditionType={rule.conditionType}
               onSelect={handleConditionTypeSelect}
-              // onCancel={handleCancelConditionTypeSelection}
             />
           )}
         </div>
@@ -334,7 +313,7 @@ const ConditionManager: React.FC<ConditionManagerProps> = ({
         </div>
       )}
 
-      {(conditions.length > 0 || !showConditionTypeSelector) &&
+      {(rule.conditions.length > 0 || !showConditionTypeSelector) &&
         rule.trigger?.id && (
           <button
             onClick={handleAddConditionClick}
@@ -345,7 +324,7 @@ const ConditionManager: React.FC<ConditionManagerProps> = ({
               isLoadingCategories
             }
             className={`w-auto h-[28px] px-2.5 text-[13px] font-semibold flex items-center mt-4 rounded-[2px] border border-[#CBD6E2] text-[#425A76] hover:bg-gray-100 transition-all cursor-pointer disabled:cursor-default disabled:opacity-60 disabled:bg-gray-100 ${
-              conditions.length === 0 ? 'mt-2' : 'mt-4'
+              rule.conditions.length === 0 ? 'mt-2' : 'mt-4'
             }`}
           >
             <div className='flex items-center justify-center gap-2'>
@@ -355,7 +334,7 @@ const ConditionManager: React.FC<ConditionManagerProps> = ({
           </button>
         )}
 
-      {!rule.trigger?.id && conditions.length === 0 && (
+      {!rule.trigger?.id && rule.conditions.length === 0 && (
         <div className='text-center py-4 text-sm text-gray-500'>
           Please select a trigger first to add conditions
         </div>
@@ -363,8 +342,6 @@ const ConditionManager: React.FC<ConditionManagerProps> = ({
     </div>
   );
 };
-
-// ... rest of the code remains the same (CategorySelector, SelectorSkeleton, ConditionForm, ConditionTypeSelector)
 
 interface CategorySelectorProps {
   categories: Array<{
@@ -723,9 +700,9 @@ function ConditionForm({
             onDelete();
           }}
           className='h-8 w-8 flex items-center justify-center hover:bg-gray-200 rounded-full transition-colors cursor-pointer'
-          title='Delete'
+          title='Remove Condition'
         >
-          <DeleteIcon className='w-4 h-4' />
+          <CloseIcon className='w-3 h-3' />
         </button>
       </div>
 
@@ -946,12 +923,14 @@ function ConditionForm({
 
 interface ConditionTypeSelectorProps {
   conditionTypes: ConditionType[];
+  selectedConditionType?: ConditionType | null;
   onSelect: (conditionType: ConditionType) => void;
   onCancel?: () => void;
 }
 
 function ConditionTypeSelector({
   conditionTypes,
+  selectedConditionType,
   onSelect,
   onCancel,
 }: ConditionTypeSelectorProps) {
@@ -986,37 +965,54 @@ function ConditionTypeSelector({
 
       <div className='p-2 space-y-1'>
         {conditionTypes.length > 0 ? (
-          conditionTypes.map((conditionType) => (
-            <button
-              key={conditionType.rid}
-              onClick={() => onSelect(conditionType)}
-              className='w-full flex items-center gap-3 p-2 rounded-lg hover:bg-blue-50 transition-colors text-left cursor-pointer border border-transparent hover:border-blue-200 group'
-            >
-              <div className='w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-200 transition-colors'>
-                <svg
-                  className='w-4 h-4 text-blue-600'
-                  fill='none'
-                  stroke='currentColor'
-                  viewBox='0 0 24 24'
+          conditionTypes.map((conditionType) => {
+            const isSelected = selectedConditionType?.rid === conditionType.rid;
+            return (
+              <button
+                key={conditionType.rid}
+                onClick={() => onSelect(conditionType)}
+                className={`w-full flex items-center gap-3 p-2 rounded-lg transition-colors text-left cursor-pointer group ${
+                  isSelected
+                    ? 'bg-blue-50 border border-blue-400'
+                    : 'border border-transparent hover:border-blue-200 hover:bg-blue-50'
+                }`}
+              >
+                <div
+                  className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${
+                    isSelected
+                      ? 'bg-blue-200'
+                      : 'bg-blue-100 group-hover:bg-blue-200'
+                  }`}
                 >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    strokeWidth={2}
-                    d={getConditionTypeIcon(conditionType.condition_type)}
-                  />
-                </svg>
-              </div>
-              <div className='flex-1'>
-                <span className='text-sm font-medium text-[#425A76] block'>
-                  {conditionType.name}
-                </span>
-                <span className='text-xs text-gray-500 block mt-1'>
-                  {conditionType.description}
-                </span>
-              </div>
-            </button>
-          ))
+                  <svg
+                    className='w-4 h-4 text-blue-600'
+                    fill='none'
+                    stroke='currentColor'
+                    viewBox='0 0 24 24'
+                  >
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      strokeWidth={2}
+                      d={getConditionTypeIcon(conditionType.condition_type)}
+                    />
+                  </svg>
+                </div>
+                <div className='flex-1'>
+                  <span
+                    className={`text-sm font-medium block ${
+                      isSelected ? 'text-blue-700' : 'text-[#425A76]'
+                    }`}
+                  >
+                    {conditionType.name}
+                  </span>
+                  <span className='text-xs text-gray-500 block mt-1'>
+                    {conditionType.description}
+                  </span>
+                </div>
+              </button>
+            );
+          })
         ) : (
           <div className='text-center py-4 text-sm text-gray-500'>
             No condition types found
