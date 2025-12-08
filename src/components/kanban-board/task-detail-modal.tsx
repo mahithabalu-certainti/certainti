@@ -251,6 +251,8 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       setDeletedAttachmentIds([]);
       setErrors({});
       setIsAddingCollaborator(false);
+      setLinkedType('');
+      setLinkTaskTypes([]);
     }
   }, [isOpen, taskId]);
 
@@ -272,12 +274,9 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       if (enriched.category) {
         setCategory(enriched.category);
       }
-      if (enriched.linkedType) {
-        setLinkedType(enriched.linkedType);
-      }
-      if (enriched.linkTaskTypes) {
-        setLinkTaskTypes(enriched.linkTaskTypes);
-      }
+      // Always set linkedType and linkTaskTypes to clear previous task's data
+      setLinkedType(enriched.linkedType || '');
+      setLinkTaskTypes(enriched.linkTaskTypes || []);
       setIsLoadingTaskDetails(false);
     }
   }, [rawTask]);
@@ -1020,6 +1019,15 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
         }
         if (isWorkflowChanged) {
           workflowConnector.is_new_changes = true;
+
+          // Determine key_name based on what changed
+          if (isLinkedTypeChanged && isLinkTaskTypesChanged) {
+            workflowConnector.key_name = 'Linked Type & Linked Task Type';
+          } else if (isLinkedTypeChanged) {
+            workflowConnector.key_name = 'Linked Type';
+          } else if (isLinkTaskTypesChanged) {
+            workflowConnector.key_name = 'Linked Task Type';
+          }
         } else if (Object.keys(workflowConnector).length > 0) {
           workflowConnector.is_new_changes = false;
         }
