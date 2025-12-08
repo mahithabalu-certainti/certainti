@@ -21,7 +21,7 @@ export const taskSummaryResolver : IResolvers  = {
                         data : null
                     } 
                 }
-                const result = await ctx.services.notesGraphqlServices.updateInlineGraphqlDetailsForNotes(data)
+                const result = await ctx.services.taskSummaryGraphqlServices.updateInlineGraphqlDetailsForTaskSummary(data)
                 if(result.statusCode == HttpStatus.SUCCESS) {
                     return {
                         statusCode : HttpStatus.SUCCESS,

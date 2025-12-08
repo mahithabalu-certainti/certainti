@@ -466,11 +466,11 @@ export interface IFetchNotesDetailsInput {
 }
 
 export interface IFetchTaskDetailsInput {
-  rid : string;
+  task_rid : string;
   account_rid : string;
   user_rid : string;
-  level: string;
-  attach_to: string;  
+  attachment_level: string;
+  attach_to: string;
 }
 
 export type ChecklistItems = {

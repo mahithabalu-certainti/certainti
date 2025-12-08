@@ -34,7 +34,12 @@ data : taskResponse
 input taskInlineInput {
 rid : String!
 account_rid : String!
-attachment_level: String
+task_name: String
+description: String
+fiscal_year: Int
+assigned_to: String
+effective_start_datetime: Date
+effective_end_datetime: Date
 }
 
 type Mutation {

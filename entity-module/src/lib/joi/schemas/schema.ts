@@ -3015,7 +3015,7 @@ const exportListTaskSummarySchema = Joi.object({
 })
 
 const listTaskByIdSchema = Joi.object({
-  rid: Joi.string()
+  task_rid: Joi.string()
         .pattern(uuidRegex, "valid UUID")
         .required()
         .messages({
@@ -3029,6 +3029,21 @@ const listTaskByIdSchema = Joi.object({
           'any.required': 'Account RID is required',
           'string.pattern.base': 'Account RID must be a valid UUID'
       }),
+  attachment_level: Joi.string()
+        .valid('account', 'project', 'case')
+        .required()
+        .messages({
+            'string.empty': 'Attachment level cannot be empty',
+            'any.required': 'Attachment level is required',
+            'any.only': 'Attachment level must be one of: account, project, case'
+        }),
+  attach_to: Joi.string()
+        .pattern(uuidRegex, "valid UUID")
+        .required()
+        .messages({
+            'any.required': 'Attach To ID is required',
+            'string.pattern.base': 'Attach To ID must be a valid UUID'
+        }),
 })
 
 const updateTaskSchema = Joi.object({

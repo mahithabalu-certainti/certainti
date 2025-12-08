@@ -237,14 +237,54 @@ export class TaskService {
         ]))
       ];
 
-      const resources = resourceRids.length > 0
-        ? await mainSequelize.query(
-          `SELECT rid, resource_name FROM ${MAIN_SCHEMA_NAME}.resources WHERE rid IN (:resourceRids)`,
-          { replacements: { resourceRids }, type: 'SELECT' }
-        )
-        : [];
+      const resourceMap = new Map<string, string>();
 
-      const resourceMap = new Map(resources.map((r: any) => [r.rid, r.resource_name]));
+      if (resourceRids.length > 0) {
+        // Group resource RIDs by schema number
+        const resourceRidsBySchema = new Map<string, string[]>();
+
+        tasksRaw.forEach(task => {
+          const schemaNumber = schemaNumberMap.get(task.account_rid);
+          if (!schemaNumber) return;
+
+          [task.status_rid, task.priority_rid, task.assigned_to].forEach(resourceRid => {
+            if (resourceRid) {
+              if (!resourceRidsBySchema.has(schemaNumber)) {
+                resourceRidsBySchema.set(schemaNumber, []);
+              }
+              resourceRidsBySchema.get(schemaNumber)!.push(resourceRid);
+            }
+          });
+        });
+
+        // Fetch resources for each schema number
+        await Promise.all(
+          Array.from(resourceRidsBySchema.entries()).map(async ([schemaNumber, rids]) => {
+            try {
+              const schemaName = `${MAIN_SCHEMA_NAME}_${schemaNumber.replace(
+                /\D/g,
+                ""
+              )}`;
+              // Get unique RIDs for this schema
+              const uniqueRids = [...new Set(rids)];
+
+              // Fetch from org database using schema number
+              const orgDb = await this.fetchOrgDb();
+              const resourcesForSchema = await orgDb.query(
+                `SELECT rid, resource_name FROM ${schemaName}.resources WHERE rid IN (:resourceRids)`,
+                { replacements: { resourceRids: uniqueRids }, type: 'SELECT' }
+              );
+
+              // Add to resource map
+              resourcesForSchema.forEach((r: any) => {
+                resourceMap.set(r.rid, r.resource_name);
+              });
+            } catch (error) {
+              console.error(`Error fetching resources for schema ${schemaNumber}:`, error);
+            }
+          })
+        );
+      }
 
       // Get user names for created_by and modified_by
       const userIds = [...new Set(tasksRaw.flatMap(task => [task.created_by, task.modified_by]))];
@@ -256,7 +296,18 @@ export class TaskService {
         : [];
       const userMap = new Map(users.map((u: any) => [u.rid, u.full_name]));
 
-
+      // Get status names for  statuses
+      const statusIds = [...new Set(tasksRaw.flatMap(task => [task.status_rid]))];
+      const statuses = statusIds.length > 0
+        ? await mainSequelize.query(
+          `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.activity_status WHERE rid IN (:statusIds)
+          union
+          SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status  WHERE rid IN (:statusIds)
+          `,
+          { replacements: { statusIds }, type: 'SELECT' }
+        )
+        : [];
+      const statusMap = new Map(statuses.map((u: any) => [u.rid, u.full_name]));
 
       // Enrich task data
       let tasks = await Promise.all(tasksRaw.map(async task => {
@@ -271,7 +322,7 @@ export class TaskService {
           fiscal_year: taskData.fiscal_year,
           created_by_name: userMap.get(task.created_by) || task.created_by,
           modified_by_name: userMap.get(task.modified_by) || task.modified_by,
-          status_name: resourceMap.get(task.status_rid) || null,
+          status_name: statusMap.get(task.status_rid) || null,
           priority_name: resourceMap.get(task.priority_rid) || null,
           assigned_to_name: resourceMap.get(task.assigned_to) || task.assigned_to,
           account_status_rid: accountStatusInfo?.status_rid || null,
@@ -386,7 +437,7 @@ export class TaskService {
       const finalSortBy = validSortFields.includes(sortBy) ? sortBy : 'created_datetime';
       const finalSortOrder = ['ASC', 'DESC'].includes(sortOrder.toUpperCase()) ? sortOrder.toUpperCase() : 'DESC';
 
-      tasks.sort((a: EnrichedTask, b: EnrichedTask) => {
+      tasks.sort((a: any, b: any) => {
         // Handle date fields
         const dateFields = ['created_datetime', 'modified_datetime', 'effective_start_datetime', 'effective_end_datetime'];
         if (dateFields.includes(finalSortBy)) {
@@ -633,14 +684,67 @@ export class TaskService {
         ]))
       ];
 
-      const resources = resourceRids.length > 0
+      const resourceMap = new Map<string, string>();
+
+      if (resourceRids.length > 0) {
+        // Group resource RIDs by schema number
+        const resourceRidsBySchema = new Map<string, string[]>();
+
+        tasksRaw.forEach(task => {
+          const schemaNumber = schemaNumberMap.get(task.account_rid);
+          if (!schemaNumber) return;
+
+          [task.status_rid, task.priority_rid, task.assigned_to].forEach(resourceRid => {
+            if (resourceRid) {
+              if (!resourceRidsBySchema.has(schemaNumber)) {
+                resourceRidsBySchema.set(schemaNumber, []);
+              }
+              resourceRidsBySchema.get(schemaNumber)!.push(resourceRid);
+            }
+          });
+        });
+
+        // Fetch resources for each schema number
+        await Promise.all(
+          Array.from(resourceRidsBySchema.entries()).map(async ([schemaNumber, rids]) => {
+            try {
+              const schemaName = `${MAIN_SCHEMA_NAME}_${schemaNumber.replace(
+                /\D/g,
+                ""
+              )}`;
+              // Get unique RIDs for this schema
+              const uniqueRids = [...new Set(rids)];
+
+              // Fetch from org database using schema number
+              const orgDb = await this.fetchOrgDb();
+              const resourcesForSchema = await orgDb.query(
+                `SELECT rid, resource_name FROM ${schemaName}.resources WHERE rid IN (:resourceRids)`,
+                { replacements: { resourceRids: uniqueRids }, type: 'SELECT' }
+              );
+
+              // Add to resource map
+              resourcesForSchema.forEach((r: any) => {
+                resourceMap.set(r.rid, r.resource_name);
+              });
+            } catch (error) {
+              console.error(`Error fetching resources for schema ${schemaNumber}:`, error);
+            }
+          })
+        );
+      }
+
+      // Get status names for  statuses
+      const statusIds = [...new Set(tasksRaw.flatMap(task => [task.status_rid]))];
+      const statuses = statusIds.length > 0
         ? await mainSequelize.query(
-          `SELECT rid, resource_name FROM ${MAIN_SCHEMA_NAME}.resources WHERE rid IN (:resourceRids)`,
-          { replacements: { resourceRids }, type: 'SELECT' }
+          `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.activity_status WHERE rid IN (:statusIds)
+          union
+          SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status  WHERE rid IN (:statusIds)
+          `,
+          { replacements: { statusIds }, type: 'SELECT' }
         )
         : [];
-
-      const resourceMap = new Map(resources.map((r: any) => [r.rid, r.resource_name]));
+      const statusMap = new Map(statuses.map((u: any) => [u.rid, u.full_name]));
 
       // Get user names for created_by and modified_by
       const userIds = [...new Set(tasksRaw.flatMap(task => [task.created_by, task.modified_by]))];
@@ -660,7 +764,7 @@ export class TaskService {
           ...taskData,
           created_by_name: userMap.get(task.created_by) || task.created_by,
           modified_by_name: userMap.get(task.modified_by) || task.modified_by,
-          status_name: resourceMap.get(task.status_rid) || null,
+          status_name: statusMap.get(task.status_rid) || null,
           priority_name: resourceMap.get(task.priority_rid) || null,
           assigned_to_name: resourceMap.get(task.assigned_to) || task.assigned_to,
           attached_to: attachmentDisplayNames[task.rid] || task.attach_to,
@@ -1166,21 +1270,37 @@ export class TaskService {
   }
 
   async getTaskDetailsById(data: IFetchTaskDetailsInput): Promise<{
-    statusCode : number,
-    statusMessage : string,
-    data : any
+    statusCode: number,
+    statusMessage: string,
+    data: any
   }> {
-
-    if (data.level = 'project') {
-      const response = await this.projectTaskService.getProjectTaskById(data.account_rid, data.rid);
+    console.log("data", data);
+    if (data.attachment_level === 'project') {
+      const response = await this.projectTaskService.getProjectTaskById(data.account_rid, data.task_rid);
+      console.log("yoki", response);
+      if (response.statusCode !== HttpStatus.SUCCESS) {
+        return {
+          statusCode: response.statusCode,
+          statusMessage: response.message,
+          data: {}
+        }
+      }
       return {
         statusCode: HttpStatus.SUCCESS,
         statusMessage: HttpStatus.SUCCESS_MESSAGE,
         data: response.data
       }
     }
-    else if (data.level = 'case') {
-      const response = await this.fetchTaskCardDetailsList(data.account_rid, data.rid, data.attach_to); 
+    else if (data.attachment_level === 'case' || data.attachment_level === 'account') {
+      const task_type = data.attachment_level === 'account' ? 'activity' : undefined;
+      const response = await this.fetchTaskCardDetailsList(data.account_rid, data.task_rid, task_type, data.attach_to);
+      if (response.statusCode !== HttpStatus.SUCCESS) {
+        return {
+          statusCode: response.statusCode,
+          statusMessage: "Task details fetch failed",
+          data: {}
+        }
+      }
       return {
         statusCode: HttpStatus.SUCCESS,
         statusMessage: HttpStatus.SUCCESS_MESSAGE,
@@ -1197,7 +1317,7 @@ export class TaskService {
 
   }
 
-  async fetchTaskCardDetailsList(account_rid: any, task_rid: any, case_rid: any, task_type?: any) {
+  async fetchTaskCardDetailsList(account_rid: any, task_rid: any, task_type: any, case_rid?: any,) {
     const mainDb = await this.fetchMainDb();
     const orgDb = await this.fetchOrgDb();
 
@@ -1392,6 +1512,6 @@ export class TaskService {
     }
   }
 
-  
+
 
 }
