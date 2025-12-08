@@ -1,26 +1,24 @@
 import { useState, useMemo } from 'react';
 import { SearchIcon } from '../../../../../assets';
-import {
-  useGetScopeEventList,
-  useGetScopeList,
-} from '../../../../service/workflow-builder/workflow-builder-service';
+import { useGetScopeEventList } from '../../../../service/workflow-builder/workflow-builder-service';
 import { Trigger } from '../helper';
 import { TriggerCard } from './data-card';
+import PageSkeleton from './page-skeleton';
+import { ScopeListResponse } from '../../../../types';
 
 interface TriggerManagerProps {
   onSelect: (trigger: Trigger) => void;
   selectedTriggerId?: string | null;
+  scopeListData?: ScopeListResponse;
 }
 
 const TriggerManager: React.FC<TriggerManagerProps> = ({
   onSelect,
   selectedTriggerId,
+  scopeListData,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedScope, setSelectedScope] = useState('all');
-
-  // Fetch scope list (categories) - only load once
-  const { data: scopeListData, isLoading: isLoadingScopes } = useGetScopeList();
 
   // Prepare payload for scope event list
   const eventListPayload = useMemo(
@@ -58,7 +56,7 @@ const TriggerManager: React.FC<TriggerManagerProps> = ({
       label: scope.name,
     }));
 
-    return [{ id: 'all', label: 'All' }, ...categories];
+    return [{ id: 'all', label: 'All Triggers' }, ...categories];
   }, [scopeListData]);
 
   // 🔍 Filter triggers (client-side search)
@@ -87,16 +85,6 @@ const TriggerManager: React.FC<TriggerManagerProps> = ({
   const isTriggerSelected = (triggerId: string) => {
     return selectedTriggerId === triggerId;
   };
-
-  // Show full loader only on initial load
-  if (isLoadingScopes) {
-    return (
-      <div className='h-full flex flex-col items-center justify-center p-6'>
-        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500'></div>
-        <p className='mt-3 text-[#425A76]'>Loading triggers...</p>
-      </div>
-    );
-  }
 
   return (
     <div className='h-full flex flex-col'>
@@ -171,28 +159,13 @@ const TriggerManager: React.FC<TriggerManagerProps> = ({
 
         {/* Loading skeleton */}
         {isLoadingEvents ? (
-          <div className='px-6 py-3'>
-            {[...Array(2)].map((_, outerIndex) => (
-              <div key={outerIndex} className='space-y-4 mb-6'>
-                {/* Skeleton for category header */}
-                <div className='h-4 bg-gray-200 rounded w-1/4'></div>
-
-                <div className='grid grid-cols-1 md:grid-cols-4 gap-3'>
-                  {[...Array(8)].map((_, i) => (
-                    <div
-                      key={i}
-                      className='w-full flex items-start gap-3 p-3 rounded-md border border-[#CBD6E2] bg-gray-50 animate-pulse'
-                    >
-                      <div className='mt-0.5 p-1.5 rounded-md w-7 h-7 flex-shrink-0 bg-gray-300'></div>
-                      <div className='flex-1 min-w-0 space-y-2'>
-                        <div className='h-3 bg-gray-300 rounded w-3/4'></div>
-                        <div className='h-2 bg-gray-200 rounded w-full'></div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
+          <div className='py-3'>
+            <PageSkeleton
+              showHeader={false}
+              showCategories={true}
+              showCards={true}
+              cardsPerCategory={8}
+            />
           </div>
         ) : (
           <>

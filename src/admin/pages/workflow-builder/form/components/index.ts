@@ -4,3 +4,4 @@ export { default as TriggerManager } from './trigger-manager';
 export { default as RuleBuilder } from './rule-builder';
 export { default as ConnectorLine } from './connector-line';
 export { default as DataCard } from './data-card';
+export { default as PageSkeleton } from './page-skeleton';

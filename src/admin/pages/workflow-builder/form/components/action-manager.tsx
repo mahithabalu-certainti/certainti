@@ -6,6 +6,7 @@ import {
   useGetActionTypes,
 } from '../../../../service/workflow-builder/workflow-builder-service';
 import { ActionCard } from './data-card';
+import PageSkeleton from './page-skeleton';
 
 interface ActionManagerProps {
   rule: Rule;
@@ -51,8 +52,6 @@ const ActionManager = ({
   const { data: actionTypeData, isLoading: isLoadingActionTypes } =
     useGetActionTypes(actionTypeParams);
 
-  console.log('actionTypeData', actionTypeData);
-
   // Transform action category data to categories
   const actionCategories = useMemo(() => {
     if (!actionCategoryData?.data)
@@ -64,7 +63,7 @@ const ActionManager = ({
       rid: category.rid,
     }));
 
-    return [{ id: 'all', label: 'All', rid: '' }, ...categories];
+    return [{ id: 'all', label: 'All Actions', rid: '' }, ...categories];
   }, [actionCategoryData]);
 
   // Transform action type data to actions (main data source) - FIXED!
@@ -124,12 +123,7 @@ const ActionManager = ({
 
   // Show full loader only on initial load
   if (isLoadingCategories) {
-    return (
-      <div className='h-full flex flex-col items-center justify-center p-6'>
-        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500'></div>
-        <p className='mt-3 text-[#425A76]'>Loading actions...</p>
-      </div>
-    );
+    return <PageSkeleton />;
   }
 
   // Show message if no trigger is selected
@@ -248,28 +242,13 @@ const ActionManager = ({
 
         {/* Loading skeleton */}
         {isLoadingActionTypes ? (
-          <div className='px-6 py-3'>
-            {[...Array(2)].map((_, outerIndex) => (
-              <div key={outerIndex} className='space-y-4 mb-6'>
-                {/* Skeleton for category header */}
-                <div className='h-4 bg-gray-200 rounded w-1/4'></div>
-
-                <div className='grid grid-cols-1 md:grid-cols-4 gap-3'>
-                  {[...Array(8)].map((_, i) => (
-                    <div
-                      key={i}
-                      className='w-full flex items-start gap-3 p-3 rounded-md border border-[#CBD6E2] bg-gray-50 animate-pulse'
-                    >
-                      <div className='mt-0.5 p-1.5 rounded-md w-7 h-7 flex-shrink-0 bg-gray-300'></div>
-                      <div className='flex-1 min-w-0 space-y-2'>
-                        <div className='h-3 bg-gray-300 rounded w-3/4'></div>
-                        <div className='h-2 bg-gray-200 rounded w-full'></div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
+          <div className='py-3'>
+            <PageSkeleton
+              showHeader={false}
+              showCategories={true}
+              showCards={true}
+              cardsPerCategory={8}
+            />
           </div>
         ) : (
           <>
