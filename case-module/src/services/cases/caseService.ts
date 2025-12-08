@@ -454,6 +454,7 @@ export class CaseService {
         if (getCurrencyDetails) {
           queryResult.currency_code = getCurrencyDetails.currency_code;
           queryResult.currency_rid = getAccountDetails!.currency_rid;
+          queryResult.currency_symbol = getCurrencyDetails.currency_symbol
         } else {
           queryResult.currency_code = null;
           queryResult.currency_rid = null;
@@ -2631,7 +2632,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
           task_status_rid : resData?.task_details.task_status_rid,
           task_status_name : taskStatusMap.get(resData?.task_details.task_status_rid!) || null,
           created_datetime : new Date(resData?.task_details.created_datetime!).toISOString(),
-          task_description : resData?.task_details.task_description,
+          task_description : data.task_type !== 'activity' ? resData?.task_details.task_description : resData?.task_details.description,
           effective_start_datetime : resData?.task_details.effective_start_datetime,
           effective_end_datetime : resData?.task_details.effective_end_datetime,
           checklist_rid : data.task_type === 'activity' ? resData?.task_details?.checklist_rid : resData?.task_details?.checklists?.rid,
@@ -3150,7 +3151,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
   async deleteTagsAccountLevel (data : any) {
     const mainDb = await this.getMainDb();
     const accountNumber : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
-    const result = await this.caseSchemaService.deleteTags(accountNumber[0][0].r_number, data.case_rid, data.account_rid, data.task_rid, data.tag_rid, data.userId);
+    const result = await this.caseSchemaService.deleteTags(accountNumber[0][0].r_number, data.case_rid, data.account_rid, data.task_rid, data.tag_rid, data.userId,data?.task_type || "case_task");
     return result;
   }
   async deleteCollaborators (data : any) {

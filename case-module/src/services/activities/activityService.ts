@@ -643,7 +643,7 @@ export class ActivityService {
       return {
         statusCode: HttpStatus.FAILED,
         message: HttpStatus.FAILED_MESSAGE,
-        errorMessage: STATUS_MESSAGE.checkListError,
+        errorMessage: STATUS_MESSAGE.detailFetchedFailed,
       };
     }
   }

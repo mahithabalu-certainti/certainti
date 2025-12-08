@@ -300,7 +300,8 @@ class CaseSchemaService {
               Op.eq,
               caseReq.case_name.toLowerCase(),
             ),
-            { fiscal_year: caseReq.fiscal_year }
+            { fiscal_year: caseReq.fiscal_year },
+            { account_rid: { [Op.eq]: caseReq.account_rid } }
           ]
         }
       });
@@ -317,6 +318,7 @@ class CaseSchemaService {
             [Op.and]: [
               { fiscal_year: caseReq.fiscal_year },
               { status_rid: { [Op.eq]: caseStatus.rid } },
+              { account_rid: { [Op.eq]: caseReq.account_rid } }
             ]
           }
         });
@@ -6157,7 +6159,8 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             created_by : userId,
             created_datetime : new Date(),
             attribute_name : "Tags",
-            new_value : result.tag_name
+             old_value : `CREATE`,
+            new_value : `added the following tags ${result.dataValues.tag_name}`,
           })
         }
           return {
@@ -6217,6 +6220,19 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             new_value : tagDetails!.tag_name,
             task_rid : taskRid
           }) 
+        }
+        else
+        {
+          await this.addTaskTimeline(accountNumber, taskRid, accountRid, `Tag added for task : ${tagDetails!.tag_name}`, userId, "Tag added for Task", "success", taskRid);
+          await ActivityHistory.create({
+            activity_rid : taskRid,
+            account_rid : accountRid,
+            created_by : userId,
+            created_datetime : new Date(),
+            attribute_name : "Tags",
+              old_value : `CREATE`,
+            new_value : `added the following tags ${tagDetails!.tag_name}`,
+          })
         }
        
         if(finalResult) {
@@ -6966,9 +6982,10 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
               await ActivityHistory.create({
                 created_by : userId,
                 created_datetime : new Date(),
-                attribute_name : "task_attachments",
+                attribute_name : "Task Attachments",
                 new_value : uploadFile.url,
-                activity_rid : data.task_rid
+                activity_rid : data.task_rid,
+                account_rid : data.account_rid
               })
             }
           }
@@ -7443,8 +7460,8 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     return result
   }
 
-  async deleteTags (accountNumber : string, caseRid : string, accountRid : string, taskRid : string, tagRid : string[], userId : string) {
-    const {TaskTag, Tags} = await this.caseModelService.getModels(accountNumber);
+  async deleteTags (accountNumber : string, caseRid : string, accountRid : string, taskRid : string, tagRid : string[], userId : string,task_type:string) {
+    const {TaskTag, Tags,ActivityHistory} = await this.caseModelService.getModels(accountNumber);
     let responseMessage : string
     let dynamicTagName : string
     if(tagRid.length == 1) {
@@ -7469,18 +7486,22 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         }
       }, raw : true
     })
-    const result = await TaskTag.destroy({
-      where : {
-        case_rid : caseRid,
-        account_rid : accountRid,
-        task_rid : taskRid,
-        tag_rid : {
-          [Op.in] : tagRid.map((d : any) => d)
-        },
+    let whereClause: any = {
+      account_rid: accountRid,
+      task_rid: taskRid,
+      tag_rid: {
+        [Op.in]: tagRid.map((d: any) => d)
       }
+    };
+    if (task_type !== 'activity') {
+      whereClause.case_rid = caseRid;
+    }
+    const result = await TaskTag.destroy({
+      where: whereClause
     });
     if(result > 0) {
       if(findTagName.length > 0) {
+        if(task_type !== 'activity') {
         await CaseHistory.create({
           created_by : userId,
           created_datetime : new Date(),
@@ -7490,6 +7511,19 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
           case_rid : caseRid,
           task_rid : taskRid
         });
+      }
+      else
+      {
+          await ActivityHistory.create({  
+          created_by : userId,
+          account_rid : accountRid,
+          created_datetime : new Date(),
+          attribute_name : "Tags",
+          old_value : `CREATE`,
+          new_value : `deleted the following ${dynamicTagName} ${findTagName.map((d : any) => d.tag_name).join(' , ')}`,
+          activity_rid : taskRid
+        });
+      }
       }
       return {
         statusCode : HttpStatus.SUCCESS,

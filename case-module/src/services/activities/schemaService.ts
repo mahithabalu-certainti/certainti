@@ -332,6 +332,7 @@ class ActivitySchemaService {
       const [updatedResult] = await Activities.update(
         {
           ...taskRequest,
+          description: taskRequest.task_description,
           modified_by: taskRequest.modified_by || userId,
           modified_datetime: new Date(),
         },
@@ -1828,9 +1829,18 @@ class ActivitySchemaService {
         rawQueries.fetchAccountInfo(activityRequest.account_rid!),
         { type: "SELECT" }
       );
+     let parentAccountNumber = accountNumber;
+          if(accountInfo.storage_type === 'separate_db') {
+            const [parentAccountInfo]: any[] =
+                await this.mainDbSequelize.query(
+                rawQueries.fetchAccountInfo(accountInfo.parent_account_rid!),
+                { type: "SELECT" }
+              );
+            parentAccountNumber = parentAccountInfo.r_number;
+          }
 
    const senderEmailInfo = await this.fetchSenderEmailInfoByAccountId(
-      accountNumber,
+      parentAccountNumber,
       accountInfo.parent_account_rid
     );
     if(!senderEmailInfo){
@@ -2149,9 +2159,17 @@ class ActivitySchemaService {
       rawQueries.fetchAccountInfo(activityRequest.account_rid),
       { type: "SELECT" }
     );
-
+  let parentAccountNumber = accountNumber;
+          if(accountInfo.storage_type === 'separate_db') {
+            const [parentAccountInfo]: any[] =
+                await this.mainDbSequelize.query(
+                rawQueries.fetchAccountInfo(accountInfo.parent_account_rid!),
+                { type: "SELECT" }
+              );
+            parentAccountNumber = parentAccountInfo.r_number;
+          }
     const senderEmailInfo = await this.fetchSenderEmailInfoByAccountId(
-      accountNumber,
+      parentAccountNumber,
       accountInfo.parent_account_rid
     );
     const emailContent = {
@@ -2875,7 +2893,8 @@ class ActivitySchemaService {
           "activity_rid",
           "account_rid",
           "modified_datetime",
-          "task_rid"
+          "task_rid",
+          "tags"
         ];
   
         const cleanedNewData = Object.fromEntries(
@@ -2944,6 +2963,27 @@ class ActivitySchemaService {
           }
         }
 
+         // Prepare mapping for checklist_rid values
+        const checklistMapping = new Map();
+        let checklistOldValueString = null;
+        let checklistNewValueString = null;
+        if (cleanedNewData.hasOwnProperty('checklist_rid')) {
+          const oldValue = existingCaseData['checklist_rid'];
+          const newValue = cleanedNewData['checklist_rid'];
+          if (oldValue || newValue) {
+            if(!this.mainDbSequelize) {
+              this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+            }
+            // Assuming rawQueries.fetchPriorityNames returns [{ rid, name }]
+            const result = await this.mainDbSequelize.query(rawQueries.fetchCheckLists(String(oldValue || ''), String(newValue || '')));
+            for (let r of result[0]) {
+              checklistMapping.set((r as any)?.rid, (r as any)?.checklist_name);
+            }
+            checklistOldValueString = checklistMapping.get(oldValue);
+            checklistNewValueString = checklistMapping.get(newValue);
+          }
+        }
+
        
 
         const historyChanges = await Promise.all(Object.entries(cleanedNewData)
@@ -2968,6 +3008,9 @@ class ActivitySchemaService {
             if (key === "status_rid") {
               return statusOldValueString !== statusNewValueString;
             }
+            if( key === "checklist_rid") {
+              return checklistOldValueString !== checklistNewValueString;
+            }
             return String(newValue ?? "") !== String(oldValue ?? "");
           })
           .map(async ([key, newValue]) => {
@@ -2991,6 +3034,11 @@ class ActivitySchemaService {
               mappedKey = "Status";
               oldValueStr = statusOldValueString ?? oldValueStr;
               newValueStr = statusNewValueString ?? newValueStr;
+            }
+            else if (key === "checklist_rid") {
+              mappedKey = "CheckList";
+              oldValueStr = checklistOldValueString ?? oldValueStr;
+              newValueStr = checklistNewValueString ?? newValueStr;
             }
             return {
               account_rid: newCaseData["account_rid"],

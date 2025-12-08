@@ -152,6 +152,7 @@ export const STATUS_MESSAGE = {
   categoryPlaceHolderSuccess : "Placeholders fetched successfully",
   categoryPlaceHolderFailed : "Failed to fetch Placeholders",
   activitiesFetchedSuccess : "Task Activities fetched successfully",
+  detailFetchedFailed : "Failed to fetch details",
   casePriorityListedSuccess : "Case Task Priority fetched successfully",
   caseTaskStatusListedSuccess : "Case Task Status fetched successfully",
   collaboratorAlreadyAdded : "Requested Collaborator already added",
