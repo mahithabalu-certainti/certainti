@@ -783,7 +783,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
         handleSorting={() => {}}
         sortFilterCount={0}
         setSortFilterCount={() => {}}
-        showRefresh={false}
+        showRefresh={tabParam === 'milestone'}
         onRefreshClick={onRefreshClick}
         // hideTabPanel={hideSection}
         showSearch={tabParam === 'case_task' ? true : false}
@@ -808,8 +808,6 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
             ? () => setIsActionItemsExpanded(!isActionItemsExpanded)
             : undefined
         }
-        onRefreshClick={tabParam === 'milestone' ? onRefreshClick : undefined}
-        showRefresh={tabParam === 'milestone'}
       />
       <SectionHeaderTab
         tabs={tabs}
@@ -817,7 +815,13 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
         defaultValue={tabParam}
       />
 
-      <div className='border border-t-0 border-[#CBD6E2]'>
+      <div
+        className={`border border-t-0 border-[#CBD6E2] ${
+          isActionItemsExpanded
+            ? 'max-h-[calc(100vh-280px)]'
+            : 'max-h-[calc(100vh-418px)]'
+        } overflow-auto`}
+      >
         {tabParam === 'milestone' && (
           <>
             {isError ? (
