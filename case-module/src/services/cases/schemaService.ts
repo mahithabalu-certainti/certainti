@@ -296,7 +296,8 @@ class CaseSchemaService {
               Op.eq,
               caseReq.case_name.toLowerCase(),
             ),
-            { fiscal_year: caseReq.fiscal_year }
+            { fiscal_year: caseReq.fiscal_year },
+            { account_rid: { [Op.eq]: caseReq.account_rid } }
           ]
         }
       });
@@ -313,6 +314,7 @@ class CaseSchemaService {
             [Op.and]: [
               { fiscal_year: caseReq.fiscal_year },
               { status_rid: { [Op.eq]: caseStatus.rid } },
+              { account_rid: { [Op.eq]: caseReq.account_rid } }
             ]
           }
         });
