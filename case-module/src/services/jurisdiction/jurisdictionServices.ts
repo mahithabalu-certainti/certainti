@@ -128,4 +128,70 @@ export class JurisdictionService {
     }
   }
 
+  
+  async getJurisdictionConfigDetailsById(configRequest:any): Promise<{
+  statusCode: number;
+  message: string;
+  errorMessage?: string;
+  data?: { configDetails: any };
+}> {
+  try {
+   
+    const configDetails =
+      await this.jurisdictionSchemaService.fetchJurisdictionConfigDetailsById(
+       configRequest
+      );
+
+    if (!configDetails) {
+      return {
+        statusCode: HttpStatus.FAILED,
+        message: HttpStatus.FAILED_MESSAGE,
+        errorMessage: "Invalid Config ID",
+      };
+    }
+
+    return {
+      statusCode: HttpStatus.SUCCESS,
+      message: HttpStatus.SUCCESS_MESSAGE,
+      data: {
+        configDetails: configDetails,
+      },
+    };
+  } catch (err) {
+    logMessage(`Error fetching jurisdiction details, ${err}`);
+      return {
+        statusCode: HttpStatus.FAILED,
+        message: HttpStatus.FAILED_MESSAGE,
+        errorMessage: "Error fetching jurisdiction config details",
+      };
+  }
+}
+  async updateJurisdictionConfig(configRequest:any): Promise<{
+  statusCode: number;
+  message: string;
+  errorMessage?: string;
+  data?: { updatedConfig: any };
+}> {
+  try { 
+    const updatedConfig =
+      await this.jurisdictionSchemaService.updateJurisdictionConfig(
+       configRequest
+      );
+    return {
+      statusCode: HttpStatus.SUCCESS,
+      message: HttpStatus.SUCCESS_MESSAGE,
+      data: { 
+        updatedConfig: updatedConfig,
+      },
+    };
+  }
+    catch (err) { 
+    logMessage(`Error updating jurisdiction config, ${err}`);
+      return {
+        statusCode: HttpStatus.FAILED,
+        message: HttpStatus.FAILED_MESSAGE,
+        errorMessage: "Error updating jurisdiction config",
+      };
+  }
+}
 }

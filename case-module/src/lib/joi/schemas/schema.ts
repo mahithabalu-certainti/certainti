@@ -1,4 +1,3 @@
-import { time } from "console";
 import Decimal from "decimal.js";
 import Joi from "joi";
 const uuidRegex = /^[A-Z0-9]{4}-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -189,6 +188,24 @@ const listCaseSummarySchema = Joi.object({
   sortBy: Joi.string().optional(),
   sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
 });
+
+const jurisdictionRDConfigSchema = Joi.object({
+ country_rid: Joi.string().required(),
+ state_rid: Joi.string().optional().allow("", null),
+});
+
+const updateJurisdictionRDConfigSchema = Joi.object({
+  data: Joi.array().items(
+    Joi.object({
+      creditConfigGroupId: Joi.string().required(),
+      items: Joi.array().items(
+        Joi.object().unknown(true)
+      ).min(1).required()
+    })
+  ).min(1).required()
+});
+
+
 
 const exportCaseSummarySchema = Joi.object({
  filters: Joi.object().default({}),
@@ -1092,5 +1109,7 @@ export {
   createActivityCallSchema,
   updateActivityCallSchema,
   sentReviewProjectSchema,
-  getEmailTemplatePreviewSchema
+  getEmailTemplatePreviewSchema,
+  jurisdictionRDConfigSchema,
+  updateJurisdictionRDConfigSchema
 };
