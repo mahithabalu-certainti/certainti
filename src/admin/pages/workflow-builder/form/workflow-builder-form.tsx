@@ -19,9 +19,10 @@ const WorkflowBuilderFormContent: React.FC = () => {
   const { rule } = useWorkflowContext();
 
   // ========== CENTRALIZED API CALLS ==========
-  
+
   // 1. Fetch scope list (trigger categories)
-  const { data: scopeListData, isLoading: isLoadingScopeList } = useGetScopeList();
+  const { data: scopeListData, isLoading: isLoadingScopeList } =
+    useGetScopeList();
 
   // NOTE: Scope event list (triggers) API call is now managed inside TriggerManager
   // because it depends on selectedScope which is local to TriggerManager
@@ -34,10 +35,8 @@ const WorkflowBuilderFormContent: React.FC = () => {
     }),
     [rule.trigger?.id]
   );
-  const { data: conditionListData, isLoading: isLoadingConditionTypes } = useGetConditionList(
-    conditionListParams,
-    !!rule.trigger?.id
-  );
+  const { data: conditionListData, isLoading: isLoadingConditionTypes } =
+    useGetConditionList(conditionListParams, !!rule.trigger?.id);
 
   // NOTE: Condition categories API call is now managed inside ConditionManager
   // because it depends on selectedConditionRid which is local to ConditionManager
@@ -50,10 +49,8 @@ const WorkflowBuilderFormContent: React.FC = () => {
     }),
     [rule.trigger?.id]
   );
-  const { data: actionCategoryData, isLoading: isLoadingActionCategories } = useGetActionCategoryTypes(
-    actionCategoryParams,
-    !!rule.trigger?.id
-  );
+  const { data: actionCategoryData, isLoading: isLoadingActionCategories } =
+    useGetActionCategoryTypes(actionCategoryParams, !!rule.trigger?.id);
 
   // NOTE: Action types API call is now managed inside ActionManager
   // because it depends on selectedCategory which is local to ActionManager
@@ -87,18 +84,19 @@ const WorkflowBuilderFormContent: React.FC = () => {
     };
 
     console.log('API Payload:', apiPayload);
-    
+
     // TODO: Call create/update API here
     // if (isEditView) {
     //   await updateWorkflowRule(apiPayload);
     // } else {
     //   await createWorkflowRule(apiPayload);
     // }
-    
+
     navigate(WORKFLOW_BUILDER);
   };
 
-  const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit-rule';
+  const isEditView =
+    location.pathname.split('/').slice(-2, -1)[0] === 'edit-rule';
 
   const isSaveEnabled =
     rule.name.trim() !== '' &&
@@ -123,10 +121,12 @@ const WorkflowBuilderFormContent: React.FC = () => {
       <div className='sticky top-0 z-10 flex flex-col bg-white border-b border-[#CBD6E2]'>
         <div className='flex items-center justify-between h-[50px] px-10 '>
           <div className='flex items-center w-[80%] max-w-[80%]'>
-            <SettingIcon
-              alt='setting-icon'
-              className='h-7 w-7 p-0.5 rounded [&>path]:fill-[#fff] [&>path]:stroke-[#EA0084] bg-[#EA0084]'
-            />
+            <React.Suspense fallback={null}>
+              <SettingIcon
+                alt='setting-icon'
+                className='h-7 w-7 p-0.5 rounded [&>path]:fill-[#fff] [&>path]:stroke-[#EA0084] bg-[#EA0084]'
+              />
+            </React.Suspense>
             <div className='w-[90%]'>
               {isInitialLoading ? (
                 <div className='ml-2'>

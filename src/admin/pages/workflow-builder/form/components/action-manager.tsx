@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { SearchIcon } from '../../../../../assets';
 import { Action } from '../helper';
 import { ActionCard } from './data-card';
@@ -8,7 +8,7 @@ import { useGetActionTypes } from '../../../../service/workflow-builder/workflow
 import { ActionCategoryTypeResponse } from '../../../../types';
 
 interface ActionManagerProps {
-  actionCategoryData?:ActionCategoryTypeResponse;
+  actionCategoryData?: ActionCategoryTypeResponse;
   isLoadingActionCategories?: boolean;
 }
 
@@ -18,7 +18,7 @@ const ActionManager = ({
 }: ActionManagerProps) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
-  
+
   const { rule, addAction, deleteAction } = useWorkflowContext();
 
   // Dynamically fetch action types based on selected category
@@ -29,8 +29,9 @@ const ActionManager = ({
     }),
     [selectedCategory]
   );
-  
-  const { data: actionTypeData, isLoading: isLoadingActionTypes } = useGetActionTypes(actionTypeParams);
+
+  const { data: actionTypeData, isLoading: isLoadingActionTypes } =
+    useGetActionTypes(actionTypeParams);
 
   // Transform action category data to categories
   const actionCategories = useMemo(() => {
@@ -148,7 +149,7 @@ const ActionManager = ({
   return (
     <div className='h-full flex flex-col'>
       {/* Header */}
-      <div className='p-6 border-b border-[#CBD6E2] sticky top-0 z-20'>
+      <div className='p-6 border-b border-[#CBD6E2] bg-gray-50 sticky top-0 z-20'>
         <div className='flex items-center justify-between mb-3'>
           <h2 className='text-2xl text-[#425A76] font-bold'>Add Actions</h2>
           {rule.actions.length > 0 && (
@@ -161,7 +162,9 @@ const ActionManager = ({
 
         {/* Search box */}
         <div className='relative mb-3'>
-          <SearchIcon className='absolute left-3 top-1/2 transform -translate-y-1/2 [&>path]:stroke-[#425A76]' />
+          <React.Suspense fallback={null}>
+            <SearchIcon className='absolute left-3 top-1/2 transform -translate-y-1/2 [&>path]:stroke-[#425A76]' />
+          </React.Suspense>
           <input
             type='text'
             placeholder='Search Actions...'

@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   COMMON_MENU_PROPS,
   Condition,
@@ -16,6 +16,7 @@ import {
   MenuItem,
   Select,
   TextField,
+  Tooltip,
   Typography,
 } from '@mui/material';
 import { useWorkflowContext } from '../workflow-context';
@@ -245,13 +246,15 @@ const ConditionManager: React.FC<ConditionManagerProps> = ({
                       transition: 'background-color 0.2s ease, color 0.2s ease',
                     }}
                   >
-                    <SwapIcon
-                      className={`w-4 h-4 transition-transform duration-300 ${
-                        condition.logicalOperator === 'OR'
-                          ? 'rotate-180 [&>path]:fill-[#0B5ED7]'
-                          : '[&>path]:fill-[#374151]'
-                      }`}
-                    />
+                    <React.Suspense fallback={null}>
+                      <SwapIcon
+                        className={`w-4 h-4 transition-transform duration-300 ${
+                          condition.logicalOperator === 'OR'
+                            ? 'rotate-180 [&>path]:fill-[#0B5ED7]'
+                            : '[&>path]:fill-[#374151]'
+                        }`}
+                      />
+                    </React.Suspense>
                     {condition.logicalOperator === 'OR' ? 'OR' : 'AND'}
                   </Button>
                 </div>
@@ -278,7 +281,10 @@ const ConditionManager: React.FC<ConditionManagerProps> = ({
                 className='flex items-center justify-center gap-[4px] w-[70px] h-[28px] text-[12px] font-medium rounded-[3px] bg-[#F3F4F6] border border-[#D1D5DB] text-[#9CA3AF] shadow-none cursor-default'
                 disabled
               >
-                <SwapIcon className='w-4 h-4 [&>path]:fill-[#9CA3AF]' /> AND
+                <React.Suspense fallback={null}>
+                  <SwapIcon className='w-4 h-4 [&>path]:fill-[#9CA3AF]' />
+                  AND
+                </React.Suspense>
               </button>
             </div>
           </div>
@@ -327,10 +333,12 @@ const ConditionManager: React.FC<ConditionManagerProps> = ({
               rule.conditions.length === 0 ? 'mt-2' : 'mt-4'
             }`}
           >
-            <div className='flex items-center justify-center gap-2'>
-              <AddIcon className='w-4 h-3' />
-              Add condition
-            </div>
+            <React.Suspense fallback={null}>
+              <div className='flex items-center justify-center gap-2'>
+                <AddIcon className='w-4 h-3' />
+                Add condition
+              </div>
+            </React.Suspense>
           </button>
         )}
 
@@ -661,13 +669,15 @@ function ConditionForm({
         onClick={onToggleExpand}
       >
         <div className='flex items-center gap-2 flex-1'>
-          <ArrowRightIcon
-            className={`text-gray-400 w-4 h-4 transition-transform ${
-              isExpanded ? 'rotate-90' : 'rotate-0'
-            }`}
-          />
+          <React.Suspense fallback={null}>
+            <ArrowRightIcon
+              className={`text-gray-400 w-4 h-4 transition-transform ${
+                isExpanded ? 'rotate-90' : 'rotate-0'
+              }`}
+            />
+          </React.Suspense>
           <div className='w-8 h-8 p-1.5 rounded-full bg-[#ffe4b3] flex items-center justify-center'>
-            {getDynamicSvgIcon('condition')}
+            {getDynamicSvgIcon(condition.name || 'condition')}
           </div>
           <div className='flex-1'>
             <div className='text-sm font-medium text-gray-900'>
@@ -693,17 +703,31 @@ function ConditionForm({
             )}
           </div>
         </div>
-
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete();
-          }}
-          className='h-8 w-8 flex items-center justify-center hover:bg-gray-200 rounded-full transition-colors cursor-pointer'
+        <Tooltip
+          placement='top'
           title='Remove Condition'
+          arrow
+          slotProps={{
+            tooltip: {
+              sx: {
+                mr: 1,
+              },
+            },
+          }}
         >
-          <CloseIcon className='w-3 h-3' />
-        </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
+            className='h-8 w-8 flex items-center justify-center hover:bg-gray-200 rounded-full transition-colors cursor-pointer'
+            title='Remove Condition'
+          >
+            <React.Suspense fallback={null}>
+              <CloseIcon className='w-3 h-3' />
+            </React.Suspense>
+          </button>
+        </Tooltip>
       </div>
 
       {/* Expanded Fields */}

@@ -14,6 +14,7 @@ import {
   ConditionListResponse,
   ScopeListResponse,
 } from '../../../../types';
+import { Tooltip } from '@mui/material';
 
 interface RuleBuilderProps {
   apiData: {
@@ -98,21 +99,36 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
           style={{ display: currentStep === 'conditions' ? 'block' : 'none' }}
         >
           <div className='p-6 relative'>
-            <div className='flex items-start justify-between gap-3 mb-3'>
+            <div className='flex items-start justify-between gap-3 mb-3 pr-4'>
               <div className='flex items-center gap-2'>
                 <div className='bg-blue-100 p-1 rounded-md flex items-center justify-center w-8 h-8 flex-shrink-0'>
-                  {getDynamicSvgIcon('condition')}
+                  {getDynamicSvgIcon(rule.trigger?.name || 'trigger')}
                 </div>
                 <div className='text-lg font-semibold text-[#425A76] mb-1 capitalize'>
                   {rule.trigger?.name || 'Configure Conditions'}
                 </div>
               </div>
-              <button
-                onClick={handleRemoveTrigger}
-                className='h-8 w-8 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors cursor-pointer'
+              <Tooltip
+                placement='top'
+                title='Remove Trigger'
+                arrow
+                slotProps={{
+                  tooltip: {
+                    sx: {
+                      mr: 1,
+                    },
+                  },
+                }}
               >
-                <DeleteIcon className='w-4 h-4' />
-              </button>
+                <button
+                  onClick={handleRemoveTrigger}
+                  className='h-8 w-8 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors cursor-pointer'
+                >
+                  <React.Suspense fallback={null}>
+                    <DeleteIcon className='w-4 h-4' />
+                  </React.Suspense>
+                </button>
+              </Tooltip>
             </div>
 
             <div className='text-sm text-[#425A76] mb-6'>
@@ -174,14 +190,16 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
               <h1 className='text-xl font-medium text-[#425A76]'>
                 {rule.name}
               </h1>
-              <EditIcon
-                className='w-3.5 h-3.5 cursor-pointer transition-opacity duration-200'
-                style={{
-                  filter:
-                    'brightness(0) saturate(100%) invert(16%) sepia(14%) saturate(749%) hue-rotate(169deg) brightness(93%) contrast(86%)',
-                }}
-                onClick={() => setIsEditing(true)}
-              />
+              <React.Suspense fallback={null}>
+                <EditIcon
+                  className='w-3.5 h-3.5 cursor-pointer transition-opacity duration-200'
+                  style={{
+                    filter:
+                      'brightness(0) saturate(100%) invert(16%) sepia(14%) saturate(749%) hue-rotate(169deg) brightness(93%) contrast(86%)',
+                  }}
+                  onClick={() => setIsEditing(true)}
+                />
+              </React.Suspense>
             </div>
           )}
           <span className='px-1 py-0.5 bg-purple-100 text-purple-700 text-xs font-medium rounded'>
@@ -238,15 +256,19 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
                     </p>
                   </div>
                   {rule.trigger && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRemoveTrigger();
-                      }}
-                      className='h-8 w-8 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors cursor-pointer'
-                    >
-                      <DeleteIcon className='w-4 h-4' />
-                    </button>
+                    <Tooltip placement='top' title='Remove Trigger' arrow>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveTrigger();
+                        }}
+                        className='h-8 w-8 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors cursor-pointer'
+                      >
+                        <React.Suspense fallback={null}>
+                          <DeleteIcon className='w-4 h-4' />
+                        </React.Suspense>
+                      </button>
+                    </Tooltip>
                   )}
                 </div>
               </div>

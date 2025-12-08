@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import React, { ReactNode } from 'react';
 import { CloseIcon } from '../../../../../assets';
 import { getCategoryColor, getDynamicSvgIcon } from '../helper';
 
@@ -113,7 +113,8 @@ export default function DataCard<T extends BaseCardItem>({
                    ${!disabled && 'hover:border-blue-500 hover:bg-blue-50'}`}
       >
         {/* Selection indicator - only show for non-disabled added items */}
-        {!disabled &&
+        {type !== 'action' &&
+          !disabled &&
           (isSelected || isAlreadyAdded) &&
           colors.selectionIcon !== 'none' && (
             <div
@@ -175,11 +176,13 @@ export default function DataCard<T extends BaseCardItem>({
       {type === 'action' && isAlreadyAdded && onDelete && !disabled && (
         <button
           onClick={handleDeleteClick}
-          className='absolute -top-2 -right-2 w-5 h-5 bg-red-100 border border-red-200 rounded-full flex items-center justify-center cursor-pointer z-20 hover:bg-red-200 transition-colors'
+          className='absolute -top-2 -right-2 w-5 h-5 bg-red-100 border border-red-400 rounded-full flex items-center justify-center cursor-pointer z-10 hover:bg-red-200 transition-colors'
           title='Remove Action'
           type='button'
         >
-          <CloseIcon className='w-[8px] h-[8px] [&>path]:stroke-[#F16137]' />
+          <React.Suspense fallback={null}>
+            <CloseIcon className='w-[8px] h-[8px] [&>path]:stroke-[#eb5628]' />
+          </React.Suspense>
         </button>
       )}
 

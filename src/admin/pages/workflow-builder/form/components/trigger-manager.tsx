@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { SearchIcon } from '../../../../../assets';
 import { Trigger } from '../helper';
 import { TriggerCard } from './data-card';
@@ -88,7 +88,7 @@ const TriggerManager: React.FC<TriggerManagerProps> = ({
   return (
     <div className='h-full flex flex-col'>
       {/* Header */}
-      <div className='p-6 border-b border-[#CBD6E2] sticky top-0 z-20'>
+      <div className='p-6 border-b border-[#CBD6E2] bg-gray-50 sticky top-0 z-20'>
         <div className='flex items-center justify-between mb-3'>
           <h2 className='text-2xl text-[#425A76] font-bold'>Add a Trigger</h2>
           {rule.trigger && (
@@ -100,7 +100,9 @@ const TriggerManager: React.FC<TriggerManagerProps> = ({
 
         {/* Search box */}
         <div className='relative mb-3'>
-          <SearchIcon className='absolute left-3 top-1/2 transform -translate-y-1/2 [&>path]:stroke-[#425A76]' />
+          <React.Suspense fallback={null}>
+            <SearchIcon className='absolute left-3 top-1/2 transform -translate-y-1/2 [&>path]:stroke-[#425A76]' />
+          </React.Suspense>
           <input
             type='text'
             placeholder='Search Triggers...'
