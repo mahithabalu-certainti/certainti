@@ -8,6 +8,7 @@ import {
   AccountType,
   ActivityType,
   AddCommentsType,
+  assignProjectType,
   CaseOwnerType,
   CaseStatusType,
   CaseTaskDropdownType,
@@ -1052,13 +1053,19 @@ export class CaseService {
           };
         }
       }
+      
       data.fiscal_year = checkCaseExists.fiscal_year
-      const result = await this.caseSchemaService.assignProjectToCase(
+      let caseSchemaServiceResult = await this.caseSchemaService.assignProjectToCase(
         data,
         fetchParentRnumber[0][0].r_number,
         schemaName
       );
-      if (result.statusCode == HttpStatus.SUCCESS) {
+      if (caseSchemaServiceResult.statusCode == HttpStatus.SUCCESS) {
+        const result = await this.caseSchemaService.insertCaseTabels(
+          caseSchemaServiceResult.data as assignProjectType,
+          fetchParentRnumber[0][0].r_number,
+          schemaName
+        );
         return {
           statusCode: HttpStatus.SUCCESS,
           statusMessage: result.statusMessage,
@@ -1066,7 +1073,7 @@ export class CaseService {
       } else {
         return {
           statusCode: HttpStatus.FAILED,
-          statusMessage: result.statusMessage,
+          statusMessage: caseSchemaServiceResult.statusMessage,
         };
       }
     } else {
@@ -2625,7 +2632,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
           task_status_rid : resData?.task_details.task_status_rid,
           task_status_name : taskStatusMap.get(resData?.task_details.task_status_rid!) || null,
           created_datetime : new Date(resData?.task_details.created_datetime!).toISOString(),
-          task_description : resData?.task_details.task_description,
+          task_description : data.task_type !== 'activity' ? resData?.task_details.task_description : resData?.task_details.description,
           effective_start_datetime : resData?.task_details.effective_start_datetime,
           effective_end_datetime : resData?.task_details.effective_end_datetime,
           checklist_rid : data.task_type === 'activity' ? resData?.task_details?.checklist_rid : resData?.task_details?.checklists?.rid,
@@ -3144,7 +3151,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
   async deleteTagsAccountLevel (data : any) {
     const mainDb = await this.getMainDb();
     const accountNumber : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
-    const result = await this.caseSchemaService.deleteTags(accountNumber[0][0].r_number, data.case_rid, data.account_rid, data.task_rid, data.tag_rid, data.userId);
+    const result = await this.caseSchemaService.deleteTags(accountNumber[0][0].r_number, data.case_rid, data.account_rid, data.task_rid, data.tag_rid, data.userId,data?.task_type || "case_task");
     return result;
   }
   async deleteCollaborators (data : any) {
