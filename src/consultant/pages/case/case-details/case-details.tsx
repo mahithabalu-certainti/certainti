@@ -862,7 +862,7 @@ export const CaseDetails = () => {
           className='flex-1 transition-all duration-500 ease-in-out'
           style={{
             maxHeight: isActionItemsExpanded
-              ? 'calc(100vh - 150px)'
+              ? 'calc(100vh - 140px)'
               : 'calc(100vh - 283px)',
             overflow: 'auto',
           }}
