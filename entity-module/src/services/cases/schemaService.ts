@@ -15,6 +15,8 @@ import { CaseModelService } from "./caseModelsService";
 import {
     UpdateCaseTaskType,
     CaseTaskWorkFlowCreate,
+    ICreateChecklist,
+    ICreateChecklistItem,
 } from "../../utils/types";
 import {
     ALPHANUMERIC_CONDITIONS,
@@ -1011,6 +1013,344 @@ class CaseSchemaService {
         else return null;
     }
 
+    async fetchChecklistTemplateDetailsById(
+        checklistId: string
+    ) {
+        ``
+        if (!this.mainDbSequelize) {
+            this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+        }
+
+        const [checklistDetailsResult] = await this.mainDbSequelize.query(rawQueries.fetchChecklistTemplates, {
+            replacements: { checklistId },
+            type: "SELECT"
+        }) as [any[], any];
+
+        if (!checklistDetailsResult || checklistDetailsResult.length === 0) {
+            return null;
+        }
+
+        const checklistDetails = checklistDetailsResult as any;
+
+        let checklistItems = await this.fetchChecklistTemplateItems(
+            checklistId
+        );
+
+        const userInfo = await this.insertUserDetails(
+            checklistDetails.created_by ?? "",
+            checklistDetails.modified_by ?? ""
+        );
+
+        const response: any = {
+            checklist_template_rid: checklistDetails?.rid,
+            checklist_name: checklistDetails?.checklist_name ?? "",
+            checklist_description: checklistDetails?.checklist_description ?? "",
+            r_number: checklistDetails.r_number ?? "",
+            status_rid: checklistDetails.status_rid ?? "",
+            status_name: checklistDetails.status_name ?? "",
+            modified_by: userInfo.modified_name ?? checklistDetails.modified_by,
+            created_by: userInfo.created_name ?? checklistDetails.created_by,
+            created_datetime: checklistDetails.created_datetime ?? null,
+            modified_datetime: checklistDetails.modified_datetime ?? null,
+            checklist_items: checklistItems ?? [],
+        };
+
+        return response;
+    }
+
+    async fetchChecklistTemplateItems(
+        checklistId: string,
+    ) {
+        try {
+            const {
+                AdminCheckListItem,
+            } = await this.caseModelService.getModels("");
+            // Convert Sequelize instances to plain objects
+
+            const items = await AdminCheckListItem.findAll({
+                attributes: [
+                    "rid",
+                    "checklist_item_name",
+                    "checklist_template_rid",
+                    "description"
+                ],
+                order: [
+                    ["created_datetime", "ASC"],
+                ],
+                where: { $checklist_template_rid$: checklistId },
+            });
+            const plainItems = items.map((item) => item.get({ plain: true }));
+            return items;
+        } catch (err) {
+            logMessage(`Error fetching interaction template items: ${err}`);
+            throw new Error(
+                "Error fetching interaction template items: " + (err as Error).message
+            );
+        }
+    }
+
+    async insertUserDetails(
+        createdById: string,
+        modifiedById: string
+    ): Promise<any> {
+        try {
+            if (!this.mainDbSequelize) {
+                this.mainDbSequelize =
+                    await this.caseModelService.getMainSequelize();
+            }
+
+            const getUserFullName = async (userId: string) => {
+                if (!userId) return null;
+
+                const [results]: any = await this.mainDbSequelize?.query(
+                    rawQueries.getUserNameByIdQuery(),
+                    {
+                        replacements: { userId },
+                        type: "SELECT",
+                    }
+                );
+
+                if (!results) return null;
+
+                const { first_name, middle_name, last_name } = results as any;
+                return [first_name, middle_name, last_name].filter(Boolean).join(" ");
+            };
+
+            const createdName = await getUserFullName(createdById);
+            const modifiedName = await getUserFullName(modifiedById);
+
+            return {
+                created_name: createdName || null,
+                modified_name: modifiedName || null,
+            };
+        } catch (err) {
+            logMessage(`Error adding user details: ${err}`);
+            throw new Error("Error adding user details" + (err as Error).message);
+        }
+    }
+
+    async manageCheckListItems(
+        accountNumber: string,
+        checklistReq: ICreateChecklist,
+        checklistRid: string,
+        transaction: Transaction
+    ): Promise<any[]> {
+        // Implementation for managing checklist items based on action type (add, edit, delete)
+        try {
+            const { CheckListItem } = await this.caseModelService.getModels(accountNumber);
+
+            const processedItems = [];
+
+            for (const item of checklistReq.checklist_items) {
+                // Use the utility function to process each item based on its action type
+                const result = await this.processChecklistItemByAction(
+                    CheckListItem,
+                    checklistRid,
+                    item,
+                    checklistReq,
+                    transaction,
+
+                );
+
+                if (result) {
+                    processedItems.push({
+                        ...result,
+                        action_type: item.action_type,
+                    });
+                }
+            }
+
+            return processedItems;
+        } catch (error) {
+            logMessage(`Error processing checklist items: ${error}`);
+            throw new Error("Error processing checklist items: " + error);
+        }
+    }
+
+    async processChecklistItemByAction(
+        CheckListItem: any,
+        checklistRid: string,
+        item: ICreateChecklistItem,
+        checkListReq: ICreateChecklist,
+        transaction: Transaction
+    ) {
+        if (!this.mainDbSequelize) {
+            this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+        }
+        const [checkListStatus]: any[] = await this.mainDbSequelize.query(
+            rawQueries.fetchChecklistStatusByName("Open"),
+            { type: "SELECT" }
+        );
+        switch (item.action_type) {
+            case "add":
+                return await addChecklistItem(
+                    CheckListItem,
+                    checklistRid,
+                    item,
+                    checkListReq.created_by,
+                    checkListReq.account_rid,
+                    checkListStatus?.rid,
+                    transaction
+                );
+
+            case "edit":
+                return await editChecklistItem(
+                    CheckListItem,
+                    checklistRid,
+                    item,
+                    checkListReq.created_by,
+                    transaction
+                );
+
+            case "delete":
+                return await deleteChecklistItem(
+                    CheckListItem,
+                    checklistRid,
+                    item,
+                    transaction
+                );
+
+            default:
+                logMessage(
+                    `Warning: Unknown action type '${item.action_type}' for checklist item: ${item.checklist_item_name}`
+                );
+                throw new Error(
+                    `Invalid action type: ${item.action_type}. Supported types are: add, edit, delete`
+                );
+        }
+    }
+
+}
+
+/**
+ * Utility function to add a new checklist item
+ * @param AdminCheckListItem - The model instance
+ * @param checklistTemplateRid - Parent checklist RID
+ * @param item - Checklist item data
+ * @param createdBy - User ID who is creating the item
+ * @param transaction - Database transaction
+ * @returns Promise resolving to the created item
+ */
+async function addChecklistItem(
+    CheckListItem: any,
+    checklistRid: string,
+    item: ICreateChecklistItem,
+    createdBy: string,
+    accountRid: string,
+    statusRid: string,
+    transaction: Transaction
+) {
+    const result = await CheckListItem.create(
+        {
+            account_rid: accountRid,
+            checklist_rid: checklistRid,
+            checklist_item_name: item.checklist_item_name,
+            checklist_item_description: item.checklist_item_description,
+            status_rid: statusRid,
+            created_by: createdBy,
+            created_datetime: new Date(),
+        },
+        { transaction }
+    );
+    logMessage(
+        `Added new checklist item: ${item.checklist_item_name}`
+    );
+    return result;
+}
+
+/**
+ * Utility function to edit/update an existing checklist item
+ * @param AdminCheckListItem - The model instance
+ * @param checklistTemplateRid - Parent checklist RID
+ * @param item - Checklist item data
+ * @param createdBy - User ID who is modifying the item
+ * @param transaction - Database transaction
+ * @returns Promise resolving to the updated or created item
+ */
+async function editChecklistItem(
+    CheckListItem: any,
+    checklistRid: string,
+    item: ICreateChecklistItem,
+    createdBy: string,
+    transaction: Transaction
+) {
+    // First, find the existing item by template_rid and sequence_no
+    const existingItem = await CheckListItem.findOne({
+        where: {
+            rid: item.checklist_item_rid,
+        },
+        transaction,
+    });
+
+    if (existingItem) {
+        // Update existing item
+        const result = await existingItem.update(
+            {
+                checklist_item_name: item.checklist_item_name,
+                checklist_item_description: item.checklist_item_description,
+                status_rid: item.status_rid,
+                modified_by: createdBy,
+                modified_datetime: new Date(),
+            },
+            { transaction }
+        );
+        logMessage(
+            `Updated checklist item  ${item.checklist_item_name}`
+        );
+        return result;
+    } else {
+        // Item doesn't exist, create it as fallback
+        logMessage(
+            `Warning: Checklist item  not found for editing`
+        );
+        const result = await CheckListItem.create(
+            {
+                checklist_item_name: item.checklist_item_name,
+                status_rid: item.status_rid,
+                created_by: createdBy,
+                created_datetime: new Date(),
+            },
+            { transaction }
+        );
+        logMessage(
+            `Created new checklist item (edit fallback): ${item.checklist_item_name}`
+        );
+        return result;
+    }
+}
+
+/**
+ * Utility function to delete an existing checklist item
+ * @param AdminCheckListItem - The model instance
+ * @param checklistTemplateRid - Parent checklist RID
+ * @param item - Checklist item data
+ * @param transaction - Database transaction
+ * @returns Promise resolving to the deletion result
+ */
+async function deleteChecklistItem(
+    CheckListItem: any,
+    checklistRid: string,
+    item: ICreateChecklistItem,
+    transaction: Transaction
+) {
+    // Find the item to delete
+    const itemToDelete = await CheckListItem.findOne({
+        where: {
+            rid: item.checklist_item_rid
+        },
+        transaction,
+    });
+
+    if (itemToDelete) {
+        await itemToDelete.destroy({ transaction });
+        logMessage(
+            `Deleted checklist item: ${item.checklist_item_name}`
+        );
+    } else {
+        logMessage(
+            `Warning: Checklist item not found for deletion`
+        );
+    }
 }
 
 export default CaseSchemaService;

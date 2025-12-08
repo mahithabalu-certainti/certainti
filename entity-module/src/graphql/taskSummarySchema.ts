@@ -33,6 +33,7 @@ data : taskResponse
 
 input taskInlineInput {
 rid : String!
+task_rid : String!
 account_rid : String!
 attachment_level: String!
 task_name: String

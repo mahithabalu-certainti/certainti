@@ -2200,15 +2200,14 @@ export const rawQueries = {
             FROM ${MAIN_SCHEMA_NAME}.task_summary ts
             WHERE ts.rid = '${rid}' AND ts.account_rid = '${accountRid}'`;
   },
-
   updateTaskSummaryQuery: (getSetData: any, data: any) => {
-    const { setClause, values } = getSetData;
-    const whereClause = `rid = '${data.rid}' AND account_rid = '${data.account_rid}'`;
-    
-    return `UPDATE ${MAIN_SCHEMA_NAME}.task_summary 
-            SET ${setClause} 
-            WHERE ${whereClause} 
-            RETURNING *`;
+  const { setClause } = getSetData;
+
+  // Use named parameters for all dynamic values
+  return `UPDATE ${MAIN_SCHEMA_NAME}.task_summary 
+          SET ${setClause} 
+          WHERE rid = :rid AND account_rid = :account_rid
+          RETURNING *`;
   },
   fetchTaskSummaryDetails: ( rid: string, accountRid: string) => {
     return `SELECT *
@@ -2253,7 +2252,45 @@ export const rawQueries = {
 
   getAccountDetails (accountRid : string) {
     return `SELECT rid, r_number, subscription_id, is_parent FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`
-  } 
+  } ,
+  fetchParentAccountDetails: `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
+  getUserNameByIdQuery() {
+    return `
+      SELECT first_name, middle_name, last_name 
+      FROM ${MAIN_SCHEMA_NAME}."user" 
+      WHERE rid = :userId
+    `;
+  },
+    fetchChecklistTemplates: `
+    SELECT 
+        ct.rid,
+        ct.r_number,
+        ct.checklist_name,
+        ct.checklist_description,
+        ct.status_rid,
+        s.status_name AS status_name,
+        ct.created_by,
+        ct.modified_by,
+        ct.created_datetime,
+        ct.modified_datetime
+    FROM 
+        ${MAIN_SCHEMA_NAME}.checklist_template ct
+    LEFT JOIN 
+        ${MAIN_SCHEMA_NAME}.status s ON ct.status_rid = s.rid
+        WHERE 
+        ct.rid = :checklistId
+    LIMIT 1;
+  `,
+  fetchChecklistStatusByName(statusName: string) {
+    return `
+    SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.checklist_status WHERE status_name = '${statusName}'`;
+  },
+  fetchActivityStatusById(oldRid : string, newRid : string) {
+    if(oldRid === null) oldRid = ''
+    if(newRid === null) newRid = ''
+    return `SELECT rid, status_name as name FROM ${MAIN_SCHEMA_NAME}.activity_status WHERE activity_type ='Task' AND rid IN ('${oldRid}', '${newRid}')`
+  },
+
 };
 
 export const IMPORT_FILTER_COLUMNS: any = {
@@ -2425,3 +2462,10 @@ export const relationshipTypes = {
   isBlockedBy : "Is Blocked By",
   isEnabledBy : "Is Enabled By"
 }
+
+export const activityTypes = {  
+ email: "Email",
+ meeting: "Meeting",
+  call: "Call",
+  task: "Task",
+};

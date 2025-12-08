@@ -15,8 +15,12 @@ import { Logger } from "winston";
 import {
   IFetchTaskDetailsInput,
   IUpdateProjectTask,
-  UpdateCaseTaskType
+  UpdateCaseTaskType,
+  IActivityTask
 } from "../../utils/types";
+import { ActivityService } from "../activities/activityService";
+import { DataTypes, Op, QueryTypes, Sequelize } from "sequelize";
+
 
 
 
@@ -30,14 +34,16 @@ export default class TaskSummaryGraphqlServices {
   private taskService: TaskService
   private projectInjestionTaskService: ProjectInjestionTaskService
   private caseService: CaseService
+  private activityService: ActivityService;
   //   private taskInjestionService: TaskInjestionService;
   //   private taskSummarySchema: TaskSummarySchemaService;
 
   constructor(logger: Logger) {
     this.logger = logger;
     this.taskService = new TaskService(logger);
-    this.projectInjestionTaskService = new ProjectInjestionTaskService();
+    this.projectInjestionTaskService = new ProjectInjestionTaskService(logger);
     this.caseService = new CaseService(logger);
+    this.activityService = new ActivityService(logger);
     // this.taskInjestionService = new TaskInjestionService();
     // this.taskSummarySchema = new TaskSummarySchemaService();
   }
@@ -84,6 +90,7 @@ export default class TaskSummaryGraphqlServices {
     let attachedTaskDetails = null;
     let projectTaskUpdateResult = null;
     let caseTaskUpdateResult = null;
+    let activityTaskUpdateResult = null;
 
     // Define editable fields from task summary
     const editableFields = [
@@ -97,7 +104,9 @@ export default class TaskSummaryGraphqlServices {
     ];
 
     let fieldsToPropagate: string[] = [];
-    data.task_rid = data.rid;
+
+    const userId = data.userId
+
 
     if (data.attachment_level === "project") {
       const projectTaskQuery: any = await orgSequelize.query(
@@ -244,7 +253,7 @@ export default class TaskSummaryGraphqlServices {
           };
         }
       }
-    } else if (data.attachment_level === "case" || data.attachment_level === "account") {
+    } else if (data.attachment_level === "case") {
       const caseTaskQuery: any = await orgSequelize.query(
         rawQueries.findCaseTaskDetails(schemaName, data.task_rid, data.account_rid)
       );
@@ -266,8 +275,6 @@ export default class TaskSummaryGraphqlServices {
           const currentDate = new Date();
 
           // We need to fetch more complete case task details to get all required fields
-          // Assuming we have a query to fetch full case task details
-          // For now, using what we have and adding defaults for missing fields
           const fullCaseTaskDetails = attachedTaskDetails;
 
           // Create the UpdateCaseTaskType object by merging existing data with task summary updates
@@ -281,8 +288,7 @@ export default class TaskSummaryGraphqlServices {
             task_name: data.task_name || fullCaseTaskDetails.task_name,
             task_description: data.description || fullCaseTaskDetails.description || fullCaseTaskDetails.task_description,
 
-            // Map status fields - need to handle status_name to status_rid conversion if needed
-            // Assuming data.status_rid is already set or we need to fetch status map
+            // Map status fields
             task_status_rid: data.status_rid || fullCaseTaskDetails.task_status_rid || fullCaseTaskDetails.status_rid,
 
             // Priority mapping
@@ -311,21 +317,9 @@ export default class TaskSummaryGraphqlServices {
             weightage_rid: fullCaseTaskDetails.weightage_rid,
             task_category_rid: fullCaseTaskDetails.task_category_rid,
 
-            // Handle fiscal year - check if it needs conversion
+            // Handle fiscal year
             ...(data.fiscal_year && { fiscal_year: data.fiscal_year }),
           };
-
-          // If status_name is provided but status_rid is not, we need to convert it
-          // if (data.status_name && !data.status_rid) {
-          //   try {
-          //     const statusMap = await this.getTaskStatusMap(mainSequelize);
-          //     if (statusMap.has(data.status_name)) {
-          //       caseTaskUpdateData.task_status_rid = statusMap.get(data.status_name);
-          //     }
-          //   } catch (error) {
-          //     logMessage(`Error fetching status map for case task: ${error}`);
-          //   }
-          // }
 
           logMessage(`Propagating task summary changes to case task: ${JSON.stringify({
             fieldsPropagated: fieldsToPropagate,
@@ -354,8 +348,6 @@ export default class TaskSummaryGraphqlServices {
           }
 
           // If successful, update attached task details
-          // Note: updateUserLevelTask doesn't return the updated task in the response
-          // You might need to fetch it again or adjust the method to return it
           if (updateResult.statusCode === HttpStatus.SUCCESS) {
             // Fetch updated case task details
             const updatedCaseTaskQuery: any = await orgSequelize.query(
@@ -375,16 +367,119 @@ export default class TaskSummaryGraphqlServices {
           };
         }
       }
-    }
-     else if (data.attachment_level === "account") {
+    } else if (data.attachment_level === "account") {
       const accTaskQuery: any = await orgSequelize.query(
         rawQueries.findAccountTaskDetails(schemaName, data.task_rid, data.account_rid)
       );
       attachedTaskExists = accTaskQuery[0].length > 0;
       attachedTaskDetails = accTaskQuery[0][0];
 
-    }
+      // Check if any editable fields from task summary need to be propagated to activity task
+      fieldsToPropagate = editableFields.filter(field =>
+        data[field] !== undefined && data[field] !== null
+      );
 
+      // Always propagate if there are date changes (for validation)
+      const hasDateChanges = data.effective_start_datetime || data.effective_end_datetime;
+
+      if (fieldsToPropagate.length > 0 || hasDateChanges) {
+        try {
+          // Extract userId from context or data
+          const currentDate = new Date();
+
+          // We need to fetch more complete account task details to get all required fields
+          const fullAccountTaskDetails = attachedTaskDetails;
+
+          // Create the IActivityTask object by merging existing data with task summary updates
+          const activityTaskUpdateData: IActivityTask = {
+            // Required fields from existing activity task
+            task_rid: data.task_rid, // Activity task RID
+            account_rid: data.account_rid,
+            accountRid: data.account_rid,
+            attach_to: fullAccountTaskDetails.attach_to || data.attach_to,
+
+            // Fields that can be overridden from task summary
+            task_name: data.task_name || fullAccountTaskDetails.task_name,
+            description: data.description || fullAccountTaskDetails.description,
+
+            // Map status fields
+            status_rid: data.status_rid || fullAccountTaskDetails.status_rid,
+
+            // Priority mapping
+            priority_rid: data.priority_rid || fullAccountTaskDetails.priority_rid,
+
+            // Date fields
+            effective_start_datetime: data.effective_start_datetime
+              ? new Date(data.effective_start_datetime)
+              : (fullAccountTaskDetails.effective_start_datetime ? new Date(fullAccountTaskDetails.effective_start_datetime) : currentDate),
+
+            effective_end_datetime: data.effective_end_datetime
+              ? new Date(data.effective_end_datetime)
+              : (fullAccountTaskDetails.effective_end_datetime ? new Date(fullAccountTaskDetails.effective_end_datetime) : currentDate),
+
+            // Fields from existing activity task (not editable from task summary)
+            created_by: fullAccountTaskDetails.created_by,
+            modified_by: userId,
+            created_datetime: fullAccountTaskDetails.created_datetime ? new Date(fullAccountTaskDetails.created_datetime) : currentDate,
+            modified_datetime: currentDate,
+
+            // Other required fields
+            activity_type: fullAccountTaskDetails.activity_type || 'general',
+            fiscal_year: data.fiscal_year || fullAccountTaskDetails.fiscal_year || new Date().getFullYear(),
+            attachment_level: fullAccountTaskDetails.attachment_level || 'account',
+
+            // Optional fields
+            assigned_to: fullAccountTaskDetails.assigned_to,
+            remainder_interval: fullAccountTaskDetails.remainder_interval,
+            checklist_rid: fullAccountTaskDetails.checklist_rid,
+            task_template_rid: fullAccountTaskDetails.task_template_rid,
+            tags: fullAccountTaskDetails.tags || [],
+          };
+
+          logMessage(`Propagating task summary changes to activity task: ${JSON.stringify({
+            fieldsPropagated: fieldsToPropagate,
+            activityTaskData: {
+              task_rid: activityTaskUpdateData.task_rid,
+              task_name: activityTaskUpdateData.task_name,
+              description: activityTaskUpdateData.description,
+              status_rid: activityTaskUpdateData.status_rid,
+              priority_rid: activityTaskUpdateData.priority_rid,
+              effective_start_datetime: activityTaskUpdateData.effective_start_datetime,
+              effective_end_datetime: activityTaskUpdateData.effective_end_datetime
+            }
+          })}`);
+
+          // Call updateActivityTask with the prepared data
+          const updateResult = await this.activityService.updateActivityTask(
+            activityTaskUpdateData,
+            userId
+          );
+
+          activityTaskUpdateResult = updateResult;
+
+          if (updateResult.statusCode !== HttpStatus.SUCCESS) {
+            return {
+              statusCode: updateResult.statusCode,
+              statusMessage: updateResult.message || updateResult.errorMessage || STATUS_MESSAGE.updateFailed,
+              data: null,
+            };
+          }
+
+          // If successful, update attached task details
+          if (updateResult.statusCode === HttpStatus.SUCCESS && updateResult.data?.task) {
+            attachedTaskDetails = updateResult.data.task;
+          }
+
+        } catch (error) {
+          logMessage(`Error updating activity task: ${error}`);
+          return {
+            statusCode: HttpStatus.FAILED,
+            statusMessage: "Failed to update associated activity task",
+            data: null,
+          };
+        }
+      }
+    }
 
     if (!attachedTaskExists) {
       return {
@@ -475,8 +570,19 @@ export default class TaskSummaryGraphqlServices {
     }
 
     // Update task summary
+    const replacements = {
+      ...getSetData.values,
+      rid: data.rid,
+      account_rid: data.account_rid
+    };
+
+    // Update task summary
     const updatedTaskSummary = await mainSequelize.query(
-      rawQueries.updateTaskSummaryQuery(getSetData, data)
+      rawQueries.updateTaskSummaryQuery(getSetData, data),
+      {
+        replacements: replacements, // Pass as object for named parameters
+        type: QueryTypes.UPDATE
+      }
     );
 
     if (updatedTaskSummary) {
@@ -486,7 +592,7 @@ export default class TaskSummaryGraphqlServices {
       );
 
       // Structure response
-      const latestData: any = fetchLatestUpdatedData.data;
+      const latestData: any = fetchLatestUpdatedData[0][0];
       const finalStructuredData = {
         rid: latestData.rid,
         r_number: latestData.r_number,

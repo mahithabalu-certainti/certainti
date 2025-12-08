@@ -9,11 +9,11 @@ import { CaseTimeline } from "../../models/caseTimeline";
 import { CaseHistory } from "../../models/caseHistory";
 import { CaseTeam } from "../../models/caseTeamModel";
 // import { AdminChecklist } from "../models/adminChecklistModel";
-// import { AdminCheckListItem } from "../models/adminCheckListItemsModel";
+import { AdminCheckListItem } from "../../models/adminCheckListItemsModel";
 // import { Jurisdiction } from "../models/jurisdiction";
 // import { TaskTemplate } from "../models/caseTaskTemplateModel";
-// import { CheckList } from "../models/checkListModel";
-// import { CheckListItem } from "../models/checkListItemModel";
+import { CheckList } from "../../models/checkListModel";
+import { CheckListItem } from "../../models/checkListItemModel";
 // import { CaseMilestone } from "../models/caseMilestoneModel";
 import { CaseTask } from "../../models/caseTaskModel";
 import { TaskCollaborators } from "../../models/taskCollaboratorsModel";
@@ -29,8 +29,8 @@ import { WorkflowConnector } from "../../models/workflowConnectorModel";
 import { Activities } from "../../models/activitiesModel";
 // import { TaskHistory } from "../models/taskHistory";
 // import { ActivityAttachments } from "../models/activitiesAttachmentModel";
-// import { ActivityHistory } from "../models/activityHistory";
-// import { TaskSummary } from "../models/taskSummaryModel";
+import { ActivityHistory } from "../../models/activityHistory";
+import { TaskSummary } from "../../models/taskSummaryModel";
 
 export class CaseModelService {
   orgDbSequelize: Sequelize | null = null;
@@ -59,8 +59,8 @@ export class CaseModelService {
       // WorkflowConnectorMapping: ReturnType<typeof WorkflowConnectorMapping.initialize>
       // TaskHistory : ReturnType<typeof TaskHistory.initialize>;
       // ActivityAttachments : ReturnType<typeof ActivityAttachments.initialise>
-      // ActivityHistory: ReturnType<typeof ActivityHistory.initialize>;
-      // TaskSummary: ReturnType<typeof TaskSummary.initialize>;
+      ActivityHistory: ReturnType<typeof ActivityHistory.initialize>;
+      TaskSummary: ReturnType<typeof TaskSummary.initialize>;
     }
   > = new Map();
 
@@ -96,10 +96,10 @@ export class CaseModelService {
     const CaseTeamModel = CaseTeam.initialize(sequelize, schemaName);
     // const JurisdictionModel = Jurisdiction.initialize(sequelize, schemaName);
     // const AdminChecklistModel = AdminChecklist.initialize(mainDbSequelize, "");
-    // const AdminCheckListItemModel = AdminCheckListItem.initialize(mainDbSequelize, "");
+    const AdminCheckListItemModel = AdminCheckListItem.initialize(mainDbSequelize, "");
     // const TaskTemplateModel = TaskTemplate.initialize(mainDbSequelize, "");
-    // const CheckListModel = CheckList.initialize(sequelize, schemaName);
-    // const CheckListItemModel = CheckListItem.initialize(sequelize, schemaName);
+    const CheckListModel = CheckList.initialize(sequelize, schemaName);
+    const CheckListItemModel = CheckListItem.initialize(sequelize, schemaName);
     // const CaseMilestoneModel = CaseMilestone.initialise(sequelize, schemaName);
     const CaseTaskModel = CaseTask.initialise(sequelize, schemaName)
     const TaskCollaboratorsModel = TaskCollaborators.initialise(sequelize, schemaName)
@@ -116,8 +116,8 @@ export class CaseModelService {
     const ActivitiesModel = Activities.initialize(sequelize, schemaName);
     // const TaskHistoryModel = TaskHistory.initialize(sequelize, schemaName);
     // const ActivityAttachmentsModel = ActivityAttachments.initialise(sequelize, schemaName);
-    // const ActivityHistoryModel = ActivityHistory.initialize(sequelize, schemaName);
-    // const TaskSummaryModel = TaskSummary.initialize(sequelize, "");
+    const ActivityHistoryModel = ActivityHistory.initialize(sequelize, schemaName);
+    const TaskSummaryModel = TaskSummary.initialize(sequelize, "");
 
     const models = {
       Case: CaseModel,
@@ -127,10 +127,10 @@ export class CaseModelService {
       CaseHistory: CaseHistoryModel,
       CaseTeam: CaseTeamModel,
       // AdminChecklist: AdminChecklistModel,
-      // AdminCheckListItem: AdminCheckListItemModel,
+      AdminCheckListItem: AdminCheckListItemModel,
       // TaskTemplate: TaskTemplateModel,
-      // CheckList: CheckListModel,
-      // CheckListItem: CheckListItemModel,
+      CheckList: CheckListModel,
+      CheckListItem: CheckListItemModel,
       // Jurisdiction: JurisdictionModel,
       // CaseMilestone: CaseMilestoneModel,
       CaseTask : CaseTaskModel,
@@ -148,8 +148,8 @@ export class CaseModelService {
       WorkflowConnector : WorkflowConnectorModel,
       // WorkflowConnectorMapping : WorkflowConnectorMappingModel,
       // ActivityAttachments : ActivityAttachmentsModel,
-      // ActivityHistory : ActivityHistoryModel,
-      // TaskSummary: TaskSummaryModel
+      ActivityHistory : ActivityHistoryModel,
+      TaskSummary: TaskSummaryModel
     };
 
     this.modelCache.set(schemaName, models);

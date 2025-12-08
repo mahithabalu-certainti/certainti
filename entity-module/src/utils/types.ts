@@ -592,3 +592,78 @@ export type CaseTaskWorkFlowCreate = {
 export interface CaseStatusResult {
   status_name: string;
 }
+
+export interface ICreateChecklist {
+  
+  account_rid: string;
+  checklist_rid: string;
+  attach_to: string;
+  attachment_level: string;
+  checklist_template_rid?: string | null;
+  checklist_name: string;
+  checklist_description?: string;
+  status_rid?: string;
+  created_by: string;
+  modified_by?: string;
+  created_datetime: Date;
+  modified_datetime?: Date;
+  fiscal_year: number;
+  checklist_items: ICreateChecklistItem[];
+  case_rid? : string
+}
+
+export interface ICreateChecklistItem{
+  checklist_item_name: string;
+  checklist_item_rid: string;
+  action_type: "add" | "edit" | "delete";
+  status_rid: string;
+  checklist_item_description?: string;
+  created_by: string;
+  modified_by?: string;
+  created_datetime: Date;
+  modified_datetime?: Date;
+}
+
+export interface IActivityTask {
+  task_template_rid?: string;
+  task_rid: string;
+  activity_type:string
+  created_by: string;
+  modified_by?: string;
+  created_datetime?: Date;
+  modified_datetime?: Date;
+  accountRid: string;
+  fiscal_year: number;
+  attach_to: string;
+  attachment_level: string;
+  task_name: string;
+  description?: string;
+  effective_start_datetime: Date;
+  effective_end_datetime: Date;
+  priority_rid?: string;
+  assigned_to?: string | null;
+  status_rid?: string;
+  remainder_interval?: number;
+  account_rid?: string; 
+  checklist_rid?: string;
+  tags : tagTypes[]
+}
+
+export interface ICreateChecklist {
+  
+  account_rid: string;
+  checklist_rid: string;
+  attach_to: string;
+  attachment_level: string;
+  checklist_template_rid?: string | null;
+  checklist_name: string;
+  checklist_description?: string;
+  status_rid?: string;
+  created_by: string;
+  modified_by?: string;
+  created_datetime: Date;
+  modified_datetime?: Date;
+  fiscal_year: number;
+  checklist_items: ICreateChecklistItem[];
+  case_rid? : string
+}
