@@ -99,7 +99,7 @@ const ReviewProjectsList: React.FC<ReviewProjectProps> = ({
       sortOrder: sortBy,
       sortBy: sortField,
       search: searchText,
-      filters: {},
+      filters: appliedFilters,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
