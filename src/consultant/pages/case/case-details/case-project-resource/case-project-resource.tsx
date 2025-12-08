@@ -5,12 +5,12 @@ import { ExportType } from '../../../../types';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
-import { useCaseProjectResourceList } from '../../../../services/case-project-resource/case-project-resource-service';
-import { BUTTON_STYLES } from '../../../../../admin/pages/manage-user-detail/styles';
 import {
-  ListTableColumn,
-  ShowHideTableColumn,
-} from '../../../../../components/table/types';
+  useCaseProjectResourceDetail,
+  useCaseProjectResourceList,
+} from '../../../../services/case-project-resource/case-project-resource-service';
+import { BUTTON_STYLES } from '../../../../../admin/pages/manage-user-detail/styles';
+import { ShowHideTableColumn } from '../../../../../components/table/types';
 import { SectionTabPanel } from '../../../../../components';
 import ResourceTableHeader from '../../../account-details-sidebar/sidebar-pages/resources/resource-table-header';
 import { ProjectsIcon } from '../../../../../assets';
@@ -25,23 +25,33 @@ import {
 import { caseProjectResourceFilterFields } from './utils';
 import CaseProjectResourceDetails from './case-project-resource-details/case-project-resource-details';
 import { CaseProjectResourceRow } from '../../../../types/case-project-resource';
+import { ReviewProjectListURLParams } from '../../../../types/assign-projects';
 
-const AttachmentTabs: ResourceTabs[] = [
+const ProjectResourceTabs: ResourceTabs[] = [
   {
     id: AllPermissions.ACCOUNT_ATTACHMENT_OVERVIEW,
     name: 'Overview',
     hide: false,
   },
 ];
-interface AttachmentsProps {
+interface ProjectResourceProps {
   setExportType?: (type: ExportType) => void;
   accountInActive?: boolean;
+  setProjectResourceParams: React.Dispatch<
+    React.SetStateAction<ReviewProjectListURLParams>
+  >;
   refetchAccountDetails?: () => void;
 }
 
-const CaseProjectResource: React.FC<AttachmentsProps> = () => {
-  const { accountid, caseId } = useParams();
+const CaseProjectResource: React.FC<ProjectResourceProps> = ({
+  setExportType,
+  accountInActive,
+  setProjectResourceParams,
+}) => {
+  const { caseId } = useParams();
   const [searchParams] = useSearchParams();
+  const accountid = searchParams.get('accountID');
+  const resource_id = searchParams.get('resource_id');
   const navigate = useNavigate();
   const [appliedFilters, setAppliedFilters] = useState<
     Record<string, string | number | boolean | string[]>
@@ -53,7 +63,7 @@ const CaseProjectResource: React.FC<AttachmentsProps> = () => {
   );
   const [rowsPerPage, setRowsPerPage] = useState(100);
   const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('ASC');
-  const [sortField, setSortField] = useState<string>('document_name');
+  const [sortField, setSortField] = useState<string>('resource_code');
   const [totalItems, setTotalItems] = useState<number>(0);
   const [resourceRowList, setResourceRowList] = useState<
     CaseProjectResourceRowType[]
@@ -76,6 +86,7 @@ const CaseProjectResource: React.FC<AttachmentsProps> = () => {
   ) => {
     setColumnAnchorEl(event.currentTarget);
   };
+  const { permission } = useSelector((state: RootState) => state.permission);
   const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
     (state: RootState) => state.account
   );
@@ -95,7 +106,28 @@ const CaseProjectResource: React.FC<AttachmentsProps> = () => {
     },
     refreshAttachments
   );
-
+  useEffect(() => {
+    if (setExportType) {
+      setExportType('project_resource');
+    }
+    const updatedParams = {
+      sortBy: sortField,
+      filters: appliedFilters,
+      page: currentPage,
+      sortOrder: sortOrder,
+      limit: rowsPerPage,
+      search: searchText,
+    };
+    setProjectResourceParams(updatedParams);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    sortField,
+    appliedFilters,
+    currentPage,
+    rowsPerPage,
+    sortOrder,
+    searchText,
+  ]);
   useEffect(() => {
     if (data?.data?.projectResources) {
       setResourceRowList(data.data.projectResources);
@@ -139,6 +171,13 @@ const CaseProjectResource: React.FC<AttachmentsProps> = () => {
     setRefreshAttachments(Date.now());
   };
 
+  const {
+    data: detailresponse,
+    isLoading: detailresponseLoading,
+    isError: detailresponseError,
+  } = useCaseProjectResourceDetail(accountid ?? '', resource_id ?? '');
+
+  const projectResourceDetail = detailresponse?.data?.projectResource;
   const handleCaseProjectResourceClick = React.useCallback(
     (row: CaseProjectResourceRowType) => {
       setResourceData(row);
@@ -147,7 +186,7 @@ const CaseProjectResource: React.FC<AttachmentsProps> = () => {
       setShowFilter(false);
       setAppliedFilters({});
       setSortFilterCount(0);
-      setResourceNumber(row.resource_code ?? undefined);
+      searchParams.set('resource_id', row.rid);
     },
     []
   );
@@ -180,12 +219,25 @@ const CaseProjectResource: React.FC<AttachmentsProps> = () => {
     newSearchParams.delete('tab');
     navigate({ search: newSearchParams.toString() }, { replace: true });
   };
-
+  const projectViewEditFields = useMemo(
+    () =>
+      permission.find(
+        (item) => item.name === AllPermissions.PROJECTS_RESOURCES_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    projectViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [projectViewEditFields]);
   const headerButtons = [
     {
       label: 'Show/Hide Fields',
       variant: 'outlined' as const,
-      disabled: false,
+      disabled: accountInActive,
       onClick: handleColumnVisibility,
       sx: { ...BUTTON_STYLES, width: '125px', minWidth: '125px' },
       hide: !viewResourceList && resourceData ? true : false,
@@ -193,7 +245,7 @@ const CaseProjectResource: React.FC<AttachmentsProps> = () => {
     {
       label: 'Back to Project Resource',
       variant: 'outlined' as const,
-      disabled: false,
+      disabled: accountInActive,
       onClick: handleBackClick,
       sx: { ...BUTTON_STYLES, width: '180px', minWidth: '125px' },
       hide: !viewResourceList && resourceData ? false : true,
@@ -215,37 +267,62 @@ const CaseProjectResource: React.FC<AttachmentsProps> = () => {
   };
 
   const attachmentColumns = useMemo(
-    () => getCaseProjectResourceColumns(handleCaseProjectResourceClick),
+    () =>
+      getCaseProjectResourceColumns(
+        handleCaseProjectResourceClick,
+        permissionMap
+      ),
     [handleCaseProjectResourceClick]
   );
 
-  const [visibleColumns, setVisibleColumns] = useState<
-    ListTableColumn<CaseProjectResourceRowType>[]
-  >(getCaseProjectResourceColumns().filter((col) => !col.hide));
+  // const [visibleColumns, setVisibleColumns] = useState<
+  //   ListTableColumn<CaseProjectResourceRowType>[]
+  // >(getCaseProjectResourceColumns().filter((col) => !col.hide));
 
-  useEffect(() => {
-    const updatedColumns = attachmentColumns.filter((col) => !col.hide);
-    setVisibleColumns(updatedColumns);
-  }, [attachmentColumns]);
+  // useEffect(() => {
+  //   const updatedColumns = attachmentColumns.filter((col) => !col.hide);
+  //   setVisibleColumns(updatedColumns);
+  // }, [attachmentColumns]);
 
-  const attachmentsFilterFields = caseProjectResourceFilterFields();
+  const projectResourceFilterFields =
+    caseProjectResourceFilterFields(permissionMap);
 
   const getRowId = (row: CaseProjectResourceRowType) => row.rid || '';
 
   const RestrictedColumns = [
     {
-      id: 'document_name',
+      id: 'resource_code',
       canHide: false,
       canDrag: false,
     },
   ];
 
+  // ---------------------
+
+  const projectResourceColumn = getCaseProjectResourceColumns(
+    handleCaseProjectResourceClick,
+    permissionMap
+  );
+
+  const [columnOrder, setColumnOrder] = useState(
+    projectResourceColumn.map((col) => col.id)
+  );
+  const [columnVisibility, setColumnVisibility] = useState<
+    Record<string, boolean>
+  >(
+    Object.fromEntries(projectResourceColumn.map((col) => [col.id, !col.hide]))
+  );
+
+  const visibleColumns = columnOrder
+    .map((id) => projectResourceColumn.find((col) => col.id === id)!)
+    .filter((col) => columnVisibility[col.id]);
+
   const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
-    setVisibleColumns(
-      updatedColumns.filter(
-        (col) => !col.hide
-      ) as ListTableColumn<CaseProjectResourceRowType>[]
+    const newVisibility = Object.fromEntries(
+      updatedColumns.map((col) => [col.id, !col.hide])
     );
+    setColumnVisibility(newVisibility);
+    setColumnOrder(updatedColumns.map((col) => col.id));
   };
 
   const handlePopoverClose = () => {
@@ -253,17 +330,17 @@ const CaseProjectResource: React.FC<AttachmentsProps> = () => {
   };
 
   const modalId = isModalOpen
-    ? 'account-attachment-list-column-visibility-popover'
+    ? 'project-resource-list-column-visibility-popover'
     : undefined;
 
   return (
     <div className='w-full pt-2 pl-2 pr-4'>
       <SectionTabPanel
-        tabs={AttachmentTabs}
-        filterMenu={attachmentsFilterFields}
+        tabs={ProjectResourceTabs}
+        filterMenu={projectResourceFilterFields}
         filterVisibility={showUploads ? false : true}
         showFilter={showFilter}
-        contextKey='account-attachments'
+        contextKey='project_resource'
         appliedFilters={appliedFilters}
         setAppliedFilters={setAppliedFilters}
         setCurrentPage={setCurrentPage}
@@ -299,9 +376,11 @@ const CaseProjectResource: React.FC<AttachmentsProps> = () => {
 
         {!viewResourceList && resourceData ? (
           <CaseProjectResourceDetails
-            resource={resourceData}
-            isLoading={isLoading}
-            error={isError ? 'Failed to load Attachment data' : null}
+            resource={projectResourceDetail ?? null}
+            isLoading={detailresponseLoading}
+            error={
+              detailresponseError ? 'Failed to load Attachment data' : null
+            }
           />
         ) : (
           <div className='border border-[#CBD6E2]'>

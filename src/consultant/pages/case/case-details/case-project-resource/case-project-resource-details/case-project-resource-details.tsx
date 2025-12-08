@@ -4,44 +4,20 @@ import { RootState } from '../../../../../../store/store';
 import { AllPermissions } from '../../../../../../common-service';
 import {
   applyHidePermission,
-  checkPermission,
+  costDisplay,
   formatDateToYYYYMMDDWithTime,
   getDateFormat,
+  valueDisplay,
 } from '../../../../../../common-utils';
-import { getDetailsAttachmentColumns } from '../../../../../../components/details-section/helpers';
 import DetailsSectionSkeleton from '../../../../../../components/skeleton-component/detailsskeleton';
 import { Typography } from '@mui/material';
 import DetailsSection, {
   DetailItem,
 } from '../../../../../../components/details-section/details';
-import DetailsTable from '../../../../../../components/details-section/details-table';
-import { AttachmentList } from '../../../../../../consultant/types/attachment';
-
-// Define resource type locally to avoid namespace conflicts
-interface ResourceData {
-  rid: string;
-  r_number: string;
-  resource_code: string;
-  resource_firstname: string | null;
-  resource_lastname: string | null;
-  resource_name: string | null;
-  country_name: string | null;
-  region_name: string | null;
-  city_name: string | null;
-  resource_startdate: string | null;
-  resource_enddate: string | null;
-  resource_total_experience: string | number | null;
-  resource_total_experience_organization: string | number | null;
-  comments: string | null;
-  created_by: string;
-  modified_by: string;
-  created_datetime: string;
-  modified_datetime: string;
-  attachment: AttachmentList[];
-}
+import { ProjectResourceDetailData } from '../../../../../types/project-task';
 
 interface ResourceDetailsProps {
-  resource: ResourceData | null;
+  resource: ProjectResourceDetailData | null;
   isLoading: boolean;
   error: string | null;
 }
@@ -68,31 +44,6 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
     return map;
   }, [viewResourceEditFields]);
 
-  const isAttachmentViewEnable = checkPermission(
-    permission || [],
-    AllPermissions.ATTACHMENT_VIEW_EDIT
-  );
-
-  const attachmentViewEditFields = useMemo(
-    () =>
-      permission?.find(
-        (item) => item.name === AllPermissions.ATTACHMENT_VIEW_EDIT
-      )?.fields ?? [],
-    [permission]
-  );
-
-  const attachmentPermissionMap = useMemo(() => {
-    const map: Record<string, { read: boolean; edit: boolean }> = {};
-    attachmentViewEditFields.forEach((item) => {
-      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
-    });
-    return map;
-  }, [attachmentViewEditFields]);
-
-  const attachmentColumns = getDetailsAttachmentColumns(
-    attachmentPermissionMap
-  );
-
   if (isLoading || !resourceData) {
     return <DetailsSectionSkeleton />;
   }
@@ -116,89 +67,159 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
 
   const basicInfo: DetailItem[] = [
     {
-      label: 'First Name',
-      value: resourceData.resource_firstname,
-      key: 'resource_firstname',
+      label: 'Resource Code',
+      value: resourceData.resource_code,
+      key: 'resource_code',
     },
     {
-      label: 'Last Name',
-      value: resourceData.resource_lastname,
-      key: 'resource_lastname',
+      label: 'Resource Name',
+      value: resourceData.resource_name,
+      // key: 'resource_name',
+    },
+    {
+      label: 'Resource Role',
+      value: resourceData.project_resource_role,
+      // key: 'project_resource_role',
+    },
+    {
+      label: 'Resource Type',
+      value: resourceData.resource_type_name,
+      // key: 'resource_type_name',
+    },
+    {
+      // key: 'status_action',
+      label: 'Status',
+      value: resourceData.status_name,
     },
   ];
 
   const locationInfo: DetailItem[] = [
-    { label: 'Country', value: resourceData.country_name, key: 'country_rid' },
-    { label: 'Region', value: resourceData.region_name, key: 'region_rid' },
-    { label: 'City', value: resourceData.city_name, key: 'city_rid' },
+    {
+      label: 'Country',
+      value: resourceData.country_name,
+      key: 'country_rid',
+    },
+    {
+      label: 'Region',
+      value: resourceData.region_name,
+      key: 'region_rid',
+    },
+    {
+      label: 'Currency',
+      value: resourceData.currency_name,
+      // key: 'currency_rid',
+    },
   ];
 
-  const employmentDetails: DetailItem[] = [
+  const projectDetails: DetailItem[] = [
     {
-      label: 'Effective Date',
-      value: getDateFormat(resourceData.resource_startdate ?? undefined),
-      key: 'resource_startdate',
+      label: 'Resource Start Date',
+      value: getDateFormat(resourceData.start_date ?? undefined),
+      key: 'start_date',
     },
     {
       label: 'End Date',
-      value: getDateFormat(resourceData.resource_enddate ?? undefined),
-      key: 'resource_enddate',
+      value: getDateFormat(resourceData.end_date ?? undefined),
+      key: 'end_date',
     },
     {
-      label: '',
-      value: 'empty',
+      label: 'Effort',
+      value: valueDisplay(resourceData.total_hours_pro_res),
+      key: 'total_hours_pro_res',
     },
     {
-      label: 'Total Years of Experience',
-      value: resourceData.resource_total_experience,
-      key: 'resource_total_experience',
+      label: 'Salary',
+      value: costDisplay(resourceData.salary, resourceData?.currency_symbol),
+      key: 'salary',
     },
     {
-      label: 'Total Years in the Organisation',
-      value: resourceData.resource_total_experience_organization,
-      key: 'resource_total_experience_organization',
+      label: 'Bonus',
+      value: costDisplay(resourceData.bonus, resourceData?.currency_symbol),
+      key: 'bonus',
+    },
+    {
+      label: 'Insurance',
+      value: costDisplay(resourceData.insurance, resourceData?.currency_symbol),
+      key: 'insurance',
+    },
+    {
+      label: 'Deductions',
+      value: costDisplay(
+        resourceData.deductions,
+        resourceData?.currency_symbol
+      ),
+      key: 'deductions',
+    },
+    {
+      label: 'Cost',
+      value: costDisplay(
+        resourceData.total_cost_pro_res,
+        resourceData?.currency_symbol
+      ),
+      key: 'total_cost_pro_res',
+    },
+    {
+      key: 'net_total_cost_pro_res',
+      label: 'Net Resource Cost',
+      value: costDisplay(
+        resourceData.net_total_cost_pro_res,
+        resourceData?.currency_symbol
+      ),
     },
   ];
 
   const description: DetailItem[] = [
     {
       label: 'Comments',
-      value: resourceData.comments,
+      value: resourceData.description,
       key: 'comments',
     },
   ];
 
   const auditInfo: DetailItem[] = [
-    { label: 'Record ID', value: resourceData.rid, key: 'rid' },
     {
-      label: 'Resource ID',
+      label: 'Record ID',
+      value: resourceData.project_rid,
+      //  key: 'project_rid'
+    },
+    {
+      label: 'Project Resource ID',
       value: resourceData.r_number,
       key: 'r_number',
     },
     {
       label: 'Created On',
-      value: formatDateToYYYYMMDDWithTime(resourceData.created_datetime),
+      value: formatDateToYYYYMMDDWithTime(
+        resourceData.created_datetime ?? undefined
+      ),
       key: 'created_datetime',
     },
-    { label: 'Created By', value: resourceData.created_by, key: 'created_by' },
+    {
+      label: 'Created By',
+      value: resourceData.created_name,
+      // key: 'created_name',
+    },
     {
       label: 'Updated On',
-      value: formatDateToYYYYMMDDWithTime(resourceData.modified_datetime),
+      value: formatDateToYYYYMMDDWithTime(
+        resourceData.modified_datetime ?? undefined
+      ),
       key: 'modified_datetime',
     },
     {
       label: 'Updated By',
-      value: resourceData.modified_by,
-      key: 'modified_by',
+      value: resourceData.modified_name,
+      // key: 'modified_name',
+    },
+    {
+      label: 'Project Resource Code',
+      value: resourceData.project_resource_code,
+      key: 'project_resource_code',
     },
   ];
   const basicDetails = applyHidePermission(basicInfo, resourcePermissionMap);
   const locationDetails = applyHidePermission(
     locationInfo,
-    resourcePermissionMap
-  );
-  const employmentDetailsInfo = applyHidePermission(
-    employmentDetails,
     resourcePermissionMap
   );
   const descriptionDetails = applyHidePermission(
@@ -221,17 +242,8 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
         title='Location and Currency Information'
         data={locationDetails}
       />
-      <DetailsSection title='Employment Details' data={employmentDetailsInfo} />
+      <DetailsSection title='Project Details' data={projectDetails} />
       <DetailsSection title='Comments' data={descriptionDetails} />
-      {resourceData.attachment &&
-        resourceData.attachment.length > 0 &&
-        isAttachmentViewEnable && (
-          <DetailsTable
-            title='Attachments'
-            columns={attachmentColumns}
-            data={resourceData.attachment || []}
-          />
-        )}
       <DetailsSection
         title='Audit Information'
         data={auditInfoDetails}

@@ -76,6 +76,7 @@ import { BUTTON_STYLES } from '../../../../admin/pages/manage-user-detail/styles
 import { CaseActivities } from './case-activities';
 import { ExportActivityList } from '../../../services/activities/activities-service';
 import { CaseProjectResource } from './case-project-resource';
+import { ExportCaseProjectResourceList } from '../../../services/case-project-resource/case-project-resource-service';
 
 export const CaseDetails = () => {
   const navigate = useNavigate();
@@ -146,6 +147,17 @@ export const CaseDetails = () => {
     account_id: accountId ?? '',
   });
   const [reviewProjectParams, setReviewProjectParams] =
+    useState<ReviewProjectListURLParams>({
+      sortOrder: 'ASC',
+      sortBy: 'project_code',
+      filters: {},
+      timezone: '',
+      page: 1,
+      limit: 10,
+      search: '',
+    });
+
+  const [projectResourceParams, setProjectResourceParams] =
     useState<ReviewProjectListURLParams>({
       sortOrder: 'ASC',
       sortBy: 'project_code',
@@ -285,6 +297,10 @@ export const CaseDetails = () => {
     AllPermissions.PROJECTS_EXPORT
   );
 
+  const isProjectResourceExportEnable = checkPermission(
+    permission,
+    AllPermissions.PROJECTS_RESOURCES_EXPORT
+  );
   const isCaseTaskExportEnable = checkPermission(
     permission,
     AllPermissions.CASES_WORKBREAKDOWN_EXPORT
@@ -306,7 +322,8 @@ export const CaseDetails = () => {
       searchParams.get('list') !== 'caseProjects' &&
       searchParams.get('list') !== 'workBreakdown' &&
       searchParams.get('tab') !== 'case_task' &&
-      searchParams.get('list') !== 'interactions'
+      searchParams.get('list') !== 'interactions' &&
+      searchParams.get('list') !== 'projectResource'
     ) {
       return;
     }
@@ -359,6 +376,11 @@ export const CaseDetails = () => {
       ExportCaseTaskList(caseTaskParams);
     } else if (list === 'caseProjects' && exportType === 'review_projects') {
       ExportReviewProjectList(reviewProjectParams, accountId, caseId);
+    } else if (
+      list === 'projectResource' &&
+      exportType === 'project_resource'
+    ) {
+      ExportCaseProjectResourceList(projectResourceParams, accountId, caseId);
     }
     if (list === 'interactions') {
       if (interactionHistoryId) {
@@ -434,6 +456,8 @@ export const CaseDetails = () => {
       return !isCaseTaskExportEnable;
     } else if (list === 'interactions' && !interactionsView) {
       return !isInteractionsExportEnable;
+    } else if (list === 'projectResource') {
+      return !isProjectResourceExportEnable;
     } else {
       return true;
     }
@@ -572,7 +596,13 @@ export const CaseDetails = () => {
           />
         );
       case 'projectResource':
-        return <CaseProjectResource accountInActive={accountInActive} />;
+        return (
+          <CaseProjectResource
+            accountInActive={accountInActive}
+            setProjectResourceParams={setProjectResourceParams}
+            setExportType={setExportType}
+          />
+        );
       default:
         return (
           <div className='flex items-center justify-center h-full'>
