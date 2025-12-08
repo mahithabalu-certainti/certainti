@@ -639,9 +639,18 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
     ]
   );
 
+  const assigneeOptions = useMemo(
+    () =>
+      userData.map((user) => ({
+        option: user.name,
+        value: user.rid,
+      })),
+    [userData]
+  );
+
   const filterFields =
     tabParam === 'case_task'
-      ? getAssignGroupsFilterFields(memoizedStatus)
+      ? getAssignGroupsFilterFields(memoizedStatus, assigneeOptions)
       : undefined;
 
   const handleFilter = () => {

@@ -149,7 +149,7 @@ const CallForm: React.FC = () => {
   const createCall = useCreateActivityCall();
   const updateCall = useUpdateActivityCall();
   const { data: callData, isLoading } = useCallActivityDetails(
-    entityId,
+    accountId,
     activityId || '',
     true
   );
