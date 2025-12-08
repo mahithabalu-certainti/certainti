@@ -6510,9 +6510,10 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
               await ActivityHistory.create({
                 created_by : userId,
                 created_datetime : new Date(),
-                attribute_name : "task_attachments",
+                attribute_name : "Task Attachments",
                 new_value : uploadFile.url,
-                activity_rid : data.task_rid
+                activity_rid : data.task_rid,
+                account_rid : data.account_rid
               })
             }
           }
