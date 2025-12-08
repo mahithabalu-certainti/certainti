@@ -1205,6 +1205,9 @@ class InteractionSchemaService {
     accountRid? : string
   ) {
     try {
+      if(!this.orgDbSequelize) {
+        this.orgDbSequelize = await initOrgSequelize();
+      }
       const offset = (page - 1) * limit;
         let modifiedByFilter;
       let modifiedByConditions;
@@ -1245,17 +1248,12 @@ class InteractionSchemaService {
       let whereCondition;
       if(caseRid !== undefined && caseRid !== '') {
         let schemaName = rawQueries.fetchSchemaName(accountNumber)
-        const versionFilter = Sequelize.literal(`
-          "AiTechnicalSummary".version = (
-            SELECT MAX(version)
-            FROM ${schemaName}.ai_technical_summary AS t2
-            WHERE t2.rid = "AiTechnicalSummary".rid
-          )
-        `);
+        const projectFiscalIds : any = await this.orgDbSequelize.query(rawQueries.getCaseProjectsIds(caseRid, accountRid!, schemaName))
         whereCondition = {
           account_rid : accountRid,
-          // project_fiscal_rid: projectFiscalRid,
-          case_rid : caseRid,
+          project_fiscal_rid: {
+            [Op.in] : projectFiscalIds[0].length > 0 ? projectFiscalIds[0].map((d : any) => d.project_fiscal_rid) : []
+          },
           [Op.and]: Sequelize.where(
         Sequelize.col('"AiTechnicalSummary".version'),
         '=',
@@ -1264,9 +1262,8 @@ class InteractionSchemaService {
             SELECT MAX(t2.version)
             FROM ${schemaName}.ai_technical_summary AS t2
             WHERE 
-                t2.account_rid = "AiTechnicalSummary".account_rid
-                AND t2.project_fiscal_rid = "AiTechnicalSummary".project_fiscal_rid
-                AND t2.case_rid = "AiTechnicalSummary".case_rid
+              t2.account_rid = "AiTechnicalSummary".account_rid
+              AND t2.project_fiscal_rid = "AiTechnicalSummary".project_fiscal_rid
           )
         `)),
           ...whereClause

@@ -951,6 +951,9 @@ export const rawQueries = {
          OR project_code = :projectCode
       LIMIT 1;
     `;
+  },
+  getCaseProjectsIds (caseRid : string, accountRid : string, schemaName : string) {
+    return `SELECT project_fiscal_rid FROM ${schemaName}.case_projects WHERE case_rid = '${caseRid}' AND account_rid = '${accountRid}'`
   }  
 };
 
