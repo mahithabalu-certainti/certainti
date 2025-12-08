@@ -125,8 +125,8 @@ const EmailForm: React.FC = () => {
   }>({
     isOpen: false,
     message: '',
-    onConfirm: () => {},
-    onCancel: () => {},
+    onConfirm: () => { },
+    onCancel: () => { },
   });
 
   // Permission
@@ -144,7 +144,7 @@ const EmailForm: React.FC = () => {
   const createEmail = useCreateActivityEmail();
   const updateEmail = useUpdateActivityEmail();
   const { data: emailData, isLoading } = useEmailActivityDetails(
-    entityId,
+    accountId,
     activityId || '',
     true
   );
@@ -932,18 +932,17 @@ const EmailForm: React.FC = () => {
                   theme='snow'
                   readOnly={emailBodyDisabled}
                   placeholder='Enter Email Content'
-                  className={`rounded-[2px] ${
-                    errors?.emailBody
+                  className={`rounded-[2px] ${errors?.emailBody
                       ? 'border border-red-500 bg-[#FEF2F2]'
                       : emailBodyDisabled
                         ? 'bg-gray-100 cursor-default'
                         : 'bg-white'
-                  }`}
+                    }`}
                   modules={
                     emailBodyDisabled
                       ? {
-                          toolbar: false,
-                        }
+                        toolbar: false,
+                      }
                       : modules
                   }
                   formats={[

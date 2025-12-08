@@ -164,7 +164,7 @@ const MeetingForm: React.FC = () => {
   const createMeeting = useCreateActivityMeeting();
   const updateMeeting = useUpdateActivityMeeting();
   const { data: meetingData, isLoading } = useMeetingActivityDetails(
-    entityId,
+    accountId,
     activityId || '',
     true
   );
@@ -609,12 +609,12 @@ const MeetingForm: React.FC = () => {
           e.preventDefault();
           if (
             attendeesSuggestions.suggestions[
-              attendeesSuggestions.highlightedIndex
+            attendeesSuggestions.highlightedIndex
             ]
           ) {
             const selectedSuggestion =
               attendeesSuggestions.suggestions[
-                attendeesSuggestions.highlightedIndex
+              attendeesSuggestions.highlightedIndex
               ];
             addAttendee('attendees', selectedSuggestion.email);
           }
@@ -1396,11 +1396,10 @@ const MeetingForm: React.FC = () => {
                       permissionMap
                     )
                   }
-                  className={`custom-select-no-arrow sm:text-sm ${
-                    formData.recurrence_type === ''
+                  className={`custom-select-no-arrow sm:text-sm ${formData.recurrence_type === ''
                       ? 'text-[#7D98B6]'
                       : 'text-black'
-                  } ${errors?.recurrence_type ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
+                    } ${errors?.recurrence_type ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
                   MenuProps={COMMON_MENU_PROPS}
                   sx={getSelectStyles(
                     !!errors?.recurrence_type,
@@ -1676,11 +1675,10 @@ const MeetingForm: React.FC = () => {
                   <div className='w-[502px] max-w-[502px] mt-2'>
                     {message && (
                       <div
-                        className={`text-sm ${
-                          message.type === 'error'
+                        className={`text-sm ${message.type === 'error'
                             ? 'text-red-600'
                             : 'text-green-600'
-                        }`}
+                          }`}
                       >
                         {message.text}
                       </div>
