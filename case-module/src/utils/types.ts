@@ -36,6 +36,7 @@ export type CaseHeadersColumns = {
   case_owner_name : string | null,
   account_rnumber : string | null,
   currency_code : string | null,
+  currency_symbol : string | null,
   status_name : string | null,
   case_total_projects : number | null,
   case_total_project_cost : number | null,
@@ -90,6 +91,7 @@ export type CaseStatusType = {
 export type CurrencyType = {
   rid : string,
   currency_code : string
+  currency_symbol : string
 }
 
 export type FilterType = {
