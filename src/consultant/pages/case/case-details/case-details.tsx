@@ -822,7 +822,7 @@ export const CaseDetails = () => {
         />
       </div>
       <div
-        className={`transition-all duration-300 ease-in-out overflow-hidden ${
+        className={`transition-all duration-700 ease-in-out overflow-hidden ${
           isActionItemsExpanded
             ? 'max-h-0 opacity-0'
             : isError
@@ -833,7 +833,7 @@ export const CaseDetails = () => {
         <InfoSection
           columns={caseHeaderDetails}
           loading={isLoading}
-          loadingRows={4}
+          loadingRows={3}
           error={isError}
           className={!isError ? 'max-h-[140px] min-h-[140px]' : ''}
         />
@@ -842,8 +842,8 @@ export const CaseDetails = () => {
         <div
           className={`flex transition-all ease-in-out ${
             isCollapsed
-              ? 'w-[60px] min-w-[60px] max-w-[60px] duration-300'
-              : 'w-[220px] min-w-[220px] max-w-[220px] duration-500'
+              ? 'w-[60px] min-w-[60px] max-w-[60px] duration-700'
+              : 'w-[220px] min-w-[220px] max-w-[220px] duration-700'
           }`}
         >
           <SideMenuPanel
@@ -855,14 +855,14 @@ export const CaseDetails = () => {
             isCollapsed={isCollapsed}
             onToggleCollapse={handleToggleSideMenu}
             enableScrollbar={true}
-            maxHeight={isActionItemsExpanded ? 155 : 292}
+            maxHeight={isActionItemsExpanded ? 150 : 292}
           />
         </div>
         <div
           className='flex-1 transition-all duration-500 ease-in-out'
           style={{
             maxHeight: isActionItemsExpanded
-              ? 'calc(100vh - 143px)'
+              ? 'calc(100vh - 140px)'
               : 'calc(100vh - 283px)',
             overflow: 'auto',
           }}

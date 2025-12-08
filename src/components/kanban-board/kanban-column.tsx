@@ -18,7 +18,19 @@ interface ExtendedKanbanColumnProps extends KanbanColumnProps {
   availableUsers?: Array<{ rid: string; name: string; email?: string }>;
   onCreateModalOpen?: () => void;
   onOpenCreateTask?: (columnId: string, columnName: string) => void;
+  index: number;
 }
+
+const HEADER_COLORS = [
+  { bg: '#F3E8FF', text: '#6B21A8', border: '#E9D5FF' }, // Purple
+  { bg: '#EFF6FF', text: '#1E40AF', border: '#BFDBFE' }, // Blue
+  { bg: '#ECFDF5', text: '#065F46', border: '#A7F3D0' }, // Green
+  { bg: '#F0FDFA', text: '#0F766E', border: '#CCFBF1' }, // Teal
+  { bg: '#FFF1F2', text: '#9F1239', border: '#FECDD3' }, // Rose
+  { bg: '#E0E7FF', text: '#3730A3', border: '#C7D2FE' }, // Indigo
+  { bg: '#FCE7F3', text: '#9D174D', border: '#FBCFE8' }, // Pink
+  { bg: '#ECFEFF', text: '#155E75', border: '#CFFAFE' }, // Cyan
+];
 
 const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
   column,
@@ -35,6 +47,7 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
   priorityData,
   onOpenCreateTask,
   onCreateModalOpen,
+  index,
 }) => {
   const { setNodeRef } = useDroppable({
     id: column.rid,
@@ -50,24 +63,39 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
     });
   }, [column.tasks]);
 
+  const headerColor = HEADER_COLORS[index % HEADER_COLORS.length];
+
   return (
     <div
       ref={setNodeRef}
       className='bg-[#f5f5f5] rounded-lg p-0.5 w-60 flex-shrink-0'
       style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
     >
-      <div className='bg-white border border-slate-200 rounded-lg p-2 mb-1'>
+      <div
+        className='border rounded-lg p-2 mb-1'
+        style={{
+          backgroundColor: headerColor.bg,
+          borderColor: headerColor.border,
+        }}
+      >
         <div className='flex items-center gap-2'>
           <h2
-            className='text-slate-800 text-[13px] font-semibold'
-            style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
+            className='text-[14px] font-semibold'
+            style={{
+              fontFamily: "'Mulish', 'Lexend', sans-serif",
+              color: headerColor.text,
+            }}
           >
             {column.milestone_name}
           </h2>
           {showTaskCount && (
             <span
-              className='bg-slate-100 text-slate-600 px-2 py-1 rounded-full text-[13px]'
-              style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
+              className='px-2 py-1 rounded-full text-[13px]'
+              style={{
+                fontFamily: "'Mulish', 'Lexend', sans-serif",
+                backgroundColor: 'rgba(255, 255, 255, 0.6)',
+                color: headerColor.text,
+              }}
             >
               {column.task_count}
             </span>
