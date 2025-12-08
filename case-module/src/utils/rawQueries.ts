@@ -932,7 +932,7 @@ export const fetchMilestoneTaskTemplate = (taskTypeRid : string, filingTypeRid :
   return query;
 }
 
-export const fetchCaseTemplateData = (schemaName : string, caseRid : string, accountRid : string, statusRid : string) => {
+export const fetchCaseTemplateData = (schemaName : string, caseRid : string, accountRid : string, statusRid : string, checkItemsOpenStatusId : string) => {
   let query = 
   `
   WITH fetch_task AS (
@@ -961,7 +961,18 @@ export const fetchCaseTemplateData = (schemaName : string, caseRid : string, acc
   WHERE 
   ch.attach_to = t.rid
   AND ch.case_rid = '${caseRid}'
+  AND ch.attachment_level = 'task'
+  ),
+  'incomplete_items', 
+  (
+  SELECT COUNT(DISTINCT chi.rid) 
+  FROM ${schemaName}.checklists ch 
+  LEFT JOIN ${schemaName}.checklist_items chi ON chi.checklist_rid = ch.rid 
+  WHERE 
+  ch.attach_to = t.rid
+  AND ch.case_rid = '${caseRid}'
   AND attachment_level = 'task'
+  AND chi.status_rid = '${checkItemsOpenStatusId}'
   ),
   'comments_count', (SELECT COUNT(DISTINCT tc.rid) from ${schemaName}.task_comments tc WHERE tc.task_rid = t.rid AND tc.case_rid = '${caseRid}'),
   'task_status_rid', t.task_status_rid
