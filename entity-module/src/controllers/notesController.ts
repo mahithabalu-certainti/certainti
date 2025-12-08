@@ -184,7 +184,7 @@ async function exportAllNotes(req: Request, res: Response): Promise<void> {
      const methodName = "getAllNotesSummary";
   try {
 
-    const value = await validateRequest(req, listNotesSummarySchema, res, "GET");
+    const value = await validateRequest(req, listNotesSummarySchema, res);
      if (!value) {
       return;    }
     const userId = req.headers['x-user-id'] as string;
@@ -199,15 +199,7 @@ async function exportAllNotes(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    // Before calling buildRawWhereClause
-    if (typeof value.filters === 'string') {
-      try {
-        value.filters = JSON.parse(value.filters);
-      } catch (err) {
-        console.error('Invalid filters JSON:', value.filters);
-        value.filters = {};
-      }
-    }
+  
     const attachments = await notesService.getNotesSummary(userId,value.page,value.limit,value.search,value.filters,value.globalFilters,value.sortBy,value.sortOrder,value.fiscalYear);
 
     if (attachments.statusCode === HttpStatus.SUCCESS) {
@@ -241,7 +233,7 @@ async function exportAllNotes(req: Request, res: Response): Promise<void> {
      const methodName = "exportAllNotesSummary";
   try {
 
-    const value = await validateRequest(req, exportListNotesSummarySchema, res, "GET");
+    const value = await validateRequest(req, exportListNotesSummarySchema, res);
      if (!value) {
       return;    }
     const userId = req.headers['x-user-id'] as string;
@@ -256,15 +248,6 @@ async function exportAllNotes(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    // Before calling buildRawWhereClause
-    if (typeof value.filters === 'string') {
-      try {
-        value.filters = JSON.parse(value.filters);
-      } catch (err) {
-        console.error('Invalid filters JSON:', value.filters);
-        value.filters = {};
-      }
-    }
     const attachments = await notesService.exportNotesSummary(userId,value.search,value.filters,value.globalFilters,value.sortBy,value.sortOrder,value.fiscalYear, value.timezone);
 
     if (attachments.statusCode === HttpStatus.SUCCESS) {

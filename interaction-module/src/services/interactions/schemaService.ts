@@ -1200,9 +1200,14 @@ class InteractionSchemaService {
     filters: Record<string, string>,
     sortBy: string = "created_datetime",
     sortOrder: string = "ASC",
-    type: string = "list"
+    type: string = "list",
+    caseRid? : string,
+    accountRid? : string
   ) {
     try {
+      if(!this.orgDbSequelize) {
+        this.orgDbSequelize = await initOrgSequelize();
+      }
       const offset = (page - 1) * limit;
         let modifiedByFilter;
       let modifiedByConditions;
@@ -1240,11 +1245,37 @@ class InteractionSchemaService {
       }
 
       // Fetch technical summaries and count
-      const { rows: technicalSummary, count } = await AiTechnicalSummary.findAndCountAll({
-        where: {
+      let whereCondition;
+      if(caseRid !== undefined && caseRid !== '') {
+        let schemaName = rawQueries.fetchSchemaName(accountNumber)
+        const projectFiscalIds : any = await this.orgDbSequelize.query(rawQueries.getCaseProjectsIds(caseRid, accountRid!, schemaName))
+        whereCondition = {
+          account_rid : accountRid,
+          project_fiscal_rid: {
+            [Op.in] : projectFiscalIds[0].length > 0 ? projectFiscalIds[0].map((d : any) => d.project_fiscal_rid) : []
+          },
+          [Op.and]: Sequelize.where(
+        Sequelize.col('"AiTechnicalSummary".version'),
+        '=',
+        Sequelize.literal(`
+          (
+            SELECT MAX(t2.version)
+            FROM ${schemaName}.ai_technical_summary AS t2
+            WHERE 
+              t2.account_rid = "AiTechnicalSummary".account_rid
+              AND t2.project_fiscal_rid = "AiTechnicalSummary".project_fiscal_rid
+          )
+        `)),
+          ...whereClause
+        }
+      } else {
+        whereCondition = {
           project_fiscal_rid: projectFiscalRid,
           ...whereClause
-        },
+        }
+      }
+      const { rows: technicalSummary, count } = await AiTechnicalSummary.findAndCountAll({
+        where: whereCondition,
         order: [[finalSortBy, finalSortOrder]],
         ...(disablePagination
           ? {}

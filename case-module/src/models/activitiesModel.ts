@@ -19,10 +19,10 @@ export interface ActivitiesAttributes {
   subject?: string;
   description?: string;
   priority_rid?: string;
-  assigned_to?: string;
+  assigned_to?: string | null;
   task_name?: string;
   task_template_rid?: string;
-  invitees_list?: string;
+  invited_by?: string;
   attendees_list?: string;
   to_email?: string[];
   cc_email?: string[];
@@ -42,6 +42,9 @@ export interface ActivitiesAttributes {
   time_zone?: string;
   effective_start_time?: string;
   effective_end_time?: string;
+  recurrence_day_of_month?: number;
+  recurrence_monthly_index?: string;
+  checklist_rid?: string;
 }
 
 export interface ActivitiesCreationAttributes extends Optional<ActivitiesAttributes, "rid"> {}
@@ -66,7 +69,7 @@ export class Activities extends Model<ActivitiesAttributes, ActivitiesCreationAt
   public assigned_to?: string;
   public task_name?: string;
   public task_template_rid?: string
-  public invitees_list?: string;
+  public invited_by?: string;
   public attendees_list?: string;
   public to_email?: string[];
   public cc_email?: string[];
@@ -86,6 +89,9 @@ export class Activities extends Model<ActivitiesAttributes, ActivitiesCreationAt
   public time_zone?: string;
   public effective_start_time?: string
   public effective_end_time?: string;
+  public recurrence_day_of_month?: number;
+  public recurrence_monthly_index?: string;
+  public checklist_rid?: string;
 
   static initialize(sequelize: Sequelize, schemaName: string = MAIN_SCHEMA_NAME) {
     return Activities.init({
@@ -116,7 +122,8 @@ export class Activities extends Model<ActivitiesAttributes, ActivitiesCreationAt
       assigned_to: { type: DataTypes.STRING(50), allowNull: true },
       task_name: { type: DataTypes.STRING(255), allowNull: true },
       task_template_rid: { type: DataTypes.STRING(50), allowNull: true },
-      invitees_list: { type: DataTypes.TEXT, allowNull: true },
+      checklist_rid: { type: DataTypes.STRING(50), allowNull: true },
+      invited_by: { type: DataTypes.TEXT, allowNull: true },
       attendees_list: { type: DataTypes.TEXT, allowNull: true },
       to_email: { type: DataTypes.JSONB, allowNull: true },
       cc_email: { type: DataTypes.JSONB, allowNull: true },
@@ -136,6 +143,8 @@ export class Activities extends Model<ActivitiesAttributes, ActivitiesCreationAt
       time_zone: { type: DataTypes.STRING(100), allowNull: true },
       effective_start_time: { type: DataTypes.STRING(10), allowNull: true },
       effective_end_time: { type: DataTypes.STRING(10), allowNull: true },
+      recurrence_day_of_month: { type: DataTypes.INTEGER, allowNull: true },
+      recurrence_monthly_index: { type: DataTypes.STRING(50), allowNull: true },
     }, {
       sequelize,
       schema: schemaName,

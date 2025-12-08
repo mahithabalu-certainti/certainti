@@ -728,28 +728,12 @@ async function listAllCasesSummary(req: Request, res: Response) {
     const methodName = "List All Cases Summary";
 
     const userId = req.headers["x-user-id"] as string;
-    const value = await validateRequest(req, listCaseSummarySchema, res, "GET");
+    const value = await validateRequest(req, listCaseSummarySchema, res);
     if (!value) return;
     let parsedFilters: Record<string, any> = {};
     let parsedGlobalFilters: Record<string, string[]> = {};
 
-    try {
-      parsedFilters = JSON.parse(value.filters);
-    } catch (error) {
-      errorLog(
-        methodName,
-        "Invalid filters format. Must be a valid JSON object."
-      );
-    }
-
-    try {
-      parsedGlobalFilters = JSON.parse(value.globalFilters);
-    } catch (error) {
-      errorLog(
-        methodName,
-        "Invalid globalFilters format. Must be a valid JSON object."
-      );
-    }
+   
 
     logMessage(
       `[${methodName}] Request received, ${JSON.stringify(
@@ -770,8 +754,8 @@ async function listAllCasesSummary(req: Request, res: Response) {
     // Create modified data object with parsed globalFilters
     const dataWithParsedGlobalFilters = {
       ...value,
-      globalFilters: parsedGlobalFilters,
-      parsedFilters: parsedFilters,
+      globalFilters: value.globalFilters,
+      parsedFilters: value.filters,
     };
 
     const result = await caseService.listAllCasesSummary(
@@ -834,29 +818,11 @@ async function exportAllCasesSummary(req: Request, res: Response) {
       req,
       exportCaseSummarySchema,
       res,
-      "GET"
+      "POST"
     );
     if (!value) return;
     let parsedFilters: Record<string, any> = {};
     let parsedGlobalFilters: Record<string, string[]> = {};
-
-    try {
-      parsedFilters = JSON.parse(value.filters);
-    } catch (error) {
-      errorLog(
-        methodName,
-        "Invalid filters format. Must be a valid JSON object."
-      );
-    }
-
-    try {
-      parsedGlobalFilters = JSON.parse(value.globalFilters);
-    } catch (error) {
-      errorLog(
-        methodName,
-        "Invalid globalFilters format. Must be a valid JSON object."
-      );
-    }
 
     logMessage(
       `[${methodName}] Request received, ${JSON.stringify(
@@ -877,8 +843,8 @@ async function exportAllCasesSummary(req: Request, res: Response) {
     // Create modified data object with parsed globalFilters
     const dataWithParsedGlobalFilters = {
       ...value,
-      globalFilters: parsedGlobalFilters,
-      parsedFilters: parsedFilters,
+      globalFilters: value.globalFilters,
+      parsedFilters: value.filters,
     };
 
     const result = await caseService.listAllCasesSummary(
@@ -1219,10 +1185,17 @@ async function sentReviewProjects(req: Request, res: Response): Promise<void> {
         "Invalid filters format. Must be a valid JSON object."
       );
     }
+      let fileArray: Express.Multer.File[] | [];
+    if (Array.isArray(req.files)) {
+      fileArray = req.files;
+    } else {
+      fileArray = [];
+    }
     const reviewProjects = await caseService.sentReviewProjects(
       value,
       parsedFilters,
-      userId
+      userId,
+      fileArray
     );
     if (reviewProjects.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
@@ -1352,6 +1325,7 @@ async function exportReviewProjects(req: Request, res: Response): Promise<void> 
                 total_effort_prj: d.total_effort_prj,
                 total_subcon_prj: d.total_subcon_prj,
                 total_cost_fte_prj: d.total_cost_fte_prj,
+                total_cost_subcon_prj:d.total_cost_subcon_prj,
                 total_nonlabor_prj: d.total_nonlabor_prj,
                 total_resources_prj: d.total_resources_prj,
                 total_effort_fte_prj  : d.total_effort_fte_prj,
@@ -1630,7 +1604,7 @@ async function exportAllAssignedProjects(req: Request, res: Response) {
     if (result.statusCode == HttpStatus.SUCCESS) {
       const generateBase64Response = await generateExcelBase64(
         result.data,
-        "Cases"
+        "Case Assigned Projects"
       );
       handleSuccessResponse(res, generateBase64Response);
     } else {
@@ -2283,7 +2257,7 @@ async function exportAllChecklists(req: Request, res: Response): Promise<void> {
 
       const generateBase64Response = await generateExcelBase64(
         finalStructuredData,
-        "Cases"
+        "Checklists"
       );
       successLog(methodName);
       handleSuccessResponse(res, generateBase64Response);
@@ -2356,14 +2330,14 @@ async function createTask (req : Request, res : Response) {
         data: result.data,
       });       
     } else if(result.statusCode === HttpStatus.BAD_REQUEST) {
-      return res.status(HttpStatus.SUCCESS).json({
-        statusCode: HttpStatus.SUCCESS,
-        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+      return res.status(HttpStatus.BAD_REQUEST).json({
+        statusCode: HttpStatus.BAD_REQUEST,
+        statusCodeValue: HttpStatus.BAD_REQUEST_MESSAGE,
         statusMessage: result.statusMessage,
         data: result.data,
       }); 
     } else if(result.statusCode === HttpStatus.FAILED) {
-      return res.status(HttpStatus.SUCCESS).json({
+      return res.status(HttpStatus.FAILED).json({
         statusCode: HttpStatus.FAILED,
         statusCodeValue: HttpStatus.FAILED_MESSAGE,
         statusMessage: result.statusMessage,
@@ -3681,6 +3655,7 @@ async function deleteTagsTaskLevel (req : Request, res : Response) {
       return;
     }
     const data = req.body;
+    data.userId = userId
     const result = await caseService.deleteTagsAccountLevel(data); 
     if(result.statusCode === HttpStatus.SUCCESS) {
       return res.status(HttpStatus.SUCCESS).json({
@@ -3727,6 +3702,7 @@ async function deleteCollaboratorsTaskLevel (req : Request, res : Response) {
       return;
     }
     const data = req.body;
+    data.user_rid = userId
     const result = await caseService.deleteCollaborators(data); 
     if(result?.statusCode === HttpStatus.SUCCESS) {
       return res.status(HttpStatus.SUCCESS).json({

@@ -33,7 +33,8 @@ import {
   IActivityCall,
   IActivityEmail,
   IActivityMeeting,
-  IActivityTask
+  IActivityTask,
+  ICreateChecklist
 } from "../../utils/types";
 
 import {
@@ -198,7 +199,7 @@ class ActivitySchemaService {
   ) {
     // Implementation for creating interactions in the database
     try {
-      const { Activities, TaskSummary } = await this.caseModelService.getModels(
+      const { Activities } = await this.caseModelService.getModels(
         accountNumber
       );
 
@@ -212,27 +213,6 @@ class ActivitySchemaService {
       const casecreationResponse = await Activities.create(activityData, {
         transaction,
       });
-
-   /*   await TaskSummary.create(
-        {
-          task_rid: casecreationResponse.rid,
-          r_number: casecreationResponse.r_number || "",
-          account_rid: taskRequest.account_rid || "",
-          attach_to: taskRequest.attach_to || "",
-          attachment_level: taskRequest.attachment_level || "",
-          task_name: taskRequest.task_name || "",
-          description: taskRequest.description || "",
-          fiscal_year: taskRequest.fiscal_year || 0,
-          assigned_to: taskRequest.assigned_to || "",
-          status_rid: taskRequest.status_rid || "",
-          priority_rid: taskRequest.priority_rid || "",
-          effective_start_datetime: taskRequest.effective_start_datetime,
-          effective_end_datetime: taskRequest.effective_end_datetime,
-          created_by: taskRequest.created_by || "",
-          created_datetime: new Date(),
-        }
-      ); 
-      */
 
       await this.addTaskManagementTimeline(
         accountNumber,
@@ -248,9 +228,39 @@ class ActivitySchemaService {
 
       return casecreationResponse;
     } catch (error) {
-      logMessage(`Error creating case: ${error}`);
-      throw new Error("Error creating case: " + error);
+      logMessage(`Error creating activity: ${error}`);
+      throw new Error("Error creating activity: " + error);
     }
+  }
+
+  async addTaskSummary( 
+    accountNumber: string,
+    taskRequest: IActivityTask,
+    taskRid: string,
+    taskRNumber: string
+  )
+  {
+    const { TaskSummary } = await this.caseModelService.getModels("");
+       await TaskSummary.create(
+        {
+          task_rid: taskRid,
+          r_number: taskRNumber || "",
+          account_rid: taskRequest.account_rid || "",
+          attach_to: taskRequest.attach_to || "",
+          attachment_level: taskRequest.attachment_level || "",
+          task_name: taskRequest.task_name || "",
+          description: taskRequest.description || "",
+          fiscal_year: taskRequest.fiscal_year || 0,
+          assigned_to: taskRequest.assigned_to || "",
+          status_rid: taskRequest.status_rid || "",
+          priority_rid: taskRequest.priority_rid || "",
+          effective_start_datetime: taskRequest.effective_start_datetime,
+          effective_end_datetime: taskRequest.effective_end_datetime,
+          created_by: taskRequest.created_by || "",
+          created_datetime: new Date(),
+        }
+      ); 
+
   }
   async updateActivityTask(
     accountNumber: string,
@@ -260,20 +270,104 @@ class ActivitySchemaService {
   ) {
     // Implementation for updating interactions in the database
     try {
-      const { Activities,TaskSummary } = await this.caseModelService.getModels(
+      const { Activities,TaskSummary, CheckList, CheckListItem } = await this.caseModelService.getModels(
         accountNumber
       );
       const existingTask = await Activities.findOne({
         where: { rid: taskRequest.task_rid },
+        raw: true,
         transaction,
       });
-      const [updatedResult] = await Activities.update(taskRequest, {
-        where: {
-          rid: taskRequest.task_rid,
+      // Fix: assigned_to should not be undefined or empty string
+      if (taskRequest.assigned_to === "" || typeof taskRequest.assigned_to === "undefined") {
+        taskRequest.assigned_to = null;
+      }
+      if(taskRequest?.checklist_rid) 
+            {
+              if(taskRequest.checklist_rid !== existingTask?.checklist_rid) {
+                if(existingTask?.checklist_rid !== null && existingTask?.checklist_rid !== '') {
+                  const checklistResult = await CheckList.findOne({
+                  where : {
+                    attach_to : taskRequest.task_rid,
+                    attachment_level : 'task',
+                    checklist_template_rid : existingTask?.checklist_rid
+                  }, raw : true
+                })
+
+                if(checklistResult) {
+                  await CheckListItem.destroy({
+                    where : {
+                      checklist_rid : checklistResult.rid
+                    }
+                  })
+                  await CheckList.destroy({
+                    where : {
+                      attach_to : taskRequest.task_rid,
+                      attachment_level : 'task',
+                      checklist_template_rid : existingTask?.checklist_rid
+                    }
+                  })
+                  }
+                }
+                const response  = await this.caseSchemaService.fetchChecklistTemplateDetailsById(taskRequest.checklist_rid);
+                response.checklist_items.map((item:any) => item.action_type  = 'add');
+                let caseRequest : any = {
+                  account_rid: taskRequest.account_rid!,
+                  checklist_name: response.checklist_name,
+                  checklist_description: response.description,  
+                  checklist_items: response.checklist_items,
+                  attach_to: taskRequest.task_rid,
+                  attachment_level: 'task',
+                  created_by: userId,
+                  created_datetime: new Date(),
+                  fiscal_year: taskRequest.fiscal_year,
+                  checklist_rid: taskRequest.checklist_rid,
+                };
+                const checklistResponse = await this.createCheckListForTask(accountNumber, caseRequest, transaction);
+                if(checklistResponse)
+                  await this.caseSchemaService.manageCheckListItems(accountNumber,caseRequest,checklistResponse.rid, transaction);
+                }
+            }
+      // Combine update: include modified_by and modified_datetime in the same update
+      const [updatedResult] = await Activities.update(
+        {
+          ...taskRequest,
+          modified_by: taskRequest.modified_by || userId,
+          modified_datetime: new Date(),
         },
-        transaction,
-      });
-     /* await TaskSummary.update(
+        {
+          where: {
+            rid: taskRequest.task_rid,
+          },
+          transaction,
+        }
+      );
+    if(updatedResult > 0) {
+       const checkIsDifferentCollaborator = await this.isNewCollaborator(
+        userId,
+        accountNumber
+      );
+      if (!checkIsDifferentCollaborator && taskRequest?.modified_by) {
+        const checkCollaboratorExists = await this.isCollaboratorAlreadyAdded(
+          userId,
+          taskRequest.task_rid,
+          taskRequest.account_rid!,
+          accountNumber
+        );
+        if (!checkCollaboratorExists) {
+          await TaskCollaborators.create(
+            {
+              account_rid: taskRequest.account_rid!,
+              task_rid: taskRequest.task_rid,
+              assigned_to: taskRequest?.modified_by,
+              created_by: userId,
+              created_datetime: new Date(),
+            },
+            { transaction }
+          );
+        }
+             }
+       await TaskSummary.update(
         {
           task_name: taskRequest.task_name || "",
           description: taskRequest.description || "",
@@ -291,44 +385,36 @@ class ActivitySchemaService {
           }
         }
       );
-      */
-      const checkIsDifferentCollaborator = await this.isNewCollaborator(
-        taskRequest.modified_by!,
-        accountNumber
-      );
-      if (!checkIsDifferentCollaborator && taskRequest?.modified_by) {
-        const checkCollaboratorExists = await this.isCollaboratorAlreadyAdded(
-          taskRequest.modified_by!,
-          taskRequest.task_rid,
-          taskRequest.account_rid!,
-          accountNumber
-        );
-        if (!checkCollaboratorExists) {
-          await TaskCollaborators.create(
-            {
-              account_rid: taskRequest.account_rid!,
-              task_rid: taskRequest.task_rid,
-              assigned_to: taskRequest?.modified_by,
-              created_by: taskRequest.modified_by,
-              created_datetime: new Date(),
-            },
-            { transaction }
-          );
-        }
-         await this.addActivityHistory(
+      await this.addActivityTaskHistory(
         accountNumber,
         taskRequest.task_rid as string,
         { ...taskRequest, modified_by: userId },
         existingTask,
         activityTypes.task
       );
-      }
-      await this.updateTaskHistory(
-        accountNumber,
-        taskRequest.task_rid as string,
-        { ...taskRequest, modified_by: userId },
-        existingTask
-      );
+      if(!this.mainDbSequelize)
+        {
+          this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+        }
+      const [activeStatusRid]: any[] = await this.mainDbSequelize.query(
+                rawQueries.getActiveStatusId()
+              );
+        if(taskRequest.tags.length > 0) {
+            for(let d of taskRequest.tags) {
+              await this.caseSchemaService.createOrUpdateTags(
+            taskRequest.task_rid,
+            taskRequest.account_rid!,
+            "",
+            d.tag_rid,
+            d.is_new_tag,
+            accountNumber,
+            taskRequest.created_by,
+            activeStatusRid,
+            "activity"
+          );
+            }
+          }
+        }
       await this.addTaskManagementTimeline(
         accountNumber,
         taskRequest.task_rid,
@@ -342,8 +428,8 @@ class ActivitySchemaService {
 
       return updatedResult;
     } catch (error) {
-      logMessage(`Error creating case: ${error}`);
-      throw new Error("Error creating case: " + error);
+      logMessage(`Error updating task: ${error}`);
+      throw new Error("Error updating task: " + error);
     }
   }
   async isNewCollaborator(rid: string, accountNumber: string) {
@@ -377,6 +463,47 @@ class ActivitySchemaService {
     if (result) return result;
     else return null;
   }
+    async createCheckListForTask(
+      accountNumber: string,
+      caseRequest: ICreateChecklist,
+      transaction: Transaction
+    ) {
+      // Implementation for creating checklist in the database
+      try {
+        const { CheckList } = await this.caseModelService.getModels(accountNumber);
+        const findCheckListAlreadyCreated = await CheckList.findOne({
+          where : {
+            attach_to : caseRequest.attach_to,
+            attachment_level : "task",
+            checklist_template_rid : caseRequest.checklist_rid
+          }, raw : true
+        });
+        if(!findCheckListAlreadyCreated) {
+          const createdChecklist = await CheckList.create(
+          {
+            account_rid: caseRequest.account_rid,
+            attach_to: caseRequest.attach_to,
+            attachment_level: caseRequest.attachment_level,
+            checklist_name: caseRequest.checklist_name,
+            checklist_description: caseRequest.checklist_description,
+            checklist_template_rid: caseRequest.checklist_rid || "",
+            fiscal_year:caseRequest.fiscal_year,
+            created_by: caseRequest.created_by,
+            status_rid: caseRequest.status_rid,
+            created_datetime: new Date(),
+           
+          },
+          { transaction }
+        );
+        return createdChecklist;
+        } else {
+          return null;
+        }
+      } catch (error) {
+        logMessage(`Error creating checklist: ${error}`);
+        throw new Error("Error creating checklist: " + error);
+      }
+    }
 
   async  checkUserAPIPermission  (
       userId: string,
@@ -534,6 +661,7 @@ class ActivitySchemaService {
     return { activities: [], totalCount: 0 };
   }
       }
+      
 
       const fetchAttachments = async (
         model: any,
@@ -549,7 +677,9 @@ class ActivitySchemaService {
             ...(whereClause[Op.and] || []),
           ],
         };
-        return model.findAll({ where });
+        return model.findAll({
+          where
+        });
       };
       // 🔷 Optimized project resource + task attachments fetch for multiple projects
       const fetchProjectResourceTaskAttachmentsBulk = async (
@@ -650,9 +780,12 @@ class ActivitySchemaService {
           [entityId]
         );
         allActivities.push(...accountAttachments);
-        const caseAttachments = await fetchAttachments(Activities, "case", [
-          entityId,
-        ]);
+         const cases = await this.caseSchemaService.getCasesByAccountId(
+          accountNumber,
+          entityId
+        );
+         const caseIds = cases.map((r:any) => (r as { rid: string }).rid);
+        const caseAttachments = await fetchAttachments(Activities, "case", caseIds);
         allActivities.push(...caseAttachments);
 
         const projects = await this.caseSchemaService.getProjectsByAccountId(
@@ -687,7 +820,6 @@ class ActivitySchemaService {
             "resource",
             resourceIds
           );
-          allActivities.push(...resourceAttachments);
 
           const resourceCostSkillAttachments =
             await fetchResourceCostSkillAttachmentsBulk(
@@ -822,28 +954,38 @@ class ActivitySchemaService {
 
       // 🔷 Sort
       const validSortFields = [
-        "r_number",
-        "attachment_level",
         "attached_to",
-        "created_datetime",
         "created_by_name",
-        "fiscal_year",
         "modified_by_name",
-        "modified_datetime",
-        "activity_type",
+         "effective_start_datetime",
+        "effective_end_datetime",
         "status_name",
-        "assigned_to_name",
+        "activity_type",
+         "r_number",
+        "attachment_level",
+        "effective_start_datetime",
+        "effective_end_datetime",
+        "created_datetime",
+        "fiscal_year",
+        "modified_datetime",
+        
+        "call_platform"
       ];
+      if(sortBy === 'createdAt') {
+        sortBy = 'created_datetime';
+      }
       const finalSortBy = validSortFields.includes(sortBy)
         ? sortBy
         : "created_datetime";
+      
       const finalSortOrder = ["ASC", "DESC"].includes(sortOrder.toUpperCase())
         ? sortOrder.toUpperCase()
         : "DESC";
 
       allActivities.sort((a, b) => {
         // Special handling for created_datetime
-        if (finalSortBy === "created_datetime") {
+        if (finalSortBy === "created_datetime" ||
+            finalSortBy === "effective_start_datetime" || finalSortBy === "effective_end_datetime") {
           const aDate = new Date(a[finalSortBy]).getTime();
           const bDate = new Date(b[finalSortBy]).getTime();
           return finalSortOrder === "ASC" ? aDate - bDate : bDate - aDate;
@@ -1039,6 +1181,22 @@ class ActivitySchemaService {
             : bType.localeCompare(aType);
         });
       }
+      if (sortBy === "status_name") {
+        activities.sort((a, b) => {
+          const aType = a.status_name || "";
+          const bType = b.status_name || "";
+          const aEmpty = !aType || aType.trim() === "";
+          const bEmpty = !bType || bType.trim() === "";
+
+          if (aEmpty && bEmpty) return 0;
+          if (aEmpty) return finalSortOrder === "ASC" ? 1 : -1;
+          if (bEmpty) return finalSortOrder === "ASC" ? -1 : 1;
+
+          return finalSortOrder === "ASC"
+            ? aType.localeCompare(bType)
+            : bType.localeCompare(aType);
+        });
+      }
      function applyActivitiesFilter(array: any[], field: string, filterObj: { [x: string]: any; }) {
     if (!filterObj || typeof filterObj !== 'object' || Array.isArray(filterObj)) return array;
     const operator = Object.keys(filterObj)[0];
@@ -1145,6 +1303,7 @@ class ActivitySchemaService {
             case 'r_number':
             case 'status_rid':
             case 'assigned_to':
+            case 'call_platform':
               switch (operator.toLowerCase()) {
                 case 'equals': condition[field] = { [Op.iLike]: value }; break;
                 case 'not_equals': condition[field] = { [Op.or]: [{ [Op.notILike]: value }, { [Op.is]: null }] }; break;          
@@ -1391,70 +1550,7 @@ class ActivitySchemaService {
     return dateObj.toISOString().split("T")[0] || "invalid-date";
   }
 
-  async updateTaskHistory(
-    accountNumber: string,
-    taskId: string,
-    newTaskData: any,
-    existingTaskData: any
-  ) {
-    try {
-      const { TaskHistory } = await this.caseModelService.getModels(
-        accountNumber
-      );
 
-      const excludedFields = [
-        "created_by",
-        "modified_by",
-        "task_rid",
-        "account_rid",
-        "modified_datetime",
-      ];
-
-      const cleanedNewData = Object.fromEntries(
-        Object.entries(newTaskData).filter(
-          ([key]) => !excludedFields.includes(key)
-        )
-      );
-
-      const historyChanges = Object.entries(cleanedNewData)
-        .filter(([key, newValue]) => {
-          const oldValue = existingTaskData[key];
-
-          if (newValue == null && oldValue == null) return false;
-
-          if (typeof newValue === "number" || typeof oldValue === "number") {
-            return Number(newValue) !== Number(oldValue);
-          }
-
-          return String(newValue ?? "") !== String(oldValue ?? "");
-        })
-        .map(([key, newValue]) => ({
-          task_rid: taskId,
-          attribute_name: key,
-          old_value:
-            existingTaskData[key] !== null &&
-            existingTaskData[key] !== undefined
-              ? String(existingTaskData[key])
-              : "",
-          new_value:
-            newValue !== null && newValue !== undefined ? String(newValue) : "",
-          created_by: newTaskData["modified_by"],
-        }));
-
-      if (historyChanges.length === 0) return;
-
-      // Use individual create operations to avoid sequence conflicts
-      for (const historyChange of historyChanges) {
-        await TaskHistory.create(historyChange);
-      }
-    } catch (err) {
-      logMessage(`Error updating project history : ${JSON.stringify(err)}`);
-      errorLog("Error updating project history : " + (err as Error).message);
-      throw new Error(
-        "Error updating project history : " + (err as Error).message
-      );
-    }
-  }
 
   async checkIsActivityTaskUnique(
     taskReq: any,
@@ -1575,12 +1671,35 @@ class ActivitySchemaService {
     const { Activities, ActivityAttachments } =
       await this.caseModelService.getModels(accountNumber);
     if (!this.mainDbSequelize) {
-      this.mainDbSequelize = await this.caseModelService.getSequelize();
+      this.mainDbSequelize = await this.caseModelService.getMainSequelize();
     }
     const [emailStatus]: any[] = await this.mainDbSequelize.query(
       rawQueries.fetchActivityStatusByName(activityRequest.email_status,activityRequest.activity_type),
       { type: "SELECT" }
     );
+     let toEmailsArray: string[] = [];
+    let ccEmailsArray: string[] = [];
+    if (Array.isArray(activityRequest.to_email)) {
+    toEmailsArray = activityRequest.to_email;
+  } else if (typeof activityRequest.to_email === 'string') {
+    try {
+      toEmailsArray = JSON.parse(activityRequest.to_email);
+    } catch {
+      toEmailsArray = [];
+    }
+  }
+   if (Array.isArray(activityRequest.cc_email)) {
+    ccEmailsArray = activityRequest.cc_email;
+  } else if (typeof activityRequest.cc_email === 'string') {
+    try {
+      ccEmailsArray = JSON.parse(activityRequest.cc_email);
+    } catch {
+      ccEmailsArray = [];
+    }
+  }
+    activityRequest.cc_email = ccEmailsArray;
+    activityRequest.to_email = toEmailsArray;
+    
     const existingActivity = await Activities.findOne({
         where: { rid: activityRequest.activity_rid }
       });
@@ -1595,6 +1714,8 @@ class ActivitySchemaService {
     const activityData = {
       ...activityRequest,
       activity_type: "Email",
+      modified_by: userId,
+      modified_datetime: new Date(),
       status_rid: emailStatus?.rid || null,
       account_rid:
         activityRequest.accountRid || activityRequest.account_rid || "",
@@ -1692,6 +1813,7 @@ class ActivitySchemaService {
   }
     const activityData = {
       ...activityRequest,
+      invited_by: userId,
       activity_type: activityRequest.activity_type,
       effective_start_datetime: activityRequest.effective_start_date,
       effective_end_datetime: activityRequest.effective_end_date,
@@ -1714,10 +1836,16 @@ class ActivitySchemaService {
     if(!senderEmailInfo){
       throw new Error("Sender email information not found for scheduling meeting.");
     } 
+  
+   const [userInfo]: any[] = await this.mainDbSequelize.query(
+        rawQueries.fetchUserDetails(userId),
+        { type: "SELECT" }
+      );
 
-    let scheduleResponse =  await scheduleTeamsMeetingUtil(activityData, userId,senderEmailInfo);
+    let scheduleResponse =  await scheduleTeamsMeetingUtil(activityData, userInfo.email,senderEmailInfo);
     if(scheduleResponse.success)
     {
+      activityData.invited_by = userInfo.email;
       activityData.meeting_invite = scheduleResponse.webLink;
       activityData.meeting_id = scheduleResponse.meetingId;
       activityData.effective_start_datetime = activityData.effective_start_date
@@ -1806,12 +1934,25 @@ class ActivitySchemaService {
     const activityData = {
       ...activityRequest,
       activity_type: "Call",
+      modified_by: userId,
+      modified_datetime: new Date(),
       account_rid:
         activityRequest.accountRid || activityRequest.account_rid || "",
     };
     const existingActivity = await Activities.findOne({
         where: { rid: activityRequest.activity_rid }
       });
+     let callParticipants: string[] = [];
+    if (Array.isArray(activityRequest.call_participants)) {
+    callParticipants = activityRequest.call_participants;
+  } else if (typeof activityRequest.call_participants === 'string') {
+    try {
+      callParticipants = JSON.parse(activityRequest.call_participants);
+    } catch {
+      callParticipants = [];
+    }
+  }
+  activityData.call_participants = callParticipants;
 
     const response = await Activities.update(activityData, {
       where: { rid: activityRequest.activity_rid },
@@ -1884,12 +2025,36 @@ class ActivitySchemaService {
       rawQueries.fetchActivityStatusByName(activityRequest.meeting_status, activityRequest.activity_type),
       { type: "SELECT" }
     );
+      let meetingParticipants: string[] = [];
+    let reOccurenceDays: string[] = [];
+     if (Array.isArray(activityRequest.meeting_participants)) {
+    meetingParticipants = activityRequest.meeting_participants;
+  } else if (typeof activityRequest.meeting_participants === 'string') {
+    try {
+      meetingParticipants = JSON.parse(activityRequest.meeting_participants);
+    } catch {
+      meetingParticipants = [];
+    }
+  }
+   if (Array.isArray(activityRequest.recurrence_days)) {
+    reOccurenceDays = activityRequest.recurrence_days;
+  } else if (typeof activityRequest.recurrence_days === 'string') {
+    try {
+      reOccurenceDays = JSON.parse(activityRequest.recurrence_days);
+    } catch {
+      reOccurenceDays = [];
+    }
+  }
     const activityData = {
       ...activityRequest,
       activity_type: "Meeting",
       effective_start_datetime: activityRequest.effective_start_date,
       effective_end_datetime: activityRequest.effective_end_date,
       meeting_status_rid: meetingStatus?.rid || null,
+      meeting_participants: meetingParticipants,
+      modified_by: userId,
+      modified_datetime: new Date(),
+      recurrence_days: reOccurenceDays,
       account_rid:
         activityRequest.accountRid || activityRequest.account_rid || "",
     };
@@ -2342,11 +2507,13 @@ class ActivitySchemaService {
       attachments: attachmentsDetails || [],
       effective_start_datetime:emailDetails.effective_start_datetime ?? null,
       effective_end_datetime:emailDetails.effective_end_datetime ?? null, 
-      efective_start_time: emailDetails.efective_start_time ?? null,
-      efective_end_time: emailDetails.efective_end_time ?? null,
+      efective_start_time: emailDetails.effective_start_time ?? null,
+      efective_end_time: emailDetails.effective_end_time ?? null,
       recurrence_days: emailDetails.recurrence_days ? emailDetails.recurrence_days: [],
       recurrence_interval: emailDetails.recurrence_interval ?? null,
       recurrence_type: emailDetails.recurrence_type ?? null,
+      recurrence_day_of_month: emailDetails.recurrence_day_of_month ?? null,
+      recurrence_monthly_index: emailDetails.recurrence_monthly_index ?? null,
     };
 
     return response;
@@ -2484,12 +2651,12 @@ class ActivitySchemaService {
     }
   }
 
-   async getActivityStatus() {
+   async getActivityStatus(activityType:string) {
       if (!this.mainDbSequelize) {
         this.mainDbSequelize = await this.caseModelService.getMainSequelize();
       }
       const activityStatus = await this.mainDbSequelize.query(
-        rawQueries.getActivityStatus(),
+        rawQueries.getActivityStatus(activityType),
         {
           type: "SELECT",
         }
@@ -2623,8 +2790,6 @@ class ActivitySchemaService {
       existingCaseData: any,
       activityType?: string
     ) {
-      console.log("Adding activity history new ...",newCaseData);
-        console.log("Adding activity history old...",existingCaseData);
       try {
         const { ActivityHistory } = await this.caseModelService.getModels(
           accountNumber
@@ -2647,17 +2812,23 @@ class ActivitySchemaService {
         const historyChanges = Object.entries(cleanedNewData)
           .filter(([key, newValue]) => {
             const oldValue = existingCaseData[key];
-            console.log(`Comparing field: ${key}, oldValue: ${oldValue}, newValue: ${newValue}`);
-  
+           
             if (newValue == null && oldValue == null) return false;
   
             if (typeof newValue === "number" || typeof oldValue === "number") {
               return Number(newValue) !== Number(oldValue);
             }
+            if (key === 'effective_start_datetime' || key === 'effective_end_datetime') {
+              const newDate = newValue ? moment.utc(newValue).format("YYYY-MM-DD") : null;
+              const oldDate = oldValue ? moment.utc(oldValue).format("YYYY-MM-DD") : null;
+              existingCaseData[key] = oldDate;
+              return String(newDate ?? "") !== String(oldDate ?? "");
+            }
   
             return String(newValue ?? "") !== String(oldValue ?? "");
           })
           .map(([key, newValue]) => ({
+            account_rid: newCaseData["account_rid"],
             activity_rid: activityId,
             attribute_name: key,
             old_value:
@@ -2672,7 +2843,7 @@ class ActivitySchemaService {
           }));
   
         if (historyChanges.length === 0) return;
-        console.log("History Changes: ", historyChanges);
+
   
         // Use individual create operations to avoid sequence conflicts
         for (const historyChange of historyChanges) {
@@ -2680,6 +2851,166 @@ class ActivitySchemaService {
         }
       } catch (err) {
         logMessage(`Error updating activity history : ${JSON.stringify(err)}`);
+        errorLog("Error updating activity history : " + (err as Error).message);
+        throw new Error(
+          "Error updating activity history : " + (err as Error).message
+        );
+      }
+    }
+  async addActivityTaskHistory(
+      accountNumber: string,
+      activityId: string,
+      newCaseData: any,
+      existingCaseData: any,
+      activityType?: string
+    ) {
+      try {
+        const { ActivityHistory } = await this.caseModelService.getModels(
+          accountNumber
+        );
+  
+        const excludedFields = [
+          "created_by",
+          "modified_by",
+          "activity_rid",
+          "account_rid",
+          "modified_datetime",
+          "task_rid"
+        ];
+  
+        const cleanedNewData = Object.fromEntries(
+          Object.entries(newCaseData).filter(
+            ([key]) => !excludedFields.includes(key)
+          )
+        );
+  
+        // Prepare mapping for assigned_to values
+        const columnMapping = new Map();
+        let assignedToOldValueString = null;
+        let assignedToNewValueString = null;
+        if (cleanedNewData.hasOwnProperty('assigned_to')) {
+          const oldValue = existingCaseData['assigned_to'];
+          const newValue = cleanedNewData['assigned_to'];
+          if (oldValue || newValue) {
+            if(!this.mainDbSequelize) {
+              this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+            }
+            const result = await this.mainDbSequelize.query(rawQueries.fetchUserNames(String(oldValue || ''), String(newValue || '')));
+            for (let r of result[0]) {
+              columnMapping.set((r as any)?.rid, (r as any)?.name);
+            }
+            assignedToOldValueString = columnMapping.get(oldValue);
+            assignedToNewValueString = columnMapping.get(newValue);
+          }
+        }
+        const statusMapping = new Map();
+        let statusOldValueString = null;
+        let statusNewValueString = null;
+        if (cleanedNewData.hasOwnProperty('status_rid')) {
+          const oldValue = existingCaseData['status_rid'];
+          const newValue = cleanedNewData['status_rid'];
+          if (oldValue || newValue) {
+            if(!this.mainDbSequelize) {
+              this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+            }
+            const result = await this.mainDbSequelize.query(rawQueries.fetchActivityStatusById(String(oldValue || ''), String(newValue || '')));
+            for (let r of result[0]) {
+              statusMapping.set((r as any)?.rid, (r as any)?.name);
+            }
+            statusOldValueString = statusMapping.get(oldValue);
+            statusNewValueString = statusMapping.get(newValue);
+          }
+
+        }
+
+        // Prepare mapping for priority_rid values
+        const priorityMapping = new Map();
+        let priorityOldValueString = null;
+        let priorityNewValueString = null;
+        if (cleanedNewData.hasOwnProperty('priority_rid')) {
+          const oldValue = existingCaseData['priority_rid'];
+          const newValue = cleanedNewData['priority_rid'];
+          if (oldValue || newValue) {
+            if(!this.mainDbSequelize) {
+              this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+            }
+            // Assuming rawQueries.fetchPriorityNames returns [{ rid, name }]
+            const result = await this.mainDbSequelize.query(rawQueries.fetchPriority(String(oldValue || ''), String(newValue || '')));
+            for (let r of result[0]) {
+              priorityMapping.set((r as any)?.rid, (r as any)?.pr);
+            }
+            priorityOldValueString = priorityMapping.get(oldValue);
+            priorityNewValueString = priorityMapping.get(newValue);
+          }
+        }
+
+       
+
+        const historyChanges = await Promise.all(Object.entries(cleanedNewData)
+          .filter(([key, newValue]) => {
+            const oldValue = existingCaseData[key];
+            if (newValue == null && oldValue == null) return false;
+            if (typeof newValue === "number" || typeof oldValue === "number") {
+              return Number(newValue) !== Number(oldValue);
+            }
+            if (key === 'effective_start_datetime' || key === 'effective_end_datetime') {
+              const newDate = newValue ? moment.utc(newValue).format("YYYY-MM-DD") : null;
+              const oldDate = oldValue ? moment.utc(oldValue).format("YYYY-MM-DD") : null;
+              existingCaseData[key] = oldDate;
+              return String(newDate ?? "") !== String(oldDate ?? "");
+            }
+            if (key === "assigned_to") {
+              return assignedToOldValueString !== assignedToNewValueString;
+            }
+            if (key === "priority_rid") {
+              return priorityOldValueString !== priorityNewValueString;
+            }
+            if (key === "status_rid") {
+              return statusOldValueString !== statusNewValueString;
+            }
+            return String(newValue ?? "") !== String(oldValue ?? "");
+          })
+          .map(async ([key, newValue]) => {
+            // Map keys for display-friendly attribute names
+            let mappedKey = key;
+            let oldValueStr = existingCaseData[key] !== null && existingCaseData[key] !== undefined ? String(existingCaseData[key]) : "";
+            let newValueStr = newValue !== null && newValue !== undefined ? String(newValue) : "";
+            if (key === 'priority_rid') {
+              mappedKey = 'Priority';
+              oldValueStr = priorityOldValueString ?? oldValueStr;
+              newValueStr = priorityNewValueString ?? newValueStr;
+            } else if (key === 'effective_start_datetime') {
+              mappedKey = 'Effective Start Date';
+            } else if (key === 'effective_end_datetime') {
+              mappedKey = 'Effective End Date';
+            } else if (key === 'assigned_to') {
+              mappedKey = 'Assigned To';
+              oldValueStr = assignedToOldValueString ?? oldValueStr;
+              newValueStr = assignedToNewValueString ?? newValueStr;
+            } else if (key === "status_rid") {
+              mappedKey = "Status";
+              oldValueStr = statusOldValueString ?? oldValueStr;
+              newValueStr = statusNewValueString ?? newValueStr;
+            }
+            return {
+              account_rid: newCaseData["account_rid"],
+              activity_rid: activityId,
+              attribute_name: mappedKey,
+              old_value: oldValueStr,
+              new_value: newValueStr,
+              created_by: newCaseData["modified_by"],
+              activity_type: activityType || newCaseData["activity_type"] || "",
+            };
+          }));
+  
+        if (historyChanges.length === 0) return;
+
+  
+        // Use individual create operations to avoid sequence conflicts
+        for (const historyChange of historyChanges) {
+          await ActivityHistory.create(historyChange);
+        }
+      } catch (err) {
         errorLog("Error updating activity history : " + (err as Error).message);
         throw new Error(
           "Error updating activity history : " + (err as Error).message

@@ -142,7 +142,6 @@ export const caseResolver: IResolvers = {
               userId,
               "graphql"
             );
-            console.log("Fetched updated case:", caseListResult);
 
             if (caseListResult.statusCode === HttpStatus.SUCCESS && 
                 caseListResult.data?.caseInfo && 

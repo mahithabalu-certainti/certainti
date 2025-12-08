@@ -1,5 +1,8 @@
 import { time } from "console";
+import Decimal from "decimal.js";
 import Joi from "joi";
+const uuidRegex = /^[A-Z0-9]{4}-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const decimal18_2Regex = /^\d{1,16}(\.\d{1,2})?$/;
 
 const createCaseSchema = Joi.object({
   account_rid: Joi.string().required(),
@@ -12,7 +15,69 @@ const createCaseSchema = Joi.object({
   case_startdate: Joi.date().required(),
   planned_submission_date: Joi.date().required(),
   statutory_submission_date: Joi.date().required(),
-  tax_liability: Joi.number().optional().allow(null,"")
+  heat_light_power:Joi.string()
+  .pattern(decimal18_2Regex)
+  .messages({
+    "string.pattern.base": "Heat Light Power must have up to 16 digits before the decimal and up to 2 decimal places",
+  })
+  .custom((value, helpers) => {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
+      return helpers.error("any.invalid");
+    }
+  })
+  .messages({
+    "any.invalid": "Heat Light Power must be a valid positive number",
+  })
+  .optional()
+  .allow(null),
+  total_nonlabor_cost:Joi.string()
+  .pattern(decimal18_2Regex)
+  .messages({
+    "string.pattern.base": "Total Nonlabor Cost must have up to 16 digits before the decimal and up to 2 decimal places",
+  })
+  .custom((value, helpers) => {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
+      return helpers.error("any.invalid");
+    }
+  })
+  .messages({
+    "any.invalid": "Total Nonlabor Cost must be a valid positive number",
+  })
+  .optional()
+  .allow(null),
+  tax_liability: Joi.string()
+  .pattern(decimal18_2Regex)
+  .messages({
+    "string.pattern.base": "Tax Liability must have up to 16 digits before the decimal and up to 2 decimal places",
+  })
+  .custom((value, helpers) => {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
+      return helpers.error("any.invalid");
+    }
+  })
+  .messages({
+    "any.invalid": "Tax Liability must be a valid positive number",
+  })
+  .optional()
+  .allow(null),
 });
 
 const updateCaseSchema = Joi.object({
@@ -28,7 +93,69 @@ const updateCaseSchema = Joi.object({
   planned_submission_date: Joi.date().required(),
   statutory_submission_date: Joi.date().required(),
   country_rid: Joi.string().optional(),
-  tax_liability: Joi.number().optional().allow(null,"")
+ heat_light_power:Joi.string()
+  .pattern(decimal18_2Regex)
+  .messages({
+    "string.pattern.base": "Heat Light Power must have up to 16 digits before the decimal and up to 2 decimal places",
+  })
+  .custom((value, helpers) => {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
+      return helpers.error("any.invalid");
+    }
+  })
+  .messages({
+    "any.invalid": "Heat Light Power must be a valid positive number",
+  })
+  .optional()
+  .allow(null),
+  total_nonlabor_cost:Joi.string()
+  .pattern(decimal18_2Regex)
+  .messages({
+    "string.pattern.base": "Total Nonlabor Cost must have up to 16 digits before the decimal and up to 2 decimal places",
+  })
+  .custom((value, helpers) => {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
+      return helpers.error("any.invalid");
+    }
+  })
+  .messages({
+    "any.invalid": "Total Nonlabor Cost must be a valid positive number",
+  })
+  .optional()
+  .allow(null),
+  tax_liability: Joi.string()
+  .pattern(decimal18_2Regex)
+  .messages({
+    "string.pattern.base": "Tax Liability must have up to 16 digits before the decimal and up to 2 decimal places",
+  })
+  .custom((value, helpers) => {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
+      return helpers.error("any.invalid");
+    }
+  })
+  .messages({
+    "any.invalid": "Tax Liability must be a valid positive number",
+  })
+  .optional()
+  .allow(null),
 });
 
 const exportCasesAccountSchema = Joi.object({
@@ -53,20 +180,20 @@ const listCasesAccountSchema = Joi.object({
 });
 
 const listCaseSummarySchema = Joi.object({
-  page: Joi.string().optional().pattern(/^[0-9]+$/),
-  limit: Joi.string().optional().pattern(/^[0-9]+$/),
-  filters: Joi.string().default("{}"),
-  globalFilters: Joi.string().default("{}"),
-  fiscal_year: Joi.string().optional(),
-  search: Joi.string().max(255).optional(),
+  page: Joi.number().optional(),
+  limit: Joi.number().optional(),
+  filters: Joi.object().default({}),
+  globalFilters: Joi.object().default({}),
+  fiscal_year: Joi.number().optional(),
+  search: Joi.string().max(255).optional().allow("",null),
   sortBy: Joi.string().optional(),
   sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
 });
 
 const exportCaseSummarySchema = Joi.object({
-  filters: Joi.string().default("{}"),
-  globalFilters: Joi.string().default("{}"),
-  fiscal_year: Joi.string().optional(),
+ filters: Joi.object().default({}),
+  globalFilters: Joi.object().default({}),
+  fiscal_year: Joi.number().optional(),
   search: Joi.string().max(255).optional(),
   sortBy: Joi.string().optional(),
   sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
@@ -87,6 +214,11 @@ const createHistoricalSubmissionSchema = Joi.object({
         total_qre: Joi.number().precision(2).required(),
         total_rd_credits: Joi.number().precision(2).required(),
         annual_gross_receipts: Joi.number().precision(2).optional(),
+        total_fte_cost: Joi.number().optional(),
+        total_subcon_cost: Joi.number().optional(),
+        total_nonlabor_cost: Joi.number().optional(),
+        country_rid: Joi.string().required(),
+        state_rid : Joi.string().optional().allow("", null),
         eid: Joi.string().optional(),
         action_type: Joi.string().valid("add", "edit", "delete").required(),
       })
@@ -97,6 +229,8 @@ const createHistoricalSubmissionSchema = Joi.object({
 
 const listHistoricalSubmissionSchema = Joi.object({
   account_rid: Joi.string().required(),
+  country_rid: Joi.string().required(),
+  state_rid: Joi.string().optional().allow("", null),
   page: Joi.string().optional().pattern(/^[0-9]+$/),
   limit: Joi.string().optional().pattern(/^[0-9]+$/),
   filters: Joi.string().default("{}"),
@@ -192,19 +326,20 @@ const listReviewProjectSchema = Joi.object({
   filters: Joi.string().default("{}"),
   sortBy: Joi.string().optional(),
   sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
+  search: Joi.string().max(255).optional(),
 });
 
 const sentReviewProjectSchema = Joi.object({
   search: Joi.string().max(255).optional(),
-  filters: Joi.object().default({}),
+  filters: Joi.string().default("{}"),
   sort_by: Joi.string().optional(),
   sort_order: Joi.string().valid("ASC", "DESC").default("ASC"),
-  to_email: Joi.array().items(Joi.string().email()).required(),
-  cc_email: Joi.array().items(Joi.string().email()).required(),
+  to_email:Joi.string().required(),
+  cc_email:Joi.string().optional(),
   recipient_name: Joi.string().max(255).optional(),
   subject: Joi.string().max(500).required(),
   body_html: Joi.string().optional().allow("", null),
-  project_id:Joi.array().items(Joi.string()).optional(),
+  project_id:Joi.string().optional().optional(),
   account_rid: Joi.string().required(),
   case_rid: Joi.string().required()
 });
@@ -552,7 +687,7 @@ const createTaskSchema = Joi.object({
   task_name: Joi.string().max(255).required(),
   effective_start_datetime : Joi.string().optional(),
   effective_end_datetime : Joi.string().optional(),
-  assigned_to : Joi.string().allow("").optional(),
+  assigned_to : Joi.string().allow("",null).optional(),
   checklist_template_rid : Joi.string().allow("").optional(),
   status_rid : Joi.string().optional(),
   priority_rid : Joi.string().allow("").optional(),
@@ -584,7 +719,32 @@ const createTaskSchema = Joi.object({
   ).optional()
 });
 
-const createActivitTaskSchema = Joi.object({
+const updateActivityTaskSchema = Joi.object({
+  task_rid: Joi.string().max(255).required(),
+  task_name: Joi.string().max(255).required(),
+  effort_in_days : Joi.number().optional(),
+  effective_start_datetime : Joi.string().optional(),
+  effective_end_datetime : Joi.string().optional(),
+  checklist_template_rid : Joi.string().allow("").optional(),
+  status_rid : Joi.string().optional(),
+  priority_rid : Joi.string().allow("").optional(),
+  task_description : Joi.string().allow("").optional(),
+  task_status_rid : Joi.string().allow("").optional(),
+  account_rid : Joi.string().max(255).required(),
+  attach_to : Joi.string().required(),
+  attachment_level : Joi.string().required(),
+  fiscal_year : Joi.number().optional(),
+  tags: Joi.array().items(
+  Joi.object({
+    tag_rid: Joi.string().required(),
+    is_new_tag: Joi.boolean().required()
+  })
+).default([]).optional(),
+  assigned_to : Joi.string().allow("",null).optional(),
+  checklist_rid: Joi.string().allow("").optional()
+});
+
+const createActivityTaskSchema = Joi.object({
   task_name: Joi.string().max(255).required(),
   effort_in_days : Joi.number().optional(),
   effective_start_datetime : Joi.string().optional(),
@@ -643,8 +803,9 @@ const createActivityMeetingSchema = Joi.object({
   time_zone: Joi.string().required(),
   recurrence_type: Joi.string().valid("none", "daily", "weekly", "monthly", "yearly").required(),
   recurrence_interval: Joi.number().optional(),
-  recurrence_days: Joi.string().optional()
-
+  recurrence_days: Joi.string().optional(),
+  recurrence_monthly_index: Joi.string().optional().allow("", null),
+  recurrence_day_of_month: Joi.number().optional().allow(null),
 });
 
 const updateActivityMeetingSchema = Joi.object({
@@ -670,7 +831,9 @@ const updateActivityMeetingSchema = Joi.object({
   recurrence_type: Joi.string().valid("none", "daily", "weekly", "monthly", "yearly").required(),
   recurrence_interval: Joi.number().optional(),
   recurrence_days: Joi.string().optional(),
-  deleted_file_ids : Joi.array().items(Joi.string()).optional()
+  recurrence_monthly_index: Joi.string().optional().allow("", null),
+  recurrence_day_of_month: Joi.number().optional().allow(null),
+  deleted_file_ids : Joi.string().optional()
 });
 
 const updateActivityCallSchema = Joi.object({
@@ -687,7 +850,7 @@ const updateActivityCallSchema = Joi.object({
   call_platform: Joi.string().max(255).optional().allow(""),
   minutes_of_meeting: Joi.string().optional().allow(""),
   call_participants:Joi.string().optional().allow(""),
-  deleted_file_ids : Joi.array().items(Joi.string()).optional()
+  deleted_file_ids : Joi.string().optional()
 });
 
 const createActivityCallSchema = Joi.object({
@@ -719,7 +882,7 @@ const updateActivityEmailSchema = Joi.object({
   to_email:Joi.string().required(),
   cc_email:Joi.string().optional(),
  email_status:Joi.string().required(),
-  deleted_file_ids : Joi.array().items(Joi.string()).optional()
+  deleted_file_ids : Joi.string().optional()
 });
 
 
@@ -760,6 +923,129 @@ const updateTaskSchema = Joi.object({
     Joi.valid(null)                    
   ).optional()
 });
+
+const exportListProjectResourceSchema = Joi.object({
+  fiscalYear: Joi.number().min(1000).max(9999).optional().allow(0).messages({
+    "number.base": "Fiscal year must be a number",
+    "number.min": "Fiscal year must be a 4-digit number",
+    "number.max": "Fiscal year must be a 4-digit number",
+    "any.required": "Fiscal year is required",
+  }),
+  filters: Joi.string().default("{}"),
+  sortBy: Joi.string().default("created_datetime").optional().allow(""),
+  sortOrder: Joi.string()
+    .valid("ASC", "DESC")
+    .default("DESC")
+    .optional()
+    .allow(""),
+  timezone: Joi.string().optional(),
+  search: Joi.string()
+        .max(255)
+        .allow('')
+        .allow(null)
+        .optional()
+        .messages({
+            'string.base': 'Search must be a string',
+            'string.max': 'Search cannot exceed 255 characters'
+        })
+});
+
+const listResourceSchema = Joi.object({
+  page: Joi.string()
+    .pattern(/^[0-9]+$/)
+    .default("1"),
+  limit: Joi.string()
+    .pattern(/^[0-9]+$/)
+    .default("100"),
+  fiscalYear: Joi.number().min(1000).max(9999).optional().allow(0).messages({
+    "number.base": "Fiscal year must be a number",
+    "number.min": "Fiscal year must be a 4-digit number",
+    "number.max": "Fiscal year must be a 4-digit number",
+    "any.required": "Fiscal year is required",
+  }),
+  search: Joi.string().max(255).optional(),
+  filters: Joi.string().default("{}"),
+  globalFilters: Joi.string().default("{}"),
+  sortBy: Joi.string().default("created_datetime").optional().allow(""),
+  sortOrder: Joi.string()
+    .valid("ASC", "DESC")
+    .default("DESC")
+    .optional()
+    .allow(""),
+  bothParentAndChild: Joi.boolean().optional().default(false),
+  isFromuserGroup: Joi.boolean().optional().default(false),
+    accountRid: Joi.alternatives().try(
+    Joi.string().allow('', null),
+    Joi.array().items(Joi.string())
+  ).optional(),
+  apiSource: Joi.string().optional().default("Project"),
+  accountInteractionId: Joi.string().optional().allow(null).allow("").default(""),
+});
+
+const exportListProjectTasksSchema = Joi.object({
+  caseRid: Joi.string().pattern(uuidRegex).required(),
+  accountRid: Joi.string().pattern(uuidRegex).required(),
+    search: Joi.string()
+        .max(255)
+        .allow('')
+        .allow(null)
+        .optional()
+        .messages({
+            'string.base': 'Search must be a string',
+            'string.max': 'Search cannot exceed 255 characters'
+        }),
+    filters: Joi.string().default("{}").optional(),
+    sortBy: Joi.string().default("created_datetime").optional(),
+    sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
+})
+
+const listProjectTasksSchema = Joi.object({
+  accountRid: Joi.string().pattern(uuidRegex).required(),
+  caseRid: Joi.string().pattern(uuidRegex).optional().required(),
+    page: Joi.number()
+        .integer()
+        .min(1)
+        .required()
+        .messages({
+            'any.required': 'Page number is required',
+            'number.base': 'Page must be a number',
+            'number.integer': 'Page must be an integer',
+            'number.min': 'Page must be greater than or equal to 1'
+        }),
+    limit: Joi.number()
+        .integer()
+        .min(1)
+        .max(100)
+        .required()
+        .messages({
+            'any.required': 'Limit is required',
+            'number.base': 'Limit must be a number',
+            'number.integer': 'Limit must be an integer',
+            'number.min': 'Limit must be greater than or equal to 1',
+            'number.max': 'Limit cannot exceed 100'
+        }),
+    search: Joi.string()
+        .max(255)
+        .allow('')
+        .allow(null)
+        .optional()
+        .messages({
+            'string.base': 'Search must be a string',
+            'string.max': 'Search cannot exceed 255 characters'
+        }),
+    filters: Joi.string().default("{}").optional(),
+    sortBy: Joi.string().default("created_datetime").optional(),
+    sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
+})
+
+const projectTaskByIdSchema = Joi.object({
+  taskRid: Joi.string().pattern(uuidRegex).required(),
+  accountRid: Joi.string().pattern(uuidRegex).required(),
+})
+
+
+
+
 export {
   createCaseSchema,
   updateCaseSchema,
@@ -791,7 +1077,13 @@ export {
   createHistoricalSubmissionSchema,
   listEmailTemplateSchema,
   exportEmailTemplateSchema,
-  createActivitTaskSchema,
+  exportListProjectResourceSchema,
+  listResourceSchema,
+  exportListProjectTasksSchema,
+  listProjectTasksSchema,
+  projectTaskByIdSchema,
+  createActivityTaskSchema,
+  updateActivityTaskSchema,
   listActivityTaskSchema,
   exportActivitySchema,
   createActivityEmailSchema,

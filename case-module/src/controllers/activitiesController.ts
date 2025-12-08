@@ -10,9 +10,8 @@ import {
   isValidTimezone,
   logMessage,
 } from "../utils/helpers";
-import { HttpStatus, activityFieldMappings } from "../utils/constants";
+import { HttpStatus, activityFieldMappings, callactivityFieldMappings, emailactivityFieldMappings, meetingactivityFieldMappings, taskactivityFieldMappings } from "../utils/constants";
 import {
-  createActivitTaskSchema,
   listActivityTaskSchema,
   exportActivitySchema,
   createActivityEmailSchema,
@@ -21,6 +20,8 @@ import {
   createActivityMeetingSchema,
   updateActivityCallSchema,
   createActivityCallSchema,
+  updateActivityTaskSchema,
+  createActivityTaskSchema,
 } from "../lib/joi/schemas/schema";
 import configurations from "../config/config";
 import moment from "moment";
@@ -34,7 +35,7 @@ async function createActivityTask(req: Request, res: Response) {
   try {
     const value = await validateRequest(
       req,
-      createActivitTaskSchema,
+      createActivityTaskSchema,
       res,
       "POST"
     );
@@ -87,7 +88,7 @@ async function updateActivityTask(req: Request, res: Response) {
   try {
     const value = await validateRequest(
       req,
-      createActivitTaskSchema,
+      updateActivityTaskSchema,
       res,
       "POST"
     );
@@ -107,7 +108,7 @@ async function updateActivityTask(req: Request, res: Response) {
     }
     const data = req.body;
     data.created_by = userId;
-    const result = await activityService.createActivityTask(data, userId);
+    const result = await activityService.updateActivityTask(data, userId);
     if (result.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
       handleCustomResponse(res, result.data, result.message);
@@ -688,9 +689,25 @@ async function exportAllActivity(req: Request, res: Response): Promise<void> {
       value.activityType,
       {}
     );
+    let permissionName = "activity_task_view_edit";
+    if (value.activityType && value.activityType.toLowerCase() === "email") {
+      permissionName = "activity_email_view_edit";
+    } else if (
+      value.activityType &&
+      value.activityType.toLowerCase() === "meeting"
+    ) {
+      permissionName = "activity_meeting_view_edit";
+    } else if (
+      value.activityType &&
+      value.activityType.toLowerCase() === "call"
+    ) {
+      permissionName = "activity_call_view_edit";
+    } else {
+      permissionName = "activity_task_view_edit";
+    }
     const fields = await caseService.getAllowedExportFields(
       userId,
-      "activity_task_view_edit"
+      permissionName
     );
     const allowedFieldSet = new Set<string>();
     for (const field of fields) {
@@ -718,8 +735,19 @@ async function exportAllActivity(req: Request, res: Response): Promise<void> {
                 attachment_level: d.attachment_level,
                 attach_to: d.attach_to,
                 attached_to: d.attached_to,
+                status_name: d.status_name,
                 created_by: d.created_by_name,
+                description: d.description,
                 created_datetime: formatDate(d.created_datetime),
+                effective_start_datetime: formatDate(d.effective_start_datetime),
+                effective_end_datetime: formatDate(d.effective_end_datetime),
+                activity_type: d.activity_type,
+                created_by_name: d.created_by_name,
+                call_platform: d.call_platform,
+                to_email: d.to_email,
+                effective_start_time: d.effective_start_time,
+                effective_end_time: d.effective_end_time,
+                subject: d.subject,
                 modified_by: d.modified_by_name,
                 modified_datetime:
                   d.modified_datetime == null
@@ -729,19 +757,48 @@ async function exportAllActivity(req: Request, res: Response): Promise<void> {
 
               // Build exportRecord using allowed fields and resultMap
               const exportRecord: Record<string, any> = {};
-              activityFieldMappings.forEach((mapping) => {
+              if(value.activityType && value.activityType.toLowerCase() === "email") {
+                emailactivityFieldMappings.forEach((mapping) => {
                 if (allowedFieldSet.has(mapping.permissionField)) {
                   exportRecord[mapping.exportField] =
                     resultMap[mapping.dataField];
                 }
               });
+              } else if(value.activityType && value.activityType.toLowerCase() === "meeting") {
+                meetingactivityFieldMappings.forEach((mapping) => {
+                if (allowedFieldSet.has(mapping.permissionField)) {
+                  exportRecord[mapping.exportField] =
+                    resultMap[mapping.dataField];
+                }
+              });
+              } else if(value.activityType && value.activityType.toLowerCase() === "call") {
+                 callactivityFieldMappings.forEach((mapping) => {
+                if (allowedFieldSet.has(mapping.permissionField)) {
+                  exportRecord[mapping.exportField] =
+                    resultMap[mapping.dataField];
+                }
+              });
+              } else if(value.activityType && value.activityType.toLowerCase() === "task") {
+                 taskactivityFieldMappings.forEach((mapping) => {
+                if (allowedFieldSet.has(mapping.permissionField)) {
+                  exportRecord[mapping.exportField] =
+                    resultMap[mapping.dataField];
+                }
+              });
+              } else {
+                 activityFieldMappings.forEach((mapping) => {
+                  exportRecord[mapping.exportField] =
+                    resultMap[mapping.dataField];
+              });
+              }
+             
 
               return exportRecord;
             });
 
       const generateBase64Response = await generateExcelBase64(
         finalStructuredData,
-        "Cases"
+        "Activities"
       );
       successLog(methodName);
       handleSuccessResponse(res, generateBase64Response);
@@ -997,7 +1054,8 @@ async function fetchCallActivityById(
 async function getActivityStatus(req: Request, res: Response): Promise<void> {
   const methodName = "Get Activity Status";
   try {
-    const activityStatus = await activityService.getActivityStatus();
+    const activityType = req.query.activity_type as string || 'all'
+    const activityStatus = await activityService.getActivityStatus(activityType);
     if (activityStatus.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
       handleSuccessResponse(res, activityStatus.data);

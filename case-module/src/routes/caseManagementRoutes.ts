@@ -114,6 +114,11 @@ routes.get(
   controller.caseManagementController.listEmailTemplates
 );
 routes.get(
+  "/emailTemplatesByCategory",
+  checkUserStatusMiddleware("email_templates_view_edit"),
+  controller.caseManagementController.listAllEmailTemplatesByCategory
+);
+routes.get(
   "/emailTemplate/export",
   checkUserStatusMiddleware("email_templates_view_edit"),
   controller.caseManagementController.exportEmailTemplates

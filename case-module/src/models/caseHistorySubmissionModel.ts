@@ -68,12 +68,10 @@ export class CaseHistorySubmission
           ),
           primaryKey: true,
         },
-        r_number: {
+         r_number: {
           type: DataTypes.STRING(20),
-          allowNull: false,
-          defaultValue: Sequelize.literal(
-            `'CHS-' || LPAD(nextval('"${schemaName}".case_history_submission_seq')::text, 10, '0')`
-          ),
+          allowNull: true,
+          unique: true,
         },
         eid: {
           type: DataTypes.STRING(120),
@@ -183,6 +181,9 @@ export async function setupCaseHistorySubmissionSequence(
     await sequelize.query(
       `CREATE SEQUENCE IF NOT EXISTS "${schemaName}".case_history_submission_seq START 1`
     );
+
+    await sequelize.query(`ALTER TABLE "${schemaName}".cases
+      ALTER COLUMN r_number SET DEFAULT 'CHS-' || LPAD(nextval('"${schemaName}".case_history_submission_seq')::text, 10, '0')`);
 
     logMessage("Case history submission sequence setup complete");
   } catch (error) {

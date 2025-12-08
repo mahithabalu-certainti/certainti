@@ -119,7 +119,6 @@ export class CaseManagementService {
         },
       };
     } catch (err) {
-      console.log(err);
       logMessage(`Error creating admin checklist: ${err}`);
       await transaction.rollback();
       return {
@@ -176,7 +175,7 @@ export class CaseManagementService {
         return {
           statusCode: HttpStatus.BAD_REQUEST,
           message: HttpStatus.BAD_REQUEST_MESSAGE,
-          errorMessage: `A template with the name "${caseRequest.checklist_name}" . Please choose a different name.`,
+          errorMessage: `A checklist template with the name "${caseRequest.checklist_name}" already exists . Please choose a different name.`,
         };
       }
     }
@@ -187,7 +186,7 @@ export class CaseManagementService {
         );
 
       // If checklist creation was successful, manage associated checklist items (add/edit/delete)
-      if (response) {
+      if (response  && caseRequest?.checklist_items) {
         await this.caseManangementSchemaService.manageAdminCheckListItems(
           caseRequest,
           caseRequest.checklist_template_rid!,
@@ -197,7 +196,6 @@ export class CaseManagementService {
 
       // Commit the transaction after all operations succeed
       await transaction.commit();
-
       return {
         statusCode: HttpStatus.SUCCESS,
         message: STATUS_MESSAGE.adminChecklistCreated,
@@ -437,6 +435,34 @@ export class CaseManagementService {
       }  
     }
   }
+
+  async listEmailTemplatesByCategory (
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { emailTemplates: any; };
+  }> {
+    const result = await this.caseManangementSchemaService.listEmailTemplatesByCategory();
+    if (result != null) {
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          emailTemplates: result
+        },
+      };
+    } else {
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.NOT_FOUND_MESSAGE,
+        data: {
+          emailTemplates: []
+        },
+      };
+    }
+  }
+     
   async updateTaskTemplate (data : UpdateTaskTemplateType, userId : string)  {
     const result = await this.caseManangementSchemaService.updateTaskTemplate(data, userId);
     if(result?.statusCode == HttpStatus.SUCCESS) {
@@ -674,6 +700,7 @@ export class CaseManagementService {
                 task_type_rid: d.task_type_rid,
                 effort_in_days: d.effort_in_days,
                 checklists_count: d.checklists_count,
+                completed_checklist_items_count : d.complete_items,
                 comments_count : d.comments_count,
                 task_description: d.task_description,
                 effective_end_datetime: d.effective_end_datetime,

@@ -102,6 +102,7 @@ class SchemaService {
       await this.createProjectResourcesHistoryTable(schemaName, sequelize);
       await this.createProjectResourceFiscalTable(schemaName, sequelize);
       await this.createProjectResourceFiscalRegionTable(schemaName, sequelize);
+      await this.createJustificationTable(schemaName, sequelize);
 
       await this.createProjectTaskTable(schemaName, sequelize);
       await this.createProjectTaskTimeLineTable(schemaName, sequelize);
@@ -122,12 +123,15 @@ class SchemaService {
       await this.createEmailWebhookHistory(schemaName, sequelize);
       await this.createNotesTable(schemaName, sequelize);
       await this.createNotesTimeline(schemaName, sequelize);
-
+      
+      await this.createAccountTimelineTable(schemaName, sequelize);
       await this.createCheckListTable(schemaName, sequelize);
       await this.createCheckListItemTable(schemaName, sequelize);
       await this.createActivitiesTable(schemaName, sequelize);
       await this.createActivityAttachmentsTable(schemaName, sequelize);
       await this.createActivityHistoryTable(schemaName, sequelize);
+      await this.createTaskHistoryTable(schemaName, sequelize);
+
       
       await transaction.commit();
     } catch (Err) {
@@ -1411,6 +1415,14 @@ class SchemaService {
     }
   }
 
+  private async createJustificationTable(schemaName: string, sequelize: Sequelize) {
+    await sequelize.query(rawQueries.getCreateJurisdictionTableQuery(schemaName));
+
+    for (const indexQuery of rawQueries.getCreateJurisdictionsIndexes(schemaName)) {
+      await sequelize.query(indexQuery);
+    }
+  }
+
   private async createNotesTimeline(schemaName: string, sequelize: Sequelize) {
     await sequelize.query(
       rawQueries.getCreateNotesTimelineSequenceQuery(schemaName)
@@ -1418,6 +1430,31 @@ class SchemaService {
 
     await sequelize.query(
       rawQueries.getCreateNotesTimelineTableQuery(schemaName)
+    );
+
+    const fieldsToIndex = [
+      "created_by",
+      "modified_by",
+      "attachment_level",
+      "event_type",
+      "event_status",
+      "event_datetime"
+    ];
+  
+    for (const field of fieldsToIndex) {
+      await sequelize.query(
+        rawQueries.getNotesTimelineIndexQuery(schemaName, field)
+      );
+    }
+  }
+
+   private async createAccountTimelineTable(schemaName: string, sequelize: Sequelize) {
+    await sequelize.query(
+      rawQueries.getCreateAccountTimelineSequenceQuery(schemaName)
+    );
+
+    await sequelize.query(
+      rawQueries.getCreateAccountTimelineTableQuery(schemaName)
     );
 
     const fieldsToIndex = [
@@ -1511,9 +1548,9 @@ class SchemaService {
     );
 
     const fieldsToIndex = [
-      "interaction_rid",
-      "interaction_item_rid",
-      "project_fiscal_rid",
+      "activity_rid",
+      "account_rid",
+      "activity_type",
       "created_by",
       "modified_by",
       "created_datetime",
@@ -1522,7 +1559,34 @@ class SchemaService {
   
     for (const field of fieldsToIndex) {
       await sequelize.query(
-        rawQueries.getInteractionHistoryIndexQuery(schemaName, field)
+        rawQueries.getActivityHistoryIndexQuery(schemaName, field)
+      );
+    }
+  }
+
+   private async createTaskHistoryTable(
+    schemaName: string,
+    sequelize: any
+  ) {
+    await sequelize.query(
+      rawQueries.getCreateTaskHistorySequenceQuery(schemaName)
+    );
+
+    await sequelize.query(
+      rawQueries.getCreateTaskHistoryTableQuery(schemaName)
+    );
+
+    const fieldsToIndex = [
+      "task_rid",
+      "created_by",
+      "modified_by",
+      "created_datetime",
+      "modified_datetime"
+    ];
+  
+    for (const field of fieldsToIndex) {
+      await sequelize.query(
+        rawQueries.getTaskHistoryIndexQuery(schemaName, field)
       );
     }
   }

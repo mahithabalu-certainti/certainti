@@ -300,10 +300,14 @@ export class HistoricalSubmissionSchemaService {
   ) {
     try {
       
-      const { CaseHistorySubmission } = await this.caseModelService.getModels(accountNumber);
+      const { CaseHistorySubmission } = await this.caseModelService.getModels(accountNumber); 
       const whereConditions: any = {
         account_rid: data.account_rid,
+        country_rid: data.country_rid
       };
+      if (data.state_rid != null) {
+        whereConditions.state_rid = data.state_rid;
+      }
       const queryOptions: any = {
         where: whereConditions,
         order: [["fiscal_year", "ASC"]],
@@ -332,7 +336,7 @@ export class HistoricalSubmissionSchemaService {
       })
       return historicalSubmissions;
     } catch (err) {
-      logMessage(`Error in fetching historical submissions: ${err}`);
+      logMessage(`Error in fetching historical submissions : ${err}`);
       errorLog("Error in fetching historical submissions:", (err as Error).message);
       return [];
     }

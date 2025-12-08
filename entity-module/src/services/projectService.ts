@@ -12,6 +12,7 @@ import {
   ICreateProject,
   IUpdateProject,
   IUpdateQrePecentAdjustment,
+  CaseStatusResult, 
 } from "../utils/types";
 import SchemaService from "./schemaService";
 import {
@@ -550,6 +551,14 @@ export class ProjectService {
         projectData.project_fiscal_id
       );
 
+    if(projectData.is_qualified){
+      if (existingFiscalData && existingFiscalData.is_qualified) {
+        errorLog("Qualified project cannot be updated.");
+        throw new Error("Qualified project cannot be updated.");
+      }
+    }
+
+
     await this.projectIngestion.updateProjectFiscal(
       accountNumber,
       projectData,
@@ -612,6 +621,21 @@ export class ProjectService {
       existingFiscalData?.rid || "",
       existingFiscalData?.fiscal_year || null
     );
+
+    const projectCaseMapping = 
+      await this.projectIngestion.fetchProjectFiscalCaseMapping(
+        accountNumber,
+        projectData.project_fiscal_id
+      );
+
+    for (const caseMapping of projectCaseMapping) {
+      await this.projectIngestion.updateCaseProjectTables(
+        accountNumber,
+        caseMapping,
+        projectData,
+        existingFiscalData?.project_code || ""
+      );
+    }
   }
 
   /**

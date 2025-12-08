@@ -60,7 +60,19 @@ export class CaseTeam
           defaultValue: DataTypes.NOW
         },
         modified_datetime: { type: DataTypes.DATE, allowNull: true },
-        case_rid: { type: DataTypes.STRING(50), allowNull: false },
+        case_rid: {
+          type: DataTypes.STRING(50),
+          allowNull: false,
+          references: {
+            model: {
+              tableName: "cases",
+              schema: schemaName
+            },
+            key: "rid"
+          },
+          onUpdate: "CASCADE",
+          onDelete: "CASCADE"
+        },
         account_rid: { type: DataTypes.STRING(50), allowNull: false },
         role_rid: { type: DataTypes.STRING(50), allowNull: false },
         user_rid: { type: DataTypes.STRING(50), allowNull: false },
@@ -77,23 +89,5 @@ export class CaseTeam
         underscored: true,
       }
     );
-  }
-}
-
-export async function setupCaseTeamSequence(
-  sequelize: Sequelize,
-  schemaName: string
-) {
-  try {
-    await sequelize.query(
-      `CREATE SEQUENCE IF NOT EXISTS "${schemaName}".case_team_seq START 1`
-    );
-
-    await sequelize.query(`ALTER TABLE "${schemaName}".case_team
-      ALTER COLUMN r_number SET DEFAULT 'CASTEAM-' || LPAD(nextval('"${schemaName}".case_team_seq')::text, 10, '0')`);
-
-    logMessage("Case team sequence setup complete");
-  } catch (error) {
-    logMessage(`Error setting up Case team sequence: ${error}`);
   }
 }

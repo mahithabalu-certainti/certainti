@@ -140,6 +140,8 @@ export interface ProjectFiscalAttributes {
 
   comments?: string | null;
   project_description?: string | null;
+
+  is_qualified?: boolean | null;
 }
 
 interface ProjectFiscalCreationAttributes
@@ -284,6 +286,7 @@ export class ProjectFiscal
   public claim_status?: string | null;
   public comments?: string | null;
   public project_description?: string | null;
+  public is_qualified?: boolean | null;
 
   static initialize(sequelize: Sequelize, schema: string) {
     ProjectFiscal.init(
@@ -521,6 +524,10 @@ export class ProjectFiscal
         },
         project_description: {
           type: DataTypes.STRING(2000),
+          allowNull: true,
+        },
+        is_qualified: {
+          type: DataTypes.BOOLEAN,
           allowNull: true,
         },
       },

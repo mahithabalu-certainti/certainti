@@ -46,7 +46,7 @@ routes.get(
   checkUserStatusMiddleware("cases_view_edit"),
   controller.caseController.listAllCasesAccount
 );
-routes.get(
+routes.post(
   "/list/caseSummary",
   checkUserStatusMiddleware("cases_view_edit"),
   controller.caseController.listAllCasesSummary
@@ -253,9 +253,11 @@ routes.get(
   checkUserStatusMiddleware("case_review_projects_export"),
   controller.caseController.exportReviewProjects
 )
+
 routes.post(
   "/sentReviewProjects",
   checkUserStatusMiddleware("case_review_projects_export"),
+  upload.array('files'),
   controller.caseController.sentReviewProjects
 )
 routes.get(

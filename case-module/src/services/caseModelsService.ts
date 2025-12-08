@@ -5,6 +5,8 @@ import { MAIN_SCHEMA_NAME, SCHEMANAME_PREFIX } from "../utils/constants";
 import { Case } from "../models/caseModel";
 import { CaseSummary } from "../models/caseSummaryModel";
 import { CaseProject } from "../models/caseProjectsModel";
+import { CaseProjectResource } from "../models/caseProjectResourceModel";
+import { CaseProjectTask } from "../models/caseProjectTaskModel";
 import { CaseTimeline } from "../models/caseTimeline";
 import { CaseHistory } from "../models/caseHistory";
 import { CaseTeam } from "../models/caseTeamModel";
@@ -26,6 +28,14 @@ import { TaskAttachments } from "../models/taskAttachmentModel";
 import { CaseTaskWorkflowConnector } from "../models/caseTaskWorkflowConnectorModel";
 import { WorkflowConnector } from "../models/workflowConnectorModel";
 import { WorkflowConnectorMapping } from "../models/workflowConnectorMapModel";
+import { ProjectResourceFiscal } from "../models/projectResourceFiscal";
+import { ProjectTask } from "../models/projectTask";
+import { CaseProjectResourceFiscal } from "../models/caseProjectResourceFiscalModel";
+import { ProjectResource } from "../models/projectResource";
+import { ProjectFiscal } from "../models/projectFiscal";
+import { ProjectFiscalRegion } from "../models/projectFiscalRegion";
+import { CaseProjectFiscalRegion } from "../models/caseProjectFiscalRegionModel";
+
 import { Activities } from "../models/activitiesModel";
 import { TaskHistory } from "../models/taskHistory";
 import { ActivityAttachments } from "../models/activitiesAttachmentModel";
@@ -42,6 +52,8 @@ export class CaseModelService {
       Case: ReturnType<typeof Case.initialize>;
       CaseSummary: ReturnType<typeof CaseSummary.initialize>;
       CaseProject: ReturnType<typeof CaseProject.initialize>;
+      CaseProjectResource: ReturnType<typeof CaseProjectResource.initialize>;
+      CaseProjectTask: ReturnType<typeof CaseProjectTask.initialize>;
       CaseTimeline: ReturnType<typeof CaseTimeline.initialize>;
       TaskTemplate: ReturnType<typeof TaskTemplate.initialize>
       CaseMilestone: ReturnType<typeof CaseMilestone.initialise>
@@ -57,6 +69,13 @@ export class CaseModelService {
       CaseTaskWorkflowConnector: ReturnType<typeof CaseTaskWorkflowConnector.initialize>
       WorkflowConnector : ReturnType<typeof WorkflowConnector.initialize>
       WorkflowConnectorMapping: ReturnType<typeof WorkflowConnectorMapping.initialize>
+      ProjectResourceFiscal: ReturnType<typeof ProjectResourceFiscal.initialize>
+      ProjectTask: ReturnType<typeof ProjectTask.initialize>
+      CaseProjectResourceFiscal: ReturnType<typeof CaseProjectResourceFiscal.initialize>
+      ProjectResource: ReturnType<typeof ProjectResource.initialize>
+      ProjectFiscal: ReturnType<typeof ProjectFiscal.initialize>
+      ProjectFiscalRegion: ReturnType<typeof ProjectFiscalRegion.initialize>
+      CaseProjectFiscalRegion: ReturnType<typeof CaseProjectFiscalRegion.initialize>
       TaskHistory : ReturnType<typeof TaskHistory.initialize>;
       ActivityAttachments : ReturnType<typeof ActivityAttachments.initialise>
       ActivityHistory: ReturnType<typeof ActivityHistory.initialize>;
@@ -91,6 +110,8 @@ export class CaseModelService {
     const CaseModel = Case.initialize(sequelize, schemaName);
     const CaseSummaryModel = CaseSummary.initialize(mainDbSequelize, "");
     const CaseProjectModel = CaseProject.initialize(sequelize, schemaName);
+    const CaseProjectResourceModel = CaseProjectResource.initialize(sequelize, schemaName);
+    const CaseProjectTaskModel = CaseProjectTask.initialize(sequelize, schemaName);
     const CaseTimelineModel = CaseTimeline.initialize(sequelize, schemaName);
     const CaseHistoryModel = CaseHistory.initialize(sequelize, schemaName);
     const CaseTeamModel = CaseTeam.initialize(sequelize, schemaName);
@@ -112,17 +133,26 @@ export class CaseModelService {
     const CaseHistorySubmissionModel = CaseHistorySubmission.initialize(sequelize, schemaName);
     const CaseTaskWorkflowConnectorModel = CaseTaskWorkflowConnector.initialize(sequelize, schemaName)
     const WorkflowConnectorModel = WorkflowConnector.initialize(mainDbSequelize, MAIN_SCHEMA_NAME);
+    const ProjectResourceFiscalModel = ProjectResourceFiscal.initialize(sequelize, schemaName);
+    const ProjectTaskModel = ProjectTask.initialize(sequelize, schemaName);
+    const CaseProjectResourceFiscalModel = CaseProjectResourceFiscal.initialize(sequelize, schemaName);
+    const ProjectResourceModel = ProjectResource.initialize(sequelize, schemaName);
+    const ProjectFiscalModel = ProjectFiscal.initialize(sequelize, schemaName);
+    const ProjectFiscalRegionModel = ProjectFiscalRegion.initialize(sequelize, schemaName);
+    const CaseProjectFiscalRegionModel = CaseProjectFiscalRegion.initialize(sequelize, schemaName);
     const WorkflowConnectorMappingModel = WorkflowConnectorMapping.initialize(mainDbSequelize, MAIN_SCHEMA_NAME)   
     const ActivitiesModel = Activities.initialize(sequelize, schemaName);
     const TaskHistoryModel = TaskHistory.initialize(sequelize, schemaName);
     const ActivityAttachmentsModel = ActivityAttachments.initialise(sequelize, schemaName);
     const ActivityHistoryModel = ActivityHistory.initialize(sequelize, schemaName);
-    const TaskSummaryModel = TaskSummary.initialize(sequelize, "");
+    const TaskSummaryModel = TaskSummary.initialize(mainDbSequelize, "");
 
     const models = {
       Case: CaseModel,
       CaseSummary: CaseSummaryModel,
       CaseProject: CaseProjectModel,
+      CaseProjectResource: CaseProjectResourceModel,
+      CaseProjectTask: CaseProjectTaskModel,
       CaseTimeline: CaseTimelineModel,
       CaseHistory: CaseHistoryModel,
       CaseTeam: CaseTeamModel,
@@ -147,6 +177,13 @@ export class CaseModelService {
       CaseTaskWorkflowConnector : CaseTaskWorkflowConnectorModel,
       WorkflowConnector : WorkflowConnectorModel,
       WorkflowConnectorMapping : WorkflowConnectorMappingModel,
+      ProjectResourceFiscal: ProjectResourceFiscalModel,
+      ProjectTask: ProjectTaskModel,
+      CaseProjectResourceFiscal: CaseProjectResourceFiscalModel,
+      ProjectResource: ProjectResourceModel,
+      ProjectFiscal: ProjectFiscalModel,
+      ProjectFiscalRegion: ProjectFiscalRegionModel,
+      CaseProjectFiscalRegion: CaseProjectFiscalRegionModel,
       ActivityAttachments : ActivityAttachmentsModel,
       ActivityHistory : ActivityHistoryModel,
       TaskSummary: TaskSummaryModel

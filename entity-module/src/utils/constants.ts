@@ -79,6 +79,7 @@ export const R_NUMBER_PREFIX = {
 export const STATUS_MESSAGE = {
   accountInactive: "Inactive Account",
   accountNoFound: "Account not found",
+  qualifiedProject: "Qualified project cannot be updated.",
   accountUpdateSuccess: "Account updated successfully",
   accountIdMissing: "Account RID mising",
   importIdMissing: "Import RID mising",
@@ -199,13 +200,13 @@ export const rawQueries = {
       `SELECT rid, r_number, account_name, storage_type,is_parent, subscription_id FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`
     );
     if (checkIsSeparateDb[0][0].storage_type == STATUS_MESSAGE.separateDb) {
-      return `SELECT rid, r_number, account_name, storage_type,is_parent, subscription_id FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`;
+      return `SELECT rid, r_number, account_name, storage_type,is_parent, subscription_id, parent_account_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`;
     } else {
       return `
       with fetch_account_details AS (
       SELECT rid, r_number, parent_account_rid,is_parent, subscription_id FROM ${MAIN_SCHEMA_NAME}.account where rid = '${accountRid}'
       )
-      SELECT a.rid, a.r_number, a.account_name, a.is_parent , a.subscription_id
+      SELECT a.rid, a.r_number, a.account_name, a.is_parent , a.subscription_id, a.parent_account_rid
       FROM ${MAIN_SCHEMA_NAME}.account a
       LEFT JOIN fetch_account_details ad ON ad.parent_account_rid = a.rid
       WHERE a.rid = ad.parent_account_rid`;
@@ -263,6 +264,12 @@ export const rawQueries = {
                 )
                 `;
   },
+  fetchProjectFiscalCaseMapping(schemaName: string, data: any) {
+    return `
+                SELECT * FROM ${schemaName}.case_projects
+                WHERE project_fiscal_rid= '${data.project_fiscal_rid}'
+                `;
+  },
   updateProject(schemaName: string, project_code: string, data: any) {
     return `
             UPDATE 
@@ -273,6 +280,27 @@ export const rawQueries = {
                     rid = '${data.project_rid}'
                     AND
                     account_rid = '${data.account_rid}'`;
+  },
+  updateCaseProjects(
+    schemaName: string,
+    setProjectFiscalData: any,
+    data: any,
+    case_rid: string
+  ) {
+    return `
+            UPDATE 
+                ${schemaName}.case_projects
+            SET
+                ${setProjectFiscalData.join(",")}
+            WHERE 
+                project_fiscal_rid = '${data.project_fiscal_rid}'
+                AND
+                account_rid = '${data.account_rid}'
+                AND
+                project_rid = '${data.project_rid}'
+                AND
+                case_rid = '${case_rid}'
+            `;
   },
   updateProjectFiscal(
     schemaName: string,
@@ -528,6 +556,9 @@ export const rawQueries = {
   fetchSchemaName(r_number: string) {
     return `${MAIN_SCHEMA_NAME}_${r_number.replace("ACC-", "")}`;
   },
+  fetchCaseStatusByRid(rid: string) {
+    return `SELECT status_name FROM ${MAIN_SCHEMA_NAME}.case_status where rid = '${rid}'`;
+  },
   updateAttachmentQuery(schemaName: string, getSetData: any, data: any) {
     return `
     UPDATE 
@@ -549,6 +580,19 @@ export const rawQueries = {
         rid = '${data.rid}'
         AND
         account_rid = '${data.account_rid}'`;
+  },
+  updateCaseProjectTaskQuery(schemaName: string, getSetData: any, data: any, caseMapping: any) {
+    return `
+    UPDATE 
+        ${schemaName}.case_project_task 
+    SET 
+        ${getSetData.data.join(",")}
+    WHERE
+        project_task_rid = '${data.rid}'
+        AND
+        account_rid = '${data.account_rid}'
+        AND
+        case_rid = '${caseMapping.case_rid}'`;
   },
   updateAttachmentSummary(getSetData: any, data: any) {
     return `
@@ -594,6 +638,29 @@ export const rawQueries = {
       /'/g,
       "''"
     )}'
+    `;
+  },
+  updateCaseProjectPrjCode(
+    schemaName: string,
+    newProject_code: string,
+    account_rid: string,
+    project_rid: string,
+    existing_project_code: string,
+    case_rid: string
+  ) {
+    return `
+    UPDATE ${schemaName}.case_projects SET project_code = '${newProject_code.replace(
+      /'/g,
+      "''"
+    )}'
+    WHERE
+    account_rid = '${account_rid}' 
+    AND project_rid = '${project_rid}' 
+    AND project_code = '${existing_project_code.replace(
+      /'/g,
+      "''"
+    )}'
+    AND case_rid = '${case_rid}' 
     `;
   },
   updateProjectFiscalSummaryPrjCode(
@@ -817,7 +884,8 @@ export const rawQueries = {
     mainDb: Sequelize,
     parentAccountID: string,
     subscriptionId?: string,
-    isParentAccount: boolean = false
+    isParentAccount: boolean = false,
+    parenSchema? : string
   ) {
     let tableName: string[];
     let whereParams: string = ``;
@@ -889,7 +957,7 @@ export const rawQueries = {
             data.client_secret
           );
           let query = `
-        UPDATE ${schema}.${t}
+        UPDATE ${parenSchema}.${t}
         SET
         support_email = '${data.support_email}',
         tenant_id = '${data.tenant_id}',
@@ -959,6 +1027,29 @@ export const rawQueries = {
       default_metric_type = 'project'
       AND
       effective_metric_type IS NULL
+    `;
+  },
+  updateCaseProjectEffectiveDatas(schemaName: string, data: any, case_rid: string) {
+    return `
+    UPDATE ${schemaName}.case_projects
+    SET 
+      effective_cost = ${data.total_cost_prj},
+      effective_effort = ${data.total_effort_prj},
+      effective_total_fte = ${data.total_fte_prj},
+      effective_total_subcon = ${data.total_subcon_prj},
+      effective_fte_effort = ${data.total_effort_fte_prj},
+      effective_subcon_effort = ${data.total_effort_subcon_prj},
+      effective_fte_cost = ${data.total_cost_fte_prj},
+      effective_subcon_cost = ${data.total_cost_subcon_prj},
+      effective_nonlabor_cost = ${data.total_cost_nonlabor_prj}
+    WHERE
+      project_fiscal_rid = '${data.rid}'
+      AND
+      default_metric_type = 'project'
+      AND
+      effective_metric_type IS NULL
+      AND
+      case_rid = '${case_rid}'
     `;
   },
   fetchResourceTypeById(schemaName: string) {
@@ -2160,6 +2251,9 @@ export const rawQueries = {
   insertTimeline: (schemaName: string,tableName: string) =>
   `INSERT INTO "${schemaName}".${tableName} (event_name, event_status, event_type, entity_rid,account_rid, description, created_by, event_datetime, created_datetime) VALUES (:event_name, :event_status, :event_type, :entity_rid, :account_rid, :description, :created_by, :event_datetime, :created_datetime)`,
 
+  getAccountDetails (accountRid : string) {
+    return `SELECT rid, r_number, subscription_id, is_parent FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`
+  } 
 };
 
 export const IMPORT_FILTER_COLUMNS: any = {

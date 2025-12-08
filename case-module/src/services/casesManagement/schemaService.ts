@@ -627,7 +627,7 @@ class CaseManagementSchemaService {
         task_description : data.task_description,
         weightage_rid : data.weightage_rid,
         task_category_rid : data.task_category_rid,
-        milestone_sequence : findMilestoneSequence[0][0].sequence_no
+        milestone_sequence : findMilestoneSequence[0][0].r_number
       }
     } else {
       const checkTaskNameExists = await this.checkTaskExists(data, getTaskType[0][0].rid);
@@ -751,16 +751,19 @@ class CaseManagementSchemaService {
         result = await this.updateTaskTemplateActionType(dynamicData)
       }
       if(result === 1) {
-        if(Object.keys(data.workflow_connector).length > 0) {
-          data.workflow_connector.created_by = userId
-          if(data.workflow_connector.target_rid.length > 0) {
-            await this.taskWorkflowConnector(data.workflow_connector);
+       if(Object.keys(data.workflow_connector).length > 0) {
+            data.workflow_connector.created_by = userId
+            if(data.workflow_connector.target_rid !== undefined) {
+              if(data.workflow_connector.target_rid.length > 0)
+                await this.taskWorkflowConnector(data.workflow_connector);
+            }
+            if(data.workflow_connector.delete_target_rids !== undefined) {
+              if(data.workflow_connector.delete_target_rids.length > 0) {
+                data.workflow_connector.source_rid = data.rid
+                await this.deleteTaskWorkConnector(data.workflow_connector)
+              }
+            }
           }
-          if(data.workflow_connector.delete_target_rids != undefined) {
-            if(data.workflow_connector.delete_target_rids.length > 0)
-              await this.deleteTaskWorkConnector(data.workflow_connector)
-          }
-        }
         return {
           statusCode : HttpStatus.SUCCESS,
           statusMessage : STATUS_MESSAGE.taskUpdatedSuccess
@@ -968,8 +971,12 @@ async fetchChecklistTemplateDetailsById(
     if(!this.orgDbSequelize) {
       this.orgDbSequelize = await initOrgSequelize();
     }
-
-    const result : any = await this.orgDbSequelize.query(fetchCaseTemplateData(schemaName,caseRid, accountRid));
+    if(!this.mainDbSequelize) {
+      this.mainDbSequelize = await initMainDbSequelize();
+    }
+    const getActiveStatusId : any = await this.mainDbSequelize.query(rawQueries.getActiveStatusId())
+    const getChecklistItemsStatusId : any = await this.mainDbSequelize.query(rawQueries.getChecklistOpenStatusId());
+    const result : any = await this.orgDbSequelize.query(fetchCaseTemplateData(schemaName,caseRid, accountRid, getActiveStatusId[0][0].rid, getChecklistItemsStatusId[0][0].rid));
     
     if(result[0].length > 0) {
       return result[0][0]
@@ -1138,7 +1145,6 @@ async  checkisExistingChecklistTemplateUnique(checklistReq: any): Promise<boolea
       ]
     }
   });
-  console.log("response checkisExistingChecklistTemplateUnique", response);
   return !response;
 }
 
@@ -1195,6 +1201,36 @@ async  checkisExistingChecklistTemplateUnique(checklistReq: any): Promise<boolea
         return [];
       }
     }
+  async listEmailTemplatesByCategory(
+  ) {
+    try { 
+      if(!this.mainDbSequelize) {
+        this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+      }
+      const { EmailTemplate } = await this.caseModelService.getModels("");
+      const [templateDetails]:any[] = await this.mainDbSequelize.query(
+            rawQueries.getEmailTemplateCategoryByName(emailCategorties.general),
+            {
+              type: "SELECT",
+            }
+          );
+      const templateResponse = await EmailTemplate.findAll({
+              attributes: ['rid', 'template_name', 'category_rid'],
+              where: {
+                category_rid: templateDetails.rid
+              },
+              raw: true,
+            });
+      return templateResponse;
+    } catch (err) {
+      logMessage(`Error in fetching email templates by category: ${err}`);
+      errorLog(
+        "Error in fetching email templates by category:",
+        (err as Error).message
+      );
+      return [];
+    } 
+  }
   async listEmailTemplates(
   page: number,
   limit: number,
@@ -1402,6 +1438,33 @@ async getWorkFlowConnector () {
         rid : data.relationship_connector_rid
       }, raw : true
     })
+    const findExistingData = await WorkflowConnectorMapping.findAll({
+      attributes : ['relationship_connector_rid', 'source_rid', 'target_rid'],
+      where : {
+        source_rid : data.source_rid,
+        target_rid : {
+          [Op.in] : data.target_rid.map((d : any) => d)
+        }
+      }, raw : true
+    });
+    if(findExistingData.length > 0) {
+      for(let d of findExistingData) {
+         if(d.relationship_connector_rid !== data.relationship_connector_rid) {
+          await WorkflowConnectorMapping.destroy({
+            where : {
+              source_rid : d.target_rid,
+              target_rid : data.source_rid,
+            }
+          })
+          await WorkflowConnectorMapping.destroy({
+            where : {
+              source_rid : data.source_rid,
+              target_rid : d.target_rid
+            }
+          })
+        }
+      }
+    }
     if(workFlowConnectorData) {
         if(workFlowConnectorData.relationship_type === 'Blocks') {
           dynamicRelationTypeName = relationshipTypes.isBlockedBy
