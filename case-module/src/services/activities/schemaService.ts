@@ -1315,6 +1315,8 @@ class ActivitySchemaService {
               break;
             case 'created_datetime':
             case 'modified_datetime':
+            case 'effective_start_datetime':
+            case 'effective_end_datetime':
               switch (operator.toLowerCase()) {
                 case 'equals': {
                   const date = new Date(value);
@@ -2956,7 +2958,7 @@ class ActivitySchemaService {
             // Assuming rawQueries.fetchPriorityNames returns [{ rid, name }]
             const result = await this.mainDbSequelize.query(rawQueries.fetchPriority(String(oldValue || ''), String(newValue || '')));
             for (let r of result[0]) {
-              priorityMapping.set((r as any)?.rid, (r as any)?.pr);
+              priorityMapping.set((r as any)?.rid, (r as any)?.priority_name);
             }
             priorityOldValueString = priorityMapping.get(oldValue);
             priorityNewValueString = priorityMapping.get(newValue);
