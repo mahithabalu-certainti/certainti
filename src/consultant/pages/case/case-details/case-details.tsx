@@ -833,7 +833,7 @@ export const CaseDetails = () => {
         <InfoSection
           columns={caseHeaderDetails}
           loading={isLoading}
-          loadingRows={4}
+          loadingRows={3}
           error={isError}
           className={!isError ? 'max-h-[140px] min-h-[140px]' : ''}
         />

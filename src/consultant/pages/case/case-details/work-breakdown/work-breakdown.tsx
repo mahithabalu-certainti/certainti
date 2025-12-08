@@ -770,49 +770,53 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
 
   return (
     <>
-      <SectionTabPanel
-        tabs={ConfigTabs}
-        filterMenu={filterFields}
-        filterVisibility={tabParam !== 'milestone'}
-        showFilter={showFilter}
-        contextKey={`case`}
-        appliedFilters={appliedFilters}
-        setAppliedFilters={setAppliedFilters}
-        setCurrentPage={setCurrentPage}
-        handleFilter={handleFilter}
-        handleSorting={() => {}}
-        sortFilterCount={0}
-        setSortFilterCount={() => {}}
-        showRefresh={tabParam === 'milestone'}
-        onRefreshClick={onRefreshClick}
-        // hideTabPanel={hideSection}
-        showSearch={tabParam === 'case_task' ? true : false}
-        searchDisabled={false}
-        searchPlaceholder='Search'
-        onSearch={(text) => setSearchText(text)}
-        searchReset={resetSearch}
-        onSearchReset={handleSearchReset}
-        showAddActivity={true}
-        activityMenuItems={activityMenuItems}
-      />
-      <SectionHeader
-        title={'Action Items'}
-        titleIcon={getTitleIcon()}
-        buttons={headerButtons}
-        count={count}
-        showItemCount={tabParam === 'case_task'}
-        hideSection={false}
+      {!isActionItemsExpanded && (
+        <>
+          <SectionTabPanel
+            tabs={ConfigTabs}
+            filterMenu={filterFields}
+            filterVisibility={tabParam !== 'milestone'}
+            showFilter={showFilter}
+            contextKey={`case`}
+            appliedFilters={appliedFilters}
+            setAppliedFilters={setAppliedFilters}
+            setCurrentPage={setCurrentPage}
+            handleFilter={handleFilter}
+            handleSorting={() => {}}
+            sortFilterCount={0}
+            setSortFilterCount={() => {}}
+            showRefresh={tabParam === 'milestone'}
+            onRefreshClick={onRefreshClick}
+            // hideTabPanel={hideSection}
+            showSearch={tabParam === 'case_task' ? true : false}
+            searchDisabled={false}
+            searchPlaceholder='Search'
+            onSearch={(text) => setSearchText(text)}
+            searchReset={resetSearch}
+            onSearchReset={handleSearchReset}
+            showAddActivity={true}
+            activityMenuItems={activityMenuItems}
+          />
+          <SectionHeader
+            title={'Action Items'}
+            titleIcon={getTitleIcon()}
+            buttons={headerButtons}
+            count={count}
+            showItemCount={tabParam === 'case_task'}
+            hideSection={false}
+          />
+        </>
+      )}
+      <SectionHeaderTab
+        tabs={tabs}
+        onTabChange={handleTabChange}
+        defaultValue={tabParam}
         isExpanded={isActionItemsExpanded}
         onToggleExpand={
           tabParam === 'milestone' && setIsActionItemsExpanded
             ? () => setIsActionItemsExpanded(!isActionItemsExpanded)
             : undefined
         }
-      />
-      <SectionHeaderTab
-        tabs={tabs}
-        onTabChange={handleTabChange}
-        defaultValue={tabParam}
       />
 
       <div

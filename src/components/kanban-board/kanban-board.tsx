@@ -371,10 +371,11 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
               <div
                 className={`flex items-start gap-2 ${isExpanded ? 'h-full' : 'pb-30'}`}
               >
-                {columns.map((column) => (
+                {columns.map((column, index) => (
                   <KanbanColumn
                     key={column.rid}
                     column={column}
+                    index={index}
                     showTaskCount={showTaskCount}
                     showCommentCount={showCommentCount}
                     showProfileIndicator={showProfileIndicator}
@@ -414,10 +415,11 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
             <div
               className={`flex items-start gap-2 ${isExpanded ? 'h-full' : 'pb-30'}`}
             >
-              {columns.map((column) => (
+              {columns.map((column, index) => (
                 <KanbanColumn
                   key={column.rid}
                   column={column}
+                  index={index}
                   showTaskCount={showTaskCount}
                   showCommentCount={showCommentCount}
                   showProfileIndicator={showProfileIndicator}
