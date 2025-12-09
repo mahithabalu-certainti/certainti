@@ -41,6 +41,7 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
     goToStep,
     canProceedToConditions,
     canProceedToActions,
+    validatedConditionIds,
   } = useWorkflowContext();
 
   const handleSelectTrigger = (trigger: Trigger) => {
@@ -76,10 +77,8 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
           goToStep('actions');
         }
         break;
-      case 'actions':
-        // Handle rule submission
-        console.log('Submitting rule:', rule);
-        break;
+      // No 'actions' case needed since Next button is not shown in actions step
+      // Validation for save happens in the form-level save button
     }
   };
 
@@ -138,6 +137,7 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
             <ConditionManager
               conditionListData={apiData.conditionListData}
               isLoadingConditionTypes={apiData.isLoadingConditionTypes}
+              validatedConditionIds={validatedConditionIds}
             />
           </div>
         </div>
@@ -398,7 +398,7 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
               {/* Actions Block */}
               <div
                 className={`border rounded-lg p-4 ${
-                  rule.conditions.length > 0 && currentStep !== 'actions'
+                  canProceedToActions && currentStep !== 'actions'
                     ? 'cursor-pointer'
                     : 'cursor-default'
                 } transition-all border ${
@@ -409,7 +409,7 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
                       : 'border-gray-300 bg-white'
                 }`}
                 onClick={() =>
-                  rule.conditions.length > 0 &&
+                  canProceedToActions &&
                   currentStep !== 'actions' &&
                   goToStep('actions')
                 }

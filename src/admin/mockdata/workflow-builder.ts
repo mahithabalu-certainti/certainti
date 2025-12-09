@@ -6,6 +6,9 @@ import {
   ActionTypeResponse,
   ScopeEventListResponse,
   ScopeListResponse,
+  RuleCategoryFieldsResponse,
+  RuleFieldOperatorsResponse,
+  RuleFieldValuesResponse,
 } from '../types';
 
 export const ScopeListMockData: ScopeListResponse = {
@@ -165,6 +168,48 @@ export const ActionCategoryTypeMockData: ActionCategoryTypeResponse = {
     {
       rid: 'D001-00016d03-5555-48d1-a247-64a5139daef9',
       name: 'Data Validation and Quality Actions',
+    },
+  ],
+};
+
+export const RuleCategoryFieldsMockData: RuleCategoryFieldsResponse = {
+  statusCode: 200,
+  statusCodeValue: 'Success',
+  statusMessage: 'Operation completed successfully!',
+  data: [
+    { rid: 'D001-00016d03-3333-48d1-a247-64a5139daef9', name: 'task.status' },
+    { rid: 'D001-00016d03-5555-48d1-a247-64a5139daef9', name: 'task.overdue' },
+  ],
+};
+
+export const RuleFieldOperatorsMockData: RuleFieldOperatorsResponse = {
+  statusCode: 200,
+  statusCodeValue: 'Success',
+  statusMessage: 'Operation completed successfully!',
+  data: [
+    {
+      rid: 'D001-00016d03-3333-48d1-a247-64a5139daef9',
+      name: 'AND',
+    },
+    {
+      rid: 'D001-00016d03-5555-48d1-a247-64a5139daef9',
+      name: 'OR',
+    },
+  ],
+};
+
+export const RuleFieldValuesMockData: RuleFieldValuesResponse = {
+  statusCode: 200,
+  statusCodeValue: 'Success',
+  statusMessage: 'Operation completed successfully!',
+  data: [
+    {
+      rid: 'D001-00016d03-3333-48d1-a247-64a5139daef9',
+      name: 'open',
+    },
+    {
+      rid: 'D001-00016d03-5555-48d1-a247-64a5139daef9',
+      name: 'close',
     },
   ],
 };

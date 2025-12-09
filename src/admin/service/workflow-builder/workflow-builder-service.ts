@@ -8,6 +8,12 @@ import {
   ConditionCategoryResponse,
   ConditionListPayload,
   ConditionListResponse,
+  RuleCategoryFieldsPayload,
+  RuleCategoryFieldsResponse,
+  RuleFieldOperatorsPayload,
+  RuleFieldOperatorsResponse,
+  RuleFieldValuesPayload,
+  RuleFieldValuesResponse,
   ScopeEventListPayload,
   ScopeEventListResponse,
   ScopeListResponse,
@@ -17,6 +23,9 @@ import {
   ActionTypeMockData,
   ConditionCategoryMockData,
   ConditionListMockData,
+  RuleCategoryFieldsMockData,
+  RuleFieldOperatorsMockData,
+  RuleFieldValuesMockData,
   ScopeEventListMockData,
   ScopeListMockData,
 } from '../../mockdata/workflow-builder';
@@ -235,5 +244,95 @@ export const useGetActionCategoryTypes = (
     retry: 0,
     gcTime: 0,
     enabled: !!enabled,
+  });
+};
+
+//-------- Category Fields --------
+export const fetchRuleCategoryFields = async (
+  params: RuleCategoryFieldsPayload
+): Promise<RuleCategoryFieldsResponse> => {
+  try {
+    // const { data } = await caseServiceApi.post<RuleCategoryFieldsResponse>(
+    //   '/api/workflow/ruleFields',
+    //   params
+    // );
+
+    // return data;
+    console.log('rule-category-fields', params);
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    return RuleCategoryFieldsMockData;
+  } catch (error) {
+    console.error('Error fetching rule category fields:', error);
+    throw error;
+  }
+};
+
+export const useGetRuleCategoryFields = (params: RuleCategoryFieldsPayload) => {
+  return useQuery<RuleCategoryFieldsResponse, Error>({
+    queryKey: ['get-rule-category-fields', params],
+    queryFn: () => fetchRuleCategoryFields(params),
+    retry: 0,
+    gcTime: 0,
+    enabled: !!params.category_rid,
+  });
+};
+
+// --------------- Field Operators ---------------
+export const fetchRuleFieldOperators = async (
+  params: RuleFieldOperatorsPayload
+): Promise<RuleFieldOperatorsResponse> => {
+  try {
+    // const { data } = await caseServiceApi.post<RuleFieldOperatorsResponse>(
+    //   '/api/workflow/ruleOperators',
+    //   params
+    // );
+
+    // return data;
+    console.log('rule-field-operators', params);
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    return RuleFieldOperatorsMockData;
+  } catch (error) {
+    console.error('Error fetching rule field operators:', error);
+    throw error;
+  }
+};
+
+export const useGetRuleFieldOperators = (params: RuleFieldOperatorsPayload) => {
+  return useQuery<RuleFieldOperatorsResponse, Error>({
+    queryKey: ['get-rule-field-operators', params],
+    queryFn: () => fetchRuleFieldOperators(params),
+    retry: 0,
+    gcTime: 0,
+    enabled: !!params.field_rid,
+  });
+};
+
+// --------------- Field Values ---------------
+export const fetchRuleFieldValues = async (
+  params: RuleFieldValuesPayload
+): Promise<RuleFieldValuesResponse> => {
+  try {
+    // const { data } = await caseServiceApi.post<RuleFieldValuesResponse>(
+    //   '/api/workflow/ruleFieldValues',
+    //   params
+    // );
+
+    // return data;
+    console.log('rule-field-values', params);
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    return RuleFieldValuesMockData;
+  } catch (error) {
+    console.error('Error fetching rule field values:', error);
+    throw error;
+  }
+};
+
+export const useGetRuleFieldValues = (params: RuleFieldValuesPayload) => {
+  return useQuery<RuleFieldValuesResponse, Error>({
+    queryKey: ['get-rule-field-values', params],
+    queryFn: () => fetchRuleFieldValues(params),
+    retry: 0,
+    gcTime: 0,
+    enabled: !!params.field_rid,
   });
 };

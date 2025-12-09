@@ -1,36 +1,22 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import {
-  COMMON_MENU_PROPS,
-  Condition,
-  ConditionType,
-  getDynamicSvgIcon,
-  getSelectStyles,
-} from '../helper';
-import { ArrowRightIcon } from '@mui/x-date-pickers/icons';
-import { AddIcon, SwapIcon, CloseIcon } from '../../../../../assets';
-import {
-  Autocomplete,
-  Box,
-  Button,
-  FormControl,
-  MenuItem,
-  Select,
-  TextField,
-  Tooltip,
-  Typography,
-} from '@mui/material';
+import { Condition, ConditionType, getDynamicSvgIcon } from '../helper';
+import { AddIcon, SwapIcon } from '../../../../../assets';
+import { Button } from '@mui/material';
 import { useWorkflowContext } from '../workflow-context';
 import { ConditionListResponse } from '../../../../types';
 import { useGetConditionCategoryList } from '../../../../service/workflow-builder/workflow-builder-service';
+import ConditionForm from './condition-form';
 
 interface ConditionManagerProps {
   conditionListData?: ConditionListResponse;
   isLoadingConditionTypes?: boolean;
+  validatedConditionIds?: Set<string>;
 }
 
 const ConditionManager: React.FC<ConditionManagerProps> = ({
   conditionListData,
   isLoadingConditionTypes,
+  validatedConditionIds = new Set(),
 }) => {
   const [showConditionTypeSelector, setShowConditionTypeSelector] =
     useState(false);
@@ -63,14 +49,18 @@ const ConditionManager: React.FC<ConditionManagerProps> = ({
   const { data: categoryListData, isLoading: isLoadingCategories } =
     useGetConditionCategoryList(categoryListParams, !!selectedConditionRid);
 
+  // Track previous conditions length to detect new additions
+  const [prevConditionsLength, setPrevConditionsLength] = useState(0);
+
   useEffect(() => {
-    // Initialize expanded IDs with the last condition
-    if (rule.conditions.length > 0) {
+    // Only expand the last condition when a NEW condition is added
+    if (rule.conditions.length > prevConditionsLength) {
       setExpandedConditionIds(
         new Set([rule.conditions[rule.conditions.length - 1].id])
       );
     }
-  }, [rule.conditions]);
+    setPrevConditionsLength(rule.conditions.length);
+  }, [rule.conditions, prevConditionsLength]);
 
   useEffect(() => {
     // Show condition type selector only for the first condition
@@ -82,6 +72,44 @@ const ConditionManager: React.FC<ConditionManagerProps> = ({
       setShowConditionTypeSelector(true);
     }
   }, [rule.conditions.length, rule.trigger?.id, rule.conditionType]);
+
+  // Check if all existing conditions are complete
+  const areAllConditionsComplete = rule.conditions.every(
+    (condition) =>
+      condition.field &&
+      condition.operator &&
+      condition.value !== '' &&
+      condition.value !== null &&
+      condition.value !== undefined
+  );
+
+  // Identify incomplete conditions that should show validation errors
+  const incompleteConditions = useMemo(() => {
+    if (validatedConditionIds.size === 0) return new Set();
+
+    return new Set(
+      rule.conditions
+        .filter(
+          (condition) =>
+            validatedConditionIds.has(condition.id) &&
+            (!condition.field ||
+              !condition.operator ||
+              condition.value === '' ||
+              condition.value === null ||
+              condition.value === undefined)
+        )
+        .map((condition) => condition.id)
+    );
+  }, [rule.conditions, validatedConditionIds]);
+
+  // Auto-expand incomplete conditions when validation errors are shown
+  useEffect(() => {
+    if (validatedConditionIds.size > 0 && incompleteConditions.size > 0) {
+      setExpandedConditionIds(
+        new Set(Array.from(incompleteConditions) as string[])
+      );
+    }
+  }, [validatedConditionIds, incompleteConditions]);
 
   const handleAddConditionClick = () => {
     if (rule.conditions.length === 0 && !rule.conditionType) {
@@ -97,7 +125,6 @@ const ConditionManager: React.FC<ConditionManagerProps> = ({
         setShowCategorySelector(true);
       }
     }
-    setExpandedConditionIds(new Set());
   };
 
   const handleConditionTypeSelect = (conditionType: ConditionType) => {
@@ -120,7 +147,6 @@ const ConditionManager: React.FC<ConditionManagerProps> = ({
       field: '',
       operator: '',
       value: '',
-      fieldType: 'text',
       conditionTypeId: rule.conditionType?.rid || '',
       logicalOperator: rule.conditions.length > 0 ? 'AND' : undefined,
     };
@@ -200,6 +226,36 @@ const ConditionManager: React.FC<ConditionManagerProps> = ({
 
   return (
     <div>
+      {/* Show validation summary if there are errors */}
+      {validatedConditionIds.size > 0 && incompleteConditions.size > 0 && (
+        <div className='mb-4 p-3 bg-red-50 border border-red-200 rounded-lg'>
+          <div className='flex items-start gap-2'>
+            <div className='w-5 h-5 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 mt-0.5'>
+              <svg
+                className='w-3 h-3 text-red-600'
+                fill='currentColor'
+                viewBox='0 0 20 20'
+              >
+                <path
+                  fillRule='evenodd'
+                  d='M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z'
+                  clipRule='evenodd'
+                />
+              </svg>
+            </div>
+            <div className='flex-1'>
+              <h4 className='text-sm font-medium text-red-800 mb-1'>
+                Incomplete Conditions
+              </h4>
+              <p className='text-sm text-red-700'>
+                Please complete all condition fields (field, operator, and
+                value) before saving the workflow.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Existing Conditions */}
       {rule.conditions.map((condition, index) => (
         <div key={condition.id}>
@@ -261,14 +317,17 @@ const ConditionManager: React.FC<ConditionManagerProps> = ({
               </div>
             </div>
           )}
-          <ConditionForm
-            key={condition.id}
-            condition={condition}
-            isExpanded={isExpanded(condition.id)}
-            onToggleExpand={() => handleToggleExpand(condition.id)}
-            onChange={(updated) => updateCondition(condition.id, updated)}
-            onDelete={() => handleDeleteCondition(condition.id)}
-          />
+          <div>
+            <ConditionForm
+              key={condition.id}
+              condition={condition}
+              isExpanded={isExpanded(condition.id)}
+              onToggleExpand={() => handleToggleExpand(condition.id)}
+              onChange={(updated) => updateCondition(condition.id, updated)}
+              onDelete={() => handleDeleteCondition(condition.id)}
+              showValidationErrors={validatedConditionIds.has(condition.id)}
+            />
+          </div>
         </div>
       ))}
 
@@ -327,7 +386,8 @@ const ConditionManager: React.FC<ConditionManagerProps> = ({
               showConditionTypeSelector ||
               showCategorySelector ||
               isLoadingConditionTypes ||
-              isLoadingCategories
+              isLoadingCategories ||
+              (rule.conditions.length > 0 && !areAllConditionsComplete)
             }
             className={`w-auto h-[28px] px-2.5 text-[13px] font-semibold flex items-center mt-4 rounded-[2px] border border-[#CBD6E2] text-[#425A76] hover:bg-gray-100 transition-all cursor-pointer disabled:cursor-default disabled:opacity-60 disabled:bg-gray-100 ${
               rule.conditions.length === 0 ? 'mt-2' : 'mt-4'
@@ -459,488 +519,6 @@ function SelectorSkeleton({ title, itemCount = 3 }: SelectorSkeletonProps) {
           </div>
         ))}
       </div>
-    </div>
-  );
-}
-
-interface ConditionFormProps {
-  condition: Condition;
-  isExpanded: boolean;
-  onToggleExpand: () => void;
-  onChange: (condition: Condition) => void;
-  onDelete: () => void;
-}
-
-interface FieldSuggestion {
-  id: string;
-  display: string;
-  fullPath: string;
-  description?: string;
-}
-
-function ConditionForm({
-  condition,
-  isExpanded,
-  onToggleExpand,
-  onChange,
-  onDelete,
-}: ConditionFormProps) {
-  // Mock data - you'll need to replace this with API calls for field data
-  const availableFields = [
-    {
-      id: 'task.status',
-      name: 'Status',
-      type: 'text',
-      operators: ['==', '!=', 'contains'],
-    },
-    {
-      id: 'task.priority',
-      name: 'Priority',
-      type: 'text',
-      operators: ['==', '!=', 'in'],
-    },
-    {
-      id: 'task.due_date',
-      name: 'Due Date',
-      type: 'date',
-      operators: ['>', '<', '=='],
-    },
-    {
-      id: 'task.assigned_to',
-      name: 'Assigned To',
-      type: 'text',
-      operators: ['==', '!='],
-    },
-    {
-      id: 'task.completed',
-      name: 'Completed',
-      type: 'boolean',
-      operators: ['=='],
-    },
-  ];
-
-  const fieldOptions = {
-    'task.status': [
-      { label: 'Pending', value: 'pending' },
-      { label: 'In Progress', value: 'in_progress' },
-      { label: 'Completed', value: 'completed' },
-      { label: 'Cancelled', value: 'cancelled' },
-    ],
-    'task.priority': [
-      { label: 'Low', value: 'low' },
-      { label: 'Medium', value: 'medium' },
-      { label: 'High', value: 'high' },
-      { label: 'Critical', value: 'critical' },
-    ],
-    'task.completed': [
-      { label: 'Yes', value: 'true' },
-      { label: 'No', value: 'false' },
-    ],
-  };
-
-  const availableOperators = [
-    { value: '==', label: 'Equals' },
-    { value: '!=', label: 'Not Equals' },
-    { value: '>', label: 'Greater Than' },
-    { value: '<', label: 'Less Than' },
-    { value: '>=', label: 'Greater Than or Equal' },
-    { value: '<=', label: 'Less Than or Equal' },
-    { value: 'contains', label: 'Contains' },
-    { value: 'in', label: 'In' },
-  ];
-
-  const [fieldInputValue, setFieldInputValue] = useState(
-    condition.field ? `@${condition.field}` : ''
-  );
-  const [showFieldSuggestions, setShowFieldSuggestions] = useState(false);
-
-  const isFieldEmpty = !condition.field;
-
-  const getAllFieldSuggestions = (): FieldSuggestion[] => {
-    return availableFields.map((field) => ({
-      id: field.id,
-      display: field.id,
-      fullPath: field.id,
-      description: field.name,
-    }));
-  };
-
-  const filterFieldSuggestions = (inputValue: string): FieldSuggestion[] => {
-    if (!inputValue.startsWith('@')) {
-      return [];
-    }
-
-    const query = inputValue.replace('@', '').toLowerCase();
-    const allSuggestions = getAllFieldSuggestions();
-
-    return allSuggestions.filter(
-      (s) =>
-        s.display.toLowerCase().includes(query) ||
-        s.description?.toLowerCase().includes(query)
-    );
-  };
-
-  const handleFieldInputChange = (value: string) => {
-    setFieldInputValue(value);
-
-    if (value.startsWith('@')) {
-      setShowFieldSuggestions(true);
-    } else {
-      setShowFieldSuggestions(false);
-    }
-
-    if (value.trim() === '' || value === '@') {
-      onChange({
-        ...condition,
-        field: '',
-        fieldType: null,
-        operator: '',
-        value: '',
-      });
-    }
-  };
-
-  const handleFieldSuggestionSelect = (suggestion: FieldSuggestion | null) => {
-    if (!suggestion) return;
-    const fullValue = `@${suggestion.fullPath}`;
-    setFieldInputValue(fullValue);
-
-    const selectedField = availableFields.find(
-      (field) => field.id === suggestion.fullPath
-    );
-    if (selectedField) {
-      onChange({
-        ...condition,
-        field: suggestion.fullPath,
-        fieldType: selectedField.type as
-          | 'number'
-          | 'boolean'
-          | 'text'
-          | 'date'
-          | 'select'
-          | 'multiselect'
-          | 'logical'
-          | null,
-        operator: '',
-        value: '',
-      });
-    }
-
-    setShowFieldSuggestions(false);
-  };
-
-  const handleFieldInputFocus = () => {
-    if (fieldInputValue.startsWith('@')) {
-      setShowFieldSuggestions(true);
-    }
-  };
-
-  const handleFieldInputBlur = () => {
-    setTimeout(() => setShowFieldSuggestions(false), 200);
-  };
-
-  const handleFieldInputKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === '@') {
-      setShowFieldSuggestions(true);
-    }
-  };
-
-  const handleOperatorChange = (operator: string) => {
-    onChange({
-      ...condition,
-      operator,
-    });
-  };
-
-  const handleValueChange = (value: string | string[]) => {
-    onChange({
-      ...condition,
-      value,
-    });
-  };
-
-  const selectedField = availableFields.find((f) => f.id === condition.field);
-
-  return (
-    <div className='rounded-lg border border-[#CBD6E2] overflow-hidden'>
-      {/* Header */}
-      <div
-        className='flex items-center justify-between h-[50px] px-4 bg-gray-50 cursor-pointer hover:bg-gray-50'
-        onClick={onToggleExpand}
-      >
-        <div className='flex items-center gap-2 flex-1'>
-          <React.Suspense fallback={null}>
-            <ArrowRightIcon
-              className={`text-gray-400 w-4 h-4 transition-transform ${
-                isExpanded ? 'rotate-90' : 'rotate-0'
-              }`}
-            />
-          </React.Suspense>
-          <div className='w-8 h-8 p-1.5 rounded-full bg-[#ffe4b3] flex items-center justify-center'>
-            {getDynamicSvgIcon(condition.name || 'condition')}
-          </div>
-          <div className='flex-1'>
-            <div className='text-sm font-medium text-gray-900'>
-              {condition.name || 'Condition'}
-            </div>
-            {!isExpanded && condition.field && (
-              <div className='text-xs text-gray-500 mt-1 flex flex-wrap gap-3 truncate'>
-                <span>
-                  <strong className='text-gray-700'>Field:</strong>{' '}
-                  <span className='text-[#1976d2]'>
-                    {condition.field || '-'}
-                  </span>
-                </span>
-                <span>
-                  <strong className='text-gray-700'>Operator:</strong>{' '}
-                  {condition.operator || '-'}
-                </span>
-                <span>
-                  <strong className='text-gray-700'>Value:</strong>{' '}
-                  {condition.value || '-'}
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
-        <Tooltip
-          placement='top'
-          title='Remove Condition'
-          arrow
-          slotProps={{
-            tooltip: {
-              sx: {
-                mr: 1,
-              },
-            },
-          }}
-        >
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete();
-            }}
-            className='h-8 w-8 flex items-center justify-center hover:bg-gray-200 rounded-full transition-colors cursor-pointer'
-            title='Remove Condition'
-          >
-            <React.Suspense fallback={null}>
-              <CloseIcon className='w-3 h-3' />
-            </React.Suspense>
-          </button>
-        </Tooltip>
-      </div>
-
-      {/* Expanded Fields */}
-      {isExpanded && (
-        <div className='p-4 border-t border-[#CBD6E2]'>
-          <div className='space-y-4'>
-            {/* Field Input */}
-            <div className='relative'>
-              <label className='block text-xs font-medium text-gray-700 mb-2'>
-                Field
-              </label>
-              <Autocomplete
-                freeSolo
-                open={showFieldSuggestions}
-                onOpen={() => {
-                  if (fieldInputValue.startsWith('@')) {
-                    setShowFieldSuggestions(true);
-                  }
-                }}
-                onClose={() => setShowFieldSuggestions(false)}
-                inputValue={fieldInputValue}
-                onInputChange={(_event, newInputValue) => {
-                  handleFieldInputChange(newInputValue);
-                }}
-                onChange={(_event, newValue) => {
-                  if (typeof newValue === 'string') {
-                    handleFieldInputChange(newValue);
-                  } else {
-                    handleFieldSuggestionSelect(newValue);
-                  }
-                }}
-                options={filterFieldSuggestions(fieldInputValue)}
-                getOptionLabel={(option) => {
-                  if (typeof option === 'string') {
-                    return option;
-                  }
-                  return `${option.display}`;
-                }}
-                renderOption={(props, option) => (
-                  <li {...props}>
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        width: '100%',
-                      }}
-                    >
-                      <Typography
-                        variant='body2'
-                        fontWeight='medium'
-                        color='#425A76'
-                      >
-                        {option.display}
-                      </Typography>
-                    </Box>
-                  </li>
-                )}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    placeholder='Type @ to see available fields'
-                    autoComplete='off'
-                    onFocus={handleFieldInputFocus}
-                    onBlur={handleFieldInputBlur}
-                    onKeyDown={handleFieldInputKeyDown}
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        padding: '5px',
-                        height: '32px',
-                        borderRadius: '2px',
-                        fontSize: '13px',
-                        '& input': {
-                          padding: '0px 12px',
-                          height: '32px',
-                          boxSizing: 'border-box',
-                          color: condition.field ? '#1976d2' : '#425A76',
-                          fontWeight: condition.field ? 600 : 400,
-                        },
-                        '& fieldset': {
-                          borderColor: '#CBD6E2',
-                        },
-                        '&:hover fieldset': {
-                          borderColor: '#CBD6E2',
-                        },
-                        '&.Mui-focused fieldset': {
-                          borderColor: '#1976d2',
-                          borderWidth: '2px',
-                        },
-                      },
-                    }}
-                  />
-                )}
-                filterOptions={(options) => options}
-                clearOnBlur={false}
-                handleHomeEndKeys
-                selectOnFocus={false}
-              />
-            </div>
-
-            {/* Operator */}
-            <div>
-              <label className='block text-xs font-medium text-gray-700 mb-2'>
-                Operator
-              </label>
-              <FormControl fullWidth size='small'>
-                <Select
-                  value={condition.operator || ''}
-                  onChange={(e) => handleOperatorChange(e.target.value)}
-                  displayEmpty
-                  MenuProps={COMMON_MENU_PROPS}
-                  disabled={isFieldEmpty}
-                  sx={getSelectStyles(false, condition.operator === '')}
-                >
-                  <MenuItem
-                    value=''
-                    sx={{ color: '#425A76', fontSize: '13px', fontWeight: 500 }}
-                  >
-                    Choose operator
-                  </MenuItem>
-                  {(selectedField?.operators || []).map((opSymbol) => {
-                    const op = availableOperators.find(
-                      (o) => o.value === opSymbol
-                    );
-                    if (!op) return null;
-                    return (
-                      <MenuItem
-                        key={op.value}
-                        value={op.value}
-                        sx={{
-                          color: '#425A76',
-                          fontSize: '13px',
-                          fontWeight: 500,
-                        }}
-                      >
-                        {op.label}
-                      </MenuItem>
-                    );
-                  })}
-                </Select>
-              </FormControl>
-            </div>
-
-            {/* Value */}
-            {selectedField && (
-              <div>
-                <label className='block text-xs font-medium text-gray-700 mb-2'>
-                  Value
-                </label>
-                {fieldOptions[condition.field as keyof typeof fieldOptions] ? (
-                  <FormControl fullWidth size='small'>
-                    <Select
-                      value={condition.value || ''}
-                      onChange={(e) => handleValueChange(e.target.value)}
-                      displayEmpty
-                      MenuProps={COMMON_MENU_PROPS}
-                      disabled={isFieldEmpty || !condition.operator}
-                      sx={getSelectStyles(false, condition.value === '')}
-                    >
-                      <MenuItem
-                        value=''
-                        sx={{
-                          color: '#425A76',
-                          fontSize: '13px',
-                          fontWeight: 500,
-                        }}
-                      >
-                        Choose value
-                      </MenuItem>
-                      {fieldOptions[
-                        condition.field as keyof typeof fieldOptions
-                      ].map((opt) => (
-                        <MenuItem
-                          key={opt.label}
-                          value={opt.value}
-                          sx={{
-                            color: '#425A76',
-                            fontSize: '13px',
-                            fontWeight: 500,
-                          }}
-                        >
-                          {opt.label}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                ) : (
-                  <input
-                    type={selectedField.type === 'number' ? 'text' : 'text'}
-                    inputMode={
-                      selectedField.type === 'number' ? 'numeric' : 'text'
-                    }
-                    pattern={
-                      selectedField.type === 'number' ? '[0-9]*' : undefined
-                    }
-                    value={(condition.value as string) || ''}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      if (selectedField.type === 'number') {
-                        if (/^\d*$/.test(value)) handleValueChange(value);
-                      } else {
-                        handleValueChange(value);
-                      }
-                    }}
-                    disabled={isFieldEmpty || !condition.operator}
-                    className='placeholder-[#7D98B6] w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs outline-none focus:border-2 focus:border-blue-400 disabled:bg-gray-100'
-                    placeholder={`Enter ${selectedField.name.toLowerCase()}`}
-                  />
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

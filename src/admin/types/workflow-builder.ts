@@ -1,7 +1,7 @@
 // Scope Event List
 export interface ScopeEventListPayload {
   scope_type_rid: string;
-  status_rid: string;
+  status_rid?: string;
 }
 
 export interface ScopeEventItem {
@@ -37,7 +37,7 @@ export interface ScopeListResponse {
 //Condition List
 export interface ConditionListPayload {
   event_rid: string;
-  status_rid: string;
+  status_rid?: string;
 }
 
 export interface ConditionItem {
@@ -57,7 +57,7 @@ export interface ConditionListResponse {
 //Condition Category
 export interface ConditionCategoryPayload {
   condition_rid: string;
-  status_rid: string;
+  status_rid?: string;
 }
 
 export interface ConditionCategoryItem {
@@ -76,7 +76,7 @@ export interface ConditionCategoryResponse {
 // -------- Action Types--------
 export interface ActionTypePayload {
   action_type_rid: string;
-  status_rid: string;
+  status_rid?: string;
 }
 
 export interface ActionTypeItem {
@@ -97,7 +97,7 @@ export interface ActionTypeResponse {
 // -------- Action Category Types --------
 export interface ActionCategoryTypePayload {
   scope_rid: string;
-  status_rid: string;
+  status_rid?: string;
 }
 
 export interface ActionCategoryTypeItem {
@@ -110,4 +110,58 @@ export interface ActionCategoryTypeResponse {
   statusCodeValue: string;
   statusMessage: string;
   data: ActionCategoryTypeItem[];
+}
+
+//-------- Category Fields --------
+export interface RuleCategoryFieldsPayload {
+  category_rid: string;
+  status_rid?: string;
+}
+
+export interface RuleCategoryFieldItem {
+  rid: string;
+  name: string;
+}
+
+export interface RuleCategoryFieldsResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: RuleCategoryFieldItem[];
+}
+
+// --------------- Field Operators ---------------
+export interface RuleFieldOperatorsPayload {
+  field_rid: string;
+  status_rid?: string;
+}
+
+export interface RuleFieldOperatorItem {
+  rid: string;
+  name: string;
+}
+
+export interface RuleFieldOperatorsResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: RuleFieldOperatorItem[];
+}
+
+// --------------- Field Values ---------------
+export interface RuleFieldValuesPayload {
+  field_rid: string;
+  status_rid?: string;
+}
+
+export interface RuleFieldValueItem {
+  rid: string;
+  name: string;
+}
+
+export interface RuleFieldValuesResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: RuleFieldValueItem[];
 }

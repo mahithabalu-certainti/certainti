@@ -1,40 +1,54 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import { Rule, Trigger, Condition, Action, ConditionType, LogicalOperator } from './helper';
+import {
+  Rule,
+  Trigger,
+  Condition,
+  Action,
+  ConditionType,
+  LogicalOperator,
+} from './helper';
 
 interface WorkflowContextValue {
   // Rule state
   rule: Rule;
-  
+
   // Step management
   currentStep: 'trigger' | 'conditions' | 'actions';
-  
+
   // Trigger actions
   selectTrigger: (trigger: Trigger) => void;
   removeTrigger: () => void;
-  
+
   // Condition actions
   addCondition: (condition: Condition) => void;
   updateCondition: (conditionId: string, updatedCondition: Condition) => void;
   deleteCondition: (conditionId: string) => void;
-  updateLogicalOperator: (conditionId: string, operator: LogicalOperator) => void;
+  updateLogicalOperator: (
+    conditionId: string,
+    operator: LogicalOperator
+  ) => void;
   setConditionType: (conditionType: ConditionType | null) => void;
-  
+
   // Action actions
   addAction: (action: Action) => void;
   deleteAction: (actionId: string) => void;
-  
+
   // Rule metadata
   updateRuleName: (name: string) => void;
-  
+
   // Navigation
   goToStep: (step: 'trigger' | 'conditions' | 'actions') => void;
-  
+
   // Validation
   canProceedToConditions: boolean;
   canProceedToActions: boolean;
+  validatedConditionIds: Set<string>; // Track which conditions have been validated
+  validateAndSave: () => boolean;
 }
 
-const WorkflowContext = createContext<WorkflowContextValue | undefined>(undefined);
+const WorkflowContext = createContext<WorkflowContextValue | undefined>(
+  undefined
+);
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const useWorkflowContext = () => {
@@ -50,27 +64,32 @@ interface WorkflowProviderProps {
   initialRule?: Rule;
 }
 
-export const WorkflowProvider: React.FC<WorkflowProviderProps> = ({ 
+export const WorkflowProvider: React.FC<WorkflowProviderProps> = ({
   children,
-  initialRule 
+  initialRule,
 }) => {
-  const [rule, setRule] = useState<Rule>(initialRule || {
-    id: crypto.randomUUID(),
-    name: 'Untitled rule',
-    trigger: null,
-    conditions: [],
-    actions: [],
-    conditionType: null,
-    isActive: false,
-  });
-  
-  const [currentStep, setCurrentStep] = useState<'trigger' | 'conditions' | 'actions'>('trigger');
+  const [rule, setRule] = useState<Rule>(
+    initialRule || {
+      id: crypto.randomUUID(),
+      name: 'Untitled rule',
+      trigger: null,
+      conditions: [],
+      actions: [],
+      conditionType: null,
+      isActive: false,
+    }
+  );
+
+  const [currentStep, setCurrentStep] = useState<
+    'trigger' | 'conditions' | 'actions'
+  >('trigger');
+  const [validatedConditionIds, setValidatedConditionIds] = useState<Set<string>>(new Set());
 
   // Trigger actions
   const selectTrigger = useCallback((trigger: Trigger) => {
     setRule((prev) => {
       const isChangingTrigger = prev.trigger && prev.trigger.id !== trigger.id;
-      
+
       if (isChangingTrigger) {
         // Clear all downstream data when changing trigger
         return {
@@ -81,13 +100,13 @@ export const WorkflowProvider: React.FC<WorkflowProviderProps> = ({
           conditionType: null,
         };
       }
-      
+
       return {
         ...prev,
         trigger,
       };
     });
-    
+
     setCurrentStep('conditions');
   }, []);
 
@@ -116,19 +135,38 @@ export const WorkflowProvider: React.FC<WorkflowProviderProps> = ({
     }));
   }, []);
 
-  const updateCondition = useCallback((conditionId: string, updatedCondition: Condition) => {
-    setRule((prev) => ({
-      ...prev,
-      conditions: prev.conditions.map((cond) =>
-        cond.id === conditionId ? updatedCondition : cond
-      ),
-    }));
-  }, []);
+  const updateCondition = useCallback(
+    (conditionId: string, updatedCondition: Condition) => {
+      setRule((prev) => ({
+        ...prev,
+        conditions: prev.conditions.map((cond) =>
+          cond.id === conditionId ? updatedCondition : cond
+        ),
+      }));
+      
+      // If this condition was validated and is now complete, remove it from validated set
+      const isComplete = 
+        updatedCondition.field &&
+        updatedCondition.operator &&
+        updatedCondition.value !== '' &&
+        updatedCondition.value !== null &&
+        updatedCondition.value !== undefined;
+      
+      if (isComplete && validatedConditionIds.has(conditionId)) {
+        setValidatedConditionIds(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(conditionId);
+          return newSet;
+        });
+      }
+    },
+    [validatedConditionIds]
+  );
 
   const deleteCondition = useCallback((conditionId: string) => {
     setRule((prev) => {
       const newConditions = prev.conditions.filter((c) => c.id !== conditionId);
-      
+
       return {
         ...prev,
         conditions: newConditions,
@@ -137,25 +175,38 @@ export const WorkflowProvider: React.FC<WorkflowProviderProps> = ({
         conditionType: newConditions.length === 0 ? null : prev.conditionType,
       };
     });
+    
+    // Remove from validated set if it was there
+    setValidatedConditionIds(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(conditionId);
+      return newSet;
+    });
   }, []);
 
-  const updateLogicalOperator = useCallback((conditionId: string, operator: LogicalOperator) => {
-    setRule((prev) => ({
-      ...prev,
-      conditions: prev.conditions.map((condition) =>
-        condition.id === conditionId
-          ? { ...condition, logicalOperator: operator }
-          : condition
-      ),
-    }));
-  }, []);
+  const updateLogicalOperator = useCallback(
+    (conditionId: string, operator: LogicalOperator) => {
+      setRule((prev) => ({
+        ...prev,
+        conditions: prev.conditions.map((condition) =>
+          condition.id === conditionId
+            ? { ...condition, logicalOperator: operator }
+            : condition
+        ),
+      }));
+    },
+    []
+  );
 
-  const setConditionType = useCallback((conditionType: ConditionType | null) => {
-    setRule((prev) => ({
-      ...prev,
-      conditionType,
-    }));
-  }, []);
+  const setConditionType = useCallback(
+    (conditionType: ConditionType | null) => {
+      setRule((prev) => ({
+        ...prev,
+        conditionType,
+      }));
+    },
+    []
+  );
 
   // Action actions
   const addAction = useCallback((action: Action) => {
@@ -187,7 +238,56 @@ export const WorkflowProvider: React.FC<WorkflowProviderProps> = ({
 
   // Validation
   const canProceedToConditions = rule.trigger !== null;
-  const canProceedToActions = rule.conditions.length > 0;
+
+  // Check if all conditions are complete (have field, operator, and value)
+  const areAllConditionsComplete =
+    rule.conditions.length > 0 &&
+    rule.conditions.every(
+      (condition) =>
+        condition.field &&
+        condition.operator &&
+        condition.value !== '' &&
+        condition.value !== null &&
+        condition.value !== undefined
+    );
+
+  // Allow proceeding to actions if user has started setting up conditions (has condition type)
+  // or if they have no conditions at all (workflow without conditions is allowed)
+  const canProceedToActions = areAllConditionsComplete;
+
+  // Validate and save function
+  const validateAndSave = useCallback(() => {
+    // If there are no conditions, allow saving
+    if (rule.conditions.length === 0) {
+      setValidatedConditionIds(new Set());
+      return true;
+    }
+
+    // Find incomplete conditions
+    const incompleteConditionIds = rule.conditions
+      .filter(
+        (condition) =>
+          !condition.field ||
+          !condition.operator ||
+          condition.value === '' ||
+          condition.value === null ||
+          condition.value === undefined
+      )
+      .map((condition) => condition.id);
+
+    // Check if all existing conditions are complete
+    if (incompleteConditionIds.length > 0) {
+      // Mark these specific conditions as validated (to show errors)
+      setValidatedConditionIds(new Set(incompleteConditionIds));
+      // Switch to conditions step to show errors
+      setCurrentStep('conditions');
+      return false;
+    }
+
+    // Validation passed - clear validated set
+    setValidatedConditionIds(new Set());
+    return true;
+  }, [rule.conditions]);
 
   const value: WorkflowContextValue = {
     rule,
@@ -205,6 +305,8 @@ export const WorkflowProvider: React.FC<WorkflowProviderProps> = ({
     goToStep,
     canProceedToConditions,
     canProceedToActions,
+    validatedConditionIds,
+    validateAndSave,
   };
 
   return (

@@ -16,7 +16,7 @@ import {
 const WorkflowBuilderFormContent: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { rule } = useWorkflowContext();
+  const { rule, validateAndSave } = useWorkflowContext();
 
   // ========== CENTRALIZED API CALLS ==========
 
@@ -62,6 +62,12 @@ const WorkflowBuilderFormContent: React.FC = () => {
   };
 
   const handleSubmit = () => {
+    // First validate the workflow
+    if (!validateAndSave()) {
+      // Validation failed - user is now on conditions step with errors shown
+      return;
+    }
+
     // Transform rule to API payload format
     const apiPayload = {
       rule_id: rule.id,

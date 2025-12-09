@@ -15,17 +15,11 @@ export interface Condition {
   category: string;
   name: string;
   field: string;
+  fieldName?: string; // Display name for field
   operator: string;
+  operatorName?: string; // Display name for operator
   value: string | string[];
-  fieldType:
-    | 'text'
-    | 'number'
-    | 'boolean'
-    | 'select'
-    | 'multiselect'
-    | 'date'
-    | 'logical'
-    | null;
+  valueName?: string; // Display name for value
   conditionTypeId?: string;
   logicalOperator?: LogicalOperator;
 }
