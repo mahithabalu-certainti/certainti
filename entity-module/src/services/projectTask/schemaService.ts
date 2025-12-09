@@ -27,8 +27,6 @@ import { AccountFiscal } from "../../models/accountFiscal";
 import { AccountFiscalRegion } from "../../models/accountFiscalRegion";
 import { ProjectTaskHistory, setupProjectTaskHistorySequence } from "../../models/projectTaskHiistory";
 import { logMessage } from "../../utils/helpers";
-import { CaseProject } from "../../models/caseProjectsModel";
-import { CaseProjectTask } from "../../models/caseProjectTaskModel"; 
 
 export class ProjectTaskSchemaService {
   private orgDbSequelize: Sequelize | null = null;
@@ -133,11 +131,6 @@ export class ProjectTaskSchemaService {
       schemaName
     );
 
-    const CaseProjectTaskModel = await CaseProjectTask.initialize(
-      sequelize,
-      schemaName
-    );
-
     ProjectTaskModel.belongsTo(AccountDetailsModel, {
       foreignKey: "account_rid",
       targetKey: "account_rid",
@@ -183,7 +176,6 @@ export class ProjectTaskSchemaService {
       Project: ProjectModel,
       AccountFiscal: AccountFiscalModel,
       AccountFiscalRegion: AccountFiscalRegionModel,
-      CaseProjectTask: CaseProjectTaskModel
     };
     this.modelCache.set(schemaName, models);
     return models;
@@ -319,51 +311,6 @@ export class ProjectTaskSchemaService {
     }, {
       where: {
         rid: projectTaskData.project_task_rid,
-      },
-      transaction,
-    });
-
-    return updatedProjectTask;
-  }
-
-  async updateCaseProjectTask(
-    accountNumber: string,
-    projectTaskData: IUpdateProjectTask,
-    userId: string,
-    projectData: ProjectFiscal,
-    resourceData: Resources,
-    transaction: Transaction,
-    caseMapping: CaseProject
-  ) {
-    const { CaseProjectTask } = await this.getModels(accountNumber);
-
-    const startDate = projectTaskData.start_date
-      ? moment.utc(projectTaskData.start_date, "YYYY-MM-DD")
-      : null;
-    const endDate = projectTaskData.end_date
-      ? moment.utc(projectTaskData.end_date, "YYYY-MM-DD")
-      : null;
-
-    const projectResourceCode =
-      projectData.project_code + "-" + resourceData.resource_code;
-
-    const baseData = ProjectTaskMapper.mapToProjectTaskUpdate(
-      projectTaskData,
-      startDate,
-      endDate,
-      userId,
-      projectResourceCode,
-      projectData,
-      resourceData
-    );
-
-    const updatedProjectTask = await CaseProjectTask.update({
-      ...baseData,
-      region_rid: resourceData.region_rid
-    }, {
-      where: {
-        project_task_rid: projectTaskData.project_task_rid,
-        case_rid: caseMapping.case_rid
       },
       transaction,
     });
@@ -3248,30 +3195,6 @@ export class ProjectTaskSchemaService {
     }, {
       where: {
         rid: projectTaskId
-      },
-      transaction,
-    })
-  }
-    
-  async updateCaseProjectTaskStatus(
-    accountNumber: string,
-    projectTaskId: string,
-    statusId: string,
-    userId: string,
-    transaction: Transaction,
-    caseMapping: CaseProject
-  ) {
-    const { CaseProjectTask } = await this.getModels(accountNumber);
-    const sequelize = await this.getSequelize();
-
-    await CaseProjectTask.update({
-      status_rid: statusId,
-      modified_by: userId,
-      modified_datetime: new Date(),
-    }, {
-      where: {
-        project_task_rid: projectTaskId,
-        case_rid: caseMapping.case_rid
       },
       transaction,
     })

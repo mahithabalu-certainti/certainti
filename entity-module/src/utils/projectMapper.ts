@@ -451,7 +451,7 @@ export class ProjectMapper {
     };
   }
 
-  static mapToProjectFiscalUpdateModel(
+static mapToProjectFiscalUpdateModel(
   data: IUpdateProject,
   startDate: moment.Moment | null,
   endDate: moment.Moment | null
@@ -476,7 +476,7 @@ export class ProjectMapper {
     project_description: data.project_description || null,
     country_rid: data.country_rid || null,
     comments: data.comments || "",
- 
+
     total_fte_prj: data.total_fte || 0,
     total_subcon_prj: data.total_subcon || 0,
     total_nonlabor_prj: data.total_nonlabor || 0,
@@ -487,18 +487,18 @@ export class ProjectMapper {
     total_cost_fte_prj: data.total_cost_fte || null,
     total_cost_subcon_prj: data.total_cost_subcon || null,
     total_cost_nonlabor_prj: data.total_cost_nonlabor || null,
- 
+
     auto_send_ai_interaction: data.auto_send_ai_interaction,
     auto_access_rd: data.auto_access_rd ?? false,
     max_ai_interaction: DEFAULT_PROJECT_DETAILS.maxAiInteraction,
- 
+
     blended_rate_fte: data.blended_rate_fte || null,
     blended_rate_subcon: data.blended_rate_subcon || null,
- 
+
     modified_datetime: new Date(),
     modified_by: data.modified_by,
   };
- 
+
   // Filter to only include keys that exist in the input data
   const result: any = {};
   for (const key in mappedData) {
@@ -506,7 +506,7 @@ export class ProjectMapper {
       result[key] = mappedData[key as keyof typeof mappedData];
     }
   }
- 
+
   return result;
 }
 
