@@ -2333,7 +2333,17 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
       const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
       data.modified_by = userId
       const result = await this.caseSchemaService.deleteComments(data, fetchParent[0][0].r_number);
-      if(result?.statusCode === HttpStatus.SUCCESS) {
+      if(result?.statusCode === HttpStatus.SUCCESS) {     
+        const {CaseHistory} = await this.caseModelService.getModels(fetchParent[0][0].r_number)
+        await CaseHistory.create({
+          created_by : data.modified_by,
+          created_datetime : new Date(),
+          case_rid : data.case_rid,
+          task_rid : data.task_rid,
+          attribute_name : "Comments",
+          old_value : "CREATE",
+          new_value : 'deleted a comment'
+        })   
         return {
           statusCode : result.statusCode,
           statusMessage : result.statusMessage
