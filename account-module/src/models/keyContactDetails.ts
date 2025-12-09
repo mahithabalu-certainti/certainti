@@ -1,5 +1,6 @@
 import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
 import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constant";
+import { errorLog } from "../utils/helpers";
 
 export interface KeyContactDetailsAttributes {
   rid?: string;
@@ -133,9 +134,7 @@ export async function setupKeyContactsSequence(sequelize: Sequelize, schemaName:
 
     await sequelize.query(`ALTER TABLE "${schemaName}".key_contact_details
           ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.KEY_CONTACT_DETAILS}-' || LPAD(nextval('"${schemaName}".key_contact_seq')::text, 10, '0')`);
-
-    console.log("Key contact sequence setup complete");
   } catch (error) {
-    console.error("Error setting up Key contact sequence:", error);
+    errorLog("Error setting up Key contact sequence:", (error as Error).message);
   }
 }

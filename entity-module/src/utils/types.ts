@@ -41,7 +41,7 @@ export interface IUpdateResource {
   total_years_experience?: number | null;
   total_years_in_org?: number | null;
   status_rid?: string;
-  modified_by ?: string | null;
+  modified_by?: string | null;
   comments?: string;
 }
 export interface IResourceCost {
@@ -188,6 +188,7 @@ export interface ICreateProject {
   total_cost?: number | null;
   total_fte?: number;
   total_subcon?: number;
+  total_nonlabor?: number;
   total_cost_nonlabor?: number | null;
   total_effort_fte?: number | null;
   total_effort_subcon?: number | null;
@@ -246,6 +247,7 @@ export interface IUpdateProject {
   total_cost?: number | null;
   total_fte?: number;
   total_subcon?: number;
+  total_nonlabor?: number;
   total_cost_nonlabor?: number | null;
   total_effort_fte?: number | null;
   total_effort_subcon?: number | null;
@@ -264,6 +266,7 @@ export interface IUpdateProject {
   key_contacts:any;
   comments?: string;
   project_fiscal_id: string;
+  is_qualified: boolean;
 }
 
 export interface IKeyContactDetail {
@@ -411,7 +414,11 @@ export interface ICreateProjectTask {
   created_by: string;
   modified_by?: string;
   status_rid : string;
-  project_resource_rid : string
+  project_resource_rid : string;
+  task_name?: string;
+  task_description?: string;
+  task_type_rid?: string;
+  task_classification_rid?: string;
 }
 
 export interface IUpdateProjectTask {
@@ -432,7 +439,11 @@ export interface IUpdateProjectTask {
   created_by: string;
   modified_by?: string;
   status_rid : string
-  project_resource_rid : string
+  project_resource_rid : string;
+  task_name?: string;
+  task_description?: string;
+  task_type_rid?: string;
+  task_classification_rid?: string;
 }
 
 export interface IAnomalyStatus {
@@ -447,4 +458,14 @@ export interface IUpdateQrePecentAdjustment {
   rid: string,
   account_rid: string,
   rd_percent_potential_ai: number;
+}
+
+export interface IFetchNotesDetailsInput {
+  rid : string;
+  account_rid : string;
+  user_rid : string
+}
+
+export interface CaseStatusResult {
+  status_name: string;
 }

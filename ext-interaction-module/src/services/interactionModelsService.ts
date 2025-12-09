@@ -4,6 +4,7 @@ import { initMainDbSequelize } from "../config/mainDataSource";
 import { Interaction } from "../models/interaction";
 import { Otp } from "../models/otp";
 import { OtpHistory } from "../models/otpHistory";
+import { SCHEMANAME_PREFIX } from "../utils/constants";
 
 export class InteractionModelService {
   orgDbSequelize: Sequelize | null = null;
@@ -39,7 +40,7 @@ export class InteractionModelService {
   }
 
   async getModels(accountNumber: string) {
-    const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
+    const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
 
     const sequelize = await initOrgSequelize();
 

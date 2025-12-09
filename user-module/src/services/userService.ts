@@ -13,6 +13,7 @@ import { UserGroupEntityAccess } from "../models/UserGroupEntityAccessModel";
 import { UserGroupMapping } from "../models/userGroupMappingModel";
 import { UserGroup } from "../models/userGroupModel";
 import { updateAzureUser } from "./manageUser";
+import { errorLog, logMessage } from "../utils/helpers";
   const { 
     User, UserDetails, Department, FunctionGroup, Profile, BusinessTeams,
     ProfileMenuAccess, Menu, ProfileModuleAccess, MenuModule, ProfilePermissionAccess, ModulePermission,
@@ -89,7 +90,7 @@ class UserService {
       } = userData;
 
       const repository = this.getAccountRepository();
-
+      logMessage(`Creating user with data : ${JSON.stringify(userData)}`);
       const user = await repository.create({
         azure_id: azureId,
         first_name,
@@ -122,6 +123,7 @@ class UserService {
         },
       };
     } catch (err) {
+      errorLog("Error creating user:", (err as Error).message);
       return this.throwServiceError(err as Error);
     }
   }
@@ -167,8 +169,9 @@ class UserService {
         phone,
         is_consultant_firm,
         org_id,
-        remove_group_memberships
+        remove_group_memberships,
       } = userData;
+      logMessage(`Updating user ${userId} with data: ${JSON.stringify(userData)}`);
 
       const repository = this.getAccountRepository();
 
@@ -181,24 +184,22 @@ class UserService {
           errorMessage: "User not found",
         };
       }
-      if(remove_group_memberships)
-      {
-         this.revokeAllGroupAccessForUser(userId)     
+      if (remove_group_memberships) {
+        this.revokeAllGroupAccessForUser(userId);
       }
       if (user.org_id !== org_id) {
         const userGroups = await this.getUserAccessStatus(userId);
-      if (userGroups.hasAccess) {
-        return {
-          statusCode: constants.CONFLICT, // 409 Conflict or use a custom code
-          message: constants.CONFLICT_MESSAGE,
-          errorMessage: `This user currently has access to this organization directly or through the following groups:
-            ${userGroups.groupNames.join(', ')}
+        if (userGroups.hasAccess) {
+          return {
+            statusCode: constants.CONFLICT, // 409 Conflict or use a custom code
+            message: constants.CONFLICT_MESSAGE,
+            errorMessage: `This user currently has access to this organization directly or through the following groups:
+            ${userGroups.groupNames.join(", ")}
             If you continue, their existing access to the organization will be updated.
             Do you want to proceed?`,
-          requiresConfimration:true
-        };
-      }
-
+            requiresConfimration: true,
+          };
+        }
       }
 
       //REstrict if user belongs the group if the user belongs to any group
@@ -231,7 +232,6 @@ class UserService {
       if (organization === constants.ENV_EA) {
         this.updateUserDetails(userData, userId);
       }
-     
 
       return {
         statusCode: constants.SUCCESS,
@@ -241,6 +241,7 @@ class UserService {
         },
       };
     } catch (err) {
+      errorLog("Error updating user:", (err as Error).message);
       return this.throwServiceError(err as Error);
     }
   }
@@ -252,55 +253,57 @@ class UserService {
     try {
       // 1. Check for direct access first
       const directAccess = await UserGroupEntityAccess.findOne({
-        where: { user_rid: userId }
+        where: { user_rid: userId },
       });
 
       if (directAccess) {
         return {
           hasAccess: true,
-          groupNames: []
+          groupNames: [],
         };
       }
 
       // 2. Check for group-based access
       const userGroups = await UserGroupMapping.findAll({
         where: { user_rid: userId },
-        include: [{
-          model: UserGroup,
-          as: 'group',
-          attributes: ['group_name'],
-          required: true
-        }],
+        include: [
+          {
+            model: UserGroup,
+            as: "group",
+            attributes: ["group_name"],
+            required: true,
+          },
+        ],
         raw: true,
-        nest: true
+        nest: true,
       });
 
       const groupNames = userGroups
-        .map(g => g.group?.group_name)
-        .filter((name): name is string => typeof name === 'string');
+        .map((g) => g.group?.group_name)
+        .filter((name): name is string => typeof name === "string");
 
-      const groupRids = userGroups.map(g => g.group_rid);
+      const groupRids = userGroups.map((g) => g.group_rid);
 
       if (groupRids.length > 0) {
         const groupAccess = await UserGroupEntityAccess.findOne({
-          where: { group_rid: { [Op.in]: groupRids } }
+          where: { group_rid: { [Op.in]: groupRids } },
         });
 
         return {
           hasAccess: Boolean(groupAccess),
-          groupNames: groupAccess ? groupNames : []
+          groupNames: groupAccess ? groupNames : [],
         };
       }
 
       return {
         hasAccess: false,
-        groupNames: []
+        groupNames: [],
       };
     } catch (error) {
-      console.error('Error checking user access:', error);
+      errorLog('Error checking user access:', (error as Error).message);
       return {
         hasAccess: false,
-        groupNames: []
+        groupNames: [],
       };
     }
   }
@@ -316,6 +319,7 @@ class UserService {
     data?: { user: any };
   }> {
     try {
+      logMessage(`Updating user ${userId} with data: ${JSON.stringify(userData)}`);
       const mainSequelize = await initSequelize()
       const { ...fieldsToUpdate } = userData;
 
@@ -364,29 +368,40 @@ class UserService {
         { where: { rid: userId } }
       );
 
-      let userDetails = await mainSequelize.query(rawQuery.fetchUserByIdForGraphql(userId))
-      let d : any = userDetails[0][0]
+      let userDetails = await mainSequelize.query(
+        rawQuery.fetchUserByIdForGraphql(userId)
+      );
+      let d: any = userDetails[0][0];
       let finalData = {
-        rid : d.rid,
-        email : d.email,
-        status_rid : d.status_rid,
-        first_name : d.first_name,
-        created_datetime : d.created_datetime,
-        modified_datetime : d.modified_datetime,
-        azure_id : d.azure_id,
-        profile : d.profile == null ? null : {
-          rid : d.profile.rid,
-          profile_name : d.profile.profile_name
-        },
-        business_teams : d.business_teams == null ? null : {
-          rid : d.business_teams.rid,
-          business_teams : d.business_teams.business_teams
-        },
-        status : d.status == null ? null : {
-          status_name : d.status.status_name,
-          status_description : d.status.status_description
-        }
-      }
+        rid: d.rid,
+        email: d.email,
+        status_rid: d.status_rid,
+        first_name: d.first_name,
+        created_datetime: d.created_datetime,
+        modified_datetime: d.modified_datetime,
+        azure_id: d.azure_id,
+        profile:
+          d.profile == null
+            ? null
+            : {
+                rid: d.profile.rid,
+                profile_name: d.profile.profile_name,
+              },
+        business_teams:
+          d.business_teams == null
+            ? null
+            : {
+                rid: d.business_teams.rid,
+                business_teams: d.business_teams.business_teams,
+              },
+        status:
+          d.status == null
+            ? null
+            : {
+                status_name: d.status.status_name,
+                status_description: d.status.status_description,
+              },
+      };
       return {
         statusCode: constants.SUCCESS,
         message: constants.SUCCESS_MESSAGE,
@@ -395,6 +410,7 @@ class UserService {
         },
       };
     } catch (err) {
+      errorLog("Error updating user inline:", (err as Error).message);
       return this.throwServiceError(err as Error);
     }
   }
@@ -402,21 +418,25 @@ class UserService {
   // ... existing code ...
   // ... existing code ...
   // ... existing code ...
+  /**
+ * Retrieves permission fields for a user based on specified permission IDs, combining both profile and user-specific access rights.
+ * The function queries the database for the user's profile, fetches permission fields, and merges access details 
+ * from profile-level and user-level permissions to produce a comprehensive access map.
+ * 
+ * @param {string} userId - The ID of the user to retrieve permission fields for.
+ * @param {string[]} permissionIds - Array of permission IDs to fetch fields and access for.
+ * @returns {Promise<Object>} - A promise resolving to an object mapping permission IDs to arrays of field access details (read/edit).
+ * 
+ * @throws {Error} Throws an error if the retrieval or processing fails.
+ */
   async getPermissionFieldsByIds(userId: string, permissionIds: string[]) {
     try {
-      console.log(
-        `[getPermissionFieldsByIds] DB operation started at: ${new Date(
-          Date.now()
-        ).toISOString()}`
-      );
       // 1. Get profile id for user
       const user = await User.findOne({
         where: { rid: userId },
         attributes: ["profile_rid"],
       });
-      console.log(
-        `After Profile retrieve: ${new Date(Date.now()).toISOString()}`
-      );
+     
       const profileId = user?.profile_rid;
       if (!profileId) {
         return {
@@ -432,11 +452,7 @@ class UserService {
         where: { module_permission_id: permissionIds },
         raw: true,
       });
-      console.log(
-        `After Permission fields retrieve: ${new Date(
-          Date.now()
-        ).toISOString()}`
-      );
+  
 
       // Collect all field IDs
       const fieldIds = fields.map((f) => f.rid);
@@ -446,20 +462,13 @@ class UserService {
         where: { profile_id: profileId, permission_field_id: fieldIds },
         raw: true,
       });
-      console.log(
-        `After profileFieldAccess retrieve: ${new Date(
-          Date.now()
-        ).toISOString()}`
-      );
 
       // 4. Get user field access for these fields
       const userFieldAccess = await UserFieldsAccess.findAll({
         where: { user_id: userId, permission_field_id: fieldIds },
         raw: true,
       });
-      console.log(
-        `After userFieldAccess retrieve: ${new Date(Date.now()).toISOString()}`
-      );
+      
 
       // 5. Build access maps for quick lookup (by field_id)
       const profileAccessMap: {
@@ -478,12 +487,7 @@ class UserService {
           read: acc.read,
           edit: acc.edit,
         };
-      });
-      console.log(
-        `After profileFieldAccess userFieldAccess map: ${new Date(
-          Date.now()
-        ).toISOString()}`
-      );
+      })
 
       // 6. Build the response
       const result: { [key: string]: any[] } = {};
@@ -504,16 +508,14 @@ class UserService {
           };
         });
       });
-      console.log(
-        `After build response: ${new Date(Date.now()).toISOString()}`
-      );
 
       return result;
     } catch (err) {
-      console.log(err);
+      errorLog("Error in getPermissionFieldsByIds:", (err as Error).message);
       return this.throwServiceError(err as Error);
     }
   }
+
   // ... existing code ...
 
   /**
@@ -554,10 +556,10 @@ class UserService {
     });
   }
 
-    /**
+  /**
    * Removes all group-related access and mappings for a given user.
    * This includes their entries in `UserGroupEntityAccess` and `UserGroupMapping`.
-   * 
+   *
    * @param userId - The ID of the user whose access is being revoked.
    * @throws If database operations fail (caller should handle errors).
    */
@@ -569,7 +571,7 @@ class UserService {
       // Remove all group mappings for the user
       UserGroupMapping.destroy({ where: { user_rid: userId } }),
     ]);
-    console.log(`Revoked all group access for user ${userId}`); 
+    logMessage(`Revoked all group access for user ${userId}`); 
   }
 
   /**
@@ -650,13 +652,14 @@ class UserService {
     data?: { users: any; count: number };
   }> {
     try {
+      logMessage(`listUsers called with page: ${page}, limit: ${limit}, search: ${search}, filters: ${JSON.stringify(filters)}, sortBy: ${sortBy}, sortOrder: ${sortOrder}, organization: ${organization}`);
       let users = null;
       let count: number = 0;
       const offset = (page - 1) * limit;
 
       const whereClause = this.buildWhereClause(filters, search);
 
-      console.log("whereClause : ", JSON.stringify(whereClause));
+      logMessage(`whereClause : ${JSON.stringify(whereClause)}`);
 
       const [finalSortBy, finalSortOrder] = this.getSortParameters(
         sortBy,
@@ -691,6 +694,7 @@ class UserService {
         },
       };
     } catch (err) {
+      errorLog("Error listing users:", (err as Error).message);
       return this.throwServiceError(err as Error);
     }
   }
@@ -718,6 +722,7 @@ class UserService {
     data?: { users: any };
   }> {
     try {
+      logMessage(`listUserById called with userId: ${userId}, organization: ${organization}`);
       let users = null;
       if (organization === constants.ENV_TRD365) {
         users = await User.findOne({
@@ -764,7 +769,11 @@ class UserService {
             created_by: users.created_by || "",
             modified_by: users.modified_by || "",
           });
-
+           const permissions = await this.getAllUserExtendedPermissionForView(
+            users.rid,
+            users.profile_rid || ""
+    );
+          (users as any).dataValues.permissions = permissions;
           (users as any).dataValues.created_by = userNames.created_by_name;
           (users as any).dataValues.modified_by = userNames.modified_by_name;
         }
@@ -799,6 +808,7 @@ class UserService {
         },
       };
     } catch (err) {
+      errorLog("Error listing user by ID:", (err as Error).message);
       return this.throwServiceError(err as Error);
     }
   }
@@ -830,6 +840,7 @@ class UserService {
         },
       };
     } catch (err) {
+      errorLog("Error fetching roles:", (err as Error).message);
       return this.throwServiceError(err as Error);
     }
   }
@@ -859,6 +870,7 @@ class UserService {
     } | null;
   }> {
     try {
+      logMessage(`Fetching permissions for user with Azure ID: ${azureId}`);
       const roles = await User.findOne({
         attributes: [
           "role_rid",
@@ -877,7 +889,6 @@ class UserService {
           },
         ],
       });
-      console.log(`After Profile retrieve: ${new Date().toISOString()}`);
 
       let organisation_name = "";
       let logo_url = "";
@@ -901,7 +912,7 @@ class UserService {
       } else {
         const mainDbSequelize = await initSequelize();
         const [account]: any[] = await mainDbSequelize.query(
-          `SELECT organisation_name, logo_url FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
+          rawQuery.getOrganizationInfoByRidQuery(),
           {
             replacements: { rid: roles.org_id },
             type: "SELECT",
@@ -940,8 +951,8 @@ class UserService {
           logo_url,
         },
       };
-    } catch (err) {
-      console.log(err);
+    } catch (err) { 
+      errorLog("Error in permissionById:", (err as Error).message);
       return this.throwServiceError(err as Error);
     }
   }
@@ -949,33 +960,32 @@ class UserService {
   // Consolidate all permissions for a user
 // ... existing code ...
 async getAllUserPermission(userId: string, profileId: string) {
-  console.log("userId : ",userId);
-  console.log("profileId : ",profileId);
+ logMessage(`getAllUserPermission called with userId: ${userId}, profileId: ${profileId}`);
   const [profilePermissions, userPermissions] = await Promise.all([
     this.getProfilePermission(profileId,false),
     this.getUserPermission(userId)
   ]);
 
-  const userPermissionMap = new Map<string, any>();
-  userPermissions.forEach((p) =>
-    userPermissionMap.set(getPermissionKey(p), p)
-  );
+    const userPermissionMap = new Map<string, any>();
+    userPermissions.forEach((p) =>
+      userPermissionMap.set(getPermissionKey(p), p)
+    );
 
-  // Result array for merged permissions
-  const mergedPermissions: any[] = [];
+    // Result array for merged permissions
+    const mergedPermissions: any[] = [];
 
-  // Merge profilePermissions with userPermissions overrides
-  for (const profilePerm of profilePermissions) {
-    const key = getPermissionKey(profilePerm);
-    const userPerm = userPermissionMap.get(key);
-    if (profilePerm.type === "field") {
+    // Merge profilePermissions with userPermissions overrides
+    for (const profilePerm of profilePermissions) {
+      const key = getPermissionKey(profilePerm);
+      const userPerm = userPermissionMap.get(key);
+      if (profilePerm.type === "field") {
         // For field permissions, merge read/edit and extended flags
         mergedPermissions.push({
           ...profilePerm,
           read: profilePerm.read ? true : userPerm?.read === true,
-          edit: profilePerm.edit ? true : userPerm?.edit === true
+          edit: profilePerm.edit ? true : userPerm?.edit === true,
         });
-    } else {
+      } else {
         // For other types (menu, module, etc.)
         mergedPermissions.push({
           ...profilePerm,
@@ -988,87 +998,128 @@ async getAllUserPermission(userId: string, profileId: string) {
       // Remove merged user permission from map to track leftover user-only permissions
       if (userPerm) userPermissionMap.delete(key);
     }
-    return mergedPermissions
+    return mergedPermissions;
   }
 
   // Get all profile-based permissions
-async getProfilePermission(profileId: string,includeDependencies: boolean = false) {
-  const permissions: any[] = [];
-  const mainDbSequelize = await initSequelize();
+  async getProfilePermission(
+    profileId: string,
+    includeDependencies: boolean = false
+  ) {
+    const permissions: any[] = [];
+    const mainDbSequelize = await initSequelize();
 
-  // Get all data including dependencies in parallel
-  const [
-    menuAccess,
-    moduleAccess,
-    permissionAccess,
-    fieldAccess,
-    allDependencies
-  ] = await Promise.all([
-    ProfileMenuAccess.findAll({
-      where: { profile_id: profileId },
-      include: [{ model: Menu, as: "menu" }],
-      order: [
-        [{ model: Menu, as: "menu" }, "menu_category", "DESC"],
-        [{ model: Menu, as: "menu" }, "sort_order", "ASC"]
-      ]
-    }),
-    ProfileModuleAccess.findAll({
-      where: { profile_id: profileId },
-      include: [{ model: MenuModule, as: "menu_module" }],
-      order: [[{ model: MenuModule, as: "menu_module" }, "sort_order", "ASC"]],
-    }),
-    ProfilePermissionAccess.findAll({
-      where: { profile_id: profileId},
-      include: [{ model: ModulePermission, as: "module_permission" }],
-      indexHints: [{ type: IndexHints.USE, values: ['idx_profile_permission_access_profile_id'] }],
-       order: [[{ model: ModulePermission, as: "module_permission" }, "permission_desc", "ASC"]]
-    }),
-    ProfileFieldsAccess.findAll({
-      where: { profile_id: profileId },
-      include: [{ model: PermissionField, as: "permission_field" }],
-      indexHints: [{ type: IndexHints.USE, values: ['idx_profile_fields_access_profile_id'] }],
-       order: [[{ model: PermissionField, as: "permission_field" }, "sort_order", "ASC"]],
-    }),
-   includeDependencies ? PermissionObjectMapping.findAll({
-      attributes: ['dependent_id', 'depends_on_id', 'dependent_type', 'depends_on_type']
-    }) : Promise.resolve([])
-  ]);
+    // Get all data including dependencies in parallel
+    const [
+      menuAccess,
+      moduleAccess,
+      permissionAccess,
+      fieldAccess,
+      allDependencies,
+    ] = await Promise.all([
+      ProfileMenuAccess.findAll({
+        where: { profile_id: profileId },
+        include: [{ model: Menu, as: "menu" }],
+        order: [
+          [{ model: Menu, as: "menu" }, "menu_category", "DESC"],
+          [{ model: Menu, as: "menu" }, "sort_order", "ASC"],
+        ],
+      }),
+      ProfileModuleAccess.findAll({
+        where: { profile_id: profileId },
+        include: [{ model: MenuModule, as: "menu_module" }],
+        order: [
+          [{ model: MenuModule, as: "menu_module" }, "sort_order", "ASC"],
+        ],
+      }),
+      ProfilePermissionAccess.findAll({
+        where: { profile_id: profileId },
+        include: [{ model: ModulePermission, as: "module_permission" }],
+        indexHints: [
+          {
+            type: IndexHints.USE,
+            values: ["idx_profile_permission_access_profile_id"],
+          },
+        ],
+        order: [
+          [
+            { model: ModulePermission, as: "module_permission" },
+            "permission_desc",
+            "ASC",
+          ],
+        ],
+      }),
+      ProfileFieldsAccess.findAll({
+        where: { profile_id: profileId },
+        include: [{ model: PermissionField, as: "permission_field" }],
+        indexHints: [
+          {
+            type: IndexHints.USE,
+            values: ["idx_profile_fields_access_profile_id"],
+          },
+        ],
+        order: [
+          [
+            { model: PermissionField, as: "permission_field" },
+            "sort_order",
+            "ASC",
+          ],
+        ],
+      }),
+      includeDependencies
+        ? PermissionObjectMapping.findAll({
+            attributes: [
+              "dependent_id",
+              "depends_on_id",
+              "dependent_type",
+              "depends_on_type",
+            ],
+          })
+        : Promise.resolve([]),
+    ]);
 
-  // Create lookup maps for dependencies
-  const dependencyMap = includeDependencies ? new Map<string, { id: string, type: string }[]>() : null;
-  
-  const reverseDependencyMap = includeDependencies ? new Map<string, { id: string, type: string }[]>() : null;
+    // Create lookup maps for dependencies
+    const dependencyMap = includeDependencies
+      ? new Map<string, { id: string; type: string }[]>()
+      : null;
 
-if (includeDependencies) {
-  allDependencies.forEach((dep: any) => {
-    const key = `${dep.dependent_id}`;
-    const reverseKey = `${dep.depends_on_id}`;
+    const reverseDependencyMap = includeDependencies
+      ? new Map<string, { id: string; type: string }[]>()
+      : null;
 
-    if (!dependencyMap!.has(key)) {
-      dependencyMap!.set(key, []);
+    if (includeDependencies) {
+      allDependencies.forEach((dep: any) => {
+        const key = `${dep.dependent_id}`;
+        const reverseKey = `${dep.depends_on_id}`;
+
+        if (!dependencyMap!.has(key)) {
+          dependencyMap!.set(key, []);
+        }
+        dependencyMap!.get(key)!.push({
+          id: dep.depends_on_id,
+          type: dep.depends_on_type,
+        });
+
+        // Populate reverse dependency map (parenting_on)
+        if (!reverseDependencyMap!.has(reverseKey)) {
+          reverseDependencyMap!.set(reverseKey, []);
+        }
+        reverseDependencyMap!.get(reverseKey)!.push({
+          id: dep.dependent_id,
+          type: dep.dependent_type,
+        });
+      });
     }
-    dependencyMap!.get(key)!.push({
-      id: dep.depends_on_id,
-      type: dep.depends_on_type
-    });
 
-    // Populate reverse dependency map (parenting_on)
-    if (!reverseDependencyMap!.has(reverseKey)) {
-      reverseDependencyMap!.set(reverseKey, []);
-    }
-    reverseDependencyMap!.get(reverseKey)!.push({
-      id: dep.dependent_id,
-      type: dep.dependent_type
-    });
-  });
-}
-
-
-  // Process menus with dependencies
-  menuAccess.forEach((ma: any) => {
+    // Process menus with dependencies
+    menuAccess.forEach((ma: any) => {
       const maWithMenu = ma as any;
-      const deps = includeDependencies ? dependencyMap?.get(`${maWithMenu.menu.rid}`) || [] : [];
-      const parents = includeDependencies ? reverseDependencyMap?.get(`${maWithMenu.menu.rid}`) || [] : [];
+      const deps = includeDependencies
+        ? dependencyMap?.get(`${maWithMenu.menu.rid}`) || []
+        : [];
+      const parents = includeDependencies
+        ? reverseDependencyMap?.get(`${maWithMenu.menu.rid}`) || []
+        : [];
 
       if (maWithMenu.menu) {
         permissions.push({
@@ -1078,21 +1129,37 @@ if (includeDependencies) {
           name: maWithMenu.menu.menu_name,
           desc: maWithMenu.menu.menu_desc,
           is_enabled: maWithMenu.is_enabled,
-          depends_on_menu:includeDependencies ?  deps.filter(d => d.type === 'menu').map(d => d.id) : undefined,
-          depends_on_module: includeDependencies ? deps.filter(d => d.type === 'module').map(d => d.id):undefined,
-          depends_on_permission :includeDependencies ?  deps.filter(d => d.type === 'permission').map(d => d.id) : undefined,
-          depended_by_menu :includeDependencies ?  parents.filter(d => d.type === 'menu').map(d => d.id):undefined,
-          depended_by_module : includeDependencies ? parents.filter(d => d.type === 'module').map(d => d.id):undefined,
-          depended_by_permission :includeDependencies ? parents.filter(d => d.type === 'permission').map(d => d.id):undefined
+          depends_on_menu: includeDependencies
+            ? deps.filter((d) => d.type === "menu").map((d) => d.id)
+            : undefined,
+          depends_on_module: includeDependencies
+            ? deps.filter((d) => d.type === "module").map((d) => d.id)
+            : undefined,
+          depends_on_permission: includeDependencies
+            ? deps.filter((d) => d.type === "permission").map((d) => d.id)
+            : undefined,
+          depended_by_menu: includeDependencies
+            ? parents.filter((d) => d.type === "menu").map((d) => d.id)
+            : undefined,
+          depended_by_module: includeDependencies
+            ? parents.filter((d) => d.type === "module").map((d) => d.id)
+            : undefined,
+          depended_by_permission: includeDependencies
+            ? parents.filter((d) => d.type === "permission").map((d) => d.id)
+            : undefined,
         });
       }
     });
 
-  // Process modules with dependencies
-  moduleAccess.forEach((mo: any) => {
+    // Process modules with dependencies
+    moduleAccess.forEach((mo: any) => {
       const moWithModule = mo as any;
-       const deps = includeDependencies ? dependencyMap?.get(`${moWithModule.menu_module.rid}`) || [] : [];
-      const parents = includeDependencies ? reverseDependencyMap?.get(`${moWithModule.menu_module.rid}`) || [] : [];
+      const deps = includeDependencies
+        ? dependencyMap?.get(`${moWithModule.menu_module.rid}`) || []
+        : [];
+      const parents = includeDependencies
+        ? reverseDependencyMap?.get(`${moWithModule.menu_module.rid}`) || []
+        : [];
       if (moWithModule.menu_module) {
         permissions.push({
           rid: moWithModule.rid,
@@ -1102,21 +1169,37 @@ if (includeDependencies) {
           name: moWithModule.menu_module.module_name,
           desc: moWithModule.menu_module.module_desc,
           is_enabled: moWithModule.is_enabled,
-          depends_on_menu:includeDependencies ? deps.filter(d => d.type === 'menu').map(d => d.id) :undefined,
-          depends_on_module:includeDependencies ? deps.filter(d => d.type === 'module').map(d => d.id):undefined,
-          depends_on_permission :includeDependencies ? deps.filter(d => d.type === 'permission').map(d => d.id):undefined,
-          depended_by_menu : includeDependencies ? parents.filter(d => d.type === 'menu').map(d => d.id):undefined,
-          depended_by_module : includeDependencies ? parents.filter(d => d.type === 'module').map(d => d.id):undefined,
-          depended_by_permission : includeDependencies ? parents.filter(d => d.type === 'permission').map(d => d.id):undefined
+          depends_on_menu: includeDependencies
+            ? deps.filter((d) => d.type === "menu").map((d) => d.id)
+            : undefined,
+          depends_on_module: includeDependencies
+            ? deps.filter((d) => d.type === "module").map((d) => d.id)
+            : undefined,
+          depends_on_permission: includeDependencies
+            ? deps.filter((d) => d.type === "permission").map((d) => d.id)
+            : undefined,
+          depended_by_menu: includeDependencies
+            ? parents.filter((d) => d.type === "menu").map((d) => d.id)
+            : undefined,
+          depended_by_module: includeDependencies
+            ? parents.filter((d) => d.type === "module").map((d) => d.id)
+            : undefined,
+          depended_by_permission: includeDependencies
+            ? parents.filter((d) => d.type === "permission").map((d) => d.id)
+            : undefined,
         });
       }
     });
 
-  // Process permissions (unchanged)
-  permissionAccess.forEach((pa: any) => {
+    // Process permissions (unchanged)
+    permissionAccess.forEach((pa: any) => {
       const paWithPerm = pa as any;
-       const deps = includeDependencies ? dependencyMap?.get(`${paWithPerm.module_permission.rid}`) || [] : [];
-      const parents = includeDependencies ? reverseDependencyMap?.get(`${paWithPerm.module_permission.rid}`) || [] : [];
+      const deps = includeDependencies
+        ? dependencyMap?.get(`${paWithPerm.module_permission.rid}`) || []
+        : [];
+      const parents = includeDependencies
+        ? reverseDependencyMap?.get(`${paWithPerm.module_permission.rid}`) || []
+        : [];
       if (paWithPerm.module_permission) {
         permissions.push({
           rid: paWithPerm.rid,
@@ -1127,17 +1210,29 @@ if (includeDependencies) {
           desc: paWithPerm.module_permission.permission_desc,
           is_field_available: paWithPerm.module_permission.is_field_available,
           is_enabled: paWithPerm.is_enabled,
-          depends_on_menu:includeDependencies ? deps.filter(d => d.type === 'menu').map(d => d.id):undefined,
-          depends_on_module:includeDependencies ? deps.filter(d => d.type === 'module').map(d => d.id) :undefined,
-          depends_on_permission :includeDependencies ?  deps.filter(d => d.type === 'permission').map(d => d.id) :undefined,
-          depended_by_menu : includeDependencies ? parents.filter(d => d.type === 'menu').map(d => d.id) :undefined,
-          depended_by_module : includeDependencies ? parents.filter(d => d.type === 'module').map(d => d.id):undefined,
-          depended_by_permission :includeDependencies ? parents.filter(d => d.type === 'permission').map(d => d.id):undefined
+          depends_on_menu: includeDependencies
+            ? deps.filter((d) => d.type === "menu").map((d) => d.id)
+            : undefined,
+          depends_on_module: includeDependencies
+            ? deps.filter((d) => d.type === "module").map((d) => d.id)
+            : undefined,
+          depends_on_permission: includeDependencies
+            ? deps.filter((d) => d.type === "permission").map((d) => d.id)
+            : undefined,
+          depended_by_menu: includeDependencies
+            ? parents.filter((d) => d.type === "menu").map((d) => d.id)
+            : undefined,
+          depended_by_module: includeDependencies
+            ? parents.filter((d) => d.type === "module").map((d) => d.id)
+            : undefined,
+          depended_by_permission: includeDependencies
+            ? parents.filter((d) => d.type === "permission").map((d) => d.id)
+            : undefined,
         });
       }
     });
 
-  // Process fields (unchanged)
+    // Process fields (unchanged)
     fieldAccess.forEach((fa: any) => {
       const faWithField = fa as any;
       if (faWithField.permission_field) {
@@ -1150,16 +1245,15 @@ if (includeDependencies) {
           desc: faWithField.permission_field.field_desc,
           read: faWithField.read,
           edit: faWithField.edit,
-          is_read_only: includeDependencies ? faWithField.permission_field.is_read_only : undefined,
-          is_edit_only: includeDependencies ? faWithField.permission_field.is_edit_only : undefined
+          is_read_only: includeDependencies
+            ? faWithField.permission_field.is_read_only
+            : undefined,
+          is_edit_only: includeDependencies
+            ? faWithField.permission_field.is_edit_only
+            : undefined,
         });
       }
     });
-    console.log(
-      `After permission access response map: ${new Date(
-        Date.now()
-      ).toISOString()}`
-    );
 
     return permissions;
   }
@@ -1170,8 +1264,12 @@ if (includeDependencies) {
 
     // Menus
     const menuAccess = await UserMenuAccess.findAll({
-      where: { user_id: userId },
+      where: { user_id: userId , is_enabled: true },
       include: [{ model: Menu, as: "menu" }],
+        order: [
+        [{ model: Menu, as: "menu" }, "menu_category", "DESC"],
+        [{ model: Menu, as: "menu" }, "sort_order", "ASC"]
+      ]
     });
     menuAccess.forEach((ma) => {
       const maWithMenu = ma as any;
@@ -1189,8 +1287,9 @@ if (includeDependencies) {
 
     // Modules
     const moduleAccess = await UserModuleAccess.findAll({
-      where: { user_id: userId },
+      where: { user_id: userId , is_enabled: true },
       include: [{ model: MenuModule, as: "menu_module" }],
+      order: [[{ model: MenuModule, as: "menu_module" }, "sort_order", "ASC"]],
     });
     moduleAccess.forEach((mo) => {
       const moWithModule = mo as any;
@@ -1209,8 +1308,9 @@ if (includeDependencies) {
 
     // Permissions
     const permissionAccess = await UserPermissionAccess.findAll({
-      where: { user_id: userId },
+      where: { user_id: userId, is_enabled: true },
       include: [{ model: ModulePermission, as: "module_permission" }],
+       order: [[{ model: ModulePermission, as: "module_permission" }, "permission_desc", "ASC"]],
       indexHints: [
         {
           type: IndexHints.USE,
@@ -1234,15 +1334,20 @@ if (includeDependencies) {
     });
 
     const fieldAccess = await UserFieldsAccess.findAll({
-      where: { user_id: userId },
+      where: {
+      user_id: userId,
+      [Op.or]: [
+        { read: true },
+        { edit: true }
+      ],
+      
+      },
       include: [{ model: PermissionField, as: "permission_field" }],
+      order: [[{ model: PermissionField, as: "permission_field" }, "sort_order", "ASC"]],
       indexHints: [
-        { type: IndexHints.USE, values: ["idx_user_fields_access_user_id"] },
+      { type: IndexHints.USE, values: ["idx_user_fields_access_user_id"] },
       ],
     });
-    console.log(
-      `After user fieldAccess retrieve: ${new Date(Date.now()).toISOString()}`
-    );
 
     fieldAccess.forEach((fa) => {
       const faWithField = fa as any;
@@ -1253,12 +1358,230 @@ if (includeDependencies) {
           field_id: faWithField.permission_field.rid,
           permission_id: faWithField.permission_field.module_permission_id,
           name: faWithField.permission_field.field_name,
+          desc: faWithField.permission_field.field_desc,
           read: faWithField.read,
           edit: faWithField.edit,
         });
       }
     });
 
+    return permissions;
+  }
+
+  async getUserPermissionForView(userId: string) {
+    const permissions: any[] = [];
+    const mainDbSequelize = await initSequelize();
+
+    // First, get all menu IDs and module IDs from user_permission_access
+    const permissionQuery = rawQuery.getUserExtendedPermissionsQuery();
+    const permissionAccess: any[] = await mainDbSequelize.query(permissionQuery, {
+      replacements: { userId },
+      type: QueryTypes.SELECT,
+    });
+
+    // Collect menu IDs and module IDs from permission access
+    const permissionMenuIds = new Set(permissionAccess.map(pa => pa.menu_id));
+    const permissionModuleIds = new Set(permissionAccess.map(pa => pa.module_id));
+    
+    // Process permission access data
+    for (const pa of permissionAccess) {
+      const permissionData: any = {
+        type: "permission",
+        menu_id: pa.menu_id,
+        module_id: pa.module_id,
+        module_permission_id: pa.module_permission_id,
+        menu_desc: pa.menu_desc,
+        module_desc: pa.module_desc,
+        permission_desc: pa.permission_desc,
+        is_field_available: pa.is_field_available,
+      };
+
+      // If fields are available for this permission, fetch field info from user field access
+      if (pa.is_field_available) {
+        const fieldAccess = await UserFieldsAccess.findAll({
+          where: {
+            user_id: userId,
+            [Op.or]: [
+              { read: true },
+              { edit: true }
+            ],
+          },
+          include: [{ 
+            model: PermissionField, 
+            as: "permission_field",
+            where: {
+              module_permission_id: pa.module_permission_id
+            },
+            required: true
+          }],
+          order: [[{ model: PermissionField, as: "permission_field" }, "sort_order", "ASC"]],
+        });
+
+        const fields = fieldAccess.map((fa: any) => ({
+          field_id: fa.permission_field.rid,
+          field_name: fa.permission_field.field_name,
+          field_desc: fa.permission_field.field_desc,
+          read: fa.read,
+          edit: fa.edit,
+        }));
+
+        permissionData.fields = fields;
+      }
+
+      permissions.push(permissionData);
+    }
+
+   
+
+    const extraModuleAccess = await UserModuleAccess.findAll({
+      where: { 
+        user_id: userId,
+        is_enabled: true,
+        menu_module_id: {
+          [Op.notIn]: Array.from(permissionModuleIds)
+        }
+      },
+      include: [{ 
+        model: MenuModule, 
+        as: "menu_module",
+        include: [{
+          model: Menu,
+          as: "menu",
+          attributes: ["menu_name", "menu_desc"]
+        }]
+      }],
+      order: [[{ model: MenuModule, as: "menu_module" }, "sort_order", "ASC"]],
+    });
+
+    // Add extra modules to permissions
+    extraModuleAccess.forEach((mo: any) => {
+      if (mo.menu_module) {
+        // Add the menu ID from extra modules to the permissionMenuIds set
+        permissionMenuIds.add(mo.menu_module.menu_id);
+        
+        permissions.push({
+          type: "module",
+          module_id: mo.menu_module.rid,
+          menu_id: mo.menu_module.menu_id,
+          module_name: mo.menu_module.module_name,
+          module_desc: mo.menu_module.module_desc,
+          menu_desc: mo.menu_module.menu?.menu_desc || null,
+          is_enabled: mo.is_enabled,
+        });
+      }
+    });
+
+     // Now find extra menus from user_menu_access that are not in permission access
+    const extraMenuAccess = await UserMenuAccess.findAll({
+      where: { 
+        user_id: userId,
+        is_enabled: true,
+        menu_id: {
+          [Op.notIn]: Array.from(permissionMenuIds)
+        }
+      },
+      include: [{ model: Menu, as: "menu" }],
+      order: [
+        [{ model: Menu, as: "menu" }, "menu_category", "DESC"],
+        [{ model: Menu, as: "menu" }, "sort_order", "ASC"]
+      ]
+    });
+
+    // Add extra menus to permissions
+    extraMenuAccess.forEach((ma: any) => {
+      if (ma.menu) {
+        permissions.push({
+          type: "menu",
+          menu_id: ma.menu.rid,
+          menu_name: ma.menu.menu_name,
+          menu_desc: ma.menu.menu_desc,
+          is_enabled: ma.is_enabled
+        });
+      }
+    });
+
+    // Find extra modules from user_module_access that are not in permission access
+    
+    // Find standalone user field access that are not tied to any permission
+    const userFieldAccess = await UserFieldsAccess.findAll({
+      where: {
+        user_id: userId,
+        [Op.or]: [
+          { read: true },
+          { edit: true }
+        ],
+      },
+      include: [{ 
+        model: PermissionField, 
+        as: "permission_field",
+        where: {
+          module_permission_id: {
+            [Op.notIn]: permissionAccess.map(pa => pa.module_permission_id)
+          }
+        },
+        required: true,
+        include: [{
+          model: ModulePermission,
+          as: "module_permission",
+          include: [{
+            model: MenuModule,
+            as: "menu_module",
+            include: [{
+              model: Menu,
+              as: "menu"
+            }]
+          }]
+        }]
+      }],
+      order: [[{ model: PermissionField, as: "permission_field" }, "sort_order", "ASC"]],
+    });
+
+    // Group standalone fields by their permission ID for better organization
+    const userFieldsByPermission = new Map();
+    userFieldAccess.forEach((fa: any) => {
+      if (fa.permission_field && fa.permission_field.module_permission) {
+        const permissionId = fa.permission_field.module_permission_id;
+        const modulePermission = fa.permission_field.module_permission;
+        const menuModule = modulePermission.menu_module;
+        const menu = menuModule?.menu;
+        
+        if (!userFieldsByPermission.has(permissionId)) {
+          userFieldsByPermission.set(permissionId, {
+            permission_desc: modulePermission.permission_desc,
+            permission_name: modulePermission.permission_name,
+            module_desc: menuModule?.module_desc,
+            menu_desc: menu?.menu_desc,
+            module_id: menuModule?.rid,
+            menu_id: menu?.rid,
+            fields: []
+          });
+        }
+        userFieldsByPermission.get(permissionId).fields.push({
+          field_id: fa.permission_field.rid,
+          field_name: fa.permission_field.field_name,
+          field_desc: fa.permission_field.field_desc,
+          read: fa.read,
+          edit: fa.edit,
+        });
+      }
+    });
+
+    // Add standalone field permissions to the result
+    userFieldsByPermission.forEach((permissionData, permissionId) => {
+      permissions.push({
+        type: "permission",
+        module_permission_id: permissionId,
+        permission_desc: permissionData.permission_desc,
+        permission_name: permissionData.permission_name,
+        module_desc: permissionData.module_desc,
+        menu_desc: permissionData.menu_desc,
+        module_id: permissionData.module_id,
+        menu_id: permissionData.menu_id,
+        is_field_available: true,
+        fields: permissionData.fields,
+      });
+    });
+    
     return permissions;
   }
 
@@ -1285,6 +1608,7 @@ if (includeDependencies) {
     sortBy: string,
     sortOrder: string
   ) {
+    logMessage(`Fetching users with filters: ${JSON.stringify(whereClause)}, limit: ${limit}, offset: ${offset}, sortBy: ${sortBy}, sortOrder: ${sortOrder}`);
     const order: any[] = [];
     if (sortBy === "$business_teams.business_teams$") {
       order.push(
@@ -1316,9 +1640,10 @@ if (includeDependencies) {
         "email",
         "status_rid",
         "first_name",
+        "last_name",
         "created_datetime",
         "modified_datetime",
-        "azure_id"
+        "azure_id",
       ],
       limit,
       offset,
@@ -1373,6 +1698,7 @@ if (includeDependencies) {
     sortBy: string,
     sortOrder: string
   ) {
+    logMessage(`Fetching user details with filters: ${JSON.stringify(whereClause)}, limit: ${limit}, offset: ${offset}, sortBy: ${sortBy}, sortOrder: ${sortOrder}`);
     return await UserDetails.findAll({
       where: whereClause,
       limit,
@@ -1713,7 +2039,7 @@ if (includeDependencies) {
         }
       } else {
         const [orgNameResult]: any[] = await mainDbSequelize.query(
-          `SELECT organisation_name FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
+          rawQuery.getOrganizationInfoByRidQuery(),
           {
             replacements: { rid: orgId },
             type: "SELECT",
@@ -1725,7 +2051,7 @@ if (includeDependencies) {
 
     if (countryId) {
       const [countryResult]: any[] = await mainDbSequelize.query(
-        `SELECT country_name FROM ${MAIN_SCHEMA_NAME}.country WHERE rid = :rid`,
+        rawQuery.getCountryNameByRidQuery(),
         {
           replacements: { rid: countryId },
           type: "SELECT",
@@ -1736,7 +2062,7 @@ if (includeDependencies) {
 
     if (stateId) {
       const [stateResult]: any[] = await mainDbSequelize.query(
-        `SELECT state_name FROM ${MAIN_SCHEMA_NAME}.state WHERE rid = :rid`,
+        rawQuery.getStateNameByRidQuery(),
         {
           replacements: { rid: stateId },
           type: "SELECT",
@@ -1747,7 +2073,7 @@ if (includeDependencies) {
 
     if (cityId) {
       const [stateResult]: any[] = await mainDbSequelize.query(
-        `SELECT city_name FROM ${MAIN_SCHEMA_NAME}.city WHERE rid = :rid`,
+        rawQuery.getCityNameByRidQuery(),
         {
           replacements: { rid: cityId },
           type: "SELECT",
@@ -1763,86 +2089,74 @@ if (includeDependencies) {
       orgName,
     };
   }
- async getAllowedExportFields(userId: string, permission_name: string): Promise<any[]> {
-  const userInfo = await User.findOne({
-    attributes: ["role_rid", "rid", "profile_rid", "first_name"],
-    where: { rid: userId },
-  });
+  async getAllowedExportFields(
+    userId: string,
+    permission_name: string
+  ): Promise<any[]> {
+    const userInfo = await User.findOne({
+      attributes: ["role_rid", "rid", "profile_rid", "first_name"],
+      where: { rid: userId },
+    });
 
-  if (!userInfo) {
-    return [];
-  }
+    if (!userInfo) {
+      return [];
+    }
 
-  const sequelize = await initSequelize();
+    const sequelize = await initSequelize();
 
-  const [profileFields, userFields] = await Promise.all([
-    sequelize.query(
-      `
-      SELECT pf.field_desc, pf.field_name, pfa.read, pfa.edit
-      FROM ${MAIN_SCHEMA_NAME}.profile_fields_access pfa
-      JOIN ${MAIN_SCHEMA_NAME}.permission_fields pf ON pfa.permission_field_id = pf.rid
-      JOIN ${MAIN_SCHEMA_NAME}.module_permission mp ON pf.module_permission_id = mp.rid
-      WHERE mp.permission_name = :permissionName
-        AND pfa.profile_id = :profileId
-      `,
-      {
-        replacements: {
-          permissionName: permission_name,
-          profileId: userInfo.profile_rid,
-        },
-        type: QueryTypes.SELECT,
+    const [profileFields, userFields] = await Promise.all([
+      sequelize.query(
+      rawQuery.getProfileFieldAccessQuery(),
+        {
+          replacements: {
+            permissionName: permission_name,
+            profileId: userInfo.profile_rid,
+          },
+          type: QueryTypes.SELECT,
+        }
+      ),
+      sequelize.query(
+        rawQuery.getUserFieldAccessQuery(),
+        {
+          replacements: {
+            permissionName: permission_name,
+            userId,
+          },
+          type: QueryTypes.SELECT,
+        }
+      ),
+    ]);
+
+    // Merge: user overrides profile
+    const userFieldMap = new Map<string, any>();
+    for (const field of userFields as any[]) {
+      userFieldMap.set(field.field_name, field);
+    }
+
+    const merged = (profileFields as any[]).map((pf) => {
+      const userPerm = userFieldMap.get(pf.field_name);
+      if (userPerm) {
+        userFieldMap.delete(pf.field_name);
+        return {
+          field_desc: pf.field_desc,
+          field_name: pf.field_name,
+          read: pf.read ? true : userPerm?.read === true,
+        };
       }
-    ),
-    sequelize.query(
-      `
-      SELECT pf.field_desc, pf.field_name, ufa.read, ufa.edit
-      FROM ${MAIN_SCHEMA_NAME}.user_fields_access ufa
-      JOIN ${MAIN_SCHEMA_NAME}.permission_fields pf ON ufa.permission_field_id = pf.rid
-      JOIN ${MAIN_SCHEMA_NAME}.module_permission mp ON pf.module_permission_id = mp.rid
-      WHERE mp.permission_name = :permissionName
-        AND ufa.user_id = :userId
-      `,
-      {
-        replacements: {
-          permissionName: permission_name,
-          userId,
-        },
-        type: QueryTypes.SELECT,
-      }
-    ),
-  ]);
-
-  // Merge: user overrides profile
-  const userFieldMap = new Map<string, any>();
-  for (const field of userFields as any[]) {
-    userFieldMap.set(field.field_name, field);
-  }
-
-  const merged = (profileFields as any[]).map((pf) => {
-    const userPerm = userFieldMap.get(pf.field_name);
-    if (userPerm) {
-      userFieldMap.delete(pf.field_name);
       return {
         field_desc: pf.field_desc,
         field_name: pf.field_name,
-        read:pf.read ? true : userPerm?.read === true,
+        read: pf.read,
       };
-    }
-    return {
-      field_desc: pf.field_desc,
-      field_name: pf.field_name,
-      read: pf.read,
-    };
-  });
+    });
 
-  const userOnly = Array.from(userFieldMap.values()).map((uf) => ({
-    field_desc: uf.field_desc,
-    field_name: uf.field_name,
-    read: uf.read,
-  }));
+    const userOnly = Array.from(userFieldMap.values()).map((uf) => ({
+      field_desc: uf.field_desc,
+      field_name: uf.field_name,
+      read: uf.read,
+    }));
 
   const exportableFields = [...merged, ...userOnly].filter((f) => f.read);
-  console.log(exportableFields)
   return exportableFields;
 }
 
@@ -1870,7 +2184,7 @@ if (includeDependencies) {
     sortOrder: string,
     organization: string,
     timezone: string,
-    userId:string
+    userId: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -1880,10 +2194,12 @@ if (includeDependencies) {
     try {
       let users = null;
       let count: number = 0;
-
+      logMessage(`Export Users - Search: ${search}, Filters: ${JSON.stringify(
+        filters
+      )}, SortBy: ${sortBy}, SortOrder: ${sortOrder}, Organization: ${organization}`);
       const whereClause = this.buildWhereClause(filters, search);
 
-      console.log("whereClause : ", JSON.stringify(whereClause));
+      logMessage(`Export Users - WhereClause: ${JSON.stringify(whereClause)}`);
 
       const [finalSortBy, finalSortOrder] = this.getSortParameters(
         sortBy,
@@ -1914,7 +2230,10 @@ if (includeDependencies) {
           return user.dataValues;
         }
       });
-      const allowedFieldsForExport = await this.getAllowedExportFields(userId,"user_view_edit");
+      const allowedFieldsForExport = await this.getAllowedExportFields(
+        userId,
+        "user_view_edit"
+      );
       const allowedFieldSet = new Set<string>();
       for (const field of allowedFieldsForExport) {
         if (field.read) {
@@ -1922,53 +2241,52 @@ if (includeDependencies) {
         }
       }
       users = cleanedUsers.map((user: any) => {
-      const exportData: Record<string, string> = {};
-      const flatUser = {
-        ...user,
-        profile_name: user.profile?.profile_name,
-        business_teams: user.business_teams?.business_teams,
-        status_name: user.status?.status_name,
-      };
-      const fieldMap: Record<string, string> = {
-        first_name: flatUser.first_name || "-",
-        email: flatUser.email || "-",
-        profile_rid: flatUser.profile_name || "-",
-        business_teams: flatUser.business_teams || "-",
-        created_datetime: flatUser.created_datetime
+        const exportData: Record<string, string> = {};
+        const flatUser = {
+          ...user,
+          profile_name: user.profile?.profile_name,
+          business_teams: user.business_teams?.business_teams,
+          status_name: user.status?.status_name,
+        };
+        const fieldMap: Record<string, string> = {
+          first_name: flatUser.first_name || "-",
+          email: flatUser.email || "-",
+          profile_rid: flatUser.profile_name || "-",
+          business_teams: flatUser.business_teams || "-",
+          created_datetime: flatUser.created_datetime
             ? timezone && isValidTimezone(timezone)
-            ? moment(flatUser.created_datetime).tz(timezone).format("YYYY-MM-DD, hh:mm:ss A")
-          : moment(flatUser.created_datetime).format("YYYY-MM-DD, hh:mm:ss A")
+            ? moment(flatUser.created_datetime).tz(timezone).format("YYYY-MMM-DD, hh:mm:ss A")
+          : moment(flatUser.created_datetime).format("YYYY-MMM-DD, hh:mm:ss A")
           : "-",
         modified_datetime: flatUser.modified_datetime
         ? timezone && isValidTimezone(timezone)
-        ? moment(flatUser.modified_datetime).tz(timezone).format("YYYY-MM-DD, hh:mm:ss A")
-        : moment(flatUser.modified_datetime).format("YYYY-MM-DD, hh:mm:ss A")
+        ? moment(flatUser.modified_datetime).tz(timezone).format("YYYY-MMM-DD, hh:mm:ss A")
+        : moment(flatUser.modified_datetime).format("YYYY-MMM-DD, hh:mm:ss A")
         : "-",
         status_rid: flatUser.status_name || "-",
   };
 
-  // Label mapping for output
-  const labelMap: Record<string, string> = {
-    first_name: "Username",
-    email: "Email",
-    profile_rid: "Profile",
-    business_teams: "Role",
-    created_datetime: "Created On",
-    modified_datetime: "Updated On",
-    status_rid: "Status",
-  };
+        // Label mapping for output
+        const labelMap: Record<string, string> = {
+          first_name: "Username",
+          email: "Email",
+          profile_rid: "Profile",
+          business_teams: "Role",
+          created_datetime: "Created On",
+          modified_datetime: "Updated On",
+          status_rid: "Status",
+        };
 
-  for (const [field, value] of Object.entries(fieldMap)) {
-    if (allowedFieldSet.has(field)) {
-      exportData[labelMap[field]] = value;
-    }
-  }
+        for (const [field, value] of Object.entries(fieldMap)) {
+          if (allowedFieldSet.has(field)) {
+            exportData[labelMap[field]] = value;
+          }
+        }
 
-  return exportData;
-});
+        return exportData;
+      });
 
-
-  return {
+      return {
         statusCode: constants.SUCCESS,
         message: constants.SUCCESS_MESSAGE,
         data: {
@@ -2114,7 +2432,7 @@ if (includeDependencies) {
       // Fetch created_by user name if ID exists
       if (userIds.created_by) {
         const [createdByUser] = await sequelize.query(
-          `SELECT first_name || ' ' || last_name AS full_name FROM ${MAIN_SCHEMA_NAME}."user" WHERE rid = :userId LIMIT 1`,
+          rawQuery.getUserFullNameByIdQuery(),
           {
             replacements: { userId: userIds.created_by },
             type: "SELECT",
@@ -2129,7 +2447,7 @@ if (includeDependencies) {
       // Fetch modified_by user name if ID exists
       if (userIds.modified_by) {
         const [modifiedByUser] = await sequelize.query(
-          `SELECT first_name || ' ' || last_name AS full_name FROM ${MAIN_SCHEMA_NAME}."user" WHERE rid = :userId LIMIT 1`,
+          rawQuery.getUserFullNameByIdQuery(),
           {
             replacements: { userId: userIds.modified_by },
             type: "SELECT",
@@ -2141,8 +2459,8 @@ if (includeDependencies) {
         }
       }
     } catch (error) {
-      console.error("Error fetching user names:", error);
-      // Return empty strings if there's an error
+      errorLog("Error fetching user names:", (error as Error).message);
+    
     }
 
     return result;
@@ -2183,9 +2501,6 @@ if (includeDependencies) {
           },
         ],
       });
-      console.log(
-        `After Profile retrieve: ${new Date(Date.now()).toISOString()}`
-      );
 
       if (!roles || !roles.business_teams) {
         return {
@@ -2213,21 +2528,80 @@ if (includeDependencies) {
         },
       };
     } catch (err) {
-      console.log(err);
+      errorLog("Error fetching user extended permissions:", (err as Error).message);
       return this.throwServiceError(err as Error);
     }
   }
 
+  async fetchUserExtendedpermissionForUserView(userId: string): Promise<{
+  statusCode: number;
+  message: string;
+  errorMessage?: string;
+  data?: {
+    rid: string;
+    user_role: string;
+    user_id: string;
+    user_name: string;
+    permissions: any[];
+  } | null;
+}> {
+  try {
+    const roles = await User.findOne({
+      attributes: ["role_rid", "rid", "profile_rid", "first_name"],
+      where: { rid: userId },
+      include: [
+        {
+          model: BusinessTeams,
+          as: "business_teams",
+          required: true,
+          attributes: ["business_teams"],
+        },
+      ],
+    });
+   
+
+    if (!roles || !roles.business_teams) {
+      return {
+        statusCode: constants.NOT_FOUND,
+        message: constants.NOT_FOUND_MESSAGE,
+        data: null,
+      };
+    }
+
+    // Call getAllUserPermission here
+    const permissions = await this.getAllUserExtendedPermissionForView(
+      roles.rid,
+      roles.profile_rid || ""
+    );
+
+    return {
+      statusCode: constants.SUCCESS,
+      message: constants.SUCCESS_MESSAGE,
+      data: {
+        rid: roles.role_rid || "",
+        user_role: roles.business_teams?.business_teams,
+        user_id: roles.rid,
+        user_name: roles.first_name,
+        permissions,
+      },
+    };
+  } catch (err) {
+    errorLog("Error fetching user extended permissions:", (err as Error).message);
+    return this.throwServiceError(err as Error);
+  }
+}
+
+  
+
   // Consolidate all permissions for a user
   async getAllUserExtendedPermission(userId: string, profileId: string) {
-    console.log("User ID:", userId);
-    console.log("Profile ID:", profileId);
+    logMessage(`Fetching user extended permissions for userId: ${userId}, profileId: ${profileId}`);
 
   const [profilePermissions, userPermissions] = await Promise.all([
     this.getProfilePermission(profileId,true),
     this.getUserPermission(userId)
   ]);
-  console.log(userPermissions)
+
     // Create map of user permissions by key for quick lookup
     const userPermissionMap = new Map<string, any>();
     userPermissions.forEach((p) =>
@@ -2285,6 +2659,22 @@ if (includeDependencies) {
     return mergedPermissions;
   }
 
+   async getAllUserExtendedPermissionForView(userId: string, profileId: string) {
+   logMessage(`Fetching user extended permissions for edit view userId: ${userId}, profileId: ${profileId}`);
+
+    const [ userPermissions] = await Promise.all([
+      this.getUserPermissionForView(userId)
+    ]);
+
+    // Create map of user permissions by key for quick lookup
+    const userPermissionMap = new Map<string, any>();
+    userPermissions.forEach((p) =>
+      userPermissionMap.set(getPermissionKey(p), p)
+    );
+
+    return userPermissions;
+  }
+
   /**
    * Retrieves a list of all profiles from the `Profile` model.
    *
@@ -2294,7 +2684,10 @@ if (includeDependencies) {
    * @returns {Promise<{ statusCode: string, message: string, data: { profiles: any[] } }>}
    * A promise that resolves to an object containing the status, message, and the list of profiles.
    */
-  async exportUserprofiles(profileId: string,userId:string): Promise<{
+  async exportUserprofiles(
+    profileId: string,
+    userId: string
+  ): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
@@ -2303,7 +2696,10 @@ if (includeDependencies) {
     try {
       const workbook = new ExcelJS.Workbook();
       const headerSheet = workbook.addWorksheet("Headers");
-      const allowedFieldsForExport = await this.getAllowedExportFields(userId,"profile_view_edit");
+      const allowedFieldsForExport = await this.getAllowedExportFields(
+        userId,
+        "profile_view_edit"
+      );
       const allowedFieldSet = new Set<string>();
       for (const field of allowedFieldsForExport) {
         if (field.read) {
@@ -2343,7 +2739,7 @@ if (includeDependencies) {
         const createdDate = profile.created_datetime
           ? new Date(profile.created_datetime).toISOString().slice(0, 10)
           : "";
-        const fieldsToExport = Object.keys(labelMap).filter(field =>
+        const fieldsToExport = Object.keys(labelMap).filter((field) =>
           allowedFieldSet.has(field)
         );
 
@@ -2355,13 +2751,12 @@ if (includeDependencies) {
           } else if (field === "profile_description") {
             rowData.push(profile.profile_description || "");
           } else if (field === "created_datetime") {
-            rowData.push(createdDate);
+            rowData.push(moment(createdDate).format("YYYY-MMM-DD, hh:mm:ss A"));
           } else if (field === "created_by") {
             rowData.push(createdByName);
           }
         }
-        headerSheet.addRow(rowData); 
-       
+        headerSheet.addRow(rowData);
       }
       const sheet = workbook.addWorksheet("Menu");
 
@@ -2501,7 +2896,7 @@ if (includeDependencies) {
       }
       //await workbook.xlsx.writeFile('Profile_Permissions.xlsx');
       const buffer = await workbook.xlsx.writeBuffer();
-      console.log("Excel file generated successfully.");
+      logMessage("Excel file generated successfully.");
       return {
         statusCode: constants.SUCCESS,
         message: constants.SUCCESS_MESSAGE,
@@ -2510,6 +2905,7 @@ if (includeDependencies) {
         },
       };
     } catch (err) {
+      errorLog("Error exporting user profiles:", (err as Error).message);
       return this.throwServiceError(err as Error);
     }
   }

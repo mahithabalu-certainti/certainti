@@ -1,20 +1,24 @@
 import { Op, Order, Sequelize } from "sequelize";
-import { HttpStatus, STATUS_MESSAGE, rawQueries } from "../../utils/constants";
+import { HttpStatus, rawQueries } from "../../utils/constants";
 import {
   IAnomalyStatus,
   ICreateProjectResource,
   IUpdateInlineProjectResource,
   IUpdateProjectResource,
+  CaseStatusResult, 
 } from "../../utils/types";
 import { ProjectResourceSchemaService } from "./schemaService";
 import { ProjectResourceMapper } from "../../utils/projectMapper";
 import { initMainDbSequelize } from "../../config/mainDataSource";
-import { initOrgSequelize } from "../../config/orgDataSource";
 import ProjectIngestionService from "../projectIngestionService";
 import { Logger } from "winston";
 import moment from "moment";
 import Decimal from "decimal.js";
 import { ProjectResource } from "../../models/projectResource";
+import { errorLog, logMessage } from "../../utils/helpers";
+import { Case } from "../../models/caseModel";
+
+
 
 export class ProjectResourceService {
   private projectResourceSchema: ProjectResourceSchemaService;
@@ -27,6 +31,27 @@ export class ProjectResourceService {
     this.projectIngestion = new ProjectIngestionService(this.logger);
   }
 
+  /**
+ * Creates a new project resource record within a transactional context.
+ *
+ * This method validates the input data, checks for duplicates and anomalies,
+ * and performs various inserts/updates across related tables to maintain
+ * referential integrity and data consistency.
+ *
+ * It also enforces business rules such as effort limits per day and total cost thresholds,
+ * marking resources as "Anomaly" when thresholds are exceeded.
+ *
+ * @param {ICreateProjectResource} projectResourceData - The data required to create the project resource.
+ * @param {string} userId - The ID of the user performing the operation.
+ * @returns {Promise<{
+ *   statusCode: number;
+  *   message: string;
+  *   errorMessage?: string;
+  *   data?: { projectResource: any };
+  * }>} Response object containing status, message, and optionally created resource data or error message.
+  *
+  * @throws Will rollback the transaction and throw an error if any step fails.
+  */ 
   async createProjectResource(
     projectResourceData: ICreateProjectResource,
     userId: string
@@ -52,6 +77,7 @@ export class ProjectResourceService {
         );
 
       if (!accountNumber) {
+        logMessage("Invalid account ID");
         throw new Error("Invalid account ID");
       }
 
@@ -63,6 +89,7 @@ export class ProjectResourceService {
         );
 
       if (!resourceData) {
+        logMessage("Invalid resource code: resource doesn't exists");
         return {
           statusCode: HttpStatus.FAILED,
           message: HttpStatus.FAILED_MESSAGE,
@@ -144,6 +171,7 @@ export class ProjectResourceService {
               end
             );
             if (!validation.success) {
+              logMessage(`Validation Error: ${validation.errorMessage}`);
               return {
                 statusCode: HttpStatus.BAD_REQUEST,
                 message: "Validation Error",
@@ -161,6 +189,7 @@ export class ProjectResourceService {
   
             const totalEffort = totalExistingEffort.plus(newEffort);
             if (totalEffort.gt(maxAllowedEffort)) {
+              logMessage("Validation Error: Effort cannot exceed the total hours in the duration");
               return {
                 statusCode: HttpStatus.BAD_REQUEST,
                 message: "Validation Error",
@@ -563,8 +592,8 @@ export class ProjectResourceService {
         },
       };
     } catch (err) {
+      errorLog("Error creating project resource: " + (err as Error).message);
       await transaction.rollback();
-      console.log("Error creatng resource", err);
       throw this.throwServiceError(err as Error);
     }
   }
@@ -607,6 +636,7 @@ export class ProjectResourceService {
       perDayEffort[dayStr] = (perDayEffort[dayStr] || new Decimal(0)).plus(newPerDay);
   
       if (perDayEffort[dayStr].gt(24)) {
+        logMessage("Validation Error: Effort cannot exceed 24 hours for the day");
         return {
           success: false,
           errorMessage: `Effort cannot exceed the total hours in the duration`,
@@ -617,6 +647,30 @@ export class ProjectResourceService {
     return { success: true };
   }
 
+  /**
+ * Updates an existing project resource record within a transactional context.
+ *
+ * This method validates the input data, checks for duplicates and anomalies,
+ * enforces business rules on effort limits and cost thresholds, and performs
+ * updates across related tables to ensure data consistency.
+ *
+ * It handles the necessary cascading updates for fiscal tables, resource fiscal regions,
+ * project fiscal regions, account fiscal regions, and aggregates resource, project,
+ * and account level data accordingly.
+ *
+ * A timeline and history record of the update is also maintained.
+ *
+ * @param {IUpdateProjectResource} projectResourceData - The data required to update the project resource.
+ * @param {string} userId - The ID of the user performing the update.
+ * @returns {Promise<{
+ *   statusCode: number;
+  *   message: string;
+  *   errorMessage?: string;
+  *   data?: { projectResource: any };
+  * }>} Response object containing status, message, and optionally the updated resource data or error message.
+  *
+  * @throws Will rollback the transaction and throw an error if any step fails.
+  */ 
   async updateProjectResource(
     projectResourceData: IUpdateProjectResource,
     userId: string
@@ -645,6 +699,14 @@ export class ProjectResourceService {
           validAccountNumber,
           project_fiscal_rid
         );
+
+      if (projectData.is_qualified) {
+        return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: "Qualified project cannot be updated.",
+        };
+      }
 
       const resourceData =
         await this.projectResourceSchema.validateResourceByCode(
@@ -676,6 +738,7 @@ export class ProjectResourceService {
         );
 
       if (isDuplicate) {
+        logMessage("Resource role already exists");
         return {
           statusCode: HttpStatus.BAD_REQUEST,
           message: HttpStatus.BAD_REQUEST_MESSAGE,
@@ -842,6 +905,66 @@ export class ProjectResourceService {
         userId,
         transaction
       );
+      
+      const projectCaseMapping = 
+      await this.projectIngestion.fetchProjectFiscalCaseMapping(
+        validAccountNumber,
+        projectData.rid
+      );
+
+      if (projectCaseMapping.length > 0) {  
+
+        for (const caseMapping of projectCaseMapping) {
+          const caseData = await Case.findOne({
+            where: {
+              rid: caseMapping.case_rid,
+            },
+          });
+        
+          if (!caseData) {
+            continue;
+          }
+
+          const mainSequelize = await initMainDbSequelize();
+
+          const caseStatus = await mainSequelize.query(
+            rawQueries.fetchCaseStatusByRid(caseData.status_rid),
+            {
+              type: "SELECT",
+            }
+          ) as CaseStatusResult[];
+        
+          if (caseStatus[0]?.status_name === "Closed") {
+            continue;
+          }
+
+          await this.projectResourceSchema.updateCaseProjectResourceRecords(
+            validAccountNumber,
+            projectResourceData,
+            userId,
+            resourceData.rid || "",
+            projectData,
+            stausId,
+            transaction,
+            caseMapping
+          );
+
+          await this.projectResourceSchema.updateCaseProjectResourceFiscalOnUpdateTable(
+            validAccountNumber,
+            projectResourceData,
+            projectData.project_rid,
+            projectData.fiscal_year,
+            userId,
+            resourceData,
+            existingProjectResource,
+            statusMap,
+            transaction,
+            caseMapping
+          );
+        
+        }
+      }
+
 
       await transaction.commit();
 
@@ -853,12 +976,32 @@ export class ProjectResourceService {
         },
       };
     } catch (err) {
-      console.log("Error updating project resource", err);
+      errorLog("Error updating project resource", (err as Error).message);
       await transaction.rollback();
       throw this.throwServiceError(err as Error);
     }
   }
 
+  /**
+ * Handles the anomaly status of a project resource by either accepting or rejecting the anomaly.
+ * 
+ * If the anomaly is accepted, the status of the project resource is updated to 'Active' and related fiscal,
+ * resource, project, and account aggregates are updated accordingly. If rejected, the status is updated to 'In-Active'.
+ * 
+ * All database operations are performed within a transaction to ensure atomicity.
+ *
+ * @param {IAnomalyStatus} data - The anomaly data containing accountId, projectResourceRid, action (accept/reject), and resourceCode.
+ * @param {string} userId - The ID of the user performing the action.
+ *
+ * @returns {Promise<{
+ *   statusCode: number;
+  *   message: string;
+  *   data?: { projectResource: any };
+  * }>} A promise resolving to an object with status, message, and optionally updated project resource data.
+  *
+  * @throws Throws an error if the account ID is invalid, the project resource is not found,
+  *         the resource code is invalid, or if any database operation fails.
+  */
   async handleAnomalyStatus(
     data: IAnomalyStatus,
     userId: string
@@ -877,6 +1020,7 @@ export class ProjectResourceService {
         await this.projectResourceSchema.fetchValidAccountNumberById(accountId);
 
       if (!accountNumber) {
+        logMessage("Invalid account ID");
         throw new Error("Invalid account ID");
       }
 
@@ -887,8 +1031,36 @@ export class ProjectResourceService {
         );
 
       if (!projectResource) {
+        logMessage("Project resource not found");
         throw new Error("Project resource not found");
       }
+
+      // 2. Fetch required data for aggregation
+        const {
+          account_rid,
+          project_fiscal_rid,
+          fiscal_year,
+          region_rid,
+          country_rid,
+          project_rid,
+        } = projectResource;
+
+        const projectFiscalData =
+          await this.projectResourceSchema.validateProjectFiscalById(
+            accountNumber,
+            project_fiscal_rid
+        );
+
+        if (projectFiscalData.is_qualified) {
+          logMessage("Qualified project cannot be updated.");
+          throw new Error("Qualified project cannot be updated.");
+        }
+
+        const projectCaseMapping = 
+        await this.projectIngestion.fetchProjectFiscalCaseMapping(
+          accountNumber,
+          projectFiscalData.rid
+        );
 
       if (action === "accept") {
         // 1. Update status to 'Active'
@@ -916,16 +1088,6 @@ export class ProjectResourceService {
           transaction
         );
 
-        // 2. Fetch required data for aggregation
-        const {
-          account_rid,
-          project_fiscal_rid,
-          fiscal_year,
-          region_rid,
-          country_rid,
-          project_rid,
-        } = projectResource;
-
         const resourceData =
           await this.projectResourceSchema.validateResourceByCode(
             accountNumber,
@@ -934,14 +1096,9 @@ export class ProjectResourceService {
           );
 
         if (!resourceData) {
+          logMessage("Invalid resource code");
           throw new Error("Invalid resource code");
         }
-
-        const projectFiscalData =
-          await this.projectResourceSchema.validateProjectFiscalById(
-            accountNumber,
-            project_fiscal_rid
-          );
 
         const startDate = projectResource.start_date
           ? moment.utc(projectResource.start_date).format("YYYY-MM-DD")
@@ -1032,6 +1189,56 @@ export class ProjectResourceService {
           transaction
         );
 
+        if (projectCaseMapping.length > 0) {  
+
+          for (const caseMapping of projectCaseMapping) {
+            const caseData = await Case.findOne({
+              where: {
+                rid: caseMapping.case_rid,
+              },
+            });
+          
+            if (!caseData) {
+              continue;
+            }
+            const mainSequelize = await initMainDbSequelize();
+          
+            const caseStatus = await mainSequelize.query(
+              rawQueries.fetchCaseStatusByRid(caseData.status_rid),
+              {
+                type: "SELECT",
+              }
+            ) as CaseStatusResult[];
+          
+            if (caseStatus[0]?.status_name === "Closed") {
+              continue;
+            }
+          
+            await this.projectResourceSchema.updateCaseProjectResourceStatus(
+              accountNumber,
+              projectResourceRid,
+              activeStatusId,
+              userId,
+              transaction,
+              caseMapping,
+            );
+
+            await this.projectResourceSchema.updateCaseProjectResourceFiscalOnUpdateTable(
+              accountNumber,
+              updatedProjectResourceData,
+              projectFiscalData.project_rid,
+              projectFiscalData.fiscal_year,
+              userId,
+              resourceData,
+              projectResource,
+              statusMap,
+              transaction,
+              caseMapping
+            );
+          
+          }
+        }
+
         await transaction.commit();
 
         return {
@@ -1066,6 +1273,44 @@ export class ProjectResourceService {
           transaction
         );
 
+        if (projectCaseMapping.length > 0) {  
+
+          for (const caseMapping of projectCaseMapping) {
+            const caseData = await Case.findOne({
+              where: {
+                rid: caseMapping.case_rid,
+              },
+            });
+          
+            if (!caseData) {
+              continue;
+            }
+
+            const mainSequelize = await initMainDbSequelize();
+          
+            const caseStatus = await mainSequelize.query(
+              rawQueries.fetchCaseStatusByRid(caseData.status_rid),
+              {
+                type: "SELECT",
+              }
+            ) as CaseStatusResult[];
+          
+            if (caseStatus[0]?.status_name === "Closed") {
+              continue;
+            }
+          
+            await this.projectResourceSchema.updateCaseProjectResourceStatus(
+              accountNumber,
+              projectResourceRid,
+              activeStatusId,
+              userId,
+              transaction,
+              caseMapping,
+            );
+
+          }
+        }
+
         await transaction.commit();
         return {
           statusCode: HttpStatus.SUCCESS,
@@ -1076,12 +1321,38 @@ export class ProjectResourceService {
         };
       }
     } catch (err) {
+      logMessage(`Error handling accepted anomaly: ${(err as Error).message}`);
       await transaction.rollback();
-      console.log("Error handling accepted anomaly", err);
+     
       throw this.throwServiceError(err as Error);
     }
   }
 
+  /**
+   * Retrieves a paginated list of project resources based on filtering, sorting, and search criteria.
+   *
+   * Validates the provided account ID and constructs the query parameters including
+   * offset for pagination, sorting options, and filtering conditions. Fetches the matching
+   * project resources and total count from the data source.
+   *
+   * @param {string} accountId - The ID of the account to which the project resources belong.
+   * @param {string} projectId - The ID of the project for which resources are to be listed.
+   * @param {number} fiscal_year - The fiscal year for filtering project resources.
+   * @param {number} page - The current page number for pagination.
+   * @param {number} limit - The number of records per page.
+   * @param {Record<string, string>} filters - Key-value pairs for filtering the results.
+   * @param {string} sortBy - The field name to sort the results by.
+   * @param {string} sortOrder - The sort order, typically 'ASC' or 'DESC'.
+   * @param {string} search - A search string to filter project resources by matching fields.
+   * @returns {Promise<{
+   *   statusCode: number;
+    *   message: string;
+    *   errorMessage?: string;
+    *   data?: { projectResources: any; count: number };
+    * }>} Response object containing status, message, and optionally the list of project resources and total count.
+    *
+    * @throws Throws an error if the account ID is invalid or if there is any issue fetching data.
+    */ 
   async listProjectResources(
     accountId: string,
     projectId: string,
@@ -1103,6 +1374,7 @@ export class ProjectResourceService {
         await this.projectResourceSchema.fetchValidAccountNumberById(accountId);
 
       if (!accountNumber) {
+        logMessage("Invalid account ID");
         throw new Error("Invalid account ID");
       }
 
@@ -1143,11 +1415,35 @@ export class ProjectResourceService {
         },
       };
     } catch (err) {
-      console.log("Error fetching project ressouce", err);
+      errorLog(`Error fetching project resource, ${(err as Error).message}`);
       throw this.throwServiceError(err as Error);
     }
   }
 
+  /**
+ * Exports project resources for a given account and project with applied filters, sorting, and search.
+ *
+ * Validates the account ID, constructs sorting and filtering criteria, then fetches the
+ * project resources data suitable for export.
+ *
+ * @param {string} accountId - The account ID used to validate and scope the query.
+ * @param {string} projectId - The project ID to fetch resources from.
+ * @param {number} fiscal_year - The fiscal year to filter the project resources.
+ * @param {Record<string, string>} filters - Key-value pairs for filtering the project resources.
+ * @param {string} sortBy - The field to sort the project resources by.
+ * @param {string} sortOrder - The sort direction, either 'ASC' or 'DESC'.
+ * @param {string} userId - The ID of the user performing the export (used for logging or auditing).
+ * @param {string} search - Search string to apply across relevant fields.
+ * 
+ * @returns {Promise<{
+ *   statusCode: number;
+  *   message: string;
+  *   errorMessage?: string;
+  *   data?: { projectResources: any };
+  * }>} Response object containing the status, message, and optionally the exported project resources data.
+  *
+  * @throws Throws an error if the account ID is invalid or if fetching the project resources fails.
+  */ 
   async exportProjectResources(
     accountId: string,
     projectId: string,
@@ -1203,11 +1499,29 @@ export class ProjectResourceService {
         },
       };
     } catch (err) {
-      console.log("Error fetching project ressouce", err);
+      errorLog(`Error exporting project resource, ${(err as Error).message}`);
       throw this.throwServiceError(err as Error);
     }
   }
 
+  /**
+ * Retrieves detailed information about a specific project resource, including its attachments.
+ *
+ * Validates the provided account ID, fetches the project resource details,
+ * and retrieves associated attachments with enriched metadata such as document type,
+ * document category, uploader details, and formatted size.
+ *
+ * @param {string} projectResourceId - The unique identifier of the project resource.
+ * @param {string} accountId - The account ID to validate and scope the query.
+ * @returns {Promise<{
+ *   statusCode: number;
+  *   message: string;
+  *   errorMessage?: string;
+  *   data?: { projectResource: any; attachment: any };
+  * }>} Response object containing status, message, and optionally the project resource details and attachments.
+  *
+  * @throws Throws an error if the account ID is invalid or if there is any issue fetching data.
+  */ 
   async projectResourceDetails(
     projectResourceId: string,
     accountId: string
@@ -1304,7 +1618,7 @@ export class ProjectResourceService {
         },
       };
     } catch (err) {
-      console.log("Error fetching project ressouce", err);
+      errorLog(`Error fetching project resource details, ${(err as Error).message}`);
       throw this.throwServiceError(err as Error);
     }
   }
@@ -1340,6 +1654,7 @@ export class ProjectResourceService {
         );
 
       if (!validAccountNumber) {
+        logMessage("Invalid account ID");
         throw new Error("Invalid account ID");
       }
 
@@ -1352,6 +1667,14 @@ export class ProjectResourceService {
           project_fiscal_rid
         );
 
+      if (projectData.is_qualified) {
+        return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: "Qualified project cannot be updated.",
+        };
+      }
+
       let resourceData = null;
 
       const existingProjectResource =
@@ -1362,6 +1685,7 @@ export class ProjectResourceService {
         );
 
       if (!existingProjectResource) {
+        logMessage("Project resource doesn't exists");
         return {
           statusCode: HttpStatus.FAILED,
           message: HttpStatus.FAILED_MESSAGE,
@@ -1390,6 +1714,7 @@ export class ProjectResourceService {
       }
 
       if (!resourceData) {
+        logMessage("Invalid resource code: resource doesn't exists");
         return {
           statusCode: HttpStatus.FAILED,
           message: HttpStatus.FAILED_MESSAGE,
@@ -1407,6 +1732,7 @@ export class ProjectResourceService {
         );
         
       if (isDuplicate) {
+        logMessage("Resource role already exists");
         return {
           statusCode: HttpStatus.BAD_REQUEST,
           message: HttpStatus.BAD_REQUEST_MESSAGE,
@@ -1507,6 +1833,7 @@ export class ProjectResourceService {
         total_hours_pro_res_new &&
         Number(total_hours_pro_res_new) > 3000
       ) {
+        logMessage("Anomaly: Effort exceeds 3000 hours");
         status = "Anomaly";
       }
 
@@ -1515,10 +1842,17 @@ export class ProjectResourceService {
         currencyThreshold !== null &&
         Number(total_cost_pro_res_new) > currencyThreshold
       ) {
+        logMessage("Anomaly: Cost exceeds currency threshold");
         status = "Anomaly";
       }
 
       const stausId = statusMap?.get(status) ?? "";
+
+      const projectCaseMapping = 
+      await this.projectIngestion.fetchProjectFiscalCaseMapping(
+        validAccountNumber,
+        projectData.rid
+      );
 
       const updateProjectResource =
         await this.projectResourceSchema.updateInlineProjectResourceRecords(
@@ -1530,6 +1864,46 @@ export class ProjectResourceService {
           stausId,
           transaction
         );
+
+
+      if (projectCaseMapping.length > 0) {  
+
+          for (const caseMapping of projectCaseMapping) {
+            const caseData = await Case.findOne({
+              where: {
+                rid: caseMapping.case_rid,
+              },
+            });
+          
+            if (!caseData) {
+              continue;
+            }
+            const mainSequelize = await initMainDbSequelize();
+          
+            const caseStatus = await mainSequelize.query(
+              rawQueries.fetchCaseStatusByRid(caseData.status_rid),
+              {
+                type: "SELECT",
+              }
+            ) as CaseStatusResult[];
+          
+            if (caseStatus[0]?.status_name === "Closed") {
+              continue;
+            }
+
+            const updateProjectResource =
+            await this.projectResourceSchema.updateInlineCaseProjectResourceRecords(
+              validAccountNumber,
+              projectResourceData,
+              userId,
+              projectData,
+              resourceData,
+              stausId,
+              transaction,
+              caseMapping
+            );
+          }
+      }
 
       if (
         updateProjectResource &&
@@ -1600,7 +1974,6 @@ export class ProjectResourceService {
           transaction
         );
 
-        // projects
         await this.aggregateProject(
           validAccountNumber,
           account_rid,
@@ -1617,6 +1990,48 @@ export class ProjectResourceService {
           projectData.fiscal_year,
           transaction
         );
+
+
+      if (projectCaseMapping.length > 0) {  
+
+          for (const caseMapping of projectCaseMapping) {
+            const caseData = await Case.findOne({
+              where: {
+                rid: caseMapping.case_rid,
+              },
+            });
+          
+            if (!caseData) {
+              continue;
+            }
+            const mainSequelize = await initMainDbSequelize();
+          
+            const caseStatus = await mainSequelize.query(
+              rawQueries.fetchCaseStatusByRid(caseData.status_rid),
+              {
+                type: "SELECT",
+              }
+            ) as CaseStatusResult[];
+          
+            if (caseStatus[0]?.status_name === "Closed") {
+              continue;
+            }
+
+            await this.projectResourceSchema.updateCaseProjectResourceFiscalOnUpdateTable(
+              validAccountNumber,
+              resourceUpdatePayload,
+              resourceUpdatePayload.project_rid,
+              resourceUpdatePayload.fiscal_year,
+              userId,
+              resourceData,
+              existingProjectResource,
+              statusMap,
+              transaction,
+              caseMapping
+            );
+          
+          }
+        }
       }
 
       await this.recordTimelineAndHistory(
@@ -1641,12 +2056,26 @@ export class ProjectResourceService {
         data: updateProjectResourceRecord,
       };
     } catch (err) {
-      console.log("Error updating project resource", err);
+      errorLog(`Error updating project resource, ${(err as Error).message}`);
       await transaction.rollback();
       throw this.throwServiceError(err as Error);
     }
   }
 
+  /**
+   * Retrieves a list of resource skill roles from the system.
+   *
+   * Fetches all resource skill roles available in the project resource schema.
+   *
+   * @returns {Promise<{
+   *   statusCode: number;
+    *   message: string;
+    *   errorMessage?: string;
+    *   data?: { resourceRoles: any };
+    * }>} Response object containing the status, message, and optionally the list of resource skill roles.
+    *
+    * @throws Throws an error if fetching the resource skill roles fails.
+    */ 
   async getResourceSkillRoles(): Promise<{
     statusCode: number;
     message: string;
@@ -1665,10 +2094,25 @@ export class ProjectResourceService {
         },
       };
     } catch (err) {
+      errorLog(`Error fetching resource skill roles, ${(err as Error).message}`);
       throw this.throwServiceError(err as Error);
     }
   }
 
+  /**
+ * Retrieves a list of resource skill role subtypes from the system.
+ *
+ * Fetches all resource skill role subtypes available in the project resource schema.
+ *
+ * @returns {Promise<{
+ *   statusCode: number;
+  *   message: string;
+  *   errorMessage?: string;
+  *   data?: { resourceRolesSubType: any };
+  * }>} Response object containing the status, message, and optionally the list of resource skill role subtypes.
+  *
+  * @throws Throws an error if fetching the resource skill role subtypes fails.
+  */ 
   async getResourceSkillRolesSubtype(): Promise<{
     statusCode: number;
     message: string;
@@ -1687,13 +2131,33 @@ export class ProjectResourceService {
         },
       };
     } catch (err) {
+      errorLog(`Error fetching resource skill roles subtype, ${(err as Error).message}`);
       throw this.throwServiceError(err as Error);
     }
   }
 
+  /**
+ * Retrieves a list of resource codes for a given account, optionally filtered by a search string.
+ *
+ * This method fetches the valid account number associated with the provided account ID,
+ * then retrieves the list of resource codes filtered by the optional search parameter.
+ *
+ * @param {string} accountId - The ID of the account to fetch resource codes for.
+ * @param {string | null} search - Optional search string to filter resource codes.
+ *
+ * @returns {Promise<{
+ *   statusCode: number;
+  *   message: string;
+  *   errorMessage?: string;
+  *   data?: { resourceCodes: any };
+  * }>} A promise resolving to an object containing the status, message, and optionally the list of resource codes.
+  *
+  * @throws Throws an error if the account ID is invalid or if fetching resource codes fails.
+  */ 
   async getResourceCodes(
     accountId: string,
-    search: string | null
+    projectFiscalRid : string,
+    search: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -1710,6 +2174,7 @@ export class ProjectResourceService {
       const resourceCodes = await this.projectResourceSchema.listResourceCodes(
         accountNumber,
         accountId,
+        projectFiscalRid,
         search
       );
 
@@ -1721,10 +2186,29 @@ export class ProjectResourceService {
         },
       };
     } catch (err) {
+      errorLog(`Error fetching resource codes, ${(err as Error).message}`);
       throw this.throwServiceError(err as Error);
     }
   }
 
+  /**
+ * Retrieves a list of resource codes assigned to a specific project fiscal period within an account.
+ *
+ * This method validates the account ID to get the valid account number, then fetches
+ * the resource codes that are assigned to the specified project fiscal ID under that account.
+ *
+ * @param {string} accountId - The ID of the account to fetch assigned resource codes for.
+ * @param {string} projectFiscalId - The fiscal ID of the project to filter assigned resource codes.
+ *
+ * @returns {Promise<{
+ *   statusCode: number;
+  *   message: string;
+  *   errorMessage?: string;
+  *   data?: { resourceCodes: any };
+  * }>} A promise resolving to an object containing the status, message, and optionally the list of assigned resource codes.
+  *
+  * @throws Throws an error if the account ID is invalid or if fetching assigned resource codes fails.
+  */ 
   async getAssignedResourceCodes(
     accountId: string,
     projectFiscalId: string
@@ -1756,6 +2240,7 @@ export class ProjectResourceService {
         },
       };
     } catch (err) {
+      errorLog(`Error fetching assigned resource codes, ${(err as Error).message}`);
       throw this.throwServiceError(err as Error);
     }
   }

@@ -1,8 +1,7 @@
 import { Sequelize } from "sequelize";
-import { HttpStatus, MAIN_SCHEMA_NAME } from "../utils/constants";
+import { HttpStatus, SCHEMANAME_PREFIX, rawQueries } from "../utils/constants";
 import { initOrgSequelize } from "../config/orgDataSource";
 import { Resources } from "../models/resource";
-import { Skill } from "../models/skill";
 import { ResourceSkill } from "../models/resourceSkill";
 import { ResourceSkillTimeline } from "../models/resourceSkillTimeline";
 import { ResourceSkillHistory } from "../models/resourceSkillHistory";
@@ -10,6 +9,7 @@ import { ResourceFiscal } from "../models/resourceFiscal";
 import { initMainDbSequelize } from "../config/mainDataSource";
 import moment from "moment";
 import SchemaService from "./schemaService";
+import { errorLog, logMessage } from "../utils/helpers";
 
 class ResourceSkillSchemaService {
   private sequelizeInstance: Sequelize | null = null;
@@ -23,6 +23,7 @@ class ResourceSkillSchemaService {
       if (!this.sequelizeInstance) {
         const sequelize = await initOrgSequelize();
         if (!sequelize) {
+          logMessage("Failed to initialize database connection");
           throw new Error("Failed to initialize database connection");
         }
 
@@ -39,7 +40,7 @@ class ResourceSkillSchemaService {
 
       return this.sequelizeInstance;
     } catch (error) {
-      console.error("Error initializing database:", error);
+      errorLog("Error initializing database:", (error as Error).message);
       throw error;
     }
   }
@@ -68,10 +69,7 @@ class ResourceSkillSchemaService {
   ): Promise<boolean> {
     try {
       const result = await sequelize.query(
-        `SELECT EXISTS (
-            SELECT 1 FROM information_schema.schemata 
-            WHERE schema_name = :schemaName
-          )`,
+        rawQueries.checkIfSchemaExists(),
         {
           replacements: { schemaName },
           type: "SELECT",
@@ -81,7 +79,7 @@ class ResourceSkillSchemaService {
 
       return result ? (result as any).exists === true : false;
     } catch (error) {
-      console.error("Error checking schema existence:", error);
+      errorLog("Error checking schema existence:", (error as Error).message);
       return false;
     }
   }
@@ -101,11 +99,7 @@ class ResourceSkillSchemaService {
   ): Promise<boolean> {
     try {
       const result = await sequelize.query(
-        `SELECT EXISTS (
-            SELECT 1 FROM information_schema.tables 
-            WHERE table_schema = :schemaName
-            AND table_name = :tableName
-          )`,
+        rawQueries.checkSchemaAndTableExists(),
         {
           replacements: { schemaName, tableName },
           type: "SELECT",
@@ -115,7 +109,7 @@ class ResourceSkillSchemaService {
 
       return result ? (result as any).exists === true : false;
     } catch (error) {
-      console.error("Error checking table existence:", error);
+      errorLog("Error checking table existence:", (error as Error).message);
       return false;
     }
   }
@@ -138,7 +132,7 @@ class ResourceSkillSchemaService {
       const schemaExists = await this.checkSchemaExists(sequelize, schemaName);
       if (!schemaExists) {
         await sequelize.query(`CREATE SCHEMA IF NOT EXISTS "${schemaName}"`);
-        console.log(`Schema ${schemaName} created`);
+        logMessage(`Schema ${schemaName} created`);
       }
 
       // Set the schema for this connection
@@ -193,9 +187,9 @@ class ResourceSkillSchemaService {
             default:
               throw new Error(`Table model ${tableName} not found`);
           }
-          console.log(`Table ${tableName} created in schema: ${schemaName}`);
+          logMessage(`Table ${tableName} created in schema: ${schemaName}`);
         } else {
-          console.log(
+          logMessage(
             `Table ${tableName} already exists in schema: ${schemaName}`
           );
         }
@@ -205,12 +199,12 @@ class ResourceSkillSchemaService {
           force: false,
           schema: schemaName, // Explicitly set schema for all tables
         });
-        console.log(`All tables created in schema: ${schemaName}`);
+        logMessage(`All tables created in schema: ${schemaName}`);
       }
 
       return true;
     } catch (err) {
-      console.error(`Error creating tables in schema ${schemaName}:`, err);
+      errorLog(`Error creating tables in schema ${schemaName}:`, (err as Error).message);
       return false;
     }
   }
@@ -227,9 +221,9 @@ class ResourceSkillSchemaService {
     tableName?: string
   ): Promise<boolean> {
     // Check if accountNumber already includes the trd365_ prefix
-    const schemaName = accountNumber.startsWith("trd365_")
+    const schemaName = accountNumber.startsWith(`${SCHEMANAME_PREFIX}`)
       ? accountNumber
-      : `trd365_${accountNumber.replace(/\D/g, '')}`;
+      : `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, '')}`;
 
     // If we're creating resource_skill, make sure resources table exists first
     if (tableName === "resource_skill") {
@@ -239,7 +233,7 @@ class ResourceSkillSchemaService {
         "resources"
       );
       if (!resourcesTableCreated) {
-        console.error(
+        errorLog(
           `Failed to create resources table in schema ${schemaName}`
         );
         return false;
@@ -287,19 +281,13 @@ async exportResoucreSkill(
   const mainDbSequelize = await initMainDbSequelize();
 
   // Build the query to get data from the account-specific schema
-  const query = `
-    SELECT rs.*,
-    TO_CHAR(rs.start_date, 'YYYY-MM-DD') as start_date,
-    r.resource_name, r.resource_role, r.resource_orgname, r.resource_designation, r.resource_total_experience as years_of_experience, ad.account_name
-    FROM "${schemaName}"."resource_skill" rs
-    INNER JOIN "${schemaName}"."resources" r ON rs.resource_rid = r.rid
-    INNER JOIN "${schemaName}"."account_details" ad ON r.account_rid = ad.account_rid
-    WHERE 1=1 AND rs.account_rid = :account_rid AND rs.resource_rid = :resource_rid
-    ${filterConditions}
-    ${searchCondition}
-    ${finalSortBy === 'resource_name' || finalSortBy === 'resource_orgname' || finalSortBy === 'resource_designation' || finalSortBy === 'resource_role' || finalSortBy === 'resource_total_experience' ?
-    `ORDER BY r."${finalSortBy}" ${finalSortOrder}` : finalSortBy === 'account_name' ? `ORDER BY ad."${finalSortBy}" ${finalSortOrder}` : finalSortBy === 'skill_type_name' || finalSortBy === 'skill_subtype_name' || finalSortBy === 'skill_level_name' ? '' : `ORDER BY rs."${finalSortBy}" ${finalSortOrder}`}
-  `;
+  const query = rawQueries.getResourceSkillQuery(
+    schemaName,
+    filterConditions,
+    searchCondition,
+    finalSortBy,
+    finalSortOrder  
+  );
 
   const replacements = {
     searchTerm: search ? `%${search}%` : null,
@@ -319,21 +307,21 @@ async exportResoucreSkill(
     const skillLevelRids = [...new Set(resourceSkill.map(r => r.skill_level_rid))];
 
     // Fetch skill type names
-    const skillTypeQuery = `SELECT rid, skill_type_name FROM ${MAIN_SCHEMA_NAME}."skill_type" WHERE rid IN (:skillTypeRids)`;
+    const skillTypeQuery = rawQueries.getSkillTypeQuery();
     const skillTypes = await mainDbSequelize.query(skillTypeQuery, {
       replacements: { skillTypeRids },
       type: "SELECT"
     });
 
     // Fetch skill subtype names
-    const skillSubtypeQuery = `SELECT rid, skill_subtype_name FROM ${MAIN_SCHEMA_NAME}."skill_subtype" WHERE rid IN (:skillSubtypeRids)`;
+    const skillSubtypeQuery = rawQueries.getSkillSubtypeQuery();
     const skillSubtypes = await mainDbSequelize.query(skillSubtypeQuery, {
       replacements: { skillSubtypeRids },
       type: "SELECT"
     });
 
      // Fetch skill level names
-    const skillLevelQuery = `SELECT rid, skill_level_name FROM ${MAIN_SCHEMA_NAME}."skill_level" WHERE rid IN (:skillLevelRids)`;
+    const skillLevelQuery = rawQueries.getSkillLevelQuery();
     const skillLevels = await mainDbSequelize.query(skillLevelQuery, {
       replacements: { skillLevelRids },
       type: "SELECT"
@@ -403,7 +391,7 @@ async exportResoucreSkill(
         "resource_code": rs.resource_code || "-",
         "resource_name": rs.resource_name || "-",
         "resource_type_rid": rs.resource_type || "-",
-        "start_date": rs.start_date || "-",
+        "start_date": rs.start_date ? moment(rs.start_date).format('YYYY-MMM-DD') : "-",
         "skill_type_rid": rs.skill_type_name || "-",
         "skill_subtype_rid": rs.skill_subtype_name || "-",
         "skill_level_rid": rs.skill_level_name || "-",
@@ -481,33 +469,14 @@ async executeQueries(
   }
 
   // Build the query to get data from the account-specific schema
-  const query = `
-    SELECT rs.*,
-    TO_CHAR(rs.start_date, 'YYYY-MM-DD') as start_date,
-    r.resource_name, r.resource_role, r.resource_orgname, r.resource_designation, r.resource_total_experience as years_of_experience, ad.account_name
-    FROM ${schemaName}.resource_skill rs
-    INNER JOIN ${schemaName}.resources r ON rs.resource_rid = r.rid
-    INNER JOIN ${schemaName}.account_details ad ON r.account_rid = ad.account_rid
-    WHERE 1=1 AND rs.account_rid = :account_rid AND rs.resource_rid = :resource_rid ${resource_skill_rid}
-    ${filterConditions}
-    ${searchCondition}
-    ${finalSortBy === 'resource_name' || finalSortBy === 'resource_orgname' || finalSortBy === 'resource_designation' || finalSortBy === 'resource_role' || finalSortBy === 'resource_total_experience' ?
-      `ORDER BY r."${finalSortBy}" ${finalSortOrder}` : finalSortBy === 'account_name' ? `ORDER BY ad."${finalSortBy}" ${finalSortOrder}` : finalSortBy === 'skill_type_name' || finalSortBy === 'skill_subtype_name' || finalSortBy === 'skill_level_name' ? '' : `ORDER BY rs."${finalSortBy}" ${finalSortOrder}`}
-    LIMIT :limit OFFSET :offset
-  `;
+  const query = rawQueries.getPaginatedResourceSkillQuery(schemaName, resource_skill_rid, filterConditions,
+    searchCondition, finalSortBy, finalSortOrder
+  );
 
-  console.log(query)
+  logMessage(query)
 
   // Count query to get total records
-  const countQuery = `
-    SELECT COUNT(*) as total
-    FROM ${schemaName}.resource_skill rs
-    INNER JOIN ${schemaName}.resources r ON rs.resource_rid = r.rid
-    INNER JOIN ${schemaName}.account_details ad ON r.account_rid = ad.account_rid
-    WHERE 1=1 AND rs.account_rid = :account_rid AND rs.resource_rid = :resource_rid
-    ${filterConditions}
-    ${searchCondition}
-  `;
+  const countQuery = rawQueries.getResourceSkillCountQuery(schemaName, filterConditions, searchCondition);
 
   const replacements = {
     limit,
@@ -540,21 +509,21 @@ async executeQueries(
     const skillLevelRids = [...new Set(resourceSkill.map((r: any) => r.skill_level_rid))];
 
     // Fetch skill type names
-    const skillTypeQuery = `SELECT rid, skill_type_name FROM ${MAIN_SCHEMA_NAME}."skill_type" WHERE rid IN (:skillTypeRids)`;
+    const skillTypeQuery = rawQueries.getSkillTypeQuery();
     const skillTypes = await mainDbSequelize.query(skillTypeQuery, {
       replacements: { skillTypeRids },
       type: "SELECT"
     });
 
     // Fetch skill subtype names
-    const skillSubtypeQuery = `SELECT rid, skill_subtype_name FROM ${MAIN_SCHEMA_NAME}."skill_subtype" WHERE rid IN (:skillSubtypeRids)`;
+    const skillSubtypeQuery = rawQueries.getSkillSubtypeQuery();
     const skillSubtypes = await mainDbSequelize.query(skillSubtypeQuery, {
       replacements: { skillSubtypeRids },
       type: "SELECT"
     });
 
     // Fetch skill level names
-    const skillLevelQuery = `SELECT rid, skill_level_name FROM ${MAIN_SCHEMA_NAME}."skill_level" WHERE rid IN (:skillLevelRids)`;
+    const skillLevelQuery = rawQueries.getSkillLevelQuery();
     const skillLevels = await mainDbSequelize.query(skillLevelQuery, {
       replacements: { skillLevelRids },
       type: "SELECT"

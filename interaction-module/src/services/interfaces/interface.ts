@@ -164,6 +164,17 @@ export interface IInteractionService {
     errorMessage?: string;
     data?: { interactionDetails: any };
   }>;
+  
+  getKeyContactsByCaseId(
+    caseRid: string,
+    accountRid: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { keyContacts: any };
+  }>;
+
   getAccountInteractionDetailsById(
     interactionRid: string,
     accountId: string,

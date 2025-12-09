@@ -1,5 +1,6 @@
 import { DataTypes, Model, Optional, Sequelize } from "sequelize";
 import { ENV_PREFIX, MAIN_SCHEMA_NAME, R_NUMBER_PREFIX } from "../utils/constant";
+import { errorLog } from "../utils/helpers";
 interface DatabaseConnectionAttributes {
   rid: string;
   r_number?: string;
@@ -90,9 +91,8 @@ export async function setupDbConnectionSequence(sequelize: Sequelize) {
     await sequelize.query(`ALTER TABLE ${MAIN_SCHEMA_NAME}.database_connection
       ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.DATABASE_CONNECTION}-' || LPAD(nextval('${MAIN_SCHEMA_NAME}.db_connection_seq')::text, 5, '0')`);
     
-    console.log('DbConnection sequence setup complete');
   } catch (error) {
-    console.error('Error setting up DbConnection sequence:', error);
+     errorLog("Error setting up database connection sequence:", (error as Error).message);
     // Don't throw the error to allow the application to continue starting up
     // The sequence setup can be handled separately if needed
   }

@@ -3,17 +3,22 @@ import { initMainDbSequelize } from "../config/mainDataSource";
 import { initOrgSequelize } from "../config/orgDataSource";
 import {
   HttpStatus,
-  MAIN_SCHEMA_NAME,
   rawQueries,
   STATUS_MESSAGE,
 } from "../utils/constants";
-import { setInlineForProjectTask } from "../utils/helpers";
+import { logMessage, setInlineForProjectTask } from "../utils/helpers";
 import { ProjectTaskSchemaService } from "../services/projectTask/schemaService";
 import { ProjectInjestionTaskService } from "./projectTask/projectTaskService";
 import Decimal from "decimal.js";
 import { ProjectTask } from "../models/projectTask";
-import { ProjectResourceSchemaService } from "./projectResource/schemaService";
 import { getCurrencyThreshold, getResourceStatuses } from "./resourceCostService";
+import { Logger } from "winston";
+import { ProjectResourceSchemaService } from "./projectResource/schemaService";
+import ProjectIngestionService from "./projectIngestionService";
+import { Case } from "../models/caseModel";
+import { CaseStatusResult } from "../utils/types";
+
+
 
 const services = Configurations.getInstance().getServices();
 const projectTaskService = services.projectTaskServices;
@@ -22,12 +27,16 @@ const projectTaskSchemaService = new ProjectTaskSchemaService();
 export default class ProjectTaskGraphqlServies {
   private projectTaskInjestionService: ProjectInjestionTaskService;
   private projectTaskSchema: ProjectTaskSchemaService;
-;
+  private projectResourceSchema: ProjectResourceSchemaService;
+  private logger: Logger;
+  private projectIngestion: ProjectIngestionService;
 
-
-  constructor() {
-    this.projectTaskInjestionService = new ProjectInjestionTaskService();
+  constructor(logger: Logger) {
+    this.logger = logger;
+    this.projectTaskInjestionService = new ProjectInjestionTaskService(this.logger);
+    this.projectResourceSchema = new ProjectResourceSchemaService();
     this.projectTaskSchema = new ProjectTaskSchemaService();
+    this.projectIngestion = new ProjectIngestionService(this.logger);
   }
 
   async updateInlineGraphqlDetails(data: any) {
@@ -35,6 +44,7 @@ export default class ProjectTaskGraphqlServies {
     let total_cost_pro_task;
     const orgSequelize = await initOrgSequelize();
     const mainSequelize = await initMainDbSequelize();
+    logMessage(`Updating inline GraphQL details for project task: ${JSON.stringify(data)}`);
 
     const checkAccountExists: any = await mainSequelize.query(
       await rawQueries.fetchParentAccount(data.account_rid, mainSequelize)
@@ -48,6 +58,20 @@ export default class ProjectTaskGraphqlServies {
       };
     } else {
       const accountNumber = checkAccountExists[0][0].r_number;
+
+      const projectData =
+        await this.projectResourceSchema.validateProjectFiscalById(
+          accountNumber,
+          data.project_fiscal_rid
+        );
+
+      if (projectData.is_qualified) {
+        return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: "Qualified project cannot be updated.",
+        };
+      }
 
       let schemaName = rawQueries.fetchSchemaName(accountNumber);
       const checkForExistingData: any = await orgSequelize.query(
@@ -183,7 +207,7 @@ export default class ProjectTaskGraphqlServies {
         }
       }
 
-        const getAccountCurrencyRid : any = await mainSequelize.query(`SELECT currency_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${data.account_rid}'`)
+        const getAccountCurrencyRid : any = await mainSequelize.query(rawQueries.fetchCurrencyFromAccount(data.account_rid))
         const costFields = {
           total_hours_pro_task,
           total_cost_pro_task
@@ -198,6 +222,7 @@ export default class ProjectTaskGraphqlServies {
                 // Convert valid string/number to Decimal
                 acc[key] = new Decimal(value).toString();
               } catch (error) {
+                logMessage(`Error converting ${key} to Decimal: ${error}`);
                 throw new Error(`Invalid number format for ${key}: ${value}`);
               }
             }
@@ -210,7 +235,7 @@ export default class ProjectTaskGraphqlServies {
         const currencyThreshold = await getCurrencyThreshold(mainSequelize,getAccountCurrencyRid[0][0].currency_rid);
         let status = "Active";
         const statusMap = await getResourceStatuses(mainSequelize);
-        const activeId : any = await mainSequelize.query(`SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_name ILIKE '%${status}%'`)
+        const activeId : any = await mainSequelize.query(rawQueries.fetchActiveStatusRid(status));
         const activeStatusId : any = statusMap?.get(status);
 
         if (total_hours_pro_task != null && Number(total_hours_pro_task) > 3000) {
@@ -238,6 +263,45 @@ export default class ProjectTaskGraphqlServies {
           const updatedProjectTask = await orgSequelize.query(
             rawQueries.updateProjectTaskQuery(schemaName, getSetData, data)
           );
+
+          const projectCaseMapping = 
+          await this.projectIngestion.fetchProjectFiscalCaseMapping(
+            accountNumber,
+            projectData.rid
+          );
+
+
+          if (projectCaseMapping.length > 0) {  
+    
+              for (const caseMapping of projectCaseMapping) {
+                const caseData = await Case.findOne({
+                  where: {
+                    rid: caseMapping.case_rid,
+                  },
+                });
+              
+                if (!caseData) {
+                  continue;
+                }
+                const mainSequelize = await initMainDbSequelize();
+              
+                const caseStatus = await mainSequelize.query(
+                  rawQueries.fetchCaseStatusByRid(caseData.status_rid),
+                  {
+                    type: "SELECT",
+                  }
+                ) as CaseStatusResult[];
+              
+                if (caseStatus[0]?.status_name === "Closed") {
+                  continue;
+                }
+
+                const updatedProjectTask = await orgSequelize.query(
+                  rawQueries.updateCaseProjectTaskQuery(schemaName, getSetData, data, caseMapping)
+                );
+                
+              }
+          }
 
           if (updatedProjectTask) {
             let fetchLatestUpdatedData =
@@ -307,7 +371,13 @@ export default class ProjectTaskGraphqlServies {
               created_datetime: latestData.created_datetime,
               modified_datetime: latestData.modified_datetime,
               status_name : latestData.status_name,
-              project_resource_role : latestData.project_resource_role
+              project_resource_role : latestData.project_resource_role,
+              task_name: latestData.task_name,
+              task_description: latestData.task_description,
+              task_classification_rid: latestData.task_classification_rid,
+              task_type_rid: latestData.task_type_rid,
+              task_classification_name: latestData.task_classification_name,
+              task_type_name: latestData.task_type_name
             };
             return {
               statusCode: HttpStatus.SUCCESS,

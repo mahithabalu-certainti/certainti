@@ -56,6 +56,7 @@ export interface ProjectFiscalAttributes {
 
   total_nonlabor_prj?: number | null;
   total_nonlabor_from_prj_res?: number | null;
+  total_nonlabor_from_tasks?: number | null;
 
   total_resources_prj?: number | null;
   total_resources_from_prj_res?: number | null;
@@ -139,6 +140,8 @@ export interface ProjectFiscalAttributes {
 
   comments?: string | null;
   project_description?: string | null;
+
+  is_qualified?: boolean | null;
 }
 
 interface ProjectFiscalCreationAttributes
@@ -200,6 +203,7 @@ export class ProjectFiscal
 
   public total_nonlabor_prj?: number | null;
   public total_nonlabor_from_prj_res?: number | null;
+  public total_nonlabor_from_tasks?: number | null;
 
   public total_resources_prj?: number | null;
   public total_resources_from_prj_res?: number | null;
@@ -282,6 +286,7 @@ export class ProjectFiscal
   public claim_status?: string | null;
   public comments?: string | null;
   public project_description?: string | null;
+  public is_qualified?: boolean | null;
 
   static initialize(sequelize: Sequelize, schema: string) {
     ProjectFiscal.init(
@@ -422,6 +427,7 @@ export class ProjectFiscal
         // Non-labor & Resources
         total_nonlabor_prj: DataTypes.DECIMAL(18, 2),
         total_nonlabor_from_prj_res: DataTypes.DECIMAL(18, 2),
+        total_nonlabor_from_tasks : DataTypes.INTEGER,
         total_resources_prj: DataTypes.INTEGER,
         total_resources_from_prj_res: DataTypes.INTEGER,
         total_resources_from_tasks: DataTypes.INTEGER,
@@ -518,6 +524,10 @@ export class ProjectFiscal
         },
         project_description: {
           type: DataTypes.STRING(2000),
+          allowNull: true,
+        },
+        is_qualified: {
+          type: DataTypes.BOOLEAN,
           allowNull: true,
         },
       },

@@ -83,6 +83,9 @@ export function successLog(methodName: string): void {
     method: methodName,
   });
 }
+export function logMessage(message: string): void {
+  getLogger().info(`${message}`);
+}
 
 export function errorLog(methodName: string, errorMessage?: string): void {
   getLogger().error("Failed log: ", {

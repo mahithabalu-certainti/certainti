@@ -42,12 +42,16 @@ import {
 } from "../models/resourceSkillHistory";
 import { KeyContact } from "../models/keyContactDetails";
 import AccountDetails from "../models/accountDetails";
-import { MAIN_SCHEMA_NAME, primaryKeyContacts, rawQueries } from "../utils/constants";
+import { SCHEMANAME_PREFIX, primaryKeyContacts, rawQueries } from "../utils/constants";
 import {
   ResourceFiscalRegion,
   setupResourceFiscalRegionSeq,
 } from "../models/resourceFiscalRegion"
-import { ProjectFiscal } from "../models/projectFiscal";
+import { errorLog } from "../utils/helpers";
+import { checkProjectMappedToProjectRes } from "../utils/rawQueries";
+import  ProjectIngestionService  from "./projectIngestionService";
+
+
 
 // import { Skill } from "../models/skill";
 class SchemaService {
@@ -60,11 +64,11 @@ class SchemaService {
    */
   async checkIfSchemaExists(accountNumber: string) {
     try {
-      const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
+      const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
       const sequelize = await initOrgSequelize();
 
       const result = await sequelize.query(
-        `SELECT schema_name FROM information_schema.schemata WHERE schema_name = :schemaName`,
+        rawQueries.getSchemaExistenceQuery(),
         {
           replacements: { schemaName },
           type: "SELECT",
@@ -95,7 +99,7 @@ class SchemaService {
       const mainDbSequelize = await initMainDbSequelize();
 
       const [account]: any[] = await mainDbSequelize.query(
-        `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid and r_number = :r_number`,
+        rawQueries.getAccountByRidAndNumberQuery(),
         {
           replacements: { rid: accountId, r_number: accountNumber },
           type: "SELECT",
@@ -118,7 +122,7 @@ class SchemaService {
    */
   async createResourceTable(accountNumber: string) {
     try {
-      const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
+      const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
       const sequelize = await initOrgSequelize();
 
       const AccountDetailsModel = await AccountDetails.initialize(
@@ -330,7 +334,7 @@ class SchemaService {
     documentRid?: string
   ) {
     try {
-      const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
+      const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
       const sequelize = await initOrgSequelize();
       const mainDdSequilze = await initMainDbSequelize();
       let finalResources = null;
@@ -497,6 +501,7 @@ class SchemaService {
 
       return { resources: [], totalCount: 0 };
     } catch (err) {
+      errorLog("Error fetching resources: " + (err as Error).message);
       throw new Error("Error fetching resources: " + (err as Error).message);
     }
   }
@@ -509,7 +514,7 @@ class SchemaService {
    */
   async fetchResourceById(accountNumber: string, resourceId: string) {
     try {
-      const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
+      const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
       const sequelize = await initOrgSequelize();
 
       const Resource = Resources.initialize(sequelize, schemaName);
@@ -541,7 +546,7 @@ class SchemaService {
     accountNumber: string
   ) {
     try {
-      const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
+      const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
 
       const sequelize = await initOrgSequelize();
 
@@ -557,6 +562,7 @@ class SchemaService {
       });
 
       if (isRefIdExist) {
+        errorLog("Resource Code must be unique");
         throw new Error("Resource Code must be unique.");
       }
 
@@ -582,7 +588,7 @@ class SchemaService {
         resource_total_experience: resourceData.total_years_experience || null,
         resource_total_experience_organization:
           resourceData.total_years_in_org || null,
-        created_by: resourceData.created_by,
+        created_by: resourceData.created_by ?? "",
         account_rid: resourceData.account_id,
         comments: resourceData.comments || "",
       };
@@ -641,7 +647,7 @@ class SchemaService {
     documentRid?: string
   ) {
     try {
-      const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
+      const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
       const sequelize = await initOrgSequelize();
       const mainDdSequilze = await initMainDbSequelize();
       let finalResources = null;
@@ -851,7 +857,8 @@ class SchemaService {
 
       return { resources: finalResources, totalCount };
     } catch (err) {
-      throw new Error("Error fetching resources: " + (err as Error).message);
+      errorLog("Error fetching resources for export: " + (err as Error).message);
+      throw new Error("Error fetching resources for export: " + (err as Error).message);
     }
   }
 
@@ -953,12 +960,12 @@ class SchemaService {
         throw new Error("Resource ID and account number are required");
       }
 
-      const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
+      const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
       const sequelize = await initOrgSequelize();
 
       // Verify schema exists before querying
       const schemaExists = await sequelize.query(
-        `SELECT schema_name FROM information_schema.schemata WHERE schema_name = :schemaName`,
+        rawQueries.getSchemaExistenceQuery(),
         {
           replacements: { schemaName },
           type: "SELECT",
@@ -1005,7 +1012,7 @@ class SchemaService {
     accountId: string
   ) {
     try {
-      const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
+      const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
       const sequelize = await initOrgSequelize();
 
       const Resource = Resources.initialize(sequelize, schemaName);
@@ -1110,6 +1117,7 @@ class SchemaService {
 
       return updateResource;
     } catch (err) {
+      errorLog("Error updating resource: " + (err as Error).message);
       throw new Error((err as Error).message);
     }
   }
@@ -1182,7 +1190,7 @@ class SchemaService {
   // }
 
   async fetchExistingResource(accountNumber: string, resourceId: string) {
-    const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
+    const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
     const sequelize = await initOrgSequelize();
 
     const ResourcesModel = Resources.initialize(sequelize, schemaName);
@@ -1210,7 +1218,7 @@ class SchemaService {
     accountNumber: string
   ) {
     try {
-      const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
+      const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
       const sequelize = await initOrgSequelize();
 
       const ResourceFiscalModel = ResourceFiscal.initialize(
@@ -1219,14 +1227,14 @@ class SchemaService {
       );
       await ResourceFiscalModel.update(
         {
-          resource_type_rid: resourceData.resource_type_rid || "",
+          resource_type_rid: resourceData?.resource_type_rid || "",
           country_rid: resourceData.country_rid || null,
           country_region_rid: resourceData.region_rid || null,
           effective_date: moment(startDate).isValid()
             ? moment(startDate).toDate()
             : null,
           end_date: moment(endDate).isValid() ? moment(endDate).toDate() : null,
-          modified_by: resourceData.modified_by,
+          modified_by: resourceData.modified_by || null,
         },
         {
           where: {
@@ -1249,7 +1257,7 @@ class SchemaService {
     accountId: string
   ) {
     try {
-      const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
+      const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
       const sequelize = await initOrgSequelize();
 
       const ResourceFiscalRegionModel = ResourceFiscalRegion.initialize(
@@ -1265,7 +1273,7 @@ class SchemaService {
             ? moment(startDate).toDate()
             : null,
           end_date: moment(endDate).isValid() ? moment(endDate).toDate() : null,
-          modified_by: resourceData.modified_by,
+          modified_by: resourceData.modified_by || null,
           modified_datetime: new Date(),
         },
         {
@@ -1293,15 +1301,15 @@ class SchemaService {
       const sequelize = await initMainDbSequelize();
 
       const [account]: any[] = await sequelize.query(
-        `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
+        rawQueries.fetchAccountDetailsByRid(parentAccountId),
         {
-          replacements: { rid: parentAccountId },
           type: "SELECT",
         }
       );
 
       return account?.r_number;
     } catch (err) {
+      errorLog("Error fetching parent account : " + (err as Error).message);
       throw new Error(
         "Error fetching parent account : " + (err as Error).message
       );
@@ -1320,7 +1328,7 @@ class SchemaService {
       let accountRnumber = accountNumber;
 
       const [account]: any[] = await sequelize.query(
-        `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE r_number = :r_number`,
+        rawQueries.getAccountByNumberQuery(),
         {
           replacements: { r_number: accountNumber },
           type: "SELECT",
@@ -1329,7 +1337,7 @@ class SchemaService {
 
       if (account?.storage_type === "store_in_parent") {
         const [accountData]: any[] = await sequelize.query(
-          `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
+          rawQueries.fetchAccountById,
           {
             replacements: { rid: account?.parent_account_rid },
             type: "SELECT",
@@ -1344,6 +1352,7 @@ class SchemaService {
         accountName: account.account_name,
       };
     } catch (err) {
+      errorLog("Error fetching account : " + (err as Error).message);
       throw new Error("Error fetching account : " + (err as Error).message);
     }
   }
@@ -1362,7 +1371,7 @@ class SchemaService {
     existingResourceData: any
   ) {
     try {
-      const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
+      const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
       const sequelize = await initOrgSequelize();
       const ResourcesHistoryModel = await ResourcesHistory.initialize(
         sequelize,
@@ -1429,7 +1438,7 @@ class SchemaService {
    */
   async resourceDetails(accountNumber: string, resourceId: string) {
     try {
-      const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
+      const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
       const sequelize = await initOrgSequelize();
       const mainDbSequelize = await initMainDbSequelize();
 
@@ -1443,35 +1452,35 @@ class SchemaService {
 
       if (resource) {
         const [country]: any[] = await mainDbSequelize.query(
-          `SELECT country_code,country_name FROM ${MAIN_SCHEMA_NAME}.country WHERE rid = :rid`,
+          rawQueries.fetchCountryById(),
           {
-            replacements: { rid: resource.country_rid },
+            replacements: { id: resource.country_rid },
             type: "SELECT",
           }
         );
         const [state]: any[] = await mainDbSequelize.query(
-          `SELECT state_name FROM ${MAIN_SCHEMA_NAME}.state WHERE rid = :rid`,
+          rawQueries.fetchStateById(),
           {
-            replacements: { rid: resource.region_rid },
+            replacements: { id: resource.region_rid },
             type: "SELECT",
           }
         );
         const [city]: any[] = await mainDbSequelize.query(
-          `SELECT city_name FROM ${MAIN_SCHEMA_NAME}.city WHERE rid = :rid`,
+          rawQueries.fetchCityById(),
           {
-            replacements: { rid: resource.city_rid },
+            replacements: { id: resource.city_rid },
             type: "SELECT",
           }
         );
         const [resource_type]: any[] = await mainDbSequelize.query(
-          `SELECT resource_type_name from ${MAIN_SCHEMA_NAME}.resource_type  WHERE rid = :rid`,
+          rawQueries.fetchSpecificResourceTypeById(),
           {
-            replacements: { rid: resource.resource_type_rid },
+            replacements: { resourceTypeId: resource.resource_type_rid },
             type: "SELECT",
           }
         );
         const [status]: any[] = await mainDbSequelize.query(
-          `SELECT status_name from ${MAIN_SCHEMA_NAME}.status  WHERE rid = :rid`,
+          rawQueries.fetchStatusById(),
           {
             replacements: { rid: resource.status_rid },
             type: "SELECT",
@@ -1523,7 +1532,7 @@ class SchemaService {
     accountId: string
   ) {
     try {
-      const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
+      const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
       const sequelize = await initOrgSequelize();
       const ResourcesTimelineModel = await ResourcesTimeline.initialize(
         sequelize,
@@ -1569,9 +1578,9 @@ class SchemaService {
 
       if (countryIds.length > 0) {
         countryRows = await mainDdSequilze.query(
-          `SELECT rid, country_name FROM ${MAIN_SCHEMA_NAME}.country WHERE rid IN (:ids)`,
+          rawQueries.GET_COUNTRIES,
           {
-            replacements: { ids: countryIds },
+            replacements: { countryRid: countryIds },
             type: "SELECT",
           }
         );
@@ -1579,9 +1588,9 @@ class SchemaService {
 
       if (regionIds.length > 0) {
         states = await mainDdSequilze.query(
-          `SELECT rid, state_name FROM ${MAIN_SCHEMA_NAME}.state WHERE rid IN (:ids)`,
+          rawQueries.GET_REGIONS,
           {
-            replacements: { ids: regionIds },
+            replacements: { regionRid: regionIds },
             type: "SELECT",
           }
         );
@@ -1589,7 +1598,7 @@ class SchemaService {
 
       if (cityIds.length > 0) {
         cities = await mainDdSequilze.query(
-          `SELECT rid, city_name FROM ${MAIN_SCHEMA_NAME}.city WHERE rid IN (:ids)`,
+          rawQueries.GET_CITIES,
           {
             replacements: { ids: cityIds },
             type: "SELECT",
@@ -1598,18 +1607,18 @@ class SchemaService {
       }
       if (resourceTypeRids.length > 0) {
         resourceType = await mainDdSequilze.query(
-          `SELECT rid, resource_type_name FROM ${MAIN_SCHEMA_NAME}.resource_type WHERE rid IN (:ids)`,
+          rawQueries.GET_RESOURCE_TYPES,
           {
-            replacements: { ids: resourceTypeRids },
+            replacements: { resourceTypeRid: resourceTypeRids },
             type: "SELECT",
           }
         );
       }
       if (statusRids.length > 0) {
         status = await mainDdSequilze.query(
-          `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status WHERE rid IN (:ids)`,
+          rawQueries.GET_STATUSES,
           {
-            replacements: { ids: statusRids },
+            replacements: { statusRid: statusRids },
             type: "SELECT",
           }
         );
@@ -1659,7 +1668,8 @@ class SchemaService {
   async sortGeoData(resources: any[], order: string[][] = []): Promise<any[]> {
     // Apply sorting if specified
     if (order && order.length > 0) {
-      const [sortField, sortDirection] = order[0];
+      const [sortField, rawSortDirection] = order?.[0] ?? [];
+      const sortDirection = rawSortDirection ?? "ASC";
       const isAsc = sortDirection.toUpperCase() === "ASC";
       resources = resources.sort((a, b) => {
         let compareValueA, compareValueB;
@@ -1747,7 +1757,7 @@ class SchemaService {
 
       if (countryId) {
         const result = await mainDdSequilze.query(
-          `SELECT rid, country_name, country_code FROM ${MAIN_SCHEMA_NAME}.country WHERE rid = :id`,
+          rawQueries.fetchCountryById(),
           {
             replacements: { id: countryId },
             type: "SELECT",
@@ -1759,7 +1769,7 @@ class SchemaService {
 
       if (regionId) {
         const result = await mainDdSequilze.query(
-          `SELECT rid, state_name FROM ${MAIN_SCHEMA_NAME}.state WHERE rid = :id`,
+          rawQueries.fetchStateById(),
           {
             replacements: { id: regionId },
             type: "SELECT",
@@ -1771,7 +1781,7 @@ class SchemaService {
 
       if (currencyId) {
         const result = await mainDdSequilze.query(
-          `SELECT rid, currency_name, currency_code, currency_symbol FROM ${MAIN_SCHEMA_NAME}.currency WHERE rid = :id`,
+          rawQueries.fetchCurrencyById(),
           {
             replacements: { id: currencyId },
             type: "SELECT",
@@ -1800,9 +1810,7 @@ class SchemaService {
     try {
       const mainDbSequelize = await initMainDbSequelize();
       const [accountData]: any[] = await mainDbSequelize.query(
-        `SELECT ${MAIN_SCHEMA_NAME}.account.*, ${MAIN_SCHEMA_NAME}.status.status_description AS status  FROM ${MAIN_SCHEMA_NAME}.account
-          LEFT JOIN ${MAIN_SCHEMA_NAME}.status ON ${MAIN_SCHEMA_NAME}.account.status_rid = ${MAIN_SCHEMA_NAME}.status.rid
-          WHERE ${MAIN_SCHEMA_NAME}.account.rid = :rid`,
+        rawQueries.getAccountWithStatusByRidQuery(),
         {
           replacements: { rid: accountId },
           type: "SELECT",
@@ -1811,8 +1819,99 @@ class SchemaService {
 
       return accountData;
     } catch (err) {
+      errorLog("Error fetching Accounts: " + (err as Error).message);
       throw new Error("Error fetching Accounts: " + (err as Error).message);
     }
+  }
+
+    async fetchValidAccountNumberById(accountId: string) {
+      try {
+
+        const mainDbSequelize = await initMainDbSequelize();
+
+        const [account]: any[] = await mainDbSequelize.query(
+          rawQueries.fetchAccountById,
+          {
+            replacements: { rid: accountId },
+            type: "SELECT",
+          }
+        );
+  
+        let accountRnumber = account?.r_number;
+  
+        if (account?.storage_type === "store_in_parent") {
+          const [accountData]: any[] = await mainDbSequelize.query(
+            rawQueries.fetchAccountById,
+            {
+              replacements: { rid: account?.parent_account_rid },
+              type: "SELECT",
+            }
+          );
+          accountRnumber = accountData?.r_number;
+        }
+  
+        return {
+          accountNumber: accountRnumber,
+          accountId: account?.rid,
+          accountName: account?.account_name,
+        };
+      } catch (err) {
+        throw new Error("Error fetching account : " + (err as Error).message);
+      }
+    }
+
+  async addProjectResourceExistsFlags(projects: any[]): Promise<any[]> {
+    const orgDb = await initOrgSequelize();
+    const checkPromises: Promise<void>[] = [];
+
+    for (const project of projects) {
+      const { accountNumber } =
+        await this.fetchValidAccountNumberById(project.account_rid);
+      const schemaName = rawQueries.fetchSchemaName(accountNumber);
+
+      if (project.ProjectFiscal && project.ProjectFiscal.length > 0) {
+        for (const fiscal of project.ProjectFiscal) {
+          try {
+            // Check if table exists
+            const checkTable: any = await orgDb.query(`
+              SELECT EXISTS (
+                SELECT 1
+                FROM information_schema.tables
+                WHERE table_schema = '${schemaName}'
+                  AND table_name = 'project_resource'
+              ) AS table_exists;
+            `);
+
+            const tableExists = checkTable[0][0].table_exists;
+
+            if (tableExists) {
+              const query = checkProjectMappedToProjectRes(schemaName, fiscal.project_fiscal_rid);
+              
+              const promise = orgDb
+                .query(query)
+                .then((result: any) => {
+                  fiscal.is_project_exists = result[0]?.length > 0;
+                })
+                .catch((error) => {
+                  console.error(`Error checking project resource for fiscal ${fiscal.project_fiscal_rid}:`, error);
+                  fiscal.is_project_exists = false;
+                });
+
+              checkPromises.push(promise);
+            } else {
+              // Table doesn't exist, set flag to false
+              fiscal.is_project_exists = false;
+            }
+          } catch (error) {
+            console.error(`Error checking table existence for schema ${schemaName}:`, error);
+            fiscal.is_project_exists = false;
+          }
+        }
+      }
+    }
+
+    await Promise.all(checkPromises);
+    return projects;
   }
 
   async fetchAllProjects(
@@ -1947,55 +2046,14 @@ class SchemaService {
         fiscalYear && fiscalYear !== 0 ? `AND pfs.fiscal_year = ?` : "";
 
       // 4. Common SQL fragments
-      const commonSelectFields = `
-        ps.project_code, ps.project_name, acc.account_name, accountStatus.status_name as account_status_name,
-        ps.project_rid, ps.modified_datetime, ps.assessment_status, ps.qre, ps.is_rd_qualified,
-        COALESCE(ps.industry_name, ind.industry_name) AS industry_name_other,
-        ps.project_type_rid, ps.project_client_group, ps.project_group,
-        ps.project_classification_rid, 
-        ps.project_classification_other,
-        pt.project_type_name, ps.account_rid,
-        pc.classification_name AS classification_name,
-        ps.status_rid, s.status_name, ps.project_point_of_contact, ps.technical_point_of_contact, ps.r_number,
-        ps.program_name, ps.project_startdate, ps.project_enddate,
-        ps.total_cost, ps.total_effort, ps.total_fte, ps.total_cost_fte,
-        ps.total_subcon, ps.total_cost_subcon, ps.total_cost_nonlabor, ps."comments",
-        cou.country_name, COALESCE(curr.currency_code,acc_curr.currency_code,usd_curr.currency_code) as currency_code,
-        COALESCE(curr.currency_symbol,acc_curr.currency_symbol,usd_curr.currency_symbol) as currency_symbol,
-        st.state_name as region_name, ps.created_datetime
-      `;
+      const commonSelectFields = rawQueries.getCommonProjectSelectFields();
 
-      const commonJoins = `
-        FROM ${MAIN_SCHEMA_NAME}.project_summary AS ps
-        INNER JOIN ${MAIN_SCHEMA_NAME}.account acc ON acc.rid = ps.account_rid 
-        LEFT JOIN ${MAIN_SCHEMA_NAME}.industry ind ON ind.rid = ps.industry_rid
-        LEFT JOIN ${MAIN_SCHEMA_NAME}.country cou ON cou.rid = ps.country_rid 
-        LEFT JOIN ${MAIN_SCHEMA_NAME}.state st ON st.rid = ps.region_rid 
-        LEFT JOIN ${MAIN_SCHEMA_NAME}.currency curr ON curr.rid = ps.currency_rid
-        LEFT JOIN ${MAIN_SCHEMA_NAME}.currency acc_curr ON acc_curr.rid = acc.currency_rid
-        LEFT JOIN ${MAIN_SCHEMA_NAME}.currency usd_curr ON usd_curr.currency_code = 'USD'
-        LEFT JOIN ${MAIN_SCHEMA_NAME}.project_classification pc ON pc.rid = ps.project_classification_rid
-        LEFT JOIN ${MAIN_SCHEMA_NAME}.project_type pt ON pt.rid = ps.project_type_rid
-        LEFT JOIN ${MAIN_SCHEMA_NAME}.status s ON s.rid = ps.status_rid
-        LEFT JOIN ${MAIN_SCHEMA_NAME}.status accountStatus ON accountStatus.rid = acc.status_rid
-      `;
+      const commonJoins = rawQueries.getCommonProjectJoins();
 
-      const commonGroupBy = `
-        GROUP BY 
-        ps.project_code, ps.project_name, acc.account_name, accountStatus.status_name, ps.project_rid, ps.modified_datetime, 
-        ps.assessment_status, ps.qre, ps.is_rd_qualified,
-        ps.industry_name, ind.industry_name, ps.project_type_rid, ps.project_client_group, ps.project_group,
-        ps.project_classification_rid, ps.project_classification_other, pc.classification_name, pt.project_type_name,
-        ps.status_rid, s.status_name, ps.project_point_of_contact, ps.technical_point_of_contact,
-        ps.r_number, ps.program_name, ps.project_startdate, ps.project_enddate,
-        ps.total_cost, ps.total_effort, ps.total_fte, ps.total_cost_fte, ps.total_subcon, ps.total_cost_subcon,
-        ps.total_cost_nonlabor, ps."comments", cou.country_name, curr.currency_code, acc_curr.currency_code,
-        usd_curr.currency_code, curr.currency_symbol, acc_curr.currency_symbol, usd_curr.currency_symbol,
-        st.state_name, ps.created_datetime, ps.account_rid
-      `;
+      const commonGroupBy = rawQueries.getCommonProjectGroupBy();
       const includeProjectFilter = accessibleIds.length > 0;
       const accessibleProjectsCondition = includeProjectFilter
-        ? `ps.project_rid = ANY(ARRAY[?]::text[])`
+        ? `pfs.project_fiscal_rid = ANY(ARRAY[?]::text[])`
         : "1=1";
 
       // 5. Get project IDs first - Modified to include all projects when bothParentAndChild is true
@@ -2054,59 +2112,7 @@ class SchemaService {
       }
 
       // 6. Main query with proper parameter ordering and bothParentAndChild logic
-      const childAggSQL = `
-  (
-    SELECT COALESCE(
-      json_agg(pfs_sub ${childSortClause}) FILTER (WHERE pfs_sub.project_fiscal_rid IS NOT NULL),
-      '[]'::json
-    )
-    FROM (
-      SELECT 
-        pfs.project_code, 
-        pfs.project_group, 
-        pfs.project_name, 
-        pt.project_type_name, 
-        pfs.project_type_rid, 
-        pfs.fiscal_year, 
-        pfs.project_client_group, 
-        pfs.project_classification_rid,
-        acc.account_name, 
-        ps.qre,
-        pc.classification_name AS classification_name,
-        pfs.project_classification_other,
-        CAST(pfs.total_effort_prj AS TEXT) as total_effort, 
-        CAST(pfs.total_cost_prj AS TEXT) AS total_cost,
-        CAST(pfs.total_cost_fte_prj AS TEXT) AS total_cost_fte,
-        CAST(pfs.total_cost_subcon_prj AS TEXT) AS total_cost_subcon,
-        CAST(pfs.total_cost_nonlabor_prj AS TEXT) AS total_cost_nonlabor, 
-        pfs.assessment_status, 
-        pfs.created_datetime,
-        pfs.qre_final, 
-        pfs.project_point_of_contact, 
-        pfs.technical_point_of_contact, 
-        pfs.comments, 
-        pfs.modified_datetime, 
-        pfs.project_rid, 
-        pfs.project_fiscal_rid, 
-        pfs.r_number, 
-        pfs.account_rid,
-        COALESCE(curr.currency_code,acc_curr.currency_code,usd_curr.currency_code) as currency_code,
-        COALESCE(curr.currency_symbol,acc_curr.currency_symbol,usd_curr.currency_symbol) as currency_symbol,
-        pfs.rd_percent_final
-      FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary pfs
-      INNER JOIN ${MAIN_SCHEMA_NAME}.account acc ON acc.rid = pfs.account_rid 
-      LEFT JOIN ${MAIN_SCHEMA_NAME}.project_classification pc ON pc.rid = pfs.project_classification_rid
-      LEFT JOIN ${MAIN_SCHEMA_NAME}.project_type pt ON pt.rid = pfs.project_type_rid
-      LEFT JOIN ${MAIN_SCHEMA_NAME}.currency curr ON curr.rid = pfs.currency_rid
-      LEFT JOIN ${MAIN_SCHEMA_NAME}.currency acc_curr ON acc_curr.rid = acc.currency_rid
-      LEFT JOIN ${MAIN_SCHEMA_NAME}.currency usd_curr ON usd_curr.currency_code = 'USD'
-      WHERE pfs.project_rid = ps.project_rid 
-        AND pfs.account_rid = ps.account_rid
-        ${fiscalYearClause}
-        ${filterWhereSQLChild ? `AND ${filterWhereSQLChild}` : ""}
-    ) AS pfs_sub
-  ) AS "ProjectFiscal"
-`;
+      const childAggSQL = rawQueries.getChildAggregationSQL(childSortClause, fiscalYearClause, filterWhereSQLChild);
 
       const fullQuery = `
         WITH base_projects AS (
@@ -2284,51 +2290,11 @@ class SchemaService {
         fiscalYear && fiscalYear !== 0 ? `AND pfs.fiscal_year = ?` : "";
 
       // 4. Common SQL fragments
-      const commonSelectFields = `
-        ps.project_code, ps.project_name, acc.account_name, accountStatus.status_name as account_status_name,
-        ps.project_rid, ps.modified_datetime, ps.assessment_status, ps.qre, ps.is_rd_qualified,
-        COALESCE(ps.industry_name, ind.industry_name) AS industry_name_other,
-        ps.project_type_rid, ps.project_client_group, ps.project_group,
-        ps.project_classification_rid, 
-        pt.project_type_name, ps.account_rid,
-        COALESCE(ps.project_classification_other, pc.classification_name) AS classification_name,
-        ps.status_rid, s.status_name, ps.project_point_of_contact, ps.technical_point_of_contact, ps.r_number,
-        ps.program_name, ps.project_startdate, ps.project_enddate,
-        ps.total_cost, ps.total_effort, ps.total_fte, ps.total_cost_fte,
-        ps.total_subcon, ps.total_cost_subcon, ps.total_cost_nonlabor, ps."comments",
-        cou.country_name, COALESCE(curr.currency_code,acc_curr.currency_code,usd_curr.currency_code) as currency_code,
-        COALESCE(curr.currency_symbol,acc_curr.currency_symbol,usd_curr.currency_symbol) as currency_symbol,
-        st.state_name as region_name, ps.created_datetime
-      `;
+      const commonSelectFields = rawQueries.getCommonProjectSelectFields();
 
-      const commonJoins = `
-        FROM ${MAIN_SCHEMA_NAME}.project_summary AS ps
-        INNER JOIN ${MAIN_SCHEMA_NAME}.account acc ON acc.rid = ps.account_rid 
-        LEFT JOIN ${MAIN_SCHEMA_NAME}.industry ind ON ind.rid = ps.industry_rid
-        LEFT JOIN ${MAIN_SCHEMA_NAME}.country cou ON cou.rid = ps.country_rid 
-        LEFT JOIN ${MAIN_SCHEMA_NAME}.state st ON st.rid = ps.region_rid 
-        LEFT JOIN ${MAIN_SCHEMA_NAME}.currency curr ON curr.rid = ps.currency_rid
-        LEFT JOIN ${MAIN_SCHEMA_NAME}.currency acc_curr ON acc_curr.rid = acc.currency_rid
-        LEFT JOIN ${MAIN_SCHEMA_NAME}.currency usd_curr ON usd_curr.currency_code = 'USD'
-        LEFT JOIN ${MAIN_SCHEMA_NAME}.project_classification pc ON pc.rid = ps.project_classification_rid
-        LEFT JOIN ${MAIN_SCHEMA_NAME}.project_type pt ON pt.rid = ps.project_type_rid
-        LEFT JOIN ${MAIN_SCHEMA_NAME}.status s ON s.rid = ps.status_rid
-        LEFT JOIN ${MAIN_SCHEMA_NAME}.status accountStatus ON accountStatus.rid = acc.status_rid
-      `;
+      const commonJoins = rawQueries.getCommonProjectJoins();
 
-      const commonGroupBy = `
-        GROUP BY 
-        ps.project_code, ps.project_name, acc.account_name, accountStatus.status_name, ps.project_rid, ps.modified_datetime, 
-        ps.assessment_status, ps.qre, ps.is_rd_qualified,
-        ps.industry_name, ind.industry_name, ps.project_type_rid, ps.project_client_group, ps.project_group,
-        ps.project_classification_rid, ps.project_classification_other, pc.classification_name, pt.project_type_name,
-        ps.status_rid, s.status_name, ps.project_point_of_contact, ps.technical_point_of_contact,
-        ps.r_number, ps.program_name, ps.project_startdate, ps.project_enddate,
-        ps.total_cost, ps.total_effort, ps.total_fte, ps.total_cost_fte, ps.total_subcon, ps.total_cost_subcon,
-        ps.total_cost_nonlabor, ps."comments", cou.country_name, curr.currency_code, acc_curr.currency_code,
-        usd_curr.currency_code, curr.currency_symbol, acc_curr.currency_symbol, usd_curr.currency_symbol,
-        st.state_name, ps.created_datetime, ps.account_rid
-      `;
+      const commonGroupBy = rawQueries.getCommonProjectGroupBy();
 
       // 5. Get project IDs first - Modified to include all projects when bothParentAndChild is true
       const includeProjectFilter = accessibleIds.length > 0;
@@ -2392,51 +2358,11 @@ class SchemaService {
       }
 
       // 6. Main query with proper parameter ordering and bothParentAndChild logic
-      const childAggSQL = `
-  (
-    SELECT COALESCE(
-      json_agg(pfs_sub ${childSortClause}) FILTER (WHERE pfs_sub.project_fiscal_rid IS NOT NULL),
-      '[]'::json
-    )
-    FROM (
-      SELECT 
-        pfs.project_code, 
-        pfs.project_group, 
-        pfs.project_name, 
-        pt.project_type_name, 
-        pfs.project_type_rid, 
-        pfs.fiscal_year, 
-        pfs.project_client_group, 
-        acc.account_name, 
-        ps.qre,
-        COALESCE(pfs.project_classification_other, pc.classification_name) AS classification_name,
-        CAST(pfs.total_effort_prj AS TEXT) as total_effort, 
-        CAST(pfs.total_cost_prj AS TEXT) AS total_cost,
-        CAST(pfs.total_cost_fte_prj AS TEXT) AS total_cost_fte,
-        CAST(pfs.total_cost_subcon_prj AS TEXT) AS total_cost_subcon,
-        CAST(pfs.total_cost_nonlabor_prj AS TEXT) AS total_cost_nonlabor, 
-        pfs.assessment_status, 
-        pfs.created_datetime,
-        pfs.qre_final, 
-        pfs.project_point_of_contact, 
-        pfs.technical_point_of_contact, 
-        pfs.comments, 
-        pfs.modified_datetime, 
-        pfs.project_rid, 
-        pfs.project_fiscal_rid, 
-        pfs.r_number, 
-        pfs.account_rid
-      FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary pfs
-      INNER JOIN ${MAIN_SCHEMA_NAME}.account acc ON acc.rid = pfs.account_rid 
-      LEFT JOIN ${MAIN_SCHEMA_NAME}.project_classification pc ON pc.rid = pfs.project_classification_rid
-      LEFT JOIN ${MAIN_SCHEMA_NAME}.project_type pt ON pt.rid = pfs.project_type_rid
-      WHERE pfs.project_rid = ps.project_rid 
-        AND pfs.account_rid = ps.account_rid
-        ${fiscalYearClause}
-        ${filterWhereSQLChild ? `AND ${filterWhereSQLChild}` : ""}
-    ) AS pfs_sub
-  ) AS "ProjectFiscal"
-`;
+      const childAggSQL = rawQueries.getChildAggSQL(
+        childSortClause,
+        fiscalYearClause,
+        filterWhereSQLChild
+      );
 
       const fullQuery = `
         WITH base_projects AS (
@@ -2485,7 +2411,8 @@ class SchemaService {
       const result = [];
 
       for (const key of Object.keys(globalFilters)) {
-        result.push(key, ...globalFilters[key]);
+        const values = globalFilters[key] ?? []; 
+        result.push(key, ...values);
       }
 
       return result;
@@ -2634,18 +2561,11 @@ class SchemaService {
 
   async checkIfSchemaAndTableExists(accountNumber: string) {
     try {
-      const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
+      const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
       const sequelize = await initOrgSequelize();
 
       const result = await sequelize.query(
-        `
-        SELECT EXISTS (
-          SELECT 1
-          FROM information_schema.tables
-          WHERE table_schema = :schemaName
-            AND table_name = 'project'
-        ) AS "exists"
-        `,
+        rawQueries.getCheckTableExistsQuery(),
         {
           replacements: { schemaName },
           type: "SELECT",
@@ -2654,6 +2574,7 @@ class SchemaService {
 
       return (result[0] as any).exists === true;
     } catch (err) {
+      errorLog("Error checking schema", (err as Error).message);
       throw new Error("Error checking schema :" + (err as Error).message);
     }
   }
@@ -2662,7 +2583,7 @@ class SchemaService {
       const mainDbInstance = await initMainDbSequelize();
 
       let account: any[] = await mainDbInstance.query(
-        `SELECT rid, r_number, storage_type, parent_account_rid FROM ${MAIN_SCHEMA_NAME}.account`,
+        rawQueries.getAccountListQuery(),
         {
           replacements: { created_by: userId },
           type: "SELECT",
@@ -3108,9 +3029,9 @@ class SchemaService {
 
       if (countryIds.length > 0) {
         countryRows = await mainDdSequilze.query(
-          `SELECT rid, country_name FROM ${MAIN_SCHEMA_NAME}.country WHERE rid IN (:ids)`,
+          rawQueries.GET_COUNTRIES,
           {
-            replacements: { ids: countryIds },
+            replacements: { countryRid: countryIds },
             type: "SELECT",
           }
         );
@@ -3118,9 +3039,9 @@ class SchemaService {
 
       if (regionIds.length > 0) {
         states = await mainDdSequilze.query(
-          `SELECT rid, state_name FROM ${MAIN_SCHEMA_NAME}.state WHERE rid IN (:ids)`,
+          rawQueries.GET_REGIONS,
           {
-            replacements: { ids: regionIds },
+            replacements: { regionRid: regionIds },
             type: "SELECT",
           }
         );
@@ -3128,9 +3049,9 @@ class SchemaService {
 
       if (currencyIds.length > 0) {
         currencies = await mainDdSequilze.query(
-          `SELECT rid, currency_code, currency_symbol FROM ${MAIN_SCHEMA_NAME}.currency WHERE rid IN (:ids)`,
+          rawQueries.GET_CURRENCIES,
           {
-            replacements: { ids: currencyIds },
+            replacements: { currencyRid: currencyIds },
             type: "SELECT",
           }
         );
@@ -3179,7 +3100,7 @@ class SchemaService {
 
       if (industryIds.length > 0) {
         IndustryRows = await mainDdSequilze.query(
-          `SELECT rid, industry_name FROM ${MAIN_SCHEMA_NAME}.industry WHERE rid IN (:ids)`,
+          rawQueries.GET_INDUSTRY,
           {
             replacements: { ids: industryIds },
             type: "SELECT",
@@ -3227,7 +3148,7 @@ class SchemaService {
 
       if (keyContactIds.length > 0) {
         const keyContactRows = await mainDdSequilze.query(
-          `SELECT rid, role_name, role_map FROM ${MAIN_SCHEMA_NAME}.key_contact_role WHERE rid IN (:ids)`,
+          rawQueries.fetchKeyContactsByIds(),
           {
             replacements: { ids: keyContactIds },
             type: "SELECT",
@@ -3289,7 +3210,7 @@ class SchemaService {
     try {
       if (project.industry_rid && !project.industry_name) {
         const industryResult: any = await mainDdSequilze.query(
-          `SELECT industry_name FROM ${MAIN_SCHEMA_NAME}.industry WHERE rid = :id`,
+          rawQueries.getIndustryById(),
           {
             replacements: { id: project.industry_rid },
             type: "SELECT",
@@ -3311,9 +3232,9 @@ class SchemaService {
     try {
       if (project.status_rid) {
         const statusResult: any = await mainDdSequilze.query(
-          `SELECT status_name FROM ${MAIN_SCHEMA_NAME}.status WHERE rid = :id`,
+          rawQueries.fetchStatusById(),
           {
-            replacements: { id: project.status_rid },
+            replacements: { rid: project.status_rid },
             type: "SELECT",
           }
         );
@@ -3323,7 +3244,7 @@ class SchemaService {
       }
       if (project.project_type_rid) {
         const projectTypeResult: any = await mainDdSequilze.query(
-          `SELECT project_type_name FROM ${MAIN_SCHEMA_NAME}.project_type WHERE rid = :id`,
+          rawQueries.getProjectTypeByIdQuery(),
           {
             replacements: { id: project.project_type_rid },
             type: "SELECT",
@@ -3359,7 +3280,7 @@ class SchemaService {
 
       if (keyContactIds.length > 0) {
         const keyContactRows = await mainDdSequilze.query(
-          `SELECT rid, role_name FROM ${MAIN_SCHEMA_NAME}.key_contact_role WHERE rid IN (:ids)`,
+          rawQueries.fetchKeyContactsByIds(),
           {
             replacements: { ids: keyContactIds },
             type: "SELECT",
@@ -3373,7 +3294,7 @@ class SchemaService {
 
       if (statusIds.length > 0) {
         const statusRows = await mainDdSequilze.query(
-          `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status WHERE rid IN (:ids)`,
+          rawQueries.fetchStatusByIds(),
           {
             replacements: { ids: statusIds },
             type: "SELECT",
@@ -3410,7 +3331,7 @@ class SchemaService {
         !project.project_classification_other
       ) {
         const [rows] = await mainDdSequilze.query(
-          `SELECT classification_name FROM ${MAIN_SCHEMA_NAME}.project_classification WHERE rid = :rid`,
+          rawQueries.getProjectClassificationByIdQuery(),
           {
             replacements: { rid: project.project_classification_rid },
             type: mainDdSequilze.QueryTypes.SELECT,
@@ -3442,7 +3363,7 @@ class SchemaService {
 
       if (classificationIds.length > 0) {
         classificationRows = await mainDdSequilze.query(
-          `SELECT rid, classification_name FROM ${MAIN_SCHEMA_NAME}.project_classification WHERE rid IN (:ids)`,
+          rawQueries.fetchProjectClassificationById(),
           {
             replacements: { ids: classificationIds },
             type: "SELECT",
@@ -3645,7 +3566,7 @@ class SchemaService {
         if (!userId) return null;
 
         const [results] = await mainDbInit.query(
-          `SELECT first_name, middle_name, last_name FROM ${MAIN_SCHEMA_NAME}."user" WHERE rid = :userId`,
+          rawQueries.fetchUserById(),
           {
             replacements: { userId },
             type: "SELECT",
@@ -3682,8 +3603,7 @@ class SchemaService {
       const mainDbSequelize = await initMainDbSequelize();
 
       const childAccounts = await mainDbSequelize.query(
-        `SELECT * FROM ${MAIN_SCHEMA_NAME}.account 
-       WHERE parent_account_rid = :entityId`,
+        rawQueries.getAccountsByParentAccountRidQuery(),
         {
           replacements: { entityId },
           type: "SELECT",
@@ -3703,13 +3623,7 @@ class SchemaService {
       const sequelize = await initMainDbSequelize();
 
       const result = await sequelize.query(
-        `
-      SELECT 
-        a.*
-      FROM "${MAIN_SCHEMA_NAME}"."attachment_summary" a
-      WHERE a.attach_to = :project_rid
-      ORDER BY a.created_datetime DESC
-    `,
+        rawQueries.getAttachmentsByProjectRidQuery(),
         {
           replacements: { project_rid },
           type: "SELECT",
@@ -3728,13 +3642,7 @@ class SchemaService {
       const sequelize = await initMainDbSequelize();
 
       const result = await sequelize.query(
-        `
-      SELECT 
-        a.*
-      FROM "${MAIN_SCHEMA_NAME}"."attachment_summary" a
-      WHERE a.attach_to = :resource_rid
-      ORDER BY a.created_datetime DESC
-    `,
+        rawQueries.getAttachmentsByResourceRidQuery(),
         {
           replacements: { resource_rid },
           type: "SELECT",
@@ -3758,7 +3666,32 @@ class SchemaService {
       }
 
       const accounts = await mainDbSequelize.query(
-        `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid IN (:accountRids)`,
+        rawQueries.getAccountsByRidsQuery(),
+        {
+          replacements: { accountRids },
+          type: "SELECT",
+        }
+      );
+
+      return accounts;
+    } catch (err) {
+      throw new Error(
+        "Error fetching accounts by IDs: " + (err as Error).message
+      );
+    }
+  }
+
+  async fetchAccountsWithStatusByIds(accountRids: string[]) {
+    try {
+      const mainDbSequelize = await initMainDbSequelize();
+
+      // Return empty array if no account IDs provided
+      if (!accountRids || accountRids.length === 0) {
+        return [];
+      }
+
+      const accounts = await mainDbSequelize.query(
+        rawQueries.getAccountsWithStatusByRidsQuery(),
         {
           replacements: { accountRids },
           type: "SELECT",
@@ -3778,13 +3711,7 @@ class SchemaService {
 
     try {
       const results = await mainDbSequelize.query<{ group_type: string }>(
-        `
-      SELECT type group_type
-      FROM ${MAIN_SCHEMA_NAME}.user_groups ug
-      JOIN ${MAIN_SCHEMA_NAME}.user_group_mapping ugm ON ug.rid = ugm.group_rid 
-      JOIN ${MAIN_SCHEMA_NAME}.user_group_type ugt ON ugt.rid = ug.group_type_rid
-      WHERE ugm.user_rid = :userRid
-      LIMIT 1`, // Important if user can only have one group type
+       rawQueries.getUserGroupTypeByUserRidQuery(), // Important if user can only have one group type
         {
           replacements: { userRid },
           type: QueryTypes.SELECT,
@@ -3795,7 +3722,7 @@ class SchemaService {
         return null;
       }
 
-      return results[0]?.group_type;
+      return results[0]?.group_type ?? null;
     } catch (error) {
       // Log the error for debugging
       console.error("Error fetching user group type:", error);
@@ -3813,13 +3740,7 @@ class SchemaService {
         profile_name: string;
         email: string;
       }>(
-        `
-      SELECT p.profile_name, u.email
-      FROM ${MAIN_SCHEMA_NAME}.user u
-      JOIN ${MAIN_SCHEMA_NAME}.profile p ON u.profile_rid = p.rid 
-      WHERE u.rid = :userRid
-      LIMIT 1
-      `,
+        rawQueries.getUserProfileAndEmailByUserRidQuery(),
         {
           replacements: { userRid },
           type: QueryTypes.SELECT,
@@ -3832,9 +3753,9 @@ class SchemaService {
 
       // Return renamed keys to match camelCase (optional)
       return {
-        profileName: results[0].profile_name,
-        email: results[0].email,
-      };
+        profileName: results[0]?.profile_name ?? "",
+        email: results[0]?.email ?? "",
+      };      
     } catch (error) {
       console.error("Error fetching user profile info:", error);
       throw new Error("Failed to get user profile information");
@@ -3857,17 +3778,7 @@ class SchemaService {
         parent_account_rid: string | null;
         is_child: boolean;
       }>(
-        `
-      SELECT 
-        ugea.entity_rid,
-        a.parent_account_rid,
-        CASE WHEN a.parent_account_rid IS NULL THEN false ELSE true END as is_child
-      FROM ${MAIN_SCHEMA_NAME}.user_group_entity_access ugea
-      LEFT JOIN ${MAIN_SCHEMA_NAME}.account a ON ugea.entity_rid = a.rid
-      WHERE ugea.user_rid = :userRid 
-        AND ugea.entity_type = 'ACCOUNT'
-        AND ugea.access_type = 'INCLUDE'
-      `,
+        rawQueries.getDirectAccountAccessQuery(),
         {
           replacements: { userRid },
           type: QueryTypes.SELECT,
@@ -3880,21 +3791,7 @@ class SchemaService {
         parent_account_rid: string | null;
         is_child: boolean;
       }>(
-        `
-      WITH user_groups AS (
-        SELECT group_rid FROM ${MAIN_SCHEMA_NAME}.user_group_mapping
-        WHERE user_rid = :userRid
-      )
-      SELECT DISTINCT 
-        gea.entity_rid,
-        a.parent_account_rid,
-        CASE WHEN a.parent_account_rid IS NULL THEN false ELSE true END as is_child
-      FROM ${MAIN_SCHEMA_NAME}.user_group_entity_access gea
-      JOIN user_groups ug ON gea.group_rid = ug.group_rid
-      LEFT JOIN ${MAIN_SCHEMA_NAME}.account a ON gea.entity_rid = a.rid
-      WHERE gea.entity_type = 'ACCOUNT'
-        AND gea.access_type = 'INCLUDE'
-      `,
+        rawQueries.getGroupAccountAccessQuery(),
         {
           replacements: { userRid },
           type: QueryTypes.SELECT,
@@ -3935,7 +3832,7 @@ class SchemaService {
   ): Promise<any[]> {
     const mainDbSequelize = await initMainDbSequelize();
     const [userInfo] = (await mainDbSequelize.query(
-      `SELECT profile_rid FROM ${MAIN_SCHEMA_NAME}.user WHERE rid = :userId LIMIT 1;`,
+      rawQueries.fetchProfileFromUser(),
       {
         replacements: { userId },
         type: QueryTypes.SELECT,
@@ -3948,14 +3845,7 @@ class SchemaService {
 
     const [profileFields, userFields] = await Promise.all([
       mainDbSequelize.query(
-        `
-      SELECT pf.field_desc, pf.field_name, pfa.read, pfa.edit
-      FROM ${MAIN_SCHEMA_NAME}.profile_fields_access pfa
-      JOIN ${MAIN_SCHEMA_NAME}.permission_fields pf ON pfa.permission_field_id = pf.rid
-      JOIN ${MAIN_SCHEMA_NAME}.module_permission mp ON pf.module_permission_id = mp.rid
-      WHERE mp.permission_name = :permissionName
-        AND pfa.profile_id = :profileId
-      `,
+        rawQueries.getProfileFieldsAccessQuery(),
         {
           replacements: {
             permissionName: permission_name,
@@ -3965,14 +3855,7 @@ class SchemaService {
         }
       ),
       mainDbSequelize.query(
-        `
-      SELECT pf.field_desc, pf.field_name, ufa.read, ufa.edit
-      FROM ${MAIN_SCHEMA_NAME}.user_fields_access ufa
-      JOIN ${MAIN_SCHEMA_NAME}.permission_fields pf ON ufa.permission_field_id = pf.rid
-      JOIN ${MAIN_SCHEMA_NAME}.module_permission mp ON pf.module_permission_id = mp.rid
-      WHERE mp.permission_name = :permissionName
-        AND ufa.user_id = :userId
-      `,
+        rawQueries.getUserFieldsAccessQuery(),
         {
           replacements: {
             permissionName: permission_name,
@@ -4042,8 +3925,9 @@ class SchemaService {
     qreAdjustment: number,
     userId: string
   ) {
-    const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
+    const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
     const sequelize = await initOrgSequelize();
+    const mainSequelize = await initMainDbSequelize();
   
     const projectFiscalData: any = await sequelize.query(
       rawQueries.fetchProjectFiscalById(schemaName,projectFiscalId ),
@@ -4091,6 +3975,26 @@ class SchemaService {
         ),
         {
           type: QueryTypes.SELECT,
+        }
+      );
+
+      // update project summary
+      await mainSequelize.query(
+        rawQueries.updateProjectFiscalSummaryQre( 
+          {
+            rd_percent_adjustment: qreAdjustment,
+            rd_percent_final: netQre,
+            qre_final: qreFinalCost,
+            qre_fte: qreFteCost,
+            qre_subcon: qreSubconCost,
+            qre_nonlabor: qreNonlaborCost,
+            modified_by: userId,
+            modified_datetime: new Date(),
+            rid: projectFiscalId
+          }
+        ),
+        {
+          type: QueryTypes.UPDATE,
         }
       );
     }

@@ -3,6 +3,7 @@ dotenv.config();
 import initExpressServer from "./servers/expressServer";
 import { Kafka } from "kafkajs";
 import aiAssessmentController from "./controllers/aiAssessmentController";
+import { logMessage } from "./utils/helpers";
 // import initGraphQLServer from "./servers/graphqlServer";
 
 const PORT = process.env.SERVER_PORT || 3000;
@@ -14,10 +15,10 @@ async function startServer() {
 
     app.listen(PORT, () => {
       // console.log(`Graphql Server ready at: ${graphqlPath}`);
-      console.log(`Server running on port : ${PORT}`);
+      logMessage(`Server running on port : ${PORT}`);
     });
   } catch (err: any) {
-    console.log("Error starting server", err.message);
+    logMessage(`Error starting server: ${err.message}`);
   }
 }
 
@@ -37,18 +38,17 @@ async function startKafkaConsumer() {
     await consumer.run({
       eachMessage: async ({ topic, partition, message }) => {
         try {
-          console.log(
-            `Received message from ${topic}[${partition}] @ offset ${message.offset}:`,
-            message.value?.toString()
+          logMessage(
+            `Received message from ${topic}[${partition}] @ offset ${message.offset}: ${message.value?.toString()}`
           );
           aiAssessmentController.processKafkaMessages(message.value?.toString());
         } catch (err) {
-          console.error("Error processing message:", err);
+          logMessage(`Error processing message: ${err}`);
         }
       },
     });
   } catch (err: any) {
-    console.log("Kafka consumer could not be started:", err.message);
+   logMessage(`Kafka consumer could not be started: ${err.message}`);
   }
 }
 startServer();

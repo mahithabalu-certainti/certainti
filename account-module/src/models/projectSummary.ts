@@ -5,6 +5,7 @@ import { Currency } from "./currencyModel";
 import { Industry } from "./industryModel";
 import { States } from "./stateModel";
 import { ENV_PREFIX, MAIN_SCHEMA_NAME, R_NUMBER_PREFIX } from "../utils/constant";
+import { errorLog } from "../utils/helpers";
 
 interface ProjectSummaryAttributes {
   rid: string;
@@ -358,9 +359,7 @@ export async function setupKeyContactsSequence(
 
     await sequelize.query(`ALTER TABLE "${schemaName}".key_contact_details
           ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.KEY_CONTACT_DETAILS}-' || LPAD(nextval('"${schemaName}".key_contact_seq')::text, 10, '0')`);
-
-    console.log("Key contact sequence setup complete");
   } catch (error) {
-    console.error("Error setting up Key contact sequence:", error);
+    errorLog("Error setting up Key contact sequence:", (error as Error).message);
   }
 }
