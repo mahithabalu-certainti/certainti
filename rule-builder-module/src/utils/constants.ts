@@ -59,7 +59,7 @@ export const STATUS_MESSAGE = {
 export const rawQueries = {
   fetchScopeEvents(scope_type_rid: string, status_rid: string): string {
     let query = `SELECT se.rid , se.event_name, se.description,st.name AS scope_type_name, st.rid as scope_type_rid 
-    FROM scopes st JOIN scope_events se ON se.scope_type_rid = st.rid `;
+    FROM ${MAIN_SCHEMA_NAME}.scopes st JOIN ${MAIN_SCHEMA_NAME}.scope_events se ON se.scope_type_rid = st.rid `;
     const conditions: string[] = [];
     if (scope_type_rid) {
       conditions.push(`se.scope_type_rid = '${scope_type_rid}'`);
@@ -75,7 +75,7 @@ export const rawQueries = {
   },
 
   fetchEventConditions(event_rid: string, status_rid: string): string {
-    let query = `SELECT ec.rid, ec.name as condition_name, ec.description,ec.type as condition_type  FROM event_conditions ec JOIN event_conditions_map ecm 
+    let query = `SELECT ec.rid, ec.name as condition_name, ec.description,ec.type as condition_type  FROM ${MAIN_SCHEMA_NAME}.event_conditions ec JOIN ${MAIN_SCHEMA_NAME}.event_conditions_map ecm 
     ON ec.rid = ecm.condition_rid `;
     const conditions: string[] = [];
     conditions.push(`ecm.event_rid = '${event_rid}'`);
@@ -87,7 +87,7 @@ export const rawQueries = {
   },
 
   fetchConditionCategory(condition_rid: string, status_rid: string): string {
-    let query = `SELECT cc.rid, cc.name as category_name, cc.description FROM condition_category cc JOIN condition_category_map ccm 
+    let query = `SELECT cc.rid, cc.name as category_name, cc.description FROM ${MAIN_SCHEMA_NAME}.condition_category cc JOIN ${MAIN_SCHEMA_NAME}.condition_category_map ccm 
     ON cc.rid = ccm.category_rid `;
     const conditions: string[] = [];
     conditions.push(`ccm.condition_rid = '${condition_rid}'`);
@@ -99,7 +99,7 @@ export const rawQueries = {
   },
 
   fetchOperators(category_rid: string, status_rid: string): string {
-    let query = `SELECT ro.rid, ro.name as name FROM rule_operators ro JOIN operator_category_map ocm 
+    let query = `SELECT ro.rid, ro.name as name FROM ${MAIN_SCHEMA_NAME}.rule_operators ro JOIN ${MAIN_SCHEMA_NAME}.operator_category_map ocm 
     ON ro.rid = ocm.operator_rid `;
     const conditions: string[] = [];
     conditions.push(`ocm.category_rid = '${category_rid}'`);
@@ -111,7 +111,7 @@ export const rawQueries = {
   },
 
   fetchValues(category_rid: string, status_rid: string): string {
-    let query = `SELECT rv.rid, rv.name as name FROM rule_values rv JOIN value_category_map vcm 
+    let query = `SELECT rv.rid, rv.name as name FROM ${MAIN_SCHEMA_NAME}.rule_values rv JOIN ${MAIN_SCHEMA_NAME}.value_category_map vcm 
     ON rv.rid = vcm.value_rid `;
     const conditions: string[] = [];
     conditions.push(`vcm.category_rid = '${category_rid}'`);
@@ -123,7 +123,7 @@ export const rawQueries = {
   },
 
   fetchActionTypes(scope_rid: string, status_rid: string): string {
-    let query = `SELECT sat.rid, sat.name FROM scope_action_types sat JOIN scope_actiontype_map sam 
+    let query = `SELECT sat.rid, sat.name FROM ${MAIN_SCHEMA_NAME}.scope_action_types sat JOIN ${MAIN_SCHEMA_NAME}.scope_actiontype_map sam 
     ON sat.rid = sam.actiontype_rid `;
     const conditions: string[] = [];
     conditions.push(`sam.scope_rid = '${scope_rid}'`);
@@ -135,7 +135,7 @@ export const rawQueries = {
   },
 
   fetchActions(action_type_rid: string, status_rid: string): string {
-    let query = `SELECT sa.rid, sa.name,sa.description,sam.action_type_rid,sat.name as action_type_name FROM scope_actions sa JOIN scope_actions_map sam 
+    let query = `SELECT sa.rid, sa.name,sa.description,sam.action_type_rid,sat.name as action_type_name FROM ${MAIN_SCHEMA_NAME}.scope_actions sa JOIN ${MAIN_SCHEMA_NAME}.scope_actions_map sam 
     ON sa.rid = sam.action_rid JOIN scope_action_types sat ON sat.rid = sam.action_type_rid `;
     const conditions: string[] = [];
     if (action_type_rid) {

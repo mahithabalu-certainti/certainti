@@ -8,6 +8,7 @@ import { actions, ICreateRuleMapWithScope, IListSCopeEvent } from "../utils/type
 import { logMessage } from "../utils/helpers";
 import { RuleMapService } from "../services/workflowRuleMapService";
 import { ScopeService } from "../services/workflowScopeMapService";
+import { RulemasterService } from "./rulemasterService";
 import { ScopeEventRows, EventConditions, ConditionCategory, Operators, Values, actionTypes } from "../utils/types";
 
 /**
@@ -16,12 +17,14 @@ import { ScopeEventRows, EventConditions, ConditionCategory, Operators, Values, 
 export class WorkFlowService {
 
     private logger: Logger;
+    private ruleMasterService: RulemasterService;
     private ruleMapService: RuleMapService;
     private scopeService: ScopeService;
     private mainDbSequelize: Sequelize | null = null;
 
     constructor(logger: Logger) {
         this.logger = logger;
+        this.ruleMasterService = new RulemasterService(this.logger);
         this.ruleMapService = new RuleMapService(this.logger);
         this.scopeService = new ScopeService(this.logger);
     }
@@ -254,37 +257,55 @@ export class WorkFlowService {
         };
     };
 
-    async createRuleMapWithScope(rulemapRequest: ICreateRuleMapWithScope, userId: string): Promise<{
+    async createRuleMapWithScope(ruleRequest: ICreateRuleMapWithScope, userId: string): Promise<{
         statusCode: number;
         message: string;
         errorMessage?: string;
         data?: { ruleMap: any };
     }> {
         console.log("rule map creation");
+
+        const rule = await this.ruleMasterService.createRuleMaster(
+            {
+                rule_rid: "",
+                rule_name: ruleRequest.rule_name,
+                description: ruleRequest.description ?? null,
+                trigger_event: ruleRequest.trigger_event,
+                trigger_type: ruleRequest.trigger_type,
+                is_active: ruleRequest.is_active ?? true,
+                scope_type_rid: ruleRequest.scope_type_rid,
+                schedule_offset_type: ruleRequest.schedule_offset_type ?? null,
+                schedule_offset_value: ruleRequest.schedule_offset_value ?? null,
+                created_by: ruleRequest.created_by,
+                modified_by: ruleRequest.modified_by ?? ruleRequest.created_by, // fallback to created_by if undefined
+            }, userId
+        )
+
+
         const ruleMapResponse = await this.ruleMapService.createRuleMap(
             {
-                rule_rid: rulemapRequest.rule_rid,
-                scope_type_rid: rulemapRequest.scope_type_rid,
-                apply_type: rulemapRequest.apply_type,
-                created_by: rulemapRequest.created_by,
-                modified_by: rulemapRequest.created_by
+                rule_rid: rule.data?.rules.rid,
+                scope_type_rid: ruleRequest.scope_type_rid,
+                apply_type: ruleRequest.apply_type,
+                created_by: ruleRequest.created_by,
+                modified_by: ruleRequest.created_by
             },
             userId
         );
         const createdRuleMap = ruleMapResponse.data?.ruleMap;
 
-        if (rulemapRequest.apply_type === 2) {
+        if (ruleRequest.apply_type === 2) {
             let createdScopes: any[] = [];
-            for (const entityRid of rulemapRequest.scope_entity_rid) {
+            for (const entityRid of ruleRequest.scope_entity_rid) {
                 const scopeResponse = await this.scopeService.createScope(
                     {
                         scope_rid: "",
-                        rule_rid: rulemapRequest.rule_rid,
-                        scope_entity_type: rulemapRequest.scope_type_rid,
+                        rule_rid: rule.data?.rules.rid,
+                        scope_entity_type: ruleRequest.scope_type_rid,
                         scope_entity_rid: entityRid,
                         is_active: true,
-                        created_by: rulemapRequest.created_by,
-                        modified_by: rulemapRequest.created_by
+                        created_by: ruleRequest.created_by,
+                        modified_by: ruleRequest.created_by
                     },
                     userId
                 );
