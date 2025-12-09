@@ -64,7 +64,8 @@ export class TaskService {
     globalFilters: Record<string, any> = {},
     sortBy: string = 'created_datetime',
     sortOrder: string = 'DESC',
-    fiscalYear: number = 0
+    fiscalYear: number = 0,
+    flag: string = ''
   ): Promise<{
     statusCode: number;
     message: string;
@@ -129,6 +130,24 @@ export class TaskService {
       const { whereClause } = this.buildRawWhereClause(filters, search);
       if (typeof globalFilters === 'string') globalFilters = JSON.parse(globalFilters);
       whereClause[Op.and] = whereClause[Op.and] || [];
+
+      if (flag === 'milestone') {
+        const taskTypeRid = await mainSequelize.query(
+          `SELECT rid FROM ${MAIN_SCHEMA_NAME}.task_type WHERE task_type_name = 'Milestone'`,
+          { replacements: {}, type: 'SELECT' }
+        ) as any[];
+        whereClause[Op.and].push({
+          task_type_rid: taskTypeRid[0].rid
+        })
+      } else if (flag === 'activity') {
+        const taskTypeRid = await mainSequelize.query(
+          `SELECT rid FROM ${MAIN_SCHEMA_NAME}.task_type WHERE task_type_name = 'Activity'`,
+          { replacements: {}, type: 'SELECT' }
+        ) as any[];
+        whereClause[Op.and].push({
+          task_type_rid: taskTypeRid[0].rid
+        })
+      }
 
       // Apply global filters (account-level access control)
       if (globalFilters && Object.keys(globalFilters).length > 0) {
@@ -516,7 +535,8 @@ export class TaskService {
     sortBy: string = 'created_datetime',
     sortOrder: string = 'DESC',
     fiscalYear: number = 0,
-    timezone: string = ''
+    timezone: string = '',
+    flag: string = ''
   ): Promise<{
     statusCode: number;
     message: string;
@@ -624,6 +644,24 @@ export class TaskService {
       if (fiscalYear !== 0) {
         whereClause[Op.and] = whereClause[Op.and] || [];
         whereClause[Op.and].push({ fiscal_year: fiscalYear });
+      }
+
+      if (flag === 'milestone') {
+        const taskTypeRid = await mainSequelize.query(
+          `SELECT rid FROM ${MAIN_SCHEMA_NAME}.task_type WHERE task_type_name = 'Milestone'`,
+          { replacements: {}, type: 'SELECT' }
+        ) as any[];
+        whereClause[Op.and].push({
+          task_type_rid: taskTypeRid[0].rid
+        })
+      } else if (flag === 'activity') {
+        const taskTypeRid = await mainSequelize.query(
+          `SELECT rid FROM ${MAIN_SCHEMA_NAME}.task_type WHERE task_type_name = 'Activity'`,
+          { replacements: {}, type: 'SELECT' }
+        ) as any[];
+        whereClause[Op.and].push({
+          task_type_rid: taskTypeRid[0].rid
+        })
       }
 
       const tasksRaw = await TaskSummaryModel.findAll({ where: whereClause });
@@ -951,8 +989,10 @@ export class TaskService {
         }
       });
 
+      const permissionName = flag === "milestone" ? "cases_workbreakdown_export" : "activity_task_export";
+
       // Apply field-level access control for export
-      const allowedFieldsForExport = await this.schemaService.getAllowedExportFields(userId, "cases_workbreakdown_view_edit");
+      const allowedFieldsForExport = await this.schemaService.getAllowedExportFields(userId, permissionName);
       const allowedFieldSet = new Set<string>();
       for (const field of allowedFieldsForExport) {
         if (field.read) {
@@ -1275,52 +1315,25 @@ export class TaskService {
     statusMessage: string,
     data: any
   }> {
-    if (data.attachment_level === 'project') {
-      const response = await this.projectTaskService.getProjectTaskById(data.account_rid, data.task_rid);
-      if (response.statusCode !== HttpStatus.SUCCESS) {
-        return {
-          statusCode: response.statusCode,
-          statusMessage: response.message,
-          data: {}
-        }
-      }
+    const task_type = data.task_type_name === 'Action' ? 'activity' : 'milestone';
+    const response = await this.fetchTaskCardDetailsList(data.account_rid, data.task_rid, task_type, data.attach_to);
+    if (response.statusCode !== HttpStatus.SUCCESS) {
       return {
-        statusCode: HttpStatus.SUCCESS,
-        statusMessage: HttpStatus.SUCCESS_MESSAGE,
-        data: response.data
-      }
-    }
-    else if (data.attachment_level === 'case' || data.attachment_level === 'account') {
-      const task_type = data.attachment_level === 'account' ? 'activity' : undefined;
-      const response = await this.fetchTaskCardDetailsList(data.account_rid, data.task_rid, task_type, data.attach_to);
-      if (response.statusCode !== HttpStatus.SUCCESS) {
-        return {
-          statusCode: response.statusCode,
-          statusMessage: "Task details fetch failed",
-          data: {}
-        }
-      }
-      return {
-        statusCode: HttpStatus.SUCCESS,
-        statusMessage: HttpStatus.SUCCESS_MESSAGE,
-        data: response.data
-      }
-    }
-    else {
-      return {
-        statusCode: HttpStatus.FAILED,
-        statusMessage: HttpStatus.FAILED_MESSAGE,
+        statusCode: response.statusCode,
+        statusMessage: "Task details fetch failed",
         data: {}
       }
     }
-
+    return {
+      statusCode: HttpStatus.SUCCESS,
+      statusMessage: HttpStatus.SUCCESS_MESSAGE,
+      data: response.data
+    }
   }
 
   async fetchTaskCardDetailsList(account_rid: any, task_rid: any, task_type: any, case_rid?: any,) {
     const mainDb = await this.fetchMainDb();
     const orgDb = await this.fetchOrgDb();
-
-    // const data : any = {}
 
     const parentNumber: any = await mainDb.query(await rawQueries.fetchParentAccount(account_rid, mainDb));
     let schemaName = rawQueries.fetchSchemaName(parentNumber[0][0].r_number);

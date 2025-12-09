@@ -2984,6 +2984,7 @@ const listTaskSummarySchema = Joi.object({
     globalFilters: Joi.string().default("{}").optional(),
     sortBy: Joi.string().default("created_datetime").optional(),
     sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
+    flag: Joi.string().valid("milestone", "activity").required(),
 })
 
 const exportListTaskSummarySchema = Joi.object({
@@ -3013,6 +3014,7 @@ const exportListTaskSummarySchema = Joi.object({
     globalFilters: Joi.string().default("{}").optional(),
     sortBy: Joi.string().default("created_datetime").optional(),
     sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
+    flag: Joi.string().valid("milestone", "activity").required(),
 })
 
 const listTaskByIdSchema = Joi.object({
