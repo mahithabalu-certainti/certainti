@@ -5598,7 +5598,8 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
           effective_start_datetime: data.effective_start_datetime,
           effective_end_datetime: data.effective_end_datetime,
           created_by: data.created_by || "",
-          created_datetime: new Date()
+          created_datetime: new Date(),
+          task_type_rid: data.task_type_rid || "",
         }
       );
       if(data?.checklist_template_rid) 

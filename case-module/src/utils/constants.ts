@@ -1437,6 +1437,9 @@ export const rawQueries = {
   getSpecificTaskType() {
     return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.task_type WHERE task_type_name ILIKE '%Milestone%'`
   },
+  getActivityTaskType() {
+    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.task_type WHERE task_type_name ILIKE '%Action%'`
+  },
   getStatusDetails(rid: string) {
     return `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status WHERE rid = '${rid}'`
   },
