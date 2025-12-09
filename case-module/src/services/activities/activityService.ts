@@ -127,6 +127,10 @@ export class ActivityService {
 
       if(taskResponse)
       {
+        const [taskTypeResponse]: any[] = await this.mainDbSequelize!.query(
+          rawQueries.getActivityTaskType()
+        );
+        taskRequest.task_type_rid = taskTypeResponse.rid;
         await this.activitySchemaService.addTaskSummary(
           accountNumber,
           taskRequest,

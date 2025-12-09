@@ -46,6 +46,7 @@ import {
   reviewProjectsFieldMappings,
   SCHEMANAME_PREFIX,
   emailCategorties,
+  caseTaskMapping,
 } from "../../utils/constants";
 import { query } from "express";
 import currency from "currency.js";
@@ -2270,7 +2271,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
     async exportTask (data : any, userId : string) {
       const result = await this.taskListForCases(data, true);
       if(result.statusCode === HttpStatus.SUCCESS) {
-        const fields = await this.getAllowedExportFields(userId,"admin_checklist_view_edit");
+        const fields = await this.getAllowedExportFields(userId,"cases_workbreakdown_view_edit");
         const allowedFieldSet = new Set<string>();
         for (const field of fields) {
           if (field.read) {
@@ -2278,13 +2279,20 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
           }
         }
         const finalData = result.data.map((d : any) => {
-          return {
+          let resultMap : { [key: string]: any } = {
             "Task Name" : d.task_name,
-            "Assigned To" : d.assigned_to || "-",
-            "Start Date" : d.effective_start_datetime || "-",
-            "End Date": d.effective_end_datetime || "-",
+            "Assigned To" : d.assigned_to_name || "-",
+            "Start Date" : d.effective_start_datetime ? moment(d.effective_start_datetime).format("YYYY-MMM-DD") : "-",
+            "End Date": d.effective_end_datetime ? moment(d.effective_end_datetime).format("YYYY-MMM-DD") : "-",
             "Status": d.task_status_name || "-",
           }
+          const exportRecord: Record<string, any> = {};
+          caseTaskMapping.forEach((mapping) => {
+            if (allowedFieldSet.has(mapping.permissionField)) {
+              exportRecord[mapping.exportField] = resultMap[mapping.exportField];
+            }
+          });
+          return exportRecord;
         })
         const generateBase64Response = await generateExcelBase64(
               finalData,

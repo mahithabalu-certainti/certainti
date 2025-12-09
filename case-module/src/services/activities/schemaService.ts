@@ -258,6 +258,7 @@ class ActivitySchemaService {
           effective_end_datetime: taskRequest.effective_end_datetime,
           created_by: taskRequest.created_by || "",
           created_datetime: new Date(),
+          task_type_rid: taskRequest.task_type_rid || ""
         }
       ); 
 
