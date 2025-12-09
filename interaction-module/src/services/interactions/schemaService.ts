@@ -1300,6 +1300,9 @@ class InteractionSchemaService {
       let finalData = technicalSummary == null ? [] : technicalSummary.map((d: any) => {
         return {
           rid: d.rid,
+          account_rid : d.account_rid,
+          project_rid : d.project_rid,
+          project_fiscal_rid : d.project_fiscal_rid,
           r_number: d.r_number,
           technical_summary: d.technical_summary,
           version: d.version,
