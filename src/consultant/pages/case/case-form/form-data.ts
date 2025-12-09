@@ -27,7 +27,8 @@ export const CaseFormData = (
     statutory_min: string;
     statutory_max: string;
   },
-  caseNamePrefix?: string
+  caseNamePrefix?: string,
+  selectedFiscalYear?: string
 ): FormType[] => {
   return useMemo(
     () => [
@@ -176,6 +177,9 @@ export const CaseFormData = (
             required: true,
             onChange: true,
             allowFutureDates: true,
+            customDateOpen: selectedFiscalYear
+              ? new Date(`${Number(selectedFiscalYear) - 1}-04-01`)
+              : undefined,
             disabled:
               isEditView &&
               !permissionMap?.['start_date']?.edit &&
@@ -192,6 +196,9 @@ export const CaseFormData = (
               required: true,
               onChange: true,
               allowFutureDates: true,
+              customDateOpen: selectedFiscalYear
+                ? new Date(`${selectedFiscalYear}-04-01`)
+                : undefined,
               minDate: dateConstraints?.planned_min
                 ? new Date(dateConstraints.planned_min)
                 : undefined,
@@ -215,6 +222,9 @@ export const CaseFormData = (
               required: true,
               onChange: true,
               allowFutureDates: true,
+              customDateOpen: selectedFiscalYear
+                ? new Date(`${selectedFiscalYear}-04-01`)
+                : undefined,
               minDate: dateConstraints?.statutory_min
                 ? new Date(dateConstraints.statutory_min)
                 : undefined,
@@ -318,6 +328,7 @@ export const CaseFormData = (
       countryOptions,
       dateConstraints,
       caseNamePrefix,
+      selectedFiscalYear,
     ]
   );
 };

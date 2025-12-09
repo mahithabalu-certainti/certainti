@@ -15,7 +15,7 @@ interface DisplayColumn {
 }
 
 export const transformCaseData = (cases: CaseDetails): DisplayColumn[] => {
-  const currencySymbol = cases?.currency_code;
+  const currencySymbol = cases?.currency_symbol || '$';
 
   return [
     {
