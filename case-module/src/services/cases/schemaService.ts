@@ -3891,6 +3891,9 @@ return !response;
       if(!this.mainDbSequelize) {
         this.mainDbSequelize = await initMainDbSequelize()
       }
+      if(!this.orgDbSequelize) {
+        this.orgDbSequelize = await initOrgSequelize()
+      }
       const { CaseTeam } = await this.caseModelService.getModels(accountNumber);
       let whereConditions;
 
@@ -3911,9 +3914,23 @@ return !response;
         order: [["effective_startdate", "ASC"]],
         raw : true
       };
-      const caseTeamMembers = await CaseTeam.findAll(queryOptions);
+      let caseTeamMembers = await CaseTeam.findAll(queryOptions);
+      const userIds = [...new Set(caseTeamMembers.map((d : any) => d.user_rid))];
+      if(userIds.length > 0) {
+        let userAssignedCountMap = new Map();
+        let schemaName = rawQueries.fetchSchemaName(accountNumber)
+        let countResult : any = await this.orgDbSequelize.query(rawQueries.getUserAssignedCount(schemaName, userIds, data.case_rid))
+        countResult[0][0].assigned_user_details.forEach((d : any) => {
+          userAssignedCountMap.set(d.user_rid, d.total_task_assigned_count)
+        })
+        caseTeamMembers = caseTeamMembers.map((d : any) => {
+          return {
+            ...d,
+            assigned_task_count : userAssignedCountMap.get(d.user_rid) || 0
+          }
+        })
+      }
       if(isDropdownList) {
-        const userIds = [...new Set(caseTeamMembers.map((d : any) => d.user_rid))];
         if(userIds.length > 0) {
           const getUserDetails = await this.mainDbSequelize.query(rawQueries.getOwnerDetails(userIds));
           const userMap = new Map(getUserDetails[0].map((d : any) => [d.rid, d.name]));

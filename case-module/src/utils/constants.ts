@@ -2019,6 +2019,27 @@ export const rawQueries = {
   },
   getChecklistOpenStatusId () {
     return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.checklist_status WHERE status_name ILIKE '%Done%'`
+  },
+  getUserAssignedCount (schemaName : string, userIds : string[], caseRid : string) {
+    return `
+    SELECT
+      array_agg(jsonb_build_object(
+      'total_task_assigned_count', (
+      SELECT count(*) FROM ${schemaName}.case_task ctt 
+      where 
+      ctt.assigned_to = ct.user_rid
+      AND
+      ctt.case_rid = ct.case_rid
+      AND
+      ctt.case_team_member_role_rid = ct.role_rid
+      ),
+      'user_rid', ct.user_rid
+      )) AS assigned_user_details
+      FROM ${schemaName}.case_team ct
+      WHERE
+      ct.user_rid IN (${userIds.map((d : any) => `'${d}'`).join(',')})
+      AND
+      ct.case_rid = '${caseRid}'`
   }
  };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 
