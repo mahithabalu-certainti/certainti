@@ -14,6 +14,7 @@ import {
     listScopeEventSchema,
     listScopeEventConditionSchema,
     listScopeConditionCategorySchema,
+    listScopeFieldSchema,
     listScopeOperatorSchema,
     listScopeValueSchema,
     listScopeActionTypeSchema,
@@ -194,7 +195,7 @@ async function listFields(req: Request, res: Response): Promise<void> {
     const methodName = "operators list";
     try {
         const userId = req.headers["x-user-id"] as string;
-        const value = await validateRequest(req, listScopeOperatorSchema, res, "POST");
+        const value = await validateRequest(req, listScopeFieldSchema, res, "POST");
         if (!value) {
             return;
         }

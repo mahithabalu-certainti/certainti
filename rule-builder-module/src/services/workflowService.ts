@@ -192,7 +192,7 @@ export class WorkFlowService {
         const mainDb = await this.getMainDb();
         const operators: Operators[] = await mainDb.query<Operators>(
             rawQueries.fetchOperators(
-                listRequest.category_rid,
+                listRequest.field_rid,
                 listRequest.status_rid
             ),
             { type: QueryTypes.SELECT }
@@ -218,7 +218,7 @@ export class WorkFlowService {
         const mainDb = await this.getMainDb();
         const values: Values[] = await mainDb.query<Values>(
             rawQueries.fetchValues(
-                listRequest.category_rid,
+                listRequest.field_rid,
                 listRequest.status_rid
             ),
             { type: QueryTypes.SELECT }

@@ -5,7 +5,7 @@ export interface ValueCategoryMapAttributes {
     rid: string;
     eid?: string | null;
     value_rid: string;
-    category_rid: string;
+    field_rid: string;
     created_by: string;
     modified_by?: string;
     created_datetime?: Date;
@@ -20,7 +20,7 @@ export class ValueCategoryMap
     implements ValueCategoryMapAttributes {
     public rid!: string;
     public value_rid!: string;
-    public category_rid!: string;
+    public field_rid!: string;
     public created_by!: string;
     public modified_by?: string;
 
@@ -47,7 +47,7 @@ export class ValueCategoryMap
                     allowNull: false,
                 },
 
-                category_rid: {
+                field_rid: {
                     type: DataTypes.STRING,
                     allowNull: false,
                 },

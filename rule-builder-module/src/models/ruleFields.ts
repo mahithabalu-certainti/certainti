@@ -1,26 +1,26 @@
 import { Sequelize, Model, DataTypes, Optional } from "sequelize";
 import { ENV_PREFIX, MAIN_SCHEMA_NAME } from "../utils/constants";
 
-export interface OperatorCategoryMapAttributes {
+export interface RuleFieldAttributes {
     rid: string;
     eid?: string | null;
-    operator_rid: string;
-    field_rid: string;
+    name: string;
+    status_rid: string;
     created_by: string;
     modified_by?: string;
     created_datetime?: Date;
     modified_datetime?: Date;
 }
 
-export interface OperatorCategoryMapCreationAttributes
-    extends Optional<OperatorCategoryMapAttributes, "rid"> { }
+export interface RuleFieldCreationAttributes
+    extends Optional<RuleFieldAttributes, "rid"> { }
 
-export class OperatorCategoryMap
-    extends Model<OperatorCategoryMapAttributes, OperatorCategoryMapCreationAttributes>
-    implements OperatorCategoryMapAttributes {
+export class RuleField
+    extends Model<RuleFieldAttributes, RuleFieldCreationAttributes>
+    implements RuleFieldAttributes {
     public rid!: string;
-    public operator_rid!: string;
-    public field_rid!: string;
+    public name!: string;
+    public status_rid!: string;
     public created_by!: string;
     public modified_by?: string;
 
@@ -28,7 +28,7 @@ export class OperatorCategoryMap
     public readonly modified_datetime!: Date;
 
     static initialize(sequelize: Sequelize) {
-        OperatorCategoryMap.init(
+        RuleField.init(
             {
                 rid: {
                     type: DataTypes.STRING(50),
@@ -42,12 +42,12 @@ export class OperatorCategoryMap
                     allowNull: true,
                 },
 
-                operator_rid: {
+                name: {
                     type: DataTypes.STRING,
                     allowNull: false,
                 },
 
-                field_rid: {
+                status_rid: {
                     type: DataTypes.STRING,
                     allowNull: false,
                 },
@@ -76,13 +76,13 @@ export class OperatorCategoryMap
             },
             {
                 sequelize,
-                modelName: "OperatorCategoryMap",
-                tableName: "operator_category_map",
+                modelName: "RuleField",
+                tableName: "rule_fields",
                 schema: MAIN_SCHEMA_NAME,
                 timestamps: false, // using custom timestamp columns
             }
         );
 
-        return OperatorCategoryMap;
+        return RuleField;
     }
 }

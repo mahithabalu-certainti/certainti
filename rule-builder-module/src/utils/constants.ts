@@ -110,11 +110,11 @@ export const rawQueries = {
     return query;
   },
 
-  fetchOperators(category_rid: string, status_rid: string): string {
+  fetchOperators(field_rid: string, status_rid: string): string {
     let query = `SELECT ro.rid, ro.name as name FROM ${MAIN_SCHEMA_NAME}.rule_operators ro JOIN ${MAIN_SCHEMA_NAME}.operator_category_map ocm 
     ON ro.rid = ocm.operator_rid `;
     const conditions: string[] = [];
-    conditions.push(`ocm.category_rid = '${category_rid}'`);
+    conditions.push(`ocm.field_rid = '${field_rid}'`);
     if (status_rid) {
       conditions.push(`ro.status_rid = '${status_rid}'`);
     }
@@ -122,11 +122,11 @@ export const rawQueries = {
     return query;
   },
 
-  fetchValues(category_rid: string, status_rid: string): string {
+  fetchValues(field_rid: string, status_rid: string): string {
     let query = `SELECT rv.rid, rv.name as name FROM ${MAIN_SCHEMA_NAME}.rule_values rv JOIN ${MAIN_SCHEMA_NAME}.value_category_map vcm 
     ON rv.rid = vcm.value_rid `;
     const conditions: string[] = [];
-    conditions.push(`vcm.category_rid = '${category_rid}'`);
+    conditions.push(`vcm.field_rid = '${field_rid}'`);
     if (status_rid) {
       conditions.push(`rv.status_rid = '${status_rid}'`);
     }
