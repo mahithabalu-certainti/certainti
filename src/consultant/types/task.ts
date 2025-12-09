@@ -24,6 +24,8 @@ export type TaskList = {
   assigned_to_name: string;
   account_status_rid: string;
   account_status_name: string;
+  case_rid?: string;
+  project_rid?: string;
 };
 
 export interface GlobalFilters {

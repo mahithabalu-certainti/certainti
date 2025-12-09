@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { Suspense, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   AccountSettingsIcon,
   ActionIcon,
@@ -10,6 +11,7 @@ import {
 import { ActionsDropdown } from '../../../../components';
 import { TasksListURLParams } from '../../../types/task';
 import { TaskTable } from './table/task-table';
+import SectionHeaderTab from '../../../../components/side-menu-panel/section-header-tab';
 import Filter from '../../account-details-sidebar/components/filter/filter';
 import {
   AllModules,
@@ -37,6 +39,7 @@ export const Tasks: React.FC = () => {
   const [totalCount, setTotalCount] = useState<number>(0);
   const [refreshTrigger, setRefreshTrigger] = useState(Date.now());
   const [searchText, setSearchText] = useState<string>('');
+  const [searchKey, setSearchKey] = useState<number>(0);
   const [tableParams, setTableParams] = useState<TasksListURLParams>({
     page: page,
     limit: 100,
@@ -205,6 +208,23 @@ export const Tasks: React.FC = () => {
 
   if (!attachmentEnable || !isAttachmentViewEnable) return <AccessRestricted />;
 
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab') || 'milestone';
+
+  const handleTabChange = (value: string) => {
+    setSearchText('');
+    setSearchKey((prev) => prev + 1);
+    setPage(1);
+    setTableParams((prev) => ({
+      ...prev,
+      page: 1,
+      search: undefined,
+    }));
+    setAppliedFilters({});
+    searchParams.set('tab', value);
+    setSearchParams(searchParams, { replace: true });
+  };
+
   return (
     <div className='flex flex-col w-full  h-full'>
       <div className='flex items-center justify-between w-full h-[55px] min-h-[55px] max-h-[55px] border-b border-[#CBD6E2] px-4'>
@@ -241,6 +261,7 @@ export const Tasks: React.FC = () => {
       <div className='flex items-center justify-end h-[34px] min-h-[34px] px-4'>
         <div className='flex gap-1 relative'>
           <SearchBar
+            key={searchKey}
             initialSearchText={searchText}
             onSearch={(value) => {
               setSearchText(value);
@@ -284,7 +305,7 @@ export const Tasks: React.FC = () => {
             <NewFilterIcon alt='filter-icon' />
             Filter
             {(appliedFilters && Object.keys(appliedFilters).length > 0) ||
-            sortFilterCount > 0 ? (
+              sortFilterCount > 0 ? (
               <div className='absolute -top-[5px] -right-2 w-4 h-4 flex items-center justify-center text-xs'>
                 <span className='absolute w-full h-full bg-[#FF6666] rounded-full animate-ping opacity-75 z-0'></span>
                 <span className='w-4 h-4 bg-[#FF6666] text-white rounded-full flex items-center justify-center z-10 font-semibold'>
@@ -317,19 +338,48 @@ export const Tasks: React.FC = () => {
         </div>
       </div>
 
-      <div className='border border-[#CBD6E2]'>
-        <TaskTable
-          appliedFilters={appliedFilters}
-          tableParams={tableParams}
-          setTableParams={setTableParams}
-          setTotalCount={setTotalCount}
-          refreshTrigger={refreshTrigger}
-          fieldOptions={fieldOptions}
-          setCurrentCategory={setCurrentCategory}
-          setColumnAnchorEl={setColumnAnchorEl}
-          columnAnchorEl={columnAnchorEl}
-          searchValue={searchText}
-        />
+      <SectionHeaderTab
+        tabs={[
+          { label: 'Milestone', value: 'milestone' },
+          { label: 'Activity', value: 'activity' },
+        ]}
+        onTabChange={handleTabChange}
+        defaultValue={tabParam}
+      />
+
+      <div className='border border-[#CBD6E2] border-t-0'>
+        {tabParam === 'milestone' && (
+          <TaskTable
+            appliedFilters={appliedFilters}
+            tableParams={tableParams}
+            setTableParams={setTableParams}
+            setTotalCount={setTotalCount}
+            refreshTrigger={refreshTrigger}
+            fieldOptions={fieldOptions}
+            setCurrentCategory={setCurrentCategory}
+            setColumnAnchorEl={setColumnAnchorEl}
+            columnAnchorEl={columnAnchorEl}
+            searchValue={searchText}
+            fixedFilters={{ attachment_level: 'milestone' }}
+          />
+        )}
+        {tabParam === 'activity' && (
+          <TaskTable
+            appliedFilters={appliedFilters}
+            tableParams={tableParams}
+            setTableParams={setTableParams}
+            setTotalCount={setTotalCount}
+            refreshTrigger={refreshTrigger}
+            fieldOptions={fieldOptions}
+            setCurrentCategory={setCurrentCategory}
+            setColumnAnchorEl={setColumnAnchorEl}
+            columnAnchorEl={columnAnchorEl}
+            searchValue={searchText}
+            fixedFilters={{
+              attachment_level: ['account', 'project', 'case'],
+            }}
+          />
+        )}
       </div>
     </div>
   );

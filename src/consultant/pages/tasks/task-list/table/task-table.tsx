@@ -1,7 +1,6 @@
 import { useSelector } from 'react-redux';
 import { TaskList, TasksListURLParams } from '../../../../types/task';
 import { RootState } from '../../../../../store/store';
-import { useEffect, useState } from 'react';
 import { useAllTasksList } from '../../../../services/tasks/tasks-service';
 import {
   ActionItem,
@@ -16,11 +15,27 @@ import {
   // checkPermission,
   reshapeGlobalFilter,
 } from '../../../../../common-utils';
-import { AccountList, FilterState } from '../../../../types';
+import { FilterState } from '../../../../types';
 // import { useToast } from '../../../../../hooks';
 // import { AllPermissions } from '../../../../../common-service';
 import { getTaskTableColumns } from './columns';
 import { EditIcon } from '../../../../../assets';
+import TaskDetailModal from '../../../../../components/kanban-board/task-detail-modal';
+import {
+  useGetTaskPriorities,
+  useGetTaskStatuses,
+} from '../../../../services/work-breakdown/work-breakdown-service';
+import {
+  useGetRoleOptions,
+  useGetTagOptions,
+  useGetCaseTeamMembersDropdown,
+} from '../../../../services/case-team/case-team-service';
+import { useGetTaskCheckListTypes } from '../../../../../admin/service/task-template/task-template-service';
+import { useQueryClient } from '@tanstack/react-query';
+import { useMemo, useCallback, useEffect, useState } from 'react';
+import { transformPriorityData, transformStatusData, transformTagData } from '../../../case/case-details/work-breakdown/helper';
+import { AllPermissions } from '../../../../../common-service';
+import { getPermissionMap } from '../../../activities/activities-list/helper';
 
 interface ITaskTableProps {
   appliedFilters: Record<string, string | number | boolean>;
@@ -35,6 +50,7 @@ interface ITaskTableProps {
     React.SetStateAction<HTMLButtonElement | null>
   >;
   searchValue?: string;
+  fixedFilters?: Record<string, any>;
 }
 
 export const TaskTable: React.FC<ITaskTableProps> = ({
@@ -46,6 +62,7 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
   setColumnAnchorEl,
   columnAnchorEl,
   searchValue,
+  fixedFilters,
 }) => {
   // const { errorToast } = useToast();
   const { fiscalYear, filters } = useSelector<
@@ -53,13 +70,173 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
     { filters: unknown; fiscalYear: string }
   >((state: RootState) => state.account);
   const [taskList, setTaskList] = useState<TaskList[]>([]);
-  // const { permission } = useSelector((state: RootState) => state.permission);
+  const [selectedTask, setSelectedTask] = useState<TaskList | null>(null);
+  const queryClient = useQueryClient();
+
+  // Hooks for Milestone (Case Task) details
+  const isMilestone = selectedTask?.attachment_level === 'milestone';
+  const caseId = selectedTask?.case_rid || '';
+  const accountId = selectedTask?.account_rid || '';
+
+  const prioritiesQuery = useGetTaskPriorities();
+  const statusesQuery = useGetTaskStatuses();
+  const checklistQuery = useGetTaskCheckListTypes();
+  const roleOptionsQuery = useGetRoleOptions();
+
+  const caseTeamMembersQuery = useGetCaseTeamMembersDropdown(
+    accountId,
+    caseId,
+    !!accountId && !!caseId && isMilestone
+  );
+
+  const tagOptionsQuery = useGetTagOptions(
+    {
+      task_rid: selectedTask?.task_rid || '',
+      account_rid: accountId,
+      case_rid: caseId,
+      action: 'update',
+    },
+    !!selectedTask && isMilestone
+  );
+
+  // Transform data
+  const priorityData = useMemo(
+    () => transformPriorityData(prioritiesQuery.data || []),
+    [prioritiesQuery.data]
+  );
+
+  const statusData = useMemo(
+    () => transformStatusData(statusesQuery.data || []),
+    [statusesQuery.data]
+  );
+
+  const tagData = useMemo(
+    () => transformTagData(tagOptionsQuery.data || []),
+    [tagOptionsQuery.data]
+  );
+
+  const checklistData = useMemo(() => {
+    if (checklistQuery.data?.data && Array.isArray(checklistQuery.data.data)) {
+      return checklistQuery.data.data.map(
+        (checklist: { rid: string; checklist_name: string }) => ({
+          id: checklist.rid,
+          name: checklist.checklist_name,
+        })
+      );
+    }
+    return [];
+  }, [checklistQuery.data]);
+
+  const userData = useMemo(() => {
+    if (caseTeamMembersQuery.data && Array.isArray(caseTeamMembersQuery.data)) {
+      return caseTeamMembersQuery.data.map((member) => ({
+        rid: member.user_rid,
+        name: member.user_name,
+      }));
+    }
+    return [];
+  }, [caseTeamMembersQuery.data]);
+
+  const handleTaskUpdate = () => {
+    queryClient.invalidateQueries({ queryKey: ['allTasksList'] });
+  };
+
+  const { permission } = useSelector((state: RootState) => state.permission);
   const newFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
+
+  // Permission Map for Activity Tasks
+  const taskPermissionMap = useMemo(
+    () => getPermissionMap(permission, AllPermissions.ACTIVITY_TASK_VIEW_EDIT),
+    [permission]
+  );
+
+  const fieldHiddenMap = useMemo(() => {
+    if (!selectedTask) return {};
+    const entityLevel = selectedTask.attachment_level?.toLowerCase();
+    const isActivity = ['account', 'project', 'case'].includes(entityLevel);
+
+    if (isActivity) {
+      return {
+        taskName:
+          !taskPermissionMap['task_name']?.read &&
+          !taskPermissionMap['task_name']?.edit,
+        status:
+          !taskPermissionMap['status_rid']?.read &&
+          !taskPermissionMap['status_rid']?.edit,
+        priority:
+          !taskPermissionMap['priority_rid']?.read &&
+          !taskPermissionMap['priority_rid']?.edit,
+        assignee:
+          !taskPermissionMap['assigned_to']?.read &&
+          !taskPermissionMap['assigned_to']?.edit,
+        startDate:
+          !taskPermissionMap['effective_start_datetime']?.read &&
+          !taskPermissionMap['effective_start_datetime']?.edit,
+        endDate:
+          !taskPermissionMap['effective_end_datetime']?.read &&
+          !taskPermissionMap['effective_end_datetime']?.edit,
+        description:
+          !taskPermissionMap['description']?.read &&
+          !taskPermissionMap['description']?.edit,
+        checklistTemplate:
+          !taskPermissionMap['checklists']?.read &&
+          !taskPermissionMap['checklists']?.edit,
+        checklist:
+          !taskPermissionMap['checklists']?.read &&
+          !taskPermissionMap['checklists']?.edit,
+        tags: !taskPermissionMap['tags']?.read && !taskPermissionMap['tags']?.edit,
+        weightage: true,
+        category: true,
+        linkedType: true,
+        linkTaskType: true,
+        attachments:
+          !taskPermissionMap['attachments']?.read &&
+          !taskPermissionMap['attachments']?.edit,
+        comments:
+          !taskPermissionMap['comments']?.read &&
+          !taskPermissionMap['comments']?.edit,
+        collaborators:
+          !taskPermissionMap['collaborators']?.read &&
+          !taskPermissionMap['collaborators']?.edit,
+        fiscalYear:
+          entityLevel !== 'account' ||
+          (!taskPermissionMap['fiscal_year']?.read &&
+            !taskPermissionMap['fiscal_year']?.edit),
+      };
+    }
+    return {};
+  }, [selectedTask, taskPermissionMap]);
+
+  const fieldDisabledMap = useMemo(() => {
+    if (!selectedTask) return {};
+    const entityLevel = selectedTask.attachment_level?.toLowerCase();
+    const isActivity = ['account', 'project', 'case'].includes(entityLevel);
+
+    if (isActivity) {
+      return {
+        taskName: !taskPermissionMap['task_name']?.edit,
+        status: !taskPermissionMap['status_rid']?.edit,
+        priority: !taskPermissionMap['priority_rid']?.edit,
+        assignee: !taskPermissionMap['assigned_to']?.edit,
+        startDate: !taskPermissionMap['effective_start_datetime']?.edit,
+        endDate: !taskPermissionMap['effective_end_datetime']?.edit,
+        description: !taskPermissionMap['description']?.edit,
+        checklistTemplate: !taskPermissionMap['checklists']?.edit,
+        checklist: !taskPermissionMap['checklists']?.edit,
+        tags: !taskPermissionMap['tags']?.edit,
+        attachments: !taskPermissionMap['attachments']?.edit,
+        comments: !taskPermissionMap['comments']?.edit,
+        collaborators: !taskPermissionMap['collaborators']?.edit,
+        fiscalYear: !taskPermissionMap['fiscal_year']?.edit,
+      };
+    }
+    return {};
+  }, [selectedTask, taskPermissionMap]);
 
   const { data, isLoading, isError } = useAllTasksList(
     {
       ...tableParams,
-      filters: appliedFilters,
+      filters: { ...appliedFilters, ...fixedFilters },
       globalFilters: reshapeGlobalFilter(filters as FilterState),
       search: searchValue,
       fiscalYear: newFiscalYear,
@@ -124,9 +301,16 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
 
   const getRowId = (row: TaskList) => row.task_rid;
 
-  const tasksColumns = getTaskTableColumns((row) => {
+  const handleTaskClick = useCallback((row: TaskList) => {
     console.log('Task clicked:', row);
-  });
+    console.log('Attachment Level:', row.attachment_level);
+    setSelectedTask(row);
+  }, []);
+
+  const tasksColumns = useMemo(
+    () => getTaskTableColumns(handleTaskClick),
+    [handleTaskClick]
+  );
 
   const actionButtons: ActionItem<TaskList>[] = [
     {
@@ -144,6 +328,16 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
   const [visibleColumns, setVisibleColumns] = useState<
     ListTableColumn<TaskList>[]
   >(tasksColumns.filter((col) => !col.hide));
+
+  // Sync visibleColumns with tasksColumns to ensure click handlers are up to date
+  useEffect(() => {
+    setVisibleColumns((prev) => {
+      return tasksColumns.map((col) => {
+        const prevCol = prev.find((p) => p.id === col.id);
+        return prevCol ? { ...col, hide: prevCol.hide } : col;
+      });
+    });
+  }, [tasksColumns]);
 
   const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
     setVisibleColumns(
@@ -208,6 +402,33 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
         sortOrder={tableParams.sortOrder}
         onSort={handleSort}
       />
+      {selectedTask && (
+        <TaskDetailModal
+          taskId={selectedTask.task_rid}
+          isOpen={true}
+          onClose={() => setSelectedTask(null)}
+          accountId={selectedTask.account_rid}
+          caseId={selectedTask.case_rid || ''}
+          onTaskUpdate={handleTaskUpdate}
+          statusData={statusData}
+          priorityData={priorityData}
+          tagData={tagData}
+          availableUsers={userData}
+          roleOptions={roleOptionsQuery.data || []}
+          checklistData={checklistData}
+          taskType={
+            ['account', 'project', 'case'].includes(
+              selectedTask.attachment_level?.toLowerCase()
+            )
+              ? 'activity'
+              : undefined
+          }
+          // For now, we are using the basic modal which should work for viewing/editing
+          // common fields.
+          fieldVisibility={fieldHiddenMap}
+          fieldDisabled={fieldDisabledMap}
+        />
+      )}
     </>
   );
 };

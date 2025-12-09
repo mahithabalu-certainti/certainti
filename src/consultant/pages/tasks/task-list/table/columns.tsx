@@ -25,7 +25,10 @@ export const getTaskTableColumns = (
       render: (row: TaskList) => {
         return (
           <span
-            onClick={() => onClick(row)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onClick(row);
+            }}
             className={`cursor-pointer !text-[#1755E7] !underline !text-[13px] !font-semibold`}
           >
             {row.r_number}
