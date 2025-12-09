@@ -49,7 +49,7 @@ interface SuggestionState {
 
 enum FlagTypeEnum {
   draft = 'Draft',
-  send = 'Send',
+  send = 'Sent',
 }
 
 const icons = Quill.import('ui/icons');

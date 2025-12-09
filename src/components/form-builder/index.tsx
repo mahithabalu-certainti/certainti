@@ -2305,7 +2305,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           }
 
           if (field.type === 'date') {
-            const dateValue = constructFormData[field.name] as string;
             if (
               field.name === 'effective_start_datetime' ||
               field.name === 'effective_end_datetime'
@@ -2316,33 +2315,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               const endDate = constructFormData[
                 'effective_end_datetime'
               ] as string;
-
-              // Future date validation for individual fields
-              if (dateValue) {
-                if (
-                  field.disableFutureDates &&
-                  dayjs(dateValue).isAfter(dayjs(), 'day')
-                ) {
-                  hasError = true;
-                  return {
-                    ...field,
-                    error: `${field.name === 'effective_start_datetime' ? 'Effective Start Date' : 'Effective End Date'} cannot be in the future`,
-                  };
-                }
-
-                const currentDate = dayjs();
-
-                if (
-                  field.name === 'effective_end_datetime' &&
-                  dayjs(dateValue).isAfter(currentDate, 'day')
-                ) {
-                  hasError = true;
-                  return {
-                    ...field,
-                    error: 'Effective End Date cannot be in the future',
-                  };
-                }
-              }
 
               // Relationship validation between start and end dates
               if (!startDate && endDate) {
