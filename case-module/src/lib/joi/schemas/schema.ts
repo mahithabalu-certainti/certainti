@@ -205,6 +205,20 @@ const updateJurisdictionRDConfigSchema = Joi.object({
   ).min(1).required()
 });
 
+const listJurisdictionConfigSchema = Joi.object({
+  page: Joi.string().optional().pattern(/^[0-9]+$/),
+  limit: Joi.string().optional().pattern(/^[0-9]+$/),
+  filters: Joi.string().default("{}"),
+  sortBy: Joi.string().optional(),
+  sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
+});
+
+const exportJurisdictionConfigSchema = Joi.object({
+  filters: Joi.string().default("{}"),
+  sortBy: Joi.string().optional(),
+  sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
+});
+
 
 
 const exportCaseSummarySchema = Joi.object({
@@ -1111,5 +1125,7 @@ export {
   sentReviewProjectSchema,
   getEmailTemplatePreviewSchema,
   jurisdictionRDConfigSchema,
-  updateJurisdictionRDConfigSchema
+  updateJurisdictionRDConfigSchema,
+  listJurisdictionConfigSchema,
+  exportJurisdictionConfigSchema
 };

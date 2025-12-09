@@ -9,10 +9,9 @@ interface JurisdictionConfigAttributes {
   created_datetime?: Date;
   modified_datetime?: Date;
   config_json:JSON
-  effective_start?: Date;
-  effective_end?: Date;
-  country_rid: string;
-  state_rid?: string;
+  effective_start_date?: Date;
+  effective_end_date?: Date;
+  status_rid: string;
   credit_config_group_rid: string;
   
 }
@@ -31,10 +30,9 @@ export class JurisdictionConfig
   public created_datetime?: Date;
   public modified_datetime?: Date;
   public config_json!: JSON;
-  public effective_start!: Date;
-  public effective_end!: Date;
-  public country_rid!: string;
-  public state_rid?: string;
+  public effective_start_date!: Date;
+  public effective_end_date!: Date;
+  public status_rid!: string;
   public credit_config_group_rid!: string;
 
   static initialize(
@@ -64,10 +62,9 @@ export class JurisdictionConfig
         },
         modified_datetime: { type: DataTypes.DATE, allowNull: true },
         config_json: { type: DataTypes.JSONB, allowNull: false },
-        effective_start: { type: DataTypes.DATE, allowNull: false },
-        effective_end: { type: DataTypes.DATE, allowNull: true },
-        country_rid: { type: DataTypes.STRING(50), allowNull: false },
-        state_rid: { type: DataTypes.STRING(50), allowNull: true},
+        effective_start_date: { type: DataTypes.DATE, allowNull: false },
+        effective_end_date: { type: DataTypes.DATE, allowNull: true },
+        status_rid: { type: DataTypes.STRING(50), allowNull: false },
         credit_config_group_rid: { type: DataTypes.STRING(50), allowNull: false }
       },
       {

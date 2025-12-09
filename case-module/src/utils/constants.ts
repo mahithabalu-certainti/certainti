@@ -2130,6 +2130,32 @@ export const filtersColumnsForEmailTemplate: Record<string, string> = {
 
 };
 
+export const filterTypesForJurisdictionConfig: Record<string, any> = {
+  r_number: "string",
+  created_datetime: "datetime",
+  modified_datetime: "datetime",
+  created_user_name: "string",
+  modified_user_name: "string",
+  status_rid: "string",
+  effective_start_date: "date",
+  effective_end_date: "date",
+  createdAt: "datetime",
+};
+
+export const filtersColumnsForJurisdictionConfig: Record<string, string> = {
+  r_number: "r_number",
+  created_datetime: "created_datetime",
+  modified_datetime: "modified_datetime",
+  created_user_name: "created_user_name",
+  modified_user_name: "modified_user_name",
+  status_rid: "status_rid",
+  status_name: "status_name",
+  createdAt: "createdAt",
+  effective_start_date: "effective_start_date",
+  effective_end_date: "effective_end_date"
+
+};
+
 export const validColumnsForSortFilters : Record<string, string> = {
   r_number : "t.r_number",
   task_name : "t.task_name",
