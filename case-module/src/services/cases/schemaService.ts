@@ -5598,7 +5598,8 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
           effective_start_datetime: data.effective_start_datetime,
           effective_end_datetime: data.effective_end_datetime,
           created_by: data.created_by || "",
-          created_datetime: new Date()
+          created_datetime: new Date(),
+          task_type_rid: data.task_type_rid || "",
         }
       );
       if(data?.checklist_template_rid) 
@@ -6397,6 +6398,15 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         event_datetime : new Date(),
         description : `Task Comments : ${createComments.comments}`
       }) 
+      await CaseHistory.create({
+        created_by : data.created_by,
+        created_datetime : new Date(),
+        case_rid : data.case_rid,
+        task_rid : data.task_rid,
+        attribute_name : "Comments",
+        old_value : "CREATE",
+        new_value : 'added a comment'
+      })
     }
     else
     {
@@ -6446,8 +6456,8 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         case_rid : data.case_rid,
         task_rid : data.task_rid,
         attribute_name : "Comments",
-        old_value : isCommentExists.comments,
-        new_value : data.comments
+        old_value : "CREATE",
+        new_value : 'updated a comment'
       })
     }
         const checkIsDifferentCollaborator = await this.isNewCollaborator(data.modified_by, accountNumber, data.task_type || 'case_task', data.case_rid, data.task_rid);
@@ -6963,7 +6973,8 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
               created_datetime : new Date(),
               case_rid : data.case_rid,
               attribute_name : "task_attachments",
-              new_value : uploadFile.url,
+              old_value : "CREATE",
+              new_value : "added an attachment",
               task_rid : data.task_rid
             })
             }
@@ -7026,6 +7037,15 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
           event_status : "success",
           event_datetime : new Date(),
           description : `Task Attachments Deleted : ${checkIsFileExists.document_name}`
+        })
+        await CaseHistory.create({
+          created_by : userId,
+          created_datetime : new Date(),
+          case_rid : data.case_rid,
+          attribute_name : "task_attachments",
+          old_value : "CREATE",
+          new_value : "deleted an attachment",
+          task_rid : data.task_rid
         })
         }
         else

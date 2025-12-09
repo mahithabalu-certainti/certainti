@@ -718,10 +718,15 @@ async function exportAllActivity(req: Request, res: Response): Promise<void> {
     const isValidTZ = value.timezone && isValidTimezone(value.timezone);
     const formatDate = (date?: Date) => {
       if (!date) return null;
-
       return moment(date)
         .tz(isValidTZ ? value.timezone : "UTC")
         .format("YYYY-MMM-DD, hh:mm:ss A");
+    };
+
+    // Helper for just date
+    const formatDateOnly = (date?: Date) => {
+      if (!date) return null;
+      return moment(date).format("YYYY-MMM-DD");
     };
     if (checklists.statusCode === HttpStatus.SUCCESS) {
       const finalStructuredData =
@@ -739,8 +744,14 @@ async function exportAllActivity(req: Request, res: Response): Promise<void> {
                 created_by: d.created_by_name,
                 description: d.description,
                 created_datetime: formatDate(d.created_datetime),
-                effective_start_datetime: formatDate(d.effective_start_datetime),
-                effective_end_datetime: formatDate(d.effective_end_datetime),
+                effective_start_datetime:
+                  value.activityType && value.activityType.toLowerCase() === "task"
+                    ? formatDateOnly(d.effective_start_datetime)
+                    : formatDate(d.effective_start_datetime),
+                effective_end_datetime:
+                  value.activityType && value.activityType.toLowerCase() === "task"
+                    ? formatDateOnly(d.effective_end_datetime)
+                    : formatDate(d.effective_end_datetime),
                 activity_type: d.activity_type,
                 created_by_name: d.created_by_name,
                 call_platform: d.call_platform,

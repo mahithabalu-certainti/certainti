@@ -601,6 +601,34 @@ export const taskTemplateFieldMappings = [
   }
 ];
 
+export const caseTaskMapping = [
+  {
+    permissionField: "task_name",
+    exportField: "Task Name",
+    dataField: "task_name",
+  },
+  {
+    permissionField: "assigned_to",
+    exportField: "Assigned To",
+    dataField: "assigned_to_name",
+  },
+  {
+    permissionField: "effective_start_datetime",
+    exportField: "Start Date",
+    dataField: "effective_start_datetime",
+  },
+  {
+    permissionField: "effective_end_datetime",
+    exportField: "End Date",
+    dataField: "effective_end_datetime",
+  },
+  {
+    permissionField: "status_rid",
+    exportField: "Status",
+    dataField: "task_status_name",
+  }
+]
+
 
 export const activityFieldMappings = [
   {
@@ -1436,6 +1464,9 @@ export const rawQueries = {
   },
   getSpecificTaskType() {
     return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.task_type WHERE task_type_name ILIKE '%Milestone%'`
+  },
+  getActivityTaskType() {
+    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.task_type WHERE task_type_name ILIKE '%Action%'`
   },
   getStatusDetails(rid: string) {
     return `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status WHERE rid = '${rid}'`

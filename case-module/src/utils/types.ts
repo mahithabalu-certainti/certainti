@@ -806,7 +806,8 @@ export interface IActivityTask {
   remainder_interval?: number;
   account_rid?: string; 
   checklist_rid?: string;
-  tags : tagTypes[]
+  tags : tagTypes[],
+  task_type_rid?: string;
 }
 
 export interface IActivityEmail {
