@@ -373,12 +373,16 @@ class RDCreditSchemaService {
      */
     async insertRDCreditCalculation(accountNumber: string, case_rid: string, country_code: string, input_params: any, computed_fields: any) {
         const { RdCreditCountryCalculations } = await this.caseModelService.getModels(accountNumber);
-        return await RdCreditCountryCalculations.create({
-            case_rid,
-            country_code,
-            input_params,
-            computed_fields
-        });
+        return await RdCreditCountryCalculations.upsert(
+            {
+                case_rid,
+                country_code,
+                input_params,
+                computed_fields
+            },
+            {
+                returning: true
+            });
     }
 
     /**
@@ -393,13 +397,17 @@ class RDCreditSchemaService {
      */
     async insertRDStateCreditCalculation(accountNumber: string, case_rid: string, country_code: string, region_name: string, input_params: any, computed_fields: any) {
         const { RdCreditStateCalculations } = await this.caseModelService.getModels(accountNumber);
-        return await RdCreditStateCalculations.create({
-            case_rid,
-            country_code,
-            input_params,
-            computed_fields,
-            region_name
-        });
+        return await RdCreditStateCalculations.upsert(
+            {
+                case_rid,
+                country_code,
+                input_params,
+                computed_fields,
+                region_name
+            },
+            {
+                returning: true
+            });
     }
 
     /**
@@ -503,7 +511,7 @@ class RDCreditSchemaService {
         const { RdCreditProcess } = await this.caseModelService.getModels(accountNumber);
 
         return await RdCreditProcess.update(
-            { status: 'INPROGRESS' },
+            { status: 'IN-PROGRESS' },
             { where: { rid } }
         );
     }

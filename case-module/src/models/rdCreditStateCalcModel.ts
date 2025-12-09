@@ -81,6 +81,12 @@ export class RdCreditStateCalculations
                 tableName: "rd_credit_state_calculations",
                 timestamps: false,
                 underscored: true,
+                indexes: [
+                    {
+                        unique: true,
+                        fields: ['case_rid']
+                    }
+                ]
             }
         );
     }

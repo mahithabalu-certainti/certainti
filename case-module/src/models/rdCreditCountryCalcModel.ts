@@ -40,7 +40,7 @@ export class RdCreditCountryCalculations
                 },
                 case_rid: {
                     type: DataTypes.STRING(50),
-                    allowNull: true,
+                    allowNull: false,
                 },
                 country_code: {
                     type: DataTypes.STRING(20),
@@ -75,6 +75,12 @@ export class RdCreditCountryCalculations
                 tableName: "rd_credit_country_calculations",
                 timestamps: false,
                 underscored: true,
+                indexes: [
+                    {
+                        unique: true,
+                        fields: ['case_rid']
+                    }
+                ]
             }
         );
     }
