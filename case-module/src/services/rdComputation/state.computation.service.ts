@@ -68,7 +68,7 @@ export class StateComputationService {
             const processRid = await this.rdCreditSchemaService.markAsInitiated(accountNumber, caseRid);
             // Publish to Kafka
             await kafkaProducerService.publish(accountRid, accountNumber, processRid, caseRid, effectiveStart, effectiveEnd);
-            
+
             return {
                 statusCode: HttpStatus.SUCCESS,
                 message: STATUS_MESSAGE.rdCreditProcessInitiatedSuccess || "RD credit process initiated successfully",
@@ -109,28 +109,16 @@ export class StateComputationService {
             const accountNumber = 'ACC-00001';
             schemaName = 'trd365_00001';
 
-            const currentFiscalYear = this.getCurrentFiscalYear();
-
             const configStateLevel = await this.rdCreditSchemaService.getRDCreditConfigStateLevel("USA", mainDb, effectiveStart, effectiveEnd, "", "State R&D Credit");
-
-            const currentYearQREs = await this.rdCreditSchemaService.getCurrentYearQREs(caseRid, schemaName, orgDb); //current yer QREs
-            logMessage(`CurrentYearQREs: ${JSON.stringify(currentYearQREs)}`);
-
-            const prior3YearsQREs = await this.rdCreditSchemaService.getPrior3YearQREs(accountRid, 3, schemaName, currentFiscalYear, orgDb);// prior 3 years QREs
-            logMessage(`Prior3YearQREs: ${JSON.stringify(prior3YearsQREs)}`);
-
-            const annualGrossReceipts = await this.rdCreditSchemaService.getAnnualGrossReceipts(accountRid, 5, schemaName, orgDb); // current year & prior 4 years gross receipts
-
-            logMessage(`AnnualGrossReceipts: ${JSON.stringify(annualGrossReceipts)}`);
-
-            const stateRDData = await this.getStateRDData(currentYearQREs, prior3YearsQREs, annualGrossReceipts);
 
             for (const config of configStateLevel) {
                 try {
                     const stateComputation = stateCalculators[config.state_code];
                     const extractConfig = this.extractConfigJson(config.config_json);
-
+                    logMessage(`Processing state: ${config.state_code} with config: ${JSON.stringify(extractConfig)}`);
                     if (stateComputation) {
+                        const stateRDData = await this.findStateInputData(accountRid, caseRid, config.region_rid, orgDb, schemaName);
+                        logMessage(`State RD Data for ${config.state_code}: ${JSON.stringify(stateRDData)}`);
                         const result = await stateComputation.compute(extractConfig, stateRDData);
                         await this.rdCreditSchemaService.insertRDStateCreditCalculation(
                             accountNumber, caseRid, "USA", config.state_code,
@@ -157,6 +145,32 @@ export class StateComputationService {
                 errorMessage: STATUS_MESSAGE.jurisdictionFetchedFailed || "Failed to fetch",
             };
         }
+    }
+
+    /**
+     * 
+     * @param accountRid 
+     * @param caseRid 
+     * @param regionRid 
+     * @param orgDb 
+     * @param schemaName 
+     */
+    async findStateInputData(accountRid: string, caseRid: string, regionRid: string, orgDb: Sequelize, schemaName: string) {
+        const currentFiscalYear = this.getCurrentFiscalYear();
+        const jurisdictionColumn = "state_rid";
+
+        const currentYearQREs = await this.rdCreditSchemaService.getCurrentYearQREsForState(caseRid, regionRid, schemaName, orgDb); //current yer QREs
+        logMessage(`CurrentYearQREs: ${JSON.stringify(currentYearQREs)}`);
+
+        const prior3YearsQREs = await this.rdCreditSchemaService.getPrior3YearQREs(accountRid, jurisdictionColumn, regionRid, 3, schemaName, currentFiscalYear, orgDb);// prior 3 years QREs
+        logMessage(`Prior3YearQREs: ${JSON.stringify(prior3YearsQREs)}`);
+
+        const annualGrossReceipts = await this.rdCreditSchemaService.getAnnualGrossReceipts(accountRid, jurisdictionColumn, regionRid, 5, schemaName, orgDb); // current year & prior 4 years gross receipts
+
+        logMessage(`AnnualGrossReceipts: ${JSON.stringify(annualGrossReceipts)}`);
+
+        const stateRDData = await this.getStateRDData(currentYearQREs, prior3YearsQREs, annualGrossReceipts);
+        return stateRDData;
     }
 
     /**

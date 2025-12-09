@@ -133,11 +133,11 @@ async function initiateRDCreditProcess(
  * @param res 
  * @returns 
  */
-async function getRDCreditResultsByCaseAndState(
+async function findRdCreditComputedResults(
   req: Request,
   res: Response
 ): Promise<void> {
-  const methodName = "getRDCreditResultsByCaseAndState";
+  const methodName = "findRdCreditComputedResults";
   try {
     // Step 1: Log request
     logMessage(
@@ -254,7 +254,7 @@ async function findProcessStatusByCaseRid(
 // Export controller
 export default {
   financialRDCreditFederal,
-  getRDCreditResultsByCaseAndState,
+  findRdCreditComputedResults,
   initiateRDCreditProcess,
   findProcessStatusByCaseRid
 };

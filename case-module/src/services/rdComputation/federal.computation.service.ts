@@ -59,13 +59,14 @@ export class FederalComputationService {
             const countryInfo = await this.rdCreditSchemaService.getCountryByAccountRid(accountRid, mainDb);
             logMessage(`Country Info: ${JSON.stringify(countryInfo)}`);
 
-            const currentYearQREs = await this.rdCreditSchemaService.getCurrentYearQREs(caseRid, schemaName, orgDb); //current yer QREs
+            const currentYearQREs = await this.rdCreditSchemaService.getCurrentYearQREsForFederal(caseRid, countryInfo.rid, schemaName, orgDb); //current yer QREs
             logMessage(`CurrentYearQREs: ${JSON.stringify(currentYearQREs)}`);
 
-            const prior3YearsQREs = await this.rdCreditSchemaService.getPrior3YearQREs(accountRid, 3, schemaName, currentFiscalYear, orgDb);// prior 3 years QREs
+            const jurisdictionColumn = "country_rid";
+            const prior3YearsQREs = await this.rdCreditSchemaService.getPrior3YearQREs(accountRid, jurisdictionColumn, countryInfo.rid, 3, schemaName, currentFiscalYear, orgDb);// prior 3 years QREs
 
             logMessage(`Total Prior 3 Years QREs: ${JSON.stringify(prior3YearsQREs)}`);
-            const annualGrossReceipts = await this.rdCreditSchemaService.getAnnualGrossReceipts(accountRid, 4, schemaName, orgDb); // prior 4 years gross receipts
+            const annualGrossReceipts = await this.rdCreditSchemaService.getAnnualGrossReceipts(accountRid, jurisdictionColumn, countryInfo.rid, 4, schemaName, orgDb); // prior 4 years gross receipts
 
             const federalRDData = await this.getFederalRDData(currentYearQREs, prior3YearsQREs, annualGrossReceipts);
 

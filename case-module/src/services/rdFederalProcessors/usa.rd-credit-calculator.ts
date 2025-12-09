@@ -30,7 +30,6 @@ export class RdCreditCalculatorForUSA {
      */
     async compute(config: any, federalRdData: FederalRDData) {
         try {
-            federalRdData = FederalMockDataLoadMap["USA"]!;
             const totalCurrentYearQRE = new Decimal(federalRdData.currentYearQREs.wages || 0).plus(federalRdData.currentYearQREs.supplies || 0).plus(federalRdData.currentYearQREs.contract || 0);
             logMessage(`CurrentYearQREs: ${JSON.stringify(federalRdData.currentYearQREs)}`);
 

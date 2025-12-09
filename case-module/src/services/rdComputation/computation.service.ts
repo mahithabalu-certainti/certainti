@@ -138,7 +138,7 @@ export class ComputationService {
 
             const accountNumber = 'ACC-00001';
             schemaName = 'trd365_00001';
-            const results = await this.rdCreditSchemaService.getRDStateCreditCalculation(accountNumber, caseRid, stateCode);
+            const results = await this.rdCreditSchemaService.findRdCreditResultsByCaseIdAndState(accountNumber, caseRid, stateCode);
 
             return {
                 statusCode: HttpStatus.SUCCESS,
