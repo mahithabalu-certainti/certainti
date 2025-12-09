@@ -11,14 +11,6 @@ const textOptions: { option: string; value: string }[] = [
   // { option: 'Is-Empty', value: 'is_empty' },
 ];
 
-const textOptionsForAssignee: { option: string; value: string }[] = [
-  { option: 'Equals', value: 'equals' },
-  { option: 'Not-Equals', value: 'not_equals' },
-  { option: 'Contains', value: 'contains' },
-  // { option: 'Not-Contains', value: 'not_contains' },
-  { option: 'Is-Empty', value: 'is_empty' },
-];
-
 const dateOptions: { option: string; value: string }[] = [
   { option: 'Equals', value: 'equals' },
   { option: 'Before', value: 'before' },
@@ -42,7 +34,8 @@ export const getAssignUserFilterFields = (): FieldConfig[] => [
 ];
 
 export const getAssignGroupsFilterFields = (
-  statusOptions: { option: string; value: string }[]
+  statusOptions: { option: string; value: string }[],
+  assigneeOptions: { option: string; value: string }[] = []
 ): FieldConfig[] => [
   {
     name: 'Task Name',
@@ -53,8 +46,9 @@ export const getAssignGroupsFilterFields = (
   {
     name: 'Assigned To',
     value: 'assigned_to',
-    type: 'text',
-    operatorOption: textOptionsForAssignee,
+    type: 'enum',
+    options: assigneeOptions,
+    operatorOption: enumOptions,
   },
   {
     name: 'Start Date',

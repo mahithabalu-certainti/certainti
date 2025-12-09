@@ -110,6 +110,7 @@ export const CaseDetails = () => {
   const defaultTab = searchParams.get('list') ?? 'workBreakdown';
   const [activeKey, setActiveKey] = useState(defaultTab as string);
   const [exportType, setExportType] = useState<ExportType>('notes');
+  const [isActionItemsExpanded, setIsActionItemsExpanded] = useState(false);
 
   const [notesParams, setNotesParams] = useState<NotesListExportParams>({
     sortBy: 'r_number',
@@ -233,6 +234,10 @@ export const CaseDetails = () => {
       dispatch(setTemporaryFiscalYear(caseData.fiscal_year.toString()));
     }
   }, [caseData, dispatch]);
+
+  useEffect(() => {
+    setIsActionItemsExpanded(false);
+  }, [activeKey, tabParam]);
 
   const list = searchParams.get('list');
 
@@ -496,6 +501,30 @@ export const CaseDetails = () => {
     []
   );
 
+  const handleToggleActionItems = (
+    value: boolean | ((prevState: boolean) => boolean)
+  ) => {
+    setIsActionItemsExpanded((prev) => {
+      const newState = typeof value === 'function' ? value(prev) : value;
+      if (newState) {
+        setIsCollapsed(true);
+      } else {
+        setIsCollapsed(false);
+      }
+      return newState;
+    });
+  };
+
+  const handleToggleSideMenu = () => {
+    setIsCollapsed((prev) => {
+      const newState = !prev;
+      if (!newState) {
+        setIsActionItemsExpanded(false);
+      }
+      return newState;
+    });
+  };
+
   const renderContent = () => {
     switch (activeKey) {
       case 'workBreakdown':
@@ -507,6 +536,8 @@ export const CaseDetails = () => {
               activityMenuItems={activityMenuItems}
               caseStartDate={caseData?.case_startdate}
               caseEndDate={caseData?.statutory_submission_date}
+              isActionItemsExpanded={isActionItemsExpanded}
+              setIsActionItemsExpanded={handleToggleActionItems}
             />
           </div>
         );
@@ -820,19 +851,29 @@ export const CaseDetails = () => {
           ]}
         />
       </div>
-      <InfoSection
-        columns={caseHeaderDetails}
-        loading={isLoading}
-        loadingRows={4}
-        error={isError}
-        className={!isError ? 'max-h-[140px] min-h-[140px]' : ''}
-      />
+      <div
+        className={`transition-all duration-700 ease-in-out overflow-hidden ${
+          isActionItemsExpanded
+            ? 'max-h-0 opacity-0'
+            : isError
+              ? 'max-h-[60px] opacity-100'
+              : 'max-h-[140px] opacity-100'
+        }`}
+      >
+        <InfoSection
+          columns={caseHeaderDetails}
+          loading={isLoading}
+          loadingRows={3}
+          error={isError}
+          className={!isError ? 'max-h-[140px] min-h-[140px]' : ''}
+        />
+      </div>
       <div className='flex flex-1 flex-row w-full border-b border-[#CBD6E2]'>
         <div
           className={`flex transition-all ease-in-out ${
             isCollapsed
-              ? 'w-[60px] min-w-[60px] max-w-[60px] duration-300'
-              : 'w-[220px] min-w-[220px] max-w-[220px] duration-500'
+              ? 'w-[60px] min-w-[60px] max-w-[60px] duration-700'
+              : 'w-[220px] min-w-[220px] max-w-[220px] duration-700'
           }`}
         >
           <SideMenuPanel
@@ -842,15 +883,17 @@ export const CaseDetails = () => {
             headerTitle='Related List'
             showBackIcon={true}
             isCollapsed={isCollapsed}
-            onToggleCollapse={() => setIsCollapsed((prev) => !prev)}
+            onToggleCollapse={handleToggleSideMenu}
             enableScrollbar={true}
-            maxHeight={292}
+            maxHeight={isActionItemsExpanded ? 150 : 292}
           />
         </div>
         <div
-          className='flex-1'
+          className='flex-1 transition-all duration-500 ease-in-out'
           style={{
-            maxHeight: 'calc(100vh - 283px)',
+            maxHeight: isActionItemsExpanded
+              ? 'calc(100vh - 140px)'
+              : 'calc(100vh - 283px)',
             overflow: 'auto',
           }}
         >

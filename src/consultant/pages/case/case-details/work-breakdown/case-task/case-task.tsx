@@ -206,7 +206,7 @@ const CaseTask: React.FC<CaseTaskProps> = ({
 
   return (
     <>
-      <div className='border-t border-[#CBD6E2] [&_.MuiTableContainer-root::-webkit-scrollbar]:hidden [&_.MuiTableContainer-root]:[-ms-overflow-style:none] [&_.MuiTableContainer-root]:[scrollbar-width:none]'>
+      <div>
         <ManageColumnsPopover
           anchorEl={columnAnchorEl}
           open={isModalOpen}
@@ -223,7 +223,7 @@ const CaseTask: React.FC<CaseTaskProps> = ({
           hoverHighlight={false}
           tableStyle={{
             height: '100%',
-            maxHeight: 'calc(100vh - 330px)',
+            maxHeight: 'calc(100vh - 425px)',
             overflow: 'auto',
           }}
           stickyHeader={true}
@@ -233,7 +233,7 @@ const CaseTask: React.FC<CaseTaskProps> = ({
           loading={isLoading}
           loadingRowCount={4}
           error={isError ? 'Failed to load data' : undefined}
-          rowsPerPageOptions={[5, 25, 50, 100]}
+          rowsPerPageOptions={[25, 50, 100]}
           rowsPerPage={tableParams.limit}
           currentPage={(tableParams.page ?? 1) - 1}
           totalItems={data?.data.total_result || 0}
