@@ -7,6 +7,7 @@ import {
   NotesIcon,
   ProjectsIcon,
   SettingsIcon,
+  TaskTemplateIcon,
   TimeLineIcon,
 } from '../../assets';
 import { MenuOption } from '../../common-service';
@@ -97,7 +98,7 @@ export const accountNavItems: INavItem[] = [
   },
   {
     id: MenuOption.TASKS,
-    icon: AttachmentIcon,
+    icon: TaskTemplateIcon,
     name: 'Tasks',
     link: TASKS,
     type: 'link',

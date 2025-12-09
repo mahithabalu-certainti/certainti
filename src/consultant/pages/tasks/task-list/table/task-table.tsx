@@ -4,6 +4,7 @@ import { RootState } from '../../../../../store/store';
 import { useEffect, useState } from 'react';
 import { useAllTasksList } from '../../../../services/tasks/tasks-service';
 import {
+  ActionItem,
   ListTableColumn,
   ShowHideTableColumn,
 } from '../../../../../components/table/types';
@@ -15,10 +16,11 @@ import {
   // checkPermission,
   reshapeGlobalFilter,
 } from '../../../../../common-utils';
-import { FilterState } from '../../../../types';
+import { AccountList, FilterState } from '../../../../types';
 // import { useToast } from '../../../../../hooks';
 // import { AllPermissions } from '../../../../../common-service';
 import { getTaskTableColumns } from './columns';
+import { EditIcon } from '../../../../../assets';
 
 interface ITaskTableProps {
   appliedFilters: Record<string, string | number | boolean>;
@@ -122,7 +124,22 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
 
   const getRowId = (row: TaskList) => row.task_rid;
 
-  const tasksColumns = getTaskTableColumns();
+  const tasksColumns = getTaskTableColumns((row) => {
+    console.log('Task clicked:', row);
+  });
+
+  const actionButtons: ActionItem<TaskList>[] = [
+    {
+      label: 'Edit',
+      onClick: (row: TaskList) => console.log('Edit clicked:', row),
+      icon: EditIcon,
+      hide: false,
+      iconStyle: {
+        filter:
+          'brightness(0) saturate(100%) invert(25%) sepia(16%) saturate(592%) hue-rotate(164deg) brightness(93%) contrast(91%)',
+      },
+    },
+  ];
 
   const [visibleColumns, setVisibleColumns] = useState<
     ListTableColumn<TaskList>[]
@@ -178,7 +195,7 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
         }
         actionWidth={60}
         actionDisplayMode='dropdown'
-        actionMenuItems={[]}
+        actionMenuItems={actionButtons}
         loading={isLoading}
         error={isError ? 'Failed to load Tasks data' : undefined}
         rowsPerPageOptions={[25, 50, 100]}
