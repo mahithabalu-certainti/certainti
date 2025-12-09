@@ -32,12 +32,6 @@ export const getReviewdProjectColumns = (
       borderRight: '1px solid #CBD6E2 !important',
       borderBottom: '1px solid #CBD6E2 !important',
     },
-    render: (row: ReviewProject) => {
-      const displayCode = row.fiscal_year
-        ? `FY${row.fiscal_year} - ${row.project_code}`
-        : row.project_code;
-      return <span>{displayCode}</span>;
-    },
   },
   {
     id: 'project_name',

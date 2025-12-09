@@ -140,9 +140,9 @@ export const getCaseFilterFields = (
       value: 'case_total_qualified_projects_cost',
       type: 'number',
       operatorOption: numberOptions,
-      // hide:
-      //   !permissionMap?.['case_total_qualified_projects_cost']?.edit &&
-      //   !permissionMap?.['case_total_qualified_projects_cost']?.read,
+      hide:
+        !permissionMap?.['case_total_qualified_project_cost']?.edit &&
+        !permissionMap?.['case_total_qualified_project_cost']?.read,
     },
     {
       name: 'Total QRE',
@@ -161,16 +161,6 @@ export const getCaseFilterFields = (
       hide:
         !permissionMap?.['case_total_rd_cost']?.edit &&
         !permissionMap?.['case_total_rd_cost']?.read,
-    },
-
-    {
-      name: 'No. of Qualified Projects',
-      value: 'case_total_qualified_projects',
-      type: 'number',
-      operatorOption: numberOptions,
-      hide:
-        !permissionMap?.['case_total_qualified_projects']?.edit &&
-        !permissionMap?.['case_total_qualified_projects']?.read,
     },
     {
       name: 'Created On',

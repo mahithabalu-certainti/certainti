@@ -19,6 +19,7 @@ import {
   InteractionListExportParams,
   ActivityListExportURLParams,
   ActivityType,
+  ProjectResourcesListParams,
 } from '../../../types';
 import {
   AllMenus,
@@ -75,6 +76,8 @@ import { ProjectTriggerAI } from '../../../services/project';
 import { BUTTON_STYLES } from '../../../../admin/pages/manage-user-detail/styles';
 import { CaseActivities } from './case-activities';
 import { ExportActivityList } from '../../../services/activities/activities-service';
+import { CaseProjectTask } from './case-project-task';
+import { ExportCaseProjectTasktList } from '../../../services/case-project-task/case-project-task-service';
 
 export const CaseDetails = () => {
   const navigate = useNavigate();
@@ -107,6 +110,7 @@ export const CaseDetails = () => {
   const defaultTab = searchParams.get('list') ?? 'workBreakdown';
   const [activeKey, setActiveKey] = useState(defaultTab as string);
   const [exportType, setExportType] = useState<ExportType>('notes');
+  const [isActionItemsExpanded, setIsActionItemsExpanded] = useState(false);
 
   const [notesParams, setNotesParams] = useState<NotesListExportParams>({
     sortBy: 'r_number',
@@ -150,6 +154,14 @@ export const CaseDetails = () => {
       sortBy: 'project_code',
       filters: {},
       timezone: '',
+      page: 1,
+      limit: 10,
+      search: '',
+    });
+  const [projectTaskParams, setProjectTaskParams] =
+    useState<ProjectResourcesListParams>({
+      sortOrder: 'ASC',
+      sortBy: 'resource_code',
       page: 1,
       limit: 10,
       search: '',
@@ -223,6 +235,10 @@ export const CaseDetails = () => {
     }
   }, [caseData, dispatch]);
 
+  useEffect(() => {
+    setIsActionItemsExpanded(false);
+  }, [activeKey, tabParam]);
+
   const list = searchParams.get('list');
 
   // Permissions management
@@ -283,6 +299,10 @@ export const CaseDetails = () => {
     permission,
     AllPermissions.PROJECTS_EXPORT
   );
+  const isProjectTaskExportEnable = checkPermission(
+    permission,
+    AllPermissions.PROJECTS_EXPORT
+  );
 
   const isCaseTaskExportEnable = checkPermission(
     permission,
@@ -305,7 +325,8 @@ export const CaseDetails = () => {
       searchParams.get('list') !== 'caseProjects' &&
       searchParams.get('list') !== 'workBreakdown' &&
       searchParams.get('tab') !== 'case_task' &&
-      searchParams.get('list') !== 'interactions'
+      searchParams.get('list') !== 'interactions' &&
+      searchParams.get('list') !== 'projectTask'
     ) {
       return;
     }
@@ -358,6 +379,8 @@ export const CaseDetails = () => {
       ExportCaseTaskList(caseTaskParams);
     } else if (list === 'caseProjects' && exportType === 'review_projects') {
       ExportReviewProjectList(reviewProjectParams, accountId, caseId);
+    } else if (list === 'projectTask' && exportType === 'projectTask') {
+      ExportCaseProjectTasktList(projectTaskParams, accountId, caseId);
     }
     if (list === 'interactions') {
       if (interactionHistoryId) {
@@ -433,6 +456,8 @@ export const CaseDetails = () => {
       return !isCaseTaskExportEnable;
     } else if (list === 'interactions' && !interactionsView) {
       return !isInteractionsExportEnable;
+    } else if (list === 'projectTask') {
+      return !isProjectTaskExportEnable;
     } else {
       return true;
     }
@@ -476,6 +501,30 @@ export const CaseDetails = () => {
     []
   );
 
+  const handleToggleActionItems = (
+    value: boolean | ((prevState: boolean) => boolean)
+  ) => {
+    setIsActionItemsExpanded((prev) => {
+      const newState = typeof value === 'function' ? value(prev) : value;
+      if (newState) {
+        setIsCollapsed(true);
+      } else {
+        setIsCollapsed(false);
+      }
+      return newState;
+    });
+  };
+
+  const handleToggleSideMenu = () => {
+    setIsCollapsed((prev) => {
+      const newState = !prev;
+      if (!newState) {
+        setIsActionItemsExpanded(false);
+      }
+      return newState;
+    });
+  };
+
   const renderContent = () => {
     switch (activeKey) {
       case 'workBreakdown':
@@ -487,6 +536,8 @@ export const CaseDetails = () => {
               activityMenuItems={activityMenuItems}
               caseStartDate={caseData?.case_startdate}
               caseEndDate={caseData?.statutory_submission_date}
+              isActionItemsExpanded={isActionItemsExpanded}
+              setIsActionItemsExpanded={handleToggleActionItems}
             />
           </div>
         );
@@ -516,6 +567,16 @@ export const CaseDetails = () => {
               accountInActive={accountInActive}
               setTableParams={setCaseProjectParams}
               setReviewProjectParams={setReviewProjectParams}
+              setExportType={setExportType}
+            />
+          </div>
+        );
+      case 'projectTask':
+        return (
+          <div>
+            <CaseProjectTask
+              accountInActive={accountInActive}
+              setProjectTaskParams={setProjectTaskParams}
               setExportType={setExportType}
             />
           </div>
@@ -648,14 +709,14 @@ export const CaseDetails = () => {
         icon: CasesIcon,
       },
       {
-        name: 'Project Resource',
+        name: 'Case Project Resource',
         key: 'projectResource',
         id: AllMenus.FINANCIAL_HIGHLIGHTS,
         disabled: false,
         icon: ResourcesIcon,
       },
       {
-        name: 'Project Task',
+        name: 'Case Project Task',
         key: 'projectTask',
         id: AllMenus.FINANCIAL_HIGHLIGHTS,
         disabled: false,
@@ -790,19 +851,29 @@ export const CaseDetails = () => {
           ]}
         />
       </div>
-      <InfoSection
-        columns={caseHeaderDetails}
-        loading={isLoading}
-        loadingRows={4}
-        error={isError}
-        className={!isError ? 'max-h-[140px] min-h-[140px]' : ''}
-      />
+      <div
+        className={`transition-all duration-700 ease-in-out overflow-hidden ${
+          isActionItemsExpanded
+            ? 'max-h-0 opacity-0'
+            : isError
+              ? 'max-h-[60px] opacity-100'
+              : 'max-h-[140px] opacity-100'
+        }`}
+      >
+        <InfoSection
+          columns={caseHeaderDetails}
+          loading={isLoading}
+          loadingRows={3}
+          error={isError}
+          className={!isError ? 'max-h-[140px] min-h-[140px]' : ''}
+        />
+      </div>
       <div className='flex flex-1 flex-row w-full border-b border-[#CBD6E2]'>
         <div
           className={`flex transition-all ease-in-out ${
             isCollapsed
-              ? 'w-[60px] min-w-[60px] max-w-[60px] duration-300'
-              : 'w-[220px] min-w-[220px] max-w-[220px] duration-500'
+              ? 'w-[60px] min-w-[60px] max-w-[60px] duration-700'
+              : 'w-[220px] min-w-[220px] max-w-[220px] duration-700'
           }`}
         >
           <SideMenuPanel
@@ -812,15 +883,17 @@ export const CaseDetails = () => {
             headerTitle='Related List'
             showBackIcon={true}
             isCollapsed={isCollapsed}
-            onToggleCollapse={() => setIsCollapsed((prev) => !prev)}
+            onToggleCollapse={handleToggleSideMenu}
             enableScrollbar={true}
-            maxHeight={292}
+            maxHeight={isActionItemsExpanded ? 150 : 292}
           />
         </div>
         <div
-          className='flex-1'
+          className='flex-1 transition-all duration-500 ease-in-out'
           style={{
-            maxHeight: 'calc(100vh - 283px)',
+            maxHeight: isActionItemsExpanded
+              ? 'calc(100vh - 140px)'
+              : 'calc(100vh - 283px)',
             overflow: 'auto',
           }}
         >

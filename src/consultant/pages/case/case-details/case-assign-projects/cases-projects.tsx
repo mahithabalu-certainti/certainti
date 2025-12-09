@@ -93,6 +93,7 @@ const CasesProjects: React.FC<casesProjectProps> = ({
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [searchText, setSearchText] = useState<string>('');
+  const [searchReset, setSearchReset] = useState<boolean>(false);
   const [count, setCount] = useState<number>(0);
   const [currentCountry, setCurrentCountry] = useState<string>('');
   const [clearSelectedRows, setClearSelectedRows] = useState<boolean>(false);
@@ -161,12 +162,16 @@ const CasesProjects: React.FC<casesProjectProps> = ({
     navigate({ search: newParams.toString() }, { replace: true });
   };
   const handleAssignProject = () => {
+    setSearchText('');
+    setSearchReset(true);
     updateSearchParams((params) =>
       params.set('assignProject', 'assigned_to_list')
     );
   };
 
   const handleBackToAssignedProjects = () => {
+    setSearchText('');
+    setSearchReset(true);
     updateSearchParams((params) => {
       params.delete('assignProject');
       return params;
@@ -239,6 +244,8 @@ const CasesProjects: React.FC<casesProjectProps> = ({
   const tabParam = searchParams.get('tab') || initialTab;
   const handleTabChange = (value: string) => {
     searchParams.set('tab', value);
+    setSearchText('');
+    setSearchReset(true);
     navigate({ search: searchParams.toString() }, { replace: true });
   };
   // const handleCloseEmailModal = () => {
@@ -644,6 +651,8 @@ const CasesProjects: React.FC<casesProjectProps> = ({
         searchDisabled={false}
         searchPlaceholder='Search'
         onSearch={(text) => setSearchText(text)}
+        searchReset={searchReset}
+        onSearchReset={() => setSearchReset(false)}
       />
       <SectionHeader
         title={isAssignProject ? 'Assign Projects' : 'Case Projects'}
