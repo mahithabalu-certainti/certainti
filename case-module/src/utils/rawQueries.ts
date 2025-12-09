@@ -1089,7 +1089,7 @@ export function fetchChecklistAttachToDetails(schemaName: string, attachTo: stri
                 if(cond === 'equals') 
                   filterQueryArray.push(`LOWER(ct.${validKey}) = '${values.toLowerCase()}'`)
                 if(cond === 'not_equals')
-                  filterQueryArray.push(`LOWER(ct.${validKey}) != '${values.toLowerCase()}'`)
+                  filterQueryArray.push(`(LOWER(ct.${validKey}) != '${values.toLowerCase()}' OR ct.${validKey} IS NULL)`)
                 if(cond === 'contains')
                   filterQueryArray.push(`ct.${validKey} ILIKE '%${values}%'`)
                 if(cond === 'is_empty') 
