@@ -24,7 +24,6 @@ import {
 } from './columns';
 import { caseProjectResourceFilterFields } from './utils';
 import CaseProjectResourceDetails from './case-project-resource-details/case-project-resource-details';
-import { CaseProjectResourceRow } from '../../../../types/case-project-resource';
 import { ReviewProjectListURLParams } from '../../../../types/assign-projects';
 
 const ProjectResourceTabs: ResourceTabs[] = [
@@ -51,7 +50,7 @@ const CaseProjectResource: React.FC<ProjectResourceProps> = ({
   const { caseId } = useParams();
   const [searchParams] = useSearchParams();
   const accountid = searchParams.get('accountID');
-  const resource_id = searchParams.get('resource_id');
+  const resourceId = searchParams.get('resource_id');
   const navigate = useNavigate();
   const [appliedFilters, setAppliedFilters] = useState<
     Record<string, string | number | boolean | string[]>
@@ -74,12 +73,9 @@ const CaseProjectResource: React.FC<ProjectResourceProps> = ({
   const [searchText, setSearchText] = useState('');
   const [viewResourceList, setViewResourceList] = useState<boolean>(true);
   const [showBackArrow, setShowBackArrow] = useState<boolean>(false);
-  const [resourceData, setResourceData] =
-    useState<CaseProjectResourceRow | null>(null);
   const [resourceNumber, setResourceNumber] = useState<string | undefined>(
     undefined
   );
-
   const isModalOpen = Boolean(columnAnchorEl);
   const handleColumnVisibility = (
     event: React.MouseEvent<HTMLButtonElement>
@@ -131,7 +127,7 @@ const CaseProjectResource: React.FC<ProjectResourceProps> = ({
   useEffect(() => {
     if (data?.data?.projectResources) {
       setResourceRowList(data.data.projectResources);
-      setTotalItems(data.data.totalCount || 0);
+      setTotalItems(data.data.count || 0);
     } else {
       setResourceRowList([]);
       setTotalItems(0);
@@ -139,28 +135,14 @@ const CaseProjectResource: React.FC<ProjectResourceProps> = ({
   }, [data]);
 
   useEffect(() => {
-    if (!viewResourceList && resourceData?.rid) {
+    if (!viewResourceList && resourceId) {
       const newSearchParams = new URLSearchParams(searchParams);
-      newSearchParams.set('resource_id', resourceData.rid);
       newSearchParams.set('tab', 'details');
       navigate({ search: newSearchParams.toString() }, { replace: true });
     }
-  }, [resourceData?.rid, viewResourceList, searchParams, navigate]);
+  }, [resourceId, viewResourceList, searchParams, navigate]);
 
-  useEffect(() => {
-    const resourceId = searchParams.get('resource_id');
-    if (resourceId && resourceRowList.length > 0) {
-      const foundResource = resourceRowList.find(
-        (resource) => resource.rid === resourceId
-      );
-      if (foundResource) {
-        setResourceData(foundResource);
-        setViewResourceList(false);
-        setShowBackArrow(true);
-        setResourceNumber(foundResource.resource_code ?? undefined);
-      }
-    }
-  }, [searchParams, resourceRowList]);
+
 
   const showUploads = searchParams.get('attachment_entity') === 'account';
 
@@ -175,12 +157,11 @@ const CaseProjectResource: React.FC<ProjectResourceProps> = ({
     data: detailresponse,
     isLoading: detailresponseLoading,
     isError: detailresponseError,
-  } = useCaseProjectResourceDetail(accountid ?? '', resource_id ?? '');
+  } = useCaseProjectResourceDetail(accountid ?? '', resourceId ?? '');
 
   const projectResourceDetail = detailresponse?.data?.projectResource;
   const handleCaseProjectResourceClick = React.useCallback(
     (row: CaseProjectResourceRowType) => {
-      setResourceData(row);
       setViewResourceList(false);
       setShowBackArrow(true);
       setShowFilter(false);
@@ -211,7 +192,6 @@ const CaseProjectResource: React.FC<ProjectResourceProps> = ({
     setViewResourceList(true);
     setShowBackArrow(false);
     setShowFilter(false);
-    setResourceData(null);
     setAppliedFilters({});
     setSortFilterCount(0);
     const newSearchParams = new URLSearchParams(searchParams);
@@ -240,7 +220,7 @@ const CaseProjectResource: React.FC<ProjectResourceProps> = ({
       disabled: accountInActive,
       onClick: handleColumnVisibility,
       sx: { ...BUTTON_STYLES, width: '125px', minWidth: '125px' },
-      hide: !viewResourceList && resourceData ? true : false,
+      hide: !viewResourceList && resourceId ? true : false,
     },
     {
       label: 'Back to Project Resource',
@@ -248,7 +228,7 @@ const CaseProjectResource: React.FC<ProjectResourceProps> = ({
       disabled: accountInActive,
       onClick: handleBackClick,
       sx: { ...BUTTON_STYLES, width: '180px', minWidth: '125px' },
-      hide: !viewResourceList && resourceData ? false : true,
+      hide: !viewResourceList && resourceId ? false : true,
     },
   ];
 
@@ -274,15 +254,6 @@ const CaseProjectResource: React.FC<ProjectResourceProps> = ({
       ),
     [handleCaseProjectResourceClick]
   );
-
-  // const [visibleColumns, setVisibleColumns] = useState<
-  //   ListTableColumn<CaseProjectResourceRowType>[]
-  // >(getCaseProjectResourceColumns().filter((col) => !col.hide));
-
-  // useEffect(() => {
-  //   const updatedColumns = attachmentColumns.filter((col) => !col.hide);
-  //   setVisibleColumns(updatedColumns);
-  // }, [attachmentColumns]);
 
   const projectResourceFilterFields =
     caseProjectResourceFilterFields(permissionMap);
@@ -359,7 +330,7 @@ const CaseProjectResource: React.FC<ProjectResourceProps> = ({
           value={'projectResource'}
           title='Project Resource'
           count={totalItems}
-          showCount={!viewResourceList && resourceData ? false : true}
+          showCount={!viewResourceList && resourceId ? false : true}
           resourceNumber={resourceNumber}
           titleIcon={
             <ProjectsIcon
@@ -374,7 +345,7 @@ const CaseProjectResource: React.FC<ProjectResourceProps> = ({
           bgType={showBackArrow ? 'react' : 'circle'}
         />
 
-        {!viewResourceList && resourceData ? (
+        {!viewResourceList && resourceId ? (
           <CaseProjectResourceDetails
             resource={projectResourceDetail ?? null}
             isLoading={detailresponseLoading}
