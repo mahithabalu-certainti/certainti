@@ -4,7 +4,7 @@ import { initSequelize } from "../config/maindbDataSource";
 import { Sequelize, Op, QueryTypes } from "sequelize";
 import { HttpStatus, STATUS_MESSAGE, rawQueries } from "../utils/constants";
 import { Logger } from "winston";
-import { actions, ICreateRuleMapWithScope, IListSCopeEvent } from "../utils/types";
+import { actions, Fields, ICreateRuleMapWithScope, IListSCopeEvent } from "../utils/types";
 import { logMessage } from "../utils/helpers";
 import { RuleMapService } from "../services/workflowRuleMapService";
 import { ScopeService } from "../services/workflowScopeMapService";
@@ -150,6 +150,32 @@ export class WorkFlowService {
             statusCode: HttpStatus.SUCCESS,
             message: HttpStatus.SUCCESS_MESSAGE,
             data: categories
+        };
+    };
+
+    async listFields(
+        listRequest: any,
+        userId: string,
+        apiType: string
+    ): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data: any;
+    }> {
+        const mainDb = await this.getMainDb();
+        const fields: Fields[] = await mainDb.query<Fields>(
+            rawQueries.fetchFields(
+                listRequest.category_rid,
+                listRequest.status_rid
+            ),
+            { type: QueryTypes.SELECT }
+        );
+
+        return {
+            statusCode: HttpStatus.SUCCESS,
+            message: HttpStatus.SUCCESS_MESSAGE,
+            data: fields
         };
     };
 

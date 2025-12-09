@@ -190,6 +190,47 @@ async function listConditionCategory(req: Request, res: Response): Promise<void>
     }
 };
 
+async function listFields(req: Request, res: Response): Promise<void> {
+    const methodName = "operators list";
+    try {
+        const userId = req.headers["x-user-id"] as string;
+        const value = await validateRequest(req, listScopeOperatorSchema, res, "POST");
+        if (!value) {
+            return;
+        }
+        // if (!userId) {
+        //   return;
+        // }
+        const result = await workFlowService.listFields(
+            value,
+            userId,
+            "list");
+        if (result.statusCode == HttpStatus.SUCCESS) {
+            successLog(methodName);
+            handleSuccessResponse(res, result.data);
+            return;
+        } else {
+            errorLog(methodName, "No data found");
+            handleErrorResponse(
+                res,
+                HttpStatus.BAD_REQUEST,
+                HttpStatus.BAD_REQUEST_MESSAGE,
+                result.errorMessage
+            );
+            return;
+        }
+    } catch (err) {
+        const error = err as Error;
+        errorLog(methodName, error.message);
+        handleErrorResponse(
+            res,
+            HttpStatus.FAILED,
+            HttpStatus.FAILED_MESSAGE,
+            error.message
+        );
+    }
+};
+
 async function listOperators(req: Request, res: Response): Promise<void> {
     const methodName = "operators list";
     try {
@@ -397,6 +438,7 @@ export default {
     listScopeEvents,
     listEventConditions,
     listConditionCategory,
+    listFields,
     listOperators,
     listValues,
     listActionTypes,

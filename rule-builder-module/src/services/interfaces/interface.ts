@@ -258,6 +258,16 @@ export interface IWorkFlowService {
         data?: any;
     }>;
 
+    listFields(listRequest: any,
+        userId: string,
+        apiType: string
+    ): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: any;
+    }>;
+
     listOperators(listRequest: any,
         userId: string,
         apiType: string

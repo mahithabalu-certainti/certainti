@@ -98,6 +98,18 @@ export const rawQueries = {
     return query;
   },
 
+  fetchFields(category_rid: string, status_rid: string): string {
+    let query = `SELECT rf.rid, rf.name as name FROM ${MAIN_SCHEMA_NAME}.rule_fields rf JOIN ${MAIN_SCHEMA_NAME}.field_category_map fcm 
+    ON rf.rid = fcm.field_rid `;
+    const conditions: string[] = [];
+    conditions.push(`fcm.category_rid = '${category_rid}'`);
+    if (status_rid) {
+      conditions.push(`rf.status_rid = '${status_rid}'`);
+    }
+    query += ` WHERE ${conditions.join(' AND ')}`;
+    return query;
+  },
+
   fetchOperators(category_rid: string, status_rid: string): string {
     let query = `SELECT ro.rid, ro.name as name FROM ${MAIN_SCHEMA_NAME}.rule_operators ro JOIN ${MAIN_SCHEMA_NAME}.operator_category_map ocm 
     ON ro.rid = ocm.operator_rid `;

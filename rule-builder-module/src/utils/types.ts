@@ -95,14 +95,14 @@ export interface ICreateRuleMap {
 
 
 export interface ICreateRuleMapWithScope {
-    rule_name:string;
-    description:string;
-    trigger_event:string;
-    trigger_type:number;
-    is_active:true;
+    rule_name: string;
+    description: string;
+    trigger_event: string;
+    trigger_type: number;
+    is_active: true;
     scope_type_rid: string;
-    schedule_offset_type:string;
-    schedule_offset_value:string;
+    schedule_offset_type: string;
+    schedule_offset_value: string;
     apply_type: number;
     scope_entity_rid: string[];
     created_by: string,
@@ -135,6 +135,11 @@ export type ConditionCategory = {
     description: string;
 }
 
+export type Fields = {
+    rid: string;
+    name: string;
+}
+
 export type Operators = {
     rid: string;
     name: string;
@@ -154,6 +159,6 @@ export type actions = {
     rid: string;
     name: string;
     description: string;
-    action_type_name:string;
-    action_type_rid:string;
+    action_type_name: string;
+    action_type_rid: string;
 }
