@@ -481,8 +481,9 @@ export const useUpdateJurisdictionConfig = () => {
 export interface DeleteTagPayload {
   task_rid: string;
   account_rid: string;
-  case_rid: string;
+  case_rid?: string;
   tag_rid: string[];
+  task_type?: string;
 }
 
 export const deleteTag = async (

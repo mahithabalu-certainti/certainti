@@ -153,6 +153,12 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
   };
   const [commentError, setCommentError] = useState<string | null>(null);
   const [commentFiles, setCommentFiles] = useState<File[]>([]);
+  const [commentAttachmentError, setCommentAttachmentError] = useState<
+    string | null
+  >(null);
+  const [editAttachmentError, setEditAttachmentError] = useState<string | null>(
+    null
+  );
   const [deleteConfirmModal, setDeleteConfirmModal] = useState<{
     isOpen: boolean;
     commentId: string | null;
@@ -453,6 +459,7 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
       setEditingCommentText('');
       setEditingNewFiles([]);
       setEditingDeletedFileIds([]);
+      setEditAttachmentError(null);
       invalidateCommentQueries();
     } catch (error) {
       console.error('Error updating comment:', error);
@@ -482,6 +489,7 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
       await onAddComment(taskId, comment.trim(), commentFiles);
       setComment('');
       setCommentFiles([]);
+      setCommentAttachmentError(null);
       setShowAddCommentForm(false);
       invalidateCommentQueries();
     } catch (error) {
@@ -495,9 +503,28 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const files = e.target.files;
+    setCommentAttachmentError(null);
     if (files && files.length > 0) {
       const arr = Array.from(files);
-      setCommentFiles((prev) => [...prev, ...arr]);
+      const validFiles: File[] = [];
+      arr.forEach((file) => {
+        // Get filename without extension
+        const lastDotIndex = file.name.lastIndexOf('.');
+        const nameWithoutExtension =
+          lastDotIndex > 0 ? file.name.substring(0, lastDotIndex) : file.name;
+
+        if (nameWithoutExtension.length > 100) {
+          setCommentAttachmentError(
+            'Document name cannot exceed 100 characters'
+          );
+        } else {
+          validFiles.push(file);
+        }
+      });
+
+      if (validFiles.length > 0) {
+        setCommentFiles((prev) => [...prev, ...validFiles]);
+      }
       e.target.value = '';
     } else {
       console.log('Add Comment - No files selected');
@@ -514,9 +541,26 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const files = e.target.files;
+    setEditAttachmentError(null);
     if (files && files.length > 0) {
       const arr = Array.from(files);
-      setEditingNewFiles((prev) => [...prev, ...arr]);
+      const validFiles: File[] = [];
+      arr.forEach((file) => {
+        // Get filename without extension
+        const lastDotIndex = file.name.lastIndexOf('.');
+        const nameWithoutExtension =
+          lastDotIndex > 0 ? file.name.substring(0, lastDotIndex) : file.name;
+
+        if (nameWithoutExtension.length > 100) {
+          setEditAttachmentError('Document name cannot exceed 100 characters');
+        } else {
+          validFiles.push(file);
+        }
+      });
+
+      if (validFiles.length > 0) {
+        setEditingNewFiles((prev) => [...prev, ...validFiles]);
+      }
       e.target.value = '';
     } else {
       console.log('Edit Comment - No files selected');
@@ -542,6 +586,7 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
   const handleCancelAdd = () => {
     setComment('');
     setCommentFiles([]);
+    setCommentAttachmentError(null);
     setShowAddCommentForm(false);
   };
 
@@ -773,6 +818,11 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                               Click to upload attachments
                             </p>
                           </button>
+                          {editAttachmentError && (
+                            <div className='text-red-500 text-xs mt-2 text-center'>
+                              {editAttachmentError}
+                            </div>
+                          )}
                         </div>
 
                         {/* Show selected files for edit comment */}
@@ -815,6 +865,7 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                             setEditingCommentText('');
                             setEditingNewFiles([]);
                             setEditingDeletedFileIds([]);
+                            setEditAttachmentError(null);
                           }}
                           disabled={isUpdating}
                           sx={{ padding: '6px 12px' }}
@@ -1041,6 +1092,11 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                       to upload attachments
                     </p>
                   </button>
+                  {commentAttachmentError && (
+                    <div className='text-red-500 text-xs mt-2 text-center'>
+                      {commentAttachmentError}
+                    </div>
+                  )}
 
                   {/* Show selected files for add comment */}
                   {commentFiles.length > 0 && (

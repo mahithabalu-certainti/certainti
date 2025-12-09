@@ -164,7 +164,7 @@ const MeetingForm: React.FC = () => {
   const createMeeting = useCreateActivityMeeting();
   const updateMeeting = useUpdateActivityMeeting();
   const { data: meetingData, isLoading } = useMeetingActivityDetails(
-    entityId,
+    accountId,
     activityId || '',
     true
   );

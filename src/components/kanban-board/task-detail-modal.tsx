@@ -251,6 +251,8 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       setDeletedAttachmentIds([]);
       setErrors({});
       setIsAddingCollaborator(false);
+      setLinkedType('');
+      setLinkTaskTypes([]);
     }
   }, [isOpen, taskId]);
 
@@ -272,12 +274,9 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       if (enriched.category) {
         setCategory(enriched.category);
       }
-      if (enriched.linkedType) {
-        setLinkedType(enriched.linkedType);
-      }
-      if (enriched.linkTaskTypes) {
-        setLinkTaskTypes(enriched.linkTaskTypes);
-      }
+      // Always set linkedType and linkTaskTypes to clear previous task's data
+      setLinkedType(enriched.linkedType || '');
+      setLinkTaskTypes(enriched.linkTaskTypes || []);
       setIsLoadingTaskDetails(false);
     }
   }, [rawTask]);
@@ -773,12 +772,15 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
 
       if (removedTags.length > 0 && taskId) {
         try {
-          await deleteTagMutation.mutateAsync({
+          const payload = {
             task_rid: taskId,
             account_rid: accountId,
-            case_rid: caseId,
             tag_rid: removedTags,
-          });
+            ...(taskType === 'activity'
+              ? { task_type: 'activity' }
+              : { case_rid: caseId }),
+          };
+          await deleteTagMutation.mutateAsync(payload);
         } catch (error) {
           console.error('Error deleting tags:', error);
         }
@@ -1020,6 +1022,15 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
         }
         if (isWorkflowChanged) {
           workflowConnector.is_new_changes = true;
+
+          // Determine key_name based on what changed
+          if (isLinkedTypeChanged && isLinkTaskTypesChanged) {
+            workflowConnector.key_name = 'Linked Type & Linked Task Type';
+          } else if (isLinkedTypeChanged) {
+            workflowConnector.key_name = 'Linked Type';
+          } else if (isLinkTaskTypesChanged) {
+            workflowConnector.key_name = 'Linked Task Type';
+          }
         } else if (Object.keys(workflowConnector).length > 0) {
           workflowConnector.is_new_changes = false;
         }
@@ -1308,6 +1319,10 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
         },
       ],
     });
+    // Refetch kanban board to update checklist counts
+    queryClient.invalidateQueries({
+      queryKey: ['kanbanBoardData', accountId, caseId],
+    });
   };
 
   const handleCollaboratorsChange = async (selectedIds: string[]) => {
@@ -1352,6 +1367,10 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
               task_rid: taskId,
             },
           ],
+        });
+        // Refetch kanban board to update task data
+        queryClient.invalidateQueries({
+          queryKey: ['kanbanBoardData', accountId, caseId],
         });
       } catch (error) {
         console.error('Failed to add collaborator:', error);
@@ -1405,6 +1424,10 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
               task_rid: taskId,
             },
           ],
+        });
+        // Refetch kanban board to update task data
+        queryClient.invalidateQueries({
+          queryKey: ['kanbanBoardData', accountId, caseId],
         });
         successToast('Collaborator removed successfully');
       } catch (error) {

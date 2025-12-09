@@ -1050,7 +1050,7 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
 
           <div className='capitalize mb-4 h-[30px] border-b border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-3.5'>
             Historical Information
-            {selectedRegion ? ' (Region Level)' : ' (Country Level)'}
+            {selectedRegion ? ' (For Region)' : ' (For Federal)'}
           </div>
           <div className='px-3.5'>
             <TableContainer

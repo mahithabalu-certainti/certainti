@@ -58,6 +58,8 @@ interface WorkBreakDownProps {
   setCaseTaskParams: (params: Record<string, unknown>) => void;
   caseStartDate?: string | null;
   caseEndDate?: string | null;
+  isActionItemsExpanded?: boolean;
+  setIsActionItemsExpanded?: (expanded: boolean) => void;
 }
 
 const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
@@ -66,6 +68,8 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
   activityMenuItems,
   caseStartDate,
   caseEndDate,
+  isActionItemsExpanded,
+  setIsActionItemsExpanded,
 }) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -87,6 +91,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
     React.useState<HTMLButtonElement | null>(null);
   const [seachText, setSearchText] = useState('');
   const [resetSearch, setResetSearch] = useState(false);
+  const [isManualRefresh, setIsManualRefresh] = useState(false);
 
   const { permission, modules } = useSelector(
     (state: RootState) => state.permission
@@ -123,7 +128,15 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
     data: kanbanData,
     isLoading,
     isError,
+    isFetching,
   } = useGetWorkBreakdownList(accountId || '', caseId || '');
+
+  // Reset manual refresh flag when fetching completes
+  useEffect(() => {
+    if (!isFetching && isManualRefresh) {
+      setIsManualRefresh(false);
+    }
+  }, [isFetching, isManualRefresh]);
 
   useEffect(() => {
     if (
@@ -400,6 +413,10 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
               queryClient.invalidateQueries({
                 queryKey: ['taskAttachments', commentsParams],
               });
+              // Refetch kanban board to update comment counts
+              queryClient.invalidateQueries({
+                queryKey: ['kanbanBoardData', accountId, caseId],
+              });
               resolve();
             },
             onError: (error) => {
@@ -465,6 +482,10 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
               queryClient.invalidateQueries({
                 queryKey: ['taskComments', commentsParams],
               });
+              // Refetch kanban board to update comment counts
+              queryClient.invalidateQueries({
+                queryKey: ['kanbanBoardData', accountId, caseId],
+              });
               resolve();
             },
             onError: (error) => {
@@ -522,6 +543,10 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
               queryClient.invalidateQueries({
                 queryKey: ['taskComments', commentsParams],
               });
+              // Refetch kanban board to update comment counts
+              queryClient.invalidateQueries({
+                queryKey: ['kanbanBoardData', accountId, caseId],
+              });
               resolve();
             },
             onError: (error) => {
@@ -578,6 +603,10 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
               queryClient.invalidateQueries({
                 queryKey: ['collaborators', accountId, caseId, taskId],
               });
+              // Refetch kanban board to update task data
+              queryClient.invalidateQueries({
+                queryKey: ['kanbanBoardData', accountId, caseId],
+              });
 
               resolve(response);
             } else {
@@ -610,9 +639,18 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
     ]
   );
 
+  const assigneeOptions = useMemo(
+    () =>
+      userData.map((user) => ({
+        option: user.name,
+        value: user.rid,
+      })),
+    [userData]
+  );
+
   const filterFields =
     tabParam === 'case_task'
-      ? getAssignGroupsFilterFields(memoizedStatus)
+      ? getAssignGroupsFilterFields(memoizedStatus, assigneeOptions)
       : undefined;
 
   const handleFilter = () => {
@@ -643,6 +681,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
   };
 
   const onRefreshClick = () => {
+    setIsManualRefresh(true);
     queryClient.invalidateQueries({
       queryKey: ['kanbanBoardData', accountId, caseId],
     });
@@ -740,46 +779,62 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
 
   return (
     <>
-      <SectionTabPanel
-        tabs={ConfigTabs}
-        filterMenu={filterFields}
-        filterVisibility={tabParam !== 'milestone'}
-        showFilter={showFilter}
-        contextKey={`case`}
-        appliedFilters={appliedFilters}
-        setAppliedFilters={setAppliedFilters}
-        setCurrentPage={setCurrentPage}
-        handleFilter={handleFilter}
-        handleSorting={() => {}}
-        sortFilterCount={0}
-        setSortFilterCount={() => {}}
-        showRefresh={false}
-        onRefreshClick={onRefreshClick}
-        // hideTabPanel={hideSection}
-        showSearch={tabParam === 'case_task' ? true : false}
-        searchDisabled={false}
-        searchPlaceholder='Search'
-        onSearch={(text) => setSearchText(text)}
-        searchReset={resetSearch}
-        onSearchReset={handleSearchReset}
-        showAddActivity={true}
-        activityMenuItems={activityMenuItems}
-      />
-      <SectionHeader
-        title={'Action Items'}
-        titleIcon={getTitleIcon()}
-        buttons={headerButtons}
-        count={count}
-        showItemCount={tabParam === 'case_task'}
-        hideSection={false}
-      />
+      {!isActionItemsExpanded && (
+        <>
+          <SectionTabPanel
+            tabs={ConfigTabs}
+            filterMenu={filterFields}
+            filterVisibility={tabParam !== 'milestone'}
+            showFilter={showFilter}
+            contextKey={`case`}
+            appliedFilters={appliedFilters}
+            setAppliedFilters={setAppliedFilters}
+            setCurrentPage={setCurrentPage}
+            handleFilter={handleFilter}
+            handleSorting={() => {}}
+            sortFilterCount={0}
+            setSortFilterCount={() => {}}
+            showRefresh={tabParam === 'milestone'}
+            onRefreshClick={onRefreshClick}
+            // hideTabPanel={hideSection}
+            showSearch={tabParam === 'case_task' ? true : false}
+            searchDisabled={false}
+            searchPlaceholder='Search'
+            onSearch={(text) => setSearchText(text)}
+            searchReset={resetSearch}
+            onSearchReset={handleSearchReset}
+            showAddActivity={true}
+            activityMenuItems={activityMenuItems}
+          />
+          <SectionHeader
+            title={'Action Items'}
+            titleIcon={getTitleIcon()}
+            buttons={headerButtons}
+            count={count}
+            showItemCount={tabParam === 'case_task'}
+            hideSection={false}
+          />
+        </>
+      )}
       <SectionHeaderTab
         tabs={tabs}
         onTabChange={handleTabChange}
         defaultValue={tabParam}
+        isExpanded={isActionItemsExpanded}
+        onToggleExpand={
+          tabParam === 'milestone' && setIsActionItemsExpanded
+            ? () => setIsActionItemsExpanded(!isActionItemsExpanded)
+            : undefined
+        }
       />
 
-      <div className='border border-t-0 border-[#CBD6E2]'>
+      <div
+        className={`border border-t-0 border-[#CBD6E2] ${
+          isActionItemsExpanded
+            ? 'max-h-[calc(100vh-200px)]'
+            : 'max-h-[calc(100vh-418px)]'
+        } overflow-auto`}
+      >
         {tabParam === 'milestone' && (
           <>
             {isError ? (
@@ -793,11 +848,12 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
             ) : (
               <KanbanBoard
                 data={kanbanData?.data || []}
-                isLoading={isLoading}
+                isLoading={isLoading || isManualRefresh}
                 statusData={statusData}
                 priorityData={priorityData}
                 tagData={tagData}
                 checklistData={checklistData}
+                isExpanded={isActionItemsExpanded}
                 userData={userData}
                 roleOptions={roleOptionsQuery.data || []}
                 onTaskClick={setOpenTaskId}
