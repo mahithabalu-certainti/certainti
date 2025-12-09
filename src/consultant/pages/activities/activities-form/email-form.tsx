@@ -144,7 +144,7 @@ const EmailForm: React.FC = () => {
   const createEmail = useCreateActivityEmail();
   const updateEmail = useUpdateActivityEmail();
   const { data: emailData, isLoading } = useEmailActivityDetails(
-    entityId,
+    accountId,
     activityId || '',
     true
   );

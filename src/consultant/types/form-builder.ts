@@ -61,6 +61,7 @@ export interface FormTypeFields {
   showCreateBtn?: boolean;
   formatCostValue?: boolean;
   clearDate?: string;
+  customDateOpen?: Date;
 }
 
 export type InputType =
@@ -160,6 +161,7 @@ export interface FieldType {
   showCreateBtn?: boolean;
   formatCostValue?: boolean;
   clearDate?: string;
+  customDateOpen?: Date;
 }
 
 export type AllowedCountry =
