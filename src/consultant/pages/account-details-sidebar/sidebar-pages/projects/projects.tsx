@@ -13,6 +13,7 @@ import { PROJECT_CREATE, PROJECT_DETAILS } from '../../../../../routes';
 import { generatePath, useNavigate, useParams } from 'react-router-dom';
 import {
   Project,
+  ProjectFiscalSummary,
   ProjectListParams,
   ProjectTriggerAIPayload,
 } from '../../../../types/project';
@@ -115,6 +116,7 @@ const Projects: React.FC<ProjectsProps> = ({
   const [projectList, setProjectList] = useState<Project[]>([]);
   const [selectedTableId, setSelectedTableIds] = useState<string[]>([]);
   const [clearTrigger, setClearTrigger] = useState(false);
+  const [searchText, setSearchText] = useState('');
   // Permission Mangement
   const { modules, permission } = useSelector(
     (state: RootState) => state.permission
@@ -176,6 +178,7 @@ const Projects: React.FC<ProjectsProps> = ({
       fiscalYear: convertedFiscalYear,
       accountNumber: accountid ?? accountDetails?.accountDetails?.account_rid,
       bothParentAndChild: false,
+      search: searchText,
       // bothParentAndChild: toggleEnabled  // Commented for it may use in future
     },
     projectOverviewIsEnable && projectViewAllIsEnable,
@@ -221,10 +224,12 @@ const Projects: React.FC<ProjectsProps> = ({
       sortOrder: sortOrder,
       filters: appliedFilters,
       fiscalYear: convertedFiscalYear,
-      accountNumber: accountDetails?.accountDetails?.account_rid || '',
+      accountNumber:
+        accountid || accountDetails?.accountDetails?.account_rid || '',
+      search: searchText,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sortField, sortOrder, appliedFilters, convertedFiscalYear]);
+  }, [sortField, sortOrder, appliedFilters, convertedFiscalYear, searchText]);
 
   const handleFilter = () => {
     setShowFilter(!showFilter);
@@ -275,7 +280,6 @@ const Projects: React.FC<ProjectsProps> = ({
   );
 
   const handleselectedList = (id: string[]) => {
-    console.log(id);
     const childIds = id.filter((_, index) => index % 2 === 0);
     setSelectedTableIds(childIds);
   };
@@ -563,7 +567,17 @@ const Projects: React.FC<ProjectsProps> = ({
 
         const newProjects = projectList.map((project) => {
           if (project.project_rid === updatedParentData.project_rid) {
-            return updatedParentData;
+            return {
+              ...project,
+              ...updatedParentData,
+              ProjectFiscal: project.ProjectFiscal.map((fiscal) => {
+                const updatedFiscal = updatedParentData.ProjectFiscal?.find(
+                  (data: ProjectFiscalSummary) =>
+                    data.project_fiscal_rid === fiscal.project_fiscal_rid
+                );
+                return updatedFiscal ? { ...fiscal, ...updatedFiscal } : fiscal;
+              }),
+            };
           }
           return project;
         });
@@ -628,6 +642,10 @@ const Projects: React.FC<ProjectsProps> = ({
         // showToggle={isProjectViewEditEnable} // Commented for it may use in future
         toggleEnabled={toggleEnabled}
         setToggleEnabled={setToggleEnabled}
+        showSearch={true}
+        searchDisabled={false}
+        searchPlaceholder='Search'
+        onSearch={(text) => setSearchText(text)}
       />
       {projectOverviewIsEnable && projectViewAllIsEnable ? (
         <>

@@ -108,6 +108,10 @@ export const CreateProfile: React.FC = () => {
     }
   };
 
+  const formData = isEditView
+    ? getProfileDetails.data?.data.privileges || []
+    : createProfile.data?.data.privileges || [];
+
   return (
     <>
       {!commonSuccess && !isEditView ? (
@@ -135,14 +139,11 @@ export const CreateProfile: React.FC = () => {
             profileLoading={getProfileDetails.isLoading}
           />
           <ProfilePermissionForm
-            formData={
-              isEditView
-                ? getProfileDetails.data?.data.privileges || []
-                : createProfile.data?.data.privileges || []
-            }
+            formData={formData}
             loading={getProfileDetails.isLoading}
             formRef={formRef}
             outData={outData}
+            oldData={JSON.parse(JSON.stringify(formData))}
           />
         </>
       )}

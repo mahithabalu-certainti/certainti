@@ -33,6 +33,7 @@ interface IUserTableProps {
   setColumnAnchorEl: React.Dispatch<
     React.SetStateAction<HTMLButtonElement | null>
   >;
+  searchValue?: string;
 }
 
 export const UserGroupTable: React.FC<IUserTableProps> = ({
@@ -44,6 +45,7 @@ export const UserGroupTable: React.FC<IUserTableProps> = ({
   refreshUserGroupTrigger,
   columnAnchorEl,
   setColumnAnchorEl,
+  searchValue,
 }) => {
   const navigate = useNavigate();
   const { errorToast } = useToast();
@@ -70,7 +72,7 @@ export const UserGroupTable: React.FC<IUserTableProps> = ({
   }, [userGroupViewEditFields]);
 
   const { data, isPending, isError } = useManageUserGroupList(
-    tableParams,
+    { ...tableParams, filters: appliedFilters, search: searchValue },
     refreshUserGroupTrigger
   );
 
@@ -87,15 +89,6 @@ export const UserGroupTable: React.FC<IUserTableProps> = ({
       }) || [];
     setUserGroupList(reShape);
   }, [data?.data.usergroup]);
-
-  useEffect(() => {
-    setTableParams((prev) => ({
-      ...prev,
-      page: 1,
-      filters: appliedFilters,
-    }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [appliedFilters]);
 
   const totalItems = data?.data?.count || 0;
   const prefixGroupName = 'G-';

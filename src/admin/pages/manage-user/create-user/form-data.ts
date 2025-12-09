@@ -251,12 +251,12 @@ export const FormData = (
             resetDependsFields: ['city_rid'],
             hide:
               isEditView &&
-              !permissionMap?.['region_rid']?.read &&
-              !permissionMap?.['region_rid']?.edit,
+              !permissionMap?.['state_rid']?.read &&
+              !permissionMap?.['state_rid']?.edit,
             disabled:
               isEditView &&
-              permissionMap?.['region_rid']?.read &&
-              !permissionMap?.['region_rid']?.edit,
+              permissionMap?.['state_rid']?.read &&
+              !permissionMap?.['state_rid']?.edit,
           }),
           createSelectField('city_rid', 'City', {
             options: city,

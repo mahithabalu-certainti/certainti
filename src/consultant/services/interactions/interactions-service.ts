@@ -23,13 +23,20 @@ import {
   getGlobalInteractionExportUrl,
   getInteractionListRemainderUrl,
 } from '../urls/interactions-url';
-import { InteractionKeyContacts } from '../../types/interactions';
+import {
+  InteractionKeyContactResponse,
+  InteractionKeyContacts,
+  InteractionProjectKeyContacts,
+} from '../../types/interactions';
 
 export const exportInteractions = async (
   params: InteractionListURLParams
 ): Promise<void> => {
   try {
-    const filename = 'project_interactions.xlsx';
+    const filename =
+      params.flag === 'case'
+        ? 'case_interaction.xlsx'
+        : 'project_interactions.xlsx';
     const response =
       await interactionServiceApi.post<ExportInteractionResponse>(
         getInteractionExportUrl(),
@@ -301,6 +308,26 @@ const fetchInteractionDetails = async (
   return response.data.data.interactionDetails;
 };
 
+const getInteractionProjectListURL = (accountId: string, caseId: string) => {
+  const params = new URLSearchParams({
+    accountId,
+    caseId,
+  });
+  return `/api/interactions/case/keyContact?${params.toString()}`;
+};
+
+const fetchInteractionProjectList = async (
+  accountId: string,
+  caseId: string
+): Promise<InteractionProjectKeyContacts[] | undefined> => {
+  const response =
+    await interactionServiceApi.get<InteractionKeyContactResponse>(
+      getInteractionProjectListURL(accountId, caseId)
+    );
+
+  return response?.data?.data?.keyContacts;
+};
+
 export const useInteractionDetails = (
   accountId?: string,
   interactionId?: string,
@@ -318,6 +345,18 @@ export const useInteractionDetails = (
     retry: 0,
     gcTime: 0,
     enabled: !!interactionId && !!accountId && !!projectFiscalRid,
+  });
+};
+export const useInteractionProjectList = (
+  accountId?: string,
+  caseId?: string
+): UseQueryResult<InteractionProjectKeyContacts[] | undefined, Error> => {
+  return useQuery<InteractionProjectKeyContacts[] | undefined, Error>({
+    queryKey: ['interaction-project-details', accountId, caseId],
+    queryFn: () => fetchInteractionProjectList(accountId!, caseId!),
+    retry: 0,
+    gcTime: 0,
+    enabled: !!caseId && !!accountId,
   });
 };
 

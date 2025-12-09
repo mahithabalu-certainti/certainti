@@ -14,6 +14,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
 import { checkPermission } from '../../../../common-utils';
 import { AllPermissions } from '../../../../common-service';
+import SearchBar from '../../../../components/search/search-bar';
 
 const BUTTON_STYLES = {
   height: '24px',
@@ -37,6 +38,7 @@ export const UserGroupList: React.FC = () => {
   });
   const [isExporting, setIsExporting] = useState(false);
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
+  const [searchText, setSearchText] = useState<string>('');
   const handleFilterModal = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
   };
@@ -194,9 +196,25 @@ export const UserGroupList: React.FC = () => {
         </div>
         <div className='flex items-center gap-3'>
           <div className='flex gap-1 relative'>
+            <SearchBar
+              initialSearchText={searchText}
+              onSearch={(value) => {
+                setSearchText(value);
+              }}
+              placeholder='Search'
+              disabled={false}
+              hide={false}
+              setCurrentPage={(pageNo) => {
+                setPage(pageNo + 1);
+                setTableParams((prev) => ({
+                  ...prev,
+                  page: pageNo + 1,
+                }));
+              }}
+            />
             <button
               aria-describedby={modalId}
-              className={`w-[120px] h-[24px] mt-1 text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1  rounded-[2px] relative border border-[#CBD6E2] px-0 py-0 normal-case ${isModalOpen ? 'bg-[#F3F3F3]' : 'bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)]'} hover:text-[#425A76] transition-colors duration-150`}
+              className={`w-[120px] h-[24px] text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1  rounded-[2px] relative border border-[#CBD6E2] px-0 py-0 normal-case ${isModalOpen ? 'bg-[#F3F3F3]' : 'bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)]'} hover:text-[#425A76] transition-colors duration-150`}
               style={{
                 boxShadow: '0px 1px 2px 0px rgba(42, 54, 71, 0.05)',
               }}
@@ -206,7 +224,7 @@ export const UserGroupList: React.FC = () => {
             </button>
             <button
               aria-describedby={filterId}
-              className={`w-[64px] h-[24px] text-[13px] mt-[5px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative 
+              className={`w-[64px] h-[24px] text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative 
               ${isFilterOpen || (appliedFilters && Object.keys(appliedFilters).length > 0) || sortFilterCount > 0 ? 'bg-[#F3F3F3]' : ''}`}
               onClick={handleFilterModal}
             >
@@ -230,7 +248,13 @@ export const UserGroupList: React.FC = () => {
                 filterId={filterId}
                 filterFields={userGroupFilterFields}
                 setAppliedFilters={setAppliedFilters}
-                setPage={setPage}
+                setPage={(pageNo) => {
+                  setPage(pageNo);
+                  setTableParams((prev) => ({
+                    ...prev,
+                    page: pageNo,
+                  }));
+                }}
                 handleCloseFilter={handleCloseFilter}
                 handleSorting={handleSorting}
               />
@@ -266,6 +290,7 @@ export const UserGroupList: React.FC = () => {
             refreshUserGroupTrigger={refreshUserGroupTrigger}
             setColumnAnchorEl={setColumnAnchorEl}
             columnAnchorEl={columnAnchorEl}
+            searchValue={searchText}
           />
         </Suspense>
       </div>

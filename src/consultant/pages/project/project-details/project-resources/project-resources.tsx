@@ -15,12 +15,14 @@ import {
   useUpdateProjectResourceStatus,
 } from '../../../../services/project-resources/project-resource-service';
 import {
+  CHECKLIST_CREATE,
+  NOTES_CREATE,
   PROJECT_RESOURCE_CREATE,
   PROJECT_RESOURCE_EDIT,
 } from '../../../../../routes';
 import { getProjectResourcesColumns } from './list/columns';
 import { ProjectResourcesListType } from '../../../../types/project-resources';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { generatePath, useNavigate, useSearchParams } from 'react-router-dom';
 import ProjectResourceTableHeader from './project-resource-list-header';
 import ProjectResourceDetails from './details/project-resource-detail';
 import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
@@ -57,6 +59,11 @@ import { useFetchState } from '../../../../services/account';
 import { AttachmentsListExportParams } from '../../../../types/attachment';
 import Uploads from '../../../../../components/Attachments/upload';
 
+enum ActionEnum {
+  ACCEPT = 'accept',
+  REJECT = 'reject',
+}
+
 const BUTTON_STYLES = {
   height: '24px !important',
   fontSize: '13px',
@@ -84,6 +91,7 @@ export const ProjectResources = ({
   setAttachmentParams,
   projectCode,
   accountOrProjectInActive,
+  projectFiscalYear,
 }: {
   projectID?: string;
   accountData?: {
@@ -98,6 +106,7 @@ export const ProjectResources = ({
   >;
   projectCode?: string;
   accountOrProjectInActive?: boolean;
+  projectFiscalYear?: number | string;
 }) => {
   const { errorToast } = useToast();
   const [showFilter, setShowFilter] = useState<boolean>(false);
@@ -121,7 +130,10 @@ export const ProjectResources = ({
   const [currentCountry, setCurrentCountry] = useState<string>('');
   const [columnAnchorEl, setColumnAnchorEl] =
     React.useState<HTMLButtonElement | null>(null);
-
+  // const [actionFlag, setActionFlag] = useState<null | ActionEnum>(null);
+  const [loadingRows, setLoadingRows] = useState<
+    Record<string, ActionEnum | null>
+  >({});
   const isModalOpen = Boolean(columnAnchorEl);
   const handleColumnVisibility = (
     event: React.MouseEvent<HTMLButtonElement>
@@ -139,6 +151,7 @@ export const ProjectResources = ({
   const [updateProjectResourceMutation] = useMutation(UPDATE_PROJECT_RESOURCE, {
     client: resourceClient,
   });
+  const [searchText, setSearchText] = useState('');
 
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
 
@@ -149,6 +162,7 @@ export const ProjectResources = ({
   const viewDetails = !!checkDetail;
   const accountID =
     accountData?.accountID || searchParams.get('accountID') || '';
+  const activeMenuPath = searchParams.get('activeMenu') || '';
 
   const [refreshProjectsTrigger, setRefreshProjectsTrigger] = useState<number>(
     Date.now()
@@ -163,6 +177,7 @@ export const ProjectResources = ({
       fiscalYear: convertedFiscalYear,
       accountNumber: accountID,
       projectid: projectID,
+      search: searchText,
     },
     undefined,
     refreshProjectsTrigger
@@ -208,6 +223,7 @@ export const ProjectResources = ({
     projectResData?.account_rid as string,
     projectResData?.rid as string,
     detailrefecth as number
+    // searchText as string
   );
   // const resourceData = resourceDetails?.data?.projectResource;
   const resourceData = useMemo(() => {
@@ -229,10 +245,12 @@ export const ProjectResources = ({
       sortBy: sortField,
       sortOrder: sortOrder,
       filters: appliedFilters,
+      search: searchText,
     });
-  }, [sortField, sortOrder, appliedFilters]);
+  }, [sortField, sortOrder, appliedFilters, searchText]);
   const { data: projectResourceCodeOptions } = useGetProjectResourceCode(
-    accountID as string
+    accountID as string,
+    projectID as string
   );
   const { successToast } = useToast();
   const updateStatusAccept = useUpdateProjectResourceStatus();
@@ -281,10 +299,14 @@ export const ProjectResources = ({
         ':resourceId',
         resourceData.rid
       );
+      const PFY = projectFiscalDate;
       const queryParams = new URLSearchParams({
         account_Id: resourceData.account_rid,
         project_Id: resourceData?.project_fiscal_rid,
         projectCode: projectCode ?? '',
+        PFY: PFY ? JSON.stringify(PFY) : '',
+        account_name: accountData?.accountName || '',
+        account_number: accountData?.accountNumber || '',
       });
       navigate(`${path}?${queryParams.toString()}`);
     }
@@ -381,6 +403,17 @@ export const ProjectResources = ({
     permission,
     AllPermissions.ATTACHMENT_VIEW_EDIT
   );
+
+  const isNoteCreateEnable = checkPermission(
+    permission,
+    AllPermissions.NOTES_CREATE
+  );
+
+  const isChecklistCreateEnable = checkPermission(
+    permission,
+    AllPermissions.CHECKLIST_CREATE
+  );
+
   const handleOpen = () => {
     const newParams = new URLSearchParams(searchParams);
     newParams.set('attachment_entity', 'project_resource');
@@ -403,17 +436,67 @@ export const ProjectResources = ({
   };
   const showUploads =
     searchParams.get('attachment_entity') === 'project_resource';
+
+  const handleCreateNote = () => {
+    const projectResourceId = searchParams.get('pro_res_id');
+    const path = generatePath(NOTES_CREATE, {
+      module: 'project',
+    });
+    const queryParams = new URLSearchParams({
+      accountId: accountID,
+      entityLevel: 'project_resource',
+      entityId: projectResourceId || '',
+      projectFiscalYear: projectFiscalYear?.toString() || '',
+      source: `Project Resource > ${resourceData?.r_number}`,
+      ...(!activeMenuPath ? {} : { activeMenu: activeMenuPath }),
+    });
+    navigate(`${path}?${queryParams.toString()}`);
+  };
+
+  const handleCreateChecklist = () => {
+    const projectResourceId = searchParams.get('pro_res_id');
+    const path = generatePath(CHECKLIST_CREATE, {
+      module: 'project',
+    });
+    const queryParams = new URLSearchParams({
+      accountId: accountID,
+      entityLevel: 'project_resource',
+      entityId: projectResourceId || '',
+      projectFiscalYear: projectFiscalYear?.toString() || '',
+      source: `Project Resource > ${resourceData?.r_number}`,
+      ...(!activeMenuPath ? {} : { activeMenu: activeMenuPath }),
+    });
+    navigate(`${path}?${queryParams.toString()}`);
+  };
+
   const headerButtons = [
     {
       label: 'Add Attachment',
       variant: 'outlined' as const,
       onClick: () => handleOpen(),
+      disabled: accountOrProjectInActive,
       sx: { ...BUTTON_STYLES, width: '120px', minWidth: '48px' },
       hide:
         !viewDetails ||
         !isAttachmentViewEnableMenu ||
         !isAttachmentViewEnableMenuModule ||
         !isAttachmentViewEnablepeormission,
+    },
+    {
+      label: 'Add Note',
+      variant: 'outlined' as const,
+      onClick: () => handleCreateNote(),
+      disabled: accountOrProjectInActive,
+      sx: { ...BUTTON_STYLES, width: '80px', minWidth: '80px' },
+      hide: !viewDetails || !isNoteCreateEnable,
+    },
+    {
+      label: 'Add Checklist',
+      variant: 'outlined' as const,
+      onClick: () => handleCreateChecklist(),
+      disabled: accountOrProjectInActive,
+      sx: { ...BUTTON_STYLES, width: '105px', minWidth: '105px' },
+      hide: !viewDetails || !isChecklistCreateEnable,
     },
     {
       label: viewDetails ? 'Edit' : 'New',
@@ -509,8 +592,6 @@ export const ProjectResources = ({
       (pro) => pro.rid === rowId
     );
     if (!selectedProject) return;
-
-    console.log('selectedProject', selectedProject);
 
     let netCost = '';
 
@@ -617,6 +698,12 @@ export const ProjectResources = ({
     .map((id) => projectResourcesColumns.find((col) => col.id === id)!)
     .filter((col) => columnVisibility[col.id]);
   const handleAccept = (row: ProjectResourcesListType) => {
+    // Set loading for this specific row
+    setLoadingRows((prev) => ({
+      ...prev,
+      [row.rid as string]: ActionEnum.ACCEPT,
+    }));
+
     const payload = {
       rid: row?.rid || '',
       accountId: accountData?.accountID || '',
@@ -624,15 +711,28 @@ export const ProjectResources = ({
       type: row?.status_name || '',
       resourceCode: row?.resource_code,
     };
+
     updateStatusAccept.mutate(payload, {
       onSuccess: (data) => {
         successToast(data?.statusMessage || 'Status updated successfully');
         refetch();
+        // Clear loading for this specific row
+        setLoadingRows((prev) => ({ ...prev, [row.rid as string]: null }));
+      },
+      onError: () => {
+        // Clear loading for this specific row on error too
+        setLoadingRows((prev) => ({ ...prev, [row.rid as string]: null }));
       },
     });
   };
 
   const handleReject = (row: ProjectResourcesListType) => {
+    // Set loading for this specific row
+    setLoadingRows((prev) => ({
+      ...prev,
+      [row.rid as string]: ActionEnum.REJECT,
+    }));
+
     const payload = {
       rid: row?.rid || '',
       accountId: accountData?.accountID || '',
@@ -640,10 +740,17 @@ export const ProjectResources = ({
       type: row?.status_name || '',
       resourceCode: row?.resource_code,
     };
+
     updateStatusAccept.mutate(payload, {
       onSuccess: (data) => {
         successToast(data?.statusMessage || 'Status updated successfully');
         refetch();
+        // Clear loading for this specific row
+        setLoadingRows((prev) => ({ ...prev, [row.rid as string]: null }));
+      },
+      onError: () => {
+        // Clear loading for this specific row on error too
+        setLoadingRows((prev) => ({ ...prev, [row.rid as string]: null }));
       },
     });
   };
@@ -664,20 +771,28 @@ export const ProjectResources = ({
         return [];
     }
 
+    // Get the loading state for this specific row
+    const rowAction = loadingRows[row.rid as string];
+    const isRowLoading = !!rowAction;
+
     return [
       {
         label: statusLabel ? `Accept ${statusLabel}` : 'Accept',
-        onClick: handleAccept,
+        onClick: () => handleAccept(row),
         icon: AcceptIcon,
+        loading: rowAction === ActionEnum.ACCEPT,
+        disabled: isRowLoading || updateStatusAccept.isPending,
         className:
-          'inline-flex items-center gap-1 px-2 py-1 rounded text-[12px] cursor-pointer h-[24px] bg-[#3EA72F1A] hover:bg-[#3EA72F] hover:text-[#fff]',
+          'inline-flex items-center gap-1 px-2 py-1 rounded text-[12px] cursor-pointer h-[24px] bg-[#3EA72F1A] hover:bg-[#3EA72F] hover:text-[#fff] min-w-[140px] max-w-[140px] disabled:opacity-60 disabled:cursor-default',
       },
       {
         label: statusLabel ? `Reject ${statusLabel}` : 'Reject',
-        onClick: handleReject,
+        onClick: () => handleReject(row),
         icon: RejectIcon,
+        loading: rowAction === ActionEnum.REJECT,
+        disabled: isRowLoading || updateStatusAccept.isPending,
         className:
-          'inline-flex items-center gap-1 px-2 py-1 rounded text-[12px] cursor-pointer h-[24px] bg-[#FF3C031A] hover:bg-[#FF3C03] hover:text-[#fff]',
+          'inline-flex items-center gap-1 px-2 py-1 rounded text-[12px] cursor-pointer h-[24px] bg-[#FF3C031A] hover:bg-[#FF3C03] hover:text-[#fff]min-w-[140px] max-w-[140px] disabled:opacity-60 disabled:cursor-default',
       },
     ];
   };
@@ -705,6 +820,8 @@ export const ProjectResources = ({
         setSortFilterCount={setSortFilterCount}
         projectResourceAccountID={accountID}
         projectResourceProjectID={projectID}
+        showSearch={viewDetails ? false : true}
+        onSearch={(text) => setSearchText(text)}
       />
       <>
         {showUploads ? (
@@ -712,6 +829,7 @@ export const ProjectResources = ({
             accountId={accountID}
             attachID={resID}
             onUploadSuccess={handleDetailReFetch}
+            projectFiscalYear={projectFiscalYear}
           />
         ) : (
           <>

@@ -13,10 +13,15 @@ import {
   useProjectTask,
   useUpdateProjectTaskStatus,
 } from '../../../../services/project/project-task-service';
-import { PROJECT_TASK, PROJECT_TASK_EDIT } from '../../../../../routes';
+import {
+  CHECKLIST_CREATE,
+  NOTES_CREATE,
+  PROJECT_TASK,
+  PROJECT_TASK_EDIT,
+} from '../../../../../routes';
 
 import { getProjectTaskColumns } from '../project-task/columns';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { generatePath, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   AllMenus,
   AllModules,
@@ -38,6 +43,7 @@ import {
   FormFiscalDateType,
   ProjectResourcesListType,
   SelectOption,
+  SelectResourceOption,
 } from '../../../../types';
 import {
   CellEditData,
@@ -48,7 +54,10 @@ import { useToast } from '../../../../../hooks';
 import { useMutation } from '@apollo/client';
 import { UPDATE_PROJECT_TASK } from '../../../../../api/graphql/queries/project-query';
 import { taskClient } from '../../../../../api/graphql/clients/client';
-import { useGetProjectResourceCode } from '../../../../services/project-resources/project-resources-form-service';
+import {
+  useGetProjectResourceCode,
+  useGetProjectResourceTaskType,
+} from '../../../../services/project-resources/project-resources-form-service';
 import { checkPermission } from '../../../../../common-utils';
 import { AccessRestricted } from '../../../../../components/account-restricted';
 import Uploads from '../../../../../components/Attachments/upload';
@@ -87,6 +96,7 @@ export const ProjectTask = ({
   setProjectTaskParams,
   projectCode,
   accountOrProjectInActive,
+  projectFiscalYear,
 }: {
   projectID?: string;
   accountData?: {
@@ -101,6 +111,7 @@ export const ProjectTask = ({
   >;
   projectCode?: string;
   accountOrProjectInActive?: boolean;
+  projectFiscalYear?: number | string;
 }) => {
   const { errorToast } = useToast();
   const [showFilter, setShowFilter] = useState<boolean>(false);
@@ -114,8 +125,10 @@ export const ProjectTask = ({
   const [sortField, setSortField] = useState<string>('resource_code');
   const [rowsPerPage, setRowsPerPage] = useState(100);
   const [, setProjectResData] = useState<ProjectTaskListType | null>(null);
+  const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
   const [showProjectTaskDetails, setShowProjectTaskDetails] =
     useState<boolean>(false);
+  const [searchText, setSearchText] = useState('');
   const [searchParams] = useSearchParams();
   const accountID =
     accountData?.accountID || searchParams.get('accountID') || '';
@@ -130,6 +143,8 @@ export const ProjectTask = ({
     setColumnAnchorEl(event.currentTarget);
   };
 
+  const activeMenuPath = searchParams.get('activeMenu') || '';
+
   const navigate = useNavigate();
   const [refreshProjectsTrigger, setRefreshProjectsTrigger] = useState<number>(
     Date.now()
@@ -142,6 +157,9 @@ export const ProjectTask = ({
   const [updateProjectTaskMutation] = useMutation(UPDATE_PROJECT_TASK, {
     client: taskClient,
   });
+  const [loadingRows, setLoadingRows] = useState<
+    Record<string, 'accept' | 'reject' | null>
+  >({});
   const { modules, permission } = useSelector(
     (state: RootState) => state.permission
   );
@@ -162,6 +180,17 @@ export const ProjectTask = ({
     permission,
     AllPermissions.PROJECTS_TASK_CREATE
   );
+
+  const isNoteCreateEnable = checkPermission(
+    permission,
+    AllPermissions.NOTES_CREATE
+  );
+
+  const isChecklistCreateEnable = checkPermission(
+    permission,
+    AllPermissions.CHECKLIST_CREATE
+  );
+
   const projectViewEditFields = useMemo(
     () =>
       permission.find(
@@ -186,6 +215,7 @@ export const ProjectTask = ({
       filters: appliedFilters,
       accountRid: accountID,
       projectRid: projectID,
+      search: searchText,
     },
     undefined,
     refreshProjectsTrigger
@@ -205,6 +235,7 @@ export const ProjectTask = ({
     accountID || '',
     refreshTaskDetailPageTrigger
   );
+
   const { successToast } = useToast();
   const updateStatusAccept = useUpdateProjectTaskStatus();
   const totalItems = data?.count || 0;
@@ -213,7 +244,31 @@ export const ProjectTask = ({
       setProjectTaskList(data?.projectTask || []);
     }
   }, [data]);
+  const type = 'type';
+  const { data: projectResourceTypeOptions } =
+    useGetProjectResourceTaskType(type);
+  const classification = 'classification';
+  const { data: projectResourceClassificationOptions } =
+    useGetProjectResourceTaskType(classification);
 
+  const memoizedProjectResourceType: SelectResourceOption[] = useMemo(
+    () =>
+      projectResourceTypeOptions?.data?.projectTaskTypes?.map((item) => ({
+        label: item.project_task_type_name,
+        value: item.rid,
+      })) || [],
+    [projectResourceTypeOptions?.data?.projectTaskTypes]
+  );
+  const memoizedProjectResourceClassification: SelectResourceOption[] = useMemo(
+    () =>
+      projectResourceClassificationOptions?.data?.projectTaskClassification?.map(
+        (item) => ({
+          label: item.classification_name ?? '',
+          value: item.rid,
+        })
+      ) || [],
+    [projectResourceClassificationOptions?.data?.projectTaskClassification]
+  );
   const handleSorting = (sortBy: string, sortOrder: 'asc' | 'desc') => {
     const defaultSortField = 'resource_code';
     const defaultSortOrder = 'ASC';
@@ -246,7 +301,8 @@ export const ProjectTask = ({
 
   const resourceData = resourceDetails?.data;
   const { data: projectResourceCodeOptions } = useGetProjectResourceCode(
-    accountID as string
+    accountID as string,
+    projectID as string
   );
   const memoizedProjectResourceCode: SelectOption[] = useMemo(
     () =>
@@ -274,13 +330,71 @@ export const ProjectTask = ({
     },
   ];
 
+  const handleCreateNote = (row?: ProjectTaskListType) => {
+    const projectTaskId = row?.rid || searchParams.get('pro_task_id');
+    const path = generatePath(NOTES_CREATE, {
+      module: 'project',
+    });
+    const queryParams = new URLSearchParams({
+      accountId: accountID,
+      entityLevel: 'project_task',
+      entityId: projectTaskId || '',
+      projectFiscalYear: projectFiscalYear?.toString() || '',
+      source: `Project Task > ${resourceData?.r_number || row?.r_number}`,
+      ...(!activeMenuPath ? {} : { activeMenu: activeMenuPath }),
+    });
+    navigate(`${path}?${queryParams.toString()}`);
+  };
+
+  const handleCreateChecklist = (row?: ProjectTaskListType) => {
+    const projectTaskId = row?.rid || searchParams.get('pro_task_id');
+    const path = generatePath(CHECKLIST_CREATE, {
+      module: 'project',
+    });
+    const queryParams = new URLSearchParams({
+      accountId: accountID,
+      entityLevel: 'project_task',
+      entityId: projectTaskId || '',
+      projectFiscalYear: projectFiscalYear?.toString() || '',
+      source: `Project Task > ${resourceData?.r_number || row?.r_number}`,
+      ...(!activeMenuPath ? {} : { activeMenu: activeMenuPath }),
+    });
+    navigate(`${path}?${queryParams.toString()}`);
+  };
+
+  const handleAttachmentClick = (rowId: string) => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('attachment_entity', 'project_task');
+    navigate({
+      pathname: location.pathname,
+      search: newParams.toString(),
+    });
+    setSelectedRowId(rowId);
+  };
   const headerButtons = [
     {
       label: 'Add Attachment',
       variant: 'outlined' as const,
       onClick: () => handleOpen(),
+      disabled: accountOrProjectInActive,
       sx: { ...BUTTON_STYLES, width: '120px', minWidth: '48px' },
       hide: !viewDetails || !isAttachmentCreateEnable,
+    },
+    {
+      label: 'Add Note',
+      variant: 'outlined' as const,
+      onClick: () => handleCreateNote(),
+      disabled: accountOrProjectInActive,
+      sx: { ...BUTTON_STYLES, width: '80px', minWidth: '80px' },
+      hide: !viewDetails || !isNoteCreateEnable,
+    },
+    {
+      label: 'Add Checklist',
+      variant: 'outlined' as const,
+      onClick: () => handleCreateChecklist(),
+      disabled: accountOrProjectInActive,
+      sx: { ...BUTTON_STYLES, width: '105px', minWidth: '105px' },
+      hide: !viewDetails || !isChecklistCreateEnable,
     },
     {
       label: viewDetails ? 'Edit' : 'New',
@@ -323,6 +437,8 @@ export const ProjectTask = ({
         PFY: PFY ? JSON.stringify(PFY) : '',
         source: 'editProjectTask',
         projectCode: projectCode ?? '',
+        account_name: accountData?.accountName || '',
+        account_number: accountData?.accountNumber || '',
       });
       navigate(`${path}?${queryParams.toString()}`);
     }
@@ -361,8 +477,9 @@ export const ProjectTask = ({
       sortBy: sortField,
       sortOrder: sortOrder,
       filters: appliedFilters,
+      search: searchText,
     });
-  }, [sortField, sortOrder, appliedFilters]);
+  }, [sortField, sortOrder, appliedFilters, searchText]);
 
   const handleCreateProjectResource = () => {
     const account_Id = accountID ?? '';
@@ -391,6 +508,8 @@ export const ProjectTask = ({
       PFY: PFY ? JSON.stringify(PFY) : '',
       projectCode: projectCode ?? '',
       source: 'editProjectTask',
+      account_number: accountData?.accountNumber || '',
+      account_name: accountData?.accountName || '',
     });
     navigate(`${path}?${queryParams.toString()}`);
   };
@@ -434,10 +553,18 @@ export const ProjectTask = ({
 
   const projectTaskColumns = getProjectTaskColumns(
     handleProjectTaskClick,
+    handleAttachmentClick,
+    handleCreateNote,
+    handleCreateChecklist,
     memoizedProjectResourceCode,
+    memoizedProjectResourceType,
+    memoizedProjectResourceClassification,
     permissionMapTaskTableColumn,
     accountOrProjectInActive,
-    fiscalDatesArg
+    fiscalDatesArg,
+    isAttachmentCreateEnable,
+    isNoteCreateEnable,
+    isChecklistCreateEnable
   );
   const onRefreshClick = () => {
     setRefreshProjectsTrigger(Date.now());
@@ -526,6 +653,9 @@ export const ProjectTask = ({
     .filter((col) => columnVisibility[col.id]);
   if (!projectTaskIsEnable) return <AccessRestricted />;
   const handleAccept = (row: ProjectResourcesListType) => {
+    // Set loading for this specific row as 'accept'
+    setLoadingRows((prev) => ({ ...prev, [row.rid as string]: 'accept' }));
+
     const payload = {
       rid: row?.rid || '',
       accountId: accountData?.accountID || '',
@@ -533,15 +663,26 @@ export const ProjectTask = ({
       type: row?.status_name || '',
       resourceCode: row?.resource_code,
     };
+
     updateStatusAccept.mutate(payload, {
       onSuccess: (data) => {
         successToast(data?.statusMessage || 'Status updated successfully');
         refetch();
+        // Clear loading for this specific row
+        setLoadingRows((prev) => ({ ...prev, [row.rid as string]: null }));
+      },
+      onError: () => {
+        // Clear loading for this specific row on error too
+        setLoadingRows((prev) => ({ ...prev, [row.rid as string]: null }));
       },
     });
   };
 
+  // Update handleReject function
   const handleReject = (row: ProjectResourcesListType) => {
+    // Set loading for this specific row as 'reject'
+    setLoadingRows((prev) => ({ ...prev, [row.rid as string]: 'reject' }));
+
     const payload = {
       rid: row?.rid || '',
       accountId: accountData?.accountID || '',
@@ -549,10 +690,17 @@ export const ProjectTask = ({
       type: row?.status_name || '',
       resourceCode: row?.resource_code,
     };
+
     updateStatusAccept.mutate(payload, {
       onSuccess: (data) => {
         successToast(data?.statusMessage || 'Status updated successfully');
         refetch();
+        // Clear loading for this specific row
+        setLoadingRows((prev) => ({ ...prev, [row.rid as string]: null }));
+      },
+      onError: () => {
+        // Clear loading for this specific row on error too
+        setLoadingRows((prev) => ({ ...prev, [row.rid as string]: null }));
       },
     });
   };
@@ -574,20 +722,31 @@ export const ProjectTask = ({
         return [];
     }
 
+    // Get the specific action that's loading for this row
+    const rowAction = loadingRows[row.rid as string];
+    const isAcceptLoading = rowAction === 'accept';
+    const isRejectLoading = rowAction === 'reject';
+
     return [
       {
         label: statusLabel ? `Accept ${statusLabel}` : 'Accept',
-        onClick: handleAccept,
+        onClick: () => handleAccept(row),
         icon: AcceptIcon,
+        loading: isAcceptLoading,
+        disabled:
+          isAcceptLoading || isRejectLoading || updateStatusAccept.isPending,
         className:
-          'inline-flex items-center gap-1 px-2 py-1 rounded text-[12px] cursor-pointer h-[24px] bg-[#3EA72F1A] hover:bg-[#3EA72F] hover:text-[#fff]',
+          'inline-flex items-center gap-1 px-2 py-1 rounded min-[140px] max-[140px] text-[12px] cursor-pointer h-[24px] bg-[#3EA72F1A] hover:bg-[#3EA72F] hover:text-[#fff]',
       },
       {
         label: statusLabel ? `Reject ${statusLabel}` : 'Reject',
-        onClick: handleReject,
+        onClick: () => handleReject(row),
         icon: RejectIcon,
+        loading: isRejectLoading,
+        disabled:
+          isAcceptLoading || isRejectLoading || updateStatusAccept.isPending,
         className:
-          'inline-flex items-center gap-1 px-2 py-1 rounded text-[12px] cursor-pointer h-[24px] bg-[#FF3C031A] hover:bg-[#FF3C03] hover:text-[#fff]',
+          'inline-flex items-center gap-1 px-2 py-1 rounded min-[140px] max-[140px] text-[12px] cursor-pointer h-[24px] bg-[#FF3C031A] hover:bg-[#FF3C03] hover:text-[#fff]',
       },
     ];
   };
@@ -599,7 +758,7 @@ export const ProjectTask = ({
         appliedFilters={appliedFilters}
         setAppliedFilters={setAppliedFilters}
         showFilter={showFilter}
-        filterVisibility={filterShow}
+        filterVisibility={filterShow && !showUploads}
         handleFilter={handleFilter}
         setCurrentPage={setCurrentPage}
         resourceTab={projectsTabs}
@@ -612,12 +771,15 @@ export const ProjectTask = ({
         projectResourceProjectID={projectID}
         permissionMapTaskTableColumn={permissionMapTaskTableColumn}
         fiscalDatesArg={fiscalDatesArg}
+        showSearch={viewDetails ? false : !showUploads}
+        onSearch={(text) => setSearchText(text)}
       />
       {showUploads ? (
         <Uploads
           accountId={accountID}
-          attachID={taskId}
+          attachID={taskId || selectedRowId}
           onUploadSuccess={taskDetailPageRefresh}
+          projectFiscalYear={projectFiscalYear}
         />
       ) : (
         <>

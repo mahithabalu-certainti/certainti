@@ -101,6 +101,48 @@ export interface Permissions {
   }[];
 }
 
+interface FieldPermission {
+  field_id: string;
+  field_name: string;
+  field_desc: string;
+  read: boolean;
+  edit: boolean;
+}
+
+interface Permission {
+  type: 'permission';
+  menu_id: string;
+  module_id: string;
+  module_permission_id: string;
+  menu_desc: string;
+  module_desc: string;
+  permission_desc: string;
+  is_field_available: boolean;
+  fields?: FieldPermission[];
+}
+
+// Define Module type
+interface Module {
+  type: 'module';
+  module_id: string;
+  menu_id: string;
+  module_name: string;
+  module_desc: string;
+  menu_desc: string;
+  is_enabled: boolean;
+}
+
+// Define Menu type
+interface Menu {
+  type: 'menu';
+  menu_id: string;
+  menu_name: string;
+  menu_desc: string;
+  is_enabled: boolean;
+}
+
+export type UserDetailPermissions = Permission | Module | Menu;
+
 export enum PermissionsMenus {
   MENU = 'menu',
   MODULE = 'module',
@@ -136,6 +178,8 @@ export enum AllMenus {
   PROJECT_SETTINGS = 'manage_project_settings',
   MANAGE_ACCOUNT_ACCESS = 'manage_account_access',
   FINANCIAL_HIGHLIGHTS = 'financial_highlights',
+  WORKBREAKDOWN = 'workbreakdown',
+  FALLBACK = 'fallback',
 }
 
 export enum AllModules {
@@ -155,10 +199,23 @@ export enum AllModules {
   USER_GROUP = 'manage_user_group',
   PROFILE_MANAGEMENT = 'profile_management',
   ATTACHMENTS = 'attachments',
+  NOTES = 'notes',
   IMPORTS = 'imports',
   MANAGE_ACCOUNT_ACCESS = 'manage_account_access',
   INTERACTIONS = 'interactions',
   INTERACTION_TEMPLATES = 'interaction_templates',
+  EMAIL_TEMPLATES = 'email_templates',
+  CASES = 'cases',
+  CHECKLIST_TEMPLATES = 'checklist_templates',
+  CHECKLISTS = 'checklists',
+  TASK_TEMPLATES = 'task_templates',
+  WORKBREAKDOWN = 'workbreakdown',
+  HISTORICAL_SUBMISSION = 'case_historical_submission',
+  CASES_TEAM = 'case_team',
+  ACTIVITIES_EMAIL = 'activity_email',
+  ACTIVITIES_TASK = 'activity_task',
+  ACTIVITIES_MEETING = 'activity_meeting',
+  ACTIVITIES_CALL = 'activity_call',
 }
 
 export enum AllPermissions {
@@ -195,6 +252,8 @@ export enum AllPermissions {
   PROJECTS_EXPORT = 'projects_export',
   ACCOUNTS_EXPORT = 'accounts_export',
   PROJECTS_VIEW_EDIT = 'projects_view_edit',
+  REVIEW_PROJECTS_VIEW_EDIT = 'case_review_projects_view_edit',
+  REVIEW_PROJECTS_EXPORT = 'case_review_projects_export',
   USER_VIEW_EDIT = 'user_view_edit',
   USER_GROUP_VIEW_EDIT = 'user_group_view_edit',
   PROFILE_VIEW_EDIT = 'profile_view_edit',
@@ -250,6 +309,60 @@ export enum AllPermissions {
   PROJECT_TECHNICAL_SUMMARY_TIMELINE = 'project_technical_summary_timeline',
   PROJECT_TECHNICAL_SUMMARY_VIEW_EDIT = 'projects_tech_summary_view_edit',
   PROJECT_TECHNICAL_SUMMARY_EXPORT = 'projects_tech_summary_export',
+  NOTES_OVERVIEW = 'notes_overview',
+  NOTES_TIMELINE = 'notes_timeline',
+  NOTES_VIEW_EDIT = 'notes_view_edit',
+  NOTES_EXPORT = 'notes_export',
+  NOTES_CREATE = 'notes_create',
+  EMAIL_TEMPLATES_CREATE = 'email_templates_create',
+  EMAIL_TEMPLATES_VIEW_EDIT = 'email_templates_view_edit',
+  EMAIL_TEMPLATES_EXPORT = 'email_templates_export',
+  CASES_OVERVIEW = 'cases_overview',
+  CASES_TIMELINE = 'cases_timeline',
+  CASES_VIEW_EDIT = 'cases_view_edit',
+  CASES_TEAM_VIEW_EDIT = 'case_team_view_edit',
+  CASES_TEAM_CREATE = 'case_team_create',
+  CASES_TEAM_DELETE = 'case_team_delete',
+  CASES_EXPORT = 'cases_export',
+  CASES_CREATE = 'cases_create',
+  CASES_DELETE = 'cases_delete',
+  QRE_PERCENT_HISTORY = 'projects_qre_history_view_edit',
+  CHECKLIST_TEMPLATES_CREATE = 'checklist_templates_create',
+  CHECKLIST_TEMPLATES_VIEW_EDIT = 'checklist_templates_view_edit',
+  CHECKLIST_TEMPLATES_EXPORT = 'checklist_templates_export',
+  CHECKLIST_OVERVIEW = 'checklist_overview',
+  CHECKLIST_TIMELINE = 'checklist_timeline',
+  CHECKLIST_VIEW_EDIT = 'checklists_view_edit',
+  CHECKLIST_EXPORT = 'checklist_export',
+  CHECKLIST_CREATE = 'checklist_create',
+  TASK_TEMPLATES = 'task_templates',
+  CREATE_TASK_TEMPLATE = 'task_templates_create',
+  TASK_TEMPLATE_VIEW_EDIT = 'task_templates_view_edit',
+  TASK_TEMPLATE_EXPORT = 'task_templates_export',
+  CASES_WORKBREAKDOWN_VIEW_EDIT = 'cases_workbreakdown_view_edit',
+  CASES_WORKBREAKDOWN_CREATE = 'cases_workbreakdown_create',
+  CASES_WORKBREAKDOWN_DELETE = 'cases_workbreakdown_delete',
+  CASES_WORKBREAKDOWN_EXPORT = 'cases_workbreakdown_export',
+  HISTORICAL_SUBMISSION_CREATE = 'case_historical_submission_create',
+  HISTORICAL_SUBMISSION_VIEW_EDIT = 'case_historical_submission_view_edit',
+  HISTORICAL_SUBMISSION_DELETE = 'case_historical_submission_delete',
+  ACTIVITIES_OVERVIEW = 'activities_overview',
+  ACTIVITIES_TIMELINE = 'activities_timeline',
+  ACTIVITY_TASK_CREATE = 'activity_task_create',
+  ACTIVITY_TASK_DELETE = 'activity_task_delete',
+  ACTIVITY_TASK_EXPORT = 'activity_task_export',
+  ACTIVITY_TASK_VIEW_EDIT = 'activity_task_view_edit',
+  ACTIVITY_CALL_CREATE = 'activity_call_create',
+  ACTIVITY_CALL_EXPORT = 'activity_call_export',
+  ACTIVITY_CALL_VIEW_EDIT = 'activity_call_view_edit',
+  ACTIVITY_EMAIL_CREATE = 'activity_email_create',
+  ACTIVITY_EMAIL_DELETE = 'activity_email_delete',
+  ACTIVITY_EMAIL_EXPORT = 'activity_email_export',
+  ACTIVITY_EMAIL_VIEW_EDIT = 'activity_email_view_edit',
+  ACTIVITY_MEETING_CREATE = 'activity_meeting_create',
+  ACTIVITY_MEETING_DELETE = 'activity_meeting_delete',
+  ACTIVITY_MEETING_EXPORT = 'activity_meeting_export',
+  ACTIVITY_MEETING_VIEW_EDIT = 'activity_meeting_view_edit',
 }
 
 export interface Country {
@@ -258,6 +371,8 @@ export interface Country {
 }
 
 export type FieldTypes = string | string[] | dayjs.Dayjs | null | File;
+
+export type FilterTypes = Record<string, string | number | boolean | string[]>;
 
 export interface OnChange {
   fieldName: string;
@@ -332,7 +447,16 @@ export interface AxiosErrorMsg {
 export interface UserDetail {
   data?: User;
   loading: boolean;
+  gotoExtendedPermission?: () => void;
 }
+
+export type PermissionTable = {
+  rid: string;
+  menu: string;
+  modules: string;
+  permissions: string;
+  fields: string;
+};
 
 export interface UploadImportPayload {
   entity_type: string;

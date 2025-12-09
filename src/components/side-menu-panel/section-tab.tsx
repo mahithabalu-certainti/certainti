@@ -9,8 +9,9 @@ import {
   FilterValue,
 } from '../../consultant/pages/account-details-sidebar/components/filter/filterType';
 import ActionImportDropdown from '../actions-dropdown/import-dropdown';
-import { SelectOption } from '../../consultant/types';
+import { ActivityMenuItem, SelectOption } from '../../consultant/types';
 import { GlobalFiscalYearDropdown } from '../fiscal-dropdown';
+import SearchBar from '../search/search-bar';
 
 interface TabOption {
   id: string;
@@ -49,6 +50,16 @@ interface TabPanelProps {
   showFiscalYear?: boolean;
   fiscalYearValue?: string;
   updatedYear?: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  showSearch?: boolean;
+  searchDisabled?: boolean;
+  searchHidden?: boolean;
+  searchPlaceholder?: string;
+  onSearchTextChange?: (text: string) => void;
+  onSearch?: (text: string) => void;
+  searchReset?: boolean;
+  onSearchReset?: () => void;
+  showAddActivity?: boolean;
+  activityMenuItems?: ActivityMenuItem[];
 }
 
 const SectionTabPanel: React.FC<TabPanelProps> = ({
@@ -80,11 +91,22 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
   fiscalYearValue,
   updatedYear,
   showFiscalYear,
+  showSearch,
+  searchDisabled = false,
+  searchHidden,
+  searchPlaceholder = 'Search',
+  onSearchTextChange,
+  onSearch,
+  searchReset,
+  onSearchReset,
+  showAddActivity = false,
+  activityMenuItems = [],
 }) => {
   const location = useLocation();
   const [tabValue, setTabValue] = useState('');
   const [filterAnchorEl, setFilterAnchorEl] =
     useState<HTMLButtonElement | null>(null);
+  const [searchText, setSearchText] = useState('');
 
   const isFilterOpen = Boolean(filterAnchorEl);
   const filterId = isFilterOpen ? `${contextKey}-filter-popover` : undefined;
@@ -122,13 +144,6 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
     setFilterAnchorEl(null);
     if (showFilter) handleFilter();
   };
-
-  const menuActivity = [
-    { label: 'Create Task', onClick: () => console.log('Task') },
-    { label: 'Draft Email', onClick: () => console.log('Email') },
-    { label: 'Schedule Meeting', onClick: () => console.log('Meeting') },
-    { label: 'Log a call', onClick: () => console.log('Call') },
-  ];
 
   if (hideTabPanel) {
     return null;
@@ -194,7 +209,24 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
                 />
               </div>
             ))}
-
+          {showSearch && (
+            <Box className={filterVisibility ? 'mr-2' : ''}>
+              <SearchBar
+                initialSearchText={searchText}
+                onSearch={(value) => {
+                  setSearchText(value);
+                  onSearch?.(value);
+                  onSearchTextChange?.(value);
+                }}
+                placeholder={searchPlaceholder || ''}
+                disabled={searchDisabled}
+                hide={searchHidden}
+                reset={searchReset}
+                onReset={onSearchReset}
+                setCurrentPage={setCurrentPage}
+              />
+            </Box>
+          )}
           {filterVisibility && contextKey !== 'details' && (
             <>
               <Box className='relative'>
@@ -251,18 +283,21 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
             />
           )}
 
-          <ActionImportDropdown
-            variant='filled'
-            actions={menuActivity}
-            label='Add Activity'
-            sx={{
-              fontWeight: 600,
-              fontSize: '13px',
-              width: '143px',
-              height: '24px',
-              display: 'none',
-            }}
-          />
+          {showAddActivity && (
+            <Box className='ml-2'>
+              <ActionImportDropdown
+                variant='filled'
+                actions={activityMenuItems || []}
+                label='Add Activity'
+                sx={{
+                  fontWeight: 600,
+                  fontSize: '13px',
+                  width: '143px',
+                  height: '24px',
+                }}
+              />
+            </Box>
+          )}
         </Box>
       </Box>
     </Box>

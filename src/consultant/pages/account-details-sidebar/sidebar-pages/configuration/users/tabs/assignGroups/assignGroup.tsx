@@ -30,6 +30,7 @@ interface AssignGroupsProps {
   setColumnAnchorEl: React.Dispatch<
     React.SetStateAction<HTMLButtonElement | null>
   >;
+  searchValue?: string;
 }
 
 const AssignGroups: React.FC<AssignGroupsProps> = ({
@@ -38,6 +39,7 @@ const AssignGroups: React.FC<AssignGroupsProps> = ({
   setCount,
   columnAnchorEl,
   setColumnAnchorEl,
+  searchValue,
 }) => {
   const { accountid } = useParams();
   const { successToast, errorToast } = useToast();
@@ -47,6 +49,7 @@ const AssignGroups: React.FC<AssignGroupsProps> = ({
     entity_type: 'ACCOUNT',
     page: filterParams.page + 1,
     limit: 100,
+    search: searchValue,
     filters: filterParams.filters,
   });
   const [assignGroupList, setAssignGroupList] = useState<
@@ -99,8 +102,9 @@ const AssignGroups: React.FC<AssignGroupsProps> = ({
       ...prev,
       page: 1,
       filters: filterParams.filters,
+      search: searchValue,
     }));
-  }, [filterParams.filters]);
+  }, [filterParams.filters, searchValue]);
 
   useEffect(() => {
     if (data?.groups?.length) {
@@ -249,7 +253,7 @@ const AssignGroups: React.FC<AssignGroupsProps> = ({
         loading={isLoading}
         error={isError ? 'Failed to load group data' : ''}
         rowsPerPageOptions={[25, 50, 100]}
-        loadindRowCount={7}
+        loadingRowCount={7}
         rowsPerPage={tableParams.limit}
         currentPage={(tableParams.page ?? 1) - 1}
         totalItems={totalItems}

@@ -31,6 +31,7 @@ interface AssignUserProps {
   setColumnAnchorEl: React.Dispatch<
     React.SetStateAction<HTMLButtonElement | null>
   >;
+  searchValue?: string;
 }
 
 const AssignUsers: React.FC<AssignUserProps> = ({
@@ -39,6 +40,7 @@ const AssignUsers: React.FC<AssignUserProps> = ({
   setCount,
   columnAnchorEl,
   setColumnAnchorEl,
+  searchValue,
 }) => {
   const { accountid } = useParams();
   const { successToast, errorToast } = useToast();
@@ -48,6 +50,7 @@ const AssignUsers: React.FC<AssignUserProps> = ({
     entity_type: 'ACCOUNT',
     page: filterParams.page + 1,
     limit: 100,
+    search: searchValue,
     filters: filterParams.filters,
   });
   const [assignUserList, setAssignUserList] = useState<ConfigAssignUserList[]>(
@@ -98,8 +101,9 @@ const AssignUsers: React.FC<AssignUserProps> = ({
       ...prev,
       page: 1,
       filters: filterParams.filters,
+      search: searchValue,
     }));
-  }, [filterParams.filters]);
+  }, [filterParams.filters, searchValue]);
 
   useEffect(() => {
     if (data?.users?.length) {
@@ -250,7 +254,7 @@ const AssignUsers: React.FC<AssignUserProps> = ({
         loading={isLoading}
         error={isError ? 'Failed to load user data' : ''}
         rowsPerPageOptions={[25, 50, 100]}
-        loadindRowCount={7}
+        loadingRowCount={7}
         rowsPerPage={tableParams.limit}
         currentPage={(tableParams.page ?? 1) - 1}
         totalItems={totalItems}

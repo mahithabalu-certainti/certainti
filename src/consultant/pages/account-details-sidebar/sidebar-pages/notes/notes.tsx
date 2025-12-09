@@ -1,9 +1,517 @@
-import { ComingSoon } from '../../../../../assets';
+import {
+  generatePath,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom';
+import {
+  AllModules,
+  AllPermissions,
+  FilterTypes,
+  OverviewTabs,
+} from '../../../../../common-service';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../../store/store';
+import { useNotesList } from '../../../../services/notes/notes-service';
+import {
+  ListTable,
+  ManageColumnsPopover,
+} from '../../../../../components/table';
+import SectionHeader from '../../../../../components/details-section/section-header';
+import { NotesSideIcon } from '../../../../../assets';
+import { SectionTabPanel } from '../../../../../components';
+import {
+  CellEditData,
+  FieldChangeValue,
+  ShowHideTableColumn,
+} from '../../../../../components/table/types';
+import {
+  ExportType,
+  NotesList,
+  NotesListExportParams,
+} from '../../../../types';
+import {
+  getNotesFilterFields,
+  getNotesTableColumns,
+} from '../../../notes/helpers';
+import { NOTES_CREATE, NOTES_EDIT } from '../../../../../routes';
+import NotesDetails from './notes-details';
+import { useMutation } from '@apollo/client';
+import { NOTES_UPDATE } from '../../../../../api/graphql/queries/notes-query';
+import { resourceClient } from '../../../../../api/graphql/clients/client';
+import { useToast } from '../../../../../hooks';
+import { accountDetailsProps } from '../../../account-details/utils';
+import { checkPermission } from '../../../../../common-utils';
+import { AccessRestricted } from '../../../../../components/account-restricted';
+import { useGetUserOptions } from '../../../../services/case-team';
 
-const Notes = () => {
+const NotesTabs: OverviewTabs[] = [
+  {
+    id: AllPermissions.NOTES_OVERVIEW,
+    name: 'Overview',
+    hide: false,
+  },
+  // {
+  //   id: AllPermissions.NOTES_TIMELINE,
+  //   name: 'Timeline',
+  //   hide: false,
+  //   disable: true,
+  // },
+];
+
+interface NotesProps {
+  setExportType?: (type: ExportType) => void;
+  setNotesParams: React.Dispatch<React.SetStateAction<NotesListExportParams>>;
+  accountInActive: boolean;
+  accountDetails?: accountDetailsProps;
+}
+
+const Notes: React.FC<NotesProps> = ({
+  setExportType,
+  setNotesParams,
+  accountInActive,
+  accountDetails,
+}) => {
+  const { errorToast } = useToast();
+  const { accountid } = useParams();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const [appliedFilters, setAppliedFilters] = useState<FilterTypes>({});
+  const [showFilter, setShowFilter] = useState<boolean>(false);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [refreshNotes, setRefreshNotes] = useState<number>(Date.now());
+  const [rowsPerPage, setRowsPerPage] = useState(100);
+  const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('ASC');
+  const [sortField, setSortField] = useState<string>('r_number');
+  const [notesList, setNotesList] = useState<NotesList[]>([]);
+  const [sortFilterCount, setSortFilterCount] = useState<number>(0);
+  const [searchText, setSearchText] = useState('');
+
+  const [columnAnchorEl, setColumnAnchorEl] =
+    React.useState<HTMLButtonElement | null>(null);
+
+  const isModalOpen = Boolean(columnAnchorEl);
+  const handleColumnVisibility = (
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    setColumnAnchorEl(event.currentTarget);
+  };
+
+  const [updateNotes] = useMutation(NOTES_UPDATE, {
+    client: resourceClient,
+  });
+
+  const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
+    (state: RootState) => state.account
+  );
+
+  const { permission, modules } = useSelector(
+    (state: RootState) => state.permission
+  );
+
+  const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
+  const noteId = searchParams.get('note_id');
+  const viewDetails = !!noteId;
+  const activeMenuPath = searchParams.get('activeMenu') || '';
+
+  // User List Api
+  const userListData = useGetUserOptions(accountid);
+
+  const { data, isLoading, isError } = useNotesList(
+    {
+      page: currentPage + 1,
+      limit: rowsPerPage,
+      sortBy: sortField,
+      sortOrder: sortOrder,
+      filters: appliedFilters,
+      attachmentLevel: 'account',
+      accountRid: accountid || '',
+      entityId: accountid || '',
+      search: searchText,
+      fiscalYear: convertedFiscalYear,
+    },
+    !viewDetails,
+    refreshNotes
+  );
+  const totalItems = data?.count || 0;
+
+  useEffect(() => {
+    if (data) {
+      setNotesList(data.notes || []);
+    }
+  }, [data]);
+
+  useEffect(() => {
+    if (setExportType) {
+      setExportType('notes');
+    }
+    setNotesParams({
+      sortBy: sortField,
+      sortOrder: sortOrder,
+      filters: appliedFilters,
+      fiscalYear: convertedFiscalYear,
+      search: searchText,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [appliedFilters, sortField, sortOrder, convertedFiscalYear, searchText]);
+
+  const userListOptions = useMemo(() => {
+    return (
+      userListData?.data?.map((item) => ({
+        value: item.rid,
+        label: item.name,
+      })) || []
+    );
+  }, [userListData]);
+
+  // Permissions
+  const isNotesExportEnable = checkPermission(
+    permission,
+    AllPermissions.NOTES_EXPORT
+  );
+
+  const notesEnable = checkPermission(modules, AllModules.NOTES);
+
+  const isNotesViewEnable = checkPermission(
+    permission,
+    AllPermissions.NOTES_VIEW_EDIT
+  );
+
+  const isNoteCreateEnable = checkPermission(
+    permission,
+    AllPermissions.NOTES_CREATE
+  );
+
+  const notesEditFields = useMemo(
+    () =>
+      permission?.find((item) => item.name === AllPermissions.NOTES_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+
+  const notesFieldsEditable = useMemo(
+    () =>
+      permission
+        .find((item) => item.name === AllPermissions.NOTES_VIEW_EDIT)
+        ?.fields?.some((field) => field.edit),
+    [permission]
+  );
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    notesEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [notesEditFields]);
+
+  const handleFilter = () => {
+    setShowFilter(!showFilter);
+  };
+  const onRefreshClick = () => {
+    setRefreshNotes(Date.now());
+  };
+
+  const handleSorting = (sortBy: string, sortOrder: 'asc' | 'desc') => {
+    const defaultSortField = 'r_number';
+    const defaultSortOrder = 'ASC';
+    const apiOrder = sortOrder.toUpperCase() as 'ASC' | 'DESC';
+
+    if (!sortBy) {
+      setSortFilterCount(0);
+      setSortOrder(defaultSortOrder);
+      setSortField(defaultSortField);
+    } else {
+      setSortFilterCount(1);
+      setSortOrder(apiOrder);
+      setSortField(sortBy);
+    }
+  };
+
+  const handleCreate = () => {
+    const accountId = accountid ?? '';
+    const accountName = accountDetails?.accountById?.account_name || '';
+    const path = generatePath(NOTES_CREATE, {
+      module: 'account',
+    });
+    const queryParams = new URLSearchParams({
+      accountId,
+      entityLevel: 'account',
+      entityId: accountId,
+      source: `Account > ${accountName}`,
+      ...(!activeMenuPath ? {} : { activeMenu: activeMenuPath }),
+    });
+    navigate(`${path}?${queryParams.toString()}`);
+  };
+
+  const handleEdit = (row: NotesList) => {
+    const accountId = accountid ?? '';
+    const accountName = accountDetails?.accountById?.account_name || '';
+    const path = generatePath(NOTES_EDIT, {
+      module: 'account',
+      noteId: row.rid,
+    });
+    const queryParams = new URLSearchParams({
+      accountId,
+      entityLevel: row.attachment_level || 'account',
+      entityId: row.attach_to || accountId,
+      source: `Account > ${accountName}`,
+      ...(!activeMenuPath ? {} : { activeMenu: activeMenuPath }),
+    });
+    navigate(`${path}?${queryParams.toString()}`);
+  };
+
+  const headerButtons = [
+    {
+      label: 'New',
+      variant: 'outlined' as const,
+      disabled: accountInActive,
+      onClick: () => handleCreate(),
+      sx: { width: '48px', minWidth: '48px' },
+      hide: !isNoteCreateEnable,
+    },
+    {
+      label: 'Show/Hide Fields',
+      variant: 'outlined' as const,
+      disabled: false,
+      onClick: handleColumnVisibility,
+      sx: { width: '125px', minWidth: '125px' },
+      hide: false,
+    },
+  ];
+
+  const actionMenuItems = [
+    {
+      label: 'Edit',
+      disabled: accountInActive,
+      onClick: (row: NotesList) => handleEdit(row),
+      hide: !notesFieldsEditable,
+    },
+  ];
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+  };
+
+  const handleRowsPerPageChange = (newPageSize: number) => {
+    setRowsPerPage(newPageSize);
+    setCurrentPage(1);
+  };
+
+  const handleSortRequest = (property: string, sortOrder: 'asc' | 'desc') => {
+    const apiOrder = sortOrder.toUpperCase() as 'ASC' | 'DESC';
+    setSortOrder(apiOrder);
+    setSortField(property);
+  };
+
+  const handleNoteView = (rowId: string) => {
+    if (rowId) {
+      searchParams.set('note_id', rowId);
+      navigate({ search: searchParams.toString() }, { replace: true });
+    }
+  };
+
+  const handleDownload = (documentUrl: string) => {
+    if (!documentUrl) return;
+
+    const link = document.createElement('a');
+    link.href = documentUrl;
+    link.download = '';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const notesColumns = getNotesTableColumns(
+    accountInActive,
+    handleNoteView,
+    handleDownload,
+    isNotesExportEnable,
+    permissionMap,
+    userListOptions
+  );
+
+  const notesFilterFields = getNotesFilterFields(
+    permissionMap,
+    userListOptions
+  );
+
+  const getRowId = (row: NotesList) => row.rid;
+
+  const handlePopoverClose = () => {
+    setColumnAnchorEl(null);
+  };
+
+  const modalId = isModalOpen
+    ? 'account-notes-list-column-visibility-popover'
+    : undefined;
+
+  const RestrictedColumns = [
+    {
+      id: 'r_number',
+      canHide: false,
+      canDrag: false,
+    },
+  ];
+
+  const [columnVisibility, setColumnVisibility] = useState<
+    Record<string, boolean>
+  >(Object.fromEntries(notesColumns.map((col) => [col.id, !col.hide])));
+
+  const [columnOrder, setColumnOrder] = useState(
+    notesColumns.map((col) => col.id)
+  );
+
+  const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
+    const newVisibility = Object.fromEntries(
+      updatedColumns.map((col) => [col.id, !col.hide])
+    );
+    setColumnVisibility(newVisibility);
+    setColumnOrder(updatedColumns.map((col) => col.id));
+  };
+
+  const visibleColumns = columnOrder
+    .map((id) => notesColumns.find((col) => col.id === id)!)
+    .filter((col) => columnVisibility[col.id]);
+
+  const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
+    const previousNotes = [...notesList];
+    // Find account_id
+    const rowData = notesList.find((note) => note.rid === rowId);
+
+    const updateData = updates.reduce<Record<string, FieldChangeValue>>(
+      (acc, item) => {
+        let value = item.value;
+        if (item.columnId === 'fiscal_year' && typeof value === 'string') {
+          const numValue = Number(value);
+          value = !isNaN(numValue) ? numValue : value;
+        }
+        acc[item.editId || item.columnId] = value;
+        return acc;
+      },
+      {
+        rid: rowId,
+        account_rid: rowData?.account_rid,
+      }
+    );
+
+    try {
+      const res = await updateNotes({
+        variables: { data: updateData },
+      });
+      const result = res.data?.updateNotesInline;
+      if (result?.statusCode === 200 && result.data) {
+        const updateNotes = result.data;
+        setNotesList((prev) =>
+          prev.map((note) => {
+            if (note.rid === updateNotes.rid) {
+              return {
+                ...note,
+                ...updateNotes,
+              };
+            }
+            return note;
+          })
+        );
+      } else {
+        errorToast(result?.statusMessage || 'Failed to update filed');
+        setNotesList(previousNotes);
+      }
+    } catch (error) {
+      errorToast((error as Error)?.message || 'Failed to update filed');
+      setNotesList(previousNotes);
+    }
+  };
+
+  if (!notesEnable || !isNotesViewEnable) return <AccessRestricted />;
+
   return (
-    <div className='flex items-center justify-center h-full'>
-      <ComingSoon alt='comingSoon' />
+    <div className='w-full pt-2 pl-2 pr-4'>
+      <SectionTabPanel
+        tabs={NotesTabs}
+        filterMenu={notesFilterFields}
+        filterVisibility={viewDetails ? false : true}
+        showFilter={showFilter}
+        contextKey='notes'
+        appliedFilters={appliedFilters}
+        setAppliedFilters={setAppliedFilters}
+        setCurrentPage={setCurrentPage}
+        handleFilter={handleFilter}
+        handleSorting={handleSorting}
+        sortFilterCount={sortFilterCount}
+        setSortFilterCount={setSortFilterCount}
+        showRefresh={viewDetails ? false : true}
+        onRefreshClick={onRefreshClick}
+        showSearch={viewDetails ? false : true}
+        searchDisabled={false}
+        searchPlaceholder='Search'
+        onSearch={(text) => setSearchText(text)}
+      />
+      {viewDetails ? (
+        <NotesDetails
+          accountInActive={accountInActive}
+          accountName={accountDetails?.accountById?.account_name || ''}
+        />
+      ) : (
+        <>
+          <SectionHeader
+            title='Notes'
+            count={totalItems}
+            showItemCount={true}
+            titleIcon={
+              <NotesSideIcon
+                className='[&>path]:stroke-white'
+                alt='Notes-header-icon'
+              />
+            }
+            buttons={headerButtons}
+            iconBg='#7F81F4'
+            bgType='circle'
+          />
+          <div className='border border-[#CBD6E2]'>
+            <ManageColumnsPopover
+              anchorEl={columnAnchorEl}
+              open={isModalOpen}
+              popoverId={modalId}
+              onClose={handlePopoverClose}
+              columns={notesColumns}
+              onColumnsChange={handleColumnsChange}
+              columnRestrictions={RestrictedColumns}
+            />
+            <ListTable
+              data={notesList}
+              columns={visibleColumns}
+              getRowId={getRowId}
+              hoverHighlight={false}
+              tableStyle={{
+                borderBottom: '1px solid #CBD6E2',
+                height: '100%',
+                maxHeight: 'calc(100vh - 320px)',
+                overflow: 'auto',
+              }}
+              stickyHeader={true}
+              stickyColumnsCount={1}
+              selectable={false}
+              actionWidth={80}
+              actionDisplayMode='dropdown'
+              actionMenuItems={actionMenuItems}
+              loading={isLoading}
+              error={isError ? 'Failed to load notes records' : undefined}
+              rowsPerPageOptions={[25, 50, 100]}
+              rowsPerPage={rowsPerPage}
+              currentPage={currentPage}
+              totalItems={totalItems}
+              onPageChange={handlePageChange}
+              onRowsPerPageChange={handleRowsPerPageChange}
+              sortBy={sortField}
+              sortOrder={sortOrder.toUpperCase() as 'ASC' | 'DESC'}
+              onSort={handleSortRequest}
+              onCellEdit={handleCellEdit}
+            />
+          </div>
+        </>
+      )}
     </div>
   );
 };

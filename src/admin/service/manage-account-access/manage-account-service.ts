@@ -27,13 +27,14 @@ export const fetchManageuserList = async (
   if (!accountId) {
     throw new Error('User ID is missing from URL');
   }
-
   const queryParams = {
+    page: params.page || 1,
+    limit: params.limit || 100,
     sortBy: params.sortBy || 'createdAt',
     sortOrder: params.sortOrder || 'DESC',
     entity_type: params.entity_type || 'Account',
     ...(params.filters && { filters: params.filters }),
-    ...(params.searchTerm && { search: params.searchTerm }),
+    ...(params.search && { search: params.search }),
   };
 
   const url = getManageUserListUrl(accountId, queryParams);
@@ -49,11 +50,13 @@ export const fetchManageGroupList = async (
   if (!accountId) throw new Error('User ID missing from URL');
 
   const queryParams = {
+    page: params.page || 1,
+    limit: params.limit || 100,
     sortBy: params.sortBy || 'createdAt',
     sortOrder: params.sortOrder || 'DESC',
     entity_type: params.entity_type || 'Account',
     ...(params.filters && { filters: params.filters }),
-    ...(params.searchTerm && { search: params.searchTerm }),
+    ...(params.search && { search: params.search }),
   };
 
   const url = getManageGroupListUrl(accountId, queryParams);
@@ -104,7 +107,6 @@ export const useManageProjectAccessList = (
   params: ManageUserListParms,
   refreshProfileTrigger?: number
 ) => {
-  console.log('useManageProjectAccessList', accountId, entityId, params);
   return useQuery<ManageAccountProjectListApiResponse, Error>({
     queryKey: [
       'manageProjectAccessList',

@@ -1,6 +1,8 @@
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
+import customParseFormat from 'dayjs/plugin/customParseFormat';
+dayjs.extend(customParseFormat);
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
@@ -48,6 +50,7 @@ export const createTextField = (
     anyOneRequired?: boolean;
     hide?: boolean;
     defaultValue?: string;
+    prefixValue?: string;
     errorHandling?: ErrorHandling[];
     resetDependsFields?: string[];
     clearValue?: Record<string, string>;
@@ -80,6 +83,7 @@ export const createTextField = (
   defaultValue: options.defaultValue,
   resetDependsFields: options.resetDependsFields,
   formatCostValue: options.formatCostValue,
+  prefixValue: options.prefixValue,
 });
 
 export const createPhoneInputField = (
@@ -133,6 +137,8 @@ export const createCheckboxField = (
     required?: boolean;
     checkboxOptions: SelectOption[];
     defaultValue?: string;
+    onChange?: boolean;
+    resetDependsFields?: string[];
   }
 ): FieldType => ({
   type: 'checkbox',
@@ -141,6 +147,8 @@ export const createCheckboxField = (
   required: options.required ?? false,
   options: options.checkboxOptions,
   defaultValue: options.defaultValue,
+  onChange: options.onChange,
+  resetDependsFields: options.resetDependsFields,
 });
 
 export const createRadioField = (
@@ -229,6 +237,7 @@ export const createSelectField = (
     required: boolean;
     width?: string;
     placeholder?: string;
+    requiredErrorMessage?: string;
     disabled?: boolean;
     clearValue?: Record<string, string>;
     onChange?: boolean;
@@ -249,6 +258,7 @@ export const createSelectField = (
   width: others.width,
   disabled: others.disabled,
   placeholder: others.placeholder,
+  requiredErrorMessage: others.requiredErrorMessage,
   clearValue: others.clearValue,
   onChange: others.onChange,
   isLoading: others.isLoading,
@@ -258,6 +268,44 @@ export const createSelectField = (
   assignDefaultValue: others.assignDefaultValue,
   dependantLabel: others.dependantLabel,
   isFiscalYear: others.isFiscalYear,
+});
+export const createMultiSelectField = (
+  name: string,
+  label: string,
+  others: {
+    options: SelectOption[];
+    required: boolean;
+    width?: string;
+    placeholder?: string;
+    requiredErrorMessage?: string;
+    disabled?: boolean;
+    clearValue?: Record<string, string>;
+    onChange?: boolean;
+    isLoading?: boolean;
+    hide?: boolean;
+    resetDependsFields?: string[];
+    defaultValue?: string;
+    assignDefaultValue?: boolean;
+    dependantLabel?: string;
+  }
+): FieldType => ({
+  type: 'multiSelect',
+  name,
+  label,
+  required: others.required,
+  options: others.options,
+  width: others.width,
+  disabled: others.disabled,
+  placeholder: others.placeholder,
+  requiredErrorMessage: others.requiredErrorMessage,
+  clearValue: others.clearValue,
+  onChange: others.onChange,
+  isLoading: others.isLoading,
+  hide: others.hide,
+  defaultValue: others.defaultValue,
+  resetDependsFields: others.resetDependsFields,
+  assignDefaultValue: others.assignDefaultValue,
+  dependantLabel: others.dependantLabel,
 });
 
 export const createAutoCompleteField = (
@@ -356,8 +404,11 @@ export const createDateField = (
     disabled?: boolean;
     hide?: boolean;
     disableFutureDates?: boolean;
+    allowFutureDates?: boolean;
+    resetDependsFields?: string[];
     minDate?: Date;
     maxDate?: Date;
+    onChange?: boolean;
     endDateValue?: boolean;
     startDateLabel?: string;
     endDateLabel?: string;
@@ -365,18 +416,22 @@ export const createDateField = (
     dateRangeError?: boolean;
     startValue?: boolean;
     errorMessage?: string;
+    clearDate?: string;
+    customDateOpen?: Date;
   }
 ): FieldType => ({
   type: 'date',
   name,
   label,
   required: others.required,
-  placeholder: 'YYYY-MM-DD',
+  placeholder: 'YYYY-MMM-DD',
   minDate: others.minDate,
   maxDate: others.maxDate,
   disabled: others.disabled,
   hide: others.hide,
+  onChange: others.onChange,
   disableFutureDates: others.disableFutureDates,
+  allowFutureDates: others.allowFutureDates,
   greaterThan: others.greaterThan,
   dateRangeError: others.dateRangeError,
   startValue: others.startValue,
@@ -384,6 +439,9 @@ export const createDateField = (
   startDateLabel: others.startDateLabel,
   endDateLabel: others.endDateLabel,
   errorMessage: others.errorMessage,
+  clearDate: others.clearDate,
+  resetDependsFields: others.resetDependsFields,
+  customDateOpen: others.customDateOpen,
 });
 
 export const createFiscalDateField = (
@@ -439,6 +497,9 @@ export const REGEX_PATTERNS = {
   EMAIL:
     /^(?=.{6,254}$)[a-zA-Z0-9]+(?:[._+-][a-zA-Z0-9]+)*@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,63}$/,
   PHONE: /^([0-9]{10})$/,
+  CLIENT_ID:
+    /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/,
+  SECRET: /^\S+$/,
   WEBSITE:
     /^(https?:\/\/|www\.)[a-zA-Z0-9-.]+\.[a-zA-Z]{2,}(:[0-9]+)?(\/[a-zA-Z0-9-._~:/?#[\]@!$&'()*+,;=%]*)?$/,
   MAX_WEBSITE: /^.{0,255}$/,
@@ -449,6 +510,7 @@ export const REGEX_PATTERNS = {
   EFFORTS_NUMBER: /^(?:[0-9]{1,16})(?:\.[0-9]{1,2})?$/,
   EFFORTS_INTEGER_NUMBER: /^[0-9]{1,16}$/,
   EFFORTS_INTEGER_9: /^[0-9]{1,9}$/,
+  ALLOW_ONE_TO_99: /^[1-9][0-9]?$/,
   DESCRIPTION: /^.{0,500}$/,
   RESOURCE_DESCRIPTION: /^.{0,1000}$/,
   ACCOUNT_DESCRIPTION: /^[\s\S]{0,2000}$/,
@@ -465,6 +527,7 @@ export const REGEX_PATTERNS = {
   USER_NAME: /^(?!.*['-]{2})(?!.*^\s)(?!.*\s$)[A-Za-z]+(?:['-][A-Za-z]+)*$/,
   STREET_REGEX: /^(?![\W_]+$)(?!\s*$)[a-zA-Z0-9\s,.\-#]+$/,
   MAX_255: /^.{0,255}$/,
+  MAX_250: /^.{0,250}$/,
   MAX_64: /^.{0,64}$/,
   MAX_50: /^.{0,50}$/,
   MAX_100: /^.{0,100}$/,
@@ -522,6 +585,7 @@ export const REGEX_PATTERNS = {
   ACCOUNT_ORG_NAME: /^[A-Za-z0-9 -&.,']+$/,
   MAX_ORG_NAME_LEGNTH: /^.{7,125}/,
   MIN_ORG_NAME_LEGNTH: /^.{7,}/,
+  EMAIL_SUBJECT: /^[A-Za-z0-9\s&\-.'",{}_]+$/,
 };
 export const PROJECT_RESOURCE_REGEX = {
   // UUID VALIDATION STANDARD FORMAT
@@ -677,12 +741,17 @@ export const formatAddress = (userDatas?: UserDetail) => {
 
 export const getDateTimeFormat = (date?: string) => {
   if (!date) return '';
-  return dayjs.utc(date).local().format('MM-DD-YYYY HH:mm:ss');
+  // return dayjs.utc(date).local().format('MM-DD-YYYY HH:mm:ss'); // For future ref.
+  return dayjs.utc(date).local().format('MMM-DD-YYYY hh:mm:ss A').toUpperCase();
 };
 
-export const getDateFormat = (date?: string) => {
+export const getDateFormatYYYYMMDD = (date?: string) => {
   if (!date) return '';
   return dayjs(date).format('YYYY-MM-DD');
+};
+export const getDateFormat = (date?: string) => {
+  if (!date) return '';
+  return dayjs(date).format('YYYY-MMM-DD');
 };
 export const STATUS_OPTIONS: SelectOption[] = [
   { label: 'Active', value: 'active' },
@@ -762,7 +831,22 @@ export const formatDateToYYYYMMDDWithTime = (
 
   // Date parts
   const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
+  // const month = String(date.getMonth() + 1).padStart(2, '0');
+  const monthNames = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+  const month = monthNames[date.getMonth()];
   const year = date.getFullYear();
 
   // Time parts (12-hour format with AM/PM)
@@ -853,9 +937,9 @@ export const getFiscalDateBounds = (
     startYear = fiscalYear - 1;
     endYear = fiscalYear;
   } else {
-    // FY 2024 with Jan–Dec → Jan 2023 to Dec 2023
-    startYear = fiscalYear - 1;
-    endYear = fiscalYear - 1;
+    // FY 2024 with Jan–Dec → Jan 2024 to Dec 2024
+    startYear = fiscalYear;
+    endYear = fiscalYear;
   }
 
   const startDateMin = getFiscalParseDateFromMMDD(
@@ -976,4 +1060,55 @@ export const getDisableReason = (
     return 'This interaction is currently queued for sending';
   if (status === '') return 'Interaction status is invalid or undefined';
   return '';
+};
+
+export const formatMonthDay = (dateStr: string): string => {
+  if (!dateStr) return '';
+  const [month, day] = dateStr.split('/');
+
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+
+  const monthIndex = parseInt(month, 10) - 1;
+  const monthName = months[monthIndex] || '';
+
+  return `${monthName}/${day}`;
+};
+
+export const getIntersection = (
+  aStart: string,
+  aEnd: string,
+  bStart: string,
+  bEnd: string
+) => {
+  const start = new Date(
+    Math.max(new Date(aStart).getTime(), new Date(bStart).getTime())
+  );
+  const end = new Date(
+    Math.min(new Date(aEnd).getTime(), new Date(bEnd).getTime())
+  );
+  return start <= end
+    ? { start: start.toISOString(), end: end.toISOString() }
+    : null;
+};
+
+export const formatTimeToAMPM = (time?: string | null): string => {
+  if (!time || typeof time !== 'string') return '-';
+  const trimmed = time.trim();
+  // Accept common time formats
+  const parsed = dayjs(trimmed, ['HH:mm', 'HH:mm:ss', 'H:mm'], true);
+  if (!parsed.isValid()) return '-';
+  return parsed.format('hh:mm A'); // AM/PM
 };

@@ -186,7 +186,10 @@ export enum OthersEnum {
   Other = 'other',
   Others = 'others',
 }
-
+export enum TaskType {
+  Action = 'action',
+  Milestone = 'milestone',
+}
 export enum ResourceType {
   full_time = 'full-time',
 }
@@ -372,6 +375,7 @@ export interface AccountListURLParams {
   filters?: object;
   globalFilters?: globalFilters;
   fiscalYear?: string;
+  search?: string;
 }
 
 export interface globalFilters {
@@ -510,7 +514,6 @@ export type ExportType =
   | 'financial_resource_cost'
   | 'financial_project_cost'
   | 'resource_attachments'
-  | 'resource_attachments'
   | 'projectTask'
   | 'project_resource'
   | 'timesheet'
@@ -518,7 +521,16 @@ export type ExportType =
   | 'timesheet_project'
   | 'timesheet_project_resource'
   | 'timesheet_project_task'
-  | 'technical_summary';
+  | 'technical_summary'
+  | 'resource_notes'
+  | 'notes'
+  | 'cases'
+  | 'checklist'
+  | 'resource_checklist'
+  | 'cases_projects'
+  | 'case_task'
+  | 'review_projects'
+  | 'activities';
 
 export type FinancialSummaryFlag = 'all' | 'rd_qualified';
 
@@ -546,4 +558,11 @@ export interface FinancialStateProps {
   accountId: string;
   countryId: string;
   fiscalYear: string;
+}
+
+export interface ActivityMenuItem {
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+  hide?: boolean;
 }
