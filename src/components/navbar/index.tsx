@@ -46,6 +46,7 @@ import { useMsal } from '@azure/msal-react';
 import { msalResetPasswordConfig } from '../../config/msalConfig';
 import CompanyBadge from './company-badge';
 import { useIsFetching } from '@tanstack/react-query';
+import NotificationPanel from './notification-panel';
 
 interface NavbarProps {
   showAdminSidebar: boolean;
@@ -529,19 +530,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             {/* <IconButton size='large' color='inherit'>
               <PhoneIcon alt='phone' className='h-[20px] w-[20px]' />
             </IconButton> */}
-            {/* <IconButton
-              size='large'
-              aria-label='notification'
-              aria-haspopup='true'
-              onClick={handleNotificationOpen}
-              color='inherit'
-              aria-controls={notificationId}
-            >
-              <NotificationIcon
-                alt='notification'
-                className='h-[22px] w-[22px]'
-              />
-            </IconButton> */}
+            <NotificationPanel />
             {isAdminEnable && (
               <Tooltip
                 title={`${isAnyApiWasLoading ? 'Loading...' : `Switch to ${showAdminSidebar ? 'Consultant' : 'Admin'}`}`}

@@ -66,3 +66,18 @@ export interface AccountFilter {
     account_name: string;
   }[];
 }
+
+// Notification
+export interface NotificationItem {
+  rid: string;
+  message: string;
+  is_read: boolean;
+  created_datetime: string;
+}
+
+export interface NotificationResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: NotificationItem[];
+}
