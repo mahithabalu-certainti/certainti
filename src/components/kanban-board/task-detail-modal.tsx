@@ -1479,6 +1479,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
             <TextButton
               label='Save'
               onClick={handleSave}
+              loading={isSaving}
               disabled={!hasTaskChanged() || isSaving}
               sx={{ padding: '6px 12px' }}
             />
