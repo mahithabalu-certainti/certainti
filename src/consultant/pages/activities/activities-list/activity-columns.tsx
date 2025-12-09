@@ -80,12 +80,13 @@ export const getActivityAllActivityListColumns = (
     hide: shouldHideColumn('attached_to', permissionMaps),
   },
   {
-    id: 'due_date',
+    id: 'effective_end_datetime',
     label: 'Due Date',
     sortable: true,
-    sortId: 'due_date',
-    width: 160,
+    sortId: 'effective_end_datetime',
+    width: 200,
     hide: shouldHideColumn('effective_end_datetime', permissionMaps),
+    render: (row) => formatDateToYYYYMMDDWithTime(row.effective_end_datetime),
   },
 ];
 

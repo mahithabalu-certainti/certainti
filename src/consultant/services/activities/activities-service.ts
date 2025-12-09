@@ -272,10 +272,9 @@ export const useUpdateActivityTask = () => {
 };
 
 // Activty Status
-export const getActivityStatusUrl = (activity_type?: string): string =>
-  activity_type
-    ? `/api/activities/activityStatus?activity_type=${activity_type}`
-    : '/api/activities/activityStatus';
+export const getActivityStatusUrl = (activity_type?: string): string => {
+  return `/api/activities/activityStatus?activity_type=${activity_type}`;
+};
 
 export const fetchActivityStatus = async (
   activity_type?: string
@@ -291,15 +290,13 @@ export const fetchActivityStatus = async (
   }
 };
 
-export const useGetActivityStatus = (activity_type?: string) => {
+export const useGetActivityStatus = (activity_type: string) => {
   return useQuery<ActivityStatusResponse, Error>({
     queryKey: ['activity-statuses', activity_type],
     queryFn: () => fetchActivityStatus(activity_type),
     retry: 0,
-    staleTime: Infinity,
-    gcTime: Infinity,
-    refetchOnMount: false,
-    refetchOnReconnect: false,
+    gcTime: 0,
+    enabled: !!activity_type,
   });
 };
 

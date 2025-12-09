@@ -44,6 +44,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
 import { AccessRestricted } from '../../../../../components/account-restricted';
 import { checkPermission } from '../../../../../common-utils';
+import { capitalize } from '@mui/material';
 
 const ActivityTabs = [
   {
@@ -209,9 +210,6 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
     [permission]
   );
 
-  const userListOptions = useGetUserOptions(accountId, true);
-  const activityStatus = useGetActivityStatus();
-
   const initialTab = useMemo(() => {
     if (allActivitiesEnabled) return 'all';
     if (activitiesTaskEnable) return 'task';
@@ -236,6 +234,9 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
   }, [initialTab, searchParams]);
 
   const tabParam = searchParams.get('tab') || initialTab;
+  const userListOptions = useGetUserOptions(accountId, true);
+  const currentType = capitalize(tabParam);
+  const activityStatus = useGetActivityStatus(currentType);
 
   const handleRefresh = () => setRefreshTrigger(Date.now());
   const handleFilter = () => setShowFilter(!showFilter);
