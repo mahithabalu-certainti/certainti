@@ -1,5 +1,6 @@
 import {
   formatDateToYYYYMMDDWithTime,
+  formatDateToYyyyMmmDd,
   formatTimeToAMPM,
 } from '../../../../common-utils';
 import { ListTableColumn } from '../../../../components/table/types';
@@ -275,7 +276,7 @@ export const getActivityEmailListColumns = (
   {
     id: 'to_email',
     label: 'Email To',
-    sortable: true,
+    sortable: false,
     sortId: 'to_email',
     width: 180,
     hide:
@@ -486,7 +487,7 @@ export const getActivityTaskListColumns = (
     sortable: true,
     sortId: 'effective_end_datetime',
     width: 200,
-    render: (row) => formatDateToYYYYMMDDWithTime(row.effective_end_datetime),
+    render: (row) => formatDateToYyyyMmmDd(row?.effective_end_datetime || ''),
     hide:
       !permissionMap?.['effective_end_datetime']?.edit &&
       !permissionMap?.['effective_end_datetime']?.read,
