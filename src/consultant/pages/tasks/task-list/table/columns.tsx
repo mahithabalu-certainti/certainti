@@ -2,9 +2,9 @@ import { formatDateToYYYYMMDDWithTime } from '../../../../../common-utils';
 import { ListTableColumn } from '../../../../../components/table/types';
 import { TaskList } from '../../../../types/task';
 
-export const getTaskTableColumns = (
-  // permissionMap?: Record<string, { read: boolean; edit: boolean }>
-): ListTableColumn<TaskList>[] => [
+export const getTaskTableColumns =
+  () // permissionMap?: Record<string, { read: boolean; edit: boolean }>
+  : ListTableColumn<TaskList>[] => [
     {
       id: 'r_number',
       sortId: 'r_number',

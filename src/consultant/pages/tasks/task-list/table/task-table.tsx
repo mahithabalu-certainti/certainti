@@ -64,12 +64,12 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
     },
     refreshTrigger
   );
-  const totalItems = data?.count || 0;
+  const totalItems = data?.data?.count || data?.data?.totalCount || 0;
 
   useEffect(() => {
-    if (data) {
-      setTotalCount(data?.count || 0);
-      setTaskList(data.tasks || []);
+    if (data?.data) {
+      setTotalCount(data.data.count || data.data.totalCount || 0);
+      setTaskList(data.data.tasks || []);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
