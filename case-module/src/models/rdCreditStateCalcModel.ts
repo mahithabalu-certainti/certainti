@@ -42,7 +42,7 @@ export class RdCreditStateCalculations
                 },
                 case_rid: {
                     type: DataTypes.STRING(50),
-                    allowNull: true,
+                    allowNull: false,
                 },
                 country_code: {
                     type: DataTypes.STRING(20),
@@ -50,7 +50,7 @@ export class RdCreditStateCalculations
                 },
                 region_name: {
                     type: DataTypes.STRING(20),
-                    allowNull: true,
+                    allowNull: false,
                 },
                 input_params: {
                     type: DataTypes.JSONB,
@@ -84,7 +84,7 @@ export class RdCreditStateCalculations
                 indexes: [
                     {
                         unique: true,
-                        fields: ['case_rid']
+                        fields: ['case_rid', 'region_name']
                     }
                 ]
             }
