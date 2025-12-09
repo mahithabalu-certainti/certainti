@@ -96,6 +96,7 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
                 fontFamily: "'Mulish', 'Lexend', sans-serif",
                 backgroundColor: 'transparent',
                 border: '1px solid #FFFFFF',
+                borderRadius: '8px',
                 color: '#FFFFFF',
               }}
             >
