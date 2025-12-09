@@ -72,7 +72,7 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
       style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
     >
       <div
-        className='border rounded-lg p-2 mb-1'
+        className='border rounded-lg p-1.5 mb-1'
         style={{
           backgroundColor: headerColor.bg,
           borderColor: headerColor.border,
@@ -90,7 +90,7 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
           </h2>
           {showTaskCount && (
             <span
-              className='px-2 py-1 rounded-full text-[13px]'
+              className='px-2 py-0.5 rounded-full text-[13px]'
               style={{
                 fontFamily: "'Mulish', 'Lexend', sans-serif",
                 backgroundColor: 'rgba(255, 255, 255, 0.6)',
