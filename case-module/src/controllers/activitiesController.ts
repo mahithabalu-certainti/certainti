@@ -755,15 +755,18 @@ async function exportAllActivity(req: Request, res: Response): Promise<void> {
                 activity_type: d.activity_type,
                 created_by_name: d.created_by_name,
                 call_platform: d.call_platform,
-                to_email: d.to_email,
-                effective_start_time: d.effective_start_time,
-                effective_end_time: d.effective_end_time,
+                to_email: Array.isArray(d.to_email) ? d.to_email.join(",") : d.to_email,
+
+                effective_start_time: d.effective_start_time ? moment(d.effective_start_time, 'HH:mm').format('h:mm A') : '',
+                effective_end_time: d.effective_end_time ? moment(d.effective_end_time, 'HH:mm').format('h:mm A') : '',
                 subject: d.subject,
                 modified_by: d.modified_by_name,
                 modified_datetime:
                   d.modified_datetime == null
                     ? ""
                     : formatDate(d.modified_datetime),
+                assigned_to_name: d.assigned_to_name,
+                invited_by: d.invited_by,
               };
 
               // Build exportRecord using allowed fields and resultMap

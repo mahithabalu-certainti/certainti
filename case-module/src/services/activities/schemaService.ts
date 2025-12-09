@@ -583,14 +583,16 @@ class ActivitySchemaService {
         { key: 'created_by_name', var: 'createdByFilter' },
         { key: 'modified_by_name', var: 'modifiedByFilter' },
         { key: 'assigned_to_name', var: 'assignedToFilter' },
-        { key: 'status_name', var: 'statusFilter' }
+        { key: 'status_name', var: 'statusFilter' },
+        { key: 'to_email', var: 'toEmailFilter' }
       ];
       const extractedFilters: Record<string, any> = {
         attachedToFilter: null,
         createdByFilter: null,
         modifiedByFilter: null,
         assignedToFilter: null,
-        statusFilter: null
+        statusFilter: null,
+        toEmailFilter: null
       };
       for (const { key, var: varName } of filterKeys) {
         if (filters[key]) {
@@ -603,6 +605,7 @@ class ActivitySchemaService {
       const modifiedByFilter = extractedFilters.modifiedByFilter;
       const assignedToFilter = extractedFilters.assignedToFilter;
       const statusFilter = extractedFilters.statusFilter;
+      const toEmailFilter = extractedFilters.toEmailFilter;
       if(!this.mainDbSequelize){
             this.mainDbSequelize = await this.caseModelService.getMainSequelize();
           } 
@@ -970,6 +973,7 @@ class ActivitySchemaService {
         "created_datetime",
         "fiscal_year",
         "modified_datetime",
+        'subject',
         
         "call_platform"
       ];
@@ -1207,19 +1211,37 @@ class ActivitySchemaService {
     if (operator === "is_empty") filterValue = "";
     else filterValue = (filterObj[operator] ?? "").toString().toLowerCase();
     return array.filter((item) => {
-        const value = (item[field] ?? "").toString().toLowerCase();
+      let value = item[field];
+      if (Array.isArray(value)) {
+        // For equals: true if any value matches
+        // For not_equals: true if none match
         switch (operator) {
-            case "contains":
-                return value.includes(filterValue);
-            case "equals":
-                return value === filterValue;
-            case "not_equals":
-                return value !== filterValue;
-            case "is_empty":
-                return value === "";
-            default:
-                return false;
+          case "equals":
+            return value.some((v) => (v ?? "").toString().toLowerCase() === filterValue);
+          case "not_equals":
+            return !value.some((v) => (v ?? "").toString().toLowerCase() === filterValue);
+          case "contains":
+            return value.some((v) => (v ?? "").toString().toLowerCase().includes(filterValue));
+          case "is_empty":
+            return value.length === 0;
+          default:
+            return false;
         }
+      } else {
+        value = (value ?? "").toString().toLowerCase();
+        switch (operator) {
+          case "contains":
+            return value.includes(filterValue);
+          case "equals":
+            return value === filterValue;
+          case "not_equals":
+            return value !== filterValue;
+          case "is_empty":
+            return value === "";
+          default:
+            return false;
+        }
+      }
     });
 }
 
@@ -1227,6 +1249,7 @@ class ActivitySchemaService {
       activities = applyActivitiesFilter(activities, "modified_by_name", modifiedByFilter);
       activities = applyActivitiesFilter(activities, "status_name", statusFilter);
       activities = applyActivitiesFilter(activities, "assigned_to_name", assignedToFilter);
+      activities = applyActivitiesFilter(activities, "to_email", toEmailFilter);
 
       const totalCount = activities.length;
       if (apiType === "download") {
@@ -1306,6 +1329,7 @@ class ActivitySchemaService {
             case 'status_rid':
             case 'assigned_to':
             case 'call_platform':
+            case 'subject':
               switch (operator.toLowerCase()) {
                 case 'equals': condition[field] = { [Op.iLike]: value }; break;
                 case 'not_equals': condition[field] = { [Op.or]: [{ [Op.notILike]: value }, { [Op.is]: null }] }; break;          
