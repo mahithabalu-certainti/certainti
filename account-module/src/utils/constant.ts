@@ -3083,7 +3083,7 @@ export const rawQueries = {
     return `
       CREATE TABLE IF NOT EXISTS "${schemaName}"."notes" (
         rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
-        r_number VARCHAR(20) UNIQUE DEFAULT ('NOT-' || LPAD(nextval('"${schemaName}".notes_seq')::TEXT, 10, '0')),
+        r_number VARCHAR(20) UNIQUE DEFAULT ('NTE-' || LPAD(nextval('"${schemaName}".notes_seq')::TEXT, 10, '0')),
         created_datetime TIMESTAMPTZ NOT NULL,
         created_by VARCHAR(50) NOT NULL,
         modified_datetime TIMESTAMPTZ,
@@ -3186,7 +3186,7 @@ export const rawQueries = {
     return `
       CREATE TABLE IF NOT EXISTS "${schemaName}".notes_timeline (
         rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
-        r_number VARCHAR(20) UNIQUE DEFAULT ('NOTTI-' || LPAD(nextval('"${schemaName}".notes_timeline_seq')::TEXT, 10, '0')),
+        r_number VARCHAR(20) UNIQUE DEFAULT ('NTETI-' || LPAD(nextval('"${schemaName}".notes_timeline_seq')::TEXT, 10, '0')),
         created_by VARCHAR(50) NOT NULL,
         modified_by VARCHAR(50),
         document_name VARCHAR(255) NULL,
