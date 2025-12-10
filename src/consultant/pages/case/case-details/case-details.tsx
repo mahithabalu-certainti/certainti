@@ -78,6 +78,8 @@ import { CaseActivities } from './case-activities';
 import { ExportActivityList } from '../../../services/activities/activities-service';
 import { CaseProjectTask } from './case-project-task';
 import { ExportCaseProjectTasktList } from '../../../services/case-project-task/case-project-task-service';
+import { CaseProjectResource } from './case-project-resource';
+import { ExportCaseProjectResourceList } from '../../../services/case-project-resource/case-project-resource-service';
 
 export const CaseDetails = () => {
   const navigate = useNavigate();
@@ -162,6 +164,17 @@ export const CaseDetails = () => {
     useState<ProjectResourcesListParams>({
       sortOrder: 'ASC',
       sortBy: 'resource_code',
+      page: 1,
+      limit: 10,
+      search: '',
+    });
+
+  const [projectResourceParams, setProjectResourceParams] =
+    useState<ReviewProjectListURLParams>({
+      sortOrder: 'ASC',
+      sortBy: 'project_code',
+      filters: {},
+      timezone: '',
       page: 1,
       limit: 10,
       search: '',
@@ -304,6 +317,10 @@ export const CaseDetails = () => {
     AllPermissions.PROJECTS_EXPORT
   );
 
+  const isProjectResourceExportEnable = checkPermission(
+    permission,
+    AllPermissions.PROJECTS_RESOURCES_EXPORT
+  );
   const isCaseTaskExportEnable = checkPermission(
     permission,
     AllPermissions.CASES_WORKBREAKDOWN_EXPORT
@@ -326,7 +343,8 @@ export const CaseDetails = () => {
       searchParams.get('list') !== 'workBreakdown' &&
       searchParams.get('tab') !== 'case_task' &&
       searchParams.get('list') !== 'interactions' &&
-      searchParams.get('list') !== 'projectTask'
+      searchParams.get('list') !== 'projectTask' &&
+      searchParams.get('list') !== 'projectResource'
     ) {
       return;
     }
@@ -381,6 +399,11 @@ export const CaseDetails = () => {
       ExportReviewProjectList(reviewProjectParams, accountId, caseId);
     } else if (list === 'projectTask' && exportType === 'projectTask') {
       ExportCaseProjectTasktList(projectTaskParams, accountId, caseId);
+    } else if (
+      list === 'projectResource' &&
+      exportType === 'project_resource'
+    ) {
+      ExportCaseProjectResourceList(projectResourceParams, accountId, caseId);
     }
     if (list === 'interactions') {
       if (interactionHistoryId) {
@@ -458,6 +481,8 @@ export const CaseDetails = () => {
       return !isInteractionsExportEnable;
     } else if (list === 'projectTask') {
       return !isProjectTaskExportEnable;
+    } else if (list === 'projectResource') {
+      return !isProjectResourceExportEnable;
     } else {
       return true;
     }
@@ -631,6 +656,14 @@ export const CaseDetails = () => {
             setExportType={setExportType}
           />
         );
+      case 'projectResource':
+        return (
+          <CaseProjectResource
+            accountInActive={accountInActive}
+            setProjectResourceParams={setProjectResourceParams}
+            setExportType={setExportType}
+          />
+        );
       default:
         return (
           <div className='flex items-center justify-center h-full'>
@@ -709,14 +742,14 @@ export const CaseDetails = () => {
         icon: CasesIcon,
       },
       {
-        name: 'Case Project Resource',
+        name: 'Project Resource',
         key: 'projectResource',
         id: AllMenus.FINANCIAL_HIGHLIGHTS,
         disabled: false,
         icon: ResourcesIcon,
       },
       {
-        name: 'Case Project Task',
+        name: 'Project Task',
         key: 'projectTask',
         id: AllMenus.FINANCIAL_HIGHLIGHTS,
         disabled: false,
@@ -852,13 +885,12 @@ export const CaseDetails = () => {
         />
       </div>
       <div
-        className={`transition-all duration-700 ease-in-out overflow-hidden ${
-          isActionItemsExpanded
-            ? 'max-h-0 opacity-0'
-            : isError
-              ? 'max-h-[60px] opacity-100'
-              : 'max-h-[140px] opacity-100'
-        }`}
+        className={`transition-all duration-700 ease-in-out overflow-hidden ${isActionItemsExpanded
+          ? 'max-h-0 opacity-0'
+          : isError
+            ? 'max-h-[60px] opacity-100'
+            : 'max-h-[140px] opacity-100'
+          }`}
       >
         <InfoSection
           columns={caseHeaderDetails}
@@ -870,11 +902,10 @@ export const CaseDetails = () => {
       </div>
       <div className='flex flex-1 flex-row w-full border-b border-[#CBD6E2]'>
         <div
-          className={`flex transition-all ease-in-out ${
-            isCollapsed
-              ? 'w-[60px] min-w-[60px] max-w-[60px] duration-700'
-              : 'w-[220px] min-w-[220px] max-w-[220px] duration-700'
-          }`}
+          className={`flex transition-all ease-in-out ${isCollapsed
+            ? 'w-[60px] min-w-[60px] max-w-[60px] duration-700'
+            : 'w-[220px] min-w-[220px] max-w-[220px] duration-700'
+            }`}
         >
           <SideMenuPanel
             menuItems={sideMenuItems}

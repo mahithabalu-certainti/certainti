@@ -43,6 +43,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
 import { checkPermission } from '../../../../../common-utils';
 import { AccessRestricted } from '../../../../../components/account-restricted';
+import { capitalize } from '@mui/material';
 
 const ActivityTabs = [
   {
@@ -90,6 +91,7 @@ const ProjectActivities: React.FC<ProjectActivitiesProps> = ({
     React.useState<HTMLButtonElement | null>(null);
   const [searchText, setSearchText] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState<number>(Date.now());
+  const [resetSearch, setResetSearch] = useState<boolean>(false);
 
   const { permission, modules } = useSelector(
     (state: RootState) => state.permission
@@ -209,9 +211,6 @@ const ProjectActivities: React.FC<ProjectActivitiesProps> = ({
     [permission]
   );
 
-  const userListOptions = useGetUserOptions(accountId, true);
-  const activityStatus = useGetActivityStatus();
-
   const initialTab = useMemo(() => {
     if (allActivitiesEnabled) return 'all';
     if (activitiesTaskEnable) return 'task';
@@ -236,6 +235,9 @@ const ProjectActivities: React.FC<ProjectActivitiesProps> = ({
   }, [initialTab, searchParams]);
 
   const tabParam = searchParams.get('tab') || initialTab;
+  const userListOptions = useGetUserOptions(accountId, true);
+  const currentType = capitalize(tabParam);
+  const activityStatus = useGetActivityStatus(currentType);
 
   const handleRefresh = () => setRefreshTrigger(Date.now());
   const handleFilter = () => setShowFilter(!showFilter);
@@ -248,6 +250,12 @@ const ProjectActivities: React.FC<ProjectActivitiesProps> = ({
     setCount(0);
     setAppliedFilters({});
     setCurrentPage(0);
+    setSearchText('');
+    setResetSearch(true);
+  };
+
+  const handleSearchReset = () => {
+    setResetSearch(false);
   };
 
   const userOptions = useMemo(() => {
@@ -255,6 +263,15 @@ const ProjectActivities: React.FC<ProjectActivitiesProps> = ({
       userListOptions?.data?.map((item) => ({
         value: item.rid,
         label: item?.name || '',
+      })) || []
+    );
+  }, [userListOptions]);
+
+  const emailUserOptions = useMemo(() => {
+    return (
+      userListOptions?.data?.map((item) => ({
+        value: item?.email,
+        label: item?.email || '',
       })) || []
     );
   }, [userListOptions]);
@@ -292,7 +309,11 @@ const ProjectActivities: React.FC<ProjectActivitiesProps> = ({
           taskPermissionMap
         );
       case 'email':
-        return getEmailFilterFields(activityStatusOptions, emailPermissionMap);
+        return getEmailFilterFields(
+          activityStatusOptions,
+          emailUserOptions,
+          emailPermissionMap
+        );
       case 'meeting':
         return getMeetingFilterFields(
           activityStatusOptions,
@@ -311,6 +332,7 @@ const ProjectActivities: React.FC<ProjectActivitiesProps> = ({
     userOptions,
     activityStatusOptions,
     taskPermissionMap,
+    emailUserOptions,
     emailPermissionMap,
     meetingPermissionMap,
     callPermissionMap,
@@ -475,6 +497,8 @@ const ProjectActivities: React.FC<ProjectActivitiesProps> = ({
           onRefreshClick={handleRefresh}
           showSearch={!viewDetails}
           onSearch={(text) => setSearchText(text)}
+          searchReset={resetSearch}
+          onSearchReset={handleSearchReset}
         />
 
         <SectionHeader
