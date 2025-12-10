@@ -472,6 +472,7 @@ export interface IFetchTaskDetailsInput {
   user_rid : string;
   attachment_level: string;
   attach_to: string;
+  task_type_name: string;
 }
 
 export type ChecklistItems = {
