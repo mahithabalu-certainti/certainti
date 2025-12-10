@@ -2030,8 +2030,14 @@ export const rawQueries = {
     LEFT JOIN trd365.state s ON g.state_rid = s.rid
     WHERE ${whereClause};
     `;
-  }
-  
+  },
+  getJurisdictionConfigValuesById(config_rid: string) {
+  return `SELECT rid,credit_config_group_rid, config_json,effective_start_date,effective_end_date FROM trd365.rd_credit_parameter_values WHERE rid = '${config_rid}';`
+  },
+    getJurisdictionPlatformConfigValuesById(config_rid: string) {
+  return `SELECT rid,credit_config_group_rid, config_json,effective_start_date,effective_end_date FROM trd365.rd_credit_parameter_values WHERE federal_config_id = '${config_rid}';`
+  },
+
 };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 
 const keyContactRole = {

@@ -171,13 +171,13 @@ export class JurisdictionSchemaService {
     let platformConfigValues: any[] = [];
     if (type !== "new") {
       [paramValues] = await this.mainDbSequelize.query(
-        `SELECT rid,credit_config_group_rid, config_json,effective_start_date,effective_end_date FROM trd365.rd_credit_parameter_values WHERE rid = '${configRequest.config_rid}';`
+        rawQueries.getJurisdictionConfigValuesById(configRequest.config_rid)
       );
-      [platformConfigValues] = await this.mainDbSequelize.query(
-        `SELECT rid,credit_config_group_rid, config_json,effective_start_date,effective_end_date FROM trd365.rd_credit_parameter_values WHERE federal_config_id = '${configRequest.config_rid}';`
+       [platformConfigValues] = await this.mainDbSequelize.query(
+        rawQueries.getJurisdictionPlatformConfigValuesById(configRequest.config_rid)
       );
     }
-
+  
     // Build a map of config group rid to config_json
     const groupConfigMap = Object.fromEntries(
       paramValues.map((row) => [row.credit_config_group_rid, row.config_json])
