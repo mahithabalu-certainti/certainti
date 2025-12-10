@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo, useLayoutEffect } from 'react';
-import ReactDOM from 'react-dom';
 import { Tooltip } from '@mui/material';
 
 import dayjs from 'dayjs';
@@ -450,7 +449,7 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
 
   if (!isAnimating) return null;
 
-  return ReactDOM.createPortal(
+  return (
     <>
       <div
         className='fixed inset-0 bg-opacity-50 z-40'
@@ -881,8 +880,7 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
           />
         </div>
       </div>
-    </>,
-    document.body
+    </>
   );
 };
 

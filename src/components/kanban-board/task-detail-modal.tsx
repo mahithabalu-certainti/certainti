@@ -1,5 +1,4 @@
 import { useEffect, useState, useMemo, useRef, useLayoutEffect } from 'react';
-import ReactDOM from 'react-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { TaskDetailModalProps, Task, Activity, Comment } from './types';
 import { MenuItem, SelectChangeEvent } from '@mui/material';
@@ -1490,7 +1489,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     }
   };
 
-  return ReactDOM.createPortal(
+  return (
     <>
       <div
         className='fixed right-0 bottom-0 w-[650px] bg-white text-gray-900 shadow-2xl z-50 overflow-y-auto'
@@ -2133,8 +2132,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
           )}
         </div>
       </div>
-    </>,
-    document.body
+    </>
   );
 };
 export default TaskDetailModal;
