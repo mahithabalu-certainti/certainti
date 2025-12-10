@@ -66,6 +66,7 @@ router.post("/ruleOperators", WorkFlowController.listOperators);
 router.post("/ruleValues", WorkFlowController.listValues);
 router.post("/scopeActionTypes", WorkFlowController.listActionTypes);
 router.post("/scopeActions", WorkFlowController.listActions);
+router.post("/createRule", WorkFlowController.createRule);
 router.post("/createRuleMap", WorkFlowController.createRuleMapWithScope);
 
 // ConditionGroup

@@ -10,7 +10,7 @@ import {
 } from "../utils/helpers";
 import {
   listRuleSchema,
-  createRuleSchema,
+  createRuleMasterSchema,
   updateRuleSchema
 } from "../lib/joi/schemas/schema";
 import configurations from "../config/config";
@@ -24,7 +24,7 @@ async function createRuleMaster(req: Request, res: Response): Promise<void> {
   const methodName = "create rule";
   try {
     const userId = req.headers["x-user-id"] as string;
-    const value = await validateRequest(req, createRuleSchema, res, "POST");
+    const value = await validateRequest(req, createRuleMasterSchema, res, "POST");
     if (!value) {
       errorLog(methodName, "Request body is empty");
       return;

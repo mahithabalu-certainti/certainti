@@ -283,20 +283,18 @@ export class WorkFlowService {
         };
     };
 
-    async createRuleMapWithScope(ruleRequest: ICreateRuleMapWithScope, userId: string): Promise<{
+    async createRule(ruleRequest: any, userId: string): Promise<{
         statusCode: number;
         message: string;
         errorMessage?: string;
-        data?: { ruleMap: any };
+        data?: { rule: any };
     }> {
-        console.log("rule map creation");
-
         const rule = await this.ruleMasterService.createRuleMaster(
             {
                 rule_rid: "",
                 rule_name: ruleRequest.rule_name,
                 description: ruleRequest.description ?? null,
-                trigger_event: ruleRequest.trigger_event,
+                trigger_event: ruleRequest.event_rid,
                 trigger_type: ruleRequest.trigger_type,
                 is_active: ruleRequest.is_active ?? true,
                 scope_type_rid: ruleRequest.scope_type_rid,
@@ -306,11 +304,25 @@ export class WorkFlowService {
                 modified_by: ruleRequest.modified_by ?? ruleRequest.created_by, // fallback to created_by if undefined
             }, userId
         )
+        return {
+            statusCode: 200,
+            message: "Rule created successfully",
+            data: {
+                rule: rule,
+            }
+        };
+    }
 
-
+    async createRuleMapWithScope(ruleRequest: ICreateRuleMapWithScope, userId: string): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: { ruleMap: any };
+    }> {
+        console.log("rule map creation");
         const ruleMapResponse = await this.ruleMapService.createRuleMap(
             {
-                rule_rid: rule.data?.rules.rid,
+                rule_rid: ruleRequest.rule_rid,
                 scope_type_rid: ruleRequest.scope_type_rid,
                 apply_type: ruleRequest.apply_type,
                 created_by: ruleRequest.created_by,
@@ -326,7 +338,7 @@ export class WorkFlowService {
                 const scopeResponse = await this.scopeService.createScope(
                     {
                         scope_rid: "",
-                        rule_rid: rule.data?.rules.rid,
+                        rule_rid: ruleRequest.rule_rid,
                         scope_entity_type: ruleRequest.scope_type_rid,
                         scope_entity_rid: entityRid,
                         is_active: true,
@@ -345,7 +357,6 @@ export class WorkFlowService {
                 ruleMap: createdRuleMap,
             }
         };
-
     };
 
 }

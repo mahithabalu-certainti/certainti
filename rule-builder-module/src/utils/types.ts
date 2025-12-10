@@ -95,14 +95,8 @@ export interface ICreateRuleMap {
 
 
 export interface ICreateRuleMapWithScope {
-    rule_name: string;
-    description: string;
-    trigger_event: string;
-    trigger_type: number;
-    is_active: true;
+    rule_rid:string;
     scope_type_rid: string;
-    schedule_offset_type: string;
-    schedule_offset_value: string;
     apply_type: number;
     scope_entity_rid: string[];
     created_by: string,

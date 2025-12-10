@@ -25,7 +25,7 @@ const allowedTLDs = [
     "in",
 ];
 
-const createRuleSchema = Joi.object({
+const createRuleMasterSchema = Joi.object({
     rule_name: Joi.string().required(),
     description: Joi.string().required(),
     is_active: Joi.boolean().required(),
@@ -298,8 +298,36 @@ const listScopeActionsSchema = Joi.object({
     sortOrder: Joi.string().valid("ASC", "DESC").default("ASC")
 });
 
+const createRuleSchema = Joi.object({
+    rule_name: Joi.string().required(),
+    description: Joi.string().optional().allow(""),
+    scope_type_rid:Joi.string().required(),
+    event_rid: Joi.string().required(),
+    condition_rid: Joi.string().required(),
+
+    condition_categories: Joi.array().items(
+        Joi.object({
+            category_rid: Joi.string().required(),
+            cateogry_operator: Joi.string().valid("AND", "OR").optional(), // assuming optional
+
+            operations: Joi.array().items(
+                Joi.object({
+                    field_rid: Joi.string().required(),
+                    operator_rid: Joi.string().required(),
+                    value_rid: Joi.string().required()
+                })
+            ).required()
+        })
+    ).required(),
+
+    action_rid: Joi.array().items(Joi.string().required()).required(),
+    created_by:Joi.string().required(),
+    trigger_type:Joi.number().required()
+});
+
+
 export {
-    createRuleSchema,
+    createRuleMasterSchema,
     listRuleSchema,
     updateRuleSchema,
     createConditionSchema,
@@ -325,5 +353,6 @@ export {
     listScopeValueSchema,
     listScopeActionTypeSchema,
     listScopeActionsSchema,
-    createRuleMapSchema
+    createRuleSchema,
+    createRuleMapSchema,
 };

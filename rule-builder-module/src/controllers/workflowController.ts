@@ -18,7 +18,8 @@ import {
     listScopeOperatorSchema,
     listScopeValueSchema,
     listScopeActionTypeSchema,
-    listScopeActionsSchema
+    listScopeActionsSchema,
+    createRuleSchema
 } from "../lib/joi/schemas/schema";
 import configurations from "../config/config";
 
@@ -397,6 +398,42 @@ async function listActions(req: Request, res: Response): Promise<void> {
     }
 };
 
+async function createRule(req: Request, res: Response): Promise<void> {
+    const methodName = "create condition";
+    try {
+        const userId = req.headers["x-user-id"] as string;
+        const value = await validateRequest(req, createRuleSchema, res, "POST");
+        if (!value) {
+            errorLog(methodName, "Request body is empty");
+            return;
+        }
+        const newRuleMap = await workFlowService.createRule(value, userId);
+        if (newRuleMap.statusCode === HttpStatus.SUCCESS) {
+            successLog(methodName);
+            handleSuccessResponse(res, newRuleMap);
+            return;
+        } {
+            errorLog(methodName, newRuleMap.errorMessage);
+            handleErrorResponse(
+                res,
+                HttpStatus.BAD_REQUEST,
+                HttpStatus.BAD_REQUEST_MESSAGE,
+                newRuleMap.errorMessage
+            );
+            return;
+        }
+    } catch (err) {
+        const error = err as Error;
+        errorLog(methodName, error.message);
+        handleErrorResponse(
+            res,
+            HttpStatus.FAILED,
+            HttpStatus.FAILED_MESSAGE,
+            error.message
+        );
+    }
+};
+
 async function createRuleMapWithScope(req: Request, res: Response): Promise<void> {
     const methodName = "create condition";
     try {
@@ -444,5 +481,6 @@ export default {
     listValues,
     listActionTypes,
     listActions,
-    createRuleMapWithScope
+    createRule,
+    createRuleMapWithScope,
 }

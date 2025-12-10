@@ -317,6 +317,17 @@ export interface IWorkFlowService {
         errorMessage?: string;
         data?: { ruleMap: any };
     }>;
+
+    createRule(
+        ruleRequest: any,
+        userId: string
+    ): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: { rule: any };
+    }>;
+
 }
 
 
