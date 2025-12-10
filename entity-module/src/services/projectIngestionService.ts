@@ -3919,6 +3919,24 @@ class ProjectIngestionService {
       );
     }
   }
+
+  async checkCaseProjectsTableExists(accountNumber: string): Promise<boolean> {
+    const orgDb = await initOrgSequelize();
+
+    // extract digits only → trd365_00001 format
+    const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
+
+    const result = await orgDb.query(
+      rawQueries.checkCaseProjectsTableExists,
+      {
+        replacements: { schemaName },
+        type: QueryTypes.SELECT,
+        plain: true, // get single record, no need array
+      }
+    ) as { exists: boolean };
+
+    return !!result?.exists;
+  }
 }
 
 export default ProjectIngestionService;

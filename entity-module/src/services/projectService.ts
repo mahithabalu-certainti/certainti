@@ -622,19 +622,25 @@ export class ProjectService {
       existingFiscalData?.fiscal_year || null
     );
 
-    const projectCaseMapping = 
-      await this.projectIngestion.fetchProjectFiscalCaseMapping(
-        accountNumber,
-        projectData.project_fiscal_id
-      );
+    const {accountNumber: validAccountNumber}  = await this.projectIngestion.fetchValidAccountNumberById(accountData.rid);
 
-    for (const caseMapping of projectCaseMapping) {
-      await this.projectIngestion.updateCaseProjectTables(
-        accountNumber,
-        caseMapping,
-        projectData,
-        existingFiscalData?.project_code || ""
-      );
+    const checkTableExists =  await this.projectIngestion.checkCaseProjectsTableExists(validAccountNumber);  
+    if (checkTableExists) {
+      const projectCaseMapping = 
+        await this.projectIngestion.fetchProjectFiscalCaseMapping(
+          accountNumber,
+          projectData.project_fiscal_id
+        );
+        if (projectCaseMapping.length > 0) {
+          for (const caseMapping of projectCaseMapping) {
+            await this.projectIngestion.updateCaseProjectTables(
+              accountNumber,
+              caseMapping,
+              projectData,
+              existingFiscalData?.project_code || ""
+            );
+          }
+        }
     }
   }
 
