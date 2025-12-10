@@ -168,7 +168,9 @@ export const mainTableFilters : Record<any, any> = {
   response_source_name : "response_source_name",
   interaction_level_name:"interaction_level_name",
   modified_by: "modified_by",
-  modified_user_name:"modified_user_name"
+  modified_user_name:"modified_user_name",
+  project_name : "project_name",
+  project_code : "project_code"
 }
 
 export const STATUS_MESSAGE = {
@@ -628,6 +630,10 @@ export const rawQueries = {
     let ids = statusIds.map((d: any) => `'${d}'`);
     return `
     SELECT rid, status_name as name FROM ${MAIN_SCHEMA_NAME}.status WHERE rid IN (${ids})`;
+  },
+  fetchProjectFiscalDetails(projectFiscalIds: string[], schemaName: string) {
+    return `
+    SELECT rid, project_name, project_code FROM ${schemaName}.project_fiscal WHERE rid IN (${projectFiscalIds.map((d : any) => `'${d}'`).join(',')})`;
   },
   fetchProjectFiscal(projectFiscalId: string, schemaName: string) {
     return `
