@@ -181,6 +181,8 @@ export const STATUS_MESSAGE = {
   dataNotAvailable: "Data not available",
   workflowConnectorMappedDeletedFailed: "Workflow Connector mapping deletion failed",
   workflowConnectorMappedDeleted: "Workflow Connector mapping deleted successfully",
+  flagRequired: "flag is required",
+  taskDetailsFetchFailed: "Task details fetch failed"
 };
 
 export const TYPES = {
@@ -2290,6 +2292,8 @@ export const rawQueries = {
     if(newRid === null) newRid = ''
     return `SELECT rid, status_name as name FROM ${MAIN_SCHEMA_NAME}.activity_status WHERE activity_type ='Task' AND rid IN ('${oldRid}', '${newRid}')`
   },
+  getTaskTypeRidMilestone: `SELECT rid FROM ${MAIN_SCHEMA_NAME}.task_type WHERE task_type_name = 'Milestone'`,
+  getTaskTypeRidActivity: `SELECT rid FROM ${MAIN_SCHEMA_NAME}.task_type WHERE task_type_name = 'Activity'`
 
    checkCaseProjectsTableExists: `
                 SELECT EXISTS (

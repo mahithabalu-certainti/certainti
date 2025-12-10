@@ -1998,7 +1998,10 @@ const listAttachmentSummarySchema = Joi.object({
             'string.base': 'Search must be a string',
             'string.max': 'Search cannot exceed 255 characters'
         }),
-    filters: Joi.string().default("{}").optional(),
+    filters: Joi.alternatives()
+    .try(Joi.string(), Joi.object())
+    .default("{}")
+    .optional(),
     fiscalYear: Joi.number()
     .integer()
     .min(1000)
@@ -2011,7 +2014,10 @@ const listAttachmentSummarySchema = Joi.object({
       "number.max": "Fiscal year must be a 4-digit number",
       "any.required": "Fiscal year is required",
     }),
-    globalFilters: Joi.string().default("{}").optional(),
+    globalFilters: Joi.alternatives()
+    .try(Joi.string(), Joi.object())
+    .default("{}")
+    .optional(),
     sortBy: Joi.string().default("created_datetime").optional(),
     sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
 })
@@ -2026,7 +2032,10 @@ const exportListAttachmentSummarySchema = Joi.object({
             'string.base': 'Search must be a string',
             'string.max': 'Search cannot exceed 255 characters'
         }),
-    filters: Joi.string().default("{}").optional(),
+    filters: Joi.alternatives()
+    .try(Joi.string(), Joi.object())
+    .default("{}")
+    .optional(),
     fiscalYear: Joi.number()
     .integer()
     .min(1000)
@@ -2039,7 +2048,10 @@ const exportListAttachmentSummarySchema = Joi.object({
       "number.max": "Fiscal year must be a 4-digit number",
       "any.required": "Fiscal year is required",
     }),
-    globalFilters: Joi.string().default("{}").optional(),
+    globalFilters: Joi.alternatives()
+    .try(Joi.string(), Joi.object())
+    .default("{}")
+    .optional(),
     sortBy: Joi.string().default("created_datetime").optional(),
     sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
     timezone: Joi.string().optional()
@@ -2984,6 +2996,7 @@ const listTaskSummarySchema = Joi.object({
     globalFilters: Joi.string().default("{}").optional(),
     sortBy: Joi.string().default("created_datetime").optional(),
     sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
+    flag: Joi.string().valid("milestone", "activity").required(),
 })
 
 const exportListTaskSummarySchema = Joi.object({
@@ -3013,6 +3026,7 @@ const exportListTaskSummarySchema = Joi.object({
     globalFilters: Joi.string().default("{}").optional(),
     sortBy: Joi.string().default("created_datetime").optional(),
     sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
+    flag: Joi.string().valid("milestone", "activity").required(),
 })
 
 const listTaskByIdSchema = Joi.object({
