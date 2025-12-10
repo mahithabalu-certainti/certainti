@@ -60,12 +60,31 @@ export const TasksExportListURL = ({
   timezone,
   search,
 }: TasksListExportParams): string => {
-  const baseUrl = `/api/task/list/summary/export`;
+  let baseUrl = '';
   const searchParams = new URLSearchParams();
 
+  const isMilestone =
+    filters &&
+    (filters as { attachment_level?: string }).attachment_level === 'milestone';
+
+  if (isMilestone) {
+    baseUrl = '/api/task/list/summaryExportMilestone';
+    searchParams.set('flag', 'milestone');
+  } else {
+    baseUrl = '/api/task/list/summaryExportActivity';
+    searchParams.set('flag', 'activity');
+  }
+
   if (fiscalYear) searchParams.set('fiscalYear', fiscalYear.toString());
-  if (filters && Object.keys(filters).length > 0) {
-    searchParams.set('filters', JSON.stringify(filters));
+
+  let filtersToSend = filters ? { ...filters } : {};
+  const { attachment_level, ...rest } = filtersToSend as {
+    attachment_level?: string;
+  };
+  filtersToSend = rest;
+
+  if (filtersToSend && Object.keys(filtersToSend).length > 0) {
+    searchParams.set('filters', JSON.stringify(filtersToSend));
   }
   if (sortBy !== undefined) searchParams.set('sortBy', sortBy);
   if (sortOrder !== undefined) searchParams.set('sortOrder', sortOrder);

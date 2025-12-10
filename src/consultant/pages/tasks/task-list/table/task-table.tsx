@@ -8,7 +8,6 @@ import { UPDATE_TASK_SUMMARY_INLINE } from '../../../../../api/graphql/queries/t
 import {
   CellEditData,
   FieldChangeValue,
-  ActionItem,
   ListTableColumn,
   ShowHideTableColumn,
 } from '../../../../../components/table/types';
@@ -24,7 +23,6 @@ import { FilterState, SelectOption } from '../../../../types';
 import { useToast } from '../../../../../hooks';
 // import { AllPermissions } from '../../../../../common-service';
 import { getTaskTableColumns } from './columns';
-import { EditIcon } from '../../../../../assets';
 import TaskDetailModal from '../../../../../components/kanban-board/task-detail-modal';
 import {
   useGetTaskPriorities,
@@ -335,18 +333,18 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
     [handleTaskClick, statusOptions]
   );
 
-  const actionButtons: ActionItem<TaskList>[] = [
-    {
-      label: 'Edit',
-      onClick: (row: TaskList) => console.log('Edit clicked:', row),
-      icon: EditIcon,
-      hide: false,
-      iconStyle: {
-        filter:
-          'brightness(0) saturate(100%) invert(25%) sepia(16%) saturate(592%) hue-rotate(164deg) brightness(93%) contrast(91%)',
-      },
-    },
-  ];
+  // const actionButtons: ActionItem<TaskList>[] = [
+  //   {
+  //     label: 'Edit',
+  //     onClick: (row: TaskList) => console.log('Edit clicked:', row),
+  //     icon: EditIcon,
+  //     hide: false,
+  //     iconStyle: {
+  //       filter:
+  //         'brightness(0) saturate(100%) invert(25%) sepia(16%) saturate(592%) hue-rotate(164deg) brightness(93%) contrast(91%)',
+  //     },
+  //   },
+  // ];
 
   const [visibleColumns, setVisibleColumns] = useState<
     ListTableColumn<TaskList>[]
@@ -455,7 +453,7 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
         }
         actionWidth={60}
         actionDisplayMode='dropdown'
-        actionMenuItems={actionButtons}
+        actionMenuItems={[]}
         loading={isLoading}
         error={isError ? 'Failed to load Tasks data' : undefined}
         rowsPerPageOptions={[25, 50, 100]}
@@ -484,14 +482,10 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
           roleOptions={roleOptionsQuery.data || []}
           checklistData={checklistData}
           taskType={
-            ['account', 'project', 'case'].includes(
-              selectedTask.attachment_level?.toLowerCase()
-            )
-              ? 'activity'
-              : undefined
+            fixedFilters?.attachment_level === 'milestone'
+              ? 'milestone'
+              : 'activity'
           }
-          // For now, we are using the basic modal which should work for viewing/editing
-          // common fields.
           fieldVisibility={fieldHiddenMap}
           fieldDisabled={fieldDisabledMap}
         />

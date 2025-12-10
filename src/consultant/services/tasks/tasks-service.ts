@@ -41,7 +41,7 @@ export const useAllTasksList = (
   });
 };
 
-type ExportType = 'tasks' | 'all_tasks';
+type ExportType = 'tasks' | 'all_tasks' | 'milestone' | 'activity';
 export const exportTasksData = async (
   type: ExportType,
   params: TasksListExportParams
@@ -59,6 +59,22 @@ export const exportTasksData = async (
     case 'all_tasks':
       url = TasksExportListURL({ ...params, timezone: systemTimezone });
       filename = 'all_tasks_records.xlsx';
+      break;
+    case 'milestone':
+      url = TasksExportListURL({
+        ...params,
+        timezone: systemTimezone,
+        filters: { ...params.filters, attachment_level: 'milestone' },
+      });
+      filename = 'milestone_tasks_records.xlsx';
+      break;
+    case 'activity':
+      url = TasksExportListURL({
+        ...params,
+        timezone: systemTimezone,
+        filters: { ...params.filters, attachment_level: 'activity' },
+      });
+      filename = 'activity_tasks_records.xlsx';
       break;
     default:
       console.error('Invalid export type');

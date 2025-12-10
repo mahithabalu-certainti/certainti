@@ -221,12 +221,12 @@ export const getTaskDetail = async (
       checklistName: taskDetailResponse.checklists?.checklist_name,
       checklistInfo: taskDetailResponse.checklists
         ? {
-            rid: taskDetailResponse.checklists.rid,
-            name: taskDetailResponse.checklists.checklist_name,
-            description: taskDetailResponse.checklists.checklist_description,
-            totalItems: taskDetailResponse.checklists.checklist_items_count,
-            completedItems: taskDetailResponse.checklists.completed_items_count,
-          }
+          rid: taskDetailResponse.checklists.rid,
+          name: taskDetailResponse.checklists.checklist_name,
+          description: taskDetailResponse.checklists.checklist_description,
+          totalItems: taskDetailResponse.checklists.checklist_items_count,
+          completedItems: taskDetailResponse.checklists.completed_items_count,
+        }
         : undefined,
       tags: normalizeTags(taskDetailResponse.tags || []),
       tagsDetails: normalizeTagsDetails(taskDetailResponse.tags || []),
@@ -251,15 +251,15 @@ export const getTaskDetail = async (
       workflow_connector: taskDetailResponse.workflow_connector,
       linkedType:
         taskDetailResponse.workflow_connector &&
-        taskDetailResponse.workflow_connector.length > 0
+          taskDetailResponse.workflow_connector.length > 0
           ? taskDetailResponse.workflow_connector[0].relationship_name
           : undefined,
       linkTaskTypes:
         taskDetailResponse.workflow_connector &&
-        taskDetailResponse.workflow_connector.length > 0
+          taskDetailResponse.workflow_connector.length > 0
           ? taskDetailResponse.workflow_connector.map(
-              (wc) => wc.target_task_name
-            )
+            (wc) => wc.target_task_name
+          )
           : [],
       fiscal_year: taskDetailResponse.fiscal_year,
     };
@@ -282,7 +282,9 @@ export const fetchTaskDetail = async (
     const payload = {
       task_rid: taskId,
       account_rid: accountId,
-      ...(taskType ? { task_type: taskType } : { case_rid: caseId }),
+      ...(taskType && taskType !== 'milestone'
+        ? { task_type: taskType }
+        : { case_rid: caseId }),
     };
     const response = await caseServiceApi.post<{
       statusCode: number;
