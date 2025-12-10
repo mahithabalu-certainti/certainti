@@ -264,43 +264,46 @@ export default class ProjectTaskGraphqlServies {
             rawQueries.updateProjectTaskQuery(schemaName, getSetData, data)
           );
 
-          const projectCaseMapping = 
-          await this.projectIngestion.fetchProjectFiscalCaseMapping(
-            accountNumber,
-            projectData.rid
-          );
+          const {accountNumber: validAccountNumber}  = await this.projectIngestion.fetchValidAccountNumberById(data.account_rid);
 
-
-          if (projectCaseMapping.length > 0) {  
-    
-              for (const caseMapping of projectCaseMapping) {
-                const caseData = await Case.findOne({
-                  where: {
-                    rid: caseMapping.case_rid,
-                  },
-                });
-              
-                if (!caseData) {
-                  continue;
-                }
-                const mainSequelize = await initMainDbSequelize();
-              
-                const caseStatus = await mainSequelize.query(
-                  rawQueries.fetchCaseStatusByRid(caseData.status_rid),
-                  {
-                    type: "SELECT",
-                  }
-                ) as CaseStatusResult[];
-              
-                if (caseStatus[0]?.status_name === "Closed") {
-                  continue;
-                }
-
-                const updatedProjectTask = await orgSequelize.query(
-                  rawQueries.updateCaseProjectTaskQuery(schemaName, getSetData, data, caseMapping)
-                );
+          const checkTableExists =  await this.projectIngestion.checkCaseProjectsTableExists(validAccountNumber);  
+          if (checkTableExists) {
+            const projectCaseMapping = 
+            await this.projectIngestion.fetchProjectFiscalCaseMapping(
+              accountNumber,
+              projectData.rid
+            );
+            if (projectCaseMapping.length > 0) {  
+      
+                for (const caseMapping of projectCaseMapping) {
+                  const caseData = await Case.findOne({
+                    where: {
+                      rid: caseMapping.case_rid,
+                    },
+                  });
                 
-              }
+                  if (!caseData) {
+                    continue;
+                  }
+                  const mainSequelize = await initMainDbSequelize();
+                
+                  const caseStatus = await mainSequelize.query(
+                    rawQueries.fetchCaseStatusByRid(caseData.status_rid),
+                    {
+                      type: "SELECT",
+                    }
+                  ) as CaseStatusResult[];
+                
+                  if (caseStatus[0]?.status_name === "Closed") {
+                    continue;
+                  }
+
+                  const updatedProjectTask = await orgSequelize.query(
+                    rawQueries.updateCaseProjectTaskQuery(schemaName, getSetData, data, caseMapping)
+                  );
+                  
+                }
+            }
           }
 
           if (updatedProjectTask) {

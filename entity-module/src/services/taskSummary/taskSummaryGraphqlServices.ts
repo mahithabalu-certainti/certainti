@@ -125,8 +125,6 @@ export default class TaskSummaryGraphqlServices {
 
       if (fieldsToPropagate.length > 0 || hasDateChanges) {
         try {
-          // Extract userId from context or data
-          const userId = data.user_id || data.modified_by;
           const currentDate = new Date();
 
           // We need to fetch more complete case task details to get all required fields
