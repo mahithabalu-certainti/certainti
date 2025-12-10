@@ -5224,12 +5224,14 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         } 
       } else {
         if(isTaskExists.task_status_rid !== data.task_status_rid) {
-          const workflowResult = await this.checkTaskWorkFlow(accountNumber, data.rid, data.task_status_rid, data.case_rid, data.workflow_connector.target_rid);
-          if(workflowResult?.success) {
-            return {
-              statusCode : HttpStatus.BAD_REQUEST,
-              statusMessage : workflowResult.statusMessage
-            } 
+          if(Object.keys(data.workflow_connector).length > 0) {
+            const workflowResult = await this.checkTaskWorkFlow(accountNumber, data.rid, data.task_status_rid, data.case_rid, data.workflow_connector.target_rid);
+            if(workflowResult?.success) {
+              return {
+                statusCode : HttpStatus.BAD_REQUEST,
+                statusMessage : workflowResult.statusMessage
+              } 
+            }
           }
         }
         if(data.assigned_to !== null && data.assigned_to !== '' && data.assigned_to !== undefined) {
