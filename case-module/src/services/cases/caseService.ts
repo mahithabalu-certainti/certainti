@@ -2276,7 +2276,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
             "Task Name" : d.task_name,
             "Assigned To" : d.assigned_to_name || "-",
             "Start Date" : d.effective_start_datetime ? moment(d.effective_start_datetime).format("YYYY-MMM-DD") : "-",
-            "End Date": d.effective_end_datetime ? moment(d.effective_end_datetime).format("YYYY-MMM-DD") : "-",
+            "Due Date": d.effective_end_datetime ? moment(d.effective_end_datetime).format("YYYY-MMM-DD") : "-",
             "Status": d.task_status_name || "-",
           }
           const exportRecord: Record<string, any> = {};
