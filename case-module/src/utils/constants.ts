@@ -2118,8 +2118,16 @@ export const rawQueries = {
   getJurisdictionConfigValuesById(config_rid: string) {
   return `SELECT rid,credit_config_group_rid, config_json,effective_start_date,effective_end_date FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values WHERE rid = '${config_rid}';`
   },
-    getJurisdictionPlatformConfigValuesById(config_rid: string) {
+  getJurisdictionPlatformConfigValuesById(config_rid: string) {
   return `SELECT rid,credit_config_group_rid, config_json,effective_start_date,effective_end_date FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values WHERE federal_config_id = '${config_rid}';`
+  },
+  fetchPlatformConfig(rid: string) {
+    return `
+    SELECT config_json FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values rv
+join ${MAIN_SCHEMA_NAME}.rd_credit_config_group rg on  rv.credit_config_group_rid  = rg.rid
+where rg.country_rid = '${rid}'
+and credit_program_name = 'Platform Configuration'
+    and is_federal = true LIMIT 1`;
   },
 
 };

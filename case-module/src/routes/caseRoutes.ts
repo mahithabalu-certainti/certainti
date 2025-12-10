@@ -291,4 +291,9 @@ routes.post(
   checkUserStatusMiddleware("NA"),
   controller.caseController.caseLevelTaskDropdown
 )
+routes.get(
+  "/getCaseSubmissionDate",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.getCaseSubmissionDate
+)
 export default routes;
