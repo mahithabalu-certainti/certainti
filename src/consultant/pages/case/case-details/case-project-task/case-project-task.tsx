@@ -88,16 +88,6 @@ const CaseProjectTask: React.FC<projectTaskProps> = ({
     },
     refreshAttachments
   );
-  console.log(data);
-  // useEffect(() => {
-  //   setExportType?.('projectTask');
-  //   if (data) {
-  //     setTotalItems(data?.count || 0);
-  //     setResourceRowList(data.tasks || []);
-  //   } else {
-  //     setResourceRowList([]);
-  //   }
-  // }, [data]);
 
   useEffect(() => {
     if (data) {
@@ -354,7 +344,7 @@ const CaseProjectTask: React.FC<projectTaskProps> = ({
                 open={isModalOpen}
                 popoverId={modalId}
                 onClose={handlePopoverClose}
-                columns={visibleColumns}
+                columns={caseProjectTaskColumn}
                 onColumnsChange={handleColumnsChange}
                 columnRestrictions={RestrictedColumns}
               />
