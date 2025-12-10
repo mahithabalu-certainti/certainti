@@ -35,7 +35,7 @@ input taskInlineInput {
 rid : String!
 task_rid : String!
 account_rid : String!
-attachment_level: String!
+task_type_name: String!
 task_name: String
 description: String
 fiscal_year: Int

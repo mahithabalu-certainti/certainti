@@ -1379,7 +1379,6 @@ class ProjectIngestionService {
       total_cost_fte_prj: effective_fte_cost,
       total_cost_subcon_prj: effective_subcon_cost,
       total_cost_nonlabor_prj: effective_nonlabor_cost,
-      is_qualified: is_qualified
     } = baseData;
 
     await ProjectFiscal.update(baseData, {
@@ -1400,7 +1399,6 @@ class ProjectIngestionService {
         effective_subcon_cost,
         effective_nonlabor_cost,
         effective_total_nonlabor,
-        is_qualified,
       },
       {
         where: {

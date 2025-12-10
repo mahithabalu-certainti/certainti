@@ -201,7 +201,6 @@ class CaseSchemaService {
                         let columnMapping: Map<string, string> = new Map()
                         let newValueString;
                         let oldValueString;
-                        console.log(fetchUpdatedColumns)
                         for (let c of fetchUpdatedColumns) {
                             oldValue = (isTaskExists as any)[c]
                             newValue = (data as any)[c]

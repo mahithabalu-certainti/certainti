@@ -989,7 +989,7 @@ export class TaskService {
         }
       });
 
-      const permissionName = flag === "milestone" ? "cases_workbreakdown_export" : "activity_task_export";
+      const permissionName = flag === "milestone" ? "cases_workbreakdown_view_edit" : "activity_task_export";
 
       // Apply field-level access control for export
       const allowedFieldsForExport = await this.schemaService.getAllowedExportFields(userId, permissionName);
@@ -1001,11 +1001,11 @@ export class TaskService {
       }
 
       const labelMap: Record<string, string> = {
-        "Task ID": "Task ID",
+        "Task ID": "Record ID",
         "Task Name": "Task Name",
         "Description": "Description",
         "Fiscal Year": "Fiscal Year",
-        "Assigned To": "Assigned To",
+        "Assigned To": "Assignee",
         "Status": "Status",
         "Priority": "Priority",
         "Effective Start Date": "Effective Start Date",
@@ -1015,8 +1015,8 @@ export class TaskService {
         "Account ID": "Account ID",
         "Created By": "Created By",
         "Created On": "Created On",
-        "Modified By": "Modified By",
-        "Modified On": "Modified On"
+        "Modified By": "Updated By",
+        "Modified On": "Updated On"
       };
 
       // Map tasks to export format

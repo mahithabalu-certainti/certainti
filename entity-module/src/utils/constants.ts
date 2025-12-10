@@ -2293,9 +2293,8 @@ export const rawQueries = {
     return `SELECT rid, status_name as name FROM ${MAIN_SCHEMA_NAME}.activity_status WHERE activity_type ='Task' AND rid IN ('${oldRid}', '${newRid}')`
   },
   getTaskTypeRidMilestone: `SELECT rid FROM ${MAIN_SCHEMA_NAME}.task_type WHERE task_type_name = 'Milestone'`,
-  getTaskTypeRidActivity: `SELECT rid FROM ${MAIN_SCHEMA_NAME}.task_type WHERE task_type_name = 'Activity'`
-
-   checkCaseProjectsTableExists: `
+  getTaskTypeRidActivity: `SELECT rid FROM ${MAIN_SCHEMA_NAME}.task_type WHERE task_type_name = 'Action'`,
+  checkCaseProjectsTableExists: `
                 SELECT EXISTS (
                     SELECT 1
                     FROM information_schema.tables
