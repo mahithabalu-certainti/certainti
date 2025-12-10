@@ -1,10 +1,7 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { FormBuilder, TagsInput } from '../../../../components';
-import { Layout, AllPermissions } from '../../../../common-service';
-import { useSelector } from 'react-redux';
-import { RootState } from '../../../../store/store';
-import { getPermissionMap } from '../activities-list/helper';
+import { Layout } from '../../../../common-service';
 import { TaskFormData } from './task-form-data';
 import {
   useGetTaskPriorities,
@@ -79,13 +76,6 @@ const TaskForm: React.FC = () => {
     !!accountId
   );
 
-  const { permission } = useSelector((state: RootState) => state.permission);
-
-  const permissionMap = useMemo(
-    () => getPermissionMap(permission, AllPermissions.ACTIVITY_TASK_VIEW_EDIT),
-    [permission]
-  );
-
   const commonSuccess = createTaskMutation.isSuccess;
 
   useEffect(() => {
@@ -153,8 +143,7 @@ const TaskForm: React.FC = () => {
     priorityOptions,
     assigneeOptions,
     checklistOptions,
-    showFiscalYear,
-    permissionMap
+    showFiscalYear
   );
 
   const handleAddCustomTag = (newTags: TagOption[]) => {
