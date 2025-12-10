@@ -868,6 +868,7 @@ class UserService {
       permissions: any[];
       organisation_name: string;
       logo_url: string;
+      profile_url: string;
     } | null;
   }> {
     try {
@@ -879,6 +880,7 @@ class UserService {
           "profile_rid",
           "is_consultant_firm",
           "org_id",
+          "profile_url",
         ],
         where: { azure_id: azureId },
         include: [
@@ -950,6 +952,7 @@ class UserService {
           permissions,
           organisation_name,
           logo_url,
+          profile_url: roles.profile_url || "",
         },
       };
     } catch (err) { 
