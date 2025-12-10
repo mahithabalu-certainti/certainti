@@ -27,7 +27,15 @@ import TaskDetailModal from '../../../../../components/kanban-board/task-detail-
 import {
   useGetTaskPriorities,
   useGetTaskStatuses,
+  useAddCollaborator,
+  AddCollaboratorPayload,
+  AddCollaboratorResponse,
 } from '../../../../services/work-breakdown/work-breakdown-service';
+import {
+  useAddTaskComment,
+  useUpdateTaskComment,
+  useDeleteTaskComment,
+} from '../../../../services/case-task/case-task-service';
 import {
   useGetRoleOptions,
   useGetTagOptions,
@@ -71,7 +79,7 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
   searchValue,
   fixedFilters,
 }) => {
-  const { errorToast } = useToast();
+  const { errorToast, successToast } = useToast();
   const { fiscalYear, filters } = useSelector<
     RootState,
     { filters: unknown; fiscalYear: string }
@@ -84,9 +92,20 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
     client: taskClient,
   });
 
+  const addCollaboratorMutation = useAddCollaborator();
+  const addCommentMutation = useAddTaskComment();
+  const updateCommentMutation = useUpdateTaskComment();
+  const deleteCommentMutation = useDeleteTaskComment();
   // Hooks for Milestone (Case Task) details
-  const isMilestone = selectedTask?.attachment_level === 'milestone';
-  const caseId = selectedTask?.case_rid || '';
+  const isMilestoneTab = fixedFilters?.attachment_level === 'milestone';
+  const isCaseTask = selectedTask?.attachment_level === 'case';
+  const shouldFetchCaseData = isMilestoneTab || isCaseTask;
+
+  const caseId = isMilestoneTab
+    ? selectedTask?.attach_to || ''
+    : selectedTask?.case_rid ||
+      (isCaseTask ? selectedTask?.attach_to : '') ||
+      '';
   const accountId = selectedTask?.account_rid || '';
 
   const prioritiesQuery = useGetTaskPriorities();
@@ -97,7 +116,7 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
   const caseTeamMembersQuery = useGetCaseTeamMembersDropdown(
     accountId,
     caseId,
-    !!accountId && !!caseId && isMilestone
+    !!accountId && !!caseId && shouldFetchCaseData
   );
 
   const tagOptionsQuery = useGetTagOptions(
@@ -107,7 +126,7 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
       case_rid: caseId,
       action: 'update',
     },
-    !!selectedTask && isMilestone
+    !!selectedTask && shouldFetchCaseData
   );
 
   // Transform data
@@ -157,6 +176,256 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
     return [];
   }, [caseTeamMembersQuery.data]);
 
+  const handleAddComment = useCallback(
+    async (taskId: string, commentText: string, files: File[]) => {
+      if (!accountId || !caseId) {
+        errorToast('Account ID or Case ID is missing');
+        throw new Error('Missing Account ID or Case ID');
+      }
+
+      return new Promise<void>((resolve, reject) => {
+        addCommentMutation.mutate(
+          {
+            account_rid: accountId,
+            case_rid: caseId,
+            task_rid: taskId,
+            comments: commentText,
+            files: files,
+          },
+          {
+            onSuccess: () => {
+              const message =
+                addCommentMutation.data?.statusMessage ||
+                'Comment added successfully';
+              successToast(message);
+              const commentsParams = {
+                account_rid: accountId,
+                case_rid: caseId,
+                task_rid: taskId,
+                page: 1,
+                limit: 100,
+              };
+              queryClient.invalidateQueries({
+                queryKey: ['taskComments', commentsParams],
+              });
+              queryClient.invalidateQueries({
+                queryKey: ['taskAttachments', commentsParams],
+              });
+              queryClient.invalidateQueries({ queryKey: ['allTasksList'] });
+              resolve();
+            },
+            onError: (error) => {
+              const errorMessage =
+                (error as { response?: { data?: { statusMessage?: string } } })
+                  ?.response?.data?.statusMessage ||
+                error?.message ||
+                'Failed to add comment';
+              errorToast(errorMessage);
+              reject(error);
+            },
+          }
+        );
+      });
+    },
+    [
+      accountId,
+      caseId,
+      successToast,
+      errorToast,
+      addCommentMutation,
+      queryClient,
+    ]
+  );
+
+  const handleUpdateComment = useCallback(
+    async (
+      commentId: string,
+      commentText: string,
+      taskId: string,
+      files?: File[],
+      deletedFileIds?: string[]
+    ) => {
+      if (!accountId || !caseId) {
+        errorToast('Account ID or Case ID is missing');
+        throw new Error('Missing Account ID or Case ID');
+      }
+
+      return new Promise<void>((resolve, reject) => {
+        updateCommentMutation.mutate(
+          {
+            account_rid: accountId,
+            case_rid: caseId,
+            task_rid: taskId,
+            rid: commentId,
+            comments: commentText,
+            files: files,
+            deleted_file_ids: deletedFileIds,
+          },
+          {
+            onSuccess: () => {
+              const message =
+                updateCommentMutation.data?.statusMessage ||
+                'Comment updated successfully';
+              successToast(message);
+              const commentsParams = {
+                account_rid: accountId,
+                case_rid: caseId,
+                task_rid: taskId,
+                page: 1,
+                limit: 100,
+              };
+              queryClient.invalidateQueries({
+                queryKey: ['taskComments', commentsParams],
+              });
+              queryClient.invalidateQueries({ queryKey: ['allTasksList'] });
+              resolve();
+            },
+            onError: (error) => {
+              const errorMessage =
+                (error as { response?: { data?: { statusMessage?: string } } })
+                  ?.response?.data?.statusMessage ||
+                error?.message ||
+                'Failed to update comment';
+              errorToast(errorMessage);
+              reject(error);
+            },
+          }
+        );
+      });
+    },
+    [
+      accountId,
+      caseId,
+      successToast,
+      errorToast,
+      updateCommentMutation,
+      queryClient,
+    ]
+  );
+
+  const handleDeleteComment = useCallback(
+    async (commentId: string, taskId: string) => {
+      if (!accountId || !caseId) {
+        errorToast('Account ID or Case ID is missing');
+        throw new Error('Missing Account ID or Case ID');
+      }
+
+      return new Promise<void>((resolve, reject) => {
+        deleteCommentMutation.mutate(
+          {
+            account_rid: accountId,
+            case_rid: caseId,
+            task_rid: taskId,
+            rid: commentId,
+            deleted_file_ids: [],
+          },
+          {
+            onSuccess: () => {
+              const message =
+                deleteCommentMutation.data?.statusMessage ||
+                'Comment deleted successfully';
+              successToast(message);
+              const commentsParams = {
+                account_rid: accountId,
+                case_rid: caseId,
+                task_rid: taskId,
+                page: 1,
+                limit: 100,
+              };
+              queryClient.invalidateQueries({
+                queryKey: ['taskComments', commentsParams],
+              });
+              queryClient.invalidateQueries({ queryKey: ['allTasksList'] });
+              resolve();
+            },
+            onError: (error) => {
+              const errorMessage =
+                (error as { response?: { data?: { statusMessage?: string } } })
+                  ?.response?.data?.statusMessage ||
+                error?.message ||
+                'Failed to delete comment';
+              errorToast(errorMessage);
+              reject(error);
+            },
+          }
+        );
+      });
+    },
+    [
+      accountId,
+      caseId,
+      successToast,
+      errorToast,
+      deleteCommentMutation,
+      queryClient,
+    ]
+  );
+
+  const handleAddCollaborator = useCallback(
+    async (
+      taskId: string,
+      userId: string
+    ): Promise<AddCollaboratorResponse> => {
+      if (!accountId || !caseId) {
+        errorToast('Account ID or Case ID is missing');
+        throw new Error('Missing Account ID or Case ID');
+      }
+
+      return new Promise<AddCollaboratorResponse>((resolve, reject) => {
+        const payload: AddCollaboratorPayload = {
+          case_rid: caseId,
+          account_rid: accountId,
+          rid: taskId,
+          user_rid: userId,
+          action_type: shouldFetchCaseData ? 'milestone' : 'activity',
+        };
+
+        addCollaboratorMutation.mutate(payload, {
+          onSuccess: (response) => {
+            if (
+              response?.statusCode === 200 ||
+              response?.statusCodeValue === 'OK'
+            ) {
+              const message =
+                response?.statusMessage || 'Collaborator added successfully';
+              successToast(message);
+              queryClient.invalidateQueries({
+                queryKey: ['collaborators', accountId, caseId, taskId],
+              });
+              queryClient.invalidateQueries({ queryKey: ['allTasksList'] });
+
+              resolve(response);
+            } else {
+              const errorMessage =
+                response?.statusMessage || 'Failed to add collaborator';
+              errorToast(errorMessage);
+              reject(new Error(errorMessage));
+            }
+          },
+          onError: (error) => {
+            const errorMessage =
+              (error as { response?: { data?: { statusMessage?: string } } })
+                ?.response?.data?.statusMessage ||
+              error?.message ||
+              'Failed to add collaborator';
+            errorToast(errorMessage);
+            console.error('Error adding collaborator:', error);
+            reject(error);
+          },
+        });
+      });
+    },
+    [
+      accountId,
+      caseId,
+      addCollaboratorMutation,
+      successToast,
+      errorToast,
+      queryClient,
+      shouldFetchCaseData,
+    ]
+  );
+
   const handleTaskUpdate = () => {
     queryClient.invalidateQueries({ queryKey: ['allTasksList'] });
   };
@@ -170,89 +439,169 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
     [permission]
   );
 
+  // Permission Map for Milestone (Case) Tasks
+  const milestonePermissionMap = useMemo(
+    () =>
+      getPermissionMap(
+        permission,
+        AllPermissions.CASES_WORKBREAKDOWN_VIEW_EDIT
+      ),
+    [permission]
+  );
+
   const fieldHiddenMap = useMemo(() => {
     if (!selectedTask) return {};
-    const entityLevel = selectedTask.attachment_level?.toLowerCase();
-    const isActivity = ['account', 'project', 'case'].includes(entityLevel);
 
-    if (isActivity) {
+    if (isMilestoneTab) {
       return {
         taskName:
-          !taskPermissionMap['task_name']?.read &&
-          !taskPermissionMap['task_name']?.edit,
+          !milestonePermissionMap['task_name']?.read &&
+          !milestonePermissionMap['task_name']?.edit,
         status:
-          !taskPermissionMap['status_rid']?.read &&
-          !taskPermissionMap['status_rid']?.edit,
+          !milestonePermissionMap['status_rid']?.read &&
+          !milestonePermissionMap['status_rid']?.edit,
         priority:
-          !taskPermissionMap['priority_rid']?.read &&
-          !taskPermissionMap['priority_rid']?.edit,
+          !milestonePermissionMap['priority_rid']?.read &&
+          !milestonePermissionMap['priority_rid']?.edit,
         assignee:
-          !taskPermissionMap['assigned_to']?.read &&
-          !taskPermissionMap['assigned_to']?.edit,
+          !milestonePermissionMap['assigned_to']?.read &&
+          !milestonePermissionMap['assigned_to']?.edit,
         startDate:
-          !taskPermissionMap['effective_start_datetime']?.read &&
-          !taskPermissionMap['effective_start_datetime']?.edit,
+          !milestonePermissionMap['effective_start_datetime']?.read &&
+          !milestonePermissionMap['effective_start_datetime']?.edit,
         endDate:
-          !taskPermissionMap['effective_end_datetime']?.read &&
-          !taskPermissionMap['effective_end_datetime']?.edit,
+          !milestonePermissionMap['effective_end_datetime']?.read &&
+          !milestonePermissionMap['effective_end_datetime']?.edit,
         description:
-          !taskPermissionMap['description']?.read &&
-          !taskPermissionMap['description']?.edit,
+          !milestonePermissionMap['task_description']?.read &&
+          !milestonePermissionMap['task_description']?.edit,
         checklistTemplate:
-          !taskPermissionMap['checklists']?.read &&
-          !taskPermissionMap['checklists']?.edit,
-        checklist:
-          !taskPermissionMap['checklists']?.read &&
-          !taskPermissionMap['checklists']?.edit,
+          !milestonePermissionMap['checklist_template_rid']?.read &&
+          !milestonePermissionMap['checklist_template_rid']?.edit,
         tags:
-          !taskPermissionMap['tags']?.read && !taskPermissionMap['tags']?.edit,
-        weightage: true,
-        category: true,
-        linkedType: true,
-        linkTaskType: true,
+          !milestonePermissionMap['tags']?.read &&
+          !milestonePermissionMap['tags']?.edit,
+        weightage:
+          !milestonePermissionMap['weightage_rid']?.read &&
+          !milestonePermissionMap['weightage_rid']?.edit,
+        category:
+          !milestonePermissionMap['task_category_rid']?.read &&
+          !milestonePermissionMap['task_category_rid']?.edit,
+        linkedType:
+          !milestonePermissionMap['relationship_connector_rid']?.read &&
+          !milestonePermissionMap['relationship_connector_rid']?.edit,
+        linkTaskType:
+          !milestonePermissionMap['target_rid']?.read &&
+          !milestonePermissionMap['target_rid']?.edit,
         attachments:
-          !taskPermissionMap['attachments']?.read &&
-          !taskPermissionMap['attachments']?.edit,
+          !milestonePermissionMap['attachments']?.read &&
+          !milestonePermissionMap['attachments']?.edit,
         comments:
-          !taskPermissionMap['comments']?.read &&
-          !taskPermissionMap['comments']?.edit,
+          !milestonePermissionMap['comments']?.read &&
+          !milestonePermissionMap['comments']?.edit,
         collaborators:
-          !taskPermissionMap['collaborators']?.read &&
-          !taskPermissionMap['collaborators']?.edit,
-        fiscalYear:
-          entityLevel !== 'account' ||
-          (!taskPermissionMap['fiscal_year']?.read &&
-            !taskPermissionMap['fiscal_year']?.edit),
+          !milestonePermissionMap['collaborators']?.read &&
+          !milestonePermissionMap['collaborators']?.edit,
+        fiscalYear: true,
       };
     }
-    return {};
-  }, [selectedTask, taskPermissionMap]);
+
+    // Activity View
+    const entityLevel = selectedTask.attachment_level?.toLowerCase();
+    return {
+      taskName:
+        !taskPermissionMap['task_name']?.read &&
+        !taskPermissionMap['task_name']?.edit,
+      status:
+        !taskPermissionMap['status_rid']?.read &&
+        !taskPermissionMap['status_rid']?.edit,
+      priority:
+        !taskPermissionMap['priority_rid']?.read &&
+        !taskPermissionMap['priority_rid']?.edit,
+      assignee:
+        !taskPermissionMap['assigned_to']?.read &&
+        !taskPermissionMap['assigned_to']?.edit,
+      startDate:
+        !taskPermissionMap['effective_start_datetime']?.read &&
+        !taskPermissionMap['effective_start_datetime']?.edit,
+      endDate:
+        !taskPermissionMap['effective_end_datetime']?.read &&
+        !taskPermissionMap['effective_end_datetime']?.edit,
+      description:
+        !taskPermissionMap['description']?.read &&
+        !taskPermissionMap['description']?.edit,
+      checklistTemplate:
+        !taskPermissionMap['checklists']?.read &&
+        !taskPermissionMap['checklists']?.edit,
+      checklist:
+        !taskPermissionMap['checklists']?.read &&
+        !taskPermissionMap['checklists']?.edit,
+      tags:
+        !taskPermissionMap['tags']?.read && !taskPermissionMap['tags']?.edit,
+      weightage: true,
+      category: true,
+      linkedType: true,
+      linkTaskType: true,
+      attachments:
+        !taskPermissionMap['attachments']?.read &&
+        !taskPermissionMap['attachments']?.edit,
+      comments:
+        !taskPermissionMap['comments']?.read &&
+        !taskPermissionMap['comments']?.edit,
+      collaborators:
+        !taskPermissionMap['collaborators']?.read &&
+        !taskPermissionMap['collaborators']?.edit,
+      fiscalYear:
+        entityLevel !== 'account' ||
+        (!taskPermissionMap['fiscal_year']?.read &&
+          !taskPermissionMap['fiscal_year']?.edit),
+    };
+  }, [selectedTask, taskPermissionMap, milestonePermissionMap, isMilestoneTab]);
 
   const fieldDisabledMap = useMemo(() => {
     if (!selectedTask) return {};
-    const entityLevel = selectedTask.attachment_level?.toLowerCase();
-    const isActivity = ['account', 'project', 'case'].includes(entityLevel);
 
-    if (isActivity) {
+    if (isMilestoneTab) {
       return {
-        taskName: !taskPermissionMap['task_name']?.edit,
-        status: !taskPermissionMap['status_rid']?.edit,
-        priority: !taskPermissionMap['priority_rid']?.edit,
-        assignee: !taskPermissionMap['assigned_to']?.edit,
-        startDate: !taskPermissionMap['effective_start_datetime']?.edit,
-        endDate: !taskPermissionMap['effective_end_datetime']?.edit,
-        description: !taskPermissionMap['description']?.edit,
-        checklistTemplate: !taskPermissionMap['checklists']?.edit,
-        checklist: !taskPermissionMap['checklists']?.edit,
-        tags: !taskPermissionMap['tags']?.edit,
-        attachments: !taskPermissionMap['attachments']?.edit,
-        comments: !taskPermissionMap['comments']?.edit,
-        collaborators: !taskPermissionMap['collaborators']?.edit,
-        fiscalYear: !taskPermissionMap['fiscal_year']?.edit,
+        taskName: !milestonePermissionMap['task_name']?.edit,
+        status: !milestonePermissionMap['status_rid']?.edit,
+        priority: !milestonePermissionMap['priority_rid']?.edit,
+        assignee: !milestonePermissionMap['assigned_to']?.edit,
+        startDate: !milestonePermissionMap['effective_start_datetime']?.edit,
+        endDate: !milestonePermissionMap['effective_end_datetime']?.edit,
+        description: !milestonePermissionMap['task_description']?.edit,
+        checklistTemplate:
+          !milestonePermissionMap['checklist_template_rid']?.edit,
+        tags: !milestonePermissionMap['tags']?.edit,
+        weightage: !milestonePermissionMap['weightage_rid']?.edit,
+        category: !milestonePermissionMap['task_category_rid']?.edit,
+        linkedType: !milestonePermissionMap['relationship_connector_rid']?.edit,
+        linkTaskType: !milestonePermissionMap['target_rid']?.edit,
+        attachments: !milestonePermissionMap['attachments']?.edit,
+        comments: !milestonePermissionMap['comments']?.edit,
+        collaborators: !milestonePermissionMap['collaborators']?.edit,
+        fiscalYear: true,
       };
     }
-    return {};
-  }, [selectedTask, taskPermissionMap]);
+
+    // Activity View
+    return {
+      taskName: !taskPermissionMap['task_name']?.edit,
+      status: !taskPermissionMap['status_rid']?.edit,
+      priority: !taskPermissionMap['priority_rid']?.edit,
+      assignee: !taskPermissionMap['assigned_to']?.edit,
+      startDate: !taskPermissionMap['effective_start_datetime']?.edit,
+      endDate: !taskPermissionMap['effective_end_datetime']?.edit,
+      description: !taskPermissionMap['description']?.edit,
+      checklistTemplate: !taskPermissionMap['checklists']?.edit,
+      checklist: !taskPermissionMap['checklists']?.edit,
+      tags: !taskPermissionMap['tags']?.edit,
+      attachments: !taskPermissionMap['attachments']?.edit,
+      comments: !taskPermissionMap['comments']?.edit,
+      collaborators: !taskPermissionMap['collaborators']?.edit,
+      fiscalYear: !taskPermissionMap['fiscal_year']?.edit,
+    };
+  }, [selectedTask, taskPermissionMap, milestonePermissionMap, isMilestoneTab]);
 
   const { data, isLoading, isError } = useAllTasksList(
     {
@@ -473,8 +822,12 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
           isOpen={true}
           onClose={() => setSelectedTask(null)}
           accountId={selectedTask.account_rid}
-          caseId={selectedTask.case_rid || ''}
+          caseId={caseId}
           onTaskUpdate={handleTaskUpdate}
+          onAddComment={handleAddComment}
+          onUpdateComment={handleUpdateComment}
+          onDeleteComment={handleDeleteComment}
+          onAddCollaborator={handleAddCollaborator}
           statusData={statusData}
           priorityData={priorityData}
           tagData={tagData}

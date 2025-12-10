@@ -1,7 +1,7 @@
 import { gql } from '@apollo/client';
 
 export const UPDATE_TASK_SUMMARY_INLINE = gql`
-  mutation UpdateTaskSummaryInline($data: updateInlineTaskSummary!) {
+  mutation UpdateTaskSummaryInline($data: taskInlineInput!) {
     updateTaskSummaryInline(data: $data) {
       statusCode
       statusCodeValue
