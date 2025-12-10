@@ -7,6 +7,7 @@ export interface TechnicalSummaryListURLParams {
   account_rid?: string;
   project_rid?: string;
   project_fiscal_rid?: string;
+  case_rid?: string;
 }
 
 export interface TechnicalSummaryExportListParams {
@@ -31,6 +32,8 @@ export type TechnicalSummaryList = {
   modified_by: string | null;
   modified_user_name: string | null;
   modified_datetime: string | null;
+  project_rid: string;
+  project_fiscal_rid: string;
 };
 
 export interface TechnicalSummaryListResponse {

@@ -128,7 +128,6 @@ const CaseProjectTask: React.FC<projectTaskProps> = ({
   } = useCaseProjectTaskDetail(
     taskId || '',
     accountID || ''
-    // refreshTaskDetailPageTrigger
   );
   const resourceData = resourceDetails?.data;
   const handleFilter = () => {
@@ -299,20 +298,6 @@ const CaseProjectTask: React.FC<projectTaskProps> = ({
       />
 
       <>
-        {/* <ResourceTableHeader
-          value={'projectTask'}
-          title='Case Project Task'
-          count={taskId ? undefined : totalItems}
-          titleIcon={
-            <ProjectsIcon
-              alt='attachment-header-icon'
-              className='[&>path]:stroke-[#4B9BFF]'
-            />
-          }
-          headerButtons={headerButtons}
-          iconBg='#D8E9FF'
-          bgType='circle'
-        /> */}
         <SectionHeader
           title={taskId ? 'Case Project Task Details' : 'Case Project Task '}
           titleIcon={

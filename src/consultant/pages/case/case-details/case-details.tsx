@@ -20,6 +20,7 @@ import {
   ActivityListExportURLParams,
   ActivityType,
   ProjectResourcesListParams,
+  TechnicalSummaryExportListParams,
 } from '../../../types';
 import {
   AllMenus,
@@ -78,6 +79,7 @@ import { CaseActivities } from './case-activities';
 import { ExportActivityList } from '../../../services/activities/activities-service';
 import { CaseProjectTask } from './case-project-task';
 import { ExportCaseProjectTasktList } from '../../../services/case-project-task/case-project-task-service';
+import { TechnicalSummary } from './technical-summary';
 import { CaseProjectResource } from './case-project-resource';
 import { ExportCaseProjectResourceList } from '../../../services/case-project-resource/case-project-resource-service';
 
@@ -202,7 +204,12 @@ export const CaseDetails = () => {
       page: 1,
       limit: 100,
     });
-
+  const [technicalSummaryParams, setTechnicalSummaryParams] =
+    useState<TechnicalSummaryExportListParams>({
+      sortBy: 'r_number',
+      sortOrder: 'ASC',
+      filters: {},
+    });
   const [activityParams, setActivityParams] =
     useState<ActivityListExportURLParams>({
       sortBy: 'r_number',
@@ -214,6 +221,7 @@ export const CaseDetails = () => {
   const activityId = searchParams.get('activity_id');
   const activityType = searchParams.get('activity_type');
   const activityViewDetails = !!activityId && !!activityType;
+
 
   useEffect(() => {
     const list = searchParams.get('list');
@@ -237,6 +245,19 @@ export const CaseDetails = () => {
       if (!newParams.get('detailstab')) {
         newParams.delete('assignProject');
       }
+      navigate({ search: newParams.toString() }, { replace: true });
+    } else if (searchParams.get('list') !== 'projectTask') {
+      console.log('projectTask');
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('caseProjectTask');
+      navigate({ search: newParams.toString() }, { replace: true });
+    }
+  }, [searchParams.get('list')]);
+  useEffect(() => {
+    if (searchParams.get('list') !== 'projectTask') {
+      console.log('working');
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('caseProjectTask');
       navigate({ search: newParams.toString() }, { replace: true });
     }
   }, [searchParams.get('list')]);
@@ -662,6 +683,14 @@ export const CaseDetails = () => {
             accountInActive={accountInActive}
             setProjectResourceParams={setProjectResourceParams}
             setExportType={setExportType}
+          />
+        );
+      case 'technicalSummary':
+        return (
+          <TechnicalSummary
+            accountInActive={accountInActive}
+            setExportType={setExportType}
+            setTechnicalSummaryParams={setTechnicalSummaryParams}
           />
         );
       default:
