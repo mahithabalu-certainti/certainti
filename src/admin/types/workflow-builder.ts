@@ -165,3 +165,25 @@ export interface RuleFieldValuesResponse {
   statusMessage: string;
   data: RuleFieldValueItem[];
 }
+
+// --------------- Create Rule ---------------
+export interface RuleOperationPayload {
+  field_rid: string;
+  operator_rid: string;
+  value_rid: string;
+}
+
+export interface RuleConditionCategoryPayload {
+  category_rid: string;
+  cateogry_operator?: 'AND' | 'OR';
+  operations: RuleOperationPayload[];
+}
+
+export interface CreateRulePayload {
+  rule_name: string;
+  description?: string;
+  event_rid: string;
+  condition_rid: string;
+  condition_categories: RuleConditionCategoryPayload[];
+  action_rid: string[];
+}

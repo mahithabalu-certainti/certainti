@@ -93,6 +93,51 @@ export interface Rule {
   conditionType?: ConditionType | null;
 }
 
+export const transformRuleToPayload = (rule: Rule) => {
+  // Group conditions by category
+  const conditionsByCategory = rule.conditions.reduce(
+    (acc, condition) => {
+      if (!acc[condition.category]) {
+        acc[condition.category] = [];
+      }
+      acc[condition.category].push(condition);
+      return acc;
+    },
+    {} as Record<string, Condition[]>
+  );
+
+  // Transform to condition_categories array
+  const condition_categories = Object.entries(conditionsByCategory).map(
+    ([categoryRid, conditions], index) => {
+      // Get the category operator from the first condition's logical operator
+      // (if it's not the first category)
+      const categoryOperator =
+        index > 0 ? conditions[0]?.logicalOperator || 'AND' : undefined;
+
+      return {
+        category_rid: categoryRid,
+        ...(categoryOperator ? { cateogry_operator: categoryOperator } : {}),
+        operations: conditions.map((condition) => ({
+          field_rid: condition.field,
+          operator_rid: condition.operator,
+          value_rid: Array.isArray(condition.value)
+            ? condition.value.join(',')
+            : condition.value,
+        })),
+      };
+    }
+  );
+
+  return {
+    rule_name: rule.name,
+    description: '',
+    event_rid: rule.trigger?.id || '',
+    condition_rid: rule.conditionType?.rid || '',
+    condition_categories,
+    action_rid: rule.actions.map((action) => action.category),
+  };
+};
+
 export const COMMON_SELECT_STYLES = {
   height: '32px',
   fontSize: '13px',

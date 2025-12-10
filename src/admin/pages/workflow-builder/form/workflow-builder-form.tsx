@@ -6,16 +6,20 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { WORKFLOW_BUILDER } from '../../../../routes';
 import { RuleBuilder } from './components';
 import { WorkflowProvider, useWorkflowContext } from './workflow-context';
+import { transformRuleToPayload } from './helper';
 import {
   useGetScopeList,
   useGetConditionList,
   useGetActionCategoryTypes,
+  useCreateRule,
 } from '../../../service/workflow-builder/workflow-builder-service';
 
 const WorkflowBuilderFormContent: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { rule, validateAndSave } = useWorkflowContext();
+
+  const createRule = useCreateRule();
 
   const { data: scopeListData, isLoading: isLoadingScopeList } =
     useGetScopeList();
@@ -49,37 +53,21 @@ const WorkflowBuilderFormContent: React.FC = () => {
       return;
     }
 
-    // Transform rule to API payload format
-    const apiPayload = {
-      rule_id: rule.id,
-      rule_name: rule.name,
-      trigger_id: rule.trigger?.id,
-      condition_type_id: rule.conditionType?.rid,
-      conditions: rule.conditions.map((condition) => ({
-        condition_id: condition.id,
-        category_id: condition.category,
-        field: condition.field,
-        operator: condition.operator,
-        value: condition.value,
-        logical_operator: condition.logicalOperator,
-      })),
-      actions: rule.actions.map((action) => ({
-        action_id: action.id,
-        category_id: action.category,
-      })),
-      is_active: rule.isActive,
-    };
+    const apiPayload = transformRuleToPayload(rule);
 
     console.log('API Payload:', apiPayload);
 
-    // TODO: Call create/update API here
-    // if (isEditView) {
-    //   await updateWorkflowRule(apiPayload);
-    // } else {
-    //   await createWorkflowRule(apiPayload);
-    // }
-
-    navigate(WORKFLOW_BUILDER);
+    // Call create rule API
+    createRule.mutate(apiPayload, {
+      onSuccess: (response) => {
+        console.log('Rule created successfully:', response);
+        navigate(WORKFLOW_BUILDER);
+      },
+      onError: (error) => {
+        console.error('Error creating rule:', error);
+        // TODO: Show error toast/notification to user
+      },
+    });
   };
 
   const isEditView =
@@ -132,7 +120,7 @@ const WorkflowBuilderFormContent: React.FC = () => {
           <div className='flex gap-3'>
             <TextButton
               label='Save'
-              loading={false}
+              loading={createRule.isPending}
               onClick={handleSubmit}
               disabled={!isSaveEnabled}
               sx={{
@@ -145,7 +133,7 @@ const WorkflowBuilderFormContent: React.FC = () => {
             <TextButton
               label='Cancel'
               onClick={goBack}
-              disabled={false}
+              disabled={createRule.isPending}
               sx={{
                 width: '75px',
                 minWidth: '75px',

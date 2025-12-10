@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import {
   ActionCategoryTypePayload,
   ActionCategoryTypeResponse,
@@ -8,6 +8,7 @@ import {
   ConditionCategoryResponse,
   ConditionListPayload,
   ConditionListResponse,
+  CreateRulePayload,
   RuleCategoryFieldsPayload,
   RuleCategoryFieldsResponse,
   RuleFieldOperatorsPayload,
@@ -29,6 +30,8 @@ import {
   ScopeEventListMockData,
   ScopeListMockData,
 } from '../../mockdata/workflow-builder';
+import { CommonApiResponse } from '../../../common-service';
+import { caseServiceApi } from '../../../api/api';
 
 // Scope List
 export const fetchScopeList = async (): Promise<ScopeListResponse> => {
@@ -334,5 +337,31 @@ export const useGetRuleFieldValues = (params: RuleFieldValuesPayload) => {
     retry: 0,
     gcTime: 0,
     enabled: !!params.field_rid,
+  });
+};
+
+// --------------- Create Rule ---------------
+export const getCreateRuleUrl = (): string => {
+  return `/api/workflow/createRule`;
+};
+
+export const createRule = async (
+  body: CreateRulePayload
+): Promise<CommonApiResponse> => {
+  try {
+    const { data } = await caseServiceApi.post<CommonApiResponse>(
+      getCreateRuleUrl(),
+      body
+    );
+    return data;
+  } catch (error) {
+    console.error('Error creating rule:', error);
+    throw error;
+  }
+};
+
+export const useCreateRule = () => {
+  return useMutation<CommonApiResponse, Error, CreateRulePayload>({
+    mutationFn: (body) => createRule({ ...body }),
   });
 };
