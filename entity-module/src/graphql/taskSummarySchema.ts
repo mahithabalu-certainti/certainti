@@ -36,6 +36,8 @@ rid : String!
 task_rid : String!
 account_rid : String!
 task_type_name: String!
+attachment_level: String!
+attach_to: String!
 task_name: String
 description: String
 fiscal_year: Int

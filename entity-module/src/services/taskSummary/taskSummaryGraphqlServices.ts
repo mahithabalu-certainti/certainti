@@ -112,8 +112,19 @@ export default class TaskSummaryGraphqlServices {
       const caseTaskQuery: any = await orgSequelize.query(
         rawQueries.findCaseTaskDetails(schemaName, data.task_rid, data.account_rid)
       );
+
       attachedTaskExists = caseTaskQuery[0].length > 0;
-      attachedTaskDetails = caseTaskQuery[0][0];
+
+      const getTaskDetailsByIdParam: IFetchTaskDetailsInput = {
+        task_rid : data.task_rid,
+        account_rid : data.account_rid,
+        user_rid : userId,
+        attachment_level: data.attachment_level,
+        attach_to: data.attach_to,
+        task_type_name: data.task_type_name,
+      } 
+
+      attachedTaskDetails = await this.taskService.getTaskDetailsById(getTaskDetailsByIdParam)
 
       // Check if any editable fields from task summary need to be propagated to case task
       fieldsToPropagate = editableFields.filter(field =>
@@ -128,7 +139,7 @@ export default class TaskSummaryGraphqlServices {
           const currentDate = new Date();
 
           // We need to fetch more complete case task details to get all required fields
-          const fullCaseTaskDetails = attachedTaskDetails;
+          const fullCaseTaskDetails = attachedTaskDetails.data;
 
           // Create the UpdateCaseTaskType object by merging existing data with task summary updates
           const caseTaskUpdateData: UpdateCaseTaskType = {
@@ -186,7 +197,6 @@ export default class TaskSummaryGraphqlServices {
               effective_end_datetime: caseTaskUpdateData.effective_end_datetime
             }
           })}`);
-
           // Call updateUserLevelTask with the prepared data
           const updateResult = await this.caseService.updateUserLevelTask(caseTaskUpdateData);
 

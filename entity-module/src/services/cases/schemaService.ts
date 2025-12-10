@@ -179,18 +179,18 @@ class CaseSchemaService {
                             await this.createOrUpdateTags(isTaskExists.rid, data.account_rid, data?.case_rid, d.tag_rid, d.is_new_tag, accountNumber, data.modified_by, activeStatusRid)
                         }
                     }
-                    if (Object.keys(data.workflow_connector).length > 0) {
-                        data.workflow_connector.created_by = data.modified_by
-                        data.workflow_connector.case_rid = data.case_rid
-                        data.workflow_connector.account_rid = data.account_rid
-                        if (data.workflow_connector.target_rid.length > 0) {
-                            await this.taskWorkflowConnector(accountNumber, data.workflow_connector, transaction);
-                        }
-                        if (data.workflow_connector.delete_target_rids !== undefined) {
-                            if (data.workflow_connector.delete_target_rids.length > 0)
-                                await this.deleteTaskWorkConnector(accountNumber, data.workflow_connector)
-                        }
-                    }
+                    // if (Object.keys(data.workflow_connector).length > 0) {
+                    //     data.workflow_connector.created_by = data.modified_by
+                    //     data.workflow_connector.case_rid = data.case_rid
+                    //     data.workflow_connector.account_rid = data.account_rid
+                    //     if (data.workflow_connector.target_rid.length > 0) {
+                    //         await this.taskWorkflowConnector(accountNumber, data.workflow_connector, transaction);
+                    //     }
+                    //     if (data.workflow_connector.delete_target_rids !== undefined) {
+                    //         if (data.workflow_connector.delete_target_rids.length > 0)
+                    //             await this.deleteTaskWorkConnector(accountNumber, data.workflow_connector)
+                    //     }
+                    // }
                     const fetchUpdatedColumns = getColumnsNamesForTaskUpdate(data, isTaskExists as any);
                     if (fetchUpdatedColumns.length > 0) {
                         let updatedColumnsStorage: string[] = []
