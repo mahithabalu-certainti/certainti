@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo, useRef } from 'react';
+import ReactDOM from 'react-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { TaskDetailModalProps, Task, Activity, Comment } from './types';
 import { MenuItem, SelectChangeEvent } from '@mui/material';
@@ -139,6 +140,8 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   const [weightage, setWeightage] = useState('');
   const [category, setCategory] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
 
   const ErrorIconTooltip = ({ error }: { error: string }) => (
     <Tooltip
@@ -255,6 +258,23 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       setLinkTaskTypes([]);
     }
   }, [isOpen, taskId]);
+
+  useEffect(() => {
+    if (isOpen) {
+      setIsAnimating(true);
+      setIsVisible(false);
+      const timer = setTimeout(() => {
+        setIsVisible(true);
+      }, 5);
+      return () => clearTimeout(timer);
+    } else {
+      setIsVisible(false);
+      const timer = setTimeout(() => {
+        setIsAnimating(false);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (rawTask) {
@@ -620,12 +640,18 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     };
   }, [fieldDisabled, editedTask?.checklist]);
 
-  if (!isOpen || !taskId) return null;
+  if (!isAnimating || !taskId) return null;
   if (isLoadingTaskDetails || (rawTask && !task)) {
     return (
       <div
         className='fixed right-0 bottom-0 w-[650px] bg-white text-gray-900 shadow-2xl z-50 overflow-y-auto'
-        style={{ top: '38.1px' }}
+        style={{
+          top: '38.1px',
+          transform: isVisible ? 'translateX(0)' : 'translateX(100%)',
+          opacity: isVisible ? 1 : 0,
+          transition:
+            'transform 500ms cubic-bezier(0.4, 0.0, 0.2, 1), opacity 500ms cubic-bezier(0.4, 0.0, 0.2, 1)',
+        }}
       >
         <div className='sticky top-0 flex items-center justify-between p-[16.5px] border-b border-[#CBD6E2] bg-white z-50'>
           <div className='p-2 w-6 h-6'></div>
@@ -688,7 +714,13 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     return (
       <div
         className='fixed right-0 bottom-0 w-[650px] bg-white text-gray-900 shadow-2xl z-50 flex items-center justify-center'
-        style={{ top: '38.1px' }}
+        style={{
+          top: '38.1px',
+          transform: isVisible ? 'translateX(0)' : 'translateX(100%)',
+          opacity: isVisible ? 1 : 0,
+          transition:
+            'transform 500ms cubic-bezier(0.4, 0.0, 0.2, 1), opacity 500ms cubic-bezier(0.4, 0.0, 0.2, 1)',
+        }}
       >
         <div className='text-center text-gray-500'>
           <p>Task not found</p>
@@ -1458,16 +1490,17 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     }
   };
 
-  return (
+  return ReactDOM.createPortal(
     <>
       <div
-        className={`fixed right-0 bottom-0 w-[650px] bg-white text-gray-900 shadow-2xl z-50 overflow-y-auto ${
-          isOpen ? 'translate-x-0' : 'translate-x-full'
-        }`}
+        className='fixed right-0 bottom-0 w-[650px] bg-white text-gray-900 shadow-2xl z-50 overflow-y-auto'
         style={{
           top: '38.1px',
-          transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
-          transition: 'transform 300ms ease-in-out',
+          transform: isVisible ? 'translateX(0)' : 'translateX(100%)',
+          opacity: isVisible ? 1 : 0,
+          transition:
+            'transform 500ms cubic-bezier(0.4, 0.0, 0.2, 1), opacity 500ms cubic-bezier(0.4, 0.0, 0.2, 1)',
+          willChange: isAnimating ? 'transform, opacity' : 'auto',
         }}
       >
         <div className='sticky top-0 flex items-center justify-between p-3 border-b border-[#CBD6E2] bg-white z-50'>
@@ -2100,7 +2133,8 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
           )}
         </div>
       </div>
-    </>
+    </>,
+    document.body
   );
 };
 export default TaskDetailModal;
