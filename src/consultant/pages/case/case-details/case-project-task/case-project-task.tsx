@@ -59,7 +59,7 @@ const CaseProjectTask: React.FC<projectTaskProps> = ({
   );
   const [rowsPerPage, setRowsPerPage] = useState(100);
   const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('ASC');
-  const [sortField, setSortField] = useState<string>('resource_name');
+  const [sortField, setSortField] = useState<string>('project_code');
   const [totalItems, setTotalItems] = useState<number>(0);
   const [resourceRowList, setResourceRowList] = useState<CaseProjectTaskRow[]>(
     []
