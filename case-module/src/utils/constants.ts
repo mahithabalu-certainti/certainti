@@ -1497,6 +1497,13 @@ export const rawQueries = {
       return `SELECT rid, CONCAT(first_name,' ', last_name) AS name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (${ids})`
     }
   },
+  getAllCaseTeamRoles(rid: any[]) {
+    let ids: string[] = []
+    if (rid.length > 0) {
+      ids.push(`${rid.map((d: any) => `'${d}'`).join(',')}`)
+      return `SELECT rid, role_name FROM ${MAIN_SCHEMA_NAME}.case_team_role WHERE rid IN (${ids})`
+    }
+  },
   getAllTeamRoles(rid: any[]) {
     let ids: string[] = []
     if (rid.length > 0) {
@@ -2291,7 +2298,8 @@ export const filterColumnsCaseTask = {
   assigned_to: `assigned_to`,
   effective_start_datetime: `effective_start_datetime`,
   effective_end_datetime: `effective_end_datetime`,
-  task_status_rid: `task_status_rid`
+  task_status_rid: `task_status_rid`,
+  role_rid : "role_rid"
 }
 
 export const filterColumnsCaseTaskTypes: any = {
@@ -2299,7 +2307,8 @@ export const filterColumnsCaseTaskTypes: any = {
   assigned_to: `string`,
   effective_start_datetime: `date`,
   effective_end_datetime: `date`,
-  task_status_rid: `string`
+  task_status_rid: `string`,
+  role_rid : `string`
 }
 
 export const relationshipTypes = {

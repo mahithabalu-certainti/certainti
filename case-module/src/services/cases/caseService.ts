@@ -2135,23 +2135,32 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
       if(result.length > 0) {
         let allFilteredUsers
         let allCaseTaskStatus;
+        let allCaseTeamRoles;
         const userIds = [...new Set(result.map((d : any) => d.assigned_to))];
         const taskStatusIds = [...new Set(result.map((d : any) => d.task_status_rid))];
+        const roleIds = [...new Set(result.map((d : any) => d.role_rid))];
+
         let fetchStatusQuery = rawQueries.getAllTaskStatus(taskStatusIds)
         let fetchUserQuery = rawQueries.getAllUsers(userIds)
+        let fetchCaseTeamRolesQuery = rawQueries.getAllCaseTeamRoles(roleIds)
+
         if(fetchStatusQuery) 
           allCaseTaskStatus = await mainDb.query(fetchStatusQuery)
         if(fetchUserQuery)
           allFilteredUsers = await mainDb.query(fetchUserQuery)
+        if(fetchCaseTeamRolesQuery)
+          allCaseTeamRoles = await mainDb.query(fetchCaseTeamRolesQuery)
 
         const userMap : Map<string, string> = new Map(allFilteredUsers?.[0].map((d : any) => [d.rid, d.name]));
         const taskStatusMap : Map<string, string> = new Map(allCaseTaskStatus?.[0].map((d : any) => [d.rid, d.task_status_name]));
+        const roleMap : Map<string, string> = new Map(allCaseTeamRoles?.[0].map((d : any) => [d.rid, d.role_name]));
 
         let mapResult = result.map((d : any) => {
           return {
             ...d,
             task_status_name : taskStatusMap.get(d.task_status_rid) || null,
-            assigned_to_name : userMap.get(d.assigned_to) || null
+            assigned_to_name : userMap.get(d.assigned_to) || null,
+            role_name : roleMap.get(d.role_rid) || null
           }
         });
         
@@ -2183,6 +2192,20 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
             return taskNameA.localeCompare(taskNameB)
           })
         }
+         else if(data.sort === 'role_name' && data.sort_by === 'DESC') {
+          mapResult = mapResult.sort((b, a) => {
+            const taskNameA = a.case_team_member_role_name || ""
+            const taskNameB = b.case_team_member_role_name || ""
+            return taskNameB.localeCompare(taskNameA)
+          })
+        } 
+         else if(data.sort === 'role_name' && data.sort_by === 'ASC') {
+          mapResult = mapResult.sort((b, a) => {
+            const taskNameA = a.case_team_member_role_name || ""
+            const taskNameB = b.case_team_member_role_name || ""
+            return taskNameA.localeCompare(taskNameB)
+          })
+        } 
         return {
           statusCode : HttpStatus.SUCCESS,
           data : mapResult
