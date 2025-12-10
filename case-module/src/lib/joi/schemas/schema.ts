@@ -190,19 +190,51 @@ const listCaseSummarySchema = Joi.object({
 });
 
 const jurisdictionRDConfigSchema = Joi.object({
+ config_rid: Joi.string().required(),
+ credit_config_group_rid: Joi.string().required()
+});
+
+const jurisdictionRDConfigSchemaForNew = Joi.object({
  country_rid: Joi.string().required(),
  state_rid: Joi.string().optional().allow("", null),
+ is_federal: Joi.boolean().required(),
+ credit_program_name: Joi.string().max(255).required(),
+});
+
+const configItemSchema = Joi.object({
+  label: Joi.string().required(),
+  value: Joi.any().allow(null)
 });
 
 const updateJurisdictionRDConfigSchema = Joi.object({
-  data: Joi.array().items(
-    Joi.object({
-      creditConfigGroupId: Joi.string().required(),
-      items: Joi.array().items(
-        Joi.object().unknown(true)
-      ).min(1).required()
-    })
-  ).min(1).required()
+  effective_start_date: Joi.date().required(),
+  effective_end_date: Joi.date().optional().allow("", null),
+  country_rid: Joi.string().required(),
+  jurisdictionConfig: Joi.object({
+    credit_program_name: Joi.string().required(),
+    config_rid: Joi.string().required(),
+    configItems: Joi.array().items(configItemSchema).min(1).required()
+  }).required(),
+  platformConfig: Joi.object({
+    credit_program_name: Joi.string().required(),
+    config_rid: Joi.string().required(),
+    configItems: Joi.array().items(configItemSchema).min(1).required()
+  }).required()
+});
+
+const createJurisdictionRDConfigSchema = Joi.object({
+  effective_start_date: Joi.date().required(),
+  effective_end_date: Joi.date().optional().allow("", null),
+  jurisdictionConfig: Joi.object({
+    credit_config_group_rid: Joi.string().required(),
+    configItems: Joi.array().items(configItemSchema).min(1).required()
+  }).required(),
+  platformConfig: Joi.object({
+    credit_config_group_rid: Joi.string().required(),
+    configItems: Joi.array().items(configItemSchema).min(1).required()
+  }).required(),
+  is_federal: Joi.boolean().required() ,
+  status_rid: Joi.string().required()
 });
 
 const listJurisdictionConfigSchema = Joi.object({
@@ -1126,6 +1158,8 @@ export {
   getEmailTemplatePreviewSchema,
   jurisdictionRDConfigSchema,
   updateJurisdictionRDConfigSchema,
+  createJurisdictionRDConfigSchema,
   listJurisdictionConfigSchema,
-  exportJurisdictionConfigSchema
+  exportJurisdictionConfigSchema,
+  jurisdictionRDConfigSchemaForNew
 };

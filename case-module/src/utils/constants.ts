@@ -189,6 +189,7 @@ export const STATUS_MESSAGE = {
   startDateLessThanEndDate: "Start date must be less than end date",
   effort24HrsExceeded: "Effort cannot exceed 24 hours for the day",
   projectTaskUpdatedSuccess: "Project task details updated successfully",
+  configNotAvailable: "Configuration not available for the selected criteria",
 };
 
 export const caseStatuses = {
@@ -1957,6 +1958,80 @@ export const rawQueries = {
       WHERE rid = '${userId}'
     `;
   },
+  getJurisdictionById(credit_config_group_rid : string) {
+    return `
+      SELECT 
+      k.rid as credit_parameter_key_rid,
+      k.credit_parameter_name,
+      k.data_type,
+      k.credit_parameter_display_name,
+      k.credit_config_group_rid,
+      g.credit_program_name,
+      g.country_rid,
+      g.is_federal,
+      g.state_rid,
+      c.country_name,
+      c.country_code,
+      s.state_name
+    FROM trd365.rd_credit_parameter_key k
+    JOIN trd365.rd_credit_config_group g ON k.credit_config_group_rid = g.rid
+    LEFT JOIN trd365.country c ON g.country_rid = c.rid
+    LEFT JOIN trd365.state s ON g.state_rid = s.rid
+    WHERE g.rid = '${credit_config_group_rid}';
+    `;
+  },
+   getPlatformJurisdictionConfig() {
+    return `
+      SELECT 
+      k.rid as credit_parameter_key_rid,
+      k.credit_parameter_name,
+      k.data_type,
+      k.credit_parameter_display_name,
+      k.credit_config_group_rid,
+      g.credit_program_name,
+      g.country_rid,
+      g.is_federal,
+      g.state_rid,
+      c.country_name,
+      c.country_code,
+      s.state_name
+    FROM trd365.rd_credit_parameter_key k
+    JOIN trd365.rd_credit_config_group g ON k.credit_config_group_rid = g.rid
+    LEFT JOIN trd365.country c ON g.country_rid = c.rid
+    LEFT JOIN trd365.state s ON g.state_rid = s.rid
+    WHERE g.credit_program_name = 'Platform Configuration';
+    `;
+  },
+  checkJurisdictionConfigOverlap() {
+    return  `SELECT rid FROM trd365.rd_credit_parameter_values WHERE credit_config_group_rid = :groupId AND status_rid = :statusRid AND ((:startDate < effective_end_date AND :endDate > effective_start_date)) LIMIT 1`
+              },
+  getJurisdictionByCountryId(country_rid : string, state_rid : string, is_federal: boolean, credit_program_name: string) {
+    let whereClause = `g.country_rid = '${country_rid}' AND g.is_federal = ${is_federal} AND g.credit_program_name = '${credit_program_name}'`;
+    if (state_rid && state_rid.trim() !== "") {
+      whereClause += ` AND g.state_rid = '${state_rid}'`;
+    }
+    return `
+      SELECT 
+      k.rid as credit_parameter_key_rid,
+      k.credit_parameter_name,
+      k.data_type,
+      k.credit_parameter_display_name,
+      k.credit_config_group_rid,
+      g.credit_program_name,
+      g.country_rid,
+      g.is_federal,
+      g.state_rid,
+      c.country_name,
+      c.country_code,
+      s.state_name
+    FROM trd365.rd_credit_parameter_key k
+    JOIN trd365.rd_credit_config_group g ON k.credit_config_group_rid = g.rid
+    LEFT JOIN trd365.country c ON g.country_rid = c.rid
+    LEFT JOIN trd365.state s ON g.state_rid = s.rid
+    WHERE ${whereClause};
+    `;
+  }
+  
 };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 
 const keyContactRole = {

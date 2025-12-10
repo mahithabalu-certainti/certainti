@@ -56,7 +56,7 @@ routes.get(
   checkUserStatusMiddleware("cases_export"),
   controller.caseController.exportAllCasesAccount
 );
-routes.get(
+routes.post(
   "/export/caseSummary",
   checkUserStatusMiddleware("cases_export"),
   controller.caseController.exportAllCasesSummary

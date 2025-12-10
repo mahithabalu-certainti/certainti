@@ -13,6 +13,7 @@ interface JurisdictionConfigAttributes {
   effective_end_date?: Date;
   status_rid: string;
   credit_config_group_rid: string;
+  federal_config_id?: string;
   
 }
 
@@ -34,6 +35,7 @@ export class JurisdictionConfig
   public effective_end_date!: Date;
   public status_rid!: string;
   public credit_config_group_rid!: string;
+  public federal_config_id?: string;
 
   static initialize(
     sequelize: Sequelize,
@@ -65,7 +67,8 @@ export class JurisdictionConfig
         effective_start_date: { type: DataTypes.DATE, allowNull: false },
         effective_end_date: { type: DataTypes.DATE, allowNull: true },
         status_rid: { type: DataTypes.STRING(50), allowNull: false },
-        credit_config_group_rid: { type: DataTypes.STRING(50), allowNull: false }
+        credit_config_group_rid: { type: DataTypes.STRING(50), allowNull: false },
+        federal_config_id: { type: DataTypes.STRING(50), allowNull: true },
       },
       {
         sequelize,

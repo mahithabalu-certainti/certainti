@@ -10,7 +10,7 @@ import {
 } from "../utils/helpers";
 import { HttpStatus } from "../utils/constants";
 import Configurations from "../config/config";
-import { exportJurisdictionConfigSchema, jurisdictionRDConfigSchema, jurisdictionSchema, listJurisdictionConfigSchema, updateJurisdictionRDConfigSchema } from "../lib/joi/schemas/schema";
+import { createJurisdictionRDConfigSchema, exportJurisdictionConfigSchema, jurisdictionRDConfigSchema, jurisdictionRDConfigSchemaForNew, jurisdictionSchema, listJurisdictionConfigSchema, updateJurisdictionRDConfigSchema } from "../lib/joi/schemas/schema";
 // Load services from configuration
 const Services = Configurations.getInstance().getServices();
 const jurisdictionService = Services.jurisdictionService;
@@ -238,14 +238,14 @@ async function getJurisdictionConfigDetailsById(
   }
 }
 
-async function getJurisdictionConfigDataForNewEntry(
+async function getJurisdictionConfigDataForCreate(
   req: Request,
   res: Response
 ): Promise<void> {
-  const methodName = "Get jurisdiction config details for new entry";
+  const methodName = "Get jurisdiction config details for create";
   try {
     const userId = req.headers["x-user-id"] as string;
-    const value = await validateRequest(req, jurisdictionRDConfigSchema, res,"GET");
+    const value = await validateRequest(req, jurisdictionRDConfigSchemaForNew, res,"GET");
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -257,7 +257,7 @@ async function getJurisdictionConfigDataForNewEntry(
       return;
     }
     let jurisdictionConfigResponse =
-        await jurisdictionService.getJurisdictionConfigDataForNewEntry(
+        await jurisdictionService.getJurisdictionConfigDetailsForNew(
           value
         );
 
@@ -292,7 +292,7 @@ async function updateJurisdictionConfig(
   req: Request,
   res: Response
 ): Promise<void> {
-  const methodName = "Get jurisdiction config details";
+  const methodName = "Update jurisdiction config details";
   try {
     const userId = req.headers["x-user-id"] as string;
     const value = await validateRequest(req, updateJurisdictionRDConfigSchema, res);
@@ -342,10 +342,10 @@ async function createJurisdictionConfig(
   req: Request,
   res: Response
 ): Promise<void> {
-  const methodName = "Get jurisdiction config details";
+  const methodName = "Create jurisdiction config details";
   try {
     const userId = req.headers["x-user-id"] as string;
-    const value = await validateRequest(req, updateJurisdictionRDConfigSchema, res);
+    const value = await validateRequest(req, createJurisdictionRDConfigSchema, res);
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -356,6 +356,7 @@ async function createJurisdictionConfig(
       );
       return;
     }
+    value.created_by = userId;
     let jurisdictionConfigResponse =
         await jurisdictionService.createJurisdictionConfig(
           value
@@ -523,7 +524,7 @@ export default {
   getJurisdictionConfigDetailsById,
   updateJurisdictionConfig,
   createJurisdictionConfig,
-  getJurisdictionConfigDataForNewEntry,
+  getJurisdictionConfigDataForCreate,
   listJurisdictionsConfigurations,
   exportJurisdictionsConfigurations
 };
