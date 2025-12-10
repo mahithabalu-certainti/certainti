@@ -439,6 +439,7 @@ return !response;
           transaction,
         }
       );
+      if(caseRequest.case_startdate && caseRequest.statutory_submission_date && caseRequest.planned_submission_date) {
       if(existingCase?.case_startdate.toISOString().split('T')[0] !== caseRequest.case_startdate.toISOString().split('T')[0] || existingCase?.statutory_submission_date.toISOString().split('T')[0] !== caseRequest.statutory_submission_date.toISOString().split('T')[0] 
       || existingCase?.planned_submission_date.toISOString().split('T')[0] !== caseRequest.planned_submission_date.toISOString().split('T')[0]
     ) {
@@ -462,6 +463,7 @@ return !response;
       } 
     }
   }
+}
       await CaseSummary.update(
         {
           ...caseRequest,
@@ -2544,6 +2546,7 @@ return !response;
       );
       return result;
     } catch (err) {
+      console.log(err)
       logMessage(`Error in fetch cases summary: ${err}`);
       errorLog("Error in fetch cases summary:", (err as Error).message);
       return [];
