@@ -1030,9 +1030,9 @@ export function fetchChecklistAttachToDetails(schemaName: string, attachTo: stri
     case 'account':
       return `SELECT ad.account_rid, ad.account_name AS name FROM ${schemaName}.account_details ad WHERE ad.account_rid = '${attachTo}'`;
     case 'project':
-      return `SELECT pf.rid, pf.project_code AS name  AS name FROM ${schemaName}.project_fiscal pf WHERE pf.rid = '${attachTo}'`;
+      return `SELECT pf.rid, pf.project_code AS name  FROM ${schemaName}.project_fiscal pf WHERE pf.rid = '${attachTo}'`;
     case 'case':
-      return `SELECT cd.rid, cd.case_name AS name  AS name FROM ${schemaName}.cases cd WHERE cd.rid = '${attachTo}'`;
+      return `SELECT cd.rid, cd.case_name AS name FROM ${schemaName}.cases cd WHERE cd.rid = '${attachTo}'`;
     case 'resource':
       return `SELECT r.rid, r.resource_code AS name FROM ${schemaName}.resources r WHERE r.rid = '${attachTo}'`;
     case 'resource_cost':
