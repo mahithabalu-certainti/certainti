@@ -1842,7 +1842,6 @@ export class CaseService {
         },
       };
     } catch (err) {
-      console.log(err)
       logMessage(`Error fetching checklist details, ${err}`);
         return {
           statusCode: HttpStatus.FAILED,
