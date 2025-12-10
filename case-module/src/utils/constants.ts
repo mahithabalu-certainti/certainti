@@ -2057,10 +2057,10 @@ export const rawQueries = {
       c.country_name,
       c.country_code,
       s.state_name
-    FROM trd365.rd_credit_parameter_key k
-    JOIN trd365.rd_credit_config_group g ON k.credit_config_group_rid = g.rid
-    LEFT JOIN trd365.country c ON g.country_rid = c.rid
-    LEFT JOIN trd365.state s ON g.state_rid = s.rid
+    FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_key k
+    JOIN ${MAIN_SCHEMA_NAME}.rd_credit_config_group g ON k.credit_config_group_rid = g.rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.country c ON g.country_rid = c.rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.state s ON g.state_rid = s.rid
     WHERE g.rid = '${credit_config_group_rid}';
     `;
   },
@@ -2079,15 +2079,15 @@ export const rawQueries = {
       c.country_name,
       c.country_code,
       s.state_name
-    FROM trd365.rd_credit_parameter_key k
-    JOIN trd365.rd_credit_config_group g ON k.credit_config_group_rid = g.rid
-    LEFT JOIN trd365.country c ON g.country_rid = c.rid
-    LEFT JOIN trd365.state s ON g.state_rid = s.rid
+    FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_key k
+    JOIN ${MAIN_SCHEMA_NAME}.rd_credit_config_group g ON k.credit_config_group_rid = g.rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.country c ON g.country_rid = c.rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.state s ON g.state_rid = s.rid
     WHERE g.credit_program_name = 'Platform Configuration';
     `;
   },
   checkJurisdictionConfigOverlap() {
-    return  `SELECT rid FROM trd365.rd_credit_parameter_values WHERE credit_config_group_rid = :groupId AND status_rid = :statusRid AND ((:startDate < effective_end_date AND :endDate > effective_start_date)) LIMIT 1`
+    return  `SELECT rid FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values WHERE credit_config_group_rid = :groupId AND status_rid = :statusRid AND ((:startDate < effective_end_date AND :endDate > effective_start_date)) LIMIT 1`
               },
   getJurisdictionByCountryId(country_rid : string, state_rid : string, is_federal: boolean, credit_program_name: string) {
     let whereClause = `g.country_rid = '${country_rid}' AND g.is_federal = ${is_federal} AND g.credit_program_name = '${credit_program_name}'`;
@@ -2108,18 +2108,18 @@ export const rawQueries = {
       c.country_name,
       c.country_code,
       s.state_name
-    FROM trd365.rd_credit_parameter_key k
-    JOIN trd365.rd_credit_config_group g ON k.credit_config_group_rid = g.rid
-    LEFT JOIN trd365.country c ON g.country_rid = c.rid
-    LEFT JOIN trd365.state s ON g.state_rid = s.rid
+    FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_key k
+    JOIN ${MAIN_SCHEMA_NAME}.rd_credit_config_group g ON k.credit_config_group_rid = g.rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.country c ON g.country_rid = c.rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.state s ON g.state_rid = s.rid
     WHERE ${whereClause};
     `;
   },
   getJurisdictionConfigValuesById(config_rid: string) {
-  return `SELECT rid,credit_config_group_rid, config_json,effective_start_date,effective_end_date FROM trd365.rd_credit_parameter_values WHERE rid = '${config_rid}';`
+  return `SELECT rid,credit_config_group_rid, config_json,effective_start_date,effective_end_date FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values WHERE rid = '${config_rid}';`
   },
     getJurisdictionPlatformConfigValuesById(config_rid: string) {
-  return `SELECT rid,credit_config_group_rid, config_json,effective_start_date,effective_end_date FROM trd365.rd_credit_parameter_values WHERE federal_config_id = '${config_rid}';`
+  return `SELECT rid,credit_config_group_rid, config_json,effective_start_date,effective_end_date FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values WHERE federal_config_id = '${config_rid}';`
   },
 
 };
