@@ -12,7 +12,6 @@ import {
 import { BUTTON_STYLES } from '../../../../../admin/pages/manage-user-detail/styles';
 import { ShowHideTableColumn } from '../../../../../components/table/types';
 import { SectionTabPanel } from '../../../../../components';
-import ResourceTableHeader from '../../../account-details-sidebar/sidebar-pages/resources/resource-table-header';
 import { ProjectsIcon } from '../../../../../assets';
 import {
   ListTable,
@@ -25,6 +24,7 @@ import {
 import { caseProjectResourceFilterFields } from './utils';
 import CaseProjectResourceDetails from './case-project-resource-details/case-project-resource-details';
 import { ReviewProjectListURLParams } from '../../../../types/assign-projects';
+import SectionHeader from '../../../../../components/details-section/section-header';
 
 const ProjectResourceTabs: ResourceTabs[] = [
   {
@@ -50,7 +50,7 @@ const CaseProjectResource: React.FC<ProjectResourceProps> = ({
   const { caseId } = useParams();
   const [searchParams] = useSearchParams();
   const accountid = searchParams.get('accountID');
-  const resourceId = searchParams.get('resource_id');
+  const resourceId = searchParams.get('resourceId');
   const navigate = useNavigate();
   const [appliedFilters, setAppliedFilters] = useState<
     Record<string, string | number | boolean | string[]>
@@ -71,11 +71,6 @@ const CaseProjectResource: React.FC<ProjectResourceProps> = ({
   const [columnAnchorEl, setColumnAnchorEl] =
     React.useState<HTMLButtonElement | null>(null);
   const [searchText, setSearchText] = useState('');
-  const [viewResourceList, setViewResourceList] = useState<boolean>(true);
-  const [showBackArrow, setShowBackArrow] = useState<boolean>(false);
-  const [resourceNumber, setResourceNumber] = useState<string | undefined>(
-    undefined
-  );
   const isModalOpen = Boolean(columnAnchorEl);
   const handleColumnVisibility = (
     event: React.MouseEvent<HTMLButtonElement>
@@ -134,15 +129,6 @@ const CaseProjectResource: React.FC<ProjectResourceProps> = ({
     }
   }, [data]);
 
-  useEffect(() => {
-    if (!viewResourceList && resourceId) {
-      const newSearchParams = new URLSearchParams(searchParams);
-      newSearchParams.set('tab', 'details');
-      navigate({ search: newSearchParams.toString() }, { replace: true });
-    }
-  }, [resourceId, viewResourceList, searchParams, navigate]);
-
-  const showUploads = searchParams.get('attachment_entity') === 'account';
 
   const handleFilter = () => {
     setShowFilter(!showFilter);
@@ -158,17 +144,17 @@ const CaseProjectResource: React.FC<ProjectResourceProps> = ({
   } = useCaseProjectResourceDetail(accountid ?? '', resourceId ?? '');
 
   const projectResourceDetail = detailresponse?.data?.projectResource;
-  const handleCaseProjectResourceClick = React.useCallback(
-    (row: CaseProjectResourceRowType) => {
-      setViewResourceList(false);
-      setShowBackArrow(true);
-      setShowFilter(false);
-      setAppliedFilters({});
-      setSortFilterCount(0);
-      searchParams.set('resource_id', row.rid);
-    },
-    []
-  );
+  const handleCaseProjectResourceClick = (row: CaseProjectResourceRowType) => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('resourceId', row.rid);
+
+    navigate({ search: newParams.toString() }, { replace: true });
+    setShowFilter(false);
+    setAppliedFilters({});
+    setSortFilterCount(0);
+
+  }
+
 
   const handleSorting = (sortBy: string, sortOrder: 'asc' | 'desc') => {
     const defaultSortField = 'document_name';
@@ -185,18 +171,18 @@ const CaseProjectResource: React.FC<ProjectResourceProps> = ({
       setSortField(sortBy);
     }
   };
-
-  const handleBackClick = () => {
-    setViewResourceList(true);
-    setShowBackArrow(false);
-    setShowFilter(false);
-    setAppliedFilters({});
-    setSortFilterCount(0);
-    const newSearchParams = new URLSearchParams(searchParams);
-    newSearchParams.delete('resource_id');
-    newSearchParams.delete('tab');
-    navigate({ search: newSearchParams.toString() }, { replace: true });
+  const updateSearchParams = (callback: (params: URLSearchParams) => void) => {
+    const newParams = new URLSearchParams(searchParams);
+    callback(newParams);
+    navigate({ search: newParams.toString() }, { replace: true });
   };
+
+  const handleBackToCaseProjectResource = () => {
+    updateSearchParams((params) => {
+      params.delete('resourceId');
+    });
+  };
+
   const projectViewEditFields = useMemo(
     () =>
       permission.find(
@@ -218,15 +204,15 @@ const CaseProjectResource: React.FC<ProjectResourceProps> = ({
       disabled: accountInActive,
       onClick: handleColumnVisibility,
       sx: { ...BUTTON_STYLES, width: '125px', minWidth: '125px' },
-      hide: !viewResourceList && resourceId ? true : false,
+      hide: resourceId ? true : false,
     },
     {
       label: 'Back to Project Resource',
       variant: 'outlined' as const,
       disabled: accountInActive,
-      onClick: handleBackClick,
+      onClick: handleBackToCaseProjectResource,
       sx: { ...BUTTON_STYLES, width: '180px', minWidth: '125px' },
-      hide: !viewResourceList && resourceId ? false : true,
+      hide: resourceId ? false : true,
     },
   ];
 
@@ -243,15 +229,6 @@ const CaseProjectResource: React.FC<ProjectResourceProps> = ({
     setSortOrder(apiOrder);
     setSortField(property);
   };
-
-  const attachmentColumns = useMemo(
-    () =>
-      getCaseProjectResourceColumns(
-        handleCaseProjectResourceClick,
-        permissionMap
-      ),
-    [handleCaseProjectResourceClick]
-  );
 
   const projectResourceFilterFields =
     caseProjectResourceFilterFields(permissionMap);
@@ -307,7 +284,7 @@ const CaseProjectResource: React.FC<ProjectResourceProps> = ({
       <SectionTabPanel
         tabs={ProjectResourceTabs}
         filterMenu={projectResourceFilterFields}
-        filterVisibility={showUploads ? false : true}
+        filterVisibility={resourceId ? false : true}
         showFilter={showFilter}
         contextKey='project_resource'
         appliedFilters={appliedFilters}
@@ -317,33 +294,29 @@ const CaseProjectResource: React.FC<ProjectResourceProps> = ({
         handleSorting={handleSorting}
         sortFilterCount={sortFilterCount}
         setSortFilterCount={setSortFilterCount}
-        showRefresh={showUploads ? false : true}
+        showRefresh={resourceId ? false : true}
         onRefreshClick={onRefreshClick}
-        showSearch={showUploads ? false : true}
+        showSearch={resourceId ? false : true}
         onSearch={(text) => setSearchText(text)}
       />
 
       <>
-        <ResourceTableHeader
-          value={'projectResource'}
-          title='Project Resource'
-          count={totalItems}
-          showCount={!viewResourceList && resourceId ? false : true}
-          resourceNumber={resourceNumber}
+        <SectionHeader
+          title={resourceId ? 'Project Resource Details' : 'Project Resource'}
           titleIcon={
             <ProjectsIcon
               alt='attachment-header-icon'
               className='[&>path]:stroke-[#4B9BFF]'
             />
           }
-          headerButtons={headerButtons}
-          showBackArrow={showBackArrow}
-          onBackClick={handleBackClick}
-          iconBg='#D8E9FF'
-          bgType={showBackArrow ? 'react' : 'circle'}
+          count={totalItems}
+          showItemCount={resourceId ? false : true}
+          buttons={headerButtons.map((btn) => ({
+            ...btn,
+            hide: Boolean(btn.hide),
+          }))}
         />
-
-        {!viewResourceList && resourceId ? (
+        {resourceId ? (
           <CaseProjectResourceDetails
             resource={projectResourceDetail ?? null}
             isLoading={detailresponseLoading}
@@ -358,7 +331,7 @@ const CaseProjectResource: React.FC<ProjectResourceProps> = ({
               open={isModalOpen}
               popoverId={modalId}
               onClose={handlePopoverClose}
-              columns={attachmentColumns}
+              columns={projectResourceColumn}
               onColumnsChange={handleColumnsChange}
               columnRestrictions={RestrictedColumns}
             />
