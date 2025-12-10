@@ -487,27 +487,10 @@ static mapToProjectFiscalUpdateModel(
     total_cost_fte_prj: data.total_cost_fte || null,
     total_cost_subcon_prj: data.total_cost_subcon || null,
     total_cost_nonlabor_prj: data.total_cost_nonlabor || null,
-
-    auto_send_ai_interaction: data.auto_send_ai_interaction,
-    auto_access_rd: data.auto_access_rd ?? false,
-    max_ai_interaction: DEFAULT_PROJECT_DETAILS.maxAiInteraction,
-
-    blended_rate_fte: data.blended_rate_fte || null,
-    blended_rate_subcon: data.blended_rate_subcon || null,
-
     modified_datetime: new Date(),
     modified_by: data.modified_by,
   };
-
-  // Filter to only include keys that exist in the input data
-  const result: any = {};
-  for (const key in mappedData) {
-    if (key in data || key === 'modified_datetime' || key === 'project_startdate' || key === 'project_enddate') {
-      result[key] = mappedData[key as keyof typeof mappedData];
-    }
-  }
-
-  return result;
+  return mappedData
 }
 
   static mapToProjectFiscalSummaryUpdate(
