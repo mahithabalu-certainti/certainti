@@ -211,6 +211,7 @@ export const getTaskDetail = async (
         color: assigneeColor,
       },
       createdBy: taskDetailResponse.created_by_name,
+      created_by_rid: taskDetailResponse.created_by,
       modifiedBy: taskDetailResponse.modified_by_name,
       description: taskDetailResponse.task_description,
       commentCount: 0,

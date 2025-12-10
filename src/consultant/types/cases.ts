@@ -144,6 +144,7 @@ export interface CaseDetails {
   account_status_name?: string;
   account_status_rid?: string;
   is_send_interaction?: boolean;
+  is_case_team_created?: boolean;
 }
 
 export interface CaseDetailsResponse {
