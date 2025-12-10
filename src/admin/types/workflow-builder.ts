@@ -182,6 +182,7 @@ export interface RuleConditionCategoryPayload {
 export interface CreateRulePayload {
   rule_name: string;
   description?: string;
+  scope_type_rid: string;
   event_rid: string;
   condition_rid: string;
   condition_categories: RuleConditionCategoryPayload[];

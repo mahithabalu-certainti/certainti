@@ -131,6 +131,7 @@ export const transformRuleToPayload = (rule: Rule) => {
   return {
     rule_name: rule.name,
     description: '',
+    scope_type_rid: rule.trigger?.category || '',
     event_rid: rule.trigger?.id || '',
     condition_rid: rule.conditionType?.rid || '',
     condition_categories,
