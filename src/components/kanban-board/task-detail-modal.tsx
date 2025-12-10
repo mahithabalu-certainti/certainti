@@ -1572,18 +1572,23 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                         >
                           {editedTask.assignee.initials}
                         </div>
-                        <span
-                          style={{
-                            fontSize: '13px',
-                            color: 'black',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                            minWidth: 0,
-                          }}
+                        <Tooltip
+                          title={editedTask.assignee.name}
+                          placement='top-start'
                         >
-                          {editedTask.assignee.name}
-                        </span>
+                          <span
+                            style={{
+                              fontSize: '13px',
+                              color: 'black',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                              minWidth: 0,
+                            }}
+                          >
+                            {editedTask.assignee.name}
+                          </span>
+                        </Tooltip>
                       </div>
                     );
                   }
@@ -1619,13 +1624,14 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                     }}
                     key={user.id}
                     value={user.id}
-                    title={user.name}
                   >
                     <div
                       style={{
                         display: 'flex',
                         alignItems: 'center',
                         gap: '8px',
+                        width: '100%',
+                        overflow: 'hidden',
                       }}
                     >
                       <div
@@ -1645,7 +1651,18 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                       >
                         {user.initials}
                       </div>
-                      {user.name}
+                      <Tooltip title={user.name} placement='top-start'>
+                        <span
+                          style={{
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            flex: 1,
+                          }}
+                        >
+                          {user.name}
+                        </span>
+                      </Tooltip>
                     </div>
                   </MenuItem>
                 ))}

@@ -23,6 +23,7 @@ export interface CaseTeamMember {
   modified_by?: string;
   created_datetime?: string;
   modified_datetime?: string;
+  assigned_task_count?: number;
 }
 
 export interface CaseTeamResponse {

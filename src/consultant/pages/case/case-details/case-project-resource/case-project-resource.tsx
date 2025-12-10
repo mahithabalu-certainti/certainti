@@ -142,8 +142,6 @@ const CaseProjectResource: React.FC<ProjectResourceProps> = ({
     }
   }, [resourceId, viewResourceList, searchParams, navigate]);
 
-
-
   const showUploads = searchParams.get('attachment_entity') === 'account';
 
   const handleFilter = () => {
