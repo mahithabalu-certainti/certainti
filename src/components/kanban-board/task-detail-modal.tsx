@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useRef } from 'react';
+import { useEffect, useState, useMemo, useRef, useLayoutEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { TaskDetailModalProps, Task, Activity, Comment } from './types';
@@ -259,7 +259,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     }
   }, [isOpen, taskId]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (isOpen) {
       setIsAnimating(true);
       setIsVisible(false);

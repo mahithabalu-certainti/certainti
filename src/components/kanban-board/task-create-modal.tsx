@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useLayoutEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { Tooltip } from '@mui/material';
 
 import dayjs from 'dayjs';
@@ -170,6 +171,8 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
   const [categoryRid, setCategoryRid] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
 
   const enrichedUsers = useMemo(() => {
     return collaboratorData && collaboratorData.length > 0
@@ -286,6 +289,23 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
       setSelectedStatusRid(toDoStatus.id);
     }
   }, [statusData]);
+
+  useLayoutEffect(() => {
+    if (isOpen) {
+      setIsAnimating(true);
+      setIsVisible(false);
+      const timer = setTimeout(() => {
+        setIsVisible(true);
+      }, 5);
+      return () => clearTimeout(timer);
+    } else {
+      setIsVisible(false);
+      const timer = setTimeout(() => {
+        setIsAnimating(false);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
 
   const handleClose = () => {
     setTaskTitle('');
@@ -428,13 +448,16 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
     return minDate;
   };
 
-  return (
+  if (!isAnimating) return null;
+
+  return ReactDOM.createPortal(
     <>
       <div
         className='fixed inset-0 bg-opacity-50 z-40'
         onClick={handleClose}
         style={{
-          display: isOpen ? 'block' : 'none',
+          opacity: isVisible ? 1 : 0,
+          transition: 'opacity 500ms cubic-bezier(0.4, 0.0, 0.2, 1)',
           pointerEvents: isOpen ? 'auto' : 'none',
         }}
       />
@@ -442,12 +465,10 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
         className='fixed right-0 bottom-0 w-[650px] bg-white text-gray-900 shadow-2xl z-50 flex flex-col'
         style={{
           top: '38.1px',
-          backgroundColor: '#fff',
-          display: isOpen ? 'flex' : 'none',
-          pointerEvents: isOpen ? 'auto' : 'none',
-          transform: 'translateZ(0)',
-          willChange: 'contents',
-          backfaceVisibility: 'hidden',
+          transform: isVisible ? 'translateX(0)' : 'translateX(100%)',
+          opacity: isVisible ? 1 : 0,
+          transition:
+            'transform 500ms cubic-bezier(0.4, 0.0, 0.2, 1), opacity 500ms cubic-bezier(0.4, 0.0, 0.2, 1)',
         }}
       >
         <div className='flex-none flex items-center justify-between p-3 border-b border-[#CBD6E2] bg-white z-50'>
@@ -860,7 +881,8 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
           />
         </div>
       </div>
-    </>
+    </>,
+    document.body
   );
 };
 
