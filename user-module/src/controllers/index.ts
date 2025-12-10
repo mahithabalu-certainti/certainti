@@ -4,6 +4,7 @@ import {
   exportUsers,
   updateUser,
   listUserById,
+  uploadProfileImage
 } from "./userController";
 import { userProfiles, userPermissionById, userRoles, userPermissionFields, createProfile, getProfilePermissions, updateProfilePermissions, editProfilePermissions,exportUserProfiles,getUserExtendedPermissions,updateUserExtendedPermissions } from "./userManagementController";
 import {
@@ -32,6 +33,7 @@ const controller = {
     exportUsers,
     listUsers,
     listUserById,
+    uploadProfileImage
   },
   userManagementController: {
     userProfiles,

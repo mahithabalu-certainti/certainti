@@ -466,5 +466,56 @@ async function exportUsers(req: Request, res: Response): Promise<void> {
     return;
   }
 }
+/**
+ * Uploads a profile image for a user to Azure Blob Storage.
+ * @param req 
+ * @param res 
+ * @returns 
+ */
+async function uploadProfileImage(req: Request, res: Response): Promise<void> {
+  const methodName = "uploadProfileImage";
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      handleErrorResponse(
+        res,
+        constants.BAD_REQUEST,
+        constants.BAD_REQUEST_MESSAGE,
+        "User id is required"
+      );
+      return;
+    }
+    const result = await services.userServices.uploadProfileImage(
+      req.file!,
+      userId
+    );
 
-export { createUser, updateUser, listUsers, listUserById, exportUsers };
+    if (result.statusCode === constants.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, result.data);
+      return;
+    } else {
+      errorLog(methodName, result.errorMessage);
+      handleErrorResponse(
+        res,
+        constants.BAD_REQUEST,
+        constants.BAD_REQUEST_MESSAGE,
+        result.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      constants.BAD_REQUEST,
+      constants.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+export { createUser, updateUser, listUsers, listUserById, exportUsers, uploadProfileImage };

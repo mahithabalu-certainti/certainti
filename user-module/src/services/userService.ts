@@ -14,6 +14,7 @@ import { UserGroupMapping } from "../models/userGroupMappingModel";
 import { UserGroup } from "../models/userGroupModel";
 import { updateAzureUser } from "./manageUser";
 import { errorLog, logMessage } from "../utils/helpers";
+import { uploadToAzure } from "./azureBlobService";
   const { 
     User, UserDetails, Department, FunctionGroup, Profile, BusinessTeams,
     ProfileMenuAccess, Menu, ProfileModuleAccess, MenuModule, ProfilePermissionAccess, ModulePermission,
@@ -2906,6 +2907,38 @@ async getAllUserPermission(userId: string, profileId: string) {
       };
     } catch (err) {
       errorLog("Error exporting user profiles:", (err as Error).message);
+      return this.throwServiceError(err as Error);
+    }
+  }
+
+  /**
+   * Uploads a profile image for a user to Azure Blob Storage and updates the user's profile URL in the database.
+   * @param file 
+   * @param userId 
+   * @returns 
+   */
+  async uploadProfileImage(file: Express.Multer.File, userId: string): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { imageUrl: string };
+  }> {
+    try {
+      if (!file) {
+        throw new Error("No file provided");
+      }
+
+      const imageUrl = await uploadToAzure(file, userId);
+      
+      await User.update( { profile_url: imageUrl }, { where: { rid: userId } });
+
+      return {
+        statusCode: constants.SUCCESS,
+        message: "Profile image uploaded successfully",
+        data: { imageUrl },
+      };
+    } catch (err) {
+      errorLog("Error uploading profile image:", (err as Error).message);
       return this.throwServiceError(err as Error);
     }
   }
