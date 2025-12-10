@@ -112,6 +112,7 @@ export const getAllActivityFilterFields = (
 
 export const getEmailFilterFields = (
   activityStatusOptions: { value: string; label: string }[],
+  userListOptions: { value: string; label: string }[],
   permissionMap: Record<string, { read: boolean; edit: boolean }>
 ): FieldConfig[] => [
   {
@@ -165,8 +166,12 @@ export const getEmailFilterFields = (
   {
     name: 'Email To',
     value: 'to_email',
-    type: 'text',
-    operatorOption: textOptions,
+    type: 'enum',
+    options: userListOptions.map((opt) => ({
+      option: opt.label,
+      value: opt.value,
+    })),
+    operatorOption: enumOptions,
     hide:
       !permissionMap?.['to_email']?.edit && !permissionMap?.['to_email']?.read,
   },

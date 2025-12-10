@@ -1112,3 +1112,31 @@ export const formatTimeToAMPM = (time?: string | null): string => {
   if (!parsed.isValid()) return '-';
   return parsed.format('hh:mm A'); // AM/PM
 };
+
+export const formatDateToYyyyMmmDd = (dateString: string): string => {
+  if (!dateString) return '';
+
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return '';
+
+  const monthNames = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+
+  const year = date.getFullYear();
+  const month = monthNames[date.getMonth()];
+  const day = String(date.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`; // 2026-May-02
+};

@@ -1,4 +1,10 @@
-import { Button, ButtonOwnProps, SxProps, Theme } from '@mui/material';
+import {
+  Button,
+  ButtonOwnProps,
+  SxProps,
+  Theme,
+  CircularProgress,
+} from '@mui/material';
 import { styled } from '@mui/material/styles';
 import React from 'react';
 
@@ -35,10 +41,20 @@ const TextButton: React.FC<TextButtonProps> = ({
   label,
   children,
   hide,
+  loading,
+  disabled,
   ...rest
 }) => {
   if (hide) return null;
-  return <StyledButton {...rest}>{children || label}</StyledButton>;
+  return (
+    <StyledButton disabled={disabled || loading} {...rest}>
+      {loading ? (
+        <CircularProgress size={14} thickness={5} color='inherit' />
+      ) : (
+        children || label
+      )}
+    </StyledButton>
+  );
 };
 
 export default TextButton;
