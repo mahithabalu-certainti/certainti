@@ -42,6 +42,16 @@ async function getAllTaskSummary(req: Request, res: Response): Promise<void> {
       return;
     }
 
+    if (!value.flag) {
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        STATUS_MESSAGE.flagRequired
+      );
+      return;
+    }
+
     // Before calling buildRawWhereClause
     if (typeof value.filters === 'string') {
       try {
@@ -51,7 +61,7 @@ async function getAllTaskSummary(req: Request, res: Response): Promise<void> {
         value.filters = {};
       }
     }
-    const attachments = await taskService.getTaskSummary(userId, value.page, value.limit, value.search, value.filters, value.globalFilters, value.sortBy, value.sortOrder, value.fiscalYear);
+    const attachments = await taskService.getTaskSummary(userId, value.page, value.limit, value.search, value.filters, value.globalFilters, value.sortBy, value.sortOrder, value.fiscalYear, value.flag);
 
     if (attachments.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
@@ -109,7 +119,7 @@ async function exportAllTaskSummary(req: Request, res: Response): Promise<void> 
         value.filters = {};
       }
     }
-    const attachments = await taskService.exportTaskSummary(userId, value.search, value.filters, value.globalFilters, value.sortBy, value.sortOrder, value.fiscalYear, value.timezone);
+    const attachments = await taskService.exportTaskSummary(userId, value.search, value.filters, value.globalFilters, value.sortBy, value.sortOrder, value.fiscalYear, value.timezone, value.flag);
 
     if (attachments.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
