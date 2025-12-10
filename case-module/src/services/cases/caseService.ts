@@ -364,11 +364,14 @@ export class CaseService {
       let schemaName = rawQueries.fetchSchemaName(
         fetchParentAccountRnumber[0][0].r_number
       );
+      const getActiveStatusId : any = await mainDb.query(rawQueries.getActiveStatusId());
       const queryResult =
         await this.caseSchemaService.getCasesHeadersSectionList(
           caseRid,
           schemaName,
-          orgDb
+          orgDb,
+          accountRid,
+          getActiveStatusId[0][0].rid
         );
       if (queryResult) {
         let isSubscriptionCreated = false;

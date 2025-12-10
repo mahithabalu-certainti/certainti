@@ -7,7 +7,7 @@ import {
   validColumnsForSorting,
 } from "./types";
 
-export const fetchCasesHeadersDatas = (schemaName: string, caseRid: string) => {
+export const fetchCasesHeadersDatas = (schemaName: string, caseRid: string, accountRid : string, activeStatusRid : string) => {
   let   query = `
     WITH fetch_fiscal_year AS (
     SELECT project_fiscal_rid FROM ${schemaName}.case_projects where case_rid = '${caseRid}'
@@ -25,8 +25,9 @@ export const fetchCasesHeadersDatas = (schemaName: string, caseRid: string) => {
     f.total_project_cost AS case_total_project_cost, c.case_total_rd_cost, c.case_total_qre_cost,c.case_completion_percentage,c.case_total_qualified_project_cost,
     c.planned_submission_date, c.statutory_submission_date, c.case_startdate,
     c.description, c.r_number, c.created_by, c.modified_by, c.created_datetime,
-    c.modified_datetime, c.total_nonlabor_cost, c.heat_light_power,c.tax_liability
-
+    c.modified_datetime, c.total_nonlabor_cost, c.heat_light_power,c.tax_liability,
+    CASE WHEN EXISTS (SELECT 1 from ${schemaName}.case_team ct WHERE ct.case_rid = '${caseRid}' AND ct.account_rid = '${accountRid}' AND ct.status_rid = '${activeStatusRid}') THEN TRUE
+    ELSE FALSE END AS is_case_created
     FROM
     ${schemaName}.cases c
     LEFT JOIN ${schemaName}.account_details ad ON ad.account_rid = c.account_rid
