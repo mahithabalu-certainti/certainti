@@ -18,7 +18,7 @@ import { taskCardDetails, taskCardDetailsActivityTask } from "../../utils/rawQue
 import { isValidTimezone } from "../../utils/valideTimeChecker";
 import { EnrichedTask } from "../interfaces/interface";
 import { ProjectTaskService } from "../projectTaskService";
-import { response } from "express";
+import { raw, response } from "express";
 
 export class TaskService {
   private logger: Logger;
@@ -133,7 +133,7 @@ export class TaskService {
 
       if (flag === 'milestone') {
         const taskTypeRid = await mainSequelize.query(
-          `SELECT rid FROM ${MAIN_SCHEMA_NAME}.task_type WHERE task_type_name = 'Milestone'`,
+          rawQueries.getTaskTypeRidMilestone,
           { replacements: {}, type: 'SELECT' }
         ) as any[];
         whereClause[Op.and].push({
@@ -141,7 +141,7 @@ export class TaskService {
         })
       } else if (flag === 'activity') {
         const taskTypeRid = await mainSequelize.query(
-          `SELECT rid FROM ${MAIN_SCHEMA_NAME}.task_type WHERE task_type_name = 'Activity'`,
+          rawQueries.getTaskTypeRidActivity,
           { replacements: {}, type: 'SELECT' }
         ) as any[];
         whereClause[Op.and].push({
@@ -648,7 +648,7 @@ export class TaskService {
 
       if (flag === 'milestone') {
         const taskTypeRid = await mainSequelize.query(
-          `SELECT rid FROM ${MAIN_SCHEMA_NAME}.task_type WHERE task_type_name = 'Milestone'`,
+          rawQueries.getTaskTypeRidMilestone,
           { replacements: {}, type: 'SELECT' }
         ) as any[];
         whereClause[Op.and].push({
@@ -656,7 +656,7 @@ export class TaskService {
         })
       } else if (flag === 'activity') {
         const taskTypeRid = await mainSequelize.query(
-          `SELECT rid FROM ${MAIN_SCHEMA_NAME}.task_type WHERE task_type_name = 'Activity'`,
+          rawQueries.getTaskTypeRidActivity,
           { replacements: {}, type: 'SELECT' }
         ) as any[];
         whereClause[Op.and].push({
@@ -1320,7 +1320,7 @@ export class TaskService {
     if (response.statusCode !== HttpStatus.SUCCESS) {
       return {
         statusCode: response.statusCode,
-        statusMessage: "Task details fetch failed",
+        statusMessage: STATUS_MESSAGE.taskDetailsFetchFailed,
         data: {}
       }
     }

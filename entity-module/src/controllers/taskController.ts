@@ -47,7 +47,7 @@ async function getAllTaskSummary(req: Request, res: Response): Promise<void> {
         res,
         HttpStatus.BAD_REQUEST,
         HttpStatus.BAD_REQUEST_MESSAGE,
-        "flag is required"
+        STATUS_MESSAGE.flagRequired
       );
       return;
     }
