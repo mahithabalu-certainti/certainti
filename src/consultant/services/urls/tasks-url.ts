@@ -8,11 +8,23 @@ export const TasksListURL = ({
   limit,
   fiscalYear,
   globalFilters,
-  isGlobal,
+  // isGlobal,
   search,
 }: TasksListURLParams) => {
-  const baseUrl = `/api/task/list${isGlobal ? `/summary` : ''}`;
+  let baseUrl = '';
   const searchParams = new URLSearchParams();
+
+  const isMilestone =
+    filters &&
+    (filters as { attachment_level?: string }).attachment_level === 'milestone';
+
+  if (isMilestone) {
+    baseUrl = '/api/task/list/summaryMilestone';
+    searchParams.set('flag', 'milestone');
+  } else {
+    baseUrl = '/api/task/list/summaryActivity';
+    searchParams.set('flag', 'activity');
+  }
 
   searchParams.set('page', page.toString());
   searchParams.set('limit', limit.toString());
@@ -20,9 +32,14 @@ export const TasksListURL = ({
   searchParams.set('sortOrder', sortOrder as string);
   if (fiscalYear) searchParams.set('fiscalYear', fiscalYear.toString());
 
-  // Only add filters if the object has properties
-  if (filters && Object.keys(filters).length > 0) {
-    searchParams.set('filters', JSON.stringify(filters));
+  let filtersToSend = filters ? { ...filters } : {};
+  const { attachment_level, ...rest } = filtersToSend as {
+    attachment_level?: string;
+  };
+  filtersToSend = rest;
+
+  if (filtersToSend && Object.keys(filtersToSend).length > 0) {
+    searchParams.set('filters', JSON.stringify(filtersToSend));
   }
   if (globalFilters !== undefined) {
     searchParams.set('globalFilters', JSON.stringify(globalFilters));

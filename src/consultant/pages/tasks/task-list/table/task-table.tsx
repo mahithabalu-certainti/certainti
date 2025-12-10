@@ -2,7 +2,12 @@ import { useSelector } from 'react-redux';
 import { TaskList, TasksListURLParams } from '../../../../types/task';
 import { RootState } from '../../../../../store/store';
 import { useAllTasksList } from '../../../../services/tasks/tasks-service';
+import { useMutation } from '@apollo/client';
+import { taskClient } from '../../../../../api/graphql/clients/client';
+import { UPDATE_TASK_SUMMARY_INLINE } from '../../../../../api/graphql/queries/task-query';
 import {
+  CellEditData,
+  FieldChangeValue,
   ActionItem,
   ListTableColumn,
   ShowHideTableColumn,
@@ -15,8 +20,8 @@ import {
   // checkPermission,
   reshapeGlobalFilter,
 } from '../../../../../common-utils';
-import { FilterState } from '../../../../types';
-// import { useToast } from '../../../../../hooks';
+import { FilterState, SelectOption } from '../../../../types';
+import { useToast } from '../../../../../hooks';
 // import { AllPermissions } from '../../../../../common-service';
 import { getTaskTableColumns } from './columns';
 import { EditIcon } from '../../../../../assets';
@@ -33,7 +38,11 @@ import {
 import { useGetTaskCheckListTypes } from '../../../../../admin/service/task-template/task-template-service';
 import { useQueryClient } from '@tanstack/react-query';
 import { useMemo, useCallback, useEffect, useState } from 'react';
-import { transformPriorityData, transformStatusData, transformTagData } from '../../../case/case-details/work-breakdown/helper';
+import {
+  transformPriorityData,
+  transformStatusData,
+  transformTagData,
+} from '../../../case/case-details/work-breakdown/helper';
 import { AllPermissions } from '../../../../../common-service';
 import { getPermissionMap } from '../../../activities/activities-list/helper';
 
@@ -64,7 +73,7 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
   searchValue,
   fixedFilters,
 }) => {
-  // const { errorToast } = useToast();
+  const { errorToast } = useToast();
   const { fiscalYear, filters } = useSelector<
     RootState,
     { filters: unknown; fiscalYear: string }
@@ -72,6 +81,10 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
   const [taskList, setTaskList] = useState<TaskList[]>([]);
   const [selectedTask, setSelectedTask] = useState<TaskList | null>(null);
   const queryClient = useQueryClient();
+
+  const [updateTaskSummaryInline] = useMutation(UPDATE_TASK_SUMMARY_INLINE, {
+    client: taskClient,
+  });
 
   // Hooks for Milestone (Case Task) details
   const isMilestone = selectedTask?.attachment_level === 'milestone';
@@ -108,6 +121,15 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
   const statusData = useMemo(
     () => transformStatusData(statusesQuery.data || []),
     [statusesQuery.data]
+  );
+
+  const statusOptions: SelectOption[] = useMemo(
+    () =>
+      statusData.map((value) => ({
+        label: value.name,
+        value: value.id,
+      })),
+    [statusData]
   );
 
   const tagData = useMemo(
@@ -184,7 +206,8 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
         checklist:
           !taskPermissionMap['checklists']?.read &&
           !taskPermissionMap['checklists']?.edit,
-        tags: !taskPermissionMap['tags']?.read && !taskPermissionMap['tags']?.edit,
+        tags:
+          !taskPermissionMap['tags']?.read && !taskPermissionMap['tags']?.edit,
         weightage: true,
         category: true,
         linkedType: true,
@@ -308,8 +331,8 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
   }, []);
 
   const tasksColumns = useMemo(
-    () => getTaskTableColumns(handleTaskClick),
-    [handleTaskClick]
+    () => getTaskTableColumns(handleTaskClick, statusOptions),
+    [handleTaskClick, statusOptions]
   );
 
   const actionButtons: ActionItem<TaskList>[] = [
@@ -360,6 +383,49 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
   const isModalOpen = Boolean(columnAnchorEl);
   const modalId = isModalOpen ? 'task-column-visibility-popover' : undefined;
 
+  const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
+    const previousTaskList = [...taskList];
+    const selectedTask = taskList.find((task) => task.task_rid === rowId);
+
+    const updateData = updates.reduce<Record<string, FieldChangeValue>>(
+      (acc, item) => {
+        acc[item.editId || item.columnId] = item.value;
+        return acc;
+      },
+      {
+        rid: selectedTask?.rid,
+        account_rid: selectedTask?.account_rid,
+        task_rid: selectedTask?.task_rid,
+        attachment_level: selectedTask?.attachment_level,
+      }
+    );
+
+    try {
+      const res = await updateTaskSummaryInline({
+        variables: { data: updateData },
+      });
+
+      const result = res.data?.updateTaskSummaryInline;
+
+      if (result?.statusCode === 200 && result.data) {
+        const updatedTask = result.data;
+        const newTaskList = taskList.map((task) => {
+          if (task.task_rid === updatedTask.task_rid) {
+            return updatedTask;
+          }
+          return task;
+        });
+        setTaskList(newTaskList);
+      } else {
+        errorToast(result?.statusMessage || 'Failed to update task');
+        setTaskList(previousTaskList);
+      }
+    } catch (error) {
+      errorToast((error as Error)?.message || 'Failed to update task');
+      setTaskList(previousTaskList);
+    }
+  };
+
   return (
     <>
       <ManageColumnsPopover
@@ -401,6 +467,7 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
         sortBy={tableParams.sortBy}
         sortOrder={tableParams.sortOrder}
         onSort={handleSort}
+        onCellEdit={handleCellEdit}
       />
       {selectedTask && (
         <TaskDetailModal
