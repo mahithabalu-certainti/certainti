@@ -19,7 +19,8 @@ import {
   IProjectTaskIngestionService,
   INotesService,
   ITemplates,
-  INotesGraphqlServices
+  INotesGraphqlServices,
+  ITaskSummaryGraphqlServices
 } from "./interfaces/interface";
 import { ProjectService } from "./projectService";
 import ResourceCostService from "./resourceCostService";
@@ -31,6 +32,7 @@ import { ProjectTaskService } from "./projectTaskService";
 import { ProjectInjestionTaskService } from "./projectTask/projectTaskService";
 import { NotesService } from "./notes/notesService";
 import { TemplateService } from "./templates/templateService";
+import { TaskService } from "./taskSummary/taskService";
 
 interface IServiceContainer {
   resourceCostServices: IResourceCostService;
@@ -58,7 +60,9 @@ class Services implements IServiceContainer {
   private _settingService? : ISettingsServices;
   private _financialHighlightServices? : IFinancialHighlights;
   private _notesGraphqlServices? : INotesGraphqlServices
+  private _taskSummaryGraphqlServices? : ITaskSummaryGraphqlServices
   notesService : INotesService;
+  taskService : TaskService
 
   constructor(
     logger: Logger,
@@ -68,7 +72,8 @@ class Services implements IServiceContainer {
     projectResourceServices: IProjectResourceService = new ProjectResourceService(logger),
     projectTaskInjestionServices: IProjectTaskIngestionService = new ProjectInjestionTaskService(logger),
     notesService : INotesService = new NotesService(logger),
-    templateServices:  ITemplates = new TemplateService()
+    templateServices:  ITemplates = new TemplateService(),
+    taskService: TaskService = new TaskService(logger)
   ) {
     try {
       this.logger = logger;
@@ -82,6 +87,7 @@ class Services implements IServiceContainer {
       this.projectTaskInjestionServices = projectTaskInjestionServices;
       this.notesService = notesService
       this.templateServices = templateServices;
+      this.taskService = taskService
     } catch (error) {
       console.log("Error initializing service: ", error);
       throw new Error("Service Initialization failed!");
@@ -163,6 +169,14 @@ class Services implements IServiceContainer {
       this._notesGraphqlServices = new NotesGraphqlServies
     }
     return this._notesGraphqlServices!
+  }
+
+  get taskSummaryGraphqlServices() : ITaskSummaryGraphqlServices {
+    if(!this._taskSummaryGraphqlServices) {
+      const {default : TaskSummaryGraphqlServices} = require('../services/taskSummary/taskSummaryGraphqlServices')
+      this._taskSummaryGraphqlServices = new TaskSummaryGraphqlServices
+    }
+    return this._taskSummaryGraphqlServices!
   }
 
 }

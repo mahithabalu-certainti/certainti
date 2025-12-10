@@ -932,7 +932,7 @@ export const fetchMilestoneTaskTemplate = (taskTypeRid : string, filingTypeRid :
   return query;
 }
 
-export const fetchCaseTemplateData = (schemaName : string, caseRid : string, accountRid : string, statusRid : string) => {
+export const fetchCaseTemplateData = (schemaName : string, caseRid : string, accountRid : string, statusRid : string, checkItemsCompletedStatusId : string) => {
   let query = 
   `
   WITH fetch_task AS (
@@ -961,7 +961,18 @@ export const fetchCaseTemplateData = (schemaName : string, caseRid : string, acc
   WHERE 
   ch.attach_to = t.rid
   AND ch.case_rid = '${caseRid}'
+  AND ch.attachment_level = 'task'
+  ),
+  'complete_items', 
+  (
+  SELECT COUNT(DISTINCT chi.rid) 
+  FROM ${schemaName}.checklists ch 
+  LEFT JOIN ${schemaName}.checklist_items chi ON chi.checklist_rid = ch.rid 
+  WHERE 
+  ch.attach_to = t.rid
+  AND ch.case_rid = '${caseRid}'
   AND attachment_level = 'task'
+  AND chi.status_rid = '${checkItemsCompletedStatusId}'
   ),
   'comments_count', (SELECT COUNT(DISTINCT tc.rid) from ${schemaName}.task_comments tc WHERE tc.task_rid = t.rid AND tc.case_rid = '${caseRid}'),
   'task_status_rid', t.task_status_rid
@@ -1120,11 +1131,12 @@ export function fetchChecklistAttachToDetails(schemaName: string, attachTo: stri
     `
     WITH fetch_case_task AS (
     SELECT 
-    ct.rid, ct.task_name, ct.assigned_to, 
+    ct.rid, ct.task_name, ctt.user_rid AS assigned_to, 
     ct.effective_start_datetime, 
     ct.effective_end_datetime, ct.task_status_rid
     FROM
     ${schemaName}.case_task ct
+    LEFT JOIN ${schemaName}.case_team ctt ON ctt.user_rid = ct.assigned_to AND ctt.case_rid = ct.case_rid AND ctt.account_rid = ct.account_rid AND ctt.status_rid = '${statusId}'
     WHERE
     ct.status_rid = '${statusId}'
     AND
@@ -1224,11 +1236,10 @@ export function fetchChecklistAttachToDetails(schemaName: string, attachTo: stri
       query = 
     `
     WITH fetch_data AS (SELECT 
-    rid, r_number, created_by, created_datetime, attribute_name, old_value, new_value, task_rid
-    FROM ${schemaName}.task_history
+    rid, r_number, created_by, created_datetime, attribute_name, old_value, new_value, activity_rid
+    FROM ${schemaName}.activity_history
     WHERE
-    task_rid = '${taskRid}'
-
+    activity_rid = '${taskRid}'
     ORDER BY created_datetime DESC),
     calculate_total AS (
     SELECT f.*, COUNT(f.rid) OVER() AS total_result FROM fetch_data f

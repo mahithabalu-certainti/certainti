@@ -127,6 +127,10 @@ export class ActivityService {
 
       if(taskResponse)
       {
+        const [taskTypeResponse]: any[] = await this.mainDbSequelize!.query(
+          rawQueries.getActivityTaskType()
+        );
+        taskRequest.task_type_rid = taskTypeResponse.rid;
         await this.activitySchemaService.addTaskSummary(
           accountNumber,
           taskRequest,
@@ -643,7 +647,7 @@ export class ActivityService {
       return {
         statusCode: HttpStatus.FAILED,
         message: HttpStatus.FAILED_MESSAGE,
-        errorMessage: STATUS_MESSAGE.checkListError,
+        errorMessage: STATUS_MESSAGE.detailFetchedFailed,
       };
     }
   }

@@ -322,7 +322,8 @@ const listActivityTaskSchema = Joi.object({
   filters: Joi.string().default("{}"),
   sortBy: Joi.string().optional(),
   sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
-  activityType:Joi.string().default("All")
+  activityType:Joi.string().default("All"),
+  search: Joi.string().max(255).optional(),
 });
 
 const exportActivitySchema = Joi.object({
@@ -389,6 +390,7 @@ const listReviewProjectSchema = Joi.object({
   filters: Joi.string().default("{}"),
   sortBy: Joi.string().optional(),
   sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
+  search: Joi.string().max(255).optional(),
 });
 
 const sentReviewProjectSchema = Joi.object({

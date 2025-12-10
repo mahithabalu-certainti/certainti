@@ -97,7 +97,7 @@ implements CommentsAttachmentsAttributes {
                 allowNull : true
             },
             document_name : {
-                type : DataTypes.STRING(64),
+                type : DataTypes.STRING(2000),
                 allowNull : true
             },
             format : {

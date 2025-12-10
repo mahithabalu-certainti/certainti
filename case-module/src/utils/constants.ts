@@ -152,6 +152,7 @@ export const STATUS_MESSAGE = {
   categoryPlaceHolderSuccess : "Placeholders fetched successfully",
   categoryPlaceHolderFailed : "Failed to fetch Placeholders",
   activitiesFetchedSuccess : "Task Activities fetched successfully",
+  detailFetchedFailed : "Failed to fetch details",
   casePriorityListedSuccess : "Case Task Priority fetched successfully",
   caseTaskStatusListedSuccess : "Case Task Status fetched successfully",
   collaboratorAlreadyAdded : "Requested Collaborator already added",
@@ -180,6 +181,7 @@ export const STATUS_MESSAGE = {
   emailSentSuccessfully: "Email sent successfully",
   emailSendingFailed: "Failed to send email",
   taskCategoryListedSuccess : "Task Category fetched successfully",
+  caseDateChangeNotAllowed : "Date changes are not allowed after case tasks transition to In Progress.",
   fiscalIdMissing: "Project Resource RID is required",
   projectIdMissing: "Project RID is required",
   noDataToUpdate: "No data provided to update",
@@ -599,6 +601,34 @@ export const taskTemplateFieldMappings = [
     dataField: "modified_datetime",
   }
 ];
+
+export const caseTaskMapping = [
+  {
+    permissionField: "task_name",
+    exportField: "Task Name",
+    dataField: "task_name",
+  },
+  {
+    permissionField: "assigned_to",
+    exportField: "Assigned To",
+    dataField: "assigned_to_name",
+  },
+  {
+    permissionField: "effective_start_datetime",
+    exportField: "Start Date",
+    dataField: "effective_start_datetime",
+  },
+  {
+    permissionField: "effective_end_datetime",
+    exportField: "End Date",
+    dataField: "effective_end_datetime",
+  },
+  {
+    permissionField: "status_rid",
+    exportField: "Status",
+    dataField: "task_status_name",
+  }
+]
 
 
 export const activityFieldMappings = [
@@ -1436,6 +1466,9 @@ export const rawQueries = {
   getSpecificTaskType() {
     return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.task_type WHERE task_type_name ILIKE '%Milestone%'`
   },
+  getActivityTaskType() {
+    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.task_type WHERE task_type_name ILIKE '%Action%'`
+  },
   getStatusDetails(rid: string) {
     return `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status WHERE rid = '${rid}'`
   },
@@ -1499,6 +1532,10 @@ export const rawQueries = {
       query += ` AND rid IN (${accessibleIds.map(id => `'${id}'`).join(',')})`;
     }
     query += ` ORDER BY project_name ASC`;
+    return query;
+  },
+    getAllCasesByAccountId(schemaName: string,accountRid: string) {
+    let query = `SELECT rid FROM ${schemaName}.cases WHERE account_rid = '${accountRid}'`;
     return query;
   },
   fetchProjectResourceAndFiscal(schemaName: string) {
@@ -1686,6 +1723,11 @@ export const rawQueries = {
     if(oldRid === null) oldRid = ''
     if(newRid === null) newRid = ''
     return `SELECT rid, CONCAT(first_name, ' ', last_name) AS name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN ('${oldRid}', '${newRid}')`
+  },
+  fetchActivityStatusById(oldRid : string, newRid : string) {
+    if(oldRid === null) oldRid = ''
+    if(newRid === null) newRid = ''
+    return `SELECT rid, status_name as name FROM ${MAIN_SCHEMA_NAME}.activity_status WHERE activity_type ='Task' AND rid IN ('${oldRid}', '${newRid}')`
   },
   insertTimeline: (schemaName: string,tableName: string) =>
     `INSERT INTO "${schemaName}".${tableName} (event_name, event_status, event_type, entity_rid,account_rid, description, created_by, event_datetime, created_datetime) VALUES (:event_name, :event_status, :event_type, :entity_rid, :account_rid, :description, :created_by, :event_datetime, :created_datetime)`,
@@ -1958,7 +2000,49 @@ export const rawQueries = {
       WHERE rid = '${userId}'
     `;
   },
-  getJurisdictionById(credit_config_group_rid : string) {
+  checkCaseStatusChanged (schemaName : string, caseRid : string, accountRid : string, toDoStatusRid : string) {
+    return `
+    SELECT rid FROM ${schemaName}.case_task 
+    WHERE
+    case_rid = '${caseRid}'
+    AND
+    account_rid = '${accountRid}'
+    AND
+    task_status_rid !='${toDoStatusRid}'
+    `
+  },
+  checkCaseTaskStatusToDo () {
+    return `
+    SELECT rid FROM ${MAIN_SCHEMA_NAME}.case_task_status 
+    WHERE
+    task_status_name ILIKE '%To Do%'
+    `
+  },
+  getChecklistOpenStatusId () {
+    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.checklist_status WHERE status_name ILIKE '%Done%'`
+  },
+  getUserAssignedCount (schemaName : string, userIds : string[], caseRid : string) {
+    return `
+    SELECT
+      array_agg(jsonb_build_object(
+      'total_task_assigned_count', (
+      SELECT count(*) FROM ${schemaName}.case_task ctt 
+      where 
+      ctt.assigned_to = ct.user_rid
+      AND
+      ctt.case_rid = ct.case_rid
+      AND
+      ctt.case_team_member_role_rid = ct.role_rid
+      ),
+      'user_rid', ct.user_rid
+      )) AS assigned_user_details
+      FROM ${schemaName}.case_team ct
+      WHERE
+      ct.user_rid IN (${userIds.map((d : any) => `'${d}'`).join(',')})
+      AND
+      ct.case_rid = '${caseRid}'`
+  },
+   getJurisdictionById(credit_config_group_rid : string) {
     return `
       SELECT 
       k.rid as credit_parameter_key_rid,

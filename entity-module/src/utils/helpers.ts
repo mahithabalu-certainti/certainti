@@ -11,6 +11,9 @@ import { Attachment } from "../models/attachments";
 import { ProjectTask } from "../models/projectTask";
 import crypto from "crypto";
 import { Notes } from "../models/notes";
+import { UpdateCaseTaskType } from "./types";
+import { CaseTask } from "../models/caseTaskModel";
+
 
 function getLogger() {
   return configurations.getInstance().getLogger();
@@ -1822,6 +1825,11 @@ export const validateNotesInput = (data: any) => {
   if (!data.rid) return STATUS_MESSAGE.notesIdMissing;
 };
 
+export const validateTaskSummaryInput = (data: any) => {
+  if (!data.account_rid) return STATUS_MESSAGE.accountIdMissing;
+  if (!data.rid) return STATUS_MESSAGE.notesIdMissing;
+};
+
 export async function deleteFromAzureBlob(blobUrl: string | null): Promise<void> {
   if (!blobUrl) return;
 
@@ -1852,4 +1860,81 @@ export async function deleteFromAzureBlob(blobUrl: string | null): Promise<void>
   } else {
     console.log(`Blob not found: ${blobName}`);
   }
+}
+
+export const setInlineForTaskSummary = (existingData: any, newData: any) => {
+  const editableFields = [
+    'task_name',
+    'description',
+    'fiscal_year',
+    'status_rid',
+    'priority_rid',
+    'effective_start_datetime',
+    'effective_end_datetime'
+  ];
+
+  const setClause: string[] = [];
+  const values: any = {};
+  let statusMessage = null;
+
+  editableFields.forEach(field => {
+    if (newData[field] !== undefined && newData[field] !== existingData[field]) {
+      // Type-specific validations
+      if (field === 'fiscal_year' && typeof newData[field] !== 'number') {
+        statusMessage = `Invalid fiscal year format`;
+        return;
+      }
+
+      if (field === 'effective_start_datetime' || field === 'effective_end_datetime') {
+        try {
+          new Date(newData[field]);
+        } catch (error) {
+          statusMessage = `Invalid date format for ${field}`;
+          return;
+        }
+      }
+
+      setClause.push(`${field} = :${field}`);
+      values[field] = newData[field];
+    }
+  });
+
+  // Always update modified fields
+  setClause.push('modified_by = :modified_by');
+  values.modified_by = newData.userId || newData.modified_by;
+  
+  setClause.push('modified_datetime = :modified_datetime');
+  values.modified_datetime = new Date().toISOString();
+
+  return {
+    setClause: setClause.join(', '),
+    values,
+    statusMessage
+  };
+};
+
+export const getColumnsNamesForTaskUpdate = (data : UpdateCaseTaskType, dbData : CaseTask) => {
+  let columns : string[] = [];
+  if(data.checklist_template_rid !== dbData.checklist_template_rid)
+    columns.push(`checklist_template_rid`)
+  // if(data.effective_end_datetime !== dbData.effective_end_datetime) 
+  //   columns.push(`effective_end_datetime`)
+  // if(data.effective_start_datetime !== dbData.effective_start_datetime)
+  //   columns.push(`effective_start_datetime`)
+  if(data.priority_rid !== dbData.priority_rid)
+    columns.push(`priority_rid`)
+  if(data.task_description !== dbData.task_description)
+    columns.push(`task_description`)
+  if(data.task_name !== dbData.task_name)
+    columns.push(`task_name`)
+  if(data.task_status_rid !== dbData.task_status_rid)
+    columns.push(`task_status_rid`)
+  if(data.weightage_rid !== dbData.weightage_rid)
+    columns.push(`weightage_rid`)
+  if(data.task_category_rid !== dbData.task_category_rid)
+    columns.push(`task_category_rid`)
+  if(data.assigned_to !== dbData.assigned_to)
+    columns.push(`assigned_to`)
+
+  return columns;
 }

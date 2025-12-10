@@ -9,6 +9,7 @@ import { IUpdateProject,CaseStatusResult } from "../utils/types";
 import { ProjectService } from "./projectService";
 import { CaseProject } from "../models/caseProjectsModel";
 import { Case } from "../models/caseModel";
+import { QueryTypes } from "sequelize";
 
 
 const services = Configurations.getInstance().getServices();
@@ -147,50 +148,55 @@ class ProjectGraphQlServices {
                     }
                     if (newValue !== null && newValue !== undefined && typeof newValue === 'string') {
                         newValue = newValue.replace(/'/g, "''");
-                    }
-                        
+                    }   
                         if(newValue !== oldValue) {
                             await orgSequelize.query(rawQueries.insertProjectHistory(schemaName, data, attributeName, newValue, oldValue))
                         }
                     }
                 }
             }
-            const projectCaseMapping = await orgSequelize.query(rawQueries.fetchProjectFiscalCaseMapping(schemaName, data));
+            const {accountNumber: validAccountNumber}  = await this.projectIngestion.fetchValidAccountNumberById(data.account_rid);
 
-            for(let caseMapping of projectCaseMapping[0] as CaseProject[]) {
-                const caseData = await Case.findOne({
-                  where: {
-                    rid: caseMapping.case_rid,
-                  },
-                });
-            
-                if (!caseData) {
-                  continue;
-                }
-            
-                const caseStatus = await mainSequelize.query(
-                  rawQueries.fetchCaseStatusByRid(caseData.status_rid),
-                  {
-                    type: "SELECT",
-                  }
-                ) as CaseStatusResult[];
-            
-                if (caseStatus[0]?.status_name === "Closed") {
-                  continue;
-                }
+            const checkTableExists =  await this.projectIngestion.checkCaseProjectsTableExists(validAccountNumber);  
+            if (checkTableExists) {
+                const projectCaseMapping = await orgSequelize.query(rawQueries.fetchProjectFiscalCaseMapping(schemaName, data));
+                if (projectCaseMapping.length > 0) {
+                    for(let caseMapping of projectCaseMapping[0] as CaseProject[]) {
+                        const caseData = await Case.findOne({
+                        where: {
+                            rid: caseMapping.case_rid,
+                        },
+                        });
+                    
+                        if (!caseData) {
+                        continue;
+                        }
+                    
+                        const caseStatus = await mainSequelize.query(
+                        rawQueries.fetchCaseStatusByRid(caseData.status_rid),
+                        {
+                            type: "SELECT",
+                        }
+                        ) as CaseStatusResult[];
+                    
+                        if (caseStatus[0]?.status_name === "Closed") {
+                        continue;
+                        }
 
-                if(setProjectFiscalData.length > 0) {
-                    if(data.project_code) {
-                        if(data.project_code !== '') {
-                        await orgSequelize.query(rawQueries.updateCaseProjectPrjCode(schemaName, data.project_code, data.account_rid, data.project_rid, findProjectFiscal[0][0].project_code, caseMapping.case_rid))
-                        } 
+                        if(setProjectFiscalData.length > 0) {
+                            if(data.project_code) {
+                                if(data.project_code !== '') {
+                                await orgSequelize.query(rawQueries.updateCaseProjectPrjCode(schemaName, data.project_code, data.account_rid, data.project_rid, findProjectFiscal[0][0].project_code, caseMapping.case_rid))
+                                } 
+                            }
+                            await orgSequelize.query(rawQueries.updateCaseProjects(schemaName, setProjectFiscalData, data,  caseMapping.case_rid))
+                            await this.projectIngestion.updateCaseProjectFiscalRegion(checkAccountExists[0][0].r_number, data, caseMapping as CaseProject, findProjectFiscal[0][0].project_code)
+                        }
+
+                        await orgSequelize.query(rawQueries.updateCaseProjectEffectiveDatas(schemaName, updatedProjectFiscal[0][0], caseMapping.case_rid))
                     }
-                    await orgSequelize.query(rawQueries.updateCaseProjects(schemaName, setProjectFiscalData, data,  caseMapping.case_rid))
-                    await this.projectIngestion.updateCaseProjectFiscalRegion(checkAccountExists[0][0].r_number, data, caseMapping as CaseProject, findProjectFiscal[0][0].project_code)
                 }
-
-                await orgSequelize.query(rawQueries.updateCaseProjectEffectiveDatas(schemaName, updatedProjectFiscal[0][0], caseMapping.case_rid))
-            }
+            }   
 
             let accountData : any = {}
             accountData.rid = data.account_rid

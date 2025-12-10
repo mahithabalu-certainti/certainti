@@ -60,7 +60,19 @@ export class CaseTeam
           defaultValue: DataTypes.NOW
         },
         modified_datetime: { type: DataTypes.DATE, allowNull: true },
-        case_rid: { type: DataTypes.STRING(50), allowNull: false },
+        case_rid: {
+          type: DataTypes.STRING(50),
+          allowNull: false,
+          references: {
+            model: {
+              tableName: "cases",
+              schema: schemaName
+            },
+            key: "rid"
+          },
+          onUpdate: "CASCADE",
+          onDelete: "CASCADE"
+        },
         account_rid: { type: DataTypes.STRING(50), allowNull: false },
         role_rid: { type: DataTypes.STRING(50), allowNull: false },
         user_rid: { type: DataTypes.STRING(50), allowNull: false },
