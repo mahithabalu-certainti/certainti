@@ -948,9 +948,7 @@ export class InteractionService {
           filters,
           data.sortBy,
           data.sortOrder,
-          "list",
-          data?.case_rid,
-          data.account_rid
+          "list"
         );
 
       if (!techSummary) {
@@ -1089,9 +1087,7 @@ export class InteractionService {
           filters,
           data.sortBy,
           data.sortOrder,
-          "download",
-          data.case_rid,
-          data.account_rid
+          "download"
         );
 
       if (!techSummary) {

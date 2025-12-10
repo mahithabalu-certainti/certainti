@@ -66,7 +66,7 @@ class Services implements IServiceContainer {
     resourceCostServices: IResourceCostService = new ResourceCostService(),
     resourceSkillServices: IResourceSkillService = new ResourceSkillService(),
     projectResourceServices: IProjectResourceService = new ProjectResourceService(logger),
-    projectTaskInjestionServices: IProjectTaskIngestionService = new ProjectInjestionTaskService(logger),
+    projectTaskInjestionServices: IProjectTaskIngestionService = new ProjectInjestionTaskService(),
     notesService : INotesService = new NotesService(logger),
     templateServices:  ITemplates = new TemplateService()
   ) {

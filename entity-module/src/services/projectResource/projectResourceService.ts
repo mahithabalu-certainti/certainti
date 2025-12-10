@@ -5,7 +5,6 @@ import {
   ICreateProjectResource,
   IUpdateInlineProjectResource,
   IUpdateProjectResource,
-  CaseStatusResult, 
 } from "../../utils/types";
 import { ProjectResourceSchemaService } from "./schemaService";
 import { ProjectResourceMapper } from "../../utils/projectMapper";
@@ -16,9 +15,6 @@ import moment from "moment";
 import Decimal from "decimal.js";
 import { ProjectResource } from "../../models/projectResource";
 import { errorLog, logMessage } from "../../utils/helpers";
-import { Case } from "../../models/caseModel";
-
-
 
 export class ProjectResourceService {
   private projectResourceSchema: ProjectResourceSchemaService;
@@ -700,14 +696,6 @@ export class ProjectResourceService {
           project_fiscal_rid
         );
 
-      if (projectData.is_qualified) {
-        return {
-          statusCode: HttpStatus.FAILED,
-          message: HttpStatus.FAILED_MESSAGE,
-          errorMessage: "Qualified project cannot be updated.",
-        };
-      }
-
       const resourceData =
         await this.projectResourceSchema.validateResourceByCode(
           validAccountNumber,
@@ -905,66 +893,6 @@ export class ProjectResourceService {
         userId,
         transaction
       );
-      
-      const projectCaseMapping = 
-      await this.projectIngestion.fetchProjectFiscalCaseMapping(
-        validAccountNumber,
-        projectData.rid
-      );
-
-      if (projectCaseMapping.length > 0) {  
-
-        for (const caseMapping of projectCaseMapping) {
-          const caseData = await Case.findOne({
-            where: {
-              rid: caseMapping.case_rid,
-            },
-          });
-        
-          if (!caseData) {
-            continue;
-          }
-
-          const mainSequelize = await initMainDbSequelize();
-
-          const caseStatus = await mainSequelize.query(
-            rawQueries.fetchCaseStatusByRid(caseData.status_rid),
-            {
-              type: "SELECT",
-            }
-          ) as CaseStatusResult[];
-        
-          if (caseStatus[0]?.status_name === "Closed") {
-            continue;
-          }
-
-          await this.projectResourceSchema.updateCaseProjectResourceRecords(
-            validAccountNumber,
-            projectResourceData,
-            userId,
-            resourceData.rid || "",
-            projectData,
-            stausId,
-            transaction,
-            caseMapping
-          );
-
-          await this.projectResourceSchema.updateCaseProjectResourceFiscalOnUpdateTable(
-            validAccountNumber,
-            projectResourceData,
-            projectData.project_rid,
-            projectData.fiscal_year,
-            userId,
-            resourceData,
-            existingProjectResource,
-            statusMap,
-            transaction,
-            caseMapping
-          );
-        
-        }
-      }
-
 
       await transaction.commit();
 
@@ -1035,33 +963,6 @@ export class ProjectResourceService {
         throw new Error("Project resource not found");
       }
 
-      // 2. Fetch required data for aggregation
-        const {
-          account_rid,
-          project_fiscal_rid,
-          fiscal_year,
-          region_rid,
-          country_rid,
-          project_rid,
-        } = projectResource;
-
-        const projectFiscalData =
-          await this.projectResourceSchema.validateProjectFiscalById(
-            accountNumber,
-            project_fiscal_rid
-        );
-
-        if (projectFiscalData.is_qualified) {
-          logMessage("Qualified project cannot be updated.");
-          throw new Error("Qualified project cannot be updated.");
-        }
-
-        const projectCaseMapping = 
-        await this.projectIngestion.fetchProjectFiscalCaseMapping(
-          accountNumber,
-          projectFiscalData.rid
-        );
-
       if (action === "accept") {
         // 1. Update status to 'Active'
         const statusMap: any =
@@ -1088,6 +989,16 @@ export class ProjectResourceService {
           transaction
         );
 
+        // 2. Fetch required data for aggregation
+        const {
+          account_rid,
+          project_fiscal_rid,
+          fiscal_year,
+          region_rid,
+          country_rid,
+          project_rid,
+        } = projectResource;
+
         const resourceData =
           await this.projectResourceSchema.validateResourceByCode(
             accountNumber,
@@ -1099,6 +1010,12 @@ export class ProjectResourceService {
           logMessage("Invalid resource code");
           throw new Error("Invalid resource code");
         }
+
+        const projectFiscalData =
+          await this.projectResourceSchema.validateProjectFiscalById(
+            accountNumber,
+            project_fiscal_rid
+          );
 
         const startDate = projectResource.start_date
           ? moment.utc(projectResource.start_date).format("YYYY-MM-DD")
@@ -1189,56 +1106,6 @@ export class ProjectResourceService {
           transaction
         );
 
-        if (projectCaseMapping.length > 0) {  
-
-          for (const caseMapping of projectCaseMapping) {
-            const caseData = await Case.findOne({
-              where: {
-                rid: caseMapping.case_rid,
-              },
-            });
-          
-            if (!caseData) {
-              continue;
-            }
-            const mainSequelize = await initMainDbSequelize();
-          
-            const caseStatus = await mainSequelize.query(
-              rawQueries.fetchCaseStatusByRid(caseData.status_rid),
-              {
-                type: "SELECT",
-              }
-            ) as CaseStatusResult[];
-          
-            if (caseStatus[0]?.status_name === "Closed") {
-              continue;
-            }
-          
-            await this.projectResourceSchema.updateCaseProjectResourceStatus(
-              accountNumber,
-              projectResourceRid,
-              activeStatusId,
-              userId,
-              transaction,
-              caseMapping,
-            );
-
-            await this.projectResourceSchema.updateCaseProjectResourceFiscalOnUpdateTable(
-              accountNumber,
-              updatedProjectResourceData,
-              projectFiscalData.project_rid,
-              projectFiscalData.fiscal_year,
-              userId,
-              resourceData,
-              projectResource,
-              statusMap,
-              transaction,
-              caseMapping
-            );
-          
-          }
-        }
-
         await transaction.commit();
 
         return {
@@ -1272,44 +1139,6 @@ export class ProjectResourceService {
           userId,
           transaction
         );
-
-        if (projectCaseMapping.length > 0) {  
-
-          for (const caseMapping of projectCaseMapping) {
-            const caseData = await Case.findOne({
-              where: {
-                rid: caseMapping.case_rid,
-              },
-            });
-          
-            if (!caseData) {
-              continue;
-            }
-
-            const mainSequelize = await initMainDbSequelize();
-          
-            const caseStatus = await mainSequelize.query(
-              rawQueries.fetchCaseStatusByRid(caseData.status_rid),
-              {
-                type: "SELECT",
-              }
-            ) as CaseStatusResult[];
-          
-            if (caseStatus[0]?.status_name === "Closed") {
-              continue;
-            }
-          
-            await this.projectResourceSchema.updateCaseProjectResourceStatus(
-              accountNumber,
-              projectResourceRid,
-              activeStatusId,
-              userId,
-              transaction,
-              caseMapping,
-            );
-
-          }
-        }
 
         await transaction.commit();
         return {
@@ -1667,14 +1496,6 @@ export class ProjectResourceService {
           project_fiscal_rid
         );
 
-      if (projectData.is_qualified) {
-        return {
-          statusCode: HttpStatus.FAILED,
-          message: HttpStatus.FAILED_MESSAGE,
-          errorMessage: "Qualified project cannot be updated.",
-        };
-      }
-
       let resourceData = null;
 
       const existingProjectResource =
@@ -1848,12 +1669,6 @@ export class ProjectResourceService {
 
       const stausId = statusMap?.get(status) ?? "";
 
-      const projectCaseMapping = 
-      await this.projectIngestion.fetchProjectFiscalCaseMapping(
-        validAccountNumber,
-        projectData.rid
-      );
-
       const updateProjectResource =
         await this.projectResourceSchema.updateInlineProjectResourceRecords(
           validAccountNumber,
@@ -1864,46 +1679,6 @@ export class ProjectResourceService {
           stausId,
           transaction
         );
-
-
-      if (projectCaseMapping.length > 0) {  
-
-          for (const caseMapping of projectCaseMapping) {
-            const caseData = await Case.findOne({
-              where: {
-                rid: caseMapping.case_rid,
-              },
-            });
-          
-            if (!caseData) {
-              continue;
-            }
-            const mainSequelize = await initMainDbSequelize();
-          
-            const caseStatus = await mainSequelize.query(
-              rawQueries.fetchCaseStatusByRid(caseData.status_rid),
-              {
-                type: "SELECT",
-              }
-            ) as CaseStatusResult[];
-          
-            if (caseStatus[0]?.status_name === "Closed") {
-              continue;
-            }
-
-            const updateProjectResource =
-            await this.projectResourceSchema.updateInlineCaseProjectResourceRecords(
-              validAccountNumber,
-              projectResourceData,
-              userId,
-              projectData,
-              resourceData,
-              stausId,
-              transaction,
-              caseMapping
-            );
-          }
-      }
 
       if (
         updateProjectResource &&
@@ -1974,6 +1749,7 @@ export class ProjectResourceService {
           transaction
         );
 
+        // projects
         await this.aggregateProject(
           validAccountNumber,
           account_rid,
@@ -1990,48 +1766,6 @@ export class ProjectResourceService {
           projectData.fiscal_year,
           transaction
         );
-
-
-      if (projectCaseMapping.length > 0) {  
-
-          for (const caseMapping of projectCaseMapping) {
-            const caseData = await Case.findOne({
-              where: {
-                rid: caseMapping.case_rid,
-              },
-            });
-          
-            if (!caseData) {
-              continue;
-            }
-            const mainSequelize = await initMainDbSequelize();
-          
-            const caseStatus = await mainSequelize.query(
-              rawQueries.fetchCaseStatusByRid(caseData.status_rid),
-              {
-                type: "SELECT",
-              }
-            ) as CaseStatusResult[];
-          
-            if (caseStatus[0]?.status_name === "Closed") {
-              continue;
-            }
-
-            await this.projectResourceSchema.updateCaseProjectResourceFiscalOnUpdateTable(
-              validAccountNumber,
-              resourceUpdatePayload,
-              resourceUpdatePayload.project_rid,
-              resourceUpdatePayload.fiscal_year,
-              userId,
-              resourceData,
-              existingProjectResource,
-              statusMap,
-              transaction,
-              caseMapping
-            );
-          
-          }
-        }
       }
 
       await this.recordTimelineAndHistory(

@@ -1030,9 +1030,9 @@ export function fetchChecklistAttachToDetails(schemaName: string, attachTo: stri
     case 'account':
       return `SELECT ad.account_rid, ad.account_name AS name FROM ${schemaName}.account_details ad WHERE ad.account_rid = '${attachTo}'`;
     case 'project':
-      return `SELECT pf.rid, pf.project_code AS name  AS name FROM ${schemaName}.project_fiscal pf WHERE pf.rid = '${attachTo}'`;
+      return `SELECT pf.rid, pf.project_code AS name  FROM ${schemaName}.project_fiscal pf WHERE pf.rid = '${attachTo}'`;
     case 'case':
-      return `SELECT cd.rid, cd.case_name AS name  AS name FROM ${schemaName}.cases cd WHERE cd.rid = '${attachTo}'`;
+      return `SELECT cd.rid, cd.case_name AS name FROM ${schemaName}.cases cd WHERE cd.rid = '${attachTo}'`;
     case 'resource':
       return `SELECT r.rid, r.resource_code AS name FROM ${schemaName}.resources r WHERE r.rid = '${attachTo}'`;
     case 'resource_cost':
@@ -1089,7 +1089,7 @@ export function fetchChecklistAttachToDetails(schemaName: string, attachTo: stri
                 if(cond === 'equals') 
                   filterQueryArray.push(`LOWER(ct.${validKey}) = '${values.toLowerCase()}'`)
                 if(cond === 'not_equals')
-                  filterQueryArray.push(`LOWER(ct.${validKey}) != '${values.toLowerCase()}'`)
+                  filterQueryArray.push(`(LOWER(ct.${validKey}) != '${values.toLowerCase()}' OR ct.${validKey} IS NULL)`)
                 if(cond === 'contains')
                   filterQueryArray.push(`ct.${validKey} ILIKE '%${values}%'`)
                 if(cond === 'is_empty') 
@@ -1495,22 +1495,6 @@ export function fetchChecklistAttachToDetails(schemaName: string, attachTo: stri
     return `SELECT rid, task_status_name FROM ${MAIN_SCHEMA_NAME}.case_task_status ORDER BY task_status_level ASC`
   }
 
-  export const getCurrencyDetailsQuery = (
-    schemaName: string,
-    currencyIds: string[]
-  ) => {
-    const query = `
-      SELECT rid, currency_name, currency_symbol, currency_code
-      FROM ${schemaName}.currency
-      WHERE rid IN (:ids)
-    `;
-  
-    const replacements = {
-      ids: currencyIds,
-    };
-  
-    return { query, replacements };
-  };
   export const fetchEmailActivityDetails = (schemaName : string, rid : string) => {
     return `
     SELECT 

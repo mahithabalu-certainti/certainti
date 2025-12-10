@@ -8,7 +8,6 @@ import {
   AccountType,
   ActivityType,
   AddCommentsType,
-  assignProjectType,
   CaseOwnerType,
   CaseStatusType,
   CaseTaskDropdownType,
@@ -1054,19 +1053,13 @@ export class CaseService {
           };
         }
       }
-      
       data.fiscal_year = checkCaseExists.fiscal_year
-      let caseSchemaServiceResult = await this.caseSchemaService.assignProjectToCase(
+      const result = await this.caseSchemaService.assignProjectToCase(
         data,
         fetchParentRnumber[0][0].r_number,
         schemaName
       );
-      if (caseSchemaServiceResult.statusCode == HttpStatus.SUCCESS) {
-        const result = await this.caseSchemaService.insertCaseTabels(
-          caseSchemaServiceResult.data as assignProjectType,
-          fetchParentRnumber[0][0].r_number,
-          schemaName
-        );
+      if (result.statusCode == HttpStatus.SUCCESS) {
         return {
           statusCode: HttpStatus.SUCCESS,
           statusMessage: result.statusMessage,
@@ -1074,7 +1067,7 @@ export class CaseService {
       } else {
         return {
           statusCode: HttpStatus.FAILED,
-          statusMessage: caseSchemaServiceResult.statusMessage,
+          statusMessage: result.statusMessage,
         };
       }
     } else {
@@ -2283,7 +2276,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
             "Task Name" : d.task_name,
             "Assigned To" : d.assigned_to_name || "-",
             "Start Date" : d.effective_start_datetime ? moment(d.effective_start_datetime).format("YYYY-MMM-DD") : "-",
-            "End Date": d.effective_end_datetime ? moment(d.effective_end_datetime).format("YYYY-MMM-DD") : "-",
+            "Due Date": d.effective_end_datetime ? moment(d.effective_end_datetime).format("YYYY-MMM-DD") : "-",
             "Status": d.task_status_name || "-",
           }
           const exportRecord: Record<string, any> = {};
