@@ -23,6 +23,7 @@ import {
   useGetRuleFieldOperators,
   useGetRuleFieldValues,
 } from '../../../../service/workflow-builder/workflow-builder-service';
+import { TruncateWithTooltip } from '../../../../../components';
 
 interface ConditionFormProps {
   condition: Condition;
@@ -256,25 +257,41 @@ const ConditionForm: React.FC<ConditionFormProps> = ({
               {condition.name || 'Condition'}
             </div>
             {!isExpanded && condition.field && (
-              <div className='text-xs text-gray-500 mt-1 flex flex-wrap gap-3 truncate'>
-                <span>
-                  <strong className='text-gray-700'>Field:</strong>{' '}
-                  <span className='text-[#1976d2]'>
-                    {condition.fieldName || condition.field || '-'}
-                  </span>
+              <div className='text-xs text-gray-500 mt-1 flex flex-wrap gap-3'>
+                {/* FIELD */}
+                <span className='flex items-center gap-1 max-w-[150px] truncate'>
+                  <strong className='text-[#2D3E4F]'>Field:</strong>
+                  <TruncateWithTooltip>
+                    <span className='text-[#1976d2] truncate'>
+                      {condition.fieldName || condition.field || '-'}
+                    </span>
+                  </TruncateWithTooltip>
                 </span>
-                <span>
-                  <strong className='text-gray-700'>Operator:</strong>{' '}
-                  {condition.operatorName || condition.operator || '-'}
+
+                {/* OPERATOR */}
+                <span className='flex items-center gap-1 max-w-[150px] truncate'>
+                  <strong className='text-[#2D3E4F]'>Operator:</strong>
+                  <TruncateWithTooltip>
+                    <span className='text-[#1976d2] truncate'>
+                      {condition.operatorName || condition.operator || '-'}
+                    </span>
+                  </TruncateWithTooltip>
                 </span>
-                <span>
-                  <strong className='text-gray-700'>Value:</strong>{' '}
-                  {condition.valueName || condition.value || '-'}
+
+                {/* VALUE */}
+                <span className='flex items-center gap-1 max-w-[150px] truncate'>
+                  <strong className='text-[#2D3E4F]'>Value:</strong>
+                  <TruncateWithTooltip>
+                    <span className='text-[#1976d2] truncate'>
+                      {condition.valueName || condition.value || '-'}
+                    </span>
+                  </TruncateWithTooltip>
                 </span>
               </div>
             )}
           </div>
         </div>
+
         <div className='flex items-center gap-2'>
           {shouldShowError && (
             <Tooltip
@@ -292,7 +309,7 @@ const ConditionForm: React.FC<ConditionFormProps> = ({
             >
               <span className='h-[28px] w-5 flex items-center justify-center cursor-pointer'>
                 <React.Suspense fallback={null}>
-                  <ErrorInfoIcon alt='error' className='w-4 h-4' />
+                  <ErrorInfoIcon alt='error' className='w-5 h-4' />
                 </React.Suspense>
               </span>
             </Tooltip>
@@ -326,11 +343,13 @@ const ConditionForm: React.FC<ConditionFormProps> = ({
 
       {/* Expanded Fields */}
       {isExpanded && (
-        <div className='p-4 border-t border-[#CBD6E2]'>
+        <div
+          className={`p-4 border-t ${shouldShowError ? 'border-red-300' : 'border-[#CBD6E2]'}`}
+        >
           <div className='space-y-4'>
             {/* Field Input */}
             <div className='relative'>
-              <label className='block text-xs font-medium text-gray-700 mb-2'>
+              <label className='block text-xs font-medium text-[#2D3E4F] mb-1'>
                 Field
               </label>
               {isLoadingFields ? (
@@ -435,7 +454,7 @@ const ConditionForm: React.FC<ConditionFormProps> = ({
 
             {/* Operator */}
             <div>
-              <label className='block text-xs font-medium text-gray-700 mb-2'>
+              <label className='block text-xs font-medium text-[#2D3E4F] mb-1'>
                 Operator
               </label>
               {isLoadingOperators ? (
@@ -463,7 +482,7 @@ const ConditionForm: React.FC<ConditionFormProps> = ({
                         fontWeight: 500,
                       }}
                     >
-                      Choose operator
+                      Choose Operator
                     </MenuItem>
                     {availableOperators.map((op) => (
                       <MenuItem
@@ -485,7 +504,7 @@ const ConditionForm: React.FC<ConditionFormProps> = ({
 
             {/* Value */}
             <div>
-              <label className='block text-xs font-medium text-gray-700 mb-2'>
+              <label className='block text-xs font-medium text-[#2D3E4F] mb-1'>
                 Value
               </label>
               {isLoadingValues ? (
@@ -502,9 +521,7 @@ const ConditionForm: React.FC<ConditionFormProps> = ({
                     onChange={(e) => handleValueChange(e.target.value)}
                     displayEmpty
                     MenuProps={COMMON_MENU_PROPS}
-                    disabled={
-                      isFieldEmpty || !condition.operator || isLoadingValues
-                    }
+                    disabled={isFieldEmpty || isLoadingValues}
                     sx={getSelectStyles(false, condition.value === '')}
                   >
                     <MenuItem
@@ -515,7 +532,7 @@ const ConditionForm: React.FC<ConditionFormProps> = ({
                         fontWeight: 500,
                       }}
                     >
-                      Choose value
+                      Choose Value
                     </MenuItem>
                     {fieldOptions && fieldOptions.length > 0
                       ? fieldOptions.map((opt) => (

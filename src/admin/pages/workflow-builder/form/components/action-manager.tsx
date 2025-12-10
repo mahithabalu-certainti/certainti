@@ -154,8 +154,8 @@ const ActionManager = ({
           <h2 className='text-2xl text-[#425A76] font-bold'>Add Actions</h2>
           {rule.actions.length > 0 && (
             <div className='text-sm text-green-600 font-medium bg-green-50 px-3 py-1 rounded-full border border-green-200'>
-              {rule.actions.length} Action{rule.actions.length !== 1 ? 's' : ''}{' '}
-              Added
+              ✓ {rule.actions.length} Action
+              {rule.actions.length !== 1 ? 's' : ''} Added
             </div>
           )}
         </div>
@@ -200,7 +200,7 @@ const ActionManager = ({
       </div>
 
       {/* Action list with skeleton loading */}
-      <div className='flex-1 overflow-y-auto space-y-4 pb-4'>
+      <div className='flex-1 overflow-y-auto space-y-4 pb-4 min-h-[calc(100vh-397px)] max-h-[calc(100vh-397px)]'>
         {/* Selected actions highlight section */}
         {rule.actions.length > 0 && !isLoadingActionTypes && (
           <div className='px-6 pt-6'>

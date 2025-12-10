@@ -10,13 +10,13 @@ import ConditionForm from './condition-form';
 interface ConditionManagerProps {
   conditionListData?: ConditionListResponse;
   isLoadingConditionTypes?: boolean;
-  validatedConditionIds?: Set<string>;
+  onCategorySelectorChange?: (isShowing: boolean) => void;
 }
 
 const ConditionManager: React.FC<ConditionManagerProps> = ({
   conditionListData,
   isLoadingConditionTypes,
-  validatedConditionIds = new Set(),
+  onCategorySelectorChange,
 }) => {
   const [showConditionTypeSelector, setShowConditionTypeSelector] =
     useState(false);
@@ -35,6 +35,8 @@ const ConditionManager: React.FC<ConditionManagerProps> = ({
     deleteCondition,
     updateLogicalOperator,
     setConditionType,
+    currentStep,
+    validatedConditionIds,
   } = useWorkflowContext();
 
   // Dynamically fetch condition categories based on selected condition type
@@ -64,14 +66,44 @@ const ConditionManager: React.FC<ConditionManagerProps> = ({
 
   useEffect(() => {
     // Show condition type selector only for the first condition
+    // Also show it when navigating back to conditions step
     if (
       rule.conditions.length === 0 &&
       rule.trigger?.id &&
-      !rule.conditionType
+      !rule.conditionType &&
+      currentStep === 'conditions'
     ) {
       setShowConditionTypeSelector(true);
+      setShowCategorySelector(false);
     }
-  }, [rule.conditions.length, rule.trigger?.id, rule.conditionType]);
+    // If condition type is selected but no conditions exist, show category selector
+    else if (
+      rule.conditions.length === 0 &&
+      rule.trigger?.id &&
+      rule.conditionType &&
+      currentStep === 'conditions'
+    ) {
+      setShowConditionTypeSelector(false);
+      // Set the selected condition RID for category fetching
+      if (selectedConditionRid !== rule.conditionType.rid) {
+        setSelectedConditionRid(rule.conditionType.rid);
+      }
+      setShowCategorySelector(true);
+    }
+  }, [rule.conditions.length, rule.trigger?.id, rule.conditionType, currentStep, selectedConditionRid]);
+
+  // Close selectors when navigating away from conditions step
+  useEffect(() => {
+    if (currentStep !== 'conditions') {
+      setShowCategorySelector(false);
+      setShowConditionTypeSelector(false);
+    }
+  }, [currentStep]);
+
+  // Notify parent when category selector state changes
+  useEffect(() => {
+    onCategorySelectorChange?.(showCategorySelector);
+  }, [showCategorySelector, onCategorySelectorChange]);
 
   // Check if all existing conditions are complete
   const areAllConditionsComplete = rule.conditions.every(
@@ -226,36 +258,6 @@ const ConditionManager: React.FC<ConditionManagerProps> = ({
 
   return (
     <div>
-      {/* Show validation summary if there are errors */}
-      {validatedConditionIds.size > 0 && incompleteConditions.size > 0 && (
-        <div className='mb-4 p-3 bg-red-50 border border-red-200 rounded-lg'>
-          <div className='flex items-start gap-2'>
-            <div className='w-5 h-5 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 mt-0.5'>
-              <svg
-                className='w-3 h-3 text-red-600'
-                fill='currentColor'
-                viewBox='0 0 20 20'
-              >
-                <path
-                  fillRule='evenodd'
-                  d='M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z'
-                  clipRule='evenodd'
-                />
-              </svg>
-            </div>
-            <div className='flex-1'>
-              <h4 className='text-sm font-medium text-red-800 mb-1'>
-                Incomplete Conditions
-              </h4>
-              <p className='text-sm text-red-700'>
-                Please complete all condition fields (field, operator, and
-                value) before saving the workflow.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Existing Conditions */}
       {rule.conditions.map((condition, index) => (
         <div key={condition.id}>

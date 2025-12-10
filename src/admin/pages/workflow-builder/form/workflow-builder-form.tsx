@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { SettingIcon } from '../../../../assets';
 import SingleSkeleton from '../../../../components/skeleton-component/singleskeleton';
 import TextButton from '../../../../components/button/text-button';
@@ -12,50 +12,31 @@ import {
   useGetActionCategoryTypes,
 } from '../../../service/workflow-builder/workflow-builder-service';
 
-// Inner component that uses the context
 const WorkflowBuilderFormContent: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { rule, validateAndSave } = useWorkflowContext();
 
-  // ========== CENTRALIZED API CALLS ==========
-
-  // 1. Fetch scope list (trigger categories)
   const { data: scopeListData, isLoading: isLoadingScopeList } =
     useGetScopeList();
 
-  // NOTE: Scope event list (triggers) API call is now managed inside TriggerManager
-  // because it depends on selectedScope which is local to TriggerManager
-
-  // 2. Fetch condition list (condition types) - only when trigger is selected
-  const conditionListParams = useMemo(
-    () => ({
-      event_rid: rule.trigger?.id || '',
-      status_rid: '',
-    }),
-    [rule.trigger?.id]
-  );
   const { data: conditionListData, isLoading: isLoadingConditionTypes } =
-    useGetConditionList(conditionListParams, !!rule.trigger?.id);
+    useGetConditionList(
+      {
+        event_rid: rule.trigger?.id || '',
+        status_rid: '',
+      },
+      !!rule.trigger?.id
+    );
 
-  // NOTE: Condition categories API call is now managed inside ConditionManager
-  // because it depends on selectedConditionRid which is local to ConditionManager
-
-  // 3. Fetch action category types - only when trigger is selected
-  const actionCategoryParams = useMemo(
-    () => ({
-      scope_rid: rule.trigger?.id || '',
-      status_rid: '',
-    }),
-    [rule.trigger?.id]
-  );
   const { data: actionCategoryData, isLoading: isLoadingActionCategories } =
-    useGetActionCategoryTypes(actionCategoryParams, !!rule.trigger?.id);
-
-  // NOTE: Action types API call is now managed inside ActionManager
-  // because it depends on selectedCategory which is local to ActionManager
-
-  // ========== HANDLERS ==========
+    useGetActionCategoryTypes(
+      {
+        scope_rid: rule.trigger?.id || '',
+        status_rid: '',
+      },
+      !!rule.trigger?.id
+    );
 
   const goBack = () => {
     navigate(WORKFLOW_BUILDER);
@@ -113,7 +94,7 @@ const WorkflowBuilderFormContent: React.FC = () => {
 
   const isInitialLoading = isLoadingScopeList;
 
-  // Pass all fetched data to RuleBuilder (excluding dynamic API data)
+  // Pass all fetched data to RuleBuilder
   const apiData = {
     scopeListData,
     conditionListData,

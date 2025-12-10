@@ -31,7 +31,12 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
   apiData,
   isInitialLoading,
 }) => {
+  const isEditView =
+    location.pathname.split('/').slice(-2, -1)[0] === 'edit-rule';
+
   const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [isCategorySelectorShowing, setIsCategorySelectorShowing] =
+    useState<boolean>(false);
   const {
     rule,
     currentStep,
@@ -41,7 +46,6 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
     goToStep,
     canProceedToConditions,
     canProceedToActions,
-    validatedConditionIds,
   } = useWorkflowContext();
 
   const handleSelectTrigger = (trigger: Trigger) => {
@@ -97,8 +101,8 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
         <div
           style={{ display: currentStep === 'conditions' ? 'block' : 'none' }}
         >
-          <div className='p-6 relative'>
-            <div className='flex items-start justify-between gap-3 mb-3 pr-4'>
+          <div className='relative'>
+            <div className='flex items-start justify-between gap-3 px-6 pt-6'>
               <div className='flex items-center gap-2'>
                 <div className='bg-blue-100 p-1 rounded-md flex items-center justify-center w-8 h-8 flex-shrink-0'>
                   {getDynamicSvgIcon(rule.trigger?.name || 'trigger')}
@@ -121,7 +125,7 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
               >
                 <button
                   onClick={handleRemoveTrigger}
-                  className='h-8 w-8 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors cursor-pointer'
+                  className='h-8 w-8 mr-2 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors cursor-pointer'
                 >
                   <React.Suspense fallback={null}>
                     <DeleteIcon className='w-4 h-4' />
@@ -130,15 +134,17 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
               </Tooltip>
             </div>
 
-            <div className='text-sm text-[#425A76] mb-6'>
+            <div className='text-sm text-[#425A76] px-6 py-2 border-b border-[#CBD6E2]'>
               {rule.trigger?.description}
             </div>
 
-            <ConditionManager
-              conditionListData={apiData.conditionListData}
-              isLoadingConditionTypes={apiData.isLoadingConditionTypes}
-              validatedConditionIds={validatedConditionIds}
-            />
+            <div className='min-h-[calc(100vh-330px)]  max-h-[calc(100vh-330px)] overflow-y-auto p-6'>
+              <ConditionManager
+                conditionListData={apiData.conditionListData}
+                isLoadingConditionTypes={apiData.isLoadingConditionTypes}
+                onCategorySelectorChange={setIsCategorySelectorShowing}
+              />
+            </div>
           </div>
         </div>
 
@@ -160,7 +166,8 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
       case 'trigger':
         return !canProceedToConditions;
       case 'conditions':
-        return !canProceedToActions;
+        // Disable if conditions are incomplete OR if category selector is showing
+        return !canProceedToActions || isCategorySelectorShowing;
       case 'actions':
         return rule.actions.length === 0;
       default:
@@ -202,9 +209,11 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
               </React.Suspense>
             </div>
           )}
-          <span className='px-1 py-0.5 bg-purple-100 text-purple-700 text-xs font-medium rounded'>
-            NEW
-          </span>
+          {!isEditView && (
+            <span className='px-1 py-0.5 bg-purple-100 text-purple-700 text-xs font-medium rounded'>
+              NEW
+            </span>
+          )}
         </div>
       </div>
       {isInitialLoading ? (
@@ -398,7 +407,9 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
               {/* Actions Block */}
               <div
                 className={`border rounded-lg p-4 ${
-                  canProceedToActions && currentStep !== 'actions'
+                  canProceedToActions &&
+                  currentStep !== 'actions' &&
+                  !isCategorySelectorShowing
                     ? 'cursor-pointer'
                     : 'cursor-default'
                 } transition-all border ${
@@ -411,6 +422,7 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
                 onClick={() =>
                   canProceedToActions &&
                   currentStep !== 'actions' &&
+                  !isCategorySelectorShowing &&
                   goToStep('actions')
                 }
               >
@@ -465,7 +477,7 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
 
             {/* Navigation Buttons */}
             {(currentStep === 'conditions' || currentStep === 'actions') && (
-              <div className='mt-6 pt-6 border-t border-gray-200 px-6 pb-6'>
+              <div className='border-t border-gray-200 px-6 py-4'>
                 <div className='flex justify-between gap-3'>
                   <button
                     onClick={handleBack}
