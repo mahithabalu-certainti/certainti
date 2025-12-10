@@ -2546,7 +2546,6 @@ return !response;
       );
       return result;
     } catch (err) {
-      console.log(err)
       logMessage(`Error in fetch cases summary: ${err}`);
       errorLog("Error in fetch cases summary:", (err as Error).message);
       return [];
