@@ -12,13 +12,6 @@ import { ProjectInjestionTaskService } from "./projectTask/projectTaskService";
 import Decimal from "decimal.js";
 import { ProjectTask } from "../models/projectTask";
 import { getCurrencyThreshold, getResourceStatuses } from "./resourceCostService";
-import { Logger } from "winston";
-import { ProjectResourceSchemaService } from "./projectResource/schemaService";
-import ProjectIngestionService from "./projectIngestionService";
-import { Case } from "../models/caseModel";
-import { CaseStatusResult } from "../utils/types";
-
-
 
 const services = Configurations.getInstance().getServices();
 const projectTaskService = services.projectTaskServices;
@@ -27,16 +20,12 @@ const projectTaskSchemaService = new ProjectTaskSchemaService();
 export default class ProjectTaskGraphqlServies {
   private projectTaskInjestionService: ProjectInjestionTaskService;
   private projectTaskSchema: ProjectTaskSchemaService;
-  private projectResourceSchema: ProjectResourceSchemaService;
-  private logger: Logger;
-  private projectIngestion: ProjectIngestionService;
+;
 
-  constructor(logger: Logger) {
-    this.logger = logger;
-    this.projectTaskInjestionService = new ProjectInjestionTaskService(this.logger);
-    this.projectResourceSchema = new ProjectResourceSchemaService();
+
+  constructor() {
+    this.projectTaskInjestionService = new ProjectInjestionTaskService();
     this.projectTaskSchema = new ProjectTaskSchemaService();
-    this.projectIngestion = new ProjectIngestionService(this.logger);
   }
 
   async updateInlineGraphqlDetails(data: any) {
@@ -58,20 +47,6 @@ export default class ProjectTaskGraphqlServies {
       };
     } else {
       const accountNumber = checkAccountExists[0][0].r_number;
-
-      const projectData =
-        await this.projectResourceSchema.validateProjectFiscalById(
-          accountNumber,
-          data.project_fiscal_rid
-        );
-
-      if (projectData.is_qualified) {
-        return {
-          statusCode: HttpStatus.FAILED,
-          message: HttpStatus.FAILED_MESSAGE,
-          errorMessage: "Qualified project cannot be updated.",
-        };
-      }
 
       let schemaName = rawQueries.fetchSchemaName(accountNumber);
       const checkForExistingData: any = await orgSequelize.query(
@@ -263,45 +238,6 @@ export default class ProjectTaskGraphqlServies {
           const updatedProjectTask = await orgSequelize.query(
             rawQueries.updateProjectTaskQuery(schemaName, getSetData, data)
           );
-
-          const projectCaseMapping = 
-          await this.projectIngestion.fetchProjectFiscalCaseMapping(
-            accountNumber,
-            projectData.rid
-          );
-
-
-          if (projectCaseMapping.length > 0) {  
-    
-              for (const caseMapping of projectCaseMapping) {
-                const caseData = await Case.findOne({
-                  where: {
-                    rid: caseMapping.case_rid,
-                  },
-                });
-              
-                if (!caseData) {
-                  continue;
-                }
-                const mainSequelize = await initMainDbSequelize();
-              
-                const caseStatus = await mainSequelize.query(
-                  rawQueries.fetchCaseStatusByRid(caseData.status_rid),
-                  {
-                    type: "SELECT",
-                  }
-                ) as CaseStatusResult[];
-              
-                if (caseStatus[0]?.status_name === "Closed") {
-                  continue;
-                }
-
-                const updatedProjectTask = await orgSequelize.query(
-                  rawQueries.updateCaseProjectTaskQuery(schemaName, getSetData, data, caseMapping)
-                );
-                
-              }
-          }
 
           if (updatedProjectTask) {
             let fetchLatestUpdatedData =

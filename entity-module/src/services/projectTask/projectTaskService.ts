@@ -9,7 +9,6 @@ import {
   ICreateProjectResource,
   ICreateProjectTask,
   IUpdateProjectTask,
-  CaseStatusResult
 } from "../../utils/types";
 import { ProjectTaskSchemaService } from "./schemaService";
 import { ProjectResourceSchemaService } from "../projectResource/schemaService";
@@ -27,25 +26,16 @@ import moment from "moment";
 import { ProjectResource } from "../../models/projectResource";
 import { fetchResCodeWithPrjResRole } from "../../utils/rawQueries";
 import { errorLog, logMessage } from "../../utils/helpers";
-import ProjectIngestionService from "../projectIngestionService";
-import { Case } from "../../models/caseModel";
-import { Logger } from "winston";
-
-
 
 export class ProjectInjestionTaskService {
   projectTaskSchema: ProjectTaskSchemaService;
   private projectResourceSchema: ProjectResourceSchemaService;
   private mainDbSequelize: Sequelize | null = null;
   private orgDbSequelize: Sequelize | null = null;
-  private projectIngestion: ProjectIngestionService;
-  private logger: Logger;
 
-  constructor(logger: Logger) {
-    this.logger = logger;
+  constructor() {
     this.projectTaskSchema = new ProjectTaskSchemaService();
     this.projectResourceSchema = new ProjectResourceSchemaService();
-    this.projectIngestion = new ProjectIngestionService(this.logger);
   }
 
   private formatDateForDb(dateString?: string): Date | null {
@@ -412,14 +402,6 @@ export class ProjectInjestionTaskService {
 
       const { accountNumber, resourceData, projectData, taskData } =
         validationResult;
-      
-      if (projectData.is_qualified) {
-        return {
-          statusCode: HttpStatus.FAILED,
-          message: HttpStatus.FAILED_MESSAGE,
-          errorMessage: "Qualified project cannot be updated.",
-        };
-      }
 
       const newEffort = new Decimal(total_hours_pro_task || "0");
 
@@ -601,50 +583,6 @@ export class ProjectInjestionTaskService {
         activeId[0][0].rid,
         transaction
       );
-            
-      const projectCaseMapping = 
-      await this.projectIngestion.fetchProjectFiscalCaseMapping(
-        accountNumber,
-        projectData.rid
-      );
-
-      if (projectCaseMapping.length > 0) {  
-
-        for (const caseMapping of projectCaseMapping) {
-          const caseData = await Case.findOne({
-            where: {
-              rid: caseMapping.case_rid,
-            },
-          });
-        
-          if (!caseData) {
-            continue;
-          }
-          const mainSequelize = await initMainDbSequelize();
-
-          const caseStatus = await mainSequelize.query(
-            rawQueries.fetchCaseStatusByRid(caseData.status_rid),
-            {
-              type: "SELECT",
-            }
-          ) as CaseStatusResult[];
-        
-          if (caseStatus[0]?.status_name === "Closed") {
-            continue;
-          }
-
-          await this.projectTaskSchema.updateCaseProjectTask(
-            accountNumber,
-            projectTaskData,
-            userId,
-            projectData,
-            resourceData,
-            transaction,
-            caseMapping
-          );
-          
-        }
-      }
 
       await transaction.commit();
 
@@ -1234,31 +1172,6 @@ export class ProjectInjestionTaskService {
         throw new Error("Invalid account ID");
       }
 
-      const projectTask = await this.projectTaskSchema.fetchProjectTaskById(
-        accountNumber,
-        projectTaskRid
-      );
-
-      if (!projectTask) {
-        logMessage("Project Task not found");
-        throw new Error("Project Task not found");
-      }
-
-      // 2. Fetch required data for aggregation
-      const {
-        account_rid,
-        project_fiscal_rid,
-        fiscal_year,
-        region_rid,
-        country_rid,
-        project_rid,
-      } = projectTask;
-
-      const projectData = await this.projectResourceSchema.validateProjectFiscalById(
-        accountNumber,
-        project_fiscal_rid
-      );
-
       let projectTaskStatus = "Active";
       const statusMap: any =
         await this.projectResourceSchema.getResourceStatuses();
@@ -1296,12 +1209,6 @@ export class ProjectInjestionTaskService {
         }
       }
 
-      const projectCaseMapping = 
-      await this.projectIngestion.fetchProjectFiscalCaseMapping(
-        accountNumber,
-        project_fiscal_rid
-      );
-
       if (action === "accept") {
         // 1. Update status to 'Active'
         const taskStatus = statusMap.get(projectTaskStatus);
@@ -1317,6 +1224,15 @@ export class ProjectInjestionTaskService {
           userId,
           transaction
         );
+        const projectTask = await this.projectTaskSchema.fetchProjectTaskById(
+          accountNumber,
+          projectTaskRid
+        );
+
+        if (!projectTask) {
+          logMessage("Project Task not found");
+          throw new Error("Project Task not found");
+        }
 
         await this.projectTaskSchema.addProjctTaskHistory(
           accountNumber,
@@ -1329,6 +1245,16 @@ export class ProjectInjestionTaskService {
           userId,
           transaction
         );
+
+        // 2. Fetch required data for aggregation
+        const {
+          account_rid,
+          project_fiscal_rid,
+          fiscal_year,
+          region_rid,
+          country_rid,
+          project_rid,
+        } = projectTask;
 
         const resourceData =
           await this.projectResourceSchema.validateResourceByCode(
@@ -1378,44 +1304,6 @@ export class ProjectInjestionTaskService {
           activeId[0][0].rid,
           transaction
         );
-
-        if (projectCaseMapping.length > 0) {  
-
-          for (const caseMapping of projectCaseMapping) {
-            const caseData = await Case.findOne({
-              where: {
-                rid: caseMapping.case_rid,
-              },
-            });
-          
-            if (!caseData) {
-              continue;
-            }
-            const mainSequelize = await initMainDbSequelize();
-          
-            const caseStatus = await mainSequelize.query(
-              rawQueries.fetchCaseStatusByRid(caseData.status_rid),
-              {
-                type: "SELECT",
-              }
-            ) as CaseStatusResult[];
-          
-            if (caseStatus[0]?.status_name === "Closed") {
-              continue;
-            }
-
-            await this.projectTaskSchema.updateCaseProjectTaskStatus(
-              accountNumber,
-              projectTaskRid,
-              taskStatus,
-              userId,
-              transaction,
-              caseMapping
-            );
-          
-          }
-        }
-        
 
         await transaction.commit();
 

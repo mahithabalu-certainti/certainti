@@ -1,7 +1,7 @@
 import Joi from "joi";
 import e, { Request, Response } from "express";
 import { errorResponse, successResponse } from "./apiResponse";
-import { ALPHANUMERIC_CONDITIONS, HttpStatus, STATUS_MESSAGE } from "./constants";
+import { ALPHANUMERIC_CONDITIONS, HttpStatus } from "./constants";
 import configurations from "../config/config";
 import ExcelJS from 'exceljs'
 import { getSecret } from "./azureSecrets";
@@ -19,7 +19,6 @@ import {
   SASProtocol
 } from "@azure/storage-blob";
 import { parse } from "url";
-import { CaseProjectTask } from "../models/caseProjectTaskModel";
 
 function getLogger() {
   return configurations.getInstance().getLogger();
@@ -210,7 +209,7 @@ export async function generateExcelBase64WithEmptyCheck(data: Array<Record<strin
 
   // Generate buffer and encode to base64
   const buffer = await workbook.xlsx.writeBuffer();
-  //  await workbook.xlsx.writeFile('cases1.xlsx');
+ //  await workbook.xlsx.writeFile('cases1.xlsx');
   return Buffer.from(buffer).toString('base64');
 }
 
@@ -230,7 +229,7 @@ export async function generateExcelBase64(data: any, sheetName: string) {
 
   // Generate buffer
   const buffer = await workbook.xlsx.writeBuffer();
-  // await workbook.xlsx.writeFile('cases.xlsx');
+ // await workbook.xlsx.writeFile('cases.xlsx');
   return Buffer.from(buffer).toString("base64");
 }
 
@@ -314,7 +313,7 @@ export const buildStringFilterCondition = (
       modified_user_name: "(um.first_name || ' ' || um.last_name)",
       case_name: " CONCAT(a.account_name, '-', c.country_code, '-', cs.fiscal_year, '-', cs.case_name)"
     };
-
+    
     return columnMap[column] || (ref ? `${ref}.${column}` : column);
 
   };
@@ -330,9 +329,10 @@ export const buildStringFilterCondition = (
     [ALPHANUMERIC_CONDITIONS.isEmpty]: (col) => `(${col} IS NULL OR ${col} = '')`,
     [ALPHANUMERIC_CONDITIONS.contains]: (col, val) => `${col} ILIKE '%${val}%'`,
     [ALPHANUMERIC_CONDITIONS.IN]: (col, val) =>
-      `${col} IN (${Array.isArray(val)
-        ? val.map((d: any) => `'${d}'`).join(",")
-        : `'${val}'`
+      `${col} IN (${
+        Array.isArray(val)
+          ? val.map((d: any) => `'${d}'`).join(",")
+          : `'${val}'`
       })`,
   };
 
@@ -354,9 +354,10 @@ export const buildDatetimeFilterCondition = (
     [ALPHANUMERIC_CONDITIONS.before]: (col, val) => `${col} < '${val}'`,
     [ALPHANUMERIC_CONDITIONS.after]: (col, val) => `${col} > '${val}'`,
     [ALPHANUMERIC_CONDITIONS.between]: (col, val) =>
-      `${col} BETWEEN ${Array.isArray(val)
-        ? val.map((d: any) => `'${d}'`).join(" AND ")
-        : `'${val}'`
+      `${col} BETWEEN ${
+        Array.isArray(val)
+          ? val.map((d: any) => `'${d}'`).join(" AND ")
+          : `'${val}'`
       }`,
     [ALPHANUMERIC_CONDITIONS.isEmpty]: (col) => `${col} IS NULL`,
   };
@@ -371,7 +372,7 @@ export const buildDatetimeFilterConditionTemplates = (
   tableAlias: string = 'i'
 ): string => {
   const columnRef = `DATE(${tableAlias}.${filteredColumns})`;
-
+  
   switch (condition) {
     case ALPHANUMERIC_CONDITIONS.equals:
       return `${columnRef} = '${values}'`;
@@ -382,7 +383,7 @@ export const buildDatetimeFilterConditionTemplates = (
     case ALPHANUMERIC_CONDITIONS.between:
       // values should be an object: { from: string, to: string }
       if (values && typeof values === 'object' && values.from && values.to) {
-        return `${columnRef} BETWEEN '${values.from}' AND '${values.to}'`;
+      return `${columnRef} BETWEEN '${values.from}' AND '${values.to}'`;
       }
       return '';
     case ALPHANUMERIC_CONDITIONS.isEmpty:
@@ -392,17 +393,17 @@ export const buildDatetimeFilterConditionTemplates = (
   }
 };
 
-export const setTaskTemplateData = (dbData: TaskTemplate, reqData: any, userId: string) => {
-  let validUpdateQuery: string[] = []
-  let validUpdateConditions: string = ``
-  if (reqData.task_name) {
-    if (reqData.task_name !== dbData.task_name) {
+export const setTaskTemplateData = (dbData : TaskTemplate, reqData : any, userId : string) => {
+  let validUpdateQuery : string[] = []
+  let validUpdateConditions : string = ``
+  if(reqData.task_name) {
+    if(reqData.task_name !== dbData.task_name) {
       validUpdateConditions = `task_name = '${reqData.task_name.replace(/'/g, "''")}'`
       validUpdateQuery.push(validUpdateConditions)
-    }
+    } 
   }
-  if (reqData.effort_in_days) {
-    if (reqData.effort_in_days !== dbData.effort_in_days) {
+  if(reqData.effort_in_days) {
+    if(reqData.effort_in_days !== dbData.effort_in_days) {
       validUpdateConditions = `effort_in_days = ${reqData.effort_in_days}`
       validUpdateQuery.push(validUpdateConditions)
     }
@@ -413,20 +414,20 @@ export const setTaskTemplateData = (dbData: TaskTemplate, reqData: any, userId: 
       validUpdateQuery.push(validUpdateConditions)
     }
   }
-  if (reqData.checklist_template_rid) {
-    if (reqData.checklist_template_rid !== dbData.checklist_template_rid) {
+  if(reqData.checklist_template_rid) {
+    if(reqData.checklist_template_rid !== dbData.checklist_template_rid) {
       validUpdateConditions = `checklist_template_rid = '${reqData.checklist_template_rid}'`
       validUpdateQuery.push(validUpdateConditions)
     }
   }
-  if (reqData.priority_rid) {
-    if (reqData.priority_rid !== dbData.priority_rid) {
+  if(reqData.priority_rid) {
+    if(reqData.priority_rid !== dbData.priority_rid) {
       validUpdateConditions = `priority_rid = '${reqData.priority_rid}'`
       validUpdateQuery.push(validUpdateConditions)
     }
   }
-  if (reqData.milestone_template_rid) {
-    if (reqData.milestone_template_rid !== dbData.milestone_template_rid) {
+  if(reqData.milestone_template_rid) {
+    if(reqData.milestone_template_rid !== dbData.milestone_template_rid) {
       validUpdateConditions = `milestone_template_rid = '${reqData.milestone_template_rid}'`
       validUpdateQuery.push(validUpdateConditions)
     }
@@ -517,8 +518,8 @@ export const getColumnsNamesForTaskUpdate = (data : UpdateCaseTaskType, dbData :
 export async function uploadToAzureBlob(
   file: Express.Multer.File,
   account_id: string,
-  task_number: string,
-  flag?: string
+  task_number : string,
+  flag? : string
 ): Promise<{
   url: string;
   name: string;
@@ -535,7 +536,7 @@ export async function uploadToAzureBlob(
     }
 
     // Get connection string from secrets manager
-    const connectionString = await getSecret(process.env.AZURE_STORAGE_CONNECTION_STRING as string);
+    const connectionString = await getSecret( process.env.AZURE_STORAGE_CONNECTION_STRING as string);
     // const connectionString = "storage-account-connection-string";
     // const connectionString = await getSecret("storage-account-connection-string");
     const containerName = "account";
@@ -563,12 +564,12 @@ export async function uploadToAzureBlob(
     // Create unique blob name with timestamp
     let timestamp = Date.now();
     let blobName;
-    if (flag === "cases") {
+    if(flag === "cases"){
       blobName = `${account_id}/cases/${task_number}/${timestamp}-${sanitizedBaseName}${originalExtension}`;
     } else {
       blobName = `${account_id}/attachments/${timestamp}-${sanitizedBaseName}${originalExtension}`;
     }
-
+    
     const blockBlobClient = containerClient.getBlockBlobClient(blobName);
 
     // Upload file with content type
@@ -595,7 +596,8 @@ export async function uploadToAzureBlob(
   } catch (error) {
     console.error("Azure Blob upload failed:", error);
     throw new Error(
-      `File upload failed: ${error instanceof Error ? error.message : "Unknown error"
+      `File upload failed: ${
+        error instanceof Error ? error.message : "Unknown error"
       }`
     );
   }
@@ -603,9 +605,9 @@ export async function uploadToAzureBlob(
 export async function deleteFromAzureBlob(blobUrl: string | null): Promise<void> {
   if (!blobUrl) return;
 
-  const connectionString = await getSecret(process.env.AZURE_STORAGE_CONNECTION_STRING as string);
-  // const connectionString = "storage-account-connection-string";
-  // const connectionString = await getSecret("storage-account-connection-string");
+    const connectionString = await getSecret(process.env.AZURE_STORAGE_CONNECTION_STRING as string);
+    // const connectionString = "storage-account-connection-string";
+    // const connectionString = await getSecret("storage-account-connection-string");
   const containerName = "account";
 
   const url = new URL(blobUrl);
@@ -630,9 +632,9 @@ export async function deleteFromAzureBlob(blobUrl: string | null): Promise<void>
   }
 }
 
-export const getColumnsNamesForTaskCommentsUpdate = (data: UpdateCommentsType, dbData: TaskComments) => {
-  let columns: string[] = [];
-  if (data.comments !== dbData.comments)
+export const getColumnsNamesForTaskCommentsUpdate = (data : UpdateCommentsType, dbData : TaskComments) => {
+  let columns : string[] = [];
+  if(data.comments !== dbData.comments) 
     columns.push(`comments`)
   return columns;
 }
@@ -657,7 +659,7 @@ export async function generateSasUrl(blobUrl: string, expiryMinutes = 15): Promi
       throw new Error("Invalid blob URL format");
     }
 
-    const containerName: any = pathParts[0];
+    const containerName : any = pathParts[0];
     const blobName = pathParts.slice(1).join("/");
 
     const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
@@ -688,14 +690,3 @@ export async function generateSasUrl(blobUrl: string, expiryMinutes = 15): Promi
     throw new Error(`SAS URL generation failed: ${error instanceof Error ? error.message : "Unknown error"}`);
   }
 }
-
-export const validateProjectResourceRequest = (data: any) => {
-  if (!data.account_rid) return STATUS_MESSAGE.accountIdMissing;
-  // if(!data.project_rid) return STATUS_MESSAGE.projectIdMissing
-  if (!data.project_resource_rid) return STATUS_MESSAGE.fiscalIdMissing;
-};
-
-export const validateProjectTaskRequest = (data: any) => {
-  if (!data.account_rid) return STATUS_MESSAGE.accountIdMissing;
-  if (!data.rid) return STATUS_MESSAGE.projectIdMissing;
-};

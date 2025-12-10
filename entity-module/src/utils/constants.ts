@@ -79,7 +79,6 @@ export const R_NUMBER_PREFIX = {
 export const STATUS_MESSAGE = {
   accountInactive: "Inactive Account",
   accountNoFound: "Account not found",
-  qualifiedProject: "Qualified project cannot be updated.",
   accountUpdateSuccess: "Account updated successfully",
   accountIdMissing: "Account RID mising",
   importIdMissing: "Import RID mising",
@@ -246,12 +245,6 @@ export const rawQueries = {
                 )
                 `;
   },
-  fetchProjectFiscalCaseMapping(schemaName: string, data: any) {
-    return `
-                SELECT * FROM ${schemaName}.case_projects
-                WHERE project_fiscal_rid= '${data.project_fiscal_rid}'
-                `;
-  },
   updateProject(schemaName: string, project_code: string, data: any) {
     return `
             UPDATE 
@@ -262,27 +255,6 @@ export const rawQueries = {
                     rid = '${data.project_rid}'
                     AND
                     account_rid = '${data.account_rid}'`;
-  },
-  updateCaseProjects(
-    schemaName: string,
-    setProjectFiscalData: any,
-    data: any,
-    case_rid: string
-  ) {
-    return `
-            UPDATE 
-                ${schemaName}.case_projects
-            SET
-                ${setProjectFiscalData.join(",")}
-            WHERE 
-                project_fiscal_rid = '${data.project_fiscal_rid}'
-                AND
-                account_rid = '${data.account_rid}'
-                AND
-                project_rid = '${data.project_rid}'
-                AND
-                case_rid = '${case_rid}'
-            `;
   },
   updateProjectFiscal(
     schemaName: string,
@@ -530,9 +502,6 @@ export const rawQueries = {
   fetchSchemaName(r_number: string) {
     return `${MAIN_SCHEMA_NAME}_${r_number.replace("ACC-", "")}`;
   },
-  fetchCaseStatusByRid(rid: string) {
-    return `SELECT status_name FROM ${MAIN_SCHEMA_NAME}.case_status where rid = '${rid}'`;
-  },
   updateAttachmentQuery(schemaName: string, getSetData: any, data: any) {
     return `
     UPDATE 
@@ -554,19 +523,6 @@ export const rawQueries = {
         rid = '${data.rid}'
         AND
         account_rid = '${data.account_rid}'`;
-  },
-  updateCaseProjectTaskQuery(schemaName: string, getSetData: any, data: any, caseMapping: any) {
-    return `
-    UPDATE 
-        ${schemaName}.case_project_task 
-    SET 
-        ${getSetData.data.join(",")}
-    WHERE
-        project_task_rid = '${data.rid}'
-        AND
-        account_rid = '${data.account_rid}'
-        AND
-        case_rid = '${caseMapping.case_rid}'`;
   },
   updateAttachmentSummary(getSetData: any, data: any) {
     return `
@@ -612,29 +568,6 @@ export const rawQueries = {
       /'/g,
       "''"
     )}'
-    `;
-  },
-  updateCaseProjectPrjCode(
-    schemaName: string,
-    newProject_code: string,
-    account_rid: string,
-    project_rid: string,
-    existing_project_code: string,
-    case_rid: string
-  ) {
-    return `
-    UPDATE ${schemaName}.case_projects SET project_code = '${newProject_code.replace(
-      /'/g,
-      "''"
-    )}'
-    WHERE
-    account_rid = '${account_rid}' 
-    AND project_rid = '${project_rid}' 
-    AND project_code = '${existing_project_code.replace(
-      /'/g,
-      "''"
-    )}'
-    AND case_rid = '${case_rid}' 
     `;
   },
   updateProjectFiscalSummaryPrjCode(
@@ -1001,29 +934,6 @@ export const rawQueries = {
       default_metric_type = 'project'
       AND
       effective_metric_type IS NULL
-    `;
-  },
-  updateCaseProjectEffectiveDatas(schemaName: string, data: any, case_rid: string) {
-    return `
-    UPDATE ${schemaName}.case_projects
-    SET 
-      effective_cost = ${data.total_cost_prj},
-      effective_effort = ${data.total_effort_prj},
-      effective_total_fte = ${data.total_fte_prj},
-      effective_total_subcon = ${data.total_subcon_prj},
-      effective_fte_effort = ${data.total_effort_fte_prj},
-      effective_subcon_effort = ${data.total_effort_subcon_prj},
-      effective_fte_cost = ${data.total_cost_fte_prj},
-      effective_subcon_cost = ${data.total_cost_subcon_prj},
-      effective_nonlabor_cost = ${data.total_cost_nonlabor_prj}
-    WHERE
-      project_fiscal_rid = '${data.rid}'
-      AND
-      default_metric_type = 'project'
-      AND
-      effective_metric_type IS NULL
-      AND
-      case_rid = '${case_rid}'
     `;
   },
   fetchResourceTypeById(schemaName: string) {
