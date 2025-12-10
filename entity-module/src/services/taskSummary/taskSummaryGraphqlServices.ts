@@ -197,7 +197,6 @@ export default class TaskSummaryGraphqlServices {
               effective_end_datetime: caseTaskUpdateData.effective_end_datetime
             }
           })}`);
-          console.log("yoki caseTaskUpdateData :", caseTaskUpdateData, );
           // Call updateUserLevelTask with the prepared data
           const updateResult = await this.caseService.updateUserLevelTask(caseTaskUpdateData);
 
