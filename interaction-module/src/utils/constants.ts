@@ -362,9 +362,10 @@ export const rawQueries = {
     c.include_in_communication = TRUE
   `;
   },
-  fetchProjectsByAccount(accountRid: string, schemaName: string,status_rid:string) {
+  fetchProjectsByAccount(accountRid: string, schemaName: string,status_rid:string,projectType?:string) {
     return `
-    SELECT rid, project_rid FROM ${schemaName}.project_fiscal WHERE account_rid = '${accountRid}' and status_rid='${status_rid}'`;
+    SELECT rid, project_rid FROM ${schemaName}.project_fiscal WHERE account_rid = '${accountRid}' and status_rid='${status_rid}'
+    and project_type_rid='${projectType}'`;
   },
   fetchProjectsByCase(caseRid: string, schemaName: string) {
     return `
@@ -431,7 +432,19 @@ export const rawQueries = {
   },
   fetchAccountInfo(rid: string) {
     return `
-    SELECT rid, account_name,r_number,parent_account_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${rid}'`;
+    SELECT rid, account_name,r_number,parent_account_rid,country_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${rid}'`;
+  },
+  fetchPlatformConfig(rid: string) {
+    return `
+    SELECT config_json FROM trd365.rd_credit_parameter_values rv
+join trd365.rd_credit_config_group rg on  rv.credit_config_group_rid  = rg.rid
+where rg.country_rid = 'D001-e66380cd-d24c-4581-8e29-07ada063acdb'
+and credit_program_name = '${rid}'
+    and is_federal = true`;
+  },
+   fetchProjectTypeRid(projectType: string) {
+    return `
+   select rid from trd365.project_type where lower(project_type_name) = lower('${projectType}')`
   },
    fetchAccountDetailsInfo(rid: string,schemaName: string) {
     return `

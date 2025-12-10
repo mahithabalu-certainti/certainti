@@ -2916,15 +2916,35 @@ export class InteractionService {
         if (!this.orgDbSequelize) {
           this.orgDbSequelize = await initOrgSequelize();
         }
+        if (!this.mainDbSequelize) {
+          this.mainDbSequelize = await initMainDbSequelize();
+        }
         const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
           /\D/g,
           ""
         )}`;
         const status_rid =
           await this.interactionSchemaService.getActiveStatusRid();
+        const [accountInfo]: any[] = await this.mainDbSequelize.query(
+          rawQueries.fetchAccountInfo(
+            req.data[0].account_rid,
+          )
+        );
+        const [platFormConfig]: any[] = await this.mainDbSequelize.query(
+          rawQueries.fetchPlatformConfig(
+            accountInfo[0].country_rid
+          )
+        );
+
+        const [projectType]: any[] = await this.mainDbSequelize.query(
+          rawQueries.fetchProjectTypeRid(
+            platFormConfig[0].platform_config_rid
+          )
+        );
         const [projects]: any[] = await this.orgDbSequelize.query(
           rawQueries.fetchProjectsByAccount(
             req.data[0].account_rid,
+            projectType[0].rid,
             schemaName,
             status_rid!
           )
