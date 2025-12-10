@@ -46,6 +46,7 @@ import {
   reviewProjectsFieldMappings,
   SCHEMANAME_PREFIX,
   emailCategorties,
+  caseTaskMapping,
 } from "../../utils/constants";
 import { query } from "express";
 import currency from "currency.js";
@@ -131,8 +132,15 @@ export class CaseService {
         throw new Error("Invalid account ID");
       }
       
-       const isUnique = await this.caseSchemaService.checkIsCaseNameUnique(caseRequest,accountNumber);
-      if (!isUnique) {
+       const validation = await this.caseSchemaService.checkIsCaseNameUnique(caseRequest,accountNumber);
+       if (!validation.isCaseUnique) {
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: HttpStatus.BAD_REQUEST_MESSAGE,
+          errorMessage: `A case is  already in progress for FY-${caseRequest.fiscal_year }. Please choose a different year.`,
+        };
+      }
+       if (!validation.isunique) {
         return {
           statusCode: HttpStatus.BAD_REQUEST,
           message: HttpStatus.BAD_REQUEST_MESSAGE,
@@ -254,15 +262,22 @@ export class CaseService {
         transaction
       );
 
-      await transaction.commit();
-
-      return {
-        statusCode: HttpStatus.SUCCESS,
-        message: STATUS_MESSAGE.caseUpdated,
-        data: {
-          cases: {},
-        },
-      };
+      if(response.statusCode === HttpStatus.BAD_REQUEST) {
+        return {
+          statusCode : HttpStatus.BAD_REQUEST,
+          message : HttpStatus.BAD_REQUEST_MESSAGE,
+          errorMessage : response.statusMessage
+        }
+      } else {
+        await transaction.commit();
+        return {
+          statusCode: HttpStatus.SUCCESS,
+          message: STATUS_MESSAGE.caseUpdated,
+          data: {
+            cases: {},
+          },
+        };
+      }
     } catch (err) {
       logMessage(`Error updating case, ${err}`);
       await transaction.rollback();
@@ -440,6 +455,7 @@ export class CaseService {
         if (getCurrencyDetails) {
           queryResult.currency_code = getCurrencyDetails.currency_code;
           queryResult.currency_rid = getAccountDetails!.currency_rid;
+          queryResult.currency_symbol = getCurrencyDetails.currency_symbol
         } else {
           queryResult.currency_code = null;
           queryResult.currency_rid = null;
@@ -2255,7 +2271,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
     async exportTask (data : any, userId : string) {
       const result = await this.taskListForCases(data, true);
       if(result.statusCode === HttpStatus.SUCCESS) {
-        const fields = await this.getAllowedExportFields(userId,"admin_checklist_view_edit");
+        const fields = await this.getAllowedExportFields(userId,"cases_workbreakdown_view_edit");
         const allowedFieldSet = new Set<string>();
         for (const field of fields) {
           if (field.read) {
@@ -2263,13 +2279,20 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
           }
         }
         const finalData = result.data.map((d : any) => {
-          return {
+          let resultMap : { [key: string]: any } = {
             "Task Name" : d.task_name,
-            "Assigned To" : d.assigned_to || "-",
-            "Start Date" : d.effective_start_datetime || "-",
-            "End Date": d.effective_end_datetime || "-",
+            "Assigned To" : d.assigned_to_name || "-",
+            "Start Date" : d.effective_start_datetime ? moment(d.effective_start_datetime).format("YYYY-MMM-DD") : "-",
+            "End Date": d.effective_end_datetime ? moment(d.effective_end_datetime).format("YYYY-MMM-DD") : "-",
             "Status": d.task_status_name || "-",
           }
+          const exportRecord: Record<string, any> = {};
+          caseTaskMapping.forEach((mapping) => {
+            if (allowedFieldSet.has(mapping.permissionField)) {
+              exportRecord[mapping.exportField] = resultMap[mapping.exportField];
+            }
+          });
+          return exportRecord;
         })
         const generateBase64Response = await generateExcelBase64(
               finalData,
@@ -2310,7 +2333,17 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
       const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
       data.modified_by = userId
       const result = await this.caseSchemaService.deleteComments(data, fetchParent[0][0].r_number);
-      if(result?.statusCode === HttpStatus.SUCCESS) {
+      if(result?.statusCode === HttpStatus.SUCCESS) {     
+        const {CaseHistory} = await this.caseModelService.getModels(fetchParent[0][0].r_number)
+        await CaseHistory.create({
+          created_by : data.modified_by,
+          created_datetime : new Date(),
+          case_rid : data.case_rid,
+          task_rid : data.task_rid,
+          attribute_name : "Comments",
+          old_value : "CREATE",
+          new_value : 'deleted a comment'
+        })   
         return {
           statusCode : result.statusCode,
           statusMessage : result.statusMessage
@@ -2617,7 +2650,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
           task_status_rid : resData?.task_details.task_status_rid,
           task_status_name : taskStatusMap.get(resData?.task_details.task_status_rid!) || null,
           created_datetime : new Date(resData?.task_details.created_datetime!).toISOString(),
-          task_description : resData?.task_details.task_description,
+          task_description : data.task_type !== 'activity' ? resData?.task_details.task_description : resData?.task_details.description,
           effective_start_datetime : resData?.task_details.effective_start_datetime,
           effective_end_datetime : resData?.task_details.effective_end_datetime,
           checklist_rid : data.task_type === 'activity' ? resData?.task_details?.checklist_rid : resData?.task_details?.checklists?.rid,
@@ -2875,7 +2908,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
           );
         let parentAccountNumber = accountNumber;
       if(accountInfo.storage_type === 'separate_db') {
-         const [parentAccountInfo]: any[] =
+        const [parentAccountInfo]: any[] =
             await mainDb.query(
             rawQueries.fetchAccountInfo(accountInfo.parent_account_rid!),
             { type: "SELECT" }
@@ -3136,7 +3169,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
   async deleteTagsAccountLevel (data : any) {
     const mainDb = await this.getMainDb();
     const accountNumber : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
-    const result = await this.caseSchemaService.deleteTags(accountNumber[0][0].r_number, data.case_rid, data.account_rid, data.task_rid, data.tag_rid, data.userId);
+    const result = await this.caseSchemaService.deleteTags(accountNumber[0][0].r_number, data.case_rid, data.account_rid, data.task_rid, data.tag_rid, data.userId,data?.task_type || "case_task");
     return result;
   }
   async deleteCollaborators (data : any) {

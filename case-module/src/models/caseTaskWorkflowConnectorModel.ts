@@ -83,6 +83,15 @@ export class CaseTaskWorkflowConnector
         case_rid: {
           type: DataTypes.STRING(50),
           allowNull: false,
+          references: {
+            model: {
+              tableName: "cases",
+              schema: schemaName
+            },
+            key: "rid"
+          },
+          onUpdate: "CASCADE",
+          onDelete: "CASCADE"
         },
 
         source_rid: {

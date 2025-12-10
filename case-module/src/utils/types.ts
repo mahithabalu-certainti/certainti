@@ -36,6 +36,7 @@ export type CaseHeadersColumns = {
   case_owner_name : string | null,
   account_rnumber : string | null,
   currency_code : string | null,
+  currency_symbol : string | null,
   status_name : string | null,
   case_total_projects : number | null,
   case_total_project_cost : number | null,
@@ -90,6 +91,7 @@ export type CaseStatusType = {
 export type CurrencyType = {
   rid : string,
   currency_code : string
+  currency_symbol : string
 }
 
 export type FilterType = {
@@ -343,7 +345,8 @@ type WorkflowConnectorItemsAccountLevel = {
   target_rid : string[]
   created_by : string
   created_datetime : Date
-  is_new_changes : boolean
+  is_new_changes : boolean,
+  key_name? : string
 }
 
 export type CreateTaskTemplateType = {
@@ -660,6 +663,7 @@ export type TaskCardDetailsType = {
   assigned_to : string
   priority_rid : string
   task_description : string
+  description : string
   task_status_rid : string
   priority_name : string
   task_status_name : string
@@ -793,6 +797,7 @@ export interface IActivityTask {
   attachment_level: string;
   task_name: string;
   description?: string;
+  task_description?: string;
   effective_start_datetime: Date;
   effective_end_datetime: Date;
   priority_rid?: string;
@@ -801,7 +806,8 @@ export interface IActivityTask {
   remainder_interval?: number;
   account_rid?: string; 
   checklist_rid?: string;
-  tags : tagTypes[]
+  tags : tagTypes[],
+  task_type_rid?: string;
 }
 
 export interface IActivityEmail {

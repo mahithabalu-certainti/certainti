@@ -1200,12 +1200,21 @@ class InteractionSchemaService {
     filters: Record<string, string>,
     sortBy: string = "created_datetime",
     sortOrder: string = "ASC",
-    type: string = "list"
+    type: string = "list",
+    caseRid? : string,
+    accountRid? : string
   ) {
     try {
+      if(!this.orgDbSequelize) {
+        this.orgDbSequelize = await initOrgSequelize();
+      }
       const offset = (page - 1) * limit;
         let modifiedByFilter;
       let modifiedByConditions;
+      let projectNameFilter;
+      let projectNameConditions;
+      let projectCodeFilter;
+      let projectCodeConditions;
       let totalResults: number = 0;
       let disablePagination = false;
       if(type === "download")
@@ -1223,7 +1232,27 @@ class InteractionSchemaService {
         modifiedByFilter = filters.modified_by;
         modifiedByConditions = detectConditions(modifiedByFilter);
       }
+      if (filters?.project_name) {
+        projectNameFilter = filters.project_name;
+        projectNameConditions = detectConditions(projectNameFilter);
+      }
+      if (filters?.project_code) {
+        projectCodeFilter = filters.project_code;
+        projectCodeConditions = detectConditions(projectCodeFilter);
+      }
        ["modified_by"].forEach(key => {
+        if (filters[key]) {
+          disablePagination = true;
+          delete filters[key];
+        }
+      });
+      ["project_name"].forEach(key => {
+        if (filters[key]) {
+          disablePagination = true;
+          delete filters[key];
+        }
+      });
+      ["project_code"].forEach(key => {
         if (filters[key]) {
           disablePagination = true;
           delete filters[key];
@@ -1238,13 +1267,38 @@ class InteractionSchemaService {
       if (!this.mainDbSequelize) {
         this.mainDbSequelize = await this.interactionModelService.getMainSequelize();
       }
-
+      let schemaName = rawQueries.fetchSchemaName(accountNumber)
       // Fetch technical summaries and count
-      const { rows: technicalSummary, count } = await AiTechnicalSummary.findAndCountAll({
-        where: {
+      let whereCondition;
+      if(caseRid !== undefined && caseRid !== '') {
+        const projectFiscalIds : any = await this.orgDbSequelize.query(rawQueries.getCaseProjectsIds(caseRid, accountRid!, schemaName))
+        whereCondition = {
+          account_rid : accountRid,
+          project_fiscal_rid: {
+            [Op.in] : projectFiscalIds[0].length > 0 ? projectFiscalIds[0].map((d : any) => d.project_fiscal_rid) : []
+          },
+          [Op.and]: Sequelize.where(
+        Sequelize.col('"AiTechnicalSummary".version'),
+        '=',
+        Sequelize.literal(`
+          (
+            SELECT MAX(t2.version)
+            FROM ${schemaName}.ai_technical_summary AS t2
+            WHERE 
+              t2.account_rid = "AiTechnicalSummary".account_rid
+              AND t2.project_fiscal_rid = "AiTechnicalSummary".project_fiscal_rid
+          )
+        `)),
+          ...whereClause
+        }
+      } else {
+        whereCondition = {
           project_fiscal_rid: projectFiscalRid,
           ...whereClause
-        },
+        }
+      }
+      const { rows: technicalSummary, count } = await AiTechnicalSummary.findAndCountAll({
+        where: whereCondition,
         order: [[finalSortBy, finalSortOrder]],
         ...(disablePagination
           ? {}
@@ -1257,18 +1311,30 @@ class InteractionSchemaService {
           count: 0
         };
       }
+      let fetchProjectDetails : any[] = [...new Set(technicalSummary.map((project : any) => project.project_fiscal_rid))];
       let createdByIds: any[] = [...new Set(technicalSummary.map((user: any) => user.created_by))];
       let modifiedByIds: any[] = [...new Set(technicalSummary.map((user: any) => user.modified_by))];
       let statusIds: any[] = [...new Set(technicalSummary.map((user: any) => user.status_rid))];
       let fetchCreatedByUsers = await this.mainDbSequelize.query(rawQueries.fetchUser(createdByIds));
       let fetchModifiedByUsers = await this.mainDbSequelize.query(rawQueries.fetchUser(modifiedByIds));
       let fetchStatusInfo = await this.mainDbSequelize.query(rawQueries.fetchStatus(statusIds));
+      let projectFiscalDetails = await this.orgDbSequelize.query(rawQueries.fetchProjectFiscalDetails(fetchProjectDetails, schemaName));
+
       let createdMap: Map<string, string> = new Map(fetchCreatedByUsers[0].map((user: any) => [user.rid, `${user.first_name} ${user.last_name}`]));
       let modifiedMap: Map<string, string> = new Map(fetchModifiedByUsers[0].map((user: any) => [user.rid, `${user.first_name} ${user.last_name}`]));
       let statusMap: Map<string, string> = new Map(fetchStatusInfo[0].map((status: any) => [status.rid, status.name]));
+      let projectCodeMap : Map<string, string> = new Map(projectFiscalDetails[0].map((d : any) => [d.rid, d.project_code]))
+      let projectNameMap : Map<string, string> = new Map(projectFiscalDetails[0].map((d : any) => [d.rid, d.project_name]))
+
+
       let finalData = technicalSummary == null ? [] : technicalSummary.map((d: any) => {
         return {
           rid: d.rid,
+          account_rid : d.account_rid,
+          project_rid : d.project_rid,
+          project_fiscal_rid : d.project_fiscal_rid,
+          project_code : projectCodeMap.get(d.project_fiscal_rid) || null,
+          project_name : projectNameMap.get(d.project_fiscal_rid) || null,
           r_number: d.r_number,
           technical_summary: d.technical_summary,
           version: d.version,
@@ -1300,6 +1366,10 @@ class InteractionSchemaService {
       };
       if (modifiedByConditions != null && modifiedByConditions != undefined)
         finalData = applyFilters(finalData, modifiedByConditions, modifiedByFilter, "modified_user_name");
+      if(projectCodeConditions != null && projectCodeConditions != undefined)
+        finalData = applyFilters(finalData, projectCodeConditions, projectCodeFilter, "project_code")
+      if(projectNameConditions != null && projectNameConditions != undefined)
+        finalData = applyFilters(finalData, projectNameConditions, projectNameFilter, "project_name")
       if (mainTableFilters[sortBy] != undefined && sortBy.toLowerCase() == 'asc') {
         finalData = finalData.sort((a: any, b: any) => {
           if (!a?.[sortBy]) return 1;

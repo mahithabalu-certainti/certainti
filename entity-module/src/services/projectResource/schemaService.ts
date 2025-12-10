@@ -6089,13 +6089,18 @@ export class ProjectResourceSchemaService {
       }
 
       // Step 3: Fetch resource_type_rid → resource_type_name mapping
-      const typeResult: any[] = await this.mainDbSequelize.query(
+      let typeResult: any[] = []
+      if(uniqueTypeIds.size !== 0) {
+        typeResult = await this.mainDbSequelize.query(
         rawQueries.GET_RESOURCE_TYPES,
         {
           replacements: { resourceTypeRid: Array.from(uniqueTypeIds) },
           type: "SELECT",
         }
       );
+      } else {
+        typeResult = []
+      }
 
       const typeMap = new Map<string, string>();
       for (const type of typeResult) {
@@ -6105,14 +6110,14 @@ export class ProjectResourceSchemaService {
       // Step 4: Enrich project resources with resource_type_name, resource_name, and resource_role
       const enrichedResources = projectResources.map((resource) => {
         const resData = resourceMap.get(resource.resource_rid) || {};
-        const typeName = typeMap.get(resData.rid || "") || null;
+        const typeName = typeMap.get(resData.resource_type_rid || "") || null;
 
         return {
           ...(resource.dataValues ?? resource),
           resource_type_name: typeName,
           resource_name: resData.resource_name ?? null,
           resource_role: resData.resource_role ?? null,
-          resource_type_rid: resData.rid ?? null,
+          resource_type_rid: resData.resource_type_rid ?? null,
         };
       });
 

@@ -75,7 +75,7 @@ export class AiTechnicalSummary
         version: { type: DataTypes.INTEGER, allowNull: true, defaultValue: 1 },
         status_rid: { type: DataTypes.STRING(50), allowNull: true },
         entity_transaction_rid: { type: DataTypes.STRING(50), allowNull: true },
-        technical_summary_refinement_prompt: { type: DataTypes.TEXT, allowNull: true },
+        technical_summary_refinement_prompt: { type: DataTypes.TEXT, allowNull: true }
       },
       {
         sequelize,

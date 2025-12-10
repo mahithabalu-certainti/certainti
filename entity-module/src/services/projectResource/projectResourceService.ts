@@ -905,66 +905,70 @@ export class ProjectResourceService {
         userId,
         transaction
       );
-      
-      const projectCaseMapping = 
-      await this.projectIngestion.fetchProjectFiscalCaseMapping(
-        validAccountNumber,
-        projectData.rid
-      );
 
-      if (projectCaseMapping.length > 0) {  
-
-        for (const caseMapping of projectCaseMapping) {
-          const caseData = await Case.findOne({
-            where: {
-              rid: caseMapping.case_rid,
-            },
-          });
+      const checkTableExists =  await this.projectIngestion.checkCaseProjectsTableExists(validAccountNumber);  
+      if (checkTableExists) {
         
-          if (!caseData) {
-            continue;
-          }
+        const projectCaseMapping = 
+        await this.projectIngestion.fetchProjectFiscalCaseMapping(
+          validAccountNumber,
+          projectData.rid
+        );
 
-          const mainSequelize = await initMainDbSequelize();
+        if (projectCaseMapping.length > 0) {  
 
-          const caseStatus = await mainSequelize.query(
-            rawQueries.fetchCaseStatusByRid(caseData.status_rid),
-            {
-              type: "SELECT",
+          for (const caseMapping of projectCaseMapping) {
+            const caseData = await Case.findOne({
+              where: {
+                rid: caseMapping.case_rid,
+              },
+            });
+          
+            if (!caseData) {
+              continue;
             }
-          ) as CaseStatusResult[];
-        
-          if (caseStatus[0]?.status_name === "Closed") {
-            continue;
+
+            const mainSequelize = await initMainDbSequelize();
+
+            const caseStatus = await mainSequelize.query(
+              rawQueries.fetchCaseStatusByRid(caseData.status_rid),
+              {
+                type: "SELECT",
+              }
+            ) as CaseStatusResult[];
+          
+            if (caseStatus[0]?.status_name === "Closed") {
+              continue;
+            }
+
+            await this.projectResourceSchema.updateCaseProjectResourceRecords(
+              validAccountNumber,
+              projectResourceData,
+              userId,
+              resourceData.rid || "",
+              projectData,
+              stausId,
+              transaction,
+              caseMapping
+            );
+
+            await this.projectResourceSchema.updateCaseProjectResourceFiscalOnUpdateTable(
+              validAccountNumber,
+              projectResourceData,
+              projectData.project_rid,
+              projectData.fiscal_year,
+              userId,
+              resourceData,
+              existingProjectResource,
+              statusMap,
+              transaction,
+              caseMapping
+            );
+          
           }
-
-          await this.projectResourceSchema.updateCaseProjectResourceRecords(
-            validAccountNumber,
-            projectResourceData,
-            userId,
-            resourceData.rid || "",
-            projectData,
-            stausId,
-            transaction,
-            caseMapping
-          );
-
-          await this.projectResourceSchema.updateCaseProjectResourceFiscalOnUpdateTable(
-            validAccountNumber,
-            projectResourceData,
-            projectData.project_rid,
-            projectData.fiscal_year,
-            userId,
-            resourceData,
-            existingProjectResource,
-            statusMap,
-            transaction,
-            caseMapping
-          );
-        
         }
-      }
 
+      }
 
       await transaction.commit();
 
@@ -1056,11 +1060,20 @@ export class ProjectResourceService {
           throw new Error("Qualified project cannot be updated.");
         }
 
-        const projectCaseMapping = 
-        await this.projectIngestion.fetchProjectFiscalCaseMapping(
-          accountNumber,
-          projectFiscalData.rid
-        );
+        let projectCaseMapping: any = [];
+
+        const {accountNumber: validAccountNumber}  = await this.projectIngestion.fetchValidAccountNumberById(account_rid);
+
+        const checkTableExists =  await this.projectIngestion.checkCaseProjectsTableExists(validAccountNumber);  
+        if (checkTableExists) {
+
+          projectCaseMapping = 
+          await this.projectIngestion.fetchProjectFiscalCaseMapping(
+            accountNumber,
+            projectFiscalData.rid
+          );
+
+        }
 
       if (action === "accept") {
         // 1. Update status to 'Active'
@@ -1848,11 +1861,15 @@ export class ProjectResourceService {
 
       const stausId = statusMap?.get(status) ?? "";
 
-      const projectCaseMapping = 
-      await this.projectIngestion.fetchProjectFiscalCaseMapping(
-        validAccountNumber,
-        projectData.rid
-      );
+      let projectCaseMapping: any = [];
+      const checkTableExists =  await this.projectIngestion.checkCaseProjectsTableExists(validAccountNumber);  
+      if (checkTableExists) {
+        projectCaseMapping = 
+        await this.projectIngestion.fetchProjectFiscalCaseMapping(
+          validAccountNumber,
+          projectData.rid
+        );
+      }
 
       const updateProjectResource =
         await this.projectResourceSchema.updateInlineProjectResourceRecords(
