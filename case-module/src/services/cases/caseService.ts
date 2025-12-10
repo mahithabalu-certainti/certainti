@@ -781,7 +781,7 @@ export class CaseService {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.NOT_FOUND_MESSAGE,
         data: {
-          caseInfo: null,
+          caseInfo: [],
           count: 0,
         },
       };

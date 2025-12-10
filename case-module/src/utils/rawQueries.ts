@@ -1131,12 +1131,12 @@ export function fetchChecklistAttachToDetails(schemaName: string, attachTo: stri
     `
     WITH fetch_case_task AS (
     SELECT 
-    ct.rid, ct.task_name, ctt.user_rid AS assigned_to, 
+    ct.rid, ct.task_name, ct.assigned_to, 
     ct.effective_start_datetime, 
     ct.effective_end_datetime, ct.task_status_rid
     FROM
     ${schemaName}.case_task ct
-    LEFT JOIN ${schemaName}.case_team ctt ON ctt.user_rid = ct.assigned_to AND ctt.case_rid = ct.case_rid AND ctt.account_rid = ct.account_rid AND ctt.status_rid = '${statusId}'
+    LEFT JOIN ${schemaName}.case_team ctt ON ctt.user_rid = ct.assigned_to AND ctt.case_rid = ct.case_rid AND ctt.account_rid = ct.account_rid AND ctt.status_rid = '${statusId}' AND ct.case_team_member_role_rid = ctt.role_rid
     WHERE
     ct.status_rid = '${statusId}'
     AND
