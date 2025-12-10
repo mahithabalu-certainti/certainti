@@ -9,6 +9,8 @@ import { logMessage } from "../utils/helpers";
 import { RuleMapService } from "../services/workflowRuleMapService";
 import { ScopeService } from "../services/workflowScopeMapService";
 import { RulemasterService } from "./rulemasterService";
+import { ConditionService } from "./workflowConditionService";
+import { ActionService } from "./workflowActionService";
 import { ScopeEventRows, EventConditions, ConditionCategory, Operators, Values, actionTypes } from "../utils/types";
 
 /**
@@ -20,6 +22,8 @@ export class WorkFlowService {
     private ruleMasterService: RulemasterService;
     private ruleMapService: RuleMapService;
     private scopeService: ScopeService;
+    private conditionService: ConditionService;
+    private actionService: ActionService;
     private mainDbSequelize: Sequelize | null = null;
 
     constructor(logger: Logger) {
@@ -27,6 +31,8 @@ export class WorkFlowService {
         this.ruleMasterService = new RulemasterService(this.logger);
         this.ruleMapService = new RuleMapService(this.logger);
         this.scopeService = new ScopeService(this.logger);
+        this.conditionService = new ConditionService(this.logger);
+        this.actionService = new ActionService(this.logger);
     }
 
     private async getMainDb() {
@@ -294,8 +300,9 @@ export class WorkFlowService {
                 rule_rid: "",
                 rule_name: ruleRequest.rule_name,
                 description: ruleRequest.description ?? null,
-                trigger_event: ruleRequest.event_rid,
+                event_rid: ruleRequest.event_rid,
                 trigger_type: ruleRequest.trigger_type,
+                condition_rid: ruleRequest.condition_rid,
                 is_active: ruleRequest.is_active ?? true,
                 scope_type_rid: ruleRequest.scope_type_rid,
                 schedule_offset_type: ruleRequest.schedule_offset_type ?? null,
@@ -304,14 +311,52 @@ export class WorkFlowService {
                 modified_by: ruleRequest.modified_by ?? ruleRequest.created_by, // fallback to created_by if undefined
             }, userId
         )
+
+        let ruleRid = rule.data?.rules?.toJSON()?.rid
+        console.log("rule id " + ruleRid);
+
+        for (const condition of ruleRequest.condition_categories) {
+            await this.conditionService.createCondition({
+                condition_rid: "",
+                rule_rid: ruleRid,
+                category_rid: condition.category_rid,
+                logical_operator: condition.category_operator,
+                field_rid: condition.field_rid,
+                operator_rid: condition.operator_rid,
+                value_rid: condition.value_rid,
+                data_type: "",
+                sequence: 1,
+                group_id: 1,
+                created_by: ruleRequest.created_by,
+                modified_by: ruleRequest.created_by
+            }, userId);
+        }
+
+        for (const actionRid of ruleRequest.action_rid) {
+            await this.actionService.createAction({
+                rule_rid: ruleRid,
+                action_rid: actionRid,
+                target_user: "test",
+                new_value: "test",
+                action_order: 1,
+                message_template: "{{ test template }}}",
+                metadata: "{{meta data}}",
+                created_by: ruleRequest.created_by,
+                modified_by: ruleRequest.created_by,
+            }, userId)
+        }
+
         return {
             statusCode: 200,
             message: "Rule created successfully",
             data: {
-                rule: rule,
+                rule: "",
             }
         };
     }
+
+
+
 
     async createRuleMapWithScope(ruleRequest: ICreateRuleMapWithScope, userId: string): Promise<{
         statusCode: number;

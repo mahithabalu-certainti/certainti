@@ -410,7 +410,7 @@ async function createRule(req: Request, res: Response): Promise<void> {
         const newRuleMap = await workFlowService.createRule(value, userId);
         if (newRuleMap.statusCode === HttpStatus.SUCCESS) {
             successLog(methodName);
-            handleSuccessResponse(res, newRuleMap);
+            handleSuccessResponse(res, newRuleMap.data);
             return;
         } {
             errorLog(methodName, newRuleMap.errorMessage);

@@ -5,10 +5,12 @@ export interface ConditionAttributes {
   rid: string;
   eid?: string | null;
   r_number?: string | null;
+  rule_rid: String;
+  category_rid: String;
   logical_operator: String;
-  field_name: string;
-  operator: string;
-  value: string;
+  field_rid: string;
+  operator_rid: string;
+  value_rid: string;
   data_type: string;
   sequence: number;
   group_id: number;
@@ -27,10 +29,12 @@ export class Condition
   public rid!: string;
   public eid!: string;
   public r_number!: string;
+  public rule_rid!: string;
+  public category_rid!: string;
   public logical_operator!: string;
-  public field_name!: string;
-  public operator!: string;
-  public value!: string;
+  public field_rid!: string;
+  public operator_rid!: string;
+  public value_rid!: string;
   public data_type!: string;
   public sequence!: number;
   public group_id!: number;
@@ -61,22 +65,32 @@ export class Condition
           allowNull: true,
         },
 
+        rule_rid: {
+          type: DataTypes.STRING,
+          allowNull: false,
+        },
+
+        category_rid: {
+          type: DataTypes.STRING,
+          allowNull: false,
+        },
+
         logical_operator: {
           type: DataTypes.STRING,
-          allowNull: false,
+          allowNull: true,
         },
 
-        field_name: {
+        field_rid: {
           type: DataTypes.STRING,
           allowNull: false,
         },
 
-        operator: {
+        operator_rid: {
           type: DataTypes.STRING,
           allowNull: false,
         },
 
-        value: {
+        value_rid: {
           type: DataTypes.STRING,
           allowNull: false,
         },

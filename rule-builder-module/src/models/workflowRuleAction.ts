@@ -6,7 +6,7 @@ export interface RuleActionAttributes {
   eid?: string | null;
   r_number?: string | null;
   rule_rid: string;
-  action_type: string; // e.g., notify_user, change_status
+  action_rid: string; // e.g., notify_user, change_status
   target_user: string;
   new_value: string | null;
   action_order: number;
@@ -28,7 +28,7 @@ export class RuleAction
   public eid!: string;
   public r_number!: string;
   public rule_rid!: string;
-  public action_type!: string;
+  public action_rid!: string;
   public target_user!: string;
   public new_value!: string;
   public action_order!: number;
@@ -66,7 +66,7 @@ export class RuleAction
           allowNull: false,
         },
 
-        action_type: {
+        action_rid: {
           type: DataTypes.STRING,
           allowNull: true,
         },

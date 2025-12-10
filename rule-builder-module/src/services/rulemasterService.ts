@@ -34,7 +34,8 @@ export class RulemasterService {
         const rulem = await RuleMaster.create({
             rule_name: ruleRequest.rule_name,
             description: ruleRequest.description ?? null,
-            trigger_event: ruleRequest.trigger_event,
+            condition_rid: ruleRequest.condition_rid ?? null,
+            event_rid: ruleRequest.event_rid,
             trigger_type: ruleRequest.trigger_type,
             is_active: ruleRequest.is_active ?? true,
             scope_type_rid: ruleRequest.scope_type_rid,

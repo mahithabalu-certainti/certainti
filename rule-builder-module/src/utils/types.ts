@@ -5,7 +5,8 @@ export interface ICreateRule {
     is_active: true;
     scope_type_rid: string;
     trigger_type: number;
-    trigger_event: string;
+    event_rid: string;
+    condition_rid: string;
     schedule_offset_type: string | null;
     schedule_offset_value: string | null;
     created_by: string,
@@ -16,9 +17,10 @@ export interface ICreateRule {
 export interface ICreateCondition {
     condition_rid: string;
     rule_rid: string;
-    field_name: string;
-    operator: string;
-    value: string;
+    category_rid: string;
+    field_rid: string;
+    operator_rid: string;
+    value_rid: string;
     data_type: string;
     logical_operator: string;
     sequence: number;
@@ -30,7 +32,6 @@ export interface ICreateCondition {
 export interface ICreateAction {
     action_rid: string;
     rule_rid: string;
-    action_type: string;
     target_user: string;
     new_value: string;
     action_order: number;
@@ -95,7 +96,7 @@ export interface ICreateRuleMap {
 
 
 export interface ICreateRuleMapWithScope {
-    rule_rid:string;
+    rule_rid: string;
     scope_type_rid: string;
     apply_type: number;
     scope_entity_rid: string[];

@@ -32,10 +32,12 @@ export class ConditionService {
         const mainDb = await this.getMainDb();
         Condition.initialize(mainDb);
         const condition = await Condition.create({
+            rule_rid: conditionRequest.rule_rid,
+            category_rid: conditionRequest.category_rid,
             logical_operator: conditionRequest.logical_operator,
-            field_name: conditionRequest.field_name,
-            operator: conditionRequest.operator,
-            value: conditionRequest.value,
+            field_rid: conditionRequest.field_rid,
+            operator_rid: conditionRequest.operator_rid,
+            value_rid: conditionRequest.value_rid,
             data_type: conditionRequest.data_type ?? null,
             sequence: conditionRequest.sequence,
             group_id: conditionRequest.group_id,

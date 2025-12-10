@@ -301,28 +301,21 @@ const listScopeActionsSchema = Joi.object({
 const createRuleSchema = Joi.object({
     rule_name: Joi.string().required(),
     description: Joi.string().optional().allow(""),
-    scope_type_rid:Joi.string().required(),
+    scope_type_rid: Joi.string().required(),
     event_rid: Joi.string().required(),
     condition_rid: Joi.string().required(),
-
     condition_categories: Joi.array().items(
         Joi.object({
             category_rid: Joi.string().required(),
-            cateogry_operator: Joi.string().valid("AND", "OR").optional(), // assuming optional
-
-            operations: Joi.array().items(
-                Joi.object({
-                    field_rid: Joi.string().required(),
-                    operator_rid: Joi.string().required(),
-                    value_rid: Joi.string().required()
-                })
-            ).required()
+            category_operator: Joi.string().valid("AND", "OR").optional(), // assuming optional
+            field_rid: Joi.string().required(),
+            operator_rid: Joi.string().required(),
+            value_rid: Joi.string().required()
         })
     ).required(),
-
     action_rid: Joi.array().items(Joi.string().required()).required(),
-    created_by:Joi.string().required(),
-    trigger_type:Joi.number().required()
+    created_by: Joi.string().required(),
+    trigger_type: Joi.number().required()
 });
 
 

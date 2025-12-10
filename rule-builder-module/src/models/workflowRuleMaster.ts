@@ -7,8 +7,9 @@ export interface RuleMasterAttributes {
   r_number?: string | null;
   rule_name: string;
   description: string;
-  trigger_event: string;
+  event_rid: string;
   trigger_type: number;
+  condition_rid: string;
   is_active?: boolean;
   scope_type_rid: string;
   schedule_offset_type?: string | null;
@@ -30,8 +31,9 @@ export class RuleMaster
   public r_number!: string;
   public rule_name!: string;
   public description!: string;
-  public trigger_event!: string;
+  public event_rid!: string;
   public trigger_type!: number;
+  public condition_rid!: string;
   public is_active?: boolean;
   public scope_type_rid!: string;
   public schedule_offset_type?: string | null;
@@ -73,13 +75,18 @@ export class RuleMaster
           allowNull: true,
         },
 
-        trigger_event: {
+        event_rid: {
           type: DataTypes.STRING,
           allowNull: false,
         },
 
         trigger_type: {
           type: DataTypes.INTEGER,
+          allowNull: false,
+        },
+
+        condition_rid: {
+          type: DataTypes.STRING,
           allowNull: false,
         },
 

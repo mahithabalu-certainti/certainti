@@ -33,7 +33,7 @@ export class ActionService {
         RuleAction.initialize(mainDb);
         const action = await RuleAction.create({
             rule_rid: actionRequest.rule_rid,
-            action_type: actionRequest.action_type,
+            action_rid: actionRequest.action_rid,
             target_user: actionRequest.target_user,
             new_value: actionRequest.new_value ?? null,
             action_order: actionRequest.action_order,
