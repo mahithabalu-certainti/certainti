@@ -1030,9 +1030,9 @@ export function fetchChecklistAttachToDetails(schemaName: string, attachTo: stri
     case 'account':
       return `SELECT ad.account_rid, ad.account_name AS name FROM ${schemaName}.account_details ad WHERE ad.account_rid = '${attachTo}'`;
     case 'project':
-      return `SELECT pf.rid, pf.project_code AS name  AS name FROM ${schemaName}.project_fiscal pf WHERE pf.rid = '${attachTo}'`;
+      return `SELECT pf.rid, pf.project_code AS name  FROM ${schemaName}.project_fiscal pf WHERE pf.rid = '${attachTo}'`;
     case 'case':
-      return `SELECT cd.rid, cd.case_name AS name  AS name FROM ${schemaName}.cases cd WHERE cd.rid = '${attachTo}'`;
+      return `SELECT cd.rid, cd.case_name AS name FROM ${schemaName}.cases cd WHERE cd.rid = '${attachTo}'`;
     case 'resource':
       return `SELECT r.rid, r.resource_code AS name FROM ${schemaName}.resources r WHERE r.rid = '${attachTo}'`;
     case 'resource_cost':
@@ -1083,19 +1083,26 @@ export function fetchChecklistAttachToDetails(schemaName: string, attachTo: stri
       for(let [key, conditions] of Object.entries(filter)) {
         if(Object.keys(filterColumnsCaseTask).includes(key)) {
           validKey = key;
+          let dynamicAlias;
           for(let [cond, values] of Object.entries(conditions)) {
             switch (filterColumnsCaseTaskTypes[validKey]) {
               case "string" : {
+                if(validKey === 'assigned_to') {
+                  dynamicAlias = `ctt`
+                  validKey = `user_rid`
+                } else {
+                  dynamicAlias = `ct`
+                }
                 if(cond === 'equals') 
-                  filterQueryArray.push(`LOWER(ct.${validKey}) = '${values.toLowerCase()}'`)
+                  filterQueryArray.push(`LOWER(${dynamicAlias}.${validKey}) = '${values.toLowerCase()}'`)
                 if(cond === 'not_equals')
-                  filterQueryArray.push(`LOWER(ct.${validKey}) != '${values.toLowerCase()}'`)
+                  filterQueryArray.push(`(LOWER(${dynamicAlias}.${validKey}) != '${values.toLowerCase()}' OR ${dynamicAlias}.${validKey} IS NULL)`)
                 if(cond === 'contains')
-                  filterQueryArray.push(`ct.${validKey} ILIKE '%${values}%'`)
+                  filterQueryArray.push(`${dynamicAlias}.${validKey} ILIKE '%${values}%'`)
                 if(cond === 'is_empty') 
-                  filterQueryArray.push(`(ct.${validKey} IS NULL OR ct.${validKey} = '')`)
+                  filterQueryArray.push(`(${dynamicAlias}.${validKey} IS NULL OR ${dynamicAlias}.${validKey} = '')`)
                 if(cond === 'in')
-                  filterQueryArray.push(`ct.${validKey} IN (${values.map((d : any) => `'${d}'`).join(',')})`)
+                  filterQueryArray.push(`${dynamicAlias}.${validKey} IN (${values.map((d : any) => `'${d}'`).join(',')})`)
                 break;
               }
               case "date" : {
@@ -1136,7 +1143,7 @@ export function fetchChecklistAttachToDetails(schemaName: string, attachTo: stri
     ct.effective_end_datetime, ct.task_status_rid
     FROM
     ${schemaName}.case_task ct
-    LEFT JOIN ${schemaName}.case_team ctt ON ctt.user_rid = ct.assigned_to AND ctt.case_rid = ct.case_rid AND ctt.account_rid = ct.account_rid AND ctt.status_rid = '${statusId}'
+    LEFT JOIN ${schemaName}.case_team ctt ON ctt.user_rid = ct.assigned_to AND ctt.case_rid = ct.case_rid AND ctt.account_rid = ct.account_rid AND ctt.status_rid = '${statusId}' AND ct.case_team_member_role_rid = ctt.role_rid
     WHERE
     ct.status_rid = '${statusId}'
     AND
