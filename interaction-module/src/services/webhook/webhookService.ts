@@ -803,6 +803,7 @@ export class WebHookService {
         globalInteraction[0].account_rid
       );
       FORWARD_EMAIL = keyContactsEmail;
+      /*Notification part will be implemented later if there is no professional services consultant added in account*/
 
       interactionLevel = await this.fetchInteractionLevel(
         accountNumber,

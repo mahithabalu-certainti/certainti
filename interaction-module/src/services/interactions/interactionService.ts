@@ -783,7 +783,8 @@ export class InteractionService {
                 professionalServiceConsultantRid[0][0].rid
               )
             );
-            if (fetchProfSerConsultantId[0][0] !== null) {
+            const consultantObj = fetchProfSerConsultantId && fetchProfSerConsultantId[0] && fetchProfSerConsultantId[0][0] ? fetchProfSerConsultantId[0][0] : null;
+            if (consultantObj !== null && consultantObj !== undefined) {
               const interactionLevel: any = await mainDbSequelize.query(
                 rawQueries.fetchInteractionLevelById(
                   fetchInteractionDetails.interaction_level_rid
@@ -871,6 +872,10 @@ export class InteractionService {
                 true
               );
             }
+            else{
+              logMessage(`No professional services consultant found for account ID ${interactionData.account_rid}`);
+              /*Notification part will be implemented later if there is no professional services consultant added in account*/
+            }
           }
         }        
       }
@@ -882,6 +887,7 @@ export class InteractionService {
         },
       };
     } catch (err) {
+      console.log('err',err);
       logMessage(`Error updating interaction response, ${err}`);
       await transaction.rollback();
       return {
