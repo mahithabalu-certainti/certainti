@@ -12,6 +12,7 @@ export type SummaryDetailedMetric = {
   project_level: string | number;
   project_resource_level: string | number;
   project_task_level?: string | number;
+  approved?: string | number;
   permission: string;
   hide?: boolean;
 };
