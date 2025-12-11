@@ -18,6 +18,7 @@ import {
 import {
   // checkPermission,
   reshapeGlobalFilter,
+  getFiscalYears,
 } from '../../../../../common-utils';
 import { FilterState, SelectOption } from '../../../../types';
 import { useToast } from '../../../../../hooks';
@@ -792,9 +793,14 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
     setSelectedTask(row);
   }, []);
 
+  const currentPermissionMap = isMilestoneTab
+    ? milestonePermissionMap
+    : taskPermissionMap;
+
   const tasksColumns = useMemo(
-    () => getTaskTableColumns(handleTaskClick, statusOptions),
-    [handleTaskClick, statusOptions]
+    () =>
+      getTaskTableColumns(handleTaskClick, statusOptions, currentPermissionMap),
+    [handleTaskClick, statusOptions, currentPermissionMap]
   );
 
   // const actionButtons: ActionItem<TaskList>[] = [
@@ -962,6 +968,12 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
           checklistData={checklistData}
           fiscalYears={(() => {
             const currentYear = new Date().getFullYear();
+            if (selectedTask?.attachment_level?.toLowerCase() === 'account') {
+              const minYear = 1950;
+              return getFiscalYears(currentYear - minYear + 1).map(
+                (y) => y.value
+              );
+            }
             return Array.from({ length: 5 }, (_, i) =>
               String(currentYear - 2 + i)
             );

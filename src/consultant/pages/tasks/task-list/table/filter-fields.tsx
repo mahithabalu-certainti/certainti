@@ -15,26 +15,31 @@ export const getTaskFilterFields = (
   priorityOptions: { value: string; label: string }[],
   statusOptions: { value: string; label: string }[],
   _assigneeOptions: { value: string; label: string }[],
-  accountStatusOptions: { value: string; label: string }[]
-  // permissionMap?: Record<string, { read: boolean; edit: boolean }>
+  accountStatusOptions: { value: string; label: string }[],
+  permissionMap?: Record<string, { read: boolean; edit: boolean }>
 ): FieldConfig[] => [
   {
     name: 'Task ID',
     value: 'r_number',
     type: 'text',
-    // hide: !permissionMap?.['r_number']?.read,
+    hide: permissionMap ? !permissionMap['r_number']?.read : false,
   },
   {
     name: 'Task Name',
     value: 'task_name',
     type: 'text',
-    // hide: !permissionMap?.['task_name']?.read,
+    hide: permissionMap ? !permissionMap['task_name']?.read : false,
   },
   {
     name: 'Description',
     value: 'description',
     type: 'text',
-    // hide: !permissionMap?.['description']?.read,
+    hide: permissionMap
+      ? !(
+          permissionMap['description']?.read ||
+          permissionMap['task_description']?.read
+        )
+      : false,
   },
   {
     name: 'Fiscal Year',
@@ -42,25 +47,29 @@ export const getTaskFilterFields = (
     type: 'enum',
     options: fiscalYears.map((y) => ({ option: y.label, value: y.value })),
     operatorOption: enumOptions,
-    // hide: !permissionMap?.['fiscal_year']?.read,
+    hide: permissionMap ? !permissionMap['fiscal_year']?.read : false,
   },
   {
     name: 'Attach To',
     value: 'attach_to',
     type: 'text',
-    // hide: !permissionMap?.['attach_to']?.read,
+    hide: permissionMap
+      ? !(
+          permissionMap['attach_to']?.read || permissionMap['attached_to']?.read
+        )
+      : false,
   },
   {
     name: 'Attachment Level',
     value: 'attachment_level',
     type: 'text',
-    // hide: !permissionMap?.['attachment_level']?.read,
+    hide: permissionMap ? !permissionMap['attachment_level']?.read : false,
   },
   {
     name: 'Assigned To',
     value: 'assigned_to_name',
     type: 'text',
-    // hide: !permissionMap?.['assigned_to_name']?.read,
+    hide: permissionMap ? !permissionMap['assigned_to']?.read : false,
   },
   {
     name: 'Priority',
@@ -71,7 +80,7 @@ export const getTaskFilterFields = (
       value: opt.value,
     })),
     operatorOption: enumOptions,
-    // hide: !permissionMap?.['priority_name']?.read,
+    hide: permissionMap ? !permissionMap['priority_rid']?.read : false,
   },
   {
     name: 'Status',
@@ -82,7 +91,7 @@ export const getTaskFilterFields = (
       value: opt.value,
     })),
     operatorOption: enumOptions,
-    // hide: !permissionMap?.['status_name']?.read,
+    hide: permissionMap ? !permissionMap['status_rid']?.read : false,
   },
   {
     name: 'Account Status',
@@ -93,25 +102,25 @@ export const getTaskFilterFields = (
       value: opt.value,
     })),
     operatorOption: enumOptions,
-    // hide: !permissionMap?.['account_status_name']?.read,
+    hide: permissionMap ? !permissionMap['account_status_name']?.read : false,
   },
   {
     name: 'Created By',
     value: 'created_by_name',
     type: 'text',
-    // hide: !permissionMap?.['created_by_name']?.read,
+    hide: permissionMap ? !permissionMap['created_by_name']?.read : false,
   },
   {
     name: 'Created On',
     value: 'created_datetime',
     type: 'date',
-    // hide: !permissionMap?.['created_datetime']?.read,
+    hide: permissionMap ? !permissionMap['created_datetime']?.read : false,
   },
   {
     name: 'Modified By',
     value: 'modified_by_name',
     type: 'text',
-    // hide: !permissionMap?.['modified_by_name']?.read,
+    hide: permissionMap ? !permissionMap['modified_by_name']?.read : false,
   },
   {
     name: 'Modified On',

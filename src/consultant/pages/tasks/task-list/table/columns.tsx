@@ -8,8 +8,8 @@ import { TaskList } from '../../../../types/task';
 
 export const getTaskTableColumns = (
   onClick: (row: TaskList) => void,
-  statusOptions: SelectOption[] = []
-  // permissionMap?: Record<string, { read: boolean; edit: boolean }>
+  statusOptions: SelectOption[] = [],
+  permissionMap?: Record<string, { read: boolean; edit: boolean }>
 ): ListTableColumn<TaskList>[] => [
   {
     id: 'r_number',
@@ -18,7 +18,7 @@ export const getTaskTableColumns = (
     width: 140,
     sortable: true,
     sticky: true,
-    // hide: !permissionMap?.['r_number']?.read,
+    hide: permissionMap ? !permissionMap['r_number']?.read : false,
     sx: {
       position: 'sticky',
       left: 0,
@@ -47,7 +47,7 @@ export const getTaskTableColumns = (
     label: 'Task Name',
     width: 250,
     sortable: true,
-    editable: true,
+    editable: permissionMap ? permissionMap['task_name']?.edit : true,
     field: {
       type: 'text',
       required: true,
@@ -62,7 +62,7 @@ export const getTaskTableColumns = (
         },
       ],
     },
-    // hide: !permissionMap?.['task_name']?.read,
+    hide: permissionMap ? !permissionMap['task_name']?.read : false,
   },
   {
     id: 'description',
@@ -70,7 +70,10 @@ export const getTaskTableColumns = (
     label: 'Description',
     width: 300,
     sortable: true,
-    editable: true,
+    editable: permissionMap
+      ? permissionMap['description']?.edit ||
+        permissionMap['task_description']?.edit
+      : true,
     field: {
       type: 'text',
       required: false,
@@ -81,7 +84,12 @@ export const getTaskTableColumns = (
         },
       ],
     },
-    // hide: !permissionMap?.['description']?.read,
+    hide: permissionMap
+      ? !(
+          permissionMap['description']?.read ||
+          permissionMap['task_description']?.read
+        )
+      : false,
     render: (row: TaskList) => row.description || '-',
   },
   {
@@ -90,7 +98,7 @@ export const getTaskTableColumns = (
     label: 'Fiscal Year',
     width: 140,
     sortable: true,
-    // hide: !permissionMap?.['fiscal_year']?.read,
+    hide: permissionMap ? !permissionMap['fiscal_year']?.read : false,
     render: (row: TaskList) => `FY-${row.fiscal_year}`,
   },
   {
@@ -99,7 +107,11 @@ export const getTaskTableColumns = (
     label: 'Attach To',
     width: 180,
     sortable: true,
-    // hide: !permissionMap?.['attach_to']?.read,
+    hide: permissionMap
+      ? !(
+          permissionMap['attach_to']?.read || permissionMap['attached_to']?.read
+        )
+      : false,
     render: (row: TaskList) => row.attach_to_name || '-',
   },
   {
@@ -108,7 +120,7 @@ export const getTaskTableColumns = (
     label: 'Attachment Level',
     width: 160,
     sortable: true,
-    // hide: !permissionMap?.['attachment_level']?.read,
+    hide: permissionMap ? !permissionMap['attachment_level']?.read : false,
     render: (row: TaskList) => row.attachment_level || '-',
   },
   {
@@ -117,7 +129,7 @@ export const getTaskTableColumns = (
     label: 'Assigned To',
     width: 180,
     sortable: true,
-    // hide: !permissionMap?.['assigned_to_name']?.read,
+    hide: permissionMap ? !permissionMap['assigned_to']?.read : false,
     render: (row: TaskList) => row.assigned_to_name || '-',
   },
   {
@@ -126,7 +138,7 @@ export const getTaskTableColumns = (
     label: 'Priority',
     width: 120,
     sortable: true,
-    // hide: !permissionMap?.['priority_name']?.read,
+    hide: permissionMap ? !permissionMap['priority_rid']?.read : false,
     render: (row: TaskList) => row.priority_name || '-',
   },
   {
@@ -135,7 +147,7 @@ export const getTaskTableColumns = (
     label: 'Status',
     width: 140,
     sortable: true,
-    editable: true,
+    editable: permissionMap ? permissionMap['status_rid']?.edit : true,
     editId: 'status_rid',
     field: {
       type: 'select',
@@ -143,7 +155,7 @@ export const getTaskTableColumns = (
       options: statusOptions,
       placeholder: 'Choose Status',
     },
-    // hide: !permissionMap?.['status_name']?.read,
+    hide: permissionMap ? !permissionMap['status_rid']?.read : false,
     render: (row: TaskList) => row.status_name || '-',
   },
   {
@@ -152,7 +164,7 @@ export const getTaskTableColumns = (
     label: 'Account Status',
     width: 150,
     sortable: true,
-    // hide: !permissionMap?.['account_status_name']?.read,
+    hide: permissionMap ? !permissionMap['account_status_name']?.read : false,
     render: (row: TaskList) => row.account_status_name || '-',
   },
   {
@@ -161,7 +173,7 @@ export const getTaskTableColumns = (
     label: 'Created By',
     width: 180,
     sortable: true,
-    // hide: !permissionMap?.['created_by_name']?.read,
+    hide: permissionMap ? !permissionMap['created_by_name']?.read : false,
   },
   {
     id: 'created_datetime',
@@ -169,7 +181,7 @@ export const getTaskTableColumns = (
     label: 'Created On',
     width: 200,
     sortable: true,
-    // hide: !permissionMap?.['created_datetime']?.read,
+    hide: permissionMap ? !permissionMap['created_datetime']?.read : false,
     render: (row: TaskList) =>
       formatDateToYYYYMMDDWithTime(row.created_datetime),
   },
@@ -179,7 +191,7 @@ export const getTaskTableColumns = (
     label: 'Modified By',
     width: 180,
     sortable: true,
-    // hide: !permissionMap?.['modified_by_name']?.read,
+    hide: permissionMap ? !permissionMap['modified_by_name']?.read : false,
     render: (row: TaskList) => row.modified_by_name || '-',
   },
   {
@@ -188,7 +200,7 @@ export const getTaskTableColumns = (
     label: 'Modified On',
     width: 200,
     sortable: true,
-    // hide: !permissionMap?.['modified_datetime']?.read,
+    hide: permissionMap ? !permissionMap['modified_datetime']?.read : false,
     render: (row: TaskList) =>
       row.modified_datetime
         ? formatDateToYYYYMMDDWithTime(row.modified_datetime)

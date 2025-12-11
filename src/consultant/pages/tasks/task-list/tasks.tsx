@@ -41,6 +41,7 @@ import {
   useGetTaskStatuses,
 } from '../../../services/work-breakdown/work-breakdown-service';
 import { useGetActivityStatus } from '../../../services/activities/activities-service';
+import { getPermissionMap } from '../../activities/activities-list/helper';
 
 export const Tasks: React.FC = () => {
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({});
@@ -90,6 +91,23 @@ export const Tasks: React.FC = () => {
     permission,
     AllPermissions.ATTACHMENT_EXPORT
   );
+
+  const taskPermissionMap = useMemo(
+    () => getPermissionMap(permission, AllPermissions.ACTIVITY_TASK_VIEW_EDIT),
+    [permission]
+  );
+
+  const milestonePermissionMap = useMemo(
+    () =>
+      getPermissionMap(
+        permission,
+        AllPermissions.CASES_WORKBREAKDOWN_VIEW_EDIT
+      ),
+    [permission]
+  );
+
+  const currentPermissionMap =
+    tabParam === 'milestone' ? milestonePermissionMap : taskPermissionMap;
 
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
 
@@ -237,9 +255,10 @@ export const Tasks: React.FC = () => {
         priorityOptions,
         statusOptions,
         [], // assigneeOptions - currently empty for global list
-        accountStatusOptions
+        accountStatusOptions,
+        currentPermissionMap
       ),
-    [priorityOptions, statusOptions]
+    [priorityOptions, statusOptions, currentPermissionMap]
   );
 
   const menuItems = [
