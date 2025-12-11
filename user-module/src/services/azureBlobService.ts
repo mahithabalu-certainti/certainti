@@ -1,12 +1,9 @@
 import { BlobServiceClient, StorageSharedKeyCredential, generateBlobSASQueryParameters, BlobSASPermissions, SASProtocol } from "@azure/storage-blob";
 import { logMessage } from "../utils/helpers";
+import { getSecret } from "../utils/azureSecrets";
 import path from 'path';
 
-const connectionString = process.env.AZURE_STORAGE_CONNECTION_STRING!;
 const containerName = process.env.AZURE_CONTAINER_NAME!;
-
-const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
-const containerClient = blobServiceClient.getContainerClient(containerName);
 
 /**
  * Uploads a file to Azure Blob Storage under a user-specific path.
@@ -15,6 +12,15 @@ const containerClient = blobServiceClient.getContainerClient(containerName);
  * @returns 
  */
 export const uploadToAzure = async (file: Express.Multer.File, user_id: string): Promise<string> => {
+    const connectionString = await getSecret(process.env.AZURE_STORAGE_CONNECTION_STRING as string);
+
+    if (!connectionString) {
+        throw new Error(`Azure Storage connection string is missing`);
+    }
+
+    const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
+    const containerClient = blobServiceClient.getContainerClient(containerName);
+
     const blobName = path.posix.join('user', user_id, 'profile', file.originalname);
     const blockBlobClient = containerClient.getBlockBlobClient(blobName);
 
@@ -35,6 +41,11 @@ export const uploadToAzure = async (file: Express.Multer.File, user_id: string):
  */
 export const generateSasUrl = async (blobUrl: string, expiryTimeInMinutes = 15): Promise<string> => {
     try {
+        const connectionString = await getSecret(process.env.AZURE_STORAGE_CONNECTION_STRING as string);
+
+        if (!connectionString) {
+            throw new Error(`Azure Storage connection string is missing`);
+        }
         const parsedUrl = new URL(blobUrl);
         const hostnameParts = parsedUrl.hostname?.split(".") || [];
         const accountName = hostnameParts[0];
