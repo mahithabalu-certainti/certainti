@@ -14,7 +14,7 @@ import { UserGroupMapping } from "../models/userGroupMappingModel";
 import { UserGroup } from "../models/userGroupModel";
 import { updateAzureUser } from "./manageUser";
 import { errorLog, logMessage } from "../utils/helpers";
-import { uploadToAzure } from "./azureBlobService";
+import { uploadToAzure, generateSasUrl } from "./azureBlobService";
   const { 
     User, UserDetails, Department, FunctionGroup, Profile, BusinessTeams,
     ProfileMenuAccess, Menu, ProfileModuleAccess, MenuModule, ProfilePermissionAccess, ModulePermission,
@@ -952,7 +952,7 @@ class UserService {
           permissions,
           organisation_name,
           logo_url,
-          profile_url: roles.profile_url || "",
+          profile_url: roles.profile_url ? await generateSasUrl(roles.profile_url) : "",
         },
       };
     } catch (err) { 
@@ -2924,7 +2924,7 @@ async getAllUserPermission(userId: string, profileId: string) {
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { imageUrl: string };
+    data?: { profile_url: string };
   }> {
     try {
       if (!file) {
@@ -2934,11 +2934,12 @@ async getAllUserPermission(userId: string, profileId: string) {
       const imageUrl = await uploadToAzure(file, userId);
       
       await User.update( { profile_url: imageUrl }, { where: { rid: userId } });
+      const profile_sas_url = await generateSasUrl(imageUrl);
 
       return {
         statusCode: constants.SUCCESS,
         message: "Profile image uploaded successfully",
-        data: { imageUrl },
+        data: { profile_url: profile_sas_url },
       };
     } catch (err) {
       errorLog("Error uploading profile image:", (err as Error).message);
