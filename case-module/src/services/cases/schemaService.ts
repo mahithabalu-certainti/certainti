@@ -443,6 +443,7 @@ return !response;
           transaction,
         }
       );
+      if(caseRequest.case_startdate && caseRequest.statutory_submission_date && caseRequest.planned_submission_date) {
       if(existingCase?.case_startdate.toISOString().split('T')[0] !== caseRequest.case_startdate.toISOString().split('T')[0] || existingCase?.statutory_submission_date.toISOString().split('T')[0] !== caseRequest.statutory_submission_date.toISOString().split('T')[0] 
       || existingCase?.planned_submission_date.toISOString().split('T')[0] !== caseRequest.planned_submission_date.toISOString().split('T')[0]
     ) {
@@ -466,6 +467,7 @@ return !response;
       } 
     }
   }
+}
       await CaseSummary.update(
         {
           ...caseRequest,
@@ -5715,12 +5717,14 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         } 
       } else {
         if(isTaskExists.task_status_rid !== data.task_status_rid) {
-          const workflowResult = await this.checkTaskWorkFlow(accountNumber, data.rid, data.task_status_rid, data.case_rid, data.workflow_connector.target_rid);
-          if(workflowResult?.success) {
-            return {
-              statusCode : HttpStatus.BAD_REQUEST,
-              statusMessage : workflowResult.statusMessage
-            } 
+          if(Object.keys(data.workflow_connector).length > 0) {
+            const workflowResult = await this.checkTaskWorkFlow(accountNumber, data.rid, data.task_status_rid, data.case_rid, data.workflow_connector.target_rid);
+            if(workflowResult?.success) {
+              return {
+                statusCode : HttpStatus.BAD_REQUEST,
+                statusMessage : workflowResult.statusMessage
+              } 
+            }
           }
         }
         if(data.assigned_to !== null && data.assigned_to !== '' && data.assigned_to !== undefined) {
@@ -7941,6 +7945,28 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       }, raw : true
     });
     return result;
+  }
+  async getCaseSubmissionDate(data: any) {
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+    }
+   const [platFormConfig]: any[] = await this.mainDbSequelize.query(
+              rawQueries.fetchPlatformConfig(
+                data.country_rid
+              ),{type: 'SELECT'}
+            );
+  // Assume platFormConfig.config_json.submission_date is in MM/DD format
+  const submissionDate = platFormConfig?.config_json?.submission_date;
+  if (!submissionDate) return "";
+///  const fiscalYear = data.fiscal_year || new Date().getFullYear();
+  // Parse MM/DD and build YYYY-MM-DD
+  // const [month, day] = submissionDate.split("/");
+  // if (!month || !day) return "";
+  // // Pad month and day to 2 digits
+  // const monthPadded = month.padStart(2, "0");
+  // const dayPadded = day.padStart(2, "0");
+  // const formattedDate = `${fiscalYear}-${monthPadded}-${dayPadded}`;
+  return submissionDate;
   }
 }
 

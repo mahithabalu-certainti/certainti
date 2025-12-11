@@ -1379,7 +1379,6 @@ class ProjectIngestionService {
       total_cost_fte_prj: effective_fte_cost,
       total_cost_subcon_prj: effective_subcon_cost,
       total_cost_nonlabor_prj: effective_nonlabor_cost,
-      is_qualified: is_qualified
     } = baseData;
 
     await ProjectFiscal.update(baseData, {
@@ -1400,7 +1399,6 @@ class ProjectIngestionService {
         effective_subcon_cost,
         effective_nonlabor_cost,
         effective_total_nonlabor,
-        is_qualified,
       },
       {
         where: {
@@ -1552,7 +1550,7 @@ class ProjectIngestionService {
         project_rid: projectData.project_id,
         project_fiscal_rid: projectData.project_fiscal_id,
         max_ai_interaction : DEFAULT_PROJECT_DETAILS.maxAiInteraction,
-
+        auto_send_ai_interaction : false,
         effective_cost: baseData.total_cost_prj,
         effective_effort: baseData.total_effort_prj,
         effective_total_fte: baseData.total_fte_prj,
@@ -3918,6 +3916,24 @@ class ProjectIngestionService {
         projectData
       );
     }
+  }
+
+  async checkCaseProjectsTableExists(accountNumber: string): Promise<boolean> {
+    const orgDb = await initOrgSequelize();
+
+    // extract digits only → trd365_00001 format
+    const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
+
+    const result = await orgDb.query(
+      rawQueries.checkCaseProjectsTableExists,
+      {
+        replacements: { schemaName },
+        type: QueryTypes.SELECT,
+        plain: true, // get single record, no need array
+      }
+    ) as { exists: boolean };
+
+    return !!result?.exists;
   }
 }
 

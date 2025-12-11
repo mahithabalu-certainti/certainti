@@ -3,13 +3,14 @@ import {
   errorLog,
   handleCustomResponse,
   handleErrorResponse,
+  handleSuccessResponse,
   logMessage,
   successLog,
   validateRequest,
 } from "../utils/helpers";
 import { HttpStatus } from "../utils/constants";
 import Configurations from "../config/config";
-import { jurisdictionSchema } from "../lib/joi/schemas/schema";
+import { createJurisdictionRDConfigSchema, exportJurisdictionConfigSchema, jurisdictionRDConfigSchema, jurisdictionRDConfigSchemaForNew, jurisdictionSchema, listJurisdictionConfigSchema, updateJurisdictionRDConfigSchema } from "../lib/joi/schemas/schema";
 // Load services from configuration
 const Services = Configurations.getInstance().getServices();
 const jurisdictionService = Services.jurisdictionService;
@@ -187,8 +188,343 @@ async function getJurisdictionConfiguration(req: Request, res: Response): Promis
   }
 }
 
+async function getJurisdictionConfigDetailsById(
+  req: Request,
+  res: Response
+): Promise<void> {
+  const methodName = "Get jurisdiction config details";
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    const value = await validateRequest(req, jurisdictionRDConfigSchema, res,"GET");
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    let jurisdictionConfigResponse =
+        await jurisdictionService.getJurisdictionConfigDetailsById(
+          value
+        );
+
+    if (jurisdictionConfigResponse.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, jurisdictionConfigResponse.data);
+      return;
+    } else {
+      errorLog(methodName, jurisdictionConfigResponse.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        jurisdictionConfigResponse.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+async function getJurisdictionConfigDataForCreate(
+  req: Request,
+  res: Response
+): Promise<void> {
+  const methodName = "Get jurisdiction config details for create";
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    const value = await validateRequest(req, jurisdictionRDConfigSchemaForNew, res,"GET");
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    let jurisdictionConfigResponse =
+        await jurisdictionService.getJurisdictionConfigDetailsForNew(
+          value
+        );
+
+    if (jurisdictionConfigResponse.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, jurisdictionConfigResponse.data);
+      return;
+    } else {
+      errorLog(methodName, jurisdictionConfigResponse.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        jurisdictionConfigResponse.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+async function updateJurisdictionConfig(
+  req: Request,
+  res: Response
+): Promise<void> {
+  const methodName = "Update jurisdiction config details";
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    const value = await validateRequest(req, updateJurisdictionRDConfigSchema, res);
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    let jurisdictionConfigResponse =
+        await jurisdictionService.updateJurisdictionConfig(
+          value
+        );
+
+    if (jurisdictionConfigResponse.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, jurisdictionConfigResponse.data);
+      return;
+    } else {
+      errorLog(methodName, jurisdictionConfigResponse.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        jurisdictionConfigResponse.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+async function createJurisdictionConfig(
+  req: Request,
+  res: Response
+): Promise<void> {
+  const methodName = "Create jurisdiction config details";
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    const value = await validateRequest(req, createJurisdictionRDConfigSchema, res);
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    value.created_by = userId;
+    let jurisdictionConfigResponse =
+        await jurisdictionService.createJurisdictionConfig(
+          value
+        );
+
+    if (jurisdictionConfigResponse.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, jurisdictionConfigResponse.data);
+      return;
+    } else {
+      errorLog(methodName, jurisdictionConfigResponse.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        jurisdictionConfigResponse.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+async function listJurisdictionsConfigurations(
+  req: Request,
+  res: Response
+): Promise<void> {
+  const methodName = "Get jurisdiction config details";
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    const value = await validateRequest(req, listJurisdictionConfigSchema, res,'GET');
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+     let parsedFilters: Record<string, any> = {};
+    
+        try {
+          parsedFilters = JSON.parse(value.filters);
+        } catch (error) {
+          errorLog(
+            methodName,
+            "Invalid filters format. Must be a valid JSON object."
+          );
+        }
+    let jurisdictionConfigResponse =
+        await jurisdictionService.listJurisdictionConfig(
+          value,
+          "list",
+          parsedFilters
+
+        );
+
+    if (jurisdictionConfigResponse.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, jurisdictionConfigResponse.data);
+      return;
+    } else {
+      errorLog(methodName, jurisdictionConfigResponse.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        jurisdictionConfigResponse.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+async function exportJurisdictionsConfigurations(
+  req: Request,
+  res: Response
+): Promise<void> {
+  const methodName = "Get jurisdiction config details";
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    const value = await validateRequest(req, exportJurisdictionConfigSchema, res,'GET');
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+     let parsedFilters: Record<string, any> = {};
+    
+        try {
+          parsedFilters = JSON.parse(value.filters);
+        } catch (error) {
+          errorLog(
+            methodName,
+            "Invalid filters format. Must be a valid JSON object."
+          );
+        }
+    let jurisdictionConfigResponse =
+        await jurisdictionService.listJurisdictionConfig(
+          value,
+          "list",
+          parsedFilters
+
+        );
+
+    if (jurisdictionConfigResponse.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, jurisdictionConfigResponse.data);
+      return;
+    } else {
+      errorLog(methodName, jurisdictionConfigResponse.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        jurisdictionConfigResponse.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+
+
 // Export controller
 export default {
   addOrUpdateJurisdictionConfiguration,
-  getJurisdictionConfiguration
+  getJurisdictionConfiguration,
+  getJurisdictionConfigDetailsById,
+  updateJurisdictionConfig,
+  createJurisdictionConfig,
+  getJurisdictionConfigDataForCreate,
+  listJurisdictionsConfigurations,
+  exportJurisdictionsConfigurations
 };

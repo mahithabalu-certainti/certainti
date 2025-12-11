@@ -602,11 +602,16 @@ export class ProjectInjestionTaskService {
         transaction
       );
             
-      const projectCaseMapping = 
-      await this.projectIngestion.fetchProjectFiscalCaseMapping(
-        accountNumber,
-        projectData.rid
-      );
+      let projectCaseMapping: any = [];
+      const {accountNumber: validAccountNumber}  = await this.projectIngestion.fetchValidAccountNumberById(account_rid);
+      const checkTableExists =  await this.projectIngestion.checkCaseProjectsTableExists(validAccountNumber);  
+      if (checkTableExists) {
+        projectCaseMapping = 
+        await this.projectIngestion.fetchProjectFiscalCaseMapping(
+          accountNumber,
+          projectData.rid
+        );
+      }
 
       if (projectCaseMapping.length > 0) {  
 
@@ -1296,11 +1301,16 @@ export class ProjectInjestionTaskService {
         }
       }
 
-      const projectCaseMapping = 
-      await this.projectIngestion.fetchProjectFiscalCaseMapping(
-        accountNumber,
-        project_fiscal_rid
-      );
+      let projectCaseMapping: any = [];
+      const {accountNumber: validAccountNumber}  = await this.projectIngestion.fetchValidAccountNumberById(account_rid);
+      const checkTableExists =  await this.projectIngestion.checkCaseProjectsTableExists(validAccountNumber);  
+      if (checkTableExists) {
+        projectCaseMapping = 
+        await this.projectIngestion.fetchProjectFiscalCaseMapping(
+          accountNumber,
+          project_fiscal_rid
+        );
+      }
 
       if (action === "accept") {
         // 1. Update status to 'Active'

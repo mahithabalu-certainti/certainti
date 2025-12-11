@@ -302,7 +302,8 @@ export function getTableSchemaByEntity(entity: string): ColumnSchema[] {
         { column_name: 'total_fte_cost', data_type: 'Decimal(18,2)',required:false },
         { column_name: 'total_sub_con_effort_in_hrs', data_type: 'Decimal(18,2)',required:false },
         { column_name: 'total_sub_con_cost', data_type: 'Decimal(18,2)',required:false },
-        { column_name: 'total_non_labor_cost', data_type: 'Decimal(18,2)',required:false }
+        { column_name: 'total_non_labor_cost', data_type: 'Decimal(18,2)',required:false },
+        { column_name: 'total_non_labor_count', data_type: 'Decimal(18,2)',required:false },
       ];
 
     case 'project_resource':

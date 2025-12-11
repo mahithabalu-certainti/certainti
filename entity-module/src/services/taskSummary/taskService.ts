@@ -309,7 +309,7 @@ export class TaskService {
       const userIds = [...new Set(tasksRaw.flatMap(task => [task.created_by, task.modified_by]))];
       const users = userIds.length > 0
         ? await mainSequelize.query(
-          `SELECT rid, CONCAT(first_name, ' ', last_name) as full_name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (:userIds)`,
+          rawQueries.fetchUsersByIds,
           { replacements: { userIds }, type: 'SELECT' }
         )
         : [];
@@ -319,14 +319,21 @@ export class TaskService {
       const statusIds = [...new Set(tasksRaw.flatMap(task => [task.status_rid]))];
       const statuses = statusIds.length > 0
         ? await mainSequelize.query(
-          `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.activity_status WHERE rid IN (:statusIds)
-          union
-          SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status  WHERE rid IN (:statusIds)
-          `,
+          rawQueries.getStatusNamesByIds,
           { replacements: { statusIds }, type: 'SELECT' }
         )
         : [];
       const statusMap = new Map(statuses.map((u: any) => [u.rid, u.full_name]));
+
+      // Get priority names for priorities
+      const priorityIds = [...new Set(tasksRaw.flatMap(task => [task.priority_rid]))];
+      const priorities = priorityIds.length > 0
+        ? await mainSequelize.query(
+          rawQueries.getPriorityNamesByIds,
+          { replacements: { priorityIds }, type: 'SELECT' }
+        )
+        : [];
+      const priorityMap = new Map(priorities.map((u: any) => [u.rid, u.priority_name]));
 
       // Enrich task data
       let tasks = await Promise.all(tasksRaw.map(async task => {
@@ -341,8 +348,8 @@ export class TaskService {
           fiscal_year: taskData.fiscal_year,
           created_by_name: userMap.get(task.created_by) || task.created_by,
           modified_by_name: userMap.get(task.modified_by) || task.modified_by,
-          status_name: statusMap.get(task.status_rid) || null,
-          priority_name: resourceMap.get(task.priority_rid) || null,
+          status_name: statusMap.get(task.status_rid) || task.status_rid,
+          priority_name: priorityMap.get(task.priority_rid) || task.priority_rid,
           assigned_to_name: resourceMap.get(task.assigned_to) || task.assigned_to,
           account_status_rid: accountStatusInfo?.status_rid || null,
           account_status_name: accountStatusInfo?.status_name || null,
@@ -757,7 +764,7 @@ export class TaskService {
               // Fetch from org database using schema number
               const orgDb = await this.fetchOrgDb();
               const resourcesForSchema = await orgDb.query(
-                `SELECT rid, resource_name FROM ${schemaName}.resources WHERE rid IN (:resourceRids)`,
+                rawQueries.getResourceNamesByIds(schemaName),
                 { replacements: { resourceRids: uniqueRids }, type: 'SELECT' }
               );
 
@@ -776,20 +783,27 @@ export class TaskService {
       const statusIds = [...new Set(tasksRaw.flatMap(task => [task.status_rid]))];
       const statuses = statusIds.length > 0
         ? await mainSequelize.query(
-          `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.activity_status WHERE rid IN (:statusIds)
-          union
-          SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status  WHERE rid IN (:statusIds)
-          `,
+          rawQueries.getStatusNamesByIds,
           { replacements: { statusIds }, type: 'SELECT' }
         )
         : [];
       const statusMap = new Map(statuses.map((u: any) => [u.rid, u.full_name]));
 
+      // Get priority names for priorities
+      const priorityIds = [...new Set(tasksRaw.flatMap(task => [task.priority_rid]))];
+      const priorities = priorityIds.length > 0
+        ? await mainSequelize.query(
+          rawQueries.getPriorityNamesByIds,
+          { replacements: { priorityIds }, type: 'SELECT' }
+        )
+        : [];
+      const priorityMap = new Map(priorities.map((u: any) => [u.rid, u.priority_name]));
+
       // Get user names for created_by and modified_by
       const userIds = [...new Set(tasksRaw.flatMap(task => [task.created_by, task.modified_by]))];
       const users = userIds.length > 0
         ? await mainSequelize.query(
-          `SELECT rid, CONCAT(first_name, ' ', last_name) as full_name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (:userIds)`,
+          rawQueries.fetchUsersByIds,
           { replacements: { userIds }, type: 'SELECT' }
         )
         : [];
@@ -804,7 +818,7 @@ export class TaskService {
           created_by_name: userMap.get(task.created_by) || task.created_by,
           modified_by_name: userMap.get(task.modified_by) || task.modified_by,
           status_name: statusMap.get(task.status_rid) || null,
-          priority_name: resourceMap.get(task.priority_rid) || null,
+          priority_name: priorityMap.get(task.priority_rid) || null,
           assigned_to_name: resourceMap.get(task.assigned_to) || task.assigned_to,
           attached_to: attachmentDisplayNames[task.rid] || task.attach_to,
         };
@@ -989,7 +1003,7 @@ export class TaskService {
         }
       });
 
-      const permissionName = flag === "milestone" ? "cases_workbreakdown_export" : "activity_task_export";
+      const permissionName = flag === "milestone" ? "cases_workbreakdown_view_edit" : "activity_task_export";
 
       // Apply field-level access control for export
       const allowedFieldsForExport = await this.schemaService.getAllowedExportFields(userId, permissionName);
@@ -1001,11 +1015,11 @@ export class TaskService {
       }
 
       const labelMap: Record<string, string> = {
-        "Task ID": "Task ID",
+        "Task ID": "Record ID",
         "Task Name": "Task Name",
         "Description": "Description",
         "Fiscal Year": "Fiscal Year",
-        "Assigned To": "Assigned To",
+        "Assigned To": "Assignee",
         "Status": "Status",
         "Priority": "Priority",
         "Effective Start Date": "Effective Start Date",
@@ -1015,8 +1029,8 @@ export class TaskService {
         "Account ID": "Account ID",
         "Created By": "Created By",
         "Created On": "Created On",
-        "Modified By": "Modified By",
-        "Modified On": "Modified On"
+        "Modified By": "Updated By",
+        "Modified On": "Updated On"
       };
 
       // Map tasks to export format

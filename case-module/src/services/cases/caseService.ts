@@ -785,7 +785,7 @@ export class CaseService {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.NOT_FOUND_MESSAGE,
         data: {
-          caseInfo: null,
+          caseInfo: [],
           count: 0,
         },
       };
@@ -2309,7 +2309,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
             "Task Name" : d.task_name,
             "Assigned To" : d.assigned_to_name || "-",
             "Start Date" : d.effective_start_datetime ? moment(d.effective_start_datetime).format("YYYY-MMM-DD") : "-",
-            "End Date": d.effective_end_datetime ? moment(d.effective_end_datetime).format("YYYY-MMM-DD") : "-",
+            "Due Date": d.effective_end_datetime ? moment(d.effective_end_datetime).format("YYYY-MMM-DD") : "-",
             "Status": d.task_status_name || "-",
           }
           const exportRecord: Record<string, any> = {};
@@ -3243,5 +3243,26 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
         return finalResult
       } 
     } else return []
+  }
+  async getCaseSubmissionDate(data: any): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { caseSubmissionDate: string };
+  }> {
+    try {
+      const caseSubmissionDate = await this.caseSchemaService.getCaseSubmissionDate(data);
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          caseSubmissionDate,
+        },
+      };
+    } catch (err) {
+      logMessage(`Error fetching case submission date, ${err}`);
+      throw this.throwServiceError(err as Error);
+    }
   }
 }

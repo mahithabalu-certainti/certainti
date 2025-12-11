@@ -1,4 +1,3 @@
-import { time } from "console";
 import Decimal from "decimal.js";
 import Joi from "joi";
 const uuidRegex = /^[A-Z0-9]{4}-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -189,6 +188,70 @@ const listCaseSummarySchema = Joi.object({
   sortBy: Joi.string().optional(),
   sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
 });
+
+const jurisdictionRDConfigSchema = Joi.object({
+ config_rid: Joi.string().required(),
+ credit_config_group_rid: Joi.string().required()
+});
+
+const jurisdictionRDConfigSchemaForNew = Joi.object({
+ country_rid: Joi.string().required(),
+ state_rid: Joi.string().optional().allow("", null),
+ is_federal: Joi.boolean().required(),
+ credit_program_name: Joi.string().max(255).required(),
+});
+
+const configItemSchema = Joi.object({
+  label: Joi.string().required(),
+  value: Joi.any().allow(null)
+});
+
+const updateJurisdictionRDConfigSchema = Joi.object({
+  effective_start_date: Joi.date().required(),
+  effective_end_date: Joi.date().optional().allow("", null),
+  country_rid: Joi.string().required(),
+  jurisdictionConfig: Joi.object({
+    credit_program_name: Joi.string().required(),
+    config_rid: Joi.string().required(),
+    configItems: Joi.array().items(configItemSchema).min(1).required()
+  }).required(),
+  platformConfig: Joi.object({
+    credit_program_name: Joi.string().required(),
+    config_rid: Joi.string().required(),
+    configItems: Joi.array().items(configItemSchema).min(1).required()
+  }).required()
+});
+
+const createJurisdictionRDConfigSchema = Joi.object({
+  effective_start_date: Joi.date().required(),
+  effective_end_date: Joi.date().optional().allow("", null),
+  jurisdictionConfig: Joi.object({
+    credit_config_group_rid: Joi.string().required(),
+    configItems: Joi.array().items(configItemSchema).min(1).required()
+  }).required(),
+  platformConfig: Joi.object({
+    credit_config_group_rid: Joi.string().required(),
+    configItems: Joi.array().items(configItemSchema).min(1).required()
+  }).required(),
+  is_federal: Joi.boolean().required() ,
+  status_rid: Joi.string().required()
+});
+
+const listJurisdictionConfigSchema = Joi.object({
+  page: Joi.string().optional().pattern(/^[0-9]+$/),
+  limit: Joi.string().optional().pattern(/^[0-9]+$/),
+  filters: Joi.string().default("{}"),
+  sortBy: Joi.string().optional(),
+  sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
+});
+
+const exportJurisdictionConfigSchema = Joi.object({
+  filters: Joi.string().default("{}"),
+  sortBy: Joi.string().optional(),
+  sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
+});
+
+
 
 const exportCaseSummarySchema = Joi.object({
  filters: Joi.object().default({}),
@@ -1044,6 +1107,11 @@ const projectTaskByIdSchema = Joi.object({
   accountRid: Joi.string().pattern(uuidRegex).required(),
 })
 
+const caseSubmissionDateSchema = Joi.object({
+ fiscal_year: Joi.number().integer().min(1900).max(2100).required(),
+ country_rid: Joi.string().required()
+});
+
 
 
 
@@ -1094,5 +1162,12 @@ export {
   createActivityCallSchema,
   updateActivityCallSchema,
   sentReviewProjectSchema,
-  getEmailTemplatePreviewSchema
+  getEmailTemplatePreviewSchema,
+  jurisdictionRDConfigSchema,
+  updateJurisdictionRDConfigSchema,
+  createJurisdictionRDConfigSchema,
+  listJurisdictionConfigSchema,
+  exportJurisdictionConfigSchema,
+  jurisdictionRDConfigSchemaForNew,
+  caseSubmissionDateSchema
 };

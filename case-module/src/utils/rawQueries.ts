@@ -1031,9 +1031,9 @@ export function fetchChecklistAttachToDetails(schemaName: string, attachTo: stri
     case 'account':
       return `SELECT ad.account_rid, ad.account_name AS name FROM ${schemaName}.account_details ad WHERE ad.account_rid = '${attachTo}'`;
     case 'project':
-      return `SELECT pf.rid, pf.project_code AS name  AS name FROM ${schemaName}.project_fiscal pf WHERE pf.rid = '${attachTo}'`;
+      return `SELECT pf.rid, pf.project_code AS name  FROM ${schemaName}.project_fiscal pf WHERE pf.rid = '${attachTo}'`;
     case 'case':
-      return `SELECT cd.rid, cd.case_name AS name  AS name FROM ${schemaName}.cases cd WHERE cd.rid = '${attachTo}'`;
+      return `SELECT cd.rid, cd.case_name AS name FROM ${schemaName}.cases cd WHERE cd.rid = '${attachTo}'`;
     case 'resource':
       return `SELECT r.rid, r.resource_code AS name FROM ${schemaName}.resources r WHERE r.rid = '${attachTo}'`;
     case 'resource_cost':
@@ -1084,16 +1084,23 @@ export function fetchChecklistAttachToDetails(schemaName: string, attachTo: stri
       for(let [key, conditions] of Object.entries(filter)) {
         if(Object.keys(filterColumnsCaseTask).includes(key)) {
           validKey = key;
-          let dynamicAlias : string = ``
+          let dynamicAlias;
           for(let [cond, values] of Object.entries(conditions)) {
             switch (filterColumnsCaseTaskTypes[validKey]) {
               case "string" : {
-                if(validKey === 'role_rid') dynamicAlias = `ctt`
-                else dynamicAlias = `ct`
+                if(validKey === 'assigned_to') {
+                  dynamicAlias = `ctt`
+                  validKey = `user_rid`
+                } else if (validKey === 'role_rid') {
+                  dynamicAlias = `ctt`
+                  validKey = `role_rid`
+                } else {
+                  dynamicAlias = `ct`
+                }
                 if(cond === 'equals') 
                   filterQueryArray.push(`LOWER(${dynamicAlias}.${validKey}) = '${values.toLowerCase()}'`)
                 if(cond === 'not_equals')
-                  filterQueryArray.push(`LOWER(${dynamicAlias}.${validKey}) != '${values.toLowerCase()}' OR ${dynamicAlias}.${validKey} IS NULL`)
+                  filterQueryArray.push(`(LOWER(${dynamicAlias}.${validKey}) != '${values.toLowerCase()}' OR ${dynamicAlias}.${validKey} IS NULL)`)
                 if(cond === 'contains')
                   filterQueryArray.push(`${dynamicAlias}.${validKey} ILIKE '%${values}%'`)
                 if(cond === 'is_empty') 
@@ -1140,7 +1147,7 @@ export function fetchChecklistAttachToDetails(schemaName: string, attachTo: stri
     ct.effective_end_datetime, ct.task_status_rid, ctt.role_rid
     FROM
     ${schemaName}.case_task ct
-    LEFT JOIN ${schemaName}.case_team ctt ON ctt.user_rid = ct.assigned_to AND ctt.case_rid = ct.case_rid AND ctt.account_rid = ct.account_rid AND ctt.status_rid = '${statusId}'
+    LEFT JOIN ${schemaName}.case_team ctt ON ctt.user_rid = ct.assigned_to AND ctt.case_rid = ct.case_rid AND ctt.account_rid = ct.account_rid AND ctt.status_rid = '${statusId}' AND ct.case_team_member_role_rid = ctt.role_rid
     WHERE
     ct.status_rid = '${statusId}'
     AND
@@ -1716,4 +1723,61 @@ export function fetchChecklistAttachToDetails(schemaName: string, attachTo: stri
     return `UPDATE ${schemaName}.cases SET case_total_project_cost = ${totalCostPrj}, case_total_qre_cost = ${totalQreCost} 
     WHERE rid = '${caseRid}' AND account_rid = '${accountRid}'`
   }
+
+  export const listAllJurisdictionConfig = (
+  searchValue: string,
+  whereKey: string,
+  joinedConditions: string,
+  sortValue: string,
+  pagination: string
+) =>  `
+    WITH fetch_jurisdiction_config AS (
+        SELECT
+            jc.rid, jc.r_number,
+            jc.status_rid,s.status_name,
+            jc.created_by, jc.modified_by,
+            jc.created_datetime, jc.modified_datetime,
+            COUNT(jc.rid) OVER() AS total_records,
+            jc.effective_start_date,
+            jc.effective_end_date,g.is_federal,
+            uc.first_name || ' ' || uc.last_name AS created_user_name,
+            um.first_name || ' ' || um.last_name AS modified_user_name,
+            jc.credit_config_group_rid
+            FROM
+            ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values jc
+             LEFT JOIN ${MAIN_SCHEMA_NAME}.rd_credit_config_group g ON jc.credit_config_group_rid = g.rid
+             LEFT JOIN ${MAIN_SCHEMA_NAME}.country c ON g.country_rid = c.rid
+             LEFT JOIN ${MAIN_SCHEMA_NAME}.status s ON jc.status_rid = s.rid
+             LEFT JOIN ${MAIN_SCHEMA_NAME}.user uc ON uc.rid = jc.created_by
+             LEFT JOIN ${MAIN_SCHEMA_NAME}.user um ON um.rid = jc.modified_by
+              WHERE
+    (jc.r_number ILIKE '${searchValue}')
+    ${joinedConditions}
+    ),
+    paginated_datas AS (
+    SELECT * FROM fetch_jurisdiction_config ${sortValue} ${pagination}
+    
+    )
+        SELECT 
+        array_agg(jsonb_build_object(
+        'rid', i.rid,
+        'r_number', i.r_number,
+        'status_rid', i.status_rid,
+        'status_name', i.status_name,
+        'created_by', i.created_by,
+        'modified_by', i.modified_by,
+        'created_datetime', i.created_datetime,
+        'modified_datetime', i.modified_datetime,
+        'effective_start_date', i.effective_start_date,
+        'effective_end_date', i.effective_end_date,
+        'total_records', i.total_records,
+        'created_user_name', i.created_user_name,
+        'modified_user_name', i.modified_user_name,
+        'is_federal', i.is_federal,
+        'credit_config_group_rid', i.credit_config_group_rid
+        ) ) AS jurisdiction_config_list
+
+        FROM
+        paginated_datas i
+    `;
  

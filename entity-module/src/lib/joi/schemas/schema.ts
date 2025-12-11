@@ -1475,7 +1475,6 @@ const updateProjectSchema = Joi.object({
   industry_rid: Joi.string()
   .pattern(uuidRegex, "valid UUID")
   .optional().allow(null),
-  is_qualified: Joi.boolean().required()  ,
   industry_name: Joi.string().min(4).max(100).optional().allow(null).allow(""),
   project_startdate: Joi.string()
     .max(10)

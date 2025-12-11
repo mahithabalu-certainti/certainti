@@ -2293,8 +2293,24 @@ export const rawQueries = {
     return `SELECT rid, status_name as name FROM ${MAIN_SCHEMA_NAME}.activity_status WHERE activity_type ='Task' AND rid IN ('${oldRid}', '${newRid}')`
   },
   getTaskTypeRidMilestone: `SELECT rid FROM ${MAIN_SCHEMA_NAME}.task_type WHERE task_type_name = 'Milestone'`,
-  getTaskTypeRidActivity: `SELECT rid FROM ${MAIN_SCHEMA_NAME}.task_type WHERE task_type_name = 'Activity'`
-
+  getTaskTypeRidActivity: `SELECT rid FROM ${MAIN_SCHEMA_NAME}.task_type WHERE task_type_name = 'Action'`,
+  checkCaseProjectsTableExists: `
+                SELECT EXISTS (
+                    SELECT 1
+                    FROM information_schema.tables
+                    WHERE table_schema = :schemaName
+                    AND table_name = 'case_projects'
+                ) AS exists;
+                `,
+  fetchUsersByIds: `SELECT rid, CONCAT(first_name, ' ', last_name) as full_name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (:userIds)`,
+  getStatusNamesByIds: `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.activity_status WHERE rid IN (:statusIds)
+          union
+          SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.case_status  WHERE rid IN (:statusIds)
+          `,
+  getPriorityNamesByIds: `SELECT rid, priority_name FROM ${MAIN_SCHEMA_NAME}.case_priority WHERE rid IN (:priorityIds)`,
+  getResourceNamesByIds(schema_name: string): string {
+    return `SELECT rid, resource_name FROM ${schema_name}.resources WHERE rid IN (:resourceRids)`;
+  }
 };
 
 export const IMPORT_FILTER_COLUMNS: any = {
