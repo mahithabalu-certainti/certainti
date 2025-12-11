@@ -47,6 +47,7 @@ import {
   SCHEMANAME_PREFIX,
   emailCategorties,
   caseTaskMapping,
+  mainTableFiltersForCase,
 } from "../../utils/constants";
 import { query } from "express";
 import currency from "currency.js";
@@ -2132,9 +2133,16 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
       let fetchParentRnumber : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
       let schemaName = rawQueries.fetchSchemaName(fetchParentRnumber[0][0].r_number);
       let doSorting : boolean;
-      if(data.sort === 'assigned_to' || data.sort === 'task_status_name') doSorting = false 
-      else doSorting = true
-      const result = await this.caseSchemaService.fetchTaskForCases(data.page, data.limit, data.search, data.sort, data.sort_by, data.filter, doSorting, data.case_rid, data.account_rid, schemaName, isExport);
+      let disablePagination : boolean;
+      if(data.sort === 'assigned_to_name' || data.sort === 'task_status_name' || data.sort === 'role_name') {
+        doSorting = false 
+        disablePagination = true
+      }
+      else {
+        doSorting = true
+        disablePagination = false
+      }
+      const result = await this.caseSchemaService.fetchTaskForCases(data.page, data.limit, data.search, data.sort, data.sort_by, data.filter, doSorting, data.case_rid, data.account_rid, schemaName, isExport, disablePagination);
       if(result.length > 0) {
         let allFilteredUsers
         let allCaseTaskStatus;
@@ -2166,52 +2174,61 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
             role_name : roleMap.get(d.role_rid) || null
           }
         });
-        
-        if(data.sort === 'task_status_name' && data.sort_by === 'DESC') {
-          mapResult = mapResult.sort((b, a) => {
-            const taskNameA = a.task_status_name || ""
-            const taskNameB = b.task_status_name || ""
-            return taskNameB.localeCompare(taskNameA)
-          })
-        } 
-        else if(data.sort === 'task_status_name' && data.sort_by === 'ASC') {
-          mapResult = mapResult.sort((a, b) => {
-            const taskNameA = a.task_status_name || ""
-            const taskNameB = b.task_status_name || ""
-            return taskNameA.localeCompare(taskNameB)
-          })
+
+        if (
+        mainTableFiltersForCase[data.sort] != undefined &&
+        data.sort_by.toLowerCase() == "asc"
+        ) {
+          mapResult = mapResult.sort((a: any, b: any) => {
+            const valA = a[data.sort];
+            const valB = b[data.sort];
+
+            // treat null, undefined, '' and ' ' as NULL
+            const isNullA = valA === null || valA === undefined || valA.trim?.() === "";
+            const isNullB = valB === null || valB === undefined || valB.trim?.() === "";
+
+            // NULLS LAST
+            if (isNullA && !isNullB) return 1;
+            if (!isNullA && isNullB) return -1;
+            if (isNullA && isNullB) return 0;
+
+            // ASC
+            return valA.localeCompare(valB);
+          });
+        } else if (
+          mainTableFiltersForCase[data.sort] != undefined &&
+          data.sort_by.toLowerCase() == "desc"
+        ) {
+          mapResult = mapResult.sort((a: any, b: any) => {
+            const valA = a[data.sort];
+            const valB = b[data.sort];
+
+            const isNullA = valA === null || valA === undefined || valA.trim?.() === "";
+            const isNullB = valB === null || valB === undefined || valB.trim?.() === "";
+
+            // NULLS LAST
+            if (isNullA && !isNullB) return 1;
+            if (!isNullA && isNullB) return -1;
+            if (isNullA && isNullB) return 0;
+
+            // DESC
+            return valB.localeCompare(valA);
+          });
         }
-        else if(data.sort === 'assigned_to_name' && data.sort_by === 'DESC') {
-          mapResult = mapResult.sort((b, a) => {
-            const taskNameA = a.assigned_to_name || ""
-            const taskNameB = b.assigned_to_name || ""           
-            return taskNameB.localeCompare(taskNameA)
-          })
+        let finalData;
+        if (isExport) {
+          finalData = mapResult;
+        } else {
+          finalData = disablePagination
+            ? mapResult.slice(
+                (data.page - 1) * data.limit,
+                data.page * data.limit
+              )
+            : mapResult;
         }
-        else if(data.sort === 'assigned_to_name' && data.sort_by === 'ASC') {
-          mapResult = mapResult.sort((a, b) => {
-            const taskNameA = a.assigned_to_name || ""
-            const taskNameB = b.assigned_to_name || ""             
-            return taskNameA.localeCompare(taskNameB)
-          })
-        }
-         else if(data.sort === 'role_name' && data.sort_by === 'DESC') {
-          mapResult = mapResult.sort((b, a) => {
-            const taskNameA = a.case_team_member_role_name || ""
-            const taskNameB = b.case_team_member_role_name || ""
-            return taskNameB.localeCompare(taskNameA)
-          })
-        } 
-         else if(data.sort === 'role_name' && data.sort_by === 'ASC') {
-          mapResult = mapResult.sort((b, a) => {
-            const taskNameA = a.case_team_member_role_name || ""
-            const taskNameB = b.case_team_member_role_name || ""
-            return taskNameA.localeCompare(taskNameB)
-          })
-        } 
         return {
           statusCode : HttpStatus.SUCCESS,
-          data : mapResult
+          data : finalData
         }
       } else {
         return {
