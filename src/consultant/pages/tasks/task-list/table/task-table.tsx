@@ -357,6 +357,9 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
             queryClient.invalidateQueries({
               queryKey: ['taskComments', commentsParams],
             });
+            queryClient.invalidateQueries({
+              queryKey: ['taskAttachments', commentsParams],
+            });
             queryClient.invalidateQueries({ queryKey: ['allTasksList'] });
             resolve();
           },
@@ -438,6 +441,9 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
 
             queryClient.invalidateQueries({
               queryKey: ['taskComments', commentsParams],
+            });
+            queryClient.invalidateQueries({
+              queryKey: ['taskAttachments', commentsParams],
             });
             queryClient.invalidateQueries({ queryKey: ['allTasksList'] });
             resolve();
