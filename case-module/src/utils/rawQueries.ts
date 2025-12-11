@@ -1083,19 +1083,26 @@ export function fetchChecklistAttachToDetails(schemaName: string, attachTo: stri
       for(let [key, conditions] of Object.entries(filter)) {
         if(Object.keys(filterColumnsCaseTask).includes(key)) {
           validKey = key;
+          let dynamicAlias;
           for(let [cond, values] of Object.entries(conditions)) {
             switch (filterColumnsCaseTaskTypes[validKey]) {
               case "string" : {
+                if(validKey === 'assigned_to') {
+                  dynamicAlias = `ctt`
+                  validKey = `user_rid`
+                } else {
+                  dynamicAlias = `ct`
+                }
                 if(cond === 'equals') 
-                  filterQueryArray.push(`LOWER(ct.${validKey}) = '${values.toLowerCase()}'`)
+                  filterQueryArray.push(`LOWER(${dynamicAlias}.${validKey}) = '${values.toLowerCase()}'`)
                 if(cond === 'not_equals')
-                  filterQueryArray.push(`(LOWER(ct.${validKey}) != '${values.toLowerCase()}' OR ct.${validKey} IS NULL)`)
+                  filterQueryArray.push(`(LOWER(${dynamicAlias}.${validKey}) != '${values.toLowerCase()}' OR ${dynamicAlias}.${validKey} IS NULL)`)
                 if(cond === 'contains')
-                  filterQueryArray.push(`ct.${validKey} ILIKE '%${values}%'`)
+                  filterQueryArray.push(`${dynamicAlias}.${validKey} ILIKE '%${values}%'`)
                 if(cond === 'is_empty') 
-                  filterQueryArray.push(`(ct.${validKey} IS NULL OR ct.${validKey} = '')`)
+                  filterQueryArray.push(`(${dynamicAlias}.${validKey} IS NULL OR ${dynamicAlias}.${validKey} = '')`)
                 if(cond === 'in')
-                  filterQueryArray.push(`ct.${validKey} IN (${values.map((d : any) => `'${d}'`).join(',')})`)
+                  filterQueryArray.push(`${dynamicAlias}.${validKey} IN (${values.map((d : any) => `'${d}'`).join(',')})`)
                 break;
               }
               case "date" : {
@@ -1131,7 +1138,7 @@ export function fetchChecklistAttachToDetails(schemaName: string, attachTo: stri
     `
     WITH fetch_case_task AS (
     SELECT 
-    ct.rid, ct.task_name, ct.assigned_to, 
+    ct.rid, ct.task_name, ctt.user_rid AS assigned_to, 
     ct.effective_start_datetime, 
     ct.effective_end_datetime, ct.task_status_rid
     FROM
