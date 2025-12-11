@@ -32,6 +32,12 @@ import { FilterValue } from '../../account-details-sidebar/components/filter/fil
 import { AccessRestricted } from '../../../../components/account-restricted';
 import SearchBar from '../../../../components/search/search-bar';
 import { getTaskFilterFields } from './table/filter-fields';
+import {
+  transformPriorityData,
+  transformStatusData,
+} from '../../case/case-details/work-breakdown/helper';
+import { useGetTaskPriorities, useGetTaskStatuses } from '../../../services/work-breakdown/work-breakdown-service';
+import { useGetActivityStatus } from '../../../services/activities/activities-service';
 
 export const Tasks: React.FC = () => {
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({});
@@ -52,6 +58,9 @@ export const Tasks: React.FC = () => {
   const [currentCategory, setCurrentCategory] = useState<string>('');
   const [columnAnchorEl, setColumnAnchorEl] =
     React.useState<HTMLButtonElement | null>(null);
+
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab') || 'milestone';
 
   const { fiscalYear, filters } = useSelector<
     RootState,
@@ -185,7 +194,50 @@ export const Tasks: React.FC = () => {
   //   return map;
   // }, [attachmentEditFields]);
 
-  const TaskFilterFields = getTaskFilterFields();
+  const prioritiesQuery = useGetTaskPriorities();
+  const statusesQuery = useGetTaskStatuses();
+  const activityStatusesQuery = useGetActivityStatus('Task');
+
+  const priorityOptions = useMemo(
+    () =>
+      transformPriorityData(prioritiesQuery.data || []).map((p) => ({
+        label: p.name,
+        value: p.name,
+      })),
+    [prioritiesQuery.data]
+  );
+
+  const statusOptions = useMemo(() => {
+    if (tabParam === 'milestone') {
+      return transformStatusData(statusesQuery.data || []).map((s) => ({
+        label: s.name,
+        value: s.name,
+      }));
+    } else {
+      const activityStatuses =
+        activityStatusesQuery.data?.data?.activityStatus || [];
+      return activityStatuses.map((status: any) => ({
+        label: status.status_name,
+        value: status.status_name,
+      }));
+    }
+  }, [tabParam, statusesQuery.data, activityStatusesQuery.data]);
+
+  const accountStatusOptions = [
+    { label: 'Active', value: 'Active' },
+    { label: 'In-Active', value: 'Inactive' },
+  ];
+
+  const TaskFilterFields = useMemo(
+    () =>
+      getTaskFilterFields(
+        priorityOptions,
+        statusOptions,
+        [], // assigneeOptions - currently empty for global list
+        accountStatusOptions
+      ),
+    [priorityOptions, statusOptions]
+  );
 
   const menuItems = [
     {
@@ -208,8 +260,7 @@ export const Tasks: React.FC = () => {
 
   if (!attachmentEnable || !isAttachmentViewEnable) return <AccessRestricted />;
 
-  const [searchParams, setSearchParams] = useSearchParams();
-  const tabParam = searchParams.get('tab') || 'milestone';
+  if (!attachmentEnable || !isAttachmentViewEnable) return <AccessRestricted />;
 
   const handleTabChange = (value: string) => {
     setSearchText('');
@@ -305,7 +356,7 @@ export const Tasks: React.FC = () => {
             <NewFilterIcon alt='filter-icon' />
             Filter
             {(appliedFilters && Object.keys(appliedFilters).length > 0) ||
-            sortFilterCount > 0 ? (
+              sortFilterCount > 0 ? (
               <div className='absolute -top-[5px] -right-2 w-4 h-4 flex items-center justify-center text-xs'>
                 <span className='absolute w-full h-full bg-[#FF6666] rounded-full animate-ping opacity-75 z-0'></span>
                 <span className='w-4 h-4 bg-[#FF6666] text-white rounded-full flex items-center justify-center z-10 font-semibold'>

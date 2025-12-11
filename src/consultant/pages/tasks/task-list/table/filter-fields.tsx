@@ -1,8 +1,23 @@
 import { FieldConfig } from '../../../../../consultant/pages/account-details-sidebar/components/filter/filterType';
+import { getFiscalYears } from '../../../../../common-utils';
 
-export const getTaskFilterFields =
-  () // permissionMap?: Record<string, { read: boolean; edit: boolean }>
-  : FieldConfig[] => [
+const enumOptions: { option: string; value: string }[] = [
+  { option: 'Equals', value: 'equals' },
+  { option: 'Not Equals', value: 'not_equals' },
+  { option: 'In', value: 'in' },
+];
+
+const minYear = 1950;
+const currentYear = new Date().getFullYear();
+const fiscalYears = getFiscalYears(currentYear - minYear + 1);
+
+export const getTaskFilterFields = (
+  priorityOptions: { value: string; label: string }[],
+  statusOptions: { value: string; label: string }[],
+  _assigneeOptions: { value: string; label: string }[],
+  accountStatusOptions: { value: string; label: string }[]
+  // permissionMap?: Record<string, { read: boolean; edit: boolean }>
+): FieldConfig[] => [
     {
       name: 'Task ID',
       value: 'r_number',
@@ -24,7 +39,9 @@ export const getTaskFilterFields =
     {
       name: 'Fiscal Year',
       value: 'fiscal_year',
-      type: 'number',
+      type: 'enum',
+      options: fiscalYears.map((y) => ({ option: y.label, value: y.value })),
+      operatorOption: enumOptions,
       // hide: !permissionMap?.['fiscal_year']?.read,
     },
     {
@@ -48,19 +65,34 @@ export const getTaskFilterFields =
     {
       name: 'Priority',
       value: 'priority_name',
-      type: 'text',
+      type: 'enum',
+      options: priorityOptions.map((opt) => ({
+        option: opt.label,
+        value: opt.value,
+      })),
+      operatorOption: enumOptions,
       // hide: !permissionMap?.['priority_name']?.read,
     },
     {
       name: 'Status',
       value: 'status_name',
-      type: 'text',
+      type: 'enum',
+      options: statusOptions.map((opt) => ({
+        option: opt.label,
+        value: opt.value,
+      })),
+      operatorOption: enumOptions,
       // hide: !permissionMap?.['status_name']?.read,
     },
     {
       name: 'Account Status',
       value: 'account_status_name',
-      type: 'text',
+      type: 'enum',
+      options: accountStatusOptions.map((opt) => ({
+        option: opt.label,
+        value: opt.value,
+      })),
+      operatorOption: enumOptions,
       // hide: !permissionMap?.['account_status_name']?.read,
     },
     {

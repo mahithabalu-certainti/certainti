@@ -7,6 +7,7 @@ export type TaskList = {
   modified_datetime: string | null;
   account_rid: string;
   attach_to: string;
+  attach_to_name: string;
   attachment_level: string;
   task_name: string;
   description: string;
