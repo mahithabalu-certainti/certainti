@@ -1039,7 +1039,7 @@ export const rawQueries = {
     return `
       SELECT distinct status_name ,rid
       FROM ${MAIN_SCHEMA_NAME}.activity_status
-      WHERE status = 'active'${activityType && activityType !== "All" ? ` AND activity_type = '${activityType}'` : ""}
+      WHERE status = 'active'${activityType && activityType !== "All" ? ` AND lower(activity_type) = lower('${activityType}')` : ""}
       ORDER BY status_name ASC
     `;
   },
