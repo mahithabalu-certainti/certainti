@@ -879,6 +879,14 @@ export const rawQueries = {
         )
       )
     `,
+  fetchPlatformConfig(rid: string) {
+        return `
+        SELECT config_json FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values rv
+        join ${MAIN_SCHEMA_NAME}.rd_credit_config_group rg on  rv.credit_config_group_rid  = rg.rid
+        where rg.country_rid = '${rid}'
+        and credit_program_name = 'Platform Configuration'
+        and is_federal = true`;
+      },
   async updateSetting(
     schemaName: string,
     data: any,
