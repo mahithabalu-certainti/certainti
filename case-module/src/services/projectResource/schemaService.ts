@@ -947,8 +947,17 @@ export class ProjectResourceSchemaService {
       userId,
       "projects_resources_view_edit"
     );
+    const projectFields = await schemaService.getAllowedExportFields(
+      userId,
+      "projects_view_edit"
+    );
     const allowedFieldSet = new Set<string>();
     for (const field of projectResourceFields) {
+      if (field.read) {
+        allowedFieldSet.add(field.field_name);
+      }
+    }
+    for (const field of projectFields) {
       if (field.read) {
         allowedFieldSet.add(field.field_name);
       }
