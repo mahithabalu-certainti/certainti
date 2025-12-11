@@ -848,6 +848,28 @@ return !response;
       const { rows: caseDetails, count } = await Case.findAndCountAll({
         where: whereConditions,
         order: [[finalSortBy, finalSortOrder]],
+         attributes: {
+        include: [
+          [
+            Sequelize.literal(`
+              CASE 
+                WHEN "Case"."case_total_project_cost" = 0 THEN NULL
+                ELSE "Case"."case_total_project_cost"
+              END
+            `),
+            'case_total_project_cost'
+          ],
+          [
+             Sequelize.literal(`
+          CASE 
+            WHEN "Case"."case_total_qre_cost" = 0 THEN NULL
+            ELSE "Case"."case_total_qre_cost"
+          END
+        `),
+        'case_total_qre_cost'
+      ]
+    ]
+  },
         ...(disablePagination ? {} : { limit: limit, offset: offset }),
       });
 
