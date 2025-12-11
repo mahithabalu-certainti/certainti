@@ -1550,7 +1550,7 @@ class ProjectIngestionService {
         project_rid: projectData.project_id,
         project_fiscal_rid: projectData.project_fiscal_id,
         max_ai_interaction : DEFAULT_PROJECT_DETAILS.maxAiInteraction,
-
+        auto_send_ai_interaction : false,
         effective_cost: baseData.total_cost_prj,
         effective_effort: baseData.total_effort_prj,
         effective_total_fte: baseData.total_fte_prj,
