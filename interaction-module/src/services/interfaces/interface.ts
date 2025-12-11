@@ -254,6 +254,7 @@ export interface IInteractionService {
   }>;
   triggerAI(data : any) : Promise<{
     statusMessage : string,
+    statusCode : number,
     status : any,
     data : any
   }>

@@ -2941,9 +2941,10 @@ export class InteractionService {
         );
 
         let projectType: any[] = [];
+        let projectTypes :any;
         if (platFormConfig && platFormConfig.config_json && platFormConfig.config_json.project_type) {
           // Support array or single value
-          let projectTypes = platFormConfig.config_json.project_type;
+           projectTypes = platFormConfig.config_json.project_type;
           if (!Array.isArray(projectTypes)) {
             projectTypes = [projectTypes];
           }
@@ -2969,7 +2970,13 @@ export class InteractionService {
           : [];
         if (projectIds.length === 0) {
           logMessage(`No active projects found for account ID in triggerAI: ${req.data[0].account_rid}`);
-          throw new Error("No active projects found for the account");
+           return {
+              statusCode: HttpStatus.FAILED,
+              statusMessage: `No active projects found for the account with the project type ${projectTypes}`,
+              data: null,
+              status: "error",
+              errorMessage: `No active projects found for the account with the project type ${projectTypes}`,
+            };
         }
         payload.project_id = projectIds;
       }
@@ -3022,6 +3029,7 @@ export class InteractionService {
       // Check if the message was processed successfully
       logMessage(`Send result to topic: ${JSON.stringify(sendResult)}`);
       return {
+        statusCode: HttpStatus.SUCCESS,
         statusMessage: "RD Assessment Initiated",
         status: "success",
         data: null,
@@ -3029,6 +3037,7 @@ export class InteractionService {
     } catch (error) {
       logMessage(`Error in triggerAI: ${error}`);
       return {
+          statusCode: HttpStatus.FAILED,
         statusMessage: "Failed to process AI request",
         status: "error",
         data: null,

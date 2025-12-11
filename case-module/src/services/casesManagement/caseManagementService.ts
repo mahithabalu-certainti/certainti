@@ -818,6 +818,13 @@ export class CaseManagementService {
         errorMessage: `A template with the category "${result.category_name}" already exists. Please choose a different category.`,
       };
     }
+     if (!result.isActiveCategoryExists) {
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: HttpStatus.BAD_REQUEST_MESSAGE,
+        errorMessage: `Atleast one template with the category "${result.category_name}" needs to be in active status.`,
+      };
+    }
   }
     const response =
       await this.caseManangementSchemaService.updateEmailTemplate(
