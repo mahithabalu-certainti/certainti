@@ -169,7 +169,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
 
   useEffect(() => {
     // updated default value into constuctFormData
-    console.log('outer');
     formData?.forEach((section) => {
       section.fields.forEach((field) => {
         if (field.assignDefaultValue && field.defaultValue) {
@@ -192,6 +191,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               [field.name]: '',
             }));
           }
+        } else if (field.assignDefaultValue && !field.defaultValue) {
+          setConstructFormData((prev) => ({
+            ...prev,
+            [field.name]: '',
+          }));
         }
       });
     });

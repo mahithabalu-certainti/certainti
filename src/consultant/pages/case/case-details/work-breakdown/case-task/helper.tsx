@@ -18,6 +18,12 @@ const dateOptions: { option: string; value: string }[] = [
   { option: 'Between', value: 'between' },
 ];
 
+export const reqEnumOptions: { option: string; value: string }[] = [
+  { option: 'Equals', value: 'equals' },
+  { option: 'Not Equals', value: 'not_equals' },
+  { option: 'In', value: 'in' },
+];
+
 export const getAssignUserFilterFields = (): FieldConfig[] => [
   {
     name: 'Username',
@@ -35,7 +41,8 @@ export const getAssignUserFilterFields = (): FieldConfig[] => [
 
 export const getAssignGroupsFilterFields = (
   statusOptions: { option: string; value: string }[],
-  assigneeOptions: { option: string; value: string }[] = []
+  assigneeOptions: { option: string; value: string }[] = [],
+  roleOptions: { option: string; value: string }[] = []
 ): FieldConfig[] => [
   {
     name: 'Task Name',
@@ -49,6 +56,13 @@ export const getAssignGroupsFilterFields = (
     type: 'enum',
     options: assigneeOptions,
     operatorOption: enumOptions,
+  },
+  {
+    name: 'Role To Be Assigned',
+    value: 'role_rid',
+    type: 'enum',
+    options: roleOptions,
+    operatorOption: reqEnumOptions,
   },
   {
     name: 'Start Date',

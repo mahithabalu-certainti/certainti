@@ -651,9 +651,22 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
     [userData]
   );
 
+  const roleOptions = useMemo(
+    () =>
+      roleOptionsQuery?.data?.map((role) => ({
+        option: role.role_name,
+        value: role.rid,
+      })),
+    [roleOptionsQuery]
+  );
+
   const filterFields =
     tabParam === 'case_task'
-      ? getAssignGroupsFilterFields(memoizedStatus, assigneeOptions)
+      ? getAssignGroupsFilterFields(
+          memoizedStatus,
+          assigneeOptions,
+          roleOptions
+        )
       : undefined;
 
   const handleFilter = () => {
