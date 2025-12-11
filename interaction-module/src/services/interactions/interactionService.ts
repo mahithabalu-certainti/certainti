@@ -3022,7 +3022,10 @@ export class InteractionService {
         value: JSON.stringify(payload),
       };
       const producer = await this.getProducer();
-      const sendResult = null;
+      const sendResult = await producer.send({
+        topic,
+        messages: [message],
+      });
       // Check if the message was processed successfully
       logMessage(`Send result to topic: ${JSON.stringify(sendResult)}`);
       return {
