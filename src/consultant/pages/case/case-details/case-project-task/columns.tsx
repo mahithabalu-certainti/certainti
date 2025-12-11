@@ -43,6 +43,7 @@ export const getCaseProjectTaskColumns = (
         borderRight: '1px solid #CBD6E2',
         borderBottom: '1px solid #CBD6E2 !important',
       },
+
       render: (row: CaseProjectTaskRow) => {
         return (
           <span

@@ -106,10 +106,11 @@ export const fetchCaseDetails = async (
 
 export const useCaseDetails = (
   caseId: string,
-  accountId: string
+  accountId: string,
+  refresh?: number
 ): UseQueryResult<CaseDetails | undefined, Error> => {
   return useQuery<CaseDetails | undefined, Error>({
-    queryKey: ['case-details', caseId, accountId],
+    queryKey: ['case-details', caseId, accountId, refresh],
     queryFn: () => fetchCaseDetails(caseId, accountId),
     retry: 0,
     gcTime: 0,

@@ -234,7 +234,7 @@ const QrePercentHistory = ({
       />
       <ResourceTableHeader
         value={'qre-percent-history'}
-        title='QRE Percent History'
+        title='RD Assessment History'
         count={totalItems}
         titleIcon={
           <ActivitiesIcon

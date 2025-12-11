@@ -92,13 +92,13 @@ export const CaseDetails = () => {
     (state: RootState) => state.permission
   );
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
+  const [refreshDetails, setRefreshDetails] = useState<number>(Date.now());
   const {
     data: caseData,
     isLoading,
     isError,
     isPending,
-  } = useCaseDetails(caseId ?? '', accountId ?? '');
+  } = useCaseDetails(caseId ?? '', accountId ?? '', refreshDetails);
   const isAssignProject = searchParams.get('assignProject');
   const projectDetails = searchParams.get('detailstab');
   const tabParam = searchParams.get('tab');
@@ -593,6 +593,7 @@ export const CaseDetails = () => {
               setTableParams={setCaseProjectParams}
               setReviewProjectParams={setReviewProjectParams}
               setExportType={setExportType}
+              setRefreshDetails={setRefreshDetails}
             />
           </div>
         );

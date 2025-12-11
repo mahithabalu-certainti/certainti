@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { IconButton } from '@mui/material';
-import { InfoIcon } from '../../../../../assets';
+
 import QrePercentHistoryModal from './modal';
 import { QrePercentHistoryItem } from '../../../../types/qre-percent-history';
 import { ListTableColumn } from '../../../../../components/table/types';
@@ -8,20 +7,30 @@ import { formatDateToYYYYMMDDWithTime } from '../../../../../common-utils';
 
 interface ContentCellProps {
   content: string;
+  qrePercent?: number;
 }
 
-const ContentCell: React.FC<ContentCellProps> = ({ content }) => {
+const ContentCell: React.FC<ContentCellProps> = ({ content, qrePercent }) => {
   const [modalOpen, setModalOpen] = useState(false);
+
 
   return (
     <>
-      <IconButton size='small' onClick={() => setModalOpen(true)}>
-        <InfoIcon fontSize='small' />
-      </IconButton>
+      <span
+        onClick={() => setModalOpen(true)}
+        style={{
+          cursor: 'pointer',
+          color: '#0056D2',
+          textDecoration: 'underline',
+        }}
+      >
+        View
+      </span>
       <QrePercentHistoryModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         content={content}
+        qrePercent={qrePercent}
       />
     </>
   );
@@ -41,18 +50,10 @@ export const getQrePercentHistoryColumns = (
       render: (row: QrePercentHistoryItem) => (
         <div
           style={{
-            textAlign: 'right',
+            textAlign: 'left',
           }}
         >{`${row.version || '-'}`}</div>
       ),
-    },
-    {
-      id: 'type',
-      sortId: 'type',
-      label: 'Type',
-      width: '17%',
-      hide: !permissionMap?.['type']?.read,
-      render: (row: QrePercentHistoryItem) => row.type || '-',
     },
     {
       id: 'contents',
@@ -63,11 +64,12 @@ export const getQrePercentHistoryColumns = (
       render: (row: QrePercentHistoryItem) => (
         <div
           style={{
-            textAlign: 'center',
+            textAlign: 'left',
           }}
         >
           <ContentCell
             content={JSON.stringify(row.qre_detailed_breakdown || {})}
+            qrePercent={row.qre_percent}
           />
         </div>
       ),
@@ -81,7 +83,7 @@ export const getQrePercentHistoryColumns = (
       render: (row: QrePercentHistoryItem) => (
         <div
           style={{
-            textAlign: 'right',
+            textAlign: 'left',
           }}
         >{`${row.qre_percent + '%' || '-'}`}</div>
       ),

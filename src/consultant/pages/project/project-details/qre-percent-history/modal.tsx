@@ -3,11 +3,14 @@ import { Modal, Box, Typography, IconButton } from '@mui/material';
 import { ListTableColumn } from '../../../../../components/table/types';
 import { CloseIcon, InfoIcon } from '../../../../../assets';
 import { ListTable } from '../../../../../components/table';
+import { InfoSection } from '../../../../../components';
+import { DisplayColumn } from '../interactions/response-history/ultils';
 
 interface QrePercentHistoryModalProps {
   open: boolean;
   onClose: () => void;
   content: React.ReactNode;
+  qrePercent?: number;
 }
 
 interface AttributeValueRow {
@@ -30,10 +33,11 @@ const QrePercentHistoryModal: React.FC<QrePercentHistoryModalProps> = ({
   open,
   onClose,
   content,
+  qrePercent,
 }) => {
   const projectSummaryData: AttributeValueRow[] = [];
   const assessmentDetailsData: AssessmentDetailsRow[] = [];
-
+  // console.log(content, 'contet')
   try {
     if (typeof content === 'string' && content.trim().startsWith('{')) {
       const parsedContent = JSON.parse(content);
@@ -83,38 +87,59 @@ const QrePercentHistoryModal: React.FC<QrePercentHistoryModalProps> = ({
     height: '30px',
     textTransform: 'capitalize' as const,
   };
+  console.log(content, 'content')
+  const transformCaseData = (data: AttributeValueRow[]): DisplayColumn[] => {
+    const formattedItems = data
+      .filter((row) => row.attribute.toLowerCase() === 'stage')
+      .map((row) => ({
+        label: row.attribute
+          .replace(/_/g, ' ')
+          .replace(/\b\w/g, (c) => c.toUpperCase()),
+        value: row.value || '-',
+      }));
 
-  const projectSummaryColumns: ListTableColumn<AttributeValueRow>[] = [
-    {
-      id: 'attribute',
-      label: 'Attribute',
-      sortId: 'attribute',
-      width: 200,
-      render: (row) => row.attribute,
-    },
-    {
-      id: 'value',
-      label: 'Value',
-      sortId: 'value',
-      width: 350,
-      render: (row) => row.value,
-    },
-  ];
+    // Insert QRE Percent Score if it exists
+    if (qrePercent !== undefined) {
+      formattedItems.push({
+        label: 'QRE Percent Score',
+        value: `${qrePercent}%`,
+      });
+    }
 
+    const columns: DisplayColumn[] = [
+      { items: [] },
+      { items: [] },
+      { items: [] },
+    ];
+
+    formattedItems.forEach((item, index) => {
+      columns[index % 3].items.push(item);
+    });
+
+    return columns.filter((col) => col.items.length > 0);
+  };
   const assessmentDetailsColumns: ListTableColumn<AssessmentDetailsRow>[] = [
     {
       id: 'questionCategory',
-      label: 'Question Category',
+      label: 'Criteria',
       sortId: 'questionCategory',
-      width: 150,
+      width: 350,
       render: (row) => row.questionCategory,
     },
+    // {
+    //   id: 'question',
+    //   label: 'Question',
+    //   sortId: 'question',
+    //   width: 200,
+    //   render: (row) => row.question,
+    // },
+
     {
-      id: 'question',
-      label: 'Question',
-      sortId: 'question',
-      width: 200,
-      render: (row) => row.question,
+      id: 'weight',
+      label: 'Weight',
+      sortId: 'weight',
+      width: 100,
+      render: (row) => row.weight,
     },
     {
       id: 'answer',
@@ -122,13 +147,6 @@ const QrePercentHistoryModal: React.FC<QrePercentHistoryModalProps> = ({
       sortId: 'answer',
       width: 100,
       render: (row) => row.answer,
-    },
-    {
-      id: 'weight',
-      label: 'Weight',
-      sortId: 'weight',
-      width: 100,
-      render: (row) => row.weight,
     },
   ];
 
@@ -145,7 +163,7 @@ const QrePercentHistoryModal: React.FC<QrePercentHistoryModalProps> = ({
           top: '50%',
           left: '60%',
           transform: 'translate(-50%, -50%)',
-          height: 500,
+          height: 270,
           width: 900,
           bgcolor: '#FCFCFC',
           boxShadow: '0px 2px 10px rgba(0, 0, 0, 0.1)',
@@ -176,30 +194,24 @@ const QrePercentHistoryModal: React.FC<QrePercentHistoryModalProps> = ({
               textTransform: 'capitalize' as const,
             }}
           >
-            Project Content
+            RD Assessment History
           </Typography>
           <IconButton onClick={onClose} size='small'>
             <CloseIcon />
           </IconButton>
         </Box>
 
-        <Box sx={{ p: 2 }}>
-          <Typography variant='subtitle1' sx={sectionHeaderStyle}>
-            Project Summary
-          </Typography>
-          <div className='border-x border-b border-[#CBD6E2]'>
-            <ListTable<AttributeValueRow>
-              data={projectSummaryData}
-              columns={projectSummaryColumns}
-              getRowId={(row) => row.id}
-              tableStyle={{ maxHeight: '150px' }}
-              actionWidth={0}
-            />
-          </div>
-
+        <Box>
           <Typography variant='subtitle1' sx={{ ...sectionHeaderStyle, mt: 2 }}>
             Assessment Details
           </Typography>
+          <InfoSection
+            columns={transformCaseData(projectSummaryData)}
+            loading={false}
+            loadingRows={1}
+            error={false}
+            singleLineView={true}
+          />
           <div className='border-x border-b border-[#CBD6E2]'>
             <ListTable<AssessmentDetailsRow>
               data={assessmentDetailsData}
@@ -219,7 +231,7 @@ interface ContentCellProps {
   content: string;
 }
 
-export const ContentCell: React.FC<ContentCellProps> = ({ content }) => {
+export const ContentCell: React.FC<ContentCellProps & { qrePercent?: number }> = ({ content }) => {
   const [isModalOpen, setIsModalOpen] = React.useState(false);
 
   return (
@@ -243,6 +255,7 @@ export const ContentCell: React.FC<ContentCellProps> = ({ content }) => {
         open={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         content={content}
+        qrePercent={0} // Default or unused in this specific export usage if it's used elsewhere
       />
     </>
   );
