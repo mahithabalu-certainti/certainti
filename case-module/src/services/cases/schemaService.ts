@@ -5091,7 +5091,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       effective_end_datetime : data.effective_end_datetime,
       case_team_member_role_rid : data.case_team_member_role_rid,
       assigned_to : data.assigned_to,
-      status_rid : data.status_rid,
+      status_rid : activeStatusRid,
       priority_rid : data.priority_rid,
       milestone_template_rid : data.milestone_template_rid,
       checklist_template_rid : data.checklist_template_rid,
