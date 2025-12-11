@@ -1120,7 +1120,7 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
                           >
                             <span className='w-5 mt-1 inline-flex items-center justify-center cursor-pointer'>
                               <React.Suspense fallback={null}>
-                                <ErrorInfoIcon className='w-5 h-3.5 [&>path]:fill-[#14a7d5]' />
+                                <ErrorInfoIcon className='w-5 h-3.5 [&>path]:fill-[#9fa0a1]' />
                               </React.Suspense>
                             </span>
                           </Tooltip>

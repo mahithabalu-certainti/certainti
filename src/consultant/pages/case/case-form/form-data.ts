@@ -150,9 +150,9 @@ export const CaseFormData = (
             type: '',
             required: false,
           }),
-          createTextField('heat_light_power', ' Heating & Lighting Cost', {
+          createTextField('heat_light_power', 'Heating & Lighting Cost', {
             required: false,
-            placeholder: 'Enter  Heating & Lighting Cost',
+            placeholder: 'Enter Heating & Lighting Cost',
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',

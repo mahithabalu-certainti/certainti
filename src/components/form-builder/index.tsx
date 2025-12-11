@@ -3303,7 +3303,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     >
                       <span className='w-5 inline-flex items-center justify-center cursor-pointer'>
                         <React.Suspense fallback={null}>
-                          <ErrorInfoIcon className='w-6 h-6 -ml-0.5 p-[4px] [&>path]:fill-[#14a7d5]' />
+                          <ErrorInfoIcon className='w-5 h-5 -ml-0.5 p-[4px] [&>path]:fill-[#9fa0a1]' />
                         </React.Suspense>
                       </span>
                     </Tooltip>
