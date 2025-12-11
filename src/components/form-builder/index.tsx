@@ -172,18 +172,16 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     console.log('outer');
     formData?.forEach((section) => {
       section.fields.forEach((field) => {
-        if (
-          field.assignDefaultValue &&
-          field.defaultValue 
-        ) {
-          if(field.clearValue){
+        if (field.assignDefaultValue && field.defaultValue) {
+          if (field.clearValue) {
             const { key, matchedValue } = field.clearValue;
-          if (constructFormData[key] === matchedValue) {
-            setConstructFormData((prev) => ({
-              ...prev,
-              [field.name]: field.defaultValue || '',
-            }));
-          } }else if (field.defaultValue && field.assignDefaultValue) {
+            if (constructFormData[key] === matchedValue) {
+              setConstructFormData((prev) => ({
+                ...prev,
+                [field.name]: field.defaultValue || '',
+              }));
+            }
+          } else if (field.defaultValue && field.assignDefaultValue) {
             setConstructFormData((prev) => ({
               ...prev,
               [field.name]: field.defaultValue || '',
@@ -3301,7 +3299,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     >
                       <span className='w-5 inline-flex items-center justify-center cursor-pointer'>
                         <React.Suspense fallback={null}>
-                          <ErrorInfoIcon className='w-5 h-3.5 [&>path]:fill-[#14a7d5]' />
+                          <ErrorInfoIcon className='w-6 h-6 -ml-0.5 p-[4px] [&>path]:fill-[#14a7d5]' />
                         </React.Suspense>
                       </span>
                     </Tooltip>

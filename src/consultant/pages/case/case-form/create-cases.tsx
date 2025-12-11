@@ -47,7 +47,6 @@ export const CreateCases: React.FC = () => {
   const [selectedFiscalYear, setSelectedFiscalYear] = useState<string>(
     currentYear.toString()
   );
-  const [selectedAccountRid, setSelectedAccountRid] = useState<string>('');
   const [selectedAccountName, setSelectedAccountName] = useState<string>('');
   const [selectedAccountNumber, setSelectedAccountNumber] =
     useState<string>('');
@@ -106,7 +105,8 @@ export const CreateCases: React.FC = () => {
     if (globalType) {
       dispatch(fetchAccountsThunk());
     }
-  }, [globalType, dispatch]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [globalType]);
 
   const caseFormData = useMemo(
     () => ({
@@ -270,7 +270,7 @@ export const CreateCases: React.FC = () => {
     if (fieldName === 'account_rid' && globalType) {
       const selectedRid = fieldValue as string;
       let accountName = '';
-      let accountId = '';
+      let accountNumber = '';
       let countryCode = '';
       let countryRid = '';
 
@@ -282,18 +282,15 @@ export const CreateCases: React.FC = () => {
         if (foundChild) break;
       }
 
-      console.log(foundChild);
-
       if (foundChild) {
         accountName = foundChild.child_label || '';
-        accountId = foundChild.r_number || '';
+        accountNumber = foundChild.r_number || '';
         countryCode = foundChild.country_code || '';
         countryRid = foundChild.country_rid || '';
       }
 
-      setSelectedAccountRid(selectedRid);
       setSelectedAccountName(accountName);
-      setSelectedAccountNumber(accountId);
+      setSelectedAccountNumber(accountNumber);
       setSelectedCountryCode(countryCode);
       setSelectedCountryRid(countryRid);
 
@@ -307,12 +304,10 @@ export const CreateCases: React.FC = () => {
     }
 
     if (fieldName === 'fiscal_year') {
-      const accName = globalType
-        ? selectedAccountName
-        : caseData?.account_name || accountName;
-      const country = globalType
-        ? selectedCountryCode
-        : caseData?.country_code || countryCode;
+      const accName =
+        caseData?.account_name || accountName || selectedAccountName;
+      const country =
+        caseData?.country_code || countryCode || selectedCountryCode;
       const year = fieldValue as string;
       // Update prefix when fiscal year changes
       const newPrefix = generateCaseNamePrefix(accName, country, year);
@@ -323,7 +318,7 @@ export const CreateCases: React.FC = () => {
 
   const submitData = (formValues: Partial<CaseFormPayload>) => {
     const payload = transformCaseFormPayload(
-      globalType ? selectedAccountRid : accountId,
+      accountId,
       formValues as CaseFormFields,
       isEditView,
       caseData

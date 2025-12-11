@@ -157,6 +157,7 @@ export interface CaseDetailsResponse {
 //Form
 export interface CaseFormFields {
   account_id?: string;
+  account_rid?: string;
   account_name?: string;
   case_owner?: string;
   case_name?: string;

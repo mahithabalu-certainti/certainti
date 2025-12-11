@@ -329,6 +329,9 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
       required: false,
       width: '200px',
       permissionKey: 'annual_gross_receipts',
+      showTooltip: true,
+      tooltipMessage:
+        'Annual Gross Receipt is the total money received in a year.',
     },
   ];
 
@@ -1089,11 +1092,38 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
                           textAlign: 'left',
                           textWrap: 'nowrap',
                           ...(field.sx || {}),
+                          ...(field.showTooltip
+                            ? {
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: 3,
+                              }
+                            : {}),
                         }}
                       >
                         {field.label}{' '}
                         {field.required && (
                           <span className='text-red-500 text-[16px]'>*</span>
+                        )}
+                        {field.showTooltip && (
+                          <Tooltip
+                            title={field.tooltipMessage || ''}
+                            arrow
+                            placement='top'
+                            slotProps={{
+                              tooltip: {
+                                sx: {
+                                  mr: 1,
+                                },
+                              },
+                            }}
+                          >
+                            <span className='w-5 mt-1 inline-flex items-center justify-center cursor-pointer'>
+                              <React.Suspense fallback={null}>
+                                <ErrorInfoIcon className='w-5 h-3.5 [&>path]:fill-[#14a7d5]' />
+                              </React.Suspense>
+                            </span>
+                          </Tooltip>
                         )}
                       </TableCell>
                     ))}

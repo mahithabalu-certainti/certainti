@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
@@ -70,6 +71,7 @@ interface TaskDetailModalPropsExtended
   fiscalYear?: string | null;
   fiscalYears?: string[];
   taskType?: string;
+  isCaseTeamCreated?: boolean;
 }
 
 const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
@@ -97,6 +99,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   fiscalYear,
   fiscalYears,
   taskType,
+  isCaseTeamCreated,
 }) => {
   const [task, setTask] = useState<Task | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
@@ -634,23 +637,33 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     const hasCompletedItems = (editedTask?.checklist || []).some(
       (item) => item.completed
     );
-    
+
     // Check if current user is the task creator
     const isCreator = task?.created_by_rid === userId;
-    
+
     // Fields that should be editable only by the creator
     const creatorOnlyFieldsDisabled = !isCreator;
-    
+
     return {
       ...fieldDisabled,
-      checklistTemplate: fieldDisabled.checklistTemplate || hasCompletedItems || creatorOnlyFieldsDisabled,
+      checklistTemplate:
+        fieldDisabled.checklistTemplate ||
+        hasCompletedItems ||
+        creatorOnlyFieldsDisabled,
       priority: fieldDisabled.priority || creatorOnlyFieldsDisabled,
       linkedType: fieldDisabled.linkedType || creatorOnlyFieldsDisabled,
       linkTaskType: fieldDisabled.linkTaskType || creatorOnlyFieldsDisabled,
       weightage: fieldDisabled.weightage || creatorOnlyFieldsDisabled,
       category: fieldDisabled.category || creatorOnlyFieldsDisabled,
+      status: fieldDisabled.status || !isCaseTeamCreated,
     };
-  }, [fieldDisabled, editedTask?.checklist, task?.created_by_rid, userId]);
+  }, [
+    editedTask?.checklist,
+    task?.created_by_rid,
+    userId,
+    fieldDisabled,
+    isCaseTeamCreated,
+  ]);
 
   if (!isOpen || !taskId) return null;
   if (isLoadingTaskDetails || (rawTask && !task)) {
@@ -1494,7 +1507,8 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     if (hasTaskChanged()) {
       setConfirmationState({
         isOpen: true,
-        message: 'You have unsaved changes. Are you sure you want to close without saving?',
+        message:
+          'You have unsaved changes. Are you sure you want to close without saving?',
         onConfirm: () => {
           onClose();
         },
@@ -1506,7 +1520,6 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   };
 
   return (
-
     <>
       <div
         className={`fixed right-0 bottom-0 w-[650px] bg-white text-gray-900 shadow-2xl z-50 overflow-y-auto ${

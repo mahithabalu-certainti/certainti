@@ -571,6 +571,7 @@ export const CaseDetails = () => {
               caseEndDate={caseData?.statutory_submission_date}
               isActionItemsExpanded={isActionItemsExpanded}
               setIsActionItemsExpanded={handleToggleActionItems}
+              isCaseTeamCreated={isCaseTeamCreated}
             />
           </div>
         );
