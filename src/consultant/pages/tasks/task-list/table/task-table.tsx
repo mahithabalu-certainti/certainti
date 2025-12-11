@@ -31,6 +31,7 @@ import {
   AddCollaboratorPayload,
   AddCollaboratorResponse,
 } from '../../../../services/work-breakdown/work-breakdown-service';
+import { useGetActivityStatus } from '../../../../services/activities/activities-service';
 import {
   useAddTaskComment,
   useUpdateTaskComment,
@@ -40,6 +41,7 @@ import {
   useGetRoleOptions,
   useGetTagOptions,
   useGetCaseTeamMembersDropdown,
+  useGetUserOptions,
 } from '../../../../services/case-team/case-team-service';
 import { useGetTaskCheckListTypes } from '../../../../../admin/service/task-template/task-template-service';
 import { useQueryClient } from '@tanstack/react-query';
@@ -110,6 +112,7 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
 
   const prioritiesQuery = useGetTaskPriorities();
   const statusesQuery = useGetTaskStatuses();
+  const activityStatusesQuery = useGetActivityStatus('Task');
   const checklistQuery = useGetTaskCheckListTypes();
   const roleOptionsQuery = useGetRoleOptions();
 
@@ -119,14 +122,20 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
     !!accountId && !!caseId && shouldFetchCaseData
   );
 
+  // For Activity tasks, use account-level user options
+  const accountUsersQuery = useGetUserOptions(
+    accountId,
+    !!accountId && !isMilestoneTab
+  );
+
   const tagOptionsQuery = useGetTagOptions(
     {
-      task_rid: selectedTask?.task_rid || '',
+      task_rid: isMilestoneTab ? selectedTask?.task_rid || '' : '',
       account_rid: accountId,
-      case_rid: caseId,
-      action: 'update',
+      ...(isMilestoneTab && { case_rid: caseId }),
+      action: isMilestoneTab ? 'update' : 'create',
     },
-    !!selectedTask && shouldFetchCaseData
+    !!selectedTask && (isMilestoneTab ? shouldFetchCaseData : !!accountId)
   );
 
   // Transform data
@@ -135,10 +144,21 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
     [prioritiesQuery.data]
   );
 
-  const statusData = useMemo(
-    () => transformStatusData(statusesQuery.data || []),
-    [statusesQuery.data]
-  );
+  // Use different status API based on tab context
+  const statusData = useMemo(() => {
+    if (isMilestoneTab) {
+      return transformStatusData(statusesQuery.data || []);
+    } else {
+      // Activity tab - transform activity status data
+      const activityStatuses =
+        activityStatusesQuery.data?.data?.activityStatus || [];
+      return activityStatuses.map((status: any) => ({
+        id: status.rid || status.status_name,
+        name: status.status_name,
+        color: '#3B82F6',
+      }));
+    }
+  }, [isMilestoneTab, statusesQuery.data, activityStatusesQuery.data]);
 
   const statusOptions: SelectOption[] = useMemo(
     () =>
@@ -167,6 +187,15 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
   }, [checklistQuery.data]);
 
   const userData = useMemo(() => {
+    // For Activity tasks, use account users
+    if (!isMilestoneTab && accountUsersQuery.data) {
+      return accountUsersQuery.data.map((user) => ({
+        rid: user.rid,
+        name: user.name,
+      }));
+    }
+
+    // For Milestone tasks, use case team members
     if (caseTeamMembersQuery.data && Array.isArray(caseTeamMembersQuery.data)) {
       return caseTeamMembersQuery.data.map((member) => ({
         rid: member.user_rid,
@@ -174,62 +203,88 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
       }));
     }
     return [];
-  }, [caseTeamMembersQuery.data]);
+  }, [isMilestoneTab, accountUsersQuery.data, caseTeamMembersQuery.data]);
 
   const handleAddComment = useCallback(
     async (taskId: string, commentText: string, files: File[]) => {
-      if (!accountId || !caseId) {
-        errorToast('Account ID or Case ID is missing');
-        throw new Error('Missing Account ID or Case ID');
+      if (!accountId) {
+        errorToast('Account ID is missing');
+        throw new Error('Missing Account ID');
+      }
+
+      // For Activity tasks, case_rid is optional
+      if (
+        !isMilestoneTab &&
+        !caseId &&
+        selectedTask?.attachment_level !== 'account'
+      ) {
+        errorToast('Case ID is required for case-level activities');
+        throw new Error('Missing Case ID');
       }
 
       return new Promise<void>((resolve, reject) => {
-        addCommentMutation.mutate(
-          {
-            account_rid: accountId,
-            case_rid: caseId,
-            task_rid: taskId,
-            comments: commentText,
-            files: files,
+        const payload: any = {
+          account_rid: accountId,
+          task_rid: taskId,
+          comments: commentText,
+          files: files,
+        };
+
+        // For Activity tasks, use attach_to as case_rid if case_rid is not available
+        // For Milestone tasks, always use case_rid
+        if (isMilestoneTab) {
+          payload.case_rid = caseId;
+        } else {
+          // Activity tasks: use case_rid if available, otherwise use attach_to
+          payload.case_rid = caseId || selectedTask?.attach_to || '';
+          payload.task_type = 'activity';
+        }
+
+        addCommentMutation.mutate(payload, {
+          onSuccess: () => {
+            const message =
+              addCommentMutation.data?.statusMessage ||
+              'Comment added successfully';
+            successToast(message);
+            const commentsParams: any = {
+              account_rid: accountId,
+              task_rid: taskId,
+              page: 1,
+              limit: 100,
+            };
+
+            if (isMilestoneTab) {
+              commentsParams.case_rid = caseId;
+            } else {
+              commentsParams.task_type = 'activity';
+            }
+
+            queryClient.invalidateQueries({
+              queryKey: ['taskComments', commentsParams],
+            });
+            queryClient.invalidateQueries({
+              queryKey: ['taskAttachments', commentsParams],
+            });
+            queryClient.invalidateQueries({ queryKey: ['allTasksList'] });
+            resolve();
           },
-          {
-            onSuccess: () => {
-              const message =
-                addCommentMutation.data?.statusMessage ||
-                'Comment added successfully';
-              successToast(message);
-              const commentsParams = {
-                account_rid: accountId,
-                case_rid: caseId,
-                task_rid: taskId,
-                page: 1,
-                limit: 100,
-              };
-              queryClient.invalidateQueries({
-                queryKey: ['taskComments', commentsParams],
-              });
-              queryClient.invalidateQueries({
-                queryKey: ['taskAttachments', commentsParams],
-              });
-              queryClient.invalidateQueries({ queryKey: ['allTasksList'] });
-              resolve();
-            },
-            onError: (error) => {
-              const errorMessage =
-                (error as { response?: { data?: { statusMessage?: string } } })
-                  ?.response?.data?.statusMessage ||
-                error?.message ||
-                'Failed to add comment';
-              errorToast(errorMessage);
-              reject(error);
-            },
-          }
-        );
+          onError: (error) => {
+            const errorMessage =
+              (error as { response?: { data?: { statusMessage?: string } } })
+                ?.response?.data?.statusMessage ||
+              error?.message ||
+              'Failed to add comment';
+            errorToast(errorMessage);
+            reject(error);
+          },
+        });
       });
     },
     [
       accountId,
       caseId,
+      isMilestoneTab,
+      selectedTask,
       successToast,
       errorToast,
       addCommentMutation,
@@ -245,57 +300,83 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
       files?: File[],
       deletedFileIds?: string[]
     ) => {
-      if (!accountId || !caseId) {
-        errorToast('Account ID or Case ID is missing');
-        throw new Error('Missing Account ID or Case ID');
+      if (!accountId) {
+        errorToast('Account ID is missing');
+        throw new Error('Missing Account ID');
+      }
+
+      // For Activity tasks, case_rid is optional
+      if (
+        !isMilestoneTab &&
+        !caseId &&
+        selectedTask?.attachment_level !== 'account'
+      ) {
+        errorToast('Case ID is required for case-level activities');
+        throw new Error('Missing Case ID');
       }
 
       return new Promise<void>((resolve, reject) => {
-        updateCommentMutation.mutate(
-          {
-            account_rid: accountId,
-            case_rid: caseId,
-            task_rid: taskId,
-            rid: commentId,
-            comments: commentText,
-            files: files,
-            deleted_file_ids: deletedFileIds,
+        const payload: any = {
+          account_rid: accountId,
+          task_rid: taskId,
+          rid: commentId,
+          comments: commentText,
+          files: files,
+          deleted_file_ids: deletedFileIds,
+        };
+
+        // For Activity tasks, use attach_to as case_rid if case_rid is not available
+        // For Milestone tasks, always use case_rid
+        if (isMilestoneTab) {
+          payload.case_rid = caseId;
+        } else {
+          // Activity tasks: use case_rid if available, otherwise use attach_to
+          payload.case_rid = caseId || selectedTask?.attach_to || '';
+          payload.task_type = 'activity';
+        }
+
+        updateCommentMutation.mutate(payload, {
+          onSuccess: () => {
+            const message =
+              updateCommentMutation.data?.statusMessage ||
+              'Comment updated successfully';
+            successToast(message);
+            const commentsParams: any = {
+              account_rid: accountId,
+              task_rid: taskId,
+              page: 1,
+              limit: 100,
+            };
+
+            if (isMilestoneTab) {
+              commentsParams.case_rid = caseId;
+            } else {
+              commentsParams.task_type = 'activity';
+            }
+
+            queryClient.invalidateQueries({
+              queryKey: ['taskComments', commentsParams],
+            });
+            queryClient.invalidateQueries({ queryKey: ['allTasksList'] });
+            resolve();
           },
-          {
-            onSuccess: () => {
-              const message =
-                updateCommentMutation.data?.statusMessage ||
-                'Comment updated successfully';
-              successToast(message);
-              const commentsParams = {
-                account_rid: accountId,
-                case_rid: caseId,
-                task_rid: taskId,
-                page: 1,
-                limit: 100,
-              };
-              queryClient.invalidateQueries({
-                queryKey: ['taskComments', commentsParams],
-              });
-              queryClient.invalidateQueries({ queryKey: ['allTasksList'] });
-              resolve();
-            },
-            onError: (error) => {
-              const errorMessage =
-                (error as { response?: { data?: { statusMessage?: string } } })
-                  ?.response?.data?.statusMessage ||
-                error?.message ||
-                'Failed to update comment';
-              errorToast(errorMessage);
-              reject(error);
-            },
-          }
-        );
+          onError: (error) => {
+            const errorMessage =
+              (error as { response?: { data?: { statusMessage?: string } } })
+                ?.response?.data?.statusMessage ||
+              error?.message ||
+              'Failed to update comment';
+            errorToast(errorMessage);
+            reject(error);
+          },
+        });
       });
     },
     [
       accountId,
       caseId,
+      isMilestoneTab,
+      selectedTask,
       successToast,
       errorToast,
       updateCommentMutation,
@@ -305,55 +386,79 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
 
   const handleDeleteComment = useCallback(
     async (commentId: string, taskId: string) => {
-      if (!accountId || !caseId) {
-        errorToast('Account ID or Case ID is missing');
-        throw new Error('Missing Account ID or Case ID');
+      if (!accountId) {
+        errorToast('Account ID is missing');
+        throw new Error('Missing Account ID');
+      }
+
+      // For Activity tasks, case_rid is optional
+      if (
+        !isMilestoneTab &&
+        !caseId &&
+        selectedTask?.attachment_level !== 'account'
+      ) {
+        errorToast('Case ID is required for case-level activities');
+        throw new Error('Missing Case ID');
       }
 
       return new Promise<void>((resolve, reject) => {
-        deleteCommentMutation.mutate(
-          {
-            account_rid: accountId,
-            case_rid: caseId,
-            task_rid: taskId,
-            rid: commentId,
-            deleted_file_ids: [],
+        const payload: any = {
+          account_rid: accountId,
+          task_rid: taskId,
+          rid: commentId,
+          deleted_file_ids: [],
+        };
+
+        // For Activity tasks, use attach_to as case_rid if case_rid is not available
+        // For Milestone tasks, always use case_rid
+        if (isMilestoneTab) {
+          payload.case_rid = caseId;
+        } else {
+          payload.task_type = 'activity';
+        }
+
+        deleteCommentMutation.mutate(payload, {
+          onSuccess: () => {
+            const message =
+              deleteCommentMutation.data?.statusMessage ||
+              'Comment deleted successfully';
+            successToast(message);
+            const commentsParams: any = {
+              account_rid: accountId,
+              task_rid: taskId,
+              page: 1,
+              limit: 100,
+            };
+
+            if (isMilestoneTab) {
+              commentsParams.case_rid = caseId;
+            } else {
+              commentsParams.task_type = 'activity';
+            }
+
+            queryClient.invalidateQueries({
+              queryKey: ['taskComments', commentsParams],
+            });
+            queryClient.invalidateQueries({ queryKey: ['allTasksList'] });
+            resolve();
           },
-          {
-            onSuccess: () => {
-              const message =
-                deleteCommentMutation.data?.statusMessage ||
-                'Comment deleted successfully';
-              successToast(message);
-              const commentsParams = {
-                account_rid: accountId,
-                case_rid: caseId,
-                task_rid: taskId,
-                page: 1,
-                limit: 100,
-              };
-              queryClient.invalidateQueries({
-                queryKey: ['taskComments', commentsParams],
-              });
-              queryClient.invalidateQueries({ queryKey: ['allTasksList'] });
-              resolve();
-            },
-            onError: (error) => {
-              const errorMessage =
-                (error as { response?: { data?: { statusMessage?: string } } })
-                  ?.response?.data?.statusMessage ||
-                error?.message ||
-                'Failed to delete comment';
-              errorToast(errorMessage);
-              reject(error);
-            },
-          }
-        );
+          onError: (error) => {
+            const errorMessage =
+              (error as { response?: { data?: { statusMessage?: string } } })
+                ?.response?.data?.statusMessage ||
+              error?.message ||
+              'Failed to delete comment';
+            errorToast(errorMessage);
+            reject(error);
+          },
+        });
       });
     },
     [
       accountId,
       caseId,
+      isMilestoneTab,
+      selectedTask,
       successToast,
       errorToast,
       deleteCommentMutation,
@@ -366,19 +471,25 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
       taskId: string,
       userId: string
     ): Promise<AddCollaboratorResponse> => {
-      if (!accountId || !caseId) {
+      if (!accountId || (isMilestoneTab && !caseId)) {
         errorToast('Account ID or Case ID is missing');
         throw new Error('Missing Account ID or Case ID');
       }
 
       return new Promise<AddCollaboratorResponse>((resolve, reject) => {
         const payload: AddCollaboratorPayload = {
-          case_rid: caseId,
           account_rid: accountId,
           rid: taskId,
           user_rid: userId,
-          action_type: shouldFetchCaseData ? 'milestone' : 'activity',
+          action_type: 'milestone',
         };
+
+        if (isMilestoneTab) {
+          if (caseId) payload.case_rid = caseId;
+        } else {
+          payload.task_type = 'activity';
+          if (caseId) payload.case_rid = caseId;
+        }
 
         addCollaboratorMutation.mutate(payload, {
           onSuccess: (response) => {
@@ -734,16 +845,26 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
     const previousTaskList = [...taskList];
     const selectedTask = taskList.find((task) => task.task_rid === rowId);
 
+    if (!selectedTask) {
+      errorToast('Task not found');
+      return;
+    }
+
+    // Determine task_type_name based on the current tab/filter
+    const taskTypeName = isMilestoneTab ? 'Milestone' : 'Action';
+
     const updateData = updates.reduce<Record<string, FieldChangeValue>>(
       (acc, item) => {
         acc[item.editId || item.columnId] = item.value;
         return acc;
       },
       {
-        rid: selectedTask?.rid,
-        account_rid: selectedTask?.account_rid,
-        task_rid: selectedTask?.task_rid,
-        attachment_level: selectedTask?.attachment_level,
+        rid: selectedTask.rid,
+        account_rid: selectedTask.account_rid,
+        task_rid: selectedTask.task_rid,
+        attachment_level: selectedTask.attachment_level,
+        attach_to: selectedTask.attach_to || '',
+        task_type_name: taskTypeName,
       }
     );
 
@@ -763,6 +884,7 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
           return task;
         });
         setTaskList(newTaskList);
+        successToast(result?.statusMessage || 'Task updated successfully');
       } else {
         errorToast(result?.statusMessage || 'Failed to update task');
         setTaskList(previousTaskList);
@@ -822,7 +944,7 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
           isOpen={true}
           onClose={() => setSelectedTask(null)}
           accountId={selectedTask.account_rid}
-          caseId={caseId}
+          caseId={isMilestoneTab ? caseId : ''}
           onTaskUpdate={handleTaskUpdate}
           onAddComment={handleAddComment}
           onUpdateComment={handleUpdateComment}
@@ -834,6 +956,12 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
           availableUsers={userData}
           roleOptions={roleOptionsQuery.data || []}
           checklistData={checklistData}
+          fiscalYears={(() => {
+            const currentYear = new Date().getFullYear();
+            return Array.from({ length: 5 }, (_, i) =>
+              String(currentYear - 2 + i)
+            );
+          })()}
           taskType={
             fixedFilters?.attachment_level === 'milestone'
               ? 'milestone'
