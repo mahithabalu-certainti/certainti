@@ -9,7 +9,7 @@ interface TaskSummaryAttributes {
   created_datetime?: Date;
   modified_datetime?: Date;
   account_rid: string;
-    task_rid: string;
+  task_rid: string;
   attach_to: string;
   attachment_level: string;
   task_name: string;
@@ -20,6 +20,7 @@ interface TaskSummaryAttributes {
   priority_rid: string;
   effective_start_datetime: Date;
   effective_end_datetime: Date;
+  task_type_rid: string;
 }
 
 export interface TaskSummaryCreationAttributes
@@ -47,6 +48,7 @@ export class TaskSummary
   public priority_rid!: string;
   public effective_start_datetime!: Date;
   public effective_end_datetime!: Date;
+  public task_type_rid!: string;
 
 
   static initialize(
@@ -83,6 +85,7 @@ export class TaskSummary
         priority_rid: { type: DataTypes.STRING(50), allowNull: false },
         effective_start_datetime: { type: DataTypes.DATE, allowNull: false },
         effective_end_datetime: { type: DataTypes.DATE, allowNull: false },
+        task_type_rid: { type: DataTypes.STRING(50), allowNull: false }
       },
       {
         sequelize,

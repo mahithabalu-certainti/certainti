@@ -7,11 +7,13 @@ import {
   SCHEMANAME_PREFIX,
   primaryKeyContacts,
   rawQueries,
+  STATUS_MESSAGE,
 } from "../utils/constants";
 import {
   ICreateProject,
   IUpdateProject,
   IUpdateQrePecentAdjustment,
+  CaseStatusResult, 
 } from "../utils/types";
 import SchemaService from "./schemaService";
 import {
@@ -550,6 +552,19 @@ export class ProjectService {
         projectData.project_fiscal_id
       );
 
+    const {accountNumber: validAccountNumber}  = await this.projectIngestion.fetchValidAccountNumberById(accountData.rid);
+    const schemaName = rawQueries.fetchSchemaName(validAccountNumber);
+    const orgDb = await initOrgSequelize()
+    
+    let findProjectFiscal : any = await orgDb.query(rawQueries.findProjectFiscal(schemaName,projectData.project_id, accountData.rid, projectData.project_fiscal_id))
+    if(findProjectFiscal[0][0].is_qualified) {
+        return {
+            statusCode : HttpStatus.NOT_FOUND,
+            statusMessage : STATUS_MESSAGE.qualifiedProject
+        } 
+    }
+
+
     await this.projectIngestion.updateProjectFiscal(
       accountNumber,
       projectData,
@@ -612,6 +627,25 @@ export class ProjectService {
       existingFiscalData?.rid || "",
       existingFiscalData?.fiscal_year || null
     );
+
+    const checkTableExists =  await this.projectIngestion.checkCaseProjectsTableExists(validAccountNumber);  
+    if (checkTableExists) {
+      const projectCaseMapping = 
+        await this.projectIngestion.fetchProjectFiscalCaseMapping(
+          accountNumber,
+          projectData.project_fiscal_id
+        );
+        if (projectCaseMapping.length > 0) {
+          for (const caseMapping of projectCaseMapping) {
+            await this.projectIngestion.updateCaseProjectTables(
+              accountNumber,
+              caseMapping,
+              projectData,
+              existingFiscalData?.project_code || ""
+            );
+          }
+        }
+    }
   }
 
   /**

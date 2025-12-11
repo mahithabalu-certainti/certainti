@@ -168,7 +168,9 @@ export const mainTableFilters : Record<any, any> = {
   response_source_name : "response_source_name",
   interaction_level_name:"interaction_level_name",
   modified_by: "modified_by",
-  modified_user_name:"modified_user_name"
+  modified_user_name:"modified_user_name",
+  project_name : "project_name",
+  project_code : "project_code"
 }
 
 export const STATUS_MESSAGE = {
@@ -362,9 +364,15 @@ export const rawQueries = {
     c.include_in_communication = TRUE
   `;
   },
-  fetchProjectsByAccount(accountRid: string, schemaName: string,status_rid:string) {
-    return `
-    SELECT rid, project_rid FROM ${schemaName}.project_fiscal WHERE account_rid = '${accountRid}' and status_rid='${status_rid}'`;
+  fetchProjectsByAccount(accountRid: string, schemaName: string, status_rid: string, projectType?: string[]) {
+    let query = `SELECT rid, project_rid FROM ${schemaName}.project_fiscal WHERE account_rid = '${accountRid}' and status_rid='${status_rid}'`;
+    if (projectType && Array.isArray(projectType) && projectType.length > 0) {
+      const inClause = projectType.map(pt => `'${pt}'`).join(",");
+      query += ` and project_type_rid IN (${inClause})`;
+    } else if (projectType && typeof projectType === "string" && projectType !== "") {
+      query += ` and project_type_rid='${projectType}'`;
+    }
+    return query;
   },
   fetchProjectsByCase(caseRid: string, schemaName: string) {
     return `
@@ -431,7 +439,27 @@ export const rawQueries = {
   },
   fetchAccountInfo(rid: string) {
     return `
-    SELECT rid, account_name,r_number,parent_account_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${rid}'`;
+    SELECT rid, account_name,r_number,parent_account_rid,country_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${rid}'`;
+  },
+  fetchPlatformConfig(rid: string) {
+    return `
+    SELECT config_json FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values rv
+    join ${MAIN_SCHEMA_NAME}.rd_credit_config_group rg on  rv.credit_config_group_rid  = rg.rid
+    where rg.country_rid = '${rid}'
+    and credit_program_name = 'Platform Configuration'
+    and is_federal = true`;
+  },
+  fetchProjectTypeRid(projectType: string | string[]) {
+    // Accepts either a string or array of strings
+    let condition = "";
+    if (Array.isArray(projectType)) {
+      const types = projectType.map(pt => `'${pt.replace(/'/g, "''")}'`).join(",");
+      condition = `lower(project_type_name) IN (${types.toLowerCase()})`;
+    } else {
+      condition = `lower(project_type_name) = lower('${projectType.replace(/'/g, "''")}')`;
+    }
+    return `
+      select rid from trd365.project_type where ${condition}`;
   },
    fetchAccountDetailsInfo(rid: string,schemaName: string) {
     return `
@@ -628,6 +656,10 @@ export const rawQueries = {
     let ids = statusIds.map((d: any) => `'${d}'`);
     return `
     SELECT rid, status_name as name FROM ${MAIN_SCHEMA_NAME}.status WHERE rid IN (${ids})`;
+  },
+  fetchProjectFiscalDetails(projectFiscalIds: string[], schemaName: string) {
+    return `
+    SELECT rid, project_name, project_code FROM ${schemaName}.project_fiscal WHERE rid IN (${projectFiscalIds.map((d : any) => `'${d}'`).join(',')})`;
   },
   fetchProjectFiscal(projectFiscalId: string, schemaName: string) {
     return `
@@ -951,6 +983,9 @@ export const rawQueries = {
          OR project_code = :projectCode
       LIMIT 1;
     `;
+  },
+  getCaseProjectsIds (caseRid : string, accountRid : string, schemaName : string) {
+    return `SELECT project_fiscal_rid FROM ${schemaName}.case_projects WHERE case_rid = '${caseRid}' AND account_rid = '${accountRid}'`
   }  
 };
 

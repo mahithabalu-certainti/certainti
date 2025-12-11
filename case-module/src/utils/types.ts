@@ -36,6 +36,7 @@ export type CaseHeadersColumns = {
   case_owner_name : string | null,
   account_rnumber : string | null,
   currency_code : string | null,
+  currency_symbol : string | null,
   status_name : string | null,
   case_total_projects : number | null,
   case_total_project_cost : number | null,
@@ -90,6 +91,7 @@ export type CaseStatusType = {
 export type CurrencyType = {
   rid : string,
   currency_code : string
+  currency_symbol : string
 }
 
 export type FilterType = {
@@ -217,6 +219,7 @@ type projectType = {
   project_rid : string,
   project_fiscal_rid : string,
   project_group : string,
+  project_case_rid? : string
   project_code : string
 }
 
@@ -342,7 +345,8 @@ type WorkflowConnectorItemsAccountLevel = {
   target_rid : string[]
   created_by : string
   created_datetime : Date
-  is_new_changes : boolean
+  is_new_changes : boolean,
+  key_name? : string
 }
 
 export type CreateTaskTemplateType = {
@@ -659,6 +663,7 @@ export type TaskCardDetailsType = {
   assigned_to : string
   priority_rid : string
   task_description : string
+  description : string
   task_status_rid : string
   priority_name : string
   task_status_name : string
@@ -710,6 +715,74 @@ export type CaseTaskWorkFlowDelete = {
   created_by : string
   modified_datetime : string
 }
+export interface IAnomalyStatus {
+  rid: string,
+  accountId: string,
+  action: "accept" | "reject",
+  resourceCode: string;
+  type: string
+}
+
+export interface IUpdateInlineProjectResource {
+  // Fields that exist in case_project_resource table
+  project_resource_rid: string;  // project_resource_rid maps to rid
+  project_fiscal_rid: string;
+  account_rid: string;
+  resource_rid?: string;
+  total_hours_pro_res?: number;
+  total_cost_pro_res?: number;
+  region_rid?: string | null;
+  country_rid?: string | null;
+  description?: string | null;
+  modified_by?: string;
+  status_rid?: string | null;
+}
+
+export interface IUpdateProjectResource {
+  // Fields that exist in case_project_resource table
+  project_resource_rid: string;  // project_resource_rid maps to rid
+  project_fiscal_rid: string;
+  account_rid: string;
+  resource_rid: string;  // resource_id maps to resource_rid
+  total_hours_pro_res?: number;
+  total_cost_pro_res?: number;
+  fiscal_year: number;
+  country_rid?: string | null;
+  region_rid?: string | null;
+  currency_rid?: string | null;
+  effort_project_resource_level?: number | null;
+  cost_project_resource_level?: number | null;
+  description?: string | null;
+  modified_by?: string;
+  total_hours_from_tasks?: number | null;
+  total_cost_from_tasks?: number | null;
+  status_rid?: string | null;
+}
+
+export interface IUpdateProjectTask {
+  project_task_rid: string;
+  project_fiscal_rid: string;
+  account_rid: string;
+  resource_id: string;
+  resource_code: string;
+  total_hours_pro_task?: number;
+  total_cost_pro_task?: number;
+  fiscal_year: number;
+  country_rid: string | null;
+  region_rid?: string | null;
+  currency_rid?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  comments?: string | null;
+  created_by: string;
+  modified_by?: string;
+  status_rid : string
+  project_resource_rid : string;
+  task_name?: string;
+  task_description?: string;
+  task_type_rid?: string;
+  task_classification_rid?: string;
+}
 export interface IActivityTask {
   task_template_rid?: string;
   task_rid: string;
@@ -724,6 +797,7 @@ export interface IActivityTask {
   attachment_level: string;
   task_name: string;
   description?: string;
+  task_description?: string;
   effective_start_datetime: Date;
   effective_end_datetime: Date;
   priority_rid?: string;
@@ -732,7 +806,8 @@ export interface IActivityTask {
   remainder_interval?: number;
   account_rid?: string; 
   checklist_rid?: string;
-  tags : tagTypes[]
+  tags : tagTypes[],
+  task_type_rid?: string;
 }
 
 export interface IActivityEmail {

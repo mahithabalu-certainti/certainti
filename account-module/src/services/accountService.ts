@@ -316,9 +316,8 @@ async accountList(
           return parent;
         });
       } else {
-        updatedAccount.data = updatedAccount.data.map((parent: any) => {
+        updatedAccount.data.forEach((parent: any) => {
           parent.hasAccountAccess = true;
-          return parent;
         });
       }
 
@@ -328,8 +327,7 @@ async accountList(
         parentWhereClause
       );
       if(search){
-        updatedAccount.data = updatedAccount.data?.filter((val: any) => val.child_accounts?.length > 0);
-        updatedAccount.total = updatedAccount?.data?.length;
+        updatedAccount.data = updatedAccount.data?.filter((val: any) => val?.dataValues?.child_accounts?.length > 0);        updatedAccount.total = updatedAccount?.data?.length;
         totalCount = updatedAccount?.data?.length;
       }
       return {
@@ -2049,22 +2047,59 @@ async accountList(
         }
       );
 
-      const globalAccount = await repository.findAll({
+      const globalAccountRaw = await repository.findAll({
         where: parentWhereClause,
-        attributes: ['rid', 'account_name','currency_rid'],
+        attributes: ['rid', 'account_name','currency_rid', 'country_rid',"r_number"],
         include: [
           {
             model: Account,
             as: 'child_accounts',
-            attributes: ['rid', 'account_name','currency_rid'],
+            attributes: ['rid', 'account_name', 'currency_rid', 'country_rid',"r_number"],
             required: false,
             where: childWhereClause,
             separate: true,
             order: [[sortBy, sortOrder]],
-          }
+            include: [
+              {
+                model: Country,
+                as: 'country',
+                attributes: ['country_code'],
+                required: false,
+              },
+            ],
+          },
+          {
+            model: Country,
+            as: 'country',
+            attributes: ['country_code'],
+            required: false,
+          },
         ],
         order: [[sortBy, sortOrder]],
-        ...paginationOptions
+        ...paginationOptions,
+      });
+
+      // Map to flatten country_code to top-level for parent and child accounts
+      const globalAccount = globalAccountRaw.map((acc: any) => {
+        const country_code = acc.country ? acc.country.country_code : null;
+        const children = Array.isArray(acc.child_accounts)
+          ? acc.child_accounts.map((child: any) => {
+              const childPlain = child.get({ plain: true });
+              return {
+                ...childPlain,
+                country_code: childPlain.country ? childPlain.country.country_code : null,
+              };
+            })
+          : [];
+        const accPlain = acc.get({ plain: true });
+        // Remove 'country' from parent and child
+        delete accPlain.country;
+        children.forEach((child: { country: any; }) => { delete child.country; });
+        return {
+          ...accPlain,
+          country_code,
+          child_accounts: children,
+        };
       });
 
         return {
@@ -2082,22 +2117,59 @@ async accountList(
       );
 
     // DEFAULT: Return all top-level (parent) accounts with their children
-    const globalAccount = await repository.findAll({
+    const globalAccountRaw = await repository.findAll({
       where: parentWhereClause,
-      attributes: ['rid', 'account_name','currency_rid'],
+      attributes: ['rid', 'account_name', 'currency_rid', 'country_rid',"r_number"],
       include: [
         {
           model: Account,
           as: 'child_accounts',
-            where: childWhereClause,
-          attributes: ['rid', 'account_name','currency_rid'],
+          where: childWhereClause,
+          attributes: ['rid', 'account_name', 'currency_rid', 'country_rid',"r_number"],
           required: false,
           separate: true,
           order: [[sortBy, sortOrder]],
-        }
+          include: [
+            {
+              model: Country,
+              as: 'country',
+              attributes: ['country_code'],
+              required: false,
+            },
+          ],
+        },
+        {
+          model: Country,
+          as: 'country',
+          attributes: ['country_code'],
+          required: false,
+        },
       ],
       order: [[sortBy, sortOrder]],
       ...paginationOptions
+    });
+
+    // Flatten country_code to top-level for parent and child accounts
+    const globalAccount = globalAccountRaw.map((acc: any) => {
+      const country_code = acc.country ? acc.country.country_code : null;
+      const children = Array.isArray(acc.child_accounts)
+        ? acc.child_accounts.map((child: any) => {
+            const childPlain = child.get({ plain: true });
+            return {
+              ...childPlain,
+              country_code: childPlain.country ? childPlain.country.country_code : null,
+            };
+          })
+        : [];
+      const accPlain = acc.get({ plain: true });
+      // Remove 'country' from parent and child
+      delete accPlain.country;
+      children.forEach((child: { country: any; }) => { delete child.country; });
+      return {
+        ...accPlain,
+        country_code,
+        child_accounts: children,
+      };
     });
 
       return {

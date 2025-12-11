@@ -85,6 +85,10 @@ import { CommentsAttachments, setupCommentsAttachmentsSequence } from "../../mod
 import { setupTaskAttachmentsSequence, TaskAttachments } from "../../models/taskAttachmentModel";
 import { CaseTaskWorkflowConnector, setupCaseTaskWorkflowConnectorSequence } from "../../models/caseTaskWorkflowConnectorModel";
 import {v4 as uuidv4} from 'uuid'
+import { CaseProjectFiscalRegion, setupCaseProjectFiscalRegionSequence } from "../../models/caseProjectFiscalRegionModel";
+import { CaseProjectResourceFiscal, setupCaseProjectResourceFiscalSequence } from "../../models/caseProjectResourceFiscalModel";
+import { CaseProjectResource, setupCaseProjectResourceSequence } from "../../models/caseProjectResourceModel";
+import { CaseProjectTask, setupCaseProjectTaskSequence } from "../../models/caseProjectTaskModel";
 import { TaskHistory } from "../../models/taskHistory";
 import { WorkflowConnector } from "../../models/workflowConnectorModel";
 
@@ -268,33 +272,64 @@ class CaseSchemaService {
   async checkIsCaseNameUnique(
       caseReq: any,
       accountNumber: string
-    ): Promise<boolean> {
+    ): Promise<{isunique : boolean,isCaseUnique : boolean}> {
       const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(
         /\D/g,
         ""
       )}`;
+      if(!this.mainDbSequelize) {
+        this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+      }
       const tableExists = await this.checkTableExists(schemaName, "cases");
       if (!tableExists) {
         logMessage(
           `Cases table does not exist for account ${accountNumber}, returning empty result`
         );
-        return true;
+        return {
+          isunique: true,
+          isCaseUnique: true
+        };
       }
       const { Case } = await this.caseModelService.getModels(accountNumber);
-      const response = await Case.findOne({
+      // Check for case name uniqueness (case-insensitive, same fiscal year)
+      const uniqueResponse = await Case.findOne({
         where: {
           [Op.and]: [
             where(
               fn("LOWER", col("case_name")),
               Op.eq,
               caseReq.case_name.toLowerCase(),
-              
             ),
-            { fiscal_year: caseReq.fiscal_year }
+            { fiscal_year: caseReq.fiscal_year },
+            { account_rid: { [Op.eq]: caseReq.account_rid } }
           ]
         }
       });
-      return !response;
+
+      // Always fetch status from mainDb using status name
+      const [caseStatus]: any[] = await this.mainDbSequelize.query(
+        rawQueries.fetchCaseStatusByType('In Progress'),
+        { type: QueryTypes.SELECT }
+      );
+      let caseWithSameStatus = null;
+      if (caseStatus && caseStatus.rid) {
+        caseWithSameStatus = await Case.findOne({
+          where: {
+            [Op.and]: [
+              { fiscal_year: caseReq.fiscal_year },
+              { status_rid: { [Op.eq]: caseStatus.rid } },
+              { account_rid: { [Op.eq]: caseReq.account_rid } }
+            ]
+          }
+        });
+      }
+
+      // If a case exists in the given fiscal year with the same status, do not allow
+      const isCaseUnique = !caseWithSameStatus;
+      return {
+        isunique: !uniqueResponse,
+        isCaseUnique: isCaseUnique
+      };
     }
     async checkIsChecklistNameUnique(
       caseReq: any,
@@ -387,7 +422,8 @@ return !response;
   ) {
     // Implementation for creating interactions in the database
     try {
-      const { Case, CaseSummary } = await this.caseModelService.getModels(
+      if(!this.mainDbSequelize) this.mainDbSequelize = await initMainDbSequelize();
+      const { Case, CaseSummary, CaseTask } = await this.caseModelService.getModels(
         accountNumber
       );
 
@@ -407,6 +443,29 @@ return !response;
           transaction,
         }
       );
+      if(existingCase?.case_startdate.toISOString().split('T')[0] !== caseRequest.case_startdate.toISOString().split('T')[0] || existingCase?.statutory_submission_date.toISOString().split('T')[0] !== caseRequest.statutory_submission_date.toISOString().split('T')[0] 
+      || existingCase?.planned_submission_date.toISOString().split('T')[0] !== caseRequest.planned_submission_date.toISOString().split('T')[0]
+    ) {
+    const [fetchToDoStatus] = await this.mainDbSequelize.query<TaskTypeResponse>(rawQueries.checkCaseTaskStatusToDo(), {type : QueryTypes.SELECT});
+    if(fetchToDoStatus) {
+      const checkStatusChanged = await CaseTask.findOne({
+        where : {
+          case_rid : caseRequest.case_rid,
+          account_rid : caseRequest.account_rid,
+          task_status_rid : {
+            [Op.ne] : fetchToDoStatus.rid
+          }
+        }, raw : true
+      })
+      if(checkStatusChanged) {
+        return {
+        statusCode : HttpStatus.BAD_REQUEST,
+        statusMessage : STATUS_MESSAGE.caseDateChangeNotAllowed,
+        data : null
+      };
+      } 
+    }
+  }
       await CaseSummary.update(
         {
           ...caseRequest,
@@ -440,11 +499,32 @@ return !response;
         );
       }
 
-      return caseUpdateResponse;
+      return {
+        statusCode : HttpStatus.SUCCESS,
+        statusMessage : '',
+        data : caseUpdateResponse
+      };
     } catch (error) {
       logMessage(`Error updating cases: ${error}`);
       throw new Error("Error updating cases: " + error);
     }
+  }
+
+  async caseDateChangeAllow (existingCase : Case, caseRequest : ICreateCases, accountNumber : string) {
+    if(!this.mainDbSequelize) this.mainDbSequelize = await initMainDbSequelize();
+    if(!this.orgDbSequelize) this.orgDbSequelize = await initOrgSequelize();
+    if(existingCase?.case_startdate.toISOString().split('T')[0] !== caseRequest.case_startdate.toISOString().split('T')[0] || existingCase.statutory_submission_date.toISOString().split('T')[0] !== caseRequest.statutory_submission_date.toISOString().split('T')[0] 
+      || existingCase.planned_submission_date.toISOString().split('T')[0] !== caseRequest.planned_submission_date.toISOString().split('T')[0]
+    ) {
+    const [fetchToDoStatus] = await this.mainDbSequelize.query<TaskTypeResponse>(rawQueries.checkCaseTaskStatusToDo(), {type : QueryTypes.SELECT});
+    if(fetchToDoStatus) {
+      let schemaName = rawQueries.fetchSchemaName(accountNumber)
+      const checkStatusChanged = await this.orgDbSequelize.query<TaskTypeResponse>(rawQueries.checkCaseStatusChanged(schemaName, caseRequest.case_rid!, caseRequest.account_rid, fetchToDoStatus.rid), {type : QueryTypes.SELECT});
+      if(checkStatusChanged.length > 0) {
+        return STATUS_MESSAGE.caseDateChangeNotAllowed
+        }
+      }
+    } else return null
   }
 
   async updateCaseHistory(
@@ -585,6 +665,22 @@ return !response;
         orgDbSequlize,
         schemaName
       )
+      const CaseProjectFiscalRegionModel = CaseProjectFiscalRegion.initialize(
+        orgDbSequlize,
+        schemaName
+      )
+      const CaseProjectResourceModel = CaseProjectResource.initialize(
+        orgDbSequlize,
+        schemaName
+      )
+      const CaseProjectResourceFiscalModel = CaseProjectResourceFiscal.initialize(
+        orgDbSequlize,
+        schemaName
+      )
+      const CaseProjectTaskModel = CaseProjectTask.initialize(
+        orgDbSequlize,
+        schemaName
+      )
 
       await CaseModel.sync({ force: false });
       await setupCaseSequence(orgDbSequlize, schemaName);
@@ -616,6 +712,14 @@ return !response;
       await setupCaseHistorySubmissionSequence(orgDbSequlize, schemaName);
       await CaseTaskWorkflowConnectorModel.sync({force : false});
       await setupCaseTaskWorkflowConnectorSequence(orgDbSequlize, schemaName)
+      await CaseProjectFiscalRegionModel.sync({ force: false });
+      await setupCaseProjectFiscalRegionSequence(orgDbSequlize, schemaName)
+      await CaseProjectResourceModel.sync({ force: false });
+      await setupCaseProjectResourceSequence(orgDbSequlize, schemaName)
+      await CaseProjectResourceFiscalModel.sync({ force: false });
+      await setupCaseProjectResourceFiscalSequence(orgDbSequlize, schemaName)
+      await CaseProjectTaskModel.sync({ force: false });
+      await setupCaseProjectTaskSequence(orgDbSequlize, schemaName)
     } catch (err) {
       console.log(err)
       errorLog("Error creating case tables", (err as Error).message);
@@ -1899,12 +2003,320 @@ return !response;
 
 }
 
-  async assignProjectToCase(
-    data: assignProjectType,
-    accountNumber: string,
-    schemaName: string
+  async insertCaseTabels(
+      data: assignProjectType,
+      accountNumber: string,
+      schemaName: string
   ) {
-    const { CaseProject, Case, CaseSummary } =
+      const { CaseProjectResource, CaseProjectResourceFiscal, ProjectResource, ProjectResourceFiscal, CaseProjectTask, ProjectTask, CaseProjectFiscalRegion, ProjectFiscalRegion } =
+          await this.caseModelService.getModels(accountNumber);
+
+      if (!this.mainDbSequelize) {
+          this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+      }
+      if (!this.orgDbSequelize) {
+          this.orgDbSequelize = await this.caseModelService.getSequelize();
+      }
+
+      let iterationCount = 0;
+      const totalCount = data.projects.length;
+
+      for (const p of data.projects) {
+
+          const projectFiscalRegionRecords = await ProjectFiscalRegion.findAll({
+              where: {
+                  project_rid: p.project_rid,
+                  project_fiscal_rid: p.project_fiscal_rid,
+                  account_rid: data.account_rid
+              }
+          });
+
+          if (projectFiscalRegionRecords.length > 0) {
+              const caseProjectFiscalRegionData = projectFiscalRegionRecords.map(regionRecord => ({
+                  project_fiscal_region_rid: regionRecord.rid,
+                  case_project_rid: p.project_case_rid || '',
+                  case_rid: data.case_rid,
+                  project_rid: regionRecord.project_rid,
+                  project_code: regionRecord.project_code || '',
+                  project_fiscal_rid: regionRecord.project_fiscal_rid,
+                  fiscal_year: regionRecord.fiscal_year,
+                  created_by: data.created_by,
+                  created_datetime: new Date(),
+                  eid: regionRecord.eid,
+                  industry_rid: regionRecord.industry_rid,
+                  industry_name: regionRecord.industry_name,
+                  project_name: regionRecord.project_name,
+                  program_name: regionRecord.program_name,
+                  project_type_rid: regionRecord.project_type_rid,
+                  project_classification_rid: regionRecord.project_classification_rid,
+                  project_classification_other: regionRecord.project_classification_other,
+                  project_client_group: regionRecord.project_client_group,
+                  project_group: regionRecord.project_group,
+                  auto_send_ai_interaction: regionRecord.auto_send_ai_interaction || false,
+                  account_rid: regionRecord.account_rid,
+                  country_rid: regionRecord.country_rid,
+                  region_rid: regionRecord.region_rid,
+                  currency_rid: regionRecord.currency_rid,
+                  max_ai_interaction: regionRecord.max_ai_interaction || 0,
+                  expiry_duration: regionRecord.expiry_duration,
+                  auto_access_rd: regionRecord.auto_access_rd,
+                  status_rid: regionRecord.status_rid || '',
+                  project_startdate: regionRecord.project_startdate,
+                  project_enddate: regionRecord.project_enddate,
+                  total_fte_prj: regionRecord.total_fte_prj,
+                  total_fte_from_prj_res: regionRecord.total_fte_from_prj_res,
+                  total_fte_from_tasks: regionRecord.total_fte_from_tasks,
+                  total_subcon_prj: regionRecord.total_subcon_prj,
+                  total_subcon_from_prj_res: regionRecord.total_subcon_from_prj_res,
+                  total_subcon_from_tasks: regionRecord.total_subcon_from_tasks,
+                  total_nonlabor_prj: regionRecord.total_nonlabor_prj,
+                  total_nonlabor_from_prj_res: regionRecord.total_nonlabor_from_prj_res,
+                  total_resources_prj: regionRecord.total_resources_prj,
+                  total_resources_from_prj_res: regionRecord.total_resources_from_prj_res,
+                  total_resources_from_tasks: regionRecord.total_resources_from_tasks,
+                  total_effort_prj: regionRecord.total_effort_prj,
+                  total_effort_fte_prj: regionRecord.total_effort_fte_prj,
+                  total_effort_subcon_prj: regionRecord.total_effort_subcon_prj,
+                  total_effort_from_prj_res: regionRecord.total_effort_from_prj_res,
+                  total_effort_fte_from_prj_res: regionRecord.total_effort_fte_from_prj_res,
+                  total_effort_subcon_from_prj_res: regionRecord.total_effort_subcon_from_prj_res,
+                  total_effort_from_tasks: regionRecord.total_effort_from_tasks,
+                  total_effort_fte_from_tasks: regionRecord.total_effort_fte_from_tasks,
+                  total_effort_subcon_from_tasks: regionRecord.total_effort_subcon_from_tasks,
+                  total_cost_prj: regionRecord.total_cost_prj,
+                  total_cost_fte_prj: regionRecord.total_cost_fte_prj,
+                  total_cost_subcon_prj: regionRecord.total_cost_subcon_prj,
+                  total_cost_nonlabor_prj: regionRecord.total_cost_nonlabor_prj,
+                  total_cost_from_prj_res: regionRecord.total_cost_from_prj_res,
+                  total_cost_fte_from_prj_res: regionRecord.total_cost_fte_from_prj_res,
+                  total_cost_subcon_from_prj_res: regionRecord.total_cost_subcon_from_prj_res,
+                  total_cost_nonlabor_from_prj_res: regionRecord.total_cost_nonlabor_from_prj_res,
+                  total_cost_from_tasks: regionRecord.total_cost_from_tasks,
+                  total_cost_fte_from_tasks: regionRecord.total_cost_fte_from_tasks,
+                  total_cost_subcon_from_tasks: regionRecord.total_cost_subcon_from_tasks,
+                  total_cost_prj_blended: regionRecord.total_cost_prj_blended,
+                  total_cost_fte_prj_blended: regionRecord.total_cost_fte_prj_blended,
+                  total_cost_subcon_prj_blended: regionRecord.total_cost_subcon_prj_blended,
+                  total_cost_from_prj_res_blended: regionRecord.total_cost_from_prj_res_blended,
+                  total_cost_fte_from_prj_res_blended: regionRecord.total_cost_fte_from_prj_res_blended,
+                  total_cost_subcon_from_prj_res_blended: regionRecord.total_cost_subcon_from_prj_res_blended,
+                  total_cost_from_tasks_blended: regionRecord.total_cost_from_tasks_blended,
+                  total_cost_fte_from_tasks_blended: regionRecord.total_cost_fte_from_tasks_blended,
+                  total_cost_subcon_from_tasks_blended: regionRecord.total_cost_subcon_from_tasks_blended,
+                  blended_rate_fte: regionRecord.blended_rate_fte,
+                  blended_rate_subcon: regionRecord.blended_rate_subcon,
+                  rd_percent_potential_ai: regionRecord.rd_percent_potential_ai,
+                  rd_percent_adjustment: regionRecord.rd_percent_adjustment,
+                  rd_percent_final: regionRecord.rd_percent_final,
+                  qre_fte: regionRecord.qre_fte,
+                  qre_subcon: regionRecord.qre_subcon,
+                  qre_nonlabor: regionRecord.qre_nonlabor,
+                  qre_final: regionRecord.qre_final,
+                  rd_credits_fte_fed_level: regionRecord.rd_credits_fte_fed_level,
+                  rd_credits_subcon_fed_level: regionRecord.rd_credits_subcon_fed_level,
+                  rd_credits_nonlabor_fed_level: regionRecord.rd_credits_nonlabor_fed_level,
+                  rd_credits_fed_level: regionRecord.rd_credits_fed_level,
+                  rd_credits_total: regionRecord.rd_credits_total,
+                  effective_total_fte: regionRecord.effective_total_fte,
+                  effective_total_subcon: regionRecord.effective_total_subcon,
+                  effective_total_nonlabor: regionRecord.effective_total_nonlabor,
+                  effective_cost: regionRecord.effective_cost,
+                  effective_effort: regionRecord.effective_effort,
+                  effective_fte_cost: regionRecord.effective_fte_cost,
+                  effective_fte_effort: regionRecord.effective_fte_effort,
+                  effective_subcon_cost: regionRecord.effective_subcon_cost,
+                  effective_subcon_effort: regionRecord.effective_subcon_effort,
+                  effective_nonlabor_cost: regionRecord.effective_nonlabor_cost,
+                  effective_metric_type: regionRecord.effective_metric_type,
+                  default_metric_type: regionRecord.default_metric_type,
+                  interaction_cc_list: regionRecord.interaction_cc_list,
+                  assessment_status: regionRecord.assessment_status,
+                  claim_status: regionRecord.claim_status,
+                  comments: regionRecord.comments,
+                  project_description: regionRecord.project_description,
+                  total_nonlabor_from_tasks: regionRecord.total_nonlabor_from_tasks,
+              }));
+
+              await CaseProjectFiscalRegion.bulkCreate(caseProjectFiscalRegionData);
+          }
+
+
+          // Insert CaseProjectResource data
+          const projectResourceRecords = await ProjectResource.findAll({
+              where: {
+                  project_rid: p.project_rid,
+                  project_fiscal_rid: p.project_fiscal_rid,
+                  account_rid: data.account_rid
+              }
+          });
+
+          if (projectResourceRecords.length > 0) {
+              const caseProjectResourceData = projectResourceRecords.map(resourceRecord => ({
+                  project_resource_rid: resourceRecord.rid,
+                  case_project_rid: p.project_case_rid || '',
+                  account_rid: resourceRecord.account_rid,
+                  case_rid: data.case_rid,
+                  project_rid: resourceRecord.project_rid,
+                  project_fiscal_rid: resourceRecord.project_fiscal_rid,
+                  project_resource_code: resourceRecord.project_resource_code,
+                  resource_rid: resourceRecord.resource_rid,
+                  fiscal_year: resourceRecord.fiscal_year,
+                  created_by: data.created_by,
+                  created_datetime: new Date(),
+                  eid: resourceRecord.eid,
+                  start_date: resourceRecord.start_date,
+                  end_date: resourceRecord.end_date,
+                  country_rid: resourceRecord.country_rid,
+                  region_rid: resourceRecord.region_rid,
+                  currency_rid: resourceRecord.currency_rid,
+                  total_hours_pro_res: resourceRecord.total_hours_pro_res,
+                  total_cost_pro_res: resourceRecord.total_cost_pro_res,
+                  description: resourceRecord.description,
+                  status_rid: resourceRecord.status_rid,
+                  salary: resourceRecord.salary,
+                  bonus: resourceRecord.bonus,
+                  insurance: resourceRecord.insurance,
+                  deductions: resourceRecord.deductions,
+                  assigned_skill_role_type_rid: resourceRecord.assigned_skill_role_type_rid,
+                  qre_percent: resourceRecord.qre_percent,
+                  project_resource_role: resourceRecord.project_resource_role,
+                  net_total_cost_pro_res: resourceRecord.net_total_cost_pro_res,
+                  effort_project_resource_level: resourceRecord.effort_project_resource_level,
+                  cost_project_resource_level: resourceRecord.cost_project_resource_level,
+                  total_hours_from_tasks: resourceRecord.total_hours_from_tasks,
+                  total_cost_from_tasks: resourceRecord.total_cost_from_tasks,
+                  qre_final: resourceRecord.qre_final,
+              }));
+
+              await CaseProjectResource.bulkCreate(caseProjectResourceData);
+          }
+
+          // Insert CaseProjectResourceFiscal data
+          const projectResourceFiscalRecords = await ProjectResourceFiscal.findAll({
+              where: {
+                  project_rid: p.project_rid,
+                  project_fiscal_rid: p.project_fiscal_rid,
+                  account_rid: data.account_rid
+              }
+          });
+
+          if (projectResourceFiscalRecords.length > 0) {
+              const caseProjectResourceFiscalData = projectResourceFiscalRecords.map(fiscalRecord => ({
+                  project_resource_fiscal_rid: fiscalRecord.rid,
+                  case_project_rid: p.project_case_rid || '',
+                  account_rid: fiscalRecord.account_rid,
+                  case_rid: data.case_rid,
+                  project_rid: fiscalRecord.project_rid,
+                  project_fiscal_rid: fiscalRecord.project_fiscal_rid,
+                  resource_rid: fiscalRecord.resource_rid,
+                  fiscal_year: fiscalRecord.fiscal_year,
+                  created_by: data.created_by,
+                  created_datetime: new Date(),
+                  eid: fiscalRecord.eid,
+                  total_hours_pro_res: fiscalRecord.total_hours_pro_res,
+                  total_cost_pro_res: fiscalRecord.total_cost_pro_res,
+                  status_rid: fiscalRecord.status_rid,
+                  country_rid: fiscalRecord.country_rid,
+                  region_rid: fiscalRecord.region_rid,
+                  currency_rid: fiscalRecord.currency_rid,
+                  description: fiscalRecord.description,
+                  effort_project_resource_level: fiscalRecord.effort_project_resource_level,
+                  cost_project_resource_level: fiscalRecord.cost_project_resource_level,
+                  cost_project_task_level: fiscalRecord.cost_project_task_level,
+                  blended_cost_project_task_level: fiscalRecord.blended_cost_project_task_level,
+                  blended_cost_project_resource_level: fiscalRecord.blended_cost_project_resource_level,
+                  effort_project_task_level: fiscalRecord.effort_project_task_level,
+                  total_hours_from_tasks: fiscalRecord.total_hours_from_tasks,
+                  total_cost_from_tasks: fiscalRecord.total_cost_from_tasks,
+                  total_cost_from_tasks_blended: fiscalRecord.total_cost_from_tasks_blended,
+                  rd_percent_potential_ai: fiscalRecord.rd_percent_potential_ai,
+                  rd_percent_adjustment: fiscalRecord.rd_percent_adjustment,
+                  rd_percent_final: fiscalRecord.rd_percent_final,
+                  qre_fte: fiscalRecord.qre_fte,
+                  qre_subcon: fiscalRecord.qre_subcon,
+                  qre_nonlabor: fiscalRecord.qre_nonlabor,
+                  qre_final: fiscalRecord.qre_final,
+                  rd_credits_fte_region_level: fiscalRecord.rd_credits_fte_region_level,
+                  rd_credits_subcon_region_level: fiscalRecord.rd_credits_subcon_region_level,
+                  rd_credits_nonlabor_region_level: fiscalRecord.rd_credits_nonlabor_region_level,
+                  rd_credits_region_level: fiscalRecord.rd_credits_region_level,
+                  rd_credits_fte_fed_level: fiscalRecord.rd_credits_fte_fed_level,
+                  rd_credits_subcon_fed_level: fiscalRecord.rd_credits_subcon_fed_level,
+                  rd_credits_nonlabor_fed_level: fiscalRecord.rd_credits_nonlabor_fed_level,
+                  rd_credits_fed_level: fiscalRecord.rd_credits_fed_level,
+                  rd_credits_total: fiscalRecord.rd_credits_total
+              }));
+
+              await CaseProjectResourceFiscal.bulkCreate(caseProjectResourceFiscalData);
+          }
+
+          const projectTaskRecords = await ProjectTask.findAll({
+              where: {
+                  project_rid: p.project_rid,
+                  project_fiscal_rid: p.project_fiscal_rid,
+                  account_rid: data.account_rid,
+              }
+          });
+
+          if (projectTaskRecords.length > 0) {
+              const caseProjectTaskData = projectTaskRecords.map(taskRecord => ({
+                  project_task_rid: taskRecord.rid,
+                  case_project_rid: p.project_case_rid || '',
+                  account_rid: taskRecord.account_rid,
+                  case_rid: data.case_rid,
+                  project_rid: taskRecord.project_rid,
+                  project_fiscal_rid: taskRecord.project_fiscal_rid,
+                  project_resource_code: taskRecord.project_resource_code,
+                  resource_rid: taskRecord.resource_rid,
+                  fiscal_year: taskRecord.fiscal_year,
+                  created_by: data.created_by,
+                  created_datetime: new Date(),
+                  eid: taskRecord.eid,
+                  task_name: taskRecord.task_name,
+                  task_description: taskRecord.task_description,
+                  task_type_rid: taskRecord.task_type_rid,
+                  task_classification_rid: taskRecord.task_classification_rid,
+                  start_date: taskRecord.start_date,
+                  end_date: taskRecord.end_date,
+                  country_rid: taskRecord.country_rid,
+                  region_rid: taskRecord.region_rid,
+                  currency_rid: taskRecord.currency_rid,
+                  total_hours_pro_task: taskRecord.total_hours_pro_task,
+                  total_cost_pro_task: taskRecord.total_cost_pro_task,
+                  comments: taskRecord.comments,
+                  status_rid: taskRecord.status_rid,
+                  project_resource_rid: taskRecord.project_resource_rid
+              }));
+
+
+              await CaseProjectTask.bulkCreate(caseProjectTaskData);
+          }
+
+          iterationCount++;
+      }
+
+      if (totalCount === iterationCount) {
+          const statusMessage = totalCount === 1
+              ? STATUS_MESSAGE.singleProjectAssignedSuccess
+              : STATUS_MESSAGE.multipleProjectAssignedSuccess;
+
+          return {
+              statusCode: HttpStatus.SUCCESS,
+              statusMessage
+          };
+      } else {
+          return {
+              statusCode: HttpStatus.FAILED,
+              statusMessage: STATUS_MESSAGE.projectAssignFailed,
+          }}}
+            
+  async assignProjectToCase(
+      data: assignProjectType,
+      accountNumber: string,
+      schemaName: string
+  ) {      
+
+    const { CaseProject, Case, CaseSummary, ProjectFiscal } =
       await this.caseModelService.getModels(accountNumber);
     if (!this.mainDbSequelize) {
       this.mainDbSequelize = await this.caseModelService.getMainSequelize();
@@ -1921,33 +2333,139 @@ return !response;
     const findProjects = await this.orgDbSequelize.query(rawQueries.getProjectByIds(collectProjectFiscalIds, schemaName))
     const mapProjectById : Map<string, any> = new Map(findProjects[0].map((d : any) => [d.rid, d]));
     for (let p of data.projects) {
-      const projectData = mapProjectById.get(p.project_fiscal_rid);
+          // Insert CaseProjectResource data
+          const projectFiscalRecords = await ProjectFiscal.findAll({
+              where: {
+                  project_rid: p.project_rid,
+                  rid: p.project_fiscal_rid,
+                  account_rid: data.account_rid
+              }
+          });
 
-      await CaseProject.create({
-        case_rid: data.case_rid,
-        account_rid: data.account_rid,
-        created_by: data.created_by,
-        created_datetime: new Date(),
-        project_rid: p.project_rid,
-        project_group: p.project_group,
-        project_fiscal_rid: p.project_fiscal_rid,
-        project_code : projectData.project_code,
-        fiscal_year : projectData.fiscal_year,
-        max_ai_interaction : projectData.max_ai_interaction
-      });
-      iterationCount += 1;
+          const projectFiscal = projectFiscalRecords.length > 0 ? projectFiscalRecords[0] : null;
+
+          const createdCaseProject = await CaseProject.create({
+              case_rid: data.case_rid,
+              account_rid: data.account_rid,
+              created_by: data.created_by,
+              created_datetime: new Date(),
+              project_rid: p.project_rid,
+              project_group: p.project_group,
+              project_fiscal_rid: p.project_fiscal_rid,
+              project_code: projectFiscal?.project_code || '',
+              industry_rid: projectFiscal?.industry_rid,
+              industry_name: projectFiscal?.industry_name,
+              fiscal_year: projectFiscal?.fiscal_year,
+              project_name: projectFiscal?.project_name,
+              program_name: projectFiscal?.program_name,
+              project_classification_rid: projectFiscal?.project_classification_rid,
+              project_classification_other: projectFiscal?.project_classification_other,
+              project_client_group: projectFiscal?.project_client_group,
+              auto_send_ai_interaction: projectFiscal?.auto_send_ai_interaction || false,
+              country_rid: projectFiscal?.country_rid,
+              region_rid: projectFiscal?.region_rid,
+              currency_rid: projectFiscal?.currency_rid,
+              max_ai_interaction: projectFiscal?.max_ai_interaction || 0,
+              expiry_duration: projectFiscal?.expiry_duration,
+              auto_access_rd: projectFiscal?.auto_access_rd,
+              project_startdate: projectFiscal?.project_startdate,
+              project_enddate: projectFiscal?.project_enddate,
+              total_fte_prj: projectFiscal?.total_fte_prj || 0,
+              total_fte_from_prj_res: projectFiscal?.total_fte_from_prj_res || 0,
+              total_fte_from_tasks: projectFiscal?.total_fte_from_tasks || 0,
+              total_subcon_prj: projectFiscal?.total_subcon_prj || 0,
+              total_subcon_from_prj_res: projectFiscal?.total_subcon_from_prj_res || 0,
+              total_subcon_from_tasks: projectFiscal?.total_subcon_from_tasks || 0,
+              total_nonlabor_prj: projectFiscal?.total_nonlabor_prj || 0,
+              total_nonlabor_from_prj_res: projectFiscal?.total_nonlabor_from_prj_res || 0,
+              total_resources_prj: projectFiscal?.total_resources_prj || 0,
+              total_resources_from_prj_res: projectFiscal?.total_resources_from_prj_res || 0,
+              total_resources_from_tasks: projectFiscal?.total_resources_from_tasks || 0,
+              total_effort_prj: projectFiscal?.total_effort_prj || 0,
+              total_effort_fte_prj: projectFiscal?.total_effort_fte_prj || 0,
+              total_effort_subcon_prj: projectFiscal?.total_effort_subcon_prj || 0,
+              total_effort_from_prj_res: projectFiscal?.total_effort_from_prj_res || 0,
+              total_effort_fte_from_prj_res: projectFiscal?.total_effort_fte_from_prj_res || 0,
+              total_effort_subcon_from_prj_res: projectFiscal?.total_effort_subcon_from_prj_res || 0,
+              total_effort_from_tasks: projectFiscal?.total_effort_from_tasks || 0,
+              total_effort_fte_from_tasks: projectFiscal?.total_effort_fte_from_tasks || 0,
+              total_effort_subcon_from_tasks: projectFiscal?.total_effort_subcon_from_tasks || 0,
+              total_cost_prj: projectFiscal?.total_cost_prj || 0,
+              total_cost_fte_prj: projectFiscal?.total_cost_fte_prj || 0,
+              total_cost_subcon_prj: projectFiscal?.total_cost_subcon_prj || 0,
+              total_cost_nonlabor_prj: projectFiscal?.total_cost_nonlabor_prj || 0,
+              total_cost_from_prj_res: projectFiscal?.total_cost_from_prj_res || 0,
+              total_cost_fte_from_prj_res: projectFiscal?.total_cost_fte_from_prj_res || 0,
+              total_cost_subcon_from_prj_res: projectFiscal?.total_cost_subcon_from_prj_res || 0,
+              total_cost_nonlabor_from_prj_res: projectFiscal?.total_cost_nonlabor_from_prj_res || 0,
+              total_cost_from_tasks: projectFiscal?.total_cost_from_tasks || 0,
+              total_cost_fte_from_tasks: projectFiscal?.total_cost_fte_from_tasks || 0,
+              total_cost_subcon_from_tasks: projectFiscal?.total_cost_subcon_from_tasks || 0,
+              total_cost_prj_blended: projectFiscal?.total_cost_prj_blended || 0,
+              total_cost_fte_prj_blended: projectFiscal?.total_cost_fte_prj_blended || 0,
+              total_cost_subcon_prj_blended: projectFiscal?.total_cost_subcon_prj_blended || 0,
+              total_cost_from_prj_res_blended: projectFiscal?.total_cost_from_prj_res_blended || 0,
+              total_cost_fte_from_prj_res_blended: projectFiscal?.total_cost_fte_from_prj_res_blended || 0,
+              total_cost_subcon_from_prj_res_blended: projectFiscal?.total_cost_subcon_from_prj_res_blended || 0,
+              total_cost_from_tasks_blended: projectFiscal?.total_cost_from_tasks_blended || 0,
+              total_cost_fte_from_tasks_blended: projectFiscal?.total_cost_fte_from_tasks_blended || 0,
+              total_cost_subcon_from_tasks_blended: projectFiscal?.total_cost_subcon_from_tasks_blended || 0,
+              blended_rate_fte: projectFiscal?.blended_rate_fte || 0,
+              blended_rate_subcon: projectFiscal?.blended_rate_subcon || 0,
+              rd_percent_potential_ai: projectFiscal?.rd_percent_potential_ai || 0,
+              rd_percent_adjustment: projectFiscal?.rd_percent_adjustment || 0,
+              rd_percent_final: projectFiscal?.rd_percent_final || 0,
+              qre_fte: projectFiscal?.qre_fte || 0,
+              qre_subcon: projectFiscal?.qre_subcon || 0,
+              qre_nonlabor: projectFiscal?.qre_nonlabor || 0,
+              qre_final: projectFiscal?.qre_final || 0,
+              rd_credits_fte_fed_level: projectFiscal?.rd_credits_fte_fed_level || 0,
+              rd_credits_subcon_fed_level: projectFiscal?.rd_credits_subcon_fed_level || 0,
+              rd_credits_nonlabor_fed_level: projectFiscal?.rd_credits_nonlabor_fed_level || 0,
+              rd_credits_fed_level: projectFiscal?.rd_credits_fed_level || 0,
+              rd_credits_total: projectFiscal?.rd_credits_total || 0,
+              interaction_cc_list: projectFiscal?.interaction_cc_list,
+              assessment_status: projectFiscal?.assessment_status,
+              claim_status: projectFiscal?.claim_status,
+              comments: projectFiscal?.comments,
+              project_description: projectFiscal?.project_description,
+              status_rid: projectFiscal?.status_rid,
+              project_type_rid: projectFiscal?.project_type_rid,
+              effective_total_fte: projectFiscal?.effective_total_fte || 0,
+              effective_total_subcon: projectFiscal?.effective_total_subcon || 0,
+              effective_total_nonlabor: projectFiscal?.effective_total_nonlabor || 0,
+              effective_cost: projectFiscal?.effective_cost || 0,
+              effective_effort: projectFiscal?.effective_effort || 0,
+              effective_fte_cost: projectFiscal?.effective_fte_cost || 0,
+              effective_fte_effort: projectFiscal?.effective_fte_effort || 0,
+              effective_subcon_cost: projectFiscal?.effective_subcon_cost || 0,
+              effective_subcon_effort: projectFiscal?.effective_subcon_effort || 0,
+              effective_nonlabor_cost: projectFiscal?.effective_nonlabor_cost || 0,
+              effective_metric_type: projectFiscal?.effective_metric_type,
+              default_metric_type: projectFiscal?.default_metric_type,
+              // is_rd_claim_qualified: projectFiscal?.is_rd_claim_qualified || false,
+              rd_percent_potential_ai_updated: projectFiscal?.rd_percent_potential_ai_updated || 0,
+              total_nonlabor_from_tasks: projectFiscal?.total_nonlabor_from_tasks || 0,
+
+          });
+          p.project_case_rid = createdCaseProject.rid;
+          iterationCount += 1;
     }
     if (totalCount === iterationCount) {
       const getTotalProjects : any = await this.orgDbSequelize.query(
         rawQueries.getTotalProjectsCountInCase(schemaName, data.fiscal_year, data.account_rid, data.case_rid)
       )
+      // If value is zero, update as null
+      const totalProjects = getTotalProjects[0][0].total_projects === 0 ? null : getTotalProjects[0][0].total_projects;
+      const totalProjectsCost = getTotalProjects[0][0].total_projects_cost === 0 ? null : getTotalProjects[0][0].total_projects_cost;
+      const totalProjectsQreCost = getTotalProjects[0][0].total_projects_qre_cost === 0 ? null : getTotalProjects[0][0].total_projects_qre_cost;
       await this.orgDbSequelize.query(
         rawQueries.updateCostCountInCase(
           schemaName,
           data.case_rid,
-          getTotalProjects[0][0].total_projects,
-          getTotalProjects[0][0].total_projects_cost,
-          getTotalProjects[0][0].total_projects_qre_cost
+          totalProjects,
+          totalProjectsCost,
+          totalProjectsQreCost
         )
       );
       await this.mainDbSequelize.query(
@@ -1962,17 +2480,20 @@ return !response;
         return {
           statusCode: HttpStatus.SUCCESS,
           statusMessage: STATUS_MESSAGE.singleProjectAssignedSuccess,
+          data: data,
         };
       } else {
         return {
           statusCode: HttpStatus.SUCCESS,
           statusMessage: STATUS_MESSAGE.multipleProjectAssignedSuccess,
+          data: data,
         };
       }
-    } else {
+    }
+    else {
       return {
         statusCode: HttpStatus.FAILED,
-        statusMessage: STATUS_MESSAGE.multipleProjectAssignedSuccess,
+        statusMessage: STATUS_MESSAGE.projectAssignFailed,
       };
     }
   }
@@ -2041,9 +2562,9 @@ return !response;
   }
 
   async deletedAssignedProject(
-    data: assignProjectType,
-    accountNumber: string,
-    schemaName: string
+      data: assignProjectType,
+      accountNumber: string,
+      schemaName: string
   ) {
     const { CaseProject } = await this.caseModelService.getModels(
       accountNumber
@@ -2060,6 +2581,34 @@ return !response;
     totalCount = data.projects.length;
 
     for (let p of data.projects) {
+      await CaseProjectTask.destroy({
+        where: {
+            case_rid: data.case_rid,
+            account_rid: data.account_rid,
+            project_fiscal_rid: p.project_fiscal_rid,
+        },
+      });
+      await CaseProjectResourceFiscal.destroy({
+        where: {
+            case_rid: data.case_rid,
+            account_rid: data.account_rid,
+            project_fiscal_rid: p.project_fiscal_rid,
+        },
+      })
+      await CaseProjectResource.destroy({
+        where: {
+            case_rid: data.case_rid,
+            account_rid: data.account_rid,
+            project_fiscal_rid: p.project_fiscal_rid,
+        },
+      });
+      await CaseProjectFiscalRegion.destroy({
+        where: {
+            case_rid: data.case_rid,
+            account_rid: data.account_rid,
+            project_fiscal_rid: p.project_fiscal_rid,
+        },
+      });
       await CaseProject.destroy({
         where: {
           case_rid: data.case_rid,
@@ -2101,10 +2650,11 @@ return !response;
           statusMessage: STATUS_MESSAGE.multipleProjectDeletedSuccess,
         };
       }
-    } else {
+    }
+    else {
       return {
-        statusCode: HttpStatus.FAILED,
-        statusMessage: STATUS_MESSAGE.projectAssignFailed,
+          statusCode: HttpStatus.FAILED,
+          statusMessage: STATUS_MESSAGE.projectAssignFailed,
       };
     }
   }
@@ -2123,8 +2673,10 @@ return !response;
           case_rid: data.case_rid,
           project_fiscal_rid: p.project_fiscal_rid,
           project_rid: p.project_rid,
-          project_group: p.project_group,
-        },
+          project_group: p.project_group === '' 
+            ? { [Op.or]: ['', null] }  
+            : p.project_group           
+        }
       });
       if (!checkProjectAlreadyMapped) {
         return {
@@ -3339,6 +3891,9 @@ return !response;
       if(!this.mainDbSequelize) {
         this.mainDbSequelize = await initMainDbSequelize()
       }
+      if(!this.orgDbSequelize) {
+        this.orgDbSequelize = await initOrgSequelize()
+      }
       const { CaseTeam } = await this.caseModelService.getModels(accountNumber);
       let whereConditions;
 
@@ -3359,9 +3914,23 @@ return !response;
         order: [["effective_startdate", "ASC"]],
         raw : true
       };
-      const caseTeamMembers = await CaseTeam.findAll(queryOptions);
+      let caseTeamMembers = await CaseTeam.findAll(queryOptions);
+      const userIds = [...new Set(caseTeamMembers.map((d : any) => d.user_rid))];
+      if(userIds.length > 0) {
+        let userAssignedCountMap = new Map();
+        let schemaName = rawQueries.fetchSchemaName(accountNumber)
+        let countResult : any = await this.orgDbSequelize.query(rawQueries.getUserAssignedCount(schemaName, userIds, data.case_rid))
+        countResult[0][0].assigned_user_details.forEach((d : any) => {
+          userAssignedCountMap.set(d.user_rid, d.total_task_assigned_count)
+        })
+        caseTeamMembers = caseTeamMembers.map((d : any) => {
+          return {
+            ...d,
+            assigned_task_count : userAssignedCountMap.get(d.user_rid) || 0
+          }
+        })
+      }
       if(isDropdownList) {
-        const userIds = [...new Set(caseTeamMembers.map((d : any) => d.user_rid))];
         if(userIds.length > 0) {
           const getUserDetails = await this.mainDbSequelize.query(rawQueries.getOwnerDetails(userIds));
           const userMap = new Map(getUserDetails[0].map((d : any) => [d.rid, d.name]));
@@ -3819,7 +4388,9 @@ return !response;
         else if (attachmentLevel === 'account' && entityId) {
           const accountAttachments = await fetchAttachments(CheckList, 'account', [entityId]);
           allChecklists.push(...accountAttachments);
-          const caseAttachments = await fetchAttachments(CheckList, 'case', [entityId]);
+          const cases = await this.getCasesByAccountId(accountNumber, entityId);
+          const caseIds = cases.map((c: { rid: any; }) => c.rid);
+          const caseAttachments = await fetchAttachments(CheckList, 'case', caseIds);
           allChecklists.push(...caseAttachments);
     
           const projects = await this.getProjectsByAccountId(accountNumber, entityId,accessibleIds);
@@ -4524,6 +5095,24 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       return results;
   }
 
+  async getCasesByAccountId(accountNumber: string, accountRid: string) {
+      if(!this.orgDbSequelize) {
+        this.orgDbSequelize = await this.caseModelService.getSequelize(
+        );
+      }
+       const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(
+        /\D/g,
+        ""
+      )}`;
+      const [results]: any[] = await this.orgDbSequelize.query(
+        rawQueries.getAllCasesByAccountId(
+          schemaName,
+          accountRid
+        )
+      );
+      return results;
+  }
+
       async fetchChecklistItems(
         checklistId: string,
         accountNumber: string
@@ -5010,12 +5599,12 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         attributes : ['case_name','fiscal_year'],
         raw : true  
       });
-    /*  await TaskSummary.create(
+      await TaskSummary.create(
         {
-          task_rid: createdTaskResult.rid,
+          task_rid: createdTaskResult.dataValues.rid,
           r_number: createdTaskResult.r_number || "",
           account_rid: createdTaskResult.account_rid || "",
-          attach_to: createdTaskResult.rid || "",
+          attach_to: data.case_rid || "",
           attachment_level: "case",
           task_name: data.task_name || "",
           description: data.task_description || "",
@@ -5027,9 +5616,9 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
           effective_end_datetime: data.effective_end_datetime,
           created_by: data.created_by || "",
           created_datetime: new Date(),
+          task_type_rid: data.task_type_rid || "",
         }
       );
-      */
       if(data?.checklist_template_rid) 
       {
         const response  = await this.fetchChecklistTemplateDetailsById(data.checklist_template_rid);
@@ -5124,7 +5713,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         } 
       } else {
         if(isTaskExists.task_status_rid !== data.task_status_rid) {
-          const workflowResult = await this.checkTaskWorkFlow(accountNumber, data.rid, data.task_status_rid);
+          const workflowResult = await this.checkTaskWorkFlow(accountNumber, data.rid, data.task_status_rid, data.case_rid, data.workflow_connector.target_rid);
           if(workflowResult?.success) {
             return {
               statusCode : HttpStatus.BAD_REQUEST,
@@ -5193,7 +5782,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             await this.manageCheckListItems(accountNumber,caseRequest,checklistResponse.rid, transaction);
           }
       }
-       /* await TaskSummary.update(
+       await TaskSummary.update(
         {
           task_name: data.task_name || "",
           description: data.task_description || "",
@@ -5207,10 +5796,11 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         },
         {
         where : {
-            task_rid : data.rid
+            task_rid : data.rid,
+            attach_to : data.case_rid
           }
       }
-      ); */
+      );
         const checkIsDifferentCollaborator = await this.isNewCollaborator(data.modified_by, accountNumber,"case_task", data.case_rid, data.rid);
         if(!checkIsDifferentCollaborator) {
           const checkCollaboratorExists = await this.isCollaboratorAlreadyAdded(data.modified_by, data.case_rid, data.account_rid, data.rid, accountNumber,"case_task");
@@ -5264,7 +5854,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                 case_rid : data.case_rid,
                 attribute_name : "Linked Items",
                 old_value : "CREATE",
-                new_value : `updated a linked task type`,
+                new_value : `updated the ${data.workflow_connector.key_name}`,
                 task_rid : data.rid
               }, {transaction});
             }
@@ -5525,7 +6115,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     else return null;
   }
   async createOrUpdateTags (taskRid : string, accountRid : string, caseRid: string, tagRid : string, isNewTag : boolean, accountNumber : string, userId : string, activeStatusRid : string, taskType? : string) {
-    const {Tags, TaskTag, CaseHistory, CaseTimeline} = await this.caseModelService.getModels(accountNumber)
+    const {Tags, TaskTag, CaseHistory, CaseTimeline, ActivityHistory} = await this.caseModelService.getModels(accountNumber)
 
     if(isNewTag) {
       const isTagExists = await Tags.findOne({
@@ -5582,12 +6172,13 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         else
         {
           await this.addTaskTimeline(accountNumber, taskRid, accountRid, `Tag added for task : ${result.tag_name}`, userId, "Tag added for Task", "success", taskRid);
-          await TaskHistory.create({
-            task_rid : taskRid,
+          await ActivityHistory.create({
+            activity_rid : taskRid,
             created_by : userId,
             created_datetime : new Date(),
             attribute_name : "Tags",
-            new_value : result.tag_name
+             old_value : `CREATE`,
+            new_value : `added the following tags ${result.dataValues.tag_name}`,
           })
         }
           return {
@@ -5647,6 +6238,19 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             new_value : tagDetails!.tag_name,
             task_rid : taskRid
           }) 
+        }
+        else
+        {
+          await this.addTaskTimeline(accountNumber, taskRid, accountRid, `Tag added for task : ${tagDetails!.tag_name}`, userId, "Tag added for Task", "success", taskRid);
+          await ActivityHistory.create({
+            activity_rid : taskRid,
+            account_rid : accountRid,
+            created_by : userId,
+            created_datetime : new Date(),
+            attribute_name : "Tags",
+              old_value : `CREATE`,
+            new_value : `added the following tags ${tagDetails!.tag_name}`,
+          })
         }
        
         if(finalResult) {
@@ -5710,7 +6314,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     else return null;
   }
   async addComments (data : AddCommentsType, accountNumber : string,  taskNumber : string, files : Express.Multer.File[]) {
-    const {TaskComments, CommentsAttachments, TaskAttachments, CaseTimeline, TaskCollaborators,Activities,TaskHistory} = await this.caseModelService.getModels(accountNumber);
+    const {TaskComments, CommentsAttachments, TaskAttachments, CaseTimeline, TaskCollaborators,Activities,ActivityHistory} = await this.caseModelService.getModels(accountNumber);
     const commentPayload: any = {
       created_by: data.created_by,
       created_datetime: new Date(),
@@ -5791,7 +6395,11 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                await CaseHistory.create(caseHistoryPayload);
             }
             else
-             await TaskHistory.create(caseHistoryPayload);
+            {
+              caseHistoryPayload.activity_rid = data.task_rid;
+              await ActivityHistory.create(caseHistoryPayload);
+            }
+             
           }
         }
       }
@@ -5807,6 +6415,15 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         event_datetime : new Date(),
         description : `Task Comments : ${createComments.comments}`
       }) 
+      await CaseHistory.create({
+        created_by : data.created_by,
+        created_datetime : new Date(),
+        case_rid : data.case_rid,
+        task_rid : data.task_rid,
+        attribute_name : "Comments",
+        old_value : "CREATE",
+        new_value : 'added a comment'
+      })
     }
     else
     {
@@ -5836,7 +6453,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
   }
 
   async updateComments (data : UpdateCommentsType, accountNumber : string,  taskNumber : string, files : Express.Multer.File[]) {
-    const {TaskComments, CommentsAttachments, TaskAttachments, TaskCollaborators, CaseHistory, CaseTimeline,TaskHistory} = await this.caseModelService.getModels(accountNumber);
+    const {TaskComments, CommentsAttachments, TaskAttachments, TaskCollaborators, CaseHistory, CaseTimeline,ActivityHistory} = await this.caseModelService.getModels(accountNumber);
     const isCommentExists = await TaskComments.findOne({
       where : {
         rid : data.rid
@@ -5856,8 +6473,8 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         case_rid : data.case_rid,
         task_rid : data.task_rid,
         attribute_name : "Comments",
-        old_value : isCommentExists.comments,
-        new_value : data.comments
+        old_value : "CREATE",
+        new_value : 'updated a comment'
       })
     }
         const checkIsDifferentCollaborator = await this.isNewCollaborator(data.modified_by, accountNumber, data.task_type || 'case_task', data.case_rid, data.task_rid);
@@ -5921,7 +6538,8 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
               }
               else
               {
-                await TaskHistory.create(caseHistoryPayload)
+                caseHistoryPayload.activity_rid = data.task_rid;
+                await ActivityHistory.create(caseHistoryPayload)
               }
               await CommentsAttachments.create(commentsAttachmentPayload);
               await TaskAttachments.create(taskAttachmentPayload);
@@ -6015,7 +6633,8 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
               }
               else
               {
-                await TaskHistory.create(historyPayload);
+                historyPayload.activity_rid = data.task_rid;
+                await ActivityHistory.create(historyPayload);
               }
              
               
@@ -6330,7 +6949,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
   }
 
   async addAttachmentForTask (data : any, accountNumber : string, files : Express.Multer.File[], userId : string) {
-    const {TaskAttachments,TaskHistory} = await this.caseModelService.getModels(accountNumber)
+    const {TaskAttachments,ActivityHistory} = await this.caseModelService.getModels(accountNumber)
     const findTaskDetails = await this.findTaskById(data.task_rid, data.account_rid, data.case_rid, accountNumber,data.task_type || 'case_task');
     if(files != undefined) {
       if(Array.isArray(files)) {
@@ -6371,7 +6990,8 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
               created_datetime : new Date(),
               case_rid : data.case_rid,
               attribute_name : "task_attachments",
-              new_value : uploadFile.url,
+              old_value : "CREATE",
+              new_value : "added an attachment",
               task_rid : data.task_rid
             })
             }
@@ -6387,12 +7007,13 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                 "success",
                data.task_rid
               )
-              await TaskHistory.create({
+              await ActivityHistory.create({
                 created_by : userId,
                 created_datetime : new Date(),
-                attribute_name : "task_attachments",
+                attribute_name : "Task Attachments",
                 new_value : uploadFile.url,
-                task_rid : data.task_rid
+                activity_rid : data.task_rid,
+                account_rid : data.account_rid
               })
             }
           }
@@ -6433,6 +7054,15 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
           event_status : "success",
           event_datetime : new Date(),
           description : `Task Attachments Deleted : ${checkIsFileExists.document_name}`
+        })
+        await CaseHistory.create({
+          created_by : userId,
+          created_datetime : new Date(),
+          case_rid : data.case_rid,
+          attribute_name : "task_attachments",
+          old_value : "CREATE",
+          new_value : "deleted an attachment",
+          task_rid : data.task_rid
         })
         }
         else
@@ -6867,8 +7497,8 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     return result
   }
 
-  async deleteTags (accountNumber : string, caseRid : string, accountRid : string, taskRid : string, tagRid : string[], userId : string) {
-    const {TaskTag, Tags} = await this.caseModelService.getModels(accountNumber);
+  async deleteTags (accountNumber : string, caseRid : string, accountRid : string, taskRid : string, tagRid : string[], userId : string,task_type:string) {
+    const {TaskTag, Tags,ActivityHistory} = await this.caseModelService.getModels(accountNumber);
     let responseMessage : string
     let dynamicTagName : string
     if(tagRid.length == 1) {
@@ -6893,18 +7523,22 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         }
       }, raw : true
     })
-    const result = await TaskTag.destroy({
-      where : {
-        case_rid : caseRid,
-        account_rid : accountRid,
-        task_rid : taskRid,
-        tag_rid : {
-          [Op.in] : tagRid.map((d : any) => d)
-        },
+    let whereClause: any = {
+      account_rid: accountRid,
+      task_rid: taskRid,
+      tag_rid: {
+        [Op.in]: tagRid.map((d: any) => d)
       }
+    };
+    if (task_type !== 'activity') {
+      whereClause.case_rid = caseRid;
+    }
+    const result = await TaskTag.destroy({
+      where: whereClause
     });
     if(result > 0) {
       if(findTagName.length > 0) {
+        if(task_type !== 'activity') {
         await CaseHistory.create({
           created_by : userId,
           created_datetime : new Date(),
@@ -6914,6 +7548,19 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
           case_rid : caseRid,
           task_rid : taskRid
         });
+      }
+      else
+      {
+          await ActivityHistory.create({  
+          created_by : userId,
+          account_rid : accountRid,
+          created_datetime : new Date(),
+          attribute_name : "Tags",
+          old_value : `CREATE`,
+          new_value : `deleted the following ${dynamicTagName} ${findTagName.map((d : any) => d.tag_name).join(' , ')}`,
+          activity_rid : taskRid
+        });
+      }
       }
       return {
         statusCode : HttpStatus.SUCCESS,
@@ -6964,50 +7611,62 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       }
     }
   }
-  async checkTaskWorkFlow (accountNumber : string, taskRid : string, statusRid : string) {
+  async checkTaskWorkFlow (accountNumber : string, taskRid : string, statusRid : string, caseRid : string, targetRids : any) {
     if(!this.mainDbSequelize) {
       this.mainDbSequelize = await initMainDbSequelize()
     }
     const {CaseTaskWorkflowConnector} = await this.caseModelService.getModels(accountNumber);
     const findTaskDependency = await CaseTaskWorkflowConnector.findAll({
       where : {
-        source_rid : taskRid
+        source_rid : taskRid,
+        target_rid : {
+          [Op.in] : targetRids
+        },
+        case_rid : caseRid
       }, raw : true
     });
     if(findTaskDependency.length > 0) {
-      const result = await this.sourceTaskValidation(accountNumber, findTaskDependency, taskRid, statusRid);
-      if(result?.success) {
-        return {
-          success : true,
-          statusMessage : result.statusMessage 
-        }
-      }
-      else {
-        const findTargetTaskDependency = await CaseTaskWorkflowConnector.findAll({
-            where : {
-              target_rid : taskRid
-            }, raw : true
-          });
-        if(findTaskDependency.length > 0) {
-          const result = await this.targetTaskValidation(accountNumber, findTargetTaskDependency, taskRid, statusRid);
-          if(result?.success) {
-            return {
-              success : true,
-              statusMessage : result.statusMessage 
-            }
+      const result = await this.sourceTaskValidation(accountNumber, findTaskDependency, taskRid, statusRid, caseRid);
+      if(result !== undefined) {
+        if(result.success) {
+          return {
+            success : true,
+            statusMessage : result.statusMessage 
           }
-          else {
+        }
+      } else {
             return {
               success : false,
               statusMessage : null
             }
           } 
-        }
-      } 
+      // else {
+      //   const findTargetTaskDependency = await CaseTaskWorkflowConnector.findAll({
+      //       where : {
+      //         target_rid : taskRid,
+      //         case_rid : caseRid
+      //       }, raw : true
+      //     });
+      //   if(findTaskDependency.length > 0) {
+      //     const result = await this.targetTaskValidation(accountNumber, findTargetTaskDependency, taskRid, statusRid, caseRid);
+      //     if(result?.success) {
+      //       return {
+      //         success : true,
+      //         statusMessage : result.statusMessage 
+      //       }
+      //     }
+      //     else {
+      //       return {
+      //         success : false,
+      //         statusMessage : null
+      //       }
+      //     } 
+      //   }
+      // } 
     }
   }
 
-  private async sourceTaskValidation (accountNumber : string, findTaskDependency: CaseTaskWorkflowConnector[], sourceRid : string, statusRid : string) {
+  private async sourceTaskValidation (accountNumber : string, findTaskDependency: CaseTaskWorkflowConnector[], sourceRid : string, statusRid : string, caseRid : string) {
     if(!this.mainDbSequelize) {
       this.mainDbSequelize = await initMainDbSequelize()
     }
@@ -7017,7 +7676,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       where : {
         rid : {
           [Op.in] : relationIds
-        }
+        },
       }, raw : true
     });
     if(findRelationshipConnector.length > 0) {
@@ -7028,7 +7687,8 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         where : {
           rid : {
             [Op.in] : targetIds
-          }
+          },
+          case_rid : caseRid
         }, raw : true
       });
       if(findCaseTasks.length > 0) {
@@ -7073,7 +7733,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       }
     }
   }
-  private async targetTaskValidation (accountNumber : string, findTaskDependency: CaseTaskWorkflowConnector[], targetRid : string, statusRid : string) {
+  private async targetTaskValidation (accountNumber : string, findTaskDependency: CaseTaskWorkflowConnector[], targetRid : string, statusRid : string, caseRid : string) {
     if(!this.mainDbSequelize) {
       this.mainDbSequelize = await initMainDbSequelize()
     }
@@ -7094,7 +7754,8 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         where : {
           rid : {
             [Op.in] : sourceIds
-          }
+          },
+          case_rid : caseRid
         }, raw : true
       });
       if(findCaseTasks.length > 0) {
@@ -7278,6 +7939,28 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       }, raw : true
     });
     return result;
+  }
+  async getCaseSubmissionDate(data: any) {
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+    }
+   const [platFormConfig]: any[] = await this.mainDbSequelize.query(
+              rawQueries.fetchPlatformConfig(
+                data.country_rid
+              ),{type: 'SELECT'}
+            );
+  // Assume platFormConfig.config_json.submission_date is in MM/DD format
+  const submissionDate = platFormConfig?.config_json?.submission_date;
+  if (!submissionDate) return "";
+///  const fiscalYear = data.fiscal_year || new Date().getFullYear();
+  // Parse MM/DD and build YYYY-MM-DD
+  // const [month, day] = submissionDate.split("/");
+  // if (!month || !day) return "";
+  // // Pad month and day to 2 digits
+  // const monthPadded = month.padStart(2, "0");
+  // const dayPadded = day.padStart(2, "0");
+  // const formattedDate = `${fiscalYear}-${monthPadded}-${dayPadded}`;
+  return submissionDate;
   }
 }
 

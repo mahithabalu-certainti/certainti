@@ -288,6 +288,12 @@ updateChecklistItemsStatus (data : any) : Promise<{
     statusCode: number;
     statusMessage: string;
 }>
+getCaseSubmissionDate(data: any): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { caseSubmissionDate: string };
+  }>;
 getTaskDropDownForDependencyMapping(data : any) : Promise<CaseTaskDropdownType[]>
 }
 
