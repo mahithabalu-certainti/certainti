@@ -1,5 +1,5 @@
 import { useQuery, UseQueryResult } from '@tanstack/react-query';
-import { api, resourceServiceApi } from '../../../api/api';
+import { resourceServiceApi } from '../../../api/api';
 import { TasksListURL, TasksExportListURL } from '../urls/tasks-url';
 import {
   TaskListResponse,

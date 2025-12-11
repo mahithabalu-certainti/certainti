@@ -106,8 +106,8 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
   const caseId = isMilestoneTab
     ? selectedTask?.attach_to || ''
     : selectedTask?.case_rid ||
-    (isCaseTask ? selectedTask?.attach_to : '') ||
-    '';
+      (isCaseTask ? selectedTask?.attach_to : '') ||
+      '';
   const accountId = selectedTask?.account_rid || '';
 
   const prioritiesQuery = useGetTaskPriorities();
