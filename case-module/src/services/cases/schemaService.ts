@@ -1583,10 +1583,12 @@ return !response;
   async getCasesHeadersSectionList(
     caseRid: string,
     schemaName: string,
-    orgDb: Sequelize
+    orgDb: Sequelize, 
+    accountRid : string,
+    activeStatusRid : string
   ) {
     const [result] = await orgDb.query<CaseHeadersColumns>(
-      fetchCasesHeadersDatas(schemaName, caseRid),
+      fetchCasesHeadersDatas(schemaName, caseRid, accountRid, activeStatusRid),
       { type: QueryTypes.SELECT }
     );
     if (result) {
