@@ -1,4 +1,4 @@
-import { FieldConfig } from '../../components/filter/filterType';
+import { FieldConfig } from '../../../account-details-sidebar/components/filter/filterType';
 
 export const textOptions: { option: string; value: string }[] = [
   { option: 'Equals', value: 'equals' },
