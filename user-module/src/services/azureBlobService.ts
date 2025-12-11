@@ -1,5 +1,6 @@
 import { BlobServiceClient, StorageSharedKeyCredential, generateBlobSASQueryParameters, BlobSASPermissions, SASProtocol } from "@azure/storage-blob";
-import { errorLog, logMessage } from "../utils/helpers";
+import { logMessage } from "../utils/helpers";
+import path from 'path';
 
 const connectionString = process.env.AZURE_STORAGE_CONNECTION_STRING!;
 const containerName = process.env.AZURE_CONTAINER_NAME!;
@@ -7,8 +8,14 @@ const containerName = process.env.AZURE_CONTAINER_NAME!;
 const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
 const containerClient = blobServiceClient.getContainerClient(containerName);
 
+/**
+ * Uploads a file to Azure Blob Storage under a user-specific path.
+ * @param file 
+ * @param user_id 
+ * @returns 
+ */
 export const uploadToAzure = async (file: Express.Multer.File, user_id: string): Promise<string> => {
-    const blobName = `${user_id}/profile/${file.originalname}`;
+    const blobName = path.posix.join('user', user_id, 'profile', file.originalname);
     const blockBlobClient = containerClient.getBlockBlobClient(blobName);
 
     await containerClient.setAccessPolicy(undefined);
