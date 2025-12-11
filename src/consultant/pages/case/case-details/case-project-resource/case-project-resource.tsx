@@ -129,7 +129,6 @@ const CaseProjectResource: React.FC<ProjectResourceProps> = ({
     }
   }, [data]);
 
-
   const handleFilter = () => {
     setShowFilter(!showFilter);
   };
@@ -152,9 +151,7 @@ const CaseProjectResource: React.FC<ProjectResourceProps> = ({
     setShowFilter(false);
     setAppliedFilters({});
     setSortFilterCount(0);
-
-  }
-
+  };
 
   const handleSorting = (sortBy: string, sortOrder: 'asc' | 'desc') => {
     const defaultSortField = 'document_name';

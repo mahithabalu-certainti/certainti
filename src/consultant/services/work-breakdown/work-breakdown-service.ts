@@ -261,7 +261,9 @@ export const getTaskDetail = async (
               (wc) => wc.target_task_name
             )
           : [],
-      fiscal_year: taskDetailResponse.fiscal_year,
+      fiscal_year: taskDetailResponse.fiscal_year
+        ? String(taskDetailResponse.fiscal_year)
+        : undefined,
     };
 
     return task;
@@ -282,7 +284,9 @@ export const fetchTaskDetail = async (
     const payload = {
       task_rid: taskId,
       account_rid: accountId,
-      ...(taskType ? { task_type: taskType } : { case_rid: caseId }),
+      ...(taskType && taskType !== 'milestone'
+        ? { task_type: taskType }
+        : { case_rid: caseId }),
     };
     const response = await caseServiceApi.post<{
       statusCode: number;
