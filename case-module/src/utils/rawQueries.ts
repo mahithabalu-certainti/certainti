@@ -1712,4 +1712,61 @@ export function fetchChecklistAttachToDetails(schemaName: string, attachTo: stri
     return `UPDATE ${schemaName}.cases SET case_total_project_cost = ${totalCostPrj}, case_total_qre_cost = ${totalQreCost} 
     WHERE rid = '${caseRid}' AND account_rid = '${accountRid}'`
   }
+
+  export const listAllJurisdictionConfig = (
+  searchValue: string,
+  whereKey: string,
+  joinedConditions: string,
+  sortValue: string,
+  pagination: string
+) =>  `
+    WITH fetch_jurisdiction_config AS (
+        SELECT
+            jc.rid, jc.r_number,
+            jc.status_rid,s.status_name,
+            jc.created_by, jc.modified_by,
+            jc.created_datetime, jc.modified_datetime,
+            COUNT(jc.rid) OVER() AS total_records,
+            jc.effective_start_date,
+            jc.effective_end_date,g.is_federal,
+            uc.first_name || ' ' || uc.last_name AS created_user_name,
+            um.first_name || ' ' || um.last_name AS modified_user_name,
+            jc.credit_config_group_rid
+            FROM
+            ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values jc
+             LEFT JOIN ${MAIN_SCHEMA_NAME}.rd_credit_config_group g ON jc.credit_config_group_rid = g.rid
+             LEFT JOIN ${MAIN_SCHEMA_NAME}.country c ON g.country_rid = c.rid
+             LEFT JOIN ${MAIN_SCHEMA_NAME}.status s ON jc.status_rid = s.rid
+             LEFT JOIN ${MAIN_SCHEMA_NAME}.user uc ON uc.rid = jc.created_by
+             LEFT JOIN ${MAIN_SCHEMA_NAME}.user um ON um.rid = jc.modified_by
+              WHERE
+    (jc.r_number ILIKE '${searchValue}')
+    ${joinedConditions}
+    ),
+    paginated_datas AS (
+    SELECT * FROM fetch_jurisdiction_config ${sortValue} ${pagination}
+    
+    )
+        SELECT 
+        array_agg(jsonb_build_object(
+        'rid', i.rid,
+        'r_number', i.r_number,
+        'status_rid', i.status_rid,
+        'status_name', i.status_name,
+        'created_by', i.created_by,
+        'modified_by', i.modified_by,
+        'created_datetime', i.created_datetime,
+        'modified_datetime', i.modified_datetime,
+        'effective_start_date', i.effective_start_date,
+        'effective_end_date', i.effective_end_date,
+        'total_records', i.total_records,
+        'created_user_name', i.created_user_name,
+        'modified_user_name', i.modified_user_name,
+        'is_federal', i.is_federal,
+        'credit_config_group_rid', i.credit_config_group_rid
+        ) ) AS jurisdiction_config_list
+
+        FROM
+        paginated_datas i
+    `;
  

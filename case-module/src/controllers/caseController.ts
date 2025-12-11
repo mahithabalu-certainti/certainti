@@ -20,6 +20,7 @@ import {
   STATUS_MESSAGE,
 } from "../utils/constants";
 import {
+  caseSubmissionDateSchema,
   checklistByIdSchema,
   checklistSchema,
   createCaseSchema,
@@ -3808,6 +3809,38 @@ async function caseLevelTaskDropdown (req : Request, res : Response) {
     );
   }
 }
+
+async function getCaseSubmissionDate(req: Request, res: Response): Promise<void> {
+  const methodName = "Get Case Submission Date";
+  try {
+     const value = await validateRequest(req, caseSubmissionDateSchema, res,"GET");
+    const caseSubmissionDate = await caseService.getCaseSubmissionDate(value);
+    if (caseSubmissionDate.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, caseSubmissionDate.data);
+      return;
+    } else {
+      errorLog(methodName, caseSubmissionDate.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        caseSubmissionDate.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
 export default {
   createCases,
   updateCases,
@@ -3863,5 +3896,6 @@ export default {
   deleteCollaboratorsTaskLevel,
   updateChecklistItemStatus,
   getEmailTemplatePreview,
-  caseLevelTaskDropdown
+  caseLevelTaskDropdown,
+  getCaseSubmissionDate
 };

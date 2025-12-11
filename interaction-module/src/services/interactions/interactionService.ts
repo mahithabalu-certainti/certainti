@@ -2920,22 +2920,57 @@ export class InteractionService {
         if (!this.orgDbSequelize) {
           this.orgDbSequelize = await initOrgSequelize();
         }
+        if (!this.mainDbSequelize) {
+          this.mainDbSequelize = await initMainDbSequelize();
+        }
         const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
           /\D/g,
           ""
         )}`;
         const status_rid =
           await this.interactionSchemaService.getActiveStatusRid();
+        const [accountInfo]: any[] = await this.mainDbSequelize.query(
+          rawQueries.fetchAccountInfo(
+            req.data[0].account_rid,
+          )
+        );
+       const [platFormConfig]: any[] = await this.mainDbSequelize.query(
+              rawQueries.fetchPlatformConfig(
+                accountInfo[0].country_rid
+              ),{type: 'SELECT'}
+        );
+
+        let projectType: any[] = [];
+        if (platFormConfig && platFormConfig.config_json && platFormConfig.config_json.project_type) {
+          // Support array or single value
+          let projectTypes = platFormConfig.config_json.project_type;
+          if (!Array.isArray(projectTypes)) {
+            projectTypes = [projectTypes];
+          }
+          [projectType] = await this.mainDbSequelize.query(
+            rawQueries.fetchProjectTypeRid(projectTypes)
+          );
+        }
+        // Get all project type rids
+        const projectTypeRids = Array.isArray(projectType)
+          ? projectType.map((pt: any) => pt.rid)
+          : [];
+        // Pass as IN clause to fetchProjectsByAccount
         const [projects]: any[] = await this.orgDbSequelize.query(
           rawQueries.fetchProjectsByAccount(
             req.data[0].account_rid,
             schemaName,
-            status_rid!
+            status_rid!,
+            projectTypeRids
           )
         );
         const projectIds = Array.isArray(projects)
           ? projects.map((p: any) => p.rid)
           : [];
+        if (projectIds.length === 0) {
+          logMessage(`No active projects found for account ID in triggerAI: ${req.data[0].account_rid}`);
+          throw new Error("No active projects found for the account");
+        }
         payload.project_id = projectIds;
       }
       else if (req.type === "case") {
