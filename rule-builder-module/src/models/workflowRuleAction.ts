@@ -10,8 +10,6 @@ export interface RuleActionAttributes {
   target_user: string;
   new_value: string | null;
   action_order: number;
-  message_template: string;
-  metadata: string;
   created_by: string;
   modified_by?: string;
   created_datetime?: Date;
@@ -32,8 +30,6 @@ export class RuleAction
   public target_user!: string;
   public new_value!: string;
   public action_order!: number;
-  public message_template!: string;
-  public metadata!: string;
   public created_by!: string;
   public modified_by?: string;
 
@@ -85,16 +81,6 @@ export class RuleAction
           type: DataTypes.INTEGER,
           allowNull: true,
           defaultValue: true,
-        },
-
-        message_template: {
-          type: DataTypes.STRING,
-          allowNull: false,
-        },
-
-        metadata: {
-          type: DataTypes.STRING,
-          allowNull: true,
         },
 
         created_by: {

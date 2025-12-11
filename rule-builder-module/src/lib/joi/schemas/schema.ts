@@ -105,8 +105,6 @@ const createActionSchema = Joi.object({
     target_user: Joi.string().required(),
     new_value: Joi.string().optional().allow(null),
     action_order: Joi.number().required(),
-    message_template: Joi.string().required(),
-    metadata: Joi.string().required(),
     created_by: Joi.string().required(),
 });
 

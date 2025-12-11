@@ -35,8 +35,6 @@ export interface ICreateAction {
     target_user: string;
     new_value: string;
     action_order: number;
-    message_template: string;
-    metadata: string;
     created_by: string,
     modified_by: string
 }
@@ -88,7 +86,6 @@ export interface ICreateTrigger {
 
 export interface ICreateRuleMap {
     rule_rid: string;
-    scope_type_rid: string;
     apply_type: number;
     created_by: string,
     modified_by: string

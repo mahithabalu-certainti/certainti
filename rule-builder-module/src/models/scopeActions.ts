@@ -7,6 +7,8 @@ export interface ScopeActionAttributes {
     name: string;
     description: string;
     status_rid: string;
+    message_template: string;
+    metadata: string;
     created_by: string;
     modified_by?: string;
     created_datetime?: Date;
@@ -24,6 +26,8 @@ export class ScopeAction
     public name!: string;
     public description!: string;
     public status_rid!: string;
+    public message_template!: string;
+    public metadata!: string;
     public created_by!: string;
     public modified_by?: string;
 
@@ -56,6 +60,16 @@ export class ScopeAction
                 },
 
                 status_rid: {
+                    type: DataTypes.STRING,
+                    allowNull: false,
+                },
+
+                message_template: {
+                    type: DataTypes.STRING,
+                    allowNull: false,
+                },
+
+                metadata: {
                     type: DataTypes.STRING,
                     allowNull: false,
                 },

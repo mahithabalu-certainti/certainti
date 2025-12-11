@@ -6,7 +6,6 @@ export interface RuleMapAttributes {
     eid?: string | null;
     r_number?: string | null;
     rule_rid: string;
-    scope_type_rid: string;
     apply_type: number;
     created_by: string;
     modified_by?: string;
@@ -24,7 +23,6 @@ export class RuleMap
     public eid!: string;
     public r_number!: string;
     public rule_rid!: string;
-    public scope_type_rid!: string;
     public apply_type!: number;
     public created_by!: string;
     public modified_by?: string;
@@ -56,11 +54,6 @@ export class RuleMap
                 rule_rid: {
                     type: DataTypes.STRING,
                     allowNull: false,
-                },
-
-                scope_type_rid: {
-                    type: DataTypes.STRING,
-                    allowNull: true,
                 },
 
                 apply_type: {

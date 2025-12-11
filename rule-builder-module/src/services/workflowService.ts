@@ -315,7 +315,7 @@ export class WorkFlowService {
         let ruleRid = rule.data?.rules?.toJSON()?.rid
         console.log("rule id " + ruleRid);
 
-        for (const condition of ruleRequest.condition_categories) {
+        for (const [index, condition] of ruleRequest.condition_categories.entries()) {
             await this.conditionService.createCondition({
                 condition_rid: "",
                 rule_rid: ruleRid,
@@ -325,22 +325,20 @@ export class WorkFlowService {
                 operator_rid: condition.operator_rid,
                 value_rid: condition.value_rid,
                 data_type: "",
-                sequence: 1,
+                sequence: index + 1,
                 group_id: 1,
                 created_by: ruleRequest.created_by,
                 modified_by: ruleRequest.created_by
             }, userId);
         }
 
-        for (const actionRid of ruleRequest.action_rid) {
+        for (const [index, actionRid] of ruleRequest.action_rid.entries()) {
             await this.actionService.createAction({
                 rule_rid: ruleRid,
                 action_rid: actionRid,
                 target_user: "test",
                 new_value: "test",
-                action_order: 1,
-                message_template: "{{ test template }}}",
-                metadata: "{{meta data}}",
+                action_order: index + 1,
                 created_by: ruleRequest.created_by,
                 modified_by: ruleRequest.created_by,
             }, userId)
@@ -356,8 +354,6 @@ export class WorkFlowService {
     }
 
 
-
-
     async createRuleMapWithScope(ruleRequest: ICreateRuleMapWithScope, userId: string): Promise<{
         statusCode: number;
         message: string;
@@ -368,7 +364,6 @@ export class WorkFlowService {
         const ruleMapResponse = await this.ruleMapService.createRuleMap(
             {
                 rule_rid: ruleRequest.rule_rid,
-                scope_type_rid: ruleRequest.scope_type_rid,
                 apply_type: ruleRequest.apply_type,
                 created_by: ruleRequest.created_by,
                 modified_by: ruleRequest.created_by

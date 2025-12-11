@@ -35,7 +35,6 @@ export class RuleMapService {
     RuleMap.initialize(mainDb);
     const condition = await RuleMap.create({
       rule_rid: rulemapRequest.rule_rid,
-      scope_type_rid: rulemapRequest.scope_type_rid,
       apply_type: rulemapRequest.apply_type,
       created_by: rulemapRequest.created_by,
       modified_by: rulemapRequest.modified_by ?? rulemapRequest.created_by, // fallback to created_by if undefined

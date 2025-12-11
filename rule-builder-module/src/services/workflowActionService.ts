@@ -37,8 +37,6 @@ export class ActionService {
             target_user: actionRequest.target_user,
             new_value: actionRequest.new_value ?? null,
             action_order: actionRequest.action_order,
-            message_template: actionRequest.message_template,
-            metadata: actionRequest.metadata,
             created_by: actionRequest.created_by,
             modified_by: actionRequest.modified_by ?? actionRequest.created_by, // fallback to created_by if undefined
         });
