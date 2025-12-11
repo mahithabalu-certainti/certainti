@@ -399,6 +399,7 @@ export enum MenuOption {
   SURVEY = 'survey',
   NOTES = 'notes',
   ATTACHMENTS = 'attachments',
+  TASKS = 'tasks',
   INTERACTIONS = 'interactions',
   HELP = 'help',
   SETTINGS = 'settings',
