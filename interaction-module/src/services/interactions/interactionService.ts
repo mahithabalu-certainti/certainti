@@ -887,7 +887,6 @@ export class InteractionService {
         },
       };
     } catch (err) {
-      console.log('err',err);
       logMessage(`Error updating interaction response, ${err}`);
       await transaction.rollback();
       return {
