@@ -56,7 +56,7 @@ routes.get(
   checkUserStatusMiddleware("cases_export"),
   controller.caseController.exportAllCasesAccount
 );
-routes.get(
+routes.post(
   "/export/caseSummary",
   checkUserStatusMiddleware("cases_export"),
   controller.caseController.exportAllCasesSummary
@@ -290,5 +290,10 @@ routes.post(
   "/task/dropDownList",
   checkUserStatusMiddleware("NA"),
   controller.caseController.caseLevelTaskDropdown
+)
+routes.get(
+  "/getCaseSubmissionDate",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.getCaseSubmissionDate
 )
 export default routes;

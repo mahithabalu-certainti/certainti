@@ -191,6 +191,7 @@ export const STATUS_MESSAGE = {
   startDateLessThanEndDate: "Start date must be less than end date",
   effort24HrsExceeded: "Effort cannot exceed 24 hours for the day",
   projectTaskUpdatedSuccess: "Project task details updated successfully",
+  configNotAvailable: "Configuration not available for the selected criteria",
 };
 
 export const caseStatuses = {
@@ -2040,8 +2041,96 @@ export const rawQueries = {
       ct.user_rid IN (${userIds.map((d : any) => `'${d}'`).join(',')})
       AND
       ct.case_rid = '${caseRid}'`
-  }
- };
+  },
+   getJurisdictionById(credit_config_group_rid : string) {
+    return `
+      SELECT 
+      k.rid as credit_parameter_key_rid,
+      k.credit_parameter_name,
+      k.data_type,
+      k.credit_parameter_display_name,
+      k.credit_config_group_rid,
+      g.credit_program_name,
+      g.country_rid,
+      g.is_federal,
+      g.state_rid,
+      c.country_name,
+      c.country_code,
+      s.state_name
+    FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_key k
+    JOIN ${MAIN_SCHEMA_NAME}.rd_credit_config_group g ON k.credit_config_group_rid = g.rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.country c ON g.country_rid = c.rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.state s ON g.state_rid = s.rid
+    WHERE g.rid = '${credit_config_group_rid}';
+    `;
+  },
+   getPlatformJurisdictionConfig() {
+    return `
+      SELECT 
+      k.rid as credit_parameter_key_rid,
+      k.credit_parameter_name,
+      k.data_type,
+      k.credit_parameter_display_name,
+      k.credit_config_group_rid,
+      g.credit_program_name,
+      g.country_rid,
+      g.is_federal,
+      g.state_rid,
+      c.country_name,
+      c.country_code,
+      s.state_name
+    FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_key k
+    JOIN ${MAIN_SCHEMA_NAME}.rd_credit_config_group g ON k.credit_config_group_rid = g.rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.country c ON g.country_rid = c.rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.state s ON g.state_rid = s.rid
+    WHERE g.credit_program_name = 'Platform Configuration';
+    `;
+  },
+  checkJurisdictionConfigOverlap() {
+    return  `SELECT rid FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values WHERE credit_config_group_rid = :groupId AND status_rid = :statusRid AND ((:startDate < effective_end_date AND :endDate > effective_start_date)) LIMIT 1`
+              },
+  getJurisdictionByCountryId(country_rid : string, state_rid : string, is_federal: boolean, credit_program_name: string) {
+    let whereClause = `g.country_rid = '${country_rid}' AND g.is_federal = ${is_federal} AND g.credit_program_name = '${credit_program_name}'`;
+    if (state_rid && state_rid.trim() !== "") {
+      whereClause += ` AND g.state_rid = '${state_rid}'`;
+    }
+    return `
+      SELECT 
+      k.rid as credit_parameter_key_rid,
+      k.credit_parameter_name,
+      k.data_type,
+      k.credit_parameter_display_name,
+      k.credit_config_group_rid,
+      g.credit_program_name,
+      g.country_rid,
+      g.is_federal,
+      g.state_rid,
+      c.country_name,
+      c.country_code,
+      s.state_name
+    FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_key k
+    JOIN ${MAIN_SCHEMA_NAME}.rd_credit_config_group g ON k.credit_config_group_rid = g.rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.country c ON g.country_rid = c.rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.state s ON g.state_rid = s.rid
+    WHERE ${whereClause};
+    `;
+  },
+  getJurisdictionConfigValuesById(config_rid: string) {
+  return `SELECT rid,credit_config_group_rid, config_json,effective_start_date,effective_end_date FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values WHERE rid = '${config_rid}';`
+  },
+  getJurisdictionPlatformConfigValuesById(config_rid: string) {
+  return `SELECT rid,credit_config_group_rid, config_json,effective_start_date,effective_end_date FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values WHERE federal_config_id = '${config_rid}';`
+  },
+  fetchPlatformConfig(rid: string) {
+    return `
+    SELECT config_json FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values rv
+join ${MAIN_SCHEMA_NAME}.rd_credit_config_group rg on  rv.credit_config_group_rid  = rg.rid
+where rg.country_rid = '${rid}'
+and credit_program_name = 'Platform Configuration'
+    and is_federal = true LIMIT 1`;
+  },
+
+};
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 
 const keyContactRole = {
   pocName: "Project Point of Contact",
@@ -2211,6 +2300,32 @@ export const filtersColumnsForEmailTemplate: Record<string, string> = {
   template_name: "template_name",
   description: "description",
   category_rid: "category_rid"
+
+};
+
+export const filterTypesForJurisdictionConfig: Record<string, any> = {
+  r_number: "string",
+  created_datetime: "datetime",
+  modified_datetime: "datetime",
+  created_user_name: "string",
+  modified_user_name: "string",
+  status_rid: "string",
+  effective_start_date: "date",
+  effective_end_date: "date",
+  createdAt: "datetime",
+};
+
+export const filtersColumnsForJurisdictionConfig: Record<string, string> = {
+  r_number: "r_number",
+  created_datetime: "created_datetime",
+  modified_datetime: "modified_datetime",
+  created_user_name: "created_user_name",
+  modified_user_name: "modified_user_name",
+  status_rid: "status_rid",
+  status_name: "status_name",
+  createdAt: "createdAt",
+  effective_start_date: "effective_start_date",
+  effective_end_date: "effective_end_date"
 
 };
 

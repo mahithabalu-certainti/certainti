@@ -2923,6 +2923,9 @@ export class InteractionService {
         if (!this.mainDbSequelize) {
           this.mainDbSequelize = await initMainDbSequelize();
         }
+        if (!this.mainDbSequelize) {
+          this.mainDbSequelize = await initMainDbSequelize();
+        }
         const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
           /\D/g,
           ""
@@ -2950,12 +2953,17 @@ export class InteractionService {
             req.data[0].account_rid,
             projectType[0].rid,
             schemaName,
-            status_rid!
+            status_rid!,
+            projectTypeRids
           )
         );
         const projectIds = Array.isArray(projects)
           ? projects.map((p: any) => p.rid)
           : [];
+        if (projectIds.length === 0) {
+          logMessage(`No active projects found for account ID in triggerAI: ${req.data[0].account_rid}`);
+          throw new Error("No active projects found for the account");
+        }
         payload.project_id = projectIds;
       }
       else if (req.type === "case") {

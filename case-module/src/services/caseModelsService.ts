@@ -41,6 +41,7 @@ import { TaskHistory } from "../models/taskHistory";
 import { ActivityAttachments } from "../models/activitiesAttachmentModel";
 import { ActivityHistory } from "../models/activityHistory";
 import { TaskSummary } from "../models/taskSummaryModel";
+import { JurisdictionConfig } from "../models/jurisdictionConfigModel";
 
 export class CaseModelService {
   orgDbSequelize: Sequelize | null = null;
@@ -80,6 +81,7 @@ export class CaseModelService {
       ActivityAttachments : ReturnType<typeof ActivityAttachments.initialise>
       ActivityHistory: ReturnType<typeof ActivityHistory.initialize>;
       TaskSummary: ReturnType<typeof TaskSummary.initialize>;
+      Jurisdiction: ReturnType<typeof Jurisdiction.initialize>;
     }
   > = new Map();
 
@@ -146,6 +148,7 @@ export class CaseModelService {
     const ActivityAttachmentsModel = ActivityAttachments.initialise(sequelize, schemaName);
     const ActivityHistoryModel = ActivityHistory.initialize(sequelize, schemaName);
     const TaskSummaryModel = TaskSummary.initialize(mainDbSequelize, "");
+    const JurisdictionConfigModel = JurisdictionConfig.initialize(mainDbSequelize, "");
 
     const models = {
       Case: CaseModel,
@@ -186,7 +189,8 @@ export class CaseModelService {
       CaseProjectFiscalRegion: CaseProjectFiscalRegionModel,
       ActivityAttachments : ActivityAttachmentsModel,
       ActivityHistory : ActivityHistoryModel,
-      TaskSummary: TaskSummaryModel
+      TaskSummary: TaskSummaryModel,
+      JurisdictionConfig: JurisdictionConfigModel,
     };
 
     this.modelCache.set(schemaName, models);

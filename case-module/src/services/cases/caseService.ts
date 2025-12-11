@@ -3218,4 +3218,25 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
       } 
     } else return []
   }
+  async getCaseSubmissionDate(data: any): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { caseSubmissionDate: string };
+  }> {
+    try {
+      const caseSubmissionDate = await this.caseSchemaService.getCaseSubmissionDate(data);
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          caseSubmissionDate,
+        },
+      };
+    } catch (err) {
+      logMessage(`Error fetching case submission date, ${err}`);
+      throw this.throwServiceError(err as Error);
+    }
+  }
 }
