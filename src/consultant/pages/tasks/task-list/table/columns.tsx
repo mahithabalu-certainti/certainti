@@ -18,7 +18,7 @@ export const getTaskTableColumns = (
     width: 140,
     sortable: true,
     sticky: true,
-    hide: permissionMap ? !permissionMap['r_number']?.read : false,
+    // hide: permissionMap ? !permissionMap['r_number']?.read : false,
     sx: {
       position: 'sticky',
       left: 0,
