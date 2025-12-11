@@ -144,6 +144,7 @@ export interface CaseDetails {
   account_status_name?: string;
   account_status_rid?: string;
   is_send_interaction?: boolean;
+  is_case_team_created?: boolean;
 }
 
 export interface CaseDetailsResponse {
@@ -156,6 +157,7 @@ export interface CaseDetailsResponse {
 //Form
 export interface CaseFormFields {
   account_id?: string;
+  account_rid?: string;
   account_name?: string;
   case_owner?: string;
   case_name?: string;

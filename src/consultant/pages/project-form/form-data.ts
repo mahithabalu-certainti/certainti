@@ -571,6 +571,7 @@ export const FormData = (
             required: false,
             onChange: true,
             defaultValue: currencyValue,
+            assignDefaultValue: true,
             placeholder: 'Choose Currency',
             dependantLabel: 'account_rid',
             disabled:
@@ -878,6 +879,7 @@ export const FormData = (
       globalType,
       isEditView,
       permissionMap,
+      isProjectExists,
       projectTypeOptions,
       classification,
       showClassifyOthersField,

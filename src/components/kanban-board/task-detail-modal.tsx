@@ -1,5 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState, useMemo, useRef, useLayoutEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../store/store';
 import { TaskDetailModalProps, Task, Activity, Comment } from './types';
 import { MenuItem, SelectChangeEvent } from '@mui/material';
 import dayjs from 'dayjs';
@@ -45,6 +48,7 @@ import {
   type TaskAttachmentRaw,
 } from '../../consultant/pages/case/case-details/work-breakdown/helper';
 import { useToast } from '../../hooks';
+import ConfirmationPopup from '../../common-utils/confirmation-popup';
 import {
   useGetTaskConnectorTypes,
   useWeightageList,
@@ -67,6 +71,7 @@ interface TaskDetailModalPropsExtended
   fiscalYear?: string | null;
   fiscalYears?: string[];
   taskType?: string;
+  isCaseTeamCreated?: boolean;
 }
 
 const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
@@ -94,6 +99,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   fiscalYear,
   fiscalYears,
   taskType,
+  isCaseTeamCreated,
 }) => {
   const [task, setTask] = useState<Task | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
@@ -141,6 +147,17 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isAnimating, setIsAnimating] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const [confirmationState, setConfirmationState] = useState<{
+    isOpen: boolean;
+    message: string;
+    onConfirm: () => void;
+    onCancel: () => void;
+  }>({
+    isOpen: false,
+    message: '',
+    onConfirm: () => {},
+    onCancel: () => {},
+  });
 
   const ErrorIconTooltip = ({ error }: { error: string }) => (
     <Tooltip
@@ -180,6 +197,11 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   const deleteCollaboratorMutation = useDeleteCollaborator();
   const deleteTagMutation = useDeleteTag();
   const queryClient = useQueryClient();
+
+  // Get current user ID from Redux
+  const { userId } = useSelector<RootState, { userId: unknown }>(
+    (state: RootState) => state.auth
+  );
 
   const commentsParams = useMemo(
     () => ({
@@ -629,15 +651,38 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   }, [editedTask, allEnrichedUsers]);
 
   // Disable checklist template if any checklist item has been completed
+  // Also disable specific fields if current user is not the task creator
   const enhancedFieldDisabled = useMemo(() => {
     const hasCompletedItems = (editedTask?.checklist || []).some(
       (item) => item.completed
     );
+
+    // Check if current user is the task creator
+    const isCreator = task?.created_by_rid === userId;
+
+    // Fields that should be editable only by the creator
+    const creatorOnlyFieldsDisabled = !isCreator;
+
     return {
       ...fieldDisabled,
-      checklistTemplate: fieldDisabled.checklistTemplate || hasCompletedItems,
+      checklistTemplate:
+        fieldDisabled.checklistTemplate ||
+        hasCompletedItems ||
+        creatorOnlyFieldsDisabled,
+      priority: fieldDisabled.priority || creatorOnlyFieldsDisabled,
+      linkedType: fieldDisabled.linkedType || creatorOnlyFieldsDisabled,
+      linkTaskType: fieldDisabled.linkTaskType || creatorOnlyFieldsDisabled,
+      weightage: fieldDisabled.weightage || creatorOnlyFieldsDisabled,
+      category: fieldDisabled.category || creatorOnlyFieldsDisabled,
+      status: fieldDisabled.status || !isCaseTeamCreated,
     };
-  }, [fieldDisabled, editedTask?.checklist]);
+  }, [
+    editedTask?.checklist,
+    task?.created_by_rid,
+    userId,
+    fieldDisabled,
+    isCaseTeamCreated,
+  ]);
 
   if (!isAnimating || !taskId) return null;
   if (isLoadingTaskDetails || (rawTask && !task)) {
@@ -1489,6 +1534,22 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     }
   };
 
+  const handleCloseAttempt = () => {
+    if (hasTaskChanged()) {
+      setConfirmationState({
+        isOpen: true,
+        message:
+          'You have unsaved changes. Are you sure you want to close without saving?',
+        onConfirm: () => {
+          onClose();
+        },
+        onCancel: () => {},
+      });
+    } else {
+      onClose();
+    }
+  };
+
   return (
     <>
       <div
@@ -1516,8 +1577,8 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
               sx={{ padding: '6px 12px' }}
             />
             <button
-              onClick={onClose}
-              className='p-2 hover:bg-gray-100 rounded transition-colors'
+              onClick={handleCloseAttempt}
+              className='p-2 hover:bg-gray-100 rounded transition-colors cursor-pointer'
             >
               <CloseIcon size={16} className='text-gray-600' />
             </button>
@@ -2133,6 +2194,37 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
           )}
         </div>
       </div>
+
+      {/* Backdrop */}
+      {isOpen && (
+        <div
+          className='fixed inset-0 bg-opacity-50 z-40'
+          style={{ top: '38.1px' }}
+          onClick={handleCloseAttempt}
+        />
+      )}
+
+      {/* Confirmation Popup */}
+      <ConfirmationPopup
+        isOpen={confirmationState.isOpen}
+        message={confirmationState.message}
+        onConfirm={() => {
+          confirmationState.onConfirm();
+          setConfirmationState((prev) => ({
+            ...prev,
+            isOpen: false,
+            message: '',
+          }));
+        }}
+        onCancel={() => {
+          confirmationState.onCancel();
+          setConfirmationState((prev) => ({
+            ...prev,
+            isOpen: false,
+            message: '',
+          }));
+        }}
+      />
     </>
   );
 };

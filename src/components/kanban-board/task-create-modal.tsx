@@ -21,6 +21,7 @@ import {
   useGetTaskCategoryTypes,
 } from '../../admin/service/task-template/task-template-service';
 import { useGetTaskDropDownList } from '../../consultant/services/case-task/case-task-service';
+import ConfirmationPopup from '../../common-utils/confirmation-popup';
 
 // Form data interface
 export interface TaskFormData {
@@ -172,6 +173,17 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isAnimating, setIsAnimating] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const [confirmationState, setConfirmationState] = useState<{
+    isOpen: boolean;
+    message: string;
+    onConfirm: () => void;
+    onCancel: () => void;
+  }>({
+    isOpen: false,
+    message: '',
+    onConfirm: () => {},
+    onCancel: () => {},
+  });
 
   const enrichedUsers = useMemo(() => {
     return collaboratorData && collaboratorData.length > 0
@@ -306,7 +318,26 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
     }
   }, [isOpen]);
 
-  const handleClose = () => {
+  // Check if form has any data entered
+  const hasFormData = () => {
+    return (
+      taskTitle.trim() !== '' ||
+      description.trim() !== '' ||
+      selectedPriority !== '' ||
+      startDate !== null ||
+      endDate !== null ||
+      selectedAssignee !== '' ||
+      selectedTags.length > 0 ||
+      selectedRole !== '' ||
+      selectedChecklist !== '' ||
+      linkedType !== '' ||
+      linkTaskTypes.length > 0 ||
+      weightage !== '' ||
+      category !== ''
+    );
+  };
+
+  const resetForm = () => {
     setTaskTitle('');
     setDescription('');
     setSelectedStatus('To Do');
@@ -330,7 +361,24 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
     setCategory('');
     setCategoryRid('');
     setErrors({});
-    onClose();
+  };
+
+  const handleClose = () => {
+    if (hasFormData()) {
+      setConfirmationState({
+        isOpen: true,
+        message:
+          'You have unsaved changes. Are you sure you want to close without saving?',
+        onConfirm: () => {
+          resetForm();
+          onClose();
+        },
+        onCancel: () => {},
+      });
+    } else {
+      resetForm();
+      onClose();
+    }
   };
 
   const handleSubmit = async () => {
@@ -415,7 +463,8 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
         categoryRid,
       };
       await onCreateTask(columnId, formData);
-      handleClose();
+      resetForm();
+      onClose();
     } catch (error) {
       console.error('Failed to create task:', error);
     } finally {
@@ -479,7 +528,7 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
           </h2>
           <button
             onClick={handleClose}
-            className='p-2 hover:bg-gray-100 rounded transition-colors'
+            className='p-2 hover:bg-gray-100 rounded transition-colors cursor-pointer'
           >
             <CloseIcon size={16} className='text-gray-600' />
           </button>
@@ -880,6 +929,28 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
           />
         </div>
       </div>
+
+      {/* Confirmation Popup */}
+      <ConfirmationPopup
+        isOpen={confirmationState.isOpen}
+        message={confirmationState.message}
+        onConfirm={() => {
+          confirmationState.onConfirm();
+          setConfirmationState((prev) => ({
+            ...prev,
+            isOpen: false,
+            message: '',
+          }));
+        }}
+        onCancel={() => {
+          confirmationState.onCancel();
+          setConfirmationState((prev) => ({
+            ...prev,
+            isOpen: false,
+            message: '',
+          }));
+        }}
+      />
     </>
   );
 };

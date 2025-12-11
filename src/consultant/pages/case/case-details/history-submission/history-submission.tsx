@@ -292,7 +292,7 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
     },
     {
       key: 'total_nonlabor_cost',
-      label: 'Total Nonlabor Cost',
+      label: 'Total Non-Labor Cost',
       type: 'text',
       required: true,
       width: '180px',
@@ -329,6 +329,9 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
       required: false,
       width: '200px',
       permissionKey: 'annual_gross_receipts',
+      showTooltip: true,
+      tooltipMessage:
+        'Annual Gross Receipt is the total money received in a year.',
     },
   ];
 
@@ -628,15 +631,16 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
         isValid = false;
       }
 
-      // Total Nonlabor Cost validation
+      // Total Non-Labor Cost validation
       if (!submission.total_nonlabor_cost?.trim()) {
-        submissionError.total_nonlabor_cost = 'Total Nonlabor Cost is required';
+        submissionError.total_nonlabor_cost =
+          'Total Non-Labor Cost is required';
         isValid = false;
       } else if (
         !amountRegex.test(removeCommas(submission.total_nonlabor_cost || ''))
       ) {
         submissionError.total_nonlabor_cost =
-          'Total Nonlabor Cost must be 1–16 digits and up to 2 decimals';
+          'Total Non-Labor Cost must be 1–16 digits and up to 2 decimals';
         isValid = false;
       }
 
@@ -1088,11 +1092,38 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
                           textAlign: 'left',
                           textWrap: 'nowrap',
                           ...(field.sx || {}),
+                          ...(field.showTooltip
+                            ? {
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: 3,
+                              }
+                            : {}),
                         }}
                       >
                         {field.label}{' '}
                         {field.required && (
                           <span className='text-red-500 text-[16px]'>*</span>
+                        )}
+                        {field.showTooltip && (
+                          <Tooltip
+                            title={field.tooltipMessage || ''}
+                            arrow
+                            placement='top'
+                            slotProps={{
+                              tooltip: {
+                                sx: {
+                                  mr: 1,
+                                },
+                              },
+                            }}
+                          >
+                            <span className='w-5 mt-1 inline-flex items-center justify-center cursor-pointer'>
+                              <React.Suspense fallback={null}>
+                                <ErrorInfoIcon className='w-5 h-3.5 [&>path]:fill-[#9fa0a1]' />
+                              </React.Suspense>
+                            </span>
+                          </Tooltip>
                         )}
                       </TableCell>
                     ))}
@@ -1492,7 +1523,7 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
                               </TableCell>
                             )}
 
-                            {/* Total Nonlabor Cost Text Field */}
+                            {/* Total Non-Labor Cost Text Field */}
                             {shouldShowField('total_nonlabor_cost') && (
                               <TableCell
                                 style={{
@@ -1534,7 +1565,7 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
                                     }
                                     size='small'
                                     fullWidth
-                                    placeholder='Enter Total Nonlabor Cost'
+                                    placeholder='Enter Total Non-Labor Cost'
                                     sx={{
                                       '& .MuiInputBase-root': {
                                         height: '28px',

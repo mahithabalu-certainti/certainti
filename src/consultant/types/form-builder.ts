@@ -34,6 +34,10 @@ export interface FormTypeFields {
   prefixValue?: string;
   disableFutureDates?: boolean;
   allowFutureDates?: boolean;
+  labelTooltip?: {
+    showTooltip: boolean;
+    tooltipMessage: string;
+  };
   lengthRequired?: {
     key: string;
     minMatchedValue: RegExp;
@@ -142,6 +146,10 @@ export interface FieldType {
   startDateLabel?: string;
   endDateLabel?: string;
   hide?: boolean;
+  labelTooltip?: {
+    showTooltip: boolean;
+    tooltipMessage: string;
+  };
   lengthRequired?: {
     key: string;
     minMatchedValue: RegExp;
@@ -185,6 +193,9 @@ export interface ChildList {
   child_value: string;
   child_label: string;
   currency_rid?: string;
+  country_rid?: string;
+  country_code?: string;
+  r_number?: string;
 }
 export interface ParentChildSelectOption {
   parent_value: string;

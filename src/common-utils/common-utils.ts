@@ -55,6 +55,10 @@ export const createTextField = (
     resetDependsFields?: string[];
     clearValue?: Record<string, string>;
     formatCostValue?: boolean;
+    labelTooltip?: {
+      showTooltip: boolean;
+      tooltipMessage: string;
+    };
     lengthRequired?: {
       key: string;
       minMatchedValue: RegExp;
@@ -78,6 +82,7 @@ export const createTextField = (
   anyOneRequired: options.anyOneRequired,
   hide: options.hide,
   lengthRequired: options.lengthRequired,
+  labelTooltip: options.labelTooltip,
   errorHandling: options.errorHandling,
   clearValue: options.clearValue,
   defaultValue: options.defaultValue,
@@ -248,6 +253,10 @@ export const createSelectField = (
     assignDefaultValue?: boolean;
     dependantLabel?: string;
     isFiscalYear?: boolean;
+    labelTooltip?: {
+      showTooltip: boolean;
+      tooltipMessage: string;
+    };
   }
 ): FieldType => ({
   type: 'select',
@@ -268,6 +277,7 @@ export const createSelectField = (
   assignDefaultValue: others.assignDefaultValue,
   dependantLabel: others.dependantLabel,
   isFiscalYear: others.isFiscalYear,
+  labelTooltip: others.labelTooltip,
 });
 export const createMultiSelectField = (
   name: string,
