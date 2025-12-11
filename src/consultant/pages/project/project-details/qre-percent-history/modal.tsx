@@ -1,10 +1,8 @@
 import React, { Suspense } from 'react';
-import { Modal, Box, Typography, IconButton } from '@mui/material';
+import { Modal, Box, Typography, IconButton, Grid } from '@mui/material';
 import { ListTableColumn } from '../../../../../components/table/types';
 import { CloseIcon, InfoIcon } from '../../../../../assets';
 import { ListTable } from '../../../../../components/table';
-import { InfoSection } from '../../../../../components';
-import { DisplayColumn } from '../interactions/response-history/ultils';
 
 interface QrePercentHistoryModalProps {
   open: boolean;
@@ -74,50 +72,22 @@ const QrePercentHistoryModal: React.FC<QrePercentHistoryModalProps> = ({
     console.log('error parsing content:', error);
   }
 
-  const sectionHeaderStyle = {
-    border: '1px solid #CBD6E2',
-    fontWeight: 'bold',
-    fontSize: '14px',
-    fontFamily: "'Mulish', 'Lexend', sans-serif",
-    color: '#2D3E4F',
-    lineHeight: '21px',
-    backgroundColor: '#ECECEC',
-    py: 0.5,
-    pl: 2,
-    height: '30px',
-    textTransform: 'capitalize' as const,
-  };
-  console.log(content, 'content')
-  const transformCaseData = (data: AttributeValueRow[]): DisplayColumn[] => {
-    const formattedItems = data
-      .filter((row) => row.attribute.toLowerCase() === 'stage')
-      .map((row) => ({
-        label: row.attribute
-          .replace(/_/g, ' ')
-          .replace(/\b\w/g, (c) => c.toUpperCase()),
-        value: row.value || '-',
-      }));
+  const formattedItems = projectSummaryData
+    .filter((row) => row.attribute.toLowerCase() === 'stage')
+    .map((row) => ({
+      label: row.attribute
+        .replace(/_/g, ' ')
+        .replace(/\b\w/g, (c) => c.toUpperCase()),
+      value: row.value || '-',
+    }));
 
-    // Insert QRE Percent Score if it exists
-    if (qrePercent !== undefined) {
-      formattedItems.push({
-        label: 'QRE Percent Score',
-        value: `${qrePercent}%`,
-      });
-    }
-
-    const columns: DisplayColumn[] = [
-      { items: [] },
-      { items: [] },
-      { items: [] },
-    ];
-
-    formattedItems.forEach((item, index) => {
-      columns[index % 3].items.push(item);
+  if (qrePercent !== undefined) {
+    formattedItems.push({
+      label: 'QRE Percent Score',
+      value: `${qrePercent}%`,
     });
+  }
 
-    return columns.filter((col) => col.items.length > 0);
-  };
   const assessmentDetailsColumns: ListTableColumn<AssessmentDetailsRow>[] = [
     {
       id: 'questionCategory',
@@ -126,14 +96,6 @@ const QrePercentHistoryModal: React.FC<QrePercentHistoryModalProps> = ({
       width: 350,
       render: (row) => row.questionCategory,
     },
-    // {
-    //   id: 'question',
-    //   label: 'Question',
-    //   sortId: 'question',
-    //   width: 200,
-    //   render: (row) => row.question,
-    // },
-
     {
       id: 'weight',
       label: 'Weight',
@@ -163,12 +125,12 @@ const QrePercentHistoryModal: React.FC<QrePercentHistoryModalProps> = ({
           top: '50%',
           left: '60%',
           transform: 'translate(-50%, -50%)',
-          height: 270,
+          height: 200,
           width: 900,
-          bgcolor: '#FCFCFC',
-          boxShadow: '0px 2px 10px rgba(0, 0, 0, 0.1)',
+          bgcolor: '#Fff',
           borderRadius: '4px',
           overflowY: 'auto',
+          outline: 'none',
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -179,7 +141,6 @@ const QrePercentHistoryModal: React.FC<QrePercentHistoryModalProps> = ({
             alignItems: 'center',
             borderBottom: '1px solid #CBD6E2',
             p: '8px 16px',
-            m: '2px',
           }}
         >
           <Typography
@@ -194,7 +155,7 @@ const QrePercentHistoryModal: React.FC<QrePercentHistoryModalProps> = ({
               textTransform: 'capitalize' as const,
             }}
           >
-            RD Assessment History
+            RD Assessment Details
           </Typography>
           <IconButton onClick={onClose} size='small'>
             <CloseIcon />
@@ -202,25 +163,92 @@ const QrePercentHistoryModal: React.FC<QrePercentHistoryModalProps> = ({
         </Box>
 
         <Box>
-          <Typography variant='subtitle1' sx={{ ...sectionHeaderStyle, mt: 2 }}>
-            Assessment Details
-          </Typography>
-          <InfoSection
-            columns={transformCaseData(projectSummaryData)}
-            loading={false}
-            loadingRows={1}
-            error={false}
-            singleLineView={true}
-          />
-          <div className='border-x border-b border-[#CBD6E2]'>
-            <ListTable<AssessmentDetailsRow>
-              data={assessmentDetailsData}
-              columns={assessmentDetailsColumns}
-              getRowId={(row) => row.id}
-              tableStyle={{ maxHeight: '150px' }}
-              actionWidth={0}
-            />
-          </div>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 3,
+              px: 2,
+              py: 1,
+              // borderBottom: '1px solid #CBD6E2',
+              backgroundColor: 'white',
+              minHeight: '40px', // Matches singleLineView
+            }}
+          >
+            <Grid container spacing={2}>
+              {/* First Item */}
+              <Grid item xs={4} sx={{ display: 'flex', gap: 1 }}>
+                {formattedItems[0] && (
+                  <>
+                    <Typography
+                      variant='caption'
+                      sx={{
+                        color: '#7D98B6',
+                        fontSize: '13px',
+                        fontWeight: 600,
+                        minWidth: 'fit-content',
+                      }}
+                    >
+                      {formattedItems[0].label}
+                    </Typography>
+                    <Typography
+                      sx={{
+                        fontSize: '14px',
+                        fontWeight: 500,
+                        color: '#2D3E4F',
+                      }}
+                    >
+                      {formattedItems[0].value}
+                    </Typography>
+                  </>
+                )}
+              </Grid>
+
+              {/* Second Item */}
+              <Grid item xs={4} sx={{ display: 'flex', gap: 1 }}>
+                {formattedItems[1] && (
+                  <>
+                    <Typography
+                      variant='caption'
+                      sx={{
+                        color: '#7D98B6',
+                        fontSize: '13px',
+                        fontWeight: 600,
+                        minWidth: 'fit-content',
+                      }}
+                    >
+                      {formattedItems[1].label}
+                    </Typography>
+                    <Typography
+                      sx={{
+                        fontSize: '14px',
+                        fontWeight: 500,
+                        color: '#2D3E4F',
+                      }}
+                    >
+                      {formattedItems[1].value}
+                    </Typography>
+                  </>
+                )}
+              </Grid>
+
+              {/* Third Item - Empty */}
+              <Grid item xs={4}>
+              </Grid>
+            </Grid>
+          </Box>
+
+          <Box sx={{ px: 2 }}>
+            <div className='border-x border-t border-[#CBD6E2]'>
+              <ListTable<AssessmentDetailsRow>
+                data={assessmentDetailsData}
+                columns={assessmentDetailsColumns}
+                getRowId={(row) => row.id}
+                tableStyle={{ maxHeight: '150px' }}
+                actionWidth={0}
+              />
+            </div>
+          </Box>
         </Box>
       </Box>
     </Modal>
@@ -231,7 +259,9 @@ interface ContentCellProps {
   content: string;
 }
 
-export const ContentCell: React.FC<ContentCellProps & { qrePercent?: number }> = ({ content }) => {
+export const ContentCell: React.FC<
+  ContentCellProps & { qrePercent?: number }
+> = ({ content, qrePercent }) => {
   const [isModalOpen, setIsModalOpen] = React.useState(false);
 
   return (
@@ -255,7 +285,7 @@ export const ContentCell: React.FC<ContentCellProps & { qrePercent?: number }> =
         open={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         content={content}
-        qrePercent={0} // Default or unused in this specific export usage if it's used elsewhere
+        qrePercent={qrePercent}
       />
     </>
   );

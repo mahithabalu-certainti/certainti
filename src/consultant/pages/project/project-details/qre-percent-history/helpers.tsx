@@ -34,13 +34,13 @@ export const getQrePercentHistoryFilterFields = (
       hide:
         !permissionMap?.['version']?.edit && !permissionMap?.['version']?.read,
     },
-    {
-      name: 'Type',
-      value: 'type',
-      type: 'text',
-      operatorOption: textOptions,
-      hide: !permissionMap?.['type']?.edit && !permissionMap?.['type']?.read,
-    },
+    // {
+    //   name: 'Type',
+    //   value: 'type',
+    //   type: 'text',
+    //   operatorOption: textOptions,
+    //   hide: !permissionMap?.['type']?.edit && !permissionMap?.['type']?.read,
+    // },
     {
       name: 'QRE Percent Score',
       value: 'qre_percent',
