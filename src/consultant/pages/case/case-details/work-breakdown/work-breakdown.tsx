@@ -663,6 +663,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
   const filterFields =
     tabParam === 'case_task'
       ? getAssignGroupsFilterFields(
+          permissionMap,
           memoizedStatus,
           assigneeOptions,
           roleOptions

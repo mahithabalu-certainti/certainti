@@ -37,7 +37,7 @@ export const getCaseTaskListColumns = (
   },
   {
     id: 'role_name',
-    sortId: 'role_rid',
+    sortId: 'role_name',
     label: 'Role To Be Assigned',
     sortable: true,
     width: 180,
