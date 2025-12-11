@@ -663,11 +663,11 @@ export class ProjectResourceSchemaService {
     //   as: "project_resource_fiscal_project",
     // });
 
-    // ProjectResourceFiscalModel.belongsTo(ProjectFiscalModel, {
-    //   foreignKey: "project_fiscal_rid",
-    //   targetKey: "rid",
-    //   as: "project_resource_fiscal_project_fiscal",
-    // });
+    CaseProjectResourceModel.belongsTo(ProjectFiscalModel, {
+      foreignKey: "project_fiscal_rid",
+      targetKey: "rid",
+      as: "project_resource_fiscal_project_fiscal",
+    });
 
     // ProjectResourceFiscalModel.belongsTo(ResourcesModel, {
     //   foreignKey: "resource_rid",
@@ -787,7 +787,19 @@ export class ProjectResourceSchemaService {
       where: {
         ...whereFilters,
       },
+      attributes: {
+        include: [
+          [Sequelize.col("project_resource_fiscal_project_fiscal.project_code"), "project_code"],
+          [Sequelize.col("project_resource_fiscal_project_fiscal.project_name"), "project_name"],
+        ]
+      },
       include: [
+        {
+          model: ProjectFiscal,
+          attributes: [],
+          required: false,
+          as: "project_resource_fiscal_project_fiscal",
+        },
         {
           model: Resources,
           attributes: [],
@@ -891,7 +903,22 @@ export class ProjectResourceSchemaService {
       where: {
         ...whereFilters,
       },
+      attributes: {
+        include: [
+          [Sequelize.col("project_resource_fiscal_project_fiscal.project_code"), "project_code"],
+          [Sequelize.col("project_resource_fiscal_project_fiscal.project_name"), "project_name"],
+        ]
+      },
+      include: [
+        {
+          model: ProjectFiscal,
+          attributes: [],
+          required: false,
+          as: "project_resource_fiscal_project_fiscal",
+        },]
     });
+
+
 
     if (projectResource && projectResource.length > 0) {
       projectResource = await this.insertProjectRegionData(projectResource);
@@ -920,8 +947,17 @@ export class ProjectResourceSchemaService {
       userId,
       "projects_resources_view_edit"
     );
+    const projectFields = await schemaService.getAllowedExportFields(
+      userId,
+      "projects_view_edit"
+    );
     const allowedFieldSet = new Set<string>();
     for (const field of projectResourceFields) {
+      if (field.read) {
+        allowedFieldSet.add(field.field_name);
+      }
+    }
+    for (const field of projectFields) {
       if (field.read) {
         allowedFieldSet.add(field.field_name);
       }
@@ -963,6 +999,8 @@ export class ProjectResourceSchemaService {
     const labelMap: Record<string, string> = {
       resource_code: "Resource Code",
       resource_name: "Resource Name",
+      project_code: "Project Code",
+      project_name: "Project Name",
       country_rid: "Resource Country",
       region_rid: "Resource Region",
       fiscal_year: "Fiscal Year",
@@ -971,19 +1009,20 @@ export class ProjectResourceSchemaService {
       total_hours_pro_res: "Effort (Hours)",
       net_total_cost_pro_res: "Net Resource Cost",
       resource_designation: "Designation",
-      qre_percent: "QRE %",
+      // qre_percent: "QRE %",
       qre_final: "QRE",
-      status_rid: "Status",
+      // status_rid: "Status",
       description: "Comments",
       project_resource_role: "Project Resource Role",
       r_number: "Project Resource ID"
-      // "r_number": "Project Resource ID",
     };
     let exportData = projectResource.map((resource: any) => {
       const exportData: Record<string, string> = {};
       let resultMap = {
         resource_code: resource.resource_code || "-",
         resource_name: resource.resource_name || "-",
+        project_code: resource.project_code || "-",
+        project_name: resource.project_name || "-",
         country_rid: resource.country_name || "-",
         region_rid: resource.region_name || "-",
         fiscal_year: resource.fiscal_year || "-",
@@ -998,7 +1037,7 @@ export class ProjectResourceSchemaService {
         description: resource.description || "-",
         r_number: resource.r_number || "-",
         case_project_rid: resource.case_project_rid || "-",
-        case_rid: resource.case_rid || "-", 
+        case_rid: resource.case_rid || "-",
         project_rid: resource.project_rid || "-",
         project_fiscal_rid: resource.project_fiscal_rid || "-"
       };
