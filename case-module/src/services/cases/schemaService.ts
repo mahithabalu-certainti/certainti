@@ -6065,7 +6065,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     if(checkTaskExists) return checkTaskExists
     else return null
   }
-  async fetchTaskForCases (page : number, limit : number, search : string, sort : string, sortBy : string, filter : FilterType, doSorting : boolean, caseRid : string, accountRid : string, schemaName : string, isExport : boolean) {
+  async fetchTaskForCases (page : number, limit : number, search : string, sort : string, sortBy : string, filter : FilterType, doSorting : boolean, caseRid : string, accountRid : string, schemaName : string, isExport : boolean, disablePagination : boolean) {
     if(!this.orgDbSequelize) {
       this.orgDbSequelize = await initOrgSequelize()
     }
@@ -6073,7 +6073,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       this.mainDbSequelize = await initMainDbSequelize()
     }
     const activeStatusId  : any = await this.mainDbSequelize.query(rawQueries.getActiveStatusId());
-    const result = await this.orgDbSequelize.query<CaseTaskQueryType>(fetchCaseSpecificTaskQuery(page, limit, search, sort, sortBy, filter, doSorting, caseRid, accountRid, schemaName, isExport, activeStatusId[0][0].rid), {type : QueryTypes.SELECT});
+    const result = await this.orgDbSequelize.query<CaseTaskQueryType>(fetchCaseSpecificTaskQuery(page, limit, search, sort, sortBy, filter, doSorting, caseRid, accountRid, schemaName, isExport, activeStatusId[0][0].rid, disablePagination), {type : QueryTypes.SELECT});
     if(result.length > 0) {
       return result;
     } else {
