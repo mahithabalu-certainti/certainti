@@ -1,10 +1,5 @@
 import { FieldConfig } from '../../../account-details-sidebar/components/filter/filterType';
 
-const textOptions = [
-  { option: 'Equals', value: 'equals' },
-  { option: 'Not-Equals', value: 'not_equals' },
-  { option: 'Contains', value: 'contains' },
-];
 
 const dateOptions = [
   { option: 'Equals', value: 'equals' },
