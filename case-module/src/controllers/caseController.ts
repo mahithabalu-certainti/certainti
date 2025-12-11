@@ -2408,7 +2408,7 @@ async function updateTask (req : Request, res : Response) {
         statusMessage: result!.statusMessage,
       }); 
     } else if(result!.statusCode === HttpStatus.FAILED) {
-      return res.status(HttpStatus.SUCCESS).json({
+      return res.status(HttpStatus.FAILED).json({
         statusCode: HttpStatus.FAILED,
         statusCodeValue: HttpStatus.FAILED_MESSAGE,
         statusMessage: result!.statusMessage,
