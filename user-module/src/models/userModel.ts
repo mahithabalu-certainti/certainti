@@ -32,6 +32,7 @@ interface UserAttributes {
   business_teams?: string;
   is_consultant_firm: boolean;
   org_id?:string;
+  profile_url?: string;
 }
 
 interface UserCreationAttributes extends Optional<UserAttributes, "rid"> {}
@@ -66,6 +67,7 @@ export class User
   public business_teams?: any;
   public is_consultant_firm!: boolean;
   public org_id?: string;
+  public profile_url?: string;
 
   public readonly created_datetime!: Date;
   public readonly modified_datetime!: Date;
@@ -153,6 +155,10 @@ export class User
         },
         country_rid: {
           type: DataTypes.STRING(50),
+          allowNull: true,
+        },
+        profile_url: {
+          type: DataTypes.STRING,
           allowNull: true,
         },
         role_rid: {

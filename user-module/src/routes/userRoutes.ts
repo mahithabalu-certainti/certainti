@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import controller from "../controllers/index"
 import { checkUserStatusMiddleware } from '../middlewares/azureMiddleware';
+import { upload } from '../middlewares/azureBlobUpload';
+import { multerErrorHandler } from '../middlewares/multerErrorHandler';
 
 const routes = Router();
 
@@ -22,5 +24,6 @@ routes.put("/profile/permissions/edit", checkUserStatusMiddleware("profile_view_
 routes.get("/:profileId/profile/export", checkUserStatusMiddleware("profile_export"), controller.userManagementController.exportUserProfiles);
 routes.get("/:userId/permission/extended",checkUserStatusMiddleware("profile_view_edit"), controller.userManagementController.getUserExtendedPermissions);
 routes.put("/permission/extended/edit",checkUserStatusMiddleware("profile_view_edit"), controller.userManagementController.updateUserExtendedPermissions);
+routes.post("/profile/upload",checkUserStatusMiddleware("profile_view_edit"), upload.single('profile'), multerErrorHandler, controller.userController.uploadProfileImage);
 export default routes;
 
