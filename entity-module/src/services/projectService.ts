@@ -1500,10 +1500,6 @@ export class ProjectService {
           accessibleIds
         );
 
-      if (allProjectList.length > 0) {
-        allProjectList = await this.schemaService.addProjectResourceExistsFlags(allProjectList) as [unknown[], unknown] | never[];
-      }
-
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
