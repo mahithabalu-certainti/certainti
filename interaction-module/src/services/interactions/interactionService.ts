@@ -2947,7 +2947,7 @@ export class InteractionService {
           if (!Array.isArray(projectTypes)) {
             projectTypes = [projectTypes];
           }
-          projectType = await this.mainDbSequelize.query(
+          [projectType] = await this.mainDbSequelize.query(
             rawQueries.fetchProjectTypeRid(projectTypes)
           );
         }
