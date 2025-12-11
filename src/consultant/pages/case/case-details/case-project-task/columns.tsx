@@ -35,6 +35,7 @@ export const getCaseProjectTaskColumns = (
       label: 'Project Code',
       width: 180,
       sortable: true,
+      sticky: true,
       sx: {
         position: 'sticky',
         left: 0,
