@@ -142,7 +142,7 @@ async accountList(
         globalFilters,
         {
           parentWhereClause: { ...parentWhereClauseBase },
-          childWhereClause: { ...whereClause, ...childWhereClauseBase },
+          childWhereClause: { ...whereClause, ...childWhereClauseBase},
         }
       );
 
@@ -239,7 +239,7 @@ async accountList(
             },
             ...childWhereClause,
           },
-          include: this.buildChildIncludes(),
+          include: this.buildChildIncludes(fiscalYear),
           order: [
             ...order,
             [
@@ -432,7 +432,15 @@ async accountList(
     ];
   }
 
-  private buildChildIncludes(): any[] {
+  private buildChildIncludes(fiscalYear : any): any[] {
+    let whereCondition;
+    if(fiscalYear !== 'FY-All') {
+      whereCondition = {
+          fiscal_year : fiscalYear
+        }
+    } else {
+      whereCondition = {}
+    }
     return [
       {
         model: Country,
@@ -464,6 +472,7 @@ async accountList(
       {
         model: AccountFiscalSummary,
         as: "projects_by_fiscal_year",
+        where : whereCondition,
         attributes: [
           "rid",
           [Sequelize.literal("'FY-' || fiscal_year"), "fiscal_year"],
@@ -713,7 +722,7 @@ async accountList(
             },
             ...childWhereClause,
           },
-          include: this.buildChildIncludes(),
+          include: this.buildChildIncludes(fiscalYear),
           order: [
             ...order,
             [
