@@ -8,7 +8,6 @@ export const MANAGE_USER = '/manage-user';
 export const MANAGE_USER_ACCESS = '/manage-user-access';
 export const MANAGE_ACCOUNT_ACCESS = '/manage-account-access';
 export const MANAGE_SETTINGS = '/manage-settings';
-export const MANAGE_GEO_BASED_RULE = '/manage-geo-based-rule';
 export const SURVEY_TEMPLATES = '/survey-templates';
 
 /** ADMIN ROUTES */
@@ -51,6 +50,11 @@ export const TASK_TEMPLATES_DETAILS = `${TASK_TEMPLATES}/details/:templateId`;
 export const CHECKLIST_TEMPLATES = `${ADMIN}/checklist-templates`;
 export const CHECKLIST_TEMPLATES_CREATE = `${CHECKLIST_TEMPLATES}/create`;
 export const CHECKLIST_TEMPLATES_EDIT = `${CHECKLIST_TEMPLATES}/edit/:caseId`;
+
+// ADMIN GEO BASED RULE ROUTES
+export const MANAGE_GEO_BASED_RULE = `${ADMIN}/manage-geo-based-rule`;
+export const MANAGE_GEO_BASED_RULE_CREATE = `${MANAGE_GEO_BASED_RULE}/create`;
+export const MANAGE_GEO_BASED_RULE_EDIT = `${MANAGE_GEO_BASED_RULE}/edit/:ruleId`;
 
 /** ACCOUNT ROUTES */
 export const ACCOUNT = '/account';

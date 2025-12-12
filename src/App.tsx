@@ -84,6 +84,8 @@ import {
   TASK_TEMPLATES_DETAILS,
   ACTIVITY_CREATE,
   ACTIVITY_EDIT,
+  MANAGE_GEO_BASED_RULE,
+  MANAGE_GEO_BASED_RULE_CREATE,
 } from './routes';
 import { RootState } from './store/store';
 import ProjectTaskForm from './consultant/pages/project/project-details/project-task/form/project-task-form';
@@ -93,6 +95,7 @@ import { Attachments } from './consultant/pages';
 import ImportTemplatesList from './admin/pages/import-templates/import-templates';
 import CaseInteractionForm from './consultant/pages/interaction/interaction-form/case-interaction-form';
 import ManageTaskDetails from './admin/pages/task-templates/task-templates-list/details/taskDetails';
+import { GeoBasedRuleForm, ManageGeoBasedRuleList } from './admin/pages/manage-geo-based-rule';
 
 // Lazy load all page components
 const ExtendedPermission = lazy(
@@ -382,6 +385,14 @@ export const App: React.FC<IApp> = ({ instance }) => {
                   <Route
                     path={MANAGE_ACCOUNT_ACCESS}
                     element={<ManageAccountAccess />}
+                  />
+                  <Route
+                    path={MANAGE_GEO_BASED_RULE}
+                    element={<ManageGeoBasedRuleList />}
+                  />
+                  <Route
+                    path={MANAGE_GEO_BASED_RULE_CREATE}
+                    element={<GeoBasedRuleForm />}
                   />
                   <Route
                     path={MANAGE_SETTINGS}
