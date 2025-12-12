@@ -7,6 +7,7 @@ import { accountNavItems } from '../sidebar/accounts-menu';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
 import { sideNavAdminItems } from '../sidebar/admin-menus';
+import Footer from '../Footer';
 
 export const AppLayout: React.FC = () => {
   const navigate = useNavigate();
@@ -125,6 +126,7 @@ export const AppLayout: React.FC = () => {
         >
           <Outlet />
         </div>
+        <Footer />
       </div>
     </div>
   );

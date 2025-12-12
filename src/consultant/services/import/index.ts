@@ -21,6 +21,8 @@ import {
 } from '../../types/timesheet-projects';
 
 import {
+  TemplateItem,
+  TemplateResponse,
   TimesheetDetails,
   TimesheetDetailsResponse,
   TimeSheetList,
@@ -141,6 +143,11 @@ const fetchTimesheetDetails = async (
   );
   return response.data.data.imports;
 };
+const fetchTempleteList = async () => {
+  const response =
+    await resourceServiceApi.get<TemplateResponse>(`/api/template/list`);
+  return response.data.data.templateData;
+};
 
 export const useTimesheetDetails = (
   accountId?: string,
@@ -150,6 +157,16 @@ export const useTimesheetDetails = (
     queryKey: ['timesheetDetails', accountId, fileId],
     queryFn: () => fetchTimesheetDetails(accountId!, fileId!),
     enabled: !!fileId && !!accountId,
+    retry: 0,
+    gcTime: 0,
+  });
+};
+
+export const useTempleteList = () => {
+  return useQuery<TemplateItem[], Error>({
+    queryKey: ['import-template-list'],
+    queryFn: fetchTempleteList,
+    enabled: true,
     retry: 0,
     gcTime: 0,
   });

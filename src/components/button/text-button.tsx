@@ -3,7 +3,8 @@ import { styled } from '@mui/material/styles';
 import React from 'react';
 
 interface TextButtonProps {
-  label: string;
+  label?: string;
+  children?: React.ReactNode;
   sx?: SxProps<Theme>;
   // variant?: 'contained' | 'text' | 'outlined' | 'filled';
   color?: ButtonOwnProps['color'];
@@ -30,9 +31,14 @@ const StyledButton = styled(Button)(() => {
   };
 });
 
-const TextButton: React.FC<TextButtonProps> = ({ label, hide, ...rest }) => {
+const TextButton: React.FC<TextButtonProps> = ({
+  label,
+  children,
+  hide,
+  ...rest
+}) => {
   if (hide) return null;
-  return <StyledButton {...rest}>{label}</StyledButton>;
+  return <StyledButton {...rest}>{children || label}</StyledButton>;
 };
 
 export default TextButton;

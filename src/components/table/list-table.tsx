@@ -77,7 +77,7 @@ const ListTable = <T extends RowData>({
   conditionMenuItems,
   // State
   loading = false,
-  loadindRowCount,
+  loadingRowCount,
   error,
   // Pagination
   rowsPerPageOptions = [5, 10, 25, 50, 100],
@@ -104,6 +104,7 @@ const ListTable = <T extends RowData>({
   toggleClick,
   clearSelectedRows = false,
   disabledSelect,
+  toggleLevel,
   emptyMessege = 'No data available',
 }: ListTableProps<T>) => {
   actionWidth = 50;
@@ -859,7 +860,12 @@ const ListTable = <T extends RowData>({
       <TableContainer
         sx={{
           ...tableStyle,
+          maxHeight: tableStyle?.maxHeight
+            ? `calc(${tableStyle.maxHeight} - 42px)`
+            : 'calc(100vh - 42px)',
           overflow: isEditingAnyCell ? 'hidden' : 'auto',
+          minHeight: 'auto',
+          height: 'fit-content',
         }}
       >
         <MuiTable
@@ -902,9 +908,7 @@ const ListTable = <T extends RowData>({
                     maxWidth: '32px',
                     minWidth: '32px',
                     padding: '0px !important',
-                    borderRight: hideHeaderSelect
-                      ? 'none !important'
-                      : '1px solid #CBD6E2',
+                    borderRight: '1px solid #CBD6E2',
                     borderBottom: '1px solid #CBD6E2 !important',
                   }}
                 >
@@ -982,24 +986,32 @@ const ListTable = <T extends RowData>({
                       width: column.width || 160,
                       minWidth: column.width || 160,
                       maxWidth: column.width || 160,
+                      textAlign: 'left',
                       ...(typeof column.sx === 'function'
                         ? filterOutBackground(column.sx())
                         : column.sx || {}),
-                      left:
-                        selectable &&
-                        actionMenuItems?.length > 0 &&
-                        isAvailableAction
-                          ? '82px'
-                          : selectable &&
-                              actionMenuItems?.length < 1 &&
-                              !isAvailableAction
-                            ? '32px'
-                            : !selectable &&
-                                actionMenuItems?.length > 0 &&
-                                isAvailableAction
-                              ? '50px'
-                              : '0px',
-                      textAlign: 'left',
+                      ...(column.sticky
+                        ? {
+                            left:
+                              selectable &&
+                              actionMenuItems?.length > 0 &&
+                              isAvailableAction
+                                ? '82px'
+                                : selectable &&
+                                    actionMenuItems?.length &&
+                                    !isAvailableAction
+                                  ? '32px'
+                                  : !selectable &&
+                                      actionMenuItems?.length > 0 &&
+                                      isAvailableAction
+                                    ? '50px'
+                                    : selectable &&
+                                        actionMenuItems.length === 0 &&
+                                        !isAvailableAction
+                                      ? '32px'
+                                      : '0px',
+                          }
+                        : {}),
                     }}
                   />
                 ) : (
@@ -1009,24 +1021,32 @@ const ListTable = <T extends RowData>({
                       width: column.width || 160,
                       minWidth: column.width || 160,
                       maxWidth: column.width || 160,
+                      textAlign: 'left',
                       ...(typeof column.sx === 'function'
                         ? filterOutBackground(column.sx())
                         : column.sx || {}),
-                      left:
-                        selectable &&
-                        actionMenuItems?.length > 0 &&
-                        isAvailableAction
-                          ? '82px'
-                          : selectable &&
-                              actionMenuItems?.length < 1 &&
-                              !isAvailableAction
-                            ? '32px'
-                            : !selectable &&
-                                actionMenuItems?.length > 0 &&
-                                isAvailableAction
-                              ? '50px'
-                              : '0px',
-                      textAlign: 'left',
+                      ...(column.sticky
+                        ? {
+                            left:
+                              selectable &&
+                              actionMenuItems?.length > 0 &&
+                              isAvailableAction
+                                ? '82px'
+                                : selectable &&
+                                    actionMenuItems?.length &&
+                                    !isAvailableAction
+                                  ? '32px'
+                                  : !selectable &&
+                                      actionMenuItems?.length > 0 &&
+                                      isAvailableAction
+                                    ? '50px'
+                                    : selectable &&
+                                        actionMenuItems.length === 0 &&
+                                        !isAvailableAction
+                                      ? '32px'
+                                      : '0px',
+                          }
+                        : {}),
                     }}
                   >
                     {column.label}
@@ -1070,7 +1090,7 @@ const ListTable = <T extends RowData>({
             {loading && (
               <TableSkeleton
                 rowsPerPage={
-                  loadindRowCount ||
+                  loadingRowCount ||
                   (component === 'account'
                     ? 20
                     : rowsPerPage > 20
@@ -1082,7 +1102,8 @@ const ListTable = <T extends RowData>({
                 }
                 selectable={selectable}
                 hasActions={
-                  actionMenuItems?.length > 0 || actionDisplayMode === 'toggle'
+                  (actionMenuItems?.length > 0 && isAvailableAction) ||
+                  actionDisplayMode === 'toggle'
                 }
                 stickyColumnsCount={stickyColumnsCount}
               />
@@ -1142,6 +1163,7 @@ const ListTable = <T extends RowData>({
                 const conditionallyDisabled = isChecked
                   ? undefined
                   : disabledSelect;
+
                 return (
                   <React.Fragment key={`${rowId}-${i}`}>
                     <TableRow
@@ -1332,31 +1354,34 @@ const ListTable = <T extends RowData>({
                             zIndex: 7,
                           }}
                         >
-                          <div className='text-center'>
-                            <Tooltip
-                              title={
-                                toggleData?.includes(rowId)
-                                  ? checkedToggleTooltip
-                                  : unCheckedToggleTooltip
-                              }
-                              arrow
-                              placement='top'
-                            >
-                              <Switch
-                                size='small'
-                                color={
-                                  row.isColorEnabled ? 'warning' : 'success'
+                          {(typeof toggleLevel !== 'number' ||
+                            rowLevel === toggleLevel) && (
+                            <div className='text-center'>
+                              <Tooltip
+                                title={
+                                  toggleData?.includes(rowId)
+                                    ? checkedToggleTooltip
+                                    : unCheckedToggleTooltip
                                 }
-                                onChange={(_e, checked) =>
-                                  toggleClick && toggleClick(rowId, checked)
-                                }
-                                checked={toggleData?.includes(rowId)}
-                                disabled={Boolean(
-                                  disabledToggle || row?.isDisabledToggle
-                                )}
-                              />
-                            </Tooltip>
-                          </div>
+                                arrow
+                                placement='top'
+                              >
+                                <Switch
+                                  size='small'
+                                  color={
+                                    row.isColorEnabled ? 'warning' : 'success'
+                                  }
+                                  onChange={(_e, checked) =>
+                                    toggleClick && toggleClick(rowId, checked)
+                                  }
+                                  checked={toggleData?.includes(rowId)}
+                                  disabled={Boolean(
+                                    disabledToggle || row?.isDisabledToggle
+                                  )}
+                                />
+                              </Tooltip>
+                            </div>
+                          )}
                         </TableCell>
                       )}
                       {/* Data cells */}
@@ -1416,20 +1441,28 @@ const ListTable = <T extends RowData>({
                                 ? column.sx(row)
                                 : column.sx || {}),
                               zIndex: column.sticky ? 6 : 'auto',
-                              left:
-                                selectable &&
-                                actionMenuItems?.length > 0 &&
-                                isAvailableAction
-                                  ? '82px'
-                                  : selectable &&
-                                      actionMenuItems?.length < 1 &&
-                                      !isAvailableAction
-                                    ? '32px'
-                                    : !selectable &&
-                                        actionMenuItems?.length > 0 &&
-                                        isAvailableAction
-                                      ? '50px'
-                                      : '0px',
+                              ...(column.sticky
+                                ? {
+                                    left:
+                                      selectable &&
+                                      actionMenuItems?.length > 0 &&
+                                      isAvailableAction
+                                        ? '82px'
+                                        : selectable &&
+                                            actionMenuItems?.length &&
+                                            !isAvailableAction
+                                          ? '32px'
+                                          : !selectable &&
+                                              actionMenuItems?.length > 0 &&
+                                              isAvailableAction
+                                            ? '50px'
+                                            : selectable &&
+                                                actionMenuItems.length === 0 &&
+                                                !isAvailableAction
+                                              ? '32px'
+                                              : '0px',
+                                  }
+                                : {}),
                               padding: isEditing
                                 ? '0px 0px !important'
                                 : '0px 8px !important',
@@ -1646,20 +1679,28 @@ const ListTable = <T extends RowData>({
                                   <button
                                     key={index}
                                     onClick={() => item.onClick(row)}
-                                    disabled={item.disabled}
+                                    disabled={item.disabled || item.loading}
                                     className={item.className}
                                   >
-                                    {item.icon && (
-                                      <item.icon
-                                        alt='actionIcon'
-                                        style={{
-                                          width: '14px',
-                                          height: '14px',
-                                          ...item.iconStyle,
-                                        }}
-                                      />
+                                    {item.loading ? (
+                                      <span className='w-full  flex items-center justify-center'>
+                                        <CircularProgress size='14px' />
+                                      </span>
+                                    ) : (
+                                      <>
+                                        {item.icon && (
+                                          <item.icon
+                                            alt='actionIcon'
+                                            style={{
+                                              width: '14px',
+                                              height: '14px',
+                                              ...item.iconStyle,
+                                            }}
+                                          />
+                                        )}
+                                        {item.label}
+                                      </>
                                     )}
-                                    {item.label}
                                   </button>
                                 );
                               })}

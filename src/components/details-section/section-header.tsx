@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { SxProps } from '@mui/material';
 import { Theme } from '@emotion/react';
 import TextButton from '../button/text-button';
+import { ActionsDropdown } from '../actions-dropdown';
+import { ActionsDropdownItem } from '../../common-utils';
+import { ExpandViewIcon, CollapseViewIcon, RefreshIcon } from '../../assets';
 
 interface SectionHeaderButton {
   label: string;
@@ -18,6 +21,8 @@ interface SectionHeaderProps {
   title: string;
   titleIcon?: React.ReactNode;
   count?: number;
+  ActionName?: string;
+  actionItems?: ActionsDropdownItem[];
   buttons?: SectionHeaderButton[];
   onViewToggle?: () => void;
   showBackArrow?: boolean;
@@ -27,6 +32,10 @@ interface SectionHeaderProps {
   className?: string;
   iconBg?: string;
   bgType?: 'circle' | 'react';
+  isExpanded?: boolean;
+  onToggleExpand?: () => void;
+  onRefreshClick?: () => void;
+  showRefresh?: boolean;
 }
 
 const SectionHeader: React.FC<SectionHeaderProps> = ({
@@ -34,6 +43,8 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({
   title,
   titleIcon,
   count = 0,
+  ActionName,
+  actionItems = [],
   buttons = [],
   onViewToggle,
   subValue,
@@ -41,6 +52,10 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({
   className,
   iconBg,
   bgType,
+  isExpanded,
+  onToggleExpand,
+  onRefreshClick,
+  showRefresh = false,
 }) => {
   if (hideSection) {
     return null;
@@ -81,7 +96,7 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({
           )}
 
           <div>
-            <div className='flex'>
+            <div className='flex items-center'>
               <h1 className='text-[13px] font-semibold text-[#2D3E4F]'>
                 {title}
               </h1>
@@ -99,25 +114,59 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({
             )}
           </div>
         </div>
-
         <div className='flex items-center gap-2'>
-          {buttons.map((button, index) =>
-            button.hide ? null : (
-              <TextButton
-                key={`section-header-btn-${index}`}
-                label={button.label}
-                onClick={
-                  button.label.toLowerCase() === 'view'
-                    ? onViewToggle
-                    : button.onClick
-                }
-                loading={button.loading}
-                aria-label={button.label}
-                sx={button.sx}
-                disabled={button.disabled}
+          <div>
+            {actionItems.length > 0 && (
+              <ActionsDropdown
+                actions={actionItems}
+                titleName={ActionName}
+                sx={{ fontWeight: 400 }}
               />
-            )
-          )}
+            )}
+          </div>
+          <div className='flex items-center gap-2'>
+            {buttons.map((button, index) =>
+              button.hide ? null : (
+                <TextButton
+                  key={`section-header-btn-${index}`}
+                  label={button.label}
+                  onClick={
+                    button.label.toLowerCase() === 'view'
+                      ? onViewToggle
+                      : button.onClick
+                  }
+                  loading={button.loading}
+                  aria-label={button.label}
+                  sx={button.sx}
+                  disabled={button.disabled}
+                />
+              )
+            )}
+            {showRefresh && onRefreshClick && (
+              <button
+                className='flex border border-[#CBD6E2] w-[20px] h-[20px] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] justify-center items-center cursor-pointer'
+                onClick={onRefreshClick}
+                title='Refresh'
+              >
+                <RefreshIcon alt='refresh-icon' className='h-3' />
+              </button>
+            )}
+            {onToggleExpand && (
+              <button
+                onClick={onToggleExpand}
+                className='flex border border-[#CBD6E2] w-[22px] h-[22px] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] justify-center items-center cursor-pointer'
+                title={isExpanded ? 'Collapse' : 'Expand'}
+              >
+                <Suspense fallback={null}>
+                  {isExpanded ? (
+                    <CollapseViewIcon className='w-5 h-5' />
+                  ) : (
+                    <ExpandViewIcon className='w-5 h-5' />
+                  )}
+                </Suspense>
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

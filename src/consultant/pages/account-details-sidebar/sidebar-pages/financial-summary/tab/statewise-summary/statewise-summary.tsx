@@ -337,7 +337,7 @@ export const StateWiseSummary: React.FC<FinancialSummaryProps> = ({
           loading={isPending || !fiscalYear}
           error={isError ? 'Failed to load data' : undefined}
           showEmptyRow={false}
-          loadindRowCount={1}
+          loadingRowCount={1}
         />
       </div>
       <ListTable
@@ -359,7 +359,7 @@ export const StateWiseSummary: React.FC<FinancialSummaryProps> = ({
         loading={isPending || !fiscalYear}
         error={isError ? 'Failed to load data' : undefined}
         showEmptyRow={false}
-        loadindRowCount={5}
+        loadingRowCount={5}
       />
 
       <div>
@@ -386,7 +386,7 @@ export const StateWiseSummary: React.FC<FinancialSummaryProps> = ({
           loading={isPending || !fiscalYear}
           error={isError ? 'Failed to load data' : undefined}
           showEmptyRow={false}
-          loadindRowCount={1}
+          loadingRowCount={1}
         />
       </div>
     </div>

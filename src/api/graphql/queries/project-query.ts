@@ -51,6 +51,7 @@ export const UPDATE_PROJECT = gql`
         blended_rate
         is_rd_qualified
         qre
+        qre_final
         project_rid
         technical_point_of_contact
         financial_consultant
@@ -273,6 +274,11 @@ export const UPDATE_PROJECT_TASK = gql`
         rid
         status_rid
         status_name
+        task_name
+        task_type_name
+        task_type_rid
+        task_classification_name
+        task_classification_rid
       }
     }
   }

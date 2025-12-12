@@ -23,6 +23,8 @@ export type AttachmentList = {
   document_type: string;
   uploaded_by: string;
   attached_to: string;
+  status_name?: string;
+  status_rid?: string;
 };
 
 export interface globalFilters {
@@ -41,6 +43,7 @@ export interface AttachmentsListURLParams {
   entityId?: string;
   accountRid?: string;
   isGlobal?: boolean;
+  search?: string;
 }
 
 export type AttachmentListResponse = {
@@ -66,6 +69,7 @@ export interface AttachmentsListExportParams {
   accountRid?: string;
   page?: number;
   limit?: number;
+  search?: string;
 }
 
 export interface AttachmentUploadPayload {

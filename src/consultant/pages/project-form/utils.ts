@@ -161,6 +161,7 @@ export const transformFormData = (
     project_code: formData.project_code,
     project_name: formData.project_name,
     industry_rid: formData.industry_rid || null,
+    total_nonlabor: formData.total_nonlabor || null,
     industry_name: showOthersField ? formData.industry_name : '',
     program_name: formData.program_name || '',
     project_startdate: formData.project_startdate || null,

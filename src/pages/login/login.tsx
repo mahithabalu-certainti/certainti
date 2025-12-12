@@ -17,6 +17,7 @@ import {
 } from '../../store/slices';
 import { AllModules, fetchCurrentUserRole } from '../../common-service';
 import { NOT_FOUND } from '../../routes';
+import Footer from '../../components/Footer';
 
 /**
  * Login component handles the user authentication process.
@@ -103,7 +104,7 @@ export const Login: React.FC = () => {
     });
   };
   return (
-    <Box className='min-h-screen flex'>
+    <Box className='min-h-screen flex flex-col'>
       <Box className='flex-1 grid md:grid-cols-2'>
         <LeftPane
           handleLogin={handleLogin}
@@ -113,6 +114,7 @@ export const Login: React.FC = () => {
         />
         <RightPane />
       </Box>
+      <Footer />
     </Box>
   );
 };

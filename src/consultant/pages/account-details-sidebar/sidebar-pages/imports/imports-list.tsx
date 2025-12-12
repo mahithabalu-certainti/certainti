@@ -12,10 +12,17 @@ import {
 } from '../../../../../components/table';
 import { AccountDetailsResponse, ExportType } from '../../../../types';
 import ImportFile from './import-file/import-file';
-import { useImportListList } from '../../../../services/import';
+import {
+  useImportListList,
+  useTempleteList,
+} from '../../../../services/import';
 import ImportDetails from './import-details/import-details';
 import SectionHeader from '../../../../../components/details-section/section-header';
-import { checkPermission, getFiscalYears } from '../../../../../common-utils';
+import {
+  ActionsDropdownItem,
+  checkPermission,
+  getFiscalYears,
+} from '../../../../../common-utils';
 import { RootState } from '../../../../../store/store';
 import { useSelector } from 'react-redux';
 import { AccessRestricted } from '../../../../../components/account-restricted';
@@ -65,6 +72,7 @@ const Imports: React.FC<ImportsProps> = ({
   const [sortField, setSortField] = useState<string>('r_number');
   const [importsList, setImportsList] = useState<ImportsList[]>([]);
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
+  const [searchText, setSearchText] = useState('');
 
   const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
     (state: RootState) => state.account
@@ -123,10 +131,12 @@ const Imports: React.FC<ImportsProps> = ({
       filters: appliedFilters,
       account_rid: accountid || '',
       fiscal_year: convertedFiscalYear,
+      search: searchText,
     },
     !viewDetails,
     refreshImports
   );
+  const { data: TempleteList } = useTempleteList();
   const totalItems = data?.count || 0;
   const minYear = 1950;
   const currentYear = new Date().getFullYear();
@@ -150,6 +160,7 @@ const Imports: React.FC<ImportsProps> = ({
       filters: appliedFilters,
       account_rid: accountid || '',
       fiscal_year: convertedFiscalYear,
+      search: searchText,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -159,6 +170,7 @@ const Imports: React.FC<ImportsProps> = ({
     currentPage,
     rowsPerPage,
     convertedFiscalYear,
+    searchText,
   ]);
 
   const handleFilter = () => {
@@ -193,6 +205,17 @@ const Imports: React.FC<ImportsProps> = ({
     }
     navigate({ search: searchParams.toString() }, { replace: true });
   };
+
+  const menuItems: ActionsDropdownItem[] =
+    TempleteList?.map((item) => ({
+      label: item.template_name,
+      disabled: !item.blob_url,
+      onClick: () => {
+        if (item.blob_url) {
+          handleDownload(item.blob_url);
+        }
+      },
+    })) ?? [];
 
   const headerButtons = [
     {
@@ -320,6 +343,10 @@ const Imports: React.FC<ImportsProps> = ({
         setSortFilterCount={setSortFilterCount}
         showRefresh={showUploads || viewDetails ? false : true}
         onRefreshClick={onRefreshClick}
+        showSearch={showUploads || viewDetails ? false : true}
+        searchDisabled={false}
+        searchPlaceholder='Search'
+        onSearch={(text) => setSearchText(text)}
       />
       {showUploads ? (
         <ImportFile
@@ -343,6 +370,8 @@ const Imports: React.FC<ImportsProps> = ({
                 alt='Imports-header-icon'
               />
             }
+            ActionName='Download Templete'
+            actionItems={menuItems}
             buttons={headerButtons}
             iconBg='#af78ff'
             bgType='circle'

@@ -28,6 +28,7 @@ export interface TimeSheetListURLParams {
   fiscal_year?: number | string;
   account_rid: string;
   documentRid?: string;
+  search?: string;
 }
 
 export interface TImesheetListResponse {
@@ -72,3 +73,22 @@ export interface TimesheetDetailsResponse {
     imports: TimesheetDetails;
   };
 }
+
+export interface TemplateResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: {
+    templateData: TemplateItem[];
+  };
+}
+
+export type TemplateItem = {
+  rid: string;
+  created_by: string;
+  modified_by: string | null;
+  created_datetime: string;
+  modified_datetime: string | null;
+  template_name: string;
+  blob_url: string | null;
+};

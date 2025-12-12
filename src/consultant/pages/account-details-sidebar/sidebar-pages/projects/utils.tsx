@@ -7,11 +7,11 @@ export const statusOptions: { option: string; value: string }[] = [
   { option: 'Active', value: 'Active' },
   { option: 'In-Active', value: 'Inactive' },
 ];
-export const fiscalYearOption = fiscalYears.map((year) => ({
+export const fiscalYearOptions = fiscalYears.map((year) => ({
   option: year.label,
   value: year.value,
 }));
-export const projectTypeOption = PROJECT_TYPE.map((year) => ({
+export const projectTypeOptions = PROJECT_TYPE.map((year) => ({
   option: year.label,
   value: year.value,
 }));
@@ -109,7 +109,7 @@ export const projectFilterFields = (
     name: 'Fiscal Year',
     value: 'fiscal_year',
     type: 'enum',
-    options: fiscalYearOption,
+    options: fiscalYearOptions,
     operatorOption: fiscalOptions,
     hide:
       !projectPermissionMap?.['fiscal_year']?.read &&
@@ -207,8 +207,8 @@ export const projectFilterFields = (
     type: 'number',
     operatorOption: numberOptions,
     hide:
-      !projectPermissionMap?.['rd_percent_final']?.read &&
-      !projectPermissionMap?.['rd_percent_final']?.edit,
+      !projectPermissionMap?.['qre']?.read &&
+      !projectPermissionMap?.['qre']?.edit,
   },
   {
     name: 'QRE Final',

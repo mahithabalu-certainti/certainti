@@ -131,6 +131,19 @@ export const validateFilters = (
       }
     }
 
+    // Add to validateFilters function
+    if (state.time) {
+      const { option, value } = state.time;
+      const isEmptyCheck = formatString(option) === 'Is Empty';
+      const fromEmpty = !value?.from?.trim();
+      const toEmpty = formatString(option) === 'Between' && !value?.to?.trim();
+      if (!isEmptyCheck) {
+        if (fromEmpty || toEmpty) {
+          hasInvalid = true;
+        }
+      }
+    }
+
     if (state.select) {
       const isEmpty = !state.select.value.trim();
       if (isEmpty) hasInvalid = true;

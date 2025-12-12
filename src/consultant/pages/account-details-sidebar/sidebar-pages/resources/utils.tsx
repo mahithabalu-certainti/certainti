@@ -373,6 +373,8 @@ export const getInitialStateForField = (
       };
     case 'date':
       return { date: { option: 'equals', value: { from: '', to: '' } } };
+    case 'time':
+      return { time: { option: 'equals', value: { from: '', to: '' } } };
     case 'enum':
       return { enum: { option: 'equals', value: [] } };
     case 'currencySelect':
@@ -459,7 +461,22 @@ export const formatDateToYYYYMMDDWithTime = (
 
   // Date parts
   const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
+  // const month = String(date.getMonth() + 1).padStart(2, '0');
+  const monthNames = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+  const month = monthNames[date.getMonth()];
   const year = date.getFullYear();
 
   // Time parts (12-hour format with AM/PM)

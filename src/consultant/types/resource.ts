@@ -10,6 +10,7 @@ export interface ResourceListURLParams {
   filters?: object;
   accountNumber: string;
   value?: string;
+  search?: string;
 }
 
 export type ResourceList = {

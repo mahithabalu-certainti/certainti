@@ -35,9 +35,9 @@ interface trasnformedKeyContacts {
   keyContactStatus?: string | undefined;
 }
 interface ProjectOverviewProps {
-  title: string;
-  titleIcon: React.ReactNode;
-  headerButtons: {
+  title?: string;
+  titleIcon?: React.ReactNode;
+  headerButtons?: {
     label: string;
     variant: 'text' | 'outlined' | 'contained';
     loading?: boolean;
@@ -206,7 +206,11 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
       label: 'Total Sub Con Count',
       value: valueDisplay(projectDetails?.total_subcon),
     },
-    { label: '', value: 'empty' },
+    {
+      key: 'total_nonlabor',
+      label: 'Total Non Labor Count',
+      value: valueDisplay(projectDetails?.total_nonlabor_prj),
+    },
     {
       key: 'total_effort_fte',
       label: 'Total FTE Effort',
@@ -306,58 +310,60 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
 
   return (
     <div className='flex flex-col gap-0 border border-[#CBD6E2] rounded-[2px]'>
-      <div className='flex items-center justify-between gap-4 h-[38px] py-1 px-2'>
-        <div className='flex items-center gap-2'>
-          {showBackArrow && (
-            <div
-              className='cursor-pointer  flex justify-center items-center -ml-2'
-              onClick={onBackClick}
-            >
-              <LeftArrowIcon alt='leftArrowIcon' />
-            </div>
-          )}
+      {title && (
+        <div className='flex items-center justify-between gap-4 h-[38px] py-1 px-2'>
+          <div className='flex items-center gap-2'>
+            {showBackArrow && (
+              <div
+                className='cursor-pointer  flex justify-center items-center -ml-2'
+                onClick={onBackClick}
+              >
+                <LeftArrowIcon alt='leftArrowIcon' />
+              </div>
+            )}
 
-          {iconBg ? (
-            <div
-              className={`w-[24px] h-[24px] flex items-center justify-center ${bgType === 'circle' ? 'rounded-full' : 'rounded-[4px]'}`}
-              style={{ backgroundColor: iconBg }}
-            >
-              {titleIcon}
-            </div>
-          ) : (
-            titleIcon && (
-              <div className='w-[24px] h-[24px] flex items-center justify-center'>
+            {iconBg ? (
+              <div
+                className={`w-[24px] h-[24px] flex items-center justify-center ${bgType === 'circle' ? 'rounded-full' : 'rounded-[4px]'}`}
+                style={{ backgroundColor: iconBg }}
+              >
                 {titleIcon}
               </div>
-            )
-          )}
+            ) : (
+              titleIcon && (
+                <div className='w-[24px] h-[24px] flex items-center justify-center'>
+                  {titleIcon}
+                </div>
+              )
+            )}
 
-          <h1 className='text-[14px] font-medium text-[#2D3E4F]'>{title}</h1>
-        </div>
+            <h1 className='text-[14px] font-medium text-[#2D3E4F]'>{title}</h1>
+          </div>
 
-        <div className='flex items-center gap-2'>
-          <div className='flex gap-2'>
-            {headerButtons?.map((button, index) => {
-              if (button.hide) return null;
-              return (
-                <TextButton
-                  key={`header-button-${index}`}
-                  label={button.label}
-                  loading={button.loading}
-                  onClick={
-                    button.label.toLowerCase() === 'view'
-                      ? toggleViewMode
-                      : button.onClick
-                  }
-                  aria-label={button.label}
-                  sx={button.sx}
-                  disabled={button.disabled}
-                />
-              );
-            })}
+          <div className='flex items-center gap-2'>
+            <div className='flex gap-2'>
+              {headerButtons?.map((button, index) => {
+                if (button.hide) return null;
+                return (
+                  <TextButton
+                    key={`header-button-${index}`}
+                    label={button.label}
+                    loading={button.loading}
+                    onClick={
+                      button.label.toLowerCase() === 'view'
+                        ? toggleViewMode
+                        : button.onClick
+                    }
+                    aria-label={button.label}
+                    sx={button.sx}
+                    disabled={button.disabled}
+                  />
+                );
+              })}
+            </div>
           </div>
         </div>
-      </div>
+      )}
       {isDetailsLoading ? (
         <DetailsSectionSkeleton />
       ) : detailsError ? (
