@@ -682,7 +682,6 @@ export class CaseManagementService {
           dynamicResult = result.array_agg.filter((d : any) => d.milestone_name.toLowerCase() !== 'audit review')
         }
         let profileUrl : string | null
-        let assignedToName : string | null;
         const finalStructure = await Promise.all(dynamicResult.map(async (d : any) => {
           return {
             rid : d.rid,
@@ -690,12 +689,13 @@ export class CaseManagementService {
             task_count : d.task_count,
             tasks : d.tasks !== null ? await Promise.all(d.tasks.map(async (d : any) => {
               if(assignedToMap.get(d.assigned_to) !== undefined) {
-                assignedToName = assignedToMap.get(d.assigned_to).name
                 if(assignedToMap.get(d.assigned_to).profile_url !== null) {
                   profileUrl = await generateSasUrl(assignedToMap.get(d.assigned_to).profile_url)
                 } else {
                   profileUrl = null
                 }
+              } else {
+                profileUrl = null
               }
               return {
                 rid: d.rid,
@@ -717,7 +717,7 @@ export class CaseManagementService {
                 case_team_member_role_rid: d.case_team_member_role_rid,
                 milestone_template_rid: d.milestone_template_rid,
                 priority_name : priorityMap.get(d.priority_rid) || null,
-                assigned_to_name : assignedToName,
+                assigned_to_name : assignedToMap.get(d.assigned_to) !== undefined ? assignedToMap.get(d.assigned_to).name : null,
                 case_team_member_role_name : teamRoleMap.get(d.case_team_member_role_rid) || null,
                 task_type_name : taskTypeMap.get(d.task_type_rid) || null,
                 status_name : statusMap.get(d.status_rid) || null,
