@@ -1755,6 +1755,7 @@ export function fetchChecklistAttachToDetails(schemaName: string, attachTo: stri
              LEFT JOIN ${MAIN_SCHEMA_NAME}.user um ON um.rid = jc.modified_by
               WHERE
     (jc.r_number ILIKE '${searchValue}')
+    and jc.federal_config_id is null
     ${joinedConditions}
     ),
     paginated_datas AS (
