@@ -2093,9 +2093,9 @@ export const rawQueries = {
     WHERE g.credit_program_name = 'Platform Configuration';
     `;
   },
-  checkJurisdictionConfigOverlap() {
-    return  `SELECT rid FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values WHERE credit_config_group_rid = :groupId AND status_rid = :statusRid AND ((:startDate < effective_end_date AND :endDate > effective_start_date)) LIMIT 1`
-              },
+  checkJurisdictionConfigOverlap(excludeCurrent = false) {
+    return  `SELECT rid FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values WHERE credit_config_group_rid = :groupId AND status_rid = :statusRid AND ((:startDate < effective_end_date AND :endDate > effective_start_date))${excludeCurrent ? ' AND rid != :excludeRid' : ''} LIMIT 1`;
+  },
   getJurisdictionByCountryId(country_rid : string, state_rid : string, is_federal: boolean, credit_program_name: string) {
     let whereClause = `g.country_rid = '${country_rid}' AND g.is_federal = ${is_federal} AND g.credit_program_name = '${credit_program_name}'`;
     if (state_rid && state_rid.trim() !== "") {
