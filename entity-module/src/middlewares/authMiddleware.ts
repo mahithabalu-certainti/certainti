@@ -3,6 +3,7 @@ import { HttpStatus } from '../utils/constants';
 import { initMainDbSequelize } from '../config/mainDataSource';
 import {constants} from "../utils/constants";
 import { v4 as uuidv4 } from 'uuid';
+import { errorLog } from '../utils/helpers';
 
 const authMiddleware = (req: Request, res: Response, next: NextFunction):void => {
 
@@ -94,7 +95,7 @@ const checkUserStatusMiddleware = (permissionName?: string) => {
         // }
         next();
     } catch (error) {
-        console.error('Error checking user status:', error);
+       errorLog('Error checking user status:', (error as Error).message);
         res.status(HttpStatus.FAILED).json({
             error: HttpStatus.FAILED_MESSAGE,
             message: 'Failed to verify user status'

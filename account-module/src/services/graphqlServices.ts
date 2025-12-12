@@ -2,13 +2,14 @@ import { initSequelize } from "../config/maindbDataSource"
 import { initOrgSequelize } from "../config/orgdbDataSource"
 import { Account } from "../models/accountModel"
 import { Status } from "../models/statusModel"
-import { HttpStatus, rawQueries, STATUS, STATUS_MESSAGE } from "../utils/constant"
-import { setAccountDetails, setInlineValues, setKeyContact, setKeyContactData } from "../utils/helpers"
+import { HttpStatus, rawQueries, STATUS, STATUS_MESSAGE, SCHEMANAME_PREFIX } from "../utils/constant"
+import { logMessage, setAccountDetails, setInlineValues, setKeyContact, setKeyContactData } from "../utils/helpers"
 import { Sequelize, Op, QueryTypes } from "sequelize";
 import SchemaService from "./schemaService"
 
 class AccountGraphQlServices {
     async inlineEditAccount(data : any) {
+    logMessage(`AccountGraphQlServices -> inlineEditAccount", ${JSON.stringify(data)}`);
     let parentAccount: any
     let accountDetails: any
     let schemaName: string
@@ -54,10 +55,10 @@ class AccountGraphQlServices {
                             rid: fetchAccountById.parent_account_rid
                         }, raw: true
                     })
-                    schemaName = `"trd365_${parentAccount?.r_number?.replace('ACC-', '')}"`
+                    schemaName = `"${SCHEMANAME_PREFIX}${parentAccount?.r_number?.replace('ACC-', '')}"`
                     accountDetails = await sequelize.query(rawQueries.fetchAccountDetails(schemaName, fetchAccountById.rid))
                 } else {
-                    schemaName = `"trd365_${fetchAccountById?.r_number?.replace('ACC-', '')}"`
+                    schemaName = `"${SCHEMANAME_PREFIX}${fetchAccountById?.r_number?.replace('ACC-', '')}"`
                     accountDetails = await sequelize.query(rawQueries.fetchAccountDetails(schemaName, fetchAccountById.rid))
                 }
                 const setAccountData = setInlineValues(fetchAccountById, data, accountDetails[0])
@@ -90,7 +91,7 @@ class AccountGraphQlServices {
                 // Update group name if account name changed
                 if (data.account_name != undefined && data.account_name !== existingAccName) 
                 {
-                    console.log("Account name changed from", existingAccName, "to ", data.account_name);
+                    logMessage(`Account name changed from ${existingAccName} to ${data.account_name}`);
                     const schemaService = new SchemaService();
                     await schemaService.updateGroupNameForAccount(fetchAccountById.rid, data.userId, fetchAccountById.is_parent, data.account_name);
                 }           

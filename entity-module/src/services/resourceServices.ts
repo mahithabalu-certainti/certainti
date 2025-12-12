@@ -1,8 +1,8 @@
 import { initMainDbSequelize } from "../config/mainDataSource";
 import { initOrgSequelize } from "../config/orgDataSource";
-import { Resources } from "../models/resource";
-import { ResourceFiscal } from "../models/resourceFiscal";
-import { HttpStatus, MAIN_SCHEMA_NAME, STATUS_MESSAGE, rawQueries } from "../utils/constants";
+import { HttpStatus, MAIN_SCHEMA_NAME, rawQueries } from "../utils/constants";
+import { errorLog, logMessage } from "../utils/helpers";
+import { checkResourceMappedToProjectRes } from "../utils/rawQueries";
 import { ICreateResource, IUpdateResource } from "../utils/types";
 import SchemaService from "./schemaService";
 import moment from "moment";
@@ -41,10 +41,15 @@ export class ResourceService {
         );
 
       if (!isAccountExist) {
+        errorLog ("Invalid account number or account ID. The specified account was not found.");
         throw new Error(
           "Invalid account number or account ID. The specified account was not found."
         );
       }
+      logMessage(
+        `Create Resource: isAccountExist=${isAccountExist}, dataStorage=${dataStorage}, parentAccountId=${parentAccountId}`
+      );
+      
 
       let accountNumber = account_number;
 
@@ -59,6 +64,7 @@ export class ResourceService {
       );
 
       if (!isExists) {
+        errorLog("Invalid account number: The account number does not exist.");
         throw new Error(
           "Invalid account number: The account number does not exist."
         );
@@ -88,6 +94,7 @@ export class ResourceService {
         },
       };
     } catch (err) {
+      errorLog("Error creating resource: " + (err as Error).message);
       return this.throwServiceError(err as Error);
     }
   }
@@ -128,6 +135,7 @@ export class ResourceService {
       );
 
       if (!isExists) {
+        errorLog("Invalid account number: The account number does not exist.");
         throw new Error(
           "Invalid account number: The account number does not exist."
         );
@@ -166,6 +174,7 @@ export class ResourceService {
         },
       };
     } catch (err) {
+      errorLog("Error fetching resources list: " + (err as Error).message);
       return this.throwServiceError(err as Error);
     }
   }
@@ -204,6 +213,7 @@ export class ResourceService {
       );
 
       if (!isExists) {
+        errorLog("Invalid account number: The account number does not exist.");
         throw new Error(
           "Invalid account number: The account number does not exist."
         );
@@ -295,6 +305,7 @@ export class ResourceService {
         },
       };
     } catch (err) {
+      errorLog("Error fetching resources list for export: " + (err as Error).message);
       return this.throwServiceError(err as Error);
     }
   }
@@ -330,12 +341,13 @@ export class ResourceService {
         );
 
         if (!isResourceExist) {
+          errorLog("Invalid resource ID: The specified resource does not exist.");
           throw new Error(
             "Invalid resource ID: The specified resource does not exist."
           );
         }
       } catch (error) {
-        console.error("Error checking resource existence:", error);
+          errorLog("Error checking resource existence:", (error as Error).message);
         // If there's a DB error, assume resource exists and continue
         // This prevents false negatives when DB query fails
       }
@@ -345,6 +357,7 @@ export class ResourceService {
       );
 
       if (!isExists) {
+        errorLog("Invalid account number: The account number does not exist.");
         throw new Error(
           "Invalid account number: The account number does not exist."
         );
@@ -369,6 +382,7 @@ export class ResourceService {
         },
       };
     } catch (err) {
+      errorLog("Error updating resource: " + (err as Error).message);
       return this.throwServiceError(err as Error);
     }
   }
@@ -399,6 +413,7 @@ export class ResourceService {
       );
 
       if (!isExists) {
+        errorLog("Invalid account number: The account number does not exist.");
         throw new Error(
           "Invalid account number: The account number does not exist."
         );
@@ -416,7 +431,7 @@ export class ResourceService {
           );
         }
       } catch (error) {
-        console.error("Error checking resource existence:", error);
+          errorLog("Error checking resource existence:", (error as Error).message);
         // If there's a DB error, assume resource exists and continue
         // This prevents false negatives when DB query fails
       }
@@ -433,6 +448,13 @@ export class ResourceService {
       });
 
       if (resourceDetails) {
+        const orgDb = await initOrgSequelize()
+        let schemaName = rawQueries.fetchSchemaName(accountNumber)
+        let isResExists : boolean;
+        const checkResExistsInPrjRes = await orgDb.query(checkResourceMappedToProjectRes(schemaName, resourceDetails.rid))
+        if(checkResExistsInPrjRes[0].length > 0) isResExists = true
+        else isResExists = false
+        resourceDetails.is_resource_exists = isResExists
         resourceDetails.created_by = userNames.created_by_name;
         resourceDetails.modified_by = userNames.modified_by_name;
       }
@@ -498,6 +520,7 @@ export class ResourceService {
         },
       };
     } catch (err) {
+      errorLog("Error fetching resource details: " + (err as Error).message);
       return this.throwServiceError(err as Error);
     }
   }
@@ -863,7 +886,7 @@ export class ResourceService {
       // Fetch created_by user name if ID exists
       if (userIds.created_by) {
         const [createdByUser] = await sequelize.query(
-          `SELECT concat(first_name, ' ', last_name) as full_name FROM ${MAIN_SCHEMA_NAME}."user" WHERE rid = :userId LIMIT 1`,
+          rawQueries.getUserFullNameQuery(),
           {
             replacements: { userId: userIds.created_by },
             type: "SELECT",
@@ -878,7 +901,7 @@ export class ResourceService {
       // Fetch modified_by user name if ID exists
       if (userIds.modified_by) {
         const [modifiedByUser] = await sequelize.query(
-          `SELECT concat(first_name, ' ', last_name) as full_name FROM ${MAIN_SCHEMA_NAME}."user" WHERE rid = :userId LIMIT 1`,
+          rawQueries.getUserFullNameQuery(),
           {
             replacements: { userId: userIds.modified_by },
             type: "SELECT",
@@ -890,8 +913,7 @@ export class ResourceService {
         }
       }
     } catch (error) {
-      console.error("Error fetching user names:", error);
-      // Return empty strings if there's an error
+      errorLog("Error fetching user names:", (error as Error).message);
     }
 
     return result;
@@ -902,13 +924,7 @@ export class ResourceService {
     try {
       const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, '')}`;
 
-      const query = `
-        SELECT 
-          r.rid
-        FROM "${schemaName}".resources r
-        WHERE r.account_rid = :accountRid
-        ORDER BY r.created_datetime DESC
-      `;
+      const query = rawQueries.getResourcesByAccountQuery(schemaName);
 
       const sequelize = await initOrgSequelize();
       const results = await sequelize.query(query, {
@@ -919,7 +935,7 @@ export class ResourceService {
       return results;
 
     } catch (error) {
-      console.error('Error fetching resources:', error);
+      errorLog("Error fetching resources by account ID:", (error as Error).message);
       throw error;
     }
   }

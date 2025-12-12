@@ -1,7 +1,7 @@
 import { initMainDbSequelize } from "../config/mainDataSource";
 import { initOrgSequelize } from "../config/orgDataSource";
 import { HttpStatus, MAIN_SCHEMA_NAME, rawQueries, STATUS_MESSAGE, TYPES } from "../utils/constants";
-import { setResourceSkillData } from "../utils/helpers";
+import { logMessage, setResourceSkillData } from "../utils/helpers";
 import resourceSkillSchemaService from "./resourceSkillSchemaService";
 
 export default class ResourceSkillGraphQlService {
@@ -9,6 +9,7 @@ export default class ResourceSkillGraphQlService {
 async updateInlineResourceSkill (data : any) {
     const mainSequelize = await initMainDbSequelize();
     const orgSequelize = await initOrgSequelize();
+    logMessage(`Updating inline resource skill with data: ${JSON.stringify(data)}`);
 
     let fetchParentAccount : any = await mainSequelize.query(await rawQueries.fetchParentAccount(data.account_rid, mainSequelize))
     if(fetchParentAccount[0].length < 1) {

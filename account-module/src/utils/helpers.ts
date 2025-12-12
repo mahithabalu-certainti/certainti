@@ -96,6 +96,9 @@ export function successLog(methodName: string): void {
     method: methodName,
   });
 }
+export function logMessage(message: string): void {
+  getLogger().info(`${message}`);
+}
 
 export function errorLog(methodName: string, errorMessage?: string): void {
    getLogger().error("Failed log: ", {
@@ -182,9 +185,9 @@ export async function deleteFromAzureBlob(blobUrl: string): Promise<void> {
   const exists = await blockBlobClient.exists();
   if (exists) {
     await blockBlobClient.delete();
-    console.log(`Blob deleted: ${blobName}`);
+  logMessage
   } else {
-    console.log(`Blob not found: ${blobName}`);
+    logMessage(`Blob not found: ${blobUrl}`);
   }
 }
 
@@ -299,7 +302,7 @@ export function getTableSchemaByEntity(entity: string): ColumnSchema[] {
         { column_name: 'total_fte_cost', data_type: 'Decimal(18,2)',required:false },
         { column_name: 'total_sub_con_effort_in_hrs', data_type: 'Decimal(18,2)',required:false },
         { column_name: 'total_sub_con_cost', data_type: 'Decimal(18,2)',required:false },
-        { column_name: 'total_non_labor_cost', data_type: 'Decimal(18,2)',required:false },
+        { column_name: 'total_non_labor_cost', data_type: 'Decimal(18,2)',required:false }
       ];
 
     case 'project_resource':

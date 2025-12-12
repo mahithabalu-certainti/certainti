@@ -17,6 +17,11 @@ interface ProjectTaskAttributes {
   resource_rid: string;
   fiscal_year: number;
 
+  task_name?: string | null;
+  task_description?: string | null;
+  task_type_rid?: string | null;
+  task_classification_rid?: string | null;
+
   start_date?: Date | null;
   end_date?: Date | null;
 
@@ -54,6 +59,11 @@ export class ProjectTask
   public resource_rid!: string;
 
   public fiscal_year!: number;
+
+  public task_name?: string | null;
+  public task_description?: string | null;
+  public task_type_rid?: string | null;
+  public task_classification_rid?: string | null;
 
   public start_date?: Date;
   public end_date?: Date;
@@ -130,6 +140,22 @@ export class ProjectTask
         fiscal_year: {
           type: DataTypes.INTEGER,
           allowNull: false,
+        },
+        task_name: {
+          type: DataTypes.TEXT,
+          allowNull: true,
+        },
+        task_description: {
+          type: DataTypes.STRING(2000),
+          allowNull: true,
+        },
+        task_type_rid: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
+        },
+        task_classification_rid: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
         },
         start_date: {
           type: DataTypes.DATEONLY,

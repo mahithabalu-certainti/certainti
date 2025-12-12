@@ -5,16 +5,15 @@ const userService = new UserService();
 import { ProfileTimeline } from "../models/profileTimelineModel";
 import { UserExtendedPermissionTimeline } from "../models/userExtendedPermissionTimelineModel";
 import { Op, IndexHints, WhereOptions, Sequelize } from "sequelize";
-import { initSequelize } from "../config/dataSource";
 import { UserFieldsAccessHistory } from "../models/userFieldsAccessHistoryModel";
 import { UserPermissionAccessHistory } from "../models/userPermissionAccessHistoryModel";
 import { UserModuleAccessHistory } from "../models/userModuleAccessHistoryModel";
 import { UserMenuAccessHistory } from "../models/userMenuAccessHistoryModel";
 import dayjs from "dayjs";
+import { errorLog, logMessage } from "../utils/helpers";
 const {
   Profile,
   ProfileMenuAccess,
-  Menu,
   ProfileModuleAccess,
   MenuModule,
   ProfilePermissionAccess,
@@ -148,7 +147,10 @@ class UserManagementService {
           },
         };
       } else {
-        const privileges = await userService.getProfilePermission(profile.rid,true);
+        const privileges = await userService.getProfilePermission(
+          profile.rid,
+          true
+        );
         return {
           statusCode: constants.SUCCESS,
           message: constants.SUCCESS_MESSAGE,
@@ -193,7 +195,7 @@ class UserManagementService {
 
       return true;
     } catch (error) {
-      console.error("Error recording profile event:", error);
+      errorLog("Error recording profile event:", (error as Error).message);
       return false;
     }
   }
@@ -227,7 +229,7 @@ class UserManagementService {
 
       return true;
     } catch (error) {
-      console.error("Error recording profile event:", error);
+      errorLog("Error recording user extended profile event:", (error as Error).message);
       return false;
     }
   }
@@ -394,19 +396,19 @@ class UserManagementService {
       ]);
 
       // Now you have access to all created records
-      console.log(`Created ${createdMenuAccess.length} menu access records`);
-      console.log(`menu access data => ${createdMenuAccess}`);
-      console.log(
+      logMessage(`Created ${createdMenuAccess.length} menu access records`);
+      logMessage(`menu access data => ${createdMenuAccess}`);
+      logMessage(
         `Created ${createdModuleAccess.length} module access records`
       );
-      console.log(
+      logMessage(
         `Created ${createdPermissionAccess.length} permission access records`
       );
-      console.log(`Created ${createdFieldAccess.length} field access records`);
+      logMessage(`Created ${createdFieldAccess.length} field access records`);
 
       return true;
     } catch (error) {
-      console.error("Error in profileClone:", error);
+      errorLog("Error in profileClone:", (error as Error).message);
       return false;
     }
   }
@@ -462,7 +464,7 @@ class UserManagementService {
         privileges = await this.getModulesForMenu(profileId, id);
       } else {
         // Case 5: If no filters, get all permissions for the profile
-        privileges = await userService.getProfilePermission(profileId,true);
+        privileges = await userService.getProfilePermission(profileId, true);
       }
 
       return {
@@ -585,7 +587,6 @@ class UserManagementService {
     // Add modules to result
     for (const ma of menuAccess) {
       const menu = ma as any;
-      console.log(menu.rid);
       privileges.push({
         rid: menu.rid,
         type: "menu",
@@ -658,7 +659,7 @@ class UserManagementService {
     filters: Record<string, any> = {},
     sortBy: string = "created_datetime",
     sortOrder: string = "ASC",
-    search? : string
+    search?: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -685,8 +686,8 @@ class UserManagementService {
       const searchConditions = {
         [Op.or]: [
           // normal fields
-          ...fields.map(field => ({
-            [field]: { [Op.iLike]: `%${search || ''}%` }
+          ...fields.map((field) => ({
+            [field]: { [Op.iLike]: `%${search || ""}%` },
           })),
         ],
       };
@@ -694,7 +695,7 @@ class UserManagementService {
       const totalCount = await Profile.count({
         where: {
           ...whereClause,
-          ...searchConditions
+          ...searchConditions,
         },
         include: includeClause,
         distinct: true, // Add this line to handle LEFT JOINs correctly
@@ -713,7 +714,7 @@ class UserManagementService {
       const profiles = await Profile.findAll({
         where: {
           ...whereClause,
-          ...searchConditions
+          ...searchConditions,
         },
         order: orderArray,
         limit,
@@ -1202,7 +1203,7 @@ class UserManagementService {
             );
 
           default:
-            console.warn(`Unknown permission type: ${permission.type}`);
+            logMessage(`Unknown permission type: ${permission.type}`);
             return false;
         }
       });
@@ -1319,12 +1320,13 @@ class UserManagementService {
       }
 
       // Process updates by type
-      const updatePromises = modifiedPermissions.map(async (permission) => {
+      const updatePromises = modifiedPermissions.map(async (permission:any) => {
         switch (permission.type) {
           case "menu":
             return this.updateMenuAccessIfChanged(
               permission.rid,
               permission.is_enabled || false,
+              permission.menu_id,
               userId,
               originalUrl
             );
@@ -1332,6 +1334,7 @@ class UserManagementService {
             return this.updateModuleAccessIfChanged(
               permission.rid,
               permission.is_enabled || false,
+              permission.module_id,
               userId,
               originalUrl
             );
@@ -1339,6 +1342,7 @@ class UserManagementService {
             return this.updatePermissionAccessIfChanged(
               permission.rid,
               permission.is_enabled || false,
+              permission.permission_id,
               userId,
               originalUrl
             );
@@ -1347,12 +1351,13 @@ class UserManagementService {
               permission.rid,
               permission.read || false,
               permission.edit || false,
+              permission.field_id,
               userId,
               originalUrl
             );
 
           default:
-            console.warn(`Unknown permission type: ${permission.type}`);
+            logMessage(`Unknown permission type: ${permission.type}`);
             return false;
         }
       });
@@ -1431,9 +1436,9 @@ class UserManagementService {
 
       return true;
     } catch (error) {
-      console.error(
+      errorLog(
         "Error checking profile name uniqueness and updating:",
-        error
+        (error as Error).message
       );
       return false;
     }
@@ -1464,16 +1469,17 @@ class UserManagementService {
 
         const existingProfile = await Profile.findOne({
           where: Sequelize.where(
-            Sequelize.fn('LOWER', Sequelize.col('profile_name')),
+            Sequelize.fn("LOWER", Sequelize.col("profile_name")),
             normalizedName
-          )
+          ),
         });
 
         if (existingProfile) {
           return {
             statusCode: constants.BAD_REQUEST,
             message: constants.BAD_REQUEST_MESSAGE,
-            errorMessage: "A profile with this name already exists. Please choose a unique profile name."
+            errorMessage:
+              "A profile with this name already exists. Please choose a unique profile name.",
           };
         }
 
@@ -1483,7 +1489,7 @@ class UserManagementService {
           old_value: currentProfileName,
           new_value: updates.profile_name,
           created_by: userId,
-          created_datetime: new Date()
+          created_datetime: new Date(),
         });
 
         updateData.profile_name = updates.profile_name;
@@ -1501,7 +1507,7 @@ class UserManagementService {
           old_value: currentProfileDescription,
           new_value: updates.profile_description,
           created_by: userId,
-          created_datetime: new Date()
+          created_datetime: new Date(),
         });
 
         updateData.profile_description = updates.profile_description;
@@ -1514,43 +1520,42 @@ class UserManagementService {
           where: { rid: profileId },
         });
       }
-      const updatedProfileData : any = await Profile.findOne({
+      const updatedProfileData: any = await Profile.findOne({
         where: { rid: profileId },
         include: [
           {
             model: User,
-            as: 'creator',
+            as: "creator",
             attributes: [
               [
                 Sequelize.fn(
-                  'CONCAT',
-                  Sequelize.col('creator.first_name'),
-                  ' ',
-                  Sequelize.col('creator.last_name')
+                  "CONCAT",
+                  Sequelize.col("creator.first_name"),
+                  " ",
+                  Sequelize.col("creator.last_name")
                 ),
-                'full_name'
-              ]
-            ]
+                "full_name",
+              ],
+            ],
           },
           {
             model: User,
-            as: 'modifier',
+            as: "modifier",
             attributes: [
               [
                 Sequelize.fn(
-                  'CONCAT',
-                  Sequelize.col('modifier.first_name'),
-                  ' ',
-                  Sequelize.col('modifier.last_name')
+                  "CONCAT",
+                  Sequelize.col("modifier.first_name"),
+                  " ",
+                  Sequelize.col("modifier.last_name")
                 ),
-                'full_name'
-              ]
-            ]
-          }
+                "full_name",
+              ],
+            ],
+          },
         ],
-        raw: true
+        raw: true,
       });
-      console.log(updatedProfileData)
       if(updatedProfileData) {
         let finalData = {
           rid: updatedProfileData.rid,
@@ -1561,16 +1566,16 @@ class UserManagementService {
           profile_status: updatedProfileData.profile_status,
           created_datetime: updatedProfileData.created_datetime,
           modified_datetime: updatedProfileData.modified_datetime,
-          created_by: updatedProfileData['creator.full_name'],
-          modified_by: updatedProfileData['modifier.full_name']
-        }
+          created_by: updatedProfileData["creator.full_name"],
+          modified_by: updatedProfileData["modifier.full_name"],
+        };
         return {
-        statusCode: constants.SUCCESS,
-        message: constants.SUCCESS_MESSAGE,
-        data: {
-          profile: finalData,
-        },
-      };
+          statusCode: constants.SUCCESS,
+          message: constants.SUCCESS_MESSAGE,
+          data: {
+            profile: finalData,
+          },
+        };
       }
     } catch (error) {
       return this.throwServiceError(error as Error);
@@ -1596,6 +1601,7 @@ class UserManagementService {
   private async updateMenuAccessIfChanged(
     accessId: string,
     isEnabled: boolean,
+    menuId: string,
     userId: string,
     originalUrl: string = "create"
   ): Promise<boolean> {
@@ -1603,13 +1609,13 @@ class UserManagementService {
       // First fetch the current value
       const currentAccess = await ProfileMenuAccess.findByPk(accessId);
       if (!currentAccess) {
-        console.error(`Menu access with ID ${accessId} not found`);
+        logMessage(`Menu access with ID ${accessId} not found`);
         return false;
       }
 
       // Check if the value has actually changed
       if (currentAccess.is_enabled === isEnabled) {
-        console.log(`Menu access ${accessId} value unchanged, skipping update`);
+        logMessage(`Menu access ${accessId} value unchanged, skipping update`);
         return false;
       }
 
@@ -1635,10 +1641,22 @@ class UserManagementService {
           where: { rid: accessId },
         }
       );
+      if (updated > 0 && isEnabled === true) {
+        // If the record was updated and is_enabled is now true, also update UserMenuAccess if exists
+        const userMenuAccess = await UserMenuAccess.findOne({
+          where: { menu_id: menuId, is_enabled: true },
+        });
+        if (userMenuAccess) {
+          await UserMenuAccess.update(
+            { is_enabled: false },
+            { where: { menu_id: menuId } }
+          );
+        }
+      }
 
       return updated > 0;
     } catch (error) {
-      console.error("Error updating menu access:", error);
+      errorLog("Error updating menu access:", (error as Error).message);
       return false;
     }
   }
@@ -1649,6 +1667,7 @@ class UserManagementService {
   private async updateModuleAccessIfChanged(
     accessId: string,
     isEnabled: boolean,
+    moduleId: string,
     userId: string,
     originalUrl: string = "create"
   ): Promise<boolean> {
@@ -1656,13 +1675,13 @@ class UserManagementService {
       // First fetch the current value
       const currentAccess = await ProfileModuleAccess.findByPk(accessId);
       if (!currentAccess) {
-        console.error(`Module access with ID ${accessId} not found`);
+        logMessage(`Module access with ID ${accessId} not found`);
         return false;
       }
 
       // Check if the value has actually changed
       if (currentAccess.is_enabled === isEnabled) {
-        console.log(
+        logMessage(
           `Module access ${accessId} value unchanged, skipping update`
         );
         return false;
@@ -1690,10 +1709,23 @@ class UserManagementService {
           where: { rid: accessId },
         }
       );
+       if (updated > 0 && isEnabled === true) {
+        // If the record was updated and is_enabled is now true, also update UserModuleAccess if exists
+        const userModuleAccess = await UserModuleAccess.findOne({
+          where: { menu_module_id: moduleId , is_enabled: true},
+        });
+
+        if (userModuleAccess) {
+          await UserModuleAccess.update(
+            { is_enabled: false },
+            { where: { menu_module_id: moduleId } }
+          );
+        }
+      }
 
       return updated > 0;
     } catch (error) {
-      console.error("Error updating module access:", error);
+      errorLog("Error updating module access:", (error as Error).message);
       return false;
     }
   }
@@ -1704,6 +1736,7 @@ class UserManagementService {
   private async updatePermissionAccessIfChanged(
     accessId: string,
     isEnabled: boolean,
+    permissionId: string,
     userId: string,
     originalUrl: string = "create"
   ): Promise<boolean> {
@@ -1711,13 +1744,13 @@ class UserManagementService {
       // First fetch the current value
       const currentAccess = await ProfilePermissionAccess.findByPk(accessId);
       if (!currentAccess) {
-        console.error(`Permission access with ID ${accessId} not found`);
+        logMessage(`Permission access with ID ${accessId} not found`);
         return false;
       }
 
       // Check if the value has actually changed
       if (currentAccess.is_enabled === isEnabled) {
-        console.log(
+        logMessage(
           `Permission access ${accessId} value unchanged, skipping update`
         );
         return false;
@@ -1745,10 +1778,22 @@ class UserManagementService {
           where: { rid: accessId },
         }
       );
+       if (updated > 0 && isEnabled === true) {
+        // If the record was updated and is_enabled is now true, also update UserPermissionAccess if exists
+        const userPermissionAccess = await UserPermissionAccess.findOne({
+          where: { module_permission_id: permissionId, is_enabled: true },
+        });
+        if (userPermissionAccess) {
+          await UserPermissionAccess.update(
+            { is_enabled: false },
+            { where: { module_permission_id: permissionId } }
+          );
+        }
+      }
 
       return updated > 0;
     } catch (error) {
-      console.error("Error updating permission access:", error);
+      errorLog("Error updating permission access:", (error as Error).message);
       return false;
     }
   }
@@ -1760,6 +1805,7 @@ class UserManagementService {
     accessId: string,
     read: boolean,
     edit: boolean,
+    fieldId: string,
     userId: string,
     originalUrl: string = "create"
   ): Promise<boolean> {
@@ -1767,7 +1813,7 @@ class UserManagementService {
       // First fetch the current values
       const currentAccess = await ProfileFieldsAccess.findByPk(accessId);
       if (!currentAccess) {
-        console.error(`Field access with ID ${accessId} not found`);
+        logMessage(`Field access with ID ${accessId} not found`);
         return false;
       }
 
@@ -1776,7 +1822,7 @@ class UserManagementService {
       const editChanged = currentAccess.edit !== edit;
 
       if (!readChanged && !editChanged) {
-        console.log(
+        logMessage(
           `Field access ${accessId} values unchanged, skipping update`
         );
         return false;
@@ -1819,10 +1865,34 @@ class UserManagementService {
           where: { rid: accessId },
         }
       );
+      if (updated > 0 && read === true) {
+        // If the record was updated and is_enabled is now true, also update UserFieldsAccess if exists
+        const userFieldsAccess = await UserFieldsAccess.findOne({
+          where: { permission_field_id: fieldId, read: true },
+        });
+        if (userFieldsAccess) {
+          await UserFieldsAccess.update(
+            { read: false },
+            { where: { permission_field_id: fieldId } }
+          );
+        }
+      }
+       if (updated > 0 && edit === true) {
+        // If the record was updated and is_enabled is now true, also update UserFieldsAccess if exists
+        const userFieldsAccess = await UserFieldsAccess.findOne({
+          where: { permission_field_id: fieldId, edit: true },
+        });
+        if (userFieldsAccess) {
+          await UserFieldsAccess.update(
+            { edit: false },
+            { where: { permission_field_id: fieldId } }
+          );
+        }
+      }
 
       return updated > 0;
     } catch (error) {
-      console.error("Error updating field access:", error);
+      errorLog("Error updating field access:", (error as Error).message);
       return false;
     }
   }
@@ -1872,7 +1942,7 @@ class UserManagementService {
       } else {
         // Check if the value has actually changed
         if (currentAccess?.is_enabled === isEnabled) {
-          console.log(
+          logMessage(
             `Menu access ${accessId} value unchanged, skipping update`
           );
           return false;
@@ -1907,7 +1977,7 @@ class UserManagementService {
         return updated > 0;
       }
     } catch (error) {
-      console.error("Error updating menu access:", error);
+      errorLog("Error updating menu access:", (error as Error).message);
       return false;
     }
   }
@@ -1956,7 +2026,7 @@ class UserManagementService {
       } else {
         // Check if the value has actually changed
         if (currentAccess?.is_enabled === has_extended_permission) {
-          console.log(
+          logMessage(
             `Module access ${accessId} value unchanged, skipping update`
           );
           return false;
@@ -1991,7 +2061,7 @@ class UserManagementService {
         return updated > 0;
       }
     } catch (error) {
-      console.error("Error updating module access:", error);
+      errorLog("Error updating module access:", (error as Error).message);
       return false;
     }
   }
@@ -2041,7 +2111,7 @@ class UserManagementService {
       } else {
         // Check if the value has actually changed
         if (currentAccess.is_enabled === isEnabled) {
-          console.log(
+          logMessage(
             `Permission access ${accessId} value unchanged, skipping update`
           );
           return false;
@@ -2076,7 +2146,7 @@ class UserManagementService {
         return updated > 0;
       }
     } catch (error) {
-      console.error("Error updating permission access:", error);
+      errorLog("Error updating permission access:", (error as Error).message);
       return false;
     }
   }
@@ -2122,7 +2192,6 @@ class UserManagementService {
           "success",
           loggedInUsername
         );
-        // console.error(`Menu access with ID ${accessId} not found`);
         return true;
       } else {
         // Check if any values have actually changed
@@ -2130,7 +2199,7 @@ class UserManagementService {
         const editChanged = currentAccess.edit !== edit;
 
         if (!readChanged && !editChanged) {
-          console.log(
+          logMessage(
             `Field access ${accessId} values unchanged, skipping update`
           );
           return false;
@@ -2186,7 +2255,7 @@ class UserManagementService {
         return updated > 0;
       }
     } catch (error) {
-      console.error("Error updating field access:", error);
+      errorLog("Error updating field access:", (error as Error).message);
       return false;
     }
   }
