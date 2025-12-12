@@ -620,7 +620,7 @@ export const caseTaskMapping = [
   },
   {
     permissionField: "effective_end_datetime",
-    exportField: "End Date",
+    exportField: "Due Date",
     dataField: "effective_end_datetime",
   },
   {
