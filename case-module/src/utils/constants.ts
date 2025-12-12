@@ -2506,3 +2506,9 @@ export const callFields = [
    "a.effective_end_datetime",
 
 ];
+
+export const mainTableFiltersForCase : Record<any, any> = {
+  role_name : "role_name",
+  task_status_name : "task_status_name",
+  assigned_to_name : "assigned_to_name"
+}
