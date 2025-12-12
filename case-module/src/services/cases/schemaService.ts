@@ -5582,7 +5582,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       effective_end_datetime : data.effective_end_datetime,
       case_team_member_role_rid : data.case_team_member_role_rid,
       assigned_to : data.assigned_to,
-      status_rid : data.status_rid,
+      status_rid : activeStatusRid,
       priority_rid : data.priority_rid,
       milestone_template_rid : data.milestone_template_rid,
       checklist_template_rid : data.checklist_template_rid,
@@ -6065,7 +6065,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     if(checkTaskExists) return checkTaskExists
     else return null
   }
-  async fetchTaskForCases (page : number, limit : number, search : string, sort : string, sortBy : string, filter : FilterType, doSorting : boolean, caseRid : string, accountRid : string, schemaName : string, isExport : boolean) {
+  async fetchTaskForCases (page : number, limit : number, search : string, sort : string, sortBy : string, filter : FilterType, doSorting : boolean, caseRid : string, accountRid : string, schemaName : string, isExport : boolean, disablePagination : boolean) {
     if(!this.orgDbSequelize) {
       this.orgDbSequelize = await initOrgSequelize()
     }
@@ -6073,7 +6073,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       this.mainDbSequelize = await initMainDbSequelize()
     }
     const activeStatusId  : any = await this.mainDbSequelize.query(rawQueries.getActiveStatusId());
-    const result = await this.orgDbSequelize.query<CaseTaskQueryType>(fetchCaseSpecificTaskQuery(page, limit, search, sort, sortBy, filter, doSorting, caseRid, accountRid, schemaName, isExport, activeStatusId[0][0].rid), {type : QueryTypes.SELECT});
+    const result = await this.orgDbSequelize.query<CaseTaskQueryType>(fetchCaseSpecificTaskQuery(page, limit, search, sort, sortBy, filter, doSorting, caseRid, accountRid, schemaName, isExport, activeStatusId[0][0].rid, disablePagination), {type : QueryTypes.SELECT});
     if(result.length > 0) {
       return result;
     } else {

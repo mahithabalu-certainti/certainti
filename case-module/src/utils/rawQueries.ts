@@ -1050,7 +1050,7 @@ export function fetchChecklistAttachToDetails(schemaName: string, attachTo: stri
 }
   
 
-  export const fetchCaseSpecificTaskQuery = (page : number, limit : number, search : string, sort : string, sortBy : string, filter : FilterType, doSorting : boolean, caseRid : string, accountRid : string, schemaName : string, isExport : boolean, statusId : string) => {
+  export const fetchCaseSpecificTaskQuery = (page : number, limit : number, search : string, sort : string, sortBy : string, filter : FilterType, doSorting : boolean, caseRid : string, accountRid : string, schemaName : string, isExport : boolean, statusId : string, disablePagination : boolean) => {
     let searchValue : string = ``
     let sortValue : string = ``
     let filterQueryArray : string[] = []
@@ -1059,7 +1059,7 @@ export function fetchChecklistAttachToDetails(schemaName: string, attachTo: stri
     let validKey : string = ``
     let pagination : string = ``
 
-    if(!isExport) {
+    if(!isExport && !disablePagination) {
       let offset = (page - 1) * limit;
       pagination = `LIMIT ${limit} OFFSET ${offset}`
     } else {

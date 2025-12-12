@@ -1039,7 +1039,7 @@ export const rawQueries = {
     return `
       SELECT distinct status_name ,rid
       FROM ${MAIN_SCHEMA_NAME}.activity_status
-      WHERE status = 'active'${activityType && activityType !== "All" ? ` AND activity_type = '${activityType}'` : ""}
+      WHERE status = 'active'${activityType && activityType !== "All" ? ` AND lower(activity_type) = lower('${activityType}')` : ""}
       ORDER BY status_name ASC
     `;
   },
@@ -2506,3 +2506,9 @@ export const callFields = [
    "a.effective_end_datetime",
 
 ];
+
+export const mainTableFiltersForCase : Record<any, any> = {
+  role_name : "role_name",
+  task_status_name : "task_status_name",
+  assigned_to_name : "assigned_to_name"
+}
