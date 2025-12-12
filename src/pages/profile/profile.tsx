@@ -4,7 +4,7 @@ import { RootState } from '../../store/store';
 import { AllPermissions } from '../../common-service';
 import { checkPermission } from '../../common-utils';
 import { AccessRestricted } from '../../components/account-restricted';
-import { UserDetailComponent } from '../../components';
+import { ProfileUserDetailComponent } from '../../components';
 import TextButton from '../../components/button/text-button';
 import { useManageUserDetail } from '../../admin/service/manage-user-detail/manage-user-detail-service';
 import { AvatarIcon } from '../../assets';
@@ -62,7 +62,10 @@ export const Profile: React.FC = () => {
           />
         </div>
       </div>
-      <UserDetailComponent data={userData} loading={userDetails.isLoading} />
+      <ProfileUserDetailComponent
+        data={userData}
+        loading={userDetails.isLoading}
+      />
     </div>
   );
 };
