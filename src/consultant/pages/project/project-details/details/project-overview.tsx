@@ -209,7 +209,11 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
     {
       key: 'total_nonlabor',
       label: 'Total Non Labor Count',
-      value: valueDisplay(projectDetails?.total_nonlabor_prj),
+      value: valueDisplay(
+        projectDetails?.total_nonlabor_prj
+          ? String(Math.floor(Number(projectDetails?.total_nonlabor_prj)))
+          : projectDetails?.total_nonlabor_prj
+      ),
     },
     {
       key: 'total_effort_fte',

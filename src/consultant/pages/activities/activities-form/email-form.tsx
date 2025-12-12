@@ -125,8 +125,8 @@ const EmailForm: React.FC = () => {
   }>({
     isOpen: false,
     message: '',
-    onConfirm: () => {},
-    onCancel: () => {},
+    onConfirm: () => { },
+    onCancel: () => { },
   });
 
   // Permission
@@ -354,8 +354,7 @@ const EmailForm: React.FC = () => {
 
   // Handle Quill editor changes
   const handleEmailBodyChange = (value: string) => {
-    const normalizedValue = normalizeQuillValue(value);
-    setFormData((prev) => ({ ...prev, emailBody: normalizedValue }));
+    setFormData((prev) => ({ ...prev, emailBody: value }));
     setErrors((prev) => ({ ...prev, emailBody: '' }));
   };
 
@@ -932,18 +931,17 @@ const EmailForm: React.FC = () => {
                   theme='snow'
                   readOnly={emailBodyDisabled}
                   placeholder='Enter Email Content'
-                  className={`rounded-[2px] ${
-                    errors?.emailBody
+                  className={`rounded-[2px] ${errors?.emailBody
                       ? 'border border-red-500 bg-[#FEF2F2]'
                       : emailBodyDisabled
                         ? 'bg-gray-100 cursor-default'
                         : 'bg-white'
-                  }`}
+                    }`}
                   modules={
                     emailBodyDisabled
                       ? {
-                          toolbar: false,
-                        }
+                        toolbar: false,
+                      }
                       : modules
                   }
                   formats={[
