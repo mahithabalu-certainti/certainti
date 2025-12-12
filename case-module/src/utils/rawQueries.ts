@@ -1742,12 +1742,14 @@ export function fetchChecklistAttachToDetails(schemaName: string, attachTo: stri
             jc.effective_end_date,g.is_federal,
             uc.first_name || ' ' || uc.last_name AS created_user_name,
             um.first_name || ' ' || um.last_name AS modified_user_name,
-            jc.credit_config_group_rid
+            jc.credit_config_group_rid,g.country_rid,c.country_name,
+            g.state_rid,st.state_name
             FROM
             ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values jc
              LEFT JOIN ${MAIN_SCHEMA_NAME}.rd_credit_config_group g ON jc.credit_config_group_rid = g.rid
              LEFT JOIN ${MAIN_SCHEMA_NAME}.country c ON g.country_rid = c.rid
              LEFT JOIN ${MAIN_SCHEMA_NAME}.status s ON jc.status_rid = s.rid
+              LEFT JOIN ${MAIN_SCHEMA_NAME}.state st ON g.state_rid = st.rid
              LEFT JOIN ${MAIN_SCHEMA_NAME}.user uc ON uc.rid = jc.created_by
              LEFT JOIN ${MAIN_SCHEMA_NAME}.user um ON um.rid = jc.modified_by
               WHERE
@@ -1774,7 +1776,11 @@ export function fetchChecklistAttachToDetails(schemaName: string, attachTo: stri
         'created_user_name', i.created_user_name,
         'modified_user_name', i.modified_user_name,
         'is_federal', i.is_federal,
-        'credit_config_group_rid', i.credit_config_group_rid
+        'credit_config_group_rid', i.credit_config_group_rid,
+        'country_rid', i.country_rid,
+        'country_name', i.country_name,
+        'state_rid', i.state_rid,
+        'state_name', i.state_name
         ) ) AS jurisdiction_config_list
 
         FROM
