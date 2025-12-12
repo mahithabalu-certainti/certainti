@@ -595,7 +595,7 @@ export const REGEX_PATTERNS = {
   ACCOUNT_ORG_NAME: /^[A-Za-z0-9 -&.,']+$/,
   MAX_ORG_NAME_LEGNTH: /^.{7,125}/,
   MIN_ORG_NAME_LEGNTH: /^.{7,}/,
-  EMAIL_SUBJECT: /^[A-Za-z0-9\s&\-.'",{}_]+$/,
+  EMAIL_SUBJECT: /^[A-Za-z0-9\s&\-.'",{}_()]+$/,
 };
 export const PROJECT_RESOURCE_REGEX = {
   // UUID VALIDATION STANDARD FORMAT

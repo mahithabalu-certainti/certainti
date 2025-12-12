@@ -121,10 +121,12 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
   const { name: loggedInUserName, userId: loggedInUserId } = useSelector(
     (state: RootState) => state.auth
   );
+  const { profileURL } = useSelector((state: RootState) => state.orgLogoInfo);
 
   const loggedInUser = {
     initials: generateInitials(loggedInUserName || ''),
     color: generateColorFromName(loggedInUserName || ''),
+    profileUrl: profileURL,
   };
 
   const [comment, setComment] = useState('');
@@ -1063,14 +1065,32 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
               /* Add Comment Form */
               <div className='flex items-start gap-3 bg-white border border-gray-300 rounded-lg p-4 shadow-sm'>
                 <div
-                  className='w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 text-white'
+                  className='w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 text-white relative'
                   style={{
                     backgroundColor: loggedInUser.color,
                     fontSize: '8px',
                   }}
                 >
-                  {loggedInUser.initials}
+                  {loggedInUser.profileUrl && (
+                    <img
+                      src={loggedInUser.profileUrl}
+                      alt='Profile'
+                      className='w-full h-full object-cover rounded-full'
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none'; // hide broken image
+                        const fallback = e.currentTarget
+                          .nextElementSibling as HTMLElement;
+                        if (fallback) fallback.classList.remove('hidden');
+                      }}
+                    />
+                  )}
+
+                  {/* Initials fallback */}
+                  <span className={loggedInUser.profileUrl ? 'hidden' : ''}>
+                    {loggedInUser.initials}
+                  </span>
                 </div>
+
                 <div className='flex-1 space-y-3 min-w-0'>
                   <div className='relative'>
                     <textarea

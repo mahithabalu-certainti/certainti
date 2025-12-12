@@ -98,7 +98,7 @@ export const validateEmailTemplateForm = (
     isValid = false;
   } else if (!REGEX_PATTERNS.EMAIL_SUBJECT.test(subject)) {
     newErrors.subject =
-      "Subject only letters, numbers, spaces, &, -, ., ', and , are allowed.";
+      "Subject only letters, numbers, spaces, &, -, ., ', (, ), and , are allowed.";
     isValid = false;
   }
 

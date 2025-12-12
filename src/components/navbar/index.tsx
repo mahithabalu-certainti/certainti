@@ -463,25 +463,31 @@ export const Navbar: React.FC<NavbarProps> = ({
       name: string | null;
       profileURL: string | null;
     }) => {
-      if (profileURL) {
-        return (
-          <img
-            className='w-6 h-6 rounded-full bg-white object-cover'
-            src={profileURL}
-            alt={`${name || 'User'}'s profile`}
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              target.style.display = 'none';
-            }}
-          />
-        );
-      }
-
-      // Fallback to AvatarIcon when no profileURL
       return (
-        <div className='w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center'>
-          <AvatarIcon className='w-5 h-5' />
-        </div>
+        <>
+          {profileURL ? (
+            <img
+              className='w-6 h-6 rounded-full bg-white object-cover'
+              src={profileURL}
+              alt={`${name || 'User'}'s profile`}
+              onError={(e) => {
+                const target = e.currentTarget;
+                target.style.display = 'none'; // hide broken image
+
+                // show fallback
+                const fallback = target.nextElementSibling as HTMLElement;
+                if (fallback) fallback.style.display = 'flex';
+              }}
+            />
+          ) : null}
+
+          <div
+            className='w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center'
+            style={{ display: profileURL ? 'none' : 'flex' }} // hide initially when image exists
+          >
+            <AvatarIcon className='w-5 h-5' />
+          </div>
+        </>
       );
     }
   );
