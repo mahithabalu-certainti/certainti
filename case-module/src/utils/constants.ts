@@ -620,7 +620,7 @@ export const caseTaskMapping = [
   },
   {
     permissionField: "effective_end_datetime",
-    exportField: "End Date",
+    exportField: "Due Date",
     dataField: "effective_end_datetime",
   },
   {
@@ -1159,6 +1159,11 @@ export const rawQueries = {
   },
   getOwnerDetails(caseOwnerRid: any[]) {
     return `SELECT rid, CONCAT(first_name,' ',last_name) AS name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (${caseOwnerRid.map(
+      (d: any) => `'${d}'`
+    )})`;
+  },
+  getChecklistItemsStatusDetails(statusIds: any[]) {
+    return `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.checklist_status WHERE rid IN (${statusIds.map(
       (d: any) => `'${d}'`
     )})`;
   },
