@@ -1500,7 +1500,7 @@ export const rawQueries = {
     let ids: string[] = []
     if (rid.length > 0) {
       ids.push(`${rid.map((d: any) => `'${d}'`).join(',')}`)
-      return `SELECT rid, CONCAT(first_name,' ', last_name) AS name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (${ids})`
+      return `SELECT rid, CONCAT(first_name,' ', last_name) AS name, profile_url FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (${ids})`
     }
   },
   getAllCaseTeamRoles(rid: any[]) {
