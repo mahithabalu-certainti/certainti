@@ -323,7 +323,7 @@ export class JurisdictionSchemaService {
         configJson[item.label] = item.value;
       }
       let createdConfig = await JurisdictionConfig.create({
-        rule_name: configRequest.rule_name,
+        config_name: configRequest.config_name,
         created_datetime: new Date(),
         created_by: configRequest.created_by,
         effective_end_date: configRequest.effective_end_date,
@@ -347,7 +347,7 @@ export class JurisdictionSchemaService {
         configJson[item.label] = item.value;
       }
       await JurisdictionConfig.create({
-        rule_name: configRequest.rule_name,
+        config_name: configRequest.config_name,
         created_datetime: new Date(),
         created_by: configRequest.created_by,
         effective_end_date: configRequest.effective_end_date,

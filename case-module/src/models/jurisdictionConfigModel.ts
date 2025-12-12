@@ -8,7 +8,7 @@ interface JurisdictionConfigAttributes {
   modified_by?: string;
   created_datetime?: Date;
   modified_datetime?: Date;
-  rule_name: string;
+  config_name: string;
   config_json:JSON
   effective_start_date?: Date;
   effective_end_date?: Date;
@@ -31,7 +31,7 @@ export class JurisdictionConfig
   public modified_by?: string;
   public created_datetime?: Date;
   public modified_datetime?: Date;
-  public rule_name!: string;
+  public config_name!: string;
   public config_json!: JSON;
   public effective_start_date!: Date;
   public effective_end_date!: Date;
@@ -65,7 +65,7 @@ export class JurisdictionConfig
           defaultValue: DataTypes.NOW
         },
         modified_datetime: { type: DataTypes.DATE, allowNull: true },
-        rule_name: { type: DataTypes.STRING(255), allowNull: false },
+        config_name: { type: DataTypes.STRING(255), allowNull: false },
         config_json: { type: DataTypes.JSONB, allowNull: false },
         effective_start_date: { type: DataTypes.DATE, allowNull: false },
         effective_end_date: { type: DataTypes.DATE, allowNull: true },
