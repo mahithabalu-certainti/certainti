@@ -200,39 +200,32 @@ const jurisdictionRDConfigSchemaForNew = Joi.object({
  is_federal: Joi.boolean().required()
 });
 
-const configItemSchema = Joi.object({
-  label: Joi.string().required(),
-  value: Joi.any().allow(null)
-});
+
+// Allow jurisdictionConfig to accept any keys with any values
+const dynamicJurisdictionConfigSchema = Joi.object().pattern(/^.*$/, Joi.any());
 
 const updateJurisdictionRDConfigSchema = Joi.object({
+  config_rid: Joi.string().required(),
   effective_start_date: Joi.date().required(),
+  is_federal: Joi.boolean().required(),
   effective_end_date: Joi.date().optional().allow("", null),
-  country_rid: Joi.string().required(),
-  jurisdictionConfig: Joi.object({
-    credit_program_name: Joi.string().required(),
-    config_rid: Joi.string().required(),
-    configItems: Joi.array().items(configItemSchema).min(1).required()
-  }).required(),
-  platformConfig: Joi.object({
-    credit_program_name: Joi.string().required(),
-    config_rid: Joi.string().required(),
-    configItems: Joi.array().items(configItemSchema).min(1).required()
-  }).required()
+  config_name: Joi.string().required(),
+  jurisdictionConfig: dynamicJurisdictionConfigSchema.required(),
+  platformConfig: dynamicJurisdictionConfigSchema.optional(),
+  jurisdiction_config_group_rid: Joi.string().required(),
+  platform_config_group_rid: Joi.string().optional().allow("", null),
+  status_rid: Joi.string().required()
 });
 
 const createJurisdictionRDConfigSchema = Joi.object({
+  config_name: Joi.string().max(255).required(),
   effective_start_date: Joi.date().required(),
   effective_end_date: Joi.date().optional().allow("", null),
-  jurisdictionConfig: Joi.object({
-    credit_config_group_rid: Joi.string().required(),
-    configItems: Joi.array().items(configItemSchema).min(1).required()
-  }).required(),
-  platformConfig: Joi.object({
-    credit_config_group_rid: Joi.string().required(),
-    configItems: Joi.array().items(configItemSchema).min(1).required()
-  }).required(),
-  is_federal: Joi.boolean().required() ,
+  jurisdiction_config_group_rid: Joi.string().required(),
+  jurisdictionConfig: dynamicJurisdictionConfigSchema.required(),
+  platform_config_group_rid: Joi.string().optional().allow("", null),
+  platformConfig: dynamicJurisdictionConfigSchema.optional(),
+  is_federal: Joi.boolean().required(),
   status_rid: Joi.string().required()
 });
 

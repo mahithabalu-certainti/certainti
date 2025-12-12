@@ -2068,7 +2068,8 @@ export const rawQueries = {
       g.state_rid,
       c.country_name,
       c.country_code,
-      s.state_name
+      s.state_name,
+      g.rid as credit_config_group_rid
     FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_key k
     JOIN ${MAIN_SCHEMA_NAME}.rd_credit_config_group g ON k.credit_config_group_rid = g.rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.country c ON g.country_rid = c.rid
@@ -2095,7 +2096,8 @@ export const rawQueries = {
     JOIN ${MAIN_SCHEMA_NAME}.rd_credit_config_group g ON k.credit_config_group_rid = g.rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.country c ON g.country_rid = c.rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.state s ON g.state_rid = s.rid
-    WHERE g.credit_program_name = 'Platform Configuration';
+    WHERE g.credit_program_name = 'Platform Configuration'
+    AND g.is_federal = true;
     `;
   },
   checkJurisdictionConfigOverlap(excludeCurrent = false) {
@@ -2119,7 +2121,8 @@ export const rawQueries = {
       g.state_rid,
       c.country_name,
       c.country_code,
-      s.state_name
+      s.state_name,
+      g.rid as credit_config_group_rid
     FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_key k
     JOIN ${MAIN_SCHEMA_NAME}.rd_credit_config_group g ON k.credit_config_group_rid = g.rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.country c ON g.country_rid = c.rid

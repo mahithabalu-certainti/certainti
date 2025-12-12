@@ -134,6 +134,7 @@ export class JurisdictionSchemaService {
     }
     return {
       jurisdictionConfig: jurisdictionConfig?.jdConfig,
+      platformConfig: jurisdictionConfig?.platformConfig,
     };
   }
 
@@ -141,10 +142,10 @@ export class JurisdictionSchemaService {
     if (!this.mainDbSequelize) {
       this.mainDbSequelize = await this.caseModelService.getMainSequelize();
     }
-
     // Fetch config metadata for the group
     let [configMeta]: any[] = [];
     let [platformConfig]: any[] = [];
+    let platformConfigsData: any = null;
     if (type !== "new") {
       [configMeta] = await this.mainDbSequelize.query(
         rawQueries.getJurisdictionById(configRequest.credit_config_group_rid)
@@ -162,9 +163,6 @@ export class JurisdictionSchemaService {
     if (configMeta.length === 0) {
       return null;
     }
-    [platformConfig] = await this.mainDbSequelize.query(
-      rawQueries.getPlatformJurisdictionConfig()
-    );
 
     // Fetch parameter values for the config group
     let paramValues: any[] = [];
@@ -182,14 +180,45 @@ export class JurisdictionSchemaService {
     const groupConfigMap = Object.fromEntries(
       paramValues.map((row) => [row.credit_config_group_rid, row.config_json])
     );
-
-    // Build a flat array of config items for the config group
-    const configItems: any[] = [];
-    const platformConfigs: any[] = [];
-    const platformGroupId =
+    if(configMeta[0]?.is_federal){
+    [platformConfig] = await this.mainDbSequelize.query(
+      rawQueries.getPlatformJurisdictionConfig()
+    );
+    const platformGroupConfigMap = Object.fromEntries(
+      platformConfigValues.map((row) => [row.credit_config_group_rid, row.config_json])
+    );
+     const platformConfigs: any[] = [];
+     const platformGroupId =
       platformConfigValues.length > 0
         ? platformConfigValues[0].credit_config_group_rid
         : "";
+      for (const meta of platformConfig) {
+      let value = null;
+      if (platformGroupConfigMap[platformGroupId]) {
+        const groupConfig = platformGroupConfigMap[platformGroupId];
+        value = groupConfig[meta.credit_parameter_name] ?? null;
+      }
+      platformConfigs.push({
+        label: meta.credit_parameter_name,
+        displayName:
+          meta.credit_parameter_display_name || meta.credit_parameter_name,
+        value,
+        type: meta.data_type || typeof value,
+      });
+    }
+      platformConfigsData = {
+      configItems: platformConfigs,
+      credit_program_name:
+        platformConfig.length > 0
+          ? platformConfig[0].credit_program_name
+          : null,
+      config_rid:
+        configMeta.length > 0 ? configMeta[0].credit_config_group_rid : null,
+    };
+  }
+
+    // Build a flat array of config items for the config group
+    const configItems: any[] = [];
     const groupId =
       configMeta.length > 0 ? configMeta[0].credit_config_group_rid : "";
     for (const meta of configMeta) {
@@ -206,35 +235,14 @@ export class JurisdictionSchemaService {
         type: meta.data_type || typeof value,
       });
     }
-    for (const meta of platformConfig) {
-      let value = null;
-      if (groupConfigMap[platformGroupId]) {
-        const groupConfig = groupConfigMap[platformGroupId];
-        value = groupConfig[meta.credit_parameter_name] ?? null;
-      }
-      platformConfigs.push({
-        label: meta.credit_parameter_name,
-        displayName:
-          meta.credit_parameter_display_name || meta.credit_parameter_name,
-        value,
-        type: meta.data_type || typeof value,
-      });
-    }
+   
     let jdConfig = {
       configItems,
       credit_program_name:
         configMeta.length > 0 ? configMeta[0].credit_program_name : null,
-      config_rid: paramValues.length > 0 ? paramValues[0].rid : null,
+      config_rid: configMeta.length > 0 ? configMeta[0].credit_config_group_rid : null,
     };
-    let platformConfigsData = {
-      configItems: platformConfigs,
-      credit_program_name:
-        platformConfig.length > 0
-          ? platformConfig[0].credit_program_name
-          : null,
-      config_rid:
-        platformConfigValues.length > 0 ? platformConfigValues[0].rid : null,
-    };
+   
     return {
       effective_start_date:
         paramValues.length > 0 ? paramValues[0].effective_start_date : null,
@@ -255,24 +263,19 @@ export class JurisdictionSchemaService {
     const { JurisdictionConfig } = await this.caseModelService.getModels("");
     let updated = false;
     if (
-      configRequest.jurisdictionConfig &&
-      Array.isArray(configRequest.jurisdictionConfig.configItems)
+      configRequest.jurisdictionConfig
     ) {
       const group = configRequest.jurisdictionConfig;
       const response: any = await JurisdictionConfig.findOne({
         where: {
-          rid: group.config_rid,
+          rid: configRequest.config_rid,
         },
       });
       if (!response) {
-        throw new Error(`Invalid config_rid: ${group.config_rid}`);
-      }
-      let configJson: Record<string, any> = {};
-      for (const item of group.configItems) {
-        configJson[item.label] = item.value;
+        throw new Error(`Invalid config_rid: ${configRequest.config_rid}`);
       }
       await response.update({
-        config_json: configJson,
+        config_json: group,
         effective_end_date: configRequest.effective_end_date,
         effective_start_date: configRequest.effective_start_date,
         modified_datetime: new Date(),
@@ -281,9 +284,8 @@ export class JurisdictionSchemaService {
       updated = true;
     }
     // Update platform config
-    if (
-      configRequest.platformConfig &&
-      Array.isArray(configRequest.platformConfig.configItems)
+    if (configRequest.is_federal &&
+      configRequest.platformConfig 
     ) {
       const group = configRequest.platformConfig;
       const response: any = await JurisdictionConfig.findOne({
@@ -292,14 +294,10 @@ export class JurisdictionSchemaService {
         },
       });
       if (!response) {
-        throw new Error(`Invalid platform config_rid: ${group.config_rid}`);
-      }
-      let configJson: Record<string, any> = {};
-      for (const item of group.configItems) {
-        configJson[item.label] = item.value;
+        throw new Error(`Invalid platform config_rid: ${configRequest.config_rid}`);
       }
       await response.update({
-        config_json: configJson,
+        config_json: group,
         effective_end_date: configRequest.effective_end_date,
         effective_start_date: configRequest.effective_start_date,
         modified_datetime: new Date(),
@@ -314,46 +312,36 @@ export class JurisdictionSchemaService {
     const { JurisdictionConfig } = await this.caseModelService.getModels("");
     let created = false;
     if (
-      configRequest.jurisdictionConfig &&
-      Array.isArray(configRequest.jurisdictionConfig.configItems)
+      configRequest.jurisdictionConfig
     ) {
-      const group = configRequest.jurisdictionConfig;
-      let configJson: Record<string, any> = {};
-      for (const item of group.configItems) {
-        configJson[item.label] = item.value;
-      }
       let createdConfig = await JurisdictionConfig.create({
         config_name: configRequest.config_name,
         created_datetime: new Date(),
         created_by: configRequest.created_by,
         effective_end_date: configRequest.effective_end_date,
         effective_start_date: configRequest.effective_start_date,
-        credit_config_group_rid: group.credit_config_group_rid,
-        config_json: JSON.parse(JSON.stringify(configJson)),
+        credit_config_group_rid: configRequest.jurisdiction_config_group_rid,
+        config_json: JSON.parse(JSON.stringify(configRequest.jurisdictionConfig)),
         status_rid: configRequest.status_rid,
       });
+      console.log('createdConfig', createdConfig);
       created = true;
       configRequest.federal_rid = createdConfig.rid;
     }
     // Create platform config
     if (
       configRequest.is_federal &&
-      configRequest.platformConfig &&
-      Array.isArray(configRequest.platformConfig.configItems)
-    ) {
-      const group = configRequest.platformConfig;
-      let configJson: Record<string, any> = {};
-      for (const item of group.configItems) {
-        configJson[item.label] = item.value;
-      }
+      configRequest.platformConfig)
+      {
+     
       await JurisdictionConfig.create({
         config_name: configRequest.config_name,
         created_datetime: new Date(),
         created_by: configRequest.created_by,
         effective_end_date: configRequest.effective_end_date,
         effective_start_date: configRequest.effective_start_date,
-        credit_config_group_rid: group.credit_config_group_rid,
-        config_json: JSON.parse(JSON.stringify(configJson)),
+        credit_config_group_rid: configRequest.platform_config_group_rid,
+        config_json: JSON.parse(JSON.stringify(configRequest.platformConfig)),
         status_rid: configRequest.status_rid,
         federal_config_id: configRequest.federal_rid,
       });
@@ -428,14 +416,20 @@ export class JurisdictionSchemaService {
         jurisdictionConfigQuery,
         { type: "SELECT" }
       );
-      return result.jurisdiction_config_list;
+      return {
+        result: result.jurisdiction_config_list,
+        count: result.jurisdiction_config_list[0]?.total_records || 0,
+      };
     } catch (err) {
       logMessage(`Error in listing jurisdiction config: ${err}`);
       errorLog(
         "Error in fetching jurisdiction config:",
         (err as Error).message
       );
-      return [];
+      return {
+        result: [],
+        count: 0,
+      }
     }
   }
 
