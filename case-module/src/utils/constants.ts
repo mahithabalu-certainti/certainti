@@ -1162,6 +1162,11 @@ export const rawQueries = {
       (d: any) => `'${d}'`
     )})`;
   },
+  getChecklistItemsStatusDetails(statusIds: any[]) {
+    return `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.checklist_status WHERE rid IN (${statusIds.map(
+      (d: any) => `'${d}'`
+    )})`;
+  },
   getCaseStatusDetails(statusRid: string) {
     return `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.case_status WHERE rid = '${statusRid}'`;
   },
