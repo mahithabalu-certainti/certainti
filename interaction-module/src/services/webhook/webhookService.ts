@@ -164,6 +164,7 @@ export class WebHookService {
           projectCode = row[1] || null;
         }
 
+        console.log("row[1]?.toLowerCase() =======> ", row[1]?.toLowerCase())
         // Find header row for questions/answers
         if (
           row[1]?.toLowerCase() === "questions" &&
@@ -192,6 +193,8 @@ export class WebHookService {
         answers = answers.filter((val) => val.response.trim() != "" && val.response != null)
       }
 
+      console.log("answers =====> ", answers)
+
       if (!this.graphClient) {
         await this.logWebhookEmailEvent({
           schemaName: mailProcessedResults.accountNumber,
@@ -215,7 +218,7 @@ export class WebHookService {
           status: "FAILED",
           errorMessage: "Invalid Account Number",
         });
-        this.sendMailWithAttachment(
+        await this.sendMailWithAttachment(
           finalResult,
           finalResult.attachments[0].fileName,
           finalResult.attachments[0].file,
@@ -243,7 +246,7 @@ export class WebHookService {
           status: "FAILED",
           errorMessage: "Invalid Account Number",
         });
-        this.sendMailWithAttachment(
+        await this.sendMailWithAttachment(
           finalResult,
           finalResult.attachments[0].fileName,
           finalResult.attachments[0].file,
@@ -267,7 +270,7 @@ export class WebHookService {
           status: "FAILED",
           errorMessage: "Invalid Interaction ID",
         });
-        this.sendMailWithAttachment(
+        await this.sendMailWithAttachment(
           finalResult,
           finalResult.attachments[0].fileName,
           finalResult.attachments[0].file,
@@ -296,7 +299,7 @@ export class WebHookService {
           status: "FAILED",
           errorMessage: "Invalid Account ID",
         });
-        this.sendMailWithAttachment(
+        await this.sendMailWithAttachment(
           finalResult,
           finalResult.attachments[0].fileName,
           finalResult.attachments[0].file,
@@ -325,7 +328,7 @@ export class WebHookService {
           status: "FAILED",
           errorMessage: "Invalid Interaction ID",
         });
-        this.sendMailWithAttachment(
+        await this.sendMailWithAttachment(
           finalResult,
           finalResult.attachments[0].fileName,
           finalResult.attachments[0].file,
@@ -358,7 +361,7 @@ export class WebHookService {
           status: "FAILED",
           errorMessage: projectData,
         });
-        this.sendMailWithAttachment(
+        await this.sendMailWithAttachment(
           finalResult,
           finalResult.attachments[0].fileName,
           finalResult.attachments[0].file,
@@ -379,6 +382,8 @@ export class WebHookService {
         interaction.rid
       );
 
+      console.log("interactionItem ====> ", interactionItem)
+
       const unmatchedSeqNums: string[] = [];
       const unmatchedQuestion: string[] = [];
 
@@ -386,14 +391,20 @@ export class WebHookService {
         const questionSeqNum = answer?.questionSeqId || ""; // Adjust key if needed
         const question = answer?.question || "";
 
+        console.log("questionSeqNum ====> ", questionSeqNum)
+        console.log("question ====> ", question)
+
         const matchingItem = interactionItem.find(
           (item: any) =>
             item.question_seq_num?.toString() === questionSeqNum?.toString()
         );
+        console.log("matchingItem Result ====> ", matchingItem)
 
         const matchingQuestion = interactionItem.find(
           (item: any) => item.question?.toString() === question?.toString()
         );
+
+        console.log("matchingQuestion Result ====> ", matchingQuestion)
 
         if (matchingItem) {
           answer.rid = matchingItem.rid;
@@ -422,7 +433,7 @@ export class WebHookService {
           status: "FAILED",
           errorMessage: "Invalid Question Number",
         });
-        this.sendMailWithAttachment(
+        await this.sendMailWithAttachment(
           finalResult,
           finalResult.attachments[0].fileName,
           finalResult.attachments[0].file,
@@ -437,7 +448,7 @@ export class WebHookService {
           errorMessage: "Invalid Question Number",
         };
       }
-
+      console.log("unmatchedQuestion =====> ", unmatchedQuestion)
       if (unmatchedQuestion.length > 0) {
         await this.logWebhookEmailEvent({
           schemaName: mailProcessedResults.accountNumber,
@@ -446,7 +457,7 @@ export class WebHookService {
           status: "FAILED",
           errorMessage: "Invalid Question",
         });
-        this.sendMailWithAttachment(
+        await this.sendMailWithAttachment(
           finalResult,
           finalResult.attachments[0].fileName,
           finalResult.attachments[0].file,
