@@ -163,8 +163,6 @@ export class WebHookService {
         if (row[0]?.toLowerCase() === "project code") {
           projectCode = row[1] || null;
         }
-
-        console.log("row[1]?.toLowerCase() =======> ", row[1]?.toLowerCase())
         // Find header row for questions/answers
         if (
           row[1]?.toLowerCase() === "questions" &&
@@ -192,8 +190,6 @@ export class WebHookService {
       if(answers && answers.length > 0){
         answers = answers.filter((val) => val.response.trim() != "" && val.response != null)
       }
-
-      console.log("answers =====> ", answers)
 
       if (!this.graphClient) {
         await this.logWebhookEmailEvent({
@@ -382,29 +378,19 @@ export class WebHookService {
         interaction.rid
       );
 
-      console.log("interactionItem ====> ", interactionItem)
-
       const unmatchedSeqNums: string[] = [];
       const unmatchedQuestion: string[] = [];
 
       for (const answer of answers) {
         const questionSeqNum = answer?.questionSeqId || ""; // Adjust key if needed
         const question = answer?.question || "";
-
-        console.log("questionSeqNum ====> ", questionSeqNum)
-        console.log("question ====> ", question)
-
         const matchingItem = interactionItem.find(
           (item: any) =>
             item.question_seq_num?.toString() === questionSeqNum?.toString()
         );
-        console.log("matchingItem Result ====> ", matchingItem)
-
         const matchingQuestion = interactionItem.find(
           (item: any) => item.question?.toString() === question?.toString()
         );
-
-        console.log("matchingQuestion Result ====> ", matchingQuestion)
 
         if (matchingItem) {
           answer.rid = matchingItem.rid;
@@ -448,7 +434,6 @@ export class WebHookService {
           errorMessage: "Invalid Question Number",
         };
       }
-      console.log("unmatchedQuestion =====> ", unmatchedQuestion)
       if (unmatchedQuestion.length > 0) {
         await this.logWebhookEmailEvent({
           schemaName: mailProcessedResults.accountNumber,
