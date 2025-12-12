@@ -20,7 +20,6 @@ import { DetailsIcon, AvatarIcon, CameraIcon } from '../../assets';
 import { useUploadProfileImage } from '../../admin/service/manage-user-detail/manage-user-detail-service';
 import { useToast } from '../../hooks';
 import { UpdateProfileURL } from '../../store/slices';
-import { TruncateWithTooltip } from '../truncate-with-tooltip';
 
 export const ProfileUserDetailComponent = ({
   data,
@@ -40,8 +39,8 @@ export const ProfileUserDetailComponent = ({
   const [searchparams] = useSearchParams();
   const profile = searchparams.get('userView');
   const viewDetails = profile === 'profile';
-  const userFullName =
-    `${data?.first_name || ''} ${data?.last_name || ''}`.trim();
+  // const userFullName =
+  //   `${data?.first_name || ''} ${data?.last_name || ''}`.trim();
 
   const { profileURL } = useSelector((state: RootState) => state.orgLogoInfo);
   const { permission } = useSelector((state: RootState) => state.permission);
@@ -267,15 +266,15 @@ export const ProfileUserDetailComponent = ({
   const ProfileIdentitySkeleton = () => {
     return (
       <div className='flex flex-col gap-0 border border-[#CBD6E2] rounded-[2px] p-4'>
-        <div className='flex items-start gap-6'>
+        <div className='flex items-center'>
           {/* Profile Picture Skeleton */}
-          <div className='flex flex-col items-center gap-3 animate-pulse'>
-            <div className='w-[100px] h-[100px] rounded-full bg-gray-300' />
+          <div className='flex flex-col items-center gap-3 min-w-[12%] max-w-[12%] animate-pulse'>
+            <div className='w-[120px] h-[120px] rounded-full bg-gray-300' />
 
-            <div className='text-center space-y-2 mt-2 flex flex-col items-center'>
+            {/* <div className='text-center space-y-2 mt-2 flex flex-col items-center'>
               <div className='h-3 w-24 bg-gray-300 rounded' />
               <div className='h-3 w-32 bg-gray-300 rounded' />
-            </div>
+            </div> */}
           </div>
 
           {/* Identity Details Skeleton */}
@@ -374,7 +373,7 @@ export const ProfileUserDetailComponent = ({
         <ProfileIdentitySkeleton />
       ) : (
         <div className='flex flex-col gap-0 border border-[#CBD6E2] rounded-[2px] p-4'>
-          <div className='flex items-center gap-6'>
+          <div className='flex items-center'>
             {/* Profile Picture Section */}
             <div className='flex flex-col items-center gap-3 min-w-[12%] max-w-[12%]'>
               <div className='relative group'>
@@ -415,7 +414,7 @@ export const ProfileUserDetailComponent = ({
                 {/* Upload Icon Button (visible on mobile/touch) */}
                 <button
                   onClick={triggerFileInput}
-                  className='absolute -bottom-0.5 right-0 w-9 h-9 bg-gray-200 border border-[#CBD6E2] cursor-pointer rounded-full flex items-center justify-center shadow-lg hover:bg-blue-100 transition-colors'
+                  className='absolute bottom-0.5 right-1 w-9 h-9 bg-gray-200 border border-[#CBD6E2] cursor-pointer rounded-full flex items-center justify-center shadow-lg hover:bg-blue-100 transition-colors'
                   aria-label='Upload profile picture'
                 >
                   {' '}
@@ -433,7 +432,7 @@ export const ProfileUserDetailComponent = ({
                 onChange={handleFileSelect}
               />
 
-              <div className='text-center w-[100%]'>
+              {/* <div className='text-center w-[100%]'>
                 <p className='text-sm font-semibold text-[#2D3E4F]'>
                   <TruncateWithTooltip maxWidth={'100%'}>
                     {data?.full_name ?? userFullName}
@@ -444,7 +443,7 @@ export const ProfileUserDetailComponent = ({
                     {data?.email || ''}
                   </TruncateWithTooltip>
                 </p>
-              </div>
+              </div> */}
             </div>
 
             {/* User Details (Identity Info) */}
