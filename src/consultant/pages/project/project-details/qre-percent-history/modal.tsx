@@ -35,7 +35,6 @@ const QrePercentHistoryModal: React.FC<QrePercentHistoryModalProps> = ({
 }) => {
   const projectSummaryData: AttributeValueRow[] = [];
   const assessmentDetailsData: AssessmentDetailsRow[] = [];
-  // console.log(content, 'contet')
   try {
     if (typeof content === 'string' && content.trim().startsWith('{')) {
       const parsedContent = JSON.parse(content);
@@ -233,8 +232,7 @@ const QrePercentHistoryModal: React.FC<QrePercentHistoryModalProps> = ({
               </Grid>
 
               {/* Third Item - Empty */}
-              <Grid item xs={4}>
-              </Grid>
+              <Grid item xs={4}></Grid>
             </Grid>
           </Box>
 

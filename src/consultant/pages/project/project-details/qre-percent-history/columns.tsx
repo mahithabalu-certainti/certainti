@@ -13,7 +13,6 @@ interface ContentCellProps {
 const ContentCell: React.FC<ContentCellProps> = ({ content, qrePercent }) => {
   const [modalOpen, setModalOpen] = useState(false);
 
-
   return (
     <>
       <span
@@ -56,25 +55,6 @@ export const getQrePercentHistoryColumns = (
       ),
     },
     {
-      id: 'contents',
-      sortId: 'contents',
-      label: 'Contents',
-      width: '10%',
-      hide: !permissionMap?.['contents']?.read,
-      render: (row: QrePercentHistoryItem) => (
-        <div
-          style={{
-            textAlign: 'left',
-          }}
-        >
-          <ContentCell
-            content={JSON.stringify(row.qre_detailed_breakdown || {})}
-            qrePercent={row.qre_percent}
-          />
-        </div>
-      ),
-    },
-    {
       id: 'qre_percent',
       sortId: 'qre_percent',
       label: 'QRE Percent Score',
@@ -96,6 +76,25 @@ export const getQrePercentHistoryColumns = (
       hide: !permissionMap?.['created_datetime']?.read,
       render: (row: QrePercentHistoryItem) =>
         formatDateToYYYYMMDDWithTime(row.created_datetime) || '-',
+    },
+    {
+      id: 'contents',
+      sortId: 'contents',
+      label: 'Contents',
+      width: '10%',
+      hide: !permissionMap?.['contents']?.read,
+      render: (row: QrePercentHistoryItem) => (
+        <div
+          style={{
+            textAlign: 'left',
+          }}
+        >
+          <ContentCell
+            content={JSON.stringify(row.qre_detailed_breakdown || {})}
+            qrePercent={row.qre_percent}
+          />
+        </div>
+      ),
     },
   ];
 };
