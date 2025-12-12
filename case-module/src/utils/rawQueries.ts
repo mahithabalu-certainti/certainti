@@ -1735,6 +1735,7 @@ export function fetchChecklistAttachToDetails(schemaName: string, attachTo: stri
         SELECT
             jc.rid, jc.r_number,jc.rule_name,
             jc.status_rid,s.status_name,
+            g.credit_program_name,
             jc.created_by, jc.modified_by,
             jc.created_datetime, jc.modified_datetime,
             COUNT(jc.rid) OVER() AS total_records,
@@ -1765,6 +1766,7 @@ export function fetchChecklistAttachToDetails(schemaName: string, attachTo: stri
         'rid', i.rid,
         'r_number', i.r_number,
         'rule_name', i.rule_name,
+        'credit_program_name', i.credit_program_name,
         'status_rid', i.status_rid,
         'status_name', i.status_name,
         'created_by', i.created_by,
