@@ -197,8 +197,7 @@ const jurisdictionRDConfigSchema = Joi.object({
 const jurisdictionRDConfigSchemaForNew = Joi.object({
  country_rid: Joi.string().required(),
  state_rid: Joi.string().optional().allow("", null),
- is_federal: Joi.boolean().required(),
- credit_program_name: Joi.string().max(255).required(),
+ is_federal: Joi.boolean().required()
 });
 
 const configItemSchema = Joi.object({
