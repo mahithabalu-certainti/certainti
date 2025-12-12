@@ -175,7 +175,7 @@ export class WebHookService {
             if (dataRow.length >= 2) {
               answers.push({
                 rid: "",
-                questionSeqId: dataRow[0]?.trim(),
+                questionSeqId: dataRow[5]?.trim(),
                 question: dataRow[1]?.trim() || "",
                 response: dataRow[2]?.trim() || "",
                 notes: dataRow[3]?.trim() || "",
