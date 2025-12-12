@@ -471,6 +471,39 @@ async function createRuleMapWithScope(req: Request, res: Response): Promise<void
 };
 
 
+async function execute(req: Request, res: Response): Promise<void> {
+    const methodName = "create condition";
+    try {
+        const userId = req.headers["x-user-id"] as string;
+        const value = req.body;
+        const execute = await workFlowService.execute(value, userId);
+        if (execute.statusCode === HttpStatus.SUCCESS) {
+            successLog(methodName);
+            handleSuccessResponse(res, execute.data);
+            return;
+        } {
+            errorLog(methodName, execute.errorMessage);
+            handleErrorResponse(
+                res,
+                HttpStatus.BAD_REQUEST,
+                HttpStatus.BAD_REQUEST_MESSAGE,
+                execute.errorMessage
+            );
+            return;
+        }
+    } catch (err) {
+        const error = err as Error;
+        errorLog(methodName, error.message);
+        handleErrorResponse(
+            res,
+            HttpStatus.FAILED,
+            HttpStatus.FAILED_MESSAGE,
+            error.message
+        );
+    }
+};
+
+
 export default {
     listScopes,
     listScopeEvents,
@@ -483,4 +516,5 @@ export default {
     listActions,
     createRule,
     createRuleMapWithScope,
+    execute
 }

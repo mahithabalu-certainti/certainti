@@ -69,6 +69,9 @@ router.post("/scopeActions", WorkFlowController.listActions);
 router.post("/createRule", WorkFlowController.createRule);
 router.post("/createRuleMap", WorkFlowController.createRuleMapWithScope);
 
+router.post("/execute", WorkFlowController.execute);
+
+
 // ConditionGroup
 // router.post("/condition-group", ConditionGroupController.createConditionGroup);
 // router.get("/condition-group/:rid", ConditionGroupController.getConditionGroupById);

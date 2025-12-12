@@ -399,4 +399,37 @@ export class WorkFlowService {
         };
     };
 
+    async execute(request: any, userId: string): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: { info: any };
+    }> {
+        const mainDb = await this.getMainDb();
+        //fetching event rid, scope type rid from event name 
+        const eventRid = await mainDb.query<any>(
+            rawQueries.fetchEventRid(
+                request.event_name,
+                request.task_rid
+            ),
+            { type: QueryTypes.SELECT }
+        );
+        const { scope_type_rid, event_rid } = eventRid[0];
+        //fetching relavent rules, condition rid, apply type from event rid
+        const rules = await mainDb.query<any>(rawQueries.fetchRulesFromEvent(event_rid, scope_type_rid, request.task_rid),
+            { type: QueryTypes.SELECT }
+        );
+        // const conditions = await mainDb.query<any>(rawQueries.fetchCategories(condition_rid, rule_rid),
+        //     { type: QueryTypes.SELECT }
+        // );
+        return {
+            statusCode: 200,
+            message: "",
+            data: {
+                info: rules,
+            }
+        };
+    }
+
+
 }

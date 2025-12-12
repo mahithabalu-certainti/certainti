@@ -328,6 +328,16 @@ export interface IWorkFlowService {
         data?: { rule: any };
     }>;
 
+
+    execute(
+        request: any,
+        userId: string
+    ): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: { info: any };
+    }>;
 }
 
 

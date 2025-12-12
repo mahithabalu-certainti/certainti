@@ -160,5 +160,26 @@ export const rawQueries = {
       query += ` WHERE ${conditions.join(' AND ')}`;
     }
     return query;
+  },
+
+  fetchEventRid(event_name: string, task_rid: string): string {
+    let query = `SELECT scope_type_rid, rid as event_rid FROM scope_events se WHERE se.event_name  = '${event_name}'`;
+    return query;
+  },
+
+  fetchRulesFromEvent(event_rid: string, scope_type_rid: string, entity_rid: string): string {
+    let query = `SELECT wrm.rid AS rule_rid,wrm.condition_rid,rm.apply_type FROM workflow_rule_master wrm LEFT JOIN workflow_rule_map rm 
+    ON rm.rule_rid = wrm.rid LEFT JOIN workflow_rule_scope_map rsm ON rsm.rule_rid = wrm.rid 
+    WHERE wrm.event_rid = '${event_rid}' AND wrm.scope_type_rid = '${scope_type_rid}'
+    AND (
+        rm.apply_type = 1
+        OR (rm.apply_type = 2 AND rsm.scope_entity_rid = '${entity_rid}')
+      );`;
+    return query;
+  },
+
+  fetchCategories(condition_rid: string, rule_rid: string): string {
+    let query = `SELECT  `;
+    return query;
   }
 }
