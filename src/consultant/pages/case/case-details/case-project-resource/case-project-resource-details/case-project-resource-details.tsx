@@ -32,7 +32,7 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
   const viewResourceEditFields = useMemo(
     () =>
       permission.find(
-        (item) => item.name === AllPermissions.ACCOUNT_RESOURCES_VIEW_EDIT
+        (item) => item.name === AllPermissions.PROJECTS_RESOURCES_VIEW_EDIT
       )?.fields ?? [],
     [permission]
   );
@@ -74,20 +74,20 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
     {
       label: 'Resource Name',
       value: resourceData.resource_name,
-      // key: 'resource_name',
+      key: 'resource_name',
     },
     {
       label: 'Resource Role',
       value: resourceData.project_resource_role,
-      // key: 'project_resource_role',
+      key: 'project_resource_role',
     },
     {
       label: 'Resource Type',
       value: resourceData.resource_type_name,
-      // key: 'resource_type_name',
+      key: 'resource_type_name',
     },
     {
-      // key: 'status_action',
+      key: 'status_action',
       label: 'Status',
       value: resourceData.status_name,
     },
@@ -107,7 +107,7 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
     {
       label: 'Currency',
       value: resourceData.currency_name,
-      // key: 'currency_rid',
+      key: 'currency_rid',
     },
   ];
 
@@ -197,7 +197,7 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
     {
       label: 'Created By',
       value: resourceData.created_name,
-      // key: 'created_name',
+      key: 'created_name',
     },
     {
       label: 'Updated On',
@@ -209,7 +209,7 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
     {
       label: 'Updated By',
       value: resourceData.modified_name,
-      // key: 'modified_name',
+      key: 'modified_name',
     },
     {
       label: 'Project Resource Code',

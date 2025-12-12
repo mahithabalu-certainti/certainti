@@ -69,7 +69,7 @@ export const validateActivityEmailForm = (
     isValid = false;
   }
 
-  if (!formData.emailBody?.trim()) {
+  if (!normalizeQuillValue(formData.emailBody)) {
     newErrors.emailBody = 'Field is required';
     isValid = false;
   }

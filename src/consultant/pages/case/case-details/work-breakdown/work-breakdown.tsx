@@ -723,6 +723,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
 
   const fieldHiddenMap = useMemo(
     () => ({
+      all_activities: !permissionMap['all_activities']?.read,
       taskName:
         !permissionMap['task_name']?.read && !permissionMap['task_name']?.edit,
       status:
@@ -808,9 +809,9 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
             setAppliedFilters={setAppliedFilters}
             setCurrentPage={setCurrentPage}
             handleFilter={handleFilter}
-            handleSorting={() => {}}
+            handleSorting={() => { }}
             sortFilterCount={0}
-            setSortFilterCount={() => {}}
+            setSortFilterCount={() => { }}
             showRefresh={tabParam === 'milestone'}
             onRefreshClick={onRefreshClick}
             // hideTabPanel={hideSection}
@@ -846,11 +847,10 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
       />
 
       <div
-        className={`border border-t-0 border-[#CBD6E2] ${
-          isActionItemsExpanded
+        className={`border border-t-0 border-[#CBD6E2] ${isActionItemsExpanded
             ? 'max-h-[calc(100vh-200px)]'
             : 'max-h-[calc(100vh-418px)]'
-        } overflow-auto`}
+          } overflow-auto`}
       >
         {tabParam === 'milestone' && (
           <>

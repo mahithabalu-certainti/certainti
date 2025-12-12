@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
 import { AllPermissions } from '../../../../../common-service';
 import { ExportType } from '../../../../types';
+import { FilterType } from '../../../../../admin/types';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
@@ -11,7 +12,6 @@ import {
 } from '../../../../services/case-project-resource/case-project-resource-service';
 import { BUTTON_STYLES } from '../../../../../admin/pages/manage-user-detail/styles';
 import { ShowHideTableColumn } from '../../../../../components/table/types';
-import { SectionTabPanel } from '../../../../../components';
 import { ProjectsIcon } from '../../../../../assets';
 import {
   ListTable,
@@ -21,10 +21,10 @@ import {
   CaseProjectResourceRowType,
   getCaseProjectResourceColumns,
 } from './columns';
-import { caseProjectResourceFilterFields } from './utils';
 import CaseProjectResourceDetails from './case-project-resource-details/case-project-resource-details';
 import { ReviewProjectListURLParams } from '../../../../types/assign-projects';
 import SectionHeader from '../../../../../components/details-section/section-header';
+import TabPanel from '../../../account-details-sidebar/components/tab';
 
 const ProjectResourceTabs: ResourceTabs[] = [
   {
@@ -53,7 +53,7 @@ const CaseProjectResource: React.FC<ProjectResourceProps> = ({
   const resourceId = searchParams.get('resourceId');
   const navigate = useNavigate();
   const [appliedFilters, setAppliedFilters] = useState<
-    Record<string, string | number | boolean | string[]>
+    Record<string, FilterType>
   >({});
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState(0);
@@ -154,7 +154,7 @@ const CaseProjectResource: React.FC<ProjectResourceProps> = ({
   };
 
   const handleSorting = (sortBy: string, sortOrder: 'asc' | 'desc') => {
-    const defaultSortField = 'document_name';
+    const defaultSortField = 'resource_code';
     const defaultSortOrder = 'ASC';
     const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
 
@@ -194,6 +194,19 @@ const CaseProjectResource: React.FC<ProjectResourceProps> = ({
     });
     return map;
   }, [projectViewEditFields]);
+  const projectListViewEditFields = useMemo(
+    () =>
+      permission.find((item) => item.name === AllPermissions.PROJECTS_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+  const projectPermissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    projectListViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [projectListViewEditFields]);
   const headerButtons = [
     {
       label: 'Show/Hide Fields',
@@ -227,9 +240,6 @@ const CaseProjectResource: React.FC<ProjectResourceProps> = ({
     setSortField(property);
   };
 
-  const projectResourceFilterFields =
-    caseProjectResourceFilterFields(permissionMap);
-
   const getRowId = (row: CaseProjectResourceRowType) => row.rid || '';
 
   const RestrictedColumns = [
@@ -244,7 +254,8 @@ const CaseProjectResource: React.FC<ProjectResourceProps> = ({
 
   const projectResourceColumn = getCaseProjectResourceColumns(
     handleCaseProjectResourceClick,
-    permissionMap
+    permissionMap,
+    projectPermissionMap
   );
 
   const [columnOrder, setColumnOrder] = useState(
@@ -278,25 +289,28 @@ const CaseProjectResource: React.FC<ProjectResourceProps> = ({
 
   return (
     <div className='w-full pt-2 pl-2 pr-4'>
-      <SectionTabPanel
-        tabs={ProjectResourceTabs}
-        filterMenu={projectResourceFilterFields}
-        filterVisibility={resourceId ? false : true}
-        showFilter={showFilter}
-        contextKey='project_resource'
+      <TabPanel
+        value={'case-project-resource'}
         appliedFilters={appliedFilters}
-        setAppliedFilters={setAppliedFilters}
-        setCurrentPage={setCurrentPage}
+        setAppliedFilters={(data) => {
+          setAppliedFilters(data);
+          setShowFilter(false);
+        }}
+        showFilter={showFilter}
+        filterVisibility={resourceId ? false : true}
         handleFilter={handleFilter}
+        setCurrentPage={setCurrentPage}
+        resourceTab={ProjectResourceTabs}
+        showRefresh={resourceId ? false : true}
+        onRefreshClick={onRefreshClick}
         handleSorting={handleSorting}
         sortFilterCount={sortFilterCount}
         setSortFilterCount={setSortFilterCount}
-        showRefresh={resourceId ? false : true}
-        onRefreshClick={onRefreshClick}
+        permissionMapTaskTableColumn={permissionMap}
+        permissionMapCaseProjectTableColumn={projectPermissionMap}
         showSearch={resourceId ? false : true}
         onSearch={(text) => setSearchText(text)}
       />
-
       <>
         <SectionHeader
           title={resourceId ? 'Project Resource Details' : 'Project Resource'}

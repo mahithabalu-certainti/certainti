@@ -594,6 +594,12 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
     return original.trim() === edited.trim();
   };
 
+  useEffect(() => {
+    if (fieldVisibility.all_activities && activeTab === 'activity') {
+      setActiveTab('comments');
+    }
+  }, [fieldVisibility.all_activities, activeTab, setActiveTab]);
+
   if (fieldVisibility.comments) return null;
 
   return (
@@ -631,21 +637,23 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
             </span>
           )}
         </button>
-        <button
-          onClick={() => setActiveTab('activity')}
-          className={`text-sm font-semibold pb-3 px-1 transition-all duration-200 ${
-            activeTab === 'activity'
-              ? 'text-gray-900 border-b-2 border-blue-600'
-              : 'text-gray-600 hover:text-gray-800 border-b-2 border-transparent'
-          }`}
-        >
-          Activity{' '}
-          {totalActivitiesCount > 0 && (
-            <span className='ml-1 text-xs text-gray-500'>
-              ({totalActivitiesCount})
-            </span>
-          )}
-        </button>
+        {!fieldVisibility.all_activities && (
+          <button
+            onClick={() => setActiveTab('activity')}
+            className={`text-sm font-semibold pb-3 px-1 transition-all duration-200 ${
+              activeTab === 'activity'
+                ? 'text-gray-900 border-b-2 border-blue-600'
+                : 'text-gray-600 hover:text-gray-800 border-b-2 border-transparent'
+            }`}
+          >
+            Activity{' '}
+            {totalActivitiesCount > 0 && (
+              <span className='ml-1 text-xs text-gray-500'>
+                ({totalActivitiesCount})
+              </span>
+            )}
+          </button>
+        )}
       </div>
 
       {/* Comments Tab */}
@@ -1156,7 +1164,7 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
       )}
 
       {/* Activity Tab */}
-      {activeTab === 'activity' && (
+      {activeTab === 'activity' && !fieldVisibility.all_activities && (
         <div className='space-y-3 max-h-[400px] overflow-y-auto overflow-x-hidden overscroll-x-none scrollbar-hide pr-1'>
           {activities.length > 0 ? (
             activities.map((activity, idx) => (

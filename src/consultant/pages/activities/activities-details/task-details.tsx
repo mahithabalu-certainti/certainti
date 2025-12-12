@@ -53,7 +53,6 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
   const activityId = searchParams.get('activity_id') || '';
 
   const { permission } = useSelector((state: RootState) => state.permission);
-
   const fiscalYearOptions = useMemo(
     () =>
       commonFiscalYears.map((fy: { value: string; label: string }) => fy.value),
@@ -78,6 +77,7 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
 
   const fieldHiddenMap = useMemo(
     () => ({
+      all_activities: !permissionMap['all_activities']?.read,
       taskName:
         !permissionMap['task_name']?.read && !permissionMap['task_name']?.edit,
       status:
