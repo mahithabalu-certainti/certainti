@@ -1733,7 +1733,7 @@ export function fetchChecklistAttachToDetails(schemaName: string, attachTo: stri
 ) =>  `
     WITH fetch_jurisdiction_config AS (
         SELECT
-            jc.rid, jc.r_number,
+            jc.rid, jc.r_number,jc.rule_name,
             jc.status_rid,s.status_name,
             jc.created_by, jc.modified_by,
             jc.created_datetime, jc.modified_datetime,
@@ -1764,6 +1764,7 @@ export function fetchChecklistAttachToDetails(schemaName: string, attachTo: stri
         array_agg(jsonb_build_object(
         'rid', i.rid,
         'r_number', i.r_number,
+        'rule_name', i.rule_name,
         'status_rid', i.status_rid,
         'status_name', i.status_name,
         'created_by', i.created_by,
