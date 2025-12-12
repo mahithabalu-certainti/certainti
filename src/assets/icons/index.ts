@@ -135,6 +135,8 @@ const icons = {
   linkTaskIcon: () => import('./link-task.svg?react'),
   expandView: () => import('./expand-view.svg?react'),
   collapseView: () => import('./collapse-view.svg?react'),
+  avatarIcon: () => import('./avatar-icon.svg?react'),
+  cameraIcon: () => import('./camera-icon.svg?react'),
 };
 
 function createLazySvgIcon(name: keyof typeof icons) {
@@ -277,3 +279,5 @@ export const PaperclipIcon = createLazySvgIcon('paperclipIcon');
 export const LinkTaskIcon = createLazySvgIcon('linkTaskIcon');
 export const ExpandViewIcon = createLazySvgIcon('expandView');
 export const CollapseViewIcon = createLazySvgIcon('collapseView');
+export const AvatarIcon = createLazySvgIcon('avatarIcon');
+export const CameraIcon = createLazySvgIcon('cameraIcon');
