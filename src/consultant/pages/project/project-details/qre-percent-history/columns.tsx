@@ -43,6 +43,7 @@ export const getQrePercentHistoryColumns = (
       id: 'version',
       sortId: 'version',
       label: 'Sequence',
+      sortable: true,
       width: '8%',
       sticky: true,
       hide: !permissionMap?.['version']?.read,
@@ -58,6 +59,7 @@ export const getQrePercentHistoryColumns = (
       id: 'qre_percent',
       sortId: 'qre_percent',
       label: 'QRE Percent Score',
+      sortable: true,
       width: '13%',
       hide: !permissionMap?.['qre_percent']?.read,
       render: (row: QrePercentHistoryItem) => (
@@ -72,6 +74,7 @@ export const getQrePercentHistoryColumns = (
       id: 'created_datetime',
       sortId: 'created_datetime',
       label: 'Date',
+      sortable: true,
       width: '20%',
       hide: !permissionMap?.['created_datetime']?.read,
       render: (row: QrePercentHistoryItem) =>
