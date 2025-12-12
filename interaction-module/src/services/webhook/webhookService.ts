@@ -175,7 +175,7 @@ export class WebHookService {
             if (dataRow.length >= 2) {
               answers.push({
                 rid: "",
-                questionSeqId: dataRow[0]?.trim(),
+                questionSeqId: dataRow[5]?.trim(),
                 question: dataRow[1]?.trim() || "",
                 response: dataRow[2]?.trim() || "",
                 notes: dataRow[3]?.trim() || "",
@@ -1227,11 +1227,12 @@ export class WebHookService {
 
     // Column Headers at index 5
     const expectedHeaders = [
-      "Question No",
+      "Record ID",
       "Questions",
       "Answers",
       "Notes",
       "Is Mandatory",
+      "Question No",
     ];
     const tableHeader = array[5] || [];
 
@@ -1257,11 +1258,12 @@ export class WebHookService {
       const row = dataRows[i];
       if (!row) continue;
 
-      const questionId = row[0];
+      const recordId = row[0];
       const question = row[1];
       const answer = row[2]?.trim();
       const notes = row[3];
       const isMandatory = row[4]?.trim().toLowerCase();
+      const questionId = row[5];
 
       const rowErrors: string[] = [];
 
