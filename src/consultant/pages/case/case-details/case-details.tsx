@@ -1,4 +1,10 @@
-import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import {
   useLocation,
   useNavigate,
@@ -35,6 +41,7 @@ import {
   ChecklistIcon,
   ComingSoon,
   DetailsIcon,
+  DetailsKeyContactErrorIcon,
   FinancialIcon,
   InteractionsIcon,
   NotesSideIcon,
@@ -127,6 +134,7 @@ export const CaseDetails = () => {
   const checklistView = searchParams.get('checklist_id');
   const accountInActive =
     caseData?.account_status_name?.toLowerCase() !== 'active';
+  const isCaseTeamCreated = caseData?.is_case_team_created;
   const [caseProjectParams, setCaseProjectParams] =
     useState<CaseAssignedExportParams>({
       sort: 'project_code',
@@ -563,6 +571,7 @@ export const CaseDetails = () => {
               caseEndDate={caseData?.statutory_submission_date}
               isActionItemsExpanded={isActionItemsExpanded}
               setIsActionItemsExpanded={handleToggleActionItems}
+              isCaseTeamCreated={isCaseTeamCreated}
             />
           </div>
         );
@@ -743,14 +752,14 @@ export const CaseDetails = () => {
         icon: CasesIcon,
       },
       {
-        name: 'Project Resource',
+        name: 'Case Project Resource',
         key: 'projectResource',
         id: AllMenus.FINANCIAL_HIGHLIGHTS,
         disabled: false,
         icon: ResourcesIcon,
       },
       {
-        name: 'Project Task',
+        name: 'Case Project Task',
         key: 'projectTask',
         id: AllMenus.FINANCIAL_HIGHLIGHTS,
         disabled: false,
@@ -931,6 +940,22 @@ export const CaseDetails = () => {
             overflow: 'auto',
           }}
         >
+          {!isCaseTeamCreated && !isLoading && (
+            <div className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] px-3 py-2 border-box'>
+              <div>
+                <React.Suspense fallback={null}>
+                  <DetailsKeyContactErrorIcon alt='key-contact' />
+                </React.Suspense>
+              </div>
+              <div>
+                <span className='font-bold mr-1 capitalize'>Case Team</span>-
+                <span className='ml-1 font-medium'>
+                  Case team setup is missing. Please create a case team before
+                  marking the task as complete.
+                </span>
+              </div>
+            </div>
+          )}
           <Suspense fallback={null}>{renderContent()}</Suspense>
         </div>
       </div>

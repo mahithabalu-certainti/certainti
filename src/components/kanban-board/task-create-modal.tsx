@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useLayoutEffect } from 'react';
 import { Tooltip } from '@mui/material';
 
 import dayjs from 'dayjs';
@@ -21,6 +21,7 @@ import {
   useGetTaskCategoryTypes,
 } from '../../admin/service/task-template/task-template-service';
 import { useGetTaskDropDownList } from '../../consultant/services/case-task/case-task-service';
+import ConfirmationPopup from '../../common-utils/confirmation-popup';
 
 // Form data interface
 export interface TaskFormData {
@@ -170,6 +171,19 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
   const [categoryRid, setCategoryRid] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const [confirmationState, setConfirmationState] = useState<{
+    isOpen: boolean;
+    message: string;
+    onConfirm: () => void;
+    onCancel: () => void;
+  }>({
+    isOpen: false,
+    message: '',
+    onConfirm: () => {},
+    onCancel: () => {},
+  });
 
   const enrichedUsers = useMemo(() => {
     return collaboratorData && collaboratorData.length > 0
@@ -287,7 +301,43 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
     }
   }, [statusData]);
 
-  const handleClose = () => {
+  useLayoutEffect(() => {
+    if (isOpen) {
+      setIsAnimating(true);
+      setIsVisible(false);
+      const timer = setTimeout(() => {
+        setIsVisible(true);
+      }, 5);
+      return () => clearTimeout(timer);
+    } else {
+      setIsVisible(false);
+      const timer = setTimeout(() => {
+        setIsAnimating(false);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
+
+  // Check if form has any data entered
+  const hasFormData = () => {
+    return (
+      taskTitle.trim() !== '' ||
+      description.trim() !== '' ||
+      selectedPriority !== '' ||
+      startDate !== null ||
+      endDate !== null ||
+      selectedAssignee !== '' ||
+      selectedTags.length > 0 ||
+      selectedRole !== '' ||
+      selectedChecklist !== '' ||
+      linkedType !== '' ||
+      linkTaskTypes.length > 0 ||
+      weightage !== '' ||
+      category !== ''
+    );
+  };
+
+  const resetForm = () => {
     setTaskTitle('');
     setDescription('');
     setSelectedStatus('To Do');
@@ -311,7 +361,24 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
     setCategory('');
     setCategoryRid('');
     setErrors({});
-    onClose();
+  };
+
+  const handleClose = () => {
+    if (hasFormData()) {
+      setConfirmationState({
+        isOpen: true,
+        message:
+          'You have unsaved changes. Are you sure you want to close without saving?',
+        onConfirm: () => {
+          resetForm();
+          onClose();
+        },
+        onCancel: () => {},
+      });
+    } else {
+      resetForm();
+      onClose();
+    }
   };
 
   const handleSubmit = async () => {
@@ -396,7 +463,8 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
         categoryRid,
       };
       await onCreateTask(columnId, formData);
-      handleClose();
+      resetForm();
+      onClose();
     } catch (error) {
       console.error('Failed to create task:', error);
     } finally {
@@ -428,13 +496,16 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
     return minDate;
   };
 
+  if (!isAnimating) return null;
+
   return (
     <>
       <div
         className='fixed inset-0 bg-opacity-50 z-40'
         onClick={handleClose}
         style={{
-          display: isOpen ? 'block' : 'none',
+          opacity: isVisible ? 1 : 0,
+          transition: 'opacity 500ms cubic-bezier(0.4, 0.0, 0.2, 1)',
           pointerEvents: isOpen ? 'auto' : 'none',
         }}
       />
@@ -442,12 +513,10 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
         className='fixed right-0 bottom-0 w-[650px] bg-white text-gray-900 shadow-2xl z-50 flex flex-col'
         style={{
           top: '38.1px',
-          backgroundColor: '#fff',
-          display: isOpen ? 'flex' : 'none',
-          pointerEvents: isOpen ? 'auto' : 'none',
-          transform: 'translateZ(0)',
-          willChange: 'contents',
-          backfaceVisibility: 'hidden',
+          transform: isVisible ? 'translateX(0)' : 'translateX(100%)',
+          opacity: isVisible ? 1 : 0,
+          transition:
+            'transform 500ms cubic-bezier(0.4, 0.0, 0.2, 1), opacity 500ms cubic-bezier(0.4, 0.0, 0.2, 1)',
         }}
       >
         <div className='flex-none flex items-center justify-between p-3 border-b border-[#CBD6E2] bg-white z-50'>
@@ -459,7 +528,7 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
           </h2>
           <button
             onClick={handleClose}
-            className='p-2 hover:bg-gray-100 rounded transition-colors'
+            className='p-2 hover:bg-gray-100 rounded transition-colors cursor-pointer'
           >
             <CloseIcon size={16} className='text-gray-600' />
           </button>
@@ -860,6 +929,28 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
           />
         </div>
       </div>
+
+      {/* Confirmation Popup */}
+      <ConfirmationPopup
+        isOpen={confirmationState.isOpen}
+        message={confirmationState.message}
+        onConfirm={() => {
+          confirmationState.onConfirm();
+          setConfirmationState((prev) => ({
+            ...prev,
+            isOpen: false,
+            message: '',
+          }));
+        }}
+        onCancel={() => {
+          confirmationState.onCancel();
+          setConfirmationState((prev) => ({
+            ...prev,
+            isOpen: false,
+            message: '',
+          }));
+        }}
+      />
     </>
   );
 };

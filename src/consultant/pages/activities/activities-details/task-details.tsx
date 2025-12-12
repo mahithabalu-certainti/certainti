@@ -485,7 +485,7 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
   };
 
   return (
-    <div>
+    <>
       <TaskDetailModal
         taskId={activityId}
         isOpen={true}
@@ -509,7 +509,7 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
         onDeleteComment={handleDeleteComment}
         onAddCollaborator={handleAddCollaborator}
       />
-    </div>
+    </>
   );
 };
 

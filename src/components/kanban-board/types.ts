@@ -60,6 +60,7 @@ export interface Task {
   commentCount: number;
   createdAt: Date;
   createdBy?: string;
+  created_by_rid?: string;
   modifiedBy?: string;
   description?: string;
   checklist?: Array<{ id: string; text: string; completed: boolean }>;

@@ -34,6 +34,9 @@ export interface CaseTaskType {
   [key: string]: unknown;
   total_result: string;
   assigned_to_name?: string;
+  task_status_rid?: string;
+  role_rid?: string;
+  role_name?: string;
 }
 
 export interface CaseTaskApiResponse {
