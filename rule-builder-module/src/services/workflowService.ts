@@ -415,21 +415,144 @@ export class WorkFlowService {
             { type: QueryTypes.SELECT }
         );
         const { scope_type_rid, event_rid } = eventRid[0];
+        const allConditions: any[] = [];
+        const allActions: any[] = [];
         //fetching relavent rules, condition rid, apply type from event rid
         const rules = await mainDb.query<any>(rawQueries.fetchRulesFromEvent(event_rid, scope_type_rid, request.task_rid),
             { type: QueryTypes.SELECT }
         );
-        // const conditions = await mainDb.query<any>(rawQueries.fetchCategories(condition_rid, rule_rid),
-        //     { type: QueryTypes.SELECT }
-        // );
+        for (const rule of rules) {
+            const conditions = await mainDb.query<any>(rawQueries.fetchRuleConditions(rule.condition_rid, rule.rule_rid),
+                { type: QueryTypes.SELECT }
+            );
+            allConditions.push(...conditions);
+            const actions = await mainDb.query<any>(rawQueries.fetchRuleActions(rule.rule_rid), { type: QueryTypes.SELECT });
+            allActions.push(...actions);
+        }
+
+        //grouping conditions by rule 
+        const conditionsByRule = allConditions.reduce((acc, condition) => {
+            if (!acc[condition.rule_rid]) {
+                acc[condition.rule_rid] = [];
+            }
+            acc[condition.rule_rid].push(condition);
+            return acc;
+        }, {} as Record<string, any[]>);
+
+        //grouping actions by rule 
+        const actionsByRule = allActions.reduce((acc, action) => {
+            if (!acc[action.rule_rid]) {
+                acc[action.rule_rid] = [];
+            }
+            acc[action.rule_rid].push(action);
+            return acc;
+        }, {} as Record<string, any[]>);
+        //sorting action by action order for each rule
+        for (const ruleId in actionsByRule) {
+            actionsByRule[ruleId].sort(
+                (a: any, b: any) => a.action_order - b.action_order
+            );
+        }
+
+        // const ruleDetails: any[] = [];
+        // for (const rule of rules) {
+        //     const conditions = await mainDb.query<any>(rawQueries.fetchRuleConditions(rule.condition_rid, rule.rule_rid), { type: QueryTypes.SELECT });
+        //     const actions = await mainDb.query<any>(rawQueries.fetchRuleActions(rule.rule_rid), { type: QueryTypes.SELECT });
+        //     // Push both conditions and actions together in a single object
+        //     ruleDetails.push({
+        //         ruleId: rule.rule_rid,
+        //         conditions: conditions,
+        //         actions: actions,
+        //     });
+        // }
+
+        const entity = {
+            status: "open",
+            overdue: "close",
+            age: "30",
+            priority: "low"
+        };
+
+        const triggeredActions: Record<string, any[]> = {};
+        const results: Record<string, boolean> = {};
+        for (const rule_rid in conditionsByRule) {
+            const ruleConditions = conditionsByRule[rule_rid];
+            let ruleResult = true;
+            for (let i = 0; i < ruleConditions.length; i++) {
+                const condition = ruleConditions[i];
+                const conditionResult = await this.evaluateCondition(condition, entity);
+
+                if (i === 0) {
+                    ruleResult = conditionResult;
+                } else {
+                    const logicalOp = condition.logical_operator;
+
+                    if (logicalOp === "AND") {
+                        ruleResult = ruleResult && conditionResult;
+                    } else if (logicalOp === "OR") {
+                        ruleResult = ruleResult || conditionResult;
+                    }
+                }
+            }
+            results[rule_rid] = ruleResult;
+            if (ruleResult) {
+                const actions = actionsByRule[rule_rid] || [];
+                for (const action of actions) {
+                    await this.executeAction(action, entity, userId);
+                }
+                triggeredActions[rule_rid] = actions;
+            }
+        }
+        //another way
+        // const passedRules = Object.entries(results)
+        //     .filter(([_, passed]) => passed)
+        //     .map(([rule_rid]) => rule_rid);
+        // for (const rule_rid of passedRules) {
+        //     const ruleActions = actionsByRule[rule_rid] || [];
+
+        //     for (const action of ruleActions) {
+        //         await this.executeAction(action, entity, userId);
+        //     }
+        // }
+
         return {
             statusCode: 200,
             message: "",
             data: {
-                info: rules,
+                info: { results, triggeredActions }
             }
         };
     }
 
+    private evaluateCondition(condition: any, entity: any): boolean {
+        const fieldKey = condition.field.split(".")[1]; // "task.status" → "status"
+        const entityValue = entity[fieldKey];
+        switch (condition.operator) {
+            case "equals":
+                return String(entityValue) === String(condition.value);
+            default:
+                return false;
+        }
+    }
+
+    private async executeAction(
+        action: any,
+        entity: any,
+        userId: string
+    ) {
+        switch (action.action_name) {
+            case "create task":
+                // call service / insert into DB
+                console.log("Creating task", entity);
+                break;
+
+            case "Assign task":
+                console.log("Assigning task", entity);
+                break;
+
+            default:
+                console.warn("Unknown action:", action.action_name);
+        }
+    }
 
 }

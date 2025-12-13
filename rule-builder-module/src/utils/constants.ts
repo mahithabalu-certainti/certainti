@@ -178,8 +178,16 @@ export const rawQueries = {
     return query;
   },
 
-  fetchCategories(condition_rid: string, rule_rid: string): string {
-    let query = `SELECT  `;
+  fetchRuleConditions(condition_rid: string, rule_rid: string): string {
+    let query = `SELECT wrc.rule_rid,rf.name as field,ro.name as operator,rv.name as value,wrc.logical_operator FROM workflow_rule_condition wrc 
+    JOIN rule_fields rf ON rf.rid = wrc.field_rid JOIN rule_operators ro ON ro.rid = wrc.operator_rid JOIN rule_values rv on rv.rid = wrc.value_rid 
+    WHERE wrc.rule_rid = '${rule_rid}' ORDER BY wrc.sequence `;
+    return query;
+  },
+
+  fetchRuleActions(rule_rid: string): string {
+    let query = `SELECT wra.rule_rid,wra.action_rid, sa.name as action_name,sa.message_template,sa.metadata,wra.action_order FROM workflow_rule_action wra 
+    JOIN scope_actions sa ON sa.rid = wra.action_rid WHERE wra.rule_rid = '${rule_rid}' ORDER BY wra.action_order `;
     return query;
   }
 }
