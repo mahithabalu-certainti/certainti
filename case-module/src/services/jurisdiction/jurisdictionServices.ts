@@ -195,7 +195,7 @@ export class JurisdictionService {
       );
       configRequest.status_rid = activeStatusRid.rid;
       let duplicate = false;
-      if (configRequest.jurisdictionConfig) {
+      if (configRequest.jurisdictionConfig && configRequest.effective_end_date && configRequest.effective_start_date) {
         duplicate = await this.hasOverlapConfig({
           JurisdictionConfig,
           groupId: configRequest.jurisdiction_config_group_rid,
@@ -207,7 +207,7 @@ export class JurisdictionService {
         });
       }
       // Duplicate check for platform config
-      if (!duplicate && configRequest.is_federal && configRequest.platformConfig) {
+      if (!duplicate && configRequest.is_federal && configRequest.platformConfig && configRequest.effective_end_date && configRequest.effective_start_date) {
         duplicate = await this.hasOverlapConfig({
           JurisdictionConfig,
           groupId: configRequest.platform_config_group_rid,
