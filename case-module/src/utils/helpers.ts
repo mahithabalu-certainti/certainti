@@ -518,6 +518,7 @@ export async function uploadToAzureBlob(
   file: Express.Multer.File,
   account_id: string,
   task_number: string,
+  account_number: string,
   flag?: string
 ): Promise<{
   url: string;
@@ -564,9 +565,9 @@ export async function uploadToAzureBlob(
     let timestamp = Date.now();
     let blobName;
     if (flag === "cases") {
-      blobName = `${account_id}/cases/${task_number}/${timestamp}-${sanitizedBaseName}${originalExtension}`;
+      blobName = `${account_number}/${account_id}/cases/${task_number}/${timestamp}-${sanitizedBaseName}${originalExtension}`;
     } else {
-      blobName = `${account_id}/attachments/${timestamp}-${sanitizedBaseName}${originalExtension}`;
+      blobName = `${account_number}/${account_id}/attachments/${timestamp}-${sanitizedBaseName}${originalExtension}`;
     }
 
     const blockBlobClient = containerClient.getBlockBlobClient(blobName);

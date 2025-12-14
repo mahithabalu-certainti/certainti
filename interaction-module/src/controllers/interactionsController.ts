@@ -1869,7 +1869,8 @@ async function uploadAttachmentToAzure(
         req.file,
         value?.account_rid,
         value?.project_rid,
-        value?.interaction_rid
+        value?.interaction_rid,
+        accountNumber
       );
       handleSuccessResponse(res, {
         fileName: fileInfo.name,

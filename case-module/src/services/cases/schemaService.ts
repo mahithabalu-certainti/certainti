@@ -6397,7 +6397,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       }
       if(files.length > 0) {
         for(let f of files) {
-          const uploadFile = await uploadToAzureBlob(f, data.account_rid, taskNumber, "cases");
+          const uploadFile = await uploadToAzureBlob(f, data.account_rid, taskNumber,accountNumber, "cases");
           if(uploadFile) {
             const commentsAttachmentPayload: any = {
               created_by: data.created_by,
@@ -6547,7 +6547,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         }
         if(files.length > 0) {
           for(let f of files) {
-            const uploadFile = await uploadToAzureBlob(f, data.account_rid, taskNumber, "cases");
+            const uploadFile = await uploadToAzureBlob(f, data.account_rid, taskNumber,accountNumber, "cases");
             if(uploadFile) {
               const commentsAttachmentPayload: any = {
                 created_by: data.modified_by,
@@ -7005,7 +7005,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     if(files != undefined) {
       if(Array.isArray(files)) {
         for(let f of files) {
-          const uploadFile = await uploadToAzureBlob(f, data.account_rid, findTaskDetails?.r_number!, "cases");
+          const uploadFile = await uploadToAzureBlob(f, data.account_rid, findTaskDetails?.r_number!, accountNumber, "cases");
           if(uploadFile) {
             const taskAttachmentPayload: any = {
               account_rid: data.account_rid,

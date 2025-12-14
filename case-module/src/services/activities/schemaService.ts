@@ -110,6 +110,7 @@ class ActivitySchemaService {
           f,
           activityRequest.account_rid,
           accountNumber,
+          accountNumber,
           "cases"
         );
         if (uploadFile) {

@@ -1216,7 +1216,7 @@ async accountList(
       });
       if (account.rid && file) {
         if (file) {
-          const file_url = await uploadToAzureBlob(file, account.rid);
+          const file_url = await uploadToAzureBlob(file, account.rid,account.r_number!);
           await repository.update(
             { logo_url: file_url },
             { where: { rid: account.rid }, returning: true }
@@ -1346,7 +1346,8 @@ async accountList(
  */
   async updateAccount(
     accountData: IUpdateAccount,
-    userId: string
+    userId: string,
+    file?: Express.Multer.File
   ): Promise<{
     statusCode: number;
     message: string;
@@ -1418,7 +1419,11 @@ async accountList(
       }
 
       let parent_account: any = null;
-
+      if(file)
+      {
+        const file_url = await uploadToAzureBlob(file, accountData.account_rid, accountData.account_number!);
+        accountData.logo_url = file_url;
+      }
       if (data_storage === "store_in_parent" && parent_account_rid !== null) {
         parent_account = await repository.findOne({
           where: {
