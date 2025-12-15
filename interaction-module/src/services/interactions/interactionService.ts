@@ -1863,9 +1863,10 @@ export class InteractionService {
             interactionlink: ({ interactionLink }) => interactionLink ?? "",
             interactionrid: ({ interactionRid }) => interactionRid ?? "",
             interactionlevel: ({ interactionLevel }) => interactionLevel ?? "",
+            fiscalYear: ({ projectInfo }) => projectInfo && projectInfo.fiscalYear != null ? projectInfo.fiscalYear : "",
           };
           // Normalize key for dynamic check
-          const specialKey = noUnderscore;
+          const specialKey = noUnderscore.toLowerCase();
           if (specialFields[specialKey]) {
             return specialFields[specialKey]({
               emailInfo,
