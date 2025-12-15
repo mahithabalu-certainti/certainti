@@ -1223,6 +1223,7 @@ export const setResourceSkillData = (
 export async function uploadToAzureBlob(
   file: Express.Multer.File,
   account_id: string,
+  account_number: string,
   flag? : string
 ): Promise<{
   url: string;
@@ -1243,9 +1244,7 @@ export async function uploadToAzureBlob(
     const connectionString = await getSecret(
       process.env.AZURE_STORAGE_CONNECTION_STRING as string
     );
-    // const connectionString = "storage-account-connection-string";
-    // const connectionString = await getSecret("storage-account-connection-string");
-    const containerName = "account";
+    const containerName = account_number.toLowerCase();
 
     if (!connectionString) {
       throw new Error("Azure storage connection string is required");

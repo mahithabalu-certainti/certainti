@@ -6412,7 +6412,7 @@ class CaseSchemaService {
     if (result) return result;
     else return null;
   }
-  async addComments(data: AddCommentsType, accountNumber: string, taskNumber: string, files: Express.Multer.File[]) {
+  async addComments(data: AddCommentsType, accountNumber: string, taskNumber: string, files: Express.Multer.File[],accountRNumber: string) {
     const { TaskComments, CommentsAttachments, TaskAttachments, CaseTimeline, TaskCollaborators, Activities, ActivityHistory } = await this.caseModelService.getModels(accountNumber);
     const commentPayload: any = {
       created_by: data.created_by,
@@ -6443,10 +6443,10 @@ class CaseSchemaService {
           await TaskCollaborators.create(collaboratorPayload);
         }
       }
-      if (files.length > 0) {
-        for (let f of files) {
-          const uploadFile = await uploadToAzureBlob(f, data.account_rid, taskNumber, "cases");
-          if (uploadFile) {
+      if(files.length > 0) {
+        for(let f of files) {
+          const uploadFile = await uploadToAzureBlob(f, data.account_rid, taskNumber,accountRNumber, "cases");
+          if(uploadFile) {
             const commentsAttachmentPayload: any = {
               created_by: data.created_by,
               created_datetime: new Date(),
@@ -6549,7 +6549,7 @@ class CaseSchemaService {
     }
   }
 
-  async updateComments(data: UpdateCommentsType, accountNumber: string, taskNumber: string, files: Express.Multer.File[]) {
+  async updateComments(data: UpdateCommentsType, accountNumber: string, taskNumber: string, files: Express.Multer.File[], accountRNumber: string) {
     const { TaskComments, CommentsAttachments, TaskAttachments, TaskCollaborators, CaseHistory, CaseTimeline, ActivityHistory } = await this.caseModelService.getModels(accountNumber);
     const isCommentExists = await TaskComments.findOne({
       where: {
@@ -6591,10 +6591,10 @@ class CaseSchemaService {
             await TaskCollaborators.create(collaboratorPayload);
           }
         }
-        if (files.length > 0) {
-          for (let f of files) {
-            const uploadFile = await uploadToAzureBlob(f, data.account_rid, taskNumber, "cases");
-            if (uploadFile) {
+        if(files.length > 0) {
+          for(let f of files) {
+            const uploadFile = await uploadToAzureBlob(f, data.account_rid, taskNumber,accountRNumber, "cases");
+            if(uploadFile) {
               const commentsAttachmentPayload: any = {
                 created_by: data.modified_by,
                 created_datetime: new Date(),
@@ -7034,14 +7034,14 @@ class CaseSchemaService {
     }
   }
 
-  async addAttachmentForTask(data: any, accountNumber: string, files: Express.Multer.File[], userId: string) {
-    const { TaskAttachments, ActivityHistory } = await this.caseModelService.getModels(accountNumber)
-    const findTaskDetails = await this.findTaskById(data.task_rid, data.account_rid, data.case_rid, accountNumber, data.task_type || 'case_task');
-    if (files != undefined) {
-      if (Array.isArray(files)) {
-        for (let f of files) {
-          const uploadFile = await uploadToAzureBlob(f, data.account_rid, findTaskDetails?.r_number!, "cases");
-          if (uploadFile) {
+  async addAttachmentForTask (data : any, accountNumber : string, files : Express.Multer.File[], userId : string, accountRNumber: string) {
+    const {TaskAttachments,ActivityHistory} = await this.caseModelService.getModels(accountNumber)
+    const findTaskDetails = await this.findTaskById(data.task_rid, data.account_rid, data.case_rid, accountNumber,data.task_type || 'case_task');
+    if(files != undefined) {
+      if(Array.isArray(files)) {
+        for(let f of files) {
+          const uploadFile = await uploadToAzureBlob(f, data.account_rid, findTaskDetails?.r_number!, accountRNumber, "cases");
+          if(uploadFile) {
             const taskAttachmentPayload: any = {
               account_rid: data.account_rid,
               task_rid: data.task_rid,
