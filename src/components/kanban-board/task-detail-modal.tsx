@@ -804,6 +804,13 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       newErrors.tags = 'Maximum 50 characters allowed';
     }
 
+    if (!editedTask?.startDate && !fieldVisibility.startDate) {
+      newErrors.startDate = 'Field is required';
+    }
+    if (!editedTask?.endDate && !fieldVisibility.endDate) {
+      newErrors.endDate = 'Field is required';
+    }
+
     if (editedTask?.startDate) {
       if (minDate && dayjs(editedTask.startDate).isBefore(minDate, 'day')) {
         newErrors.startDate = 'Invalid Date';
@@ -1774,7 +1781,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
               {!fieldVisibility.startDate && (
                 <div>
                   <label className='block text-xs font-medium text-gray-600 mb-1'>
-                    Start Date
+                    Start Date <span className='text-red-500'>*</span>
                   </label>
                   <DatePicker
                     disabled={fieldDisabled.startDate}
@@ -1854,7 +1861,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
               {!fieldVisibility.endDate && (
                 <div>
                   <label className='block text-xs font-medium text-gray-600 mb-1'>
-                    Due Date
+                    Due Date <span className='text-red-500'>*</span>
                   </label>
                   <DatePicker
                     disabled={fieldDisabled.endDate}
