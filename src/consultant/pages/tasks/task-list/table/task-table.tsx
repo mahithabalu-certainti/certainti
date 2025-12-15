@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useSelector } from 'react-redux';
 import { TaskList, TasksListURLParams } from '../../../../types/task';
 import { RootState } from '../../../../../store/store';
@@ -923,7 +924,7 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
         hoverHighlight={false}
         tableStyle={{
           height: '100%',
-          maxHeight: 'calc(100vh - 180px)',
+          maxHeight: 'calc(100vh - 220px)',
           overflow: 'auto',
         }}
         stickyHeader={true}
