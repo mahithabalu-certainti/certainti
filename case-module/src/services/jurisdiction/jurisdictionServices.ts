@@ -340,7 +340,7 @@ export class JurisdictionService {
     groupId: string,
     statusRid: string,
     startDate: string,
-    endDate: string,
+    endDate?: string,
     excludeRid?: string,
     isUpdate?: boolean
   }): Promise<boolean> {
@@ -348,9 +348,11 @@ export class JurisdictionService {
     const replacements: any = {
       groupId,
       statusRid,
-      startDate,
-      endDate
+      startDate
     };
+    if (typeof endDate !== 'undefined') {
+      replacements.endDate = endDate;
+    }
     if (isUpdate && excludeRid) {
       replacements.excludeRid = excludeRid;
     }
