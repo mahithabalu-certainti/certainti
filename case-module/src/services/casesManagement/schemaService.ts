@@ -1038,15 +1038,14 @@ async fetchChecklistTemplateDetailsById(
       this.mainDbSequelize = await this.caseModelService.getMainSequelize();
     }
     const [categoryInfo]: any[] = await this.mainDbSequelize.query(rawQueries.getCategoryDetails(emailReq.category_rid), { type: QueryTypes.SELECT });
-    const [statusInfo]: any[] = await this.mainDbSequelize.query(rawQueries.getActiveStatusId(), { type: QueryTypes.SELECT });
+  //  const [statusInfo]: any[] = await this.mainDbSequelize.query(rawQueries.getActiveStatusId(), { type: QueryTypes.SELECT });
     let isSameCategoryExists = true;
     let category_name = categoryInfo?.category_name;
     if (categoryInfo?.category_name !== emailCategorties.general) {
       const categoryResponse = await EmailTemplate.findOne({
         where: {
           [Op.and]: [
-            { category_rid: emailReq.category_rid },
-            { status_rid: statusInfo.rid }
+            { category_rid: emailReq.category_rid }
           ]
         }
       });

@@ -207,7 +207,7 @@ class CaseSchemaService {
       if (!tableExists) {
          await this.createCaseTables(accountNumber);
       }
-      await this.createCaseTables(accountNumber);
+    //  await this.createCaseTables(accountNumber);
       const casecreationResponse = await Case.create(caseRequest, {
         transaction,
       });

@@ -986,7 +986,10 @@ export const rawQueries = {
   },
   getCaseProjectsIds (caseRid : string, accountRid : string, schemaName : string) {
     return `SELECT project_fiscal_rid FROM ${schemaName}.case_projects WHERE case_rid = '${caseRid}' AND account_rid = '${accountRid}'`
-  }  
+  },
+  fetchEmailTemplateByCategory (categoryName : string) {
+    return `SELECT rid, template_name, subject, body_html FROM ${MAIN_SCHEMA_NAME}.email_template WHERE category_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.email_template_category WHERE lower(category_name) = lower('${categoryName}') LIMIT 1) LIMIT 1`
+  },
 };
 
 export const filterTypesForSummaryInteractions : Record<string, any> = 
@@ -1140,6 +1143,15 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
     interactionAge : "interaction_age",
     interaction : "interactions",
     attachments : "attachments"
+  }
+
+   export const interactionTemplateName = {
+    interactionProject : "interaction project",
+    interactionProjectRemainder : "interaction project remainder",
+    interactionAccount : "interaction account",
+    interactionAccountRemainder : "interaction account remainder",
+    interactionProjectUpdate : "interaction project update",
+    interactionAccountUpdate : "interaction account update"
   }
 
   export const keyContactRoleName = {

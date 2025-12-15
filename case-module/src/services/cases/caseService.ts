@@ -43,19 +43,17 @@ import {
   STATUS_MESSAGE,
   rawQueries,
   MAIN_SCHEMA_NAME,
-  reviewProjectsFieldMappings,
   SCHEMANAME_PREFIX,
   emailCategorties,
-  caseTaskMapping,
   mainTableFiltersForCase,
 } from "../../utils/constants";
-import { query } from "express";
 import currency from "currency.js";
 import moment from "moment";
 import { CaseManagementSchemaService } from "../casesManagement/schemaService";
 import { fetchCaseProjects, fetchTaskActivities, fetchTaskComments, listAllTaskStatus, taskCardDetails,taskCardDetailsActivityTask, updateCaseAggregatedValue } from "../../utils/rawQueries";
 import { sendEmailWithAttachment } from "../emailService";
 import ActivitySchemaService from "../activities/schemaService";
+import { caseTaskMapping, reviewProjectsFieldMappings } from "../../utils/excelExportMapping";
 export class CaseService {
   private caseSchemaService: CaseSchemaService;
   private activitySchemaService: ActivitySchemaService; // Assuming this is defined somewhere in your code

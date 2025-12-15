@@ -219,6 +219,7 @@ const updateJurisdictionRDConfigSchema = Joi.object({
 
 const createJurisdictionRDConfigSchema = Joi.object({
   config_name: Joi.string().max(255).required(),
+  state_rid: Joi.string().optional().allow("", null),
   effective_start_date: Joi.date().required(),
   effective_end_date: Joi.date().optional().allow("", null),
   jurisdiction_config_group_rid: Joi.string().required(),

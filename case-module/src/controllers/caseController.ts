@@ -12,11 +12,8 @@ import {
   validateRequest,
 } from "../utils/helpers";
 import {
-  casesFieldMappings,
-  casesSummaryFieldMappings,
-  checklistsFieldMappings,
   HttpStatus,
-  reviewProjectsFieldMappings,
+
   STATUS_MESSAGE,
 } from "../utils/constants";
 import {
@@ -43,6 +40,10 @@ import {
 } from "../lib/joi/schemas/schema";
 import configurations from "../config/config";
 import moment from "moment";
+import { checklistsFieldMappings, reviewProjectsFieldMappings,
+    casesFieldMappings,
+  casesSummaryFieldMappings,
+ } from "../utils/excelExportMapping";
 
 const services = configurations.getInstance().getServices();
 const caseService = services.caseService;
