@@ -813,7 +813,7 @@ export const rawQueries = {
       WHERE u.rid = :userRid
       LIMIT 1
       `,
-  fetchEmailInfo: `SELECT * FROM ${MAIN_SCHEMA_NAME}.send_email_info WHERE rid = 'D001-e582eea1-234b-4866-acaa-9e20f550c6db' ORDER BY created_datetime ASC LIMIT ${sendEmailCount}`,
+  fetchEmailInfo: `SELECT * FROM ${MAIN_SCHEMA_NAME}.send_email_info WHERE is_email_send = false ORDER BY created_datetime ASC LIMIT ${sendEmailCount}`,
   updateInteractionStatus(schemaName : string, statusRid : string, interactionRid : string) {
     return `UPDATE ${schemaName}.interactions SET status_rid = '${statusRid}' WHERE rid = '${interactionRid}'`
   },
