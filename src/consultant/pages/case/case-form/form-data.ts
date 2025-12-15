@@ -257,10 +257,10 @@ export const CaseFormData = (
               maxDate: dateConstraints?.statutory_max
                 ? new Date(dateConstraints.statutory_max)
                 : undefined,
-              disabled:
-                isEditView &&
-                !permissionMap?.['statutory_submission_date']?.edit &&
-                permissionMap?.['statutory_submission_date']?.read,
+              disabled: !isEditView ||
+                (isEditView &&
+                  !permissionMap?.['statutory_submission_date']?.edit &&
+                  permissionMap?.['statutory_submission_date']?.read),
               hide:
                 isEditView &&
                 !permissionMap?.['statutory_submission_date']?.edit &&

@@ -15,6 +15,7 @@ import {
   CaseListResponse,
   CaseOwnersResponse,
   CaseStatusResponse,
+  CaseSubmissionDateResponse,
   CaseTaskExportParams,
   ExportCaseListResponse,
 } from '../../types/cases';
@@ -388,5 +389,33 @@ export const useGetCaseOwners = () => {
     retry: 0,
     gcTime: 0,
     enabled: true,
+  });
+};
+
+// Case Submission Date
+export const getCaseSubmissionDateUrl = (countryRid: string): string =>
+  `/api/cases/getCaseSubmissionDate?country_rid=${countryRid}`;
+
+export const fetchCaseSubmissionDate = async (
+  countryRid: string
+): Promise<CaseSubmissionDateResponse> => {
+  try {
+    const { data } = await caseServiceApi.get<CaseSubmissionDateResponse>(
+      getCaseSubmissionDateUrl(countryRid)
+    );
+    return data;
+  } catch (error) {
+    console.error('Error fetching case submission date:', error);
+    throw error;
+  }
+};
+
+export const useGetCaseSubmissionDate = (countryRid: string) => {
+  return useQuery<CaseSubmissionDateResponse, Error>({
+    queryKey: ['case-submission-date', countryRid],
+    queryFn: () => fetchCaseSubmissionDate(countryRid),
+    retry: 0,
+    gcTime: 0,
+    enabled: !!countryRid,
   });
 };

@@ -21,6 +21,7 @@ import {
   useCreateCase,
   useGetCaseFilingTypes,
   useGetCaseOwners,
+  useGetCaseSubmissionDate,
   useUpdateCaseDetails,
 } from '../../../services/cases/case-service';
 import { CaseIcon } from '../../../../assets';
@@ -52,6 +53,7 @@ export const CreateCases: React.FC = () => {
     useState<string>('');
   const [selectedCountryCode, setSelectedCountryCode] = useState<string>('');
   const [selectedCountryRid, setSelectedCountryRid] = useState<string>('');
+  const [calculatedStatutoryDate, setCalculatedStatutoryDate] = useState<string>('');
   const [dateConstraints, setDateConstraints] = useState<{
     planned_min: string;
     planned_max: string;
@@ -88,6 +90,15 @@ export const CreateCases: React.FC = () => {
   const caseFillingTypes = useGetCaseFilingTypes();
   const allCountries = useGetAllCountries();
   const caseOwners = useGetCaseOwners();
+
+  // Fetch submission date (mm, dd) based on country_rid
+  // In edit mode, use existing country_rid; in create mode, use selected or URL param country_rid
+  const effectiveCountryRid = isEditView
+    ? (caseData?.country_rid || countryRid || selectedCountryRid)
+    : (selectedCountryRid || countryRid);
+
+  const { data: submissionDateData } = useGetCaseSubmissionDate(effectiveCountryRid);
+
 
   const commonSuccess = createCase.isSuccess || updateCase.isSuccess;
 
@@ -159,6 +170,23 @@ export const CreateCases: React.FC = () => {
       setCaseNamePrefix(prefixValue);
     }
   }, [accountName, caseData, countryCode, currentYear, isEditView]);
+
+  // Calculate statutory submission date when fiscal year or submission date data changes
+  useEffect(() => {
+    if (!isEditView && submissionDateData?.data && selectedFiscalYear) {
+      const { caseSubmissionDate } = submissionDateData.data;
+      if (caseSubmissionDate) {
+        // Parse MM/DD format from API response
+        const [mm, dd] = caseSubmissionDate.split('/');
+        if (mm && dd) {
+          // Construct date in YYYY-MM-DD format
+          const statutoryDate = `${selectedFiscalYear}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`;
+          setCalculatedStatutoryDate(statutoryDate);
+        }
+      }
+    }
+  }, [submissionDateData, selectedFiscalYear, isEditView]);
+
 
   const caseOwnersOptions = useMemo(() => {
     return (
@@ -418,15 +446,16 @@ export const CreateCases: React.FC = () => {
             values={
               isEditView && caseFormData
                 ? {
-                    ...caseFormData,
-                  }
+                  ...caseFormData,
+                }
                 : {
-                    account_name: accountName || '',
-                    account_id: accountNumber || '',
-                    case_owner: userId || '',
-                    fiscal_year: currentYear.toString(),
-                    country: countryRid || '',
-                  }
+                  account_name: accountName || '',
+                  account_id: accountNumber || '',
+                  case_owner: userId || '',
+                  fiscal_year: currentYear.toString(),
+                  country: countryRid || '',
+                  ...(calculatedStatutoryDate && { statutory_submission_date: calculatedStatutoryDate }),
+                }
             }
             outData={submitData}
             formRef={formRef}
