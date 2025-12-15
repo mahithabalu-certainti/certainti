@@ -209,7 +209,7 @@ class CaseSchemaService {
       if (!tableExists) {
         await this.createCaseTables(accountNumber);
       }
-    //  await this.createCaseTables(accountNumber);
+      //  await this.createCaseTables(accountNumber);
       const casecreationResponse = await Case.create(caseRequest, {
         transaction,
       });
@@ -2078,7 +2078,6 @@ class CaseSchemaService {
           include_in_communication: contactRecord.include_in_communication,
           interaction_cc_recipient: contactRecord.interaction_cc_recipient,
           status_rid: contactRecord.status_rid,
-          interaction_recipient: contactRecord.interaction_recipient,
           created_by: data.created_by,
           modified_by: data.modified_by,
         }));
