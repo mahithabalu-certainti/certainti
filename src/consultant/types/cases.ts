@@ -307,9 +307,8 @@ export interface CaseOwnersResponse {
   };
 }
 
-// Case Submission Date
 export interface CaseSubmissionDate {
-  caseSubmissionDate: string; // format: "MM/DD"
+  caseSubmissionDate: string;
 }
 
 export interface CaseSubmissionDateResponse {

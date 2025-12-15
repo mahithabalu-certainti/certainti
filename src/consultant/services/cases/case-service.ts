@@ -392,7 +392,6 @@ export const useGetCaseOwners = () => {
   });
 };
 
-// Case Submission Date
 export const getCaseSubmissionDateUrl = (countryRid: string): string =>
   `/api/cases/getCaseSubmissionDate?country_rid=${countryRid}`;
 

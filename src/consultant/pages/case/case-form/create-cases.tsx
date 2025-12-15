@@ -94,8 +94,6 @@ export const CreateCases: React.FC = () => {
   const allCountries = useGetAllCountries();
   const caseOwners = useGetCaseOwners();
 
-  // Fetch submission date (mm, dd) based on country_rid
-  // In edit mode, use existing country_rid; in create mode, use selected or URL param country_rid
   const effectiveCountryRid = isEditView
     ? caseData?.country_rid || countryRid || selectedCountryRid
     : selectedCountryRid || countryRid;
@@ -178,7 +176,6 @@ export const CreateCases: React.FC = () => {
     if (!isEditView && submissionDateData?.data && selectedFiscalYear) {
       const { caseSubmissionDate } = submissionDateData.data;
       if (caseSubmissionDate) {
-        // Parse MM/DD format from API response
         const [mm, dd] = caseSubmissionDate.split('/');
         if (mm && dd) {
           const statutoryDate = `${selectedFiscalYear}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`;
