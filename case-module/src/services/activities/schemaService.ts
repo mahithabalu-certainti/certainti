@@ -2553,7 +2553,7 @@ class ActivitySchemaService {
       activity_rid: emailDetails?.rid,
       activity_type: emailDetails?.activity_type ?? "",
       subject: emailDetails?.subject ?? "",
-      meeting_url: emailDetails?.meeting_url ?? "",
+      meeting_url: emailDetails?.meeting_invite ?? "",
       meeting_id: emailDetails?.meeting_id ?? "",
       meeting_participants: emailDetails?.meeting_participants
         ? emailDetails.meeting_participants
