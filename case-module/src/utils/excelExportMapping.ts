@@ -204,7 +204,7 @@ export const caseTaskMapping = [
   },
   {
     permissionField: "effective_end_datetime",
-    exportField: "End Date",
+    exportField: "Due Date",
     dataField: "effective_end_datetime",
   },
   {
@@ -742,6 +742,11 @@ export const adminCheckListMappings = [
 ];
 
 export const jurisdictionRuleMapping = [
+   {
+    permissionField: "r_number",
+    exportField: "Geo Bases ID",
+    dataField: "r_number",
+  },
   {
     permissionField: "config_name",
     exportField: "Configuration Name",

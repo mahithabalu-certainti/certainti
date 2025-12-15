@@ -1864,12 +1864,15 @@ async function uploadAttachmentToAzure(
       );
       return;
     }
+    const accountInfo =  await interactionService.getAccountNumberByRid(value?.account_rid);
+    const accountNumber = accountInfo.data?.account_number || "account";
     if (req.file) {
       let fileInfo = await uploadToAzureBlob(
         req.file,
         value?.account_rid,
         value?.project_rid,
-        value?.interaction_rid
+        value?.interaction_rid,
+        accountNumber
       );
       handleSuccessResponse(res, {
         fileName: fileInfo.name,

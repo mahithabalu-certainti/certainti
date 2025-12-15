@@ -116,7 +116,7 @@ export class AttachmentService {
 
       await this.createAttachmentTables(accountNumber);
 
-        const { url, name, extension, size } = await uploadToAzureBlob(file, account_rid);
+        const { url, name, extension, size } = await uploadToAzureBlob(file, account_rid, accountData.r_number);
         
         if(name.length > 100) {
           logMessage("Document name cannot exceed 100 characters: " + name);

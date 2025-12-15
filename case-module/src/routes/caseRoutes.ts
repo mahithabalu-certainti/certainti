@@ -296,4 +296,9 @@ routes.get(
   checkUserStatusMiddleware("NA"),
   controller.caseController.getCaseSubmissionDate
 )
+routes.put(
+  "/project/signoff",
+  checkUserStatusMiddleware("projects_tech_summary_view_edit"),
+  controller.caseController.signoffTechnicalDocumentation
+)
 export default routes;

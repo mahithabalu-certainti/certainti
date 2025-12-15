@@ -4006,13 +4006,27 @@ class CaseSchemaService {
       if (isDropdownList) {
         if (userIds.length > 0) {
           const getUserDetails = await this.mainDbSequelize.query(rawQueries.getOwnerDetails(userIds));
-          const userMap = new Map(getUserDetails[0].map((d: any) => [d.rid, d.name]));
-          const finalData = caseTeamMembers.map((d: any) => {
+          const userMap = new Map(getUserDetails[0].map((d: any) => [d.rid, {name : d.name, profile_url : d.profile_url}]));
+          let profileUrl;
+          let userName;
+          const finalData = await Promise.all(caseTeamMembers.map(async (d: any) => {
+            if(userMap.get(d.user_rid) !== undefined) {
+              userName = userMap.get(d.user_rid)?.name || null
+              if(userMap.get(d.user_rid)?.profile_url !== null) {
+                profileUrl = await generateSasUrl(userMap.get(d.user_rid)?.profile_url);
+              } else {
+                profileUrl = null
+              }
+            } else {
+              profileUrl = null
+              userName = null
+            }
             return {
               ...d,
-              user_name: userMap.get(d.user_rid)
+              user_name: userName,
+              profile_url : profileUrl
             }
-          })
+          }))
           return finalData
         }
       } else return caseTeamMembers;
@@ -5701,7 +5715,7 @@ class CaseSchemaService {
           description: data.task_description || "",
           fiscal_year: caseInfo?.fiscal_year || 0,
           assigned_to: data.assigned_to || "",
-          status_rid: data.status_rid || "",
+          status_rid: data.task_status_rid || "",
           priority_rid: data.priority_rid || "",
           effective_start_datetime: data.effective_start_datetime,
           effective_end_datetime: data.effective_end_datetime,
@@ -6398,7 +6412,7 @@ class CaseSchemaService {
     if (result) return result;
     else return null;
   }
-  async addComments(data: AddCommentsType, accountNumber: string, taskNumber: string, files: Express.Multer.File[]) {
+  async addComments(data: AddCommentsType, accountNumber: string, taskNumber: string, files: Express.Multer.File[],accountRNumber: string) {
     const { TaskComments, CommentsAttachments, TaskAttachments, CaseTimeline, TaskCollaborators, Activities, ActivityHistory } = await this.caseModelService.getModels(accountNumber);
     const commentPayload: any = {
       created_by: data.created_by,
@@ -6429,10 +6443,10 @@ class CaseSchemaService {
           await TaskCollaborators.create(collaboratorPayload);
         }
       }
-      if (files.length > 0) {
-        for (let f of files) {
-          const uploadFile = await uploadToAzureBlob(f, data.account_rid, taskNumber, "cases");
-          if (uploadFile) {
+      if(files.length > 0) {
+        for(let f of files) {
+          const uploadFile = await uploadToAzureBlob(f, data.account_rid, taskNumber,accountRNumber, "cases");
+          if(uploadFile) {
             const commentsAttachmentPayload: any = {
               created_by: data.created_by,
               created_datetime: new Date(),
@@ -6535,7 +6549,7 @@ class CaseSchemaService {
     }
   }
 
-  async updateComments(data: UpdateCommentsType, accountNumber: string, taskNumber: string, files: Express.Multer.File[]) {
+  async updateComments(data: UpdateCommentsType, accountNumber: string, taskNumber: string, files: Express.Multer.File[], accountRNumber: string) {
     const { TaskComments, CommentsAttachments, TaskAttachments, TaskCollaborators, CaseHistory, CaseTimeline, ActivityHistory } = await this.caseModelService.getModels(accountNumber);
     const isCommentExists = await TaskComments.findOne({
       where: {
@@ -6577,10 +6591,10 @@ class CaseSchemaService {
             await TaskCollaborators.create(collaboratorPayload);
           }
         }
-        if (files.length > 0) {
-          for (let f of files) {
-            const uploadFile = await uploadToAzureBlob(f, data.account_rid, taskNumber, "cases");
-            if (uploadFile) {
+        if(files.length > 0) {
+          for(let f of files) {
+            const uploadFile = await uploadToAzureBlob(f, data.account_rid, taskNumber,accountRNumber, "cases");
+            if(uploadFile) {
               const commentsAttachmentPayload: any = {
                 created_by: data.modified_by,
                 created_datetime: new Date(),
@@ -7020,14 +7034,14 @@ class CaseSchemaService {
     }
   }
 
-  async addAttachmentForTask(data: any, accountNumber: string, files: Express.Multer.File[], userId: string) {
-    const { TaskAttachments, ActivityHistory } = await this.caseModelService.getModels(accountNumber)
-    const findTaskDetails = await this.findTaskById(data.task_rid, data.account_rid, data.case_rid, accountNumber, data.task_type || 'case_task');
-    if (files != undefined) {
-      if (Array.isArray(files)) {
-        for (let f of files) {
-          const uploadFile = await uploadToAzureBlob(f, data.account_rid, findTaskDetails?.r_number!, "cases");
-          if (uploadFile) {
+  async addAttachmentForTask (data : any, accountNumber : string, files : Express.Multer.File[], userId : string, accountRNumber: string) {
+    const {TaskAttachments,ActivityHistory} = await this.caseModelService.getModels(accountNumber)
+    const findTaskDetails = await this.findTaskById(data.task_rid, data.account_rid, data.case_rid, accountNumber,data.task_type || 'case_task');
+    if(files != undefined) {
+      if(Array.isArray(files)) {
+        for(let f of files) {
+          const uploadFile = await uploadToAzureBlob(f, data.account_rid, findTaskDetails?.r_number!, accountRNumber, "cases");
+          if(uploadFile) {
             const taskAttachmentPayload: any = {
               account_rid: data.account_rid,
               task_rid: data.task_rid,
