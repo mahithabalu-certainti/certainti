@@ -250,8 +250,6 @@ export class TaskService {
       // Get related resources (status, priority, assigned to)
       const resourceRids = [
         ...new Set(tasksRaw.flatMap(task => [
-          task.status_rid,
-          task.priority_rid,
           task.assigned_to
         ]))
       ];
@@ -266,7 +264,7 @@ export class TaskService {
           const schemaNumber = schemaNumberMap.get(task.account_rid);
           if (!schemaNumber) return;
 
-          [task.status_rid, task.priority_rid, task.assigned_to].forEach(resourceRid => {
+          [task.assigned_to].forEach(resourceRid => {
             if (resourceRid) {
               if (!resourceRidsBySchema.has(schemaNumber)) {
                 resourceRidsBySchema.set(schemaNumber, []);

@@ -106,18 +106,17 @@ interface CaseProjectAttributes {
   effective_nonlabor_cost: number | null;
   effective_metric_type?: string | null;
   default_metric_type?: string | null;
-  is_rd_claim_qualified: boolean | null ;
+  is_rd_claim_qualified: boolean | null;
   rd_percent_potential_ai_updated: number | null;
   total_nonlabor_from_tasks: number | null;
 }
 
 export interface CaseProjectCreationAttributes
-  extends Optional<CaseProjectAttributes, "rid"> {}
+  extends Optional<CaseProjectAttributes, "rid"> { }
 
 export class CaseProject
   extends Model<CaseProjectAttributes, CaseProjectCreationAttributes>
-  implements CaseProjectAttributes
-{
+  implements CaseProjectAttributes {
   public rid!: string;
   public r_number?: string;
   public eid?: string;
@@ -277,292 +276,292 @@ export class CaseProject
         project_classification_rid: { type: DataTypes.STRING(50), allowNull: true },
         project_classification_other: { type: DataTypes.TEXT, allowNull: true },
         project_client_group: { type: DataTypes.TEXT, allowNull: true },
-        auto_send_ai_interaction: { 
-          type: DataTypes.BOOLEAN, 
-          allowNull: true, 
-          defaultValue: false 
+        auto_send_ai_interaction: {
+          type: DataTypes.BOOLEAN,
+          allowNull: true,
+          defaultValue: false
         },
         country_rid: { type: DataTypes.STRING(50), allowNull: true },
         region_rid: { type: DataTypes.STRING(50), allowNull: true },
         currency_rid: { type: DataTypes.STRING(50), allowNull: true },
-        max_ai_interaction: { 
-          type: DataTypes.INTEGER, 
-          allowNull: true, 
-          defaultValue: 0 
+        max_ai_interaction: {
+          type: DataTypes.INTEGER,
+          allowNull: true,
+          defaultValue: 0
         },
         expiry_duration: { type: DataTypes.INTEGER, allowNull: true },
         auto_access_rd: { type: DataTypes.BOOLEAN, allowNull: true },
         project_startdate: { type: DataTypes.DATE, allowNull: true },
         project_enddate: { type: DataTypes.DATE, allowNull: true },
-        total_fte_prj: { 
-          type: DataTypes.INTEGER, 
-          allowNull: true, 
-          defaultValue: 0 
+        total_fte_prj: {
+          type: DataTypes.INTEGER,
+          allowNull: true,
+          defaultValue: 0
         },
-        total_fte_from_prj_res: { 
-          type: DataTypes.INTEGER, 
-          allowNull: true, 
-          defaultValue: 0 
+        total_fte_from_prj_res: {
+          type: DataTypes.INTEGER,
+          allowNull: true,
+          defaultValue: 0
         },
-        total_fte_from_tasks: { 
-          type: DataTypes.INTEGER, 
-          allowNull: true, 
-          defaultValue: 0 
+        total_fte_from_tasks: {
+          type: DataTypes.INTEGER,
+          allowNull: true,
+          defaultValue: 0
         },
-        total_subcon_prj: { 
-          type: DataTypes.INTEGER, 
-          allowNull: true, 
-          defaultValue: 0 
+        total_subcon_prj: {
+          type: DataTypes.INTEGER,
+          allowNull: true,
+          defaultValue: 0
         },
-        total_subcon_from_prj_res: { 
-          type: DataTypes.INTEGER, 
-          allowNull: true, 
-          defaultValue: 0 
+        total_subcon_from_prj_res: {
+          type: DataTypes.INTEGER,
+          allowNull: true,
+          defaultValue: 0
         },
-        total_subcon_from_tasks: { 
-          type: DataTypes.INTEGER, 
-          allowNull: true, 
-          defaultValue: 0 
+        total_subcon_from_tasks: {
+          type: DataTypes.INTEGER,
+          allowNull: true,
+          defaultValue: 0
         },
-        total_nonlabor_prj: { 
-          type: DataTypes.INTEGER, 
-          allowNull: true, 
-          defaultValue: 0 
+        total_nonlabor_prj: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+          defaultValue: 0
         },
-        total_nonlabor_from_prj_res: { 
-          type: DataTypes.DECIMAL(18, 2), 
-          allowNull: true, 
-          defaultValue: 0 
+        total_nonlabor_from_prj_res: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+          defaultValue: 0
         },
-        total_resources_prj: { 
-          type: DataTypes.INTEGER, 
-          allowNull: true, 
-          defaultValue: 0 
+        total_resources_prj: {
+          type: DataTypes.INTEGER,
+          allowNull: true,
+          defaultValue: 0
         },
-        total_resources_from_prj_res: { 
-          type: DataTypes.INTEGER, 
-          allowNull: true, 
-          defaultValue: 0 
+        total_resources_from_prj_res: {
+          type: DataTypes.INTEGER,
+          allowNull: true,
+          defaultValue: 0
         },
-        total_resources_from_tasks: { 
-          type: DataTypes.INTEGER, 
-          allowNull: true, 
-          defaultValue: 0 
+        total_resources_from_tasks: {
+          type: DataTypes.INTEGER,
+          allowNull: true,
+          defaultValue: 0
         },
-        total_effort_prj: { 
-          type: DataTypes.DECIMAL(18, 2), 
-          allowNull: true, 
-          defaultValue: 0 
+        total_effort_prj: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+          defaultValue: 0
         },
-        total_effort_fte_prj: { 
-          type: DataTypes.DECIMAL(18, 2), 
-          allowNull: true, 
-          defaultValue: 0 
+        total_effort_fte_prj: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+          defaultValue: 0
         },
-        total_effort_subcon_prj: { 
-          type: DataTypes.DECIMAL(18, 2), 
-          allowNull: true, 
-          defaultValue: 0 
+        total_effort_subcon_prj: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+          defaultValue: 0
         },
-        total_effort_from_prj_res: { 
-          type: DataTypes.DECIMAL(18, 2), 
-          allowNull: true, 
-          defaultValue: 0 
+        total_effort_from_prj_res: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+          defaultValue: 0
         },
-        total_effort_fte_from_prj_res: { 
-          type: DataTypes.DECIMAL(18, 2), 
-          allowNull: true, 
-          defaultValue: 0 
+        total_effort_fte_from_prj_res: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+          defaultValue: 0
         },
-        total_effort_subcon_from_prj_res: { 
-          type: DataTypes.DECIMAL(18, 2), 
-          allowNull: true, 
-          defaultValue: 0 
+        total_effort_subcon_from_prj_res: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+          defaultValue: 0
         },
-        total_effort_from_tasks: { 
-          type: DataTypes.DECIMAL(18, 2), 
-          allowNull: true, 
-          defaultValue: 0 
+        total_effort_from_tasks: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+          defaultValue: 0
         },
-        total_effort_fte_from_tasks: { 
-          type: DataTypes.DECIMAL(18, 2), 
-          allowNull: true, 
-          defaultValue: 0 
+        total_effort_fte_from_tasks: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+          defaultValue: 0
         },
-        total_effort_subcon_from_tasks: { 
-          type: DataTypes.DECIMAL(18, 2), 
-          allowNull: true, 
-          defaultValue: 0 
+        total_effort_subcon_from_tasks: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+          defaultValue: 0
         },
-        total_cost_prj: { 
-          type: DataTypes.DECIMAL(18, 2), 
-          allowNull: true, 
-          defaultValue: 0 
+        total_cost_prj: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+          defaultValue: 0
         },
-        total_cost_fte_prj: { 
-          type: DataTypes.DECIMAL(18, 2), 
-          allowNull: true, 
-          defaultValue: 0 
+        total_cost_fte_prj: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+          defaultValue: 0
         },
-        total_cost_subcon_prj: { 
-          type: DataTypes.DECIMAL(18, 2), 
-          allowNull: true, 
-          defaultValue: 0 
+        total_cost_subcon_prj: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+          defaultValue: 0
         },
-        total_cost_nonlabor_prj: { 
-          type: DataTypes.DECIMAL(18, 2), 
-          allowNull: true, 
-          defaultValue: 0 
+        total_cost_nonlabor_prj: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+          defaultValue: 0
         },
-        total_cost_from_prj_res: { 
-          type: DataTypes.DECIMAL(18, 2), 
-          allowNull: true, 
-          defaultValue: 0 
+        total_cost_from_prj_res: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+          defaultValue: 0
         },
-        total_cost_fte_from_prj_res: { 
-          type: DataTypes.DECIMAL(18, 2), 
-          allowNull: true, 
-          defaultValue: 0 
+        total_cost_fte_from_prj_res: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+          defaultValue: 0
         },
-        total_cost_subcon_from_prj_res: { 
-          type: DataTypes.DECIMAL(18, 2), 
-          allowNull: true, 
-          defaultValue: 0 
+        total_cost_subcon_from_prj_res: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+          defaultValue: 0
         },
-        total_cost_nonlabor_from_prj_res: { 
-          type: DataTypes.DECIMAL(18, 2), 
-          allowNull: true, 
-          defaultValue: 0 
+        total_cost_nonlabor_from_prj_res: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+          defaultValue: 0
         },
-        total_cost_from_tasks: { 
-          type: DataTypes.DECIMAL(18, 2), 
-          allowNull: true, 
-          defaultValue: 0 
+        total_cost_from_tasks: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+          defaultValue: 0
         },
-        total_cost_fte_from_tasks: { 
-          type: DataTypes.DECIMAL(18, 2), 
-          allowNull: true, 
-          defaultValue: 0 
+        total_cost_fte_from_tasks: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+          defaultValue: 0
         },
-        total_cost_subcon_from_tasks: { 
-          type: DataTypes.DECIMAL(18, 2), 
-          allowNull: true, 
-          defaultValue: 0 
+        total_cost_subcon_from_tasks: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+          defaultValue: 0
         },
-        total_cost_prj_blended: { 
-          type: DataTypes.DECIMAL(18, 2), 
-          allowNull: true, 
-          defaultValue: 0 
+        total_cost_prj_blended: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+          defaultValue: 0
         },
-        total_cost_fte_prj_blended: { 
-          type: DataTypes.DECIMAL(18, 2), 
-          allowNull: true, 
-          defaultValue: 0 
+        total_cost_fte_prj_blended: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+          defaultValue: 0
         },
-        total_cost_subcon_prj_blended: { 
-          type: DataTypes.DECIMAL(18, 2), 
-          allowNull: true, 
-          defaultValue: 0 
+        total_cost_subcon_prj_blended: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+          defaultValue: 0
         },
-        total_cost_from_prj_res_blended: { 
-          type: DataTypes.DECIMAL(18, 2), 
-          allowNull: true, 
-          defaultValue: 0 
+        total_cost_from_prj_res_blended: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+          defaultValue: 0
         },
-        total_cost_fte_from_prj_res_blended: { 
-          type: DataTypes.DECIMAL(18, 2), 
-          allowNull: true, 
-          defaultValue: 0 
+        total_cost_fte_from_prj_res_blended: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+          defaultValue: 0
         },
-        total_cost_subcon_from_prj_res_blended: { 
-          type: DataTypes.DECIMAL(18, 2), 
-          allowNull: true, 
-          defaultValue: 0 
+        total_cost_subcon_from_prj_res_blended: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+          defaultValue: 0
         },
-        total_cost_from_tasks_blended: { 
-          type: DataTypes.DECIMAL(18, 2), 
-          allowNull: true, 
-          defaultValue: 0 
+        total_cost_from_tasks_blended: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+          defaultValue: 0
         },
-        total_cost_fte_from_tasks_blended: { 
-          type: DataTypes.DECIMAL(18, 2), 
-          allowNull: true, 
-          defaultValue: 0 
+        total_cost_fte_from_tasks_blended: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+          defaultValue: 0
         },
-        total_cost_subcon_from_tasks_blended: { 
-          type: DataTypes.DECIMAL(18, 2), 
-          allowNull: true, 
-          defaultValue: 0 
+        total_cost_subcon_from_tasks_blended: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+          defaultValue: 0
         },
-        blended_rate_fte: { 
-          type: DataTypes.DECIMAL(18, 2), 
-          allowNull: true, 
-          defaultValue: 0 
+        blended_rate_fte: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+          defaultValue: 0
         },
-        blended_rate_subcon: { 
-          type: DataTypes.DECIMAL(18, 2), 
-          allowNull: true, 
-          defaultValue: 0 
+        blended_rate_subcon: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+          defaultValue: 0
         },
-        rd_percent_potential_ai: { 
-          type: DataTypes.DECIMAL(18, 2), 
-          allowNull: true, 
-          defaultValue: 0 
+        rd_percent_potential_ai: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+          defaultValue: 0
         },
-        rd_percent_adjustment: { 
-          type: DataTypes.DECIMAL(18, 2), 
-          allowNull: true, 
-          defaultValue: 0 
+        rd_percent_adjustment: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+          defaultValue: 0
         },
-        rd_percent_final: { 
-          type: DataTypes.DECIMAL(18, 2), 
-          allowNull: true, 
-          defaultValue: 0 
+        rd_percent_final: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+          defaultValue: 0
         },
-        qre_fte: { 
-          type: DataTypes.DECIMAL(18, 2), 
-          allowNull: true, 
-          defaultValue: 0 
+        qre_fte: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+          defaultValue: 0
         },
-        qre_subcon: { 
-          type: DataTypes.DECIMAL(18, 2), 
-          allowNull: true, 
-          defaultValue: 0 
+        qre_subcon: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+          defaultValue: 0
         },
-        qre_nonlabor: { 
-          type: DataTypes.DECIMAL(18, 2), 
-          allowNull: true, 
-          defaultValue: 0 
+        qre_nonlabor: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+          defaultValue: 0
         },
-        qre_final: { 
-          type: DataTypes.DECIMAL(18, 2), 
-          allowNull: true, 
-          defaultValue: 0 
+        qre_final: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+          defaultValue: 0
         },
-        rd_credits_fte_fed_level: { 
-          type: DataTypes.DECIMAL(18, 2), 
-          allowNull: true, 
-          defaultValue: 0 
+        rd_credits_fte_fed_level: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+          defaultValue: 0
         },
-        rd_credits_subcon_fed_level: { 
-          type: DataTypes.DECIMAL(18, 2), 
-          allowNull: true, 
-          defaultValue: 0 
+        rd_credits_subcon_fed_level: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+          defaultValue: 0
         },
-        rd_credits_nonlabor_fed_level: { 
-          type: DataTypes.DECIMAL(18, 2), 
-          allowNull: true, 
-          defaultValue: 0 
+        rd_credits_nonlabor_fed_level: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+          defaultValue: 0
         },
-        rd_credits_fed_level: { 
-          type: DataTypes.DECIMAL(18, 2), 
-          allowNull: true, 
-          defaultValue: 0 
+        rd_credits_fed_level: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+          defaultValue: 0
         },
-        rd_credits_total: { 
-          type: DataTypes.DECIMAL(18, 2), 
-          allowNull: true, 
-          defaultValue: 0 
+        rd_credits_total: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+          defaultValue: 0
         },
         interaction_cc_list: { type: DataTypes.TEXT, allowNull: true },
         assessment_status: { type: DataTypes.TEXT, allowNull: true },
@@ -571,72 +570,72 @@ export class CaseProject
         project_description: { type: DataTypes.STRING(2000), allowNull: true },
         status_rid: { type: DataTypes.STRING(50), allowNull: true },
         project_type_rid: { type: DataTypes.STRING(50), allowNull: true },
-        effective_total_fte: { 
-          type: DataTypes.INTEGER, 
-          allowNull: true, 
-          defaultValue: 0 
+        effective_total_fte: {
+          type: DataTypes.INTEGER,
+          allowNull: true,
+          defaultValue: 0
         },
-        effective_total_subcon: { 
-          type: DataTypes.INTEGER, 
-          allowNull: true, 
-          defaultValue: 0 
+        effective_total_subcon: {
+          type: DataTypes.INTEGER,
+          allowNull: true,
+          defaultValue: 0
         },
-        effective_total_nonlabor: { 
-          type: DataTypes.INTEGER, 
-          allowNull: true, 
-          defaultValue: 0 
+        effective_total_nonlabor: {
+          type: DataTypes.INTEGER,
+          allowNull: true,
+          defaultValue: 0
         },
-        effective_cost: { 
-          type: DataTypes.DECIMAL(18, 2), 
-          allowNull: true, 
-          defaultValue: 0 
+        effective_cost: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+          defaultValue: 0
         },
-        effective_effort: { 
-          type: DataTypes.DECIMAL(18, 2), 
-          allowNull: true, 
-          defaultValue: 0 
+        effective_effort: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+          defaultValue: 0
         },
-        effective_fte_cost: { 
-          type: DataTypes.DECIMAL(18, 2), 
-          allowNull: true, 
-          defaultValue: 0 
+        effective_fte_cost: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+          defaultValue: 0
         },
-        effective_fte_effort: { 
-          type: DataTypes.DECIMAL(18, 2), 
-          allowNull: true, 
-          defaultValue: 0 
+        effective_fte_effort: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+          defaultValue: 0
         },
-        effective_subcon_cost: { 
-          type: DataTypes.DECIMAL(18, 2), 
-          allowNull: true, 
-          defaultValue: 0 
+        effective_subcon_cost: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+          defaultValue: 0
         },
-        effective_subcon_effort: { 
-          type: DataTypes.DECIMAL(18, 2), 
-          allowNull: true, 
-          defaultValue: 0 
+        effective_subcon_effort: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+          defaultValue: 0
         },
-        effective_nonlabor_cost: { 
-          type: DataTypes.DECIMAL(18, 2), 
-          allowNull: true, 
-          defaultValue: 0 
+        effective_nonlabor_cost: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+          defaultValue: 0
         },
         effective_metric_type: { type: DataTypes.STRING(50), allowNull: true },
         default_metric_type: { type: DataTypes.STRING(50), allowNull: true },
-        is_rd_claim_qualified: { 
-          type: DataTypes.BOOLEAN, 
-          allowNull: true, 
-          defaultValue: false 
+        is_rd_claim_qualified: {
+          type: DataTypes.BOOLEAN,
+          allowNull: true,
+          defaultValue: false
         },
-        rd_percent_potential_ai_updated: { 
-          type: DataTypes.DECIMAL(18, 2), 
-          allowNull: true, 
-          defaultValue: 0 
+        rd_percent_potential_ai_updated: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+          defaultValue: 0
         },
-        total_nonlabor_from_tasks: { 
-          type: DataTypes.INTEGER, 
-          allowNull: true, 
-          defaultValue: 0 
+        total_nonlabor_from_tasks: {
+          type: DataTypes.INTEGER,
+          allowNull: true,
+          defaultValue: 0
         },
       },
       {

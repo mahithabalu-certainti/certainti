@@ -8,7 +8,7 @@ import {
 } from "sequelize";
 import { HttpStatus, primaryKeyContacts, rawQueries } from "../utils/constant";
 import { IAccount, IUpdateAccount, AccountAttributes } from "../utils/types";
-import { errorLog, getTableSchemaByEntity, logMessage, uploadToAzureBlob } from "../utils/helpers";
+import { errorLog, generateSasUrl, getTableSchemaByEntity, logMessage, uploadToAzureBlob } from "../utils/helpers";
 import SchemaService from "./schemaService";
 import { Account } from "../models/accountModel";
 import { Country } from "../models/countryModel";
@@ -1216,7 +1216,7 @@ async accountList(
       });
       if (account.rid && file) {
         if (file) {
-          const file_url = await uploadToAzureBlob(file, account.rid);
+          const file_url = await uploadToAzureBlob(file, account.rid,account.r_number!);
           await repository.update(
             { logo_url: file_url },
             { where: { rid: account.rid }, returning: true }
@@ -1346,7 +1346,8 @@ async accountList(
  */
   async updateAccount(
     accountData: IUpdateAccount,
-    userId: string
+    userId: string,
+    file?: Express.Multer.File
   ): Promise<{
     statusCode: number;
     message: string;
@@ -1418,7 +1419,11 @@ async accountList(
       }
 
       let parent_account: any = null;
-
+      if(file)
+      {
+        const file_url = await uploadToAzureBlob(file, accountData.account_rid, existingAcc?.r_number!);
+        accountData.logo_url = file_url;
+      }
       if (data_storage === "store_in_parent" && parent_account_rid !== null) {
         parent_account = await repository.findOne({
           where: {
@@ -1707,6 +1712,10 @@ async accountList(
           where: { rid: accountById.parent_account_rid || "" },
         });
         accountNumber = parentAccount?.r_number || "";
+      }
+      if(accountById?.logo_url)
+      {
+        accountById.logo_url =  await generateSasUrl(accountById.logo_url);
       }
 
       // Fetch related data in parallel

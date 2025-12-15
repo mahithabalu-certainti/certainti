@@ -514,6 +514,11 @@ async function exportJurisdictionsConfigurations(
                    .tz(isValidTZ ? value.timezone : "UTC")
                    .format("YYYY-MMM-DD, hh:mm:ss A");
                };
+          // Helper for just date
+            const formatDateOnly = (date?: Date) => {
+              if (!date) return null;
+              return moment(date).format("YYYY-MMM-DD");
+            };
     if (result.statusCode === HttpStatus.SUCCESS) {
             const finalStructuredData =
               result?.data?.configs.length < 1
@@ -523,8 +528,8 @@ async function exportJurisdictionsConfigurations(
                       r_number: d.r_number,
                       status_name: d.status_name,
                       config_name: d.config_name,
-                      effective_start_date: formatDate(d?.effective_start_date),
-                      effective_end_date: formatDate(d?.effective_end_date),
+                      effective_start_date: formatDateOnly(d?.effective_start_date),
+                      effective_end_date: formatDateOnly(d?.effective_end_date),
                       country_name: d.country_name,
                       state_name: d.state_name,
                       is_federal: d.is_federal ? "Yes" : "No",
