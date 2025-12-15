@@ -58,7 +58,8 @@ export const ProfileUserDetailComponent = ({
     return map;
   }, [userViewEditFields]);
 
-  const { mutateAsync: uploadImage } = useUploadProfileImage();
+  const { mutateAsync: uploadImage, isPending: isUploadingImage } =
+    useUploadProfileImage();
 
   const transformedData = useMemo(() => {
     const menus: {
@@ -411,13 +412,20 @@ export const ProfileUserDetailComponent = ({
                   </div>
                 </div> */}
 
+                {/* Upload Loading Overlay */}
+                {isUploadingImage && (
+                  <div className='absolute inset-0 bg-black/30 flex items-center justify-center rounded-full'>
+                    <div className='w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin' />
+                  </div>
+                )}
+
                 {/* Upload Icon Button (visible on mobile/touch) */}
                 <button
                   onClick={triggerFileInput}
-                  className='absolute bottom-0.5 right-1 w-9 h-9 bg-gray-200 border border-[#CBD6E2] cursor-pointer rounded-full flex items-center justify-center shadow-lg hover:bg-blue-100 transition-colors'
+                  disabled={isUploadingImage}
+                  className='absolute bottom-0.5 right-1 w-9 h-9 bg-gray-200 border border-[#CBD6E2] cursor-pointer rounded-full flex items-center justify-center shadow-lg hover:bg-blue-100 transition-colors  disabled:cursor-default disabled:hover:bg-gray-200'
                   aria-label='Upload profile picture'
                 >
-                  {' '}
                   <React.Suspense fallback={null}>
                     <CameraIcon className='w-4 h-4 [&>path]:fill-[#2D3E4F]' />
                   </React.Suspense>
