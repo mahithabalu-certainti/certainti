@@ -151,7 +151,7 @@ export const getChecklistItemsTableColumns =
       width: 700,
     },
     {
-      id: 'completed_by',
+      id: 'modified_by_name',
       label: 'Completed By',
       width: 200,
     },

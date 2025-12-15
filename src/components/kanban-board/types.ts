@@ -133,6 +133,7 @@ export interface TaskCard {
   task_status_name?: string;
   tags?: string[];
   comments_count: number;
+  profile_url: string | null;
 }
 
 export interface KanbanColumn {

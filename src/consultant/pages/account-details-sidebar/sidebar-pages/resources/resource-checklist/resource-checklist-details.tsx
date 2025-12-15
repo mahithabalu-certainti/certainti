@@ -21,6 +21,8 @@ import DetailsSectionSkeleton from '../../../../../../components/skeleton-compon
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../store/store';
 import { AllPermissions } from '../../../../../../common-service';
+import { getChecklistItemsTableColumns } from '../../../../../../components/details-section/helpers';
+import DetailsTable from '../../../../../../components/details-section/details-table';
 
 interface ChecklistDetailsProps {
   accountInActive: boolean;
@@ -182,6 +184,11 @@ const ResourceChecklistDetails: React.FC<ChecklistDetailsProps> = ({
   );
   const auditDetails = applyHidePermission(auditInfo, permissionMap);
 
+  const checklistItemsColumns = getChecklistItemsTableColumns();
+  const hideChecklistItemsTable =
+    !permissionMap?.['checklists']?.read &&
+    !permissionMap?.['checklists']?.edit;
+
   return (
     <div>
       <SectionHeader
@@ -217,10 +224,18 @@ const ResourceChecklistDetails: React.FC<ChecklistDetailsProps> = ({
             fullColumn={true}
             customStyle='pt-[1px]'
           />
+          {data &&
+            data.checklist_items?.length > 0 &&
+            !hideChecklistItemsTable && (
+              <DetailsTable
+                title='Checklist Items'
+                columns={checklistItemsColumns}
+                data={data?.checklist_items || []}
+              />
+            )}
           <DetailsSection
             title='Audit Information'
             data={auditDetails}
-            customStyle='pt-0 mt-0'
             isAudit={true}
           />
         </>

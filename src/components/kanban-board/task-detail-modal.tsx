@@ -909,6 +909,19 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
             });
           }
           setDeletedAttachmentIds([]);
+          queryClient.invalidateQueries({
+            queryKey: ['taskActivities', accountId, caseId, taskId],
+          });
+          queryClient.invalidateQueries({
+            queryKey: [
+              'taskActivitiesInfinite',
+              {
+                case_rid: caseId,
+                account_rid: accountId,
+                task_rid: taskId,
+              },
+            ],
+          });
           successToast('Attachment deleted successfully');
         } catch (error) {
           let errorMessage = 'Failed to delete attachments';
@@ -954,6 +967,19 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
 
           queryClient.invalidateQueries({
             queryKey: ['taskAttachments', attachmentsParams],
+          });
+          queryClient.invalidateQueries({
+            queryKey: ['taskActivities', accountId, caseId, taskId],
+          });
+          queryClient.invalidateQueries({
+            queryKey: [
+              'taskActivitiesInfinite',
+              {
+                case_rid: caseId,
+                account_rid: accountId,
+                task_rid: taskId,
+              },
+            ],
           });
           successToast('Attachment uploaded successfully');
         } catch (error) {
