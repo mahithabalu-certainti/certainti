@@ -10,7 +10,7 @@ import {
   isValidTimezone,
   logMessage,
 } from "../utils/helpers";
-import { HttpStatus, activityFieldMappings, callactivityFieldMappings, emailactivityFieldMappings, meetingactivityFieldMappings, taskactivityFieldMappings } from "../utils/constants";
+import { HttpStatus} from "../utils/constants";
 import {
   listActivityTaskSchema,
   exportActivitySchema,
@@ -25,6 +25,7 @@ import {
 } from "../lib/joi/schemas/schema";
 import configurations from "../config/config";
 import moment from "moment";
+import { activityFieldMappings, callactivityFieldMappings, emailactivityFieldMappings, meetingactivityFieldMappings, taskactivityFieldMappings } from "../utils/excelExportMapping";
 
 const services = configurations.getInstance().getServices();
 const activityService = services.activityService;

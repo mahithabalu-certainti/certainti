@@ -290,7 +290,7 @@ export class JurisdictionSchemaService {
       const group = configRequest.platformConfig;
       const response: any = await JurisdictionConfig.findOne({
         where: {
-          rid: group.config_rid,
+          federal_config_id: configRequest.config_rid,
         },
       });
       if (!response) {
@@ -357,8 +357,19 @@ export class JurisdictionSchemaService {
     filters: filterType,
     search: string,
     sortBy: string,
-    sortOrder: string
+    sortOrder: string,
+    configRid?: string
   ) {
+    console.log("Listing jurisdiction config with params:", {
+      page,
+      limit,
+      apiType,
+      filters,
+      search,
+      sortBy,
+      sortOrder,
+      configRid,
+    }); 
     try {
       // Ensure filters is not null or undefined
       filters = filters || {};
@@ -376,7 +387,7 @@ export class JurisdictionSchemaService {
       let whereKey: string = ``;
       let sortValue;
       let searchValue: string;
-      let templateQuery: string = ``;
+      let graphQlQuery: string = ``;
       let filterDatas = this.filterForJurisdictionConfig(
         filters,
         andConditions,
@@ -392,9 +403,13 @@ export class JurisdictionSchemaService {
       searchValue = search ? `%${search}%` : `%%`;
       whereKey = `1 = 1`;
 
-      // Optimized conditions joining
-      const conditions = [filterQueryValues, templateQuery].filter(Boolean);
+       if (apiType === "graphql") {
+        console.log("GraphQL query configRid:", configRid);
+        graphQlQuery = ` jc.rid = '${configRid}'`;
+      }
 
+      // Optimized conditions joining
+      const conditions = [filterQueryValues, graphQlQuery].filter(Boolean);
       const joinedConditions =
         conditions.length > 0 ? " AND " + conditions.join(" AND ") : "";
 
