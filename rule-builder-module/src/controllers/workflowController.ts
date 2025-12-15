@@ -35,9 +35,9 @@ async function listScopes(req: Request, res: Response): Promise<void> {
         if (!value) {
             return;
         }
-        // if (!userId) {
-        //   return;
-        // }
+        if (!userId) {
+          return;
+        }
         const result = await workFlowService.listScopes(
             value,
             userId,
@@ -77,9 +77,9 @@ async function listScopeEvents(req: Request, res: Response): Promise<void> {
         if (!value) {
             return;
         }
-        // if (!userId) {
-        //   return;
-        // }
+        if (!userId) {
+          return;
+        }
         const result = await workFlowService.listScopeEvents(
             value,
             userId,
@@ -118,9 +118,9 @@ async function listEventConditions(req: Request, res: Response): Promise<void> {
         if (!value) {
             return;
         }
-        // if (!userId) {
-        //   return;
-        // }
+        if (!userId) {
+          return;
+        }
         const result = await workFlowService.listEventConditions(
             value,
             userId,
@@ -159,9 +159,9 @@ async function listConditionCategory(req: Request, res: Response): Promise<void>
         if (!value) {
             return;
         }
-        // if (!userId) {
-        //   return;
-        // }
+        if (!userId) {
+          return;
+        }
         const result = await workFlowService.listConditionCategory(
             value,
             userId,
@@ -200,9 +200,9 @@ async function listFields(req: Request, res: Response): Promise<void> {
         if (!value) {
             return;
         }
-        // if (!userId) {
-        //   return;
-        // }
+        if (!userId) {
+          return;
+        }
         const result = await workFlowService.listFields(
             value,
             userId,
@@ -241,9 +241,9 @@ async function listOperators(req: Request, res: Response): Promise<void> {
         if (!value) {
             return;
         }
-        // if (!userId) {
-        //   return;
-        // }
+        if (!userId) {
+          return;
+        }
         const result = await workFlowService.listOperators(
             value,
             userId,
@@ -282,9 +282,9 @@ async function listValues(req: Request, res: Response): Promise<void> {
         if (!value) {
             return;
         }
-        // if (!userId) {
-        //   return;
-        // }
+        if (!userId) {
+          return;
+        }
         const result = await workFlowService.listValues(
             value,
             userId,
@@ -323,9 +323,9 @@ async function listActionTypes(req: Request, res: Response): Promise<void> {
         if (!value) {
             return;
         }
-        // if (!userId) {
-        //   return;
-        // }
+        if (!userId) {
+          return;
+        }
         const result = await workFlowService.listActionTypes(
             value,
             userId,
@@ -365,9 +365,9 @@ async function listActions(req: Request, res: Response): Promise<void> {
         if (!value) {
             return;
         }
-        // if (!userId) {
-        //   return;
-        // }
+        if (!userId) {
+          return;
+        }
         const result = await workFlowService.listActions(
             value,
             userId,

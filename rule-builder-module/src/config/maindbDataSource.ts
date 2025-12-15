@@ -60,48 +60,48 @@ async function getAzureSecrets() {
 export async function initSequelize() {
   try {
 
-    if (!sequelize) {
-      sequelize = new Sequelize(process.env.POSTGRES_CONNECTION_STRING!, {
-        dialect: "postgres",
-        logging: false
-      });
+    // if (!sequelize) {
+    //   sequelize = new Sequelize(process.env.POSTGRES_CONNECTION_STRING!, {
+    //     dialect: "postgres",
+    //     logging: false
+    //   });
 
-      await sequelize.authenticate();
-    }
-    return sequelize;
-    //   if (sequelize) {
-    //     return sequelize;
-    //   }
-    //   const { DB_NAME, DB_USER, DB_PASSWORD, DB_HOST } = await getAzureSecrets();
-
-    //   if (!DB_NAME || !DB_USER || !DB_PASSWORD || !DB_HOST) {
-    //     throw new Error("One or more required database secrets are missing.");
-    //   }
-
-    //  sequelize = new Sequelize(
-    //     DB_NAME,
-    //     DB_USER,
-    //     DB_PASSWORD,
-    //     {
-    //       host: DB_HOST,
-    //       dialect: "postgres",
-    //       port: 5432,
-    //       logging: env !== "production",
-    //       define: {
-    //         freezeTableName: true,
-    //         timestamps: false,
-    //       },
-    //       dialectOptions: {
-    //         ssl: {
-    //           require: true,
-    //           rejectUnauthorized: false,
-    //         },
-    //       },
-    //     },
-    //   );
     //   await sequelize.authenticate();
-    //   logMessage("Database connection established successfully.");
-    //   return sequelize;
+    // }
+    // return sequelize;
+      if (sequelize) {
+        return sequelize;
+      }
+      const { DB_NAME, DB_USER, DB_PASSWORD, DB_HOST } = await getAzureSecrets();
+
+      if (!DB_NAME || !DB_USER || !DB_PASSWORD || !DB_HOST) {
+        throw new Error("One or more required database secrets are missing.");
+      }
+
+     sequelize = new Sequelize(
+        DB_NAME,
+        DB_USER,
+        DB_PASSWORD,
+        {
+          host: DB_HOST,
+          dialect: "postgres",
+          port: 5432,
+          logging: env !== "production",
+          define: {
+            freezeTableName: true,
+            timestamps: false,
+          },
+          dialectOptions: {
+            ssl: {
+              require: true,
+              rejectUnauthorized: false,
+            },
+          },
+        },
+      );
+      await sequelize.authenticate();
+      logMessage("Database connection established successfully.");
+      return sequelize;
   } catch (error) {
     errorLog("Database connection error:", (error as Error).message);
     process.exit(1);

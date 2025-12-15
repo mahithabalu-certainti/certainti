@@ -163,13 +163,13 @@ export const rawQueries = {
   },
 
   fetchEventRid(event_name: string, task_rid: string): string {
-    let query = `SELECT scope_type_rid, rid as event_rid FROM scope_events se WHERE se.event_name  = '${event_name}'`;
+    let query = `SELECT scope_type_rid, rid as event_rid FROM ${MAIN_SCHEMA_NAME}.scope_events se WHERE se.event_name  = '${event_name}'`;
     return query;
   },
 
   fetchRulesFromEvent(event_rid: string, scope_type_rid: string, entity_rid: string): string {
-    let query = `SELECT wrm.rid AS rule_rid,wrm.condition_rid,rm.apply_type FROM workflow_rule_master wrm LEFT JOIN workflow_rule_map rm 
-    ON rm.rule_rid = wrm.rid LEFT JOIN workflow_rule_scope_map rsm ON rsm.rule_rid = wrm.rid 
+    let query = `SELECT wrm.rid AS rule_rid,wrm.condition_rid,rm.apply_type FROM ${MAIN_SCHEMA_NAME}.workflow_rule_master wrm LEFT JOIN ${MAIN_SCHEMA_NAME}.workflow_rule_map rm 
+    ON rm.rule_rid = wrm.rid LEFT JOIN ${MAIN_SCHEMA_NAME}.workflow_rule_scope_map rsm ON rsm.rule_rid = wrm.rid 
     WHERE wrm.event_rid = '${event_rid}' AND wrm.scope_type_rid = '${scope_type_rid}'
     AND (
         rm.apply_type = 1
@@ -179,15 +179,15 @@ export const rawQueries = {
   },
 
   fetchRuleConditions(condition_rid: string, rule_rid: string): string {
-    let query = `SELECT wrc.rule_rid,rf.name as field,ro.name as operator,rv.name as value,wrc.logical_operator FROM workflow_rule_condition wrc 
-    JOIN rule_fields rf ON rf.rid = wrc.field_rid JOIN rule_operators ro ON ro.rid = wrc.operator_rid JOIN rule_values rv on rv.rid = wrc.value_rid 
+    let query = `SELECT wrc.rule_rid,rf.name as field,ro.name as operator,rv.name as value,wrc.logical_operator FROM ${MAIN_SCHEMA_NAME}.workflow_rule_condition wrc 
+    JOIN ${MAIN_SCHEMA_NAME}.rule_fields rf ON rf.rid = wrc.field_rid JOIN ${MAIN_SCHEMA_NAME}.rule_operators ro ON ro.rid = wrc.operator_rid JOIN rule_values rv on rv.rid = wrc.value_rid 
     WHERE wrc.rule_rid = '${rule_rid}' ORDER BY wrc.sequence `;
     return query;
   },
 
   fetchRuleActions(rule_rid: string): string {
-    let query = `SELECT wra.rule_rid,wra.action_rid, sa.name as action_name,sa.message_template,sa.metadata,wra.action_order FROM workflow_rule_action wra 
-    JOIN scope_actions sa ON sa.rid = wra.action_rid WHERE wra.rule_rid = '${rule_rid}' ORDER BY wra.action_order `;
+    let query = `SELECT wra.rule_rid,wra.action_rid, sa.name as action_name,sa.message_template,sa.metadata,wra.action_order FROM ${MAIN_SCHEMA_NAME}.workflow_rule_action wra 
+    JOIN ${MAIN_SCHEMA_NAME}.scope_actions sa ON sa.rid = wra.action_rid WHERE wra.rule_rid = '${rule_rid}' ORDER BY wra.action_order `;
     return query;
   }
 }
