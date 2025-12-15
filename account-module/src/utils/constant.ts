@@ -838,6 +838,7 @@ export const rawQueries = {
         comments VARCHAR(2000),
         project_description VARCHAR(2000),
         is_qualified BOOLEAN DEFAULT false
+        signoff BOOLEAN DEFAULT false
       );
     `;
   },

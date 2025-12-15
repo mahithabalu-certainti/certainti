@@ -2328,3 +2328,16 @@ export const fetchQueryForReferenceMap = (idField: any, nameField: any, table: a
 
   return query;
 };
+
+export const signoffProjectTechSummary  = (schemaName : string, projectFiscalRid : string, accountRid : string, signoff : boolean, userId : string) =>{
+  const query = `
+  UPDATE ${schemaName}.project_fiscal 
+  SET 
+  signoff = ${signoff}, modified_datetime = NOW(), modified_by = '${userId}'
+  WHERE
+  rid = '${projectFiscalRid}'
+  AND
+  account_rid = '${accountRid}'
+  `
+  return query;
+}
