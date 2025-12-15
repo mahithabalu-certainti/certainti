@@ -7,6 +7,7 @@ import React, {
 } from 'react';
 import {
   Select,
+  SelectChangeEvent,
   MenuItem,
   Tooltip,
   Table,
@@ -246,6 +247,7 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
             is_primary: user.is_primary || false,
             status: statusOption?.status_name || '',
             status_rid: user.status_rid || '',
+            assigned_task_count: Number(user.assigned_task_count) || 0,
           };
         }
       );
@@ -432,6 +434,70 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
       };
     });
   }
+
+  const handleConfirmStatusChange = (
+    index: number,
+    statusRid: string,
+    statusName: string
+  ) => {
+    setFormData((prev) => {
+      const updatedMembers = [...prev.team_members];
+      updatedMembers[index] = {
+        ...updatedMembers[index],
+        status: statusName,
+        status_rid: statusRid,
+      };
+      return {
+        ...prev,
+        team_members: updatedMembers,
+      };
+    });
+
+    setErrors((prev) => {
+      const newMemberErrors = [...(prev.team_members || [])];
+      if (!newMemberErrors[index]) {
+        newMemberErrors[index] = {};
+      }
+      newMemberErrors[index] = {
+        ...newMemberErrors[index],
+        status: undefined,
+      };
+      return {
+        ...prev,
+        team_members: newMemberErrors,
+      };
+    });
+  };
+
+  const handleStatusChange = (
+    e: SelectChangeEvent<unknown>,
+    member: CaseTeamMember,
+    index: number
+  ) => {
+    const selectedStatusName = e.target.value as string;
+    const selectedStatus = statusOptionsQuery.data?.data?.status?.find(
+      (s: { rid: string; status_name: string }) =>
+        s.status_name === selectedStatusName
+    );
+
+    if (
+      (selectedStatusName?.toLowerCase().trim() === 'inactive' ||
+        selectedStatusName?.toLowerCase().trim() === 'in-active') &&
+      (member.assigned_task_count || 0) >= 1
+    ) {
+      errorToast(
+        `Cannot deactivate user. Please unassign the ${member.assigned_task_count} assigned tasks before proceeding.`
+      );
+      return;
+    } else {
+      // Proceed with status change without confirmation
+      handleConfirmStatusChange(
+        index,
+        selectedStatus?.rid || '',
+        selectedStatusName
+      );
+    }
+  };
 
   function validateForm(): boolean {
     const newErrors: CaseTeamFormErrors = {};
@@ -836,7 +902,8 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
                                       }
                                       disabled={
                                         isDisabled ||
-                                        !permissionMap.role_rid?.edit
+                                        !permissionMap.role_rid?.edit ||
+                                        !!member.rid
                                       }
                                       size='small'
                                       fullWidth
@@ -955,7 +1022,8 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
                                       }
                                       disabled={
                                         isDisabled ||
-                                        !permissionMap.user_rid?.edit
+                                        !permissionMap.user_rid?.edit ||
+                                        !!member.rid
                                       }
                                       size='small'
                                       fullWidth
@@ -1142,54 +1210,9 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
                                   <div className='p-1'>
                                     <Select
                                       value={member.status || ''}
-                                      onChange={(e) => {
-                                        const selectedStatusName =
-                                          e.target.value;
-                                        const selectedStatus =
-                                          statusOptionsQuery.data?.data?.status?.find(
-                                            (s: {
-                                              rid: string;
-                                              status_name: string;
-                                            }) =>
-                                              s.status_name ===
-                                              selectedStatusName
-                                          );
-
-                                        // Update both status and status_rid
-                                        setFormData((prev) => {
-                                          const updatedMembers = [
-                                            ...prev.team_members,
-                                          ];
-                                          updatedMembers[index] = {
-                                            ...updatedMembers[index],
-                                            status: selectedStatusName,
-                                            status_rid:
-                                              selectedStatus?.rid || '',
-                                          };
-                                          return {
-                                            ...prev,
-                                            team_members: updatedMembers,
-                                          };
-                                        });
-
-                                        // Clear status error when a status is selected
-                                        setErrors((prev) => {
-                                          const newMemberErrors = [
-                                            ...(prev.team_members || []),
-                                          ];
-                                          if (!newMemberErrors[index]) {
-                                            newMemberErrors[index] = {};
-                                          }
-                                          newMemberErrors[index] = {
-                                            ...newMemberErrors[index],
-                                            status: undefined,
-                                          };
-                                          return {
-                                            ...prev,
-                                            team_members: newMemberErrors,
-                                          };
-                                        });
-                                      }}
+                                      onChange={(e) =>
+                                        handleStatusChange(e, member, index)
+                                      }
                                       disabled={
                                         isDisabled || !isCaseTeamEditable
                                       }

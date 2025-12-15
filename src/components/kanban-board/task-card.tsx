@@ -193,7 +193,7 @@ const TaskCardComponent: React.FC<ExtendedTaskCardProps> = ({
       <div className='flex items-center justify-between'>
         {showProfileIndicator && taskData.assigned_to_name && (
           <div
-            className='w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-semibold border border-white shadow-sm'
+            className='w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-semibold shadow-sm'
             style={{
               backgroundColor: '#F3E8FF',
               color: '#6B21A8',
@@ -202,7 +202,24 @@ const TaskCardComponent: React.FC<ExtendedTaskCardProps> = ({
             }}
             title={taskData.assigned_to_name}
           >
-            {generateInitials(taskData.assigned_to_name)}
+            {taskData.profile_url && (
+              <img
+                src={taskData.profile_url}
+                alt='user-profile-img'
+                className='w-full h-full object-cover rounded-full'
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none'; // hide broken image
+                  const fallback = e.currentTarget
+                    .nextElementSibling as HTMLElement;
+                  if (fallback) fallback.classList.remove('hidden');
+                }}
+              />
+            )}
+
+            {/* Initials fallback */}
+            <span className={taskData.profile_url ? 'hidden' : ''}>
+              {generateInitials(taskData.assigned_to_name)}
+            </span>
           </div>
         )}
 

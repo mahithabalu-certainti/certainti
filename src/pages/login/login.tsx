@@ -14,6 +14,7 @@ import {
   setUserId,
   UpdateOrgLogo,
   updatePermissions,
+  UpdateProfileURL,
 } from '../../store/slices';
 import { AllModules, fetchCurrentUserRole } from '../../common-service';
 import { NOT_FOUND } from '../../routes';
@@ -75,6 +76,7 @@ export const Login: React.FC = () => {
             logoUrl: userRole.data.logo_url,
           })
         );
+        dispatch(UpdateProfileURL(userRole.data.profile_url));
         const currentActiveRoute = accountNavItems.find(
           (menu) =>
             !menu.noRedirect &&

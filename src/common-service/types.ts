@@ -77,6 +77,7 @@ export interface GetCurrentUserRoleApiResponse extends CommonApiResponse {
     organisation_name: string;
     logo_url: string;
     profile_id: string;
+    profile_url: string;
   };
 }
 
@@ -399,6 +400,7 @@ export enum MenuOption {
   SURVEY = 'survey',
   NOTES = 'notes',
   ATTACHMENTS = 'attachments',
+  TASKS = 'tasks',
   INTERACTIONS = 'interactions',
   HELP = 'help',
   SETTINGS = 'settings',

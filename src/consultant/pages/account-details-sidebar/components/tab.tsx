@@ -52,6 +52,8 @@ import SearchBar from '../../../../components/search/search-bar';
 import { getNotesFilterFields } from '../../notes/helpers';
 import { getChecklistFilterFields } from '../../checklist/helpers';
 import { useGetUserOptions } from '../../../services/case-team';
+import { caseProjectTaskFilterFields } from '../../case/case-details/case-project-task/utils';
+import { caseProjectResourceFilterFields } from '../../case/case-details/case-project-resource/utils';
 interface TabProps {
   resourceTab?: ResourceTabs[];
   filterVisibility: boolean;
@@ -75,6 +77,10 @@ interface TabProps {
   fieldOptions?: FieldOptionType;
   handleFilterChange?: (fieldName: string, value: FilterValue) => void;
   permissionMapTaskTableColumn?: Record<
+    string,
+    { read: boolean; edit: boolean }
+  >;
+  permissionMapCaseProjectTableColumn?: Record<
     string,
     { read: boolean; edit: boolean }
   >;
@@ -111,6 +117,7 @@ const TabPanel: React.FC<TabProps> = ({
   fieldOptions,
   handleFilterChange,
   permissionMapTaskTableColumn,
+  permissionMapCaseProjectTableColumn,
   fiscalDatesArg,
   showSearch,
   searchDisabled = false,
@@ -511,6 +518,14 @@ const TabPanel: React.FC<TabProps> = ({
         permissionProjectResourcesMap,
         memoizedResourceStatus
       );
+    if (value === 'case-project-resource') {
+      return caseProjectResourceFilterFields(
+        permissionMapTaskTableColumn,
+        permissionMapCaseProjectTableColumn,
+        memoizedCountry,
+        regionData
+      );
+    }
     if (value === 'project-task')
       return projectTaskFilterFields(
         memoizedResourceCode,
@@ -521,6 +536,16 @@ const TabPanel: React.FC<TabProps> = ({
         fiscalDatesArg,
         memoizedResourceStatus
       );
+    if (value === 'case-project-task') {
+      return caseProjectTaskFilterFields(
+        permissionMapTaskTableColumn,
+        permissionMapCaseProjectTableColumn,
+        memoizedResourceType,
+        memoizedProjectResourceType,
+        memoizedProjectResourceClassification,
+        memoizedResourceStatus
+      );
+    }
     if (value === 'attachments')
       return getAttachmentsFilterFields(fieldOptions, attachmentPermissionMap);
     if (value === 'notes')

@@ -55,6 +55,10 @@ export const createTextField = (
     resetDependsFields?: string[];
     clearValue?: Record<string, string>;
     formatCostValue?: boolean;
+    labelTooltip?: {
+      showTooltip: boolean;
+      tooltipMessage: string;
+    };
     lengthRequired?: {
       key: string;
       minMatchedValue: RegExp;
@@ -78,6 +82,7 @@ export const createTextField = (
   anyOneRequired: options.anyOneRequired,
   hide: options.hide,
   lengthRequired: options.lengthRequired,
+  labelTooltip: options.labelTooltip,
   errorHandling: options.errorHandling,
   clearValue: options.clearValue,
   defaultValue: options.defaultValue,
@@ -248,6 +253,10 @@ export const createSelectField = (
     assignDefaultValue?: boolean;
     dependantLabel?: string;
     isFiscalYear?: boolean;
+    labelTooltip?: {
+      showTooltip: boolean;
+      tooltipMessage: string;
+    };
   }
 ): FieldType => ({
   type: 'select',
@@ -268,6 +277,7 @@ export const createSelectField = (
   assignDefaultValue: others.assignDefaultValue,
   dependantLabel: others.dependantLabel,
   isFiscalYear: others.isFiscalYear,
+  labelTooltip: others.labelTooltip,
 });
 export const createMultiSelectField = (
   name: string,
@@ -585,7 +595,7 @@ export const REGEX_PATTERNS = {
   ACCOUNT_ORG_NAME: /^[A-Za-z0-9 -&.,']+$/,
   MAX_ORG_NAME_LEGNTH: /^.{7,125}/,
   MIN_ORG_NAME_LEGNTH: /^.{7,}/,
-  EMAIL_SUBJECT: /^[A-Za-z0-9\s&\-.'",{}_]+$/,
+  EMAIL_SUBJECT: /^[A-Za-z0-9\s&\-.'",{}_()]+$/,
 };
 export const PROJECT_RESOURCE_REGEX = {
   // UUID VALIDATION STANDARD FORMAT
@@ -1111,4 +1121,32 @@ export const formatTimeToAMPM = (time?: string | null): string => {
   const parsed = dayjs(trimmed, ['HH:mm', 'HH:mm:ss', 'H:mm'], true);
   if (!parsed.isValid()) return '-';
   return parsed.format('hh:mm A'); // AM/PM
+};
+
+export const formatDateToYyyyMmmDd = (dateString: string): string => {
+  if (!dateString) return '';
+
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return '';
+
+  const monthNames = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+
+  const year = date.getFullYear();
+  const month = monthNames[date.getMonth()];
+  const day = String(date.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`; // 2026-May-02
 };

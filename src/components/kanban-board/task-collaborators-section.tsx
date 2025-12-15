@@ -1,5 +1,5 @@
 import React from 'react';
-import { Autocomplete, TextField } from '@mui/material';
+import { Autocomplete, TextField, Tooltip } from '@mui/material';
 import { Assignee, User } from './types';
 
 interface TaskCollaboratorsSectionProps {
@@ -144,16 +144,18 @@ const TaskCollaboratorsSection: React.FC<TaskCollaboratorsSectionProps> = ({
                   >
                     {option.initials}
                   </div>
-                  <span
-                    style={{
-                      flex: 1,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {option.name}
-                  </span>
+                  <Tooltip title={option.name} placement='top-start'>
+                    <span
+                      style={{
+                        flex: 1,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {option.name}
+                    </span>
+                  </Tooltip>
                 </div>
               </li>
             )}

@@ -121,10 +121,12 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
   const { name: loggedInUserName, userId: loggedInUserId } = useSelector(
     (state: RootState) => state.auth
   );
+  const { profileURL } = useSelector((state: RootState) => state.orgLogoInfo);
 
   const loggedInUser = {
     initials: generateInitials(loggedInUserName || ''),
     color: generateColorFromName(loggedInUserName || ''),
+    profileUrl: profileURL,
   };
 
   const [comment, setComment] = useState('');
@@ -594,6 +596,12 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
     return original.trim() === edited.trim();
   };
 
+  useEffect(() => {
+    if (fieldVisibility.all_activities && activeTab === 'activity') {
+      setActiveTab('comments');
+    }
+  }, [fieldVisibility.all_activities, activeTab, setActiveTab]);
+
   if (fieldVisibility.comments) return null;
 
   return (
@@ -631,21 +639,23 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
             </span>
           )}
         </button>
-        <button
-          onClick={() => setActiveTab('activity')}
-          className={`text-sm font-semibold pb-3 px-1 transition-all duration-200 ${
-            activeTab === 'activity'
-              ? 'text-gray-900 border-b-2 border-blue-600'
-              : 'text-gray-600 hover:text-gray-800 border-b-2 border-transparent'
-          }`}
-        >
-          Activity{' '}
-          {totalActivitiesCount > 0 && (
-            <span className='ml-1 text-xs text-gray-500'>
-              ({totalActivitiesCount})
-            </span>
-          )}
-        </button>
+        {!fieldVisibility.all_activities && (
+          <button
+            onClick={() => setActiveTab('activity')}
+            className={`text-sm font-semibold pb-3 px-1 transition-all duration-200 ${
+              activeTab === 'activity'
+                ? 'text-gray-900 border-b-2 border-blue-600'
+                : 'text-gray-600 hover:text-gray-800 border-b-2 border-transparent'
+            }`}
+          >
+            Activity{' '}
+            {totalActivitiesCount > 0 && (
+              <span className='ml-1 text-xs text-gray-500'>
+                ({totalActivitiesCount})
+              </span>
+            )}
+          </button>
+        )}
       </div>
 
       {/* Comments Tab */}
@@ -1055,14 +1065,32 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
               /* Add Comment Form */
               <div className='flex items-start gap-3 bg-white border border-gray-300 rounded-lg p-4 shadow-sm'>
                 <div
-                  className='w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 text-white'
+                  className='w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 text-white relative'
                   style={{
                     backgroundColor: loggedInUser.color,
                     fontSize: '8px',
                   }}
                 >
-                  {loggedInUser.initials}
+                  {loggedInUser.profileUrl && (
+                    <img
+                      src={loggedInUser.profileUrl}
+                      alt='Profile'
+                      className='w-full h-full object-cover rounded-full'
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none'; // hide broken image
+                        const fallback = e.currentTarget
+                          .nextElementSibling as HTMLElement;
+                        if (fallback) fallback.classList.remove('hidden');
+                      }}
+                    />
+                  )}
+
+                  {/* Initials fallback */}
+                  <span className={loggedInUser.profileUrl ? 'hidden' : ''}>
+                    {loggedInUser.initials}
+                  </span>
                 </div>
+
                 <div className='flex-1 space-y-3 min-w-0'>
                   <div className='relative'>
                     <textarea
@@ -1156,7 +1184,7 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
       )}
 
       {/* Activity Tab */}
-      {activeTab === 'activity' && (
+      {activeTab === 'activity' && !fieldVisibility.all_activities && (
         <div className='space-y-3 max-h-[400px] overflow-y-auto overflow-x-hidden overscroll-x-none scrollbar-hide pr-1'>
           {activities.length > 0 ? (
             activities.map((activity, idx) => (

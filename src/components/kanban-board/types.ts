@@ -60,6 +60,7 @@ export interface Task {
   commentCount: number;
   createdAt: Date;
   createdBy?: string;
+  created_by_rid?: string;
   modifiedBy?: string;
   description?: string;
   checklist?: Array<{ id: string; text: string; completed: boolean }>;
@@ -132,6 +133,7 @@ export interface TaskCard {
   task_status_name?: string;
   tags?: string[];
   comments_count: number;
+  profile_url: string | null;
 }
 
 export interface KanbanColumn {
