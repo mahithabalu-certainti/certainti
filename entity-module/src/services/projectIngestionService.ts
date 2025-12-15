@@ -16,7 +16,7 @@ import {
   ICreateProject,
   IKeyContactDetail,
   IUpdateProject,
-  CaseStatusResult, 
+  CaseStatusResult,
 } from "../utils/types";
 import moment, { Moment } from "moment";
 import { ProjectMapper } from "../utils/projectMapper";
@@ -48,6 +48,7 @@ import { checkProjectMappedToProjectRes } from "../utils/rawQueries";
 import { CaseProject } from "../models/caseProjectsModel";
 import { Case } from "../models/caseModel";
 import { CaseProjectFiscalRegion } from "../models/caseProjectFiscalRegionModel";
+import { CaseKeyContactDetails } from "../models/caseKeyContactModel";
 
 
 class ProjectIngestionService {
@@ -78,13 +79,13 @@ class ProjectIngestionService {
         typeof ProjectResourceFiscalRegion.initialize
       >;
       AccountDetails: ReturnType<typeof AccountDetails.initialize>;
-      
+      CaseKeyContactDetails: ReturnType<typeof CaseKeyContactDetails.initialize>;
     }
   > = new Map();
 
   constructor(logger: Logger) {
     this.logger = logger;
-    this.keyContactService = new KeyContactService();
+    this.keyContactService = new KeyContactService(logger);
   }
 
   get keyContacts() {
@@ -209,6 +210,7 @@ class ProjectIngestionService {
       mainDbSequelize,
       ""
     );
+    const caseKeyContactModel = await CaseKeyContactDetails.initialize(sequelize, schemaName);
 
 
     const models = {
@@ -228,8 +230,9 @@ class ProjectIngestionService {
       AccountDetails: AccountDetailsModel,
       AccountFiscalSummary: AccountFiscalSummaryModel,
       CaseProject: CaseProjectModel,
-      Case: CaseModel, 
+      Case: CaseModel,
       CaseProjectFiscalRegion: CaseProjectFiscalRegionModel,
+      CaseKeyContactDetails: caseKeyContactModel,
     };
     this.modelCache.set(schemaName, models);
     return models;
@@ -363,17 +366,16 @@ class ProjectIngestionService {
       ...baseData,
       default_metric_type: "project",
     });
-    if(accountSettings[0]?.auto_access_rd === true)
-      {
-        const req = {
-          data: [
-        {
-          account_rid: projectData.account_id,
-          project_fiscal_rid: [response.rid],
-        },
-          ],
-          type: "project",
-        };
+    if (accountSettings[0]?.auto_access_rd === true) {
+      const req = {
+        data: [
+          {
+            account_rid: projectData.account_id,
+            project_fiscal_rid: [response.rid],
+          },
+        ],
+        type: "project",
+      };
       logMessage(`Triggering AI for project fiscal rid: ${req}`);
       await this.triggerAI(req);
     }
@@ -428,7 +430,7 @@ class ProjectIngestionService {
       throw new Error("Error fetching account : " + (err as Error).message);
     }
   }
-  
+
   async triggerAI(req: any) {
     try {
       let payload: {
@@ -731,7 +733,17 @@ class ProjectIngestionService {
     userId: string,
     schemaName: string
   ) {
-    const { KeyContact } = await this.getModels(schemaName);
+    const { KeyContact, CaseKeyContactDetails, Case } = await this.getModels(schemaName);
+
+    let projectCaseMapping: any[] = [];
+    const checkTableExists = await this.checkCaseProjectsTableExists(schemaName);
+    if (checkTableExists) {
+      projectCaseMapping = await this.fetchProjectFiscalCaseMapping(
+        schemaName,
+        projectId
+      );
+    }
+
     for (const contact of Object.values(key_contacts)) {
       if (contact.action_type === "edit") {
         if (
@@ -740,6 +752,7 @@ class ProjectIngestionService {
           contact.key_contact_role_rid
         ) {
           this.keyContacts.updateKeyContactDetails(contact, userId, KeyContact);
+          this.keyContacts.updateCaseKeyContactDetails(contact, userId, CaseKeyContactDetails, Case, projectCaseMapping);
         }
       } else if (contact.action_type === "delete") {
         {
@@ -1549,8 +1562,8 @@ class ProjectIngestionService {
         created_by: projectData.created_by,
         project_rid: projectData.project_id,
         project_fiscal_rid: projectData.project_fiscal_id,
-        max_ai_interaction : DEFAULT_PROJECT_DETAILS.maxAiInteraction,
-        auto_send_ai_interaction : false,
+        max_ai_interaction: DEFAULT_PROJECT_DETAILS.maxAiInteraction,
+        auto_send_ai_interaction: false,
         effective_cost: baseData.total_cost_prj,
         effective_effort: baseData.total_effort_prj,
         effective_total_fte: baseData.total_fte_prj,
@@ -1795,7 +1808,7 @@ class ProjectIngestionService {
     accountNumber: string,
     projectData: IUpdateProject
   ) {
-    const { CaseProjectFiscalRegion, CaseProject  } = await this.getModels(
+    const { CaseProjectFiscalRegion, CaseProject } = await this.getModels(
       accountNumber
     );
 
@@ -1919,7 +1932,7 @@ class ProjectIngestionService {
         attribute_name: key,
         old_value:
           existingProjectData[key] !== null &&
-          existingProjectData[key] !== undefined
+            existingProjectData[key] !== undefined
             ? String(existingProjectData[key])
             : "",
         new_value:
@@ -1949,7 +1962,7 @@ class ProjectIngestionService {
 
     const fiscalDataById = await CaseProject.findAll({
       where: {
-          project_fiscal_rid: projectFiscalId,
+        project_fiscal_rid: projectFiscalId,
       },
     });
 
@@ -1985,16 +1998,16 @@ class ProjectIngestionService {
     }
 
     await this.updateCaseProject(
-    accountNumber,
-    projectData,
-    caseMapping,
-    existingProjectCode)
+      accountNumber,
+      projectData,
+      caseMapping,
+      existingProjectCode)
 
     await this.updateCaseProjectFiscalRegion(
-    accountNumber,
-    projectData,
-    caseMapping,
-    existingProjectCode)
+      accountNumber,
+      projectData,
+      caseMapping,
+      existingProjectCode)
   }
 
 
@@ -2093,7 +2106,7 @@ class ProjectIngestionService {
 
             if (tableExists) {
               const query = checkProjectMappedToProjectRes(schemaName, fiscal.project_fiscal_rid);
-              
+
               const promise = orgDb
                 .query(query)
                 .then((result: any) => {
@@ -2250,21 +2263,21 @@ class ProjectIngestionService {
             include: [
               ...(documentRid
                 ? [
-                    {
-                      model: ProjectTimeline,
-                      as: "ProjectTimelines",
-                      required: true,
-                      where: {
-                        document_rid: documentRid,
-                      },
-                      attributes: [
-                        "rid",
-                        "entity_rid", // THIS IS CRUCIAL
-                        "document_rid",
-                        "event_name",
-                      ],
+                  {
+                    model: ProjectTimeline,
+                    as: "ProjectTimelines",
+                    required: true,
+                    where: {
+                      document_rid: documentRid,
                     },
-                  ]
+                    attributes: [
+                      "rid",
+                      "entity_rid", // THIS IS CRUCIAL
+                      "document_rid",
+                      "event_name",
+                    ],
+                  },
+                ]
                 : []),
               // KeyContact filter-only join (no data fetched)
             ],
@@ -2340,7 +2353,7 @@ class ProjectIngestionService {
             fullOrder.push([
               Sequelize.literal(`"ProjectFiscal"."fiscal_year" ASC`),
             ]);
-          } 
+          }
           else {
             if (field === "project_code" && sortDirection === "ASC") {
               fullOrder.push([
@@ -2356,29 +2369,29 @@ class ProjectIngestionService {
               fullOrder.push([
                 Sequelize.literal(`"ProjectFiscal"."fiscal_year" DESC`),
               ]);
-            } 
+            }
             else {
-              if(field === 'rd_percent_final') {
+              if (field === 'rd_percent_final') {
                 fullOrder.push([
-                Sequelize.literal(`"Project"."project_code" ASC NULLS LAST`),
-              ]);
-                fullOrder.push([
-                Sequelize.literal(`"ProjectFiscal"."${field}" ${nullsHandled}`),
-              ]);
-              } 
-              else if(field === "qre_final") {
-                fullOrder.push([
-                Sequelize.literal(`"Project"."project_code" ASC NULLS LAST`),
+                  Sequelize.literal(`"Project"."project_code" ASC NULLS LAST`),
                 ]);
                 fullOrder.push([
-                Sequelize.literal(`"ProjectFiscal"."${field}" ${nullsHandled}`),
-              ]);
-              } 
+                  Sequelize.literal(`"ProjectFiscal"."${field}" ${nullsHandled}`),
+                ]);
+              }
+              else if (field === "qre_final") {
+                fullOrder.push([
+                  Sequelize.literal(`"Project"."project_code" ASC NULLS LAST`),
+                ]);
+                fullOrder.push([
+                  Sequelize.literal(`"ProjectFiscal"."${field}" ${nullsHandled}`),
+                ]);
+              }
               else {
-                if(field !== 'qre_final' && field !== 'fiscal_year' && field !== 'rd_percent_final') {
+                if (field !== 'qre_final' && field !== 'fiscal_year' && field !== 'rd_percent_final') {
                   fullOrder.push([
-                  Sequelize.literal(`"Project"."${field}" ${nullsHandled}`),
-                ]);
+                    Sequelize.literal(`"Project"."${field}" ${nullsHandled}`),
+                  ]);
                 }
               }
             }
@@ -2414,21 +2427,21 @@ class ProjectIngestionService {
             },
             include: documentRid
               ? [
-                  {
-                    model: ProjectTimeline,
-                    as: "ProjectTimelines",
-                    required: true,
-                    where: {
-                      document_rid: documentRid,
-                    },
-                    attributes: [
-                      "rid",
-                      "entity_rid", // THIS IS CRUCIAL
-                      "document_rid",
-                      "event_name",
-                    ],
+                {
+                  model: ProjectTimeline,
+                  as: "ProjectTimelines",
+                  required: true,
+                  where: {
+                    document_rid: documentRid,
                   },
-                ]
+                  attributes: [
+                    "rid",
+                    "entity_rid", // THIS IS CRUCIAL
+                    "document_rid",
+                    "event_name",
+                  ],
+                },
+              ]
               : [],
             attributes: {
               include: [
@@ -2444,28 +2457,28 @@ class ProjectIngestionService {
                 ],
                 ...(apiSource === "interaction"
                   ? [
-                      [
-                        Sequelize.literal(`EXISTS (
+                    [
+                      Sequelize.literal(`EXISTS (
                       SELECT 1 FROM "${schemaName}"."key_contact_details" kc
                       WHERE kc.entity_rid = "ProjectFiscal"."rid"
                         AND kc.include_in_communication = true
                         AND kc.status_rid = '${activeStatusId}'
                     )`),
-                        "isKeyContactIncluded",
-                      ] as [any, string],
-                    ]
+                      "isKeyContactIncluded",
+                    ] as [any, string],
+                  ]
                   : []),
               ] as (
                 | string
                 | [
-                    (
-                      | string
-                      | ReturnType<typeof Sequelize.fn>
-                      | ReturnType<typeof Sequelize.col>
-                      | ReturnType<typeof Sequelize.literal>
-                    ),
-                    string
-                  ]
+                  (
+                    | string
+                    | ReturnType<typeof Sequelize.fn>
+                    | ReturnType<typeof Sequelize.col>
+                    | ReturnType<typeof Sequelize.literal>
+                  ),
+                  string
+                ]
               )[],
             },
           },
@@ -2702,21 +2715,21 @@ class ProjectIngestionService {
           },
           include: documentRid
             ? [
-                {
-                  model: ProjectTimeline,
-                  as: "ProjectTimelines",
-                  required: true,
-                  where: {
-                    document_rid: documentRid,
-                  },
-                  attributes: [
-                    "rid",
-                    "entity_rid", // THIS IS CRUCIAL
-                    "document_rid",
-                    "event_name",
-                  ],
+              {
+                model: ProjectTimeline,
+                as: "ProjectTimelines",
+                required: true,
+                where: {
+                  document_rid: documentRid,
                 },
-              ]
+                attributes: [
+                  "rid",
+                  "entity_rid", // THIS IS CRUCIAL
+                  "document_rid",
+                  "event_name",
+                ],
+              },
+            ]
             : [],
           attributes: [
             "rid",
@@ -2944,7 +2957,7 @@ class ProjectIngestionService {
           "Assessment Status": fiscal.assessment_status || "-",
           "QRE Percent Final": fiscal.rd_percent_final || "-", // Only base project has QRE %
           "QRE Final":
-          fiscal.qre_final || // formatNumberForExport(fiscal.qre_final, project.currency_symbol)
+            fiscal.qre_final || // formatNumberForExport(fiscal.qre_final, project.currency_symbol)
             "-",
           "Project Point of Contact": fiscal.project_point_of_contact || "-",
           "Technical Point of Contact":
@@ -2953,12 +2966,12 @@ class ProjectIngestionService {
           "Last Modified": modifiedDateTime
             ? timezone && isValidTimezone(timezone)
               ? moment
-                  .tz(modifiedDateTime.toISOString(), timezone)
-                  .add(5, 'hours').add(30, 'minutes')
-                  .format("YYYY-MMM-DD, hh:mm:ss A")
+                .tz(modifiedDateTime.toISOString(), timezone)
+                .add(5, 'hours').add(30, 'minutes')
+                .format("YYYY-MMM-DD, hh:mm:ss A")
               : moment(modifiedDateTime.toISOString()).add(5, 'hours').add(30, 'minutes').format(
-                  "YYYY-MMM-DD, hh:mm:ss A"
-                )
+                "YYYY-MMM-DD, hh:mm:ss A"
+              )
             : "-",
           "Project ID": fiscal.r_number || "-",
         };
@@ -3410,10 +3423,10 @@ class ProjectIngestionService {
         .map((project) => {
           const parentMatches = isBoth
             ? filterableClientFields.every((key) => {
-                const filter = filters[key];
-                if (!filter || Object.keys(filter).length === 0) return true;
-                return matchFilter(project, key, filter);
-              })
+              const filter = filters[key];
+              if (!filter || Object.keys(filter).length === 0) return true;
+              return matchFilter(project, key, filter);
+            })
             : false;
 
           const matchingChildren = (project.ProjectFiscal || []).filter(

@@ -42,6 +42,8 @@ import { ActivityAttachments } from "../models/activitiesAttachmentModel";
 import { ActivityHistory } from "../models/activityHistory";
 import { TaskSummary } from "../models/taskSummaryModel";
 import { JurisdictionConfig } from "../models/jurisdictionConfigModel";
+import { CaseKeyContactDetails } from "../models/caseKeyContactModel";
+import { KeyContact } from "../models/keyContactDetails";
 
 export class CaseModelService {
   orgDbSequelize: Sequelize | null = null;
@@ -82,6 +84,8 @@ export class CaseModelService {
       ActivityHistory: ReturnType<typeof ActivityHistory.initialize>;
       TaskSummary: ReturnType<typeof TaskSummary.initialize>;
       Jurisdiction: ReturnType<typeof Jurisdiction.initialize>;
+      CaseKeyContactDetails: ReturnType<typeof CaseKeyContactDetails.initialize>;
+      KeyContact: ReturnType<typeof KeyContact.initialize>;
     }
   > = new Map();
 
@@ -149,6 +153,8 @@ export class CaseModelService {
     const ActivityHistoryModel = ActivityHistory.initialize(sequelize, schemaName);
     const TaskSummaryModel = TaskSummary.initialize(mainDbSequelize, "");
     const JurisdictionConfigModel = JurisdictionConfig.initialize(mainDbSequelize, "");
+    const CaseKeyContactDetailsModel = CaseKeyContactDetails.initialize(sequelize, schemaName);
+    const KeyContactModel = KeyContact.initialize(sequelize, schemaName);
 
     const models = {
       Case: CaseModel,
@@ -191,6 +197,8 @@ export class CaseModelService {
       ActivityHistory : ActivityHistoryModel,
       TaskSummary: TaskSummaryModel,
       JurisdictionConfig: JurisdictionConfigModel,
+      CaseKeyContactDetails: CaseKeyContactDetailsModel,
+      KeyContact: KeyContactModel
     };
 
     this.modelCache.set(schemaName, models);
