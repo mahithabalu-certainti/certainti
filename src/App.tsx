@@ -86,6 +86,7 @@ import {
   ACTIVITY_EDIT,
   MANAGE_GEO_BASED_RULE,
   MANAGE_GEO_BASED_RULE_CREATE,
+  MANAGE_GEO_BASED_RULE_EDIT,
 } from './routes';
 import { RootState } from './store/store';
 import ProjectTaskForm from './consultant/pages/project/project-details/project-task/form/project-task-form';
@@ -392,6 +393,10 @@ export const App: React.FC<IApp> = ({ instance }) => {
                   />
                   <Route
                     path={MANAGE_GEO_BASED_RULE_CREATE}
+                    element={<GeoBasedRuleForm />}
+                  />
+                  <Route
+                    path={MANAGE_GEO_BASED_RULE_EDIT}
                     element={<GeoBasedRuleForm />}
                   />
                   <Route

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { generatePath, useNavigate } from 'react-router-dom';
 import { ListTable, ManageColumnsPopover } from '../../../../components/table';
-import { getGeoBasedRuleColumns, GeoBasedRuleList } from './columns';
+import { getGeoBasedRuleColumns } from './columns';
 import {
     ActionItem,
     ListTableColumn,
@@ -9,15 +9,18 @@ import {
 } from '../../../../components/table/types';
 import { EditIcon } from '../../../../assets';
 import { useGeoBasedList } from '../../../service/manage-geo-based-access/geo-based-group-service';
+import {
+    GeoBasedRule,
+    GeoBasedRuleListParams,
+} from '../../../types/geo-based-rule';
+import { MANAGE_GEO_BASED_RULE_EDIT } from '../../../../routes';
 
-// Placeholder route
-const MANAGE_GEO_BASED_RULE = '/admin/manage-geo-based-rule';
 
 interface IGeoBasedRuleTableProps {
-    appliedFilters: any;
-    tableParams: any;
+    //   appliedFilters: any;
+    tableParams: GeoBasedRuleListParams;
     isEditable?: boolean;
-    setTableParams: any;
+    setTableParams: React.Dispatch<React.SetStateAction<GeoBasedRuleListParams>>;
     onSelectionChange: (selectedIds: string[]) => void;
     refreshTrigger?: number;
     columnAnchorEl: HTMLButtonElement | null;
@@ -28,7 +31,7 @@ interface IGeoBasedRuleTableProps {
 }
 
 export const ManageGeoBasedRuleTable: React.FC<IGeoBasedRuleTableProps> = ({
-    appliedFilters,
+    //   appliedFilters,
     tableParams,
     isEditable,
     setTableParams,
@@ -36,24 +39,28 @@ export const ManageGeoBasedRuleTable: React.FC<IGeoBasedRuleTableProps> = ({
     refreshTrigger,
     columnAnchorEl,
     setColumnAnchorEl,
-    searchValue,
+    //   searchValue,
 }) => {
     const navigate = useNavigate();
-    const [dataList, setDataList] = useState<GeoBasedRuleList[]>([]); // Empty for now
+    //   const [dataList, setDataList] = useState<GeoBasedRule[]>([]); // Empty for now
 
-    const { data, isLoading, isError } = useGeoBasedList(tableParams);
-
-    console.log(data?.data.updatedConfig);
-    const geoBasedRuleList = data?.data.updatedConfig;
+    const { data, isLoading, isError } = useGeoBasedList(
+        tableParams,
+        refreshTrigger
+    );
+    const geoBasedRuleList = data?.data.configs;
     const totalItems = 0;
-    const getRowId = (row: GeoBasedRuleList) => row.rid;
-
-    const handleEdit = (row: GeoBasedRuleList) => {
-        navigate(MANAGE_GEO_BASED_RULE + '/edit/' + row.rid);
+    const getRowId = (row: GeoBasedRule) => row.rid;
+    const handleEdit = (row: GeoBasedRule) => {
+        const path = generatePath(MANAGE_GEO_BASED_RULE_EDIT, {
+            ruleId: row.rid,
+            config_rid: row.credit_config_group_rid,
+        });
+        navigate(path);
     };
 
     const handleSort = (sortBy: string, sortOrder: 'asc' | 'desc') => {
-        setTableParams((prev: any) => ({
+        setTableParams((prev: GeoBasedRuleListParams) => ({
             ...prev,
             sortBy,
             sortOrder: sortOrder === 'asc' ? 'ASC' : 'DESC',
@@ -61,24 +68,24 @@ export const ManageGeoBasedRuleTable: React.FC<IGeoBasedRuleTableProps> = ({
     };
 
     const handlePageChange = (newPage: number) => {
-        setTableParams((prev: any) => ({
+        setTableParams((prev: GeoBasedRuleListParams) => ({
             ...prev,
             page: newPage + 1,
         }));
     };
 
     const handleRowsPerPageChange = (newLimit: number) => {
-        setTableParams((prev: any) => ({
+        setTableParams((prev: GeoBasedRuleListParams) => ({
             ...prev,
             limit: newLimit,
             page: 1,
         }));
     };
 
-    const actionButtons: ActionItem<GeoBasedRuleList>[] = [
+    const actionButtons: ActionItem<GeoBasedRule>[] = [
         {
             label: 'Edit',
-            onClick: (row: GeoBasedRuleList) => handleEdit(row),
+            onClick: (row: GeoBasedRule) => handleEdit(row),
             icon: EditIcon,
             iconStyle: {
                 filter:
@@ -89,14 +96,14 @@ export const ManageGeoBasedRuleTable: React.FC<IGeoBasedRuleTableProps> = ({
     ];
 
     const [visibleColumns, setVisibleColumns] = useState<
-        ListTableColumn<GeoBasedRuleList>[]
+        ListTableColumn<GeoBasedRule>[]
     >(getGeoBasedRuleColumns().filter((col) => !col.hide));
 
     const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
         setVisibleColumns(
             updatedColumns.filter(
                 (col) => !col.hide
-            ) as ListTableColumn<GeoBasedRuleList>[]
+            ) as ListTableColumn<GeoBasedRule>[]
         );
     };
 
@@ -138,7 +145,7 @@ export const ManageGeoBasedRuleTable: React.FC<IGeoBasedRuleTableProps> = ({
                 actionDisplayMode='dropdown'
                 actionMenuItems={actionButtons}
                 loading={isLoading}
-
+                error={isError ? 'failed to load data' : undefined}
                 rowsPerPageOptions={[25, 50, 100]}
                 rowsPerPage={tableParams.limit}
                 currentPage={(tableParams.page ?? 1) - 1}

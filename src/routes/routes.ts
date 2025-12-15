@@ -52,9 +52,9 @@ export const CHECKLIST_TEMPLATES_CREATE = `${CHECKLIST_TEMPLATES}/create`;
 export const CHECKLIST_TEMPLATES_EDIT = `${CHECKLIST_TEMPLATES}/edit/:caseId`;
 
 // ADMIN GEO BASED RULE ROUTES
-export const MANAGE_GEO_BASED_RULE = `${ADMIN}/manage-geo-based-rule`;
+export const MANAGE_GEO_BASED_RULE = `${ADMIN}/manage-jurisdiction-rule`;
 export const MANAGE_GEO_BASED_RULE_CREATE = `${MANAGE_GEO_BASED_RULE}/create`;
-export const MANAGE_GEO_BASED_RULE_EDIT = `${MANAGE_GEO_BASED_RULE}/edit/:ruleId`;
+export const MANAGE_GEO_BASED_RULE_EDIT = `${MANAGE_GEO_BASED_RULE}/edit/:ruleId/:config_rid`;
 
 /** ACCOUNT ROUTES */
 export const ACCOUNT = '/account';

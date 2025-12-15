@@ -80,7 +80,7 @@ export const sideNavAdminItems: AdminNavItem[] = [
       },
       {
         id: MenuOption.MANAGE_GEO_BASED_RULE,
-        name: 'Manage Geo-Based Rule',
+        name: 'Manage Jurisdiction Rule',
         icon: ManageGeoIcon,
         link: MANAGE_GEO_BASED_RULE,
         matchLink: MANAGE_GEO_BASED_RULE,
