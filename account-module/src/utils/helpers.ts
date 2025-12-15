@@ -4,10 +4,17 @@ import { HttpStatus, rawQueries, STATUS_MESSAGE } from "./constant";
 import { errorResponse, successResponse } from "./apiResponse";
 import configurations from "../config/config";
 import ExcelJS from 'exceljs';
-import { BlobServiceClient } from '@azure/storage-blob';
 import { getSecret } from "../utils/azureSecrets";
 import { Sequelize } from "sequelize";
 import crypto from "crypto";
+import {
+  BlobServiceClient,
+  StorageSharedKeyCredential,
+  generateBlobSASQueryParameters,
+  BlobSASPermissions,
+  SASProtocol
+} from "@azure/storage-blob";
+import { parse } from "url";
 
 function getLogger() {
   return configurations.getInstance().getLogger();
@@ -154,7 +161,7 @@ export async function uploadToAzureBlob(file: Express.Multer.File,account_id:str
   if (!connString) throw new Error('Azure storage connection string is required');
   const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
   const containerClient = blobServiceClient.getContainerClient(containerName);
-  await containerClient.createIfNotExists({ access: 'blob' })
+  await containerClient.createIfNotExists()
 
   const blobName = `${account_id}/logo/${file.originalname}`;
   const blockBlobClient = containerClient.getBlockBlobClient(blobName);
@@ -188,6 +195,54 @@ export async function deleteFromAzureBlob(blobUrl: string): Promise<void> {
   logMessage
   } else {
     logMessage(`Blob not found: ${blobUrl}`);
+  }
+}
+
+export async function generateSasUrl(blobUrl: string, expiryMinutes = 60): Promise<string> {
+  try {
+    const connectionString = await getSecret(process.env.AZURE_STORAGE_CONNECTION_STRING as string);
+    if (!connectionString) {
+      throw new Error("Azure storage connection string is required");
+    }
+
+    const parsedUrl = parse(blobUrl);
+    const hostnameParts = parsedUrl.hostname?.split(".") || [];
+    const accountName = hostnameParts[0];
+    const pathParts = parsedUrl.pathname?.replace(/^\/+/, "").split("/") || [];
+
+    if (pathParts.length < 2) {
+      throw new Error("Invalid blob URL format");
+    }
+
+    const containerName: any = pathParts[0];
+    const blobName = pathParts.slice(1).join("/");
+
+    const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
+    const credential = (blobServiceClient as any).credential as StorageSharedKeyCredential;
+
+    if (!credential) {
+      throw new Error("StorageSharedKeyCredential missing from BlobServiceClient");
+    }
+
+    const expiresOn = new Date();
+    expiresOn.setMinutes(expiresOn.getMinutes() + expiryMinutes);
+
+    const sasToken = generateBlobSASQueryParameters(
+      {
+        containerName,
+        blobName,
+        permissions: BlobSASPermissions.parse("r"),
+        expiresOn,
+        protocol: SASProtocol.Https
+      },
+      credential
+    ).toString();
+
+    const sasUrl = `${blobUrl}?${sasToken}`;
+    return sasUrl;
+  } catch (error) {
+    logMessage(`Error generating SAS URL: ${error}`);
+    throw new Error(`SAS URL generation failed: ${error instanceof Error ? error.message : "Unknown error"}`);
   }
 }
 

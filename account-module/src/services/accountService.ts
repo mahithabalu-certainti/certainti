@@ -8,7 +8,7 @@ import {
 } from "sequelize";
 import { HttpStatus, primaryKeyContacts, rawQueries } from "../utils/constant";
 import { IAccount, IUpdateAccount, AccountAttributes } from "../utils/types";
-import { errorLog, getTableSchemaByEntity, logMessage, uploadToAzureBlob } from "../utils/helpers";
+import { errorLog, generateSasUrl, getTableSchemaByEntity, logMessage, uploadToAzureBlob } from "../utils/helpers";
 import SchemaService from "./schemaService";
 import { Account } from "../models/accountModel";
 import { Country } from "../models/countryModel";
@@ -1712,6 +1712,10 @@ async accountList(
           where: { rid: accountById.parent_account_rid || "" },
         });
         accountNumber = parentAccount?.r_number || "";
+      }
+      if(accountById?.logo_url)
+      {
+        accountById.logo_url =  await generateSasUrl(accountById.logo_url);
       }
 
       // Fetch related data in parallel
