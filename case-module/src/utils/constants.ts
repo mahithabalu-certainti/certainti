@@ -192,6 +192,9 @@ export const STATUS_MESSAGE = {
   effort24HrsExceeded: "Effort cannot exceed 24 hours for the day",
   projectTaskUpdatedSuccess: "Project task details updated successfully",
   configNotAvailable: "Configuration not available for the selected criteria",
+  technicalDocumentationSignedOff : "Technical documentation has been successfully signed off",
+  technicalDocsAlreadySignedOff : "Technical documentation is already signed off",
+  signoffNotAllowed : "Sign-off cannot be reverted. Approval is required to proceed"
 };
 
 export const caseStatuses = {
@@ -338,7 +341,7 @@ export const rawQueries = {
   },
   listUsersForCaseTeam(accountRid: string) {
     return `  
-      SELECT u.rid, CONCAT(u.first_name, ' ', u.last_name) AS name,email
+      SELECT u.rid, CONCAT(u.first_name, ' ', u.last_name) AS name,email, profile_url
       FROM ${MAIN_SCHEMA_NAME}.user u
 	  where (is_consultant_firm is true
 	  or org_id = '${accountRid}')
@@ -347,7 +350,7 @@ export const rawQueries = {
   },
   listAllUsers() {
     return `  
-      SELECT u.rid, CONCAT(u.first_name, ' ', u.last_name) AS name
+      SELECT u.rid, CONCAT(u.first_name, ' ', u.last_name) AS name, profile_url
       FROM ${MAIN_SCHEMA_NAME}.user u
 	  where  u.status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active')
 	  order by name asc`
@@ -1494,6 +1497,9 @@ and credit_program_name = 'Platform Configuration'
       SELECT c.* FROM ${MAIN_SCHEMA_NAME}.currency c WHERE c.currency_code = 'USD'
     `;
   },
+  fetchProjectFiscalById (rid : string, accountRid : string, schemaName : string) {
+    return `SELECT rid, signoff, project_code FROM ${schemaName}.project_fiscal WHERE rid = '${rid}' AND account_rid = '${accountRid}'`
+  }
 };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 
 const keyContactRole = {

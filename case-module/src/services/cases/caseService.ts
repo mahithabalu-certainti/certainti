@@ -27,6 +27,7 @@ import {
   ICreateCaseTeam,
   ICreateChecklist,
   priorityTypes,
+  ProjectFiscalType,
   TagsTypes,
   TaskCardDetailsType,
   TaskCardResponse,
@@ -50,7 +51,7 @@ import {
 import currency from "currency.js";
 import moment from "moment";
 import { CaseManagementSchemaService } from "../casesManagement/schemaService";
-import { fetchCaseProjects, fetchTaskActivities, fetchTaskComments, listAllTaskStatus, taskCardDetails,taskCardDetailsActivityTask, updateCaseAggregatedValue } from "../../utils/rawQueries";
+import { fetchCaseProjects, fetchTaskActivities, fetchTaskComments, listAllTaskStatus, signoffProjectTechSummary, taskCardDetails,taskCardDetailsActivityTask, updateCaseAggregatedValue } from "../../utils/rawQueries";
 import { sendEmailWithAttachment } from "../emailService";
 import ActivitySchemaService from "../activities/schemaService";
 import { caseTaskMapping, reviewProjectsFieldMappings } from "../../utils/excelExportMapping";
@@ -2303,9 +2304,10 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
     async addCommentsToTask (data : AddCommentsType, userId : string, files : Express.Multer.File[]) {
       const mainDb = await this.getMainDb();
       const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
-      data.created_by = userId
+      data.created_by = userId;
+      const [accountInfo]:any[] = await mainDb.query(rawQueries.fetchAccountInfo(data.account_rid));
       const fetchTaskDetails = await this.caseSchemaService.findTaskById(data.task_rid, data.account_rid, data.case_rid, fetchParent[0][0].r_number,data.task_type);
-      const result = await this.caseSchemaService.addComments(data, fetchParent[0][0].r_number, fetchTaskDetails?.r_number!, files);
+      const result = await this.caseSchemaService.addComments(data, fetchParent[0][0].r_number, fetchTaskDetails?.r_number!, files,accountInfo.r_number);
       if(result.statusCode == HttpStatus.SUCCESS) {
         return result
       } else {
@@ -2358,8 +2360,9 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
       const mainDb = await this.getMainDb();
       const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
       data.modified_by = userId
+      const [accountInfo]:any[] = await mainDb.query(rawQueries.fetchAccountInfo(data.account_rid));
       const fetchTaskDetails = await this.caseSchemaService.findTaskById(data.task_rid,data.account_rid, data.case_rid ,fetchParent[0][0].r_number,data.task_type);
-      const result = await this.caseSchemaService.updateComments(data, fetchParent[0][0].r_number, fetchTaskDetails?.r_number!, files);
+      const result = await this.caseSchemaService.updateComments(data, fetchParent[0][0].r_number, fetchTaskDetails?.r_number!, files,accountInfo.r_number);
       if(result?.statusCode === HttpStatus.SUCCESS) {
         return {
           statusCode : result.statusCode,
@@ -2484,7 +2487,8 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
     async addTaskLevelAttachment (data : any, userId : string, files : Express.Multer.File[]) {
       const mainDb = await this.getMainDb();
       const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
-      const result = await this.caseSchemaService.addAttachmentForTask(data, fetchParent[0][0].r_number, files, userId);
+      const accountInfo : any = await mainDb.query(rawQueries.fetchAccountInfo(data.account_rid));
+      const result = await this.caseSchemaService.addAttachmentForTask(data, fetchParent[0][0].r_number, files, userId,accountInfo[0][0].r_number);
       return result;
     }
 
@@ -3364,6 +3368,55 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
     } catch (err) {
       logMessage(`Error fetching case submission date, ${err}`);
       throw this.throwServiceError(err as Error);
+    }
+  }
+  async signOffTechnicalDocumentation (data : any) {
+    const mainDb = await this.getMainDb();
+    const orgDb = await this.getOrgDb();
+    const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
+    if(fetchParent[0].length > 0) {
+      const schemaName = rawQueries.fetchSchemaName(fetchParent[0][0].r_number);
+      const {CaseHistory} = await this.caseModelService.getModels(fetchParent[0][0].r_number)
+      const [isProjectExists] = await orgDb.query<ProjectFiscalType>(rawQueries.fetchProjectFiscalById(data.project_fiscal_rid, data.account_rid, schemaName), {type : QueryTypes.SELECT});
+      if(isProjectExists) {
+        if (isProjectExists.signoff && !data.signoff) {
+          return {
+            statusCode : HttpStatus.SUCCESS,
+            statusMessage : STATUS_MESSAGE.signoffNotAllowed
+          }
+        } else if (isProjectExists.signoff === data.signoff) {
+          return {
+            statusCode : HttpStatus.SUCCESS,
+            statusMessage : STATUS_MESSAGE.technicalDocsAlreadySignedOff
+          }
+        }
+        else {
+          await orgDb.query(signoffProjectTechSummary(schemaName, data.project_fiscal_rid, data.account_rid, data.signoff, data.userId));
+          if(data.case_rid && (data.signoff !== isProjectExists.signoff)) {
+            await CaseHistory.create({
+              case_rid : data.case_rid,
+              old_value : "CREATE",
+              attribute_name : "Technical Documentation",
+              created_by : data.userId,
+              new_value : `signed off technical documentation for ${isProjectExists.project_code}`
+            });
+          }
+          return {
+            statusCode : HttpStatus.SUCCESS,
+            statusMessage : STATUS_MESSAGE.technicalDocumentationSignedOff
+          }
+        }
+      } else {
+        return {
+          statusCode : HttpStatus.NOT_FOUND,
+          statusMessage : STATUS_MESSAGE.dataNotAvailable
+        }
+      }
+    } else {
+      return {
+        statusCode : HttpStatus.NOT_FOUND,
+        statusMessage : STATUS_MESSAGE.accountNoFound
+      }
     }
   }
 }

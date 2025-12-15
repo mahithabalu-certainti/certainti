@@ -50,7 +50,7 @@ export interface IAccountService {
     errorMessage?: string;
     data?: { accountData: any; orgData: any };
   }>;
-  updateAccount(accountData: IUpdateAccount, userId: string): Promise<{
+  updateAccount(accountData: IUpdateAccount, userId: string,file?:Express.Multer.File): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;

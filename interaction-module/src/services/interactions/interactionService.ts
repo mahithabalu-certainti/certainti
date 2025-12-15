@@ -3849,4 +3849,34 @@ export class InteractionService {
       throw this.throwServiceError(err as Error);
     }
   }
+  async getAccountNumberByRid(accountRid: string): Promise<{
+    statusCode: number;
+    message: string;  
+    errorMessage?: string;
+    data?: { account_number: string };
+  }> {  
+    if(!this.mainDbSequelize) {
+      this.mainDbSequelize = await this.interactionModelService.getMainSequelize();
+    }
+    const [accountInfo]: any[] = await this.mainDbSequelize.query(
+      rawQueries.fetchAccountInfo(accountRid),
+      {
+        replacements: { rid: accountRid },
+        type: "SELECT"
+        
+      }
+    );
+    if (!accountInfo) {
+      return {
+        statusCode: HttpStatus.FAILED,
+        message: "Account not found",
+        errorMessage: "Invalid account RID",
+      };
+    } 
+    return {
+      statusCode: HttpStatus.SUCCESS,
+      message: "Account found",
+      data: { account_number: accountInfo.account_number },
+    };
+}
 }
