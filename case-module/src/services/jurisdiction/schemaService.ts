@@ -121,7 +121,6 @@ export class JurisdictionSchemaService {
       country_rid: jurisdictionConfig?.country_rid,
       is_federal: jurisdictionConfig?.is_federal,
       state_rid: jurisdictionConfig?.state_rid,
-      is_required: jurisdictionConfig?.is_required,
       country_code: jurisdictionConfig?.country_code,
       state_name: jurisdictionConfig?.state_name,
       country_name: jurisdictionConfig?.country_name,
@@ -211,6 +210,7 @@ export class JurisdictionSchemaService {
           meta.credit_parameter_display_name || meta.credit_parameter_name,
         value,
         type: meta.data_type || typeof value,
+        is_required: meta.is_required || false,
       });
     }
       platformConfigsData = {
@@ -240,6 +240,7 @@ export class JurisdictionSchemaService {
           meta.credit_parameter_display_name || meta.credit_parameter_name,
         value,
         type: meta.data_type || typeof value,
+        is_required: meta.is_required || false,
       });
     }
    
