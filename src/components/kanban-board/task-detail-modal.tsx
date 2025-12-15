@@ -108,6 +108,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     Array<{
       assigned_to: string;
       assigned_to_name: string;
+      profile_url?: string | null;
     }>
   >([]);
   const [taskAttachments, setTaskAttachments] = useState<
@@ -587,6 +588,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       enrichUserOption({
         rid: collab.assigned_to,
         name: collab.assigned_to_name,
+        profile_url: collab.profile_url || undefined,
       })
     );
     const uniqueCollaborators = enrichedCollaborators.filter(
@@ -615,27 +617,34 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   );
 
   useEffect(() => {
-    if (
-      !editedTask ||
-      (editedTask.collaborators && editedTask.collaborators.length > 0)
-    ) {
-      return;
-    }
+    if (!editedTask) return;
+
     if (collaborators && collaborators.length > 0) {
       const mappedCollaborators = collaborators.map((collab) => {
         const enrichedUser = enrichUserOption({
           rid: collab.assigned_to,
           name: collab.assigned_to_name,
+          profile_url: collab.profile_url,
         });
         return {
           name: enrichedUser.name,
           initials: enrichedUser.initials,
           color: enrichedUser.color,
+          profile_url: enrichedUser.profile_url,
         };
       });
-      setEditedTask((prev) =>
-        prev ? { ...prev, collaborators: mappedCollaborators } : null
-      );
+
+      setEditedTask((prev) => {
+        if (!prev) return null;
+        // Avoid infinite loop by checking if content is different
+        if (
+          JSON.stringify(prev.collaborators) ===
+          JSON.stringify(mappedCollaborators)
+        ) {
+          return prev;
+        }
+        return { ...prev, collaborators: mappedCollaborators };
+      });
     }
   }, [collaborators, editedTask]);
 
@@ -1220,6 +1229,10 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
         queryClient.invalidateQueries({
           queryKey: ['taskDetail', accountId, caseId, taskId],
         });
+        // Refetch collaborators to get profile urls
+        queryClient.invalidateQueries({
+          queryKey: ['collaborators', accountId, caseId, taskId, taskType],
+        });
         if (onTaskUpdate) {
           onTaskUpdate();
         }
@@ -1407,6 +1420,9 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     setEditedTask((prev) =>
       prev ? { ...prev, checklist: updatedChecklist } : null
     );
+    setOriginalTask((prev) =>
+      prev ? { ...prev, checklist: updatedChecklist } : null
+    );
 
     queryClient.invalidateQueries({
       queryKey: ['taskActivities', accountId, caseId, taskId],
@@ -1424,6 +1440,10 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     // Refetch kanban board to update checklist counts
     queryClient.invalidateQueries({
       queryKey: ['kanbanBoardData', accountId, caseId],
+    });
+    // Refetch collaborators to get profile urls
+    queryClient.invalidateQueries({
+      queryKey: ['collaborators', accountId, caseId, taskId, taskType],
     });
   };
 
@@ -1448,6 +1468,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
           name: user.name,
           initials: user.initials,
           color: user.color,
+          profile_url: user.profile_url,
         }));
         setEditedTask((prev) => (prev ? { ...prev, collaborators } : null));
         setOriginalTask((prev) => (prev ? { ...prev, collaborators } : null));
@@ -1455,6 +1476,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
           selectedUsers.map((user) => ({
             assigned_to: user.id,
             assigned_to_name: user.name,
+            profile_url: user.profile_url,
           }))
         );
         queryClient.invalidateQueries({
@@ -1473,6 +1495,10 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
         // Refetch kanban board to update task data
         queryClient.invalidateQueries({
           queryKey: ['kanbanBoardData', accountId, caseId],
+        });
+        // Refetch collaborators to get profile urls
+        queryClient.invalidateQueries({
+          queryKey: ['collaborators', accountId, caseId, taskId, taskType],
         });
       } catch (error) {
         console.error('Failed to add collaborator:', error);
@@ -1505,6 +1531,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
           name: user.name,
           initials: user.initials,
           color: user.color,
+          profile_url: user.profile_url,
         }));
         setEditedTask((prev) => (prev ? { ...prev, collaborators } : null));
         setOriginalTask((prev) => (prev ? { ...prev, collaborators } : null));
@@ -1512,6 +1539,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
           selectedUsers.map((user) => ({
             assigned_to: user.id,
             assigned_to_name: user.name,
+            profile_url: user.profile_url,
           }))
         );
         queryClient.invalidateQueries({
@@ -1531,6 +1559,10 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
         queryClient.invalidateQueries({
           queryKey: ['kanbanBoardData', accountId, caseId],
         });
+        // Refetch collaborators to get profile urls
+        queryClient.invalidateQueries({
+          queryKey: ['collaborators', accountId, caseId, taskId, taskType],
+        });
         successToast('Collaborator removed successfully');
       } catch (error) {
         console.error('Failed to remove collaborator:', error);
@@ -1548,6 +1580,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
         name: user.name,
         initials: user.initials,
         color: user.color,
+        profile_url: user.profile_url,
       }));
       setEditedTask((prev) => (prev ? { ...prev, collaborators } : null));
       setOriginalTask((prev) => (prev ? { ...prev, collaborators } : null));
@@ -1555,6 +1588,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
         selectedUsers.map((user) => ({
           assigned_to: user.id,
           assigned_to_name: user.name,
+          profile_url: user.profile_url,
         }))
       );
     }
@@ -2159,9 +2193,35 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
               accountId={accountId}
               caseId={caseId}
               taskId={taskId}
-              onAddComment={onAddComment}
+              onAddComment={async (taskId, comment, files) => {
+                if (onAddComment) {
+                  await onAddComment(taskId, comment, files);
+                  queryClient.invalidateQueries({
+                    queryKey: [
+                      'collaborators',
+                      accountId,
+                      caseId,
+                      taskId,
+                      taskType,
+                    ],
+                  });
+                }
+              }}
               onUpdateComment={onUpdateComment}
-              onDeleteComment={onDeleteComment}
+              onDeleteComment={async (commentId) => {
+                if (onDeleteComment) {
+                  await onDeleteComment(commentId, taskId!);
+                  queryClient.invalidateQueries({
+                    queryKey: [
+                      'collaborators',
+                      accountId,
+                      caseId,
+                      taskId,
+                      taskType,
+                    ],
+                  });
+                }
+              }}
               useInfiniteScroll={true}
               taskType={taskType}
             />
@@ -2223,6 +2283,16 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                             account_rid: accountId,
                             task_rid: taskId,
                           },
+                        ],
+                      });
+                      // Refetch collaborators to get profile urls
+                      queryClient.invalidateQueries({
+                        queryKey: [
+                          'collaborators',
+                          accountId,
+                          caseId,
+                          taskId,
+                          taskType,
                         ],
                       });
                       successToast('Collaborator removed successfully');

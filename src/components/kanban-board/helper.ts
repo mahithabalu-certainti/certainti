@@ -82,6 +82,7 @@ export const enrichUserOption = (userOption: UserOption): User => {
     name: userOption.name,
     initials: generateInitials(userOption.name),
     color: generateColorFromName(userOption.name),
+    profile_url: userOption.profile_url,
   };
 };
 
@@ -89,11 +90,13 @@ export const enrichAssignee = (assignee: {
   name: string;
   initials?: string;
   color?: string;
+  profile_url?: string | null;
 }): Assignee => {
   return {
     name: assignee.name,
     initials: assignee.initials || generateInitials(assignee.name),
     color: assignee.color || generateColorFromName(assignee.name),
+    profile_url: assignee.profile_url,
   };
 };
 

@@ -5,6 +5,7 @@ export interface Assignee {
   name: string;
   initials: string;
   color: string;
+  profile_url?: string | null;
 }
 
 export interface User extends Assignee {
@@ -192,6 +193,7 @@ export interface UserOption {
   name: string;
   email?: string;
   status?: string;
+  profile_url?: string | null;
 }
 
 export interface KanbanBoardProps {
