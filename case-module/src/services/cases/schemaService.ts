@@ -848,6 +848,28 @@ return !response;
       const { rows: caseDetails, count } = await Case.findAndCountAll({
         where: whereConditions,
         order: [[finalSortBy, finalSortOrder]],
+         attributes: {
+        include: [
+          [
+            Sequelize.literal(`
+              CASE 
+                WHEN "Case"."case_total_project_cost" = 0 THEN NULL
+                ELSE "Case"."case_total_project_cost"
+              END
+            `),
+            'case_total_project_cost'
+          ],
+          [
+             Sequelize.literal(`
+          CASE 
+            WHEN "Case"."case_total_qre_cost" = 0 THEN NULL
+            ELSE "Case"."case_total_qre_cost"
+          END
+        `),
+        'case_total_qre_cost'
+      ]
+    ]
+  },
         ...(disablePagination ? {} : { limit: limit, offset: offset }),
       });
 
@@ -4134,7 +4156,8 @@ return !response;
  async fetchChecklistDetailsById(
     checklistId: string,
     accountNumber: string,
-    accountRid: string
+    accountRid: string,
+    mainDb? : Sequelize
   ) {
     if(!this.orgDbSequelize)
     {
@@ -4152,7 +4175,7 @@ return !response;
     }
   
     let checklistItems = await this.fetchChecklistItems(
-      checklistId,accountNumber
+      checklistId,accountNumber, mainDb
     );
   
      const userInfo = await this.insertUserDetails(
@@ -5119,7 +5142,8 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
 
       async fetchChecklistItems(
         checklistId: string,
-        accountNumber: string
+        accountNumber: string,
+        mainDb? : Sequelize
       ) {
         try {
           const {
@@ -5132,14 +5156,35 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
               "rid",
               "checklist_item_name",
               "status_rid",
-              "checklist_item_description"
+              "checklist_item_description",
+              "created_by",
+              "modified_by"
               ],
             order: [
               ["created_datetime", "ASC"],
             ],
             where: { checklist_rid: checklistId },
+            raw : true
           });
-          return items;
+          const createdIds : string[] = [...new Set(items.map((d : any) => d.created_by))];
+          const modifiedIds = [...new Set(items.map((d : any) => d.modified_by))];
+          let combinedIds : string[] = [];
+          combinedIds.push(...createdIds, ...modifiedIds);
+          const checklistItemStatusIds = [...new Set(items.map((d : any) => d.status_rid))];
+          const getStatusDetails : any = await mainDb?.query(rawQueries.getChecklistItemsStatusDetails(checklistItemStatusIds));
+          const getUserDetails : any = await mainDb?.query(rawQueries.getOwnerDetails(combinedIds));
+          const userMap = new Map(getUserDetails[0].map((d : any) => [d.rid, d.name]));
+          const statusMap = new Map(getStatusDetails[0].map((d : any) => [d.rid, d.status_name]));
+
+          const finalData = items.map((data : any) => {
+            return {
+              ...data,
+              created_by_name : userMap.get(data.created_by) || null,
+              modified_by_name : userMap.get(data.modified_by) || null,
+              status_name : statusMap.get(data.status_rid)
+            }
+          })
+          return finalData;
         } catch (err) {
           logMessage(`Error fetching checklist items: ${err}`);
           throw new Error(

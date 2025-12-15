@@ -346,6 +346,10 @@ async function createJurisdictionConfig(
   try {
     const userId = req.headers["x-user-id"] as string;
     const value = await validateRequest(req, createJurisdictionRDConfigSchema, res);
+    if(!value)
+    {
+      return;
+    }
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
