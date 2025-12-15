@@ -17,6 +17,7 @@ import { ALPHANUMERIC_CONDITIONS, HttpStatus, MAIN_SCHEMA_NAME, mainTableFilters
 import { SendEmailInfo } from "../../models/sendEmailInfo";
 import { decryptClientSecret, logMessage } from "../../utils/helpers";
 import { fetchStatusIdsForReminderList } from "../../utils/rawQueries";
+import { generateSasUrl } from "../../utils/blob";
 
 class InteractionSchemaService {
   private orgDbSequelize: Sequelize | null = null;
@@ -2819,13 +2820,15 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         const attachmentsList = attachments.map((item) =>
           item.get({ plain: true })
         );
-        (item as any).attachments = Array.isArray(attachmentsList)
-          ? attachmentsList.map((att: any) => ({
-              fileUrl: att?.attachment_url ?? "",
-              fileName: att?.attachment_name ?? "",
-              fileSize: att?.attachment_size ?? "",
-              fileType: att?.attachment_type ?? "",
-            }))
+        (item as any).attachments = Array.isArray(attachmentsList) && attachmentsList.length > 0
+          ? await Promise.all(
+              attachmentsList.map(async (att: any) => ({
+                fileUrl: await generateSasUrl(att.attachment_url),
+                fileName: att?.attachment_name ?? "",
+                fileSize: att?.attachment_size ?? "",
+                fileType: att?.attachment_type ?? "",
+              }))
+            )
           : [];
 
         // Fetch latest response history for each question
