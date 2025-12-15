@@ -813,7 +813,7 @@ export const rawQueries = {
       WHERE u.rid = :userRid
       LIMIT 1
       `,
-  fetchEmailInfo: `SELECT * FROM ${MAIN_SCHEMA_NAME}.send_email_info WHERE is_email_send = false ORDER BY created_datetime ASC LIMIT ${sendEmailCount}`,
+  fetchEmailInfo: `SELECT * FROM ${MAIN_SCHEMA_NAME}.send_email_info WHERE rid = 'D001-e582eea1-234b-4866-acaa-9e20f550c6db' ORDER BY created_datetime ASC LIMIT ${sendEmailCount}`,
   updateInteractionStatus(schemaName : string, statusRid : string, interactionRid : string) {
     return `UPDATE ${schemaName}.interactions SET status_rid = '${statusRid}' WHERE rid = '${interactionRid}'`
   },
@@ -986,7 +986,10 @@ export const rawQueries = {
   },
   getCaseProjectsIds (caseRid : string, accountRid : string, schemaName : string) {
     return `SELECT project_fiscal_rid FROM ${schemaName}.case_projects WHERE case_rid = '${caseRid}' AND account_rid = '${accountRid}'`
-  }  
+  },
+  fetchEmailTemplateByCategory (categoryName : string) {
+    return `SELECT rid, template_name, subject, body_html FROM ${MAIN_SCHEMA_NAME}.email_template WHERE category_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.email_template_category WHERE lower(category_name) = lower('${categoryName}') LIMIT 1) LIMIT 1`
+  },
 };
 
 export const filterTypesForSummaryInteractions : Record<string, any> = 

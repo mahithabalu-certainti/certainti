@@ -4633,6 +4633,20 @@ const existingTemplate = await InteractionTemplate.findOne({
     }
   }
 
+  async getTemplateDetailsByCategory(categoryName: string) {
+      if (!this.mainDbSequelize) {
+        this.mainDbSequelize = await this.interactionModelService.getMainSequelize();  
+      }
+      const [templateDetails]:any[] = await this.mainDbSequelize.query(
+        rawQueries.fetchEmailTemplateByCategory(categoryName),
+        {
+          type: "SELECT",
+        }
+      );
+  
+  
+      return templateDetails;  }
+
 }
 
 

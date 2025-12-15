@@ -1766,33 +1766,49 @@ export class InteractionService {
   ) {
     let emailResponse = false;
     try {
-      let emailContent = interactionMailTemplate(
-        emailInfo,
-        projectInfo,
-        accountInfo,
-        interactionLink,
-        interactionRid,
-        interactionLevel
-      );
+       let templateName ="";
+       if(interactionLevel.toLowerCase() === 'project') {
+        templateName = "interaction project"
+       } else {
+        templateName = "interaction account"
+       }
+       let emailPreview = await this.interactionSchemaService.getTemplateDetailsByCategory(templateName);
       if (is_interaction_followup) {
-        emailContent = interactionReminderMailTemplate(
-          emailInfo,
-          projectInfo,
-          accountInfo,
-          interactionLink,
-          interactionRid,
-          interactionLevel
-        );
+         if(interactionLevel.toLowerCase() === 'project') {
+        templateName = "interaction project remainder"
+       } else {
+        templateName = "interaction account remainder"
+       }
+      emailPreview = await this.interactionSchemaService.getTemplateDetailsByCategory(templateName);
+      
       }
       if (isResponseReceived) {
-        emailContent = interactionResponseReceivedTemplate(
-          emailInfo,
-          projectInfo,
-          accountInfo,
-          interactionRid,
-          interactionLevel
-        );
+         if(interactionLevel.toLowerCase() === 'project') {
+        templateName = "interaction project update"
+       } else {
+        templateName = "interaction account update"
+       }
+         emailPreview = await this.interactionSchemaService.getTemplateDetailsByCategory(templateName);
       }
+      let  emailContent = {
+          message: {
+          subject :  this.replacePlaceholders(emailPreview.subject, emailInfo,projectInfo, accountInfo, interactionLink,interactionRid, interactionLevel),
+          body: {
+              contentType: "HTML",
+              content:this.replacePlaceholders(emailPreview.body_html, emailInfo, projectInfo, accountInfo,interactionLink, interactionRid, interactionLevel),
+            },
+        toRecipients: [
+              {
+                emailAddress: {address: emailInfo.email,},
+              },
+            ],
+          ccRecipients: emailInfo.ccEmails && emailInfo.ccEmails.length > 0
+            ? emailInfo.ccEmails.map(email => ({
+            emailAddress: { address: email }
+          }))
+        : [],
+        },
+        }
       //fetch sender email info
       emailResponse = await sendEmailWithAttachment({
         message: emailContent.message,
@@ -1812,6 +1828,63 @@ export class InteractionService {
       return emailResponse;
     }
   }
+
+    replacePlaceholders(
+        template: string,
+        emailInfo: Record<string, any>,
+        projectInfo: Record<string, any>,
+        accountInfo: Record<string, any>,
+        interactionLink: string,
+        interactionRid?: string,
+        interactionLevel?: string
+      ): string {
+        return template.replace(/{{(.*?)}}/g, (_: string, key: string) => {
+          const raw = key.trim();
+          const normalized = raw.toLowerCase().replace(/\s+/g, "_");
+          const noUnderscore = normalized.replace(/_/g, "");
+          // Helper to check in an object
+          const checkObj = (obj: Record<string, any>) => {
+            if (!obj) return undefined;
+            if (raw in obj && obj[raw] != null) return obj[raw];
+            if (normalized in obj && obj[normalized] != null) return obj[normalized];
+            if (noUnderscore in obj && obj[noUnderscore] != null) return obj[noUnderscore];
+            return undefined;
+          };
+          // Dynamic special fields mapping
+          const specialFields: Record<string, (args: any) => any> = {
+            fiscalyear: ({ projectInfo }) => projectInfo && projectInfo.fiscalYear != null ? projectInfo.fiscalYear : "",
+            interactionlink: ({ interactionLink }) => interactionLink ?? "",
+            interactionrid: ({ interactionRid }) => interactionRid ?? "",
+            interactionlevel: ({ interactionLevel }) => interactionLevel ?? "",
+          };
+          // Normalize key for dynamic check
+          const specialKey = noUnderscore;
+          if (specialFields[specialKey]) {
+            return specialFields[specialKey]({
+              emailInfo,
+              projectInfo,
+              accountInfo,
+              interactionLink,
+              interactionRid,
+              interactionLevel
+            });
+          }
+          // Check in all provided objects in order
+          let val =
+            checkObj(emailInfo) ??
+            checkObj(projectInfo) ??
+            checkObj(accountInfo);
+          if (val !== undefined) return val;
+          // Check for direct placeholders
+          if (raw === "Interaction Id" || normalized === "interactionrid" || noUnderscore === "interactionrid") {
+            return interactionRid ?? "";
+          }
+          if (raw === "interactionLevel" || normalized === "interactionlevel" || noUnderscore === "interactionlevel") {
+            return interactionLevel ?? "";
+          }
+          return "";
+        });
+      }
 
   /**
    * Formats an error response to be returned from service methods.

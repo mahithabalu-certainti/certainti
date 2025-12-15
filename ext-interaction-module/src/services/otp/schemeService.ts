@@ -56,6 +56,19 @@ export class OtpSchemaService {
     }
   }
 
+ async getTemplateDetailsByCategory(categoryName: string) {
+    const mainDbSequelize =
+      await this.interactionModelService.getMainSequelize();
+    const [templateDetails]:any[] = await mainDbSequelize.query(
+        rawQueries.fetchEmailTemplateByCategory(categoryName),
+        {
+          type: "SELECT",
+        }
+      );
+  
+  
+      return templateDetails;  }
+
   async storeOtp(
     accountNumber: string,
     data: IGenerateOtp,
