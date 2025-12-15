@@ -971,7 +971,7 @@ export const fetchCaseTemplateData = (schemaName : string, caseRid : string, acc
   'milestone_template_rid', t.milestone_template_rid,
   'attachment_count', 
   (
-  SELECT COUNT(*) OVER() AS total_result
+  SELECT COUNT(DISTINCT ta.rid) AS total_result
   FROM
   ${schemaName}.task_attachments ta
   LEFT JOIN ${schemaName}.case_task ct ON ct.rid = ta.task_rid AND ct.case_rid = ta.case_rid AND ct.account_rid = ta.account_rid
@@ -1036,6 +1036,7 @@ c.rid = '${caseRid}'
 AND
 c.account_rid = '${accountRid}'
   `
+  console.log(query)
   return query;
 }
 
