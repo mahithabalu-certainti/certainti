@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import type { TaskCardProps, TaskCard } from './types';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { CommentIcon, CustomChecklistIcon, LinkTaskIcon } from '../../assets';
+import { CommentIcon, CustomChecklistIcon } from '../../assets';
 import { generateInitials, getTagColor } from './helper';
 import { Tooltip } from '@mui/material';
 import { formatDateToYyyyMmmDd } from '../../common-utils';
@@ -126,6 +126,21 @@ const TaskCardComponent: React.FC<ExtendedTaskCardProps> = ({
       )
     : [];
 
+  const isDueTodayOrPast = (dateStr?: string) => {
+    if (!dateStr) return false;
+    const [year, month, day] = dateStr.split('-').map(Number);
+
+    const dueDate = new Date(year, month - 1, day); // LOCAL date
+    dueDate.setHours(0, 0, 0, 0);
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    return dueDate <= today;
+  };
+
+  const isOverdue = isDueTodayOrPast(taskData.effective_end_datetime || '');
+
   return (
     <div
       ref={setNodeRef}
@@ -148,7 +163,7 @@ const TaskCardComponent: React.FC<ExtendedTaskCardProps> = ({
               {taskData.task_name}
             </h3>
           </Tooltip>
-          <div
+          {/* <div
             onClick={(e) => {
               e.stopPropagation();
               // Add link click handler here if needed
@@ -159,7 +174,7 @@ const TaskCardComponent: React.FC<ExtendedTaskCardProps> = ({
             className='cursor-pointer hover:bg-gray-100 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity'
           >
             <LinkTaskIcon className='w-3.5 h-3.5 text-gray-400 flex-shrink-0' />
-          </div>
+          </div> */}
         </div>
       </div>
 
@@ -302,7 +317,12 @@ const TaskCardComponent: React.FC<ExtendedTaskCardProps> = ({
               placement='top'
             >
               <div className={`flex items-center gap-1 text-gray-400`}>
-                <div className='w-3.5 h-3.5 flex items-center justify-center'>
+                <div
+                  className='w-3.5 h-3.5 flex items-center justify-center'
+                  style={{
+                    color: isOverdue ? '#DC2626' : '#9CA3AF',
+                  }}
+                >
                   <svg
                     className='w-3 h-3 mt-0.5'
                     fill='none'
