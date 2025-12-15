@@ -96,10 +96,6 @@ export const validateEmailTemplateForm = (
   } else if (!REGEX_PATTERNS.MAX_125.test(subject)) {
     newErrors.subject = 'Subject must not exceed 125 characters';
     isValid = false;
-  } else if (!REGEX_PATTERNS.EMAIL_SUBJECT.test(subject)) {
-    newErrors.subject =
-      "Subject only letters, numbers, spaces, &, -, ., ', (, ), and , are allowed.";
-    isValid = false;
   }
 
   //Description

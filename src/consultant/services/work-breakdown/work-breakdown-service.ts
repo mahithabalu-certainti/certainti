@@ -68,6 +68,7 @@ export interface TaskCard {
   status_name: string;
   task_status_rid: string;
   task_status_name: string;
+  profile_url: string | null;
 }
 export interface TaskDetailResponse {
   rid: string;
