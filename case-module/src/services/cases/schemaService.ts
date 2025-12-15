@@ -445,26 +445,28 @@ class CaseSchemaService {
           transaction,
         }
       );
-      if (existingCase?.case_startdate.toISOString().split('T')[0] !== caseRequest.case_startdate.toISOString().split('T')[0] || existingCase?.statutory_submission_date.toISOString().split('T')[0] !== caseRequest.statutory_submission_date.toISOString().split('T')[0]
-        || existingCase?.planned_submission_date.toISOString().split('T')[0] !== caseRequest.planned_submission_date.toISOString().split('T')[0]
-      ) {
-        const [fetchToDoStatus] = await this.mainDbSequelize.query<TaskTypeResponse>(rawQueries.checkCaseTaskStatusToDo(), { type: QueryTypes.SELECT });
-        if (fetchToDoStatus) {
-          const checkStatusChanged = await CaseTask.findOne({
-            where: {
-              case_rid: caseRequest.case_rid,
-              account_rid: caseRequest.account_rid,
-              task_status_rid: {
-                [Op.ne]: fetchToDoStatus.rid
-              }
-            }, raw: true
-          })
-          if (checkStatusChanged) {
-            return {
-              statusCode: HttpStatus.BAD_REQUEST,
-              statusMessage: STATUS_MESSAGE.caseDateChangeNotAllowed,
-              data: null
-            };
+      if (caseRequest.case_startdate && caseRequest.statutory_submission_date && caseRequest.planned_submission_date) {
+        if (existingCase?.case_startdate.toISOString().split('T')[0] !== caseRequest.case_startdate.toISOString().split('T')[0] || existingCase?.statutory_submission_date.toISOString().split('T')[0] !== caseRequest.statutory_submission_date.toISOString().split('T')[0]
+          || existingCase?.planned_submission_date.toISOString().split('T')[0] !== caseRequest.planned_submission_date.toISOString().split('T')[0]
+        ) {
+          const [fetchToDoStatus] = await this.mainDbSequelize.query<TaskTypeResponse>(rawQueries.checkCaseTaskStatusToDo(), { type: QueryTypes.SELECT });
+          if (fetchToDoStatus) {
+            const checkStatusChanged = await CaseTask.findOne({
+              where: {
+                case_rid: caseRequest.case_rid,
+                account_rid: caseRequest.account_rid,
+                task_status_rid: {
+                  [Op.ne]: fetchToDoStatus.rid
+                }
+              }, raw: true
+            })
+            if (checkStatusChanged) {
+              return {
+                statusCode: HttpStatus.BAD_REQUEST,
+                statusMessage: STATUS_MESSAGE.caseDateChangeNotAllowed,
+                data: null
+              };
+            }
           }
         }
       }
@@ -854,6 +856,28 @@ class CaseSchemaService {
       const { rows: caseDetails, count } = await Case.findAndCountAll({
         where: whereConditions,
         order: [[finalSortBy, finalSortOrder]],
+        attributes: {
+          include: [
+            [
+              Sequelize.literal(`
+              CASE 
+                WHEN "Case"."case_total_project_cost" = 0 THEN NULL
+                ELSE "Case"."case_total_project_cost"
+              END
+            `),
+              'case_total_project_cost'
+            ],
+            [
+              Sequelize.literal(`
+          CASE 
+            WHEN "Case"."case_total_qre_cost" = 0 THEN NULL
+            ELSE "Case"."case_total_qre_cost"
+          END
+        `),
+              'case_total_qre_cost'
+            ]
+          ]
+        },
         ...(disablePagination ? {} : { limit: limit, offset: offset }),
       });
 
@@ -1589,10 +1613,12 @@ class CaseSchemaService {
   async getCasesHeadersSectionList(
     caseRid: string,
     schemaName: string,
-    orgDb: Sequelize
+    orgDb: Sequelize,
+    accountRid: string,
+    activeStatusRid: string
   ) {
     const [result] = await orgDb.query<CaseHeadersColumns>(
-      fetchCasesHeadersDatas(schemaName, caseRid),
+      fetchCasesHeadersDatas(schemaName, caseRid, accountRid, activeStatusRid),
       { type: QueryTypes.SELECT }
     );
     if (result) {
@@ -4176,7 +4202,8 @@ class CaseSchemaService {
   async fetchChecklistDetailsById(
     checklistId: string,
     accountNumber: string,
-    accountRid: string
+    accountRid: string,
+    mainDb?: Sequelize
   ) {
     if (!this.orgDbSequelize) {
       this.orgDbSequelize = await this.caseModelService.getSequelize();
@@ -4192,7 +4219,7 @@ class CaseSchemaService {
     }
 
     let checklistItems = await this.fetchChecklistItems(
-      checklistId, accountNumber
+      checklistId, accountNumber, mainDb
     );
 
     const userInfo = await this.insertUserDetails(
@@ -5159,7 +5186,8 @@ class CaseSchemaService {
 
   async fetchChecklistItems(
     checklistId: string,
-    accountNumber: string
+    accountNumber: string,
+    mainDb?: Sequelize
   ) {
     try {
       const {
@@ -5172,14 +5200,35 @@ class CaseSchemaService {
           "rid",
           "checklist_item_name",
           "status_rid",
-          "checklist_item_description"
+          "checklist_item_description",
+          "created_by",
+          "modified_by"
         ],
         order: [
           ["created_datetime", "ASC"],
         ],
         where: { checklist_rid: checklistId },
+        raw: true
       });
-      return items;
+      const createdIds: string[] = [...new Set(items.map((d: any) => d.created_by))];
+      const modifiedIds = [...new Set(items.map((d: any) => d.modified_by))];
+      let combinedIds: string[] = [];
+      combinedIds.push(...createdIds, ...modifiedIds);
+      const checklistItemStatusIds = [...new Set(items.map((d: any) => d.status_rid))];
+      const getStatusDetails: any = await mainDb?.query(rawQueries.getChecklistItemsStatusDetails(checklistItemStatusIds));
+      const getUserDetails: any = await mainDb?.query(rawQueries.getOwnerDetails(combinedIds));
+      const userMap = new Map(getUserDetails[0].map((d: any) => [d.rid, d.name]));
+      const statusMap = new Map(getStatusDetails[0].map((d: any) => [d.rid, d.status_name]));
+
+      const finalData = items.map((data: any) => {
+        return {
+          ...data,
+          created_by_name: userMap.get(data.created_by) || null,
+          modified_by_name: userMap.get(data.modified_by) || null,
+          status_name: statusMap.get(data.status_rid)
+        }
+      })
+      return finalData;
     } catch (err) {
       logMessage(`Error fetching checklist items: ${err}`);
       throw new Error(
@@ -5288,7 +5337,6 @@ class CaseSchemaService {
         );
     }
   }
-
 
   async manageCheckListItems(
     accountNumber: string,
@@ -5622,7 +5670,7 @@ class CaseSchemaService {
       effective_end_datetime: data.effective_end_datetime,
       case_team_member_role_rid: data.case_team_member_role_rid,
       assigned_to: data.assigned_to,
-      status_rid: data.status_rid,
+      status_rid: activeStatusRid,
       priority_rid: data.priority_rid,
       milestone_template_rid: data.milestone_template_rid,
       checklist_template_rid: data.checklist_template_rid,
@@ -5756,11 +5804,13 @@ class CaseSchemaService {
         }
       } else {
         if (isTaskExists.task_status_rid !== data.task_status_rid) {
-          const workflowResult = await this.checkTaskWorkFlow(accountNumber, data.rid, data.task_status_rid, data.case_rid, data.workflow_connector.target_rid);
-          if (workflowResult?.success) {
-            return {
-              statusCode: HttpStatus.BAD_REQUEST,
-              statusMessage: workflowResult.statusMessage
+          if (Object.keys(data.workflow_connector).length > 0) {
+            const workflowResult = await this.checkTaskWorkFlow(accountNumber, data.rid, data.task_status_rid, data.case_rid, data.workflow_connector.target_rid);
+            if (workflowResult?.success) {
+              return {
+                statusCode: HttpStatus.BAD_REQUEST,
+                statusMessage: workflowResult.statusMessage
+              }
             }
           }
         }
@@ -6099,7 +6149,7 @@ class CaseSchemaService {
     if (checkTaskExists) return checkTaskExists
     else return null
   }
-  async fetchTaskForCases(page: number, limit: number, search: string, sort: string, sortBy: string, filter: FilterType, doSorting: boolean, caseRid: string, accountRid: string, schemaName: string, isExport: boolean) {
+  async fetchTaskForCases(page: number, limit: number, search: string, sort: string, sortBy: string, filter: FilterType, doSorting: boolean, caseRid: string, accountRid: string, schemaName: string, isExport: boolean, disablePagination: boolean) {
     if (!this.orgDbSequelize) {
       this.orgDbSequelize = await initOrgSequelize()
     }
@@ -6107,7 +6157,7 @@ class CaseSchemaService {
       this.mainDbSequelize = await initMainDbSequelize()
     }
     const activeStatusId: any = await this.mainDbSequelize.query(rawQueries.getActiveStatusId());
-    const result = await this.orgDbSequelize.query<CaseTaskQueryType>(fetchCaseSpecificTaskQuery(page, limit, search, sort, sortBy, filter, doSorting, caseRid, accountRid, schemaName, isExport, activeStatusId[0][0].rid), { type: QueryTypes.SELECT });
+    const result = await this.orgDbSequelize.query<CaseTaskQueryType>(fetchCaseSpecificTaskQuery(page, limit, search, sort, sortBy, filter, doSorting, caseRid, accountRid, schemaName, isExport, activeStatusId[0][0].rid, disablePagination), { type: QueryTypes.SELECT });
     if (result.length > 0) {
       return result;
     } else {

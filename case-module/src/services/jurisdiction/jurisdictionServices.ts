@@ -1,5 +1,5 @@
 import { Logger } from "winston";
-import { Sequelize } from "sequelize";
+import { Sequelize, Op } from "sequelize";
 import { CaseModelService } from "../caseModelsService";
 import { JurisdictionSchemaService } from "./schemaService";
 import { HttpStatus, rawQueries, STATUS_MESSAGE } from "../../utils/constants";
@@ -186,6 +186,78 @@ export class JurisdictionService {
     data?: { response: any };
   }> {
     try {
+      // Duplicate check for jurisdiction config (exclude current record)
+      const { JurisdictionConfig } = await this.caseModelService.getModels("");
+      const mainDb = await this.getMainDb();
+      const [activeStatusRid]: any[] = await mainDb.query(
+        rawQueries.getActiveStatusId(),
+        { type: "SELECT" }
+      );
+      configRequest.status_rid = activeStatusRid.rid;
+      let duplicate = false;
+      if (configRequest.jurisdictionConfig) {
+        const existingConfig = await JurisdictionConfig.findOne({
+          where: {
+            credit_config_group_rid: configRequest.jurisdiction_config_group_rid,
+            status_rid: activeStatusRid.rid,
+            rid: { [Op.ne]: configRequest.config_rid },
+          },
+        });
+        // Raw query for overlap (exclude current rid)
+        const overlapConfig = await JurisdictionConfig.sequelize?.query(
+          rawQueries.checkJurisdictionConfigOverlap(true), // pass a flag to exclude current rid if needed
+          {
+            replacements: {
+              groupId: configRequest.jurisdiction_config_group_rid,
+              statusRid: activeStatusRid.rid,
+              startDate: configRequest.effective_start_date,
+              endDate: configRequest.effective_end_date,
+              excludeRid: configRequest.config_rid,
+            },
+            type: "SELECT",
+          }
+        );
+        if (existingConfig || (overlapConfig && overlapConfig.length > 0))
+          duplicate = true;
+      }
+      // Duplicate check for platform config
+      if (configRequest.is_federal && configRequest.platformConfig) {
+       
+        const existingPlatformConfig = await JurisdictionConfig.findOne({
+          where: {
+            credit_config_group_rid: configRequest.platform_config_group_rid,
+            status_rid: activeStatusRid.rid,
+            rid: { [Op.ne]: configRequest.config_rid },
+          },
+        });
+        const overlapPlatformConfig = await JurisdictionConfig.sequelize?.query(
+          rawQueries.checkJurisdictionConfigOverlap(true),
+          {
+            replacements: {
+              groupId: configRequest.platform_config_group_rid,
+              statusRid: activeStatusRid.rid,
+              startDate: configRequest.effective_start_date,
+              endDate: configRequest.effective_end_date,
+              excludeRid: configRequest.config_rid,
+            },
+            type: "SELECT",
+          }
+        );
+        if (
+          existingPlatformConfig ||
+          (overlapPlatformConfig && overlapPlatformConfig.length > 0)
+        )
+          duplicate = true;
+      }
+      console.log("duplicate in platform", duplicate);
+      if (!duplicate) {
+        return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage:
+            "Duplicate platform config exists for the same effective dates wih active status.",
+        };
+      }
       const updatedConfig =
         await this.jurisdictionSchemaService.updateJurisdictionConfig(
           configRequest
@@ -228,7 +300,7 @@ export class JurisdictionService {
         const group = configRequest.jurisdictionConfig;
         const existingConfig = await JurisdictionConfig.findOne({
           where: {
-            credit_config_group_rid: group.credit_config_group_rid,
+            credit_config_group_rid: configRequest.jurisdiction_config_group_rid,
             status_rid: activeStatusRid.rid,
           },
         });
@@ -237,7 +309,7 @@ export class JurisdictionService {
           rawQueries.checkJurisdictionConfigOverlap(),
           {
             replacements: {
-              groupId: group.credit_config_group_rid,
+              groupId: configRequest.jurisdiction_config_group_rid,
               statusRid: activeStatusRid.rid,
               startDate: configRequest.effective_start_date,
               endDate: configRequest.effective_end_date,
@@ -253,7 +325,7 @@ export class JurisdictionService {
         const group = configRequest.platformConfig;
         const existingPlatformConfig = await JurisdictionConfig.findOne({
           where: {
-            credit_config_group_rid: group.credit_config_group_rid,
+            credit_config_group_rid: configRequest.platform_config_group_rid,
             status_rid: activeStatusRid.rid,
           },
         });
@@ -261,7 +333,7 @@ export class JurisdictionService {
           rawQueries.checkJurisdictionConfigOverlap(),
           {
             replacements: {
-              groupId: group.credit_config_group_rid,
+              groupId: configRequest.platform_config_group_rid,
               statusRid: activeStatusRid.rid,
               startDate: configRequest.effective_start_date,
               endDate: configRequest.effective_end_date,
@@ -313,7 +385,7 @@ export class JurisdictionService {
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { updatedConfig: any };
+    data?: { configs: any,count:number };
   }> {
     try {
       const updatedConfig =
@@ -330,7 +402,8 @@ export class JurisdictionService {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
         data: {
-          updatedConfig: updatedConfig,
+          configs: updatedConfig?.result,
+          count: updatedConfig?.count,
         },
       };
     } catch (err) {

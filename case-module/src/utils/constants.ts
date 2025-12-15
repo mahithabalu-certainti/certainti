@@ -634,7 +634,7 @@ export const caseTaskMapping = [
   },
   {
     permissionField: "effective_end_datetime",
-    exportField: "End Date",
+    exportField: "Due Date",
     dataField: "effective_end_datetime",
   },
   {
@@ -1053,7 +1053,7 @@ export const rawQueries = {
     return `
       SELECT distinct status_name ,rid
       FROM ${MAIN_SCHEMA_NAME}.activity_status
-      WHERE status = 'active'${activityType && activityType !== "All" ? ` AND activity_type = '${activityType}'` : ""}
+      WHERE status = 'active'${activityType && activityType !== "All" ? ` AND lower(activity_type) = lower('${activityType}')` : ""}
       ORDER BY status_name ASC
     `;
   },
@@ -1173,6 +1173,11 @@ export const rawQueries = {
   },
   getOwnerDetails(caseOwnerRid: any[]) {
     return `SELECT rid, CONCAT(first_name,' ',last_name) AS name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (${caseOwnerRid.map(
+      (d: any) => `'${d}'`
+    )})`;
+  },
+  getChecklistItemsStatusDetails(statusIds: any[]) {
+    return `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.checklist_status WHERE rid IN (${statusIds.map(
       (d: any) => `'${d}'`
     )})`;
   },
@@ -1509,7 +1514,14 @@ export const rawQueries = {
     let ids: string[] = []
     if (rid.length > 0) {
       ids.push(`${rid.map((d: any) => `'${d}'`).join(',')}`)
-      return `SELECT rid, CONCAT(first_name,' ', last_name) AS name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (${ids})`
+      return `SELECT rid, CONCAT(first_name,' ', last_name) AS name, profile_url FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (${ids})`
+    }
+  },
+  getAllCaseTeamRoles(rid: any[]) {
+    let ids: string[] = []
+    if (rid.length > 0) {
+      ids.push(`${rid.map((d: any) => `'${d}'`).join(',')}`)
+      return `SELECT rid, role_name FROM ${MAIN_SCHEMA_NAME}.case_team_role WHERE rid IN (${ids})`
     }
   },
   getAllTeamRoles(rid: any[]) {
@@ -2070,7 +2082,8 @@ export const rawQueries = {
       g.state_rid,
       c.country_name,
       c.country_code,
-      s.state_name
+      s.state_name,
+      g.rid as credit_config_group_rid
     FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_key k
     JOIN ${MAIN_SCHEMA_NAME}.rd_credit_config_group g ON k.credit_config_group_rid = g.rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.country c ON g.country_rid = c.rid
@@ -2097,14 +2110,15 @@ export const rawQueries = {
     JOIN ${MAIN_SCHEMA_NAME}.rd_credit_config_group g ON k.credit_config_group_rid = g.rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.country c ON g.country_rid = c.rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.state s ON g.state_rid = s.rid
-    WHERE g.credit_program_name = 'Platform Configuration';
+    WHERE g.credit_program_name = 'Platform Configuration'
+    AND g.is_federal = true;
     `;
   },
-  checkJurisdictionConfigOverlap() {
-    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values WHERE credit_config_group_rid = :groupId AND status_rid = :statusRid AND ((:startDate < effective_end_date AND :endDate > effective_start_date)) LIMIT 1`
+  checkJurisdictionConfigOverlap(excludeCurrent = false) {
+    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values WHERE credit_config_group_rid = :groupId AND status_rid = :statusRid AND ((:startDate < effective_end_date AND :endDate > effective_start_date))${excludeCurrent ? ' AND rid != :excludeRid' : ''} LIMIT 1`;
   },
   getJurisdictionByCountryId(country_rid: string, state_rid: string, is_federal: boolean, credit_program_name: string) {
-    let whereClause = `g.country_rid = '${country_rid}' AND g.is_federal = ${is_federal} AND g.credit_program_name = '${credit_program_name}'`;
+    let whereClause = `g.country_rid = '${country_rid}' AND g.is_federal = ${is_federal}`;
     if (state_rid && state_rid.trim() !== "") {
       whereClause += ` AND g.state_rid = '${state_rid}'`;
     }
@@ -2121,7 +2135,8 @@ export const rawQueries = {
       g.state_rid,
       c.country_name,
       c.country_code,
-      s.state_name
+      s.state_name,
+      g.rid as credit_config_group_rid
     FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_key k
     JOIN ${MAIN_SCHEMA_NAME}.rd_credit_config_group g ON k.credit_config_group_rid = g.rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.country c ON g.country_rid = c.rid
@@ -2477,7 +2492,8 @@ export const filterColumnsCaseTask = {
   assigned_to: `assigned_to`,
   effective_start_datetime: `effective_start_datetime`,
   effective_end_datetime: `effective_end_datetime`,
-  task_status_rid: `task_status_rid`
+  task_status_rid: `task_status_rid`,
+  role_rid: "role_rid"
 }
 
 export const filterColumnsCaseTaskTypes: any = {
@@ -2485,7 +2501,8 @@ export const filterColumnsCaseTaskTypes: any = {
   assigned_to: `string`,
   effective_start_datetime: `date`,
   effective_end_datetime: `date`,
-  task_status_rid: `string`
+  task_status_rid: `string`,
+  role_rid: `string`
 }
 
 export const relationshipTypes = {
@@ -2568,3 +2585,9 @@ export const callFields = [
   "a.effective_end_datetime",
 
 ];
+
+export const mainTableFiltersForCase: Record<any, any> = {
+  role_name: "role_name",
+  task_status_name: "task_status_name",
+  assigned_to_name: "assigned_to_name"
+}

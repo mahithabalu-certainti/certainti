@@ -1224,6 +1224,10 @@ class ActivitySchemaService {
             return value.some((v) => (v ?? "").toString().toLowerCase().includes(filterValue));
           case "is_empty":
             return value.length === 0;
+          case "in":
+            if (!Array.isArray(filterObj[operator])) return false;
+            const filterArr = filterObj[operator].map((v: any) => (v ?? "").toString().toLowerCase());
+            return value.some((v) => filterArr.includes((v ?? "").toString().toLowerCase()));
           default:
             return false;
         }
@@ -1238,6 +1242,10 @@ class ActivitySchemaService {
             return value !== filterValue;
           case "is_empty":
             return value === "";
+          case "in":
+            if (!Array.isArray(filterObj[operator])) return false;
+            const filterArr = filterObj[operator].map((v: any) => (v ?? "").toString().toLowerCase());
+            return filterArr.includes(value);
           default:
             return false;
         }

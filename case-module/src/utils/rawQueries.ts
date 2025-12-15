@@ -7,7 +7,7 @@ import {
   validColumnsForSorting,
 } from "./types";
 
-export const fetchCasesHeadersDatas = (schemaName: string, caseRid: string) => {
+export const fetchCasesHeadersDatas = (schemaName: string, caseRid: string, accountRid: string, activeStatusRid: string) => {
   let query = `
     WITH fetch_fiscal_year AS (
     SELECT project_fiscal_rid FROM ${schemaName}.case_projects where case_rid = '${caseRid}'
@@ -25,8 +25,9 @@ export const fetchCasesHeadersDatas = (schemaName: string, caseRid: string) => {
     f.total_project_cost AS case_total_project_cost, c.case_total_rd_cost, c.case_total_qre_cost,c.case_completion_percentage,c.case_total_qualified_project_cost,
     c.planned_submission_date, c.statutory_submission_date, c.case_startdate,
     c.description, c.r_number, c.created_by, c.modified_by, c.created_datetime,
-    c.modified_datetime, c.total_nonlabor_cost, c.heat_light_power,c.tax_liability
-
+    c.modified_datetime, c.total_nonlabor_cost, c.heat_light_power,c.tax_liability,
+    CASE WHEN EXISTS (SELECT 1 from ${schemaName}.case_team ct WHERE ct.case_rid = '${caseRid}' AND ct.account_rid = '${accountRid}' AND ct.status_rid = '${activeStatusRid}') THEN TRUE
+    ELSE FALSE END AS is_case_team_created
     FROM
     ${schemaName}.cases c
     LEFT JOIN ${schemaName}.account_details ad ON ad.account_rid = c.account_rid
@@ -1030,9 +1031,9 @@ export function fetchChecklistAttachToDetails(schemaName: string, attachTo: stri
     case 'account':
       return `SELECT ad.account_rid, ad.account_name AS name FROM ${schemaName}.account_details ad WHERE ad.account_rid = '${attachTo}'`;
     case 'project':
-      return `SELECT pf.rid, pf.project_code AS name  AS name FROM ${schemaName}.project_fiscal pf WHERE pf.rid = '${attachTo}'`;
+      return `SELECT pf.rid, pf.project_code AS name  FROM ${schemaName}.project_fiscal pf WHERE pf.rid = '${attachTo}'`;
     case 'case':
-      return `SELECT cd.rid, cd.case_name AS name  AS name FROM ${schemaName}.cases cd WHERE cd.rid = '${attachTo}'`;
+      return `SELECT cd.rid, cd.case_name AS name FROM ${schemaName}.cases cd WHERE cd.rid = '${attachTo}'`;
     case 'resource':
       return `SELECT r.rid, r.resource_code AS name FROM ${schemaName}.resources r WHERE r.rid = '${attachTo}'`;
     case 'resource_cost':
@@ -1048,8 +1049,7 @@ export function fetchChecklistAttachToDetails(schemaName: string, attachTo: stri
   }
 }
 
-
-export const fetchCaseSpecificTaskQuery = (page: number, limit: number, search: string, sort: string, sortBy: string, filter: FilterType, doSorting: boolean, caseRid: string, accountRid: string, schemaName: string, isExport: boolean, statusId: string) => {
+export const fetchCaseSpecificTaskQuery = (page: number, limit: number, search: string, sort: string, sortBy: string, filter: FilterType, doSorting: boolean, caseRid: string, accountRid: string, schemaName: string, isExport: boolean, statusId: string, disablePagination: boolean) => {
   let searchValue: string = ``
   let sortValue: string = ``
   let filterQueryArray: string[] = []
@@ -1058,7 +1058,7 @@ export const fetchCaseSpecificTaskQuery = (page: number, limit: number, search: 
   let validKey: string = ``
   let pagination: string = ``
 
-  if (!isExport) {
+  if (!isExport && !disablePagination) {
     let offset = (page - 1) * limit;
     pagination = `LIMIT ${limit} OFFSET ${offset}`
   } else {
@@ -1083,19 +1083,29 @@ export const fetchCaseSpecificTaskQuery = (page: number, limit: number, search: 
     for (let [key, conditions] of Object.entries(filter)) {
       if (Object.keys(filterColumnsCaseTask).includes(key)) {
         validKey = key;
+        let dynamicAlias;
         for (let [cond, values] of Object.entries(conditions)) {
           switch (filterColumnsCaseTaskTypes[validKey]) {
             case "string": {
+              if (validKey === 'assigned_to') {
+                dynamicAlias = `ctt`
+                validKey = `user_rid`
+              } else if (validKey === 'role_rid') {
+                dynamicAlias = `ctt`
+                validKey = `role_rid`
+              } else {
+                dynamicAlias = `ct`
+              }
               if (cond === 'equals')
-                filterQueryArray.push(`LOWER(ct.${validKey}) = '${values.toLowerCase()}'`)
+                filterQueryArray.push(`LOWER(${dynamicAlias}.${validKey}) = '${values.toLowerCase()}'`)
               if (cond === 'not_equals')
-                filterQueryArray.push(`LOWER(ct.${validKey}) != '${values.toLowerCase()}'`)
+                filterQueryArray.push(`(LOWER(${dynamicAlias}.${validKey}) != '${values.toLowerCase()}' OR ${dynamicAlias}.${validKey} IS NULL)`)
               if (cond === 'contains')
-                filterQueryArray.push(`ct.${validKey} ILIKE '%${values}%'`)
+                filterQueryArray.push(`${dynamicAlias}.${validKey} ILIKE '%${values}%'`)
               if (cond === 'is_empty')
-                filterQueryArray.push(`(ct.${validKey} IS NULL OR ct.${validKey} = '')`)
+                filterQueryArray.push(`(${dynamicAlias}.${validKey} IS NULL OR ${dynamicAlias}.${validKey} = '')`)
               if (cond === 'in')
-                filterQueryArray.push(`ct.${validKey} IN (${values.map((d: any) => `'${d}'`).join(',')})`)
+                filterQueryArray.push(`${dynamicAlias}.${validKey} IN (${values.map((d: any) => `'${d}'`).join(',')})`)
               break;
             }
             case "date": {
@@ -1130,13 +1140,13 @@ export const fetchCaseSpecificTaskQuery = (page: number, limit: number, search: 
   let query =
     `
     WITH fetch_case_task AS (
-    SELECT 
-    ct.rid, ct.task_name, ctt.user_rid AS assigned_to, 
-    ct.effective_start_datetime, 
-    ct.effective_end_datetime, ct.task_status_rid
+    SELECT
+    ct.rid, ct.task_name, ctt.user_rid AS assigned_to,
+    ct.effective_start_datetime,
+    ct.effective_end_datetime, ct.task_status_rid, ctt.role_rid
     FROM
     ${schemaName}.case_task ct
-    LEFT JOIN ${schemaName}.case_team ctt ON ctt.user_rid = ct.assigned_to AND ctt.case_rid = ct.case_rid AND ctt.account_rid = ct.account_rid AND ctt.status_rid = '${statusId}'
+    LEFT JOIN ${schemaName}.case_team ctt ON ctt.user_rid = ct.assigned_to AND ctt.case_rid = ct.case_rid AND ctt.account_rid = ct.account_rid AND ctt.status_rid = '${statusId}' AND ct.case_team_member_role_rid = ctt.role_rid
     WHERE
     ct.status_rid = '${statusId}'
     AND
@@ -1151,11 +1161,12 @@ export const fetchCaseSpecificTaskQuery = (page: number, limit: number, search: 
     count_results AS (
     SELECT f.*, COUNT(f.rid) OVER() AS total_result FROM fetch_case_task f
     )
-
+ 
     SELECT c.* FROM count_results c ${pagination}
     `
   return query;
 }
+
 
 export const fetchTaskComments = (page: number, limit: number, taskRid: string, accountRid: string, caseRid: string, schemaName: string, taskType: string) => {
   let offset = (page - 1) * limit;
@@ -1720,8 +1731,9 @@ export const listAllJurisdictionConfig = (
 ) => `
     WITH fetch_jurisdiction_config AS (
         SELECT
-            jc.rid, jc.r_number,
+            jc.rid, jc.r_number,jc.config_name,
             jc.status_rid,s.status_name,
+            g.credit_program_name,
             jc.created_by, jc.modified_by,
             jc.created_datetime, jc.modified_datetime,
             COUNT(jc.rid) OVER() AS total_records,
@@ -1729,16 +1741,19 @@ export const listAllJurisdictionConfig = (
             jc.effective_end_date,g.is_federal,
             uc.first_name || ' ' || uc.last_name AS created_user_name,
             um.first_name || ' ' || um.last_name AS modified_user_name,
-            jc.credit_config_group_rid
+            jc.credit_config_group_rid,g.country_rid,c.country_name,
+            g.state_rid,st.state_name
             FROM
             ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values jc
              LEFT JOIN ${MAIN_SCHEMA_NAME}.rd_credit_config_group g ON jc.credit_config_group_rid = g.rid
              LEFT JOIN ${MAIN_SCHEMA_NAME}.country c ON g.country_rid = c.rid
              LEFT JOIN ${MAIN_SCHEMA_NAME}.status s ON jc.status_rid = s.rid
+              LEFT JOIN ${MAIN_SCHEMA_NAME}.state st ON g.state_rid = st.rid
              LEFT JOIN ${MAIN_SCHEMA_NAME}.user uc ON uc.rid = jc.created_by
              LEFT JOIN ${MAIN_SCHEMA_NAME}.user um ON um.rid = jc.modified_by
               WHERE
     (jc.r_number ILIKE '${searchValue}')
+    and jc.federal_config_id is null
     ${joinedConditions}
     ),
     paginated_datas AS (
@@ -1749,6 +1764,8 @@ export const listAllJurisdictionConfig = (
         array_agg(jsonb_build_object(
         'rid', i.rid,
         'r_number', i.r_number,
+        'config_name', i.config_name,
+        'credit_program_name', i.credit_program_name,
         'status_rid', i.status_rid,
         'status_name', i.status_name,
         'created_by', i.created_by,
@@ -1761,7 +1778,11 @@ export const listAllJurisdictionConfig = (
         'created_user_name', i.created_user_name,
         'modified_user_name', i.modified_user_name,
         'is_federal', i.is_federal,
-        'credit_config_group_rid', i.credit_config_group_rid
+        'credit_config_group_rid', i.credit_config_group_rid,
+        'country_rid', i.country_rid,
+        'country_name', i.country_name,
+        'state_rid', i.state_rid,
+        'state_name', i.state_name
         ) ) AS jurisdiction_config_list
 
         FROM

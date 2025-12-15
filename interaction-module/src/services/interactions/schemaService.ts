@@ -2913,6 +2913,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           "notes",
           "is_mandatory",
         ],
+        order : [['created_datetime', 'DESC']],
         where: { interaction_rid: interactionRid },
       });
 

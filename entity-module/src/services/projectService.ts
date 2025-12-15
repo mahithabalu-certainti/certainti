@@ -770,10 +770,23 @@ export class ProjectService {
       );
 
       if (projectData) {
+        const mainDbInit = await initMainDbSequelize();
+        const [platFormConfig]: any[] = await mainDbInit.query(
+                      rawQueries.fetchPlatformConfig(
+                        accountData.country_rid
+                      ),{type: 'SELECT'}
+                );
+        let projectType: any[] = [];
+        if (platFormConfig && platFormConfig.config_json && platFormConfig.config_json.project_type) {
+          let projectTypes = platFormConfig.config_json.project_type;
+          if (!Array.isArray(projectTypes)) {
+              projectTypes = [projectTypes];
+              }
+          projectType = projectTypes;
+          }
         projectData.dataValues.total_fte = projectData.dataValues.total_fte == 0 ? null : projectData.dataValues.total_fte
         projectData.dataValues.total_nonlabor_prj = projectData.dataValues.total_nonlabor_prj == 0 ? null : projectData.dataValues.total_nonlabor_prj
         projectData.dataValues.total_subcon = projectData.dataValues.total_subcon == 0 ? null : projectData.dataValues.total_subcon
-        const mainDbInit = await initMainDbSequelize();
 
         let schemaName = rawQueries.fetchSchemaName(accountRNumber)
         const orgDb = await initOrgSequelize()
@@ -800,7 +813,8 @@ export class ProjectService {
         );
         projectData = await this.schemaService.insertProjectTypeAndStatus(
           projectData,
-          mainDbInit
+          mainDbInit,
+          projectType
         );
         projectData = await this.schemaService.projectKeyContactData(
           projectData,
@@ -874,6 +888,7 @@ export class ProjectService {
 
           return {
             ...attachment,
+
             document_type: (documentType as any)?.type_name || "",
             document_category: (documentCategory as any)?.category_name || "",
             uploaded_by: (uploadedBy as any)?.full_name || "",
@@ -1514,10 +1529,6 @@ export class ProjectService {
           bothParentAndChild,
           accessibleIds
         );
-
-      if (allProjectList.length > 0) {
-        allProjectList = await this.schemaService.addProjectResourceExistsFlags(allProjectList) as [unknown[], unknown] | never[];
-      }
 
       return {
         statusCode: HttpStatus.SUCCESS,

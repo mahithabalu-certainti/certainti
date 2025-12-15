@@ -1085,6 +1085,7 @@ async fetchChecklistTemplateDetailsById(
     isUnique: boolean;
     isSameCategoryExists: boolean;
     category_name?: string;
+    isActiveCategoryExists?: boolean;
   }> {
     const { EmailTemplate } = await this.caseModelService.getModels("");
     // Uniqueness: template name, category, and exclude current rid
@@ -1110,8 +1111,31 @@ async fetchChecklistTemplateDetailsById(
     const [categoryInfo]: any[] = await this.mainDbSequelize.query(rawQueries.getCategoryDetails(emailReq.category_rid), { type: QueryTypes.SELECT });
     const [statusInfo]: any[] = await this.mainDbSequelize.query(rawQueries.getActiveStatusId(), { type: QueryTypes.SELECT });
     let isSameCategoryExists = true;
+    let isActiveCategoryExists = true;
     let category_name = categoryInfo?.category_name;
     if (categoryInfo?.category_name !== emailCategorties.general) {
+      if(categoryInfo?.category_name === emailCategorties.review_projects) {
+        const existingTemplate = await EmailTemplate.findOne({
+          where: {
+            rid: emailReq.email_template_rid  
+          }
+        });
+        if(existingTemplate?.status_rid !== emailReq.status_rid) {
+          const activeTemplate = await EmailTemplate.findOne({
+          where: {
+            category_rid: emailReq.category_rid,
+            status_rid: statusInfo.rid
+          }
+        });
+        isActiveCategoryExists = !activeTemplate;
+          return {
+            isUnique,
+            isSameCategoryExists,
+            category_name,
+            isActiveCategoryExists
+          };
+        }
+      }
       const categoryResponse = await EmailTemplate.findOne({
         where: {
           [Op.and]: [
@@ -1126,7 +1150,8 @@ async fetchChecklistTemplateDetailsById(
     return {
       isUnique,
       isSameCategoryExists,
-      category_name
+      category_name,
+      isActiveCategoryExists
     };
   }
 

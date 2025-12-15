@@ -47,6 +47,7 @@ import {
   SCHEMANAME_PREFIX,
   emailCategorties,
   caseTaskMapping,
+  mainTableFiltersForCase,
 } from "../../utils/constants";
 import { query } from "express";
 import currency from "currency.js";
@@ -364,11 +365,14 @@ export class CaseService {
       let schemaName = rawQueries.fetchSchemaName(
         fetchParentAccountRnumber[0][0].r_number
       );
+      const getActiveStatusId : any = await mainDb.query(rawQueries.getActiveStatusId());
       const queryResult =
         await this.caseSchemaService.getCasesHeadersSectionList(
           caseRid,
           schemaName,
-          orgDb
+          orgDb,
+          accountRid,
+          getActiveStatusId[0][0].rid
         );
       if (queryResult) {
         let isSubscriptionCreated = false;
@@ -782,7 +786,7 @@ export class CaseService {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.NOT_FOUND_MESSAGE,
         data: {
-          caseInfo: null,
+          caseInfo: [],
           count: 0,
         },
       };
@@ -1819,6 +1823,9 @@ export class CaseService {
         await this.caseSchemaService.fetchValidAccountNumberById(
           caseRequest.account_rid
         );
+        if(!this.mainDbSequelize) {
+          this.mainDbSequelize = await initMainDbSequelize();
+        }
 
         if (!accountNumber) {
           logMessage(`Invalid account ID ${caseRequest.account_rid}`);
@@ -1830,7 +1837,7 @@ export class CaseService {
         }
       const checklistDetails =
         await this.caseSchemaService.fetchChecklistDetailsById(
-          checkListRid,accountNumber,caseRequest.account_rid
+          checkListRid,accountNumber,caseRequest.account_rid, this.mainDbSequelize
         );
   
       if (!checklistDetails) {
@@ -2129,63 +2136,102 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
       let fetchParentRnumber : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
       let schemaName = rawQueries.fetchSchemaName(fetchParentRnumber[0][0].r_number);
       let doSorting : boolean;
-      if(data.sort === 'assigned_to' || data.sort === 'task_status_name') doSorting = false 
-      else doSorting = true
-      const result = await this.caseSchemaService.fetchTaskForCases(data.page, data.limit, data.search, data.sort, data.sort_by, data.filter, doSorting, data.case_rid, data.account_rid, schemaName, isExport);
+      let disablePagination : boolean;
+      if(data.sort === 'assigned_to_name' || data.sort === 'task_status_name' || data.sort === 'role_name') {
+        doSorting = false 
+        disablePagination = true
+      }
+      else {
+        doSorting = true
+        disablePagination = false
+      }
+      const result = await this.caseSchemaService.fetchTaskForCases(data.page, data.limit, data.search, data.sort, data.sort_by, data.filter, doSorting, data.case_rid, data.account_rid, schemaName, isExport, disablePagination);
       if(result.length > 0) {
         let allFilteredUsers
         let allCaseTaskStatus;
+        let allCaseTeamRoles;
         const userIds = [...new Set(result.map((d : any) => d.assigned_to))];
         const taskStatusIds = [...new Set(result.map((d : any) => d.task_status_rid))];
+        const roleIds = [...new Set(result.map((d : any) => d.role_rid))];
+
         let fetchStatusQuery = rawQueries.getAllTaskStatus(taskStatusIds)
         let fetchUserQuery = rawQueries.getAllUsers(userIds)
+        let fetchCaseTeamRolesQuery = rawQueries.getAllCaseTeamRoles(roleIds)
+
         if(fetchStatusQuery) 
           allCaseTaskStatus = await mainDb.query(fetchStatusQuery)
         if(fetchUserQuery)
           allFilteredUsers = await mainDb.query(fetchUserQuery)
+        if(fetchCaseTeamRolesQuery)
+          allCaseTeamRoles = await mainDb.query(fetchCaseTeamRolesQuery)
 
         const userMap : Map<string, string> = new Map(allFilteredUsers?.[0].map((d : any) => [d.rid, d.name]));
         const taskStatusMap : Map<string, string> = new Map(allCaseTaskStatus?.[0].map((d : any) => [d.rid, d.task_status_name]));
+        const roleMap : Map<string, string> = new Map(allCaseTeamRoles?.[0].map((d : any) => [d.rid, d.role_name]));
 
         let mapResult = result.map((d : any) => {
           return {
             ...d,
             task_status_name : taskStatusMap.get(d.task_status_rid) || null,
-            assigned_to_name : userMap.get(d.assigned_to) || null
+            assigned_to_name : userMap.get(d.assigned_to) || null,
+            role_name : roleMap.get(d.role_rid) || null
           }
         });
-        
-        if(data.sort === 'task_status_name' && data.sort_by === 'DESC') {
-          mapResult = mapResult.sort((b, a) => {
-            const taskNameA = a.task_status_name || ""
-            const taskNameB = b.task_status_name || ""
-            return taskNameB.localeCompare(taskNameA)
-          })
-        } 
-        else if(data.sort === 'task_status_name' && data.sort_by === 'ASC') {
-          mapResult = mapResult.sort((a, b) => {
-            const taskNameA = a.task_status_name || ""
-            const taskNameB = b.task_status_name || ""
-            return taskNameA.localeCompare(taskNameB)
-          })
+
+        if (
+        mainTableFiltersForCase[data.sort] != undefined &&
+        data.sort_by.toLowerCase() == "asc"
+        ) {
+          mapResult = mapResult.sort((a: any, b: any) => {
+            const valA = a[data.sort];
+            const valB = b[data.sort];
+
+            // treat null, undefined, '' and ' ' as NULL
+            const isNullA = valA === null || valA === undefined || valA.trim?.() === "";
+            const isNullB = valB === null || valB === undefined || valB.trim?.() === "";
+
+            // NULLS LAST
+            if (isNullA && !isNullB) return 1;
+            if (!isNullA && isNullB) return -1;
+            if (isNullA && isNullB) return 0;
+
+            // ASC
+            return valA.localeCompare(valB);
+          });
+        } else if (
+          mainTableFiltersForCase[data.sort] != undefined &&
+          data.sort_by.toLowerCase() == "desc"
+        ) {
+          mapResult = mapResult.sort((a: any, b: any) => {
+            const valA = a[data.sort];
+            const valB = b[data.sort];
+
+            const isNullA = valA === null || valA === undefined || valA.trim?.() === "";
+            const isNullB = valB === null || valB === undefined || valB.trim?.() === "";
+
+            // NULLS LAST
+            if (isNullA && !isNullB) return 1;
+            if (!isNullA && isNullB) return -1;
+            if (isNullA && isNullB) return 0;
+
+            // DESC
+            return valB.localeCompare(valA);
+          });
         }
-        else if(data.sort === 'assigned_to_name' && data.sort_by === 'DESC') {
-          mapResult = mapResult.sort((b, a) => {
-            const taskNameA = a.assigned_to_name || ""
-            const taskNameB = b.assigned_to_name || ""           
-            return taskNameB.localeCompare(taskNameA)
-          })
-        }
-        else if(data.sort === 'assigned_to_name' && data.sort_by === 'ASC') {
-          mapResult = mapResult.sort((a, b) => {
-            const taskNameA = a.assigned_to_name || ""
-            const taskNameB = b.assigned_to_name || ""             
-            return taskNameA.localeCompare(taskNameB)
-          })
+        let finalData;
+        if (isExport) {
+          finalData = mapResult;
+        } else {
+          finalData = disablePagination
+            ? mapResult.slice(
+                (data.page - 1) * data.limit,
+                data.page * data.limit
+              )
+            : mapResult;
         }
         return {
           statusCode : HttpStatus.SUCCESS,
-          data : mapResult
+          data : finalData
         }
       } else {
         return {
@@ -2283,7 +2329,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
             "Task Name" : d.task_name,
             "Assigned To" : d.assigned_to_name || "-",
             "Start Date" : d.effective_start_datetime ? moment(d.effective_start_datetime).format("YYYY-MMM-DD") : "-",
-            "End Date": d.effective_end_datetime ? moment(d.effective_end_datetime).format("YYYY-MMM-DD") : "-",
+            "Due Date": d.effective_end_datetime ? moment(d.effective_end_datetime).format("YYYY-MMM-DD") : "-",
             "Status": d.task_status_name || "-",
           }
           const exportRecord: Record<string, any> = {};
@@ -2334,8 +2380,9 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
       data.modified_by = userId
       const result = await this.caseSchemaService.deleteComments(data, fetchParent[0][0].r_number);
       if(result?.statusCode === HttpStatus.SUCCESS) {     
-        const {CaseHistory} = await this.caseModelService.getModels(fetchParent[0][0].r_number)
-        await CaseHistory.create({
+        const {CaseHistory,ActivityHistory} = await this.caseModelService.getModels(fetchParent[0][0].r_number)
+        if(data.task_type !== 'activity') {
+          await CaseHistory.create({
           created_by : data.modified_by,
           created_datetime : new Date(),
           case_rid : data.case_rid,
@@ -2343,7 +2390,20 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
           attribute_name : "Comments",
           old_value : "CREATE",
           new_value : 'deleted a comment'
-        })   
+        }) 
+        }
+        else{
+          await ActivityHistory.create({
+          created_by : data.modified_by,
+          created_datetime : new Date(),
+          activity_rid : data.task_rid,
+          attribute_name : "Comments",
+          old_value : "CREATE",
+          new_value : 'deleted a comment'
+        }) 
+
+        }
+         
         return {
           statusCode : result.statusCode,
           statusMessage : result.statusMessage

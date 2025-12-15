@@ -783,7 +783,8 @@ export class InteractionService {
                 professionalServiceConsultantRid[0][0].rid
               )
             );
-            if (fetchProfSerConsultantId[0][0] !== null) {
+            const consultantObj = fetchProfSerConsultantId && fetchProfSerConsultantId[0] && fetchProfSerConsultantId[0][0] ? fetchProfSerConsultantId[0][0] : null;
+            if (consultantObj !== null && consultantObj !== undefined) {
               const interactionLevel: any = await mainDbSequelize.query(
                 rawQueries.fetchInteractionLevelById(
                   fetchInteractionDetails.interaction_level_rid
@@ -870,6 +871,10 @@ export class InteractionService {
                 interactionLevel[0][0].interaction_level_name,
                 true
               );
+            }
+            else{
+              logMessage(`No professional services consultant found for account ID ${interactionData.account_rid}`);
+              /*Notification part will be implemented later if there is no professional services consultant added in account*/
             }
           }
         }        
@@ -1688,11 +1693,12 @@ export class InteractionService {
 
     // Column headers
     worksheet.addRow([
-      "Question No",
+      "Record ID",
       "Questions",
       "Answers",
       "Notes",
       "Is Mandatory",
+      "Question No",
     ]);
     worksheet.getRow(6).eachCell((cell) => {
       cell.font = { bold: true };
@@ -1700,22 +1706,26 @@ export class InteractionService {
     });
 
     worksheet.columns = [
-      { key: "question no", width: 15 },
+      { key: "record id", width: 15 },
       { key: "question", width: 50 },
       { key: "answer", width: 50 },
       { key: "notes", width: 30 },
       { key: "is_mandatory", width: 15 },
+      { key: "question no", width: 15 },
     ];
 
     // Add question rows
+    let sequenceNo : number = 0;
     interactionItems.forEach((item: any) => {
+      sequenceNo = sequenceNo + 1
       const plain = item.get ? item.get({ plain: true }) : item;
       const row = worksheet.addRow({
-        "question no": plain.question_seq_num,
+        "record id": `Q${sequenceNo}`,
         question: plain.question,
         answer: "",
         notes: "",
         is_mandatory: plain.is_mandatory ? "Yes" : "No",
+        "question no": plain.question_seq_num
       });
 
       // Lock specific columns right away
@@ -1724,6 +1734,7 @@ export class InteractionService {
       row.getCell(3).protection = { locked: false };
       row.getCell(4).protection = { locked: true };
       row.getCell(5).protection = { locked: true };
+      row.getCell(6).protection = { locked: true };
     });
 
     // Now protect worksheet AFTER all protections are set
@@ -2941,9 +2952,10 @@ export class InteractionService {
         );
 
         let projectType: any[] = [];
+        let projectTypes :any;
         if (platFormConfig && platFormConfig.config_json && platFormConfig.config_json.project_type) {
           // Support array or single value
-          let projectTypes = platFormConfig.config_json.project_type;
+           projectTypes = platFormConfig.config_json.project_type;
           if (!Array.isArray(projectTypes)) {
             projectTypes = [projectTypes];
           }
@@ -2969,7 +2981,13 @@ export class InteractionService {
           : [];
         if (projectIds.length === 0) {
           logMessage(`No active projects found for account ID in triggerAI: ${req.data[0].account_rid}`);
-          throw new Error("No active projects found for the account");
+           return {
+              statusCode: HttpStatus.FAILED,
+              statusMessage: `No active projects found for the account with the project type ${projectTypes}`,
+              data: null,
+              status: "error",
+              errorMessage: `No active projects found for the account with the project type ${projectTypes}`,
+            };
         }
         payload.project_id = projectIds;
       }
@@ -3022,6 +3040,7 @@ export class InteractionService {
       // Check if the message was processed successfully
       logMessage(`Send result to topic: ${JSON.stringify(sendResult)}`);
       return {
+        statusCode: HttpStatus.SUCCESS,
         statusMessage: "RD Assessment Initiated",
         status: "success",
         data: null,
@@ -3029,6 +3048,7 @@ export class InteractionService {
     } catch (error) {
       logMessage(`Error in triggerAI: ${error}`);
       return {
+          statusCode: HttpStatus.FAILED,
         statusMessage: "Failed to process AI request",
         status: "error",
         data: null,
