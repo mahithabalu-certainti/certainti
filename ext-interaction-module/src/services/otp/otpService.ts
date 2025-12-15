@@ -103,8 +103,24 @@ export class OtpService {
 
       // 5. Send OTP email (only once)
       const safeOtpMeta = otpMeta ?? { otp_attempt_count: 0 };
-
-      const mailContent = otpMailTemplate(randomOtpDigit, email);
+      let emailContents = await this.otpSchema.getTemplateDetailsByCategory("interaction otp");
+      let  mailContent = {
+          message: {
+          subject :  emailContents.subject,
+          body: {
+              contentType: "HTML",
+              content:this.replacePlaceholders(emailContents.body_html,randomOtpDigit,process.env.SUPPORT_EMAIL!
+              ),
+            },
+        toRecipients: [
+              {
+                emailAddress: {address: email,},
+              },
+            ],
+         
+        },
+        }
+     // const mailContent = otpMailTemplate(randomOtpDigit, email);
       const sent = await this.sendOtpOnceAndTrackFailure(
         accountNumber,
         email,
@@ -166,6 +182,19 @@ export class OtpService {
       throw this.throwServiceError(err as Error);
     }
   }
+
+    replacePlaceholders(
+      template: string,
+      otp: string,
+      supportEmail: string
+    ): string {
+      return template.replace(/{{(.*?)}}/g, (_: string, key: string) => {
+        const normalized = key.trim().toLowerCase().replace(/\s+/g, "");
+        if (normalized === "otp") return otp;
+        if (normalized === "supportemail") return supportEmail;
+        return "";
+      });
+    }
 
   /**
    * Verifies the provided OTP for a given account and interaction.

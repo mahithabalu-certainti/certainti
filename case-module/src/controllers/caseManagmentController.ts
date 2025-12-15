@@ -13,11 +13,8 @@ import {
   validateRequest,
 } from "../utils/helpers";
 import {
-  adminCheckListMappings,
-  emailTemplateMappings,
   HttpStatus,
-  STATUS_MESSAGE,
-  taskTemplateFieldMappings,
+  STATUS_MESSAGE
 } from "../utils/constants";
 import {
   adminChecklistSchema,
@@ -34,6 +31,7 @@ import {
 } from "../lib/joi/schemas/schema";
 import configurations from "../config/config";
 import moment from "moment";
+import { adminCheckListMappings, emailTemplateMappings, taskTemplateFieldMappings } from "../utils/excelExportMapping";
 
 // Initialize services from configuration for dependency injection
 const services = configurations.getInstance().getServices();
@@ -406,7 +404,7 @@ async function exportAdminCheckList(req: Request, res: Response) {
          }
        }
         const isValidTZ = value.timezone && isValidTimezone(value.timezone);
-           const formatDate = (date?: Date) => {
+        const formatDate = (date?: Date) => {
              if (!date) return null;
              
              return moment(date)
