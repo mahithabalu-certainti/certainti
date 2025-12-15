@@ -107,7 +107,7 @@ export interface GeoDataResponse<T> {
 }
 
 export interface IGeoDataService {
-  countries(): Promise<
+  countries(statusScope: string): Promise<
     GeoDataResponse<{
       country: any;
       count: number;

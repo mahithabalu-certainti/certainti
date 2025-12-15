@@ -27,7 +27,12 @@ const services = configurations.getInstance().getServices();
 async function country(req: Request, res: Response): Promise<void> {
   const methodName = "country";
   try {
-    const countries = await services.geoDataServices.countries();
+    let { statusScope} = req.query;
+  if(!statusScope)
+  {
+    statusScope = "all";
+  }
+    const countries = await services.geoDataServices.countries(statusScope as string);
     if (countries.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
       handleSuccessResponse(res, countries.data);
