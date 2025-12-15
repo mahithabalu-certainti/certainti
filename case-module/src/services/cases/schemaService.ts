@@ -4007,13 +4007,27 @@ class CaseSchemaService {
       if (isDropdownList) {
         if (userIds.length > 0) {
           const getUserDetails = await this.mainDbSequelize.query(rawQueries.getOwnerDetails(userIds));
-          const userMap = new Map(getUserDetails[0].map((d: any) => [d.rid, d.name]));
-          const finalData = caseTeamMembers.map((d: any) => {
+          const userMap = new Map(getUserDetails[0].map((d: any) => [d.rid, {name : d.name, profile_url : d.profile_url}]));
+          let profileUrl;
+          let userName;
+          const finalData = await Promise.all(caseTeamMembers.map(async (d: any) => {
+            if(userMap.get(d.user_rid) !== undefined) {
+              userName = userMap.get(d.user_rid)?.name || null
+              if(userMap.get(d.user_rid)?.profile_url !== null) {
+                profileUrl = await generateSasUrl(userMap.get(d.user_rid)?.profile_url);
+              } else {
+                profileUrl = null
+              }
+            } else {
+              profileUrl = null
+              userName = null
+            }
             return {
               ...d,
-              user_name: userMap.get(d.user_rid)
+              user_name: userName,
+              profile_url : profileUrl
             }
-          })
+          }))
           return finalData
         }
       } else return caseTeamMembers;
@@ -5702,7 +5716,7 @@ class CaseSchemaService {
           description: data.task_description || "",
           fiscal_year: caseInfo?.fiscal_year || 0,
           assigned_to: data.assigned_to || "",
-          status_rid: data.status_rid || "",
+          status_rid: data.task_status_rid || "",
           priority_rid: data.priority_rid || "",
           effective_start_datetime: data.effective_start_datetime,
           effective_end_datetime: data.effective_end_datetime,
