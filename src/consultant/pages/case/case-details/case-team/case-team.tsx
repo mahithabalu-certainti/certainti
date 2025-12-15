@@ -72,11 +72,13 @@ const ConfigTabs: ResourceTabs[] = [
 interface CaseTeamProps {
   activityMenuItems: ActivityMenuItem[];
   fiscalYear: number;
+  refetchCaseDetails: () => void;
 }
 
 const CaseTeam: React.FC<CaseTeamProps> = ({
   activityMenuItems,
   fiscalYear,
+  refetchCaseDetails,
 }) => {
   const [searchParams] = useSearchParams();
   const { caseId } = useParams();
@@ -683,6 +685,7 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
     updateCaseTeamMutation.mutate(payload, {
       onSuccess: () => {
         setIsLoading(false);
+        refetchCaseDetails();
       },
       onError: () => {
         setIsLoading(false);
