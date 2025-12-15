@@ -1145,6 +1145,15 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
     attachments : "attachments"
   }
 
+   export const interactionTemplateName = {
+    interactionProject : "interaction project",
+    interactionProjectRemainder : "interaction project remainder",
+    interactionAccount : "interaction account",
+    interactionAccountRemainder : "interaction account remainder",
+    interactionProjectUpdate : "interaction project update",
+    interactionAccountUpdate : "interaction account update"
+  }
+
   export const keyContactRoleName = {
     professionalServiceConsultant : "Professional Services Consultant"
   }

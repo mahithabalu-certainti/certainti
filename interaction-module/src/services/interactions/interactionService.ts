@@ -24,6 +24,7 @@ import {
   schedulerStatus,
   interactionTaskName,
   interactionSource,
+  interactionTemplateName,
 } from "../../utils/constants";
 import { Op, Sequelize } from "sequelize";
 import { initMainDbSequelize } from "../../config/mainDataSource";
@@ -1768,25 +1769,25 @@ export class InteractionService {
     try {
        let templateName ="";
        if(interactionLevel.toLowerCase() === 'project') {
-        templateName = "interaction project"
+        templateName = interactionTemplateName.interactionProject
        } else {
-        templateName = "interaction account"
+        templateName = interactionTemplateName.interactionAccount
        }
        let emailPreview = await this.interactionSchemaService.getTemplateDetailsByCategory(templateName);
       if (is_interaction_followup) {
          if(interactionLevel.toLowerCase() === 'project') {
-        templateName = "interaction project remainder"
+        templateName = interactionTemplateName.interactionProjectRemainder
        } else {
-        templateName = "interaction account remainder"
+        templateName = interactionTemplateName.interactionAccountRemainder
        }
       emailPreview = await this.interactionSchemaService.getTemplateDetailsByCategory(templateName);
       
       }
       if (isResponseReceived) {
          if(interactionLevel.toLowerCase() === 'project') {
-        templateName = "interaction project update"
+        templateName = interactionTemplateName.interactionProjectUpdate
        } else {
-        templateName = "interaction account update"
+        templateName = interactionTemplateName.interactionAccountUpdate
        }
          emailPreview = await this.interactionSchemaService.getTemplateDetailsByCategory(templateName);
       }
