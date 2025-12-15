@@ -28,6 +28,7 @@ import {
 } from '../../consultant/pages/case/case-details/work-breakdown/helper';
 import { generateInitials, generateColorFromName } from './helper';
 import LoadingSkeleton from './loading-skeleton';
+import UserAvatar from './user-avatar';
 
 interface TaskCommentsSectionProps {
   fieldVisibility: Record<string, boolean | undefined>;
@@ -692,339 +693,340 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
           {/* Comments List */}
           <div className='space-y-3 max-h-[400px] overflow-y-auto overflow-x-hidden scrollbar-hide pr-1'>
             {comments.length > 0 ? (
-              comments.map((commentItem, idx) => (
-                <div
-                  key={commentItem.id || idx}
-                  onMouseEnter={() =>
-                    setHoveredCommentId(commentItem.id || null)
-                  }
-                  onMouseLeave={() => setHoveredCommentId(null)}
-                  className='group'
-                >
-                  {/* Edit Mode */}
-                  {editingCommentId === commentItem.id ? (
-                    <div className='bg-white border border-gray-300 rounded-lg p-4 shadow-sm'>
-                      <div className='flex gap-3 mb-3'>
-                        <div
-                          className='w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 text-white'
-                          style={{
-                            backgroundColor:
-                              commentItem.createdBy === loggedInUserId
-                                ? loggedInUser.color
-                                : commentItem.color || '#999',
-                            fontSize: '8px',
-                          }}
-                        >
-                          {commentItem.createdBy === loggedInUserId
-                            ? loggedInUser.initials
-                            : commentItem.initials ||
-                              generateInitials(commentItem.user)}
-                        </div>
-                        <div>
-                          <p className='text-sm font-semibold text-gray-900'>
-                            {commentItem.user}
-                          </p>
-                          <p className='text-xs text-gray-500'>Editing...</p>
-                        </div>
-                      </div>
-                      <div className='relative'>
-                        <textarea
-                          ref={editTextareaRef}
-                          value={editingCommentText}
-                          onChange={(e) =>
-                            setEditingCommentText(e.target.value)
-                          }
-                          className='w-full bg-white border border-gray-300 rounded-lg p-3 text-sm resize-none focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900 placeholder-gray-500 min-h-[100px] pr-8'
-                          placeholder='Edit your comment'
-                          disabled={isUpdating}
-                        />
-                        {commentError &&
-                          editingCommentId === commentItem.id && (
-                            <div className='absolute right-2 top-3'>
-                              <ErrorIconTooltip error={commentError} />
-                            </div>
-                          )}
-                      </div>
+              comments.map((commentItem, idx) => {
+                const isOwnComment = commentItem.createdBy === loggedInUserId;
 
-                      {/* Edit Mode Attachments */}
-                      <div className='mt-3 space-y-3'>
-                        {/* Existing Attachments */}
-                        {commentItem.attachments &&
-                          commentItem.attachments.length > 0 && (
-                            <div className='space-y-2'>
-                              <p className='text-xs font-medium text-gray-500'>
-                                Existing Attachments:
-                              </p>
-                              {commentItem.attachments.map((att) => {
-                                const isMarkedForDeletion =
-                                  editingDeletedFileIds.includes(att.rid);
-                                return (
-                                  <div
-                                    key={att.rid}
-                                    className={`flex items-center justify-between p-2 rounded text-xs ${
-                                      isMarkedForDeletion
-                                        ? 'bg-red-50 text-gray-400'
-                                        : 'bg-gray-50 text-gray-700'
-                                    }`}
-                                  >
-                                    <div className='flex items-center gap-2 overflow-hidden min-w-0'>
-                                      <PaperclipIcon className='w-3 h-3 text-gray-600 flex-shrink-0' />
-                                      <span
-                                        className={`truncate ${
-                                          isMarkedForDeletion
-                                            ? 'line-through'
-                                            : ''
-                                        }`}
-                                        title={att.documentName}
-                                      >
-                                        {att.documentName}
-                                      </span>
-                                      {isMarkedForDeletion && (
-                                        <span className='text-red-500 text-[10px] flex-shrink-0'>
-                                          (Marked for deletion)
-                                        </span>
-                                      )}
-                                    </div>
-                                    <button
-                                      onClick={() =>
-                                        isMarkedForDeletion
-                                          ? handleUndoRemoveExistingAttachment(
-                                              att.rid
-                                            )
-                                          : handleRemoveExistingAttachment(
-                                              att.rid
-                                            )
-                                      }
-                                      className={`ml-2 p-1 rounded hover:bg-opacity-80 ${
-                                        isMarkedForDeletion
-                                          ? 'text-green-600 hover:bg-green-100'
-                                          : 'text-red-600 hover:bg-red-100'
-                                      }`}
-                                      title={
-                                        isMarkedForDeletion
-                                          ? 'Undo delete'
-                                          : 'Delete attachment'
-                                      }
-                                      disabled={isUpdating}
-                                    >
-                                      {isMarkedForDeletion ? '↩' : '✕'}
-                                    </button>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          )}
+                const avatarProfileUrl = isOwnComment
+                  ? loggedInUser.profileUrl
+                  : commentItem.profile_url;
 
-                        {/* New Attachments Input */}
-                        <div className='space-y-2'>
-                          <button
-                            type='button'
-                            onClick={() => editFileInputRef.current?.click()}
-                            className='block w-full border-2 border-dashed border-gray-300 rounded-lg p-3 text-center hover:border-gray-400 hover:bg-gray-50 transition-colors cursor-pointer bg-gray-50'
-                            disabled={isUpdating}
-                          >
-                            <p className='text-xs text-gray-600 font-medium flex items-center justify-center gap-2'>
-                              <PaperclipIcon className='w-3 h-3 text-gray-600' />{' '}
-                              Click to upload attachments
-                            </p>
-                          </button>
-                          {editAttachmentError && (
-                            <div className='text-red-500 text-xs mt-2 text-center'>
-                              {editAttachmentError}
-                            </div>
-                          )}
-                        </div>
+                const avatarInitials = isOwnComment
+                  ? loggedInUser.initials
+                  : commentItem.initials || generateInitials(commentItem.user);
 
-                        {/* Show selected files for edit comment */}
-                        {editingNewFiles.length > 0 && (
-                          <div className='space-y-1 max-w-full'>
-                            {editingNewFiles.map((file, idx) => (
-                              <div
-                                key={idx}
-                                className='text-xs text-blue-900 bg-blue-50 p-2 rounded flex items-center gap-2 justify-between min-w-0'
-                              >
-                                <div className='flex items-center gap-2 min-w-0'>
-                                  <PaperclipIcon className='w-3 h-3 text-gray-600 flex-shrink-0' />
-                                  <span
-                                    className='truncate break-all min-w-0'
-                                    title={file.name}
-                                  >
-                                    {file.name}
-                                  </span>
-                                </div>
-                                <button
-                                  onClick={() =>
-                                    handleRemoveEditNewAttachment(idx)
-                                  }
-                                  className='text-blue-700 hover:text-blue-900 transition-colors flex-shrink-0'
-                                  disabled={isUpdating}
-                                  title='Remove attachment'
-                                >
-                                  ✕
-                                </button>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                      <div className='flex gap-2 justify-end mt-3 items-center'>
-                        <TextButton
-                          label='Cancel'
-                          onClick={() => {
-                            setEditingCommentId(null);
-                            setEditingCommentText('');
-                            setEditingNewFiles([]);
-                            setEditingDeletedFileIds([]);
-                            setEditAttachmentError(null);
-                          }}
-                          disabled={isUpdating}
-                          sx={{ padding: '6px 12px' }}
-                        />
-                        <TextButton
-                          label={isUpdating ? 'Saving...' : 'Save'}
-                          onClick={() =>
-                            handleUpdateComment(commentItem.id || '')
-                          }
-                          disabled={
-                            isUpdating ||
-                            (!editingCommentText.trim() &&
-                              (commentItem.attachments?.length || 0) -
-                                editingDeletedFileIds.length +
-                                editingNewFiles.length <=
-                                0) ||
-                            (!editingNewFiles.length &&
-                              !editingDeletedFileIds.length &&
-                              isCommentUnchanged(
-                                commentItem.text,
-                                editingCommentText
-                              ))
-                          }
-                          sx={{ padding: '6px 12px' }}
-                        />
-                      </div>
-                    </div>
-                  ) : (
-                    /* View Mode */
-                    <div className='flex gap-3 pb-3 border-b border-gray-200 last:border-b-0 transition-colors group-hover:bg-gray-50 rounded-lg p-3 -mx-3'>
-                      <div
-                        className='w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 text-white'
-                        style={{
-                          backgroundColor:
-                            commentItem.createdBy === loggedInUserId
-                              ? loggedInUser.color
-                              : commentItem.color || '#999',
-                          fontSize: '8px',
-                        }}
-                      >
-                        {commentItem.createdBy === loggedInUserId
-                          ? loggedInUser.initials
-                          : commentItem.initials ||
-                            generateInitials(commentItem.user)}
-                      </div>
-                      <div className='flex-1 min-w-0'>
-                        <div className='flex items-start justify-between gap-2'>
+                const avatarColor = isOwnComment
+                  ? loggedInUser.color
+                  : commentItem.color || '#999';
+
+                return (
+                  <div
+                    key={commentItem.id || idx}
+                    onMouseEnter={() =>
+                      setHoveredCommentId(commentItem.id || null)
+                    }
+                    onMouseLeave={() => setHoveredCommentId(null)}
+                    className='group'
+                  >
+                    {/* Edit Mode */}
+                    {editingCommentId === commentItem.id ? (
+                      <div className='bg-white border border-gray-300 rounded-lg p-4 shadow-sm'>
+                        <div className='flex gap-3 mb-3'>
+                          <UserAvatar
+                            profileUrl={avatarProfileUrl}
+                            initials={avatarInitials}
+                            color={avatarColor}
+                            size={32}
+                            fontSize={8}
+                          />
                           <div>
                             <p className='text-sm font-semibold text-gray-900'>
                               {commentItem.user}
                             </p>
-                            {commentItem.createdDateTime && (
-                              <p className='text-xs text-gray-500 mt-0.5'>
-                                {commentItem.createdDateTime}
+                            <p className='text-xs text-gray-500'>Editing...</p>
+                          </div>
+                        </div>
+                        <div className='relative'>
+                          <textarea
+                            ref={editTextareaRef}
+                            value={editingCommentText}
+                            onChange={(e) =>
+                              setEditingCommentText(e.target.value)
+                            }
+                            className='w-full bg-white border border-gray-300 rounded-lg p-3 text-sm resize-none focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900 placeholder-gray-500 min-h-[100px] pr-8'
+                            placeholder='Edit your comment'
+                            disabled={isUpdating}
+                          />
+                          {commentError &&
+                            editingCommentId === commentItem.id && (
+                              <div className='absolute right-2 top-3'>
+                                <ErrorIconTooltip error={commentError} />
+                              </div>
+                            )}
+                        </div>
+
+                        {/* Edit Mode Attachments */}
+                        <div className='mt-3 space-y-3'>
+                          {/* Existing Attachments */}
+                          {commentItem.attachments &&
+                            commentItem.attachments.length > 0 && (
+                              <div className='space-y-2'>
+                                <p className='text-xs font-medium text-gray-500'>
+                                  Existing Attachments:
+                                </p>
+                                {commentItem.attachments.map((att) => {
+                                  const isMarkedForDeletion =
+                                    editingDeletedFileIds.includes(att.rid);
+                                  return (
+                                    <div
+                                      key={att.rid}
+                                      className={`flex items-center justify-between p-2 rounded text-xs ${
+                                        isMarkedForDeletion
+                                          ? 'bg-red-50 text-gray-400'
+                                          : 'bg-gray-50 text-gray-700'
+                                      }`}
+                                    >
+                                      <div className='flex items-center gap-2 overflow-hidden min-w-0'>
+                                        <PaperclipIcon className='w-3 h-3 text-gray-600 flex-shrink-0' />
+                                        <span
+                                          className={`truncate ${
+                                            isMarkedForDeletion
+                                              ? 'line-through'
+                                              : ''
+                                          }`}
+                                          title={att.documentName}
+                                        >
+                                          {att.documentName}
+                                        </span>
+                                        {isMarkedForDeletion && (
+                                          <span className='text-red-500 text-[10px] flex-shrink-0'>
+                                            (Marked for deletion)
+                                          </span>
+                                        )}
+                                      </div>
+                                      <button
+                                        onClick={() =>
+                                          isMarkedForDeletion
+                                            ? handleUndoRemoveExistingAttachment(
+                                                att.rid
+                                              )
+                                            : handleRemoveExistingAttachment(
+                                                att.rid
+                                              )
+                                        }
+                                        className={`ml-2 p-1 rounded hover:bg-opacity-80 ${
+                                          isMarkedForDeletion
+                                            ? 'text-green-600 hover:bg-green-100'
+                                            : 'text-red-600 hover:bg-red-100'
+                                        }`}
+                                        title={
+                                          isMarkedForDeletion
+                                            ? 'Undo delete'
+                                            : 'Delete attachment'
+                                        }
+                                        disabled={isUpdating}
+                                      >
+                                        {isMarkedForDeletion ? '↩' : '✕'}
+                                      </button>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+
+                          {/* New Attachments Input */}
+                          <div className='space-y-2'>
+                            <button
+                              type='button'
+                              onClick={() => editFileInputRef.current?.click()}
+                              className='block w-full border-2 border-dashed border-gray-300 rounded-lg p-3 text-center hover:border-gray-400 hover:bg-gray-50 transition-colors cursor-pointer bg-gray-50'
+                              disabled={isUpdating}
+                            >
+                              <p className='text-xs text-gray-600 font-medium flex items-center justify-center gap-2'>
+                                <PaperclipIcon className='w-3 h-3 text-gray-600' />{' '}
+                                Click to upload attachments
                               </p>
+                            </button>
+                            {editAttachmentError && (
+                              <div className='text-red-500 text-xs mt-2 text-center'>
+                                {editAttachmentError}
+                              </div>
                             )}
                           </div>
 
-                          {/* Action Icons - Hover Reveal */}
-                          <div
-                            className={`flex gap-2 flex-shrink-0 transition-opacity duration-200 ${
-                              hoveredCommentId === commentItem.id
-                                ? 'opacity-100'
-                                : 'opacity-0'
-                            }`}
-                          >
-                            <Suspense fallback={null}>
-                              {!fieldDisabled.comments && (
-                                <>
-                                  <button
-                                    onClick={() => {
-                                      setEditingCommentId(
-                                        commentItem.id || null
-                                      );
-                                      setEditingCommentText(commentItem.text);
-                                      setEditingNewFiles([]);
-                                      setEditingDeletedFileIds([]);
-                                    }}
-                                    className='p-1.5 hover:bg-blue-100 rounded-md transition-colors group/edit'
-                                    title='Edit comment'
-                                  >
-                                    <PencilIcon className='w-4 h-4 text-blue-600' />
-                                  </button>
-                                  <button
-                                    onClick={() => {
-                                      setDeleteConfirmModal({
-                                        isOpen: true,
-                                        commentId: commentItem.id || null,
-                                      });
-                                    }}
-                                    className='p-1.5 hover:bg-red-100 rounded-md transition-colors group/delete'
-                                    title='Delete comment'
-                                  >
-                                    <DeleteIcon className='w-4 h-4 text-red-600' />
-                                  </button>
-                                </>
-                              )}
-                            </Suspense>
-                          </div>
-                        </div>
-
-                        <p className='text-sm text-gray-700 mt-2 break-words'>
-                          {commentItem.text}
-                        </p>
-
-                        {commentItem.attachments &&
-                          commentItem.attachments.length > 0 && (
-                            <div className='mt-2 space-y-2'>
-                              {commentItem.attachments.map((att) => (
+                          {/* Show selected files for edit comment */}
+                          {editingNewFiles.length > 0 && (
+                            <div className='space-y-1 max-w-full'>
+                              {editingNewFiles.map((file, idx) => (
                                 <div
-                                  key={att.rid}
-                                  className='bg-gray-50 p-2 rounded border border-gray-200'
+                                  key={idx}
+                                  className='text-xs text-blue-900 bg-blue-50 p-2 rounded flex items-center gap-2 justify-between min-w-0'
                                 >
-                                  <div className='flex items-center gap-2'>
-                                    <PaperclipIcon className='w-3 h-3 text-gray-500 flex-shrink-0' />
-                                    <div className='flex-1 min-w-0'>
-                                      <a
-                                        href={att.browseFile}
-                                        onClick={(e) =>
-                                          handleDownload(
-                                            e,
-                                            att.browseFile,
-                                            att.documentName
-                                          )
-                                        }
-                                        className='text-sm text-blue-600 hover:underline font-medium block truncate'
-                                        title={att.documentName}
-                                      >
-                                        {att.documentName}
-                                      </a>
-                                      {(att.uploadedBy || att.uploadedDate) && (
-                                        <p className='text-xs text-gray-500 mt-0.5'>
-                                          Uploaded by{' '}
-                                          {att.uploadedBy || 'Unknown'} on{' '}
-                                          {att.uploadedDate ||
-                                            'Recently uploaded'}
-                                        </p>
-                                      )}
-                                    </div>
+                                  <div className='flex items-center gap-2 min-w-0'>
+                                    <PaperclipIcon className='w-3 h-3 text-gray-600 flex-shrink-0' />
+                                    <span
+                                      className='truncate break-all min-w-0'
+                                      title={file.name}
+                                    >
+                                      {file.name}
+                                    </span>
                                   </div>
+                                  <button
+                                    onClick={() =>
+                                      handleRemoveEditNewAttachment(idx)
+                                    }
+                                    className='text-blue-700 hover:text-blue-900 transition-colors flex-shrink-0'
+                                    disabled={isUpdating}
+                                    title='Remove attachment'
+                                  >
+                                    ✕
+                                  </button>
                                 </div>
                               ))}
                             </div>
                           )}
+                        </div>
+                        <div className='flex gap-2 justify-end mt-3 items-center'>
+                          <TextButton
+                            label='Cancel'
+                            onClick={() => {
+                              setEditingCommentId(null);
+                              setEditingCommentText('');
+                              setEditingNewFiles([]);
+                              setEditingDeletedFileIds([]);
+                              setEditAttachmentError(null);
+                            }}
+                            disabled={isUpdating}
+                            sx={{ padding: '6px 12px' }}
+                          />
+                          <TextButton
+                            label={isUpdating ? 'Saving...' : 'Save'}
+                            onClick={() =>
+                              handleUpdateComment(commentItem.id || '')
+                            }
+                            disabled={
+                              isUpdating ||
+                              (!editingCommentText.trim() &&
+                                (commentItem.attachments?.length || 0) -
+                                  editingDeletedFileIds.length +
+                                  editingNewFiles.length <=
+                                  0) ||
+                              (!editingNewFiles.length &&
+                                !editingDeletedFileIds.length &&
+                                isCommentUnchanged(
+                                  commentItem.text,
+                                  editingCommentText
+                                ))
+                            }
+                            sx={{ padding: '6px 12px' }}
+                          />
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </div>
-              ))
+                    ) : (
+                      /* View Mode */
+                      <div className='flex gap-3 pb-3 border-b border-gray-200 last:border-b-0 transition-colors group-hover:bg-gray-50 rounded-lg p-3 -mx-3'>
+                        <UserAvatar
+                          profileUrl={avatarProfileUrl}
+                          initials={avatarInitials}
+                          color={avatarColor}
+                          size={32}
+                          fontSize={8}
+                        />
+                        <div className='flex-1 min-w-0'>
+                          <div className='flex items-start justify-between gap-2'>
+                            <div>
+                              <p className='text-sm font-semibold text-gray-900'>
+                                {commentItem.user}
+                              </p>
+                              {commentItem.createdDateTime && (
+                                <p className='text-xs text-gray-500 mt-0.5'>
+                                  {commentItem.createdDateTime}
+                                </p>
+                              )}
+                            </div>
+
+                            {/* Action Icons - Hover Reveal */}
+                            <div
+                              className={`flex gap-2 flex-shrink-0 transition-opacity duration-200 ${
+                                hoveredCommentId === commentItem.id
+                                  ? 'opacity-100'
+                                  : 'opacity-0'
+                              }`}
+                            >
+                              <Suspense fallback={null}>
+                                {!fieldDisabled.comments && (
+                                  <>
+                                    <button
+                                      onClick={() => {
+                                        setEditingCommentId(
+                                          commentItem.id || null
+                                        );
+                                        setEditingCommentText(commentItem.text);
+                                        setEditingNewFiles([]);
+                                        setEditingDeletedFileIds([]);
+                                      }}
+                                      className='p-1.5 hover:bg-blue-100 rounded-md transition-colors group/edit'
+                                      title='Edit comment'
+                                    >
+                                      <PencilIcon className='w-4 h-4 text-blue-600' />
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        setDeleteConfirmModal({
+                                          isOpen: true,
+                                          commentId: commentItem.id || null,
+                                        });
+                                      }}
+                                      className='p-1.5 hover:bg-red-100 rounded-md transition-colors group/delete'
+                                      title='Delete comment'
+                                    >
+                                      <DeleteIcon className='w-4 h-4 text-red-600' />
+                                    </button>
+                                  </>
+                                )}
+                              </Suspense>
+                            </div>
+                          </div>
+
+                          <p className='text-sm text-gray-700 mt-2 break-words'>
+                            {commentItem.text}
+                          </p>
+
+                          {commentItem.attachments &&
+                            commentItem.attachments.length > 0 && (
+                              <div className='mt-2 space-y-2'>
+                                {commentItem.attachments.map((att) => (
+                                  <div
+                                    key={att.rid}
+                                    className='bg-gray-50 p-2 rounded border border-gray-200'
+                                  >
+                                    <div className='flex items-center gap-2'>
+                                      <PaperclipIcon className='w-3 h-3 text-gray-500 flex-shrink-0' />
+                                      <div className='flex-1 min-w-0'>
+                                        <a
+                                          href={att.browseFile}
+                                          onClick={(e) =>
+                                            handleDownload(
+                                              e,
+                                              att.browseFile,
+                                              att.documentName
+                                            )
+                                          }
+                                          className='text-sm text-blue-600 hover:underline font-medium block truncate'
+                                          title={att.documentName}
+                                        >
+                                          {att.documentName}
+                                        </a>
+                                        {(att.uploadedBy ||
+                                          att.uploadedDate) && (
+                                          <p className='text-xs text-gray-500 mt-0.5'>
+                                            Uploaded by{' '}
+                                            {att.uploadedBy || 'Unknown'} on{' '}
+                                            {att.uploadedDate ||
+                                              'Recently uploaded'}
+                                          </p>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })
             ) : isLoadingInfinite && useInfiniteScroll ? (
               <LoadingSkeleton count={3} variant='comment' />
             ) : (
@@ -1199,7 +1201,24 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                     fontSize: '8px',
                   }}
                 >
-                  {activity.initials || generateInitials(activity.user)}
+                  {activity.profile_url && (
+                    <img
+                      src={activity.profile_url}
+                      alt='activity-user-profile-img'
+                      className='w-full h-full object-cover rounded-full'
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none'; // hide broken image
+                        const fallback = e.currentTarget
+                          .nextElementSibling as HTMLElement;
+                        if (fallback) fallback.classList.remove('hidden');
+                      }}
+                    />
+                  )}
+
+                  {/* Initials fallback */}
+                  <span className={activity.profile_url ? 'hidden' : ''}>
+                    {activity.initials || generateInitials(activity.user)}
+                  </span>
                 </div>
                 <div className='flex-1 min-w-0'>
                   <p className='text-sm text-gray-900 break-words'>

@@ -75,6 +75,7 @@ export interface TaskComment {
   attachments?: string[];
   user_avatar_color?: string;
   [key: string]: unknown;
+  profile_url?: string | null;
 }
 
 export interface TaskCommentsApiResponse {

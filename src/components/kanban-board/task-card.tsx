@@ -4,8 +4,9 @@ import type { TaskCardProps, TaskCard } from './types';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { CommentIcon, CustomChecklistIcon, LinkTaskIcon } from '../../assets';
-import { generateInitials } from './helper';
+import { generateInitials, getTagColor } from './helper';
 import { Tooltip } from '@mui/material';
+import { formatDateToYyyyMmmDd } from '../../common-utils';
 
 interface ExtendedTaskCardProps extends TaskCardProps {
   isDragable?: boolean;
@@ -35,6 +36,8 @@ const TaskCardComponent: React.FC<ExtendedTaskCardProps> = ({
     data: { type: 'Task', taskId },
     disabled: !isDragable && !isDragablebetweenBoards,
   });
+
+  console.log(taskData);
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -117,6 +120,12 @@ const TaskCardComponent: React.FC<ExtendedTaskCardProps> = ({
   );
   const priorityColor = getColor('priority', taskData.priority_name ?? ' ');
 
+  const tags = Array.isArray(taskData.tags)
+    ? taskData.tags.map((t, i) =>
+        typeof t === 'string' ? { rid: i + 1, tag_name: t } : t
+      )
+    : [];
+
   return (
     <div
       ref={setNodeRef}
@@ -147,7 +156,7 @@ const TaskCardComponent: React.FC<ExtendedTaskCardProps> = ({
             onDoubleClick={(e) => {
               e.stopPropagation();
             }}
-            className='cursor-pointer hover:bg-gray-100 rounded p-0.5 opacity-0 group-hover:opacity-100 transition-opacity'
+            className='cursor-pointer hover:bg-gray-100 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity'
           >
             <LinkTaskIcon className='w-3.5 h-3.5 text-gray-400 flex-shrink-0' />
           </div>
@@ -160,13 +169,12 @@ const TaskCardComponent: React.FC<ExtendedTaskCardProps> = ({
         <div className='flex items-center gap-2 mb-2'>
           {(taskData.task_status_name || taskData.status_name) && (
             <div
-              className='w-auto px-3 py-1 rounded text-[11px] font-medium'
+              className='w-auto px-2 h-[19px] rounded text-[11px] font-medium flex items-center justify-center'
               style={{
                 backgroundColor: statusColor.bg,
                 color: statusColor.text,
                 border: `0.5px solid ${statusColor.border}`,
                 fontFamily: "'Mulish', 'Lexend', sans-serif",
-                fontSize: '13px',
               }}
             >
               {taskData.task_status_name || taskData.status_name}
@@ -175,13 +183,12 @@ const TaskCardComponent: React.FC<ExtendedTaskCardProps> = ({
 
           {taskData.priority_name && (
             <div
-              className='w-auto px-3 py-1 rounded text-[11px] font-medium'
+              className='w-auto px-2 h-[19px] rounded text-[11px] font-medium flex items-center justify-center'
               style={{
                 backgroundColor: priorityColor.bg,
                 color: priorityColor.text,
                 border: `0.5px solid ${priorityColor.border}`,
                 fontFamily: "'Mulish', 'Lexend', sans-serif",
-                fontSize: '13px',
               }}
             >
               {taskData.priority_name}
@@ -232,19 +239,14 @@ const TaskCardComponent: React.FC<ExtendedTaskCardProps> = ({
 
               return (
                 <div className='flex items-center gap-1'>
-                  <div
-                    className='w-3.5 h-3.5 flex items-center justify-center'
-                    style={{
-                      backgroundColor: isCompleted ? '#D2FFE3' : 'transparent',
-                    }}
-                  >
+                  <div className='w-3.5 h-3.5 flex items-center justify-center'>
                     <CustomChecklistIcon
-                      className='w-3 h-3'
+                      className='w-3 h-3 mt-0.5'
                       style={{ color: isCompleted ? '#15803D' : '#9CA3AF' }}
                     />
                   </div>
                   <span
-                    className='text-[13px] text-gray-400'
+                    className='text-[10px] text-gray-400 h-3.5'
                     style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
                   >
                     {`${taskData.completed_checklist_items_count} / ${taskData.checklists_count}`}
@@ -255,17 +257,102 @@ const TaskCardComponent: React.FC<ExtendedTaskCardProps> = ({
 
           {showCommentCount && (
             <div className='flex items-center gap-1 text-gray-400'>
-              <CommentIcon className='w-3 h-3 text-gray-400' />
+              <div className='w-3.5 h-3.5 flex items-center justify-center'>
+                <CommentIcon className='w-4 h-4 mt-1 text-gray-400' />
+              </div>
               <span
-                className='text-[13px]'
+                className='text-[10px] h-3.5'
                 style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
               >
                 {taskData?.comments_count ?? 0}
               </span>
             </div>
           )}
+
+          {/* Attachments */}
+          <div className='flex items-center gap-0.5 text-gray-400'>
+            <div className='w-3.5 h-3.5 flex items-center justify-center'>
+              <svg
+                className='w-3 h-4 mt-0.5'
+                fill='none'
+                stroke='currentColor'
+                viewBox='0 0 24 24'
+              >
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth={2}
+                  d='M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13'
+                />
+              </svg>
+            </div>
+            <span
+              className='text-[10px] h-3.5'
+              style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
+            >
+              {taskData.attachment_count ?? 0}
+            </span>
+          </div>
+
+          {/* Due Date */}
+          {taskData.effective_end_datetime && (
+            <Tooltip
+              title={`Due: ${formatDateToYyyyMmmDd(taskData.effective_end_datetime)}`}
+              arrow
+              placement='top'
+            >
+              <div className={`flex items-center gap-1 text-gray-400`}>
+                <div className='w-3.5 h-3.5 flex items-center justify-center'>
+                  <svg
+                    className='w-3 h-3 mt-0.5'
+                    fill='none'
+                    stroke='currentColor'
+                    viewBox='0 0 24 24'
+                  >
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      strokeWidth={2}
+                      d='M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'
+                    />
+                  </svg>
+                </div>
+              </div>
+            </Tooltip>
+          )}
         </div>
       </div>
+
+      {/* Tags Section */}
+      {tags && tags.length > 0 && (
+        <div className='mt-2 border-t border-slate-200 py-1.5'>
+          <div className='flex items-center gap-1 flex-wrap'>
+            {(() => {
+              let prevColor: string | undefined;
+
+              return tags.map((item, index) => {
+                const tagColor = getTagColor(index, prevColor);
+                prevColor = tagColor.base;
+
+                return (
+                  <div
+                    key={item.rid}
+                    className='w-auto px-1.5 h-[18px] rounded text-[10px] font-medium flex items-center justify-center'
+                    style={{
+                      backgroundColor: tagColor.bg,
+                      color: tagColor.text,
+                      border: `0.5px solid ${tagColor.border}`,
+                      fontFamily: "'Mulish', 'Lexend', sans-serif",
+                    }}
+                  >
+                    {item.tag_name}
+                  </div>
+                );
+              });
+            })()}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
