@@ -372,7 +372,7 @@ export class WorkFlowService {
         );
         const createdRuleMap = ruleMapResponse.data?.ruleMap;
 
-        if (ruleRequest.apply_type === 2) {
+        if (ruleRequest.apply_type === 'INDIVIDUAL') {
             let createdScopes: any[] = [];
             for (const entityRid of ruleRequest.scope_entity_rid) {
                 const scopeResponse = await this.scopeService.createScope(

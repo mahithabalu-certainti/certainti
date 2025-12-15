@@ -219,16 +219,16 @@ const createTriggerLogSchema = Joi.object({
 const createRuleMapSchema = Joi.object({
     scope_type_rid: Joi.string().required(),
     rule_rid: Joi.string().required(),
-    apply_type: Joi.number().required(),
+    apply_type: Joi.string().required(),
     scope_entity_rid: Joi.when("apply_type", {
-        is: 2,
+        is: 'INDIVIDUAL',
         then: Joi.array()
             .items(Joi.string())
             .min(1)
             .required()
             .messages({
-                "any.required": "scope_entity_rid is required when apply_type = 2",
-                "array.min": "scope_entity_rid must contain at least one value when apply_type = 2"
+                "any.required": "scope_entity_rid is required when apply_type = 'INDIVIDUAL'",
+                "array.min": "scope_entity_rid must contain at least one value when apply_type = 'INDIVIDUAL'"
             }),
         otherwise: Joi.array().items(Joi.string()).optional()
     }),

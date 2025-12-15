@@ -6,7 +6,7 @@ export interface RuleMapAttributes {
     eid?: string | null;
     r_number?: string | null;
     rule_rid: string;
-    apply_type: number;
+    apply_type: string;
     created_by: string;
     modified_by?: string;
     created_datetime?: Date;
@@ -23,7 +23,7 @@ export class RuleMap
     public eid!: string;
     public r_number!: string;
     public rule_rid!: string;
-    public apply_type!: number;
+    public apply_type!: string;
     public created_by!: string;
     public modified_by?: string;
 
@@ -57,7 +57,7 @@ export class RuleMap
                 },
 
                 apply_type: {
-                    type: DataTypes.INTEGER,
+                    type: DataTypes.STRING,
                     allowNull: false,
                 },
 

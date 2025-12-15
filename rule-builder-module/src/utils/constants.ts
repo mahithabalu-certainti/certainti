@@ -172,8 +172,8 @@ export const rawQueries = {
     ON rm.rule_rid = wrm.rid LEFT JOIN ${MAIN_SCHEMA_NAME}.workflow_rule_scope_map rsm ON rsm.rule_rid = wrm.rid 
     WHERE wrm.event_rid = '${event_rid}' AND wrm.scope_type_rid = '${scope_type_rid}'
     AND (
-        rm.apply_type = 1
-        OR (rm.apply_type = 2 AND rsm.scope_entity_rid = '${entity_rid}')
+        rm.apply_type = 'ALL'
+        OR (rm.apply_type = 'INDIVIDUAL' AND rsm.scope_entity_rid = '${entity_rid}')
       );`;
     return query;
   },
