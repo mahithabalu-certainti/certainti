@@ -1408,11 +1408,12 @@ export const rawQueries = {
     JOIN ${MAIN_SCHEMA_NAME}.rd_credit_config_group g ON k.credit_config_group_rid = g.rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.country c ON g.country_rid = c.rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.state s ON g.state_rid = s.rid
-    WHERE ${whereClause};
+    WHERE ${whereClause}
+    and g.credit_program_name != 'Platform Configuration';
     `;
   },
   getJurisdictionConfigValuesById(config_rid: string) {
-    return `SELECT rv.rid,credit_config_group_rid, config_json,effective_start_date,
+    return `SELECT rv.rid,credit_config_group_rid, config_json,effective_start_date,config_name,rv.status_rid,rv.r_number,
     effective_end_date,rv.created_datetime,rv.created_by,rv.modified_datetime,rv.modified_by,
      CONCAT(u.first_name, ' ', u.last_name) AS created_user_name,
     CASE WHEN uu.first_name IS NULL THEN rv.modified_by ELSE CONCAT(uu.first_name, ' ', uu.last_name) END AS modified_user_name
@@ -1422,7 +1423,7 @@ export const rawQueries = {
      WHERE rv.rid = '${config_rid}';`
   },
   getJurisdictionPlatformConfigValuesById(config_rid: string) {
-    return `SELECT rv.rid,credit_config_group_rid, config_json,effective_start_date,effective_end_date,
+    return `SELECT rv.rid,credit_config_group_rid, config_json,effective_start_date,effective_end_date,config_name,rv.status_rid,rv.r_number,
     rv.created_datetime,rv.created_by,rv.modified_datetime,rv.modified_by,
      CONCAT(u.first_name, ' ', u.last_name) AS created_user_name,
     CASE WHEN uu.first_name IS NULL THEN rv.modified_by ELSE CONCAT(uu.first_name, ' ', uu.last_name) END AS modified_user_name
