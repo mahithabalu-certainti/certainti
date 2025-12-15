@@ -936,7 +936,22 @@ export const fetchMilestoneTaskTemplate = (taskTypeRid : string, filingTypeRid :
 export const fetchCaseTemplateData = (schemaName : string, caseRid : string, accountRid : string, statusRid : string, checkItemsCompletedStatusId : string) => {
   let query = 
   `
-  WITH fetch_task AS (
+  WITH fetch_tags AS (
+  SELECT 
+  ct.case_rid, ct.account_rid, ct.rid AS task_rid,
+  array_agg(jsonb_build_object(
+  'rid', ctag.tag_rid
+  )) AS tags
+  FROM ${schemaName}.task_tags ctag
+  LEFT JOIN ${schemaName}.case_task ct ON ct.rid = ctag.task_rid AND ct.account_rid = ctag.account_rid AND ct.case_rid = ctag.case_rid
+  WHERE
+  ct.case_rid = '${caseRid}'
+  AND
+  ct.account_rid = '${accountRid}'
+  GROUP BY
+  ct.case_rid, ct.account_rid, ct.rid
+  ),
+  fetch_task AS (
   SELECT cm.rid, cm.account_rid, cm.case_rid,
   array_agg(jsonb_build_object(
   'rid', t.rid,
@@ -954,6 +969,19 @@ export const fetchCaseTemplateData = (schemaName : string, caseRid : string, acc
   'task_type_rid', t.task_type_rid,
   'task_description', t.task_description,
   'milestone_template_rid', t.milestone_template_rid,
+  'attachment_count', 
+  (
+  SELECT COUNT(*) OVER() AS total_result
+  FROM
+  ${schemaName}.task_attachments ta
+  LEFT JOIN ${schemaName}.case_task ct ON ct.rid = ta.task_rid AND ct.case_rid = ta.case_rid AND ct.account_rid = ta.account_rid
+  WHERE
+  ta.task_rid = t.rid
+  AND
+  ta.case_rid = t.case_rid
+  AND
+  ta.account_rid = t.account_rid
+  ),
   'checklists_count', 
   (
   SELECT COUNT(DISTINCT chi.rid) 
@@ -976,11 +1004,13 @@ export const fetchCaseTemplateData = (schemaName : string, caseRid : string, acc
   AND chi.status_rid = '${checkItemsCompletedStatusId}'
   ),
   'comments_count', (SELECT COUNT(DISTINCT tc.rid) from ${schemaName}.task_comments tc WHERE tc.task_rid = t.rid AND tc.case_rid = '${caseRid}'),
-  'task_status_rid', t.task_status_rid
+  'task_status_rid', t.task_status_rid,
+  'tags', ftt.tags
   )ORDER BY t.sequence_no ASC) AS tasks
   FROM 
   ${schemaName}.case_milestone cm
   LEFT JOIN ${schemaName}.case_task t ON t.milestone_template_rid = cm.rid
+  LEFT JOIN fetch_tags ftt ON ftt.case_rid = t.case_rid AND ftt.account_rid = t.account_rid AND ftt.task_rid = t.rid
   LEFT JOIN ${schemaName}.case_team ct ON ct.user_rid = t.assigned_to AND ct.role_rid = t.case_team_member_role_rid AND ct.case_rid = '${caseRid}' AND ct.account_rid = '${accountRid}' AND ct.status_rid = '${statusRid}'
   WHERE
   t.milestone_template_rid = cm.rid
