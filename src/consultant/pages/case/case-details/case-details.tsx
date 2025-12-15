@@ -105,6 +105,7 @@ export const CaseDetails = () => {
     isLoading,
     isError,
     isPending,
+    refetch: refetchCaseDetails,
   } = useCaseDetails(caseId ?? '', accountId ?? '', refreshDetails);
   const isAssignProject = searchParams.get('assignProject');
   const projectDetails = searchParams.get('detailstab');
@@ -581,6 +582,7 @@ export const CaseDetails = () => {
             <CaseTeam
               activityMenuItems={activityMenuItems}
               fiscalYear={fiscalYear}
+              refetchCaseDetails={refetchCaseDetails}
             />
           </div>
         );
