@@ -7,6 +7,7 @@ import { HistoricalSubmissionService } from "./historicalSubmission/historicalSu
 import { ProjectResourceService } from "./projectResource/projectResourceService";
 import { ProjectInjestionTaskService } from "./projectTask/projectTaskService";
 import { ActivityService } from "./activities/activityService";
+import { ProjectService } from "./project/projectService";
 
 class Services {
   private logger: Logger;
@@ -17,6 +18,7 @@ class Services {
   projectResourceService: ProjectResourceService;
   projectTaskInjestionServices: ProjectInjestionTaskService;
   activityService: IActivityService;
+  projectService: ProjectService
 
   constructor(logger: Logger) {
     this.logger = logger;
@@ -27,6 +29,7 @@ class Services {
     this.projectResourceService = new ProjectResourceService(logger);
     this.projectTaskInjestionServices = new ProjectInjestionTaskService();
     this.activityService = new ActivityService(logger);
+    this.projectService = new ProjectService(logger)
   }
 }
 
