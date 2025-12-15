@@ -1421,7 +1421,7 @@ async accountList(
       let parent_account: any = null;
       if(file)
       {
-        const file_url = await uploadToAzureBlob(file, accountData.account_rid, accountData.account_number!);
+        const file_url = await uploadToAzureBlob(file, accountData.account_rid, existingAcc?.r_number!);
         accountData.logo_url = file_url;
       }
       if (data_storage === "store_in_parent" && parent_account_rid !== null) {

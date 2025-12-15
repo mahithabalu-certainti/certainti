@@ -1244,8 +1244,6 @@ export async function uploadToAzureBlob(
     const connectionString = await getSecret(
       process.env.AZURE_STORAGE_CONNECTION_STRING as string
     );
-    // const connectionString = "storage-account-connection-string";
-    // const connectionString = await getSecret("storage-account-connection-string");
     const containerName = account_number.toLowerCase();
 
     if (!connectionString) {

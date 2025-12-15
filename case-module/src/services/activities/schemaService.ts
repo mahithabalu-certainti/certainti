@@ -105,12 +105,21 @@ class ActivitySchemaService {
     async uploadActivityFiles(files: Express.Multer.File[] | undefined, activityRequest: any, accountNumber: string) {
       const { ActivityAttachments } = await this.caseModelService.getModels(accountNumber);
       if (!files) return;
+      if(!this.mainDbSequelize){  
+          this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+        }
+      const [accountData]: any[] = await this.mainDbSequelize.query(
+        rawQueries.fetchAccountDetailsByRid(activityRequest.account_rid),{
+          type: QueryTypes.SELECT,
+        }
+      );
+
       for (let f of files) {
         const uploadFile = await uploadToAzureBlob(
           f,
           activityRequest.account_rid,
           accountNumber,
-          accountNumber,
+          accountData.r_number,
           "cases"
         );
         if (uploadFile) {

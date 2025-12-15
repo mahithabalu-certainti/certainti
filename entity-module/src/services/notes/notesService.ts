@@ -92,7 +92,7 @@ export class NotesService {
         let size : number | null = null
 
         if(file) {
-          const uploadedResult = await uploadToAzureBlob(file, account_rid, accountNumber,"notes");
+          const uploadedResult = await uploadToAzureBlob(file, account_rid, accountData.r_number,"notes");
           name = uploadedResult.name
           url = uploadedResult.url
           extension = uploadedResult.extension
@@ -2103,7 +2103,7 @@ private mapAttachmentToCommonFormat(at: any, timezone : string) {
           }
           else if(file && !isFileDeleted) {
             await deleteFromAzureBlob(isNotesExists.browse_file)
-            const uploadResult = await uploadToAzureBlob(file, account_rid, accountNumber, "notes");
+            const uploadResult = await uploadToAzureBlob(file, account_rid, accountData.r_number, "notes");
           if(uploadResult.name.length > 100) {
             throw new Error("Document name cannot exceed 100 characters");
           }  
@@ -2115,7 +2115,7 @@ private mapAttachmentToCommonFormat(at: any, timezone : string) {
             name = isNotesExists.document_name
             url = isNotesExists.browse_file
             extension = isNotesExists.format
-            size = isNotesExists.size_in_mb
+            size = isNotesExists.size_in_mb 
         }      
         const [affectedCount] = await NotesModel.update({
           browse_file: url,

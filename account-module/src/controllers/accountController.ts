@@ -8,7 +8,6 @@ import {
   successLog,
   validateRequest,
   generateExcelBase64,
-  uploadToAzureBlob,
   deleteFromAzureBlob,
 } from "../utils/helpers";
 import {
@@ -281,8 +280,6 @@ async function updateAccount(req: Request, res: Response): Promise<void> {
       if (value.logo_url) {
         await deleteFromAzureBlob(value.logo_url);
       }
-    //  file_url = await uploadToAzureBlob(req.file, value?.account_rid);
-      //value.logo_url = file_url;
     } else if (value.logo_action === "delete") {
       await deleteFromAzureBlob(value.logo_url);
       value.logo_url = "";
