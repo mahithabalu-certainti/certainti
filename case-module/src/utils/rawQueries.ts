@@ -1036,7 +1036,6 @@ c.rid = '${caseRid}'
 AND
 c.account_rid = '${accountRid}'
   `
-  console.log(query)
   return query;
 }
 
