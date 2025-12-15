@@ -3,7 +3,7 @@ import { CaseModelService } from "../caseModelsService";
 import { QueryTypes, Sequelize } from "sequelize";
 import { CaseManagementSchemaService } from "./schemaService";
 import { HttpStatus, rawQueries, STATUS_MESSAGE } from "../../utils/constants";
-import { logMessage, setTaskTemplateData } from "../../utils/helpers";
+import { generateSasUrl, logMessage, setTaskTemplateData } from "../../utils/helpers";
 import CaseSchemaService from "../cases/schemaService";
 import { AdminTaskTemplatePayloadType, AdminTaskTemplateResponseTypes, caseStatusType, checkListTypes, CreateTaskTemplateType, ICreateChecklist, ICreateChecklistTemplate, ICreateEmailTemplate, MilestoneTypes, priorityTypes, TaskCategoryType, TaskType, UpdateTaskTemplateType, WeightageType } from "../../utils/types";
 import { initMainDbSequelize } from "../../config/mainDataSource";
@@ -669,7 +669,7 @@ export class CaseManagementService {
         const [fetchCaseStatus] = await mainDb.query<caseStatusType>(rawQueries.getCaseStatusById(caseDetails?.status_rid!), {type : QueryTypes.SELECT});
         
         let priorityMap : Map<string, string> = new Map(priority?.[0]?.map((d : any) => [d.rid, d.priority_name]));
-        let assignedToMap : Map<string, string> = new Map(assignedTo?.[0]?.map((d : any) => [d.rid, d.name]));
+        let assignedToMap : Map<string, any> = new Map(assignedTo?.[0]?.map((d : any) => [d.rid, {name : d.name, profile_url : d.profile_url}]));
         let teamRoleMap : Map<string, string> =new Map(teamRole?.[0]?.map((d : any) => [d.rid, d.role_name]));
         let taskTypeMap : Map<string, string> = new Map(tasktype?.[0]?.map((d : any) => [d.rid, d.task_type_name]));
         let statusMap : Map<string, string> = new Map(statusType?.[0]?.map((d : any) => [d.rid, d.status_name]));
@@ -681,13 +681,22 @@ export class CaseManagementService {
         } else {
           dynamicResult = result.array_agg.filter((d : any) => d.milestone_name.toLowerCase() !== 'audit review')
         }
-        
-        const finalStructure = dynamicResult.map((d : any) => {
+        let profileUrl : string | null
+        const finalStructure = await Promise.all(dynamicResult.map(async (d : any) => {
           return {
             rid : d.rid,
             milestone_name : d.milestone_name,
             task_count : d.task_count,
-            tasks : d.tasks !== null ? d.tasks.map((d : any) => {
+            tasks : d.tasks !== null ? await Promise.all(d.tasks.map(async (d : any) => {
+              if(assignedToMap.get(d.assigned_to) !== undefined) {
+                if(assignedToMap.get(d.assigned_to).profile_url !== null) {
+                  profileUrl = await generateSasUrl(assignedToMap.get(d.assigned_to).profile_url)
+                } else {
+                  profileUrl = null
+                }
+              } else {
+                profileUrl = null
+              }
               return {
                 rid: d.rid,
                 r_number: d.r_number,
@@ -708,16 +717,17 @@ export class CaseManagementService {
                 case_team_member_role_rid: d.case_team_member_role_rid,
                 milestone_template_rid: d.milestone_template_rid,
                 priority_name : priorityMap.get(d.priority_rid) || null,
-                assigned_to_name : assignedToMap.get(d.assigned_to) || null,
+                assigned_to_name : assignedToMap.get(d.assigned_to) !== undefined ? assignedToMap.get(d.assigned_to).name : null,
                 case_team_member_role_name : teamRoleMap.get(d.case_team_member_role_rid) || null,
                 task_type_name : taskTypeMap.get(d.task_type_rid) || null,
                 status_name : statusMap.get(d.status_rid) || null,
                 task_status_rid : d.task_status_rid,
-                task_status_name : taskStatusMap.get(d.task_status_rid) || null
+                task_status_name : taskStatusMap.get(d.task_status_rid) || null,
+                profile_url : profileUrl
               }
-            }) : []
+            })) : []
           }
-        })
+        }))
         return {
           statusCode : HttpStatus.SUCCESS,
           data : finalStructure

@@ -1694,11 +1694,12 @@ export class InteractionService {
 
     // Column headers
     worksheet.addRow([
-      "Question No",
+      "Record ID",
       "Questions",
       "Answers",
       "Notes",
       "Is Mandatory",
+      "Question No",
     ]);
     worksheet.getRow(6).eachCell((cell) => {
       cell.font = { bold: true };
@@ -1706,22 +1707,26 @@ export class InteractionService {
     });
 
     worksheet.columns = [
-      { key: "question no", width: 15 },
+      { key: "record id", width: 15 },
       { key: "question", width: 50 },
       { key: "answer", width: 50 },
       { key: "notes", width: 30 },
       { key: "is_mandatory", width: 15 },
+      { key: "question no", width: 15 },
     ];
 
     // Add question rows
+    let sequenceNo : number = 0;
     interactionItems.forEach((item: any) => {
+      sequenceNo = sequenceNo + 1
       const plain = item.get ? item.get({ plain: true }) : item;
       const row = worksheet.addRow({
-        "question no": plain.question_seq_num,
+        "record id": `Q${sequenceNo}`,
         question: plain.question,
         answer: "",
         notes: "",
         is_mandatory: plain.is_mandatory ? "Yes" : "No",
+        "question no": plain.question_seq_num
       });
 
       // Lock specific columns right away
@@ -1730,6 +1735,7 @@ export class InteractionService {
       row.getCell(3).protection = { locked: false };
       row.getCell(4).protection = { locked: true };
       row.getCell(5).protection = { locked: true };
+      row.getCell(6).protection = { locked: true };
     });
 
     // Now protect worksheet AFTER all protections are set

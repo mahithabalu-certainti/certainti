@@ -1821,6 +1821,9 @@ export class CaseService {
         await this.caseSchemaService.fetchValidAccountNumberById(
           caseRequest.account_rid
         );
+        if(!this.mainDbSequelize) {
+          this.mainDbSequelize = await initMainDbSequelize();
+        }
 
         if (!accountNumber) {
           logMessage(`Invalid account ID ${caseRequest.account_rid}`);
@@ -1832,7 +1835,7 @@ export class CaseService {
         }
       const checklistDetails =
         await this.caseSchemaService.fetchChecklistDetailsById(
-          checkListRid,accountNumber,caseRequest.account_rid
+          checkListRid,accountNumber,caseRequest.account_rid, this.mainDbSequelize
         );
   
       if (!checklistDetails) {
