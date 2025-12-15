@@ -2425,7 +2425,9 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
         const total = result[0][0].comments[0].total_result
         const userIds = [...new Set(result[0][0].comments.map((d : any) => d.created_by))];
         const findUsers = await mainDb.query(rawQueries.getOwnerDetails(userIds));
-        const userMap = new Map(findUsers[0].map((d : any) => [d.rid, d.name]));
+        const userMap = new Map(findUsers[0].map((d : any) => [d.rid, {name : d.name, profile_url : d.profile_url}]));
+        let createdByName;
+        let profileUrl;
         const structuredData = await Promise.all(
         (result[0][0].comments || []).map(async (d: any) => {
           delete d.total_result
@@ -2435,9 +2437,22 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
                 browse_file: da.browse_file ? await generateSasUrl(da.browse_file) : null,
               }))
             );
+            if(userMap.get(d.created_by) !== undefined) {
+              createdByName = userMap.get(d.created_by)?.name;
+              if(userMap.get(d.created_by)?.profile_url !== null) {
+                console.log("URL : ", userMap.get(d.created_by)?.profile_url)
+                profileUrl = await generateSasUrl(userMap.get(d.created_by)?.profile_url)
+              } else {
+                profileUrl = null
+              }
+            } else {
+              profileUrl = null
+              createdByName = null
+            }
             return {
               ...d,
-              created_by_name : userMap.get(d.created_by) || null,
+              created_by_name : createdByName,
+              profile_url : profileUrl,
               comments_attachments: updatedAttachments,
             };
           })
@@ -2496,19 +2511,33 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
 
       const result = await orgDb.query<ActivityType>(fetchTaskActivities(data.page, data.limit, schemaName, data.case_rid, data.task_rid,data.task_type), {type : QueryTypes.SELECT});
       if(result.length > 0) {
+        let createdByName;
+        let profileUrl;
         const userIds = [...new Set(result.map((d : any) => d.created_by))];
         const findUsers : any = await mainDb.query(rawQueries.getOwnerDetails(userIds));
-        const mapUser : Map<string, string> = new Map(findUsers[0].map((d : any) => [d.rid, d.name]));
+        const mapUser : Map<string, {name : string, profile_url : string}> = new Map(findUsers[0].map((d : any) => [d.rid, {name : d.name, profile_url : d.profile_url}]));
         const total = parseInt(result[0]!.total_result)
-        const structuredResult = result.map((d : any) => {
+        const structuredResult = await Promise.all(result.map(async(d : any) => {
           delete d.total_result
+          if(mapUser.get(d.created_by) !== undefined) {
+            createdByName = mapUser.get(d.created_by)?.name
+            if(mapUser.get(d.created_by)?.profile_url !== null) {
+              profileUrl = await generateSasUrl(mapUser.get(d.created_by)?.profile_url!)
+            } else {
+              profileUrl = null
+            }
+          } else {
+            profileUrl = null
+            createdByName = null
+          }
           return {
             ...d,
             old_value : d.old_value === null ? "-" : d.old_value,
             new_value : d.new_value === null ? "-" : d.new_value,
-            created_by_name : mapUser.get(d.created_by) || null
+            created_by_name : createdByName,
+            profile_url : profileUrl
           }
-        })
+        }))
         const finalData = {
           page : data.page,
           limit : data.limit,
@@ -2654,7 +2683,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
           }
       
         let priorityMap : Map<string, string> = new Map(priority?.[0]?.map((d : any) => [d.rid, d.priority_name]));
-        let assignedToMap : Map<string, string> = new Map(getUsers?.[0]?.map((d : any) => [d.rid, d.name]));
+        let assignedToMap : Map<string, any> = new Map(getUsers?.[0]?.map((d : any) => [d.rid, {name : d.name, profile_url : d.profile_url}]));
         let checkListItemsMap : Map<string, string> = new Map(checkListStatusName?.[0]?.map((d : any) => [d.rid, d.status_name]));
 
         const resData = result[0];
@@ -2692,17 +2721,43 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
           }) || []
         }
       }
+      let profileUrl;
+      let createdByName;
+      let modifiedByName;
+      let assignedToName;
+      if(assignedToMap.get(resData?.task_details.assigned_to!) !== undefined) {
+        assignedToName = assignedToMap.get(resData?.task_details.assigned_to!).name
+        if(assignedToMap.get(resData?.task_details.assigned_to!).profile_url !== null) {
+          profileUrl = await generateSasUrl(assignedToMap.get(resData?.task_details.assigned_to!).profile_url)
+        } else {
+          profileUrl = assignedToMap.get(resData?.task_details.assigned_to!).profile_url
+        }
+      } else {
+        profileUrl = null
+        assignedToName = null
+      }
+      if(assignedToMap.get(resData?.task_details.created_by!) !== undefined) {
+        createdByName = assignedToMap.get(resData?.task_details.created_by!).name
+      } else {
+        createdByName = null
+      }
+      if(modifiedByName = assignedToMap.get(resData?.task_details.modified_by!) !== undefined) {
+        modifiedByName = modifiedByName = assignedToMap.get(resData?.task_details.modified_by!).name
+      } else {
+        modifiedByName = null
+      }
         let finalStruture = {
           rid : resData?.task_details.rid,
           r_number : resData?.task_details.r_number,
           task_name : resData?.task_details.task_name,
           created_by : resData?.task_details.created_by,
           fiscal_year : resData?.task_details.fiscal_year || null,
-          created_by_name : assignedToMap.get(resData?.task_details.created_by!) || null,
+          created_by_name : createdByName,
+          profile_url : profileUrl,
           assigned_to : resData?.task_details.assigned_to,
-          assigned_to_name :  assignedToMap.get(resData?.task_details.assigned_to!) || null,
+          assigned_to_name : assignedToName,
           modified_by : resData?.task_details.modified_by,
-          modified_by_name : assignedToMap.get(resData?.task_details.modified_by!) || null,
+          modified_by_name : modifiedByName,
           priority_rid : resData?.task_details.priority_rid,
           priority_name : priorityMap.get(resData?.task_details.priority_rid!) || null,
           task_status_rid : resData?.task_details.task_status_rid,
@@ -2764,17 +2819,31 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
       let result = await this.caseSchemaService.fetchCollaboratorsList(parentNumber[0][0].r_number, data);
       if(result.length > 0) {
         let userLists;
-        let userMap : Map<string, string>
+        let userMap : Map<string, {name: string; profile_url: string;}>
         const uniqueIds = [...new Set(result.map((d : any) => d.assigned_to))];
         if(uniqueIds.length > 0) {
           userLists = await mainDb.query(rawQueries.getOwnerDetails(uniqueIds));
-          userMap = new Map(userLists[0].map((d : any) => [d.rid, d.name]));
-          result = result.map((d : any) => {
+          let assignedToName;
+          let profileUrl;
+          userMap = new Map(userLists[0].map((d : any) => [d.rid, {name : d.name, profile_url : d.profile_url}]));
+          result = await Promise.all(result.map(async (d : any) => {
+            if(userMap.get(d.assigned_to) !== undefined) {
+              assignedToName = userMap.get(d.assigned_to)?.name
+              if(userMap.get(d.assigned_to)?.profile_url !== null) {
+                profileUrl = await generateSasUrl(userMap.get(d.assigned_to)?.profile_url!)
+              } else {
+                profileUrl = null
+              }
+            } else {
+              assignedToName = null
+              profileUrl = null
+            }
             return {
               ...d,
-              assigned_to_name : userMap.get(d.assigned_to)
+              assigned_to_name : assignedToName,
+              profile_url : profileUrl
             }
-          });
+          }));
           return result;
         } else {
           return []
