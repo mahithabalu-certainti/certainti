@@ -729,9 +729,12 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                         <textarea
                           ref={editTextareaRef}
                           value={editingCommentText}
-                          onChange={(e) =>
-                            setEditingCommentText(e.target.value)
-                          }
+                          onChange={(e) => {
+                            setEditingCommentText(e.target.value);
+                            if (e.target.value.length <= 2000) {
+                              setCommentError(null);
+                            }
+                          }}
                           className='w-full bg-white border border-gray-300 rounded-lg p-3 text-sm resize-none focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900 placeholder-gray-500 min-h-[100px] pr-8'
                           placeholder='Edit your comment'
                           disabled={isUpdating}
@@ -1076,7 +1079,12 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                     <textarea
                       ref={textareaRef}
                       value={comment}
-                      onChange={(e) => setComment(e.target.value)}
+                      onChange={(e) => {
+                        setComment(e.target.value);
+                        if (e.target.value.length <= 2000) {
+                          setCommentError(null);
+                        }
+                      }}
                       placeholder='Add your comment here...'
                       className='w-full bg-white border border-gray-300 rounded-lg p-3 text-sm resize-none focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900 placeholder-gray-500 min-h-[100px] pr-8'
                       disabled={fieldDisabled.comments || isAddingComment}
