@@ -16,6 +16,8 @@ import { checkListTypeDefs } from '../graphql/checkListSchema';
 import { checkListResolver } from '../resolvers';
 import { emailTemplateTypeDefs } from '../graphql/emailTemplateSchema';
 import { emailTemplateResolver } from '../resolvers/emailTemplateResolver';
+import { jurisdictionResolver } from '../resolvers/jurisdictionResolver';
+import { jurisdictionTypeDefs } from '../graphql/jurisdictionSchema';
 
 const GRAPHQL_PATH = '/graphql';
 
@@ -26,10 +28,10 @@ interface GraphQLServer {
 
 const initGraphQLServer = async (app: Application): Promise<GraphQLServer> => {
   // Merge type definitions from multiple schemas
-  const mergedTypeDefs = mergeTypeDefs([typeDefs, adminChecklistTypeDefs, taskTemplateDefs, checkListTypeDefs,emailTemplateTypeDefs]);
+  const mergedTypeDefs = mergeTypeDefs([typeDefs, adminChecklistTypeDefs, taskTemplateDefs, checkListTypeDefs,emailTemplateTypeDefs, jurisdictionTypeDefs]);
   
   // Merge resolvers from multiple resolver files
-  const mergedResolvers = mergeResolvers([caseResolver, adminChecklistResolver, adminTaskTemplateResolver, checkListResolver,emailTemplateResolver]);
+  const mergedResolvers = mergeResolvers([caseResolver, adminChecklistResolver, adminTaskTemplateResolver, checkListResolver,emailTemplateResolver, jurisdictionResolver]);
 
   const schema = makeExecutableSchema({
     typeDefs: mergedTypeDefs,

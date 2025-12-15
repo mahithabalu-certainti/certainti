@@ -5,6 +5,7 @@ import historicalSubmissionController from "./historicalSubmissionController";
 import projectResourcesController from "./projectResourceController";
 import projectTaskController from "./projectTaskController";
 import activitiesController from "./activitiesController";
+import projectController from "./projectController"
 
 const controller = {
   caseController,
@@ -14,6 +15,7 @@ const controller = {
   projectResourcesController,
   projectTaskController,
   activitiesController,
+  projectController
 };
 
 export default controller;
