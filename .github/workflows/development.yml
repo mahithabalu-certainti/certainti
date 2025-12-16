@@ -1138,7 +1138,7 @@ jobs:
         working-directory: rule-builder-module
         run: |
           KEY_VAULT_NAME=${{ secrets.DEVELOPMENT_KEY_VAULT_NAME }}
-          ENV_FILE=".env.rule-buildermodule"
+          ENV_FILE=".env.rulebuildermodule"
           
           # Ensure Azure CLI is authenticated
           az account show > /dev/null 2>&1
@@ -1176,7 +1176,7 @@ jobs:
           echo "$ENV_FILE file created successfully!"
       - name: Copy .env file to VM
         run: |
-          scp -o StrictHostKeyChecking=no .env.rule-buildermodule adminuser@${{ secrets.DEVELOPMENT_BACKEND_VM_HOST }}:/tmp/
+          scp -o StrictHostKeyChecking=no .env.rulebuildermodule adminuser@${{ secrets.DEVELOPMENT_BACKEND_VM_HOST }}:/tmp/
         working-directory: rule-builder-module
       - name: SSH into VM and deploy
         run: |
@@ -1191,7 +1191,7 @@ jobs:
             fi
             
             # Move .env file with sudo
-            sudo mv /tmp/.env.rule-buildermodule /app/backend/.env.rule-buildermodule
+            sudo mv /tmp/.env.rulebuildermodule /app/backend/.env.rulebuildermodule
             echo ".env file moved successfully!"
           
             # Update only the rule-builder-module image tag
