@@ -339,6 +339,26 @@ export const listAllStageFailures = (
   return query;
 };
 
+export const listAllWarning = (
+  schemaName: string,
+  import_rid: string,
+  entity_type: string
+) => {
+  const query = `
+    WITH import_data AS (
+      SELECT r_number, entity_type, document_rid
+      FROM ${schemaName}.import
+      WHERE rid = '${import_rid}'
+    )
+    SELECT p.*
+    FROM ${schemaName}.history_staging_${entity_type} p
+    JOIN import_data i ON p.document_rid = i.document_rid
+    WHERE p.warning_descriptions IS NOT NULL
+  `;
+
+  return query;
+};
+
 export const fetchImportListByRid = (rid: string, schemaName: string) => {
   let query = `
     SELECT 
