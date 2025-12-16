@@ -12,6 +12,7 @@ on:
       - ext-interaction-module/**
       - event-stream-module/**
       - case-module/**
+      - rule-builder-module/**
 
 env:
   ENVIRONMENT: development
@@ -29,6 +30,7 @@ jobs:
       ext-interaction-module: ${{ steps.filter.outputs.ext-interaction-module }}
       event-stream-module: ${{ steps.filter.outputs.event-stream-module }}
       case-module: ${{ steps.filter.outputs.case-module }}
+      rule-builder-module: ${{ steps.filter.outputs.rule-builder-module }}
     # For pull requests it's not necessary to checkout the code
     steps:
       - uses: actions/checkout@v3
@@ -51,6 +53,8 @@ jobs:
               - 'event-stream-module/**'  
             case-module:
               - 'case-module/**'
+            rule-builder-module:
+              - 'rule-builder-module/**'
 
   # JOB to build backend user-module code
   user-module:
