@@ -447,18 +447,18 @@ export const CreateCases: React.FC = () => {
             values={
               isEditView && caseFormData
                 ? {
-                  ...caseFormData,
-                }
+                    ...caseFormData,
+                  }
                 : {
-                  account_name: accountName || '',
-                  account_id: accountNumber || '',
-                  case_owner: userId || '',
-                  fiscal_year: currentYear.toString(),
-                  country: countryRid || '',
-                  ...(calculatedStatutoryDate && {
-                    statutory_submission_date: calculatedStatutoryDate,
-                  }),
-                }
+                    account_name: accountName || '',
+                    account_id: accountNumber || '',
+                    case_owner: userId || '',
+                    fiscal_year: currentYear.toString(),
+                    country: countryRid || '',
+                    ...(calculatedStatutoryDate && {
+                      statutory_submission_date: calculatedStatutoryDate,
+                    }),
+                  }
             }
             outData={submitData}
             formRef={formRef}

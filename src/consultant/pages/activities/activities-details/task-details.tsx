@@ -244,6 +244,7 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
             comments: commentText,
             files: files,
             task_type: 'activity',
+            attachment_level: entityLevel,
           },
           {
             onSuccess: () => {
@@ -286,6 +287,7 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
       errorToast,
       addCommentMutation,
       queryClient,
+      entityLevel,
     ]
   );
 
@@ -312,6 +314,7 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
             files: files,
             deleted_file_ids: deletedFileIds,
             task_type: 'activity',
+            attachment_level: entityLevel,
           },
           {
             onSuccess: () => {
@@ -351,6 +354,7 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
       errorToast,
       updateCommentMutation,
       queryClient,
+      entityLevel,
     ]
   );
 
@@ -508,6 +512,7 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
         fiscalYear={null}
         fiscalYears={fiscalYearOptions}
         taskType='activity'
+        entityLevel={entityLevel}
         onAddComment={handleAddComment}
         onUpdateComment={handleUpdateComment}
         onDeleteComment={handleDeleteComment}
