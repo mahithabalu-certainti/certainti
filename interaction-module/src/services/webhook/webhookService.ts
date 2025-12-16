@@ -780,8 +780,10 @@ export class WebHookService {
     let accountRNumber = "";
     let interactionLevel = "";
 
-    const match = htmlBodyContent.match(
-      /\(Interaction Ref Id:\s*((?:D001|U001|S001|P001)-[a-f0-9\-]+)\s*\)/i
+    const plainText = htmlBodyContent.replace(/<[^>]*>/g, ' ').replace(/\u00A0/g, ' ');
+
+    const match = plainText.match(
+      /Interaction Ref Id:\s*((?:D001|U001|S001|P001)-[a-f0-9\-]+)/i
     );
     if (match && match[1]) {
       interactionIdFomBody = match[1];

@@ -582,9 +582,9 @@ export async function uploadToAzureBlob(
     let timestamp = Date.now();
     let blobName;
     if (flag === "cases") {
-      blobName = `${account_number}/${account_id}/cases/${task_number}/${timestamp}-${sanitizedBaseName}${originalExtension}`;
+      blobName = `${account_id}/cases/${task_number}/${timestamp}-${sanitizedBaseName}${originalExtension}`;
     } else {
-      blobName = `${account_number}/${account_id}/attachments/${timestamp}-${sanitizedBaseName}${originalExtension}`;
+      blobName = `${account_id}/attachments/${timestamp}-${sanitizedBaseName}${originalExtension}`;
     }
 
     const blockBlobClient = containerClient.getBlockBlobClient(blobName);
