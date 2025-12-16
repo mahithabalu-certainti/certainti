@@ -241,6 +241,24 @@ export const AccountDetails = () => {
     AllPermissions.ACTIVITY_MEETING_EXPORT
   );
 
+  // Activity Create Permission
+  const isActivityTaskCreateEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_TASK_CREATE
+  );
+  const isActivityCallCreateEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_CALL_CREATE
+  );
+  const isActivityEmailCreateEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_EMAIL_CREATE
+  );
+  const isActivityMeetingCreateEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_MEETING_CREATE
+  );
+
   const activityExportPermissionMap: Record<string, boolean> = {
     task: !!isActivityTaskExportEnable,
     email: !!isActivityEmailExportEnable,
@@ -779,21 +797,25 @@ export const AccountDetails = () => {
       label: 'Create Task',
       onClick: () => setActivityModalId('create-task'),
       icon: TaskCreateIcon,
+      hide: !isActivityTaskCreateEnable,
     },
     {
       label: 'Draft Email',
       onClick: () => setActivityModalId('draft-email'),
       icon: DraftEmailIcon,
+      hide: !isActivityEmailCreateEnable,
     },
     {
       label: 'Schedule Meeting',
       onClick: () => setActivityModalId('schedule-meeting'),
       icon: MeetingIcon,
+      hide: !isActivityMeetingCreateEnable,
     },
     {
       label: 'Log a call',
       onClick: () => setActivityModalId('call-log'),
       icon: CallLogIcon,
+      hide: !isActivityCallCreateEnable,
     },
   ];
 
@@ -884,6 +906,7 @@ export const AccountDetails = () => {
             accountInActive={accountInActive}
             accountDetails={{ ...data?.data } as accountDetailsProps}
             isDetailLoading={isPending}
+            activityMenuItems={activityMenuItems}
           />
         );
       case 'notes':
@@ -934,6 +957,7 @@ export const AccountDetails = () => {
         return (
           <Configuration
             countryId={data?.data.accountById.country_rid ?? null}
+            activityMenuItems={activityMenuItems}
           />
         );
 
@@ -1089,6 +1113,14 @@ export const AccountDetails = () => {
     navigate(ACCOUNT);
   };
 
+  const sourceDetails = {
+    accountId: accountid || '',
+    entityLevel: 'account',
+    entityId: accountid || '',
+    source: `Account > ${data?.data?.accountById?.r_number || ''}`,
+    isEmailConfigured: data?.data?.accountDetails?.is_send_interaction,
+  };
+
   if (!accountIsEnable || !isAccountDetailsEnable) return <AccessRestricted />;
   return (
     <div className='flex flex-col h-full'>
@@ -1168,6 +1200,7 @@ export const AccountDetails = () => {
       <ActivityModal
         modalId={activityModalId}
         onCloseModal={() => setActivityModalId(null)}
+        sourceDetails={sourceDetails}
       />
     </div>
   );

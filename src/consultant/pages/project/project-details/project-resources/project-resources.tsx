@@ -50,6 +50,7 @@ import {
 import { useToast } from '../../../../../hooks';
 import { useGetProjectResourceCode } from '../../../../services/project-resources/project-resources-form-service';
 import {
+  ActivityDropdownItem,
   ExportType,
   FormFiscalDateType,
   SelectOption,
@@ -92,6 +93,7 @@ export const ProjectResources = ({
   projectCode,
   accountOrProjectInActive,
   projectFiscalYear,
+  activityMenuItems,
 }: {
   projectID?: string;
   accountData?: {
@@ -107,6 +109,7 @@ export const ProjectResources = ({
   projectCode?: string;
   accountOrProjectInActive?: boolean;
   projectFiscalYear?: number | string;
+  activityMenuItems: ActivityDropdownItem[];
 }) => {
   const { errorToast } = useToast();
   const [showFilter, setShowFilter] = useState<boolean>(false);
@@ -822,6 +825,8 @@ export const ProjectResources = ({
         projectResourceProjectID={projectID}
         showSearch={viewDetails ? false : true}
         onSearch={(text) => setSearchText(text)}
+        showAddActivity={!viewDetails && !showUploads}
+        activityMenuItems={activityMenuItems}
       />
       <>
         {showUploads ? (

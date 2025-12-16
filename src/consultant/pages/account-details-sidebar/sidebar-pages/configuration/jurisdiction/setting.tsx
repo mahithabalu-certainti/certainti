@@ -6,8 +6,10 @@ import { AllPermissions } from '../../../../../../common-service';
 import { SectionTabPanel } from '../../../../../../components';
 import SectionHeader from '../../../../../../components/details-section/section-header';
 import { DetailsIcon } from '../../../../../../assets';
+import { ActivityDropdownItem } from '../../../../../types';
 interface JurisdictionSettingProps {
   countryId: string | null;
+  activityMenuItems: ActivityDropdownItem[];
 }
 const SettingsTabs: ResourceTabs[] = [
   {
@@ -25,6 +27,7 @@ const SettingsTabs: ResourceTabs[] = [
 
 const JurisdictionSetting: React.FC<JurisdictionSettingProps> = ({
   countryId,
+  activityMenuItems,
 }) => {
   const formRef = useRef<HTMLFormElement>(null);
   const [isFormSaving, setIsFormSaving] = useState<boolean>(false);
@@ -43,7 +46,7 @@ const JurisdictionSetting: React.FC<JurisdictionSettingProps> = ({
     },
   ];
   return (
-    <div className='flex flex-col w-full pt-2 pl-2 pr-4'>
+    <div className='flex flex-col w-full'>
       <SectionTabPanel
         tabs={SettingsTabs}
         filterVisibility={false}
@@ -65,6 +68,8 @@ const JurisdictionSetting: React.FC<JurisdictionSettingProps> = ({
         onSearch={() => {}}
         searchReset={false}
         onSearchReset={() => {}}
+        showAddActivity={true}
+        activityMenuItems={activityMenuItems}
       />
       <SectionHeader
         title={'Jurisdiction Configuration'}

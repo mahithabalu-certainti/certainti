@@ -461,7 +461,7 @@ export const Attachments: React.FC<AttachmentsProps> = ({
         onFilterChange={handleCategory}
         showSearch={showUploads ? false : true}
         onSearch={(text) => setSearchText(text)}
-        showAddActivity={true}
+        showAddActivity={showUploads ? false : true}
         activityMenuItems={activityMenuItems}
       />
       {showUploads ? (

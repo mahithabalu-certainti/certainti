@@ -27,6 +27,7 @@ import { RootState } from '../../../../store/store';
 import { useSelector } from 'react-redux';
 import { AllPermissions } from '../../../../common-service';
 import { shouldDisableField, shouldHideField } from './helper';
+import { ActivitySourceDetails } from '../../../types';
 
 // Types
 interface SuggestionState {
@@ -83,7 +84,17 @@ const ACCEPTED_FILE_TYPES = [
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
 ];
 
-const CallForm: React.FC = () => {
+interface CallFormProps {
+  isFrom?: string;
+  onCloseModal?: () => void;
+  sourceDetails?: ActivitySourceDetails;
+}
+
+const CallForm: React.FC<CallFormProps> = ({
+  isFrom,
+  onCloseModal,
+  sourceDetails,
+}) => {
   const { activityId } = useParams();
   const [searchParams] = useSearchParams();
   const { successToast } = useToast();
@@ -115,10 +126,13 @@ const CallForm: React.FC = () => {
   const [existingFiles, setExistingFiles] = useState<ExistingFile[]>([]);
 
   const isEditView = location.pathname.split('/').includes('edit');
-  const sourcePath = searchParams.get('source') || '';
-  const accountId = searchParams.get('accountId') || '';
-  const entityLevel = searchParams.get('entityLevel') || '';
-  const entityId = searchParams.get('entityId') || '';
+  const sourcePath = searchParams.get('source') || sourceDetails?.source || '';
+  const accountId =
+    searchParams.get('accountId') || sourceDetails?.accountId || '';
+  const entityLevel =
+    searchParams.get('entityLevel') || sourceDetails?.entityLevel || '';
+  const entityId =
+    searchParams.get('entityId') || sourceDetails?.entityId || '';
 
   const [participantsSuggestions, setParticipantsSuggestions] =
     useState<SuggestionState>({
@@ -638,7 +652,11 @@ const CallForm: React.FC = () => {
   };
 
   const goBack = () => {
-    window.history.back();
+    if (isFrom === 'modal') {
+      onCloseModal?.();
+    } else {
+      window.history.back();
+    }
   };
 
   const handleSubmit = () => {
@@ -733,7 +751,9 @@ const CallForm: React.FC = () => {
 
   return (
     <div>
-      <div className='h-[50px] flex items-center justify-between px-10 sticky top-0 z-10 bg-white border-b border-[#CBD6E2]'>
+      <div
+        className={`h-[50px] flex items-center justify-between ${isFrom === 'modal' ? 'px-6 rounded-t-2xl' : 'px-10'} sticky top-0 z-10 bg-white border-b border-[#CBD6E2]`}
+      >
         <div className='flex items-center w-[80%] max-w-[80%]'>
           <CallLogIcon
             alt='call-icon'
@@ -781,16 +801,20 @@ const CallForm: React.FC = () => {
           />
         </div>
       </div>
-      <div className={`${isEditView ? 'pb-6' : 'pb-4'}`}>
+      <div
+        className={`${isFrom === 'modal' ? 'min-h-[500px] max-h-[550px] overflow-y-auto scrollbar-transparent' : ''} ${isEditView ? 'pb-6' : 'pb-4'}`}
+      >
         {formLoading ? (
           <SkeletonForm />
         ) : (
           <form>
-            <div className='border capitalize h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-10'>
+            <div
+              className={`border capitalize h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] ${isFrom === 'modal' ? 'px-6' : 'px-10'}`}
+            >
               Call Information
             </div>
 
-            <div className='px-10'>
+            <div className={`${isFrom === 'modal' ? 'px-6' : 'px-10'}`}>
               <MeetingAttendees
                 label='Call Participants'
                 field='call_participants'
@@ -824,7 +848,9 @@ const CallForm: React.FC = () => {
             </div>
 
             {/* Subject Field */}
-            <div className='grid md:grid-cols-3 gap-x-4 gap-y-3 px-10 pt-3'>
+            <div
+              className={`grid md:grid-cols-3 gap-x-4 gap-y-3 ${isFrom === 'modal' ? 'px-6' : 'px-10'} pt-3`}
+            >
               <MeetingAttendees
                 label='Caller ID'
                 field='caller_id'
@@ -997,7 +1023,7 @@ const CallForm: React.FC = () => {
 
             {/* Minutes of Meeting Field */}
             <div
-              className='grid md:grid-cols-1 gap-x-4 gap-y-[2px] px-10 pt-3'
+              className={`grid md:grid-cols-1 gap-x-4 gap-y-[2px] ${isFrom === 'modal' ? 'px-6' : 'px-10'} pt-3`}
               style={{
                 display: shouldHideField(
                   'minutes_of_meeting',
@@ -1045,10 +1071,12 @@ const CallForm: React.FC = () => {
                 pointerEvents: disableAttachments ? 'none' : 'all',
               }}
             >
-              <div className='mt-6 border capitalize h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-10'>
+              <div
+                className={`mt-6 border capitalize h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] ${isFrom === 'modal' ? 'px-6' : 'px-10'}`}
+              >
                 Attachments
               </div>
-              <div className='px-10 mt-3'>
+              <div className={`${isFrom === 'modal' ? 'px-6' : 'px-10'} mt-3`}>
                 <div className='flex flex-col items-center justify-center gap-4 px-4 py-5'>
                   <div
                     onDrop={handleDrop}
@@ -1058,10 +1086,12 @@ const CallForm: React.FC = () => {
                     ${message?.type === 'error' ? 'border-red-600 bg-[#FEF2F2]' : 'border-[#0176D3] bg-[#F4F6F9]'} ${disableAttachments ? 'opacity-50' : 'opacity-100'}
                   `}
                   >
-                    <UploadIcon
-                      alt='Upload Icon'
-                      className='w-[36px] h-[24px]'
-                    />
+                    <React.Suspense fallback={null}>
+                      <UploadIcon
+                        alt='Upload Icon'
+                        className='w-[36px] h-[24px]'
+                      />
+                    </React.Suspense>
                     <div
                       className='text-[14px] text-[#0B0B0B]'
                       style={{ whiteSpace: 'nowrap' }}
@@ -1120,7 +1150,7 @@ const CallForm: React.FC = () => {
             {/* Audit Information for Edit View */}
             <div className={`${isEditView ? 'block pt-5' : 'hidden'}`}>
               <div
-                className={`border capitalize h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-10`}
+                className={`border capitalize h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] ${isFrom === 'modal' ? 'px-6' : 'px-10'}`}
               >
                 Audit Information
               </div>

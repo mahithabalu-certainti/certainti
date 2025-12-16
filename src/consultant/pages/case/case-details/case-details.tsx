@@ -213,7 +213,6 @@ export const CaseDetails = () => {
       sortOrder: 'ASC',
       filters: {},
     });
-  const [showModal, setShowModal] = useState(false);
 
   const systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const [interactionsParams, setInteractionsParams] =
@@ -346,6 +345,24 @@ export const CaseDetails = () => {
   const isCaseTaskExportEnable = checkPermission(
     permission,
     AllPermissions.CASES_WORKBREAKDOWN_EXPORT
+  );
+
+  // Activity Create Permission
+  const isActivityTaskCreateEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_TASK_CREATE
+  );
+  const isActivityCallCreateEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_CALL_CREATE
+  );
+  const isActivityEmailCreateEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_EMAIL_CREATE
+  );
+  const isActivityMeetingCreateEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_MEETING_CREATE
   );
 
   const activityExportPermissionMap: Record<string, boolean> = {
@@ -536,21 +553,25 @@ export const CaseDetails = () => {
       label: 'Create Task',
       onClick: () => setActivityModalId('create-task'),
       icon: TaskCreateIcon,
+      hide: !isActivityTaskCreateEnable,
     },
     {
       label: 'Draft Email',
       onClick: () => setActivityModalId('draft-email'),
       icon: DraftEmailIcon,
+      hide: !isActivityEmailCreateEnable,
     },
     {
       label: 'Schedule Meeting',
       onClick: () => setActivityModalId('schedule-meeting'),
       icon: MeetingIcon,
+      hide: !isActivityMeetingCreateEnable,
     },
     {
       label: 'Log a call',
       onClick: () => setActivityModalId('call-log'),
       icon: CallLogIcon,
+      hide: !isActivityCallCreateEnable,
     },
   ];
 
@@ -634,6 +655,7 @@ export const CaseDetails = () => {
               setReviewProjectParams={setReviewProjectParams}
               setExportType={setExportType}
               refetchCaseDetails={refetchCaseDetails}
+              activityMenuItems={activityMenuItems}
             />
           </div>
         );
@@ -669,7 +691,7 @@ export const CaseDetails = () => {
           />
         );
       case 'settings':
-        return <Setting />;
+        return <Setting activityMenuItems={activityMenuItems} />;
       case 'activities':
         return (
           <CaseActivities
@@ -678,6 +700,7 @@ export const CaseDetails = () => {
             setExportType={setExportType}
             setActivityParams={setActivityParams}
             isDetailLoading={isPending}
+            activityMenuItems={activityMenuItems}
           />
         );
       case 'checklist':
@@ -699,6 +722,7 @@ export const CaseDetails = () => {
             loading={isLoading}
             setInteractionsParams={setInteractionsParams}
             setExportType={setExportType}
+            activityMenuItems={activityMenuItems}
           />
         );
       case 'projectResource':
@@ -894,6 +918,15 @@ export const CaseDetails = () => {
     }
   };
 
+  const sourceDetails = {
+    accountId: accountId,
+    entityLevel: 'case',
+    entityId: caseId || '',
+    caseFiscalYear: caseData?.fiscal_year || '',
+    source: `Case > ${caseData?.r_number || ''}`,
+    isEmailConfigured: caseData?.is_send_interaction,
+  };
+
   if (!caseIsEnable || !isCaseDetailsEnable) return <AccessRestricted />;
 
   return (
@@ -998,6 +1031,7 @@ export const CaseDetails = () => {
       <ActivityModal
         modalId={activityModalId}
         onCloseModal={() => setActivityModalId(null)}
+        sourceDetails={sourceDetails}
       />
     </div>
   );

@@ -1,25 +1,27 @@
 import React from 'react';
 import { Modal, Box } from '@mui/material';
-import TaskModal from './task-modal';
-import MeetingModal from './meeting-modal';
-import CallLogModal from './call-log-modal';
-import DraftEmailModal from './draft-email-modal';
 import {
   CallLogIcon,
-  CloseIcon,
   DraftEmailIcon,
   MeetingIcon,
   TaskCreateIcon,
 } from '../../assets';
+import TaskForm from '../../consultant/pages/activities/activities-form/task-form';
+import { ActivitySourceDetails } from '../../consultant/types';
+import EmailForm from '../../consultant/pages/activities/activities-form/email-form';
+import MeetingForm from '../../consultant/pages/activities/activities-form/meeting-form';
+import CallForm from '../../consultant/pages/activities/activities-form/call-form';
 
 interface ActivityModalProps {
   modalId: string | null;
   onCloseModal: () => void;
+  sourceDetails: ActivitySourceDetails;
 }
 
 const ActivityModal: React.FC<ActivityModalProps> = ({
   modalId,
   onCloseModal,
+  sourceDetails,
 }) => {
   if (!modalId) return null;
 
@@ -31,31 +33,55 @@ const ActivityModal: React.FC<ActivityModalProps> = ({
           title: 'Create Task',
           icon: TaskCreateIcon,
           color: '#2E5AAC',
-          body: <TaskModal onCloseModal={onCloseModal} />,
+          body: (
+            <TaskForm
+              isFrom='modal'
+              sourceDetails={sourceDetails}
+              onCloseModal={onCloseModal}
+            />
+          ),
         };
 
       case 'draft-email':
         return {
-          title: 'Draft Email',
+          title: 'Create Email',
           color: '#FF73C3',
           icon: DraftEmailIcon,
-          body: <DraftEmailModal onCloseModal={onCloseModal} />,
+          body: (
+            <EmailForm
+              isFrom='modal'
+              sourceDetails={sourceDetails}
+              onCloseModal={onCloseModal}
+            />
+          ),
         };
 
       case 'schedule-meeting':
         return {
-          title: 'Meeting Information',
+          title: 'Create Meeting',
           color: '#FF5F5F',
           icon: MeetingIcon,
-          body: <MeetingModal onCloseModal={onCloseModal} />,
+          body: (
+            <MeetingForm
+              isFrom='modal'
+              sourceDetails={sourceDetails}
+              onCloseModal={onCloseModal}
+            />
+          ),
         };
 
       case 'call-log':
         return {
-          title: 'Log a Call',
+          title: 'Create Call',
           color: '#AF78FF',
           icon: CallLogIcon,
-          body: <CallLogModal onCloseModal={onCloseModal} />,
+          body: (
+            <CallForm
+              isFrom='modal'
+              sourceDetails={sourceDetails}
+              onCloseModal={onCloseModal}
+            />
+          ),
         };
 
       default:
@@ -79,29 +105,8 @@ const ActivityModal: React.FC<ActivityModalProps> = ({
     <React.Suspense fallback={null}>
       <Modal open={true} onClose={handleClose}>
         <Box className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 min-w-[65%] max-w-[65%] bg-white rounded-md shadow-lg outline-none'>
-          {/* Title */}
-          <div className='flex justify-between items-center py-4 px-6 border-b border-[#CBD6E2]'>
-            <div className='flex items-center gap-2'>
-              <modal.icon
-                className='h-[26px] w-[26px] p-1.5 rounded-[2px] [&>path]:stroke-white'
-                style={{ backgroundColor: modal.color }}
-              />
-              <div className='text-xl font-semibold text-[#2A2A2A]'>
-                {modal.title}
-              </div>
-            </div>
-            <button
-              onClick={onCloseModal}
-              className='p-2.5 hover:bg-gray-200 rounded-full cursor-pointer'
-            >
-              <CloseIcon />
-            </button>
-          </div>
-
           {/* Body */}
-          <div className='min-h-[300px] max-h-[550px] overflow-y-auto'>
-            {modal.body}
-          </div>
+          {modal.body}
         </Box>
       </Modal>
     </React.Suspense>

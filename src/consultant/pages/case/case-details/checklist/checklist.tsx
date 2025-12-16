@@ -393,7 +393,7 @@ const Checklist: React.FC<ChecklistProps> = ({
         searchDisabled={false}
         searchPlaceholder='Search'
         onSearch={(text) => setSearchText(text)}
-        showAddActivity={true}
+        showAddActivity={!viewDetails}
         activityMenuItems={activityMenuItems}
       />
 

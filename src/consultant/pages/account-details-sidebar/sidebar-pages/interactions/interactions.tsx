@@ -717,7 +717,11 @@ const Interactions: React.FC<InteractionsProps> = ({
           onSearch={(text) => setSearchText(text)}
           searchReset={resetSearch}
           onSearchReset={handleSearchReset}
-          showAddActivity={true}
+          showAddActivity={
+            !viewDetails &&
+            !viewInteractionAttachment &&
+            !viewInteractionHistory
+          }
           activityMenuItems={activityMenuItems}
         />
         {viewDetails && !viewResponseHistory ? (

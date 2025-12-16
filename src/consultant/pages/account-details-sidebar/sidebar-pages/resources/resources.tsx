@@ -1088,7 +1088,14 @@ const Resource: React.FC<ResourceProps> = ({
         onSearch={(text) => setSearchText(text)}
         resetSearch={resetSearch}
         onSearchReset={handleSearchReset}
-        showAddActivity={true}
+        showAddActivity={
+          showUploads ||
+          noteViewDetails ||
+          checklistDetails ||
+          !!attachmentEntity
+            ? false
+            : true
+        }
         activityMenuItems={activityMenuItems}
       />
       {showUploads ? (

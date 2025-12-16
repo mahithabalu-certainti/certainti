@@ -353,7 +353,7 @@ const Imports: React.FC<ImportsProps> = ({
         searchDisabled={false}
         searchPlaceholder='Search'
         onSearch={(text) => setSearchText(text)}
-        showAddActivity={true}
+        showAddActivity={showUploads || viewDetails ? false : true}
         activityMenuItems={activityMenuItems}
       />
       {showUploads ? (

@@ -238,3 +238,23 @@
   scrollbar-width: thin;
   scrollbar-color: #b1b0b0b2 transparent; /* thumb | track */
 }
+
+/* Transparent scrollbar background */
+.scrollbar-transparent {
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: rgba(0, 0, 0, 0.3) transparent;
+}
+
+/* Chrome, Edge, Safari */
+.scrollbar-transparent::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-transparent::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-transparent::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 6px;
+}

@@ -396,7 +396,7 @@ const Timesheet: React.FC<TimeSheetProps> = ({
         searchDisabled={false}
         searchPlaceholder='Search'
         onSearch={(text) => setSearchText(text)}
-        showAddActivity={true}
+        showAddActivity={viewDetails ? false : true}
         activityMenuItems={activityMenuItems}
       />
       {viewDetails ? (

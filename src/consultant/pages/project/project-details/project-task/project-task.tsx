@@ -39,6 +39,7 @@ import {
 import { RootState } from '../../../../../store/store';
 import ProjectTaskDetails from './project-task-details';
 import {
+  ActivityDropdownItem,
   ExportType,
   FilterType,
   FormFiscalDateType,
@@ -98,6 +99,7 @@ export const ProjectTask = ({
   projectCode,
   accountOrProjectInActive,
   projectFiscalYear,
+  activityMenuItems,
 }: {
   projectID?: string;
   accountData?: {
@@ -113,6 +115,7 @@ export const ProjectTask = ({
   projectCode?: string;
   accountOrProjectInActive?: boolean;
   projectFiscalYear?: number | string;
+  activityMenuItems: ActivityDropdownItem[];
 }) => {
   const { errorToast } = useToast();
   const [showFilter, setShowFilter] = useState<boolean>(false);
@@ -774,6 +777,8 @@ export const ProjectTask = ({
         fiscalDatesArg={fiscalDatesArg}
         showSearch={viewDetails ? false : !showUploads}
         onSearch={(text) => setSearchText(text)}
+        showAddActivity={viewDetails ? false : !showUploads}
+        activityMenuItems={activityMenuItems}
       />
       {showUploads ? (
         <Uploads

@@ -54,7 +54,6 @@ const ConfigTabs: ResourceTabs[] = [
 ];
 interface WorkBreakDownProps {
   activityMenuItems: ActivityDropdownItem[];
-  caseId: string | undefined;
   setExportType: (type: ExportType) => void;
   setCaseTaskParams: (params: Record<string, unknown>) => void;
   caseStartDate?: string | null;
