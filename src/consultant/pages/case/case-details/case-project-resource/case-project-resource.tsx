@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
 import { AllPermissions } from '../../../../../common-service';
-import { ExportType } from '../../../../types';
+import { ActivityDropdownItem, ExportType } from '../../../../types';
 import { FilterType } from '../../../../../admin/types';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
@@ -40,12 +40,14 @@ interface ProjectResourceProps {
     React.SetStateAction<ReviewProjectListURLParams>
   >;
   refetchAccountDetails?: () => void;
+  activityMenuItems: ActivityDropdownItem[];
 }
 
 const CaseProjectResource: React.FC<ProjectResourceProps> = ({
   setExportType,
   accountInActive,
   setProjectResourceParams,
+  activityMenuItems,
 }) => {
   const { caseId } = useParams();
   const [searchParams] = useSearchParams();
@@ -310,6 +312,8 @@ const CaseProjectResource: React.FC<ProjectResourceProps> = ({
         permissionMapCaseProjectTableColumn={projectPermissionMap}
         showSearch={resourceId ? false : true}
         onSearch={(text) => setSearchText(text)}
+        showAddActivity={true}
+        activityMenuItems={activityMenuItems}
       />
       <>
         <SectionHeader

@@ -39,8 +39,7 @@ import {
 } from './helper';
 import { CaseTask } from './case-task';
 import { getAssignGroupsFilterFields } from './case-task/helper';
-import { ExportType } from '../../../../types';
-import { ActivityMenuItem } from '../../../../types';
+import { ActivityDropdownItem, ExportType } from '../../../../types';
 import { useToast } from '../../../../../hooks';
 import { TaskCard } from '../../../../../components/kanban-board/types';
 import { useGetTaskCheckListTypes } from '../../../../../admin/service/task-template/task-template-service';
@@ -54,7 +53,7 @@ const ConfigTabs: ResourceTabs[] = [
   },
 ];
 interface WorkBreakDownProps {
-  activityMenuItems: ActivityMenuItem[];
+  activityMenuItems: ActivityDropdownItem[];
   setExportType: (type: ExportType) => void;
   setCaseTaskParams: (params: Record<string, unknown>) => void;
   caseStartDate?: string | null;

@@ -7,7 +7,11 @@ import {
   useSearchParams,
 } from 'react-router-dom';
 import { ACCOUNT, PROJECT } from '../../../../routes';
-import { PageHeader, SideMenuPanel } from '../../../../components';
+import {
+  ActivityModal,
+  PageHeader,
+  SideMenuPanel,
+} from '../../../../components';
 import {
   // ActivitiesIcon,
   AttachmentsSideIcon,
@@ -23,6 +27,10 @@ import {
   TechSummaryIcon,
   ConfigIcon,
   ActivitiesIcon,
+  TaskCreateIcon,
+  DraftEmailIcon,
+  MeetingIcon,
+  CallLogIcon,
 } from '../../../../assets';
 import { useProjectDetail, ProjectTriggerAI } from '../../../services/project';
 import {
@@ -36,6 +44,7 @@ import {
   ProjectTriggerAIPayload,
 } from '../../../types/project';
 import {
+  ActivityDropdownItem,
   ActivityListExportURLParams,
   ActivityType,
   ChecklistListExportParams,
@@ -167,6 +176,8 @@ export const ProjectDetails = () => {
       filters: {},
       activity_type: 'all',
     });
+
+  const [activityModalId, setActivityModalId] = useState<string | null>(null);
 
   const [fiscalDate, setFiscalDate] = useState<FormFiscalDateType>({
     year: 0,
@@ -356,6 +367,24 @@ export const ProjectDetails = () => {
   const isActivityMeetingExportEnable = checkPermission(
     permission,
     AllPermissions.ACTIVITY_MEETING_EXPORT
+  );
+
+  // Activity Create Permission
+  const isActivityTaskCreateEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_TASK_CREATE
+  );
+  const isActivityCallCreateEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_CALL_CREATE
+  );
+  const isActivityEmailCreateEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_EMAIL_CREATE
+  );
+  const isActivityMeetingCreateEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_MEETING_CREATE
   );
 
   const activityExportPermissionMap: Record<string, boolean> = {
@@ -651,6 +680,33 @@ export const ProjectDetails = () => {
     AllPermissions.TRIGGER_AI_ASSESSMENT
   );
 
+  const activityMenuItems: ActivityDropdownItem[] = [
+    {
+      label: 'Create Task',
+      onClick: () => setActivityModalId('create-task'),
+      icon: TaskCreateIcon,
+      hide: !isActivityTaskCreateEnable,
+    },
+    {
+      label: 'Draft Email',
+      onClick: () => setActivityModalId('draft-email'),
+      icon: DraftEmailIcon,
+      hide: !isActivityEmailCreateEnable,
+    },
+    {
+      label: 'Schedule Meeting',
+      onClick: () => setActivityModalId('schedule-meeting'),
+      icon: MeetingIcon,
+      hide: !isActivityMeetingCreateEnable,
+    },
+    {
+      label: 'Log a call',
+      onClick: () => setActivityModalId('call-log'),
+      icon: CallLogIcon,
+      hide: !isActivityCallCreateEnable,
+    },
+  ];
+
   const renderContent = () => {
     switch (activeKey) {
       case 'financial':
@@ -660,6 +716,7 @@ export const ProjectDetails = () => {
             setExportType={setExportType}
             setResCostExportParams={setFinancialResCostParams}
             onQreAdjustmentUpdated={handleQreAdjustmentUpdated}
+            activityMenuItems={activityMenuItems}
           />
         );
       case 'projectDetails':
@@ -675,6 +732,7 @@ export const ProjectDetails = () => {
             projectDownloadIsEnable={projectDownloadIsEnable}
             projectEditIsEnable={isProjectFieldsEditable}
             permission={permission}
+            activityMenuItems={activityMenuItems}
           />
         );
       case 'projectResources':
@@ -692,6 +750,7 @@ export const ProjectDetails = () => {
             setAttachmentParams={setProjectResourceParams}
             projectCode={projectData?.project_code}
             projectFiscalYear={projectData?.fiscal_year}
+            activityMenuItems={activityMenuItems}
           />
         );
       case 'projectsTask':
@@ -709,6 +768,7 @@ export const ProjectDetails = () => {
             setProjectTaskParams={setProjectTaskParams}
             projectCode={projectData?.project_code}
             projectFiscalYear={projectData?.fiscal_year}
+            activityMenuItems={activityMenuItems}
           />
         );
       case 'rd-assessment-history':
@@ -717,6 +777,7 @@ export const ProjectDetails = () => {
             refetchAccountDetails={refetch}
             accountID={accountID}
             projectID={projectID}
+            activityMenuItems={activityMenuItems}
           />
         );
       case 'interactions':
@@ -727,6 +788,7 @@ export const ProjectDetails = () => {
             setInteractionsParams={setInteractionsParams}
             isSendInteraction={data?.data?.project?.is_send_interaction}
             loading={isPending}
+            activityMenuItems={activityMenuItems}
           />
         );
       case 'technicalSummary':
@@ -735,6 +797,7 @@ export const ProjectDetails = () => {
             accountInActive={accountInActive || projectInActive}
             setExportType={setExportType}
             setTechnicalSummaryParams={setTechnicalSummaryParams}
+            activityMenuItems={activityMenuItems}
           />
         );
       case 'activities':
@@ -747,6 +810,7 @@ export const ProjectDetails = () => {
             setActivityParams={setActivityParams}
             isDetailLoading={isPending}
             isEmailConfigured={data?.data?.project?.is_send_interaction}
+            activityMenuItems={activityMenuItems}
           />
         );
       case 'notes':
@@ -757,6 +821,7 @@ export const ProjectDetails = () => {
             setNotesParams={setNotesParams}
             projectFiscalYear={projectData?.fiscal_year}
             projectCode={projectData?.project_code}
+            activityMenuItems={activityMenuItems}
           />
         );
       case 'attachments':
@@ -767,6 +832,7 @@ export const ProjectDetails = () => {
             setAttachmentParams={setAttachmentParams}
             refetchProjectDetails={refetch}
             projectFiscalYear={projectData?.fiscal_year}
+            activityMenuItems={activityMenuItems}
           />
         );
       case 'checklist':
@@ -777,10 +843,11 @@ export const ProjectDetails = () => {
             accountOrProjectInActive={accountInActive || projectInActive}
             projectFiscalYear={projectData?.fiscal_year}
             projectCode={projectData?.project_code}
+            activityMenuItems={activityMenuItems}
           />
         );
       case 'configuration':
-        return <Configuration />;
+        return <Configuration activityMenuItems={activityMenuItems} />;
       default:
         return (
           <div className='pr-4 pl-2 py-2 w-full'>
@@ -908,7 +975,17 @@ export const ProjectDetails = () => {
       : allMenus.filter((item) => item.id !== AllMenus.FINANCIAL_HIGHLIGHTS);
   }, [isFinancialHighlightsEnable]);
 
+  const sourceDetails = {
+    accountId: accountID,
+    entityLevel: 'project',
+    entityId: projectID || '',
+    caseFiscalYear: projectData?.fiscal_year || '',
+    source: `Project > ${projectData?.project_code || ''}`,
+    isEmailConfigured: data?.data?.project?.is_send_interaction,
+  };
+
   if (!projectIsEnable) return <AccessRestricted />;
+
   return (
     <div className='flex flex-col h-full'>
       <div className='flex h-[60px]'>
@@ -984,6 +1061,11 @@ export const ProjectDetails = () => {
           <Suspense fallback={null}>{renderContent()}</Suspense>
         </div>
       </div>
+      <ActivityModal
+        modalId={activityModalId}
+        onCloseModal={() => setActivityModalId(null)}
+        sourceDetails={sourceDetails}
+      />
     </div>
   );
 };

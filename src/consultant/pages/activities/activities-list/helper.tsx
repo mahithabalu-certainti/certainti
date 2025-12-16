@@ -199,6 +199,15 @@ export const getTaskFilterFields = (
       !permissionMap?.['r_number']?.edit && !permissionMap?.['r_number']?.read,
   },
   {
+    name: 'Task Name',
+    value: 'task_name',
+    type: 'text',
+    operatorOption: textOptions,
+    hide:
+      !permissionMap?.['task_name']?.edit &&
+      !permissionMap?.['task_name']?.read,
+  },
+  {
     name: 'Task Status',
     value: 'status_name',
     type: 'enum',
