@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import { FormBuilder } from '../../../../components';
@@ -26,6 +27,10 @@ import {
 } from '../../../../common-utils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
+import {
+  ConfigDetails,
+  CreateConfigPayload,
+} from '../../../types/geo-based-rule';
 
 const GeoBasedRuleForm: React.FC = () => {
   const formRef = useRef<HTMLFormElement>(null);
@@ -49,7 +54,6 @@ const GeoBasedRuleForm: React.FC = () => {
     ruleId ?? '',
     config_rid ?? ''
   );
-  console.log(ruleDetailsData?.data?.configDetails, 'data');
   const isLoading = false;
   const isPending = false;
   const goBack = () => window.history.back();
@@ -139,12 +143,12 @@ const GeoBasedRuleForm: React.FC = () => {
 
   const initialValues = useMemo(() => {
     if (!isEditView || !ruleDetailsData?.data?.configDetails) return {};
-    const details = ruleDetailsData.data.configDetails as any;
+    const details = ruleDetailsData.data.configDetails as ConfigDetails;
     const dynamicValues: Record<string, any> = {};
 
     // Extract values from nested configs
     Object.keys(details).forEach((key) => {
-      const config = details[key];
+      const config = (details as Record<string, any>)[key];
       if (config && Array.isArray(config?.configItems)) {
         config?.configItems.forEach((item: any) => {
           if (item.label) {
@@ -159,7 +163,6 @@ const GeoBasedRuleForm: React.FC = () => {
       country: details.country_rid,
       region: details.state_rid,
       status_rid: details.status_rid,
-      is_federal: details.is_federal,
       effective_start_date: details.effective_start_date
         ? getDateFormatYYYYMMDD(details.effective_start_date)
         : '',
@@ -178,14 +181,13 @@ const GeoBasedRuleForm: React.FC = () => {
       state_rid: details.state_rid,
       updated_by: details.modified_user_name ? details.modified_user_name : '-',
       created_by: details.created_user_name ? details.created_user_name : '-',
-      config_id: details.config_id,
-      rid: details.rid,
+      config_id: details.rid,
     };
   }, [isEditView, ruleDetailsData?.data?.configDetails]);
 
   useEffect(() => {
     if (isEditView && ruleDetailsData?.data?.configDetails) {
-      const details = ruleDetailsData.data.configDetails as any;
+      const details = ruleDetailsData.data.configDetails as ConfigDetails;
       if (details.country_rid) setCurrentCountry(details.country_rid);
       if (details.state_rid) setCurrentRegion(details.state_rid);
       if (details.is_federal !== undefined) setIsFederal(details.is_federal);
@@ -219,7 +221,7 @@ const GeoBasedRuleForm: React.FC = () => {
     console.log('Submitting payload:', payload);
 
     if (isEditView) {
-      updateRule(payload, {
+      updateRule(payload as CreateConfigPayload, {
         onSuccess: () => {
           goBack();
         },
@@ -228,7 +230,7 @@ const GeoBasedRuleForm: React.FC = () => {
         },
       });
     } else {
-      createRule(payload, {
+      createRule(payload as CreateConfigPayload, {
         onSuccess: () => {
           goBack();
         },

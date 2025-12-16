@@ -363,7 +363,9 @@ export enum AllPermissions {
   ACTIVITY_MEETING_DELETE = 'activity_meeting_delete',
   ACTIVITY_MEETING_EXPORT = 'activity_meeting_export',
   ACTIVITY_MEETING_VIEW_EDIT = 'activity_meeting_view_edit',
-  CONFIGURE_SETTINGS_VIEW_EDIT = 'configure_settings_view_edit',
+  CONFIGURE_SETTINGS_VIEW_EDIT = 'manage_jurisdiction_rule_view_edit',
+  CONFIGURE_SETTINGS_EXPORT = 'manage_jurisdiction_rule_export',
+  CONFIGURE_SETTINGS_CREATE = 'manage_jurisdiction_rule_create',
 }
 
 export interface Country {

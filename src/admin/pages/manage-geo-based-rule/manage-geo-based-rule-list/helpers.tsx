@@ -51,18 +51,18 @@ export const getGeoBasedRuleFilterFields = (
             name: 'r_number',
             type: 'text',
             operatorOption: textfieldOptions,
-            //  hide:
-            // !permissionMap?.['r_number']?.read &&
-            // !permissionMap?.['r_number']?.edit,
+            hide:
+                !permissionMap?.['r_number']?.read &&
+                !permissionMap?.['r_number']?.edit,
         },
         {
             label: 'Config Name',
             name: 'config_name',
             type: 'text',
             operatorOption: textfieldOptions,
-            // hide:
-            //     !permissionMap?.['config_name']?.read &&
-            //     !permissionMap?.['config_name']?.edit,
+            hide:
+                !permissionMap?.['config_name']?.read &&
+                !permissionMap?.['config_name']?.edit,
         },
         {
             label: 'Country',
@@ -70,9 +70,9 @@ export const getGeoBasedRuleFilterFields = (
             type: 'enumSelect',
             options: countryOptions,
             operatorOption: enumOperator,
-            // hide:
-            //     !permissionMap?.['country_name']?.read &&
-            //     !permissionMap?.['country_name']?.edit,
+            hide:
+                !permissionMap?.['country_rid']?.read &&
+                !permissionMap?.['country_rid']?.edit,
         },
         {
             label: 'Region',
@@ -80,9 +80,9 @@ export const getGeoBasedRuleFilterFields = (
             type: 'enumSelect',
             options: regionOptions,
             operatorOption: enumOperator,
-            // hide:
-            //     !permissionMap?.['state_name']?.read &&
-            //     !permissionMap?.['state_name']?.edit,
+            hide:
+                !permissionMap?.['state_rid']?.read &&
+                !permissionMap?.['state_rid']?.edit,
         },
         {
             label: 'Federal',
@@ -90,63 +90,63 @@ export const getGeoBasedRuleFilterFields = (
             type: 'enumSelect',
             options: booleanOptions,
             operatorOption: enumOperator,
-            // hide:
-            //     !permissionMap?.['is_federal']?.read &&
-            //     !permissionMap?.['is_federal']?.edit,
+            hide:
+                !permissionMap?.['is_federal']?.read &&
+                !permissionMap?.['is_federal']?.edit,
         },
         {
             label: 'Effective Start Date',
             name: 'effective_start_date',
             type: 'date',
             operatorOption: requiredDateOptions,
-            // hide:
-            //     !permissionMap?.['effective_start_date']?.read &&
-            //     !permissionMap?.['effective_start_date']?.edit,
+            hide:
+                !permissionMap?.['effective_start_date']?.read &&
+                !permissionMap?.['effective_start_date']?.edit,
         },
         {
             label: 'Effective End Date',
             name: 'effective_end_date',
             type: 'date',
             operatorOption: dateOptions,
-            // hide:
-            //     !permissionMap?.['effective_end_date']?.read &&
-            //     !permissionMap?.['effective_end_date']?.edit,
+            hide:
+                !permissionMap?.['effective_end_date']?.read &&
+                !permissionMap?.['effective_end_date']?.edit,
         },
         {
             label: 'Created By',
             name: 'created_user_name',
             type: 'text',
             operatorOption: textfieldOptions,
-            // hide:
-            //     !permissionMap?.['created_by']?.read &&
-            //     !permissionMap?.['created_by']?.edit,
+            hide:
+                !permissionMap?.['created_by']?.read &&
+                !permissionMap?.['created_by']?.edit,
         },
         {
             label: 'Created On',
             name: 'created_datetime',
             type: 'date',
             operatorOption: requiredDateOptions,
-            //   hide:
-            //     !permissionMap?.['created_datetime']?.read &&
-            //     !permissionMap?.['created_datetime']?.edit,
+            hide:
+                !permissionMap?.['created_datetime']?.read &&
+                !permissionMap?.['created_datetime']?.edit,
         },
         {
             label: 'Updated By',
             name: 'modified_user_name',
             type: 'text',
             operatorOption: nonReqTextfieldOptions,
-            // hide:
-            //     !permissionMap?.['modified_by']?.read &&
-            //     !permissionMap?.['modified_by']?.edit,
+            hide:
+                !permissionMap?.['modified_by']?.read &&
+                !permissionMap?.['modified_by']?.edit,
         },
         {
             label: 'Updated On',
             name: 'modified_datetime',
             type: 'date',
             operatorOption: dateOptions,
-            // hide:
-            //     !permissionMap?.['modified_datetime']?.read &&
-            //     !permissionMap?.['modified_datetime']?.edit,
+            hide:
+                !permissionMap?.['modified_datetime']?.read &&
+                !permissionMap?.['modified_datetime']?.edit,
         },
         {
             label: 'Status',
@@ -154,9 +154,9 @@ export const getGeoBasedRuleFilterFields = (
             type: 'enumSelect',
             options: statusOptions,
             operatorOption: enumOperator,
-            // hide:
-            //     !permissionMap?.['status_rid']?.read &&
-            //     !permissionMap?.['status_rid']?.edit,
+            hide:
+                !permissionMap?.['status_rid']?.read &&
+                !permissionMap?.['status_rid']?.edit,
         },
         {
             label: 'Sort Options',

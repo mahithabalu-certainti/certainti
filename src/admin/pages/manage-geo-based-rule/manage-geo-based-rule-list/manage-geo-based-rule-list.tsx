@@ -3,7 +3,6 @@ import { NewFilterIcon, RefreshIcon, ManageGeoIcon } from '../../../../assets';
 import TextButton from '../../../../components/button/text-button';
 import { useNavigate } from 'react-router-dom';
 import { ActionsDropdown, FilterModal } from '../../../../components';
-import { FilterType } from '../../../types';
 import SearchBar from '../../../../components/search/search-bar';
 import { ManageGeoBasedRuleTable } from '../table';
 import { GeoBasedRuleListParams } from '../../../types/geo-based-rule';
@@ -19,6 +18,7 @@ import { RootState } from '../../../../store/store';
 import { ExportConfigRuleList } from '../../../service/manage-geo-based-access/geo-based-group-service';
 import { getGeoBasedRuleFilterFields } from './helpers';
 import { SelectOption } from '../../../../consultant/types';
+import { FilterCondition, Filters } from '../../../types/manage-user';
 
 const BUTTON_STYLES = {
   height: '24px',
@@ -31,7 +31,7 @@ export const ManageGeoBasedRuleList: React.FC = () => {
 
   // UseStates
   const [appliedFilters, setAppliedFilters] = useState<
-    Record<string, FilterType>
+    Record<string, FilterCondition>
   >({});
   const [page, setPage] = useState<number>(1);
   const [tableParams, setTableParams] = useState<GeoBasedRuleListParams>({
@@ -91,15 +91,13 @@ export const ManageGeoBasedRuleList: React.FC = () => {
     [permission]
   );
 
-  //   const permissionMap = useMemo(() => {
-  //     const map: Record<string, { read: boolean; edit: boolean }> = {};
-  //     configEditFields.forEach((item) => {
-  //       map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
-  //     });
-  //     return map;
-  //   }, [configEditFields]);
-
-  const permissionMap = {};
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    configEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [configEditFields]);
 
   // Filter Fields
   const filterFields = useMemo(
@@ -148,11 +146,11 @@ export const ManageGeoBasedRuleList: React.FC = () => {
   };
   const isCreateEnable = checkPermission(
     permission || [],
-    AllPermissions.CREATE_TASK_TEMPLATE
+    AllPermissions.CONFIGURE_SETTINGS_CREATE
   );
   const isExportEnable = checkPermission(
     permission || [],
-    AllPermissions.TASK_TEMPLATE_EXPORT
+    AllPermissions.CONFIGURE_SETTINGS_EXPORT
   );
   const MENU_ITEMS = [
     {
@@ -161,7 +159,7 @@ export const ManageGeoBasedRuleList: React.FC = () => {
       onClick: () =>
         ExportConfigRuleList({
           ...tableParams,
-          filters: appliedFilters as any,
+          filters: appliedFilters as unknown as Filters,
         }),
     },
   ];
@@ -196,6 +194,7 @@ export const ManageGeoBasedRuleList: React.FC = () => {
           <TextButton
             label='Create Rule'
             onClick={() => navigate(MANAGE_GEO_BASED_RULE_CREATE)}
+            hide={!isCreateEnable}
             sx={{
               ...BUTTON_STYLES,
               width: '119px',
@@ -247,7 +246,7 @@ export const ManageGeoBasedRuleList: React.FC = () => {
               <NewFilterIcon alt='filter-icon' />
               Filter
               {(appliedFilters && Object.keys(appliedFilters).length > 0) ||
-                sortFilterCount > 0 ? (
+              sortFilterCount > 0 ? (
                 <div className='absolute -top-[5px] -right-2 w-4 h-4 flex items-center justify-center text-xs'>
                   <span className='absolute w-full h-full bg-[#FF6666] rounded-full animate-ping opacity-75 z-0'></span>
                   <span className='w-4 h-4 bg-[#FF6666] text-white rounded-full flex items-center justify-center z-10 font-semibold'>
@@ -263,7 +262,9 @@ export const ManageGeoBasedRuleList: React.FC = () => {
                 filterAnchorEl={anchorEl}
                 filterId={filterId}
                 filterFields={filterFields}
-                setAppliedFilters={setAppliedFilters}
+                setAppliedFilters={(filters) =>
+                  setAppliedFilters(filters as Record<string, FilterCondition>)
+                }
                 setPage={(pageNo) => {
                   setPage(pageNo);
                   setTableParams((prev) => ({
@@ -285,7 +286,7 @@ export const ManageGeoBasedRuleList: React.FC = () => {
             appliedFilters={appliedFilters} // removed unsafe cast
             tableParams={tableParams}
             setTableParams={setTableParams}
-            onSelectionChange={() => { }}
+            onSelectionChange={() => {}}
             refreshTrigger={refreshTrigger}
             setColumnAnchorEl={setColumnAnchorEl}
             columnAnchorEl={columnAnchorEl}

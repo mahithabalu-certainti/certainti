@@ -5,36 +5,52 @@ import {
 import { ListTableColumn } from '../../../../components/table/types';
 import { GeoBasedRule } from '../../../types/geo-based-rule';
 
-export const getGeoBasedRuleColumns = (): ListTableColumn<GeoBasedRule>[] => [
+export const getGeoBasedRuleColumns = (
+  permissionMap: Record<string, { read: boolean; edit: boolean }>
+): ListTableColumn<GeoBasedRule>[] => [
   {
     id: 'r_number',
     label: 'Geo Based ID',
     sortId: 'r_number',
     sortable: true,
+    hide:
+      !permissionMap?.['r_number']?.read && !permissionMap?.['r_number']?.edit,
   },
   {
     id: 'config_name',
     label: 'Config Name',
     sortId: 'config_name',
     sortable: true,
+    hide:
+      !permissionMap?.['config_name']?.read &&
+      !permissionMap?.['config_name']?.edit,
   },
   {
     id: 'country_name',
     sortId: 'country_name',
     label: 'Country',
     sortable: true,
+    hide:
+      !permissionMap?.['country_rid']?.read &&
+      !permissionMap?.['country_rid']?.edit,
   },
   {
     id: 'state_name',
     sortId: 'state_name',
     label: 'Region',
     sortable: true,
+    hide:
+      !permissionMap?.['state_rid']?.read &&
+      !permissionMap?.['state_rid']?.edit,
   },
   {
     id: 'is_federal',
     sortId: 'is_federal',
     label: 'Federal',
     sortable: true,
+    hide:
+      !permissionMap?.['is_federal']?.read &&
+      !permissionMap?.['is_federal']?.edit,
     render: (row: GeoBasedRule) => (row.is_federal ? 'Yes' : 'No'),
   },
   {
@@ -43,7 +59,9 @@ export const getGeoBasedRuleColumns = (): ListTableColumn<GeoBasedRule>[] => [
     label: 'Effective Start Date',
     sortable: true,
     editable: true,
-    width: 220,
+    hide:
+      !permissionMap?.['effective_start_date']?.read &&
+      !permissionMap?.['effective_start_date']?.edit,
     editId: 'effective_start_date',
     render: (row: GeoBasedRule) =>
       row.effective_start_date
@@ -83,9 +101,11 @@ export const getGeoBasedRuleColumns = (): ListTableColumn<GeoBasedRule>[] => [
     id: 'effective_end_date',
     sortId: 'effective_end_date',
     label: 'Effective End Date',
-    // width: 220,
     sortable: true,
     editable: true,
+    hide:
+      !permissionMap?.['effective_end_date']?.read &&
+      !permissionMap?.['effective_end_date']?.edit,
     editId: 'effective_end_date',
     render: (row: GeoBasedRule) =>
       row.effective_end_date
@@ -101,8 +121,11 @@ export const getGeoBasedRuleColumns = (): ListTableColumn<GeoBasedRule>[] => [
     id: 'created_datetime',
     sortId: 'created_datetime',
     label: 'Created On',
-    // width: 220,
     sortable: true,
+    width: 220,
+    hide:
+      !permissionMap?.['created_datetime']?.read &&
+      !permissionMap?.['created_datetime']?.edit,
     render: (row: GeoBasedRule) =>
       row.created_datetime
         ? formatDateToYYYYMMDDWithTime(row.created_datetime)
@@ -112,8 +135,11 @@ export const getGeoBasedRuleColumns = (): ListTableColumn<GeoBasedRule>[] => [
     id: 'modified_datetime',
     sortId: 'modified_datetime',
     label: 'Updated On',
-    width: 220,
     sortable: true,
+    width: 220,
+    hide:
+      !permissionMap?.['modified_datetime']?.read &&
+      !permissionMap?.['modified_datetime']?.edit,
     render: (row: GeoBasedRule) =>
       row.modified_datetime
         ? formatDateToYYYYMMDDWithTime(row.modified_datetime)

@@ -39,12 +39,12 @@ export const GeoBasedRuleFormFieldsData = (
           placeholder: `Enter ${formattedLabel}`,
           disabled:
             isEditView &&
-            !permissionMap?.[item.label]?.edit &&
-            permissionMap?.[item.label]?.read,
-          // hide:
-          //     isEditView &&
-          //     !permissionMap?.[item.label]?.edit &&
-          //     !permissionMap?.[item.label]?.read,
+            !permissionMap?.['configs']?.edit &&
+            permissionMap?.['configs']?.read,
+          hide:
+            isEditView &&
+            !permissionMap?.['configs']?.edit &&
+            !permissionMap?.['configs']?.read,
         });
       });
 
@@ -68,10 +68,10 @@ export const GeoBasedRuleFormFieldsData = (
               isEditView &&
               !permissionMap?.['effective_start_date']?.edit &&
               permissionMap?.['effective_start_date']?.read,
-            // hide:
-            //   isEditView &&
-            //   !permissionMap?.['effective_start_date']?.edit &&
-            //   !permissionMap?.['effective_start_date']?.read,
+            hide:
+              isEditView &&
+              !permissionMap?.['effective_start_date']?.edit &&
+              !permissionMap?.['effective_start_date']?.read,
           }),
           createDateField('effective_end_date', 'Effective End Date', {
             required: false,
@@ -81,19 +81,19 @@ export const GeoBasedRuleFormFieldsData = (
               isEditView &&
               !permissionMap?.['effective_end_date']?.edit &&
               permissionMap?.['effective_end_date']?.read,
-            // hide:
-            //   isEditView &&
-            //   !permissionMap?.['effective_end_date']?.edit &&
-            //   !permissionMap?.['effective_end_date']?.read,
+            hide:
+              isEditView &&
+              !permissionMap?.['effective_end_date']?.edit &&
+              !permissionMap?.['effective_end_date']?.read,
           }),
           createSelectField('status_rid', 'Status', {
             required: true,
             options: statusOptions,
             placeholder: 'Choose Status',
-            // hide:
-            //   isEditView &&
-            //   !permissionMap?.['status_rid']?.read &&
-            //   !permissionMap?.['status_rid']?.edit,
+            hide:
+              isEditView &&
+              !permissionMap?.['status_rid']?.read &&
+              !permissionMap?.['status_rid']?.edit,
             disabled:
               isEditView &&
               permissionMap?.['status_rid']?.read &&
@@ -109,10 +109,10 @@ export const GeoBasedRuleFormFieldsData = (
               isEditView &&
               !permissionMap?.['is_federal']?.edit &&
               permissionMap?.['is_federal']?.read,
-            // hide:
-            //   isEditView &&
-            //   !permissionMap?.['is_federal']?.edit &&
-            //   !permissionMap?.['is_federal']?.read,
+            hide:
+              isEditView &&
+              !permissionMap?.['is_federal']?.edit &&
+              !permissionMap?.['is_federal']?.read,
           }),
           createSelectField('country', 'Country', {
             options: countryOptions || [],
@@ -124,10 +124,10 @@ export const GeoBasedRuleFormFieldsData = (
               isEditView &&
               !permissionMap?.['country']?.edit &&
               permissionMap?.['country']?.read,
-            // hide:
-            //     isEditView &&
-            //     !permissionMap?.['country']?.edit &&
-            //     !permissionMap?.['country']?.read,
+            hide:
+              isEditView &&
+              !permissionMap?.['country']?.edit &&
+              !permissionMap?.['country']?.read,
           }),
           createSelectField('region', 'Region', {
             options: regionOptions || [],
@@ -136,11 +136,10 @@ export const GeoBasedRuleFormFieldsData = (
             isLoading: regionLoading,
             onChange: true,
             disabled: isFederal ?? undefined,
-
-            // hide:
-            //   isEditView &&
-            //   !permissionMap?.['region']?.edit &&
-            //   !permissionMap?.['region']?.read,
+            hide:
+              isEditView &&
+              !permissionMap?.['region']?.edit &&
+              !permissionMap?.['region']?.read,
           }),
           createTextField('config_name', 'Config Name', {
             required: true,
@@ -148,8 +147,8 @@ export const GeoBasedRuleFormFieldsData = (
             prefixValue: caseNamePrefix,
             disabled:
               isEditView &&
-              !permissionMap?.['rule_name']?.edit &&
-              permissionMap?.['rule_name']?.read,
+              !permissionMap?.['config_name']?.edit &&
+              permissionMap?.['config_name']?.read,
             errorHandling: [
               {
                 regex: REGEX_PATTERNS.MIN_3,
@@ -160,10 +159,10 @@ export const GeoBasedRuleFormFieldsData = (
                 errorMessage: 'Config Name must be within 255 characters',
               },
             ],
-            // hide:
-            //   isEditView &&
-            //   !permissionMap?.['rule_name']?.edit &&
-            //   !permissionMap?.['rule_name']?.read,
+            hide:
+              isEditView &&
+              !permissionMap?.['config_name']?.edit &&
+              !permissionMap?.['config_name']?.read,
           }),
         ],
       },
@@ -176,50 +175,50 @@ export const GeoBasedRuleFormFieldsData = (
           createTextField('rid', 'Record ID', {
             required: false,
             disabled: true,
-            // hide:
-            //     isEditView &&
-            //     !permissionMap?.['rid']?.edit &&
-            //     !permissionMap?.['rid']?.read,
+            hide:
+              isEditView &&
+              !permissionMap?.['rid']?.edit &&
+              !permissionMap?.['rid']?.read,
           }),
           createTextField('created_datetime', 'Created On', {
             required: false,
             disabled: true,
-            // hide:
-            //     isEditView &&
-            //     !permissionMap?.['created_datetime']?.edit &&
-            //     !permissionMap?.['created_datetime']?.read,
+            hide:
+              isEditView &&
+              !permissionMap?.['created_datetime']?.edit &&
+              !permissionMap?.['created_datetime']?.read,
           }),
           createTextField('created_by', 'Created By', {
             required: false,
             disabled: true,
-            // hide:
-            //   isEditView &&
-            //   !permissionMap?.['created_by']?.edit &&
-            //   !permissionMap?.['created_by']?.read,
+            hide:
+              isEditView &&
+              !permissionMap?.['created_by']?.edit &&
+              !permissionMap?.['created_by']?.read,
           }),
           createTextField('config_id', 'Config ID', {
             required: false,
             disabled: true,
-            // hide:
-            //   isEditView &&
-            //   !permissionMap?.['r_number']?.edit &&
-            //   !permissionMap?.['r_number']?.read,
+            hide:
+              isEditView &&
+              !permissionMap?.['r_number']?.edit &&
+              !permissionMap?.['r_number']?.read,
           }),
           createTextField('updated_on', 'Updated On', {
             required: false,
             disabled: true,
-            // hide:
-            //   isEditView &&
-            //   !permissionMap?.['modified_datetime']?.edit &&
-            //   !permissionMap?.['modified_datetime']?.read,
+            hide:
+              isEditView &&
+              !permissionMap?.['modified_datetime']?.edit &&
+              !permissionMap?.['modified_datetime']?.read,
           }),
           createTextField('updated_by', 'Updated By', {
             required: false,
             disabled: true,
-            // hide:
-            //   isEditView &&
-            //   !permissionMap?.['modified_by']?.edit &&
-            //   !permissionMap?.['modified_by']?.read,
+            hide:
+              isEditView &&
+              !permissionMap?.['modified_by']?.edit &&
+              !permissionMap?.['modified_by']?.read,
           }),
         ],
       },
