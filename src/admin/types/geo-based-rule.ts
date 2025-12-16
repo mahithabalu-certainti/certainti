@@ -23,6 +23,7 @@ export type GeoBasedRule = {
   platform_config_group_rid?: string;
   jurisdictionConfig?: any;
   platformConfig?: any;
+  country_code?: string;
 };
 export interface GeoBasedRuleListParams {
   page: number;

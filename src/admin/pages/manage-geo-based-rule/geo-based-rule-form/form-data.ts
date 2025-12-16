@@ -152,8 +152,8 @@ export const GeoBasedRuleFormFieldsData = (
               permissionMap?.['country']?.read,
             hide:
               isEditView &&
-              !permissionMap?.['country']?.edit &&
-              !permissionMap?.['country']?.read,
+              !permissionMap?.['country_rid']?.edit &&
+              !permissionMap?.['country_rid']?.read,
           }),
           createSelectField('region', 'Region', {
             options: regionOptions || [],
@@ -164,8 +164,8 @@ export const GeoBasedRuleFormFieldsData = (
             disabled: isFederal ?? undefined,
             hide:
               isEditView &&
-              !permissionMap?.['region']?.edit &&
-              !permissionMap?.['region']?.read,
+              !permissionMap?.['state_rid']?.edit &&
+              !permissionMap?.['state_rid']?.read,
           }),
           createTextField('config_name', 'Config Name', {
             required: true,

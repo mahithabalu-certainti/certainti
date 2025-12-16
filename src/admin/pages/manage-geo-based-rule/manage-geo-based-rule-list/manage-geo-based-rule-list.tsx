@@ -104,7 +104,7 @@ export const ManageGeoBasedRuleList: React.FC = () => {
     () =>
       getGeoBasedRuleFilterFields(
         permissionMap,
-        memoizedStatus,
+        // memoizedStatus,
         countryOptions,
         [] // Region options - can be populated based on selected country if needed
       ),
@@ -207,7 +207,7 @@ export const ManageGeoBasedRuleList: React.FC = () => {
 
       <div className='flex items-center justify-between h-[42px] min-h-[42px] max-h-[42px] px-4'>
         <div className='font-bold text-[14px] leading-[32px] text-[#2D3E4F]'>
-          All Geo Based Rules
+          All Jurisdiction Rules
         </div>
         <div className='flex items-center gap-3'>
           <div className='flex gap-1 relative'>

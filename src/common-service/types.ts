@@ -372,6 +372,7 @@ export enum AllPermissions {
 export interface Country {
   rid: string;
   country_name: string;
+  country_code?: string;
 }
 
 export type FieldTypes = string | string[] | dayjs.Dayjs | null | File;
