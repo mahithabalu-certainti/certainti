@@ -1,4 +1,4 @@
-import React, { Suspense, useState } from 'react';
+import React, { Suspense, useMemo, useState } from 'react';
 import { NewFilterIcon, RefreshIcon, ManageGeoIcon } from '../../../../assets';
 import TextButton from '../../../../components/button/text-button';
 import { useNavigate } from 'react-router-dom';
@@ -9,10 +9,16 @@ import { ManageGeoBasedRuleTable } from '../table';
 import { GeoBasedRuleListParams } from '../../../types/geo-based-rule';
 import { MANAGE_GEO_BASED_RULE_CREATE } from '../../../../routes';
 import { checkPermission } from '../../../../common-utils';
-import { AllPermissions } from '../../../../common-service';
+import {
+  AllPermissions,
+  useGetAllCountries,
+  useGetStatus,
+} from '../../../../common-service';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
 import { ExportConfigRuleList } from '../../../service/manage-geo-based-access/geo-based-group-service';
+import { getGeoBasedRuleFilterFields } from './helpers';
+import { SelectOption } from '../../../../consultant/types';
 
 const BUTTON_STYLES = {
   height: '24px',
@@ -48,10 +54,65 @@ export const ManageGeoBasedRuleList: React.FC = () => {
   const isModalOpen = Boolean(columnAnchorEl);
   const modalId = isModalOpen ? 'geo-rule-visibility-popover' : undefined;
 
+  // Service Hooks
+  const statusOptions = useGetStatus();
+  const allCountries = useGetAllCountries('Active');
+
   // Variables
   const isFilterOpen = Boolean(anchorEl);
   const filterId = isFilterOpen ? 'geo-rule-filter-popover' : undefined;
 
+  // Memoized Options
+  const countryOptions: SelectOption[] = useMemo(
+    () =>
+      allCountries.data?.data.country.map((country) => ({
+        label: country.country_name,
+        value: country.rid,
+      })) || [],
+    [allCountries.data?.data.country]
+  );
+
+  const memoizedStatus: SelectOption[] = useMemo(
+    () =>
+      statusOptions?.data?.data?.status.map((status) => ({
+        label: status?.status_name,
+        value: status?.rid,
+        desc: status?.status_description,
+      })) || [],
+    [statusOptions?.data?.data?.status]
+  );
+
+  // Permission Map
+  const configEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.CONFIGURE_SETTINGS_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  //   const permissionMap = useMemo(() => {
+  //     const map: Record<string, { read: boolean; edit: boolean }> = {};
+  //     configEditFields.forEach((item) => {
+  //       map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+  //     });
+  //     return map;
+  //   }, [configEditFields]);
+
+  const permissionMap = {};
+
+  // Filter Fields
+  const filterFields = useMemo(
+    () =>
+      getGeoBasedRuleFilterFields(
+        permissionMap,
+        memoizedStatus,
+        countryOptions,
+        [] // Region options - can be populated based on selected country if needed
+      ),
+    [permissionMap, memoizedStatus, countryOptions]
+  );
+  console.log('filterFields', filterFields);
   // Functions
   const onRefreshClick = () => {
     setRefreshTrigger(Date.now());
@@ -202,7 +263,7 @@ export const ManageGeoBasedRuleList: React.FC = () => {
                 isOpen={isFilterOpen}
                 filterAnchorEl={anchorEl}
                 filterId={filterId}
-                filterFields={[]} // Placeholder for filter fields
+                filterFields={filterFields}
                 setAppliedFilters={setAppliedFilters}
                 setPage={(pageNo) => {
                   setPage(pageNo);
