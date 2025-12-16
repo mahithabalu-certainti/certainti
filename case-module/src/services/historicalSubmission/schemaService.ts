@@ -310,7 +310,6 @@ export class HistoricalSubmissionSchemaService {
     currencyRid : string
   ) {
     try {
-      
       const { CaseHistorySubmission } = await this.caseModelService.getModels(accountNumber); 
       const whereConditions: any = {
         account_rid: data.account_rid,
