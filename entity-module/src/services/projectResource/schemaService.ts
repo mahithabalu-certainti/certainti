@@ -2480,7 +2480,6 @@ export class ProjectResourceSchemaService {
     caseMapping: any,
     projectResourceFiscal: any,
   ) {
-    console.log("yoki projectResourceFiscal", projectResourceFiscal);
     const { CaseProjectResourceFiscal, Resources } = await this.getModels(
       accountNumber
     );
