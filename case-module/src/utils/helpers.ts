@@ -1,5 +1,5 @@
 import Joi from "joi";
-import e, { Request, Response } from "express";
+import { Request, Response } from "express";
 import { errorResponse, successResponse } from "./apiResponse";
 import { ALPHANUMERIC_CONDITIONS, HttpStatus, STATUS_MESSAGE } from "./constants";
 import configurations from "../config/config";
