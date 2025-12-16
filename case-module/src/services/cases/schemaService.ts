@@ -3989,27 +3989,13 @@ class CaseSchemaService {
       };
       let caseTeamMembers = await CaseTeam.findAll(queryOptions);
       const userIds = [...new Set(caseTeamMembers.map((d: any) => d.user_rid))];
-      if (userIds.length > 0) {
-        let userAssignedCountMap = new Map();
-        let schemaName = rawQueries.fetchSchemaName(accountNumber)
-        let countResult: any = await this.orgDbSequelize.query(rawQueries.getUserAssignedCount(schemaName, userIds, data.case_rid))
-        countResult[0][0].assigned_user_details.forEach((d: any) => {
-          userAssignedCountMap.set(d.user_rid, d.total_task_assigned_count)
-        })
-        caseTeamMembers = caseTeamMembers.map((d: any) => {
-          return {
-            ...d,
-            assigned_task_count: userAssignedCountMap.get(d.user_rid) || 0
-          }
-        })
-      }
       if (isDropdownList) {
         if (userIds.length > 0) {
           const getUserDetails = await this.mainDbSequelize.query(rawQueries.getOwnerDetails(userIds));
           const userMap = new Map(getUserDetails[0].map((d: any) => [d.rid, {name : d.name, profile_url : d.profile_url}]));
-          let profileUrl;
-          let userName;
           const finalData = await Promise.all(caseTeamMembers.map(async (d: any) => {
+            let profileUrl;
+            let userName;
             if(userMap.get(d.user_rid) !== undefined) {
               userName = userMap.get(d.user_rid)?.name || null
               if(userMap.get(d.user_rid)?.profile_url !== null) {
@@ -4029,7 +4015,25 @@ class CaseSchemaService {
           }))
           return finalData
         }
-      } else return caseTeamMembers;
+        return caseTeamMembers
+      } else {
+          if (userIds.length > 0) {
+          let userAssignedCountMap = new Map();
+          let schemaName = rawQueries.fetchSchemaName(accountNumber)
+          let countResult: any = await this.orgDbSequelize.query(rawQueries.getUserAssignedCount(schemaName, userIds, data.case_rid))
+          countResult[0][0].assigned_user_details.forEach((d: any) => {
+            userAssignedCountMap.set(d.user_rid, d.total_task_assigned_count)
+          })
+          caseTeamMembers = caseTeamMembers.map((d: any) => {
+            return {
+              ...d,
+              assigned_task_count: userAssignedCountMap.get(d.user_rid) || 0
+            }
+          })
+          return caseTeamMembers;
+        }
+        return caseTeamMembers
+      }
     } catch (err) {
       logMessage(`Error in fetching case team members: ${err}`);
       errorLog("Error in fetching case team members:", (err as Error).message);

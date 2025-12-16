@@ -13,7 +13,7 @@ export const fetchCasesHeadersDatas = (schemaName: string, caseRid: string, acco
     SELECT project_fiscal_rid FROM ${schemaName}.case_projects where case_rid = '${caseRid}'
     ),
     fetch_project_count_cost AS (
-    SELECT COALESCE(COUNT(pf.rid), 0) AS total_projects, COALESCE(SUM(pf.total_cost_prj), 0.00) AS total_project_cost
+    SELECT NULLIF(COUNT(pf.rid), 0) AS total_projects, NULLIF(SUM(pf.total_cost_prj), 0.00) AS total_project_cost
     FROM ${schemaName}.project_fiscal pf
     CROSS JOIN fetch_fiscal_year f
     WHERE

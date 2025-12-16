@@ -114,6 +114,7 @@ export class JurisdictionSchemaService {
       return null;
     }
     return {
+      config_name: jurisdictionConfig.config_name,
       jurisdictionConfig: jurisdictionConfig?.jdConfig,
       platformConfig: jurisdictionConfig?.platformConfig,
       effective_start_date: jurisdictionConfig?.effective_start_date,
@@ -129,7 +130,9 @@ export class JurisdictionSchemaService {
       modified_datetime: jurisdictionConfig?.modified_datetime,
       modified_by: jurisdictionConfig?.modified_by,
       created_user_name: jurisdictionConfig?.created_user_name,
-      modified_user_name: jurisdictionConfig?.modified_user_name
+      modified_user_name: jurisdictionConfig?.modified_user_name,
+      status_rid: jurisdictionConfig?.status_rid,
+      r_number: jurisdictionConfig?.r_number,
     };
   }
 
@@ -252,6 +255,10 @@ export class JurisdictionSchemaService {
     };
    
     return {
+      config_name:
+        paramValues.length > 0 ? paramValues[0].config_name : null,
+      status_rid:
+        paramValues.length > 0 ? paramValues[0].status_rid : null,
       effective_start_date:
         paramValues.length > 0 ? paramValues[0].effective_start_date : null,
       effective_end_date:
@@ -265,6 +272,8 @@ export class JurisdictionSchemaService {
       state_name: configMeta.length > 0 ? configMeta[0].state_name : null,
       country_name: configMeta.length > 0 ? configMeta[0].country_name : null,
       is_required: configMeta.length > 0 ? configMeta[0].is_required : null,
+      r_number:
+        paramValues.length > 0 ? paramValues[0].r_number : null,
       created_datetime:
         paramValues.length > 0 ? paramValues[0].created_datetime : null,
       created_by:
@@ -299,6 +308,8 @@ export class JurisdictionSchemaService {
         config_json: group,
         effective_end_date: configRequest.effective_end_date,
         effective_start_date: configRequest.effective_start_date,
+        config_name:configRequest.config_name,
+        status_rid:configRequest.status_rid,
         modified_datetime: new Date(),
         modified_by: configRequest.modified_by,
       });

@@ -214,10 +214,13 @@ const updateJurisdictionRDConfigSchema = Joi.object({
   platformConfig: dynamicJurisdictionConfigSchema.optional(),
   jurisdiction_config_group_rid: Joi.string().required(),
   platform_config_group_rid: Joi.string().optional().allow("", null),
-  status_rid: Joi.string().required()
+  status_rid: Joi.string().required(),
+  country_rid: Joi.string().optional().allow("", null),
+  state_rid: Joi.string().optional().allow("", null)
 });
 
 const createJurisdictionRDConfigSchema = Joi.object({
+  country_rid: Joi.string().optional().allow("", null),
   config_name: Joi.string().max(255).required(),
   state_rid: Joi.string().optional().allow("", null),
   effective_start_date: Joi.date().required(),
@@ -1101,7 +1104,8 @@ const projectTaskByIdSchema = Joi.object({
 })
 
 const caseSubmissionDateSchema = Joi.object({
- country_rid: Joi.string().required()
+  fiscal_year: Joi.number().integer().min(1900).max(2100).required(),
+  country_rid: Joi.string().required()
 });
 
 

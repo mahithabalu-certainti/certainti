@@ -5,6 +5,8 @@ export const jurisdictionTypeDefs = gql`
 
   type JurisdictionConfig {
     rid: ID!
+    r_number: String
+    config_name: String
     jurisdiction_config_group_rid: String
     platform_config_group_rid: String
     effective_start_date: String
@@ -21,6 +23,11 @@ export const jurisdictionTypeDefs = gql`
     modified_user_name: String
     status_name: String
     credit_config_group_rid: String
+    country_name: String
+    state_name: String
+    country_rid: String
+    state_rid: String
+
   }
 
   type JurisdictionConfigList {

@@ -2429,60 +2429,59 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
         const userIds = [...new Set(result[0][0].comments.map((d : any) => d.created_by))];
         const findUsers = await mainDb.query(rawQueries.getOwnerDetails(userIds));
         const userMap = new Map(findUsers[0].map((d : any) => [d.rid, {name : d.name, profile_url : d.profile_url}]));
-        let createdByName;
-        let profileUrl;
         const structuredData = await Promise.all(
         (result[0][0].comments || []).map(async (d: any) => {
           delete d.total_result
-            const updatedAttachments = await Promise.all(
-              (d.comments_attachments || []).map(async (da: any) => ({
-                ...da,
-                browse_file: da.browse_file ? await generateSasUrl(da.browse_file) : null,
-              }))
-            );
-            if(userMap.get(d.created_by) !== undefined) {
-              createdByName = userMap.get(d.created_by)?.name;
-              if(userMap.get(d.created_by)?.profile_url !== null) {
-                console.log("URL : ", userMap.get(d.created_by)?.profile_url)
-                profileUrl = await generateSasUrl(userMap.get(d.created_by)?.profile_url)
-              } else {
-                profileUrl = null
-              }
+          let createdByName;
+          let profileUrl;
+          const updatedAttachments = await Promise.all(
+            (d.comments_attachments || []).map(async (da: any) => ({
+              ...da,
+              browse_file: da.browse_file ? await generateSasUrl(da.browse_file) : null,
+            }))
+          );
+          if(userMap.get(d.created_by) !== undefined) {
+            createdByName = userMap.get(d.created_by)?.name;
+            if(userMap.get(d.created_by)?.profile_url !== null) {
+              profileUrl = await generateSasUrl(userMap.get(d.created_by)?.profile_url)
             } else {
               profileUrl = null
-              createdByName = null
             }
-            return {
-              ...d,
-              created_by_name : createdByName,
-              profile_url : profileUrl,
-              comments_attachments: updatedAttachments,
-            };
-          })
-        );
-        const finalData = {
-          page : data.page,
-          limit : data.limit,
-          total_result : total,
-          data : structuredData
-        }
-        return {
-          statusCode : HttpStatus.SUCCESS,
-          data : finalData
-        }
-      } else {
-        const finalData = {
-          page : data.page,
-          limit : data.limit,
-          total_result : 0,
-          data : []
-        }
-        return {
-          statusCode : HttpStatus.NOT_FOUND,
-          data : finalData
-        }
+          } else {
+            profileUrl = null
+            createdByName = null
+          }
+          return {
+            ...d,
+            created_by_name : createdByName,
+            profile_url : profileUrl,
+            comments_attachments: updatedAttachments,
+          };
+        })
+      );
+      const finalData = {
+        page : data.page,
+        limit : data.limit,
+        total_result : total,
+        data : structuredData
+      }
+      return {
+        statusCode : HttpStatus.SUCCESS,
+        data : finalData
+      }
+    } else {
+      const finalData = {
+        page : data.page,
+        limit : data.limit,
+        total_result : 0,
+        data : []
+      }
+      return {
+        statusCode : HttpStatus.NOT_FOUND,
+        data : finalData
       }
     }
+  }
 
     async addTaskLevelAttachment (data : any, userId : string, files : Express.Multer.File[]) {
       const mainDb = await this.getMainDb();
@@ -2515,14 +2514,14 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
 
       const result = await orgDb.query<ActivityType>(fetchTaskActivities(data.page, data.limit, schemaName, data.case_rid, data.task_rid,data.task_type), {type : QueryTypes.SELECT});
       if(result.length > 0) {
-        let createdByName;
-        let profileUrl;
         const userIds = [...new Set(result.map((d : any) => d.created_by))];
         const findUsers : any = await mainDb.query(rawQueries.getOwnerDetails(userIds));
         const mapUser : Map<string, {name : string, profile_url : string}> = new Map(findUsers[0].map((d : any) => [d.rid, {name : d.name, profile_url : d.profile_url}]));
         const total = parseInt(result[0]!.total_result)
         const structuredResult = await Promise.all(result.map(async(d : any) => {
           delete d.total_result
+          let createdByName;
+          let profileUrl;
           if(mapUser.get(d.created_by) !== undefined) {
             createdByName = mapUser.get(d.created_by)?.name
             if(mapUser.get(d.created_by)?.profile_url !== null) {
@@ -2990,6 +2989,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
                       total_effort_prj: d.total_effort_prj,
                       total_subcon_prj: d.total_subcon_prj,
                       total_cost_fte_prj: d.total_cost_fte_prj,
+                      total_cost_subcon_prj: d.total_cost_subcon_prj,
                       total_nonlabor_prj: d.total_nonlabor_prj,
                       total_resources_prj: d.total_resources_prj,
                       total_effort_fte_prj  : d.total_effort_fte_prj,
