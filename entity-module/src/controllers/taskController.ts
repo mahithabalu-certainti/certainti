@@ -26,7 +26,7 @@ async function getAllTaskSummary(req: Request, res: Response): Promise<void> {
   const methodName = "getAllTaskSummary";
   try {
 
-    const value = await validateRequest(req, listTaskSummarySchema, res, "GET");
+    const value = await validateRequest(req, listTaskSummarySchema, res, "POST");
     if (!value) {
       return;
     }
@@ -94,7 +94,7 @@ async function exportAllTaskSummary(req: Request, res: Response): Promise<void> 
   const methodName = "exportAllNotesSummary";
   try {
 
-    const value = await validateRequest(req, exportListTaskSummarySchema, res, "GET");
+    const value = await validateRequest(req, exportListTaskSummarySchema, res, "POST");
     if (!value) {
       return;
     }

@@ -144,7 +144,6 @@ export class CaseProjectResource
         r_number: {
           type: DataTypes.STRING(20),
           allowNull: true,
-          unique: true,
         },
         created_by: { 
           type: DataTypes.STRING(50), 
@@ -385,25 +384,5 @@ export class CaseProjectResource
         underscored: true,
       }
     );
-  }
-}
-
-export async function setupCaseProjectResourceSequence(
-  sequelize: Sequelize,
-  schemaName: string
-) {
-  try {
-    await sequelize.query(
-      `CREATE SEQUENCE IF NOT EXISTS "${schemaName}".case_project_resource_seq START 1`
-    );
-
-    await sequelize.query(`
-      ALTER TABLE "${schemaName}".case_project_resource
-      ALTER COLUMN r_number SET DEFAULT 'CPRS-' || LPAD(nextval('"${schemaName}".case_project_resource_seq')::text, 10, '0')
-    `);
-
-    logMessage("CaseProjectResource sequence setup complete");
-  } catch (error) {
-    logMessage(`Error setting up CaseProjectResource sequence: ${error}`);
   }
 }

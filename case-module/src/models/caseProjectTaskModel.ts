@@ -87,8 +87,7 @@ export class CaseProjectTask
         },
         r_number: {
           type: DataTypes.STRING(20),
-          allowNull: true,
-          unique: true,
+          allowNull: true
         },
         eid: { type: DataTypes.STRING(120), allowNull: true },
         created_by: { type: DataTypes.STRING(255), allowNull: false },
@@ -131,25 +130,5 @@ export class CaseProjectTask
         underscored: true,
       }
     );
-  }
-}
-
-export async function setupCaseProjectTaskSequence(
-  sequelize: Sequelize,
-  schemaName: string
-) {
-  try {
-    await sequelize.query(
-      `CREATE SEQUENCE IF NOT EXISTS "${schemaName}".case_project_tasks_seq START 1`
-    );
-
-    await sequelize.query(`
-      ALTER TABLE "${schemaName}".case_project_task
-      ALTER COLUMN r_number SET DEFAULT 'CPTA-' || LPAD(nextval('"${schemaName}".case_project_tasks_seq')::text, 10, '0')
-    `);
-
-    logMessage("CaseProjectTask sequence setup complete");
-  } catch (error) {
-    logMessage(`Error setting up CaseProjectTask sequence: ${error}`);
   }
 }

@@ -398,7 +398,6 @@ export class ProjectService {
             );
 
             const accountData = await this.schemaService.fetchAccountById(accountId);
-            console.log("yoki accountData", accountData);
             if (!accountData) {
                 throw new Error("Invalid account ID");
             }
