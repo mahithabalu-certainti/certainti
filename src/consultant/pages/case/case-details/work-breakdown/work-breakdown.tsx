@@ -190,6 +190,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
       return caseTeamMembersQuery.data.map((member) => ({
         rid: member.user_rid,
         name: member.user_name,
+        profile_url: member.profile_url,
       }));
     }
     return [];
@@ -249,7 +250,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
       return new Promise<void>((resolve, reject) => {
         const tagsArray: Array<{ tag_rid: string; is_new_tag: boolean }> = [];
         if (taskData.tags && taskData.tags.length > 0) {
-          taskData.tags.forEach((tagName: string) => {
+          (taskData.tags as string[]).forEach((tagName: string) => {
             const existingTag = tagData?.find((t) => t.name === tagName);
             if (existingTag) {
               tagsArray.push({

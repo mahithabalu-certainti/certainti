@@ -181,6 +181,8 @@ export enum AllMenus {
   FINANCIAL_HIGHLIGHTS = 'financial_highlights',
   WORKBREAKDOWN = 'workbreakdown',
   FALLBACK = 'fallback',
+  PROJECT_RESOURCES = 'project_resources',
+  PROJECT_TASK = 'project_task',
 }
 
 export enum AllModules {

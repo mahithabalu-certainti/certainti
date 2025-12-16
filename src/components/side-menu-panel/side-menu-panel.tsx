@@ -134,6 +134,8 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
     searchParams.delete('technical_summary_id');
     searchParams.delete('caseProjectTask');
     searchParams.delete('resourceId');
+    searchParams.delete('detailstab');
+    searchParams.delete('assignProject');
     //For project resource and task
     searchParams.delete('page');
     searchParams.delete('pro_res_id');

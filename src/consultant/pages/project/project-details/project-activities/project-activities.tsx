@@ -527,6 +527,7 @@ const ProjectActivities: React.FC<ProjectActivitiesProps> = ({
             accountInActive={accountInActive}
             tabValue={tabParam as ActivityType}
             entityLevel={'project'}
+            projectId={projectID}
           />
         )}
 

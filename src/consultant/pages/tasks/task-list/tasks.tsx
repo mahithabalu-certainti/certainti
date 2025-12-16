@@ -87,11 +87,6 @@ export const Tasks: React.FC = () => {
     AllPermissions.ATTACHMENT_VIEW_EDIT
   );
 
-  const isAttachmentExportEnable = checkPermission(
-    permission,
-    AllPermissions.ATTACHMENT_EXPORT
-  );
-
   const taskPermissionMap = useMemo(
     () => getPermissionMap(permission, AllPermissions.ACTIVITY_TASK_VIEW_EDIT),
     [permission]
@@ -106,8 +101,23 @@ export const Tasks: React.FC = () => {
     [permission]
   );
 
+  const isMilestoneExportEnable = checkPermission(
+    permission,
+    AllPermissions.CASES_WORKBREAKDOWN_EXPORT
+  );
+
+  const isActivityTaskExportEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_TASK_EXPORT
+  );
+
   const currentPermissionMap =
     tabParam === 'milestone' ? milestonePermissionMap : taskPermissionMap;
+
+  const isCurrentTabExportEnable =
+    tabParam === 'milestone'
+      ? isMilestoneExportEnable
+      : isActivityTaskExportEnable;
 
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
 
@@ -270,7 +280,7 @@ export const Tasks: React.FC = () => {
     {
       label: 'Export',
       onClick: () => handleExport(),
-      hide: !isAttachmentExportEnable,
+      hide: !isCurrentTabExportEnable,
     },
   ];
 

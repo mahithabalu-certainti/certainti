@@ -1,6 +1,5 @@
 import { FieldConfig } from '../../../account-details-sidebar/components/filter/filterType';
 
-
 const dateOptions = [
   { option: 'Equals', value: 'equals' },
   { option: 'Before', value: 'before' },

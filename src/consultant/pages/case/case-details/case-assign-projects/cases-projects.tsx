@@ -67,7 +67,7 @@ interface casesProjectProps {
     React.SetStateAction<ReviewProjectListURLParams>
   >;
   setExportType?: (type: ExportType) => void;
-  setRefreshDetails?: (value: number) => void;
+  refetchCaseDetails: () => void;
   activityMenuItems: ActivityDropdownItem[];
 }
 const InteractionsTabs: OverviewTabs[] = [
@@ -90,7 +90,7 @@ const CasesProjects: React.FC<casesProjectProps> = ({
   setTableParams,
   setExportType,
   setReviewProjectParams,
-  setRefreshDetails,
+  refetchCaseDetails,
   activityMenuItems,
 }) => {
   const { caseId } = useParams();
@@ -139,7 +139,7 @@ const CasesProjects: React.FC<casesProjectProps> = ({
           onRefreshClick();
           setSelectedRows([]);
           setClearSelectedRows((prev) => !prev);
-          setRefreshDetails?.(Date.now());
+          refetchCaseDetails();
         }
       },
     });
@@ -161,7 +161,7 @@ const CasesProjects: React.FC<casesProjectProps> = ({
           onRefreshClick();
           setSelectedRows([]);
           setClearSelectedRows((prev) => !prev);
-          setRefreshDetails?.(Date.now());
+          refetchCaseDetails();
         }
       },
     });
