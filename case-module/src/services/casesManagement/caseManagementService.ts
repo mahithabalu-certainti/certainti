@@ -687,8 +687,8 @@ export class CaseManagementService {
         } else {
           dynamicResult = result.array_agg.filter((d : any) => d.milestone_name.toLowerCase() !== 'audit review')
         }
-        let profileUrl : string | null
         const finalStructure = await Promise.all(dynamicResult.map(async (d : any) => {
+          let profileUrl : string | null
           return {
             rid : d.rid,
             milestone_name : d.milestone_name,
