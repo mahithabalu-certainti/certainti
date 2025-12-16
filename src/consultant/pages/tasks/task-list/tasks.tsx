@@ -87,11 +87,6 @@ export const Tasks: React.FC = () => {
     AllPermissions.ATTACHMENT_VIEW_EDIT
   );
 
-  const isAttachmentExportEnable = checkPermission(
-    permission,
-    AllPermissions.ATTACHMENT_EXPORT
-  );
-
   const taskPermissionMap = useMemo(
     () => getPermissionMap(permission, AllPermissions.ACTIVITY_TASK_VIEW_EDIT),
     [permission]
@@ -106,8 +101,21 @@ export const Tasks: React.FC = () => {
     [permission]
   );
 
+  const isMilestoneExportEnable = checkPermission(
+    permission,
+    AllPermissions.CASES_WORKBREAKDOWN_EXPORT
+  );
+
+  const isActivityTaskExportEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_TASK_EXPORT
+  );
+
   const currentPermissionMap =
     tabParam === 'milestone' ? milestonePermissionMap : taskPermissionMap;
+
+  const isCurrentTabExportEnable =
+    tabParam === 'milestone' ? isMilestoneExportEnable : isActivityTaskExportEnable;
 
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
 
@@ -270,7 +278,7 @@ export const Tasks: React.FC = () => {
     {
       label: 'Export',
       onClick: () => handleExport(),
-      hide: !isAttachmentExportEnable,
+      hide: !isCurrentTabExportEnable,
     },
   ];
 
@@ -378,7 +386,7 @@ export const Tasks: React.FC = () => {
             <NewFilterIcon alt='filter-icon' />
             Filter
             {(appliedFilters && Object.keys(appliedFilters).length > 0) ||
-            sortFilterCount > 0 ? (
+              sortFilterCount > 0 ? (
               <div className='absolute -top-[5px] -right-2 w-4 h-4 flex items-center justify-center text-xs'>
                 <span className='absolute w-full h-full bg-[#FF6666] rounded-full animate-ping opacity-75 z-0'></span>
                 <span className='w-4 h-4 bg-[#FF6666] text-white rounded-full flex items-center justify-center z-10 font-semibold'>
