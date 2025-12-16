@@ -1333,7 +1333,7 @@ class InteractionSchemaService {
           project_fiscal_rid : d.project_fiscal_rid,
           project_code : projectDetailsMap.get(d.project_fiscal_rid)?.project_code || null,
           project_name : projectDetailsMap.get(d.project_fiscal_rid)?.project_name || null,
-          signoff : projectDetailsMap.get(d.project_fiscal_rid)?.signoff || null,
+          signoff : projectDetailsMap.get(d.project_fiscal_rid)?.signoff,
           r_number: d.r_number,
           technical_summary: d.technical_summary,
           version: d.version,
