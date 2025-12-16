@@ -321,6 +321,7 @@ export class ProjectTaskSchemaService {
         case_rid: caseMappingData?.case_rid,
         project_task_rid: newTaskData?.rid || "",
         case_project_rid: caseMappingData?.rid,
+        r_number: newTaskData?.r_number,
       },
       {
         transaction,
