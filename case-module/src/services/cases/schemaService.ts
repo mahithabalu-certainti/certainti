@@ -86,9 +86,9 @@ import { setupTaskAttachmentsSequence, TaskAttachments } from "../../models/task
 import { CaseTaskWorkflowConnector, setupCaseTaskWorkflowConnectorSequence } from "../../models/caseTaskWorkflowConnectorModel";
 import { v4 as uuidv4 } from 'uuid'
 import { CaseProjectFiscalRegion, setupCaseProjectFiscalRegionSequence } from "../../models/caseProjectFiscalRegionModel";
-import { CaseProjectResourceFiscal, setupCaseProjectResourceFiscalSequence } from "../../models/caseProjectResourceFiscalModel";
+import { CaseProjectResourceFiscal } from "../../models/caseProjectResourceFiscalModel";
 import { CaseProjectResource, setupCaseProjectResourceSequence } from "../../models/caseProjectResourceModel";
-import { CaseProjectTask, setupCaseProjectTaskSequence } from "../../models/caseProjectTaskModel";
+import { CaseProjectTask } from "../../models/caseProjectTaskModel";
 import { TaskHistory } from "../../models/taskHistory";
 import { WorkflowConnector } from "../../models/workflowConnectorModel";
 import { CaseKeyContactDetails } from "../../models/caseKeyContactModel";
@@ -725,9 +725,7 @@ class CaseSchemaService {
       await CaseProjectResourceModel.sync({ force: false });
       await setupCaseProjectResourceSequence(orgDbSequlize, schemaName)
       await CaseProjectResourceFiscalModel.sync({ force: false });
-      await setupCaseProjectResourceFiscalSequence(orgDbSequlize, schemaName)
       await CaseProjectTaskModel.sync({ force: false });
-      await setupCaseProjectTaskSequence(orgDbSequlize, schemaName)
       await CaseKeyContactDetailsModel.sync({ force: false });
       await setupCaseKeyContactSequence(orgDbSequlize, schemaName)
     } catch (err) {
@@ -2253,6 +2251,7 @@ class CaseSchemaService {
           total_hours_from_tasks: resourceRecord.total_hours_from_tasks,
           total_cost_from_tasks: resourceRecord.total_cost_from_tasks,
           qre_final: resourceRecord.qre_final,
+          r_number : resourceRecord.r_number
         }));
 
         await CaseProjectResource.bulkCreate(caseProjectResourceData);
@@ -2264,9 +2263,8 @@ class CaseSchemaService {
           project_rid: p.project_rid,
           project_fiscal_rid: p.project_fiscal_rid,
           account_rid: data.account_rid
-        }
+        }, raw : true
       });
-
       if (projectResourceFiscalRecords.length > 0) {
         const caseProjectResourceFiscalData = projectResourceFiscalRecords.map(fiscalRecord => ({
           project_resource_fiscal_rid: fiscalRecord.rid,
@@ -2311,7 +2309,8 @@ class CaseSchemaService {
           rd_credits_subcon_fed_level: fiscalRecord.rd_credits_subcon_fed_level,
           rd_credits_nonlabor_fed_level: fiscalRecord.rd_credits_nonlabor_fed_level,
           rd_credits_fed_level: fiscalRecord.rd_credits_fed_level,
-          rd_credits_total: fiscalRecord.rd_credits_total
+          rd_credits_total: fiscalRecord.rd_credits_total,
+          r_number : fiscalRecord.r_number
         }));
 
         await CaseProjectResourceFiscal.bulkCreate(caseProjectResourceFiscalData);
@@ -2352,7 +2351,8 @@ class CaseSchemaService {
           total_cost_pro_task: taskRecord.total_cost_pro_task,
           comments: taskRecord.comments,
           status_rid: taskRecord.status_rid,
-          project_resource_rid: taskRecord.project_resource_rid
+          project_resource_rid: taskRecord.project_resource_rid,
+          r_number : taskRecord.r_number
         }));
 
 
