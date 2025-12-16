@@ -66,6 +66,7 @@ jobs:
           echo "VITE_PASSWORD_CHANGE_REDIRECT_URL=https://thinkrd365-qa.certainti.ai" >> $ENV_FILE
           echo "VITE_INTERACTION_URL=/interactionService" >> $ENV_FILE
           echo "VITE_EXT_INTERACTION_URL=/extinteractionService" >> $ENV_FILE
+          echo "VITE_CASE_URL=/caseService" >> $ENV_FILE
           echo "$ENV_FILE file created successfully!"       
           
           echo "STATIC_WEB_APP_API_KEY=$STATIC_WEB_APP_API_KEY" >> $GITHUB_ENV

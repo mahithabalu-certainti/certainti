@@ -41,9 +41,10 @@ const JurisdictionConfig: React.FC<JurisdictionConfigProps> = ({
   const updateconfig = useUpdateJurisdictionConfig();
   const accountid = searchParams.get('accountID');
   const cuurrency_rid = searchParams.get('country_rid');
-
+  const level = 'case';
   const { data, isLoading, refetch } = useFetchCasesConfigFields(
     accountid as string,
+    level,
     caseId as string
   );
   const states = useFetchState(cuurrency_rid);
@@ -124,6 +125,7 @@ const JurisdictionConfig: React.FC<JurisdictionConfigProps> = ({
       is_federal_level: isFederalLevel,
       is_state_level: isStateLevel,
       states,
+      level: 'case',
     };
     setIsFormSaving(true);
     updateconfig.mutate(payload, {
@@ -155,8 +157,8 @@ const JurisdictionConfig: React.FC<JurisdictionConfigProps> = ({
       <Box
         className='bg-white'
         sx={{
-          minHeight: '180px',
-          maxHeight: '180px',
+          minHeight: '100px',
+          maxHeight: '100px',
           overflowY: 'auto',
           '& .grid': {
             display: 'grid',

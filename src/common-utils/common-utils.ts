@@ -1,6 +1,8 @@
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
+import customParseFormat from 'dayjs/plugin/customParseFormat';
+dayjs.extend(customParseFormat);
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
@@ -53,6 +55,10 @@ export const createTextField = (
     resetDependsFields?: string[];
     clearValue?: Record<string, string>;
     formatCostValue?: boolean;
+    labelTooltip?: {
+      showTooltip: boolean;
+      tooltipMessage: string;
+    };
     lengthRequired?: {
       key: string;
       minMatchedValue: RegExp;
@@ -76,6 +82,7 @@ export const createTextField = (
   anyOneRequired: options.anyOneRequired,
   hide: options.hide,
   lengthRequired: options.lengthRequired,
+  labelTooltip: options.labelTooltip,
   errorHandling: options.errorHandling,
   clearValue: options.clearValue,
   defaultValue: options.defaultValue,
@@ -246,6 +253,10 @@ export const createSelectField = (
     assignDefaultValue?: boolean;
     dependantLabel?: string;
     isFiscalYear?: boolean;
+    labelTooltip?: {
+      showTooltip: boolean;
+      tooltipMessage: string;
+    };
   }
 ): FieldType => ({
   type: 'select',
@@ -266,6 +277,7 @@ export const createSelectField = (
   assignDefaultValue: others.assignDefaultValue,
   dependantLabel: others.dependantLabel,
   isFiscalYear: others.isFiscalYear,
+  labelTooltip: others.labelTooltip,
 });
 export const createMultiSelectField = (
   name: string,
@@ -402,6 +414,7 @@ export const createDateField = (
     disabled?: boolean;
     hide?: boolean;
     disableFutureDates?: boolean;
+    allowFutureDates?: boolean;
     resetDependsFields?: string[];
     minDate?: Date;
     maxDate?: Date;
@@ -414,6 +427,9 @@ export const createDateField = (
     startValue?: boolean;
     errorMessage?: string;
     clearDate?: string;
+    customDateOpen?: Date;
+    defaultValue?: string;
+    assignDefaultValue?: boolean;
   }
 ): FieldType => ({
   type: 'date',
@@ -427,6 +443,7 @@ export const createDateField = (
   hide: others.hide,
   onChange: others.onChange,
   disableFutureDates: others.disableFutureDates,
+  allowFutureDates: others.allowFutureDates,
   greaterThan: others.greaterThan,
   dateRangeError: others.dateRangeError,
   startValue: others.startValue,
@@ -436,6 +453,9 @@ export const createDateField = (
   errorMessage: others.errorMessage,
   clearDate: others.clearDate,
   resetDependsFields: others.resetDependsFields,
+  customDateOpen: others.customDateOpen,
+  defaultValue: others.defaultValue,
+  assignDefaultValue: others.assignDefaultValue,
 });
 
 export const createFiscalDateField = (
@@ -504,6 +524,7 @@ export const REGEX_PATTERNS = {
   EFFORTS_NUMBER: /^(?:[0-9]{1,16})(?:\.[0-9]{1,2})?$/,
   EFFORTS_INTEGER_NUMBER: /^[0-9]{1,16}$/,
   EFFORTS_INTEGER_9: /^[0-9]{1,9}$/,
+  ALLOW_ONE_TO_99: /^[1-9][0-9]?$/,
   DESCRIPTION: /^.{0,500}$/,
   RESOURCE_DESCRIPTION: /^.{0,1000}$/,
   ACCOUNT_DESCRIPTION: /^[\s\S]{0,2000}$/,
@@ -578,7 +599,7 @@ export const REGEX_PATTERNS = {
   ACCOUNT_ORG_NAME: /^[A-Za-z0-9 -&.,']+$/,
   MAX_ORG_NAME_LEGNTH: /^.{7,125}/,
   MIN_ORG_NAME_LEGNTH: /^.{7,}/,
-  EMAIL_SUBJECT: /^[A-Za-z0-9\s&\-.'",{}_]+$/,
+  EMAIL_SUBJECT: /^[A-Za-z0-9\s&\-.'",{}_()]+$/,
 };
 export const PROJECT_RESOURCE_REGEX = {
   // UUID VALIDATION STANDARD FORMAT
@@ -1095,4 +1116,41 @@ export const getIntersection = (
   return start <= end
     ? { start: start.toISOString(), end: end.toISOString() }
     : null;
+};
+
+export const formatTimeToAMPM = (time?: string | null): string => {
+  if (!time || typeof time !== 'string') return '-';
+  const trimmed = time.trim();
+  // Accept common time formats
+  const parsed = dayjs(trimmed, ['HH:mm', 'HH:mm:ss', 'H:mm'], true);
+  if (!parsed.isValid()) return '-';
+  return parsed.format('hh:mm A'); // AM/PM
+};
+
+export const formatDateToYyyyMmmDd = (dateString: string): string => {
+  if (!dateString) return '';
+
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return '';
+
+  const monthNames = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+
+  const year = date.getFullYear();
+  const month = monthNames[date.getMonth()];
+  const day = String(date.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`; // 2026-May-02
 };

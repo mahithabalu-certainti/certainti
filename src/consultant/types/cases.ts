@@ -29,6 +29,7 @@ export type CaseList = {
   case_owner_name: string;
   case_total_projects: number | null;
   case_total_project_cost: string | null;
+  case_total_qualified_projects_cost: string | null;
   case_total_rd_cost: string | null;
   case_total_qre_cost: string | null;
   filing_type_rid: string;
@@ -134,6 +135,7 @@ export interface CaseDetails {
   modified_by_name: string | null;
   status_name: string;
   currency_code: string;
+  currency_symbol: string;
   currency_rid: string;
   case_completion_percentage: string | null;
   case_total_qualified_projects: string | number | null;
@@ -141,6 +143,8 @@ export interface CaseDetails {
   country_code?: string;
   account_status_name?: string;
   account_status_rid?: string;
+  is_send_interaction?: boolean;
+  is_case_team_created?: boolean;
 }
 
 export interface CaseDetailsResponse {
@@ -153,6 +157,7 @@ export interface CaseDetailsResponse {
 //Form
 export interface CaseFormFields {
   account_id?: string;
+  account_rid?: string;
   account_name?: string;
   case_owner?: string;
   case_name?: string;
@@ -163,6 +168,9 @@ export interface CaseFormFields {
   case_startdate?: string;
   planned_submission_date?: string;
   statutory_submission_date?: string;
+  heat_light_power?: string;
+  total_nonlabor_cost?: string;
+  tax_liability?: string;
 }
 
 export interface CaseFormPayload {
@@ -177,14 +185,18 @@ export interface CaseFormPayload {
   case_startdate: string;
   planned_submission_date: string;
   statutory_submission_date: string;
+  heat_light_power?: string | null;
+  total_nonlabor_cost?: string | null;
+  tax_liability?: string | null;
 }
 
 export interface updateCaseJurisdictionPayload {
-  case_rid: string;
+  case_rid?: string;
   account_rid: string;
   is_federal_level: boolean;
   is_state_level: boolean;
   states: string[];
+  level?: string;
 }
 
 export interface CreateCaseApiResponse {
@@ -283,6 +295,7 @@ export interface CaseStatusResponse {
 export interface CaseOwner {
   rid: string;
   name: string;
+  email: string;
 }
 
 export interface CaseOwnersResponse {
@@ -292,4 +305,15 @@ export interface CaseOwnersResponse {
   data: {
     caseOwners: CaseOwner[];
   };
+}
+
+export interface CaseSubmissionDate {
+  caseSubmissionDate: string;
+}
+
+export interface CaseSubmissionDateResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: CaseSubmissionDate;
 }

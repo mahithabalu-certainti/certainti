@@ -121,6 +121,7 @@ const CaseNotes: React.FC<NotesProps> = ({
     limit: 2000,
     sortBy: 'first_name',
     sortOrder: 'ASC',
+    filters: { status: { equals: 'Active' } },
   });
 
   const { data, isLoading, isError } = useNotesList(
@@ -340,12 +341,16 @@ const CaseNotes: React.FC<NotesProps> = ({
     handleDownload,
     isNotesExportEnable,
     permissionMap,
-    userListOptions
+    userListOptions,
+    undefined,
+    undefined,
+    'case'
   );
 
   const notesFilterFields = getNotesFilterFields(
     permissionMap,
-    userListOptions
+    userListOptions,
+    'case'
   );
 
   const getRowId = (row: NotesList) => row.rid;

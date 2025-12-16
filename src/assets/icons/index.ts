@@ -126,10 +126,17 @@ const icons = {
   editTaskIcon: () => import('./editTaskIcon.svg?react'),
   pencilIcon: () => import('./PencilIcon.svg?react'),
   commentIcon: () => import('./comment-icon.svg?react'),
+  customChecklistIcon: () => import('./ChecklistIcon.svg?react'),
   callLogIcon: () => import('./call-log-icon.svg?react'),
   draftEmailIcon: () => import('./draft-email-icon.svg?react'),
   meetingIcon: () => import('./meeting-icon.svg?react'),
   taskCreateIcon: () => import('./task-create-icon.svg?react'),
+  paperclipIcon: () => import('./PaperclipIcon.svg?react'),
+  linkTaskIcon: () => import('./link-task.svg?react'),
+  expandView: () => import('./expand-view.svg?react'),
+  collapseView: () => import('./collapse-view.svg?react'),
+  avatarIcon: () => import('./avatar-icon.svg?react'),
+  cameraIcon: () => import('./camera-icon.svg?react'),
 };
 
 function createLazySvgIcon(name: keyof typeof icons) {
@@ -263,7 +270,14 @@ export const InfoIcon = createLazySvgIcon('infoIcon');
 export const EditTaskIcon = createLazySvgIcon('editTaskIcon');
 export const PencilIcon = createLazySvgIcon('pencilIcon');
 export const CommentIcon = createLazySvgIcon('commentIcon');
+export const CustomChecklistIcon = createLazySvgIcon('customChecklistIcon');
 export const CallLogIcon = createLazySvgIcon('callLogIcon');
 export const DraftEmailIcon = createLazySvgIcon('draftEmailIcon');
 export const MeetingIcon = createLazySvgIcon('meetingIcon');
 export const TaskCreateIcon = createLazySvgIcon('taskCreateIcon');
+export const PaperclipIcon = createLazySvgIcon('paperclipIcon');
+export const LinkTaskIcon = createLazySvgIcon('linkTaskIcon');
+export const ExpandViewIcon = createLazySvgIcon('expandView');
+export const CollapseViewIcon = createLazySvgIcon('collapseView');
+export const AvatarIcon = createLazySvgIcon('avatarIcon');
+export const CameraIcon = createLazySvgIcon('cameraIcon');

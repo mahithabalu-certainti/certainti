@@ -6,6 +6,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
 import { MenuItem } from '../../consultant/types';
 import { Skeleton, Tooltip } from '@mui/material';
+import { TruncateWithTooltip } from '../truncate-with-tooltip';
 
 interface SideMenuPanelProps {
   menuItems: MenuItem[];
@@ -16,6 +17,8 @@ interface SideMenuPanelProps {
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
   isLoading?: boolean;
+  enableScrollbar?: boolean;
+  maxHeight?: number;
 }
 
 const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
@@ -27,6 +30,8 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
   isCollapsed,
   onToggleCollapse,
   isLoading = false,
+  maxHeight = 220,
+  // enableScrollbar = false,
 }) => {
   const [accountMenus, setAccountMenus] = useState<MenuItem[]>(menuItems);
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
@@ -115,6 +120,8 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
     searchParams.delete('attachment_entity');
     searchParams.delete('file_id');
     searchParams.delete('note_id');
+    searchParams.delete('activity_id');
+    searchParams.delete('activity_type');
     searchParams.delete('checklist_id');
     searchParams.delete('timesheet_id');
     searchParams.delete('interaction_id');
@@ -125,6 +132,8 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
     searchParams.delete('history');
     searchParams.delete('upload');
     searchParams.delete('technical_summary_id');
+    searchParams.delete('caseProjectTask');
+    searchParams.delete('resourceId');
     //For project resource and task
     searchParams.delete('page');
     searchParams.delete('pro_res_id');
@@ -308,7 +317,7 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
                 } ease-in-out`,
               }}
             >
-              {item.name}
+              <TruncateWithTooltip text={item.name} enableCopy={false} />
             </span>
             {!isCollapsed && (
               <AdminSubmenuActiveIcon
@@ -404,7 +413,10 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
                       } ease-in-out`,
                     }}
                   >
-                    {submenu.name}
+                    <TruncateWithTooltip
+                      text={submenu.name}
+                      enableCopy={false}
+                    />
                   </span>
                   {!isCollapsed && (
                     <AdminSubmenuActiveIcon
@@ -494,7 +506,13 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
         renderSkeletonItem()
       ) : (
         <React.Suspense fallback={null}>
-          <ul className='overflow-y-auto'>
+          <ul
+            className='side-menu-scrollbar'
+            style={{
+              maxHeight: `calc(100vh - ${maxHeight + 25}px)`,
+              overflow: 'auto',
+            }}
+          >
             {accountMenus.map((item) => renderMenuItem(item))}
           </ul>
         </React.Suspense>

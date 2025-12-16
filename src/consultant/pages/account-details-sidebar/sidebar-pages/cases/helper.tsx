@@ -109,34 +109,7 @@ export const getCaseFilterFields = (
         !permissionMap?.['case_owner_rid']?.read,
     },
     {
-      name: 'Total Case Project Cost',
-      value: 'case_total_project_cost',
-      type: 'number',
-      operatorOption: numberOptions,
-      hide:
-        !permissionMap?.['case_total_project_cost']?.edit &&
-        !permissionMap?.['case_total_project_cost']?.read,
-    },
-    {
-      name: 'Case Project QRE Cost',
-      value: 'case_total_qre_cost',
-      type: 'number',
-      operatorOption: numberOptions,
-      hide:
-        !permissionMap?.['case_total_qre_cost']?.edit &&
-        !permissionMap?.['case_total_qre_cost']?.read,
-    },
-    {
-      name: 'Case Project RD Credit',
-      value: 'case_total_rd_cost',
-      type: 'number',
-      operatorOption: numberOptions,
-      hide:
-        !permissionMap?.['case_total_rd_cost']?.edit &&
-        !permissionMap?.['case_total_rd_cost']?.read,
-    },
-    {
-      name: 'No. of Projects',
+      name: 'Total Assigned Project',
       value: 'case_total_projects',
       type: 'number',
       operatorOption: numberOptions,
@@ -145,13 +118,49 @@ export const getCaseFilterFields = (
         !permissionMap?.['case_total_projects']?.read,
     },
     {
-      name: 'No. of Qualified Projects',
+      name: 'Total Assigned Project Cost',
+      value: 'case_total_project_cost',
+      type: 'number',
+      operatorOption: numberOptions,
+      hide:
+        !permissionMap?.['case_total_project_cost']?.edit &&
+        !permissionMap?.['case_total_project_cost']?.read,
+    },
+    {
+      name: 'Total Qualified Project',
       value: 'case_total_qualified_projects',
       type: 'number',
       operatorOption: numberOptions,
       hide:
         !permissionMap?.['case_total_qualified_projects']?.edit &&
         !permissionMap?.['case_total_qualified_projects']?.read,
+    },
+    {
+      name: 'Total Qualified Project Cost',
+      value: 'case_total_qualified_projects_cost',
+      type: 'number',
+      operatorOption: numberOptions,
+      hide:
+        !permissionMap?.['case_total_qualified_project_cost']?.edit &&
+        !permissionMap?.['case_total_qualified_project_cost']?.read,
+    },
+    {
+      name: 'Total QRE',
+      value: 'case_total_qre_cost',
+      type: 'number',
+      operatorOption: numberOptions,
+      hide:
+        !permissionMap?.['case_total_qre_cost']?.edit &&
+        !permissionMap?.['case_total_qre_cost']?.read,
+    },
+    {
+      name: 'Total RD Credits',
+      value: 'case_total_rd_cost',
+      type: 'number',
+      operatorOption: numberOptions,
+      hide:
+        !permissionMap?.['case_total_rd_cost']?.edit &&
+        !permissionMap?.['case_total_rd_cost']?.read,
     },
     {
       name: 'Created On',

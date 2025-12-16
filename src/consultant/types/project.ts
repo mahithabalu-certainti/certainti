@@ -270,6 +270,7 @@ export type ProjectTiggerAIResponse = {
 interface ProjectItem {
   account_rid: string;
   project_fiscal_rid: string[];
+  case_rid?: string;
 }
 export type ProjectTriggerAIPayload = {
   data: ProjectItem[];

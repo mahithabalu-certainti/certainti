@@ -177,10 +177,10 @@ const EmailInteraction: React.FC = () => {
     accountId: questions?.account_rnumber || '',
     projectCode: questions?.project_code || '',
     statusName: questions?.status_name || '',
-    fiscal_year: String(questions?.fiscal_year) || ''
+    fiscal_year: String(questions?.fiscal_year) || '',
   };
-  const isAccountlevel = questions?.interaction_level_name?.toLocaleLowerCase() === 'account'
-  
+  const isAccountlevel =
+    questions?.interaction_level_name?.toLocaleLowerCase() === 'account';
 
   return (
     <div className={isAuthentic ? '' : 'bg-[#f4f4f4]'}>

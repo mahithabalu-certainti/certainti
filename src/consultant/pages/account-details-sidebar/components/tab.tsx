@@ -26,7 +26,7 @@ import {
   useGetAllCountries,
   useGetStatus,
 } from '../../../../common-service';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useParams, useSearchParams } from 'react-router-dom';
 import {
   useGetResourceStatus,
   useGetResourceType,
@@ -49,8 +49,10 @@ import { projectTaskFilterFields } from '../../project/project-details/project-t
 import { ActivityDropdownItem, FormFiscalDateType } from '../../../types';
 import SearchBar from '../../../../components/search/search-bar';
 import { getNotesFilterFields } from '../../notes/helpers';
-import { useManageUserList } from '../../../../admin/service';
 import { getChecklistFilterFields } from '../../checklist/helpers';
+import { useGetUserOptions } from '../../../services/case-team';
+import { caseProjectTaskFilterFields } from '../../case/case-details/case-project-task/utils';
+import { caseProjectResourceFilterFields } from '../../case/case-details/case-project-resource/utils';
 import { ActivityDropdown } from '../../../../components';
 interface TabProps {
   resourceTab?: ResourceTabs[];
@@ -76,6 +78,10 @@ interface TabProps {
   fieldOptions?: FieldOptionType;
   handleFilterChange?: (fieldName: string, value: FilterValue) => void;
   permissionMapTaskTableColumn?: Record<
+    string,
+    { read: boolean; edit: boolean }
+  >;
+  permissionMapCaseProjectTableColumn?: Record<
     string,
     { read: boolean; edit: boolean }
   >;
@@ -115,6 +121,7 @@ const TabPanel: React.FC<TabProps> = ({
   fieldOptions,
   handleFilterChange,
   permissionMapTaskTableColumn,
+  permissionMapCaseProjectTableColumn,
   fiscalDatesArg,
   showSearch,
   searchDisabled = false,
@@ -127,6 +134,9 @@ const TabPanel: React.FC<TabProps> = ({
   showAddActivity = false,
   activityMenuItems = [],
 }) => {
+  const { accountid } = useParams();
+  const [searchParams] = useSearchParams();
+  const accountId = searchParams.get('accountID') || '';
   const [tabValue, setTabValue] = useState('');
   const location = useLocation();
   const [sortAnchorEl, setSortAnchorEl] = useState<null | HTMLElement>(null);
@@ -185,18 +195,13 @@ const TabPanel: React.FC<TabProps> = ({
   );
 
   // User List Api
-  const { data: userListData } = useManageUserList({
-    page: 1,
-    limit: 2000,
-    sortBy: 'first_name',
-    sortOrder: 'ASC',
-  });
+  const userListData = useGetUserOptions(accountid || accountId);
 
   const userListOptions = useMemo(() => {
     return (
-      userListData?.data?.users?.map((item) => ({
+      userListData?.data?.map((item) => ({
         value: item.rid,
-        label: `${item.first_name} ${item.last_name}`,
+        label: item.name,
       })) || []
     );
   }, [userListData]);
@@ -505,6 +510,14 @@ const TabPanel: React.FC<TabProps> = ({
         permissionProjectResourcesMap,
         memoizedResourceStatus
       );
+    if (value === 'case-project-resource') {
+      return caseProjectResourceFilterFields(
+        permissionMapTaskTableColumn,
+        permissionMapCaseProjectTableColumn,
+        memoizedCountry,
+        regionData
+      );
+    }
     if (value === 'project-task')
       return projectTaskFilterFields(
         memoizedResourceCode,
@@ -515,6 +528,16 @@ const TabPanel: React.FC<TabProps> = ({
         fiscalDatesArg,
         memoizedResourceStatus
       );
+    if (value === 'case-project-task') {
+      return caseProjectTaskFilterFields(
+        permissionMapTaskTableColumn,
+        permissionMapCaseProjectTableColumn,
+        memoizedResourceType,
+        memoizedProjectResourceType,
+        memoizedProjectResourceClassification,
+        memoizedResourceStatus
+      );
+    }
     if (value === 'attachments')
       return getAttachmentsFilterFields(fieldOptions, attachmentPermissionMap);
     if (value === 'notes')
@@ -663,6 +686,7 @@ const TabPanel: React.FC<TabProps> = ({
                 hide={searchHidden}
                 reset={resetSearch}
                 onReset={onSearchReset}
+                setCurrentPage={setCurrentPage}
               />
             </Box>
           )}

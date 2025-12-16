@@ -1,4 +1,5 @@
 export interface FormType {
+  gridMode?: string;
   sectionName: string;
   subSection?: boolean; // Means this is a secondary level block → no header + half width
   fillType: 'half' | 'full' | 'quarter';
@@ -33,6 +34,11 @@ export interface FormTypeFields {
   resetDependsFields?: string[];
   prefixValue?: string;
   disableFutureDates?: boolean;
+  allowFutureDates?: boolean;
+  labelTooltip?: {
+    showTooltip: boolean;
+    tooltipMessage: string;
+  };
   lengthRequired?: {
     key: string;
     minMatchedValue: RegExp;
@@ -60,6 +66,7 @@ export interface FormTypeFields {
   showCreateBtn?: boolean;
   formatCostValue?: boolean;
   clearDate?: string;
+  customDateOpen?: Date;
 }
 
 export type InputType =
@@ -78,11 +85,18 @@ export type InputType =
   | 'emptyFeild'
   | 'website'
   | 'iconButton'
-  | 'file';
+  | 'file'
+  | 'custom';
 
 export interface SelectOption {
   label: string;
   value: string;
+  desc?: string;
+  isCreate?: boolean;
+}
+export interface SelectNumberOption {
+  label: string;
+  value: number;
   desc?: string;
   isCreate?: boolean;
 }
@@ -117,6 +131,7 @@ export interface FieldType {
   placeholder?: string;
   requiredErrorMessage?: string;
   disableFutureDates?: boolean;
+  allowFutureDates?: boolean;
   disabled?: boolean;
   defaultValue?: string;
   greaterThan?: Record<string, string>;
@@ -132,6 +147,10 @@ export interface FieldType {
   startDateLabel?: string;
   endDateLabel?: string;
   hide?: boolean;
+  labelTooltip?: {
+    showTooltip: boolean;
+    tooltipMessage: string;
+  };
   lengthRequired?: {
     key: string;
     minMatchedValue: RegExp;
@@ -151,6 +170,7 @@ export interface FieldType {
   showCreateBtn?: boolean;
   formatCostValue?: boolean;
   clearDate?: string;
+  customDateOpen?: Date;
 }
 
 export type AllowedCountry =
@@ -174,6 +194,9 @@ export interface ChildList {
   child_value: string;
   child_label: string;
   currency_rid?: string;
+  country_rid?: string;
+  country_code?: string;
+  r_number?: string;
 }
 export interface ParentChildSelectOption {
   parent_value: string;

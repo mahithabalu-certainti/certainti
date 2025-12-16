@@ -6,10 +6,14 @@ import { useLocation, useParams } from 'react-router-dom';
 import {
   useCreateTaskTemplate,
   useGetTaskAssignRoleTypes,
+  useGetTaskCategoryTypes,
   useGetTaskCheckListTypes,
+  useGetTaskConnectorTypes,
   useGetTaskMilestoneTypes,
   useGetTaskPriorityTypes,
+  useGetTaskTemplate,
   useGetTaskTemplateTypes,
+  useGetTaskWeightAgeTypes,
   useTaskTemplateDetails,
   useUpdateTaskTemplateDetails,
 } from '../../../service/task-template/task-template-service';
@@ -17,15 +21,24 @@ import { formatDateToYYYYMMDDWithTime } from '../../../../common-utils';
 import { TaskTemplateFormData } from '../../../types';
 import SkeletonForm from '../../../../components/form-builder/skeleton-form';
 import { FormBuilder } from '../../../../components';
-import { Layout, OnChange, useGetStatus } from '../../../../common-service';
+import {
+  AllPermissions,
+  Layout,
+  OnChange,
+  useGetStatus,
+} from '../../../../common-service';
 import TextButton from '../../../../components/button/text-button';
 import { transformTaskTemplatePayload } from './utils';
 import { TaskTemplateFormFieldsData } from './form-data';
-import { SelectOption } from '../../../../consultant/types';
+import { SelectOption, TaskType } from '../../../../consultant/types';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../store/store';
 
 const TaskTemplateForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
   const [taskType, setTaskType] = useState(false);
+  const [isLinkedType, setIsLinkedType] = useState(false);
+  const [isLikedTaskType, setIsLinkedTAskType] = useState(false);
   const { successToast } = useToast();
   const location = useLocation();
   const { templateId } = useParams();
@@ -36,9 +49,13 @@ const TaskTemplateForm: React.FC = () => {
   const taskPrioritytTypes = useGetTaskPriorityTypes();
   const taskCheckListTypes = useGetTaskCheckListTypes();
   const taskAssignRoleTypes = useGetTaskAssignRoleTypes();
+  const taskWeightAgeTypes = useGetTaskWeightAgeTypes();
+  const taskCategoryTypes = useGetTaskCategoryTypes();
   const createTaskTemplate = useCreateTaskTemplate();
   const updateTaskTemplate = useUpdateTaskTemplateDetails();
 
+  const taskConecterTypes = useGetTaskConnectorTypes();
+  const tasktemplates = useGetTaskTemplate({ search: '' });
   const { data: taskTemplateData, isLoading } = useTaskTemplateDetails(
     templateId || ''
   );
@@ -76,6 +93,14 @@ const TaskTemplateForm: React.FC = () => {
           ? formatDateToYYYYMMDDWithTime(taskTemplateData.modified_datetime)
           : '-',
         updated_by: taskTemplateData.modified_by_name || '-',
+        relationship_connector_rid:
+          taskTemplateData?.workflow_connector?.relationship_connector_rid,
+        target_rid:
+          taskTemplateData?.workflow_connector?.target_data?.[0]?.map(
+            (item: { target_rid: string }) => item.target_rid
+          ) || [],
+        // Add source_rid if needed for display
+        source_rid: taskTemplateData?.rid || '',
       }),
     }),
     [taskTemplateData]
@@ -122,6 +147,23 @@ const TaskTemplateForm: React.FC = () => {
       })) || []
     );
   }, [taskAssignRoleTypes]);
+
+  const taskWeightAgeTypesOptions = useMemo(() => {
+    return (
+      taskWeightAgeTypes?.data?.data?.data?.map((item) => ({
+        value: item.rid,
+        label: item.weightage_value,
+      })) || []
+    );
+  }, [taskWeightAgeTypes]);
+  const taskCategoryTypesOptions = useMemo(() => {
+    return (
+      taskCategoryTypes?.data?.data?.map((item) => ({
+        value: item.rid,
+        label: item.category_name,
+      })) || []
+    );
+  }, [taskCategoryTypes]);
   const memoizedStatus: SelectOption[] = useMemo(
     () =>
       statusOptions?.data?.data?.status.map((status) => ({
@@ -131,7 +173,33 @@ const TaskTemplateForm: React.FC = () => {
       })) || [],
     [statusOptions?.data?.data?.status]
   );
+  const taskConnecterTypesOptions = useMemo(() => {
+    return (
+      taskConecterTypes?.data?.data?.map((item) => ({
+        value: item.rid,
+        label: item.relationship_type,
+      })) || []
+    );
+  }, [taskConecterTypes]);
 
+  const taskTemplate = useMemo(() => {
+    if (isEditView && taskTemplateData?.task_name) {
+      return (
+        tasktemplates?.data?.data
+          ?.filter((item) => item.task_name !== taskTemplateData.task_name)
+          ?.map((item) => ({
+            value: item.rid,
+            label: item.task_name,
+          })) || []
+      );
+    }
+    return (
+      tasktemplates?.data?.data?.map((item) => ({
+        value: item.rid,
+        label: item.task_name,
+      })) || []
+    );
+  }, [tasktemplates, isEditView, taskTemplateData?.task_name]);
   const submitData = (formValues: Partial<TaskTemplateFormData>) => {
     const payload = transformTaskTemplatePayload(
       formValues,
@@ -150,12 +218,33 @@ const TaskTemplateForm: React.FC = () => {
   };
   const onChangeField = (data: OnChange) => {
     if (data.fieldName === 'task_type_rid') {
-      const targetId = 'D001-43aaca8b-0c9a-4165-bf6a-93cada5c11d1';
-      const isMatch = data.fieldValue === targetId;
-      setTaskType(isMatch);
+      const selectedIndustry = taskTemplateTypesOptions.find(
+        (option) => String(option.value) === String(data.fieldValue)
+      );
+
+      setTaskType(selectedIndustry?.label.toLowerCase() === TaskType.Action);
+    }
+    if (data.fieldName === 'relationship_connector_rid') {
+      if (data.fieldValue) {
+        setIsLinkedType(true);
+      } else {
+        setIsLinkedType(false);
+      }
+    }
+    if (data.fieldName === 'target_rid') {
+      console.log(data.fieldValue, 'data.fieldValue');
+      if (
+        data.fieldValue &&
+        Array.isArray(data.fieldValue) &&
+        data.fieldValue.length > 0
+      ) {
+        setIsLinkedTAskType(true);
+      } else {
+        setIsLinkedTAskType(false);
+      }
     }
   };
-
+  console.log(isLinkedType, 'isLinkedType');
   const goBack = () => {
     window.history.back();
   };
@@ -165,6 +254,38 @@ const TaskTemplateForm: React.FC = () => {
     );
     return activeOption?.value || '';
   }, [memoizedStatus]);
+
+  const { permission } = useSelector((state: RootState) => state.permission);
+  const taskViewEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.TASK_TEMPLATE_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    taskViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [taskViewEditFields]);
+
+  useEffect(() => {
+    if (taskTemplateData && isEditView) {
+      const selectedType = taskTemplateTypesOptions.find(
+        (option) =>
+          String(option.value) === String(taskTemplateData.task_type_rid)
+      );
+
+      setTaskType(selectedType?.label.toLowerCase() === TaskType.Action);
+    }
+    if (taskTemplateData?.workflow_connector?.relationship_connector_rid) {
+      setIsLinkedType(true);
+    }
+  }, [taskTemplateData, isEditView]);
+
   const formConfig = TaskTemplateFormFieldsData(
     isEditView,
     taskTemplateTypesOptions,
@@ -173,7 +294,14 @@ const TaskTemplateForm: React.FC = () => {
     taskCheckListTypesTypesOptions,
     taskAssignRoleTypesTypesOptions,
     memoizedStatus,
-    taskType
+    taskConnecterTypesOptions,
+    taskTemplate,
+    taskWeightAgeTypesOptions,
+    taskCategoryTypesOptions,
+    taskType,
+    isLinkedType,
+    isLikedTaskType,
+    permissionMap
   );
 
   const formLoading = isLoading || taskTemplateTypes.isPending;

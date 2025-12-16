@@ -186,7 +186,10 @@ export enum OthersEnum {
   Other = 'other',
   Others = 'others',
 }
-
+export enum TaskType {
+  Action = 'action',
+  Milestone = 'milestone',
+}
 export enum ResourceType {
   full_time = 'full-time',
 }
@@ -398,6 +401,7 @@ export type AccountList = {
   parent_account_rid: string | null;
   database_connection_rid: string | null;
   country_rid: string;
+  country_code?: string;
   currency_rid: string;
   industry_rid: string;
   industry_name_other: string | null;
@@ -525,7 +529,9 @@ export type ExportType =
   | 'checklist'
   | 'resource_checklist'
   | 'cases_projects'
-  | 'case_task';
+  | 'case_task'
+  | 'review_projects'
+  | 'activities';
 
 export type FinancialSummaryFlag = 'all' | 'rd_qualified';
 

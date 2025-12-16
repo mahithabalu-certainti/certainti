@@ -23,7 +23,7 @@ const StyledButton = styled(Button)(() => {
     width: 'auto',
     minWidth: 'auto',
     maxWidth: 'auto',
-    padding: '10px 9px',
+    padding: '10px 8px',
     borderRadius: '2px',
   };
 });

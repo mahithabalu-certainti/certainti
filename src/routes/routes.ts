@@ -45,6 +45,7 @@ export const EMAIL_TEMPLATES_EDIT = `${EMAIL_TEMPLATES}/edit/:templateId`;
 export const TASK_TEMPLATES = `${ADMIN}/task-templates`;
 export const TASK_TEMPLATES_CREATE = `${TASK_TEMPLATES}/create`;
 export const TASK_TEMPLATES_EDIT = `${TASK_TEMPLATES}/edit/:templateId`;
+export const TASK_TEMPLATES_DETAILS = `${TASK_TEMPLATES}/details/:templateId`;
 
 /** ADMIN CHECKLIST TEMPLATES ROUTES */
 export const CHECKLIST_TEMPLATES = `${ADMIN}/checklist-templates`;
@@ -111,8 +112,16 @@ export const CHECKLIST_BASE = `/:module/checklist`;
 export const CHECKLIST_CREATE = `${CHECKLIST_BASE}/create`;
 export const CHECKLIST_EDIT = `${CHECKLIST_BASE}/edit/:checklistId`;
 
+// Activities routes
+export const ACTIVITY_BASE = '/:module/activity';
+export const ACTIVITY_CREATE = `${ACTIVITY_BASE}/create/:type`;
+export const ACTIVITY_EDIT = `${ACTIVITY_BASE}/edit/:type/:activityId`;
+
 // ATTACHMENT ROUTES
 export const ATTACHMENTS = '/attachments';
+
+// TASKS ROUTES
+export const TASKS = '/tasks';
 
 //CASES ROUTES
 export const CASE = '/case';

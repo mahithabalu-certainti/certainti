@@ -1,11 +1,18 @@
 import { DownloadIcon } from '../../../../../assets';
-import { formatDateToYYYYMMDDWithTime } from '../../../../../common-utils';
-import { ListTableColumn } from '../../../../../components/table/types';
+import {
+  formatDateToYYYYMMDDWithTime,
+  REGEX_PATTERNS,
+} from '../../../../../common-utils';
+import {
+  ListOption,
+  ListTableColumn,
+} from '../../../../../components/table/types';
 import { ChecklistTemplateList } from '../../../../types';
 
 export const getChecklistTemplateColumns = (
   handleDownload: (row: ChecklistTemplateList) => void,
   permissionMap: Record<string, { read: boolean; edit: boolean }>,
+  statusOptions: ListOption[],
   isTemplateExportEnable?: boolean
 ): ListTableColumn<ChecklistTemplateList>[] => [
   {
@@ -28,24 +35,63 @@ export const getChecklistTemplateColumns = (
   },
   {
     id: 'checklist_name',
+    editId: 'checklist_name',
     sortId: 'checklist_name',
     label: 'Checklist Name',
     width: 200,
     sortable: true,
+    editable:
+      permissionMap?.['checklist_name']?.read &&
+      permissionMap?.['checklist_name']?.edit,
     hide:
       !permissionMap?.['checklist_name']?.read &&
       !permissionMap?.['checklist_name']?.edit,
+    field: {
+      type: 'text',
+      required: true,
+      placeholder: 'Enter Checklist Name',
+      validation: [
+        {
+          regex: REGEX_PATTERNS.MIN_3,
+          errorMessage: 'Checklist Name must be more than 2 characters long',
+        },
+        {
+          regex: REGEX_PATTERNS.MAX_64,
+          errorMessage: 'Checklist Name must not exceed 64 characters',
+        },
+        {
+          regex: REGEX_PATTERNS.TEMPLATE_NAME_REGEX,
+          errorMessage:
+            "Checklist Name must contain only letters, numbers, spaces, apostrophes('), and hyphens(-).",
+        },
+      ],
+    },
   },
   {
     id: 'checklist_description',
+    editId: 'checklist_description',
     sortId: 'checklist_description',
     label: 'Description',
     width: 220,
     sortable: true,
+    editable:
+      permissionMap?.['checklist_description']?.read &&
+      permissionMap?.['checklist_description']?.edit,
     hide:
       !permissionMap?.['checklist_description']?.read &&
       !permissionMap?.['checklist_description']?.edit,
     render: (row: ChecklistTemplateList) => row.checklist_description || '-',
+    field: {
+      type: 'text',
+      required: false,
+      placeholder: 'Enter Description',
+      validation: [
+        {
+          regex: REGEX_PATTERNS.MAX_2000,
+          errorMessage: 'Description must be within 2000 characters',
+        },
+      ],
+    },
   },
   {
     id: 'created_user_name',
@@ -97,13 +143,23 @@ export const getChecklistTemplateColumns = (
   },
   {
     id: 'status_name',
+    editId: 'status_rid',
     sortId: 'status_rid',
     label: 'Status',
-    width: 100,
+    width: 120,
     sortable: true,
+    editable:
+      permissionMap?.['status_rid']?.read &&
+      permissionMap?.['status_rid']?.edit,
     hide:
       !permissionMap?.['status_rid']?.read &&
       !permissionMap?.['status_rid']?.edit,
+    field: {
+      type: 'select',
+      required: true,
+      placeholder: 'Choose Status',
+      options: statusOptions,
+    },
   },
   {
     id: 'download',

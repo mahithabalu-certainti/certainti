@@ -32,7 +32,7 @@ import { resourceClient } from '../../../../../../api/graphql/clients/client';
 import { useMutation } from '@apollo/client';
 import { checkPermission } from '../../../../../../common-utils';
 import { AccessRestricted } from '../../../../../../components/account-restricted';
-import { useManageUserList } from '../../../../../../admin/service';
+import { useGetUserOptions } from '../../../../../services/case-team';
 
 interface ResourceNotesListProps {
   fiscalYear?: number;
@@ -96,12 +96,7 @@ const ResourceNotesList: React.FC<ResourceNotesListProps> = ({
   const viewDetails = !!noteId;
 
   // User List Api
-  const { data: userListData } = useManageUserList({
-    page: 1,
-    limit: 2000,
-    sortBy: 'first_name',
-    sortOrder: 'ASC',
-  });
+  const userListData = useGetUserOptions(accountid);
 
   const { data, isLoading, isError } = useNotesList(
     {
@@ -134,9 +129,9 @@ const ResourceNotesList: React.FC<ResourceNotesListProps> = ({
 
   const userListOptions = useMemo(() => {
     return (
-      userListData?.data?.users?.map((item) => ({
+      userListData?.data?.map((item) => ({
         value: item.rid,
-        label: `${item.first_name} ${item.last_name}`,
+        label: item.name,
       })) || []
     );
   }, [userListData]);

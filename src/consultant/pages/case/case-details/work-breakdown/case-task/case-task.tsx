@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   CaseTaskType,
@@ -19,8 +19,12 @@ import {
   ConfigAssignUserListParms,
 } from '../../../../../types';
 import { useToast } from '../../../../../../hooks';
-
 import { ExportType } from '../../../../../types';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../../../store/store';
+import { checkPermission } from '../../../../../../common-utils';
+import { AllModules, AllPermissions } from '../../../../../../common-service';
+import { AccessRestricted } from '../../../../../../components/account-restricted';
 
 type CaseTaskParamsType = {
   case_rid: string;
@@ -34,7 +38,6 @@ type CaseTaskParamsType = {
 };
 
 interface CaseTaskProps {
-  reFetchData: number;
   caseId?: string;
   setCount: (value: number) => void;
   filterParams: ConfigAssignGroupsListParms | ConfigAssignUserListParms;
@@ -48,7 +51,6 @@ interface CaseTaskProps {
 }
 
 const CaseTask: React.FC<CaseTaskProps> = ({
-  reFetchData,
   caseId,
   setCount,
   filterParams,
@@ -60,6 +62,9 @@ const CaseTask: React.FC<CaseTaskProps> = ({
 }) => {
   const [searchParams] = useSearchParams();
   const accountID = searchParams.get('accountID') || '';
+  const { permission, modules } = useSelector(
+    (state: RootState) => state.permission
+  );
 
   const { errorToast } = useToast();
   const [pagination, setPagination] = useState({
@@ -69,7 +74,7 @@ const CaseTask: React.FC<CaseTaskProps> = ({
 
   const [sorting, setSorting] = useState({
     sort: 'task_name',
-    sort_by: 'DESC' as 'ASC' | 'DESC',
+    sort_by: 'ASC' as 'ASC' | 'DESC',
   });
 
   const tableParams = React.useMemo(
@@ -95,10 +100,7 @@ const CaseTask: React.FC<CaseTaskProps> = ({
     ]
   );
 
-  const { data, isLoading, isError, error } = useGetCaseTaskList(
-    tableParams,
-    reFetchData
-  );
+  const { data, isLoading, isError, error } = useGetCaseTaskList(tableParams);
 
   useEffect(() => {
     if (setCaseTaskParams) {
@@ -125,7 +127,30 @@ const CaseTask: React.FC<CaseTaskProps> = ({
     }
   }, [data, setCount]);
   const getRowId = (row: CaseTaskType) => row.rid;
-  const caseTaskColumns = getCaseTaskListColumns();
+
+  const caseTaskViewEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.CASES_WORKBREAKDOWN_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    caseTaskViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [caseTaskViewEditFields]);
+
+  const caseIsEnable = checkPermission(modules, AllModules.WORKBREAKDOWN);
+  const isCaseTaskViewEnable = checkPermission(
+    permission,
+    AllPermissions.CASES_WORKBREAKDOWN_VIEW_EDIT
+  );
+
+  const caseTaskColumns = getCaseTaskListColumns(permissionMap);
 
   const handlePageChange = (newPage: number) => {
     setPagination((prev) => ({
@@ -177,9 +202,11 @@ const CaseTask: React.FC<CaseTaskProps> = ({
     ? 'case-task-list-column-visibility-popover'
     : undefined;
 
+  if (!caseIsEnable || !isCaseTaskViewEnable) return <AccessRestricted />;
+
   return (
     <>
-      <div className='border-t border-[#CBD6E2]'>
+      <div>
         <ManageColumnsPopover
           anchorEl={columnAnchorEl}
           open={isModalOpen}
@@ -196,7 +223,7 @@ const CaseTask: React.FC<CaseTaskProps> = ({
           hoverHighlight={false}
           tableStyle={{
             height: '100%',
-            maxHeight: 'calc(100vh - 330px)',
+            maxHeight: 'calc(100vh - 425px)',
             overflow: 'auto',
           }}
           stickyHeader={true}
@@ -206,7 +233,7 @@ const CaseTask: React.FC<CaseTaskProps> = ({
           loading={isLoading}
           loadingRowCount={4}
           error={isError ? 'Failed to load data' : undefined}
-          rowsPerPageOptions={[5, 25, 50, 100]}
+          rowsPerPageOptions={[25, 50, 100]}
           rowsPerPage={tableParams.limit}
           currentPage={(tableParams.page ?? 1) - 1}
           totalItems={data?.data.total_result || 0}

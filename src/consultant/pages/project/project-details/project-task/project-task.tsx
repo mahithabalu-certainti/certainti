@@ -40,6 +40,7 @@ import { RootState } from '../../../../../store/store';
 import ProjectTaskDetails from './project-task-details';
 import {
   ExportType,
+  FilterType,
   FormFiscalDateType,
   ProjectResourcesListType,
   SelectOption,
@@ -118,7 +119,7 @@ export const ProjectTask = ({
   const [projectsTabs] = useState(projectTabs);
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const [appliedFilters, setAppliedFilters] = useState<
-    Record<string, string | number | boolean>
+    Record<string, string | number | boolean | string[]>
   >({});
   const [currentPage, setCurrentPage] = useState(0);
   const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('ASC');
@@ -157,6 +158,9 @@ export const ProjectTask = ({
   const [updateProjectTaskMutation] = useMutation(UPDATE_PROJECT_TASK, {
     client: taskClient,
   });
+  const [loadingRows, setLoadingRows] = useState<
+    Record<string, 'accept' | 'reject' | null>
+  >({});
   const { modules, permission } = useSelector(
     (state: RootState) => state.permission
   );
@@ -650,6 +654,9 @@ export const ProjectTask = ({
     .filter((col) => columnVisibility[col.id]);
   if (!projectTaskIsEnable) return <AccessRestricted />;
   const handleAccept = (row: ProjectResourcesListType) => {
+    // Set loading for this specific row as 'accept'
+    setLoadingRows((prev) => ({ ...prev, [row.rid as string]: 'accept' }));
+
     const payload = {
       rid: row?.rid || '',
       accountId: accountData?.accountID || '',
@@ -657,15 +664,26 @@ export const ProjectTask = ({
       type: row?.status_name || '',
       resourceCode: row?.resource_code,
     };
+
     updateStatusAccept.mutate(payload, {
       onSuccess: (data) => {
         successToast(data?.statusMessage || 'Status updated successfully');
         refetch();
+        // Clear loading for this specific row
+        setLoadingRows((prev) => ({ ...prev, [row.rid as string]: null }));
+      },
+      onError: () => {
+        // Clear loading for this specific row on error too
+        setLoadingRows((prev) => ({ ...prev, [row.rid as string]: null }));
       },
     });
   };
 
+  // Update handleReject function
   const handleReject = (row: ProjectResourcesListType) => {
+    // Set loading for this specific row as 'reject'
+    setLoadingRows((prev) => ({ ...prev, [row.rid as string]: 'reject' }));
+
     const payload = {
       rid: row?.rid || '',
       accountId: accountData?.accountID || '',
@@ -673,10 +691,17 @@ export const ProjectTask = ({
       type: row?.status_name || '',
       resourceCode: row?.resource_code,
     };
+
     updateStatusAccept.mutate(payload, {
       onSuccess: (data) => {
         successToast(data?.statusMessage || 'Status updated successfully');
         refetch();
+        // Clear loading for this specific row
+        setLoadingRows((prev) => ({ ...prev, [row.rid as string]: null }));
+      },
+      onError: () => {
+        // Clear loading for this specific row on error too
+        setLoadingRows((prev) => ({ ...prev, [row.rid as string]: null }));
       },
     });
   };
@@ -698,20 +723,31 @@ export const ProjectTask = ({
         return [];
     }
 
+    // Get the specific action that's loading for this row
+    const rowAction = loadingRows[row.rid as string];
+    const isAcceptLoading = rowAction === 'accept';
+    const isRejectLoading = rowAction === 'reject';
+
     return [
       {
         label: statusLabel ? `Accept ${statusLabel}` : 'Accept',
-        onClick: handleAccept,
+        onClick: () => handleAccept(row),
         icon: AcceptIcon,
+        loading: isAcceptLoading,
+        disabled:
+          isAcceptLoading || isRejectLoading || updateStatusAccept.isPending,
         className:
-          'inline-flex items-center gap-1 px-2 py-1 rounded text-[12px] cursor-pointer h-[24px] bg-[#3EA72F1A] hover:bg-[#3EA72F] hover:text-[#fff]',
+          'inline-flex items-center gap-1 px-2 py-1 rounded min-[140px] max-[140px] text-[12px] cursor-pointer h-[24px] bg-[#3EA72F1A] hover:bg-[#3EA72F] hover:text-[#fff]',
       },
       {
         label: statusLabel ? `Reject ${statusLabel}` : 'Reject',
-        onClick: handleReject,
+        onClick: () => handleReject(row),
         icon: RejectIcon,
+        loading: isRejectLoading,
+        disabled:
+          isAcceptLoading || isRejectLoading || updateStatusAccept.isPending,
         className:
-          'inline-flex items-center gap-1 px-2 py-1 rounded text-[12px] cursor-pointer h-[24px] bg-[#FF3C031A] hover:bg-[#FF3C03] hover:text-[#fff]',
+          'inline-flex items-center gap-1 px-2 py-1 rounded min-[140px] max-[140px] text-[12px] cursor-pointer h-[24px] bg-[#FF3C031A] hover:bg-[#FF3C03] hover:text-[#fff]',
       },
     ];
   };
@@ -720,7 +756,7 @@ export const ProjectTask = ({
     <div className='w-full pt-2 pb-2 pl-2 pr-4'>
       <TabPanel
         value={'project-task'}
-        appliedFilters={appliedFilters}
+        appliedFilters={appliedFilters as Record<string, FilterType>}
         setAppliedFilters={setAppliedFilters}
         showFilter={showFilter}
         filterVisibility={filterShow && !showUploads}

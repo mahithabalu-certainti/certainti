@@ -61,6 +61,27 @@ export interface TaskTemplateDetails {
   modified_datetime: string | null;
   created_by_name: string | null;
   modified_by_name: string | null;
+  status_name?: string;
+  checklist_name?: string;
+  priority_name?: string;
+  milestone_name?: string;
+  role_name?: string;
+  effort_in_days?: number;
+  category_name?: string;
+  weightage_value?: string;
+  workflow_connector?: {
+    source_rid: string;
+    relationship_connector_rid?: string;
+    relationship_type_name?: string;
+    source_name?: string;
+    target_name?: string;
+    target_rid?: string;
+
+    target_data?: {
+      target_rid: string;
+      target_name?: string;
+    }[][];
+  };
 }
 
 export interface TaskTemplateDetailsResponse {
@@ -85,6 +106,15 @@ export interface TaskTemplateFormData {
   reminder_interval: string;
   checklist_rid: string;
   milestone_rid: string;
+  target_rid?: string;
+  task_category_rid?: string;
+  weightage_rid?: string;
+  relationship_connector_rid?: string;
+  workflow_connector?: {
+    source_rid: string;
+    target_rid?: string[];
+    relationship_connector_rid?: string;
+  };
 }
 
 export type TaskTemplateFormPayload = {
@@ -99,7 +129,16 @@ export type TaskTemplateFormPayload = {
   case_team_member_role_rid?: string;
   reminder_interval?: string;
   rid?: string;
+  target_rid?: string;
+  relationship_connector_rid?: string;
+  weightage_rid?: string;
+  task_category_rid?: string;
   status_rid?: string;
+  workflow_connector?: {
+    source_rid?: string;
+    target_rid?: string[];
+    relationship_connector_rid?: string;
+  };
 };
 
 export interface ExportTaskTemplateResponse {
@@ -126,9 +165,25 @@ export interface TaskcheckListType {
   rid: string;
   checklist_name: string;
 }
+export interface TaskCategoryListType {
+  rid: string;
+  category_name: string;
+}
+export interface TaskWeightAgeListType {
+  rid: string;
+  weightage_value: string;
+}
 export interface TaskRoleType {
   rid: string;
   role_name: string;
+}
+export interface TaskLinkType {
+  rid: string;
+  relationship_type: string;
+}
+export interface TaskTemplateType {
+  rid: string;
+  task_name: string;
 }
 
 export interface TaskTemplateTypeResponse {
@@ -149,6 +204,20 @@ export interface TaskPriorityTypeResponse {
   statusMessage: string;
   data: TaskPriorityType[];
 }
+export interface TaskCategoryTypeResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: TaskCategoryListType[];
+}
+export interface TaskWeightAgeTypeResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: {
+    data: TaskWeightAgeListType[];
+  };
+}
 export interface TaskCheckListTypeResponse {
   statusCode: number;
   statusCodeValue: string;
@@ -162,4 +231,16 @@ export interface TaskAssigneRoleTypeResponse {
   data: {
     caseRoles: TaskRoleType[];
   };
+}
+export interface TaskLinkTypeResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: TaskLinkType[];
+}
+export interface TaskTemplateResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: TaskTemplateType[];
 }

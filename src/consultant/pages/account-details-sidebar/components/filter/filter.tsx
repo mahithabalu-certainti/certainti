@@ -24,6 +24,8 @@ import {
   TextFilterOptionForCostAndSkill,
   textOptionForCostAndSkill,
   textOptions,
+  TimeFilterOption,
+  timeOptions,
 } from './filterType';
 import {
   CurrencySelectFilterControl,
@@ -34,6 +36,7 @@ import {
   StatusFilterControl,
   TextFilterControl,
   TextFilterControlForCostAndSKill,
+  TimeFilterControl,
 } from './helper';
 import {
   applyFilterOnChanges,
@@ -327,6 +330,17 @@ const Filter: React.FC<FilterComponentProps> = ({
               },
             },
           };
+        case 'time':
+          return {
+            ...prev,
+            [fieldName]: {
+              ...currentState,
+              time: {
+                ...currentState.time!,
+                option: event.target.value as TimeFilterOption,
+              },
+            },
+          };
         case 'select':
           return {
             ...prev,
@@ -502,6 +516,29 @@ const Filter: React.FC<FilterComponentProps> = ({
     }
   };
 
+  const handleTimeChange = (type: string, fieldName: string, value: string) => {
+    const fieldConfig = filterMenu.find((f) => f.value === fieldName);
+    setFilterStates((prev: any) => {
+      return {
+        ...prev,
+        [fieldName]: {
+          ...prev[fieldName],
+          time: {
+            ...prev[fieldName].time,
+            value: {
+              ...prev[fieldName].time.value,
+              [type]: value,
+            },
+          },
+        },
+      };
+    });
+    // Call onChange if configured
+    if (fieldConfig?.onChange && !fieldConfig.hide) {
+      onFilterChange?.(fieldName, value);
+    }
+  };
+
   const disableDependantFilterFields = (
     filterFieldName: string,
     field: FieldConfig,
@@ -630,7 +667,23 @@ const Filter: React.FC<FilterComponentProps> = ({
             onOptionChange={handleFilterOptionChange}
             onValueChange={handleDateChange}
             mode={mode as 'date' | 'year'}
+            isFutureDateEnabled={field.isFutureDateEnabled}
             // onChange={handleBooleanChange}
+          />
+        );
+      case 'time':
+        return (
+          <TimeFilterControl
+            filterStates={filterStates}
+            menuOption={field.operatorOption || timeOptions}
+            fieldName={field.value}
+            state={fieldState}
+            onOptionChange={handleFilterOptionChange}
+            onValueChange={handleTimeChange}
+            timeFormat={field.timeFormat}
+            minutesStep={field.minutesStep}
+            minTime={field.minTime}
+            maxTime={field.maxTime}
           />
         );
       case 'select':

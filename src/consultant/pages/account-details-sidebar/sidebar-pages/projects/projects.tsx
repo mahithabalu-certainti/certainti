@@ -13,6 +13,7 @@ import { PROJECT_CREATE, PROJECT_DETAILS } from '../../../../../routes';
 import { generatePath, useNavigate, useParams } from 'react-router-dom';
 import {
   Project,
+  ProjectFiscalSummary,
   ProjectListParams,
   ProjectTriggerAIPayload,
 } from '../../../../types/project';
@@ -285,7 +286,6 @@ const Projects: React.FC<ProjectsProps> = ({
   );
 
   const handleselectedList = (id: string[]) => {
-    console.log(id);
     const childIds = id.filter((_, index) => index % 2 === 0);
     setSelectedTableIds(childIds);
   };
@@ -573,7 +573,17 @@ const Projects: React.FC<ProjectsProps> = ({
 
         const newProjects = projectList.map((project) => {
           if (project.project_rid === updatedParentData.project_rid) {
-            return updatedParentData;
+            return {
+              ...project,
+              ...updatedParentData,
+              ProjectFiscal: project.ProjectFiscal.map((fiscal) => {
+                const updatedFiscal = updatedParentData.ProjectFiscal?.find(
+                  (data: ProjectFiscalSummary) =>
+                    data.project_fiscal_rid === fiscal.project_fiscal_rid
+                );
+                return updatedFiscal ? { ...fiscal, ...updatedFiscal } : fiscal;
+              }),
+            };
           }
           return project;
         });

@@ -222,7 +222,7 @@ export const validateTemplateForm = (
 
     if (!REGEX_PATTERNS.MAX_2000.test(question.question)) {
       currentQuestionErrors.question =
-        'Checklist Question must be within 2000 characters';
+        'Checklist Item must be within 2000 characters';
       isValid = false;
     }
 
@@ -320,7 +320,7 @@ export const transformToNewCreateTemplatePayload = (
     status_rid: formData.status,
     checklist_items: formData.questions.map((question) => ({
       checklist_item_name: question.question,
-      description: question.comments || question.question,
+      description: question.comments || '',
       action_type: 'add' as const,
     })),
   };

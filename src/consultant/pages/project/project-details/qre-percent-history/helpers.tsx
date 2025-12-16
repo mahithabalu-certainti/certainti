@@ -1,10 +1,5 @@
 import { FieldConfig } from '../../../account-details-sidebar/components/filter/filterType';
 
-const textOptions = [
-  { option: 'Equals', value: 'equals' },
-  { option: 'Not-Equals', value: 'not_equals' },
-  { option: 'Contains', value: 'contains' },
-];
 
 const dateOptions = [
   { option: 'Equals', value: 'equals' },
@@ -34,13 +29,13 @@ export const getQrePercentHistoryFilterFields = (
       hide:
         !permissionMap?.['version']?.edit && !permissionMap?.['version']?.read,
     },
-    {
-      name: 'Type',
-      value: 'type',
-      type: 'text',
-      operatorOption: textOptions,
-      hide: !permissionMap?.['type']?.edit && !permissionMap?.['type']?.read,
-    },
+    // {
+    //   name: 'Type',
+    //   value: 'type',
+    //   type: 'text',
+    //   operatorOption: textOptions,
+    //   hide: !permissionMap?.['type']?.edit && !permissionMap?.['type']?.read,
+    // },
     {
       name: 'QRE Percent Score',
       value: 'qre_percent',

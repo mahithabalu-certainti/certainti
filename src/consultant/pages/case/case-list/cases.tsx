@@ -28,8 +28,12 @@ import { ActionsDropdown } from '../../../../components';
 import SearchBar from '../../../../components/search/search-bar';
 import Filter from '../../account-details-sidebar/components/filter/filter';
 import { CaseListTable } from './table/case-table';
+import { useNavigate } from 'react-router-dom';
+import { CASE_CREATE } from '../../../../routes';
+import TextButton from '../../../../components/button/text-button';
 
 const Cases: React.FC = () => {
+  const navigate = useNavigate();
   const [appliedFilters, setAppliedFilters] = useState<FilterTypes>({});
   const [page, setPage] = useState<number>(1);
   const [totalCount, setTotalCount] = useState<number>(0);
@@ -190,6 +194,10 @@ const Cases: React.FC = () => {
     }
   };
 
+  const handleCreateNewCase = () => {
+    navigate(`${CASE_CREATE}?sourceType=global`);
+  };
+
   const handleExport = () => {
     const allCasesParams = {
       sortBy: tableParams.sortBy,
@@ -246,6 +254,7 @@ const Cases: React.FC = () => {
           </div>
         </div>
         <div className='flex gap-3 justify-center items-center'>
+          <TextButton label='New' onClick={handleCreateNewCase} />
           <ActionsDropdown actions={menuItems} />
           <div
             className='flex items-center justify-center border border-[#CBD6E2] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] w-[24px] h-[23px] cursor-pointer'
@@ -280,6 +289,13 @@ const Cases: React.FC = () => {
             placeholder='Search'
             disabled={false}
             hide={false}
+            setCurrentPage={(pageNo) => {
+              setPage(pageNo + 1);
+              setTableParams((prev) => ({
+                ...prev,
+                page: pageNo + 1,
+              }));
+            }}
           />
           <button
             aria-describedby={modalId}
@@ -319,7 +335,13 @@ const Cases: React.FC = () => {
               filterMenu={filterFields}
               setAppliedFilters={setAppliedFilters}
               handleCloseFilter={handleCloseFilter}
-              setCurrentPage={setPage}
+              setCurrentPage={(pageNo) => {
+                setPage(pageNo + 1);
+                setTableParams((prev) => ({
+                  ...prev,
+                  page: pageNo + 1,
+                }));
+              }}
               handleSorting={handleSorting}
             />
           </Suspense>

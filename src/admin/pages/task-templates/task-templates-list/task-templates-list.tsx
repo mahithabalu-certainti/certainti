@@ -14,14 +14,19 @@ import { getTaskTemplateFilterFields } from './helpers';
 import {
   ExportTaskTemplateList,
   useGetTaskAssignRoleTypes,
+  useGetTaskCategoryTypes,
   useGetTaskCheckListTypes,
   useGetTaskMilestoneTypes,
   useGetTaskPriorityTypes,
   useGetTaskTemplateTypes,
+  useGetTaskWeightAgeTypes,
 } from '../../../service/task-template/task-template-service';
 import { TaskTemplateTable } from './table/task-templates-table';
 import { SelectOption } from '../../../../consultant/types';
-import { useGetStatus } from '../../../../common-service';
+import { AllPermissions, useGetStatus } from '../../../../common-service';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../store/store';
+import { checkPermission } from '../../../../common-utils';
 
 const TaskTemplates: React.FC = () => {
   const navigate = useNavigate();
@@ -36,7 +41,7 @@ const TaskTemplates: React.FC = () => {
     sort: 'r_number',
     search: '',
   });
-  console.log('tableParams', tableParams);
+
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const [refreshTrigger, setRefreshTrigger] = useState<number>();
   const [columnAnchorEl, setColumnAnchorEl] =
@@ -46,7 +51,22 @@ const TaskTemplates: React.FC = () => {
   const handleFilterModal = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
   };
+  const { permission } = useSelector((state: RootState) => state.permission);
+  const taskViewEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.TASK_TEMPLATE_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
 
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    taskViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [taskViewEditFields]);
   const systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   const isModalOpen = Boolean(columnAnchorEl);
@@ -87,23 +107,14 @@ const TaskTemplates: React.FC = () => {
     }
   };
 
-  const MENU_ITEMS = [
-    {
-      label: 'Export',
-      onClick: () =>
-        ExportTaskTemplateList({
-          ...tableParams,
-          filter: appliedFilters,
-          timezone: systemTimezone,
-        }),
-    },
-  ];
   const statusOptions = useGetStatus();
   const taskTemplateTypes = useGetTaskTemplateTypes();
   const taskMilestoneTypes = useGetTaskMilestoneTypes();
   const taskPrioritytTypes = useGetTaskPriorityTypes();
   const taskCheckListTypes = useGetTaskCheckListTypes();
   const taskAssignRoleTypes = useGetTaskAssignRoleTypes();
+  const taskWeightAgeTypes = useGetTaskWeightAgeTypes();
+  const taskCategoryTypes = useGetTaskCategoryTypes();
   const taskTemplateTypesOptions = useMemo(() => {
     return (
       taskTemplateTypes?.data?.data?.map((item) => ({
@@ -154,14 +165,32 @@ const TaskTemplates: React.FC = () => {
       })) || [],
     [statusOptions?.data?.data?.status]
   );
-
+  const taskWeightAgeTypesOptions = useMemo(() => {
+    return (
+      taskWeightAgeTypes?.data?.data?.data?.map((item) => ({
+        value: item.rid,
+        label: item.weightage_value,
+      })) || []
+    );
+  }, [taskWeightAgeTypes]);
+  const taskCategoryTypesOptions = useMemo(() => {
+    return (
+      taskCategoryTypes?.data?.data?.map((item) => ({
+        value: item.rid,
+        label: item.category_name,
+      })) || []
+    );
+  }, [taskCategoryTypes]);
   const taskTemplateFilterFields = getTaskTemplateFilterFields(
     taskTemplateTypesOptions,
     taskMilestoneTypesOptions,
     taskPrioritytTypesTypesOptions,
     taskCheckListTypesTypesOptions,
     taskAssigneRoleTypesTypesOptions,
-    memoizedStatus
+    memoizedStatus,
+    taskCategoryTypesOptions,
+    taskWeightAgeTypesOptions,
+    permissionMap
   );
 
   const handleColumnVisibility = (
@@ -169,6 +198,26 @@ const TaskTemplates: React.FC = () => {
   ) => {
     setColumnAnchorEl(event.currentTarget);
   };
+  const isCreateEnable = checkPermission(
+    permission || [],
+    AllPermissions.CREATE_TASK_TEMPLATE
+  );
+  const isExportEnable = checkPermission(
+    permission || [],
+    AllPermissions.TASK_TEMPLATE_EXPORT
+  );
+  const MENU_ITEMS = [
+    {
+      label: 'Export',
+      hide: !isExportEnable,
+      onClick: () =>
+        ExportTaskTemplateList({
+          ...tableParams,
+          filter: appliedFilters,
+          timezone: systemTimezone,
+        }),
+    },
+  ];
 
   return (
     <div className='flex flex-col w-full h-full'>
@@ -200,6 +249,7 @@ const TaskTemplates: React.FC = () => {
           <TextButton
             label='Create Template'
             onClick={() => navigate(TASK_TEMPLATES_CREATE)}
+            hide={!isCreateEnable}
             sx={{
               width: '120px',
               minWidth: '120px',

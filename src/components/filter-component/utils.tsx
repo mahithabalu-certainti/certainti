@@ -47,7 +47,7 @@ export const getInitialStateForField = (
 ): FilterState => {
   switch (fieldConfig.type) {
     case 'text':
-      return { text: { option: 'contains', value: '' } };
+      return { text: { option: 'equals', value: '' } };
     case 'number':
       return { number: { option: 'greater_than', value: '' } };
     case 'status':

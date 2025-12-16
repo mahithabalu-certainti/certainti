@@ -14,6 +14,7 @@ import {
   useGetDocumentCategoryType,
 } from '../../../../../common-service';
 import {
+  CaseDetails,
   ActivityDropdownItem,
   ExportType,
   SelectOption,
@@ -67,6 +68,7 @@ interface AttachmentsProps {
     React.SetStateAction<AttachmentsListExportParams>
   >;
   accountInActive: boolean;
+  caseDetails?: CaseDetails;
   activityMenuItems: ActivityDropdownItem[];
 }
 
@@ -74,6 +76,7 @@ export const Attachments: React.FC<AttachmentsProps> = ({
   setExportType,
   setAttachmentParams,
   accountInActive,
+  caseDetails,
   activityMenuItems,
 }) => {
   const { errorToast } = useToast();
@@ -111,6 +114,7 @@ export const Attachments: React.FC<AttachmentsProps> = ({
   const [updateAttachment] = useMutation(ATTACHMENT_UPDATE, {
     client: resourceClient,
   });
+  const caseFiscalYear = caseDetails?.fiscal_year || '';
 
   const { data, isLoading, isError } = useAttachmentList(
     {
@@ -214,7 +218,7 @@ export const Attachments: React.FC<AttachmentsProps> = ({
     {
       label: 'Upload file',
       variant: 'outlined' as const,
-      disabled: accountInActive,
+      disabled: accountInActive || !caseFiscalYear,
       onClick: () => handleOpen(),
       sx: { ...BUTTON_STYLES, width: '90px', minWidth: '90px' },
       hide: !attachmentCreateEnable,
@@ -308,10 +312,13 @@ export const Attachments: React.FC<AttachmentsProps> = ({
         handleDownload,
         permissionMap,
         isAttachmentExportEnable,
-        categoryTypes.isLoading
+        categoryTypes.isLoading,
+        accountInActive,
+        undefined,
+        'case'
       ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [memoizedDocumentTypes]
+    [accountInActive, memoizedDocumentTypes]
   );
 
   const [visibleColumns, setVisibleColumns] = useState<
@@ -331,7 +338,8 @@ export const Attachments: React.FC<AttachmentsProps> = ({
 
   const attachmentsFilterFields = getAttachmentsFilterFields(
     fieldOptions,
-    permissionMap
+    permissionMap,
+    'case'
   );
 
   const getRowId = (row: AttachmentList) => row.rid;
@@ -461,6 +469,7 @@ export const Attachments: React.FC<AttachmentsProps> = ({
           accountId={accountId}
           attachID={caseId}
           onUploadSuccess={onRefreshClick}
+          projectFiscalYear={caseFiscalYear}
         />
       ) : (
         <>
@@ -496,7 +505,7 @@ export const Attachments: React.FC<AttachmentsProps> = ({
               tableStyle={{
                 borderBottom: '1px solid #CBD6E2',
                 height: '100%',
-                maxHeight: 'calc(100vh - 320px)',
+                maxHeight: 'calc(100vh - 380px)',
                 overflow: 'auto',
               }}
               stickyHeader={true}

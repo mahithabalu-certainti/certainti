@@ -17,6 +17,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityDropdownItem,
   CaseDetails,
+  ExportType,
   InteractionList,
   InteractionListExportParams,
   StatusTypeEnum,
@@ -97,6 +98,7 @@ interface InteractionsProps {
   isSendInteraction: boolean;
   loading: boolean;
   CaseDetails: CaseDetails | null;
+  setExportType?: (type: ExportType) => void;
   activityMenuItems: ActivityDropdownItem[];
 }
 
@@ -107,6 +109,7 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
   isSendInteraction,
   loading,
   CaseDetails,
+  setExportType,
   activityMenuItems,
 }) => {
   const { caseId } = useParams();
@@ -342,6 +345,9 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
 
   useEffect(() => {
     if (interactionHistoryId) return;
+    if (setExportType) {
+      setExportType('interactions');
+    }
     const updatedParams = {
       sortBy: sortField,
       filters: appliedFilters,
@@ -703,7 +709,7 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
 
   return (
     <div className='w-full'>
-      {!isSendInteraction && !loading && (
+      {isSendInteraction && loading && isLoading && (
         <Box className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] px-3 py-2 border-box'>
           <Box>
             <DetailsKeyContactErrorIcon alt='key-contact' />

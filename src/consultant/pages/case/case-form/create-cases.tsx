@@ -11,12 +11,17 @@ import { CaseFormData } from './form-data';
 import TextButton from '../../../../components/button/text-button';
 import SkeletonForm from '../../../../components/form-builder/skeleton-form';
 import { FormBuilder } from '../../../../components';
-import { CaseFormPayload } from '../../../types';
+import {
+  CaseFormFields,
+  CaseFormPayload,
+  ParentChildSelectOption,
+} from '../../../types';
 import {
   useCaseDetails,
   useCreateCase,
   useGetCaseFilingTypes,
   useGetCaseOwners,
+  useGetCaseSubmissionDate,
   useUpdateCaseDetails,
 } from '../../../services/cases/case-service';
 import { CaseIcon } from '../../../../assets';
@@ -27,34 +32,51 @@ import {
 } from '../../../../common-utils';
 import { generateCaseNamePrefix, transformCaseFormPayload } from './utils';
 import { useSelector } from 'react-redux';
-import { RootState } from '../../../../store/store';
+import { RootState, useAppDispatch } from '../../../../store/store';
+import { fetchAccountsThunk } from '../../../../store/slices';
 
 export const CreateCases: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
 
   const { successToast } = useToast();
+  const currentYear = new Date().getFullYear();
   const [searchParams] = useSearchParams();
   const location = useLocation();
+  const dispatch = useAppDispatch();
   const { caseId } = useParams();
   const [caseNamePrefix, setCaseNamePrefix] = useState<string>('');
+  const [selectedFiscalYear, setSelectedFiscalYear] = useState<string>(
+    currentYear.toString()
+  );
+  const [selectedAccountName, setSelectedAccountName] = useState<string>('');
+  const [selectedAccountNumber, setSelectedAccountNumber] =
+    useState<string>('');
+  const [selectedCountryCode, setSelectedCountryCode] = useState<string>('');
+  const [selectedCountryRid, setSelectedCountryRid] = useState<string>('');
+  const [calculatedStatutoryDate, setCalculatedStatutoryDate] =
+    useState<string>('');
   const [dateConstraints, setDateConstraints] = useState<{
     planned_min: string;
     planned_max: string;
     statutory_min: string;
     statutory_max: string;
+    start_date_max: string;
   }>({
     planned_min: '',
     planned_max: '',
     statutory_min: '',
     statutory_max: '',
+    start_date_max: '',
   });
 
   const { userId } = useSelector<RootState, { userId: unknown }>(
     (state: RootState) => state.auth
   );
   const { permission } = useSelector((state: RootState) => state.permission);
+  const { accounts, loading } = useSelector(
+    (state: RootState) => state.account
+  );
 
-  const currentYear = new Date().getFullYear();
   const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
   const accountId = searchParams.get('accountId') || '';
   const accountNumber = searchParams.get('account_number') || '';
@@ -62,6 +84,7 @@ export const CreateCases: React.FC = () => {
   const sourcePath = searchParams.get('source') || '';
   const countryRid = searchParams.get('country_rid') || '';
   const countryCode = searchParams.get('country_code') || '';
+  const globalType = searchParams.get('sourceType') === 'global';
 
   const { data: caseData, isLoading } = useCaseDetails(caseId || '', accountId);
 
@@ -70,6 +93,13 @@ export const CreateCases: React.FC = () => {
   const caseFillingTypes = useGetCaseFilingTypes();
   const allCountries = useGetAllCountries();
   const caseOwners = useGetCaseOwners();
+
+  const effectiveCountryRid = isEditView
+    ? caseData?.country_rid || countryRid || selectedCountryRid
+    : selectedCountryRid || countryRid;
+
+  const { data: submissionDateData } =
+    useGetCaseSubmissionDate(effectiveCountryRid);
 
   const commonSuccess = createCase.isSuccess || updateCase.isSuccess;
 
@@ -83,11 +113,19 @@ export const CreateCases: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [commonSuccess, isEditView]);
 
+  useEffect(() => {
+    if (globalType) {
+      dispatch(fetchAccountsThunk());
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [globalType]);
+
   const caseFormData = useMemo(
     () => ({
       ...caseData,
       ...(caseData && {
         account_name: accountName || caseData.account_name || '',
+        account_rid: accountId || caseData.account_rid || '',
         account_id: accountNumber || caseData.account_rnumber || '',
         filing_type: caseData.filing_type_rid || '',
         case_name: caseData.case_name || '',
@@ -114,7 +152,7 @@ export const CreateCases: React.FC = () => {
         updated_by: caseData.modified_by_name || '-',
       }),
     }),
-    [caseData, accountName, accountNumber, countryRid]
+    [caseData, accountName, accountId, accountNumber, countryRid]
   );
 
   useEffect(() => {
@@ -133,6 +171,24 @@ export const CreateCases: React.FC = () => {
       setCaseNamePrefix(prefixValue);
     }
   }, [accountName, caseData, countryCode, currentYear, isEditView]);
+
+  useEffect(() => {
+    if (!isEditView && submissionDateData?.data && selectedFiscalYear) {
+      const { caseSubmissionDate } = submissionDateData.data;
+      if (caseSubmissionDate) {
+        const [mm, dd] = caseSubmissionDate.split('/');
+        if (mm && dd) {
+          const statutoryDate = `${selectedFiscalYear}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`;
+          setCalculatedStatutoryDate(statutoryDate);
+          setDateConstraints((prev) => ({
+            ...prev,
+            planned_max: statutoryDate,
+            start_date_max: statutoryDate,
+          }));
+        }
+      }
+    }
+  }, [submissionDateData, selectedFiscalYear, isEditView]);
 
   const caseOwnersOptions = useMemo(() => {
     return (
@@ -160,6 +216,24 @@ export const CreateCases: React.FC = () => {
       })) || [],
     [allCountries.data?.data.country]
   );
+
+  const memoizedAccounts: ParentChildSelectOption[] = useMemo(() => {
+    if (!accounts) return [];
+
+    return accounts.map((account) => ({
+      parent_value: account.rid,
+      parent_label: account.account_name,
+      childList:
+        account.child_accounts?.map((child) => ({
+          child_value: child.rid,
+          child_label: child.account_name,
+          currency_rid: child.currency_rid,
+          country_rid: child.country_rid,
+          country_code: child.country_code,
+          r_number: child.r_number,
+        })) || [],
+    }));
+  }, [accounts]);
 
   //Permission
   const casesEditFields = useMemo(
@@ -200,7 +274,6 @@ export const CreateCases: React.FC = () => {
         ...prev,
         planned_min: fieldValue as string,
         statutory_min: fieldValue as string,
-        planned_max: '',
       }));
     }
 
@@ -210,7 +283,6 @@ export const CreateCases: React.FC = () => {
       setDateConstraints((prev) => ({
         ...prev,
         statutory_min: fieldValue as string,
-        planned_max: '',
       }));
     }
 
@@ -222,20 +294,60 @@ export const CreateCases: React.FC = () => {
         planned_max: fieldValue as string,
       }));
     }
+
+    if (fieldName === 'account_rid' && globalType) {
+      const selectedRid = fieldValue as string;
+      let accountName = '';
+      let accountNumber = '';
+      let countryCode = '';
+      let countryRid = '';
+
+      let foundChild = null;
+      for (const acc of memoizedAccounts) {
+        foundChild = acc.childList?.find(
+          (childAcc) => childAcc.child_value === selectedRid
+        );
+        if (foundChild) break;
+      }
+
+      if (foundChild) {
+        accountName = foundChild.child_label || '';
+        accountNumber = foundChild.r_number || '';
+        countryCode = foundChild.country_code || '';
+        countryRid = foundChild.country_rid || '';
+      }
+
+      setSelectedAccountName(accountName);
+      setSelectedAccountNumber(accountNumber);
+      setSelectedCountryCode(countryCode);
+      setSelectedCountryRid(countryRid);
+
+      // Update case name prefix
+      const newPrefix = generateCaseNamePrefix(
+        accountName,
+        countryCode,
+        selectedFiscalYear
+      );
+      setCaseNamePrefix(newPrefix);
+    }
+
     if (fieldName === 'fiscal_year') {
-      const accName = caseData?.account_name || accountName;
-      const country = caseData?.country_code || countryCode;
+      const accName =
+        caseData?.account_name || accountName || selectedAccountName;
+      const country =
+        caseData?.country_code || countryCode || selectedCountryCode;
       const year = fieldValue as string;
       // Update prefix when fiscal year changes
       const newPrefix = generateCaseNamePrefix(accName, country, year);
       setCaseNamePrefix(newPrefix);
+      setSelectedFiscalYear(year);
     }
   };
 
   const submitData = (formValues: Partial<CaseFormPayload>) => {
     const payload = transformCaseFormPayload(
       accountId,
-      formValues,
+      formValues as CaseFormFields,
       isEditView,
       caseData
     );
@@ -261,12 +373,18 @@ export const CreateCases: React.FC = () => {
     caseFilingTypesOptions,
     caseOwnersOptions,
     countryOptions,
+    memoizedAccounts,
     dateConstraints,
-    caseNamePrefix
+    caseNamePrefix,
+    selectedCountryRid,
+    selectedAccountNumber,
+    selectedFiscalYear,
+    globalType,
+    calculatedStatutoryDate
   );
 
   const formLoading =
-    caseOwners.isLoading || isLoading || caseFillingTypes.isPending;
+    caseOwners.isLoading || isLoading || caseFillingTypes.isPending || loading;
 
   return (
     <>
@@ -329,15 +447,18 @@ export const CreateCases: React.FC = () => {
             values={
               isEditView && caseFormData
                 ? {
-                    ...caseFormData,
-                  }
+                  ...caseFormData,
+                }
                 : {
-                    account_name: accountName || '',
-                    account_id: accountNumber || '',
-                    case_owner: userId || '',
-                    fiscal_year: currentYear.toString(),
-                    country: countryRid || '',
-                  }
+                  account_name: accountName || '',
+                  account_id: accountNumber || '',
+                  case_owner: userId || '',
+                  fiscal_year: currentYear.toString(),
+                  country: countryRid || '',
+                  ...(calculatedStatutoryDate && {
+                    statutory_submission_date: calculatedStatutoryDate,
+                  }),
+                }
             }
             outData={submitData}
             formRef={formRef}
