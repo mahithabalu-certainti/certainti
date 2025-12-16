@@ -935,7 +935,8 @@ const MeetingForm: React.FC = () => {
         formData.recurrence_interval === '' ||
         parseInt(formData.recurrence_interval) < 1
       ) {
-        newErrors.recurrence_interval = 'Interval must be at least 1';
+        newErrors.recurrence_interval =
+          'Field is required. Recurrence Interval must be at least 1.';
       }
 
       if (
@@ -1447,7 +1448,7 @@ const MeetingForm: React.FC = () => {
                     htmlFor='recurrence_interval'
                     className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px]'
                   >
-                    Recurrence Interval
+                    Recurrence Interval<span className='text-red-500'> *</span>
                   </label>
                   <input
                     type='number'
@@ -1531,7 +1532,7 @@ const MeetingForm: React.FC = () => {
               >
                 <div className='grid md:grid-cols-1 gap-x-4 gap-y-3 px-10 pt-3'>
                   <label className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px]'>
-                    Recurrence Days
+                    Recurrence Days<span className='text-red-500'> *</span>
                   </label>
                   <div className='flex flex-wrap gap-3 mt-2'>
                     {daysOfWeek.map((day) => (
@@ -1583,7 +1584,7 @@ const MeetingForm: React.FC = () => {
               >
                 <div className='grid md:grid-cols-1 gap-x-4 gap-y-3 px-10 pt-3'>
                   <label className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px]'>
-                    Recurrence Days
+                    Recurrence Days<span className='text-red-500'> *</span>
                   </label>
                   <div className='flex flex-col gap-2 mt-2'>
                     {monthlyRecurrenceOptions.map((option) => (

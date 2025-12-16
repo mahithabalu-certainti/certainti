@@ -252,6 +252,7 @@ export const getTaskFilterFields = (
     value: 'effective_end_datetime',
     type: 'date',
     operatorOption: dateOptions,
+    isFutureDateEnabled: true,
     hide:
       !permissionMap?.['effective_end_datetime']?.edit &&
       !permissionMap?.['effective_end_datetime']?.read,

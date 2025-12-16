@@ -75,6 +75,7 @@ export interface TaskComment {
   attachments?: string[];
   user_avatar_color?: string;
   [key: string]: unknown;
+  profile_url?: string | null;
 }
 
 export interface TaskCommentsApiResponse {
@@ -132,6 +133,7 @@ export interface UploadTaskAttachmentsPayload {
   task_rid: string;
   files: File[];
   task_type?: string;
+  attachment_level?: string;
 }
 
 export interface UploadTaskAttachmentsResponse extends CommonApiResponse {
@@ -195,6 +197,7 @@ export interface AddCommentPayload {
   comments: string;
   files?: File[];
   task_type?: string;
+  attachment_level?: string;
 }
 
 export interface UpdateCommentPayload {
@@ -206,6 +209,7 @@ export interface UpdateCommentPayload {
   files?: File[];
   deleted_file_ids?: string[];
   task_type?: string;
+  attachment_level?: string;
 }
 
 export interface DeleteCommentPayload {
@@ -305,6 +309,9 @@ export const addTaskComment = async (
     if (payload.task_type) {
       formData.append('task_type', payload.task_type);
     }
+    if (payload.attachment_level) {
+      formData.append('attachment_level', payload.attachment_level);
+    }
     formData.append('task_rid', payload.task_rid);
     formData.append('comments', payload.comments);
 
@@ -343,6 +350,9 @@ export const updateTaskComment = async (
     }
     if (payload.task_type) {
       formData.append('task_type', payload.task_type);
+    }
+    if (payload.attachment_level) {
+      formData.append('attachment_level', payload.attachment_level);
     }
     formData.append('task_rid', payload.task_rid);
     formData.append('rid', payload.rid);
@@ -436,6 +446,10 @@ export const uploadTaskAttachments = async (
 
     if (payload.task_type) {
       formData.append('task_type', payload.task_type);
+    }
+
+    if (payload.attachment_level) {
+      formData.append('attachment_level', payload.attachment_level);
     }
 
     // Add all files to the payload
