@@ -3,12 +3,26 @@ import { CommonApiResponse } from '../../common-service';
 
 export type GeoBasedRule = {
   rid: string;
+  r_number: string;
+  config_name: string;
+  country_name: string;
+  country_rid: string;
+  state_name: string | null;
+  state_rid: string | null;
+  is_federal: boolean;
+  effective_start_date: string;
+  effective_end_date: string | null;
+  status_name: string;
+  status_rid: string;
   created_datetime: string;
   modified_datetime: string | null;
-  group_name: string;
-  is_consultant_only_group: boolean;
-  group_type_rid: string;
-  user_count: string;
+  created_user_name: string;
+  modified_user_name: string | null;
+  credit_config_group_rid: string;
+  jurisdiction_config_group_rid?: string;
+  platform_config_group_rid?: string;
+  jurisdictionConfig?: any;
+  platformConfig?: any;
 };
 export interface GeoBasedRuleListParams {
   page: number;

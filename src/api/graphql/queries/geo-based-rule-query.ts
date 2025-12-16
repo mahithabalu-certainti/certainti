@@ -1,30 +1,37 @@
 import { gql } from '@apollo/client';
 
 export const GEO_BASED_RULE = gql`
-  mutation UpdateGeoBasedRuleInline($data: geoBasedRuleUpdateInput!) {
-    UpdateGeoBasedRuleInline(data: $data) {
+  mutation UpdateJurisdictionConfig($input: JurisdictionConfigInput!) {
+    updateJurisdictionConfig(input: $input) {
       statusCode
-      statusCodeValue
-      statusMessage
+      message
+      errorMessage
       data {
         rid
         r_number
         config_name
-        country_name
-        country_rid
-        state_name
-        state_rid
-        is_federal
+        jurisdiction_config_group_rid
+        platform_config_group_rid
         effective_start_date
         effective_end_date
-        status_name
+        is_federal
         status_rid
-        created_datetime
-        modified_datetime
+        jurisdictionConfig
+        platformConfig
+        created_by
         created_user_name
+        created_at
+        modified_by
+        modified_at
         modified_user_name
+        status_name
         credit_config_group_rid
+        country_name
+        state_name
+        country_rid
+        state_rid
       }
     }
   }
 `;
+

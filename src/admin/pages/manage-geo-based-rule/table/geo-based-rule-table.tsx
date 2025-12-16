@@ -149,9 +149,10 @@ export const ManageGeoBasedRuleTable: React.FC<IGeoBasedRuleTableProps> = ({
             },
             {
                 config_rid: rowId,
-                // Always include both effective dates
+                // Always include both effective dates and federal status
                 effective_start_date: matchedRule.effective_start_date,
                 effective_end_date: matchedRule.effective_end_date,
+                is_federal: matchedRule.is_federal,
             }
         );
 
@@ -163,9 +164,9 @@ export const ManageGeoBasedRuleTable: React.FC<IGeoBasedRuleTableProps> = ({
 
         try {
             const res = await updateGeoBasedRule({
-                variables: { data: updateData },
+                variables: { input: updateData },
             });
-            const result = res.data?.UpdateGeoBasedRuleInline;
+            const result = res.data?.updateJurisdictionConfig;
 
             if (result?.statusCode === 200 && result.data) {
                 const updatedItem = result.data;
@@ -175,7 +176,7 @@ export const ManageGeoBasedRuleTable: React.FC<IGeoBasedRuleTableProps> = ({
                     )
                 );
             } else {
-                errorToast(result?.statusMessage || 'Failed to update field');
+                errorToast(result?.message || result?.errorMessage || 'Failed to update field');
                 setGeoBasedRuleList(previousGeoBasedRuleList);
             }
         } catch (error) {
