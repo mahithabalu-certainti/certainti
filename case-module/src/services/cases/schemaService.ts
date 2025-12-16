@@ -87,7 +87,7 @@ import { CaseTaskWorkflowConnector, setupCaseTaskWorkflowConnectorSequence } fro
 import { v4 as uuidv4 } from 'uuid'
 import { CaseProjectFiscalRegion, setupCaseProjectFiscalRegionSequence } from "../../models/caseProjectFiscalRegionModel";
 import { CaseProjectResourceFiscal } from "../../models/caseProjectResourceFiscalModel";
-import { CaseProjectResource, setupCaseProjectResourceSequence } from "../../models/caseProjectResourceModel";
+import { CaseProjectResource } from "../../models/caseProjectResourceModel";
 import { CaseProjectTask } from "../../models/caseProjectTaskModel";
 import { TaskHistory } from "../../models/taskHistory";
 import { WorkflowConnector } from "../../models/workflowConnectorModel";
@@ -723,7 +723,6 @@ class CaseSchemaService {
       await CaseProjectFiscalRegionModel.sync({ force: false });
       await setupCaseProjectFiscalRegionSequence(orgDbSequlize, schemaName)
       await CaseProjectResourceModel.sync({ force: false });
-      await setupCaseProjectResourceSequence(orgDbSequlize, schemaName)
       await CaseProjectResourceFiscalModel.sync({ force: false });
       await CaseProjectTaskModel.sync({ force: false });
       await CaseKeyContactDetailsModel.sync({ force: false });
@@ -2212,7 +2211,7 @@ class CaseSchemaService {
           project_rid: p.project_rid,
           project_fiscal_rid: p.project_fiscal_rid,
           account_rid: data.account_rid
-        }
+        }, raw : true
       });
 
       if (projectResourceRecords.length > 0) {
