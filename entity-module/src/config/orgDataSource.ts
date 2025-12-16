@@ -59,12 +59,14 @@ export async function initOrgSequelize() {
     if (sequelize) {
       return sequelize;
     }
-    // const { DB_NAME, DB_USER, DB_PASSWORD, DB_HOST } = await getAzureSecrets();
-    // if (!DB_NAME || !DB_USER || !DB_PASSWORD || !DB_HOST) {
-    //   throw new Error("One or more required database secrets are missing.");
-    // }
-    sequelize = new Sequelize("thinkrd365_org", "adminUser", "B_Cb8JPZP?eHPzD-", {
-      host: "development-thinkrd365-psqlserver-centralus-org.postgres.database.azure.com",
+    const { DB_NAME, DB_USER, DB_PASSWORD, DB_HOST } = await getAzureSecrets();
+
+    if (!DB_NAME || !DB_USER || !DB_PASSWORD || !DB_HOST) {
+      throw new Error("One or more required database secrets are missing.");
+    }
+
+    sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASSWORD, {
+      host: DB_HOST,
       dialect: "postgres",
       port: 5432,
       logging: env !== "production",
@@ -79,7 +81,6 @@ export async function initOrgSequelize() {
         },
       },
     });
-
     await sequelize.authenticate();
     logMessage("Database connection established successfully.");
     return sequelize;
