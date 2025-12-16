@@ -41,6 +41,12 @@ export interface AddCollaboratorResponse {
     [key: string]: unknown;
   };
 }
+
+type Tag = {
+  rid: string;
+  tag_name: string;
+};
+
 export interface TaskCard {
   rid: string;
   sequence_no: number;
@@ -69,6 +75,8 @@ export interface TaskCard {
   task_status_rid: string;
   task_status_name: string;
   profile_url: string | null;
+  attachment_count?: number | null;
+  tags?: string[] | Tag[];
 }
 export interface TaskDetailResponse {
   rid: string;
@@ -315,6 +323,7 @@ export interface TaskActivity {
   new_value: string;
   task_rid: string;
   created_by_name: string;
+  profile_url: string | null;
 }
 
 export interface TaskActivitiesData {
@@ -418,6 +427,7 @@ export const fetchTaskStatuses = async (): Promise<StatusData[]> => {
 export interface CollaboratorData {
   assigned_to: string;
   assigned_to_name: string;
+  profile_url: string | null;
 }
 
 export interface CollaboratorsResponse {

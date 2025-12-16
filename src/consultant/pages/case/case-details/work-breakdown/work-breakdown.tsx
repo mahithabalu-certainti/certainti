@@ -190,6 +190,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
       return caseTeamMembersQuery.data.map((member) => ({
         rid: member.user_rid,
         name: member.user_name,
+        profile_url: member.profile_url,
       }));
     }
     return [];
@@ -249,7 +250,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
       return new Promise<void>((resolve, reject) => {
         const tagsArray: Array<{ tag_rid: string; is_new_tag: boolean }> = [];
         if (taskData.tags && taskData.tags.length > 0) {
-          taskData.tags.forEach((tagName: string) => {
+          (taskData.tags as string[]).forEach((tagName: string) => {
             const existingTag = tagData?.find((t) => t.name === tagName);
             if (existingTag) {
               tagsArray.push({
@@ -809,9 +810,9 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
             setAppliedFilters={setAppliedFilters}
             setCurrentPage={setCurrentPage}
             handleFilter={handleFilter}
-            handleSorting={() => { }}
+            handleSorting={() => {}}
             sortFilterCount={0}
-            setSortFilterCount={() => { }}
+            setSortFilterCount={() => {}}
             showRefresh={tabParam === 'milestone'}
             onRefreshClick={onRefreshClick}
             // hideTabPanel={hideSection}
@@ -847,10 +848,11 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
       />
 
       <div
-        className={`border border-t-0 border-[#CBD6E2] ${isActionItemsExpanded
+        className={`border border-t-0 border-[#CBD6E2] ${
+          isActionItemsExpanded
             ? 'max-h-[calc(100vh-200px)]'
             : 'max-h-[calc(100vh-418px)]'
-          } overflow-auto`}
+        } overflow-auto`}
       >
         {tabParam === 'milestone' && (
           <>

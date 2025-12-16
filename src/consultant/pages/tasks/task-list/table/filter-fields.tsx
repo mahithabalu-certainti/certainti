@@ -7,6 +7,12 @@ const enumOptions: { option: string; value: string }[] = [
   { option: 'In', value: 'in' },
 ];
 
+const textOptions: { option: string; value: string }[] = [
+  { option: 'Equals', value: 'equals' },
+  { option: 'Not Equals', value: 'not_equals' },
+  { option: 'Contains', value: 'contains' },
+];
+
 const minYear = 1950;
 const currentYear = new Date().getFullYear();
 const fiscalYears = getFiscalYears(currentYear - minYear + 1);
@@ -22,12 +28,14 @@ export const getTaskFilterFields = (
     name: 'Task ID',
     value: 'r_number',
     type: 'text',
+    operatorOption: textOptions,
     hide: permissionMap ? !permissionMap['r_number']?.read : false,
   },
   {
     name: 'Task Name',
     value: 'task_name',
     type: 'text',
+    operatorOption: textOptions,
     hide: permissionMap ? !permissionMap['task_name']?.read : false,
   },
   {

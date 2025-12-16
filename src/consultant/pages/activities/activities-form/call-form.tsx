@@ -143,8 +143,6 @@ const CallForm: React.FC = () => {
     [permission]
   );
 
-  console.log(permissionMap);
-
   const userListOptions = useGetUserOptions(accountId, true);
   const createCall = useCreateActivityCall();
   const updateCall = useUpdateActivityCall();
@@ -565,6 +563,11 @@ const CallForm: React.FC = () => {
 
     if (!formData.caller_id.trim()) {
       newErrors.caller_id = 'Field is required';
+    }
+
+    if (!REGEX_PATTERNS.MAX_2000.test(formData.minutes_of_meeting)) {
+      newErrors.minutes_of_meeting =
+        'Minutes of Meeting must be within 2000 characters';
     }
 
     if (!formData.subject.trim()) {

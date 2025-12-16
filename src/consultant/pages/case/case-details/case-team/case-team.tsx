@@ -60,6 +60,7 @@ import { TableSkeleton } from '../../../../../components/table';
 import { RootState } from '../../../../../store/store';
 import { useSelector } from 'react-redux';
 import { ActivityMenuItem } from '../../../../types';
+import { useQueryClient } from '@tanstack/react-query';
 
 const ConfigTabs: ResourceTabs[] = [
   {
@@ -72,11 +73,13 @@ const ConfigTabs: ResourceTabs[] = [
 interface CaseTeamProps {
   activityMenuItems: ActivityMenuItem[];
   fiscalYear: number;
+  refetchCaseDetails: () => void;
 }
 
 const CaseTeam: React.FC<CaseTeamProps> = ({
   activityMenuItems,
   fiscalYear,
+  refetchCaseDetails,
 }) => {
   const [searchParams] = useSearchParams();
   const { caseId } = useParams();
@@ -177,6 +180,7 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
   }, [formData.team_members, originalTeamMembers]);
 
   const accountId = searchParams.get('accountID') || '';
+  const queryClient = useQueryClient();
 
   const caseTeamQuery = useGetCaseTeam(caseId, accountId);
   const updateCaseTeamMutation = useUpdateCaseTeam();
@@ -690,8 +694,14 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
     };
 
     updateCaseTeamMutation.mutate(payload, {
-      onSuccess: () => {
+      onSuccess: async () => {
         setIsLoading(false);
+        // Invalidate case details query to update is_case_team_created flag
+        await queryClient.invalidateQueries({
+          queryKey: ['caseDetails', caseId, accountId],
+        });
+        // Refetch case details to ensure UI updates immediately
+        await refetchCaseDetails();
       },
       onError: () => {
         setIsLoading(false);
