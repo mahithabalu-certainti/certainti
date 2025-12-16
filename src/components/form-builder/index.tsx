@@ -171,13 +171,16 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     // updated default value into constuctFormData
     formData?.forEach((section) => {
       section.fields.forEach((field) => {
-        if (
-          field.assignDefaultValue &&
-          field.defaultValue &&
-          field.clearValue
-        ) {
-          const { key, matchedValue } = field.clearValue;
-          if (constructFormData[key] === matchedValue) {
+        if (field.assignDefaultValue && field.defaultValue) {
+          if (field.clearValue) {
+            const { key, matchedValue } = field.clearValue;
+            if (constructFormData[key] === matchedValue) {
+              setConstructFormData((prev) => ({
+                ...prev,
+                [field.name]: field.defaultValue || '',
+              }));
+            }
+          } else if (field.defaultValue && field.assignDefaultValue) {
             setConstructFormData((prev) => ({
               ...prev,
               [field.name]: field.defaultValue || '',
@@ -188,12 +191,16 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               [field.name]: '',
             }));
           }
+        } else if (field.assignDefaultValue && !field.defaultValue) {
+          setConstructFormData((prev) => ({
+            ...prev,
+            [field.name]: '',
+          }));
         }
       });
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formData]);
-
   useEffect(() => {
     if (Object.keys(constructFormData).length === 0) return;
     const keyContactSection = formData?.find(
@@ -1805,7 +1812,15 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               }
               minDate={customMinDate || dayjs('1950-01-01')}
               maxDate={customMaxDate}
-              value={fieldValue ? dayjs(fieldValue, 'YYYY-MM-DD') : null}
+              value={
+                fieldValue
+                  ? dayjs(fieldValue, 'YYYY-MM-DD').isValid()
+                    ? dayjs(fieldValue, 'YYYY-MM-DD')
+                    : dayjs(fieldValue, 'YYYY-MMM-DD').isValid()
+                      ? dayjs(fieldValue, 'YYYY-MMM-DD')
+                      : null
+                  : null
+              }
               disabled={field.disabled}
               format='YYYY-MMM-DD'
               referenceDate={
@@ -2305,7 +2320,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           }
 
           if (field.type === 'date') {
-            const dateValue = constructFormData[field.name] as string;
             if (
               field.name === 'effective_start_datetime' ||
               field.name === 'effective_end_datetime'
@@ -2316,33 +2330,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               const endDate = constructFormData[
                 'effective_end_datetime'
               ] as string;
-
-              // Future date validation for individual fields
-              if (dateValue) {
-                if (
-                  field.disableFutureDates &&
-                  dayjs(dateValue).isAfter(dayjs(), 'day')
-                ) {
-                  hasError = true;
-                  return {
-                    ...field,
-                    error: `${field.name === 'effective_start_datetime' ? 'Effective Start Date' : 'Effective End Date'} cannot be in the future`,
-                  };
-                }
-
-                const currentDate = dayjs();
-
-                if (
-                  field.name === 'effective_end_datetime' &&
-                  dayjs(dateValue).isAfter(currentDate, 'day')
-                ) {
-                  hasError = true;
-                  return {
-                    ...field,
-                    error: 'Effective End Date cannot be in the future',
-                  };
-                }
-              }
 
               // Relationship validation between start and end dates
               if (!startDate && endDate) {
@@ -3303,11 +3290,32 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               className={`col-span-1 ${!isHalf ? 'md:col-span-3' : ''} flex flex-col`}
             >
               <label
-                className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
+                className={`text-[13px] inline-flex items-center gap-1 text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
                 htmlFor={field.name}
               >
                 {field.label}
                 {field.required && <span className='text-red-500'> *</span>}
+                {field.labelTooltip?.showTooltip &&
+                  field.labelTooltip.tooltipMessage && (
+                    <Tooltip
+                      title={field.labelTooltip.tooltipMessage || ''}
+                      arrow
+                      placement='top'
+                      slotProps={{
+                        tooltip: {
+                          sx: {
+                            mr: 1,
+                          },
+                        },
+                      }}
+                    >
+                      <span className='w-5 inline-flex items-center justify-center cursor-pointer'>
+                        <React.Suspense fallback={null}>
+                          <ErrorInfoIcon className='w-5 h-5 -ml-0.5 p-[4px] [&>path]:fill-[#9fa0a1]' />
+                        </React.Suspense>
+                      </span>
+                    </Tooltip>
+                  )}
               </label>
               <div>
                 {field.type === 'website' ? (

@@ -124,6 +124,9 @@ export const ACTIVITY_EDIT = `${ACTIVITY_BASE}/edit/:type/:activityId`;
 // ATTACHMENT ROUTES
 export const ATTACHMENTS = '/attachments';
 
+// TASKS ROUTES
+export const TASKS = '/tasks';
+
 //CASES ROUTES
 export const CASE = '/case';
 export const CASE_DETAILS = `${CASE}/details/:caseId`;

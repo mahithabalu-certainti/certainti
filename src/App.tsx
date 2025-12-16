@@ -87,12 +87,14 @@ import {
   MANAGE_GEO_BASED_RULE,
   MANAGE_GEO_BASED_RULE_CREATE,
   MANAGE_GEO_BASED_RULE_EDIT,
+  TASKS,
 } from './routes';
 import { RootState } from './store/store';
 import ProjectTaskForm from './consultant/pages/project/project-details/project-task/form/project-task-form';
 // import { ProjectTask } from './consultant/pages/project/project-details/project-task';
 import ProjectResourceForm from './consultant/pages/project/project-details/project-resources/project-resource-form/project-resource-form';
 import { Attachments } from './consultant/pages';
+import { Tasks } from './consultant/pages/tasks';
 import ImportTemplatesList from './admin/pages/import-templates/import-templates';
 import CaseInteractionForm from './consultant/pages/interaction/interaction-form/case-interaction-form';
 import ManageTaskDetails from './admin/pages/task-templates/task-templates-list/details/taskDetails';
@@ -366,6 +368,7 @@ export const App: React.FC<IApp> = ({ instance }) => {
                     element={<CaseInteractionForm />}
                   />
                   <Route path={ATTACHMENTS} element={<Attachments />} />
+                  <Route path={TASKS} element={<Tasks />} />
                   <Route path={NOTES} element={<Notes />} />
                   <Route path={NOTES_CREATE} element={<NotesForm />} />
                   <Route path={NOTES_EDIT} element={<NotesForm />} />

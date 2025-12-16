@@ -711,7 +711,7 @@ export const ProjectDetails = () => {
             projectFiscalYear={projectData?.fiscal_year}
           />
         );
-      case 'qre-percent-history':
+      case 'rd-assessment-history':
         return (
           <QrePercentHistory
             refetchAccountDetails={refetch}
@@ -852,8 +852,8 @@ export const ProjectDetails = () => {
         icon: ActivitiesIcon,
       },
       {
-        name: 'QRE Percent History',
-        key: 'qre-percent-history',
+        name: 'RD Assessment History',
+        key: 'rd-assessment-history',
         id: AllModules.ACTIVITIES,
         disabled: false,
         icon: ActivitiesIcon,
@@ -937,10 +937,10 @@ export const ProjectDetails = () => {
           primaryButton={
             isProjectFieldsEditable && !detailPageView
               ? {
-                  label: 'Edit',
-                  onClick: handleEditAccount,
-                  disabled: accountInActive,
-                }
+                label: 'Edit',
+                onClick: handleEditAccount,
+                disabled: accountInActive,
+              }
               : undefined
           }
           onActionsClick={handleActionsClick}
@@ -959,11 +959,10 @@ export const ProjectDetails = () => {
       />
       <div className='flex flex-row flex-1 w-full border-b border-[#CBD6E2]'>
         <div
-          className={`flex transition-all duration-300 ease-in-out ${
-            isCollapsed
-              ? 'w-[60px] min-w-[60px] max-w-[60px]'
-              : 'w-[220px] min-w-[220px] max-w-[220px]'
-          }`}
+          className={`flex transition-all duration-300 ease-in-out ${isCollapsed
+            ? 'w-[60px] min-w-[60px] max-w-[60px]'
+            : 'w-[220px] min-w-[220px] max-w-[220px]'
+            }`}
         >
           <SideMenuPanel
             menuItems={sideMenuItems}

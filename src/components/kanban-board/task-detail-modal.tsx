@@ -1,5 +1,8 @@
-import { useEffect, useState, useMemo, useRef } from 'react';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useEffect, useState, useMemo, useRef, useLayoutEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../store/store';
 import { TaskDetailModalProps, Task, Activity, Comment } from './types';
 import { MenuItem, SelectChangeEvent } from '@mui/material';
 import dayjs from 'dayjs';
@@ -45,6 +48,7 @@ import {
   type TaskAttachmentRaw,
 } from '../../consultant/pages/case/case-details/work-breakdown/helper';
 import { useToast } from '../../hooks';
+import ConfirmationPopup from '../../common-utils/confirmation-popup';
 import {
   useGetTaskConnectorTypes,
   useWeightageList,
@@ -67,6 +71,7 @@ interface TaskDetailModalPropsExtended
   fiscalYear?: string | null;
   fiscalYears?: string[];
   taskType?: string;
+  isCaseTeamCreated?: boolean;
 }
 
 const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
@@ -94,6 +99,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   fiscalYear,
   fiscalYears,
   taskType,
+  isCaseTeamCreated,
 }) => {
   const [task, setTask] = useState<Task | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
@@ -139,6 +145,19 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   const [weightage, setWeightage] = useState('');
   const [category, setCategory] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const [confirmationState, setConfirmationState] = useState<{
+    isOpen: boolean;
+    message: string;
+    onConfirm: () => void;
+    onCancel: () => void;
+  }>({
+    isOpen: false,
+    message: '',
+    onConfirm: () => {},
+    onCancel: () => {},
+  });
 
   const ErrorIconTooltip = ({ error }: { error: string }) => (
     <Tooltip
@@ -178,6 +197,11 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   const deleteCollaboratorMutation = useDeleteCollaborator();
   const deleteTagMutation = useDeleteTag();
   const queryClient = useQueryClient();
+
+  // Get current user ID from Redux
+  const { userId } = useSelector<RootState, { userId: unknown }>(
+    (state: RootState) => state.auth
+  );
 
   const commentsParams = useMemo(
     () => ({
@@ -255,6 +279,23 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       setLinkTaskTypes([]);
     }
   }, [isOpen, taskId]);
+
+  useLayoutEffect(() => {
+    if (isOpen) {
+      setIsAnimating(true);
+      setIsVisible(false);
+      const timer = setTimeout(() => {
+        setIsVisible(true);
+      }, 5);
+      return () => clearTimeout(timer);
+    } else {
+      setIsVisible(false);
+      const timer = setTimeout(() => {
+        setIsAnimating(false);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (rawTask) {
@@ -610,22 +651,51 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   }, [editedTask, allEnrichedUsers]);
 
   // Disable checklist template if any checklist item has been completed
+  // Also disable specific fields if current user is not the task creator
   const enhancedFieldDisabled = useMemo(() => {
     const hasCompletedItems = (editedTask?.checklist || []).some(
       (item) => item.completed
     );
+
+    // Check if current user is the task creator
+    const isCreator = task?.created_by_rid === userId;
+
+    // Fields that should be editable only by the creator
+    const creatorOnlyFieldsDisabled = !isCreator;
+
     return {
       ...fieldDisabled,
-      checklistTemplate: fieldDisabled.checklistTemplate || hasCompletedItems,
+      checklistTemplate:
+        fieldDisabled.checklistTemplate ||
+        hasCompletedItems ||
+        creatorOnlyFieldsDisabled,
+      priority: fieldDisabled.priority || creatorOnlyFieldsDisabled,
+      linkedType: fieldDisabled.linkedType || creatorOnlyFieldsDisabled,
+      linkTaskType: fieldDisabled.linkTaskType || creatorOnlyFieldsDisabled,
+      weightage: fieldDisabled.weightage || creatorOnlyFieldsDisabled,
+      category: fieldDisabled.category || creatorOnlyFieldsDisabled,
+      status: fieldDisabled.status || !isCaseTeamCreated,
     };
-  }, [fieldDisabled, editedTask?.checklist]);
+  }, [
+    editedTask?.checklist,
+    task?.created_by_rid,
+    userId,
+    fieldDisabled,
+    isCaseTeamCreated,
+  ]);
 
-  if (!isOpen || !taskId) return null;
+  if (!isAnimating || !taskId) return null;
   if (isLoadingTaskDetails || (rawTask && !task)) {
     return (
       <div
         className='fixed right-0 bottom-0 w-[650px] bg-white text-gray-900 shadow-2xl z-50 overflow-y-auto'
-        style={{ top: '38.1px' }}
+        style={{
+          top: '38.1px',
+          transform: isVisible ? 'translateX(0)' : 'translateX(100%)',
+          opacity: isVisible ? 1 : 0,
+          transition:
+            'transform 500ms cubic-bezier(0.4, 0.0, 0.2, 1), opacity 500ms cubic-bezier(0.4, 0.0, 0.2, 1)',
+        }}
       >
         <div className='sticky top-0 flex items-center justify-between p-[16.5px] border-b border-[#CBD6E2] bg-white z-50'>
           <div className='p-2 w-6 h-6'></div>
@@ -688,7 +758,13 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     return (
       <div
         className='fixed right-0 bottom-0 w-[650px] bg-white text-gray-900 shadow-2xl z-50 flex items-center justify-center'
-        style={{ top: '38.1px' }}
+        style={{
+          top: '38.1px',
+          transform: isVisible ? 'translateX(0)' : 'translateX(100%)',
+          opacity: isVisible ? 1 : 0,
+          transition:
+            'transform 500ms cubic-bezier(0.4, 0.0, 0.2, 1), opacity 500ms cubic-bezier(0.4, 0.0, 0.2, 1)',
+        }}
       >
         <div className='text-center text-gray-500'>
           <p>Task not found</p>
@@ -726,6 +802,13 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     }
     if (editedTask?.tags && editedTask.tags.some((tag) => tag.length > 50)) {
       newErrors.tags = 'Maximum 50 characters allowed';
+    }
+
+    if (!editedTask?.startDate && !fieldVisibility.startDate) {
+      newErrors.startDate = 'Field is required';
+    }
+    if (!editedTask?.endDate && !fieldVisibility.endDate) {
+      newErrors.endDate = 'Field is required';
     }
 
     if (editedTask?.startDate) {
@@ -826,6 +909,19 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
             });
           }
           setDeletedAttachmentIds([]);
+          queryClient.invalidateQueries({
+            queryKey: ['taskActivities', accountId, caseId, taskId],
+          });
+          queryClient.invalidateQueries({
+            queryKey: [
+              'taskActivitiesInfinite',
+              {
+                case_rid: caseId,
+                account_rid: accountId,
+                task_rid: taskId,
+              },
+            ],
+          });
           successToast('Attachment deleted successfully');
         } catch (error) {
           let errorMessage = 'Failed to delete attachments';
@@ -871,6 +967,19 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
 
           queryClient.invalidateQueries({
             queryKey: ['taskAttachments', attachmentsParams],
+          });
+          queryClient.invalidateQueries({
+            queryKey: ['taskActivities', accountId, caseId, taskId],
+          });
+          queryClient.invalidateQueries({
+            queryKey: [
+              'taskActivitiesInfinite',
+              {
+                case_rid: caseId,
+                account_rid: accountId,
+                task_rid: taskId,
+              },
+            ],
           });
           successToast('Attachment uploaded successfully');
         } catch (error) {
@@ -1458,16 +1567,33 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     }
   };
 
+  const handleCloseAttempt = () => {
+    if (hasTaskChanged()) {
+      setConfirmationState({
+        isOpen: true,
+        message:
+          'You have unsaved changes. Are you sure you want to close without saving?',
+        onConfirm: () => {
+          onClose();
+        },
+        onCancel: () => {},
+      });
+    } else {
+      onClose();
+    }
+  };
+
   return (
     <>
       <div
-        className={`fixed right-0 bottom-0 w-[650px] bg-white text-gray-900 shadow-2xl z-50 overflow-y-auto ${
-          isOpen ? 'translate-x-0' : 'translate-x-full'
-        }`}
+        className='fixed right-0 bottom-0 w-[650px] bg-white text-gray-900 shadow-2xl z-50 overflow-y-auto'
         style={{
           top: '38.1px',
-          transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
-          transition: 'transform 300ms ease-in-out',
+          transform: isVisible ? 'translateX(0)' : 'translateX(100%)',
+          opacity: isVisible ? 1 : 0,
+          transition:
+            'transform 500ms cubic-bezier(0.4, 0.0, 0.2, 1), opacity 500ms cubic-bezier(0.4, 0.0, 0.2, 1)',
+          willChange: isAnimating ? 'transform, opacity' : 'auto',
         }}
       >
         <div className='sticky top-0 flex items-center justify-between p-3 border-b border-[#CBD6E2] bg-white z-50'>
@@ -1479,12 +1605,13 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
             <TextButton
               label='Save'
               onClick={handleSave}
+              loading={isSaving}
               disabled={!hasTaskChanged() || isSaving}
               sx={{ padding: '6px 12px' }}
             />
             <button
-              onClick={onClose}
-              className='p-2 hover:bg-gray-100 rounded transition-colors'
+              onClick={handleCloseAttempt}
+              className='p-2 hover:bg-gray-100 rounded transition-colors cursor-pointer'
             >
               <CloseIcon size={16} className='text-gray-600' />
             </button>
@@ -1571,18 +1698,23 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                         >
                           {editedTask.assignee.initials}
                         </div>
-                        <span
-                          style={{
-                            fontSize: '13px',
-                            color: 'black',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                            minWidth: 0,
-                          }}
+                        <Tooltip
+                          title={editedTask.assignee.name}
+                          placement='top-start'
                         >
-                          {editedTask.assignee.name}
-                        </span>
+                          <span
+                            style={{
+                              fontSize: '13px',
+                              color: 'black',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                              minWidth: 0,
+                            }}
+                          >
+                            {editedTask.assignee.name}
+                          </span>
+                        </Tooltip>
                       </div>
                     );
                   }
@@ -1618,13 +1750,14 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                     }}
                     key={user.id}
                     value={user.id}
-                    title={user.name}
                   >
                     <div
                       style={{
                         display: 'flex',
                         alignItems: 'center',
                         gap: '8px',
+                        width: '100%',
+                        overflow: 'hidden',
                       }}
                     >
                       <div
@@ -1644,7 +1777,18 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                       >
                         {user.initials}
                       </div>
-                      {user.name}
+                      <Tooltip title={user.name} placement='top-start'>
+                        <span
+                          style={{
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            flex: 1,
+                          }}
+                        >
+                          {user.name}
+                        </span>
+                      </Tooltip>
                     </div>
                   </MenuItem>
                 ))}
@@ -1663,7 +1807,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
               {!fieldVisibility.startDate && (
                 <div>
                   <label className='block text-xs font-medium text-gray-600 mb-1'>
-                    Start Date
+                    Start Date <span className='text-red-500'>*</span>
                   </label>
                   <DatePicker
                     disabled={fieldDisabled.startDate}
@@ -1743,7 +1887,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
               {!fieldVisibility.endDate && (
                 <div>
                   <label className='block text-xs font-medium text-gray-600 mb-1'>
-                    Due Date
+                    Due Date <span className='text-red-500'>*</span>
                   </label>
                   <DatePicker
                     disabled={fieldDisabled.endDate}
@@ -2100,6 +2244,37 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
           )}
         </div>
       </div>
+
+      {/* Backdrop */}
+      {isOpen && (
+        <div
+          className='fixed inset-0 bg-opacity-50 z-40'
+          style={{ top: '38.1px' }}
+          onClick={handleCloseAttempt}
+        />
+      )}
+
+      {/* Confirmation Popup */}
+      <ConfirmationPopup
+        isOpen={confirmationState.isOpen}
+        message={confirmationState.message}
+        onConfirm={() => {
+          confirmationState.onConfirm();
+          setConfirmationState((prev) => ({
+            ...prev,
+            isOpen: false,
+            message: '',
+          }));
+        }}
+        onCancel={() => {
+          confirmationState.onCancel();
+          setConfirmationState((prev) => ({
+            ...prev,
+            isOpen: false,
+            message: '',
+          }));
+        }}
+      />
     </>
   );
 };

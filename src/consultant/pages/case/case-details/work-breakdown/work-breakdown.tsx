@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
@@ -60,6 +61,7 @@ interface WorkBreakDownProps {
   caseEndDate?: string | null;
   isActionItemsExpanded?: boolean;
   setIsActionItemsExpanded?: (expanded: boolean) => void;
+  isCaseTeamCreated?: boolean;
 }
 
 const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
@@ -70,6 +72,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
   caseEndDate,
   isActionItemsExpanded,
   setIsActionItemsExpanded,
+  isCaseTeamCreated,
 }) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -648,9 +651,23 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
     [userData]
   );
 
+  const roleOptions = useMemo(
+    () =>
+      roleOptionsQuery?.data?.map((role) => ({
+        option: role.role_name,
+        value: role.rid,
+      })),
+    [roleOptionsQuery]
+  );
+
   const filterFields =
     tabParam === 'case_task'
-      ? getAssignGroupsFilterFields(memoizedStatus, assigneeOptions)
+      ? getAssignGroupsFilterFields(
+          permissionMap,
+          memoizedStatus,
+          assigneeOptions,
+          roleOptions
+        )
       : undefined;
 
   const handleFilter = () => {
@@ -706,6 +723,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
 
   const fieldHiddenMap = useMemo(
     () => ({
+      all_activities: !permissionMap['all_activities']?.read,
       taskName:
         !permissionMap['task_name']?.read && !permissionMap['task_name']?.edit,
       status:
@@ -791,9 +809,9 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
             setAppliedFilters={setAppliedFilters}
             setCurrentPage={setCurrentPage}
             handleFilter={handleFilter}
-            handleSorting={() => {}}
+            handleSorting={() => { }}
             sortFilterCount={0}
-            setSortFilterCount={() => {}}
+            setSortFilterCount={() => { }}
             showRefresh={tabParam === 'milestone'}
             onRefreshClick={onRefreshClick}
             // hideTabPanel={hideSection}
@@ -829,11 +847,10 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
       />
 
       <div
-        className={`border border-t-0 border-[#CBD6E2] ${
-          isActionItemsExpanded
+        className={`border border-t-0 border-[#CBD6E2] ${isActionItemsExpanded
             ? 'max-h-[calc(100vh-200px)]'
             : 'max-h-[calc(100vh-418px)]'
-        } overflow-auto`}
+          } overflow-auto`}
       >
         {tabParam === 'milestone' && (
           <>
@@ -892,6 +909,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
                 onAddCollaborator={handleAddCollaborator}
                 caseStartDate={caseStartDate}
                 caseEndDate={caseEndDate}
+                isCaseTeamCreated={isCaseTeamCreated}
               />
             )}
           </>

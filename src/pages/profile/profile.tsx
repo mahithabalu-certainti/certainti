@@ -4,10 +4,10 @@ import { RootState } from '../../store/store';
 import { AllPermissions } from '../../common-service';
 import { checkPermission } from '../../common-utils';
 import { AccessRestricted } from '../../components/account-restricted';
-import { UserDetailComponent } from '../../components';
+import { ProfileUserDetailComponent } from '../../components';
 import TextButton from '../../components/button/text-button';
-import { AccountHomeIcon, DetailsIcon } from '../../assets';
 import { useManageUserDetail } from '../../admin/service/manage-user-detail/manage-user-detail-service';
+import { AvatarIcon } from '../../assets';
 
 export const Profile: React.FC = () => {
   const { userId } = useSelector((state: RootState) => state.auth);
@@ -31,13 +31,15 @@ export const Profile: React.FC = () => {
   if (!isViewProfileEnable) return <AccessRestricted />;
 
   return (
-    <div className='flex flex-col h-[calc(100vh-64px)] w-full overflow-y-auto p-4 gap-3'>
+    <div className='flex flex-col w-full overflow-y-auto p-4 gap-3'>
       <div className='w-full h-[55px] min-h-[50px] px-4 flex items-center justify-between border border-[#CBD6E2] rounded-[4px]'>
         <div className='flex items-center justify-center'>
-          <AccountHomeIcon
-            alt='manage user'
-            className='h-7 w-7 bg-[#7D98B6] p-1.5 rounded'
-          />
+          <React.Suspense fallback={null}>
+            <AvatarIcon
+              alt='avatar-user'
+              className='h-8 w-8 bg-gray-300 p-1.5 rounded'
+            />
+          </React.Suspense>
           <div className='flex flex-col mx-2.5 pb-1'>
             <div className='font-semibold text-[#7D98B6] text-[12px] pt-1'>
               {`Profile > ${userDetail?.full_name ?? userFullName}`}
@@ -60,28 +62,10 @@ export const Profile: React.FC = () => {
           />
         </div>
       </div>
-      {/* User Details section  */}
-      <div className='flex flex-col gap-0 border border-[#CBD6E2] rounded-[2px]'>
-        <div className='flex items-center justify-between gap-4 h-[38px] py-1 px-2'>
-          <div className='flex items-center gap-2'>
-            <div className='w-[24px] h-[24px] flex items-center justify-center rounded-full bg-[#D7E5FF]'>
-              <DetailsIcon
-                alt='details'
-                className='[&>path]:stroke-[#294F98] w-[14px] h-[14px]'
-              />
-            </div>
-            <div className='text-[13px] text-[#2D3E4F] font-semibold'>
-              Details
-            </div>
-          </div>
-        </div>
-        <div>
-          <UserDetailComponent
-            data={userData}
-            loading={userDetails.isLoading}
-          />
-        </div>
-      </div>
+      <ProfileUserDetailComponent
+        data={userData}
+        loading={userDetails.isLoading}
+      />
     </div>
   );
 };

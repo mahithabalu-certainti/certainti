@@ -1,4 +1,10 @@
-import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import {
   useLocation,
   useNavigate,
@@ -19,6 +25,7 @@ import {
   InteractionListExportParams,
   ActivityListExportURLParams,
   ActivityType,
+  ProjectResourcesListParams,
 } from '../../../types';
 import {
   AllMenus,
@@ -34,6 +41,7 @@ import {
   ChecklistIcon,
   ComingSoon,
   DetailsIcon,
+  DetailsKeyContactErrorIcon,
   FinancialIcon,
   InteractionsIcon,
   NotesSideIcon,
@@ -75,6 +83,10 @@ import { ProjectTriggerAI } from '../../../services/project';
 import { BUTTON_STYLES } from '../../../../admin/pages/manage-user-detail/styles';
 import { CaseActivities } from './case-activities';
 import { ExportActivityList } from '../../../services/activities/activities-service';
+import { CaseProjectTask } from './case-project-task';
+import { ExportCaseProjectTasktList } from '../../../services/case-project-task/case-project-task-service';
+import { CaseProjectResource } from './case-project-resource';
+import { ExportCaseProjectResourceList } from '../../../services/case-project-resource/case-project-resource-service';
 
 export const CaseDetails = () => {
   const navigate = useNavigate();
@@ -87,13 +99,13 @@ export const CaseDetails = () => {
     (state: RootState) => state.permission
   );
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
+  const [refreshDetails, setRefreshDetails] = useState<number>(Date.now());
   const {
     data: caseData,
     isLoading,
     isError,
     isPending,
-  } = useCaseDetails(caseId ?? '', accountId ?? '');
+  } = useCaseDetails(caseId ?? '', accountId ?? '', refreshDetails);
   const isAssignProject = searchParams.get('assignProject');
   const projectDetails = searchParams.get('detailstab');
   const tabParam = searchParams.get('tab');
@@ -122,6 +134,7 @@ export const CaseDetails = () => {
   const checklistView = searchParams.get('checklist_id');
   const accountInActive =
     caseData?.account_status_name?.toLowerCase() !== 'active';
+  const isCaseTeamCreated = caseData?.is_case_team_created;
   const [caseProjectParams, setCaseProjectParams] =
     useState<CaseAssignedExportParams>({
       sort: 'project_code',
@@ -146,6 +159,25 @@ export const CaseDetails = () => {
     account_id: accountId ?? '',
   });
   const [reviewProjectParams, setReviewProjectParams] =
+    useState<ReviewProjectListURLParams>({
+      sortOrder: 'ASC',
+      sortBy: 'project_code',
+      filters: {},
+      timezone: '',
+      page: 1,
+      limit: 10,
+      search: '',
+    });
+  const [projectTaskParams, setProjectTaskParams] =
+    useState<ProjectResourcesListParams>({
+      sortOrder: 'ASC',
+      sortBy: 'resource_code',
+      page: 1,
+      limit: 10,
+      search: '',
+    });
+
+  const [projectResourceParams, setProjectResourceParams] =
     useState<ReviewProjectListURLParams>({
       sortOrder: 'ASC',
       sortBy: 'project_code',
@@ -288,7 +320,15 @@ export const CaseDetails = () => {
     permission,
     AllPermissions.PROJECTS_EXPORT
   );
+  const isProjectTaskExportEnable = checkPermission(
+    permission,
+    AllPermissions.PROJECTS_EXPORT
+  );
 
+  const isProjectResourceExportEnable = checkPermission(
+    permission,
+    AllPermissions.PROJECTS_RESOURCES_EXPORT
+  );
   const isCaseTaskExportEnable = checkPermission(
     permission,
     AllPermissions.CASES_WORKBREAKDOWN_EXPORT
@@ -310,7 +350,9 @@ export const CaseDetails = () => {
       searchParams.get('list') !== 'caseProjects' &&
       searchParams.get('list') !== 'workBreakdown' &&
       searchParams.get('tab') !== 'case_task' &&
-      searchParams.get('list') !== 'interactions'
+      searchParams.get('list') !== 'interactions' &&
+      searchParams.get('list') !== 'projectTask' &&
+      searchParams.get('list') !== 'projectResource'
     ) {
       return;
     }
@@ -363,6 +405,13 @@ export const CaseDetails = () => {
       ExportCaseTaskList(caseTaskParams);
     } else if (list === 'caseProjects' && exportType === 'review_projects') {
       ExportReviewProjectList(reviewProjectParams, accountId, caseId);
+    } else if (list === 'projectTask' && exportType === 'projectTask') {
+      ExportCaseProjectTasktList(projectTaskParams, accountId, caseId);
+    } else if (
+      list === 'projectResource' &&
+      exportType === 'project_resource'
+    ) {
+      ExportCaseProjectResourceList(projectResourceParams, accountId, caseId);
     }
     if (list === 'interactions') {
       if (interactionHistoryId) {
@@ -438,6 +487,10 @@ export const CaseDetails = () => {
       return !isCaseTaskExportEnable;
     } else if (list === 'interactions' && !interactionsView) {
       return !isInteractionsExportEnable;
+    } else if (list === 'projectTask') {
+      return !isProjectTaskExportEnable;
+    } else if (list === 'projectResource') {
+      return !isProjectResourceExportEnable;
     } else {
       return true;
     }
@@ -518,6 +571,7 @@ export const CaseDetails = () => {
               caseEndDate={caseData?.statutory_submission_date}
               isActionItemsExpanded={isActionItemsExpanded}
               setIsActionItemsExpanded={handleToggleActionItems}
+              isCaseTeamCreated={isCaseTeamCreated}
             />
           </div>
         );
@@ -547,6 +601,17 @@ export const CaseDetails = () => {
               accountInActive={accountInActive}
               setTableParams={setCaseProjectParams}
               setReviewProjectParams={setReviewProjectParams}
+              setExportType={setExportType}
+              setRefreshDetails={setRefreshDetails}
+            />
+          </div>
+        );
+      case 'projectTask':
+        return (
+          <div>
+            <CaseProjectTask
+              accountInActive={accountInActive}
+              setProjectTaskParams={setProjectTaskParams}
               setExportType={setExportType}
             />
           </div>
@@ -598,6 +663,14 @@ export const CaseDetails = () => {
             CaseDetails={caseData || null}
             loading={isLoading}
             setInteractionsParams={setInteractionsParams}
+            setExportType={setExportType}
+          />
+        );
+      case 'projectResource':
+        return (
+          <CaseProjectResource
+            accountInActive={accountInActive}
+            setProjectResourceParams={setProjectResourceParams}
             setExportType={setExportType}
           />
         );
@@ -679,14 +752,14 @@ export const CaseDetails = () => {
         icon: CasesIcon,
       },
       {
-        name: 'Project Resource',
+        name: 'Case Project Resource',
         key: 'projectResource',
         id: AllMenus.FINANCIAL_HIGHLIGHTS,
         disabled: false,
         icon: ResourcesIcon,
       },
       {
-        name: 'Project Task',
+        name: 'Case Project Task',
         key: 'projectTask',
         id: AllMenus.FINANCIAL_HIGHLIGHTS,
         disabled: false,
@@ -867,6 +940,22 @@ export const CaseDetails = () => {
             overflow: 'auto',
           }}
         >
+          {!isCaseTeamCreated && !isLoading && (
+            <div className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] px-3 py-2 border-box'>
+              <div>
+                <React.Suspense fallback={null}>
+                  <DetailsKeyContactErrorIcon alt='key-contact' />
+                </React.Suspense>
+              </div>
+              <div>
+                <span className='font-bold mr-1 capitalize'>Case Team</span>-
+                <span className='ml-1 font-medium'>
+                  Case team setup is missing. Please create a case team before
+                  marking the task as complete.
+                </span>
+              </div>
+            </div>
+          )}
           <Suspense fallback={null}>{renderContent()}</Suspense>
         </div>
       </div>
