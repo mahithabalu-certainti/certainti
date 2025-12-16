@@ -29,15 +29,22 @@ export class HistoricalSubmissionSchemaService {
     CaseHistorySubmission: any,
     account_rid: string,
     fiscal_year: string,
+    country_rid: string,
+    state_rid: string,
     excludeRid?: string
   ): Promise<boolean> {
     const whereClause: any = {
       account_rid,
-      fiscal_year
+      fiscal_year,
+      country_rid
     };
 
     if (excludeRid) {
       whereClause.rid = { [Op.ne]: excludeRid };
+    }
+
+    if(state_rid != null) {
+      whereClause.state_rid = state_rid;
     }
 
     const existing = await CaseHistorySubmission.findOne({
@@ -120,6 +127,8 @@ export class HistoricalSubmissionSchemaService {
           CaseHistorySubmission,
           historySubmissionRequest.account_rid,
           submission.fiscal_year,
+          submission.country_rid,
+          submission.state_rid || "",
           submission.history_submission_rid 
         );
 
@@ -198,7 +207,9 @@ export class HistoricalSubmissionSchemaService {
         const isUnique = await this.checkUniqueFiscalYear(
           CaseHistorySubmission,
           historySubmissionRequest.account_rid,
-          submission.fiscal_year
+          submission.fiscal_year,
+          submission.country_rid,
+          submission.state_rid || ""
         );
 
         if (!isUnique) {
@@ -305,8 +316,10 @@ export class HistoricalSubmissionSchemaService {
         account_rid: data.account_rid,
         country_rid: data.country_rid
       };
-      if (data.state_rid != null) {
+      if (data.state_rid != null && data.state_rid !== "") {
         whereConditions.state_rid = data.state_rid;
+      } else {
+        whereConditions.state_rid = { [Op.or]: [{ [Op.is]: null }, ""] };
       }
       const queryOptions: any = {
         where: whereConditions,
