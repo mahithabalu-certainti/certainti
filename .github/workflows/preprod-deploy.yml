@@ -155,7 +155,7 @@ jobs:
           EMAIL_WEBHOOK_URL='https://preprod-thinkrd365-api-management.azure-api.net/interactionService/api/email/webhook'
           CLIENT_SECRET_ENCRYPTION_KEY='client-secret-encryption-key'
           CLIENT_SECRET_ENCRYPTION_LENGTH=16
-          AZURE_CONTAINER_NAME="account"
+          AZURE_CONTAINER_NAME="user"
           EOF
 
           echo "$ENV_FILE file created successfully!"
