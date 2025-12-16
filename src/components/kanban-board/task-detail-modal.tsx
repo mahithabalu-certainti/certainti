@@ -714,6 +714,9 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     // Fields that should be editable only by the creator
     const creatorOnlyFieldsDisabled = !isCreator;
 
+    const shouldDisableStatus =
+      typeof isCaseTeamCreated === 'boolean' ? !isCaseTeamCreated : false;
+
     return {
       ...fieldDisabled,
       checklistTemplate:
@@ -725,7 +728,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       linkTaskType: fieldDisabled.linkTaskType || creatorOnlyFieldsDisabled,
       weightage: fieldDisabled.weightage || creatorOnlyFieldsDisabled,
       category: fieldDisabled.category || creatorOnlyFieldsDisabled,
-      status: fieldDisabled.status || !isCaseTeamCreated,
+      status: fieldDisabled.status || shouldDisableStatus,
     };
   }, [
     editedTask?.checklist,

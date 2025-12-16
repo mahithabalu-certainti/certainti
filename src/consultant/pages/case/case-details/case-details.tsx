@@ -99,14 +99,13 @@ export const CaseDetails = () => {
     (state: RootState) => state.permission
   );
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const [refreshDetails, setRefreshDetails] = useState<number>(Date.now());
   const {
     data: caseData,
     isLoading,
     isError,
     isPending,
     refetch: refetchCaseDetails,
-  } = useCaseDetails(caseId ?? '', accountId ?? '', refreshDetails);
+  } = useCaseDetails(caseId ?? '', accountId ?? '');
   const isAssignProject = searchParams.get('assignProject');
   const projectDetails = searchParams.get('detailstab');
   const tabParam = searchParams.get('tab');
@@ -604,7 +603,7 @@ export const CaseDetails = () => {
               setTableParams={setCaseProjectParams}
               setReviewProjectParams={setReviewProjectParams}
               setExportType={setExportType}
-              setRefreshDetails={setRefreshDetails}
+              refetchCaseDetails={refetchCaseDetails}
             />
           </div>
         );
@@ -756,14 +755,14 @@ export const CaseDetails = () => {
       {
         name: 'Case Project Resource',
         key: 'projectResource',
-        id: AllMenus.FINANCIAL_HIGHLIGHTS,
+        id: AllMenus.PROJECT_RESOURCES,
         disabled: false,
         icon: ResourcesIcon,
       },
       {
         name: 'Case Project Task',
         key: 'projectTask',
-        id: AllMenus.FINANCIAL_HIGHLIGHTS,
+        id: AllMenus.PROJECT_TASK,
         disabled: false,
         icon: ProjectsSideIcon,
       },
