@@ -6,7 +6,7 @@ import ScopeController from "../controllers/workflowRuleScopeMapController";
 import AuditController from "../controllers/workflowRuleAuditController";
 import TriggerController from "../controllers/workflowRuleTriggerLogController";
 import ScheduleController from "../controllers/workflowRuleScheduleQueueController";
-import WorkFlowController from "../controllers/workFlowController";
+import WorkFlowController from "../controllers/workflowRulecontroller";
 
 const router = Router();
 
