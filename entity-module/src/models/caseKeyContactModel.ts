@@ -22,16 +22,15 @@ interface CaseKeyContactDetailsAttributes {
   include_in_communication?: boolean | null;
   interaction_cc_recipient?: boolean | null;
   status_rid?: string | null;
-  interaction_recipient?: boolean | null;
+
 }
 
 export interface CaseKeyContactDetailsCreationAttributes
-  extends Optional<CaseKeyContactDetailsAttributes, "rid"> {}
+  extends Optional<CaseKeyContactDetailsAttributes, "rid"> { }
 
 export class CaseKeyContactDetails
   extends Model<CaseKeyContactDetailsAttributes, CaseKeyContactDetailsCreationAttributes>
-  implements CaseKeyContactDetailsAttributes
-{
+  implements CaseKeyContactDetailsAttributes {
   public rid!: string;
   public r_number?: string | null;
   public created_by?: string | null;
@@ -51,7 +50,7 @@ export class CaseKeyContactDetails
   public include_in_communication?: boolean | null;
   public interaction_cc_recipient?: boolean | null;
   public status_rid?: string | null;
-  public interaction_recipient?: boolean | null;
+
 
   static initialize(
     sequelize: Sequelize,
@@ -139,10 +138,7 @@ export class CaseKeyContactDetails
           type: DataTypes.STRING(50),
           allowNull: true,
         },
-        interaction_recipient: {
-          type: DataTypes.BOOLEAN,
-          allowNull: true,
-        },
+
       },
       {
         sequelize,

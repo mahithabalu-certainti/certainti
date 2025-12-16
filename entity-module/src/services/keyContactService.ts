@@ -156,6 +156,68 @@ export class KeyContactService {
     });
   }
 
+  async insertCaseKeyContactDetails(
+    key_contact: IUpdateKeyContactDetail,
+    userId: string,
+    CaseKeyContactDetails: any,
+    Case: any,
+    projectCaseMapping: any[],
+    projectId: string,
+    keyContactRid?: string
+  ) {
+    try {
+
+      if (projectCaseMapping.length > 0) {
+        for (const caseMapping of projectCaseMapping) {
+
+          const caseData = await Case.findOne({
+            where: {
+              rid: caseMapping.case_rid,
+            },
+          });
+
+          if (!caseData) {
+            continue;
+          }
+          const mainSequelize = await initMainDbSequelize();
+
+          const caseStatus = await mainSequelize.query(
+            rawQueries.fetchCaseStatusByRid(caseData.status_rid),
+            {
+              type: "SELECT",
+            }
+          ) as CaseStatusResult[];
+
+          if (caseStatus[0]?.status_name === "Closed") {
+            continue;
+          }
+
+          const keyContactDetails = key_contact;
+
+          await CaseKeyContactDetails.create({
+            key_contact_rid: keyContactRid || keyContactDetails.rid,
+            key_contact_name: keyContactDetails.key_contact_name || null,
+            key_contact_email: keyContactDetails.key_contact_email || null,
+            key_contact_role: keyContactDetails.key_contact_role || null,
+            status_rid: keyContactDetails.status_rid || null,
+            is_primary_contact: keyContactDetails.is_primary_contact || null,
+            interaction_cc_recipient: keyContactDetails.interaction_cc_recipient || null,
+            include_in_communication:
+              keyContactDetails.include_in_communication === null ? null : keyContactDetails.include_in_communication,
+            entity_rid: projectId,
+            created_by: userId,
+            entity_type: "Project",
+            case_project_rid: caseMapping.rid,
+            case_rid: caseMapping.case_rid,
+            account_rid: caseData.account_rid,
+          });
+        }
+      }
+    } catch (error) {
+      logMessage(`Error updating key contact details: ${error instanceof Error ? error.message : error}`);
+      throw error;
+    }
+  }
   async updateCaseKeyContactDetails(
     key_contact: IUpdateKeyContactDetail,
     userId: string,
@@ -276,7 +338,7 @@ export class KeyContactService {
   ) {
     try {
       const keyContactDetails = keyContacts;
-      await KeyContactModel.create({
+      const createdContact = await KeyContactModel.create({
         key_contact_name: keyContactDetails.key_contact_name || null,
         key_contact_email: keyContactDetails.key_contact_email || null,
         key_contact_role: keyContactDetails.key_contact_role || null,
@@ -289,6 +351,7 @@ export class KeyContactService {
         created_by: userId,
         entity_type: "Project",
       });
+      return createdContact;
     } catch (error) {
       logMessage(`Error inserting key contact details: ${error instanceof Error ? error.message : error}`);
       throw error;
