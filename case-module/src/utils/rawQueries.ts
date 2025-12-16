@@ -1771,7 +1771,7 @@ export const listAllJurisdictionConfig = (
             jc.effective_end_date,g.is_federal,
             uc.first_name || ' ' || uc.last_name AS created_user_name,
             um.first_name || ' ' || um.last_name AS modified_user_name,
-            jc.credit_config_group_rid,g.country_rid,c.country_name,
+            jc.credit_config_group_rid,g.country_rid,c.country_name,c.country_code,
             g.state_rid,st.state_name
             FROM
             ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values jc
@@ -1782,7 +1782,7 @@ export const listAllJurisdictionConfig = (
              LEFT JOIN ${MAIN_SCHEMA_NAME}.user uc ON uc.rid = jc.created_by
              LEFT JOIN ${MAIN_SCHEMA_NAME}.user um ON um.rid = jc.modified_by
               WHERE
-    (jc.r_number ILIKE '${searchValue}')
+    (jc.r_number ILIKE '${searchValue}' OR CONCAT('C','-',c.country_code, '-', (CASE WHEN g.is_federal = false AND st.state_name IS NOT NULL AND st.state_name != '' THEN st.state_name || '-' ELSE '' END), jc.config_name ) ILIKE '${searchValue}' )
     and jc.federal_config_id is null
     ${joinedConditions}
     ),
@@ -1812,7 +1812,8 @@ export const listAllJurisdictionConfig = (
         'country_rid', i.country_rid,
         'country_name', i.country_name,
         'state_rid', i.state_rid,
-        'state_name', i.state_name
+        'state_name', i.state_name,
+        'country_code', i.country_code
         ) ) AS jurisdiction_config_list
 
         FROM

@@ -1681,9 +1681,13 @@ export const filterTypesForJurisdictionConfig: Record<string, any> = {
   created_user_name: "string",
   modified_user_name: "string",
   status_rid: "string",
-  effective_start_date: "date",
-  effective_end_date: "date",
+  effective_start_date: "datetime",
+  effective_end_date: "datetime",
   createdAt: "datetime",
+  config_name: "string",
+  state_rid: "string",
+  country_rid: "string",
+  is_federal: "boolean"
 };
 
 export const filtersColumnsForJurisdictionConfig: Record<string, string> = {
@@ -1696,7 +1700,11 @@ export const filtersColumnsForJurisdictionConfig: Record<string, string> = {
   status_name: "status_name",
   createdAt: "createdAt",
   effective_start_date: "effective_start_date",
-  effective_end_date: "effective_end_date"
+  effective_end_date: "effective_end_date",
+  state_rid: "state_rid",
+  country_rid: "country_rid",
+  is_federal: "is_federal",
+  config_name: "config_name"
 
 };
 

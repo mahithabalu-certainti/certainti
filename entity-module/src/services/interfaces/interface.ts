@@ -675,6 +675,21 @@ export interface IImportListGraphqlServices {
       }
   >;
 
+  listAllWarnings(
+    account_rid: string,
+    rid: string,
+    entity_type: string
+  ): Promise<
+    | {
+        statusCode: number;
+        data: {};
+      }
+    | {
+        statusCode: number;
+        data: null;
+      }
+  >;
+
   fetchAccountLevelImportedProjects(
     accountId: string,
     fiscal_year: number,

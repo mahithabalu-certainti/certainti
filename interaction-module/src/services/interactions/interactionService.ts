@@ -3880,7 +3880,7 @@ export class InteractionService {
     return {
       statusCode: HttpStatus.SUCCESS,
       message: "Account found",
-      data: { account_number: accountInfo.account_number },
+      data: { account_number: accountInfo.r_number },
     };
 }
 }
