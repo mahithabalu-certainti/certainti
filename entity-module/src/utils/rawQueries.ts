@@ -355,10 +355,22 @@ export const fetchImportListByRid = (rid: string, schemaName: string) => {
     'status_description', i.upload_failure_reason,
     'imported_on', i.uploaded_datetime,
     'imported_by', i.uploaded_by_user_rid,
-    'records_loaded_successfully', ((COALESCE(i.total_staging_processed, 0) - COALESCE(i.target_load_error_records_count, 0))),
-    'records_failed_to_load', i.target_load_error_records_count,
-    'records_failed_to_stage', (COALESCE(i.total_records,0) - COALESCE(i.total_staging_processed, 0)),
-    'records_with_warning', i.total_staging_warning_count,
+    'records_loaded_successfully', (SELECT CASE WHEN 
+        ii.target_load_end_timestamp IS NOT NULL
+        THEN ((COALESCE(ii.total_staging_processed, 0) - COALESCE(ii.target_load_error_records_count, 0)))
+        ELSE 0
+        END AS records_loaded_successfully FROM ${schemaName}.import ii WHERE ii.rid = i.rid),
+    'records_failed_to_load', (SELECT CASE WHEN 
+        iii.target_load_end_timestamp IS NOT NULL 
+        THEN (COALESCE(iii.target_load_error_records_count,0) + (COALESCE(iii.total_records, 0) - COALESCE(iii.total_staging_processed,0)))
+        ELSE 0
+        END AS records_failed_to_load FROM ${schemaName}.import iii WHERE iii.rid = i.rid),
+    'records_failed_to_stage', (SELECT CASE WHEN im.target_load_end_timestamp IS NOT NULL THEN COALESCE(im.total_records,0) - COALESCE(im.total_staging_processed, 0) ELSE 0 END AS failed_to_stage 
+    FROM ${schemaName}.import im WHERE im.rid = i.rid
+    ),
+    'records_with_warning', 
+    (SELECT CASE WHEN iiii.target_load_end_timestamp IS NOT NULL THEN iiii.total_staging_warning_count ELSE 0 END AS total_staging_warning_count
+    FROM ${schemaName}.import iiii WHERE iiii.rid = i.rid),
     'document_url', d.document_url,
     'document_rid', i.document_rid
     ) AS imports
