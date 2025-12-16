@@ -31,7 +31,7 @@ export const ManageGeoBasedRuleList: React.FC = () => {
   const [tableParams, setTableParams] = useState<GeoBasedRuleListParams>({
     page: page,
     limit: 100,
-    sortBy: 'config_name', // Assumed default sort
+    sortBy: 'r_number', // Assumed default sort
     sortOrder: 'ASC',
   });
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
@@ -101,8 +101,7 @@ export const ManageGeoBasedRuleList: React.FC = () => {
       onClick: () =>
         ExportConfigRuleList({
           ...tableParams,
-          filter: appliedFilters,
-          //   timezone: systemTimezone,
+          filters: appliedFilters as any,
         }),
     },
   ];
