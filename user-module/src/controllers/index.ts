@@ -24,8 +24,9 @@ import {
   listUserGroupUser
 } from "./userGroupController";
 import { listSettings, updateSettings } from "./settingsController";
+import { listNotifications,updateNotificationStatus } from "./notificationController";
 
-import { get } from "http";
+
 const controller = {
   userController: {
     createUser,
@@ -67,6 +68,10 @@ const controller = {
   settingsController:{
     updateSettings,
     listSettings
+  },
+  notificationController:{
+    listNotifications,
+    updateNotificationStatus
   }
 };
 

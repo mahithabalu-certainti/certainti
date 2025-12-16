@@ -1,0 +1,98 @@
+
+import { constants, statusMessage } from "../utils/constant";
+ const { Op } = require('sequelize');
+import { Notification } from "../models/notificationModel";
+import { NotificationStatus } from "../models/notificationStatusModel";
+class NotificationService {
+
+  /**
+   * Retrieves all notifications for a given user, including their status details.
+   *
+   * @param {string} userId - The ID of the user whose notifications are to be listed.
+   * @returns {Promise<object>} - A promise resolving to an object containing the notifications array.
+   *
+   * This method:
+   * - Fetches all notifications for the user (filtering by userId can be added if needed).
+   * - Includes notification status details (status_description, status_name) via association.
+   * - Returns a structured response with status code, message, and notifications data.
+   */
+  async listNotifications(userId: string): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { notifications: any };
+  }> {
+    const { count, rows } = await Notification.findAndCountAll({
+      //    where: { user_rid: userId }, // Uncomment to filter by user
+      //    limit,
+      //    offset,
+      //    order,
+      include: [
+        {
+          model: NotificationStatus,
+          as: "notificationstatus",
+          attributes: ["status_description", "status_name"],
+          required: false,
+        },
+      ],
+    });
+    return {
+      statusCode: constants.SUCCESS,
+      message: statusMessage.orgRetrieved,
+      data: {
+        notifications: rows,
+      },
+    };
+  }
+
+
+  /**
+   * Updates all notifications for a user from 'Unread' to 'Read' status.
+   *
+   * @param {string} userId - The ID of the user whose notifications should be marked as read.
+   * @returns {Promise<object>} - A promise resolving to an object with the update result.
+   *
+   * This method:
+   * - Fetches the rids for both 'Read' and 'Unread' statuses from NotificationStatus.
+   * - Updates all notifications for the user with 'Unread' status to 'Read' status.
+   * - Sets modified_by and modified_datetime fields accordingly.
+   * - Returns a structured response with status code, message, and update result.
+   */
+  async updateNotificationStatus(userId: string): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { notifications: any };
+  }> {
+    const notificationStatuses: NotificationStatus[] = await NotificationStatus.findAll({
+      where: {
+        status_name: { [Op.in]: ['Read', 'Unread'] }
+      }
+    });
+    const readStatus = notificationStatuses.find(s => s.status_name === 'Read');
+    const unreadStatus = notificationStatuses.find(s => s.status_name === 'Unread');
+    const result = await Notification.update(
+      {
+        status_rid: readStatus?.rid, // Set to 'Read' status rid
+        modified_by: userId,
+        modified_datetime: new Date(),
+      },
+      {
+        where: {  
+          user_rid: userId,
+          status_rid: unreadStatus?.rid // Only update notifications with 'Unread' status
+        }
+      }
+    );
+    return {
+      statusCode: constants.SUCCESS,
+      message: statusMessage.orgRetrieved,
+      data: {
+        notifications: result,
+      },
+    };
+  }
+
+}
+
+export default NotificationService;
