@@ -455,10 +455,18 @@ export class JurisdictionSchemaService {
         jurisdictionConfigQuery,
         { type: "SELECT" }
       );
-      return {
+      if(result && result?.jurisdiction_config_list != null){
+       return {
         result: result.jurisdiction_config_list,
-        count: result.jurisdiction_config_list[0]?.total_records || 0,
+        count: result?.jurisdiction_config_list[0]?.total_records || 0,
       };
+      } else {
+        return {
+          result: [],
+          count: 0,
+        };
+      }
+      
     } catch (err) {
       logMessage(`Error in listing jurisdiction config: ${err}`);
       errorLog(
@@ -490,7 +498,8 @@ export class JurisdictionSchemaService {
           switch (filterTypes[key]) {
             case "string": {
               let dynamicReference = `jc`;
-
+              if (filteredColumns == "country_rid") dynamicReference = `g`;
+              if (filteredColumns == "state_rid") dynamicReference = `g`;
               const stringCondition = buildStringFilterCondition(
                 condition,
                 values,
