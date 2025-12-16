@@ -62,6 +62,7 @@ interface TaskDetailModalPropsExtended
   availableTagOptions?: Array<{ id: string; name: string; color: string }>;
   accountId: string;
   caseId: string;
+  projectId?: string;
   onAddComment?: (
     taskId: string,
     comment: string,
@@ -94,6 +95,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   onAddCollaborator,
   accountId,
   caseId,
+  projectId,
   fieldVisibility = {},
   fieldDisabled = {},
   caseStartDate,
@@ -1229,7 +1231,12 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
           // Use activities API for tasks opened from activities page
           const activityPayload = {
             task_rid: taskId,
-            attach_to: editedTask.case_rid || caseId || accountId,
+            attach_to:
+              entityLevel === 'project'
+                ? projectId || accountId
+                : entityLevel === 'case'
+                  ? editedTask.case_rid || caseId || accountId
+                  : accountId,
             attachment_level:
               entityLevel ||
               (editedTask.case_rid || caseId ? 'case' : 'account'),

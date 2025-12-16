@@ -38,11 +38,13 @@ interface TaskDetailsProps {
   tabValue: ActivityType;
   entityLevel: 'account' | 'case' | 'project';
   caseId?: string;
+  projectId?: string;
 }
 
 const TaskDetails: React.FC<TaskDetailsProps> = ({
   entityLevel,
   caseId: propCaseId,
+  projectId: propProjectId,
 }) => {
   const navigate = useNavigate();
   const { successToast, errorToast } = useToast();
@@ -500,6 +502,7 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
         onClose={handleBackClick}
         accountId={accountId || accountid || ''}
         caseId={effectiveCaseId || ''}
+        projectId={propProjectId}
         onTaskUpdate={handleTaskSaved}
         statusData={statusData}
         priorityData={priorityData}
