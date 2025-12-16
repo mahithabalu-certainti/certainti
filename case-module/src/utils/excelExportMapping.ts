@@ -256,6 +256,11 @@ export const taskactivityFieldMappings = [
     dataField: "r_number",
   },
   {
+    permissionField: "task_name",
+    exportField: "Task Name",
+    dataField: "task_name",
+  },
+  {
     permissionField: "status_rid",
     exportField: "Status",
     dataField: "status_name",
