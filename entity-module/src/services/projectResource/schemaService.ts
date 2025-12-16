@@ -942,7 +942,7 @@ export class ProjectResourceSchemaService {
     resourceId: string,
     countryId: string | null,
     transaction: Transaction
-  ): Promise<boolean> {
+  ): Promise<any> {
     const { ProjectResourceFiscal } = await this.getModels(accountNumber);
 
     const isExists = await ProjectResourceFiscal.findOne({
@@ -952,6 +952,33 @@ export class ProjectResourceSchemaService {
         country_rid: countryId ? countryId : null,
         project_fiscal_rid: projectId,
         resource_rid: resourceId,
+      },
+      transaction,
+    });
+
+    return isExists;
+  }
+
+  async existsInCaseProjectResourceFiscalTable(
+    accountNumber: string,
+    accountId: string,
+    fiscalYear: number,
+    projectId: string,
+    resourceId: string,
+    countryId: string | null,
+    transaction: Transaction,
+    caseMapping: any,
+  ): Promise<boolean> {
+    const { CaseProjectResourceFiscal } = await this.getModels(accountNumber);
+
+    const isExists = await CaseProjectResourceFiscal.findOne({
+      where: {
+        account_rid: accountId,
+        fiscal_year: fiscalYear,
+        country_rid: countryId ? countryId : null,
+        project_fiscal_rid: projectId,
+        resource_rid: resourceId,
+        case_rid: caseMapping.case_rid,
       },
       transaction,
     });
@@ -2223,7 +2250,8 @@ export class ProjectResourceSchemaService {
         bonus: projectResourceData.bonus || null,
         deductions: projectResourceData.deductions || null,
         insurance: projectResourceData.insurance || null,
-        project_resource_role: projectResourceData.project_resource_role || null
+        project_resource_role: projectResourceData.project_resource_role || null,
+        r_number: projectResource.r_number || null,
       },
       {
         transaction,
