@@ -355,6 +355,15 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
   }
 
   function handleRemoveTeamMember(index: number) {
+    const memberToRemove = formData.team_members[index];
+
+    if ((memberToRemove.assigned_task_count || 0) >= 1) {
+      errorToast(
+        `Cannot remove user. Please unassign the ${memberToRemove.assigned_task_count} assigned tasks before proceeding.`
+      );
+      return;
+    }
+
     setFormData((prev) => {
       const updatedMembers = prev.team_members.filter((_, i) => i !== index);
       return {

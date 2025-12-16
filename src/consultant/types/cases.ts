@@ -306,3 +306,14 @@ export interface CaseOwnersResponse {
     caseOwners: CaseOwner[];
   };
 }
+
+export interface CaseSubmissionDate {
+  caseSubmissionDate: string;
+}
+
+export interface CaseSubmissionDateResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: CaseSubmissionDate;
+}

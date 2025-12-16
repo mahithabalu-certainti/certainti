@@ -32,12 +32,14 @@ export const CaseFormData = (
     planned_max: string;
     statutory_min: string;
     statutory_max: string;
+    start_date_max: string;
   },
   caseNamePrefix?: string,
   selectedCountryRid?: string,
   selectedAccountNumber?: string,
   selectedFiscalYear?: string,
-  globalType?: boolean
+  globalType?: boolean,
+  calculatedStatutoryDate?: string
 ): FormType[] => {
   return useMemo(
     () => [
@@ -206,6 +208,9 @@ export const CaseFormData = (
             customDateOpen: selectedFiscalYear
               ? new Date(`${Number(selectedFiscalYear) - 1}-04-01`)
               : undefined,
+            maxDate: dateConstraints?.start_date_max
+              ? new Date(dateConstraints.start_date_max)
+              : undefined,
             disabled:
               isEditView &&
               !permissionMap?.['start_date']?.edit &&
@@ -258,13 +263,16 @@ export const CaseFormData = (
                 ? new Date(dateConstraints.statutory_max)
                 : undefined,
               disabled:
-                isEditView &&
-                !permissionMap?.['statutory_submission_date']?.edit &&
-                permissionMap?.['statutory_submission_date']?.read,
+                !isEditView ||
+                (isEditView &&
+                  !permissionMap?.['statutory_submission_date']?.edit &&
+                  permissionMap?.['statutory_submission_date']?.read),
               hide:
                 isEditView &&
                 !permissionMap?.['statutory_submission_date']?.edit &&
                 !permissionMap?.['statutory_submission_date']?.read,
+              defaultValue: calculatedStatutoryDate,
+              assignDefaultValue: true,
             }
           ),
         ],
@@ -359,6 +367,7 @@ export const CaseFormData = (
       selectedAccountNumber,
       selectedFiscalYear,
       globalType,
+      calculatedStatutoryDate,
     ]
   );
 };

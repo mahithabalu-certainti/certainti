@@ -51,17 +51,17 @@ interface TaskCommentsSectionProps {
     files: File[]
   ) => Promise<void>;
   onUpdateComment?:
-    | ((
-        commentId: string,
-        comment: string,
-        taskId: string,
-        files?: File[],
-        deletedFileIds?: string[]
-      ) => Promise<void>)
-    | undefined;
+  | ((
+    commentId: string,
+    comment: string,
+    taskId: string,
+    files?: File[],
+    deletedFileIds?: string[]
+  ) => Promise<void>)
+  | undefined;
   onDeleteComment:
-    | ((commentId: string, taskId: string) => Promise<void>)
-    | undefined;
+  | ((commentId: string, taskId: string) => Promise<void>)
+  | undefined;
   loadingComments?: boolean;
   loadingActivities?: boolean;
   useInfiniteScroll?: boolean; // New prop to enable infinite scrolling
@@ -627,11 +627,10 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
       <div className='flex gap-6 mb-6 border-b border-gray-200'>
         <button
           onClick={() => setActiveTab('comments')}
-          className={`text-sm font-semibold pb-3 px-1 transition-all duration-200 ${
-            activeTab === 'comments'
+          className={`text-sm font-semibold pb-3 px-1 transition-all duration-200 ${activeTab === 'comments'
               ? 'text-gray-900 border-b-2 border-blue-600'
               : 'text-gray-600 hover:text-gray-800 border-b-2 border-transparent'
-          }`}
+            }`}
         >
           Comments{' '}
           {totalCommentsCount > 0 && (
@@ -643,11 +642,10 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
         {!fieldVisibility.all_activities && (
           <button
             onClick={() => setActiveTab('activity')}
-            className={`text-sm font-semibold pb-3 px-1 transition-all duration-200 ${
-              activeTab === 'activity'
+            className={`text-sm font-semibold pb-3 px-1 transition-all duration-200 ${activeTab === 'activity'
                 ? 'text-gray-900 border-b-2 border-blue-600'
                 : 'text-gray-600 hover:text-gray-800 border-b-2 border-transparent'
-            }`}
+              }`}
           >
             Activity{' '}
             {totalActivitiesCount > 0 && (
@@ -739,9 +737,12 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                           <textarea
                             ref={editTextareaRef}
                             value={editingCommentText}
-                            onChange={(e) =>
-                              setEditingCommentText(e.target.value)
-                            }
+                            onChange={(e) => {
+                              setEditingCommentText(e.target.value);
+                              if (e.target.value.length <= 2000) {
+                                setCommentError(null);
+                              }
+                            }}
                             className='w-full bg-white border border-gray-300 rounded-lg p-3 text-sm resize-none focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900 placeholder-gray-500 min-h-[100px] pr-8'
                             placeholder='Edit your comment'
                             disabled={isUpdating}
@@ -769,20 +770,18 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                                   return (
                                     <div
                                       key={att.rid}
-                                      className={`flex items-center justify-between p-2 rounded text-xs ${
-                                        isMarkedForDeletion
+                                      className={`flex items-center justify-between p-2 rounded text-xs ${isMarkedForDeletion
                                           ? 'bg-red-50 text-gray-400'
                                           : 'bg-gray-50 text-gray-700'
-                                      }`}
+                                        }`}
                                     >
                                       <div className='flex items-center gap-2 overflow-hidden min-w-0'>
                                         <PaperclipIcon className='w-3 h-3 text-gray-600 flex-shrink-0' />
                                         <span
-                                          className={`truncate ${
-                                            isMarkedForDeletion
+                                          className={`truncate ${isMarkedForDeletion
                                               ? 'line-through'
                                               : ''
-                                          }`}
+                                            }`}
                                           title={att.documentName}
                                         >
                                           {att.documentName}
@@ -797,17 +796,16 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                                         onClick={() =>
                                           isMarkedForDeletion
                                             ? handleUndoRemoveExistingAttachment(
-                                                att.rid
-                                              )
+                                              att.rid
+                                            )
                                             : handleRemoveExistingAttachment(
-                                                att.rid
-                                              )
+                                              att.rid
+                                            )
                                         }
-                                        className={`ml-2 p-1 rounded hover:bg-opacity-80 ${
-                                          isMarkedForDeletion
+                                        className={`ml-2 p-1 rounded hover:bg-opacity-80 ${isMarkedForDeletion
                                             ? 'text-green-600 hover:bg-green-100'
                                             : 'text-red-600 hover:bg-red-100'
-                                        }`}
+                                          }`}
                                         title={
                                           isMarkedForDeletion
                                             ? 'Undo delete'
@@ -897,9 +895,9 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                               isUpdating ||
                               (!editingCommentText.trim() &&
                                 (commentItem.attachments?.length || 0) -
-                                  editingDeletedFileIds.length +
-                                  editingNewFiles.length <=
-                                  0) ||
+                                editingDeletedFileIds.length +
+                                editingNewFiles.length <=
+                                0) ||
                               (!editingNewFiles.length &&
                                 !editingDeletedFileIds.length &&
                                 isCommentUnchanged(
@@ -936,11 +934,10 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
 
                             {/* Action Icons - Hover Reveal */}
                             <div
-                              className={`flex gap-2 flex-shrink-0 transition-opacity duration-200 ${
-                                hoveredCommentId === commentItem.id
+                              className={`flex gap-2 flex-shrink-0 transition-opacity duration-200 ${hoveredCommentId === commentItem.id
                                   ? 'opacity-100'
                                   : 'opacity-0'
-                              }`}
+                                }`}
                             >
                               <Suspense fallback={null}>
                                 {!fieldDisabled.comments && (
@@ -1008,13 +1005,13 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                                         </a>
                                         {(att.uploadedBy ||
                                           att.uploadedDate) && (
-                                          <p className='text-xs text-gray-500 mt-0.5'>
-                                            Uploaded by{' '}
-                                            {att.uploadedBy || 'Unknown'} on{' '}
-                                            {att.uploadedDate ||
-                                              'Recently uploaded'}
-                                          </p>
-                                        )}
+                                            <p className='text-xs text-gray-500 mt-0.5'>
+                                              Uploaded by{' '}
+                                              {att.uploadedBy || 'Unknown'} on{' '}
+                                              {att.uploadedDate ||
+                                                'Recently uploaded'}
+                                            </p>
+                                          )}
                                       </div>
                                     </div>
                                   </div>
@@ -1098,7 +1095,12 @@ const TaskCommentsSection: React.FC<TaskCommentsSectionProps> = ({
                     <textarea
                       ref={textareaRef}
                       value={comment}
-                      onChange={(e) => setComment(e.target.value)}
+                      onChange={(e) => {
+                        setComment(e.target.value);
+                        if (e.target.value.length <= 2000) {
+                          setCommentError(null);
+                        }
+                      }}
                       placeholder='Add your comment here...'
                       className='w-full bg-white border border-gray-300 rounded-lg p-3 text-sm resize-none focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900 placeholder-gray-500 min-h-[100px] pr-8'
                       disabled={fieldDisabled.comments || isAddingComment}
