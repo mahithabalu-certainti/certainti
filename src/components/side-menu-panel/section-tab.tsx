@@ -150,6 +150,11 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
   if (hideTabPanel) {
     return null;
   }
+
+  const visibleActivityMenuItems = activityMenuItems.filter(
+    (item) => !item.hide
+  );
+
   return (
     <Box>
       <Box className='flex justify-between items-center mb-2'>
@@ -286,7 +291,7 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
           )}
 
           <React.Suspense fallback={null}>
-            {showAddActivity && (
+            {showAddActivity && visibleActivityMenuItems?.length > 0 && (
               <ActivityDropdown
                 menuItems={activityMenuItems || []}
                 label='Add Activity'
