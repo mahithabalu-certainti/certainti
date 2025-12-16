@@ -16,12 +16,6 @@ export const transformGeoBasedRulePayload = (
         effective_end_date: formData.effective_end_date || '',
     };
 
-    // Only include state_rid when is_federal is false (No)
-    if (!isFederal && formData.region) {
-        payload.state_rid = formData.region;
-        payload.country = formData.country || '';
-    }
-
     // Extract dynamic fields based on configDetails keys
     if (configDetails && Object.keys(configDetails).length > 0) {
         Object.keys(configDetails).forEach((key) => {

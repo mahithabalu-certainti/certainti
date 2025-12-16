@@ -20,7 +20,10 @@ import {
   useJurisdictionsDetails,
   useUpdateGeoBasedRule,
 } from '../../../service/manage-geo-based-access/geo-based-group-service';
-import { getDateFormatYYYYMMDD } from '../../../../common-utils';
+import {
+  formatDateToYYYYMMDDWithTime,
+  getDateFormatYYYYMMDD,
+} from '../../../../common-utils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
 
@@ -37,7 +40,11 @@ const GeoBasedRuleForm: React.FC = () => {
   const statusOptions = useGetStatus();
   const allCountries = useGetAllCountries('Active');
   const states = useFetchState(currentCountry);
-  const { data: formConfigList } = useFormConfigList(currentCountry, isFederal);
+  const { data: formConfigList } = useFormConfigList(
+    currentCountry,
+    isFederal,
+    currentRegion
+  );
   const { data: ruleDetailsData } = useJurisdictionsDetails(
     ruleId ?? '',
     config_rid ?? ''
@@ -161,8 +168,18 @@ const GeoBasedRuleForm: React.FC = () => {
         : '',
       config_name: details.config_name,
       rid: details.rid,
-      created_datetime: details.created_datetime,
-      modified_datetime: details.modified_datetime,
+      created_datetime: details.created_datetime
+        ? formatDateToYYYYMMDDWithTime(details.created_datetime)
+        : '-',
+      updated_on: details.modified_datetime
+        ? formatDateToYYYYMMDDWithTime(details.modified_datetime)
+        : '-',
+      is_federal: details.is_federal ? YesNo.Yes : YesNo.No,
+      state_rid: details.state_rid,
+      updated_by: details.modified_user_name ? details.modified_user_name : '-',
+      created_by: details.created_user_name ? details.created_user_name : '-',
+      config_id: details.config_id,
+      rid: details.rid,
     };
   }, [isEditView, ruleDetailsData?.data?.configDetails]);
 

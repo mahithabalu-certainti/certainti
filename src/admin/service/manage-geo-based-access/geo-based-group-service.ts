@@ -3,6 +3,10 @@ import { caseServiceApi } from '../../../api/api';
 import { UserListParams } from '../../types/manage-user';
 import { buildQueryString } from '../helpers';
 import { GeoBasedApiResponse } from '../../types/geo-based-rule';
+import {
+    ExportTaskTemplateResponse,
+    TaskTemplateListParams,
+} from '../../types';
 
 export const getGeoBasedListUrl = (params: UserListParams = {}): string => {
     const defaultParams: UserListParams = {
@@ -50,18 +54,28 @@ export const useGeoBasedList = (
     });
 };
 
-const getFormConfigListUrl = (countryId: string, isFederal: boolean) => {
-    return `/api/jurisdictions/config/details/new?country_rid=${countryId}&is_federal=${isFederal}`;
+const getFormConfigListUrl = (
+    countryId: string,
+    isFederal: boolean,
+    regionId?: string
+) => {
+    // If federal, don't include region_rid in the URL
+    if (isFederal) {
+        return `/api/jurisdictions/config/details/new?country_rid=${countryId}&is_federal=${isFederal}`;
+    }
+    // If not federal, include region_rid
+    return `/api/jurisdictions/config/details/new?country_rid=${countryId}&state_rid=${regionId}&is_federal=${isFederal}`;
 };
 
 export const fetchFormConfigList = async (
     countryId: string,
-    isFederal: boolean | null | undefined
+    isFederal: boolean | null | undefined,
+    regionId?: string
 ) => {
     const response = await caseServiceApi.get<GeoBasedApiResponse>(
-        getFormConfigListUrl(countryId, isFederal as boolean)
+        getFormConfigListUrl(countryId, isFederal as boolean, regionId)
     );
-    return response.data
+    return response.data;
 };
 
 export const createGeoBasedRule = async (
@@ -76,15 +90,25 @@ export const createGeoBasedRule = async (
 
 export const useFormConfigList = (
     countryId: string,
-    isFederal: boolean | null | undefined
+    isFederal: boolean | null | undefined,
+    regionId?: string
 ) => {
+    // Enable query based on conditions:
+    // - If federal (true): only need country
+    // - If not federal (false): need both country and region
+    const shouldFetch =
+        countryId &&
+        isFederal !== null &&
+        isFederal !== undefined &&
+        (isFederal === true || (isFederal === false && regionId));
+
     return useQuery<GeoBasedApiResponse, Error>({
-        queryKey: ['formConfigList', countryId, isFederal],
-        queryFn: () => fetchFormConfigList(countryId, isFederal),
+        queryKey: ['formConfigList', countryId, isFederal, regionId],
+        queryFn: () => fetchFormConfigList(countryId, isFederal, regionId),
         staleTime: 0,
         gcTime: 0,
         retry: 0,
-        enabled: !!(countryId && isFederal !== null && isFederal !== undefined),
+        enabled: !!shouldFetch,
     });
 };
 
@@ -93,7 +117,6 @@ export const useCreateGeoBasedRule = () => {
         mutationFn: createGeoBasedRule,
     });
 };
-
 
 export const updateGeoBasedRule = async (
     payload: any // Replace with specific payload type if available
@@ -110,7 +133,10 @@ export const useUpdateGeoBasedRule = () => {
         mutationFn: updateGeoBasedRule,
     });
 };
-const getJurisdictionsDetailsUrl = (configId: string, creditConfigGroupRid: string) => {
+const getJurisdictionsDetailsUrl = (
+    configId: string,
+    creditConfigGroupRid: string
+) => {
     return `/api/jurisdictions/config/details?config_rid=${configId}&credit_config_group_rid=${creditConfigGroupRid}`;
 };
 export const fetchJurisdictionsDetails = async (
@@ -120,7 +146,7 @@ export const fetchJurisdictionsDetails = async (
     const response = await caseServiceApi.get<GeoBasedApiResponse>(
         getJurisdictionsDetailsUrl(configId, creditConfigGroupRid)
     );
-    return response.data
+    return response.data;
 };
 export const useJurisdictionsDetails = (
     configId: string,
@@ -132,6 +158,49 @@ export const useJurisdictionsDetails = (
         staleTime: 0,
         gcTime: 0,
         retry: 0,
-        enabled: !!(configId && creditConfigGroupRid !== null && creditConfigGroupRid !== undefined),
+        enabled: !!(
+            configId &&
+            creditConfigGroupRid !== null &&
+            creditConfigGroupRid !== undefined
+        ),
     });
+};
+
+export const getConfigExportUrl = () => '/api/jurisdictions/config/export';
+
+export const ExportConfigRuleList = async (
+    params: TaskTemplateListParams
+): Promise<void> => {
+    try {
+        const filename = `config_rule_list.xlsx`;
+        const response = await caseServiceApi.post<ExportTaskTemplateResponse>(
+            getConfigExportUrl(),
+            params
+        );
+        const base64Data = response.data?.data;
+
+        if (!base64Data) {
+            console.error('No base64 data found in the response.');
+            return;
+        }
+
+        const binary = atob(base64Data);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+            bytes[i] = binary.charCodeAt(i);
+        }
+
+        const blob = new Blob([bytes], {
+            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        });
+
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    } catch (error) {
+        console.error('Export failed:', error);
+    }
 };

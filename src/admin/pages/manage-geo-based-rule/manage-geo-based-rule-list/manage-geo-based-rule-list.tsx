@@ -2,12 +2,17 @@ import React, { Suspense, useState } from 'react';
 import { NewFilterIcon, RefreshIcon, ManageGeoIcon } from '../../../../assets';
 import TextButton from '../../../../components/button/text-button';
 import { useNavigate } from 'react-router-dom';
-import { FilterModal } from '../../../../components';
+import { ActionsDropdown, FilterModal } from '../../../../components';
 import { FilterType } from '../../../types';
 import SearchBar from '../../../../components/search/search-bar';
 import { ManageGeoBasedRuleTable } from '../table';
 import { GeoBasedRuleListParams } from '../../../types/geo-based-rule';
 import { MANAGE_GEO_BASED_RULE_CREATE } from '../../../../routes';
+import { checkPermission } from '../../../../common-utils';
+import { AllPermissions } from '../../../../common-service';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../store/store';
+import { ExportConfigRuleList } from '../../../service/manage-geo-based-access/geo-based-group-service';
 
 const BUTTON_STYLES = {
   height: '24px',
@@ -26,7 +31,7 @@ export const ManageGeoBasedRuleList: React.FC = () => {
   const [tableParams, setTableParams] = useState<GeoBasedRuleListParams>({
     page: page,
     limit: 100,
-    sortBy: 'rule_name', // Assumed default sort
+    sortBy: 'config_name', // Assumed default sort
     sortOrder: 'ASC',
   });
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
@@ -36,7 +41,7 @@ export const ManageGeoBasedRuleList: React.FC = () => {
   };
   const [refreshTrigger, setRefreshTrigger] = useState<number>();
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
-
+  const { permission } = useSelector((state: RootState) => state.permission);
   const [columnAnchorEl, setColumnAnchorEl] =
     React.useState<HTMLButtonElement | null>(null);
 
@@ -81,7 +86,26 @@ export const ManageGeoBasedRuleList: React.FC = () => {
   ) => {
     setColumnAnchorEl(event.currentTarget);
   };
-
+  const isCreateEnable = checkPermission(
+    permission || [],
+    AllPermissions.CREATE_TASK_TEMPLATE
+  );
+  const isExportEnable = checkPermission(
+    permission || [],
+    AllPermissions.TASK_TEMPLATE_EXPORT
+  );
+  const MENU_ITEMS = [
+    {
+      label: 'Export',
+      hide: !isExportEnable,
+      onClick: () =>
+        ExportConfigRuleList({
+          ...tableParams,
+          filter: appliedFilters,
+          //   timezone: systemTimezone,
+        }),
+    },
+  ];
   return (
     <div className='flex flex-col h-full w-full'>
       {/* Header Section */}
@@ -103,6 +127,7 @@ export const ManageGeoBasedRuleList: React.FC = () => {
           </div>
         </div>
         <div className='flex gap-3 justify-center items-center'>
+          <ActionsDropdown actions={MENU_ITEMS} />
           <button
             className='flex border border-[#CBD6E2] w-[24px] h-[24px] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] justify-center items-center cursor-pointer'
             onClick={onRefreshClick}
@@ -163,7 +188,7 @@ export const ManageGeoBasedRuleList: React.FC = () => {
               <NewFilterIcon alt='filter-icon' />
               Filter
               {(appliedFilters && Object.keys(appliedFilters).length > 0) ||
-              sortFilterCount > 0 ? (
+                sortFilterCount > 0 ? (
                 <div className='absolute -top-[5px] -right-2 w-4 h-4 flex items-center justify-center text-xs'>
                   <span className='absolute w-full h-full bg-[#FF6666] rounded-full animate-ping opacity-75 z-0'></span>
                   <span className='w-4 h-4 bg-[#FF6666] text-white rounded-full flex items-center justify-center z-10 font-semibold'>
@@ -201,7 +226,7 @@ export const ManageGeoBasedRuleList: React.FC = () => {
             // appliedFilters={appliedFilters} // removed unsafe cast
             tableParams={tableParams}
             setTableParams={setTableParams}
-            onSelectionChange={() => {}}
+            onSelectionChange={() => { }}
             refreshTrigger={refreshTrigger}
             setColumnAnchorEl={setColumnAnchorEl}
             columnAnchorEl={columnAnchorEl}

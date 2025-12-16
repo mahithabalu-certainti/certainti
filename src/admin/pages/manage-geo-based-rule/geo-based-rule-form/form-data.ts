@@ -63,6 +63,7 @@ export const GeoBasedRuleFormFieldsData = (
         fields: [
           createDateField('effective_start_date', 'Effective Start Date', {
             required: true,
+            allowFutureDates: true,
             disabled:
               isEditView &&
               !permissionMap?.['effective_start_date']?.edit &&
@@ -73,8 +74,9 @@ export const GeoBasedRuleFormFieldsData = (
             //   !permissionMap?.['effective_start_date']?.read,
           }),
           createDateField('effective_end_date', 'Effective End Date', {
-            required: true,
+            required: false,
             greaterThan: { effective_start_date: 'Effective Start Date' },
+            allowFutureDates: true,
             disabled:
               isEditView &&
               !permissionMap?.['effective_end_date']?.edit &&
@@ -102,6 +104,7 @@ export const GeoBasedRuleFormFieldsData = (
             placeholder: 'Select',
             required: true,
             onChange: true,
+            resetDependsFields: ['region'],
             disabled:
               isEditView &&
               !permissionMap?.['is_federal']?.edit &&
@@ -133,6 +136,7 @@ export const GeoBasedRuleFormFieldsData = (
             isLoading: regionLoading,
             onChange: true,
             disabled: isFederal ?? undefined,
+
             // hide:
             //   isEditView &&
             //   !permissionMap?.['region']?.edit &&
@@ -146,12 +150,20 @@ export const GeoBasedRuleFormFieldsData = (
               isEditView &&
               !permissionMap?.['rule_name']?.edit &&
               permissionMap?.['rule_name']?.read,
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MIN_3,
+                errorMessage: 'Config Name must be more than 2 characters long',
+              },
+              {
+                regex: REGEX_PATTERNS.MAX_255,
+                errorMessage: 'Config Name must be within 255 characters',
+              },
+            ],
             // hide:
             //   isEditView &&
             //   !permissionMap?.['rule_name']?.edit &&
             //   !permissionMap?.['rule_name']?.read,
-            regex: REGEX_PATTERNS.MIN_3,
-            regexErrorMessage: 'Rule Name must be at least 3 characters long',
           }),
         ],
       },
@@ -177,13 +189,37 @@ export const GeoBasedRuleFormFieldsData = (
             //     !permissionMap?.['created_datetime']?.edit &&
             //     !permissionMap?.['created_datetime']?.read,
           }),
-          createTextField('modified_datetime', 'Updated On', {
+          createTextField('created_by', 'Created By', {
             required: false,
             disabled: true,
             // hide:
-            //     isEditView &&
-            //     !permissionMap?.['modified_datetime']?.edit &&
-            //     !permissionMap?.['modified_datetime']?.read,
+            //   isEditView &&
+            //   !permissionMap?.['created_by']?.edit &&
+            //   !permissionMap?.['created_by']?.read,
+          }),
+          createTextField('config_id', 'Config ID', {
+            required: false,
+            disabled: true,
+            // hide:
+            //   isEditView &&
+            //   !permissionMap?.['r_number']?.edit &&
+            //   !permissionMap?.['r_number']?.read,
+          }),
+          createTextField('updated_on', 'Updated On', {
+            required: false,
+            disabled: true,
+            // hide:
+            //   isEditView &&
+            //   !permissionMap?.['modified_datetime']?.edit &&
+            //   !permissionMap?.['modified_datetime']?.read,
+          }),
+          createTextField('updated_by', 'Updated By', {
+            required: false,
+            disabled: true,
+            // hide:
+            //   isEditView &&
+            //   !permissionMap?.['modified_by']?.edit &&
+            //   !permissionMap?.['modified_by']?.read,
           }),
         ],
       },
