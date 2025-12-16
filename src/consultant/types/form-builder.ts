@@ -93,6 +93,7 @@ export interface SelectOption {
   value: string;
   desc?: string;
   isCreate?: boolean;
+  code?: string;
 }
 export interface SelectNumberOption {
   label: string;
