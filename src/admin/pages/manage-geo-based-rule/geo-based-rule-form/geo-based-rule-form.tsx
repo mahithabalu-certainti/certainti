@@ -138,9 +138,36 @@ const GeoBasedRuleForm: React.FC = () => {
     setCaseNamePrefix(prefix);
   }, [currentCountry, currentRegion, countryOptions, regionOptions]);
 
-  const configDetails = isEditView
-    ? ruleDetailsData?.data?.configDetails
-    : formConfigList?.data?.configDetails || {};
+  const configDetails = useMemo(() => {
+    if (isEditView && ruleDetailsData?.data?.configDetails) {
+      const details = ruleDetailsData.data.configDetails as ConfigDetails;
+
+      const savedCountry = details.country_rid || '';
+      const savedRegion = details.state_rid || '';
+      const savedIsFederal = !!details.is_federal;
+
+      const currentCountryVal = currentCountry || '';
+      const currentRegionVal = currentRegion || '';
+      const currentIsFederalVal = !!isFederal;
+
+      // Check if current form selections match the saved data
+      if (
+        savedCountry === currentCountryVal &&
+        savedRegion === currentRegionVal &&
+        savedIsFederal === currentIsFederalVal
+      ) {
+        return ruleDetailsData.data.configDetails;
+      }
+    }
+    return formConfigList?.data?.configDetails || {};
+  }, [
+    isEditView,
+    ruleDetailsData?.data?.configDetails,
+    formConfigList?.data?.configDetails,
+    currentCountry,
+    currentRegion,
+    isFederal,
+  ]);
 
   const initialValues = useMemo(() => {
     if (!isEditView || !ruleDetailsData?.data?.configDetails) return {};
