@@ -29,7 +29,8 @@ export interface GeoBasedRuleListParams {
   limit: number;
   sortBy: string;
   sortOrder: 'ASC' | 'DESC';
-  filter?: any;
+  filters?: any;
+  search?: string;
 }
 // export interface ConfigItem {
 //   label: string;

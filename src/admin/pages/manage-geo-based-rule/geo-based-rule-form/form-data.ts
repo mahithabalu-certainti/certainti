@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { FormType, SelectOption } from '../../../../consultant/types';
 import {
   createDateField,
+  createFiscalDateField,
   createSelectField,
   createTextField,
   REGEX_PATTERNS,
@@ -25,18 +26,17 @@ export const GeoBasedRuleFormFieldsData = (
       const items = config?.configItems || [];
       const title = config?.credit_program_name || 'Configuration';
 
+      const formatLabel = (str: string) =>
+        str
+          .split('_')
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(' ');
+
       const fields = items.map((item: any) => {
-        const formatLabel = (str: string) => {
-          return str
-            .split('_')
-            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-            .join(' ');
-        };
         const formattedLabel = formatLabel(item.displayName || item.label);
 
-        return createTextField(item.label, formattedLabel, {
-          required: false,
-          placeholder: `Enter ${formattedLabel}`,
+        const commonProps = {
+          required: item?.is_required ?? false,
           disabled:
             isEditView &&
             !permissionMap?.['configs']?.edit &&
@@ -45,6 +45,30 @@ export const GeoBasedRuleFormFieldsData = (
             isEditView &&
             !permissionMap?.['configs']?.edit &&
             !permissionMap?.['configs']?.read,
+        };
+
+        // ✅ Date field
+        if (item.type === 'Date') {
+          return createFiscalDateField(item.label, formattedLabel, {
+            ...commonProps,
+          });
+        }
+
+        // ✅ Numeric field with validation
+        if (item.type?.startsWith('numeric')) {
+          return createTextField(item.label, formattedLabel, {
+            ...commonProps,
+            placeholder: `Enter ${formattedLabel}`,
+            regex: REGEX_PATTERNS.NUMERIC_10_4,
+            regexErrorMessage: `${formattedLabel}must be a positive number with up to 10 digits and 4 decimal places`,
+            formatCostValue: true,
+          });
+        }
+
+        // ✅ Default text field
+        return createTextField(item.label, formattedLabel, {
+          ...commonProps,
+          placeholder: `Enter ${formattedLabel}`,
         });
       });
 
@@ -52,9 +76,11 @@ export const GeoBasedRuleFormFieldsData = (
         sectionName: title,
         fillType: 'half' as const,
         hide: fields.length === 0,
-        fields: fields,
+        fields,
       };
     });
+
+
 
     return [
       {

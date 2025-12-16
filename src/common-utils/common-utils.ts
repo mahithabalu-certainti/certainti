@@ -510,6 +510,7 @@ export const REGEX_PATTERNS = {
   EFFORTS_NUMBER: /^(?:[0-9]{1,16})(?:\.[0-9]{1,2})?$/,
   EFFORTS_INTEGER_NUMBER: /^[0-9]{1,16}$/,
   EFFORTS_INTEGER_9: /^[0-9]{1,9}$/,
+  NUMERIC_10_4: /^\d{1,10}(\.\d{1,4})?$/,
   ALLOW_ONE_TO_99: /^[1-9][0-9]?$/,
   DESCRIPTION: /^.{0,500}$/,
   RESOURCE_DESCRIPTION: /^.{0,1000}$/,
@@ -719,13 +720,12 @@ export const checkError = (data: CheckError[]) => {
 
 export const errorHandling = (data: AxiosErrorMsg): string => {
   const errorData = data.response?.data;
-  return `<p>${
-    errorData?.statusMessage
-      ? typeof errorData.statusMessage === 'object'
-        ? Object.values(errorData.statusMessage).join(', ')
-        : errorData.statusMessage || ''
-      : errorData?.message || data.message
-  }</p>`;
+  return `<p>${errorData?.statusMessage
+    ? typeof errorData.statusMessage === 'object'
+      ? Object.values(errorData.statusMessage).join(', ')
+      : errorData.statusMessage || ''
+    : errorData?.message || data.message
+    }</p>`;
 };
 
 export const formatAddress = (userDatas?: UserDetail) => {
