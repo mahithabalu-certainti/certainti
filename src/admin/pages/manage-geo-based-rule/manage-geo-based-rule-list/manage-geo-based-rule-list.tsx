@@ -112,7 +112,6 @@ export const ManageGeoBasedRuleList: React.FC = () => {
       ),
     [permissionMap, memoizedStatus, countryOptions]
   );
-  console.log('filterFields', filterFields);
   // Functions
   const onRefreshClick = () => {
     setRefreshTrigger(Date.now());
@@ -283,7 +282,7 @@ export const ManageGeoBasedRuleList: React.FC = () => {
       <div className='border border-[#CBD6E2]'>
         <Suspense fallback={null}>
           <ManageGeoBasedRuleTable
-            // appliedFilters={appliedFilters} // removed unsafe cast
+            appliedFilters={appliedFilters} // removed unsafe cast
             tableParams={tableParams}
             setTableParams={setTableParams}
             onSelectionChange={() => { }}

@@ -17,7 +17,7 @@ import { MANAGE_GEO_BASED_RULE_EDIT } from '../../../../routes';
 
 
 interface IGeoBasedRuleTableProps {
-    //   appliedFilters: any;
+    appliedFilters: any;
     tableParams: GeoBasedRuleListParams;
     isEditable?: boolean;
     setTableParams: React.Dispatch<React.SetStateAction<GeoBasedRuleListParams>>;
@@ -31,7 +31,7 @@ interface IGeoBasedRuleTableProps {
 }
 
 export const ManageGeoBasedRuleTable: React.FC<IGeoBasedRuleTableProps> = ({
-    //   appliedFilters,
+    appliedFilters,
     tableParams,
     isEditable,
     setTableParams,
@@ -45,11 +45,11 @@ export const ManageGeoBasedRuleTable: React.FC<IGeoBasedRuleTableProps> = ({
     //   const [dataList, setDataList] = useState<GeoBasedRule[]>([]); // Empty for now
 
     const { data, isLoading, isError } = useGeoBasedList(
-        tableParams,
+        { ...tableParams, filters: appliedFilters },
         refreshTrigger
     );
     const geoBasedRuleList = data?.data.configs;
-    const totalItems = 0;
+    const totalItems = data?.data.count || 0;
     const getRowId = (row: GeoBasedRule) => row.rid;
     const handleEdit = (row: GeoBasedRule) => {
         const path = generatePath(MANAGE_GEO_BASED_RULE_EDIT, {

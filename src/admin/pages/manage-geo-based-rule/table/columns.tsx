@@ -1,4 +1,7 @@
-import { formatDateToYYYYMMDDWithTime } from '../../../../common-utils';
+import {
+  formatDateToYYYYMMDDWithTime,
+  getDateFormatYYYYMMDD,
+} from '../../../../common-utils';
 import { ListTableColumn } from '../../../../components/table/types';
 import { GeoBasedRule } from '../../../types/geo-based-rule';
 
@@ -11,7 +14,7 @@ export const getGeoBasedRuleColumns = (): ListTableColumn<GeoBasedRule>[] => [
   },
   {
     id: 'config_name',
-    label: 'Rule Name',
+    label: 'Config Name',
     sortId: 'config_name',
     sortable: true,
   },
@@ -44,7 +47,7 @@ export const getGeoBasedRuleColumns = (): ListTableColumn<GeoBasedRule>[] => [
     editId: 'effective_start_date',
     render: (row: GeoBasedRule) =>
       row.effective_start_date
-        ? formatDateToYYYYMMDDWithTime(row.effective_start_date)
+        ? getDateFormatYYYYMMDD(row.effective_start_date)
         : '-',
     field: {
       type: 'date',
@@ -80,13 +83,13 @@ export const getGeoBasedRuleColumns = (): ListTableColumn<GeoBasedRule>[] => [
     id: 'effective_end_date',
     sortId: 'effective_end_date',
     label: 'Effective End Date',
-    width: 220,
+    // width: 220,
     sortable: true,
     editable: true,
     editId: 'effective_end_date',
     render: (row: GeoBasedRule) =>
       row.effective_end_date
-        ? formatDateToYYYYMMDDWithTime(row.effective_end_date)
+        ? getDateFormatYYYYMMDD(row.effective_end_date)
         : '-',
     field: {
       type: 'date',
@@ -98,7 +101,7 @@ export const getGeoBasedRuleColumns = (): ListTableColumn<GeoBasedRule>[] => [
     id: 'created_datetime',
     sortId: 'created_datetime',
     label: 'Created On',
-    width: 220,
+    // width: 220,
     sortable: true,
     render: (row: GeoBasedRule) =>
       row.created_datetime

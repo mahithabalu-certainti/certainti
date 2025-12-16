@@ -15,6 +15,7 @@ export interface GeoBasedRuleListParams {
   limit: number;
   sortBy: string;
   sortOrder: 'ASC' | 'DESC';
+  filter?: any;
 }
 export interface ConfigItem {
   label: string;
