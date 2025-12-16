@@ -527,7 +527,9 @@ async function exportJurisdictionsConfigurations(
                     let resultMap: { [key: string]: any } = {
                       r_number: d.r_number,
                       status_name: d.status_name,
-                      config_name: d.config_name,
+                      config_name: d.is_federal
+                        ? `C-${d.country_name}-${d.config_name}`
+                        : `C-${d.country_name}-${d.state_name}-${d.config_name}`,
                       effective_start_date: formatDateOnly(d?.effective_start_date),
                       effective_end_date: formatDateOnly(d?.effective_end_date),
                       country_name: d.country_name,
