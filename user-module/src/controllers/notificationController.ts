@@ -72,9 +72,7 @@ async function listNotifications(req: Request, res: Response): Promise<void> {
   }
 }
 
-async function updateNotificationStatus(req: Request, res: Response): Promise<void> {
-  const methodName = "Update Notification Status for User";
-  /**
+ /**
    * Controller to update notification status for a user (mark all as read).
    *
    * @param {Request} req - Express request object (expects x-user-id in headers).
@@ -87,6 +85,9 @@ async function updateNotificationStatus(req: Request, res: Response): Promise<vo
    * - Sends a success response with the update result if successful.
    * - Logs errors and sends appropriate error responses on failure.
    */
+async function updateNotificationStatus(req: Request, res: Response): Promise<void> {
+  const methodName = "Update Notification Status for User";
+ 
   try {
     const userId = req.headers["x-user-id"] as string;
     if (!userId) {
