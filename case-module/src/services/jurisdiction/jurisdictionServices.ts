@@ -195,7 +195,23 @@ export class JurisdictionService {
       );
       configRequest.status_rid = activeStatusRid.rid;
       let duplicate = false;
-      if (configRequest.jurisdictionConfig && configRequest.effective_end_date && configRequest.effective_start_date) {
+      if (configRequest.config_name) {
+        const existingConfigName = await JurisdictionConfig.findOne({
+          where: {
+            config_name: configRequest.config_name,
+            status_rid: activeStatusRid.rid,
+            rid: { [Op.ne]: configRequest.config_rid },
+          },
+        });
+        if (existingConfigName) {
+          return {
+            statusCode: HttpStatus.FAILED,
+            message: HttpStatus.FAILED_MESSAGE,
+            errorMessage: `A config with name ${configRequest.config_name} already exists.Please use a different name.`,
+          };
+        }
+      }
+      if (configRequest.jurisdictionConfig &&  configRequest.effective_start_date) {
         duplicate = await this.hasOverlapConfig({
           JurisdictionConfig,
           groupId: configRequest.jurisdiction_config_group_rid,
@@ -207,7 +223,7 @@ export class JurisdictionService {
         });
       }
       // Duplicate check for platform config
-      if (!duplicate && configRequest.is_federal && configRequest.platformConfig && configRequest.effective_end_date && configRequest.effective_start_date) {
+      if (!duplicate && configRequest.is_federal && configRequest.platformConfig  && configRequest.effective_start_date) {
         duplicate = await this.hasOverlapConfig({
           JurisdictionConfig,
           groupId: configRequest.platform_config_group_rid,
@@ -263,6 +279,22 @@ export class JurisdictionService {
       );
       configRequest.status_rid = activeStatusRid.rid;
       let duplicate = false;
+      if (configRequest.config_name) {
+        const existingConfigName = await JurisdictionConfig.findOne({
+          where: {
+            config_name: configRequest.config_name,
+            status_rid: activeStatusRid.rid,
+          },
+        });
+        if (existingConfigName) {
+          return {
+            statusCode: HttpStatus.FAILED,
+            message: HttpStatus.FAILED_MESSAGE,
+            errorMessage: `A config with name ${configRequest.config_name} already exists.Please use a different name.`,
+          };
+        }
+      }
+      
       if (configRequest.jurisdictionConfig) {
         // Check for overlap only (existingConfig check is redundant with overlap query)
         duplicate = await this.hasOverlapConfig({
@@ -340,7 +372,7 @@ export class JurisdictionService {
     groupId: string,
     statusRid: string,
     startDate: string,
-    endDate: string,
+    endDate?: string,
     excludeRid?: string,
     isUpdate?: boolean
   }): Promise<boolean> {
@@ -348,9 +380,11 @@ export class JurisdictionService {
     const replacements: any = {
       groupId,
       statusRid,
-      startDate,
-      endDate
+      startDate
     };
+    if (typeof endDate !== 'undefined') {
+      replacements.endDate = endDate;
+    }
     if (isUpdate && excludeRid) {
       replacements.excludeRid = excludeRid;
     }

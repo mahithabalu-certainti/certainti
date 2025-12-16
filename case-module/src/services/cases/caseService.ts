@@ -2990,6 +2990,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
                       total_effort_prj: d.total_effort_prj,
                       total_subcon_prj: d.total_subcon_prj,
                       total_cost_fte_prj: d.total_cost_fte_prj,
+                      total_cost_subcon_prj: d.total_cost_subcon_prj,
                       total_nonlabor_prj: d.total_nonlabor_prj,
                       total_resources_prj: d.total_resources_prj,
                       total_effort_fte_prj  : d.total_effort_fte_prj,

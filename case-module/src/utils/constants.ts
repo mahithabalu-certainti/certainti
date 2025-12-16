@@ -1348,7 +1348,8 @@ export const rawQueries = {
       c.country_name,
       c.country_code,
       s.state_name,
-      g.rid as credit_config_group_rid
+      g.rid as credit_config_group_rid,
+      k.is_required
     FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_key k
     JOIN ${MAIN_SCHEMA_NAME}.rd_credit_config_group g ON k.credit_config_group_rid = g.rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.country c ON g.country_rid = c.rid
@@ -1370,7 +1371,8 @@ export const rawQueries = {
       g.state_rid,
       c.country_name,
       c.country_code,
-      s.state_name
+      s.state_name,
+      k.is_required
     FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_key k
     JOIN ${MAIN_SCHEMA_NAME}.rd_credit_config_group g ON k.credit_config_group_rid = g.rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.country c ON g.country_rid = c.rid
@@ -1380,7 +1382,7 @@ export const rawQueries = {
     `;
   },
   checkJurisdictionConfigOverlap(excludeCurrent = false) {
-    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values WHERE credit_config_group_rid = :groupId AND status_rid = :statusRid AND ((:startDate < effective_end_date AND :endDate > effective_start_date))${excludeCurrent ? ' AND federal_config_id is null AND rid != :excludeRid' : ''} LIMIT 1`;
+    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values WHERE credit_config_group_rid = :groupId AND status_rid = :statusRid AND ((:endDate IS NULL AND :startDate < effective_end_date) OR (:endDate IS NOT NULL AND :startDate < effective_end_date AND :endDate > effective_start_date))${excludeCurrent ? ' AND federal_config_id is null AND rid != :excludeRid' : ''} LIMIT 1`;
   },
   getJurisdictionByCountryId(country_rid: string, state_rid: string, is_federal: boolean, credit_program_name: string) {
     let whereClause = `g.country_rid = '${country_rid}' AND g.is_federal = ${is_federal}`;
@@ -1406,14 +1408,29 @@ export const rawQueries = {
     JOIN ${MAIN_SCHEMA_NAME}.rd_credit_config_group g ON k.credit_config_group_rid = g.rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.country c ON g.country_rid = c.rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.state s ON g.state_rid = s.rid
-    WHERE ${whereClause};
+    WHERE ${whereClause}
+    and g.credit_program_name != 'Platform Configuration';
     `;
   },
   getJurisdictionConfigValuesById(config_rid: string) {
-    return `SELECT rid,credit_config_group_rid, config_json,effective_start_date,effective_end_date FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values WHERE rid = '${config_rid}';`
+    return `SELECT rv.rid,credit_config_group_rid, config_json,effective_start_date,config_name,rv.status_rid,rv.r_number,
+    effective_end_date,rv.created_datetime,rv.created_by,rv.modified_datetime,rv.modified_by,
+     CONCAT(u.first_name, ' ', u.last_name) AS created_user_name,
+    CASE WHEN uu.first_name IS NULL THEN rv.modified_by ELSE CONCAT(uu.first_name, ' ', uu.last_name) END AS modified_user_name
+    FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values rv
+     LEFT JOIN ${MAIN_SCHEMA_NAME}.user u ON u.rid = rv.created_by
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.user uu ON uu.rid = rv.modified_by
+     WHERE rv.rid = '${config_rid}';`
   },
   getJurisdictionPlatformConfigValuesById(config_rid: string) {
-    return `SELECT rid,credit_config_group_rid, config_json,effective_start_date,effective_end_date FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values WHERE federal_config_id = '${config_rid}';`
+    return `SELECT rv.rid,credit_config_group_rid, config_json,effective_start_date,effective_end_date,config_name,rv.status_rid,rv.r_number,
+    rv.created_datetime,rv.created_by,rv.modified_datetime,rv.modified_by,
+     CONCAT(u.first_name, ' ', u.last_name) AS created_user_name,
+    CASE WHEN uu.first_name IS NULL THEN rv.modified_by ELSE CONCAT(uu.first_name, ' ', uu.last_name) END AS modified_user_name
+    FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values rv
+     LEFT JOIN ${MAIN_SCHEMA_NAME}.user u ON u.rid = rv.created_by
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.user uu ON uu.rid = rv.modified_by
+    WHERE federal_config_id = '${config_rid}';`
   },
   fetchPlatformConfig(rid: string) {
     return `

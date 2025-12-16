@@ -2454,7 +2454,6 @@ class ActivitySchemaService {
       body_html: emailDetails?.body_html ?? "",
       to_email: emailDetails?.to_email || [],
       cc_emails: emailDetails?.cc_email || [],
-      email_status: emailDetails?.email_status ?? "",
       r_number: emailDetails.r_number ?? "",
       status_rid: emailDetails.status_rid ?? "",
       account_rid: emailDetails.account_rid ?? "",
@@ -2553,7 +2552,7 @@ class ActivitySchemaService {
       activity_rid: emailDetails?.rid,
       activity_type: emailDetails?.activity_type ?? "",
       subject: emailDetails?.subject ?? "",
-      meeting_url: emailDetails?.meeting_url ?? "",
+      meeting_url: emailDetails?.meeting_invite ?? "",
       meeting_id: emailDetails?.meeting_id ?? "",
       meeting_participants: emailDetails?.meeting_participants
         ? emailDetails.meeting_participants
@@ -2756,7 +2755,7 @@ class ActivitySchemaService {
       return emailDetails?.fiscal_year ?? null;
     } else if (attachmentLevel === "project" && attachTo) {
       const project = await this.caseSchemaService.fetchProjectInfoById(
-        schemaName,
+        accountNumber,
         attachTo
       );
       return project?.fiscal_year ?? null;
@@ -2769,7 +2768,7 @@ class ActivitySchemaService {
       if (Array.isArray(projectResource)) projectResource = projectResource[0];
       if (projectResource && projectResource.project_fiscal_rid) {
         const project = await this.caseSchemaService.fetchProjectInfoById(
-          schemaName,
+          accountNumber,
           projectResource.project_fiscal_rid
         );
         return project?.fiscal_year ?? null;
