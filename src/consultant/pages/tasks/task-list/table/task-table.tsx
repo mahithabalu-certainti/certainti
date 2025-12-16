@@ -194,6 +194,7 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
       return accountUsersQuery.data.map((user) => ({
         rid: user.rid,
         name: user.name,
+        profile_url: user.profile_url,
       }));
     }
 
@@ -202,6 +203,7 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
       return caseTeamMembersQuery.data.map((member) => ({
         rid: member.user_rid,
         name: member.user_name,
+        profile_url: member.profile_url,
       }));
     }
     return [];

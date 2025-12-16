@@ -54,6 +54,7 @@ import {
   useWeightageList,
   useGetTaskCategoryTypes,
 } from '../../admin/service/task-template/task-template-service';
+import UserAvatar from './user-avatar';
 
 interface TaskDetailModalPropsExtended
   extends Omit<TaskDetailModalProps, 'tagData'> {
@@ -297,31 +298,6 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       return () => clearTimeout(timer);
     }
   }, [isOpen]);
-
-  useEffect(() => {
-    if (rawTask) {
-      const enriched = enrichTask(rawTask);
-      setTask(enriched);
-      setEditedTask(enriched);
-      setOriginalTask(enriched);
-      if (enriched.caseTeamMemberRoleName) {
-        setSelectedRole(enriched.caseTeamMemberRoleName);
-      }
-      if (enriched.checklistName) {
-        setSelectedChecklist(enriched.checklistName);
-      }
-      if (enriched.weightage) {
-        setWeightage(enriched.weightage);
-      }
-      if (enriched.category) {
-        setCategory(enriched.category);
-      }
-      // Always set linkedType and linkTaskTypes to clear previous task's data
-      setLinkedType(enriched.linkedType || '');
-      setLinkTaskTypes(enriched.linkTaskTypes || []);
-      setIsLoadingTaskDetails(false);
-    }
-  }, [rawTask]);
 
   useEffect(() => {
     let commentsArray: TaskCommentRaw[] = [];
@@ -606,15 +582,77 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     return uniqueUsers;
   }, [availableUsers]);
 
-  const allEnrichedUsers = useMemo(
-    () => [
+  const allEnrichedUsers = useMemo(() => {
+    const combined = [
       ...collaboratorUsers,
       ...(assigneeUsers.filter(
         (user) => !collaboratorUsers.find((cu) => cu.id === user.id)
       ) || []),
-    ],
-    [collaboratorUsers, assigneeUsers]
-  );
+    ];
+    return combined;
+  }, [collaboratorUsers, assigneeUsers]);
+
+  useEffect(() => {
+    if (rawTask) {
+      const enriched = enrichTask(rawTask);
+
+      // Enrich assignee with profile_url from available users if missing
+      if (
+        enriched.assignee &&
+        !enriched.assignee.profile_url &&
+        enriched.assignee.name
+      ) {
+        const foundUser = assigneeUsers.find(
+          (user) => user.name === enriched.assignee.name
+        );
+        if (foundUser) {
+          enriched.assignee.profile_url = foundUser.profile_url;
+          enriched.assignee.initials = foundUser.initials;
+          enriched.assignee.color = foundUser.color;
+        }
+      }
+
+      // Enrich collaborators with profile_url from allEnrichedUsers if missing
+      if (enriched.collaborators && enriched.collaborators.length > 0) {
+        enriched.collaborators = enriched.collaborators.map((collab) => {
+          if (!collab.profile_url && collab.name) {
+            const foundUser = allEnrichedUsers.find(
+              (user) => user.name === collab.name
+            );
+            if (foundUser) {
+              return {
+                ...collab,
+                profile_url: foundUser.profile_url,
+                initials: foundUser.initials,
+                color: foundUser.color,
+              };
+            }
+          }
+          return collab;
+        });
+      }
+
+      setTask(enriched);
+      setEditedTask(enriched);
+      setOriginalTask(enriched);
+      if (enriched.caseTeamMemberRoleName) {
+        setSelectedRole(enriched.caseTeamMemberRoleName);
+      }
+      if (enriched.checklistName) {
+        setSelectedChecklist(enriched.checklistName);
+      }
+      if (enriched.weightage) {
+        setWeightage(enriched.weightage);
+      }
+      if (enriched.category) {
+        setCategory(enriched.category);
+      }
+      // Always set linkedType and linkTaskTypes to clear previous task's data
+      setLinkedType(enriched.linkedType || '');
+      setLinkTaskTypes(enriched.linkTaskTypes || []);
+      setIsLoadingTaskDetails(false);
+    }
+  }, [rawTask, assigneeUsers, allEnrichedUsers]);
 
   useEffect(() => {
     if (!editedTask) return;
@@ -1397,6 +1435,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                 name: selectedUser.name,
                 initials: selectedUser.initials,
                 color: selectedUser.color,
+                profile_url: selectedUser.profile_url,
               },
             }
           : null
@@ -1708,23 +1747,13 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                           minWidth: 0,
                         }}
                       >
-                        <div
-                          style={{
-                            width: '20px',
-                            height: '20px',
-                            borderRadius: '50%',
-                            backgroundColor: editedTask.assignee.color,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '9px',
-                            fontWeight: '600',
-                            color: 'white',
-                            flexShrink: 0,
-                          }}
-                        >
-                          {editedTask.assignee.initials}
-                        </div>
+                        <UserAvatar
+                          profileUrl={editedTask.assignee.profile_url}
+                          initials={editedTask.assignee.initials}
+                          color={editedTask.assignee.color}
+                          size={20}
+                          fontSize={9}
+                        />
                         <Tooltip
                           title={editedTask.assignee.name}
                           placement='top-start'
@@ -1787,23 +1816,13 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                         overflow: 'hidden',
                       }}
                     >
-                      <div
-                        style={{
-                          width: '20px',
-                          height: '20px',
-                          borderRadius: '50%',
-                          backgroundColor: user.color,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '8px',
-                          fontWeight: '600',
-                          color: 'white',
-                          flexShrink: 0,
-                        }}
-                      >
-                        {user.initials}
-                      </div>
+                      <UserAvatar
+                        profileUrl={user.profile_url}
+                        initials={user.initials}
+                        color={user.color}
+                        size={20}
+                        fontSize={8}
+                      />
                       <Tooltip title={user.name} placement='top-start'>
                         <span
                           style={{

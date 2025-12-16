@@ -128,23 +128,13 @@ const TaskCollaboratorsSection: React.FC<TaskCollaboratorsSectionProps> = ({
                       height: '16px',
                     }}
                   />
-                  <div
-                    style={{
-                      width: '20px',
-                      height: '20px',
-                      borderRadius: '50%',
-                      backgroundColor: option.color,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '8px',
-                      fontWeight: '600',
-                      color: 'white',
-                      flexShrink: 0,
-                    }}
-                  >
-                    {option.initials}
-                  </div>
+                  <UserAvatar
+                    profileUrl={option.profile_url}
+                    initials={option.initials}
+                    color={option.color}
+                    size={20}
+                    fontSize={8}
+                  />
                   <Tooltip title={option.name} placement='top-start'>
                     <span
                       style={{

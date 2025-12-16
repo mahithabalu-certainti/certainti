@@ -153,7 +153,8 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
 
   const userOptionsQuery = useGetUserOptions(
     accountid || accountId || '',
-    true
+    true,
+    'account'
   );
   const roleOptionsQuery = useGetRoleOptions();
   const prioritiesQuery = useGetTaskPriorities();
@@ -181,10 +182,13 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
 
   const userData = useMemo(() => {
     if (userOptionsQuery.data && Array.isArray(userOptionsQuery.data)) {
-      return userOptionsQuery.data.map((member) => ({
+      const mappedData = userOptionsQuery.data.map((member) => ({
         rid: member.rid,
         name: member.name,
+        email: member.email,
+        profile_url: member.profile_url,
       }));
+      return mappedData;
     }
     return [];
   }, [userOptionsQuery.data]);

@@ -190,6 +190,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
       return caseTeamMembersQuery.data.map((member) => ({
         rid: member.user_rid,
         name: member.user_name,
+        profile_url: member.profile_url,
       }));
     }
     return [];
