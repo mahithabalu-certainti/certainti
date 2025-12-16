@@ -98,7 +98,7 @@ export class ProjectInjestionTaskService {
   * }>} Returns an object indicating success, prompt, or error status along with relevant messages and created task data.
   * 
   * @throws Will rollback the transaction and throw an error if any unexpected failure occurs during the creation process.
-  */ 
+  */
   async createProjectTask(
     projectTaskData: ICreateProjectTask,
     userId: string,
@@ -280,7 +280,7 @@ export class ProjectInjestionTaskService {
         total_hours_pro_task !== undefined &&
         Number(total_hours_pro_task) > 3000
       ) {
-          logMessage(`Total hours per task ${total_hours_pro_task} exceeds 3000`);
+        logMessage(`Total hours per task ${total_hours_pro_task} exceeds 3000`);
         status = "Anomaly";
       } else if (
         total_cost_pro_task !== undefined &&
@@ -315,7 +315,7 @@ export class ProjectInjestionTaskService {
         );
       }
 
-      await this.projectTaskSchema.startAggregation(
+      const { projectResourceFiscalCreated, newProjectFiscalRegion } = await this.projectTaskSchema.startAggregation(
         accountNumber,
         projectTaskData,
         projectData,
@@ -327,6 +327,75 @@ export class ProjectInjestionTaskService {
         activeId[0][0].rid,
         transaction
       );
+
+
+      const checkTableExists = await this.projectIngestion.checkCaseProjectsTableExists(accountNumber);
+      if (checkTableExists) {
+
+        const projectCaseMapping =
+          await this.projectIngestion.fetchProjectFiscalCaseMapping(
+            accountNumber,
+            project_fiscal_rid
+          );
+
+        if (projectCaseMapping.length > 0) {
+
+          for (const caseMapping of projectCaseMapping) {
+            const caseData = await Case.findOne({
+              where: {
+                rid: caseMapping.case_rid,
+              },
+            });
+
+            if (!caseData) {
+              continue;
+            }
+
+            const mainSequelize = await initMainDbSequelize();
+
+            const caseStatus = await mainSequelize.query(
+              rawQueries.fetchCaseStatusByRid(caseData.status_rid),
+              {
+                type: "SELECT",
+              }
+            ) as CaseStatusResult[];
+
+            if (caseStatus[0]?.status_name === "Closed") {
+              continue;
+            }
+
+            const newCaseTask = await this.projectTaskSchema.addCaseProjectTask(
+              accountNumber,
+              projectTaskData,
+              userId,
+              projectData,
+              resourceData,
+              transaction,
+              caseMapping,
+              newTask
+            );
+
+            await this.projectTaskSchema.startCaseAggregation(
+              accountNumber,
+              projectTaskData,
+              projectData,
+              resourceData,
+              projectData.fiscal_year,
+              resourceData.rid!,
+              userId,
+              activeStatusId,
+              activeId[0][0].rid,
+              transaction,
+              caseMapping,
+              projectResourceFiscalCreated,
+              newProjectFiscalRegion
+            );
+
+
+          }
+        }
+      }
+
 
       await transaction.commit();
       return {
@@ -366,7 +435,7 @@ export class ProjectInjestionTaskService {
   * }>} Result of the update operation, including the updated task or an error/prompt response.
   * 
   * @throws Throws an error if the update process fails and rolls back the transaction.
-  */ 
+  */
   async updateProjectTask(
     projectTaskData: IUpdateProjectTask,
     userId: string,
@@ -412,7 +481,7 @@ export class ProjectInjestionTaskService {
 
       const { accountNumber, resourceData, projectData, taskData } =
         validationResult;
-      
+
       if (projectData.is_qualified) {
         return {
           statusCode: HttpStatus.FAILED,
@@ -546,7 +615,7 @@ export class ProjectInjestionTaskService {
         total_hours_pro_task !== undefined &&
         Number(total_hours_pro_task) > 3000
       ) {
-          logMessage(`Total hours per task ${total_hours_pro_task} exceeds 3000`);
+        logMessage(`Total hours per task ${total_hours_pro_task} exceeds 3000`);
         status = "Anomaly";
       } else if (
         total_cost_pro_task !== undefined &&
@@ -601,19 +670,19 @@ export class ProjectInjestionTaskService {
         activeId[0][0].rid,
         transaction
       );
-            
+
       let projectCaseMapping: any = [];
-      const {accountNumber: validAccountNumber}  = await this.projectIngestion.fetchValidAccountNumberById(account_rid);
-      const checkTableExists =  await this.projectIngestion.checkCaseProjectsTableExists(validAccountNumber);  
+      const { accountNumber: validAccountNumber } = await this.projectIngestion.fetchValidAccountNumberById(account_rid);
+      const checkTableExists = await this.projectIngestion.checkCaseProjectsTableExists(validAccountNumber);
       if (checkTableExists) {
-        projectCaseMapping = 
-        await this.projectIngestion.fetchProjectFiscalCaseMapping(
-          accountNumber,
-          projectData.rid
-        );
+        projectCaseMapping =
+          await this.projectIngestion.fetchProjectFiscalCaseMapping(
+            accountNumber,
+            projectData.rid
+          );
       }
 
-      if (projectCaseMapping.length > 0) {  
+      if (projectCaseMapping.length > 0) {
 
         for (const caseMapping of projectCaseMapping) {
           const caseData = await Case.findOne({
@@ -621,7 +690,7 @@ export class ProjectInjestionTaskService {
               rid: caseMapping.case_rid,
             },
           });
-        
+
           if (!caseData) {
             continue;
           }
@@ -633,7 +702,7 @@ export class ProjectInjestionTaskService {
               type: "SELECT",
             }
           ) as CaseStatusResult[];
-        
+
           if (caseStatus[0]?.status_name === "Closed") {
             continue;
           }
@@ -647,7 +716,7 @@ export class ProjectInjestionTaskService {
             transaction,
             caseMapping
           );
-          
+
         }
       }
 
@@ -661,7 +730,7 @@ export class ProjectInjestionTaskService {
         },
       };
     } catch (error) {
-      errorLog( "Update Project Task", (error as Error).message );
+      errorLog("Update Project Task", (error as Error).message);
       await transaction.rollback();
       throw this.throwServiceError(error as Error);
     }
@@ -687,7 +756,7 @@ export class ProjectInjestionTaskService {
   *   - data: Object containing the array of project task types.
   *
   * @throws Throws a service error if fetching project task types fails.
-  */ 
+  */
   async listProjectTaskTypes(): Promise<{
     statusCode: number;
     message: string;
@@ -731,7 +800,7 @@ export class ProjectInjestionTaskService {
   *   - data: Object containing the array of project task classifications.
   *
   * @throws Throws a service error if fetching project task classifications fails.
-  */ 
+  */
   async listProjectTaskClassification(): Promise<{
     statusCode: number;
     message: string;
@@ -872,17 +941,17 @@ export class ProjectInjestionTaskService {
     projectResourceSchema: ProjectResourceSchemaService;
   }): Promise<
     | {
-        success: true;
-        accountNumber: string;
-        resourceData: Resources;
-        projectData: ProjectFiscal;
-      }
+      success: true;
+      accountNumber: string;
+      resourceData: Resources;
+      projectData: ProjectFiscal;
+    }
     | {
-        success: false;
-        statusCode: number;
-        message: string;
-        errorMessage: string;
-      }
+      success: false;
+      statusCode: number;
+      message: string;
+      errorMessage: string;
+    }
   > {
     try {
       const { accountNumber } =
@@ -962,18 +1031,18 @@ export class ProjectInjestionTaskService {
     projectTaskSchema: ProjectTaskSchemaService;
   }): Promise<
     | {
-        success: true;
-        accountNumber: string;
-        resourceData: Resources;
-        projectData: ProjectFiscal;
-        taskData: ProjectTask;
-      }
+      success: true;
+      accountNumber: string;
+      resourceData: Resources;
+      projectData: ProjectFiscal;
+      taskData: ProjectTask;
+    }
     | {
-        success: false;
-        statusCode: number;
-        message: string;
-        errorMessage: string;
-      }
+      success: false;
+      statusCode: number;
+      message: string;
+      errorMessage: string;
+    }
   > {
     try {
       const { accountNumber } =
@@ -1074,7 +1143,7 @@ export class ProjectInjestionTaskService {
   * }>} Object containing the status, message, and the list of assigned resource codes.
   * 
   * @throws Throws a service error if the account ID is invalid or if the query fails.
-  */ 
+  */
   async getAssignedResourceCodes(
     accountId: string,
     projectFiscalId: string
@@ -1215,7 +1284,7 @@ export class ProjectInjestionTaskService {
   * }>} Result of the anomaly handling process with status and message.
   *
   * @throws Throws a service error if account ID is invalid, project task is not found, resource code is invalid, or any database operation fails.
-  */ 
+  */
   async handleAnomalyStatus(
     data: IAnomalyStatus,
     userId: string
@@ -1302,14 +1371,14 @@ export class ProjectInjestionTaskService {
       }
 
       let projectCaseMapping: any = [];
-      const {accountNumber: validAccountNumber}  = await this.projectIngestion.fetchValidAccountNumberById(account_rid);
-      const checkTableExists =  await this.projectIngestion.checkCaseProjectsTableExists(validAccountNumber);  
+      const { accountNumber: validAccountNumber } = await this.projectIngestion.fetchValidAccountNumberById(account_rid);
+      const checkTableExists = await this.projectIngestion.checkCaseProjectsTableExists(validAccountNumber);
       if (checkTableExists) {
-        projectCaseMapping = 
-        await this.projectIngestion.fetchProjectFiscalCaseMapping(
-          accountNumber,
-          project_fiscal_rid
-        );
+        projectCaseMapping =
+          await this.projectIngestion.fetchProjectFiscalCaseMapping(
+            accountNumber,
+            project_fiscal_rid
+          );
       }
 
       if (action === "accept") {
@@ -1389,7 +1458,7 @@ export class ProjectInjestionTaskService {
           transaction
         );
 
-        if (projectCaseMapping.length > 0) {  
+        if (projectCaseMapping.length > 0) {
 
           for (const caseMapping of projectCaseMapping) {
             const caseData = await Case.findOne({
@@ -1397,19 +1466,19 @@ export class ProjectInjestionTaskService {
                 rid: caseMapping.case_rid,
               },
             });
-          
+
             if (!caseData) {
               continue;
             }
             const mainSequelize = await initMainDbSequelize();
-          
+
             const caseStatus = await mainSequelize.query(
               rawQueries.fetchCaseStatusByRid(caseData.status_rid),
               {
                 type: "SELECT",
               }
             ) as CaseStatusResult[];
-          
+
             if (caseStatus[0]?.status_name === "Closed") {
               continue;
             }
@@ -1422,10 +1491,10 @@ export class ProjectInjestionTaskService {
               transaction,
               caseMapping
             );
-          
+
           }
         }
-        
+
 
         await transaction.commit();
 
@@ -1525,12 +1594,12 @@ export class ProjectInjestionTaskService {
     if (result[0].length > 0) {
       const finalResult = result[0].map((data: any) => {
         return {
-          rid : data.rid,
-          resource_code : data.resource_code,
-          project_resource_role : data.project_resource_role,
-          resource_name : data.resource_name,
-          start_date : data.start_date,
-          end_date : data.end_date
+          rid: data.rid,
+          resource_code: data.resource_code,
+          project_resource_role: data.project_resource_role,
+          resource_name: data.resource_name,
+          start_date: data.start_date,
+          end_date: data.end_date
         }
       })
       return {

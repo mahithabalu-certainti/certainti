@@ -947,8 +947,12 @@ const updateActivityEmailSchema = Joi.object({
 const updateTaskSchema = Joi.object({
   rid: Joi.string().max(255).required(),
   task_name: Joi.string().max(255).required(),
-  effective_start_datetime: Joi.string().required(),
-  effective_end_datetime: Joi.string().required(),
+  effective_start_datetime: Joi.string().required().messages({
+    'any.required': 'Please select start date',
+  }),
+  effective_end_datetime: Joi.string().required().messages({
+    'any.required': 'Please select due date',
+  }),
   assigned_to: Joi.string().allow("").optional(),
   checklist_template_rid: Joi.string().allow("").optional(),
   status_rid: Joi.string().optional(),
