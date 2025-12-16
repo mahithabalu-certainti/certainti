@@ -4077,7 +4077,19 @@ class CaseSchemaService {
             type: "SELECT",
           }
         );
-        return users;
+        const finalData = await Promise.all(users.map(async(data : any) => {
+          let profileUrl;
+          if(data.profile_url !== null) {
+            profileUrl = await generateSasUrl(data.profile_url)
+          } else {
+            profileUrl = null
+          }
+          return {
+            ...data,
+            profile_url : profileUrl
+          }
+        }))
+        return finalData;
       }
       else {
         const users = await this.mainDbSequelize.query(
@@ -4086,7 +4098,19 @@ class CaseSchemaService {
             type: "SELECT",
           }
         );
-        return users;
+        const finalData = await Promise.all(users.map(async(data : any) => {
+          let profileUrl;
+          if(data.profile_url !== null) {
+            profileUrl = await generateSasUrl(data.profile_url)
+          } else {
+            profileUrl = null
+          }
+          return {
+            ...data,
+            profile_url : profileUrl
+          }
+        }))
+        return finalData;
 
       }
 
