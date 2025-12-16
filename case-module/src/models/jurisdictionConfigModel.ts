@@ -14,7 +14,7 @@ interface JurisdictionConfigAttributes {
   effective_end_date?: Date;
   status_rid: string;
   credit_config_group_rid: string;
-  federal_config_id?: string;
+  federal_config_id?: string | null;
   
 }
 
@@ -37,7 +37,7 @@ export class JurisdictionConfig
   public effective_end_date!: Date;
   public status_rid!: string;
   public credit_config_group_rid!: string;
-  public federal_config_id?: string;
+  public federal_config_id?: string | null;
 
   static initialize(
     sequelize: Sequelize,

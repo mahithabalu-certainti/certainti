@@ -201,6 +201,7 @@ export class JurisdictionService {
             config_name: configRequest.config_name,
             status_rid: activeStatusRid.rid,
             rid: { [Op.ne]: configRequest.config_rid },
+            federal_config_id: { [Op.is]: null },
           },
         });
         if (existingConfigName) {
