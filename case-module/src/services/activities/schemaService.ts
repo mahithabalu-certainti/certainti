@@ -984,6 +984,7 @@ class ActivitySchemaService {
         "fiscal_year",
         "modified_datetime",
         'subject',
+        'task_name',
         
         "call_platform"
       ];
@@ -1348,6 +1349,7 @@ class ActivitySchemaService {
             case 'assigned_to':
             case 'call_platform':
             case 'subject':
+            case 'task_name':
               switch (operator.toLowerCase()) {
                 case 'equals': condition[field] = { [Op.iLike]: value }; break;
                 case 'not_equals': condition[field] = { [Op.or]: [{ [Op.notILike]: value }, { [Op.is]: null }] }; break;          
