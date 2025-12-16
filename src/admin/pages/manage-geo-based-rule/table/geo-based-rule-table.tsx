@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { generatePath, useNavigate } from 'react-router-dom';
 import { ListTable, ManageColumnsPopover } from '../../../../components/table';
 import { getGeoBasedRuleColumns } from './columns';
 import {
     ActionItem,
+    CellEditData,
+    FieldChangeValue,
     ListTableColumn,
     ShowHideTableColumn,
 } from '../../../../components/table/types';
@@ -14,6 +16,10 @@ import {
     GeoBasedRuleListParams,
 } from '../../../types/geo-based-rule';
 import { MANAGE_GEO_BASED_RULE_EDIT } from '../../../../routes';
+import { useToast } from '../../../../hooks';
+import { GEO_BASED_RULE } from '../../../../api/graphql/queries/geo-based-rule-query';
+import { useMutation } from '@apollo/client';
+import { caseClient } from '../../../../api/graphql/clients/client';
 
 
 interface IGeoBasedRuleTableProps {
@@ -41,15 +47,25 @@ export const ManageGeoBasedRuleTable: React.FC<IGeoBasedRuleTableProps> = ({
     setColumnAnchorEl,
     //   searchValue,
 }) => {
+    const { errorToast } = useToast();
     const navigate = useNavigate();
-    //   const [dataList, setDataList] = useState<GeoBasedRule[]>([]); // Empty for now
+    const [geoBasedRuleList, setGeoBasedRuleList] = useState<GeoBasedRule[]>([]);
+
+    const [updateGeoBasedRule] = useMutation(GEO_BASED_RULE, {
+        client: caseClient,
+    });
 
     const { data, isLoading, isError } = useGeoBasedList(
         { ...tableParams, filters: appliedFilters },
         refreshTrigger
     );
-    const geoBasedRuleList = data?.data.configs;
     const totalItems = data?.data.count || 0;
+
+    useEffect(() => {
+        if (data?.data.configs) {
+            setGeoBasedRuleList(data?.data.configs || []);
+        }
+    }, [data?.data.configs]);
     const getRowId = (row: GeoBasedRule) => row.rid;
     const handleEdit = (row: GeoBasedRule) => {
         const path = generatePath(MANAGE_GEO_BASED_RULE_EDIT, {
@@ -116,6 +132,58 @@ export const ManageGeoBasedRuleTable: React.FC<IGeoBasedRuleTableProps> = ({
         ? 'interaction-column-visibility-popover'
         : undefined;
 
+    const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
+        const previousGeoBasedRuleList = [...geoBasedRuleList];
+
+        const matchedRule = geoBasedRuleList.find((rule) => rule.rid === rowId);
+        if (!matchedRule) {
+            return;
+        }
+
+        // Build update data with both effective dates
+        const updateData = updates.reduce<Record<string, FieldChangeValue>>(
+            (acc, item) => {
+                const key = item.editId || item.columnId;
+                acc[key] = item.value;
+                return acc;
+            },
+            {
+                config_rid: rowId,
+                // Always include both effective dates
+                effective_start_date: matchedRule.effective_start_date,
+                effective_end_date: matchedRule.effective_end_date,
+            }
+        );
+
+        // Override with the updated value(s)
+        updates.forEach((update) => {
+            const key = update.editId || update.columnId;
+            updateData[key] = update.value;
+        });
+
+        try {
+            const res = await updateGeoBasedRule({
+                variables: { data: updateData },
+            });
+            const result = res.data?.UpdateGeoBasedRuleInline;
+
+            if (result?.statusCode === 200 && result.data) {
+                const updatedItem = result.data;
+                setGeoBasedRuleList((prev) =>
+                    prev.map((item) =>
+                        item.rid === updatedItem.rid ? { ...item, ...updatedItem } : item
+                    )
+                );
+            } else {
+                errorToast(result?.statusMessage || 'Failed to update field');
+                setGeoBasedRuleList(previousGeoBasedRuleList);
+            }
+        } catch (error) {
+            errorToast((error as Error)?.message || 'Failed to update field');
+            setGeoBasedRuleList(previousGeoBasedRuleList);
+        }
+    };
+
     return (
         <>
             <ManageColumnsPopover
@@ -155,6 +223,7 @@ export const ManageGeoBasedRuleTable: React.FC<IGeoBasedRuleTableProps> = ({
                 sortBy={tableParams.sortBy}
                 sortOrder={tableParams.sortOrder}
                 onSort={handleSort}
+                onCellEdit={handleCellEdit}
             />
         </>
     );
