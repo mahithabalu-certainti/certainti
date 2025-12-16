@@ -2768,12 +2768,16 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         ],
       });
 
-      return attachments.map((att) => ({
-        fileUrl: att.attachment_url,
-        fileName: att.attachment_name,
-        fileSize: att.attachment_size,
-        fileType: att.attachment_type,
-      }));
+      return Promise.resolve(
+        await Promise.all(
+          attachments.map(async (att) => ({
+            fileUrl: await generateSasUrl(att.attachment_url),
+            fileName: att.attachment_name,
+            fileSize: att.attachment_size,
+            fileType: att.attachment_type,
+          }))
+        )
+      );
     } catch (err) {
       logMessage(`Error fetching global attachments: ${err}`);
       throw new Error(

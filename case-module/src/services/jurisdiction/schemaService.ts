@@ -1,6 +1,7 @@
 import { Sequelize, Transaction } from "sequelize";
 import { CaseModelService } from "../caseModelsService";
 import {
+  buildBooleanFilterCondition,
   buildDatetimeFilterConditionTemplates,
   buildNumericFilterCondition,
   buildStringFilterCondition,
@@ -133,6 +134,7 @@ export class JurisdictionSchemaService {
       modified_user_name: jurisdictionConfig?.modified_user_name,
       status_rid: jurisdictionConfig?.status_rid,
       r_number: jurisdictionConfig?.r_number,
+      rid:jurisdictionConfig?.rid
     };
   }
 
@@ -255,6 +257,7 @@ export class JurisdictionSchemaService {
     };
    
     return {
+      rid:paramValues.length > 0 ? paramValues[0].rid : null,
       config_name:
         paramValues.length > 0 ? paramValues[0].config_name : null,
       status_rid:
@@ -337,6 +340,22 @@ export class JurisdictionSchemaService {
       });
       updated = true;
     }
+
+      if (
+      configRequest?.apiType === "graphql"
+    ) {
+      const response: any = await JurisdictionConfig.findOne({
+        where: {
+          rid: configRequest.config_rid,
+        },
+      });
+      if (!response) {
+        throw new Error(`Invalid config_rid: ${configRequest.config_rid}`);
+      }
+      await response.update(configRequest);
+      updated = true;
+    }
+  
     return updated;
   }
 
@@ -392,16 +411,6 @@ export class JurisdictionSchemaService {
     sortOrder: string,
     configRid?: string
   ) {
-    console.log("Listing jurisdiction config with params:", {
-      page,
-      limit,
-      apiType,
-      filters,
-      search,
-      sortBy,
-      sortOrder,
-      configRid,
-    }); 
     try {
       // Ensure filters is not null or undefined
       filters = filters || {};
@@ -463,10 +472,18 @@ export class JurisdictionSchemaService {
         jurisdictionConfigQuery,
         { type: "SELECT" }
       );
-      return {
+      if(result && result?.jurisdiction_config_list != null){
+       return {
         result: result.jurisdiction_config_list,
-        count: result.jurisdiction_config_list[0]?.total_records || 0,
+        count: result?.jurisdiction_config_list[0]?.total_records || 0,
       };
+      } else {
+        return {
+          result: [],
+          count: 0,
+        };
+      }
+      
     } catch (err) {
       logMessage(`Error in listing jurisdiction config: ${err}`);
       errorLog(
@@ -497,8 +514,9 @@ export class JurisdictionSchemaService {
         for (let [condition, values] of Object.entries(conditions)) {
           switch (filterTypes[key]) {
             case "string": {
-              let dynamicReference = `et`;
-
+              let dynamicReference = `jc`;
+              if (filteredColumns == "country_rid") dynamicReference = `g`;
+              if (filteredColumns == "state_rid") dynamicReference = `g`;
               const stringCondition = buildStringFilterCondition(
                 condition,
                 values,
@@ -507,6 +525,20 @@ export class JurisdictionSchemaService {
               );
               if (stringCondition) {
                 filteredQueryArray.push(stringCondition);
+              }
+              break;
+            }
+             case "boolean": {
+              let dynamicReference = `g`;
+            
+              const booleanCondition = buildBooleanFilterCondition(
+                condition,
+                values,
+                filteredColumns!,
+                dynamicReference
+              );
+              if (booleanCondition) {
+                filteredQueryArray.push(booleanCondition);
               }
               break;
             }
@@ -522,7 +554,7 @@ export class JurisdictionSchemaService {
               break;
             }
             case "datetime": {
-              let dynamicReference = `et`;
+              let dynamicReference = `jc`;
               const datetimeCondition = buildDatetimeFilterConditionTemplates(
                 condition,
                 values,
@@ -563,6 +595,10 @@ export class JurisdictionSchemaService {
       effective_end_date: "effective_end_date",
       createdAt: "created_datetime",
       category_rid: "category_name",
+      config_name: "config_name",
+      state_name: "state_name",
+      country_name: "country_name",
+      is_federal: "is_federal"
     };
 
     return sortMapping[sortField] || "r_number";

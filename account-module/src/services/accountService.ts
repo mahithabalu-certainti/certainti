@@ -1371,10 +1371,9 @@ async accountList(
         industry_name_other,
         key_contacts,
         parent_account_rid,
-        logo_url,
         organisation_name,
       } = accountData;
-
+      let logo_url = accountData.logo_url;
       // Check if account name already exists before update
       const existingAccount = await repository.findOne({
         where: {
@@ -1422,7 +1421,7 @@ async accountList(
       if(file)
       {
         const file_url = await uploadToAzureBlob(file, accountData.account_rid, existingAcc?.r_number!);
-        accountData.logo_url = file_url;
+        logo_url = file_url;
       }
       if (data_storage === "store_in_parent" && parent_account_rid !== null) {
         parent_account = await repository.findOne({
@@ -1715,6 +1714,7 @@ async accountList(
       }
       if(accountById?.logo_url)
       {
+        console.log("Generating SAS URL for logo:", accountById.logo_url);
         accountById.logo_url =  await generateSasUrl(accountById.logo_url);
       }
 
