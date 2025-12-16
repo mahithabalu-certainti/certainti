@@ -1,6 +1,7 @@
 import { Sequelize, Transaction } from "sequelize";
 import { CaseModelService } from "../caseModelsService";
 import {
+  buildBooleanFilterCondition,
   buildDatetimeFilterConditionTemplates,
   buildNumericFilterCondition,
   buildStringFilterCondition,
@@ -339,6 +340,22 @@ export class JurisdictionSchemaService {
       });
       updated = true;
     }
+
+      if (
+      configRequest?.apiType === "graphql"
+    ) {
+      const response: any = await JurisdictionConfig.findOne({
+        where: {
+          rid: configRequest.config_rid,
+        },
+      });
+      if (!response) {
+        throw new Error(`Invalid config_rid: ${configRequest.config_rid}`);
+      }
+      await response.update(configRequest);
+      updated = true;
+    }
+  
     return updated;
   }
 
@@ -508,6 +525,20 @@ export class JurisdictionSchemaService {
               );
               if (stringCondition) {
                 filteredQueryArray.push(stringCondition);
+              }
+              break;
+            }
+             case "boolean": {
+              let dynamicReference = `g`;
+            
+              const booleanCondition = buildBooleanFilterCondition(
+                condition,
+                values,
+                filteredColumns!,
+                dynamicReference
+              );
+              if (booleanCondition) {
+                filteredQueryArray.push(booleanCondition);
               }
               break;
             }

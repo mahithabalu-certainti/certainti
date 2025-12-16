@@ -749,7 +749,7 @@ export const jurisdictionRuleMapping = [
   },
   {
     permissionField: "config_name",
-    exportField: "Configuration Name",
+    exportField: "Config Name",
     dataField: "config_name",
   },
   {

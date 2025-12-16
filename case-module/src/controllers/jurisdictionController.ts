@@ -528,8 +528,8 @@ async function exportJurisdictionsConfigurations(
                       r_number: d.r_number,
                       status_name: d.status_name,
                       config_name: d.is_federal
-                        ? `C-${d.country_code}-${d.config_name}`
-                        : `C-${d.country_code}-${d.state_code}-${d.config_name}`,
+                        ? `C-${d.country_code}${d.config_name ? '-' + d.config_name : ''}`
+                        : `C-${d.country_code}-${d.state_name || ""}${d.config_name ? '-' + d.config_name : ''}`,
                       effective_start_date: formatDateOnly(d?.effective_start_date),
                       effective_end_date: formatDateOnly(d?.effective_end_date),
                       country_name: d.country_name,
@@ -547,7 +547,6 @@ async function exportJurisdictionsConfigurations(
                     // Build exportRecord using allowed fields and resultMap
                     const exportRecord: Record<string, any> = {};
                     jurisdictionRuleMapping.forEach((mapping) => {
-                      console.log("mapping.permissionField", mapping.permissionField);
                       if (allowedFieldSet.has(mapping.permissionField)) {
                         exportRecord[mapping.exportField] =
                           resultMap[mapping.dataField];
@@ -556,7 +555,6 @@ async function exportJurisdictionsConfigurations(
       
                     return exportRecord;
                   });
-            console.log("finalStructuredData", finalStructuredData);
             const generateBase64Response = await generateExcelBase64(
               finalStructuredData,
               "Jurisdiction_Configurations",

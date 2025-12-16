@@ -313,7 +313,7 @@ export const buildStringFilterCondition = (
       created_user_name: "(uc.first_name || ' ' || uc.last_name)",
       modified_user_name: "(um.first_name || ' ' || um.last_name)",
       case_name: " CONCAT(a.account_name, '-', c.country_code, '-', cs.fiscal_year, '-', cs.case_name)",
-      config_name: "CONCAT(C,'-',c.country_code, CASE WHEN s.state_code IS NOT NULL AND s.state_code <> '' THEN CONCAT('-', s.state_code) ELSE '' END, '-', cs.config_name)"
+      config_name: "CONCAT('C','-',c.country_code, '-', (CASE WHEN g.is_federal = false AND st.state_name IS NOT NULL AND st.state_name != '' THEN st.state_name || '-' ELSE '' END), jc.config_name)"
     };
 
     return columnMap[column] || (ref ? `${ref}.${column}` : column);
@@ -393,6 +393,24 @@ export const buildDatetimeFilterConditionTemplates = (
   }
 };
 
+// Optimized utility function for handling boolean filter conditions
+export const buildBooleanFilterCondition = (
+  condition: string,
+  values: any,
+  filteredColumns: string,
+  tableAlias: string = "cs"
+): string => {
+  const columnRef = `${tableAlias}.${filteredColumns}`;
+
+  // Use object mapping for boolean conditions
+  const conditionMap: Record<string, (col: string, val: any) => string> = {
+    [ALPHANUMERIC_CONDITIONS.equals]: (col, val) => `${col} = ${val === true || val === 'true' ? 'true' : 'false'}`,
+    [ALPHANUMERIC_CONDITIONS.notEquals]: (col, val) => `${col} != ${val === true || val === 'true' ? 'true' : 'false'}`,
+    [ALPHANUMERIC_CONDITIONS.isEmpty]: (col) => `(${col} IS NULL)`
+  };
+
+  return conditionMap[condition]?.(columnRef, values) || "";
+};
 export const setTaskTemplateData = (dbData: TaskTemplate, reqData: any, userId: string) => {
   let validUpdateQuery: string[] = []
   let validUpdateConditions: string = ``
