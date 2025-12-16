@@ -768,11 +768,21 @@ class ProjectIngestionService {
           contact.key_contact_email ||
           contact.key_contact_role_rid
         ) {
-          this.keyContacts.insertKeyContactDetails(
+          const createdKeyContact = await this.keyContacts.insertKeyContactDetails(
             KeyContact,
             contact,
             projectId,
             userId
+          );
+
+          this.keyContacts.insertCaseKeyContactDetails(
+            contact,
+            userId,
+            CaseKeyContactDetails,
+            Case,
+            projectCaseMapping,
+            projectId,
+            createdKeyContact.rid
           );
         }
       }

@@ -304,7 +304,7 @@ export class TaskService {
       }
 
       // Get user names for created_by and modified_by
-      const userIds = [...new Set(tasksRaw.flatMap(task => [task.created_by, task.modified_by]))];
+      const userIds = [...new Set(tasksRaw.flatMap(task => [task.created_by, task.modified_by, task.assigned_to]))];
       const users = userIds.length > 0
         ? await mainSequelize.query(
           rawQueries.fetchUsersByIds,
@@ -321,7 +321,7 @@ export class TaskService {
           { replacements: { statusIds }, type: 'SELECT' }
         )
         : [];
-      const statusMap = new Map(statuses.map((u: any) => [u.rid, u.full_name]));
+      const statusMap = new Map(statuses.map((u: any) => [u.rid, u.status_name]));
 
       // Get priority names for priorities
       const priorityIds = [...new Set(tasksRaw.flatMap(task => [task.priority_rid]))];
@@ -340,6 +340,7 @@ export class TaskService {
 
         return {
           ...taskData,
+          account_name: accountMap.get(task.account_rid)?.account_name || task.account_rid,
           r_number: taskData.r_number,
           task_name: taskData.task_name,
           description: taskData.description,
@@ -348,7 +349,7 @@ export class TaskService {
           modified_by_name: userMap.get(task.modified_by) || task.modified_by,
           status_name: statusMap.get(task.status_rid) || task.status_rid,
           priority_name: priorityMap.get(task.priority_rid) || task.priority_rid,
-          assigned_to_name: resourceMap.get(task.assigned_to) || task.assigned_to,
+          assigned_to_name: userMap.get(task.assigned_to) || task.assigned_to,
           account_status_rid: accountStatusInfo?.status_rid || null,
           account_status_name: accountStatusInfo?.status_name || null,
           effective_start_datetime: taskData.effective_start_datetime,
@@ -785,7 +786,7 @@ export class TaskService {
           { replacements: { statusIds }, type: 'SELECT' }
         )
         : [];
-      const statusMap = new Map(statuses.map((u: any) => [u.rid, u.full_name]));
+      const statusMap = new Map(statuses.map((u: any) => [u.rid, u.status_name]));
 
       // Get priority names for priorities
       const priorityIds = [...new Set(tasksRaw.flatMap(task => [task.priority_rid]))];
@@ -798,7 +799,7 @@ export class TaskService {
       const priorityMap = new Map(priorities.map((u: any) => [u.rid, u.priority_name]));
 
       // Get user names for created_by and modified_by
-      const userIds = [...new Set(tasksRaw.flatMap(task => [task.created_by, task.modified_by]))];
+      const userIds = [...new Set(tasksRaw.flatMap(task => [task.created_by, task.modified_by, task.assigned_to]))];
       const users = userIds.length > 0
         ? await mainSequelize.query(
           rawQueries.fetchUsersByIds,
@@ -817,7 +818,7 @@ export class TaskService {
           modified_by_name: userMap.get(task.modified_by) || task.modified_by,
           status_name: statusMap.get(task.status_rid) || null,
           priority_name: priorityMap.get(task.priority_rid) || null,
-          assigned_to_name: resourceMap.get(task.assigned_to) || task.assigned_to,
+          assigned_to_name: userMap.get(task.assigned_to) || task.assigned_to,
           attached_to: attachmentDisplayNames[task.rid] || task.attach_to,
         };
       }));
