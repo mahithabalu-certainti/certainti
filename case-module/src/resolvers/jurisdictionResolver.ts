@@ -53,8 +53,11 @@ export const jurisdictionResolver: IResolvers = {
     updateJurisdictionConfig: async (_, { input }, ctx) => {
       try {
          const userId = ctx.req.headers["x-user-id"];
+         input.created_by = userId;
+         input.modified_by = userId;
+         input.apiType = "graphql";
         const result = await ctx.services.jurisdictionService.updateJurisdictionConfig(input);
-        console.log("Result in resolver:", input);
+
         if (result.statusCode === HttpStatus.SUCCESS) {
               const configResult = await ctx.services.jurisdictionService.listJurisdictionConfig(
               { page: 1, limit: 1, sortBy: "created_datetime", sortOrder: "DESC" },
