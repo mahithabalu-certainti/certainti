@@ -18,6 +18,7 @@ import {
   AllPermissions,
   useGetAllDocumentInfo,
   useGetDocumentCategoryType,
+  useGetStatus,
 } from '../../../../common-service';
 import {
   checkPermission,
@@ -98,6 +99,11 @@ export const Tasks: React.FC = () => {
         permission,
         AllPermissions.CASES_WORKBREAKDOWN_VIEW_EDIT
       ),
+    [permission]
+  );
+
+  const accountPermissionMap = useMemo(
+    () => getPermissionMap(permission, AllPermissions.ACCOUNTS_VIEW_EDIT),
     [permission]
   );
 
@@ -208,26 +214,10 @@ export const Tasks: React.FC = () => {
     docTypesLoading: categoryTypes.isLoading,
   };
 
-  // Permissions
-  // const attachmentEditFields = useMemo(
-  //   () =>
-  //     permission?.find(
-  //       (item) => item.name === AllPermissions.ATTACHMENT_VIEW_EDIT
-  //     )?.fields ?? [],
-  //   [permission]
-  // );
-
-  // const permissionMap = useMemo(() => {
-  //   const map: Record<string, { read: boolean; edit: boolean }> = {};
-  //   attachmentEditFields.forEach((item) => {
-  //     map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
-  //   });
-  //   return map;
-  // }, [attachmentEditFields]);
-
   const prioritiesQuery = useGetTaskPriorities();
   const statusesQuery = useGetTaskStatuses();
   const activityStatusesQuery = useGetActivityStatus('Task');
+  const accountStatusQuery = useGetStatus();
 
   const priorityOptions = useMemo(
     () =>
@@ -254,10 +244,14 @@ export const Tasks: React.FC = () => {
     }
   }, [tabParam, statusesQuery.data, activityStatusesQuery.data]);
 
-  const accountStatusOptions = [
-    { label: 'Active', value: 'Active' },
-    { label: 'In-Active', value: 'Inactive' },
-  ];
+  const accountStatusOptions = useMemo(
+    () =>
+      accountStatusQuery?.data?.data?.status.map((status) => ({
+        label: status.status_name,
+        value: status.rid,
+      })) || [],
+    [accountStatusQuery?.data?.data?.status]
+  );
 
   const TaskFilterFields = useMemo(
     () =>
@@ -266,9 +260,10 @@ export const Tasks: React.FC = () => {
         statusOptions,
         [], // assigneeOptions - currently empty for global list
         accountStatusOptions,
-        currentPermissionMap
+        currentPermissionMap,
+        accountPermissionMap
       ),
-    [priorityOptions, statusOptions, currentPermissionMap]
+    [priorityOptions, statusOptions, currentPermissionMap, accountPermissionMap]
   );
 
   const menuItems = [

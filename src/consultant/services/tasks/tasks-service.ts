@@ -12,18 +12,26 @@ export const fetchTasksList = async (
   const isMilestone =
     params.filters &&
     (params.filters as { attachment_level?: string }).attachment_level ===
-    'milestone';
+      'milestone';
 
   const flag = isMilestone ? 'milestone' : 'activity';
   const baseUrl = isMilestone
     ? '/api/task/list/summaryMilestone'
     : '/api/task/list/summaryActivity';
 
-  let filtersToSend = params.filters ? { ...params.filters } : {};
-  const { attachment_level, ...rest } = filtersToSend as {
+  let filtersToSend: Record<string, any> = params.filters
+    ? { ...params.filters }
+    : {};
+  const { attachment_level, account_status_rid, ...rest } = filtersToSend as {
     attachment_level?: string;
+    account_status_rid?: any;
   };
-  filtersToSend = rest;
+  filtersToSend = rest as Record<string, any>;
+
+  // Map account_status_rid to status_rid for the API
+  if (account_status_rid !== undefined) {
+    filtersToSend.status_rid = account_status_rid;
+  }
 
   const payload: Record<string, any> = {
     flag,
@@ -108,11 +116,19 @@ export const exportTasksData = async (
   }
 
   // Build the payload similar to fetchTasksList
-  let filtersToSend = params.filters ? { ...params.filters } : {};
-  const { attachment_level, ...rest } = filtersToSend as {
+  let filtersToSend: Record<string, any> = params.filters
+    ? { ...params.filters }
+    : {};
+  const { attachment_level, account_status_rid, ...rest } = filtersToSend as {
     attachment_level?: string | string[];
+    account_status_rid?: any;
   };
-  filtersToSend = rest;
+  filtersToSend = rest as Record<string, any>;
+
+  // Map account_status_rid to status_rid for the API
+  if (account_status_rid !== undefined) {
+    filtersToSend.status_rid = account_status_rid;
+  }
 
   const payload: Record<string, any> = {
     flag,

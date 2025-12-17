@@ -22,7 +22,8 @@ export const getTaskFilterFields = (
   statusOptions: { value: string; label: string }[],
   _assigneeOptions: { value: string; label: string }[],
   accountStatusOptions: { value: string; label: string }[],
-  permissionMap?: Record<string, { read: boolean; edit: boolean }>
+  permissionMap?: Record<string, { read: boolean; edit: boolean }>,
+  accountPermissionMap?: Record<string, { read: boolean; edit: boolean }>
 ): FieldConfig[] => [
   {
     name: 'Task ID',
@@ -36,6 +37,9 @@ export const getTaskFilterFields = (
     value: 'account_name',
     type: 'text',
     operatorOption: textOptions,
+    hide: accountPermissionMap
+      ? !accountPermissionMap['account_name']?.read
+      : false,
   },
   {
     name: 'Task Name',
@@ -109,14 +113,16 @@ export const getTaskFilterFields = (
   },
   {
     name: 'Account Status',
-    value: 'account_status_name',
+    value: 'account_status_rid',
     type: 'enum',
     options: accountStatusOptions.map((opt) => ({
       option: opt.label,
       value: opt.value,
     })),
     operatorOption: enumOptions,
-    hide: permissionMap ? !permissionMap['account_status_name']?.read : false,
+    hide: accountPermissionMap
+      ? !accountPermissionMap['status_rid']?.read
+      : false,
   },
   {
     name: 'Created By',

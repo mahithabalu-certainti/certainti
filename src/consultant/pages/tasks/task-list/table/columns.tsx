@@ -10,7 +10,8 @@ export const getTaskTableColumns = (
   onClick: (row: TaskList) => void,
   statusOptions: SelectOption[] = [],
   priorityOptions: SelectOption[] = [],
-  permissionMap?: Record<string, { read: boolean; edit: boolean }>
+  permissionMap?: Record<string, { read: boolean; edit: boolean }>,
+  accountPermissionMap?: Record<string, { read: boolean; edit: boolean }>
 ): ListTableColumn<TaskList>[] => [
   {
     id: 'r_number',
@@ -48,7 +49,10 @@ export const getTaskTableColumns = (
     label: 'Account Name',
     width: 200,
     sortable: true,
-    hide: false,
+    hide: accountPermissionMap
+      ? !accountPermissionMap['account_name']?.read &&
+        !accountPermissionMap['account_name']?.edit
+      : false,
     render: (row: TaskList) => row.account_name || '-',
   },
   {
@@ -178,7 +182,10 @@ export const getTaskTableColumns = (
     label: 'Account Status',
     width: 150,
     sortable: true,
-    hide: permissionMap ? !permissionMap['account_status_name']?.read : false,
+    hide: accountPermissionMap
+      ? !accountPermissionMap['status_rid']?.read &&
+        !accountPermissionMap['status_rid']?.edit
+      : false,
     render: (row: TaskList) => row.account_status_name || '-',
   },
   {

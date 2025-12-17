@@ -579,6 +579,12 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
     [permission]
   );
 
+  // Permission Map for Account fields (account_name, account_status_name)
+  const accountPermissionMap = useMemo(
+    () => getPermissionMap(permission, AllPermissions.ACCOUNTS_VIEW_EDIT),
+    [permission]
+  );
+
   const fieldHiddenMap = useMemo(() => {
     if (!selectedTask) return {};
 
@@ -815,9 +821,16 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
         handleTaskClick,
         statusOptions,
         priorityOptions,
-        currentPermissionMap
+        currentPermissionMap,
+        accountPermissionMap
       ),
-    [handleTaskClick, statusOptions, priorityOptions, currentPermissionMap]
+    [
+      handleTaskClick,
+      statusOptions,
+      priorityOptions,
+      currentPermissionMap,
+      accountPermissionMap,
+    ]
   );
 
   // const actionButtons: ActionItem<TaskList>[] = [
