@@ -9,10 +9,11 @@ import {
 export const fetchTasksList = async (
   params: TasksListURLParams
 ): Promise<TaskListResponse> => {
-  const isMilestone =
-    params.filters &&
+  const isMilestone = params.flag
+    ? params.flag === 'milestone'
+    : params.filters &&
     (params.filters as { attachment_level?: string }).attachment_level ===
-      'milestone';
+    'milestone';
 
   const flag = isMilestone ? 'milestone' : 'activity';
   const baseUrl = isMilestone
@@ -22,13 +23,12 @@ export const fetchTasksList = async (
   let filtersToSend: Record<string, any> = params.filters
     ? { ...params.filters }
     : {};
-  const { attachment_level, account_status_rid, ...rest } = filtersToSend as {
-    attachment_level?: string;
+
+  const { account_status_rid, ...rest } = filtersToSend as {
     account_status_rid?: any;
   };
   filtersToSend = rest as Record<string, any>;
 
-  // Map account_status_rid to status_rid for the API
   if (account_status_rid !== undefined) {
     filtersToSend.status_rid = account_status_rid;
   }
@@ -119,8 +119,8 @@ export const exportTasksData = async (
   let filtersToSend: Record<string, any> = params.filters
     ? { ...params.filters }
     : {};
-  const { attachment_level, account_status_rid, ...rest } = filtersToSend as {
-    attachment_level?: string | string[];
+
+  const { account_status_rid, ...rest } = filtersToSend as {
     account_status_rid?: any;
   };
   filtersToSend = rest as Record<string, any>;

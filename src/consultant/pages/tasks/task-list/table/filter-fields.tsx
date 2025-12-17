@@ -69,7 +69,7 @@ export const getTaskFilterFields = (
   },
   {
     name: 'Attach To',
-    value: 'attach_to',
+    value: 'attach_to_name',
     type: 'text',
     hide: permissionMap
       ? !(
@@ -81,6 +81,7 @@ export const getTaskFilterFields = (
     name: 'Attachment Level',
     value: 'attachment_level',
     type: 'text',
+    operatorOption: textOptions,
     hide: permissionMap ? !permissionMap['attachment_level']?.read : false,
   },
   {
@@ -128,6 +129,7 @@ export const getTaskFilterFields = (
     name: 'Created By',
     value: 'created_by_name',
     type: 'text',
+    operatorOption: textOptions,
     hide: permissionMap ? !permissionMap['created_by_name']?.read : false,
   },
   {
@@ -140,6 +142,7 @@ export const getTaskFilterFields = (
     name: 'Modified By',
     value: 'modified_by_name',
     type: 'text',
+    operatorOption: textOptions,
     hide: permissionMap ? !permissionMap['modified_by_name']?.read : false,
   },
   {

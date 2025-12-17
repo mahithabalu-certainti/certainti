@@ -108,8 +108,8 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
   const caseId = isMilestoneTab
     ? selectedTask?.attach_to || ''
     : selectedTask?.case_rid ||
-      (isCaseTask ? selectedTask?.attach_to : '') ||
-      '';
+    (isCaseTask ? selectedTask?.attach_to : '') ||
+    '';
   const accountId = selectedTask?.account_rid || '';
 
   const prioritiesQuery = useGetTaskPriorities();
@@ -739,13 +739,17 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
     };
   }, [selectedTask, taskPermissionMap, milestonePermissionMap, isMilestoneTab]);
 
+  const taskFlag: 'milestone' | 'activity' =
+    fixedFilters?.attachment_level === 'milestone' ? 'milestone' : 'activity';
+
   const { data, isLoading, isError } = useAllTasksList(
     {
       ...tableParams,
-      filters: { ...appliedFilters, ...fixedFilters },
+      filters: { ...fixedFilters, ...appliedFilters },
       globalFilters: reshapeGlobalFilter(filters as FilterState),
       search: searchValue,
       fiscalYear: newFiscalYear,
+      flag: taskFlag,
     },
     refreshTrigger
   );
