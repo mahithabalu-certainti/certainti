@@ -1,6 +1,5 @@
 import { useQuery, UseQueryResult } from '@tanstack/react-query';
 import { resourceServiceApi } from '../../../api/api';
-import { TasksExportListURL } from '../urls/tasks-url';
 import {
   TaskListResponse,
   TasksListExportParams,
@@ -13,7 +12,7 @@ export const fetchTasksList = async (
   const isMilestone =
     params.filters &&
     (params.filters as { attachment_level?: string }).attachment_level ===
-      'milestone';
+    'milestone';
 
   const flag = isMilestone ? 'milestone' : 'activity';
   const baseUrl = isMilestone
@@ -80,39 +79,27 @@ export const useAllTasksList = (
   });
 };
 
-type ExportType = 'tasks' | 'all_tasks' | 'milestone' | 'activity';
+type ExportType = 'milestone' | 'activity';
 export const exportTasksData = async (
   type: ExportType,
   params: TasksListExportParams
 ) => {
-  let url = '';
+  let baseUrl = '';
   let filename = '';
+  let flag = '';
 
   const systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
+  // Determine the base URL, flag, and filename based on type
   switch (type) {
-    case 'tasks':
-      url = TasksExportListURL({ ...params, timezone: systemTimezone });
-      filename = 'tasks_records.xlsx';
-      break;
-    case 'all_tasks':
-      url = TasksExportListURL({ ...params, timezone: systemTimezone });
-      filename = 'all_tasks_records.xlsx';
-      break;
     case 'milestone':
-      url = TasksExportListURL({
-        ...params,
-        timezone: systemTimezone,
-        filters: { ...params.filters, attachment_level: 'milestone' },
-      });
+      baseUrl = '/api/task/list/summaryExportMilestone';
+      flag = 'milestone';
       filename = 'milestone_tasks_records.xlsx';
       break;
     case 'activity':
-      url = TasksExportListURL({
-        ...params,
-        timezone: systemTimezone,
-        filters: { ...params.filters, attachment_level: 'activity' },
-      });
+      baseUrl = '/api/task/list/summaryExportActivity';
+      flag = 'activity';
       filename = 'activity_tasks_records.xlsx';
       break;
     default:
@@ -120,8 +107,41 @@ export const exportTasksData = async (
       return;
   }
 
+  // Build the payload similar to fetchTasksList
+  let filtersToSend = params.filters ? { ...params.filters } : {};
+  const { attachment_level, ...rest } = filtersToSend as {
+    attachment_level?: string | string[];
+  };
+  filtersToSend = rest;
+
+  const payload: Record<string, any> = {
+    flag,
+  };
+
+  if (params.fiscalYear) {
+    payload.fiscalYear = params.fiscalYear;
+  }
+  if (filtersToSend && Object.keys(filtersToSend).length > 0) {
+    payload.filters = JSON.stringify(filtersToSend);
+  }
+  if (params.globalFilters) {
+    payload.globalFilters = JSON.stringify(params.globalFilters);
+  }
+  if (params.sortBy) {
+    payload.sortBy = params.sortBy;
+  }
+  if (params.sortOrder) {
+    payload.sortOrder = params.sortOrder;
+  }
+  if (params.search) {
+    payload.search = params.search;
+  }
+  if (systemTimezone) {
+    payload.timezone = systemTimezone;
+  }
+
   try {
-    const response = await resourceServiceApi.get(url);
+    const response = await resourceServiceApi.post(baseUrl, payload);
     const base64Data = response.data?.data;
 
     if (!base64Data) {
