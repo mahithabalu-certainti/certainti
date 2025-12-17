@@ -208,7 +208,7 @@ export class JurisdictionService {
         if (existingConfigName) {
           return {
             statusCode: HttpStatus.FAILED,
-            message: HttpStatus.FAILED_MESSAGE,
+            message: STATUS_MESSAGE.configUpdateFailed,
             errorMessage: `A config with name ${configRequest.config_name} already exists.Please use a different name.`,
           };
         }
@@ -239,7 +239,7 @@ export class JurisdictionService {
       if (duplicate) {
         return {
           statusCode: HttpStatus.FAILED,
-          message: HttpStatus.FAILED_MESSAGE,
+          message: STATUS_MESSAGE.configUpdateFailed,
           errorMessage:
             "Duplicate platform config exists for the same effective dates wih active status.",
         };
@@ -250,7 +250,7 @@ export class JurisdictionService {
         );
       return {
         statusCode: HttpStatus.SUCCESS,
-        message: HttpStatus.SUCCESS_MESSAGE,
+        message: STATUS_MESSAGE.configUpdatedSuccess,
         data: {
           response: updatedConfig,
         },
@@ -323,7 +323,7 @@ export class JurisdictionService {
       if (duplicate) {
         return {
           statusCode: HttpStatus.FAILED,
-          message: HttpStatus.FAILED_MESSAGE,
+          message: STATUS_MESSAGE.configCreationFailed,
           errorMessage:
             "Duplicate config exists for the same effective dates and active status.",
         };
@@ -334,18 +334,17 @@ export class JurisdictionService {
         );
       return {
         statusCode: HttpStatus.SUCCESS,
-        message: HttpStatus.SUCCESS_MESSAGE,
+        message: STATUS_MESSAGE.configCreatedSuccess,
         data: {
           response: updatedConfig,
         },
       };
     } catch (err) {
-      console.log("err", err);
-      logMessage(`Error updating jurisdiction config, ${err}`);
+      logMessage(`Error creating jurisdiction config, ${err}`);
       return {
         statusCode: HttpStatus.FAILED,
-        message: HttpStatus.FAILED_MESSAGE,
-        errorMessage: "Error updating jurisdiction config",
+        message: STATUS_MESSAGE.configCreationFailed,
+        errorMessage: "Error creating jurisdiction config",
       };
     }
   }

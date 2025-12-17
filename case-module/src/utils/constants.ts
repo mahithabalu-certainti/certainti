@@ -194,7 +194,11 @@ export const STATUS_MESSAGE = {
   configNotAvailable: "Configuration not available for the selected criteria",
   technicalDocumentationSignedOff : "Technical documentation has been successfully signed off",
   technicalDocsAlreadySignedOff : "Technical documentation is already signed off",
-  signoffNotAllowed : "Sign-off cannot be reverted. Approval is required to proceed"
+  signoffNotAllowed : "Sign-off cannot be reverted. Approval is required to proceed",
+  configCreatedSuccess: "Configuration created successfully",
+  configUpdatedSuccess: "Configuration updated successfully",
+  configCreationFailed: "Configuration creation failed",
+  configUpdateFailed: "Configuration update failed",
 };
 
 export const caseStatuses = {
@@ -1439,7 +1443,7 @@ export const rawQueries = {
 join ${MAIN_SCHEMA_NAME}.rd_credit_config_group rg on  rv.credit_config_group_rid  = rg.rid
 where rg.country_rid = '${rid}'
 and credit_program_name = 'Platform Configuration'
-    and is_federal = true LIMIT 1`;
+    and rg.is_federal = true LIMIT 1`;
   },
 
   fetchAccountDetailsInfo(schemaName: string, account_rid: string) {

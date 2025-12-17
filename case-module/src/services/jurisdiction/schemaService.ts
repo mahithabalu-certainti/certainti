@@ -56,9 +56,9 @@ export class JurisdictionSchemaService {
         status_rid: configRequest.status_rid,
         modified_datetime: new Date(),
         modified_by: configRequest.modified_by,
-        ...(updateGroupRid ? { credit_config_group_rid: configRequest.jurisdiction_config_group_rid } : {})
-      });
-    }
+        credit_config_group_rid: configRequest.jurisdiction_config_group_rid
+    });
+  }
 
     // Helper: update or create platform config
     private async updatePlatformConfig(JurisdictionConfig: any, configRequest: any) {
@@ -364,7 +364,6 @@ export class JurisdictionSchemaService {
 
     // 1. Handle is_federal change
     if (response.is_federal !== configRequest.is_federal) {
-      console.log('Handling is_federal change');
       if (configRequest.is_federal === false) {
         // Federal to non-federal
         if (configRequest.jurisdictionConfig) {
@@ -418,7 +417,6 @@ export class JurisdictionSchemaService {
         status_rid: configRequest.status_rid,
         is_federal: configRequest.is_federal || false,
       });
-      console.log('createdConfig', createdConfig);
       created = true;
       configRequest.federal_rid = createdConfig.rid;
     }
@@ -488,7 +486,6 @@ export class JurisdictionSchemaService {
       whereKey = `1 = 1`;
 
        if (apiType === "graphql") {
-        console.log("GraphQL query configRid:", configRid);
         graphQlQuery = ` jc.rid = '${configRid}'`;
       }
 
