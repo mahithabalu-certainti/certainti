@@ -116,13 +116,13 @@ export default class TaskSummaryGraphqlServices {
       attachedTaskExists = caseTaskQuery[0].length > 0;
 
       const getTaskDetailsByIdParam: IFetchTaskDetailsInput = {
-        task_rid : data.task_rid,
-        account_rid : data.account_rid,
-        user_rid : userId,
+        task_rid: data.task_rid,
+        account_rid: data.account_rid,
+        user_rid: userId,
         attachment_level: data.attachment_level,
         attach_to: data.attach_to,
         task_type_name: data.task_type_name,
-      } 
+      }
 
       attachedTaskDetails = await this.taskService.getTaskDetailsById(getTaskDetailsByIdParam)
 
@@ -483,6 +483,11 @@ export default class TaskSummaryGraphqlServices {
         modified_by: latestData.modified_by,
         created_datetime: latestData.created_datetime,
         modified_datetime: latestData.modified_datetime,
+        attach_to_name: latestData.attach_to_name,
+
+        created_by_name: latestData.created_by_name,
+        modified_by_name: latestData.modified_by_name,
+        account_name: latestData.account_name,
       };
 
       return {
