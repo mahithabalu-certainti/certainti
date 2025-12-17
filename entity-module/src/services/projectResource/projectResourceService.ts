@@ -427,7 +427,7 @@ export class ProjectResourceService {
 
         // project resource
 
-        const existsInProjectResourceFiscal =
+        const existingProjectResourceFiscal =
           await this.projectResourceSchema.existsInProjectResourceFiscalTable(
             accountNumber,
             account_rid,
@@ -439,7 +439,7 @@ export class ProjectResourceService {
           );
 
         let projectResourceFiscal;
-        if (!existsInProjectResourceFiscal) {
+        if (!existingProjectResourceFiscal) {
           projectResourceFiscal =
             await this.projectResourceSchema.insertIntoProjectResourceFiscalTable(
               accountNumber,
@@ -450,6 +450,7 @@ export class ProjectResourceService {
               transaction
             );
         } else {
+          projectResourceFiscal = existingProjectResourceFiscal;
           await this.projectResourceSchema.updateProjectResourceFiscalTable(
             accountNumber,
             projectResourceData,
@@ -624,6 +625,18 @@ export class ProjectResourceService {
                   transaction,
                   caseMapping,
                   projectResource,
+                );
+
+              const existsInProjectResourceFiscal =
+                await this.projectResourceSchema.existsInCaseProjectResourceFiscalTable(
+                  accountNumber,
+                  account_rid,
+                  projectFiscalData.fiscal_year,
+                  projectResourceData.project_fiscal_rid,
+                  resourceData.rid || "",
+                  projectResourceData.country_rid,
+                  transaction,
+                  caseMapping
                 );
 
 
