@@ -20,6 +20,7 @@ import { transformTagData } from '../../case/case-details/work-breakdown/helper'
 import { useToast } from '../../../../hooks';
 import TextButton from '../../../../components/button/text-button';
 import { TaskCreateIcon } from '../../../../assets';
+import { ActivitySourceDetails } from '../../../types';
 
 // Types
 interface TagOption {
@@ -42,19 +43,33 @@ interface FormValues {
   fiscal_year?: string;
 }
 
-const TaskForm: React.FC = () => {
+interface TaskFormProps {
+  isFrom?: string;
+  onCloseModal?: () => void;
+  sourceDetails?: ActivitySourceDetails;
+}
+
+const TaskForm: React.FC<TaskFormProps> = ({
+  isFrom,
+  onCloseModal,
+  sourceDetails,
+}) => {
   const [searchParams] = useSearchParams();
   const { successToast } = useToast();
 
   const isEditView = location.pathname.split('/').includes('edit');
-  const sourcePath = searchParams.get('source') || '';
-  const accountId = searchParams.get('accountId') || '';
-  const entityLevel = searchParams.get('entityLevel') || '';
-  const entityId = searchParams.get('entityId') || '';
+  const sourcePath = searchParams.get('source') || sourceDetails?.source || '';
+  const accountId =
+    searchParams.get('accountId') || sourceDetails?.accountId || '';
+  const entityLevel =
+    searchParams.get('entityLevel') || sourceDetails?.entityLevel || '';
+  const entityId =
+    searchParams.get('entityId') || sourceDetails?.entityId || '';
   const showFiscalYear = entityLevel === 'account';
   const entityFiscalYear =
     searchParams.get('projectFiscalYear') ||
     searchParams.get('caseFiscalYear') ||
+    sourceDetails?.caseFiscalYear ||
     '';
 
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -197,12 +212,18 @@ const TaskForm: React.FC = () => {
   };
 
   const goBack = () => {
-    window.history.back();
+    if (isFrom === 'modal') {
+      onCloseModal?.();
+    } else {
+      window.history.back();
+    }
   };
 
   return (
     <div>
-      <div className='h-[50px] flex items-center justify-between px-10 sticky top-0 z-10 bg-white border-b border-[#CBD6E2]'>
+      <div
+        className={`h-[50px] flex items-center justify-between ${isFrom === 'modal' ? 'px-4 rounded-t-2xl' : 'px-10'} sticky top-0 z-10 bg-white border-b border-[#CBD6E2]`}
+      >
         <div className='flex items-center w-[80%] max-w-[80%]'>
           <TaskCreateIcon
             alt='call-icon'
@@ -242,20 +263,21 @@ const TaskForm: React.FC = () => {
           />
         </div>
       </div>
-
-      <div>
+      <div
+        className={`${isFrom === 'modal' ? 'min-h-[500px] max-h-[550px] overflow-y-auto pb-2 scrollbar-transparent' : ''}`}
+      >
         <FormBuilder
           loading={false}
           data={formConfig}
           values={{}}
           outData={submitData}
           formRef={formRef}
-          layout={Layout.TYPE_1}
+          layout={isFrom !== 'modal' ? Layout.TYPE_1 : undefined}
           keyStart='effective_start_datetime'
           keyEnd='effective_end_datetime'
         />
 
-        <div className='px-10'>
+        <div className={`${isFrom === 'modal' ? 'px-6' : 'px-10'}`}>
           <TagsInput
             label='Tags'
             values={selectedTags}

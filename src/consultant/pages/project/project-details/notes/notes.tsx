@@ -10,7 +10,12 @@ import {
   FilterTypes,
   OverviewTabs,
 } from '../../../../../common-service';
-import { ExportType, NotesList, NotesListURLParams } from '../../../../types';
+import {
+  ActivityDropdownItem,
+  ExportType,
+  NotesList,
+  NotesListURLParams,
+} from '../../../../types';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
@@ -61,6 +66,7 @@ interface NotesProps {
   accountInActive: boolean;
   projectFiscalYear?: number | string;
   projectCode?: string;
+  activityMenuItems: ActivityDropdownItem[];
 }
 
 const Notes: React.FC<NotesProps> = ({
@@ -69,6 +75,7 @@ const Notes: React.FC<NotesProps> = ({
   accountInActive,
   projectFiscalYear,
   projectCode,
+  activityMenuItems,
 }) => {
   const { errorToast } = useToast();
   const [searchParams] = useSearchParams();
@@ -453,6 +460,8 @@ const Notes: React.FC<NotesProps> = ({
         searchDisabled={false}
         searchPlaceholder='Search'
         onSearch={(text) => setSearchText(text)}
+        showAddActivity={viewDetails ? false : true}
+        activityMenuItems={activityMenuItems}
       />
       {viewDetails ? (
         <NotesDetails

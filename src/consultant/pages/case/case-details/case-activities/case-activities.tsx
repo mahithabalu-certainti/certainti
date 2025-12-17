@@ -13,6 +13,7 @@ import {
 } from '../../../../../assets';
 import { AllModules, AllPermissions } from '../../../../../common-service';
 import {
+  ActivityDropdownItem,
   ActivityListExportURLParams,
   ActivityModuleType,
   ActivityType,
@@ -68,6 +69,7 @@ interface CaseActivitiesProps {
     React.SetStateAction<ActivityListExportURLParams>
   >;
   isDetailLoading?: boolean;
+  activityMenuItems: ActivityDropdownItem[];
 }
 
 const CaseActivities: React.FC<CaseActivitiesProps> = ({
@@ -76,6 +78,7 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
   setExportType,
   setActivityParams,
   isDetailLoading,
+  activityMenuItems,
 }) => {
   const navigate = useNavigate();
   const [appliedFilters, setAppliedFilters] = useState<
@@ -499,6 +502,8 @@ const CaseActivities: React.FC<CaseActivitiesProps> = ({
           onSearch={(text) => setSearchText(text)}
           searchReset={resetSearch}
           onSearchReset={handleSearchReset}
+          showAddActivity={tabParam === 'all'}
+          activityMenuItems={activityMenuItems}
         />
 
         <SectionHeader

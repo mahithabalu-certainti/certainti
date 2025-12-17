@@ -364,3 +364,14 @@ export interface EamilTemplateItemsResponse {
     emailTemplates: EamilTemplateItem[];
   };
 }
+
+// ----------- Activity modal types  ----------------
+export type ActivitySourceDetails = {
+  accountId: string;
+  entityLevel: string;
+  entityId: string;
+  caseFiscalYear?: number | string;
+  projectFiscalYear?: number | string;
+  source: string;
+  isEmailConfigured?: boolean;
+};

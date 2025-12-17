@@ -12,6 +12,7 @@ import {
   OverviewTabs,
 } from '../../../../../common-service';
 import {
+  ActivityDropdownItem,
   ChecklistList,
   ChecklistListExportParams,
   ExportType,
@@ -61,6 +62,7 @@ interface ChecklistProps {
   accountOrProjectInActive: boolean;
   projectFiscalYear?: number | string;
   projectCode?: string;
+  activityMenuItems: ActivityDropdownItem[];
 }
 
 const Checklist: React.FC<ChecklistProps> = ({
@@ -69,6 +71,7 @@ const Checklist: React.FC<ChecklistProps> = ({
   accountOrProjectInActive,
   projectFiscalYear,
   projectCode,
+  activityMenuItems,
 }) => {
   const { errorToast } = useToast();
   const [searchParams] = useSearchParams();
@@ -394,6 +397,8 @@ const Checklist: React.FC<ChecklistProps> = ({
         searchDisabled={false}
         searchPlaceholder='Search'
         onSearch={(text) => setSearchText(text)}
+        showAddActivity={!viewDetails}
+        activityMenuItems={activityMenuItems}
       />
 
       {viewDetails ? (

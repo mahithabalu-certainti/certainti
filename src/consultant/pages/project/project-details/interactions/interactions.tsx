@@ -20,7 +20,11 @@ import {
   ListTable,
   ManageColumnsPopover,
 } from '../../../../../components/table';
-import { InteractionList, StatusTypeEnum } from '../../../../types';
+import {
+  ActivityDropdownItem,
+  InteractionList,
+  StatusTypeEnum,
+} from '../../../../types';
 import {
   useInteractionList,
   useInteractionListModel,
@@ -87,6 +91,7 @@ interface InteractionsProps {
   >;
   isSendInteraction: boolean;
   loading: boolean;
+  activityMenuItems: ActivityDropdownItem[];
 }
 
 const Interactions: React.FC<InteractionsProps> = ({
@@ -95,6 +100,7 @@ const Interactions: React.FC<InteractionsProps> = ({
   setInteractionsParams,
   isSendInteraction,
   loading,
+  activityMenuItems,
 }) => {
   const { projectid } = useParams();
   const [searchParams] = useSearchParams();
@@ -743,6 +749,12 @@ const Interactions: React.FC<InteractionsProps> = ({
           onSearch={(text) => setSearchText(text)}
           searchReset={resetSearch}
           onSearchReset={handleSearchReset}
+          showAddActivity={
+            !viewDetails &&
+            !viewInteractionAttachment &&
+            !viewInteractionHistory
+          }
+          activityMenuItems={activityMenuItems}
         />
         {viewDetails && !viewResponseHistory ? (
           <InteractionDetails

@@ -2,7 +2,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
 import { AllPermissions } from '../../../../../common-service';
-import { ExportType, ProjectResourcesListParams } from '../../../../types';
+import {
+  ActivityDropdownItem,
+  ExportType,
+  ProjectResourcesListParams,
+} from '../../../../types';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   useCaseProjectTaskDetail,
@@ -38,13 +42,14 @@ interface projectTaskProps {
   >;
   setExportType?: (type: ExportType) => void;
   refetchAccountDetails?: () => void;
+  activityMenuItems: ActivityDropdownItem[];
 }
 
 const CaseProjectTask: React.FC<projectTaskProps> = ({
   accountInActive,
   setProjectTaskParams,
   setExportType,
-
+  activityMenuItems,
   // refetchAccountDetails,
 }) => {
   const { caseId } = useParams();
@@ -292,6 +297,8 @@ const CaseProjectTask: React.FC<projectTaskProps> = ({
         // fiscalDatesArg={fiscalDatesArg}
         showSearch={taskId ? false : true}
         onSearch={(text) => setSearchText(text)}
+        showAddActivity={true}
+        activityMenuItems={activityMenuItems}
       />
       <>
         <SectionHeader

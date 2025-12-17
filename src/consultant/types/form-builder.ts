@@ -1,6 +1,7 @@
 export interface FormType {
   gridMode?: string;
   sectionName: string;
+  subSection?: boolean; // Means this is a secondary level block → no header + half width
   fillType: 'half' | 'full' | 'quarter';
   fields: FormTypeFields[];
   from?: string;
@@ -92,6 +93,7 @@ export interface SelectOption {
   value: string;
   desc?: string;
   isCreate?: boolean;
+  code?: string;
 }
 export interface SelectNumberOption {
   label: string;
