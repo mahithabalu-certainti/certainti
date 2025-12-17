@@ -29,6 +29,66 @@ interface IJurisdictionRequest {
 }
 
 export class JurisdictionSchemaService {
+    // Helper: handle federal to non-federal transition
+    private async handleFederalToNonFederal(JurisdictionConfig: any, response: any, configRequest: any, group: any) {
+      // Delete platform config
+      await JurisdictionConfig.destroy({ where: { federal_config_id: configRequest.config_rid } });
+      // Update main config
+      await response.update({
+        config_json: group,
+        effective_end_date: configRequest.effective_end_date,
+        effective_start_date: configRequest.effective_start_date,
+        credit_config_group_rid: configRequest.jurisdiction_config_group_rid,
+        config_name: configRequest.config_name,
+        status_rid: configRequest.status_rid,
+        modified_datetime: new Date(),
+        modified_by: configRequest.modified_by,
+      });
+    }
+
+    // Helper: update main jurisdiction config
+    private async updateMainConfig(response: any, configRequest: any, group: any, updateGroupRid = false) {
+      await response.update({
+        config_json: group,
+        effective_end_date: configRequest.effective_end_date,
+        effective_start_date: configRequest.effective_start_date,
+        config_name: configRequest.config_name,
+        status_rid: configRequest.status_rid,
+        modified_datetime: new Date(),
+        modified_by: configRequest.modified_by,
+        ...(updateGroupRid ? { credit_config_group_rid: configRequest.jurisdiction_config_group_rid } : {})
+      });
+    }
+
+    // Helper: update or create platform config
+    private async updatePlatformConfig(JurisdictionConfig: any, configRequest: any) {
+      const group = configRequest.platformConfig;
+      const response: any = await JurisdictionConfig.findOne({
+        where: { federal_config_id: configRequest.config_rid },
+      });
+      if (!response) {
+        // Create if not exists
+        await JurisdictionConfig.create({
+          config_name: configRequest.config_name,
+          created_datetime: new Date(),
+          created_by: configRequest.modified_by,
+          effective_end_date: configRequest.effective_end_date,
+          effective_start_date: configRequest.effective_start_date,
+          credit_config_group_rid: configRequest.platform_config_group_rid,
+          config_json: JSON.parse(JSON.stringify(configRequest.platformConfig)),
+          status_rid: configRequest.status_rid,
+          federal_config_id: configRequest.config_rid,
+        });
+      } else {
+        await response.update({
+          config_json: group,
+          effective_end_date: configRequest.effective_end_date,
+          effective_start_date: configRequest.effective_start_date,
+          modified_datetime: new Date(),
+          modified_by: configRequest.modified_by,
+        });
+      }
+    }
   private orgDbSequelize: Sequelize | null = null;
   private mainDbSequelize: Sequelize | null = null;
   private caseModelService: CaseModelService;
@@ -295,63 +355,45 @@ export class JurisdictionSchemaService {
   async updateJurisdictionConfig(configRequest: any) {
     const { JurisdictionConfig } = await this.caseModelService.getModels("");
     let updated = false;
-    if (
-      configRequest.jurisdictionConfig
-    ) {
-      const group = configRequest.jurisdictionConfig;
-      const response: any = await JurisdictionConfig.findOne({
-        where: {
-          rid: configRequest.config_rid,
-        },
-      });
-      if (!response) {
-        throw new Error(`Invalid config_rid: ${configRequest.config_rid}`);
-      }
-      await response.update({
-        config_json: group,
-        effective_end_date: configRequest.effective_end_date,
-        effective_start_date: configRequest.effective_start_date,
-        config_name:configRequest.config_name,
-        status_rid:configRequest.status_rid,
-        modified_datetime: new Date(),
-        modified_by: configRequest.modified_by,
-      });
-      updated = true;
+    const response: any = await JurisdictionConfig.findOne({
+      where: { rid: configRequest.config_rid },
+    });
+    if (!response) {
+      throw new Error(`Invalid config_rid: ${configRequest.config_rid}`);
     }
-    // Update platform config
-    if (configRequest.is_federal &&
-      configRequest.platformConfig 
-    ) {
-      const group = configRequest.platformConfig;
-      const response: any = await JurisdictionConfig.findOne({
-        where: {
-          federal_config_id: configRequest.config_rid,
-        },
-      });
-      if (!response) {
-        throw new Error(`Invalid platform config_rid: ${configRequest.config_rid}`);
+
+    // 1. Handle is_federal change
+    if (response.is_federal !== configRequest.is_federal) {
+      console.log('Handling is_federal change');
+      if (configRequest.is_federal === false) {
+        // Federal to non-federal
+        if (configRequest.jurisdictionConfig) {
+          await this.handleFederalToNonFederal(JurisdictionConfig, response, configRequest, configRequest.jurisdictionConfig);
+          updated = true;
+        }
+      } else {
+        // Non-federal to federal (update group rid and config)
+        if (configRequest.jurisdictionConfig) {
+          await this.updateMainConfig(response, configRequest, configRequest.jurisdictionConfig, true);
+          updated = true;
+        }
       }
-      await response.update({
-        config_json: group,
-        effective_end_date: configRequest.effective_end_date,
-        effective_start_date: configRequest.effective_start_date,
-        modified_datetime: new Date(),
-        modified_by: configRequest.modified_by,
-      });
+    } else {
+      // 2. Normal update
+      if (configRequest.jurisdictionConfig) {
+        await this.updateMainConfig(response, configRequest, configRequest.jurisdictionConfig);
+        updated = true;
+      }
+    }
+
+    // 3. Platform config update (if federal)
+    if (configRequest.is_federal && configRequest.platformConfig) {
+      await this.updatePlatformConfig(JurisdictionConfig, configRequest);
       updated = true;
     }
 
-      if (
-      configRequest?.apiType === "graphql"
-    ) {
-      const response: any = await JurisdictionConfig.findOne({
-        where: {
-          rid: configRequest.config_rid,
-        },
-      });
-      if (!response) {
-        throw new Error(`Invalid config_rid: ${configRequest.config_rid}`);
-      }
+    // 4. GraphQL update
+    if (configRequest?.apiType === "graphql") {
       await response.update(configRequest);
       updated = true;
     }
@@ -374,6 +416,7 @@ export class JurisdictionSchemaService {
         credit_config_group_rid: configRequest.jurisdiction_config_group_rid,
         config_json: JSON.parse(JSON.stringify(configRequest.jurisdictionConfig)),
         status_rid: configRequest.status_rid,
+        is_federal: configRequest.is_federal || false,
       });
       console.log('createdConfig', createdConfig);
       created = true;
