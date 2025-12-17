@@ -15,6 +15,7 @@ interface JurisdictionConfigAttributes {
   status_rid: string;
   credit_config_group_rid: string;
   federal_config_id?: string | null;
+  is_federal?: boolean;
   
 }
 
@@ -38,6 +39,7 @@ export class JurisdictionConfig
   public status_rid!: string;
   public credit_config_group_rid!: string;
   public federal_config_id?: string | null;
+  public is_federal?: boolean;
 
   static initialize(
     sequelize: Sequelize,
@@ -72,6 +74,7 @@ export class JurisdictionConfig
         status_rid: { type: DataTypes.STRING(50), allowNull: false },
         credit_config_group_rid: { type: DataTypes.STRING(50), allowNull: false },
         federal_config_id: { type: DataTypes.STRING(50), allowNull: true },
+        is_federal: { type: DataTypes.BOOLEAN, allowNull: true, defaultValue: false },
       },
       {
         sequelize,

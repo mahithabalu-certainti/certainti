@@ -885,7 +885,7 @@ export const rawQueries = {
         join ${MAIN_SCHEMA_NAME}.rd_credit_config_group rg on  rv.credit_config_group_rid  = rg.rid
         where rg.country_rid = '${rid}'
         and credit_program_name = 'Platform Configuration'
-        and is_federal = true`;
+        and rg.is_federal = true`;
       },
   async updateSetting(
     schemaName: string,

@@ -824,8 +824,7 @@ export class CaseManagementService {
     // Set the user who is creating this checklist
 
     emailRequest.modified_by = userId;
-    if(emailRequest.template_name)
-    {
+
     const result = await this.caseManangementSchemaService.checkisExistingTemplateUnique(emailRequest);
     if (!result.isUnique) {
       return {
@@ -848,7 +847,7 @@ export class CaseManagementService {
         errorMessage: `Atleast one template with the category "${result.category_name}" needs to be in active status.`,
       };
     }
-  }
+  
     const response =
       await this.caseManangementSchemaService.updateEmailTemplate(
         emailRequest
