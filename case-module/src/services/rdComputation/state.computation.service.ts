@@ -17,6 +17,10 @@ export class StateComputationService {
     private orgDbSequelize: Sequelize | null = null;
     private mainDbSequelize: Sequelize | null = null;
 
+    readonly programName = "State R&D Credit";
+    readonly jurisdictionColumn = "state_rid";
+
+
     constructor() {
         this.rdCreditSchemaService = new RDCreditSchemaService();
     }
@@ -109,7 +113,7 @@ export class StateComputationService {
             const accountNumber = 'ACC-00001';
             schemaName = 'trd365_00001';
 
-            const configStateLevel = await this.rdCreditSchemaService.getRDCreditConfigStateLevel("USA", mainDb, effectiveStart, effectiveEnd, "", "State R&D Credit");
+            const configStateLevel = await this.rdCreditSchemaService.getRDCreditConfigStateLevel("USA", mainDb, effectiveStart, effectiveEnd, "", this.programName);
 
             for (const config of configStateLevel) {
                 try {
@@ -117,11 +121,11 @@ export class StateComputationService {
                     const extractConfig = this.extractConfigJson(config.config_json);
                     logMessage(`Processing state: ${config.state_code} with config: ${JSON.stringify(extractConfig)}`);
                     if (stateComputation) {
-                        const stateRDData = await this.findStateInputData(accountRid, caseRid, config.region_rid, orgDb, schemaName);
+                        const stateRDData = await this.findStateInputData(accountRid, caseRid, config.state_rid, orgDb, schemaName);
                         logMessage(`State RD Data for ${config.state_code}: ${JSON.stringify(stateRDData)}`);
                         const result = await stateComputation.compute(extractConfig, stateRDData);
                         await this.rdCreditSchemaService.insertRDStateCreditCalculation(
-                            accountNumber, caseRid, "USA", config.state_code,
+                            accountNumber, caseRid, config.country_rid, config.state_rid,
                             result.inputFields, result.computedFields
                         );
                     }
@@ -157,15 +161,14 @@ export class StateComputationService {
      */
     async findStateInputData(accountRid: string, caseRid: string, regionRid: string, orgDb: Sequelize, schemaName: string) {
         const currentFiscalYear = this.getCurrentFiscalYear();
-        const jurisdictionColumn = "state_rid";
 
         const currentYearQREs = await this.rdCreditSchemaService.getCurrentYearQREsForState(caseRid, regionRid, schemaName, orgDb); //current yer QREs
         logMessage(`CurrentYearQREs: ${JSON.stringify(currentYearQREs)}`);
 
-        const prior3YearsQREs = await this.rdCreditSchemaService.getPrior3YearQREs(accountRid, jurisdictionColumn, regionRid, 3, schemaName, currentFiscalYear, orgDb);// prior 3 years QREs
+        const prior3YearsQREs = await this.rdCreditSchemaService.getPrior3YearQREs(accountRid, this.jurisdictionColumn, regionRid, 3, schemaName, currentFiscalYear, orgDb);// prior 3 years QREs
         logMessage(`Prior3YearQREs: ${JSON.stringify(prior3YearsQREs)}`);
 
-        const annualGrossReceipts = await this.rdCreditSchemaService.getAnnualGrossReceipts(accountRid, jurisdictionColumn, regionRid, 5, schemaName, orgDb); // current year & prior 4 years gross receipts
+        const annualGrossReceipts = await this.rdCreditSchemaService.getAnnualGrossReceipts(accountRid, this.jurisdictionColumn, regionRid, 5, schemaName, orgDb); // current year & prior 4 years gross receipts
 
         logMessage(`AnnualGrossReceipts: ${JSON.stringify(annualGrossReceipts)}`);
 

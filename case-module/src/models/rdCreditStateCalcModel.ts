@@ -4,8 +4,8 @@ import { ENV_PREFIX } from "../utils/constants";
 export interface RdCreditStateCalcAttributes {
     rid?: string;
     case_rid?: string;
-    country_code?: string;
-    region_name?: string;
+    country_rid?: string;
+    state_rid?: string;
     input_params?: object | null;
     computed_fields?: object | null;
     final_credit?: number | null;
@@ -24,8 +24,8 @@ export class RdCreditStateCalculations
     implements RdCreditStateCalcAttributes {
     public rid?: string;
     public case_rid?: string;
-    public country_code?: string;
-    public region_name?: string;
+    public country_rid?: string;
+    public state_rid?: string;
     public input_params?: object | null;
     public computed_fields?: object | null;
     public final_credit?: number | null;
@@ -44,11 +44,11 @@ export class RdCreditStateCalculations
                     type: DataTypes.STRING(50),
                     allowNull: false,
                 },
-                country_code: {
+                country_rid: {
                     type: DataTypes.STRING(20),
                     allowNull: true,
                 },
-                region_name: {
+                state_rid: {
                     type: DataTypes.STRING(20),
                     allowNull: false,
                 },
@@ -84,7 +84,7 @@ export class RdCreditStateCalculations
                 indexes: [
                     {
                         unique: true,
-                        fields: ['case_rid', 'region_name']
+                        fields: ['case_rid', 'state_rid']
                     }
                 ]
             }

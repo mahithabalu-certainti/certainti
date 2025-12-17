@@ -13,6 +13,11 @@ export interface ConfigJson {
     qre_cap_rate: number;
 }
 
+export interface Splitconfig {
+    asc: ConfigJson;
+    rrc: ConfigJson;
+}
+
 /**
  * USA RD Credit Calculator
  */
@@ -30,6 +35,9 @@ export class RdCreditCalculatorForUSA {
      */
     async compute(config: any, federalRdData: FederalRDData) {
         try {
+            const { asc, rrc } = this.splitAscRrcConfig(config);
+            logMessage(`Extracted ASC Config: ${JSON.stringify(asc)}`);
+            logMessage(`Extracted RRC Config: ${JSON.stringify(rrc)}`);
             const totalCurrentYearQRE = new Decimal(federalRdData.currentYearQREs.wages || 0).plus(federalRdData.currentYearQREs.supplies || 0).plus(federalRdData.currentYearQREs.contract || 0);
             logMessage(`CurrentYearQREs: ${JSON.stringify(federalRdData.currentYearQREs)}`);
 
@@ -37,11 +45,11 @@ export class RdCreditCalculatorForUSA {
                 (sum, r) => sum + (r.grossReceipts || 0), 0));
             logMessage(`AnnualGrossReceipts: ${JSON.stringify(federalRdData.annualGrossReceipts)}`);
 
-            const extractConfigAsc = config.ascConfig;
+            const extractConfigAsc = asc;
             const creditASC = await this.calculateASC(totalCurrentYearQRE, federalRdData.prior3YearsQREs, extractConfigAsc);
             const asc280C = await this.apply280C_ASC(creditASC, extractConfigAsc);
 
-            const extractConfigRRC = config.rrcConfig;
+            const extractConfigRRC = rrc;
             const creditRRC = await this.calculateRRC(totalCurrentYearQRE, totalGrossReceipts, extractConfigRRC, 4);
             const rrc280C = await this.apply280C_RRC(creditRRC, extractConfigRRC);
 
@@ -304,6 +312,36 @@ export class RdCreditCalculatorForUSA {
         // Fiscal year starts in April
         return month >= 4 ? year : year - 1;
     }
+
+    /**
+     * 
+     * @param config 
+     * @returns 
+     */
+    splitAscRrcConfig(config: Record<string, number>): Splitconfig {
+        const result = Object.entries(config).reduce<{
+            asc: Partial<ConfigJson>;
+            rrc: Partial<ConfigJson>;
+        }>(
+            (acc, [key, value]) => {
+                if (key.startsWith("asc_")) {
+                    const cleanKey = key.replace("asc_", "") as keyof ConfigJson;
+                    acc.asc[cleanKey] = value;
+                } else if (key.startsWith("rrc_")) {
+                    const cleanKey = key.replace("rrc_", "") as keyof ConfigJson;
+                    acc.rrc[cleanKey] = value;
+                }
+                return acc;
+            },
+            { asc: {}, rrc: {} }
+        );
+
+        return {
+            asc: result.asc as ConfigJson,
+            rrc: result.rrc as ConfigJson
+        };
+    }
+
 }
 
 export default RdCreditCalculatorForUSA;

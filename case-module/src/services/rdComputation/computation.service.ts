@@ -123,7 +123,7 @@ export class ComputationService {
      * @param stateCode 
      * @returns 
      */
-    async getComputationResultsByIDAndState(accountRid: string, caseRid: string, stateCode: string) {
+    async getComputationResultsByIDAndState(accountRid: string, caseRid: string, stateRid: string) {
         try {
             const mainDb = await this.getMainDb();
             const orgDb = await this.getOrgDb();
@@ -138,7 +138,7 @@ export class ComputationService {
 
             const accountNumber = 'ACC-00001';
             schemaName = 'trd365_00001';
-            const results = await this.rdCreditSchemaService.findRdCreditResultsByCaseIdAndState(accountNumber, caseRid, stateCode);
+            const results = await this.rdCreditSchemaService.findRdCreditResultsByCaseIdAndState(accountNumber, caseRid, stateRid);
 
             return {
                 statusCode: HttpStatus.SUCCESS,

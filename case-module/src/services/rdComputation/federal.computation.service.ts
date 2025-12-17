@@ -11,6 +11,9 @@ export class FederalComputationService {
     private rdCreditSchemaService: RDCreditSchemaService;
     private orgDbSequelize: Sequelize | null = null;
     private mainDbSequelize: Sequelize | null = null;
+    
+    readonly programName = "Federal R&D Credit";
+    readonly jurisdictionColumn = "country_rid";
 
     constructor() {
         this.rdCreditSchemaService = new RDCreditSchemaService();
@@ -62,32 +65,23 @@ export class FederalComputationService {
             const currentYearQREs = await this.rdCreditSchemaService.getCurrentYearQREsForFederal(caseRid, countryInfo.rid, schemaName, orgDb); //current yer QREs
             logMessage(`CurrentYearQREs: ${JSON.stringify(currentYearQREs)}`);
 
-            const jurisdictionColumn = "country_rid";
-            const prior3YearsQREs = await this.rdCreditSchemaService.getPrior3YearQREs(accountRid, jurisdictionColumn, countryInfo.rid, 3, schemaName, currentFiscalYear, orgDb);// prior 3 years QREs
+            const prior3YearsQREs = await this.rdCreditSchemaService.getPrior3YearQREs(accountRid, this.jurisdictionColumn, countryInfo.rid, 3, schemaName, currentFiscalYear, orgDb);// prior 3 years QREs
 
             logMessage(`Total Prior 3 Years QREs: ${JSON.stringify(prior3YearsQREs)}`);
-            const annualGrossReceipts = await this.rdCreditSchemaService.getAnnualGrossReceipts(accountRid, jurisdictionColumn, countryInfo.rid, 4, schemaName, orgDb); // prior 4 years gross receipts
+            const annualGrossReceipts = await this.rdCreditSchemaService.getAnnualGrossReceipts(accountRid, this.jurisdictionColumn, countryInfo.rid, 4, schemaName, orgDb); // prior 4 years gross receipts
 
             const federalRDData = await this.getFederalRDData(currentYearQREs, prior3YearsQREs, annualGrossReceipts);
 
-            const configASC = await this.rdCreditSchemaService.getRDCreditConfig("USA", mainDb, effectiveStart, effectiveEnd, "", "ASC");
-            const extractConfigAsc = this.extractConfigJson(configASC.config_json);
-
-            const configRRC = await this.rdCreditSchemaService.getRDCreditConfig("USA", mainDb, effectiveStart, effectiveEnd, "", "RRC");
-            const extractConfigRRC = this.extractConfigJson(configRRC.config_json);
-
-            const config = {
-                ascConfig: extractConfigAsc,
-                rrcConfig: extractConfigRRC
-            };
+            const config = await this.rdCreditSchemaService.getRDCreditConfig("USA", mainDb, effectiveStart, effectiveEnd, "", this.programName);
+            const extractConfig = this.extractConfigJson(config.config_json);
 
             // const federalComputation = federalCalculators[countryInfo.countryCode];
             const federalComputation = federalCalculators["USA"];
 
 
             if (federalComputation) {
-                const result = await federalComputation.compute(config, federalRDData);
-                await this.rdCreditSchemaService.insertRDCreditCalculation(accountNumber, caseRid, "USA", result.inputFields, result.computedFields);
+                const result = await federalComputation.compute(extractConfig, federalRDData);
+                await this.rdCreditSchemaService.insertRDCreditCalculation(accountNumber, caseRid, config.country_rid, result.inputFields, result.computedFields);
                 return {
                     statusCode: HttpStatus.SUCCESS,
                     message: STATUS_MESSAGE.rdCreditPreviewSuccess || "RD credit calculation processed successfully",

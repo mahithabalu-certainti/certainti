@@ -273,8 +273,8 @@ class RDCreditSchemaService {
                 WHERE LOWER(ctry.country_code) = LOWER(:countryCode)
                 
                 -- Effective date filter
-                AND (:effectiveStart IS NULL OR rdval.effective_start >= CAST(:effectiveStart AS timestamptz))
-                AND (:effectiveEnd IS NULL OR rdval.effective_end <= CAST(:effectiveEnd AS timestamptz))
+                AND (:effectiveStart IS NULL OR rdval.effective_start_date >= CAST(:effectiveStart AS timestamptz))
+                AND (:effectiveEnd IS NULL OR rdval.effective_end_date <= CAST(:effectiveEnd AS timestamptz))
             
             `,
                 {
@@ -315,7 +315,7 @@ class RDCreditSchemaService {
             }
             const results: any[] = await this.mainDbSequelize.query(
                 `
-                SELECT rdval.config_json
+                SELECT rdval.config_json, ctry.rid AS country_rid
                 FROM ${MAIN_SCHEMA_NAME}.rd_credit_config_group rdcg
                 JOIN ${MAIN_SCHEMA_NAME}.rd_credit_parameter_key rdkey ON rdkey.credit_config_group_rid = rdcg.rid
                 JOIN ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values rdval ON rdval.credit_config_group_rid = rdcg.rid
@@ -336,9 +336,9 @@ class RDCreditSchemaService {
                 )
                 
                 -- Effective date filter
-                AND (:effectiveStart IS NULL OR rdval.effective_start >= CAST(:effectiveStart AS timestamptz))
-                AND (:effectiveEnd IS NULL OR rdval.effective_end <= CAST(:effectiveEnd AS timestamptz))
-                group by rdcg.rid, rdval.config_json, st.state_code
+                AND (:effectiveStart IS NULL OR rdval.effective_start_date >= CAST(:effectiveStart AS timestamptz))
+                AND (:effectiveEnd IS NULL OR rdval.effective_end_date <= CAST(:effectiveEnd AS timestamptz))
+                group by rdcg.rid, rdval.config_json, st.state_code, ctry.rid
                 LIMIT 1
             `,
                 {
@@ -371,12 +371,12 @@ class RDCreditSchemaService {
      * @param computed_fields 
      * @returns 
      */
-    async insertRDCreditCalculation(accountNumber: string, case_rid: string, country_code: string, input_params: any, computed_fields: any) {
+    async insertRDCreditCalculation(accountNumber: string, case_rid: string, country_rid: string, input_params: any, computed_fields: any) {
         const { RdCreditCountryCalculations } = await this.caseModelService.getModels(accountNumber);
         return await RdCreditCountryCalculations.upsert(
             {
                 case_rid,
-                country_code,
+                country_rid,
                 input_params,
                 computed_fields
             },
@@ -395,15 +395,15 @@ class RDCreditSchemaService {
      * @param computed_fields 
      * @returns 
      */
-    async insertRDStateCreditCalculation(accountNumber: string, case_rid: string, country_code: string, region_name: string, input_params: any, computed_fields: any) {
+    async insertRDStateCreditCalculation(accountNumber: string, case_rid: string, country_rid: string, state_rid: string, input_params: any, computed_fields: any) {
         const { RdCreditStateCalculations } = await this.caseModelService.getModels(accountNumber);
         return await RdCreditStateCalculations.upsert(
             {
                 case_rid,
-                country_code,
+                country_rid,
                 input_params,
                 computed_fields,
-                region_name
+                state_rid
             },
             {
                 returning: true
@@ -417,13 +417,13 @@ class RDCreditSchemaService {
      * @param region_name 
      * @returns 
      */
-    async findRdCreditResultsByCaseIdAndState(accountNumber: string, case_rid: string, region_name: string) {
+    async findRdCreditResultsByCaseIdAndState(accountNumber: string, case_rid: string, state_rid: string) {
         const { RdCreditStateCalculations } = await this.caseModelService.getModels(accountNumber);
 
         return await RdCreditStateCalculations.findOne({
             where: {
                 case_rid,
-                region_name
+                state_rid
             },
             order: [['created_datetime', 'DESC']]
 
@@ -447,7 +447,7 @@ class RDCreditSchemaService {
             }
             const results: any[] = await this.mainDbSequelize.query(
                 `
-                SELECT rdval.config_json, st.state_code, st.rid AS region_rid
+                SELECT rdval.config_json, st.state_code, st.rid AS state_rid, ctry.rid AS country_rid
                 FROM ${MAIN_SCHEMA_NAME}.rd_credit_config_group rdcg
                 JOIN ${MAIN_SCHEMA_NAME}.rd_credit_parameter_key rdkey ON rdkey.credit_config_group_rid = rdcg.rid
                 JOIN ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values rdval ON rdval.credit_config_group_rid = rdcg.rid
@@ -462,10 +462,10 @@ class RDCreditSchemaService {
                 )
                 
                 -- Effective date filter
-                AND (:effectiveStart IS NULL OR rdval.effective_start >= CAST(:effectiveStart AS timestamptz))
-                AND (:effectiveEnd IS NULL OR rdval.effective_end <= CAST(:effectiveEnd AS timestamptz))
+                AND (:effectiveStart IS NULL OR rdval.effective_start_date >= CAST(:effectiveStart AS timestamptz))
+                AND (:effectiveEnd IS NULL OR rdval.effective_end_date <= CAST(:effectiveEnd AS timestamptz))
 
-                group by rdcg.rid, rdval.config_json, st.rid 
+                group by rdcg.rid, rdval.config_json, st.rid , ctry.rid
             `,
                 {
                     replacements: {
