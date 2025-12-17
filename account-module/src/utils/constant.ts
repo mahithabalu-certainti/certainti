@@ -837,7 +837,7 @@ export const rawQueries = {
         claim_status TEXT,
         comments VARCHAR(2000),
         project_description VARCHAR(2000),
-        is_qualified BOOLEAN DEFAULT false
+        is_qualified BOOLEAN DEFAULT false,
         signoff BOOLEAN DEFAULT false
       );
     `;

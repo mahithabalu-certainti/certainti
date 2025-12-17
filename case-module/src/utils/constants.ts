@@ -1403,7 +1403,8 @@ export const rawQueries = {
       c.country_name,
       c.country_code,
       s.state_name,
-      g.rid as credit_config_group_rid
+      g.rid as credit_config_group_rid,
+      k.is_required
     FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_key k
     JOIN ${MAIN_SCHEMA_NAME}.rd_credit_config_group g ON k.credit_config_group_rid = g.rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.country c ON g.country_rid = c.rid
