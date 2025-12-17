@@ -125,7 +125,7 @@ export const WorkflowTable: React.FC<IWorkflowTableProps> = ({
 
   const RestrictedColumns = [
     {
-      id: 'r_number',
+      id: 'rule_name',
       canHide: false,
       canDrag: false,
     },

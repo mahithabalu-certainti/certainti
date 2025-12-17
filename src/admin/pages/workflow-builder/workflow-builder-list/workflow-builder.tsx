@@ -25,7 +25,7 @@ const WorkflowBuilder: React.FC = () => {
   const [tableParams, setTableParams] = useState<WorkflowRuleListURLParams>({
     page: page,
     limit: 100,
-    sortBy: 'r_number',
+    sortBy: 'rule_name',
     sortOrder: 'ASC',
   });
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
@@ -80,6 +80,7 @@ const WorkflowBuilder: React.FC = () => {
     {
       label: 'Export',
       onClick: () => console.log('Export clicked'),
+      hide: true,
     },
   ];
 
@@ -152,7 +153,7 @@ const WorkflowBuilder: React.FC = () => {
             }}
             placeholder='Search'
             disabled={false}
-            hide={false}
+            hide={true}
             setCurrentPage={(pageNo) => {
               setPage(pageNo + 1);
               setTableParams((prev) => ({
