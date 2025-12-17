@@ -32,6 +32,12 @@ export const getTaskFilterFields = (
     hide: permissionMap ? !permissionMap['r_number']?.read : false,
   },
   {
+    name: 'Account Name',
+    value: 'account_name',
+    type: 'text',
+    operatorOption: textOptions,
+  },
+  {
     name: 'Task Name',
     value: 'task_name',
     type: 'text',
@@ -81,7 +87,7 @@ export const getTaskFilterFields = (
   },
   {
     name: 'Priority',
-    value: 'priority_name',
+    value: 'priority_rid',
     type: 'enum',
     options: priorityOptions.map((opt) => ({
       option: opt.label,
@@ -92,7 +98,7 @@ export const getTaskFilterFields = (
   },
   {
     name: 'Status',
-    value: 'status_name',
+    value: 'status_rid',
     type: 'enum',
     options: statusOptions.map((opt) => ({
       option: opt.label,

@@ -88,22 +88,44 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
   }, [modules, menus, menuItems]);
 
   useEffect(() => {
-    if (!localActiveKey) {
-      const findFirstAvailableItem = (items: MenuItem[]): MenuItem | null => {
-        for (const item of items) {
-          if (!item.hide) {
-            if (item.subMenu && item.subMenu.length > 0) {
-              const submenuItem = findFirstAvailableItem(item.subMenu);
-              if (submenuItem) return submenuItem;
-            } else {
-              return item;
-            }
+    const findFirstAvailableItem = (items: MenuItem[]): MenuItem | null => {
+      for (const item of items) {
+        if (!item.hide) {
+          if (item.subMenu && item.subMenu.length > 0) {
+            const submenuItem = findFirstAvailableItem(item.subMenu);
+            if (submenuItem) return submenuItem;
+          } else {
+            return item;
           }
         }
-        return null;
-      };
+      }
+      return null;
+    };
+
+    // Check if active key doesn't have permission (is hidden)
+    const isActiveKeyHidden = (items: MenuItem[], key: string): boolean => {
+      for (const item of items) {
+        if (item.key === key) {
+          return item.hide || false;
+        }
+        if (item.subMenu && item.subMenu.length > 0) {
+          const foundInSubmenu = isActiveKeyHidden(item.subMenu, key);
+          if (foundInSubmenu !== null) return foundInSubmenu;
+        }
+      }
+      return false;
+    };
+
+    if (!localActiveKey) {
+      // No active key set, find first available
       const activeItem = findFirstAvailableItem(accountMenus);
       if (activeItem) handleSelect(activeItem.key as string);
+    } else if (isActiveKeyHidden(accountMenus, localActiveKey)) {
+      // Active key has no permission, find next available
+      const nextAvailableItem = findFirstAvailableItem(accountMenus);
+      if (nextAvailableItem && nextAvailableItem.key !== localActiveKey) {
+        handleSelect(nextAvailableItem.key as string);
+      }
     }
   }, [accountMenus, localActiveKey]);
 
