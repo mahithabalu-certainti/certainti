@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { YesNo } from '../../../../consultant/types';
 import { GeoBasedRuleFormData, GeoBasedRulePayload } from '../types';
 
 export const transformGeoBasedRulePayload = (
@@ -8,8 +9,7 @@ export const transformGeoBasedRulePayload = (
     ruleId?: string
 ): GeoBasedRulePayload => {
     const isFederal =
-        formData.is_federal === 'true' || formData.is_federal === true;
-
+        formData.is_federal === YesNo.Yes ? true : false;
     const payload: GeoBasedRulePayload = {
         config_name: formData.config_name || '',
         status_rid: formData.status_rid || '',
@@ -37,25 +37,18 @@ export const transformGeoBasedRulePayload = (
                         }
                     }
                 });
-
-                // Set IDs at root level based on the config key
                 if (key === 'jurisdictionConfig' && config.config_rid) {
                     payload.jurisdiction_config_group_rid = config.config_rid;
                 }
                 if (key === 'platformConfig' && config.config_rid) {
                     payload.platform_config_group_rid = config.config_rid;
                 }
-
-                // Assign the section payload to the corresponding key (jurisdictionConfig or platformConfig)
                 (payload as any)[key] = sectionPayload;
             }
         });
     }
 
     if (isEditView) {
-        // if (formData.rid) {
-        //     payload.rid = formData.rid;
-        // }
         if (ruleId) {
             payload.config_rid = ruleId;
         }

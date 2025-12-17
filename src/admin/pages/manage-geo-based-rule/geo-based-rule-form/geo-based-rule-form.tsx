@@ -170,8 +170,9 @@ const GeoBasedRuleForm: React.FC = () => {
   ]);
 
   const initialValues = useMemo(() => {
-    if (!isEditView || !ruleDetailsData?.data?.configDetails) return {};
-    const details = ruleDetailsData.data.configDetails as ConfigDetails;
+    const details = configDetails as ConfigDetails;
+    if (!details || Object.keys(details).length === 0) return {};
+
     const dynamicValues: Record<string, any> = {};
 
     // Extract values from nested configs
@@ -186,10 +187,11 @@ const GeoBasedRuleForm: React.FC = () => {
       }
     });
 
+    // Use current state for controlled fields to prevent them from clearing when config switches
     return {
       ...dynamicValues,
-      country: details.country_rid,
-      region: details.state_rid,
+      country: currentCountry,
+      region: currentRegion,
       status_rid: details.status_rid,
       effective_start_date: details.effective_start_date
         ? getDateFormatYYYYMMDD(details.effective_start_date)
@@ -205,13 +207,13 @@ const GeoBasedRuleForm: React.FC = () => {
       updated_on: details.modified_datetime
         ? formatDateToYYYYMMDDWithTime(details.modified_datetime)
         : '-',
-      is_federal: details.is_federal ? YesNo.Yes : YesNo.No,
+      is_federal: isFederal ? YesNo.Yes : YesNo.No,
       state_rid: details.state_rid,
       updated_by: details.modified_user_name ? details.modified_user_name : '-',
       created_by: details.created_user_name ? details.created_user_name : '-',
       config_id: details.rid,
     };
-  }, [isEditView, ruleDetailsData?.data?.configDetails]);
+  }, [configDetails, currentCountry, currentRegion, isFederal]);
 
   useEffect(() => {
     if (isEditView && ruleDetailsData?.data?.configDetails) {
@@ -280,11 +282,11 @@ const GeoBasedRuleForm: React.FC = () => {
           <div className='w-[90%]'>
             <div className='font-semibold text-[12px] leading-[20px] ml-2 mb-[-6px] text-[#7D98B6]'>
               {isEditView && ruleId
-                ? `Geo Based Rule > ${ruleId} `
-                : 'Geo Based Rule'}
+                ? `Jurisdiction Rules > ${(configDetails as ConfigDetails)?.config_name} `
+                : 'Jurisdiction Rules'}
             </div>
             <h5 className='text-[16px] font-bold ml-2 mt-0.5 text-[#2D3E4F]'>
-              {isEditView ? 'Edit Rule' : 'Create Rule'}
+              {isEditView ? 'Edit Config' : 'Create Config'}
             </h5>
           </div>
         </div>
@@ -323,6 +325,8 @@ const GeoBasedRuleForm: React.FC = () => {
           formRef={formRef}
           layout={Layout.TYPE_1}
           onChange={onChangeField}
+          keyStart='effective_start_date'
+          keyEnd='effective_end_date'
         />
       </div>
     </div>

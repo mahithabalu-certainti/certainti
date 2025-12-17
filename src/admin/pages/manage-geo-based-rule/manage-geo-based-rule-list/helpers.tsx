@@ -51,7 +51,7 @@ export const getGeoBasedRuleFilterFields = (
                 !permissionMap?.['r_number']?.edit,
         },
         {
-            label: 'Config Name',
+            label: 'Configuration Name',
             name: 'config_name',
             type: 'text',
             operatorOption: textfieldOptions,
@@ -94,6 +94,7 @@ export const getGeoBasedRuleFilterFields = (
             name: 'effective_start_date',
             type: 'date',
             operatorOption: requiredDateOptions,
+            isFutureDateEnabled: true,
             hide:
                 !permissionMap?.['effective_start_date']?.read &&
                 !permissionMap?.['effective_start_date']?.edit,
@@ -103,6 +104,7 @@ export const getGeoBasedRuleFilterFields = (
             name: 'effective_end_date',
             type: 'date',
             operatorOption: dateOptions,
+            isFutureDateEnabled: true,
             hide:
                 !permissionMap?.['effective_end_date']?.read &&
                 !permissionMap?.['effective_end_date']?.edit,

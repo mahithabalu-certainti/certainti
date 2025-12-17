@@ -84,7 +84,7 @@ export const GeoBasedRuleFormFieldsData = (
 
     return [
       {
-        sectionName: 'Geo Based Rule Information',
+        sectionName: 'Jurisdiction Rules Information',
         fillType: 'half',
         fields: [
           createDateField('effective_start_date', 'Effective Start Date', {
@@ -167,9 +167,9 @@ export const GeoBasedRuleFormFieldsData = (
               !permissionMap?.['state_rid']?.edit &&
               !permissionMap?.['state_rid']?.read,
           }),
-          createTextField('config_name', 'Config Name', {
+          createTextField('config_name', 'Configuration Name', {
             required: true,
-            placeholder: 'Enter Config Name',
+            placeholder: 'Enter Configuration Name',
             prefixValue: caseNamePrefix,
             disabled:
               isEditView &&
@@ -178,11 +178,11 @@ export const GeoBasedRuleFormFieldsData = (
             errorHandling: [
               {
                 regex: REGEX_PATTERNS.MIN_3,
-                errorMessage: 'Config Name must be more than 2 characters long',
+                errorMessage: 'Configuration Name must be more than 2 characters long',
               },
               {
                 regex: REGEX_PATTERNS.MAX_255,
-                errorMessage: 'Config Name must be within 255 characters',
+                errorMessage: 'Configuration Name must be within 255 characters',
               },
             ],
             hide:
