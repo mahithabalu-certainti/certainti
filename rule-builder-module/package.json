@@ -17,7 +17,8 @@
     "nodemon": "^3.1.11",
     "pg": "^8.16.3",
     "sequelize": "^6.37.7",
-    "uuid": "^13.0.0"
+    "uuid": "^13.0.0",
+    "winston": "^3.19.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.5",
