@@ -1,7 +1,7 @@
-import {gql} from 'graphql-tag'
+import { gql } from 'graphql-tag'
 
 const typeDefs = gql
-`
+    `
 type taskResponse {
 rid: String
 r_number: String
@@ -44,6 +44,8 @@ fiscal_year: Int
 assigned_to: String
 effective_start_datetime: Date
 effective_end_datetime: Date
+status_rid: String
+priority_rid: String
 }
 
 type Mutation {
