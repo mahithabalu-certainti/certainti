@@ -189,61 +189,54 @@ export interface CreateRulePayload {
 
 // --------- Details ---------
 export interface RuleDetails {
-  rule_rid: string;
-  r_number: string;
-  rule_name: string;
-  description?: string;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-
-  scope_type_rid: string;
-  scope_type_name: string;
+  rule: {
+    rid: string;
+    r_number: string | null;
+    eid: string | null;
+    rule_name: string;
+    description: string;
+    event_rid: string;
+    trigger_type: number;
+    condition_rid: string;
+    is_active: boolean;
+    scope_type_rid: string;
+    schedule_offset_type: string | null;
+    schedule_offset_value: string | null;
+    created_by: string;
+    modified_by: string;
+    created_datetime: string;
+    modified_datetime: string;
+  };
 
   event: {
     event_rid: string;
     event_name: string;
-    event_description?: string;
-    event_category_rid: string;
+    description: string;
   };
 
   condition: {
     condition_rid: string;
     condition_name: string;
-    condition_type: 'if' | 'else_if' | 'else';
-    description?: string;
+    description: string;
+    condition_type: 'IF' | 'ELSE_IF' | 'ELSE';
   };
 
-  condition_categories: {
+  conditions: {
     category_rid: string;
     category_name: string;
-    category_description?: string;
-    category_operator: 'AND' | 'OR' | null;
-
-    operations: {
-      operation_rid: string;
-
-      field_rid: string;
-      field_name: string;
-      field_display_name: string;
-
-      operator_rid: string;
-      operator_name: string;
-      operator_display_name: string;
-
-      value_rid: string;
-      value_name: string;
-      value_display_name: string;
-
-      operation_operator: 'AND' | 'OR' | null;
-    }[];
+    category_description: string;
+    field_rid: string;
+    field_name: string;
+    operator_rid: string;
+    operator_name: string;
+    value_rid: string;
+    value_name: string;
   }[];
 
   actions: {
     action_rid: string;
     action_name: string;
-    action_description?: string;
-    action_category_rid: string;
+    description: string;
   }[];
 }
 

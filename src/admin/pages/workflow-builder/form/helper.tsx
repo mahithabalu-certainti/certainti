@@ -136,8 +136,8 @@ export const transformApiResponseToRule = (data: RuleDetails): Rule => {
     ? {
         id: data.event.event_rid,
         name: data.event.event_name,
-        description: data.event.event_description || '',
-        category: data.event.event_category_rid,
+        description: data.event.description || '',
+        category: data.rule.scope_type_rid, // Use scope_type_rid from rule
         badge: undefined,
         requiresConfig: false,
       }
@@ -153,37 +153,28 @@ export const transformApiResponseToRule = (data: RuleDetails): Rule => {
       }
     : null;
 
-  // Transform condition categories to flat conditions array
+  // Transform conditions to flat conditions array
   // All RIDs are preserved for each condition
   const conditions: Condition[] = [];
 
-  if (data?.condition_categories) {
-    data.condition_categories.forEach((category, categoryIndex: number) => {
-      category.operations.forEach((operation, operationIndex: number) => {
-        const condition: Condition = {
-          id: operation.operation_rid, // Use operation RID as unique ID
-          category: category.category_rid, // Category RID preserved
-          name: category.category_name,
-          field: operation.field_rid, // Field RID preserved
-          fieldName: operation.field_display_name || operation.field_name,
-          operator: operation.operator_rid, // Operator RID preserved
-          operatorName:
-            operation.operator_display_name || operation.operator_name,
-          value: operation.value_rid, // Value RID preserved
-          valueName: operation.value_display_name || operation.value_name,
-          conditionTypeId: data.condition?.condition_rid,
-          // Set logical operator based on position
-          // First condition in first category has no operator
-          // Other conditions use the operation_operator or category_operator
-          logicalOperator:
-            categoryIndex === 0 && operationIndex === 0
-              ? undefined
-              : operation.operation_operator ||
-                (operationIndex === 0 ? category.category_operator : null) ||
-                'AND',
-        };
-        conditions.push(condition);
-      });
+  if (data?.conditions) {
+    data.conditions.forEach((conditionItem, index: number) => {
+      const condition: Condition = {
+        id: `${conditionItem.category_rid}-${conditionItem.field_rid}-${index}`, // Generate unique ID
+        category: conditionItem.category_rid, // Category RID preserved
+        name: conditionItem.category_name,
+        field: conditionItem.field_rid, // Field RID preserved
+        fieldName: conditionItem.field_name,
+        operator: conditionItem.operator_rid, // Operator RID preserved
+        operatorName: conditionItem.operator_name,
+        value: conditionItem.value_rid, // Value RID preserved
+        valueName: conditionItem.value_name,
+        conditionTypeId: data.condition?.condition_rid,
+        // Set logical operator based on position
+        // First condition has no operator, others default to 'AND'
+        logicalOperator: index === 0 ? undefined : 'AND',
+      };
+      conditions.push(condition);
     });
   }
 
@@ -192,8 +183,8 @@ export const transformApiResponseToRule = (data: RuleDetails): Rule => {
     ? data.actions.map((action) => ({
         id: action.action_rid, // Action RID preserved
         name: action.action_name,
-        description: action.action_description || '',
-        category: action.action_category_rid, // Action category RID preserved
+        description: action.description || '',
+        category: action.action_rid, // Use action_rid as category
         icon: undefined,
         badge: undefined,
       }))
@@ -201,13 +192,13 @@ export const transformApiResponseToRule = (data: RuleDetails): Rule => {
 
   // Construct the Rule object with all RIDs preserved
   const rule: Rule = {
-    id: data.rule_rid, // Rule RID preserved
-    name: data.rule_name,
-    r_number: data.r_number, // R Number preserved
+    id: data.rule.rid, // Rule RID preserved
+    name: data.rule.rule_name,
+    r_number: data.rule.r_number || undefined, // R Number preserved
     trigger,
     conditions,
     actions,
-    isActive: data.is_active || false,
+    isActive: data.rule.is_active || false,
     conditionType,
   };
 
