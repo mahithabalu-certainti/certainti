@@ -1,4 +1,4 @@
-import { Op, Sequelize } from "sequelize";
+import { Op, QueryTypes, Sequelize } from "sequelize";
 import { initOrgSequelize } from "../config/orgDataSource";
 import { initMainDbSequelize } from "../config/mainDataSource";
 import {
@@ -13,6 +13,7 @@ import {
   fetchIsRdQualifiedProjectQuery,
   fetchIsRdQualifiedProjectQueryRegion,
   fetchProjectQueryByPrjId,
+  fetchProjectQueryByPrjIdForCase,
   summaryHighlightsQuery,
   summaryHighlightsQueryRegion,
 } from "../utils/rawQueries";
@@ -24,6 +25,7 @@ import { ProjectSummary } from "../models/projectSummary";
 import Decimal from "decimal.js";
 import currency from "currency.js";
 import { logMessage } from "../utils/helpers";
+import { ProjectFiscalIds } from "../utils/types";
 
 export default class FinancialHighlightsService {
   private mainDbSequelize: Sequelize | null = null;
@@ -117,15 +119,30 @@ export default class FinancialHighlightsService {
       await rawQueries.fetchParentAccount(data.account_rid, mainDb)
     );
     let schemaName = rawQueries.fetchSchemaName(fetchParent[0][0].r_number);
-
-    let result = await orgDb.query(
+    let projectFiscalIds = []
+    let result;
+    if(data.case_rid != undefined && data.case_rid !== '') {
+      const ids = await orgDb.query<ProjectFiscalIds>(rawQueries.getProjectsForCases(data.case_rid, data.account_rid, schemaName), {type : QueryTypes.SELECT});
+      projectFiscalIds.push(...ids.map((d : any) => d.project_fiscal_rid));
+      result = await orgDb.query(
+      fetchProjectQueryByPrjIdForCase(
+        data.account_rid,
+        schemaName,
+        data.fiscal_year,
+        projectFiscalIds
+      )
+    );
+    } else {
+      projectFiscalIds.push(data.project_fiscal_rid)
+      result = await orgDb.query(
       fetchProjectQueryByPrjId(
         data.account_rid,
         schemaName,
         data.fiscal_year,
-        data.project_fiscal_rid
+        projectFiscalIds
       )
     );
+    }
     if (result[0].length > 0) {
       return {
         statusCode: HttpStatus.SUCCESS,
