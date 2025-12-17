@@ -201,6 +201,7 @@ export class JurisdictionService {
             config_name: configRequest.config_name,
             status_rid: activeStatusRid.rid,
             rid: { [Op.ne]: configRequest.config_rid },
+            credit_config_group_rid:configRequest.jurisdiction_config_group_rid,
             federal_config_id: { [Op.is]: null },
           },
         });
@@ -285,6 +286,7 @@ export class JurisdictionService {
           where: {
             config_name: configRequest.config_name,
             status_rid: activeStatusRid.rid,
+            credit_config_group_rid:configRequest.jurisdiction_config_group_rid
           },
         });
         if (existingConfigName) {
