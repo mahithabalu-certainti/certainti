@@ -2,7 +2,7 @@ import { Op, QueryTypes, Sequelize } from "sequelize";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import { Logger } from "winston";
-import  CaseSchemaService from "./schemaService";
+import CaseSchemaService from "./schemaService";
 import { CaseModelService } from "./caseModelsService";
 import {
   UpdateCaseTaskType,
@@ -13,6 +13,7 @@ import {
   rawQueries,
 
 } from "../../utils/constants";
+import { logMessage } from "../../utils/helpers";
 
 export class CaseService {
   private caseSchemaService: CaseSchemaService;
@@ -42,50 +43,51 @@ export class CaseService {
   }
 
 
-async updateUserLevelTask (data : UpdateCaseTaskType) {
+  async updateUserLevelTask(data: UpdateCaseTaskType) {
     const mainDb = await this.getMainDb();
     const dbInit = await this.caseModelService.getSequelize()
     const transaction = await dbInit.transaction()
     try {
-      const fetchParentNumber : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
-      if(fetchParentNumber[0].length > 0) {
-        const findTask : any = await this.caseSchemaService.findTaskById(data.rid, data.account_rid, data.case_rid, fetchParentNumber[0][0].r_number, "milestone");
+      const fetchParentNumber: any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
+      if (fetchParentNumber[0].length > 0) {
+        const findTask: any = await this.caseSchemaService.findTaskById(data.rid, data.account_rid, data.case_rid, fetchParentNumber[0][0].r_number, "milestone");
         let eid;
-        if(findTask) eid = findTask.eid
+        if (findTask) eid = findTask.eid
         else eid = null
-        
+
         const isTaskNameExists = await this.caseSchemaService.checkTaskNameExistsForUpdate(data, fetchParentNumber[0][0].r_number, eid);
-        if(isTaskNameExists) {
+        if (isTaskNameExists) {
           return {
-            statusCode : HttpStatus.BAD_REQUEST,
-            statusMessage : STATUS_MESSAGE.taskNameExistsAlready
-          }         
+            statusCode: HttpStatus.BAD_REQUEST,
+            statusMessage: STATUS_MESSAGE.taskNameExistsAlready
+          }
         }
         else {
-          const getActiveStatusId : any = await mainDb.query(rawQueries.getActiveStatusId());
+          const getActiveStatusId: any = await mainDb.query(rawQueries.getActiveStatusId());
           const result = await this.caseSchemaService.updateUserLevelTask(data, fetchParentNumber[0][0].r_number, transaction, getActiveStatusId[0][0].rid);
-          if(result.statusCode === HttpStatus.SUCCESS) {
+          if (result.statusCode === HttpStatus.SUCCESS) {
             await transaction.commit()
           } else {
             await transaction.rollback()
           }
           return {
-            statusCode : result.statusCode,
-            statusMessage : result.statusMessage
+            statusCode: result.statusCode,
+            statusMessage: result.statusMessage
           }
         }
       } else {
         return {
-          statusCode : HttpStatus.FAILED,
-          statusMessage : STATUS_MESSAGE.accountNotFound
+          statusCode: HttpStatus.FAILED,
+          statusMessage: STATUS_MESSAGE.accountNotFound
         }
       }
     } catch (error) {
+      logMessage(`Error updating case task: ${error}`);
       await transaction.rollback()
       return {
-        statusCode : HttpStatus.FAILED,
-        statusMessage : STATUS_MESSAGE.taskUpdatedFailed
+        statusCode: HttpStatus.FAILED,
+        statusMessage: STATUS_MESSAGE.taskUpdatedFailed
       }
-    }  
-}
+    }
+  }
 }
