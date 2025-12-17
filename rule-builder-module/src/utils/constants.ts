@@ -189,5 +189,12 @@ export const rawQueries = {
     let query = `SELECT wra.rule_rid,wra.action_rid, sa.name as action_name,sa.message_template,sa.metadata,wra.action_order FROM ${MAIN_SCHEMA_NAME}.workflow_rule_action wra 
     JOIN ${MAIN_SCHEMA_NAME}.scope_actions sa ON sa.rid = wra.action_rid WHERE wra.rule_rid = '${rule_rid}' ORDER BY wra.action_order `;
     return query;
+  },
+  fetchNotificationTemplateDetails(template_name: string): string {
+    let query = `SELECT nt.message_template
+    FROM ${MAIN_SCHEMA_NAME}.notification_template nt 
+    WHERE nt.template_code = '${template_name}'
+    and status_rid = (select status_rid from ${MAIN_SCHEMA_NAME}.status where status_name = 'ACTIVE');`;
+    return query;
   }
 }
