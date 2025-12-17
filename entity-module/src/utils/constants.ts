@@ -885,8 +885,8 @@ export const rawQueries = {
         join ${MAIN_SCHEMA_NAME}.rd_credit_config_group rg on  rv.credit_config_group_rid  = rg.rid
         where rg.country_rid = '${rid}'
         and credit_program_name = 'Platform Configuration'
-        and is_federal = true`;
-  },
+        and rg.is_federal = true`;
+      },
   async updateSetting(
     schemaName: string,
     data: any,
@@ -2331,6 +2331,9 @@ export const rawQueries = {
   getPriorityNamesByIds: `SELECT rid, priority_name FROM ${MAIN_SCHEMA_NAME}.case_priority WHERE rid IN (:priorityIds)`,
   getResourceNamesByIds(schema_name: string): string {
     return `SELECT rid, resource_name FROM ${schema_name}.resources WHERE rid IN (:resourceRids)`;
+  },
+  getProjectsForCases (caseRid : string, accountRid : string, schemaName : string) {
+    return `SELECT project_fiscal_rid FROM ${schemaName}.case_projects WHERE case_rid = '${caseRid}' AND account_rid = '${accountRid}'`
   }
 };
 
