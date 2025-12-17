@@ -46,7 +46,9 @@ export const FileList: React.FC<FileListProps> = ({
           }}
         >
           <div className='flex items-center gap-2 flex-1 min-w-0'>
-            <AttachmentsSideIcon className='w-[14px] h-[14px]' />
+            <React.Suspense fallback={null}>
+              <AttachmentsSideIcon className='w-[14px] h-[14px]' />
+            </React.Suspense>
             <span
               className='text-sm text-[#2D3E4F] truncate'
               title={`${file.name}${file.format ? ` ${file.format}` : ''}`}
@@ -68,10 +70,12 @@ export const FileList: React.FC<FileListProps> = ({
               className='ml-2 p-1 cursor-pointer'
               title='Remove file'
             >
-              <CloseCircleIcon
-                alt='close-icon'
-                className='hover:[&>path]:stroke-[#F16137] hover:[&>rect]:fill-[#ffede7]'
-              />
+              <React.Suspense fallback={null}>
+                <CloseCircleIcon
+                  alt='close-icon'
+                  className='hover:[&>path]:stroke-[#F16137] hover:[&>rect]:fill-[#ffede7]'
+                />
+              </React.Suspense>
             </button>
           )}
         </div>

@@ -13,7 +13,12 @@ import {
   useGetAllDocumentInfo,
   useGetDocumentCategoryType,
 } from '../../../../../common-service';
-import { CaseDetails, ExportType, SelectOption } from '../../../../types';
+import {
+  CaseDetails,
+  ActivityDropdownItem,
+  ExportType,
+  SelectOption,
+} from '../../../../types';
 import {
   AttachmentList,
   AttachmentsListExportParams,
@@ -64,6 +69,7 @@ interface AttachmentsProps {
   >;
   accountInActive: boolean;
   caseDetails?: CaseDetails;
+  activityMenuItems: ActivityDropdownItem[];
 }
 
 export const Attachments: React.FC<AttachmentsProps> = ({
@@ -71,6 +77,7 @@ export const Attachments: React.FC<AttachmentsProps> = ({
   setAttachmentParams,
   accountInActive,
   caseDetails,
+  activityMenuItems,
 }) => {
   const { errorToast } = useToast();
   const { caseId } = useParams();
@@ -454,6 +461,8 @@ export const Attachments: React.FC<AttachmentsProps> = ({
         onFilterChange={handleCategory}
         showSearch={showUploads ? false : true}
         onSearch={(text) => setSearchText(text)}
+        showAddActivity={showUploads ? false : true}
+        activityMenuItems={activityMenuItems}
       />
       {showUploads ? (
         <Uploads

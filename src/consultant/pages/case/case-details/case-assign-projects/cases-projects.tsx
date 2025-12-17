@@ -39,7 +39,11 @@ import {
   useAssignProjects,
   useRemoveProjects,
 } from '../../../../services/cases-assign-projects/assign-project-service';
-import { CaseAssignedExportParams, ExportType } from '../../../../types';
+import {
+  ActivityDropdownItem,
+  CaseAssignedExportParams,
+  ExportType,
+} from '../../../../types';
 import ProjectTab from './projects-tab';
 import { getProjectFinancialResCostFields } from '../../../project/project-details/financial-highlights/helpers';
 import { useGetResourceType } from '../../../../services/resource-list';
@@ -64,6 +68,7 @@ interface casesProjectProps {
   >;
   setExportType?: (type: ExportType) => void;
   refetchCaseDetails: () => void;
+  activityMenuItems: ActivityDropdownItem[];
 }
 const InteractionsTabs: OverviewTabs[] = [
   {
@@ -86,6 +91,7 @@ const CasesProjects: React.FC<casesProjectProps> = ({
   setExportType,
   setReviewProjectParams,
   refetchCaseDetails,
+  activityMenuItems,
 }) => {
   const { caseId } = useParams();
   const [refreshTrigger, setRefreshTrigger] = useState<number>(Date.now());
@@ -657,6 +663,8 @@ const CasesProjects: React.FC<casesProjectProps> = ({
         onSearch={(text) => setSearchText(text)}
         searchReset={searchReset}
         onSearchReset={() => setSearchReset(false)}
+        showAddActivity={true}
+        activityMenuItems={activityMenuItems}
       />
       <SectionHeader
         title={isAssignProject ? 'Assign Projects' : 'Case Projects'}

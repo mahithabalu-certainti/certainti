@@ -16,8 +16,10 @@ import { RootState } from '../../../../../store/store';
 import { useSelector } from 'react-redux';
 import { checkPermission } from '../../../../../common-utils';
 import JurisdictionSetting from './jurisdiction/setting';
+import { ActivityDropdownItem } from '../../../../types';
 interface ConfigurationProps {
   countryId: string | null;
+  activityMenuItems: ActivityDropdownItem[];
 }
 const ConfigTabs: ResourceTabs[] = [
   {
@@ -33,7 +35,10 @@ const ConfigTabs: ResourceTabs[] = [
   // },
 ];
 
-const Configuration: React.FC<ConfigurationProps> = ({ countryId }) => {
+const Configuration: React.FC<ConfigurationProps> = ({
+  countryId,
+  activityMenuItems,
+}) => {
   const [searchParams] = useSearchParams();
   const [isFormSaving, setIsFormSaving] = useState<boolean>(false);
   const [isSaveDisable, setIsSaveDisable] = useState<boolean>(false);
@@ -112,7 +117,12 @@ const Configuration: React.FC<ConfigurationProps> = ({ countryId }) => {
           />
         );
       case 'jurisdiction_configuration':
-        return <JurisdictionSetting countryId={countryId} />;
+        return (
+          <JurisdictionSetting
+            countryId={countryId}
+            activityMenuItems={activityMenuItems}
+          />
+        );
       default:
         return (
           <div className='flex items-center justify-center h-full'>
@@ -208,6 +218,8 @@ const Configuration: React.FC<ConfigurationProps> = ({ countryId }) => {
             onSearch={(text) => setSearchText(text)}
             searchReset={resetSearch}
             onSearchReset={handleSearchReset}
+            showAddActivity={true}
+            activityMenuItems={activityMenuItems}
           />
           <SectionHeader
             title={list ? list.charAt(0).toUpperCase() + list.slice(1) : ''}

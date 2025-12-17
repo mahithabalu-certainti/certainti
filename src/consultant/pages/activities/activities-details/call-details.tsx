@@ -216,6 +216,7 @@ const CallDetails: React.FC<CallDetailsProps> = ({
           />
         }
         buttons={headerButtons}
+        className='rounded-tl-[2px] h-[40px] rounded-tr-[2px]'
       />
 
       {isLoading ? (
