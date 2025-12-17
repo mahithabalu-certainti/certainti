@@ -4,6 +4,7 @@ import { FormType, SelectOption } from '../../../../consultant/types';
 import {
   createDateField,
   createFiscalDateField,
+  createMultiSelectField,
   createSelectField,
   createTextField,
   REGEX_PATTERNS,
@@ -15,6 +16,7 @@ export const GeoBasedRuleFormFieldsData = (
   countryOptions: SelectOption[],
   regionOptions: SelectOption[],
   statusOptions: SelectOption[],
+  projectTypeOptions: SelectOption[],
   regionLoading: boolean,
   permissionMap: Record<string, { read: boolean; edit: boolean }>,
   isFederal: boolean | null,
@@ -53,7 +55,13 @@ export const GeoBasedRuleFormFieldsData = (
             ...commonProps,
           });
         }
-
+        if (item.type === 'select') {
+          return createMultiSelectField(item.label, formattedLabel, {
+            ...commonProps,
+            options: projectTypeOptions,
+            placeholder: 'Choose ' + formattedLabel,
+          });
+        }
         // ✅ Numeric field with validation
         if (item.type?.startsWith('numeric')) {
           return createTextField(item.label, formattedLabel, {

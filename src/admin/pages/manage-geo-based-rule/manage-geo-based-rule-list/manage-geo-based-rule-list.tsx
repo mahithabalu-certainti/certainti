@@ -19,6 +19,8 @@ import { ExportConfigRuleList } from '../../../service/manage-geo-based-access/g
 import { getGeoBasedRuleFilterFields } from './helpers';
 import { SelectOption } from '../../../../consultant/types';
 import { FilterCondition, Filters } from '../../../types/manage-user';
+import { FilterValue } from '../../../../consultant/types/account-filter';
+import { useFetchState } from '../../../../consultant/services/account';
 
 const BUTTON_STYLES = {
   height: '24px',
@@ -50,18 +52,18 @@ export const ManageGeoBasedRuleList: React.FC = () => {
   const { permission } = useSelector((state: RootState) => state.permission);
   const [columnAnchorEl, setColumnAnchorEl] =
     React.useState<HTMLButtonElement | null>(null);
-
+  const [currentCountry, setCurrentCountry] = useState<string>('');
   const isModalOpen = Boolean(columnAnchorEl);
   const modalId = isModalOpen ? 'geo-rule-visibility-popover' : undefined;
 
   // Service Hooks
   const statusOptions = useGetStatus();
   const allCountries = useGetAllCountries('Active');
-
+  const Regions = useFetchState(currentCountry?.toString() || '');
   // Variables
   const isFilterOpen = Boolean(anchorEl);
   const filterId = isFilterOpen ? 'geo-rule-filter-popover' : undefined;
-
+  console.log("currentCountry", currentCountry);
   // Memoized Options
   const countryOptions: SelectOption[] = useMemo(
     () =>
@@ -81,7 +83,14 @@ export const ManageGeoBasedRuleList: React.FC = () => {
       })) || [],
     [statusOptions?.data?.data?.status]
   );
-
+  const memoizedRegion = useMemo(
+    () =>
+      Regions.data?.data.states.map((state) => ({
+        label: state.state_name,
+        value: state.rid,
+      })) || [],
+    [Regions.data?.data.states]
+  );
   // Permission Map
   const configEditFields = useMemo(
     () =>
@@ -106,9 +115,9 @@ export const ManageGeoBasedRuleList: React.FC = () => {
         permissionMap,
         // memoizedStatus,
         countryOptions,
-        [] // Region options - can be populated based on selected country if needed
+        memoizedRegion
       ),
-    [permissionMap, memoizedStatus, countryOptions]
+    [permissionMap, countryOptions, memoizedRegion]
   );
   // Functions
   const onRefreshClick = () => {
@@ -138,7 +147,12 @@ export const ManageGeoBasedRuleList: React.FC = () => {
       }));
     }
   };
-
+  const handleCountry = (fieldName: string, value: FilterValue) => {
+    console.log("value", value, fieldName);
+    if (fieldName === 'country_rid' && value) {
+      setCurrentCountry(String(value));
+    }
+  };
   const handleColumnVisibility = (
     event: React.MouseEvent<HTMLButtonElement>
   ) => {
@@ -274,6 +288,7 @@ export const ManageGeoBasedRuleList: React.FC = () => {
                 }}
                 handleCloseFilter={handleCloseFilter}
                 handleSorting={handleSorting}
+                onFilterChange={handleCountry}
               />
             </Suspense>
           </div>

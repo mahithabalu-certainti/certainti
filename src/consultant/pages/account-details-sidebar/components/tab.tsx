@@ -515,7 +515,8 @@ const TabPanel: React.FC<TabProps> = ({
         permissionMapTaskTableColumn,
         permissionMapCaseProjectTableColumn,
         memoizedCountry,
-        regionData
+        regionData,
+        memoizedResourceType
       );
     }
     if (value === 'project-task')
@@ -546,16 +547,16 @@ const TabPanel: React.FC<TabProps> = ({
       return getChecklistFilterFields(resourceChecklistsPermissionMap);
     return value === 'cost'
       ? getCostFilterFields(
-          memoizedCurrency,
-          memoizedResourceStatus,
-          resourceCostpermissionMap
-        )
+        memoizedCurrency,
+        memoizedResourceStatus,
+        resourceCostpermissionMap
+      )
       : getSkillFilterFields(
-          memoizedSkillType,
-          skillSubTypeData,
-          memoizedSkillLevels,
-          resourceSkillpermissionMap
-        );
+        memoizedSkillType,
+        skillSubTypeData,
+        memoizedSkillLevels,
+        resourceSkillpermissionMap
+      );
   }, [
     value,
     memoizedCountry,
@@ -720,7 +721,7 @@ const TabPanel: React.FC<TabProps> = ({
                 >
                   <ResourceFilterIcon />
                   {(appliedFilters && Object.keys(appliedFilters).length > 0) ||
-                  sortFilterCount > 0 ? (
+                    sortFilterCount > 0 ? (
                     <div className='absolute -top-[8px] -right-1.5 w-4 h-4 flex items-center justify-center text-xs'>
                       <span className='absolute w-full h-full bg-[#FF6666] rounded-full animate-ping opacity-75 z-0'></span>
                       <span className='w-3.5 h-3.5 bg-[#FF6666] text-white rounded-full flex items-center justify-center z-10 font-semibold'>

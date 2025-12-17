@@ -74,7 +74,7 @@ export const getCaseProjectResourceColumns = (
     },
     {
       id: 'country_name',
-      sortId: 'resource_country',
+      sortId: 'country_name',
       label: 'Resource Country',
       width: 160,
       sortable: true,
@@ -84,7 +84,7 @@ export const getCaseProjectResourceColumns = (
     },
     {
       id: 'region_name',
-      sortId: 'resource_region',
+      sortId: 'region_name',
       label: 'Resource Region',
       width: 160,
       sortable: true,
@@ -104,7 +104,7 @@ export const getCaseProjectResourceColumns = (
     },
     {
       id: 'resource_type_name',
-      sortId: 'resource_type',
+      sortId: 'resource_type_name',
       label: 'Resource Type',
       width: 160,
       sortable: true,
@@ -114,18 +114,17 @@ export const getCaseProjectResourceColumns = (
     },
     {
       id: 'total_hours_pro_res',
-      sortId: 'effort_hours',
+      sortId: 'total_hours_pro_res',
       label: 'Effort (Hours)',
       width: 160,
       sortable: true,
-      render: (row) => row.effort_hours as unknown as React.ReactNode,
       hide:
         !permissionMap?.['total_hours_pro_res']?.read &&
         !permissionMap?.['total_hours_pro_res']?.edit,
     },
     {
       id: 'total_cost_pro_res',
-      sortId: 'net_resource_cost',
+      sortId: 'total_cost_pro_res',
       label: 'Net Resource Cost',
       width: 180,
       sortable: true,
@@ -134,7 +133,7 @@ export const getCaseProjectResourceColumns = (
         !permissionMap?.['net_total_cost_pro_res']?.edit,
       render: (row) =>
         costDisplay(
-          row.net_resource_cost as unknown as string | number | null | undefined
+          row.total_cost_pro_res as unknown as string | number | null | undefined
         ),
     },
     {
@@ -146,11 +145,11 @@ export const getCaseProjectResourceColumns = (
       hide:
         !permissionMap?.['qre_final']?.read &&
         !permissionMap?.['qre_final']?.edit,
-      // render: (row) => `${row.qre_final}%`,
+      render: (row) => `${costDisplay(row.qre_final, row.currency_symbol)}`,
     },
     {
       id: 'description',
-      sortId: 'comments',
+      sortId: 'description',
       label: 'Comments',
       width: 200,
       sortable: true,
@@ -160,7 +159,7 @@ export const getCaseProjectResourceColumns = (
     },
     {
       id: 'r_number',
-      sortId: 'project_resource_id',
+      sortId: 'r_number',
       label: 'Project Resource ID',
       width: 200,
       sortable: true,

@@ -31,6 +31,7 @@ import {
   ConfigDetails,
   CreateConfigPayload,
 } from '../../../types/geo-based-rule';
+import { useGetProjectType } from '../../../../consultant/services/project';
 
 const GeoBasedRuleForm: React.FC = () => {
   const formRef = useRef<HTMLFormElement>(null);
@@ -42,6 +43,7 @@ const GeoBasedRuleForm: React.FC = () => {
   const [caseNamePrefix, setCaseNamePrefix] = useState<string>('');
   const [isFederal, setIsFederal] = useState<boolean | null>(null);
   // Service Hooks
+  const projectTypeOptions = useGetProjectType();
   const statusOptions = useGetStatus();
   const allCountries = useGetAllCountries('Active');
   const states = useFetchState(currentCountry);
@@ -84,6 +86,14 @@ const GeoBasedRuleForm: React.FC = () => {
         desc: status?.status_description,
       })) || [],
     [statusOptions?.data?.data?.status]
+  );
+  const memoizedProjectTypes: SelectOption[] = useMemo(
+    () =>
+      projectTypeOptions?.data?.data?.projectType.map((item) => ({
+        label: item.project_type_name,
+        value: item.rid,
+      })) || [],
+    [projectTypeOptions?.data?.data?.projectType]
   );
   const { permission } = useSelector((state: RootState) => state.permission);
   // Mock permission map - replace with actual permission logic
@@ -229,6 +239,7 @@ const GeoBasedRuleForm: React.FC = () => {
     countryOptions,
     regionOptions,
     memoizedStatus,
+    memoizedProjectTypes,
     states.isLoading,
     permissionMap,
     isFederal,

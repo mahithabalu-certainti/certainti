@@ -208,7 +208,7 @@ export const getCaseProjectTaskColumns = (
     },
     {
       id: 'r_number',
-      sortId: 'project_task_id',
+      sortId: 'r_number',
       label: 'Project Task ID',
       width: 200,
       sortable: true,

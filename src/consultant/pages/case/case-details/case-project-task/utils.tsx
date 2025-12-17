@@ -134,7 +134,7 @@ export const caseProjectTaskFilterFields = (
     },
     {
       name: 'Resource Type',
-      value: 'resource_type',
+      value: 'resource_type_rid',
       type: 'enum',
       required: true,
       options: resourceTypeOptions,
@@ -154,7 +154,7 @@ export const caseProjectTaskFilterFields = (
     },
     {
       name: 'Task Type',
-      value: 'task_type',
+      value: 'task_type_rid',
       type: 'enum',
       required: true,
       options: memoizedProjectResourceType,
@@ -165,7 +165,7 @@ export const caseProjectTaskFilterFields = (
     },
     {
       name: 'Classification Type',
-      value: 'classification_type',
+      value: 'classification_type_rid',
       hide:
         !permissionMap?.['task_classification_rid']?.read &&
         !permissionMap?.['task_classification_rid']?.edit,
@@ -211,7 +211,7 @@ export const caseProjectTaskFilterFields = (
     },
     {
       name: 'Status',
-      value: 'status',
+      value: 'status_rid',
       type: 'enum',
       options: memoizedResourceStatus,
       operatorOption: fiscalOptions,
@@ -229,7 +229,7 @@ export const caseProjectTaskFilterFields = (
     },
     {
       name: 'Project Task ID',
-      value: 'project_task_id',
+      value: 'r_number',
       type: 'text',
       operatorOption: textOptions,
       hide:

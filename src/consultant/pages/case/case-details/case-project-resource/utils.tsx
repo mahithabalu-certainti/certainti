@@ -75,7 +75,8 @@ export const caseProjectResourceFilterFields = (
   permissionMap?: Record<string, { read: boolean; edit: boolean }>,
   projectPermissionMap?: Record<string, { read: boolean; edit: boolean }>,
   memoizedCountry?: { option: string; value: string }[],
-  region?: { option: string; value: string }[]
+  region?: { option: string; value: string }[],
+  memoizedTypeOptions?: { option: string; value: string }[],
 ): FieldConfig[] => [
     {
       name: 'Resource Code',
@@ -115,7 +116,7 @@ export const caseProjectResourceFilterFields = (
     },
     {
       name: 'Resource Country',
-      value: 'resource_country',
+      value: 'country_rid',
       type: 'enum',
       options: memoizedCountry,
       filterOptions: requiredFieldFilterOptionsForEnum,
@@ -125,7 +126,7 @@ export const caseProjectResourceFilterFields = (
     },
     {
       name: 'Resource Region',
-      value: 'resource_region',
+      value: 'region_rid',
       type: 'enum',
       options: region,
       dependsOn: 'country_rid',
@@ -137,7 +138,7 @@ export const caseProjectResourceFilterFields = (
     {
       name: 'Project Resource Role',
       value: 'project_resource_role',
-      type: 'text',
+      type: 'enum',
       operatorOption: nonMadatoryOptions,
       hide:
         !permissionMap?.['project_resource_role']?.read &&
@@ -145,16 +146,17 @@ export const caseProjectResourceFilterFields = (
     },
     {
       name: 'Resource Type',
-      value: 'resource_type',
-      type: 'text',
-      operatorOption: textOptions,
+      value: 'resource_type_rid',
+      type: 'enum',
+      options: memoizedTypeOptions,
+      filterOptions: requiredFieldFilterOptionsForEnum,
       hide:
         !permissionMap?.['resource_type_name']?.read &&
         !permissionMap?.['resource_type_name']?.edit,
     },
     {
       name: 'Effort (Hours)',
-      value: 'effort_hours',
+      value: 'total_hours_pro_res',
       type: 'number',
       operatorOption: numberOptions,
       hide:
@@ -163,7 +165,7 @@ export const caseProjectResourceFilterFields = (
     },
     {
       name: 'Net Resource Cost',
-      value: 'net_resource_cost',
+      value: 'total_cost_pro_res',
       type: 'number',
       operatorOption: numberOptions,
       hide:
@@ -181,7 +183,7 @@ export const caseProjectResourceFilterFields = (
     },
     {
       name: 'Comments',
-      value: 'comments',
+      value: 'description',
       type: 'text',
       operatorOption: nonMadatoryOptions,
       hide:
@@ -190,7 +192,7 @@ export const caseProjectResourceFilterFields = (
     },
     {
       name: 'Project Resource ID',
-      value: 'project_resource_id',
+      value: 'r_number',
       type: 'text',
       operatorOption: textOptions,
       hide:
