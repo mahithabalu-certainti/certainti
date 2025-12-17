@@ -11,6 +11,8 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@types/body-parser": "^1.19.6",
+    "body-parser": "^2.2.1",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "joi": "^18.0.2",
@@ -24,6 +26,7 @@
     "@types/express": "^5.0.5",
     "@types/node": "^24.10.1",
     "@types/pg": "^8.15.6",
+    "@types/winston": "^2.4.4",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   }
