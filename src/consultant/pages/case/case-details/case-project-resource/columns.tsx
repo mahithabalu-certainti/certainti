@@ -148,6 +148,28 @@ export const getCaseProjectResourceColumns = (
       render: (row) => `${costDisplay(row.qre_final, row.currency_symbol)}`,
     },
     {
+      id: 'status_name',
+      sortId: 'status_name',
+      label: 'Status',
+      width: 130,
+      sortable: true,
+      hide:
+        !permissionMap?.['status_rid']?.edit &&
+        !permissionMap?.['status_rid']?.read,
+      render: (row: CaseProjectResourceRowType) => (
+        <span
+          className={`${row.status_name === 'Active'
+            ? 'text-[#199806]'
+            : row.status_name === 'In-Active'
+              ? 'text-[#f44336] '
+              : ''
+            }`}
+        >
+          {row.status_name || '-'}
+        </span>
+      ),
+    },
+    {
       id: 'description',
       sortId: 'description',
       label: 'Comments',

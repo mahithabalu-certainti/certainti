@@ -77,6 +77,7 @@ export const caseProjectResourceFilterFields = (
   memoizedCountry?: { option: string; value: string }[],
   region?: { option: string; value: string }[],
   memoizedTypeOptions?: { option: string; value: string }[],
+  memoizedResourceStatus?: { option: string; value: string }[],
 ): FieldConfig[] => [
     {
       name: 'Resource Code',
@@ -180,6 +181,16 @@ export const caseProjectResourceFilterFields = (
       hide:
         !permissionMap?.['qre_final']?.read &&
         !permissionMap?.['qre_final']?.edit,
+    },
+    {
+      name: 'Status',
+      value: 'status_rid',
+      type: 'enum',
+      options: memoizedResourceStatus,
+      operatorOption: fiscalOptions,
+      hide:
+        !permissionMap?.['status_rid']?.edit &&
+        !permissionMap?.['status_rid']?.read,
     },
     {
       name: 'Comments',

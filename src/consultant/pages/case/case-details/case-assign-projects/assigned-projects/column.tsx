@@ -189,12 +189,8 @@ export const getAssignedProjectColumns = (
     },
     {
       id: 'total_cost_nonlabor_prj',
-      editId: 'total_cost_nonlabor_prj',
       label: 'Non-Labor Cost',
       sortable: true,
-      editable:
-        permissionMap?.['total_cost_nonlabor']?.read &&
-        permissionMap?.['total_cost_nonlabor']?.edit,
       hide:
         !permissionMap?.['total_cost_nonlabor']?.read &&
         !permissionMap?.['total_cost_nonlabor']?.edit,

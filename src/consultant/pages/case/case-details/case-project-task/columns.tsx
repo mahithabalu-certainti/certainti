@@ -24,6 +24,7 @@ export interface CaseProjectTaskRow extends RowData {
   status: string;
   comments: string;
   project_task_id: string;
+  status_name: string;
 }
 
 export const getCaseProjectTaskColumns = (
@@ -55,8 +56,8 @@ export const getCaseProjectTaskColumns = (
       },
     },
     {
-      id: 'resource_orgname',
-      sortId: 'resource_orgname',
+      id: 'resource_name',
+      sortId: 'resource_name',
       label: 'Resource Name',
       width: 180,
       sortable: true,
@@ -127,7 +128,7 @@ export const getCaseProjectTaskColumns = (
     },
     {
       id: 'task_type_name',
-      sortId: 'task_type',
+      sortId: 'task_type_name',
       label: 'Task Type',
       width: 160,
       sortable: true,
@@ -137,7 +138,7 @@ export const getCaseProjectTaskColumns = (
     },
     {
       id: 'task_classification_name',
-      sortId: 'classification_type',
+      sortId: 'task_classification_name',
       label: 'Classification Type',
       width: 180,
       sortable: true,
@@ -168,7 +169,7 @@ export const getCaseProjectTaskColumns = (
     },
     {
       id: 'total_cost_pro_task',
-      sortId: 'cost',
+      sortId: 'total_cost_pro_task',
       label: 'Cost',
       width: 140,
       sortable: true,
@@ -179,7 +180,7 @@ export const getCaseProjectTaskColumns = (
     },
     {
       id: 'total_hours_pro_task',
-      sortId: 'effort_hours',
+      sortId: 'total_hours_pro_task',
       label: 'Effort in Hrs',
       width: 160,
       sortable: true,
@@ -189,13 +190,25 @@ export const getCaseProjectTaskColumns = (
     },
     {
       id: 'status_name',
-      sortId: 'status',
+      sortId: 'status_rid',
       label: 'Status',
-      width: 140,
+      width: 130,
       sortable: true,
       hide:
         !permissionMap?.['status_action']?.edit &&
         !permissionMap?.['status_action']?.read,
+      render: (row: CaseProjectTaskRow) => (
+        <span
+          className={`${row.status_name === 'Active'
+            ? 'text-[#199806]'
+            : row.status_name === 'In-Active'
+              ? 'text-[#f44336] '
+              : ''
+            }`}
+        >
+          {row.status_name || '-'}
+        </span>
+      ),
     },
     {
       id: 'comments',

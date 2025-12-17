@@ -21,11 +21,22 @@ export const getGeoBasedRuleColumns = (
       label: 'Configuration Name',
       sortId: 'config_name',
       sortable: true,
-      width: 280,
+      width: 250,
       hide:
         !permissionMap?.['config_name']?.read &&
         !permissionMap?.['config_name']?.edit,
-      render: (row: GeoBasedRule) => `${row.country_code} ${row.state_name ? ' - ' + row.state_name : ''}- ${row.config_name}`,
+      render: (row: GeoBasedRule) => {
+        let displayText = 'C-';
+        if (row.country_code) {
+          displayText += row.country_code;
+          if (row.state_name) {
+            displayText += `-${row.state_name}`;
+          }
+          displayText += '-';
+        }
+        displayText += row.config_name || '';
+        return displayText || '-';
+      },
     },
     {
       id: 'country_name',

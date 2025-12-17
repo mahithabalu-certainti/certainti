@@ -206,14 +206,14 @@ export const ManageGeoBasedRuleList: React.FC = () => {
             <RefreshIcon alt='refresh-icon' className='h-4' />
           </button>
           <TextButton
-            label='Create Config'
+            label='Create Configuration'
             onClick={() => navigate(MANAGE_GEO_BASED_RULE_CREATE)}
             hide={!isCreateEnable}
             sx={{
               ...BUTTON_STYLES,
-              width: '119px',
-              minWidth: '119px',
-              maxWidth: '119px',
+              width: '160px',
+              minWidth: '160px',
+              maxWidth: '160px',
             }}
           />
         </div>

@@ -137,14 +137,19 @@ const GeoBasedRuleForm: React.FC = () => {
     const regionLabel =
       regionOptions.find((r) => r.value === currentRegion)?.label || '';
 
-    let prefix = '';
+    let prefix = 'C-'; // Default prefix starts with "C-"
+
     if (countryCode) {
-      prefix = `${countryCode}`;
+      prefix += `${countryCode}`;
       if (regionLabel) {
         prefix += `-${regionLabel}`;
       }
       prefix += '-';
+    } else {
+      // If no country selected yet, keep as "C-"
+      prefix = 'C-';
     }
+
     setCaseNamePrefix(prefix);
   }, [currentCountry, currentRegion, countryOptions, regionOptions]);
 
@@ -222,6 +227,8 @@ const GeoBasedRuleForm: React.FC = () => {
       updated_by: details.modified_user_name ? details.modified_user_name : '-',
       created_by: details.created_user_name ? details.created_user_name : '-',
       config_id: details.rid,
+      // Ensure case_name_prefix field has the default value
+      case_name_prefix: details.case_name_prefix || 'C-',
     };
   }, [configDetails, currentCountry, currentRegion, isFederal]);
 
@@ -297,7 +304,7 @@ const GeoBasedRuleForm: React.FC = () => {
                 : 'Jurisdiction Rules'}
             </div>
             <h5 className='text-[16px] font-bold ml-2 mt-0.5 text-[#2D3E4F]'>
-              {isEditView ? 'Edit Config' : 'Create Config'}
+              {isEditView ? 'Edit Configuration' : 'Create Configuration'}
             </h5>
           </div>
         </div>

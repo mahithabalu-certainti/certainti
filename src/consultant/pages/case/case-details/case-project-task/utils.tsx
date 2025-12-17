@@ -165,7 +165,7 @@ export const caseProjectTaskFilterFields = (
     },
     {
       name: 'Classification Type',
-      value: 'classification_type_rid',
+      value: 'task_classification_rid',
       hide:
         !permissionMap?.['task_classification_rid']?.read &&
         !permissionMap?.['task_classification_rid']?.edit,

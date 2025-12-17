@@ -516,7 +516,8 @@ const TabPanel: React.FC<TabProps> = ({
         permissionMapCaseProjectTableColumn,
         memoizedCountry,
         regionData,
-        memoizedResourceType
+        memoizedResourceType,
+        memoizedResourceStatus
       );
     }
     if (value === 'project-task')
