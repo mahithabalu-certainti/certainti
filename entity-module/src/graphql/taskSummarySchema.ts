@@ -21,6 +21,8 @@ priority_rid: String
 effective_start_datetime: Date
 effective_end_datetime: Date
 task_rid: String
+status_name: String
+priority_name: String
 }
 
 
