@@ -9,7 +9,8 @@ export type CaseProjectResourceRowType = CaseProjectResourceRow & RowData;
 
 export const getCaseProjectResourceColumns = (
   onResourceIdClick?: (row: CaseProjectResourceRowType) => void,
-  permissionMap?: Record<string, { read: boolean; edit: boolean }>
+  permissionMap?: Record<string, { read: boolean; edit: boolean }>,
+  projectPermissionMap?: Record<string, { read: boolean; edit: boolean }>
 ): ListTableColumn<CaseProjectResourceRowType>[] => [
   {
     id: 'resource_code',
@@ -47,9 +48,9 @@ export const getCaseProjectResourceColumns = (
     label: 'Resource Name',
     width: 180,
     sortable: true,
-    // hide:
-    //   !permissionMap?.['resource_name']?.read &&
-    //   !permissionMap?.['resource_name']?.edit,
+    hide:
+      !permissionMap?.['resource_name']?.read &&
+      !permissionMap?.['resource_name']?.edit,
   },
   {
     id: 'project_code',
@@ -57,9 +58,9 @@ export const getCaseProjectResourceColumns = (
     label: 'Project Code',
     width: 180,
     sortable: true,
-    // hide:
-    //   !permissionMap?.['project_code']?.read &&
-    //   !permissionMap?.['project_code']?.edit,
+    hide:
+      !projectPermissionMap?.['project_code']?.read &&
+      !projectPermissionMap?.['project_code']?.edit,
   },
   {
     id: 'project_name',
@@ -67,9 +68,9 @@ export const getCaseProjectResourceColumns = (
     label: 'Project Name',
     width: 200,
     sortable: true,
-    // hide:
-    //   !permissionMap?.['project_name']?.read &&
-    //   !permissionMap?.['project_name']?.edit,
+    hide:
+      !projectPermissionMap?.['project_name']?.read &&
+      !projectPermissionMap?.['project_name']?.edit,
   },
   {
     id: 'country_name',

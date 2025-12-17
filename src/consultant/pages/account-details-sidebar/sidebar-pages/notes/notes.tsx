@@ -27,6 +27,7 @@ import {
   ShowHideTableColumn,
 } from '../../../../../components/table/types';
 import {
+  ActivityDropdownItem,
   ExportType,
   NotesList,
   NotesListExportParams,
@@ -65,6 +66,7 @@ interface NotesProps {
   setNotesParams: React.Dispatch<React.SetStateAction<NotesListExportParams>>;
   accountInActive: boolean;
   accountDetails?: accountDetailsProps;
+  activityMenuItems: ActivityDropdownItem[];
 }
 
 const Notes: React.FC<NotesProps> = ({
@@ -72,6 +74,7 @@ const Notes: React.FC<NotesProps> = ({
   setNotesParams,
   accountInActive,
   accountDetails,
+  activityMenuItems,
 }) => {
   const { errorToast } = useToast();
   const { accountid } = useParams();
@@ -447,6 +450,8 @@ const Notes: React.FC<NotesProps> = ({
         searchDisabled={false}
         searchPlaceholder='Search'
         onSearch={(text) => setSearchText(text)}
+        showAddActivity={viewDetails ? false : true}
+        activityMenuItems={activityMenuItems}
       />
       {viewDetails ? (
         <NotesDetails

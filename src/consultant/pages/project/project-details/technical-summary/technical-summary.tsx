@@ -12,6 +12,7 @@ import {
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useTechnicalSummaryList } from '../../../../services/technical-summary/technical-summary-service';
 import {
+  ActivityDropdownItem,
   ExportType,
   TechnicalSummaryExportListParams,
   TechnicalSummaryList,
@@ -45,12 +46,14 @@ interface TechnicalSummaryProps {
   accountInActive: boolean;
   setExportType: (type: ExportType) => void;
   setTechnicalSummaryParams: (params: TechnicalSummaryExportListParams) => void;
+  activityMenuItems: ActivityDropdownItem[];
 }
 
 const TechnicalSummary: React.FC<TechnicalSummaryProps> = ({
   accountInActive,
   setExportType,
   setTechnicalSummaryParams,
+  activityMenuItems,
 }) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -260,6 +263,8 @@ const TechnicalSummary: React.FC<TechnicalSummaryProps> = ({
         onRefreshClick={onRefreshClick}
         sortFilterCount={0}
         setSortFilterCount={() => {}}
+        showAddActivity={!viewTechSummaryDetails}
+        activityMenuItems={activityMenuItems}
       />
       {viewTechSummaryDetails ? (
         <TechnicalSummaryDetails

@@ -22,14 +22,15 @@ interface ExtendedKanbanColumnProps extends KanbanColumnProps {
 }
 
 const HEADER_COLORS = [
-  { bg: '#F3E8FF', text: '#6B21A8', border: '#E9D5FF' }, // Purple
-  { bg: '#EFF6FF', text: '#1E40AF', border: '#BFDBFE' }, // Blue
-  { bg: '#ECFDF5', text: '#065F46', border: '#A7F3D0' }, // Green
-  { bg: '#F0FDFA', text: '#0F766E', border: '#CCFBF1' }, // Teal
-  { bg: '#FFF1F2', text: '#9F1239', border: '#FECDD3' }, // Rose
-  { bg: '#E0E7FF', text: '#3730A3', border: '#C7D2FE' }, // Indigo
-  { bg: '#FCE7F3', text: '#9D174D', border: '#FBCFE8' }, // Pink
-  { bg: '#ECFEFF', text: '#155E75', border: '#CFFAFE' }, // Cyan
+  { bg: '#6488C4', text: '#FFFFFF', border: '#6488C4' }, // Darker Pastel Blue
+  { bg: '#78B8A0', text: '#FFFFFF', border: '#78B8A0' }, // Darker Pastel Mint
+  { bg: '#C888A8', text: '#FFFFFF', border: '#C888A8' }, // Darker Pastel Pink
+  { bg: '#D88886', text: '#FFFFFF', border: '#D88886' }, // Darker Pastel Rose
+  { bg: '#70A0C0', text: '#FFFFFF', border: '#70A0C0' }, // Darker Pastel Light Blue
+  { bg: '#88B8A8', text: '#FFFFFF', border: '#88B8A8' }, // Darker Pastel Sage
+  { bg: '#C888A8', text: '#FFFFFF', border: '#C888A8' }, // Darker Pastel Pink
+  { bg: '#8898C8', text: '#FFFFFF', border: '#8898C8' }, // Darker Pastel Powder Blue
+  { bg: '#B878B8', text: '#FFFFFF', border: '#B878B8' }, // Darker Pastel Lavender
 ];
 
 const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
@@ -72,7 +73,7 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
       style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
     >
       <div
-        className='border rounded-lg p-2 mb-1'
+        className='border rounded-lg p-1.5 mb-1'
         style={{
           backgroundColor: headerColor.bg,
           borderColor: headerColor.border,
@@ -90,11 +91,13 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
           </h2>
           {showTaskCount && (
             <span
-              className='px-2 py-1 rounded-full text-[13px]'
+              className='px-2 py-0.5 rounded-full text-[13px]'
               style={{
                 fontFamily: "'Mulish', 'Lexend', sans-serif",
-                backgroundColor: 'rgba(255, 255, 255, 0.6)',
-                color: headerColor.text,
+                backgroundColor: 'transparent',
+                border: '1px solid #FFFFFF',
+                borderRadius: '8px',
+                color: '#FFFFFF',
               }}
             >
               {column.task_count}
@@ -139,7 +142,7 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
           className={`w-full flex items-center gap-2 p-2 rounded-lg border-2 border-dashed transition-colors duration-200 ${
             isCreateTaskDisabled
               ? 'border-slate-300 text-slate-400 cursor-not-allowed'
-              : 'border-slate-300 text-slate-500 hover:border-slate-400 hover:text-slate-600'
+              : 'border-slate-300 text-slate-500 hover:border-slate-400 hover:text-slate-600 cursor-pointer'
           }`}
           style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
         >

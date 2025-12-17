@@ -87,7 +87,10 @@ export const getActivityAllActivityListColumns = (
     sortId: 'effective_end_datetime',
     width: 200,
     hide: shouldHideColumn('effective_end_datetime', permissionMaps),
-    render: (row) => formatDateToYYYYMMDDWithTime(row.effective_end_datetime),
+    render: (row) =>
+      row?.activity_type?.toLowerCase() === 'task'
+        ? formatDateToYyyyMmmDd(row.effective_end_datetime || '')
+        : '-',
   },
 ];
 
@@ -429,6 +432,15 @@ export const getActivityTaskListColumns = (
       ) : (
         <span>{row.r_number}</span>
       ),
+  },
+  {
+    id: 'task_name',
+    label: 'Task Name',
+    sortable: true,
+    sortId: 'task_name',
+    width: 160,
+    hide:
+      !permissionMap['task_name']?.read && !permissionMap['task_name']?.edit,
   },
   {
     id: 'status_name',

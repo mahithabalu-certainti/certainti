@@ -2,7 +2,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
 import { AllPermissions } from '../../../../../common-service';
-import { ExportType, ProjectResourcesListParams } from '../../../../types';
+import {
+  ActivityDropdownItem,
+  ExportType,
+  ProjectResourcesListParams,
+} from '../../../../types';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   useCaseProjectTaskDetail,
@@ -10,19 +14,18 @@ import {
 } from '../../../../services/case-project-task/case-project-task-service';
 import { BUTTON_STYLES } from '../../../../../admin/pages/manage-user-detail/styles';
 import { ShowHideTableColumn } from '../../../../../components/table/types';
-import { SectionTabPanel } from '../../../../../components';
 import { ProjectsIcon } from '../../../../../assets';
 import {
   ListTable,
   ManageColumnsPopover,
 } from '../../../../../components/table';
 import { CaseProjectTaskRow, getCaseProjectTaskColumns } from './columns';
-import { caseProjectTaskFilterFields } from './utils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
 import ProjectTaskDetails from '../../../project/project-details/project-task/project-task-details';
 import { ProjectTaskDetailsType } from '../../../../types/project-task';
 import SectionHeader from '../../../../../components/details-section/section-header';
+import TabPanel from '../../../account-details-sidebar/components/tab';
 
 const CasesProjectTaskTabs: ResourceTabs[] = [
   {
@@ -39,13 +42,14 @@ interface projectTaskProps {
   >;
   setExportType?: (type: ExportType) => void;
   refetchAccountDetails?: () => void;
+  activityMenuItems: ActivityDropdownItem[];
 }
 
 const CaseProjectTask: React.FC<projectTaskProps> = ({
   accountInActive,
   setProjectTaskParams,
   setExportType,
-
+  activityMenuItems,
   // refetchAccountDetails,
 }) => {
   const { caseId } = useParams();
@@ -59,7 +63,7 @@ const CaseProjectTask: React.FC<projectTaskProps> = ({
   );
   const [rowsPerPage, setRowsPerPage] = useState(100);
   const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('ASC');
-  const [sortField, setSortField] = useState<string>('resource_name');
+  const [sortField, setSortField] = useState<string>('project_code');
   const [totalItems, setTotalItems] = useState<number>(0);
   const [resourceRowList, setResourceRowList] = useState<CaseProjectTaskRow[]>(
     []
@@ -75,6 +79,7 @@ const CaseProjectTask: React.FC<projectTaskProps> = ({
   ) => {
     setColumnAnchorEl(event.currentTarget);
   };
+
   const { data, isLoading, isError } = useCaseProjectTaskList(
     {
       page: currentPage + 1,
@@ -88,16 +93,6 @@ const CaseProjectTask: React.FC<projectTaskProps> = ({
     },
     refreshAttachments
   );
-  console.log(data);
-  // useEffect(() => {
-  //   setExportType?.('projectTask');
-  //   if (data) {
-  //     setTotalItems(data?.count || 0);
-  //     setResourceRowList(data.tasks || []);
-  //   } else {
-  //     setResourceRowList([]);
-  //   }
-  // }, [data]);
 
   useEffect(() => {
     if (data) {
@@ -149,7 +144,7 @@ const CaseProjectTask: React.FC<projectTaskProps> = ({
   };
 
   const handleSorting = (sortBy: string, sortOrder: 'asc' | 'desc') => {
-    const defaultSortField = 'document_name';
+    const defaultSortField = 'project_code';
     const defaultSortOrder = 'ASC';
     const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
 
@@ -241,12 +236,6 @@ const CaseProjectTask: React.FC<projectTaskProps> = ({
 
     navigate({ search: newParams.toString() }, { replace: true });
   };
-
-  const projectTaskFilterFields = caseProjectTaskFilterFields(
-    permissionMapProjectTaskTableColumn,
-    permissionMapProjectTableColumn
-  );
-
   const getRowId = (row: CaseProjectTaskRow) => row.rid;
 
   const RestrictedColumns = [
@@ -289,40 +278,29 @@ const CaseProjectTask: React.FC<projectTaskProps> = ({
 
   return (
     <div className='w-full pt-2 pl-2 pr-4'>
-      <SectionTabPanel
-        tabs={CasesProjectTaskTabs}
-        filterMenu={projectTaskFilterFields}
-        filterVisibility={taskId ? false : true}
-        showFilter={showFilter}
-        contextKey='case-projectTask-list'
+      <TabPanel
+        value={'case-project-task'}
         appliedFilters={appliedFilters}
         setAppliedFilters={setAppliedFilters}
-        setCurrentPage={setCurrentPage}
+        showFilter={showFilter}
+        filterVisibility={taskId ? false : true}
         handleFilter={handleFilter}
+        setCurrentPage={setCurrentPage}
+        resourceTab={CasesProjectTaskTabs}
+        showRefresh={taskId ? false : true}
+        onRefreshClick={onRefreshClick}
         handleSorting={handleSorting}
         sortFilterCount={sortFilterCount}
         setSortFilterCount={setSortFilterCount}
-        showRefresh={taskId ? false : true}
-        onRefreshClick={onRefreshClick}
+        permissionMapTaskTableColumn={permissionMapProjectTaskTableColumn}
+        permissionMapCaseProjectTableColumn={permissionMapProjectTableColumn}
+        // fiscalDatesArg={fiscalDatesArg}
         showSearch={taskId ? false : true}
         onSearch={(text) => setSearchText(text)}
+        showAddActivity={true}
+        activityMenuItems={activityMenuItems}
       />
-
       <>
-        {/* <ResourceTableHeader
-          value={'projectTask'}
-          title='Case Project Task'
-          count={taskId ? undefined : totalItems}
-          titleIcon={
-            <ProjectsIcon
-              alt='attachment-header-icon'
-              className='[&>path]:stroke-[#4B9BFF]'
-            />
-          }
-          headerButtons={headerButtons}
-          iconBg='#D8E9FF'
-          bgType='circle'
-        /> */}
         <SectionHeader
           title={taskId ? 'Case Project Task Details' : 'Case Project Task '}
           titleIcon={
@@ -354,7 +332,7 @@ const CaseProjectTask: React.FC<projectTaskProps> = ({
                 open={isModalOpen}
                 popoverId={modalId}
                 onClose={handlePopoverClose}
-                columns={visibleColumns}
+                columns={caseProjectTaskColumn}
                 onColumnsChange={handleColumnsChange}
                 columnRestrictions={RestrictedColumns}
               />

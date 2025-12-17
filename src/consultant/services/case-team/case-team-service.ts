@@ -23,6 +23,7 @@ export interface CaseTeamMember {
   modified_by?: string;
   created_datetime?: string;
   modified_datetime?: string;
+  assigned_task_count?: number;
 }
 
 export interface CaseTeamResponse {
@@ -94,6 +95,7 @@ export interface UserOption {
   name: string;
   email: string;
   status?: string;
+  profile_url?: string | null;
 }
 
 export interface UserOptionsResponse extends CommonApiResponse {
@@ -144,6 +146,7 @@ export interface CaseTeamMemberDropdown {
   effective_enddate: string;
   is_primary: boolean;
   status_rid: string;
+  profile_url?: string | null;
 }
 
 export interface CaseTeamMembersDropdownResponse extends CommonApiResponse {

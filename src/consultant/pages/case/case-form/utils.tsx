@@ -15,7 +15,7 @@ export const transformCaseFormPayload = (
   originalData?: CaseDetails
 ): CaseFormPayload => {
   const basePayload: CaseFormPayload = {
-    account_rid: accountId || '',
+    account_rid: accountId || formData.account_rid || '',
     case_owner_rid: formData.case_owner || '',
     case_name: formData.case_name || '',
     description: formData.description || '',

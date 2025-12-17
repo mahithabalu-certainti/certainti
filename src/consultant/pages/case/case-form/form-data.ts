@@ -1,5 +1,9 @@
 import { useMemo } from 'react';
-import { FormType, SelectOption } from '../../../types';
+import {
+  FormType,
+  ParentChildSelectOption,
+  SelectOption,
+} from '../../../types';
 import {
   createSelectField,
   createTextField,
@@ -8,6 +12,7 @@ import {
   createDateField,
   createEmptyField,
   getFiscalYears,
+  createSelectChildField,
 } from '../../../../common-utils';
 
 const minYear = 1950;
@@ -21,14 +26,20 @@ export const CaseFormData = (
   filingTypeOptions?: SelectOption[],
   ownerOptions?: SelectOption[],
   countryOptions?: SelectOption[],
+  accountList?: ParentChildSelectOption[],
   dateConstraints?: {
     planned_min: string;
     planned_max: string;
     statutory_min: string;
     statutory_max: string;
+    start_date_max: string;
   },
   caseNamePrefix?: string,
-  selectedFiscalYear?: string
+  selectedCountryRid?: string,
+  selectedAccountNumber?: string,
+  selectedFiscalYear?: string,
+  globalType?: boolean,
+  calculatedStatutoryDate?: string
 ): FormType[] => {
   return useMemo(
     () => [
@@ -36,15 +47,26 @@ export const CaseFormData = (
         sectionName: 'Basic Information',
         fillType: 'half',
         fields: [
+          createSelectChildField('account_rid', 'Account Name', {
+            expandOptions: accountList || [],
+            placeholder: 'Choose Account Name',
+            required: true,
+            onChange: true,
+            hide: !globalType,
+            expandedAll: true,
+            disabled: isEditView,
+          }),
           createTextField('account_name', 'Account Name', {
             required: false,
             disabled: true,
+            hide: globalType,
             placeholder: 'Enter Account Name',
           }),
           createTextField('account_id', 'Account ID', {
             required: false,
             disabled: true,
             placeholder: 'Enter Account ID',
+            defaultValue: selectedAccountNumber,
           }),
         ],
       },
@@ -115,6 +137,8 @@ export const CaseFormData = (
             placeholder: 'Choose Country',
             required: true,
             disabled: true,
+            defaultValue: selectedCountryRid,
+            assignDefaultValue: globalType,
             requiredErrorMessage:
               'Field is required. Please select a country at the account level.',
             hide:
@@ -128,9 +152,9 @@ export const CaseFormData = (
             type: '',
             required: false,
           }),
-          createTextField('heat_light_power', 'Heat Light Power', {
+          createTextField('heat_light_power', 'Heating & Lighting Cost', {
             required: false,
-            placeholder: 'Enter Heat Light Power',
+            placeholder: 'Enter Heating & Lighting Cost',
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
@@ -162,6 +186,10 @@ export const CaseFormData = (
             required: false,
             placeholder: 'Enter Tax Liability',
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            labelTooltip: {
+              showTooltip: true,
+              tooltipMessage: 'Tax Liability: your estimated tax due.',
+            },
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             disabled:
@@ -173,12 +201,15 @@ export const CaseFormData = (
               !permissionMap?.['case_name']?.edit &&
               !permissionMap?.['case_name']?.read,
           }),
-          createDateField('case_startdate', 'Start Date', {
+          createDateField('case_startdate', 'Planned Start Date', {
             required: true,
             onChange: true,
             allowFutureDates: true,
             customDateOpen: selectedFiscalYear
               ? new Date(`${Number(selectedFiscalYear) - 1}-04-01`)
+              : undefined,
+            maxDate: dateConstraints?.start_date_max
+              ? new Date(dateConstraints.start_date_max)
               : undefined,
             disabled:
               isEditView &&
@@ -232,13 +263,16 @@ export const CaseFormData = (
                 ? new Date(dateConstraints.statutory_max)
                 : undefined,
               disabled:
-                isEditView &&
-                !permissionMap?.['statutory_submission_date']?.edit &&
-                permissionMap?.['statutory_submission_date']?.read,
+                !isEditView ||
+                (isEditView &&
+                  !permissionMap?.['statutory_submission_date']?.edit &&
+                  permissionMap?.['statutory_submission_date']?.read),
               hide:
                 isEditView &&
                 !permissionMap?.['statutory_submission_date']?.edit &&
                 !permissionMap?.['statutory_submission_date']?.read,
+              defaultValue: calculatedStatutoryDate,
+              assignDefaultValue: true,
             }
           ),
         ],
@@ -326,9 +360,14 @@ export const CaseFormData = (
       accountPermissionMap,
       ownerOptions,
       countryOptions,
+      accountList,
       dateConstraints,
       caseNamePrefix,
+      selectedCountryRid,
+      selectedAccountNumber,
       selectedFiscalYear,
+      globalType,
+      calculatedStatutoryDate,
     ]
   );
 };

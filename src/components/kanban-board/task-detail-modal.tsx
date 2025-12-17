@@ -1,5 +1,8 @@
-import { useEffect, useState, useMemo, useRef } from 'react';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useEffect, useState, useMemo, useRef, useLayoutEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../store/store';
 import { TaskDetailModalProps, Task, Activity, Comment } from './types';
 import { MenuItem, SelectChangeEvent } from '@mui/material';
 import dayjs from 'dayjs';
@@ -45,11 +48,13 @@ import {
   type TaskAttachmentRaw,
 } from '../../consultant/pages/case/case-details/work-breakdown/helper';
 import { useToast } from '../../hooks';
+import ConfirmationPopup from '../../common-utils/confirmation-popup';
 import {
   useGetTaskConnectorTypes,
   useWeightageList,
   useGetTaskCategoryTypes,
 } from '../../admin/service/task-template/task-template-service';
+import UserAvatar from './user-avatar';
 
 interface TaskDetailModalPropsExtended
   extends Omit<TaskDetailModalProps, 'tagData'> {
@@ -57,6 +62,7 @@ interface TaskDetailModalPropsExtended
   availableTagOptions?: Array<{ id: string; name: string; color: string }>;
   accountId: string;
   caseId: string;
+  projectId?: string;
   onAddComment?: (
     taskId: string,
     comment: string,
@@ -67,6 +73,8 @@ interface TaskDetailModalPropsExtended
   fiscalYear?: string | null;
   fiscalYears?: string[];
   taskType?: string;
+  isCaseTeamCreated?: boolean;
+  entityLevel?: 'account' | 'case' | 'project';
 }
 
 const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
@@ -87,6 +95,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   onAddCollaborator,
   accountId,
   caseId,
+  projectId,
   fieldVisibility = {},
   fieldDisabled = {},
   caseStartDate,
@@ -94,6 +103,8 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   fiscalYear,
   fiscalYears,
   taskType,
+  isCaseTeamCreated,
+  entityLevel,
 }) => {
   const [task, setTask] = useState<Task | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
@@ -102,6 +113,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     Array<{
       assigned_to: string;
       assigned_to_name: string;
+      profile_url?: string | null;
     }>
   >([]);
   const [taskAttachments, setTaskAttachments] = useState<
@@ -139,6 +151,19 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   const [weightage, setWeightage] = useState('');
   const [category, setCategory] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const [confirmationState, setConfirmationState] = useState<{
+    isOpen: boolean;
+    message: string;
+    onConfirm: () => void;
+    onCancel: () => void;
+  }>({
+    isOpen: false,
+    message: '',
+    onConfirm: () => {},
+    onCancel: () => {},
+  });
 
   const ErrorIconTooltip = ({ error }: { error: string }) => (
     <Tooltip
@@ -178,6 +203,11 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   const deleteCollaboratorMutation = useDeleteCollaborator();
   const deleteTagMutation = useDeleteTag();
   const queryClient = useQueryClient();
+
+  // Get current user ID from Redux
+  const { userId } = useSelector<RootState, { userId: unknown }>(
+    (state: RootState) => state.auth
+  );
 
   const commentsParams = useMemo(
     () => ({
@@ -256,30 +286,22 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     }
   }, [isOpen, taskId]);
 
-  useEffect(() => {
-    if (rawTask) {
-      const enriched = enrichTask(rawTask);
-      setTask(enriched);
-      setEditedTask(enriched);
-      setOriginalTask(enriched);
-      if (enriched.caseTeamMemberRoleName) {
-        setSelectedRole(enriched.caseTeamMemberRoleName);
-      }
-      if (enriched.checklistName) {
-        setSelectedChecklist(enriched.checklistName);
-      }
-      if (enriched.weightage) {
-        setWeightage(enriched.weightage);
-      }
-      if (enriched.category) {
-        setCategory(enriched.category);
-      }
-      // Always set linkedType and linkTaskTypes to clear previous task's data
-      setLinkedType(enriched.linkedType || '');
-      setLinkTaskTypes(enriched.linkTaskTypes || []);
-      setIsLoadingTaskDetails(false);
+  useLayoutEffect(() => {
+    if (isOpen) {
+      setIsAnimating(true);
+      setIsVisible(false);
+      const timer = setTimeout(() => {
+        setIsVisible(true);
+      }, 5);
+      return () => clearTimeout(timer);
+    } else {
+      setIsVisible(false);
+      const timer = setTimeout(() => {
+        setIsAnimating(false);
+      }, 500);
+      return () => clearTimeout(timer);
     }
-  }, [rawTask]);
+  }, [isOpen]);
 
   useEffect(() => {
     let commentsArray: TaskCommentRaw[] = [];
@@ -546,6 +568,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       enrichUserOption({
         rid: collab.assigned_to,
         name: collab.assigned_to_name,
+        profile_url: collab.profile_url || undefined,
       })
     );
     const uniqueCollaborators = enrichedCollaborators.filter(
@@ -563,38 +586,107 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     return uniqueUsers;
   }, [availableUsers]);
 
-  const allEnrichedUsers = useMemo(
-    () => [
+  const allEnrichedUsers = useMemo(() => {
+    const combined = [
       ...collaboratorUsers,
       ...(assigneeUsers.filter(
         (user) => !collaboratorUsers.find((cu) => cu.id === user.id)
       ) || []),
-    ],
-    [collaboratorUsers, assigneeUsers]
-  );
+    ];
+    return combined;
+  }, [collaboratorUsers, assigneeUsers]);
 
   useEffect(() => {
-    if (
-      !editedTask ||
-      (editedTask.collaborators && editedTask.collaborators.length > 0)
-    ) {
-      return;
+    if (rawTask) {
+      const enriched = enrichTask(rawTask);
+
+      // Enrich assignee with profile_url from available users if missing
+      if (
+        enriched.assignee &&
+        !enriched.assignee.profile_url &&
+        enriched.assignee.name
+      ) {
+        const foundUser = assigneeUsers.find(
+          (user) => user.name === enriched.assignee.name
+        );
+        if (foundUser) {
+          enriched.assignee.profile_url = foundUser.profile_url;
+          enriched.assignee.initials = foundUser.initials;
+          enriched.assignee.color = foundUser.color;
+        }
+      }
+
+      // Enrich collaborators with profile_url from allEnrichedUsers if missing
+      if (enriched.collaborators && enriched.collaborators.length > 0) {
+        enriched.collaborators = enriched.collaborators.map((collab) => {
+          if (!collab.profile_url && collab.name) {
+            const foundUser = allEnrichedUsers.find(
+              (user) => user.name === collab.name
+            );
+            if (foundUser) {
+              return {
+                ...collab,
+                profile_url: foundUser.profile_url,
+                initials: foundUser.initials,
+                color: foundUser.color,
+              };
+            }
+          }
+          return collab;
+        });
+      }
+
+      setTask(enriched);
+      setEditedTask(enriched);
+      setOriginalTask(enriched);
+      if (enriched.caseTeamMemberRoleName) {
+        setSelectedRole(enriched.caseTeamMemberRoleName);
+      }
+      if (enriched.checklistName) {
+        setSelectedChecklist(enriched.checklistName);
+      }
+      if (enriched.weightage) {
+        setWeightage(enriched.weightage);
+      }
+      if (enriched.category) {
+        setCategory(enriched.category);
+      }
+      // Always set linkedType and linkTaskTypes to clear previous task's data
+      setLinkedType(enriched.linkedType || '');
+      setLinkTaskTypes(enriched.linkTaskTypes || []);
+      setIsLoadingTaskDetails(false);
     }
+  }, [rawTask, assigneeUsers, allEnrichedUsers]);
+
+  useEffect(() => {
+    if (!editedTask) return;
+
     if (collaborators && collaborators.length > 0) {
       const mappedCollaborators = collaborators.map((collab) => {
         const enrichedUser = enrichUserOption({
           rid: collab.assigned_to,
           name: collab.assigned_to_name,
+          profile_url: collab.profile_url,
         });
         return {
           name: enrichedUser.name,
           initials: enrichedUser.initials,
           color: enrichedUser.color,
+          profile_url: enrichedUser.profile_url,
         };
       });
-      setEditedTask((prev) =>
-        prev ? { ...prev, collaborators: mappedCollaborators } : null
-      );
+
+      setEditedTask((prev) => {
+        if (!prev) return null;
+        // Avoid infinite loop by checking if content is different
+        if (
+          JSON.stringify(prev.collaborators) ===
+          JSON.stringify(mappedCollaborators)
+        ) {
+          return prev;
+        }
+        return { ...prev, collaborators: mappedCollaborators };
+      });
     }
   }, [collaborators, editedTask]);
 
@@ -610,22 +702,54 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
   }, [editedTask, allEnrichedUsers]);
 
   // Disable checklist template if any checklist item has been completed
+  // Also disable specific fields if current user is not the task creator
   const enhancedFieldDisabled = useMemo(() => {
     const hasCompletedItems = (editedTask?.checklist || []).some(
       (item) => item.completed
     );
+
+    // Check if current user is the task creator
+    const isCreator = task?.created_by_rid === userId;
+
+    // Fields that should be editable only by the creator
+    const creatorOnlyFieldsDisabled = !isCreator;
+
+    const shouldDisableStatus =
+      typeof isCaseTeamCreated === 'boolean' ? !isCaseTeamCreated : false;
+
     return {
       ...fieldDisabled,
-      checklistTemplate: fieldDisabled.checklistTemplate || hasCompletedItems,
+      checklistTemplate:
+        fieldDisabled.checklistTemplate ||
+        hasCompletedItems ||
+        creatorOnlyFieldsDisabled,
+      priority: fieldDisabled.priority || creatorOnlyFieldsDisabled,
+      linkedType: fieldDisabled.linkedType || creatorOnlyFieldsDisabled,
+      linkTaskType: fieldDisabled.linkTaskType || creatorOnlyFieldsDisabled,
+      weightage: fieldDisabled.weightage || creatorOnlyFieldsDisabled,
+      category: fieldDisabled.category || creatorOnlyFieldsDisabled,
+      status: fieldDisabled.status || shouldDisableStatus,
     };
-  }, [fieldDisabled, editedTask?.checklist]);
+  }, [
+    editedTask?.checklist,
+    task?.created_by_rid,
+    userId,
+    fieldDisabled,
+    isCaseTeamCreated,
+  ]);
 
-  if (!isOpen || !taskId) return null;
+  if (!isAnimating || !taskId) return null;
   if (isLoadingTaskDetails || (rawTask && !task)) {
     return (
       <div
         className='fixed right-0 bottom-0 w-[650px] bg-white text-gray-900 shadow-2xl z-50 overflow-y-auto'
-        style={{ top: '38.1px' }}
+        style={{
+          top: '38.1px',
+          transform: isVisible ? 'translateX(0)' : 'translateX(100%)',
+          opacity: isVisible ? 1 : 0,
+          transition:
+            'transform 500ms cubic-bezier(0.4, 0.0, 0.2, 1), opacity 500ms cubic-bezier(0.4, 0.0, 0.2, 1)',
+        }}
       >
         <div className='sticky top-0 flex items-center justify-between p-[16.5px] border-b border-[#CBD6E2] bg-white z-50'>
           <div className='p-2 w-6 h-6'></div>
@@ -688,7 +812,13 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     return (
       <div
         className='fixed right-0 bottom-0 w-[650px] bg-white text-gray-900 shadow-2xl z-50 flex items-center justify-center'
-        style={{ top: '38.1px' }}
+        style={{
+          top: '38.1px',
+          transform: isVisible ? 'translateX(0)' : 'translateX(100%)',
+          opacity: isVisible ? 1 : 0,
+          transition:
+            'transform 500ms cubic-bezier(0.4, 0.0, 0.2, 1), opacity 500ms cubic-bezier(0.4, 0.0, 0.2, 1)',
+        }}
       >
         <div className='text-center text-gray-500'>
           <p>Task not found</p>
@@ -726,6 +856,13 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     }
     if (editedTask?.tags && editedTask.tags.some((tag) => tag.length > 50)) {
       newErrors.tags = 'Maximum 50 characters allowed';
+    }
+
+    if (!editedTask?.startDate && !fieldVisibility.startDate) {
+      newErrors.startDate = 'Field is required';
+    }
+    if (!editedTask?.endDate && !fieldVisibility.endDate) {
+      newErrors.endDate = 'Field is required';
     }
 
     if (editedTask?.startDate) {
@@ -826,6 +963,19 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
             });
           }
           setDeletedAttachmentIds([]);
+          queryClient.invalidateQueries({
+            queryKey: ['taskActivities', accountId, caseId, taskId],
+          });
+          queryClient.invalidateQueries({
+            queryKey: [
+              'taskActivitiesInfinite',
+              {
+                case_rid: caseId,
+                account_rid: accountId,
+                task_rid: taskId,
+              },
+            ],
+          });
           successToast('Attachment deleted successfully');
         } catch (error) {
           let errorMessage = 'Failed to delete attachments';
@@ -871,6 +1021,19 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
 
           queryClient.invalidateQueries({
             queryKey: ['taskAttachments', attachmentsParams],
+          });
+          queryClient.invalidateQueries({
+            queryKey: ['taskActivities', accountId, caseId, taskId],
+          });
+          queryClient.invalidateQueries({
+            queryKey: [
+              'taskActivitiesInfinite',
+              {
+                case_rid: caseId,
+                account_rid: accountId,
+                task_rid: taskId,
+              },
+            ],
           });
           successToast('Attachment uploaded successfully');
         } catch (error) {
@@ -1071,9 +1234,15 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
           // Use activities API for tasks opened from activities page
           const activityPayload = {
             task_rid: taskId,
-            attach_to: editedTask.case_rid || caseId || accountId,
+            attach_to:
+              entityLevel === 'project'
+                ? projectId || accountId
+                : entityLevel === 'case'
+                  ? editedTask.case_rid || caseId || accountId
+                  : accountId,
             attachment_level:
-              editedTask.case_rid || caseId ? 'case' : 'account',
+              entityLevel ||
+              (editedTask.case_rid || caseId ? 'case' : 'account'),
             account_rid: accountId,
             task_name: editedTask.title || '',
             task_description: editedTask.description || '',
@@ -1117,6 +1286,10 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
         });
         queryClient.invalidateQueries({
           queryKey: ['taskDetail', accountId, caseId, taskId],
+        });
+        // Refetch collaborators to get profile urls
+        queryClient.invalidateQueries({
+          queryKey: ['collaborators', accountId, caseId, taskId, taskType],
         });
         if (onTaskUpdate) {
           onTaskUpdate();
@@ -1282,6 +1455,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                 name: selectedUser.name,
                 initials: selectedUser.initials,
                 color: selectedUser.color,
+                profile_url: selectedUser.profile_url,
               },
             }
           : null
@@ -1305,6 +1479,9 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     setEditedTask((prev) =>
       prev ? { ...prev, checklist: updatedChecklist } : null
     );
+    setOriginalTask((prev) =>
+      prev ? { ...prev, checklist: updatedChecklist } : null
+    );
 
     queryClient.invalidateQueries({
       queryKey: ['taskActivities', accountId, caseId, taskId],
@@ -1322,6 +1499,10 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     // Refetch kanban board to update checklist counts
     queryClient.invalidateQueries({
       queryKey: ['kanbanBoardData', accountId, caseId],
+    });
+    // Refetch collaborators to get profile urls
+    queryClient.invalidateQueries({
+      queryKey: ['collaborators', accountId, caseId, taskId, taskType],
     });
   };
 
@@ -1346,6 +1527,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
           name: user.name,
           initials: user.initials,
           color: user.color,
+          profile_url: user.profile_url,
         }));
         setEditedTask((prev) => (prev ? { ...prev, collaborators } : null));
         setOriginalTask((prev) => (prev ? { ...prev, collaborators } : null));
@@ -1353,6 +1535,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
           selectedUsers.map((user) => ({
             assigned_to: user.id,
             assigned_to_name: user.name,
+            profile_url: user.profile_url,
           }))
         );
         queryClient.invalidateQueries({
@@ -1371,6 +1554,10 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
         // Refetch kanban board to update task data
         queryClient.invalidateQueries({
           queryKey: ['kanbanBoardData', accountId, caseId],
+        });
+        // Refetch collaborators to get profile urls
+        queryClient.invalidateQueries({
+          queryKey: ['collaborators', accountId, caseId, taskId, taskType],
         });
       } catch (error) {
         console.error('Failed to add collaborator:', error);
@@ -1403,6 +1590,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
           name: user.name,
           initials: user.initials,
           color: user.color,
+          profile_url: user.profile_url,
         }));
         setEditedTask((prev) => (prev ? { ...prev, collaborators } : null));
         setOriginalTask((prev) => (prev ? { ...prev, collaborators } : null));
@@ -1410,6 +1598,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
           selectedUsers.map((user) => ({
             assigned_to: user.id,
             assigned_to_name: user.name,
+            profile_url: user.profile_url,
           }))
         );
         queryClient.invalidateQueries({
@@ -1429,6 +1618,10 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
         queryClient.invalidateQueries({
           queryKey: ['kanbanBoardData', accountId, caseId],
         });
+        // Refetch collaborators to get profile urls
+        queryClient.invalidateQueries({
+          queryKey: ['collaborators', accountId, caseId, taskId, taskType],
+        });
         successToast('Collaborator removed successfully');
       } catch (error) {
         console.error('Failed to remove collaborator:', error);
@@ -1446,6 +1639,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
         name: user.name,
         initials: user.initials,
         color: user.color,
+        profile_url: user.profile_url,
       }));
       setEditedTask((prev) => (prev ? { ...prev, collaborators } : null));
       setOriginalTask((prev) => (prev ? { ...prev, collaborators } : null));
@@ -1453,21 +1647,39 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
         selectedUsers.map((user) => ({
           assigned_to: user.id,
           assigned_to_name: user.name,
+          profile_url: user.profile_url,
         }))
       );
+    }
+  };
+
+  const handleCloseAttempt = () => {
+    if (hasTaskChanged()) {
+      setConfirmationState({
+        isOpen: true,
+        message:
+          'You have unsaved changes. Are you sure you want to close without saving?',
+        onConfirm: () => {
+          onClose();
+        },
+        onCancel: () => {},
+      });
+    } else {
+      onClose();
     }
   };
 
   return (
     <>
       <div
-        className={`fixed right-0 bottom-0 w-[650px] bg-white text-gray-900 shadow-2xl z-50 overflow-y-auto ${
-          isOpen ? 'translate-x-0' : 'translate-x-full'
-        }`}
+        className='fixed right-0 bottom-0 w-[650px] bg-white text-gray-900 shadow-2xl z-50 overflow-y-auto'
         style={{
           top: '38.1px',
-          transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
-          transition: 'transform 300ms ease-in-out',
+          transform: isVisible ? 'translateX(0)' : 'translateX(100%)',
+          opacity: isVisible ? 1 : 0,
+          transition:
+            'transform 500ms cubic-bezier(0.4, 0.0, 0.2, 1), opacity 500ms cubic-bezier(0.4, 0.0, 0.2, 1)',
+          willChange: isAnimating ? 'transform, opacity' : 'auto',
         }}
       >
         <div className='sticky top-0 flex items-center justify-between p-3 border-b border-[#CBD6E2] bg-white z-50'>
@@ -1484,8 +1696,8 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
               sx={{ padding: '6px 12px' }}
             />
             <button
-              onClick={onClose}
-              className='p-2 hover:bg-gray-100 rounded transition-colors'
+              onClick={handleCloseAttempt}
+              className='p-2 hover:bg-gray-100 rounded transition-colors cursor-pointer'
             >
               <CloseIcon size={16} className='text-gray-600' />
             </button>
@@ -1555,35 +1767,30 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                           minWidth: 0,
                         }}
                       >
-                        <div
-                          style={{
-                            width: '20px',
-                            height: '20px',
-                            borderRadius: '50%',
-                            backgroundColor: editedTask.assignee.color,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '9px',
-                            fontWeight: '600',
-                            color: 'white',
-                            flexShrink: 0,
-                          }}
+                        <UserAvatar
+                          profileUrl={editedTask.assignee.profile_url}
+                          initials={editedTask.assignee.initials}
+                          color={editedTask.assignee.color}
+                          size={20}
+                          fontSize={9}
+                        />
+                        <Tooltip
+                          title={editedTask.assignee.name}
+                          placement='top-start'
                         >
-                          {editedTask.assignee.initials}
-                        </div>
-                        <span
-                          style={{
-                            fontSize: '13px',
-                            color: 'black',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                            minWidth: 0,
-                          }}
-                        >
-                          {editedTask.assignee.name}
-                        </span>
+                          <span
+                            style={{
+                              fontSize: '13px',
+                              color: 'black',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                              minWidth: 0,
+                            }}
+                          >
+                            {editedTask.assignee.name}
+                          </span>
+                        </Tooltip>
                       </div>
                     );
                   }
@@ -1619,33 +1826,35 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                     }}
                     key={user.id}
                     value={user.id}
-                    title={user.name}
                   >
                     <div
                       style={{
                         display: 'flex',
                         alignItems: 'center',
                         gap: '8px',
+                        width: '100%',
+                        overflow: 'hidden',
                       }}
                     >
-                      <div
-                        style={{
-                          width: '20px',
-                          height: '20px',
-                          borderRadius: '50%',
-                          backgroundColor: user.color,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '8px',
-                          fontWeight: '600',
-                          color: 'white',
-                          flexShrink: 0,
-                        }}
-                      >
-                        {user.initials}
-                      </div>
-                      {user.name}
+                      <UserAvatar
+                        profileUrl={user.profile_url}
+                        initials={user.initials}
+                        color={user.color}
+                        size={20}
+                        fontSize={8}
+                      />
+                      <Tooltip title={user.name} placement='top-start'>
+                        <span
+                          style={{
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            flex: 1,
+                          }}
+                        >
+                          {user.name}
+                        </span>
+                      </Tooltip>
                     </div>
                   </MenuItem>
                 ))}
@@ -1664,7 +1873,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
               {!fieldVisibility.startDate && (
                 <div>
                   <label className='block text-xs font-medium text-gray-600 mb-1'>
-                    Start Date
+                    Start Date <span className='text-red-500'>*</span>
                   </label>
                   <DatePicker
                     disabled={fieldDisabled.startDate}
@@ -1744,7 +1953,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
               {!fieldVisibility.endDate && (
                 <div>
                   <label className='block text-xs font-medium text-gray-600 mb-1'>
-                    Due Date
+                    Due Date <span className='text-red-500'>*</span>
                   </label>
                   <DatePicker
                     disabled={fieldDisabled.endDate}
@@ -2023,9 +2232,35 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
               accountId={accountId}
               caseId={caseId}
               taskId={taskId}
-              onAddComment={onAddComment}
+              onAddComment={async (taskId, comment, files) => {
+                if (onAddComment) {
+                  await onAddComment(taskId, comment, files);
+                  queryClient.invalidateQueries({
+                    queryKey: [
+                      'collaborators',
+                      accountId,
+                      caseId,
+                      taskId,
+                      taskType,
+                    ],
+                  });
+                }
+              }}
               onUpdateComment={onUpdateComment}
-              onDeleteComment={onDeleteComment}
+              onDeleteComment={async (commentId) => {
+                if (onDeleteComment) {
+                  await onDeleteComment(commentId, taskId!);
+                  queryClient.invalidateQueries({
+                    queryKey: [
+                      'collaborators',
+                      accountId,
+                      caseId,
+                      taskId,
+                      taskType,
+                    ],
+                  });
+                }
+              }}
               useInfiniteScroll={true}
               taskType={taskType}
             />
@@ -2089,6 +2324,16 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
                           },
                         ],
                       });
+                      // Refetch collaborators to get profile urls
+                      queryClient.invalidateQueries({
+                        queryKey: [
+                          'collaborators',
+                          accountId,
+                          caseId,
+                          taskId,
+                          taskType,
+                        ],
+                      });
                       successToast('Collaborator removed successfully');
                     },
                     onError: () => {
@@ -2101,6 +2346,37 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
           )}
         </div>
       </div>
+
+      {/* Backdrop */}
+      {isOpen && (
+        <div
+          className='fixed inset-0 bg-opacity-50 z-40'
+          style={{ top: '38.1px' }}
+          onClick={handleCloseAttempt}
+        />
+      )}
+
+      {/* Confirmation Popup */}
+      <ConfirmationPopup
+        isOpen={confirmationState.isOpen}
+        message={confirmationState.message}
+        onConfirm={() => {
+          confirmationState.onConfirm();
+          setConfirmationState((prev) => ({
+            ...prev,
+            isOpen: false,
+            message: '',
+          }));
+        }}
+        onCancel={() => {
+          confirmationState.onCancel();
+          setConfirmationState((prev) => ({
+            ...prev,
+            isOpen: false,
+            message: '',
+          }));
+        }}
+      />
     </>
   );
 };

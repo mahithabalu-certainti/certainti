@@ -35,6 +35,7 @@ export const getCaseProjectTaskColumns = (
     label: 'Project Code',
     width: 180,
     sortable: true,
+    sticky: true,
     sx: {
       position: 'sticky',
       left: 0,
@@ -43,6 +44,7 @@ export const getCaseProjectTaskColumns = (
       borderRight: '1px solid #CBD6E2',
       borderBottom: '1px solid #CBD6E2 !important',
     },
+
     render: (row: CaseProjectTaskRow) => {
       return (
         <span
@@ -185,9 +187,9 @@ export const getCaseProjectTaskColumns = (
     label: 'Status',
     width: 140,
     sortable: true,
-    // hide:
-    //   !permissionMap?.['status_rid']?.edit &&
-    //   !permissionMap?.['status_rid']?.read,
+    hide:
+      !permissionMap?.['status_action']?.edit &&
+      !permissionMap?.['status_action']?.read,
   },
   {
     id: 'comments',

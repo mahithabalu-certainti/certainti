@@ -1,4 +1,10 @@
-import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import {
   useLocation,
   useNavigate,
@@ -20,27 +26,38 @@ import {
   ActivityListExportURLParams,
   ActivityType,
   ProjectResourcesListParams,
+  ActivityDropdownItem,
 } from '../../../types';
 import {
   AllMenus,
   AllModules,
   AllPermissions,
 } from '../../../../common-service';
-import { InfoSection, PageHeader, SideMenuPanel } from '../../../../components';
+import {
+  ActivityModal,
+  InfoSection,
+  PageHeader,
+  SideMenuPanel,
+} from '../../../../components';
 import {
   AccountDetailsIcon,
   ActivitiesIcon,
   AttachmentsSideIcon,
+  CallLogIcon,
   CasesIcon,
   ChecklistIcon,
   ComingSoon,
   DetailsIcon,
+  DetailsKeyContactErrorIcon,
+  DraftEmailIcon,
   FinancialIcon,
   InteractionsIcon,
+  MeetingIcon,
   NotesSideIcon,
   ProjectsSideIcon,
   ResourcesIcon,
   SettingIcon,
+  TaskCreateIcon,
   TechSummaryIcon,
 } from '../../../../assets';
 import { WorkBreakDown } from './work-breakdown';
@@ -92,12 +109,12 @@ export const CaseDetails = () => {
     (state: RootState) => state.permission
   );
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
   const {
     data: caseData,
     isLoading,
     isError,
     isPending,
+    refetch: refetchCaseDetails,
   } = useCaseDetails(caseId ?? '', accountId ?? '');
   const isAssignProject = searchParams.get('assignProject');
   const projectDetails = searchParams.get('detailstab');
@@ -123,10 +140,13 @@ export const CaseDetails = () => {
   const interactionId = searchParams.get('interaction_id');
   const interactionRID = searchParams.get('interaction_rid');
   const interactionsView = !!interactionId || !!interactionRID;
+  const [activityModalId, setActivityModalId] = useState<string | null>(null);
+
   const noteView = searchParams.get('note_id');
   const checklistView = searchParams.get('checklist_id');
   const accountInActive =
     caseData?.account_status_name?.toLowerCase() !== 'active';
+  const isCaseTeamCreated = caseData?.is_case_team_created;
   const [caseProjectParams, setCaseProjectParams] =
     useState<CaseAssignedExportParams>({
       sort: 'project_code',
@@ -193,6 +213,7 @@ export const CaseDetails = () => {
       sortOrder: 'ASC',
       filters: {},
     });
+
   const systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const [interactionsParams, setInteractionsParams] =
     useState<InteractionListExportParams>({
@@ -324,6 +345,24 @@ export const CaseDetails = () => {
   const isCaseTaskExportEnable = checkPermission(
     permission,
     AllPermissions.CASES_WORKBREAKDOWN_EXPORT
+  );
+
+  // Activity Create Permission
+  const isActivityTaskCreateEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_TASK_CREATE
+  );
+  const isActivityCallCreateEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_CALL_CREATE
+  );
+  const isActivityEmailCreateEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_EMAIL_CREATE
+  );
+  const isActivityMeetingCreateEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_MEETING_CREATE
   );
 
   const activityExportPermissionMap: Record<string, boolean> = {
@@ -509,11 +548,31 @@ export const CaseDetails = () => {
     console.log('Settings clicked');
   };
 
-  const activityMenuItems = [
-    { label: 'Create Task', onClick: () => console.log('Task') },
-    { label: 'Draft Email', onClick: () => console.log('Eamil') },
-    { label: 'Schedule Meeting', onClick: () => console.log('Meeting') },
-    { label: 'Log a call', onClick: () => console.log('Call') },
+  const activityMenuItems: ActivityDropdownItem[] = [
+    {
+      label: 'Create Task',
+      onClick: () => setActivityModalId('create-task'),
+      icon: TaskCreateIcon,
+      hide: !isActivityTaskCreateEnable,
+    },
+    {
+      label: 'Draft Email',
+      onClick: () => setActivityModalId('draft-email'),
+      icon: DraftEmailIcon,
+      hide: !isActivityEmailCreateEnable,
+    },
+    {
+      label: 'Schedule Meeting',
+      onClick: () => setActivityModalId('schedule-meeting'),
+      icon: MeetingIcon,
+      hide: !isActivityMeetingCreateEnable,
+    },
+    {
+      label: 'Log a call',
+      onClick: () => setActivityModalId('call-log'),
+      icon: CallLogIcon,
+      hide: !isActivityCallCreateEnable,
+    },
   ];
 
   const handleSetCaseTaskParams = useCallback(
@@ -563,6 +622,7 @@ export const CaseDetails = () => {
               caseEndDate={caseData?.statutory_submission_date}
               isActionItemsExpanded={isActionItemsExpanded}
               setIsActionItemsExpanded={handleToggleActionItems}
+              isCaseTeamCreated={isCaseTeamCreated}
             />
           </div>
         );
@@ -572,6 +632,7 @@ export const CaseDetails = () => {
             <CaseTeam
               activityMenuItems={activityMenuItems}
               fiscalYear={fiscalYear}
+              refetchCaseDetails={refetchCaseDetails}
             />
           </div>
         );
@@ -593,6 +654,8 @@ export const CaseDetails = () => {
               setTableParams={setCaseProjectParams}
               setReviewProjectParams={setReviewProjectParams}
               setExportType={setExportType}
+              refetchCaseDetails={refetchCaseDetails}
+              activityMenuItems={activityMenuItems}
             />
           </div>
         );
@@ -603,6 +666,7 @@ export const CaseDetails = () => {
               accountInActive={accountInActive}
               setProjectTaskParams={setProjectTaskParams}
               setExportType={setExportType}
+              activityMenuItems={activityMenuItems}
             />
           </div>
         );
@@ -613,6 +677,7 @@ export const CaseDetails = () => {
             setExportType={setExportType}
             setNotesParams={setNotesParams}
             caseDetails={caseData}
+            activityMenuItems={activityMenuItems}
           />
         );
       case 'attachments':
@@ -622,10 +687,11 @@ export const CaseDetails = () => {
             setExportType={setExportType}
             setAttachmentParams={setAttachmentParams}
             caseDetails={caseData}
+            activityMenuItems={activityMenuItems}
           />
         );
       case 'settings':
-        return <Setting />;
+        return <Setting activityMenuItems={activityMenuItems} />;
       case 'activities':
         return (
           <CaseActivities
@@ -634,6 +700,7 @@ export const CaseDetails = () => {
             setExportType={setExportType}
             setActivityParams={setActivityParams}
             isDetailLoading={isPending}
+            activityMenuItems={activityMenuItems}
           />
         );
       case 'checklist':
@@ -643,6 +710,7 @@ export const CaseDetails = () => {
             setChecklistParams={setChecklistParams}
             accountInActive={accountInActive}
             caseDetails={caseData}
+            activityMenuItems={activityMenuItems}
           />
         );
       case 'interactions':
@@ -654,6 +722,7 @@ export const CaseDetails = () => {
             loading={isLoading}
             setInteractionsParams={setInteractionsParams}
             setExportType={setExportType}
+            activityMenuItems={activityMenuItems}
           />
         );
       case 'projectResource':
@@ -662,6 +731,7 @@ export const CaseDetails = () => {
             accountInActive={accountInActive}
             setProjectResourceParams={setProjectResourceParams}
             setExportType={setExportType}
+            activityMenuItems={activityMenuItems}
           />
         );
       default:
@@ -744,14 +814,14 @@ export const CaseDetails = () => {
       {
         name: 'Project Resource',
         key: 'projectResource',
-        id: AllMenus.FINANCIAL_HIGHLIGHTS,
+        id: AllMenus.PROJECT_RESOURCES,
         disabled: false,
         icon: ResourcesIcon,
       },
       {
         name: 'Project Task',
         key: 'projectTask',
-        id: AllMenus.FINANCIAL_HIGHLIGHTS,
+        id: AllMenus.PROJECT_TASK,
         disabled: false,
         icon: ProjectsSideIcon,
       },
@@ -848,6 +918,15 @@ export const CaseDetails = () => {
     }
   };
 
+  const sourceDetails = {
+    accountId: accountId,
+    entityLevel: 'case',
+    entityId: caseId || '',
+    caseFiscalYear: caseData?.fiscal_year || '',
+    source: `Case > ${caseData?.r_number || ''}`,
+    isEmailConfigured: caseData?.is_send_interaction,
+  };
+
   if (!caseIsEnable || !isCaseDetailsEnable) return <AccessRestricted />;
 
   return (
@@ -885,12 +964,13 @@ export const CaseDetails = () => {
         />
       </div>
       <div
-        className={`transition-all duration-700 ease-in-out overflow-hidden ${isActionItemsExpanded
-          ? 'max-h-0 opacity-0'
-          : isError
-            ? 'max-h-[60px] opacity-100'
-            : 'max-h-[140px] opacity-100'
-          }`}
+        className={`transition-all duration-700 ease-in-out overflow-hidden ${
+          isActionItemsExpanded
+            ? 'max-h-0 opacity-0'
+            : isError
+              ? 'max-h-[60px] opacity-100'
+              : 'max-h-[140px] opacity-100'
+        }`}
       >
         <InfoSection
           columns={caseHeaderDetails}
@@ -902,10 +982,11 @@ export const CaseDetails = () => {
       </div>
       <div className='flex flex-1 flex-row w-full border-b border-[#CBD6E2]'>
         <div
-          className={`flex transition-all ease-in-out ${isCollapsed
-            ? 'w-[60px] min-w-[60px] max-w-[60px] duration-700'
-            : 'w-[220px] min-w-[220px] max-w-[220px] duration-700'
-            }`}
+          className={`flex transition-all ease-in-out ${
+            isCollapsed
+              ? 'w-[60px] min-w-[60px] max-w-[60px] duration-700'
+              : 'w-[220px] min-w-[220px] max-w-[220px] duration-700'
+          }`}
         >
           <SideMenuPanel
             menuItems={sideMenuItems}
@@ -928,9 +1009,30 @@ export const CaseDetails = () => {
             overflow: 'auto',
           }}
         >
+          {!isCaseTeamCreated && !isLoading && (
+            <div className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] px-3 py-2 border-box'>
+              <div>
+                <React.Suspense fallback={null}>
+                  <DetailsKeyContactErrorIcon alt='key-contact' />
+                </React.Suspense>
+              </div>
+              <div>
+                <span className='font-bold mr-1 capitalize'>Case Team</span>-
+                <span className='ml-1 font-medium'>
+                  Case team setup is missing. Please create a case team before
+                  marking the task as complete.
+                </span>
+              </div>
+            </div>
+          )}
           <Suspense fallback={null}>{renderContent()}</Suspense>
         </div>
       </div>
+      <ActivityModal
+        modalId={activityModalId}
+        onCloseModal={() => setActivityModalId(null)}
+        sourceDetails={sourceDetails}
+      />
     </div>
   );
 };

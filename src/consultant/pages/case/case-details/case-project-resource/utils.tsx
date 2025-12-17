@@ -1,6 +1,7 @@
 import { PROJECT_TYPE } from '../../../../../common-utils';
 import { FieldConfig } from '../../../account-details-sidebar/components/filter/filterType';
 import { fiscalYears } from '../../../resource-form/form-data';
+import { requiredFieldFilterOptionsForEnum } from '../case-project-task/utils';
 
 export const statusOptions: { option: string; value: string }[] = [
   { option: 'Active', value: 'Active' },
@@ -71,7 +72,10 @@ export const dateOptions: { option: string; value: string }[] = [
 ];
 
 export const caseProjectResourceFilterFields = (
-  permissionMap?: Record<string, { read: boolean; edit: boolean }>
+  permissionMap?: Record<string, { read: boolean; edit: boolean }>,
+  projectPermissionMap?: Record<string, { read: boolean; edit: boolean }>,
+  memoizedCountry?: { option: string; value: string }[],
+  region?: { option: string; value: string }[]
 ): FieldConfig[] => [
   {
     name: 'Resource Code',
@@ -96,24 +100,25 @@ export const caseProjectResourceFilterFields = (
     value: 'project_code',
     type: 'text',
     operatorOption: textOptions,
-    // hide:
-    //   !permissionMap?.['project_code']?.read &&
-    //   !permissionMap?.['project_code']?.edit,
+    hide:
+      !projectPermissionMap?.['project_code']?.read &&
+      !projectPermissionMap?.['project_code']?.edit,
   },
   {
     name: 'Project Name',
     value: 'project_name',
     type: 'text',
     operatorOption: nonMadatoryOptions,
-    // hide:
-    //   !permissionMap?.['project_name']?.read &&
-    //   !permissionMap?.['project_name']?.edit,
+    hide:
+      !projectPermissionMap?.['project_name']?.read &&
+      !projectPermissionMap?.['project_name']?.edit,
   },
   {
     name: 'Resource Country',
     value: 'resource_country',
-    type: 'text',
-    operatorOption: textOptions,
+    type: 'enum',
+    options: memoizedCountry,
+    filterOptions: requiredFieldFilterOptionsForEnum,
     hide:
       !permissionMap?.['country_rid']?.read &&
       !permissionMap?.['country_rid']?.edit,
@@ -121,8 +126,10 @@ export const caseProjectResourceFilterFields = (
   {
     name: 'Resource Region',
     value: 'resource_region',
-    type: 'text',
-    operatorOption: textOptions,
+    type: 'enum',
+    options: region,
+    dependsOn: 'country_rid',
+    filterOptions: requiredFieldFilterOptionsForEnum,
     hide:
       !permissionMap?.['region_rid']?.read &&
       !permissionMap?.['region_rid']?.edit,

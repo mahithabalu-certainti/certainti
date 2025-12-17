@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
@@ -38,8 +39,7 @@ import {
 } from './helper';
 import { CaseTask } from './case-task';
 import { getAssignGroupsFilterFields } from './case-task/helper';
-import { ExportType } from '../../../../types';
-import { ActivityMenuItem } from '../../../../types';
+import { ActivityDropdownItem, ExportType } from '../../../../types';
 import { useToast } from '../../../../../hooks';
 import { TaskCard } from '../../../../../components/kanban-board/types';
 import { useGetTaskCheckListTypes } from '../../../../../admin/service/task-template/task-template-service';
@@ -53,13 +53,14 @@ const ConfigTabs: ResourceTabs[] = [
   },
 ];
 interface WorkBreakDownProps {
-  activityMenuItems: ActivityMenuItem[];
+  activityMenuItems: ActivityDropdownItem[];
   setExportType: (type: ExportType) => void;
   setCaseTaskParams: (params: Record<string, unknown>) => void;
   caseStartDate?: string | null;
   caseEndDate?: string | null;
   isActionItemsExpanded?: boolean;
   setIsActionItemsExpanded?: (expanded: boolean) => void;
+  isCaseTeamCreated?: boolean;
 }
 
 const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
@@ -70,6 +71,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
   caseEndDate,
   isActionItemsExpanded,
   setIsActionItemsExpanded,
+  isCaseTeamCreated,
 }) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -187,6 +189,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
       return caseTeamMembersQuery.data.map((member) => ({
         rid: member.user_rid,
         name: member.user_name,
+        profile_url: member.profile_url,
       }));
     }
     return [];
@@ -246,7 +249,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
       return new Promise<void>((resolve, reject) => {
         const tagsArray: Array<{ tag_rid: string; is_new_tag: boolean }> = [];
         if (taskData.tags && taskData.tags.length > 0) {
-          taskData.tags.forEach((tagName: string) => {
+          (taskData.tags as string[]).forEach((tagName: string) => {
             const existingTag = tagData?.find((t) => t.name === tagName);
             if (existingTag) {
               tagsArray.push({
@@ -648,9 +651,23 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
     [userData]
   );
 
+  const roleOptions = useMemo(
+    () =>
+      roleOptionsQuery?.data?.map((role) => ({
+        option: role.role_name,
+        value: role.rid,
+      })),
+    [roleOptionsQuery]
+  );
+
   const filterFields =
     tabParam === 'case_task'
-      ? getAssignGroupsFilterFields(memoizedStatus, assigneeOptions)
+      ? getAssignGroupsFilterFields(
+          permissionMap,
+          memoizedStatus,
+          assigneeOptions,
+          roleOptions
+        )
       : undefined;
 
   const handleFilter = () => {
@@ -706,6 +723,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
 
   const fieldHiddenMap = useMemo(
     () => ({
+      all_activities: !permissionMap['all_activities']?.read,
       taskName:
         !permissionMap['task_name']?.read && !permissionMap['task_name']?.edit,
       status:
@@ -892,6 +910,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
                 onAddCollaborator={handleAddCollaborator}
                 caseStartDate={caseStartDate}
                 caseEndDate={caseEndDate}
+                isCaseTeamCreated={isCaseTeamCreated}
               />
             )}
           </>

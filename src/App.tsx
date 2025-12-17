@@ -84,6 +84,10 @@ import {
   TASK_TEMPLATES_DETAILS,
   ACTIVITY_CREATE,
   ACTIVITY_EDIT,
+  MANAGE_GEO_BASED_RULE,
+  MANAGE_GEO_BASED_RULE_CREATE,
+  MANAGE_GEO_BASED_RULE_EDIT,
+  TASKS,
   WORKFLOW_BUILDER,
   WORKFLOW_BUILDER_CREATE,
   WORKFLOW_BUILDER_EDIT,
@@ -93,9 +97,14 @@ import ProjectTaskForm from './consultant/pages/project/project-details/project-
 // import { ProjectTask } from './consultant/pages/project/project-details/project-task';
 import ProjectResourceForm from './consultant/pages/project/project-details/project-resources/project-resource-form/project-resource-form';
 import { Attachments } from './consultant/pages';
+import { Tasks } from './consultant/pages/tasks';
 import ImportTemplatesList from './admin/pages/import-templates/import-templates';
 import CaseInteractionForm from './consultant/pages/interaction/interaction-form/case-interaction-form';
 import ManageTaskDetails from './admin/pages/task-templates/task-templates-list/details/taskDetails';
+import {
+  GeoBasedRuleForm,
+  ManageGeoBasedRuleList,
+} from './admin/pages/manage-geo-based-rule';
 
 // Lazy load all page components
 const ExtendedPermission = lazy(
@@ -376,6 +385,7 @@ export const App: React.FC<IApp> = ({ instance }) => {
                     element={<CaseInteractionForm />}
                   />
                   <Route path={ATTACHMENTS} element={<Attachments />} />
+                  <Route path={TASKS} element={<Tasks />} />
                   <Route path={NOTES} element={<Notes />} />
                   <Route path={NOTES_CREATE} element={<NotesForm />} />
                   <Route path={NOTES_EDIT} element={<NotesForm />} />
@@ -396,6 +406,18 @@ export const App: React.FC<IApp> = ({ instance }) => {
                   <Route
                     path={MANAGE_ACCOUNT_ACCESS}
                     element={<ManageAccountAccess />}
+                  />
+                  <Route
+                    path={MANAGE_GEO_BASED_RULE}
+                    element={<ManageGeoBasedRuleList />}
+                  />
+                  <Route
+                    path={MANAGE_GEO_BASED_RULE_CREATE}
+                    element={<GeoBasedRuleForm />}
+                  />
+                  <Route
+                    path={MANAGE_GEO_BASED_RULE_EDIT}
+                    element={<GeoBasedRuleForm />}
                   />
                   <Route
                     path={MANAGE_SETTINGS}

@@ -69,10 +69,22 @@ export const dateOptions: { option: string; value: string }[] = [
   { option: 'Between', value: 'between' },
   { option: 'Is-Empty', value: 'is_empty' },
 ];
+export const requiredFieldFilterOptionsForEnum: {
+  option: string;
+  value: string;
+}[] = [
+  { option: 'Equals', value: 'equals' },
+  { option: 'Not Equals', value: 'not_equals' },
+  { option: 'In', value: 'in' },
+];
 
 export const caseProjectTaskFilterFields = (
-  permissionMap: Record<string, { read: boolean; edit: boolean }>,
-  projectPermissionMap: Record<string, { read: boolean; edit: boolean }>
+  permissionMap?: Record<string, { read: boolean; edit: boolean }>,
+  projectPermissionMap?: Record<string, { read: boolean; edit: boolean }>,
+  resourceTypeOptions?: { option: string; value: string }[],
+  memoizedProjectResourceType?: { option: string; value: string }[],
+  memoizedProjectResourceClassification?: { option: string; value: string }[],
+  memoizedResourceStatus?: { option: string; value: string }[]
 ): FieldConfig[] => [
   {
     name: 'Project Code',
@@ -122,8 +134,10 @@ export const caseProjectTaskFilterFields = (
   {
     name: 'Resource Type',
     value: 'resource_type',
-    type: 'text',
-    operatorOption: nonMadatoryOptions,
+    type: 'enum',
+    required: true,
+    options: resourceTypeOptions,
+    filterOptions: requiredFieldFilterOptionsForEnum,
     hide:
       !permissionMap?.['resource_type_name']?.read &&
       !permissionMap?.['resource_type_name']?.edit,
@@ -140,8 +154,10 @@ export const caseProjectTaskFilterFields = (
   {
     name: 'Task Type',
     value: 'task_type',
-    type: 'text',
-    operatorOption: nonMadatoryOptions,
+    type: 'enum',
+    required: true,
+    options: memoizedProjectResourceType,
+    filterOptions: requiredFieldFilterOptionsForEnum,
     hide:
       !permissionMap?.['task_type_rid']?.read &&
       !permissionMap?.['task_type_rid']?.edit,
@@ -152,8 +168,10 @@ export const caseProjectTaskFilterFields = (
     hide:
       !permissionMap?.['task_classification_rid']?.read &&
       !permissionMap?.['task_classification_rid']?.edit,
-    type: 'text',
-    operatorOption: nonMadatoryOptions,
+    type: 'enum',
+    required: true,
+    options: memoizedProjectResourceClassification,
+    filterOptions: requiredFieldFilterOptionsForEnum,
   },
   {
     name: 'Start Date',
@@ -193,11 +211,12 @@ export const caseProjectTaskFilterFields = (
   {
     name: 'Status',
     value: 'status',
-    type: 'text',
-    operatorOption: nonMadatoryOptions,
+    type: 'enum',
+    options: memoizedResourceStatus,
+    operatorOption: fiscalOptions,
     hide:
-      !permissionMap?.['status_rid']?.edit &&
-      !permissionMap?.['status_rid']?.read,
+      !permissionMap?.['status_action']?.edit &&
+      !permissionMap?.['status_action']?.read,
   },
   {
     name: 'Comments',
@@ -214,11 +233,5 @@ export const caseProjectTaskFilterFields = (
     operatorOption: textOptions,
     hide:
       !permissionMap?.['r_number']?.read && !permissionMap?.['r_number']?.edit,
-  },
-  {
-    name: 'Sort Options',
-    value: 'sort_options',
-    type: 'system-sort',
-    options: [{ value: 'created_datetime_desc', option: 'Recently Created' }],
   },
 ];

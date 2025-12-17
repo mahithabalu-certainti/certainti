@@ -15,6 +15,7 @@ import {
   CaseListResponse,
   CaseOwnersResponse,
   CaseStatusResponse,
+  CaseSubmissionDateResponse,
   CaseTaskExportParams,
   ExportCaseListResponse,
 } from '../../types/cases';
@@ -106,10 +107,11 @@ export const fetchCaseDetails = async (
 
 export const useCaseDetails = (
   caseId: string,
-  accountId: string
+  accountId: string,
+  refresh?: number
 ): UseQueryResult<CaseDetails | undefined, Error> => {
   return useQuery<CaseDetails | undefined, Error>({
-    queryKey: ['case-details', caseId, accountId],
+    queryKey: ['case-details', caseId, accountId, refresh],
     queryFn: () => fetchCaseDetails(caseId, accountId),
     retry: 0,
     gcTime: 0,
@@ -168,7 +170,7 @@ export const useUpdateCaseDetails = () => {
   });
 };
 
-// Export
+// Export Case List
 export const ExportCaseList = async (
   params: CaseListExportParams,
   accountId?: string
@@ -177,9 +179,24 @@ export const ExportCaseList = async (
     const filename = `cases_list.xlsx`;
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-    const response = await caseServiceApi.get<ExportCaseListResponse>(
-      getCaseExportListURL({ ...params, timezone }, accountId)
-    );
+    let response;
+
+    if (params.isGlobal) {
+      // Use POST API for global export
+      const url = `/api/cases/export/caseSummary`;
+
+      const body = {
+        ...params,
+        timezone,
+        account_rid: accountId,
+      };
+
+      response = await caseServiceApi.post<ExportCaseListResponse>(url, body);
+    } else {
+      // Use GET API for normal export
+      const url = getCaseExportListURL({ ...params, timezone }, accountId);
+      response = await caseServiceApi.get<ExportCaseListResponse>(url);
+    }
 
     const base64Data = response.data?.data;
 
@@ -208,6 +225,7 @@ export const ExportCaseList = async (
     console.error('Export failed:', error);
   }
 };
+
 // Export
 
 export const getCasesProjectExportUrl = () =>
@@ -371,5 +389,32 @@ export const useGetCaseOwners = () => {
     retry: 0,
     gcTime: 0,
     enabled: true,
+  });
+};
+
+export const getCaseSubmissionDateUrl = (countryRid: string): string =>
+  `/api/cases/getCaseSubmissionDate?country_rid=${countryRid}`;
+
+export const fetchCaseSubmissionDate = async (
+  countryRid: string
+): Promise<CaseSubmissionDateResponse> => {
+  try {
+    const { data } = await caseServiceApi.get<CaseSubmissionDateResponse>(
+      getCaseSubmissionDateUrl(countryRid)
+    );
+    return data;
+  } catch (error) {
+    console.error('Error fetching case submission date:', error);
+    throw error;
+  }
+};
+
+export const useGetCaseSubmissionDate = (countryRid: string) => {
+  return useQuery<CaseSubmissionDateResponse, Error>({
+    queryKey: ['case-submission-date', countryRid],
+    queryFn: () => fetchCaseSubmissionDate(countryRid),
+    retry: 0,
+    gcTime: 0,
+    enabled: !!countryRid,
   });
 };

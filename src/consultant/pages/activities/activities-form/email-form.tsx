@@ -1,4 +1,4 @@
-import type React from 'react';
+import React from 'react';
 import { useRef, useState, useCallback, useMemo, useEffect } from 'react';
 import { CloseIcon, DocumentIcon, DraftEmailIcon } from '../../../../assets';
 import SingleSkeleton from '../../../../components/skeleton-component/singleskeleton';
@@ -39,6 +39,7 @@ import ConfirmationPopup from '../../../../common-utils/confirmation-popup';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
 import { AllPermissions } from '../../../../common-service';
+import { ActivitySourceDetails } from '../../../types';
 
 // Types
 interface SuggestionState {
@@ -70,7 +71,17 @@ icons['attachment'] = `
   </svg>
 `;
 
-const EmailForm: React.FC = () => {
+interface EmailFormProps {
+  isFrom?: string;
+  onCloseModal?: () => void;
+  sourceDetails?: ActivitySourceDetails;
+}
+
+const EmailForm: React.FC<EmailFormProps> = ({
+  isFrom,
+  onCloseModal,
+  sourceDetails,
+}) => {
   const { activityId } = useParams();
   const [searchParams] = useSearchParams();
   const { successToast } = useToast();
@@ -94,10 +105,13 @@ const EmailForm: React.FC = () => {
   const [ccInput, setCcInput] = useState<string>('');
 
   const isEditView = location.pathname.split('/').includes('edit');
-  const sourcePath = searchParams.get('source') || '';
-  const accountId = searchParams.get('accountId') || '';
-  const entityLevel = searchParams.get('entityLevel') || '';
-  const entityId = searchParams.get('entityId') || '';
+  const sourcePath = searchParams.get('source') || sourceDetails?.source || '';
+  const accountId =
+    searchParams.get('accountId') || sourceDetails?.accountId || '';
+  const entityLevel =
+    searchParams.get('entityLevel') || sourceDetails?.entityLevel || '';
+  const entityId =
+    searchParams.get('entityId') || sourceDetails?.entityId || '';
 
   const [toSuggestions, setToSuggestions] = useState<SuggestionState>({
     suggestions: [],
@@ -157,6 +171,7 @@ const EmailForm: React.FC = () => {
 
   const isEmailConfigured =
     searchParams.get('isEmailConfigured') === 'true' ||
+    sourceDetails?.isEmailConfigured ||
     emailData?.is_email_configured;
 
   const userOptions = useMemo(() => {
@@ -354,8 +369,7 @@ const EmailForm: React.FC = () => {
 
   // Handle Quill editor changes
   const handleEmailBodyChange = (value: string) => {
-    const normalizedValue = normalizeQuillValue(value);
-    setFormData((prev) => ({ ...prev, emailBody: normalizedValue }));
+    setFormData((prev) => ({ ...prev, emailBody: value }));
     setErrors((prev) => ({ ...prev, emailBody: '' }));
   };
 
@@ -538,7 +552,11 @@ const EmailForm: React.FC = () => {
   };
 
   const goBack = () => {
-    window.history.back();
+    if (isFrom === 'modal') {
+      onCloseModal?.();
+    } else {
+      window.history.back();
+    }
   };
 
   const modules = {
@@ -662,7 +680,9 @@ const EmailForm: React.FC = () => {
 
   return (
     <div className={`${templateLoading ? 'pointer-events-none' : ''}`}>
-      <div className='h-[50px] flex items-center justify-between px-10 sticky top-0 z-10 bg-white border-b border-[#CBD6E2]'>
+      <div
+        className={`h-[50px] flex items-center justify-between ${isFrom === 'modal' ? 'px-6 rounded-t-2xl' : 'px-10'} sticky top-0 z-10 bg-white border-b border-[#CBD6E2]`}
+      >
         <div className='flex items-center w-[80%] max-w-[80%]'>
           <DraftEmailIcon
             alt='email-icon'
@@ -805,17 +825,22 @@ const EmailForm: React.FC = () => {
           />
         </div>
       </div>
-      <div className={`${isEditView ? 'pb-6' : 'pb-4'}`}>
+
+      <div
+        className={`${isFrom === 'modal' ? 'min-h-[500px] max-h-[550px] overflow-y-auto scrollbar-transparent' : ''} ${isEditView ? 'pb-6' : 'pb-4'}`}
+      >
         {formLoading ? (
           <SkeletonForm />
         ) : (
           <form>
-            <div className='border capitalize h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-10'>
+            <div
+              className={`border capitalize h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] ${isFrom === 'modal' ? 'px-6' : 'px-10'}`}
+            >
               Email Information
             </div>
 
             {/* TO & CC Fields using reusable component */}
-            <div className='px-10'>
+            <div className={`${isFrom === 'modal' ? 'px-6' : 'px-10'}`}>
               <EmailRecipients
                 label='To'
                 field='to'
@@ -871,7 +896,7 @@ const EmailForm: React.FC = () => {
 
             {/* Subject Field */}
             <div
-              className='grid md:grid-cols-1 gap-x-4 gap-y-[2px] px-10 pt-4'
+              className={`grid md:grid-cols-1 gap-x-4 gap-y-[2px] ${isFrom === 'modal' ? 'px-6' : 'px-10'} pt-4`}
               style={{
                 display: shouldHideField('subject', isEditView, permissionMap)
                   ? 'none'
@@ -908,7 +933,7 @@ const EmailForm: React.FC = () => {
 
             {/* Email Body */}
             <div
-              className='email-template-editor grid grid-cols-1 px-10 pt-4 relative'
+              className={`email-template-editor grid grid-cols-1 ${isFrom === 'modal' ? 'px-6' : 'px-10'} pt-4 relative`}
               style={{
                 display: shouldHideField('body_html', isEditView, permissionMap)
                   ? 'none'
@@ -982,7 +1007,7 @@ const EmailForm: React.FC = () => {
             {/* Attachments */}
             {formData.attachments.length > 0 && (
               <div
-                className={`px-10 py-6 ${hideAttachments ? 'hidden' : 'block'}`}
+                className={`${isFrom === 'modal' ? 'px-6' : 'px-10'} py-6 ${hideAttachments ? 'hidden' : 'block'}`}
               >
                 <div className='flex items-center gap-2 mb-2'>
                   <span className='text-sm font-medium text-gray-700'>
@@ -996,7 +1021,9 @@ const EmailForm: React.FC = () => {
                       className='flex items-center justify-between p-2 bg-gray-50 border border-gray-200 rounded-md'
                     >
                       <div className='flex items-center gap-2'>
-                        <DocumentIcon className='w-6 h-6' />
+                        <React.Suspense fallback={null}>
+                          <DocumentIcon className='w-6 h-6' />
+                        </React.Suspense>
                         <div className='flex flex-col'>
                           <span className='text-sm font-medium text-gray-700 truncate max-w-[300px]'>
                             {attachment.name}
@@ -1011,7 +1038,9 @@ const EmailForm: React.FC = () => {
                         disabled={disableAttachments}
                         className='flex items-center justify-center h-6 w-6 hover:bg-gray-200 rounded-full cursor-pointer disabled:cursor-default disabled:hover:bg-transparent transition-colors'
                       >
-                        <CloseIcon className='w-3 h-3' />
+                        <React.Suspense fallback={null}>
+                          <CloseIcon className='w-3 h-3' />
+                        </React.Suspense>
                       </button>
                     </div>
                   ))}
@@ -1022,7 +1051,7 @@ const EmailForm: React.FC = () => {
             {/* Audit Information for Edit View */}
             <div className={`${isEditView ? 'block pt-5' : 'hidden'}`}>
               <div
-                className={`border capitalize h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-10`}
+                className={`border capitalize h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] ${isFrom === 'modal' ? 'px-6' : 'px-10'}`}
               >
                 Audit Information
               </div>

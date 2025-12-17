@@ -38,11 +38,13 @@ interface TaskDetailsProps {
   tabValue: ActivityType;
   entityLevel: 'account' | 'case' | 'project';
   caseId?: string;
+  projectId?: string;
 }
 
 const TaskDetails: React.FC<TaskDetailsProps> = ({
   entityLevel,
   caseId: propCaseId,
+  projectId: propProjectId,
 }) => {
   const navigate = useNavigate();
   const { successToast, errorToast } = useToast();
@@ -53,7 +55,6 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
   const activityId = searchParams.get('activity_id') || '';
 
   const { permission } = useSelector((state: RootState) => state.permission);
-
   const fiscalYearOptions = useMemo(
     () =>
       commonFiscalYears.map((fy: { value: string; label: string }) => fy.value),
@@ -78,6 +79,7 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
 
   const fieldHiddenMap = useMemo(
     () => ({
+      all_activities: !permissionMap['all_activities']?.read,
       taskName:
         !permissionMap['task_name']?.read && !permissionMap['task_name']?.edit,
       status:
@@ -153,7 +155,8 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
 
   const userOptionsQuery = useGetUserOptions(
     accountid || accountId || '',
-    true
+    true,
+    'account'
   );
   const roleOptionsQuery = useGetRoleOptions();
   const prioritiesQuery = useGetTaskPriorities();
@@ -181,10 +184,13 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
 
   const userData = useMemo(() => {
     if (userOptionsQuery.data && Array.isArray(userOptionsQuery.data)) {
-      return userOptionsQuery.data.map((member) => ({
+      const mappedData = userOptionsQuery.data.map((member) => ({
         rid: member.rid,
         name: member.name,
+        email: member.email,
+        profile_url: member.profile_url,
       }));
+      return mappedData;
     }
     return [];
   }, [userOptionsQuery.data]);
@@ -240,6 +246,7 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
             comments: commentText,
             files: files,
             task_type: 'activity',
+            attachment_level: entityLevel,
           },
           {
             onSuccess: () => {
@@ -282,6 +289,7 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
       errorToast,
       addCommentMutation,
       queryClient,
+      entityLevel,
     ]
   );
 
@@ -308,6 +316,7 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
             files: files,
             deleted_file_ids: deletedFileIds,
             task_type: 'activity',
+            attachment_level: entityLevel,
           },
           {
             onSuccess: () => {
@@ -347,6 +356,7 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
       errorToast,
       updateCommentMutation,
       queryClient,
+      entityLevel,
     ]
   );
 
@@ -485,13 +495,14 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
   };
 
   return (
-    <div>
+    <>
       <TaskDetailModal
         taskId={activityId}
         isOpen={true}
         onClose={handleBackClick}
         accountId={accountId || accountid || ''}
         caseId={effectiveCaseId || ''}
+        projectId={propProjectId}
         onTaskUpdate={handleTaskSaved}
         statusData={statusData}
         priorityData={priorityData}
@@ -504,12 +515,13 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
         fiscalYear={null}
         fiscalYears={fiscalYearOptions}
         taskType='activity'
+        entityLevel={entityLevel}
         onAddComment={handleAddComment}
         onUpdateComment={handleUpdateComment}
         onDeleteComment={handleDeleteComment}
         onAddCollaborator={handleAddCollaborator}
       />
-    </div>
+    </>
   );
 };
 
