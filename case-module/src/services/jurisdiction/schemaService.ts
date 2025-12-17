@@ -56,9 +56,9 @@ export class JurisdictionSchemaService {
         status_rid: configRequest.status_rid,
         modified_datetime: new Date(),
         modified_by: configRequest.modified_by,
-        ...(updateGroupRid ? { credit_config_group_rid: configRequest.jurisdiction_config_group_rid } : {})
-      });
-    }
+        credit_config_group_rid: configRequest.jurisdiction_config_group_rid
+    });
+  }
 
     // Helper: update or create platform config
     private async updatePlatformConfig(JurisdictionConfig: any, configRequest: any) {

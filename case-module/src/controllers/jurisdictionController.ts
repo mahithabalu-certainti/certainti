@@ -201,6 +201,7 @@ async function getJurisdictionConfigDetailsById(
   try {
     const userId = req.headers["x-user-id"] as string;
     const value = await validateRequest(req, jurisdictionRDConfigSchema, res,"GET");
+    if (!value) return;
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -251,6 +252,7 @@ async function getJurisdictionConfigDataForCreate(
   try {
     const userId = req.headers["x-user-id"] as string;
     const value = await validateRequest(req, jurisdictionRDConfigSchemaForNew, res,"GET");
+    if (!value) return;
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -301,6 +303,7 @@ async function updateJurisdictionConfig(
   try {
     const userId = req.headers["x-user-id"] as string;
     const value = await validateRequest(req, updateJurisdictionRDConfigSchema, res);
+    if (!value) return;
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -319,7 +322,7 @@ async function updateJurisdictionConfig(
 
     if (jurisdictionConfigResponse.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
-      handleSuccessResponse(res, jurisdictionConfigResponse.data);
+      handleCustomResponse(res, jurisdictionConfigResponse.data, jurisdictionConfigResponse.message);
       return;
     } else {
       errorLog(methodName, jurisdictionConfigResponse.errorMessage);
@@ -374,7 +377,7 @@ async function createJurisdictionConfig(
 
     if (jurisdictionConfigResponse.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
-      handleSuccessResponse(res, jurisdictionConfigResponse.data);
+      handleCustomResponse(res, jurisdictionConfigResponse.data, jurisdictionConfigResponse.message);
       return;
     } else {
       errorLog(methodName, jurisdictionConfigResponse.errorMessage);
@@ -407,6 +410,7 @@ async function listJurisdictionsConfigurations(
   try {
     const userId = req.headers["x-user-id"] as string;
     const value = await validateRequest(req, listJurisdictionConfigSchema, res,'GET');
+    if (!value) return;
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -470,6 +474,7 @@ async function exportJurisdictionsConfigurations(
   try {
     const userId = req.headers["x-user-id"] as string;
     const value = await validateRequest(req, exportJurisdictionConfigSchema, res,'GET');
+    if (!value) return;
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
