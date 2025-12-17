@@ -11,6 +11,9 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@azure/identity": "^4.13.0",
+    "@azure/keyvault-secrets": "^4.10.0",
+    "@azure/storage-blob": "^12.29.1",
     "@types/body-parser": "^1.19.6",
     "body-parser": "^2.2.1",
     "dotenv": "^17.2.3",
