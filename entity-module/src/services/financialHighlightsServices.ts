@@ -13,9 +13,10 @@ import {
   fetchIsRdQualifiedProjectQuery,
   fetchIsRdQualifiedProjectQueryRegion,
   fetchProjectQueryByPrjId,
-  fetchProjectQueryByPrjIdForCase,
   summaryHighlightsQuery,
+  summaryHighlightsQueryForCase,
   summaryHighlightsQueryRegion,
+  summaryHighlightsQueryRegionForCase,
 } from "../utils/rawQueries";
 import SchemaService from "./schemaService";
 import { Logger } from "winston";
@@ -62,7 +63,10 @@ export default class FinancialHighlightsService {
     let schemaName = rawQueries.fetchSchemaName(fetchParent[0][0].r_number);
 
     if (data.summaryType == SUMMARY_HIGHLIGHTS_TYPE_FLAG.summary) {
-      if (data.flag == SUMMARY_HIGHLIGHTS_FLAG.all) {
+      if(data.case_rid != undefined && data.case_rid !== "") {
+        result = await orgDb.query(summaryHighlightsQueryForCase(data.account_rid, data.fiscal_year, schemaName, data.case_rid));
+      }
+      else if (data.flag == SUMMARY_HIGHLIGHTS_FLAG.all) {
         result = await orgDb.query(
           summaryHighlightsQuery(data.account_rid, data.fiscal_year, schemaName)
         );
@@ -76,7 +80,18 @@ export default class FinancialHighlightsService {
         );
       }
     } else {
-      if (data.flag == SUMMARY_HIGHLIGHTS_FLAG.all) {
+      if(data.case_rid != undefined && data.case_rid !== "") {
+        result = await orgDb.query(
+          summaryHighlightsQueryRegionForCase(
+            data.account_rid,
+            data.fiscal_year,
+            schemaName,
+            data.region_rid,
+            data.case_rid
+          )
+        )
+      }
+      else if (data.flag == SUMMARY_HIGHLIGHTS_FLAG.all) {
         result = await orgDb.query(
           summaryHighlightsQueryRegion(
             data.account_rid,
@@ -119,30 +134,14 @@ export default class FinancialHighlightsService {
       await rawQueries.fetchParentAccount(data.account_rid, mainDb)
     );
     let schemaName = rawQueries.fetchSchemaName(fetchParent[0][0].r_number);
-    let projectFiscalIds = []
-    let result;
-    if(data.case_rid != undefined && data.case_rid !== '') {
-      const ids = await orgDb.query<ProjectFiscalIds>(rawQueries.getProjectsForCases(data.case_rid, data.account_rid, schemaName), {type : QueryTypes.SELECT});
-      projectFiscalIds.push(...ids.map((d : any) => d.project_fiscal_rid));
-      result = await orgDb.query(
-      fetchProjectQueryByPrjIdForCase(
-        data.account_rid,
-        schemaName,
-        data.fiscal_year,
-        projectFiscalIds
-      )
-    );
-    } else {
-      projectFiscalIds.push(data.project_fiscal_rid)
-      result = await orgDb.query(
+    let result = await orgDb.query(
       fetchProjectQueryByPrjId(
         data.account_rid,
         schemaName,
         data.fiscal_year,
-        projectFiscalIds
+        data.project_fiscal_rid
       )
     );
-    }
     if (result[0].length > 0) {
       return {
         statusCode: HttpStatus.SUCCESS,
