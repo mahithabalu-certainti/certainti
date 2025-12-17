@@ -311,6 +311,7 @@ async function updateJurisdictionConfig(
       );
       return;
     }
+    value.modified_by = userId;
     let jurisdictionConfigResponse =
         await jurisdictionService.updateJurisdictionConfig(
           value

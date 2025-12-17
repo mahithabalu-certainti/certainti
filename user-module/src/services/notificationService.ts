@@ -1,32 +1,34 @@
 
 import { constants, statusMessage } from "../utils/constant";
- const { Op } = require('sequelize');
+import { Op } from 'sequelize';
 import { Notification } from "../models/notificationModel";
 import { NotificationStatus } from "../models/notificationStatusModel";
 class NotificationService {
 
+
   /**
-   * Retrieves all notifications for a given user, including their status details.
+   * Retrieves paginated notifications for a given user, including their status details.
    *
    * @param {string} userId - The ID of the user whose notifications are to be listed.
-   * @returns {Promise<object>} - A promise resolving to an object containing the notifications array.
-   *
-   * This method:
-   * - Fetches all notifications for the user (filtering by userId can be added if needed).
-   * - Includes notification status details (status_description, status_name) via association.
-   * - Returns a structured response with status code, message, and notifications data.
+   * @param {number} [limit=10] - The maximum number of notifications to return.
+   * @param {number} [offset=0] - The number of notifications to skip (for pagination).
+   * @returns {Promise<object>} - A promise resolving to an object containing the notifications array and total count.
    */
-  async listNotifications(userId: string): Promise<{
+  async listNotifications(
+    userId: string,
+    limit: number = 5,
+    offset: number = 0
+  ): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { notifications: any };
+    data?: { notifications: any; total: number, nextOffset: number | null };
   }> {
     const { count, rows } = await Notification.findAndCountAll({
-      //    where: { user_rid: userId }, // Uncomment to filter by user
-      //    limit,
-      //    offset,
-      //    order,
+      where: { user_rid: userId },
+      limit,
+      offset,
+      order: [["created_datetime", "DESC"]],
       include: [
         {
           model: NotificationStatus,
@@ -36,11 +38,15 @@ class NotificationService {
         },
       ],
     });
+    // Calculate nextOffset for pagination
+    const nextOffset = offset + rows.length < count ? offset + rows.length : null;
     return {
       statusCode: constants.SUCCESS,
       message: statusMessage.orgRetrieved,
       data: {
         notifications: rows,
+        total: count,
+        nextOffset,
       },
     };
   }
