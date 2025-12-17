@@ -148,7 +148,7 @@ export const rawQueries = {
 
   fetchActions(action_type_rid: string, status_rid: string): string {
     let query = `SELECT sa.rid, sa.name,sa.description,sam.action_type_rid,sat.name as action_type_name FROM ${MAIN_SCHEMA_NAME}.scope_actions sa JOIN ${MAIN_SCHEMA_NAME}.scope_actions_map sam 
-    ON sa.rid = sam.action_rid JOIN scope_action_types sat ON sat.rid = sam.action_type_rid `;
+    ON sa.rid = sam.action_rid JOIN ${MAIN_SCHEMA_NAME}.scope_action_types sat ON sat.rid = sam.action_type_rid `;
     const conditions: string[] = [];
     if (action_type_rid) {
       conditions.push(`sam.action_type_rid = '${action_type_rid}'`);
