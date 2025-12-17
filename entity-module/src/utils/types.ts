@@ -667,3 +667,7 @@ export interface ICreateChecklist {
   checklist_items: ICreateChecklistItem[];
   case_rid? : string
 }
+
+export type ProjectFiscalIds = {
+  project_fiscal_rid : string
+}
