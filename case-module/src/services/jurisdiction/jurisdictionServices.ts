@@ -417,7 +417,8 @@ export class JurisdictionService {
           filters,
           data.search,
           data.sortBy,
-          data.sortOrder,          configRid
+          data.sortOrder,          
+          configRid
         );
       return {
         statusCode: HttpStatus.SUCCESS,

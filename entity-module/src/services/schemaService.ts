@@ -3254,8 +3254,8 @@ class SchemaService {
         project.project_type_name = projectType?.project_type_name;
         project.is_rd_trigger_qualified = false;
         if(projectTypesFromConfig && projectTypesFromConfig.length >0){
-          if (project.project_type_name) {
-            const normalizedProjectTypeName = project.project_type_name.trim().toLowerCase();
+          if (project.project_type_rid) {
+            const normalizedProjectTypeName = project.project_type_rid.trim().toLowerCase();
             const normalizedProjectTypes = projectTypesFromConfig.map((pt: string) => pt.trim().toLowerCase());
             project.is_rd_trigger_qualified = normalizedProjectTypes.includes(normalizedProjectTypeName);
           }

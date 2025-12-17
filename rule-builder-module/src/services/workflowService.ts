@@ -555,4 +555,34 @@ export class WorkFlowService {
         }
     }
 
+    async getNotificationTemplateDetails(templateName: string,oldValue:string,newValue:string): Promise<{
+    templateDetails: any;
+    }> {
+        const mainDb = await this.getMainDb();
+        const templateDetails = await mainDb.query<any>(
+            rawQueries.fetchNotificationTemplateDetails(
+                templateName
+            ),
+            { type: QueryTypes.SELECT }
+        );
+        if(templateDetails.length>0){
+            let messageTemplate = templateDetails[0].message_template;
+            if (messageTemplate.includes('{{old_value}}')) {
+                messageTemplate = messageTemplate.replace('{{old_value}}', oldValue != null ? oldValue : '');
+            }
+            if (messageTemplate.includes('{{new_value}}')) {
+                messageTemplate = messageTemplate.replace('{{new_value}}', newValue != null ? newValue : '');
+            }
+            templateDetails[0].message_template = messageTemplate;
+        }
+        return {
+            templateDetails: templateDetails
+        };
+    }
+
+    async sentNotification(templateDetails: any, targetUser: string): Promise<void> {
+        // Implement notification sending logic here
+        console.log(`Sending notification to ${targetUser} with template:`, templateDetails);
+    }
+
 }

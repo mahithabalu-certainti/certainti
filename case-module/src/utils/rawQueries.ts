@@ -54,7 +54,8 @@ export const fetchProjectsForCases = (
   caseRid: string,
   assignedApi: boolean,
   accessibleIds: string[],
-  isExport: boolean
+  isExport: boolean,
+  projectTypeRids: string[]
 ) => {
   let pagination: string = ``
   if (!isExport) {
@@ -75,12 +76,16 @@ export const fetchProjectsForCases = (
   let subQueryConditions: string = ``;
   let subQueryJoinConditions: string = ``;
   let accessibleProjects: string = ``;
+  let projectTypeCondition: string = ``;
 
   if (accessibleIds.length > 0)
     accessibleProjects = `AND pf.rid IN (${accessibleIds
       .map((d: any) => `'${d}'`)
       .join(",")})`;
   else accessibleProjects = ``;
+  if( projectTypeRids.length > 0 ) {
+    projectTypeCondition = ` AND pf.project_type_rid IN (${projectTypeRids .map((d: any) => `'${d}'`).join(",")}) `;
+  }
 
   if (assignedApi) {
     whereConditions = `cp.case_rid = '${caseRid}'`;
@@ -95,7 +100,7 @@ export const fetchProjectsForCases = (
         `;
     subQueryConditions = ` AND NOT EXISTS (SELECT 1 FROM fetch_case_projects_ids f WHERE f.project_fiscal_rid = pf.rid)`;
     subQueryJoinConditions = `LEFT JOIN fetch_case_projects_ids f ON f.project_fiscal_rid = pf.rid`;
-    whereConditions = `pf.account_rid = '${accountRid}' AND pf.fiscal_year = ${fiscalYear} ${accessibleProjects}`;
+    whereConditions = `pf.account_rid = '${accountRid}' AND pf.fiscal_year = ${fiscalYear} ${accessibleProjects} ${projectTypeCondition}`;
   }
 
   if (!isSorting) {

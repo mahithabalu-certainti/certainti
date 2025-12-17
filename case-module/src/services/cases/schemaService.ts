@@ -1684,6 +1684,34 @@ class CaseSchemaService {
     accessibleIds: string[],
     isExport: boolean
   ) {
+    if(!this.mainDbSequelize) {
+      this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+    }
+    if(!this.orgDbSequelize) {
+      this.orgDbSequelize = await this.caseModelService.getSequelize();
+    }
+   const [caseInfo]: any[] = await this.orgDbSequelize.query(
+           rawQueries.fetchCaseInfo(schemaName, data.case_rid),
+           {
+             type: "SELECT",
+           }
+         );
+
+    const [accountInfo]: any[] = await this.mainDbSequelize.query(
+            rawQueries.fetchAccountInfo(
+              data.account_rid,
+            )
+          );
+    const [platFormConfig]: any[] = await this.mainDbSequelize.query(
+                rawQueries.fetchPlatformConfig(
+                 accountInfo[0].country_rid,caseInfo.fiscal_year
+                ),{type: 'SELECT'}
+          );
+    let projectTypes :string[] = [];
+    if (platFormConfig && platFormConfig.config_json && platFormConfig.config_json.project_type) {
+      // Support array or single value
+        projectTypes = platFormConfig.config_json.project_type;
+    }
     const result = await orgDb.query(
       fetchProjectsForCases(
         schemaName,
@@ -1701,7 +1729,8 @@ class CaseSchemaService {
         data.case_rid,
         assignedApi,
         accessibleIds,
-        isExport
+        isExport,
+        projectTypes
       )
     );
     return result[0];
@@ -8054,7 +8083,7 @@ class CaseSchemaService {
     }
     const [platFormConfig]: any[] = await this.mainDbSequelize.query(
       rawQueries.fetchPlatformConfig(
-        data.country_rid
+        data.country_rid,data.fiscal_year
       ), { type: 'SELECT' }
     );
     // Assume platFormConfig.config_json.submission_date is in MM/DD format

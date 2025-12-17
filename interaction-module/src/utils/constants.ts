@@ -364,16 +364,49 @@ export const rawQueries = {
     c.include_in_communication = TRUE
   `;
   },
-  fetchProjectsByAccount(accountRid: string, schemaName: string, status_rid: string, projectType?: string[]) {
-    let query = `SELECT rid, project_rid FROM ${schemaName}.project_fiscal WHERE account_rid = '${accountRid}' and status_rid='${status_rid}'`;
-    if (projectType && Array.isArray(projectType) && projectType.length > 0) {
-      const inClause = projectType.map(pt => `'${pt}'`).join(",");
-      query += ` and project_type_rid IN (${inClause})`;
-    } else if (projectType && typeof projectType === "string" && projectType !== "") {
-      query += ` and project_type_rid='${projectType}'`;
-    }
-    return query;
-  },
+ fetchProjectsByAccount(
+  accountRid: string,
+  schemaName: string,
+  status_rid: string,
+  groupedProjectTypes?: Record<string, string[]>
+) {
+  let query = `
+    SELECT DISTINCT
+      pf.rid,
+      pf.project_rid,
+      pf.project_type_rid,
+      pf.fiscal_year
+    FROM ${schemaName}.project_fiscal pf
+  `;
+  if (groupedProjectTypes && Object.keys(groupedProjectTypes).length > 0) {
+    const values = Object.entries(groupedProjectTypes)
+      .flatMap(([key, typeRids]) => {
+        const [start, end] = key.split('_');
+        return typeRids.map(pt => 
+          `(DATE '${start}', DATE '${end}', '${pt}')`
+        );
+      })
+      .join(',\n');
+
+    query += `
+      JOIN (
+        VALUES
+          ${values}
+      ) AS ir(range_start, range_end, project_type_rid)
+        ON pf.project_type_rid = ir.project_type_rid
+       AND ir.range_start <= make_date(pf.fiscal_year, 3, 31)
+       AND ir.range_end   >= make_date(pf.fiscal_year - 1, 4, 1)
+    `;
+  }
+
+  query += `
+    WHERE pf.account_rid = '${accountRid}'
+      AND pf.status_rid  = '${status_rid}'
+  `;
+
+  return query;
+}
+,
   fetchProjectsByCase(caseRid: string, schemaName: string) {
     return `
     SELECT a.project_fiscal_rid FROM ${schemaName}.case_projects as a WHERE a.case_rid = '${caseRid}'
@@ -443,7 +476,7 @@ export const rawQueries = {
   },
   fetchPlatformConfig(rid: string) {
     return `
-    SELECT config_json FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values rv
+    SELECT config_json,effective_start_date,effective_end_date FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values rv
     join ${MAIN_SCHEMA_NAME}.rd_credit_config_group rg on  rv.credit_config_group_rid  = rg.rid
     where rg.country_rid = '${rid}'
     and credit_program_name = 'Platform Configuration'
