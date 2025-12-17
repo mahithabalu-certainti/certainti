@@ -5,10 +5,10 @@ import { WorkflowRuleListItem } from '../../../../types';
 export const getWorkflowColumns =
   (): ListTableColumn<WorkflowRuleListItem>[] => [
     {
-      id: 'r_number',
-      sortId: 'r_number',
-      label: 'Rule ID',
-      width: 140,
+      id: 'rule_name',
+      sortId: 'rule_name',
+      label: 'Rule Name',
+      width: 180,
       sortable: true,
       sticky: true,
       sx: {
@@ -19,20 +19,6 @@ export const getWorkflowColumns =
         borderRight: '1px solid #CBD6E2 !important',
         borderBottom: '1px solid #CBD6E2 !important',
       },
-    },
-    {
-      id: 'rule_name',
-      sortId: 'rule_name',
-      label: 'Rule Name',
-      width: 180,
-      sortable: true,
-    },
-    {
-      id: 'description',
-      sortId: 'description',
-      label: 'Description',
-      width: 300,
-      sortable: true,
     },
     // {
     //   id: 'labels',
@@ -111,8 +97,8 @@ export const getWorkflowColumns =
     //   ),
     // },
     {
-      id: 'created_by',
-      sortId: 'created_by',
+      id: 'created_by_name',
+      sortId: 'created_by_name',
       label: 'Created By',
       width: 180,
       sortable: true,
@@ -132,8 +118,8 @@ export const getWorkflowColumns =
       //   !permissionMap?.['created_datetime']?.read,
     },
     {
-      id: 'modified_by',
-      sortId: 'modified_by',
+      id: 'modified_by_name',
+      sortId: 'modified_by_name',
       label: 'Modified By',
       width: 180,
       sortable: true,

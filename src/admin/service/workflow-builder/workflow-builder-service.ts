@@ -20,14 +20,13 @@ import {
   ScopeEventListResponse,
   ScopeListResponse,
   WorkflowRuleListItem,
+  WorkflowRuleListResponse,
   WorkflowRuleListURLParams,
 } from '../../types';
 import { CommonApiResponse } from '../../../common-service';
 import { ruleBuilderServiceApi } from '../../../api/api';
-import {
-  RuleDetailsMockData,
-  WorkflowRuleListMockData,
-} from '../../mockdata/workflow-builder';
+import { RuleDetailsMockData } from '../../mockdata/workflow-builder';
+import { WorkflowRuleListURL } from '../urls';
 
 // Scope List
 export const fetchScopeList = async (): Promise<ScopeListResponse> => {
@@ -311,19 +310,13 @@ export const useCreateRule = () => {
 export const fetchWorkflowRuleList = async (
   params: WorkflowRuleListURLParams
 ): Promise<{ rules: WorkflowRuleListItem[]; count: number }> => {
-  // const response = await ruleBuilderServiceApi.get<WorkflowRuleListResponse>(
-  //   WorkflowRuleListURL(params)
-  // );
+  const response = await ruleBuilderServiceApi.get<WorkflowRuleListResponse>(
+    WorkflowRuleListURL(params)
+  );
 
-  // return {
-  //   rules: response.data.data.rules,
-  //   count: response.data.data.count,
-  // };
-  console.log('workflow-rule-list-params', params);
-  await new Promise((resolve) => setTimeout(resolve, 1500));
   return {
-    rules: WorkflowRuleListMockData.data.rules,
-    count: WorkflowRuleListMockData.data.count,
+    rules: response.data.data.data.rules,
+    count: response.data.data.data.count,
   };
 };
 

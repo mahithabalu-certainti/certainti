@@ -23,15 +23,6 @@ const dateOptions: { option: string; value: string }[] = [
 export const getWorkflowListFilterFields = (): FieldConfig[] => {
   return [
     {
-      name: 'Rule ID',
-      value: 'r_number',
-      type: 'text',
-      operatorOption: textOptions,
-      //   hide:
-      //     !permissionMap?.['r_number']?.edit &&
-      //     !permissionMap?.['r_number']?.read,
-    },
-    {
       name: 'Rule Name',
       value: 'rule_name',
       type: 'text',
@@ -41,17 +32,8 @@ export const getWorkflowListFilterFields = (): FieldConfig[] => {
       //     !permissionMap?.['rule_name']?.read,
     },
     {
-      name: 'Description',
-      value: 'description',
-      type: 'text',
-      operatorOption: textOptions,
-      //   hide:
-      //     !permissionMap?.['description']?.edit &&
-      //     !permissionMap?.['description']?.read,
-    },
-    {
       name: 'Created By',
-      value: 'created_by',
+      value: 'created_by_name',
       type: 'text',
       operatorOption: textOptions,
       //   hide:
@@ -69,7 +51,7 @@ export const getWorkflowListFilterFields = (): FieldConfig[] => {
     },
     {
       name: 'Modified By',
-      value: 'modified_by',
+      value: 'modified_by_name',
       type: 'text',
       operatorOption: nonReqTextfieldOptions,
       //   hide:

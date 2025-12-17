@@ -272,7 +272,9 @@ export type WorkflowRuleListItem = {
   schedule_offset_type: string | null;
   schedule_offset_value: string | null;
   created_by: string;
+  created_by_name: string;
   modified_by: string;
+  modified_by_name: string | null;
   created_datetime: string;
   modified_datetime: string;
 };
@@ -282,7 +284,11 @@ export interface WorkflowRuleListResponse {
   statusCodeValue: string;
   statusMessage: string;
   data: {
-    rules: WorkflowRuleListItem[];
-    count: number;
+    statusCode: number;
+    message: string;
+    data: {
+      rules: WorkflowRuleListItem[];
+      count: number;
+    };
   };
 }
