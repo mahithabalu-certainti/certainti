@@ -16,6 +16,7 @@ import {
 } from '../../../service/workflow-builder/workflow-builder-service';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
+import { useToast } from '../../../../hooks';
 
 interface WorkflowBuilderProps {
   isLoadingRuleDetails: boolean;
@@ -26,6 +27,7 @@ const WorkflowBuilderFormContent: React.FC<WorkflowBuilderProps> = ({
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { successToast } = useToast();
   const { rule, validateAndSave } = useWorkflowContext();
 
   const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
@@ -61,23 +63,16 @@ const WorkflowBuilderFormContent: React.FC<WorkflowBuilderProps> = ({
   const handleSubmit = () => {
     // First validate the workflow
     if (!validateAndSave()) {
-      // Validation failed - user is now on conditions step with errors shown
       return;
     }
 
     const apiPayload = transformRuleToPayload(rule, userId || '');
 
-    console.log('API Payload:', apiPayload);
-
     // Call create rule API
     createRule.mutate(apiPayload, {
-      onSuccess: (response) => {
-        console.log('Rule created successfully:', response);
+      onSuccess: () => {
         navigate(WORKFLOW_BUILDER);
-      },
-      onError: (error) => {
-        console.error('Error creating rule:', error);
-        // TODO: Show error toast/notification to user
+        successToast('Workflow created successfully');
       },
     });
   };
