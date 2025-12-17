@@ -17,7 +17,7 @@ export const HttpStatus = {
 };
 
 export const ENV_PREFIX = process.env.NODE_ENV_DB_PREFIX || "D001-";
-export const MAIN_SCHEMA_NAME = "trd365_";
+export const MAIN_SCHEMA_NAME = "trd365";
 export const SCHEMANAME_PREFIX = "trd365_";
 
 export const NODE_ENV = {
