@@ -3,6 +3,7 @@ import userRoutes from "./userRoutes";
 import { errorLog, successLog } from "../utils/helpers";
 import userGroupRoutes from "./userGroupRoutes";
 import settingsRoutes from "./settingsRoutes";
+import notificationRoutes from "./notificationRoutes";
 
 const routes: Router = Router();
 
@@ -29,5 +30,6 @@ routes.get("/health", async (req, res) => {
 routes.use("/user", userRoutes);
 routes.use("/user_group", userGroupRoutes);
 routes.use("/admin_settings", settingsRoutes);
+routes.use("/notifications", notificationRoutes);
 
 export default routes;

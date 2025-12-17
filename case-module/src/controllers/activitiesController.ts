@@ -768,6 +768,7 @@ async function exportAllActivity(req: Request, res: Response): Promise<void> {
                     : formatDate(d.modified_datetime),
                 assigned_to_name: d.assigned_to_name,
                 invited_by: d.invited_by,
+                task_name: d.task_name,
               };
 
               // Build exportRecord using allowed fields and resultMap

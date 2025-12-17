@@ -5,7 +5,7 @@ import { logMessage } from "../utils/helpers";
 interface CaseProjectTaskAttributes {
   rid: string;
   r_number?: string;
-  eid?: string;
+  eid?: string | null;
   created_by: string;
   modified_by?: string;
   created_datetime?: Date;
@@ -36,12 +36,11 @@ interface CaseProjectTaskAttributes {
 }
 
 export interface CaseProjectTaskCreationAttributes
-  extends Optional<CaseProjectTaskAttributes, "rid"> {}
+  extends Optional<CaseProjectTaskAttributes, "rid"> { }
 
 export class CaseProjectTask
   extends Model<CaseProjectTaskAttributes, CaseProjectTaskCreationAttributes>
-  implements CaseProjectTaskAttributes
-{
+  implements CaseProjectTaskAttributes {
   public rid!: string;
   public r_number?: string;
   public eid?: string;

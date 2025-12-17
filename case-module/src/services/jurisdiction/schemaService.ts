@@ -225,7 +225,7 @@ export class JurisdictionSchemaService {
           ? platformConfig[0].credit_program_name
           : null,
       config_rid:
-        configMeta.length > 0 ? configMeta[0].credit_config_group_rid : null,
+        platformConfig.length > 0 ? platformConfig[0].credit_config_group_rid : null,
     };
   }
 
