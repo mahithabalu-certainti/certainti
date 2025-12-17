@@ -1,6 +1,6 @@
 
 import { constants, statusMessage } from "../utils/constant";
- const { Op } = require('sequelize');
+import { Op } from 'sequelize';
 import { Notification } from "../models/notificationModel";
 import { NotificationStatus } from "../models/notificationStatusModel";
 class NotificationService {
@@ -16,8 +16,8 @@ class NotificationService {
    */
   async listNotifications(
     userId: string,
-    limit: number = 2,
-    offset: number = 4
+    limit: number = 5,
+    offset: number = 0
   ): Promise<{
     statusCode: number;
     message: string;
