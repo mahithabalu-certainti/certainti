@@ -19,6 +19,9 @@ export type ProjectTasksListType = {
   comments: string;
   project_task_id: string;
   rid: string;
+  total_cost_pro_task: string;
+  status_name: string;
+  currency_symbol: string;
 };
 
 export interface ProjectTasksApiResponse extends CommonApiResponse {

@@ -32,6 +32,7 @@ import {
   CreateConfigPayload,
 } from '../../../types/geo-based-rule';
 import { useGetProjectType } from '../../../../consultant/services/project';
+import { ManageGeoIcon } from '../../../../assets';
 
 const GeoBasedRuleForm: React.FC = () => {
   const formRef = useRef<HTMLFormElement>(null);
@@ -297,6 +298,10 @@ const GeoBasedRuleForm: React.FC = () => {
       <div className='h-[50px] flex items-center justify-between px-10 sticky top-0 z-10 bg-white'>
         <div className='flex items-center w-[80%] max-w-[80%]'>
           {/* Add Icon if needed */}
+          <ManageGeoIcon
+            alt='Manage Jurisdiction Rules '
+            className=' h-7 w-7 p-1.5 rounded [&>path]:stroke-[#fff] bg-[#9747FF]'
+          />
           <div className='w-[90%]'>
             <div className='font-semibold text-[12px] leading-[20px] ml-2 mb-[-6px] text-[#7D98B6]'>
               {isEditView && ruleId
