@@ -21,6 +21,13 @@ priority_rid: String
 effective_start_datetime: Date
 effective_end_datetime: Date
 task_rid: String
+status_name: String
+priority_name: String
+attach_to_name: String
+assigned_to_name: String
+created_by_name: String
+modified_by_name: String
+account_name: String
 }
 
 
