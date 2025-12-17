@@ -1490,14 +1490,15 @@ export const rawQueries = {
     accountFilter: any,
     projectFilter: any,
     filterConditions: any,
-    searchCondition: any
+    searchCondition: any,
+    caseProjectQuery? : any
   ) {
     return `
       SELECT 
         prf.total_cost_pro_res,
-        prf.rd_percent_final,
-        prf.qre_final,
-        prf.rd_credits_total,
+        pf.rd_percent_final,
+        pf.qre_final,
+        pf.rd_credits_total,
         prf.resource_rid,
         prf.project_fiscal_rid,
         prf.country_rid,
@@ -1516,6 +1517,7 @@ export const rawQueries = {
       WHERE 1=1 
       ${accountFilter}
       ${projectFilter}
+      ${caseProjectQuery}
       ${filterConditions}
       ${searchCondition}
     `;
@@ -1528,7 +1530,8 @@ export const rawQueries = {
     accountFilter: any,
     projectFilter: any,
     filterConditions: any,
-    searchCondition: any
+    searchCondition: any,
+    caseProjectQuery? : any
   ) {
     return `
       SELECT COUNT(*) as total
@@ -1540,6 +1543,7 @@ export const rawQueries = {
       ${projectFilter}
       ${filterConditions}
       ${searchCondition}
+      ${caseProjectQuery}
     `
   },
   getResourceCostQuery(

@@ -94,7 +94,8 @@ export interface IResourceCostService {
     fiscalYear: any,
     project_id: string,
     account_id:string,
-    userId:string
+    userId:string,
+    caseRid? : string
   ): Promise<{
       statusCode: number;
       message: string;
@@ -111,7 +112,8 @@ export interface IResourceCostService {
     accountNumber: string,
     fiscalYear: number,
     project_id: string,
-    account_id:string
+    account_id:string,
+    caseRid? : string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -921,7 +923,8 @@ export interface IFinancialHighlights {
   page: number,
   limit: number,
   sortBy: string,
-  sortOrder: string
+  sortOrder: string,
+  caseRid? : string
 ): Promise<{
   statusCode: number;
   message: string;
@@ -935,7 +938,8 @@ exportListAccountLevelProjectCostFinancialHighlights(
   search: string,
   fiscalYear:number,
   sortBy: string,
-  sortOrder: string
+  sortOrder: string,
+  caseRid : string
 ): Promise<{
   statusCode: number;
   message: string;

@@ -195,7 +195,8 @@ export default class FinancialHighlightsService {
     page: number = 1,
     limit: number = 10,
     sortBy: string = "created_datetime",
-    sortOrder: string = "DESC"
+    sortOrder: string = "DESC",
+    caseRid? : string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -239,6 +240,15 @@ export default class FinancialHighlightsService {
       // Add fiscal year filter
       if (fiscalYear && fiscalYear !== 0) {
         whereClause[Op.and].push({ fiscal_year: fiscalYear });
+      }
+      if(caseRid !== undefined && caseRid !== '') {
+        const orgDbSequelize = await this.getOrgDbSequelize();
+        const parentAccount : any = await mainSequelize.query(await rawQueries.fetchParentAccount(accountRid, mainSequelize))
+        let schemaName = rawQueries.fetchSchemaName(parentAccount[0][0].r_number);
+        const projectIds = await orgDbSequelize.query<ProjectFiscalIds>(rawQueries.getProjectsForCases(caseRid, accountRid, schemaName), {type : QueryTypes.SELECT});
+        let ids = [];
+        ids.push(...projectIds.map((d : any) => d.project_fiscal_rid));
+        whereClause[Op.and].push({project_fiscal_rid : {[Op.in] : ids }});
       }
       // ✅ Get all project fiscal summary without pagination first to properly handle sorting of related data
       const allSummary = await ProjectFiscalSummaryModel.findAll({
@@ -409,7 +419,8 @@ export default class FinancialHighlightsService {
     search?: string,
     fiscalYear: number = 0,
     sortBy: string = "created_datetime",
-    sortOrder: string = "DESC"
+    sortOrder: string = "DESC",
+    caseRid? : string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -453,6 +464,16 @@ export default class FinancialHighlightsService {
       // Add fiscal year filter
       if (fiscalYear && fiscalYear !== 0) {
         whereClause[Op.and].push({ fiscal_year: fiscalYear });
+      }
+
+      if(caseRid !== undefined && caseRid !== '') {
+        const orgDbSequelize = await this.getOrgDbSequelize();
+        const parentAccount : any = await mainSequelize.query(await rawQueries.fetchParentAccount(accountRid, mainSequelize))
+        let schemaName = rawQueries.fetchSchemaName(parentAccount[0][0].r_number);
+        const projectIds = await orgDbSequelize.query<ProjectFiscalIds>(rawQueries.getProjectsForCases(caseRid, accountRid, schemaName), {type : QueryTypes.SELECT});
+        let ids = [];
+        ids.push(...projectIds.map((d : any) => d.project_fiscal_rid));
+        whereClause[Op.and].push({project_fiscal_rid : {[Op.in] : ids }});
       }
       // ✅ Get all project fiscal summary without pagination first to properly handle sorting of related data
       const allSummary = await ProjectFiscalSummaryModel.findAll({

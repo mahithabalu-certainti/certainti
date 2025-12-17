@@ -477,7 +477,8 @@ async function financialHighlightsProjectCostAccountLevel(
         value.page,
         value.limit,
         value.sortBy,
-        value.sortOrder
+        value.sortOrder,
+        value.caseRid
       );
 
     if (projectCosts.statusCode === HttpStatus.SUCCESS) {
@@ -567,7 +568,8 @@ async function exportFinancialHighlightsProjectCostAccountLevel(
         value.search,
         value.fiscalYear,
         value.sortBy,
-        value.sortOrder
+        value.sortOrder,
+        value.caseRid
       );
 
     if (projectCosts.statusCode === HttpStatus.SUCCESS) {

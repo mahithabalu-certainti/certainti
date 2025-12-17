@@ -501,7 +501,8 @@ async function resourceCostsForFinancialHighlights(
         value.accountNumber,
         value.fiscalYear,
         value.projectRid,
-        value.accountRid
+        value.accountRid,
+        value.caseRid
       );
 
     if (resourceCost.statusCode === HttpStatus.SUCCESS) {
@@ -578,7 +579,8 @@ async function exportResourceCostsForFinancialHighlights(
         value.fiscalYear,
         value.projectRid,
         value.accountRid,
-        userId
+        userId,
+        value.caseRid
       );
 
     if (resourceCost.statusCode === HttpStatus.SUCCESS) {
