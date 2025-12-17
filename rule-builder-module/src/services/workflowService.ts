@@ -354,6 +354,120 @@ export class WorkFlowService {
     }
 
 
+    async ruleDetailByRuleRid(ruleRid: string, userId: string): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: any;
+    }> {
+        const mainDb = await this.getMainDb();
+        console.log(ruleRid);
+        const ruleDetail = await this.ruleMasterService.getRuleDetailByRuleRid(ruleRid, userId);
+        const eventDetail = await mainDb.query<any>(
+            rawQueries.fetchEventDetailByEventRid(ruleDetail.data?.toJSON()?.event_rid),
+            { type: QueryTypes.SELECT }
+        );
+        const conditionDetail = await mainDb.query<any>(
+            rawQueries.fetchConditionDetailByCondRid(ruleDetail.data?.toJSON()?.condition_rid),
+            { type: QueryTypes.SELECT }
+        );
+        const actions = await mainDb.query<any>(
+            rawQueries.fetchActionDetailByRuleRid(ruleRid),
+            { type: QueryTypes.SELECT }
+        );
+        const conditions = await mainDb.query<any>(
+            rawQueries.fetchConditionsByRuleRid(ruleRid),
+            { type: QueryTypes.SELECT }
+        );
+
+
+        return {
+            statusCode: 200,
+            message: "Rule fetched successfully",
+            data: {
+                rule: ruleDetail.data,
+                event: eventDetail[0],
+                condition: conditionDetail[0],
+                conditions:conditions,
+                actions:actions,
+            }
+        };
+    }
+
+    async updateRule(
+        ruleRequest: any,
+        userId: string
+    ): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: { rule: any };
+    }> {
+        //Update Rule Master
+        const rule = await this.ruleMasterService.updateRuleMaster(
+            {
+                rule_rid: ruleRequest.rule_rid,
+                rule_name: ruleRequest.rule_name,
+                description: ruleRequest.description ?? null,
+                event_rid: ruleRequest.event_rid,
+                trigger_type: ruleRequest.trigger_type,
+                condition_rid: ruleRequest.condition_rid,
+                is_active: ruleRequest.is_active ?? true,
+                scope_type_rid: ruleRequest.scope_type_rid,
+                schedule_offset_type: ruleRequest.schedule_offset_type ?? null,
+                schedule_offset_value: ruleRequest.schedule_offset_value ?? null,
+                modified_by: ruleRequest.modified_by ?? ruleRequest.created_by,
+            },
+            userId
+        );
+        //Remove existing conditions
+        await this.conditionService.deleteConditionsByRuleRid(ruleRequest.rule_rid, userId);
+        //Recreate conditions
+        for (const [index, condition] of ruleRequest.condition_categories.entries()) {
+            await this.conditionService.createCondition(
+                {
+                    condition_rid: "",
+                    rule_rid: ruleRequest.rule_rid,
+                    category_rid: condition.category_rid,
+                    logical_operator: condition.category_operator,
+                    field_rid: condition.field_rid,
+                    operator_rid: condition.operator_rid,
+                    value_rid: condition.value_rid,
+                    data_type: "",
+                    sequence: index + 1,
+                    group_id: 1,
+                    created_by: ruleRequest.modified_by ?? ruleRequest.created_by,
+                    modified_by: ruleRequest.modified_by ?? ruleRequest.created_by,
+                },
+                userId
+            );
+        }
+        //Remove existing actions
+        await this.actionService.deleteActionByRuleRid(ruleRequest.rule_rid, userId);
+        //Recreate actions
+        for (const [index, actionRid] of ruleRequest.action_rid.entries()) {
+            await this.actionService.createAction(
+                {
+                    rule_rid: ruleRequest.rule_rid,
+                    action_rid: actionRid,
+                    target_user: "test",
+                    new_value: "test",
+                    action_order: index + 1,
+                    created_by: ruleRequest.modified_by ?? ruleRequest.created_by,
+                    modified_by: ruleRequest.modified_by ?? ruleRequest.created_by,
+                },
+                userId
+            );
+        }
+        return {
+            statusCode: 200,
+            message: "Rule updated successfully",
+            data: {
+                rule: "",
+            },
+        };
+    }
+
     async createRuleMapWithScope(ruleRequest: ICreateRuleMapWithScope, userId: string): Promise<{
         statusCode: number;
         message: string;

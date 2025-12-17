@@ -5,14 +5,17 @@ import { HttpStatus, STATUS_MESSAGE } from "../utils/constants";
 import { Logger } from "winston";
 import { ICreateCondition } from "../utils/types";
 import { logMessage } from "../utils/helpers";
+import { AuditService } from "./workflowAuditService";
 
 export class ConditionService {
 
     private logger: Logger;
+    private auditService: AuditService;
     private mainDbSequelize: Sequelize | null = null;
 
     constructor(logger: Logger) {
         this.logger = logger;
+        this.auditService = new AuditService(this.logger);
     }
 
     private async getMainDb() {
@@ -42,7 +45,7 @@ export class ConditionService {
             sequence: conditionRequest.sequence,
             group_id: conditionRequest.group_id,
             created_by: conditionRequest.created_by,
-            modified_by: conditionRequest.modified_by ?? conditionRequest.created_by, // fallback to created_by if undefined
+            //modified_by: conditionRequest.modified_by ?? conditionRequest.created_by, // fallback to created_by if undefined
         });
 
         return {
@@ -133,11 +136,21 @@ export class ConditionService {
     };
 
     /** DELETE RuleMaster by RID */
-    async deleteCondition(data: any, userId: string) {
+    async deleteConditionsByRuleRid(rule_rid: any, userId: string) {
         try {
             const mainDb = await this.getMainDb();
             Condition.initialize(mainDb);
-            await Condition.destroy({ where: { rid: data.condition_rid } });
+            await Condition.destroy({ where: { rule_rid: rule_rid } });
+            await this.auditService.createAudit({
+                action: "DELETE",
+                audit_rid: "",
+                rule_rid: rule_rid,
+                old_value: "",
+                new_value: "",
+                notes: "Rule condition deleted",
+                created_by: userId,
+                modified_by: userId,
+            }, userId);
             return {
                 statusCode: HttpStatus.SUCCESS,
                 message: STATUS_MESSAGE.conditionDeleteSuccess,

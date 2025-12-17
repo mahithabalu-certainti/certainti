@@ -20,14 +20,14 @@ router.post("/rule/delete", RuleController.deleteRuleMaster);
 router.post("/condition", ConditionController.createCondition);
 router.get("/condition", ConditionController.listAllConditions);
 router.put("/condition/update", ConditionController.updateCondition);
-router.post("/condition/delete", ConditionController.deleteCondition);
+//router.post("/condition/delete", ConditionController.deleteCondition);
 // router.get("/condition/group/:groupRid", ConditionController.getConditionsByGroup);
 
 // Action
 router.post("/action", ActionController.createAction);
 router.get("/action", ActionController.listActions);
 router.put("/action/update", ActionController.updateAction);
-router.post("/action/delete", ActionController.deleteAction);
+//router.post("/action/delete", ActionController.deleteAction);
 
 // ScopeMap
 router.post("/scope", ScopeController.createRuleScope);
@@ -67,17 +67,11 @@ router.post("/ruleValues", WorkFlowController.listValues);
 router.post("/scopeActionTypes", WorkFlowController.listActionTypes);
 router.post("/scopeActions", WorkFlowController.listActions);
 router.post("/createRule", WorkFlowController.createRule);
+router.post("/getRuleDetail", WorkFlowController.ruleDetailByRuleRid);
+router.post("/updateRule", WorkFlowController.updateRule);
 router.post("/createRuleMap", WorkFlowController.createRuleMapWithScope);
 
 router.post("/execute", WorkFlowController.execute);
-
-
-// ConditionGroup
-// router.post("/condition-group", ConditionGroupController.createConditionGroup);
-// router.get("/condition-group/:rid", ConditionGroupController.getConditionGroupById);
-// router.get("/condition-group/rule/:ruleRid", ConditionGroupController.getConditionGroupsByRule);
-// router.put("/condition-group/:rid", ConditionGroupController.updateConditionGroup);
-// router.delete("/condition-group/:rid", ConditionGroupController.deleteConditionGroup);
 
 
 export default router;

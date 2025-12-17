@@ -1,8 +1,18 @@
 
-import { ICreateRule, ICreateCondition, ICreateAction, ICreateScope, ICreateSchedule, ICreateAudit, ICreateTrigger, ICreateRuleMap, ICreateRuleMapWithScope, IListSCopeEvent } from "../../utils/types";
+import { ICreateRule, IUpdateRule, ICreateCondition, ICreateAction, ICreateScope, ICreateSchedule, ICreateAudit, ICreateTrigger, ICreateRuleMap, ICreateRuleMapWithScope, IListSCopeEvent } from "../../utils/types";
 export interface IRulemasterService {
     createRuleMaster(
         ruleRequest: ICreateRule,
+        userId: string
+    ): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: { rules: any };
+    }>;
+
+    updateRuleMaster(
+        ruleRequest: IUpdateRule,
         userId: string
     ): Promise<{
         statusCode: number;
@@ -20,6 +30,16 @@ export interface IRulemasterService {
         message: string;
         errorMessage?: string;
         data?: { rules: any; count: number };
+    }>;
+
+    getRuleDetailByRuleRid(
+        ruleRid: string,
+        userId: string
+    ): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?:any;
     }>;
 
     updateRuleMaster(
@@ -68,7 +88,7 @@ export interface IConditionService {
         data?: { condition: any };
     }>;
 
-    deleteCondition(data: any, userId: string): Promise<any>;
+    deleteConditionsByRuleRid(data: any, userId: string): Promise<any>;
 }
 
 
@@ -104,7 +124,7 @@ export interface IActionService {
         data?: { action: any };
     }>;
 
-    deleteAction(data: any, userId: string): Promise<any>;
+    deleteActionByRuleRid(data: any, userId: string): Promise<any>;
 }
 
 
@@ -319,6 +339,26 @@ export interface IWorkFlowService {
     }>;
 
     createRule(
+        ruleRequest: any,
+        userId: string
+    ): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: { rule: any };
+    }>;
+
+    ruleDetailByRuleRid(
+        ruleRequest: any,
+        userId: string
+    ): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: { rule: any };
+    }>;
+
+    updateRule(
         ruleRequest: any,
         userId: string
     ): Promise<{

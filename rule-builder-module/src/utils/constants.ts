@@ -189,5 +189,29 @@ export const rawQueries = {
     let query = `SELECT wra.rule_rid,wra.action_rid, sa.name as action_name,sa.message_template,sa.metadata,wra.action_order FROM ${MAIN_SCHEMA_NAME}.workflow_rule_action wra 
     JOIN ${MAIN_SCHEMA_NAME}.scope_actions sa ON sa.rid = wra.action_rid WHERE wra.rule_rid = '${rule_rid}' ORDER BY wra.action_order `;
     return query;
+  },
+
+  fetchEventDetailByEventRid(event_rid: string): string {
+    let query = `SELECT se.rid as event_rid,se.event_name, se.description FROM ${MAIN_SCHEMA_NAME}.scope_events se 
+    WHERE se.rid = '${event_rid}' `;
+    return query;
+  },
+
+  fetchConditionDetailByCondRid(condition_rid: string): string {
+    let query = `SELECT se.rid as condition_rid,se.name as condition_name, se.description,se.type as condition_type FROM ${MAIN_SCHEMA_NAME}.event_conditions se 
+    WHERE se.rid = '${condition_rid}' `;
+    return query;
+  },
+
+  fetchActionDetailByRuleRid(rule_rid: string): string {
+    let query = `SELECT sa.rid as action_rid,sa.name as action_name,sa.description as description FROM ${MAIN_SCHEMA_NAME}.scope_actions sa JOIN ${MAIN_SCHEMA_NAME}.workflow_rule_action wra ON sa.rid = wra.action_rid
+    WHERE wra.rule_rid = '${rule_rid}' `;
+    return query;
+  },
+
+  fetchConditionsByRuleRid(rule_rid: string): string {
+    let query = `SELECT cc.rid as category_rid,cc.name as category_name, cc.description as category_description, wrc.logical_operator as category_operator, rf.rid as field_rid, rf.name as field_name, ro.rid as operator_rid, ro.name as operator_name, rv.rid as value_rid, rv.name as value_name  FROM ${MAIN_SCHEMA_NAME}.condition_category cc JOIN ${MAIN_SCHEMA_NAME}.workflow_rule_condition wrc ON cc.rid = wrc.category_rid JOIN ${MAIN_SCHEMA_NAME}.rule_fields rf on rf.rid = wrc.field_rid JOIN ${MAIN_SCHEMA_NAME}.rule_operators ro ON ro.rid = wrc.operator_rid JOIN ${MAIN_SCHEMA_NAME}.rule_values rv ON rv.rid = wrc.value_rid
+    WHERE wrc.rule_rid = '${rule_rid}' `;
+    return query;
   }
 }

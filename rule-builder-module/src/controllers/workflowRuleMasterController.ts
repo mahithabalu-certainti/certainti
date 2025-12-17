@@ -87,7 +87,7 @@ async function getAllRuleMasters(req: Request, res: Response): Promise<void> {
       "list");
     if (result.statusCode == HttpStatus.SUCCESS) {
       successLog(methodName);
-      handleSuccessResponse(res, result);
+      handleSuccessResponse(res, result.data);
       return;
     } else {
       errorLog(methodName, "No data found");
