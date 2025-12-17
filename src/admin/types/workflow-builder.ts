@@ -225,6 +225,7 @@ export interface RuleDetails {
     category_rid: string;
     category_name: string;
     category_description: string;
+    category_operator: 'AND' | 'OR' | null;
     field_rid: string;
     field_name: string;
     operator_rid: string;

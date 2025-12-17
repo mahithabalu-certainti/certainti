@@ -170,9 +170,7 @@ export const transformApiResponseToRule = (data: RuleDetails): Rule => {
         value: conditionItem.value_rid, // Value RID preserved
         valueName: conditionItem.value_name,
         conditionTypeId: data.condition?.condition_rid,
-        // Set logical operator based on position
-        // First condition has no operator, others default to 'AND'
-        logicalOperator: index === 0 ? undefined : 'AND',
+        logicalOperator: conditionItem.category_operator || undefined,
       };
       conditions.push(condition);
     });

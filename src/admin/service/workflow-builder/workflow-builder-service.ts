@@ -22,17 +22,6 @@ import {
   WorkflowRuleListItem,
   WorkflowRuleListURLParams,
 } from '../../types';
-// import {
-//   ActionCategoryTypeMockData,
-//   ActionTypeMockData,
-//   ConditionCategoryMockData,
-//   ConditionListMockData,
-//   RuleCategoryFieldsMockData,
-//   RuleFieldOperatorsMockData,
-//   RuleFieldValuesMockData,
-//   ScopeEventListMockData,
-//   ScopeListMockData,
-// } from '../../mockdata/workflow-builder';
 import { CommonApiResponse } from '../../../common-service';
 import { ruleBuilderServiceApi } from '../../../api/api';
 import {
@@ -47,9 +36,6 @@ export const fetchScopeList = async (): Promise<ScopeListResponse> => {
       '/api/workflow/scopeList'
     );
     return data;
-    // console.log('scope-list');
-    // await new Promise((resolve) => setTimeout(resolve, 1500));
-    // return ScopeListMockData;
   } catch (error) {
     console.error('Error fetching scope list:', error);
     throw error;
@@ -78,25 +64,6 @@ export const fetchScopeEventList = async (
       params
     );
     return data;
-    // console.log('scope-event-list', params);
-    // const { scope_type_rid } = params;
-
-    // // Simulate 2-second delay (optional)
-    // await new Promise((resolve) => setTimeout(resolve, 1500));
-
-    // // Filter logic
-    // let filteredData = ScopeEventListMockData.data;
-
-    // if (scope_type_rid && scope_type_rid.trim() !== '') {
-    //   filteredData = filteredData.filter(
-    //     (item) => item.scope_type_rid === scope_type_rid
-    //   );
-    // }
-
-    // return {
-    //   ...ScopeEventListMockData,
-    //   data: filteredData,
-    // };
   } catch (error) {
     console.error('Error fetching scope event list:', error);
     throw error;
@@ -124,9 +91,6 @@ export const fetchConditionList = async (
     );
 
     return data;
-    // console.log('condition-list', params);
-    // await new Promise((resolve) => setTimeout(resolve, 1500));
-    // return ConditionListMockData;
   } catch (error) {
     console.error('Error fetching condition list:', error);
     throw error;
@@ -158,9 +122,6 @@ export const fetchConditionCategoryList = async (
       );
 
     return data;
-    // console.log('condition-category-list', params);
-    // await new Promise((resolve) => setTimeout(resolve, 1500));
-    // return ConditionCategoryMockData;
   } catch (error) {
     console.error('Error fetching condition category list:', error);
     throw error;
@@ -190,25 +151,6 @@ export const fetchActionTypes = async (
       params
     );
     return data;
-    // console.log('action-type', params);
-    // const { action_type_rid } = params;
-
-    // // Simulate 2-second delay (optional)
-    // await new Promise((resolve) => setTimeout(resolve, 1500));
-
-    // // Filter logic
-    // let filteredData = ActionTypeMockData.data;
-
-    // if (action_type_rid && action_type_rid.trim() !== '') {
-    //   filteredData = filteredData.filter(
-    //     (item) => item.action_type_rid === action_type_rid
-    //   );
-    // }
-
-    // return {
-    //   ...ScopeEventListMockData,
-    //   data: filteredData,
-    // };
   } catch (error) {
     console.error('Error fetching scope action types:', error);
     throw error;
@@ -237,9 +179,6 @@ export const fetchActionCategoryTypes = async (
       );
 
     return data;
-    // console.log('action-category-list', params);
-    // await new Promise((resolve) => setTimeout(resolve, 1500));
-    // return ActionCategoryTypeMockData;
   } catch (error) {
     console.error('Error fetching action category types:', error);
     throw error;
@@ -271,9 +210,6 @@ export const fetchRuleCategoryFields = async (
       );
 
     return data;
-    // console.log('rule-category-fields', params);
-    // await new Promise((resolve) => setTimeout(resolve, 1500));
-    // return RuleCategoryFieldsMockData;
   } catch (error) {
     console.error('Error fetching rule category fields:', error);
     throw error;
@@ -302,9 +238,6 @@ export const fetchRuleFieldOperators = async (
       );
 
     return data;
-    // console.log('rule-field-operators', params);
-    // await new Promise((resolve) => setTimeout(resolve, 1500));
-    // return RuleFieldOperatorsMockData;
   } catch (error) {
     console.error('Error fetching rule field operators:', error);
     throw error;
@@ -332,9 +265,6 @@ export const fetchRuleFieldValues = async (
     );
 
     return data;
-    // console.log('rule-field-values', params);
-    // await new Promise((resolve) => setTimeout(resolve, 1500));
-    // return RuleFieldValuesMockData;
   } catch (error) {
     console.error('Error fetching rule field values:', error);
     throw error;
