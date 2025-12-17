@@ -37,6 +37,7 @@ const ConditionManager: React.FC<ConditionManagerProps> = ({
     setConditionType,
     currentStep,
     validatedConditionIds,
+    duplicateConditionIds,
   } = useWorkflowContext();
 
   // Dynamically fetch condition categories based on selected condition type
@@ -328,6 +329,7 @@ const ConditionManager: React.FC<ConditionManagerProps> = ({
               onChange={(updated) => updateCondition(condition.id, updated)}
               onDelete={() => handleDeleteCondition(condition.id)}
               showValidationErrors={validatedConditionIds.has(condition.id)}
+              isDuplicate={duplicateConditionIds.has(condition.id)}
             />
           </div>
         </div>

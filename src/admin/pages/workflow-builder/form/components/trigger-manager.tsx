@@ -29,8 +29,11 @@ const TriggerManager: React.FC<TriggerManagerProps> = ({
     [selectedScope]
   );
 
-  const { data: eventListData, isLoading: isLoadingEvents } =
-    useGetScopeEventList(eventListPayload);
+  const {
+    data: eventListData,
+    isLoading: isLoadingEvents,
+    isError,
+  } = useGetScopeEventList(eventListPayload);
 
   // Transform API data to match existing Trigger interface
   const triggers = useMemo(() => {
@@ -163,6 +166,10 @@ const TriggerManager: React.FC<TriggerManagerProps> = ({
               showCards={true}
               cardsPerCategory={8}
             />
+          </div>
+        ) : isError ? (
+          <div className='w-full h-[200px] text-[16px] flex items-center justify-center text-red-500'>
+            Faild to load data
           </div>
         ) : (
           <>

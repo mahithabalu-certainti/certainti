@@ -1,3 +1,5 @@
+import { RuleDetails } from '../../../types';
+
 /// RULE BUILDER TYPES
 export type LogicalOperator = 'AND' | 'OR';
 
@@ -86,6 +88,7 @@ export interface ConditionType {
 export interface Rule {
   id: string;
   name: string;
+  r_number?: string;
   trigger: Trigger | null;
   conditions: Condition[];
   actions: Action[];
@@ -137,6 +140,95 @@ export const transformRuleToPayload = (rule: Rule) => {
     condition_categories,
     action_rid: rule.actions.map((action) => action.category),
   };
+};
+
+/**
+ * Transform API response to Rule format for UI
+ * Converts backend API response into frontend Rule structure for editing
+ * All RIDs are preserved for saving back to the API
+ */
+export const transformApiResponseToRule = (data: RuleDetails): Rule => {
+  // Extract trigger information with all RIDs
+  const trigger: Trigger | null = data?.event
+    ? {
+        id: data.event.event_rid,
+        name: data.event.event_name,
+        description: data.event.event_description || '',
+        category: data.event.event_category_rid,
+        badge: undefined,
+        requiresConfig: false,
+      }
+    : null;
+
+  // Extract condition type with RID
+  const conditionType: ConditionType | null = data?.condition
+    ? {
+        rid: data.condition.condition_rid,
+        name: data.condition.condition_name,
+        condition_type: data.condition.condition_type,
+        description: data.condition.description || '',
+      }
+    : null;
+
+  // Transform condition categories to flat conditions array
+  // All RIDs are preserved for each condition
+  const conditions: Condition[] = [];
+
+  if (data?.condition_categories) {
+    data.condition_categories.forEach((category, categoryIndex: number) => {
+      category.operations.forEach((operation, operationIndex: number) => {
+        const condition: Condition = {
+          id: operation.operation_rid, // Use operation RID as unique ID
+          category: category.category_rid, // Category RID preserved
+          name: category.category_name,
+          field: operation.field_rid, // Field RID preserved
+          fieldName: operation.field_display_name || operation.field_name,
+          operator: operation.operator_rid, // Operator RID preserved
+          operatorName:
+            operation.operator_display_name || operation.operator_name,
+          value: operation.value_rid, // Value RID preserved
+          valueName: operation.value_display_name || operation.value_name,
+          conditionTypeId: data.condition?.condition_rid,
+          // Set logical operator based on position
+          // First condition in first category has no operator
+          // Other conditions use the operation_operator or category_operator
+          logicalOperator:
+            categoryIndex === 0 && operationIndex === 0
+              ? undefined
+              : operation.operation_operator ||
+                (operationIndex === 0 ? category.category_operator : null) ||
+                'AND',
+        };
+        conditions.push(condition);
+      });
+    });
+  }
+
+  // Transform actions with all RIDs preserved
+  const actions: Action[] = data?.actions
+    ? data.actions.map((action) => ({
+        id: action.action_rid, // Action RID preserved
+        name: action.action_name,
+        description: action.action_description || '',
+        category: action.action_category_rid, // Action category RID preserved
+        icon: undefined,
+        badge: undefined,
+      }))
+    : [];
+
+  // Construct the Rule object with all RIDs preserved
+  const rule: Rule = {
+    id: data.rule_rid, // Rule RID preserved
+    name: data.rule_name,
+    r_number: data.r_number, // R Number preserved
+    trigger,
+    conditions,
+    actions,
+    isActive: data.is_active || false,
+    conditionType,
+  };
+
+  return rule;
 };
 
 export const COMMON_SELECT_STYLES = {

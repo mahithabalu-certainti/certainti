@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import {
   Rule,
   Trigger,
@@ -43,6 +43,7 @@ interface WorkflowContextValue {
   canProceedToConditions: boolean;
   canProceedToActions: boolean;
   validatedConditionIds: Set<string>; // Track which conditions have been validated
+  duplicateConditionIds: Set<string>; // Track which conditions are duplicates
   validateAndSave: () => boolean;
 }
 
@@ -84,6 +85,14 @@ export const WorkflowProvider: React.FC<WorkflowProviderProps> = ({
     'trigger' | 'conditions' | 'actions'
   >('trigger');
   const [validatedConditionIds, setValidatedConditionIds] = useState<Set<string>>(new Set());
+  const [duplicateConditionIds, setDuplicateConditionIds] = useState<Set<string>>(new Set());
+
+  // Update rule when initialRule is loaded (for edit mode)
+  useEffect(() => {
+    if (initialRule) {
+      setRule(initialRule);
+    }
+  }, [initialRule]);
 
   // Trigger actions
   const selectTrigger = useCallback((trigger: Trigger) => {
@@ -159,8 +168,17 @@ export const WorkflowProvider: React.FC<WorkflowProviderProps> = ({
           return newSet;
         });
       }
+      
+      // If this condition was marked as duplicate, remove it from duplicate set when changed
+      if (duplicateConditionIds.has(conditionId)) {
+        setDuplicateConditionIds(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(conditionId);
+          return newSet;
+        });
+      }
     },
-    [validatedConditionIds]
+    [validatedConditionIds, duplicateConditionIds]
   );
 
   const deleteCondition = useCallback((conditionId: string) => {
@@ -260,6 +278,7 @@ export const WorkflowProvider: React.FC<WorkflowProviderProps> = ({
     // If there are no conditions, allow saving
     if (rule.conditions.length === 0) {
       setValidatedConditionIds(new Set());
+      setDuplicateConditionIds(new Set());
       return true;
     }
 
@@ -275,17 +294,45 @@ export const WorkflowProvider: React.FC<WorkflowProviderProps> = ({
       )
       .map((condition) => condition.id);
 
+    // Check for duplicate conditions
+    const duplicateIds = new Set<string>();
+    const seen = new Map<string, string>(); // Map of condition signature to first condition ID
+
+    rule.conditions.forEach((condition) => {
+      // Only check complete conditions for duplicates
+      if (
+        condition.field &&
+        condition.operator &&
+        condition.value !== '' &&
+        condition.value !== null &&
+        condition.value !== undefined
+      ) {
+        const signature = `${condition.category}|${condition.field}|${condition.operator}|${condition.value}`;
+        
+        if (seen.has(signature)) {
+          // Mark both the original and duplicate as duplicates
+          const originalId = seen.get(signature)!;
+          duplicateIds.add(originalId);
+          duplicateIds.add(condition.id);
+        } else {
+          seen.set(signature, condition.id);
+        }
+      }
+    });
+
     // Check if all existing conditions are complete
-    if (incompleteConditionIds.length > 0) {
+    if (incompleteConditionIds.length > 0 || duplicateIds.size > 0) {
       // Mark these specific conditions as validated (to show errors)
       setValidatedConditionIds(new Set(incompleteConditionIds));
+      setDuplicateConditionIds(duplicateIds);
       // Switch to conditions step to show errors
       setCurrentStep('conditions');
       return false;
     }
 
-    // Validation passed - clear validated set
+    // Validation passed - clear validated sets
     setValidatedConditionIds(new Set());
+    setDuplicateConditionIds(new Set());
     return true;
   }, [rule.conditions]);
 
@@ -306,6 +353,7 @@ export const WorkflowProvider: React.FC<WorkflowProviderProps> = ({
     canProceedToConditions,
     canProceedToActions,
     validatedConditionIds,
+    duplicateConditionIds,
     validateAndSave,
   };
 

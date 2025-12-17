@@ -1,16 +1,15 @@
-import React, { useState } from 'react';
-import { RefreshIcon, SettingIcon } from '../../../../assets';
+import React, { Suspense, useState } from 'react';
+import { NewFilterIcon, RefreshIcon, WorkflowIcon } from '../../../../assets';
 import TextButton from '../../../../components/button/text-button';
 import { WORKFLOW_BUILDER_CREATE } from '../../../../routes';
 import { useNavigate } from 'react-router-dom';
 import { WorkflowTable } from './table/workflow-table';
-
-interface WorkflowTableParams {
-  page: number;
-  limit: number;
-  sortBy?: string;
-  sortOrder?: 'ASC' | 'DESC';
-}
+import { WorkflowRuleListURLParams } from '../../../types';
+import { ActionsDropdown } from '../../../../components';
+import { FilterTypes } from '../../../../common-service';
+import Filter from '../../../../consultant/pages/account-details-sidebar/components/filter/filter';
+import SearchBar from '../../../../components/search/search-bar';
+import { getWorkflowListFilterFields } from './helper';
 
 const BUTTON_STYLES = {
   height: '24px',
@@ -19,56 +18,70 @@ const BUTTON_STYLES = {
 
 const WorkflowBuilder: React.FC = () => {
   const navigate = useNavigate();
-  const [tableParams, setTableParams] = useState<WorkflowTableParams>({
-    page: 1,
+  const [appliedFilters, setAppliedFilters] = useState<FilterTypes>({});
+  const [page, setPage] = useState<number>(1);
+  const [refreshTrigger, setRefreshTrigger] = useState(Date.now());
+  const [searchText, setSearchText] = useState<string>('');
+  const [tableParams, setTableParams] = useState<WorkflowRuleListURLParams>({
+    page: page,
     limit: 100,
-    sortBy: 'name',
+    sortBy: 'r_number',
     sortOrder: 'ASC',
   });
-  const [refreshWorkflowTrigger, setRefreshWorkflowTrigger] =
-    useState<number>();
+  const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const [columnAnchorEl, setColumnAnchorEl] =
     React.useState<HTMLButtonElement | null>(null);
-  const [, setSelectedWorkflowIds] = useState<string[]>([]);
+
+  const onRefreshClick = () => {
+    setRefreshTrigger(Date.now());
+  };
+
+  const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
+
+  const handleFilterModal = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleCloseFilter = () => {
+    setAnchorEl(null);
+  };
+
+  const isFilterOpen = Boolean(anchorEl);
+  const filterId = isFilterOpen ? 'workflow-filter-popover' : undefined;
 
   const isModalOpen = Boolean(columnAnchorEl);
   const modalId = isModalOpen
     ? 'workflow-column-visibility-popover'
     : undefined;
 
-  const onRefreshClick = () => {
-    setRefreshWorkflowTrigger(Date.now());
-  };
+  const handleSorting = (sortBy: string, sortOrder: 'asc' | 'desc') => {
+    const defaultSortField = 'r_number';
+    const defaultSortOrder = 'ASC';
+    const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
 
-  const handleSelectionChange = (selectedIds: string[]) => {
-    setSelectedWorkflowIds(selectedIds);
-  };
-
-  const workflowActionButtons = [
-    { label: 'Enable Rules', width: '104px', hide: false },
-    { label: 'Disable Rules', width: '116px', hide: false },
-    { label: 'Duplicate', width: '118px', hide: false },
-    { label: 'Delete', width: '58px', hide: false },
-  ];
-
-  const handleAction = (action: string) => {
-    switch (action) {
-      case 'Enable Rules':
-        console.log('Enable Rules clicked');
-        break;
-      case 'Disable Rules':
-        console.log('Disable Rules clicked');
-        break;
-      case 'Duplicate':
-        console.log('Duplicate clicked');
-        break;
-      case 'Delete':
-        console.log('Delete clicked');
-        break;
-      default:
-        break;
+    if (!sortBy) {
+      setSortFilterCount(0);
+      setTableParams((prev) => ({
+        ...prev,
+        sortBy: defaultSortField,
+        sortOrder: defaultSortOrder,
+      }));
+    } else {
+      setSortFilterCount(1);
+      setTableParams((prev) => ({
+        ...prev,
+        sortBy,
+        sortOrder: apiOrder,
+      }));
     }
   };
+
+  const menuItems = [
+    {
+      label: 'Export',
+      onClick: () => console.log('Export clicked'),
+    },
+  ];
 
   const handleColumnVisibility = (
     event: React.MouseEvent<HTMLButtonElement>
@@ -76,14 +89,16 @@ const WorkflowBuilder: React.FC = () => {
     setColumnAnchorEl(event.currentTarget);
   };
 
+  const workflowFilterFields = getWorkflowListFilterFields();
+
   return (
     <div className='flex flex-col w-full h-full'>
       <div className='flex items-center justify-between w-full h-[55px] min-h-[50px] border-b border-[#CBD6E2] px-4'>
         <div className='flex h-[33px]'>
           <div className='flex items-center justify-center'>
-            <SettingIcon
-              alt='setting-icon'
-              className='h-7 w-7 p-0.5 rounded [&>path]:fill-[#fff] [&>path]:stroke-[#EA0084] bg-[#EA0084]'
+            <WorkflowIcon
+              alt='workflow-icon'
+              className='h-7 w-7 p-1 rounded bg-[#3992ec]'
             />
             <div className='flex flex-col mx-2.5 pb-1'>
               <div className='font-semibold text-[#7D98B6] text-[12px] pt-1'>
@@ -96,12 +111,13 @@ const WorkflowBuilder: React.FC = () => {
           </div>
         </div>
         <div className='flex gap-3 justify-center items-center'>
-          <button
-            className='flex border border-[#CBD6E2] w-[24px] h-[23px] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] justify-center items-center cursor-pointer'
+          <ActionsDropdown actions={menuItems} />
+          <div
+            className='flex items-center justify-center border border-[#CBD6E2] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] w-[24px] h-[23px] cursor-pointer'
             onClick={onRefreshClick}
           >
             <RefreshIcon alt='refresh-icon' className='h-4' />
-          </button>
+          </div>
           <TextButton
             label='Create Rule'
             onClick={() => navigate(WORKFLOW_BUILDER_CREATE)}
@@ -119,10 +135,35 @@ const WorkflowBuilder: React.FC = () => {
         <div className='font-bold text-[14px] leading-[32px] text-[#2D3E4F]'>
           All Workflow Rules
         </div>
-        <div className='flex items-center gap-1'>
+        <div className='flex gap-1 relative'>
+          <SearchBar
+            initialSearchText={searchText}
+            onSearch={(value) => {
+              setSearchText(value);
+              setTableParams((prevParams) => {
+                const newParams = { ...prevParams };
+                if (value) {
+                  newParams.search = value;
+                } else {
+                  delete newParams.search;
+                }
+                return newParams;
+              });
+            }}
+            placeholder='Search'
+            disabled={false}
+            hide={false}
+            setCurrentPage={(pageNo) => {
+              setPage(pageNo + 1);
+              setTableParams((prev) => ({
+                ...prev,
+                page: pageNo + 1,
+              }));
+            }}
+          />
           <button
             aria-describedby={modalId}
-            className={`w-[120px] h-[24px] text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 rounded-[2px] relative border border-[#CBD6E2] px-0 py-0 normal-case ${isModalOpen ? 'bg-[#F3F3F3]' : 'bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)]'} hover:text-[#425A76] transition-colors duration-150`}
+            className={`w-[120px] h-[24px] text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative border border-[#CBD6E2] px-0 py-0 normal-case ${isModalOpen ? 'bg-[#F3F3F3]' : 'bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)]'} hover:text-[#425A76] transition-colors duration-150`}
             style={{
               boxShadow: '0px 1px 2px 0px rgba(42, 54, 71, 0.05)',
             }}
@@ -130,34 +171,56 @@ const WorkflowBuilder: React.FC = () => {
           >
             Show/Hide Fields
           </button>
-          {workflowActionButtons.map((button) => {
-            if (button.hide) return null;
-            return (
-              <TextButton
-                key={button.label}
-                label={button.label}
-                onClick={() => handleAction(button.label)}
-                sx={{
-                  ...BUTTON_STYLES,
-                  width: button.width,
-                  minWidth: button.width,
-                  maxWidth: button.width,
-                  display: 'none',
-                }}
-              />
-            );
-          })}
+          <button
+            aria-describedby={filterId}
+            className={`w-[64px] h-[26px] text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative 
+              ${isFilterOpen || (appliedFilters && Object.keys(appliedFilters).length > 0) || sortFilterCount > 0 ? 'bg-[#F3F3F3]' : ''}`}
+            onClick={handleFilterModal}
+          >
+            <NewFilterIcon alt='filter-icon' />
+            Filter
+            {(appliedFilters && Object.keys(appliedFilters).length > 0) ||
+            sortFilterCount > 0 ? (
+              <div className='absolute -top-[5px] -right-2 w-4 h-4 flex items-center justify-center text-xs'>
+                <span className='absolute w-full h-full bg-[#FF6666] rounded-full animate-ping opacity-75 z-0'></span>
+                <span className='w-4 h-4 bg-[#FF6666] text-white rounded-full flex items-center justify-center z-10 font-semibold'>
+                  {(appliedFilters ? Object.keys(appliedFilters).length : 0) +
+                    sortFilterCount}
+                </span>
+              </div>
+            ) : null}
+          </button>
+          <Suspense fallback={null}>
+            <Filter
+              value='workflow-list'
+              isOpen={isFilterOpen}
+              filterAnchorEl={anchorEl}
+              filterId={filterId}
+              filterMenu={workflowFilterFields}
+              setAppliedFilters={setAppliedFilters}
+              handleCloseFilter={handleCloseFilter}
+              setCurrentPage={(pageNo) => {
+                setPage(pageNo + 1);
+                setTableParams((prev) => ({
+                  ...prev,
+                  page: pageNo + 1,
+                }));
+              }}
+              handleSorting={handleSorting}
+            />
+          </Suspense>
         </div>
       </div>
 
       <div className='border border-[#CBD6E2]'>
         <WorkflowTable
+          appliedFilters={appliedFilters}
           tableParams={tableParams}
           setTableParams={setTableParams}
-          onSelectionChange={handleSelectionChange}
-          columnAnchorEl={columnAnchorEl}
+          refreshTrigger={refreshTrigger}
           setColumnAnchorEl={setColumnAnchorEl}
-          refreshWorkflowTrigger={refreshWorkflowTrigger}
+          columnAnchorEl={columnAnchorEl}
+          searchValue={searchText}
         />
       </div>
     </div>

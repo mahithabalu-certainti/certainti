@@ -32,6 +32,7 @@ interface ConditionFormProps {
   onChange: (condition: Condition) => void;
   onDelete: () => void;
   showValidationErrors?: boolean;
+  isDuplicate?: boolean;
 }
 
 interface FieldSuggestion {
@@ -48,6 +49,7 @@ const ConditionForm: React.FC<ConditionFormProps> = ({
   onChange,
   onDelete,
   showValidationErrors = false,
+  isDuplicate = false,
 }) => {
   const [fieldInputValue, setFieldInputValue] = useState(
     condition.field ? `@${condition.fieldName || condition.field}` : ''
@@ -231,14 +233,17 @@ const ConditionForm: React.FC<ConditionFormProps> = ({
 
   // Only show validation errors when explicitly requested
   const shouldShowError = showValidationErrors && !isConditionComplete;
+  
+  // Show duplicate error
+  const shouldShowDuplicateError = isDuplicate && isConditionComplete;
 
   return (
     <div
-      className={`rounded-lg border ${shouldShowError ? 'border-red-300' : 'border-[#CBD6E2]'} overflow-hidden`}
+      className={`rounded-lg border ${shouldShowError || shouldShowDuplicateError ? 'border-red-300' : 'border-[#CBD6E2]'} overflow-hidden`}
     >
       {/* Header */}
       <div
-        className={`flex items-center justify-between h-[50px] px-4 ${shouldShowError ? 'bg-red-50' : 'bg-gray-50 hover:bg-gray-50'} cursor-pointer`}
+        className={`flex items-center justify-between h-[50px] px-4 ${shouldShowError || shouldShowDuplicateError ? 'bg-red-50' : 'bg-gray-50 hover:bg-gray-50'} cursor-pointer`}
         onClick={onToggleExpand}
       >
         <div className='flex items-center gap-2 flex-1'>
@@ -314,6 +319,27 @@ const ConditionForm: React.FC<ConditionFormProps> = ({
               </span>
             </Tooltip>
           )}
+          {shouldShowDuplicateError && (
+            <Tooltip
+              title={'This condition already exists. Please change the field, operator, or value.'}
+              arrow
+              placement='top'
+              slotProps={{
+                tooltip: {
+                  sx: {
+                    backgroundColor: '#FEF2F2',
+                    mr: 1,
+                  },
+                },
+              }}
+            >
+              <span className='h-[28px] w-5 flex items-center justify-center cursor-pointer'>
+                <React.Suspense fallback={null}>
+                  <ErrorInfoIcon alt='error' className='w-5 h-4' />
+                </React.Suspense>
+              </span>
+            </Tooltip>
+          )}
           <Tooltip
             placement='top'
             title='Remove Condition'
@@ -344,7 +370,7 @@ const ConditionForm: React.FC<ConditionFormProps> = ({
       {/* Expanded Fields */}
       {isExpanded && (
         <div
-          className={`p-4 border-t ${shouldShowError ? 'border-red-300' : 'border-[#CBD6E2]'}`}
+          className={`p-4 border-t ${shouldShowError || shouldShowDuplicateError ? 'border-red-300' : 'border-[#CBD6E2]'}`}
         >
           <div className='space-y-4'>
             {/* Field Input */}

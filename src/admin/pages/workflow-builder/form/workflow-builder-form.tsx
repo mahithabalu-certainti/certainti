@@ -1,23 +1,32 @@
 import React from 'react';
-import { SettingIcon } from '../../../../assets';
+import { WorkflowIcon } from '../../../../assets';
 import SingleSkeleton from '../../../../components/skeleton-component/singleskeleton';
 import TextButton from '../../../../components/button/text-button';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { WORKFLOW_BUILDER } from '../../../../routes';
 import { RuleBuilder } from './components';
 import { WorkflowProvider, useWorkflowContext } from './workflow-context';
-import { transformRuleToPayload } from './helper';
+import { transformRuleToPayload, transformApiResponseToRule } from './helper';
 import {
   useGetScopeList,
   useGetConditionList,
   useGetActionCategoryTypes,
   useCreateRule,
+  useGetRuleDetails,
 } from '../../../service/workflow-builder/workflow-builder-service';
 
-const WorkflowBuilderFormContent: React.FC = () => {
+interface WorkflowBuilderProps {
+  isLoadingRuleDetails: boolean;
+}
+
+const WorkflowBuilderFormContent: React.FC<WorkflowBuilderProps> = ({
+  isLoadingRuleDetails,
+}) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { rule, validateAndSave } = useWorkflowContext();
+
+  const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
 
   const createRule = useCreateRule();
 
@@ -70,9 +79,6 @@ const WorkflowBuilderFormContent: React.FC = () => {
     });
   };
 
-  const isEditView =
-    location.pathname.split('/').slice(-2, -1)[0] === 'edit-rule';
-
   const isSaveEnabled =
     rule.name.trim() !== '' &&
     rule.trigger !== null &&
@@ -80,7 +86,7 @@ const WorkflowBuilderFormContent: React.FC = () => {
     rule.actions.length > 0 &&
     rule.conditionType !== null;
 
-  const isInitialLoading = isLoadingScopeList;
+  const isInitialLoading = isLoadingScopeList || isLoadingRuleDetails;
 
   // Pass all fetched data to RuleBuilder
   const apiData = {
@@ -97,9 +103,9 @@ const WorkflowBuilderFormContent: React.FC = () => {
         <div className='flex items-center justify-between h-[50px] px-10 '>
           <div className='flex items-center w-[80%] max-w-[80%]'>
             <React.Suspense fallback={null}>
-              <SettingIcon
-                alt='setting-icon'
-                className='h-7 w-7 p-0.5 rounded [&>path]:fill-[#fff] [&>path]:stroke-[#EA0084] bg-[#EA0084]'
+              <WorkflowIcon
+                alt='workflow-icon'
+                className='h-7 w-7 p-1 rounded bg-[#3992ec]'
               />
             </React.Suspense>
             <div className='w-[90%]'>
@@ -109,7 +115,7 @@ const WorkflowBuilderFormContent: React.FC = () => {
                 </div>
               ) : (
                 <div className='font-semibold text-[12px] leading-[20px] ml-2 mb-[-6px] text-[#7D98B6]'>
-                  {`Workflow Builder ${isEditView ? `> ` : ''}`}
+                  {`Workflow Builder ${isEditView ? `> ${rule.r_number || ''}` : ''}`}
                 </div>
               )}
               <h5 className='text-[16px] font-bold ml-2 mt-0.5 text-[#2D3E4F]'>
@@ -157,13 +163,23 @@ const WorkflowBuilderFormContent: React.FC = () => {
 
 // Main component that provides the context
 const WorkflowBuilderForm: React.FC = () => {
-  // TODO: For edit mode, fetch existing rule data and pass as initialRule
-  // const { ruleId } = useParams();
-  // const { data: existingRule } = useGetWorkflowRule(ruleId);
+  const { ruleId } = useParams();
+  const location = useLocation();
+
+  const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
+
+  // Fetch existing rule data for edit mode
+  const { data: ruleDetailsResponse, isLoading: isLoadingRuleDetails } =
+    useGetRuleDetails(ruleId || '', isEditView);
+
+  // Transform API response to Rule format
+  const initialRule = ruleDetailsResponse
+    ? transformApiResponseToRule(ruleDetailsResponse)
+    : undefined;
 
   return (
-    <WorkflowProvider>
-      <WorkflowBuilderFormContent />
+    <WorkflowProvider initialRule={initialRule}>
+      <WorkflowBuilderFormContent isLoadingRuleDetails={isLoadingRuleDetails} />
     </WorkflowProvider>
   );
 };

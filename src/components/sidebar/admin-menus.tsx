@@ -12,8 +12,8 @@ import {
   ManagerUserIcon,
   ManageSettingsIcon,
   ManageUserAccessIcon,
-  SettingsIcon,
   TaskTemplateIcon,
+  WorkflowIcon,
 } from '../../assets';
 import { MenuOption } from '../../common-service';
 import { AdminNavItem } from '../../consultant/types';
@@ -90,7 +90,7 @@ export const sideNavAdminItems: AdminNavItem[] = [
       {
         id: MenuOption.WORKFLOW_BUILDER,
         name: 'Workflow Builder',
-        icon: SettingsIcon,
+        icon: WorkflowIcon,
         link: WORKFLOW_BUILDER,
         matchLink: WORKFLOW_BUILDER,
       },

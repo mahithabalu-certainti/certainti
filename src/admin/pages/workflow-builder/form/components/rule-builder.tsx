@@ -31,9 +31,7 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
   apiData,
   isInitialLoading,
 }) => {
-  const isEditView =
-    location.pathname.split('/').slice(-2, -1)[0] === 'edit-rule';
-
+  const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [isCategorySelectorShowing, setIsCategorySelectorShowing] =
     useState<boolean>(false);

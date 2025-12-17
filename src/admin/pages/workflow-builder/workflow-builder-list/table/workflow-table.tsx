@@ -1,77 +1,61 @@
-import { useState } from 'react';
-import { getWorkflowColumns, WorkflowRule } from './columns';
+import { useEffect, useState } from 'react';
+import { getWorkflowColumns } from './columns';
 import { ShowHideTableColumn } from '../../../../../components/table/types';
 import {
   ListTable,
   ManageColumnsPopover,
 } from '../../../../../components/table';
-interface WorkflowTableParams {
-  page: number;
-  limit: number;
-  sortBy?: string;
-  sortOrder?: 'ASC' | 'DESC';
-}
+import { useWorkflowRuleList } from '../../../../service/workflow-builder/workflow-builder-service';
+import {
+  WorkflowRuleListItem,
+  WorkflowRuleListURLParams,
+} from '../../../../types';
+import { FilterTypes } from '../../../../../common-service';
+import { generatePath, useNavigate } from 'react-router-dom';
+import { WORKFLOW_BUILDER_EDIT } from '../../../../../routes';
 
 interface IWorkflowTableProps {
-  tableParams: WorkflowTableParams;
-  setTableParams: React.Dispatch<React.SetStateAction<WorkflowTableParams>>;
-  onSelectionChange: (selectedIds: string[]) => void;
+  appliedFilters: FilterTypes;
+  tableParams: WorkflowRuleListURLParams;
+  setTableParams: React.Dispatch<
+    React.SetStateAction<WorkflowRuleListURLParams>
+  >;
+  refreshTrigger?: number;
   columnAnchorEl: HTMLButtonElement | null;
   setColumnAnchorEl: React.Dispatch<
     React.SetStateAction<HTMLButtonElement | null>
   >;
-  refreshWorkflowTrigger?: number;
+  searchValue?: string;
 }
 
 export const WorkflowTable: React.FC<IWorkflowTableProps> = ({
+  appliedFilters,
   tableParams,
   setTableParams,
-  onSelectionChange,
-  columnAnchorEl,
+  refreshTrigger,
   setColumnAnchorEl,
+  columnAnchorEl,
+  searchValue,
 }) => {
-  // Mock data - in real implementation, this would come from an API
-  const [workflowList, setWorkflowList] = useState<WorkflowRule[]>([
-    {
-      rid: '1',
-      name: 'Notify When Assignee Changes',
-      labels: ['automation', 'assignment'],
-      owner: 'John Doe',
-      scope: 'Account',
-      updated_datetime: '2025-10-05T09:32:44.769+00:00',
-      enabled: true,
-      created_datetime: '2025-10-05T09:32:44.769+00:00',
-      created_by: 'Admin',
-    },
-    {
-      rid: '2',
-      name: 'Reminder: Due Tomorrow',
-      labels: ['notification', 'email'],
-      owner: 'Jane Smith',
-      scope: 'Case',
-      updated_datetime: '2025-10-05T09:32:44.769+00:00',
-      enabled: false,
-      created_datetime: '2025-10-05T09:32:44.769+00:00',
-      created_by: 'Manager',
-    },
-    {
-      rid: '3',
-      name: 'Escalate High-Priority Overdue Task',
-      labels: ['status', 'update'],
-      owner: 'Mike Johnson',
-      scope: 'Project',
-      updated_datetime: '2025-10-05T09:32:44.769+00:00',
-      enabled: true,
-      created_datetime: '2025-10-05T09:32:44.769+00:00',
-      created_by: 'Team Lead',
-    },
-  ]);
+  const navigate = useNavigate();
+  const [workflowList, setWorkflowList] = useState<WorkflowRuleListItem[]>([]);
 
-  const totalItems = workflowList.length;
-  const isLoading = false;
-  const isError = false;
+  const { data, isLoading, isError } = useWorkflowRuleList(
+    {
+      ...tableParams,
+      search: searchValue,
+      filters: appliedFilters,
+    },
+    refreshTrigger
+  );
 
-  const getRowId = (row: WorkflowRule) => row.rid;
+  const totalItems = data?.count || 0;
+
+  useEffect(() => {
+    if (data) {
+      setWorkflowList(data.rules || []);
+    }
+  }, [data]);
 
   const handleSort = (sortBy: string, sortOrder: 'asc' | 'desc') => {
     const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
@@ -97,21 +81,55 @@ export const WorkflowTable: React.FC<IWorkflowTableProps> = ({
     }));
   };
 
-  const handleToggleStatus = (rid: string, enabled: boolean) => {
-    // Update the workflow status in the local state
-    setWorkflowList((prevList) =>
-      prevList.map((workflow) =>
-        workflow.rid === rid ? { ...workflow, enabled } : workflow
-      )
-    );
+  const getRowId = (row: WorkflowRuleListItem) => row?.rid || '';
 
-    // Here you would typically make an API call to update the status
-    console.log(
-      `Toggling workflow ${rid} to ${enabled ? 'enabled' : 'disabled'}`
-    );
+  // const handleToggleStatus = (rid: string, enabled: boolean) => {
+  //   // Update the workflow status in the local state
+  //   setWorkflowList((prevList) =>
+  //     prevList.map((workflow) =>
+  //       workflow.rid === rid ? { ...workflow, enabled } : workflow
+  //     )
+  //   );
+
+  //   // Here you would typically make an API call to update the status
+  //   console.log(
+  //     `Toggling workflow ${rid} to ${enabled ? 'enabled' : 'disabled'}`
+  //   );
+  // };
+
+  const handleEdit = (row: WorkflowRuleListItem) => {
+    const path = generatePath(WORKFLOW_BUILDER_EDIT, {
+      ruleId: row?.rid || '',
+    });
+    navigate(`${path}`);
   };
 
-  const workflowColumns = getWorkflowColumns(handleToggleStatus);
+  const actionMenuItems = [
+    {
+      label: 'Edit',
+      onClick: (row: WorkflowRuleListItem) => handleEdit(row),
+      // hide: !notesFieldsEditable,
+    },
+  ];
+
+  const workflowColumns = getWorkflowColumns();
+
+  const handlePopoverClose = () => {
+    setColumnAnchorEl(null);
+  };
+  const isModalOpen = Boolean(columnAnchorEl);
+
+  const modalId = isModalOpen
+    ? 'workflow-list-column-visibility-popover'
+    : undefined;
+
+  const RestrictedColumns = [
+    {
+      id: 'r_number',
+      canHide: false,
+      canDrag: false,
+    },
+  ];
 
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
@@ -133,23 +151,6 @@ export const WorkflowTable: React.FC<IWorkflowTableProps> = ({
     .map((id) => workflowColumns.find((col) => col.id === id)!)
     .filter((col) => columnVisibility[col.id]);
 
-  const RestrictedColumns = [
-    {
-      id: 'name',
-      canHide: false,
-      canDrag: false,
-    },
-  ];
-
-  const handlePopoverClose = () => {
-    setColumnAnchorEl(null);
-  };
-
-  const isModalOpen = Boolean(columnAnchorEl);
-  const modalId = isModalOpen
-    ? 'workflow-column-visibility-popover'
-    : undefined;
-
   return (
     <>
       <ManageColumnsPopover
@@ -162,33 +163,32 @@ export const WorkflowTable: React.FC<IWorkflowTableProps> = ({
         columnRestrictions={RestrictedColumns}
       />
       <ListTable
-        data={workflowList}
+        data={workflowList || []}
         columns={visibleColumns}
         getRowId={getRowId}
-        hoverHighlight={true}
+        hoverHighlight={false}
         tableStyle={{
           height: '100%',
-          maxHeight: 'calc(100vh - 195px)',
+          maxHeight: 'calc(100vh - 190px)',
           overflow: 'auto',
         }}
         stickyHeader={true}
         stickyColumnsCount={2}
-        actionWidth={50}
-        // Selection
         selectable={true}
-        onSelectionChange={onSelectionChange}
-        // State
+        onSelectionChange={(selectedIds) =>
+          console.log('Selected:', selectedIds)
+        }
+        actionWidth={60}
+        actionDisplayMode='dropdown'
+        actionMenuItems={actionMenuItems}
         loading={isLoading}
-        error={isError ? 'Failed to load workflow rules' : undefined}
-        emptyMessege='No workflow rules found'
-        // Pagination
+        error={isError ? 'Failed to load data' : undefined}
         rowsPerPageOptions={[25, 50, 100]}
         rowsPerPage={tableParams.limit}
         currentPage={(tableParams.page ?? 1) - 1}
         totalItems={totalItems}
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
-        // Sorting
         sortBy={tableParams.sortBy}
         sortOrder={tableParams.sortOrder}
         onSort={handleSort}
