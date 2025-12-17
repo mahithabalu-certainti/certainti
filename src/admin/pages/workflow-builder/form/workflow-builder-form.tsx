@@ -14,6 +14,8 @@ import {
   useCreateRule,
   useGetRuleDetails,
 } from '../../../service/workflow-builder/workflow-builder-service';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../store/store';
 
 interface WorkflowBuilderProps {
   isLoadingRuleDetails: boolean;
@@ -27,6 +29,7 @@ const WorkflowBuilderFormContent: React.FC<WorkflowBuilderProps> = ({
   const { rule, validateAndSave } = useWorkflowContext();
 
   const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
+  const { userId } = useSelector((state: RootState) => state.auth);
 
   const createRule = useCreateRule();
 
@@ -45,7 +48,7 @@ const WorkflowBuilderFormContent: React.FC<WorkflowBuilderProps> = ({
   const { data: actionCategoryData, isLoading: isLoadingActionCategories } =
     useGetActionCategoryTypes(
       {
-        scope_rid: rule.trigger?.id || '',
+        scope_rid: rule.trigger?.category || '',
         status_rid: '',
       },
       !!rule.trigger?.id
@@ -62,7 +65,7 @@ const WorkflowBuilderFormContent: React.FC<WorkflowBuilderProps> = ({
       return;
     }
 
-    const apiPayload = transformRuleToPayload(rule);
+    const apiPayload = transformRuleToPayload(rule, userId || '');
 
     console.log('API Payload:', apiPayload);
 

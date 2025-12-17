@@ -44,6 +44,9 @@ interface WorkflowContextValue {
   canProceedToActions: boolean;
   validatedConditionIds: Set<string>; // Track which conditions have been validated
   duplicateConditionIds: Set<string>; // Track which conditions are duplicates
+  validatedFieldErrors: Map<string, { field: boolean; operator: boolean; value: boolean }>; // Track field-level errors per condition
+  ruleNameError: string | null; // Track rule name validation error
+  showRuleNameError: boolean; // Track whether to show rule name error
   validateAndSave: () => boolean;
 }
 
@@ -86,6 +89,9 @@ export const WorkflowProvider: React.FC<WorkflowProviderProps> = ({
   >('trigger');
   const [validatedConditionIds, setValidatedConditionIds] = useState<Set<string>>(new Set());
   const [duplicateConditionIds, setDuplicateConditionIds] = useState<Set<string>>(new Set());
+  const [validatedFieldErrors, setValidatedFieldErrors] = useState<Map<string, { field: boolean; operator: boolean; value: boolean }>>(new Map());
+  const [ruleNameError, setRuleNameError] = useState<string | null>(null);
+  const [showRuleNameError, setShowRuleNameError] = useState(false);
 
   // Update rule when initialRule is loaded (for edit mode)
   useEffect(() => {
@@ -146,12 +152,73 @@ export const WorkflowProvider: React.FC<WorkflowProviderProps> = ({
 
   const updateCondition = useCallback(
     (conditionId: string, updatedCondition: Condition) => {
-      setRule((prev) => ({
-        ...prev,
-        conditions: prev.conditions.map((cond) =>
+      // Capture old condition data and related duplicates BEFORE updating
+      let oldSignature: string | undefined;
+      let relatedDuplicateIds: string[] = [];
+      
+      setRule((prev) => {
+        // Store old condition before update
+        const oldCondition = prev.conditions.find(c => c.id === conditionId);
+        
+        if (oldCondition && duplicateConditionIds.has(conditionId)) {
+          oldSignature = `${oldCondition.category}|${oldCondition.field}|${oldCondition.operator}|${oldCondition.value}`;
+          
+          // Find all conditions that have the same signature (including this one)
+          relatedDuplicateIds = prev.conditions
+            .filter(c => {
+              const sig = `${c.category}|${c.field}|${c.operator}|${c.value}`;
+              return sig === oldSignature && duplicateConditionIds.has(c.id);
+            })
+            .map(c => c.id);
+        }
+        
+        const newConditions = prev.conditions.map((cond) =>
           cond.id === conditionId ? updatedCondition : cond
-        ),
-      }));
+        );
+
+        return {
+          ...prev,
+          conditions: newConditions,
+        };
+      });
+      
+      // Clear individual field errors when fields are filled
+      setValidatedFieldErrors(prev => {
+        const current = prev.get(conditionId);
+        if (current) {
+          const newErrors = { ...current };
+          
+          // Clear field error if field is now valid
+          if (updatedCondition.field) {
+            newErrors.field = false;
+          }
+          
+          // Clear operator error if operator is now valid
+          if (updatedCondition.operator) {
+            newErrors.operator = false;
+          }
+          
+          // Clear value error if value is now valid
+          if (updatedCondition.value !== '' && 
+              updatedCondition.value !== null && 
+              updatedCondition.value !== undefined) {
+            newErrors.value = false;
+          }
+          
+          // If all errors are cleared, remove from map
+          if (!newErrors.field && !newErrors.operator && !newErrors.value) {
+            const newMap = new Map(prev);
+            newMap.delete(conditionId);
+            return newMap;
+          }
+          
+          // Update with new errors
+          const newMap = new Map(prev);
+          newMap.set(conditionId, newErrors);
+          return newMap;
+        }
+        return prev;
+      });
       
       // If this condition was validated and is now complete, remove it from validated set
       const isComplete = 
@@ -168,13 +235,22 @@ export const WorkflowProvider: React.FC<WorkflowProviderProps> = ({
           return newSet;
         });
       }
-      
-      // If this condition was marked as duplicate, remove it from duplicate set when changed
-      if (duplicateConditionIds.has(conditionId)) {
-        setDuplicateConditionIds(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(conditionId);
-          return newSet;
+
+      // Clear duplicate error when any field in this condition changes
+      if (oldSignature && relatedDuplicateIds.length > 0) {
+        setDuplicateConditionIds(prevDups => {
+          const newDups = new Set(prevDups);
+          
+          // Always remove duplicate error from the changed condition
+          newDups.delete(conditionId);
+          
+          // If there were only 2 conditions with this signature and one changed,
+          // the remaining one is no longer a duplicate
+          if (relatedDuplicateIds.length === 2) {
+            relatedDuplicateIds.forEach(id => newDups.delete(id));
+          }
+          
+          return newDups;
         });
       }
     },
@@ -241,13 +317,44 @@ export const WorkflowProvider: React.FC<WorkflowProviderProps> = ({
     }));
   }, []);
 
+  // Rule name validation
+  const validateRuleName = useCallback((name: string): string | null => {
+    const trimmedName = name.trim();
+    
+    if (!trimmedName) {
+      return 'Rule name is required';
+    }
+    
+    if (trimmedName.length < 2) {
+      return 'Rule name must be at least 2 characters';
+    }
+    
+    if (trimmedName.length > 64) {
+      return 'Rule name must not exceed 64 characters';
+    }
+    
+    // Only letters, numbers, spaces, apostrophes('), and hyphens(-)
+    const validPattern = /^[a-zA-Z0-9\s'-]+$/;
+    if (!validPattern.test(trimmedName)) {
+      return "Rule name must contain only letters, numbers, spaces, apostrophes('), and hyphens(-)";
+    }
+    
+    return null;
+  }, []);
+
   // Rule metadata
   const updateRuleName = useCallback((name: string) => {
     setRule((prev) => ({
       ...prev,
       name,
     }));
-  }, []);
+    
+    // Clear error when user types (don't validate on change)
+    if (showRuleNameError) {
+      setShowRuleNameError(false);
+      setRuleNameError(null);
+    }
+  }, [showRuleNameError]);
 
   // Navigation
   const goToStep = useCallback((step: 'trigger' | 'conditions' | 'actions') => {
@@ -275,22 +382,50 @@ export const WorkflowProvider: React.FC<WorkflowProviderProps> = ({
 
   // Validate and save function
   const validateAndSave = useCallback(() => {
+    // Validate rule name first
+    const nameError = validateRuleName(rule.name);
+    setRuleNameError(nameError);
+    setShowRuleNameError(true);
+    
+    if (nameError) {
+      // Rule name is invalid, don't proceed
+      return false;
+    }
+    
     // If there are no conditions, allow saving
     if (rule.conditions.length === 0) {
       setValidatedConditionIds(new Set());
       setDuplicateConditionIds(new Set());
+      setValidatedFieldErrors(new Map());
       return true;
     }
 
-    // Find incomplete conditions
+    // Track field-level errors for each condition
+    const fieldErrors = new Map<string, { field: boolean; operator: boolean; value: boolean }>();
+
+    // Find incomplete conditions and track which fields are invalid
     const incompleteConditionIds = rule.conditions
       .filter(
-        (condition) =>
-          !condition.field ||
-          !condition.operator ||
-          condition.value === '' ||
-          condition.value === null ||
-          condition.value === undefined
+        (condition) => {
+          const fieldInvalid = !condition.field;
+          const operatorInvalid = !condition.operator;
+          const valueInvalid = condition.value === '' ||
+            condition.value === null ||
+            condition.value === undefined;
+
+          const isIncomplete = fieldInvalid || operatorInvalid || valueInvalid;
+
+          if (isIncomplete) {
+            // Track which specific fields are invalid
+            fieldErrors.set(condition.id, {
+              field: fieldInvalid,
+              operator: operatorInvalid,
+              value: valueInvalid,
+            });
+          }
+
+          return isIncomplete;
+        }
       )
       .map((condition) => condition.id);
 
@@ -325,6 +460,7 @@ export const WorkflowProvider: React.FC<WorkflowProviderProps> = ({
       // Mark these specific conditions as validated (to show errors)
       setValidatedConditionIds(new Set(incompleteConditionIds));
       setDuplicateConditionIds(duplicateIds);
+      setValidatedFieldErrors(fieldErrors);
       // Switch to conditions step to show errors
       setCurrentStep('conditions');
       return false;
@@ -333,8 +469,9 @@ export const WorkflowProvider: React.FC<WorkflowProviderProps> = ({
     // Validation passed - clear validated sets
     setValidatedConditionIds(new Set());
     setDuplicateConditionIds(new Set());
+    setValidatedFieldErrors(new Map());
     return true;
-  }, [rule.conditions]);
+  }, [rule.conditions, rule.name, validateRuleName]);
 
   const value: WorkflowContextValue = {
     rule,
@@ -354,6 +491,9 @@ export const WorkflowProvider: React.FC<WorkflowProviderProps> = ({
     canProceedToActions,
     validatedConditionIds,
     duplicateConditionIds,
+    validatedFieldErrors,
+    ruleNameError,
+    showRuleNameError,
     validateAndSave,
   };
 

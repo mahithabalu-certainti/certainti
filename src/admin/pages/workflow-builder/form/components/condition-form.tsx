@@ -24,6 +24,7 @@ import {
   useGetRuleFieldValues,
 } from '../../../../service/workflow-builder/workflow-builder-service';
 import { TruncateWithTooltip } from '../../../../../components';
+import { useWorkflowContext } from '../workflow-context';
 
 interface ConditionFormProps {
   condition: Condition;
@@ -52,12 +53,18 @@ const ConditionForm: React.FC<ConditionFormProps> = ({
   isDuplicate = false,
 }) => {
   const [fieldInputValue, setFieldInputValue] = useState(
-    condition.field ? `@${condition.fieldName || condition.field}` : ''
+    condition.field ? condition.fieldName || condition.field : ''
   );
   const [showFieldSuggestions, setShowFieldSuggestions] = useState(false);
   const [selectedFieldRid, setSelectedFieldRid] = useState<string>(
     condition.field || ''
   );
+  // Track if the current field input is from a valid selection
+  const [isFieldFromValidSelection, setIsFieldFromValidSelection] = useState(
+    !!condition.field
+  );
+
+  const { validatedFieldErrors } = useWorkflowContext();
 
   // Fetch fields based on selected category
   const { data: fieldsData, isLoading: isLoadingFields } =
@@ -120,13 +127,19 @@ const ConditionForm: React.FC<ConditionFormProps> = ({
   };
 
   const filterFieldSuggestions = (inputValue: string): FieldSuggestion[] => {
-    if (!inputValue.startsWith('@')) {
-      return [];
-    }
-
-    const query = inputValue.replace('@', '').toLowerCase();
     const allSuggestions = getAllFieldSuggestions();
 
+    // If input starts with @, remove it for filtering
+    const query = inputValue.startsWith('@')
+      ? inputValue.slice(1).toLowerCase()
+      : inputValue.toLowerCase();
+
+    // If query is empty (just @ or empty string), return all suggestions
+    if (query === '') {
+      return allSuggestions;
+    }
+
+    // Filter based on query
     return allSuggestions.filter(
       (s) =>
         s.display.toLowerCase().includes(query) ||
@@ -135,29 +148,56 @@ const ConditionForm: React.FC<ConditionFormProps> = ({
   };
 
   const handleFieldInputChange = (value: string) => {
+    // If there's a valid selection and user is trying to add characters (not delete), prevent it
+    if (isFieldFromValidSelection && value.length > fieldInputValue.length) {
+      // User is trying to type more characters after selection - prevent it
+      return;
+    }
+
     setFieldInputValue(value);
 
-    if (value.startsWith('@')) {
+    // Show suggestions when user starts typing (with or without @)
+    if (value.trim() !== '') {
       setShowFieldSuggestions(true);
     } else {
       setShowFieldSuggestions(false);
     }
 
-    if (value.trim() === '' || value === '@') {
+    // If user deletes/modifies the selected value, mark as invalid and clear
+    if (isFieldFromValidSelection && value !== (condition.fieldName || '')) {
+      setIsFieldFromValidSelection(false);
       onChange({
         ...condition,
         field: '',
+        fieldName: '',
         operator: '',
+        operatorName: '',
         value: '',
+        valueName: '',
       });
       setSelectedFieldRid('');
+    }
+
+    // Clear the field if input is empty
+    if (value.trim() === '') {
+      onChange({
+        ...condition,
+        field: '',
+        fieldName: '',
+        operator: '',
+        operatorName: '',
+        value: '',
+        valueName: '',
+      });
+      setSelectedFieldRid('');
+      setIsFieldFromValidSelection(false);
     }
   };
 
   const handleFieldSuggestionSelect = (suggestion: FieldSuggestion | null) => {
     if (!suggestion) return;
-    const fullValue = `@${suggestion.display}`;
-    setFieldInputValue(fullValue);
+    // Display without @ symbol after selection
+    setFieldInputValue(suggestion.display);
 
     const selectedField = availableFields.find(
       (field) => field.id === suggestion.fullPath
@@ -165,6 +205,8 @@ const ConditionForm: React.FC<ConditionFormProps> = ({
     if (selectedField) {
       // Set the field RID to trigger operators and values fetch
       setSelectedFieldRid(selectedField.id);
+      // Mark as valid selection
+      setIsFieldFromValidSelection(true);
 
       onChange({
         ...condition,
@@ -181,19 +223,14 @@ const ConditionForm: React.FC<ConditionFormProps> = ({
   };
 
   const handleFieldInputFocus = () => {
-    if (fieldInputValue.startsWith('@')) {
+    // Show suggestions on focus if there's any input or field is empty
+    if (fieldInputValue.trim() !== '' || !condition.field) {
       setShowFieldSuggestions(true);
     }
   };
 
   const handleFieldInputBlur = () => {
     setTimeout(() => setShowFieldSuggestions(false), 200);
-  };
-
-  const handleFieldInputKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === '@') {
-      setShowFieldSuggestions(true);
-    }
   };
 
   const handleOperatorChange = (operatorId: string) => {
@@ -223,17 +260,37 @@ const ConditionForm: React.FC<ConditionFormProps> = ({
     });
   };
 
+  // Check if field input is invalid (user typed text but didn't select from dropdown)
+  const isFieldInputInvalid =
+    fieldInputValue.trim() !== '' &&
+    fieldInputValue !== '@' &&
+    !isFieldFromValidSelection;
+
+  // Get field errors from context for this specific condition
+  const conditionFieldErrors = validatedFieldErrors.get(condition.id) || {
+    field: false,
+    operator: false,
+    value: false,
+  };
+
+  // Individual field validation checks - only show errors for fields that were invalid at validation time
+  const isFieldError = showValidationErrors && conditionFieldErrors.field;
+  const isOperatorError = showValidationErrors && conditionFieldErrors.operator;
+  const isValueError = showValidationErrors && conditionFieldErrors.value;
+
   // Check if condition is complete
   const isConditionComplete =
     condition.field &&
+    isFieldFromValidSelection &&
     condition.operator &&
     condition.value !== '' &&
     condition.value !== null &&
     condition.value !== undefined;
 
   // Only show validation errors when explicitly requested
-  const shouldShowError = showValidationErrors && !isConditionComplete;
-  
+  const shouldShowError =
+    showValidationErrors && (!isConditionComplete || isFieldInputInvalid);
+
   // Show duplicate error
   const shouldShowDuplicateError = isDuplicate && isConditionComplete;
 
@@ -243,7 +300,7 @@ const ConditionForm: React.FC<ConditionFormProps> = ({
     >
       {/* Header */}
       <div
-        className={`flex items-center justify-between h-[50px] px-4 ${shouldShowError || shouldShowDuplicateError ? 'bg-red-50' : 'bg-gray-50 hover:bg-gray-50'} cursor-pointer`}
+        className={`flex items-center justify-between h-[50px] px-4 ${shouldShowError || shouldShowDuplicateError ? 'bg-[#FEF2F2]' : 'bg-gray-50 hover:bg-gray-50'} cursor-pointer`}
         onClick={onToggleExpand}
       >
         <div className='flex items-center gap-2 flex-1'>
@@ -298,30 +355,13 @@ const ConditionForm: React.FC<ConditionFormProps> = ({
         </div>
 
         <div className='flex items-center gap-2'>
-          {shouldShowError && (
+          {(shouldShowError || shouldShowDuplicateError) && (
             <Tooltip
-              title={'Please fill all fields: Field, Operator, and Value'}
-              arrow
-              placement='top'
-              slotProps={{
-                tooltip: {
-                  sx: {
-                    backgroundColor: '#FEF2F2',
-                    mr: 1,
-                  },
-                },
-              }}
-            >
-              <span className='h-[28px] w-5 flex items-center justify-center cursor-pointer'>
-                <React.Suspense fallback={null}>
-                  <ErrorInfoIcon alt='error' className='w-5 h-4' />
-                </React.Suspense>
-              </span>
-            </Tooltip>
-          )}
-          {shouldShowDuplicateError && (
-            <Tooltip
-              title={'This condition already exists. Please change the field, operator, or value.'}
+              title={
+                shouldShowDuplicateError
+                  ? 'This condition already exists. Please change the field, operator, or value.'
+                  : 'Please fill all fields: Field, Operator, and Value'
+              }
               arrow
               placement='top'
               slotProps={{
@@ -376,7 +416,7 @@ const ConditionForm: React.FC<ConditionFormProps> = ({
             {/* Field Input */}
             <div className='relative'>
               <label className='block text-xs font-medium text-[#2D3E4F] mb-1'>
-                Field
+                Field <span className='text-red-500'> *</span>
               </label>
               {isLoadingFields ? (
                 <Skeleton
@@ -390,9 +430,8 @@ const ConditionForm: React.FC<ConditionFormProps> = ({
                   freeSolo
                   open={showFieldSuggestions}
                   onOpen={() => {
-                    if (fieldInputValue.startsWith('@')) {
-                      setShowFieldSuggestions(true);
-                    }
+                    // Show suggestions when dropdown is opened
+                    setShowFieldSuggestions(true);
                   }}
                   onClose={() => setShowFieldSuggestions(false)}
                   inputValue={fieldInputValue}
@@ -438,17 +477,18 @@ const ConditionForm: React.FC<ConditionFormProps> = ({
                   renderInput={(params) => (
                     <TextField
                       {...params}
-                      placeholder='Type @ to see available fields'
+                      placeholder='Start typing to search fields (@ optional)'
                       autoComplete='off'
                       onFocus={handleFieldInputFocus}
                       onBlur={handleFieldInputBlur}
-                      onKeyDown={handleFieldInputKeyDown}
+                      error={isFieldError}
                       sx={{
                         '& .MuiOutlinedInput-root': {
                           padding: '5px',
                           height: '32px',
                           borderRadius: '2px',
                           fontSize: '13px',
+                          background: isFieldError ? '#FEF2F2' : 'transparent',
                           '& input': {
                             padding: '0px 12px',
                             height: '32px',
@@ -457,10 +497,10 @@ const ConditionForm: React.FC<ConditionFormProps> = ({
                             fontWeight: condition.field ? 600 : 400,
                           },
                           '& fieldset': {
-                            borderColor: '#CBD6E2',
+                            borderColor: isFieldError ? '#f44336' : '#CBD6E2',
                           },
                           '&:hover fieldset': {
-                            borderColor: '#CBD6E2',
+                            borderColor: isFieldError ? '#f44336' : '#CBD6E2',
                           },
                           '&.Mui-focused fieldset': {
                             borderColor: '#1976d2',
@@ -476,12 +516,19 @@ const ConditionForm: React.FC<ConditionFormProps> = ({
                   selectOnFocus={false}
                 />
               )}
+              {isFieldError && (
+                <p className='text-xs text-red-600 mt-1'>
+                  {isFieldInputInvalid
+                    ? 'Invalid field input. Please select a field from the dropdown.'
+                    : 'Field is required'}
+                </p>
+              )}
             </div>
 
             {/* Operator */}
             <div>
               <label className='block text-xs font-medium text-[#2D3E4F] mb-1'>
-                Operator
+                Operator <span className='text-red-500'> *</span>
               </label>
               {isLoadingOperators ? (
                 <Skeleton
@@ -491,14 +538,18 @@ const ConditionForm: React.FC<ConditionFormProps> = ({
                   sx={{ borderRadius: '2px' }}
                 />
               ) : (
-                <FormControl fullWidth size='small'>
+                <FormControl fullWidth size='small' error={isOperatorError}>
                   <Select
                     value={condition.operator || ''}
                     onChange={(e) => handleOperatorChange(e.target.value)}
                     displayEmpty
                     MenuProps={COMMON_MENU_PROPS}
                     disabled={isFieldEmpty || isLoadingOperators}
-                    sx={getSelectStyles(false, condition.operator === '')}
+                    className={`${isOperatorError ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
+                    sx={getSelectStyles(
+                      isOperatorError,
+                      condition.operator === ''
+                    )}
                   >
                     <MenuItem
                       value=''
@@ -526,12 +577,15 @@ const ConditionForm: React.FC<ConditionFormProps> = ({
                   </Select>
                 </FormControl>
               )}
+              {isOperatorError && (
+                <p className='text-xs text-red-500 mt-1'>Field is required</p>
+              )}
             </div>
 
             {/* Value */}
             <div>
               <label className='block text-xs font-medium text-[#2D3E4F] mb-1'>
-                Value
+                Value <span className='text-red-500'> *</span>
               </label>
               {isLoadingValues ? (
                 <Skeleton
@@ -541,14 +595,15 @@ const ConditionForm: React.FC<ConditionFormProps> = ({
                   sx={{ borderRadius: '2px' }}
                 />
               ) : (
-                <FormControl fullWidth size='small'>
+                <FormControl fullWidth size='small' error={isValueError}>
                   <Select
                     value={condition.value || ''}
                     onChange={(e) => handleValueChange(e.target.value)}
                     displayEmpty
                     MenuProps={COMMON_MENU_PROPS}
                     disabled={isFieldEmpty || isLoadingValues}
-                    sx={getSelectStyles(false, condition.value === '')}
+                    className={`${isValueError ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
+                    sx={getSelectStyles(isValueError, condition.value === '')}
                   >
                     <MenuItem
                       value=''
@@ -588,6 +643,9 @@ const ConditionForm: React.FC<ConditionFormProps> = ({
                         )}
                   </Select>
                 </FormControl>
+              )}
+              {isValueError && (
+                <p className='text-xs text-red-500 mt-1'>Field is required</p>
               )}
             </div>
           </div>

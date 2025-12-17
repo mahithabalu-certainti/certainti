@@ -327,7 +327,7 @@ export const fetchRuleFieldValues = async (
 ): Promise<RuleFieldValuesResponse> => {
   try {
     const { data } = await ruleBuilderServiceApi.post<RuleFieldValuesResponse>(
-      '/api/workflow/ruleFieldValues',
+      '/api/workflow/ruleValues',
       params
     );
 

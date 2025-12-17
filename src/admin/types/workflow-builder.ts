@@ -167,26 +167,24 @@ export interface RuleFieldValuesResponse {
 }
 
 // --------------- Create Rule ---------------
-export interface RuleOperationPayload {
+export interface RuleConditionCategoryPayload {
+  category_rid: string;
+  category_operator?: 'AND' | 'OR';
   field_rid: string;
   operator_rid: string;
   value_rid: string;
 }
 
-export interface RuleConditionCategoryPayload {
-  category_rid: string;
-  cateogry_operator?: 'AND' | 'OR';
-  operations: RuleOperationPayload[];
-}
-
 export interface CreateRulePayload {
   rule_name: string;
   description?: string;
+  trigger_type: number;
   scope_type_rid: string;
   event_rid: string;
   condition_rid: string;
   condition_categories: RuleConditionCategoryPayload[];
   action_rid: string[];
+  created_by: string;
 }
 
 // --------- Details ---------

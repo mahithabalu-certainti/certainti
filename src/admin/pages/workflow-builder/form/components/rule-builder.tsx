@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { DeleteIcon, EditIcon } from '../../../../../assets';
+import { DeleteIcon, EditIcon, ErrorInfoIcon } from '../../../../../assets';
 import {
   ActionManager,
   ConditionManager,
@@ -15,6 +15,7 @@ import {
   ScopeListResponse,
 } from '../../../../types';
 import { Tooltip } from '@mui/material';
+import { TruncateWithTooltip } from '../../../../../components';
 
 interface RuleBuilderProps {
   apiData: {
@@ -33,6 +34,7 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
 }) => {
   const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
   const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [originalRuleName, setOriginalRuleName] = useState<string>('');
   const [isCategorySelectorShowing, setIsCategorySelectorShowing] =
     useState<boolean>(false);
   const {
@@ -44,7 +46,28 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
     goToStep,
     canProceedToConditions,
     canProceedToActions,
+    ruleNameError,
+    showRuleNameError,
   } = useWorkflowContext();
+
+  const handleStartEdit = () => {
+    setOriginalRuleName(rule.name);
+    setIsEditing(true);
+  };
+
+  const handleSaveEdit = () => {
+    // If empty, set to default
+    if (!rule.name.trim()) {
+      updateRuleName('Untitled rule');
+    }
+    setIsEditing(false);
+  };
+
+  const handleCancelEdit = () => {
+    // Revert to original value
+    updateRuleName(originalRuleName);
+    setIsEditing(false);
+  };
 
   const handleSelectTrigger = (trigger: Trigger) => {
     selectTrigger(trigger);
@@ -177,36 +200,84 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
     <div>
       <div className='flex items-center justify-between border-b border-[#CBD6E2] h-[50px] px-10'>
         <div className='flex items-center gap-3 group'>
-          {isEditing ? (
-            <input
-              type='text'
-              value={rule.name}
-              autoFocus
-              onChange={(e) => updateRuleName(e.target.value)}
-              onBlur={() => setIsEditing(false)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') setIsEditing(false);
-              }}
-              className='text-[14px] font-medium text-[#425A76] bg-white border border-gray-300 
-                 rounded-[2px] px-2 py-0.5 outline-none focus:ring-1 focus:ring-blue-500'
-            />
-          ) : (
-            <div className='flex items-center gap-2 group/name relative'>
-              <h1 className='text-xl font-medium text-[#425A76]'>
-                {rule.name}
-              </h1>
+          <div className='relative flex items-center'>
+            {isEditing ? (
+              <input
+                type='text'
+                value={rule.name}
+                autoFocus
+                placeholder='Enter Rule Name'
+                onChange={(e) => updateRuleName(e.target.value)}
+                onBlur={handleSaveEdit}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === 'Tab') {
+                    e.preventDefault();
+                    handleSaveEdit();
+                  } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    handleCancelEdit();
+                  }
+                }}
+                className={`placeholder-custom-color text-[13px] w-[200px] font-medium text-[#425A76] px-1 bg-transparent border-0 border-b-1 outline-none ${
+                  showRuleNameError && ruleNameError
+                    ? 'border-b-red-500'
+                    : 'border-b-transparent focus:border-b-blue-500'
+                }`}
+                style={{
+                  paddingRight:
+                    showRuleNameError && ruleNameError ? '24px' : '2px',
+                }}
+              />
+            ) : (
+              <div className='relative max-w-[200px]'>
+                <h1
+                  className={`text-[14px] font-medium text-[#425A76] border-b-1 px-1 overflow-hidden text-ellipsis whitespace-nowrap ${
+                    showRuleNameError && ruleNameError
+                      ? 'border-b-red-500'
+                      : 'border-b-transparent'
+                  }`}
+                  style={{
+                    paddingRight:
+                      showRuleNameError && ruleNameError ? '24px' : '8px',
+                  }}
+                >
+                  <TruncateWithTooltip maxWidth={200} text={rule.name} />
+                </h1>
+                {showRuleNameError && ruleNameError && (
+                  <Tooltip
+                    title={ruleNameError}
+                    arrow
+                    placement='top'
+                    slotProps={{
+                      tooltip: {
+                        sx: {
+                          backgroundColor: '#FEF2F2',
+                        },
+                      },
+                    }}
+                  >
+                    <div className='absolute right-0 top-1/2 -translate-y-1/2 flex items-center cursor-pointer pr-1'>
+                      <React.Suspense fallback={null}>
+                        <ErrorInfoIcon className='w-3.5 h-3.5 text-red-500' />
+                      </React.Suspense>
+                    </div>
+                  </Tooltip>
+                )}
+              </div>
+            )}
+            {!isEditing && (
               <React.Suspense fallback={null}>
                 <EditIcon
-                  className='w-3.5 h-3.5 cursor-pointer transition-opacity duration-200'
+                  className='w-3.5 h-3.5 cursor-pointer transition-opacity duration-200 ml-2'
                   style={{
                     filter:
                       'brightness(0) saturate(100%) invert(16%) sepia(14%) saturate(749%) hue-rotate(169deg) brightness(93%) contrast(86%)',
                   }}
-                  onClick={() => setIsEditing(true)}
+                  onClick={handleStartEdit}
                 />
               </React.Suspense>
-            </div>
-          )}
+            )}
+          </div>
           {!isEditView && (
             <span className='px-1 py-0.5 bg-purple-100 text-purple-700 text-xs font-medium rounded'>
               NEW
@@ -333,13 +404,9 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
                   </div>
                   <div className='flex-1'>
                     <h3 className='text-sm font-semibold text-gray-900 mb-1'>
-                      {rule.conditionType?.condition_type === 'for-each'
-                        ? 'For Each:'
-                        : rule.conditionType?.condition_type === 'then'
-                          ? 'Then:'
-                          : rule.conditionType?.condition_type === 'if'
-                            ? 'If:'
-                            : ''}
+                      {rule.conditionType?.condition_type
+                        ? `${rule.conditionType?.condition_type}: `
+                        : ''}
                       {rule.conditions.length > 0
                         ? `${rule.conditions.length} condition(s)`
                         : 'Add conditions'}

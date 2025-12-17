@@ -96,49 +96,32 @@ export interface Rule {
   conditionType?: ConditionType | null;
 }
 
-export const transformRuleToPayload = (rule: Rule) => {
-  // Group conditions by category
-  const conditionsByCategory = rule.conditions.reduce(
-    (acc, condition) => {
-      if (!acc[condition.category]) {
-        acc[condition.category] = [];
-      }
-      acc[condition.category].push(condition);
-      return acc;
-    },
-    {} as Record<string, Condition[]>
-  );
+export const transformRuleToPayload = (rule: Rule, userId: string) => {
+  const condition_categories = rule.conditions.map((condition, index) => {
+    const categoryOperator =
+      index > 0 ? condition.logicalOperator || 'AND' : undefined;
 
-  // Transform to condition_categories array
-  const condition_categories = Object.entries(conditionsByCategory).map(
-    ([categoryRid, conditions], index) => {
-      // Get the category operator from the first condition's logical operator
-      // (if it's not the first category)
-      const categoryOperator =
-        index > 0 ? conditions[0]?.logicalOperator || 'AND' : undefined;
-
-      return {
-        category_rid: categoryRid,
-        ...(categoryOperator ? { cateogry_operator: categoryOperator } : {}),
-        operations: conditions.map((condition) => ({
-          field_rid: condition.field,
-          operator_rid: condition.operator,
-          value_rid: Array.isArray(condition.value)
-            ? condition.value.join(',')
-            : condition.value,
-        })),
-      };
-    }
-  );
+    return {
+      category_rid: condition.category,
+      ...(categoryOperator ? { category_operator: categoryOperator } : {}),
+      field_rid: condition.field,
+      operator_rid: condition.operator,
+      value_rid: Array.isArray(condition.value)
+        ? condition.value.join(',')
+        : condition.value,
+    };
+  });
 
   return {
     rule_name: rule.name,
     description: '',
+    trigger_type: 1,
     scope_type_rid: rule.trigger?.category || '',
     event_rid: rule.trigger?.id || '',
     condition_rid: rule.conditionType?.rid || '',
     condition_categories,
     action_rid: rule.actions.map((action) => action.category),
+    created_by: userId || '',
   };
 };
 

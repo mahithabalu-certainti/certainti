@@ -91,7 +91,13 @@ const ConditionManager: React.FC<ConditionManagerProps> = ({
       }
       setShowCategorySelector(true);
     }
-  }, [rule.conditions.length, rule.trigger?.id, rule.conditionType, currentStep, selectedConditionRid]);
+  }, [
+    rule.conditions.length,
+    rule.trigger?.id,
+    rule.conditionType,
+    currentStep,
+    selectedConditionRid,
+  ]);
 
   // Close selectors when navigating away from conditions step
   useEffect(() => {
@@ -192,8 +198,9 @@ const ConditionManager: React.FC<ConditionManagerProps> = ({
   const handleCancelCategorySelection = () => {
     setShowCategorySelector(false);
     if (rule.conditions.length === 0) {
-      // If no conditions added yet, show condition type selector again
+      // If no conditions added yet, reset everything and show condition type selector again
       setSelectedConditionRid(null);
+      setConditionType(null); // Reset the condition type in the rule context
       setShowConditionTypeSelector(true);
     }
   };
@@ -548,7 +555,7 @@ function ConditionTypeSelector({
         'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2',
     };
 
-    return iconMap[conditionType] || iconMap.if;
+    return iconMap[conditionType.toLowerCase()] || iconMap.if;
   };
 
   return (
