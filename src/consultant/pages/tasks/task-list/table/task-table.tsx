@@ -146,6 +146,15 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
     [prioritiesQuery.data]
   );
 
+  const priorityOptions: SelectOption[] = useMemo(
+    () =>
+      priorityData.map((value) => ({
+        label: value.name,
+        value: value.id,
+      })),
+    [priorityData]
+  );
+
   // Use different status API based on tab context
   const statusData = useMemo(() => {
     if (isMilestoneTab) {
@@ -802,8 +811,13 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
 
   const tasksColumns = useMemo(
     () =>
-      getTaskTableColumns(handleTaskClick, statusOptions, currentPermissionMap),
-    [handleTaskClick, statusOptions, currentPermissionMap]
+      getTaskTableColumns(
+        handleTaskClick,
+        statusOptions,
+        priorityOptions,
+        currentPermissionMap
+      ),
+    [handleTaskClick, statusOptions, priorityOptions, currentPermissionMap]
   );
 
   // const actionButtons: ActionItem<TaskList>[] = [

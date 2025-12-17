@@ -81,7 +81,7 @@ export const getTaskFilterFields = (
   },
   {
     name: 'Priority',
-    value: 'priority_name',
+    value: 'priority_rid',
     type: 'enum',
     options: priorityOptions.map((opt) => ({
       option: opt.label,
@@ -92,7 +92,7 @@ export const getTaskFilterFields = (
   },
   {
     name: 'Status',
-    value: 'status_name',
+    value: 'status_rid',
     type: 'enum',
     options: statusOptions.map((opt) => ({
       option: opt.label,

@@ -1,6 +1,6 @@
 import { useQuery, UseQueryResult } from '@tanstack/react-query';
 import { resourceServiceApi } from '../../../api/api';
-import { TasksListURL, TasksExportListURL } from '../urls/tasks-url';
+import { TasksExportListURL } from '../urls/tasks-url';
 import {
   TaskListResponse,
   TasksListExportParams,
@@ -10,8 +10,47 @@ import {
 export const fetchTasksList = async (
   params: TasksListURLParams
 ): Promise<TaskListResponse> => {
-  const response = await resourceServiceApi.get<TaskListResponse>(
-    TasksListURL(params)
+  const isMilestone =
+    params.filters &&
+    (params.filters as { attachment_level?: string }).attachment_level ===
+      'milestone';
+
+  const flag = isMilestone ? 'milestone' : 'activity';
+  const baseUrl = isMilestone
+    ? '/api/task/list/summaryMilestone'
+    : '/api/task/list/summaryActivity';
+
+  let filtersToSend = params.filters ? { ...params.filters } : {};
+  const { attachment_level, ...rest } = filtersToSend as {
+    attachment_level?: string;
+  };
+  filtersToSend = rest;
+
+  const payload: Record<string, any> = {
+    flag,
+    page: params.page,
+    limit: params.limit,
+    sortBy: params.sortBy,
+    sortOrder: params.sortOrder,
+  };
+
+  if (params.fiscalYear) {
+    payload.fiscalYear = params.fiscalYear;
+  }
+  if (filtersToSend && Object.keys(filtersToSend).length > 0) {
+    payload.filters = JSON.stringify(filtersToSend);
+  }
+  if (params.globalFilters) {
+    payload.globalFilters = JSON.stringify(params.globalFilters);
+  }
+
+  if (params.search) {
+    payload.search = params.search;
+  }
+
+  const response = await resourceServiceApi.post<TaskListResponse>(
+    baseUrl,
+    payload
   );
   return response.data;
 };

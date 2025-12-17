@@ -231,25 +231,25 @@ export const Tasks: React.FC = () => {
 
   const priorityOptions = useMemo(
     () =>
-      transformPriorityData(prioritiesQuery.data || []).map((p) => ({
-        label: p.name,
-        value: p.name,
+      transformPriorityData(prioritiesQuery.data || []).map((priority) => ({
+        label: priority.name,
+        value: priority.id,
       })),
     [prioritiesQuery.data]
   );
 
   const statusOptions = useMemo(() => {
     if (tabParam === 'milestone') {
-      return transformStatusData(statusesQuery.data || []).map((s) => ({
-        label: s.name,
-        value: s.name,
+      return transformStatusData(statusesQuery.data || []).map((status) => ({
+        label: status.name,
+        value: status.id,
       }));
     } else {
       const activityStatuses =
         activityStatusesQuery.data?.data?.activityStatus || [];
       return activityStatuses.map((status: any) => ({
         label: status.status_name,
-        value: status.status_name,
+        value: status.rid,
       }));
     }
   }, [tabParam, statusesQuery.data, activityStatusesQuery.data]);

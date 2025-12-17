@@ -9,6 +9,7 @@ import { TaskList } from '../../../../types/task';
 export const getTaskTableColumns = (
   onClick: (row: TaskList) => void,
   statusOptions: SelectOption[] = [],
+  priorityOptions: SelectOption[] = [],
   permissionMap?: Record<string, { read: boolean; edit: boolean }>
 ): ListTableColumn<TaskList>[] => [
   {
@@ -143,6 +144,14 @@ export const getTaskTableColumns = (
     label: 'Priority',
     width: 120,
     sortable: true,
+    editable: permissionMap ? permissionMap['priority_rid']?.edit : true,
+    editId: 'priority_rid',
+    field: {
+      type: 'select',
+      required: true,
+      options: priorityOptions,
+      placeholder: 'Choose Priority',
+    },
     hide: permissionMap ? !permissionMap['priority_rid']?.read : false,
     render: (row: TaskList) => row.priority_name || '-',
   },
