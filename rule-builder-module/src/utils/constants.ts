@@ -245,7 +245,7 @@ export const rawQueries = {
     return query;
   },
 
-  fetchNotificationTemplateDetails(template_name: string): string {
+  fetchNotificationTemplateDetails(template_name: string,channel: string): string {
     let query = `SELECT nt.message_template,nt.channel
     FROM ${MAIN_SCHEMA_NAME}.notification_template nt 
     WHERE nt.template_code = '${template_name}'
