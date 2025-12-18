@@ -208,7 +208,7 @@ export class JurisdictionService {
           return {
             statusCode: HttpStatus.FAILED,
             message: STATUS_MESSAGE.configUpdateFailed,
-            errorMessage: `A config with name ${configRequest.config_name} already exists.Please use a different name.`,
+            errorMessage: `A configuration with name ${configRequest.config_name} already exists.Please use a different name.`,
           };
         }
       }
@@ -240,7 +240,7 @@ export class JurisdictionService {
           statusCode: HttpStatus.FAILED,
           message: STATUS_MESSAGE.configUpdateFailed,
           errorMessage:
-            "Duplicate platform config exists for the same effective dates wih active status.",
+            "Duplicate platform configuration exists for the same effective dates wih active status.",
         };
       }
       const updatedConfig =
@@ -291,7 +291,7 @@ export class JurisdictionService {
           return {
             statusCode: HttpStatus.FAILED,
             message: HttpStatus.FAILED_MESSAGE,
-            errorMessage: `A config with name ${configRequest.config_name} already exists.Please use a different name.`,
+            errorMessage: `A configuration with name ${configRequest.config_name} already exists.Please use a different name.`,
           };
         }
       }
@@ -323,7 +323,7 @@ export class JurisdictionService {
           statusCode: HttpStatus.FAILED,
           message: STATUS_MESSAGE.configCreationFailed,
           errorMessage:
-            "Duplicate config exists for the same effective dates and active status.",
+            "Duplicate configuration exists for the same effective dates and active status.",
         };
       }
       const updatedConfig =
