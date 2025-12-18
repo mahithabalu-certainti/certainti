@@ -19,6 +19,8 @@ import { ExportConfigRuleList } from '../../../service/manage-geo-based-access/g
 import { getGeoBasedRuleFilterFields } from './helpers';
 import { SelectOption } from '../../../../consultant/types';
 import { FilterCondition, Filters } from '../../../types/manage-user';
+import { FilterValue } from '../../../../consultant/types/account-filter';
+import { useFetchState } from '../../../../consultant/services/account';
 
 const BUTTON_STYLES = {
   height: '24px',
@@ -50,18 +52,17 @@ export const ManageGeoBasedRuleList: React.FC = () => {
   const { permission } = useSelector((state: RootState) => state.permission);
   const [columnAnchorEl, setColumnAnchorEl] =
     React.useState<HTMLButtonElement | null>(null);
-
+  const [currentCountry, setCurrentCountry] = useState<string>('');
   const isModalOpen = Boolean(columnAnchorEl);
   const modalId = isModalOpen ? 'geo-rule-visibility-popover' : undefined;
 
   // Service Hooks
   const statusOptions = useGetStatus();
   const allCountries = useGetAllCountries('Active');
-
+  const Regions = useFetchState(currentCountry?.toString() || '');
   // Variables
   const isFilterOpen = Boolean(anchorEl);
   const filterId = isFilterOpen ? 'geo-rule-filter-popover' : undefined;
-
   // Memoized Options
   const countryOptions: SelectOption[] = useMemo(
     () =>
@@ -81,7 +82,14 @@ export const ManageGeoBasedRuleList: React.FC = () => {
       })) || [],
     [statusOptions?.data?.data?.status]
   );
-
+  const memoizedRegion = useMemo(
+    () =>
+      Regions.data?.data.states.map((state) => ({
+        label: state.state_name,
+        value: state.rid,
+      })) || [],
+    [Regions.data?.data.states]
+  );
   // Permission Map
   const configEditFields = useMemo(
     () =>
@@ -104,11 +112,11 @@ export const ManageGeoBasedRuleList: React.FC = () => {
     () =>
       getGeoBasedRuleFilterFields(
         permissionMap,
-        // memoizedStatus,
+        memoizedStatus,
         countryOptions,
-        [] // Region options - can be populated based on selected country if needed
+        memoizedRegion
       ),
-    [permissionMap, memoizedStatus, countryOptions]
+    [permissionMap, countryOptions, memoizedRegion, memoizedStatus]
   );
   // Functions
   const onRefreshClick = () => {
@@ -138,7 +146,11 @@ export const ManageGeoBasedRuleList: React.FC = () => {
       }));
     }
   };
-
+  const handleCountry = (fieldName: string, value: FilterValue) => {
+    if (fieldName === 'country_rid' && value) {
+      setCurrentCountry(String(value));
+    }
+  };
   const handleColumnVisibility = (
     event: React.MouseEvent<HTMLButtonElement>
   ) => {
@@ -171,7 +183,7 @@ export const ManageGeoBasedRuleList: React.FC = () => {
           <div className='flex items-center justify-center'>
             <ManageGeoIcon
               alt='Manage Jurisdiction Rules '
-              className='h-7 w-7 rounded [&>path:first-child]:fill-[#BE3EB5]'
+              className=' h-7 w-7 p-1.5 rounded [&>path]:stroke-[#fff] bg-[#9747FF]'
             />
             <div className='flex flex-col mx-2.5 pb-1'>
               <div className='font-semibold text-[#7D98B6] text-[12px] pt-1'>
@@ -192,14 +204,14 @@ export const ManageGeoBasedRuleList: React.FC = () => {
             <RefreshIcon alt='refresh-icon' className='h-4' />
           </button>
           <TextButton
-            label='Create Rule'
+            label='Create Configuration'
             onClick={() => navigate(MANAGE_GEO_BASED_RULE_CREATE)}
             hide={!isCreateEnable}
             sx={{
               ...BUTTON_STYLES,
-              width: '119px',
-              minWidth: '119px',
-              maxWidth: '119px',
+              width: '160px',
+              minWidth: '160px',
+              maxWidth: '160px',
             }}
           />
         </div>
@@ -246,7 +258,7 @@ export const ManageGeoBasedRuleList: React.FC = () => {
               <NewFilterIcon alt='filter-icon' />
               Filter
               {(appliedFilters && Object.keys(appliedFilters).length > 0) ||
-                sortFilterCount > 0 ? (
+              sortFilterCount > 0 ? (
                 <div className='absolute -top-[5px] -right-2 w-4 h-4 flex items-center justify-center text-xs'>
                   <span className='absolute w-full h-full bg-[#FF6666] rounded-full animate-ping opacity-75 z-0'></span>
                   <span className='w-4 h-4 bg-[#FF6666] text-white rounded-full flex items-center justify-center z-10 font-semibold'>
@@ -274,6 +286,7 @@ export const ManageGeoBasedRuleList: React.FC = () => {
                 }}
                 handleCloseFilter={handleCloseFilter}
                 handleSorting={handleSorting}
+                onFilterChange={handleCountry}
               />
             </Suspense>
           </div>
@@ -286,7 +299,7 @@ export const ManageGeoBasedRuleList: React.FC = () => {
             appliedFilters={appliedFilters} // removed unsafe cast
             tableParams={tableParams}
             setTableParams={setTableParams}
-            onSelectionChange={() => { }}
+            onSelectionChange={() => {}}
             refreshTrigger={refreshTrigger}
             setColumnAnchorEl={setColumnAnchorEl}
             columnAnchorEl={columnAnchorEl}

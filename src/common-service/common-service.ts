@@ -32,7 +32,11 @@ import {
 } from '../consultant/types';
 
 export const getAllCountriesUrl = (statusScope?: string): string => {
-  return `/api/accounts/country?statusScope=${statusScope}`;
+  const baseUrl = '/api/accounts/country';
+  if (statusScope && statusScope.trim()) {
+    return `${baseUrl}?statusScope=${encodeURIComponent(statusScope.trim())}`;
+  }
+  return baseUrl;
 };
 /**
  * Fetches detailed information for a all country
