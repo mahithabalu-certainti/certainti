@@ -249,50 +249,6 @@ const exportJurisdictionConfigSchema = Joi.object({
   timezone: Joi.string().optional()
 });
 
-const jurisdictionRDConfigSchema = Joi.object({
-  config_rid: Joi.string().required(),
-  credit_config_group_rid: Joi.string().required()
-});
-
-const jurisdictionRDConfigSchemaForNew = Joi.object({
-  country_rid: Joi.string().required(),
-  state_rid: Joi.string().optional().allow("", null),
-  is_federal: Joi.boolean().required()
-});
-
-
-// Allow jurisdictionConfig to accept any keys with any values
-const dynamicJurisdictionConfigSchema = Joi.object().pattern(/^.*$/, Joi.any());
-
-const updateJurisdictionRDConfigSchema = Joi.object({
-  config_rid: Joi.string().required(),
-  effective_start_date: Joi.date().required(),
-  is_federal: Joi.boolean().required(),
-  effective_end_date: Joi.date().optional().allow("", null),
-  config_name: Joi.string().required(),
-  jurisdictionConfig: dynamicJurisdictionConfigSchema.required(),
-  platformConfig: dynamicJurisdictionConfigSchema.optional(),
-  jurisdiction_config_group_rid: Joi.string().required(),
-  platform_config_group_rid: Joi.string().optional().allow("", null),
-  status_rid: Joi.string().required(),
-  country_rid: Joi.string().optional().allow("", null),
-  state_rid: Joi.string().optional().allow("", null)
-});
-
-const createJurisdictionRDConfigSchema = Joi.object({
-  country_rid: Joi.string().optional().allow("", null),
-  config_name: Joi.string().max(255).required(),
-  state_rid: Joi.string().optional().allow("", null),
-  effective_start_date: Joi.date().required(),
-  effective_end_date: Joi.date().optional().allow("", null),
-  jurisdiction_config_group_rid: Joi.string().required(),
-  jurisdictionConfig: dynamicJurisdictionConfigSchema.required(),
-  platform_config_group_rid: Joi.string().optional().allow("", null),
-  platformConfig: dynamicJurisdictionConfigSchema.optional(),
-  is_federal: Joi.boolean().required(),
-  status_rid: Joi.string().required()
-});
-
 
 
 const exportCaseSummarySchema = Joi.object({
@@ -1188,8 +1144,6 @@ const listResourceCostSchemaForFinancialHighlights = Joi.object({
     }),
 });
 
-
-
 const rdCreditGenerationSchema = Joi.object({
   account_rid : Joi.string().max(255).required(),
   case_rid : Joi.string().max(255).required(),
@@ -1207,6 +1161,7 @@ const rdCreditDataSchema = Joi.object({
   caseRid: Joi.string().max(255).required(),
   stateCode: Joi.string().length(2).required(),
 });
+
 
 export {
   createCaseSchema,
@@ -1248,9 +1203,6 @@ export {
   updateActivityTaskSchema,
   listActivityTaskSchema,
   exportActivitySchema,
-  rdCreditGenerationSchema,
-  rdCreditProcessSchema,
-  rdCreditDataSchema,
   createActivityEmailSchema,
   updateActivityEmailSchema,
   createActivityMeetingSchema,
@@ -1266,5 +1218,8 @@ export {
   exportJurisdictionConfigSchema,
   jurisdictionRDConfigSchemaForNew,
   caseSubmissionDateSchema,
-  listResourceCostSchemaForFinancialHighlights
+  listResourceCostSchemaForFinancialHighlights,
+   rdCreditGenerationSchema,
+  rdCreditProcessSchema,
+  rdCreditDataSchema,
 };
