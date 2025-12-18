@@ -22,7 +22,8 @@ export const getTaskFilterFields = (
   statusOptions: { value: string; label: string }[],
   _assigneeOptions: { value: string; label: string }[],
   accountStatusOptions: { value: string; label: string }[],
-  permissionMap?: Record<string, { read: boolean; edit: boolean }>
+  permissionMap?: Record<string, { read: boolean; edit: boolean }>,
+  accountPermissionMap?: Record<string, { read: boolean; edit: boolean }>
 ): FieldConfig[] => [
   {
     name: 'Task ID',
@@ -36,6 +37,9 @@ export const getTaskFilterFields = (
     value: 'account_name',
     type: 'text',
     operatorOption: textOptions,
+    hide: accountPermissionMap
+      ? !accountPermissionMap['account_name']?.read
+      : false,
   },
   {
     name: 'Task Name',
@@ -64,8 +68,8 @@ export const getTaskFilterFields = (
     hide: permissionMap ? !permissionMap['fiscal_year']?.read : false,
   },
   {
-    name: 'Attach To',
-    value: 'attach_to',
+    name: 'Related To Name',
+    value: 'attach_to_name',
     type: 'text',
     hide: permissionMap
       ? !(
@@ -74,9 +78,10 @@ export const getTaskFilterFields = (
       : false,
   },
   {
-    name: 'Attachment Level',
+    name: 'Related Entity',
     value: 'attachment_level',
     type: 'text',
+    operatorOption: textOptions,
     hide: permissionMap ? !permissionMap['attachment_level']?.read : false,
   },
   {
@@ -109,20 +114,23 @@ export const getTaskFilterFields = (
   },
   {
     name: 'Account Status',
-    value: 'account_status_name',
+    value: 'account_status_rid',
     type: 'enum',
     options: accountStatusOptions.map((opt) => ({
       option: opt.label,
       value: opt.value,
     })),
     operatorOption: enumOptions,
-    hide: permissionMap ? !permissionMap['account_status_name']?.read : false,
+    hide: accountPermissionMap
+      ? !accountPermissionMap['status_rid']?.read
+      : false,
   },
   {
     name: 'Created By',
     value: 'created_by_name',
     type: 'text',
-    hide: permissionMap ? !permissionMap['created_by_name']?.read : false,
+    operatorOption: textOptions,
+    hide: permissionMap ? !permissionMap['created_by']?.read : false,
   },
   {
     name: 'Created On',
@@ -131,15 +139,22 @@ export const getTaskFilterFields = (
     hide: permissionMap ? !permissionMap['created_datetime']?.read : false,
   },
   {
-    name: 'Modified By',
+    name: 'Updated By',
     value: 'modified_by_name',
     type: 'text',
-    hide: permissionMap ? !permissionMap['modified_by_name']?.read : false,
+    operatorOption: textOptions,
+    hide: permissionMap ? !permissionMap['modified_by']?.read : false,
   },
   {
-    name: 'Modified On',
+    name: 'Updated On',
     value: 'modified_datetime',
     type: 'date',
     // hide: !permissionMap?.['modified_datetime']?.read,
+  },
+  {
+    name: 'Sort Options',
+    value: 'sort_options',
+    type: 'system-sort',
+    options: [{ value: 'createdAt_desc', option: 'Recently Created' }],
   },
 ];

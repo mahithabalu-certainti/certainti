@@ -42,8 +42,7 @@ export const getCaseTaskListColumns = (
     sortable: true,
     width: 180,
     render: (row: CaseTaskType) => row.role_name || '-',
-    // hide:
-    //   !permissionMap['role_rid']?.read && !permissionMap['role_rid']?.edit,
+    hide: !permissionMap['role_rid']?.read && !permissionMap['role_rid']?.edit,
   },
   {
     id: 'effective_start_datetime',

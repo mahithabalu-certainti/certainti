@@ -98,8 +98,10 @@ export const CreateCases: React.FC = () => {
     ? caseData?.country_rid || countryRid || selectedCountryRid
     : selectedCountryRid || countryRid;
 
-  const { data: submissionDateData } =
-    useGetCaseSubmissionDate(effectiveCountryRid);
+  const { data: submissionDateData } = useGetCaseSubmissionDate(
+    effectiveCountryRid,
+    Number(selectedFiscalYear)
+  );
 
   const commonSuccess = createCase.isSuccess || updateCase.isSuccess;
 

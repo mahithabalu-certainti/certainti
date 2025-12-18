@@ -31,9 +31,9 @@ export const fetchGeoBasedList = async (params: GeoBasedRuleListParams) => {
         sortBy: params.sortBy,
         sortOrder: params.sortOrder,
         filters: params.filters || {},
-        // search: params.searchValue || '',
+        // search: params.search || '',
         ...(params.filters && { filters: params.filters }),
-        // ...(params.searchValue && { searchValue: params.searchValue }),
+        ...(params.search && { search: params.search }),
     };
 
     const url = getGeoBasedListUrl(queryParams);
