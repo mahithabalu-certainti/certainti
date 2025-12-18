@@ -31,6 +31,8 @@ import {
   ConfigDetails,
   CreateConfigPayload,
 } from '../../../types/geo-based-rule';
+import { useGetProjectType } from '../../../../consultant/services/project';
+import { ManageGeoIcon } from '../../../../assets';
 
 const GeoBasedRuleForm: React.FC = () => {
   const formRef = useRef<HTMLFormElement>(null);
@@ -42,6 +44,7 @@ const GeoBasedRuleForm: React.FC = () => {
   const [caseNamePrefix, setCaseNamePrefix] = useState<string>('');
   const [isFederal, setIsFederal] = useState<boolean | null>(null);
   // Service Hooks
+  const projectTypeOptions = useGetProjectType();
   const statusOptions = useGetStatus();
   const allCountries = useGetAllCountries('Active');
   const states = useFetchState(currentCountry);
@@ -85,6 +88,14 @@ const GeoBasedRuleForm: React.FC = () => {
       })) || [],
     [statusOptions?.data?.data?.status]
   );
+  const memoizedProjectTypes: SelectOption[] = useMemo(
+    () =>
+      projectTypeOptions?.data?.data?.projectType.map((item) => ({
+        label: item.project_type_name,
+        value: item.rid,
+      })) || [],
+    [projectTypeOptions?.data?.data?.projectType]
+  );
   const { permission } = useSelector((state: RootState) => state.permission);
   // Mock permission map - replace with actual permission logic
   const configEditFields = useMemo(
@@ -127,14 +138,19 @@ const GeoBasedRuleForm: React.FC = () => {
     const regionLabel =
       regionOptions.find((r) => r.value === currentRegion)?.label || '';
 
-    let prefix = '';
+    let prefix = 'C-'; // Default prefix starts with "C-"
+
     if (countryCode) {
-      prefix = `${countryCode}`;
+      prefix += `${countryCode}`;
       if (regionLabel) {
         prefix += `-${regionLabel}`;
       }
       prefix += '-';
+    } else {
+      // If no country selected yet, keep as "C-"
+      prefix = 'C-';
     }
+
     setCaseNamePrefix(prefix);
   }, [currentCountry, currentRegion, countryOptions, regionOptions]);
 
@@ -170,8 +186,9 @@ const GeoBasedRuleForm: React.FC = () => {
   ]);
 
   const initialValues = useMemo(() => {
-    if (!isEditView || !ruleDetailsData?.data?.configDetails) return {};
-    const details = ruleDetailsData.data.configDetails as ConfigDetails;
+    const details = configDetails as ConfigDetails;
+    if (!details || Object.keys(details).length === 0) return {};
+
     const dynamicValues: Record<string, any> = {};
 
     // Extract values from nested configs
@@ -186,10 +203,11 @@ const GeoBasedRuleForm: React.FC = () => {
       }
     });
 
+    // Use current state for controlled fields to prevent them from clearing when config switches
     return {
       ...dynamicValues,
-      country: details.country_rid,
-      region: details.state_rid,
+      country: currentCountry,
+      region: currentRegion,
       status_rid: details.status_rid,
       effective_start_date: details.effective_start_date
         ? getDateFormatYYYYMMDD(details.effective_start_date)
@@ -205,13 +223,15 @@ const GeoBasedRuleForm: React.FC = () => {
       updated_on: details.modified_datetime
         ? formatDateToYYYYMMDDWithTime(details.modified_datetime)
         : '-',
-      is_federal: details.is_federal ? YesNo.Yes : YesNo.No,
+      is_federal: isFederal ? YesNo.Yes : YesNo.No,
       state_rid: details.state_rid,
       updated_by: details.modified_user_name ? details.modified_user_name : '-',
       created_by: details.created_user_name ? details.created_user_name : '-',
       config_id: details.rid,
+      // Ensure case_name_prefix field has the default value
+      case_name_prefix: details.case_name_prefix || 'C-',
     };
-  }, [isEditView, ruleDetailsData?.data?.configDetails]);
+  }, [configDetails, currentCountry, currentRegion, isFederal]);
 
   useEffect(() => {
     if (isEditView && ruleDetailsData?.data?.configDetails) {
@@ -227,6 +247,7 @@ const GeoBasedRuleForm: React.FC = () => {
     countryOptions,
     regionOptions,
     memoizedStatus,
+    memoizedProjectTypes,
     states.isLoading,
     permissionMap,
     isFederal,
@@ -277,14 +298,18 @@ const GeoBasedRuleForm: React.FC = () => {
       <div className='h-[50px] flex items-center justify-between px-10 sticky top-0 z-10 bg-white'>
         <div className='flex items-center w-[80%] max-w-[80%]'>
           {/* Add Icon if needed */}
+          <ManageGeoIcon
+            alt='Manage Jurisdiction Rules '
+            className=' h-7 w-7 p-1.5 rounded [&>path]:stroke-[#fff] bg-[#9747FF]'
+          />
           <div className='w-[90%]'>
             <div className='font-semibold text-[12px] leading-[20px] ml-2 mb-[-6px] text-[#7D98B6]'>
               {isEditView && ruleId
-                ? `Geo Based Rule > ${ruleId} `
-                : 'Geo Based Rule'}
+                ? `Jurisdiction Rules > ${(configDetails as ConfigDetails)?.config_name} `
+                : 'Jurisdiction Rules'}
             </div>
             <h5 className='text-[16px] font-bold ml-2 mt-0.5 text-[#2D3E4F]'>
-              {isEditView ? 'Edit Rule' : 'Create Rule'}
+              {isEditView ? 'Edit Configuration' : 'Create Configuration'}
             </h5>
           </div>
         </div>
@@ -323,6 +348,8 @@ const GeoBasedRuleForm: React.FC = () => {
           formRef={formRef}
           layout={Layout.TYPE_1}
           onChange={onChangeField}
+          keyStart='effective_start_date'
+          keyEnd='effective_end_date'
         />
       </div>
     </div>

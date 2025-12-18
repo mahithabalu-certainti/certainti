@@ -1,6 +1,6 @@
 import {
   formatDateToYYYYMMDDWithTime,
-  getDateFormatYYYYMMDD,
+  getDateFormat,
 } from '../../../../common-utils';
 import { ListTableColumn } from '../../../../components/table/types';
 import { GeoBasedRule } from '../../../types/geo-based-rule';
@@ -18,14 +18,25 @@ export const getGeoBasedRuleColumns = (
     },
     {
       id: 'config_name',
-      label: 'Config Name',
+      label: 'Configuration Name',
       sortId: 'config_name',
       sortable: true,
-      width: 280,
+      width: 250,
       hide:
         !permissionMap?.['config_name']?.read &&
         !permissionMap?.['config_name']?.edit,
-      render: (row: GeoBasedRule) => `${row.country_code} ${row.state_name ? ' - ' + row.state_name : ''}- ${row.config_name}`,
+      render: (row: GeoBasedRule) => {
+        let displayText = 'C-';
+        if (row.country_code) {
+          displayText += row.country_code;
+          if (row.state_name) {
+            displayText += `-${row.state_name}`;
+          }
+          displayText += '-';
+        }
+        displayText += row.config_name || '';
+        return displayText || '-';
+      },
     },
     {
       id: 'country_name',
@@ -68,7 +79,7 @@ export const getGeoBasedRuleColumns = (
       editId: 'effective_start_date',
       render: (row: GeoBasedRule) =>
         row.effective_start_date
-          ? getDateFormatYYYYMMDD(row.effective_start_date)
+          ? getDateFormat(row.effective_start_date)
           : '-',
       field: {
         type: 'date',
@@ -112,13 +123,44 @@ export const getGeoBasedRuleColumns = (
       editId: 'effective_end_date',
       render: (row: GeoBasedRule) =>
         row.effective_end_date
-          ? getDateFormatYYYYMMDD(row.effective_end_date)
+          ? getDateFormat(row.effective_end_date)
           : '-',
       field: {
         type: 'date',
         required: false,
         placeholder: 'YYYY-MM-DD',
       },
+    },
+    {
+      id: 'status_name',
+      sortId: 'status_name',
+      label: 'Status',
+      width: 130,
+      sortable: true,
+      hide:
+        !permissionMap?.['status_rid']?.edit &&
+        !permissionMap?.['status_rid']?.read,
+      render: (row: GeoBasedRule) => (
+        <span
+          className={`${row.status_name === 'Active'
+            ? 'text-[#199806]'
+            : row.status_name === 'In-Active'
+              ? 'text-[#f44336] '
+              : ''
+            }`}
+        >
+          {row.status_name || '-'}
+        </span>
+      ),
+    },
+    {
+      id: 'created_user_name',
+      sortId: 'created_user_name',
+      label: 'Created By',
+      sortable: true,
+      hide:
+        !permissionMap?.['created_by']?.read &&
+        !permissionMap?.['created_by']?.edit,
     },
     {
       id: 'created_datetime',
@@ -133,6 +175,15 @@ export const getGeoBasedRuleColumns = (
         row.created_datetime
           ? formatDateToYYYYMMDDWithTime(row.created_datetime)
           : '-',
+    },
+    {
+      id: 'modified_user_name',
+      sortId: 'modified_user_name',
+      label: 'Updated By',
+      sortable: true,
+      hide:
+        !permissionMap?.['modified_by']?.read &&
+        !permissionMap?.['modified_by']?.edit,
     },
     {
       id: 'modified_datetime',

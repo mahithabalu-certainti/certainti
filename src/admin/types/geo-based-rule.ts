@@ -51,6 +51,7 @@ export interface GeoBasedRuleListParams {
 // }
 
 export interface ConfigDetails {
+  case_name_prefix: string;
   config_name: string;
   jurisdictionConfig: {
     configItems: ConfigItem[];
