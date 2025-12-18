@@ -292,6 +292,8 @@ const CaseFinancialSummary: React.FC<ProjectFinancialProps> = ({
           <Summary
             fiscalYear={fiscalYearValue}
             accountDetails={accountDetails}
+            caseRid={caseRid}
+            accountId={accountId}
           />
         )}
         {tabParam === 'state_wise_summary' && isStatewiseSummaryViewEnable && (
@@ -300,6 +302,8 @@ const CaseFinancialSummary: React.FC<ProjectFinancialProps> = ({
             countryId={countryId}
             stateId={stateId}
             accountDetails={accountDetails}
+            caseRid={caseRid}
+            accountId={accountId}
           />
         )}
         {tabParam === 'project_cost' && isProjectCostViewEnable && (

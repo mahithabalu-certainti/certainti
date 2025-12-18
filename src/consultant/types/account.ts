@@ -483,13 +483,13 @@ export interface FormField {
   id: string;
   label: string;
   type:
-    | 'text'
-    | 'number'
-    | 'email'
-    | 'select'
-    | 'textarea'
-    | 'checkbox'
-    | 'date';
+  | 'text'
+  | 'number'
+  | 'email'
+  | 'select'
+  | 'textarea'
+  | 'checkbox'
+  | 'date';
   required?: boolean;
   editable?: boolean;
   hide?: boolean;
@@ -541,6 +541,7 @@ export interface FinancialSummaryBody {
   flag: FinancialSummaryFlag;
   summaryType: string;
   region_rid: string;
+  case_rid?: string;
 }
 
 export type FormFiscalDateType = {

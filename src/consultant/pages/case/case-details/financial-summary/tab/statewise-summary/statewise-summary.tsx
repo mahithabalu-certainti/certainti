@@ -15,7 +15,6 @@ import {
   getResourceMetricColumns,
 } from './columns';
 import { Box, MenuItem, Select, Skeleton } from '@mui/material';
-import TextButton from '../../../../../../../components/button/text-button';
 import { useFetchFinancialStates } from '../../../../../../services/account';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../../store/store';
@@ -28,6 +27,8 @@ interface FinancialSummaryProps {
   accountDetails?: accountDetailsProps;
   countryId?: string | null;
   stateId?: string | null;
+  caseRid?: string;
+  accountId?: string;
 }
 
 export const StateWiseSummary: React.FC<FinancialSummaryProps> = ({
@@ -35,9 +36,12 @@ export const StateWiseSummary: React.FC<FinancialSummaryProps> = ({
   countryId,
   stateId,
   accountDetails,
+  caseRid,
+  accountId,
 }) => {
   // hooks
-  const { accountid } = useParams();
+  const { accountid: paramAccountId } = useParams();
+  const accountid = accountId || paramAccountId;
   const { permission } = useSelector((state: RootState) => state.permission);
 
   // UseStates
@@ -48,7 +52,6 @@ export const StateWiseSummary: React.FC<FinancialSummaryProps> = ({
     []
   );
   const [rdCredits, setRdCredits] = useState<SummaryRdCredits[]>([]);
-  const [type, setType] = useState('all');
   const [region, setRegion] = useState('');
   const [payload, setPayload] = useState({
     flag: 'all',
@@ -66,16 +69,6 @@ export const StateWiseSummary: React.FC<FinancialSummaryProps> = ({
   });
 
   // Variables
-  const projectTypes: SelectOption[] = [
-    {
-      label: 'All',
-      value: 'all',
-    },
-    {
-      label: 'Claimed Projects',
-      value: 'rd_qualified',
-    },
-  ];
   const memoizedState: SelectOption[] = useMemo(
     () =>
       financislStates.data?.data.map((state) => ({
@@ -111,10 +104,11 @@ export const StateWiseSummary: React.FC<FinancialSummaryProps> = ({
         summaryType: 'state',
         region_rid: payload.region_rid || stateId,
         flag: payload.flag as FinancialSummaryFlag,
+        case_rid: caseRid,
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [accountid, fiscalYear, payload.region_rid, payload.flag, stateId]);
+  }, [accountid, fiscalYear, payload.region_rid, payload.flag, stateId, caseRid]);
   useEffect(() => {
     if (allData) {
       setResourceMetric(allData.resource_metrics);
@@ -153,7 +147,7 @@ export const StateWiseSummary: React.FC<FinancialSummaryProps> = ({
         </Box>
       )}
       <div>
-        <div className='max-w-[80%] flex mb-5 mt-2 gap-3'>
+        <div className='max-w-[300px] flex mb-5 mt-2 gap-3'>
           {financislStates.isLoading ? (
             <Skeleton variant='rounded' width='100%' height={32} />
           ) : (
@@ -205,7 +199,10 @@ export const StateWiseSummary: React.FC<FinancialSummaryProps> = ({
                 },
               }}
               value={region || stateId || ''}
-              onChange={(e) => setRegion(e.target.value)}
+              onChange={(e) => {
+                setRegion(e.target.value);
+                setPayload((prev) => ({ ...prev, region_rid: e.target.value }));
+              }}
               renderValue={(selected) => {
                 if (!selected) {
                   return 'Select State';
@@ -237,79 +234,6 @@ export const StateWiseSummary: React.FC<FinancialSummaryProps> = ({
               })}
             </Select>
           )}
-          <Select
-            name='project'
-            className='custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px]'
-            displayEmpty
-            fullWidth
-            size='small'
-            MenuProps={{
-              PaperProps: {
-                sx: {
-                  maxWidth: 300,
-                  maxHeight: 300,
-                  marginTop: '4px',
-                  boxShadow:
-                    'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
-                  '& .MuiMenuItem-root': {
-                    fontSize: '13px',
-                    padding: '6px 12px',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                  },
-                },
-              },
-            }}
-            sx={{
-              height: '32px',
-              fontSize: '13px',
-              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                border: '2px solid #60A5FA',
-              },
-              '& .MuiOutlinedInput-root': {
-                '&.Mui-focused': {
-                  boxShadow: 'none',
-                },
-              },
-              '.MuiSelect-select': {
-                padding: '6px 6px',
-              },
-              '&.Mui-disabled': {
-                backgroundColor: '#f3f4f6',
-              },
-              '& svg': {
-                color: '#7D98B6',
-              },
-              '& .MuiOutlinedInput-notchedOutline': {
-                borderRadius: '2px',
-              },
-            }}
-            value={type}
-            onChange={(e) => setType(e.target.value)}
-          >
-            {projectTypes.map((it, i) => {
-              return (
-                <MenuItem
-                  key={i}
-                  sx={{
-                    color: '#425A76',
-                    fontSize: '13px',
-                    fontWeight: '500',
-                  }}
-                  value={it.value}
-                  title={it.label}
-                >
-                  {it.label}
-                </MenuItem>
-              );
-            })}
-          </Select>
-          <TextButton
-            key='section-header-btn'
-            label='Go'
-            sx={{ padding: '15px 4px' }}
-            onClick={() => setPayload({ flag: type, region_rid: region })}
-          />
         </div>
 
         <div className='h-[46px] max-h-[46px] flex items-center justify-between border border-[#CBD6E2] px-3 text-[14px] font-bold bg-[#FCFCFC]'>
