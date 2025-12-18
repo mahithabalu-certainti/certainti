@@ -1,4 +1,4 @@
-import { Sequelize } from "sequelize/lib/sequelize";
+import { Sequelize } from "sequelize";
 
 export const HttpStatus = {
   SUCCESS: 200,
