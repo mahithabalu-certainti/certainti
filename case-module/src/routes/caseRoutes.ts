@@ -301,4 +301,9 @@ routes.put(
   checkUserStatusMiddleware("projects_tech_summary_view_edit"),
   controller.caseController.signoffTechnicalDocumentation
 )
+routes.post(
+  "/financialWorking/signOff",
+  checkUserStatusMiddleware("NA"),
+  controller.childCaseController.signOffFinancialWorking
+)
 export default routes;
