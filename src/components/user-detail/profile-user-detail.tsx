@@ -302,7 +302,7 @@ export const ProfileUserDetailComponent = ({
       // Check file size (optional, e.g., limit to 5MB)
       const maxSize = 5 * 1024 * 1024; // 5MB in bytes
       if (file.size > maxSize) {
-        alert('File size should be less than 5MB');
+        errorToast('File size should be less than 5MB');
         return;
       }
 
@@ -315,7 +315,7 @@ export const ProfileUserDetailComponent = ({
         'image/webp',
       ];
       if (!allowedTypes.includes(file.type)) {
-        alert('Please select a valid image file (JPEG, PNG, GIF, WebP)');
+        errorToast('Please select a valid image file (JPEG, PNG, GIF, WebP)');
         return;
       }
       const reader = new FileReader();

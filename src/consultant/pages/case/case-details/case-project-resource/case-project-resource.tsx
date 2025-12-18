@@ -219,11 +219,11 @@ const CaseProjectResource: React.FC<ProjectResourceProps> = ({
       hide: resourceId ? true : false,
     },
     {
-      label: 'Back to Project Resource',
+      label: 'Back to Case Project Resource',
       variant: 'outlined' as const,
       disabled: accountInActive,
       onClick: handleBackToCaseProjectResource,
-      sx: { ...BUTTON_STYLES, width: '180px', minWidth: '125px' },
+      sx: { ...BUTTON_STYLES, width: '200px', minWidth: '125px' },
       hide: resourceId ? false : true,
     },
   ];
@@ -317,7 +317,11 @@ const CaseProjectResource: React.FC<ProjectResourceProps> = ({
       />
       <>
         <SectionHeader
-          title={resourceId ? 'Project Resource Details' : 'Project Resource'}
+          title={
+            resourceId
+              ? 'Case Project Resource Details'
+              : 'Case Project Resource'
+          }
           titleIcon={
             <ProjectsIcon
               alt='attachment-header-icon'

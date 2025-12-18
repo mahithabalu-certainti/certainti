@@ -230,7 +230,7 @@ export const GeoBasedRuleFormFieldsData = (
               !permissionMap?.['created_by']?.edit &&
               !permissionMap?.['created_by']?.read,
           }),
-          createTextField('config_id', 'Config ID', {
+          createTextField('r_number', 'Geo Based ID', {
             required: false,
             disabled: true,
             hide:

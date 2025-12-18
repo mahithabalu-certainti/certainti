@@ -105,13 +105,18 @@ const EmailForm: React.FC<EmailFormProps> = ({
   const [ccInput, setCcInput] = useState<string>('');
 
   const isEditView = location.pathname.split('/').includes('edit');
-  const sourcePath = searchParams.get('source') || sourceDetails?.source || '';
-  const accountId =
-    searchParams.get('accountId') || sourceDetails?.accountId || '';
-  const entityLevel =
-    searchParams.get('entityLevel') || sourceDetails?.entityLevel || '';
-  const entityId =
-    searchParams.get('entityId') || sourceDetails?.entityId || '';
+  const sourcePath = sourceDetails?.source
+    ? sourceDetails?.source
+    : searchParams.get('source') || '';
+  const accountId = sourceDetails?.accountId
+    ? sourceDetails?.accountId
+    : searchParams.get('accountId') || '';
+  const entityLevel = sourceDetails?.entityLevel
+    ? sourceDetails?.entityLevel
+    : searchParams.get('entityLevel') || '';
+  const entityId = sourceDetails?.entityId
+    ? sourceDetails?.entityId
+    : searchParams.get('entityId') || '';
 
   const [toSuggestions, setToSuggestions] = useState<SuggestionState>({
     suggestions: [],
@@ -169,10 +174,10 @@ const EmailForm: React.FC<EmailFormProps> = ({
   const { data: templateDetails, isLoading: templateLoading } =
     useEmailTemplateDetails(currentTemplate.value);
 
-  const isEmailConfigured =
-    searchParams.get('isEmailConfigured') === 'true' ||
-    sourceDetails?.isEmailConfigured ||
-    emailData?.is_email_configured;
+  const isEmailConfigured = sourceDetails?.isEmailConfigured
+    ? sourceDetails?.isEmailConfigured
+    : searchParams.get('isEmailConfigured') === 'true' ||
+      emailData?.is_email_configured;
 
   const userOptions = useMemo(() => {
     return (

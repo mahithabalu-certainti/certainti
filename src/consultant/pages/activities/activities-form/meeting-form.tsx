@@ -147,13 +147,18 @@ const MeetingForm: React.FC<MeetingFormProps> = ({
 
   const isEditView = location.pathname.split('/').includes('edit');
   const systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const sourcePath = searchParams.get('source') || sourceDetails?.source || '';
-  const accountId =
-    searchParams.get('accountId') || sourceDetails?.accountId || '';
-  const entityLevel =
-    searchParams.get('entityLevel') || sourceDetails?.entityLevel || '';
-  const entityId =
-    searchParams.get('entityId') || sourceDetails?.entityId || '';
+  const sourcePath = sourceDetails?.source
+    ? sourceDetails?.source
+    : searchParams.get('source') || '';
+  const accountId = sourceDetails?.accountId
+    ? sourceDetails?.accountId
+    : searchParams.get('accountId') || '';
+  const entityLevel = sourceDetails?.entityLevel
+    ? sourceDetails?.entityLevel
+    : searchParams.get('entityLevel') || '';
+  const entityId = sourceDetails?.entityId
+    ? sourceDetails?.entityId
+    : searchParams.get('entityId') || '';
 
   const [attendeesSuggestions, setAttendeesSuggestions] =
     useState<SuggestionState>({

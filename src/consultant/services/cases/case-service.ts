@@ -392,15 +392,19 @@ export const useGetCaseOwners = () => {
   });
 };
 
-export const getCaseSubmissionDateUrl = (countryRid: string): string =>
-  `/api/cases/getCaseSubmissionDate?country_rid=${countryRid}`;
+export const getCaseSubmissionDateUrl = (
+  countryRid: string,
+  fiscalYear: number
+): string =>
+  `/api/cases/getCaseSubmissionDate?country_rid=${countryRid}&fiscal_year=${fiscalYear}`;
 
 export const fetchCaseSubmissionDate = async (
-  countryRid: string
+  countryRid: string,
+  fiscalYear: number
 ): Promise<CaseSubmissionDateResponse> => {
   try {
     const { data } = await caseServiceApi.get<CaseSubmissionDateResponse>(
-      getCaseSubmissionDateUrl(countryRid)
+      getCaseSubmissionDateUrl(countryRid, fiscalYear)
     );
     return data;
   } catch (error) {
@@ -409,12 +413,15 @@ export const fetchCaseSubmissionDate = async (
   }
 };
 
-export const useGetCaseSubmissionDate = (countryRid: string) => {
+export const useGetCaseSubmissionDate = (
+  countryRid: string,
+  fiscalYear: number
+) => {
   return useQuery<CaseSubmissionDateResponse, Error>({
-    queryKey: ['case-submission-date', countryRid],
-    queryFn: () => fetchCaseSubmissionDate(countryRid),
+    queryKey: ['case-submission-date', countryRid, fiscalYear],
+    queryFn: () => fetchCaseSubmissionDate(countryRid, fiscalYear),
     retry: 0,
     gcTime: 0,
-    enabled: !!countryRid,
+    enabled: !!countryRid && !!fiscalYear,
   });
 };

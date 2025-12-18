@@ -70,6 +70,7 @@ interface ITaskTableProps {
   >;
   searchValue?: string;
   fixedFilters?: Record<string, any>;
+  taskType: 'milestone' | 'activity';
 }
 
 export const TaskTable: React.FC<ITaskTableProps> = ({
@@ -82,6 +83,7 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
   columnAnchorEl,
   searchValue,
   fixedFilters,
+  taskType,
 }) => {
   const { errorToast, successToast } = useToast();
   const { fiscalYear, filters } = useSelector<
@@ -101,7 +103,7 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
   const updateCommentMutation = useUpdateTaskComment();
   const deleteCommentMutation = useDeleteTaskComment();
   // Hooks for Milestone (Case Task) details
-  const isMilestoneTab = fixedFilters?.attachment_level === 'milestone';
+  const isMilestoneTab = taskType === 'milestone';
   const isCaseTask = selectedTask?.attachment_level === 'case';
   const shouldFetchCaseData = isMilestoneTab || isCaseTask;
 
@@ -579,6 +581,12 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
     [permission]
   );
 
+  // Permission Map for Account fields (account_name, account_status_name)
+  const accountPermissionMap = useMemo(
+    () => getPermissionMap(permission, AllPermissions.ACCOUNTS_VIEW_EDIT),
+    [permission]
+  );
+
   const fieldHiddenMap = useMemo(() => {
     if (!selectedTask) return {};
 
@@ -736,10 +744,11 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
   const { data, isLoading, isError } = useAllTasksList(
     {
       ...tableParams,
-      filters: { ...appliedFilters, ...fixedFilters },
+      filters: { ...fixedFilters, ...appliedFilters },
       globalFilters: reshapeGlobalFilter(filters as FilterState),
       search: searchValue,
       fiscalYear: newFiscalYear,
+      flag: taskType,
     },
     refreshTrigger
   );
@@ -815,9 +824,16 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
         handleTaskClick,
         statusOptions,
         priorityOptions,
-        currentPermissionMap
+        currentPermissionMap,
+        accountPermissionMap
       ),
-    [handleTaskClick, statusOptions, priorityOptions, currentPermissionMap]
+    [
+      handleTaskClick,
+      statusOptions,
+      priorityOptions,
+      currentPermissionMap,
+      accountPermissionMap,
+    ]
   );
 
   // const actionButtons: ActionItem<TaskList>[] = [
@@ -995,11 +1011,7 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
               String(currentYear - 2 + i)
             );
           })()}
-          taskType={
-            fixedFilters?.attachment_level === 'milestone'
-              ? 'milestone'
-              : 'activity'
-          }
+          taskType={taskType}
           fieldVisibility={fieldHiddenMap}
           fieldDisabled={fieldDisabledMap}
         />
