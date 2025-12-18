@@ -27,12 +27,7 @@ import {
   ActivityType,
   ProjectResourcesListParams,
   ActivityDropdownItem,
-  ProjectFinancialProjectExportParams,
-  ProjectFinancialResourceExportParams,
 } from '../../../types';
-import CaseFinancialSummary from './financial-summary/financial-summary';
-import { useAccountDetail } from '../../../services/account-details/account-details-service';
-import { accountDetailsProps } from '../../account-details/utils';
 import {
   AllMenus,
   AllModules,
@@ -102,10 +97,6 @@ import { CaseProjectTask } from './case-project-task';
 import { ExportCaseProjectTasktList } from '../../../services/case-project-task/case-project-task-service';
 import { CaseProjectResource } from './case-project-resource';
 import { ExportCaseProjectResourceList } from '../../../services/case-project-resource/case-project-resource-service';
-import {
-  exportFinancialProjectCost,
-  exportFinancialResourceCost,
-} from '../../../services/financial/financial-service';
 
 export const CaseDetails = () => {
   const navigate = useNavigate();
@@ -241,21 +232,6 @@ export const CaseDetails = () => {
       activity_type: 'all',
     });
 
-  const [financialResCostParams, setFinancialResCostParams] =
-    useState<ProjectFinancialResourceExportParams>({
-      sortBy: 'project_code',
-      sortOrder: 'ASC',
-      filters: {},
-    });
-
-  const [financialProjectCostParams, setFinancialProjectCostParams] =
-    useState<ProjectFinancialProjectExportParams>({
-      sortBy: 'project_code',
-      sortOrder: 'ASC',
-      filters: {},
-      fiscalYear: 0,
-    });
-
   const activityId = searchParams.get('activity_id');
   const activityType = searchParams.get('activity_type');
   const activityViewDetails = !!activityId && !!activityType;
@@ -304,15 +280,6 @@ export const CaseDetails = () => {
   const isCaseDetailsEnable = checkPermission(
     permission,
     AllPermissions.CASES_VIEW_EDIT
-  );
-  const isAccountDetailsEnable = checkPermission(
-    permission,
-    AllPermissions.ACCOUNTS_VIEW_EDIT
-  );
-  const { data: accountData } = useAccountDetail(
-    accountId as string,
-    isAccountDetailsEnable,
-    Date.now()
   );
 
   const isAttachmentExportEnable = checkPermission(
@@ -398,16 +365,6 @@ export const CaseDetails = () => {
     AllPermissions.ACTIVITY_MEETING_CREATE
   );
 
-  const isFinancialResourceCostExportEnable = checkPermission(
-    permission,
-    AllPermissions.ACCOUNT_FINANCIAL_RESOURCE_COST_EXPORT
-  );
-
-  const isFinancialProjectCostExportEnable = checkPermission(
-    permission,
-    AllPermissions.ACCOUNT_FINANCIAL_PROJECT_COST_EXPORT
-  );
-
   const activityExportPermissionMap: Record<string, boolean> = {
     task: !!isActivityTaskExportEnable,
     email: !!isActivityEmailExportEnable,
@@ -426,10 +383,7 @@ export const CaseDetails = () => {
       searchParams.get('tab') !== 'case_task' &&
       searchParams.get('list') !== 'interactions' &&
       searchParams.get('list') !== 'projectTask' &&
-      searchParams.get('list') !== 'interactions' &&
-      searchParams.get('list') !== 'projectTask' &&
-      searchParams.get('list') !== 'projectResource' &&
-      searchParams.get('list') !== 'financialHighlights'
+      searchParams.get('list') !== 'projectResource'
     ) {
       return;
     }
@@ -489,23 +443,6 @@ export const CaseDetails = () => {
       exportType === 'project_resource'
     ) {
       ExportCaseProjectResourceList(projectResourceParams, accountId, caseId);
-    } else if (exportType === 'financial_resource_cost') {
-      const financialPayload = {
-        accountNumber: accountData?.data?.accountById?.r_number,
-        accountRid: accountId,
-      };
-      exportFinancialResourceCost({
-        ...financialResCostParams,
-        ...financialPayload,
-      });
-    } else if (exportType === 'financial_project_cost') {
-      const financialProjectPayload = {
-        accountRid: accountId,
-      };
-      exportFinancialProjectCost({
-        ...financialProjectCostParams,
-        ...financialProjectPayload,
-      });
     }
     if (list === 'interactions') {
       if (interactionHistoryId) {
@@ -585,16 +522,6 @@ export const CaseDetails = () => {
       return !isProjectTaskExportEnable;
     } else if (list === 'projectResource') {
       return !isProjectResourceExportEnable;
-    } else if (
-      list === 'financialHighlights' &&
-      searchParams.get('tab') === 'resource_cost'
-    ) {
-      return !isFinancialResourceCostExportEnable;
-    } else if (
-      list === 'financialHighlights' &&
-      searchParams.get('tab') === 'project_cost'
-    ) {
-      return !isFinancialProjectCostExportEnable;
     } else {
       return true;
     }
@@ -798,36 +725,13 @@ export const CaseDetails = () => {
             activityMenuItems={activityMenuItems}
           />
         );
+      case 'projectResource':
         return (
           <CaseProjectResource
             accountInActive={accountInActive}
             setProjectResourceParams={setProjectResourceParams}
             setExportType={setExportType}
             activityMenuItems={activityMenuItems}
-          />
-        );
-      case 'financialHighlights':
-        return (
-          <CaseFinancialSummary
-            accountDetails={{ ...accountData?.data } as accountDetailsProps}
-            setExportType={setExportType}
-            setResCostExportParams={setFinancialResCostParams}
-            setFinancialProjectCostParams={setFinancialProjectCostParams}
-            countryId={accountData?.data?.accountById?.country_rid}
-            stateId={accountData?.data?.accountById?.region_rid}
-            accountId={accountId}
-          />
-        );
-      case 'financialHighlights':
-        return (
-          <CaseFinancialSummary
-            accountDetails={{ ...accountData?.data } as accountDetailsProps}
-            setExportType={setExportType}
-            setResCostExportParams={setFinancialResCostParams}
-            setFinancialProjectCostParams={setFinancialProjectCostParams}
-            countryId={accountData?.data?.accountById?.country_rid}
-            stateId={accountData?.data?.accountById?.region_rid}
-            accountId={accountId}
           />
         );
       default:
@@ -1060,12 +964,13 @@ export const CaseDetails = () => {
         />
       </div>
       <div
-        className={`transition-all duration-700 ease-in-out overflow-hidden ${isActionItemsExpanded
+        className={`transition-all duration-700 ease-in-out overflow-hidden ${
+          isActionItemsExpanded
             ? 'max-h-0 opacity-0'
             : isError
               ? 'max-h-[60px] opacity-100'
               : 'max-h-[140px] opacity-100'
-          }`}
+        }`}
       >
         <InfoSection
           columns={caseHeaderDetails}
@@ -1077,10 +982,11 @@ export const CaseDetails = () => {
       </div>
       <div className='flex flex-1 flex-row w-full border-b border-[#CBD6E2]'>
         <div
-          className={`flex transition-all ease-in-out ${isCollapsed
+          className={`flex transition-all ease-in-out ${
+            isCollapsed
               ? 'w-[60px] min-w-[60px] max-w-[60px] duration-700'
               : 'w-[220px] min-w-[220px] max-w-[220px] duration-700'
-            }`}
+          }`}
         >
           <SideMenuPanel
             menuItems={sideMenuItems}
