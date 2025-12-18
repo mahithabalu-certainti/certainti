@@ -145,10 +145,10 @@ export const renderFields = <T extends RowData>({
         color: '#7D98B6',
       },
       '& input[type=number]::-webkit-outer-spin-button, & input[type=number]::-webkit-inner-spin-button':
-        {
-          WebkitAppearance: 'none',
-          margin: 0,
-        },
+      {
+        WebkitAppearance: 'none',
+        margin: 0,
+      },
       '& input[type=number]': {
         MozAppearance: 'textfield',
       },
@@ -349,7 +349,7 @@ export const renderFields = <T extends RowData>({
               }}
               format='YYYY-MMM-DD'
               disabled={isFieldDisabled}
-              minDate={dateConstraints.minDate || undefined}
+              minDate={dateConstraints.minDate || dayjs('1950-01-01')}
               maxDate={dateConstraints.maxDate || undefined}
               disableFuture={dateConstraints.disableFuture}
               sx={{

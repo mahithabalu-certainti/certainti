@@ -19,13 +19,14 @@ import {
   ListTable,
   ManageColumnsPopover,
 } from '../../../../../components/table';
-import { CaseProjectTaskRow, getCaseProjectTaskColumns } from './columns';
+import { getCaseProjectTaskColumns } from './columns';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
 import ProjectTaskDetails from '../../../project/project-details/project-task/project-task-details';
 import { ProjectTaskDetailsType } from '../../../../types/project-task';
 import SectionHeader from '../../../../../components/details-section/section-header';
 import TabPanel from '../../../account-details-sidebar/components/tab';
+import { ProjectTasksListType } from '../../../../types/project-tasks';
 
 const CasesProjectTaskTabs: ResourceTabs[] = [
   {
@@ -65,9 +66,9 @@ const CaseProjectTask: React.FC<projectTaskProps> = ({
   const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('ASC');
   const [sortField, setSortField] = useState<string>('project_code');
   const [totalItems, setTotalItems] = useState<number>(0);
-  const [resourceRowList, setResourceRowList] = useState<CaseProjectTaskRow[]>(
-    []
-  );
+  const [resourceRowList, setResourceRowList] = useState<
+    ProjectTasksListType[]
+  >([]);
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const [columnAnchorEl, setColumnAnchorEl] =
     React.useState<HTMLButtonElement | null>(null);
@@ -97,7 +98,7 @@ const CaseProjectTask: React.FC<projectTaskProps> = ({
   useEffect(() => {
     if (data) {
       setTotalItems(data?.count);
-      setResourceRowList(data.tasks || []);
+      setResourceRowList(data?.tasks || []);
     }
     if (setExportType) {
       setExportType('projectTask');
@@ -229,14 +230,14 @@ const CaseProjectTask: React.FC<projectTaskProps> = ({
     });
     return map;
   }, [projectViewEditFields]);
-  const handleProjectDetails = (data: CaseProjectTaskRow) => {
+  const handleProjectDetails = (data: ProjectTasksListType) => {
     // Create new search params without assignProject
     const newParams = new URLSearchParams(searchParams);
     newParams.set('caseProjectTask', data.rid);
 
     navigate({ search: newParams.toString() }, { replace: true });
   };
-  const getRowId = (row: CaseProjectTaskRow) => row.rid;
+  const getRowId = (row: ProjectTasksListType) => row.rid;
 
   const RestrictedColumns = [
     {

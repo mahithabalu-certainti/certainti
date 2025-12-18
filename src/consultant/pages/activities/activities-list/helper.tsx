@@ -95,7 +95,14 @@ export const getAllActivityFilterFields = (
     hide: !isFieldVisibleInAnyModule('status_rid', permissionMaps),
   },
   {
-    name: 'Related To',
+    name: 'Related Entity',
+    value: 'attachment_level',
+    type: 'text',
+    operatorOption: textOptions,
+    hide: !isFieldVisibleInAnyModule('attachment_level', permissionMaps),
+  },
+  {
+    name: 'Related To Name',
     value: 'attached_to',
     type: 'text',
     operatorOption: textOptions,
@@ -137,7 +144,16 @@ export const getEmailFilterFields = (
       !permissionMap?.['status_rid']?.read,
   },
   {
-    name: 'Related To',
+    name: 'Related Entity',
+    value: 'attachment_level',
+    type: 'text',
+    operatorOption: textOptions,
+    hide:
+      !permissionMap?.['attachment_level']?.edit &&
+      !permissionMap?.['attachment_level']?.read,
+  },
+  {
+    name: 'Related To Name',
     value: 'attached_to',
     type: 'text',
     operatorOption: textOptions,
@@ -221,7 +237,16 @@ export const getTaskFilterFields = (
       !permissionMap?.['status_rid']?.read,
   },
   {
-    name: 'Related To',
+    name: 'Related Entity',
+    value: 'attachment_level',
+    type: 'text',
+    operatorOption: textOptions,
+    hide:
+      !permissionMap?.['attachment_level']?.edit &&
+      !permissionMap?.['attachment_level']?.read,
+  },
+  {
+    name: 'Related To Name',
     value: 'attached_to',
     type: 'text',
     operatorOption: textOptions,
@@ -345,7 +370,16 @@ export const getMeetingFilterFields = (
       !permissionMap?.['effective_start_time']?.read,
   },
   {
-    name: 'Related To',
+    name: 'Related Entity',
+    value: 'attachment_level',
+    type: 'text',
+    operatorOption: textOptions,
+    hide:
+      !permissionMap?.['attachment_level']?.edit &&
+      !permissionMap?.['attachment_level']?.read,
+  },
+  {
+    name: 'Related To Name',
     value: 'attached_to',
     type: 'text',
     operatorOption: textOptions,
@@ -377,7 +411,16 @@ export const getCallFilterFields = (
       !permissionMap?.['call_platform']?.read,
   },
   {
-    name: 'Related To',
+    name: 'Related Entity',
+    value: 'attachment_level',
+    type: 'text',
+    operatorOption: textOptions,
+    hide:
+      !permissionMap?.['attachment_level']?.edit &&
+      !permissionMap?.['attachment_level']?.read,
+  },
+  {
+    name: 'Related To Name',
     value: 'attached_to',
     type: 'text',
     operatorOption: textOptions,

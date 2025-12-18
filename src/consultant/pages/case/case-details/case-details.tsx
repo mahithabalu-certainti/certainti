@@ -812,14 +812,14 @@ export const CaseDetails = () => {
         icon: CasesIcon,
       },
       {
-        name: 'Project Resource',
+        name: 'Case Project Resource',
         key: 'projectResource',
         id: AllMenus.PROJECT_RESOURCES,
         disabled: false,
         icon: ResourcesIcon,
       },
       {
-        name: 'Project Task',
+        name: 'Case Project Task',
         key: 'projectTask',
         id: AllMenus.PROJECT_TASK,
         disabled: false,
