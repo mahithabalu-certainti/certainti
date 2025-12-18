@@ -180,7 +180,7 @@ const CaseProjectTask: React.FC<projectTaskProps> = ({
       hide: taskId ? true : false,
     },
     {
-      label: 'Back To Project Task',
+      label: 'Back To Case Project Task',
       variant: 'outlined' as const,
       disabled: false,
       onClick: handleBackToCaseProjectTask,
@@ -303,7 +303,7 @@ const CaseProjectTask: React.FC<projectTaskProps> = ({
       />
       <>
         <SectionHeader
-          title={taskId ? 'Project Task Details' : 'Project Task '}
+          title={taskId ? 'Case Project Task Details' : 'Case Project Task '}
           titleIcon={
             <ProjectsIcon
               alt='attachment-header-icon'

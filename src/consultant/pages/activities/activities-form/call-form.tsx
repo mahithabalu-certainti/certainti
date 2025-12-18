@@ -126,13 +126,18 @@ const CallForm: React.FC<CallFormProps> = ({
   const [existingFiles, setExistingFiles] = useState<ExistingFile[]>([]);
 
   const isEditView = location.pathname.split('/').includes('edit');
-  const sourcePath = searchParams.get('source') || sourceDetails?.source || '';
-  const accountId =
-    searchParams.get('accountId') || sourceDetails?.accountId || '';
-  const entityLevel =
-    searchParams.get('entityLevel') || sourceDetails?.entityLevel || '';
-  const entityId =
-    searchParams.get('entityId') || sourceDetails?.entityId || '';
+  const sourcePath = sourceDetails?.source
+    ? sourceDetails?.source
+    : searchParams.get('source') || '';
+  const accountId = sourceDetails?.accountId
+    ? sourceDetails?.accountId
+    : searchParams.get('accountId') || '';
+  const entityLevel = sourceDetails?.entityLevel
+    ? sourceDetails?.entityLevel
+    : searchParams.get('entityLevel') || '';
+  const entityId = sourceDetails?.entityId
+    ? sourceDetails?.entityId
+    : searchParams.get('entityId') || '';
 
   const [participantsSuggestions, setParticipantsSuggestions] =
     useState<SuggestionState>({
