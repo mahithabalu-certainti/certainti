@@ -764,12 +764,12 @@ export const jurisdictionRuleMapping = [
   },
   {
     permissionField: "state_rid",
-    exportField: "State",
+    exportField: "Region",
     dataField: "state_name",
   },
   {
     permissionField: "is_federal",
-    exportField: "Is Federal",
+    exportField: "Federal",
     dataField: "is_federal",
   },
   {
