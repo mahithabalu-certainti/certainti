@@ -49,20 +49,6 @@ const listRuleSchema = Joi.object({
     sortOrder: Joi.string().valid("ASC", "DESC").default("ASC")
 });
 
-const updateRuleSchema = Joi.object({
-    rule_rid: Joi.string().required(),
-    rule_name: Joi.string().required(),
-    description: Joi.string().required(),
-    is_active: Joi.boolean().required(),
-    scope_type: Joi.number().required(),
-    trigger_type: Joi.number().optional(),
-    trigger_event: Joi.string().optional(),
-    schedule_offset_type: Joi.string().optional().allow(null),
-    schedule_offset_value: Joi.string().optional().allow(null),
-    modified_by: Joi.string().optional(),
-});
-
-
 const createConditionSchema = Joi.object({
     field_name: Joi.string().required(),
     operator: Joi.string().required(),
@@ -316,11 +302,34 @@ const createRuleSchema = Joi.object({
     trigger_type: Joi.number().required()
 });
 
+const getRuleDetailSchema = Joi.object({
+    rule_rid: Joi.string().required(),
+});
+
+const updateRuleSchema = Joi.object({
+    rule_rid: Joi.string().required(),
+    rule_name: Joi.string().required(),
+    description: Joi.string().optional().allow(""),
+    scope_type_rid: Joi.string().required(),
+    event_rid: Joi.string().required(),
+    condition_rid: Joi.string().required(),
+    condition_categories: Joi.array().items(
+        Joi.object({
+            category_rid: Joi.string().required(),
+            category_operator: Joi.string().valid("AND", "OR").optional(), // assuming optional
+            field_rid: Joi.string().required(),
+            operator_rid: Joi.string().required(),
+            value_rid: Joi.string().required()
+        })
+    ).required(),
+    action_rid: Joi.array().items(Joi.string().required()).required(),
+    modified_by: Joi.string().required(),
+    trigger_type: Joi.number().required()
+});
 
 export {
     createRuleMasterSchema,
     listRuleSchema,
-    updateRuleSchema,
     createConditionSchema,
     listConditionSchema,
     updateConditionSchema,
@@ -345,5 +354,7 @@ export {
     listScopeActionTypeSchema,
     listScopeActionsSchema,
     createRuleSchema,
+    getRuleDetailSchema,
+    updateRuleSchema,
     createRuleMapSchema,
 };

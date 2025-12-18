@@ -99,7 +99,7 @@ export class TaskService {
       }
 
       // Extract specific filters
-      let assignedToFilter, createdByFilter, modifiedByFilter, taskNameFilter, statusFilter, priorityFilter;
+      let assignedToFilter, createdByFilter, modifiedByFilter, taskNameFilter, statusFilter, priorityFilter, attachToFilter, accountNameFilter;
 
       if (filters.assigned_to_name) {
         assignedToFilter = filters.assigned_to_name;
@@ -124,6 +124,14 @@ export class TaskService {
       if (filters.priority_name) {
         priorityFilter = filters.priority_name;
         delete filters.priority_name;
+      }
+      if (filters.attach_to_name) {
+        attachToFilter = filters.attach_to_name;
+        delete filters.attach_to_name;
+      }
+      if (filters.account_name) {
+        accountNameFilter = filters.account_name;
+        delete filters.account_name;
       }
 
       // Build where clause
@@ -366,21 +374,49 @@ export class TaskService {
         tasks = tasks.filter(task => {
           const displayName = (task.assigned_to_name || '').toLowerCase();
           const operator = Object.keys(assignedToFilter)[0];
-          const filterValue = (assignedToFilter[operator] || '').toLowerCase();
+          const filterValue = String(assignedToFilter[operator] || '').toLowerCase();
           switch (operator) {
             case 'contains': return displayName.includes(filterValue);
             case 'equals': return displayName === filterValue;
             case 'not_equals': return displayName !== filterValue || displayName === null;
+            case 'is_empty': return displayName === null || displayName === ''
             default: return false;
           }
         });
       }
-
+      if (attachToFilter) {
+        tasks = tasks.filter(task => {
+          const displayName = (task.attach_to_name || '').toLowerCase();
+          const operator = Object.keys(attachToFilter)[0];
+          const filterValue = String(attachToFilter[operator] || '').toLowerCase();
+          switch (operator) {
+            case 'contains': return displayName.includes(filterValue);
+            case 'equals': return displayName === filterValue;
+            case 'not_equals': return displayName !== filterValue || displayName === null;
+            case 'is_empty': return displayName === null || displayName === ''
+            default: return false;
+          }
+        });
+      }
+      if (accountNameFilter) {
+        tasks = tasks.filter(task => {
+          const displayName = (task.account_name || '').toLowerCase();
+          const operator = Object.keys(accountNameFilter)[0];
+          const filterValue = String(accountNameFilter[operator] || '').toLowerCase();
+          switch (operator) {
+            case 'contains': return displayName.includes(filterValue);
+            case 'equals': return displayName === filterValue;
+            case 'not_equals': return displayName !== filterValue || displayName === null;
+            case 'is_empty': return displayName === null || displayName === ''
+            default: return false;
+          }
+        });
+      }
       if (taskNameFilter) {
         tasks = tasks.filter(task => {
           const taskName = (task.task_name || '').toLowerCase();
           const operator = Object.keys(taskNameFilter)[0];
-          const filterValue = (taskNameFilter[operator] || '').toLowerCase();
+          const filterValue = String(taskNameFilter[operator] || '').toLowerCase();
           switch (operator) {
             case 'contains': return taskName.includes(filterValue);
             case 'equals': return taskName === filterValue;
@@ -394,7 +430,7 @@ export class TaskService {
         tasks = tasks.filter(task => {
           const statusName = (task.status_name || '').toLowerCase();
           const operator = Object.keys(statusFilter)[0];
-          const filterValue = (statusFilter[operator] || '').toLowerCase();
+          const filterValue = String(statusFilter[operator] || '').toLowerCase();
           switch (operator) {
             case 'contains': return statusName.includes(filterValue);
             case 'equals': return statusName === filterValue;
@@ -408,7 +444,7 @@ export class TaskService {
         tasks = tasks.filter(task => {
           const priorityName = (task.priority_name || '').toLowerCase();
           const operator = Object.keys(priorityFilter)[0];
-          const filterValue = (priorityFilter[operator] || '').toLowerCase();
+          const filterValue = String(priorityFilter[operator] || '').toLowerCase();
           switch (operator) {
             case 'contains': return priorityName.includes(filterValue);
             case 'equals': return priorityName === filterValue;
@@ -424,7 +460,7 @@ export class TaskService {
           const createdByName = task.created_by_name?.toLowerCase() || '';
           const operator = Object.keys(createdByFilter)[0];
           if (operator === 'is_empty') filterValue = ''
-          else filterValue = (createdByFilter[operator] || '').toLowerCase();
+          else filterValue = String(createdByFilter[operator] || '').toLowerCase();
           switch (operator) {
             case 'contains': return createdByName.includes(filterValue);
             case 'equals': return createdByName === filterValue;
@@ -441,7 +477,7 @@ export class TaskService {
           const modifiedByName = task.modified_by_name?.toLowerCase() || '';
           const operator = Object.keys(modifiedByFilter)[0];
           if (operator === 'is_empty') filterValue = ''
-          else filterValue = (modifiedByFilter[operator] || '').toLowerCase();
+          else filterValue = String(modifiedByFilter[operator] || '').toLowerCase();
           switch (operator) {
             case 'contains': return modifiedByName.includes(filterValue);
             case 'equals': return modifiedByName === filterValue;
@@ -457,7 +493,7 @@ export class TaskService {
         'r_number', 'task_name', 'fiscal_year', 'assigned_to_name',
         'status_name', 'priority_name', 'created_by_name', 'created_datetime',
         'modified_by_name', 'modified_datetime', 'effective_start_datetime',
-        'effective_end_datetime', 'description', 'attachment_level'
+        'effective_end_datetime', 'description', 'attachment_level', 'attach_to_name', 'account_name'
       ];
 
       const finalSortBy = validSortFields.includes(sortBy) ? sortBy : 'created_datetime';
@@ -484,6 +520,8 @@ export class TaskService {
           case 'task_name': aVal = a.task_name || ''; bVal = b.task_name || ''; break;
           case 'description': aVal = a.description || ''; bVal = b.description || ''; break;
           case 'attachment_level': aVal = a.attachment_level || ''; bVal = b.attachment_level || ''; break;
+          case 'attach_to_name': aVal = a.attach_to_name || ''; bVal = b.attach_to_name || ''; break;
+          case 'account_name': aVal = a.account_name || ''; bVal = b.account_name || ''; break;
           default:
             aVal = a[finalSortBy] !== undefined && a[finalSortBy] !== null ? String(a[finalSortBy]) : '';
             bVal = b[finalSortBy] !== undefined && b[finalSortBy] !== null ? String(b[finalSortBy]) : '';
@@ -819,6 +857,7 @@ export class TaskService {
           status_name: statusMap.get(task.status_rid) || null,
           priority_name: priorityMap.get(task.priority_rid) || null,
           assigned_to_name: userMap.get(task.assigned_to) || task.assigned_to,
+          account_name: accountMap.get(task.account_rid)?.account_name || task.account_rid,
           attached_to: attachmentDisplayNames[task.rid] || task.attach_to,
         };
       }));
@@ -1002,44 +1041,48 @@ export class TaskService {
         }
       });
 
-      const permissionName = flag === "milestone" ? "cases_workbreakdown_view_edit" : "activity_task_export";
+      const permissionName = flag === "milestone" ? "cases_workbreakdown_view_edit" : "activity_task_view_edit";
 
       // Apply field-level access control for export
       const allowedFieldsForExport = await this.schemaService.getAllowedExportFields(userId, permissionName);
+      const accountAllowedFieldsForExport = await this.schemaService.getAllowedExportFields(userId, "accounts_view_edit");
       const allowedFieldSet = new Set<string>();
       for (const field of allowedFieldsForExport) {
         if (field.read) {
           allowedFieldSet.add(field.field_desc);
         }
       }
+      for (const field of accountAllowedFieldsForExport) {
+        if (field.read) {
+          allowedFieldSet.add(field.field_desc);
+        }
+      }
 
       const labelMap: Record<string, string> = {
-        "Task ID": "Record ID",
+        "Task ID": "Task ID",
+        "Name": "Account Name",
         "Task Name": "Task Name",
         "Description": "Description",
         "Fiscal Year": "Fiscal Year",
-        "Assigned To": "Assignee",
-        "Status": "Status",
+        [flag === 'milestone' ? "Attach To" : "Related To Name"]: "Related To Name",
+        [flag === 'milestone' ? "Attachment Level" : "Related Entity"]: "Related Entity",
+        [flag === 'milestone' ? "Assignee" : "Assigned To"]: "Assigned To",
         "Priority": "Priority",
-        "Effective Start Date": "Effective Start Date",
-        "Effective End Date": "Effective End Date",
-        "Attachment Level": "Attachment Level",
-        "Attached To": "Attached To",
-        "Account ID": "Account ID",
+        "Status": "Status",
         "Created By": "Created By",
         "Created On": "Created On",
-        "Modified By": "Updated By",
-        "Modified On": "Updated On"
+        "Updated By": "Modified By",
+        "Updated On": "Modified On"
       };
 
       // Map tasks to export format
       tasks = tasks.map((task) => {
-        const rawMapped = this.mapTaskToExportFormat(task, timezone);
+        const rawMapped = this.mapTaskToExportFormat(task, timezone, flag);
         const filtered: Record<string, any> = {};
 
         for (const [fieldKey, value] of Object.entries(rawMapped)) {
           const label = labelMap[fieldKey];
-          if (allowedFieldSet.has(label)) {
+          if (allowedFieldSet.has(fieldKey)) {
             filtered[label] = value;
           }
         }
@@ -1179,37 +1222,19 @@ export class TaskService {
   }
 
   // Helper method to map task to export format
-  private mapTaskToExportFormat(task: any, timezone: string): Record<string, any> {
+  private mapTaskToExportFormat(task: any, timezone: string, flag: string): Record<string, any> {
 
     return {
       "Task ID": task.r_number || '-',
+      "Name": task.account_name || '-',
       "Task Name": task.task_name || '-',
       "Description": task.description || '-',
-      "Fiscal Year": task.fiscal_year || '-',
-      "Assigned To": task.assigned_to_name || '-',
-      "Status": task.status_name || '-',
+      "Fiscal Year": task.fiscal_year ? `FY-${task.fiscal_year}` : '-',
+      [flag === 'milestone' ? "Attach To" : "Related To Name"]: task.attached_to || '-',
+      [flag === 'milestone' ? "Attachment Level" : "Related Entity"]: task.attachment_level || '-',
+      [flag === 'milestone' ? "Assignee" : "Assigned To"]: task.assigned_to_name || '-',
       "Priority": task.priority_name || '-',
-      "Effective Start Date": task.effective_start_datetime
-        ? timezone && isValidTimezone(timezone)
-          ? moment(task.effective_start_datetime)
-            .tz(timezone)
-            .format("YYYY-MMM-DD, hh:mm:ss A")
-          : moment(task.effective_start_datetime).format(
-            "YYYY-MMM-DD, hh:mm:ss A"
-          )
-        : "-",
-      "Effective End Date": task.effective_end_datetime
-        ? timezone && isValidTimezone(timezone)
-          ? moment(task.effective_end_datetime)
-            .tz(timezone)
-            .format("YYYY-MMM-DD, hh:mm:ss A")
-          : moment(task.effective_end_datetime).format(
-            "YYYY-MMM-DD, hh:mm:ss A"
-          )
-        : "-",
-      "Attachment Level": task.attachment_level || '-',
-      "Attached To": task.attach_to || '-',
-      "Account ID": task.account_rid || '-',
+      "Status": task.status_name || '-',
       "Created By": task.created_by_name || '-',
       "Created On": task.created_datetime
         ? timezone && isValidTimezone(timezone)
@@ -1220,8 +1245,8 @@ export class TaskService {
             "YYYY-MMM-DD, hh:mm:ss A"
           )
         : "-",
-      "Modified By": task.modified_by_name || '-',
-      "Modified On": task.modified_datetime
+      "Updated By": task.modified_by_name || '-',
+      "Updated On": task.modified_datetime
         ? timezone && isValidTimezone(timezone)
           ? moment(task.modified_datetime)
             .tz(timezone)
@@ -1229,7 +1254,7 @@ export class TaskService {
           : moment(task.modified_datetime).format(
             "YYYY-MMM-DD, hh:mm:ss A"
           )
-        : "-",
+        : "-"
     };
   }
 

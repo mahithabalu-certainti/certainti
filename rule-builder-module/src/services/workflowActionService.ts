@@ -5,14 +5,17 @@ import { HttpStatus, STATUS_MESSAGE } from "../utils/constants";
 import { Logger } from "winston";
 import { ICreateAction } from "../utils/types";
 import { logMessage } from "../utils/helpers";
+import { AuditService } from "./workflowAuditService";
 
 export class ActionService {
 
     private logger: Logger;
+    private auditService: AuditService;
     private mainDbSequelize: Sequelize | null = null;
 
     constructor(logger: Logger) {
         this.logger = logger;
+        this.auditService = new AuditService(this.logger);
     }
 
     private async getMainDb() {
@@ -38,7 +41,7 @@ export class ActionService {
             new_value: actionRequest.new_value ?? null,
             action_order: actionRequest.action_order,
             created_by: actionRequest.created_by,
-            modified_by: actionRequest.modified_by ?? actionRequest.created_by, // fallback to created_by if undefined
+            //modified_by: actionRequest.modified_by ?? actionRequest.created_by, // fallback to created_by if undefined
         });
 
         return {
@@ -131,11 +134,21 @@ export class ActionService {
 
 
     /** DELETE RuleMaster by RID */
-    async deleteAction(data: any, userId: string) {
+    async deleteActionByRuleRid(rule_rid: any, userId: string) {
         try {
             const mainDb = await this.getMainDb();
             RuleAction.initialize(mainDb);
-            await RuleAction.destroy({ where: { rid: data.action_rid } });
+            await RuleAction.destroy({ where: { rule_rid: rule_rid } });
+            await this.auditService.createAudit({
+                action: "DELETE",
+                audit_rid: "",
+                rule_rid: rule_rid,
+                old_value: "",
+                new_value: "",
+                notes: "Rule action deleted",
+                created_by: userId,
+                modified_by: userId,
+            }, userId);
             return {
                 statusCode: HttpStatus.SUCCESS,
                 message: STATUS_MESSAGE.actionDeleteSuccess,

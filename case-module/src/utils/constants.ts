@@ -550,7 +550,7 @@ export const rawQueries = {
   },
   fetchAccountInfo(rid: string) {
     return `
-    SELECT rid, account_name,r_number,parent_account_rid,storage_type FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${rid}'`;
+    SELECT rid, account_name,r_number,parent_account_rid,storage_type,country_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${rid}'`;
   },
   fetchUserGroupType: `
       SELECT type group_type
@@ -1437,13 +1437,17 @@ export const rawQueries = {
     LEFT JOIN ${MAIN_SCHEMA_NAME}.user uu ON uu.rid = rv.modified_by
     WHERE federal_config_id = '${config_rid}';`
   },
-  fetchPlatformConfig(rid: string) {
+  fetchPlatformConfig(rid: string,fiscalYear: number) {
     return `
     SELECT config_json FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values rv
 join ${MAIN_SCHEMA_NAME}.rd_credit_config_group rg on  rv.credit_config_group_rid  = rg.rid
 where rg.country_rid = '${rid}'
 and credit_program_name = 'Platform Configuration'
-    and rg.is_federal = true LIMIT 1`;
+    and rg.is_federal = true 
+     AND rv.effective_start_date <= make_date(${fiscalYear}, 3, 31)
+  AND rv.effective_end_date   >= make_date(${fiscalYear} - 1, 4, 1)
+ORDER BY rv.effective_start_date DESC
+LIMIT 1`;
   },
 
   fetchAccountDetailsInfo(schemaName: string, account_rid: string) {

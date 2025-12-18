@@ -3028,23 +3028,21 @@ export class InteractionService {
             accountInfo[0].country_rid
           )
         );
-
-        let projectType: any[] = [];
-        let projectTypes :any;
-        if (platFormConfig && platFormConfig.config_json && platFormConfig.config_json.project_type) {
-          // Support array or single value
-           projectTypes = platFormConfig.config_json.project_type;
-          if (!Array.isArray(projectTypes)) {
-            projectTypes = [projectTypes];
+        let projectTypes: any;
+        const platFormConfigs = Array.isArray(platFormConfigResult) ? platFormConfigResult : [platFormConfigResult];
+        const groupedProjectTypes: Record<string, any[]> = {};
+        platFormConfigs.forEach((config: any) => {
+          if (config && config.config_json && config.config_json.project_type) {
+            const projectTypeArr = Array.isArray(config.config_json.project_type)
+              ? config.config_json.project_type
+              : [config.config_json.project_type];
+            const key = `${config.effective_start_date || ''}_${config.effective_end_date || ''}`;
+            if (!groupedProjectTypes[key]) groupedProjectTypes[key] = [];
+            groupedProjectTypes[key].push(...projectTypeArr);
           }
-          [projectType] = await this.mainDbSequelize.query(
-            rawQueries.fetchProjectTypeRid(projectTypes)
-          );
-        }
-        // Get all project type rids
-        const projectTypeRids = Array.isArray(projectType)
-          ? projectType.map((pt: any) => pt.rid)
-          : [];
+        });
+        projectTypes = groupedProjectTypes;
+       
         // Pass as IN clause to fetchProjectsByAccount
         const [projects]: any[] = await this.orgDbSequelize.query(
           rawQueries.fetchProjectsByAccount(
@@ -3052,7 +3050,7 @@ export class InteractionService {
             projectType[0].rid,
             schemaName,
             status_rid!,
-            projectTypeRids
+            projectTypes
           )
         );
         const projectIds = Array.isArray(projects)

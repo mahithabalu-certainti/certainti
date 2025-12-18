@@ -1,3 +1,5 @@
+import { Sequelize } from "sequelize";
+
 export const HttpStatus = {
   SUCCESS: 200,
   BAD_REQUEST: 400,
@@ -26,6 +28,7 @@ export const NODE_ENV = {
 };
 
 export const STATUS_MESSAGE = {
+  separateDb: "separate_db",
   ruleCreated: "Rule created successfully",
   ruleUpdated: "Rule updated successfully",
   ruleCreationFailed: "Rule creation failed",
@@ -55,8 +58,34 @@ export const STATUS_MESSAGE = {
   triggerLogCreated: "Trigger Log created successfullt",
 }
 
+export const ALPHANUMERIC_CONDITIONS: Record<string, string> = {
+  equals: "equals",
+  notEquals: "not_equals",
+  contains: "contains",
+  isEmpty: "is_empty",
+  IN: "in",
+  less_than: "less_than",
+  greater_than: "greater_than",
+  between: "between",
+  before: "before",
+  after: "after",
+};
+
+export const mainTableFilters : Record<any, any> = {
+  created_user_name : "created_user_name",
+  updated_user_name : "updated_user_name",
+  rule_name : "rule_name",
+  modified_by: "modified_by",
+  modified_user_name:"modified_user_name"
+}
 
 export const rawQueries = {
+  fetchUser(data: any) {
+    let ids = data.map((d: any) => `'${d}'`);
+    return `
+    SELECT rid, first_name, last_name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (${ids})`;
+  },
+
   fetchScopeEvents(scope_type_rid: string, status_rid: string): string {
     let query = `SELECT se.rid , se.event_name, se.description,st.name AS scope_type_name, st.rid as scope_type_rid 
     FROM ${MAIN_SCHEMA_NAME}.scopes st JOIN ${MAIN_SCHEMA_NAME}.scope_events se ON se.scope_type_rid = st.rid `;
@@ -189,5 +218,81 @@ export const rawQueries = {
     let query = `SELECT wra.rule_rid,wra.action_rid, sa.name as action_name,sa.message_template,sa.metadata,wra.action_order FROM ${MAIN_SCHEMA_NAME}.workflow_rule_action wra 
     JOIN ${MAIN_SCHEMA_NAME}.scope_actions sa ON sa.rid = wra.action_rid WHERE wra.rule_rid = '${rule_rid}' ORDER BY wra.action_order `;
     return query;
+  },
+
+
+  fetchEventDetailByEventRid(event_rid: string): string {
+    let query = `SELECT se.rid as event_rid,se.event_name, se.description FROM ${MAIN_SCHEMA_NAME}.scope_events se 
+    WHERE se.rid = '${event_rid}' `;
+    return query;
+  },
+
+  fetchConditionDetailByCondRid(condition_rid: string): string {
+    let query = `SELECT se.rid as condition_rid,se.name as condition_name, se.description,se.type as condition_type FROM ${MAIN_SCHEMA_NAME}.event_conditions se 
+    WHERE se.rid = '${condition_rid}' `;
+    return query;
+  },
+
+  fetchActionDetailByRuleRid(rule_rid: string): string {
+    let query = `SELECT sa.rid as action_rid,sa.name as action_name,sa.description as description FROM ${MAIN_SCHEMA_NAME}.scope_actions sa JOIN ${MAIN_SCHEMA_NAME}.workflow_rule_action wra ON sa.rid = wra.action_rid
+    WHERE wra.rule_rid = '${rule_rid}' `;
+    return query;
+  },
+
+  fetchConditionsByRuleRid(rule_rid: string): string {
+    let query = `SELECT cc.rid as category_rid,cc.name as category_name, cc.description as category_description, wrc.logical_operator as category_operator, rf.rid as field_rid, rf.name as field_name, ro.rid as operator_rid, ro.name as operator_name, rv.rid as value_rid, rv.name as value_name  FROM ${MAIN_SCHEMA_NAME}.condition_category cc JOIN ${MAIN_SCHEMA_NAME}.workflow_rule_condition wrc ON cc.rid = wrc.category_rid JOIN ${MAIN_SCHEMA_NAME}.rule_fields rf on rf.rid = wrc.field_rid JOIN ${MAIN_SCHEMA_NAME}.rule_operators ro ON ro.rid = wrc.operator_rid JOIN ${MAIN_SCHEMA_NAME}.rule_values rv ON rv.rid = wrc.value_rid
+    WHERE wrc.rule_rid = '${rule_rid}' `;
+    return query;
+  },
+
+  fetchNotificationTemplateDetails(template_name: string): string {
+    let query = `SELECT nt.message_template,nt.channel
+    FROM ${MAIN_SCHEMA_NAME}.notification_template nt 
+    WHERE nt.template_code = '${template_name}'
+    and status_rid = (select status_rid from ${MAIN_SCHEMA_NAME}.status where status_name = 'Active');`;
+    return query;
+  },
+  insertNotification(): string {
+    let query = `INSERT INTO ${MAIN_SCHEMA_NAME}.notifications (notification_message, created_by, user_rid, created_datetime)
+            VALUES (:notification_message, :created_by, :user_rid, NOW())
+            RETURNING rid`;
+    return query;
+  },
+  updateNotificationStatus(): string {
+    return `UPDATE ${MAIN_SCHEMA_NAME}.notifications SET status_rid = :status_rid WHERE rid = :notificationId`;
+  },
+  fetchNotificationStatusByType(type: string) {
+    return `
+    SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.notification_status WHERE status_name = '${type}'`;
+  },
+  fetchAccountInfo(rid: string) {
+    return `
+    SELECT rid, account_name,r_number,parent_account_rid,storage_type,country_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${rid}'`;
+  },
+  fetchSenderEmail(schemaName: string, accountRid: string) {
+    return `
+    SELECT support_email,client_id,client_secret,tenant_id, subscription_created FROM ${schemaName}.account_details WHERE account_rid = '${accountRid}'  and  subscription_created is true  and support_email is not null LIMIT 1`;
+  },
+    fetchParentAccountDetails: `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
+  async fetchParentAccount(
+    accountRid: any,
+    mainSequelize: Sequelize
+  ): Promise<any> {
+    let checkIsSeparateDb: any = await mainSequelize.query(
+      `SELECT rid, r_number, account_name, storage_type FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`
+    );
+    if (checkIsSeparateDb[0][0].storage_type == STATUS_MESSAGE.separateDb) {
+      return `SELECT rid, r_number, account_name, storage_type, currency_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`;
+    } else {
+      return `
+      with fetch_account_details AS (
+      SELECT rid, r_number, parent_account_rid, currency_rid FROM ${MAIN_SCHEMA_NAME}.account where rid = '${accountRid}'
+      )
+      SELECT a.rid, a.r_number, a.account_name, a.is_parent 
+      FROM ${MAIN_SCHEMA_NAME}.account a
+      LEFT JOIN fetch_account_details ad ON ad.parent_account_rid = a.rid
+      WHERE a.rid = ad.parent_account_rid`;
+    }
   }
+
 }

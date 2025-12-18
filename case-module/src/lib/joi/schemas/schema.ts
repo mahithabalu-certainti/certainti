@@ -239,7 +239,7 @@ const listJurisdictionConfigSchema = Joi.object({
   filters: Joi.string().default("{}"),
   sortBy: Joi.string().optional(),
   sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
-  search: Joi.string().max(255).optional(),
+  search: Joi.string().max(255).optional().allow("", null),
 });
 
 const exportJurisdictionConfigSchema = Joi.object({
@@ -1109,7 +1109,8 @@ const projectTaskByIdSchema = Joi.object({
 })
 
 const caseSubmissionDateSchema = Joi.object({
-  country_rid: Joi.string().required()
+  country_rid: Joi.string().required(),
+  fiscal_year: Joi.number().integer().min(1900).max(2100).default(2025).optional(),
 });
 
 

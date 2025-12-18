@@ -776,12 +776,9 @@ export class ProjectService {
                         accountData.country_rid
                       ),{type: 'SELECT'}
                 );
-        let projectType: any[] = [];
+        let projectType: string[] = [];
         if (platFormConfig && platFormConfig.config_json && platFormConfig.config_json.project_type) {
           let projectTypes = platFormConfig.config_json.project_type;
-          if (!Array.isArray(projectTypes)) {
-              projectTypes = [projectTypes];
-              }
           projectType = projectTypes;
           }
         projectData.dataValues.total_fte = projectData.dataValues.total_fte == 0 ? null : projectData.dataValues.total_fte

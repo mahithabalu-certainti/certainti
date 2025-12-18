@@ -262,38 +262,38 @@ export class ProjectInjestionTaskService {
             const allTasks = await models.CaseProjectTaskModel.findAll({
                 where: whereClause,
                 include: [
-                {
-                    model: models.AccountDetailsModel,
-                    attributes: ["account_name"],
-                    required: false,
-                    as: "account",
-                },
-                {
-                    model: models.ProjectFiscalModel,
-                    attributes: ["project_name", "project_code", "currency_rid"],
-                    required: false,
-                    as: "project",
-                },
-                {
-                    model: models.ResourceModel,
-                    attributes: [
-                    "resource_code",
-                    "resource_name",
-                    "resource_type_rid",
-                    "resource_role",
-                    "resource_orgname",
-                    ],
-                    required: false,
-                    as: "resource",
-                },
-                {
-                    model : models.ProjectResourceModel,
-                    attributes : [
-                    "project_resource_role"
-                    ],
-                    required : false,
-                    as : "project_resource"
-                }
+                    {
+                        model: models.AccountDetailsModel,
+                        attributes: ["account_name"],
+                        required: false,
+                        as: "account",
+                    },
+                    {
+                        model: models.ProjectFiscalModel,
+                        attributes: ["project_name", "project_code", "currency_rid"],
+                        required: false,
+                        as: "project",
+                    },
+                    {
+                        model: models.ResourceModel,
+                        attributes: [
+                            "resource_code",
+                            "resource_name",
+                            "resource_type_rid",
+                            "resource_role",
+                            "resource_orgname",
+                        ],
+                        required: false,
+                        as: "resource",
+                    },
+                    {
+                        model: models.ProjectResourceModel,
+                        attributes: [
+                            "project_resource_role"
+                        ],
+                        required: false,
+                        as: "project_resource"
+                    }
                 ],
             });
 
@@ -310,11 +310,11 @@ export class ProjectInjestionTaskService {
 
             if (resourceFilter) {
                 formattedTasks = formattedTasks.filter((task) => {
-                const resourcePass = resourceFilter
-                    ? this.applyTextFilter(task.resource_name, resourceFilter)
-                    : true;
+                    const resourcePass = resourceFilter
+                        ? this.applyTextFilter(task.resource_name, resourceFilter)
+                        : true;
 
-                return resourcePass;
+                    return resourcePass;
                 });
             }
 
@@ -329,17 +329,17 @@ export class ProjectInjestionTaskService {
                 statusCode: HttpStatus.SUCCESS,
                 message: HttpStatus.SUCCESS_MESSAGE,
                 data: {
-                tasks: formattedTasks,
-                totalCount: total,
+                    tasks: formattedTasks,
+                    totalCount: total,
                 },
             };
-            } catch (error) {
+        } catch (error) {
             errorLog("projectTaskService - listProjectTasks", (error as Error).message);
             return {
                 statusCode: 500,
                 message: "Failed to fetch attachments",
                 errorMessage:
-                error instanceof Error ? error.message : "An unknown error occurred",
+                    error instanceof Error ? error.message : "An unknown error occurred",
                 data: { tasks: [], totalCount: 0 },
             };
         }
@@ -466,9 +466,20 @@ export class ProjectInjestionTaskService {
                     "projects_task_view_edit"
                 ),
             ]);
+            const [projectFields] = await Promise.all([
+                this.projectTaskSchema.getAllowedExportFields(
+                    userId,
+                    "projects_view_edit"
+                ),
+            ]);
 
             const allowedFieldSet = new Set<string>();
             for (const field of projectTaskFields) {
+                if (field.read) {
+                    allowedFieldSet.add(field.field_name);
+                }
+            }
+            for (const field of projectFields) {
                 if (field.read) {
                     allowedFieldSet.add(field.field_name);
                 }
@@ -479,26 +490,32 @@ export class ProjectInjestionTaskService {
                     const exportRecord: Record<string, any> = {};
 
                     // Only add fields that are in the allowedFieldSet
+                    if (allowedFieldSet.has('project_code')) {
+                        exportRecord['Project Code'] = task.project_code || "-";
+                    }
+                    if (allowedFieldSet.has('project_name')) {
+                        exportRecord['Project Name'] = task.project_name || "-";
+                    }
                     if (allowedFieldSet.has('resource_code')) {
                         exportRecord['Resource Code'] = task.resource_code || "-";
                     }
+                    if (allowedFieldSet.has('resource_name')) {
+                        exportRecord['Resource Name'] = task.resource_name || "-";
+                    }
                     if (allowedFieldSet.has('task_name')) {
                         exportRecord['Task Name'] = task.task_name || "-";
+                    }
+                    if (allowedFieldSet.has('resource_type_name')) {
+                        exportRecord['Resource Type'] = task.resource_type_name || "-";
+                    }
+                    if (allowedFieldSet.has('project_resource_role')) {
+                        exportRecord['Project Resource Role'] = task.project_resource_role || "-";
                     }
                     if (allowedFieldSet.has('task_type_rid')) {
                         exportRecord['Task Type'] = task.task_type_name || "-";
                     }
                     if (allowedFieldSet.has('task_classification_rid')) {
-                        exportRecord['Task Classification'] = task.task_classification_name || "-";
-                    }
-                    if (allowedFieldSet.has('resource_name')) {
-                        exportRecord['Resource Name'] = task.resource_name || "-";
-                    }
-                    if (allowedFieldSet.has('resource_type_name')) {
-                        exportRecord['Resource Type'] = task.resource_type_name || "-";
-                    }
-                    if (allowedFieldSet.has('resource_role')) {
-                        exportRecord['Role'] = task.resource_role || "-";
+                        exportRecord['Classification Type'] = task.task_classification_name || "-";
                     }
                     if (allowedFieldSet.has('start_date')) {
                         exportRecord['Start Date'] = task.start_date ? moment(task.start_date).format("YYYY-MMM-DD") : "-";
@@ -515,11 +532,14 @@ export class ProjectInjestionTaskService {
                     if (allowedFieldSet.has('total_hours_pro_task')) {
                         exportRecord['Effort in Hrs'] = task.total_hours_pro_task || "-";
                     }
+                    if (allowedFieldSet.has('status_rid')) {
+                        exportRecord['Status'] = task.status_name || "-";
+                    }
                     if (allowedFieldSet.has('comments')) {
                         exportRecord['Comments'] = task.comments || "-";
                     }
                     if (allowedFieldSet.has('r_number')) {
-                        exportRecord['Case Project Task ID'] = task.r_number || "-";
+                        exportRecord['Project Task ID'] = task.r_number || "-";
                     }
 
                     return exportRecord;
@@ -1385,6 +1405,50 @@ export class ProjectInjestionTaskService {
                             break;
                         case "is_empty":
                             condition["$resource.resource_name$"] = {
+                                [Op.or]: [{ [Op.is]: null }, { [Op.eq]: "" }],
+                            };
+                            break;
+                    }
+                    break;
+            case "project_code":
+                    switch (operator.toLowerCase()) {
+                        case "equals":
+                            condition["$project.project_code$"] = { [Op.iLike]: value };
+                            break;
+                        case "not_equals":
+                            condition["$project.project_code$"] = {
+                                [Op.or]: [{ [Op.notILike]: value }, { [Op.is]: null }],
+                            };
+                            break;
+                        case "contains":
+                            condition["$project.project_code$"] = {
+                                [Op.iLike]: `%${value}%`,
+                            };
+                            break;
+                        case "is_empty":
+                            condition["$project.project_code$"] = {
+                                [Op.or]: [{ [Op.is]: null }, { [Op.eq]: "" }],
+                            };
+                            break;
+                    }
+                    break;
+                case "project_name":
+                    switch (operator.toLowerCase()) {
+                        case "equals":
+                            condition["$project.project_name$"] = { [Op.iLike]: value };
+                            break;
+                        case "not_equals":
+                            condition["$project.project_name$"] = {
+                                [Op.or]: [{ [Op.notILike]: value }, { [Op.is]: null }],
+                            };
+                            break;
+                        case "contains":
+                            condition["$project.project_name$"] = {
+                                [Op.iLike]: `%${value}%`,
+                            };
+                            break;
+                        case "is_empty":
+                            condition["$project.project_name$"] = {
                                 [Op.or]: [{ [Op.is]: null }, { [Op.eq]: "" }],
                             };
                             break;

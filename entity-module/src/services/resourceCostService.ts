@@ -1,6 +1,6 @@
 import { ResourceCost } from "../models/resourceCost";
 import { Resources } from "../models/resource";
-import { IResourceCost, IUpdateResourceCost } from "../utils/types";
+import { IResourceCost, IUpdateResourceCost, ProjectFiscalIds } from "../utils/types";
 import {
   HttpStatus,
   MAIN_SCHEMA_NAME,
@@ -15,7 +15,7 @@ import SchemaService from "./schemaService";
 import { initOrgSequelize } from "../config/orgDataSource";
 import { ResourceFiscal } from "../models/resourceFiscal";
 import { initMainDbSequelize } from "../config/mainDataSource";
-import { Op, Sequelize } from "sequelize";
+import { Op, QueryTypes, Sequelize } from "sequelize";
 import moment from "moment";
 import Decimal from "decimal.js";
 import { errorLog, logMessage } from "../utils/helpers";
@@ -73,7 +73,8 @@ class ResourceCostService {
     accountNumber: string,
     fiscalYear: number,
     project_rid: string,
-    account_rid: string
+    account_rid: string,
+    caseRid? : string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -135,6 +136,14 @@ class ResourceCostService {
           filters,
           fiscalYear
         );
+      let caseProjectFiscalRids = [];
+      if(caseRid != undefined && caseRid !== "") {
+        const orgDb = await this.getOrgSequelize();
+        const result = await orgDb.query<ProjectFiscalIds>(rawQueries.getProjectsForCases(caseRid, account_rid, schemaName), {type : QueryTypes.SELECT});
+        if(result.length > 0) {
+          caseProjectFiscalRids.push(...result.map((d : any) => d.project_fiscal_rid));
+        }
+      }
 
       // Execute queries and return results
       return await resourceCostSchemaService.executeQueriesForFinancialHighlights(
@@ -147,7 +156,8 @@ class ResourceCostService {
         offset,
         search,
         account_rid,
-        project_rid
+        project_rid,
+        caseProjectFiscalRids
       );
     } catch (err) {
        const error = err as Error;
@@ -176,7 +186,8 @@ class ResourceCostService {
     fiscalYear: number,
     project_rid: string,
     account_rid: string,
-    userId: string
+    userId: string,
+    caseRid? : string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -237,7 +248,14 @@ class ResourceCostService {
           filters,
           fiscalYear
         );
-
+      let caseProjectFiscalRids = [];
+      if(caseRid != undefined && caseRid !== "") {
+        const orgDb = await this.getOrgSequelize();
+        const result = await orgDb.query<ProjectFiscalIds>(rawQueries.getProjectsForCases(caseRid, account_rid, schemaName), {type : QueryTypes.SELECT});
+        if(result.length > 0) {
+          caseProjectFiscalRids.push(...result.map((d : any) => d.project_fiscal_rid));
+        }
+      }
       // Execute queries and return results
       return await resourceCostSchemaService.exportresourceCostDetailsForFinancialHighlights(
         schemaName,
@@ -248,7 +266,8 @@ class ResourceCostService {
         search,
         userId,
         account_rid,
-        project_rid
+        project_rid,
+        caseProjectFiscalRids
       );
     } catch (err) {
       const error = err as Error;

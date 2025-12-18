@@ -10,8 +10,23 @@ export interface ICreateRule {
     schedule_offset_type: string | null;
     schedule_offset_value: string | null;
     created_by: string,
+    modified_by: string 
+}
+
+export interface IUpdateRule {
+    rule_rid: string;
+    rule_name: string;
+    description: string;
+    is_active: true;
+    scope_type_rid: string;
+    trigger_type: number;
+    event_rid: string;
+    condition_rid: string;
+    schedule_offset_type: string | null;
+    schedule_offset_value: string | null;
     modified_by: string
 }
+
 
 
 export interface ICreateCondition {
@@ -153,4 +168,13 @@ export type actions = {
     description: string;
     action_type_name: string;
     action_type_rid: string;
+}
+
+export interface IEmailMessage {
+  subject: string;
+  body: {
+    contentType: string;
+    content: string;
+  };
+  toRecipients: { emailAddress: { address: string } }[];
 }

@@ -198,6 +198,11 @@ export const caseTaskMapping = [
     dataField: "assigned_to_name",
   },
   {
+    permissionField: "role_rid",
+    exportField: "Role To Be Assigned",
+    dataField: "role_name",
+  },
+  {
     permissionField: "effective_start_datetime",
     exportField: "Start Date",
     dataField: "effective_start_datetime",
@@ -764,12 +769,12 @@ export const jurisdictionRuleMapping = [
   },
   {
     permissionField: "state_rid",
-    exportField: "State",
+    exportField: "Region",
     dataField: "state_name",
   },
   {
     permissionField: "is_federal",
-    exportField: "Is Federal",
+    exportField: "Federal",
     dataField: "is_federal",
   },
   {
