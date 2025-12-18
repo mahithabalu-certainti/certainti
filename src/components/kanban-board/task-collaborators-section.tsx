@@ -1,6 +1,7 @@
 import React from 'react';
-import { Autocomplete, TextField } from '@mui/material';
+import { Autocomplete, TextField, Tooltip } from '@mui/material';
 import { Assignee, User } from './types';
+import UserAvatar from './user-avatar';
 
 interface TaskCollaboratorsSectionProps {
   fieldVisibility: Record<string, boolean | undefined>;
@@ -127,33 +128,25 @@ const TaskCollaboratorsSection: React.FC<TaskCollaboratorsSectionProps> = ({
                       height: '16px',
                     }}
                   />
-                  <div
-                    style={{
-                      width: '20px',
-                      height: '20px',
-                      borderRadius: '50%',
-                      backgroundColor: option.color,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '8px',
-                      fontWeight: '600',
-                      color: 'white',
-                      flexShrink: 0,
-                    }}
-                  >
-                    {option.initials}
-                  </div>
-                  <span
-                    style={{
-                      flex: 1,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {option.name}
-                  </span>
+                  <UserAvatar
+                    profileUrl={option.profile_url}
+                    initials={option.initials}
+                    color={option.color}
+                    size={20}
+                    fontSize={8}
+                  />
+                  <Tooltip title={option.name} placement='top-start'>
+                    <span
+                      style={{
+                        flex: 1,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {option.name}
+                    </span>
+                  </Tooltip>
                 </div>
               </li>
             )}
@@ -198,21 +191,22 @@ const TaskCollaboratorsSection: React.FC<TaskCollaboratorsSectionProps> = ({
               }}
               data-profile-index={index}
             >
-              <div
-                className='w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold cursor-pointer text-white border-2 border-white shadow-md transition-all duration-300 ease-in-out group-hover:shadow-xl group-hover:border-blue-200'
-                style={{
-                  backgroundColor: collab.color,
-                  fontSize: '10px',
-                }}
-              >
-                {collab.initials}
+              <div className='relative'>
+                <UserAvatar
+                  profileUrl={collab.profile_url}
+                  initials={collab.initials}
+                  color={collab.color}
+                  size={32}
+                  fontSize={10}
+                  className='border-2 border-white shadow-md transition-all duration-300 ease-in-out group-hover:shadow-xl group-hover:border-blue-200 cursor-pointer'
+                />
                 {!fieldDisabled.collaborators && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       onRemoveCollaborator(collab.name);
                     }}
-                    className='absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-red-500 hover:bg-red-600 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 ease-in-out scale-0 group-hover:scale-100 shadow-sm'
+                    className='absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-red-500 hover:bg-red-600 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 ease-in-out scale-0 group-hover:scale-100 shadow-sm z-20'
                     title={`Remove ${collab.name}`}
                   >
                     ×

@@ -1,3 +1,5 @@
+import { REGEX_PATTERNS } from '../../../../common-utils';
+
 export type EmailFields = 'to' | 'cc' | 'bcc';
 export type MeetingFields =
   | 'attendees'
@@ -64,12 +66,20 @@ export const validateActivityEmailForm = (
     isValid = false;
   }
 
-  if (!formData.subject?.trim()) {
+  const subject = formData.subject.trim();
+
+  if (!subject) {
     newErrors.subject = 'Field is required';
+    isValid = false;
+  } else if (!REGEX_PATTERNS.MIN_3.test(subject)) {
+    newErrors.subject = 'Subject must be at least 3 characters long';
+    isValid = false;
+  } else if (!REGEX_PATTERNS.MAX_125.test(subject)) {
+    newErrors.subject = 'Subject must not exceed 125 characters';
     isValid = false;
   }
 
-  if (!formData.emailBody?.trim()) {
+  if (!normalizeQuillValue(formData.emailBody)) {
     newErrors.emailBody = 'Field is required';
     isValid = false;
   }

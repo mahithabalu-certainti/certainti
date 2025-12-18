@@ -17,6 +17,7 @@ import {
 } from '../../../activities/activities-list/helper';
 import { ACTIVITY_CREATE } from '../../../../../routes';
 import {
+  ActivityDropdownItem,
   ActivityListExportURLParams,
   ActivityModuleType,
   ActivityType,
@@ -68,6 +69,7 @@ interface ActivitiesProps {
   accountInActive: boolean;
   accountDetails: accountDetailsProps;
   isDetailLoading?: boolean;
+  activityMenuItems: ActivityDropdownItem[];
 }
 
 const Activities: React.FC<ActivitiesProps> = ({
@@ -76,6 +78,7 @@ const Activities: React.FC<ActivitiesProps> = ({
   accountInActive,
   accountDetails,
   isDetailLoading,
+  activityMenuItems,
 }) => {
   const navigate = useNavigate();
   const [appliedFilters, setAppliedFilters] = useState<
@@ -495,6 +498,8 @@ const Activities: React.FC<ActivitiesProps> = ({
           onSearch={(text) => setSearchText(text)}
           searchReset={resetSearch}
           onSearchReset={handleSearchReset}
+          showAddActivity={tabParam === 'all'}
+          activityMenuItems={activityMenuItems}
         />
 
         <SectionHeader

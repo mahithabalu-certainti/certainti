@@ -18,6 +18,12 @@ const dateOptions: { option: string; value: string }[] = [
   { option: 'Between', value: 'between' },
 ];
 
+export const reqEnumOptions: { option: string; value: string }[] = [
+  { option: 'Equals', value: 'equals' },
+  { option: 'Not Equals', value: 'not_equals' },
+  { option: 'In', value: 'in' },
+];
+
 export const getAssignUserFilterFields = (): FieldConfig[] => [
   {
     name: 'Username',
@@ -34,14 +40,18 @@ export const getAssignUserFilterFields = (): FieldConfig[] => [
 ];
 
 export const getAssignGroupsFilterFields = (
+  permissionMap: Record<string, { read: boolean; edit: boolean }>,
   statusOptions: { option: string; value: string }[],
-  assigneeOptions: { option: string; value: string }[] = []
+  assigneeOptions: { option: string; value: string }[] = [],
+  roleOptions: { option: string; value: string }[] = []
 ): FieldConfig[] => [
   {
     name: 'Task Name',
     value: 'task_name',
     type: 'text',
     operatorOption: textOptions,
+    hide:
+      !permissionMap['task_name']?.read && !permissionMap['task_name']?.edit,
   },
   {
     name: 'Assigned To',
@@ -49,6 +59,18 @@ export const getAssignGroupsFilterFields = (
     type: 'enum',
     options: assigneeOptions,
     operatorOption: enumOptions,
+    hide:
+      !permissionMap['assigned_to']?.read &&
+      !permissionMap['assigned_to']?.edit,
+  },
+  {
+    name: 'Role To Be Assigned',
+    value: 'role_rid',
+    type: 'enum',
+    options: roleOptions,
+    operatorOption: enumOptions,
+    // hide:
+    //   !permissionMap['role_rid']?.read && !permissionMap['role_rid']?.edit,
   },
   {
     name: 'Start Date',
@@ -56,6 +78,9 @@ export const getAssignGroupsFilterFields = (
     type: 'date',
     operatorOption: dateOptions,
     isFutureDateEnabled: true,
+    hide:
+      !permissionMap['effective_start_datetime']?.read &&
+      !permissionMap['effective_start_datetime']?.edit,
   },
   {
     name: 'Due Date',
@@ -63,6 +88,9 @@ export const getAssignGroupsFilterFields = (
     type: 'date',
     operatorOption: dateOptions,
     isFutureDateEnabled: true,
+    hide:
+      !permissionMap['effective_end_datetime']?.read &&
+      !permissionMap['effective_end_datetime']?.edit,
   },
   {
     name: 'Status',
@@ -70,5 +98,7 @@ export const getAssignGroupsFilterFields = (
     type: 'enum',
     options: statusOptions,
     operatorOption: enumOptions,
+    hide:
+      !permissionMap['status_rid']?.read && !permissionMap['status_rid']?.edit,
   },
 ];

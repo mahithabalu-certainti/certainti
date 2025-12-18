@@ -95,7 +95,14 @@ export const getAllActivityFilterFields = (
     hide: !isFieldVisibleInAnyModule('status_rid', permissionMaps),
   },
   {
-    name: 'Related To',
+    name: 'Related Entity',
+    value: 'attachment_level',
+    type: 'text',
+    operatorOption: textOptions,
+    hide: !isFieldVisibleInAnyModule('attachment_level', permissionMaps),
+  },
+  {
+    name: 'Related To Name',
     value: 'attached_to',
     type: 'text',
     operatorOption: textOptions,
@@ -137,7 +144,16 @@ export const getEmailFilterFields = (
       !permissionMap?.['status_rid']?.read,
   },
   {
-    name: 'Related To',
+    name: 'Related Entity',
+    value: 'attachment_level',
+    type: 'text',
+    operatorOption: textOptions,
+    hide:
+      !permissionMap?.['attachment_level']?.edit &&
+      !permissionMap?.['attachment_level']?.read,
+  },
+  {
+    name: 'Related To Name',
     value: 'attached_to',
     type: 'text',
     operatorOption: textOptions,
@@ -199,6 +215,15 @@ export const getTaskFilterFields = (
       !permissionMap?.['r_number']?.edit && !permissionMap?.['r_number']?.read,
   },
   {
+    name: 'Task Name',
+    value: 'task_name',
+    type: 'text',
+    operatorOption: textOptions,
+    hide:
+      !permissionMap?.['task_name']?.edit &&
+      !permissionMap?.['task_name']?.read,
+  },
+  {
     name: 'Task Status',
     value: 'status_name',
     type: 'enum',
@@ -212,7 +237,16 @@ export const getTaskFilterFields = (
       !permissionMap?.['status_rid']?.read,
   },
   {
-    name: 'Related To',
+    name: 'Related Entity',
+    value: 'attachment_level',
+    type: 'text',
+    operatorOption: textOptions,
+    hide:
+      !permissionMap?.['attachment_level']?.edit &&
+      !permissionMap?.['attachment_level']?.read,
+  },
+  {
+    name: 'Related To Name',
     value: 'attached_to',
     type: 'text',
     operatorOption: textOptions,
@@ -252,6 +286,7 @@ export const getTaskFilterFields = (
     value: 'effective_end_datetime',
     type: 'date',
     operatorOption: dateOptions,
+    isFutureDateEnabled: true,
     hide:
       !permissionMap?.['effective_end_datetime']?.edit &&
       !permissionMap?.['effective_end_datetime']?.read,
@@ -335,7 +370,16 @@ export const getMeetingFilterFields = (
       !permissionMap?.['effective_start_time']?.read,
   },
   {
-    name: 'Related To',
+    name: 'Related Entity',
+    value: 'attachment_level',
+    type: 'text',
+    operatorOption: textOptions,
+    hide:
+      !permissionMap?.['attachment_level']?.edit &&
+      !permissionMap?.['attachment_level']?.read,
+  },
+  {
+    name: 'Related To Name',
     value: 'attached_to',
     type: 'text',
     operatorOption: textOptions,
@@ -367,7 +411,16 @@ export const getCallFilterFields = (
       !permissionMap?.['call_platform']?.read,
   },
   {
-    name: 'Related To',
+    name: 'Related Entity',
+    value: 'attachment_level',
+    type: 'text',
+    operatorOption: textOptions,
+    hide:
+      !permissionMap?.['attachment_level']?.edit &&
+      !permissionMap?.['attachment_level']?.read,
+  },
+  {
+    name: 'Related To Name',
     value: 'attached_to',
     type: 'text',
     operatorOption: textOptions,

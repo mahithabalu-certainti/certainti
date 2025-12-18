@@ -133,6 +133,100 @@ const StyledDateTimePicker: React.FC<StyledDateTimePickerProps> = ({
 
   const finalViews = views || defaultViews[mode];
 
+  // In StyledDateTimePicker component, update the handleChange function:
+  const handleChange = (newValue: Dayjs | null) => {
+    if (!newValue) {
+      onChange(null);
+      return;
+    }
+
+    if (disablePast) {
+      const now = dayjs();
+
+      // For time mode, we need to create a comparable datetime
+      if (mode === 'time') {
+        // Create a datetime object for comparison using today's date
+        const today = dayjs().startOf('day');
+        const newTimeWithDate = today
+          .hour(newValue.hour())
+          .minute(newValue.minute())
+          .second(newValue.second());
+
+        // Check if the time is in the past
+        if (newTimeWithDate.isBefore(now)) {
+          // It's past time - use current time
+          onChange(dayjs().startOf('minute'));
+          return;
+        }
+      }
+
+      // For datetime mode
+      if (mode === 'datetime') {
+        const today = dayjs().startOf('day');
+        const isToday = newValue.isSame(today, 'day');
+        if (isToday && newValue.isBefore(now)) {
+          // It's today but past time - use current time
+          onChange(now);
+          return;
+        }
+      }
+
+      // For date mode
+      if (mode === 'date') {
+        const today = dayjs().startOf('day');
+        if (newValue.isBefore(today) && !newValue.isSame(today, 'day')) {
+          // Past date - revert to current value
+          onChange(value ? dayjs(value) : null);
+          return;
+        }
+      }
+    }
+
+    if (disableFuture) {
+      const now = dayjs();
+
+      // For time mode
+      if (mode === 'time') {
+        // Create a datetime object for comparison using today's date
+        const today = dayjs().startOf('day');
+        const newTimeWithDate = today
+          .hour(newValue.hour())
+          .minute(newValue.minute())
+          .second(newValue.second());
+
+        // Check if the time is in the future
+        if (newTimeWithDate.isAfter(now)) {
+          // It's future time - use current time
+          onChange(dayjs().startOf('minute'));
+          return;
+        }
+      }
+
+      // For datetime mode
+      if (mode === 'datetime') {
+        const today = dayjs().startOf('day');
+        const isToday = newValue.isSame(today, 'day');
+        if (isToday && newValue.isAfter(now)) {
+          // It's today but future time - use current time
+          onChange(now);
+          return;
+        }
+      }
+
+      // For date mode
+      if (mode === 'date') {
+        const today = dayjs().startOf('day');
+        if (newValue.isAfter(today) && !newValue.isSame(today, 'day')) {
+          // Future date - revert to current value
+          onChange(value ? dayjs(value) : null);
+          return;
+        }
+      }
+    }
+
+    onChange(newValue);
+  };
+
   // Enhanced shouldDisableDate function
   const enhancedShouldDisableDate = (date: Dayjs): boolean => {
     // Check custom disable function
@@ -307,7 +401,7 @@ const StyledDateTimePicker: React.FC<StyledDateTimePickerProps> = ({
   // Common props for all picker types
   const commonProps = {
     value: value ? dayjs(value) : null,
-    onChange: (v: Dayjs | null) => onChange(v ? dayjs(v) : null),
+    onChange: handleChange, // Use custom handleChange
     disabled,
     readOnly,
     onOpen,

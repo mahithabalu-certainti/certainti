@@ -10,7 +10,11 @@ import {
   ListTable,
   ManageColumnsPopover,
 } from '../../../../../components/table';
-import { AccountDetailsResponse, ExportType } from '../../../../types';
+import {
+  AccountDetailsResponse,
+  ActivityDropdownItem,
+  ExportType,
+} from '../../../../types';
 import ImportFile from './import-file/import-file';
 import {
   useImportListList,
@@ -51,6 +55,7 @@ interface ImportsProps {
   setExportType?: (type: ExportType) => void;
   setImportsParams: React.Dispatch<React.SetStateAction<ImportsListURLParams>>;
   accountInActive: boolean;
+  activityMenuItems: ActivityDropdownItem[];
 }
 
 const Imports: React.FC<ImportsProps> = ({
@@ -58,6 +63,7 @@ const Imports: React.FC<ImportsProps> = ({
   setImportsParams,
   accountInActive,
   accountDetails,
+  activityMenuItems,
 }) => {
   const { accountid } = useParams();
   const [searchParams] = useSearchParams();
@@ -347,6 +353,8 @@ const Imports: React.FC<ImportsProps> = ({
         searchDisabled={false}
         searchPlaceholder='Search'
         onSearch={(text) => setSearchText(text)}
+        showAddActivity={showUploads || viewDetails ? false : true}
+        activityMenuItems={activityMenuItems}
       />
       {showUploads ? (
         <ImportFile

@@ -87,11 +87,6 @@ export const Tasks: React.FC = () => {
     AllPermissions.ATTACHMENT_VIEW_EDIT
   );
 
-  const isAttachmentExportEnable = checkPermission(
-    permission,
-    AllPermissions.ATTACHMENT_EXPORT
-  );
-
   const taskPermissionMap = useMemo(
     () => getPermissionMap(permission, AllPermissions.ACTIVITY_TASK_VIEW_EDIT),
     [permission]
@@ -106,8 +101,23 @@ export const Tasks: React.FC = () => {
     [permission]
   );
 
+  const isMilestoneExportEnable = checkPermission(
+    permission,
+    AllPermissions.CASES_WORKBREAKDOWN_EXPORT
+  );
+
+  const isActivityTaskExportEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_TASK_EXPORT
+  );
+
   const currentPermissionMap =
     tabParam === 'milestone' ? milestonePermissionMap : taskPermissionMap;
+
+  const isCurrentTabExportEnable =
+    tabParam === 'milestone'
+      ? isMilestoneExportEnable
+      : isActivityTaskExportEnable;
 
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
 
@@ -221,25 +231,25 @@ export const Tasks: React.FC = () => {
 
   const priorityOptions = useMemo(
     () =>
-      transformPriorityData(prioritiesQuery.data || []).map((p) => ({
-        label: p.name,
-        value: p.name,
+      transformPriorityData(prioritiesQuery.data || []).map((priority) => ({
+        label: priority.name,
+        value: priority.id,
       })),
     [prioritiesQuery.data]
   );
 
   const statusOptions = useMemo(() => {
     if (tabParam === 'milestone') {
-      return transformStatusData(statusesQuery.data || []).map((s) => ({
-        label: s.name,
-        value: s.name,
+      return transformStatusData(statusesQuery.data || []).map((status) => ({
+        label: status.name,
+        value: status.id,
       }));
     } else {
       const activityStatuses =
         activityStatusesQuery.data?.data?.activityStatus || [];
       return activityStatuses.map((status: any) => ({
         label: status.status_name,
-        value: status.status_name,
+        value: status.rid,
       }));
     }
   }, [tabParam, statusesQuery.data, activityStatusesQuery.data]);
@@ -270,7 +280,7 @@ export const Tasks: React.FC = () => {
     {
       label: 'Export',
       onClick: () => handleExport(),
-      hide: !isAttachmentExportEnable,
+      hide: !isCurrentTabExportEnable,
     },
   ];
 

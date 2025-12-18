@@ -9,6 +9,7 @@ import { TaskList } from '../../../../types/task';
 export const getTaskTableColumns = (
   onClick: (row: TaskList) => void,
   statusOptions: SelectOption[] = [],
+  priorityOptions: SelectOption[] = [],
   permissionMap?: Record<string, { read: boolean; edit: boolean }>
 ): ListTableColumn<TaskList>[] => [
   {
@@ -18,7 +19,7 @@ export const getTaskTableColumns = (
     width: 140,
     sortable: true,
     sticky: true,
-    // hide: permissionMap ? !permissionMap['r_number']?.read : false,
+    hide: permissionMap ? !permissionMap['r_number']?.read : false,
     sx: {
       position: 'sticky',
       left: 0,
@@ -40,6 +41,15 @@ export const getTaskTableColumns = (
         </span>
       );
     },
+  },
+  {
+    id: 'account_name',
+    sortId: 'account_name',
+    label: 'Account Name',
+    width: 200,
+    sortable: true,
+    hide: false,
+    render: (row: TaskList) => row.account_name || '-',
   },
   {
     id: 'task_name',
@@ -107,11 +117,7 @@ export const getTaskTableColumns = (
     label: 'Attach To',
     width: 180,
     sortable: true,
-    hide: permissionMap
-      ? !(
-          permissionMap['attach_to']?.read || permissionMap['attached_to']?.read
-        )
-      : false,
+    hide: permissionMap ? !permissionMap['attach_to']?.read : false,
     render: (row: TaskList) => row.attach_to_name || '-',
   },
   {
@@ -138,6 +144,14 @@ export const getTaskTableColumns = (
     label: 'Priority',
     width: 120,
     sortable: true,
+    editable: permissionMap ? permissionMap['priority_rid']?.edit : true,
+    editId: 'priority_rid',
+    field: {
+      type: 'select',
+      required: true,
+      options: priorityOptions,
+      placeholder: 'Choose Priority',
+    },
     hide: permissionMap ? !permissionMap['priority_rid']?.read : false,
     render: (row: TaskList) => row.priority_name || '-',
   },

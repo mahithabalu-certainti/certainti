@@ -26,6 +26,7 @@ import {
   ShowHideTableColumn,
 } from '../../../../../components/table/types';
 import {
+  ActivityDropdownItem,
   ChecklistList,
   ChecklistListExportParams,
   ExportType,
@@ -60,6 +61,7 @@ interface ChecklistProps {
   >;
   accountInActive: boolean;
   accountDetails?: accountDetailsProps;
+  activityMenuItems: ActivityDropdownItem[];
 }
 
 const Checklist: React.FC<ChecklistProps> = ({
@@ -67,6 +69,7 @@ const Checklist: React.FC<ChecklistProps> = ({
   setChecklistParams,
   accountInActive,
   accountDetails,
+  activityMenuItems,
 }) => {
   const { errorToast } = useToast();
   const { accountid } = useParams();
@@ -394,6 +397,8 @@ const Checklist: React.FC<ChecklistProps> = ({
         searchDisabled={false}
         searchPlaceholder='Search'
         onSearch={(text) => setSearchText(text)}
+        showAddActivity={!viewDetails}
+        activityMenuItems={activityMenuItems}
       />
 
       {viewDetails ? (

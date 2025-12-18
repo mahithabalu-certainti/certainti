@@ -5,6 +5,7 @@ export interface Assignee {
   name: string;
   initials: string;
   color: string;
+  profile_url?: string | null;
 }
 
 export interface User extends Assignee {
@@ -19,6 +20,7 @@ export interface Activity {
   link?: string;
   initials?: string;
   color?: string;
+  profile_url?: string;
 }
 
 export interface CommentAttachment {
@@ -42,6 +44,7 @@ export interface Comment {
   initials?: string;
   color?: string;
   attachments?: CommentAttachment[];
+  profile_url?: string;
 }
 
 // New interface for simple status options (active/inactive)
@@ -60,6 +63,7 @@ export interface Task {
   commentCount: number;
   createdAt: Date;
   createdBy?: string;
+  created_by_rid?: string;
   modifiedBy?: string;
   description?: string;
   checklist?: Array<{ id: string; text: string; completed: boolean }>;
@@ -105,6 +109,11 @@ export interface Task {
   fiscal_year?: string;
 }
 
+export type Tag = {
+  rid: string;
+  tag_name: string;
+};
+
 export interface TaskCard {
   rid: string;
   sequence_no: number;
@@ -130,8 +139,10 @@ export interface TaskCard {
   task_type_name: string;
   status_name: string;
   task_status_name?: string;
-  tags?: string[];
   comments_count: number;
+  profile_url: string | null;
+  attachment_count?: number | null;
+  tags?: string[] | Tag[];
 }
 
 export interface KanbanColumn {
@@ -182,6 +193,7 @@ export interface UserOption {
   name: string;
   email?: string;
   status?: string;
+  profile_url?: string | null;
 }
 
 export interface KanbanBoardProps {

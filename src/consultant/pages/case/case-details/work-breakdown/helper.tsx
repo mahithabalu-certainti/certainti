@@ -18,6 +18,7 @@ export interface TaskActivityRaw {
   old_value: string | null;
   new_value: string;
   created_datetime: string;
+  profile_url: string | null;
 }
 
 export interface TaskCommentAttachmentRaw {
@@ -51,6 +52,7 @@ export interface TaskCommentRaw {
   created_by?: string;
   comments_attachments?: TaskCommentAttachmentRaw[];
   attachments?: TaskCommentAttachmentRaw[];
+  profile_url?: string;
 }
 
 export interface TaskAttachmentRaw {
@@ -105,6 +107,7 @@ export const transformActivities = (
       }),
       initials: generateInitials(activity.created_by_name),
       color: generateColorFromName(activity.created_by_name),
+      profile_url: activity.profile_url || '',
     };
   });
 };
@@ -181,6 +184,7 @@ export const transformComments = (
       initials: initials,
       color: generateColorFromName(userName),
       attachments: attachments,
+      profile_url: comment.profile_url || '',
     };
   });
 };
