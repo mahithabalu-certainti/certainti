@@ -260,7 +260,10 @@ export const rawQueries = {
       SELECT * 
       FROM "${MAIN_SCHEMA_NAME}".organization_licenses
     `;
-  }  
+  } ,
+  fetchEmailTemplateByCategory (categoryName : string) {
+    return `SELECT rid, template_name, subject, body_html FROM ${MAIN_SCHEMA_NAME}.email_template WHERE category_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.email_template_category WHERE lower(category_name) = lower('${categoryName}') LIMIT 1) LIMIT 1`
+  }, 
 };
 
 export const filterTypesForSummaryInteractions: Record<string, any> = {

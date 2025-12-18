@@ -4,7 +4,7 @@ import { Tags } from "../../models/tagsModel";
 import { TaskCollaborators } from "../../models/taskCollaboratorsModel";
 import { TaskComments } from "../../models/taskCommentsModel";
 import { TaskTag } from "../../models/taskTagsModel";
-import { AddCommentsType, AdminTaskTemplatePayloadType, CaseTaskQueryType, CreateCaseTaskType, CreateTaskTemplateType, ICreateCases, ICreateCaseTeam, ICreateChecklist, ICreateChecklistTemplate, ICreateEmailTemplate, MilestoneResponse, UpdateCaseTaskType, UpdateTaskTemplateType, UpdateCommentsType, DeleteCommentsType, CommentsListType, ActivityType, TaskCardDetailsType, priorityTypes, caseTaskStatusTypes, WorkflowConnectorType, CaseTaskWorkFlowCreate, CaseTaskWorkFlowDelete, IActivityTask, IActivityEmail, IActivityMeeting, IActivityCall } from "../../utils/types";
+import { AddCommentsType, AdminTaskTemplatePayloadType, CaseTaskQueryType, CreateCaseTaskType, CreateTaskTemplateType, ICreateCases, ICreateCaseTeam, ICreateChecklist, ICreateChecklistTemplate, ICreateEmailTemplate, MilestoneResponse, UpdateCaseTaskType, UpdateTaskTemplateType, UpdateCommentsType, DeleteCommentsType, CommentsListType, ActivityType, TaskCardDetailsType, priorityTypes, caseTaskStatusTypes, WorkflowConnectorType, CaseTaskWorkFlowCreate, CaseTaskWorkFlowDelete, IActivityTask, IActivityEmail, IActivityMeeting, IActivityCall, WeightageType, TaskCategoryType, CaseTaskDropdownType } from "../../utils/types";
 
 export interface ICaseService {
   createCase(
@@ -96,7 +96,7 @@ export interface ICaseService {
     errorMessage?: string;
     data?: { caseRoles: any };
   }>;
-  listCaseTeamMembers( data: any, filters: Record<string, any>,userId:string,apiType:string): Promise<{
+  listCaseTeamMembers( data: any, filters: Record<string, any>,userId:string,apiType:string,isDropdownList? : boolean): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
@@ -108,7 +108,7 @@ export interface ICaseService {
     errorMessage?: string;
     data?: { caseOwners: any };
   }>;
-  listUsersForCaseTeam(accountRid: string): Promise<{
+  listUsersForCaseTeam(accountRid: string,scope:string): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
@@ -163,15 +163,7 @@ export interface ICaseService {
   }>;
 
   exportAssignedProjects (data : any) : Promise<any>,
-  createUserLevelTask(data : CreateCaseTaskType): Promise<{
-    statusCode: number;
-    statusMessage: string;
-    data: null;
-} | {
-    statusCode: number;
-    statusMessage: string;
-    data: CaseTask | {};
-}>
+  createUserLevelTask(data : CreateCaseTaskType): Promise<any>
 updateUserLevelTask(data : UpdateCaseTaskType): Promise<{
     statusCode: number;
     statusMessage: string | null;
@@ -258,15 +250,32 @@ getReviewProjects(
   errorMessage?: string;
   data?: { reviewProjects: any ,count: number};
 }>;
+sentReviewProjects(
+  data: any, 
+  filters: Record<string, any>,
+  userId:string,
+  files? : Express.Multer.File[]
+): Promise<{
+  statusCode: number;
+  message: string;
+  errorMessage?: string;
+  data?: any;
+}>;
+getEmailTemplatePreview(data : any,userId: string) : Promise<{
+    statusCode: number;
+    statusMessage: string;
+    errorMessage?: string;
+    data: {templatePreview: any};
+}>
+
 linkTask (data : CaseTaskWorkFlowCreate) : Promise<{
     statusCode: number;
     statusMessage: string;
 }>
-deleteLinkTask (data : CaseTaskWorkFlowDelete) : Promise<{
+deleteLinkTask (data : CaseTaskWorkFlowCreate) : Promise<{
     statusCode: number;
     statusMessage: string;
 } | undefined>
-taskListForDropdownAccountLevel (data : any) : Promise<CaseTask[]>
 deleteTagsAccountLevel (data : any) : Promise<{
     statusCode: number;
     statusMessage: string;
@@ -279,6 +288,14 @@ updateChecklistItemsStatus (data : any) : Promise<{
     statusCode: number;
     statusMessage: string;
 }>
+getCaseSubmissionDate(data: any): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { caseSubmissionDate: string };
+  }>;
+getTaskDropDownForDependencyMapping(data : any) : Promise<CaseTaskDropdownType[]>
+signOffTechnicalDocumentation(data : any): Promise<{ statusCode: number; statusMessage: string;}>
 }
 
 export interface ICaseManagementService {
@@ -325,6 +342,15 @@ export interface ICaseManagementService {
     message: string;
     errorMessage?: string;
     data?: { emailTemplates: any; count: number };
+  }>;
+   listEmailTemplatesByCategory(
+    data: any,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { emailTemplates: any;};
   }>;
   updateAdminCheckList(
     checklistRequest: ICreateChecklistTemplate,
@@ -410,6 +436,11 @@ deleteLinkTask (data : CaseTaskWorkFlowDelete) : Promise<{
     statusMessage: string;
 } | undefined>
 adminTaskListForDropdown (data : any) : Promise<TaskTemplate[]>
+getWeightageList() : Promise<{
+    statusCode: number;
+    data: WeightageType[];
+}>
+  getTaskCategoryList () : Promise<TaskCategoryType[]>
 }
 
 export interface IActivityService {
@@ -420,7 +451,16 @@ export interface IActivityService {
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { cases: any };
+    data?: { task: any };
+  }>;
+  updateActivityTask(
+    taskRequest: IActivityTask,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { task: any };
   }>;
    getAllActivities(
     userId: string,
@@ -435,6 +475,7 @@ export interface IActivityService {
     sortOrder: string,
     fiscalYear: number,
     apiType: string,
+    activityType: string,
     graphqlData: any
   ): Promise<{
     statusCode: number;
@@ -491,11 +532,29 @@ export interface IActivityService {
     errorMessage?: string;
     data?: { emailActivityDetails: any };
   }>;
-   getEmailStatus(): Promise<{
+  getMeetingActivityDetailsById(
+    activityRid: string,
+    accountRid: string
+  ): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { emailStatus: any };
+    data?: { activityDetails: any };
+  }>;
+   getCallActivityDetailsById(
+    activityRid: string,
+    accountRid: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { activityDetails: any };
+  }>;
+   getActivityStatus(activityType: string): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { activityStatus: any };
   }>;
 }
 

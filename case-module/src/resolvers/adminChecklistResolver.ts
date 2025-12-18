@@ -118,11 +118,12 @@ export const adminChecklistResolver: IResolvers = {
         // Prepare the checklist data for update
         const checklistUpdateData = {
           ...data,
+          checklist_template_rid: data.rid,
           modified_by: userId,
           modified_datetime: new Date(),
         };
 
-        const result = await ctx.services.caseManagementService.updateAdminChecklist(
+        const result = await ctx.services.caseManagementService.updateAdminCheckList(
           checklistUpdateData,
           userId
         );

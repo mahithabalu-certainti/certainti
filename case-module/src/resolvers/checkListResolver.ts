@@ -32,8 +32,7 @@ export const checkListResolver: IResolvers = {
           modified_by: userId,
           modified_datetime: new Date(),
         };
-
-        const result = await ctx.services.caseService.updateCheckList(checklistUpdateData);
+        const result = await ctx.services.caseService.updateCheckList(checklistUpdateData,userId);
           if (result.statusCode === HttpStatus.SUCCESS) {
           // Fetch the updated checklist information to return complete data like listchecklist
           try {
@@ -67,7 +66,6 @@ export const checkListResolver: IResolvers = {
                // "modified_by_name": checklistListResult.data.checklistDetails.modified_by_name,
                 "attached_to": checklistListResult.data.checklistDetails.attached_to,
                 }
-                console.log("latestData", latestData);
 
               return {
                 statusCode: HttpStatus.SUCCESS,

@@ -35,7 +35,7 @@ routes.get(
 );
 routes.post(
   "/taskTemplate/create",
-  checkUserStatusMiddleware("NA"),
+  checkUserStatusMiddleware("task_templates_create"),
   controller.caseManagementController.createTaskTemplate
 );
 routes.get(
@@ -60,12 +60,12 @@ routes.put(
 );
 routes.post(
   "/taskTemplate/list",
-  checkUserStatusMiddleware("NA"),
+  checkUserStatusMiddleware("task_templates_view_edit"),
   controller.caseManagementController.fetchAdminTaskTemplateList
 );
 routes.post(
   "/taskTemplate/export",
-  checkUserStatusMiddleware("NA"),
+  checkUserStatusMiddleware("task_templates_export"),
   controller.caseManagementController.ExportAdminTaskTemplateList
 );
 routes.get(
@@ -74,8 +74,18 @@ routes.get(
   controller.caseManagementController.fetchAllTaskTypes
 );
 routes.get(
-  "/taskTemplate/:rid",
+  "/taskTemplate/weightage",
   checkUserStatusMiddleware("NA"),
+  controller.caseManagementController.listAdminTaskWeightage
+)
+routes.get(
+  "/taskTemplate/category",
+  checkUserStatusMiddleware("NA"),
+  controller.caseManagementController.getTaskCategoryForDropdown
+)
+routes.get(
+  "/taskTemplate/:rid",
+  checkUserStatusMiddleware("task_templates_view_edit"),
   controller.caseManagementController.fetchTaskTemplateDetails
 );
 routes.post(
@@ -102,6 +112,11 @@ routes.get(
   "/emailTemplate/list",
   checkUserStatusMiddleware("email_templates_view_edit"),
   controller.caseManagementController.listEmailTemplates
+);
+routes.get(
+  "/emailTemplatesByCategory",
+  checkUserStatusMiddleware("email_templates_view_edit"),
+  controller.caseManagementController.listAllEmailTemplatesByCategory
 );
 routes.get(
   "/emailTemplate/export",

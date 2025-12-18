@@ -14,6 +14,7 @@ import settingRoutes from '../routes/settingsRoutes'
 import financialRoutes from '../routes/financialHighlightsRoutes'
 import timesheetRoutes from './timesheetRoutes'
 import templateRoutes from './templateRoute'
+import taskRoutes from './taskRoutes'
 
 const routes: Router = Router();
 
@@ -48,5 +49,6 @@ routes.use('/financialHighlight', financialRoutes)
 routes.use('/timesheet', timesheetRoutes)
 routes.use('/notes', notesRoutes)
 routes.use('/template', templateRoutes)
+routes.use('/task', taskRoutes)
 
 export default routes;

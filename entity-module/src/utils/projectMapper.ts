@@ -452,54 +452,46 @@ export class ProjectMapper {
   }
 
   static mapToProjectFiscalUpdateModel(
-    data: IUpdateProject,
-    startDate: moment.Moment | null,
-    endDate: moment.Moment | null
-  ) {
-    return {
-      project_code: data.project_code,
-      industry_rid: data.industry_rid || null,
-      industry_name: data.industry_name || null,
-      program_name: data.program_name || null,
-      project_name: data.project_name || null,
-      fiscal_year: data.fiscal_year,
-      project_startdate: startDate?.toDate() || null,
-      project_enddate: endDate?.toDate() || null,
-      project_type_rid: data.project_type_rid,
-      project_classification_rid: data.project_classification_rid || null,
-      project_classification_other: data.project_classification_other || null,
-      project_client_group: data.project_client_group || null,
-      project_group: data.project_group || null,
-      status_rid: data.status_rid,
-      region_rid: data.region_rid || null,
-      comments_rid: data.comments || "",
-      currency_rid: data.currency_rid || null,
-      project_description: data.project_description || null,
-      country_rid: data.country_rid || null,
-      comments: data.comments || "",
-
-      total_fte_prj: data.total_fte || 0,
-      total_subcon_prj: data.total_subcon || 0,
-      total_nonlabor_prj: data.total_nonlabor || 0,
-      total_effort_prj: data.total_effort || null,
-      total_cost_prj: data.total_cost || null,
-      total_effort_fte_prj: data.total_effort_fte || null,
-      total_effort_subcon_prj: data.total_effort_subcon || null,
-      total_cost_fte_prj: data.total_cost_fte || null,
-      total_cost_subcon_prj: data.total_cost_subcon || null,
-      total_cost_nonlabor_prj: data.total_cost_nonlabor || null,
-
-      auto_send_ai_interaction: data.auto_send_ai_interaction,
-      auto_access_rd: data.auto_access_rd ?? false,
-      max_ai_interaction: DEFAULT_PROJECT_DETAILS.maxAiInteraction,
-
-      blended_rate_fte: data.blended_rate_fte || null,
-      blended_rate_subcon: data.blended_rate_subcon || null,
-
-      modified_datetime: new Date(),
-      modified_by: data.modified_by,
-    };
-  }
+  data: IUpdateProject,
+  startDate: moment.Moment | null,
+  endDate: moment.Moment | null
+) {
+  const mappedData = {
+    project_code: data.project_code,
+    industry_rid: data.industry_rid || null,
+    industry_name: data.industry_name || null,
+    program_name: data.program_name || null,
+    project_name: data.project_name || null,
+    fiscal_year: data.fiscal_year,
+    project_startdate: startDate?.toDate() || null,
+    project_enddate: endDate?.toDate() || null,
+    project_type_rid: data.project_type_rid,
+    project_classification_rid: data.project_classification_rid || null,
+    project_classification_other: data.project_classification_other || null,
+    project_client_group: data.project_client_group || null,
+    project_group: data.project_group || null,
+    status_rid: data.status_rid,
+    region_rid: data.region_rid || null,
+    currency_rid: data.currency_rid || null,
+    project_description: data.project_description || null,
+    country_rid: data.country_rid || null,
+    comments: data.comments || "",
+ 
+    total_fte_prj: data.total_fte || 0,
+    total_subcon_prj: data.total_subcon || 0,
+    total_nonlabor_prj: data.total_nonlabor || 0,
+    total_effort_prj: data.total_effort || null,
+    total_cost_prj: data.total_cost || null,
+    total_effort_fte_prj: data.total_effort_fte || null,
+    total_effort_subcon_prj: data.total_effort_subcon || null,
+    total_cost_fte_prj: data.total_cost_fte || null,
+    total_cost_subcon_prj: data.total_cost_subcon || null,
+    total_cost_nonlabor_prj: data.total_cost_nonlabor || null,
+    modified_datetime: new Date(),
+    modified_by: data.modified_by,
+  };
+  return mappedData
+}
 
   static mapToProjectFiscalSummaryUpdate(
     projectData: ICreateProject,

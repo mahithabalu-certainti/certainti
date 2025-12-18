@@ -112,7 +112,7 @@ export class CaseTimeline
           allowNull: true,
         },
         description: {
-          type: DataTypes.STRING(2000),
+          type: DataTypes.TEXT,
           allowNull: true,
         },
       },

@@ -89,7 +89,7 @@ type ProjectFiscalDetails {
     total_cost_fte_from_tasks: String
     total_cost_subcon_from_tasks: String
     total_cost_prj_blended: String
-    qre_final: Int
+    qre_final: String
     total_cost_fte_prj_blended : String
     total_cost_subcon_prj_blended : String
     total_cost_from_prj_res_blended : String
@@ -171,6 +171,7 @@ type projectNewResponse {
     blended_rate: String
     is_rd_qualified: String
     qre: String
+    qre_final : String
     project_rid: String
     technical_point_of_contact: String
     financial_consultant: String

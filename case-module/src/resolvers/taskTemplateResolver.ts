@@ -26,6 +26,13 @@ export const adminTaskTemplateResolver: IResolvers = {
             statusMessage: result.statusMessage,
             data: result.data
         };
+      } else {
+        return {
+            statusCode: HttpStatus.BAD_REQUEST,
+            statusCodeValue: HttpStatus.BAD_REQUEST_MESSAGE,
+            statusMessage: result.statusMessage,
+            data: null
+        };
       }
     }catch (error: any) {
         return {

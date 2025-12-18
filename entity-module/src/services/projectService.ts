@@ -7,11 +7,13 @@ import {
   SCHEMANAME_PREFIX,
   primaryKeyContacts,
   rawQueries,
+  STATUS_MESSAGE,
 } from "../utils/constants";
 import {
   ICreateProject,
   IUpdateProject,
   IUpdateQrePecentAdjustment,
+  CaseStatusResult,
 } from "../utils/types";
 import SchemaService from "./schemaService";
 import {
@@ -45,6 +47,7 @@ import {
 } from "../models/accountFiscalRegion";
 import { errorLog, logMessage } from "../utils/helpers";
 import { checkProjectMappedToProjectRes, fetchQreHistoryDatas } from "../utils/rawQueries";
+import { Case } from "../models/caseModel";
 
 export class ProjectService {
   private schemaService: SchemaService;
@@ -79,7 +82,7 @@ export class ProjectService {
   * - Checks whether the appropriate schema exists.
   * - Ensures project tables are created in the correct schema.
   * - Persists the project data using `createProjectRecords`.
-  */ 
+  */
   async createProject(
     projectData: ICreateProject,
     userId: string
@@ -100,7 +103,7 @@ export class ProjectService {
       }
 
       if (accountData.status !== "active") {
-        errorLog( "Project creation failed: The selected account is inactive. Please choose an active account.");
+        errorLog("Project creation failed: The selected account is inactive. Please choose an active account.");
         throw new Error(
           "Project creation failed: The selected account is inactive. Please choose an active account."
         );
@@ -447,7 +450,7 @@ export class ProjectService {
   * - Checks whether the appropriate schema and project table exist.
   * - Calls `updateProjectRecords` to update the project data in the database.
   * - Returns success response with an empty project array.
-  */ 
+  */
   async updateProject(
     projectData: IUpdateProject,
     userId: string
@@ -463,7 +466,7 @@ export class ProjectService {
       const accountData = await this.schemaService.fetchAccountById(account_id);
 
       if (accountData.status !== "active") {
-        errorLog( "Project update failed: The selected account is inactive. Please choose an active account.");
+        errorLog("Project update failed: The selected account is inactive. Please choose an active account.");
         throw new Error(
           "Project creation failed: The selected account is inactive. Please choose an active account."
         );
@@ -529,6 +532,16 @@ export class ProjectService {
     accountData: any,
     userId: string
   ) {
+
+    const { accountNumber: validAccountNumber } = await this.projectIngestion.fetchValidAccountNumberById(accountData.rid);
+    const schemaName = rawQueries.fetchSchemaName(validAccountNumber);
+    const sequelize = await initOrgSequelize();
+
+    const CaseModel = await Case.initialize(
+      sequelize,
+      schemaName
+    );
+
     const fiscalData =
       await this.projectIngestion.checkIfProjectFiscalExistsOnUpdate(
         accountNumber,
@@ -549,6 +562,18 @@ export class ProjectService {
         accountNumber,
         projectData.project_fiscal_id
       );
+
+
+    const orgDb = await initOrgSequelize()
+
+    let findProjectFiscal: any = await orgDb.query(rawQueries.findProjectFiscal(schemaName, projectData.project_id, accountData.rid, projectData.project_fiscal_id))
+    if (findProjectFiscal[0][0].is_qualified) {
+      return {
+        statusCode: HttpStatus.NOT_FOUND,
+        statusMessage: STATUS_MESSAGE.qualifiedProject
+      }
+    }
+
 
     await this.projectIngestion.updateProjectFiscal(
       accountNumber,
@@ -612,6 +637,46 @@ export class ProjectService {
       existingFiscalData?.rid || "",
       existingFiscalData?.fiscal_year || null
     );
+
+    const checkTableExists = await this.projectIngestion.checkCaseProjectsTableExists(validAccountNumber);
+    if (checkTableExists) {
+      const projectCaseMapping =
+        await this.projectIngestion.fetchProjectFiscalCaseMapping(
+          accountNumber,
+          projectData.project_fiscal_id
+        );
+      if (projectCaseMapping.length > 0) {
+        for (const caseMapping of projectCaseMapping) {
+          const caseData = await CaseModel.findOne({
+            where: {
+              rid: caseMapping.case_rid,
+            },
+          });
+
+          if (!caseData) {
+            continue;
+          }
+          const mainSequelize = await initMainDbSequelize();
+
+          const caseStatus = await mainSequelize.query(
+            rawQueries.fetchCaseStatusByRid(caseData.status_rid),
+            {
+              type: "SELECT",
+            }
+          ) as CaseStatusResult[];
+
+          if (caseStatus[0]?.status_name === "Closed") {
+            continue;
+          }
+          await this.projectIngestion.updateCaseProjectTables(
+            accountNumber,
+            caseMapping,
+            projectData,
+            existingFiscalData?.project_code || ""
+          );
+        }
+      }
+    }
   }
 
   /**
@@ -641,7 +706,7 @@ export class ProjectService {
   * - Fetches project details and enriches them with additional data such as currency, key contacts, geo data, industry, project type and status, classification, user details, and account info.
   * - Retrieves project attachments and enriches them with document types, categories, uploader info, and formatted size.
   * - Returns the project data and mapped attachments in the response.
-  */ 
+  */
   async projectById(
     accountId: string,
     projectId: string
@@ -670,14 +735,14 @@ export class ProjectService {
       let accountRNumber = accountData.r_number;
 
       let childRNumber = await this.schemaService.fetchParentAccount(
-          accountData.parent_account_rid
-        );
-        if (accountData.storage_type === "store_in_parent") {
-          accountRNumber = childRNumber;
-        }
-        let isSubscriptionCreated = false;
-        isSubscriptionCreated = (await this.schemaService.getSubscriptionDetailsByProjectId(accountData.parent_account_rid, childRNumber,accountId)) ?? false;
-             
+        accountData.parent_account_rid
+      );
+      if (accountData.storage_type === "store_in_parent") {
+        accountRNumber = childRNumber;
+      }
+      let isSubscriptionCreated = false;
+      isSubscriptionCreated = (await this.schemaService.getSubscriptionDetailsByProjectId(accountData.parent_account_rid, childRNumber, accountId)) ?? false;
+
 
       const isExists = await this.schemaService.checkIfSchemaAndTableExists(
         accountRNumber
@@ -699,22 +764,32 @@ export class ProjectService {
           accountRNumber,
           accountId
         );
-      let projectData : any = await this.projectIngestion.fetchProjectById(
+      let projectData: any = await this.projectIngestion.fetchProjectById(
         accountRNumber,
         projectId
       );
 
       if (projectData) {
+        const mainDbInit = await initMainDbSequelize();
+        const [platFormConfig]: any[] = await mainDbInit.query(
+                      rawQueries.fetchPlatformConfig(
+                        accountData.country_rid
+                      ),{type: 'SELECT'}
+                );
+        let projectType: string[] = [];
+        if (platFormConfig && platFormConfig.config_json && platFormConfig.config_json.project_type) {
+          let projectTypes = platFormConfig.config_json.project_type;
+          projectType = projectTypes;
+          }
         projectData.dataValues.total_fte = projectData.dataValues.total_fte == 0 ? null : projectData.dataValues.total_fte
         projectData.dataValues.total_nonlabor_prj = projectData.dataValues.total_nonlabor_prj == 0 ? null : projectData.dataValues.total_nonlabor_prj
         projectData.dataValues.total_subcon = projectData.dataValues.total_subcon == 0 ? null : projectData.dataValues.total_subcon
-        const mainDbInit = await initMainDbSequelize();
 
         let schemaName = rawQueries.fetchSchemaName(accountRNumber)
         const orgDb = await initOrgSequelize()
-        let isResExists : boolean;
+        let isResExists: boolean;
         const checkResExistsInPrjRes = await orgDb.query(checkProjectMappedToProjectRes(schemaName, projectData.rid))
-        if(checkResExistsInPrjRes[0].length > 0) isResExists = true
+        if (checkResExistsInPrjRes[0].length > 0) isResExists = true
         else isResExists = false
         projectData.dataValues.is_project_exists = isResExists
 
@@ -735,7 +810,8 @@ export class ProjectService {
         );
         projectData = await this.schemaService.insertProjectTypeAndStatus(
           projectData,
-          mainDbInit
+          mainDbInit,
+          projectType
         );
         projectData = await this.schemaService.projectKeyContactData(
           projectData,
@@ -776,21 +852,21 @@ export class ProjectService {
         const [documentTypes, documentCategories, users] = await Promise.all([
           documentTypeIds.length > 0
             ? sequelize.query(rawQueries.GET_DOCUMENT_TYPES, {
-                replacements: { documentTypeIds },
-                type: "SELECT",
-              })
+              replacements: { documentTypeIds },
+              type: "SELECT",
+            })
             : [],
           documentCategoryIds.length > 0
             ? sequelize.query(rawQueries.GET_DOCUMENT_CATEGORIES, {
-                replacements: { documentCategoryIds },
-                type: "SELECT",
-              })
+              replacements: { documentCategoryIds },
+              type: "SELECT",
+            })
             : [],
           userIds.length > 0
             ? sequelize.query(rawQueries.GET_USERS, {
-                replacements: { userIds },
-                type: "SELECT",
-              })
+              replacements: { userIds },
+              type: "SELECT",
+            })
             : [],
         ]);
 
@@ -809,6 +885,7 @@ export class ProjectService {
 
           return {
             ...attachment,
+
             document_type: (documentType as any)?.type_name || "",
             document_category: (documentCategory as any)?.category_name || "",
             uploaded_by: (uploadedBy as any)?.full_name || "",
@@ -836,7 +913,7 @@ export class ProjectService {
     }
   }
 
-  insertAccount(project: any, account: any, accountDetails: any,isSubscriptionCreated:boolean) {
+  insertAccount(project: any, account: any, accountDetails: any, isSubscriptionCreated: boolean) {
     const fiscalStartDate = accountDetails?.[0]?.fiscal_start_date || null;
     const fiscalEndDate = accountDetails?.[0]?.fiscal_end_date || null;
     return {
@@ -888,7 +965,7 @@ export class ProjectService {
   * - Builds filtering and search clauses based on input parameters.
   * - Fetches the filtered, sorted, paginated project list from the database.
   * - Returns projects and total count.
-  */ 
+  */
   async projectList(
     accountId: string,
     fiscalYear: number = 0,
@@ -1084,7 +1161,7 @@ export class ProjectService {
   * - Builds filtering and search clauses based on input parameters.
   * - Fetches the filtered and sorted project list for export from the database.
   * - Returns projects and total count.
-  */ 
+  */
   async exportProjectList(
     accountId: string,
     fiscalYear: number = 0,
@@ -1344,7 +1421,7 @@ export class ProjectService {
   * - Applies global account filters and optionally merges additional account RIDs if from user group.
   * - Fetches all projects matching filters, pagination, sorting, fiscal year, and access permissions.
   * - Returns paginated project list and total count.
-  */ 
+  */
   async allProjectList(
     fiscalYear: number = 0,
     page: number = 1,
@@ -1431,10 +1508,9 @@ export class ProjectService {
 
       const appliedAccountNumber =
         await this.schemaService.computeGlobalAccountFilter(globalFilters);
-      if (isFromUserGroup && accountRid.length > 0)
-        {
-         appliedAccountNumber.push(...accountRid);
-        }
+      if (isFromUserGroup && accountRid.length > 0) {
+        appliedAccountNumber.push(...accountRid);
+      }
 
       let { finalResult: allProjectList, totalCount } =
         await this.schemaService.fetchAllProjects(
@@ -1450,10 +1526,6 @@ export class ProjectService {
           bothParentAndChild,
           accessibleIds
         );
-
-      if (allProjectList.length > 0) {
-        allProjectList = await this.schemaService.addProjectResourceExistsFlags(allProjectList) as [unknown[], unknown] | never[];
-      }
 
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -1506,7 +1578,7 @@ export class ProjectService {
   * - Processes both base project data and associated fiscal year summaries.
   * - Formats date/time fields using the specified timezone, falling back to default format if invalid.
   * - Constructs a final export dataset containing only allowed fields with user-friendly labels.
-  */ 
+  */
   async exportAllProjectList(
     fiscalYear: number = 0,
     search: string,
@@ -1677,7 +1749,7 @@ export class ProjectService {
         // Always add base project data row first
         const projectInfo = {
           "Project Code": project.project_code || "-",
-          "Project Name":  "-",
+          "Project Name": "-",
           "Project Type": "-",
           "Account Name": "-",
           "Fiscal Year": "-",
@@ -1709,7 +1781,7 @@ export class ProjectService {
           "QRE Percent Final": "-",
           "QRE Final": "-",
           "Project Point of Contact": "-",
-          "Technical Point of Contact":"-",
+          "Technical Point of Contact": "-",
           Comments: "-",
           "Last Modified": "-",
           "Project ID": project.r_number || "-",
@@ -1771,11 +1843,11 @@ export class ProjectService {
               "Last Modified": fiscal.modified_datetime
                 ? timezone && isValidTimezone(timezone)
                   ? moment(fiscal.modified_datetime)
-                      .tz(timezone)
-                      .format("YYYY-MMM-DD, hh:mm:ss A")
+                    .tz(timezone)
+                    .format("YYYY-MMM-DD, hh:mm:ss A")
                   : moment(fiscal.modified_datetime).format(
-                      "YYYY-MMM-DD, hh:mm:ss A"
-                    )
+                    "YYYY-MMM-DD, hh:mm:ss A"
+                  )
                 : "-",
               "Project ID": fiscal.r_number || "-",
             };
@@ -2005,7 +2077,7 @@ export class ProjectService {
           attribute_name: key,
           old_value:
             existingProjectData[key] !== null &&
-            existingProjectData[key] !== undefined
+              existingProjectData[key] !== undefined
               ? String(existingProjectData[key])
               : "",
           new_value:
@@ -2127,19 +2199,19 @@ export class ProjectService {
       const technicalContact = enrichedKeyContacts.find(
         (e: any) =>
           e.role_name ===
-            keyContactRoleMap[primaryKeyContacts.technical_point_of_contact] &&
+          keyContactRoleMap[primaryKeyContacts.technical_point_of_contact] &&
           e.is_primary_contact
       );
       const financialContact = enrichedKeyContacts.find(
         (e: any) =>
           e.role_name ===
-            keyContactRoleMap[primaryKeyContacts.financial_consultant] &&
+          keyContactRoleMap[primaryKeyContacts.financial_consultant] &&
           e.is_primary_contact
       );
       const pointOfContact = enrichedKeyContacts.find(
         (e: any) =>
           e.role_name ===
-            keyContactRoleMap[primaryKeyContacts.project_point_of_contact] &&
+          keyContactRoleMap[primaryKeyContacts.project_point_of_contact] &&
           e.is_primary_contact
       );
 
@@ -2242,10 +2314,10 @@ export class ProjectService {
     isParent: boolean = false
   ): {
     whereClause: Record<string, any>;
-    searchClause : Record<string, any>;
+    searchClause: Record<string, any>;
   } {
     let whereClause: Record<string, any> = {};
-    let searchClause : Record<string, any> = {};
+    let searchClause: Record<string, any> = {};
 
     if (search) {
       searchClause = this.buildSearchCondition(
@@ -2288,9 +2360,9 @@ export class ProjectService {
         ...(isNaN(parseInt(search))
           ? []
           : [
-              { total_cost: { [Op.eq]: parseInt(search) } },
-              { total_effort: { [Op.eq]: parseInt(search) } },
-            ]),
+            { total_cost: { [Op.eq]: parseInt(search) } },
+            { total_effort: { [Op.eq]: parseInt(search) } },
+          ]),
       ];
     }
 
@@ -2751,44 +2823,44 @@ export class ProjectService {
           );
           result.currency = usdCurrencyId[0]?.rid;
         } catch (err) {
-        errorLog("Error fetching USD currency: " + (err as Error).message);
+          errorLog("Error fetching USD currency: " + (err as Error).message);
         }
       }
     }
   }
-  async fetchQreHistoryByAccountId (data : any) {
+  async fetchQreHistoryByAccountId(data: any) {
     const mainDbSequlize = await initMainDbSequelize();
     const orgDbSequlize = await initOrgSequelize();
 
-    const fetchParentAccount : any = await mainDbSequlize.query(await rawQueries.fetchParentAccount(data.account_rid, mainDbSequlize))
-    if(fetchParentAccount[0].length > 0) {
+    const fetchParentAccount: any = await mainDbSequlize.query(await rawQueries.fetchParentAccount(data.account_rid, mainDbSequlize))
+    if (fetchParentAccount[0].length > 0) {
       let parentAccountRNumber = fetchParentAccount[0][0].r_number;
       let schemaName = rawQueries.fetchSchemaName(parentAccountRNumber);
-      let result : any = await orgDbSequlize.query(fetchQreHistoryDatas(schemaName, data.account_rid, data.page, data.limit, data.sort, data.sort_by, data.filter, data.project_fiscal_rid))
-      if(result[0][0].data !== null) {
-        const finalResult = result[0][0].data.map((d : any) => {
+      let result: any = await orgDbSequlize.query(fetchQreHistoryDatas(schemaName, data.account_rid, data.page, data.limit, data.sort, data.sort_by, data.filter, data.project_fiscal_rid))
+      if (result[0][0].data !== null) {
+        const finalResult = result[0][0].data.map((d: any) => {
           return {
-            rid : d.rid,
-            created_datetime : d.created_datetime,
-            transaction_id : d.transaction_id,
-            project_fiscal_rid : d.project_fiscal_rid,
-            project_rid : d.project_rid,
-            account_rid : d.account_rid,
-            qre_percent : d.qre_percent,
-            version : d.version,
-            qre_detailed_breakdown : d.qre_detailed_breakdown
+            rid: d.rid,
+            created_datetime: d.created_datetime,
+            transaction_id: d.transaction_id,
+            project_fiscal_rid: d.project_fiscal_rid,
+            project_rid: d.project_rid,
+            account_rid: d.account_rid,
+            qre_percent: d.qre_percent,
+            version: d.version,
+            qre_detailed_breakdown: d.qre_detailed_breakdown
           }
         });
         return {
-          status : HttpStatus.SUCCESS,
-          total_result : result[0][0].data[0].total_result,
-          data : finalResult
+          status: HttpStatus.SUCCESS,
+          total_result: result[0][0].data[0].total_result,
+          data: finalResult
         };
       } else {
-       return {
-          status : HttpStatus.NOT_FOUND,
-          total_result : 0,
-          data : []
+        return {
+          status: HttpStatus.NOT_FOUND,
+          total_result: 0,
+          data: []
         };
       }
     }

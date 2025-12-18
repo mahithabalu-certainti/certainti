@@ -2,33 +2,49 @@ import { Sequelize, Transaction, Op } from "sequelize";
 import { CaseModelService } from "../caseModelsService";
 import CaseSchemaService from "../cases/schemaService";
 import { logMessage, errorLog } from "../../utils/helpers";
-import { ICreateHistoricalSubmission, CaseHistorySubmission } from "../../utils/types";
+import { ICreateHistoricalSubmission, CaseHistorySubmission, CurrencyType } from "../../utils/types";
 import { fetchCaseDetails } from "../../utils/rawQueries";
 import { rawQueries, SCHEMANAME_PREFIX } from "../../utils/constants";
+import { initMainDbSequelize } from "../../config/mainDataSource";
 
 export class HistoricalSubmissionSchemaService {
   private orgDbSequelize: Sequelize | null = null;
   private caseModelService: CaseModelService;
   private caseSchemaService: CaseSchemaService;
+  private mainDbSequelize : Sequelize | null = null
 
   constructor() {
     this.caseModelService = new CaseModelService();
     this.caseSchemaService = new CaseSchemaService();
   }
 
+  async getMainDb () {
+    if(!this.mainDbSequelize) {
+      this.mainDbSequelize = await initMainDbSequelize();
+    }
+    return this.mainDbSequelize;
+  }
+
   private async checkUniqueFiscalYear(
     CaseHistorySubmission: any,
     account_rid: string,
     fiscal_year: string,
+    country_rid: string,
+    state_rid: string,
     excludeRid?: string
   ): Promise<boolean> {
     const whereClause: any = {
       account_rid,
-      fiscal_year
+      fiscal_year,
+      country_rid
     };
 
     if (excludeRid) {
       whereClause.rid = { [Op.ne]: excludeRid };
+    }
+
+    if(state_rid != null) {
+      whereClause.state_rid = state_rid;
     }
 
     const existing = await CaseHistorySubmission.findOne({
@@ -111,6 +127,8 @@ export class HistoricalSubmissionSchemaService {
           CaseHistorySubmission,
           historySubmissionRequest.account_rid,
           submission.fiscal_year,
+          submission.country_rid,
+          submission.state_rid || "",
           submission.history_submission_rid 
         );
 
@@ -134,6 +152,11 @@ export class HistoricalSubmissionSchemaService {
             total_qualified_project_cost: submission.total_qualified_project_cost,
             total_qre: submission.total_qre,
             total_rd_credits: submission.total_rd_credits,
+            total_fte_cost: submission.total_fte_cost,
+            total_subcon_cost: submission.total_subcon_cost,
+            total_nonlabor_cost: submission.total_nonlabor_cost,
+            country_rid: submission.country_rid,
+            state_rid: submission.state_rid,
             annual_gross_receipts: submission.annual_gross_receipts,
             modified_by: userId,
             modified_datetime: new Date(),
@@ -184,7 +207,9 @@ export class HistoricalSubmissionSchemaService {
         const isUnique = await this.checkUniqueFiscalYear(
           CaseHistorySubmission,
           historySubmissionRequest.account_rid,
-          submission.fiscal_year
+          submission.fiscal_year,
+          submission.country_rid,
+          submission.state_rid || ""
         );
 
         if (!isUnique) {
@@ -208,6 +233,11 @@ export class HistoricalSubmissionSchemaService {
           total_qre: submission.total_qre,
           total_rd_credits: submission.total_rd_credits,
           annual_gross_receipts: submission.annual_gross_receipts,
+          total_fte_cost: submission.total_fte_cost,
+          total_subcon_cost: submission.total_subcon_cost,
+          total_nonlabor_cost: submission.total_nonlabor_cost,
+          country_rid: submission.country_rid,
+          state_rid: submission.state_rid,
           created_by: userId,
           created_datetime: new Date(),
         });
@@ -276,21 +306,49 @@ export class HistoricalSubmissionSchemaService {
     accountNumber: string,
     data: any,
     userId: string,
-    type: string = "list"
+    type: string = "list",
+    currencyRid : string
   ) {
     try {
-      const { CaseHistorySubmission } = await this.caseModelService.getModels(accountNumber);
+      const { CaseHistorySubmission } = await this.caseModelService.getModels(accountNumber); 
       const whereConditions: any = {
         account_rid: data.account_rid,
+        country_rid: data.country_rid
       };
+      if (data.state_rid != null && data.state_rid !== "") {
+        whereConditions.state_rid = data.state_rid;
+      } else {
+        whereConditions.state_rid = { [Op.or]: [{ [Op.is]: null }, ""] };
+      }
       const queryOptions: any = {
         where: whereConditions,
         order: [["fiscal_year", "ASC"]],
+        raw : true
       };
-      const historicalSubmissions = await CaseHistorySubmission.findAll(queryOptions);
+      let currencySymbol : string | null;
+      let currencyId : string | null;
+      if(currencyRid !== null) {
+        const mainDb = await this.getMainDb();
+        const getCurrencySymbol : any = await mainDb.query(rawQueries.getCurrencyDetails(currencyRid))
+        if(getCurrencySymbol[0].length > 0) {
+          currencySymbol = getCurrencySymbol[0][0].currency_symbol
+          currencyId = getCurrencySymbol[0][0].rid
+        } else {
+          currencySymbol = null
+          currencyId = null
+        }
+      }
+      let historicalSubmissions = await CaseHistorySubmission.findAll(queryOptions);
+      historicalSubmissions = historicalSubmissions.map((d : any) => {
+        return {
+          ...d,
+          currency_rid : currencyId,
+          currency_symbol : currencySymbol
+        }
+      })
       return historicalSubmissions;
     } catch (err) {
-      logMessage(`Error in fetching historical submissions: ${err}`);
+      logMessage(`Error in fetching historical submissions : ${err}`);
       errorLog("Error in fetching historical submissions:", (err as Error).message);
       return [];
     }

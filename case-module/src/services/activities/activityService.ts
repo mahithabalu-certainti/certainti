@@ -47,16 +47,8 @@ import {
   rawQueries,
   MAIN_SCHEMA_NAME,
 } from "../../utils/constants";
-import { query } from "express";
-import currency from "currency.js";
-import moment from "moment";
 import { CaseManagementSchemaService } from "../casesManagement/schemaService";
-import {
-  fetchTaskActivities,
-  fetchTaskComments,
-  listAllTaskStatus,
-  taskCardDetails,
-} from "../../utils/rawQueries";
+
 import ActivitySchemaService from "./schemaService";
 import CaseSchemaService from "../cases/schemaService";
 export class ActivityService {
@@ -97,7 +89,7 @@ export class ActivityService {
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { cases: any };
+    data?: { task: any };
   }> {
     if (!this.mainDbSequelize) {
       this.mainDbSequelize = await this.getMainDb();
@@ -133,6 +125,25 @@ export class ActivityService {
         transaction
       );
 
+      if(taskResponse)
+      {
+        if(!this.mainDbSequelize)
+        {
+          this.mainDbSequelize = await this.getMainDb();
+        }
+        const [taskTypeResponse]: any[] = await this.mainDbSequelize.query(
+          rawQueries.getActivityTaskType(),
+          {type: QueryTypes.SELECT}
+        );
+        taskRequest.task_type_rid = taskTypeResponse.rid;
+        await this.activitySchemaService.addTaskSummary(
+          accountNumber,
+          taskRequest,
+          taskResponse.rid,
+          taskResponse.get("r_number") || ""
+        )
+      }
+        
       if (taskRequest?.checklist_rid) {
         const response =
           await this.caseManagementService.fetchChecklistTemplateDetailsById(
@@ -165,7 +176,7 @@ export class ActivityService {
             transaction
           );
       }
-      if (taskRequest?.tags?.length > 0) {
+      if (taskRequest?.tags.length > 0) {
         const [activeStatusRid]: any[] = await this.mainDbSequelize.query(
           rawQueries.getActiveStatusId()
         );
@@ -200,7 +211,7 @@ export class ActivityService {
         statusCode: HttpStatus.SUCCESS,
         message: STATUS_MESSAGE.caseCreated,
         data: {
-          cases: taskResponse,
+          task: taskResponse,
         },
       };
     } catch (err) {
@@ -209,7 +220,7 @@ export class ActivityService {
       return {
         statusCode: HttpStatus.FAILED,
         message: HttpStatus.FAILED_MESSAGE,
-        errorMessage: STATUS_MESSAGE.caseCreationFailed,
+        errorMessage: STATUS_MESSAGE.taskCreateFailed,
       };
     }
   }
@@ -220,15 +231,15 @@ export class ActivityService {
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { tasks: any };
+    data?: { task: any };
   }> {
     const dbInit = await this.caseModelService.getSequelize();
     const transaction = await dbInit.transaction();
     try {
-      taskRequest.created_by = userId;
+      taskRequest.modified_by = userId;
       const { accountNumber, parentAccountId } =
         await this.caseSchemaService.fetchValidAccountNumberById(
-          taskRequest.accountRid
+          taskRequest.account_rid!
         );
 
       if (!accountNumber) {
@@ -269,18 +280,18 @@ export class ActivityService {
 
       return {
         statusCode: HttpStatus.SUCCESS,
-        message: STATUS_MESSAGE.caseCreated,
+        message: STATUS_MESSAGE.taskUpdatedSuccess,
         data: {
-          tasks: response,
+          task: response,
         },
       };
     } catch (err) {
-      logMessage(`Error creating activity task, ${err}`);
+      logMessage(`Error updating activity task, ${err}`);
       await transaction.rollback();
       return {
         statusCode: HttpStatus.FAILED,
         message: HttpStatus.FAILED_MESSAGE,
-        errorMessage: STATUS_MESSAGE.caseCreationFailed,
+        errorMessage: STATUS_MESSAGE.taskUpdateFailed,
       };
     }
   }
@@ -297,6 +308,7 @@ export class ActivityService {
     sortOrder: string = "DESC",
     fiscalYear: number = 0,
     apiType: string = "list",
+    activityType: string = "All",
     graphqlData?: any
   ): Promise<{
     statusCode: number;
@@ -316,6 +328,57 @@ export class ActivityService {
           errorMessage: "Invalid account ID",
         };
       }
+        const userGroupType = await this.caseSchemaService.getUserGroupType(
+              userId
+            );
+            const userProfileType = await this.caseSchemaService.getUserProfileType(
+              userId
+            );
+            const isCustomGlobal = userGroupType === "DEFAULT";
+            const isDefaultParent = userGroupType === "AUTO_ASSIGNED_PARENT";
+            const isPOCProfile =
+              userProfileType?.profileName === "Project Point of Contact";
+            let accessibleIds: string[] = [];
+            if (!isCustomGlobal) {
+              accessibleIds = await this.getAccessibleProjectIds(
+                userId,
+                isDefaultParent,
+                isPOCProfile,
+                userProfileType?.email,
+                isCustomGlobal
+              );
+              if (accessibleIds.length === 0) {
+                return {
+                  message: 'No accessible checklist found for the user.',
+                  statusCode: HttpStatus.NOT_FOUND,
+                  data: {
+                      totalCount: 0,
+                    activities: [],
+                  },
+                };
+              }
+            }
+      
+            if (isCustomGlobal && isPOCProfile) {
+              accessibleIds = await this.getAccessibleProjectIds(
+                userId,
+                isDefaultParent,
+                isPOCProfile,
+                userProfileType?.email,
+                isCustomGlobal
+              );
+              if (accessibleIds.length === 0) {
+                return {
+                  message: 'No accessible checklist found for the user.',
+                  statusCode: HttpStatus.NOT_FOUND,
+                  data: {
+                  
+                    totalCount: 0,
+                    activities: [],
+                  },
+                };
+              }
+            }
       const checklistResponse: any =
         await this.activitySchemaService.fetchActivities(
           accountNumber,
@@ -330,6 +393,9 @@ export class ActivityService {
           sortBy,
           sortOrder,
           apiType,
+          accessibleIds,
+          activityType,
+          userId,
           graphqlData
         );
 
@@ -342,7 +408,6 @@ export class ActivityService {
         },
       };
     } catch (error) {
-      console.log(error);
       logMessage(`Error fetching activities task, ${error}`);
       return {
         statusCode: 500,
@@ -378,7 +443,7 @@ export class ActivityService {
         data: result,
       };
     } catch (err) {
-      logMessage(`Error adding comments to task, ${err}`);
+      logMessage(`Error updating activity email, ${err}`);
       return {
         statusCode: HttpStatus.FAILED,
         message: HttpStatus.FAILED_MESSAGE,
@@ -411,7 +476,7 @@ export class ActivityService {
         data: result,
       };
     } catch (err) {
-      logMessage(`Error adding comments to task, ${err}`);
+      logMessage(`Error updating activity email, ${err}`);
       return {
         statusCode: HttpStatus.FAILED,
         message: HttpStatus.FAILED_MESSAGE,
@@ -461,6 +526,19 @@ export class ActivityService {
           errorMessage: "Invalid Email Template ID",
         };
       }
+      let isSubscriptionCreated = false;
+        const accountData = await this.caseSchemaService.fetchAccountById(accountRid);
+        let accountRNumber = accountData.r_number;
+
+      let childRNumber = await this.caseSchemaService.fetchParentAccount(
+          accountData.parent_account_rid
+        );
+        if (accountData.storage_type === "store_in_parent") {
+          accountRNumber = childRNumber;
+        }
+        isSubscriptionCreated = (await this.caseSchemaService.getSubscriptionDetailsByProjectId(accountData.parent_account_rid, childRNumber,accountRid)) ?? false;
+        emailActivityDetails.is_email_configured = isSubscriptionCreated
+
 
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -505,6 +583,18 @@ export class ActivityService {
           errorMessage: "Invalid Activity ID",
         };
       }
+      let isSubscriptionCreated = false;
+        const accountData = await this.caseSchemaService.fetchAccountById(accountRid);
+        let accountRNumber = accountData.r_number;
+
+      let childRNumber = await this.caseSchemaService.fetchParentAccount(
+          accountData.parent_account_rid
+        );
+        if (accountData.storage_type === "store_in_parent") {
+          accountRNumber = childRNumber;
+        }
+        isSubscriptionCreated = (await this.caseSchemaService.getSubscriptionDetailsByProjectId(accountData.parent_account_rid, childRNumber,accountRid)) ?? false;
+        activityDetails.is_email_configured = isSubscriptionCreated
 
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -514,11 +604,55 @@ export class ActivityService {
         },
       };
     } catch (err) {
-      logMessage(`Error fetching email activity details, ${err}`);
+      logMessage(`Error fetching meeting activity details, ${err}`);
       return {
         statusCode: HttpStatus.FAILED,
         message: HttpStatus.FAILED_MESSAGE,
         errorMessage: STATUS_MESSAGE.checkListError,
+      };
+    }
+  }
+
+  async getCallActivityDetailsById(
+    activityRid: string,
+    accountRid: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { activityDetails: any };
+  }> {
+    try {
+      const { accountNumber } =
+        await this.caseSchemaService.fetchValidAccountNumberById(accountRid);
+      const activityDetails =
+        await this.activitySchemaService.fetchCallActivityDetailsById(
+          activityRid,
+          accountNumber,
+          accountRid
+        );
+
+      if (!activityDetails) {
+        return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: "Invalid Activity ID",
+        };
+      }
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          activityDetails,
+        },
+      };
+    } catch (err) {
+      logMessage(`Error fetching call activity details, ${err}`);
+      return {
+        statusCode: HttpStatus.FAILED,
+        message: HttpStatus.FAILED_MESSAGE,
+        errorMessage: STATUS_MESSAGE.detailFetchedFailed,
       };
     }
   }
@@ -542,6 +676,15 @@ export class ActivityService {
         userId,
         files
       );
+      if (result.success === false) 
+        {
+          return {
+            statusCode: HttpStatus.FAILED,
+            message: HttpStatus.FAILED_MESSAGE,
+            errorMessage: result.error,
+        }
+      }
+    
       return {
         statusCode: HttpStatus.SUCCESS,
         message: STATUS_MESSAGE.activityCreated,
@@ -658,26 +801,79 @@ export class ActivityService {
       };
     }
   }
-  async getEmailStatus(): Promise<{
+  async getActivityStatus(activityType: string): Promise<{
       statusCode: number;
       message: string;
       errorMessage?: string;
-      data?: { emailStatus: any };
+      data?: { activityStatus: any };
     }> {
       try {
-        const emailStatus = await this.activitySchemaService.getEmailStatus();
+        const activityStatus = await this.activitySchemaService.getActivityStatus(activityType);
   
         return {
           statusCode: HttpStatus.SUCCESS,
           message: HttpStatus.SUCCESS_MESSAGE,
           data: {
-            emailStatus,
+            activityStatus,
           },
         };
       } catch (err) {
-        logMessage(`Error fetching email status, ${err}`);
+        logMessage(`Error fetching activity status, ${err}`);
         throw this.throwServiceError(err as Error);
       }
+    }
+  
+   async getAccessibleProjectIds(
+      userId: string,
+      isdefaultparent: boolean,
+      isPOC: boolean = false,
+      userEmail?: string,
+      isCustomGlobal: boolean = false
+    ): Promise<string[]> {
+      const mainDbSequelize = await initMainDbSequelize();
+      const MAIN_SCHEMA_NAME = "trd365";
+  
+      const replacements: any[] = [];
+  
+      let accessControlWhere = "WHERE 1=1";
+      logMessage(
+        `isCustomGlobal: ${isCustomGlobal}, isPOC: ${isPOC}, isdefaultparent: ${isdefaultparent}, userEmail: ${userEmail}, userId: ${userId}`
+      );
+  
+      if (isCustomGlobal) {
+        // If isPOC is also true, restrict to POC email
+        if (isPOC && userEmail) {
+          accessControlWhere += ` AND (ps.project_point_of_contact_email = ? OR pfs.project_point_of_contact_email = ?)`;
+          replacements.push(userEmail, userEmail);
+        }
+        // Else allow all projects (no extra access checks)
+      } else {
+        // Non-global user – apply account/project access checks
+        const accountAccessSubquery = rawQueries.GET_ACCOUNT_ACCESS;
+        replacements.push(userId, userId, userId, userId);
+        accessControlWhere += ` AND ${accountAccessSubquery}`;
+  
+        if (!isdefaultparent) {
+          // Add project-level access checks if not a parent group
+          accessControlWhere += rawQueries.GET_PROJECT_ACCESS;
+          replacements.push(userId, userId, userId, userId);
+        }
+  
+        // Only non-global users can be further filtered by POC
+        if (isPOC && userEmail) {
+          accessControlWhere += ` AND (ps.project_point_of_contact_email = ? OR pfs.project_point_of_contact_email = ?)`;
+          replacements.push(userEmail, userEmail);
+        }
+      }
+  
+      const query = rawQueries.fetchProjectFiscalSummary(accessControlWhere);
+  
+      const results = await mainDbSequelize.query(query, {
+        replacements,
+        type: "SELECT",
+      });
+  
+      return results.map((row: any) => row.project_fiscal_rid);
     }
     /**
      * Formats an error response to be returned from service methods.

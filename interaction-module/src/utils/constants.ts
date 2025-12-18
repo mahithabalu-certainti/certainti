@@ -86,6 +86,7 @@ export const filtersColumns : Record<string, string> =
     interaction_type_rid : "interaction_type_rid",
     interaction_iteration : "interaction_iteration",
     project_code : "project_code",
+    project_name : "project_name",
     fiscal_year : "fiscal_year",
     response_source_rid : "response_source_rid",
     interaction_level_rid:"interaction_level_rid",
@@ -128,6 +129,7 @@ export const filtersColumns : Record<string, string> =
     status_rid : "string",
     interaction_type_rid : "string",
     project_code : "string",
+    project_name : "string",
     fiscal_year : "number",
     response_source_rid : "string",
     parent_interaction_rid:"string",
@@ -166,7 +168,9 @@ export const mainTableFilters : Record<any, any> = {
   response_source_name : "response_source_name",
   interaction_level_name:"interaction_level_name",
   modified_by: "modified_by",
-  modified_user_name:"modified_user_name"
+  modified_user_name:"modified_user_name",
+  project_name : "project_name",
+  project_code : "project_code"
 }
 
 export const STATUS_MESSAGE = {
@@ -344,23 +348,70 @@ export const rawQueries = {
   fetchKeyContactsByCaseId(caseRid: string, schemaName: string) {
   return `
     SELECT 
-      a.project_rid, 
-      project_code, 
-      project_name, 
-      key_contact_name, 
-      key_contact_email
+      a.project_fiscal_rid, 
+      b.project_code, 
+      b.project_name, 
+      c.key_contact_name, 
+      c.key_contact_email
     FROM ${schemaName}.case_projects as a
-    LEFT JOIN ${schemaName}.project as b
-      ON a.project_rid = b.rid
+    LEFT JOIN ${schemaName}.project_fiscal as b
+      ON a.project_fiscal_rid = b.rid
     LEFT JOIN ${schemaName}.key_contact_details as c
       ON b.rid = c.entity_rid
-    WHERE case_rid = '${caseRid}'
+    WHERE 
+    a.case_rid = '${caseRid}'
+    AND
+    c.include_in_communication = TRUE
   `;
   },
-  fetchProjectsByAccount(accountRid: string, schemaName: string,status_rid:string) {
+ fetchProjectsByAccount(
+  accountRid: string,
+  schemaName: string,
+  status_rid: string,
+  groupedProjectTypes?: Record<string, string[]>
+) {
+  let query = `
+    SELECT DISTINCT
+      pf.rid,
+      pf.project_rid,
+      pf.project_type_rid,
+      pf.fiscal_year
+    FROM ${schemaName}.project_fiscal pf
+  `;
+  if (groupedProjectTypes && Object.keys(groupedProjectTypes).length > 0) {
+    const values = Object.entries(groupedProjectTypes)
+      .flatMap(([key, typeRids]) => {
+        const [start, end] = key.split('_');
+        return typeRids.map(pt => 
+          `(DATE '${start}', DATE '${end}', '${pt}')`
+        );
+      })
+      .join(',\n');
+
+    query += `
+      JOIN (
+        VALUES
+          ${values}
+      ) AS ir(range_start, range_end, project_type_rid)
+        ON pf.project_type_rid = ir.project_type_rid
+       AND ir.range_start <= make_date(pf.fiscal_year, 3, 31)
+       AND ir.range_end   >= make_date(pf.fiscal_year - 1, 4, 1)
+    `;
+  }
+
+  query += `
+    WHERE pf.account_rid = '${accountRid}'
+      AND pf.status_rid  = '${status_rid}'
+  `;
+
+  return query;
+}
+,
+  fetchProjectsByCase(caseRid: string, schemaName: string) {
     return `
-    SELECT rid, project_rid FROM ${schemaName}.project_fiscal WHERE account_rid = '${accountRid}' and status_rid='${status_rid}'`;
-  },
+    SELECT a.project_fiscal_rid FROM ${schemaName}.case_projects as a WHERE a.case_rid = '${caseRid}'
+    `
+    },
   updateQreInfo(rid: string, schemaName: string, qrePercent: number, data: any) {
     return `
       UPDATE ${schemaName}.project_fiscal
@@ -421,7 +472,27 @@ export const rawQueries = {
   },
   fetchAccountInfo(rid: string) {
     return `
-    SELECT rid, account_name,r_number,parent_account_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${rid}'`;
+    SELECT rid, account_name,r_number,parent_account_rid,country_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${rid}'`;
+  },
+  fetchPlatformConfig(rid: string) {
+    return `
+    SELECT config_json,effective_start_date,effective_end_date FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values rv
+    join ${MAIN_SCHEMA_NAME}.rd_credit_config_group rg on  rv.credit_config_group_rid  = rg.rid
+    where rg.country_rid = '${rid}'
+    and credit_program_name = 'Platform Configuration'
+    and rg.is_federal = true`;
+  },
+  fetchProjectTypeRid(projectType: string | string[]) {
+    // Accepts either a string or array of strings
+    let condition = "";
+    if (Array.isArray(projectType)) {
+      const types = projectType.map(pt => `'${pt.replace(/'/g, "''")}'`).join(",");
+      condition = `lower(project_type_name) IN (${types.toLowerCase()})`;
+    } else {
+      condition = `lower(project_type_name) = lower('${projectType.replace(/'/g, "''")}')`;
+    }
+    return `
+      select rid from trd365.project_type where ${condition}`;
   },
    fetchAccountDetailsInfo(rid: string,schemaName: string) {
     return `
@@ -618,6 +689,10 @@ export const rawQueries = {
     let ids = statusIds.map((d: any) => `'${d}'`);
     return `
     SELECT rid, status_name as name FROM ${MAIN_SCHEMA_NAME}.status WHERE rid IN (${ids})`;
+  },
+  fetchProjectFiscalDetails(projectFiscalIds: string[], schemaName: string) {
+    return `
+    SELECT rid, project_name, project_code, signoff FROM ${schemaName}.project_fiscal WHERE rid IN (${projectFiscalIds.map((d : any) => `'${d}'`).join(',')})`;
   },
   fetchProjectFiscal(projectFiscalId: string, schemaName: string) {
     return `
@@ -941,7 +1016,13 @@ export const rawQueries = {
          OR project_code = :projectCode
       LIMIT 1;
     `;
-  }  
+  },
+  getCaseProjectsIds (caseRid : string, accountRid : string, schemaName : string) {
+    return `SELECT project_fiscal_rid FROM ${schemaName}.case_projects WHERE case_rid = '${caseRid}' AND account_rid = '${accountRid}'`
+  },
+  fetchEmailTemplateByCategory (categoryName : string) {
+    return `SELECT rid, template_name, subject, body_html FROM ${MAIN_SCHEMA_NAME}.email_template WHERE category_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.email_template_category WHERE lower(category_name) = lower('${categoryName}') LIMIT 1) LIMIT 1`
+  },
 };
 
 export const filterTypesForSummaryInteractions : Record<string, any> = 
@@ -1095,6 +1176,15 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
     interactionAge : "interaction_age",
     interaction : "interactions",
     attachments : "attachments"
+  }
+
+   export const interactionTemplateName = {
+    interactionProject : "interaction project",
+    interactionProjectRemainder : "interaction project remainder",
+    interactionAccount : "interaction account",
+    interactionAccountRemainder : "interaction account remainder",
+    interactionProjectUpdate : "interaction project update",
+    interactionAccountUpdate : "interaction account update"
   }
 
   export const keyContactRoleName = {

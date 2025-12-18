@@ -46,7 +46,7 @@ routes.get(
   checkUserStatusMiddleware("cases_view_edit"),
   controller.caseController.listAllCasesAccount
 );
-routes.get(
+routes.post(
   "/list/caseSummary",
   checkUserStatusMiddleware("cases_view_edit"),
   controller.caseController.listAllCasesSummary
@@ -56,7 +56,7 @@ routes.get(
   checkUserStatusMiddleware("cases_export"),
   controller.caseController.exportAllCasesAccount
 );
-routes.get(
+routes.post(
   "/export/caseSummary",
   checkUserStatusMiddleware("cases_export"),
   controller.caseController.exportAllCasesSummary
@@ -136,17 +136,17 @@ routes.get(
 );
 routes.get(
   "/workBreakdown/:accountRid/:caseRid",
-  checkUserStatusMiddleware("NA"),
+  checkUserStatusMiddleware("cases_workbreakdown_view_edit"),
   controller.caseController.fetchCaseKanbanBoard
 );
 routes.post(
   "/task/create",
-  checkUserStatusMiddleware("NA"),
+  checkUserStatusMiddleware("cases_workbreakdown_create"),
   controller.caseController.createTask
 );
 routes.put(
   '/task/update',
-  checkUserStatusMiddleware("NA"),
+  checkUserStatusMiddleware("cases_workbreakdown_view_edit"),
   controller.caseController.updateTask
 );
 routes.post(
@@ -253,6 +253,19 @@ routes.get(
   checkUserStatusMiddleware("case_review_projects_export"),
   controller.caseController.exportReviewProjects
 )
+
+routes.post(
+  "/sentReviewProjects",
+  checkUserStatusMiddleware("case_review_projects_export"),
+  upload.array('files'),
+  controller.caseController.sentReviewProjects
+)
+routes.get(
+  "/emailTemplatePreview",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.getEmailTemplatePreview
+)
+
 routes.post(
   "/task/workflowConnector/add",
   checkUserStatusMiddleware("NA"),
@@ -264,11 +277,6 @@ routes.post(
   controller.caseController.linkDeleteTask
 )
 routes.post(
-  "/task/dropdown",
-  checkUserStatusMiddleware("NA"),
-  controller.caseController.listTaskDropdownAccountLevel
-)
-routes.post(
   "/task/collaborator/delete",
   checkUserStatusMiddleware("NA"),
   controller.caseController.deleteCollaboratorsTaskLevel
@@ -277,5 +285,20 @@ routes.put(
   "/task/checklist/status",
   checkUserStatusMiddleware("NA"),
   controller.caseController.updateChecklistItemStatus
+)
+routes.post(
+  "/task/dropDownList",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.caseLevelTaskDropdown
+)
+routes.get(
+  "/getCaseSubmissionDate",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.getCaseSubmissionDate
+)
+routes.put(
+  "/project/signoff",
+  checkUserStatusMiddleware("projects_tech_summary_view_edit"),
+  controller.caseController.signoffTechnicalDocumentation
 )
 export default routes;

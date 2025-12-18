@@ -2,36 +2,36 @@ import { Sequelize } from "sequelize";
 import { NODE_ENV } from "../utils/constants";
 import { getSecret } from "../utils/azureSecrets";
 import { errorLog, logMessage } from "../utils/helpers";
- 
+
 let sequelize: Sequelize;
- 
+
 const requiredEnvVariables = [
   "ORGDB_NAME",
   "ORGDB_PASSWORD",
   "ORGDB_USERNAME",
   "ORGDB_ENDPOINT",
 ];
- 
+
 requiredEnvVariables.forEach((envVar) => {
   if (!process.env[envVar]) {
     throw new Error(`Missing environment variable: ${envVar}`);
   }
 });
- 
+
 const env = process.env.NODE_ENV || NODE_ENV.DEV;
- 
+
 const sslOptions =
   env === NODE_ENV?.PROD
     ? {
-        dialectOptions: {
-          ssl: {
-            require: true,
-            rejectUnauthorized: false,
-          },
+      dialectOptions: {
+        ssl: {
+          require: true,
+          rejectUnauthorized: false,
         },
-      }
+      },
+    }
     : {};
- 
+
 async function getAzureSecrets() {
   try {
     const secrets = await Promise.all([
@@ -40,7 +40,7 @@ async function getAzureSecrets() {
       getSecret(process.env.ORGDB_PASSWORD as string),
       getSecret(process.env.ORGDB_ENDPOINT as string),
     ]);
- 
+
     return {
       DB_NAME: secrets[0],
       DB_USER: secrets[1],
@@ -53,18 +53,18 @@ async function getAzureSecrets() {
     );
   }
 }
- 
+
 export async function initOrgSequelize() {
   try {
     if (sequelize) {
       return sequelize;
     }
     const { DB_NAME, DB_USER, DB_PASSWORD, DB_HOST } = await getAzureSecrets();
- 
+
     if (!DB_NAME || !DB_USER || !DB_PASSWORD || !DB_HOST) {
       throw new Error("One or more required database secrets are missing.");
     }
- 
+
     sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASSWORD, {
       host: DB_HOST,
       dialect: "postgres",
