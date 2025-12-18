@@ -153,56 +153,55 @@ async function updateCondition(req: Request, res: Response): Promise<void> {
   }
 };
 
-async function deleteCondition(req: Request, res: Response): Promise<any> {
-  const methodName = "delete condition";
-  try {
-    const userId = req.headers["x-user-id"] as string;
-    if (!userId) {
-      // errorLog(methodName, "User ID is required in headers");
-      // handleErrorResponse(
-      //   res,
-      //   HttpStatus.BAD_REQUEST,
-      //   HttpStatus.BAD_REQUEST_MESSAGE,
-      //   "User ID is required in headers"
-      // );
-      // return;
-    }
-    const data = req.body;
-    const result = await ConditionService.deleteCondition(data, userId);
-    if (result.statusCode === HttpStatus.SUCCESS) {
-      return res.status(HttpStatus.SUCCESS).send({
-        statusCode: HttpStatus.SUCCESS,
-        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
-        statusMessage: result.statusMessage,
-      });
-    } else if (result.statusCode === HttpStatus.NOT_FOUND) {
-      return res.status(HttpStatus.SUCCESS).send({
-        statusCode: HttpStatus.SUCCESS,
-        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
-        statusMessage: result.statusMessage,
-      });
-    } else {
-      return res.status(HttpStatus.FAILED).send({
-        statusCode: HttpStatus.FAILED,
-        statusCodeValue: HttpStatus.FAILED_MESSAGE,
-        statusMessage: result.statusMessage,
-      });
-    }
-  } catch (err) {
-    const error = err as Error;
-    errorLog(methodName, error.message);
-    handleErrorResponse(
-      res,
-      HttpStatus.FAILED,
-      HttpStatus.FAILED_MESSAGE,
-      error.message
-    );
-  }
-};
+// async function deleteCondition(req: Request, res: Response): Promise<any> {
+//   const methodName = "delete condition";
+//   try {
+//     const userId = req.headers["x-user-id"] as string;
+//     if (!userId) {
+//       // errorLog(methodName, "User ID is required in headers");
+//       // handleErrorResponse(
+//       //   res,
+//       //   HttpStatus.BAD_REQUEST,
+//       //   HttpStatus.BAD_REQUEST_MESSAGE,
+//       //   "User ID is required in headers"
+//       // );
+//       // return;
+//     }
+//     const data = req.body;
+//     const result = await ConditionService.deleteCondition(data, userId);
+//     if (result.statusCode === HttpStatus.SUCCESS) {
+//       return res.status(HttpStatus.SUCCESS).send({
+//         statusCode: HttpStatus.SUCCESS,
+//         statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+//         statusMessage: result.statusMessage,
+//       });
+//     } else if (result.statusCode === HttpStatus.NOT_FOUND) {
+//       return res.status(HttpStatus.SUCCESS).send({
+//         statusCode: HttpStatus.SUCCESS,
+//         statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+//         statusMessage: result.statusMessage,
+//       });
+//     } else {
+//       return res.status(HttpStatus.FAILED).send({
+//         statusCode: HttpStatus.FAILED,
+//         statusCodeValue: HttpStatus.FAILED_MESSAGE,
+//         statusMessage: result.statusMessage,
+//       });
+//     }
+//   } catch (err) {
+//     const error = err as Error;
+//     errorLog(methodName, error.message);
+//     handleErrorResponse(
+//       res,
+//       HttpStatus.FAILED,
+//       HttpStatus.FAILED_MESSAGE,
+//       error.message
+//     );
+//   }
+// };
 
 export default {
   createCondition,
   listAllConditions,
   updateCondition,
-  deleteCondition
 };
