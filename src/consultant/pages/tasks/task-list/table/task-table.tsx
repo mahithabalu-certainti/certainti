@@ -228,14 +228,6 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
       }
 
       // For Activity tasks, case_rid is optional
-      if (
-        !isMilestoneTab &&
-        !caseId &&
-        selectedTask?.attachment_level !== 'account'
-      ) {
-        errorToast('Case ID is required for case-level activities');
-        throw new Error('Missing Case ID');
-      }
 
       return new Promise<void>((resolve, reject) => {
         const payload: any = {
@@ -245,13 +237,9 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
           files: files,
         };
 
-        // For Activity tasks, use attach_to as case_rid if case_rid is not available
-        // For Milestone tasks, always use case_rid
         if (isMilestoneTab) {
           payload.case_rid = caseId;
         } else {
-          // Activity tasks: use case_rid if available, otherwise use attach_to
-          payload.case_rid = caseId || selectedTask?.attach_to || '';
           payload.task_type = 'activity';
         }
 
@@ -321,14 +309,6 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
       }
 
       // For Activity tasks, case_rid is optional
-      if (
-        !isMilestoneTab &&
-        !caseId &&
-        selectedTask?.attachment_level !== 'account'
-      ) {
-        errorToast('Case ID is required for case-level activities');
-        throw new Error('Missing Case ID');
-      }
 
       return new Promise<void>((resolve, reject) => {
         const payload: any = {
@@ -340,13 +320,9 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
           deleted_file_ids: deletedFileIds,
         };
 
-        // For Activity tasks, use attach_to as case_rid if case_rid is not available
-        // For Milestone tasks, always use case_rid
         if (isMilestoneTab) {
           payload.case_rid = caseId;
         } else {
-          // Activity tasks: use case_rid if available, otherwise use attach_to
-          payload.case_rid = caseId || selectedTask?.attach_to || '';
           payload.task_type = 'activity';
         }
 
@@ -410,14 +386,6 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
       }
 
       // For Activity tasks, case_rid is optional
-      if (
-        !isMilestoneTab &&
-        !caseId &&
-        selectedTask?.attachment_level !== 'account'
-      ) {
-        errorToast('Case ID is required for case-level activities');
-        throw new Error('Missing Case ID');
-      }
 
       return new Promise<void>((resolve, reject) => {
         const payload: any = {
@@ -427,8 +395,6 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
           deleted_file_ids: [],
         };
 
-        // For Activity tasks, use attach_to as case_rid if case_rid is not available
-        // For Milestone tasks, always use case_rid
         if (isMilestoneTab) {
           payload.case_rid = caseId;
         } else {
@@ -509,7 +475,6 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
           if (caseId) payload.case_rid = caseId;
         } else {
           payload.task_type = 'activity';
-          if (caseId) payload.case_rid = caseId;
         }
 
         addCollaboratorMutation.mutate(payload, {
