@@ -558,4 +558,11 @@ export interface IActivityService {
   }>;
 }
 
+export interface IChildCaseService extends ICaseService {
+  signOffFinancialWorking(data : any) : Promise<{
+    statusCode: number;
+    statusMessage: string;
+}>
+}
+
 

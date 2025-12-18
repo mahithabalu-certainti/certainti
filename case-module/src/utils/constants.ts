@@ -199,6 +199,9 @@ export const STATUS_MESSAGE = {
   configUpdatedSuccess: "Configuration updated successfully",
   configCreationFailed: "Configuration creation failed",
   configUpdateFailed: "Configuration update failed",
+  noProjectsAssignedToCase : "No Assigned Projects found. Kindly assign a project to case and try again",
+  financialWorkingSignedOff : "Financial Working has been successfully signed off",
+  financialWorkingSignedOffFailed : "Failed to signoff financial working",
 };
 
 export const caseStatuses = {
@@ -1509,6 +1512,24 @@ LIMIT 1`;
   },
   fetchProjectFiscalById (rid : string, accountRid : string, schemaName : string) {
     return `SELECT rid, signoff, project_code FROM ${schemaName}.project_fiscal WHERE rid = '${rid}' AND account_rid = '${accountRid}'`
+  },
+  getProjectsForCases(caseRid: string, accountRid: string, schemaName: string) {
+    return `SELECT rid, project_fiscal_rid, region_rid FROM ${schemaName}.case_projects WHERE case_rid = '${caseRid}' AND account_rid = '${accountRid}'`
+  },
+  updateSignoffInCase(schemaName : string, caseRid : string, signOff : boolean) {
+    return `UPDATE ${schemaName}.cases SET financial_working_signoff = ${signOff} WHERE rid = '${caseRid}'`
+  },
+  updateClaimQualifiedInCaseProject (caseRid : string, projectFiscalRids : string[], accountRid : string, schemaName : string) {
+    return `UPDATE ${schemaName}.case_projects SET is_rd_claim_qualified = true WHERE case_rid = '${caseRid}' AND account_rid = '${accountRid}' AND project_fiscal_rid IN (${projectFiscalRids.map((d : any) => `'${d}'`).join(',')})`
+  },
+  updateClaimQualifiedInProjectFiscal (projectFiscalRids : string[], accountRid : string, schemaName : string) {
+    return `UPDATE ${schemaName}.project_fiscal SET is_rd_claim_qualified = true WHERE rid IN (${projectFiscalRids.map((d : any) => `'${d}'`).join(',')}) AND account_rid = '${accountRid}'`
+  },
+  updateClaimQualifiedInCaseProjectFiscalRegion (ProjectRegionIds : any[], accountRid : string, schemaName : string) {
+    let ids = ProjectRegionIds.filter((d : any) => d.region_rid !== null)
+    let validIds;
+    validIds = ids.map((d : any) => `('${d.case_project_rid}','${d.project_fiscal_rid}', '${d.region_rid}')`).join(',')
+    return `UPDATE ${schemaName}.case_project_fiscal_region SET is_rd_claim_qualified = true WHERE account_rid = '${accountRid}' AND (case_project_rid, project_fiscal_rid, region_rid) IN (${validIds})`
   }
 };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 

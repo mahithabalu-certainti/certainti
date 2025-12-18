@@ -72,14 +72,14 @@ export class CaseService {
     this.caseManagementService = new CaseManagementSchemaService()
   }
 
-  private async getMainDb() {
+  protected async getMainDb() {
     if (!this.mainDbSequelize) {
       this.mainDbSequelize = await initMainDbSequelize();
     }
     return this.mainDbSequelize;
   }
 
-  private async getOrgDb() {
+  protected async getOrgDb() {
     if (!this.orgDbSequelize) {
       this.orgDbSequelize = await initOrgSequelize();
     }
