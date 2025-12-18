@@ -193,7 +193,6 @@ export class JurisdictionService {
         rawQueries.getActiveStatusId(),
         { type: "SELECT" }
       );
-      configRequest.status_rid = activeStatusRid.rid;
       let duplicate = false;
       if (configRequest.config_name) {
         const existingConfigName = await JurisdictionConfig.findOne({
@@ -279,7 +278,6 @@ export class JurisdictionService {
         rawQueries.getActiveStatusId(),
         { type: "SELECT" }
       );
-      configRequest.status_rid = activeStatusRid.rid;
       let duplicate = false;
       if (configRequest.config_name) {
         const existingConfigName = await JurisdictionConfig.findOne({

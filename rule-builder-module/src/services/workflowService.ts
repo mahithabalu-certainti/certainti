@@ -2,7 +2,7 @@ import { RuleScope } from "../models/ruleScope";
 import { ScopeEvent } from "../models/scopeEvents";
 import { initSequelize } from "../config/maindbDataSource";
 import { Sequelize, Op, QueryTypes } from "sequelize";
-import { HttpStatus, MAIN_SCHEMA_NAME, STATUS_MESSAGE, rawQueries } from "../utils/constants";
+import { HttpStatus, MAIN_SCHEMA_NAME, STATUS_MESSAGE, notificationTypes, rawQueries } from "../utils/constants";
 import { Logger } from "winston";
 import { actions, Fields, ICreateRuleMapWithScope, IListSCopeEvent } from "../utils/types";
 import { decryptClientSecret, logMessage } from "../utils/helpers";
@@ -680,10 +680,10 @@ export class WorkFlowService {
                 console.log("Creating task", entity);
                 break;
             case "In App":
-                await this.triggerNotification(entity,"In App");
+                await this.triggerNotification(entity,notificationTypes.InApp);
                 break;
             case "Email":
-                await this.triggerNotification(entity,"Email");
+                await this.triggerNotification(entity,notificationTypes.Email);
                 break;
 
             default:
