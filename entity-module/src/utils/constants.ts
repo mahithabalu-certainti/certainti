@@ -886,7 +886,7 @@ export const rawQueries = {
         where rg.country_rid = '${rid}'
         and credit_program_name = 'Platform Configuration'
         and rg.is_federal = true`;
-      },
+  },
   async updateSetting(
     schemaName: string,
     data: any,
@@ -1491,7 +1491,7 @@ export const rawQueries = {
     projectFilter: any,
     filterConditions: any,
     searchCondition: any,
-    caseProjectQuery? : any
+    caseProjectQuery?: any
   ) {
     return `
       SELECT 
@@ -1531,7 +1531,7 @@ export const rawQueries = {
     projectFilter: any,
     filterConditions: any,
     searchCondition: any,
-    caseProjectQuery? : any
+    caseProjectQuery?: any
   ) {
     return `
       SELECT COUNT(*) as total
@@ -2330,13 +2330,13 @@ export const rawQueries = {
   fetchUsersByIds: `SELECT rid, CONCAT(first_name, ' ', last_name) as full_name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (:userIds)`,
   getStatusNamesByIds: `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.activity_status WHERE rid IN (:statusIds)
           union
-          SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.case_status  WHERE rid IN (:statusIds)
+          SELECT rid, task_status_name FROM ${MAIN_SCHEMA_NAME}.case_task_status  WHERE rid IN (:statusIds)
           `,
   getPriorityNamesByIds: `SELECT rid, priority_name FROM ${MAIN_SCHEMA_NAME}.case_priority WHERE rid IN (:priorityIds)`,
   getResourceNamesByIds(schema_name: string): string {
     return `SELECT rid, resource_name FROM ${schema_name}.resources WHERE rid IN (:resourceRids)`;
   },
-  getProjectsForCases (caseRid : string, accountRid : string, schemaName : string) {
+  getProjectsForCases(caseRid: string, accountRid: string, schemaName: string) {
     return `SELECT project_fiscal_rid FROM ${schemaName}.case_projects WHERE case_rid = '${caseRid}' AND account_rid = '${accountRid}'`
   }
 };
