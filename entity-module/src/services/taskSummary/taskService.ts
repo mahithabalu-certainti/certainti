@@ -819,6 +819,7 @@ export class TaskService {
           status_name: statusMap.get(task.status_rid) || null,
           priority_name: priorityMap.get(task.priority_rid) || null,
           assigned_to_name: userMap.get(task.assigned_to) || task.assigned_to,
+          account_name: accountMap.get(task.account_rid)?.account_name || task.account_rid,
           attached_to: attachmentDisplayNames[task.rid] || task.attach_to,
         };
       }));
@@ -1002,34 +1003,38 @@ export class TaskService {
         }
       });
 
-      const permissionName = flag === "milestone" ? "cases_workbreakdown_view_edit" : "activity_task_export";
+      const permissionName = flag === "milestone" ? "cases_workbreakdown_view_edit" : "activity_task_view_edit";
 
       // Apply field-level access control for export
       const allowedFieldsForExport = await this.schemaService.getAllowedExportFields(userId, permissionName);
+      const accountAllowedFieldsForExport = await this.schemaService.getAllowedExportFields(userId, "accounts_view_edit");
       const allowedFieldSet = new Set<string>();
       for (const field of allowedFieldsForExport) {
         if (field.read) {
           allowedFieldSet.add(field.field_desc);
         }
       }
+      for (const field of accountAllowedFieldsForExport) {
+        if (field.read) {
+          allowedFieldSet.add(field.field_desc);
+        }
+      }
 
       const labelMap: Record<string, string> = {
-        "Task ID": "Record ID",
+        "Task ID": "Task ID",
+        "Name": "Account Name",
         "Task Name": "Task Name",
         "Description": "Description",
         "Fiscal Year": "Fiscal Year",
-        "Assigned To": "Assignee",
-        "Status": "Status",
+        "Related To Name": "Related To Name",
+        "Related Entity": "Related Entity",
+        "Assigned To": "Assigned To",
         "Priority": "Priority",
-        "Effective Start Date": "Effective Start Date",
-        "Effective End Date": "Effective End Date",
-        "Attachment Level": "Attachment Level",
-        "Attached To": "Attached To",
-        "Account ID": "Account ID",
+        "Status": "Status",
         "Created By": "Created By",
         "Created On": "Created On",
-        "Modified By": "Updated By",
-        "Modified On": "Updated On"
+        "Updated By": "Modified By",
+        "Updated On": "Modified On"
       };
 
       // Map tasks to export format
@@ -1039,7 +1044,7 @@ export class TaskService {
 
         for (const [fieldKey, value] of Object.entries(rawMapped)) {
           const label = labelMap[fieldKey];
-          if (allowedFieldSet.has(label)) {
+          if (allowedFieldSet.has(fieldKey)) {
             filtered[label] = value;
           }
         }
@@ -1183,33 +1188,15 @@ export class TaskService {
 
     return {
       "Task ID": task.r_number || '-',
+      "Name": task.account_name || '-',
       "Task Name": task.task_name || '-',
       "Description": task.description || '-',
-      "Fiscal Year": task.fiscal_year || '-',
+      "Fiscal Year": task.fiscal_year ? `FY-${task.fiscal_year}` : '-',
+      "Related To Name": task.attached_to || '-',
+      "Related Entity": task.attachment_level || '-',
       "Assigned To": task.assigned_to_name || '-',
-      "Status": task.status_name || '-',
       "Priority": task.priority_name || '-',
-      "Effective Start Date": task.effective_start_datetime
-        ? timezone && isValidTimezone(timezone)
-          ? moment(task.effective_start_datetime)
-            .tz(timezone)
-            .format("YYYY-MMM-DD, hh:mm:ss A")
-          : moment(task.effective_start_datetime).format(
-            "YYYY-MMM-DD, hh:mm:ss A"
-          )
-        : "-",
-      "Effective End Date": task.effective_end_datetime
-        ? timezone && isValidTimezone(timezone)
-          ? moment(task.effective_end_datetime)
-            .tz(timezone)
-            .format("YYYY-MMM-DD, hh:mm:ss A")
-          : moment(task.effective_end_datetime).format(
-            "YYYY-MMM-DD, hh:mm:ss A"
-          )
-        : "-",
-      "Attachment Level": task.attachment_level || '-',
-      "Attached To": task.attach_to || '-',
-      "Account ID": task.account_rid || '-',
+      "Status": task.status_name || '-',
       "Created By": task.created_by_name || '-',
       "Created On": task.created_datetime
         ? timezone && isValidTimezone(timezone)
@@ -1220,8 +1207,8 @@ export class TaskService {
             "YYYY-MMM-DD, hh:mm:ss A"
           )
         : "-",
-      "Modified By": task.modified_by_name || '-',
-      "Modified On": task.modified_datetime
+      "Updated By": task.modified_by_name || '-',
+      "Updated On": task.modified_datetime
         ? timezone && isValidTimezone(timezone)
           ? moment(task.modified_datetime)
             .tz(timezone)
@@ -1229,7 +1216,7 @@ export class TaskService {
           : moment(task.modified_datetime).format(
             "YYYY-MMM-DD, hh:mm:ss A"
           )
-        : "-",
+        : "-"
     };
   }
 
