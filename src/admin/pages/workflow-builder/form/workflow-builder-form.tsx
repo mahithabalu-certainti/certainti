@@ -13,6 +13,7 @@ import {
   useGetActionCategoryTypes,
   useCreateRule,
   useGetRuleDetails,
+  useUpdateRule,
 } from '../../../service/workflow-builder/workflow-builder-service';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
@@ -25,6 +26,7 @@ interface WorkflowBuilderProps {
 const WorkflowBuilderFormContent: React.FC<WorkflowBuilderProps> = ({
   isLoadingRuleDetails,
 }) => {
+  const { ruleId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const { successToast } = useToast();
@@ -34,6 +36,7 @@ const WorkflowBuilderFormContent: React.FC<WorkflowBuilderProps> = ({
   const { userId } = useSelector((state: RootState) => state.auth);
 
   const createRule = useCreateRule();
+  const updateRule = useUpdateRule();
 
   const { data: scopeListData, isLoading: isLoadingScopeList } =
     useGetScopeList();
@@ -66,15 +69,29 @@ const WorkflowBuilderFormContent: React.FC<WorkflowBuilderProps> = ({
       return;
     }
 
-    const apiPayload = transformRuleToPayload(rule, userId || '');
+    const apiPayload = transformRuleToPayload(rule);
 
-    // Call create rule API
-    createRule.mutate(apiPayload, {
-      onSuccess: () => {
-        navigate(WORKFLOW_BUILDER);
-        successToast('Workflow created successfully');
-      },
-    });
+    if (isEditView) {
+      updateRule.mutate(
+        { ...apiPayload, rule_rid: ruleId || '', modified_by: userId || '' },
+        {
+          onSuccess: () => {
+            navigate(WORKFLOW_BUILDER);
+            successToast('Workflow updated successfully');
+          },
+        }
+      );
+    } else {
+      createRule.mutate(
+        { ...apiPayload, created_by: userId || '' },
+        {
+          onSuccess: () => {
+            navigate(WORKFLOW_BUILDER);
+            successToast('Workflow created successfully');
+          },
+        }
+      );
+    }
   };
 
   const isSaveEnabled =
@@ -84,7 +101,10 @@ const WorkflowBuilderFormContent: React.FC<WorkflowBuilderProps> = ({
     rule.actions.length > 0 &&
     rule.conditionType !== null;
 
-  const isInitialLoading = isLoadingScopeList || isLoadingRuleDetails;
+  const isInitialLoading =
+    isLoadingScopeList ||
+    isLoadingRuleDetails ||
+    (isEditView && (isLoadingActionCategories || isLoadingConditionTypes));
 
   // Pass all fetched data to RuleBuilder
   const apiData = {
@@ -96,7 +116,9 @@ const WorkflowBuilderFormContent: React.FC<WorkflowBuilderProps> = ({
   };
 
   return (
-    <div className='flex flex-col h-full'>
+    <div
+      className={`flex flex-col h-full ${createRule.isPending || updateRule.isPending || isInitialLoading ? 'pointer-events-none' : ''}`}
+    >
       <div className='sticky top-0 z-10 flex flex-col bg-white border-b border-[#CBD6E2]'>
         <div className='flex items-center justify-between h-[50px] px-10 '>
           <div className='flex items-center w-[80%] max-w-[80%]'>
@@ -113,7 +135,7 @@ const WorkflowBuilderFormContent: React.FC<WorkflowBuilderProps> = ({
                 </div>
               ) : (
                 <div className='font-semibold text-[12px] leading-[20px] ml-2 mb-[-6px] text-[#7D98B6]'>
-                  {`Workflow Builder ${isEditView ? `> ${rule.r_number || ''}` : ''}`}
+                  {`Workflow Builder ${isEditView ? `> ${rule.name || ''}` : ''}`}
                 </div>
               )}
               <h5 className='text-[16px] font-bold ml-2 mt-0.5 text-[#2D3E4F]'>
@@ -124,7 +146,7 @@ const WorkflowBuilderFormContent: React.FC<WorkflowBuilderProps> = ({
           <div className='flex gap-3'>
             <TextButton
               label='Save'
-              loading={createRule.isPending}
+              loading={createRule.isPending || updateRule.isPending}
               onClick={handleSubmit}
               disabled={!isSaveEnabled}
               sx={{
@@ -137,7 +159,7 @@ const WorkflowBuilderFormContent: React.FC<WorkflowBuilderProps> = ({
             <TextButton
               label='Cancel'
               onClick={goBack}
-              disabled={createRule.isPending}
+              disabled={createRule.isPending || updateRule.isPending}
               sx={{
                 width: '75px',
                 minWidth: '75px',
@@ -176,7 +198,10 @@ const WorkflowBuilderForm: React.FC = () => {
     : undefined;
 
   return (
-    <WorkflowProvider initialRule={initialRule}>
+    <WorkflowProvider
+      key={initialRule ? 'edit-mode' : 'create-mode'}
+      initialRule={initialRule}
+    >
       <WorkflowBuilderFormContent isLoadingRuleDetails={isLoadingRuleDetails} />
     </WorkflowProvider>
   );

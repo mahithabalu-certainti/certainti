@@ -97,14 +97,14 @@ export const getWorkflowColumns =
     //   ),
     // },
     {
-      id: 'created_by_name',
-      sortId: 'created_by_name',
+      id: 'created_user_name',
+      sortId: 'created_user_name',
       label: 'Created By',
       width: 180,
       sortable: true,
       // hide:
-      //   !permissionMap?.['created_by_name']?.edit &&
-      //   !permissionMap?.['created_by_name']?.read,
+      //   !permissionMap?.['created_user_name']?.edit &&
+      //   !permissionMap?.['created_user_name']?.read,
     },
     {
       id: 'created_datetime',
@@ -118,14 +118,14 @@ export const getWorkflowColumns =
       //   !permissionMap?.['created_datetime']?.read,
     },
     {
-      id: 'modified_by_name',
-      sortId: 'modified_by_name',
+      id: 'modified_user_name',
+      sortId: 'modified_user_name',
       label: 'Modified By',
       width: 180,
       sortable: true,
       // hide:
-      //   !permissionMap?.['modified_by_name']?.edit &&
-      //   !permissionMap?.['modified_by_name']?.read,
+      //   !permissionMap?.['modified_user_name']?.edit &&
+      //   !permissionMap?.['modified_user_name']?.read,
     },
     {
       id: 'modified_datetime',

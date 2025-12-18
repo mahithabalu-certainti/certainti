@@ -20,20 +20,14 @@ const TriggerManager: React.FC<TriggerManagerProps> = ({
   const [selectedScope, setSelectedScope] = useState('all');
   const { rule } = useWorkflowContext();
 
-  // Dynamically fetch scope event list (triggers) based on selected scope
-  const eventListPayload = useMemo(
-    () => ({
-      scope_type_rid: selectedScope === 'all' ? '' : selectedScope,
-      status_rid: '',
-    }),
-    [selectedScope]
-  );
-
   const {
     data: eventListData,
     isLoading: isLoadingEvents,
     isError,
-  } = useGetScopeEventList(eventListPayload);
+  } = useGetScopeEventList({
+    scope_type_rid: selectedScope === 'all' ? '' : selectedScope,
+    status_rid: '',
+  });
 
   // Transform API data to match existing Trigger interface
   const triggers = useMemo(() => {

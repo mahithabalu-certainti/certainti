@@ -21,17 +21,11 @@ const ActionManager = ({
 
   const { rule, addAction, deleteAction } = useWorkflowContext();
 
-  // Dynamically fetch action types based on selected category
-  const actionTypeParams = useMemo(
-    () => ({
+  const { data: actionTypeData, isLoading: isLoadingActionTypes } =
+    useGetActionTypes({
       action_type_rid: selectedCategory === 'all' ? '' : selectedCategory,
       status_rid: '',
-    }),
-    [selectedCategory]
-  );
-
-  const { data: actionTypeData, isLoading: isLoadingActionTypes } =
-    useGetActionTypes(actionTypeParams);
+    });
 
   // Transform action category data to categories
   const actionCategories = useMemo(() => {

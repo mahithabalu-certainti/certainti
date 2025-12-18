@@ -12,6 +12,7 @@ import {
   RuleCategoryFieldsPayload,
   RuleCategoryFieldsResponse,
   RuleDetails,
+  RuleDetailsResponse,
   RuleFieldOperatorsPayload,
   RuleFieldOperatorsResponse,
   RuleFieldValuesPayload,
@@ -19,13 +20,13 @@ import {
   ScopeEventListPayload,
   ScopeEventListResponse,
   ScopeListResponse,
+  UpdateRulePayload,
   WorkflowRuleListItem,
   WorkflowRuleListResponse,
   WorkflowRuleListURLParams,
 } from '../../types';
 import { CommonApiResponse } from '../../../common-service';
 import { ruleBuilderServiceApi } from '../../../api/api';
-import { RuleDetailsMockData } from '../../mockdata/workflow-builder';
 import { WorkflowRuleListURL } from '../urls';
 
 // Scope List
@@ -306,6 +307,32 @@ export const useCreateRule = () => {
   });
 };
 
+// --------------- Update Rule ---------------
+export const getUpdateRuleUrl = (): string => {
+  return `/api/workflow/updateRule`;
+};
+
+export const updateRule = async (
+  body: UpdateRulePayload
+): Promise<CommonApiResponse> => {
+  try {
+    const { data } = await ruleBuilderServiceApi.post<CommonApiResponse>(
+      getUpdateRuleUrl(),
+      body
+    );
+    return data;
+  } catch (error) {
+    console.error('Error updating rule:', error);
+    throw error;
+  }
+};
+
+export const useUpdateRule = () => {
+  return useMutation<CommonApiResponse, Error, UpdateRulePayload>({
+    mutationFn: (body) => updateRule({ ...body }),
+  });
+};
+
 // ---------- LIST ------------
 export const fetchWorkflowRuleList = async (
   params: WorkflowRuleListURLParams
@@ -315,8 +342,8 @@ export const fetchWorkflowRuleList = async (
   );
 
   return {
-    rules: response.data.data.data.rules,
-    count: response.data.data.data.count,
+    rules: response.data.data.rules,
+    count: response.data.data.count,
   };
 };
 
@@ -337,14 +364,14 @@ export const useWorkflowRuleList = (
 export const fetchRuleDetails = async (
   ruleId: string
 ): Promise<RuleDetails> => {
-  // const response = await ruleBuilderServiceApi.get<RuleDetailsResponse>(
-  //   `/api/workflow/rules/${ruleId}`
-  // );
+  const response = await ruleBuilderServiceApi.post<RuleDetailsResponse>(
+    '/api/workflow/getRuleDetail',
+    {
+      rule_rid: ruleId,
+    }
+  );
 
-  // return response.data.data;
-  console.log('rule-details', ruleId);
-  await new Promise((resolve) => setTimeout(resolve, 1500));
-  return RuleDetailsMockData.data;
+  return response.data.data;
 };
 
 export const useGetRuleDetails = (

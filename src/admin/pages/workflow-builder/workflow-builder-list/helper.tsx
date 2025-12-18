@@ -33,12 +33,12 @@ export const getWorkflowListFilterFields = (): FieldConfig[] => {
     },
     {
       name: 'Created By',
-      value: 'created_by_name',
+      value: 'created_user_name',
       type: 'text',
       operatorOption: textOptions,
       //   hide:
-      //     !permissionMap?.['created_by_name']?.edit &&
-      //     !permissionMap?.['created_by_name']?.read,
+      //     !permissionMap?.['created_user_name']?.edit &&
+      //     !permissionMap?.['created_user_name']?.read,
     },
     {
       name: 'Created On',
@@ -51,12 +51,12 @@ export const getWorkflowListFilterFields = (): FieldConfig[] => {
     },
     {
       name: 'Modified By',
-      value: 'modified_by_name',
+      value: 'modified_user_name',
       type: 'text',
       operatorOption: nonReqTextfieldOptions,
       //   hide:
-      //     !permissionMap?.['modified_by_name']?.edit &&
-      //     !permissionMap?.['modified_by_name']?.read,
+      //     !permissionMap?.['modified_user_name']?.edit &&
+      //     !permissionMap?.['modified_user_name']?.read,
     },
     {
       name: 'Modified On',

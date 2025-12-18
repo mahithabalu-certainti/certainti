@@ -96,7 +96,7 @@ export interface Rule {
   conditionType?: ConditionType | null;
 }
 
-export const transformRuleToPayload = (rule: Rule, userId: string) => {
+export const transformRuleToPayload = (rule: Rule) => {
   const condition_categories = rule.conditions.map((condition, index) => {
     const categoryOperator =
       index > 0 ? condition.logicalOperator || 'AND' : undefined;
@@ -120,8 +120,7 @@ export const transformRuleToPayload = (rule: Rule, userId: string) => {
     event_rid: rule.trigger?.id || '',
     condition_rid: rule.conditionType?.rid || '',
     condition_categories,
-    action_rid: rule.actions.map((action) => action.category),
-    created_by: userId || '',
+    action_rid: rule.actions.map((action) => action.id),
   };
 };
 
@@ -182,7 +181,7 @@ export const transformApiResponseToRule = (data: RuleDetails): Rule => {
         id: action.action_rid, // Action RID preserved
         name: action.action_name,
         description: action.description || '',
-        category: action.action_rid, // Use action_rid as category
+        category: data?.rule?.action_type_rid || '', // Use action_type_rid from rule
         icon: undefined,
         badge: undefined,
       }))

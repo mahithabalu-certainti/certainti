@@ -166,7 +166,7 @@ export interface RuleFieldValuesResponse {
   data: RuleFieldValueItem[];
 }
 
-// --------------- Create Rule ---------------
+// --------------- Create / Update Rule ---------------
 export interface RuleConditionCategoryPayload {
   category_rid: string;
   category_operator?: 'AND' | 'OR';
@@ -184,7 +184,12 @@ export interface CreateRulePayload {
   condition_rid: string;
   condition_categories: RuleConditionCategoryPayload[];
   action_rid: string[];
-  created_by: string;
+  created_by?: string;
+}
+
+export interface UpdateRulePayload extends CreateRulePayload {
+  rule_rid: string;
+  modified_by: string;
 }
 
 // --------- Details ---------
@@ -200,12 +205,13 @@ export interface RuleDetails {
     condition_rid: string;
     is_active: boolean;
     scope_type_rid: string;
+    action_type_rid: string;
     schedule_offset_type: string | null;
     schedule_offset_value: string | null;
     created_by: string;
-    modified_by: string;
+    modified_by: string | null;
     created_datetime: string;
-    modified_datetime: string;
+    modified_datetime: string | null;
   };
 
   event: {
@@ -261,22 +267,17 @@ export interface WorkflowRuleListURLParams {
 export type WorkflowRuleListItem = {
   rid: string;
   r_number: string | null;
-  eid: string | null;
   rule_name: string;
   description?: string;
   event_rid: string;
-  trigger_type: number;
   condition_rid: string;
-  is_active: boolean;
   scope_type_rid: string;
-  schedule_offset_type: string | null;
-  schedule_offset_value: string | null;
   created_by: string;
-  created_by_name: string;
-  modified_by: string;
-  modified_by_name: string | null;
+  created_user_name: string;
+  modified_by: string | null;
+  modified_user_name: string | null;
   created_datetime: string;
-  modified_datetime: string;
+  modified_datetime: string | null;
 };
 
 export interface WorkflowRuleListResponse {
@@ -284,11 +285,7 @@ export interface WorkflowRuleListResponse {
   statusCodeValue: string;
   statusMessage: string;
   data: {
-    statusCode: number;
-    message: string;
-    data: {
-      rules: WorkflowRuleListItem[];
-      count: number;
-    };
+    rules: WorkflowRuleListItem[];
+    count: number;
   };
 }

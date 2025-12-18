@@ -55,7 +55,7 @@ const WorkflowBuilder: React.FC = () => {
     : undefined;
 
   const handleSorting = (sortBy: string, sortOrder: 'asc' | 'desc') => {
-    const defaultSortField = 'r_number';
+    const defaultSortField = 'rule_name';
     const defaultSortOrder = 'ASC';
     const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
 
@@ -178,7 +178,9 @@ const WorkflowBuilder: React.FC = () => {
               ${isFilterOpen || (appliedFilters && Object.keys(appliedFilters).length > 0) || sortFilterCount > 0 ? 'bg-[#F3F3F3]' : ''}`}
             onClick={handleFilterModal}
           >
-            <NewFilterIcon alt='filter-icon' />
+            <React.Suspense fallback={null}>
+              <NewFilterIcon alt='filter-icon' />
+            </React.Suspense>
             Filter
             {(appliedFilters && Object.keys(appliedFilters).length > 0) ||
             sortFilterCount > 0 ? (
