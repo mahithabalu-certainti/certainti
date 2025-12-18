@@ -172,6 +172,7 @@ export const ManageGeoBasedRuleList: React.FC = () => {
         ExportConfigRuleList({
           ...tableParams,
           filters: appliedFilters as unknown as Filters,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         }),
     },
   ];

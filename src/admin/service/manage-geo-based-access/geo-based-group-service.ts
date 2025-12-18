@@ -191,6 +191,7 @@ export const getConfigExportUrl = (params: UserListParams = {}): string => {
         sortOrder: params.sortOrder,
         filters: params.filters || {},
         ...(params.filters && { filters: params.filters }),
+        timezone: params.timezone,
     };
     return `/api/jurisdictions/config/export?${buildQueryString(queryParams)}`;
 };

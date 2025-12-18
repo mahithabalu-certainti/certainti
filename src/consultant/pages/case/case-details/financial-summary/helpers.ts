@@ -23,141 +23,57 @@ const numberOptions: { option: string; value: string }[] = [
 
 export const getAccountFinancialResCostFields = (
   //   fiscalYearOptions: { label: string; value: string }[],
-  countryOptions: { option: string; value: string }[],
   resourceTypeOptions: { option: string; value: string }[]
 ): FieldConfig[] => [
-  {
-    name: 'Project Code',
-    value: 'project_code',
-    type: 'text',
-    operatorOption: textOptions,
-  },
-  //   {
-  //     name: 'Fiscal Year',
-  //     value: 'fiscal_year',
-  //     type: 'enum',
-  //     options: fiscalYearOptions.map((y) => ({
-  //       option: y.label,
-  //       value: y.value,
-  //     })),
-  //     operatorOption: requiredForEnum,
-  //   },
-  {
-    name: 'Project Name',
-    value: 'project_name',
-    type: 'text',
-  },
-  {
-    name: 'Project ID',
-    value: 'r_number',
-    type: 'text',
-    operatorOption: textOptions,
-  },
-  {
-    name: 'Resource Code',
-    value: 'resource_code',
-    type: 'text',
-    operatorOption: textOptions,
-  },
-  {
-    name: 'Resource Name',
-    value: 'resource_name',
-    type: 'text',
-    operatorOption: textOptions,
-  },
-  {
-    name: 'Resource Type',
-    value: 'resource_type_rid',
-    type: 'enum',
-    options: resourceTypeOptions,
-    operatorOption: requiredForEnum,
-  },
-  {
-    name: 'Country',
-    value: 'country_rid',
-    type: 'enum',
-    onChange: true,
-    options: countryOptions,
-  },
-  {
-    name: 'Net Resource Cost',
-    value: 'total_cost_pro_res',
-    type: 'number',
-    operatorOption: numberOptions,
-  },
-  {
-    name: 'RD %',
-    value: 'rd_percent_final',
-    type: 'number',
-    operatorOption: numberOptions,
-  },
-  {
-    name: 'Project QRE',
-    value: 'qre_final',
-    type: 'number',
-    operatorOption: numberOptions,
-  },
-  {
-    name: 'RD Credit',
-    value: 'rd_credits_total',
-    type: 'number',
-    operatorOption: numberOptions,
-  },
-];
-
-export const getAccountFinancialProjectCostFields =
-  () //   fiscalYearOptions: { label: string; value: string }[],
-  // countryOptions: { option: string; value: string }[],
-  // resourceTypeOptions: { option: string; value: string }[]
-  : FieldConfig[] => [
     {
-      name: 'Project Code',
+      name: 'Project Number',
       value: 'project_code',
       type: 'text',
       operatorOption: textOptions,
     },
-    //   {
-    //     name: 'Fiscal Year',
-    //     value: 'fiscal_year',
-    //     type: 'enum',
-    //     options: fiscalYearOptions.map((y) => ({
-    //       option: y.label,
-    //       value: y.value,
-    //     })),
-    //     operatorOption: requiredForEnum,
-    //   },
+    // {
+    //   name: 'Fiscal Year',
+    //   value: 'fiscal_year',
+    //   type: 'enum',
+    //   options: fiscalYearOptions.map((y) => ({
+    //     option: y.label,
+    //     value: y.value,
+    //   })),
+    //   operatorOption: requiredForEnum,
+    // },
+    {
+      name: 'Project Ref ID',
+      value: 'r_number',
+      type: 'text',
+      operatorOption: textOptions,
+    },
     {
       name: 'Project Name',
       value: 'project_name',
       type: 'text',
     },
     {
-      name: 'Project ID',
+      name: 'Resource Ref ID',
       value: 'r_number',
       type: 'text',
       operatorOption: textOptions,
     },
     {
-      name: 'FTE Cost',
-      value: 'total_cost_fte_prj',
-      type: 'number',
-      operatorOption: numberOptions,
+      name: 'Resource Code',
+      value: 'resource_code',
+      type: 'text',
+      operatorOption: textOptions,
     },
     {
-      name: 'Sub Con Cost',
-      value: 'total_cost_subcon_prj',
-      type: 'number',
-      operatorOption: numberOptions,
+      name: 'Resource Type',
+      value: 'resource_type_rid',
+      type: 'enum',
+      options: resourceTypeOptions,
+      operatorOption: requiredForEnum,
     },
     {
-      name: 'Non Labor Cost',
-      value: 'total_cost_nonlabor_prj',
-      type: 'number',
-      operatorOption: numberOptions,
-    },
-    {
-      name: 'Project Cost',
-      value: 'total_cost_prj',
+      name: 'Cost',
+      value: 'cost',
       type: 'number',
       operatorOption: numberOptions,
     },
@@ -168,7 +84,7 @@ export const getAccountFinancialProjectCostFields =
       operatorOption: numberOptions,
     },
     {
-      name: 'Project QRE',
+      name: 'QRE',
       value: 'qre_final',
       type: 'number',
       operatorOption: numberOptions,
@@ -180,3 +96,85 @@ export const getAccountFinancialProjectCostFields =
       operatorOption: numberOptions,
     },
   ];
+
+export const getAccountFinancialProjectCostFields =
+  () //   fiscalYearOptions: { label: string; value: string }[],
+    // countryOptions: { option: string; value: string }[],
+    // resourceTypeOptions: { option: string; value: string }[]
+    : FieldConfig[] => [
+      {
+        name: 'Project Number',
+        value: 'project_code',
+        type: 'text',
+        operatorOption: textOptions,
+      },
+      //   {
+      //     name: 'Fiscal Year',
+      //     value: 'fiscal_year',
+      //     type: 'enum',
+      //     options: fiscalYearOptions.map((y) => ({
+      //       option: y.label,
+      //       value: y.value,
+      //     })),
+      //     operatorOption: requiredForEnum,
+      //   },
+      {
+        name: 'Resource Ref ID',
+        value: 'r_number',
+        type: 'text',
+        operatorOption: textOptions,
+      },
+      {
+        name: 'Project Name',
+        value: 'project_name',
+        type: 'text',
+      },
+      {
+        name: 'Project ID',
+        value: 'r_number',
+        type: 'text',
+        operatorOption: textOptions,
+      },
+      {
+        name: 'FTE Cost',
+        value: 'total_cost_fte_prj',
+        type: 'number',
+        operatorOption: numberOptions,
+      },
+      {
+        name: 'Sub Con Cost',
+        value: 'total_cost_subcon_prj',
+        type: 'number',
+        operatorOption: numberOptions,
+      },
+      {
+        name: 'Non Labor Cost',
+        value: 'total_cost_nonlabor_prj',
+        type: 'number',
+        operatorOption: numberOptions,
+      },
+      {
+        name: 'Project Cost',
+        value: 'total_cost_prj',
+        type: 'number',
+        operatorOption: numberOptions,
+      },
+      {
+        name: 'RD %',
+        value: 'rd_percent_final',
+        type: 'number',
+        operatorOption: numberOptions,
+      },
+      {
+        name: 'Project QRE',
+        value: 'qre_final',
+        type: 'number',
+        operatorOption: numberOptions,
+      },
+      {
+        name: 'RD Credit',
+        value: 'rd_credits_total',
+        type: 'number',
+        operatorOption: numberOptions,
+      },
+    ];
