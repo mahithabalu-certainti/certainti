@@ -44,6 +44,7 @@ export interface TasksListURLParams {
   globalFilters?: GlobalFilters;
   isGlobal?: boolean;
   search?: string;
+  flag?: 'milestone' | 'activity';
 }
 
 export type TaskListResponse = {
