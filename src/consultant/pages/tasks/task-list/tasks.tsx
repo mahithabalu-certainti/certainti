@@ -438,7 +438,7 @@ export const Tasks: React.FC = () => {
             setColumnAnchorEl={setColumnAnchorEl}
             columnAnchorEl={columnAnchorEl}
             searchValue={searchText}
-            fixedFilters={{ attachment_level: 'milestone' }}
+            taskType='milestone'
           />
         )}
         {tabParam === 'activity' && (
@@ -453,9 +453,7 @@ export const Tasks: React.FC = () => {
             setColumnAnchorEl={setColumnAnchorEl}
             columnAnchorEl={columnAnchorEl}
             searchValue={searchText}
-            fixedFilters={{
-              attachment_level: ['account', 'project', 'case'],
-            }}
+            taskType='activity'
           />
         )}
       </div>

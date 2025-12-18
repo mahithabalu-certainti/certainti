@@ -118,7 +118,7 @@ export const getTaskTableColumns = (
   {
     id: 'attach_to_name',
     sortId: 'attach_to_name',
-    label: 'Attach To',
+    label: 'Related To Name',
     width: 180,
     sortable: true,
     hide: permissionMap ? !permissionMap['attach_to']?.read : false,
@@ -127,7 +127,7 @@ export const getTaskTableColumns = (
   {
     id: 'attachment_level',
     sortId: 'attachment_level',
-    label: 'Attachment Level',
+    label: 'Related Entity',
     width: 160,
     sortable: true,
     hide: permissionMap ? !permissionMap['attachment_level']?.read : false,
@@ -194,7 +194,8 @@ export const getTaskTableColumns = (
     label: 'Created By',
     width: 180,
     sortable: true,
-    hide: permissionMap ? !permissionMap['created_by_name']?.read : false,
+    hide: permissionMap ? !permissionMap['created_by']?.read : false,
+    render: (row: TaskList) => row.created_by_name || '-',
   },
   {
     id: 'created_datetime',
@@ -209,16 +210,16 @@ export const getTaskTableColumns = (
   {
     id: 'modified_by_name',
     sortId: 'modified_by_name',
-    label: 'Modified By',
+    label: 'Updated By',
     width: 180,
     sortable: true,
-    hide: permissionMap ? !permissionMap['modified_by_name']?.read : false,
+    hide: permissionMap ? !permissionMap['modified_by']?.read : false,
     render: (row: TaskList) => row.modified_by_name || '-',
   },
   {
     id: 'modified_datetime',
     sortId: 'modified_datetime',
-    label: 'Modified On',
+    label: 'Updated On',
     width: 200,
     sortable: true,
     hide: permissionMap ? !permissionMap['modified_datetime']?.read : false,

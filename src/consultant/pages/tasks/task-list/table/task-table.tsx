@@ -70,6 +70,7 @@ interface ITaskTableProps {
   >;
   searchValue?: string;
   fixedFilters?: Record<string, any>;
+  taskType: 'milestone' | 'activity';
 }
 
 export const TaskTable: React.FC<ITaskTableProps> = ({
@@ -82,6 +83,7 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
   columnAnchorEl,
   searchValue,
   fixedFilters,
+  taskType,
 }) => {
   const { errorToast, successToast } = useToast();
   const { fiscalYear, filters } = useSelector<
@@ -101,15 +103,15 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
   const updateCommentMutation = useUpdateTaskComment();
   const deleteCommentMutation = useDeleteTaskComment();
   // Hooks for Milestone (Case Task) details
-  const isMilestoneTab = fixedFilters?.attachment_level === 'milestone';
+  const isMilestoneTab = taskType === 'milestone';
   const isCaseTask = selectedTask?.attachment_level === 'case';
   const shouldFetchCaseData = isMilestoneTab || isCaseTask;
 
   const caseId = isMilestoneTab
     ? selectedTask?.attach_to || ''
     : selectedTask?.case_rid ||
-    (isCaseTask ? selectedTask?.attach_to : '') ||
-    '';
+      (isCaseTask ? selectedTask?.attach_to : '') ||
+      '';
   const accountId = selectedTask?.account_rid || '';
 
   const prioritiesQuery = useGetTaskPriorities();
@@ -739,9 +741,6 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
     };
   }, [selectedTask, taskPermissionMap, milestonePermissionMap, isMilestoneTab]);
 
-  const taskFlag: 'milestone' | 'activity' =
-    fixedFilters?.attachment_level === 'milestone' ? 'milestone' : 'activity';
-
   const { data, isLoading, isError } = useAllTasksList(
     {
       ...tableParams,
@@ -749,7 +748,7 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
       globalFilters: reshapeGlobalFilter(filters as FilterState),
       search: searchValue,
       fiscalYear: newFiscalYear,
-      flag: taskFlag,
+      flag: taskType,
     },
     refreshTrigger
   );
@@ -1012,11 +1011,7 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
               String(currentYear - 2 + i)
             );
           })()}
-          taskType={
-            fixedFilters?.attachment_level === 'milestone'
-              ? 'milestone'
-              : 'activity'
-          }
+          taskType={taskType}
           fieldVisibility={fieldHiddenMap}
           fieldDisabled={fieldDisabledMap}
         />

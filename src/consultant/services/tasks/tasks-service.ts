@@ -12,8 +12,8 @@ export const fetchTasksList = async (
   const isMilestone = params.flag
     ? params.flag === 'milestone'
     : params.filters &&
-    (params.filters as { attachment_level?: string }).attachment_level ===
-    'milestone';
+      (params.filters as { attachment_level?: string }).attachment_level ===
+        'milestone';
 
   const flag = isMilestone ? 'milestone' : 'activity';
   const baseUrl = isMilestone
@@ -48,7 +48,7 @@ export const fetchTasksList = async (
     payload.filters = JSON.stringify(filtersToSend);
   }
   if (params.globalFilters) {
-    payload.globalFilters = JSON.stringify(params.globalFilters);
+    payload.globalFilters = params.globalFilters;
   }
 
   if (params.search) {
@@ -141,7 +141,7 @@ export const exportTasksData = async (
     payload.filters = JSON.stringify(filtersToSend);
   }
   if (params.globalFilters) {
-    payload.globalFilters = JSON.stringify(params.globalFilters);
+    payload.globalFilters = params.globalFilters;
   }
   if (params.sortBy) {
     payload.sortBy = params.sortBy;

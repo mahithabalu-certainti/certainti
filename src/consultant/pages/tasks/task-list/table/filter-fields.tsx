@@ -68,7 +68,7 @@ export const getTaskFilterFields = (
     hide: permissionMap ? !permissionMap['fiscal_year']?.read : false,
   },
   {
-    name: 'Attach To',
+    name: 'Related To Name',
     value: 'attach_to_name',
     type: 'text',
     hide: permissionMap
@@ -78,7 +78,7 @@ export const getTaskFilterFields = (
       : false,
   },
   {
-    name: 'Attachment Level',
+    name: 'Related Entity',
     value: 'attachment_level',
     type: 'text',
     operatorOption: textOptions,
@@ -130,7 +130,7 @@ export const getTaskFilterFields = (
     value: 'created_by_name',
     type: 'text',
     operatorOption: textOptions,
-    hide: permissionMap ? !permissionMap['created_by_name']?.read : false,
+    hide: permissionMap ? !permissionMap['created_by']?.read : false,
   },
   {
     name: 'Created On',
@@ -139,14 +139,14 @@ export const getTaskFilterFields = (
     hide: permissionMap ? !permissionMap['created_datetime']?.read : false,
   },
   {
-    name: 'Modified By',
+    name: 'Updated By',
     value: 'modified_by_name',
     type: 'text',
     operatorOption: textOptions,
-    hide: permissionMap ? !permissionMap['modified_by_name']?.read : false,
+    hide: permissionMap ? !permissionMap['modified_by']?.read : false,
   },
   {
-    name: 'Modified On',
+    name: 'Updated On',
     value: 'modified_datetime',
     type: 'date',
     // hide: !permissionMap?.['modified_datetime']?.read,
