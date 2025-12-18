@@ -2,7 +2,7 @@ import { RuleScope } from "../models/ruleScope";
 import { ScopeEvent } from "../models/scopeEvents";
 import { initSequelize } from "../config/maindbDataSource";
 import { Sequelize, Op, QueryTypes } from "sequelize";
-import { HttpStatus, MAIN_SCHEMA_NAME, STATUS_MESSAGE, rawQueries } from "../utils/constants";
+import { HttpStatus, MAIN_SCHEMA_NAME, STATUS_MESSAGE, notificationTypes, rawQueries } from "../utils/constants";
 import { Logger } from "winston";
 import { actions, Fields, ICreateRuleMapWithScope, IListSCopeEvent } from "../utils/types";
 import { decryptClientSecret, logMessage } from "../utils/helpers";
@@ -592,13 +592,20 @@ export class WorkFlowService {
         //     });
         // }
 
-        const entity = {
-            status: "open",
+          const entity = {
+            status: "Close",
             overdue: "close",
             age: "30",
-            priority: "low"
-        };
-
+            priority: "low",
+            entityId: "D001-4f350616-2e42-4829-8824-a3af3f3f24ed",
+            assigneeId: "D001-caace427-6365-469d-b8e5-d6322da67d40",
+            userId: "D001-caace427-6365-469d-b8e5-d6322da67d40",
+            accountRid: "D001-31b99b5b-0e39-4ddf-8b5a-5b9d60b87983",
+            templateName: "task_priority_update",
+            entityName: "Task ABC",
+            oldValue: "low",
+            newValue: "High"
+    };
         const triggeredActions: Record<string, any[]> = {};
         const results: Record<string, boolean> = {};
         for (const rule_rid in conditionsByRule) {
@@ -653,7 +660,8 @@ export class WorkFlowService {
     private evaluateCondition(condition: any, entity: any): boolean {
         const fieldKey = condition.field.split(".")[1]; // "task.status" → "status"
         const entityValue = entity[fieldKey];
-        switch (condition.operator) {
+        const operator = (condition.operator || "").toLowerCase();
+        switch (operator) {
             case "equals":
                 return String(entityValue) === String(condition.value);
             default:
@@ -671,9 +679,11 @@ export class WorkFlowService {
                 // call service / insert into DB
                 console.log("Creating task", entity);
                 break;
-
-            case "Assign task":
-                console.log("Assigning task", entity);
+            case "In App":
+                await this.triggerNotification(entity,notificationTypes.InApp);
+                break;
+            case "Email":
+                await this.triggerNotification(entity,notificationTypes.Email);
                 break;
 
             default:
@@ -681,13 +691,13 @@ export class WorkFlowService {
         }
     }
 
-    async getNotificationTemplateDetails(templateName: string,oldValue:string,newValue:string,entityName: string): Promise<{
+    async getNotificationTemplateDetails(templateName: string,oldValue:string,newValue:string,entityName: string, channel: string): Promise<{
     templateDetails: any;
     }> {
         const mainDb = await this.getMainDb();
         const templateDetails = await mainDb.query<any>(
             rawQueries.fetchNotificationTemplateDetails(
-                templateName
+                templateName,channel
             ),
             { type: QueryTypes.SELECT }
         );
@@ -775,18 +785,9 @@ export class WorkFlowService {
     );
 }
 
-async updateTaskAssignee(): Promise<void> {
+async triggerNotification(taskContext:any,channel:string): Promise<void> {
     // Implementation for changing assignee
-    const taskContext = {
-        entityId: "D001-4f350616-2e42-4829-8824-a3af3f3f24ed",
-        assigneeId: "D001-caace427-6365-469d-b8e5-d6322da67d40",
-        userId: "D001-caace427-6365-469d-b8e5-d6322da67d40",
-        accountRid: "D001-31b99b5b-0e39-4ddf-8b5a-5b9d60b87983",
-        templateName: "task_priority_update",
-        entityName: "Task 123",
-        oldValue: "low",
-        newValue: "High"
-    };
+    
     const { accountNumber, parentAccountId } =
         await this.fetchValidAccountNumberById(
           taskContext.accountRid
@@ -795,42 +796,31 @@ async updateTaskAssignee(): Promise<void> {
         taskContext.templateName,
         taskContext.oldValue,
         taskContext.newValue,
-        taskContext.entityName
+        taskContext.entityName,
+        channel
     );
-    console.log("templateDetails", templateDetails);
-
-    // If templateDetails.templateDetails is not an array, make it an array
-    const templates = Array.isArray(templateDetails.templateDetails)
-        ? templateDetails.templateDetails
-        : [templateDetails.templateDetails];
-  
-    for (const detail of templates) {
-  
-        const channel = detail.channel;
-        const channelType = Array.isArray(channel)
-            ? channel.map((c: string) => c)
-            : typeof channel === 'string'
-                ? [channel]
-                : [];
-        if (channelType.includes('notification') || channelType.includes('In App')) {
-            await this.sentNotification(
-                { templateDetails: detail },
-                taskContext.assigneeId,
-                taskContext.assigneeId
-            );
-        }
-        if (channelType.includes('Email')) {
-            await this.sendNotificationEmail(
-                accountNumber,
-                taskContext.accountRid,
-                {
-                    to_email: "dhivya.s@hubino.com",
-                    subject: "test email from thinkrd",
-                    body_html: detail.message_template,
-                },
-                taskContext.userId
-            );
-        }
+    // Only one template detail is expected
+    const detail = Array.isArray(templateDetails.templateDetails)
+        ? templateDetails.templateDetails[0]
+        : templateDetails.templateDetails;
+    if (channel.includes('In App')) {
+        await this.sentNotification(
+            { templateDetails: detail },
+            taskContext.assigneeId,
+            taskContext.assigneeId
+        );
+    }
+    if (channel.includes('Email')) {
+        await this.sendNotificationEmail(
+            accountNumber,
+            taskContext.accountRid,
+            {
+                to_email: "dhivya.s@hubino.com",
+                subject: "test email from thinkrd",
+                body_html: detail.message_template,
+            },
+            taskContext.userId
+        );
     }
 
   }

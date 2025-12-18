@@ -406,7 +406,14 @@ export const buildBooleanFilterCondition = (
   const conditionMap: Record<string, (col: string, val: any) => string> = {
     [ALPHANUMERIC_CONDITIONS.equals]: (col, val) => `${col} = ${val === true || val === 'true' ? 'true' : 'false'}`,
     [ALPHANUMERIC_CONDITIONS.notEquals]: (col, val) => `${col} != ${val === true || val === 'true' ? 'true' : 'false'}`,
-    [ALPHANUMERIC_CONDITIONS.isEmpty]: (col) => `(${col} IS NULL)`
+    [ALPHANUMERIC_CONDITIONS.isEmpty]: (col) => `(${col} IS NULL)`,
+    [ALPHANUMERIC_CONDITIONS.IN]: (col, val) => {
+      if (Array.isArray(val)) {
+        const boolVals = val.map(v => (v === true || v === 'true') ? 'true' : 'false').join(",");
+        return `${col} IN (${boolVals})`;
+      }
+      return `${col} = ${(val === true || val === 'true') ? 'true' : 'false'}`;
+    }
   };
 
   return conditionMap[condition]?.(columnRef, values) || "";

@@ -79,6 +79,11 @@ export const mainTableFilters : Record<any, any> = {
   modified_user_name:"modified_user_name"
 }
 
+export const notificationTypes = {
+  InApp: "In App",
+  Email: "Email"
+}
+
 export const rawQueries = {
   fetchUser(data: any) {
     let ids = data.map((d: any) => `'${d}'`);
@@ -209,7 +214,7 @@ export const rawQueries = {
 
   fetchRuleConditions(condition_rid: string, rule_rid: string): string {
     let query = `SELECT wrc.rule_rid,rf.name as field,ro.name as operator,rv.name as value,wrc.logical_operator FROM ${MAIN_SCHEMA_NAME}.workflow_rule_condition wrc 
-    JOIN ${MAIN_SCHEMA_NAME}.rule_fields rf ON rf.rid = wrc.field_rid JOIN ${MAIN_SCHEMA_NAME}.rule_operators ro ON ro.rid = wrc.operator_rid JOIN rule_values rv on rv.rid = wrc.value_rid 
+    JOIN ${MAIN_SCHEMA_NAME}.rule_fields rf ON rf.rid = wrc.field_rid JOIN ${MAIN_SCHEMA_NAME}.rule_operators ro ON ro.rid = wrc.operator_rid JOIN ${MAIN_SCHEMA_NAME}.rule_values rv on rv.rid = wrc.value_rid 
     WHERE wrc.rule_rid = '${rule_rid}' ORDER BY wrc.sequence `;
     return query;
   },
@@ -245,10 +250,11 @@ export const rawQueries = {
     return query;
   },
 
-  fetchNotificationTemplateDetails(template_name: string): string {
+  fetchNotificationTemplateDetails(template_name: string,channel: string): string {
     let query = `SELECT nt.message_template,nt.channel
     FROM ${MAIN_SCHEMA_NAME}.notification_template nt 
     WHERE nt.template_code = '${template_name}'
+    and nt.channel = '${channel}'
     and status_rid = (select status_rid from ${MAIN_SCHEMA_NAME}.status where status_name = 'Active');`;
     return query;
   },
