@@ -151,4 +151,10 @@ export const getTaskFilterFields = (
     type: 'date',
     // hide: !permissionMap?.['modified_datetime']?.read,
   },
+  {
+    name: 'Sort Options',
+    value: 'sort_options',
+    type: 'system-sort',
+    options: [{ value: 'createdAt_desc', option: 'Recently Created' }],
+  },
 ];
