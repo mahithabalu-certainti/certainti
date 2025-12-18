@@ -1,7 +1,6 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
-  AllPermissions,
-  useGetAllCountries,
+  AllPermissions
 } from '../../../../../common-service';
 import { SectionHeaderTab, SectionTabPanel } from '../../../../../components';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -134,7 +133,6 @@ const CaseFinancialSummary: React.FC<ProjectFinancialProps> = ({
   const tabParam = searchParams.get('tab') || initialTab;
 
   const fiscalYearOptions = getFiscalYears(26);
-  const countriesList = useGetAllCountries();
   const resourceTypeOptions = useGetResourceType();
 
   const memoizedResourceType = useMemo(
@@ -145,15 +143,6 @@ const CaseFinancialSummary: React.FC<ProjectFinancialProps> = ({
       })) || [],
     [resourceTypeOptions?.data?.data?.resouceType]
   );
-
-  const memoizedCountry = useMemo(() => {
-    return (
-      countriesList.data?.data.country.map((item) => ({
-        option: item.country_name,
-        value: item.rid,
-      })) || []
-    );
-  }, [countriesList]);
 
   const onRefreshClick = () => {
     setReFetchData(Date.now());
@@ -284,8 +273,8 @@ const CaseFinancialSummary: React.FC<ProjectFinancialProps> = ({
       />
       <div
         className={`border border-t-0 border-[#CBD6E2] ${tabParam === 'summary' || tabParam === 'state_wise_summary'
-            ? 'p-3'
-            : ''
+          ? 'p-3'
+          : ''
           }`}
       >
         {tabParam === 'summary' && isSummaryViewEnable && (
