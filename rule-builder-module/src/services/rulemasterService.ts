@@ -2,7 +2,7 @@ import { RuleMaster } from "../models/workflowRuleMaster";
 import { initSequelize } from "../config/maindbDataSource";
 import { Sequelize, Op } from "sequelize";
 import dayjs from "dayjs";
-import { HttpStatus, STATUS_MESSAGE, ALPHANUMERIC_CONDITIONS, rawQueries, mainTableFilters } from "../utils/constants";
+import { HttpStatus, STATUS_MESSAGE, ALPHANUMERIC_CONDITIONS, MAIN_SCHEMA_NAME, rawQueries, mainTableFilters } from "../utils/constants";
 import { Logger } from "winston";
 import { ICreateRule, IUpdateRule } from "../utils/types";
 import { logMessage } from "../utils/helpers";
@@ -72,7 +72,7 @@ export class RulemasterService {
         errorMessage?: string;
         data?: { rules: any; count: number };
     }> {
-        let sortBy = data.sort_by;
+        let sortBy = data.sortBy;
         console.log("listing all rules");
         const mainDb = await this.getMainDb();
         RuleMaster.initialize(mainDb);
@@ -112,7 +112,7 @@ export class RulemasterService {
             disablePagination = true;
         }
 
-        const schemaName = `public`;
+        const schemaName = `${MAIN_SCHEMA_NAME}`;
         const { whereClause } = this.buildWhereClause(filters, schemaName);
         const [finalSortBy, finalSortOrder] = this.getSortParameters(sortBy, data.sortOrder);
         const { rows: rules, count } = await RuleMaster.findAndCountAll({
@@ -152,6 +152,7 @@ export class RulemasterService {
                 rid: d.rid,
                 r_number: d.r_number,
                 rule_name: d.rule_name,
+                description: d.description,
                 event_rid: d.event_rid,
                 condition_rid: d.condition_rid,
                 scope_type_rid: d.scope_type_rid,
@@ -204,7 +205,7 @@ export class RulemasterService {
         else {
             finalPaginatedData = disablePagination ? finalData.slice((data.page - 1) * data.limit, data.page * data.limit) : finalData;
         }
-        
+
         return {
             statusCode: HttpStatus.SUCCESS,
             message: HttpStatus.SUCCESS_MESSAGE,
@@ -527,9 +528,7 @@ export class RulemasterService {
             "r_number",
             "created_datetime",
             "modified_datetime",
-            "version",
-            "status",
-            "project_count"
+            "rule_name",
         ];
         if (!validSortColumns.includes(sortBy)) {
             sortBy = "created_datetime";
