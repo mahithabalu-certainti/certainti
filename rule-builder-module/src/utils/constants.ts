@@ -55,8 +55,34 @@ export const STATUS_MESSAGE = {
   triggerLogCreated: "Trigger Log created successfullt",
 }
 
+export const ALPHANUMERIC_CONDITIONS: Record<string, string> = {
+  equals: "equals",
+  notEquals: "not_equals",
+  contains: "contains",
+  isEmpty: "is_empty",
+  IN: "in",
+  less_than: "less_than",
+  greater_than: "greater_than",
+  between: "between",
+  before: "before",
+  after: "after",
+};
+
+export const mainTableFilters : Record<any, any> = {
+  created_user_name : "created_user_name",
+  updated_user_name : "updated_user_name",
+  rule_name : "rule_name",
+  modified_by: "modified_by",
+  modified_user_name:"modified_user_name"
+}
 
 export const rawQueries = {
+  fetchUser(data: any) {
+    let ids = data.map((d: any) => `'${d}'`);
+    return `
+    SELECT rid, first_name, last_name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (${ids})`;
+  },
+
   fetchScopeEvents(scope_type_rid: string, status_rid: string): string {
     let query = `SELECT se.rid , se.event_name, se.description,st.name AS scope_type_name, st.rid as scope_type_rid 
     FROM ${MAIN_SCHEMA_NAME}.scopes st JOIN ${MAIN_SCHEMA_NAME}.scope_events se ON se.scope_type_rid = st.rid `;
