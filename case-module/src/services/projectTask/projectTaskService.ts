@@ -1390,6 +1390,50 @@ export class ProjectInjestionTaskService {
                             break;
                     }
                     break;
+            case "project_code":
+                    switch (operator.toLowerCase()) {
+                        case "equals":
+                            condition["$project.project_code$"] = { [Op.iLike]: value };
+                            break;
+                        case "not_equals":
+                            condition["$project.project_code$"] = {
+                                [Op.or]: [{ [Op.notILike]: value }, { [Op.is]: null }],
+                            };
+                            break;
+                        case "contains":
+                            condition["$project.project_code$"] = {
+                                [Op.iLike]: `%${value}%`,
+                            };
+                            break;
+                        case "is_empty":
+                            condition["$project.project_code$"] = {
+                                [Op.or]: [{ [Op.is]: null }, { [Op.eq]: "" }],
+                            };
+                            break;
+                    }
+                    break;
+                case "project_name":
+                    switch (operator.toLowerCase()) {
+                        case "equals":
+                            condition["$project.project_name$"] = { [Op.iLike]: value };
+                            break;
+                        case "not_equals":
+                            condition["$project.project_name$"] = {
+                                [Op.or]: [{ [Op.notILike]: value }, { [Op.is]: null }],
+                            };
+                            break;
+                        case "contains":
+                            condition["$project.project_name$"] = {
+                                [Op.iLike]: `%${value}%`,
+                            };
+                            break;
+                        case "is_empty":
+                            condition["$project.project_name$"] = {
+                                [Op.or]: [{ [Op.is]: null }, { [Op.eq]: "" }],
+                            };
+                            break;
+                    }
+                    break;
                 case "project_resource_role":
                     switch (operator.toLowerCase()) {
                         case "equals":
