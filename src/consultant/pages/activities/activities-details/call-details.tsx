@@ -116,7 +116,7 @@ const CallDetails: React.FC<CallDetailsProps> = ({
 
   const basicDetails: DetailItem[] = [
     {
-      label: 'Related To',
+      label: 'Related To Name',
       value: call?.attached_to ?? '-',
       key: 'attached_to',
     },
