@@ -2328,6 +2328,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
           let resultMap : { [key: string]: any } = {
             "Task Name" : d.task_name,
             "Assigned To" : d.assigned_to_name || "-",
+            "Role To Be Assigned": d.role_name || "-",
             "Start Date" : d.effective_start_datetime ? moment(d.effective_start_datetime).format("YYYY-MMM-DD") : "-",
             "Due Date": d.effective_end_datetime ? moment(d.effective_end_datetime).format("YYYY-MMM-DD") : "-",
             "Status": d.task_status_name || "-",
