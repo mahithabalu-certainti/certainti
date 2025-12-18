@@ -114,16 +114,7 @@ export const getGeoBasedRuleFilterFields = (
                 !permissionMap?.['effective_end_date']?.read &&
                 !permissionMap?.['effective_end_date']?.edit,
         },
-        {
-            label: 'Status',
-            name: 'status_rid',
-            type: 'enumSelect',
-            options: statusOptions,
-            operatorOption: enumOperator,
-            hide:
-                !permissionMap?.['status_rid']?.read &&
-                !permissionMap?.['status_rid']?.edit,
-        },
+      
         {
             label: 'Created By',
             name: 'created_user_name',
@@ -159,6 +150,16 @@ export const getGeoBasedRuleFilterFields = (
             hide:
                 !permissionMap?.['modified_datetime']?.read &&
                 !permissionMap?.['modified_datetime']?.edit,
+        },
+        {
+            label: 'Status',
+            name: 'status_rid',
+            type: 'enumSelect',
+            options: statusOptions,
+            operatorOption: enumOperator,
+            hide:
+                !permissionMap?.['status_rid']?.read &&
+                !permissionMap?.['status_rid']?.edit,
         },
         {
             label: 'Sort Options',

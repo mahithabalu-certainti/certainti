@@ -228,6 +228,7 @@ const GeoBasedRuleForm: React.FC = () => {
       updated_by: details.modified_user_name ? details.modified_user_name : '-',
       created_by: details.created_user_name ? details.created_user_name : '-',
       config_id: details.rid,
+      r_number: details.r_number,
       // Ensure case_name_prefix field has the default value
       case_name_prefix: details.case_name_prefix || 'C-',
     };
