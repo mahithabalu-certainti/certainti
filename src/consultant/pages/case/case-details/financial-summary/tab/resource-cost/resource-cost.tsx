@@ -40,6 +40,7 @@ interface FinancialResourceCostProps {
   >;
   searchValue?: string;
   accountId?: string;
+  caseRid?: string;
 }
 
 const ResourceCost: React.FC<FinancialResourceCostProps> = ({
@@ -55,6 +56,7 @@ const ResourceCost: React.FC<FinancialResourceCostProps> = ({
   setColumnAnchorEl,
   searchValue,
   accountId: propAccountId,
+  caseRid,
 }) => {
   const { accountid: paramAccountId } = useParams();
   const accountid = propAccountId || paramAccountId;
@@ -86,6 +88,7 @@ const ResourceCost: React.FC<FinancialResourceCostProps> = ({
       accountRid: accountid,
       accountNumber: accountDetails?.accountById?.r_number,
       fiscalYear: Number(fiscalyear) || 0,
+      caseRid: caseRid,
     },
     refreshTrigger
   );
@@ -120,6 +123,7 @@ const ResourceCost: React.FC<FinancialResourceCostProps> = ({
       accountNumber: accountNumber,
       accountRid: accountid,
       search: searchValue,
+      caseRid: caseRid,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [

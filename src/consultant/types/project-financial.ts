@@ -91,6 +91,7 @@ export interface ProjectFinancialResourceListParams {
   fiscalYear?: number;
   projectRid?: string;
   accountRid?: string;
+  caseRid?: string;
 }
 
 export interface ProjectFinancialResourceExportParams {
@@ -102,6 +103,7 @@ export interface ProjectFinancialResourceExportParams {
   projectRid?: string;
   accountRid?: string;
   search?: string;
+  caseRid?: string;
 }
 export interface ProjectResourceExportParams {
   sortBy?: string;
@@ -120,6 +122,7 @@ export interface ProjectFinancialProjectExportParams {
   fiscalYear?: number;
   accountRid?: string;
   search?: string;
+  caseRid?: string;
 }
 
 export type ProjectFinancialResourceCostList = {

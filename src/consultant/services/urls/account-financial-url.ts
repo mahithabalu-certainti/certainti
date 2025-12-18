@@ -27,7 +27,7 @@ export const getResourceCostListURL = (
 export const getProjectCostListURL = (
   accountId: string,
   fiscalYear: string,
-  { sortBy, sortOrder, filters, page, limit, search }: CostListParms
+  { sortBy, sortOrder, filters, page, limit, search, caseRid }: CostListParms
 ) => {
   const baseUrl = `/api/financialHighlight/list/projectCost`;
   const searchParams = new URLSearchParams();
@@ -45,6 +45,9 @@ export const getProjectCostListURL = (
   if (search) {
     searchParams.set('search', search);
   }
+  if (caseRid) {
+    searchParams.set('caseRid', caseRid);
+  }
   return `${baseUrl}?${searchParams.toString()}`;
 };
 
@@ -55,6 +58,7 @@ export const ProjectFinancialProjectCostExportURL = ({
   fiscalYear,
   accountRid,
   search,
+  caseRid,
 }: ProjectFinancialProjectExportParams): string => {
   const baseUrl = `/api/financialHighlight/list/projectCost/export`;
   const searchParams = new URLSearchParams();
@@ -70,6 +74,9 @@ export const ProjectFinancialProjectCostExportURL = ({
   }
   if (search) {
     searchParams.set('search', search);
+  }
+  if (caseRid) {
+    searchParams.set('caseRid', caseRid);
   }
   const queryString = searchParams.toString();
   return queryString ? `${baseUrl}?${queryString}` : baseUrl;

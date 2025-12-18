@@ -53,6 +53,7 @@ interface ProjectFinancialProps {
   ) => void;
   setExportType: (type: ExportType) => void;
   accountId?: string;
+  caseRid?: string;
 }
 
 const CaseFinancialSummary: React.FC<ProjectFinancialProps> = ({
@@ -63,6 +64,7 @@ const CaseFinancialSummary: React.FC<ProjectFinancialProps> = ({
   countryId,
   stateId,
   accountId,
+  caseRid,
 }) => {
   const navigate = useNavigate();
   const [appliedFilters, setAppliedFilters] = useState<
@@ -240,7 +242,7 @@ const CaseFinancialSummary: React.FC<ProjectFinancialProps> = ({
         setCurrentPage={setCurrentPage}
         handleFilter={handleFilter}
         sortFilterCount={0}
-        setSortFilterCount={() => {}}
+        setSortFilterCount={() => { }}
         allYears={fiscalYearOptions}
         fiscalYearValue={fiscalYearValue}
         showRefresh={
@@ -281,11 +283,10 @@ const CaseFinancialSummary: React.FC<ProjectFinancialProps> = ({
         defaultValue={tabParam}
       />
       <div
-        className={`border border-t-0 border-[#CBD6E2] ${
-          tabParam === 'summary' || tabParam === 'state_wise_summary'
-            ? 'p-3'
-            : ''
-        }`}
+        className={`border border-t-0 border-[#CBD6E2] ${tabParam === 'summary' || tabParam === 'state_wise_summary'
+          ? 'p-3'
+          : ''
+          }`}
       >
         {tabParam === 'summary' && isSummaryViewEnable && (
           <Summary
@@ -314,6 +315,7 @@ const CaseFinancialSummary: React.FC<ProjectFinancialProps> = ({
             columnAnchorEl={columnAnchorEl}
             searchValue={searchText}
             accountId={accountId}
+            caseRid={caseRid}
           />
         )}
         {tabParam === 'resource_cost' && isResourceCostViewEnable && (
@@ -330,6 +332,7 @@ const CaseFinancialSummary: React.FC<ProjectFinancialProps> = ({
             columnAnchorEl={columnAnchorEl}
             searchValue={searchText}
             accountId={accountId}
+            caseRid={caseRid}
           />
         )}
       </div>

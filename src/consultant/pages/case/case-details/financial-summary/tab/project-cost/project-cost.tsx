@@ -42,6 +42,7 @@ interface FinancialProjectCostProps {
   >;
   searchValue?: string;
   accountId?: string;
+  caseRid?: string;
 }
 
 const FinancialProjectCost: React.FC<FinancialProjectCostProps> = ({
@@ -56,6 +57,7 @@ const FinancialProjectCost: React.FC<FinancialProjectCostProps> = ({
   setColumnAnchorEl,
   searchValue,
   accountId: propAccountId,
+  caseRid,
 }) => {
   const { accountid: paramAccountId } = useParams();
   const accountid = propAccountId || paramAccountId;
@@ -69,6 +71,7 @@ const FinancialProjectCost: React.FC<FinancialProjectCostProps> = ({
     limit: 100,
     filters: appliedFilters,
     search: searchValue,
+    caseRid: caseRid,
   });
 
   const {
@@ -118,6 +121,7 @@ const FinancialProjectCost: React.FC<FinancialProjectCostProps> = ({
       page: currentPage + 1,
       filters: appliedFilters,
       search: searchValue,
+      caseRid: caseRid,
     }));
   }, [currentPage, appliedFilters, searchValue]);
 
@@ -132,6 +136,7 @@ const FinancialProjectCost: React.FC<FinancialProjectCostProps> = ({
       fiscalYear: Number(fiscalyear),
       accountRid: accountid,
       search: searchValue,
+      caseRid: caseRid,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tableParams, fiscalyear, appliedFilters, searchValue, accountid]);
