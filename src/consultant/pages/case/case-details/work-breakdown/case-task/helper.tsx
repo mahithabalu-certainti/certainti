@@ -69,8 +69,7 @@ export const getAssignGroupsFilterFields = (
     type: 'enum',
     options: roleOptions,
     operatorOption: enumOptions,
-    // hide:
-    //   !permissionMap['role_rid']?.read && !permissionMap['role_rid']?.edit,
+    hide: !permissionMap['role_rid']?.read && !permissionMap['role_rid']?.edit,
   },
   {
     name: 'Start Date',
