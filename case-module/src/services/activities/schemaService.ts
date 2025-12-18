@@ -105,11 +105,21 @@ class ActivitySchemaService {
     async uploadActivityFiles(files: Express.Multer.File[] | undefined, activityRequest: any, accountNumber: string) {
       const { ActivityAttachments } = await this.caseModelService.getModels(accountNumber);
       if (!files) return;
+      if(!this.mainDbSequelize){  
+          this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+        }
+      const [accountData]: any[] = await this.mainDbSequelize.query(
+        rawQueries.fetchAccountDetailsByRid(activityRequest.account_rid),{
+          type: QueryTypes.SELECT,
+        }
+      );
+
       for (let f of files) {
         const uploadFile = await uploadToAzureBlob(
           f,
           activityRequest.account_rid,
           accountNumber,
+          accountData.r_number,
           "cases"
         );
         if (uploadFile) {
@@ -974,6 +984,7 @@ class ActivitySchemaService {
         "fiscal_year",
         "modified_datetime",
         'subject',
+        'task_name',
         
         "call_platform"
       ];
@@ -1338,6 +1349,7 @@ class ActivitySchemaService {
             case 'assigned_to':
             case 'call_platform':
             case 'subject':
+            case 'task_name':
               switch (operator.toLowerCase()) {
                 case 'equals': condition[field] = { [Op.iLike]: value }; break;
                 case 'not_equals': condition[field] = { [Op.or]: [{ [Op.notILike]: value }, { [Op.is]: null }] }; break;          
@@ -2444,7 +2456,6 @@ class ActivitySchemaService {
       body_html: emailDetails?.body_html ?? "",
       to_email: emailDetails?.to_email || [],
       cc_emails: emailDetails?.cc_email || [],
-      email_status: emailDetails?.email_status ?? "",
       r_number: emailDetails.r_number ?? "",
       status_rid: emailDetails.status_rid ?? "",
       account_rid: emailDetails.account_rid ?? "",
@@ -2543,7 +2554,7 @@ class ActivitySchemaService {
       activity_rid: emailDetails?.rid,
       activity_type: emailDetails?.activity_type ?? "",
       subject: emailDetails?.subject ?? "",
-      meeting_url: emailDetails?.meeting_url ?? "",
+      meeting_url: emailDetails?.meeting_invite ?? "",
       meeting_id: emailDetails?.meeting_id ?? "",
       meeting_participants: emailDetails?.meeting_participants
         ? emailDetails.meeting_participants
@@ -2746,7 +2757,7 @@ class ActivitySchemaService {
       return emailDetails?.fiscal_year ?? null;
     } else if (attachmentLevel === "project" && attachTo) {
       const project = await this.caseSchemaService.fetchProjectInfoById(
-        schemaName,
+        accountNumber,
         attachTo
       );
       return project?.fiscal_year ?? null;
@@ -2759,7 +2770,7 @@ class ActivitySchemaService {
       if (Array.isArray(projectResource)) projectResource = projectResource[0];
       if (projectResource && projectResource.project_fiscal_rid) {
         const project = await this.caseSchemaService.fetchProjectInfoById(
-          schemaName,
+          accountNumber,
           projectResource.project_fiscal_rid
         );
         return project?.fiscal_year ?? null;

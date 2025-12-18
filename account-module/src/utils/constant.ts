@@ -756,8 +756,8 @@ export const rawQueries = {
         total_subcon_from_tasks INTEGER,
   
         -- Non-labor & Resources
-        total_nonlabor_prj DECIMAL(18,2),
-        total_nonlabor_from_prj_res DECIMAL(18,2),
+        total_nonlabor_prj INTEGER,
+        total_nonlabor_from_prj_res INTEGER,
         total_nonlabor_from_tasks INTEGER,
         total_resources_prj INTEGER,
         total_resources_from_prj_res INTEGER,
@@ -837,7 +837,8 @@ export const rawQueries = {
         claim_status TEXT,
         comments VARCHAR(2000),
         project_description VARCHAR(2000),
-        is_qualified BOOLEAN DEFAULT false
+        is_qualified BOOLEAN DEFAULT false,
+        signoff BOOLEAN DEFAULT false
       );
     `;
   },

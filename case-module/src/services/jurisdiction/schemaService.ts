@@ -1,6 +1,7 @@
 import { Sequelize, Transaction } from "sequelize";
 import { CaseModelService } from "../caseModelsService";
 import {
+  buildBooleanFilterCondition,
   buildDatetimeFilterConditionTemplates,
   buildNumericFilterCondition,
   buildStringFilterCondition,
@@ -28,6 +29,66 @@ interface IJurisdictionRequest {
 }
 
 export class JurisdictionSchemaService {
+    // Helper: handle federal to non-federal transition
+    private async handleFederalToNonFederal(JurisdictionConfig: any, response: any, configRequest: any, group: any) {
+      // Delete platform config
+      await JurisdictionConfig.destroy({ where: { federal_config_id: configRequest.config_rid } });
+      // Update main config
+      await response.update({
+        config_json: group,
+        effective_end_date: configRequest.effective_end_date,
+        effective_start_date: configRequest.effective_start_date,
+        credit_config_group_rid: configRequest.jurisdiction_config_group_rid,
+        config_name: configRequest.config_name,
+        status_rid: configRequest.status_rid,
+        modified_datetime: new Date(),
+        modified_by: configRequest.modified_by,
+      });
+    }
+
+    // Helper: update main jurisdiction config
+    private async updateMainConfig(response: any, configRequest: any, group: any, updateGroupRid = false) {
+      await response.update({
+        config_json: group,
+        effective_end_date: configRequest.effective_end_date,
+        effective_start_date: configRequest.effective_start_date,
+        config_name: configRequest.config_name,
+        status_rid: configRequest.status_rid,
+        modified_datetime: new Date(),
+        modified_by: configRequest.modified_by,
+        credit_config_group_rid: configRequest.jurisdiction_config_group_rid
+    });
+  }
+
+    // Helper: update or create platform config
+    private async updatePlatformConfig(JurisdictionConfig: any, configRequest: any) {
+      const group = configRequest.platformConfig;
+      const response: any = await JurisdictionConfig.findOne({
+        where: { federal_config_id: configRequest.config_rid },
+      });
+      if (!response) {
+        // Create if not exists
+        await JurisdictionConfig.create({
+          config_name: configRequest.config_name,
+          created_datetime: new Date(),
+          created_by: configRequest.modified_by,
+          effective_end_date: configRequest.effective_end_date,
+          effective_start_date: configRequest.effective_start_date,
+          credit_config_group_rid: configRequest.platform_config_group_rid,
+          config_json: JSON.parse(JSON.stringify(configRequest.platformConfig)),
+          status_rid: configRequest.status_rid,
+          federal_config_id: configRequest.config_rid,
+        });
+      } else {
+        await response.update({
+          config_json: group,
+          effective_end_date: configRequest.effective_end_date,
+          effective_start_date: configRequest.effective_start_date,
+          modified_datetime: new Date(),
+          modified_by: configRequest.modified_by,
+        });
+      }
+    }
   private orgDbSequelize: Sequelize | null = null;
   private mainDbSequelize: Sequelize | null = null;
   private caseModelService: CaseModelService;
@@ -114,6 +175,7 @@ export class JurisdictionSchemaService {
       return null;
     }
     return {
+      config_name: jurisdictionConfig.config_name,
       jurisdictionConfig: jurisdictionConfig?.jdConfig,
       platformConfig: jurisdictionConfig?.platformConfig,
       effective_start_date: jurisdictionConfig?.effective_start_date,
@@ -124,6 +186,15 @@ export class JurisdictionSchemaService {
       country_code: jurisdictionConfig?.country_code,
       state_name: jurisdictionConfig?.state_name,
       country_name: jurisdictionConfig?.country_name,
+      created_datetime: jurisdictionConfig?.created_datetime,
+      created_by: jurisdictionConfig?.created_by,
+      modified_datetime: jurisdictionConfig?.modified_datetime,
+      modified_by: jurisdictionConfig?.modified_by,
+      created_user_name: jurisdictionConfig?.created_user_name,
+      modified_user_name: jurisdictionConfig?.modified_user_name,
+      status_rid: jurisdictionConfig?.status_rid,
+      r_number: jurisdictionConfig?.r_number,
+      rid:jurisdictionConfig?.rid
     };
   }
 
@@ -204,6 +275,7 @@ export class JurisdictionSchemaService {
           meta.credit_parameter_display_name || meta.credit_parameter_name,
         value,
         type: meta.data_type || typeof value,
+        is_required: meta.is_required || false,
       });
     }
       platformConfigsData = {
@@ -213,7 +285,7 @@ export class JurisdictionSchemaService {
           ? platformConfig[0].credit_program_name
           : null,
       config_rid:
-        configMeta.length > 0 ? configMeta[0].credit_config_group_rid : null,
+        platformConfig.length > 0 ? platformConfig[0].credit_config_group_rid : null,
     };
   }
 
@@ -233,6 +305,7 @@ export class JurisdictionSchemaService {
           meta.credit_parameter_display_name || meta.credit_parameter_name,
         value,
         type: meta.data_type || typeof value,
+        is_required: meta.is_required || false,
       });
     }
    
@@ -244,6 +317,11 @@ export class JurisdictionSchemaService {
     };
    
     return {
+      rid:paramValues.length > 0 ? paramValues[0].rid : null,
+      config_name:
+        paramValues.length > 0 ? paramValues[0].config_name : null,
+      status_rid:
+        paramValues.length > 0 ? paramValues[0].status_rid : null,
       effective_start_date:
         paramValues.length > 0 ? paramValues[0].effective_start_date : null,
       effective_end_date:
@@ -256,55 +334,69 @@ export class JurisdictionSchemaService {
       country_code: configMeta.length > 0 ? configMeta[0].country_code : null,
       state_name: configMeta.length > 0 ? configMeta[0].state_name : null,
       country_name: configMeta.length > 0 ? configMeta[0].country_name : null,
+      is_required: configMeta.length > 0 ? configMeta[0].is_required : null,
+      r_number:
+        paramValues.length > 0 ? paramValues[0].r_number : null,
+      created_datetime:
+        paramValues.length > 0 ? paramValues[0].created_datetime : null,
+      created_by:
+        paramValues.length > 0 ? paramValues[0].created_by : null,
+      modified_datetime:
+        paramValues.length > 0 ? paramValues[0].modified_datetime : null,
+      modified_by:
+        paramValues.length > 0 ? paramValues[0].modified_by : null,
+      created_user_name:
+        paramValues.length > 0 ? paramValues[0].created_user_name : null,
+      modified_user_name:
+        paramValues.length > 0 ? paramValues[0].modified_user_name : null,
     };
   }
 
   async updateJurisdictionConfig(configRequest: any) {
     const { JurisdictionConfig } = await this.caseModelService.getModels("");
     let updated = false;
-    if (
-      configRequest.jurisdictionConfig
-    ) {
-      const group = configRequest.jurisdictionConfig;
-      const response: any = await JurisdictionConfig.findOne({
-        where: {
-          rid: configRequest.config_rid,
-        },
-      });
-      if (!response) {
-        throw new Error(`Invalid config_rid: ${configRequest.config_rid}`);
+    const response: any = await JurisdictionConfig.findOne({
+      where: { rid: configRequest.config_rid },
+    });
+    if (!response) {
+      throw new Error(`Invalid config_rid: ${configRequest.config_rid}`);
+    }
+
+    // 1. Handle is_federal change
+    if (response.is_federal !== configRequest.is_federal) {
+      if (configRequest.is_federal === false) {
+        // Federal to non-federal
+        if (configRequest.jurisdictionConfig) {
+          await this.handleFederalToNonFederal(JurisdictionConfig, response, configRequest, configRequest.jurisdictionConfig);
+          updated = true;
+        }
+      } else {
+        // Non-federal to federal (update group rid and config)
+        if (configRequest.jurisdictionConfig) {
+          await this.updateMainConfig(response, configRequest, configRequest.jurisdictionConfig, true);
+          updated = true;
+        }
       }
-      await response.update({
-        config_json: group,
-        effective_end_date: configRequest.effective_end_date,
-        effective_start_date: configRequest.effective_start_date,
-        modified_datetime: new Date(),
-        modified_by: configRequest.modified_by,
-      });
+    } else {
+      // 2. Normal update
+      if (configRequest.jurisdictionConfig) {
+        await this.updateMainConfig(response, configRequest, configRequest.jurisdictionConfig);
+        updated = true;
+      }
+    }
+
+    // 3. Platform config update (if federal)
+    if (configRequest.is_federal && configRequest.platformConfig) {
+      await this.updatePlatformConfig(JurisdictionConfig, configRequest);
       updated = true;
     }
-    // Update platform config
-    if (configRequest.is_federal &&
-      configRequest.platformConfig 
-    ) {
-      const group = configRequest.platformConfig;
-      const response: any = await JurisdictionConfig.findOne({
-        where: {
-          federal_config_id: configRequest.config_rid,
-        },
-      });
-      if (!response) {
-        throw new Error(`Invalid platform config_rid: ${configRequest.config_rid}`);
-      }
-      await response.update({
-        config_json: group,
-        effective_end_date: configRequest.effective_end_date,
-        effective_start_date: configRequest.effective_start_date,
-        modified_datetime: new Date(),
-        modified_by: configRequest.modified_by,
-      });
+
+    // 4. GraphQL update
+    if (configRequest?.apiType === "graphql") {
+      await response.update(configRequest);
       updated = true;
     }
+  
     return updated;
   }
 
@@ -323,8 +415,8 @@ export class JurisdictionSchemaService {
         credit_config_group_rid: configRequest.jurisdiction_config_group_rid,
         config_json: JSON.parse(JSON.stringify(configRequest.jurisdictionConfig)),
         status_rid: configRequest.status_rid,
+        is_federal: configRequest.is_federal || false,
       });
-      console.log('createdConfig', createdConfig);
       created = true;
       configRequest.federal_rid = createdConfig.rid;
     }
@@ -360,16 +452,6 @@ export class JurisdictionSchemaService {
     sortOrder: string,
     configRid?: string
   ) {
-    console.log("Listing jurisdiction config with params:", {
-      page,
-      limit,
-      apiType,
-      filters,
-      search,
-      sortBy,
-      sortOrder,
-      configRid,
-    }); 
     try {
       // Ensure filters is not null or undefined
       filters = filters || {};
@@ -404,7 +486,6 @@ export class JurisdictionSchemaService {
       whereKey = `1 = 1`;
 
        if (apiType === "graphql") {
-        console.log("GraphQL query configRid:", configRid);
         graphQlQuery = ` jc.rid = '${configRid}'`;
       }
 
@@ -431,10 +512,18 @@ export class JurisdictionSchemaService {
         jurisdictionConfigQuery,
         { type: "SELECT" }
       );
-      return {
+      if(result && result?.jurisdiction_config_list != null){
+       return {
         result: result.jurisdiction_config_list,
-        count: result.jurisdiction_config_list[0]?.total_records || 0,
+        count: result?.jurisdiction_config_list[0]?.total_records || 0,
       };
+      } else {
+        return {
+          result: [],
+          count: 0,
+        };
+      }
+      
     } catch (err) {
       logMessage(`Error in listing jurisdiction config: ${err}`);
       errorLog(
@@ -465,8 +554,9 @@ export class JurisdictionSchemaService {
         for (let [condition, values] of Object.entries(conditions)) {
           switch (filterTypes[key]) {
             case "string": {
-              let dynamicReference = `et`;
-
+              let dynamicReference = `jc`;
+              if (filteredColumns == "country_rid") dynamicReference = `g`;
+              if (filteredColumns == "state_rid") dynamicReference = `g`;
               const stringCondition = buildStringFilterCondition(
                 condition,
                 values,
@@ -475,6 +565,20 @@ export class JurisdictionSchemaService {
               );
               if (stringCondition) {
                 filteredQueryArray.push(stringCondition);
+              }
+              break;
+            }
+             case "boolean": {
+              let dynamicReference = `g`;
+            
+              const booleanCondition = buildBooleanFilterCondition(
+                condition,
+                values,
+                filteredColumns!,
+                dynamicReference
+              );
+              if (booleanCondition) {
+                filteredQueryArray.push(booleanCondition);
               }
               break;
             }
@@ -490,7 +594,7 @@ export class JurisdictionSchemaService {
               break;
             }
             case "datetime": {
-              let dynamicReference = `et`;
+              let dynamicReference = `jc`;
               const datetimeCondition = buildDatetimeFilterConditionTemplates(
                 condition,
                 values,
@@ -531,6 +635,10 @@ export class JurisdictionSchemaService {
       effective_end_date: "effective_end_date",
       createdAt: "created_datetime",
       category_rid: "category_name",
+      config_name: "config_name",
+      state_name: "state_name",
+      country_name: "country_name",
+      is_federal: "is_federal"
     };
 
     return sortMapping[sortField] || "r_number";

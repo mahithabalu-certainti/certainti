@@ -12,11 +12,8 @@ import {
   validateRequest,
 } from "../utils/helpers";
 import {
-  casesFieldMappings,
-  casesSummaryFieldMappings,
-  checklistsFieldMappings,
   HttpStatus,
-  reviewProjectsFieldMappings,
+
   STATUS_MESSAGE,
 } from "../utils/constants";
 import {
@@ -43,6 +40,10 @@ import {
 } from "../lib/joi/schemas/schema";
 import configurations from "../config/config";
 import moment from "moment";
+import { checklistsFieldMappings, reviewProjectsFieldMappings,
+    casesFieldMappings,
+  casesSummaryFieldMappings,
+ } from "../utils/excelExportMapping";
 
 const services = configurations.getInstance().getServices();
 const caseService = services.caseService;
@@ -3841,6 +3842,82 @@ async function getCaseSubmissionDate(req: Request, res: Response): Promise<void>
     return;
   }
 }
+
+/**
+ * Controller to sign off technical documentation for a project.
+ *
+ * This function handles HTTP requests to perform the sign-off action
+ * on a project’s technical documentation. It validates required headers,
+ * forwards the request payload to the service layer, and returns a
+ * standardized API response based on the outcome.
+ *
+ * Key Responsibilities:
+ * - Validates the presence of a valid `x-user-id` header
+ * - Delegates the sign-off operation to `caseService.signOffTechnicalDocumentation()`
+ * - Formats and returns success or error responses consistently
+ *
+ * Response Behavior:
+ * - **SUCCESS** → Technical documentation sign-off completed successfully
+ * - **BAD_REQUEST** → Triggered when required input is missing, invalid, or documentation is already signed off
+ * - **NOT_FOUND** → Triggered when the specified project or documentation does not exist
+ *
+ * Error Handling:
+ * - Missing `x-user-id` header → Responds with `BAD_REQUEST`
+ * - Service-level validation failures → Responds with the respective status code
+ * - Unexpected exceptions → Responds with `BAD_REQUEST` and error details
+ *
+ * @param {Request} req - Express request containing sign-off details in the request body and user ID in headers
+ * @param {Response} res - Express response used to return the API result
+ * @returns {Promise<void>} - Resolves after sending an HTTP response
+ */
+async function signoffTechnicalDocumentation (req : Request, res : Response) {
+  const methodName = "signoffTechnicalDocumentation";
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const data = req.body;
+    data.userId = userId 
+    const result = await caseService.signOffTechnicalDocumentation(data);
+    if(result.statusCode === HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: result.statusMessage
+      }); 
+    } else if(result.statusCode === HttpStatus.BAD_REQUEST) {
+      return res.status(HttpStatus.BAD_REQUEST).json({
+        statusCode: HttpStatus.BAD_REQUEST,
+        statusCodeValue: HttpStatus.BAD_REQUEST_MESSAGE,
+        statusMessage: result.statusMessage
+      });
+    } else if(result.statusCode === HttpStatus.NOT_FOUND) {
+      return res.status(HttpStatus.NOT_FOUND).json({
+        statusCode: HttpStatus.NOT_FOUND,
+        statusCodeValue: HttpStatus.NOT_FOUND_MESSAGE,
+        statusMessage: result.statusMessage
+      });
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
 export default {
   createCases,
   updateCases,
@@ -3897,5 +3974,6 @@ export default {
   updateChecklistItemStatus,
   getEmailTemplatePreview,
   caseLevelTaskDropdown,
-  getCaseSubmissionDate
+  getCaseSubmissionDate,
+  signoffTechnicalDocumentation
 };

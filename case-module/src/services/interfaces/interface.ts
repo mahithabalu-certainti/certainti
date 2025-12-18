@@ -295,6 +295,7 @@ getCaseSubmissionDate(data: any): Promise<{
     data?: { caseSubmissionDate: string };
   }>;
 getTaskDropDownForDependencyMapping(data : any) : Promise<CaseTaskDropdownType[]>
+signOffTechnicalDocumentation(data : any): Promise<{ statusCode: number; statusMessage: string;}>
 }
 
 export interface ICaseManagementService {

@@ -27,6 +27,7 @@ import {
   ICreateCaseTeam,
   ICreateChecklist,
   priorityTypes,
+  ProjectFiscalType,
   TagsTypes,
   TaskCardDetailsType,
   TaskCardResponse,
@@ -43,19 +44,17 @@ import {
   STATUS_MESSAGE,
   rawQueries,
   MAIN_SCHEMA_NAME,
-  reviewProjectsFieldMappings,
   SCHEMANAME_PREFIX,
   emailCategorties,
-  caseTaskMapping,
   mainTableFiltersForCase,
 } from "../../utils/constants";
-import { query } from "express";
 import currency from "currency.js";
 import moment from "moment";
 import { CaseManagementSchemaService } from "../casesManagement/schemaService";
-import { fetchCaseProjects, fetchTaskActivities, fetchTaskComments, listAllTaskStatus, taskCardDetails,taskCardDetailsActivityTask, updateCaseAggregatedValue } from "../../utils/rawQueries";
+import { fetchCaseProjects, fetchTaskActivities, fetchTaskComments, listAllTaskStatus, signoffProjectTechSummary, taskCardDetails,taskCardDetailsActivityTask, updateCaseAggregatedValue } from "../../utils/rawQueries";
 import { sendEmailWithAttachment } from "../emailService";
 import ActivitySchemaService from "../activities/schemaService";
+import { caseTaskMapping, reviewProjectsFieldMappings } from "../../utils/excelExportMapping";
 export class CaseService {
   private caseSchemaService: CaseSchemaService;
   private activitySchemaService: ActivitySchemaService; // Assuming this is defined somewhere in your code
@@ -2305,9 +2304,10 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
     async addCommentsToTask (data : AddCommentsType, userId : string, files : Express.Multer.File[]) {
       const mainDb = await this.getMainDb();
       const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
-      data.created_by = userId
+      data.created_by = userId;
+      const [accountInfo]:any[] = await mainDb.query(rawQueries.fetchAccountInfo(data.account_rid));
       const fetchTaskDetails = await this.caseSchemaService.findTaskById(data.task_rid, data.account_rid, data.case_rid, fetchParent[0][0].r_number,data.task_type);
-      const result = await this.caseSchemaService.addComments(data, fetchParent[0][0].r_number, fetchTaskDetails?.r_number!, files);
+      const result = await this.caseSchemaService.addComments(data, fetchParent[0][0].r_number, fetchTaskDetails?.r_number!, files,accountInfo.r_number);
       if(result.statusCode == HttpStatus.SUCCESS) {
         return result
       } else {
@@ -2360,8 +2360,9 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
       const mainDb = await this.getMainDb();
       const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
       data.modified_by = userId
+      const [accountInfo]:any[] = await mainDb.query(rawQueries.fetchAccountInfo(data.account_rid));
       const fetchTaskDetails = await this.caseSchemaService.findTaskById(data.task_rid,data.account_rid, data.case_rid ,fetchParent[0][0].r_number,data.task_type);
-      const result = await this.caseSchemaService.updateComments(data, fetchParent[0][0].r_number, fetchTaskDetails?.r_number!, files);
+      const result = await this.caseSchemaService.updateComments(data, fetchParent[0][0].r_number, fetchTaskDetails?.r_number!, files,accountInfo.r_number);
       if(result?.statusCode === HttpStatus.SUCCESS) {
         return {
           statusCode : result.statusCode,
@@ -2427,51 +2428,66 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
         const total = result[0][0].comments[0].total_result
         const userIds = [...new Set(result[0][0].comments.map((d : any) => d.created_by))];
         const findUsers = await mainDb.query(rawQueries.getOwnerDetails(userIds));
-        const userMap = new Map(findUsers[0].map((d : any) => [d.rid, d.name]));
+        const userMap = new Map(findUsers[0].map((d : any) => [d.rid, {name : d.name, profile_url : d.profile_url}]));
         const structuredData = await Promise.all(
         (result[0][0].comments || []).map(async (d: any) => {
           delete d.total_result
-            const updatedAttachments = await Promise.all(
-              (d.comments_attachments || []).map(async (da: any) => ({
-                ...da,
-                browse_file: da.browse_file ? await generateSasUrl(da.browse_file) : null,
-              }))
-            );
-            return {
-              ...d,
-              created_by_name : userMap.get(d.created_by) || null,
-              comments_attachments: updatedAttachments,
-            };
-          })
-        );
-        const finalData = {
-          page : data.page,
-          limit : data.limit,
-          total_result : total,
-          data : structuredData
-        }
-        return {
-          statusCode : HttpStatus.SUCCESS,
-          data : finalData
-        }
-      } else {
-        const finalData = {
-          page : data.page,
-          limit : data.limit,
-          total_result : 0,
-          data : []
-        }
-        return {
-          statusCode : HttpStatus.NOT_FOUND,
-          data : finalData
-        }
+          let createdByName;
+          let profileUrl;
+          const updatedAttachments = await Promise.all(
+            (d.comments_attachments || []).map(async (da: any) => ({
+              ...da,
+              browse_file: da.browse_file ? await generateSasUrl(da.browse_file) : null,
+            }))
+          );
+          if(userMap.get(d.created_by) !== undefined) {
+            createdByName = userMap.get(d.created_by)?.name;
+            if(userMap.get(d.created_by)?.profile_url !== null) {
+              profileUrl = await generateSasUrl(userMap.get(d.created_by)?.profile_url)
+            } else {
+              profileUrl = null
+            }
+          } else {
+            profileUrl = null
+            createdByName = null
+          }
+          return {
+            ...d,
+            created_by_name : createdByName,
+            profile_url : profileUrl,
+            comments_attachments: updatedAttachments,
+          };
+        })
+      );
+      const finalData = {
+        page : data.page,
+        limit : data.limit,
+        total_result : total,
+        data : structuredData
+      }
+      return {
+        statusCode : HttpStatus.SUCCESS,
+        data : finalData
+      }
+    } else {
+      const finalData = {
+        page : data.page,
+        limit : data.limit,
+        total_result : 0,
+        data : []
+      }
+      return {
+        statusCode : HttpStatus.NOT_FOUND,
+        data : finalData
       }
     }
+  }
 
     async addTaskLevelAttachment (data : any, userId : string, files : Express.Multer.File[]) {
       const mainDb = await this.getMainDb();
       const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
-      const result = await this.caseSchemaService.addAttachmentForTask(data, fetchParent[0][0].r_number, files, userId);
+      const accountInfo : any = await mainDb.query(rawQueries.fetchAccountInfo(data.account_rid));
+      const result = await this.caseSchemaService.addAttachmentForTask(data, fetchParent[0][0].r_number, files, userId,accountInfo[0][0].r_number);
       return result;
     }
 
@@ -2500,17 +2516,31 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
       if(result.length > 0) {
         const userIds = [...new Set(result.map((d : any) => d.created_by))];
         const findUsers : any = await mainDb.query(rawQueries.getOwnerDetails(userIds));
-        const mapUser : Map<string, string> = new Map(findUsers[0].map((d : any) => [d.rid, d.name]));
+        const mapUser : Map<string, {name : string, profile_url : string}> = new Map(findUsers[0].map((d : any) => [d.rid, {name : d.name, profile_url : d.profile_url}]));
         const total = parseInt(result[0]!.total_result)
-        const structuredResult = result.map((d : any) => {
+        const structuredResult = await Promise.all(result.map(async(d : any) => {
           delete d.total_result
+          let createdByName;
+          let profileUrl;
+          if(mapUser.get(d.created_by) !== undefined) {
+            createdByName = mapUser.get(d.created_by)?.name
+            if(mapUser.get(d.created_by)?.profile_url !== null) {
+              profileUrl = await generateSasUrl(mapUser.get(d.created_by)?.profile_url!)
+            } else {
+              profileUrl = null
+            }
+          } else {
+            profileUrl = null
+            createdByName = null
+          }
           return {
             ...d,
             old_value : d.old_value === null ? "-" : d.old_value,
             new_value : d.new_value === null ? "-" : d.new_value,
-            created_by_name : mapUser.get(d.created_by) || null
+            created_by_name : createdByName,
+            profile_url : profileUrl
           }
-        })
+        }))
         const finalData = {
           page : data.page,
           limit : data.limit,
@@ -2656,7 +2686,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
           }
       
         let priorityMap : Map<string, string> = new Map(priority?.[0]?.map((d : any) => [d.rid, d.priority_name]));
-        let assignedToMap : Map<string, string> = new Map(getUsers?.[0]?.map((d : any) => [d.rid, d.name]));
+        let assignedToMap : Map<string, any> = new Map(getUsers?.[0]?.map((d : any) => [d.rid, {name : d.name, profile_url : d.profile_url}]));
         let checkListItemsMap : Map<string, string> = new Map(checkListStatusName?.[0]?.map((d : any) => [d.rid, d.status_name]));
 
         const resData = result[0];
@@ -2694,17 +2724,43 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
           }) || []
         }
       }
+      let profileUrl;
+      let createdByName;
+      let modifiedByName;
+      let assignedToName;
+      if(assignedToMap.get(resData?.task_details.assigned_to!) !== undefined) {
+        assignedToName = assignedToMap.get(resData?.task_details.assigned_to!).name
+        if(assignedToMap.get(resData?.task_details.assigned_to!).profile_url !== null) {
+          profileUrl = await generateSasUrl(assignedToMap.get(resData?.task_details.assigned_to!).profile_url)
+        } else {
+          profileUrl = assignedToMap.get(resData?.task_details.assigned_to!).profile_url
+        }
+      } else {
+        profileUrl = null
+        assignedToName = null
+      }
+      if(assignedToMap.get(resData?.task_details.created_by!) !== undefined) {
+        createdByName = assignedToMap.get(resData?.task_details.created_by!).name
+      } else {
+        createdByName = null
+      }
+      if(modifiedByName = assignedToMap.get(resData?.task_details.modified_by!) !== undefined) {
+        modifiedByName = modifiedByName = assignedToMap.get(resData?.task_details.modified_by!).name
+      } else {
+        modifiedByName = null
+      }
         let finalStruture = {
           rid : resData?.task_details.rid,
           r_number : resData?.task_details.r_number,
           task_name : resData?.task_details.task_name,
           created_by : resData?.task_details.created_by,
           fiscal_year : resData?.task_details.fiscal_year || null,
-          created_by_name : assignedToMap.get(resData?.task_details.created_by!) || null,
+          created_by_name : createdByName,
+          profile_url : profileUrl,
           assigned_to : resData?.task_details.assigned_to,
-          assigned_to_name :  assignedToMap.get(resData?.task_details.assigned_to!) || null,
+          assigned_to_name : assignedToName,
           modified_by : resData?.task_details.modified_by,
-          modified_by_name : assignedToMap.get(resData?.task_details.modified_by!) || null,
+          modified_by_name : modifiedByName,
           priority_rid : resData?.task_details.priority_rid,
           priority_name : priorityMap.get(resData?.task_details.priority_rid!) || null,
           task_status_rid : resData?.task_details.task_status_rid,
@@ -2766,17 +2822,31 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
       let result = await this.caseSchemaService.fetchCollaboratorsList(parentNumber[0][0].r_number, data);
       if(result.length > 0) {
         let userLists;
-        let userMap : Map<string, string>
+        let userMap : Map<string, {name: string; profile_url: string;}>
         const uniqueIds = [...new Set(result.map((d : any) => d.assigned_to))];
         if(uniqueIds.length > 0) {
           userLists = await mainDb.query(rawQueries.getOwnerDetails(uniqueIds));
-          userMap = new Map(userLists[0].map((d : any) => [d.rid, d.name]));
-          result = result.map((d : any) => {
+          let assignedToName;
+          let profileUrl;
+          userMap = new Map(userLists[0].map((d : any) => [d.rid, {name : d.name, profile_url : d.profile_url}]));
+          result = await Promise.all(result.map(async (d : any) => {
+            if(userMap.get(d.assigned_to) !== undefined) {
+              assignedToName = userMap.get(d.assigned_to)?.name
+              if(userMap.get(d.assigned_to)?.profile_url !== null) {
+                profileUrl = await generateSasUrl(userMap.get(d.assigned_to)?.profile_url!)
+              } else {
+                profileUrl = null
+              }
+            } else {
+              assignedToName = null
+              profileUrl = null
+            }
             return {
               ...d,
-              assigned_to_name : userMap.get(d.assigned_to)
+              assigned_to_name : assignedToName,
+              profile_url : profileUrl
             }
-          });
+          }));
           return result;
         } else {
           return []
@@ -2919,6 +2989,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
                       total_effort_prj: d.total_effort_prj,
                       total_subcon_prj: d.total_subcon_prj,
                       total_cost_fte_prj: d.total_cost_fte_prj,
+                      total_cost_subcon_prj: d.total_cost_subcon_prj,
                       total_nonlabor_prj: d.total_nonlabor_prj,
                       total_resources_prj: d.total_resources_prj,
                       total_effort_fte_prj  : d.total_effort_fte_prj,
@@ -3297,6 +3368,55 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
     } catch (err) {
       logMessage(`Error fetching case submission date, ${err}`);
       throw this.throwServiceError(err as Error);
+    }
+  }
+  async signOffTechnicalDocumentation (data : any) {
+    const mainDb = await this.getMainDb();
+    const orgDb = await this.getOrgDb();
+    const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
+    if(fetchParent[0].length > 0) {
+      const schemaName = rawQueries.fetchSchemaName(fetchParent[0][0].r_number);
+      const {CaseHistory} = await this.caseModelService.getModels(fetchParent[0][0].r_number)
+      const [isProjectExists] = await orgDb.query<ProjectFiscalType>(rawQueries.fetchProjectFiscalById(data.project_fiscal_rid, data.account_rid, schemaName), {type : QueryTypes.SELECT});
+      if(isProjectExists) {
+        if (isProjectExists.signoff && !data.signoff) {
+          return {
+            statusCode : HttpStatus.SUCCESS,
+            statusMessage : STATUS_MESSAGE.signoffNotAllowed
+          }
+        } else if (isProjectExists.signoff === data.signoff) {
+          return {
+            statusCode : HttpStatus.SUCCESS,
+            statusMessage : STATUS_MESSAGE.technicalDocsAlreadySignedOff
+          }
+        }
+        else {
+          await orgDb.query(signoffProjectTechSummary(schemaName, data.project_fiscal_rid, data.account_rid, data.signoff, data.userId));
+          if(data.case_rid && (data.signoff !== isProjectExists.signoff)) {
+            await CaseHistory.create({
+              case_rid : data.case_rid,
+              old_value : "CREATE",
+              attribute_name : "Technical Documentation",
+              created_by : data.userId,
+              new_value : `signed off technical documentation for ${isProjectExists.project_code}`
+            });
+          }
+          return {
+            statusCode : HttpStatus.SUCCESS,
+            statusMessage : STATUS_MESSAGE.technicalDocumentationSignedOff
+          }
+        }
+      } else {
+        return {
+          statusCode : HttpStatus.NOT_FOUND,
+          statusMessage : STATUS_MESSAGE.dataNotAvailable
+        }
+      }
+    } else {
+      return {
+        statusCode : HttpStatus.NOT_FOUND,
+        statusMessage : STATUS_MESSAGE.accountNoFound
+      }
     }
   }
 }

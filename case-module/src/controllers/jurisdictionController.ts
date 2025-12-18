@@ -1,9 +1,11 @@
 import { Request, Response } from "express";
 import {
   errorLog,
+  generateExcelBase64,
   handleCustomResponse,
   handleErrorResponse,
   handleSuccessResponse,
+  isValidTimezone,
   logMessage,
   successLog,
   validateRequest,
@@ -14,6 +16,9 @@ import { createJurisdictionRDConfigSchema, exportJurisdictionConfigSchema, juris
 // Load services from configuration
 const Services = Configurations.getInstance().getServices();
 const jurisdictionService = Services.jurisdictionService;
+const caseService = Services.caseService;
+import moment from "moment";
+import { jurisdictionRuleMapping } from "../utils/excelExportMapping";
 
 
 /**
@@ -196,6 +201,7 @@ async function getJurisdictionConfigDetailsById(
   try {
     const userId = req.headers["x-user-id"] as string;
     const value = await validateRequest(req, jurisdictionRDConfigSchema, res,"GET");
+    if (!value) return;
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -246,6 +252,7 @@ async function getJurisdictionConfigDataForCreate(
   try {
     const userId = req.headers["x-user-id"] as string;
     const value = await validateRequest(req, jurisdictionRDConfigSchemaForNew, res,"GET");
+    if (!value) return;
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -296,6 +303,7 @@ async function updateJurisdictionConfig(
   try {
     const userId = req.headers["x-user-id"] as string;
     const value = await validateRequest(req, updateJurisdictionRDConfigSchema, res);
+    if (!value) return;
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -306,6 +314,7 @@ async function updateJurisdictionConfig(
       );
       return;
     }
+    value.modified_by = userId;
     let jurisdictionConfigResponse =
         await jurisdictionService.updateJurisdictionConfig(
           value
@@ -313,7 +322,7 @@ async function updateJurisdictionConfig(
 
     if (jurisdictionConfigResponse.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
-      handleSuccessResponse(res, jurisdictionConfigResponse.data);
+      handleCustomResponse(res, jurisdictionConfigResponse.data, jurisdictionConfigResponse.message);
       return;
     } else {
       errorLog(methodName, jurisdictionConfigResponse.errorMessage);
@@ -368,7 +377,7 @@ async function createJurisdictionConfig(
 
     if (jurisdictionConfigResponse.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
-      handleSuccessResponse(res, jurisdictionConfigResponse.data);
+      handleCustomResponse(res, jurisdictionConfigResponse.data, jurisdictionConfigResponse.message);
       return;
     } else {
       errorLog(methodName, jurisdictionConfigResponse.errorMessage);
@@ -401,6 +410,7 @@ async function listJurisdictionsConfigurations(
   try {
     const userId = req.headers["x-user-id"] as string;
     const value = await validateRequest(req, listJurisdictionConfigSchema, res,'GET');
+    if (!value) return;
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -464,6 +474,7 @@ async function exportJurisdictionsConfigurations(
   try {
     const userId = req.headers["x-user-id"] as string;
     const value = await validateRequest(req, exportJurisdictionConfigSchema, res,'GET');
+    if (!value) return;
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -484,25 +495,84 @@ async function exportJurisdictionsConfigurations(
             "Invalid filters format. Must be a valid JSON object."
           );
         }
-    let jurisdictionConfigResponse =
+      let result =
         await jurisdictionService.listJurisdictionConfig(
           value,
-          "list",
+          "download",
           parsedFilters
 
         );
-
-    if (jurisdictionConfigResponse.statusCode === HttpStatus.SUCCESS) {
-      successLog(methodName);
-      handleSuccessResponse(res, jurisdictionConfigResponse.data);
-      return;
-    } else {
-      errorLog(methodName, jurisdictionConfigResponse.errorMessage);
+       const fields = await caseService.getAllowedExportFields(
+             userId,
+             "manage_jurisdiction_rule_view_edit"
+           );
+           const allowedFieldSet = new Set<string>();
+           for (const field of fields) {
+             if (field.read) {
+               allowedFieldSet.add(field.field_name);
+             }
+           }
+            const isValidTZ = value.timezone && isValidTimezone(value.timezone);
+            const formatDate = (date?: Date) => {
+                 if (!date) return null;
+                 
+                 return moment(date)
+                   .tz(isValidTZ ? value.timezone : "UTC")
+                   .format("YYYY-MMM-DD, hh:mm:ss A");
+               };
+          // Helper for just date
+            const formatDateOnly = (date?: Date) => {
+              if (!date) return null;
+              return moment(date).format("YYYY-MMM-DD");
+            };
+    if (result.statusCode === HttpStatus.SUCCESS) {
+            const finalStructuredData =
+              result?.data?.configs.length < 1
+                ? []
+                : result?.data?.configs.map((d: any) => {
+                    let resultMap: { [key: string]: any } = {
+                      r_number: d.r_number,
+                      status_name: d.status_name,
+                      config_name: d.is_federal
+                        ? `C-${d.country_code}${d.config_name ? '-' + d.config_name : ''}`
+                        : `C-${d.country_code}-${d.state_name || ""}${d.config_name ? '-' + d.config_name : ''}`,
+                      effective_start_date: formatDateOnly(d?.effective_start_date),
+                      effective_end_date: formatDateOnly(d?.effective_end_date),
+                      country_name: d.country_name,
+                      state_name: d.state_name,
+                      is_federal: d.is_federal ? "Yes" : "No",
+                      created_by: d.created_user_name,
+                      created_datetime: formatDate(d?.created_datetime),
+                      modified_by: d.modified_user_name,
+                      modified_datetime:
+                        d?.modified_datetime == null
+                          ? ""
+                          : formatDate(d.modified_datetime) 
+                    };
+      
+                    // Build exportRecord using allowed fields and resultMap
+                    const exportRecord: Record<string, any> = {};
+                    jurisdictionRuleMapping.forEach((mapping) => {
+                      if (allowedFieldSet.has(mapping.permissionField)) {
+                        exportRecord[mapping.exportField] =
+                          resultMap[mapping.dataField];
+                      }
+                    });
+      
+                    return exportRecord;
+                  });
+            const generateBase64Response = await generateExcelBase64(
+              finalStructuredData,
+              "Jurisdiction_Configurations",
+            );
+            handleSuccessResponse(res, generateBase64Response);
+          }  else {
+      errorLog(methodName, result.errorMessage);
       handleErrorResponse(
         res,
         HttpStatus.BAD_REQUEST,
         HttpStatus.BAD_REQUEST_MESSAGE,
-        jurisdictionConfigResponse.errorMessage
+        result.errorMessage
       );
       return;
     }

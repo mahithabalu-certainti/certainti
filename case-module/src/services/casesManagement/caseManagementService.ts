@@ -634,13 +634,14 @@ export class CaseManagementService {
         let uniqueTaskTypeIds = [...new Set(result.array_agg.flatMap((d : any) => d.tasks !== null ? d.tasks.map((dd : any) => dd.task_type_rid) : '' ))]
         let statusIds = [...new Set(result.array_agg.flatMap((d : any) => d.tasks !== null ? d.tasks.map((dd : any) => dd.status_rid) : ''))]
         let taskStatusIds = [...new Set(result.array_agg.flatMap((d : any) => d.tasks !== null ? d.tasks.map((a : any) => a.task_status_rid) : '' ))];
-
+        let tagsIds = [...new Set(result.array_agg.flatMap((d : any) => d.tasks !== null ? d.tasks.flatMap((dd : any) => dd.tags !== null ? dd.tags.map((t : any) => t.rid) : '') : ''))]
         let priority;
         let assignedTo;
         let teamRole;
         let tasktype;
         let statusType;
         let taskStatusType;
+        let tagNames;
 
         let priorityQuery = rawQueries.getAllPriorityTypes(uniquePriorityIds)
         if(priorityQuery) {
@@ -666,6 +667,10 @@ export class CaseManagementService {
         if(taskStatusQuery) {
           taskStatusType = await mainDb.query(taskStatusQuery)
         }
+        let tagQuery = rawQueries.getAllTags(tagsIds)
+        if(tagQuery) {
+          tagNames = await mainDb.query(tagQuery) 
+        }
         const [fetchCaseStatus] = await mainDb.query<caseStatusType>(rawQueries.getCaseStatusById(caseDetails?.status_rid!), {type : QueryTypes.SELECT});
         
         let priorityMap : Map<string, string> = new Map(priority?.[0]?.map((d : any) => [d.rid, d.priority_name]));
@@ -674,6 +679,7 @@ export class CaseManagementService {
         let taskTypeMap : Map<string, string> = new Map(tasktype?.[0]?.map((d : any) => [d.rid, d.task_type_name]));
         let statusMap : Map<string, string> = new Map(statusType?.[0]?.map((d : any) => [d.rid, d.status_name]));
         let taskStatusMap : Map<string, string> = new Map(taskStatusType?.[0]?.map((d : any) => [d.rid, d.task_status_name]));
+        let tagMap : Map<string, string> = new Map(tagNames?.[0]?.map((d : any) => [d.rid, d.tag_name]))
         
         let dynamicResult;
         if(fetchCaseStatus?.status_name.toLowerCase() === "audit review") {
@@ -681,8 +687,8 @@ export class CaseManagementService {
         } else {
           dynamicResult = result.array_agg.filter((d : any) => d.milestone_name.toLowerCase() !== 'audit review')
         }
-        let profileUrl : string | null
         const finalStructure = await Promise.all(dynamicResult.map(async (d : any) => {
+          let profileUrl : string | null
           return {
             rid : d.rid,
             milestone_name : d.milestone_name,
@@ -711,6 +717,7 @@ export class CaseManagementService {
                 checklists_count: d.checklists_count,
                 completed_checklist_items_count : d.complete_items,
                 comments_count : d.comments_count,
+                attachment_count : d.attachment_count || 0,
                 task_description: d.task_description,
                 effective_end_datetime: d.effective_end_datetime,
                 effective_start_datetime: d.effective_start_datetime,
@@ -723,7 +730,13 @@ export class CaseManagementService {
                 status_name : statusMap.get(d.status_rid) || null,
                 task_status_rid : d.task_status_rid,
                 task_status_name : taskStatusMap.get(d.task_status_rid) || null,
-                profile_url : profileUrl
+                profile_url : profileUrl,
+                tags : d.tags !== null ? d.tags.map((t : any) => {
+                  return {
+                    rid : t.rid,
+                    tag_name : tagMap.get(t.rid) || null
+                  }
+                }) : []
               }
             })) : []
           }
@@ -811,8 +824,7 @@ export class CaseManagementService {
     // Set the user who is creating this checklist
 
     emailRequest.modified_by = userId;
-    if(emailRequest.template_name)
-    {
+
     const result = await this.caseManangementSchemaService.checkisExistingTemplateUnique(emailRequest);
     if (!result.isUnique) {
       return {
@@ -835,7 +847,7 @@ export class CaseManagementService {
         errorMessage: `Atleast one template with the category "${result.category_name}" needs to be in active status.`,
       };
     }
-  }
+  
     const response =
       await this.caseManangementSchemaService.updateEmailTemplate(
         emailRequest

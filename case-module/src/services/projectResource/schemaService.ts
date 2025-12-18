@@ -490,14 +490,14 @@ export class ProjectResourceSchemaService {
       // Step 4: Enrich project resources with resource_type_name, resource_name, and resource_role
       const enrichedResources = projectResources.map((resource) => {
         const resData = resourceMap.get(resource.resource_rid) || {};
-        const typeName = typeMap.get(resData.rid || "") || null;
+        const typeName = typeMap.get(resData.resource_type_rid || "") || null;
 
         return {
           ...(resource.dataValues ?? resource),
           resource_type_name: typeName,
           resource_name: resData.resource_name ?? null,
           resource_role: resData.resource_role ?? null,
-          resource_type_rid: resData.rid ?? null,
+          resource_type_rid: resData.resource_type_rid ?? null,
         };
       });
 
@@ -1010,7 +1010,7 @@ export class ProjectResourceSchemaService {
       net_total_cost_pro_res: "Net Resource Cost",
       resource_designation: "Designation",
       // qre_percent: "QRE %",
-      qre_final: "QRE",
+      qre_final: "QRE Final",
       // status_rid: "Status",
       description: "Comments",
       project_resource_role: "Project Resource Role",

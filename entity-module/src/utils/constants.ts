@@ -161,9 +161,9 @@ export const STATUS_MESSAGE = {
   noNotesRecordFound: "Notes not found",
   notesIdMissing: "Notes RID missing",
   notesFetchedSuccess: "Notes fetched successfully",
-  templateUploadedSuccess : "Template uploaded successfully",
-  qreHistoryFetchedSuccess : "Qre-History fetched successfully",
-  noDataFound : "Data not available",
+  templateUploadedSuccess: "Template uploaded successfully",
+  qreHistoryFetchedSuccess: "Qre-History fetched successfully",
+  noDataFound: "Data not available",
   taskSummaryNotFound: "Task Summary not found",
   attachedTaskNotFound: "No attached Task found",
   taskSummaryUpdatedSuccess: "Task Summary updated successfully",
@@ -258,9 +258,9 @@ export const rawQueries = {
                 pf.account_rid = '${data.account_rid}'
                 AND
                 pf.project_code ILIKE '%${data.project_code.replace(
-                  /'/g,
-                  "''"
-                )}%'
+      /'/g,
+      "''"
+    )}%'
                 AND
                 pf.rid != p.rid
                 )
@@ -880,12 +880,12 @@ export const rawQueries = {
       )
     `,
   fetchPlatformConfig(rid: string) {
-        return `
+    return `
         SELECT config_json FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values rv
         join ${MAIN_SCHEMA_NAME}.rd_credit_config_group rg on  rv.credit_config_group_rid  = rg.rid
         where rg.country_rid = '${rid}'
         and credit_program_name = 'Platform Configuration'
-        and is_federal = true`;
+        and rg.is_federal = true`;
       },
   async updateSetting(
     schemaName: string,
@@ -895,7 +895,7 @@ export const rawQueries = {
     parentAccountID: string,
     subscriptionId?: string,
     isParentAccount: boolean = false,
-    parenSchema? : string
+    parenSchema?: string
   ) {
     let tableName: string[];
     let whereParams: string = ``;
@@ -907,14 +907,12 @@ export const rawQueries = {
       tableName = [`project_fiscal`, `project_fiscal_summary`];
 
       setValues = `
-      blended_rate_fte = ${
-        data.blended_rate_fte == "" ? null : parseFloat(data.blended_rate_fte)
-      },
-      blended_rate_subcon = ${
-        data.blended_rate_subcon == ""
+      blended_rate_fte = ${data.blended_rate_fte == "" ? null : parseFloat(data.blended_rate_fte)
+        },
+      blended_rate_subcon = ${data.blended_rate_subcon == ""
           ? null
           : parseFloat(data.blended_rate_subcon)
-      },
+        },
       auto_send_ai_interaction = ${data.autosend_interaction},
       max_ai_interaction = ${data.max_ai_interactions},
       auto_access_rd = ${data.auto_access_rd},
@@ -923,14 +921,12 @@ export const rawQueries = {
     } else {
       tableName = [`account_details`];
       setValues = `
-      blended_rate_fte = ${
-        data.blended_rate_fte == "" ? null : parseFloat(data.blended_rate_fte)
-      },
-      blended_rate_subcon = ${
-        data.blended_rate_subcon == ""
+      blended_rate_fte = ${data.blended_rate_fte == "" ? null : parseFloat(data.blended_rate_fte)
+        },
+      blended_rate_subcon = ${data.blended_rate_subcon == ""
           ? null
           : parseFloat(data.blended_rate_subcon)
-      },
+        },
       autosend_interaction = ${data.autosend_interaction},
       max_ai_interactions = ${data.max_ai_interactions},
       auto_access_rd = ${data.auto_access_rd},
@@ -1494,14 +1490,15 @@ export const rawQueries = {
     accountFilter: any,
     projectFilter: any,
     filterConditions: any,
-    searchCondition: any
+    searchCondition: any,
+    caseProjectQuery? : any
   ) {
     return `
       SELECT 
         prf.total_cost_pro_res,
-        prf.rd_percent_final,
-        prf.qre_final,
-        prf.rd_credits_total,
+        pf.rd_percent_final,
+        pf.qre_final,
+        pf.rd_credits_total,
         prf.resource_rid,
         prf.project_fiscal_rid,
         prf.country_rid,
@@ -1520,11 +1517,12 @@ export const rawQueries = {
       WHERE 1=1 
       ${accountFilter}
       ${projectFilter}
+      ${caseProjectQuery}
       ${filterConditions}
       ${searchCondition}
     `;
   },
-  fetchQueryForReferenceMap(idField: any, nameField: any, table: any){
+  fetchQueryForReferenceMap(idField: any, nameField: any, table: any) {
     return `SELECT ${idField}, ${nameField} FROM ${MAIN_SCHEMA_NAME}.${table}`
   },
   fetchProjectFiscalCountQuery(
@@ -1532,8 +1530,9 @@ export const rawQueries = {
     accountFilter: any,
     projectFilter: any,
     filterConditions: any,
-    searchCondition: any
-  ){
+    searchCondition: any,
+    caseProjectQuery? : any
+  ) {
     return `
       SELECT COUNT(*) as total
       FROM "${schemaName}"."project_resource_fiscal" prf
@@ -1544,6 +1543,7 @@ export const rawQueries = {
       ${projectFilter}
       ${filterConditions}
       ${searchCondition}
+      ${caseProjectQuery}
     `
   },
   getResourceCostQuery(
@@ -1606,7 +1606,7 @@ export const rawQueries = {
         ${searchCondition}
     `;
   },
-  fetchStatusById(){
+  fetchStatusById() {
     return `SELECT status_name FROM ${MAIN_SCHEMA_NAME}.status WHERE rid = :rid`
   },
   getUserFullNameQuery(): string {
@@ -1644,7 +1644,7 @@ export const rawQueries = {
     finalSortOrder: string
   ): string {
     let sortClause = '';
-  
+
     if (
       ['resource_name', 'resource_orgname', 'resource_designation', 'resource_role', 'resource_total_experience'].includes(finalSortBy)
     ) {
@@ -1656,7 +1656,7 @@ export const rawQueries = {
     ) {
       sortClause = `ORDER BY rs."${finalSortBy}" ${finalSortOrder}`;
     }
-  
+
     return `
       SELECT 
         rs.*,
@@ -1708,7 +1708,7 @@ export const rawQueries = {
     finalSortOrder: string
   ): string {
     let sortClause = '';
-  
+
     if (
       ['resource_name', 'resource_orgname', 'resource_designation', 'resource_role', 'resource_total_experience'].includes(finalSortBy)
     ) {
@@ -1720,7 +1720,7 @@ export const rawQueries = {
     ) {
       sortClause = `ORDER BY rs."${finalSortBy}" ${finalSortOrder}`;
     }
-  
+
     return `
       SELECT 
         rs.*,
@@ -2013,7 +2013,7 @@ export const rawQueries = {
       FROM ${MAIN_SCHEMA_NAME}.account
     `;
   },
-  getIndustryById(){
+  getIndustryById() {
     return `SELECT industry_name FROM ${MAIN_SCHEMA_NAME}.industry WHERE rid = :id`
   },
   getProjectTypeByIdQuery() {
@@ -2145,124 +2145,141 @@ export const rawQueries = {
         AND ufa.user_id = :userId
     `;
   },
-  fetchChecklistStatus () {
+  fetchChecklistStatus() {
     return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.checklist_status WHERE status_name ILIKE '%Done%'`
-  },  
-    getCaseTeamRoleName (roleRid : string) {
-      return `SELECT rid, role_name FROM ${MAIN_SCHEMA_NAME}.case_team_role WHERE rid = '${roleRid}'`
-    },
-      getWeightageValue (rid : string) {
+  },
+  getCaseTeamRoleName(roleRid: string) {
+    return `SELECT rid, role_name FROM ${MAIN_SCHEMA_NAME}.case_team_role WHERE rid = '${roleRid}'`
+  },
+  getWeightageValue(rid: string) {
     return `SELECT weightage_value FROM ${MAIN_SCHEMA_NAME}.task_weightage WHERE rid = '${rid}'`
   },
-    getTaskCategoryByRid (rid : string) {
+  getTaskCategoryByRid(rid: string) {
     return `SELECT category_name FROM ${MAIN_SCHEMA_NAME}.task_category WHERE rid = '${rid}'`
   },
-    getTaskNames (rid : any[], schemaName : string) {
-    let ids : string[] = []
-    if(rid.length > 0) {
-      ids.push(`${rid.map((d : any) => `'${d}'`).join(',')}`)
+  getTaskNames(rid: any[], schemaName: string) {
+    let ids: string[] = []
+    if (rid.length > 0) {
+      ids.push(`${rid.map((d: any) => `'${d}'`).join(',')}`)
       return `SELECT rid, task_name FROM ${schemaName}.case_task WHERE rid IN (${ids})`
     }
   },
-    getWorkflowConnectors (rid : any[]) {
-    let ids : string[] = []
-    if(rid.length > 0) {
-      ids.push(`${rid.map((d : any) => `'${d}'`).join(',')}`)
+  getWorkflowConnectors(rid: any[]) {
+    let ids: string[] = []
+    if (rid.length > 0) {
+      ids.push(`${rid.map((d: any) => `'${d}'`).join(',')}`)
       return `SELECT rid, relationship_type FROM ${MAIN_SCHEMA_NAME}.workflow_connector WHERE rid IN (${ids})`
     }
   },
-    getAllTagsName (rid : any[]) {
-      let ids : string[] = []
-      if(rid.length > 0) {
-        ids.push(`${rid.map((d : any) => `'${d}'`).join(',')}`)
-        return `SELECT rid, tag_name FROM ${MAIN_SCHEMA_NAME}.tags WHERE rid IN (${ids})`
-      }
-    },
-      getOwnerDetails(caseOwnerRid: any[]) {
+  getAllTagsName(rid: any[]) {
+    let ids: string[] = []
+    if (rid.length > 0) {
+      ids.push(`${rid.map((d: any) => `'${d}'`).join(',')}`)
+      return `SELECT rid, tag_name FROM ${MAIN_SCHEMA_NAME}.tags WHERE rid IN (${ids})`
+    }
+  },
+  getOwnerDetails(caseOwnerRid: any[]) {
     return `SELECT rid, CONCAT(first_name,' ',last_name) AS name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (${caseOwnerRid.map(
       (d: any) => `'${d}'`
     )})`;
   },
-    getAllPriorityTypes (rid : any[]) {
-    let ids : string[] = []
-    if(rid.length > 0) {
-      ids.push(`${rid.map((d : any) => `'${d}'`).join(',')}`)
+  getAllPriorityTypes(rid: any[]) {
+    let ids: string[] = []
+    if (rid.length > 0) {
+      ids.push(`${rid.map((d: any) => `'${d}'`).join(',')}`)
       return `SELECT rid, priority_name FROM ${MAIN_SCHEMA_NAME}.case_priority WHERE rid IN (${ids})`
     }
   },
-    fetchCheckListStatusNamesByRids(schemaName: string, statusRids: string[]) {
-  const ridsList = statusRids.map(rid => `'${rid}'`).join(",");
-  if(ridsList.length > 0) {
-    return `SELECT rid, status_name FROM ${schemaName}.checklist_status WHERE rid IN (${ridsList})`;
-  } else {
-    return `SELECT rid, status_name FROM ${schemaName}.checklist_status WHERE rid IN ('')`
-  }
+  fetchCheckListStatusNamesByRids(schemaName: string, statusRids: string[]) {
+    const ridsList = statusRids.map(rid => `'${rid}'`).join(",");
+    if (ridsList.length > 0) {
+      return `SELECT rid, status_name FROM ${schemaName}.checklist_status WHERE rid IN (${ridsList})`;
+    } else {
+      return `SELECT rid, status_name FROM ${schemaName}.checklist_status WHERE rid IN ('')`
+    }
   },
-    getAllTaskStatus (rid : any) {
-    let ids : string[] = []
-    if(rid.length > 0) {
-      ids.push(`${rid.map((d : any) => `'${d}'`).join(',')}`)
+  getAllTaskStatus(rid: any) {
+    let ids: string[] = []
+    if (rid.length > 0) {
+      ids.push(`${rid.map((d: any) => `'${d}'`).join(',')}`)
       return `SELECT rid, task_status_name FROM ${MAIN_SCHEMA_NAME}.case_task_status WHERE rid IN (${ids})`
     }
   },
-    findTaskSummaryDetails: (rid: string, accountRid: string) => {
+  findTaskSummaryDetails: (rid: string, accountRid: string) => {
     return `SELECT ts.*
             FROM ${MAIN_SCHEMA_NAME}.task_summary ts
             WHERE ts.rid = '${rid}' AND ts.account_rid = '${accountRid}'`;
   },
   updateTaskSummaryQuery: (getSetData: any, data: any) => {
-  const { setClause } = getSetData;
+    const { setClause } = getSetData;
 
-  // Use named parameters for all dynamic values
-  return `UPDATE ${MAIN_SCHEMA_NAME}.task_summary 
+    // Use named parameters for all dynamic values
+    return `UPDATE ${MAIN_SCHEMA_NAME}.task_summary 
           SET ${setClause} 
           WHERE rid = :rid AND account_rid = :account_rid
           RETURNING *`;
   },
-  fetchTaskSummaryDetails: ( rid: string, accountRid: string) => {
-    return `SELECT *
+  fetchTaskSummaryDetails: (rid: string, accountRid: string) => {
+    return `SELECT ts.*,
+            COALESCE(cts.status_name, ast.status_name) as status_name,
+            cp.priority_name,
+            CONCAT(u_created.first_name, ' ', u_created.last_name) as created_by_name,
+            CONCAT(u_modified.first_name, ' ', u_modified.last_name) as modified_by_name,
+            CONCAT(u_assigned.first_name, ' ', u_assigned.last_name) as assigned_to_name,
+            acc.account_name,
+            COALESCE(acc_attach.account_name, ps.project_name, cs.case_name) as attach_to_name
             FROM ${MAIN_SCHEMA_NAME}.task_summary ts
+            LEFT JOIN ${MAIN_SCHEMA_NAME}.case_status cts ON cts.rid = ts.status_rid
+            LEFT JOIN ${MAIN_SCHEMA_NAME}.activity_status ast ON ast.rid = ts.status_rid
+            LEFT JOIN ${MAIN_SCHEMA_NAME}.case_priority cp ON cp.rid = ts.priority_rid
+            LEFT JOIN ${MAIN_SCHEMA_NAME}."user" u_created ON u_created.rid = ts.created_by
+            LEFT JOIN ${MAIN_SCHEMA_NAME}."user" u_modified ON u_modified.rid = ts.modified_by
+            LEFT JOIN ${MAIN_SCHEMA_NAME}."user" u_assigned ON u_assigned.rid = ts.assigned_to
+            LEFT JOIN ${MAIN_SCHEMA_NAME}.account acc ON acc.rid = ts.account_rid
+            LEFT JOIN ${MAIN_SCHEMA_NAME}.account acc_attach ON acc_attach.rid = ts.attach_to
+            LEFT JOIN ${MAIN_SCHEMA_NAME}.project_summary ps ON ps.project_rid = ts.attach_to
+            LEFT JOIN ${MAIN_SCHEMA_NAME}.case_summary cs ON cs.case_rid = ts.attach_to
             where ts.rid = '${rid}' AND ts.account_rid = '${accountRid}'`;
   },
-  getActiveStatusId () {
+  getActiveStatusId() {
     return `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status where status_name ILIKE '%Active%'`
   },
-  fetchUserNames (oldRid : string, newRid : string) {
-    if(oldRid === null) oldRid = ''
-    if(newRid === null) newRid = ''
+  fetchUserNames(oldRid: string, newRid: string) {
+    if (oldRid === null) oldRid = ''
+    if (newRid === null) newRid = ''
     return `SELECT rid, CONCAT(first_name, ' ', last_name) AS name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN ('${oldRid}', '${newRid}')`
   },
-  fetchCheckLists(oldRid : string, newRid : string) {
-    if(oldRid === null) oldRid = ''
-    if(newRid === null) newRid = ''
+  fetchCheckLists(oldRid: string, newRid: string) {
+    if (oldRid === null) oldRid = ''
+    if (newRid === null) newRid = ''
     return `SELECT rid, checklist_name FROM ${MAIN_SCHEMA_NAME}.checklist_template WHERE rid IN ('${oldRid}', '${newRid}')`
   },
-  fetchPriority(oldRid : string, newRid : string) {
-    if(oldRid === null) oldRid = ''
-    if(newRid === null) newRid = ''
+  fetchPriority(oldRid: string, newRid: string) {
+    if (oldRid === null) oldRid = ''
+    if (newRid === null) newRid = ''
     return `SELECT rid, priority_name FROM ${MAIN_SCHEMA_NAME}.case_priority WHERE rid IN ('${oldRid}', '${newRid}')`
   },
-  fetchTaskStatus(oldRid : string, newRid : string) {
-    if(oldRid === null) oldRid = ''
-    if(newRid === null) newRid = ''
+  fetchTaskStatus(oldRid: string, newRid: string) {
+    if (oldRid === null) oldRid = ''
+    if (newRid === null) newRid = ''
     return `SELECT rid, task_status_name FROM ${MAIN_SCHEMA_NAME}.case_task_status WHERE rid IN ('${oldRid}', '${newRid}')`
   },
-  fetchTaskWeightage(oldRid : string, newRid : string) {
-    if(oldRid === null) oldRid = ''
-    if(newRid === null) newRid = ''
+  fetchTaskWeightage(oldRid: string, newRid: string) {
+    if (oldRid === null) oldRid = ''
+    if (newRid === null) newRid = ''
     return `SELECT rid, weightage_value FROM ${MAIN_SCHEMA_NAME}.task_weightage WHERE rid IN ('${oldRid}', '${newRid}')`
   },
-  fetchTaskCategory(oldRid : string, newRid : string) {
-  if(oldRid === null) oldRid = ''
-  if(newRid === null) newRid = ''
-  return `SELECT rid, category_name FROM ${MAIN_SCHEMA_NAME}.task_category WHERE rid IN ('${oldRid}', '${newRid}')`
+  fetchTaskCategory(oldRid: string, newRid: string) {
+    if (oldRid === null) oldRid = ''
+    if (newRid === null) newRid = ''
+    return `SELECT rid, category_name FROM ${MAIN_SCHEMA_NAME}.task_category WHERE rid IN ('${oldRid}', '${newRid}')`
   },
-  insertTimeline: (schemaName: string,tableName: string) =>
-  `INSERT INTO "${schemaName}".${tableName} (event_name, event_status, event_type, entity_rid,account_rid, description, created_by, event_datetime, created_datetime) VALUES (:event_name, :event_status, :event_type, :entity_rid, :account_rid, :description, :created_by, :event_datetime, :created_datetime)`,
+  insertTimeline: (schemaName: string, tableName: string) =>
+    `INSERT INTO "${schemaName}".${tableName} (event_name, event_status, event_type, entity_rid,account_rid, description, created_by, event_datetime, created_datetime) VALUES (:event_name, :event_status, :event_type, :entity_rid, :account_rid, :description, :created_by, :event_datetime, :created_datetime)`,
 
-  getAccountDetails (accountRid : string) {
+  getAccountDetails(accountRid: string) {
     return `SELECT rid, r_number, subscription_id, is_parent FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`
-  } ,
+  },
   fetchParentAccountDetails: `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
   getUserNameByIdQuery() {
     return `
@@ -2271,7 +2288,7 @@ export const rawQueries = {
       WHERE rid = :userId
     `;
   },
-    fetchChecklistTemplates: `
+  fetchChecklistTemplates: `
     SELECT 
         ct.rid,
         ct.r_number,
@@ -2295,9 +2312,9 @@ export const rawQueries = {
     return `
     SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.checklist_status WHERE status_name = '${statusName}'`;
   },
-  fetchActivityStatusById(oldRid : string, newRid : string) {
-    if(oldRid === null) oldRid = ''
-    if(newRid === null) newRid = ''
+  fetchActivityStatusById(oldRid: string, newRid: string) {
+    if (oldRid === null) oldRid = ''
+    if (newRid === null) newRid = ''
     return `SELECT rid, status_name as name FROM ${MAIN_SCHEMA_NAME}.activity_status WHERE activity_type ='Task' AND rid IN ('${oldRid}', '${newRid}')`
   },
   getTaskTypeRidMilestone: `SELECT rid FROM ${MAIN_SCHEMA_NAME}.task_type WHERE task_type_name = 'Milestone'`,
@@ -2318,6 +2335,9 @@ export const rawQueries = {
   getPriorityNamesByIds: `SELECT rid, priority_name FROM ${MAIN_SCHEMA_NAME}.case_priority WHERE rid IN (:priorityIds)`,
   getResourceNamesByIds(schema_name: string): string {
     return `SELECT rid, resource_name FROM ${schema_name}.resources WHERE rid IN (:resourceRids)`;
+  },
+  getProjectsForCases (caseRid : string, accountRid : string, schemaName : string) {
+    return `SELECT project_fiscal_rid FROM ${schemaName}.case_projects WHERE case_rid = '${caseRid}' AND account_rid = '${accountRid}'`
   }
 };
 
@@ -2359,7 +2379,7 @@ export const IMPORT_DOC_IMPORT_KEYS = {
   records_with_warning: "records_with_warning",
 };
 
-export const ALPHANUMERIC_CONDITIONS : any = {
+export const ALPHANUMERIC_CONDITIONS: any = {
   equals: "equals",
   notEquals: "not_equals",
   contains: "contains",
@@ -2455,19 +2475,19 @@ export const IMPORT_FIELD_MAPPINGS_FOR_EXPORT = [
   },
 ];
 
-export const filterColumnsForQreHistoryList : any = {
-  qre_percent : `qre_percent`,
-  version : `version`,
-  created_datetime : `created_datetime`
+export const filterColumnsForQreHistoryList: any = {
+  qre_percent: `qre_percent`,
+  version: `version`,
+  created_datetime: `created_datetime`
 }
 
-export const filterColumnsTypesForQreHistory : any = {
-  qre_percent : `number`,
-  version : `number`,
-  created_datetime : `date`
+export const filterColumnsTypesForQreHistory: any = {
+  qre_percent: `number`,
+  version: `number`,
+  created_datetime: `date`
 }
 
-export const numericConditionsForQRE : any = {
+export const numericConditionsForQRE: any = {
   equals: "equals",
   not_equals: "not_equals",
   is_empty: "is_empty",
@@ -2476,7 +2496,7 @@ export const numericConditionsForQRE : any = {
   between: "between"
 };
 
-export const dateConditionsForQRE : any = {
+export const dateConditionsForQRE: any = {
   equals: "equals",
   between: "between",
   before: "before",
@@ -2485,15 +2505,15 @@ export const dateConditionsForQRE : any = {
 };
 
 export const relationshipTypes = {
-  blocks : "Blocks",
-  enables : "Enables",
-  isBlockedBy : "Is Blocked By",
-  isEnabledBy : "Is Enabled By"
+  blocks: "Blocks",
+  enables: "Enables",
+  isBlockedBy: "Is Blocked By",
+  isEnabledBy: "Is Enabled By"
 }
 
-export const activityTypes = {  
- email: "Email",
- meeting: "Meeting",
+export const activityTypes = {
+  email: "Email",
+  meeting: "Meeting",
   call: "Call",
   task: "Task",
 };

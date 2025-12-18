@@ -916,3 +916,9 @@ export type CaseTaskDropdownType = {
   rid : string
   task_name : string
 }
+
+export type ProjectFiscalType = {
+  rid : string
+  signoff : boolean
+  project_code : string
+}

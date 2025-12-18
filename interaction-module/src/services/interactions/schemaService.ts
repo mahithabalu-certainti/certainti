@@ -17,6 +17,7 @@ import { ALPHANUMERIC_CONDITIONS, HttpStatus, MAIN_SCHEMA_NAME, mainTableFilters
 import { SendEmailInfo } from "../../models/sendEmailInfo";
 import { decryptClientSecret, logMessage } from "../../utils/helpers";
 import { fetchStatusIdsForReminderList } from "../../utils/rawQueries";
+import { generateSasUrl } from "../../utils/blob";
 
 class InteractionSchemaService {
   private orgDbSequelize: Sequelize | null = null;
@@ -1323,18 +1324,16 @@ class InteractionSchemaService {
       let createdMap: Map<string, string> = new Map(fetchCreatedByUsers[0].map((user: any) => [user.rid, `${user.first_name} ${user.last_name}`]));
       let modifiedMap: Map<string, string> = new Map(fetchModifiedByUsers[0].map((user: any) => [user.rid, `${user.first_name} ${user.last_name}`]));
       let statusMap: Map<string, string> = new Map(fetchStatusInfo[0].map((status: any) => [status.rid, status.name]));
-      let projectCodeMap : Map<string, string> = new Map(projectFiscalDetails[0].map((d : any) => [d.rid, d.project_code]))
-      let projectNameMap : Map<string, string> = new Map(projectFiscalDetails[0].map((d : any) => [d.rid, d.project_name]))
-
-
+      let projectDetailsMap = new Map(projectFiscalDetails[0].map((d : any) => [d.rid, {project_name : d.project_name, project_code : d.project_code, signoff : d.signoff}]))
       let finalData = technicalSummary == null ? [] : technicalSummary.map((d: any) => {
         return {
           rid: d.rid,
           account_rid : d.account_rid,
           project_rid : d.project_rid,
           project_fiscal_rid : d.project_fiscal_rid,
-          project_code : projectCodeMap.get(d.project_fiscal_rid) || null,
-          project_name : projectNameMap.get(d.project_fiscal_rid) || null,
+          project_code : projectDetailsMap.get(d.project_fiscal_rid)?.project_code || null,
+          project_name : projectDetailsMap.get(d.project_fiscal_rid)?.project_name || null,
+          signoff : projectDetailsMap.get(d.project_fiscal_rid)?.signoff,
           r_number: d.r_number,
           technical_summary: d.technical_summary,
           version: d.version,
@@ -1640,6 +1639,9 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     accountNumber: string,
     techSummaryId: string
   ) {
+    if(!this.orgDbSequelize) {
+      this.orgDbSequelize = await initOrgSequelize()
+    }
     const { AiTechnicalSummary } = await this.interactionModelService.getModels(
       accountNumber
     );
@@ -1657,6 +1659,12 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       const statusInfo = await this.insertStatusInfo(
         techSummaryDetails.dataValues.status_rid
       );
+      const fetchProjectDetails : string[] = []
+      fetchProjectDetails.push(techSummaryDetails.project_fiscal_rid!)
+      let schemaName = rawQueries.fetchSchemaName(accountNumber)
+      let projectFiscalDetails = await this.orgDbSequelize.query(rawQueries.fetchProjectFiscalDetails(fetchProjectDetails, schemaName));
+      let projectDetailsMap = new Map(projectFiscalDetails[0].map((d : any) => [d.rid, {project_name : d.project_name, project_code : d.project_code, signoff : d.signoff}]))
+
       return {
         rid: techSummaryDetails.dataValues.rid,
         r_number: techSummaryDetails.dataValues.r_number,
@@ -1670,11 +1678,13 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         modified_by: techSummaryDetails.dataValues.modified_by,
         created_datetime: techSummaryDetails.dataValues.created_datetime,
         modified_datetime: techSummaryDetails.dataValues.modified_datetime,
-        technical_summary_refinement_prompt: techSummaryDetails.dataValues.technical_summary_refinement_prompt
+        technical_summary_refinement_prompt: techSummaryDetails.dataValues.technical_summary_refinement_prompt,
+        project_fiscal_rid : techSummaryDetails.project_fiscal_rid,
+        project_code : projectDetailsMap.get(techSummaryDetails.project_fiscal_rid)?.project_code || null,
+        project_name : projectDetailsMap.get(techSummaryDetails.project_fiscal_rid)?.project_name || null,
+        signoff : projectDetailsMap.get(techSummaryDetails.project_fiscal_rid)?.signoff || null
       }
     }
-
-
     return techSummaryDetails;
   }
 
@@ -2758,12 +2768,16 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         ],
       });
 
-      return attachments.map((att) => ({
-        fileUrl: att.attachment_url,
-        fileName: att.attachment_name,
-        fileSize: att.attachment_size,
-        fileType: att.attachment_type,
-      }));
+      return Promise.resolve(
+        await Promise.all(
+          attachments.map(async (att) => ({
+            fileUrl: await generateSasUrl(att.attachment_url),
+            fileName: att.attachment_name,
+            fileSize: att.attachment_size,
+            fileType: att.attachment_type,
+          }))
+        )
+      );
     } catch (err) {
       logMessage(`Error fetching global attachments: ${err}`);
       throw new Error(
@@ -2819,13 +2833,15 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         const attachmentsList = attachments.map((item) =>
           item.get({ plain: true })
         );
-        (item as any).attachments = Array.isArray(attachmentsList)
-          ? attachmentsList.map((att: any) => ({
-              fileUrl: att?.attachment_url ?? "",
-              fileName: att?.attachment_name ?? "",
-              fileSize: att?.attachment_size ?? "",
-              fileType: att?.attachment_type ?? "",
-            }))
+        (item as any).attachments = Array.isArray(attachmentsList) && attachmentsList.length > 0
+          ? await Promise.all(
+              attachmentsList.map(async (att: any) => ({
+                fileUrl: await generateSasUrl(att.attachment_url),
+                fileName: att?.attachment_name ?? "",
+                fileSize: att?.attachment_size ?? "",
+                fileType: att?.attachment_type ?? "",
+              }))
+            )
           : [];
 
         // Fetch latest response history for each question
@@ -4633,6 +4649,20 @@ const existingTemplate = await InteractionTemplate.findOne({
       );
     }
   }
+
+  async getTemplateDetailsByCategory(categoryName: string) {
+      if (!this.mainDbSequelize) {
+        this.mainDbSequelize = await this.interactionModelService.getMainSequelize();  
+      }
+      const [templateDetails]:any[] = await this.mainDbSequelize.query(
+        rawQueries.fetchEmailTemplateByCategory(categoryName),
+        {
+          type: "SELECT",
+        }
+      );
+  
+  
+      return templateDetails;  }
 
 }
 
