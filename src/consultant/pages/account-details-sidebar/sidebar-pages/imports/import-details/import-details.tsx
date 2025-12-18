@@ -113,15 +113,14 @@ const ImportDetails: React.FC<ImportDetailsProps> = ({ handleBackClick }) => {
       label: 'Status',
       value: (
         <span
-          className={`font-semibold ${
-            data?.status === 'Failed'
-              ? 'text-red-600'
-              : data?.status === 'Completed'
-                ? 'text-green-600'
-                : data?.status === 'Processing'
-                  ? 'text-yellow-600'
-                  : 'text-gray-700'
-          }`}
+          className={`font-semibold ${data?.status === 'Failed'
+            ? 'text-red-600'
+            : data?.status === 'Completed'
+              ? 'text-green-600'
+              : data?.status === 'Processing'
+                ? 'text-yellow-600'
+                : 'text-gray-700'
+            }`}
         >
           {data?.status}
         </span>
@@ -160,7 +159,22 @@ const ImportDetails: React.FC<ImportDetailsProps> = ({ handleBackClick }) => {
     },
     {
       label: 'Records with Warning',
-      value: data?.records_with_warning,
+      value: data?.records_with_warning ? (
+        <span
+          className='cursor-pointer no-underline hover:underline text-[#1755E7] font-semibold'
+          onClick={() =>
+            handleExportFailureData(
+              'warnings',
+              data?.entity as ImportEntityType
+            )
+          }
+        >
+          View Warning
+          {`(${data?.records_with_warning})`}
+        </span>
+      ) : (
+        '-'
+      ),
       key: 'records_with_warning',
     },
   ];

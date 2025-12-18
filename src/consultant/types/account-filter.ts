@@ -147,22 +147,23 @@ export type FieldConfig = {
   name: string;
   label: string;
   type:
-  | 'text'
-  | 'number'
-  | 'status'
-  | 'boolean'
-  | 'multi-select'
-  | 'date'
-  | 'keyContact'
-  | 'enumSelect'
-  | 'system'
-  | 'system-sort'
-  | 'enum';
+    | 'text'
+    | 'number'
+    | 'status'
+    | 'boolean'
+    | 'multi-select'
+    | 'date'
+    | 'keyContact'
+    | 'enumSelect'
+    | 'system'
+    | 'system-sort'
+    | 'enum';
   options?: string[] | Options[];
   operatorOption?: Options[];
   hide?: boolean;
   onChange?: boolean;
   isFutureDateEnabled?: boolean;
+  dependsOn?: string;
 };
 
 export interface FilterComponentProps {

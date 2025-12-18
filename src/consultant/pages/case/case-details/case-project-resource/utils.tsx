@@ -139,7 +139,7 @@ export const caseProjectResourceFilterFields = (
     {
       name: 'Project Resource Role',
       value: 'project_resource_role',
-      type: 'enum',
+      type: 'text',
       operatorOption: nonMadatoryOptions,
       hide:
         !permissionMap?.['project_resource_role']?.read &&
