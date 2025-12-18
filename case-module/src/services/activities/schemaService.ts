@@ -382,7 +382,7 @@ class ActivitySchemaService {
        await TaskSummary.update(
         {
           task_name: taskRequest.task_name || "",
-          description: taskRequest.description || "",
+          description: taskRequest.task_description || "",
           assigned_to: taskRequest.assigned_to || "",
           status_rid: taskRequest.status_rid || "",
           priority_rid: taskRequest.priority_rid || "",

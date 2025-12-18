@@ -1905,8 +1905,8 @@ export const summaryHighlightsQueryForCase = (
 ) => {
   let query = `
     WITH calculate_rd_credits_projects AS (
-    SELECT DISTINCT ON (cp.account_rid) 
-      COUNT(*)OVER() AS total_projects_rd_credits,
+    SELECT 
+      COUNT(*) AS total_projects_rd_credits,
       cp.account_rid
       FROM 
       ${schemaName}.case_projects cp

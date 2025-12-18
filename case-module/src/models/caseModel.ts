@@ -32,6 +32,7 @@ interface CaseAttributes {
   submitted_datetime?: Date;
   approved_datetime?: Date;
   tax_liability?: number;
+  financial_working_signoff? : boolean
 }
 
 export interface CaseCreationAttributes
@@ -69,6 +70,7 @@ export class Case
   public  total_nonlabor_cost?: number;
   public  heat_light_power?: number;
   public tax_liability?: number;
+  public financial_working_signoff? : boolean
 
   static initialize(
     sequelize: Sequelize,
@@ -118,6 +120,7 @@ export class Case
         total_nonlabor_cost: { type: DataTypes.DECIMAL, allowNull: true },
         heat_light_power: { type: DataTypes.DECIMAL, allowNull: true },
         tax_liability: { type: DataTypes.DECIMAL, allowNull: true },
+        financial_working_signoff : {type : DataTypes.BOOLEAN, defaultValue : false}
       },
       {
         sequelize,
