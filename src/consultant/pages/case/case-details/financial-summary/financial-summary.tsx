@@ -204,11 +204,20 @@ const CaseFinancialSummary: React.FC<ProjectFinancialProps> = ({
     },
   ];
 
+  const fiscalYearFilterOptions = useMemo(
+    () =>
+      fiscalYearOptions.map((item) => ({
+        option: item.label,
+        value: item.value,
+      })),
+    [fiscalYearOptions]
+  );
+
   const filterFields =
     tabParam === 'resource_cost'
-      ? getAccountFinancialResCostFields(memoizedResourceType)
+      ? getAccountFinancialResCostFields(memoizedResourceType, fiscalYearFilterOptions)
       : tabParam === 'project_cost'
-        ? getAccountFinancialProjectCostFields()
+        ? getAccountFinancialProjectCostFields(fiscalYearFilterOptions)
         : [];
 
   if (

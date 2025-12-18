@@ -22,8 +22,8 @@ const numberOptions: { option: string; value: string }[] = [
 ];
 
 export const getAccountFinancialResCostFields = (
-  //   fiscalYearOptions: { label: string; value: string }[],
-  resourceTypeOptions: { option: string; value: string }[]
+  resourceTypeOptions: { option: string; value: string }[],
+  fiscalYearOptions: { option: string; value: string }[]
 ): FieldConfig[] => [
     {
       name: 'Project Number',
@@ -31,16 +31,13 @@ export const getAccountFinancialResCostFields = (
       type: 'text',
       operatorOption: textOptions,
     },
-    // {
-    //   name: 'Fiscal Year',
-    //   value: 'fiscal_year',
-    //   type: 'enum',
-    //   options: fiscalYearOptions.map((y) => ({
-    //     option: y.label,
-    //     value: y.value,
-    //   })),
-    //   operatorOption: requiredForEnum,
-    // },
+    {
+      name: 'Fiscal Year',
+      value: 'fiscal_year',
+      type: 'enum',
+      options: fiscalYearOptions,
+      operatorOption: requiredForEnum,
+    },
     {
       name: 'Project Ref ID',
       value: 'r_number',
@@ -98,7 +95,7 @@ export const getAccountFinancialResCostFields = (
   ];
 
 export const getAccountFinancialProjectCostFields =
-  () //   fiscalYearOptions: { label: string; value: string }[]
+  (fiscalYearOptions: { option: string; value: string }[])
     : FieldConfig[] => [
       {
         name: 'Project Number',
@@ -106,16 +103,13 @@ export const getAccountFinancialProjectCostFields =
         type: 'text',
         operatorOption: textOptions,
       },
-      //   {
-      //     name: 'Fiscal Year',
-      //     value: 'fiscal_year',
-      //     type: 'enum',
-      //     options: fiscalYearOptions.map((y) => ({
-      //       option: y.label,
-      //       value: y.value,
-      //     })),
-      //     operatorOption: requiredForEnum,
-      //   },
+      {
+        name: 'Fiscal Year',
+        value: 'fiscal_year',
+        type: 'enum',
+        options: fiscalYearOptions,
+        operatorOption: requiredForEnum,
+      },
       {
         name: 'Resource Ref ID',
         value: 'r_number',
