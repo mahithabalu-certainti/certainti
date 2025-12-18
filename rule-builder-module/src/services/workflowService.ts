@@ -2,16 +2,20 @@ import { RuleScope } from "../models/ruleScope";
 import { ScopeEvent } from "../models/scopeEvents";
 import { initSequelize } from "../config/maindbDataSource";
 import { Sequelize, Op, QueryTypes } from "sequelize";
-import { HttpStatus, STATUS_MESSAGE, rawQueries } from "../utils/constants";
+import { HttpStatus, MAIN_SCHEMA_NAME, STATUS_MESSAGE, rawQueries } from "../utils/constants";
 import { Logger } from "winston";
 import { actions, Fields, ICreateRuleMapWithScope, IListSCopeEvent } from "../utils/types";
-import { logMessage } from "../utils/helpers";
+import { decryptClientSecret, logMessage } from "../utils/helpers";
 import { RuleMapService } from "../services/workflowRuleMapService";
 import { ScopeService } from "../services/workflowScopeMapService";
 import { RulemasterService } from "./rulemasterService";
 import { ConditionService } from "./workflowConditionService";
 import { ActionService } from "./workflowActionService";
 import { ScopeEventRows, EventConditions, ConditionCategory, Operators, Values, actionTypes } from "../utils/types";
+import { WebPubSubServiceClient } from "@azure/web-pubsub";
+import { sendEmailWithAttachment } from "./emailService";
+import { initOrgSequelize } from "../config/orgDataSource";
+
 
 /**
  * Evaluate a rule for a given entity (case or task)
@@ -25,6 +29,7 @@ export class WorkFlowService {
     private conditionService: ConditionService;
     private actionService: ActionService;
     private mainDbSequelize: Sequelize | null = null;
+    private orgDbSequelize: Sequelize | null = null;
 
     constructor(logger: Logger) {
         this.logger = logger;
@@ -40,6 +45,13 @@ export class WorkFlowService {
             this.mainDbSequelize = await initSequelize();
         }
         return this.mainDbSequelize;
+    }
+
+     private async getOrgDb() {
+        if (!this.orgDbSequelize) {
+            this.orgDbSequelize = await initOrgSequelize();
+        }
+        return this.orgDbSequelize;
     }
 
     //list scopes
@@ -555,7 +567,7 @@ export class WorkFlowService {
         }
     }
 
-    async getNotificationTemplateDetails(templateName: string,oldValue:string,newValue:string): Promise<{
+    async getNotificationTemplateDetails(templateName: string,oldValue:string,newValue:string,entityName: string): Promise<{
     templateDetails: any;
     }> {
         const mainDb = await this.getMainDb();
@@ -573,6 +585,9 @@ export class WorkFlowService {
             if (messageTemplate.includes('{{new_value}}')) {
                 messageTemplate = messageTemplate.replace('{{new_value}}', newValue != null ? newValue : '');
             }
+            if (messageTemplate.includes('{{entity_name}}')) {
+                messageTemplate = messageTemplate.replace('{{entity_name}}', entityName != null ? entityName : '');
+            }
             templateDetails[0].message_template = messageTemplate;
         }
         return {
@@ -580,9 +595,255 @@ export class WorkFlowService {
         };
     }
 
-    async sentNotification(templateDetails: any, targetUser: string): Promise<void> {
-        // Implement notification sending logic here
-        console.log(`Sending notification to ${targetUser} with template:`, templateDetails);
+    async sentNotification(templateDetails: any, userId: string,targetUser: string): Promise<any> {
+        const mainDb = await this.getMainDb();
+        let notificationPayload = {
+            notification_message: templateDetails.templateDetails.message_template,
+            created_by: userId,
+            user_rid: targetUser
+        };
+        const insertQuery = rawQueries.insertNotification();
+        const [notificationResult]:any[] = await mainDb.query(
+            insertQuery,
+            {
+                replacements: notificationPayload,
+                type: QueryTypes.INSERT
+            }
+        );
+        console.log("Notification inserted:", notificationResult);  
+        const notificationRid = notificationResult[0].rid ;
+         try {
+    
+    // Step 2: Send message with notification ID included
+    const webPubSubClient = new WebPubSubServiceClient(
+        process.env.AZURE_WEB_PUBSUB_CONNECTION_STRING!,
+        "notificationsHub"
+    );
+
+    const response  = await webPubSubClient.sendToUser(userId, {
+      id: notificationRid,
+      message:templateDetails.templateDetails.message_template,
+    });
+    console.log("Notification sent response:", response);
+    const [statusRid]:any[] = await mainDb.query(
+        rawQueries.fetchNotificationStatusByType("unread"),
+        {   
+            replacements: { notificationRid },
+            type: QueryTypes.SELECT
+        }
+    );
+    // Step 3: Update status to "sent"
+    await this.updateNotification(notificationRid, statusRid.rid);
+    return { notificationResult, status: "sent" };
+
+  } catch (err) {
+    // Update DB to "failed"
+    const [statusRid]:any[] = await mainDb.query(
+        rawQueries.fetchNotificationStatusByType("Failed"),
+        {   
+            replacements: { notificationRid },
+            type: QueryTypes.SELECT
+        }
+    );
+    await this.updateNotification(notificationRid, statusRid.rid);
+    return { notificationResult, status: "failed" };
+  }
+}
+  async updateNotification(notificationId: string, status_rid: string): Promise<void> {
+    const mainDb = await this.getMainDb();
+    let query = rawQueries.updateNotificationStatus();
+    await mainDb.query(
+        query,
+        {
+            replacements: { status_rid: status_rid, notificationId },
+            type: QueryTypes.UPDATE
+        }
+    );
+}
+
+async updateTaskAssignee(): Promise<void> {
+    // Implementation for changing assignee
+    const taskContext = {
+        entityId: "D001-4f350616-2e42-4829-8824-a3af3f3f24ed",
+        assigneeId: "D001-caace427-6365-469d-b8e5-d6322da67d40",
+        userId: "D001-caace427-6365-469d-b8e5-d6322da67d40",
+        accountRid: "D001-31b99b5b-0e39-4ddf-8b5a-5b9d60b87983",
+        templateName: "task_priority_update",
+        entityName: "Task 123",
+        oldValue: "low",
+        newValue: "High"
+    };
+    const { accountNumber, parentAccountId } =
+        await this.fetchValidAccountNumberById(
+          taskContext.accountRid
+        );
+    const templateDetails = await this.getNotificationTemplateDetails(
+        taskContext.templateName,
+        taskContext.oldValue,
+        taskContext.newValue,
+        taskContext.entityName
+    );
+    console.log("templateDetails", templateDetails);
+
+    // If templateDetails.templateDetails is not an array, make it an array
+    const templates = Array.isArray(templateDetails.templateDetails)
+        ? templateDetails.templateDetails
+        : [templateDetails.templateDetails];
+  
+    for (const detail of templates) {
+  
+        const channel = detail.channel;
+        const channelType = Array.isArray(channel)
+            ? channel.map((c: string) => c)
+            : typeof channel === 'string'
+                ? [channel]
+                : [];
+        if (channelType.includes('notification') || channelType.includes('In App')) {
+            await this.sentNotification(
+                { templateDetails: detail },
+                taskContext.assigneeId,
+                taskContext.assigneeId
+            );
+        }
+        if (channelType.includes('Email')) {
+            await this.sendNotificationEmail(
+                accountNumber,
+                taskContext.accountRid,
+                {
+                    to_email: "dhivya.s@hubino.com",
+                    subject: "test email from thinkrd",
+                    body_html: detail.message_template,
+                },
+                taskContext.userId
+            );
+        }
     }
+
+  }
+
+async fetchValidAccountNumberById(accountId: string) {
+    try {
+      const mainDb = await this.getMainDb();
+
+      const [account]: any[] = await mainDb.query(
+        rawQueries.fetchParentAccountDetails,
+        {
+          replacements: { rid: accountId },
+          type: "SELECT",
+        }
+      );
+
+      let accountRnumber = account?.r_number;
+
+      if (account?.storage_type === "store_in_parent") {
+        const [accountData]: any[] = await mainDb.query(
+          rawQueries.fetchParentAccountDetails,
+          {
+            replacements: { rid: account?.parent_account_rid },
+            type: "SELECT",
+          }
+        );
+        accountRnumber = accountData?.r_number;
+      }
+
+      return {
+        accountNumber: accountRnumber,
+        accountId: account?.rid,
+        accountName: account?.account_name,
+        parentAccountId: account?.parent_account_rid,
+        currencyRid: account?.currency_rid
+      };
+    } catch (err) {
+      logMessage(`Error fetching account: ${err}`);
+      throw new Error("Error fetching account : " + (err as Error).message);
+    }
+  }
+
+async sendNotificationEmail(
+    accountNumber: string,
+    accountRid: string,
+    emailRequest: any,
+    userId: string
+  ) {
+     const mainDb = await this.getMainDb();
+    
+    const [accountInfo]: any[] = await mainDb.query(
+      rawQueries.fetchAccountInfo(accountRid),
+      { type: "SELECT" }
+    );
+  let parentAccountNumber = accountNumber;
+          if(accountInfo.storage_type === 'separate_db') {
+            const [parentAccountInfo]: any[] =
+                await mainDb.query(
+                rawQueries.fetchAccountInfo(accountInfo.parent_account_rid!),
+                { type: "SELECT" }
+              );
+            parentAccountNumber = parentAccountInfo.r_number;
+          }
+    let senderEmailInfo = await this.fetchSenderEmailInfoByAccountId(
+      parentAccountNumber,
+      accountInfo.parent_account_rid
+    );
+      senderEmailInfo = {  
+      email: 'dev_rd_interactions@resdevtax.com',
+    clientId: 'ea0d9e79-8006-4ee2-a58f-61abda0dd77a',
+    clientSecret: 'nns8Q~ws3tPFOIegD.UtRRV_4viR4AIoLT687bns',
+    tenantId: '7c722eb0-2d94-428a-ac72-cea1da5c87c0'
+      
+   } 
+    const emailContent = {
+      message: {
+        subject: emailRequest.subject,
+        body: {
+          contentType: "HTML",
+          content: emailRequest.body_html,
+        },
+        toRecipients: Array.isArray(emailRequest.to_email)
+  ? emailRequest.to_email.map((email: string) => ({
+      emailAddress: { address: email }
+    }))
+  : [{
+      emailAddress: { address: emailRequest.to_email }
+    }]
+      },
+    };
+
+
+    let emailResponse = await sendEmailWithAttachment({
+      message: emailContent.message,
+      senderEmailInfo: senderEmailInfo!,
+    });
+  }
+
+  async fetchSenderEmailInfoByAccountId(
+    accountNumber: string,
+    parentAccountId: string
+  ) {
+    try {
+      const orgDb = await this.getOrgDb();
+      const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+        /\D/g,
+        ""
+      )}`;
+      const [senderEmailInfo]: any[] = await orgDb.query(
+        rawQueries.fetchSenderEmail(schemaName, parentAccountId)
+      );
+      const clientSecret = senderEmailInfo[0]?.client_secret;
+      const decryptedSecret = await decryptClientSecret(clientSecret);
+
+      return {
+        email:
+          senderEmailInfo[0]?.support_email,
+        clientId:
+          senderEmailInfo[0]?.client_id,
+        clientSecret:
+          decryptedSecret,
+        tenantId:
+          senderEmailInfo[0]?.tenant_id ,
+      };
+    } catch (err) {
+      logMessage(`Error fetching sender email info for account: ${err}`);
+    }
+  }
 
 }

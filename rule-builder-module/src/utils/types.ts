@@ -154,3 +154,12 @@ export type actions = {
     action_type_name: string;
     action_type_rid: string;
 }
+
+export interface IEmailMessage {
+  subject: string;
+  body: {
+    contentType: string;
+    content: string;
+  };
+  toRecipients: { emailAddress: { address: string } }[];
+}
