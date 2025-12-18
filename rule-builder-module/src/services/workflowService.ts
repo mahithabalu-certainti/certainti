@@ -288,6 +288,7 @@ export class WorkFlowService {
         const mainDb = await this.getMainDb();
         const actionTypes: actions[] = await mainDb.query<actions>(
             rawQueries.fetchActions(
+                listRequest.scope_rid,
                 listRequest.action_type_rid,
                 listRequest.status_rid
             ),
@@ -397,7 +398,10 @@ export class WorkFlowService {
             statusCode: 200,
             message: "Rule fetched successfully",
             data: {
-                rule: ruleDetail.data,
+                rule: {
+                    ...ruleDetail.data.dataValues,
+                    action_type_rid: actions[0].action_type_rid
+                },
                 event: eventDetail[0],
                 condition: conditionDetail[0],
                 conditions: conditions,

@@ -71,12 +71,12 @@ export const ALPHANUMERIC_CONDITIONS: Record<string, string> = {
   after: "after",
 };
 
-export const mainTableFilters : Record<any, any> = {
-  created_user_name : "created_user_name",
-  updated_user_name : "updated_user_name",
-  rule_name : "rule_name",
+export const mainTableFilters: Record<any, any> = {
+  created_user_name: "created_user_name",
+  updated_user_name: "updated_user_name",
+  rule_name: "rule_name",
   modified_by: "modified_by",
-  modified_user_name:"modified_user_name"
+  modified_user_name: "modified_user_name"
 }
 
 export const rawQueries = {
@@ -175,10 +175,12 @@ export const rawQueries = {
     return query;
   },
 
-  fetchActions(action_type_rid: string, status_rid: string): string {
+  fetchActions(scope_rid: string, action_type_rid: string, status_rid: string): string {
     let query = `SELECT sa.rid, sa.name,sa.description,sam.action_type_rid,sat.name as action_type_name FROM ${MAIN_SCHEMA_NAME}.scope_actions sa JOIN ${MAIN_SCHEMA_NAME}.scope_actions_map sam 
-    ON sa.rid = sam.action_rid JOIN ${MAIN_SCHEMA_NAME}.scope_action_types sat ON sat.rid = sam.action_type_rid `;
+    ON sa.rid = sam.action_rid JOIN ${MAIN_SCHEMA_NAME}.scope_action_types sat ON sat.rid = sam.action_type_rid
+    JOIN ${MAIN_SCHEMA_NAME}.scope_actiontype_map samt ON samt.actiontype_rid = sam.action_type_rid `;
     const conditions: string[] = [];
+    conditions.push(`samt.scope_rid = '${scope_rid}'`);
     if (action_type_rid) {
       conditions.push(`sam.action_type_rid = '${action_type_rid}'`);
     }
@@ -234,7 +236,7 @@ export const rawQueries = {
   },
 
   fetchActionDetailByRuleRid(rule_rid: string): string {
-    let query = `SELECT sa.rid as action_rid,sa.name as action_name,sa.description as description FROM ${MAIN_SCHEMA_NAME}.scope_actions sa JOIN ${MAIN_SCHEMA_NAME}.workflow_rule_action wra ON sa.rid = wra.action_rid
+    let query = `SELECT sa.rid as action_rid,sa.name as action_name,sa.description as description,sam.action_type_rid FROM ${MAIN_SCHEMA_NAME}.scope_actions sa JOIN ${MAIN_SCHEMA_NAME}.workflow_rule_action wra ON sa.rid = wra.action_rid JOIN ${MAIN_SCHEMA_NAME}.scope_actions_map sam ON sam.action_rid = wra.action_rid
     WHERE wra.rule_rid = '${rule_rid}' `;
     return query;
   },
@@ -273,7 +275,7 @@ export const rawQueries = {
     return `
     SELECT support_email,client_id,client_secret,tenant_id, subscription_created FROM ${schemaName}.account_details WHERE account_rid = '${accountRid}'  and  subscription_created is true  and support_email is not null LIMIT 1`;
   },
-    fetchParentAccountDetails: `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
+  fetchParentAccountDetails: `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
   async fetchParentAccount(
     accountRid: any,
     mainSequelize: Sequelize
