@@ -92,7 +92,9 @@ export class ProjectResourceSchemaService {
       "resource_name",
       "resource_role",
       "resource_type_rid",
-      "status_name"
+      "status_name",
+      "project_code",
+      "project_name"
     ];
 
     const matchFilter = (record: any, key: string, filter: any): boolean => {
@@ -102,6 +104,9 @@ export class ProjectResourceSchemaService {
       if (enumFields.includes(key)) {
         if (filter.equals !== undefined) return value === filter.equals;
         if (filter.not_equals !== undefined) return value !== filter.not_equals;
+        if (filter.contains !== undefined) {
+            return value?.toLowerCase()?.includes(filter?.contains?.toLowerCase()) && value !== null
+        }
         if (filter.is_empty === true) return value === null || value === "";
         if (Array.isArray(filter.in)) return filter.in.includes(value);
       }
