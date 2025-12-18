@@ -19,7 +19,7 @@ import {
     //   activityStatus,
     constants,
     //   callFields,
-      activityTypes
+    activityTypes
 } from "../../utils/constants";
 import {
     decryptClientSecret,
@@ -34,7 +34,7 @@ import {
     //   IActivityEmail,
     //   IActivityMeeting,
     IActivityTask,
-      ICreateChecklist
+    ICreateChecklist
 } from "../../utils/types";
 import { TaskSummary } from "../../models/taskSummaryModel";
 
@@ -381,7 +381,8 @@ class ActivitySchemaService {
                 "activity_rid",
                 "account_rid",
                 "modified_datetime",
-                "task_rid"
+                "task_rid",
+                "accountRid"
             ];
 
             const cleanedNewData = Object.fromEntries(
