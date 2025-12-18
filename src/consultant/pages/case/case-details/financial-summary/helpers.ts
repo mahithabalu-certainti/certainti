@@ -98,9 +98,7 @@ export const getAccountFinancialResCostFields = (
   ];
 
 export const getAccountFinancialProjectCostFields =
-  () //   fiscalYearOptions: { label: string; value: string }[],
-    // countryOptions: { option: string; value: string }[],
-    // resourceTypeOptions: { option: string; value: string }[]
+  () //   fiscalYearOptions: { label: string; value: string }[]
     : FieldConfig[] => [
       {
         name: 'Project Number',
