@@ -20,6 +20,7 @@ export const uploadToAzure = async (file: Express.Multer.File, user_id: string):
 
     const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
     const containerClient = blobServiceClient.getContainerClient(containerName);
+    await containerClient.createIfNotExists();
 
     const blobName = path.posix.join('user', user_id, 'profile', file.originalname);
     const blockBlobClient = containerClient.getBlockBlobClient(blobName);
