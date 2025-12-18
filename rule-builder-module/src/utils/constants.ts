@@ -79,6 +79,11 @@ export const mainTableFilters : Record<any, any> = {
   modified_user_name:"modified_user_name"
 }
 
+export const notificationTypes = {
+  InApp: "In App",
+  Email: "Email"
+}
+
 export const rawQueries = {
   fetchUser(data: any) {
     let ids = data.map((d: any) => `'${d}'`);
