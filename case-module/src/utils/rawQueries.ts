@@ -1777,7 +1777,8 @@ export const listAllJurisdictionConfig = (
             uc.first_name || ' ' || uc.last_name AS created_user_name,
             um.first_name || ' ' || um.last_name AS modified_user_name,
             jc.credit_config_group_rid,g.country_rid,c.country_name,c.country_code,
-            g.state_rid,st.state_name
+            g.state_rid,st.state_name,
+            CONCAT('C','-',c.country_code, '-', (CASE WHEN g.is_federal = false AND st.state_name IS NOT NULL AND st.state_name != '' THEN st.state_name || '-' ELSE '' END), jc.config_name ) AS config_full_name
             FROM
             ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values jc
              LEFT JOIN ${MAIN_SCHEMA_NAME}.rd_credit_config_group g ON jc.credit_config_group_rid = g.rid
