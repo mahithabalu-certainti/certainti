@@ -2305,7 +2305,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
       const mainDb = await this.getMainDb();
       const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
       data.created_by = userId;
-      const [accountInfo]:any[] = await mainDb.query(rawQueries.fetchAccountInfo(data.account_rid));
+      const [accountInfo]:any[] = await mainDb.query(rawQueries.fetchAccountInfo(data.account_rid),{type: QueryTypes.SELECT});
       const fetchTaskDetails = await this.caseSchemaService.findTaskById(data.task_rid, data.account_rid, data.case_rid, fetchParent[0][0].r_number,data.task_type);
       const result = await this.caseSchemaService.addComments(data, fetchParent[0][0].r_number, fetchTaskDetails?.r_number!, files,accountInfo.r_number);
       if(result.statusCode == HttpStatus.SUCCESS) {
@@ -2361,7 +2361,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
       const mainDb = await this.getMainDb();
       const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
       data.modified_by = userId
-      const [accountInfo]:any[] = await mainDb.query(rawQueries.fetchAccountInfo(data.account_rid));
+      const [accountInfo]:any[] = await mainDb.query(rawQueries.fetchAccountInfo(data.account_rid),{type: QueryTypes.SELECT});
       const fetchTaskDetails = await this.caseSchemaService.findTaskById(data.task_rid,data.account_rid, data.case_rid ,fetchParent[0][0].r_number,data.task_type);
       const result = await this.caseSchemaService.updateComments(data, fetchParent[0][0].r_number, fetchTaskDetails?.r_number!, files,accountInfo.r_number);
       if(result?.statusCode === HttpStatus.SUCCESS) {
@@ -2487,7 +2487,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
     async addTaskLevelAttachment (data : any, userId : string, files : Express.Multer.File[]) {
       const mainDb = await this.getMainDb();
       const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
-      const accountInfo : any = await mainDb.query(rawQueries.fetchAccountInfo(data.account_rid));
+      const accountInfo : any = await mainDb.query(rawQueries.fetchAccountInfo(data.account_rid),{type: QueryTypes.SELECT});
       const result = await this.caseSchemaService.addAttachmentForTask(data, fetchParent[0][0].r_number, files, userId,accountInfo[0][0].r_number);
       return result;
     }
