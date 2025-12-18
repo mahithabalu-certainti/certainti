@@ -19,7 +19,9 @@ import {
     listScopeValueSchema,
     listScopeActionTypeSchema,
     listScopeActionsSchema,
-    createRuleSchema
+    createRuleSchema,
+    updateRuleSchema,
+    getRuleDetailSchema
 } from "../lib/joi/schemas/schema";
 import configurations from "../config/config";
 
@@ -36,7 +38,7 @@ async function listScopes(req: Request, res: Response): Promise<void> {
             return;
         }
         if (!userId) {
-          return;
+            return;
         }
         const result = await workFlowService.listScopes(
             value,
@@ -78,7 +80,7 @@ async function listScopeEvents(req: Request, res: Response): Promise<void> {
             return;
         }
         if (!userId) {
-          return;
+            return;
         }
         const result = await workFlowService.listScopeEvents(
             value,
@@ -119,7 +121,7 @@ async function listEventConditions(req: Request, res: Response): Promise<void> {
             return;
         }
         if (!userId) {
-          return;
+            return;
         }
         const result = await workFlowService.listEventConditions(
             value,
@@ -160,7 +162,7 @@ async function listConditionCategory(req: Request, res: Response): Promise<void>
             return;
         }
         if (!userId) {
-          return;
+            return;
         }
         const result = await workFlowService.listConditionCategory(
             value,
@@ -201,7 +203,7 @@ async function listFields(req: Request, res: Response): Promise<void> {
             return;
         }
         if (!userId) {
-          return;
+            return;
         }
         const result = await workFlowService.listFields(
             value,
@@ -242,7 +244,7 @@ async function listOperators(req: Request, res: Response): Promise<void> {
             return;
         }
         if (!userId) {
-          return;
+            return;
         }
         const result = await workFlowService.listOperators(
             value,
@@ -283,7 +285,7 @@ async function listValues(req: Request, res: Response): Promise<void> {
             return;
         }
         if (!userId) {
-          return;
+            return;
         }
         const result = await workFlowService.listValues(
             value,
@@ -324,7 +326,7 @@ async function listActionTypes(req: Request, res: Response): Promise<void> {
             return;
         }
         if (!userId) {
-          return;
+            return;
         }
         const result = await workFlowService.listActionTypes(
             value,
@@ -366,7 +368,7 @@ async function listActions(req: Request, res: Response): Promise<void> {
             return;
         }
         if (!userId) {
-          return;
+            return;
         }
         const result = await workFlowService.listActions(
             value,
@@ -408,6 +410,79 @@ async function createRule(req: Request, res: Response): Promise<void> {
             return;
         }
         const newRuleMap = await workFlowService.createRule(value, userId);
+        if (newRuleMap.statusCode === HttpStatus.SUCCESS) {
+            successLog(methodName);
+            handleSuccessResponse(res, newRuleMap.data);
+            return;
+        } {
+            errorLog(methodName, newRuleMap.errorMessage);
+            handleErrorResponse(
+                res,
+                HttpStatus.BAD_REQUEST,
+                HttpStatus.BAD_REQUEST_MESSAGE,
+                newRuleMap.errorMessage
+            );
+            return;
+        }
+    } catch (err) {
+        const error = err as Error;
+        errorLog(methodName, error.message);
+        handleErrorResponse(
+            res,
+            HttpStatus.FAILED,
+            HttpStatus.FAILED_MESSAGE,
+            error.message
+        );
+    }
+};
+
+
+async function ruleDetailByRuleRid(req: Request, res: Response): Promise<void> {
+    const methodName = "create condition";
+    try {
+        const userId = req.headers["x-user-id"] as string;
+        const value = await validateRequest(req, getRuleDetailSchema, res, "POST");
+        if (!value) {
+            errorLog(methodName, "Request body is empty");
+            return;
+        }
+        const newRuleMap = await workFlowService.ruleDetailByRuleRid(value.rule_rid, userId);
+        if (newRuleMap.statusCode === HttpStatus.SUCCESS) {
+            successLog(methodName);
+            handleSuccessResponse(res, newRuleMap.data);
+            return;
+        } {
+            errorLog(methodName, newRuleMap.errorMessage);
+            handleErrorResponse(
+                res,
+                HttpStatus.BAD_REQUEST,
+                HttpStatus.BAD_REQUEST_MESSAGE,
+                newRuleMap.errorMessage
+            );
+            return;
+        }
+    } catch (err) {
+        const error = err as Error;
+        errorLog(methodName, error.message);
+        handleErrorResponse(
+            res,
+            HttpStatus.FAILED,
+            HttpStatus.FAILED_MESSAGE,
+            error.message
+        );
+    }
+};
+
+async function updateRule(req: Request, res: Response): Promise<void> {
+    const methodName = "update Rule";
+    try {
+        const userId = req.headers["x-user-id"] as string;
+        const value = await validateRequest(req, updateRuleSchema, res, "POST");
+        if (!value) {
+            errorLog(methodName, "Request body is empty");
+            return;
+        }
+        const newRuleMap = await workFlowService.updateRule(value, userId);
         if (newRuleMap.statusCode === HttpStatus.SUCCESS) {
             successLog(methodName);
             handleSuccessResponse(res, newRuleMap.data);
@@ -515,6 +590,8 @@ export default {
     listActionTypes,
     listActions,
     createRule,
+    ruleDetailByRuleRid,
+    updateRule,
     createRuleMapWithScope,
     execute
 }
