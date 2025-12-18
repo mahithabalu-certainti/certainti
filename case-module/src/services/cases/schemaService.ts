@@ -2121,7 +2121,7 @@ class CaseSchemaService {
           project_rid: p.project_rid,
           project_fiscal_rid: p.project_fiscal_rid,
           account_rid: data.account_rid
-        }
+        }, raw : true
       });
 
       if (projectFiscalRegionRecords.length > 0) {

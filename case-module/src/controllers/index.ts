@@ -6,6 +6,7 @@ import projectResourcesController from "./projectResourceController";
 import projectTaskController from "./projectTaskController";
 import activitiesController from "./activitiesController";
 import projectController from "./projectController"
+import childCaseController from "./childCaseController";
 
 const controller = {
   caseController,
@@ -15,7 +16,8 @@ const controller = {
   projectResourcesController,
   projectTaskController,
   activitiesController,
-  projectController
+  projectController,
+  childCaseController
 };
 
 export default controller;
