@@ -242,7 +242,7 @@ const CaseFinancialSummary: React.FC<ProjectFinancialProps> = ({
         setCurrentPage={setCurrentPage}
         handleFilter={handleFilter}
         sortFilterCount={0}
-        setSortFilterCount={() => { }}
+        setSortFilterCount={() => {}}
         allYears={fiscalYearOptions}
         fiscalYearValue={fiscalYearValue}
         showRefresh={
@@ -283,10 +283,11 @@ const CaseFinancialSummary: React.FC<ProjectFinancialProps> = ({
         defaultValue={tabParam}
       />
       <div
-        className={`border border-t-0 border-[#CBD6E2] ${tabParam === 'summary' || tabParam === 'state_wise_summary'
-          ? 'p-3'
-          : ''
-          }`}
+        className={`border border-t-0 border-[#CBD6E2] ${
+          tabParam === 'summary' || tabParam === 'state_wise_summary'
+            ? 'p-3'
+            : ''
+        }`}
       >
         {tabParam === 'summary' && isSummaryViewEnable && (
           <Summary

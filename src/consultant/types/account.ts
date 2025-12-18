@@ -483,13 +483,13 @@ export interface FormField {
   id: string;
   label: string;
   type:
-  | 'text'
-  | 'number'
-  | 'email'
-  | 'select'
-  | 'textarea'
-  | 'checkbox'
-  | 'date';
+    | 'text'
+    | 'number'
+    | 'email'
+    | 'select'
+    | 'textarea'
+    | 'checkbox'
+    | 'date';
   required?: boolean;
   editable?: boolean;
   hide?: boolean;

@@ -108,7 +108,6 @@ export const Summary: React.FC<Summary> = ({
   return (
     <div className='flex flex-col gap-4'>
       <div>
-
         <div className='h-[46px] max-h-[46px] flex items-center justify-between border border-[#CBD6E2] px-3 text-[14px] font-bold bg-[#FCFCFC]'>
           <span className='text-[#2D3E4F] '>
             {permissionMap?.['rd_eligible_projects']?.read &&

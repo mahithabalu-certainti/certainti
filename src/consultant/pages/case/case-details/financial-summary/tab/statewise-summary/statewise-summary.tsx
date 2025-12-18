@@ -108,7 +108,14 @@ export const StateWiseSummary: React.FC<FinancialSummaryProps> = ({
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [accountid, fiscalYear, payload.region_rid, payload.flag, stateId, caseRid]);
+  }, [
+    accountid,
+    fiscalYear,
+    payload.region_rid,
+    payload.flag,
+    stateId,
+    caseRid,
+  ]);
   useEffect(() => {
     if (allData) {
       setResourceMetric(allData.resource_metrics);
