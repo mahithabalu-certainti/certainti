@@ -421,7 +421,8 @@ async exportresourceCostDetailsForFinancialHighlights(
   search: string,
   userId: string,
   account_rid?: string,
-  project_rid?: string
+  project_rid?: string,
+  caseProjectFiscalRids? : string[]
 ) {
   try {
     const sequelize = await this.getDbConnection(schemaName);
@@ -431,6 +432,15 @@ async exportresourceCostDetailsForFinancialHighlights(
     
     // Build project filter condition
     const projectFilter = project_rid ? ` AND prf.project_fiscal_rid = :project_rid` : '';
+    let caseProjectQuery
+    
+    if(caseProjectFiscalRids != undefined) {
+      if(caseProjectFiscalRids.length > 0) {
+        caseProjectQuery = ` AND prf.project_fiscal_rid IN (${caseProjectFiscalRids.map((d : any) => `'${d}'`).join(',')})`
+      }
+    } else {
+      caseProjectQuery = ` `
+    }
 
     // Build the base query without sorting or pagination
     let query = rawQueries.fetchProjetFiscalForFinancialHighlights(
@@ -438,7 +448,8 @@ async exportresourceCostDetailsForFinancialHighlights(
       accountFilter,
       projectFilter,
       filterConditions,
-      searchCondition
+      searchCondition,
+      caseProjectQuery
     );
 
     const replacements: any = {
@@ -863,7 +874,8 @@ async executeQueriesForFinancialHighlights(
   offset: number,
   search: string,
   account_rid?: string,
-  project_rid?: string
+  project_rid?: string,
+  caseProjectFiscalRids? : string[]
 ) {
   try {
     const sequelize = await this.getDbConnection(schemaName);
@@ -873,6 +885,15 @@ async executeQueriesForFinancialHighlights(
     
     // Build project filter condition
     const projectFilter = project_rid ? ` AND prf.project_fiscal_rid = :project_rid` : '';
+    let caseProjectQuery : string = ``
+
+    if(caseProjectFiscalRids != undefined) {
+      if(caseProjectFiscalRids.length > 0) {
+        caseProjectQuery = ` AND prf.project_fiscal_rid IN (${caseProjectFiscalRids.map((d : any) => `'${d}'`).join(',')})`
+      }
+    } else {
+      caseProjectQuery = ` `
+    }
 
     // Build the base query without sorting or pagination
     let query = rawQueries.fetchProjetFiscalForFinancialHighlights(
@@ -880,7 +901,8 @@ async executeQueriesForFinancialHighlights(
       accountFilter,
       projectFilter,
       filterConditions,
-      searchCondition
+      searchCondition,
+      caseProjectQuery
     );
 
     // Count query to get total records
@@ -889,7 +911,8 @@ async executeQueriesForFinancialHighlights(
       accountFilter,
       projectFilter,
       filterConditions,
-      searchCondition
+      searchCondition,
+      caseProjectQuery
     );
 
     const replacements: any = {
