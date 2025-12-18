@@ -635,7 +635,7 @@ export class JurisdictionSchemaService {
       effective_end_date: "effective_end_date",
       createdAt: "created_datetime",
       category_rid: "category_name",
-      config_name: "config_name",
+      config_name: "config_full_name",
       state_name: "state_name",
       country_name: "country_name",
       is_federal: "is_federal"
