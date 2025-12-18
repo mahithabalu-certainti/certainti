@@ -199,6 +199,10 @@ export const STATUS_MESSAGE = {
   configUpdatedSuccess: "Configuration updated successfully",
   configCreationFailed: "Configuration creation failed",
   configUpdateFailed: "Configuration update failed",
+  rdCreditPreviewSuccess : "R&D Credit preview fethched successfully",
+  rdCreditPreview: "RD credit calculation results retrieved",
+  rdCreditProcessInitiatedSuccess : "RD credit calculation initiated successfully",
+  rdCreditProcessInitiationFailed: "Failed to initiate RD credit process"
 };
 
 export const caseStatuses = {
