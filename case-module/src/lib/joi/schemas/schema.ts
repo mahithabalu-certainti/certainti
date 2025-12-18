@@ -239,7 +239,7 @@ const listJurisdictionConfigSchema = Joi.object({
   filters: Joi.string().default("{}"),
   sortBy: Joi.string().optional(),
   sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
-  search: Joi.string().max(255).optional(),
+  search: Joi.string().max(255).optional().allow("", null),
 });
 
 const exportJurisdictionConfigSchema = Joi.object({
