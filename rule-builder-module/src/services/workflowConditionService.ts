@@ -3,19 +3,19 @@ import { initSequelize } from "../config/maindbDataSource";
 import { Sequelize, Op } from "sequelize";
 import { HttpStatus, STATUS_MESSAGE } from "../utils/constants";
 import { Logger } from "winston";
-import { ICreateCondition } from "../utils/types";
+import { ICreateCondition, IUpdateCondition } from "../utils/types";
 import { logMessage } from "../utils/helpers";
-import { AuditService } from "./workflowAuditService";
+import { RuleHistoryService } from "./workflowRuleHistoryService";
 
 export class ConditionService {
 
     private logger: Logger;
-    private auditService: AuditService;
+    private ruleHistoryService: RuleHistoryService;
     private mainDbSequelize: Sequelize | null = null;
 
     constructor(logger: Logger) {
         this.logger = logger;
-        this.auditService = new AuditService(this.logger);
+        this.ruleHistoryService = new RuleHistoryService(this.logger);
     }
 
     private async getMainDb() {
@@ -103,9 +103,22 @@ export class ConditionService {
         };
     };
 
+
+    async getConditionsByRuleRid(ruleRid: string): Promise<any[]> {
+        const mainDb = await this.getMainDb();
+        Condition.initialize(mainDb);
+        const conditions = await Condition.findAll({
+            where: {
+                rule_rid: ruleRid,
+            },
+            order: [['sequence', 'ASC']], // IMPORTANT for update-by-index logic
+        });
+        return conditions;
+    }
+
     /** UPDATE RuleMaster by RID */
     async updateCondition(
-        conditionRequest: ICreateCondition,
+        conditionRequest: IUpdateCondition,
         userId: string
     ): Promise<{
         statusCode: number;
@@ -115,6 +128,43 @@ export class ConditionService {
     }> {
         const mainDb = await this.getMainDb();
         const dbInit = Condition.initialize(mainDb);
+
+        const oldCondition = await Condition.findOne({ where: { rid: conditionRequest.rid } });
+        if (!oldCondition) {
+            return {
+                statusCode: HttpStatus.NOT_FOUND,
+                message: "",
+            };
+        }
+        const oldRuleData = oldCondition.toJSON();
+        const historyRecords = [];
+        // Compare and prepare history records for each field
+        const fieldsToUpdate = [
+            { field: 'category_rid', oldValue: oldRuleData.category_rid, newValue: conditionRequest.category_rid },
+            { field: 'field_rid', oldValue: oldRuleData.field_rid, newValue: conditionRequest.field_rid ?? null },
+            { field: 'operator_rid', oldValue: oldRuleData.operator_rid, newValue: conditionRequest.operator_rid ?? null },
+            { field: 'value_rid', oldValue: oldRuleData.value_rid, newValue: conditionRequest.value_rid },
+        ];
+        for (const { field, oldValue, newValue } of fieldsToUpdate) {
+            if (oldValue !== newValue) {
+                try {
+                    historyRecords.push({
+                        rule_rid: oldRuleData.rule_rid,
+                        attribute_name: field,
+                        old_value: oldValue,
+                        new_value: newValue,
+                        created_by: userId,
+                        action: 'ruleCondition'
+                    });
+                } catch (err) {
+                    console.log(err);
+                }
+            }
+        }
+        for (const history of historyRecords) {
+            await this.ruleHistoryService.createHistory(history, userId);
+        }
+
         const caseUpdateResponse = await Condition.update(
             {
                 ...conditionRequest,
@@ -122,7 +172,7 @@ export class ConditionService {
                 modified_datetime: new Date(),
             },
             {
-                where: { rid: conditionRequest.condition_rid },
+                where: { rid: conditionRequest.rid },
             }
         );
 
@@ -136,20 +186,18 @@ export class ConditionService {
     };
 
     /** DELETE RuleMaster by RID */
-    async deleteConditionsByRuleRid(rule_rid: any, userId: string) {
+    async deleteCondition(condition_rid: string, rule_rid: string, userId: string) {
         try {
             const mainDb = await this.getMainDb();
             Condition.initialize(mainDb);
-            await Condition.destroy({ where: { rule_rid: rule_rid } });
-            await this.auditService.createAudit({
-                action: "DELETE",
-                audit_rid: "",
+            await Condition.destroy({ where: { rule_rid: rule_rid, rid: condition_rid } });
+             await this.ruleHistoryService.createHistory({
                 rule_rid: rule_rid,
-                old_value: "",
-                new_value: "",
-                notes: "Rule condition deleted",
+                attribute_name: condition_rid,
+                old_value: null,
+                new_value: null,
                 created_by: userId,
-                modified_by: userId,
+                action: 'conditionDelete'
             }, userId);
             return {
                 statusCode: HttpStatus.SUCCESS,

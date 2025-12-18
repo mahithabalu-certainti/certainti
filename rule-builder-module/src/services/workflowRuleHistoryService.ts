@@ -1,12 +1,11 @@
-import { RuleAudit, RuleAuditCreationAttributes } from "../models/workflowRuleAudit";
+import { RuleHistory } from "../models/workflowRuleHistory";
 import { initSequelize } from "../config/maindbDataSource";
 import { Sequelize } from "sequelize";
 import { HttpStatus, STATUS_MESSAGE } from "../utils/constants";
 import { Logger } from "winston";
-import { ICreateAudit } from "../utils/types";
 import { logMessage } from "../utils/helpers";
 
-export class AuditService {
+export class RuleHistoryService {
 
     private logger: Logger;
     private mainDbSequelize: Sequelize | null = null;
@@ -22,30 +21,29 @@ export class AuditService {
         return this.mainDbSequelize;
     }
 
-    /** CREATE a new Audit */
-    async createAudit(auditRequest: ICreateAudit, userId: string): Promise<{
+    async createHistory(request: any, userId: string): Promise<{
         statusCode: number;
         message: string;
         errorMessage?: string;
-        data?: { audit: any };
+        data?: { history: any };
     }> {
         const mainDb = await this.getMainDb();
-        RuleAudit.initialize(mainDb);
-        const audit = await RuleAudit.create({
-            rule_rid: auditRequest.rule_rid,
-            action: auditRequest.action,
-            old_value: auditRequest.old_value,
-            new_value: auditRequest.new_value,
-            notes: auditRequest.notes,
-            created_by: auditRequest.created_by,
-            modified_by: auditRequest.modified_by ?? auditRequest.created_by, // fallback to created_by if undefined
+        RuleHistory.initialize(mainDb);
+        const history = await RuleHistory.create({
+            rule_rid: request.rule_rid,
+            attribute_name: request.attribute_name,
+            old_value: request.old_value,
+            new_value: request.new_value,
+            notes: request.notes,
+            action: request.action,
+            created_by: request.created_by,
         });
 
         return {
             statusCode: HttpStatus.SUCCESS,
             message: STATUS_MESSAGE.auditCreated,
             data: {
-                audit: audit,
+                history: history,
             },
         };
     };
