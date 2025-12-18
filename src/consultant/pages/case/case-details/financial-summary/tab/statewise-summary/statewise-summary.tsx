@@ -15,6 +15,7 @@ import {
   getResourceMetricColumns,
 } from './columns';
 import { Box, MenuItem, Select, Skeleton } from '@mui/material';
+import TextButton from '../../../../../../../components/button/text-button';
 import { useFetchFinancialStates } from '../../../../../../services/account';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../../store/store';
@@ -97,12 +98,17 @@ export const StateWiseSummary: React.FC<FinancialSummaryProps> = ({
 
   // UseEffects
   useEffect(() => {
-    if (accountid && fiscalYear && stateId && payload.flag) {
+    if (
+      accountid &&
+      fiscalYear &&
+      (stateId || payload.region_rid) &&
+      payload.flag
+    ) {
       mutate({
         account_rid: accountid,
         fiscal_year: Number(fiscalYear),
         summaryType: 'state',
-        region_rid: payload.region_rid || stateId,
+        region_rid: (payload.region_rid || stateId) as string,
         flag: payload.flag as FinancialSummaryFlag,
         case_rid: caseRid,
       });
@@ -154,93 +160,102 @@ export const StateWiseSummary: React.FC<FinancialSummaryProps> = ({
         </Box>
       )}
       <div>
-        <div className='max-w-[300px] flex mb-5 mt-2 gap-3'>
-          {financislStates.isLoading ? (
-            <Skeleton variant='rounded' width='100%' height={32} />
-          ) : (
-            <Select
-              name='regions'
-              className='custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px]'
-              displayEmpty
-              fullWidth
-              size='small'
-              MenuProps={{
-                PaperProps: {
-                  sx: {
-                    maxWidth: 300,
-                    maxHeight: 300,
-                    marginTop: '4px',
-                    boxShadow:
-                      'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
-                    '& .MuiMenuItem-root': {
-                      fontSize: '13px',
-                      padding: '6px 12px',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
+        <div className='flex mb-5 mt-2 gap-3 items-center'>
+          <div className='w-[300px]'>
+            {financislStates.isLoading ? (
+              <Skeleton variant='rounded' width='100%' height={32} />
+            ) : (
+              <Select
+                name='regions'
+                className='custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px]'
+                displayEmpty
+                fullWidth
+                size='small'
+                MenuProps={{
+                  PaperProps: {
+                    sx: {
+                      maxWidth: 300,
+                      maxHeight: 300,
+                      marginTop: '4px',
+                      boxShadow:
+                        'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
+                      '& .MuiMenuItem-root': {
+                        fontSize: '13px',
+                        padding: '6px 12px',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      },
                     },
                   },
-                },
-              }}
-              sx={{
-                height: '32px',
-                fontSize: '13px',
-                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                  border: '2px solid #60A5FA',
-                },
-                '& .MuiOutlinedInput-root': {
-                  '&.Mui-focused': {
-                    boxShadow: 'none',
+                }}
+                sx={{
+                  height: '32px',
+                  fontSize: '13px',
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                    border: '2px solid #60A5FA',
                   },
-                },
-                '.MuiSelect-select': {
-                  padding: '6px 6px',
-                },
-                '&.Mui-disabled': {
-                  backgroundColor: '#f3f4f6',
-                },
-                '& svg': {
-                  color: '#7D98B6',
-                },
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderRadius: '2px',
-                },
-              }}
-              value={region || stateId || ''}
-              onChange={(e) => {
-                setRegion(e.target.value);
-                setPayload((prev) => ({ ...prev, region_rid: e.target.value }));
-              }}
-              renderValue={(selected) => {
-                if (!selected) {
-                  return 'Select State';
-                }
-                const selectedOption = memoizedState.find(
-                  (it) => it.value === selected
-                );
-                return selectedOption ? selectedOption.label : 'Select State';
-              }}
-            >
-              <MenuItem value='' disabled>
-                Select State
-              </MenuItem>
-              {memoizedState.map((it, i) => {
-                return (
-                  <MenuItem
-                    key={i}
-                    sx={{
-                      color: '#425A76',
-                      fontSize: '13px',
-                      fontWeight: '500',
-                    }}
-                    value={it.value}
-                    title={it.label}
-                  >
-                    {it.label}
-                  </MenuItem>
-                );
-              })}
-            </Select>
-          )}
+                  '& .MuiOutlinedInput-root': {
+                    '&.Mui-focused': {
+                      boxShadow: 'none',
+                    },
+                  },
+                  '.MuiSelect-select': {
+                    padding: '6px 6px',
+                  },
+                  '&.Mui-disabled': {
+                    backgroundColor: '#f3f4f6',
+                  },
+                  '& svg': {
+                    color: '#7D98B6',
+                  },
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderRadius: '2px',
+                  },
+                }}
+                value={region || stateId || ''}
+                onChange={(e) => {
+                  setRegion(e.target.value);
+                }}
+                renderValue={(selected) => {
+                  if (!selected) {
+                    return 'Select State';
+                  }
+                  const selectedOption = memoizedState.find(
+                    (it) => it.value === selected
+                  );
+                  return selectedOption ? selectedOption.label : 'Select State';
+                }}
+              >
+                <MenuItem value='' disabled>
+                  Select State
+                </MenuItem>
+                {memoizedState.map((it, i) => {
+                  return (
+                    <MenuItem
+                      key={i}
+                      sx={{
+                        color: '#425A76',
+                        fontSize: '13px',
+                        fontWeight: '500',
+                      }}
+                      value={it.value}
+                      title={it.label}
+                    >
+                      {it.label}
+                    </MenuItem>
+                  );
+                })}
+              </Select>
+            )}
+          </div>
+          <TextButton
+            key='section-header-btn'
+            label='Go'
+            sx={{ padding: '15px 4px' }}
+            onClick={() => {
+              setPayload((prev) => ({ ...prev, region_rid: region }));
+            }}
+          />
         </div>
 
         <div className='h-[46px] max-h-[46px] flex items-center justify-between border border-[#CBD6E2] px-3 text-[14px] font-bold bg-[#FCFCFC]'>

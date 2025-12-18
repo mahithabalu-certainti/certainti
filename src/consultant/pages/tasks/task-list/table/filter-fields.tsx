@@ -88,6 +88,7 @@ export const getTaskFilterFields = (
     name: 'Assigned To',
     value: 'assigned_to_name',
     type: 'text',
+    operatorOption: textOptions,
     hide: permissionMap ? !permissionMap['assigned_to']?.read : false,
   },
   {
