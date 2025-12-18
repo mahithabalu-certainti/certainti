@@ -541,6 +541,7 @@ export interface FinancialSummaryBody {
   flag: FinancialSummaryFlag;
   summaryType: string;
   region_rid: string;
+  case_rid?: string;
 }
 
 export type FormFiscalDateType = {

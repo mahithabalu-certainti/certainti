@@ -18,7 +18,7 @@ export interface GeoBasedRulePayload {
   country?: string;
   is_federal: boolean;
   effective_start_date: string;
-  effective_end_date: string;
+  effective_end_date: string | null;
   rid?: string;
   jurisdiction_config_group_rid?: string;
   platform_config_group_rid?: string;
