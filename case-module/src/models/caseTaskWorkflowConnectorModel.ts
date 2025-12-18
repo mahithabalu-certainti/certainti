@@ -13,6 +13,7 @@ export interface CaseTaskWorkflowConnectorAttributes {
   source_rid: string;
   target_rid: string;
   relationship_connector_rid: string;
+  r_number?: string;
 }
 
 export interface CaseTaskWorkflowConnectorCreationAttributes
@@ -35,6 +36,7 @@ export class CaseTaskWorkflowConnector
   public source_rid!: string;
   public target_rid!: string;
   public relationship_connector_rid!: string;
+  public r_number?: string;
 
   static initialize(sequelize: Sequelize, schemaName: string) {
     return CaseTaskWorkflowConnector.init(
@@ -45,6 +47,11 @@ export class CaseTaskWorkflowConnector
           defaultValue: Sequelize.literal(
             `'${ENV_PREFIX}' || gen_random_uuid()`
           ),
+        },
+        r_number: {
+          type: DataTypes.STRING(64),
+          allowNull: true,
+          unique: true,
         },
 
         created_by: {
@@ -76,6 +83,15 @@ export class CaseTaskWorkflowConnector
         case_rid: {
           type: DataTypes.STRING(50),
           allowNull: false,
+          references: {
+            model: {
+              tableName: "cases",
+              schema: schemaName
+            },
+            key: "rid"
+          },
+          onUpdate: "CASCADE",
+          onDelete: "CASCADE"
         },
 
         source_rid: {
@@ -96,7 +112,7 @@ export class CaseTaskWorkflowConnector
       {
         sequelize,
         schema: schemaName,
-        tableName: "case_task_workflow_connector_mapping",
+        tableName: "case_task_dependency_mapping",
         timestamps: false,
         underscored: true,
       }
@@ -110,11 +126,11 @@ export async function setupCaseTaskWorkflowConnectorSequence(
 ) {
   try {
     await sequelize.query(
-      `CREATE SEQUENCE IF NOT EXISTS "${schemaName}".case_task_workflow_connector_mapping_seq START 1`
+      `CREATE SEQUENCE IF NOT EXISTS "${schemaName}".case_task_dependency_mapping_seq START 1`
     );
 
-    await sequelize.query(`ALTER TABLE "${schemaName}".case_task_workflow_connector_mapping
-      ALTER COLUMN r_number SET DEFAULT 'CTKWC-' || LPAD(nextval('"${schemaName}".case_task_workflow_connector_mapping_seq')::text, 10, '0')`);
+    await sequelize.query(`ALTER TABLE "${schemaName}".case_task_dependency_mapping
+      ALTER COLUMN r_number SET DEFAULT 'CTKWC-' || LPAD(nextval('"${schemaName}".case_task_dependency_mapping_seq')::text, 10, '0')`);
 
     logMessage("Cases history sequence setup complete");
   } catch (error) {

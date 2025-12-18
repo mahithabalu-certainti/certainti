@@ -12,14 +12,12 @@ import {
   validateRequest,
 } from "../utils/helpers";
 import {
-  casesFieldMappings,
-  casesSummaryFieldMappings,
-  checklistsFieldMappings,
   HttpStatus,
-  reviewProjectsFieldMappings,
+
   STATUS_MESSAGE,
 } from "../utils/constants";
 import {
+  caseSubmissionDateSchema,
   checklistByIdSchema,
   checklistSchema,
   createCaseSchema,
@@ -29,17 +27,23 @@ import {
   exportCaseSummarySchema,
   exportCheckListSchema,
   exportReviewProjectSchema,
+  getEmailTemplatePreviewSchema,
   listCasesAccountSchema,
   listCaseSummarySchema,
   listCaseTeamSchema,
   listCheckListSchema,
   listReviewProjectSchema,
+  sentReviewProjectSchema,
   updateCaseSchema,
   updateChecklistSchema,
   updateTaskSchema,
 } from "../lib/joi/schemas/schema";
 import configurations from "../config/config";
 import moment from "moment";
+import { checklistsFieldMappings, reviewProjectsFieldMappings,
+    casesFieldMappings,
+  casesSummaryFieldMappings,
+ } from "../utils/excelExportMapping";
 
 const services = configurations.getInstance().getServices();
 const caseService = services.caseService;
@@ -726,28 +730,12 @@ async function listAllCasesSummary(req: Request, res: Response) {
     const methodName = "List All Cases Summary";
 
     const userId = req.headers["x-user-id"] as string;
-    const value = await validateRequest(req, listCaseSummarySchema, res, "GET");
+    const value = await validateRequest(req, listCaseSummarySchema, res);
     if (!value) return;
     let parsedFilters: Record<string, any> = {};
     let parsedGlobalFilters: Record<string, string[]> = {};
 
-    try {
-      parsedFilters = JSON.parse(value.filters);
-    } catch (error) {
-      errorLog(
-        methodName,
-        "Invalid filters format. Must be a valid JSON object."
-      );
-    }
-
-    try {
-      parsedGlobalFilters = JSON.parse(value.globalFilters);
-    } catch (error) {
-      errorLog(
-        methodName,
-        "Invalid globalFilters format. Must be a valid JSON object."
-      );
-    }
+   
 
     logMessage(
       `[${methodName}] Request received, ${JSON.stringify(
@@ -768,8 +756,8 @@ async function listAllCasesSummary(req: Request, res: Response) {
     // Create modified data object with parsed globalFilters
     const dataWithParsedGlobalFilters = {
       ...value,
-      globalFilters: parsedGlobalFilters,
-      parsedFilters: parsedFilters,
+      globalFilters: value.globalFilters,
+      parsedFilters: value.filters,
     };
 
     const result = await caseService.listAllCasesSummary(
@@ -832,29 +820,11 @@ async function exportAllCasesSummary(req: Request, res: Response) {
       req,
       exportCaseSummarySchema,
       res,
-      "GET"
+      "POST"
     );
     if (!value) return;
     let parsedFilters: Record<string, any> = {};
     let parsedGlobalFilters: Record<string, string[]> = {};
-
-    try {
-      parsedFilters = JSON.parse(value.filters);
-    } catch (error) {
-      errorLog(
-        methodName,
-        "Invalid filters format. Must be a valid JSON object."
-      );
-    }
-
-    try {
-      parsedGlobalFilters = JSON.parse(value.globalFilters);
-    } catch (error) {
-      errorLog(
-        methodName,
-        "Invalid globalFilters format. Must be a valid JSON object."
-      );
-    }
 
     logMessage(
       `[${methodName}] Request received, ${JSON.stringify(
@@ -875,8 +845,8 @@ async function exportAllCasesSummary(req: Request, res: Response) {
     // Create modified data object with parsed globalFilters
     const dataWithParsedGlobalFilters = {
       ...value,
-      globalFilters: parsedGlobalFilters,
-      parsedFilters: parsedFilters,
+      globalFilters: value.globalFilters,
+      parsedFilters: value.filters,
     };
 
     const result = await caseService.listAllCasesSummary(
@@ -1202,6 +1172,98 @@ async function getReviewProjects(req: Request, res: Response): Promise<void> {
   }
 }
 
+async function sentReviewProjects(req: Request, res: Response): Promise<void> {
+  const methodName = "Sent Review Projects";
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    const value = await validateRequest(req, sentReviewProjectSchema, res);
+    if (!value) return;
+    let parsedFilters: Record<string, any> = {};
+    try {
+      parsedFilters = JSON.parse(value.filters);
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid filters format. Must be a valid JSON object."
+      );
+    }
+      let fileArray: Express.Multer.File[] | [];
+    if (Array.isArray(req.files)) {
+      fileArray = req.files;
+    } else {
+      fileArray = [];
+    }
+    const reviewProjects = await caseService.sentReviewProjects(
+      value,
+      parsedFilters,
+      userId,
+      fileArray
+    );
+    if (reviewProjects.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleCustomResponse(res, reviewProjects.data, reviewProjects.message);
+      return;
+    } else {
+      errorLog(methodName, reviewProjects.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        reviewProjects.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+async function getEmailTemplatePreview(req: Request, res: Response): Promise<void> {
+  const methodName = "Get Email Template Preview";
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    const value = await validateRequest(req, getEmailTemplatePreviewSchema, res, "GET");
+    if (!value) return;
+    const templateDetails = await caseService.getEmailTemplatePreview(
+      value,
+      userId
+    );
+    if (templateDetails.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleCustomResponse(res, templateDetails.data, templateDetails.statusMessage);
+      return;
+    } else {
+      errorLog(methodName, templateDetails.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        templateDetails.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+
 async function exportReviewProjects(req: Request, res: Response): Promise<void> {
   const methodName = "Export Review Projects";
   try {
@@ -1265,6 +1327,7 @@ async function exportReviewProjects(req: Request, res: Response): Promise<void> 
                 total_effort_prj: d.total_effort_prj,
                 total_subcon_prj: d.total_subcon_prj,
                 total_cost_fte_prj: d.total_cost_fte_prj,
+                total_cost_subcon_prj:d.total_cost_subcon_prj,
                 total_nonlabor_prj: d.total_nonlabor_prj,
                 total_resources_prj: d.total_resources_prj,
                 total_effort_fte_prj  : d.total_effort_fte_prj,
@@ -1486,7 +1549,8 @@ async function listCaseTeamMembers(req: Request, res: Response): Promise<void> {
       value,
       parsedFilters,
       userId,
-      "list"
+      "list",
+      value.is_dropdown_list
     );
     if (caseTeamMembers.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
@@ -1542,7 +1606,7 @@ async function exportAllAssignedProjects(req: Request, res: Response) {
     if (result.statusCode == HttpStatus.SUCCESS) {
       const generateBase64Response = await generateExcelBase64(
         result.data,
-        "Cases"
+        "Case Assigned Projects"
       );
       handleSuccessResponse(res, generateBase64Response);
     } else {
@@ -1622,9 +1686,10 @@ async function listUsersForCaseTeam(req: Request, res: Response): Promise<void> 
     
     // Extract account RID from request parameters to identify target account
     const accountrid = req.params.accountRid as string;
+    const userAccessScope = req.query.user_access_scope as string || 'account'
     
     // Call the service layer to fetch users eligible for case team assignment
-    const result = await caseService.listUsersForCaseTeam(accountrid);
+    const result = await caseService.listUsersForCaseTeam(accountrid,userAccessScope);
     
     // Handle successful user retrieval
     if (result.statusCode === HttpStatus.SUCCESS) {
@@ -2069,7 +2134,7 @@ async function getAllChecklists(req: Request, res: Response): Promise<void> {
         value.filters = {};
       }
     }
-    const attachments = await caseService.getAllChecklists(userId,value.attachmentLevel,value.entityId,value.accountRid,value.page,value.limit,value.search,value.filters,value.sortBy,value.sortOrder,value.fiscalYear,"download", {});
+    const attachments = await caseService.getAllChecklists(userId,value.attachmentLevel,value.entityId,value.accountRid,value.page,value.limit,value.search,value.filters,value.sortBy,value.sortOrder,value.fiscalYear,"list", {});
 
     if (attachments.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
@@ -2166,14 +2231,14 @@ async function exportAllChecklists(req: Request, res: Response): Promise<void> {
           : checklists.data.checklists.map((d: any) => {
               let resultMap: { [key: string]: any } = {
                 r_number: d.r_number,
-                fiscal_year: `FY-${d.fiscal_year}`,
+                fiscal_year: d?.fiscal_year == null ? "" : `FY-${d.fiscal_year}`,
                 checklist_name: d.checklist_name,
                 attachment_level: d.attachment_level,
                 attach_to: d.attach_to,
                 attached_to: d.attached_to,
-                created_by: d.created_by_name,
+                created_by_name: d.created_by_name,
                 created_datetime: formatDate(d.created_datetime),
-                modified_by: d.modified_by_name,
+                modified_by_name: d.modified_by_name,
                 modified_datetime:
                   d.modified_datetime == null
                     ? ""
@@ -2194,7 +2259,7 @@ async function exportAllChecklists(req: Request, res: Response): Promise<void> {
 
       const generateBase64Response = await generateExcelBase64(
         finalStructuredData,
-        "Cases"
+        "Checklists"
       );
       successLog(methodName);
       handleSuccessResponse(res, generateBase64Response);
@@ -2267,14 +2332,14 @@ async function createTask (req : Request, res : Response) {
         data: result.data,
       });       
     } else if(result.statusCode === HttpStatus.BAD_REQUEST) {
-      return res.status(HttpStatus.SUCCESS).json({
-        statusCode: HttpStatus.SUCCESS,
-        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+      return res.status(HttpStatus.BAD_REQUEST).json({
+        statusCode: HttpStatus.BAD_REQUEST,
+        statusCodeValue: HttpStatus.BAD_REQUEST_MESSAGE,
         statusMessage: result.statusMessage,
         data: result.data,
       }); 
     } else if(result.statusCode === HttpStatus.FAILED) {
-      return res.status(HttpStatus.SUCCESS).json({
+      return res.status(HttpStatus.FAILED).json({
         statusCode: HttpStatus.FAILED,
         statusCodeValue: HttpStatus.FAILED_MESSAGE,
         statusMessage: result.statusMessage,
@@ -2338,13 +2403,13 @@ async function updateTask (req : Request, res : Response) {
         statusMessage: result!.statusMessage
       });       
     } else if(result!.statusCode === HttpStatus.BAD_REQUEST) {
-      return res.status(HttpStatus.SUCCESS).json({
-        statusCode: HttpStatus.SUCCESS,
-        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+      return res.status(HttpStatus.BAD_REQUEST).json({
+        statusCode: HttpStatus.BAD_REQUEST,
+        statusCodeValue: HttpStatus.BAD_REQUEST_MESSAGE,
         statusMessage: result!.statusMessage,
       }); 
     } else if(result!.statusCode === HttpStatus.FAILED) {
-      return res.status(HttpStatus.SUCCESS).json({
+      return res.status(HttpStatus.FAILED).json({
         statusCode: HttpStatus.FAILED,
         statusCodeValue: HttpStatus.FAILED_MESSAGE,
         statusMessage: result!.statusMessage,
@@ -3379,7 +3444,7 @@ async function addCollaborators (req : Request, res : Response) {
       return res.status(HttpStatus.SUCCESS).json({
         statusCode: HttpStatus.SUCCESS,
         statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
-        statusMessage: STATUS_MESSAGE.caseTaskStatusListedSuccess,
+        statusMessage: result.statusMessage,
       });
     } else if (result.statusCode === HttpStatus.BAD_REQUEST) {
       return res.status(HttpStatus.BAD_REQUEST).json({
@@ -3577,48 +3642,6 @@ async function linkDeleteTask (req : Request, res : Response) {
   }
 }
 
-async function listTaskDropdownAccountLevel (req : Request, res : Response) {
-  const methodName = "listTaskDropdownAccountLevel";
-  try {
-   const userId = req.headers["x-user-id"] as string;
-    if (!userId) {
-      errorLog(methodName, "User ID is required in headers");
-      handleErrorResponse(
-        res,
-        HttpStatus.BAD_REQUEST,
-        HttpStatus.BAD_REQUEST_MESSAGE,
-        "User ID is required in headers"
-      );
-      return;
-    }
-    const data = req.body;
-    const result = await caseService.taskListForDropdownAccountLevel(data); 
-    if(result.length > 0) {
-      return res.status(HttpStatus.SUCCESS).json({
-        statusCode: HttpStatus.SUCCESS,
-        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
-        statusMessage: STATUS_MESSAGE.caseTaskFetchedSuccess,
-        data : result
-      });
-    } 
-    else {
-      return res.status(HttpStatus.SUCCESS).json({
-        statusCode: HttpStatus.SUCCESS,
-        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
-        statusMessage: STATUS_MESSAGE.dataNotAvailable,
-        data : []
-      });
-    }
-  } catch (error: any) {
-    handleErrorResponse(
-      res,
-      HttpStatus.FAILED,
-      HttpStatus.FAILED_MESSAGE,
-      error.message
-    );
-  }
-}
-
 async function deleteTagsTaskLevel (req : Request, res : Response) {
   const methodName = "deleteTagsTaskLevel";
   try {
@@ -3634,6 +3657,7 @@ async function deleteTagsTaskLevel (req : Request, res : Response) {
       return;
     }
     const data = req.body;
+    data.userId = userId
     const result = await caseService.deleteTagsAccountLevel(data); 
     if(result.statusCode === HttpStatus.SUCCESS) {
       return res.status(HttpStatus.SUCCESS).json({
@@ -3680,6 +3704,7 @@ async function deleteCollaboratorsTaskLevel (req : Request, res : Response) {
       return;
     }
     const data = req.body;
+    data.user_rid = userId
     const result = await caseService.deleteCollaborators(data); 
     if(result?.statusCode === HttpStatus.SUCCESS) {
       return res.status(HttpStatus.SUCCESS).json({
@@ -3744,6 +3769,155 @@ async function updateChecklistItemStatus (req : Request, res : Response) {
     );
   }
 }
+
+async function caseLevelTaskDropdown (req : Request, res : Response) {
+  const methodName = "caseLevelTaskDropdown"
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const data = req.body;
+    const result = await caseService.getTaskDropDownForDependencyMapping(data);
+    if(result.length > 0) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: STATUS_MESSAGE.taskTemplateSuccess,
+        data : result
+      });
+    } else {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: STATUS_MESSAGE.dataNotAvailable,
+        data : result
+      });
+    }
+  } catch (error: any) {
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+
+async function getCaseSubmissionDate(req: Request, res: Response): Promise<void> {
+  const methodName = "Get Case Submission Date";
+  try {
+     const value = await validateRequest(req, caseSubmissionDateSchema, res,"GET");
+    const caseSubmissionDate = await caseService.getCaseSubmissionDate(value);
+    if (caseSubmissionDate.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, caseSubmissionDate.data);
+      return;
+    } else {
+      errorLog(methodName, caseSubmissionDate.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        caseSubmissionDate.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+/**
+ * Controller to sign off technical documentation for a project.
+ *
+ * This function handles HTTP requests to perform the sign-off action
+ * on a project’s technical documentation. It validates required headers,
+ * forwards the request payload to the service layer, and returns a
+ * standardized API response based on the outcome.
+ *
+ * Key Responsibilities:
+ * - Validates the presence of a valid `x-user-id` header
+ * - Delegates the sign-off operation to `caseService.signOffTechnicalDocumentation()`
+ * - Formats and returns success or error responses consistently
+ *
+ * Response Behavior:
+ * - **SUCCESS** → Technical documentation sign-off completed successfully
+ * - **BAD_REQUEST** → Triggered when required input is missing, invalid, or documentation is already signed off
+ * - **NOT_FOUND** → Triggered when the specified project or documentation does not exist
+ *
+ * Error Handling:
+ * - Missing `x-user-id` header → Responds with `BAD_REQUEST`
+ * - Service-level validation failures → Responds with the respective status code
+ * - Unexpected exceptions → Responds with `BAD_REQUEST` and error details
+ *
+ * @param {Request} req - Express request containing sign-off details in the request body and user ID in headers
+ * @param {Response} res - Express response used to return the API result
+ * @returns {Promise<void>} - Resolves after sending an HTTP response
+ */
+async function signoffTechnicalDocumentation (req : Request, res : Response) {
+  const methodName = "signoffTechnicalDocumentation";
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const data = req.body;
+    data.userId = userId 
+    const result = await caseService.signOffTechnicalDocumentation(data);
+    if(result.statusCode === HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: result.statusMessage
+      }); 
+    } else if(result.statusCode === HttpStatus.BAD_REQUEST) {
+      return res.status(HttpStatus.BAD_REQUEST).json({
+        statusCode: HttpStatus.BAD_REQUEST,
+        statusCodeValue: HttpStatus.BAD_REQUEST_MESSAGE,
+        statusMessage: result.statusMessage
+      });
+    } else if(result.statusCode === HttpStatus.NOT_FOUND) {
+      return res.status(HttpStatus.NOT_FOUND).json({
+        statusCode: HttpStatus.NOT_FOUND,
+        statusCodeValue: HttpStatus.NOT_FOUND_MESSAGE,
+        statusMessage: result.statusMessage
+      });
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
 export default {
   createCases,
   updateCases,
@@ -3786,6 +3960,7 @@ export default {
   listTaskAttachments,
   getReviewProjects,
   exportReviewProjects,
+  sentReviewProjects,
   fetchTaskActivity,
   fetchTaskDetails,
   fetchCaseTaskStatus,
@@ -3794,8 +3969,11 @@ export default {
   listCollaborators,
   linkTask,
   linkDeleteTask,
-  listTaskDropdownAccountLevel,
   deleteTagsTaskLevel,
   deleteCollaboratorsTaskLevel,
-  updateChecklistItemStatus
+  updateChecklistItemStatus,
+  getEmailTemplatePreview,
+  caseLevelTaskDropdown,
+  getCaseSubmissionDate,
+  signoffTechnicalDocumentation
 };

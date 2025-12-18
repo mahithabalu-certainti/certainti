@@ -13,10 +13,8 @@ import {
   validateRequest,
 } from "../utils/helpers";
 import {
-  adminCheckListMappings,
-  emailTemplateMappings,
   HttpStatus,
-  STATUS_MESSAGE,
+  STATUS_MESSAGE
 } from "../utils/constants";
 import {
   adminChecklistSchema,
@@ -33,6 +31,7 @@ import {
 } from "../lib/joi/schemas/schema";
 import configurations from "../config/config";
 import moment from "moment";
+import { adminCheckListMappings, emailTemplateMappings, taskTemplateFieldMappings } from "../utils/excelExportMapping";
 
 // Initialize services from configuration for dependency injection
 const services = configurations.getInstance().getServices();
@@ -405,7 +404,7 @@ async function exportAdminCheckList(req: Request, res: Response) {
          }
        }
         const isValidTZ = value.timezone && isValidTimezone(value.timezone);
-           const formatDate = (date?: Date) => {
+        const formatDate = (date?: Date) => {
              if (!date) return null;
              
              return moment(date)
@@ -958,10 +957,9 @@ async function ExportAdminTaskTemplateList (req : Request, res : Response) {
     }
     const data = req.body;
     let result = await caseManagementService.fetchTaskTemplate(data, true, false, null);
-    let totalRecord = parseInt(result.data[0].total_result)
     const fields = await caseService.getAllowedExportFields(
     userId,
-    "admin_checklist_view_edit"
+    "task_templates_view_edit"
     );
     const allowedFieldSet = new Set<string>();
     for (const field of fields) {
@@ -976,32 +974,48 @@ async function ExportAdminTaskTemplateList (req : Request, res : Response) {
           return moment(date)
             .tz(isValidTZ ? data.timezone : "UTC")
             .format("YYYY-MMM-DD, hh:mm:ss A");
-      };
+      };    
     if(result.statusCode == HttpStatus.SUCCESS) {
       const finalData = result.data.map((d : any) => {
-        return {
+        let resultMap : { [key: string]: any } =  {
           "Template ID" : d.r_number,
           "Task Name" : d.task_name,
-          "Efforts (Hrs)" : d.effort_in_days || "-",
+          "Effort In Days": d.effort_in_days || "-",
+          "Task Type": d.task_type_name || "-",
+          "Milestone Name": d.milestone_name || "-",
+          "Assign Role": d.role_name || "-",
+          "Priority": d.priority_name || "-",
+          "Checklist": d.checklist_name || "-",
+          "Task Category" : d.category_name,
+          "Task Weightage": d.weightage_value || "-",
+          "Status": d.status_name,
+          "Task Description": d.task_description || "-",
           "Created By" : d.created_by_name || "-",
           "Created On" : d.created_datetime
-                        ? data.timezone && isValidTimezone(data.timezone)
-                          ? moment.tz(d.created_datetime.toISOString(), data.timezone)
-                              .format("YYYY-MMM-DD, hh:mm:ss A")
-                          : moment(d.created_datetime.toISOString())
-                              .tz(data.timezone)
-                              .format("YYYY-MMM-DD, hh:mm:ss A")
-                        : "-",
-          "Modified By": d.modified_by_name || "-",
+          ? data.timezone && isValidTimezone(data.timezone)
+            ? moment.tz(d.created_datetime.toISOString(), data.timezone)
+                .format("YYYY-MMM-DD, hh:mm:ss A")
+            : moment(d.created_datetime.toISOString())
+                .tz(data.timezone)
+                .format("YYYY-MMM-DD, hh:mm:ss A")
+          : "-",
+          "Updated By": d.modified_by_name || "-",
           "Updated On": d.modified_datetime
-                        ? data.timezone && isValidTimezone(data.timezone)
-                          ? moment.tz(d.modified_datetime.toISOString(), data.timezone)
-                              .format("YYYY-MMM-DD, hh:mm:ss A")
-                          : moment(d.modified_datetime.toISOString())
-                              .tz(data.timezone)
-                              .format("YYYY-MMM-DD, hh:mm:ss A")
-                        : "-"
+          ? data.timezone && isValidTimezone(data.timezone)
+            ? moment.tz(d.modified_datetime.toISOString(), data.timezone)
+                .format("YYYY-MMM-DD, hh:mm:ss A")
+            : moment(d.modified_datetime.toISOString())
+                .tz(data.timezone)
+                .format("YYYY-MMM-DD, hh:mm:ss A")
+          : "-"
         }
+        const exportRecord: Record<string, any> = {};
+        taskTemplateFieldMappings.forEach((mapping) => {
+          if (allowedFieldSet.has(mapping.permissionField)) {
+            exportRecord[mapping.exportField] = resultMap[mapping.exportField];
+          }
+        });
+        return exportRecord;
       })
       const generateBase64Response = await generateExcelBase64(
            finalData,
@@ -1022,7 +1036,6 @@ async function ExportAdminTaskTemplateList (req : Request, res : Response) {
       })  
     }
   } catch (err) {
-    // Handle unexpected errors (system failures, network issues, etc.)
     const error = err as Error;
     errorLog(methodName, error.message);
     handleErrorResponse(
@@ -1034,6 +1047,7 @@ async function ExportAdminTaskTemplateList (req : Request, res : Response) {
     return;
   }
 }
+
 
 async function fetchAllTaskTypes (req : Request, res : Response) {
   const methodName = "fetchAllTaskTypes";
@@ -1113,12 +1127,13 @@ async function exportCheckListTemplateById(req: Request, res: Response) {
       }
     }
     const isValidTZ = data.timezone && isValidTimezone(data.timezone);
-    const formatDate = (date?: Date) =>
-      date
-        ? moment(date)
-            .tz(isValidTZ ? data.timezone : "UTC")
-            .format("YYYY-MM-DD, hh:mm:ss A")
-        : null;
+    const formatDate = (date?: Date) => {
+             if (!date) return null;
+             
+             return moment(date)
+               .tz(isValidTZ ? data.timezone : "UTC")
+               .format("YYYY-MMM-DD, hh:mm:ss A");
+           };
     const response = result.data?.checklistDetails;
     if (result.statusCode == HttpStatus.SUCCESS) {
       const workbook = new ExcelJS.Workbook();
@@ -1476,6 +1491,68 @@ async function listEmailTemplates(req: Request, res: Response) {
       parsedFilters,
       userId,
       "list"
+    );
+    if (result.statusCode == HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, result.data);
+      return;
+    } else {
+      errorLog(methodName, "No data found");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        result.errorMessage
+      );
+      return;
+    }
+  } catch (error: any) {
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+
+async function listAllEmailTemplatesByCategory(req: Request, res: Response) {
+  try {
+    const methodName = "List Email Templates By Category";
+
+    const userId = req.headers["x-user-id"] as string;
+    const value = await validateRequest(req, listEmailTemplateSchema, res, "GET");
+    if (!value) return;
+    let parsedFilters: Record<string, any> = {};
+
+    try {
+      parsedFilters = JSON.parse(value.filters);
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid filters format. Must be a valid JSON object."
+      );
+    }
+
+    logMessage(
+      `[${methodName}] Request received, ${JSON.stringify(
+        req.body
+      )} userId: ${userId}`
+    );
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    
+    const result = await caseManagementService.listEmailTemplatesByCategory(
+      value,
+      userId
     );
     if (result.statusCode == HttpStatus.SUCCESS) {
       successLog(methodName);
@@ -1900,6 +1977,86 @@ async function listAdminTaskDropdown (req : Request, res : Response) {
     );
   }
 }
+async function listAdminTaskWeightage (req : Request, res : Response) {
+  const methodName = "listAdminTaskWeightage";
+  try {
+   const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const result = await caseManagementService.getWeightageList(); 
+    if(result.statusCode === HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: STATUS_MESSAGE.taskWeightageListSuccess,
+        data : result
+      });
+    } 
+    else {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: STATUS_MESSAGE.dataNotAvailable,
+        data : []
+      });
+    }
+  } catch (error: any) {
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+
+async function getTaskCategoryForDropdown (req : Request, res : Response) {
+  const methodName = "getTaskCategoryForDropdown";
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const result = await caseManagementService.getTaskCategoryList();
+    if(result.length > 0) {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.taskCategoryListedSuccess,
+        data : result
+      })
+    } else {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.dataNotAvailable,
+        data : result
+      })
+    }
+  } catch (error: any) {
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
 // Export the controller functions for use in route definitions
 export default {
   createAdminCheckList,
@@ -1921,6 +2078,7 @@ export default {
   updateEmailTemplate,
   getEmailPlaceHolders,
   listEmailTemplates,
+  listAllEmailTemplatesByCategory,
   getEmailTemplateDetailsById,
   exportEmailTemplates,
   getEmailCategoryPlaceHolders,
@@ -1928,5 +2086,7 @@ export default {
   getWorkFlowConnector,
   linkAdminDeleteTask,
   linkAdminTask,
-  listAdminTaskDropdown
+  listAdminTaskDropdown,
+  listAdminTaskWeightage,
+  getTaskCategoryForDropdown
 };

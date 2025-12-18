@@ -1,4 +1,4 @@
-import { Op, Sequelize } from "sequelize";
+import { Op, QueryTypes, Sequelize } from "sequelize";
 import { initOrgSequelize } from "../config/orgDataSource";
 import { initMainDbSequelize } from "../config/mainDataSource";
 import {
@@ -14,7 +14,9 @@ import {
   fetchIsRdQualifiedProjectQueryRegion,
   fetchProjectQueryByPrjId,
   summaryHighlightsQuery,
+  summaryHighlightsQueryForCase,
   summaryHighlightsQueryRegion,
+  summaryHighlightsQueryRegionForCase,
 } from "../utils/rawQueries";
 import SchemaService from "./schemaService";
 import { Logger } from "winston";
@@ -24,6 +26,7 @@ import { ProjectSummary } from "../models/projectSummary";
 import Decimal from "decimal.js";
 import currency from "currency.js";
 import { logMessage } from "../utils/helpers";
+import { ProjectFiscalIds } from "../utils/types";
 
 export default class FinancialHighlightsService {
   private mainDbSequelize: Sequelize | null = null;
@@ -60,7 +63,10 @@ export default class FinancialHighlightsService {
     let schemaName = rawQueries.fetchSchemaName(fetchParent[0][0].r_number);
 
     if (data.summaryType == SUMMARY_HIGHLIGHTS_TYPE_FLAG.summary) {
-      if (data.flag == SUMMARY_HIGHLIGHTS_FLAG.all) {
+      if(data.case_rid != undefined && data.case_rid !== "") {
+        result = await orgDb.query(summaryHighlightsQueryForCase(data.account_rid, data.fiscal_year, schemaName, data.case_rid));
+      }
+      else if (data.flag == SUMMARY_HIGHLIGHTS_FLAG.all) {
         result = await orgDb.query(
           summaryHighlightsQuery(data.account_rid, data.fiscal_year, schemaName)
         );
@@ -74,7 +80,18 @@ export default class FinancialHighlightsService {
         );
       }
     } else {
-      if (data.flag == SUMMARY_HIGHLIGHTS_FLAG.all) {
+      if(data.case_rid != undefined && data.case_rid !== "") {
+        result = await orgDb.query(
+          summaryHighlightsQueryRegionForCase(
+            data.account_rid,
+            data.fiscal_year,
+            schemaName,
+            data.region_rid,
+            data.case_rid
+          )
+        )
+      }
+      else if (data.flag == SUMMARY_HIGHLIGHTS_FLAG.all) {
         result = await orgDb.query(
           summaryHighlightsQueryRegion(
             data.account_rid,
@@ -117,7 +134,6 @@ export default class FinancialHighlightsService {
       await rawQueries.fetchParentAccount(data.account_rid, mainDb)
     );
     let schemaName = rawQueries.fetchSchemaName(fetchParent[0][0].r_number);
-
     let result = await orgDb.query(
       fetchProjectQueryByPrjId(
         data.account_rid,
@@ -179,7 +195,8 @@ export default class FinancialHighlightsService {
     page: number = 1,
     limit: number = 10,
     sortBy: string = "created_datetime",
-    sortOrder: string = "DESC"
+    sortOrder: string = "DESC",
+    caseRid? : string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -223,6 +240,15 @@ export default class FinancialHighlightsService {
       // Add fiscal year filter
       if (fiscalYear && fiscalYear !== 0) {
         whereClause[Op.and].push({ fiscal_year: fiscalYear });
+      }
+      if(caseRid !== undefined && caseRid !== '') {
+        const orgDbSequelize = await this.getOrgDbSequelize();
+        const parentAccount : any = await mainSequelize.query(await rawQueries.fetchParentAccount(accountRid, mainSequelize))
+        let schemaName = rawQueries.fetchSchemaName(parentAccount[0][0].r_number);
+        const projectIds = await orgDbSequelize.query<ProjectFiscalIds>(rawQueries.getProjectsForCases(caseRid, accountRid, schemaName), {type : QueryTypes.SELECT});
+        let ids = [];
+        ids.push(...projectIds.map((d : any) => d.project_fiscal_rid));
+        whereClause[Op.and].push({project_fiscal_rid : {[Op.in] : ids }});
       }
       // ✅ Get all project fiscal summary without pagination first to properly handle sorting of related data
       const allSummary = await ProjectFiscalSummaryModel.findAll({
@@ -393,7 +419,8 @@ export default class FinancialHighlightsService {
     search?: string,
     fiscalYear: number = 0,
     sortBy: string = "created_datetime",
-    sortOrder: string = "DESC"
+    sortOrder: string = "DESC",
+    caseRid? : string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -437,6 +464,16 @@ export default class FinancialHighlightsService {
       // Add fiscal year filter
       if (fiscalYear && fiscalYear !== 0) {
         whereClause[Op.and].push({ fiscal_year: fiscalYear });
+      }
+
+      if(caseRid !== undefined && caseRid !== '') {
+        const orgDbSequelize = await this.getOrgDbSequelize();
+        const parentAccount : any = await mainSequelize.query(await rawQueries.fetchParentAccount(accountRid, mainSequelize))
+        let schemaName = rawQueries.fetchSchemaName(parentAccount[0][0].r_number);
+        const projectIds = await orgDbSequelize.query<ProjectFiscalIds>(rawQueries.getProjectsForCases(caseRid, accountRid, schemaName), {type : QueryTypes.SELECT});
+        let ids = [];
+        ids.push(...projectIds.map((d : any) => d.project_fiscal_rid));
+        whereClause[Op.and].push({project_fiscal_rid : {[Op.in] : ids }});
       }
       // ✅ Get all project fiscal summary without pagination first to properly handle sorting of related data
       const allSummary = await ProjectFiscalSummaryModel.findAll({

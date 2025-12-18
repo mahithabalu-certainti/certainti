@@ -24,6 +24,7 @@ import {
   schedulerStatus,
   interactionTaskName,
   interactionSource,
+  interactionTemplateName,
 } from "../../utils/constants";
 import { Op, Sequelize } from "sequelize";
 import { initMainDbSequelize } from "../../config/mainDataSource";
@@ -783,7 +784,8 @@ export class InteractionService {
                 professionalServiceConsultantRid[0][0].rid
               )
             );
-            if (fetchProfSerConsultantId[0][0] !== null) {
+            const consultantObj = fetchProfSerConsultantId && fetchProfSerConsultantId[0] && fetchProfSerConsultantId[0][0] ? fetchProfSerConsultantId[0][0] : null;
+            if (consultantObj !== null && consultantObj !== undefined) {
               const interactionLevel: any = await mainDbSequelize.query(
                 rawQueries.fetchInteractionLevelById(
                   fetchInteractionDetails.interaction_level_rid
@@ -871,6 +873,10 @@ export class InteractionService {
                 true
               );
             }
+            else{
+              logMessage(`No professional services consultant found for account ID ${interactionData.account_rid}`);
+              /*Notification part will be implemented later if there is no professional services consultant added in account*/
+            }
           }
         }        
       }
@@ -948,7 +954,9 @@ export class InteractionService {
           filters,
           data.sortBy,
           data.sortOrder,
-          "list"
+          "list",
+          data?.case_rid,
+          data.account_rid
         );
 
       if (!techSummary) {
@@ -1087,7 +1095,9 @@ export class InteractionService {
           filters,
           data.sortBy,
           data.sortOrder,
-          "download"
+          "download",
+          data.case_rid,
+          data.account_rid
         );
 
       if (!techSummary) {
@@ -1684,11 +1694,12 @@ export class InteractionService {
 
     // Column headers
     worksheet.addRow([
-      "Question No",
+      "Record ID",
       "Questions",
       "Answers",
       "Notes",
       "Is Mandatory",
+      "Question No",
     ]);
     worksheet.getRow(6).eachCell((cell) => {
       cell.font = { bold: true };
@@ -1696,22 +1707,26 @@ export class InteractionService {
     });
 
     worksheet.columns = [
-      { key: "question no", width: 15 },
+      { key: "record id", width: 15 },
       { key: "question", width: 50 },
       { key: "answer", width: 50 },
       { key: "notes", width: 30 },
       { key: "is_mandatory", width: 15 },
+      { key: "question no", width: 15 },
     ];
 
     // Add question rows
+    let sequenceNo : number = 0;
     interactionItems.forEach((item: any) => {
+      sequenceNo = sequenceNo + 1
       const plain = item.get ? item.get({ plain: true }) : item;
       const row = worksheet.addRow({
-        "question no": plain.question_seq_num,
+        "record id": `Q${sequenceNo}`,
         question: plain.question,
         answer: "",
         notes: "",
         is_mandatory: plain.is_mandatory ? "Yes" : "No",
+        "question no": plain.question_seq_num
       });
 
       // Lock specific columns right away
@@ -1720,6 +1735,7 @@ export class InteractionService {
       row.getCell(3).protection = { locked: false };
       row.getCell(4).protection = { locked: true };
       row.getCell(5).protection = { locked: true };
+      row.getCell(6).protection = { locked: true };
     });
 
     // Now protect worksheet AFTER all protections are set
@@ -1757,33 +1773,49 @@ export class InteractionService {
   ) {
     let emailResponse = false;
     try {
-      let emailContent = interactionMailTemplate(
-        emailInfo,
-        projectInfo,
-        accountInfo,
-        interactionLink,
-        interactionRid,
-        interactionLevel
-      );
+       let templateName ="";
+       if(interactionLevel.toLowerCase() === 'project') {
+        templateName = interactionTemplateName.interactionProject
+       } else {
+        templateName = interactionTemplateName.interactionAccount
+       }
+       let emailPreview = await this.interactionSchemaService.getTemplateDetailsByCategory(templateName);
       if (is_interaction_followup) {
-        emailContent = interactionReminderMailTemplate(
-          emailInfo,
-          projectInfo,
-          accountInfo,
-          interactionLink,
-          interactionRid,
-          interactionLevel
-        );
+         if(interactionLevel.toLowerCase() === 'project') {
+        templateName = interactionTemplateName.interactionProjectRemainder
+       } else {
+        templateName = interactionTemplateName.interactionAccountRemainder
+       }
+      emailPreview = await this.interactionSchemaService.getTemplateDetailsByCategory(templateName);
+      
       }
       if (isResponseReceived) {
-        emailContent = interactionResponseReceivedTemplate(
-          emailInfo,
-          projectInfo,
-          accountInfo,
-          interactionRid,
-          interactionLevel
-        );
+         if(interactionLevel.toLowerCase() === 'project') {
+        templateName = interactionTemplateName.interactionProjectUpdate
+       } else {
+        templateName = interactionTemplateName.interactionAccountUpdate
+       }
+         emailPreview = await this.interactionSchemaService.getTemplateDetailsByCategory(templateName);
       }
+      let  emailContent = {
+          message: {
+          subject :  this.replacePlaceholders(emailPreview.subject, emailInfo,projectInfo, accountInfo, interactionLink,interactionRid, interactionLevel),
+          body: {
+              contentType: "HTML",
+              content:this.replacePlaceholders(emailPreview.body_html, emailInfo, projectInfo, accountInfo,interactionLink, interactionRid, interactionLevel),
+            },
+        toRecipients: [
+              {
+                emailAddress: {address: emailInfo.email,},
+              },
+            ],
+          ccRecipients: emailInfo.ccEmails && emailInfo.ccEmails.length > 0
+            ? emailInfo.ccEmails.map(email => ({
+            emailAddress: { address: email }
+          }))
+        : [],
+        },
+        }
       //fetch sender email info
       emailResponse = await sendEmailWithAttachment({
         message: emailContent.message,
@@ -1803,6 +1835,64 @@ export class InteractionService {
       return emailResponse;
     }
   }
+
+    replacePlaceholders(
+        template: string,
+        emailInfo: Record<string, any>,
+        projectInfo: Record<string, any>,
+        accountInfo: Record<string, any>,
+        interactionLink: string,
+        interactionRid?: string,
+        interactionLevel?: string
+      ): string {
+        return template.replace(/{{(.*?)}}/g, (_: string, key: string) => {
+          const raw = key.trim();
+          const normalized = raw.toLowerCase().replace(/\s+/g, "_");
+          const noUnderscore = normalized.replace(/_/g, "");
+          // Helper to check in an object
+          const checkObj = (obj: Record<string, any>) => {
+            if (!obj) return undefined;
+            if (raw in obj && obj[raw] != null) return obj[raw];
+            if (normalized in obj && obj[normalized] != null) return obj[normalized];
+            if (noUnderscore in obj && obj[noUnderscore] != null) return obj[noUnderscore];
+            return undefined;
+          };
+          // Dynamic special fields mapping
+          const specialFields: Record<string, (args: any) => any> = {
+            fiscalyear: ({ projectInfo }) => projectInfo && projectInfo.fiscalYear != null ? projectInfo.fiscalYear : "",
+            interactionlink: ({ interactionLink }) => interactionLink ?? "",
+            interactionrid: ({ interactionRid }) => interactionRid ?? "",
+            interactionlevel: ({ interactionLevel }) => interactionLevel ?? "",
+            fiscalYear: ({ projectInfo }) => projectInfo && projectInfo.fiscalYear != null ? projectInfo.fiscalYear : "",
+          };
+          // Normalize key for dynamic check
+          const specialKey = noUnderscore.toLowerCase();
+          if (specialFields[specialKey]) {
+            return specialFields[specialKey]({
+              emailInfo,
+              projectInfo,
+              accountInfo,
+              interactionLink,
+              interactionRid,
+              interactionLevel
+            });
+          }
+          // Check in all provided objects in order
+          let val =
+            checkObj(emailInfo) ??
+            checkObj(projectInfo) ??
+            checkObj(accountInfo);
+          if (val !== undefined) return val;
+          // Check for direct placeholders
+          if (raw === "Interaction Id" || normalized === "interactionrid" || noUnderscore === "interactionrid") {
+            return interactionRid ?? "";
+          }
+          if (raw === "interactionLevel" || normalized === "interactionlevel" || noUnderscore === "interactionlevel") {
+            return interactionLevel ?? "";
+          }
+          return "";
+        });
+      }
 
   /**
    * Formats an error response to be returned from service methods.
@@ -2004,7 +2094,7 @@ export class InteractionService {
     if (data.flag === "project") {
       entityRid = data.project_fiscal_rid;
     } else if (data.flag === "case") {
-      entityRid = ""; 
+      entityRid = ""
     } else {
       entityRid = data.account_rid;
     }
@@ -2702,7 +2792,7 @@ export class InteractionService {
         responseData.map(async (d: any) => {
           return {
             ...d,
-            uploaded_by: mapUsers.get(d.created_by),
+            uploaded_by: mapUsers.get(d.created_by) === undefined ? d.created_by : mapUsers.get(d.created_by),
             new_url: await generateSasUrl(d.download_link),
           };
         })
@@ -2916,24 +3006,94 @@ export class InteractionService {
         if (!this.orgDbSequelize) {
           this.orgDbSequelize = await initOrgSequelize();
         }
+        if (!this.mainDbSequelize) {
+          this.mainDbSequelize = await initMainDbSequelize();
+        }
         const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
           /\D/g,
           ""
         )}`;
         const status_rid =
           await this.interactionSchemaService.getActiveStatusRid();
+        const [accountInfo]: any[] = await this.mainDbSequelize.query(
+          rawQueries.fetchAccountInfo(
+            req.data[0].account_rid,
+          )
+        );
+        const platFormConfigResult: any[] = await this.mainDbSequelize.query(
+          rawQueries.fetchPlatformConfig(accountInfo[0].country_rid),
+          { type: 'SELECT' }
+        );
+        let projectTypes: any;
+        const platFormConfigs = Array.isArray(platFormConfigResult) ? platFormConfigResult : [platFormConfigResult];
+        const groupedProjectTypes: Record<string, any[]> = {};
+        platFormConfigs.forEach((config: any) => {
+          if (config && config.config_json && config.config_json.project_type) {
+            const projectTypeArr = Array.isArray(config.config_json.project_type)
+              ? config.config_json.project_type
+              : [config.config_json.project_type];
+            const key = `${config.effective_start_date || ''}_${config.effective_end_date || ''}`;
+            if (!groupedProjectTypes[key]) groupedProjectTypes[key] = [];
+            groupedProjectTypes[key].push(...projectTypeArr);
+          }
+        });
+        projectTypes = groupedProjectTypes;
+       
+        // Pass as IN clause to fetchProjectsByAccount
         const [projects]: any[] = await this.orgDbSequelize.query(
           rawQueries.fetchProjectsByAccount(
             req.data[0].account_rid,
             schemaName,
-            status_rid!
+            status_rid!,
+            projectTypes
           )
         );
         const projectIds = Array.isArray(projects)
           ? projects.map((p: any) => p.rid)
           : [];
+        if (projectIds.length === 0) {
+          logMessage(`No active projects found for account ID in triggerAI: ${req.data[0].account_rid}`);
+           return {
+              statusCode: HttpStatus.FAILED,
+              statusMessage: `No active projects found for the account with the project type ${projectTypes}`,
+              data: null,
+              status: "error",
+              errorMessage: `No active projects found for the account with the project type ${projectTypes}`,
+            };
+        }
         payload.project_id = projectIds;
-      } else {
+      }
+      else if (req.type === "case") {
+        payload.company_id = req.data[0].account_rid;
+        const { accountNumber } =
+          await this.interactionSchemaService.fetchValidAccountNumberById(
+            req.data[0].account_rid
+          );
+
+        if (!accountNumber) {
+          logMessage(`Invalid account ID in triggerAI: ${req.data[0].account_rid}`);
+          throw new Error("Invalid account ID");
+        }
+        if (!this.orgDbSequelize) {
+          this.orgDbSequelize = await initOrgSequelize();
+        }
+        const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+          /\D/g,
+          ""
+        )}`;
+
+        const [projects]: any[] = await this.orgDbSequelize.query(
+          rawQueries.fetchProjectsByCase(
+            req.data[0].case_rid,
+            schemaName
+          )
+        );
+        const projectIds = Array.isArray(projects)
+          ? projects.map((p: any) => p.project_fiscal_rid)
+          : [];
+        payload.project_id = projectIds;
+      }
+       else {
         payload.company_id = req.data[0].account_rid;
         payload.project_id = req.data[0].project_fiscal_rid;
       }
@@ -2952,6 +3112,7 @@ export class InteractionService {
       // Check if the message was processed successfully
       logMessage(`Send result to topic: ${JSON.stringify(sendResult)}`);
       return {
+        statusCode: HttpStatus.SUCCESS,
         statusMessage: "RD Assessment Initiated",
         status: "success",
         data: null,
@@ -2959,6 +3120,7 @@ export class InteractionService {
     } catch (error) {
       logMessage(`Error in triggerAI: ${error}`);
       return {
+          statusCode: HttpStatus.FAILED,
         statusMessage: "Failed to process AI request",
         status: "error",
         data: null,
@@ -3684,4 +3846,34 @@ export class InteractionService {
       throw this.throwServiceError(err as Error);
     }
   }
+  async getAccountNumberByRid(accountRid: string): Promise<{
+    statusCode: number;
+    message: string;  
+    errorMessage?: string;
+    data?: { account_number: string };
+  }> {  
+    if(!this.mainDbSequelize) {
+      this.mainDbSequelize = await this.interactionModelService.getMainSequelize();
+    }
+    const [accountInfo]: any[] = await this.mainDbSequelize.query(
+      rawQueries.fetchAccountInfo(accountRid),
+      {
+        replacements: { rid: accountRid },
+        type: "SELECT"
+        
+      }
+    );
+    if (!accountInfo) {
+      return {
+        statusCode: HttpStatus.FAILED,
+        message: "Account not found",
+        errorMessage: "Invalid account RID",
+      };
+    } 
+    return {
+      statusCode: HttpStatus.SUCCESS,
+      message: "Account found",
+      data: { account_number: accountInfo.r_number },
+    };
+}
 }

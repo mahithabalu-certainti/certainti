@@ -13,4 +13,5 @@ router.post('/list/export', checkUserStatusMiddleware('imports_export'),
 controller.importListController.exportAllImportedData)
 router.get('/export/stagingFailure/:accountRid/:importRid/:entityType', checkUserStatusMiddleware('imports_view_edit'), controller.importListController.exportStagingFailureList)
 router.get('/export/loadFailure/:accountRid/:importRid/:entityType', checkUserStatusMiddleware('imports_view_edit'), controller.importListController.exportLoadFailureList)
+router.get('/export/warnings/:accountRid/:importRid/:entityType', checkUserStatusMiddleware('imports_view_edit'), controller.importListController.exportAllWarningList)
 export default router

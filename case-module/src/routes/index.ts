@@ -5,6 +5,9 @@ import caseManagementRoutes from "./caseManagementRoutes"
 import jurisdictionRoutes from "./jurisdictionRoutes";
 import historicalSubmissionRoutes from "./historicalSubmissionRoutes";
 import activitiesRoutes from "./activitiesRoutes";
+import projectResourceRoutes from "./projectResourceRoutes"
+import projectTaskRoutes from "./projectTaskRoutes"
+import projectRoutes from "./projectRoutes"
 import financialRDCreditRoutes from "./financialRDCreditRoutes";
 
 const routes: Router = Router();
@@ -33,6 +36,9 @@ routes.use("/caseManagement", caseManagementRoutes);
 routes.use("/activities", activitiesRoutes);
 routes.use("/jurisdictions", jurisdictionRoutes);
 routes.use("/historicalSubmission", historicalSubmissionRoutes);
+routes.use("/caseProjectResource", projectResourceRoutes);
+routes.use("/caseProjectTask", projectTaskRoutes);
+routes.use("/caseProject", projectRoutes);
 routes.use("/rd-credit", financialRDCreditRoutes);
 
 

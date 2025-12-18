@@ -1,0 +1,38 @@
+{
+  "name": "rule-builder-module",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon --watch src --exec ts-node src/index.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@azure/identity": "^4.8.0",
+    "@azure/keyvault-secrets": "^4.9.0",
+    "@types/body-parser": "^1.19.6",
+    "body-parser": "^2.2.1",
+    "dayjs": "^1.11.18",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "joi": "^18.0.2",
+    "nodemon": "^3.1.11",
+    "pg": "^8.16.3",
+    "sequelize": "^6.37.7",
+    "uuid": "^13.0.0",
+    "winston": "^3.19.0",
+    "@azure/web-pubsub": "^1.2.0",
+    "@microsoft/microsoft-graph-client": "^3.0.7"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.5",
+    "@types/node": "^24.10.1",
+    "@types/pg": "^8.15.6",
+    "@types/winston": "^2.4.4",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}

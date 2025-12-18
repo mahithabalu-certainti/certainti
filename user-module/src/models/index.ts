@@ -39,7 +39,9 @@ import { UserGroupEntityAccess } from "./UserGroupEntityAccessModel";
 import { PermissionObjectMapping } from "./permissionObjectMappingModel";
 import { UserGroupType } from "./userGroupTypesModel";
 import { UserGroupAccountMapping } from "./userGroupAccountMappingModel";
+import { Notification } from "./notificationModel";
 import { errorLog } from "../utils/helpers";
+import { NotificationStatus } from "./notificationStatusModel";
 
 
 export const models: {
@@ -81,6 +83,8 @@ export const models: {
   UserGroupEntityAccess:typeof UserGroupEntityAccess;
   UserGroupType:typeof UserGroupType;
   UserGroupAccountMapping:typeof UserGroupAccountMapping;
+  Notification:typeof Notification;
+  NotificationStatus:typeof NotificationStatus;
 } = {
   BusinessTeams: BusinessTeams,
   Department: Department,
@@ -119,7 +123,9 @@ export const models: {
   UserGroupMapping:UserGroupMapping,
   UserGroupEntityAccess:UserGroupEntityAccess,
   UserGroupType:UserGroupType,
-  UserGroupAccountMapping:UserGroupAccountMapping
+  UserGroupAccountMapping:UserGroupAccountMapping,
+  Notification:Notification,
+  NotificationStatus:NotificationStatus
 };
 
 export async function initModels() {
@@ -163,6 +169,9 @@ export async function initModels() {
     UserGroupEntityAccess.initialize(sequelize)
     UserGroupType.initialize(sequelize)
     UserGroupAccountMapping.initialize(sequelize)
+    NotificationStatus.initialize(sequelize)  
+    Notification.initialize(sequelize)
+    
   
     Object.values(models).forEach((model: any) => { 
       if (model.associate) { 
@@ -173,6 +182,7 @@ export async function initModels() {
     //await setupProfileSequence(sequelize);
     ///await setupUserSequence(sequelize);
   } catch (err) {
+    console.log(err)
     errorLog("Error loading models", (err as Error).message);
   }
 }

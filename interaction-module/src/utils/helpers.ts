@@ -186,7 +186,8 @@ export async function uploadToAzureBlob(
   file: Express.Multer.File,
   account_id: string,
   project_id: string,
-  interaction_id: string
+  interaction_id: string,
+  account_number: string
 ): Promise<{
   url: string;
   name: string;
@@ -196,7 +197,7 @@ export async function uploadToAzureBlob(
   const connectionString = await getSecret(
     process.env.AZURE_STORAGE_CONNECTION_STRING as string
   );
-  const containerName = "account";
+  const containerName = account_number.toLowerCase();
 
   const connString = connectionString;
   if (!connString)
@@ -205,7 +206,7 @@ export async function uploadToAzureBlob(
     BlobServiceClient.fromConnectionString(connectionString);
   const containerClient = blobServiceClient.getContainerClient(containerName);
   await containerClient.createIfNotExists();
-  const blobName = `${account_id}/${project_id}/${interaction_id}/attachements/${file.originalname}`;
+  const blobName = `${account_id}/${project_id}/${interaction_id}/attachments/${file.originalname}`;
   const blockBlobClient = containerClient.getBlockBlobClient(blobName);
   await blockBlobClient.uploadData(file.buffer, {
     blobHTTPHeaders: { blobContentType: file.mimetype },

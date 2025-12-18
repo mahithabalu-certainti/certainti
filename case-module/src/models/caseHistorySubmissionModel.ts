@@ -10,6 +10,8 @@ interface CaseHistorySubmissionAttributes {
   modified_by?: string;
   created_datetime?: Date;
   modified_datetime?: Date;
+  country_rid: string;
+  state_rid?: string;
   account_rid: string;
   fiscal_year: string;
   total_project: number;
@@ -19,6 +21,9 @@ interface CaseHistorySubmissionAttributes {
   total_qre: number;
   total_rd_credits: number;
   annual_gross_receipts?: number;
+  total_fte_cost?: number;
+  total_subcon_cost?: number;
+  total_nonlabor_cost?: number;
 }
 
 export interface CaseHistorySubmissionCreationAttributes
@@ -44,6 +49,11 @@ export class CaseHistorySubmission
   public total_qre!: number;
   public total_rd_credits!: number;
   public annual_gross_receipts?: number;
+  public country_rid!: string;
+  public state_rid?: string;
+  public total_fte_cost?: number;
+  public total_subcon_cost?: number;
+  public total_nonlabor_cost?: number;
 
   static initialize(
     sequelize: Sequelize,
@@ -58,12 +68,10 @@ export class CaseHistorySubmission
           ),
           primaryKey: true,
         },
-        r_number: {
+         r_number: {
           type: DataTypes.STRING(20),
-          allowNull: false,
-          defaultValue: Sequelize.literal(
-            `'CHS-' || LPAD(nextval('"${schemaName}".case_history_submission_seq')::text, 10, '0')`
-          ),
+          allowNull: true,
+          unique: true,
         },
         eid: {
           type: DataTypes.STRING(120),
@@ -89,6 +97,26 @@ export class CaseHistorySubmission
         account_rid: {
           type: DataTypes.STRING(50),
           allowNull: false,
+        },
+        country_rid: {
+          type: DataTypes.STRING(50),
+          allowNull: false, 
+        },
+        state_rid: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
+        },
+        total_fte_cost: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+        },
+        total_subcon_cost: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+        },
+        total_nonlabor_cost: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
         },
         fiscal_year: {
           type: DataTypes.INTEGER,
@@ -153,6 +181,9 @@ export async function setupCaseHistorySubmissionSequence(
     await sequelize.query(
       `CREATE SEQUENCE IF NOT EXISTS "${schemaName}".case_history_submission_seq START 1`
     );
+
+    await sequelize.query(`ALTER TABLE "${schemaName}".cases
+      ALTER COLUMN r_number SET DEFAULT 'CHS-' || LPAD(nextval('"${schemaName}".case_history_submission_seq')::text, 10, '0')`);
 
     logMessage("Case history submission sequence setup complete");
   } catch (error) {

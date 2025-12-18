@@ -1864,12 +1864,15 @@ async function uploadAttachmentToAzure(
       );
       return;
     }
+    const accountInfo =  await interactionService.getAccountNumberByRid(value?.account_rid);
+    const accountNumber = accountInfo.data?.account_number || "account";
     if (req.file) {
       let fileInfo = await uploadToAzureBlob(
         req.file,
         value?.account_rid,
         value?.project_rid,
-        value?.interaction_rid
+        value?.interaction_rid,
+        accountNumber
       );
       handleSuccessResponse(res, {
         fileName: fileInfo.name,
@@ -2368,6 +2371,15 @@ async function triggerAIAndPassResponse(req: Request, res: Response) {
       return;
     }
     const result = await interactionService.triggerAI(data);
+    if(result.statusCode != HttpStatus.SUCCESS) {
+       return res.status(HttpStatus.FAILED).json({
+      statusCode: HttpStatus.FAILED,
+      statusCodeValue: HttpStatus.FAILED_MESSAGE,
+      statusMessage: result.statusMessage,
+      data: result.data,
+    });
+    }
+  
     return res.status(HttpStatus.SUCCESS).json({
       statusCode: HttpStatus.SUCCESS,
       statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
