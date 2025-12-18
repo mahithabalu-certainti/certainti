@@ -1613,7 +1613,7 @@ class ActivitySchemaService {
             Op.eq,
             taskReq.task_name.toLowerCase()
           ),
-          { activity_type: "task" },
+          { activity_type: "Task" },
         ],
       },
     });
@@ -1634,7 +1634,7 @@ class ActivitySchemaService {
             taskReq.task_name.toLowerCase()
           ),
           { rid: { [Op.ne]: taskReq.task_rid } },
-          { activity_type: "task" },
+          { activity_type: "Task" },
         ],
       },
     });
