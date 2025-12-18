@@ -154,6 +154,15 @@ export const getGeoBasedRuleColumns = (
       ),
     },
     {
+      id: 'created_user_name',
+      sortId: 'created_user_name',
+      label: 'Created By',
+      sortable: true,
+      hide:
+        !permissionMap?.['created_by']?.read &&
+        !permissionMap?.['created_by']?.edit,
+    },
+    {
       id: 'created_datetime',
       sortId: 'created_datetime',
       label: 'Created On',
@@ -168,6 +177,15 @@ export const getGeoBasedRuleColumns = (
           : '-',
     },
     {
+      id: 'modified_user_name',
+      sortId: 'modified_user_name',
+      label: 'Updated By',
+      sortable: true,
+      hide:
+        !permissionMap?.['modified_by']?.read &&
+        !permissionMap?.['modified_by']?.edit,
+    },
+    {
       id: 'modified_datetime',
       sortId: 'modified_datetime',
       label: 'Updated On',
@@ -180,23 +198,5 @@ export const getGeoBasedRuleColumns = (
         row.modified_datetime
           ? formatDateToYYYYMMDDWithTime(row.modified_datetime)
           : '-',
-    },
-    {
-      id: 'created_user_name',
-      sortId: 'created_user_name',
-      label: 'Created By',
-      sortable: true,
-      hide:
-        !permissionMap?.['created_by']?.read &&
-        !permissionMap?.['created_by']?.edit,
-    },
-    {
-      id: 'modified_user_name',
-      sortId: 'modified_user_name',
-      label: 'Updated By',
-      sortable: true,
-      hide:
-        !permissionMap?.['modified_by']?.read &&
-        !permissionMap?.['modified_by']?.edit,
     },
   ];

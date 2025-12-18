@@ -189,8 +189,8 @@ export const GeoBasedRuleFormFieldsData = (
                 errorMessage: 'Configuration Name must be more than 2 characters long',
               },
               {
-                regex: REGEX_PATTERNS.MAX_255,
-                errorMessage: 'Configuration Name must be within 255 characters',
+                regex: REGEX_PATTERNS.MAX_150,
+                errorMessage: 'Configuration Name must be within 150 characters',
               },
             ],
             hide:
