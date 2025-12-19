@@ -32,7 +32,7 @@ const projectService = services.projectService;
 async function projectById(req: Request, res: Response): Promise<void> {
     const methodName = "Project Details";
     try {
-        const { accountId, projectId, caseId } = req.params;
+        const { accountId, projectId, caseId } = req.query;
         logMessage(`Project Details - Request received for Account ID: ${accountId}, Project ID: ${projectId}`);
 
         const project = await projectService.projectById(accountId as string, projectId as string, caseId as string);

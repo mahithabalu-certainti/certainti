@@ -323,7 +323,7 @@ export default class TaskSummaryGraphqlServices {
           if (updateResult.statusCode !== HttpStatus.SUCCESS) {
             return {
               statusCode: updateResult.statusCode,
-              statusMessage: updateResult.message || updateResult.errorMessage || STATUS_MESSAGE.updateFailed,
+              statusMessage: updateResult.errorMessage || STATUS_MESSAGE.updateFailed,
               data: null,
             };
           }

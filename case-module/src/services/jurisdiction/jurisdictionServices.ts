@@ -193,7 +193,6 @@ export class JurisdictionService {
         rawQueries.getActiveStatusId(),
         { type: "SELECT" }
       );
-      configRequest.status_rid = activeStatusRid.rid;
       let duplicate = false;
       if (configRequest.config_name) {
         const existingConfigName = await JurisdictionConfig.findOne({
@@ -209,7 +208,7 @@ export class JurisdictionService {
           return {
             statusCode: HttpStatus.FAILED,
             message: STATUS_MESSAGE.configUpdateFailed,
-            errorMessage: `A config with name ${configRequest.config_name} already exists.Please use a different name.`,
+            errorMessage: `A configuration with name ${configRequest.config_name} already exists.Please use a different name.`,
           };
         }
       }
@@ -225,23 +224,23 @@ export class JurisdictionService {
         });
       }
       // Duplicate check for platform config
-      if (!duplicate && configRequest.is_federal && configRequest.platformConfig  && configRequest.effective_start_date) {
-        duplicate = await this.hasOverlapConfig({
-          JurisdictionConfig,
-          groupId: configRequest.platform_config_group_rid,
-          statusRid: activeStatusRid.rid,
-          startDate: configRequest.effective_start_date,
-          endDate: configRequest.effective_end_date,
-          excludeRid: configRequest.config_rid,
-          isUpdate: true
-        });
-      }
+      // if (!duplicate && configRequest.is_federal && configRequest.platformConfig  && configRequest.effective_start_date) {
+      //   duplicate = await this.hasOverlapConfig({
+      //     JurisdictionConfig,
+      //     groupId: configRequest.platform_config_group_rid,
+      //     statusRid: activeStatusRid.rid,
+      //     startDate: configRequest.effective_start_date,
+      //     endDate: configRequest.effective_end_date,
+      //     excludeRid: configRequest.config_rid,
+      //     isUpdate: true
+      //   });
+      // }
       if (duplicate) {
         return {
           statusCode: HttpStatus.FAILED,
           message: STATUS_MESSAGE.configUpdateFailed,
           errorMessage:
-            "Duplicate platform config exists for the same effective dates wih active status.",
+            "Duplicate  configuration exists for the same effective dates wih active status.",
         };
       }
       const updatedConfig =
@@ -279,7 +278,6 @@ export class JurisdictionService {
         rawQueries.getActiveStatusId(),
         { type: "SELECT" }
       );
-      configRequest.status_rid = activeStatusRid.rid;
       let duplicate = false;
       if (configRequest.config_name) {
         const existingConfigName = await JurisdictionConfig.findOne({
@@ -293,7 +291,7 @@ export class JurisdictionService {
           return {
             statusCode: HttpStatus.FAILED,
             message: HttpStatus.FAILED_MESSAGE,
-            errorMessage: `A config with name ${configRequest.config_name} already exists.Please use a different name.`,
+            errorMessage: `A configuration with name ${configRequest.config_name} already exists.Please use a different name.`,
           };
         }
       }
@@ -325,13 +323,14 @@ export class JurisdictionService {
           statusCode: HttpStatus.FAILED,
           message: STATUS_MESSAGE.configCreationFailed,
           errorMessage:
-            "Duplicate config exists for the same effective dates and active status.",
+            "Duplicate configuration exists for the same effective dates and active status.",
         };
       }
       const updatedConfig =
         await this.jurisdictionSchemaService.createJurisdictionConfig(
           configRequest
         );
+        
       return {
         statusCode: HttpStatus.SUCCESS,
         message: STATUS_MESSAGE.configCreatedSuccess,

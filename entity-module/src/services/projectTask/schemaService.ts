@@ -1928,7 +1928,7 @@ export class ProjectTaskSchemaService {
           ),
           "total_cost",
         ],
-        [Sequelize.fn("COUNT", Sequelize.col("ProjectTask.rid")), "count"],
+        [Sequelize.fn("COUNT", Sequelize.col("CaseProjectTask.rid")), "count"],
       ],
       include: [
         {
@@ -1945,7 +1945,7 @@ export class ProjectTaskSchemaService {
         region_rid,
         case_rid: caseMapping.case_rid,
       },
-      group: ["resource.resource_type_rid", "ProjectTask.region_rid"],
+      group: ["resource.resource_type_rid", "CaseProjectTask.region_rid"],
       raw: true,
       transaction,
     });
