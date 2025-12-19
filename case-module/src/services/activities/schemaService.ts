@@ -49,15 +49,26 @@ import CaseSchemaService from "../cases/schemaService";
 import { sendEmailWithAttachment } from "../emailService";
 import { scheduleTeamsMeetingUtil } from "../../utils/teamsMeetingUtil";
 import moment from "moment";
+import { ChecklistSchemaService } from "../cases/caseChecklist/checklistSchemaService";
+import { CaseTaskSchemaService } from "../cases/caseTask/caseTaskSchemaService";
+import { HelperMethods } from "../cases/helperMethods";
 class ActivitySchemaService {
   private orgDbSequelize: Sequelize | null = null;
   private mainDbSequelize: Sequelize | null = null;
   private caseModelService: CaseModelService;
   private caseSchemaService: CaseSchemaService;
+  private caseChecklistSchemaService : ChecklistSchemaService
+  private caseTaskSchemaService : CaseTaskSchemaService
+  private helperMethod : HelperMethods
 
   constructor() {
     this.caseModelService = new CaseModelService();
     this.caseSchemaService = new CaseSchemaService();
+    this.caseChecklistSchemaService = new ChecklistSchemaService()
+    this.caseTaskSchemaService = new CaseTaskSchemaService()
+    this.helperMethod = new HelperMethods(
+      this.caseModelService
+    );
   }
 
   async fetchValidAccountNumberById(accountId: string) {
@@ -320,7 +331,7 @@ class ActivitySchemaService {
                   })
                   }
                 }
-                const response  = await this.caseSchemaService.fetchChecklistTemplateDetailsById(taskRequest.checklist_rid);
+                const response  = await this.helperMethod.fetchChecklistTemplateDetailsById(taskRequest.checklist_rid);
                 response.checklist_items.map((item:any) => item.action_type  = 'add');
                 let caseRequest : any = {
                   account_rid: taskRequest.account_rid!,
@@ -336,7 +347,7 @@ class ActivitySchemaService {
                 };
                 const checklistResponse = await this.createCheckListForTask(accountNumber, caseRequest, transaction);
                 if(checklistResponse)
-                  await this.caseSchemaService.manageCheckListItems(accountNumber,caseRequest,checklistResponse.rid, transaction);
+                  await this.helperMethod.manageCheckListItems(accountNumber,caseRequest,checklistResponse.rid, transaction);
                 }
             }
       // Combine update: include modified_by and modified_datetime in the same update
@@ -413,7 +424,7 @@ class ActivitySchemaService {
               );
         if(taskRequest.tags.length > 0) {
             for(let d of taskRequest.tags) {
-              await this.caseSchemaService.createOrUpdateTags(
+              await this.caseTaskSchemaService.createOrUpdateTags(
             taskRequest.task_rid,
             taskRequest.account_rid!,
             "",
@@ -706,7 +717,7 @@ class ActivitySchemaService {
 
         // 🔹 Fetch all project_resources under projects in one call
         const projectResources =
-          await this.caseSchemaService.getProjectResourcesByProjectIds(
+          await this.helperMethod.getProjectResourcesByProjectIds(
             accountNumber,
             projectIds
           );
@@ -723,7 +734,7 @@ class ActivitySchemaService {
 
         // 🔹 Fetch all project_tasks under projects in one call
         const projectTasks =
-          await this.caseSchemaService.getProjectTasksByProjectIds(
+          await this.helperMethod.getProjectTasksByProjectIds(
             accountNumber,
             projectIds
           );
@@ -751,7 +762,7 @@ class ActivitySchemaService {
 
         // 🔹 Fetch all resource_costs in one call
         const resourceCosts =
-          await this.caseSchemaService.getResourceCostsByResourceIds(
+          await this.helperMethod.getResourceCostsByResourceIds(
             accountNumber,
             resourceIds
           );
@@ -767,7 +778,7 @@ class ActivitySchemaService {
 
         // 🔹 Fetch all resource_skills in one call
         const resourceSkills =
-          await this.caseSchemaService.getResourceSkillsByResourceIds(
+          await this.helperMethod.getResourceSkillsByResourceIds(
             accountNumber,
             resourceIds
           );
@@ -795,7 +806,7 @@ class ActivitySchemaService {
           [entityId]
         );
         allActivities.push(...accountAttachments);
-         const cases = await this.caseSchemaService.getCasesByAccountId(
+         const cases = await this.helperMethod.getCasesByAccountId(
           accountNumber,
           entityId
         );
@@ -803,7 +814,7 @@ class ActivitySchemaService {
         const caseAttachments = await fetchAttachments(Activities, "case", caseIds);
         allActivities.push(...caseAttachments);
 
-        const projects = await this.caseSchemaService.getProjectsByAccountId(
+        const projects = await this.helperMethod.getProjectsByAccountId(
           accountNumber,
           entityId,accessibleIds
         );
@@ -824,7 +835,7 @@ class ActivitySchemaService {
           allActivities.push(...projectChildAttachments);
         }
 
-        const resources = await this.caseSchemaService.getResourcesByAccountId(
+        const resources = await this.helperMethod.getResourcesByAccountId(
           accountNumber,
           entityId
         );
@@ -864,12 +875,12 @@ class ActivitySchemaService {
         );
         allActivities.push(...projectResourceAttachments);
         const projectResource =
-          await this.caseSchemaService.fetchProjectResourceById(
+          await this.helperMethod.fetchProjectResourceById(
             accountNumber,
             entityId
           );
         const projectTasks =
-          await this.caseSchemaService.getProjectTasksByProjectIds(
+          await this.helperMethod.getProjectTasksByProjectIds(
             accountNumber,
             [(projectResource as any)?.project_fiscal_rid]
           );
@@ -941,7 +952,7 @@ class ActivitySchemaService {
         allActivities = allActivities.filter((d: any) => d != null);
       }
       const { displayNames } =
-        await this.caseSchemaService.getAttachmentDisplayNames(
+        await this.helperMethod.getAttachmentDisplayNames(
           allActivities,
           accountNumber
         );
@@ -1067,7 +1078,7 @@ class ActivitySchemaService {
       const getFiscalYearForChecklist = async (attachment: any) => {
         // CASE: fetch from Case model
         if (attachment.attachment_level === "case" && attachment.attach_to) {
-          const caseData = await this.caseSchemaService.fetchCaseById(
+          const caseData = await this.helperMethod.fetchCaseById(
             accountNumber,
             attachment.attach_to
           );
@@ -1079,7 +1090,7 @@ class ActivitySchemaService {
         }
         // PROJECT: fetch from project info (project fiscal_year)
         if (attachment.attachment_level === "project" && attachment.attach_to) {
-          const project = await this.caseSchemaService.fetchProjectInfoById(
+          const project = await this.helperMethod.fetchProjectInfoById(
             accountNumber,
             attachment.attach_to
           );
@@ -1091,14 +1102,14 @@ class ActivitySchemaService {
           attachment.attach_to
         ) {
           let projectResource: any =
-            await this.caseSchemaService.fetchProjectResourceById(
+            await this.helperMethod.fetchProjectResourceById(
               accountNumber,
               attachment.attach_to
             );
           if (Array.isArray(projectResource))
             projectResource = projectResource[0];
           if (projectResource && projectResource.project_fiscal_rid) {
-            const project = await this.caseSchemaService.fetchProjectInfoById(
+            const project = await this.helperMethod.fetchProjectInfoById(
               accountNumber,
               projectResource.project_fiscal_rid
             );
@@ -1112,13 +1123,13 @@ class ActivitySchemaService {
           attachment.attach_to
         ) {
           let projectTask: any =
-            await this.caseSchemaService.fetchProjectTaskById(
+            await this.helperMethod.fetchProjectTaskById(
               accountNumber,
               attachment.attach_to
             );
           if (Array.isArray(projectTask)) projectTask = projectTask[0];
           if (projectTask && projectTask.project_fiscal_rid) {
-            const project = await this.caseSchemaService.fetchProjectInfoById(
+            const project = await this.helperMethod.fetchProjectInfoById(
               accountNumber,
               projectTask.project_fiscal_rid
             );
@@ -2399,7 +2410,7 @@ class ActivitySchemaService {
       activityRid
     );
 
-    const userInfo = await this.caseSchemaService.insertUserDetails(
+    const userInfo = await this.helperMethod.insertUserDetails(
       emailDetails.created_by ?? "",
       emailDetails.modified_by ?? ""
     );
@@ -2500,7 +2511,7 @@ class ActivitySchemaService {
       activityRid
     );
 
-    const userInfo = await this.caseSchemaService.insertUserDetails(
+    const userInfo = await this.helperMethod.insertUserDetails(
       emailDetails.created_by ?? "",
       emailDetails.modified_by ?? ""
     );
@@ -2612,7 +2623,7 @@ class ActivitySchemaService {
       activityRid
     );
 
-    const userInfo = await this.caseSchemaService.insertUserDetails(
+    const userInfo = await this.helperMethod.insertUserDetails(
       emailDetails.created_by ?? "",
       emailDetails.modified_by ?? ""
     );
@@ -2756,46 +2767,46 @@ class ActivitySchemaService {
     } else if (attachmentLevel === "account" && attachTo) {
       return emailDetails?.fiscal_year ?? null;
     } else if (attachmentLevel === "project" && attachTo) {
-      const project = await this.caseSchemaService.fetchProjectInfoById(
+      const project = await this.helperMethod.fetchProjectInfoById(
         accountNumber,
         attachTo
       );
       return project?.fiscal_year ?? null;
     } else if (attachmentLevel === "project_resource" && attachTo) {
       let projectResource: any =
-        await this.caseSchemaService.fetchProjectResourceById(
+        await this.helperMethod.fetchProjectResourceById(
           schemaName,
           attachTo
         );
       if (Array.isArray(projectResource)) projectResource = projectResource[0];
       if (projectResource && projectResource.project_fiscal_rid) {
-        const project = await this.caseSchemaService.fetchProjectInfoById(
+        const project = await this.helperMethod.fetchProjectInfoById(
           accountNumber,
           projectResource.project_fiscal_rid
         );
         return project?.fiscal_year ?? null;
       }
     } else if (attachmentLevel === "project_task" && attachTo) {
-      let projectTask: any = await this.caseSchemaService.fetchProjectTaskById(
+      let projectTask: any = await this.helperMethod.fetchProjectTaskById(
         accountNumber,
         attachTo
       );
       if (Array.isArray(projectTask)) projectTask = projectTask[0];
       if (projectTask && projectTask.project_fiscal_rid) {
-        const project = await this.caseSchemaService.fetchProjectInfoById(
+        const project = await this.helperMethod.fetchProjectInfoById(
           accountNumber,
           projectTask.project_fiscal_rid
         );
         return project?.fiscal_year ?? null;
       }
     } else if (attachmentLevel === "resource" && attachTo) {
-      let resource: any = await this.caseSchemaService.fetchResourceById(
+      let resource: any = await this.helperMethod.fetchResourceById(
         accountNumber,
         attachTo
       );
       if (Array.isArray(resource)) resource = resource[0];
       if (resource && resource.project_fiscal_rid) {
-        const project = await this.caseSchemaService.fetchProjectInfoById(
+        const project = await this.helperMethod.fetchProjectInfoById(
           accountNumber,
           resource.project_fiscal_rid
         );
@@ -2803,19 +2814,19 @@ class ActivitySchemaService {
       }
     } else if (attachmentLevel === "resource_cost" && attachTo) {
       let resourceCost: any =
-        await this.caseSchemaService.fetchResourceCostById(
+        await this.helperMethod.fetchResourceCostById(
           accountNumber,
           attachTo
         );
       if (Array.isArray(resourceCost)) resourceCost = resourceCost[0];
       if (resourceCost && resourceCost.resource_rid) {
-        let resource: any = await this.caseSchemaService.fetchResourceById(
+        let resource: any = await this.helperMethod.fetchResourceById(
           accountNumber,
           resourceCost.resource_rid
         );
         if (Array.isArray(resource)) resource = resource[0];
         if (resource && resource.project_fiscal_rid) {
-          const project = await this.caseSchemaService.fetchProjectInfoById(
+          const project = await this.helperMethod.fetchProjectInfoById(
             accountNumber,
             resource.project_fiscal_rid
           );
@@ -2824,19 +2835,19 @@ class ActivitySchemaService {
       }
     } else if (attachmentLevel === "resource_skill" && attachTo) {
       let resourceSkill: any =
-        await this.caseSchemaService.fetchResourceSkillById(
+        await this.helperMethod.fetchResourceSkillById(
           accountNumber,
           attachTo
         );
       if (Array.isArray(resourceSkill)) resourceSkill = resourceSkill[0];
       if (resourceSkill && resourceSkill.resource_rid) {
-        let resource: any = await this.caseSchemaService.fetchResourceById(
+        let resource: any = await this.helperMethod.fetchResourceById(
           accountNumber,
           resourceSkill.resource_rid
         );
         if (Array.isArray(resource)) resource = resource[0];
         if (resource && resource.project_fiscal_rid) {
-          const project = await this.caseSchemaService.fetchProjectInfoById(
+          const project = await this.helperMethod.fetchProjectInfoById(
             accountNumber,
             resource.project_fiscal_rid
           );

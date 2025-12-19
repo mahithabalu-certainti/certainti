@@ -51,6 +51,9 @@ import { CaseManagementSchemaService } from "../casesManagement/schemaService";
 
 import ActivitySchemaService from "./schemaService";
 import CaseSchemaService from "../cases/schemaService";
+import { CaseTaskSchemaService } from "../cases/caseTask/caseTaskSchemaService";
+import { ChecklistSchemaService } from "../cases/caseChecklist/checklistSchemaService";
+import { HelperMethods } from "../cases/helperMethods";
 export class ActivityService {
   private caseModelService: CaseModelService; // Assuming this is defined somewhere in your code
   private caseManagementService: CaseManagementSchemaService;
@@ -59,6 +62,9 @@ export class ActivityService {
   private logger: Logger;
   private orgDbSequelize: Sequelize | null = null;
   private mainDbSequelize: Sequelize | null = null;
+  private caseTaskSchemaService : CaseTaskSchemaService
+  private checklistSchemaService : ChecklistSchemaService
+  private helperMethod : HelperMethods
 
   constructor(logger: Logger) {
     this.logger = logger;
@@ -66,6 +72,11 @@ export class ActivityService {
     this.caseManagementService = new CaseManagementSchemaService();
     this.activitySchemaService = new ActivitySchemaService();
     this.caseSchemaService = new CaseSchemaService();
+    this.caseTaskSchemaService = new CaseTaskSchemaService()
+    this.checklistSchemaService = new ChecklistSchemaService()
+    this.helperMethod = new HelperMethods(
+      this.caseModelService
+    );
   }
 
   private async getMainDb() {
@@ -163,13 +174,13 @@ export class ActivityService {
           checklist_rid: taskRequest.checklist_rid,
         };
 
-        const checklistResponse = await this.caseSchemaService.createCheckList(
+        const checklistResponse = await this.checklistSchemaService.createCheckList(
           accountNumber,
           caseRequest,
           transaction
         );
         const checklistItems =
-          await this.caseSchemaService.manageCheckListItems(
+          await this.helperMethod.manageCheckListItems(
             accountNumber,
             caseRequest,
             checklistResponse.rid,
@@ -181,7 +192,7 @@ export class ActivityService {
           rawQueries.getActiveStatusId()
         );
         for (let d of taskRequest.tags) {
-          await this.caseSchemaService.createOrUpdateTags(
+          await this.caseTaskSchemaService .createOrUpdateTags(
             taskResponse.rid,
             taskRequest.account_rid!,
             "",
@@ -527,7 +538,7 @@ export class ActivityService {
         };
       }
       let isSubscriptionCreated = false;
-        const accountData = await this.caseSchemaService.fetchAccountById(accountRid);
+        const accountData = await this.helperMethod.fetchAccountById(accountRid);
         let accountRNumber = accountData.r_number;
 
       let childRNumber = await this.caseSchemaService.fetchParentAccount(
@@ -584,7 +595,7 @@ export class ActivityService {
         };
       }
       let isSubscriptionCreated = false;
-        const accountData = await this.caseSchemaService.fetchAccountById(accountRid);
+        const accountData = await this.helperMethod.fetchAccountById(accountRid);
         let accountRNumber = accountData.r_number;
 
       let childRNumber = await this.caseSchemaService.fetchParentAccount(
