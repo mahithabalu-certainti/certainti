@@ -175,7 +175,7 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
               {rule.trigger?.description}
             </div>
 
-            <div className='min-h-[calc(100vh-330px)]  max-h-[calc(100vh-330px)] overflow-y-auto p-6'>
+            <div className='min-h-[calc(100vh-320px)]  max-h-[calc(100vh-320px)] overflow-y-auto p-6'>
               <ConditionManager
                 conditionListData={apiData.conditionListData}
                 isLoadingConditionTypes={apiData.isLoadingConditionTypes}
@@ -577,9 +577,10 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
             {renderStepContent()}
 
             {/* Navigation Buttons */}
-            {(currentStep === 'conditions' || currentStep === 'actions') && (
-              <div className='border-t border-gray-200 px-6 py-4'>
-                <div className='flex justify-end items-center gap-3'>
+            <div className='border-t border-gray-200 px-6 py-4'>
+              <div className='flex justify-end items-center gap-3'>
+                {/* Back Button - Show only on conditions and actions steps */}
+                {currentStep !== 'trigger' && (
                   <TextButton
                     label={
                       currentStep === 'conditions'
@@ -594,23 +595,28 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
                       fontWeight: 400,
                     }}
                   />
+                )}
 
-                  {currentStep !== 'actions' && (
-                    <TextButton
-                      label={'Next to Actions'}
-                      onClick={handleNext}
-                      disabled={isNextButtonDisabled()}
-                      sx={{
-                        width: '110px',
-                        minWidth: '110px',
-                        fontSize: '12px',
-                        fontWeight: 400,
-                      }}
-                    />
-                  )}
-                </div>
+                {/* Next Button - Show on trigger and conditions steps */}
+                {currentStep !== 'actions' && (
+                  <TextButton
+                    label={
+                      currentStep === 'trigger'
+                        ? 'Next to Conditions'
+                        : 'Next to Actions'
+                    }
+                    onClick={handleNext}
+                    disabled={isNextButtonDisabled()}
+                    sx={{
+                      width: '135px',
+                      minWidth: '135px',
+                      fontSize: '12px',
+                      fontWeight: 400,
+                    }}
+                  />
+                )}
               </div>
-            )}
+            </div>
           </div>
         </div>
       )}
