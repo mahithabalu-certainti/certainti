@@ -484,7 +484,7 @@ export default class TaskSummaryGraphqlServices {
         created_datetime: latestData.created_datetime,
         modified_datetime: latestData.modified_datetime,
         attach_to_name: latestData.attach_to_name,
-
+        account_status_name: latestData.account_status_name,
         created_by_name: latestData.created_by_name,
         modified_by_name: latestData.modified_by_name,
         account_name: latestData.account_name,

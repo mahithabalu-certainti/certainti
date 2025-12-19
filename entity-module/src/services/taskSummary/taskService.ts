@@ -1176,8 +1176,6 @@ export class TaskService {
         "Updated On": "Updated On"
       };
 
-      console.log("yoki tasks", tasks);
-
       // Map tasks to export format
       tasks = tasks.map((task) => {
         const rawMapped = this.mapTaskToExportFormat(task, timezone, flag);
@@ -1191,8 +1189,6 @@ export class TaskService {
         }
         return filtered;
       }) as typeof tasks;
-
-      console.log("yoki tasks", tasks);
 
       return {
         statusCode: HttpStatus.SUCCESS,
