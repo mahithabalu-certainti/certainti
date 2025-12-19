@@ -34,9 +34,13 @@ const BUTTON_STYLES = {
 
 interface AccountsProps {
   onSelectionChange?: (selectedIds: string[]) => void;
+  initialSelectedIds?: string[];
 }
 
-export const Accounts: React.FC<AccountsProps> = ({ onSelectionChange }) => {
+export const Accounts: React.FC<AccountsProps> = ({ 
+  onSelectionChange,
+  initialSelectedIds 
+}) => {
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>();
   const [expandChild, setExpandChild] = useState<boolean>(false);
   const [order, setOrder] = useState<'asc' | 'desc'>('asc');
@@ -238,6 +242,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onSelectionChange }) => {
           expandChild={expandChild}
           searchValue={searchText}
           onSelectionChange={onSelectionChange}
+          initialSelectedIds={initialSelectedIds}
         />
       </div>
     </div>

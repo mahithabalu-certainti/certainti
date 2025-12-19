@@ -10,6 +10,7 @@ import {
   ConditionListResponse,
   CreateRuleMapPayload,
   CreateRulePayload,
+  GetRuleMapDetailsPayload,
   RuleCategoryFieldsPayload,
   RuleCategoryFieldsResponse,
   RuleDetails,
@@ -18,6 +19,7 @@ import {
   RuleFieldOperatorsResponse,
   RuleFieldValuesPayload,
   RuleFieldValuesResponse,
+  RuleMapDetails,
   ScopeEventListPayload,
   ScopeEventListResponse,
   ScopeListResponse,
@@ -411,5 +413,51 @@ export const createRuleMap = async (
 export const useCreateRuleMap = () => {
   return useMutation<CommonApiResponse, Error, CreateRuleMapPayload>({
     mutationFn: (body) => createRuleMap({ ...body }),
+  });
+};
+
+// ---------- Get Rule Map Details ----------
+export const getRuleMapDetailsUrl = (): string => {
+  return `/api/workflow/getRuleMapDetails`;
+};
+
+export const getRuleMapDetails = async (
+  body: GetRuleMapDetailsPayload
+): Promise<RuleMapDetails> => {
+  try {
+    // TODO: Replace with actual API call when backend is ready
+    // const { data } = await ruleBuilderServiceApi.post<GetRuleMapDetailsResponse>(
+    //   getRuleMapDetailsUrl(),
+    //   body
+    // );
+    // return data.data;
+
+    // Mock data for now
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({
+          scope_type_rid: 'D001-1a7c9f4e-2d8b-4a36-9e51-0b3d6c5f8421',
+          rule_rid: body.rule_rid,
+          apply_type: 'INDIVIDUAL',
+          scope_entity_rid: ['D001-7023ddcb-4b2b-49c6-90e3-e846fd7df70b'],
+        });
+      }, 1500); // Simulate network delay
+    });
+  } catch (error) {
+    console.error('Error fetching rule map details:', error);
+    throw error;
+  }
+};
+
+export const useGetRuleMapDetails = (
+  ruleRid: string,
+  enabled: boolean
+): UseQueryResult<RuleMapDetails | undefined, Error> => {
+  return useQuery<RuleMapDetails | undefined, Error>({
+    queryKey: ['rule-map-details', ruleRid],
+    queryFn: () => getRuleMapDetails({ rule_rid: ruleRid }),
+    retry: 0,
+    gcTime: 0,
+    enabled: !!ruleRid && enabled,
   });
 };

@@ -22,6 +22,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
   expandChild,
   searchValue,
   onSelectionChange,
+  initialSelectedIds,
 }) => {
   const apiOrder = order.toUpperCase() as 'ASC' | 'DESC';
   const [limit, setLimit] = useState<number>(100);
@@ -128,6 +129,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
         // Selection
         selectable={true}
         onSelectionChange={handleSelectionChange}
+        initialSelectedIds={initialSelectedIds}
         // Pagination
         rowsPerPageOptions={[25, 50, 100]}
         rowsPerPage={limit}

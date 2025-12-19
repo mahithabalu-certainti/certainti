@@ -18,6 +18,7 @@ interface ITaskTemplateTableProps {
   refreshTrigger?: number;
   onSelectionChange?: (selectedIds: string[]) => void;
   setTotalCount: (count: number) => void;
+  initialSelectedIds?: string[];
 }
 
 export const TaskTemplateTable: React.FC<ITaskTemplateTableProps> = ({
@@ -27,6 +28,7 @@ export const TaskTemplateTable: React.FC<ITaskTemplateTableProps> = ({
   refreshTrigger,
   onSelectionChange,
   setTotalCount,
+  initialSelectedIds,
 }) => {
   const [taskTemplateList, setTaskTemplateList] = useState<TaskTemplateList[]>(
     []
@@ -128,6 +130,7 @@ export const TaskTemplateTable: React.FC<ITaskTemplateTableProps> = ({
         onSelectionChange={(selectedIds) => {
           onSelectionChange?.(selectedIds);
         }}
+        initialSelectedIds={initialSelectedIds}
       />
     </>
   );

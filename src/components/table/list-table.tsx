@@ -70,6 +70,7 @@ const ListTable = <T extends RowData>({
   hideHeaderSelect = false,
   selectable = false,
   onSelectionChange,
+  initialSelectedIds,
   // Actions
   actionWidth = 100,
   actionDisplayMode = 'dropdown',
@@ -125,6 +126,16 @@ const ListTable = <T extends RowData>({
     () => columns.filter((column) => !column.hide),
     [columns]
   );
+
+  // Initialize selected rows from initialSelectedIds
+  useEffect(() => {
+    if (initialSelectedIds && initialSelectedIds.length > 0) {
+      const initialSet = new Set(initialSelectedIds);
+      setSelectedRows(initialSet);
+      onSelectionChange?.(Array.from(initialSet));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialSelectedIds]); // Only run when initialSelectedIds changes
 
   // handle initial expansion
   useEffect(() => {
@@ -989,7 +1000,7 @@ const ListTable = <T extends RowData>({
                       ...(typeof column.sx === 'function'
                         ? filterOutBackground(column.sx())
                         : column.sx || {}),
-                        textAlign: 'left',
+                      textAlign: 'left',
                       ...(column.sticky
                         ? {
                             left:
@@ -1024,7 +1035,7 @@ const ListTable = <T extends RowData>({
                       ...(typeof column.sx === 'function'
                         ? filterOutBackground(column.sx())
                         : column.sx || {}),
-                        textAlign: 'left',
+                      textAlign: 'left',
                       ...(column.sticky
                         ? {
                             left:

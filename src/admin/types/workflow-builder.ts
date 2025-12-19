@@ -304,3 +304,22 @@ export interface CreateRuleMapPayload {
   scope_entity_rid: string[];
   created_by: string;
 }
+
+// ---------- Get Rule Map Details ----------
+export interface GetRuleMapDetailsPayload {
+  rule_rid: string;
+}
+
+export interface RuleMapDetails {
+  scope_type_rid: string;
+  rule_rid: string;
+  apply_type: ApplyType;
+  scope_entity_rid: string[];
+}
+
+export interface GetRuleMapDetailsResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: RuleMapDetails;
+}

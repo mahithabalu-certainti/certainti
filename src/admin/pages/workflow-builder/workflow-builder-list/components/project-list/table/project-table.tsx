@@ -20,6 +20,7 @@ interface IProjectTableProps {
   refreshProjectsTrigger?: number;
   searchValue: string;
   onSelectionChange?: (selectedIds: string[]) => void;
+  initialSelectedIds?: string[];
 }
 
 export const ProjectTable: React.FC<IProjectTableProps> = ({
@@ -30,6 +31,7 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
   refreshProjectsTrigger,
   searchValue,
   onSelectionChange,
+  initialSelectedIds,
 }) => {
   const { fiscalYear, filters } = useSelector<
     RootState,
@@ -193,6 +195,7 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
         onSelectionChange={(selectedIds) => {
           handleselectedList(selectedIds);
         }}
+        initialSelectedIds={initialSelectedIds}
         actionWidth={60}
         actionDisplayMode='dropdown'
         actionMenuItems={[]}

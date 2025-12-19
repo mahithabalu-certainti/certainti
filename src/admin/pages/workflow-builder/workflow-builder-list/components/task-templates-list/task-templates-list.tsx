@@ -19,9 +19,13 @@ import { TaskTemplateTable } from './table/task-templates-table';
 
 interface TaskTemplatesProps {
   onSelectionChange?: (selectedIds: string[]) => void;
+  initialSelectedIds?: string[];
 }
 
-const TaskTemplates: React.FC<TaskTemplatesProps> = ({ onSelectionChange }) => {
+const TaskTemplates: React.FC<TaskTemplatesProps> = ({ 
+  onSelectionChange,
+  initialSelectedIds 
+}) => {
   const [appliedFilters, setAppliedFilters] = useState<
     Record<string, FilterCondition>
   >({});
@@ -211,6 +215,7 @@ const TaskTemplates: React.FC<TaskTemplatesProps> = ({ onSelectionChange }) => {
           refreshTrigger={refreshTrigger}
           onSelectionChange={onSelectionChange}
           setTotalCount={setTotalCount}
+          initialSelectedIds={initialSelectedIds}
         />
       </div>
     </div>

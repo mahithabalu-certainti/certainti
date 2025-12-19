@@ -21,6 +21,7 @@ interface ICaseTableProps {
   refreshTrigger?: number;
   searchText: string;
   onSelectionChange?: (selectedIds: string[]) => void;
+  initialSelectedIds?: string[];
 }
 
 export const CaseListTable: React.FC<ICaseTableProps> = ({
@@ -31,6 +32,7 @@ export const CaseListTable: React.FC<ICaseTableProps> = ({
   refreshTrigger,
   searchText,
   onSelectionChange,
+  initialSelectedIds,
 }) => {
   const [caseList, setCaseList] = useState<CaseGlobalList[]>([]);
   const { permission } = useSelector((state: RootState) => state.permission);
@@ -134,6 +136,7 @@ export const CaseListTable: React.FC<ICaseTableProps> = ({
         onSelectionChange={(selectedIds) => {
           onSelectionChange?.(selectedIds);
         }}
+        initialSelectedIds={initialSelectedIds}
         actionWidth={60}
         actionDisplayMode='dropdown'
         actionMenuItems={[]}

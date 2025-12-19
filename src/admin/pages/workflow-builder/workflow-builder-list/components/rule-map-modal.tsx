@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Modal,
   Box,
@@ -8,6 +8,7 @@ import {
   FormControlLabel,
   Radio,
   RadioGroup,
+  Skeleton,
 } from '@mui/material';
 import { ApplyType } from '../../../../types';
 import Projects from './project-list/projects';
@@ -16,7 +17,10 @@ import TextButton from '../../../../../components/button/text-button';
 import TaskTemplates from './task-templates-list/task-templates-list';
 import Accounts from './account-list/accounts';
 import Cases from './case-list/cases';
-import { useCreateRuleMap } from '../../../../service/workflow-builder/workflow-builder-service';
+import {
+  useCreateRuleMap,
+  useGetRuleMapDetails,
+} from '../../../../service/workflow-builder/workflow-builder-service';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
 import { useToast } from '../../../../../hooks';
@@ -27,6 +31,7 @@ interface RuleMapModalProps {
   scopeTypeName: string;
   scopeTypeRid: string;
   ruleRid: string;
+  isRuleMapped: boolean;
   onSuccess?: () => void;
 }
 
@@ -36,6 +41,7 @@ const RuleMapModal: React.FC<RuleMapModalProps> = ({
   scopeTypeName,
   scopeTypeRid,
   ruleRid,
+  isRuleMapped,
   onSuccess,
 }) => {
   const { successToast } = useToast();
@@ -46,6 +52,23 @@ const RuleMapModal: React.FC<RuleMapModalProps> = ({
   const [showEntityTable, setShowEntityTable] = useState(false);
   const [selectedEntityIds, setSelectedEntityIds] = useState<string[]>([]);
 
+  // Fetch rule map details if rule is already mapped
+  const { data: ruleMapDetails, isLoading: ruleMapDetailsLoading } =
+    useGetRuleMapDetails(ruleRid, open && isRuleMapped);
+
+  // Populate modal with existing rule map data
+  useEffect(() => {
+    if (ruleMapDetails && open && isRuleMapped) {
+      setSelectedApplyType(ruleMapDetails.apply_type);
+
+      // If INDIVIDUAL, show the entity table and set selected IDs
+      if (ruleMapDetails.apply_type === 'INDIVIDUAL') {
+        setShowEntityTable(true);
+        setSelectedEntityIds(ruleMapDetails.scope_entity_rid);
+      }
+    }
+  }, [ruleMapDetails, open, isRuleMapped]);
+
   const resetModalState = () => {
     setSelectedApplyType('ALL');
     setShowEntityTable(false);
@@ -53,6 +76,11 @@ const RuleMapModal: React.FC<RuleMapModalProps> = ({
   };
 
   const handleSaveRuleMap = (applyType: ApplyType, entityIds: string[]) => {
+    if (isRuleMapped) {
+      resetModalState();
+      onClose();
+      return;
+    }
     const apiPayload = {
       scope_type_rid: scopeTypeRid,
       rule_rid: ruleRid,
@@ -106,13 +134,33 @@ const RuleMapModal: React.FC<RuleMapModalProps> = ({
   const getModalContent = () => {
     switch (scopeTypeName?.toLowerCase()) {
       case 'case task':
-        return <TaskTemplates onSelectionChange={handleSelectionChange} />;
+        return (
+          <TaskTemplates
+            onSelectionChange={handleSelectionChange}
+            initialSelectedIds={selectedEntityIds}
+          />
+        );
       case 'case':
-        return <Cases onSelectionChange={handleSelectionChange} />;
+        return (
+          <Cases
+            onSelectionChange={handleSelectionChange}
+            initialSelectedIds={selectedEntityIds}
+          />
+        );
       case 'account':
-        return <Accounts onSelectionChange={handleSelectionChange} />;
+        return (
+          <Accounts
+            onSelectionChange={handleSelectionChange}
+            initialSelectedIds={selectedEntityIds}
+          />
+        );
       case 'project':
-        return <Projects onSelectionChange={handleSelectionChange} />;
+        return (
+          <Projects
+            onSelectionChange={handleSelectionChange}
+            initialSelectedIds={selectedEntityIds}
+          />
+        );
       default:
         return null;
     }
@@ -142,11 +190,13 @@ const RuleMapModal: React.FC<RuleMapModalProps> = ({
             <div className='text-[16px] font-bold text-[#2D3E4F]'>
               {showEntityTable
                 ? `Select ${scopeTypeName} Entities`
-                : 'Assign Rule'}
+                : isRuleMapped
+                  ? 'Edit Assigned Rule'
+                  : 'Assign Rule'}
             </div>
             <button
               onClick={handleClose}
-              disabled={createRuleMap.isPending}
+              disabled={createRuleMap.isPending || ruleMapDetailsLoading}
               className='w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-200 cursor-pointer disabled:cursor-default'
             >
               <React.Suspense fallback={null}>
@@ -156,7 +206,39 @@ const RuleMapModal: React.FC<RuleMapModalProps> = ({
           </div>
           {/* Body */}
           <div>
-            {!showEntityTable ? (
+            {ruleMapDetailsLoading ? (
+              // Skeleton loading state
+              <div className='p-4'>
+                <Skeleton
+                  variant='text'
+                  width='60%'
+                  height={24}
+                  sx={{ mb: 2 }}
+                />
+                <Skeleton
+                  variant='text'
+                  width='40%'
+                  height={20}
+                  sx={{ mb: 3 }}
+                />
+                <div className='space-y-3'>
+                  <div className='flex items-start gap-2'>
+                    <Skeleton variant='circular' width={20} height={20} />
+                    <div className='flex-1'>
+                      <Skeleton variant='text' width='30%' height={20} />
+                      <Skeleton variant='text' width='70%' height={16} />
+                    </div>
+                  </div>
+                  <div className='flex items-start gap-2'>
+                    <Skeleton variant='circular' width={20} height={20} />
+                    <div className='flex-1'>
+                      <Skeleton variant='text' width='30%' height={20} />
+                      <Skeleton variant='text' width='70%' height={16} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : !showEntityTable ? (
               // Step 1: Apply Type Selection
               <div className='p-4'>
                 <div className='text-[14px] font-medium text-[#425A76] mb-2'>
@@ -196,7 +278,9 @@ const RuleMapModal: React.FC<RuleMapModalProps> = ({
                           }}
                         />
                       }
-                      disabled={createRuleMap.isPending}
+                      disabled={
+                        createRuleMap.isPending || ruleMapDetailsLoading
+                      }
                       label={
                         <Box>
                           <Typography
@@ -233,7 +317,9 @@ const RuleMapModal: React.FC<RuleMapModalProps> = ({
                           }}
                         />
                       }
-                      disabled={createRuleMap.isPending}
+                      disabled={
+                        createRuleMap.isPending || ruleMapDetailsLoading
+                      }
                       label={
                         <Box>
                           <Typography
@@ -270,7 +356,7 @@ const RuleMapModal: React.FC<RuleMapModalProps> = ({
               <TextButton
                 label='Back'
                 onClick={handleBack}
-                disabled={createRuleMap.isPending}
+                disabled={createRuleMap.isPending || ruleMapDetailsLoading}
                 sx={{
                   width: '65px',
                   minWidth: '65px',
@@ -284,7 +370,7 @@ const RuleMapModal: React.FC<RuleMapModalProps> = ({
               <TextButton
                 label='Cancel'
                 onClick={handleClose}
-                disabled={createRuleMap.isPending}
+                disabled={createRuleMap.isPending || ruleMapDetailsLoading}
                 sx={{
                   width: '75px',
                   minWidth: '75px',
@@ -304,6 +390,7 @@ const RuleMapModal: React.FC<RuleMapModalProps> = ({
                 loading={createRuleMap.isPending}
                 disabled={
                   createRuleMap.isPending ||
+                  ruleMapDetailsLoading ||
                   (showEntityTable && selectedEntityIds.length === 0)
                 }
                 sx={{

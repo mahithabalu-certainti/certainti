@@ -204,6 +204,7 @@ export const WorkflowTable: React.FC<IWorkflowTableProps> = ({
         scopeTypeName={selectedRuleData?.scope_type_name || ''}
         scopeTypeRid={selectedRuleData?.scope_type_rid || ''}
         ruleRid={selectedRuleData?.rid || ''}
+        isRuleMapped={selectedRuleData?.is_rule_mapped || false}
         onSuccess={handleRuleMapSuccess}
       />
 
