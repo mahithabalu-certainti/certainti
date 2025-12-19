@@ -21,6 +21,7 @@ import {
   useCreateCase,
   useGetCaseFilingTypes,
   useGetCaseOwners,
+  useGetCaseStatuses,
   useGetCaseSubmissionDate,
   useUpdateCaseDetails,
 } from '../../../services/cases/case-service';
@@ -95,6 +96,7 @@ export const CreateCases: React.FC = () => {
   const caseFillingTypes = useGetCaseFilingTypes();
   const allCountries = useGetAllCountries();
   const caseOwners = useGetCaseOwners();
+  const caseStatuses = useGetCaseStatuses();
 
   const effectiveCountryRid = isEditView
     ? caseData?.country_rid || countryRid || selectedCountryRid
@@ -136,6 +138,7 @@ export const CreateCases: React.FC = () => {
         case_owner: caseData.case_owner_rid || '',
         fiscal_year: caseData.fiscal_year || '',
         country: caseData.country_rid || countryRid || '',
+        status_rid: caseData.status_rid || '',
         case_startdate: caseData.case_startdate
           ? getDateFormatYYYYMMDD(caseData.case_startdate)
           : '',
@@ -177,7 +180,14 @@ export const CreateCases: React.FC = () => {
   }, [accountName, caseData, countryCode, currentYear, isEditView]);
 
   useEffect(() => {
-    if (!isEditView && submissionDateData?.data && selectedFiscalYear) {
+    if (isEditView) return;
+
+    if (!effectiveCountryRid) {
+      setCalculatedStatutoryDate('');
+      return;
+    }
+
+    if (submissionDateData?.data && selectedFiscalYear) {
       const { caseSubmissionDate } = submissionDateData.data;
       if (caseSubmissionDate) {
         const [mm, dd] = caseSubmissionDate.split('/');
@@ -190,9 +200,13 @@ export const CreateCases: React.FC = () => {
             start_date_max: statutoryDate,
           }));
         }
+      } else {
+        setCalculatedStatutoryDate('');
       }
+    } else {
+      setCalculatedStatutoryDate('');
     }
-  }, [submissionDateData, selectedFiscalYear, isEditView]);
+  }, [submissionDateData, selectedFiscalYear, isEditView, effectiveCountryRid]);
 
   useEffect(() => {
     if (selectedFiscalYear) {
@@ -217,6 +231,15 @@ export const CreateCases: React.FC = () => {
       })) || []
     );
   }, [caseOwners]);
+
+  const caseStatusOptions = useMemo(() => {
+    return (
+      caseStatuses?.data?.data?.caseStatus?.map((item) => ({
+        value: item.rid,
+        label: item.status_name || '',
+      })) || []
+    );
+  }, [caseStatuses]);
 
   const caseFilingTypesOptions = useMemo(() => {
     return (
@@ -351,6 +374,7 @@ export const CreateCases: React.FC = () => {
         selectedFiscalYear
       );
       setCaseNamePrefix(newPrefix);
+      setCalculatedStatutoryDate('');
     }
 
     if (fieldName === 'fiscal_year') {
@@ -402,7 +426,10 @@ export const CreateCases: React.FC = () => {
     selectedAccountNumber,
     selectedFiscalYear,
     globalType,
-    calculatedStatutoryDate
+    isEditView
+      ? caseData?.statutory_submission_date || undefined
+      : calculatedStatutoryDate,
+    caseStatusOptions
   );
 
   const formLoading =
@@ -477,9 +504,7 @@ export const CreateCases: React.FC = () => {
                     case_owner: userId || '',
                     fiscal_year: currentYear.toString(),
                     country: countryRid || '',
-                    ...(calculatedStatutoryDate && {
-                      statutory_submission_date: calculatedStatutoryDate,
-                    }),
+                    statutory_submission_date: calculatedStatutoryDate,
                   }
             }
             outData={submitData}

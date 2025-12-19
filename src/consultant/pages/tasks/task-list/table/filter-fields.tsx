@@ -134,7 +134,8 @@ export const getTaskFilterFields = (
     operatorOption: textOptions,
     hide: permissionMap
       ? !(
-          permissionMap['created_by']?.read || permissionMap['created_by']?.read
+          permissionMap['created_by']?.read ||
+          permissionMap['created_by_name']?.read
         )
       : false,
   },
@@ -148,11 +149,10 @@ export const getTaskFilterFields = (
     name: 'Updated By',
     value: 'modified_by_name',
     type: 'text',
-    operatorOption: textOptions,
     hide: permissionMap
       ? !(
           permissionMap['modified_by']?.read ||
-          permissionMap['modified_by']?.read
+          permissionMap['modified_by_name']?.read
         )
       : false,
   },
@@ -161,12 +161,6 @@ export const getTaskFilterFields = (
     value: 'modified_datetime',
     type: 'date',
     hide: !permissionMap?.['modified_datetime']?.read,
-  },
-  {
-    name: 'Sort Options',
-    value: 'sort_options',
-    type: 'system-sort',
-    options: [{ value: 'createdAt_desc', option: 'Recently Created' }],
   },
   {
     name: 'Sort Options',

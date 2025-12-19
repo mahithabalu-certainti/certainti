@@ -374,15 +374,24 @@ export const createButton = (
   onClick: others.onClick,
   disabled: others.disabled,
 });
+export interface EmptyFieldOptions {
+  name?: string;
+  label?: string;
+  type?: string;
+  required?: boolean;
+  hide?: boolean;
+}
+
 export const createEmptyField = (
   name: string,
   label: string,
-  options?: { name?: string; label?: string; type?: string; required?: boolean }
+  options?: EmptyFieldOptions
 ): FieldType => ({
   type: 'emptyFeild',
   name: options?.name || name,
   label: options?.label || label,
   required: options?.required ?? false,
+  hide: options?.hide,
 });
 
 export const createImgButton = (

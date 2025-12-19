@@ -10,9 +10,9 @@ import {
   createTextAreaField,
   REGEX_PATTERNS,
   createDateField,
-  createEmptyField,
   getFiscalYears,
   createSelectChildField,
+  createEmptyField,
 } from '../../../../common-utils';
 
 const minYear = 1950;
@@ -40,7 +40,8 @@ export const CaseFormData = (
   selectedAccountNumber?: string,
   selectedFiscalYear?: string,
   globalType?: boolean,
-  calculatedStatutoryDate?: string
+  calculatedStatutoryDate?: string,
+  statusOptions?: SelectOption[]
 ): FormType[] => {
   return useMemo(
     () => [
@@ -152,6 +153,17 @@ export const CaseFormData = (
             label: '',
             type: '',
             required: false,
+            hide: isEditView,
+          }),
+          createSelectField('status_rid', 'Status', {
+            options: statusOptions || [],
+            placeholder: 'Choose Status',
+            required: true,
+            hide: !isEditView,
+            // disabled:
+            //   isEditView &&
+            //   !permissionMap?.['status_rid']?.edit &&
+            //   permissionMap?.['status_rid']?.read,
           }),
           createTextField('heat_light_power', 'Heating & Lighting Cost', {
             required: false,
@@ -276,7 +288,7 @@ export const CaseFormData = (
                 !permissionMap?.['statutory_submission_date']?.edit &&
                 !permissionMap?.['statutory_submission_date']?.read,
               defaultValue: calculatedStatutoryDate,
-              assignDefaultValue: true,
+              assignDefaultValue: !isEditView || !!calculatedStatutoryDate,
               requiredErrorMessage:
                 'Field is required. Please add statutory submission date in the platform level configuration.',
               labelTooltip: {
