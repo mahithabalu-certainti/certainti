@@ -71,6 +71,7 @@ export const getTaskFilterFields = (
     name: 'Related To Name',
     value: 'attach_to_name',
     type: 'text',
+    operatorOption: textOptions,
     hide: permissionMap
       ? !(
           permissionMap['attach_to']?.read || permissionMap['attached_to']?.read
