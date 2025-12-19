@@ -71,6 +71,20 @@ export const useGetFinancialSummary = (isStateWise?: boolean) => {
   });
 };
 
+export const useFetchFinancialSummaryQuery = (
+  body: FinancialSummaryBody,
+  isStateWise?: boolean,
+  enabled: boolean = true
+) => {
+  return useQuery<FinancialSummaryApiResponse, Error>({
+    queryKey: ['financialSummary', body, isStateWise],
+    queryFn: () => getFinancialSummary(body, isStateWise),
+    enabled,
+    retry: 0,
+    gcTime: 0,
+  });
+};
+
 export const fetchProjectFinancialResourceCost = async (
   params: ProjectFinancialResourceListParams
 ): Promise<{

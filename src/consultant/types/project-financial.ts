@@ -12,6 +12,7 @@ export type SummaryDetailedMetric = {
   project_level: string | number;
   project_resource_level: string | number;
   project_task_level?: string | number;
+  approved?: string | number;
   permission: string;
   hide?: boolean;
 };
@@ -103,6 +104,7 @@ export interface ProjectFinancialResourceExportParams {
   projectRid?: string;
   accountRid?: string;
   search?: string;
+  caseRid?: string;
 }
 export interface ProjectResourceExportParams {
   sortBy?: string;
@@ -121,6 +123,7 @@ export interface ProjectFinancialProjectExportParams {
   fiscalYear?: number;
   accountRid?: string;
   search?: string;
+  caseRid?: string;
 }
 
 export type ProjectFinancialResourceCostList = {

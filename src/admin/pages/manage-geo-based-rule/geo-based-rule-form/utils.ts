@@ -15,7 +15,7 @@ export const transformGeoBasedRulePayload = (
         status_rid: formData.status_rid || '',
         is_federal: isFederal,
         effective_start_date: formData.effective_start_date || '',
-        effective_end_date: formData.effective_end_date || '',
+        effective_end_date: formData.effective_end_date || null,
     };
 
     // Extract dynamic fields based on configDetails keys
