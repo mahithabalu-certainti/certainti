@@ -83,6 +83,7 @@ export class RulemasterService {
         errorMessage?: string;
         data?: { rules: any; count: number };
     }> {
+        //console.log("filters"+JSON.stringify(filters));
         let sortBy = data.sortBy;
         console.log("listing all rules");
         const mainDb = await this.getMainDb();
@@ -148,14 +149,17 @@ export class RulemasterService {
             };
         }
         const plainRules = rules.map((r: any) => r.toJSON());
-        let createdByIds = [...new Set(plainRules.map(r => r.created_by).filter(Boolean))];
-        let modifiedByIds = [...new Set(plainRules.map(r => r.modified_by).filter(Boolean))];
+        let createdByIds = [...new Set(plainRules.map(r => r.created_by))];
+        let modifiedByIds = [...new Set(plainRules.map(r => r.modified_by))];
+        let scopeTypeIds = [...new Set(plainRules.map(r => r.scope_type_rid))];
         // let createdByIds: any[] = [...new Set(rules.map((user: any) => user.created_by))];
         // let modifiedByIds: any[] = [...new Set(rules.map((user: any) => user.modified_by))];
         let fetchCreatedByUsers = await mainDb.query(rawQueries.fetchUser(createdByIds));
         let fetchModifiedByUsers = await mainDb.query(rawQueries.fetchUser(modifiedByIds));
+        let scopeTypeName = await mainDb.query(rawQueries.getScopeTypeName(scopeTypeIds));
         let createdMap: Map<string, string> = new Map(fetchCreatedByUsers[0].map((user: any) => [user.rid, `${user.first_name} ${user.last_name}`]));
         let modifiedMap: Map<string, string> = new Map(fetchModifiedByUsers[0].map((user: any) => [user.rid, `${user.first_name} ${user.last_name}`]));
+        let scopeTypeMap: Map<string, string> = new Map(scopeTypeName[0].map((scope: any) => [scope.rid, `${scope.scope_name}`]));
         let finalData = rules == null ? [] : rules.map((da: any) => {
             //console.log("each object "+d);
             const d = da.toJSON();
@@ -167,6 +171,9 @@ export class RulemasterService {
                 event_rid: d.event_rid,
                 condition_rid: d.condition_rid,
                 scope_type_rid: d.scope_type_rid,
+                scope_type_name : scopeTypeMap.get(d.scope_type_rid) || null,
+                is_active:d.is_active,
+                is_rule_mapped:true,
                 created_by: d.created_by,
                 created_user_name: createdMap.get(d.created_by) || null,
                 modified_by: d.modified_by,

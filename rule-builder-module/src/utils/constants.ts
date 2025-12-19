@@ -295,6 +295,12 @@ export const rawQueries = {
       LEFT JOIN fetch_account_details ad ON ad.parent_account_rid = a.rid
       WHERE a.rid = ad.parent_account_rid`;
     }
-  }
+  },
+
+  getScopeTypeName(data: any) {
+    let scopeids = data.map((sc: any) => `'${sc}'`).join(', ');  // Join ids with commas
+    let query = `SELECT rid, name as scope_name FROM ${MAIN_SCHEMA_NAME}.scopes WHERE rid IN (${scopeids})`;  // Remove extra quote at the end
+    return query;
+}
 
 }

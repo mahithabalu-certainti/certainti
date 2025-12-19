@@ -398,10 +398,7 @@ export class WorkFlowService {
             statusCode: 200,
             message: "Rule fetched successfully",
             data: {
-                rule: {
-                    ...ruleDetail.data.dataValues,
-                    action_type_rid: actions[0].action_type_rid
-                },
+                rule: ruleDetail.data,
                 event: eventDetail[0],
                 condition: conditionDetail[0],
                 conditions: conditions,
