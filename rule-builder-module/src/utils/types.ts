@@ -27,8 +27,6 @@ export interface IUpdateRule {
     modified_by: string
 }
 
-
-
 export interface ICreateCondition {
     condition_rid: string;
     rule_rid: string;
@@ -44,6 +42,19 @@ export interface ICreateCondition {
     modified_by: string
 }
 
+export interface IUpdateCondition {
+    rid: string;
+    rule_rid: string;
+    category_rid: string;
+    field_rid: string;
+    operator_rid: string;
+    value_rid: string;
+    logical_operator: string;
+    sequence: number;
+    group_id: number;
+    modified_by: string
+}
+
 export interface ICreateAction {
     action_rid: string;
     rule_rid: string;
@@ -51,6 +62,14 @@ export interface ICreateAction {
     new_value: string;
     action_order: number;
     created_by: string,
+    modified_by: string
+}
+
+export interface IUpdateAction {
+    rid:string;
+    action_rid: string;
+    rule_rid: string;
+    action_order: number;
     modified_by: string
 }
 

@@ -288,6 +288,7 @@ export class WorkFlowService {
         const mainDb = await this.getMainDb();
         const actionTypes: actions[] = await mainDb.query<actions>(
             rawQueries.fetchActions(
+                listRequest.scope_rid,
                 listRequest.action_type_rid,
                 listRequest.status_rid
             ),
@@ -400,8 +401,8 @@ export class WorkFlowService {
                 rule: ruleDetail.data,
                 event: eventDetail[0],
                 condition: conditionDetail[0],
-                conditions:conditions,
-                actions:actions,
+                conditions: conditions,
+                actions: actions,
             }
         };
     }
@@ -415,7 +416,8 @@ export class WorkFlowService {
         errorMessage?: string;
         data?: { rule: any };
     }> {
-        //Update Rule Master
+
+        // 1. Update Rule Master
         const rule = await this.ruleMasterService.updateRuleMaster(
             {
                 rule_rid: ruleRequest.rule_rid,
@@ -432,50 +434,127 @@ export class WorkFlowService {
             },
             userId
         );
-        //Remove existing conditions
-        await this.conditionService.deleteConditionsByRuleRid(ruleRequest.rule_rid, userId);
-        //Recreate conditions
-        for (const [index, condition] of ruleRequest.condition_categories.entries()) {
-            await this.conditionService.createCondition(
-                {
-                    condition_rid: "",
-                    rule_rid: ruleRequest.rule_rid,
-                    category_rid: condition.category_rid,
-                    logical_operator: condition.category_operator,
-                    field_rid: condition.field_rid,
-                    operator_rid: condition.operator_rid,
-                    value_rid: condition.value_rid,
-                    data_type: "",
-                    sequence: index + 1,
-                    group_id: 1,
-                    created_by: ruleRequest.modified_by ?? ruleRequest.created_by,
-                    modified_by: ruleRequest.modified_by ?? ruleRequest.created_by,
-                },
-                userId
-            );
+
+        /* ---------------- CONDITIONS ---------------- */
+
+        const existingConditions =
+            await this.conditionService.getConditionsByRuleRid(ruleRequest.rule_rid);
+        const existingPlain = existingConditions.map(cond => cond.get({ plain: true }));
+        const incomingConditions = ruleRequest.condition_categories;
+        //console.log(JSON.stringify(existingConditions));
+        // Update / Create
+        for (let i = 0; i < incomingConditions.length; i++) {
+            const incoming = incomingConditions[i];
+            const existing = existingPlain[i];
+
+            if (existing) {
+                // Update existing condition
+                await this.conditionService.updateCondition(
+                    {
+                        rid: existing.rid,
+                        category_rid: incoming.category_rid,
+                        logical_operator: incoming.category_operator,
+                        field_rid: incoming.field_rid,
+                        operator_rid: incoming.operator_rid,
+                        value_rid: incoming.value_rid,
+                        rule_rid: ruleRequest.rule_rid,
+                        group_id: 1,
+                        sequence: i + 1,
+                        modified_by: ruleRequest.created_by,
+                    },
+                    userId
+                );
+            } else {
+                // Create new condition
+                await this.conditionService.createCondition(
+                    {
+                        condition_rid: "",
+                        rule_rid: ruleRequest.rule_rid,
+                        category_rid: incoming.category_rid,
+                        logical_operator: incoming.category_operator,
+                        field_rid: incoming.field_rid,
+                        operator_rid: incoming.operator_rid,
+                        value_rid: incoming.value_rid,
+                        data_type: "",
+                        sequence: i + 1,
+                        group_id: 1,
+                        created_by: ruleRequest.modified_by,
+                        modified_by: ruleRequest.modified_by,
+                    },
+                    userId
+                );
+            }
         }
-        //Remove existing actions
-        await this.actionService.deleteActionByRuleRid(ruleRequest.rule_rid, userId);
-        //Recreate actions
-        for (const [index, actionRid] of ruleRequest.action_rid.entries()) {
-            await this.actionService.createAction(
-                {
-                    rule_rid: ruleRequest.rule_rid,
-                    action_rid: actionRid,
-                    target_user: "test",
-                    new_value: "test",
-                    action_order: index + 1,
-                    created_by: ruleRequest.modified_by ?? ruleRequest.created_by,
-                    modified_by: ruleRequest.modified_by ?? ruleRequest.created_by,
-                },
-                userId
-            );
+
+        // Delete only extra existing conditions
+        if (existingPlain.length > incomingConditions.length) {
+            const extraConditions = existingPlain.slice(incomingConditions.length);
+            for (const condition of extraConditions) {
+                await this.conditionService.deleteCondition(
+                    condition.rid,        // now this works
+                    ruleRequest.rule_rid,
+                    userId
+                );
+            }
         }
+
+
+        const existingActions =
+            await this.actionService.getActionsByRuleRid(ruleRequest.rule_rid);
+        const existingActionPlain = existingActions.map(act => act.get({ plain: true }));
+        const incomingActions = ruleRequest.action_rid;
+
+        for (let i = 0; i < incomingActions.length; i++) {
+            const incoming = incomingActions[i];
+            const existing = existingActionPlain[i];
+
+            if (existing) {
+                // Update action
+                await this.actionService.updateAction(
+                    {
+                        rid: existing.rid,
+                        action_rid: incoming,
+                        rule_rid: ruleRequest.rule_rid,
+                        action_order: incoming.action_order,
+                        modified_by: ruleRequest.created_by,
+                    },
+                    userId
+                );
+            } else {
+                // Create new action
+                console.log(incoming.action_rid);
+                await this.actionService.createAction(
+                    {
+                        rule_rid: ruleRequest.rule_rid,
+                        action_rid: incoming,
+                        target_user: "test",
+                        new_value: "test",
+                        action_order: i + 1,
+                        created_by: ruleRequest.modified_by,
+                        modified_by: ruleRequest.modified_by,
+                    },
+                    userId
+                );
+            }
+        }
+
+        // Delete only extra actions
+        if (existingActionPlain.length > incomingActions.length) {
+            const extraActions = existingActionPlain.slice(incomingActions.length);
+            for (const action of extraActions) {
+                await this.actionService.deleteAction(
+                    action.rid,
+                    ruleRequest.rule_rid,
+                    userId
+                );
+            }
+        }
+
         return {
             statusCode: 200,
             message: "Rule updated successfully",
             data: {
-                rule: "",
+                rule: rule?.data?.rules ?? null,
             },
         };
     }
@@ -710,7 +789,7 @@ export class WorkFlowService {
         }
     }
 
-    async sentNotification(templateDetails: any, userId: string,targetUser: string): Promise<any> {
+    async sentNotification(templateDetails: any, userId: string, targetUser: string): Promise<any> {
         const mainDb = await this.getMainDb();
         let notificationPayload = {
             notification_message: templateDetails.templateDetails.message_template,
@@ -718,22 +797,21 @@ export class WorkFlowService {
             user_rid: targetUser
         };
         const insertQuery = rawQueries.insertNotification();
-        const [notificationResult]:any[] = await mainDb.query(
+        const [notificationResult]: any[] = await mainDb.query(
             insertQuery,
             {
                 replacements: notificationPayload,
                 type: QueryTypes.INSERT
             }
         );
-        console.log("Notification inserted:", notificationResult);  
-        const notificationRid = notificationResult[0].rid ;
-         try {
-    
-    // Step 2: Send message with notification ID included
-    const webPubSubClient = new WebPubSubServiceClient(
-        process.env.AZURE_WEB_PUBSUB_CONNECTION_STRING!,
-        "notificationsHub"
-    );
+        const notificationRid = notificationResult[0].rid;
+        try {
+
+            // Step 2: Send message with notification ID included
+            const webPubSubClient = new WebPubSubServiceClient(
+                process.env.AZURE_WEB_PUBSUB_CONNECTION_STRING!,
+                "notificationsHub"
+            );
 
     const response  = await webPubSubClient.sendToUser(userId, {
       id: notificationRid,
@@ -814,71 +892,71 @@ async triggerNotification(taskContext:any,channel:string): Promise<void> {
         );
     }
 
-  }
-
-async fetchValidAccountNumberById(accountId: string) {
-    try {
-      const mainDb = await this.getMainDb();
-
-      const [account]: any[] = await mainDb.query(
-        rawQueries.fetchParentAccountDetails,
-        {
-          replacements: { rid: accountId },
-          type: "SELECT",
-        }
-      );
-
-      let accountRnumber = account?.r_number;
-
-      if (account?.storage_type === "store_in_parent") {
-        const [accountData]: any[] = await mainDb.query(
-          rawQueries.fetchParentAccountDetails,
-          {
-            replacements: { rid: account?.parent_account_rid },
-            type: "SELECT",
-          }
-        );
-        accountRnumber = accountData?.r_number;
-      }
-
-      return {
-        accountNumber: accountRnumber,
-        accountId: account?.rid,
-        accountName: account?.account_name,
-        parentAccountId: account?.parent_account_rid,
-        currencyRid: account?.currency_rid
-      };
-    } catch (err) {
-      logMessage(`Error fetching account: ${err}`);
-      throw new Error("Error fetching account : " + (err as Error).message);
     }
-  }
 
-async sendNotificationEmail(
-    accountNumber: string,
-    accountRid: string,
-    emailRequest: any,
-    userId: string
-  ) {
-     const mainDb = await this.getMainDb();
-    
-    const [accountInfo]: any[] = await mainDb.query(
-      rawQueries.fetchAccountInfo(accountRid),
-      { type: "SELECT" }
-    );
-  let parentAccountNumber = accountNumber;
-          if(accountInfo.storage_type === 'separate_db') {
+    async fetchValidAccountNumberById(accountId: string) {
+        try {
+            const mainDb = await this.getMainDb();
+
+            const [account]: any[] = await mainDb.query(
+                rawQueries.fetchParentAccountDetails,
+                {
+                    replacements: { rid: accountId },
+                    type: "SELECT",
+                }
+            );
+
+            let accountRnumber = account?.r_number;
+
+            if (account?.storage_type === "store_in_parent") {
+                const [accountData]: any[] = await mainDb.query(
+                    rawQueries.fetchParentAccountDetails,
+                    {
+                        replacements: { rid: account?.parent_account_rid },
+                        type: "SELECT",
+                    }
+                );
+                accountRnumber = accountData?.r_number;
+            }
+
+            return {
+                accountNumber: accountRnumber,
+                accountId: account?.rid,
+                accountName: account?.account_name,
+                parentAccountId: account?.parent_account_rid,
+                currencyRid: account?.currency_rid
+            };
+        } catch (err) {
+            logMessage(`Error fetching account: ${err}`);
+            throw new Error("Error fetching account : " + (err as Error).message);
+        }
+    }
+
+    async sendNotificationEmail(
+        accountNumber: string,
+        accountRid: string,
+        emailRequest: any,
+        userId: string
+    ) {
+        const mainDb = await this.getMainDb();
+
+        const [accountInfo]: any[] = await mainDb.query(
+            rawQueries.fetchAccountInfo(accountRid),
+            { type: "SELECT" }
+        );
+        let parentAccountNumber = accountNumber;
+        if (accountInfo.storage_type === 'separate_db') {
             const [parentAccountInfo]: any[] =
                 await mainDb.query(
-                rawQueries.fetchAccountInfo(accountInfo.parent_account_rid!),
-                { type: "SELECT" }
-              );
+                    rawQueries.fetchAccountInfo(accountInfo.parent_account_rid!),
+                    { type: "SELECT" }
+                );
             parentAccountNumber = parentAccountInfo.r_number;
           }
-     let senderEmailInfo = await this.fetchSenderEmailInfoByAccountId(
-       parentAccountNumber,
-       accountInfo.parent_account_rid
-     );
+    let senderEmailInfo = await this.fetchSenderEmailInfoByAccountId(
+      parentAccountNumber,
+      accountInfo.parent_account_rid
+    );
     const emailContent = {
       message: {
         subject: emailRequest.subject,
@@ -897,41 +975,41 @@ async sendNotificationEmail(
     };
 
 
-    let emailResponse = await sendEmailWithAttachment({
-      message: emailContent.message,
-      senderEmailInfo: senderEmailInfo!,
-    });
-  }
-
-  async fetchSenderEmailInfoByAccountId(
-    accountNumber: string,
-    parentAccountId: string
-  ) {
-    try {
-      const orgDb = await this.getOrgDb();
-      const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
-        /\D/g,
-        ""
-      )}`;
-      const [senderEmailInfo]: any[] = await orgDb.query(
-        rawQueries.fetchSenderEmail(schemaName, parentAccountId)
-      );
-      const clientSecret = senderEmailInfo[0]?.client_secret;
-      const decryptedSecret = await decryptClientSecret(clientSecret);
-
-      return {
-        email:
-          senderEmailInfo[0]?.support_email,
-        clientId:
-          senderEmailInfo[0]?.client_id,
-        clientSecret:
-          decryptedSecret,
-        tenantId:
-          senderEmailInfo[0]?.tenant_id ,
-      };
-    } catch (err) {
-      logMessage(`Error fetching sender email info for account: ${err}`);
+        let emailResponse = await sendEmailWithAttachment({
+            message: emailContent.message,
+            senderEmailInfo: senderEmailInfo!,
+        });
     }
-  }
+
+    async fetchSenderEmailInfoByAccountId(
+        accountNumber: string,
+        parentAccountId: string
+    ) {
+        try {
+            const orgDb = await this.getOrgDb();
+            const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+                /\D/g,
+                ""
+            )}`;
+            const [senderEmailInfo]: any[] = await orgDb.query(
+                rawQueries.fetchSenderEmail(schemaName, parentAccountId)
+            );
+            const clientSecret = senderEmailInfo[0]?.client_secret;
+            const decryptedSecret = await decryptClientSecret(clientSecret);
+
+            return {
+                email:
+                    senderEmailInfo[0]?.support_email,
+                clientId:
+                    senderEmailInfo[0]?.client_id,
+                clientSecret:
+                    decryptedSecret,
+                tenantId:
+                    senderEmailInfo[0]?.tenant_id,
+            };
+        } catch (err) {
+            logMessage(`Error fetching sender email info for account: ${err}`);
+        }
+    }
 
 }

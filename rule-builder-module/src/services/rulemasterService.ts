@@ -6,18 +6,19 @@ import { HttpStatus, STATUS_MESSAGE, ALPHANUMERIC_CONDITIONS, MAIN_SCHEMA_NAME, 
 import { Logger } from "winston";
 import { ICreateRule, IUpdateRule } from "../utils/types";
 import { logMessage } from "../utils/helpers";
-import { AuditService } from "./workflowAuditService";
+import { RuleHistoryService } from "./workflowRuleHistoryService";
 import { json } from "body-parser";
+
 
 export class RulemasterService {
 
     private logger: Logger;
-    private auditService: AuditService;
+    private ruleHistoryService: RuleHistoryService;
     private mainDbSequelize: Sequelize | null = null;
 
     constructor(logger: Logger) {
         this.logger = logger;
-        this.auditService = new AuditService(this.logger);
+        this.ruleHistoryService = new RuleHistoryService(this.logger);
     }
 
     private async getMainDb() {
@@ -26,6 +27,7 @@ export class RulemasterService {
         }
         return this.mainDbSequelize;
     }
+
 
     /** CREATE a new RuleMaster */
     async createRuleMaster(ruleRequest: ICreateRule, userId: string): Promise<{
@@ -47,8 +49,17 @@ export class RulemasterService {
             schedule_offset_type: ruleRequest.schedule_offset_type ?? null,
             schedule_offset_value: ruleRequest.schedule_offset_value ?? null,
             created_by: ruleRequest.created_by,
-            //modified_by: ruleRequest.modified_by ?? ruleRequest.created_by, // fallback to created_by if undefined
         });
+
+        // for (const attr of attributesToTrack) {
+        //     await this.ruleHistoryService.createHistory({
+        //         rule_rid: rulem.rid,          
+        //         attribute_name: attr,
+        //         old_value: null,                   
+        //         new_value: rulem[attr],
+        //         created_by: ruleRequest.created_by
+        //     }, userId);
+        // }
 
         return {
             statusCode: HttpStatus.SUCCESS,
@@ -72,6 +83,7 @@ export class RulemasterService {
         errorMessage?: string;
         data?: { rules: any; count: number };
     }> {
+        //console.log("filters"+JSON.stringify(filters));
         let sortBy = data.sortBy;
         console.log("listing all rules");
         const mainDb = await this.getMainDb();
@@ -80,7 +92,9 @@ export class RulemasterService {
         let modifiedByFilter;
         let modifiedByConditions;
         let createdByFilter;
+        let scopeTypeFilter;
         let createdByConditions;
+        let scopeTypeConditions;
         let totalResults: number = 0;
         let disablePagination = false;
         if (apiType === "download") {
@@ -101,7 +115,11 @@ export class RulemasterService {
             createdByFilter = filters.created_user_name;
             createdByConditions = detectConditions(createdByFilter);
         }
-        ["created_user_name", "modified_user_name"].forEach(key => {
+        if (filters?.scope_type_name) {
+            scopeTypeFilter = filters.scope_type_name;
+            scopeTypeConditions = detectConditions(scopeTypeFilter);
+        }
+        ["created_user_name", "modified_user_name", "scope_type_name"].forEach(key => {
             if (filters[key]) {
                 disablePagination = true;
                 delete filters[key];
@@ -137,14 +155,20 @@ export class RulemasterService {
             };
         }
         const plainRules = rules.map((r: any) => r.toJSON());
-        let createdByIds = [...new Set(plainRules.map(r => r.created_by).filter(Boolean))];
-        let modifiedByIds = [...new Set(plainRules.map(r => r.modified_by).filter(Boolean))];
+        let createdByIds = [...new Set(plainRules.map(r => r.created_by))];
+        let modifiedByIds = [...new Set(plainRules.map(r => r.modified_by))];
+        let scopeTypeIds = [...new Set(plainRules.map(r => r.scope_type_rid))];
+        let ruleRids = [...new Set(plainRules.map(r => r.rid))];
         // let createdByIds: any[] = [...new Set(rules.map((user: any) => user.created_by))];
         // let modifiedByIds: any[] = [...new Set(rules.map((user: any) => user.modified_by))];
         let fetchCreatedByUsers = await mainDb.query(rawQueries.fetchUser(createdByIds));
         let fetchModifiedByUsers = await mainDb.query(rawQueries.fetchUser(modifiedByIds));
+        let scopeTypeName = await mainDb.query(rawQueries.getScopeTypeName(scopeTypeIds));
+        let mappedRulesRes = await mainDb.query(rawQueries.getMappedRuleRids(ruleRids));
         let createdMap: Map<string, string> = new Map(fetchCreatedByUsers[0].map((user: any) => [user.rid, `${user.first_name} ${user.last_name}`]));
         let modifiedMap: Map<string, string> = new Map(fetchModifiedByUsers[0].map((user: any) => [user.rid, `${user.first_name} ${user.last_name}`]));
+        let scopeTypeMap: Map<string, string> = new Map(scopeTypeName[0].map((scope: any) => [scope.rid, `${scope.scope_name}`]));
+        let mappedRuleSet = new Set(mappedRulesRes[0].map((row: any) => row.rule_rid));
         let finalData = rules == null ? [] : rules.map((da: any) => {
             //console.log("each object "+d);
             const d = da.toJSON();
@@ -156,6 +180,9 @@ export class RulemasterService {
                 event_rid: d.event_rid,
                 condition_rid: d.condition_rid,
                 scope_type_rid: d.scope_type_rid,
+                scope_type_name: scopeTypeMap.get(d.scope_type_rid) || null,
+                is_active: d.is_active,
+                is_rule_mapped: mappedRuleSet.has(d.rid),
                 created_by: d.created_by,
                 created_user_name: createdMap.get(d.created_by) || null,
                 modified_by: d.modified_by,
@@ -184,13 +211,19 @@ export class RulemasterService {
             finalData = applyFilters(finalData, modifiedByConditions, modifiedByFilter, "modified_user_name");
         if (createdByConditions != null && createdByConditions != undefined)
             finalData = applyFilters(finalData, createdByConditions, createdByFilter, "created_user_name");
-        if (mainTableFilters[sortBy] != undefined && sortBy.toLowerCase() == 'asc') {
+        if (scopeTypeConditions != null && scopeTypeConditions != undefined)
+            finalData = applyFilters(finalData, scopeTypeConditions, scopeTypeFilter, "scope_type_name");
+                    console.log("coming here one" );
+                    console.log(mainTableFilters[sortBy]);
+
+        if (mainTableFilters[sortBy] != undefined && data.sortOrder.toLowerCase() == 'asc') {
+            console.log("coming here");
             finalData = finalData.sort((a: any, b: any) => {
                 if (!a?.[sortBy]) return 1;
                 if (!b?.[sortBy]) return -1;
                 return a[sortBy].localeCompare(b[sortBy]);
             });
-        } else if (mainTableFilters[sortBy] != undefined && sortBy.toLowerCase() == 'desc') {
+        } else if (mainTableFilters[sortBy] != undefined && data.sortOrder.toLowerCase() == 'desc') {
             finalData = finalData.sort((a: any, b: any) => {
                 if (!b?.[sortBy]) return 1;
                 if (!a?.[sortBy]) return -1;
@@ -222,17 +255,49 @@ export class RulemasterService {
     ) {
         const mainDb = await this.getMainDb();
         RuleMaster.initialize(mainDb);
-        const rule = await RuleMaster.findOne({ where: { rid: ruleRequest.rule_rid } });
-        if (!rule) {
+        const oldRule = await RuleMaster.findOne({ where: { rid: ruleRequest.rule_rid } });
+        if (!oldRule) {
             return {
                 statusCode: HttpStatus.NOT_FOUND,
                 message: "",
             };
         }
-        // Capture OLD state
-        const oldValue = rule.toJSON();
+
+        const oldRuleData = oldRule.toJSON();
+        const historyRecords = [];
+        // Compare and prepare history records for each field
+        const fieldsToUpdate = [
+            { field: 'rule_name', oldValue: oldRuleData.rule_name, newValue: ruleRequest.rule_name },
+            { field: 'description', oldValue: oldRuleData.description, newValue: ruleRequest.description ?? null },
+            { field: 'condition_rid', oldValue: oldRuleData.condition_rid, newValue: ruleRequest.condition_rid ?? null },
+            { field: 'event_rid', oldValue: oldRuleData.event_rid, newValue: ruleRequest.event_rid },
+            { field: 'scope_type_rid', oldValue: oldRuleData.scope_type_rid, newValue: ruleRequest.scope_type_rid },
+            { field: 'modified_by', oldValue: oldRuleData.modified_by, newValue: ruleRequest.modified_by }
+        ];
+
+        for (const { field, oldValue, newValue } of fieldsToUpdate) {
+            if (oldValue !== newValue) {
+                try {
+                    historyRecords.push({
+                        rule_rid: oldRuleData.rid,
+                        attribute_name: field,
+                        old_value: oldValue,
+                        new_value: newValue,
+                        created_by: userId,
+                        action: 'ruleUpdate'
+                    });
+                } catch (err) {
+                    console.log(err);
+                }
+            }
+        }
+
+        for (const history of historyRecords) {
+            await this.ruleHistoryService.createHistory(history, userId);
+        }
+
         //Update rule
-        await rule.update({
+        const newRule = await oldRule.update({
             rule_name: ruleRequest.rule_name,
             description: ruleRequest.description ?? null,
             condition_rid: ruleRequest.condition_rid ?? null,
@@ -245,89 +310,14 @@ export class RulemasterService {
             modified_by: ruleRequest.modified_by,
         });
 
-        // const updateRule = await RuleMaster.update({
-        //     rule_name: ruleRequest.rule_name,
-        //     description: ruleRequest.description ?? null,
-        //     condition_rid: ruleRequest.condition_rid ?? null,
-        //     event_rid: ruleRequest.event_rid,
-        //     trigger_type: ruleRequest.trigger_type,
-        //     is_active: ruleRequest.is_active ?? true,
-        //     scope_type_rid: ruleRequest.scope_type_rid,
-        //     schedule_offset_type: ruleRequest.schedule_offset_type ?? null,
-        //     schedule_offset_value: ruleRequest.schedule_offset_value ?? null,
-        //     modified_by: ruleRequest.modified_by,
-        // },{
-        //     where: { rid: ruleRequest.rule_rid }
-        // });
-
-        // Capture NEW state
-        const newValue = rule.toJSON();
-
-        // Write AUDIT record
-        await this.auditService.createAudit({
-            action: "UPDATE",
-            audit_rid: "",
-            rule_rid: ruleRequest.rule_rid,
-            old_value: JSON.stringify(oldValue),
-            new_value: JSON.stringify(newValue),
-            notes: "Rule updated",
-            created_by: ruleRequest.modified_by ?? userId,
-            modified_by: ruleRequest.modified_by ?? userId,
-        }, userId);
-
         return {
             statusCode: HttpStatus.SUCCESS,
             message: STATUS_MESSAGE.ruleUpdated,
             data: {
-                rules: rule,
+                rules: "",
             },
         };
     }
-
-    /** UPDATE RuleMaster by RID */
-    // async updateRuleMaster(
-    //     rulerequest: ICreateRule, userId: string
-    // ): Promise<{
-    //     statusCode: number;
-    //     message: string;
-    //     errorMessage?: string;
-    //     data?: { rules: any };
-    // }> {
-    //     try {
-    //         const mainDb = await this.getMainDb();
-    //         RuleMaster.initialize(mainDb);
-    //         const existingCase = await RuleMaster.findOne({
-    //             where: { rid: rulerequest.rule_rid },
-    //         });
-    //         const caseUpdateResponse = await RuleMaster.update(
-    //             {
-    //                 ...rulerequest,
-    //                 modified_by: "userId",
-    //                 modified_datetime: new Date(),
-    //             },
-    //             {
-    //                 where: { rid: rulerequest.rule_rid },
-    //             }
-    //         );
-
-    //         return {
-    //             statusCode: HttpStatus.SUCCESS,
-    //             message: STATUS_MESSAGE.ruleUpdated,
-    //             data: {
-    //                 rules: {},
-    //             },
-    //         };
-    //     } catch (err) {
-    //         logMessage(`Error updating case, ${err}`);
-    //         //await transaction.rollback();
-    //         return {
-    //             statusCode: HttpStatus.FAILED,
-    //             message: HttpStatus.FAILED_MESSAGE,
-    //             errorMessage: STATUS_MESSAGE.ruleCreationFailed,
-    //         };
-    //     }
-    // };
-
 
     async getRuleDetailByRuleRid(
         ruleRid: string, userId: string

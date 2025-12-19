@@ -3,7 +3,6 @@ import RuleController from "../controllers/workflowRuleMasterController";
 import ConditionController from "../controllers/workflowConditionController";
 import ActionController from "../controllers/workflowRuleActionController";
 import ScopeController from "../controllers/workflowRuleScopeMapController";
-import AuditController from "../controllers/workflowRuleAuditController";
 import TriggerController from "../controllers/workflowRuleTriggerLogController";
 import ScheduleController from "../controllers/workflowRuleScheduleQueueController";
 import WorkFlowController from "../controllers/workflowRulecontroller";
@@ -34,12 +33,6 @@ router.post("/scope", ScopeController.createRuleScope);
 router.get("/scope", ScopeController.listScopes);
 router.put("/scope/update", ScopeController.updateScope);
 router.post("/scope/delete", ScopeController.deleteScope);
-
-// Audit
-router.post("/audit", AuditController.createAudit);
-// router.get("/audit/:rid", AuditController.getAuditById);
-// router.get("/audit/rule/:ruleRid", AuditController.getAuditsByRule);
-// router.delete("/audit/:rid", AuditController.deleteAuditEntry);
 
 // TriggerLog
 router.post("/trigger", TriggerController.createTriggerLog);

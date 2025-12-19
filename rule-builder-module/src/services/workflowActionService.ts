@@ -3,19 +3,19 @@ import { initSequelize } from "../config/maindbDataSource";
 import { Sequelize, Op } from "sequelize";
 import { HttpStatus, STATUS_MESSAGE } from "../utils/constants";
 import { Logger } from "winston";
-import { ICreateAction } from "../utils/types";
+import { ICreateAction, IUpdateAction } from "../utils/types";
 import { logMessage } from "../utils/helpers";
-import { AuditService } from "./workflowAuditService";
+import { RuleHistoryService } from "./workflowRuleHistoryService";
 
 export class ActionService {
 
     private logger: Logger;
-    private auditService: AuditService;
+    private ruleHistoryService: RuleHistoryService;
     private mainDbSequelize: Sequelize | null = null;
 
     constructor(logger: Logger) {
         this.logger = logger;
-        this.auditService = new AuditService(this.logger);
+        this.ruleHistoryService = new RuleHistoryService(this.logger);
     }
 
     private async getMainDb() {
@@ -100,9 +100,22 @@ export class ActionService {
         };
     };
 
+
+    async getActionsByRuleRid(ruleRid: string): Promise<any[]> {
+        const mainDb = await this.getMainDb();
+        RuleAction.initialize(mainDb);
+        const actions = await RuleAction.findAll({
+            where: {
+                rule_rid: ruleRid,
+            },
+            order: [['action_order', 'ASC']], // IMPORTANT for index-based updates
+        });
+        return actions;
+    }
+
     /** UPDATE RuleMaster by RID */
     async updateAction(
-        actionRequest: ICreateAction,
+        actionRequest: any,
         userId: string
     ): Promise<{
         statusCode: number;
@@ -112,6 +125,41 @@ export class ActionService {
     }> {
         const mainDb = await this.getMainDb();
         const dbInit = RuleAction.initialize(mainDb);
+        const oldaction = await RuleAction.findOne({ where: { rid: actionRequest.rid } });
+        if (!oldaction) {
+            return {
+                statusCode: HttpStatus.NOT_FOUND,
+                message: "",
+            };
+        }
+        const oldRuleData = oldaction.toJSON();
+        const historyRecords = [];
+        // Compare and prepare history records for each field
+        const fieldsToUpdate = [
+            { field: 'action_rid', oldValue: oldRuleData.action_rid, newValue: actionRequest.action_rid },
+
+        ];
+        for (const { field, oldValue, newValue } of fieldsToUpdate) {
+            if (oldValue !== newValue) {
+                try {
+                    historyRecords.push({
+                        rule_rid: oldRuleData.rule_rid,
+                        attribute_name: field,
+                        old_value: oldValue,
+                        new_value: newValue,
+                        created_by: userId,
+                        action: 'ruleAction'
+                    });
+                } catch (err) {
+                    console.log(err);
+                }
+            }
+        }
+        for (const history of historyRecords) {
+            await this.ruleHistoryService.createHistory(history, userId);
+        }
+
+
         const UpdateResponse = await RuleAction.update(
             {
                 ...actionRequest,
@@ -119,7 +167,7 @@ export class ActionService {
                 modified_datetime: new Date(),
             },
             {
-                where: { rid: actionRequest.action_rid },
+                where: { rid: actionRequest.rid, rule_rid: actionRequest.rule_rid },
             }
         );
 
@@ -134,20 +182,18 @@ export class ActionService {
 
 
     /** DELETE RuleMaster by RID */
-    async deleteActionByRuleRid(rule_rid: any, userId: string) {
+    async deleteAction(action_rid: string, rule_rid: string, userId: string) {
         try {
             const mainDb = await this.getMainDb();
             RuleAction.initialize(mainDb);
-            await RuleAction.destroy({ where: { rule_rid: rule_rid } });
-            await this.auditService.createAudit({
-                action: "DELETE",
-                audit_rid: "",
+            await RuleAction.destroy({ where: { rule_rid: rule_rid, rid: action_rid } });
+            await this.ruleHistoryService.createHistory({
                 rule_rid: rule_rid,
-                old_value: "",
-                new_value: "",
-                notes: "Rule action deleted",
+                attribute_name: action_rid,
+                old_value: null,
+                new_value: null,
                 created_by: userId,
-                modified_by: userId,
+                action: 'actionDelete'
             }, userId);
             return {
                 statusCode: HttpStatus.SUCCESS,

@@ -28,6 +28,7 @@ assigned_to_name: String
 created_by_name: String
 modified_by_name: String
 account_name: String
+account_status_name: String
 }
 
 

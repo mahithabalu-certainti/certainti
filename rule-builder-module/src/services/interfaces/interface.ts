@@ -1,5 +1,5 @@
 
-import { ICreateRule, IUpdateRule, ICreateCondition, ICreateAction, ICreateScope, ICreateSchedule, ICreateAudit, ICreateTrigger, ICreateRuleMap, ICreateRuleMapWithScope, IListSCopeEvent } from "../../utils/types";
+import { ICreateRule, IUpdateRule, ICreateCondition, IUpdateCondition, ICreateAction, ICreateScope, ICreateSchedule, ICreateAudit, ICreateTrigger, ICreateRuleMap, ICreateRuleMapWithScope, IListSCopeEvent } from "../../utils/types";
 export interface IRulemasterService {
     createRuleMaster(
         ruleRequest: ICreateRule,
@@ -39,7 +39,7 @@ export interface IRulemasterService {
         statusCode: number;
         message: string;
         errorMessage?: string;
-        data?:any;
+        data?: any;
     }>;
 
     updateRuleMaster(
@@ -78,8 +78,10 @@ export interface IConditionService {
         data?: { conditions: any; count: number };
     }>;
 
+    getConditionsByRuleRid(rule_rid: string): Promise<any>;
+
     updateCondition(
-        conditionRequest: ICreateCondition,
+        conditionRequest: IUpdateCondition,
         userId: string
     ): Promise<{
         statusCode: number;
@@ -88,7 +90,7 @@ export interface IConditionService {
         data?: { condition: any };
     }>;
 
-    deleteConditionsByRuleRid(data: any, userId: string): Promise<any>;
+    deleteCondition(condition_rid: string, rule_rid: string, userId: string): Promise<any>;
 }
 
 
@@ -114,6 +116,8 @@ export interface IActionService {
         data?: { actions: any; count: number };
     }>;
 
+    getActionsByRuleRid(rule_rid: string): Promise<any>;
+
     updateAction(
         actionRequest: ICreateAction,
         userId: string
@@ -124,7 +128,7 @@ export interface IActionService {
         data?: { action: any };
     }>;
 
-    deleteActionByRuleRid(data: any, userId: string): Promise<any>;
+    deleteAction(action_rid: string, rule_rid: string, userId: string): Promise<any>;
 }
 
 
@@ -198,15 +202,15 @@ export interface IScheduleService {
     deleteSchedule(data: any, userId: string): Promise<any>;
 }
 
-export interface IAuditservice {
-    createAudit(
-        auditRequest: ICreateAudit,
+export interface IRuleHistoryservice {
+    createHistory(
+        request: any,
         userId: string
     ): Promise<{
         statusCode: number;
         message: string;
         errorMessage?: string;
-        data?: { audit: any };
+        data?: { history: any };
     }>;
 }
 
