@@ -437,20 +437,9 @@ class CaseSchemaService {
         transaction,
       });
 
-      const caseUpdateResponse = await Case.update(
-        {
-          ...caseRequest,
-          modified_by: userId,
-          modified_datetime: new Date(),
-        },
-        {
-          where: { rid: caseRequest.case_rid },
-          transaction,
-        }
-      );
       if (caseRequest.case_startdate && caseRequest.statutory_submission_date && caseRequest.planned_submission_date) {
-        if (existingCase?.case_startdate.toISOString().split('T')[0] !== caseRequest.case_startdate.toISOString().split('T')[0] || existingCase?.statutory_submission_date.toISOString().split('T')[0] !== caseRequest.statutory_submission_date.toISOString().split('T')[0]
-          || existingCase?.planned_submission_date.toISOString().split('T')[0] !== caseRequest.planned_submission_date.toISOString().split('T')[0]
+        if (existingCase?.case_startdate !== caseRequest.case_startdate || existingCase?.statutory_submission_date !== caseRequest.statutory_submission_date
+          || existingCase?.planned_submission_date !== caseRequest.planned_submission_date
         ) {
           const [fetchToDoStatus] = await this.mainDbSequelize.query<TaskTypeResponse>(rawQueries.checkCaseTaskStatusToDo(), { type: QueryTypes.SELECT });
           if (fetchToDoStatus) {
@@ -473,6 +462,17 @@ class CaseSchemaService {
           }
         }
       }
+      const caseUpdateResponse = await Case.update(
+        {
+          ...caseRequest,
+          modified_by: userId,
+          modified_datetime: new Date(),
+        },
+        {
+          where: { rid: caseRequest.case_rid },
+          transaction,
+        }
+      );
       await CaseSummary.update(
         {
           ...caseRequest,

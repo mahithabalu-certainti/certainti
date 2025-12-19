@@ -11,9 +11,9 @@ const createCaseSchema = Joi.object({
   case_name: Joi.string().max(255).required(),
   description: Joi.string().max(2000).optional().allow(""),
   filing_type_rid: Joi.string().required(),
-  case_startdate: Joi.date().required(),
-  planned_submission_date: Joi.date().required(),
-  statutory_submission_date: Joi.date().required(),
+  case_startdate: Joi.string().required(),
+  planned_submission_date: Joi.string().required(),
+  statutory_submission_date: Joi.string().required(),
   heat_light_power: Joi.string()
     .pattern(decimal18_2Regex)
     .messages({
@@ -88,9 +88,9 @@ const updateCaseSchema = Joi.object({
   case_name: Joi.string().max(255).required(),
   description: Joi.string().max(2000).optional().allow(""),
   filing_type_rid: Joi.string().required(),
-  case_startdate: Joi.date().required(),
-  planned_submission_date: Joi.date().required(),
-  statutory_submission_date: Joi.date().required(),
+  case_startdate: Joi.string().required(),
+  planned_submission_date: Joi.string().required(),
+  statutory_submission_date: Joi.string().required(),
   country_rid: Joi.string().optional(),
   heat_light_power: Joi.string()
     .pattern(decimal18_2Regex)
