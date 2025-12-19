@@ -68,7 +68,7 @@ export const GeoBasedRuleFormFieldsData = (
             ...commonProps,
             placeholder: `Enter ${formattedLabel}`,
             regex: REGEX_PATTERNS.NUMERIC_10_4,
-            regexErrorMessage: `${formattedLabel}must be a positive number with up to 10 digits and 4 decimal places`,
+            regexErrorMessage: `${formattedLabel} must be a positive number with up to 10 digits and 4 decimal places`,
             formatCostValue: true,
           });
         }
