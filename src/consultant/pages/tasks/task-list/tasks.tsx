@@ -263,7 +263,13 @@ export const Tasks: React.FC = () => {
         currentPermissionMap,
         accountPermissionMap
       ),
-    [priorityOptions, statusOptions, currentPermissionMap, accountPermissionMap]
+    [
+      priorityOptions,
+      statusOptions,
+      accountStatusOptions,
+      currentPermissionMap,
+      accountPermissionMap,
+    ]
   );
 
   const menuItems = [

@@ -986,10 +986,10 @@ const ListTable = <T extends RowData>({
                       width: column.width || 160,
                       minWidth: column.width || 160,
                       maxWidth: column.width || 160,
-                      textAlign: 'left',
                       ...(typeof column.sx === 'function'
                         ? filterOutBackground(column.sx())
                         : column.sx || {}),
+                        textAlign: 'left',
                       ...(column.sticky
                         ? {
                             left:
@@ -1021,10 +1021,10 @@ const ListTable = <T extends RowData>({
                       width: column.width || 160,
                       minWidth: column.width || 160,
                       maxWidth: column.width || 160,
-                      textAlign: 'left',
                       ...(typeof column.sx === 'function'
                         ? filterOutBackground(column.sx())
                         : column.sx || {}),
+                        textAlign: 'left',
                       ...(column.sticky
                         ? {
                             left:

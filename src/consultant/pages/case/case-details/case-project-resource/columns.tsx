@@ -123,8 +123,8 @@ export const getCaseProjectResourceColumns = (
         !permissionMap?.['total_hours_pro_res']?.edit,
     },
     {
-      id: 'total_cost_pro_res',
-      sortId: 'total_cost_pro_res',
+      id: 'net_total_cost_pro_res',
+      sortId: 'net_total_cost_pro_res',
       label: 'Net Resource Cost',
       width: 180,
       sortable: true,
@@ -133,7 +133,7 @@ export const getCaseProjectResourceColumns = (
         !permissionMap?.['net_total_cost_pro_res']?.edit,
       render: (row) =>
         costDisplay(
-          row.total_cost_pro_res as unknown as string | number | null | undefined
+          row.net_total_cost_pro_res as unknown as string | number | null | undefined
         ),
     },
     {

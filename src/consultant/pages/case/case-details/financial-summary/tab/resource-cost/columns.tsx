@@ -9,8 +9,8 @@ export const getFinancialResourceCostColumns = (
   {
     id: 'project_code',
     sortId: 'project_code',
-    label: 'Project Number',
-    width: 150,
+    label: 'Project Code',
+    width: 130,
     sortable: true,
     sticky: true,
     sx: {
@@ -38,16 +38,6 @@ export const getFinancialResourceCostColumns = (
       !permissionMap?.['fiscal_year']?.read,
   },
   {
-    id: 'project_ref_id',
-    sortId: 'project_ref_id',
-    label: 'Project Ref ID',
-    width: 130,
-    sortable: true,
-    // hide:
-    //   !permissionMap?.['project_ref_id']?.edit &&
-    //   !permissionMap?.['project_ref_id']?.read,
-  },
-  {
     id: 'project_name',
     sortId: 'project_name',
     label: 'Project Name',
@@ -58,14 +48,23 @@ export const getFinancialResourceCostColumns = (
       !permissionMap?.['project_name']?.read,
   },
   {
-    id: 'resource_ref_id',
-    sortId: 'resource_ref_id',
-    label: 'Resource Ref ID',
-    width: 150,
+    id: 'r_number',
+    sortId: 'r_number',
+    label: 'Project ID',
+    width: 130,
     sortable: true,
-    // hide:
-    //   !permissionMap?.['resource_ref_id']?.edit &&
-    //   !permissionMap?.['resource_ref_id']?.read,
+    hide:
+      !permissionMap?.['r_number']?.edit && !permissionMap?.['r_number']?.read,
+  },
+  {
+    id: 'resource_code',
+    sortId: 'resource_code',
+    label: 'Resource Code',
+    width: 130,
+    sortable: true,
+    hide:
+      !permissionMap?.['resource_code']?.edit &&
+      !permissionMap?.['resource_code']?.read,
   },
   {
     id: 'resource_name',
@@ -88,10 +87,20 @@ export const getFinancialResourceCostColumns = (
       !permissionMap?.['resource_type_name']?.read,
   },
   {
+    id: 'country_name',
+    sortId: 'country_name',
+    label: 'Country',
+    width: 130,
+    sortable: true,
+    hide:
+      !permissionMap?.['country_name']?.edit &&
+      !permissionMap?.['country_name']?.read,
+  },
+  {
     id: 'total_cost_pro_res',
     sortId: 'total_cost_pro_res',
-    label: 'Cost',
-    width: 110,
+    label: 'Net Resource Cost',
+    width: 160,
     sortable: true,
     sx: {
       textAlign: 'right',
@@ -120,8 +129,8 @@ export const getFinancialResourceCostColumns = (
   {
     id: 'qre_final',
     sortId: 'qre_final',
-    label: 'QRE',
-    width: 110,
+    label: 'Project QRE',
+    width: 130,
     sortable: true,
     sx: {
       textAlign: 'right',

@@ -351,6 +351,7 @@ const GeoBasedRuleForm: React.FC = () => {
           onChange={onChangeField}
           keyStart='effective_start_date'
           keyEnd='effective_end_date'
+          isFrom='geoBasedRuleForm'
         />
       </div>
     </div>

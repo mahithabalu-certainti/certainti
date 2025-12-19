@@ -642,7 +642,7 @@ const Resource: React.FC<ResourceProps> = ({
       variant: 'outlined' as const,
       onClick: () => handleOpen(),
       sx: { ...BUTTON_STYLES, width: '120px', minWidth: '120px' },
-      hide: value !== 'details' || !attachmentCreateEnable,
+      hide: !value  || !attachmentCreateEnable,
       disabled: accountInActive ? accountInActive : resourceInActive,
     },
     {
@@ -650,7 +650,7 @@ const Resource: React.FC<ResourceProps> = ({
       variant: 'outlined' as const,
       onClick: () => handleCreateNote(),
       sx: { ...BUTTON_STYLES, width: '80px', minWidth: '80px' },
-      hide: value !== 'details' || !isNoteCreateEnable,
+      hide: !value || !isNoteCreateEnable,
       disabled: accountInActive ? accountInActive : resourceInActive,
     },
     {
@@ -658,7 +658,7 @@ const Resource: React.FC<ResourceProps> = ({
       variant: 'outlined' as const,
       onClick: () => handleCreateChecklist(),
       sx: { ...BUTTON_STYLES, width: '105px', minWidth: '105px' },
-      hide: value !== 'details' || !isChecklistCreateEnable,
+      hide: !value || !isChecklistCreateEnable,
       disabled: accountInActive ? accountInActive : resourceInActive,
     },
     {

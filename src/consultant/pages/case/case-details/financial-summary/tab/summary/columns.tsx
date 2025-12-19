@@ -134,24 +134,6 @@ export const getDetailedMetricColumns = (
         ? costDisplay(row.project_task_level, currencySymbol)
         : row.project_task_level || '-',
   },
-  {
-    id: 'approved',
-    label: 'Approved',
-    sortable: false,
-    sortId: 'approved',
-    width: '20%',
-    sx: {
-      textAlign: 'right',
-    },
-    render: (row: SummaryDetailedMetric) =>
-      row.metric_name &&
-      row.approved &&
-      (row.metric_name === 'FTE Cost' ||
-        row.metric_name === 'Sub Con Cost' ||
-        row.metric_name === 'Non Labor Cost')
-        ? costDisplay(row.approved, currencySymbol)
-        : row.approved || '-',
-  },
 ];
 
 export const getClaimJurisdictionColumns = (
@@ -218,20 +200,6 @@ export const getClaimJurisdictionColumns = (
     render: (row: ClaimJurisdiction) =>
       row.rd_credits_nonlabor
         ? costDisplay(row.rd_credits_nonlabor, currencySymbol)
-        : '-',
-  },
-  {
-    id: 'rd_credits_total',
-    label: 'RD Credits - Total',
-    sortable: false,
-    sortId: 'rd_credits_total',
-    width: '20%',
-    sx: {
-      textAlign: 'right',
-    },
-    render: (row: ClaimJurisdiction) =>
-      row.rd_credits_total
-        ? costDisplay(row.rd_credits_total, currencySymbol)
         : '-',
   },
 ];
