@@ -98,6 +98,20 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
     return map;
   }, [projectViewEditFields]);
 
+  const accountViewEditFields = useMemo(
+    () =>
+      permission.find((item) => item.name === AllPermissions.ACCOUNTS_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+  const accountPermissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    accountViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [accountViewEditFields]);
+
   useEffect(() => {
     setTableParams((prev) => {
       const newParams: Partial<ProjectListParams> = {
@@ -248,7 +262,8 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
         memoizedProjectTypes,
         memoizedClassification,
         handleEdit,
-        permissionMap
+        permissionMap,
+        accountPermissionMap
       ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [memoizedProjectTypes, memoizedClassification]

@@ -1,40 +1,26 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { Suspense, useMemo, useState } from 'react';
+import { ProjectListParams } from '../../../../../../consultant/types/project';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../../../store/store';
+import { checkPermission } from '../../../../../../common-utils';
+import { AllModules, AllPermissions } from '../../../../../../common-service';
+import { getAllProjectFilterFields } from './helpers';
+import { AccessRestricted } from '../../../../../../components/account-restricted';
+import SearchBar from '../../../../../../components/search/search-bar';
 import {
-  AccountSettingsIcon,
-  ActionIcon,
   NewFilterIcon,
   ProjectDetailsIcon,
   RefreshIcon,
-} from '../../../../assets';
-import { ActionsDropdown } from '../../../../components';
-import { getAllProjectFilterFields } from './helpers';
+} from '../../../../../../assets';
+import Filter from '../../../../../../consultant/pages/account-details-sidebar/components/filter/filter';
 import { ProjectTable } from './table/project-table';
-import { ProjectListParams } from '../../../types/project';
-import Filter from '../../account-details-sidebar/components/filter/filter';
-import { useSelector } from 'react-redux';
-import { RootState } from '../../../../store/store';
-import { checkPermission } from '../../../../common-utils';
-import {
-  AllModules,
-  AllPermissions,
-  useGetStatus,
-} from '../../../../common-service';
-import { AccessRestricted } from '../../../../components/account-restricted';
-import {
-  exportProjectData,
-  useGetProjectType,
-} from '../../../services/project';
-import { useFetchClassification } from '../../../services/account';
-// import { Switch } from '@mui/material';
-import TextButton from '../../../../components/button/text-button';
-import { PROJECT_CREATE } from '../../../../routes';
-import { useNavigate } from 'react-router-dom';
-import SearchBar from '../../../../components/search/search-bar';
 
-export const Projects: React.FC = () => {
-  // const [toggleEnabled, setToggleEnabled] = useState(false);
-  const navigate = useNavigate();
+interface ProjectsProps {
+  onSelectionChange?: (selectedIds: string[]) => void;
+}
+
+export const Projects: React.FC<ProjectsProps> = ({ onSelectionChange }) => {
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({});
   const [page, setPage] = useState<number>(1);
   const [totalCount, setTotalCount] = useState<number>(0);
@@ -48,10 +34,7 @@ export const Projects: React.FC = () => {
   const [refreshProjectsTrigger, setRefreshProjectsTrigger] =
     useState<number>();
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
-  const [columnAnchorEl, setColumnAnchorEl] =
-    React.useState<HTMLButtonElement | null>(null);
   const [searchText, setSearchText] = useState<string>('');
-  const systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   const onRefreshClick = () => {
     setRefreshProjectsTrigger(Date.now()); // unique on every click
@@ -72,14 +55,7 @@ export const Projects: React.FC = () => {
     permission,
     AllPermissions.PROJECTS_VIEW_EDIT
   );
-  const isProjectExportEnable = checkPermission(
-    permission,
-    AllPermissions.PROJECTS_EXPORT
-  );
-  // const isProjectEditEnable = checkPermission(
-  //   permission,
-  //   AllPermissions.PROJECT_PROJECTS_EDIT
-  // );
+
   const isProjectDeleteEnable = checkPermission(
     permission,
     AllPermissions.PROJECTS_DELETE
@@ -119,62 +95,6 @@ export const Projects: React.FC = () => {
     }
   };
 
-  const handleExport = () => {
-    const projectParams = {
-      sortBy: tableParams.sortBy,
-      sortOrder: tableParams.sortOrder,
-      filters: appliedFilters,
-      fiscalYear: tableParams.fiscalYear,
-      globalFilters: tableParams.globalFilters,
-      timezone: systemTimezone,
-      bothParentAndChild: false,
-      search: searchText || undefined,
-      // bothParentAndChild: toggleEnabled, // Commented for it may use in future
-    };
-    exportProjectData('projectall', projectParams);
-  };
-  const menuItems = [
-    {
-      label: 'Export',
-      hide: !isProjectExportEnable,
-      onClick: () => handleExport(),
-    },
-  ];
-
-  const Classification = useFetchClassification();
-  const statusOptions = useGetStatus();
-  const projectTypeOptions = useGetProjectType();
-
-  const isModalOpen = Boolean(columnAnchorEl);
-  const modalId = isModalOpen ? 'project-column-visibility-popover' : undefined;
-
-  const memoizedClassification = useMemo(
-    () =>
-      Classification.data?.data.projectClassifications.map((data) => ({
-        option: data.classification_name,
-        value: data.classification_name,
-      })) || [],
-    [Classification.data?.data.projectClassifications]
-  );
-
-  const memoizedStatus = useMemo(
-    () =>
-      statusOptions?.data?.data?.status.map((status) => ({
-        option: status.status_name,
-        value: status.rid,
-      })) || [],
-    [statusOptions?.data?.data?.status]
-  );
-
-  const memoizedProjectTypes = useMemo(
-    () =>
-      projectTypeOptions?.data?.data?.projectType.map((item) => ({
-        option: item.project_type_name,
-        value: item.rid,
-      })) || [],
-    [projectTypeOptions?.data?.data?.projectType]
-  );
-
   const projectViewEditFields = useMemo(
     () =>
       permission?.find(
@@ -205,37 +125,11 @@ export const Projects: React.FC = () => {
   }, [accountViewEditFields]);
 
   const projectFilterFields = getAllProjectFilterFields(
-    memoizedClassification.map((item) => ({
-      label: item.option,
-      value: item.value,
-    })),
-    memoizedProjectTypes,
-    memoizedStatus,
     projectPermissionMap,
     accountPermissionMap
   );
 
-  // Commented for it may use in future
-  // const handleToggleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-  //   if (setToggleEnabled) {
-  //     setToggleEnabled(event.target.checked);
-  //   }
-  // };
-  const handleNewProjectCLick = () => {
-    navigate(`${PROJECT_CREATE}?type=global`);
-  };
-  const dropdownOptions = {
-    classification: Classification?.data,
-    projectType: projectTypeOptions?.data,
-  };
-
   if (!projectIsEnable || !isProjectViewEnable) return <AccessRestricted />;
-
-  const handleColumnVisibility = (
-    event: React.MouseEvent<HTMLButtonElement>
-  ) => {
-    setColumnAnchorEl(event.currentTarget);
-  };
 
   return (
     <div className='flex flex-col w-full  h-full'>
@@ -257,25 +151,11 @@ export const Projects: React.FC = () => {
           </div>
         </div>
         <div className='flex gap-3 justify-center items-center'>
-          <div>
-            <TextButton
-              label='New'
-              onClick={() => handleNewProjectCLick()}
-              // sx={ ...BUTTON_STYLES, width: '48px', minWidth: '48px' }
-            />
-          </div>
-          <ActionsDropdown actions={menuItems} />
           <div
             className='flex items-center justify-center border border-[#CBD6E2] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] w-[24px] h-[23px] cursor-pointer'
             onClick={onRefreshClick}
           >
             <RefreshIcon alt='refresh-icon' className='h-4' />
-          </div>
-          <div className='hidden border border-[#CBD6E2] w-[24px] h-[24px] justify-center items-center bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)]'>
-            <ActionIcon alt='menu-icon' className='h-4' />
-          </div>
-          <div className='hidden border border-[#CBD6E2] w-[24px] h-[24px]  justify-center items-center bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)]'>
-            <AccountSettingsIcon alt='menu-icon' className='h-4' />
           </div>
         </div>
       </div>
@@ -308,16 +188,6 @@ export const Projects: React.FC = () => {
               }));
             }}
           />
-          <button
-            aria-describedby={modalId}
-            className={`w-[120px] h-[24px] text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative border border-[#CBD6E2] px-0 py-0 normal-case ${isModalOpen ? 'bg-[#F3F3F3]' : 'bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)]'} hover:text-[#425A76] transition-colors duration-150`}
-            style={{
-              boxShadow: '0px 1px 2px 0px rgba(42, 54, 71, 0.05)',
-            }}
-            onClick={handleColumnVisibility}
-          >
-            Show/Hide Fields
-          </button>
           <button
             aria-describedby={filterId}
             className={`w-[64px] h-[26px] text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative 
@@ -366,11 +236,8 @@ export const Projects: React.FC = () => {
           isProjectEditEnable={isProjectFieldsEditable}
           isProjectDeleteEnable={isProjectDeleteEnable}
           refreshProjectsTrigger={refreshProjectsTrigger}
-          // toggleEnabled={toggleEnabled} // Commented for it may use in future
-          dropdownOptions={dropdownOptions}
-          setColumnAnchorEl={setColumnAnchorEl}
-          columnAnchorEl={columnAnchorEl}
           searchValue={searchText}
+          onSelectionChange={onSelectionChange}
         />
       </div>
     </div>

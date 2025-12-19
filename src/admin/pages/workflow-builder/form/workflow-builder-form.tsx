@@ -25,10 +25,12 @@ import { useToast } from '../../../../hooks';
 
 interface WorkflowBuilderProps {
   isLoadingRuleDetails: boolean;
+  ruleName: string;
 }
 
 const WorkflowBuilderFormContent: React.FC<WorkflowBuilderProps> = ({
   isLoadingRuleDetails,
+  ruleName,
 }) => {
   const { ruleId } = useParams();
   const navigate = useNavigate();
@@ -135,13 +137,13 @@ const WorkflowBuilderFormContent: React.FC<WorkflowBuilderProps> = ({
               />
             </React.Suspense>
             <div className='w-[90%]'>
-              {isInitialLoading ? (
+              {isEditView && isInitialLoading ? (
                 <div className='ml-2'>
                   <SingleSkeleton width={150} height={12} />
                 </div>
               ) : (
                 <div className='font-semibold text-[12px] leading-[20px] ml-2 mb-[-6px] text-[#7D98B6]'>
-                  {`Workflow Builder ${isEditView ? `> ${rule.name || ''}` : ''}`}
+                  {`Workflow Builder ${isEditView ? `> ${ruleName || ''}` : ''}`}
                 </div>
               )}
               <h5 className='text-[16px] font-bold ml-2 mt-0.5 text-[#2D3E4F]'>
@@ -195,20 +197,23 @@ const WorkflowBuilderForm: React.FC = () => {
   const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
 
   // Fetch existing rule data for edit mode
-  const { data: ruleDetailsResponse, isLoading: isLoadingRuleDetails } =
-    useGetRuleDetails(ruleId || '', isEditView);
+  const { data, isLoading: isLoadingRuleDetails } = useGetRuleDetails(
+    ruleId || '',
+    isEditView
+  );
 
   // Transform API response to Rule format
-  const initialRule = ruleDetailsResponse
-    ? transformApiResponseToRule(ruleDetailsResponse)
-    : undefined;
+  const initialRule = data ? transformApiResponseToRule(data) : undefined;
 
   return (
     <WorkflowProvider
       key={initialRule ? 'edit-mode' : 'create-mode'}
       initialRule={initialRule}
     >
-      <WorkflowBuilderFormContent isLoadingRuleDetails={isLoadingRuleDetails} />
+      <WorkflowBuilderFormContent
+        isLoadingRuleDetails={isLoadingRuleDetails}
+        ruleName={data?.rule?.rule_name || ''}
+      />
     </WorkflowProvider>
   );
 };

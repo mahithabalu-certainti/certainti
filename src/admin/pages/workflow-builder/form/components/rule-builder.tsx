@@ -21,6 +21,7 @@ import {
 } from '../../../../types';
 import { Tooltip } from '@mui/material';
 import { TruncateWithTooltip } from '../../../../../components';
+import SingleSkeleton from '../../../../../components/skeleton-component/singleskeleton';
 
 interface RuleBuilderProps {
   apiData: {
@@ -213,91 +214,95 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
   return (
     <div>
       <div className='flex items-center justify-between border-b border-[#CBD6E2] h-[50px] px-10'>
-        <div className='flex items-center gap-3 group'>
-          <div className='relative flex items-center'>
-            {isEditing ? (
-              <input
-                type='text'
-                value={rule.name}
-                autoFocus
-                placeholder='Enter Rule Name'
-                onChange={(e) => updateRuleName(e.target.value)}
-                onBlur={handleSaveEdit}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === 'Tab') {
-                    e.preventDefault();
-                    handleSaveEdit();
-                  } else if (e.key === 'Escape') {
-                    e.preventDefault();
-                    handleCancelEdit();
-                  }
-                }}
-                className={`placeholder-custom-color text-[13px] w-[200px] font-medium text-[#425A76] px-1 bg-transparent border-0 border-b-1 outline-none ${
-                  showRuleNameError && ruleNameError
-                    ? 'border-b-red-500'
-                    : 'border-b-transparent focus:border-b-blue-500'
-                }`}
-                style={{
-                  paddingRight:
-                    showRuleNameError && ruleNameError ? '24px' : '2px',
-                }}
-              />
-            ) : (
-              <div className='relative max-w-[200px]'>
-                <h1
-                  className={`text-[14px] font-medium text-[#425A76] border-b-1 px-1 overflow-hidden text-ellipsis whitespace-nowrap ${
+        {isInitialLoading ? (
+          <SingleSkeleton width={160} height={22} />
+        ) : (
+          <div className='flex items-center gap-3 group'>
+            <div className='relative flex items-center'>
+              {isEditing ? (
+                <input
+                  type='text'
+                  value={rule.name}
+                  autoFocus
+                  placeholder='Enter Rule Name'
+                  onChange={(e) => updateRuleName(e.target.value)}
+                  onBlur={handleSaveEdit}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === 'Tab') {
+                      e.preventDefault();
+                      handleSaveEdit();
+                    } else if (e.key === 'Escape') {
+                      e.preventDefault();
+                      handleCancelEdit();
+                    }
+                  }}
+                  className={`placeholder-custom-color text-[13px] w-[200px] font-medium text-[#425A76] px-1 bg-transparent border-0 border-b-1 outline-none ${
                     showRuleNameError && ruleNameError
                       ? 'border-b-red-500'
-                      : 'border-b-transparent'
+                      : 'border-b-transparent focus:border-b-blue-500'
                   }`}
                   style={{
                     paddingRight:
-                      showRuleNameError && ruleNameError ? '24px' : '8px',
+                      showRuleNameError && ruleNameError ? '24px' : '2px',
                   }}
-                >
-                  <TruncateWithTooltip maxWidth={200} text={rule.name} />
-                </h1>
-                {showRuleNameError && ruleNameError && (
-                  <Tooltip
-                    title={ruleNameError}
-                    arrow
-                    placement='top'
-                    slotProps={{
-                      tooltip: {
-                        sx: {
-                          backgroundColor: '#FEF2F2',
-                        },
-                      },
+                />
+              ) : (
+                <div className='relative max-w-[200px]'>
+                  <h1
+                    className={`text-[14px] font-medium text-[#425A76] border-b-1 px-1 overflow-hidden text-ellipsis whitespace-nowrap ${
+                      showRuleNameError && ruleNameError
+                        ? 'border-b-red-500'
+                        : 'border-b-transparent'
+                    }`}
+                    style={{
+                      paddingRight:
+                        showRuleNameError && ruleNameError ? '24px' : '8px',
                     }}
                   >
-                    <div className='absolute right-0 top-1/2 -translate-y-1/2 flex items-center cursor-pointer pr-1'>
-                      <React.Suspense fallback={null}>
-                        <ErrorInfoIcon className='w-3.5 h-3.5 text-red-500' />
-                      </React.Suspense>
-                    </div>
-                  </Tooltip>
-                )}
-              </div>
-            )}
-            {!isEditing && (
-              <React.Suspense fallback={null}>
-                <EditIcon
-                  className='w-3.5 h-3.5 cursor-pointer transition-opacity duration-200 ml-2'
-                  style={{
-                    filter:
-                      'brightness(0) saturate(100%) invert(16%) sepia(14%) saturate(749%) hue-rotate(169deg) brightness(93%) contrast(86%)',
-                  }}
-                  onClick={handleStartEdit}
-                />
-              </React.Suspense>
+                    <TruncateWithTooltip maxWidth={200} text={rule.name} />
+                  </h1>
+                  {showRuleNameError && ruleNameError && (
+                    <Tooltip
+                      title={ruleNameError}
+                      arrow
+                      placement='top'
+                      slotProps={{
+                        tooltip: {
+                          sx: {
+                            backgroundColor: '#FEF2F2',
+                          },
+                        },
+                      }}
+                    >
+                      <div className='absolute right-0 top-1/2 -translate-y-1/2 flex items-center cursor-pointer pr-1'>
+                        <React.Suspense fallback={null}>
+                          <ErrorInfoIcon className='w-3.5 h-3.5 text-red-500' />
+                        </React.Suspense>
+                      </div>
+                    </Tooltip>
+                  )}
+                </div>
+              )}
+              {!isEditing && (
+                <React.Suspense fallback={null}>
+                  <EditIcon
+                    className='w-3.5 h-3.5 cursor-pointer transition-opacity duration-200 ml-2'
+                    style={{
+                      filter:
+                        'brightness(0) saturate(100%) invert(16%) sepia(14%) saturate(749%) hue-rotate(169deg) brightness(93%) contrast(86%)',
+                    }}
+                    onClick={handleStartEdit}
+                  />
+                </React.Suspense>
+              )}
+            </div>
+            {!isEditView && (
+              <span className='px-1 py-0.5 bg-purple-100 text-purple-700 text-xs font-medium rounded'>
+                NEW
+              </span>
             )}
           </div>
-          {!isEditView && (
-            <span className='px-1 py-0.5 bg-purple-100 text-purple-700 text-xs font-medium rounded'>
-              NEW
-            </span>
-          )}
-        </div>
+        )}
       </div>
       {isInitialLoading ? (
         <div className='w-full flex h-full bg-gray-50'>

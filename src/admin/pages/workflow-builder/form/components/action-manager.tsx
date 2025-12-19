@@ -23,6 +23,7 @@ const ActionManager = ({
 
   const { data: actionTypeData, isLoading: isLoadingActionTypes } =
     useGetActionTypes({
+      scope_rid: rule.trigger?.category || '',
       action_type_rid: selectedCategory === 'all' ? '' : selectedCategory,
       status_rid: '',
     });

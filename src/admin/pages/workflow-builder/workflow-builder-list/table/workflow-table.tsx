@@ -5,14 +5,22 @@ import {
   ListTable,
   ManageColumnsPopover,
 } from '../../../../../components/table';
-import { useWorkflowRuleList } from '../../../../service/workflow-builder/workflow-builder-service';
+import {
+  useCreateRuleMap,
+  useWorkflowRuleList,
+} from '../../../../service/workflow-builder/workflow-builder-service';
 import {
   WorkflowRuleListItem,
   WorkflowRuleListURLParams,
+  ApplyType,
 } from '../../../../types';
 import { FilterTypes } from '../../../../../common-service';
 import { generatePath, useNavigate } from 'react-router-dom';
 import { WORKFLOW_BUILDER_EDIT } from '../../../../../routes';
+import RuleMapModal from '../components/rule-map-modal';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../../store/store';
+import { useToast } from '../../../../../hooks';
 
 interface IWorkflowTableProps {
   appliedFilters: FilterTypes;
@@ -37,10 +45,23 @@ export const WorkflowTable: React.FC<IWorkflowTableProps> = ({
   columnAnchorEl,
   searchValue,
 }) => {
+  const { successToast } = useToast();
   const navigate = useNavigate();
   const [workflowList, setWorkflowList] = useState<WorkflowRuleListItem[]>([]);
 
-  const { data, isLoading, isError } = useWorkflowRuleList(
+  const { userId } = useSelector((state: RootState) => state.auth);
+
+  // Rule Map Modal State
+  const [isRuleMapModalOpen, setIsRuleMapModalOpen] = useState(false);
+  const [selectedRuleData, setSelectedRuleData] =
+    useState<WorkflowRuleListItem | null>(null);
+
+  const {
+    data,
+    isLoading,
+    isError,
+    refetch: refetchList,
+  } = useWorkflowRuleList(
     {
       ...tableParams,
       search: searchValue,
@@ -48,6 +69,8 @@ export const WorkflowTable: React.FC<IWorkflowTableProps> = ({
     },
     refreshTrigger
   );
+
+  const createRuleMap = useCreateRuleMap();
 
   const totalItems = data?.count || 0;
 
@@ -103,7 +126,48 @@ export const WorkflowTable: React.FC<IWorkflowTableProps> = ({
   };
 
   const handleCreateRuleMap = (rowData: WorkflowRuleListItem) => {
-    console.log(rowData, 'modal open');
+    setSelectedRuleData(rowData);
+    setIsRuleMapModalOpen(true);
+  };
+
+  const handleRuleMapModalClose = () => {
+    setIsRuleMapModalOpen(false);
+    setSelectedRuleData(null);
+  };
+
+  const handleRuleMapConfirm = (
+    applyType: ApplyType,
+    selectedEntityIds?: string[]
+  ) => {
+    if (!selectedRuleData) return;
+
+    let apiPayload;
+
+    if (applyType === 'ALL') {
+      apiPayload = {
+        scope_type_rid: selectedRuleData.scope_type_rid,
+        rule_rid: selectedRuleData.rid,
+        apply_type: applyType,
+        scope_entity_rid: [],
+      };
+    } else {
+      apiPayload = {
+        scope_type_rid: selectedRuleData.scope_type_rid,
+        rule_rid: selectedRuleData.rid,
+        apply_type: applyType,
+        scope_entity_rid: selectedEntityIds || [],
+      };
+    }
+    createRuleMap.mutate(
+      { ...apiPayload, created_by: userId || '' },
+      {
+        onSuccess: () => {
+          refetchList();
+          handleRuleMapModalClose();
+          successToast('Created rule map successfully');
+        },
+      }
+    );
   };
 
   const handleEdit = (row: WorkflowRuleListItem) => {
@@ -174,6 +238,15 @@ export const WorkflowTable: React.FC<IWorkflowTableProps> = ({
         onColumnsChange={handleColumnsChange}
         columnRestrictions={RestrictedColumns}
       />
+
+      <RuleMapModal
+        open={isRuleMapModalOpen}
+        onClose={handleRuleMapModalClose}
+        scopeTypeName={selectedRuleData?.scope_type_name || ''}
+        onConfirm={handleRuleMapConfirm}
+        isLoading={createRuleMap.isPending}
+      />
+
       <ListTable
         data={workflowList || []}
         columns={visibleColumns}

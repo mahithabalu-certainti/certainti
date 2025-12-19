@@ -512,6 +512,7 @@ export const WorkflowProvider: React.FC<WorkflowProviderProps> = ({
     setDuplicateConditionIds(new Set());
     setValidatedFieldErrors(new Map());
     return true;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rule.conditions, rule.name, validateRuleName]);
 
   const value: WorkflowContextValue = {

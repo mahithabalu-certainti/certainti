@@ -75,6 +75,7 @@ export interface ConditionCategoryResponse {
 
 // -------- Action Types--------
 export interface ActionTypePayload {
+  scope_rid: string;
   action_type_rid: string;
   status_rid?: string;
 }
@@ -205,7 +206,6 @@ export interface RuleDetails {
     condition_rid: string;
     is_active: boolean;
     scope_type_rid: string;
-    action_type_rid: string;
     schedule_offset_type: string | null;
     schedule_offset_value: string | null;
     created_by: string;
@@ -244,6 +244,7 @@ export interface RuleDetails {
     action_rid: string;
     action_name: string;
     description: string;
+    action_type_rid: string;
   }[];
 }
 
@@ -291,4 +292,15 @@ export interface WorkflowRuleListResponse {
     rules: WorkflowRuleListItem[];
     count: number;
   };
+}
+
+// ---------- Create Rule Map ----------
+export type ApplyType = 'INDIVIDUAL' | 'ALL';
+
+export interface CreateRuleMapPayload {
+  scope_type_rid: string;
+  rule_rid: string;
+  apply_type: ApplyType;
+  scope_entity_rid: string[];
+  created_by: string;
 }

@@ -8,6 +8,7 @@ import {
   ConditionCategoryResponse,
   ConditionListPayload,
   ConditionListResponse,
+  CreateRuleMapPayload,
   CreateRulePayload,
   RuleCategoryFieldsPayload,
   RuleCategoryFieldsResponse,
@@ -163,7 +164,7 @@ export const useGetActionTypes = (params: ActionTypePayload) => {
     queryFn: () => fetchActionTypes(params),
     retry: 0,
     gcTime: 0,
-    enabled: true,
+    enabled: !!params.scope_rid,
   });
 };
 
@@ -384,5 +385,31 @@ export const useGetRuleDetails = (
     retry: 0,
     gcTime: 0,
     enabled: !!ruleId && isEnable,
+  });
+};
+
+// ---------- Create Rule Map ----------
+export const getCreateRuleMapUrl = (): string => {
+  return `/api/workflow/createRuleMap`;
+};
+
+export const createRuleMap = async (
+  body: CreateRuleMapPayload
+): Promise<CommonApiResponse> => {
+  try {
+    const { data } = await ruleBuilderServiceApi.post<CommonApiResponse>(
+      getCreateRuleMapUrl(),
+      body
+    );
+    return data;
+  } catch (error) {
+    console.error('Error creating rule map:', error);
+    throw error;
+  }
+};
+
+export const useCreateRuleMap = () => {
+  return useMutation<CommonApiResponse, Error, CreateRuleMapPayload>({
+    mutationFn: (body) => createRuleMap({ ...body }),
   });
 };
