@@ -418,8 +418,14 @@ export class TaskService {
       }
       if (accountStatusFilter) {
         tasks = tasks.filter(task => {
-          const displayName = (task.account_status_name || '').toLowerCase();
+          const displayName = (task.account_status_rid || '').toLowerCase();
           const operator = Object.keys(accountStatusFilter)[0];
+
+          if (operator === 'in') {
+            const values = accountStatusFilter[operator];
+            return Array.isArray(values) && values.some((v: any) => String(v).toLowerCase() === displayName);
+          }
+
           const filterValue = String(accountStatusFilter[operator] || '').toLowerCase();
           switch (operator) {
             case 'contains': return displayName.includes(filterValue);
@@ -1176,8 +1182,6 @@ export class TaskService {
         "Updated On": "Updated On"
       };
 
-      console.log("yoki tasks", tasks);
-
       // Map tasks to export format
       tasks = tasks.map((task) => {
         const rawMapped = this.mapTaskToExportFormat(task, timezone, flag);
@@ -1191,8 +1195,6 @@ export class TaskService {
         }
         return filtered;
       }) as typeof tasks;
-
-      console.log("yoki tasks", tasks);
 
       return {
         statusCode: HttpStatus.SUCCESS,
