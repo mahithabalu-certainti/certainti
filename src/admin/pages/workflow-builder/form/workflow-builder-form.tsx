@@ -6,7 +6,11 @@ import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { WORKFLOW_BUILDER } from '../../../../routes';
 import { RuleBuilder } from './components';
 import { WorkflowProvider, useWorkflowContext } from './workflow-context';
-import { transformRuleToPayload, transformApiResponseToRule } from './helper';
+import {
+  transformRuleToPayload,
+  transformApiResponseToRule,
+  ConditionTypeEnum,
+} from './helper';
 import {
   useGetScopeList,
   useGetConditionList,
@@ -97,7 +101,9 @@ const WorkflowBuilderFormContent: React.FC<WorkflowBuilderProps> = ({
   const isSaveEnabled =
     rule.name.trim() !== '' &&
     rule.trigger !== null &&
-    rule.conditions.length > 0 &&
+    (rule.conditions.length > 0 ||
+      rule.conditionType?.condition_type?.toLowerCase() ===
+        ConditionTypeEnum.then) &&
     rule.actions.length > 0 &&
     rule.conditionType !== null;
 
