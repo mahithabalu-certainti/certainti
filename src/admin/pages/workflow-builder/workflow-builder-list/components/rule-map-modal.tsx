@@ -137,28 +137,28 @@ const RuleMapModal: React.FC<RuleMapModalProps> = ({
         return (
           <TaskTemplates
             onSelectionChange={handleSelectionChange}
-            initialSelectedIds={selectedEntityIds}
+            initialSelectedIds={isRuleMapped ? selectedEntityIds : undefined}
           />
         );
       case 'case':
         return (
           <Cases
             onSelectionChange={handleSelectionChange}
-            initialSelectedIds={selectedEntityIds}
+            initialSelectedIds={isRuleMapped ? selectedEntityIds : undefined}
           />
         );
       case 'account':
         return (
           <Accounts
             onSelectionChange={handleSelectionChange}
-            initialSelectedIds={selectedEntityIds}
+            initialSelectedIds={isRuleMapped ? selectedEntityIds : undefined}
           />
         );
       case 'project':
         return (
           <Projects
             onSelectionChange={handleSelectionChange}
-            initialSelectedIds={selectedEntityIds}
+            initialSelectedIds={isRuleMapped ? selectedEntityIds : undefined}
           />
         );
       default:
