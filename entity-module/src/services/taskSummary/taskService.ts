@@ -418,8 +418,14 @@ export class TaskService {
       }
       if (accountStatusFilter) {
         tasks = tasks.filter(task => {
-          const displayName = (task.account_status_name || '').toLowerCase();
+          const displayName = (task.account_status_rid || '').toLowerCase();
           const operator = Object.keys(accountStatusFilter)[0];
+
+          if (operator === 'in') {
+            const values = accountStatusFilter[operator];
+            return Array.isArray(values) && values.some((v: any) => String(v).toLowerCase() === displayName);
+          }
+
           const filterValue = String(accountStatusFilter[operator] || '').toLowerCase();
           switch (operator) {
             case 'contains': return displayName.includes(filterValue);
