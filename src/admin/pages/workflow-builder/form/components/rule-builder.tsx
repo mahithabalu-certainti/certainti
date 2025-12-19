@@ -22,6 +22,7 @@ import {
 import { Tooltip } from '@mui/material';
 import { TruncateWithTooltip } from '../../../../../components';
 import SingleSkeleton from '../../../../../components/skeleton-component/singleskeleton';
+import TextButton from '../../../../../components/button/text-button';
 
 interface RuleBuilderProps {
   apiData: {
@@ -578,23 +579,34 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
             {/* Navigation Buttons */}
             {(currentStep === 'conditions' || currentStep === 'actions') && (
               <div className='border-t border-gray-200 px-6 py-4'>
-                <div className='flex justify-between gap-3'>
-                  <button
+                <div className='flex justify-end items-center gap-3'>
+                  <TextButton
+                    label={
+                      currentStep === 'conditions'
+                        ? 'Back to Trigger'
+                        : 'Back to Conditions'
+                    }
                     onClick={handleBack}
-                    className={`w-1/2 px-4 py-2 text-[12px] font-bold text-[#425A76] rounded-[2px] transition-colors bg-gray-50 hover:bg-gray-100 cursor-pointer border border-[#CBD6E2] disabled:opacity-50 disabled:bg-gray-400 disabled:cursor-default
-                `}
-                  >
-                    Back
-                  </button>
+                    sx={{
+                      width: '125px',
+                      minWidth: '125px',
+                      fontSize: '12px',
+                      fontWeight: 400,
+                    }}
+                  />
+
                   {currentStep !== 'actions' && (
-                    <button
+                    <TextButton
+                      label={'Next to Actions'}
                       onClick={handleNext}
                       disabled={isNextButtonDisabled()}
-                      className={`w-1/2 px-4 py-2 text-[12px] font-bold text-[#425A76] rounded-[2px] transition-colors bg-gray-50 hover:bg-gray-100 border border-[#CBD6E2] disabled:opacity-60 cursor-pointer disabled:cursor-default
-                `}
-                    >
-                      Next
-                    </button>
+                      sx={{
+                        width: '110px',
+                        minWidth: '110px',
+                        fontSize: '12px',
+                        fontWeight: 400,
+                      }}
+                    />
                   )}
                 </div>
               </div>

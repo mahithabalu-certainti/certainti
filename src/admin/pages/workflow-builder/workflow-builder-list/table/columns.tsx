@@ -73,6 +73,21 @@ export const getWorkflowColumns = (
     //   !permissionMap?.['modified_datetime']?.read,
   },
   {
+    id: 'createMap',
+    sortId: 'create_map',
+    label: 'Assign Rule',
+    width: 140,
+    sortable: false,
+    render: (row) => (
+      <span
+        onClick={() => handleCreateRuleMap(row)}
+        className='cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
+      >
+        Assign
+      </span>
+    ),
+  },
+  {
     id: 'is_active',
     sortId: 'is_active',
     label: 'Status',
@@ -93,21 +108,6 @@ export const getWorkflowColumns = (
           />
         </Tooltip>
       </div>
-    ),
-  },
-  {
-    id: 'createMap',
-    sortId: 'create_map',
-    label: 'Assign Rule',
-    width: 140,
-    sortable: false,
-    render: (row) => (
-      <span
-        onClick={() => handleCreateRuleMap(row)}
-        className='cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
-      >
-        Create Map
-      </span>
     ),
   },
 ];

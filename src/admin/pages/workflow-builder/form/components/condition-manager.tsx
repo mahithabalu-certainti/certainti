@@ -79,18 +79,29 @@ const ConditionManager: React.FC<ConditionManagerProps> = ({
     if (
       rule.conditions.length === 0 &&
       rule.trigger?.id &&
-      currentStep === 'conditions' &&
-      !showCategorySelector // Don't override if category selector is showing
+      currentStep === 'conditions'
     ) {
-      // Show condition type selector when:
-      // - No condition type selected yet, OR
-      // - THEN type is selected (user can change it)
+      // If condition type is IF/ELSE-IF and no conditions exist, show category selector
       if (
-        !rule.conditionType ||
-        rule.conditionType.condition_type?.toLowerCase() ===
-          ConditionTypeEnum.then
+        rule.conditionType &&
+        rule.conditionType.condition_type?.toLowerCase() !== ConditionTypeEnum.then
       ) {
+        // Set the selected condition RID if not already set
+        if (selectedConditionRid !== rule.conditionType.rid) {
+          setSelectedConditionRid(rule.conditionType.rid);
+        }
+        // Show category selector for IF/ELSE-IF types
+        setShowConditionTypeSelector(false);
+        setShowCategorySelector(true);
+      } else if (
+        !rule.conditionType ||
+        rule.conditionType.condition_type?.toLowerCase() === ConditionTypeEnum.then
+      ) {
+        // Show condition type selector when:
+        // - No condition type selected yet, OR
+        // - THEN type is selected (user can change it)
         setShowConditionTypeSelector(true);
+        setShowCategorySelector(false);
 
         // Set the selected condition RID if condition type exists
         if (
@@ -107,7 +118,6 @@ const ConditionManager: React.FC<ConditionManagerProps> = ({
     rule.conditionType,
     currentStep,
     selectedConditionRid,
-    showCategorySelector,
   ]);
 
   // Close selectors when navigating away from conditions step

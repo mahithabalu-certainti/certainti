@@ -16,31 +16,69 @@ import TextButton from '../../../../../components/button/text-button';
 import TaskTemplates from './task-templates-list/task-templates-list';
 import Accounts from './account-list/accounts';
 import Cases from './case-list/cases';
+import { useCreateRuleMap } from '../../../../service/workflow-builder/workflow-builder-service';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../../store/store';
+import { useToast } from '../../../../../hooks';
 
 interface RuleMapModalProps {
   open: boolean;
   onClose: () => void;
   scopeTypeName: string;
-  onConfirm: (applyType: ApplyType, selectedEntityIds?: string[]) => void;
-  isLoading?: boolean;
+  scopeTypeRid: string;
+  ruleRid: string;
+  onSuccess?: () => void;
 }
 
 const RuleMapModal: React.FC<RuleMapModalProps> = ({
   open,
   onClose,
   scopeTypeName,
-  onConfirm,
-  isLoading = false,
+  scopeTypeRid,
+  ruleRid,
+  onSuccess,
 }) => {
-  const [selectedApplyType, setSelectedApplyType] =
-    useState<ApplyType>('INDIVIDUAL');
+  const { successToast } = useToast();
+  const { userId } = useSelector((state: RootState) => state.auth);
+  const createRuleMap = useCreateRuleMap();
+
+  const [selectedApplyType, setSelectedApplyType] = useState<ApplyType>('ALL');
   const [showEntityTable, setShowEntityTable] = useState(false);
   const [selectedEntityIds, setSelectedEntityIds] = useState<string[]>([]);
 
+  const resetModalState = () => {
+    setSelectedApplyType('ALL');
+    setShowEntityTable(false);
+    setSelectedEntityIds([]);
+  };
+
+  const handleSaveRuleMap = (applyType: ApplyType, entityIds: string[]) => {
+    const apiPayload = {
+      scope_type_rid: scopeTypeRid,
+      rule_rid: ruleRid,
+      apply_type: applyType,
+      scope_entity_rid: entityIds,
+      created_by: userId || '',
+    };
+
+    createRuleMap.mutate(apiPayload, {
+      onSuccess: () => {
+        successToast('Created rule map successfully');
+        resetModalState();
+        onClose();
+        onSuccess?.();
+      },
+    });
+  };
+
+  const handleSaveEntitySelection = () => {
+    handleSaveRuleMap('INDIVIDUAL', selectedEntityIds);
+  };
+
   const handleConfirm = () => {
     if (selectedApplyType === 'ALL') {
-      // For ALL: directly confirm
-      onConfirm('ALL', []);
+      // For ALL: directly call API
+      handleSaveRuleMap('ALL', []);
     } else {
       // For INDIVIDUAL: show entity table
       setShowEntityTable(true);
@@ -52,15 +90,9 @@ const RuleMapModal: React.FC<RuleMapModalProps> = ({
     setSelectedEntityIds([]);
   };
 
-  const handleSaveEntitySelection = () => {
-    onConfirm('INDIVIDUAL', selectedEntityIds);
-  };
-
   const handleClose = () => {
-    if (!isLoading) {
-      setSelectedApplyType('INDIVIDUAL');
-      setShowEntityTable(false);
-      setSelectedEntityIds([]);
+    if (!createRuleMap.isPending) {
+      resetModalState();
       onClose();
     }
   };
@@ -110,11 +142,11 @@ const RuleMapModal: React.FC<RuleMapModalProps> = ({
             <div className='text-[16px] font-bold text-[#2D3E4F]'>
               {showEntityTable
                 ? `Select ${scopeTypeName} Entities`
-                : 'Create Rule Mapping'}
+                : 'Assign Rule'}
             </div>
             <button
               onClick={handleClose}
-              disabled={isLoading}
+              disabled={createRuleMap.isPending}
               className='w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-200 cursor-pointer disabled:cursor-default'
             >
               <React.Suspense fallback={null}>
@@ -164,7 +196,7 @@ const RuleMapModal: React.FC<RuleMapModalProps> = ({
                           }}
                         />
                       }
-                      disabled={isLoading}
+                      disabled={createRuleMap.isPending}
                       label={
                         <Box>
                           <Typography
@@ -201,7 +233,7 @@ const RuleMapModal: React.FC<RuleMapModalProps> = ({
                           }}
                         />
                       }
-                      disabled={isLoading}
+                      disabled={createRuleMap.isPending}
                       label={
                         <Box>
                           <Typography
@@ -238,7 +270,7 @@ const RuleMapModal: React.FC<RuleMapModalProps> = ({
               <TextButton
                 label='Back'
                 onClick={handleBack}
-                disabled={isLoading}
+                disabled={createRuleMap.isPending}
                 sx={{
                   width: '65px',
                   minWidth: '65px',
@@ -252,7 +284,7 @@ const RuleMapModal: React.FC<RuleMapModalProps> = ({
               <TextButton
                 label='Cancel'
                 onClick={handleClose}
-                disabled={isLoading}
+                disabled={createRuleMap.isPending}
                 sx={{
                   width: '75px',
                   minWidth: '75px',
@@ -269,9 +301,9 @@ const RuleMapModal: React.FC<RuleMapModalProps> = ({
                 onClick={
                   showEntityTable ? handleSaveEntitySelection : handleConfirm
                 }
-                loading={isLoading}
+                loading={createRuleMap.isPending}
                 disabled={
-                  isLoading ||
+                  createRuleMap.isPending ||
                   (showEntityTable && selectedEntityIds.length === 0)
                 }
                 sx={{
