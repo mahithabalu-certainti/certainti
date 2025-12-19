@@ -24,15 +24,6 @@ export const fetchTasksList = async (
     ? { ...params.filters }
     : {};
 
-  const { account_status_rid, ...rest } = filtersToSend as {
-    account_status_rid?: any;
-  };
-  filtersToSend = rest as Record<string, any>;
-
-  if (account_status_rid !== undefined) {
-    filtersToSend.status_rid = account_status_rid;
-  }
-
   const payload: Record<string, any> = {
     flag,
     page: params.page,
@@ -119,16 +110,6 @@ export const exportTasksData = async (
   let filtersToSend: Record<string, any> = params.filters
     ? { ...params.filters }
     : {};
-
-  const { account_status_rid, ...rest } = filtersToSend as {
-    account_status_rid?: any;
-  };
-  filtersToSend = rest as Record<string, any>;
-
-  // Map account_status_rid to status_rid for the API
-  if (account_status_rid !== undefined) {
-    filtersToSend.status_rid = account_status_rid;
-  }
 
   const payload: Record<string, any> = {
     flag,

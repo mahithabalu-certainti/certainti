@@ -892,7 +892,6 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
           return task;
         });
         setTaskList(newTaskList);
-        successToast(result?.statusMessage || 'Task updated successfully');
       } else {
         errorToast(result?.statusMessage || 'Failed to update task');
         setTaskList(previousTaskList);

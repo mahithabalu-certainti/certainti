@@ -171,6 +171,7 @@ export interface CaseFormFields {
   heat_light_power?: string;
   total_nonlabor_cost?: string;
   tax_liability?: string;
+  status_rid?: string;
 }
 
 export interface CaseFormPayload {
@@ -188,6 +189,7 @@ export interface CaseFormPayload {
   heat_light_power?: string | null;
   total_nonlabor_cost?: string | null;
   tax_liability?: string | null;
+  status_rid?: string;
 }
 
 export interface updateCaseJurisdictionPayload {
