@@ -1,6 +1,7 @@
 import { initOrgSequelize } from "../../config/orgDataSource";
 import dayjs from "dayjs";
 import { initMainDbSequelize } from "../../config/mainDataSource";
+import axios, { AxiosError } from "axios";
 import {
   col,
   fn,
@@ -24,6 +25,8 @@ import {
   mainTableFilters,
   rawQueries,
   relationshipTypes,
+  ruleNames,
+  ruleTemplateNames,
   SCHEMANAME_PREFIX,
   STATUS_MESSAGE,
 } from "../../utils/constants";
@@ -434,20 +437,9 @@ class CaseSchemaService {
         transaction,
       });
 
-      const caseUpdateResponse = await Case.update(
-        {
-          ...caseRequest,
-          modified_by: userId,
-          modified_datetime: new Date(),
-        },
-        {
-          where: { rid: caseRequest.case_rid },
-          transaction,
-        }
-      );
       if (caseRequest.case_startdate && caseRequest.statutory_submission_date && caseRequest.planned_submission_date) {
-        if (existingCase?.case_startdate.toISOString().split('T')[0] !== caseRequest.case_startdate.toISOString().split('T')[0] || existingCase?.statutory_submission_date.toISOString().split('T')[0] !== caseRequest.statutory_submission_date.toISOString().split('T')[0]
-          || existingCase?.planned_submission_date.toISOString().split('T')[0] !== caseRequest.planned_submission_date.toISOString().split('T')[0]
+        if (existingCase?.case_startdate !== caseRequest.case_startdate || existingCase?.statutory_submission_date !== caseRequest.statutory_submission_date
+          || existingCase?.planned_submission_date !== caseRequest.planned_submission_date
         ) {
           const [fetchToDoStatus] = await this.mainDbSequelize.query<TaskTypeResponse>(rawQueries.checkCaseTaskStatusToDo(), { type: QueryTypes.SELECT });
           if (fetchToDoStatus) {
@@ -470,6 +462,17 @@ class CaseSchemaService {
           }
         }
       }
+      const caseUpdateResponse = await Case.update(
+        {
+          ...caseRequest,
+          modified_by: userId,
+          modified_datetime: new Date(),
+        },
+        {
+          where: { rid: caseRequest.case_rid },
+          transaction,
+        }
+      );
       await CaseSummary.update(
         {
           ...caseRequest,
@@ -5720,6 +5723,31 @@ class CaseSchemaService {
     if (result) return result
     else return null;
   }
+
+   async triggerDynamicRuleEngine(eventType: string, payload: any, extra: Record<string, any> = {}, accessToken: string) {
+    let templateName = '';
+    let event_name = '';
+    switch (eventType) {
+      case 'create':
+        templateName = ruleTemplateNames.taskCreated;
+        event_name = ruleNames.taskCreated;
+        break;
+      case 'status_change':
+        templateName = ruleTemplateNames.statusUpdated;
+        event_name =  ruleNames.taskCreated;
+        break;
+      default:
+        templateName = eventType;
+        event_name = eventType;
+    }
+    const ruleEnginePayload = {
+      ...payload,
+      ...extra,
+      templateName,
+      event_name
+    };
+    await this.triggerRuleEngine(ruleEnginePayload, accessToken);
+  }
   async createUserLevelTask(data: CreateCaseTaskType, accountNumber: string, transaction: Transaction, activeStatusRid: string, fiscalYear: number) {
     const { CaseTask, CaseTimeline, TaskSummary, Case, CaseHistory } = await this.caseModelService.getModels(accountNumber);
     const fetchSequenceNumber = await this.fetchSequenceOrder(data.milestone_template_rid, accountNumber);
@@ -5821,6 +5849,14 @@ class CaseSchemaService {
           }
         }
       }
+      await this.triggerDynamicRuleEngine('create', {
+        task_rid: createdTaskResult.dataValues.rid,
+        newValue: data.task_name,
+        userId: data.created_by,
+        accountRid: data.account_rid,
+        entityName: data.task_name,
+        entityId: createdTaskResult.dataValues.rid
+      },{},'');
       await CaseTimeline.create({
         created_by: data.created_by,
         created_datetime: new Date(),
@@ -5853,7 +5889,7 @@ class CaseSchemaService {
     }
   }
 
-  async updateUserLevelTask(data: UpdateCaseTaskType, accountNumber: string, transaction: Transaction, activeStatusRid: string) {
+  async updateUserLevelTask(data: UpdateCaseTaskType, accountNumber: string, transaction: Transaction, activeStatusRid: string, accessToken: string) {
     if (!this.mainDbSequelize) {
       this.mainDbSequelize = await initMainDbSequelize()
     }
@@ -5896,6 +5932,16 @@ class CaseSchemaService {
             case_rid: data.case_rid
           }, transaction
         });
+        let baseRuleEnginePayload: any = {
+          task_rid: data.rid,
+          userId: data.modified_by,
+          accountRid: data.account_rid,
+          entityName: data.task_name,
+          entityId: data.rid,
+          status: "",
+          assigneeId:data.modified_by
+        };
+     
         if (data?.checklist_template_rid) {
           if (data.checklist_template_rid !== isTaskExists.checklist_template_rid) {
             if (isTaskExists.checklist_template_rid !== null && isTaskExists.checklist_template_rid !== '') {
@@ -6061,7 +6107,7 @@ class CaseSchemaService {
                   columnMapping.set(r.rid, r.priority_name)
                 }
                 oldValueString = columnMapping.get(oldValue)
-                newValueString = columnMapping.get(newValue)
+                newValueString = columnMapping.get(newValue);
               }
               else if (columnName === "task_status_rid") {
                 labelName = "Status"
@@ -6070,7 +6116,12 @@ class CaseSchemaService {
                   columnMapping.set(r.rid, r.task_status_name)
                 }
                 oldValueString = columnMapping.get(oldValue)
-                newValueString = columnMapping.get(newValue)
+                newValueString = columnMapping.get(newValue);
+                baseRuleEnginePayload.status  = newValueString;
+                await this.triggerDynamicRuleEngine('status_change', baseRuleEnginePayload, {
+                  newValue: newValueString,
+                  oldValue: oldValueString
+                }, accessToken);
               }
               else if (columnName === "weightage_rid") {
                 labelName = "Weightage"
@@ -8099,6 +8150,29 @@ class CaseSchemaService {
     // const formattedDate = `${fiscalYear}-${monthPadded}-${dayPadded}`;
     return submissionDate;
   }
+
+  async triggerRuleEngine(data: any, accessToken: string): Promise<void> {
+      try {
+        console.log("Triggering rule engine with data:", data); 
+        const RULE_ENGINE_BASE_URL = process.env.RULEBUILDER_BASE_URL;
+        const response = await axios.post(
+                `${RULE_ENGINE_BASE_URL}/workflow/execute`,
+                {
+                  ...data
+                },
+                {
+                  headers: {
+                    "x-user-id": data.userId,
+                    Authorization: `Bearer ${accessToken}`,
+                  },
+                }
+              );
+      } catch (err) {
+        console.log(err)
+        logMessage(`Error triggering rule engine: ${err}`);
+        throw this.throwServiceError(err as Error);
+      }
+    }
 }
 
 // Utility function for optimized column sorting
@@ -8465,3 +8539,11 @@ async function deleteChecklistItem(
     );
   }
 }
+
+  /**
+   * Dynamically triggers the rule engine for various task events
+   * @param eventType - The type of event (e.g., 'create', 'status_change', 'priority_change')
+   * @param payload - The base payload (task info, user info, etc.)
+   * @param extra - Any extra data to merge into the payload
+   */
+ 

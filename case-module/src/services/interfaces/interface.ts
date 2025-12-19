@@ -9,7 +9,8 @@ import { AddCommentsType, AdminTaskTemplatePayloadType, CaseTaskQueryType, Creat
 export interface ICaseService {
   createCase(
     caseRequest: ICreateCases,
-    userId: string
+    userId: string,
+    accessToken: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -164,7 +165,7 @@ export interface ICaseService {
 
   exportAssignedProjects (data : any) : Promise<any>,
   createUserLevelTask(data : CreateCaseTaskType): Promise<any>
-updateUserLevelTask(data : UpdateCaseTaskType): Promise<{
+updateUserLevelTask(data : UpdateCaseTaskType,accessToken: string): Promise<{
     statusCode: number;
     statusMessage: string | null;
 }>

@@ -1038,6 +1038,7 @@ jobs:
           VITE_CASE_URL=/caseService
           CLIENT_SECRET_ENCRYPTION_KEY='client-secret-encryption-key'
           CLIENT_SECRET_ENCRYPTION_LENGTH=16
+          RULEBUILDER_BASE_URL='https://development-thinkrd365-api-management.azure-api.net/rulebuilderService/api'
           EOF
           echo "$ENV_FILE file created successfully!"
       - name: Copy .env file to VM
