@@ -92,7 +92,9 @@ export class RulemasterService {
         let modifiedByFilter;
         let modifiedByConditions;
         let createdByFilter;
+        let scopeTypeFilter;
         let createdByConditions;
+        let scopeTypeConditions;
         let totalResults: number = 0;
         let disablePagination = false;
         if (apiType === "download") {
@@ -113,7 +115,11 @@ export class RulemasterService {
             createdByFilter = filters.created_user_name;
             createdByConditions = detectConditions(createdByFilter);
         }
-        ["created_user_name", "modified_user_name"].forEach(key => {
+        if (filters?.scope_type_name) {
+            scopeTypeFilter = filters.scope_type_name;
+            scopeTypeConditions = detectConditions(scopeTypeFilter);
+        }
+        ["created_user_name", "modified_user_name", "scope_type_name"].forEach(key => {
             if (filters[key]) {
                 disablePagination = true;
                 delete filters[key];
@@ -152,14 +158,17 @@ export class RulemasterService {
         let createdByIds = [...new Set(plainRules.map(r => r.created_by))];
         let modifiedByIds = [...new Set(plainRules.map(r => r.modified_by))];
         let scopeTypeIds = [...new Set(plainRules.map(r => r.scope_type_rid))];
+        let ruleRids = [...new Set(plainRules.map(r => r.rid))];
         // let createdByIds: any[] = [...new Set(rules.map((user: any) => user.created_by))];
         // let modifiedByIds: any[] = [...new Set(rules.map((user: any) => user.modified_by))];
         let fetchCreatedByUsers = await mainDb.query(rawQueries.fetchUser(createdByIds));
         let fetchModifiedByUsers = await mainDb.query(rawQueries.fetchUser(modifiedByIds));
         let scopeTypeName = await mainDb.query(rawQueries.getScopeTypeName(scopeTypeIds));
+        let mappedRulesRes = await mainDb.query(rawQueries.getMappedRuleRids(ruleRids));
         let createdMap: Map<string, string> = new Map(fetchCreatedByUsers[0].map((user: any) => [user.rid, `${user.first_name} ${user.last_name}`]));
         let modifiedMap: Map<string, string> = new Map(fetchModifiedByUsers[0].map((user: any) => [user.rid, `${user.first_name} ${user.last_name}`]));
         let scopeTypeMap: Map<string, string> = new Map(scopeTypeName[0].map((scope: any) => [scope.rid, `${scope.scope_name}`]));
+        let mappedRuleSet = new Set(mappedRulesRes[0].map((row: any) => row.rule_rid));
         let finalData = rules == null ? [] : rules.map((da: any) => {
             //console.log("each object "+d);
             const d = da.toJSON();
@@ -171,9 +180,9 @@ export class RulemasterService {
                 event_rid: d.event_rid,
                 condition_rid: d.condition_rid,
                 scope_type_rid: d.scope_type_rid,
-                scope_type_name : scopeTypeMap.get(d.scope_type_rid) || null,
-                is_active:d.is_active,
-                is_rule_mapped:true,
+                scope_type_name: scopeTypeMap.get(d.scope_type_rid) || null,
+                is_active: d.is_active,
+                is_rule_mapped: mappedRuleSet.has(d.rid),
                 created_by: d.created_by,
                 created_user_name: createdMap.get(d.created_by) || null,
                 modified_by: d.modified_by,
@@ -202,13 +211,19 @@ export class RulemasterService {
             finalData = applyFilters(finalData, modifiedByConditions, modifiedByFilter, "modified_user_name");
         if (createdByConditions != null && createdByConditions != undefined)
             finalData = applyFilters(finalData, createdByConditions, createdByFilter, "created_user_name");
-        if (mainTableFilters[sortBy] != undefined && sortBy.toLowerCase() == 'asc') {
+        if (scopeTypeConditions != null && scopeTypeConditions != undefined)
+            finalData = applyFilters(finalData, scopeTypeConditions, scopeTypeFilter, "scope_type_name");
+                    console.log("coming here one" );
+                    console.log(mainTableFilters[sortBy]);
+
+        if (mainTableFilters[sortBy] != undefined && data.sortOrder.toLowerCase() == 'asc') {
+            console.log("coming here");
             finalData = finalData.sort((a: any, b: any) => {
                 if (!a?.[sortBy]) return 1;
                 if (!b?.[sortBy]) return -1;
                 return a[sortBy].localeCompare(b[sortBy]);
             });
-        } else if (mainTableFilters[sortBy] != undefined && sortBy.toLowerCase() == 'desc') {
+        } else if (mainTableFilters[sortBy] != undefined && data.sortOrder.toLowerCase() == 'desc') {
             finalData = finalData.sort((a: any, b: any) => {
                 if (!b?.[sortBy]) return 1;
                 if (!a?.[sortBy]) return -1;

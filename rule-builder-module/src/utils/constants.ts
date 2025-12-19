@@ -75,8 +75,8 @@ export const mainTableFilters: Record<any, any> = {
   created_user_name: "created_user_name",
   updated_user_name: "updated_user_name",
   rule_name: "rule_name",
-  modified_by: "modified_by",
-  modified_user_name: "modified_user_name"
+  modified_user_name: "modified_user_name",
+  scope_type_name:"scope_type_name",
 }
 
 export const rawQueries = {
@@ -301,6 +301,12 @@ export const rawQueries = {
     let scopeids = data.map((sc: any) => `'${sc}'`).join(', ');  // Join ids with commas
     let query = `SELECT rid, name as scope_name FROM ${MAIN_SCHEMA_NAME}.scopes WHERE rid IN (${scopeids})`;  // Remove extra quote at the end
     return query;
-}
+  },
+
+  getMappedRuleRids(ruleRids: any[]) {
+    const ids = ruleRids.map(id => `'${id}'`).join(', ');
+    return `SELECT rule_rid FROM ${MAIN_SCHEMA_NAME}.workflow_rule_map WHERE rule_rid IN (${ids})`;
+  }
+
 
 }
