@@ -88,6 +88,7 @@ export const getTaskFilterFields = (
     name: 'Assigned To',
     value: 'assigned_to_name',
     type: 'text',
+    operatorOption: textOptions,
     hide: permissionMap ? !permissionMap['assigned_to']?.read : false,
   },
   {
@@ -130,7 +131,11 @@ export const getTaskFilterFields = (
     value: 'created_by_name',
     type: 'text',
     operatorOption: textOptions,
-    hide: permissionMap ? !permissionMap['created_by']?.read : false,
+    hide: permissionMap
+      ? !(
+          permissionMap['created_by']?.read || permissionMap['created_by']?.read
+        )
+      : false,
   },
   {
     name: 'Created On',
@@ -143,13 +148,24 @@ export const getTaskFilterFields = (
     value: 'modified_by_name',
     type: 'text',
     operatorOption: textOptions,
-    hide: permissionMap ? !permissionMap['modified_by']?.read : false,
+    hide: permissionMap
+      ? !(
+          permissionMap['modified_by']?.read ||
+          permissionMap['modified_by']?.read
+        )
+      : false,
   },
   {
     name: 'Updated On',
     value: 'modified_datetime',
     type: 'date',
-    // hide: !permissionMap?.['modified_datetime']?.read,
+    hide: !permissionMap?.['modified_datetime']?.read,
+  },
+  {
+    name: 'Sort Options',
+    value: 'sort_options',
+    type: 'system-sort',
+    options: [{ value: 'createdAt_desc', option: 'Recently Created' }],
   },
   {
     name: 'Sort Options',

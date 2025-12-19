@@ -27,7 +27,11 @@ import {
   ActivityType,
   ProjectResourcesListParams,
   ActivityDropdownItem,
+  ProjectFinancialProjectExportParams,
+  ProjectFinancialResourceExportParams,
 } from '../../../types';
+import CaseFinancialSummary from './financial-summary/financial-summary';
+import { accountDetailsProps } from '../../account-details/utils';
 import {
   AllMenus,
   AllModules,
@@ -97,6 +101,10 @@ import { CaseProjectTask } from './case-project-task';
 import { ExportCaseProjectTasktList } from '../../../services/case-project-task/case-project-task-service';
 import { CaseProjectResource } from './case-project-resource';
 import { ExportCaseProjectResourceList } from '../../../services/case-project-resource/case-project-resource-service';
+import {
+  exportFinancialProjectCost,
+  exportFinancialResourceCost,
+} from '../../../services/financial/financial-service';
 
 export const CaseDetails = () => {
   const navigate = useNavigate();
@@ -232,6 +240,22 @@ export const CaseDetails = () => {
       activity_type: 'all',
     });
 
+  const [financialResCostParams, setFinancialResCostParams] =
+    useState<ProjectFinancialResourceExportParams>({
+      sortBy: 'project_code',
+      sortOrder: 'ASC',
+      filters: {},
+    });
+
+  const [financialProjectCostParams, setFinancialProjectCostParams] =
+    useState<ProjectFinancialProjectExportParams>({
+      sortBy: 'project_code',
+      sortOrder: 'ASC',
+      filters: {},
+      fiscalYear: 0,
+      caseRid: caseId,
+    });
+
   const activityId = searchParams.get('activity_id');
   const activityType = searchParams.get('activity_type');
   const activityViewDetails = !!activityId && !!activityType;
@@ -347,6 +371,16 @@ export const CaseDetails = () => {
     AllPermissions.CASES_WORKBREAKDOWN_EXPORT
   );
 
+  const isFinancialProjectCostExportEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_FINANCIAL_PROJECT_COST_EXPORT
+  );
+
+  const isFinancialResourceCostExportEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_FINANCIAL_RESOURCE_COST_EXPORT
+  );
+
   // Activity Create Permission
   const isActivityTaskCreateEnable = checkPermission(
     permission,
@@ -383,7 +417,8 @@ export const CaseDetails = () => {
       searchParams.get('tab') !== 'case_task' &&
       searchParams.get('list') !== 'interactions' &&
       searchParams.get('list') !== 'projectTask' &&
-      searchParams.get('list') !== 'projectResource'
+      searchParams.get('list') !== 'projectResource' &&
+      searchParams.get('list') !== 'financialHighlights'
     ) {
       return;
     }
@@ -443,6 +478,12 @@ export const CaseDetails = () => {
       exportType === 'project_resource'
     ) {
       ExportCaseProjectResourceList(projectResourceParams, accountId, caseId);
+    } else if (list === 'financialHighlights') {
+      if (exportType === 'financial_project_cost') {
+        exportFinancialProjectCost(financialProjectCostParams);
+      } else if (exportType === 'financial_resource_cost') {
+        exportFinancialResourceCost(financialResCostParams);
+      }
     }
     if (list === 'interactions') {
       if (interactionHistoryId) {
@@ -522,6 +563,14 @@ export const CaseDetails = () => {
       return !isProjectTaskExportEnable;
     } else if (list === 'projectResource') {
       return !isProjectResourceExportEnable;
+    } else if (list === 'financialHighlights') {
+      const tab = searchParams.get('tab');
+      if (tab === 'project_cost') {
+        return !isFinancialProjectCostExportEnable;
+      } else if (tab === 'resource_cost') {
+        return !isFinancialResourceCostExportEnable;
+      }
+      return true;
     } else {
       return true;
     }
@@ -625,6 +674,28 @@ export const CaseDetails = () => {
               isCaseTeamCreated={isCaseTeamCreated}
             />
           </div>
+        );
+      case 'financialHighlights':
+        return (
+          <CaseFinancialSummary
+            accountDetails={
+              {
+                accountById: {
+                  account_name: caseData?.account_name,
+                  r_number: caseData?.account_rnumber,
+                  currency: {
+                    currency_symbol: caseData?.currency_symbol,
+                  },
+                },
+              } as accountDetailsProps
+            }
+            setExportType={setExportType}
+            setResCostExportParams={setFinancialResCostParams}
+            setFinancialProjectCostParams={setFinancialProjectCostParams}
+            countryId={caseData?.country_rid}
+            accountId={accountId}
+            caseRid={caseId}
+          />
         );
       case 'caseTeam':
         return (

@@ -194,8 +194,12 @@ export const getTaskTableColumns = (
     label: 'Created By',
     width: 180,
     sortable: true,
-    hide: permissionMap ? !permissionMap['created_by']?.read : false,
-    render: (row: TaskList) => row.created_by_name || '-',
+    hide: permissionMap
+      ? !(
+          permissionMap['created_by']?.read ||
+          permissionMap['created_by_name']?.read
+        )
+      : false,
   },
   {
     id: 'created_datetime',
@@ -213,7 +217,12 @@ export const getTaskTableColumns = (
     label: 'Updated By',
     width: 180,
     sortable: true,
-    hide: permissionMap ? !permissionMap['modified_by']?.read : false,
+    hide: permissionMap
+      ? !(
+          permissionMap['modified_by']?.read ||
+          permissionMap['modified_by_name']?.read
+        )
+      : false,
     render: (row: TaskList) => row.modified_by_name || '-',
   },
   {
