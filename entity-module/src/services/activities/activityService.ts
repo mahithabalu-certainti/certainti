@@ -113,7 +113,7 @@ export class ActivityService {
                 return {
                     statusCode: HttpStatus.BAD_REQUEST,
                     message: HttpStatus.BAD_REQUEST_MESSAGE,
-                    errorMessage: `A Task with the name "${taskRequest.task_name}" already exists. Please choose a different name.`,
+                    errorMessage: `Task name already exists.`,
                 };
             }
 

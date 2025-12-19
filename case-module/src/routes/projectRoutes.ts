@@ -6,7 +6,7 @@ const routes: Router = Router()
 
 
 routes.get(
-  "/details/:accountId/:caseId/:projectId",
+  "/details",
   checkUserStatusMiddleware("projects_view_edit"),
   controller.projectController.projectById
 );
