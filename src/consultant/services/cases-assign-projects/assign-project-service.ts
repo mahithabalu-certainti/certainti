@@ -11,6 +11,7 @@ import {
   AssignProjectListURLParams,
   assignProjectsListResponse,
   AssignProjectsParams,
+  CasesProjectDetailResponse,
 } from '../../types/assign-projects';
 import { caseServiceApi } from '../../../api/api';
 import { CommonApiResponse } from '../../../common-service';
@@ -124,9 +125,9 @@ export const fetchCasesProjectDetail = async (
   accountId: string,
   caseId: string,
   projectId: string
-): Promise<any> => {
+): Promise<CasesProjectDetailResponse> => {
   try {
-    const response = await caseServiceApi.get<any>(
+    const response = await caseServiceApi.get<CasesProjectDetailResponse>(
       CasesProjectDetailUrl(accountId, caseId, projectId)
     );
     return response.data;
@@ -144,7 +145,7 @@ export const useCasesProjectDetail = (
 
   refreshTrigger?: number
 ) => {
-  return useQuery<any, Error>({
+  return useQuery<CasesProjectDetailResponse, Error>({
     queryKey: ['projectDetail', projectId, accountId, caseId, refreshTrigger],
     queryFn: () => fetchCasesProjectDetail(accountId, caseId, projectId),
     enabled: !!projectId && !!accountId && !!caseId,
