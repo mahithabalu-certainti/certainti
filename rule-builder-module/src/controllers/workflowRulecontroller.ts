@@ -22,7 +22,8 @@ import {
     createRuleSchema,
     updateRuleSchema,
     getRuleDetailSchema,
-    updateRuleStatusSchema
+    updateRuleStatusSchema,
+    updateRuleMapSchema
 } from "../lib/joi/schemas/schema";
 import configurations from "../config/config";
 
@@ -622,7 +623,7 @@ async function updateRuleMapWithScope(req: Request, res: Response): Promise<void
     const methodName = "update rule scope map";
     try {
         const userId = req.headers["x-user-id"] as string;
-        const value = await validateRequest(req, createRuleMapSchema, res, "POST");
+        const value = await validateRequest(req, updateRuleMapSchema, res, "POST");
         if (!value) {
             errorLog(methodName, "Request body is empty");
             return;

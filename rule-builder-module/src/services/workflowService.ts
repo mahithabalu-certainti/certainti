@@ -660,7 +660,14 @@ export class WorkFlowService {
         data?: { ruleMap: any };
     }> {
         console.log("rule map updation");
-
+        const ruleMap = await this.ruleMapService.updateRuleMap(
+            {
+                rule_rid: ruleRequest.rule_rid,
+                apply_type: ruleRequest.apply_type,
+                modified_by: ruleRequest.modified_by
+            },
+            userId
+        );
         return {
             statusCode: 200,
             message: "RuleMap and Scopes updated successfully",

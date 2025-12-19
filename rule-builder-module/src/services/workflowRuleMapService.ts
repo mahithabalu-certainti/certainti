@@ -48,4 +48,35 @@ export class RuleMapService {
       },
     };
   };
+
+  async updateRuleMap(rulemapRequest: any, userId: string): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { ruleMap: any };
+  }> {
+    const mainDb = await this.getMainDb();
+    RuleMap.initialize(mainDb);
+    const oldRuleMap = await RuleMap.findOne({ where: { rule_rid: rulemapRequest.rule_rid } });
+    if (!oldRuleMap) {
+      return {
+        statusCode: HttpStatus.NOT_FOUND,
+        message: "",
+      };
+    }
+
+    const oldRuleData = oldRuleMap.toJSON();
+    const newRuleMap = await oldRuleMap.update({
+      apply_type: rulemapRequest.apply_type,
+      modified_by: rulemapRequest.modified_by, // fallback to created_by if undefined
+    });
+
+    return {
+      statusCode: HttpStatus.SUCCESS,
+      message: STATUS_MESSAGE.conditionCreated,
+      data: {
+        ruleMap: "",
+      },
+    };
+  };
 }

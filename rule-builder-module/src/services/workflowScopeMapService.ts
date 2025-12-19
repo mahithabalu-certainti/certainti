@@ -90,7 +90,7 @@ export class ScopeService {
     };
 
     /** UPDATE RuleMaster by RID */
-    async updateScope(scopeRequest: ICreateScope,
+    async updateScope(scopeRequest: any,
         userId: string): Promise<{
             statusCode: number;
             message: string;

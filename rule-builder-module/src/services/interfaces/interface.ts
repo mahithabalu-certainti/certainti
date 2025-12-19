@@ -166,7 +166,7 @@ export interface IScopeService {
     }>;
 
     updateScope(
-        scopeRequest: ICreateScope,
+        scopeRequest: any,
         userId: string
     ): Promise<{
         statusCode: number;
@@ -241,6 +241,16 @@ export interface ITriggerservice {
 export interface IRuleMapService {
     createRuleMap(
         rulemapRequest: ICreateRuleMap,
+        userId: string
+    ): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: { ruleMap: any };
+    }>;
+
+    updateRuleMap(
+        rulemapRequest: any,
         userId: string
     ): Promise<{
         statusCode: number;
@@ -353,7 +363,7 @@ export interface IWorkFlowService {
         data?: { ruleMap: any };
     }>;
 
-     updateRuleMapWithScope(
+    updateRuleMapWithScope(
         rulemapRequest: any,
         userId: string
     ): Promise<{
