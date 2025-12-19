@@ -747,6 +747,9 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
       checklistTemplate:
         !permissionMap['checklist_template_rid']?.read &&
         !permissionMap['checklist_template_rid']?.edit,
+      checklist:
+        !permissionMap['checklist_template_rid']?.read &&
+        !permissionMap['checklist_template_rid']?.edit,
       tags: !permissionMap['tags']?.read && !permissionMap['tags']?.edit,
       weightage:
         !permissionMap['weightage_rid']?.read &&
@@ -783,6 +786,7 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
       endDate: !permissionMap['effective_end_datetime']?.edit,
       description: !permissionMap['task_description']?.edit,
       checklistTemplate: !permissionMap['checklist_template_rid']?.edit,
+      checklist: !permissionMap['checklist_template_rid']?.edit,
       tags: !permissionMap['tags']?.edit,
       weightage: !permissionMap['weightage_rid']?.edit,
       category: !permissionMap['task_category_rid']?.edit,
