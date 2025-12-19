@@ -69,7 +69,7 @@ const CasesResourceCost: React.FC<FinancialResourceCostProps> = ({
       projectRid: projectID,
       accountRid: accountId,
       fiscalYear: fiscalYear,
-      accountNumber:projectDetails?.account_number,
+      accountNumber: projectDetails?.account_number,
       search: searchValue,
       caseRid: caseId,
     },
@@ -215,7 +215,7 @@ const CasesResourceCost: React.FC<FinancialResourceCostProps> = ({
         stickyColumnsCount={1}
         selectable={false}
         actionWidth={80}
-        loading={isLoading}
+        loading={isLoading || !fiscalYear}
         error={isError ? 'Failed to load data' : undefined}
         rowsPerPageOptions={[25, 50, 100]}
         rowsPerPage={tableParams.limit}
