@@ -62,6 +62,7 @@ router.post("/scopeActions", WorkFlowController.listActions);
 router.post("/createRule", WorkFlowController.createRule);
 router.post("/getRuleDetail", WorkFlowController.ruleDetailByRuleRid);
 router.post("/updateRule", WorkFlowController.updateRule);
+router.post("/updateRuleStatus", WorkFlowController.updateRuleStatus);
 router.post("/createRuleMap", WorkFlowController.createRuleMapWithScope);
 
 router.post("/execute", WorkFlowController.execute);

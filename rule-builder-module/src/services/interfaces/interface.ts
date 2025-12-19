@@ -52,6 +52,17 @@ export interface IRulemasterService {
         data?: { rules: any };
     }>;
 
+
+    updateRuleMasterStatus(
+        ruleRequest: any,
+        userId: string
+    ): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: any;
+    }>;
+
     deleteRuleMaster(data: any, userId: string): Promise<any>;
 }
 
@@ -370,6 +381,16 @@ export interface IWorkFlowService {
         message: string;
         errorMessage?: string;
         data?: { rule: any };
+    }>;
+
+    updateRuleStatus(
+        ruleRequest: any,
+        userId: string
+    ): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: any;
     }>;
 
 

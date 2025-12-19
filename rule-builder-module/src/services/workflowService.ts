@@ -559,6 +559,23 @@ export class WorkFlowService {
         };
     }
 
+    async updateRuleStatus(
+        request: any,
+        userId: string
+    ): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: any;
+    }> {
+        await this.ruleMasterService.updateRuleMasterStatus(request, userId);
+        return {
+            statusCode: 200,
+            message: "Rule Status updated successfully",
+            data: ""
+        };
+    }
+
     async createRuleMapWithScope(ruleRequest: ICreateRuleMapWithScope, userId: string): Promise<{
         statusCode: number;
         message: string;
@@ -671,7 +688,7 @@ export class WorkFlowService {
         //     });
         // }
 
-          const entity = {
+        const entity = {
             status: "Close",
             overdue: "close",
             age: "30",
@@ -684,7 +701,7 @@ export class WorkFlowService {
             entityName: "Task ABC",
             oldValue: "low",
             newValue: "High"
-    };
+        };
         const triggeredActions: Record<string, any[]> = {};
         const results: Record<string, boolean> = {};
         for (const rule_rid in conditionsByRule) {
@@ -759,10 +776,10 @@ export class WorkFlowService {
                 console.log("Creating task", entity);
                 break;
             case "In App":
-                await this.triggerNotification(entity,notificationTypes.InApp);
+                await this.triggerNotification(entity, notificationTypes.InApp);
                 break;
             case "Email":
-                await this.triggerNotification(entity,notificationTypes.Email);
+                await this.triggerNotification(entity, notificationTypes.Email);
                 break;
 
             default:
@@ -770,13 +787,13 @@ export class WorkFlowService {
         }
     }
 
-    async getNotificationTemplateDetails(templateName: string,oldValue:string,newValue:string,entityName: string, channel: string): Promise<{
-    templateDetails: any;
+    async getNotificationTemplateDetails(templateName: string, oldValue: string, newValue: string, entityName: string, channel: string): Promise<{
+        templateDetails: any;
     }> {
         const mainDb = await this.getMainDb();
         const templateDetails = await mainDb.query<any>(
             rawQueries.fetchNotificationTemplateDetails(
-                templateName,channel
+                templateName, channel
             ),
             { type: QueryTypes.SELECT }
         );
@@ -864,43 +881,43 @@ export class WorkFlowService {
         );
     }
 
-async triggerNotification(taskContext:any,channel:string): Promise<void> {
-    // Implementation for changing assignee
-    
-    const { accountNumber, parentAccountId } =
-        await this.fetchValidAccountNumberById(
-          taskContext.accountRid
+    async triggerNotification(taskContext: any, channel: string): Promise<void> {
+        // Implementation for changing assignee
+
+        const { accountNumber, parentAccountId } =
+            await this.fetchValidAccountNumberById(
+                taskContext.accountRid
+            );
+        const templateDetails = await this.getNotificationTemplateDetails(
+            taskContext.templateName,
+            taskContext.oldValue,
+            taskContext.newValue,
+            taskContext.entityName,
+            channel
         );
-    const templateDetails = await this.getNotificationTemplateDetails(
-        taskContext.templateName,
-        taskContext.oldValue,
-        taskContext.newValue,
-        taskContext.entityName,
-        channel
-    );
-    // Only one template detail is expected
-    const detail = Array.isArray(templateDetails.templateDetails)
-        ? templateDetails.templateDetails[0]
-        : templateDetails.templateDetails;
-    if (channel.includes('In App')) {
-        await this.sentNotification(
-            { templateDetails: detail },
-            taskContext.assigneeId,
-            taskContext.assigneeId
-        );
-    }
-    if (channel.includes('Email')) {
-        await this.sendNotificationEmail(
-            accountNumber,
-            taskContext.accountRid,
-            {
-                to_email: "dhivya.s@hubino.com",
-                subject: "test email from thinkrd",
-                body_html: detail.message_template,
-            },
-            taskContext.userId
-        );
-    }
+        // Only one template detail is expected
+        const detail = Array.isArray(templateDetails.templateDetails)
+            ? templateDetails.templateDetails[0]
+            : templateDetails.templateDetails;
+        if (channel.includes('In App')) {
+            await this.sentNotification(
+                { templateDetails: detail },
+                taskContext.assigneeId,
+                taskContext.assigneeId
+            );
+        }
+        if (channel.includes('Email')) {
+            await this.sendNotificationEmail(
+                accountNumber,
+                taskContext.accountRid,
+                {
+                    to_email: "dhivya.s@hubino.com",
+                    subject: "test email from thinkrd",
+                    body_html: detail.message_template,
+                },
+                taskContext.userId
+            );
+        }
 
     }
 

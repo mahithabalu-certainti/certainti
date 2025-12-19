@@ -328,6 +328,12 @@ const updateRuleSchema = Joi.object({
     trigger_type: Joi.number().required()
 });
 
+
+const updateRuleStatusSchema = Joi.object({
+    rule_rid: Joi.string().required(),
+    is_active: Joi.boolean().required()
+});
+
 export {
     createRuleMasterSchema,
     listRuleSchema,
@@ -357,5 +363,6 @@ export {
     createRuleSchema,
     getRuleDetailSchema,
     updateRuleSchema,
+    updateRuleStatusSchema,
     createRuleMapSchema,
 };
