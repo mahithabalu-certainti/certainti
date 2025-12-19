@@ -84,6 +84,7 @@ export class JurisdictionSchemaService {
           config_json: group,
           effective_end_date: configRequest.effective_end_date,
           effective_start_date: configRequest.effective_start_date,
+          status_rid: configRequest.status_rid,
           modified_datetime: new Date(),
           modified_by: configRequest.modified_by,
         });

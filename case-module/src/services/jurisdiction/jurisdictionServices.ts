@@ -212,7 +212,7 @@ export class JurisdictionService {
           };
         }
       }
-      if (configRequest.jurisdictionConfig &&  configRequest.effective_start_date) {
+      if (configRequest.effective_start_date) {
         duplicate = await this.hasOverlapConfig({
           JurisdictionConfig,
           groupId: configRequest.jurisdiction_config_group_rid,
