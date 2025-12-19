@@ -787,15 +787,16 @@ export const jurisdictionRuleMapping = [
     exportField: "Effective End Date",
     dataField: "effective_end_date",
   },
-  {
-    permissionField: "created_datetime",
-    exportField: "Created On",
-    dataField: "created_datetime",
-  },
+
   {
     permissionField: "created_by",
     exportField: "Created By",
     dataField: "created_by",
+  },
+   {
+    permissionField: "created_datetime",
+    exportField: "Created On",
+    dataField: "created_datetime",
   },
  
   {
