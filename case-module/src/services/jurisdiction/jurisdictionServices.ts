@@ -224,23 +224,23 @@ export class JurisdictionService {
         });
       }
       // Duplicate check for platform config
-      if (!duplicate && configRequest.is_federal && configRequest.platformConfig  && configRequest.effective_start_date) {
-        duplicate = await this.hasOverlapConfig({
-          JurisdictionConfig,
-          groupId: configRequest.platform_config_group_rid,
-          statusRid: activeStatusRid.rid,
-          startDate: configRequest.effective_start_date,
-          endDate: configRequest.effective_end_date,
-          excludeRid: configRequest.config_rid,
-          isUpdate: true
-        });
-      }
+      // if (!duplicate && configRequest.is_federal && configRequest.platformConfig  && configRequest.effective_start_date) {
+      //   duplicate = await this.hasOverlapConfig({
+      //     JurisdictionConfig,
+      //     groupId: configRequest.platform_config_group_rid,
+      //     statusRid: activeStatusRid.rid,
+      //     startDate: configRequest.effective_start_date,
+      //     endDate: configRequest.effective_end_date,
+      //     excludeRid: configRequest.config_rid,
+      //     isUpdate: true
+      //   });
+      // }
       if (duplicate) {
         return {
           statusCode: HttpStatus.FAILED,
           message: STATUS_MESSAGE.configUpdateFailed,
           errorMessage:
-            "Duplicate platform configuration exists for the same effective dates wih active status.",
+            "Duplicate  configuration exists for the same effective dates wih active status.",
         };
       }
       const updatedConfig =
@@ -330,6 +330,7 @@ export class JurisdictionService {
         await this.jurisdictionSchemaService.createJurisdictionConfig(
           configRequest
         );
+        
       return {
         statusCode: HttpStatus.SUCCESS,
         message: STATUS_MESSAGE.configCreatedSuccess,
