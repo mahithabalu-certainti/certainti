@@ -156,7 +156,8 @@ async function updateTask (req : Request, res : Response) {
     }
     const data = req.body;
     data.modified_by = userId
-    const result = await caseTaskService.updateUserLevelTask(data);
+    const accessToken = req.headers['authorization'] as string;
+    const result = await caseTaskService.updateUserLevelTask(data, accessToken);
     if(result!.statusCode === HttpStatus.SUCCESS) {
       return res.status(HttpStatus.SUCCESS).json({
         statusCode: HttpStatus.SUCCESS,

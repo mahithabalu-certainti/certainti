@@ -215,7 +215,7 @@ export class CaseTaskService {
       };
     }
   }
-  async updateUserLevelTask(data: UpdateCaseTaskType) {
+  async updateUserLevelTask(data: UpdateCaseTaskType, accessToken : string) {
     const mainDb = await this.getMainDb();
     const dbInit = await this.caseModelService.getSequelize();
     const transaction = await dbInit.transaction();
@@ -254,7 +254,8 @@ export class CaseTaskService {
             data,
             fetchParentNumber[0][0].r_number,
             transaction,
-            getActiveStatusId[0][0].rid
+            getActiveStatusId[0][0].rid,
+            accessToken
           );
           if (result.statusCode === HttpStatus.SUCCESS) {
             await transaction.commit();

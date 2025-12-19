@@ -122,6 +122,17 @@ export interface ICaseService {
     errorMessage?: string;
     data?: any;
   }>;
+  sentReviewProjects(
+  data: any,
+  filters: Record<string, any>,
+  userId:string,
+  files? : Express.Multer.File[]
+): Promise<{
+  statusCode: number;
+  message: string;
+  errorMessage?: string;
+  data?: any;
+}>
   getCaseTeamRoles(): Promise<{
     statusCode: number;
     message: string;
