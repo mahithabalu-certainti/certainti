@@ -621,6 +621,55 @@ export class WorkFlowService {
         };
     };
 
+    async ruleMapDetailByRuleRid(ruleRid: string, userId: string): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: any;
+    }> {
+        const mainDb = await this.getMainDb();
+        console.log(ruleRid);
+        const rulemap = await mainDb.query<any>(
+            rawQueries.fetchMapDetailsByRuleRid(ruleRid),
+            { type: QueryTypes.SELECT }
+        );
+
+        const rulescopemaps = await mainDb.query<any>(
+            rawQueries.fetchScopeMapDetailsByRuleRid(ruleRid),
+            { type: QueryTypes.SELECT }
+        );
+
+        return {
+            statusCode: 200,
+            message: "RuleMap detail fetched successfully",
+            data: {
+                scope_type_rid: rulemap[0].scope_type_rid,
+                rule_rid: rulemap[0].rule_rid,
+                apply_type: rulemap[0].apply_type,
+                scope_entity_rid: rulescopemaps.map(
+                    (item) => item.scope_entity_rid
+                ),
+            }
+        };
+    }
+
+    async updateRuleMapWithScope(ruleRequest: any, userId: string): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: { ruleMap: any };
+    }> {
+        console.log("rule map updation");
+
+        return {
+            statusCode: 200,
+            message: "RuleMap and Scopes updated successfully",
+            data: {
+                ruleMap: "",
+            }
+        };
+    };
+
     async execute(request: any, userId: string): Promise<{
         statusCode: number;
         message: string;
@@ -707,24 +756,29 @@ export class WorkFlowService {
         for (const rule_rid in conditionsByRule) {
             const ruleConditions = conditionsByRule[rule_rid];
             let ruleResult = true;
-            for (let i = 0; i < ruleConditions.length; i++) {
-                const condition = ruleConditions[i];
-                const conditionResult = await this.evaluateCondition(condition, entity);
+            if (ruleConditions.length > 0) {
+                for (let i = 0; i < ruleConditions.length; i++) {
+                    const condition = ruleConditions[i];
+                    const conditionResult = await this.evaluateCondition(condition, entity);
 
-                if (i === 0) {
-                    ruleResult = conditionResult;
-                } else {
-                    const logicalOp = condition.logical_operator;
+                    if (i === 0) {
+                        ruleResult = conditionResult;
+                    } else {
+                        const logicalOp = condition.logical_operator;
 
-                    if (logicalOp === "AND") {
-                        ruleResult = ruleResult && conditionResult;
-                    } else if (logicalOp === "OR") {
-                        ruleResult = ruleResult || conditionResult;
+                        if (logicalOp === "AND") {
+                            ruleResult = ruleResult && conditionResult;
+                        } else if (logicalOp === "OR") {
+                            ruleResult = ruleResult || conditionResult;
+                        }
                     }
                 }
             }
             results[rule_rid] = ruleResult;
-            if (ruleResult) {
+            //Execute actions if:
+            // - no conditions exist
+            // - OR conditions evaluated to true
+            if (ruleConditions.length === 0 || ruleResult) {
                 const actions = actionsByRule[rule_rid] || [];
                 for (const action of actions) {
                     await this.executeAction(action, entity, userId);

@@ -353,6 +353,16 @@ export interface IWorkFlowService {
         data?: { ruleMap: any };
     }>;
 
+     updateRuleMapWithScope(
+        rulemapRequest: any,
+        userId: string
+    ): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: { ruleMap: any };
+    }>;
+
     createRule(
         ruleRequest: any,
         userId: string
@@ -393,6 +403,15 @@ export interface IWorkFlowService {
         data?: any;
     }>;
 
+    ruleMapDetailByRuleRid(
+        ruleRequest: any,
+        userId: string
+    ): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: { rule: any };
+    }>;
 
     execute(
         request: any,

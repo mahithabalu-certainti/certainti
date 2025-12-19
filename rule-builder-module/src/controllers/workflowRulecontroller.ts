@@ -547,7 +547,7 @@ async function updateRuleStatus(req: Request, res: Response): Promise<void> {
 }
 
 async function createRuleMapWithScope(req: Request, res: Response): Promise<void> {
-    const methodName = "create condition";
+    const methodName = "create rule scope map";
     try {
         const userId = req.headers["x-user-id"] as string;
         const value = await validateRequest(req, createRuleMapSchema, res, "POST");
@@ -582,9 +582,80 @@ async function createRuleMapWithScope(req: Request, res: Response): Promise<void
     }
 };
 
+async function ruleMapDetailByRuleRid(req: Request, res: Response): Promise<void> {
+    const methodName = "rulemap detail";
+    try {
+        const userId = req.headers["x-user-id"] as string;
+        const value = await validateRequest(req, getRuleDetailSchema, res, "POST");
+        if (!value) {
+            errorLog(methodName, "Request body is empty");
+            return;
+        }
+        const ruleMapDetail = await workFlowService.ruleMapDetailByRuleRid(value.rule_rid, userId);
+        if (ruleMapDetail.statusCode === HttpStatus.SUCCESS) {
+            successLog(methodName);
+            handleSuccessResponse(res, ruleMapDetail.data);
+            return;
+        } {
+            errorLog(methodName, ruleMapDetail.errorMessage);
+            handleErrorResponse(
+                res,
+                HttpStatus.BAD_REQUEST,
+                HttpStatus.BAD_REQUEST_MESSAGE,
+                ruleMapDetail.errorMessage
+            );
+            return;
+        }
+    } catch (err) {
+        const error = err as Error;
+        errorLog(methodName, error.message);
+        handleErrorResponse(
+            res,
+            HttpStatus.FAILED,
+            HttpStatus.FAILED_MESSAGE,
+            error.message
+        );
+    }
+};
+
+async function updateRuleMapWithScope(req: Request, res: Response): Promise<void> {
+    const methodName = "update rule scope map";
+    try {
+        const userId = req.headers["x-user-id"] as string;
+        const value = await validateRequest(req, createRuleMapSchema, res, "POST");
+        if (!value) {
+            errorLog(methodName, "Request body is empty");
+            return;
+        }
+        const newRuleMap = await workFlowService.updateRuleMapWithScope(value, userId);
+        if (newRuleMap.statusCode === HttpStatus.SUCCESS) {
+            successLog(methodName);
+            handleSuccessResponse(res, newRuleMap);
+            return;
+        } {
+            errorLog(methodName, newRuleMap.errorMessage);
+            handleErrorResponse(
+                res,
+                HttpStatus.BAD_REQUEST,
+                HttpStatus.BAD_REQUEST_MESSAGE,
+                newRuleMap.errorMessage
+            );
+            return;
+        }
+    } catch (err) {
+        const error = err as Error;
+        errorLog(methodName, error.message);
+        handleErrorResponse(
+            res,
+            HttpStatus.FAILED,
+            HttpStatus.FAILED_MESSAGE,
+            error.message
+        );
+    }
+};
 
 async function execute(req: Request, res: Response): Promise<void> {
-    const methodName = "create condition";
+    const methodName = "execute rule";
     try {
         const userId = req.headers["x-user-id"] as string;
         const value = req.body;
@@ -631,5 +702,7 @@ export default {
     updateRule,
     updateRuleStatus,
     createRuleMapWithScope,
+    ruleMapDetailByRuleRid,
+    updateRuleMapWithScope,
     execute
 }
