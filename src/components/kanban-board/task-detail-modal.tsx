@@ -729,6 +729,7 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       weightage: fieldDisabled.weightage || creatorOnlyFieldsDisabled,
       category: fieldDisabled.category || creatorOnlyFieldsDisabled,
       status: fieldDisabled.status || shouldDisableStatus,
+      checklist: fieldDisabled.checklist || creatorOnlyFieldsDisabled,
     };
   }, [
     editedTask?.checklist,
