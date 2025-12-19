@@ -400,7 +400,7 @@ class ActivitySchemaService {
       await this.addActivityTaskHistory(
         accountNumber,
         taskRequest.task_rid as string,
-        { ...taskRequest, modified_by: userId },
+        { ...taskRequest, modified_by: userId, description: taskRequest.task_description },
         existingTask,
         activityTypes.task
       );
@@ -2940,7 +2940,8 @@ class ActivitySchemaService {
           "account_rid",
           "modified_datetime",
           "task_rid",
-          "tags"
+          "tags",
+          "task_description"
         ];
   
         const cleanedNewData = Object.fromEntries(
@@ -3085,6 +3086,11 @@ class ActivitySchemaService {
               mappedKey = "CheckList";
               oldValueStr = checklistOldValueString ?? oldValueStr;
               newValueStr = checklistNewValueString ?? newValueStr;
+            }
+            else if (key === 'task_name') {
+              mappedKey = "Task Name"
+            } else if (key === 'task_description' || key === 'description') {
+              mappedKey = "Task Description";
             }
             return {
               account_rid: newCaseData["account_rid"],
