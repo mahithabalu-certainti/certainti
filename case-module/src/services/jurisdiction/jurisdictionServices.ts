@@ -330,6 +330,7 @@ export class JurisdictionService {
         await this.jurisdictionSchemaService.createJurisdictionConfig(
           configRequest
         );
+        
       return {
         statusCode: HttpStatus.SUCCESS,
         message: STATUS_MESSAGE.configCreatedSuccess,
