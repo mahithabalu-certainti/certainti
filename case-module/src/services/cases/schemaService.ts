@@ -1,6 +1,7 @@
 import { initOrgSequelize } from "../../config/orgDataSource";
 import dayjs from "dayjs";
 import { initMainDbSequelize } from "../../config/mainDataSource";
+import axios, { AxiosError } from "axios";
 import {
   col,
   fn,
@@ -4305,6 +4306,29 @@ class CaseSchemaService {
     // const formattedDate = `${fiscalYear}-${monthPadded}-${dayPadded}`;
     return submissionDate;
   }
+
+  async triggerRuleEngine(data: any, accessToken: string): Promise<void> {
+      try {
+        console.log("Triggering rule engine with data:", data); 
+        const RULE_ENGINE_BASE_URL = process.env.RULEBUILDER_BASE_URL;
+        const response = await axios.post(
+                `${RULE_ENGINE_BASE_URL}/workflow/execute`,
+                {
+                  ...data
+                },
+                {
+                  headers: {
+                    "x-user-id": data.userId,
+                    Authorization: `Bearer ${accessToken}`,
+                  },
+                }
+              );
+      } catch (err) {
+        console.log(err)
+        logMessage(`Error triggering rule engine: ${err}`);
+        throw this.throwServiceError(err as Error);
+      }
+    }
 }
 
 // Utility function for optimized column sorting

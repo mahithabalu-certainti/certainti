@@ -40,7 +40,8 @@ import {
 export interface ICaseService {
   createCase(
     caseRequest: ICreateCases,
-    userId: string
+    userId: string,
+    accessToken: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -154,7 +155,6 @@ export interface ICaseService {
     errorMessage?: string;
     data?: { users: any };
   }>;
-  exportAssignedProjects(data: any): Promise<any>;
   getReviewProjects(
     data: any,
     filters: Record<string, any>,
@@ -168,17 +168,8 @@ export interface ICaseService {
     errorMessage?: string;
     data?: { reviewProjects: any; count: number };
   }>;
-  sentReviewProjects(
-    data: any,
-    filters: Record<string, any>,
-    userId: string,
-    files?: Express.Multer.File[]
-  ): Promise<{
-    statusCode: number;
-    message: string;
-    errorMessage?: string;
-    data?: any;
-  }>;
+
+  exportAssignedProjects (data : any) : Promise<any>,
   getEmailTemplatePreview(
     data: any,
     userId: string
@@ -504,10 +495,9 @@ export interface IChildCaseService extends ICaseService {
     statusMessage: string;
   }>;
 }
-
 export interface ICaseTaskService {
   createUserLevelTask(data: CreateCaseTaskType): Promise<any>;
-  updateUserLevelTask(data: UpdateCaseTaskType): Promise<{
+  updateUserLevelTask(data: UpdateCaseTaskType, accessToken : string): Promise<{
     statusCode: number;
     statusMessage: string | null;
   }>;

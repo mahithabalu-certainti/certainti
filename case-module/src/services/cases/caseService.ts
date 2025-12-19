@@ -47,6 +47,8 @@ import {
   SCHEMANAME_PREFIX,
   emailCategorties,
   mainTableFiltersForCase,
+  ruleNames,
+  ruleTemplateNames,
 } from "../../utils/constants";
 import currency from "currency.js";
 import moment from "moment";
@@ -118,7 +120,8 @@ export class CaseService {
 
   async createCase(
     caseRequest: ICreateCases,
-    userId: string
+    userId: string,
+    accessToken: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -188,6 +191,14 @@ export class CaseService {
       }
 
       await transaction.commit();
+      let ruleEnginePayload = {
+        entityName: caseRequest.case_name,
+        event_name: ruleNames.caseCreated,
+        templateName:ruleTemplateNames.caseCreated,
+        userId: userId,
+        accountRid: caseRequest.account_rid,
+      };
+      await this.caseSchemaService.triggerRuleEngine(ruleEnginePayload, accessToken);
 
       return {
         statusCode: HttpStatus.SUCCESS,

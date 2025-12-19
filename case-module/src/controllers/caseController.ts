@@ -72,6 +72,7 @@ async function createCases(req: Request, res: Response): Promise<void> {
     );
     const value = await validateRequest(req, createCaseSchema, res);
     const userId = req.headers["x-user-id"] as string;
+    const accessToken = req.headers["authorization"] as string;
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -86,7 +87,7 @@ async function createCases(req: Request, res: Response): Promise<void> {
       errorLog(methodName, "Request body is empty");
       return;
     }
-    const cases = await caseService.createCase(value, userId);
+    const cases = await caseService.createCase(value, userId,accessToken);
     if (cases.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
       handleCustomResponse(res, cases.data, cases.message);
