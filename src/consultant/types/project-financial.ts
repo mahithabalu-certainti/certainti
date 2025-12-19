@@ -72,6 +72,7 @@ export interface ProjectFinancialSummaryListParams {
   account_rid: string;
   project_fiscal_rid: string;
   fiscal_year?: number;
+  case_rid?: string;
 }
 
 export type ProjectFinancialSummaryResponse = {

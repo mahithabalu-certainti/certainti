@@ -239,7 +239,6 @@ export const ProjectDetails = () => {
     accountID,
     projectID || ''
   );
-
   const [updateQreAdjustment] = useMutation(UPDATE_QRE_ADJUSTMENT, {
     client: resourceClient,
   });
@@ -248,6 +247,7 @@ export const ProjectDetails = () => {
     data?.data?.project?.account_status?.toLowerCase() !== 'active';
   const projectInActive =
     data?.data?.project?.status_name?.toLowerCase() === 'in-active';
+  const rdQualified = data?.data?.project?.is_rd_trigger_qualified;
   useEffect(() => {
     if (data?.data) {
       const project = data.data.project;
@@ -1005,19 +1005,21 @@ export const ProjectDetails = () => {
             {
               label: 'RD Assessment',
               onClick: handleTriggerAI,
-              disabled: accountInActive || projectInActive,
+              disabled: accountInActive || projectInActive || !rdQualified,
               loading: triggerAIMutation.isPending,
               sx: { ...BUTTON_STYLES, width: '115px', minWidth: '115px' },
               hide: !TriggerAIEnable,
+              tooltipValue: 'Project type not allowed due to Configuration setting',
+              toolTipEnabled: !rdQualified,
             },
           ]}
           primaryButton={
             isProjectFieldsEditable && !detailPageView
               ? {
-                  label: 'Edit',
-                  onClick: handleEditAccount,
-                  disabled: accountInActive,
-                }
+                label: 'Edit',
+                onClick: handleEditAccount,
+                disabled: accountInActive,
+              }
               : undefined
           }
           onActionsClick={handleActionsClick}
@@ -1036,11 +1038,10 @@ export const ProjectDetails = () => {
       />
       <div className='flex flex-row flex-1 w-full border-b border-[#CBD6E2]'>
         <div
-          className={`flex transition-all duration-300 ease-in-out ${
-            isCollapsed
-              ? 'w-[60px] min-w-[60px] max-w-[60px]'
-              : 'w-[220px] min-w-[220px] max-w-[220px]'
-          }`}
+          className={`flex transition-all duration-300 ease-in-out ${isCollapsed
+            ? 'w-[60px] min-w-[60px] max-w-[60px]'
+            : 'w-[220px] min-w-[220px] max-w-[220px]'
+            }`}
         >
           <SideMenuPanel
             menuItems={sideMenuItems}

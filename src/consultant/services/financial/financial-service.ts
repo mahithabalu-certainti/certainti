@@ -100,10 +100,9 @@ export const fetchProjectFinancialResourceCost = async (
     count: response.data.data.count,
   };
 };
-
 export const useProjectFinancialResourceCost = (
   params: ProjectFinancialResourceListParams,
-  refresTrigger?: number
+  refreshTrigger?: number
 ): UseQueryResult<
   {
     projectResourceFiscal: ProjectFinancialResourceCostList[];
@@ -118,7 +117,7 @@ export const useProjectFinancialResourceCost = (
     },
     Error
   >({
-    queryKey: ['projectFinancialResource', params, refresTrigger],
+    queryKey: ['projectFinancialResource', params, refreshTrigger],
     queryFn: () => fetchProjectFinancialResourceCost(params),
     retry: 0,
     gcTime: 0,
