@@ -276,6 +276,7 @@ const listScopeActionTypeSchema = Joi.object({
 });
 
 const listScopeActionsSchema = Joi.object({
+    scope_rid: Joi.string().required(),
     action_type_rid: Joi.string().required().allow(""),
     status_rid: Joi.string().required().allow(""),
     sortBy: Joi.string().optional(),
