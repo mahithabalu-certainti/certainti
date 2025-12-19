@@ -17,6 +17,7 @@ interface ITaskTemplateTableProps {
   setTableParams: React.Dispatch<React.SetStateAction<TaskTemplateListParams>>;
   refreshTrigger?: number;
   onSelectionChange?: (selectedIds: string[]) => void;
+  setTotalCount: (count: number) => void;
 }
 
 export const TaskTemplateTable: React.FC<ITaskTemplateTableProps> = ({
@@ -25,6 +26,7 @@ export const TaskTemplateTable: React.FC<ITaskTemplateTableProps> = ({
   setTableParams,
   refreshTrigger,
   onSelectionChange,
+  setTotalCount,
 }) => {
   const [taskTemplateList, setTaskTemplateList] = useState<TaskTemplateList[]>(
     []
@@ -36,10 +38,12 @@ export const TaskTemplateTable: React.FC<ITaskTemplateTableProps> = ({
 
   const totalItems = data?.count || 0;
   useEffect(() => {
-    if (data?.taskTemplates) {
+    if (data) {
       setTaskTemplateList(data?.taskTemplates || []);
+      setTotalCount(data.count || 0);
     }
-  }, [data?.taskTemplates]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data]);
 
   const getRowId = (row: TaskTemplateList) => row.rid;
 

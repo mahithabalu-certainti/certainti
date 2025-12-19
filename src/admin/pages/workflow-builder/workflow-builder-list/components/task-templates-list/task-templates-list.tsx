@@ -26,6 +26,7 @@ const TaskTemplates: React.FC<TaskTemplatesProps> = ({ onSelectionChange }) => {
     Record<string, FilterCondition>
   >({});
   const [page, setPage] = useState<number>(1);
+  const [totalCount, setTotalCount] = useState<number>(0);
   const [tableParams, setTableParams] = useState<TaskTemplateListParams>({
     page: page,
     limit: 100,
@@ -137,11 +138,14 @@ const TaskTemplates: React.FC<TaskTemplatesProps> = ({ onSelectionChange }) => {
           <div className='flex items-center justify-center'>
             <TaskTemplateIcon
               alt='task-template-icon'
-              className='h-7 w-7 p-1.5 rounded [&>path]:stroke-[#fff] bg-[#9747FF]'
+              className={`w-7 h-7 p-[5px] [&>path]:stroke-[#fff] bg-[#9747FF] rounded`}
             />
-            <div className='flex flex-col mx-2.5 items-center'>
+            <div className='flex flex-col mx-2.5 pb-1'>
               <div className='font-bold text-[16px] text-[#2D3E4F]'>
                 Case Task
+              </div>
+              <div className='font-semibold text-[#7D98B6] text-[12px] -mt-1'>
+                {`${totalCount} items`}
               </div>
             </div>
           </div>
@@ -206,6 +210,7 @@ const TaskTemplates: React.FC<TaskTemplatesProps> = ({ onSelectionChange }) => {
           setTableParams={setTableParams}
           refreshTrigger={refreshTrigger}
           onSelectionChange={onSelectionChange}
+          setTotalCount={setTotalCount}
         />
       </div>
     </div>
