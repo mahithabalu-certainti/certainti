@@ -67,6 +67,7 @@ export interface FormTypeFields {
   formatCostValue?: boolean;
   clearDate?: string;
   customDateOpen?: Date;
+  disableDatesBefore?: Date;
 }
 
 export type InputType =
@@ -172,6 +173,7 @@ export interface FieldType {
   formatCostValue?: boolean;
   clearDate?: string;
   customDateOpen?: Date;
+  disableDatesBefore?: Date;
 }
 
 export type AllowedCountry =

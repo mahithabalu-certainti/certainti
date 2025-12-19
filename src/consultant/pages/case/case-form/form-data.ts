@@ -33,6 +33,7 @@ export const CaseFormData = (
     statutory_min: string;
     statutory_max: string;
     start_date_max: string;
+    start_date_min: string;
   },
   caseNamePrefix?: string,
   selectedCountryRid?: string,
@@ -211,6 +212,9 @@ export const CaseFormData = (
             maxDate: dateConstraints?.start_date_max
               ? new Date(dateConstraints.start_date_max)
               : undefined,
+            disableDatesBefore: dateConstraints?.start_date_min
+              ? new Date(dateConstraints.start_date_min)
+              : undefined,
             disabled:
               isEditView &&
               !permissionMap?.['start_date']?.edit &&
@@ -230,7 +234,7 @@ export const CaseFormData = (
               customDateOpen: selectedFiscalYear
                 ? new Date(`${selectedFiscalYear}-04-01`)
                 : undefined,
-              minDate: dateConstraints?.planned_min
+              disableDatesBefore: dateConstraints?.planned_min
                 ? new Date(dateConstraints.planned_min)
                 : undefined,
               maxDate: dateConstraints?.planned_max
@@ -274,10 +278,11 @@ export const CaseFormData = (
               defaultValue: calculatedStatutoryDate,
               assignDefaultValue: true,
               requiredErrorMessage:
-                'Field is required. Please add statutory submission date in the platform level.',
+                'Field is required. Please add statutory submission date in the platform level configuration.',
               labelTooltip: {
                 showTooltip: true,
-                tooltipMessage: 'Statutory Submission Date: ',
+                tooltipMessage:
+                  'Statutory Submission Date: Please add statutory submission date in the platform level configuration.',
               },
             }
           ),

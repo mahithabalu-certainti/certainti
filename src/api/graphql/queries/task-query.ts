@@ -26,6 +26,7 @@ export const UPDATE_TASK_SUMMARY_INLINE = gql`
         priority_rid
         attach_to_name
         account_name
+        account_status_name
         assigned_to_name
         created_by_name
         modified_by_name

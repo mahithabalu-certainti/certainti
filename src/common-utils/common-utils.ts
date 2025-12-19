@@ -431,6 +431,7 @@ export const createDateField = (
     defaultValue?: string;
     assignDefaultValue?: boolean;
     requiredErrorMessage?: string;
+    disableDatesBefore?: Date;
     labelTooltip?: {
       showTooltip: boolean;
       tooltipMessage: string;
@@ -462,6 +463,7 @@ export const createDateField = (
   defaultValue: others.defaultValue,
   assignDefaultValue: others.assignDefaultValue,
   requiredErrorMessage: others.requiredErrorMessage,
+  disableDatesBefore: others.disableDatesBefore,
   labelTooltip: others.labelTooltip,
 });
 

@@ -61,12 +61,14 @@ export const CreateCases: React.FC = () => {
     statutory_min: string;
     statutory_max: string;
     start_date_max: string;
+    start_date_min: string;
   }>({
     planned_min: '',
     planned_max: '',
     statutory_min: '',
     statutory_max: '',
     start_date_max: '',
+    start_date_min: '',
   });
 
   const { userId } = useSelector<RootState, { userId: unknown }>(
@@ -192,6 +194,21 @@ export const CreateCases: React.FC = () => {
     }
   }, [submissionDateData, selectedFiscalYear, isEditView]);
 
+  useEffect(() => {
+    if (selectedFiscalYear) {
+      const year = Number(selectedFiscalYear);
+      const startDateMin = `${year - 1}-04-01`;
+      const plannedDateMin = `${year}-04-01`;
+
+      setDateConstraints((prev) => ({
+        ...prev,
+        start_date_min: startDateMin,
+        planned_min:
+          prev.planned_min < plannedDateMin ? plannedDateMin : prev.planned_min,
+      }));
+    }
+  }, [selectedFiscalYear]);
+
   const caseOwnersOptions = useMemo(() => {
     return (
       caseOwners?.data?.data?.caseOwners?.map((item) => ({
@@ -269,13 +286,16 @@ export const CreateCases: React.FC = () => {
 
   const onChangeField = ({ fieldName, fieldValue }: OnChange) => {
     if (fieldName === 'case_startdate') {
-      // When Start Date changes:
-      // - Planned Submission Date must be ≥ Start Date
-      // - Statutory Submission Date must be ≥ Start Date
+      const startDate = fieldValue as string;
+      const year = Number(selectedFiscalYear);
+      const basePlannedMin = `${year}-04-01`;
+      const newPlannedMin =
+        startDate > basePlannedMin ? startDate : basePlannedMin;
+
       setDateConstraints((prev) => ({
         ...prev,
-        planned_min: fieldValue as string,
-        statutory_min: fieldValue as string,
+        planned_min: newPlannedMin,
+        statutory_min: startDate,
       }));
     }
 

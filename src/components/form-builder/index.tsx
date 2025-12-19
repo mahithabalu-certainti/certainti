@@ -1824,12 +1824,12 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               disabled={field.disabled}
               format='YYYY-MMM-DD'
               referenceDate={
-                customMaxDate
-                  ? dayjs(customMinDate)
+                field.customDateOpen
+                  ? dayjs(field.customDateOpen)
                   : customMinDate
-                    ? dayjs(customMaxDate)
-                    : field.customDateOpen
-                      ? dayjs(field.customDateOpen)
+                    ? dayjs(customMinDate)
+                    : customMaxDate
+                      ? dayjs(customMaxDate)
                       : dayjs()
               }
               // onOpen={() => {
@@ -1844,11 +1844,21 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   newValue ? dayjs(newValue).format('YYYY-MM-DD') : null
                 );
               }}
-              shouldDisableDate={
-                field.disableFutureDates
-                  ? (date) => dayjs(date).isAfter(today, 'day')
-                  : undefined
-              }
+              shouldDisableDate={(date) => {
+                if (
+                  field.disableFutureDates &&
+                  dayjs(date).isAfter(today, 'day')
+                ) {
+                  return true;
+                }
+                if (
+                  field.disableDatesBefore &&
+                  dayjs(date).isBefore(dayjs(field.disableDatesBefore), 'day')
+                ) {
+                  return true;
+                }
+                return false;
+              }}
               slots={{
                 openPickerIcon: () => (
                   <CalendarIcon alt='calendar' className='w-4 h-4' />
