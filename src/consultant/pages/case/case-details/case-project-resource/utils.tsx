@@ -166,7 +166,7 @@ export const caseProjectResourceFilterFields = (
     },
     {
       name: 'Net Resource Cost',
-      value: 'total_cost_pro_res',
+      value: 'net_total_cost_pro_res',
       type: 'number',
       operatorOption: numberOptions,
       hide:
