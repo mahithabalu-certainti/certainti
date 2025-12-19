@@ -1449,6 +1449,7 @@ and credit_program_name = 'Platform Configuration'
     and rg.is_federal = true 
      AND rv.effective_start_date <= make_date(${fiscalYear}, 3, 31)
   AND rv.effective_end_date   >= make_date(${fiscalYear} - 1, 4, 1)
+  AND rv.status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active')
 ORDER BY rv.effective_start_date DESC
 LIMIT 1`;
   },
