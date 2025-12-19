@@ -7,7 +7,12 @@ import {
   PageSkeleton,
   TriggerManager,
 } from '.';
-import { getDynamicSvgIcon, Trigger } from '../helper';
+import {
+  ConditionTypeEnum,
+  getCategoryColor,
+  getDynamicSvgIcon,
+  Trigger,
+} from '../helper';
 import { useWorkflowContext } from '../workflow-context';
 import {
   ActionCategoryTypeResponse,
@@ -125,34 +130,43 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
           <div className='relative'>
             <div className='flex items-start justify-between gap-3 px-6 pt-6'>
               <div className='flex items-center gap-2'>
-                <div className='bg-blue-100 p-1 rounded-md flex items-center justify-center w-8 h-8 flex-shrink-0'>
+                <div
+                  className='p-1 rounded-md flex items-center justify-center w-8 h-8 flex-shrink-0'
+                  style={{
+                    backgroundColor:
+                      getCategoryColor(rule.trigger?.category || 'trigger') ||
+                      '#E5E7EB',
+                  }}
+                >
                   {getDynamicSvgIcon(rule.trigger?.name || 'trigger')}
                 </div>
                 <div className='text-lg font-semibold text-[#425A76] mb-1 capitalize'>
                   {rule.trigger?.name || 'Configure Conditions'}
                 </div>
               </div>
-              <Tooltip
-                placement='top'
-                title='Remove Trigger'
-                arrow
-                slotProps={{
-                  tooltip: {
-                    sx: {
-                      mr: 1,
+              {!isEditView && (
+                <Tooltip
+                  placement='top'
+                  title='Remove Trigger'
+                  arrow
+                  slotProps={{
+                    tooltip: {
+                      sx: {
+                        mr: 1,
+                      },
                     },
-                  },
-                }}
-              >
-                <button
-                  onClick={handleRemoveTrigger}
-                  className='h-8 w-8 mr-2 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors cursor-pointer'
+                  }}
                 >
-                  <React.Suspense fallback={null}>
-                    <DeleteIcon className='w-4 h-4' />
-                  </React.Suspense>
-                </button>
-              </Tooltip>
+                  <button
+                    onClick={handleRemoveTrigger}
+                    className='h-8 w-8 mr-2 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors cursor-pointer'
+                  >
+                    <React.Suspense fallback={null}>
+                      <DeleteIcon className='w-4 h-4' />
+                    </React.Suspense>
+                  </button>
+                </Tooltip>
+              )}
             </div>
 
             <div className='text-sm text-[#425A76] px-6 py-2 border-b border-[#CBD6E2]'>
@@ -333,7 +347,7 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
                         : 'An event that triggers the rule to run'}
                     </p>
                   </div>
-                  {rule.trigger && (
+                  {rule.trigger && !isEditView && (
                     <Tooltip placement='top' title='Remove Trigger' arrow>
                       <button
                         onClick={(e) => {
@@ -368,7 +382,9 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
                 } transition-all ${
                   currentStep === 'conditions'
                     ? 'border-blue-500 bg-blue-50'
-                    : rule.conditions.length > 0
+                    : rule.conditions.length > 0 ||
+                        rule.conditionType?.condition_type?.toLowerCase() ===
+                          ConditionTypeEnum.then
                       ? 'border-amber-300 bg-amber-50'
                       : 'border-gray-300 bg-white'
                 }`}
@@ -382,9 +398,13 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
                   <div
                     className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 border ${
                       currentStep === 'conditions' &&
-                      rule.conditions.length === 0
+                      rule.conditions.length === 0 &&
+                      rule.conditionType?.condition_type?.toLowerCase() !==
+                        ConditionTypeEnum.then
                         ? 'border-blue-500 bg-blue-200'
-                        : rule.conditions.length > 0
+                        : rule.conditions.length > 0 ||
+                            rule.conditionType?.condition_type?.toLowerCase() ===
+                              ConditionTypeEnum.then
                           ? 'bg-[#FFF3B3] border-[#FFD700]'
                           : 'border-gray-300 bg-gray-200'
                     }`}
@@ -392,9 +412,13 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
                     <span
                       className={`text-[16px] ${
                         currentStep === 'conditions' &&
-                        rule.conditions.length === 0
+                        rule.conditions.length === 0 &&
+                        rule.conditionType?.condition_type?.toLowerCase() !==
+                          ConditionTypeEnum.then
                           ? 'text-blue-700'
-                          : rule.conditions.length > 0
+                          : rule.conditions.length > 0 ||
+                              rule.conditionType?.condition_type?.toLowerCase() ===
+                                ConditionTypeEnum.then
                             ? 'text-amber-700'
                             : 'text-[#425A76]'
                       }`}
@@ -409,12 +433,18 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
                         : ''}
                       {rule.conditions.length > 0
                         ? `${rule.conditions.length} condition(s)`
-                        : 'Add conditions'}
+                        : rule.conditionType?.condition_type?.toLowerCase() ===
+                            ConditionTypeEnum.then
+                          ? 'No conditions (Optional)'
+                          : 'Add conditions'}
                     </h3>
                     <p className='text-xs text-gray-600'>
                       {rule.conditions.length > 0
                         ? 'Conditions that must be met for the rule to execute'
-                        : 'Filter events that trigger the rule'}
+                        : rule.conditionType?.condition_type?.toLowerCase() ===
+                            ConditionTypeEnum.then
+                          ? 'Conditions are optional for THEN type'
+                          : 'Filter events that trigger the rule'}
                     </p>
                     {rule.conditions.length > 0 && (
                       <div className='mt-2 space-y-1'>

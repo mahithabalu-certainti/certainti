@@ -83,19 +83,28 @@ export const WorkflowTable: React.FC<IWorkflowTableProps> = ({
 
   const getRowId = (row: WorkflowRuleListItem) => row?.rid || '';
 
-  // const handleToggleStatus = (rid: string, enabled: boolean) => {
-  //   // Update the workflow status in the local state
-  //   setWorkflowList((prevList) =>
-  //     prevList.map((workflow) =>
-  //       workflow.rid === rid ? { ...workflow, enabled } : workflow
-  //     )
-  //   );
+  const handleToggleStatus = (
+    rowData: WorkflowRuleListItem,
+    enabled: boolean
+  ) => {
+    // Update the workflow status in the local state
+    setWorkflowList((prevList) =>
+      prevList.map((workflow) =>
+        workflow.rid === rowData.rid
+          ? { ...workflow, is_active: enabled }
+          : workflow
+      )
+    );
 
-  //   // Here you would typically make an API call to update the status
-  //   console.log(
-  //     `Toggling workflow ${rid} to ${enabled ? 'enabled' : 'disabled'}`
-  //   );
-  // };
+    // Here you would typically make an API call to update the status
+    console.log(
+      `Toggling workflow ${rowData.rid} to ${enabled ? 'enabled' : 'disabled'}`
+    );
+  };
+
+  const handleCreateRuleMap = (rowData: WorkflowRuleListItem) => {
+    console.log(rowData, 'modal open');
+  };
 
   const handleEdit = (row: WorkflowRuleListItem) => {
     const path = generatePath(WORKFLOW_BUILDER_EDIT, {
@@ -112,7 +121,10 @@ export const WorkflowTable: React.FC<IWorkflowTableProps> = ({
     },
   ];
 
-  const workflowColumns = getWorkflowColumns();
+  const workflowColumns = getWorkflowColumns(
+    handleToggleStatus,
+    handleCreateRuleMap
+  );
 
   const handlePopoverClose = () => {
     setColumnAnchorEl(null);

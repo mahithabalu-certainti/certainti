@@ -1,6 +1,14 @@
 import { RuleDetails } from '../../../types';
 
 /// RULE BUILDER TYPES
+
+// Enum for condition types
+export enum ConditionTypeEnum {
+  if = 'if',
+  then = 'then',
+  else_if = 'else-if',
+}
+
 export type LogicalOperator = 'AND' | 'OR';
 
 export interface Trigger {
@@ -97,20 +105,26 @@ export interface Rule {
 }
 
 export const transformRuleToPayload = (rule: Rule) => {
-  const condition_categories = rule.conditions.map((condition, index) => {
-    const categoryOperator =
-      index > 0 ? condition.logicalOperator || 'AND' : undefined;
+  // If condition type is THEN, send empty conditions array
+  const condition_categories =
+    rule.conditionType?.condition_type?.toLowerCase() === ConditionTypeEnum.then
+      ? []
+      : rule.conditions.map((condition, index) => {
+          const categoryOperator =
+            index > 0 ? condition.logicalOperator || 'AND' : undefined;
 
-    return {
-      category_rid: condition.category,
-      ...(categoryOperator ? { category_operator: categoryOperator } : {}),
-      field_rid: condition.field,
-      operator_rid: condition.operator,
-      value_rid: Array.isArray(condition.value)
-        ? condition.value.join(',')
-        : condition.value,
-    };
-  });
+          return {
+            category_rid: condition.category,
+            ...(categoryOperator
+              ? { category_operator: categoryOperator }
+              : {}),
+            field_rid: condition.field,
+            operator_rid: condition.operator,
+            value_rid: Array.isArray(condition.value)
+              ? condition.value.join(',')
+              : condition.value,
+          };
+        });
 
   return {
     rule_name: rule.name,

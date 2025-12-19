@@ -56,7 +56,7 @@ const WorkflowBuilderFormContent: React.FC<WorkflowBuilderProps> = ({
         scope_rid: rule.trigger?.category || '',
         status_rid: '',
       },
-      !!rule.trigger?.id
+      !!rule.trigger?.category
     );
 
   const goBack = () => {

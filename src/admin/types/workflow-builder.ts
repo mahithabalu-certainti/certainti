@@ -272,6 +272,9 @@ export type WorkflowRuleListItem = {
   event_rid: string;
   condition_rid: string;
   scope_type_rid: string;
+  scope_type_name: string;
+  is_active: boolean;
+  is_rule_mapped: boolean;
   created_by: string;
   created_user_name: string;
   modified_by: string | null;

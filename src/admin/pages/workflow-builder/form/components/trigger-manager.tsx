@@ -16,6 +16,7 @@ const TriggerManager: React.FC<TriggerManagerProps> = ({
   scopeListData,
   onSelect,
 }) => {
+  const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedScope, setSelectedScope] = useState('all');
   const { rule } = useWorkflowContext();
@@ -106,8 +107,8 @@ const TriggerManager: React.FC<TriggerManagerProps> = ({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className='w-full pl-9 pr-3 py-2 rounded-[2px] text-[12px] border border-[#CBD6E2] text-[#425A76] 
-                       focus:outline-none focus:ring-1 focus:ring-blue-500'
-            disabled={isLoadingEvents}
+                       focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-default'
+            disabled={isLoadingEvents || isEditView}
           />
         </div>
 
@@ -117,14 +118,13 @@ const TriggerManager: React.FC<TriggerManagerProps> = ({
             <button
               key={category.id}
               onClick={() => !isLoadingEvents && setSelectedScope(category.id)}
-              disabled={isLoadingEvents}
+              disabled={isLoadingEvents || isEditView}
               className={`px-3 py-1.5 text-xs font-semibold rounded-[2px] border transition-all cursor-pointer
                 ${
                   selectedScope === category.id
                     ? 'bg-blue-100 text-blue-700 border-blue-600'
                     : 'border-[#CBD6E2] text-[#425A76] hover:bg-gray-50'
-                }
-                ${isLoadingEvents ? 'opacity-50 cursor-not-allowed' : ''}`}
+                } disabled:opacity-50 disabled:cursor-default disabled:bg-gray-100`}
             >
               {category.label}
             </button>
@@ -196,6 +196,7 @@ const TriggerManager: React.FC<TriggerManagerProps> = ({
                           trigger={trigger}
                           onSelect={(trigger) => onSelect(trigger as Trigger)}
                           isSelected={isTriggerSelected(trigger.id)}
+                          disabled={isEditView}
                         />
                       ))}
                     </div>
@@ -219,6 +220,7 @@ const TriggerManager: React.FC<TriggerManagerProps> = ({
                         trigger={trigger}
                         onSelect={(trigger) => onSelect(trigger as Trigger)}
                         isSelected={isTriggerSelected(trigger.id)}
+                        disabled={isEditView}
                       />
                     ))}
                 </div>

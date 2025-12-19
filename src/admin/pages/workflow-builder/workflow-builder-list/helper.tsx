@@ -32,6 +32,15 @@ export const getWorkflowListFilterFields = (): FieldConfig[] => {
       //     !permissionMap?.['rule_name']?.read,
     },
     {
+      value: 'scope_type_name',
+      name: 'Scope Name',
+      type: 'text',
+      operatorOption: textOptions,
+      //   hide:
+      //     !permissionMap?.['scope_type_name']?.edit &&
+      //     !permissionMap?.['scope_type_name']?.read,
+    },
+    {
       name: 'Created By',
       value: 'created_user_name',
       type: 'text',

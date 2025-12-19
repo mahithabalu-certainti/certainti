@@ -1,5 +1,10 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { Condition, ConditionType, getDynamicSvgIcon } from '../helper';
+import {
+  Condition,
+  ConditionType,
+  ConditionTypeEnum,
+  getDynamicSvgIcon,
+} from '../helper';
 import { AddIcon, SwapIcon } from '../../../../../assets';
 import { Button } from '@mui/material';
 import { useWorkflowContext } from '../workflow-context';
@@ -36,6 +41,7 @@ const ConditionManager: React.FC<ConditionManagerProps> = ({
     updateLogicalOperator,
     setConditionType,
     currentStep,
+    goToStep,
     validatedConditionIds,
     duplicateConditionIds,
   } = useWorkflowContext();
@@ -66,30 +72,34 @@ const ConditionManager: React.FC<ConditionManagerProps> = ({
   }, [rule.conditions, prevConditionsLength]);
 
   useEffect(() => {
-    // Show condition type selector only for the first condition
-    // Also show it when navigating back to conditions step
+    // Show condition type selector when:
+    // 1. No conditions exist AND no condition type selected
+    // 2. Condition type is THEN AND user navigated back to conditions
+    // Don't show if category selector is already showing (for IF/ELSE-IF)
     if (
       rule.conditions.length === 0 &&
       rule.trigger?.id &&
-      !rule.conditionType &&
-      currentStep === 'conditions'
+      currentStep === 'conditions' &&
+      !showCategorySelector // Don't override if category selector is showing
     ) {
-      setShowConditionTypeSelector(true);
-      setShowCategorySelector(false);
-    }
-    // If condition type is selected but no conditions exist, show category selector
-    else if (
-      rule.conditions.length === 0 &&
-      rule.trigger?.id &&
-      rule.conditionType &&
-      currentStep === 'conditions'
-    ) {
-      setShowConditionTypeSelector(false);
-      // Set the selected condition RID for category fetching
-      if (selectedConditionRid !== rule.conditionType.rid) {
-        setSelectedConditionRid(rule.conditionType.rid);
+      // Show condition type selector when:
+      // - No condition type selected yet, OR
+      // - THEN type is selected (user can change it)
+      if (
+        !rule.conditionType ||
+        rule.conditionType.condition_type?.toLowerCase() ===
+          ConditionTypeEnum.then
+      ) {
+        setShowConditionTypeSelector(true);
+
+        // Set the selected condition RID if condition type exists
+        if (
+          rule.conditionType &&
+          selectedConditionRid !== rule.conditionType.rid
+        ) {
+          setSelectedConditionRid(rule.conditionType.rid);
+        }
       }
-      setShowCategorySelector(true);
     }
   }, [
     rule.conditions.length,
@@ -97,6 +107,7 @@ const ConditionManager: React.FC<ConditionManagerProps> = ({
     rule.conditionType,
     currentStep,
     selectedConditionRid,
+    showCategorySelector,
   ]);
 
   // Close selectors when navigating away from conditions step
@@ -170,8 +181,24 @@ const ConditionManager: React.FC<ConditionManagerProps> = ({
     // Update the rule with the selected condition type
     setConditionType(conditionType);
     setSelectedConditionRid(conditionType.rid);
+
+    // Hide condition type selector first
     setShowConditionTypeSelector(false);
-    setShowCategorySelector(true);
+
+    // If THEN type is selected, automatically navigate to actions
+    if (
+      conditionType.condition_type?.toLowerCase() === ConditionTypeEnum.then
+    ) {
+      setShowCategorySelector(false);
+      // Navigate to actions page
+      goToStep('actions');
+    } else {
+      // For IF/ELSE-IF, show category selector
+      // Use setTimeout to ensure state updates properly
+      setTimeout(() => {
+        setShowCategorySelector(true);
+      }, 0);
+    }
   };
 
   const handleCategorySelect = (category: {
@@ -389,8 +416,11 @@ const ConditionManager: React.FC<ConditionManagerProps> = ({
         </div>
       )}
 
-      {(rule.conditions.length > 0 || !showConditionTypeSelector) &&
-        rule.trigger?.id && (
+      {/* Only show Add Condition button if condition type is NOT THEN or if conditions already exist */}
+      {rule.trigger?.id &&
+        rule.conditionType?.condition_type?.toLowerCase() !==
+          ConditionTypeEnum.then &&
+        (rule.conditions.length > 0 || !showConditionTypeSelector) && (
           <button
             onClick={handleAddConditionClick}
             disabled={
