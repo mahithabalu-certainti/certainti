@@ -88,6 +88,9 @@ import {
   MANAGE_GEO_BASED_RULE_CREATE,
   MANAGE_GEO_BASED_RULE_EDIT,
   TASKS,
+  WORKFLOW_BUILDER,
+  WORKFLOW_BUILDER_CREATE,
+  WORKFLOW_BUILDER_EDIT,
 } from './routes';
 import { RootState } from './store/store';
 import ProjectTaskForm from './consultant/pages/project/project-details/project-task/form/project-task-form';
@@ -98,7 +101,10 @@ import { Tasks } from './consultant/pages/tasks';
 import ImportTemplatesList from './admin/pages/import-templates/import-templates';
 import CaseInteractionForm from './consultant/pages/interaction/interaction-form/case-interaction-form';
 import ManageTaskDetails from './admin/pages/task-templates/task-templates-list/details/taskDetails';
-import { GeoBasedRuleForm, ManageGeoBasedRuleList } from './admin/pages/manage-geo-based-rule';
+import {
+  GeoBasedRuleForm,
+  ManageGeoBasedRuleList,
+} from './admin/pages/manage-geo-based-rule';
 
 // Lazy load all page components
 const ExtendedPermission = lazy(
@@ -255,6 +261,17 @@ const CheckListForm = lazy(
 
 const ActivityForm = lazy(
   () => import('./consultant/pages/activities/activities-form/activity-form')
+);
+
+const WorkflowBuilder = lazy(
+  () =>
+    import(
+      './admin/pages/workflow-builder/workflow-builder-list/workflow-builder'
+    )
+);
+
+const WorkflowBuilderForm = lazy(
+  () => import('./admin/pages/workflow-builder/form/workflow-builder-form')
 );
 
 // Loading component for Suspense fallback
@@ -486,6 +503,18 @@ export const App: React.FC<IApp> = ({ instance }) => {
                   <Route
                     path={TASK_TEMPLATES_DETAILS}
                     element={<ManageTaskDetails />}
+                  />
+                  <Route
+                    path={WORKFLOW_BUILDER}
+                    element={<WorkflowBuilder />}
+                  />
+                  <Route
+                    path={WORKFLOW_BUILDER_CREATE}
+                    element={<WorkflowBuilderForm />}
+                  />
+                  <Route
+                    path={WORKFLOW_BUILDER_EDIT}
+                    element={<WorkflowBuilderForm />}
                   />
                 </Route>
                 {/* Page not found */}

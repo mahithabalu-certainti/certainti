@@ -216,6 +216,7 @@ export interface ListTableProps<T extends RowData> {
   hideHeaderSelect?: boolean;
   selectable?: boolean;
   onSelectionChange?: (selectedIds: string[]) => void;
+  initialSelectedIds?: string[];
   // Actions
   actionWidth: string | number;
   actionDisplayMode?: 'dropdown' | 'icon' | 'toggle';

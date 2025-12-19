@@ -13,6 +13,7 @@ import {
   ManageSettingsIcon,
   ManageUserAccessIcon,
   TaskTemplateIcon,
+  WorkflowIcon,
 } from '../../assets';
 import { MenuOption } from '../../common-service';
 import { AdminNavItem } from '../../consultant/types';
@@ -28,6 +29,7 @@ import {
   MANAGE_SETTINGS,
   MANAGE_USER_GROUP,
   TASK_TEMPLATES,
+  WORKFLOW_BUILDER,
 } from '../../routes';
 
 export const sideNavAdminItems: AdminNavItem[] = [
@@ -84,6 +86,13 @@ export const sideNavAdminItems: AdminNavItem[] = [
         icon: ManageGeoIcon,
         link: MANAGE_GEO_BASED_RULE,
         matchLink: MANAGE_GEO_BASED_RULE,
+      },
+      {
+        id: MenuOption.WORKFLOW_BUILDER,
+        name: 'Workflow Builder',
+        icon: WorkflowIcon,
+        link: WORKFLOW_BUILDER,
+        matchLink: WORKFLOW_BUILDER,
       },
     ],
   },

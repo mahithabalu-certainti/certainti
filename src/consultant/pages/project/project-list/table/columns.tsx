@@ -28,7 +28,8 @@ export const getAllProjectListColumns = (
   projectTypeOption: ListOption[],
   projectClassificationOption: ListOption[],
   handleEdit: (row: Project, field?: string | null, section?: string) => void,
-  permissionMap: Record<string, { read: boolean; edit: boolean }>
+  permissionMap: Record<string, { read: boolean; edit: boolean }>,
+  accountPermissionMap: Record<string, { read: boolean; edit: boolean }>
 ): ListTableColumn<Project>[] => [
   {
     id: 'project_code',
@@ -165,8 +166,8 @@ export const getAllProjectListColumns = (
     sortId: 'account_name',
     width: 150,
     hide:
-      !permissionMap?.['account_name']?.read &&
-      !permissionMap?.['account_name']?.edit,
+      !accountPermissionMap?.['account_name']?.read &&
+      !accountPermissionMap?.['account_name']?.edit,
     render: (row: Project) => {
       const isChild = row._level !== undefined && row._level === 1;
       return isChild ? row.account_name : '-';

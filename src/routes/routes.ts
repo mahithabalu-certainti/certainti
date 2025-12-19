@@ -56,6 +56,11 @@ export const MANAGE_GEO_BASED_RULE = `${ADMIN}/manage-jurisdiction-rule`;
 export const MANAGE_GEO_BASED_RULE_CREATE = `${MANAGE_GEO_BASED_RULE}/create`;
 export const MANAGE_GEO_BASED_RULE_EDIT = `${MANAGE_GEO_BASED_RULE}/edit/:ruleId/:config_rid`;
 
+/** ADMIN WORKFLOW BUILDER ROUTES */
+export const WORKFLOW_BUILDER = `${ADMIN}/workflow-builder`;
+export const WORKFLOW_BUILDER_CREATE = `${WORKFLOW_BUILDER}/create`;
+export const WORKFLOW_BUILDER_EDIT = `${WORKFLOW_BUILDER}/edit/:ruleId`;
+
 /** ACCOUNT ROUTES */
 export const ACCOUNT = '/account';
 export const ACCOUNT_CREATE = `${ACCOUNT}/create`;
