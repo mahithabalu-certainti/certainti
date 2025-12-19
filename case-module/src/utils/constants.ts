@@ -1845,6 +1845,18 @@ export const activityStatus = {
   scheduled: "Scheduled",
 };
 
+export const ruleTemplateNames = {
+  caseCreated: "case_create",
+  statusUpdated:"task_status_update",
+  taskCreated:"task_create"
+}
+
+export const ruleNames = {
+  caseCreated: "Create Case",
+  taskCreated: "Create Task",
+}
+
+
 export const activityTypes = {
   email: "Email",
   meeting: "Meeting",

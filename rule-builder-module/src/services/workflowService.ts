@@ -2,7 +2,7 @@ import { RuleScope } from "../models/ruleScope";
 import { ScopeEvent } from "../models/scopeEvents";
 import { initSequelize } from "../config/maindbDataSource";
 import { Sequelize, Op, QueryTypes } from "sequelize";
-import { HttpStatus, MAIN_SCHEMA_NAME, STATUS_MESSAGE, notificationTypes, rawQueries } from "../utils/constants";
+import { HttpStatus, MAIN_SCHEMA_NAME, STATUS_MESSAGE, notificationStatus, notificationTypes, rawQueries } from "../utils/constants";
 import { Logger } from "winston";
 import { actions, Fields, ICreateRuleMapWithScope, IListSCopeEvent } from "../utils/types";
 import { decryptClientSecret, logMessage } from "../utils/helpers";
@@ -591,21 +591,7 @@ export class WorkFlowService {
         //         actions: actions,
         //     });
         // }
-
-          const entity = {
-            status: "Close",
-            overdue: "close",
-            age: "30",
-            priority: "low",
-            entityId: "D001-4f350616-2e42-4829-8824-a3af3f3f24ed",
-            assigneeId: "D001-caace427-6365-469d-b8e5-d6322da67d40",
-            userId: "D001-caace427-6365-469d-b8e5-d6322da67d40",
-            accountRid: "D001-31b99b5b-0e39-4ddf-8b5a-5b9d60b87983",
-            templateName: "task_priority_update",
-            entityName: "Task ABC",
-            oldValue: "low",
-            newValue: "High"
-    };
+        const entity = request;
         const triggeredActions: Record<string, any[]> = {};
         const results: Record<string, boolean> = {};
         for (const rule_rid in conditionsByRule) {
@@ -697,11 +683,11 @@ export class WorkFlowService {
         const mainDb = await this.getMainDb();
         const templateDetails = await mainDb.query<any>(
             rawQueries.fetchNotificationTemplateDetails(
-                templateName,channel
+                templateName, channel
             ),
             { type: QueryTypes.SELECT }
         );
-        if(templateDetails.length>0){
+        if (templateDetails.length > 0) {
             let messageTemplate = templateDetails[0].message_template;
             if (messageTemplate.includes('{{old_value}}')) {
                 messageTemplate = messageTemplate.replace('{{old_value}}', oldValue != null ? oldValue : '');
@@ -713,10 +699,15 @@ export class WorkFlowService {
                 messageTemplate = messageTemplate.replace('{{entity_name}}', entityName != null ? entityName : '');
             }
             templateDetails[0].message_template = messageTemplate;
+            return {
+                templateDetails: templateDetails
+            };
+        } else {
+            // If no template found, just return empty array and continue
+            return {
+                templateDetails: []
+            };
         }
-        return {
-            templateDetails: templateDetails
-        };
     }
 
     async sentNotification(templateDetails: any, userId: string,targetUser: string): Promise<any> {
@@ -750,7 +741,7 @@ export class WorkFlowService {
     });
     console.log("Notification sent response:", response);
     const [statusRid]:any[] = await mainDb.query(
-        rawQueries.fetchNotificationStatusByType("unread"),
+        rawQueries.fetchNotificationStatusByType(notificationStatus.unread),
         {   
             replacements: { notificationRid },
             type: QueryTypes.SELECT
@@ -763,7 +754,7 @@ export class WorkFlowService {
   } catch (err) {
     // Update DB to "failed"
     const [statusRid]:any[] = await mainDb.query(
-        rawQueries.fetchNotificationStatusByType("Failed"),
+        rawQueries.fetchNotificationStatusByType(notificationStatus.failed ),
         {   
             replacements: { notificationRid },
             type: QueryTypes.SELECT
@@ -806,8 +797,8 @@ async triggerNotification(taskContext:any,channel:string): Promise<void> {
     if (channel.includes('In App')) {
         await this.sentNotification(
             { templateDetails: detail },
-            taskContext.assigneeId,
-            taskContext.assigneeId
+            taskContext.userId,
+            taskContext.userId
         );
     }
     if (channel.includes('Email')) {
@@ -884,17 +875,10 @@ async sendNotificationEmail(
               );
             parentAccountNumber = parentAccountInfo.r_number;
           }
-    let senderEmailInfo = await this.fetchSenderEmailInfoByAccountId(
-      parentAccountNumber,
-      accountInfo.parent_account_rid
-    );
-      senderEmailInfo = {  
-      email: 'dev_rd_interactions@resdevtax.com',
-    clientId: 'ea0d9e79-8006-4ee2-a58f-61abda0dd77a',
-    clientSecret: 'nns8Q~ws3tPFOIegD.UtRRV_4viR4AIoLT687bns',
-    tenantId: '7c722eb0-2d94-428a-ac72-cea1da5c87c0'
-      
-   } 
+     let senderEmailInfo = await this.fetchSenderEmailInfoByAccountId(
+       parentAccountNumber,
+       accountInfo.parent_account_rid
+     );
     const emailContent = {
       message: {
         subject: emailRequest.subject,

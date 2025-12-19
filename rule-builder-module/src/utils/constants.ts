@@ -84,6 +84,11 @@ export const notificationTypes = {
   Email: "Email"
 }
 
+export const notificationStatus = {
+  unread: "Unread",
+  failed: "Failed"
+}
+
 export const rawQueries = {
   fetchUser(data: any) {
     let ids = data.map((d: any) => `'${d}'`);
