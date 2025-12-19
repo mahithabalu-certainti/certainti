@@ -9,8 +9,8 @@ export const getFinancialProjectCostColumns = (
     {
       id: 'project_code',
       sortId: 'project_code',
-      label: 'Project Number',
-      width: 150,
+      label: 'Project Code',
+      width: 130,
       sticky: true,
       sortable: true,
       sx: {
@@ -36,16 +36,6 @@ export const getFinancialProjectCostColumns = (
         !permissionMap?.['fiscal_year']?.read,
       render: (row: FinancialProjectCostList) =>
         row.fiscal_year ? `FY-${row.fiscal_year}` : '-',
-    },
-    {
-      id: 'project_ref_id',
-      sortId: 'project_ref_id',
-      label: 'Project Ref ID',
-      width: 130,
-      sortable: true,
-      // hide:
-      //   !permissionMap?.['project_ref_id']?.edit &&
-      //   !permissionMap?.['project_ref_id']?.read,
     },
     {
       id: 'project_name',

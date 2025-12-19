@@ -273,6 +273,12 @@ export const CaseFormData = (
                 !permissionMap?.['statutory_submission_date']?.read,
               defaultValue: calculatedStatutoryDate,
               assignDefaultValue: true,
+              requiredErrorMessage:
+                'Field is required. Please add statutory submission date in the platform level.',
+              labelTooltip: {
+                showTooltip: true,
+                tooltipMessage: 'Statutory Submission Date: ',
+              },
             }
           ),
         ],
