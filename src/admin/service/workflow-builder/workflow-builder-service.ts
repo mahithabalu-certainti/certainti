@@ -8,7 +8,10 @@ import {
   ConditionCategoryResponse,
   ConditionListPayload,
   ConditionListResponse,
+  CreateRuleMapPayload,
   CreateRulePayload,
+  GetRuleMapDetailsPayload,
+  GetRuleMapDetailsResponse,
   RuleCategoryFieldsPayload,
   RuleCategoryFieldsResponse,
   RuleDetails,
@@ -17,10 +20,13 @@ import {
   RuleFieldOperatorsResponse,
   RuleFieldValuesPayload,
   RuleFieldValuesResponse,
+  RuleMapDetails,
   ScopeEventListPayload,
   ScopeEventListResponse,
   ScopeListResponse,
+  UpdateRuleMapPayload,
   UpdateRulePayload,
+  UpdateRuleStatusPayload,
   WorkflowRuleListItem,
   WorkflowRuleListResponse,
   WorkflowRuleListURLParams,
@@ -163,7 +169,7 @@ export const useGetActionTypes = (params: ActionTypePayload) => {
     queryFn: () => fetchActionTypes(params),
     retry: 0,
     gcTime: 0,
-    enabled: true,
+    enabled: !!params.scope_rid,
   });
 };
 
@@ -386,3 +392,116 @@ export const useGetRuleDetails = (
     enabled: !!ruleId && isEnable,
   });
 };
+
+// ---------- Create Rule Map ----------
+export const getCreateRuleMapUrl = (): string => {
+  return `/api/workflow/createRuleMap`;
+};
+
+export const createRuleMap = async (
+  body: CreateRuleMapPayload
+): Promise<CommonApiResponse> => {
+  try {
+    const { data } = await ruleBuilderServiceApi.post<CommonApiResponse>(
+      getCreateRuleMapUrl(),
+      body
+    );
+    return data;
+  } catch (error) {
+    console.error('Error creating rule map:', error);
+    throw error;
+  }
+};
+
+export const useCreateRuleMap = () => {
+  return useMutation<CommonApiResponse, Error, CreateRuleMapPayload>({
+    mutationFn: (body) => createRuleMap({ ...body }),
+  });
+};
+
+// ---------- Update Rule Map ----------
+export const getUpdateRuleMapUrl = (): string => {
+  return `/api/workflow/updateRuleMap`;
+};
+
+export const updateRuleMap = async (
+  body: UpdateRuleMapPayload
+): Promise<CommonApiResponse> => {
+  try {
+    const { data } = await ruleBuilderServiceApi.post<CommonApiResponse>(
+      getUpdateRuleMapUrl(),
+      body
+    );
+    return data;
+  } catch (error) {
+    console.error('Error updating rule map:', error);
+    throw error;
+  }
+};
+
+export const useUpdateRuleMap = () => {
+  return useMutation<CommonApiResponse, Error, UpdateRuleMapPayload>({
+    mutationFn: (body) => updateRuleMap({ ...body }),
+  });
+};
+
+// ---------- Get Rule Map Details ----------
+export const getRuleMapDetailsUrl = (): string => {
+  return `/api/workflow/getRuleMapDetail`;
+};
+
+export const getRuleMapDetails = async (
+  body: GetRuleMapDetailsPayload
+): Promise<RuleMapDetails> => {
+  try {
+    const { data } =
+      await ruleBuilderServiceApi.post<GetRuleMapDetailsResponse>(
+        getRuleMapDetailsUrl(),
+        body
+      );
+    return data.data;
+  } catch (error) {
+    console.error('Error fetching rule map details:', error);
+    throw error;
+  }
+};
+
+export const useGetRuleMapDetails = (
+  ruleRid: string,
+  enabled: boolean
+): UseQueryResult<RuleMapDetails | undefined, Error> => {
+  return useQuery<RuleMapDetails | undefined, Error>({
+    queryKey: ['rule-map-details', ruleRid],
+    queryFn: () => getRuleMapDetails({ rule_rid: ruleRid }),
+    retry: 0,
+    gcTime: 0,
+    enabled: !!ruleRid && enabled,
+  });
+};
+
+// ---------- Update Rule Status ----------
+export const getUpdateRuleStatusUrl = (): string => {
+  return `/api/workflow/updateRuleStatus`;
+};
+
+export const updateRuleStatus = async (
+  body: UpdateRuleStatusPayload
+): Promise<CommonApiResponse> => {
+  try {
+    const { data } = await ruleBuilderServiceApi.post<CommonApiResponse>(
+      getUpdateRuleStatusUrl(),
+      body
+    );
+    return data;
+  } catch (error) {
+    console.error('Error updating rule status:', error);
+    throw error;
+  }
+};
+
+export const useUpdateRuleStatus = () => {
+  return useMutation<CommonApiResponse, Error, UpdateRuleStatusPayload>({
+    mutationFn: (body) => updateRuleStatus({ ...body }),
+  });
+};
+

@@ -27,6 +27,7 @@ export const transformCaseFormPayload = (
     heat_light_power: formData.heat_light_power || null,
     total_nonlabor_cost: formData.total_nonlabor_cost || null,
     tax_liability: formData.tax_liability || null,
+    status_rid: formData.status_rid,
   };
 
   if (isEditView && originalData) {

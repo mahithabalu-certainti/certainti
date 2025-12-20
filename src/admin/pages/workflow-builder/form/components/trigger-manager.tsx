@@ -133,7 +133,7 @@ const TriggerManager: React.FC<TriggerManagerProps> = ({
       </div>
 
       {/* Trigger list with skeleton loading */}
-      <div className='flex-1 overflow-y-auto space-y-4 pb-4 max-h-[calc(100vh-335px)]'>
+      <div className='flex-1 overflow-y-auto space-y-4 pb-4 min-h-[calc(100vh-390px)] max-h-[calc(100vh-390px)]'>
         {/* Selected trigger highlight section - Always show if trigger is selected */}
         {rule.trigger && !isLoadingEvents && (
           <div className='px-6 pt-6'>

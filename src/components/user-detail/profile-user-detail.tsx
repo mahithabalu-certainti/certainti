@@ -11,7 +11,7 @@ import DetailsSection, { DetailItem } from '../details-section/details';
 import DetailsSectionSkeleton from '../skeleton-component/detailsskeleton';
 import { RootState } from '../../store/store';
 import { useDispatch, useSelector } from 'react-redux';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { ListTable } from '../table';
 import TextButton from '../button/text-button';
@@ -60,6 +60,13 @@ export const ProfileUserDetailComponent = ({
 
   const { mutateAsync: uploadImage, isPending: isUploadingImage } =
     useUploadProfileImage();
+
+  // Sync previewUrl with profileURL from Redux
+  useEffect(() => {
+    if (profileURL) {
+      setPreviewUrl(profileURL);
+    }
+  }, [profileURL]);
 
   const transformedData = useMemo(() => {
     const menus: {
@@ -338,22 +345,22 @@ export const ProfileUserDetailComponent = ({
         onSuccess: (response) => {
           if (response.statusCode === 200 && response.data?.profile_url) {
             const newProfileUrl = response.data.profile_url;
+            // Update Redux - useEffect will automatically sync previewUrl
             dispatch(UpdateProfileURL(newProfileUrl));
-            setPreviewUrl(newProfileUrl);
           } else {
             throw new Error(response.statusMessage || 'Upload failed');
           }
         },
         onError: () => {
           errorToast('Failed to upload profile picture. Please try again.');
-          // Revert preview on error
+          // Revert preview on error - useEffect will sync with Redux profileURL
           setPreviewUrl(profileURL || null);
         },
       });
     } catch (error) {
       console.error('Upload error:', error);
       errorToast('An error occurred while uploading. Please try again.');
-      // Revert preview on error
+      // Revert preview on error - useEffect will sync with Redux profileURL
       setPreviewUrl(profileURL || null);
     }
   };

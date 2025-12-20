@@ -374,15 +374,24 @@ export const createButton = (
   onClick: others.onClick,
   disabled: others.disabled,
 });
+export interface EmptyFieldOptions {
+  name?: string;
+  label?: string;
+  type?: string;
+  required?: boolean;
+  hide?: boolean;
+}
+
 export const createEmptyField = (
   name: string,
   label: string,
-  options?: { name?: string; label?: string; type?: string; required?: boolean }
+  options?: EmptyFieldOptions
 ): FieldType => ({
   type: 'emptyFeild',
   name: options?.name || name,
   label: options?.label || label,
   required: options?.required ?? false,
+  hide: options?.hide,
 });
 
 export const createImgButton = (
@@ -430,6 +439,12 @@ export const createDateField = (
     customDateOpen?: Date;
     defaultValue?: string;
     assignDefaultValue?: boolean;
+    requiredErrorMessage?: string;
+    disableDatesBefore?: Date;
+    labelTooltip?: {
+      showTooltip: boolean;
+      tooltipMessage: string;
+    };
   }
 ): FieldType => ({
   type: 'date',
@@ -456,6 +471,9 @@ export const createDateField = (
   customDateOpen: others.customDateOpen,
   defaultValue: others.defaultValue,
   assignDefaultValue: others.assignDefaultValue,
+  requiredErrorMessage: others.requiredErrorMessage,
+  disableDatesBefore: others.disableDatesBefore,
+  labelTooltip: others.labelTooltip,
 });
 
 export const createFiscalDateField = (
@@ -734,12 +752,13 @@ export const checkError = (data: CheckError[]) => {
 
 export const errorHandling = (data: AxiosErrorMsg): string => {
   const errorData = data.response?.data;
-  return `<p>${errorData?.statusMessage
-    ? typeof errorData.statusMessage === 'object'
-      ? Object.values(errorData.statusMessage).join(', ')
-      : errorData.statusMessage || ''
-    : errorData?.message || data.message
-    }</p>`;
+  return `<p>${
+    errorData?.statusMessage
+      ? typeof errorData.statusMessage === 'object'
+        ? Object.values(errorData.statusMessage).join(', ')
+        : errorData.statusMessage || ''
+      : errorData?.message || data.message
+  }</p>`;
 };
 
 export const formatAddress = (userDatas?: UserDetail) => {

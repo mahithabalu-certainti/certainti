@@ -10,9 +10,9 @@ import {
   createTextAreaField,
   REGEX_PATTERNS,
   createDateField,
-  createEmptyField,
   getFiscalYears,
   createSelectChildField,
+  createEmptyField,
 } from '../../../../common-utils';
 
 const minYear = 1950;
@@ -33,13 +33,15 @@ export const CaseFormData = (
     statutory_min: string;
     statutory_max: string;
     start_date_max: string;
+    start_date_min: string;
   },
   caseNamePrefix?: string,
   selectedCountryRid?: string,
   selectedAccountNumber?: string,
   selectedFiscalYear?: string,
   globalType?: boolean,
-  calculatedStatutoryDate?: string
+  calculatedStatutoryDate?: string,
+  statusOptions?: SelectOption[]
 ): FormType[] => {
   return useMemo(
     () => [
@@ -151,6 +153,17 @@ export const CaseFormData = (
             label: '',
             type: '',
             required: false,
+            hide: isEditView,
+          }),
+          createSelectField('status_rid', 'Status', {
+            options: statusOptions || [],
+            placeholder: 'Choose Status',
+            required: true,
+            hide: !isEditView,
+            // disabled:
+            //   isEditView &&
+            //   !permissionMap?.['status_rid']?.edit &&
+            //   permissionMap?.['status_rid']?.read,
           }),
           createTextField('heat_light_power', 'Heating & Lighting Cost', {
             required: false,
@@ -211,6 +224,9 @@ export const CaseFormData = (
             maxDate: dateConstraints?.start_date_max
               ? new Date(dateConstraints.start_date_max)
               : undefined,
+            disableDatesBefore: dateConstraints?.start_date_min
+              ? new Date(dateConstraints.start_date_min)
+              : undefined,
             disabled:
               isEditView &&
               !permissionMap?.['start_date']?.edit &&
@@ -230,7 +246,7 @@ export const CaseFormData = (
               customDateOpen: selectedFiscalYear
                 ? new Date(`${selectedFiscalYear}-04-01`)
                 : undefined,
-              minDate: dateConstraints?.planned_min
+              disableDatesBefore: dateConstraints?.planned_min
                 ? new Date(dateConstraints.planned_min)
                 : undefined,
               maxDate: dateConstraints?.planned_max
@@ -272,7 +288,14 @@ export const CaseFormData = (
                 !permissionMap?.['statutory_submission_date']?.edit &&
                 !permissionMap?.['statutory_submission_date']?.read,
               defaultValue: calculatedStatutoryDate,
-              assignDefaultValue: true,
+              assignDefaultValue: !isEditView || !!calculatedStatutoryDate,
+              requiredErrorMessage:
+                'Field is required. Please add statutory submission date in the platform level configuration.',
+              labelTooltip: {
+                showTooltip: true,
+                tooltipMessage:
+                  'Statutory Submission Date: Please add statutory submission date in the platform level configuration.',
+              },
             }
           ),
         ],

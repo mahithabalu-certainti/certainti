@@ -195,7 +195,7 @@ export const transformApiResponseToRule = (data: RuleDetails): Rule => {
         id: action.action_rid, // Action RID preserved
         name: action.action_name,
         description: action.description || '',
-        category: data?.rule?.action_type_rid || '', // Use action_type_rid from rule
+        category: action?.action_type_rid || '',
         icon: undefined,
         badge: undefined,
       }))

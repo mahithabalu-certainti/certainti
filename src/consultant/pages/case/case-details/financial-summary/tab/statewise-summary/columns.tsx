@@ -118,24 +118,6 @@ export const getDetailedMetricColumns = (
       textAlign: 'right',
     },
   },
-  {
-    id: 'approved',
-    label: 'Approved',
-    sortable: false,
-    sortId: 'approved',
-    width: '20%',
-    sx: {
-      textAlign: 'right',
-    },
-    render: (row: SummaryDetailedMetric) =>
-      row.metric_name &&
-      row.approved &&
-      (row.metric_name === 'FTE Cost' ||
-        row.metric_name === 'Sub Con Cost' ||
-        row.metric_name === 'Non Labor Cost')
-        ? costDisplay(row.approved, currencySymbol)
-        : row.approved || '-',
-  },
 ];
 
 export const getRdCreditsColumns = (

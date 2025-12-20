@@ -5,7 +5,10 @@ import {
   ListTable,
   ManageColumnsPopover,
 } from '../../../../../components/table';
-import { useWorkflowRuleList } from '../../../../service/workflow-builder/workflow-builder-service';
+import {
+  useWorkflowRuleList,
+  useUpdateRuleStatus,
+} from '../../../../service/workflow-builder/workflow-builder-service';
 import {
   WorkflowRuleListItem,
   WorkflowRuleListURLParams,
@@ -13,6 +16,7 @@ import {
 import { FilterTypes } from '../../../../../common-service';
 import { generatePath, useNavigate } from 'react-router-dom';
 import { WORKFLOW_BUILDER_EDIT } from '../../../../../routes';
+import RuleMapModal from '../components/rule-map-modal';
 
 interface IWorkflowTableProps {
   appliedFilters: FilterTypes;
@@ -40,7 +44,17 @@ export const WorkflowTable: React.FC<IWorkflowTableProps> = ({
   const navigate = useNavigate();
   const [workflowList, setWorkflowList] = useState<WorkflowRuleListItem[]>([]);
 
-  const { data, isLoading, isError } = useWorkflowRuleList(
+  // Rule Map Modal State
+  const [isRuleMapModalOpen, setIsRuleMapModalOpen] = useState(false);
+  const [selectedRuleData, setSelectedRuleData] =
+    useState<WorkflowRuleListItem | null>(null);
+
+  const {
+    data,
+    isLoading,
+    isError,
+    refetch: refetchList,
+  } = useWorkflowRuleList(
     {
       ...tableParams,
       search: searchValue,
@@ -48,6 +62,8 @@ export const WorkflowTable: React.FC<IWorkflowTableProps> = ({
     },
     refreshTrigger
   );
+
+  const updateRuleStatus = useUpdateRuleStatus();
 
   const totalItems = data?.count || 0;
 
@@ -83,11 +99,16 @@ export const WorkflowTable: React.FC<IWorkflowTableProps> = ({
 
   const getRowId = (row: WorkflowRuleListItem) => row?.rid || '';
 
-  const handleToggleStatus = (
+  const handleToggleStatus = async (
     rowData: WorkflowRuleListItem,
     enabled: boolean
   ) => {
-    // Update the workflow status in the local state
+    // Store the previous state for rollback
+    const previousState = workflowList.find(
+      (workflow) => workflow.rid === rowData.rid
+    )?.is_active;
+
+    // Optimistic update - immediately update the UI
     setWorkflowList((prevList) =>
       prevList.map((workflow) =>
         workflow.rid === rowData.rid
@@ -96,14 +117,40 @@ export const WorkflowTable: React.FC<IWorkflowTableProps> = ({
       )
     );
 
-    // Here you would typically make an API call to update the status
-    console.log(
-      `Toggling workflow ${rowData.rid} to ${enabled ? 'enabled' : 'disabled'}`
+    updateRuleStatus.mutate(
+      {
+        rule_rid: rowData.rid,
+        is_active: enabled,
+      },
+      {
+        onSuccess: () => {
+          refetchList();
+        },
+        onError: () => {
+          setWorkflowList((prevList) =>
+            prevList.map((workflow) =>
+              workflow.rid === rowData.rid
+                ? { ...workflow, is_active: previousState ?? !enabled }
+                : workflow
+            )
+          );
+        },
+      }
     );
   };
 
   const handleCreateRuleMap = (rowData: WorkflowRuleListItem) => {
-    console.log(rowData, 'modal open');
+    setSelectedRuleData(rowData);
+    setIsRuleMapModalOpen(true);
+  };
+
+  const handleRuleMapModalClose = () => {
+    setIsRuleMapModalOpen(false);
+    setSelectedRuleData(null);
+  };
+
+  const handleRuleMapSuccess = () => {
+    refetchList();
   };
 
   const handleEdit = (row: WorkflowRuleListItem) => {
@@ -174,6 +221,17 @@ export const WorkflowTable: React.FC<IWorkflowTableProps> = ({
         onColumnsChange={handleColumnsChange}
         columnRestrictions={RestrictedColumns}
       />
+
+      <RuleMapModal
+        open={isRuleMapModalOpen}
+        onClose={handleRuleMapModalClose}
+        scopeTypeName={selectedRuleData?.scope_type_name || ''}
+        scopeTypeRid={selectedRuleData?.scope_type_rid || ''}
+        ruleRid={selectedRuleData?.rid || ''}
+        isRuleMapped={selectedRuleData?.is_rule_mapped || false}
+        onSuccess={handleRuleMapSuccess}
+      />
+
       <ListTable
         data={workflowList || []}
         columns={visibleColumns}

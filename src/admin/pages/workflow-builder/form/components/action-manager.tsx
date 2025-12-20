@@ -23,6 +23,7 @@ const ActionManager = ({
 
   const { data: actionTypeData, isLoading: isLoadingActionTypes } =
     useGetActionTypes({
+      scope_rid: rule.trigger?.category || '',
       action_type_rid: selectedCategory === 'all' ? '' : selectedCategory,
       status_rid: '',
     });
@@ -194,7 +195,7 @@ const ActionManager = ({
       </div>
 
       {/* Action list with skeleton loading */}
-      <div className='flex-1 overflow-y-auto space-y-4 pb-4 min-h-[calc(100vh-397px)] max-h-[calc(100vh-397px)]'>
+      <div className='flex-1 overflow-y-auto space-y-4 pb-4 min-h-[calc(100vh-390px)] max-h-[calc(100vh-390px)]'>
         {/* Selected actions highlight section */}
         {rule.actions.length > 0 && !isLoadingActionTypes && (
           <div className='px-6 pt-6'>

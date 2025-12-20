@@ -470,23 +470,23 @@ const CasesProjects: React.FC<casesProjectProps> = ({
   );
   const assignFilterFields = isAssignProject
     ? selectProjectFilterFields(
-        memoizedClassification.map((item) => ({
-          label: item.option,
-          value: item.value,
-        })),
-        memoizedProjectTypes,
-        memoizedStatus,
-        projectPermissionMap
-      )
+      memoizedClassification.map((item) => ({
+        label: item.option,
+        value: item.value,
+      })),
+      memoizedProjectTypes,
+      memoizedStatus,
+      projectPermissionMap
+    )
     : assignedProjectFilterFields(
-        memoizedClassification.map((item) => ({
-          label: item.option,
-          value: item.value,
-        })),
-        memoizedProjectTypes,
-        memoizedStatus,
-        projectPermissionMap
-      );
+      memoizedClassification.map((item) => ({
+        label: item.option,
+        value: item.value,
+      })),
+      memoizedProjectTypes,
+      memoizedStatus,
+      projectPermissionMap
+    );
 
   const projectViewEditlistFields = useMemo(
     () =>
@@ -653,7 +653,7 @@ const CasesProjects: React.FC<casesProjectProps> = ({
         setCurrentPage={setCurrentPage}
         handleFilter={handleFilter}
         sortFilterCount={0}
-        setSortFilterCount={() => {}}
+        setSortFilterCount={() => { }}
         showRefresh={visbleIcons}
         onRefreshClick={onRefreshClick}
         onFilterChange={handleFilterChange}

@@ -140,6 +140,7 @@ export interface NewProjectData {
   project_fiscal_rid?: string;
   attachment?: AttachmentList[];
   project_rid?: string;
+  
 }
 
 export interface ProjectTypeItem {
