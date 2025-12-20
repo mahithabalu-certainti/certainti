@@ -216,7 +216,7 @@ export class JurisdictionService {
         duplicate = await this.hasOverlapConfig({
           JurisdictionConfig,
           groupId: configRequest.jurisdiction_config_group_rid,
-          statusRid: activeStatusRid.rid,
+          statusRid: configRequest.status_rid,
           startDate: configRequest.effective_start_date,
           endDate: configRequest.effective_end_date,
           excludeRid: configRequest.config_rid,
