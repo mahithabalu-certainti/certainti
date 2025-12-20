@@ -194,6 +194,7 @@ export const ManageGeoBasedRuleTable: React.FC<IGeoBasedRuleTableProps> = ({
                 effective_start_date: matchedRule.effective_start_date,
                 effective_end_date: matchedRule.effective_end_date,
                 is_federal: matchedRule.is_federal,
+                jurisdiction_config_group_rid: matchedRule.credit_config_group_rid,
             }
         );
 
