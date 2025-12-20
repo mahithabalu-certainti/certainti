@@ -30,7 +30,6 @@ router.put("/action/update", ActionController.updateAction);
 
 // ScopeMap
 router.post("/scope", ScopeController.createRuleScope);
-router.get("/scope", ScopeController.listScopes);
 router.put("/scope/update", ScopeController.updateScope);
 router.post("/scope/delete", ScopeController.deleteScope);
 

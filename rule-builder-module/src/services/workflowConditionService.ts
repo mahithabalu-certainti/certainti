@@ -168,7 +168,7 @@ export class ConditionService {
         const caseUpdateResponse = await Condition.update(
             {
                 ...conditionRequest,
-                modified_by: "userId",
+                modified_by: userId,
                 modified_datetime: new Date(),
             },
             {
@@ -193,8 +193,8 @@ export class ConditionService {
             await Condition.destroy({ where: { rule_rid: rule_rid, rid: condition_rid } });
              await this.ruleHistoryService.createHistory({
                 rule_rid: rule_rid,
-                attribute_name: condition_rid,
-                old_value: null,
+                attribute_name: "condition_rid",
+                old_value: condition_rid,
                 new_value: null,
                 created_by: userId,
                 action: 'conditionDelete'

@@ -154,16 +154,10 @@ export interface IScopeService {
         data?: { scope: any };
     }>;
 
-    listScopes(data: any,
-        filters: Record<string, any>,
-        userId: string,
-        apiType: string
-    ): Promise<{
-        statusCode: number;
-        message: string;
-        errorMessage?: string;
-        data?: { scopes: any; count: number };
-    }>;
+    getScopeMapsByRuleRid(
+        rule_rid: string,
+        userId: string
+    ): Promise<any[]>;
 
     updateScope(
         scopeRequest: any,

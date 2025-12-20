@@ -304,6 +304,7 @@ export class RulemasterService {
             schedule_offset_type: ruleRequest.schedule_offset_type ?? null,
             schedule_offset_value: ruleRequest.schedule_offset_value ?? null,
             modified_by: ruleRequest.modified_by,
+            modified_datetime: new Date(),
         });
 
         return {

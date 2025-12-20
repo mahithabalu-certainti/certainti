@@ -668,6 +668,65 @@ export class WorkFlowService {
             },
             userId
         );
+
+        if (ruleRequest.apply_type === 'INDIVIDUAL') {
+            const existingEntities =
+                await this.scopeService.getScopeMapsByRuleRid(ruleRequest.rule_rid, userId);
+            const existingEntitieslain = existingEntities.map(act => act.get({ plain: true }));
+            const incomingEntities = ruleRequest.scope_entity_rid;
+            for (let i = 0; i < incomingEntities.length; i++) {
+                const incoming = incomingEntities[i];
+                const existing = existingEntitieslain[i];
+
+                if (existing) {
+                    // Update action
+                    await this.scopeService.updateScope(
+                        {
+                            rid: existing.rid,
+                            rule_rid: ruleRequest.rule_rid,
+                            scope_entity_type: ruleRequest.scope_type_rid,
+                            scope_entity_rid: incoming,
+                            is_active: true,
+                            modified_by: ruleRequest.modified_by
+                        },
+                        userId
+                    );
+                } else {
+                    await this.scopeService.createScope(
+                        {
+                            scope_rid: "",
+                            rule_rid: ruleRequest.rule_rid,
+                            scope_entity_type: ruleRequest.scope_type_rid,
+                            scope_entity_rid: incoming,
+                            is_active: true,
+                            created_by: ruleRequest.modified_by,
+                            modified_by: ruleRequest.modified_by
+                        },
+                        userId
+                    );
+                }
+            }
+
+            // Delete only extra actions
+            if (existingEntitieslain.length > incomingEntities.length) {
+                const extraEntities = existingEntitieslain.slice(incomingEntities.length);
+                for (const entity of extraEntities) {
+                    await this.scopeService.deleteScope(
+                        {
+                            "rid": entity.rid,
+                            "rule_rid": ruleRequest.rule_rid,
+                            "apply_type":ruleRequest.apply_type
+                        },
+                    userId,
+                    );
+                }
+            }
+        }
+
+        if (ruleRequest.apply_type === 'ALL') {
+            await this.scopeService.deleteScope(ruleRequest, userId);
+        }
+
         return {
             statusCode: 200,
             message: "RuleMap and Scopes updated successfully",
