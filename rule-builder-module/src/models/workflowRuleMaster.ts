@@ -68,6 +68,7 @@ export class RuleMaster
         rule_name: {
           type: DataTypes.STRING,
           allowNull: false,
+          unique: true,
         },
 
         description: {
