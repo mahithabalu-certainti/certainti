@@ -885,6 +885,7 @@ export const rawQueries = {
         join ${MAIN_SCHEMA_NAME}.rd_credit_config_group rg on  rv.credit_config_group_rid  = rg.rid
         where rg.country_rid = '${rid}'
         and credit_program_name = 'Platform Configuration'
+        AND rv.status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active')
         and rg.is_federal = true`;
   },
   async updateSetting(
@@ -2221,15 +2222,16 @@ export const rawQueries = {
   },
   fetchTaskSummaryDetails: (rid: string, accountRid: string) => {
     return `SELECT ts.*,
-            COALESCE(cts.status_name, ast.status_name) as status_name,
+            COALESCE(cts.task_status_name, ast.status_name) as status_name,
             cp.priority_name,
             CONCAT(u_created.first_name, ' ', u_created.last_name) as created_by_name,
             CONCAT(u_modified.first_name, ' ', u_modified.last_name) as modified_by_name,
             CONCAT(u_assigned.first_name, ' ', u_assigned.last_name) as assigned_to_name,
             acc.account_name,
-            COALESCE(acc_attach.account_name, ps.project_name, cs.case_name) as attach_to_name
+            acc_status.status_name as account_status_name,
+            COALESCE(acc_attach.account_name, ps.project_code, cs.case_name) as attach_to_name
             FROM ${MAIN_SCHEMA_NAME}.task_summary ts
-            LEFT JOIN ${MAIN_SCHEMA_NAME}.case_status cts ON cts.rid = ts.status_rid
+            LEFT JOIN ${MAIN_SCHEMA_NAME}.case_task_status cts ON cts.rid = ts.status_rid
             LEFT JOIN ${MAIN_SCHEMA_NAME}.activity_status ast ON ast.rid = ts.status_rid
             LEFT JOIN ${MAIN_SCHEMA_NAME}.case_priority cp ON cp.rid = ts.priority_rid
             LEFT JOIN ${MAIN_SCHEMA_NAME}."user" u_created ON u_created.rid = ts.created_by
@@ -2237,7 +2239,8 @@ export const rawQueries = {
             LEFT JOIN ${MAIN_SCHEMA_NAME}."user" u_assigned ON u_assigned.rid = ts.assigned_to
             LEFT JOIN ${MAIN_SCHEMA_NAME}.account acc ON acc.rid = ts.account_rid
             LEFT JOIN ${MAIN_SCHEMA_NAME}.account acc_attach ON acc_attach.rid = ts.attach_to
-            LEFT JOIN ${MAIN_SCHEMA_NAME}.project_summary ps ON ps.project_rid = ts.attach_to
+            LEFT JOIN ${MAIN_SCHEMA_NAME}.status acc_status ON acc_status.rid = acc.status_rid
+            LEFT JOIN ${MAIN_SCHEMA_NAME}.project_fiscal_summary ps ON ps.project_fiscal_rid = ts.attach_to
             LEFT JOIN ${MAIN_SCHEMA_NAME}.case_summary cs ON cs.case_rid = ts.attach_to
             where ts.rid = '${rid}' AND ts.account_rid = '${accountRid}'`;
   },

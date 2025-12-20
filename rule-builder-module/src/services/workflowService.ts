@@ -2,7 +2,7 @@ import { RuleScope } from "../models/ruleScope";
 import { ScopeEvent } from "../models/scopeEvents";
 import { initSequelize } from "../config/maindbDataSource";
 import { Sequelize, Op, QueryTypes } from "sequelize";
-import { HttpStatus, MAIN_SCHEMA_NAME, STATUS_MESSAGE, notificationTypes, rawQueries } from "../utils/constants";
+import { HttpStatus, MAIN_SCHEMA_NAME, STATUS_MESSAGE, notificationStatus, notificationTypes, rawQueries } from "../utils/constants";
 import { Logger } from "winston";
 import { actions, Fields, ICreateRuleMapWithScope, IListSCopeEvent } from "../utils/types";
 import { decryptClientSecret, logMessage } from "../utils/helpers";
@@ -47,7 +47,7 @@ export class WorkFlowService {
         return this.mainDbSequelize;
     }
 
-    private async getOrgDb() {
+     private async getOrgDb() {
         if (!this.orgDbSequelize) {
             this.orgDbSequelize = await initOrgSequelize();
         }
@@ -802,21 +802,7 @@ export class WorkFlowService {
         //         actions: actions,
         //     });
         // }
-
-        const entity = {
-            status: "Close",
-            overdue: "close",
-            age: "30",
-            priority: "low",
-            entityId: "D001-4f350616-2e42-4829-8824-a3af3f3f24ed",
-            assigneeId: "D001-caace427-6365-469d-b8e5-d6322da67d40",
-            userId: "D001-caace427-6365-469d-b8e5-d6322da67d40",
-            accountRid: "D001-31b99b5b-0e39-4ddf-8b5a-5b9d60b87983",
-            templateName: "task_priority_update",
-            entityName: "Task ABC",
-            oldValue: "low",
-            newValue: "High"
-        };
+        const entity = request;
         const triggeredActions: Record<string, any[]> = {};
         const results: Record<string, boolean> = {};
         for (const rule_rid in conditionsByRule) {
@@ -929,10 +915,15 @@ export class WorkFlowService {
                 messageTemplate = messageTemplate.replace('{{entity_name}}', entityName != null ? entityName : '');
             }
             templateDetails[0].message_template = messageTemplate;
+            return {
+                templateDetails: templateDetails
+            };
+        } else {
+            // If no template found, just return empty array and continue
+            return {
+                templateDetails: []
+            };
         }
-        return {
-            templateDetails: templateDetails
-        };
     }
 
     async sentNotification(templateDetails: any, userId: string, targetUser: string): Promise<any> {
@@ -950,7 +941,6 @@ export class WorkFlowService {
                 type: QueryTypes.INSERT
             }
         );
-        console.log("Notification inserted:", notificationResult);
         const notificationRid = notificationResult[0].rid;
         try {
 
@@ -960,84 +950,84 @@ export class WorkFlowService {
                 "notificationsHub"
             );
 
-            const response = await webPubSubClient.sendToUser(userId, {
-                id: notificationRid,
-                message: templateDetails.templateDetails.message_template,
-            });
-            console.log("Notification sent response:", response);
-            const [statusRid]: any[] = await mainDb.query(
-                rawQueries.fetchNotificationStatusByType("unread"),
-                {
-                    replacements: { notificationRid },
-                    type: QueryTypes.SELECT
-                }
-            );
-            // Step 3: Update status to "sent"
-            await this.updateNotification(notificationRid, statusRid.rid);
-            return { notificationResult, status: "sent" };
-
-        } catch (err) {
-            // Update DB to "failed"
-            const [statusRid]: any[] = await mainDb.query(
-                rawQueries.fetchNotificationStatusByType("Failed"),
-                {
-                    replacements: { notificationRid },
-                    type: QueryTypes.SELECT
-                }
-            );
-            await this.updateNotification(notificationRid, statusRid.rid);
-            return { notificationResult, status: "failed" };
+    const response  = await webPubSubClient.sendToUser(userId, {
+      id: notificationRid,
+      message:templateDetails.templateDetails.message_template,
+    });
+    console.log("Notification sent response:", response);
+    const [statusRid]:any[] = await mainDb.query(
+        rawQueries.fetchNotificationStatusByType(notificationStatus.unread),
+        {   
+            replacements: { notificationRid },
+            type: QueryTypes.SELECT
         }
+    );
+    // Step 3: Update status to "sent"
+    await this.updateNotification(notificationRid, statusRid.rid);
+    return { notificationResult, status: "sent" };
+
+  } catch (err) {
+    // Update DB to "failed"
+    const [statusRid]:any[] = await mainDb.query(
+        rawQueries.fetchNotificationStatusByType(notificationStatus.failed ),
+        {   
+            replacements: { notificationRid },
+            type: QueryTypes.SELECT
+        }
+    );
+    await this.updateNotification(notificationRid, statusRid.rid);
+    return { notificationResult, status: "failed" };
+  }
+}
+  async updateNotification(notificationId: string, status_rid: string): Promise<void> {
+    const mainDb = await this.getMainDb();
+    let query = rawQueries.updateNotificationStatus();
+    await mainDb.query(
+        query,
+        {
+            replacements: { status_rid: status_rid, notificationId },
+            type: QueryTypes.UPDATE
+        }
+    );
+}
+
+async triggerNotification(taskContext:any,channel:string): Promise<void> {
+    // Implementation for changing assignee
+    
+    const { accountNumber, parentAccountId } =
+        await this.fetchValidAccountNumberById(
+          taskContext.accountRid
+        );
+    const templateDetails = await this.getNotificationTemplateDetails(
+        taskContext.templateName,
+        taskContext.oldValue,
+        taskContext.newValue,
+        taskContext.entityName,
+        channel
+    );
+    // Only one template detail is expected
+    const detail = Array.isArray(templateDetails.templateDetails)
+        ? templateDetails.templateDetails[0]
+        : templateDetails.templateDetails;
+    if (channel.includes('In App')) {
+        await this.sentNotification(
+            { templateDetails: detail },
+            taskContext.userId,
+            taskContext.userId
+        );
     }
-    async updateNotification(notificationId: string, status_rid: string): Promise<void> {
-        const mainDb = await this.getMainDb();
-        let query = rawQueries.updateNotificationStatus();
-        await mainDb.query(
-            query,
+    if (channel.includes('Email')) {
+        await this.sendNotificationEmail(
+            accountNumber,
+            taskContext.accountRid,
             {
-                replacements: { status_rid: status_rid, notificationId },
-                type: QueryTypes.UPDATE
-            }
+                to_email: "dhivya.s@hubino.com",
+                subject: "test email from thinkrd",
+                body_html: detail.message_template,
+            },
+            taskContext.userId
         );
     }
-
-    async triggerNotification(taskContext: any, channel: string): Promise<void> {
-        // Implementation for changing assignee
-
-        const { accountNumber, parentAccountId } =
-            await this.fetchValidAccountNumberById(
-                taskContext.accountRid
-            );
-        const templateDetails = await this.getNotificationTemplateDetails(
-            taskContext.templateName,
-            taskContext.oldValue,
-            taskContext.newValue,
-            taskContext.entityName,
-            channel
-        );
-        // Only one template detail is expected
-        const detail = Array.isArray(templateDetails.templateDetails)
-            ? templateDetails.templateDetails[0]
-            : templateDetails.templateDetails;
-        if (channel.includes('In App')) {
-            await this.sentNotification(
-                { templateDetails: detail },
-                taskContext.assigneeId,
-                taskContext.assigneeId
-            );
-        }
-        if (channel.includes('Email')) {
-            await this.sendNotificationEmail(
-                accountNumber,
-                taskContext.accountRid,
-                {
-                    to_email: "dhivya.s@hubino.com",
-                    subject: "test email from thinkrd",
-                    body_html: detail.message_template,
-                },
-                taskContext.userId
-            );
-        }
 
     }
 
@@ -1099,34 +1089,27 @@ export class WorkFlowService {
                     { type: "SELECT" }
                 );
             parentAccountNumber = parentAccountInfo.r_number;
-        }
-        let senderEmailInfo = await this.fetchSenderEmailInfoByAccountId(
-            parentAccountNumber,
-            accountInfo.parent_account_rid
-        );
-        senderEmailInfo = {
-            email: 'dev_rd_interactions@resdevtax.com',
-            clientId: 'ea0d9e79-8006-4ee2-a58f-61abda0dd77a',
-            clientSecret: 'nns8Q~ws3tPFOIegD.UtRRV_4viR4AIoLT687bns',
-            tenantId: '7c722eb0-2d94-428a-ac72-cea1da5c87c0'
-
-        }
-        const emailContent = {
-            message: {
-                subject: emailRequest.subject,
-                body: {
-                    contentType: "HTML",
-                    content: emailRequest.body_html,
-                },
-                toRecipients: Array.isArray(emailRequest.to_email)
-                    ? emailRequest.to_email.map((email: string) => ({
-                        emailAddress: { address: email }
-                    }))
-                    : [{
-                        emailAddress: { address: emailRequest.to_email }
-                    }]
-            },
-        };
+          }
+    let senderEmailInfo = await this.fetchSenderEmailInfoByAccountId(
+      parentAccountNumber,
+      accountInfo.parent_account_rid
+    );
+    const emailContent = {
+      message: {
+        subject: emailRequest.subject,
+        body: {
+          contentType: "HTML",
+          content: emailRequest.body_html,
+        },
+        toRecipients: Array.isArray(emailRequest.to_email)
+  ? emailRequest.to_email.map((email: string) => ({
+      emailAddress: { address: email }
+    }))
+  : [{
+      emailAddress: { address: emailRequest.to_email }
+    }]
+      },
+    };
 
 
         let emailResponse = await sendEmailWithAttachment({

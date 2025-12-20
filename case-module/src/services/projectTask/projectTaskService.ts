@@ -1410,7 +1410,7 @@ export class ProjectInjestionTaskService {
                             break;
                     }
                     break;
-            case "project_code":
+                case "project_code":
                     switch (operator.toLowerCase()) {
                         case "equals":
                             condition["$project.project_code$"] = { [Op.iLike]: value };
@@ -1509,7 +1509,7 @@ export class ProjectInjestionTaskService {
                                 );
                             }
                             condition[field] = Sequelize.literal(
-                                `DATE("ProjectTask".${field}) = DATE('${date.toISOString()}')`
+                                `DATE("CaseProjectTask".${field}) = DATE('${date.toISOString()}')`
                             );
                             break;
                         }
@@ -1521,7 +1521,7 @@ export class ProjectInjestionTaskService {
                                 );
                             }
                             condition[field] = Sequelize.literal(
-                                `DATE("ProjectTask".${field}) < DATE('${date.toISOString()}')`
+                                `DATE("CaseProjectTask".${field}) < DATE('${date.toISOString()}')`
                             );
                             break;
                         }
@@ -1533,7 +1533,7 @@ export class ProjectInjestionTaskService {
                                 );
                             }
                             condition[field] = Sequelize.literal(
-                                `DATE("ProjectTask".${field}) > DATE('${date.toISOString()}')`
+                                `DATE("CaseProjectTask".${field}) > DATE('${date.toISOString()}')`
                             );
                             break;
                         }
@@ -1557,7 +1557,7 @@ export class ProjectInjestionTaskService {
                             }
 
                             condition[field] = Sequelize.literal(
-                                `DATE("ProjectTask".${field}) BETWEEN DATE('${startDate.toISOString()}') AND DATE('${endDate.toISOString()}')`
+                                `DATE("CaseProjectTask".${field}) BETWEEN DATE('${startDate.toISOString()}') AND DATE('${endDate.toISOString()}')`
                             );
                             break;
                         }
@@ -1660,6 +1660,11 @@ export class ProjectInjestionTaskService {
                             case "is_empty":
                                 nestedCondition["$resource.resource_code$"] = {
                                     [Op.or]: [{ [Op.is]: null }, { [Op.eq]: "" }],
+                                };
+                                break;
+                            case "contains":
+                                nestedCondition["$resource.resource_code$"] = {
+                                    [Op.iLike]: `%${val}%`,
                                 };
                                 break;
                         }

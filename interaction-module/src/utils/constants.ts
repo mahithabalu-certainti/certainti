@@ -480,6 +480,7 @@ export const rawQueries = {
     join ${MAIN_SCHEMA_NAME}.rd_credit_config_group rg on  rv.credit_config_group_rid  = rg.rid
     where rg.country_rid = '${rid}'
     and credit_program_name = 'Platform Configuration'
+    AND rv.status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active')
     and rg.is_federal = true`;
   },
   fetchProjectTypeRid(projectType: string | string[]) {
