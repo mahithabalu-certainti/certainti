@@ -305,6 +305,15 @@ export interface CreateRuleMapPayload {
   created_by: string;
 }
 
+// ---------- Update Rule Map ----------
+export interface UpdateRuleMapPayload {
+  scope_type_rid: string;
+  rule_rid: string;
+  apply_type: ApplyType;
+  scope_entity_rid: string[];
+  modified_by: string;
+}
+
 // ---------- Get Rule Map Details ----------
 export interface GetRuleMapDetailsPayload {
   rule_rid: string;
@@ -322,4 +331,10 @@ export interface GetRuleMapDetailsResponse {
   statusCodeValue: string;
   statusMessage: string;
   data: RuleMapDetails;
+}
+
+// ---------- Update Rule Status ----------
+export interface UpdateRuleStatusPayload {
+  rule_rid: string;
+  is_active: boolean;
 }

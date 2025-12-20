@@ -11,6 +11,7 @@ import {
   CreateRuleMapPayload,
   CreateRulePayload,
   GetRuleMapDetailsPayload,
+  GetRuleMapDetailsResponse,
   RuleCategoryFieldsPayload,
   RuleCategoryFieldsResponse,
   RuleDetails,
@@ -23,7 +24,9 @@ import {
   ScopeEventListPayload,
   ScopeEventListResponse,
   ScopeListResponse,
+  UpdateRuleMapPayload,
   UpdateRulePayload,
+  UpdateRuleStatusPayload,
   WorkflowRuleListItem,
   WorkflowRuleListResponse,
   WorkflowRuleListURLParams,
@@ -416,33 +419,47 @@ export const useCreateRuleMap = () => {
   });
 };
 
+// ---------- Update Rule Map ----------
+export const getUpdateRuleMapUrl = (): string => {
+  return `/api/workflow/updateRuleMap`;
+};
+
+export const updateRuleMap = async (
+  body: UpdateRuleMapPayload
+): Promise<CommonApiResponse> => {
+  try {
+    const { data } = await ruleBuilderServiceApi.post<CommonApiResponse>(
+      getUpdateRuleMapUrl(),
+      body
+    );
+    return data;
+  } catch (error) {
+    console.error('Error updating rule map:', error);
+    throw error;
+  }
+};
+
+export const useUpdateRuleMap = () => {
+  return useMutation<CommonApiResponse, Error, UpdateRuleMapPayload>({
+    mutationFn: (body) => updateRuleMap({ ...body }),
+  });
+};
+
 // ---------- Get Rule Map Details ----------
 export const getRuleMapDetailsUrl = (): string => {
-  return `/api/workflow/getRuleMapDetails`;
+  return `/api/workflow/getRuleMapDetail`;
 };
 
 export const getRuleMapDetails = async (
   body: GetRuleMapDetailsPayload
 ): Promise<RuleMapDetails> => {
   try {
-    // TODO: Replace with actual API call when backend is ready
-    // const { data } = await ruleBuilderServiceApi.post<GetRuleMapDetailsResponse>(
-    //   getRuleMapDetailsUrl(),
-    //   body
-    // );
-    // return data.data;
-
-    // Mock data for now
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          scope_type_rid: 'D001-1a7c9f4e-2d8b-4a36-9e51-0b3d6c5f8421',
-          rule_rid: body.rule_rid,
-          apply_type: 'INDIVIDUAL',
-          scope_entity_rid: ['D001-7023ddcb-4b2b-49c6-90e3-e846fd7df70b'],
-        });
-      }, 1500); // Simulate network delay
-    });
+    const { data } =
+      await ruleBuilderServiceApi.post<GetRuleMapDetailsResponse>(
+        getRuleMapDetailsUrl(),
+        body
+      );
+    return data.data;
   } catch (error) {
     console.error('Error fetching rule map details:', error);
     throw error;
@@ -461,3 +478,30 @@ export const useGetRuleMapDetails = (
     enabled: !!ruleRid && enabled,
   });
 };
+
+// ---------- Update Rule Status ----------
+export const getUpdateRuleStatusUrl = (): string => {
+  return `/api/workflow/updateRuleStatus`;
+};
+
+export const updateRuleStatus = async (
+  body: UpdateRuleStatusPayload
+): Promise<CommonApiResponse> => {
+  try {
+    const { data } = await ruleBuilderServiceApi.post<CommonApiResponse>(
+      getUpdateRuleStatusUrl(),
+      body
+    );
+    return data;
+  } catch (error) {
+    console.error('Error updating rule status:', error);
+    throw error;
+  }
+};
+
+export const useUpdateRuleStatus = () => {
+  return useMutation<CommonApiResponse, Error, UpdateRuleStatusPayload>({
+    mutationFn: (body) => updateRuleStatus({ ...body }),
+  });
+};
+
