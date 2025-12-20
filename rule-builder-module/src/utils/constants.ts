@@ -76,7 +76,7 @@ export const mainTableFilters: Record<any, any> = {
   updated_user_name: "updated_user_name",
   rule_name: "rule_name",
   modified_user_name: "modified_user_name",
-  scope_type_name:"scope_type_name",
+  scope_type_name: "scope_type_name",
 }
 
 export const notificationTypes = {
@@ -257,7 +257,7 @@ export const rawQueries = {
     return query;
   },
 
-  fetchNotificationTemplateDetails(template_name: string,channel: string): string {
+  fetchNotificationTemplateDetails(template_name: string, channel: string): string {
     let query = `SELECT nt.message_template,nt.channel
     FROM ${MAIN_SCHEMA_NAME}.notification_template nt 
     WHERE nt.template_code = '${template_name}'
@@ -317,7 +317,16 @@ export const rawQueries = {
   getMappedRuleRids(ruleRids: any[]) {
     const ids = ruleRids.map(id => `'${id}'`).join(', ');
     return `SELECT rule_rid FROM ${MAIN_SCHEMA_NAME}.workflow_rule_map WHERE rule_rid IN (${ids})`;
-  }
+  },
 
+  fetchMapDetailsByRuleRid(rule_rid: string): string {
+    let query = `SELECT wrm.apply_type,wrm.rule_rid,wrma.scope_type_rid FROM ${MAIN_SCHEMA_NAME}.workflow_rule_map wrm
+    JOIN ${MAIN_SCHEMA_NAME}.workflow_rule_master wrma ON wrm.rule_rid = wrma.rid WHERE wrma.rid = '${rule_rid}' `;
+    return query;
+  },
 
+  fetchScopeMapDetailsByRuleRid(rule_rid: string): string {
+    let query = `SELECT wrsm.scope_entity_rid FROM ${MAIN_SCHEMA_NAME}.workflow_rule_scope_map wrsm  WHERE wrsm.rule_rid = '${rule_rid}' `;
+    return query;
+  },
 }

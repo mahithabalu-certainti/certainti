@@ -201,7 +201,6 @@ const createTriggerLogSchema = Joi.object({
     created_by: Joi.string().required(),
 });
 
-
 const createRuleMapSchema = Joi.object({
     scope_type_rid: Joi.string().required(),
     rule_rid: Joi.string().required(),
@@ -219,6 +218,25 @@ const createRuleMapSchema = Joi.object({
         otherwise: Joi.array().items(Joi.string()).optional()
     }),
     created_by: Joi.string().required(),
+});
+
+const updateRuleMapSchema = Joi.object({
+    scope_type_rid: Joi.string().required(),
+    rule_rid: Joi.string().required(),
+    apply_type: Joi.string().required(),
+    scope_entity_rid: Joi.when("apply_type", {
+        is: 'INDIVIDUAL',
+        then: Joi.array()
+            .items(Joi.string())
+            .min(1)
+            .required()
+            .messages({
+                "any.required": "scope_entity_rid is required when apply_type = 'INDIVIDUAL'",
+                "array.min": "scope_entity_rid must contain at least one value when apply_type = 'INDIVIDUAL'"
+            }),
+        otherwise: Joi.array().items(Joi.string()).optional()
+    }),
+    modified_by: Joi.string().required(),
 });
 
 const listScopesSchema = Joi.object({
@@ -328,6 +346,12 @@ const updateRuleSchema = Joi.object({
     trigger_type: Joi.number().required()
 });
 
+
+const updateRuleStatusSchema = Joi.object({
+    rule_rid: Joi.string().required(),
+    is_active: Joi.boolean().required()
+});
+
 export {
     createRuleMasterSchema,
     listRuleSchema,
@@ -357,5 +381,7 @@ export {
     createRuleSchema,
     getRuleDetailSchema,
     updateRuleSchema,
+    updateRuleStatusSchema,
     createRuleMapSchema,
+    updateRuleMapSchema,
 };
