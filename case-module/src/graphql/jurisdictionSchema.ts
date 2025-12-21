@@ -41,7 +41,6 @@ export const jurisdictionTypeDefs = gql`
     effective_start_date: String
     effective_end_date: String
     is_federal: Boolean!
-    jurisdiction_config_group_rid: String!
     status_rid: String
   }
 
