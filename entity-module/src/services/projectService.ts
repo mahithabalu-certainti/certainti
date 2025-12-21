@@ -48,6 +48,7 @@ import {
 import { errorLog, logMessage } from "../utils/helpers";
 import { checkProjectMappedToProjectRes, fetchQreHistoryDatas } from "../utils/rawQueries";
 import { Case } from "../models/caseModel";
+import { getFiscalEndYear, parseFiscalDate } from "../utils/dateUtils";
 
 export class ProjectService {
   private schemaService: SchemaService;
@@ -770,10 +771,24 @@ export class ProjectService {
       );
 
       if (projectData) {
+        let schemaName = rawQueries.fetchSchemaName(accountRNumber)
         const mainDbInit = await initMainDbSequelize();
+        const orgDb = await initOrgSequelize()
+        const [accountFiscalInfo]: any[] = await orgDb.query(
+        rawQueries.fetchAccountInfo(
+          schemaName,accountId, 
+        ), { type: 'SELECT' }
+      );
+      const fiscalStart = accountFiscalInfo?.fiscal_start_date; // e.g. 'Apr/01'
+      const fiscalEnd = accountFiscalInfo?.fiscal_end_date; // e.g. 'Mar/31'
+      const fiscalYear = projectData.dataValues.fiscal_year || new Date().getFullYear();
+      // Start date
+      const formattedStartDate = parseFiscalDate(fiscalStart, fiscalYear);
+      const endYear = getFiscalEndYear(fiscalStart, fiscalEnd, fiscalYear);
+      const formattedEndDate = parseFiscalDate(fiscalEnd, endYear);
         const [platFormConfig]: any[] = await mainDbInit.query(
                       rawQueries.fetchPlatformConfig(
-                        accountData.country_rid
+                        accountData.country_rid,formattedStartDate,formattedEndDate
                       ),{type: 'SELECT'}
                 );
         let projectType: string[] = [];
@@ -785,8 +800,8 @@ export class ProjectService {
         projectData.dataValues.total_nonlabor_prj = projectData.dataValues.total_nonlabor_prj == 0 ? null : projectData.dataValues.total_nonlabor_prj
         projectData.dataValues.total_subcon = projectData.dataValues.total_subcon == 0 ? null : projectData.dataValues.total_subcon
 
-        let schemaName = rawQueries.fetchSchemaName(accountRNumber)
-        const orgDb = await initOrgSequelize()
+        
+       
         let isResExists: boolean;
         const checkResExistsInPrjRes = await orgDb.query(checkProjectMappedToProjectRes(schemaName, projectData.rid))
         if (checkResExistsInPrjRes[0].length > 0) isResExists = true
