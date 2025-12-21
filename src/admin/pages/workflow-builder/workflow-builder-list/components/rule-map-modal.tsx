@@ -20,6 +20,7 @@ import Cases from './case-list/cases';
 import {
   useCreateRuleMap,
   useGetRuleMapDetails,
+  useUpdateRuleMap,
 } from '../../../../service/workflow-builder/workflow-builder-service';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
@@ -47,6 +48,7 @@ const RuleMapModal: React.FC<RuleMapModalProps> = ({
   const { successToast } = useToast();
   const { userId } = useSelector((state: RootState) => state.auth);
   const createRuleMap = useCreateRuleMap();
+  const updateRuleMap = useUpdateRuleMap();
 
   const [selectedApplyType, setSelectedApplyType] = useState<ApplyType>('ALL');
   const [showEntityTable, setShowEntityTable] = useState(false);
@@ -77,26 +79,42 @@ const RuleMapModal: React.FC<RuleMapModalProps> = ({
 
   const handleSaveRuleMap = (applyType: ApplyType, entityIds: string[]) => {
     if (isRuleMapped) {
-      resetModalState();
-      onClose();
-      return;
-    }
-    const apiPayload = {
-      scope_type_rid: scopeTypeRid,
-      rule_rid: ruleRid,
-      apply_type: applyType,
-      scope_entity_rid: entityIds,
-      created_by: userId || '',
-    };
+      // Update existing rule map
+      const updatePayload = {
+        scope_type_rid: scopeTypeRid,
+        rule_rid: ruleRid,
+        apply_type: applyType,
+        scope_entity_rid: entityIds,
+        modified_by: userId || '',
+      };
 
-    createRuleMap.mutate(apiPayload, {
-      onSuccess: () => {
-        successToast('Created rule map successfully');
-        resetModalState();
-        onClose();
-        onSuccess?.();
-      },
-    });
+      updateRuleMap.mutate(updatePayload, {
+        onSuccess: () => {
+          successToast('Updated rule map successfully');
+          resetModalState();
+          onClose();
+          onSuccess?.();
+        },
+      });
+    } else {
+      // Create new rule map
+      const createPayload = {
+        scope_type_rid: scopeTypeRid,
+        rule_rid: ruleRid,
+        apply_type: applyType,
+        scope_entity_rid: entityIds,
+        created_by: userId || '',
+      };
+
+      createRuleMap.mutate(createPayload, {
+        onSuccess: () => {
+          successToast('Created rule map successfully');
+          resetModalState();
+          onClose();
+          onSuccess?.();
+        },
+      });
+    }
   };
 
   const handleSaveEntitySelection = () => {
@@ -119,7 +137,7 @@ const RuleMapModal: React.FC<RuleMapModalProps> = ({
   };
 
   const handleClose = () => {
-    if (!createRuleMap.isPending) {
+    if (!createRuleMap.isPending && !updateRuleMap.isPending) {
       resetModalState();
       onClose();
     }
@@ -183,7 +201,17 @@ const RuleMapModal: React.FC<RuleMapModalProps> = ({
   return (
     <React.Suspense fallback={null}>
       <Modal open={open} onClose={handleModalClose}>
-        <Box className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 min-w-[65%] max-w-[65%] bg-white rounded-md shadow-lg outline-none'>
+        <Box
+          className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 min-w-[65%] max-w-[65%] bg-white rounded-md shadow-lg outline-none'
+          sx={{
+            pointerEvents:
+              createRuleMap.isPending ||
+              updateRuleMap.isPending ||
+              ruleMapDetailsLoading
+                ? 'none'
+                : 'all',
+          }}
+        >
           <div
             className={`flex items-center justify-between gap-2 p-4 border-b border-[#CBD6E2] shrink-0`}
           >
@@ -196,7 +224,11 @@ const RuleMapModal: React.FC<RuleMapModalProps> = ({
             </div>
             <button
               onClick={handleClose}
-              disabled={createRuleMap.isPending || ruleMapDetailsLoading}
+              disabled={
+                createRuleMap.isPending ||
+                updateRuleMap.isPending ||
+                ruleMapDetailsLoading
+              }
               className='w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-200 cursor-pointer disabled:cursor-default'
             >
               <React.Suspense fallback={null}>
@@ -279,7 +311,9 @@ const RuleMapModal: React.FC<RuleMapModalProps> = ({
                         />
                       }
                       disabled={
-                        createRuleMap.isPending || ruleMapDetailsLoading
+                        createRuleMap.isPending ||
+                        updateRuleMap.isPending ||
+                        ruleMapDetailsLoading
                       }
                       label={
                         <Box>
@@ -318,7 +352,9 @@ const RuleMapModal: React.FC<RuleMapModalProps> = ({
                         />
                       }
                       disabled={
-                        createRuleMap.isPending || ruleMapDetailsLoading
+                        createRuleMap.isPending ||
+                        updateRuleMap.isPending ||
+                        ruleMapDetailsLoading
                       }
                       label={
                         <Box>
@@ -356,7 +392,11 @@ const RuleMapModal: React.FC<RuleMapModalProps> = ({
               <TextButton
                 label='Back'
                 onClick={handleBack}
-                disabled={createRuleMap.isPending || ruleMapDetailsLoading}
+                disabled={
+                  createRuleMap.isPending ||
+                  updateRuleMap.isPending ||
+                  ruleMapDetailsLoading
+                }
                 sx={{
                   width: '65px',
                   minWidth: '65px',
@@ -370,7 +410,11 @@ const RuleMapModal: React.FC<RuleMapModalProps> = ({
               <TextButton
                 label='Cancel'
                 onClick={handleClose}
-                disabled={createRuleMap.isPending || ruleMapDetailsLoading}
+                disabled={
+                  createRuleMap.isPending ||
+                  updateRuleMap.isPending ||
+                  ruleMapDetailsLoading
+                }
                 sx={{
                   width: '75px',
                   minWidth: '75px',
@@ -387,9 +431,10 @@ const RuleMapModal: React.FC<RuleMapModalProps> = ({
                 onClick={
                   showEntityTable ? handleSaveEntitySelection : handleConfirm
                 }
-                loading={createRuleMap.isPending}
+                loading={createRuleMap.isPending || updateRuleMap.isPending}
                 disabled={
                   createRuleMap.isPending ||
+                  updateRuleMap.isPending ||
                   ruleMapDetailsLoading ||
                   (showEntityTable && selectedEntityIds.length === 0)
                 }

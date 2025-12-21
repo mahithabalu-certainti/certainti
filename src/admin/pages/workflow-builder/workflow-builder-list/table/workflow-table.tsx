@@ -7,6 +7,7 @@ import {
 } from '../../../../../components/table';
 import {
   useWorkflowRuleList,
+  useUpdateRuleStatus,
 } from '../../../../service/workflow-builder/workflow-builder-service';
 import {
   WorkflowRuleListItem,
@@ -62,6 +63,8 @@ export const WorkflowTable: React.FC<IWorkflowTableProps> = ({
     refreshTrigger
   );
 
+  const updateRuleStatus = useUpdateRuleStatus();
+
   const totalItems = data?.count || 0;
 
   useEffect(() => {
@@ -96,11 +99,16 @@ export const WorkflowTable: React.FC<IWorkflowTableProps> = ({
 
   const getRowId = (row: WorkflowRuleListItem) => row?.rid || '';
 
-  const handleToggleStatus = (
+  const handleToggleStatus = async (
     rowData: WorkflowRuleListItem,
     enabled: boolean
   ) => {
-    // Update the workflow status in the local state
+    // Store the previous state for rollback
+    const previousState = workflowList.find(
+      (workflow) => workflow.rid === rowData.rid
+    )?.is_active;
+
+    // Optimistic update - immediately update the UI
     setWorkflowList((prevList) =>
       prevList.map((workflow) =>
         workflow.rid === rowData.rid
@@ -109,9 +117,25 @@ export const WorkflowTable: React.FC<IWorkflowTableProps> = ({
       )
     );
 
-    // Here you would typically make an API call to update the status
-    console.log(
-      `Toggling workflow ${rowData.rid} to ${enabled ? 'enabled' : 'disabled'}`
+    updateRuleStatus.mutate(
+      {
+        rule_rid: rowData.rid,
+        is_active: enabled,
+      },
+      {
+        onSuccess: () => {
+          refetchList();
+        },
+        onError: () => {
+          setWorkflowList((prevList) =>
+            prevList.map((workflow) =>
+              workflow.rid === rowData.rid
+                ? { ...workflow, is_active: previousState ?? !enabled }
+                : workflow
+            )
+          );
+        },
+      }
     );
   };
 
