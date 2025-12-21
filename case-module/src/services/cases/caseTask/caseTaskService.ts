@@ -795,7 +795,7 @@ export class CaseTaskService {
     const fetchParent: any = await mainDb.query(
       await rawQueries.fetchParentAccount(data.account_rid, mainDb)
     );
-    const accountInfo: any = await mainDb.query(
+    const [accountInfo]: any[] = await mainDb.query(
       rawQueries.fetchAccountInfo(data.account_rid),
       { type: QueryTypes.SELECT }
     );
@@ -804,7 +804,7 @@ export class CaseTaskService {
       fetchParent[0][0].r_number,
       files,
       userId,
-      accountInfo[0][0].r_number
+      accountInfo.r_number
     );
     return result;
   }
