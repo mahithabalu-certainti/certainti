@@ -9,6 +9,7 @@ import { RuleHistoryService } from "../services/workflowRuleHistoryService";
 import { TriggerService } from "../services/workflowTriggerLogService";
 import { RuleMapService } from "../services/workflowRuleMapService";
 import { WorkFlowService } from "../services/workflowService";
+import { SchedulerService } from "./schedulerRuleExecutionService";
 
 class Services {
   private logger: Logger;
@@ -21,6 +22,7 @@ class Services {
   triggerService: ITriggerservice;
   ruleMapService: IRuleMapService;
   workFlowService: IWorkFlowService;
+  schedulerService: SchedulerService;
 
   constructor(logger: Logger) {
     this.logger = logger;
@@ -33,6 +35,7 @@ class Services {
     this.triggerService = new TriggerService(logger);
     this.ruleMapService = new RuleMapService(logger);
     this.workFlowService = new WorkFlowService(logger);
+    this.schedulerService = new SchedulerService(logger);
   }
 }
 
