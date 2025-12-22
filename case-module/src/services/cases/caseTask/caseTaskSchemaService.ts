@@ -15,7 +15,7 @@ import { CaseTimeline } from "../../../models/caseTimeline";
 import { TaskCollaborators } from "../../../models/taskCollaboratorsModel";
 import { CaseTaskWorkflowConnector } from "../../../models/caseTaskWorkflowConnectorModel";
 import { CaseTask } from "../../../models/caseTaskModel";
-import axios from "axios";
+
 
 export class CaseTaskSchemaService {
   private orgDbSequelize: Sequelize | null = null;
@@ -399,11 +399,19 @@ export class CaseTaskSchemaService {
               if (columnName == "assigned_to") {
                 labelName = "Assigned To"
                 const result: any = await this.mainDbSequelize.query(rawQueries.fetchUserNames(oldValue, newValue))
+                let emailMapping: Map<string, string> = new Map()
                 for (let r of result[0]) {
                   columnMapping.set(r.rid, r.name)
+                  emailMapping.set(r.rid, r.email)
                 }
                 oldValueString = columnMapping.get(oldValue)
                 newValueString = columnMapping.get(newValue)
+                baseRuleEnginePayload.targetUserID = newValue;
+                baseRuleEnginePayload.targetEmail = emailMapping.get(newValue);
+                 await this.helperMethod.triggerDynamicRuleEngine('assignee_change', baseRuleEnginePayload, {
+                  newValue: newValueString,
+                  oldValue: oldValueString
+                }, accessToken);
               }
               else if (columnName === "checklist_template_rid") {
                 labelName = "Checklist"
@@ -432,7 +440,7 @@ export class CaseTaskSchemaService {
                 oldValueString = columnMapping.get(oldValue)
                 newValueString = columnMapping.get(newValue);
                 baseRuleEnginePayload.status  = newValueString;
-                await this.triggerDynamicRuleEngine('status_change', baseRuleEnginePayload, {
+                await this.helperMethod.triggerDynamicRuleEngine('status_change', baseRuleEnginePayload, {
                   newValue: newValueString,
                   oldValue: oldValueString
                 }, accessToken);
@@ -2601,50 +2609,6 @@ export class CaseTaskSchemaService {
       }
     }
   }
-  async triggerDynamicRuleEngine(eventType: string, payload: any, extra: Record<string, any> = {}, accessToken: string) {
-    let templateName = '';
-    let event_name = '';
-    switch (eventType) {
-      case 'create':
-        templateName = ruleTemplateNames.taskCreated;
-        event_name = ruleNames.taskCreated;
-        break;
-      case 'status_change':
-        templateName = ruleTemplateNames.statusUpdated;
-        event_name =  ruleNames.taskCreated;
-        break;
-      default:
-        templateName = eventType;
-        event_name = eventType;
-    }
-    const ruleEnginePayload = {
-      ...payload,
-      ...extra,
-      templateName,
-      event_name
-    };
-    await this.triggerRuleEngine(ruleEnginePayload, accessToken);
-  }
-  async triggerRuleEngine(data: any, accessToken: string): Promise<void> {
-      try {
-        console.log("Triggering rule engine with data:", data); 
-        const RULE_ENGINE_BASE_URL = process.env.RULEBUILDER_BASE_URL;
-        const response = await axios.post(
-                `${RULE_ENGINE_BASE_URL}/workflow/execute`,
-                {
-                  ...data
-                },
-                {
-                  headers: {
-                    "x-user-id": data.userId,
-                    Authorization: `Bearer ${accessToken}`,
-                  },
-                }
-              );
-      } catch (err) {
-        console.log(err)
-        logMessage(`Error triggering rule engine: ${err}`);
-        throw this.caseSchemaService.throwServiceError(err as Error);
-      }
-    }
+  
+ 
 }

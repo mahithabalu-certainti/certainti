@@ -860,12 +860,53 @@ export class WorkFlowService {
     }
 
     private evaluateCondition(condition: any, entity: any): boolean {
-        const fieldKey = condition.field.split(".")[1]; // "task.status" → "status"
-        const entityValue = entity[fieldKey];
+        const fieldKey = condition.field.split(".")[1] || condition.field; // "task.status" → "status"
+        let entityValue = entity[fieldKey];
+        let conditionValue = condition.value;
+        // Special handling for 'current date' as value
+        if (
+            typeof entityValue === "string" &&
+            entityValue.trim().toLowerCase() === "current date"
+        ) {
+            // Use today's date in YYYY-MM-DD format
+            const today = new Date();
+            entityValue = today.toISOString().slice(0, 10);
+        }
+        if (
+            typeof conditionValue === "string" &&
+            conditionValue.trim().toLowerCase() === "current date"
+        ) {
+            // Use today's date in YYYY-MM-DD format
+            const today = new Date();
+            conditionValue = today.toISOString().slice(0, 10);
+        }
+        logMessage(`Evaluating condition: ${fieldKey} ${condition.operator} ${conditionValue} against entity value: ${entityValue}`);
         const operator = (condition.operator || "").toLowerCase();
         switch (operator) {
             case "equals":
-                return String(entityValue) === String(condition.value);
+                return String(entityValue).toLowerCase() === String(conditionValue).toLowerCase();
+            case "not equals":
+                return String(entityValue).toLowerCase() !== String(conditionValue).toLowerCase();
+            case "greater than": {
+                // date comparison first
+                const dateA = new Date(entityValue);
+                const dateB = new Date(conditionValue);
+                if (!isNaN(dateA.getTime()) && !isNaN(dateB.getTime())) {
+                    return dateA > dateB;
+                }
+                // Fallback to number comparison
+                return Number(entityValue) > Number(conditionValue);
+            }
+            case "less than": {
+                // date comparison first
+                const dateA = new Date(entityValue);
+                const dateB = new Date(conditionValue);
+                if (!isNaN(dateA.getTime()) && !isNaN(dateB.getTime())) {
+                    return dateA < dateB;
+                }
+                // Fallback to number comparison
+                return Number(entityValue) < Number(conditionValue);
+            }
             default:
                 return false;
         }
@@ -926,12 +967,12 @@ export class WorkFlowService {
         }
     }
 
-    async sentNotification(templateDetails: any, userId: string, targetUser: string): Promise<any> {
+    async sentNotification(templateDetails: any, targetuserId: string, targetUserEmail: string): Promise<any> {
         const mainDb = await this.getMainDb();
         let notificationPayload = {
             notification_message: templateDetails.templateDetails.message_template,
-            created_by: userId,
-            user_rid: targetUser
+            created_by: targetuserId,
+            user_rid: targetuserId
         };
         const insertQuery = rawQueries.insertNotification();
         const [notificationResult]: any[] = await mainDb.query(
@@ -950,11 +991,10 @@ export class WorkFlowService {
                 "notificationsHub"
             );
 
-    const response  = await webPubSubClient.sendToUser(userId, {
+    const response  = await webPubSubClient.sendToUser(targetuserId, {
       id: notificationRid,
       message:templateDetails.templateDetails.message_template,
     });
-    console.log("Notification sent response:", response);
     const [statusRid]:any[] = await mainDb.query(
         rawQueries.fetchNotificationStatusByType(notificationStatus.unread),
         {   
@@ -1012,8 +1052,8 @@ async triggerNotification(taskContext:any,channel:string): Promise<void> {
     if (channel.includes('In App')) {
         await this.sentNotification(
             { templateDetails: detail },
-            taskContext.userId,
-            taskContext.userId
+            taskContext.targetUserID,
+            taskContext.targetEmail
         );
     }
     if (channel.includes('Email')) {
@@ -1021,8 +1061,8 @@ async triggerNotification(taskContext:any,channel:string): Promise<void> {
             accountNumber,
             taskContext.accountRid,
             {
-                to_email: "dhivya.s@hubino.com",
-                subject: "test email from thinkrd",
+                to_email: taskContext.targetEmail,
+                subject:  detail.message_template,
                 body_html: detail.message_template,
             },
             taskContext.userId

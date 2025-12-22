@@ -89,6 +89,31 @@ export const notificationStatus = {
   failed: "Failed"
 }
 
+
+export const ruleTemplateNames = {
+  caseCreated: "case_create",
+  statusUpdated:"task_status_update",
+  taskCreated:"task_create"
+}
+
+export const ruleNames = {
+  caseCreated: "Create Case",
+  taskCreated: "Create Task",
+  taskAssigned: "Task Assigned",
+}
+
+export const schedulerStatus = {
+  Success : "success",
+  Failed : "failed",
+  Running : "running"
+}
+
+export const schedulerTaskName = {
+    caseSubmissionOverDue : "caseSubmissionOverDue",
+    interaction : "interactions",
+    attachments : "attachments"
+  }
+
 export const rawQueries = {
   fetchUser(data: any) {
     let ids = data.map((d: any) => `'${d}'`);
@@ -329,4 +354,65 @@ export const rawQueries = {
     let query = `SELECT wrsm.scope_entity_rid FROM ${MAIN_SCHEMA_NAME}.workflow_rule_scope_map wrsm  WHERE wrsm.rule_rid = '${rule_rid}' `;
     return query;
   },
+  schedulerSelectRunning(): string {
+    return `SELECT * FROM ${MAIN_SCHEMA_NAME}.scheduler_executions WHERE status = :status LIMIT 1`;
+  },
+  schedulerInsertRunning(): string {
+    return `INSERT INTO ${MAIN_SCHEMA_NAME}.scheduler_executions (created_datetime, started_at, status) VALUES (:created_datetime, :started_at, :status) RETURNING *`;
+  },
+  fetchAllParentRNumber() {
+    let query = `SELECT r_number FROM ${MAIN_SCHEMA_NAME}.account WHERE storage_type = '${STATUS_MESSAGE.separateDb}' AND parent_account_rid IS NULL
+    ORDER BY r_number ASC limit 1`;
+    return query;
+  },
+  fetchSchemaName(r_number: string) {
+    return `${MAIN_SCHEMA_NAME}_${r_number.replace("ACC-", "")}`;
+  },
+  fetchInProgressCaseStatus() { 
+    return `SELECT rid, status_name from ${MAIN_SCHEMA_NAME}.case_status WHERE status_name = 'In Progress'`;
+  },
+  fetchInProgressTaskStatus() {
+    return `SELECT rid, task_status_name from ${MAIN_SCHEMA_NAME}.case_task_status WHERE task_status_name = 'In Progress'`;
+  },
+  fetchTaskTypes() {
+    return `SELECT rid, task_type_name from ${MAIN_SCHEMA_NAME}.task_type WHERE task_type_name ='Milestone' and status = 'Active'`;
+  },
+   fetchAllCases(inProgressStatusRid: string) {
+    return `SELECT cs.rid, cs.status_rid, planned_submission_date,account_rid,case_owner_rid ,email FROM ${MAIN_SCHEMA_NAME}.case_summary  cs
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.user uu ON cs.case_owner_rid = uu.rid
+    WHERE cs.status_rid = '${inProgressStatusRid}'  limit 1`;
+  },
+  fetchAllCaseTask(inProgressStatusRid: string,taskType:string) {
+    return `SELECT task_rid, status_rid, effective_start_datetime,effective_end_datetime,account_rid FROM ${MAIN_SCHEMA_NAME}.task_summary WHERE status_rid = '${inProgressStatusRid}' and task_type_rid = '${taskType}'  limit 1`;
+  },
+  fetchAllCasesOverdue(inProgressStatusRid: string) {
+    return `SELECT rid, status_rid, planned_submission_date FROM ${MAIN_SCHEMA_NAME}.case_summary WHERE status_rid = '${inProgressStatusRid}' AND planned_submission_date IS NOT NULL AND planned_submission_date <= CURRENT_DATE limit 1`;
+  },
+
+  fetchCasesStatutoryOverdue(inProgressStatusRid: string) {
+    return `SELECT rid, status_rid, statutory_submission_date FROM ${MAIN_SCHEMA_NAME}.case_summary WHERE status_rid = '${inProgressStatusRid}' AND statutory_submission_date IS NOT NULL AND statutory_submission_date < CURRENT_DATE limit 1`;
+  },
+  schedulerTaskExecutionInsert(): string {
+      return `INSERT INTO ${MAIN_SCHEMA_NAME}.scheduler_task_executions (task_name, execution_rid, started_at, created_datetime, status) VALUES (:taskName, :executionRid, :startedAt, :createdDatetime, :status) RETURNING *`;
+  },
+  schedulerExecutionSelect(): string {
+      return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.scheduler_executions WHERE rid = :executionRid AND status = :status LIMIT 1`;
+    },
+   schedulerTaskExecutionUpdate(): string {
+      return `UPDATE ${MAIN_SCHEMA_NAME}.scheduler_task_executions SET 
+          status = :status, 
+          error_message = :errorMessage, 
+          completed_at = :completedAt 
+        WHERE execution_rid = :executionRid AND task_name = :taskName`;
+    },
+    schedulerExecutionUpdate(): string {
+      return `UPDATE ${MAIN_SCHEMA_NAME}.scheduler_executions SET status = :status WHERE rid = :executionRid`;
+    },
+    schedulerTaskExecutionSelect(): string {
+        return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.scheduler_task_executions WHERE execution_rid = :executionRid AND task_name = :taskName LIMIT 1`;
+      },
+    checkTableExists(schemaName: string, table: string) {
+  return `SELECT EXISTS(SELECT 1 FROM information_schema.tables WHERE table_schema = '${schemaName}' AND table_name = '${table}')`;
+}
+
 }
