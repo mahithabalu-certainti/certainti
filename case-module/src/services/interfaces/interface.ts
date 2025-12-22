@@ -115,7 +115,8 @@ export interface ICaseService {
   }>;
   createCaseTeam(
     caseTeamRequest: ICreateCaseTeam,
-    userId: string
+    userId: string,
+    accessToken: string
   ): Promise<{
     statusCode: number;
     message: string;
