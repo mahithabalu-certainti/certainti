@@ -12,7 +12,12 @@ const textOptions: { option: string; value: string }[] = [
   { option: 'Not Equals', value: 'not_equals' },
   { option: 'Contains', value: 'contains' },
 ];
-
+const nonReqTextfieldOptions: { option: string; value: string  }[] = [
+  { option: 'Equals', value: 'equals' },
+  { option: 'Not Equals', value: 'not_equals' },
+  { option: 'Contains', value: 'contains' },
+  { option: 'Is Empty', value: 'is_empty' },
+];
 const minYear = 1950;
 const currentYear = new Date().getFullYear();
 const fiscalYears = getFiscalYears(currentYear - minYear + 1);
@@ -89,7 +94,7 @@ export const getTaskFilterFields = (
     name: 'Assigned To',
     value: 'assigned_to_name',
     type: 'text',
-    operatorOption: textOptions,
+    operatorOption: nonReqTextfieldOptions,
     hide: permissionMap ? !permissionMap['assigned_to']?.read : false,
   },
   {

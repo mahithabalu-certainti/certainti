@@ -63,6 +63,16 @@ export const getGeoBasedRuleFilterFields = (
                 !permissionMap?.['config_name']?.edit,
         },
         {
+            label: 'Is Federal?',
+            name: 'is_federal',
+            type: 'enumSelect',
+            options: booleanOptions,
+            operatorOption: enumOperator,
+            hide:
+                !permissionMap?.['is_federal']?.read &&
+                !permissionMap?.['is_federal']?.edit,
+        },
+        {
             label: 'Country',
             name: 'country_rid',
             onChange: true,
@@ -83,16 +93,6 @@ export const getGeoBasedRuleFilterFields = (
             hide:
                 !permissionMap?.['state_rid']?.read &&
                 !permissionMap?.['state_rid']?.edit,
-        },
-        {
-            label: 'Federal',
-            name: 'is_federal',
-            type: 'enumSelect',
-            options: booleanOptions,
-            operatorOption: enumOperator,
-            hide:
-                !permissionMap?.['is_federal']?.read &&
-                !permissionMap?.['is_federal']?.edit,
         },
         {
             label: 'Effective Start Date',
