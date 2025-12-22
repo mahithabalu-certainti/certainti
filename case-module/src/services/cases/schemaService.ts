@@ -25,7 +25,7 @@ import {
   SCHEMANAME_PREFIX,
   STATUS_MESSAGE,
 } from "../../utils/constants";
-import { buildDatetimeFilterCondition, buildNumericFilterCondition, buildStringFilterCondition, decryptClientSecret, errorLog, generateSasUrl, logMessage } from "../../utils/helpers";
+import { buildDatetimeFilterCondition, buildNumericFilterCondition, buildStringFilterCondition, decryptClientSecret, errorLog, generateSasUrl, getFiscalEndYear, logMessage, parseFiscalDate } from "../../utils/helpers";
 import {
   assignProjectType,
   CaseHeadersColumns,
@@ -1560,9 +1560,22 @@ class CaseSchemaService {
               data.account_rid,
             )
           );
+    const [accountFiscalInfo]: any[] = await this.orgDbSequelize.query(
+      rawQueries.fetchAccountDetailsInfo(
+        schemaName,data.account_rid, 
+      ), { type: 'SELECT' }
+    );
+    const fiscalStart = accountFiscalInfo?.fiscal_start_date; // e.g. 'Apr/01'
+    const fiscalEnd = accountFiscalInfo?.fiscal_end_date; // e.g. 'Mar/31'
+    const fiscalYear = data.fiscal_year || new Date().getFullYear();
+    if (!fiscalStart || !fiscalEnd) return "";
+    // Start date
+    const formattedStartDate = parseFiscalDate(fiscalStart, fiscalYear);
+    const endYear = getFiscalEndYear(fiscalStart, fiscalEnd, fiscalYear);
+    const formattedEndDate = parseFiscalDate(fiscalEnd, endYear);
     const [platFormConfig]: any[] = await this.mainDbSequelize.query(
                 rawQueries.fetchPlatformConfig(
-                 accountInfo[0].country_rid,caseInfo.fiscal_year
+                 accountInfo[0].country_rid,formattedStartDate,formattedEndDate
                 ),{type: 'SELECT'}
           );
     let projectTypes :string[] = [];
@@ -4114,6 +4127,7 @@ class CaseSchemaService {
                 else {
                   validEndDate = endDateStorage
                   day = dayjs(validEndDate)
+
                   day = day.add(1, 'day')
                   firstMilestoneDatePicker = true
                   d.effort_in_days = d.effort_in_days
@@ -4284,26 +4298,36 @@ class CaseSchemaService {
     });
     return result;
   }
-  async getCaseSubmissionDate(data: any) {
-    if (!this.mainDbSequelize) {
-      this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+  async getCaseSubmissionDate(data: any,accountNumber: string) {
+    if (!this.mainDbSequelize) this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+    if(!this.orgDbSequelize){
+      this.orgDbSequelize = await this.caseModelService.getSequelize();
     }
-    const [platFormConfig]: any[] = await this.mainDbSequelize.query(
-      rawQueries.fetchPlatformConfig(
-        data.country_rid,data.fiscal_year
+    const schemaName = rawQueries.fetchSchemaName(accountNumber)
+    const [accountFiscalInfo]: any[] = await this.orgDbSequelize.query(
+      rawQueries.fetchAccountDetailsInfo(
+        schemaName,data.account_rid, 
       ), { type: 'SELECT' }
     );
+    const fiscalStart = accountFiscalInfo?.fiscal_start_date; // e.g. 'Apr/01'
+    const fiscalEnd = accountFiscalInfo?.fiscal_end_date; // e.g. 'Mar/31'
+    const fiscalYear = data.fiscal_year || new Date().getFullYear();
+    if (!fiscalStart || !fiscalEnd) return "";
+    // Start date
+    const formattedStartDate = parseFiscalDate(fiscalStart, fiscalYear);
+    const endYear = getFiscalEndYear(fiscalStart, fiscalEnd, fiscalYear);
+    const formattedEndDate = parseFiscalDate(fiscalEnd, endYear);
+
+    // Now send both to fetchPlatformConfig
+    const [platFormConfig]: any[] = await this.mainDbSequelize.query(
+      rawQueries.fetchPlatformConfig(
+        data.country_rid, formattedStartDate, formattedEndDate
+      ), { type: 'SELECT' }
+    );
+
     // Assume platFormConfig.config_json.submission_date is in MM/DD format
     const submissionDate = platFormConfig?.config_json?.submission_date;
     if (!submissionDate) return "";
-    ///  const fiscalYear = data.fiscal_year || new Date().getFullYear();
-    // Parse MM/DD and build YYYY-MM-DD
-    // const [month, day] = submissionDate.split("/");
-    // if (!month || !day) return "";
-    // // Pad month and day to 2 digits
-    // const monthPadded = month.padStart(2, "0");
-    // const dayPadded = day.padStart(2, "0");
-    // const formattedDate = `${fiscalYear}-${monthPadded}-${dayPadded}`;
     return submissionDate;
   }
 

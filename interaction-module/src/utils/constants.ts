@@ -474,14 +474,18 @@ export const rawQueries = {
     return `
     SELECT rid, account_name,r_number,parent_account_rid,country_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${rid}'`;
   },
-  fetchPlatformConfig(rid: string) {
+  fetchPlatformConfig(rid: string,formattedStartDate: string,formattedEndDate:string) {
     return `
-    SELECT config_json,effective_start_date,effective_end_date FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values rv
+    SELECT config_json,,effective_start_date,effective_end_date  FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values rv
     join ${MAIN_SCHEMA_NAME}.rd_credit_config_group rg on  rv.credit_config_group_rid  = rg.rid
     where rg.country_rid = '${rid}'
-    and credit_program_name = 'Platform Configuration'
+    AND credit_program_name = 'Platform Configuration'
+    AND rg.is_federal = true 
+    AND rv.effective_start_date <= '${formattedEndDate}'
+    AND rv.effective_end_date   >= '${formattedStartDate}'
     AND rv.status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active')
-    and rg.is_federal = true`;
+  ORDER BY rv.effective_start_date DESC
+  LIMIT 1`;
   },
   fetchProjectTypeRid(projectType: string | string[]) {
     // Accepts either a string or array of strings
