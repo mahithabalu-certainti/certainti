@@ -1559,7 +1559,10 @@ class ProjectIngestionService {
 
     if (existingRecord) {
       // Aggregate values
-      await existingRecord.update(aggregateValues);
+      await existingRecord.update({
+        ...baseData,
+        aggregateValues
+      });
     } else {
       // Create new record
       await ProjectFiscalRegion.create({
@@ -1792,7 +1795,10 @@ class ProjectIngestionService {
 
     if (existingRecord) {
       // Aggregate values
-      await existingRecord.update(aggregateValues);
+      await existingRecord.update({
+        ...baseData,
+        aggregateValues
+      });
     } else {
       await CaseProjectFiscalRegion.create({
         ...baseData,
