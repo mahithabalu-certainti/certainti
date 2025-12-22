@@ -1,4 +1,4 @@
-import { RuleDetails } from '../../../types';
+import { CreateRulePayload, RuleDetails } from '../../../types';
 
 /// RULE BUILDER TYPES
 
@@ -10,6 +10,11 @@ export enum ConditionTypeEnum {
 }
 
 export type LogicalOperator = 'AND' | 'OR';
+
+export enum ActionTypeEnum {
+  InApp = 'In App',
+  Email = 'Email',
+}
 
 export interface Trigger {
   id: string;
@@ -46,13 +51,13 @@ export interface ConditionField {
   id: string;
   name: string;
   type:
-    | 'text'
-    | 'number'
-    | 'boolean'
-    | 'select'
-    | 'multiselect'
-    | 'date'
-    | 'logical';
+  | 'text'
+  | 'number'
+  | 'boolean'
+  | 'select'
+  | 'multiselect'
+  | 'date'
+  | 'logical';
   operators: string[];
   options?: { value: string; label: string }[];
   placeholder?: string;
@@ -92,7 +97,11 @@ export interface ConditionType {
   condition_type: string; // 'if' or 'then' or other types
   description?: string;
 }
-
+export interface Template {
+  rid: string;
+  channel: string;
+  // Add other template properties as needed
+}
 export interface Rule {
   id: string;
   name: string;
@@ -102,6 +111,8 @@ export interface Rule {
   actions: Action[];
   isActive: boolean;
   conditionType?: ConditionType | null;
+  // Map of actionId -> template value
+  actionTemplates?: Record<string, Template | undefined>;
 }
 
 export const transformRuleToPayload = (rule: Rule) => {
@@ -126,7 +137,30 @@ export const transformRuleToPayload = (rule: Rule) => {
           };
         });
 
-  return {
+  // Extract template RIDs dynamically - only include if they exist
+  let inAppTemplateRid: string | undefined;
+  let emailTemplateRid: string | undefined;
+
+  if (rule.actionTemplates) {
+    // Find In-App template
+    const inAppTemplate = Object.values(rule.actionTemplates).find(
+      template => 
+        template && 
+        (template.channel === 'In App' || template.channel === 'in_app')
+    );
+    inAppTemplateRid = inAppTemplate?.rid;
+
+    // Find Email template
+    const emailTemplate = Object.values(rule.actionTemplates).find(
+      template => 
+        template && 
+        (template.channel === 'Email' || template.channel === 'email')
+    );
+    emailTemplateRid = emailTemplate?.rid;
+  }
+
+  // Build payload with conditional inclusion of template RIDs
+  const payload: CreateRulePayload = {
     rule_name: rule.name,
     description: '',
     trigger_type: 1,
@@ -136,6 +170,18 @@ export const transformRuleToPayload = (rule: Rule) => {
     condition_categories,
     action_rid: rule.actions.map((action) => action.id),
   };
+
+  // Only add in_app_template_rid if it exists
+  if (inAppTemplateRid) {
+    payload.in_app_template_rid = inAppTemplateRid;
+  }
+
+  // Only add email_template_rid if it exists
+  if (emailTemplateRid) {
+    payload.email_template_rid = emailTemplateRid;
+  }
+
+  return payload;
 };
 
 /**
@@ -147,23 +193,23 @@ export const transformApiResponseToRule = (data: RuleDetails): Rule => {
   // Extract trigger information with all RIDs
   const trigger: Trigger | null = data?.event
     ? {
-        id: data.event.event_rid,
-        name: data.event.event_name,
-        description: data.event.description || '',
-        category: data.rule.scope_type_rid, // Use scope_type_rid from rule
-        badge: undefined,
-        requiresConfig: false,
-      }
+      id: data.event.event_rid,
+      name: data.event.event_name,
+      description: data.event.description || '',
+      category: data.rule.scope_type_rid, // Use scope_type_rid from rule
+      badge: undefined,
+      requiresConfig: false,
+    }
     : null;
 
   // Extract condition type with RID
   const conditionType: ConditionType | null = data?.condition
     ? {
-        rid: data.condition.condition_rid,
-        name: data.condition.condition_name,
-        condition_type: data.condition.condition_type,
-        description: data.condition.description || '',
-      }
+      rid: data.condition.condition_rid,
+      name: data.condition.condition_name,
+      condition_type: data.condition.condition_type,
+      description: data.condition.description || '',
+    }
     : null;
 
   // Transform conditions to flat conditions array
@@ -192,13 +238,13 @@ export const transformApiResponseToRule = (data: RuleDetails): Rule => {
   // Transform actions with all RIDs preserved
   const actions: Action[] = data?.actions
     ? data.actions.map((action) => ({
-        id: action.action_rid, // Action RID preserved
-        name: action.action_name,
-        description: action.description || '',
-        category: action?.action_type_rid || '',
-        icon: undefined,
-        badge: undefined,
-      }))
+      id: action.action_rid, // Action RID preserved
+      name: action.action_name,
+      description: action.description || '',
+      category: action?.action_type_rid || '',
+      icon: undefined,
+      badge: undefined,
+    }))
     : [];
 
   // Construct the Rule object with all RIDs preserved

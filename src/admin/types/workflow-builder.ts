@@ -186,6 +186,8 @@ export interface CreateRulePayload {
   condition_categories: RuleConditionCategoryPayload[];
   action_rid: string[];
   created_by?: string;
+  email_template_rid?: string;
+  in_app_template_rid?: string;
 }
 
 export interface UpdateRulePayload extends CreateRulePayload {

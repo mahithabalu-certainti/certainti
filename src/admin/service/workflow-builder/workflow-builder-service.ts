@@ -505,3 +505,34 @@ export const useUpdateRuleStatus = () => {
   });
 };
 
+// ---------- action template ----------
+export const getActionsTemplateUrl = (ActionName: string): string => {
+  return `api/workflow/notificationTemplate/${ActionName}`;
+};
+
+export const getActionsTemplate = async (ActionName: string): Promise<CommonApiResponse> => {
+  try {
+    const { data } = await ruleBuilderServiceApi.get<CommonApiResponse>(
+      getActionsTemplateUrl(ActionName)
+    );
+    return data;
+  } catch (error) {
+    console.error('Error fetching scope actions:', error);
+    throw error;
+  }
+};
+
+export const useGetActionsTemplate = (ActionName: string): UseQueryResult<
+  CommonApiResponse,
+  Error
+> => {
+  return useQuery({
+    queryKey: ['action-template', ActionName],
+    queryFn: () => getActionsTemplate(ActionName),
+    retry: 0,
+    gcTime: 0,
+    enabled: true,
+  });
+};
+
+
