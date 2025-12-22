@@ -2,6 +2,8 @@ import { Op, Sequelize, Transaction } from "sequelize";
 import {
   MAIN_SCHEMA_NAME,
   rawQueries,
+  ruleNames,
+  ruleTemplateNames,
   SCHEMANAME_PREFIX,
 } from "../../utils/constants";
 import { CaseModelService } from "../caseModelsService";
@@ -9,6 +11,7 @@ import { errorLog, logMessage } from "../../utils/helpers";
 import { ICreateChecklist, ICreateChecklistItem } from "../../utils/types";
 import { ChecklistSchemaService } from "./caseChecklist/checklistSchemaService";
 import { initMainDbSequelize } from "../../config/mainDataSource";
+import axios from "axios";
 
 export class HelperMethods {
   private orgDbSequelize: Sequelize | null = null;
@@ -966,4 +969,53 @@ export class HelperMethods {
 
     return results.map((row: any) => row.project_fiscal_rid);
   }
+  async triggerDynamicRuleEngine(eventType: string, payload: any, extra: Record<string, any> = {}, accessToken: string) {
+    let templateName = '';
+    let event_name = '';
+    switch (eventType) {
+      case 'create':
+        templateName = ruleTemplateNames.taskCreated;
+        event_name = ruleNames.taskCreated;
+        break;
+      case 'status_change':
+        templateName = ruleTemplateNames.statusUpdated;
+        event_name =  ruleNames.taskCreated;
+        break;
+      case 'assignee_change':
+        templateName = ruleTemplateNames.assigneeChanged;
+        event_name =  ruleNames.taskCreated;
+        break;
+      default:
+        templateName = eventType;
+        event_name = eventType;
+    }
+    const ruleEnginePayload = {
+      ...payload,
+      ...extra,
+      templateName,
+      event_name
+    };
+    await this.triggerRuleEngine(ruleEnginePayload, accessToken);
+  }
+
+  async triggerRuleEngine(data: any, accessToken: string): Promise<void> {
+      try {
+        console.log("Triggering rule engine with data:", data); 
+        const RULE_ENGINE_BASE_URL = process.env.RULEBUILDER_BASE_URL;
+        const response = await axios.post(
+                `${RULE_ENGINE_BASE_URL}/workflow/execute`,
+                {
+                  ...data
+                },
+                {
+                  headers: {
+                    "x-user-id": data.userId,
+                    Authorization: `Bearer ${accessToken}`,
+                  },
+                }
+              );
+      } catch (err) {
+        logMessage(`Error triggering rule engine: ${err}`);
+      }
+    }
 }
