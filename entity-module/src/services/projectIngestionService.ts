@@ -934,7 +934,8 @@ class ProjectIngestionService {
 
   async addAccountFiscalRegion(
     accountNumber: string,
-    projectData: ICreateProject
+    projectData: ICreateProject,
+    regionRid? : string
   ) {
     const { AccountFiscalRegion } = await this.getModels(accountNumber);
 
@@ -948,7 +949,24 @@ class ProjectIngestionService {
         "Missing required account_rid or fiscal_year in project data."
       );
     }
+    let query;
+    if(regionRid === null && projectData.region_rid == '') {
+      query = {
+        [Op.is] : null
+      }
+    } else {
+      query = regionRid
+    }
 
+    if(projectData.region_rid === '') {
+      await AccountFiscalRegion.destroy({
+        where : {
+          account_rid,
+          fiscal_year,
+          region_rid: query,
+        }
+      })
+    }
     const existingFiscal = await AccountFiscalRegion.findOne({
       where: {
         account_rid,
@@ -969,11 +987,11 @@ class ProjectIngestionService {
         });
       }
     } else {
-      await this.updateAccountFiscalRegionAggregatesFromFiscal(
-        accountNumber,
-        projectData
-      );
-    }
+        await this.updateAccountFiscalRegionAggregatesFromFiscal(
+          accountNumber,
+          projectData
+        );
+      }
   }
 
   async updateAccountFiscalAggregatesFromFiscal(

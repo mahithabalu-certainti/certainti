@@ -566,6 +566,8 @@ export class ProjectService {
 
 
     const orgDb = await initOrgSequelize()
+    let existingRegionId : string = ``
+    existingRegionId = existingFiscalData?.region_rid!
 
     let findProjectFiscal: any = await orgDb.query(rawQueries.findProjectFiscal(schemaName, projectData.project_id, accountData.rid, projectData.project_fiscal_id))
     if (findProjectFiscal[0][0].is_qualified) {
@@ -624,7 +626,8 @@ export class ProjectService {
     await this.projectIngestion.addAccountFiscal(accountNumber, projectData);
     await this.projectIngestion.addAccountFiscalRegion(
       accountNumber,
-      projectData
+      projectData,
+      existingRegionId
     );
 
     await this.projectIngestion.updateAccountAggregatesFromAccountFiscal(
