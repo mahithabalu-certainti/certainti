@@ -1857,7 +1857,7 @@ export class ProjectResourceSchemaService {
     statusMap: any,
     transaction: Transaction
   ) {
-    const { ProjectFiscalRegion, ProjectFiscal, ProjectResource } =
+    const { ProjectFiscalRegion, ProjectFiscal, ProjectResource, CaseProjectFiscalRegion } =
       await this.getModels(accountNumber);
 
     const projectData = await ProjectFiscal.findOne({
@@ -1880,6 +1880,14 @@ export class ProjectResourceSchemaService {
 
     if (!projectResourceData.region_rid) {
       await ProjectFiscalRegion.destroy({
+        where: {
+          account_rid: projectResourceData.account_rid,
+          fiscal_year: fiscalYear,
+          project_fiscal_rid: projectResourceData.project_fiscal_rid,
+        },
+        transaction,
+      });
+      await CaseProjectFiscalRegion.destroy({
         where: {
           account_rid: projectResourceData.account_rid,
           fiscal_year: fiscalYear,
@@ -2070,7 +2078,7 @@ export class ProjectResourceSchemaService {
     fiscalYear: number,
     transaction: Transaction
   ) {
-    const { ProjectResource, ProjectFiscalRegion } = await this.getModels(
+    const { ProjectResource, ProjectFiscalRegion, CaseProjectFiscalRegion } = await this.getModels(
       accountNumber
     );
 
@@ -2118,6 +2126,13 @@ export class ProjectResourceSchemaService {
 
     if (orphanedRids.length > 0) {
       await ProjectFiscalRegion.destroy({
+        where: {
+          rid: { [Op.in]: orphanedRids },
+          default_metric_type: "project_resource",
+        },
+        transaction,
+      });
+      await CaseProjectFiscalRegion.destroy({
         where: {
           rid: { [Op.in]: orphanedRids },
           default_metric_type: "project_resource",
@@ -4118,7 +4133,7 @@ export class ProjectResourceSchemaService {
     statusMap: any,
     transaction: Transaction
   ) {
-    const { ProjectResource, ProjectFiscal } = await this.getModels(
+    const { ProjectResource, ProjectFiscal, CaseProject } = await this.getModels(
       accountNumber
     );
 
@@ -4279,6 +4294,38 @@ export class ProjectResourceSchemaService {
           account_rid: accountId,
           fiscal_year: fiscalYear,
           rid: projectId,
+          // [Op.and]: [
+          //   Sequelize.where(
+          //     Sequelize.fn("LOWER", Sequelize.col("project_code")),
+          //     Sequelize.fn("LOWER", projectCode)
+          //   ),
+          // ],
+        },
+        transaction,
+      }
+    );
+
+     await CaseProject.update(
+      {
+        total_cost_fte_from_prj_res: total_cost_fte,
+        total_cost_subcon_from_prj_res: total_cost_subcon,
+        total_cost_nonlabor_from_prj_res: total_cost_nonlabor,
+
+        total_effort_fte_from_prj_res: total_effort_fte,
+        total_effort_subcon_from_prj_res: total_effort_subcon,
+
+        total_cost_from_prj_res: total_cost,
+        total_effort_from_prj_res: total_effort,
+
+        total_fte_from_prj_res: total_fte_count,
+        total_subcon_from_prj_res: total_subcon_count,
+        total_nonlabor_from_prj_res: total_nonlabor_count,
+      },
+      {
+        where: {
+          account_rid: accountId,
+          fiscal_year: fiscalYear,
+          project_fiscal_rid: projectId,
           // [Op.and]: [
           //   Sequelize.where(
           //     Sequelize.fn("LOWER", Sequelize.col("project_code")),
@@ -4738,7 +4785,7 @@ export class ProjectResourceSchemaService {
     statusMap: any,
     transaction: Transaction
   ) {
-    const { ProjectResource, ProjectFiscalRegion } = await this.getModels(
+    const { ProjectResource, ProjectFiscalRegion, CaseProjectFiscalRegion } = await this.getModels(
       accountNumber
     );
 
@@ -4753,7 +4800,11 @@ export class ProjectResourceSchemaService {
     // 2. Aggregate by region + resource_type_rid
     const aggregates: any[] = await ProjectResource.findAll({
       attributes: [
-        "region_rid",
+        "ProjectResource.region_rid",
+        [
+          Sequelize.col("project_resource_resource.resource_type_rid"),
+          "resource_type_rid",
+        ],
         [
           Sequelize.fn("SUM", Sequelize.col("net_total_cost_pro_res")),
           "total_cost",
@@ -4762,7 +4813,15 @@ export class ProjectResourceSchemaService {
           Sequelize.fn("SUM", Sequelize.col("total_hours_pro_res")),
           "total_effort",
         ],
-        [Sequelize.fn("COUNT", Sequelize.col("rid")), "count"],
+        [Sequelize.fn("COUNT", Sequelize.col("ProjectResource.rid")), "count"],
+      ],
+      include: [
+        {
+          model: Resources,
+          as: "project_resource_resource",
+          attributes: ["resource_type_rid"],
+          required: true,
+        },
       ],
       where: {
         account_rid: accountId,
@@ -4774,7 +4833,7 @@ export class ProjectResourceSchemaService {
           ].filter(Boolean) as string[],
         },
       },
-      group: ["region_rid"],
+      group: ["ProjectResource.region_rid", "project_resource_resource.resource_type_rid"],
       raw: true,
       transaction,
     });
@@ -4838,6 +4897,38 @@ export class ProjectResourceSchemaService {
 
       // 4a. Always update base totals
       await ProjectFiscalRegion.update(
+        {
+          total_cost_fte_from_prj_res: total_cost_fte,
+          total_cost_subcon_from_prj_res: total_cost_subcon,
+          total_cost_nonlabor_from_prj_res: total_cost_nonlabor,
+
+          total_effort_fte_from_prj_res: total_effort_fte,
+          total_effort_subcon_from_prj_res: total_effort_subcon,
+
+          total_cost_from_prj_res: total_cost,
+          total_effort_from_prj_res: total_effort,
+
+          total_fte_from_prj_res: total_fte_count,
+          total_subcon_from_prj_res: total_subcon_count,
+          total_nonlabor_from_prj_res: total_nonlabor_count,
+        },
+        {
+          where: {
+            account_rid: accountId,
+            fiscal_year: fiscalYear,
+            project_code: projectCode,
+            region_rid: region,
+            [Op.and]: [
+              Sequelize.where(
+                Sequelize.fn("LOWER", Sequelize.col("project_code")),
+                Sequelize.fn("LOWER", projectCode)
+              ),
+            ],
+          },
+          transaction,
+        }
+      );
+      await CaseProjectFiscalRegion.update(
         {
           total_cost_fte_from_prj_res: total_cost_fte,
           total_cost_subcon_from_prj_res: total_cost_subcon,

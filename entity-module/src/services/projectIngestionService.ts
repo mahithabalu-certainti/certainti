@@ -1559,7 +1559,10 @@ class ProjectIngestionService {
 
     if (existingRecord) {
       // Aggregate values
-      await existingRecord.update(aggregateValues);
+      await existingRecord.update({
+        ...baseData,
+        aggregateValues
+      });
     } else {
       // Create new record
       await ProjectFiscalRegion.create({
@@ -1792,7 +1795,37 @@ class ProjectIngestionService {
 
     if (existingRecord) {
       // Aggregate values
-      await existingRecord.update(aggregateValues);
+      await existingRecord.update({
+        ...baseData,
+        aggregateValues
+      });
+    } else {
+      await CaseProjectFiscalRegion.create({
+        ...baseData,
+        account_rid: projectData.account_id,
+        project_code: projectData.project_code,
+        fiscal_year: projectData.fiscal_year,
+        default_metric_type: "project",
+        effective_metric_type: null,
+        created_by: projectData.created_by,
+        project_rid: projectData.project_id,
+        project_fiscal_rid: projectData.project_fiscal_id,
+        max_ai_interaction: DEFAULT_PROJECT_DETAILS.maxAiInteraction,
+        auto_send_ai_interaction: false,
+        total_cost_prj : baseData.total_cost_prj,
+        effective_cost: baseData.total_cost_prj,
+        effective_effort: baseData.total_effort_prj,
+        effective_total_fte: baseData.total_fte_prj,
+        effective_total_subcon: baseData.total_subcon_prj,
+        effective_fte_effort: baseData.total_effort_fte_prj,
+        effective_subcon_effort: baseData.total_effort_subcon_prj,
+        effective_fte_cost: baseData.total_cost_fte_prj,
+        effective_subcon_cost: baseData.total_cost_subcon_prj,
+        effective_nonlabor_cost: baseData.total_cost_nonlabor_prj,
+        case_rid : caseProjectData.case_rid,
+        case_project_rid : caseProjectData.rid,
+        project_fiscal_region_rid : ''
+      });
     }
 
     if (
