@@ -300,7 +300,7 @@ class SchemaService {
                     replacements: { userId: projectData.created_by },
                     type: "SELECT",
                 });
-                projectData.created_by_name =
+                projectData.created_name =
                     user?.first_name + " " + user?.last_name || "";
             }
             if (projectData.modified_by) {
@@ -308,7 +308,7 @@ class SchemaService {
                     replacements: { userId: projectData.modified_by },
                     type: "SELECT",
                 });
-                projectData.modified_by_name =
+                projectData.modified_name =
                     user?.first_name + " " + user?.last_name || "";
             }
 
