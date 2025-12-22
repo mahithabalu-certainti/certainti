@@ -52,6 +52,17 @@ export interface IRulemasterService {
         data?: { rules: any };
     }>;
 
+
+    updateRuleMasterStatus(
+        ruleRequest: any,
+        userId: string
+    ): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: any;
+    }>;
+
     deleteRuleMaster(data: any, userId: string): Promise<any>;
 }
 
@@ -143,19 +154,13 @@ export interface IScopeService {
         data?: { scope: any };
     }>;
 
-    listScopes(data: any,
-        filters: Record<string, any>,
-        userId: string,
-        apiType: string
-    ): Promise<{
-        statusCode: number;
-        message: string;
-        errorMessage?: string;
-        data?: { scopes: any; count: number };
-    }>;
+    getScopeMapsByRuleRid(
+        rule_rid: string,
+        userId: string
+    ): Promise<any[]>;
 
     updateScope(
-        scopeRequest: ICreateScope,
+        scopeRequest: any,
         userId: string
     ): Promise<{
         statusCode: number;
@@ -230,6 +235,16 @@ export interface ITriggerservice {
 export interface IRuleMapService {
     createRuleMap(
         rulemapRequest: ICreateRuleMap,
+        userId: string
+    ): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: { ruleMap: any };
+    }>;
+
+    updateRuleMap(
+        rulemapRequest: any,
         userId: string
     ): Promise<{
         statusCode: number;
@@ -342,6 +357,16 @@ export interface IWorkFlowService {
         data?: { ruleMap: any };
     }>;
 
+    updateRuleMapWithScope(
+        rulemapRequest: any,
+        userId: string
+    ): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: { ruleMap: any };
+    }>;
+
     createRule(
         ruleRequest: any,
         userId: string
@@ -372,6 +397,25 @@ export interface IWorkFlowService {
         data?: { rule: any };
     }>;
 
+    updateRuleStatus(
+        ruleRequest: any,
+        userId: string
+    ): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: any;
+    }>;
+
+    ruleMapDetailByRuleRid(
+        ruleRequest: any,
+        userId: string
+    ): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: { rule: any };
+    }>;
 
     execute(
         request: any,

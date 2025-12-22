@@ -213,11 +213,7 @@ export class RulemasterService {
             finalData = applyFilters(finalData, createdByConditions, createdByFilter, "created_user_name");
         if (scopeTypeConditions != null && scopeTypeConditions != undefined)
             finalData = applyFilters(finalData, scopeTypeConditions, scopeTypeFilter, "scope_type_name");
-                    console.log("coming here one" );
-                    console.log(mainTableFilters[sortBy]);
-
         if (mainTableFilters[sortBy] != undefined && data.sortOrder.toLowerCase() == 'asc') {
-            console.log("coming here");
             finalData = finalData.sort((a: any, b: any) => {
                 if (!a?.[sortBy]) return 1;
                 if (!b?.[sortBy]) return -1;
@@ -308,6 +304,7 @@ export class RulemasterService {
             schedule_offset_type: ruleRequest.schedule_offset_type ?? null,
             schedule_offset_value: ruleRequest.schedule_offset_value ?? null,
             modified_by: ruleRequest.modified_by,
+            modified_datetime: new Date(),
         });
 
         return {
@@ -344,6 +341,29 @@ export class RulemasterService {
         };
     }
 
+
+    async updateRuleMasterStatus(
+        req: any,
+        userId: string
+    ) {
+        const mainDb = await this.getMainDb();
+        RuleMaster.initialize(mainDb);
+        const srule = await RuleMaster.findOne({ where: { rid: req.rule_rid } });
+        if (!srule) {
+            return {
+                statusCode: HttpStatus.NOT_FOUND,
+                message: "",
+            };
+        }
+        await srule.update({
+            is_active: req.is_active ?? true,
+        });
+        return {
+            statusCode: HttpStatus.SUCCESS,
+            message: "",
+            data: ""
+        };
+    }
 
     // /** DELETE RuleMaster by RID */
     async deleteRuleMaster(data: any, userId: string) {
