@@ -372,16 +372,18 @@ export const rawQueries = {
     return `SELECT rid, status_name from ${MAIN_SCHEMA_NAME}.case_status WHERE status_name = 'In Progress'`;
   },
   fetchInProgressTaskStatus() {
-    return `SELECT rid, status_name from ${MAIN_SCHEMA_NAME}.task_status WHERE status_name = 'In Progress'`;
+    return `SELECT rid, task_status_name from ${MAIN_SCHEMA_NAME}.case_task_status WHERE task_status_name = 'In Progress'`;
   },
   fetchTaskTypes() {
-    return `SELECT rid, name from ${MAIN_SCHEMA_NAME}.task_type WHERE task_type_name ='Milestone' and status_rid = (select status_rid from ${MAIN_SCHEMA_NAME}.status where status_name = 'Active')`;
+    return `SELECT rid, task_type_name from ${MAIN_SCHEMA_NAME}.task_type WHERE task_type_name ='Milestone' and status = 'Active'`;
   },
    fetchAllCases(inProgressStatusRid: string) {
-    return `SELECT rid, status_rid, planned_submission_date FROM ${MAIN_SCHEMA_NAME}.case_summary WHERE status_rid = '${inProgressStatusRid}'  limit 1`;
+    return `SELECT cs.rid, cs.status_rid, planned_submission_date,account_rid,case_owner_rid ,email FROM ${MAIN_SCHEMA_NAME}.case_summary  cs
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.user uu ON cs.case_owner_rid = uu.rid
+    WHERE cs.status_rid = '${inProgressStatusRid}'  limit 1`;
   },
   fetchAllCaseTask(inProgressStatusRid: string,taskType:string) {
-    return `SELECT task_rid, status_rid, effective_start_datetime,effective_end_datetime FROM ${MAIN_SCHEMA_NAME}.task_summary WHERE status_rid = '${inProgressStatusRid}' and task_type_rid = '${taskType}'  limit 1`;
+    return `SELECT task_rid, status_rid, effective_start_datetime,effective_end_datetime,account_rid FROM ${MAIN_SCHEMA_NAME}.task_summary WHERE status_rid = '${inProgressStatusRid}' and task_type_rid = '${taskType}'  limit 1`;
   },
   fetchAllCasesOverdue(inProgressStatusRid: string) {
     return `SELECT rid, status_rid, planned_submission_date FROM ${MAIN_SCHEMA_NAME}.case_summary WHERE status_rid = '${inProgressStatusRid}' AND planned_submission_date IS NOT NULL AND planned_submission_date <= CURRENT_DATE limit 1`;

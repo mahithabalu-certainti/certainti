@@ -144,6 +144,8 @@ export class SchedulerService {
           event_name: eventName,
           templateName: templateName,
           userId: data.created_by,
+          targetUserID: data.case_owner_rid,
+          targetEmail: data.email,
           accountRid: data.account_rid,
           plannedSubmissionDate: data.planned_submission_date,
           statutorySubmissionDate: data.statutory_submission_date,
