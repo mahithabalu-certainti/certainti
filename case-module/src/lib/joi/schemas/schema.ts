@@ -1110,6 +1110,7 @@ const projectTaskByIdSchema = Joi.object({
 })
 
 const caseSubmissionDateSchema = Joi.object({
+  account_rid: Joi.string().required(),
   country_rid: Joi.string().required(),
   fiscal_year: Joi.number().integer().min(1900).max(2100).default(2025).optional(),
 });
