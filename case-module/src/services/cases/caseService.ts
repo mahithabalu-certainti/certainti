@@ -2032,8 +2032,15 @@ export class CaseService {
     data?: { caseSubmissionDate: string };
   }> {
     try {
-      const caseSubmissionDate = await this.caseSchemaService.getCaseSubmissionDate(data);
+      const { accountNumber, parentAccountId } =
+        await this.caseSchemaService.fetchValidAccountNumberById(
+          data.account_rid
+        );
 
+      if (!accountNumber) {
+        throw new Error("Invalid account ID");
+      }
+      const caseSubmissionDate = await this.caseSchemaService.getCaseSubmissionDate(data,accountNumber);
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
@@ -2042,6 +2049,7 @@ export class CaseService {
         },
       };
     } catch (err) {
+      console.log(err)
       logMessage(`Error fetching case submission date, ${err}`);
       throw this.throwServiceError(err as Error);
     }
