@@ -56,6 +56,8 @@ export const STATUS_MESSAGE = {
   scheduleDeleteFailed: "Schedule deletion failed",
   auditCreated: "Audit created successfullt",
   triggerLogCreated: "Trigger Log created successfullt",
+  notificationTemplatesListedSuccess: "Notification templates listed successfully",
+  dataNotAvailable: "Data not available",
 }
 
 export const ALPHANUMERIC_CONDITIONS: Record<string, string> = {
@@ -411,6 +413,9 @@ export const rawQueries = {
     schedulerTaskExecutionSelect(): string {
         return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.scheduler_task_executions WHERE execution_rid = :executionRid AND task_name = :taskName LIMIT 1`;
       },
+    getNotificationTemplates(channel: string) {
+      return `SELECT rid, template_code, channel, message_template,template_name FROM ${MAIN_SCHEMA_NAME}.notification_template WHERE channel = '${channel}' AND status_rid = (SELECT status_rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_name = 'Active')`;
+    },
     checkTableExists(schemaName: string, table: string) {
   return `SELECT EXISTS(SELECT 1 FROM information_schema.tables WHERE table_schema = '${schemaName}' AND table_name = '${table}')`;
 }
