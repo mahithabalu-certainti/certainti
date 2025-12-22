@@ -22,6 +22,8 @@ import {
   MAIN_SCHEMA_NAME,
   mainTableFilters,
   rawQueries,
+  ruleNames,
+  ruleTemplateNames,
   SCHEMANAME_PREFIX,
   STATUS_MESSAGE,
 } from "../../utils/constants";
@@ -3450,7 +3452,8 @@ class CaseSchemaService {
   async assignCaseTeamToTasks(
     accountNumber: string,
     caseReq: any,
-    userId: string
+    userId: string,
+    accessToken: string
   ) {
     try {
       const { CaseTask, CaseTeam } =
@@ -3468,6 +3471,7 @@ class CaseSchemaService {
       // Fetch user names from mainDbSequelize using rawQueries
       const userRids = teamMembers.map((tm: any) => tm.user_rid);
       let userNamesMap: Map<string, string> = new Map();
+      let userEmailsMap: Map<string, string> = new Map();
       if (userRids.length > 0 && this.mainDbSequelize) {
         const users = await this.mainDbSequelize.query(
           rawQueries.fetchUser(userRids)
@@ -3475,6 +3479,7 @@ class CaseSchemaService {
         if (users && Array.isArray(users) && users[0] && Array.isArray(users[0])) {
           users[0].forEach((user: any) => {
             userNamesMap.set(user.rid, `${user.first_name} ${user.last_name}`);
+            userEmailsMap.set(user.rid, user.email);
           });
         }
       }
@@ -3482,10 +3487,11 @@ class CaseSchemaService {
       // Enrich teamMembers with user_name
       const enrichedTeamMembers = teamMembers.map((tm: any) => ({
         ...tm,
-        user_name: userNamesMap.get(tm.user_rid) || null
+        user_name: userNamesMap.get(tm.user_rid) || null,
+        email: userEmailsMap.get(tm.user_rid) || null,
       }));
       for (const member of teamMembers) {
-        await CaseTask.update(
+       const response = await CaseTask.update(
           {
             assigned_to: enrichedTeamMembers.find(etm => etm.user_rid === member.user_rid)?.user_rid || null,
           },
@@ -3497,6 +3503,23 @@ class CaseSchemaService {
             },
           }
         );
+          let ruleEnginePayload = {
+                entityName: "case",
+                eventName: ruleNames.taskCreated,
+                templateName:ruleTemplateNames.taskCreated,
+                userId: userId,
+                accountRid: caseReq.account_rid,
+                targetUserID: enrichedTeamMembers.find(etm => etm.user_rid === member.user_rid)?.user_rid || null,
+                targetEmail: enrichedTeamMembers.find(etm => etm.user_rid === member.user_rid)?.email || null,
+                entityId:  caseReq.case_rid
+              };
+        if(response[0] > 0){
+
+          this.triggerRuleEngine(ruleEnginePayload,accessToken); 
+          
+        }
+
+
       }
 
     } catch (error) {
@@ -4334,7 +4357,7 @@ class CaseSchemaService {
   async triggerRuleEngine(data: any, accessToken: string): Promise<void> {
       try {
         console.log("Triggering rule engine with data:", data); 
-        const RULE_ENGINE_BASE_URL = process.env.RULEBUILDER_BASE_URL;
+        const RULE_ENGINE_BASE_URL = "http:/localhost:8513/api"; // Replace with actual URL
         const response = await axios.post(
                 `${RULE_ENGINE_BASE_URL}/workflow/execute`,
                 {
@@ -4343,7 +4366,7 @@ class CaseSchemaService {
                 {
                   headers: {
                     "x-user-id": data.userId,
-                    Authorization: `Bearer ${accessToken}`,
+                 //   Authorization: `Bearer ${accessToken}`,
                   },
                 }
               );

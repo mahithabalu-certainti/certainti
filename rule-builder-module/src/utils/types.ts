@@ -10,7 +10,9 @@ export interface ICreateRule {
     schedule_offset_type: string | null;
     schedule_offset_value: string | null;
     created_by: string,
-    modified_by: string 
+    modified_by: string,
+    in_app_template_rid?: string,
+    email_template_rid?: string
 }
 
 export interface IUpdateRule {
@@ -24,7 +26,9 @@ export interface IUpdateRule {
     condition_rid: string;
     schedule_offset_type: string | null;
     schedule_offset_value: string | null;
-    modified_by: string
+    modified_by: string,
+    in_app_template_rid?: string,
+    email_template_rid?: string
 }
 
 export interface ICreateCondition {
