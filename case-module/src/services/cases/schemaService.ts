@@ -4357,7 +4357,7 @@ class CaseSchemaService {
   async triggerRuleEngine(data: any, accessToken: string): Promise<void> {
       try {
         console.log("Triggering rule engine with data:", data); 
-        const RULE_ENGINE_BASE_URL = "http:/localhost:8513/api"; // Replace with actual URL
+        const RULE_ENGINE_BASE_URL = process.env.RULEBUILDER_BASE_URL;
         const response = await axios.post(
                 `${RULE_ENGINE_BASE_URL}/workflow/execute`,
                 {
