@@ -986,6 +986,8 @@ export const fetchCaseTemplateData = (schemaName : string, caseRid : string, acc
   ta.case_rid = t.case_rid
   AND
   ta.account_rid = t.account_rid
+  AND
+  ta.is_file_deleted = FALSE
   ),
   'checklists_count', 
   (
@@ -1041,6 +1043,7 @@ c.rid = '${caseRid}'
 AND
 c.account_rid = '${accountRid}'
   `
+  console.log(query)
   return query;
 }
 
