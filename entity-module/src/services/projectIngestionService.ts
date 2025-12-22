@@ -761,6 +761,13 @@ class ProjectIngestionService {
             projectId,
             KeyContact
           );
+          this.keyContacts.deleteCaseKeyContactDetails(
+            contact.rid,
+            projectId,
+            CaseKeyContactDetails,
+            Case,
+            projectCaseMapping
+          );
         }
       } else if (contact.action_type === "add") {
         if (
