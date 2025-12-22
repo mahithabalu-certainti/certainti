@@ -163,7 +163,7 @@ export class ActionService {
         const UpdateResponse = await RuleAction.update(
             {
                 ...actionRequest,
-                modified_by: "userId",
+                modified_by: userId,
                 modified_datetime: new Date(),
             },
             {
@@ -189,8 +189,8 @@ export class ActionService {
             await RuleAction.destroy({ where: { rule_rid: rule_rid, rid: action_rid } });
             await this.ruleHistoryService.createHistory({
                 rule_rid: rule_rid,
-                attribute_name: action_rid,
-                old_value: null,
+                attribute_name: "action_rid",
+                old_value: action_rid,
                 new_value: null,
                 created_by: userId,
                 action: 'actionDelete'

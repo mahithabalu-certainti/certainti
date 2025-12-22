@@ -54,76 +54,6 @@ async function createRuleScope(req: Request, res: Response): Promise<void> {
   };
 }
 
-async function listScopes(req: Request, res: Response): Promise<void> {
-  const methodName = "scope details";
-  try {
-    const userId = req.headers["x-user-id"] as string;
-    const value = await validateRequest(req, listScopeSchema, res, "GET");
-    if (!value) {
-      return;
-    }
-    let parsedFilters: Record<string, any> = {};
-    try {
-      if (value.filters) {
-        parsedFilters = JSON.parse(value.filters);
-      }
-    } catch (error) {
-      errorLog(
-        methodName,
-        "Invalid filters format. Must be a valid JSON object."
-      );
-    }
-    // if (!userId) {
-    //   return;
-    // }
-    const result = await ScopeService.listScopes(
-      value,
-      parsedFilters,
-      userId,
-      "list");
-    if (result.statusCode == HttpStatus.SUCCESS) {
-      successLog(methodName);
-      handleSuccessResponse(res, result);
-      return;
-    } else {
-      errorLog(methodName, "No data found");
-      handleErrorResponse(
-        res,
-        HttpStatus.BAD_REQUEST,
-        HttpStatus.BAD_REQUEST_MESSAGE,
-        result.errorMessage
-      );
-      return;
-    }
-  } catch (err) {
-    const error = err as Error;
-    errorLog(methodName, error.message);
-    handleErrorResponse(
-      res,
-      HttpStatus.FAILED,
-      HttpStatus.FAILED_MESSAGE,
-      error.message
-    );
-  }
-};
-
-// export const getScopesByRule = async (req: Request, res: Response) => {
-//   const methodName = "scope By rule";
-//   try {
-//     const scopes = await Scopeservice.getRuleScopeByRule(String(req.params.ruleRid));
-//     res.json(scopes);
-//   } catch (err) {
-//     const error = err as Error;
-//     errorLog(methodName, error.message);
-//     handleErrorResponse(
-//       res,
-//       HttpStatus.FAILED,
-//       HttpStatus.FAILED_MESSAGE,
-//       error.message
-//     );
-//   }
-// };
-
 async function updateScope(req: Request, res: Response): Promise<void> {
   const methodName = "update scope";
   try {
@@ -219,7 +149,6 @@ async function deleteScope(req: Request, res: Response) {
 
 export default {
   createRuleScope,
-  listScopes,
   updateScope,
   deleteScope
 };

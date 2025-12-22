@@ -7,6 +7,8 @@ import projectTaskController from "./projectTaskController";
 import activitiesController from "./activitiesController";
 import projectController from "./projectController"
 import childCaseController from "./childCaseController";
+import caseTaskController from "./caseTaskController";
+import caseChecklistController from "./caseChecklistController";
 
 const controller = {
   caseController,
@@ -17,7 +19,9 @@ const controller = {
   projectTaskController,
   activitiesController,
   projectController,
-  childCaseController
+  childCaseController,
+  caseTaskController,
+  caseChecklistController
 };
 
 export default controller;
