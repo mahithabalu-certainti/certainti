@@ -1031,6 +1031,26 @@ export class WorkFlowService {
     );
 }
 
+ async getNotificationTemplates(channel:string): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: { templates: any; };
+    }> {
+    const mainDb = await this.getMainDb();
+    const result = await mainDb.query(
+      rawQueries.getNotificationTemplates(channel),
+      { type: QueryTypes.SELECT }
+    );
+    return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,    
+        data: {
+            templates: result
+        }
+    };
+  }
+
 async triggerNotification(taskContext:any,channel:string): Promise<void> {
     // Implementation for changing assignee
     
