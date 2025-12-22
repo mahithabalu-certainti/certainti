@@ -4118,7 +4118,7 @@ export class ProjectResourceSchemaService {
     statusMap: any,
     transaction: Transaction
   ) {
-    const { ProjectResource, ProjectFiscal } = await this.getModels(
+    const { ProjectResource, ProjectFiscal, CaseProject } = await this.getModels(
       accountNumber
     );
 
@@ -4279,6 +4279,38 @@ export class ProjectResourceSchemaService {
           account_rid: accountId,
           fiscal_year: fiscalYear,
           rid: projectId,
+          // [Op.and]: [
+          //   Sequelize.where(
+          //     Sequelize.fn("LOWER", Sequelize.col("project_code")),
+          //     Sequelize.fn("LOWER", projectCode)
+          //   ),
+          // ],
+        },
+        transaction,
+      }
+    );
+
+     await CaseProject.update(
+      {
+        total_cost_fte_from_prj_res: total_cost_fte,
+        total_cost_subcon_from_prj_res: total_cost_subcon,
+        total_cost_nonlabor_from_prj_res: total_cost_nonlabor,
+
+        total_effort_fte_from_prj_res: total_effort_fte,
+        total_effort_subcon_from_prj_res: total_effort_subcon,
+
+        total_cost_from_prj_res: total_cost,
+        total_effort_from_prj_res: total_effort,
+
+        total_fte_from_prj_res: total_fte_count,
+        total_subcon_from_prj_res: total_subcon_count,
+        total_nonlabor_from_prj_res: total_nonlabor_count,
+      },
+      {
+        where: {
+          account_rid: accountId,
+          fiscal_year: fiscalYear,
+          project_fiscal_rid: projectId,
           // [Op.and]: [
           //   Sequelize.where(
           //     Sequelize.fn("LOWER", Sequelize.col("project_code")),
