@@ -49,6 +49,8 @@ export class RulemasterService {
             schedule_offset_type: ruleRequest.schedule_offset_type ?? null,
             schedule_offset_value: ruleRequest.schedule_offset_value ?? null,
             created_by: ruleRequest.created_by,
+            in_app_template_rid: ruleRequest.in_app_template_rid ?? null,
+            email_template_rid: ruleRequest.email_template_rid ?? null
         });
 
         // for (const attr of attributesToTrack) {
