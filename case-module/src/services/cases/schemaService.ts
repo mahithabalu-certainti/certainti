@@ -4366,7 +4366,7 @@ class CaseSchemaService {
                 {
                   headers: {
                     "x-user-id": data.userId,
-                 //   Authorization: `Bearer ${accessToken}`,
+                    Authorization: `Bearer ${accessToken}`,
                   },
                 }
               );
