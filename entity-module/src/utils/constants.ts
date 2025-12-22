@@ -879,14 +879,18 @@ export const rawQueries = {
         )
       )
     `,
-  fetchPlatformConfig(rid: string) {
+   fetchPlatformConfig(rid: string,formattedStartDate: string,formattedEndDate:string) {
     return `
-        SELECT config_json FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values rv
-        join ${MAIN_SCHEMA_NAME}.rd_credit_config_group rg on  rv.credit_config_group_rid  = rg.rid
-        where rg.country_rid = '${rid}'
-        and credit_program_name = 'Platform Configuration'
-        AND rv.status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active')
-        and rg.is_federal = true`;
+    SELECT config_json FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values rv
+  join ${MAIN_SCHEMA_NAME}.rd_credit_config_group rg on  rv.credit_config_group_rid  = rg.rid
+  where rg.country_rid = '${rid}'
+  and credit_program_name = 'Platform Configuration'
+    and rg.is_federal = true 
+     AND rv.effective_start_date <= '${formattedEndDate}'
+    AND rv.effective_end_date   >= '${formattedStartDate}'
+    AND rv.status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active')
+  ORDER BY rv.effective_start_date DESC
+  LIMIT 1`;
   },
   async updateSetting(
     schemaName: string,

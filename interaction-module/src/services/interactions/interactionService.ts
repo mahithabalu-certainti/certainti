@@ -56,7 +56,7 @@ import ExcelJS from "exceljs";
 import axios from "axios";
 import { Kafka, Producer } from "kafkajs";
 import { SchedulerExecutions } from "../../models/schedulerExecution";
-import { errorLog, logMessage } from "../../utils/helpers";
+import { errorLog, getFiscalEndYear, logMessage, parseFiscalDate } from "../../utils/helpers";
 import "moment-timezone";
 import moment from "moment";
 
@@ -3020,8 +3020,20 @@ export class InteractionService {
             req.data[0].account_rid,
           )
         );
-        const platFormConfigResult: any[] = await this.mainDbSequelize.query(
-          rawQueries.fetchPlatformConfig(accountInfo[0].country_rid),
+    const [accountFiscalInfo]: any[] = await this.orgDbSequelize.query(
+      rawQueries.fetchAccountDetailsInfo(
+        schemaName,req.data[0].account_rid, 
+      ), { type: 'SELECT' }
+    );
+    const fiscalStart = accountFiscalInfo?.fiscal_start_date; // e.g. 'Apr/01'
+    const fiscalEnd = accountFiscalInfo?.fiscal_end_date; // e.g. 'Mar/31'
+    const fiscalYear = accountInfo[0].fiscal_year || new Date().getFullYear();
+    // Start date 
+    const formattedStartDate = parseFiscalDate(fiscalStart, fiscalYear);
+    const endYear = getFiscalEndYear(fiscalStart, fiscalEnd, fiscalYear);
+    const formattedEndDate = parseFiscalDate(fiscalEnd, endYear);
+    const platFormConfigResult: any[] = await this.mainDbSequelize.query(
+          rawQueries.fetchPlatformConfig(accountInfo[0].country_rid,formattedStartDate,formattedEndDate),
           { type: 'SELECT' }
         );
         let projectTypes: any;
