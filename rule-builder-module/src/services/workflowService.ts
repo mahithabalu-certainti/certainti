@@ -1061,8 +1061,8 @@ async triggerNotification(taskContext:any,channel:string): Promise<void> {
             accountNumber,
             taskContext.accountRid,
             {
-                to_email: "dhivya.s@hubino.com",
-                subject: "test email from thinkrd",
+                to_email: taskContext.targetEmail,
+                subject:  detail.message_template,
                 body_html: detail.message_template,
             },
             taskContext.userId

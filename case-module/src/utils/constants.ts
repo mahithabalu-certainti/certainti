@@ -1020,7 +1020,7 @@ export const rawQueries = {
   fetchUserNames(oldRid: string, newRid: string) {
     if (oldRid === null) oldRid = ''
     if (newRid === null) newRid = ''
-    return `SELECT rid, CONCAT(first_name, ' ', last_name) AS name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN ('${oldRid}', '${newRid}')`
+    return `SELECT rid, CONCAT(first_name, ' ', last_name) AS name,email FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN ('${oldRid}', '${newRid}')`
   },
   fetchActivityStatusById(oldRid: string, newRid: string) {
     if (oldRid === null) oldRid = ''
@@ -1849,7 +1849,8 @@ export const activityStatus = {
 export const ruleTemplateNames = {
   caseCreated: "case_create",
   statusUpdated:"task_status_update",
-  taskCreated:"task_create"
+  taskCreated:"task_create",
+  assigneeChanged:"task_assignee_change"
 }
 
 export const ruleNames = {
