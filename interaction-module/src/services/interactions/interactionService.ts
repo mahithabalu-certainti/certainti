@@ -3020,7 +3020,7 @@ export class InteractionService {
             req.data[0].account_rid,
           )
         );
-        const [accountFiscalInfo]: any[] = await this.orgDbSequelize.query(
+    const [accountFiscalInfo]: any[] = await this.orgDbSequelize.query(
       rawQueries.fetchAccountDetailsInfo(
         schemaName,req.data[0].account_rid, 
       ), { type: 'SELECT' }
@@ -3028,7 +3028,6 @@ export class InteractionService {
     const fiscalStart = accountFiscalInfo?.fiscal_start_date; // e.g. 'Apr/01'
     const fiscalEnd = accountFiscalInfo?.fiscal_end_date; // e.g. 'Mar/31'
     const fiscalYear = accountInfo[0].fiscal_year || new Date().getFullYear();
-    if (!fiscalStart || !fiscalEnd) return "";
     // Start date
     const formattedStartDate = parseFiscalDate(fiscalStart, fiscalYear);
     const endYear = getFiscalEndYear(fiscalStart, fiscalEnd, fiscalYear);
