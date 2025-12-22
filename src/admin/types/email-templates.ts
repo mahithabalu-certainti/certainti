@@ -129,6 +129,7 @@ export interface CategoryPlaceholder {
   rid: string;
   placeholder_rid: string;
   placeholder_key: string;
+  display_name: string;
   applicable_to: 'body' | 'subject' | 'both';
 }
 

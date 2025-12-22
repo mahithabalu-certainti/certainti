@@ -15,7 +15,7 @@ export const transformCaseFormPayload = (
   originalData?: CaseDetails
 ): CaseFormPayload => {
   const basePayload: CaseFormPayload = {
-    account_rid: accountId || '',
+    account_rid: accountId || formData.account_rid || '',
     case_owner_rid: formData.case_owner || '',
     case_name: formData.case_name || '',
     description: formData.description || '',
@@ -27,6 +27,7 @@ export const transformCaseFormPayload = (
     heat_light_power: formData.heat_light_power || null,
     total_nonlabor_cost: formData.total_nonlabor_cost || null,
     tax_liability: formData.tax_liability || null,
+    status_rid: formData.status_rid,
   };
 
   if (isEditView && originalData) {

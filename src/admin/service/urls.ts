@@ -1,3 +1,4 @@
+import { WorkflowRuleListURLParams } from '../types';
 import { ManageUserListParms } from '../types/manage-account';
 import { UserListParams } from '../types/manage-user';
 import { buildQueryString } from './helpers';
@@ -137,4 +138,26 @@ export const getConfigureSettingUrl = () => {
 
 export const updateCOnfigureSettingUrl = () => {
   return `/api/admin_settings/update`;
+};
+
+export const WorkflowRuleListURL = ({
+  page,
+  limit,
+  sortBy,
+  sortOrder,
+  filters,
+}: WorkflowRuleListURLParams) => {
+  const baseUrl = `/api/workflow/rule`;
+  const searchParams = new URLSearchParams();
+
+  searchParams.set('page', page.toString());
+  searchParams.set('limit', limit.toString());
+  searchParams.set('sortBy', sortBy);
+  searchParams.set('sortOrder', sortOrder);
+
+  if (filters && Object.keys(filters).length > 0) {
+    searchParams.set('filters', JSON.stringify(filters));
+  }
+
+  return `${baseUrl}?${searchParams.toString()}`;
 };

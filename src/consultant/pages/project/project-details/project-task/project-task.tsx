@@ -39,7 +39,9 @@ import {
 import { RootState } from '../../../../../store/store';
 import ProjectTaskDetails from './project-task-details';
 import {
+  ActivityDropdownItem,
   ExportType,
+  FilterType,
   FormFiscalDateType,
   ProjectResourcesListType,
   SelectOption,
@@ -97,6 +99,7 @@ export const ProjectTask = ({
   projectCode,
   accountOrProjectInActive,
   projectFiscalYear,
+  activityMenuItems,
 }: {
   projectID?: string;
   accountData?: {
@@ -112,13 +115,14 @@ export const ProjectTask = ({
   projectCode?: string;
   accountOrProjectInActive?: boolean;
   projectFiscalYear?: number | string;
+  activityMenuItems: ActivityDropdownItem[];
 }) => {
   const { errorToast } = useToast();
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [projectsTabs] = useState(projectTabs);
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const [appliedFilters, setAppliedFilters] = useState<
-    Record<string, string | number | boolean>
+    Record<string, string | number | boolean | string[]>
   >({});
   const [currentPage, setCurrentPage] = useState(0);
   const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('ASC');
@@ -755,7 +759,7 @@ export const ProjectTask = ({
     <div className='w-full pt-2 pb-2 pl-2 pr-4'>
       <TabPanel
         value={'project-task'}
-        appliedFilters={appliedFilters}
+        appliedFilters={appliedFilters as Record<string, FilterType>}
         setAppliedFilters={setAppliedFilters}
         showFilter={showFilter}
         filterVisibility={filterShow && !showUploads}
@@ -773,6 +777,8 @@ export const ProjectTask = ({
         fiscalDatesArg={fiscalDatesArg}
         showSearch={viewDetails ? false : !showUploads}
         onSearch={(text) => setSearchText(text)}
+        showAddActivity={viewDetails ? false : !showUploads}
+        activityMenuItems={activityMenuItems}
       />
       {showUploads ? (
         <Uploads

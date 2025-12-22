@@ -21,6 +21,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
 import { checkPermission } from '../../../../../common-utils';
 import { AccessRestricted } from '../../../../../components/account-restricted';
+import { ActivityDropdownItem } from '../../../../types';
 
 const AttachmentTabs: ResourceTabs[] = [
   {
@@ -34,11 +35,13 @@ interface QrePercentHistoryProps {
   refetchAccountDetails: () => void;
   accountID: string;
   projectID: string | undefined;
+  activityMenuItems: ActivityDropdownItem[];
 }
 const QrePercentHistory = ({
   refetchAccountDetails,
   accountID,
   projectID,
+  activityMenuItems,
 }: QrePercentHistoryProps) => {
   const { permission } = useSelector((state: RootState) => state.permission);
 
@@ -231,10 +234,12 @@ const QrePercentHistory = ({
         showRefresh={true}
         onRefreshClick={onRefreshClick}
         showSearch={false}
+        showAddActivity={true}
+        activityMenuItems={activityMenuItems}
       />
       <ResourceTableHeader
         value={'qre-percent-history'}
-        title='QRE Percent History'
+        title='RD Assessment History'
         count={totalItems}
         titleIcon={
           <ActivitiesIcon

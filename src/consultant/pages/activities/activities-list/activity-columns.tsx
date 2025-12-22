@@ -1,5 +1,6 @@
 import {
   formatDateToYYYYMMDDWithTime,
+  formatDateToYyyyMmmDd,
   formatTimeToAMPM,
 } from '../../../../common-utils';
 import { ListTableColumn } from '../../../../components/table/types';
@@ -72,20 +73,32 @@ export const getActivityAllActivityListColumns = (
     hide: shouldHideColumn('status_rid', permissionMaps),
   },
   {
+    id: 'attachment_level',
+    sortId: 'attachment_level',
+    label: 'Related Entity',
+    width: 140,
+    sortable: true,
+    hide: shouldHideColumn('attachment_level', permissionMaps),
+  },
+  {
     id: 'attached_to',
-    label: 'Related To',
+    label: 'Related To Name',
     sortable: true,
     sortId: 'attached_to',
     width: 180,
     hide: shouldHideColumn('attached_to', permissionMaps),
   },
   {
-    id: 'due_date',
+    id: 'effective_end_datetime',
     label: 'Due Date',
     sortable: true,
-    sortId: 'due_date',
-    width: 160,
+    sortId: 'effective_end_datetime',
+    width: 200,
     hide: shouldHideColumn('effective_end_datetime', permissionMaps),
+    render: (row) =>
+      row?.activity_type?.toLowerCase() === 'task'
+        ? formatDateToYyyyMmmDd(row.effective_end_datetime || '')
+        : '-',
   },
 ];
 
@@ -133,8 +146,18 @@ export const getActivityCallLogListColumns = (
       !permissionMap?.['call_platform']?.read,
   },
   {
+    id: 'attachment_level',
+    sortId: 'attachment_level',
+    label: 'Related Entity',
+    width: 140,
+    sortable: true,
+    hide:
+      !permissionMap?.['attachment_level']?.edit &&
+      !permissionMap?.['attachment_level']?.read,
+  },
+  {
     id: 'attached_to',
-    label: 'Related To',
+    label: 'Related To Name',
     sortable: true,
     sortId: 'attached_to',
     width: 180,
@@ -241,8 +264,18 @@ export const getActivityEmailListColumns = (
       !permissionMap?.['status_rid']?.read,
   },
   {
+    id: 'attachment_level',
+    sortId: 'attachment_level',
+    label: 'Related Entity',
+    width: 140,
+    sortable: true,
+    hide:
+      !permissionMap?.['attachment_level']?.edit &&
+      !permissionMap?.['attachment_level']?.read,
+  },
+  {
     id: 'attached_to',
-    label: 'Related To',
+    label: 'Related To Name',
     sortable: true,
     sortId: 'attached_to',
     width: 180,
@@ -274,7 +307,7 @@ export const getActivityEmailListColumns = (
   {
     id: 'to_email',
     label: 'Email To',
-    sortable: true,
+    sortable: false,
     sortId: 'to_email',
     width: 180,
     hide:
@@ -385,8 +418,18 @@ export const getActivityMeetingListColumns = (
       !permissionMap?.['effective_start_time']?.read,
   },
   {
+    id: 'attachment_level',
+    sortId: 'attachment_level',
+    label: 'Related Entity',
+    width: 140,
+    sortable: true,
+    hide:
+      !permissionMap?.['attachment_level']?.edit &&
+      !permissionMap?.['attachment_level']?.read,
+  },
+  {
     id: 'attached_to',
-    label: 'Related To',
+    label: 'Related To Name',
     sortable: true,
     sortId: 'attached_to',
     width: 180,
@@ -429,6 +472,15 @@ export const getActivityTaskListColumns = (
       ),
   },
   {
+    id: 'task_name',
+    label: 'Task Name',
+    sortable: true,
+    sortId: 'task_name',
+    width: 160,
+    hide:
+      !permissionMap['task_name']?.read && !permissionMap['task_name']?.edit,
+  },
+  {
     id: 'status_name',
     label: 'Task Status',
     sortable: true,
@@ -438,8 +490,18 @@ export const getActivityTaskListColumns = (
       !permissionMap['status_rid']?.read && !permissionMap['status_rid']?.edit,
   },
   {
+    id: 'attachment_level',
+    sortId: 'attachment_level',
+    label: 'Related Entity',
+    width: 140,
+    sortable: true,
+    hide:
+      !permissionMap?.['attachment_level']?.edit &&
+      !permissionMap?.['attachment_level']?.read,
+  },
+  {
     id: 'attached_to',
-    label: 'Related To',
+    label: 'Related To Name',
     sortable: true,
     sortId: 'attached_to',
     width: 180,
@@ -485,7 +547,7 @@ export const getActivityTaskListColumns = (
     sortable: true,
     sortId: 'effective_end_datetime',
     width: 200,
-    render: (row) => formatDateToYYYYMMDDWithTime(row.effective_end_datetime),
+    render: (row) => formatDateToYyyyMmmDd(row?.effective_end_datetime || ''),
     hide:
       !permissionMap?.['effective_end_datetime']?.edit &&
       !permissionMap?.['effective_end_datetime']?.read,

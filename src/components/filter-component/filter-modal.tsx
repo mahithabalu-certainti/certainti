@@ -13,6 +13,7 @@ import {
   DateValueOptions,
   EnumSelectFilterOption,
   enumSelectOperators,
+  FieldConfig,
   FilterModalProps,
   FilterState,
   NumberFilterOption,
@@ -524,6 +525,28 @@ const FilterModal: React.FC<FilterModalProps> = ({
       onFilterChange?.(fieldName, value);
     }
   };
+  const disableDependantFilterFields = (
+    filterFieldName: string,
+    field: FieldConfig,
+    fieldState: FilterState
+  ) => {
+    const fieldValue = filterStates[filterFieldName]?.enumSelect?.value;
+    const enabled = !!fieldValue && !!fieldValue[0];
+    return (
+      <EnumSelectFilterControl
+        filterStates={filterStates}
+        menuOption={field.operatorOption || enumSelectOperators}
+        valueOptions={
+          (field.options as { label: string; value: string }[]) || []
+        }
+        fieldName={field.name}
+        state={fieldState}
+        onOptionChange={handleFilterOptionChange}
+        onChange={handleEnumSelectChange}
+        disabled={!enabled}
+      />
+    );
+  };
 
   const handleApplyFilters = () => {
     const updatedStates = { ...filterStates };
@@ -561,6 +584,15 @@ const FilterModal: React.FC<FilterModalProps> = ({
     if (!fieldConfig) return null;
 
     const state = filterStates[fieldName];
+
+    // Check if this field depends on another field
+    if (fieldConfig.dependsOn && fieldConfig.type === 'enumSelect') {
+      return disableDependantFilterFields(
+        fieldConfig.dependsOn,
+        fieldConfig,
+        state
+      );
+    }
 
     switch (fieldConfig.type) {
       case 'text':
@@ -633,6 +665,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
             onOptionChange={handleFilterOptionChange}
             onValueChange={handleDateChange}
             mode={'date'}
+            isFutureDateEnabled={fieldConfig.isFutureDateEnabled}
             // onChange={handleBooleanChange}
           />
         );
@@ -903,16 +936,31 @@ const FilterModal: React.FC<FilterModalProps> = ({
                       </div>
                       <button
                         onClick={() => {
-                          const newSelectedFilters = selectedFilters.filter(
-                            (f) => f !== fieldName
+                          const fieldToRemove = [fieldName];
+
+                          // Find and remove any dependent fields
+                          const dependentFields = filterFields.filter(
+                            (field) => field.dependsOn === fieldName
                           );
+                          dependentFields.forEach((field) => {
+                            if (selectedFilters.includes(field.name)) {
+                              fieldToRemove.push(field.name);
+                            }
+                          });
+
+                          const newSelectedFilters = selectedFilters.filter(
+                            (f) => !fieldToRemove.includes(f)
+                          );
+
                           if (newSelectedFilters.length === 0) {
                             handleResetFilters();
                           } else {
                             setSelectedFilters(newSelectedFilters);
                             setFilterStates((prev) => {
                               const newState = { ...prev };
-                              delete newState[fieldName];
+                              fieldToRemove.forEach(
+                                (field) => delete newState[field]
+                              );
                               return newState;
                             });
                           }

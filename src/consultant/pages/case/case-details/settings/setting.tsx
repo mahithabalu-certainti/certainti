@@ -1,10 +1,11 @@
-import { useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { DetailsIcon } from '../../../../../assets';
 import { AllPermissions } from '../../../../../common-service';
 import { SectionTabPanel } from '../../../../../components';
 import SectionHeader from '../../../../../components/details-section/section-header';
 import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
 import JurisdictionConfig from './Jurisdiction-Config/Jurisdiction-Config';
+import { ActivityDropdownItem } from '../../../../types';
 
 const SettingsTabs: ResourceTabs[] = [
   {
@@ -20,7 +21,11 @@ const SettingsTabs: ResourceTabs[] = [
   // },
 ];
 
-const Setting = () => {
+interface SettingProps {
+  activityMenuItems: ActivityDropdownItem[];
+}
+
+const Setting: React.FC<SettingProps> = ({ activityMenuItems }) => {
   const formRef = useRef<HTMLFormElement>(null);
   const [isFormSaving, setIsFormSaving] = useState<boolean>(false);
   // const [isSaveDisable, setIsSaveDisable] = useState<boolean>(false);
@@ -60,6 +65,8 @@ const Setting = () => {
         onSearch={() => {}}
         searchReset={false}
         onSearchReset={() => {}}
+        showAddActivity={true}
+        activityMenuItems={activityMenuItems}
       />
       <SectionHeader
         title={'Jurisdiction Configuration'}

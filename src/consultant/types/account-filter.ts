@@ -162,6 +162,8 @@ export type FieldConfig = {
   operatorOption?: Options[];
   hide?: boolean;
   onChange?: boolean;
+  isFutureDateEnabled?: boolean;
+  dependsOn?: string;
 };
 
 export interface FilterComponentProps {

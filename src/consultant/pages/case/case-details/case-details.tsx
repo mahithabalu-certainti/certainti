@@ -1,4 +1,10 @@
-import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import {
   useLocation,
   useNavigate,
@@ -19,27 +25,43 @@ import {
   InteractionListExportParams,
   ActivityListExportURLParams,
   ActivityType,
+  ProjectResourcesListParams,
+  ActivityDropdownItem,
+  ProjectFinancialProjectExportParams,
+  ProjectFinancialResourceExportParams,
 } from '../../../types';
+import CaseFinancialSummary from './financial-summary/financial-summary';
+import { accountDetailsProps } from '../../account-details/utils';
 import {
   AllMenus,
   AllModules,
   AllPermissions,
 } from '../../../../common-service';
-import { InfoSection, PageHeader, SideMenuPanel } from '../../../../components';
+import {
+  ActivityModal,
+  InfoSection,
+  PageHeader,
+  SideMenuPanel,
+} from '../../../../components';
 import {
   AccountDetailsIcon,
   ActivitiesIcon,
   AttachmentsSideIcon,
+  CallLogIcon,
   CasesIcon,
   ChecklistIcon,
   ComingSoon,
   DetailsIcon,
+  DetailsKeyContactErrorIcon,
+  DraftEmailIcon,
   FinancialIcon,
   InteractionsIcon,
+  MeetingIcon,
   NotesSideIcon,
   ProjectsSideIcon,
   ResourcesIcon,
   SettingIcon,
+  TaskCreateIcon,
   TechSummaryIcon,
 } from '../../../../assets';
 import { WorkBreakDown } from './work-breakdown';
@@ -75,6 +97,14 @@ import { ProjectTriggerAI } from '../../../services/project';
 import { BUTTON_STYLES } from '../../../../admin/pages/manage-user-detail/styles';
 import { CaseActivities } from './case-activities';
 import { ExportActivityList } from '../../../services/activities/activities-service';
+import { CaseProjectTask } from './case-project-task';
+import { ExportCaseProjectTasktList } from '../../../services/case-project-task/case-project-task-service';
+import { CaseProjectResource } from './case-project-resource';
+import { ExportCaseProjectResourceList } from '../../../services/case-project-resource/case-project-resource-service';
+import {
+  exportFinancialProjectCost,
+  exportFinancialResourceCost,
+} from '../../../services/financial/financial-service';
 
 export const CaseDetails = () => {
   const navigate = useNavigate();
@@ -87,12 +117,12 @@ export const CaseDetails = () => {
     (state: RootState) => state.permission
   );
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
   const {
     data: caseData,
     isLoading,
     isError,
     isPending,
+    refetch: refetchCaseDetails,
   } = useCaseDetails(caseId ?? '', accountId ?? '');
   const isAssignProject = searchParams.get('assignProject');
   const projectDetails = searchParams.get('detailstab');
@@ -118,10 +148,13 @@ export const CaseDetails = () => {
   const interactionId = searchParams.get('interaction_id');
   const interactionRID = searchParams.get('interaction_rid');
   const interactionsView = !!interactionId || !!interactionRID;
+  const [activityModalId, setActivityModalId] = useState<string | null>(null);
+
   const noteView = searchParams.get('note_id');
   const checklistView = searchParams.get('checklist_id');
   const accountInActive =
     caseData?.account_status_name?.toLowerCase() !== 'active';
+  const isCaseTeamCreated = caseData?.is_case_team_created;
   const [caseProjectParams, setCaseProjectParams] =
     useState<CaseAssignedExportParams>({
       sort: 'project_code',
@@ -155,6 +188,25 @@ export const CaseDetails = () => {
       limit: 10,
       search: '',
     });
+  const [projectTaskParams, setProjectTaskParams] =
+    useState<ProjectResourcesListParams>({
+      sortOrder: 'ASC',
+      sortBy: 'resource_code',
+      page: 1,
+      limit: 10,
+      search: '',
+    });
+
+  const [projectResourceParams, setProjectResourceParams] =
+    useState<ReviewProjectListURLParams>({
+      sortOrder: 'ASC',
+      sortBy: 'project_code',
+      filters: {},
+      timezone: '',
+      page: 1,
+      limit: 10,
+      search: '',
+    });
   const fiscalYear = caseData?.fiscal_year ?? 0;
   const [attachmentParams, setAttachmentParams] =
     useState<AttachmentsListExportParams>({
@@ -169,6 +221,7 @@ export const CaseDetails = () => {
       sortOrder: 'ASC',
       filters: {},
     });
+
   const systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const [interactionsParams, setInteractionsParams] =
     useState<InteractionListExportParams>({
@@ -185,6 +238,22 @@ export const CaseDetails = () => {
       sortOrder: 'ASC',
       filters: {},
       activity_type: 'all',
+    });
+
+  const [financialResCostParams, setFinancialResCostParams] =
+    useState<ProjectFinancialResourceExportParams>({
+      sortBy: 'project_code',
+      sortOrder: 'ASC',
+      filters: {},
+    });
+
+  const [financialProjectCostParams, setFinancialProjectCostParams] =
+    useState<ProjectFinancialProjectExportParams>({
+      sortBy: 'project_code',
+      sortOrder: 'ASC',
+      filters: {},
+      fiscalYear: 0,
+      caseRid: caseId,
     });
 
   const activityId = searchParams.get('activity_id');
@@ -288,10 +357,46 @@ export const CaseDetails = () => {
     permission,
     AllPermissions.PROJECTS_EXPORT
   );
+  const isProjectTaskExportEnable = checkPermission(
+    permission,
+    AllPermissions.PROJECTS_EXPORT
+  );
 
+  const isProjectResourceExportEnable = checkPermission(
+    permission,
+    AllPermissions.PROJECTS_RESOURCES_EXPORT
+  );
   const isCaseTaskExportEnable = checkPermission(
     permission,
     AllPermissions.CASES_WORKBREAKDOWN_EXPORT
+  );
+
+  const isFinancialProjectCostExportEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_FINANCIAL_PROJECT_COST_EXPORT
+  );
+
+  const isFinancialResourceCostExportEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_FINANCIAL_RESOURCE_COST_EXPORT
+  );
+
+  // Activity Create Permission
+  const isActivityTaskCreateEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_TASK_CREATE
+  );
+  const isActivityCallCreateEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_CALL_CREATE
+  );
+  const isActivityEmailCreateEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_EMAIL_CREATE
+  );
+  const isActivityMeetingCreateEnable = checkPermission(
+    permission,
+    AllPermissions.ACTIVITY_MEETING_CREATE
   );
 
   const activityExportPermissionMap: Record<string, boolean> = {
@@ -310,7 +415,10 @@ export const CaseDetails = () => {
       searchParams.get('list') !== 'caseProjects' &&
       searchParams.get('list') !== 'workBreakdown' &&
       searchParams.get('tab') !== 'case_task' &&
-      searchParams.get('list') !== 'interactions'
+      searchParams.get('list') !== 'interactions' &&
+      searchParams.get('list') !== 'projectTask' &&
+      searchParams.get('list') !== 'projectResource' &&
+      searchParams.get('list') !== 'financialHighlights'
     ) {
       return;
     }
@@ -363,6 +471,19 @@ export const CaseDetails = () => {
       ExportCaseTaskList(caseTaskParams);
     } else if (list === 'caseProjects' && exportType === 'review_projects') {
       ExportReviewProjectList(reviewProjectParams, accountId, caseId);
+    } else if (list === 'projectTask' && exportType === 'projectTask') {
+      ExportCaseProjectTasktList(projectTaskParams, accountId, caseId);
+    } else if (
+      list === 'projectResource' &&
+      exportType === 'project_resource'
+    ) {
+      ExportCaseProjectResourceList(projectResourceParams, accountId, caseId);
+    } else if (list === 'financialHighlights') {
+      if (exportType === 'financial_project_cost') {
+        exportFinancialProjectCost(financialProjectCostParams);
+      } else if (exportType === 'financial_resource_cost') {
+        exportFinancialResourceCost(financialResCostParams);
+      }
     }
     if (list === 'interactions') {
       if (interactionHistoryId) {
@@ -438,6 +559,18 @@ export const CaseDetails = () => {
       return !isCaseTaskExportEnable;
     } else if (list === 'interactions' && !interactionsView) {
       return !isInteractionsExportEnable;
+    } else if (list === 'projectTask') {
+      return !isProjectTaskExportEnable;
+    } else if (list === 'projectResource') {
+      return !isProjectResourceExportEnable;
+    } else if (list === 'financialHighlights') {
+      const tab = searchParams.get('tab');
+      if (tab === 'project_cost') {
+        return !isFinancialProjectCostExportEnable;
+      } else if (tab === 'resource_cost') {
+        return !isFinancialResourceCostExportEnable;
+      }
+      return true;
     } else {
       return true;
     }
@@ -464,11 +597,31 @@ export const CaseDetails = () => {
     console.log('Settings clicked');
   };
 
-  const activityMenuItems = [
-    { label: 'Create Task', onClick: () => console.log('Task') },
-    { label: 'Draft Email', onClick: () => console.log('Eamil') },
-    { label: 'Schedule Meeting', onClick: () => console.log('Meeting') },
-    { label: 'Log a call', onClick: () => console.log('Call') },
+  const activityMenuItems: ActivityDropdownItem[] = [
+    {
+      label: 'Create Task',
+      onClick: () => setActivityModalId('create-task'),
+      icon: TaskCreateIcon,
+      hide: !isActivityTaskCreateEnable,
+    },
+    {
+      label: 'Draft Email',
+      onClick: () => setActivityModalId('draft-email'),
+      icon: DraftEmailIcon,
+      hide: !isActivityEmailCreateEnable,
+    },
+    {
+      label: 'Schedule Meeting',
+      onClick: () => setActivityModalId('schedule-meeting'),
+      icon: MeetingIcon,
+      hide: !isActivityMeetingCreateEnable,
+    },
+    {
+      label: 'Log a call',
+      onClick: () => setActivityModalId('call-log'),
+      icon: CallLogIcon,
+      hide: !isActivityCallCreateEnable,
+    },
   ];
 
   const handleSetCaseTaskParams = useCallback(
@@ -518,8 +671,31 @@ export const CaseDetails = () => {
               caseEndDate={caseData?.statutory_submission_date}
               isActionItemsExpanded={isActionItemsExpanded}
               setIsActionItemsExpanded={handleToggleActionItems}
+              isCaseTeamCreated={isCaseTeamCreated}
             />
           </div>
+        );
+      case 'financialHighlights':
+        return (
+          <CaseFinancialSummary
+            accountDetails={
+              {
+                accountById: {
+                  account_name: caseData?.account_name,
+                  r_number: caseData?.account_rnumber,
+                  currency: {
+                    currency_symbol: caseData?.currency_symbol,
+                  },
+                },
+              } as accountDetailsProps
+            }
+            setExportType={setExportType}
+            setResCostExportParams={setFinancialResCostParams}
+            setFinancialProjectCostParams={setFinancialProjectCostParams}
+            countryId={caseData?.country_rid}
+            accountId={accountId}
+            caseRid={caseId}
+          />
         );
       case 'caseTeam':
         return (
@@ -527,6 +703,7 @@ export const CaseDetails = () => {
             <CaseTeam
               activityMenuItems={activityMenuItems}
               fiscalYear={fiscalYear}
+              refetchCaseDetails={refetchCaseDetails}
             />
           </div>
         );
@@ -548,6 +725,19 @@ export const CaseDetails = () => {
               setTableParams={setCaseProjectParams}
               setReviewProjectParams={setReviewProjectParams}
               setExportType={setExportType}
+              refetchCaseDetails={refetchCaseDetails}
+              activityMenuItems={activityMenuItems}
+            />
+          </div>
+        );
+      case 'projectTask':
+        return (
+          <div>
+            <CaseProjectTask
+              accountInActive={accountInActive}
+              setProjectTaskParams={setProjectTaskParams}
+              setExportType={setExportType}
+              activityMenuItems={activityMenuItems}
             />
           </div>
         );
@@ -558,6 +748,7 @@ export const CaseDetails = () => {
             setExportType={setExportType}
             setNotesParams={setNotesParams}
             caseDetails={caseData}
+            activityMenuItems={activityMenuItems}
           />
         );
       case 'attachments':
@@ -567,10 +758,11 @@ export const CaseDetails = () => {
             setExportType={setExportType}
             setAttachmentParams={setAttachmentParams}
             caseDetails={caseData}
+            activityMenuItems={activityMenuItems}
           />
         );
       case 'settings':
-        return <Setting />;
+        return <Setting activityMenuItems={activityMenuItems} />;
       case 'activities':
         return (
           <CaseActivities
@@ -579,6 +771,7 @@ export const CaseDetails = () => {
             setExportType={setExportType}
             setActivityParams={setActivityParams}
             isDetailLoading={isPending}
+            activityMenuItems={activityMenuItems}
           />
         );
       case 'checklist':
@@ -588,6 +781,7 @@ export const CaseDetails = () => {
             setChecklistParams={setChecklistParams}
             accountInActive={accountInActive}
             caseDetails={caseData}
+            activityMenuItems={activityMenuItems}
           />
         );
       case 'interactions':
@@ -599,6 +793,16 @@ export const CaseDetails = () => {
             loading={isLoading}
             setInteractionsParams={setInteractionsParams}
             setExportType={setExportType}
+            activityMenuItems={activityMenuItems}
+          />
+        );
+      case 'projectResource':
+        return (
+          <CaseProjectResource
+            accountInActive={accountInActive}
+            setProjectResourceParams={setProjectResourceParams}
+            setExportType={setExportType}
+            activityMenuItems={activityMenuItems}
           />
         );
       default:
@@ -679,16 +883,16 @@ export const CaseDetails = () => {
         icon: CasesIcon,
       },
       {
-        name: 'Project Resource',
+        name: 'Case Project Resource',
         key: 'projectResource',
-        id: AllMenus.FINANCIAL_HIGHLIGHTS,
+        id: AllMenus.PROJECT_RESOURCES,
         disabled: false,
         icon: ResourcesIcon,
       },
       {
-        name: 'Project Task',
+        name: 'Case Project Task',
         key: 'projectTask',
-        id: AllMenus.FINANCIAL_HIGHLIGHTS,
+        id: AllMenus.PROJECT_TASK,
         disabled: false,
         icon: ProjectsSideIcon,
       },
@@ -785,6 +989,15 @@ export const CaseDetails = () => {
     }
   };
 
+  const sourceDetails = {
+    accountId: accountId,
+    entityLevel: 'case',
+    entityId: caseId || '',
+    caseFiscalYear: caseData?.fiscal_year || '',
+    source: `Case > ${caseData?.r_number || ''}`,
+    isEmailConfigured: caseData?.is_send_interaction,
+  };
+
   if (!caseIsEnable || !isCaseDetailsEnable) return <AccessRestricted />;
 
   return (
@@ -867,9 +1080,30 @@ export const CaseDetails = () => {
             overflow: 'auto',
           }}
         >
+          {!isCaseTeamCreated && !isLoading && (
+            <div className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] px-3 py-2 border-box'>
+              <div>
+                <React.Suspense fallback={null}>
+                  <DetailsKeyContactErrorIcon alt='key-contact' />
+                </React.Suspense>
+              </div>
+              <div>
+                <span className='font-bold mr-1 capitalize'>Case Team</span>-
+                <span className='ml-1 font-medium'>
+                  Case team setup is missing. Please create a case team before
+                  marking the task as complete.
+                </span>
+              </div>
+            </div>
+          )}
           <Suspense fallback={null}>{renderContent()}</Suspense>
         </div>
       </div>
+      <ActivityModal
+        modalId={activityModalId}
+        onCloseModal={() => setActivityModalId(null)}
+        sourceDetails={sourceDetails}
+      />
     </div>
   );
 };

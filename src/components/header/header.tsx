@@ -23,6 +23,8 @@ interface HeaderButton {
   sx?: SxProps<Theme>;
   loading?: boolean;
   hide?: boolean;
+  tooltipValue?: string;
+  toolTipEnabled?: boolean;
 }
 
 interface HeaderProps {
@@ -147,6 +149,8 @@ export const PageHeader: React.FC<HeaderProps> = ({
                 onClick={button.onClick}
                 disabled={button.disabled}
                 loading={button.loading}
+                tooltipValue={button.tooltipValue}
+                toolTipEnabled={button.toolTipEnabled}
                 sx={{
                   ...DEFAULT_BUTTON_STYLES,
                   ...customStyles.button,

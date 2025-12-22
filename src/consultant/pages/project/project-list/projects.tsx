@@ -190,6 +190,20 @@ export const Projects: React.FC = () => {
     return map;
   }, [projectViewEditFields]);
 
+  const accountViewEditFields = useMemo(
+    () =>
+      permission.find((item) => item.name === AllPermissions.ACCOUNTS_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+  const accountPermissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    accountViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [accountViewEditFields]);
+
   const projectFilterFields = getAllProjectFilterFields(
     memoizedClassification.map((item) => ({
       label: item.option,
@@ -197,7 +211,8 @@ export const Projects: React.FC = () => {
     })),
     memoizedProjectTypes,
     memoizedStatus,
-    projectPermissionMap
+    projectPermissionMap,
+    accountPermissionMap
   );
 
   // Commented for it may use in future
