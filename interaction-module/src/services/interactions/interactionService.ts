@@ -3028,7 +3028,7 @@ export class InteractionService {
     const fiscalStart = accountFiscalInfo?.fiscal_start_date; // e.g. 'Apr/01'
     const fiscalEnd = accountFiscalInfo?.fiscal_end_date; // e.g. 'Mar/31'
     const fiscalYear = accountInfo[0].fiscal_year || new Date().getFullYear();
-    // Start date
+    // Start date 
     const formattedStartDate = parseFiscalDate(fiscalStart, fiscalYear);
     const endYear = getFiscalEndYear(fiscalStart, fiscalEnd, fiscalYear);
     const formattedEndDate = parseFiscalDate(fiscalEnd, endYear);
