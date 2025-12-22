@@ -743,11 +743,11 @@ export class WorkFlowService {
         data?: { info: any };
     }> {
         const mainDb = await this.getMainDb();
-        //fetching event rid, scope type rid from event name 
+        //fetching event rid, scope type rid from event name
         const eventRid = await mainDb.query<any>(
             rawQueries.fetchEventRid(
-                request.event_name,
-                request.task_rid
+                request.eventName,
+                request.entityRid
             ),
             { type: QueryTypes.SELECT }
         );
@@ -755,7 +755,7 @@ export class WorkFlowService {
         const allConditions: any[] = [];
         const allActions: any[] = [];
         //fetching relavent rules, condition rid, apply type from event rid
-        const rules = await mainDb.query<any>(rawQueries.fetchRulesFromEvent(event_rid, scope_type_rid, request.task_rid),
+        const rules = await mainDb.query<any>(rawQueries.fetchRulesFromEvent(event_rid, scope_type_rid, request.entityRid),
             { type: QueryTypes.SELECT }
         );
         for (const rule of rules) {
@@ -766,8 +766,8 @@ export class WorkFlowService {
             const actions = await mainDb.query<any>(rawQueries.fetchRuleActions(rule.rule_rid), { type: QueryTypes.SELECT });
             allActions.push(...actions);
         }
-
-        //grouping conditions by rule 
+ 
+        //grouping conditions by rule
         const conditionsByRule = allConditions.reduce((acc, condition) => {
             if (!acc[condition.rule_rid]) {
                 acc[condition.rule_rid] = [];
@@ -775,8 +775,8 @@ export class WorkFlowService {
             acc[condition.rule_rid].push(condition);
             return acc;
         }, {} as Record<string, any[]>);
-
-        //grouping actions by rule 
+ 
+        //grouping actions by rule
         const actionsByRule = allActions.reduce((acc, action) => {
             if (!acc[action.rule_rid]) {
                 acc[action.rule_rid] = [];
@@ -790,7 +790,7 @@ export class WorkFlowService {
                 (a: any, b: any) => a.action_order - b.action_order
             );
         }
-
+ 
         // const ruleDetails: any[] = [];
         // for (const rule of rules) {
         //     const conditions = await mainDb.query<any>(rawQueries.fetchRuleConditions(rule.condition_rid, rule.rule_rid), { type: QueryTypes.SELECT });
@@ -805,10 +805,10 @@ export class WorkFlowService {
         const entity = request;
         const triggeredActions: Record<string, any[]> = {};
         const results: Record<string, boolean> = {};
-        for (const rule_rid in conditionsByRule) {
-            const ruleConditions = conditionsByRule[rule_rid];
+        for (const rule_rid in actionsByRule) {
             let ruleResult = true;
-            if (ruleConditions.length > 0) {
+            if (conditionsByRule.length > 0) {
+                const ruleConditions = conditionsByRule[rule_rid];
                 for (let i = 0; i < ruleConditions.length; i++) {
                     const condition = ruleConditions[i];
                     const conditionResult = await this.evaluateCondition(condition, entity);
@@ -817,7 +817,7 @@ export class WorkFlowService {
                         ruleResult = conditionResult;
                     } else {
                         const logicalOp = condition.logical_operator;
-
+ 
                         if (logicalOp === "AND") {
                             ruleResult = ruleResult && conditionResult;
                         } else if (logicalOp === "OR") {
@@ -830,7 +830,7 @@ export class WorkFlowService {
             //Execute actions if:
             // - no conditions exist
             // - OR conditions evaluated to true
-            if (ruleConditions.length === 0 || ruleResult) {
+            if (conditionsByRule.length === 0 || ruleResult) {
                 const actions = actionsByRule[rule_rid] || [];
                 for (const action of actions) {
                     await this.executeAction(action, entity, userId);
@@ -860,12 +860,53 @@ export class WorkFlowService {
     }
 
     private evaluateCondition(condition: any, entity: any): boolean {
-        const fieldKey = condition.field.split(".")[1]; // "task.status" → "status"
-        const entityValue = entity[fieldKey];
+        const fieldKey = condition.field.split(".")[1] || condition.field; // "task.status" → "status"
+        let entityValue = entity[fieldKey];
+        let conditionValue = condition.value;
+        // Special handling for 'current date' as value
+        if (
+            typeof entityValue === "string" &&
+            entityValue.trim().toLowerCase() === "current date"
+        ) {
+            // Use today's date in YYYY-MM-DD format
+            const today = new Date();
+            entityValue = today.toISOString().slice(0, 10);
+        }
+        if (
+            typeof conditionValue === "string" &&
+            conditionValue.trim().toLowerCase() === "current date"
+        ) {
+            // Use today's date in YYYY-MM-DD format
+            const today = new Date();
+            conditionValue = today.toISOString().slice(0, 10);
+        }
+        logMessage(`Evaluating condition: ${fieldKey} ${condition.operator} ${conditionValue} against entity value: ${entityValue}`);
         const operator = (condition.operator || "").toLowerCase();
         switch (operator) {
             case "equals":
-                return String(entityValue) === String(condition.value);
+                return String(entityValue).toLowerCase() === String(conditionValue).toLowerCase();
+            case "not equals":
+                return String(entityValue).toLowerCase() !== String(conditionValue).toLowerCase();
+            case "greater than": {
+                // date comparison first
+                const dateA = new Date(entityValue);
+                const dateB = new Date(conditionValue);
+                if (!isNaN(dateA.getTime()) && !isNaN(dateB.getTime())) {
+                    return dateA > dateB;
+                }
+                // Fallback to number comparison
+                return Number(entityValue) > Number(conditionValue);
+            }
+            case "less than": {
+                // date comparison first
+                const dateA = new Date(entityValue);
+                const dateB = new Date(conditionValue);
+                if (!isNaN(dateA.getTime()) && !isNaN(dateB.getTime())) {
+                    return dateA < dateB;
+                }
+                // Fallback to number comparison
+                return Number(entityValue) < Number(conditionValue);
+            }
             default:
                 return false;
         }
@@ -926,12 +967,12 @@ export class WorkFlowService {
         }
     }
 
-    async sentNotification(templateDetails: any, userId: string, targetUser: string): Promise<any> {
+    async sentNotification(templateDetails: any, targetuserId: string, targetUserEmail: string): Promise<any> {
         const mainDb = await this.getMainDb();
         let notificationPayload = {
             notification_message: templateDetails.templateDetails.message_template,
-            created_by: userId,
-            user_rid: targetUser
+            created_by: targetuserId,
+            user_rid: targetuserId
         };
         const insertQuery = rawQueries.insertNotification();
         const [notificationResult]: any[] = await mainDb.query(
@@ -950,11 +991,10 @@ export class WorkFlowService {
                 "notificationsHub"
             );
 
-    const response  = await webPubSubClient.sendToUser(userId, {
+    const response  = await webPubSubClient.sendToUser(targetuserId, {
       id: notificationRid,
       message:templateDetails.templateDetails.message_template,
     });
-    console.log("Notification sent response:", response);
     const [statusRid]:any[] = await mainDb.query(
         rawQueries.fetchNotificationStatusByType(notificationStatus.unread),
         {   
@@ -991,6 +1031,26 @@ export class WorkFlowService {
     );
 }
 
+ async getNotificationTemplates(channel:string): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: { templates: any; };
+    }> {
+    const mainDb = await this.getMainDb();
+    const result = await mainDb.query(
+      rawQueries.getNotificationTemplates(channel),
+      { type: QueryTypes.SELECT }
+    );
+    return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,    
+        data: {
+            templates: result
+        }
+    };
+  }
+
 async triggerNotification(taskContext:any,channel:string): Promise<void> {
     // Implementation for changing assignee
     
@@ -1012,8 +1072,8 @@ async triggerNotification(taskContext:any,channel:string): Promise<void> {
     if (channel.includes('In App')) {
         await this.sentNotification(
             { templateDetails: detail },
-            taskContext.userId,
-            taskContext.userId
+            taskContext.targetUserID,
+            taskContext.targetEmail
         );
     }
     if (channel.includes('Email')) {
@@ -1021,8 +1081,8 @@ async triggerNotification(taskContext:any,channel:string): Promise<void> {
             accountNumber,
             taskContext.accountRid,
             {
-                to_email: "dhivya.s@hubino.com",
-                subject: "test email from thinkrd",
+                to_email: taskContext.targetEmail,
+                subject:  detail.message_template,
                 body_html: detail.message_template,
             },
             taskContext.userId

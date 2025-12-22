@@ -426,6 +426,14 @@ export interface IWorkFlowService {
         errorMessage?: string;
         data?: { info: any };
     }>;
+    getNotificationTemplates(
+        userId: string
+    ): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: { templates: any };
+    }>;
 }
 
 

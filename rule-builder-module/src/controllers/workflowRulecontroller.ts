@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { HttpStatus } from "../utils/constants";
+import { HttpStatus, STATUS_MESSAGE } from "../utils/constants";
 import {
     errorLog,
     successLog,
@@ -686,6 +686,58 @@ async function execute(req: Request, res: Response): Promise<void> {
         );
     }
 };
+async function fetchNotificationTemplates (req : Request, res : Response) {
+  const methodName = "fetchNotificationTemplates"
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const { channel } = req.params;
+    if (!channel) {
+        errorLog(methodName, "Channel parameter is required");
+        handleErrorResponse(
+          res,
+          HttpStatus.BAD_REQUEST,
+          HttpStatus.BAD_REQUEST_MESSAGE,
+          "Channel parameter is required"
+        );
+        return;
+    }
+    const result = await workFlowService.getNotificationTemplates(channel);
+    if(result.data?.templates.length > 0) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: STATUS_MESSAGE.notificationTemplatesListedSuccess,
+        data : result
+      });
+    } else {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: STATUS_MESSAGE.dataNotAvailable,
+        data : []
+      });
+    }
+
+  }
+  catch (error: any) {
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
 
 
 export default {
@@ -705,5 +757,6 @@ export default {
     createRuleMapWithScope,
     ruleMapDetailByRuleRid,
     updateRuleMapWithScope,
+    fetchNotificationTemplates,
     execute
 }

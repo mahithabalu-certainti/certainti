@@ -156,6 +156,47 @@ export class KeyContactService {
     });
   }
 
+  async deleteCaseKeyContactDetails(
+    key_contact_id: string,
+    project_rid: string,
+    CaseKeyContactDetails: any,
+    Case: any,
+    projectCaseMapping: any[],
+  ) {
+
+    if (projectCaseMapping.length > 0) {
+      for (const caseMapping of projectCaseMapping) {
+
+        const caseData = await Case.findOne({
+          where: {
+            rid: caseMapping.case_rid,
+          },
+        });
+
+        if (!caseData) {
+          continue;
+        }
+        const mainSequelize = await initMainDbSequelize();
+
+        const caseStatus = await mainSequelize.query(
+          rawQueries.fetchCaseStatusByRid(caseData.status_rid),
+          {
+            type: "SELECT",
+          }
+        ) as CaseStatusResult[];
+
+        if (caseStatus[0]?.status_name === "Closed") {
+          continue;
+        }
+        await CaseKeyContactDetails.destroy({
+          where: {
+            key_contact_rid: key_contact_id,
+          },
+        });
+      }
+    }
+  }
+
   async insertCaseKeyContactDetails(
     key_contact: IUpdateKeyContactDetail,
     userId: string,
