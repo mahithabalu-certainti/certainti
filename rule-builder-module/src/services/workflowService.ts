@@ -743,11 +743,11 @@ export class WorkFlowService {
         data?: { info: any };
     }> {
         const mainDb = await this.getMainDb();
-        //fetching event rid, scope type rid from event name 
+        //fetching event rid, scope type rid from event name
         const eventRid = await mainDb.query<any>(
             rawQueries.fetchEventRid(
-                request.event_name,
-                request.task_rid
+                request.eventName,
+                request.entityRid
             ),
             { type: QueryTypes.SELECT }
         );
@@ -755,7 +755,7 @@ export class WorkFlowService {
         const allConditions: any[] = [];
         const allActions: any[] = [];
         //fetching relavent rules, condition rid, apply type from event rid
-        const rules = await mainDb.query<any>(rawQueries.fetchRulesFromEvent(event_rid, scope_type_rid, request.task_rid),
+        const rules = await mainDb.query<any>(rawQueries.fetchRulesFromEvent(event_rid, scope_type_rid, request.entityRid),
             { type: QueryTypes.SELECT }
         );
         for (const rule of rules) {
@@ -766,8 +766,8 @@ export class WorkFlowService {
             const actions = await mainDb.query<any>(rawQueries.fetchRuleActions(rule.rule_rid), { type: QueryTypes.SELECT });
             allActions.push(...actions);
         }
-
-        //grouping conditions by rule 
+ 
+        //grouping conditions by rule
         const conditionsByRule = allConditions.reduce((acc, condition) => {
             if (!acc[condition.rule_rid]) {
                 acc[condition.rule_rid] = [];
@@ -775,8 +775,8 @@ export class WorkFlowService {
             acc[condition.rule_rid].push(condition);
             return acc;
         }, {} as Record<string, any[]>);
-
-        //grouping actions by rule 
+ 
+        //grouping actions by rule
         const actionsByRule = allActions.reduce((acc, action) => {
             if (!acc[action.rule_rid]) {
                 acc[action.rule_rid] = [];
@@ -790,7 +790,7 @@ export class WorkFlowService {
                 (a: any, b: any) => a.action_order - b.action_order
             );
         }
-
+ 
         // const ruleDetails: any[] = [];
         // for (const rule of rules) {
         //     const conditions = await mainDb.query<any>(rawQueries.fetchRuleConditions(rule.condition_rid, rule.rule_rid), { type: QueryTypes.SELECT });
@@ -805,10 +805,10 @@ export class WorkFlowService {
         const entity = request;
         const triggeredActions: Record<string, any[]> = {};
         const results: Record<string, boolean> = {};
-        for (const rule_rid in conditionsByRule) {
-            const ruleConditions = conditionsByRule[rule_rid];
+        for (const rule_rid in actionsByRule) {
             let ruleResult = true;
-            if (ruleConditions.length > 0) {
+            if (conditionsByRule.length > 0) {
+                const ruleConditions = conditionsByRule[rule_rid];
                 for (let i = 0; i < ruleConditions.length; i++) {
                     const condition = ruleConditions[i];
                     const conditionResult = await this.evaluateCondition(condition, entity);
@@ -817,7 +817,7 @@ export class WorkFlowService {
                         ruleResult = conditionResult;
                     } else {
                         const logicalOp = condition.logical_operator;
-
+ 
                         if (logicalOp === "AND") {
                             ruleResult = ruleResult && conditionResult;
                         } else if (logicalOp === "OR") {
@@ -830,7 +830,7 @@ export class WorkFlowService {
             //Execute actions if:
             // - no conditions exist
             // - OR conditions evaluated to true
-            if (ruleConditions.length === 0 || ruleResult) {
+            if (conditionsByRule.length === 0 || ruleResult) {
                 const actions = actionsByRule[rule_rid] || [];
                 for (const action of actions) {
                     await this.executeAction(action, entity, userId);
