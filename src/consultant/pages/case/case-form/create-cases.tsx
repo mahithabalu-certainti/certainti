@@ -54,6 +54,7 @@ export const CreateCases: React.FC = () => {
     useState<string>('');
   const [selectedCountryCode, setSelectedCountryCode] = useState<string>('');
   const [selectedCountryRid, setSelectedCountryRid] = useState<string>('');
+  const [selectedAccountRid, setSelectedAccountRid] = useState<string>('');
   const [calculatedStatutoryDate, setCalculatedStatutoryDate] =
     useState<string>('');
   const [dateConstraints, setDateConstraints] = useState<{
@@ -102,9 +103,14 @@ export const CreateCases: React.FC = () => {
     ? caseData?.country_rid || countryRid || selectedCountryRid
     : selectedCountryRid || countryRid;
 
+  const effectiveAccountRid = isEditView
+    ? caseData?.account_rid || accountId || selectedAccountRid
+    : selectedAccountRid || accountId;
+
   const { data: submissionDateData } = useGetCaseSubmissionDate(
     effectiveCountryRid,
-    Number(selectedFiscalYear)
+    Number(selectedFiscalYear),
+    effectiveAccountRid
   );
 
   const commonSuccess = createCase.isSuccess || updateCase.isSuccess;
@@ -366,6 +372,7 @@ export const CreateCases: React.FC = () => {
       setSelectedAccountNumber(accountNumber);
       setSelectedCountryCode(countryCode);
       setSelectedCountryRid(countryRid);
+      setSelectedAccountRid(selectedRid);
 
       // Update case name prefix
       const newPrefix = generateCaseNamePrefix(
