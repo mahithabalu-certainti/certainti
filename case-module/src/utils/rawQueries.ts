@@ -2350,3 +2350,7 @@ export const signoffProjectTechSummary  = (schemaName : string, projectFiscalRid
   `
   return query;
 }
+
+export const getValidRegionIdsFromCases = (schemaName : string, accountId : string, caseId : string) => {
+  return `SELECT region_rid AS rid FROM ${schemaName}.case_projects WHERE case_rid = '${caseId}' AND account_rid = '${accountId}' AND region_rid IS NOT NULL`
+}
