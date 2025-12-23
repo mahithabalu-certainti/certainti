@@ -945,20 +945,28 @@ export class WorkFlowService {
         templateDetails: any;
     }> {
         const mainDb = await this.getMainDb();
-        let [notificationTemplateRid]: any[] =[]
-        if(channel === "In App"){
-           [notificationTemplateRid] = await mainDb.query<any>(
-            rawQueries.fetchNotificationInAppTemplatesForRule(ruleRid),
-            { type: QueryTypes.SELECT }
-        );
-        }
-        else
-        {
+        let [notificationTemplateRid]: any[] = [];
+        if (channel === "In App") {
             [notificationTemplateRid] = await mainDb.query<any>(
-            rawQueries.fetchNotificationEmailTemplatesForRule(ruleRid),
-            { type: QueryTypes.SELECT }
-        );
-
+                rawQueries.fetchNotificationInAppTemplatesForRule(ruleRid),
+                { type: QueryTypes.SELECT }
+            );
+        } else {
+            [notificationTemplateRid] = await mainDb.query<any>(
+                rawQueries.fetchNotificationEmailTemplatesForRule(ruleRid),
+                { type: QueryTypes.SELECT }
+            );
+        }
+        if (
+            notificationTemplateRid === undefined ||
+            notificationTemplateRid === null ||
+            typeof notificationTemplateRid !== 'object' ||
+            !('template_rid' in notificationTemplateRid) ||
+            !notificationTemplateRid.template_rid
+        ) {
+            return {
+                templateDetails: []
+            };
         }
         const templateDetails = await mainDb.query<any>(
             rawQueries.fetchNotificationTemplateDetails(
@@ -1074,9 +1082,7 @@ export class WorkFlowService {
     };
   }
 
-async triggerNotification(taskContext:any,channel:string, ruleRid:string): Promise<void> {
-    // Implementation for changing assignee
-    
+async triggerNotification(taskContext:any,channel:string, ruleRid:string): Promise<void> {    
     const { accountNumber, parentAccountId } =
         await this.fetchValidAccountNumberById(
           taskContext.accountRid
@@ -1089,28 +1095,27 @@ async triggerNotification(taskContext:any,channel:string, ruleRid:string): Promi
         channel,
         ruleRid
     );
-    // Only one template detail is expected
-    const detail = Array.isArray(templateDetails.templateDetails)
-        ? templateDetails.templateDetails[0]
-        : templateDetails.templateDetails;
-    if (channel.includes('In App')) {
-        await this.sentNotification(
-            { templateDetails: detail },
-            taskContext.targetUserID,
-            taskContext.targetEmail
-        );
-    }
-    if (channel.includes('Email')) {
-        await this.sendNotificationEmail(
-            accountNumber,
-            taskContext.accountRid,
-            {
-                to_email: taskContext.targetEmail,
-                subject:  detail.subject,
-                body_html: detail.message_template,
-            },
-            taskContext.userId
-        );
+    if (templateDetails && Array.isArray(templateDetails.templateDetails) && templateDetails.templateDetails.length > 0) {
+        const detail = templateDetails.templateDetails[0];
+        if (channel.includes('In App')) {
+            await this.sentNotification(
+                { templateDetails: detail },
+                taskContext.targetUserID,
+                taskContext.targetEmail
+            );
+        }
+        if (channel.includes('Email')) {
+            await this.sendNotificationEmail(
+                accountNumber,
+                taskContext.accountRid,
+                {
+                    to_email: taskContext.targetEmail,
+                    subject: detail.subject,
+                    body_html: detail.message_template,
+                },
+                taskContext.userId
+            );
+        }
     }
 
     }
