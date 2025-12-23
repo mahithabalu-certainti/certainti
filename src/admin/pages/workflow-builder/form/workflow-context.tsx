@@ -44,7 +44,10 @@ interface WorkflowContextValue {
 
   // Rule metadata
   updateRuleName: (name: string) => void;
-  updateActionTemplate: (actionId: string, templateData: CreateRulePayload) => void;
+  updateActionTemplate: (
+    actionId: string,
+    templateData: CreateRulePayload
+  ) => void;
 
   // Navigation
   goToStep: (
@@ -91,7 +94,7 @@ export const WorkflowProvider: React.FC<WorkflowProviderProps> = ({
   const [rule, setRule] = useState<Rule>(
     initialRule || {
       id: crypto.randomUUID(),
-      name: 'Untitled rule',
+      name: '',
       trigger: null,
       conditions: [],
       actions: [],
@@ -425,7 +428,7 @@ export const WorkflowProvider: React.FC<WorkflowProviderProps> = ({
   // 3. Condition type is selected but no conditions added yet (user can skip)
   const canProceedToActions = !!(
     rule.conditionType?.condition_type?.toLowerCase() ===
-    ConditionTypeEnum.then ||
+      ConditionTypeEnum.then ||
     areAllConditionsComplete ||
     (rule.conditionType && rule.conditions.length === 0)
   );
