@@ -3433,8 +3433,21 @@ class ProjectIngestionService {
           for (const config of allPlatformConfigs) {
             const effStart = new Date(config.effective_start_date);
             const effEnd = new Date(config.effective_end_date);
-            // Check overlap: fiscalYearStart <= effEnd && fiscalYearEnd >= effStart
-            if (fiscalYearStart <= effEnd && fiscalYearEnd >= effStart) {
+            // Optimized: prefer config.config_json.project_type, fallback to config.project_type_rid
+            let configProjectTypes: string[] = [];
+            const pjType = config.config_json?.project_type ?? config.project_type_rid;
+            if (Array.isArray(pjType)) {
+              configProjectTypes = pjType.map(String);
+            } else if (typeof pjType === 'string') {
+              configProjectTypes = pjType.split(',').map((s: string) => s.trim());
+            } else if (pjType != null) {
+              configProjectTypes = [String(pjType)];
+            }
+            if (
+              fiscalYearStart <= effEnd &&
+              fiscalYearEnd >= effStart &&
+              configProjectTypes.includes(String(childObj.project_type_rid))
+            ) {
               is_rd_trigger_qualified = true;
               break;
             }
