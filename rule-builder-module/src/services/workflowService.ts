@@ -832,9 +832,11 @@ export class WorkFlowService {
         const triggeredActions: Record<string, any[]> = {};
         const results: Record<string, boolean> = {};
         for (const rule_rid in actionsByRule) {
+            console.log("rule id" + rule_rid);
+            console.log("conditionLength" + allConditions.length);
             let ruleResult = true;
-            if (conditionsByRule.length > 0) {
-                const ruleConditions = conditionsByRule[rule_rid];
+            const ruleConditions = conditionsByRule[rule_rid] ?? [];
+            if (ruleConditions.length > 0) {
                 for (let i = 0; i < ruleConditions.length; i++) {
                     const condition = ruleConditions[i];
                     const conditionResult = await this.evaluateCondition(condition, entity);
@@ -856,7 +858,7 @@ export class WorkFlowService {
             //Execute actions if:
             // - no conditions exist
             // - OR conditions evaluated to true
-            if (conditionsByRule.length === 0 || ruleResult) {
+            if (ruleConditions.length === 0 || ruleResult) {
                 const actions = actionsByRule[rule_rid] || [];
                 for (const action of actions) {
                     await this.executeAction(action, entity, userId, rule_rid);
@@ -908,6 +910,7 @@ export class WorkFlowService {
         }
         logMessage(`Evaluating condition: ${fieldKey} ${condition.operator} ${conditionValue} against entity value: ${entityValue}`);
         const operator = (condition.operator || "").toLowerCase();
+        //console.log(String(entityValue).toLowerCase() + "    " + String(conditionValue).toLowerCase());
         switch (operator) {
             case "equals":
                 return String(entityValue).toLowerCase() === String(conditionValue).toLowerCase();
