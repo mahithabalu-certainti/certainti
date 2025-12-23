@@ -977,6 +977,14 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
               },
             ],
           });
+          // Refetch kanban board to update attachment counts
+          if (onTaskUpdate) {
+            onTaskUpdate();
+          } else {
+            queryClient.invalidateQueries({
+              queryKey: ['kanbanBoardData', accountId, caseId],
+            });
+          }
           successToast('Attachment deleted successfully');
         } catch (error) {
           let errorMessage = 'Failed to delete attachments';
@@ -1036,6 +1044,14 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
               },
             ],
           });
+          // Refetch kanban board to update attachment counts
+          if (onTaskUpdate) {
+            onTaskUpdate();
+          } else {
+            queryClient.invalidateQueries({
+              queryKey: ['kanbanBoardData', accountId, caseId],
+            });
+          }
           successToast('Attachment uploaded successfully');
         } catch (error) {
           let errorMessage = 'Failed to upload attachments';
