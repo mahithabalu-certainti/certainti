@@ -19,7 +19,7 @@ const TriggerManager: React.FC<TriggerManagerProps> = ({
   const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedScope, setSelectedScope] = useState('all');
-  const { rule } = useWorkflowContext();
+  const { rule, removeTrigger } = useWorkflowContext();
 
   const {
     data: eventListData,
@@ -146,6 +146,7 @@ const TriggerManager: React.FC<TriggerManagerProps> = ({
                 trigger={rule.trigger}
                 onSelect={(trigger) => onSelect(trigger as Trigger)}
                 isSelected={true}
+                onDelete={removeTrigger} // Show delete icon for selected trigger
               />
             </div>
           </div>
@@ -169,40 +170,49 @@ const TriggerManager: React.FC<TriggerManagerProps> = ({
           <>
             {/* Category sections */}
             {selectedScope === 'all' ? (
-              Object.entries(groupedTriggers).map(([categoryId, list]) => {
-                const category = triggerCategories.find(
-                  (c) => c.id === categoryId
-                );
-                if (!category || category.id === 'all') return null;
-
-                // Filter out already selected trigger from this category
-                const filteredList = list.filter(
-                  (trigger) => trigger.id !== rule.trigger?.id
-                );
-                if (filteredList.length === 0) return null;
-
-                return (
-                  <div key={categoryId} className='px-6 space-y-2'>
-                    <h3
-                      className='text-sm font-semibold text-[#425A76] uppercase sticky top-0
-                                 bg-gray-50 z-10 py-2'
-                    >
-                      {category.label}
-                    </h3>
-                    <div className='grid grid-cols-1 md:grid-cols-4 gap-3'>
-                      {filteredList.map((trigger) => (
-                        <TriggerCard
-                          key={trigger.id}
-                          trigger={trigger}
-                          onSelect={(trigger) => onSelect(trigger as Trigger)}
-                          isSelected={isTriggerSelected(trigger.id)}
-                          disabled={isEditView}
-                        />
-                      ))}
-                    </div>
+              filteredTriggers.length === 0 ? (
+                <div className='text-center py-10 text-[#425A76]'>
+                  <div className='text-lg font-semibold mb-2'>
+                    No triggers found
                   </div>
-                );
-              })
+                </div>
+              ) : (
+                Object.entries(groupedTriggers).map(([categoryId, list]) => {
+                  const category = triggerCategories.find(
+                    (c) => c.id === categoryId
+                  );
+                  if (!category || category.id === 'all') return null;
+
+                  // Show all triggers in category, including already selected one
+                  return (
+                    <div key={categoryId} className='px-6 space-y-2'>
+                      <h3
+                        className='text-sm font-semibold text-[#425A76] uppercase sticky top-0
+                                   bg-gray-50 z-10 py-2'
+                      >
+                        {category.label}
+                      </h3>
+                      <div className='grid grid-cols-1 md:grid-cols-4 gap-3'>
+                        {list.map((trigger) => {
+                          const isSelected = isTriggerSelected(trigger.id);
+                          return (
+                            <TriggerCard
+                              key={trigger.id}
+                              trigger={trigger}
+                              onSelect={(trigger) =>
+                                onSelect(trigger as Trigger)
+                              }
+                              isSelected={isSelected}
+                              disabled={isEditView || isSelected} // Disable if in edit view or already selected
+                              onDelete={isSelected ? removeTrigger : undefined} // Show delete icon for selected trigger
+                            />
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })
+              )
             ) : groupedTriggers[selectedScope]?.length ? (
               <div className='px-6 space-y-2'>
                 <h3
@@ -212,22 +222,38 @@ const TriggerManager: React.FC<TriggerManagerProps> = ({
                   {triggerCategories.find((c) => c.id === selectedScope)?.label}
                 </h3>
                 <div className='grid grid-cols-1 md:grid-cols-4 gap-3'>
-                  {groupedTriggers[selectedScope]
-                    .filter((trigger) => trigger.id !== rule.trigger?.id) // Exclude already selected
-                    .map((trigger) => (
+                  {groupedTriggers[selectedScope].map((trigger) => {
+                    const isSelected = isTriggerSelected(trigger.id);
+                    return (
                       <TriggerCard
                         key={trigger.id}
                         trigger={trigger}
                         onSelect={(trigger) => onSelect(trigger as Trigger)}
-                        isSelected={isTriggerSelected(trigger.id)}
-                        disabled={isEditView}
+                        isSelected={isSelected}
+                        disabled={isEditView || isSelected} // Disable if in edit view or already selected
+                        onDelete={isSelected ? removeTrigger : undefined} // Show delete icon for selected trigger
                       />
-                    ))}
+                    );
+                  })}
                 </div>
               </div>
             ) : (
-              <div className='text-center py-10 text-[#425A76] text-sm'>
-                No triggers found.
+              <div className='px-6 space-y-2'>
+                <h3
+                  className='text-sm font-semibold text-[#425A76] uppercase sticky top-0
+                             bg-gray-50 z-10 py-2'
+                >
+                  {triggerCategories.find((c) => c.id === selectedScope)?.label}
+                </h3>
+                <div className='text-center py-10 text-[#425A76]'>
+                  <div className='text-[12px] font-medium mb-2'>
+                    No triggers found in{' '}
+                    {
+                      triggerCategories.find((c) => c.id === selectedScope)
+                        ?.label
+                    }
+                  </div>
+                </div>
               </div>
             )}
           </>

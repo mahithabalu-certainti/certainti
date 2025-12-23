@@ -54,7 +54,7 @@ export const getWorkflowColumns = (
   {
     id: 'modified_user_name',
     sortId: 'modified_user_name',
-    label: 'Modified By',
+    label: 'Updated By',
     width: 180,
     sortable: true,
     // hide:
@@ -64,7 +64,7 @@ export const getWorkflowColumns = (
   {
     id: 'modified_datetime',
     sortId: 'modified_datetime',
-    label: 'Modified On',
+    label: 'Updated On',
     width: 200,
     sortable: true,
     render: (row) => formatDateToYYYYMMDDWithTime(row.modified_datetime),

@@ -22,11 +22,13 @@ import { CaseListTable } from './table/case-table';
 interface CasesProps {
   onSelectionChange?: (selectedIds: string[]) => void;
   initialSelectedIds?: string[];
+  resetFilterTrigger?: number;
 }
 
 const Cases: React.FC<CasesProps> = ({ 
   onSelectionChange,
-  initialSelectedIds 
+  initialSelectedIds,
+  resetFilterTrigger
 }) => {
   const [appliedFilters, setAppliedFilters] = useState<FilterTypes>({});
   const [page, setPage] = useState<number>(1);
@@ -242,6 +244,7 @@ const Cases: React.FC<CasesProps> = ({
                 }));
               }}
               handleSorting={handleSorting}
+              resetFilterTrigger={resetFilterTrigger}
             />
           </Suspense>
         </div>

@@ -65,7 +65,8 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
   // Check if we should show the Action Template step
   const shouldShowActionTemplate = rule.actions.some(
     (action) =>
-      action.name === ActionTypeEnum.InApp || action.name === ActionTypeEnum.Email
+      action.name === ActionTypeEnum.InApp ||
+      action.name === ActionTypeEnum.Email
   );
 
   const handleStartEdit = () => {
@@ -276,10 +277,11 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
                       handleCancelEdit();
                     }
                   }}
-                  className={`placeholder-custom-color text-[13px] w-[200px] font-medium text-[#425A76] px-1 bg-transparent border-0 border-b-1 outline-none ${showRuleNameError && ruleNameError
-                    ? 'border-b-red-500'
-                    : 'border-b-transparent focus:border-b-blue-500'
-                    }`}
+                  className={`placeholder-custom-color text-[13px] w-[200px] font-medium text-[#425A76] px-1 bg-transparent border-0 border-b-1 outline-none ${
+                    showRuleNameError && ruleNameError
+                      ? 'border-b-red-500'
+                      : 'border-b-transparent focus:border-b-blue-500'
+                  }`}
                   style={{
                     paddingRight:
                       showRuleNameError && ruleNameError ? '24px' : '2px',
@@ -288,10 +290,11 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
               ) : (
                 <div className='relative max-w-[200px]'>
                   <h1
-                    className={`text-[14px] font-medium text-[#425A76] border-b-1 px-1 overflow-hidden text-ellipsis whitespace-nowrap ${showRuleNameError && ruleNameError
-                      ? 'border-b-red-500'
-                      : 'border-b-transparent'
-                      }`}
+                    className={`text-[14px] font-medium text-[#425A76] border-b-1 px-1 overflow-hidden text-ellipsis whitespace-nowrap ${
+                      showRuleNameError && ruleNameError
+                        ? 'border-b-red-500'
+                        : 'border-b-transparent'
+                    }`}
                     style={{
                       paddingRight:
                         showRuleNameError && ruleNameError ? '24px' : '8px',
@@ -356,20 +359,22 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
             <div className='w-[90%] max-w-[90%]'>
               {/* Trigger Block */}
               <div
-                className={`border rounded-lg p-4 cursor-pointer transition-all ${currentStep === 'trigger'
-                  ? 'border-blue-500 bg-blue-50'
-                  : rule.trigger
-                    ? 'border border-[#98fb98] bg-[#E0FEE0]'
-                    : 'border-gray-300 bg-white'
-                  }`}
+                className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                  currentStep === 'trigger'
+                    ? 'border-blue-500 bg-blue-50'
+                    : rule.trigger
+                      ? 'border border-[#98fb98] bg-[#E0FEE0]'
+                      : 'border-gray-300 bg-white'
+                }`}
                 onClick={() => currentStep !== 'trigger' && goToStep('trigger')}
               >
                 <div className='flex items-start gap-3'>
                   <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 border ${rule.trigger
-                      ? 'bg-green-200 border-green-500 text-green-700'
-                      : 'bg-blue-200 border border-blue-500 text-blue-700'
-                      }`}
+                    className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 border ${
+                      rule.trigger
+                        ? 'bg-green-200 border-green-500 text-green-700'
+                        : 'bg-blue-200 border border-blue-500 text-blue-700'
+                    }`}
                   >
                     <span>⏻</span>
                   </div>
@@ -409,24 +414,26 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
               <ConnectorLine
                 active={Boolean(
                   rule.trigger &&
-                  currentStep === 'conditions' &&
-                  !rule.conditions.length
+                    currentStep === 'conditions' &&
+                    !rule.conditions.length
                 )}
               />
 
               {/* Conditions Block */}
               <div
-                className={`border rounded-lg p-4 ${rule.trigger && currentStep !== 'conditions'
-                  ? 'cursor-pointer'
-                  : 'cursor-default'
-                  } transition-all ${currentStep === 'conditions'
+                className={`border rounded-lg p-4 ${
+                  rule.trigger && currentStep !== 'conditions'
+                    ? 'cursor-pointer'
+                    : 'cursor-default'
+                } transition-all ${
+                  currentStep === 'conditions'
                     ? 'border-blue-500 bg-blue-50'
                     : rule.conditions.length > 0 ||
-                      rule.conditionType?.condition_type?.toLowerCase() ===
-                      ConditionTypeEnum.then
+                        rule.conditionType?.condition_type?.toLowerCase() ===
+                          ConditionTypeEnum.then
                       ? 'border-amber-300 bg-amber-50'
                       : 'border-gray-300 bg-white'
-                  }`}
+                }`}
                 onClick={() =>
                   rule.trigger &&
                   currentStep !== 'conditions' &&
@@ -435,30 +442,32 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
               >
                 <div className='flex items-start gap-3'>
                   <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 border ${currentStep === 'conditions' &&
+                    className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 border ${
+                      currentStep === 'conditions' &&
                       rule.conditions.length === 0 &&
                       rule.conditionType?.condition_type?.toLowerCase() !==
-                      ConditionTypeEnum.then
-                      ? 'border-blue-500 bg-blue-200'
-                      : rule.conditions.length > 0 ||
-                        rule.conditionType?.condition_type?.toLowerCase() ===
                         ConditionTypeEnum.then
-                        ? 'bg-[#FFF3B3] border-[#FFD700]'
-                        : 'border-gray-300 bg-gray-200'
-                      }`}
+                        ? 'border-blue-500 bg-blue-200'
+                        : rule.conditions.length > 0 ||
+                            rule.conditionType?.condition_type?.toLowerCase() ===
+                              ConditionTypeEnum.then
+                          ? 'bg-[#FFF3B3] border-[#FFD700]'
+                          : 'border-gray-300 bg-gray-200'
+                    }`}
                   >
                     <span
-                      className={`text-[16px] ${currentStep === 'conditions' &&
+                      className={`text-[16px] ${
+                        currentStep === 'conditions' &&
                         rule.conditions.length === 0 &&
                         rule.conditionType?.condition_type?.toLowerCase() !==
-                        ConditionTypeEnum.then
-                        ? 'text-blue-700'
-                        : rule.conditions.length > 0 ||
-                          rule.conditionType?.condition_type?.toLowerCase() ===
                           ConditionTypeEnum.then
-                          ? 'text-amber-700'
-                          : 'text-[#425A76]'
-                        }`}
+                          ? 'text-blue-700'
+                          : rule.conditions.length > 0 ||
+                              rule.conditionType?.condition_type?.toLowerCase() ===
+                                ConditionTypeEnum.then
+                            ? 'text-amber-700'
+                            : 'text-[#425A76]'
+                      }`}
                     >
                       ≈
                     </span>
@@ -471,7 +480,7 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
                       {rule.conditions.length > 0
                         ? `${rule.conditions.length} condition(s)`
                         : rule.conditionType?.condition_type?.toLowerCase() ===
-                          ConditionTypeEnum.then
+                            ConditionTypeEnum.then
                           ? 'No conditions (Optional)'
                           : 'Add conditions'}
                     </h3>
@@ -479,7 +488,7 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
                       {rule.conditions.length > 0
                         ? 'Conditions that must be met for the rule to execute'
                         : rule.conditionType?.condition_type?.toLowerCase() ===
-                          ConditionTypeEnum.then
+                            ConditionTypeEnum.then
                           ? 'Conditions are optional for THEN type'
                           : 'Filter events that trigger the rule'}
                     </p>
@@ -531,24 +540,27 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
               <ConnectorLine
                 active={
                   rule.conditions.length > 0 &&
-                  (currentStep === 'actions' || currentStep === 'action-template') &&
+                  (currentStep === 'actions' ||
+                    currentStep === 'action-template') &&
                   !rule.actions.length
                 }
               />
 
               {/* Actions Block */}
               <div
-                className={`border rounded-lg p-4 ${canProceedToActions &&
+                className={`border rounded-lg p-4 ${
+                  canProceedToActions &&
                   currentStep !== 'actions' &&
                   !isCategorySelectorShowing
-                  ? 'cursor-pointer'
-                  : 'cursor-default'
-                  } transition-all border ${currentStep === 'actions'
+                    ? 'cursor-pointer'
+                    : 'cursor-default'
+                } transition-all border ${
+                  currentStep === 'actions'
                     ? 'border-blue-500 bg-blue-50'
                     : rule.actions.length > 0
                       ? 'border border-[#ff7256d3] bg-[#ffd5cd8d]'
                       : 'border-gray-300 bg-white'
-                  }`}
+                }`}
                 onClick={() =>
                   canProceedToActions &&
                   currentStep !== 'actions' &&
@@ -558,20 +570,22 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
               >
                 <div className='flex items-start gap-3'>
                   <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 border ${currentStep === 'actions' && rule.actions.length === 0
-                      ? 'border-blue-500 bg-blue-200'
-                      : rule.actions.length > 0
-                        ? 'border border-[#FF7256] bg-[#FFD5CD]'
-                        : 'bg-gray-200 border-gray-300'
-                      }`}
+                    className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 border ${
+                      currentStep === 'actions' && rule.actions.length === 0
+                        ? 'border-blue-500 bg-blue-200'
+                        : rule.actions.length > 0
+                          ? 'border border-[#FF7256] bg-[#FFD5CD]'
+                          : 'bg-gray-200 border-gray-300'
+                    }`}
                   >
                     <span
-                      className={`text-sm ${currentStep === 'actions' && rule.actions.length === 0
-                        ? 'text-blue-700'
-                        : rule.actions.length > 0
-                          ? 'text-yellow-700'
-                          : 'text-gray-700'
-                        }`}
+                      className={`text-sm ${
+                        currentStep === 'actions' && rule.actions.length === 0
+                          ? 'text-blue-700'
+                          : rule.actions.length > 0
+                            ? 'text-yellow-700'
+                            : 'text-gray-700'
+                      }`}
                     >
                       <svg
                         xmlns='http://www.w3.org/2000/svg'
@@ -611,19 +625,21 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
 
                   {/* Action Template Block */}
                   <div
-                    className={`border rounded-lg p-4 ${canProceedToActionTemplate &&
+                    className={`border rounded-lg p-4 ${
+                      canProceedToActionTemplate &&
                       currentStep !== 'action-template'
-                      ? 'cursor-pointer'
-                      : 'cursor-default'
-                      } transition-all ${currentStep === 'action-template'
+                        ? 'cursor-pointer'
+                        : 'cursor-default'
+                    } transition-all ${
+                      currentStep === 'action-template'
                         ? 'border-blue-500 bg-blue-50'
                         : rule.actions.length > 0 &&
-                          rule.actions.every(
-                            (action) => rule.actionTemplates?.[action.id]
-                          )
-                          ? 'border border-[#ff7256d3] bg-[#ffd5cd8d]'
+                            rule.actions.every(
+                              (action) => rule.actionTemplates?.[action.id]
+                            )
+                          ? 'border border-[#d467d4] bg-[#d446d41f]'
                           : 'border-gray-300 bg-white'
-                      }`}
+                    }`}
                     onClick={() =>
                       canProceedToActionTemplate &&
                       currentStep !== 'action-template' &&
@@ -632,41 +648,44 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
                   >
                     <div className='flex items-start gap-3'>
                       <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 border ${currentStep === 'action-template' &&
+                        className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 border ${
+                          currentStep === 'action-template' &&
                           rule.actions.some(
                             (action) => !rule.actionTemplates?.[action.id]
                           )
-                          ? 'border-blue-500 bg-blue-200'
-                          : rule.actions.length > 0 &&
-                            rule.actions.every(
-                              (action) => rule.actionTemplates?.[action.id]
-                            )
-                            ? 'border border-[#FF7256] bg-[#FFD5CD]'
-                            : 'bg-gray-200 border-gray-300'
-                          }`}
+                            ? 'border-blue-500 bg-blue-200'
+                            : rule.actions.length > 0 &&
+                                rule.actions.every(
+                                  (action) => rule.actionTemplates?.[action.id]
+                                )
+                              ? 'border border-[#d467d4] bg-[#dda0dd1f]'
+                              : 'bg-gray-200 border-gray-300'
+                        }`}
                       >
                         <span
-                          className={`text-sm ${currentStep === 'action-template' &&
+                          className={`text-sm ${
+                            currentStep === 'action-template' &&
                             rule.actions.some(
                               (action) => !rule.actionTemplates?.[action.id]
                             )
-                            ? 'text-blue-700'
-                            : rule.actions.length > 0 &&
-                              rule.actions.every(
-                                (action) => rule.actionTemplates?.[action.id]
-                              )
-                              ? 'text-yellow-700'
-                              : 'text-gray-700'
-                            }`}
+                              ? 'text-blue-700'
+                              : rule.actions.length > 0 &&
+                                  rule.actions.every(
+                                    (action) =>
+                                      rule.actionTemplates?.[action.id]
+                                  )
+                                ? 'text-[#d720d7]'
+                                : 'text-gray-700'
+                          }`}
                         >
-                          T
+                          🛠
                         </span>
                       </div>
                       <div className='flex-1'>
                         <h3 className='text-sm font-semibold text-gray-900 mb-1'>
                           Template:{' '}
                           {rule.actionTemplates &&
-                            Object.keys(rule.actionTemplates).length > 0
+                          Object.keys(rule.actionTemplates).length > 0
                             ? `${Object.keys(rule.actionTemplates).length}/${rule.actions.length} Configured`
                             : 'Configure Templates'}
                         </h3>
@@ -709,27 +728,29 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
                 )}
 
                 {/* Next Button - Show on trigger, conditions and actions steps */}
-                {currentStep !== 'action-template' && !(currentStep === 'actions' && !shouldShowActionTemplate) && (
-                  <TextButton
-                    label={
-                      currentStep === 'trigger'
-                        ? 'Next to Conditions'
-                        : currentStep === 'conditions'
-                          ? 'Next to Actions'
-                          : currentStep === 'actions' && shouldShowActionTemplate
-                            ? 'Next to Template'
-                            : 'Next'
-                    }
-                    onClick={handleNext}
-                    disabled={isButtonDisabled}
-                    sx={{
-                      width: '135px',
-                      minWidth: '135px',
-                      fontSize: '12px',
-                      fontWeight: 400,
-                    }}
-                  />
-                )}
+                {currentStep !== 'action-template' &&
+                  !(currentStep === 'actions' && !shouldShowActionTemplate) && (
+                    <TextButton
+                      label={
+                        currentStep === 'trigger'
+                          ? 'Next to Conditions'
+                          : currentStep === 'conditions'
+                            ? 'Next to Actions'
+                            : currentStep === 'actions' &&
+                                shouldShowActionTemplate
+                              ? 'Next to Template'
+                              : 'Next'
+                      }
+                      onClick={handleNext}
+                      disabled={isButtonDisabled}
+                      sx={{
+                        width: '135px',
+                        minWidth: '135px',
+                        fontSize: '12px',
+                        fontWeight: 400,
+                      }}
+                    />
+                  )}
               </div>
             </div>
           </div>

@@ -194,6 +194,7 @@ export interface FilterModalProps {
   handleSorting?: (sortBy: string, sortOrder: 'asc' | 'desc') => void;
   onFilterChange?: (fieldName: string, value: FilterValue) => void;
   carryFilterData?: boolean;
+  resetFilterTrigger?: number;
 }
 
 export const StatusOptions = [
