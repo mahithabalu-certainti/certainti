@@ -129,37 +129,42 @@ const ListTable = <T extends RowData>({
 
   // Initialize selected rows from initialSelectedIds
   useEffect(() => {
-    if (initialSelectedIds && initialSelectedIds.length > 0 && data && data.length > 0) {
+    if (
+      initialSelectedIds &&
+      initialSelectedIds.length > 0 &&
+      data &&
+      data.length > 0
+    ) {
       const initialSet = new Set(initialSelectedIds);
-      
+
       // Auto-select parents if their children are in initialSelectedIds
       // This ensures proper hierarchical selection
       data.forEach((parent) => {
         const parentId = getRowId(parent);
         const children = parent[childrenKey] as T[] | undefined;
-        
+
         if (children && children.length > 0) {
           // Check if any child is in initialSelectedIds
-          const hasSelectedChild = children.some((child) => 
+          const hasSelectedChild = children.some((child) =>
             initialSet.has(getRowId(child))
           );
-          
+
           // If any child is selected, also select the parent
           if (hasSelectedChild) {
             initialSet.add(parentId);
           }
-          
+
           // Also check grandchildren for accounts/projects
           if (grandchildrenKey) {
             children.forEach((child) => {
               const childId = getRowId(child);
               const grandchildren = child[grandchildrenKey] as T[] | undefined;
-              
+
               if (grandchildren && grandchildren.length > 0) {
-                const hasSelectedGrandchild = grandchildren.some((_, index) => 
+                const hasSelectedGrandchild = grandchildren.some((_, index) =>
                   initialSet.has(`${childId}-gc-${index}`)
                 );
-                
+
                 // If any grandchild is selected, select both child and parent
                 if (hasSelectedGrandchild) {
                   initialSet.add(childId);
@@ -170,7 +175,7 @@ const ListTable = <T extends RowData>({
           }
         }
       });
-      
+
       setSelectedRows(initialSet);
       onSelectionChange?.(Array.from(initialSet));
     }

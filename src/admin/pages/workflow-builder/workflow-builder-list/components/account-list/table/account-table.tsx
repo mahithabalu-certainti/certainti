@@ -99,7 +99,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
         account.child_accounts?.some((child) => child.rid === id)
       );
     });
-    
+
     onSelectionChange?.(childIds);
   };
 

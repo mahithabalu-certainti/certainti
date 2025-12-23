@@ -137,7 +137,7 @@ const RuleMapModal: React.FC<RuleMapModalProps> = ({
   const handleBack = () => {
     // Reset table filters when going back
     console.log('handleBack - triggering reset');
-    setResetFilterTrigger(prev => {
+    setResetFilterTrigger((prev) => {
       console.log('Previous trigger value:', prev);
       return prev + 1;
     });
@@ -149,11 +149,11 @@ const RuleMapModal: React.FC<RuleMapModalProps> = ({
     if (!createRuleMap.isPending && !updateRuleMap.isPending) {
       // Reset table filters when closing
       console.log('handleClose - triggering reset');
-      setResetFilterTrigger(prev => {
+      setResetFilterTrigger((prev) => {
         console.log('Previous trigger value:', prev);
         return prev + 1;
       });
-      
+
       // Use setTimeout to ensure the trigger propagates before closing
       setTimeout(() => {
         resetModalState();
@@ -173,7 +173,9 @@ const RuleMapModal: React.FC<RuleMapModalProps> = ({
       case 'case task':
         return (
           <TaskTemplates
-            key={initialEntityIds.length > 0 ? initialEntityIds.join(',') : 'empty'}
+            key={
+              initialEntityIds.length > 0 ? initialEntityIds.join(',') : 'empty'
+            }
             onSelectionChange={handleSelectionChange}
             initialSelectedIds={isRuleMapped ? initialEntityIds : undefined}
             resetFilterTrigger={resetFilterTrigger}
@@ -182,7 +184,9 @@ const RuleMapModal: React.FC<RuleMapModalProps> = ({
       case 'case':
         return (
           <Cases
-            key={initialEntityIds.length > 0 ? initialEntityIds.join(',') : 'empty'}
+            key={
+              initialEntityIds.length > 0 ? initialEntityIds.join(',') : 'empty'
+            }
             onSelectionChange={handleSelectionChange}
             initialSelectedIds={isRuleMapped ? initialEntityIds : undefined}
             resetFilterTrigger={resetFilterTrigger}
@@ -191,7 +195,9 @@ const RuleMapModal: React.FC<RuleMapModalProps> = ({
       case 'account':
         return (
           <Accounts
-            key={initialEntityIds.length > 0 ? initialEntityIds.join(',') : 'empty'}
+            key={
+              initialEntityIds.length > 0 ? initialEntityIds.join(',') : 'empty'
+            }
             onSelectionChange={handleSelectionChange}
             initialSelectedIds={isRuleMapped ? initialEntityIds : undefined}
             resetFilterTrigger={resetFilterTrigger}
@@ -200,7 +206,9 @@ const RuleMapModal: React.FC<RuleMapModalProps> = ({
       case 'project':
         return (
           <Projects
-            key={initialEntityIds.length > 0 ? initialEntityIds.join(',') : 'empty'}
+            key={
+              initialEntityIds.length > 0 ? initialEntityIds.join(',') : 'empty'
+            }
             onSelectionChange={handleSelectionChange}
             initialSelectedIds={isRuleMapped ? initialEntityIds : undefined}
             resetFilterTrigger={resetFilterTrigger}

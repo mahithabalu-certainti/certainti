@@ -25,10 +25,10 @@ interface CasesProps {
   resetFilterTrigger?: number;
 }
 
-const Cases: React.FC<CasesProps> = ({ 
+const Cases: React.FC<CasesProps> = ({
   onSelectionChange,
   initialSelectedIds,
-  resetFilterTrigger
+  resetFilterTrigger,
 }) => {
   const [appliedFilters, setAppliedFilters] = useState<FilterTypes>({});
   const [page, setPage] = useState<number>(1);

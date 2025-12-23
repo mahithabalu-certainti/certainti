@@ -33,7 +33,6 @@ const ProjectTab: React.FC<ProjectTabProps> = ({
     accountID || '',
     caseId || '',
     projectID || ''
-
   );
 
   useEffect(() => {

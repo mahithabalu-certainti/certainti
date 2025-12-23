@@ -34,4 +34,3 @@ export const GEO_BASED_RULE = gql`
     }
   }
 `;
-

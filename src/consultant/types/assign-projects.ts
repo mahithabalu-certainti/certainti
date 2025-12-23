@@ -1,5 +1,5 @@
-import { AttachmentList } from "./attachment";
-import { NewProjectData } from "./project";
+import { AttachmentList } from './attachment';
+import { NewProjectData } from './project';
 
 export type AssignProject = {
   rid: string;
@@ -223,6 +223,6 @@ export interface CasesProjectDetailResponse {
   statusMessage: string;
   data: {
     project: NewProjectData;
-    attachment:  AttachmentList[]
+    attachment: AttachmentList[];
   };
 }

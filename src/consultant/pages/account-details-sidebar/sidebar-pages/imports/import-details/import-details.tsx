@@ -113,14 +113,15 @@ const ImportDetails: React.FC<ImportDetailsProps> = ({ handleBackClick }) => {
       label: 'Status',
       value: (
         <span
-          className={`font-semibold ${data?.status === 'Failed'
-            ? 'text-red-600'
-            : data?.status === 'Completed'
-              ? 'text-green-600'
-              : data?.status === 'Processing'
-                ? 'text-yellow-600'
-                : 'text-gray-700'
-            }`}
+          className={`font-semibold ${
+            data?.status === 'Failed'
+              ? 'text-red-600'
+              : data?.status === 'Completed'
+                ? 'text-green-600'
+                : data?.status === 'Processing'
+                  ? 'text-yellow-600'
+                  : 'text-gray-700'
+          }`}
         >
           {data?.status}
         </span>
