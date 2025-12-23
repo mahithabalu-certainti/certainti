@@ -124,7 +124,7 @@ export const rawQueries = {
   },
 
   fetchScopeEvents(scope_type_rid: string, status_rid: string): string {
-    let query = `SELECT se.rid , se.event_name, se.description,st.name AS scope_type_name, st.rid as scope_type_rid 
+    let query = `SELECT se.rid , se.event_name, se.description,st.name AS scope_type_name, st.rid as scope_type_rid,se.type 
     FROM ${MAIN_SCHEMA_NAME}.scopes st JOIN ${MAIN_SCHEMA_NAME}.scope_events se ON se.scope_type_rid = st.rid `;
     const conditions: string[] = [];
     if (scope_type_rid) {
@@ -165,7 +165,7 @@ export const rawQueries = {
   },
 
   fetchFields(category_rid: string, status_rid: string): string {
-    let query = `SELECT rf.rid, rf.name as name FROM ${MAIN_SCHEMA_NAME}.rule_fields rf JOIN ${MAIN_SCHEMA_NAME}.field_category_map fcm 
+    let query = `SELECT rf.rid, rf.name as name,rf.field_description FROM ${MAIN_SCHEMA_NAME}.rule_fields rf JOIN ${MAIN_SCHEMA_NAME}.field_category_map fcm 
     ON rf.rid = fcm.field_rid `;
     const conditions: string[] = [];
     conditions.push(`fcm.category_rid = '${category_rid}'`);
@@ -238,7 +238,7 @@ export const rawQueries = {
   fetchRulesFromEvent(event_rid: string, scope_type_rid: string, entity_rid: string): string {
     let query = `SELECT wrm.rid AS rule_rid,wrm.condition_rid,rm.apply_type FROM ${MAIN_SCHEMA_NAME}.workflow_rule_master wrm LEFT JOIN ${MAIN_SCHEMA_NAME}.workflow_rule_map rm 
     ON rm.rule_rid = wrm.rid LEFT JOIN ${MAIN_SCHEMA_NAME}.workflow_rule_scope_map rsm ON rsm.rule_rid = wrm.rid 
-    WHERE wrm.event_rid = '${event_rid}' AND wrm.scope_type_rid = '${scope_type_rid}'
+    WHERE wrm.event_rid = '${event_rid}' AND wrm.scope_type_rid = '${scope_type_rid}' AND wrm.is_active = true
     AND (
         rm.apply_type = 'ALL'
         OR (rm.apply_type = 'INDIVIDUAL' AND rsm.scope_entity_rid = '${entity_rid}')
@@ -285,7 +285,7 @@ export const rawQueries = {
   },
 
   fetchNotificationTemplateDetails(template_rid: string, channel: string,): string {
-    let query = `SELECT nt.message_template,nt.channel
+    let query = `SELECT nt.message_template,nt.channel,nt.subject
     FROM ${MAIN_SCHEMA_NAME}.notification_template nt 
     WHERE nt.rid = '${template_rid}'
     and nt.channel = '${channel}'
@@ -382,10 +382,10 @@ export const rawQueries = {
    fetchAllCases(inProgressStatusRid: string) {
     return `SELECT cs.rid, cs.status_rid, planned_submission_date,account_rid,case_owner_rid ,email FROM ${MAIN_SCHEMA_NAME}.case_summary  cs
     LEFT JOIN ${MAIN_SCHEMA_NAME}.user uu ON cs.case_owner_rid = uu.rid
-    WHERE cs.status_rid = '${inProgressStatusRid}'  limit 1`;
+    WHERE cs.status_rid = '${inProgressStatusRid}'`;
   },
   fetchAllCaseTask(inProgressStatusRid: string,taskType:string) {
-    return `SELECT task_rid, status_rid, effective_start_datetime,effective_end_datetime,account_rid FROM ${MAIN_SCHEMA_NAME}.task_summary WHERE status_rid = '${inProgressStatusRid}' and task_type_rid = '${taskType}'  limit 1`;
+    return `SELECT task_rid, status_rid, effective_start_datetime,effective_end_datetime,account_rid FROM ${MAIN_SCHEMA_NAME}.task_summary WHERE status_rid = '${inProgressStatusRid}' and task_type_rid = '${taskType}'`;
   },
   fetchAllCasesOverdue(inProgressStatusRid: string) {
     return `SELECT rid, status_rid, planned_submission_date FROM ${MAIN_SCHEMA_NAME}.case_summary WHERE status_rid = '${inProgressStatusRid}' AND planned_submission_date IS NOT NULL AND planned_submission_date <= CURRENT_DATE limit 1`;

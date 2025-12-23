@@ -38,6 +38,17 @@ export class RulemasterService {
     }> {
         const mainDb = await this.getMainDb();
         RuleMaster.initialize(mainDb);
+
+        const checkExists = await RuleMaster.findOne({ where: { rule_name: ruleRequest.rule_name } });
+        if (checkExists) {
+            console.log("here coming");
+            return {
+                statusCode: HttpStatus.BAD_REQUEST,
+                message: "",
+                errorMessage: "Rule name already exists"
+            };
+        }
+
         const rulem = await RuleMaster.create({
             rule_name: ruleRequest.rule_name,
             description: ruleRequest.description ?? null,
@@ -49,6 +60,8 @@ export class RulemasterService {
             schedule_offset_type: ruleRequest.schedule_offset_type ?? null,
             schedule_offset_value: ruleRequest.schedule_offset_value ?? null,
             created_by: ruleRequest.created_by,
+            in_app_template_rid: ruleRequest.in_app_template_rid ?? null,
+            email_template_rid: ruleRequest.email_template_rid ?? null
         });
 
         // for (const attr of attributesToTrack) {
@@ -254,9 +267,28 @@ export class RulemasterService {
         const oldRule = await RuleMaster.findOne({ where: { rid: ruleRequest.rule_rid } });
         if (!oldRule) {
             return {
-                statusCode: HttpStatus.NOT_FOUND,
+                statusCode: HttpStatus.BAD_REQUEST,
                 message: "",
+                errorMessage: "Rule not found"
             };
+        }
+
+
+        if (ruleRequest.rule_name) {
+            const existingRule = await RuleMaster.findOne({
+                where: {
+                    rule_name: ruleRequest.rule_name,
+                    rid: { [Op.ne]: ruleRequest.rule_rid }, // exclude current rule
+                },
+            });
+
+            if (existingRule) {
+                return {
+                    statusCode: HttpStatus.BAD_REQUEST,
+                    message: 'Rule name already exists',
+                    errorMessage: "Rule name already exists"
+                };
+            }
         }
 
         const oldRuleData = oldRule.toJSON();
