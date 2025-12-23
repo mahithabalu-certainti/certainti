@@ -558,8 +558,9 @@ export type FiscalDates = {
 
 export interface FinancialStateProps {
   accountId: string;
-  countryId: string;
-  fiscalYear: string;
+  countryId?: string;
+  fiscalYear?: string;
+  caseId?: string;
 }
 
 export interface ActivityMenuItem {

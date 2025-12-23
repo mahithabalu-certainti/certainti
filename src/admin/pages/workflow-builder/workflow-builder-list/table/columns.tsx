@@ -76,7 +76,7 @@ export const getWorkflowColumns = (
     id: 'createMap',
     sortId: 'create_map',
     label: 'Assign Rule',
-    width: 80,
+    width: 90,
     sortable: false,
     render: (row) => (
       <span

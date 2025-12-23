@@ -581,6 +581,9 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
         checklistTemplate:
           !milestonePermissionMap['checklist_template_rid']?.read &&
           !milestonePermissionMap['checklist_template_rid']?.edit,
+        checklist:
+          !milestonePermissionMap['checklist_template_rid']?.read &&
+          !milestonePermissionMap['checklist_template_rid']?.edit,
         tags:
           !milestonePermissionMap['tags']?.read &&
           !milestonePermissionMap['tags']?.edit,
@@ -675,6 +678,7 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
         description: !milestonePermissionMap['task_description']?.edit,
         checklistTemplate:
           !milestonePermissionMap['checklist_template_rid']?.edit,
+        checklist: !milestonePermissionMap['checklist_template_rid']?.edit,
         tags: !milestonePermissionMap['tags']?.edit,
         weightage: !milestonePermissionMap['weightage_rid']?.edit,
         category: !milestonePermissionMap['task_category_rid']?.edit,

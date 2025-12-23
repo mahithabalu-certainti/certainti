@@ -133,7 +133,7 @@ export const getCaseProjectResourceColumns = (
         !permissionMap?.['net_total_cost_pro_res']?.edit,
       render: (row) =>
         costDisplay(
-          row.net_total_cost_pro_res as unknown as string | number | null | undefined
+          row.net_total_cost_pro_res as unknown as string | number | null | undefined,row.currency_symbol
         ),
     },
     {

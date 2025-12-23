@@ -146,7 +146,7 @@ const TriggerManager: React.FC<TriggerManagerProps> = ({
                 trigger={rule.trigger}
                 onSelect={(trigger) => onSelect(trigger as Trigger)}
                 isSelected={true}
-                onDelete={removeTrigger} // Show delete icon for selected trigger
+                onDelete={!isEditView ? removeTrigger : undefined} // Only show delete icon in create mode
               />
             </div>
           </div>
@@ -204,7 +204,7 @@ const TriggerManager: React.FC<TriggerManagerProps> = ({
                               }
                               isSelected={isSelected}
                               disabled={isEditView || isSelected} // Disable if in edit view or already selected
-                              onDelete={isSelected ? removeTrigger : undefined} // Show delete icon for selected trigger
+                              onDelete={isSelected && !isEditView ? removeTrigger : undefined} // Only show delete icon in create mode
                             />
                           );
                         })}
@@ -231,7 +231,7 @@ const TriggerManager: React.FC<TriggerManagerProps> = ({
                         onSelect={(trigger) => onSelect(trigger as Trigger)}
                         isSelected={isSelected}
                         disabled={isEditView || isSelected} // Disable if in edit view or already selected
-                        onDelete={isSelected ? removeTrigger : undefined} // Show delete icon for selected trigger
+                        onDelete={isSelected && !isEditView ? removeTrigger : undefined} // Only show delete icon in create mode
                       />
                     );
                   })}

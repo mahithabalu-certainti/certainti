@@ -351,11 +351,10 @@ const ConditionManager: React.FC<ConditionManagerProps> = ({
                   >
                     <React.Suspense fallback={null}>
                       <SwapIcon
-                        className={`w-4 h-4 transition-transform duration-300 ${
-                          condition.logicalOperator === 'OR'
+                        className={`w-4 h-4 transition-transform duration-300 ${condition.logicalOperator === 'OR'
                             ? 'rotate-180 [&>path]:fill-[#0B5ED7]'
                             : '[&>path]:fill-[#374151]'
-                        }`}
+                          }`}
                       />
                     </React.Suspense>
                     {condition.logicalOperator === 'OR' ? 'OR' : 'AND'}
@@ -429,8 +428,9 @@ const ConditionManager: React.FC<ConditionManagerProps> = ({
       {/* Only show Add Condition button if condition type is NOT THEN or if conditions already exist */}
       {rule.trigger?.id &&
         rule.conditionType?.condition_type?.toLowerCase() !==
-          ConditionTypeEnum.then &&
-        (rule.conditions.length > 0 || !showConditionTypeSelector) && (
+        ConditionTypeEnum.then &&
+        (rule.conditions.length > 0 || !showConditionTypeSelector) &&
+        rule.conditions.length < 2 && (
           <button
             onClick={handleAddConditionClick}
             disabled={
@@ -440,9 +440,8 @@ const ConditionManager: React.FC<ConditionManagerProps> = ({
               isLoadingCategories ||
               (rule.conditions.length > 0 && !areAllConditionsComplete)
             }
-            className={`w-auto h-[28px] px-2.5 text-[13px] font-semibold flex items-center mt-4 rounded-[2px] border border-[#CBD6E2] text-[#425A76] hover:bg-gray-100 transition-all cursor-pointer disabled:cursor-default disabled:opacity-60 disabled:bg-gray-100 ${
-              rule.conditions.length === 0 ? 'mt-2' : 'mt-4'
-            }`}
+            className={`w-auto h-[28px] px-2.5 text-[13px] font-semibold flex items-center mt-4 rounded-[2px] border border-[#CBD6E2] text-[#425A76] hover:bg-gray-100 transition-all cursor-pointer disabled:cursor-default disabled:opacity-60 disabled:bg-gray-100 ${rule.conditions.length === 0 ? 'mt-2' : 'mt-4'
+              }`}
           >
             <React.Suspense fallback={null}>
               <div className='flex items-center justify-center gap-2'>
@@ -624,18 +623,16 @@ function ConditionTypeSelector({
               <button
                 key={conditionType.rid}
                 onClick={() => onSelect(conditionType)}
-                className={`w-full flex items-center gap-3 p-2 rounded-lg transition-colors text-left cursor-pointer group ${
-                  isSelected
+                className={`w-full flex items-center gap-3 p-2 rounded-lg transition-colors text-left cursor-pointer group ${isSelected
                     ? 'bg-blue-50 border border-blue-400'
                     : 'border border-transparent hover:border-blue-200 hover:bg-blue-50'
-                }`}
+                  }`}
               >
                 <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${
-                    isSelected
+                  className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${isSelected
                       ? 'bg-blue-200'
                       : 'bg-blue-100 group-hover:bg-blue-200'
-                  }`}
+                    }`}
                 >
                   <svg
                     className='w-4 h-4 text-blue-600'
@@ -653,9 +650,8 @@ function ConditionTypeSelector({
                 </div>
                 <div className='flex-1'>
                   <span
-                    className={`text-sm font-medium block ${
-                      isSelected ? 'text-blue-700' : 'text-[#425A76]'
-                    }`}
+                    className={`text-sm font-medium block ${isSelected ? 'text-blue-700' : 'text-[#425A76]'
+                      }`}
                   >
                     {conditionType.name}
                   </span>

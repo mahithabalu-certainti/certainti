@@ -247,6 +247,36 @@ export const transformApiResponseToRule = (data: RuleDetails): Rule => {
       }))
     : [];
 
+  // Map action templates if they exist in the rule
+  const actionTemplates: Record<string, Template | undefined> = {};
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const ruleData = data.rule as any;
+
+  if (ruleData.in_app_template_rid) {
+    const inAppAction = actions.find(
+      (a) => a.name === ActionTypeEnum.InApp || a.name === 'In App'
+    );
+    if (inAppAction) {
+      actionTemplates[inAppAction.id] = {
+        rid: ruleData.in_app_template_rid,
+        channel: 'In App',
+      };
+    }
+  }
+
+  if (ruleData.email_template_rid) {
+    const emailAction = actions.find(
+      (a) => a.name === ActionTypeEnum.Email || a.name === 'Email'
+    );
+    if (emailAction) {
+      actionTemplates[emailAction.id] = {
+        rid: ruleData.email_template_rid,
+        channel: 'Email',
+      };
+    }
+  }
+
   // Construct the Rule object with all RIDs preserved
   const rule: Rule = {
     id: data.rule.rid, // Rule RID preserved
@@ -257,6 +287,8 @@ export const transformApiResponseToRule = (data: RuleDetails): Rule => {
     actions,
     isActive: data.rule.is_active || false,
     conditionType,
+    actionTemplates:
+      Object.keys(actionTemplates).length > 0 ? actionTemplates : undefined,
   };
 
   return rule;
