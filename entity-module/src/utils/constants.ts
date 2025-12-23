@@ -1006,7 +1006,9 @@ export const rawQueries = {
     let formattedStateIds = stateIds.map((id: string) => `'${id}'`).join(",");
     return `SELECT rid, state_name, country_code FROM ${MAIN_SCHEMA_NAME}.state 
     WHERE 
-    rid IN (${formattedStateIds})`;
+    rid IN (${formattedStateIds})
+    AND
+    country_rid = '${country_rid}'`;
   },
   fetchStatesIds(schemaName: string, account_rid: string, fiscal_year: number) {
     return `
@@ -1014,7 +1016,7 @@ export const rawQueries = {
     WHERE 
     account_rid = '${account_rid}'
     AND
-    region_rid IS NOT NULL
+    fiscal_year = ${fiscal_year}
     `;
   },
   updateProjectFiscalEffectiveDatas(schemaName: string, data: any) {
