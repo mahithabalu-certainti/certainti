@@ -72,7 +72,7 @@ export interface ImportDetailsResponse {
   };
 }
 
-export type FailureType = 'stagingFailure' | 'loadFailure';
+export type FailureType = 'stagingFailure' | 'loadFailure' | 'warnings';
 
 export type ImportEntityType =
   | 'resource'

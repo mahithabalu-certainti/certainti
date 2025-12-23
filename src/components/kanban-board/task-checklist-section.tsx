@@ -130,7 +130,7 @@ const TaskChecklistSection: React.FC<TaskChecklistSectionProps> = ({
                 type='checkbox'
                 checked={item.completed}
                 onChange={() => handleChecklistItemToggle(item.id)}
-                className='w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500 focus:ring-2 cursor-pointer'
+                className='w-4 h-4 text-emerald-600 accent-emerald-600 border-gray-300 rounded cursor-pointer'
                 disabled={fieldDisabled.checklist}
               />
               <span

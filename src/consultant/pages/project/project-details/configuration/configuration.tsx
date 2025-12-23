@@ -15,6 +15,7 @@ import { clearFilters } from '../../../account-details-sidebar/components/filter
 import { checkPermission } from '../../../../../common-utils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
+import { ActivityDropdownItem } from '../../../../types';
 
 const ConfigTabs: ResourceTabs[] = [
   {
@@ -29,7 +30,12 @@ const ConfigTabs: ResourceTabs[] = [
   //   disable: true,
   // },
 ];
-const Configuration: React.FC = () => {
+
+interface ConfigurationProps {
+  activityMenuItems: ActivityDropdownItem[];
+}
+
+const Configuration: React.FC<ConfigurationProps> = ({ activityMenuItems }) => {
   const [searchParams] = useSearchParams();
   const [isFormSaving, setIsFormSaving] = useState<boolean>(false);
   const [isSaveDisable, setIsSaveDisable] = useState<boolean>(false);
@@ -202,6 +208,8 @@ const Configuration: React.FC = () => {
         onSearch={(text) => setSearchText(text)}
         searchReset={resetSearch}
         onSearchReset={handleSearchReset}
+        showAddActivity={true}
+        activityMenuItems={activityMenuItems}
       />
       <SectionHeader
         title={list ? list.charAt(0).toUpperCase() + list.slice(1) : ''}

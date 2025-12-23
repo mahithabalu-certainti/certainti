@@ -48,6 +48,7 @@ import { RootState } from '../../../../store/store';
 interface PlaceholderSuggestion {
   rid: string;
   placeholder_key: string;
+  display_name: string;
   applicable_to?: 'body' | 'subject' | 'both';
 }
 
@@ -124,7 +125,13 @@ const EmailTemplateForm: React.FC = () => {
 
   // Get all available placeholders for mention suggestions
   const allPlaceholders = useMemo((): PlaceholderSuggestion[] => {
-    return emailPlaceholder.data?.data?.placeHolders || [];
+    return (
+      emailPlaceholder.data?.data?.placeHolders?.map((p) => ({
+        rid: p.rid,
+        placeholder_key: p.placeholder_key,
+        display_name: p.display_name,
+      })) || []
+    );
   }, [emailPlaceholder.data]);
 
   // Get required placeholders for current category
@@ -133,6 +140,7 @@ const EmailTemplateForm: React.FC = () => {
       categoryPlaceholder.data?.data?.placeholders?.map((p) => ({
         rid: p.placeholder_rid,
         placeholder_key: p.placeholder_key,
+        display_name: p.display_name,
         applicable_to: p.applicable_to || 'body', // Default to 'body' if not provided
       })) || []
     );
@@ -264,8 +272,11 @@ const EmailTemplateForm: React.FC = () => {
     (search: string): PlaceholderSuggestion[] => {
       if (!search) return allPlaceholders;
 
-      return allPlaceholders.filter((placeholder) =>
-        placeholder.placeholder_key.toLowerCase().includes(search.toLowerCase())
+      const searchLower = search.toLowerCase();
+      return allPlaceholders.filter(
+        (placeholder) =>
+          placeholder.placeholder_key.toLowerCase().includes(searchLower) ||
+          placeholder.display_name.toLowerCase().includes(searchLower)
       );
     },
     [allPlaceholders]
@@ -361,11 +372,17 @@ const EmailTemplateForm: React.FC = () => {
         quill.deleteText(atIndex, textToDelete);
 
         // Insert the placeholder with bold formatting
-        quill.insertText(atIndex, `{{${placeholder.placeholder_key}}}`, {
-          bold: true,
-        });
+        quill.insertText(
+          atIndex,
+          `{{${placeholder.display_name || placeholder.placeholder_key}}}`,
+          {
+            bold: true,
+          }
+        );
 
-        const placeholderLength = `{{${placeholder.placeholder_key}}}`.length;
+        const placeholderLength =
+          `{{${placeholder.display_name || placeholder.placeholder_key}}}`
+            .length;
 
         // Insert a space after placeholder with normal formatting (no bold)
         quill.insertText(atIndex + placeholderLength, ' ', { bold: false });
@@ -481,7 +498,7 @@ const EmailTemplateForm: React.FC = () => {
       if (atIndex !== -1) {
         const textBeforeAt = text.substring(0, atIndex);
         const textAfterCursor = text.substring(cursorPosition);
-        const placeholderText = `{{${placeholder.placeholder_key}}}`;
+        const placeholderText = `{{${placeholder.display_name || placeholder.placeholder_key}}}`;
         const newValue = textBeforeAt + placeholderText + ' ' + textAfterCursor;
 
         setFormData((prev) => ({ ...prev, subject: newValue }));
@@ -765,13 +782,13 @@ const EmailTemplateForm: React.FC = () => {
 
     // Validate body placeholders
     const missingBodyPlaceholders = bodyPlaceholders.filter((placeholder) => {
-      const placeholderPattern = `{{${placeholder.placeholder_key}}}`;
+      const placeholderPattern = `{{${placeholder.display_name || placeholder.placeholder_key}}}`;
       return !formData.emailBody.includes(placeholderPattern);
     });
 
     if (missingBodyPlaceholders.length > 0) {
       const missingKeys = missingBodyPlaceholders
-        .map((p) => `{{${p.placeholder_key}}}`)
+        .map((p) => `{{${p.display_name || p.placeholder_key}}}`)
         .join(', ');
 
       if (missingBodyPlaceholders.length === 1) {
@@ -784,14 +801,14 @@ const EmailTemplateForm: React.FC = () => {
     // Validate subject placeholders
     const missingSubjectPlaceholders = subjectPlaceholders.filter(
       (placeholder) => {
-        const placeholderPattern = `{{${placeholder.placeholder_key}}}`;
+        const placeholderPattern = `{{${placeholder.display_name || placeholder.placeholder_key}}}`;
         return !formData.subject.includes(placeholderPattern);
       }
     );
 
     if (missingSubjectPlaceholders.length > 0) {
       const missingKeys = missingSubjectPlaceholders
-        .map((p) => `{{${p.placeholder_key}}}`)
+        .map((p) => `{{${p.display_name || p.placeholder_key}}}`)
         .join(', ');
 
       if (missingSubjectPlaceholders.length === 1) {
@@ -1197,13 +1214,18 @@ const EmailTemplateForm: React.FC = () => {
                           }}
                         >
                           <ListItemText
-                            primary={`{{${suggestion.placeholder_key}}}`}
+                            primary={`{{${suggestion.display_name || suggestion.placeholder_key}}}`}
+                            // secondary={`{{${suggestion.placeholder_key}}}`}
                             primaryTypographyProps={{
                               fontSize: '13px',
                               fontWeight:
                                 index === subjectMentionState.selectionIndex
                                   ? 600
                                   : 400,
+                            }}
+                            secondaryTypographyProps={{
+                              fontSize: '11px',
+                              color: '#7D98B6',
                             }}
                           />
                         </ListItem>
@@ -1367,13 +1389,18 @@ const EmailTemplateForm: React.FC = () => {
                           }}
                         >
                           <ListItemText
-                            primary={`{{${suggestion.placeholder_key}}}`}
+                            primary={`{{${suggestion.display_name || suggestion.placeholder_key}}}`}
+                            // secondary={`{{${suggestion.placeholder_key}}}`}
                             primaryTypographyProps={{
                               fontSize: '13px',
                               fontWeight:
                                 index === mentionState.selectionIndex
                                   ? 600
                                   : 400,
+                            }}
+                            secondaryTypographyProps={{
+                              fontSize: '11px',
+                              color: '#7D98B6',
                             }}
                           />
                         </ListItem>

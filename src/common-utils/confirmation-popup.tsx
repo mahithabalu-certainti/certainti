@@ -44,11 +44,12 @@ const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
             color='inherit'
             onClick={onConfirm}
             sx={{
-              width: '56px',
+              width: 'auto',
               minWidth: '56px',
               fontWeight: 400,
               fontSize: '12px',
               height: '32px',
+              padding: '0 10px',
             }}
           />
         </div>

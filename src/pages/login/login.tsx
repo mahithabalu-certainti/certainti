@@ -14,6 +14,8 @@ import {
   setUserId,
   UpdateOrgLogo,
   updatePermissions,
+  UpdateProfileURL,
+  setWebSocketUrl,
 } from '../../store/slices';
 import { AllModules, fetchCurrentUserRole } from '../../common-service';
 import { NOT_FOUND } from '../../routes';
@@ -75,6 +77,15 @@ export const Login: React.FC = () => {
             logoUrl: userRole.data.logo_url,
           })
         );
+
+        // Construct WebSocket URL from env base URL + access token
+        if (userRole?.data?.web_socket_url) {
+          const websocketBaseUrl = import.meta.env.VITE_WEBSOCKET_URL;
+          const websocketUrl = `${websocketBaseUrl}?access_token=${userRole.data.web_socket_url}`;
+          dispatch(setWebSocketUrl(websocketUrl));
+        }
+
+        dispatch(UpdateProfileURL(userRole.data.profile_url));
         const currentActiveRoute = accountNavItems.find(
           (menu) =>
             !menu.noRedirect &&

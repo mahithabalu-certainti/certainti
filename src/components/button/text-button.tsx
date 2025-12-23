@@ -1,4 +1,11 @@
-import { Button, ButtonOwnProps, SxProps, Theme } from '@mui/material';
+import {
+  Button,
+  ButtonOwnProps,
+  SxProps,
+  Theme,
+  CircularProgress,
+  Tooltip,
+} from '@mui/material';
 import { styled } from '@mui/material/styles';
 import React from 'react';
 
@@ -11,6 +18,8 @@ interface TextButtonProps {
   loading?: boolean;
   disabled?: boolean;
   hide?: boolean;
+  tooltipValue?: string;
+  toolTipEnabled?: boolean;
   onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
 }
 const StyledButton = styled(Button)(() => {
@@ -35,10 +44,26 @@ const TextButton: React.FC<TextButtonProps> = ({
   label,
   children,
   hide,
+  loading,
+  disabled,
+  tooltipValue,
+  toolTipEnabled,
   ...rest
 }) => {
   if (hide) return null;
-  return <StyledButton {...rest}>{children || label}</StyledButton>;
+  return (
+    <Tooltip title={toolTipEnabled ? tooltipValue : ''} arrow placement='top'>
+      <span>
+        <StyledButton disabled={disabled || loading} {...rest}>
+          {loading ? (
+            <CircularProgress size={14} thickness={5} color='inherit' />
+          ) : (
+            children || label
+          )}
+        </StyledButton>
+      </span>
+    </Tooltip>
+  );
 };
 
 export default TextButton;

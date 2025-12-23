@@ -37,6 +37,7 @@ export const NewDateFilterControl: React.FC<{
     dateValue: string,
     mode?: 'year' | 'date'
   ) => void;
+  isFutureDateEnabled?: boolean;
 }> = ({
   filterStates,
   menuOption,
@@ -45,6 +46,7 @@ export const NewDateFilterControl: React.FC<{
   onOptionChange,
   onValueChange,
   mode = 'date',
+  isFutureDateEnabled,
 }) => {
   const option = formatString(filterStates?.[fieldName]?.date?.option);
   const isBetween = option === 'Between';
@@ -129,8 +131,8 @@ export const NewDateFilterControl: React.FC<{
             >
               <DatePicker
                 name='from'
-                maxDate={dayjs(today)}
-                minDate={dayjs(sixYearsAgo)}
+                maxDate={isFutureDateEnabled ? undefined : dayjs(today)}
+                minDate={dayjs('1950-01-01')}
                 value={dayjs(state.date?.value.from, 'YYYY-MM-DD')}
                 disabled={disableInput}
                 format='YYYY-MMM-DD'
@@ -142,7 +144,7 @@ export const NewDateFilterControl: React.FC<{
                   );
                 }}
                 shouldDisableDate={(date) =>
-                  dayjs(date).isAfter(dayjs(), 'day')
+                  !isFutureDateEnabled && dayjs(date).isAfter(dayjs(), 'day')
                 }
                 slots={{
                   openPickerIcon: () => (
@@ -196,8 +198,8 @@ export const NewDateFilterControl: React.FC<{
           >
             <DatePicker
               name='to'
-              maxDate={dayjs(today)}
-              minDate={dayjs(sixYearsAgo)}
+              maxDate={isFutureDateEnabled ? undefined : dayjs(today)}
+              minDate={dayjs('1950-01-01')}
               sx={{ mt: 1 }}
               value={dayjs(state.date?.value.to, 'YYYY-MM-DD')}
               disabled={disableInput}
@@ -209,7 +211,9 @@ export const NewDateFilterControl: React.FC<{
                   dayjs(newValue).format('YYYY-MM-DD')
                 );
               }}
-              shouldDisableDate={(date) => dayjs(date).isAfter(dayjs(), 'day')}
+              shouldDisableDate={(date) =>
+                !isFutureDateEnabled && dayjs(date).isAfter(dayjs(), 'day')
+              }
               slots={{
                 openPickerIcon: () => (
                   <CalendarIcon alt='calendar' className='w-4 h-4' />
@@ -860,6 +864,7 @@ export const EnumSelectFilterControl: React.FC<{
   state: FilterState;
   onOptionChange: (fieldName: string, event: SelectChangeEvent<string>) => void;
   onChange: (fieldName: string, values: string[]) => void;
+  disabled?: boolean;
 }> = ({
   filterStates,
   menuOption,
@@ -868,6 +873,7 @@ export const EnumSelectFilterControl: React.FC<{
   state,
   onOptionChange,
   onChange,
+  disabled = false,
 }) => {
   const option = formatString(filterStates?.[fieldName]?.enumSelect?.option);
   const isMultiple = option === 'In';
@@ -883,6 +889,7 @@ export const EnumSelectFilterControl: React.FC<{
         IconComponent={(props) => <ArrowIcon alt='arrowIcon' {...props} />}
         sx={{ ...SELECT_STYLES, ...OPERATOR_STYLE }}
         MenuProps={MENU_PROPS}
+        disabled={disabled}
         name='option'
       >
         {menuOption.map((menu) => (
@@ -906,6 +913,7 @@ export const EnumSelectFilterControl: React.FC<{
             multiple={isMultiple}
             value={state.enumSelect?.value || []}
             name='value'
+            disabled={disabled}
             onChange={(e) => onChange(fieldName, e.target.value as string[])}
             renderValue={(selected) => {
               if (isMultiple) {

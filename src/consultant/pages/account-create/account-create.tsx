@@ -153,7 +153,7 @@ export const AccountForm: React.FC = () => {
   }, [account, logoName]);
 
   const statusOptions = useGetStatus();
-  const allCountries = useGetAllCountries();
+  const allCountries = useGetAllCountries('Active');
   const industry = useFetchIndustrys();
   const keyContactRoles = useKeyContactRoles('Account');
   const parentAccount = useFetchParentAccounts();

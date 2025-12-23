@@ -32,7 +32,11 @@ import {
   ShowHideTableColumn,
 } from '../../../../../components/table/types';
 import { useFetchClassification } from '../../../../services/account';
-import { AccountDetailsResponse, ExportType } from '../../../../types';
+import {
+  AccountDetailsResponse,
+  ActivityDropdownItem,
+  ExportType,
+} from '../../../../types';
 import { UPDATE_PROJECT } from '../../../../../api/graphql/queries/project-query';
 import { useMutation } from '@apollo/client';
 import { resourceClient } from '../../../../../api/graphql/clients/client';
@@ -54,6 +58,7 @@ interface ProjectsProps {
   setExportType?: (type: ExportType) => void;
   toggleEnabled: boolean;
   setToggleEnabled: (val: boolean) => void;
+  activityMenuItems: ActivityDropdownItem[];
 }
 
 const projectTabs: ResourceTabs[] = [
@@ -76,6 +81,7 @@ const Projects: React.FC<ProjectsProps> = ({
   setProjectParams,
   toggleEnabled,
   setToggleEnabled,
+  activityMenuItems,
 }) => {
   const { accountid } = useParams();
   const navigate = useNavigate();
@@ -194,9 +200,43 @@ const Projects: React.FC<ProjectsProps> = ({
     setRefreshProjectsTrigger(Date.now());
   };
 
+  const getProjectDisableReason = (isRdTriggerQualified: boolean): string => {
+    if (isRdTriggerQualified) {
+      return 'Project type not allowed due to Configuration setting';
+    }
+    return '';
+  };
   useEffect(() => {
     if (data?.projects) {
-      setProjectList(data.projects || []);
+      const updatedProjects =
+        data.projects.map((project) => {
+          // 🔹 Map over each ProjectFiscal to add disable logic
+          const updatedProjectFiscal =
+            project?.ProjectFiscal?.map((fiscal) => {
+              // Get message for THIS specific fiscal object
+              const checkBoxMessage = getProjectDisableReason(
+                fiscal?.is_rd_trigger_qualified === true
+              );
+
+              return {
+                ...fiscal,
+                disableCheckBox: !!checkBoxMessage,
+                checkBoxMessage,
+              };
+            }) || [];
+
+          return {
+            ...project,
+            // Update the ProjectFiscal array with the new objects
+            ProjectFiscal: updatedProjectFiscal,
+            // Optionally also set a flag at project level if ANY fiscal is disabled
+            hasDisabledFiscal: updatedProjectFiscal.some(
+              (fiscal) => fiscal.disableCheckBox
+            ),
+          };
+        }) || [];
+
+      setProjectList(updatedProjects);
     }
   }, [data?.projects]);
 
@@ -646,6 +686,8 @@ const Projects: React.FC<ProjectsProps> = ({
         searchDisabled={false}
         searchPlaceholder='Search'
         onSearch={(text) => setSearchText(text)}
+        showAddActivity={true}
+        activityMenuItems={activityMenuItems}
       />
       {projectOverviewIsEnable && projectViewAllIsEnable ? (
         <>

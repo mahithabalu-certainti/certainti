@@ -39,12 +39,50 @@ export const generateColorFromName = (name: string): string => {
   return colors[Math.abs(hash) % colors.length];
 };
 
+export const TAG_COLORS = [
+  '#2563EB', // Blue
+  '#7C3AED', // Violet
+  '#0D9488', // Teal
+  '#16A34A', // Green
+  '#CA8A04', // Amber
+  '#DC2626', // Red
+  '#9333EA', // Purple
+  '#0284C7', // Sky
+  '#059669', // Emerald
+  '#EA580C', // Orange
+  '#4F46E5', // Indigo
+  '#0891B2', // Cyan
+];
+
+const hexToRgba = (hex: string, alpha = 0.14) => {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
+export const getTagColor = (index: number, prev?: string) => {
+  let color = TAG_COLORS[index % TAG_COLORS.length];
+
+  if (color === prev) {
+    color = TAG_COLORS[(index + 1) % TAG_COLORS.length];
+  }
+
+  return {
+    base: color,
+    text: color,
+    bg: hexToRgba(color),
+    border: hexToRgba(color, 0.35),
+  };
+};
+
 export const enrichUserOption = (userOption: UserOption): User => {
   return {
     id: userOption.rid,
     name: userOption.name,
     initials: generateInitials(userOption.name),
     color: generateColorFromName(userOption.name),
+    profile_url: userOption.profile_url,
   };
 };
 
@@ -52,11 +90,13 @@ export const enrichAssignee = (assignee: {
   name: string;
   initials?: string;
   color?: string;
+  profile_url?: string | null;
 }): Assignee => {
   return {
     name: assignee.name,
     initials: assignee.initials || generateInitials(assignee.name),
     color: assignee.color || generateColorFromName(assignee.name),
+    profile_url: assignee.profile_url,
   };
 };
 
@@ -113,7 +153,9 @@ export const enrichTask = (task: Task): Task => {
     typeof enrichedTask.tags[0] === 'object'
   ) {
     // Populate tagsDetails first because normalizeTags modifies the array to strings (if it was objects)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     enrichedTask.tagsDetails = normalizeTagsDetails(enrichedTask.tags as any);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     enrichedTask.tags = normalizeTags(enrichedTask.tags as any);
   }
 

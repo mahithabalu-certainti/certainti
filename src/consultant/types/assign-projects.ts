@@ -1,3 +1,6 @@
+import { AttachmentList } from './attachment';
+import { NewProjectData } from './project';
+
 export type AssignProject = {
   rid: string;
   r_number: string;
@@ -211,5 +214,15 @@ export interface SentProjectsResponse {
     success: boolean;
     message?: string;
     // Add other response fields as per your API response
+  };
+}
+
+export interface CasesProjectDetailResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: {
+    project: NewProjectData;
+    attachment: AttachmentList[];
   };
 }

@@ -22,6 +22,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import {
   AccountsIcon,
   AdminSettingIcon,
+  AvatarIcon,
   BurgerMenuIcon,
   ChevronDownIcon,
   GlobeIcon,
@@ -46,6 +47,7 @@ import { useMsal } from '@azure/msal-react';
 import { msalResetPasswordConfig } from '../../config/msalConfig';
 import CompanyBadge from './company-badge';
 import { useIsFetching } from '@tanstack/react-query';
+import NotificationPanel from './notification-panel';
 
 interface NavbarProps {
   showAdminSidebar: boolean;
@@ -102,7 +104,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     () => checkPermission(permission, AllPermissions.PROFILE_VIEW_EDIT),
     [permission]
   );
-  const { orgName, logoUrl } = useSelector(
+  const { orgName, logoUrl, profileURL } = useSelector(
     (state: RootState) => state.orgLogoInfo
   );
 
@@ -454,13 +456,42 @@ export const Navbar: React.FC<NavbarProps> = ({
     [isMobileMenuOpen, mobileMoreAnchorEl]
   );
 
-  const MemoizedAvatar = React.memo(({ name }: { name: string | null }) => (
-    <img
-      className='w-6 h-6 p-0.5 rounded-full bg-white object-cover'
-      src='https://cdn-icons-png.flaticon.com/512/666/666201.png'
-      alt={`${name}'s avatar`}
-    />
-  ));
+  const MemoizedAvatar = React.memo(
+    ({
+      name,
+      profileURL,
+    }: {
+      name: string | null;
+      profileURL: string | null;
+    }) => {
+      return (
+        <>
+          {profileURL ? (
+            <img
+              className='w-6 h-6 rounded-full bg-white object-cover'
+              src={profileURL}
+              alt={`${name || 'User'}'s profile`}
+              onError={(e) => {
+                const target = e.currentTarget;
+                target.style.display = 'none'; // hide broken image
+
+                // show fallback
+                const fallback = target.nextElementSibling as HTMLElement;
+                if (fallback) fallback.style.display = 'flex';
+              }}
+            />
+          ) : null}
+
+          <div
+            className='w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center'
+            style={{ display: profileURL ? 'none' : 'flex' }} // hide initially when image exists
+          >
+            <AvatarIcon className='w-5 h-5' />
+          </div>
+        </>
+      );
+    }
+  );
 
   return (
     <>
@@ -529,19 +560,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             {/* <IconButton size='large' color='inherit'>
               <PhoneIcon alt='phone' className='h-[20px] w-[20px]' />
             </IconButton> */}
-            {/* <IconButton
-              size='large'
-              aria-label='notification'
-              aria-haspopup='true'
-              onClick={handleNotificationOpen}
-              color='inherit'
-              aria-controls={notificationId}
-            >
-              <NotificationIcon
-                alt='notification'
-                className='h-[22px] w-[22px]'
-              />
-            </IconButton> */}
+            <NotificationPanel />
             {isAdminEnable && (
               <Tooltip
                 title={`${isAnyApiWasLoading ? 'Loading...' : `Switch to ${showAdminSidebar ? 'Consultant' : 'Admin'}`}`}
@@ -556,7 +575,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   >
                     <AdminSettingIcon
                       alt='admin-settings'
-                      className='h-[20px] w-[20px]'
+                      className='h-[19px] w-[19px]'
                     />
                   </IconButton>
                 </span>
@@ -573,7 +592,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               color='inherit'
               disableRipple
             >
-              <MemoizedAvatar name={name} />
+              <MemoizedAvatar name={name} profileURL={profileURL} />
               <span className='text-[12px] font-[400] px-2'>{name}</span>
               <ChevronDownIcon alt='down nav' />
             </IconButton>

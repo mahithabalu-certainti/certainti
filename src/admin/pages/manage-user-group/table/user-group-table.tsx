@@ -71,7 +71,7 @@ export const UserGroupTable: React.FC<IUserTableProps> = ({
     return map;
   }, [userGroupViewEditFields]);
 
-  const { data, isPending, isError } = useManageUserGroupList(
+  const { data, isLoading, isError } = useManageUserGroupList(
     { ...tableParams, filters: appliedFilters, search: searchValue },
     refreshUserGroupTrigger
   );
@@ -244,7 +244,7 @@ export const UserGroupTable: React.FC<IUserTableProps> = ({
         actionWidth={60}
         actionDisplayMode='dropdown'
         actionMenuItems={actionButtons}
-        loading={isPending}
+        loading={isLoading}
         error={isError ? 'Failed to load User Groups' : undefined}
         rowsPerPageOptions={[25, 50, 100]}
         rowsPerPage={tableParams.limit}

@@ -82,7 +82,7 @@ export const projectTaskFilterFields = (
   },
   {
     name: 'Classification Type',
-    value: 'task_classification_rid',
+    value: 'task_classification',
     type: 'enum',
     required: true,
     options: memoizedProjectResourceClassification,

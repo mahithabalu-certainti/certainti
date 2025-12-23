@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Box, Switch, Tab, Tabs } from '@mui/material';
 import { RefreshIcon, ResourceFilterIcon } from '../../assets';
@@ -8,20 +8,15 @@ import {
   FieldConfig,
   FilterValue,
 } from '../../consultant/pages/account-details-sidebar/components/filter/filterType';
-import ActionImportDropdown from '../actions-dropdown/import-dropdown';
-import { ActivityMenuItem, SelectOption } from '../../consultant/types';
+import { ActivityDropdownItem, SelectOption } from '../../consultant/types';
 import { GlobalFiscalYearDropdown } from '../fiscal-dropdown';
 import SearchBar from '../search/search-bar';
-
-interface TabOption {
-  id: string;
-  name: string;
-  hide?: boolean;
-  disable?: boolean;
-}
+import { ActivityDropdown } from '../actions-dropdown';
+import { OverviewTabs } from '../../common-service';
 
 interface TabPanelProps {
-  tabs?: TabOption[];
+  tabs?: OverviewTabs[];
+  onTabChange?: (tabId: string) => void;
   filterVisibility: boolean;
   showFilter: boolean;
   filterMenu?: FieldConfig[];
@@ -59,11 +54,12 @@ interface TabPanelProps {
   searchReset?: boolean;
   onSearchReset?: () => void;
   showAddActivity?: boolean;
-  activityMenuItems?: ActivityMenuItem[];
+  activityMenuItems?: ActivityDropdownItem[];
 }
 
 const SectionTabPanel: React.FC<TabPanelProps> = ({
   tabs,
+  onTabChange,
   filterVisibility,
   showFilter,
   filterMenu = [],
@@ -112,9 +108,14 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
   const filterId = isFilterOpen ? `${contextKey}-filter-popover` : undefined;
 
   useEffect(() => {
-    const activeTab = tabs?.find((tab) => !tab.hide)?.id;
-    setTabValue(activeTab || '');
-  }, [tabs]);
+    const activeTab = tabs?.find((tab) => !tab.hide)?.id || '';
+    setTabValue(activeTab);
+
+    // inform parent about initial tab
+    if (activeTab && onTabChange) {
+      onTabChange(activeTab);
+    }
+  }, [tabs, onTabChange]);
 
   useEffect(() => {
     setAppliedFilters({});
@@ -129,6 +130,7 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
     setAppliedFilters({});
     clearFilters(contextKey || 'resource');
     setSortFilterCount(0);
+    onTabChange?.(newValue);
   };
 
   const handleToggleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -148,6 +150,11 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
   if (hideTabPanel) {
     return null;
   }
+
+  const visibleActivityMenuItems = activityMenuItems.filter(
+    (item) => !item.hide
+  );
+
   return (
     <Box>
       <Box className='flex justify-between items-center mb-2'>
@@ -194,7 +201,7 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
           </Tabs>
         )}
 
-        <Box className='flex items-center'>
+        <Box className='flex items-center gap-2'>
           {tabValue === 'account_projects_view_overview' ||
             (showToggle && (
               <div className='flex items-center gap-2'>
@@ -210,7 +217,7 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
               </div>
             ))}
           {showSearch && (
-            <Box className={filterVisibility ? 'mr-2' : ''}>
+            <Box>
               <SearchBar
                 initialSearchText={searchText}
                 onSearch={(value) => {
@@ -268,7 +275,7 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
           )}
           {showRefresh && (
             <button
-              className='flex border border-[#CBD6E2] ml-2 w-[24px] h-[24px] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] justify-center items-center cursor-pointer'
+              className='flex border border-[#CBD6E2] w-[24px] h-[24px] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] justify-center items-center cursor-pointer'
               onClick={onRefreshClick}
             >
               <RefreshIcon alt='refresh-icon' className='h-4' />
@@ -283,11 +290,10 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
             />
           )}
 
-          {showAddActivity && (
-            <Box className='ml-2'>
-              <ActionImportDropdown
-                variant='filled'
-                actions={activityMenuItems || []}
+          <React.Suspense fallback={null}>
+            {showAddActivity && visibleActivityMenuItems?.length > 0 && (
+              <ActivityDropdown
+                menuItems={activityMenuItems || []}
                 label='Add Activity'
                 sx={{
                   fontWeight: 600,
@@ -296,8 +302,8 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
                   height: '24px',
                 }}
               />
-            </Box>
-          )}
+            )}
+          </React.Suspense>
         </Box>
       </Box>
     </Box>

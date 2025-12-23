@@ -1,6 +1,5 @@
-import { useEffect, useState } from 'react';
+import React from 'react';
 import { DetailsIcon, DetailsKeyContactErrorIcon } from '../../../../../assets';
-import TabPanel from './tab';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import ProjectOverview from './project-overview';
 import { NewProjectData } from '../../../../types/project';
@@ -10,6 +9,8 @@ import {
   Permissions,
 } from '../../../../../common-service';
 import { Box } from '@mui/material';
+import { ActivityDropdownItem } from '../../../../types';
+import { SectionTabPanel } from '../../../../../components';
 
 const BUTTON_STYLES = {
   height: '26px !important',
@@ -28,6 +29,7 @@ interface ProjectsDataProps {
   projectEditIsEnable?: boolean;
   iconBg?: string;
   bgType?: 'circle' | 'react';
+  activityMenuItems: ActivityDropdownItem[];
 }
 export interface DetailsTabs {
   id: AllPermissions | AllMenus;
@@ -36,7 +38,7 @@ export interface DetailsTabs {
   disable?: boolean;
 }
 
-const detailsTabs: DetailsTabs[] = [
+const detailsTabs = [
   {
     id: AllPermissions.PROJECTS_VIEW_EDIT,
     name: 'Overview',
@@ -58,29 +60,12 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
   // projectDownloadIsEnable,
   projectEditIsEnable,
   permission,
+  activityMenuItems,
 }) => {
-  const [detailsTab, setDetailsTab] = useState(detailsTabs);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [currentPage, setCurrentPage] = useState(0);
-  const [tabValue, setTabValue] = useState('');
   const sourceTab = searchParams.get('source_tab');
-  const isOverViewEnable = !detailsTab[0].hide;
 
-  useEffect(() => {
-    const isHide = (tab: DetailsTabs) => {
-      return (
-        !permission?.find((item) => item.name === tab.id)?.is_enabled || false
-      );
-    };
-    // updated sub tabs(Overview, Timeline)
-    setDetailsTab(
-      detailsTabs.map((tab) => ({
-        ...tab,
-        hide: isHide(tab),
-      }))
-    );
-  }, [permission]);
   const handleEdit = () => {
     const source =
       searchParams.get('source') === 'account' ? 'account' : 'project';
@@ -143,10 +128,6 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
   //     });
   //   };
 
-  const handleTabChange = (_event: React.SyntheticEvent, newValue: string) => {
-    setTabValue(newValue);
-  };
-
   return (
     <div className='w-full'>
       {!isKeyContactAvailable && !isDetailsLoading && (
@@ -164,31 +145,38 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
         </Box>
       )}
       <Box className='pr-4 pl-2 py-2'>
-        <TabPanel
-          tabValue={tabValue}
-          setCurrentPage={setCurrentPage}
-          detailsTab={detailsTab}
-          handleTabChange={handleTabChange}
+        <SectionTabPanel
+          tabs={detailsTabs}
+          showAddActivity={true}
+          activityMenuItems={activityMenuItems}
+          filterVisibility={false}
+          showFilter={false}
+          contextKey='project-details'
+          setCurrentPage={() => {}}
+          appliedFilters={{}}
+          setAppliedFilters={() => {}}
+          handleFilter={() => {}}
+          handleSorting={() => {}}
+          sortFilterCount={0}
+          setSortFilterCount={() => {}}
         />
-        {currentPage === 0 && isOverViewEnable && (
-          <ProjectOverview
-            title='Projects'
-            titleIcon={
-              <DetailsIcon
-                alt='project-header-icon'
-                className='[&>path]:stroke-white'
-              />
-            }
-            headerButtons={headerButtons}
-            projectDetails={projectDetails}
-            isDetailsLoading={isDetailsLoading}
-            detailsError={detailsError}
-            isKeyContactAvailable={isKeyContactAvailable}
-            permission={permission}
-            iconBg='#AF78FF'
-            bgType='circle'
-          />
-        )}
+        <ProjectOverview
+          title='Projects'
+          titleIcon={
+            <DetailsIcon
+              alt='project-header-icon'
+              className='[&>path]:stroke-white'
+            />
+          }
+          headerButtons={headerButtons}
+          projectDetails={projectDetails}
+          isDetailsLoading={isDetailsLoading}
+          detailsError={detailsError}
+          isKeyContactAvailable={isKeyContactAvailable}
+          permission={permission}
+          iconBg='#AF78FF'
+          bgType='circle'
+        />
       </Box>
     </div>
   );

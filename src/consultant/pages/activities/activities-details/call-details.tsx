@@ -116,7 +116,7 @@ const CallDetails: React.FC<CallDetailsProps> = ({
 
   const basicDetails: DetailItem[] = [
     {
-      label: 'Related To',
+      label: 'Related To Name',
       value: call?.attached_to ?? '-',
       key: 'attached_to',
     },
@@ -216,6 +216,7 @@ const CallDetails: React.FC<CallDetailsProps> = ({
           />
         }
         buttons={headerButtons}
+        className='rounded-tl-[2px] h-[40px] rounded-tr-[2px]'
       />
 
       {isLoading ? (

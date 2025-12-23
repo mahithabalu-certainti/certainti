@@ -189,12 +189,8 @@ export const getAssignedProjectColumns = (
   },
   {
     id: 'total_cost_nonlabor_prj',
-    editId: 'total_cost_nonlabor_prj',
     label: 'Non-Labor Cost',
     sortable: true,
-    editable:
-      permissionMap?.['total_cost_nonlabor']?.read &&
-      permissionMap?.['total_cost_nonlabor']?.edit,
     hide:
       !permissionMap?.['total_cost_nonlabor']?.read &&
       !permissionMap?.['total_cost_nonlabor']?.edit,
@@ -243,7 +239,8 @@ export const getAssignedProjectColumns = (
       textAlign: 'right',
     },
     hide: !permissionMap?.['qre']?.read && !permissionMap?.['qre']?.edit,
-    render: (row: AssignProject) => (row.qre_final ? row.qre_final : '-'),
+    render: (row: AssignProject) =>
+      row.qre_final ? costDisplay(row.qre_final, row.currency_symbol) : '-',
   },
   {
     id: 'project_point_of_contact',
