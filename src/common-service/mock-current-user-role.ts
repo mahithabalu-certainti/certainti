@@ -10,6 +10,7 @@ export const mockCurrentUserRole: GetCurrentUserRoleApiResponse = {
     user_id: 'D001-09c06141-8832-472f-9a88-74cd917a45bb',
     profile_id: 'D001-76d5c773-8b2a-4c7f-9b5b-5780bb83a279',
     profile_url: '',
+    web_socket_url: '',
     permissions: [
       {
         rid: 'D001-2a95db09-4f4a-41f2-a858-96c3c8ddff55',

@@ -22,10 +22,10 @@ interface ProjectsProps {
   resetFilterTrigger?: number;
 }
 
-export const Projects: React.FC<ProjectsProps> = ({ 
+export const Projects: React.FC<ProjectsProps> = ({
   onSelectionChange,
   initialSelectedIds,
-  resetFilterTrigger
+  resetFilterTrigger,
 }) => {
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({});
   const [page, setPage] = useState<number>(1);

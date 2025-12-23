@@ -78,6 +78,7 @@ export interface GetCurrentUserRoleApiResponse extends CommonApiResponse {
     logo_url: string;
     profile_id: string;
     profile_url: string;
+    web_socket_url: string;
   };
 }
 

@@ -38,10 +38,10 @@ interface AccountsProps {
   resetFilterTrigger?: number;
 }
 
-export const Accounts: React.FC<AccountsProps> = ({ 
+export const Accounts: React.FC<AccountsProps> = ({
   onSelectionChange,
   initialSelectedIds,
-  resetFilterTrigger
+  resetFilterTrigger,
 }) => {
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>();
   const [expandChild, setExpandChild] = useState<boolean>(false);

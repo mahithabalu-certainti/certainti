@@ -132,7 +132,7 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
         )
       );
     });
-    
+
     onSelectionChange?.(childIds);
   };
 

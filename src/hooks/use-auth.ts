@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { setUserId } from '../store/slices/account-slice';
 import { clearAuthDetail, setAuthDetail } from '../store/slices/auth-slice';
+import { clearWebSocketState } from '../store/slices/websocket-slice';
 import { IAuthDetails } from '../store/type';
 
 const DEFAULT_AUTH_DETAIL: IAuthDetails = {
@@ -43,6 +44,7 @@ export const useAuthHook = () => {
     localStorage.removeItem('showAdminSidebar');
     localStorage.removeItem('resetPassword');
     dispatch(clearAuthDetail());
+    dispatch(clearWebSocketState()); // Clear WebSocket state to trigger disconnection
     setAuthDetails(DEFAULT_AUTH_DETAIL);
   };
 

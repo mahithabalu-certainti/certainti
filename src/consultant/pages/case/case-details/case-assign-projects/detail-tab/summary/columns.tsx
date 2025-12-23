@@ -1,14 +1,13 @@
-
 import { costDisplay, valueDisplay } from '../../../../../../../common-utils';
 import { ListTableColumn } from '../../../../../../../components/table/types';
 import {
-   SummaryClaimJurisdiction,
+  SummaryClaimJurisdiction,
   SummaryDetailedMetric,
   SummaryQRE,
   SummaryRdCredits,
-  SummaryRdPercent, 
-  SummaryResourceMetric } from '../../../../../../types';
-
+  SummaryRdPercent,
+  SummaryResourceMetric,
+} from '../../../../../../types';
 
 const percentDisplay = (value: string | number | null | undefined): string => {
   if (value === null || value === undefined || value === '' || value === '-')

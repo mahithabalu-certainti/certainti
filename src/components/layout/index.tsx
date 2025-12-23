@@ -7,6 +7,7 @@ import { accountNavItems } from '../sidebar/accounts-menu';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
 import { sideNavAdminItems } from '../sidebar/admin-menus';
+import { useWebSocket } from '../../hooks/use-websocket';
 import Footer from '../Footer';
 
 export const AppLayout: React.FC = () => {
@@ -18,6 +19,9 @@ export const AppLayout: React.FC = () => {
   });
   const [showAdminSidebar, setShowAdminSidebar] = useState<boolean>(false);
   const { menus } = useSelector((state: RootState) => state.permission);
+
+  // Initialize WebSocket connection for authenticated users
+  useWebSocket();
 
   useEffect(() => {
     const showAdminSidebarLocalStorage =

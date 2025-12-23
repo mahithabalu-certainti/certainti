@@ -52,11 +52,7 @@ const TextButton: React.FC<TextButtonProps> = ({
 }) => {
   if (hide) return null;
   return (
-    <Tooltip
-      title={toolTipEnabled ? tooltipValue : ''}
-      arrow
-      placement='top'
-    >
+    <Tooltip title={toolTipEnabled ? tooltipValue : ''} arrow placement='top'>
       <span>
         <StyledButton disabled={disabled || loading} {...rest}>
           {loading ? (

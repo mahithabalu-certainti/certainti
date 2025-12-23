@@ -42,20 +42,20 @@ export const getAllCountriesUrl = (statusScope?: string): string => {
  * Fetches detailed information for a all country
  * @returns Promise with user details
  */
-export const fetchAllCountries =
-  async (statusScope?: string): Promise<GetAllCountriesApiResponse> => {
-    try {
-      const { data } =
-        await accountServiceApi.get<GetAllCountriesApiResponse>(
-          getAllCountriesUrl(statusScope)
-        );
-      // await new Promise((resolve) => setTimeout(resolve, 1000));
-      return data;
-    } catch (error) {
-      console.error('Error fetching user details:', error);
-      throw error;
-    }
-  };
+export const fetchAllCountries = async (
+  statusScope?: string
+): Promise<GetAllCountriesApiResponse> => {
+  try {
+    const { data } = await accountServiceApi.get<GetAllCountriesApiResponse>(
+      getAllCountriesUrl(statusScope)
+    );
+    // await new Promise((resolve) => setTimeout(resolve, 1000));
+    return data;
+  } catch (error) {
+    console.error('Error fetching user details:', error);
+    throw error;
+  }
+};
 /**
  * React Query hook for fetching country list (view only)
  * @returns UseQueryResult with user details and query state

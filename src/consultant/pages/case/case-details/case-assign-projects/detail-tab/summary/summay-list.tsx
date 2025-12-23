@@ -4,10 +4,24 @@ import { ProjectQreAdjustmentResponse } from '../../../../../project/utils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../../store/store';
 import { AllPermissions } from '../../../../../../../common-service';
-import { getClaimJurisdictionColumns, getDetailedMetricColumns, getQREColumns, getRdCreditsColumns, getRdPercentColumns, getResourceMetricColumns } from './columns';
+import {
+  getClaimJurisdictionColumns,
+  getDetailedMetricColumns,
+  getQREColumns,
+  getRdCreditsColumns,
+  getRdPercentColumns,
+  getResourceMetricColumns,
+} from './columns';
 import { CellEditData } from '../../../../../../../components/table/types';
 import { ListTable } from '../../../../../../../components/table';
-import { SummaryClaimJurisdiction, SummaryDetailedMetric, SummaryQRE, SummaryRdCredits, SummaryRdPercent, SummaryResourceMetric } from '../../../../../../types';
+import {
+  SummaryClaimJurisdiction,
+  SummaryDetailedMetric,
+  SummaryQRE,
+  SummaryRdCredits,
+  SummaryRdPercent,
+  SummaryResourceMetric,
+} from '../../../../../../types';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { resourceClient } from '../../../../../../../api/graphql/clients/client';
 import { useMutation } from '@apollo/client';
@@ -154,14 +168,14 @@ const CasesSummayListTable: React.FC<FinancialSummaryProps> = ({
           prev.map((row) =>
             row.rid === rowId
               ? {
-                ...row,
-                rd_percent_potential:
-                  result.rd_percent_potential_ai ?? row.rd_percent_potential,
-                rd_percent_adjustment:
-                  result.rd_percent_adjustment ?? row.rd_percent_adjustment,
-                rd_percent_final:
-                  result.rd_percent_final ?? row.rd_percent_final,
-              }
+                  ...row,
+                  rd_percent_potential:
+                    result.rd_percent_potential_ai ?? row.rd_percent_potential,
+                  rd_percent_adjustment:
+                    result.rd_percent_adjustment ?? row.rd_percent_adjustment,
+                  rd_percent_final:
+                    result.rd_percent_final ?? row.rd_percent_final,
+                }
               : row
           )
         );

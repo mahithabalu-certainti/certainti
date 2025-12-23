@@ -200,48 +200,45 @@ const Projects: React.FC<ProjectsProps> = ({
     setRefreshProjectsTrigger(Date.now());
   };
 
-  const getProjectDisableReason = (
-    isRdTriggerQualified: boolean
-  ): string => {
+  const getProjectDisableReason = (isRdTriggerQualified: boolean): string => {
     if (isRdTriggerQualified) {
       return 'Project type not allowed due to Configuration setting';
     }
     return '';
   };
-  ;
-
   useEffect(() => {
     if (data?.projects) {
-      const updatedProjects = data.projects.map((project) => {
-        // 🔹 Map over each ProjectFiscal to add disable logic
-        const updatedProjectFiscal = project?.ProjectFiscal?.map((fiscal) => {
-          // Get message for THIS specific fiscal object
-          const checkBoxMessage = getProjectDisableReason(
-            fiscal?.is_rd_trigger_qualified === true
-          );
-          
+      const updatedProjects =
+        data.projects.map((project) => {
+          // 🔹 Map over each ProjectFiscal to add disable logic
+          const updatedProjectFiscal =
+            project?.ProjectFiscal?.map((fiscal) => {
+              // Get message for THIS specific fiscal object
+              const checkBoxMessage = getProjectDisableReason(
+                fiscal?.is_rd_trigger_qualified === true
+              );
+
+              return {
+                ...fiscal,
+                disableCheckBox: !!checkBoxMessage,
+                checkBoxMessage,
+              };
+            }) || [];
+
           return {
-            ...fiscal,
-            disableCheckBox: !!checkBoxMessage,
-            checkBoxMessage,
+            ...project,
+            // Update the ProjectFiscal array with the new objects
+            ProjectFiscal: updatedProjectFiscal,
+            // Optionally also set a flag at project level if ANY fiscal is disabled
+            hasDisabledFiscal: updatedProjectFiscal.some(
+              (fiscal) => fiscal.disableCheckBox
+            ),
           };
         }) || [];
-  
-        return {
-          ...project,
-          // Update the ProjectFiscal array with the new objects
-          ProjectFiscal: updatedProjectFiscal,
-          // Optionally also set a flag at project level if ANY fiscal is disabled
-          hasDisabledFiscal: updatedProjectFiscal.some(fiscal => fiscal.disableCheckBox),
-        };
-      }) || [];
-  
+
       setProjectList(updatedProjects);
     }
   }, [data?.projects]);
-  
-
-  
 
   useEffect(() => {
     const isHide = (tab: ResourceTabs) => {
@@ -301,11 +298,11 @@ const Projects: React.FC<ProjectsProps> = ({
       `/project/edit/${projectID}?${queryParams.toString()}`,
       sendState
         ? {
-          state: {
-            field: fieldValue || '',
-            section: fieldValue ? '' : section,
-          },
-        }
+            state: {
+              field: fieldValue || '',
+              section: fieldValue ? '' : section,
+            },
+          }
         : undefined
     );
   };
