@@ -47,7 +47,7 @@ export class WorkFlowService {
         return this.mainDbSequelize;
     }
 
-     private async getOrgDb() {
+    private async getOrgDb() {
         if (!this.orgDbSequelize) {
             this.orgDbSequelize = await initOrgSequelize();
         }
@@ -305,7 +305,7 @@ export class WorkFlowService {
     async createRule(ruleRequest: any, userId: string): Promise<{
         statusCode: number;
         message: string;
-        errorMessage?: string;
+        errorMessage?: any;
         data?: { rule: any };
     }> {
         const rule = await this.ruleMasterService.createRuleMaster(
@@ -326,6 +326,17 @@ export class WorkFlowService {
                 email_template_rid: ruleRequest.email_template_rid ?? null,
             }, userId
         )
+
+        if (rule.statusCode == HttpStatus.BAD_REQUEST) {
+            return {
+                statusCode: HttpStatus.BAD_REQUEST,
+                message: "",
+                errorMessage: rule.errorMessage,
+                data: {
+                    rule: "",
+                }
+            };
+        }
 
         let ruleRid = rule.data?.rules?.toJSON()?.rid
         console.log("rule id " + ruleRid);
@@ -415,7 +426,7 @@ export class WorkFlowService {
     ): Promise<{
         statusCode: number;
         message: string;
-        errorMessage?: string;
+        errorMessage?: any;
         data?: { rule: any };
     }> {
 
@@ -438,6 +449,17 @@ export class WorkFlowService {
             },
             userId
         );
+
+        if (rule.statusCode == HttpStatus.BAD_REQUEST) {
+            return {
+                statusCode: HttpStatus.BAD_REQUEST,
+                message: "",
+                errorMessage: rule.errorMessage,
+                data: {
+                    rule: "",
+                }
+            };
+        }
 
         /* ---------------- CONDITIONS ---------------- */
 
@@ -719,9 +741,9 @@ export class WorkFlowService {
                         {
                             "rid": entity.rid,
                             "rule_rid": ruleRequest.rule_rid,
-                            "apply_type":ruleRequest.apply_type
+                            "apply_type": ruleRequest.apply_type
                         },
-                    userId,
+                        userId,
                     );
                 }
             }
@@ -770,7 +792,7 @@ export class WorkFlowService {
             const actions = await mainDb.query<any>(rawQueries.fetchRuleActions(rule.rule_rid), { type: QueryTypes.SELECT });
             allActions.push(...actions);
         }
- 
+
         //grouping conditions by rule
         const conditionsByRule = allConditions.reduce((acc, condition) => {
             if (!acc[condition.rule_rid]) {
@@ -779,7 +801,7 @@ export class WorkFlowService {
             acc[condition.rule_rid].push(condition);
             return acc;
         }, {} as Record<string, any[]>);
- 
+
         //grouping actions by rule
         const actionsByRule = allActions.reduce((acc, action) => {
             if (!acc[action.rule_rid]) {
@@ -794,7 +816,7 @@ export class WorkFlowService {
                 (a: any, b: any) => a.action_order - b.action_order
             );
         }
- 
+
         // const ruleDetails: any[] = [];
         // for (const rule of rules) {
         //     const conditions = await mainDb.query<any>(rawQueries.fetchRuleConditions(rule.condition_rid, rule.rule_rid), { type: QueryTypes.SELECT });
@@ -810,9 +832,11 @@ export class WorkFlowService {
         const triggeredActions: Record<string, any[]> = {};
         const results: Record<string, boolean> = {};
         for (const rule_rid in actionsByRule) {
+            console.log("rule id" + rule_rid);
+            console.log("conditionLength" + allConditions.length);
             let ruleResult = true;
-            if (conditionsByRule.length > 0) {
-                const ruleConditions = conditionsByRule[rule_rid];
+            const ruleConditions = conditionsByRule[rule_rid] ?? [];
+            if (ruleConditions.length > 0) {
                 for (let i = 0; i < ruleConditions.length; i++) {
                     const condition = ruleConditions[i];
                     const conditionResult = await this.evaluateCondition(condition, entity);
@@ -821,7 +845,7 @@ export class WorkFlowService {
                         ruleResult = conditionResult;
                     } else {
                         const logicalOp = condition.logical_operator;
- 
+
                         if (logicalOp === "AND") {
                             ruleResult = ruleResult && conditionResult;
                         } else if (logicalOp === "OR") {
@@ -834,7 +858,7 @@ export class WorkFlowService {
             //Execute actions if:
             // - no conditions exist
             // - OR conditions evaluated to true
-            if (conditionsByRule.length === 0 || ruleResult) {
+            if (ruleConditions.length === 0 || ruleResult) {
                 const actions = actionsByRule[rule_rid] || [];
                 for (const action of actions) {
                     await this.executeAction(action, entity, userId, rule_rid);
@@ -886,6 +910,7 @@ export class WorkFlowService {
         }
         logMessage(`Evaluating condition: ${fieldKey} ${condition.operator} ${conditionValue} against entity value: ${entityValue}`);
         const operator = (condition.operator || "").toLowerCase();
+        //console.log(String(entityValue).toLowerCase() + "    " + String(conditionValue).toLowerCase());
         switch (operator) {
             case "equals":
                 return String(entityValue).toLowerCase() === String(conditionValue).toLowerCase();
@@ -930,10 +955,10 @@ export class WorkFlowService {
                 console.log("Creating task", entity);
                 break;
             case "In App":
-                await this.triggerNotification(entity, notificationTypes.InApp,ruleRid);
+                await this.triggerNotification(entity, notificationTypes.InApp, ruleRid);
                 break;
             case "Email":
-                await this.triggerNotification(entity, notificationTypes.Email,ruleRid);
+                await this.triggerNotification(entity, notificationTypes.Email, ruleRid);
                 break;
 
             default:
@@ -945,20 +970,28 @@ export class WorkFlowService {
         templateDetails: any;
     }> {
         const mainDb = await this.getMainDb();
-        let [notificationTemplateRid]: any[] =[]
-        if(channel === "In App"){
-           [notificationTemplateRid] = await mainDb.query<any>(
-            rawQueries.fetchNotificationInAppTemplatesForRule(ruleRid),
-            { type: QueryTypes.SELECT }
-        );
-        }
-        else
-        {
+        let [notificationTemplateRid]: any[] = [];
+        if (channel === "In App") {
             [notificationTemplateRid] = await mainDb.query<any>(
-            rawQueries.fetchNotificationEmailTemplatesForRule(ruleRid),
-            { type: QueryTypes.SELECT }
-        );
-
+                rawQueries.fetchNotificationInAppTemplatesForRule(ruleRid),
+                { type: QueryTypes.SELECT }
+            );
+        } else {
+            [notificationTemplateRid] = await mainDb.query<any>(
+                rawQueries.fetchNotificationEmailTemplatesForRule(ruleRid),
+                { type: QueryTypes.SELECT }
+            );
+        }
+        if (
+            notificationTemplateRid === undefined ||
+            notificationTemplateRid === null ||
+            typeof notificationTemplateRid !== 'object' ||
+            !('template_rid' in notificationTemplateRid) ||
+            !notificationTemplateRid.template_rid
+        ) {
+            return {
+                templateDetails: []
+            };
         }
         const templateDetails = await mainDb.query<any>(
             rawQueries.fetchNotificationTemplateDetails(
@@ -1014,69 +1047,67 @@ export class WorkFlowService {
                 "notificationsHub"
             );
 
-    const response  = await webPubSubClient.sendToUser(targetuserId, {
-      id: notificationRid,
-      message:templateDetails.templateDetails.message_template,
-    });
-    const [statusRid]:any[] = await mainDb.query(
-        rawQueries.fetchNotificationStatusByType(notificationStatus.unread),
-        {   
-            replacements: { notificationRid },
-            type: QueryTypes.SELECT
-        }
-    );
-    // Step 3: Update status to "sent"
-    await this.updateNotification(notificationRid, statusRid.rid);
-    return { notificationResult, status: "sent" };
+            const response = await webPubSubClient.sendToUser(targetuserId, {
+                id: notificationRid,
+                message: templateDetails.templateDetails.message_template,
+            });
+            const [statusRid]: any[] = await mainDb.query(
+                rawQueries.fetchNotificationStatusByType(notificationStatus.unread),
+                {
+                    replacements: { notificationRid },
+                    type: QueryTypes.SELECT
+                }
+            );
+            // Step 3: Update status to "sent"
+            await this.updateNotification(notificationRid, statusRid.rid);
+            return { notificationResult, status: "sent" };
 
-  } catch (err) {
-    // Update DB to "failed"
-    const [statusRid]:any[] = await mainDb.query(
-        rawQueries.fetchNotificationStatusByType(notificationStatus.failed ),
-        {   
-            replacements: { notificationRid },
-            type: QueryTypes.SELECT
+        } catch (err) {
+            // Update DB to "failed"
+            const [statusRid]: any[] = await mainDb.query(
+                rawQueries.fetchNotificationStatusByType(notificationStatus.failed),
+                {
+                    replacements: { notificationRid },
+                    type: QueryTypes.SELECT
+                }
+            );
+            await this.updateNotification(notificationRid, statusRid.rid);
+            return { notificationResult, status: "failed" };
         }
-    );
-    await this.updateNotification(notificationRid, statusRid.rid);
-    return { notificationResult, status: "failed" };
-  }
-}
-  async updateNotification(notificationId: string, status_rid: string): Promise<void> {
-    const mainDb = await this.getMainDb();
-    let query = rawQueries.updateNotificationStatus();
-    await mainDb.query(
-        query,
-        {
-            replacements: { status_rid: status_rid, notificationId },
-            type: QueryTypes.UPDATE
-        }
-    );
-}
+    }
+    async updateNotification(notificationId: string, status_rid: string): Promise<void> {
+        const mainDb = await this.getMainDb();
+        let query = rawQueries.updateNotificationStatus();
+        await mainDb.query(
+            query,
+            {
+                replacements: { status_rid: status_rid, notificationId },
+                type: QueryTypes.UPDATE
+            }
+        );
+    }
 
- async getNotificationTemplates(channel:string): Promise<{
+    async getNotificationTemplates(channel: string): Promise<{
         statusCode: number;
         message: string;
         errorMessage?: string;
         data?: { templates: any; };
     }> {
-    const mainDb = await this.getMainDb();
-    const result = await mainDb.query(
-      rawQueries.getNotificationTemplates(channel),
-      { type: QueryTypes.SELECT }
-    );
-    return {
-        statusCode: HttpStatus.SUCCESS,
-        message: HttpStatus.SUCCESS_MESSAGE,    
-        data: {
-            templates: result
-        }
-    };
-  }
+        const mainDb = await this.getMainDb();
+        const result = await mainDb.query(
+            rawQueries.getNotificationTemplates(channel),
+            { type: QueryTypes.SELECT }
+        );
+        return {
+            statusCode: HttpStatus.SUCCESS,
+            message: HttpStatus.SUCCESS_MESSAGE,
+            data: {
+                templates: result
+            }
+        };
+    }
 
-async triggerNotification(taskContext:any,channel:string, ruleRid:string): Promise<void> {
-    // Implementation for changing assignee
-    
+async triggerNotification(taskContext:any,channel:string, ruleRid:string): Promise<void> {    
     const { accountNumber, parentAccountId } =
         await this.fetchValidAccountNumberById(
           taskContext.accountRid
@@ -1089,28 +1120,27 @@ async triggerNotification(taskContext:any,channel:string, ruleRid:string): Promi
         channel,
         ruleRid
     );
-    // Only one template detail is expected
-    const detail = Array.isArray(templateDetails.templateDetails)
-        ? templateDetails.templateDetails[0]
-        : templateDetails.templateDetails;
-    if (channel.includes('In App')) {
-        await this.sentNotification(
-            { templateDetails: detail },
-            taskContext.targetUserID,
-            taskContext.targetEmail
-        );
-    }
-    if (channel.includes('Email')) {
-        await this.sendNotificationEmail(
-            accountNumber,
-            taskContext.accountRid,
-            {
-                to_email: taskContext.targetEmail,
-                subject:  detail.subject,
-                body_html: detail.message_template,
-            },
-            taskContext.userId
-        );
+    if (templateDetails && Array.isArray(templateDetails.templateDetails) && templateDetails.templateDetails.length > 0) {
+        const detail = templateDetails.templateDetails[0];
+        if (channel.includes('In App')) {
+            await this.sentNotification(
+                { templateDetails: detail },
+                taskContext.targetUserID,
+                taskContext.targetEmail
+            );
+        }
+        if (channel.includes('Email')) {
+            await this.sendNotificationEmail(
+                accountNumber,
+                taskContext.accountRid,
+                {
+                    to_email: taskContext.targetEmail,
+                    subject: detail.subject,
+                    body_html: detail.message_template,
+                },
+                taskContext.userId
+            );
+        }
     }
 
     }
@@ -1173,27 +1203,27 @@ async triggerNotification(taskContext:any,channel:string, ruleRid:string): Promi
                     { type: "SELECT" }
                 );
             parentAccountNumber = parentAccountInfo.r_number;
-          }
-    let senderEmailInfo = await this.fetchSenderEmailInfoByAccountId(
-      parentAccountNumber,
-      accountInfo.parent_account_rid
-    );
-    const emailContent = {
-      message: {
-        subject: emailRequest.subject,
-        body: {
-          contentType: "HTML",
-          content: emailRequest.body_html,
-        },
-        toRecipients: Array.isArray(emailRequest.to_email)
-  ? emailRequest.to_email.map((email: string) => ({
-      emailAddress: { address: email }
-    }))
-  : [{
-      emailAddress: { address: emailRequest.to_email }
-    }]
-      },
-    };
+        }
+        let senderEmailInfo = await this.fetchSenderEmailInfoByAccountId(
+            parentAccountNumber,
+            accountInfo.parent_account_rid
+        );
+        const emailContent = {
+            message: {
+                subject: emailRequest.subject,
+                body: {
+                    contentType: "HTML",
+                    content: emailRequest.body_html,
+                },
+                toRecipients: Array.isArray(emailRequest.to_email)
+                    ? emailRequest.to_email.map((email: string) => ({
+                        emailAddress: { address: email }
+                    }))
+                    : [{
+                        emailAddress: { address: emailRequest.to_email }
+                    }]
+            },
+        };
 
 
         let emailResponse = await sendEmailWithAttachment({
