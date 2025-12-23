@@ -1177,6 +1177,7 @@ jobs:
           CLIENT_SECRET_ENCRYPTION_LENGTH=16
           SCHEDULER_EXPRESSION=scheduler-expression 
           SCHEDULER_EXPRESSION_RULE_ENGINE=scheduler-expression-rule-engine
+          AZURE_WEB_PUBSUB_CONNECTION_STRING=Endpoint=https://notification-test.webpubsub.azure.com;AccessKey=DZRyMMDQZU1chkLUcTBkNhCNYn0lpOUsWb8mmxHPk7GKodZm3z0UJQQJ99BKACYeBjFXJ3w3AAAAAWPSS5KX;
           EOF
           echo "$ENV_FILE file created successfully!"
       - name: Copy .env file to VM
