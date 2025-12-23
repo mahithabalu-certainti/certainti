@@ -172,12 +172,14 @@ export default function DataCard<T extends BaseCardItem>({
         </div>
       </button>
 
-      {/* Delete button for actions - only show for non-disabled added actions */}
-      {type === 'action' && isAlreadyAdded && onDelete && !disabled && (
+      {/* Delete button - show for selected triggers or added actions */}
+      {onDelete && !disabled && (
+        (type === 'trigger' && isSelected) || (type === 'action' && isAlreadyAdded)
+      ) && (
         <button
           onClick={handleDeleteClick}
           className='absolute -top-2 -right-2 w-5 h-5 bg-red-100 border border-red-400 rounded-full flex items-center justify-center cursor-pointer z-10 hover:bg-red-200 transition-colors'
-          title='Remove Action'
+          title={type === 'trigger' ? 'Remove Trigger' : 'Remove Action'}
           type='button'
         >
           <React.Suspense fallback={null}>

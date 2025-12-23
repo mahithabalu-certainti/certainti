@@ -268,4 +268,5 @@ export interface FilterComponentProps {
   mode?: string;
   handleSorting?: (sortBy: string, sortOrder: 'asc' | 'desc') => void;
   onFilterChange?: (fieldName: string, value: FilterValue) => void;
+  resetFilterTrigger?: number;
 }

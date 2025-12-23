@@ -19,11 +19,13 @@ import { ProjectTable } from './table/project-table';
 interface ProjectsProps {
   onSelectionChange?: (selectedIds: string[]) => void;
   initialSelectedIds?: string[];
+  resetFilterTrigger?: number;
 }
 
 export const Projects: React.FC<ProjectsProps> = ({ 
   onSelectionChange,
-  initialSelectedIds 
+  initialSelectedIds,
+  resetFilterTrigger
 }) => {
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({});
   const [page, setPage] = useState<number>(1);
@@ -223,6 +225,7 @@ export const Projects: React.FC<ProjectsProps> = ({
               setCurrentPage={setPage}
               mode={'date'}
               handleSorting={handleSorting}
+              resetFilterTrigger={resetFilterTrigger}
             />
           </Suspense>
         </div>

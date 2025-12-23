@@ -39,6 +39,17 @@ export const getGeoBasedRuleColumns = (
       },
     },
     {
+      id: 'is_federal',
+      sortId: 'is_federal',
+      label: 'Is Federal?',
+      sortable: true,
+      width: 100,
+      hide:
+        !permissionMap?.['is_federal']?.read &&
+        !permissionMap?.['is_federal']?.edit,
+      render: (row: GeoBasedRule) => (row.is_federal ? 'Yes' : 'No'),
+    },
+    {
       id: 'country_name',
       sortId: 'country_name',
       label: 'Country',
@@ -55,17 +66,6 @@ export const getGeoBasedRuleColumns = (
       hide:
         !permissionMap?.['state_rid']?.read &&
         !permissionMap?.['state_rid']?.edit,
-    },
-    {
-      id: 'is_federal',
-      sortId: 'is_federal',
-      label: 'Federal',
-      sortable: true,
-      width: 100,
-      hide:
-        !permissionMap?.['is_federal']?.read &&
-        !permissionMap?.['is_federal']?.edit,
-      render: (row: GeoBasedRule) => (row.is_federal ? 'Yes' : 'No'),
     },
     {
       id: 'effective_start_date',

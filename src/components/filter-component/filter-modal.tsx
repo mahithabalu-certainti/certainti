@@ -55,6 +55,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
   handleSorting,
   onFilterChange,
   carryFilterData = true,
+  resetFilterTrigger,
 }) => {
   const location = useLocation();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -566,7 +567,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
   };
 
   const handleResetFilters = (clearSort: boolean = false) => {
-    if (!Object.keys(filterStates).length) return null;
+    if (!Object.keys(filterStates).length && !resetFilterTrigger) return null;
     handleCloseFilter();
     setSelectedFilters([]);
     setFilterStates({});
@@ -578,6 +579,14 @@ const FilterModal: React.FC<FilterModalProps> = ({
     }
     clearFilters();
   };
+
+  // React to resetFilterTrigger changes from parent component
+  useEffect(() => {
+    if (resetFilterTrigger !== undefined && resetFilterTrigger > 0) {
+      handleResetFilters(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resetFilterTrigger]);
 
   const renderFilterControl = (fieldName: string) => {
     const fieldConfig = filterFields.find((f) => f.name === fieldName);

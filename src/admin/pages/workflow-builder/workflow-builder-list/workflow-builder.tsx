@@ -10,6 +10,7 @@ import { FilterTypes } from '../../../../common-service';
 import Filter from '../../../../consultant/pages/account-details-sidebar/components/filter/filter';
 import SearchBar from '../../../../components/search/search-bar';
 import { getWorkflowListFilterFields } from './helper';
+import { ExportWorkflowRuleList } from '../../../service/workflow-builder/workflow-builder-service';
 
 const BUTTON_STYLES = {
   height: '24px',
@@ -76,11 +77,22 @@ const WorkflowBuilder: React.FC = () => {
     }
   };
 
+  const handleExport = () => {
+    const payload = {
+      sortBy: tableParams.sortBy,
+      sortOrder: tableParams.sortOrder,
+      filters: appliedFilters,
+      isGlobal: true,
+      search: searchText,
+    };
+    ExportWorkflowRuleList(payload);
+  };
+
   const menuItems = [
     {
       label: 'Export',
-      onClick: () => console.log('Export clicked'),
-      hide: true,
+      onClick: () => handleExport(),
+      hide: false,
     },
   ];
 

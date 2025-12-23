@@ -20,11 +20,13 @@ import { TaskTemplateTable } from './table/task-templates-table';
 interface TaskTemplatesProps {
   onSelectionChange?: (selectedIds: string[]) => void;
   initialSelectedIds?: string[];
+  resetFilterTrigger?: number;
 }
 
 const TaskTemplates: React.FC<TaskTemplatesProps> = ({ 
   onSelectionChange,
-  initialSelectedIds 
+  initialSelectedIds,
+  resetFilterTrigger
 }) => {
   const [appliedFilters, setAppliedFilters] = useState<
     Record<string, FilterCondition>
@@ -166,7 +168,6 @@ const TaskTemplates: React.FC<TaskTemplatesProps> = ({
 
       <div className='flex items-center justify-between h-[42px] min-h-[42px] max-h-[42px] px-4'>
         <div className='font-bold text-[14px] leading-[32px] text-[#2D3E4F]'>
-          All Task Templates
         </div>
         <div className='flex items-center gap-3'>
           <div className='flex gap-1 relative'>
@@ -201,6 +202,7 @@ const TaskTemplates: React.FC<TaskTemplatesProps> = ({
                 setPage={setPage}
                 handleCloseFilter={handleCloseFilter}
                 handleSorting={handleSorting}
+                resetFilterTrigger={resetFilterTrigger}
               />
             </Suspense>
           </div>

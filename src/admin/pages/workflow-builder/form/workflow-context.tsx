@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, {
   createContext,
   useContext,
@@ -14,13 +15,14 @@ import {
   ConditionTypeEnum,
   LogicalOperator,
 } from './helper';
+import { CreateRulePayload } from '../../../types';
 
 interface WorkflowContextValue {
   // Rule state
   rule: Rule;
 
   // Step management
-  currentStep: 'trigger' | 'conditions' | 'actions';
+  currentStep: 'trigger' | 'conditions' | 'actions' | 'action-template';
 
   // Trigger actions
   selectTrigger: (trigger: Trigger) => void;
@@ -42,13 +44,17 @@ interface WorkflowContextValue {
 
   // Rule metadata
   updateRuleName: (name: string) => void;
+  updateActionTemplate: (actionId: string, templateData: CreateRulePayload) => void;
 
   // Navigation
-  goToStep: (step: 'trigger' | 'conditions' | 'actions') => void;
+  goToStep: (
+    step: 'trigger' | 'conditions' | 'actions' | 'action-template'
+  ) => void;
 
   // Validation
   canProceedToConditions: boolean;
   canProceedToActions: boolean;
+  canProceedToActionTemplate: boolean;
   validatedConditionIds: Set<string>; // Track which conditions have been validated
   duplicateConditionIds: Set<string>; // Track which conditions are duplicates
   validatedFieldErrors: Map<
@@ -95,7 +101,7 @@ export const WorkflowProvider: React.FC<WorkflowProviderProps> = ({
   );
 
   const [currentStep, setCurrentStep] = useState<
-    'trigger' | 'conditions' | 'actions'
+    'trigger' | 'conditions' | 'actions' | 'action-template'
   >('trigger');
   const [validatedConditionIds, setValidatedConditionIds] = useState<
     Set<string>
@@ -377,10 +383,26 @@ export const WorkflowProvider: React.FC<WorkflowProviderProps> = ({
     [showRuleNameError]
   );
 
+  const updateActionTemplate = useCallback(
+    (actionId: string, templateData: any) => {
+      setRule((prev) => ({
+        ...prev,
+        actionTemplates: {
+          ...prev.actionTemplates,
+          [actionId]: templateData,
+        },
+      }));
+    },
+    []
+  );
+
   // Navigation
-  const goToStep = useCallback((step: 'trigger' | 'conditions' | 'actions') => {
-    setCurrentStep(step);
-  }, []);
+  const goToStep = useCallback(
+    (step: 'trigger' | 'conditions' | 'actions' | 'action-template') => {
+      setCurrentStep(step);
+    },
+    []
+  );
 
   // Validation
   const canProceedToConditions = rule.trigger !== null;
@@ -403,10 +425,12 @@ export const WorkflowProvider: React.FC<WorkflowProviderProps> = ({
   // 3. Condition type is selected but no conditions added yet (user can skip)
   const canProceedToActions = !!(
     rule.conditionType?.condition_type?.toLowerCase() ===
-      ConditionTypeEnum.then ||
+    ConditionTypeEnum.then ||
     areAllConditionsComplete ||
     (rule.conditionType && rule.conditions.length === 0)
   );
+
+  const canProceedToActionTemplate = rule.actions.length > 0;
 
   // Validate and save function
   const validateAndSave = useCallback(() => {
@@ -528,9 +552,11 @@ export const WorkflowProvider: React.FC<WorkflowProviderProps> = ({
     addAction,
     deleteAction,
     updateRuleName,
+    updateActionTemplate,
     goToStep,
     canProceedToConditions,
     canProceedToActions,
+    canProceedToActionTemplate,
     validatedConditionIds,
     duplicateConditionIds,
     validatedFieldErrors,

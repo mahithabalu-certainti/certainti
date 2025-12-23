@@ -10,6 +10,7 @@ import {
   transformRuleToPayload,
   transformApiResponseToRule,
   ConditionTypeEnum,
+  ActionTypeEnum,
 } from './helper';
 import {
   useGetScopeList,
@@ -105,9 +106,14 @@ const WorkflowBuilderFormContent: React.FC<WorkflowBuilderProps> = ({
     rule.trigger !== null &&
     (rule.conditions.length > 0 ||
       rule.conditionType?.condition_type?.toLowerCase() ===
-        ConditionTypeEnum.then) &&
+      ConditionTypeEnum.then) &&
     rule.actions.length > 0 &&
-    rule.conditionType !== null;
+    rule.conditionType !== null &&
+    (
+      !rule.actions.some(a => a.name === ActionTypeEnum.InApp || a.name === ActionTypeEnum.Email)
+        ? true
+        : !!rule.actionTemplates && Object.keys(rule.actionTemplates).length === rule.actions.length
+    );
 
   const isInitialLoading =
     isLoadingScopeList ||

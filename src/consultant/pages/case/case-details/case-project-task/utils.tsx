@@ -193,7 +193,7 @@ export const caseProjectTaskFilterFields = (
     },
     {
       name: 'Cost',
-      value: 'cost',
+      value: 'total_cost_pro_task',
       type: 'number',
       operatorOption: numberOptions,
       hide:
@@ -202,7 +202,7 @@ export const caseProjectTaskFilterFields = (
     },
     {
       name: 'Effort (Hours)',
-      value: 'effort_hours',
+      value: 'total_hours_pro_task',
       type: 'number',
       operatorOption: numberOptions,
       hide:
