@@ -9,8 +9,8 @@ import { logMessage } from "./helpers";
 let isJobRunning = false;
 
 export const schedulerForTriggerRule = async () => {
-  //    const schdulerExpression = await getSecret(process.env.SCHEDULER_EXPRESSION as string) || `0 0 * * *`;
-  const task = cron.schedule("* * * * *", async () => {
+  const schdulerExpression = await getSecret(process.env.SCHEDULER_EXPRESSION as string) || `0 0 * * *`;
+  const task = cron.schedule(schdulerExpression, async () => {
     if (isJobRunning) {
       logMessage(
         `Skipped at: ${new Date().toISOString()} — previous job still running`

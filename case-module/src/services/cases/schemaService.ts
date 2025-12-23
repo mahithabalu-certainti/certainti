@@ -74,14 +74,19 @@ import { CaseProjectResource } from "../../models/caseProjectResourceModel";
 import { CaseProjectTask } from "../../models/caseProjectTaskModel";
 import { CaseKeyContactDetails } from "../../models/caseKeyContactModel";
 import { setupCaseKeyContactSequence } from "../../models/caseKeyContactModel";
+import { HelperMethods } from "./helperMethods";
 
 class CaseSchemaService {
   private orgDbSequelize: Sequelize | null = null;
   private mainDbSequelize: Sequelize | null = null;
   private caseModelService: CaseModelService;
+  private helperMethod : HelperMethods
 
   constructor() {
     this.caseModelService = new CaseModelService();
+    this.helperMethod = new HelperMethods(
+          this.caseModelService
+        );
   }
 
   /**
@@ -401,7 +406,8 @@ class CaseSchemaService {
     accountNumber: string,
     userId: string,
     caseRequest: ICreateCases,
-    transaction: Transaction
+    transaction: Transaction,
+    accessToken: string
   ) {
     // Implementation for creating interactions in the database
     try {
@@ -467,7 +473,8 @@ class CaseSchemaService {
         accountNumber,
         caseRequest.case_rid as string,
         { ...caseRequest, modified_by: userId },
-        existingCase
+        existingCase,
+        accessToken
       );
 
       // Add timeline entry for case update
@@ -516,12 +523,16 @@ class CaseSchemaService {
     accountNumber: string,
     caseId: string,
     newCaseData: any,
-    existingCaseData: any
+    existingCaseData: any,
+    accessToken: string
   ) {
     try {
       const { CaseHistory } = await this.caseModelService.getModels(
         accountNumber
       );
+      if(!this.mainDbSequelize) {
+        this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+      }
 
       const excludedFields = [
         "created_by",
@@ -565,8 +576,39 @@ class CaseSchemaService {
       if (historyChanges.length === 0) return;
 
       // Use individual create operations to avoid sequence conflicts
+       let baseRuleEnginePayload: any = {
+          eventName: ruleNames.caseCreated,
+          userId: newCaseData.modified_by,
+          accountRid: newCaseData.account_rid,
+          entityName: newCaseData.case_name,
+          entityId: newCaseData.rid
+        };
       for (const historyChange of historyChanges) {
         await CaseHistory.create(historyChange);
+        // If the attribute is 'case_owner_rid', fetch user names for old and new values
+        if (historyChange.attribute_name === 'case_owner_rid') {
+          const oldValue = historyChange.old_value;
+          const newValue = historyChange.new_value;
+          const result:any = await this.mainDbSequelize.query(rawQueries.fetchUserNames(oldValue, newValue));
+          let nameMapping = new Map();
+          if (result && Array.isArray(result[0])) {
+            for (const r of result[0]) {
+              if (r && r.rid != null) {
+                nameMapping.set(String(r.rid), r.email ? String(r.email) : '');
+              }
+            }
+          }
+          const oldName = nameMapping.get(oldValue) || '';
+          const newName = nameMapping.get(newValue) || '';
+          baseRuleEnginePayload.targetUserID = newValue;
+          baseRuleEnginePayload.targetEmail = newName;
+          baseRuleEnginePayload.caseOwner = "Updated"
+            await this.helperMethod.triggerDynamicRuleEngine('assigne_change', baseRuleEnginePayload, {
+                  newValue: newName,
+                  oldValue: oldName
+                }, accessToken);
+         
+        }
       }
     } catch (err) {
       logMessage(`Error updating project history : ${JSON.stringify(err)}`);
