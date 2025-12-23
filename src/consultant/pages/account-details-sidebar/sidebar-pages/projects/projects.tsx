@@ -241,7 +241,6 @@ const Projects: React.FC<ProjectsProps> = ({
   }, [data?.projects]);
   
 
-  console.log('projects', projectList);
   
 
   useEffect(() => {
