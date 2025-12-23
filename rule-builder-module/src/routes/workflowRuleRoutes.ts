@@ -12,6 +12,7 @@ const router = Router();
 // RuleMaster
 router.post("/rule", RuleController.createRuleMaster);
 router.get("/rule", RuleController.getAllRuleMasters);
+router.get("/rule/export", RuleController.exportRuleMasters);
 router.put("/rule/update", RuleController.updateRuleMaster);
 router.post("/rule/delete", RuleController.deleteRuleMaster);
 
@@ -65,7 +66,7 @@ router.post("/updateRule", WorkFlowController.updateRule);
 router.post("/updateRuleStatus", WorkFlowController.updateRuleStatus);
 router.post("/createRuleMap", WorkFlowController.createRuleMapWithScope);
 router.post("/updateRuleMap", WorkFlowController.updateRuleMapWithScope);
-router.get("/notificationTemplate/:channel",WorkFlowController.fetchNotificationTemplates)
+router.get("/notificationTemplate/:channel", WorkFlowController.fetchNotificationTemplates)
 
 router.post("/execute", WorkFlowController.execute);
 
