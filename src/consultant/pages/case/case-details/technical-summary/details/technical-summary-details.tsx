@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import SectionHeader from '../../../../../../components/details-section/section-header';
 import { TechSummaryIcon } from '../../../../../../assets';
-import { useParams, useSearchParams } from 'react-router-dom';
+import {  useSearchParams } from 'react-router-dom';
 import {
   useTechnicalSummaryDetails,
   useUpdateTechnicalSummaryText,
@@ -20,7 +20,6 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../store/store';
 import { AllPermissions } from '../../../../../../common-service';
 import Markdown from 'react-markdown';
-import TextButton from '../../../../../../components/button/text-button';
 
 interface TechnicalSummaryDetailsProps {
   accountInActive: boolean;
@@ -265,7 +264,7 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
               <div>
                 Refinement Prompt
               </div>
-              <div>
+              {/* <div>
                 <TextButton label='Refine Prompt' onClick={() => console.log('Trigger AI Prompt')}
                   sx={{
                     width: '130px',
@@ -273,7 +272,7 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
                     fontSize: '13px',
                     // fontWeight: 400,
                   }} />
-              </div>
+              </div> */}
             </div>
             <div className='py-2 px-6'>
               <TextareaAutosize
