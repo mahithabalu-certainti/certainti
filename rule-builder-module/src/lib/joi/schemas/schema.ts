@@ -51,6 +51,12 @@ const listRuleSchema = Joi.object({
 });
 
 const exportRuleSchema = Joi.object({
+     page: Joi.string().optional()
+        .pattern(/^[0-9]+$/)
+    ,
+    limit: Joi.string().optional()
+        .pattern(/^[0-9]+$/)
+    ,
     timezone: Joi.string().optional(),
     filters: Joi.string().default("{}"),
     sortBy: Joi.string().optional(),
