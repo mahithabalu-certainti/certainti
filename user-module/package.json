@@ -37,7 +37,8 @@
     "sequelize": "^6.37.6",
     "supertest": "^7.0.0",
     "uuid": "^11.1.0",
-    "winston": "^3.17.0"
+    "winston": "^3.17.0",
+    "@azure/web-pubsub": "^1.2.0"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
