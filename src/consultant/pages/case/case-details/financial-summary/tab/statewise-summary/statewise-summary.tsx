@@ -67,6 +67,7 @@ export const StateWiseSummary: React.FC<FinancialSummaryProps> = ({
     accountId: accountid as string,
     countryId: countryId as string,
     fiscalYear,
+    caseId: caseRid,
   });
 
   // Variables
