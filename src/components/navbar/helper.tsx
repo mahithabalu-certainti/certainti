@@ -23,57 +23,6 @@ export const getRelativeTime = (timestamp: string): string => {
   }
 };
 
-export const PROJECT_COLORS = [
-  '#40E0D0',
-  '#FFA500',
-  '#EEEE00',
-  '#00BFFF',
-  '#FF7256',
-  '#CCCC33',
-  '#DDA0DD',
-  '#66CDAA',
-  '#FFDAB9',
-  '#CDB38B',
-  '#98FB98',
-  '#FFD700',
-  '#B0E0E6',
-  '#C5B8FF',
-  '#BDB76B',
-  '#66CDAA',
-  '#EEE0E5',
-  '#FFA07A',
-  '#7FFFD4',
-  '#BEBEBE',
-  '#FFB6C1',
-  '#32CD32',
-  '#CDB5CD',
-  '#A2CD5A',
-];
-
-export const getRandomColorForId = (id: string): string => {
-  // Use the notification ID to generate a deterministic but varied color
-  const idNumber = parseInt(id, 10) || 0;
-  const colorIndex = idNumber % PROJECT_COLORS.length;
-  return PROJECT_COLORS[colorIndex];
-};
-
-export const blendWithWhite = (hex: string, alpha = 0.6) => {
-  const r = parseInt(hex.substring(1, 3), 16);
-  const g = parseInt(hex.substring(3, 5), 16);
-  const b = parseInt(hex.substring(5, 7), 16);
-
-  const newR = Math.round(r * (1 - alpha) + 255 * alpha);
-  const newG = Math.round(g * (1 - alpha) + 255 * alpha);
-  const newB = Math.round(b * (1 - alpha) + 255 * alpha);
-
-  return (
-    '#' +
-    newR.toString(16).padStart(2, '0') +
-    newG.toString(16).padStart(2, '0') +
-    newB.toString(16).padStart(2, '0')
-  );
-};
-
 export const getSvgIcon = (name: string, color: string = '#425A76') => {
   const icons: Record<string, JSX.Element> = {
     info: (
