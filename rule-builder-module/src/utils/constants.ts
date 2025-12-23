@@ -124,7 +124,7 @@ export const rawQueries = {
   },
 
   fetchScopeEvents(scope_type_rid: string, status_rid: string): string {
-    let query = `SELECT se.rid , se.event_name, se.description,st.name AS scope_type_name, st.rid as scope_type_rid 
+    let query = `SELECT se.rid , se.event_name, se.description,st.name AS scope_type_name, st.rid as scope_type_rid,se.type 
     FROM ${MAIN_SCHEMA_NAME}.scopes st JOIN ${MAIN_SCHEMA_NAME}.scope_events se ON se.scope_type_rid = st.rid `;
     const conditions: string[] = [];
     if (scope_type_rid) {
@@ -238,7 +238,7 @@ export const rawQueries = {
   fetchRulesFromEvent(event_rid: string, scope_type_rid: string, entity_rid: string): string {
     let query = `SELECT wrm.rid AS rule_rid,wrm.condition_rid,rm.apply_type FROM ${MAIN_SCHEMA_NAME}.workflow_rule_master wrm LEFT JOIN ${MAIN_SCHEMA_NAME}.workflow_rule_map rm 
     ON rm.rule_rid = wrm.rid LEFT JOIN ${MAIN_SCHEMA_NAME}.workflow_rule_scope_map rsm ON rsm.rule_rid = wrm.rid 
-    WHERE wrm.event_rid = '${event_rid}' AND wrm.scope_type_rid = '${scope_type_rid}'
+    WHERE wrm.event_rid = '${event_rid}' AND wrm.scope_type_rid = '${scope_type_rid}' AND wrm.is_active = true
     AND (
         rm.apply_type = 'ALL'
         OR (rm.apply_type = 'INDIVIDUAL' AND rsm.scope_entity_rid = '${entity_rid}')
