@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { Suspense, useMemo, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   AccountSettingsIcon,
@@ -87,6 +87,49 @@ export const Tasks: React.FC = () => {
     permission,
     AllPermissions.ATTACHMENT_VIEW_EDIT
   );
+
+  const isWorkBreakdownEnable = checkPermission(
+    modules,
+    AllModules.WORKBREAKDOWN
+  );
+
+  const isActivityTaskEnable = checkPermission(
+    modules,
+    AllModules.ACTIVITIES_TASK
+  );
+
+  const tabs = useMemo(() => {
+    const list = [];
+    if (isWorkBreakdownEnable) {
+      list.push({ label: 'Milestone', value: 'milestone' });
+    }
+    if (isActivityTaskEnable) {
+      list.push({ label: 'Activity', value: 'activity' });
+    }
+    return list;
+  }, [isWorkBreakdownEnable, isActivityTaskEnable]);
+
+  useEffect(() => {
+    if (!isWorkBreakdownEnable && tabParam === 'milestone') {
+      if (isActivityTaskEnable) {
+        const newParams = new URLSearchParams(searchParams);
+        newParams.set('tab', 'activity');
+        setSearchParams(newParams, { replace: true });
+      }
+    } else if (!isActivityTaskEnable && tabParam === 'activity') {
+      if (isWorkBreakdownEnable) {
+        const newParams = new URLSearchParams(searchParams);
+        newParams.set('tab', 'milestone');
+        setSearchParams(newParams, { replace: true });
+      }
+    }
+  }, [
+    isWorkBreakdownEnable,
+    isActivityTaskEnable,
+    tabParam,
+    searchParams,
+    setSearchParams,
+  ]);
 
   const taskPermissionMap = useMemo(
     () => getPermissionMap(permission, AllPermissions.ACTIVITY_TASK_VIEW_EDIT),
@@ -293,7 +336,8 @@ export const Tasks: React.FC = () => {
 
   if (!attachmentEnable || !isAttachmentViewEnable) return <AccessRestricted />;
 
-  if (!attachmentEnable || !isAttachmentViewEnable) return <AccessRestricted />;
+  if (!isWorkBreakdownEnable && !isActivityTaskEnable)
+    return <AccessRestricted />;
 
   const handleTabChange = (value: string) => {
     setSearchText('');
@@ -423,16 +467,13 @@ export const Tasks: React.FC = () => {
       </div>
 
       <SectionHeaderTab
-        tabs={[
-          { label: 'Milestone', value: 'milestone' },
-          { label: 'Activity', value: 'activity' },
-        ]}
+        tabs={tabs}
         onTabChange={handleTabChange}
         defaultValue={tabParam}
       />
 
       <div className='border border-[#CBD6E2] border-t-0'>
-        {tabParam === 'milestone' && (
+        {tabParam === 'milestone' && isWorkBreakdownEnable && (
           <TaskTable
             appliedFilters={appliedFilters}
             tableParams={tableParams}
@@ -447,7 +488,7 @@ export const Tasks: React.FC = () => {
             taskType='milestone'
           />
         )}
-        {tabParam === 'activity' && (
+        {tabParam === 'activity' && isActivityTaskEnable && (
           <TaskTable
             appliedFilters={appliedFilters}
             tableParams={tableParams}

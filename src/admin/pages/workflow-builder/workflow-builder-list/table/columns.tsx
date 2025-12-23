@@ -54,7 +54,7 @@ export const getWorkflowColumns = (
   {
     id: 'modified_user_name',
     sortId: 'modified_user_name',
-    label: 'Modified By',
+    label: 'Updated By',
     width: 180,
     sortable: true,
     // hide:
@@ -64,7 +64,7 @@ export const getWorkflowColumns = (
   {
     id: 'modified_datetime',
     sortId: 'modified_datetime',
-    label: 'Modified On',
+    label: 'Updated On',
     width: 200,
     sortable: true,
     render: (row) => formatDateToYYYYMMDDWithTime(row.modified_datetime),
@@ -76,7 +76,7 @@ export const getWorkflowColumns = (
     id: 'createMap',
     sortId: 'create_map',
     label: 'Assign Rule',
-    width: 140,
+    width: 80,
     sortable: false,
     render: (row) => (
       <span
@@ -91,7 +91,7 @@ export const getWorkflowColumns = (
     id: 'is_active',
     sortId: 'is_active',
     label: 'Status',
-    width: 100,
+    width: 60,
     sortable: false,
     render: (row) => (
       <div className='text-center'>

@@ -53,6 +53,8 @@ const RuleMapModal: React.FC<RuleMapModalProps> = ({
   const [selectedApplyType, setSelectedApplyType] = useState<ApplyType>('ALL');
   const [showEntityTable, setShowEntityTable] = useState(false);
   const [selectedEntityIds, setSelectedEntityIds] = useState<string[]>([]);
+  const [initialEntityIds, setInitialEntityIds] = useState<string[]>([]); // Store initial IDs separately
+  const [resetFilterTrigger, setResetFilterTrigger] = useState<number>(0);
 
   // Fetch rule map details if rule is already mapped
   const { data: ruleMapDetails, isLoading: ruleMapDetailsLoading } =
@@ -63,10 +65,10 @@ const RuleMapModal: React.FC<RuleMapModalProps> = ({
     if (ruleMapDetails && open && isRuleMapped) {
       setSelectedApplyType(ruleMapDetails.apply_type);
 
-      // If INDIVIDUAL, show the entity table and set selected IDs
+      // Store the initial entity IDs for INDIVIDUAL type
       if (ruleMapDetails.apply_type === 'INDIVIDUAL') {
-        setShowEntityTable(true);
         setSelectedEntityIds(ruleMapDetails.scope_entity_rid);
+        setInitialEntityIds(ruleMapDetails.scope_entity_rid); // Set initial IDs once
       }
     }
   }, [ruleMapDetails, open, isRuleMapped]);
@@ -75,6 +77,7 @@ const RuleMapModal: React.FC<RuleMapModalProps> = ({
     setSelectedApplyType('ALL');
     setShowEntityTable(false);
     setSelectedEntityIds([]);
+    setInitialEntityIds([]); // Reset initial IDs too
   };
 
   const handleSaveRuleMap = (applyType: ApplyType, entityIds: string[]) => {
@@ -90,7 +93,7 @@ const RuleMapModal: React.FC<RuleMapModalProps> = ({
 
       updateRuleMap.mutate(updatePayload, {
         onSuccess: () => {
-          successToast('Updated rule map successfully');
+          successToast('Rule map assigned successfully');
           resetModalState();
           onClose();
           onSuccess?.();
@@ -108,7 +111,7 @@ const RuleMapModal: React.FC<RuleMapModalProps> = ({
 
       createRuleMap.mutate(createPayload, {
         onSuccess: () => {
-          successToast('Created rule map successfully');
+          successToast('Rule map assigned successfully');
           resetModalState();
           onClose();
           onSuccess?.();
@@ -132,14 +135,30 @@ const RuleMapModal: React.FC<RuleMapModalProps> = ({
   };
 
   const handleBack = () => {
+    // Reset table filters when going back
+    console.log('handleBack - triggering reset');
+    setResetFilterTrigger(prev => {
+      console.log('Previous trigger value:', prev);
+      return prev + 1;
+    });
     setShowEntityTable(false);
     setSelectedEntityIds([]);
   };
 
   const handleClose = () => {
     if (!createRuleMap.isPending && !updateRuleMap.isPending) {
-      resetModalState();
-      onClose();
+      // Reset table filters when closing
+      console.log('handleClose - triggering reset');
+      setResetFilterTrigger(prev => {
+        console.log('Previous trigger value:', prev);
+        return prev + 1;
+      });
+      
+      // Use setTimeout to ensure the trigger propagates before closing
+      setTimeout(() => {
+        resetModalState();
+        onClose();
+      }, 0);
     }
   };
 
@@ -154,29 +173,37 @@ const RuleMapModal: React.FC<RuleMapModalProps> = ({
       case 'case task':
         return (
           <TaskTemplates
+            key={initialEntityIds.length > 0 ? initialEntityIds.join(',') : 'empty'}
             onSelectionChange={handleSelectionChange}
-            initialSelectedIds={isRuleMapped ? selectedEntityIds : undefined}
+            initialSelectedIds={isRuleMapped ? initialEntityIds : undefined}
+            resetFilterTrigger={resetFilterTrigger}
           />
         );
       case 'case':
         return (
           <Cases
+            key={initialEntityIds.length > 0 ? initialEntityIds.join(',') : 'empty'}
             onSelectionChange={handleSelectionChange}
-            initialSelectedIds={isRuleMapped ? selectedEntityIds : undefined}
+            initialSelectedIds={isRuleMapped ? initialEntityIds : undefined}
+            resetFilterTrigger={resetFilterTrigger}
           />
         );
       case 'account':
         return (
           <Accounts
+            key={initialEntityIds.length > 0 ? initialEntityIds.join(',') : 'empty'}
             onSelectionChange={handleSelectionChange}
-            initialSelectedIds={isRuleMapped ? selectedEntityIds : undefined}
+            initialSelectedIds={isRuleMapped ? initialEntityIds : undefined}
+            resetFilterTrigger={resetFilterTrigger}
           />
         );
       case 'project':
         return (
           <Projects
+            key={initialEntityIds.length > 0 ? initialEntityIds.join(',') : 'empty'}
             onSelectionChange={handleSelectionChange}
-            initialSelectedIds={isRuleMapped ? selectedEntityIds : undefined}
+            initialSelectedIds={isRuleMapped ? initialEntityIds : undefined}
+            resetFilterTrigger={resetFilterTrigger}
           />
         );
       default:

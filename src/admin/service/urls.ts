@@ -1,4 +1,7 @@
-import { WorkflowRuleListURLParams } from '../types';
+import {
+  WorkflowRuleExportListURLParams,
+  WorkflowRuleListURLParams,
+} from '../types';
 import { ManageUserListParms } from '../types/manage-account';
 import { UserListParams } from '../types/manage-user';
 import { buildQueryString } from './helpers';
@@ -160,4 +163,27 @@ export const WorkflowRuleListURL = ({
   }
 
   return `${baseUrl}?${searchParams.toString()}`;
+};
+
+export const WorkflowRuleExportListURL = ({
+  sortBy,
+  sortOrder,
+  filters,
+  search,
+  timezone,
+}: WorkflowRuleExportListURLParams): string => {
+  const baseUrl = `/api/workflow/rule/export`;
+  const searchParams = new URLSearchParams();
+
+  if (filters && Object.keys(filters).length > 0) {
+    searchParams.set('filters', JSON.stringify(filters));
+  }
+  if (sortBy !== undefined) searchParams.set('sortBy', sortBy);
+  if (sortOrder !== undefined) searchParams.set('sortOrder', sortOrder);
+  if (search) {
+    searchParams.set('search', search);
+  }
+  if (timezone !== undefined) searchParams.set('timezone', timezone);
+  const queryString = searchParams.toString();
+  return queryString ? `${baseUrl}?${queryString}` : baseUrl;
 };

@@ -129,7 +129,7 @@ const ListTable = <T extends RowData>({
 
   // Initialize selected rows from initialSelectedIds
   useEffect(() => {
-    if (initialSelectedIds && initialSelectedIds.length > 0) {
+    if (initialSelectedIds && initialSelectedIds.length > 0 && data && data.length > 0) {
       const initialSet = new Set(initialSelectedIds);
       
       // Auto-select parents if their children are in initialSelectedIds
@@ -175,7 +175,7 @@ const ListTable = <T extends RowData>({
       onSelectionChange?.(Array.from(initialSet));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialSelectedIds]); // Only run when initialSelectedIds changes
+  }, [initialSelectedIds, data]); // Run when initialSelectedIds or data changes
 
   // handle initial expansion
   useEffect(() => {

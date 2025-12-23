@@ -59,7 +59,7 @@ export const getWorkflowListFilterFields = (): FieldConfig[] => {
       //     !permissionMap?.['created_datetime']?.read,
     },
     {
-      name: 'Modified By',
+      name: 'Updated By',
       value: 'modified_user_name',
       type: 'text',
       operatorOption: nonReqTextfieldOptions,
@@ -68,7 +68,7 @@ export const getWorkflowListFilterFields = (): FieldConfig[] => {
       //     !permissionMap?.['modified_user_name']?.read,
     },
     {
-      name: 'Modified On',
+      name: 'Updated On',
       value: 'modified_datetime',
       type: 'date',
       operatorOption: dateOptions,

@@ -231,38 +231,46 @@ const ActionManager = ({
           <>
             {/* When "All" is selected - Show grouped by category */}
             {selectedCategory === 'all' ? (
-              Object.entries(groupedActions).map(([categoryId, list]) => {
-                // Get category name for display
-                const categoryName = getCategoryNameById(categoryId);
-
-                // Show all actions in category, including already added ones
-                return (
-                  <div key={categoryId} className='px-6 space-y-2'>
-                    <h3
-                      className='text-sm font-semibold text-[#425A76] uppercase sticky top-0
-                                 bg-gray-50 z-10 py-2'
-                    >
-                      {categoryName}
-                    </h3>
-                    <div className='grid grid-cols-1 md:grid-cols-4 gap-3'>
-                      {list.map((action) => {
-                        const isAlreadyAdded = rule.actions.some(
-                          (a) => a.id === action.id
-                        );
-                        return (
-                          <ActionCard
-                            key={action.id}
-                            action={action}
-                            onSelect={() => handleActionSelect(action)}
-                            isAlreadyAdded={isAlreadyAdded}
-                            disabled={isAlreadyAdded} // Disable if already added
-                          />
-                        );
-                      })}
-                    </div>
+              filteredActions.length === 0 ? (
+                <div className='text-center py-10 text-[#425A76]'>
+                  <div className='text-lg font-semibold mb-2'>
+                    No actions found
                   </div>
-                );
-              })
+                </div>
+              ) : (
+                Object.entries(groupedActions).map(([categoryId, list]) => {
+                  // Get category name for display
+                  const categoryName = getCategoryNameById(categoryId);
+
+                  // Show all actions in category, including already added ones
+                  return (
+                    <div key={categoryId} className='px-6 space-y-2'>
+                      <h3
+                        className='text-sm font-semibold text-[#425A76] uppercase sticky top-0
+                                   bg-gray-50 z-10 py-2'
+                      >
+                        {categoryName}
+                      </h3>
+                      <div className='grid grid-cols-1 md:grid-cols-4 gap-3'>
+                        {list.map((action) => {
+                          const isAlreadyAdded = rule.actions.some(
+                            (a) => a.id === action.id
+                          );
+                          return (
+                            <ActionCard
+                              key={action.id}
+                              action={action}
+                              onSelect={() => handleActionSelect(action)}
+                              isAlreadyAdded={isAlreadyAdded}
+                              disabled={isAlreadyAdded} // Disable if already added
+                            />
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })
+              )
             ) : filteredActions.length > 0 ? (
               // When specific category is selected - Show all actions in that category
               <div className='px-6 space-y-2'>
@@ -291,9 +299,21 @@ const ActionManager = ({
                 </div>
               </div>
             ) : (
-              <div className='text-center py-10 text-[#425A76] text-sm'>
-                No actions found{' '}
-                {searchQuery ? 'for your search' : 'in this category'}.
+              <div className='px-6 space-y-2'>
+                <h3
+                  className='text-sm font-semibold text-[#425A76] uppercase sticky top-0
+                             bg-gray-50 z-10 py-2'
+                >
+                  {actionCategories.find((c) => c.id === selectedCategory)
+                    ?.label || selectedCategory}
+                </h3>
+                <div className='text-center py-10 text-[#425A76]'>
+                  <div className='text-[12px] font-medium mb-2'>
+                    No actions found in{' '}
+                    {actionCategories.find((c) => c.id === selectedCategory)
+                      ?.label || selectedCategory}
+                  </div>
+                </div>
               </div>
             )}
           </>

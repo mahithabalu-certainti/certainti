@@ -35,11 +35,13 @@ const BUTTON_STYLES = {
 interface AccountsProps {
   onSelectionChange?: (selectedIds: string[]) => void;
   initialSelectedIds?: string[];
+  resetFilterTrigger?: number;
 }
 
 export const Accounts: React.FC<AccountsProps> = ({ 
   onSelectionChange,
-  initialSelectedIds 
+  initialSelectedIds,
+  resetFilterTrigger
 }) => {
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>();
   const [expandChild, setExpandChild] = useState<boolean>(false);
@@ -223,6 +225,8 @@ export const Accounts: React.FC<AccountsProps> = ({
               setPage={setPage}
               handleCloseFilter={handleCloseFilter}
               handleSorting={handleSorting}
+              carryFilterData={false}
+              resetFilterTrigger={resetFilterTrigger}
             />
           </Suspense>
         </div>
