@@ -2345,7 +2345,21 @@ export const rawQueries = {
   },
   getProjectsForCases(caseRid: string, accountRid: string, schemaName: string) {
     return `SELECT project_fiscal_rid FROM ${schemaName}.case_projects WHERE case_rid = '${caseRid}' AND account_rid = '${accountRid}'`
-  }
+  },
+  fetchAccountDetailsInfo(rid: string) {
+    return `
+    SELECT rid, account_name,r_number,parent_account_rid,country_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${rid}'`;
+  },
+   fetchAllPlatformConfig(rid: string) {
+    return `
+    SELECT config_json,effective_start_date,effective_end_date  FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values rv
+    join ${MAIN_SCHEMA_NAME}.rd_credit_config_group rg on  rv.credit_config_group_rid  = rg.rid
+    where rg.country_rid = '${rid}'
+    AND credit_program_name = 'Platform Configuration'
+    AND rg.is_federal = true 
+    AND rv.status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active')
+  ORDER BY rv.effective_start_date DESC`;
+  },
 };
 
 export const IMPORT_FILTER_COLUMNS: any = {
