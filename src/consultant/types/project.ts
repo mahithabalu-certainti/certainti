@@ -140,6 +140,7 @@ export interface NewProjectData {
   project_fiscal_rid?: string;
   attachment?: AttachmentList[];
   project_rid?: string;
+  
 }
 
 export interface ProjectTypeItem {
@@ -217,6 +218,7 @@ export type Project = {
   currency_rid?: string;
   rd_percent_final?: string;
   is_project_exists: boolean;
+  is_rd_trigger_qualified?: boolean;
 };
 export type ProjectFiscalSummary = {
   account_status_name?: string;
@@ -247,6 +249,7 @@ export type ProjectFiscalSummary = {
   isInteractionMapped?: boolean;
   isKeyContactIncluded?: boolean;
   interactionKeyRecipients?: InteractionKeyRecipients[];
+  is_rd_trigger_qualified: boolean;
 };
 
 interface InteractionKeyRecipients {

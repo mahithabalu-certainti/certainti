@@ -57,6 +57,12 @@ export type User = {
   is_consultant_firm: string;
   org_name: string;
   permissions?: UserDetailPermissions[];
+  city_rid: string | null;
+  region_rid: string | null;
+  country_rid: string | null;
+  profile_url: string | null;
+  status_rid: string;
+  org_id: string;
 };
 
 // Response status types
@@ -88,3 +94,12 @@ export type ConfigureManageSettingApiResponse = {
     settings: ManageSetting;
   };
 };
+
+export interface UploadProfileResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: {
+    profile_url: string;
+  };
+}

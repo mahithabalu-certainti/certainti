@@ -2,7 +2,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
 import { AllPermissions } from '../../../../../common-service';
-import { ExportType, ProjectResourcesListParams } from '../../../../types';
+import {
+  ActivityDropdownItem,
+  ExportType,
+  ProjectResourcesListParams,
+} from '../../../../types';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   useCaseProjectTaskDetail,
@@ -10,19 +14,19 @@ import {
 } from '../../../../services/case-project-task/case-project-task-service';
 import { BUTTON_STYLES } from '../../../../../admin/pages/manage-user-detail/styles';
 import { ShowHideTableColumn } from '../../../../../components/table/types';
-import { SectionTabPanel } from '../../../../../components';
 import { ProjectsIcon } from '../../../../../assets';
 import {
   ListTable,
   ManageColumnsPopover,
 } from '../../../../../components/table';
-import { CaseProjectTaskRow, getCaseProjectTaskColumns } from './columns';
-import { caseProjectTaskFilterFields } from './utils';
+import { getCaseProjectTaskColumns } from './columns';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
 import ProjectTaskDetails from '../../../project/project-details/project-task/project-task-details';
 import { ProjectTaskDetailsType } from '../../../../types/project-task';
 import SectionHeader from '../../../../../components/details-section/section-header';
+import TabPanel from '../../../account-details-sidebar/components/tab';
+import { ProjectTasksListType } from '../../../../types/project-tasks';
 
 const CasesProjectTaskTabs: ResourceTabs[] = [
   {
@@ -39,13 +43,14 @@ interface projectTaskProps {
   >;
   setExportType?: (type: ExportType) => void;
   refetchAccountDetails?: () => void;
+  activityMenuItems: ActivityDropdownItem[];
 }
 
 const CaseProjectTask: React.FC<projectTaskProps> = ({
   accountInActive,
   setProjectTaskParams,
   setExportType,
-
+  activityMenuItems,
   // refetchAccountDetails,
 }) => {
   const { caseId } = useParams();
@@ -59,11 +64,11 @@ const CaseProjectTask: React.FC<projectTaskProps> = ({
   );
   const [rowsPerPage, setRowsPerPage] = useState(100);
   const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('ASC');
-  const [sortField, setSortField] = useState<string>('project_code');
+  const [sortField, setSortField] = useState<string>('resource_code');
   const [totalItems, setTotalItems] = useState<number>(0);
-  const [resourceRowList, setResourceRowList] = useState<CaseProjectTaskRow[]>(
-    []
-  );
+  const [resourceRowList, setResourceRowList] = useState<
+    ProjectTasksListType[]
+  >([]);
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const [columnAnchorEl, setColumnAnchorEl] =
     React.useState<HTMLButtonElement | null>(null);
@@ -75,6 +80,7 @@ const CaseProjectTask: React.FC<projectTaskProps> = ({
   ) => {
     setColumnAnchorEl(event.currentTarget);
   };
+
   const { data, isLoading, isError } = useCaseProjectTaskList(
     {
       page: currentPage + 1,
@@ -92,7 +98,7 @@ const CaseProjectTask: React.FC<projectTaskProps> = ({
   useEffect(() => {
     if (data) {
       setTotalItems(data?.count);
-      setResourceRowList(data.tasks || []);
+      setResourceRowList(data?.tasks || []);
     }
     if (setExportType) {
       setExportType('projectTask');
@@ -138,7 +144,7 @@ const CaseProjectTask: React.FC<projectTaskProps> = ({
   };
 
   const handleSorting = (sortBy: string, sortOrder: 'asc' | 'desc') => {
-    const defaultSortField = 'document_name';
+    const defaultSortField = 'resource_code';
     const defaultSortOrder = 'ASC';
     const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
 
@@ -223,20 +229,14 @@ const CaseProjectTask: React.FC<projectTaskProps> = ({
     });
     return map;
   }, [projectViewEditFields]);
-  const handleProjectDetails = (data: CaseProjectTaskRow) => {
+  const handleProjectDetails = (data: ProjectTasksListType) => {
     // Create new search params without assignProject
     const newParams = new URLSearchParams(searchParams);
     newParams.set('caseProjectTask', data.rid);
 
     navigate({ search: newParams.toString() }, { replace: true });
   };
-
-  const projectTaskFilterFields = caseProjectTaskFilterFields(
-    permissionMapProjectTaskTableColumn,
-    permissionMapProjectTableColumn
-  );
-
-  const getRowId = (row: CaseProjectTaskRow) => row.rid;
+  const getRowId = (row: ProjectTasksListType) => row.rid;
 
   const RestrictedColumns = [
     {
@@ -278,25 +278,28 @@ const CaseProjectTask: React.FC<projectTaskProps> = ({
 
   return (
     <div className='w-full pt-2 pl-2 pr-4'>
-      <SectionTabPanel
-        tabs={CasesProjectTaskTabs}
-        filterMenu={projectTaskFilterFields}
-        filterVisibility={taskId ? false : true}
-        showFilter={showFilter}
-        contextKey='case-projectTask-list'
+      <TabPanel
+        value={'case-project-task'}
         appliedFilters={appliedFilters}
         setAppliedFilters={setAppliedFilters}
-        setCurrentPage={setCurrentPage}
+        showFilter={showFilter}
+        filterVisibility={taskId ? false : true}
         handleFilter={handleFilter}
+        setCurrentPage={setCurrentPage}
+        resourceTab={CasesProjectTaskTabs}
+        showRefresh={taskId ? false : true}
+        onRefreshClick={onRefreshClick}
         handleSorting={handleSorting}
         sortFilterCount={sortFilterCount}
         setSortFilterCount={setSortFilterCount}
-        showRefresh={taskId ? false : true}
-        onRefreshClick={onRefreshClick}
+        permissionMapTaskTableColumn={permissionMapProjectTaskTableColumn}
+        permissionMapCaseProjectTableColumn={permissionMapProjectTableColumn}
+        // fiscalDatesArg={fiscalDatesArg}
         showSearch={taskId ? false : true}
         onSearch={(text) => setSearchText(text)}
+        showAddActivity={true}
+        activityMenuItems={activityMenuItems}
       />
-
       <>
         <SectionHeader
           title={taskId ? 'Case Project Task Details' : 'Case Project Task '}

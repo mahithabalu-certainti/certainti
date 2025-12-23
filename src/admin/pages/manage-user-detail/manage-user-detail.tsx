@@ -6,7 +6,7 @@ import TextButton from '../../../components/button/text-button';
 import { useManageUserDetail } from '../../service/manage-user-detail/manage-user-detail-service';
 import { BUTTON_STYLES, HEADER_STYLES } from './styles';
 import { ADMIN_CREATE_USER, ADMIN_MANAGE_USER } from '../../../routes';
-import { UserDetailComponent } from '../../../components';
+import { UserDetailComponent } from '../../../components/user-detail/user-detail';
 import { Box } from '@mui/material';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../store/store';

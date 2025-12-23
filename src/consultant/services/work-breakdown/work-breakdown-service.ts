@@ -41,6 +41,12 @@ export interface AddCollaboratorResponse {
     [key: string]: unknown;
   };
 }
+
+type Tag = {
+  rid: string;
+  tag_name: string;
+};
+
 export interface TaskCard {
   rid: string;
   sequence_no: number;
@@ -68,6 +74,9 @@ export interface TaskCard {
   status_name: string;
   task_status_rid: string;
   task_status_name: string;
+  profile_url: string | null;
+  attachment_count?: number | null;
+  tags?: string[] | Tag[];
 }
 export interface TaskDetailResponse {
   rid: string;
@@ -211,6 +220,7 @@ export const getTaskDetail = async (
         color: assigneeColor,
       },
       createdBy: taskDetailResponse.created_by_name,
+      created_by_rid: taskDetailResponse.created_by,
       modifiedBy: taskDetailResponse.modified_by_name,
       description: taskDetailResponse.task_description,
       commentCount: 0,
@@ -261,7 +271,9 @@ export const getTaskDetail = async (
               (wc) => wc.target_task_name
             )
           : [],
-      fiscal_year: taskDetailResponse.fiscal_year,
+      fiscal_year: taskDetailResponse.fiscal_year
+        ? String(taskDetailResponse.fiscal_year)
+        : undefined,
     };
 
     return task;
@@ -282,7 +294,9 @@ export const fetchTaskDetail = async (
     const payload = {
       task_rid: taskId,
       account_rid: accountId,
-      ...(taskType ? { task_type: taskType } : { case_rid: caseId }),
+      ...(taskType && taskType !== 'milestone'
+        ? { task_type: taskType }
+        : { case_rid: caseId }),
     };
     const response = await caseServiceApi.post<{
       statusCode: number;
@@ -309,6 +323,7 @@ export interface TaskActivity {
   new_value: string;
   task_rid: string;
   created_by_name: string;
+  profile_url: string | null;
 }
 
 export interface TaskActivitiesData {
@@ -412,6 +427,7 @@ export const fetchTaskStatuses = async (): Promise<StatusData[]> => {
 export interface CollaboratorData {
   assigned_to: string;
   assigned_to_name: string;
+  profile_url: string | null;
 }
 
 export interface CollaboratorsResponse {

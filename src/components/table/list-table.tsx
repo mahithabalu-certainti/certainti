@@ -70,6 +70,7 @@ const ListTable = <T extends RowData>({
   hideHeaderSelect = false,
   selectable = false,
   onSelectionChange,
+  initialSelectedIds,
   // Actions
   actionWidth = 100,
   actionDisplayMode = 'dropdown',
@@ -125,6 +126,56 @@ const ListTable = <T extends RowData>({
     () => columns.filter((column) => !column.hide),
     [columns]
   );
+
+  // Initialize selected rows from initialSelectedIds
+  useEffect(() => {
+    if (initialSelectedIds && initialSelectedIds.length > 0 && data && data.length > 0) {
+      const initialSet = new Set(initialSelectedIds);
+      
+      // Auto-select parents if their children are in initialSelectedIds
+      // This ensures proper hierarchical selection
+      data.forEach((parent) => {
+        const parentId = getRowId(parent);
+        const children = parent[childrenKey] as T[] | undefined;
+        
+        if (children && children.length > 0) {
+          // Check if any child is in initialSelectedIds
+          const hasSelectedChild = children.some((child) => 
+            initialSet.has(getRowId(child))
+          );
+          
+          // If any child is selected, also select the parent
+          if (hasSelectedChild) {
+            initialSet.add(parentId);
+          }
+          
+          // Also check grandchildren for accounts/projects
+          if (grandchildrenKey) {
+            children.forEach((child) => {
+              const childId = getRowId(child);
+              const grandchildren = child[grandchildrenKey] as T[] | undefined;
+              
+              if (grandchildren && grandchildren.length > 0) {
+                const hasSelectedGrandchild = grandchildren.some((_, index) => 
+                  initialSet.has(`${childId}-gc-${index}`)
+                );
+                
+                // If any grandchild is selected, select both child and parent
+                if (hasSelectedGrandchild) {
+                  initialSet.add(childId);
+                  initialSet.add(parentId);
+                }
+              }
+            });
+          }
+        }
+      });
+      
+      setSelectedRows(initialSet);
+      onSelectionChange?.(Array.from(initialSet));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialSelectedIds, data]); // Run when initialSelectedIds or data changes
 
   // handle initial expansion
   useEffect(() => {
@@ -986,10 +1037,10 @@ const ListTable = <T extends RowData>({
                       width: column.width || 160,
                       minWidth: column.width || 160,
                       maxWidth: column.width || 160,
-                      textAlign: 'left',
                       ...(typeof column.sx === 'function'
                         ? filterOutBackground(column.sx())
                         : column.sx || {}),
+                      textAlign: 'left',
                       ...(column.sticky
                         ? {
                             left:
@@ -1021,10 +1072,10 @@ const ListTable = <T extends RowData>({
                       width: column.width || 160,
                       minWidth: column.width || 160,
                       maxWidth: column.width || 160,
-                      textAlign: 'left',
                       ...(typeof column.sx === 'function'
                         ? filterOutBackground(column.sx())
                         : column.sx || {}),
+                      textAlign: 'left',
                       ...(column.sticky
                         ? {
                             left:

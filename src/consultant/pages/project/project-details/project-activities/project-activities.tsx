@@ -16,6 +16,7 @@ import {
 } from '../../../activities/activities-list/helper';
 import { ACTIVITY_CREATE } from '../../../../../routes';
 import {
+  ActivityDropdownItem,
   ActivityListExportURLParams,
   ActivityModuleType,
   ActivityType,
@@ -69,6 +70,7 @@ interface ProjectActivitiesProps {
   >;
   isEmailConfigured: boolean;
   isDetailLoading?: boolean;
+  activityMenuItems: ActivityDropdownItem[];
 }
 
 const ProjectActivities: React.FC<ProjectActivitiesProps> = ({
@@ -79,6 +81,7 @@ const ProjectActivities: React.FC<ProjectActivitiesProps> = ({
   setExportType,
   isEmailConfigured,
   isDetailLoading,
+  activityMenuItems,
 }) => {
   const navigate = useNavigate();
   const [appliedFilters, setAppliedFilters] = useState<
@@ -499,6 +502,8 @@ const ProjectActivities: React.FC<ProjectActivitiesProps> = ({
           onSearch={(text) => setSearchText(text)}
           searchReset={resetSearch}
           onSearchReset={handleSearchReset}
+          showAddActivity={tabParam === 'all'}
+          activityMenuItems={activityMenuItems}
         />
 
         <SectionHeader
@@ -527,6 +532,7 @@ const ProjectActivities: React.FC<ProjectActivitiesProps> = ({
             accountInActive={accountInActive}
             tabValue={tabParam as ActivityType}
             entityLevel={'project'}
+            projectId={projectID}
           />
         )}
 

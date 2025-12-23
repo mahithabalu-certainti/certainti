@@ -1208,11 +1208,7 @@ const CaseInteractionForm = () => {
                                         padding: '4px',
                                       }}
                                     >
-                                      {question.question_seq_num.startsWith(
-                                        'SNO'
-                                      )
-                                        ? '-'
-                                        : question.question_seq_num}
+                                      {`Q${index + 1}`}
                                     </div>
                                   )}
 

@@ -31,19 +31,23 @@ import {
   UploadInteractionAttachmentResponse,
 } from '../consultant/types';
 
-export const getAllCountriesUrl = (): string => {
-  return `/api/accounts/country`;
+export const getAllCountriesUrl = (statusScope?: string): string => {
+  const baseUrl = '/api/accounts/country';
+  if (statusScope && statusScope.trim()) {
+    return `${baseUrl}?statusScope=${encodeURIComponent(statusScope.trim())}`;
+  }
+  return baseUrl;
 };
 /**
  * Fetches detailed information for a all country
  * @returns Promise with user details
  */
 export const fetchAllCountries =
-  async (): Promise<GetAllCountriesApiResponse> => {
+  async (statusScope?: string): Promise<GetAllCountriesApiResponse> => {
     try {
       const { data } =
         await accountServiceApi.get<GetAllCountriesApiResponse>(
-          getAllCountriesUrl()
+          getAllCountriesUrl(statusScope)
         );
       // await new Promise((resolve) => setTimeout(resolve, 1000));
       return data;
@@ -62,10 +66,10 @@ export const getDocumentInfoUrl = (categoryId?: string): string => {
     : 'api/attachment/document-type-category';
 };
 
-export const useGetAllCountries = () => {
+export const useGetAllCountries = (statusScope?: string) => {
   return useQuery<GetAllCountriesApiResponse, Error>({
-    queryKey: ['getAllCountry'], // Unique query key
-    queryFn: () => fetchAllCountries(),
+    queryKey: ['getAllCountry', statusScope], // Unique query key
+    queryFn: () => fetchAllCountries(statusScope),
     retry: 0,
     staleTime: Infinity, // Cache data forever until manually invalidated
     gcTime: Infinity, // Never delete from cache

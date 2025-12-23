@@ -11,6 +11,7 @@ import {
   OverviewTabs,
 } from '../../../../../common-service';
 import {
+  ActivityDropdownItem,
   CaseDetails,
   ExportType,
   NotesList,
@@ -65,6 +66,7 @@ interface NotesProps {
   setNotesParams: React.Dispatch<React.SetStateAction<NotesListExportParams>>;
   accountInActive: boolean;
   caseDetails?: CaseDetails;
+  activityMenuItems: ActivityDropdownItem[];
 }
 
 const CaseNotes: React.FC<NotesProps> = ({
@@ -72,6 +74,7 @@ const CaseNotes: React.FC<NotesProps> = ({
   setNotesParams,
   accountInActive,
   caseDetails,
+  activityMenuItems,
 }) => {
   const { errorToast } = useToast();
   const [searchParams] = useSearchParams();
@@ -460,6 +463,8 @@ const CaseNotes: React.FC<NotesProps> = ({
         searchDisabled={false}
         searchPlaceholder='Search'
         onSearch={(text) => setSearchText(text)}
+        showAddActivity={viewDetails ? false : true}
+        activityMenuItems={activityMenuItems}
       />
       {viewDetails ? (
         <CaseNotesDetails

@@ -9,6 +9,7 @@ import { CasesIcon } from '../../../../../assets';
 import SectionHeader from '../../../../../components/details-section/section-header';
 import { CaseListTable } from './table/case-list';
 import {
+  ActivityDropdownItem,
   CaseListExportParams,
   CaseListParams,
   ExportType,
@@ -46,12 +47,14 @@ interface CaseProps {
   accountDetails: accountDetailsProps;
   setExportType: (type: ExportType) => void;
   setCasesParams: React.Dispatch<React.SetStateAction<CaseListExportParams>>;
+  activityMenuItems: ActivityDropdownItem[];
 }
 const Cases: React.FC<CaseProps> = ({
   accountInActive,
   accountDetails,
   setExportType,
   setCasesParams,
+  activityMenuItems,
 }) => {
   const navigate = useNavigate();
   const { accountid } = useParams();
@@ -271,6 +274,8 @@ const Cases: React.FC<CaseProps> = ({
         searchDisabled={false}
         searchPlaceholder='Search'
         onSearch={(text) => setSearchText(text)}
+        showAddActivity={true}
+        activityMenuItems={activityMenuItems}
       />
       <SectionHeader
         title={'Cases'}

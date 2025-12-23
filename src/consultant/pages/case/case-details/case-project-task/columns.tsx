@@ -1,40 +1,52 @@
-import { costDisplay } from '../../../../../common-utils';
-import {
-  ListTableColumn,
-  RowData,
-} from '../../../../../components/table/types';
-
-export interface CaseProjectTaskRow extends RowData {
-  rid: string;
-  project_code: string;
-  project_name: string;
-  resource_code: string;
-  resource_name: string;
-  task_name: string;
-  resource_type: string;
-  project_resource_role: string;
-  task_type: string;
-  classification_type: string;
-  start_date: string;
-  end_date: string;
-  cost: number;
-  effort_hours: number;
-  status: string;
-  comments: string;
-  project_task_id: string;
-}
+import { costDisplay, getDateFormat } from '../../../../../common-utils';
+import { ListTableColumn } from '../../../../../components/table/types';
+import { ProjectTasksListType } from '../../../../types/project-tasks';
 
 export const getCaseProjectTaskColumns = (
   permissionMap: Record<string, { read: boolean; edit: boolean }>,
   projectPermissionMap: Record<string, { read: boolean; edit: boolean }>,
-  onClick: (row: CaseProjectTaskRow) => void
-): ListTableColumn<CaseProjectTaskRow>[] => [
+  onClick: (row: ProjectTasksListType) => void
+): ListTableColumn<ProjectTasksListType>[] => [
+  {
+    id: 'resource_code',
+    sortId: 'resource_code',
+    label: 'Resource Code',
+    width: 160,
+    sortable: true,
+    hide:
+      !permissionMap?.['resource_code']?.read &&
+      !permissionMap?.['resource_code']?.edit,
+
+    render: (row: ProjectTasksListType) => {
+      return (
+        <span
+          onClick={() => onClick(row)}
+          className={
+            'cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
+          }
+        >
+          {row.resource_code}
+        </span>
+      );
+    },
+  },
+  {
+    id: 'resource_name',
+    sortId: 'resource_name',
+    label: 'Resource Name',
+    width: 180,
+    sortable: true,
+    hide:
+      !permissionMap?.['resource_name']?.read &&
+      !permissionMap?.['resource_name']?.edit,
+  },
   {
     id: 'project_code',
     sortId: 'project_code',
     label: 'Project Code',
     width: 180,
     sortable: true,
+    sticky: true,
     sx: {
       position: 'sticky',
       left: 0,
@@ -43,18 +55,7 @@ export const getCaseProjectTaskColumns = (
       borderRight: '1px solid #CBD6E2',
       borderBottom: '1px solid #CBD6E2 !important',
     },
-    render: (row: CaseProjectTaskRow) => {
-      return (
-        <span
-          onClick={() => onClick(row)}
-          className={
-            'cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
-          }
-        >
-          {row.project_code}
-        </span>
-      );
-    },
+
     hide:
       !projectPermissionMap?.['project_code']?.read &&
       !projectPermissionMap?.['project_code']?.edit,
@@ -69,26 +70,7 @@ export const getCaseProjectTaskColumns = (
       !projectPermissionMap?.['project_name']?.read &&
       !projectPermissionMap?.['project_name']?.edit,
   },
-  {
-    id: 'resource_code',
-    sortId: 'resource_code',
-    label: 'Resource Code',
-    width: 160,
-    sortable: true,
-    hide:
-      !permissionMap?.['resource_code']?.read &&
-      !permissionMap?.['resource_code']?.edit,
-  },
-  {
-    id: 'resource_orgname',
-    sortId: 'resource_orgname',
-    label: 'Resource Name',
-    width: 180,
-    sortable: true,
-    hide:
-      !permissionMap?.['resource_name']?.read &&
-      !permissionMap?.['resource_name']?.edit,
-  },
+
   {
     id: 'task_name',
     sortId: 'task_name',
@@ -110,7 +92,7 @@ export const getCaseProjectTaskColumns = (
       !permissionMap?.['resource_type_name']?.edit,
   },
   {
-    id: 'resource_role',
+    id: 'project_resource_role',
     sortId: 'project_resource_role',
     label: 'Project Resource Role',
     width: 200,
@@ -121,7 +103,7 @@ export const getCaseProjectTaskColumns = (
   },
   {
     id: 'task_type_name',
-    sortId: 'task_type',
+    sortId: 'task_type_name',
     label: 'Task Type',
     width: 160,
     sortable: true,
@@ -131,7 +113,7 @@ export const getCaseProjectTaskColumns = (
   },
   {
     id: 'task_classification_name',
-    sortId: 'classification_type',
+    sortId: 'task_classification_name',
     label: 'Classification Type',
     width: 180,
     sortable: true,
@@ -148,6 +130,7 @@ export const getCaseProjectTaskColumns = (
     hide:
       !permissionMap?.['start_date']?.read &&
       !permissionMap?.['start_date']?.edit,
+    render: (row) => getDateFormat(row.start_date),
   },
   {
     id: 'end_date',
@@ -157,21 +140,22 @@ export const getCaseProjectTaskColumns = (
     sortable: true,
     hide:
       !permissionMap?.['end_date']?.read && !permissionMap?.['end_date']?.edit,
+    render: (row) => getDateFormat(row.end_date),
   },
   {
     id: 'total_cost_pro_task',
-    sortId: 'cost',
+    sortId: 'total_cost_pro_task',
     label: 'Cost',
     width: 140,
     sortable: true,
-    render: (row) => costDisplay(row.cost),
+    render: (row) => costDisplay(row.total_cost_pro_task, row.currency_symbol),
     hide:
       !permissionMap?.['total_cost_pro_task']?.read &&
       !permissionMap?.['total_cost_pro_task']?.edit,
   },
   {
     id: 'total_hours_pro_task',
-    sortId: 'effort_hours',
+    sortId: 'total_hours_pro_task',
     label: 'Effort in Hrs',
     width: 160,
     sortable: true,
@@ -181,13 +165,26 @@ export const getCaseProjectTaskColumns = (
   },
   {
     id: 'status_name',
-    sortId: 'status',
+    sortId: 'status_rid',
     label: 'Status',
-    width: 140,
+    width: 130,
     sortable: true,
-    // hide:
-    //   !permissionMap?.['status_rid']?.edit &&
-    //   !permissionMap?.['status_rid']?.read,
+    hide:
+      !permissionMap?.['status_action']?.edit &&
+      !permissionMap?.['status_action']?.read,
+    render: (row: ProjectTasksListType) => (
+      <span
+        className={`${
+          row.status_name === 'Active'
+            ? 'text-[#199806]'
+            : row.status_name === 'In-Active'
+              ? 'text-[#f44336] '
+              : ''
+        }`}
+      >
+        {row.status_name || '-'}
+      </span>
+    ),
   },
   {
     id: 'comments',
@@ -200,7 +197,7 @@ export const getCaseProjectTaskColumns = (
   },
   {
     id: 'r_number',
-    sortId: 'project_task_id',
+    sortId: 'r_number',
     label: 'Project Task ID',
     width: 200,
     sortable: true,

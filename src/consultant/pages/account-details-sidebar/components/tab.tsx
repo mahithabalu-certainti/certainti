@@ -44,16 +44,19 @@ import {
   FieldOptionType,
   getAttachmentsFilterFields,
 } from '../../../../components/Attachments/helpers';
-import ActionImportDropdown from '../../../../components/actions-dropdown/import-dropdown';
 import { FilterValue } from './filter/filterType';
 import { projectTaskFilterFields } from '../../project/project-details/project-task/filters/filter-fields';
-import { FormFiscalDateType } from '../../../types';
+import { ActivityDropdownItem, FormFiscalDateType } from '../../../types';
 import SearchBar from '../../../../components/search/search-bar';
 import { getNotesFilterFields } from '../../notes/helpers';
 import { getChecklistFilterFields } from '../../checklist/helpers';
 import { useGetUserOptions } from '../../../services/case-team';
+import { caseProjectTaskFilterFields } from '../../case/case-details/case-project-task/utils';
+import { caseProjectResourceFilterFields } from '../../case/case-details/case-project-resource/utils';
+import { ActivityDropdown } from '../../../../components';
 interface TabProps {
   resourceTab?: ResourceTabs[];
+  onTabChange?: (tabId: string) => void;
   filterVisibility: boolean;
   handleFilter: () => void;
   value: string;
@@ -78,6 +81,10 @@ interface TabProps {
     string,
     { read: boolean; edit: boolean }
   >;
+  permissionMapCaseProjectTableColumn?: Record<
+    string,
+    { read: boolean; edit: boolean }
+  >;
   fiscalDatesArg?: FormFiscalDateType;
   showSearch?: boolean;
   searchDisabled?: boolean;
@@ -87,9 +94,12 @@ interface TabProps {
   onSearch?: (text: string) => void;
   resetSearch?: boolean;
   onSearchReset?: () => void;
+  showAddActivity?: boolean;
+  activityMenuItems?: ActivityDropdownItem[];
 }
 const TabPanel: React.FC<TabProps> = ({
   resourceTab,
+  onTabChange,
   appliedFilters,
   handleFilter,
   setAppliedFilters,
@@ -111,6 +121,7 @@ const TabPanel: React.FC<TabProps> = ({
   fieldOptions,
   handleFilterChange,
   permissionMapTaskTableColumn,
+  permissionMapCaseProjectTableColumn,
   fiscalDatesArg,
   showSearch,
   searchDisabled = false,
@@ -120,6 +131,8 @@ const TabPanel: React.FC<TabProps> = ({
   onSearch,
   resetSearch,
   onSearchReset,
+  showAddActivity = false,
+  activityMenuItems = [],
 }) => {
   const { accountid } = useParams();
   const [searchParams] = useSearchParams();
@@ -152,7 +165,11 @@ const TabPanel: React.FC<TabProps> = ({
     // assign default tab value
     const activeTab = resourceTab?.find((tab) => !tab.hide)?.id;
     setTabValue(activeTab as string);
-  }, [resourceTab]);
+    // inform parent about initial tab
+    if (activeTab && onTabChange) {
+      onTabChange(activeTab);
+    }
+  }, [resourceTab, onTabChange]);
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: string) => {
     setTabValue(newValue);
@@ -160,6 +177,7 @@ const TabPanel: React.FC<TabProps> = ({
     setAppliedFilters({});
     clearFilters(value || 'resource');
     setSortFilterCount(0);
+    onTabChange?.(newValue);
   };
   const currency = useFetchCurrency();
   const allCountries = useGetAllCountries();
@@ -436,25 +454,6 @@ const TabPanel: React.FC<TabProps> = ({
     handleSortClose();
   };
 
-  const menuActivity = [
-    {
-      label: 'Create Task',
-      onClick: () => console.log('manage user clicked'),
-    },
-    {
-      label: 'Draft Email',
-      onClick: () => console.log('Export clicked'),
-    },
-    {
-      label: 'Schedule Meeting',
-      onClick: () => console.log('Export clicked'),
-    },
-    {
-      label: 'Log a call',
-      onClick: () => console.log('Export clicked'),
-    },
-  ];
-
   const memoizedCurrency: { option: string; value: string }[] = useMemo(
     () =>
       currency.data?.data.currency.map(
@@ -511,6 +510,16 @@ const TabPanel: React.FC<TabProps> = ({
         permissionProjectResourcesMap,
         memoizedResourceStatus
       );
+    if (value === 'case-project-resource') {
+      return caseProjectResourceFilterFields(
+        permissionMapTaskTableColumn,
+        permissionMapCaseProjectTableColumn,
+        memoizedCountry,
+        regionData,
+        memoizedResourceType,
+        memoizedResourceStatus
+      );
+    }
     if (value === 'project-task')
       return projectTaskFilterFields(
         memoizedResourceCode,
@@ -521,6 +530,16 @@ const TabPanel: React.FC<TabProps> = ({
         fiscalDatesArg,
         memoizedResourceStatus
       );
+    if (value === 'case-project-task') {
+      return caseProjectTaskFilterFields(
+        permissionMapTaskTableColumn,
+        permissionMapCaseProjectTableColumn,
+        memoizedResourceType,
+        memoizedProjectResourceType,
+        memoizedProjectResourceClassification,
+        memoizedResourceStatus
+      );
+    }
     if (value === 'attachments')
       return getAttachmentsFilterFields(fieldOptions, attachmentPermissionMap);
     if (value === 'notes')
@@ -529,16 +548,16 @@ const TabPanel: React.FC<TabProps> = ({
       return getChecklistFilterFields(resourceChecklistsPermissionMap);
     return value === 'cost'
       ? getCostFilterFields(
-          memoizedCurrency,
-          memoizedResourceStatus,
-          resourceCostpermissionMap
-        )
+        memoizedCurrency,
+        memoizedResourceStatus,
+        resourceCostpermissionMap
+      )
       : getSkillFilterFields(
-          memoizedSkillType,
-          skillSubTypeData,
-          memoizedSkillLevels,
-          resourceSkillpermissionMap
-        );
+        memoizedSkillType,
+        skillSubTypeData,
+        memoizedSkillLevels,
+        resourceSkillpermissionMap
+      );
   }, [
     value,
     memoizedCountry,
@@ -602,6 +621,10 @@ const TabPanel: React.FC<TabProps> = ({
     }
   };
 
+  const visibleActivityMenuItems = activityMenuItems.filter(
+    (item) => !item.hide
+  );
+
   return (
     <Box>
       <Box className='flex justify-between items-center mb-2'>
@@ -654,9 +677,9 @@ const TabPanel: React.FC<TabProps> = ({
             })}
           </Tabs>
         )}
-        <Box className='flex items-center'>
+        <Box className='flex items-center gap-2'>
           {showSearch && (
-            <Box className='mr-2'>
+            <Box>
               <SearchBar
                 initialSearchText={searchText}
                 onSearch={(value) => {
@@ -699,7 +722,7 @@ const TabPanel: React.FC<TabProps> = ({
                 >
                   <ResourceFilterIcon />
                   {(appliedFilters && Object.keys(appliedFilters).length > 0) ||
-                  sortFilterCount > 0 ? (
+                    sortFilterCount > 0 ? (
                     <div className='absolute -top-[8px] -right-1.5 w-4 h-4 flex items-center justify-center text-xs'>
                       <span className='absolute w-full h-full bg-[#FF6666] rounded-full animate-ping opacity-75 z-0'></span>
                       <span className='w-3.5 h-3.5 bg-[#FF6666] text-white rounded-full flex items-center justify-center z-10 font-semibold'>
@@ -731,7 +754,7 @@ const TabPanel: React.FC<TabProps> = ({
 
               {showRefresh && (
                 <button
-                  className='flex border border-[#CBD6E2] ml-2 w-[24px] h-[24px] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] justify-center items-center cursor-pointer'
+                  className='flex border border-[#CBD6E2] w-[24px] h-[24px] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] justify-center items-center cursor-pointer'
                   onClick={onRefreshClick}
                 >
                   <RefreshIcon alt='refresh-icon' className='h-4' />
@@ -739,18 +762,20 @@ const TabPanel: React.FC<TabProps> = ({
               )}
             </>
           )}
-          <ActionImportDropdown
-            variant='filled'
-            actions={menuActivity}
-            label='Add Activity'
-            sx={{
-              fontWeight: 600,
-              fontSize: '13px',
-              width: '143px',
-              height: '24px',
-              display: 'none',
-            }}
-          />
+          <React.Suspense fallback={null}>
+            {showAddActivity && visibleActivityMenuItems?.length > 0 && (
+              <ActivityDropdown
+                menuItems={activityMenuItems || []}
+                label='Add Activity'
+                sx={{
+                  fontWeight: 600,
+                  fontSize: '13px',
+                  width: '143px',
+                  height: '24px',
+                }}
+              />
+            )}
+          </React.Suspense>
 
           {/* <ActionImportDropdown
             actions={menuAccounts}

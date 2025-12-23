@@ -55,6 +55,10 @@ export const createTextField = (
     resetDependsFields?: string[];
     clearValue?: Record<string, string>;
     formatCostValue?: boolean;
+    labelTooltip?: {
+      showTooltip: boolean;
+      tooltipMessage: string;
+    };
     lengthRequired?: {
       key: string;
       minMatchedValue: RegExp;
@@ -78,6 +82,7 @@ export const createTextField = (
   anyOneRequired: options.anyOneRequired,
   hide: options.hide,
   lengthRequired: options.lengthRequired,
+  labelTooltip: options.labelTooltip,
   errorHandling: options.errorHandling,
   clearValue: options.clearValue,
   defaultValue: options.defaultValue,
@@ -248,6 +253,10 @@ export const createSelectField = (
     assignDefaultValue?: boolean;
     dependantLabel?: string;
     isFiscalYear?: boolean;
+    labelTooltip?: {
+      showTooltip: boolean;
+      tooltipMessage: string;
+    };
   }
 ): FieldType => ({
   type: 'select',
@@ -268,6 +277,7 @@ export const createSelectField = (
   assignDefaultValue: others.assignDefaultValue,
   dependantLabel: others.dependantLabel,
   isFiscalYear: others.isFiscalYear,
+  labelTooltip: others.labelTooltip,
 });
 export const createMultiSelectField = (
   name: string,
@@ -364,15 +374,24 @@ export const createButton = (
   onClick: others.onClick,
   disabled: others.disabled,
 });
+export interface EmptyFieldOptions {
+  name?: string;
+  label?: string;
+  type?: string;
+  required?: boolean;
+  hide?: boolean;
+}
+
 export const createEmptyField = (
   name: string,
   label: string,
-  options?: { name?: string; label?: string; type?: string; required?: boolean }
+  options?: EmptyFieldOptions
 ): FieldType => ({
   type: 'emptyFeild',
   name: options?.name || name,
   label: options?.label || label,
   required: options?.required ?? false,
+  hide: options?.hide,
 });
 
 export const createImgButton = (
@@ -418,6 +437,14 @@ export const createDateField = (
     errorMessage?: string;
     clearDate?: string;
     customDateOpen?: Date;
+    defaultValue?: string;
+    assignDefaultValue?: boolean;
+    requiredErrorMessage?: string;
+    disableDatesBefore?: Date;
+    labelTooltip?: {
+      showTooltip: boolean;
+      tooltipMessage: string;
+    };
   }
 ): FieldType => ({
   type: 'date',
@@ -442,6 +469,11 @@ export const createDateField = (
   clearDate: others.clearDate,
   resetDependsFields: others.resetDependsFields,
   customDateOpen: others.customDateOpen,
+  defaultValue: others.defaultValue,
+  assignDefaultValue: others.assignDefaultValue,
+  requiredErrorMessage: others.requiredErrorMessage,
+  disableDatesBefore: others.disableDatesBefore,
+  labelTooltip: others.labelTooltip,
 });
 
 export const createFiscalDateField = (
@@ -510,6 +542,7 @@ export const REGEX_PATTERNS = {
   EFFORTS_NUMBER: /^(?:[0-9]{1,16})(?:\.[0-9]{1,2})?$/,
   EFFORTS_INTEGER_NUMBER: /^[0-9]{1,16}$/,
   EFFORTS_INTEGER_9: /^[0-9]{1,9}$/,
+  NUMERIC_10_4: /^\d{1,10}(\.\d{1,4})?$/,
   ALLOW_ONE_TO_99: /^[1-9][0-9]?$/,
   DESCRIPTION: /^.{0,500}$/,
   RESOURCE_DESCRIPTION: /^.{0,1000}$/,
@@ -585,7 +618,7 @@ export const REGEX_PATTERNS = {
   ACCOUNT_ORG_NAME: /^[A-Za-z0-9 -&.,']+$/,
   MAX_ORG_NAME_LEGNTH: /^.{7,125}/,
   MIN_ORG_NAME_LEGNTH: /^.{7,}/,
-  EMAIL_SUBJECT: /^[A-Za-z0-9\s&\-.'",{}_]+$/,
+  EMAIL_SUBJECT: /^[A-Za-z0-9\s&\-.'",{}_()]+$/,
 };
 export const PROJECT_RESOURCE_REGEX = {
   // UUID VALIDATION STANDARD FORMAT

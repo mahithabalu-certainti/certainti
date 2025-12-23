@@ -69,13 +69,18 @@ export interface ChecklistListResponse {
 
 //Details
 
-export interface ChecklistItemDetails {
+export type ChecklistItemDetails = {
   rid: string;
   sequence_no?: string;
   checklist_item_name: string;
   status_rid: string | null;
+  status_name: string | null;
   checklist_item_description: string | null;
-}
+  created_by?: string | null;
+  modified_by?: string | null;
+  created_by_name?: string | null;
+  modified_by_name?: string | null;
+};
 
 export interface ChecklistDetails {
   checklist_rid: string;
