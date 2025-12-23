@@ -1038,6 +1038,7 @@ jobs:
           VITE_CASE_URL=/caseService
           CLIENT_SECRET_ENCRYPTION_KEY='client-secret-encryption-key'
           CLIENT_SECRET_ENCRYPTION_LENGTH=16
+          RULEBUILDER_BASE_URL='https://development-thinkrd365-api-management.azure-api.net/rulebuilderService/api'
           EOF
           echo "$ENV_FILE file created successfully!"
       - name: Copy .env file to VM
@@ -1081,6 +1082,7 @@ jobs:
               exit 1
             fi
           EOF
+          
   # JOB to build backend rule-builder-module code
   rule-builder-module:
     needs:
@@ -1172,6 +1174,8 @@ jobs:
           SYSTEM_USER_ID = "D001-477aac5d-3d92-4420-8e65-4153af4f3aed"
           CLIENT_SECRET_ENCRYPTION_KEY='client-secret-encryption-key'
           CLIENT_SECRET_ENCRYPTION_LENGTH=16
+          SCHEDULER_EXPRESSION=scheduler-expression 
+          SCHEDULER_EXPRESSION_RULE_ENGINE=scheduler-expression-rule-engine
           EOF
           echo "$ENV_FILE file created successfully!"
       - name: Copy .env file to VM

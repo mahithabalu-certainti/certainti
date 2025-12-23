@@ -10,7 +10,7 @@ interface CaseProjectResourceFiscalAttributes {
   modified_by?: string | null;
   created_datetime: Date;
   modified_datetime?: Date | null;
-  project_resource_fiscal_rid: string;
+  project_resource_fiscal_rid?: string;
   case_project_rid: string;
   account_rid: string;
   case_rid: string;
@@ -66,7 +66,7 @@ export class CaseProjectResourceFiscal
   public modified_by?: string;
   public created_datetime!: Date;
   public modified_datetime?: Date;
-  public project_resource_fiscal_rid!: string;
+  public project_resource_fiscal_rid?: string;
   public case_project_rid!: string;
   public account_rid!: string;
   public case_rid!: string;

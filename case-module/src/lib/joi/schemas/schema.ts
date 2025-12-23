@@ -6,14 +6,14 @@ const decimal18_2Regex = /^\d{1,16}(\.\d{1,2})?$/;
 const createCaseSchema = Joi.object({
   account_rid: Joi.string().required(),
   fiscal_year: Joi.number().integer().min(1900).max(2100).required(),
-  status_rid: Joi.string().optional(),
+  status_rid: Joi.string().optional().allow(""),
   case_owner_rid: Joi.string().required(),
   case_name: Joi.string().max(255).required(),
   description: Joi.string().max(2000).optional().allow(""),
   filing_type_rid: Joi.string().required(),
-  case_startdate: Joi.date().required(),
-  planned_submission_date: Joi.date().required(),
-  statutory_submission_date: Joi.date().required(),
+  case_startdate: Joi.string().required(),
+  planned_submission_date: Joi.string().required(),
+  statutory_submission_date: Joi.string().required(),
   heat_light_power: Joi.string()
     .pattern(decimal18_2Regex)
     .messages({
@@ -83,14 +83,14 @@ const updateCaseSchema = Joi.object({
   case_rid: Joi.string().required(),
   account_rid: Joi.string().required(),
   fiscal_year: Joi.number().integer().min(1900).max(2100).required(),
-  status_rid: Joi.string().optional(),
+  status_rid: Joi.string().optional().allow(""),
   case_owner_rid: Joi.string().required(),
   case_name: Joi.string().max(255).required(),
   description: Joi.string().max(2000).optional().allow(""),
   filing_type_rid: Joi.string().required(),
-  case_startdate: Joi.date().required(),
-  planned_submission_date: Joi.date().required(),
-  statutory_submission_date: Joi.date().required(),
+  case_startdate: Joi.string().required(),
+  planned_submission_date: Joi.string().required(),
+  statutory_submission_date: Joi.string().required(),
   country_rid: Joi.string().optional(),
   heat_light_power: Joi.string()
     .pattern(decimal18_2Regex)
@@ -1110,6 +1110,7 @@ const projectTaskByIdSchema = Joi.object({
 })
 
 const caseSubmissionDateSchema = Joi.object({
+  account_rid: Joi.string().required(),
   country_rid: Joi.string().required(),
   fiscal_year: Joi.number().integer().min(1900).max(2100).default(2025).optional(),
 });

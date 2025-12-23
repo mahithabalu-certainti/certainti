@@ -2,7 +2,7 @@ import { RuleScope } from "../models/ruleScope";
 import { ScopeEvent } from "../models/scopeEvents";
 import { initSequelize } from "../config/maindbDataSource";
 import { Sequelize, Op, QueryTypes } from "sequelize";
-import { HttpStatus, MAIN_SCHEMA_NAME, STATUS_MESSAGE, notificationTypes, rawQueries } from "../utils/constants";
+import { HttpStatus, MAIN_SCHEMA_NAME, STATUS_MESSAGE, notificationStatus, notificationTypes, rawQueries } from "../utils/constants";
 import { Logger } from "winston";
 import { actions, Fields, ICreateRuleMapWithScope, IListSCopeEvent } from "../utils/types";
 import { decryptClientSecret, logMessage } from "../utils/helpers";
@@ -47,7 +47,7 @@ export class WorkFlowService {
         return this.mainDbSequelize;
     }
 
-     private async getOrgDb() {
+    private async getOrgDb() {
         if (!this.orgDbSequelize) {
             this.orgDbSequelize = await initOrgSequelize();
         }
@@ -288,6 +288,7 @@ export class WorkFlowService {
         const mainDb = await this.getMainDb();
         const actionTypes: actions[] = await mainDb.query<actions>(
             rawQueries.fetchActions(
+                listRequest.scope_rid,
                 listRequest.action_type_rid,
                 listRequest.status_rid
             ),
@@ -304,7 +305,7 @@ export class WorkFlowService {
     async createRule(ruleRequest: any, userId: string): Promise<{
         statusCode: number;
         message: string;
-        errorMessage?: string;
+        errorMessage?: any;
         data?: { rule: any };
     }> {
         const rule = await this.ruleMasterService.createRuleMaster(
@@ -321,8 +322,21 @@ export class WorkFlowService {
                 schedule_offset_value: ruleRequest.schedule_offset_value ?? null,
                 created_by: ruleRequest.created_by,
                 modified_by: ruleRequest.modified_by ?? ruleRequest.created_by, // fallback to created_by if undefined
+                in_app_template_rid: ruleRequest.in_app_template_rid ?? null,
+                email_template_rid: ruleRequest.email_template_rid ?? null,
             }, userId
         )
+
+        if (rule.statusCode == HttpStatus.BAD_REQUEST) {
+            return {
+                statusCode: HttpStatus.BAD_REQUEST,
+                message: "",
+                errorMessage: rule.errorMessage,
+                data: {
+                    rule: "",
+                }
+            };
+        }
 
         let ruleRid = rule.data?.rules?.toJSON()?.rid
         console.log("rule id " + ruleRid);
@@ -400,8 +414,8 @@ export class WorkFlowService {
                 rule: ruleDetail.data,
                 event: eventDetail[0],
                 condition: conditionDetail[0],
-                conditions:conditions,
-                actions:actions,
+                conditions: conditions,
+                actions: actions,
             }
         };
     }
@@ -412,10 +426,11 @@ export class WorkFlowService {
     ): Promise<{
         statusCode: number;
         message: string;
-        errorMessage?: string;
+        errorMessage?: any;
         data?: { rule: any };
     }> {
-        //Update Rule Master
+
+        // 1. Update Rule Master
         const rule = await this.ruleMasterService.updateRuleMaster(
             {
                 rule_rid: ruleRequest.rule_rid,
@@ -429,54 +444,161 @@ export class WorkFlowService {
                 schedule_offset_type: ruleRequest.schedule_offset_type ?? null,
                 schedule_offset_value: ruleRequest.schedule_offset_value ?? null,
                 modified_by: ruleRequest.modified_by ?? ruleRequest.created_by,
+                in_app_template_rid: ruleRequest.in_app_template_rid ?? null,
+                email_template_rid: ruleRequest.email_template_rid ?? null,
             },
             userId
         );
-        //Remove existing conditions
-        await this.conditionService.deleteConditionsByRuleRid(ruleRequest.rule_rid, userId);
-        //Recreate conditions
-        for (const [index, condition] of ruleRequest.condition_categories.entries()) {
-            await this.conditionService.createCondition(
-                {
-                    condition_rid: "",
-                    rule_rid: ruleRequest.rule_rid,
-                    category_rid: condition.category_rid,
-                    logical_operator: condition.category_operator,
-                    field_rid: condition.field_rid,
-                    operator_rid: condition.operator_rid,
-                    value_rid: condition.value_rid,
-                    data_type: "",
-                    sequence: index + 1,
-                    group_id: 1,
-                    created_by: ruleRequest.modified_by ?? ruleRequest.created_by,
-                    modified_by: ruleRequest.modified_by ?? ruleRequest.created_by,
-                },
-                userId
-            );
+
+        if (rule.statusCode == HttpStatus.BAD_REQUEST) {
+            return {
+                statusCode: HttpStatus.BAD_REQUEST,
+                message: "",
+                errorMessage: rule.errorMessage,
+                data: {
+                    rule: "",
+                }
+            };
         }
-        //Remove existing actions
-        await this.actionService.deleteActionByRuleRid(ruleRequest.rule_rid, userId);
-        //Recreate actions
-        for (const [index, actionRid] of ruleRequest.action_rid.entries()) {
-            await this.actionService.createAction(
-                {
-                    rule_rid: ruleRequest.rule_rid,
-                    action_rid: actionRid,
-                    target_user: "test",
-                    new_value: "test",
-                    action_order: index + 1,
-                    created_by: ruleRequest.modified_by ?? ruleRequest.created_by,
-                    modified_by: ruleRequest.modified_by ?? ruleRequest.created_by,
-                },
-                userId
-            );
+
+        /* ---------------- CONDITIONS ---------------- */
+
+        const existingConditions =
+            await this.conditionService.getConditionsByRuleRid(ruleRequest.rule_rid);
+        const existingPlain = existingConditions.map(cond => cond.get({ plain: true }));
+        const incomingConditions = ruleRequest.condition_categories;
+        //console.log(JSON.stringify(existingConditions));
+        // Update / Create
+        for (let i = 0; i < incomingConditions.length; i++) {
+            const incoming = incomingConditions[i];
+            const existing = existingPlain[i];
+
+            if (existing) {
+                // Update existing condition
+                await this.conditionService.updateCondition(
+                    {
+                        rid: existing.rid,
+                        category_rid: incoming.category_rid,
+                        logical_operator: incoming.category_operator,
+                        field_rid: incoming.field_rid,
+                        operator_rid: incoming.operator_rid,
+                        value_rid: incoming.value_rid,
+                        rule_rid: ruleRequest.rule_rid,
+                        group_id: 1,
+                        sequence: i + 1,
+                        modified_by: ruleRequest.created_by,
+                    },
+                    userId
+                );
+            } else {
+                // Create new condition
+                await this.conditionService.createCondition(
+                    {
+                        condition_rid: "",
+                        rule_rid: ruleRequest.rule_rid,
+                        category_rid: incoming.category_rid,
+                        logical_operator: incoming.category_operator,
+                        field_rid: incoming.field_rid,
+                        operator_rid: incoming.operator_rid,
+                        value_rid: incoming.value_rid,
+                        data_type: "",
+                        sequence: i + 1,
+                        group_id: 1,
+                        created_by: ruleRequest.modified_by,
+                        modified_by: ruleRequest.modified_by,
+                    },
+                    userId
+                );
+            }
         }
+
+        // Delete only extra existing conditions
+        if (existingPlain.length > incomingConditions.length) {
+            const extraConditions = existingPlain.slice(incomingConditions.length);
+            for (const condition of extraConditions) {
+                await this.conditionService.deleteCondition(
+                    condition.rid,        // now this works
+                    ruleRequest.rule_rid,
+                    userId
+                );
+            }
+        }
+
+
+        const existingActions =
+            await this.actionService.getActionsByRuleRid(ruleRequest.rule_rid);
+        const existingActionPlain = existingActions.map(act => act.get({ plain: true }));
+        const incomingActions = ruleRequest.action_rid;
+
+        for (let i = 0; i < incomingActions.length; i++) {
+            const incoming = incomingActions[i];
+            const existing = existingActionPlain[i];
+
+            if (existing) {
+                // Update action
+                await this.actionService.updateAction(
+                    {
+                        rid: existing.rid,
+                        action_rid: incoming,
+                        rule_rid: ruleRequest.rule_rid,
+                        action_order: incoming.action_order,
+                        modified_by: ruleRequest.created_by,
+                    },
+                    userId
+                );
+            } else {
+                // Create new action
+                console.log(incoming.action_rid);
+                await this.actionService.createAction(
+                    {
+                        rule_rid: ruleRequest.rule_rid,
+                        action_rid: incoming,
+                        target_user: "test",
+                        new_value: "test",
+                        action_order: i + 1,
+                        created_by: ruleRequest.modified_by,
+                        modified_by: ruleRequest.modified_by,
+                    },
+                    userId
+                );
+            }
+        }
+
+        // Delete only extra actions
+        if (existingActionPlain.length > incomingActions.length) {
+            const extraActions = existingActionPlain.slice(incomingActions.length);
+            for (const action of extraActions) {
+                await this.actionService.deleteAction(
+                    action.rid,
+                    ruleRequest.rule_rid,
+                    userId
+                );
+            }
+        }
+
         return {
             statusCode: 200,
             message: "Rule updated successfully",
             data: {
-                rule: "",
+                rule: rule?.data?.rules ?? null,
             },
+        };
+    }
+
+    async updateRuleStatus(
+        request: any,
+        userId: string
+    ): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: any;
+    }> {
+        await this.ruleMasterService.updateRuleMasterStatus(request, userId);
+        return {
+            statusCode: 200,
+            message: "Rule Status updated successfully",
+            data: ""
         };
     }
 
@@ -525,6 +647,121 @@ export class WorkFlowService {
         };
     };
 
+    async ruleMapDetailByRuleRid(ruleRid: string, userId: string): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: any;
+    }> {
+        const mainDb = await this.getMainDb();
+        console.log(ruleRid);
+        const rulemap = await mainDb.query<any>(
+            rawQueries.fetchMapDetailsByRuleRid(ruleRid),
+            { type: QueryTypes.SELECT }
+        );
+
+        const rulescopemaps = await mainDb.query<any>(
+            rawQueries.fetchScopeMapDetailsByRuleRid(ruleRid),
+            { type: QueryTypes.SELECT }
+        );
+
+        return {
+            statusCode: 200,
+            message: "RuleMap detail fetched successfully",
+            data: {
+                scope_type_rid: rulemap[0].scope_type_rid,
+                rule_rid: rulemap[0].rule_rid,
+                apply_type: rulemap[0].apply_type,
+                scope_entity_rid: rulescopemaps.map(
+                    (item) => item.scope_entity_rid
+                ),
+            }
+        };
+    }
+
+    async updateRuleMapWithScope(ruleRequest: any, userId: string): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: { ruleMap: any };
+    }> {
+        console.log("rule map updation");
+        const ruleMap = await this.ruleMapService.updateRuleMap(
+            {
+                rule_rid: ruleRequest.rule_rid,
+                apply_type: ruleRequest.apply_type,
+                modified_by: ruleRequest.modified_by
+            },
+            userId
+        );
+
+        if (ruleRequest.apply_type === 'INDIVIDUAL') {
+            const existingEntities =
+                await this.scopeService.getScopeMapsByRuleRid(ruleRequest.rule_rid, userId);
+            const existingEntitieslain = existingEntities.map(act => act.get({ plain: true }));
+            const incomingEntities = ruleRequest.scope_entity_rid;
+            for (let i = 0; i < incomingEntities.length; i++) {
+                const incoming = incomingEntities[i];
+                const existing = existingEntitieslain[i];
+
+                if (existing) {
+                    // Update action
+                    await this.scopeService.updateScope(
+                        {
+                            rid: existing.rid,
+                            rule_rid: ruleRequest.rule_rid,
+                            scope_entity_type: ruleRequest.scope_type_rid,
+                            scope_entity_rid: incoming,
+                            is_active: true,
+                            modified_by: ruleRequest.modified_by
+                        },
+                        userId
+                    );
+                } else {
+                    await this.scopeService.createScope(
+                        {
+                            scope_rid: "",
+                            rule_rid: ruleRequest.rule_rid,
+                            scope_entity_type: ruleRequest.scope_type_rid,
+                            scope_entity_rid: incoming,
+                            is_active: true,
+                            created_by: ruleRequest.modified_by,
+                            modified_by: ruleRequest.modified_by
+                        },
+                        userId
+                    );
+                }
+            }
+
+            // Delete only extra actions
+            if (existingEntitieslain.length > incomingEntities.length) {
+                const extraEntities = existingEntitieslain.slice(incomingEntities.length);
+                for (const entity of extraEntities) {
+                    await this.scopeService.deleteScope(
+                        {
+                            "rid": entity.rid,
+                            "rule_rid": ruleRequest.rule_rid,
+                            "apply_type": ruleRequest.apply_type
+                        },
+                        userId,
+                    );
+                }
+            }
+        }
+
+        if (ruleRequest.apply_type === 'ALL') {
+            await this.scopeService.deleteScope(ruleRequest, userId);
+        }
+
+        return {
+            statusCode: 200,
+            message: "RuleMap and Scopes updated successfully",
+            data: {
+                ruleMap: "",
+            }
+        };
+    };
+
     async execute(request: any, userId: string): Promise<{
         statusCode: number;
         message: string;
@@ -532,11 +769,11 @@ export class WorkFlowService {
         data?: { info: any };
     }> {
         const mainDb = await this.getMainDb();
-        //fetching event rid, scope type rid from event name 
+        //fetching event rid, scope type rid from event name
         const eventRid = await mainDb.query<any>(
             rawQueries.fetchEventRid(
-                request.event_name,
-                request.task_rid
+                request.eventName,
+                request.entityRid
             ),
             { type: QueryTypes.SELECT }
         );
@@ -544,7 +781,7 @@ export class WorkFlowService {
         const allConditions: any[] = [];
         const allActions: any[] = [];
         //fetching relavent rules, condition rid, apply type from event rid
-        const rules = await mainDb.query<any>(rawQueries.fetchRulesFromEvent(event_rid, scope_type_rid, request.task_rid),
+        const rules = await mainDb.query<any>(rawQueries.fetchRulesFromEvent(event_rid, scope_type_rid, request.entityRid),
             { type: QueryTypes.SELECT }
         );
         for (const rule of rules) {
@@ -556,7 +793,7 @@ export class WorkFlowService {
             allActions.push(...actions);
         }
 
-        //grouping conditions by rule 
+        //grouping conditions by rule
         const conditionsByRule = allConditions.reduce((acc, condition) => {
             if (!acc[condition.rule_rid]) {
                 acc[condition.rule_rid] = [];
@@ -565,7 +802,7 @@ export class WorkFlowService {
             return acc;
         }, {} as Record<string, any[]>);
 
-        //grouping actions by rule 
+        //grouping actions by rule
         const actionsByRule = allActions.reduce((acc, action) => {
             if (!acc[action.rule_rid]) {
                 acc[action.rule_rid] = [];
@@ -591,47 +828,40 @@ export class WorkFlowService {
         //         actions: actions,
         //     });
         // }
-
-          const entity = {
-            status: "Close",
-            overdue: "close",
-            age: "30",
-            priority: "low",
-            entityId: "D001-4f350616-2e42-4829-8824-a3af3f3f24ed",
-            assigneeId: "D001-caace427-6365-469d-b8e5-d6322da67d40",
-            userId: "D001-caace427-6365-469d-b8e5-d6322da67d40",
-            accountRid: "D001-31b99b5b-0e39-4ddf-8b5a-5b9d60b87983",
-            templateName: "task_priority_update",
-            entityName: "Task ABC",
-            oldValue: "low",
-            newValue: "High"
-    };
+        const entity = request;
         const triggeredActions: Record<string, any[]> = {};
         const results: Record<string, boolean> = {};
-        for (const rule_rid in conditionsByRule) {
-            const ruleConditions = conditionsByRule[rule_rid];
+        for (const rule_rid in actionsByRule) {
+            console.log("rule id" + rule_rid);
+            console.log("conditionLength" + allConditions.length);
             let ruleResult = true;
-            for (let i = 0; i < ruleConditions.length; i++) {
-                const condition = ruleConditions[i];
-                const conditionResult = await this.evaluateCondition(condition, entity);
+            const ruleConditions = conditionsByRule[rule_rid] ?? [];
+            if (ruleConditions.length > 0) {
+                for (let i = 0; i < ruleConditions.length; i++) {
+                    const condition = ruleConditions[i];
+                    const conditionResult = await this.evaluateCondition(condition, entity);
 
-                if (i === 0) {
-                    ruleResult = conditionResult;
-                } else {
-                    const logicalOp = condition.logical_operator;
+                    if (i === 0) {
+                        ruleResult = conditionResult;
+                    } else {
+                        const logicalOp = condition.logical_operator;
 
-                    if (logicalOp === "AND") {
-                        ruleResult = ruleResult && conditionResult;
-                    } else if (logicalOp === "OR") {
-                        ruleResult = ruleResult || conditionResult;
+                        if (logicalOp === "AND") {
+                            ruleResult = ruleResult && conditionResult;
+                        } else if (logicalOp === "OR") {
+                            ruleResult = ruleResult || conditionResult;
+                        }
                     }
                 }
             }
             results[rule_rid] = ruleResult;
-            if (ruleResult) {
+            //Execute actions if:
+            // - no conditions exist
+            // - OR conditions evaluated to true
+            if (ruleConditions.length === 0 || ruleResult) {
                 const actions = actionsByRule[rule_rid] || [];
                 for (const action of actions) {
-                    await this.executeAction(action, entity, userId);
+                    await this.executeAction(action, entity, userId, rule_rid);
                 }
                 triggeredActions[rule_rid] = actions;
             }
@@ -658,12 +888,56 @@ export class WorkFlowService {
     }
 
     private evaluateCondition(condition: any, entity: any): boolean {
-        const fieldKey = condition.field.split(".")[1]; // "task.status" → "status"
-        const entityValue = entity[fieldKey];
+        const fieldKey = condition.field.split(".")[1] || condition.field; // "task.status" → "status"
+        let entityValue = entity[fieldKey] || entity[fieldKey.toLowerCase()] || entity[fieldKey.toUpperCase()];
+        let conditionValue = condition.value;
+        // Special handling for 'current date' as value
+        if (
+            typeof entityValue === "string" &&
+            entityValue.trim().toLowerCase() === "current date"
+        ) {
+            // Use today's date in YYYY-MM-DD format
+            const today = new Date();
+            entityValue = today.toISOString().slice(0, 10);
+        }
+        if (
+            typeof conditionValue === "string" &&
+            conditionValue.trim().toLowerCase() === "current date"
+        ) {
+            // Use today's date in YYYY-MM-DD format
+            const today = new Date();
+            conditionValue = today.toISOString().slice(0, 10);
+        }
+        logMessage(`Evaluating condition: ${fieldKey} ${condition.operator} ${conditionValue} against entity value: ${entityValue}`);
         const operator = (condition.operator || "").toLowerCase();
+        //console.log(String(entityValue).toLowerCase() + "    " + String(conditionValue).toLowerCase());
         switch (operator) {
             case "equals":
-                return String(entityValue) === String(condition.value);
+                return String(entityValue).toLowerCase() === String(conditionValue).toLowerCase();
+            case "not equals":
+                return String(entityValue).toLowerCase() !== String(conditionValue).toLowerCase();
+            case "is":
+                return entityValue === conditionValue;
+            case "greater than": {
+                // date comparison first
+                const dateA = new Date(entityValue);
+                const dateB = new Date(conditionValue);
+                if (!isNaN(dateA.getTime()) && !isNaN(dateB.getTime())) {
+                    return dateA > dateB;
+                }
+                // Fallback to number comparison
+                return Number(entityValue) > Number(conditionValue);
+            }
+            case "less than": {
+                // date comparison first
+                const dateA = new Date(entityValue);
+                const dateB = new Date(conditionValue);
+                if (!isNaN(dateA.getTime()) && !isNaN(dateB.getTime())) {
+                    return dateA < dateB;
+                }
+                // Fallback to number comparison
+                return Number(entityValue) < Number(conditionValue);
+            }
             default:
                 return false;
         }
@@ -672,7 +946,8 @@ export class WorkFlowService {
     private async executeAction(
         action: any,
         entity: any,
-        userId: string
+        userId: string,
+        ruleRid: string
     ) {
         switch (action.action_name) {
             case "create task":
@@ -680,10 +955,10 @@ export class WorkFlowService {
                 console.log("Creating task", entity);
                 break;
             case "In App":
-                await this.triggerNotification(entity,notificationTypes.InApp);
+                await this.triggerNotification(entity, notificationTypes.InApp, ruleRid);
                 break;
             case "Email":
-                await this.triggerNotification(entity,notificationTypes.Email);
+                await this.triggerNotification(entity, notificationTypes.Email, ruleRid);
                 break;
 
             default:
@@ -691,17 +966,40 @@ export class WorkFlowService {
         }
     }
 
-    async getNotificationTemplateDetails(templateName: string,oldValue:string,newValue:string,entityName: string, channel: string): Promise<{
-    templateDetails: any;
+    async getNotificationTemplateDetails(templateName: string, oldValue: string, newValue: string, entityName: string, channel: string, ruleRid: string): Promise<{
+        templateDetails: any;
     }> {
         const mainDb = await this.getMainDb();
+        let [notificationTemplateRid]: any[] = [];
+        if (channel === "In App") {
+            [notificationTemplateRid] = await mainDb.query<any>(
+                rawQueries.fetchNotificationInAppTemplatesForRule(ruleRid),
+                { type: QueryTypes.SELECT }
+            );
+        } else {
+            [notificationTemplateRid] = await mainDb.query<any>(
+                rawQueries.fetchNotificationEmailTemplatesForRule(ruleRid),
+                { type: QueryTypes.SELECT }
+            );
+        }
+        if (
+            notificationTemplateRid === undefined ||
+            notificationTemplateRid === null ||
+            typeof notificationTemplateRid !== 'object' ||
+            !('template_rid' in notificationTemplateRid) ||
+            !notificationTemplateRid.template_rid
+        ) {
+            return {
+                templateDetails: []
+            };
+        }
         const templateDetails = await mainDb.query<any>(
             rawQueries.fetchNotificationTemplateDetails(
-                templateName,channel
+                notificationTemplateRid.template_rid, channel
             ),
             { type: QueryTypes.SELECT }
         );
-        if(templateDetails.length>0){
+        if (templateDetails.length > 0) {
             let messageTemplate = templateDetails[0].message_template;
             if (messageTemplate.includes('{{old_value}}')) {
                 messageTemplate = messageTemplate.replace('{{old_value}}', oldValue != null ? oldValue : '');
@@ -709,85 +1007,107 @@ export class WorkFlowService {
             if (messageTemplate.includes('{{new_value}}')) {
                 messageTemplate = messageTemplate.replace('{{new_value}}', newValue != null ? newValue : '');
             }
-            if (messageTemplate.includes('{{entity_name}}')) {
-                messageTemplate = messageTemplate.replace('{{entity_name}}', entityName != null ? entityName : '');
+            if (messageTemplate.includes('{{entityName}}')) {
+                messageTemplate = messageTemplate.replace('{{entityName}}', entityName != null ? entityName : '');
+                templateDetails[0].subject = templateDetails[0].subject.replace('{{entityName}}', entityName != null ? entityName : '');
             }
             templateDetails[0].message_template = messageTemplate;
+            return {
+                templateDetails: templateDetails
+            };
+        } else {
+            // If no template found, just return empty array and continue
+            return {
+                templateDetails: []
+            };
         }
-        return {
-            templateDetails: templateDetails
-        };
     }
 
-    async sentNotification(templateDetails: any, userId: string,targetUser: string): Promise<any> {
+    async sentNotification(templateDetails: any, targetuserId: string, targetUserEmail: string): Promise<any> {
         const mainDb = await this.getMainDb();
         let notificationPayload = {
             notification_message: templateDetails.templateDetails.message_template,
-            created_by: userId,
-            user_rid: targetUser
+            created_by: targetuserId,
+            user_rid: targetuserId
         };
         const insertQuery = rawQueries.insertNotification();
-        const [notificationResult]:any[] = await mainDb.query(
+        const [notificationResult]: any[] = await mainDb.query(
             insertQuery,
             {
                 replacements: notificationPayload,
                 type: QueryTypes.INSERT
             }
         );
-        console.log("Notification inserted:", notificationResult);  
-        const notificationRid = notificationResult[0].rid ;
-         try {
-    
-    // Step 2: Send message with notification ID included
-    const webPubSubClient = new WebPubSubServiceClient(
-        process.env.AZURE_WEB_PUBSUB_CONNECTION_STRING!,
-        "notificationsHub"
-    );
+        const notificationRid = notificationResult[0].rid;
+        try {
 
-    const response  = await webPubSubClient.sendToUser(userId, {
-      id: notificationRid,
-      message:templateDetails.templateDetails.message_template,
-    });
-    console.log("Notification sent response:", response);
-    const [statusRid]:any[] = await mainDb.query(
-        rawQueries.fetchNotificationStatusByType("unread"),
-        {   
-            replacements: { notificationRid },
-            type: QueryTypes.SELECT
-        }
-    );
-    // Step 3: Update status to "sent"
-    await this.updateNotification(notificationRid, statusRid.rid);
-    return { notificationResult, status: "sent" };
+            // Step 2: Send message with notification ID included
+            const webPubSubClient = new WebPubSubServiceClient(
+                process.env.AZURE_WEB_PUBSUB_CONNECTION_STRING!,
+                "notificationsHub"
+            );
 
-  } catch (err) {
-    // Update DB to "failed"
-    const [statusRid]:any[] = await mainDb.query(
-        rawQueries.fetchNotificationStatusByType("Failed"),
-        {   
-            replacements: { notificationRid },
-            type: QueryTypes.SELECT
-        }
-    );
-    await this.updateNotification(notificationRid, statusRid.rid);
-    return { notificationResult, status: "failed" };
-  }
-}
-  async updateNotification(notificationId: string, status_rid: string): Promise<void> {
-    const mainDb = await this.getMainDb();
-    let query = rawQueries.updateNotificationStatus();
-    await mainDb.query(
-        query,
-        {
-            replacements: { status_rid: status_rid, notificationId },
-            type: QueryTypes.UPDATE
-        }
-    );
-}
+            const response = await webPubSubClient.sendToUser(targetuserId, {
+                id: notificationRid,
+                message: templateDetails.templateDetails.message_template,
+            });
+            const [statusRid]: any[] = await mainDb.query(
+                rawQueries.fetchNotificationStatusByType(notificationStatus.unread),
+                {
+                    replacements: { notificationRid },
+                    type: QueryTypes.SELECT
+                }
+            );
+            // Step 3: Update status to "sent"
+            await this.updateNotification(notificationRid, statusRid.rid);
+            return { notificationResult, status: "sent" };
 
-async triggerNotification(taskContext:any,channel:string): Promise<void> {
-    // Implementation for changing assignee
-    
+        } catch (err) {
+            // Update DB to "failed"
+            const [statusRid]: any[] = await mainDb.query(
+                rawQueries.fetchNotificationStatusByType(notificationStatus.failed),
+                {
+                    replacements: { notificationRid },
+                    type: QueryTypes.SELECT
+                }
+            );
+            await this.updateNotification(notificationRid, statusRid.rid);
+            return { notificationResult, status: "failed" };
+        }
+    }
+    async updateNotification(notificationId: string, status_rid: string): Promise<void> {
+        const mainDb = await this.getMainDb();
+        let query = rawQueries.updateNotificationStatus();
+        await mainDb.query(
+            query,
+            {
+                replacements: { status_rid: status_rid, notificationId },
+                type: QueryTypes.UPDATE
+            }
+        );
+    }
+
+    async getNotificationTemplates(channel: string): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: { templates: any; };
+    }> {
+        const mainDb = await this.getMainDb();
+        const result = await mainDb.query(
+            rawQueries.getNotificationTemplates(channel),
+            { type: QueryTypes.SELECT }
+        );
+        return {
+            statusCode: HttpStatus.SUCCESS,
+            message: HttpStatus.SUCCESS_MESSAGE,
+            data: {
+                templates: result
+            }
+        };
+    }
+
+async triggerNotification(taskContext:any,channel:string, ruleRid:string): Promise<void> {    
     const { accountNumber, parentAccountId } =
         await this.fetchValidAccountNumberById(
           taskContext.accountRid
@@ -797,157 +1117,150 @@ async triggerNotification(taskContext:any,channel:string): Promise<void> {
         taskContext.oldValue,
         taskContext.newValue,
         taskContext.entityName,
-        channel
+        channel,
+        ruleRid
     );
-    // Only one template detail is expected
-    const detail = Array.isArray(templateDetails.templateDetails)
-        ? templateDetails.templateDetails[0]
-        : templateDetails.templateDetails;
-    if (channel.includes('In App')) {
-        await this.sentNotification(
-            { templateDetails: detail },
-            taskContext.assigneeId,
-            taskContext.assigneeId
-        );
-    }
-    if (channel.includes('Email')) {
-        await this.sendNotificationEmail(
-            accountNumber,
-            taskContext.accountRid,
-            {
-                to_email: "dhivya.s@hubino.com",
-                subject: "test email from thinkrd",
-                body_html: detail.message_template,
-            },
-            taskContext.userId
-        );
-    }
-
-  }
-
-async fetchValidAccountNumberById(accountId: string) {
-    try {
-      const mainDb = await this.getMainDb();
-
-      const [account]: any[] = await mainDb.query(
-        rawQueries.fetchParentAccountDetails,
-        {
-          replacements: { rid: accountId },
-          type: "SELECT",
+    if (templateDetails && Array.isArray(templateDetails.templateDetails) && templateDetails.templateDetails.length > 0) {
+        const detail = templateDetails.templateDetails[0];
+        if (channel.includes('In App')) {
+            await this.sentNotification(
+                { templateDetails: detail },
+                taskContext.targetUserID,
+                taskContext.targetEmail
+            );
         }
-      );
-
-      let accountRnumber = account?.r_number;
-
-      if (account?.storage_type === "store_in_parent") {
-        const [accountData]: any[] = await mainDb.query(
-          rawQueries.fetchParentAccountDetails,
-          {
-            replacements: { rid: account?.parent_account_rid },
-            type: "SELECT",
-          }
-        );
-        accountRnumber = accountData?.r_number;
-      }
-
-      return {
-        accountNumber: accountRnumber,
-        accountId: account?.rid,
-        accountName: account?.account_name,
-        parentAccountId: account?.parent_account_rid,
-        currencyRid: account?.currency_rid
-      };
-    } catch (err) {
-      logMessage(`Error fetching account: ${err}`);
-      throw new Error("Error fetching account : " + (err as Error).message);
+        if (channel.includes('Email')) {
+            await this.sendNotificationEmail(
+                accountNumber,
+                taskContext.accountRid,
+                {
+                    to_email: taskContext.targetEmail,
+                    subject: detail.subject,
+                    body_html: detail.message_template,
+                },
+                taskContext.userId
+            );
+        }
     }
-  }
 
-async sendNotificationEmail(
-    accountNumber: string,
-    accountRid: string,
-    emailRequest: any,
-    userId: string
-  ) {
-     const mainDb = await this.getMainDb();
-    
-    const [accountInfo]: any[] = await mainDb.query(
-      rawQueries.fetchAccountInfo(accountRid),
-      { type: "SELECT" }
-    );
-  let parentAccountNumber = accountNumber;
-          if(accountInfo.storage_type === 'separate_db') {
+    }
+
+    async fetchValidAccountNumberById(accountId: string) {
+        try {
+            const mainDb = await this.getMainDb();
+
+            const [account]: any[] = await mainDb.query(
+                rawQueries.fetchParentAccountDetails,
+                {
+                    replacements: { rid: accountId },
+                    type: "SELECT",
+                }
+            );
+
+            let accountRnumber = account?.r_number;
+
+            if (account?.storage_type === "store_in_parent") {
+                const [accountData]: any[] = await mainDb.query(
+                    rawQueries.fetchParentAccountDetails,
+                    {
+                        replacements: { rid: account?.parent_account_rid },
+                        type: "SELECT",
+                    }
+                );
+                accountRnumber = accountData?.r_number;
+            }
+
+            return {
+                accountNumber: accountRnumber,
+                accountId: account?.rid,
+                accountName: account?.account_name,
+                parentAccountId: account?.parent_account_rid,
+                currencyRid: account?.currency_rid
+            };
+        } catch (err) {
+            logMessage(`Error fetching account: ${err}`);
+            throw new Error("Error fetching account : " + (err as Error).message);
+        }
+    }
+
+    async sendNotificationEmail(
+        accountNumber: string,
+        accountRid: string,
+        emailRequest: any,
+        userId: string
+    ) {
+        const mainDb = await this.getMainDb();
+
+        const [accountInfo]: any[] = await mainDb.query(
+            rawQueries.fetchAccountInfo(accountRid),
+            { type: "SELECT" }
+        );
+        let parentAccountNumber = accountNumber;
+        if (accountInfo.storage_type === 'separate_db') {
             const [parentAccountInfo]: any[] =
                 await mainDb.query(
-                rawQueries.fetchAccountInfo(accountInfo.parent_account_rid!),
-                { type: "SELECT" }
-              );
+                    rawQueries.fetchAccountInfo(accountInfo.parent_account_rid!),
+                    { type: "SELECT" }
+                );
             parentAccountNumber = parentAccountInfo.r_number;
-          }
-    let senderEmailInfo = await this.fetchSenderEmailInfoByAccountId(
-      parentAccountNumber,
-      accountInfo.parent_account_rid
-    );
-      senderEmailInfo = {  
-      email: 'dev_rd_interactions@resdevtax.com',
-    clientId: 'ea0d9e79-8006-4ee2-a58f-61abda0dd77a',
-    clientSecret: 'nns8Q~ws3tPFOIegD.UtRRV_4viR4AIoLT687bns',
-    tenantId: '7c722eb0-2d94-428a-ac72-cea1da5c87c0'
-      
-   } 
-    const emailContent = {
-      message: {
-        subject: emailRequest.subject,
-        body: {
-          contentType: "HTML",
-          content: emailRequest.body_html,
-        },
-        toRecipients: Array.isArray(emailRequest.to_email)
-  ? emailRequest.to_email.map((email: string) => ({
-      emailAddress: { address: email }
-    }))
-  : [{
-      emailAddress: { address: emailRequest.to_email }
-    }]
-      },
-    };
+        }
+        let senderEmailInfo = await this.fetchSenderEmailInfoByAccountId(
+            parentAccountNumber,
+            accountInfo.parent_account_rid
+        );
+        const emailContent = {
+            message: {
+                subject: emailRequest.subject,
+                body: {
+                    contentType: "HTML",
+                    content: emailRequest.body_html,
+                },
+                toRecipients: Array.isArray(emailRequest.to_email)
+                    ? emailRequest.to_email.map((email: string) => ({
+                        emailAddress: { address: email }
+                    }))
+                    : [{
+                        emailAddress: { address: emailRequest.to_email }
+                    }]
+            },
+        };
 
 
-    let emailResponse = await sendEmailWithAttachment({
-      message: emailContent.message,
-      senderEmailInfo: senderEmailInfo!,
-    });
-  }
-
-  async fetchSenderEmailInfoByAccountId(
-    accountNumber: string,
-    parentAccountId: string
-  ) {
-    try {
-      const orgDb = await this.getOrgDb();
-      const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
-        /\D/g,
-        ""
-      )}`;
-      const [senderEmailInfo]: any[] = await orgDb.query(
-        rawQueries.fetchSenderEmail(schemaName, parentAccountId)
-      );
-      const clientSecret = senderEmailInfo[0]?.client_secret;
-      const decryptedSecret = await decryptClientSecret(clientSecret);
-
-      return {
-        email:
-          senderEmailInfo[0]?.support_email,
-        clientId:
-          senderEmailInfo[0]?.client_id,
-        clientSecret:
-          decryptedSecret,
-        tenantId:
-          senderEmailInfo[0]?.tenant_id ,
-      };
-    } catch (err) {
-      logMessage(`Error fetching sender email info for account: ${err}`);
+        let emailResponse = await sendEmailWithAttachment({
+            message: emailContent.message,
+            senderEmailInfo: senderEmailInfo!,
+        });
     }
-  }
+
+    async fetchSenderEmailInfoByAccountId(
+        accountNumber: string,
+        parentAccountId: string
+    ) {
+        try {
+            const orgDb = await this.getOrgDb();
+            const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+                /\D/g,
+                ""
+            )}`;
+            const [senderEmailInfo]: any[] = await orgDb.query(
+                rawQueries.fetchSenderEmail(schemaName, parentAccountId)
+            );
+            const clientSecret = senderEmailInfo[0]?.client_secret;
+            const decryptedSecret = await decryptClientSecret(clientSecret);
+
+            return {
+                email:
+                    senderEmailInfo[0]?.support_email,
+                clientId:
+                    senderEmailInfo[0]?.client_id,
+                clientSecret:
+                    decryptedSecret,
+                tenantId:
+                    senderEmailInfo[0]?.tenant_id,
+            };
+        } catch (err) {
+            logMessage(`Error fetching sender email info for account: ${err}`);
+        }
+    }
 
 }

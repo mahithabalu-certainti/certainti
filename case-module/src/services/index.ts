@@ -1,6 +1,6 @@
 import { Logger } from "winston";
 import { CaseService } from "./cases/caseService";
-import { ICaseManagementService, ICaseService, IActivityService } from "./interfaces/interface";
+import { ICaseManagementService, ICaseService, IActivityService, IChildCaseService } from "./interfaces/interface";
 import { CaseManagementService } from "./casesManagement/caseManagementService";
 import { JurisdictionService }  from "./jurisdiction/jurisdictionServices";
 import { HistoricalSubmissionService }  from "./historicalSubmission/historicalSubmissionServices";
@@ -11,11 +11,13 @@ import { ProjectService } from "./project/projectService";
 import { StateComputationService } from "../services/rdComputation/state.computation.service";
 import { FederalComputationService } from "../services/rdComputation/federal.computation.service";
 import { ComputationService } from "./rdComputation/computation.service";
-
+import { ChildCaseService } from "./cases/childCaseService";
+import { CaseTaskService } from "./cases/caseTask/caseTaskService";
+import { ChecklistService } from "./cases/caseChecklist/checklistService";
 
 class Services {
   private logger: Logger;
-  caseService: ICaseService;
+  caseService: IChildCaseService;
   caseManagementService: ICaseManagementService;
   jurisdictionService: JurisdictionService;
   historicalSubmissionService: HistoricalSubmissionService;
@@ -26,10 +28,12 @@ class Services {
   stateComputationService: StateComputationService;
   federalComputationService: FederalComputationService;
   computationService: ComputationService;
+  caseTaskService : CaseTaskService
+  checklistService : ChecklistService
 
   constructor(logger: Logger) {
     this.logger = logger;
-    this.caseService = new CaseService(logger);
+    this.caseService = new ChildCaseService(logger);
     this.caseManagementService = new CaseManagementService(logger);
     this.jurisdictionService = new JurisdictionService(logger);
     this.historicalSubmissionService = new HistoricalSubmissionService(logger);
@@ -40,6 +44,8 @@ class Services {
     this.stateComputationService = new StateComputationService();
     this.federalComputationService = new FederalComputationService();
     this.computationService = new ComputationService();
+    this.caseTaskService = new CaseTaskService()
+    this.checklistService = new ChecklistService()
   }
 }
 

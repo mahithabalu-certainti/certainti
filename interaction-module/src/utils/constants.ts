@@ -368,6 +368,8 @@ export const rawQueries = {
   accountRid: string,
   schemaName: string,
   status_rid: string,
+  fiscalStart: string,
+  fiscalEnd: string,
   groupedProjectTypes?: Record<string, string[]>
 ) {
   let query = `
@@ -378,6 +380,10 @@ export const rawQueries = {
       pf.fiscal_year
     FROM ${schemaName}.project_fiscal pf
   `;
+  // Parse MM/DD for fiscalStart and fiscalEnd
+  const [startMM, startDD] = fiscalStart.split('/').map(Number);
+  const [endMM, endDD] = fiscalEnd.split('/').map(Number);
+
   if (groupedProjectTypes && Object.keys(groupedProjectTypes).length > 0) {
     const values = Object.entries(groupedProjectTypes)
       .flatMap(([key, typeRids]) => {
@@ -394,8 +400,8 @@ export const rawQueries = {
           ${values}
       ) AS ir(range_start, range_end, project_type_rid)
         ON pf.project_type_rid = ir.project_type_rid
-       AND ir.range_start <= make_date(pf.fiscal_year, 3, 31)
-       AND ir.range_end   >= make_date(pf.fiscal_year - 1, 4, 1)
+       AND ir.range_start <= make_date(pf.fiscal_year, ${endMM}, ${endDD})
+       AND ir.range_end   >= make_date(pf.fiscal_year - 1, ${startMM}, ${startDD})
     `;
   }
 
@@ -474,13 +480,29 @@ export const rawQueries = {
     return `
     SELECT rid, account_name,r_number,parent_account_rid,country_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${rid}'`;
   },
-  fetchPlatformConfig(rid: string) {
+  fetchPlatformConfig(rid: string,formattedStartDate: string,formattedEndDate:string) {
     return `
-    SELECT config_json,effective_start_date,effective_end_date FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values rv
+    SELECT config_json,,effective_start_date,effective_end_date  FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values rv
     join ${MAIN_SCHEMA_NAME}.rd_credit_config_group rg on  rv.credit_config_group_rid  = rg.rid
     where rg.country_rid = '${rid}'
-    and credit_program_name = 'Platform Configuration'
-    and rg.is_federal = true`;
+    AND credit_program_name = 'Platform Configuration'
+    AND rg.is_federal = true 
+    AND rv.effective_start_date <= '${formattedEndDate}'
+    AND rv.effective_end_date   >= '${formattedStartDate}'
+    AND rv.status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active')
+  ORDER BY rv.effective_start_date DESC
+  LIMIT 1`;
+  },
+   fetchAllPlatformConfig(rid: string) {
+    return `
+    SELECT config_json,effective_start_date,effective_end_date  FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values rv
+    join ${MAIN_SCHEMA_NAME}.rd_credit_config_group rg on  rv.credit_config_group_rid  = rg.rid
+    where rg.country_rid = '${rid}'
+    AND credit_program_name = 'Platform Configuration'
+    AND rg.is_federal = true 
+    AND rv.status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active')
+  ORDER BY rv.effective_start_date DESC
+  LIMIT 1`;
   },
   fetchProjectTypeRid(projectType: string | string[]) {
     // Accepts either a string or array of strings

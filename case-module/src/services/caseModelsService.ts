@@ -22,7 +22,7 @@ import { TaskCollaborators } from "../models/taskCollaboratorsModel";
 import { Tags } from "../models/tagsModel";
 import { TaskTag } from "../models/taskTagsModel";
 import { CaseHistorySubmission } from "../models/caseHistorySubmissionModel";
-import { EmailTemplate } from "../models/emailTemplateModel";import { TaskComments } from "../models/taskCommentsModel";
+import { EmailTemplate } from "../models/emailTemplateModel"; import { TaskComments } from "../models/taskCommentsModel";
 import { CommentsAttachments } from "../models/commentsAttachmentModel";
 import { TaskAttachments } from "../models/taskAttachmentModel";
 import { CaseTaskWorkflowConnector } from "../models/caseTaskWorkflowConnectorModel";
@@ -63,17 +63,17 @@ export class CaseModelService {
       CaseTimeline: ReturnType<typeof CaseTimeline.initialize>;
       TaskTemplate: ReturnType<typeof TaskTemplate.initialize>
       CaseMilestone: ReturnType<typeof CaseMilestone.initialise>
-      CaseTask : ReturnType<typeof CaseTask.initialise>
-      TaskCollaborators : ReturnType<typeof TaskCollaborators.initialise>
-      TaskTag : ReturnType<typeof TaskTag.initialise>
-      Tags : ReturnType<typeof Tags.initialise>
+      CaseTask: ReturnType<typeof CaseTask.initialise>
+      TaskCollaborators: ReturnType<typeof TaskCollaborators.initialise>
+      TaskTag: ReturnType<typeof TaskTag.initialise>
+      Tags: ReturnType<typeof Tags.initialise>
       EmailTemplate?: ReturnType<typeof EmailTemplate.initialize>
-      TaskComments : ReturnType<typeof TaskComments.initialise>
-      CommentsAttachments : ReturnType<typeof CommentsAttachments.initialise>
-      TaskAttachments : ReturnType<typeof TaskAttachments.initialise>
+      TaskComments: ReturnType<typeof TaskComments.initialise>
+      CommentsAttachments: ReturnType<typeof CommentsAttachments.initialise>
+      TaskAttachments: ReturnType<typeof TaskAttachments.initialise>
       CaseHistorySubmission: ReturnType<typeof CaseHistorySubmission.initialize>;
       CaseTaskWorkflowConnector: ReturnType<typeof CaseTaskWorkflowConnector.initialize>
-      WorkflowConnector : ReturnType<typeof WorkflowConnector.initialize>
+      WorkflowConnector: ReturnType<typeof WorkflowConnector.initialize>
       WorkflowConnectorMapping: ReturnType<typeof WorkflowConnectorMapping.initialize>
       ProjectResourceFiscal: ReturnType<typeof ProjectResourceFiscal.initialize>
       ProjectTask: ReturnType<typeof ProjectTask.initialize>
@@ -82,8 +82,8 @@ export class CaseModelService {
       ProjectFiscal: ReturnType<typeof ProjectFiscal.initialize>
       ProjectFiscalRegion: ReturnType<typeof ProjectFiscalRegion.initialize>
       CaseProjectFiscalRegion: ReturnType<typeof CaseProjectFiscalRegion.initialize>
-      TaskHistory : ReturnType<typeof TaskHistory.initialize>;
-      ActivityAttachments : ReturnType<typeof ActivityAttachments.initialise>
+      TaskHistory: ReturnType<typeof TaskHistory.initialize>;
+      ActivityAttachments: ReturnType<typeof ActivityAttachments.initialise>
       ActivityHistory: ReturnType<typeof ActivityHistory.initialize>;
       TaskSummary: ReturnType<typeof TaskSummary.initialize>;
       Jurisdiction: ReturnType<typeof Jurisdiction.initialize>;
@@ -92,7 +92,7 @@ export class CaseModelService {
     }
   > = new Map();
 
-  constructor() {}
+  constructor() { }
 
   async getSequelize(): Promise<Sequelize> {
     if (!this.orgDbSequelize) {
@@ -149,7 +149,7 @@ export class CaseModelService {
     const ProjectFiscalModel = ProjectFiscal.initialize(sequelize, schemaName);
     const ProjectFiscalRegionModel = ProjectFiscalRegion.initialize(sequelize, schemaName);
     const CaseProjectFiscalRegionModel = CaseProjectFiscalRegion.initialize(sequelize, schemaName);
-    const WorkflowConnectorMappingModel = WorkflowConnectorMapping.initialize(mainDbSequelize, MAIN_SCHEMA_NAME)   
+    const WorkflowConnectorMappingModel = WorkflowConnectorMapping.initialize(mainDbSequelize, MAIN_SCHEMA_NAME)
     const ActivitiesModel = Activities.initialize(sequelize, schemaName);
     const TaskHistoryModel = TaskHistory.initialize(sequelize, schemaName);
     const ActivityAttachmentsModel = ActivityAttachments.initialise(sequelize, schemaName);
@@ -161,6 +161,12 @@ export class CaseModelService {
     const RdCreditCountryCalculationsModel = RdCreditCountryCalculations.initialize(sequelize, schemaName);
     const RdCreditStateCalculationsModel = RdCreditStateCalculations.initialize(sequelize, schemaName);
     const RdCreditProcessModel = RdCreditProcess.initialize(sequelize, schemaName);
+
+    CaseProjectModel.belongsTo(ProjectFiscalModel, {
+      foreignKey: "project_fiscal_rid",
+      targetKey: "rid",
+      as: "case_project_project_fiscal",
+    });
 
     const models = {
       Case: CaseModel,
@@ -178,14 +184,14 @@ export class CaseModelService {
       CheckListItem: CheckListItemModel,
       Jurisdiction: JurisdictionModel,
       CaseMilestone: CaseMilestoneModel,
-      CaseTask : CaseTaskModel,
-      TaskCollaborators : TaskCollaboratorsModel,
-      TaskTag : TaskTagModel,
-      Tags : TagsModel,
+      CaseTask: CaseTaskModel,
+      TaskCollaborators: TaskCollaboratorsModel,
+      TaskTag: TaskTagModel,
+      Tags: TagsModel,
       EmailTemplate: EmailTemplateModel,
-      TaskComments : TaskCommentsModel,
-      CommentsAttachments : CommentsAttachmentsModel,
-      TaskAttachments : TaskAttachmentsModel,
+      TaskComments: TaskCommentsModel,
+      CommentsAttachments: CommentsAttachmentsModel,
+      TaskAttachments: TaskAttachmentsModel,
       CaseHistorySubmission: CaseHistorySubmissionModel,
       Activities: ActivitiesModel,
       TaskHistory: TaskHistoryModel,
@@ -200,8 +206,8 @@ export class CaseModelService {
       ProjectFiscal: ProjectFiscalModel,
       ProjectFiscalRegion: ProjectFiscalRegionModel,
       CaseProjectFiscalRegion: CaseProjectFiscalRegionModel,
-      ActivityAttachments : ActivityAttachmentsModel,
-      ActivityHistory : ActivityHistoryModel,
+      ActivityAttachments: ActivityAttachmentsModel,
+      ActivityHistory: ActivityHistoryModel,
       TaskSummary: TaskSummaryModel,
       JurisdictionConfig: JurisdictionConfigModel,
       CaseKeyContactDetails: CaseKeyContactDetailsModel,

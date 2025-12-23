@@ -110,6 +110,7 @@ interface CaseProjectFiscalRegionAttributes {
   project_description?: string | null;
   project_fiscal_rid: string;
   total_nonlabor_from_tasks?: number | null;
+  is_rd_claim_qualified? : boolean
 }
 
 export interface CaseProjectFiscalRegionCreationAttributes
@@ -225,6 +226,7 @@ export class CaseProjectFiscalRegion
   public project_description?: string | null;
   public project_fiscal_rid!: string;
   public total_nonlabor_from_tasks?: number | null;
+  public is_rd_claim_qualified? : boolean
 
   static initialize(
     sequelize: Sequelize,
@@ -661,6 +663,10 @@ export class CaseProjectFiscalRegion
           type: DataTypes.INTEGER,
           allowNull: true,
         },
+        is_rd_claim_qualified : {
+          type: DataTypes.BOOLEAN,
+          defaultValue: false,
+        }
       },
       {
         sequelize,

@@ -922,3 +922,14 @@ export type ProjectFiscalType = {
   signoff : boolean
   project_code : string
 }
+
+export type ProjectFiscalIds = {
+  project_fiscal_rid : string
+}
+export type RegionIds = {
+  region_rid : string
+}
+export type RegionDetails = {
+  rid : string
+  state_name : string
+}

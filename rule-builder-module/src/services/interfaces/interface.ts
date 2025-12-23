@@ -1,5 +1,5 @@
 
-import { ICreateRule, IUpdateRule, ICreateCondition, ICreateAction, ICreateScope, ICreateSchedule, ICreateAudit, ICreateTrigger, ICreateRuleMap, ICreateRuleMapWithScope, IListSCopeEvent } from "../../utils/types";
+import { ICreateRule, IUpdateRule, ICreateCondition, IUpdateCondition, ICreateAction, ICreateScope, ICreateSchedule, ICreateAudit, ICreateTrigger, ICreateRuleMap, ICreateRuleMapWithScope, IListSCopeEvent } from "../../utils/types";
 export interface IRulemasterService {
     createRuleMaster(
         ruleRequest: ICreateRule,
@@ -17,7 +17,7 @@ export interface IRulemasterService {
     ): Promise<{
         statusCode: number;
         message: string;
-        errorMessage?: string;
+        errorMessage?: any;
         data?: { rules: any };
     }>;
 
@@ -39,7 +39,7 @@ export interface IRulemasterService {
         statusCode: number;
         message: string;
         errorMessage?: string;
-        data?:any;
+        data?: any;
     }>;
 
     updateRuleMaster(
@@ -50,6 +50,17 @@ export interface IRulemasterService {
         message: string;
         errorMessage?: string;
         data?: { rules: any };
+    }>;
+
+
+    updateRuleMasterStatus(
+        ruleRequest: any,
+        userId: string
+    ): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: any;
     }>;
 
     deleteRuleMaster(data: any, userId: string): Promise<any>;
@@ -78,8 +89,10 @@ export interface IConditionService {
         data?: { conditions: any; count: number };
     }>;
 
+    getConditionsByRuleRid(rule_rid: string): Promise<any>;
+
     updateCondition(
-        conditionRequest: ICreateCondition,
+        conditionRequest: IUpdateCondition,
         userId: string
     ): Promise<{
         statusCode: number;
@@ -88,7 +101,7 @@ export interface IConditionService {
         data?: { condition: any };
     }>;
 
-    deleteConditionsByRuleRid(data: any, userId: string): Promise<any>;
+    deleteCondition(condition_rid: string, rule_rid: string, userId: string): Promise<any>;
 }
 
 
@@ -114,6 +127,8 @@ export interface IActionService {
         data?: { actions: any; count: number };
     }>;
 
+    getActionsByRuleRid(rule_rid: string): Promise<any>;
+
     updateAction(
         actionRequest: ICreateAction,
         userId: string
@@ -124,7 +139,7 @@ export interface IActionService {
         data?: { action: any };
     }>;
 
-    deleteActionByRuleRid(data: any, userId: string): Promise<any>;
+    deleteAction(action_rid: string, rule_rid: string, userId: string): Promise<any>;
 }
 
 
@@ -139,19 +154,13 @@ export interface IScopeService {
         data?: { scope: any };
     }>;
 
-    listScopes(data: any,
-        filters: Record<string, any>,
-        userId: string,
-        apiType: string
-    ): Promise<{
-        statusCode: number;
-        message: string;
-        errorMessage?: string;
-        data?: { scopes: any; count: number };
-    }>;
+    getScopeMapsByRuleRid(
+        rule_rid: string,
+        userId: string
+    ): Promise<any[]>;
 
     updateScope(
-        scopeRequest: ICreateScope,
+        scopeRequest: any,
         userId: string
     ): Promise<{
         statusCode: number;
@@ -198,15 +207,15 @@ export interface IScheduleService {
     deleteSchedule(data: any, userId: string): Promise<any>;
 }
 
-export interface IAuditservice {
-    createAudit(
-        auditRequest: ICreateAudit,
+export interface IRuleHistoryservice {
+    createHistory(
+        request: any,
         userId: string
     ): Promise<{
         statusCode: number;
         message: string;
         errorMessage?: string;
-        data?: { audit: any };
+        data?: { history: any };
     }>;
 }
 
@@ -226,6 +235,16 @@ export interface ITriggerservice {
 export interface IRuleMapService {
     createRuleMap(
         rulemapRequest: ICreateRuleMap,
+        userId: string
+    ): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: { ruleMap: any };
+    }>;
+
+    updateRuleMap(
+        rulemapRequest: any,
         userId: string
     ): Promise<{
         statusCode: number;
@@ -338,13 +357,23 @@ export interface IWorkFlowService {
         data?: { ruleMap: any };
     }>;
 
+    updateRuleMapWithScope(
+        rulemapRequest: any,
+        userId: string
+    ): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: { ruleMap: any };
+    }>;
+
     createRule(
         ruleRequest: any,
         userId: string
     ): Promise<{
         statusCode: number;
         message: string;
-        errorMessage?: string;
+        errorMessage?: any;
         data?: { rule: any };
     }>;
 
@@ -364,10 +393,29 @@ export interface IWorkFlowService {
     ): Promise<{
         statusCode: number;
         message: string;
-        errorMessage?: string;
+        errorMessage?: any;
         data?: { rule: any };
     }>;
 
+    updateRuleStatus(
+        ruleRequest: any,
+        userId: string
+    ): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: any;
+    }>;
+
+    ruleMapDetailByRuleRid(
+        ruleRequest: any,
+        userId: string
+    ): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: { rule: any };
+    }>;
 
     execute(
         request: any,
@@ -377,6 +425,14 @@ export interface IWorkFlowService {
         message: string;
         errorMessage?: string;
         data?: { info: any };
+    }>;
+    getNotificationTemplates(
+        userId: string
+    ): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: { templates: any };
     }>;
 }
 

@@ -1340,7 +1340,7 @@ export class ProjectTaskSchemaService {
     activeStatusId: string,
     transaction: Transaction
   ) {
-    const { ProjectTask, ProjectFiscal, Resources } = await this.getModels(
+    const { ProjectTask, ProjectFiscal, Resources, CaseProject } = await this.getModels(
       accountNumber
     );
     const { account_rid, project_fiscal_rid } = projectTaskData;
@@ -1471,6 +1471,27 @@ export class ProjectTaskSchemaService {
             account_rid,
             fiscal_year: fiscalYear,
             rid: project_fiscal_rid,
+          },
+          transaction,
+        }
+      );
+      await CaseProject.update(
+        {
+          total_cost_from_tasks: total_cost || null,
+          total_effort_from_tasks: total_effort || null,
+          total_cost_fte_from_tasks,
+          total_cost_subcon_from_tasks,
+          total_effort_fte_from_tasks,
+          total_effort_subcon_from_tasks,
+          total_fte_from_tasks: total_fte_from_tasks,
+          total_subcon_from_tasks: total_subcon_from_tasks,
+          total_nonlabor_from_tasks: total_nonlabor_from_tasks
+        },
+        {
+          where: {
+            account_rid,
+            fiscal_year: fiscalYear,
+            project_fiscal_rid: project_fiscal_rid,
           },
           transaction,
         }
@@ -1928,7 +1949,7 @@ export class ProjectTaskSchemaService {
           ),
           "total_cost",
         ],
-        [Sequelize.fn("COUNT", Sequelize.col("ProjectTask.rid")), "count"],
+        [Sequelize.fn("COUNT", Sequelize.col("CaseProjectTask.rid")), "count"],
       ],
       include: [
         {
@@ -1945,7 +1966,7 @@ export class ProjectTaskSchemaService {
         region_rid,
         case_rid: caseMapping.case_rid,
       },
-      group: ["resource.resource_type_rid", "ProjectTask.region_rid"],
+      group: ["resource.resource_type_rid", "CaseProjectTask.region_rid"],
       raw: true,
       transaction,
     });
@@ -2584,8 +2605,17 @@ export class ProjectTaskSchemaService {
     activeStatusId: string,
     transaction: Transaction
   ) {
-    const { ProjectTask, ProjectResourceFiscal } = await this.getModels(accountNumber);
+    const { ProjectTask, ProjectResourceFiscal, CaseProjectResourceFiscal, CaseProjectTask } = await this.getModels(accountNumber);
 
+    const existingCaseProjectTask = await CaseProjectTask.findOne({
+      where : {
+        project_task_rid : existingProjectTask.rid,
+        account_rid : projectTaskData.account_rid,
+        fiscal_year : fiscalYear,
+        resource_rid : resourceId,
+        project_fiscal_rid : projectTaskData.project_fiscal_rid
+      }, raw : true
+    })
     const newGroupKey = {
       project_fiscal_rid: projectTaskData.project_fiscal_rid,
       account_rid: projectTaskData.account_rid,
@@ -2645,9 +2675,25 @@ export class ProjectTaskSchemaService {
             where: oldGroupKey,
             transaction
           });
+          await CaseProjectResourceFiscal.destroy({
+            where: oldGroupKey,
+            transaction
+          });
         } else {
           // Update zero aggregates (still used elsewhere)
           await ProjectResourceFiscal.update(
+            {
+              total_cost_from_tasks: oldCost,
+              total_hours_from_tasks: oldEffort,
+              modified_by: userId,
+              modified_datetime: new Date()
+            },
+            {
+              where: oldGroupKey,
+              transaction
+            }
+          );
+          await CaseProjectResourceFiscal.update(
             {
               total_cost_from_tasks: oldCost,
               total_hours_from_tasks: oldEffort,
@@ -2663,6 +2709,18 @@ export class ProjectTaskSchemaService {
       } else {
         // Non-zero aggregate → just update
         await ProjectResourceFiscal.update(
+          {
+            total_cost_from_tasks: oldCost,
+            total_hours_from_tasks: oldEffort,
+            modified_by: userId,
+            modified_datetime: new Date()
+          },
+          {
+            where: oldGroupKey,
+            transaction
+          }
+        );
+        await CaseProjectResourceFiscal.update(
           {
             total_cost_from_tasks: oldCost,
             total_hours_from_tasks: oldEffort,
@@ -2692,6 +2750,18 @@ export class ProjectTaskSchemaService {
         created_datetime: new Date(),
         project_rid: existingProjectTask.project_rid
       }, { transaction });
+      if(!existingCaseProjectTask) {
+        await CaseProjectResourceFiscal.create({
+        ...newGroupKey,
+        total_cost_from_tasks: projectTaskData.total_cost_pro_task,
+        total_hours_from_tasks: projectTaskData.total_hours_pro_task,
+        created_by: userId,
+        created_datetime: new Date(),
+        case_project_rid: existingCaseProjectTask!.case_project_rid,
+        project_rid : existingCaseProjectTask!.project_rid,
+        case_rid : existingCaseProjectTask!.case_rid,
+      }, { transaction });
+      }
     }
 
     // 🔁 Step 3: Recalculate new group aggregate
@@ -2714,6 +2784,18 @@ export class ProjectTaskSchemaService {
     const newEffort = parseFloat(newAggregate[0].get('totalEffort') as string) || 0;
 
     await ProjectResourceFiscal.update(
+      {
+        total_hours_from_tasks: newEffort,
+        total_cost_from_tasks: newCost,
+        modified_by: userId,
+        modified_datetime: new Date()
+      },
+      {
+        where: newGroupKey,
+        transaction
+      }
+    );
+    await CaseProjectResourceFiscal.update(
       {
         total_hours_from_tasks: newEffort,
         total_cost_from_tasks: newCost,

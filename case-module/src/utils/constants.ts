@@ -202,7 +202,11 @@ export const STATUS_MESSAGE = {
   rdCreditPreviewSuccess : "R&D Credit preview fethched successfully",
   rdCreditPreview: "RD credit calculation results retrieved",
   rdCreditProcessInitiatedSuccess : "RD credit calculation initiated successfully",
-  rdCreditProcessInitiationFailed: "Failed to initiate RD credit process"
+  rdCreditProcessInitiationFailed: "Failed to initiate RD credit process",
+  noProjectsAssignedToCase : "No Assigned Projects found. Kindly assign a project to case and try again",
+  financialWorkingSignedOff : "Financial Working has been successfully signed off",
+  financialWorkingSignedOffFailed : "Failed to signoff financial working",
+  regionsFetchedSuccess : "Regions listed successfully"
 };
 
 export const caseStatuses = {
@@ -1021,7 +1025,7 @@ export const rawQueries = {
   fetchUserNames(oldRid: string, newRid: string) {
     if (oldRid === null) oldRid = ''
     if (newRid === null) newRid = ''
-    return `SELECT rid, CONCAT(first_name, ' ', last_name) AS name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN ('${oldRid}', '${newRid}')`
+    return `SELECT rid, CONCAT(first_name, ' ', last_name) AS name,email FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN ('${oldRid}', '${newRid}')`
   },
   fetchActivityStatusById(oldRid: string, newRid: string) {
     if (oldRid === null) oldRid = ''
@@ -1390,7 +1394,7 @@ export const rawQueries = {
     `;
   },
   checkJurisdictionConfigOverlap(excludeCurrent = false) {
-    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values WHERE credit_config_group_rid = :groupId AND status_rid = :statusRid AND ((:endDate IS NULL AND :startDate < effective_end_date) OR (:endDate IS NOT NULL AND :startDate < effective_end_date AND :endDate > effective_start_date))${excludeCurrent ? ' AND federal_config_id is null AND rid != :excludeRid' : ''} LIMIT 1`;
+    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values WHERE credit_config_group_rid = :groupId  AND ((:endDate IS NULL AND :startDate < effective_end_date) OR (:endDate IS NOT NULL AND :startDate < effective_end_date AND :endDate > effective_start_date))${excludeCurrent ? ' AND federal_config_id is null AND rid != :excludeRid' : ''} LIMIT 1`;
   },
   getJurisdictionByCountryId(country_rid: string, state_rid: string, is_federal: boolean, credit_program_name: string) {
     let whereClause = `g.country_rid = '${country_rid}' AND g.is_federal = ${is_federal}`;
@@ -1441,17 +1445,18 @@ export const rawQueries = {
     LEFT JOIN ${MAIN_SCHEMA_NAME}.user uu ON uu.rid = rv.modified_by
     WHERE federal_config_id = '${config_rid}';`
   },
-  fetchPlatformConfig(rid: string,fiscalYear: number) {
+  fetchPlatformConfig(rid: string,formattedStartDate: string,formattedEndDate:string) {
     return `
     SELECT config_json FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values rv
-join ${MAIN_SCHEMA_NAME}.rd_credit_config_group rg on  rv.credit_config_group_rid  = rg.rid
-where rg.country_rid = '${rid}'
-and credit_program_name = 'Platform Configuration'
+  join ${MAIN_SCHEMA_NAME}.rd_credit_config_group rg on  rv.credit_config_group_rid  = rg.rid
+  where rg.country_rid = '${rid}'
+  and credit_program_name = 'Platform Configuration'
     and rg.is_federal = true 
-     AND rv.effective_start_date <= make_date(${fiscalYear}, 3, 31)
-  AND rv.effective_end_date   >= make_date(${fiscalYear} - 1, 4, 1)
-ORDER BY rv.effective_start_date DESC
-LIMIT 1`;
+     AND rv.effective_start_date <= '${formattedEndDate}'
+    AND rv.effective_end_date   >= '${formattedStartDate}'
+    AND rv.status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active')
+  ORDER BY rv.effective_start_date DESC
+  LIMIT 1`;
   },
 
   fetchAccountDetailsInfo(schemaName: string, account_rid: string) {
@@ -1513,7 +1518,31 @@ LIMIT 1`;
   },
   fetchProjectFiscalById (rid : string, accountRid : string, schemaName : string) {
     return `SELECT rid, signoff, project_code FROM ${schemaName}.project_fiscal WHERE rid = '${rid}' AND account_rid = '${accountRid}'`
-  }
+  },
+  getProjectsForCases(caseRid: string, accountRid: string, schemaName: string) {
+    return `SELECT rid, project_fiscal_rid, region_rid FROM ${schemaName}.case_projects WHERE case_rid = '${caseRid}' AND account_rid = '${accountRid}'`
+  },
+  updateSignoffInCase(schemaName : string, caseRid : string, signOff : boolean) {
+    return `UPDATE ${schemaName}.cases SET financial_working_signoff = ${signOff} WHERE rid = '${caseRid}'`
+  },
+  updateClaimQualifiedInCaseProject (caseRid : string, projectFiscalRids : string[], accountRid : string, schemaName : string) {
+    return `UPDATE ${schemaName}.case_projects SET is_rd_claim_qualified = true WHERE case_rid = '${caseRid}' AND account_rid = '${accountRid}' AND project_fiscal_rid IN (${projectFiscalRids.map((d : any) => `'${d}'`).join(',')})`
+  },
+  updateClaimQualifiedInProjectFiscal (projectFiscalRids : string[], accountRid : string, schemaName : string) {
+    return `UPDATE ${schemaName}.project_fiscal SET is_rd_claim_qualified = true WHERE rid IN (${projectFiscalRids.map((d : any) => `'${d}'`).join(',')}) AND account_rid = '${accountRid}'`
+  },
+  updateClaimQualifiedInCaseProjectFiscalRegion (ProjectRegionIds : any[], accountRid : string, schemaName : string) {
+    let ids = ProjectRegionIds.filter((d : any) => d.region_rid !== null)
+    let validIds;
+    validIds = ids.map((d : any) => `('${d.case_project_rid}','${d.project_fiscal_rid}', '${d.region_rid}')`).join(',')
+    return `UPDATE ${schemaName}.case_project_fiscal_region SET is_rd_claim_qualified = true WHERE account_rid = '${accountRid}' AND (case_project_rid, project_fiscal_rid, region_rid) IN (${validIds})`
+  },
+  fetchStates(stateIds: string[]) {
+    let formattedStateIds = stateIds.map((id: string) => `'${id}'`).join(",");
+    return `SELECT rid, state_name FROM ${MAIN_SCHEMA_NAME}.state 
+    WHERE 
+    rid IN (${formattedStateIds})`;
+  },
 };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 
 const keyContactRole = {
@@ -1827,6 +1856,19 @@ export const activityStatus = {
   completed: "Completed",
   scheduled: "Scheduled",
 };
+
+export const ruleTemplateNames = {
+  caseCreated: "case_create",
+  statusUpdated:"task_status_update",
+  taskCreated:"task_create",
+  assigneeChanged:"task_assignee_change"
+}
+
+export const ruleNames = {
+  caseCreated: "Create Case",
+  taskCreated: "Create Task",
+}
+
 
 export const activityTypes = {
   email: "Email",

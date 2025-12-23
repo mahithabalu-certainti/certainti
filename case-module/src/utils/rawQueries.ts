@@ -986,6 +986,8 @@ export const fetchCaseTemplateData = (schemaName : string, caseRid : string, acc
   ta.case_rid = t.case_rid
   AND
   ta.account_rid = t.account_rid
+  AND
+  ta.is_file_deleted = FALSE
   ),
   'checklists_count', 
   (
@@ -2347,4 +2349,8 @@ export const signoffProjectTechSummary  = (schemaName : string, projectFiscalRid
   account_rid = '${accountRid}'
   `
   return query;
+}
+
+export const getValidRegionIdsFromCases = (schemaName : string, accountId : string, caseId : string) => {
+  return `SELECT region_rid AS rid FROM ${schemaName}.case_projects WHERE case_rid = '${caseId}' AND account_rid = '${accountId}' AND region_rid IS NOT NULL`
 }

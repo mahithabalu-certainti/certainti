@@ -99,7 +99,7 @@ export class TaskService {
       }
 
       // Extract specific filters
-      let assignedToFilter, createdByFilter, modifiedByFilter, taskNameFilter, statusFilter, priorityFilter, attachToFilter, accountNameFilter;
+      let assignedToFilter, createdByFilter, modifiedByFilter, taskNameFilter, statusFilter, priorityFilter, attachToFilter, accountNameFilter, accountStatusFilter;
 
       if (filters.assigned_to_name) {
         assignedToFilter = filters.assigned_to_name;
@@ -132,6 +132,10 @@ export class TaskService {
       if (filters.account_name) {
         accountNameFilter = filters.account_name;
         delete filters.account_name;
+      }
+      if (filters.account_status_rid) {
+        accountStatusFilter = filters.account_status_rid;
+        delete filters.account_status_rid;
       }
 
       // Build where clause
@@ -412,6 +416,26 @@ export class TaskService {
           }
         });
       }
+      if (accountStatusFilter) {
+        tasks = tasks.filter(task => {
+          const displayName = (task.account_status_rid || '').toLowerCase();
+          const operator = Object.keys(accountStatusFilter)[0];
+
+          if (operator === 'in') {
+            const values = accountStatusFilter[operator];
+            return Array.isArray(values) && values.some((v: any) => String(v).toLowerCase() === displayName);
+          }
+
+          const filterValue = String(accountStatusFilter[operator] || '').toLowerCase();
+          switch (operator) {
+            case 'contains': return displayName.includes(filterValue);
+            case 'equals': return displayName === filterValue;
+            case 'not_equals': return displayName !== filterValue || displayName === null;
+            case 'is_empty': return displayName === null || displayName === ''
+            default: return false;
+          }
+        });
+      }
       if (taskNameFilter) {
         tasks = tasks.filter(task => {
           const taskName = (task.task_name || '').toLowerCase();
@@ -613,7 +637,7 @@ export class TaskService {
       }
 
       // Extract task-specific filters
-      let assignedToFilter, createdByFilter, modifiedByFilter, taskNameFilter, statusFilter, priorityFilter;
+      let assignedToFilter, createdByFilter, modifiedByFilter, taskNameFilter, statusFilter, priorityFilter, attachToFilter, accountNameFilter, accountStatusFilter;
 
       if (filters.assigned_to_name) {
         assignedToFilter = filters.assigned_to_name;
@@ -638,6 +662,18 @@ export class TaskService {
       if (filters.priority_name) {
         priorityFilter = filters.priority_name;
         delete filters.priority_name;
+      }
+      if (filters.account_status_rid) {
+        accountStatusFilter = filters.account_status_rid;
+        delete filters.account_status_rid;
+      }
+      if (filters.attach_to_name) {
+        attachToFilter = filters.attach_to_name;
+        delete filters.attach_to_name;
+      }
+      if (filters.account_name) {
+        accountNameFilter = filters.account_name;
+        delete filters.account_name;
       }
 
       const { whereClause } = this.buildRawWhereClause(filters, search);
@@ -848,17 +884,29 @@ export class TaskService {
 
       // Enrich task data
       let tasks = await Promise.all(tasksRaw.map(async task => {
-        const taskData = task.get({ plain: true });
+        const taskData = task.get({ plain: true }) as EnrichedTask;
+        const accountStatusInfo = accountStatusMap.get(task.account_rid);
 
         return {
           ...taskData,
+          account_name: accountMap.get(task.account_rid)?.account_name || task.account_rid,
+          r_number: taskData.r_number,
+          task_name: taskData.task_name,
+          description: taskData.description,
+          fiscal_year: taskData.fiscal_year,
           created_by_name: userMap.get(task.created_by) || task.created_by,
           modified_by_name: userMap.get(task.modified_by) || task.modified_by,
-          status_name: statusMap.get(task.status_rid) || null,
-          priority_name: priorityMap.get(task.priority_rid) || null,
+          status_name: statusMap.get(task.status_rid) || task.status_rid,
+          priority_name: priorityMap.get(task.priority_rid) || task.priority_rid,
           assigned_to_name: userMap.get(task.assigned_to) || task.assigned_to,
-          account_name: accountMap.get(task.account_rid)?.account_name || task.account_rid,
-          attached_to: attachmentDisplayNames[task.rid] || task.attach_to,
+          account_status_rid: accountStatusInfo?.status_rid || null,
+          account_status_name: accountStatusInfo?.status_name || null,
+          effective_start_datetime: taskData.effective_start_datetime,
+          effective_end_datetime: taskData.effective_end_datetime,
+          attachment_level: taskData.attachment_level,
+          attach_to_name: attachmentDisplayNames[taskData.rid] || taskData.attach_to,
+          attach_to: taskData.attach_to,
+          task_rid: taskData.task_rid
         };
       }));
 
@@ -867,11 +915,63 @@ export class TaskService {
         tasks = tasks.filter(task => {
           const displayName = (task.assigned_to_name || '').toLowerCase();
           const operator = Object.keys(assignedToFilter)[0];
-          const filterValue = (assignedToFilter[operator] || '').toLowerCase();
+          const filterValue = String(assignedToFilter[operator] || '').toLowerCase();
           switch (operator) {
             case 'contains': return displayName.includes(filterValue);
             case 'equals': return displayName === filterValue;
             case 'not_equals': return displayName !== filterValue || displayName === null;
+            case 'is_empty': return displayName === null || displayName === ''
+            default: return false;
+          }
+        });
+      }
+
+      if (attachToFilter) {
+        tasks = tasks.filter(task => {
+          const attachToName = (task.attach_to_name || '').toLowerCase();
+          const operator = Object.keys(attachToFilter)[0];
+          const filterValue = String(attachToFilter[operator] || '').toLowerCase();
+          switch (operator) {
+            case 'contains': return attachToName.includes(filterValue);
+            case 'equals': return attachToName === filterValue;
+            case 'not_equals': return attachToName !== filterValue || attachToName === null;
+            case 'is_empty': return attachToName === null || attachToName === ''
+            default: return false;
+          }
+        });
+      }
+
+      if (accountNameFilter) {
+        tasks = tasks.filter(task => {
+          const accountName = (task.account_name || '').toLowerCase();
+          const operator = Object.keys(accountNameFilter)[0];
+          const filterValue = String(accountNameFilter[operator] || '').toLowerCase();
+          switch (operator) {
+            case 'contains': return accountName.includes(filterValue);
+            case 'equals': return accountName === filterValue;
+            case 'not_equals': return accountName !== filterValue || accountName === null;
+            case 'is_empty': return accountName === null || accountName === ''
+            default: return false;
+          }
+        });
+      }
+
+      if (accountStatusFilter) {
+        tasks = tasks.filter(task => {
+          const accountStatus = (task.account_status_rid || '').toLowerCase();
+          const operator = Object.keys(accountStatusFilter)[0];
+
+          if (operator === 'in') {
+            const values = accountStatusFilter[operator];
+            return Array.isArray(values) && values.some((v: any) => String(v).toLowerCase() === accountStatus);
+          }
+
+          const filterValue = String(accountStatusFilter[operator] || '').toLowerCase();
+          switch (operator) {
+            case 'contains': return accountStatus.includes(filterValue);
+            case 'equals': return accountStatus === filterValue;
+            case 'not_equals': return accountStatus !== filterValue || accountStatus === null;
+            case 'is_empty': return accountStatus === null || accountStatus === ''
             default: return false;
           }
         });
@@ -881,7 +981,7 @@ export class TaskService {
         tasks = tasks.filter(task => {
           const taskName = (task.task_name || '').toLowerCase();
           const operator = Object.keys(taskNameFilter)[0];
-          const filterValue = (taskNameFilter[operator] || '').toLowerCase();
+          const filterValue = String(taskNameFilter[operator] || '').toLowerCase();
           switch (operator) {
             case 'contains': return taskName.includes(filterValue);
             case 'equals': return taskName === filterValue;
@@ -895,7 +995,7 @@ export class TaskService {
         tasks = tasks.filter(task => {
           const statusName = (task.status_name || '').toLowerCase();
           const operator = Object.keys(statusFilter)[0];
-          const filterValue = (statusFilter[operator] || '').toLowerCase();
+          const filterValue = String(statusFilter[operator] || '').toLowerCase();
           switch (operator) {
             case 'contains': return statusName.includes(filterValue);
             case 'equals': return statusName === filterValue;
@@ -909,7 +1009,7 @@ export class TaskService {
         tasks = tasks.filter(task => {
           const priorityName = (task.priority_name || '').toLowerCase();
           const operator = Object.keys(priorityFilter)[0];
-          const filterValue = (priorityFilter[operator] || '').toLowerCase();
+          const filterValue = String(priorityFilter[operator] || '').toLowerCase();
           switch (operator) {
             case 'contains': return priorityName.includes(filterValue);
             case 'equals': return priorityName === filterValue;
@@ -920,28 +1020,34 @@ export class TaskService {
       }
 
       if (createdByFilter) {
+        let filterValue;
         tasks = tasks.filter(task => {
           const createdByName = (task.created_by_name || '').toLowerCase();
           const operator = Object.keys(createdByFilter)[0];
-          const filterValue = (createdByFilter[operator] || '').toLowerCase();
+          if (operator === 'is_empty') filterValue = ''
+          else filterValue = String(createdByFilter[operator] || '').toLowerCase();
           switch (operator) {
             case 'contains': return createdByName.includes(filterValue);
             case 'equals': return createdByName === filterValue;
             case 'not_equals': return createdByName !== filterValue || createdByName === null;
+            case 'is_empty': return createdByName === null || createdByName === ''
             default: return false;
           }
         });
       }
 
       if (modifiedByFilter) {
+        let filterValue;
         tasks = tasks.filter(task => {
           const modifiedByName = (task.modified_by_name || '').toLowerCase();
           const operator = Object.keys(modifiedByFilter)[0];
-          const filterValue = (modifiedByFilter[operator] || '').toLowerCase();
+          if (operator === 'is_empty') filterValue = ''
+          else filterValue = String(modifiedByFilter[operator] || '').toLowerCase();
           switch (operator) {
             case 'contains': return modifiedByName.includes(filterValue);
             case 'equals': return modifiedByName === filterValue;
             case 'not_equals': return modifiedByName !== filterValue || modifiedByName === null;
+            case 'is_empty': return modifiedByName === null || modifiedByName === ''
             default: return false;
           }
         });
@@ -952,7 +1058,8 @@ export class TaskService {
         'r_number', 'task_name', 'fiscal_year', 'assigned_to_name',
         'status_name', 'priority_name', 'created_by_name', 'created_datetime',
         'modified_by_name', 'modified_datetime', 'effective_start_datetime',
-        'effective_end_datetime', 'description', 'attachment_level'
+        'effective_end_datetime', 'description', 'attachment_level', 'account_status_name',
+        'attach_to_name', 'account_name'
       ];
 
       const finalSortBy = validSortFields.includes(sortBy) ? sortBy : 'created_datetime';
@@ -1004,6 +1111,18 @@ export class TaskService {
             aVal = a.attachment_level || '';
             bVal = b.attachment_level || '';
             break;
+          case 'account_status_name':
+            aVal = a.account_status_name || '';
+            bVal = b.account_status_name || '';
+            break;
+          case 'account_name':
+            aVal = a.account_name || '';
+            bVal = b.account_name || '';
+            break;
+          case 'attach_to_name':
+            aVal = a.attach_to_name || '';
+            bVal = b.attach_to_name || '';
+            break;
           case 'r_number':
             aVal = a.r_number || '';
             bVal = b.r_number || '';
@@ -1054,25 +1173,31 @@ export class TaskService {
       }
       for (const field of accountAllowedFieldsForExport) {
         if (field.read) {
-          allowedFieldSet.add(field.field_desc);
+          if (field.field_name === "status_rid") {
+            allowedFieldSet.add("Account Status");
+          }
+          if (field.field_name === "account_name") {
+            allowedFieldSet.add("Account Name");
+          }
         }
       }
 
       const labelMap: Record<string, string> = {
         "Task ID": "Task ID",
-        "Name": "Account Name",
+        "Account Name": "Account Name",
         "Task Name": "Task Name",
         "Description": "Description",
         "Fiscal Year": "Fiscal Year",
-        [flag === 'milestone' ? "Attach To" : "Related To Name"]: "Related To Name",
-        [flag === 'milestone' ? "Attachment Level" : "Related Entity"]: "Related Entity",
+        [flag === 'milestone' ? "Related To Name" : "Related To Name"]: "Related To Name",
+        [flag === 'milestone' ? "Related Entity" : "Related Entity"]: "Related Entity",
         [flag === 'milestone' ? "Assignee" : "Assigned To"]: "Assigned To",
         "Priority": "Priority",
         "Status": "Status",
+        "Account Status": "Account Status",
         "Created By": "Created By",
         "Created On": "Created On",
-        "Updated By": "Modified By",
-        "Updated On": "Modified On"
+        "Updated By": "Updated By",
+        "Updated On": "Updated On"
       };
 
       // Map tasks to export format
@@ -1226,15 +1351,16 @@ export class TaskService {
 
     return {
       "Task ID": task.r_number || '-',
-      "Name": task.account_name || '-',
+      "Account Name": task.account_name || '-',
       "Task Name": task.task_name || '-',
       "Description": task.description || '-',
       "Fiscal Year": task.fiscal_year ? `FY-${task.fiscal_year}` : '-',
-      [flag === 'milestone' ? "Attach To" : "Related To Name"]: task.attached_to || '-',
-      [flag === 'milestone' ? "Attachment Level" : "Related Entity"]: task.attachment_level || '-',
+      [flag === 'milestone' ? "Related To Name" : "Related To Name"]: task.attach_to_name || '-',
+      [flag === 'milestone' ? "Related Entity" : "Related Entity"]: task.attachment_level || '-',
       [flag === 'milestone' ? "Assignee" : "Assigned To"]: task.assigned_to_name || '-',
       "Priority": task.priority_name || '-',
       "Status": task.status_name || '-',
+      "Account Status": task.account_status_name || '-',
       "Created By": task.created_by_name || '-',
       "Created On": task.created_datetime
         ? timezone && isValidTimezone(timezone)

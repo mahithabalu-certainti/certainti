@@ -761,6 +761,13 @@ class ProjectIngestionService {
             projectId,
             KeyContact
           );
+          this.keyContacts.deleteCaseKeyContactDetails(
+            contact.rid,
+            projectId,
+            CaseKeyContactDetails,
+            Case,
+            projectCaseMapping
+          );
         }
       } else if (contact.action_type === "add") {
         if (
@@ -934,7 +941,8 @@ class ProjectIngestionService {
 
   async addAccountFiscalRegion(
     accountNumber: string,
-    projectData: ICreateProject
+    projectData: ICreateProject,
+    regionRid? : string
   ) {
     const { AccountFiscalRegion } = await this.getModels(accountNumber);
 
@@ -948,7 +956,24 @@ class ProjectIngestionService {
         "Missing required account_rid or fiscal_year in project data."
       );
     }
+    let query;
+    if(regionRid === null && projectData.region_rid == '') {
+      query = {
+        [Op.is] : null
+      }
+    } else {
+      query = regionRid
+    }
 
+    if(projectData.region_rid === '') {
+      await AccountFiscalRegion.destroy({
+        where : {
+          account_rid,
+          fiscal_year,
+          region_rid: query,
+        }
+      })
+    }
     const existingFiscal = await AccountFiscalRegion.findOne({
       where: {
         account_rid,
@@ -969,11 +994,11 @@ class ProjectIngestionService {
         });
       }
     } else {
-      await this.updateAccountFiscalRegionAggregatesFromFiscal(
-        accountNumber,
-        projectData
-      );
-    }
+        await this.updateAccountFiscalRegionAggregatesFromFiscal(
+          accountNumber,
+          projectData
+        );
+      }
   }
 
   async updateAccountFiscalAggregatesFromFiscal(
@@ -1559,7 +1584,10 @@ class ProjectIngestionService {
 
     if (existingRecord) {
       // Aggregate values
-      await existingRecord.update(aggregateValues);
+      await existingRecord.update({
+        ...baseData,
+        aggregateValues
+      });
     } else {
       // Create new record
       await ProjectFiscalRegion.create({
@@ -1792,7 +1820,37 @@ class ProjectIngestionService {
 
     if (existingRecord) {
       // Aggregate values
-      await existingRecord.update(aggregateValues);
+      await existingRecord.update({
+        ...baseData,
+        aggregateValues
+      });
+    } else {
+      await CaseProjectFiscalRegion.create({
+        ...baseData,
+        account_rid: projectData.account_id,
+        project_code: projectData.project_code,
+        fiscal_year: projectData.fiscal_year,
+        default_metric_type: "project",
+        effective_metric_type: null,
+        created_by: projectData.created_by,
+        project_rid: projectData.project_id,
+        project_fiscal_rid: projectData.project_fiscal_id,
+        max_ai_interaction: DEFAULT_PROJECT_DETAILS.maxAiInteraction,
+        auto_send_ai_interaction: false,
+        total_cost_prj : baseData.total_cost_prj,
+        effective_cost: baseData.total_cost_prj,
+        effective_effort: baseData.total_effort_prj,
+        effective_total_fte: baseData.total_fte_prj,
+        effective_total_subcon: baseData.total_subcon_prj,
+        effective_fte_effort: baseData.total_effort_fte_prj,
+        effective_subcon_effort: baseData.total_effort_subcon_prj,
+        effective_fte_cost: baseData.total_cost_fte_prj,
+        effective_subcon_cost: baseData.total_cost_subcon_prj,
+        effective_nonlabor_cost: baseData.total_cost_nonlabor_prj,
+        case_rid : caseProjectData.case_rid,
+        case_project_rid : caseProjectData.rid,
+        project_fiscal_region_rid : ''
+      });
     }
 
     if (
@@ -2536,6 +2594,16 @@ class ProjectIngestionService {
       projectData = await this.insertProjectClassification(
         projectData,
         this.mainDbSequelize
+      );
+      if(this.orgDbSequelize) {
+        this.orgDbSequelize = await initOrgSequelize();
+      }
+       projectData = await this.insertRDAssessmentFlag(
+        projectData,
+        this.mainDbSequelize,
+        this.orgDbSequelize!,
+        schemaName,
+        accountData.rid
       );
 
       projectData = await this.finalProjectSort(
@@ -3308,6 +3376,99 @@ class ProjectIngestionService {
     }
   }
 
+  async insertRDAssessmentFlag(
+  projects: any[],
+  mainDbSequelize: Sequelize,
+  orgDbSequelize: Sequelize,
+  schemaName: string,
+  accountRid: string,
+) {
+  try {
+    const [accountInfo]: any[] = await mainDbSequelize.query(
+      rawQueries.fetchAccountDetailsInfo(accountRid),
+      { type: 'SELECT' }
+    );
+    const [accountFiscalInfo]: any[] = await orgDbSequelize.query(
+      rawQueries.fetchAccountInfo(schemaName, accountRid), { type: 'SELECT' }
+    );
+    const fiscalStart = accountFiscalInfo?.fiscal_start_date; // e.g. 'Apr/01'
+    const fiscalEnd = accountFiscalInfo?.fiscal_end_date; // e.g. 'Mar/31'
+
+    // Fetch all platform configs for this country
+    const allPlatformConfigs: any[] = await mainDbSequelize.query(
+     rawQueries.fetchAllPlatformConfig(accountInfo.country_rid),
+      { type: 'SELECT' }
+    );
+
+    const updatedProjects = projects.map((project) => {
+      const updatedProject: any = {
+        ...(typeof project.toJSON === "function"
+          ? project.toJSON()
+          : project),
+      };
+
+      if (Array.isArray(project.ProjectFiscal)) {
+        updatedProject.ProjectFiscal = project.ProjectFiscal.map((child: any) => {
+          const childObj = typeof child.toJSON === "function" ? child.toJSON() : child;
+          // Construct fiscal year start and end using account fiscal start/end and child's fiscal year
+          // fiscalStart: e.g. 'Apr/01', fiscalEnd: e.g. 'Mar/31', child.fiscal_year: e.g. 2024
+          const [startMonth, startDay] = (fiscalStart || 'Apr/01').split('/');
+          const [endMonth, endDay] = (fiscalEnd || 'Mar/31').split('/');
+          const fiscalYear = Number(child.fiscal_year);
+          const fiscalYearStart = new Date(`${fiscalYear}-${startMonth}-${startDay}`);
+          // If fiscal year starts in April, fiscal end is next year March
+          let fiscalYearEndYear = fiscalYear;
+          if (startMonth !== endMonth || startDay !== endDay) {
+            // If fiscal year end is before start (e.g. Apr to Mar), increment year
+            const startMonthNum = new Date(`${fiscalYear}-${startMonth}-01`).getMonth();
+            const endMonthNum = new Date(`${fiscalYear}-${endMonth}-01`).getMonth();
+            if (endMonthNum < startMonthNum) {
+              fiscalYearEndYear = fiscalYear + 1;
+            }
+          }
+          const fiscalYearEnd = new Date(`${fiscalYearEndYear}-${endMonth}-${endDay}`);
+
+          // Check if this fiscal period falls within any platform config's effective dates
+          let is_rd_trigger_qualified = false;
+          for (const config of allPlatformConfigs) {
+            const effStart = new Date(config.effective_start_date);
+            const effEnd = new Date(config.effective_end_date);
+            // Optimized: prefer config.config_json.project_type, fallback to config.project_type_rid
+            let configProjectTypes: string[] = [];
+            const pjType = config.config_json?.project_type ?? config.project_type_rid;
+            if (Array.isArray(pjType)) {
+              configProjectTypes = pjType.map(String);
+            } else if (typeof pjType === 'string') {
+              configProjectTypes = pjType.split(',').map((s: string) => s.trim());
+            } else if (pjType != null) {
+              configProjectTypes = [String(pjType)];
+            }
+            if (
+              fiscalYearStart <= effEnd &&
+              fiscalYearEnd >= effStart &&
+              configProjectTypes.includes(String(childObj.project_type_rid))
+            ) {
+              is_rd_trigger_qualified = true;
+              break;
+            }
+          }
+          return {
+            ...childObj,
+            is_rd_trigger_qualified: is_rd_trigger_qualified,
+          };
+        });
+      }
+
+      return updatedProject;
+    });
+
+    return updatedProjects;
+  } catch (err) {
+    throw new Error(
+      "Error fetching classification: " + (err as Error).message
+    );
+  }
+}
   async finalProjectSort(
     projects: any[],
     sortBy: string,
