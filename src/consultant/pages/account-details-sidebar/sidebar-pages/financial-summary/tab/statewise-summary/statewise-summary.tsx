@@ -102,19 +102,18 @@ export const StateWiseSummary: React.FC<FinancialSummaryProps> = ({
   }, [summaryViewEditFields]);
   const accountName = accountDetails?.accountById?.account_name;
 
-  // UseEffects
   useEffect(() => {
-    if (accountid && fiscalYear && stateId && payload.flag) {
+    if (accountid && fiscalYear && (stateId || region)) {
       mutate({
         account_rid: accountid,
         fiscal_year: Number(fiscalYear),
         summaryType: 'state',
-        region_rid: payload.region_rid || stateId,
-        flag: payload.flag as FinancialSummaryFlag,
+        region_rid: (region || stateId) as string,
+        flag: (type || 'all') as FinancialSummaryFlag,
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [accountid, fiscalYear, payload.region_rid, payload.flag, stateId]);
+  }, [accountid, fiscalYear, stateId]);
   useEffect(() => {
     if (allData) {
       setResourceMetric(allData.resource_metrics);
@@ -308,7 +307,18 @@ export const StateWiseSummary: React.FC<FinancialSummaryProps> = ({
             key='section-header-btn'
             label='Go'
             sx={{ padding: '15px 4px' }}
-            onClick={() => setPayload({ flag: type, region_rid: region })}
+            onClick={() => {
+              setPayload({ flag: type, region_rid: region });
+              if (accountid && fiscalYear && (region || stateId)) {
+                mutate({
+                  account_rid: accountid,
+                  fiscal_year: Number(fiscalYear),
+                  summaryType: 'state',
+                  region_rid: (region || stateId) as string,
+                  flag: (type || 'all') as FinancialSummaryFlag,
+                });
+              }
+            }}
           />
         </div>
 
