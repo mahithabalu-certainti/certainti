@@ -972,8 +972,9 @@ export class WorkFlowService {
             if (messageTemplate.includes('{{new_value}}')) {
                 messageTemplate = messageTemplate.replace('{{new_value}}', newValue != null ? newValue : '');
             }
-            if (messageTemplate.includes('{{entity_name}}')) {
-                messageTemplate = messageTemplate.replace('{{entity_name}}', entityName != null ? entityName : '');
+            if (messageTemplate.includes('{{entityName}}')) {
+                messageTemplate = messageTemplate.replace('{{entityName}}', entityName != null ? entityName : '');
+                templateDetails[0].subject = templateDetails[0].subject.replace('{{entityName}}', entityName != null ? entityName : '');
             }
             templateDetails[0].message_template = messageTemplate;
             return {
@@ -1103,7 +1104,7 @@ async triggerNotification(taskContext:any,channel:string, ruleRid:string): Promi
             taskContext.accountRid,
             {
                 to_email: taskContext.targetEmail,
-                subject:  detail.message_template,
+                subject:  detail.subject,
                 body_html: detail.message_template,
             },
             taskContext.userId
