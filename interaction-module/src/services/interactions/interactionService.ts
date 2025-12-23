@@ -3030,13 +3030,8 @@ export class InteractionService {
     );
     const fiscalStart = accountFiscalInfo?.fiscal_start_date; // e.g. 'Apr/01'
     const fiscalEnd = accountFiscalInfo?.fiscal_end_date; // e.g. 'Mar/31'
-    const fiscalYear = accountInfo[0].fiscal_year || new Date().getFullYear();
-    // Start date 
-    const formattedStartDate = parseFiscalDate(fiscalStart, fiscalYear);
-    const endYear = getFiscalEndYear(fiscalStart, fiscalEnd, fiscalYear);
-    const formattedEndDate = parseFiscalDate(fiscalEnd, endYear);
     const platFormConfigResult: any[] = await this.mainDbSequelize.query(
-          rawQueries.fetchPlatformConfig(accountInfo[0].country_rid,formattedStartDate,formattedEndDate),
+          rawQueries.fetchAllPlatformConfig(accountInfo[0].country_rid),
           { type: 'SELECT' }
         );
         let projectTypes: any;
@@ -3061,6 +3056,7 @@ export class InteractionService {
             projectType[0].rid,
             schemaName,
             status_rid!,
+            fiscalStart,fiscalEnd,
             projectTypes
           )
         );

@@ -115,7 +115,8 @@ export interface ICaseService {
   }>;
   createCaseTeam(
     caseTeamRequest: ICreateCaseTeam,
-    userId: string
+    userId: string,
+    accessToken: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -505,6 +506,7 @@ export interface IChildCaseService extends ICaseService {
     statusCode: number;
     statusMessage: string;
   }>;
+  stateWiseRegionList(data : any) : Promise<any[]>
 }
 export interface ICaseTaskService {
   createUserLevelTask(data: CreateCaseTaskType): Promise<any>;

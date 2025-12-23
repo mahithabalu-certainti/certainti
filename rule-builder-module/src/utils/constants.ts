@@ -284,10 +284,10 @@ export const rawQueries = {
     return query;
   },
 
-  fetchNotificationTemplateDetails(template_name: string, channel: string): string {
-    let query = `SELECT nt.message_template,nt.channel
+  fetchNotificationTemplateDetails(template_rid: string, channel: string,): string {
+    let query = `SELECT nt.message_template,nt.channel,nt.subject
     FROM ${MAIN_SCHEMA_NAME}.notification_template nt 
-    WHERE nt.template_code = '${template_name}'
+    WHERE nt.rid = '${template_rid}'
     and nt.channel = '${channel}'
     and status_rid = (select status_rid from ${MAIN_SCHEMA_NAME}.status where status_name = 'Active');`;
     return query;
@@ -415,6 +415,12 @@ export const rawQueries = {
       },
     getNotificationTemplates(channel: string) {
       return `SELECT rid, template_code, channel, message_template,template_name FROM ${MAIN_SCHEMA_NAME}.notification_template WHERE channel = '${channel}' AND status_rid = (SELECT status_rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_name = 'Active')`;
+    },
+    fetchNotificationInAppTemplatesForRule(rule_rid: string) {
+      return `SELECT in_app_template_rid as template_rid FROM ${MAIN_SCHEMA_NAME}.workflow_rule_master WHERE rid = '${rule_rid}' AND is_active = true`;
+    },
+    fetchNotificationEmailTemplatesForRule(rule_rid: string) {
+      return `SELECT email_template_rid as template_rid FROM ${MAIN_SCHEMA_NAME}.workflow_rule_master WHERE rid = '${rule_rid}'  AND is_active = true`;
     },
     checkTableExists(schemaName: string, table: string) {
   return `SELECT EXISTS(SELECT 1 FROM information_schema.tables WHERE table_schema = '${schemaName}' AND table_name = '${table}')`;

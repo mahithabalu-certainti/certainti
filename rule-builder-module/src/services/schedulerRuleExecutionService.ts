@@ -129,19 +129,19 @@ export class SchedulerService {
         return {
           entityName: data.task_name,
           status: data.status_name,
-          event_name: eventName,
+          eventName: eventName,
           templateName: templateName,
           userId: data.assigned_to,
           accountRid: data.account_rid,
           plannedStartDate: data.effective_start_datetime,
           plannedEndDate: data.effective_end_datetime,
-          taskRid: data.task_rid,
+          entityRid: data.task_rid,
         };
       } else {
         return {
           entityName: data.case_name,
           status: data.status_name,
-          event_name: eventName,
+          eventName: eventName,
           templateName: templateName,
           userId: data.created_by,
           targetUserID: data.case_owner_rid,
@@ -149,7 +149,7 @@ export class SchedulerService {
           accountRid: data.account_rid,
           plannedSubmissionDate: data.planned_submission_date,
           statutorySubmissionDate: data.statutory_submission_date,
-          caseRid: data.rid,
+          entityRid: data.rid,
         };
       }
     };
