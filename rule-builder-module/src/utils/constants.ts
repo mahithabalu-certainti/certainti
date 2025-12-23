@@ -165,7 +165,7 @@ export const rawQueries = {
   },
 
   fetchFields(category_rid: string, status_rid: string): string {
-    let query = `SELECT rf.rid, rf.name as name FROM ${MAIN_SCHEMA_NAME}.rule_fields rf JOIN ${MAIN_SCHEMA_NAME}.field_category_map fcm 
+    let query = `SELECT rf.rid, rf.name as name,rf.field_description FROM ${MAIN_SCHEMA_NAME}.rule_fields rf JOIN ${MAIN_SCHEMA_NAME}.field_category_map fcm 
     ON rf.rid = fcm.field_rid `;
     const conditions: string[] = [];
     conditions.push(`fcm.category_rid = '${category_rid}'`);
@@ -285,7 +285,7 @@ export const rawQueries = {
   },
 
   fetchNotificationTemplateDetails(template_rid: string, channel: string,): string {
-    let query = `SELECT nt.message_template,nt.channel
+    let query = `SELECT nt.message_template,nt.channel,nt.subject
     FROM ${MAIN_SCHEMA_NAME}.notification_template nt 
     WHERE nt.rid = '${template_rid}'
     and nt.channel = '${channel}'
@@ -382,10 +382,10 @@ export const rawQueries = {
    fetchAllCases(inProgressStatusRid: string) {
     return `SELECT cs.rid, cs.status_rid, planned_submission_date,account_rid,case_owner_rid ,email FROM ${MAIN_SCHEMA_NAME}.case_summary  cs
     LEFT JOIN ${MAIN_SCHEMA_NAME}.user uu ON cs.case_owner_rid = uu.rid
-    WHERE cs.status_rid = '${inProgressStatusRid}'  limit 1`;
+    WHERE cs.status_rid = '${inProgressStatusRid}'`;
   },
   fetchAllCaseTask(inProgressStatusRid: string,taskType:string) {
-    return `SELECT task_rid, status_rid, effective_start_datetime,effective_end_datetime,account_rid FROM ${MAIN_SCHEMA_NAME}.task_summary WHERE status_rid = '${inProgressStatusRid}' and task_type_rid = '${taskType}'  limit 1`;
+    return `SELECT task_rid, status_rid, effective_start_datetime,effective_end_datetime,account_rid FROM ${MAIN_SCHEMA_NAME}.task_summary WHERE status_rid = '${inProgressStatusRid}' and task_type_rid = '${taskType}'`;
   },
   fetchAllCasesOverdue(inProgressStatusRid: string) {
     return `SELECT rid, status_rid, planned_submission_date FROM ${MAIN_SCHEMA_NAME}.case_summary WHERE status_rid = '${inProgressStatusRid}' AND planned_submission_date IS NOT NULL AND planned_submission_date <= CURRENT_DATE limit 1`;

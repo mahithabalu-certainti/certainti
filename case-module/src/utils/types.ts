@@ -926,3 +926,10 @@ export type ProjectFiscalType = {
 export type ProjectFiscalIds = {
   project_fiscal_rid : string
 }
+export type RegionIds = {
+  region_rid : string
+}
+export type RegionDetails = {
+  rid : string
+  state_name : string
+}
