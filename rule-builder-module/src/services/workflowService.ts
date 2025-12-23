@@ -1082,9 +1082,7 @@ export class WorkFlowService {
     };
   }
 
-async triggerNotification(taskContext:any,channel:string, ruleRid:string): Promise<void> {
-    // Implementation for changing assignee
-    
+async triggerNotification(taskContext:any,channel:string, ruleRid:string): Promise<void> {    
     const { accountNumber, parentAccountId } =
         await this.fetchValidAccountNumberById(
           taskContext.accountRid
