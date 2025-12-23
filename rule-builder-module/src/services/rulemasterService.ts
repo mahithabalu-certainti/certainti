@@ -337,6 +337,8 @@ export class RulemasterService {
             schedule_offset_value: ruleRequest.schedule_offset_value ?? null,
             modified_by: ruleRequest.modified_by,
             modified_datetime: new Date(),
+            in_app_template_rid: ruleRequest.in_app_template_rid ?? null,
+            email_template_rid: ruleRequest.email_template_rid ?? null
         });
 
         return {

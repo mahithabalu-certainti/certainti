@@ -22,7 +22,7 @@ class NotificationService {
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { notifications: any; total: number, nextOffset: number | null };
+    data?: { notifications: any; total: number; nextOffset: number | null; unreadCount: number };
   }> {
     const { count, rows } = await Notification.findAndCountAll({
       where: { user_rid: userId },
@@ -38,6 +38,24 @@ class NotificationService {
         },
       ],
     });
+
+    // Get the 'Unread' status rid
+    const unreadStatus = await NotificationStatus.findOne({
+      where: { status_name: 'Unread' },
+      attributes: ['rid'],
+    });
+
+    // Count unread notifications for the user
+    let unreadCount = 0;
+    if (unreadStatus) {
+      unreadCount = await Notification.count({
+        where: {
+          user_rid: userId,
+          status_rid: unreadStatus.rid,
+        },
+      });
+    }
+
     // Calculate nextOffset for pagination
     const nextOffset = offset + rows.length < count ? offset + rows.length : null;
     return {
@@ -47,6 +65,7 @@ class NotificationService {
         notifications: rows,
         total: count,
         nextOffset,
+        unreadCount,
       },
     };
   }
