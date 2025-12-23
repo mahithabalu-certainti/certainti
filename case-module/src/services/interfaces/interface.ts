@@ -50,7 +50,8 @@ export interface ICaseService {
   }>;
   updateCase(
     caseRequest: ICreateCases,
-    userId: string
+    userId: string,
+    accessToken: string
   ): Promise<{
     statusCode: number;
     message: string;

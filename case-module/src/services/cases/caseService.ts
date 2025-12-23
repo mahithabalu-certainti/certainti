@@ -250,7 +250,8 @@ export class CaseService {
    */
   async updateCase(
     caseRequest: ICreateCases,
-    userId: string
+    userId: string,
+    accessToken: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -284,7 +285,8 @@ export class CaseService {
         accountNumber,
         userId,
         caseRequest,
-        transaction
+        transaction,
+        accessToken
       );
 
       if(response.statusCode === HttpStatus.BAD_REQUEST) {
