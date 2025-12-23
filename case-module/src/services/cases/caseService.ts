@@ -129,6 +129,7 @@ export class CaseService {
     data?: { cases: any };
   }> {
     const dbInit = await this.caseModelService.getSequelize();
+    const mainDb = await this.getMainDb();
     const transaction = await dbInit.transaction();
     try {
       caseRequest.created_by = userId;
@@ -191,12 +192,19 @@ export class CaseService {
       }
 
       await transaction.commit();
+      const [caseOwnerData]: any[] = await mainDb.query(  
+        rawQueries.fetchUserDetails(caseRequest.case_owner_rid),
+        { type: QueryTypes.SELECT }
+      );
       let ruleEnginePayload = {
         entityName: caseRequest.case_name,
-        event_name: ruleNames.caseCreated,
+        eventName: ruleNames.caseCreated,
         templateName:ruleTemplateNames.caseCreated,
         userId: userId,
         accountRid: caseRequest.account_rid,
+        targetUserID: caseRequest.case_owner_rid,
+        targetEmail: caseOwnerData.email || "",
+        entityId: response.rid,
       };
       await this.caseSchemaService.triggerRuleEngine(ruleEnginePayload, accessToken);
 
@@ -1207,7 +1215,8 @@ export class CaseService {
    */
   async createCaseTeam(
     caseRequest: ICreateCaseTeam,
-    userId: string
+    userId: string,
+    accessToken: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -1234,7 +1243,8 @@ export class CaseService {
       await this.caseSchemaService.assignCaseTeamToTasks(
         accountNumber,
          caseRequest,
-        userId
+        userId,
+        accessToken
       );
 
       return {

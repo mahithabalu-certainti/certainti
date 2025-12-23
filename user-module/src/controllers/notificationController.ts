@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import {} from "../lib/joi/schemas/schema";
+import { listNotificationSchema } from "../lib/joi/schemas/schema";
 import { errorResponse } from "../utils/apiResponse";
 import { constants } from "../utils/constant";
 import configurations from "../config/config";
@@ -10,6 +10,7 @@ import {
   handleErrorResponse,
   handleSuccessResponse,
   successLog,
+  validateRequest,
 } from "../utils/helpers";
 
 const services = configurations.getInstance().getServices();
@@ -42,8 +43,13 @@ async function listNotifications(req: Request, res: Response): Promise<void> {
       );
       return;
     }
+     const value = await validateRequest(req, listNotificationSchema, "", res, "GET");
 
-    const listResponse = await services.notificationService.listNotifications(userId);
+    if (!value) {
+      return;
+    }
+
+    const listResponse = await services.notificationService.listNotifications(userId,value.limit,value.nextOffset);
 
     if (listResponse.statusCode === constants.SUCCESS) {
       successLog(methodName);

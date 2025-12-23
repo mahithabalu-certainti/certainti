@@ -318,7 +318,9 @@ const createRuleSchema = Joi.object({
     ).required(),
     action_rid: Joi.array().items(Joi.string().required()).required(),
     created_by: Joi.string().required(),
-    trigger_type: Joi.number().required()
+    trigger_type: Joi.number().required(),
+    in_app_template_rid: Joi.string().optional().allow("",null),
+    email_template_rid: Joi.string().optional().allow("",null),
 });
 
 const getRuleDetailSchema = Joi.object({
@@ -343,7 +345,9 @@ const updateRuleSchema = Joi.object({
     ).required(),
     action_rid: Joi.array().items(Joi.string().required()).required(),
     modified_by: Joi.string().required(),
-    trigger_type: Joi.number().required()
+    trigger_type: Joi.number().required(),
+    in_app_template_rid: Joi.string().optional().allow("",null),
+    email_template_rid: Joi.string().optional().allow("",null),
 });
 
 

@@ -322,6 +322,8 @@ export class WorkFlowService {
                 schedule_offset_value: ruleRequest.schedule_offset_value ?? null,
                 created_by: ruleRequest.created_by,
                 modified_by: ruleRequest.modified_by ?? ruleRequest.created_by, // fallback to created_by if undefined
+                in_app_template_rid: ruleRequest.in_app_template_rid ?? null,
+                email_template_rid: ruleRequest.email_template_rid ?? null,
             }, userId
         )
 
@@ -431,6 +433,8 @@ export class WorkFlowService {
                 schedule_offset_type: ruleRequest.schedule_offset_type ?? null,
                 schedule_offset_value: ruleRequest.schedule_offset_value ?? null,
                 modified_by: ruleRequest.modified_by ?? ruleRequest.created_by,
+                in_app_template_rid: ruleRequest.in_app_template_rid ?? null,
+                email_template_rid: ruleRequest.email_template_rid ?? null,
             },
             userId
         );
@@ -743,11 +747,11 @@ export class WorkFlowService {
         data?: { info: any };
     }> {
         const mainDb = await this.getMainDb();
-        //fetching event rid, scope type rid from event name 
+        //fetching event rid, scope type rid from event name
         const eventRid = await mainDb.query<any>(
             rawQueries.fetchEventRid(
-                request.event_name,
-                request.task_rid
+                request.eventName,
+                request.entityRid
             ),
             { type: QueryTypes.SELECT }
         );
@@ -755,7 +759,7 @@ export class WorkFlowService {
         const allConditions: any[] = [];
         const allActions: any[] = [];
         //fetching relavent rules, condition rid, apply type from event rid
-        const rules = await mainDb.query<any>(rawQueries.fetchRulesFromEvent(event_rid, scope_type_rid, request.task_rid),
+        const rules = await mainDb.query<any>(rawQueries.fetchRulesFromEvent(event_rid, scope_type_rid, request.entityRid),
             { type: QueryTypes.SELECT }
         );
         for (const rule of rules) {
@@ -766,8 +770,8 @@ export class WorkFlowService {
             const actions = await mainDb.query<any>(rawQueries.fetchRuleActions(rule.rule_rid), { type: QueryTypes.SELECT });
             allActions.push(...actions);
         }
-
-        //grouping conditions by rule 
+ 
+        //grouping conditions by rule
         const conditionsByRule = allConditions.reduce((acc, condition) => {
             if (!acc[condition.rule_rid]) {
                 acc[condition.rule_rid] = [];
@@ -775,8 +779,8 @@ export class WorkFlowService {
             acc[condition.rule_rid].push(condition);
             return acc;
         }, {} as Record<string, any[]>);
-
-        //grouping actions by rule 
+ 
+        //grouping actions by rule
         const actionsByRule = allActions.reduce((acc, action) => {
             if (!acc[action.rule_rid]) {
                 acc[action.rule_rid] = [];
@@ -790,7 +794,7 @@ export class WorkFlowService {
                 (a: any, b: any) => a.action_order - b.action_order
             );
         }
-
+ 
         // const ruleDetails: any[] = [];
         // for (const rule of rules) {
         //     const conditions = await mainDb.query<any>(rawQueries.fetchRuleConditions(rule.condition_rid, rule.rule_rid), { type: QueryTypes.SELECT });
@@ -805,10 +809,10 @@ export class WorkFlowService {
         const entity = request;
         const triggeredActions: Record<string, any[]> = {};
         const results: Record<string, boolean> = {};
-        for (const rule_rid in conditionsByRule) {
-            const ruleConditions = conditionsByRule[rule_rid];
+        for (const rule_rid in actionsByRule) {
             let ruleResult = true;
-            if (ruleConditions.length > 0) {
+            if (conditionsByRule.length > 0) {
+                const ruleConditions = conditionsByRule[rule_rid];
                 for (let i = 0; i < ruleConditions.length; i++) {
                     const condition = ruleConditions[i];
                     const conditionResult = await this.evaluateCondition(condition, entity);
@@ -817,7 +821,7 @@ export class WorkFlowService {
                         ruleResult = conditionResult;
                     } else {
                         const logicalOp = condition.logical_operator;
-
+ 
                         if (logicalOp === "AND") {
                             ruleResult = ruleResult && conditionResult;
                         } else if (logicalOp === "OR") {
@@ -830,10 +834,10 @@ export class WorkFlowService {
             //Execute actions if:
             // - no conditions exist
             // - OR conditions evaluated to true
-            if (ruleConditions.length === 0 || ruleResult) {
+            if (conditionsByRule.length === 0 || ruleResult) {
                 const actions = actionsByRule[rule_rid] || [];
                 for (const action of actions) {
-                    await this.executeAction(action, entity, userId);
+                    await this.executeAction(action, entity, userId, rule_rid);
                 }
                 triggeredActions[rule_rid] = actions;
             }
@@ -860,12 +864,53 @@ export class WorkFlowService {
     }
 
     private evaluateCondition(condition: any, entity: any): boolean {
-        const fieldKey = condition.field.split(".")[1]; // "task.status" → "status"
-        const entityValue = entity[fieldKey];
+        const fieldKey = condition.field.split(".")[1] || condition.field; // "task.status" → "status"
+        let entityValue = entity[fieldKey];
+        let conditionValue = condition.value;
+        // Special handling for 'current date' as value
+        if (
+            typeof entityValue === "string" &&
+            entityValue.trim().toLowerCase() === "current date"
+        ) {
+            // Use today's date in YYYY-MM-DD format
+            const today = new Date();
+            entityValue = today.toISOString().slice(0, 10);
+        }
+        if (
+            typeof conditionValue === "string" &&
+            conditionValue.trim().toLowerCase() === "current date"
+        ) {
+            // Use today's date in YYYY-MM-DD format
+            const today = new Date();
+            conditionValue = today.toISOString().slice(0, 10);
+        }
+        logMessage(`Evaluating condition: ${fieldKey} ${condition.operator} ${conditionValue} against entity value: ${entityValue}`);
         const operator = (condition.operator || "").toLowerCase();
         switch (operator) {
             case "equals":
-                return String(entityValue) === String(condition.value);
+                return String(entityValue).toLowerCase() === String(conditionValue).toLowerCase();
+            case "not equals":
+                return String(entityValue).toLowerCase() !== String(conditionValue).toLowerCase();
+            case "greater than": {
+                // date comparison first
+                const dateA = new Date(entityValue);
+                const dateB = new Date(conditionValue);
+                if (!isNaN(dateA.getTime()) && !isNaN(dateB.getTime())) {
+                    return dateA > dateB;
+                }
+                // Fallback to number comparison
+                return Number(entityValue) > Number(conditionValue);
+            }
+            case "less than": {
+                // date comparison first
+                const dateA = new Date(entityValue);
+                const dateB = new Date(conditionValue);
+                if (!isNaN(dateA.getTime()) && !isNaN(dateB.getTime())) {
+                    return dateA < dateB;
+                }
+                // Fallback to number comparison
+                return Number(entityValue) < Number(conditionValue);
+            }
             default:
                 return false;
         }
@@ -874,7 +919,8 @@ export class WorkFlowService {
     private async executeAction(
         action: any,
         entity: any,
-        userId: string
+        userId: string,
+        ruleRid: string
     ) {
         switch (action.action_name) {
             case "create task":
@@ -882,10 +928,10 @@ export class WorkFlowService {
                 console.log("Creating task", entity);
                 break;
             case "In App":
-                await this.triggerNotification(entity, notificationTypes.InApp);
+                await this.triggerNotification(entity, notificationTypes.InApp,ruleRid);
                 break;
             case "Email":
-                await this.triggerNotification(entity, notificationTypes.Email);
+                await this.triggerNotification(entity, notificationTypes.Email,ruleRid);
                 break;
 
             default:
@@ -893,13 +939,28 @@ export class WorkFlowService {
         }
     }
 
-    async getNotificationTemplateDetails(templateName: string, oldValue: string, newValue: string, entityName: string, channel: string): Promise<{
+    async getNotificationTemplateDetails(templateName: string, oldValue: string, newValue: string, entityName: string, channel: string, ruleRid: string): Promise<{
         templateDetails: any;
     }> {
         const mainDb = await this.getMainDb();
+        let [notificationTemplateRid]: any[] =[]
+        if(channel === "In App"){
+           [notificationTemplateRid] = await mainDb.query<any>(
+            rawQueries.fetchNotificationInAppTemplatesForRule(ruleRid),
+            { type: QueryTypes.SELECT }
+        );
+        }
+        else
+        {
+            [notificationTemplateRid] = await mainDb.query<any>(
+            rawQueries.fetchNotificationEmailTemplatesForRule(ruleRid),
+            { type: QueryTypes.SELECT }
+        );
+
+        }
         const templateDetails = await mainDb.query<any>(
             rawQueries.fetchNotificationTemplateDetails(
-                templateName, channel
+                notificationTemplateRid.template_rid, channel
             ),
             { type: QueryTypes.SELECT }
         );
@@ -926,12 +987,12 @@ export class WorkFlowService {
         }
     }
 
-    async sentNotification(templateDetails: any, userId: string, targetUser: string): Promise<any> {
+    async sentNotification(templateDetails: any, targetuserId: string, targetUserEmail: string): Promise<any> {
         const mainDb = await this.getMainDb();
         let notificationPayload = {
             notification_message: templateDetails.templateDetails.message_template,
-            created_by: userId,
-            user_rid: targetUser
+            created_by: targetuserId,
+            user_rid: targetuserId
         };
         const insertQuery = rawQueries.insertNotification();
         const [notificationResult]: any[] = await mainDb.query(
@@ -950,11 +1011,10 @@ export class WorkFlowService {
                 "notificationsHub"
             );
 
-    const response  = await webPubSubClient.sendToUser(userId, {
+    const response  = await webPubSubClient.sendToUser(targetuserId, {
       id: notificationRid,
       message:templateDetails.templateDetails.message_template,
     });
-    console.log("Notification sent response:", response);
     const [statusRid]:any[] = await mainDb.query(
         rawQueries.fetchNotificationStatusByType(notificationStatus.unread),
         {   
@@ -991,7 +1051,27 @@ export class WorkFlowService {
     );
 }
 
-async triggerNotification(taskContext:any,channel:string): Promise<void> {
+ async getNotificationTemplates(channel:string): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: { templates: any; };
+    }> {
+    const mainDb = await this.getMainDb();
+    const result = await mainDb.query(
+      rawQueries.getNotificationTemplates(channel),
+      { type: QueryTypes.SELECT }
+    );
+    return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,    
+        data: {
+            templates: result
+        }
+    };
+  }
+
+async triggerNotification(taskContext:any,channel:string, ruleRid:string): Promise<void> {
     // Implementation for changing assignee
     
     const { accountNumber, parentAccountId } =
@@ -1003,7 +1083,8 @@ async triggerNotification(taskContext:any,channel:string): Promise<void> {
         taskContext.oldValue,
         taskContext.newValue,
         taskContext.entityName,
-        channel
+        channel,
+        ruleRid
     );
     // Only one template detail is expected
     const detail = Array.isArray(templateDetails.templateDetails)
@@ -1012,8 +1093,8 @@ async triggerNotification(taskContext:any,channel:string): Promise<void> {
     if (channel.includes('In App')) {
         await this.sentNotification(
             { templateDetails: detail },
-            taskContext.userId,
-            taskContext.userId
+            taskContext.targetUserID,
+            taskContext.targetEmail
         );
     }
     if (channel.includes('Email')) {
@@ -1021,8 +1102,8 @@ async triggerNotification(taskContext:any,channel:string): Promise<void> {
             accountNumber,
             taskContext.accountRid,
             {
-                to_email: "dhivya.s@hubino.com",
-                subject: "test email from thinkrd",
+                to_email: taskContext.targetEmail,
+                subject:  detail.message_template,
                 body_html: detail.message_template,
             },
             taskContext.userId
