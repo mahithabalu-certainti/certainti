@@ -21,6 +21,7 @@ export default function NotificationPanel() {
   const [nextOffset, setNextOffset] = useState<string | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [isTabVisible, setIsTabVisible] = useState(true);
 
   const [currentOffset, setCurrentOffset] = useState<string | number>(0);
   const [limit] = useState(10);
@@ -54,6 +55,24 @@ export default function NotificationPanel() {
     }
   }, [apiNotifications, currentOffset]);
 
+  // Track tab visibility using Page Visibility API
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      setIsTabVisible(!document.hidden);
+    };
+
+    // Set initial state
+    setIsTabVisible(!document.hidden);
+
+    // Listen for visibility changes
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
+
+  // Request notification permission on mount
   useEffect(() => {
     // Check if browser supports notifications
     if ('Notification' in window && Notification.permission === 'default') {
@@ -104,8 +123,6 @@ export default function NotificationPanel() {
 
   // Listen for real-time notification updates via WebSocket
   useWebSocketEvent('*', (message) => {
-    console.log('WebSocket message received:', message);
-
     // Check if this is a notification message
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const messageData = message as any;
@@ -121,20 +138,24 @@ export default function NotificationPanel() {
         message?.data?.message ||
         'New notification received';
 
-      // Show browser notification (requests permission if needed)
-      showBrowserNotification('New Notification', notificationMessage);
-
-      if (
-        !('Notification' in window) ||
-        Notification.permission === 'granted'
-      ) {
-        showToast(`🔔 ${notificationMessage}`, 'info');
+      // Industry Standard Notification Architecture
+      if (isTabVisible) {
+        // Tab is active and visible → Show in-app toast
+        showToast(`${notificationMessage}`, 'info');
+      } else {
+        // Tab is inactive, minimized, or in background → Show browser notification
+        showBrowserNotification('New Notification', notificationMessage);
       }
 
+      // Update unread count
       setUnreadCount((prev) => prev + 1);
-      setCurrentOffset(0);
-      setLocalNotifications([]);
-      refetchNotifications();
+
+      // Only refetch if popup is closed to avoid glitch
+      if (!anchorEl) {
+        setCurrentOffset(0);
+        setLocalNotifications([]);
+        refetchNotifications();
+      }
     }
   });
 
@@ -160,11 +181,8 @@ export default function NotificationPanel() {
     if (unreadCount > 0) {
       try {
         await triggerMarkAsRead();
-        setTimeout(() => {
-          setCurrentOffset(0);
-          setLocalNotifications([]);
-          refetchNotifications();
-        }, 500);
+        // Update unread count immediately without clearing notifications
+        setUnreadCount(0);
       } catch (error) {
         console.error('Failed to mark notifications as read:', error);
       }
@@ -173,6 +191,11 @@ export default function NotificationPanel() {
 
   const handleClose = () => {
     setAnchorEl(null);
+
+    // Refetch notifications when closing to get latest data
+    setCurrentOffset(0);
+    setLocalNotifications([]);
+    refetchNotifications();
   };
 
   const sortedNotifications = useMemo(() => {
