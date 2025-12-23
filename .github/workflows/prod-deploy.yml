@@ -1100,19 +1100,19 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
       - name: Login to ACR
-        run: az acr login --name ${{ secrets.PREPROD_ACR_NAME }}
+        run: az acr login --name ${{ secrets.PROD_ACR_NAME }}
         working-directory: rule-builder-module
       - name: Build Docker Image
         run: |
-          docker build -t ${{ secrets.PREPROD_ACR_LOGIN_SERVER }}/rule-builder-module:${{ env.IMAGE_TAG }} .
+          docker build -t ${{ secrets.PROD_ACR_LOGIN_SERVER }}/rule-builder-module:${{ env.IMAGE_TAG }} .
         working-directory: rule-builder-module
       - name: Push Docker Image to ACR
-        run: docker push ${{ secrets.PREPROD_ACR_LOGIN_SERVER }}/rule-builder-module:${{ env.IMAGE_TAG }}
+        run: docker push ${{ secrets.PROD_ACR_LOGIN_SERVER }}/rule-builder-module:${{ env.IMAGE_TAG }}
         working-directory: rule-builder-module
 
       - name: Cleanup old Docker tags in ACR (keep latest 10)
         run: |
-          ACR_NAME=${{ secrets.PREPROD_ACR_NAME }}
+          ACR_NAME=${{ secrets.PROD_ACR_NAME }}
           REPO_NAME="rule-builder-module"
           KEEP_LATEST=10
 
@@ -1133,13 +1133,13 @@ jobs:
       - name: Set up SSH key
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.PREPROD_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          echo "${{ secrets.PROD_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.PREPROD_BACKEND_VM_HOST }} >> ~/.ssh/known_hosts
+          ssh-keyscan -H ${{ secrets.PROD_BACKEND_VM_HOST }} >> ~/.ssh/known_hosts
       - name: Fetch secrets and create .env file
         working-directory: rule-builder-module
         run: |
-          KEY_VAULT_NAME=${{ secrets.PREPROD_KEY_VAULT_NAME }}
+          KEY_VAULT_NAME=${{ secrets.PROD_KEY_VAULT_NAME }}
           ENV_FILE=".env.rule-buildermodule"
           
           # Ensure Azure CLI is authenticated
@@ -1169,7 +1169,7 @@ jobs:
           ORGDB_USERNAME=org-db-admin-username-pvt
           ORGDB_ENDPOINT=org-db-endpoint-pvt
           LOG_LEVEL=debug
-          NODE_ENV=PREPROD
+          NODE_ENV=PROD
           NODE_ENV_DB_PREFIX="P001-"
           SYSTEM_USER_ID = "P001-477aac5d-3d92-4420-8e65-4153af4f3aed"
           CLIENT_SECRET_ENCRYPTION_KEY='client-secret-encryption-key'
@@ -1180,11 +1180,11 @@ jobs:
           echo "$ENV_FILE file created successfully!"
       - name: Copy .env file to VM
         run: |
-          scp -o StrictHostKeyChecking=no .env.rulebuildermodule adminuser@${{ secrets.PREPROD_BACKEND_VM_HOST }}:/tmp/
+          scp -o StrictHostKeyChecking=no .env.rulebuildermodule adminuser@${{ secrets.PROD_BACKEND_VM_HOST }}:/tmp/
         working-directory: rule-builder-module
       - name: SSH into VM and deploy
         run: |
-          ssh -o StrictHostKeyChecking=no adminuser@${{ secrets.PREPROD_BACKEND_VM_HOST }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no adminuser@${{ secrets.PROD_BACKEND_VM_HOST }} << 'EOF'
             sudo -s
             cd /app/backend
 
@@ -1200,11 +1200,11 @@ jobs:
           
             # Update only the rule-builder-module image tag
             echo "Updating docker-compose.yml..."
-            sed -i 's|image:.*rule-builder-module:.*|image: ${{ secrets.PREPROD_ACR_LOGIN_SERVER }}/rule-builder-module:${{ env.IMAGE_TAG }}|' docker-compose.yml
+            sed -i 's|image:.*rule-builder-module:.*|image: ${{ secrets.PROD_ACR_LOGIN_SERVER }}/rule-builder-module:${{ env.IMAGE_TAG }}|' docker-compose.yml
             echo "Docker Compose updated successfully!"
           
             # Login to ACR 
-            az acr login --name ${{ secrets.PREPROD_ACR_NAME }}
+            az acr login --name ${{ secrets.PROD_ACR_NAME }}
             echo "Logged in to ACR successfully!"
           
             # Pull latest changes and restart
@@ -1218,4 +1218,4 @@ jobs:
               echo "Deployment failed!"
               exit 1
             fi
-          EOF    
+          EOF
