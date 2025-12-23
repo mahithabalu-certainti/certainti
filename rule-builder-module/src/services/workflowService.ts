@@ -322,6 +322,8 @@ export class WorkFlowService {
                 schedule_offset_value: ruleRequest.schedule_offset_value ?? null,
                 created_by: ruleRequest.created_by,
                 modified_by: ruleRequest.modified_by ?? ruleRequest.created_by, // fallback to created_by if undefined
+                in_app_template_rid: ruleRequest.in_app_template_rid ?? null,
+                email_template_rid: ruleRequest.email_template_rid ?? null,
             }, userId
         )
 
@@ -431,6 +433,8 @@ export class WorkFlowService {
                 schedule_offset_type: ruleRequest.schedule_offset_type ?? null,
                 schedule_offset_value: ruleRequest.schedule_offset_value ?? null,
                 modified_by: ruleRequest.modified_by ?? ruleRequest.created_by,
+                in_app_template_rid: ruleRequest.in_app_template_rid ?? null,
+                email_template_rid: ruleRequest.email_template_rid ?? null,
             },
             userId
         );
@@ -833,7 +837,7 @@ export class WorkFlowService {
             if (conditionsByRule.length === 0 || ruleResult) {
                 const actions = actionsByRule[rule_rid] || [];
                 for (const action of actions) {
-                    await this.executeAction(action, entity, userId);
+                    await this.executeAction(action, entity, userId, rule_rid);
                 }
                 triggeredActions[rule_rid] = actions;
             }
@@ -915,7 +919,8 @@ export class WorkFlowService {
     private async executeAction(
         action: any,
         entity: any,
-        userId: string
+        userId: string,
+        ruleRid: string
     ) {
         switch (action.action_name) {
             case "create task":
@@ -923,10 +928,10 @@ export class WorkFlowService {
                 console.log("Creating task", entity);
                 break;
             case "In App":
-                await this.triggerNotification(entity, notificationTypes.InApp);
+                await this.triggerNotification(entity, notificationTypes.InApp,ruleRid);
                 break;
             case "Email":
-                await this.triggerNotification(entity, notificationTypes.Email);
+                await this.triggerNotification(entity, notificationTypes.Email,ruleRid);
                 break;
 
             default:
@@ -934,13 +939,28 @@ export class WorkFlowService {
         }
     }
 
-    async getNotificationTemplateDetails(templateName: string, oldValue: string, newValue: string, entityName: string, channel: string): Promise<{
+    async getNotificationTemplateDetails(templateName: string, oldValue: string, newValue: string, entityName: string, channel: string, ruleRid: string): Promise<{
         templateDetails: any;
     }> {
         const mainDb = await this.getMainDb();
+        let [notificationTemplateRid]: any[] =[]
+        if(channel === "In App"){
+           [notificationTemplateRid] = await mainDb.query<any>(
+            rawQueries.fetchNotificationInAppTemplatesForRule(ruleRid),
+            { type: QueryTypes.SELECT }
+        );
+        }
+        else
+        {
+            [notificationTemplateRid] = await mainDb.query<any>(
+            rawQueries.fetchNotificationEmailTemplatesForRule(ruleRid),
+            { type: QueryTypes.SELECT }
+        );
+
+        }
         const templateDetails = await mainDb.query<any>(
             rawQueries.fetchNotificationTemplateDetails(
-                templateName, channel
+                notificationTemplateRid.template_rid, channel
             ),
             { type: QueryTypes.SELECT }
         );
@@ -952,8 +972,9 @@ export class WorkFlowService {
             if (messageTemplate.includes('{{new_value}}')) {
                 messageTemplate = messageTemplate.replace('{{new_value}}', newValue != null ? newValue : '');
             }
-            if (messageTemplate.includes('{{entity_name}}')) {
-                messageTemplate = messageTemplate.replace('{{entity_name}}', entityName != null ? entityName : '');
+            if (messageTemplate.includes('{{entityName}}')) {
+                messageTemplate = messageTemplate.replace('{{entityName}}', entityName != null ? entityName : '');
+                templateDetails[0].subject = templateDetails[0].subject.replace('{{entityName}}', entityName != null ? entityName : '');
             }
             templateDetails[0].message_template = messageTemplate;
             return {
@@ -1051,7 +1072,7 @@ export class WorkFlowService {
     };
   }
 
-async triggerNotification(taskContext:any,channel:string): Promise<void> {
+async triggerNotification(taskContext:any,channel:string, ruleRid:string): Promise<void> {
     // Implementation for changing assignee
     
     const { accountNumber, parentAccountId } =
@@ -1063,7 +1084,8 @@ async triggerNotification(taskContext:any,channel:string): Promise<void> {
         taskContext.oldValue,
         taskContext.newValue,
         taskContext.entityName,
-        channel
+        channel,
+        ruleRid
     );
     // Only one template detail is expected
     const detail = Array.isArray(templateDetails.templateDetails)
@@ -1082,7 +1104,7 @@ async triggerNotification(taskContext:any,channel:string): Promise<void> {
             taskContext.accountRid,
             {
                 to_email: taskContext.targetEmail,
-                subject:  detail.message_template,
+                subject:  detail.subject,
                 body_html: detail.message_template,
             },
             taskContext.userId

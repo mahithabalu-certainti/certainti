@@ -774,7 +774,7 @@ export const jurisdictionRuleMapping = [
   },
   {
     permissionField: "is_federal",
-    exportField: "Federal",
+    exportField: "Is Federal?",
     dataField: "is_federal",
   },
   {
