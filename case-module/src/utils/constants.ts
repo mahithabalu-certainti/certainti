@@ -202,6 +202,7 @@ export const STATUS_MESSAGE = {
   noProjectsAssignedToCase : "No Assigned Projects found. Kindly assign a project to case and try again",
   financialWorkingSignedOff : "Financial Working has been successfully signed off",
   financialWorkingSignedOffFailed : "Failed to signoff financial working",
+  regionsFetchedSuccess : "Regions listed successfully"
 };
 
 export const caseStatuses = {
@@ -1531,7 +1532,13 @@ export const rawQueries = {
     let validIds;
     validIds = ids.map((d : any) => `('${d.case_project_rid}','${d.project_fiscal_rid}', '${d.region_rid}')`).join(',')
     return `UPDATE ${schemaName}.case_project_fiscal_region SET is_rd_claim_qualified = true WHERE account_rid = '${accountRid}' AND (case_project_rid, project_fiscal_rid, region_rid) IN (${validIds})`
-  }
+  },
+  fetchStates(stateIds: string[]) {
+    let formattedStateIds = stateIds.map((id: string) => `'${id}'`).join(",");
+    return `SELECT rid, state_name FROM ${MAIN_SCHEMA_NAME}.state 
+    WHERE 
+    rid IN (${formattedStateIds})`;
+  },
 };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 
 const keyContactRole = {

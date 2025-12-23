@@ -4,7 +4,8 @@ import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import { Logger } from "winston";
 import { HttpStatus, rawQueries, STATUS_MESSAGE } from "../../utils/constants";
-import { ProjectFiscalIds } from "../../utils/types";
+import { ProjectFiscalIds, RegionDetails, RegionIds } from "../../utils/types";
+import { getValidRegionIdsFromCases } from "../../utils/rawQueries";
 
 export class ChildCaseService extends CaseService {
 
@@ -60,6 +61,29 @@ export class ChildCaseService extends CaseService {
                     statusCode : HttpStatus.FAILED,
                     statusMessage : STATUS_MESSAGE.accountNoFound
                 }
+        }
+    }
+    async stateWiseRegionList (data : any) {
+        const mainDb = await this.getMainDb();
+        const orgDb = await this.getOrgDb();
+
+        const parenRNumber : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
+        let schemaName = rawQueries.fetchSchemaName(parenRNumber[0][0].r_number);
+
+        const getValidRegionId = await orgDb.query<RegionIds>(getValidRegionIdsFromCases(schemaName, data.account_rid, data.case_rid), {type : QueryTypes.SELECT});
+        if(getValidRegionId.length > 0) {
+            const allRegionIds = [...new Set(getValidRegionId.map((d : any) => d.rid))];
+            const getRegionDetails = await mainDb.query<RegionDetails>(rawQueries.fetchStates(allRegionIds), {type : QueryTypes.SELECT});
+            const mapStates = new Map(getRegionDetails.map((d : any) => [d.rid, d.state_name]));
+            const result = getValidRegionId.map((d : any) => {
+                return {
+                    ...d,
+                    state_name : mapStates.get(d.rid) || null
+                }
+            });
+            return result;
+        } else {
+            return []
         }
     }
 }
