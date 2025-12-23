@@ -172,16 +172,19 @@ export class RulemasterService {
         let modifiedByIds = [...new Set(plainRules.map(r => r.modified_by))];
         let scopeTypeIds = [...new Set(plainRules.map(r => r.scope_type_rid))];
         let ruleRids = [...new Set(plainRules.map(r => r.rid))];
+        let eventRids = [...new Set(plainRules.map(r => r.event_rid))];
         // let createdByIds: any[] = [...new Set(rules.map((user: any) => user.created_by))];
         // let modifiedByIds: any[] = [...new Set(rules.map((user: any) => user.modified_by))];
         let fetchCreatedByUsers = await mainDb.query(rawQueries.fetchUser(createdByIds));
         let fetchModifiedByUsers = await mainDb.query(rawQueries.fetchUser(modifiedByIds));
         let scopeTypeName = await mainDb.query(rawQueries.getScopeTypeName(scopeTypeIds));
         let mappedRulesRes = await mainDb.query(rawQueries.getMappedRuleRids(ruleRids));
+        let eventTypes = await mainDb.query(rawQueries.getEventTypes(eventRids));
         let createdMap: Map<string, string> = new Map(fetchCreatedByUsers[0].map((user: any) => [user.rid, `${user.first_name} ${user.last_name}`]));
         let modifiedMap: Map<string, string> = new Map(fetchModifiedByUsers[0].map((user: any) => [user.rid, `${user.first_name} ${user.last_name}`]));
         let scopeTypeMap: Map<string, string> = new Map(scopeTypeName[0].map((scope: any) => [scope.rid, `${scope.scope_name}`]));
         let mappedRuleSet = new Set(mappedRulesRes[0].map((row: any) => row.rule_rid));
+        let eventTypeMap: Map<string, string> = new Map(eventTypes[0].map((event: any) => [event.rid, `${event.type}`]));
         let finalData = rules == null ? [] : rules.map((da: any) => {
             //console.log("each object "+d);
             const d = da.toJSON();
@@ -191,6 +194,7 @@ export class RulemasterService {
                 rule_name: d.rule_name,
                 description: d.description,
                 event_rid: d.event_rid,
+                event_type: eventTypeMap.get(d.event_rid) || null,
                 condition_rid: d.condition_rid,
                 scope_type_rid: d.scope_type_rid,
                 scope_type_name: scopeTypeMap.get(d.scope_type_rid) || null,

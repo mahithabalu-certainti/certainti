@@ -346,6 +346,11 @@ export const rawQueries = {
     return `SELECT rule_rid FROM ${MAIN_SCHEMA_NAME}.workflow_rule_map WHERE rule_rid IN (${ids})`;
   },
 
+  getEventTypes(eventRids: any[]) {
+    const ids = eventRids.map(id => `'${id}'`).join(', ');
+    return `SELECT rid,type FROM ${MAIN_SCHEMA_NAME}.scope_events WHERE rid IN (${ids})`;
+  },
+
   fetchMapDetailsByRuleRid(rule_rid: string): string {
     let query = `SELECT wrm.apply_type,wrm.rule_rid,wrma.scope_type_rid FROM ${MAIN_SCHEMA_NAME}.workflow_rule_map wrm
     JOIN ${MAIN_SCHEMA_NAME}.workflow_rule_master wrma ON wrm.rule_rid = wrma.rid WHERE wrma.rid = '${rule_rid}' `;
