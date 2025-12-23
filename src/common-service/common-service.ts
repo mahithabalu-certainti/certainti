@@ -68,7 +68,7 @@ export const getDocumentInfoUrl = (categoryId?: string): string => {
 
 export const useGetAllCountries = (statusScope?: string) => {
   return useQuery<GetAllCountriesApiResponse, Error>({
-    queryKey: ['getAllCountry'], // Unique query key
+    queryKey: ['getAllCountry', statusScope], // Unique query key
     queryFn: () => fetchAllCountries(statusScope),
     retry: 0,
     staleTime: Infinity, // Cache data forever until manually invalidated

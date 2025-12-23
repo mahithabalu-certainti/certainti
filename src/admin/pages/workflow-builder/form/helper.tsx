@@ -121,21 +121,21 @@ export const transformRuleToPayload = (rule: Rule) => {
     rule.conditionType?.condition_type?.toLowerCase() === ConditionTypeEnum.then
       ? []
       : rule.conditions.map((condition, index) => {
-          const categoryOperator =
-            index > 0 ? condition.logicalOperator || 'AND' : undefined;
+        const categoryOperator =
+          index > 0 ? condition.logicalOperator || 'AND' : undefined;
 
-          return {
-            category_rid: condition.category,
-            ...(categoryOperator
-              ? { category_operator: categoryOperator }
-              : {}),
-            field_rid: condition.field,
-            operator_rid: condition.operator,
-            value_rid: Array.isArray(condition.value)
-              ? condition.value.join(',')
-              : condition.value,
-          };
-        });
+        return {
+          category_rid: condition.category,
+          ...(categoryOperator
+            ? { category_operator: categoryOperator }
+            : {}),
+          field_rid: condition.field,
+          operator_rid: condition.operator,
+          value_rid: Array.isArray(condition.value)
+            ? condition.value.join(',')
+            : condition.value,
+        };
+      });
 
   // Extract template RIDs dynamically - only include if they exist
   let inAppTemplateRid: string | undefined;
@@ -144,16 +144,16 @@ export const transformRuleToPayload = (rule: Rule) => {
   if (rule.actionTemplates) {
     // Find In-App template
     const inAppTemplate = Object.values(rule.actionTemplates).find(
-      template => 
-        template && 
+      template =>
+        template &&
         (template.channel === 'In App' || template.channel === 'in_app')
     );
     inAppTemplateRid = inAppTemplate?.rid;
 
     // Find Email template
     const emailTemplate = Object.values(rule.actionTemplates).find(
-      template => 
-        template && 
+      template =>
+        template &&
         (template.channel === 'Email' || template.channel === 'email')
     );
     emailTemplateRid = emailTemplate?.rid;
@@ -247,6 +247,36 @@ export const transformApiResponseToRule = (data: RuleDetails): Rule => {
     }))
     : [];
 
+  // Map action templates if they exist in the rule
+  const actionTemplates: Record<string, Template | undefined> = {};
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const ruleData = data.rule as any;
+
+  if (ruleData.in_app_template_rid) {
+    const inAppAction = actions.find(
+      (a) => a.name === ActionTypeEnum.InApp || a.name === 'In App'
+    );
+    if (inAppAction) {
+      actionTemplates[inAppAction.id] = {
+        rid: ruleData.in_app_template_rid,
+        channel: 'In App',
+      };
+    }
+  }
+
+  if (ruleData.email_template_rid) {
+    const emailAction = actions.find(
+      (a) => a.name === ActionTypeEnum.Email || a.name === 'Email'
+    );
+    if (emailAction) {
+      actionTemplates[emailAction.id] = {
+        rid: ruleData.email_template_rid,
+        channel: 'Email',
+      };
+    }
+  }
+
   // Construct the Rule object with all RIDs preserved
   const rule: Rule = {
     id: data.rule.rid, // Rule RID preserved
@@ -257,6 +287,7 @@ export const transformApiResponseToRule = (data: RuleDetails): Rule => {
     actions,
     isActive: data.rule.is_active || false,
     conditionType,
+    actionTemplates: Object.keys(actionTemplates).length > 0 ? actionTemplates : undefined,
   };
 
   return rule;
