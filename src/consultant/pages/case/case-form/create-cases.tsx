@@ -218,13 +218,11 @@ export const CreateCases: React.FC = () => {
     if (selectedFiscalYear) {
       const year = Number(selectedFiscalYear);
       const startDateMin = `${year - 1}-04-01`;
-      const plannedDateMin = `${year}-04-01`;
 
       setDateConstraints((prev) => ({
         ...prev,
         start_date_min: startDateMin,
-        planned_min:
-          prev.planned_min < plannedDateMin ? plannedDateMin : prev.planned_min,
+        planned_min: startDateMin,
       }));
     }
   }, [selectedFiscalYear]);
@@ -317,7 +315,7 @@ export const CreateCases: React.FC = () => {
     if (fieldName === 'case_startdate') {
       const startDate = fieldValue as string;
       const year = Number(selectedFiscalYear);
-      const basePlannedMin = `${year}-04-01`;
+      const basePlannedMin = `${year - 1}-04-01`;
       const newPlannedMin =
         startDate > basePlannedMin ? startDate : basePlannedMin;
 
