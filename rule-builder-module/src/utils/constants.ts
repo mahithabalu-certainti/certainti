@@ -165,7 +165,7 @@ export const rawQueries = {
   },
 
   fetchFields(category_rid: string, status_rid: string): string {
-    let query = `SELECT rf.rid, rf.name as name FROM ${MAIN_SCHEMA_NAME}.rule_fields rf JOIN ${MAIN_SCHEMA_NAME}.field_category_map fcm 
+    let query = `SELECT rf.rid, rf.name as name,rf.field_description FROM ${MAIN_SCHEMA_NAME}.rule_fields rf JOIN ${MAIN_SCHEMA_NAME}.field_category_map fcm 
     ON rf.rid = fcm.field_rid `;
     const conditions: string[] = [];
     conditions.push(`fcm.category_rid = '${category_rid}'`);

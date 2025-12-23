@@ -865,7 +865,7 @@ export class WorkFlowService {
 
     private evaluateCondition(condition: any, entity: any): boolean {
         const fieldKey = condition.field.split(".")[1] || condition.field; // "task.status" → "status"
-        let entityValue = entity[fieldKey];
+        let entityValue = entity[fieldKey] || entity[fieldKey.toLowerCase()] || entity[fieldKey.toUpperCase()];
         let conditionValue = condition.value;
         // Special handling for 'current date' as value
         if (
@@ -891,6 +891,8 @@ export class WorkFlowService {
                 return String(entityValue).toLowerCase() === String(conditionValue).toLowerCase();
             case "not equals":
                 return String(entityValue).toLowerCase() !== String(conditionValue).toLowerCase();
+            case "is":
+                return entityValue === conditionValue;
             case "greater than": {
                 // date comparison first
                 const dateA = new Date(entityValue);
