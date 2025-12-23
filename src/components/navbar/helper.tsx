@@ -23,44 +23,6 @@ export const getRelativeTime = (timestamp: string): string => {
   }
 };
 
-export const getIconFromMessage = (message: string): string => {
-  const lowerMessage = message.toLowerCase();
-
-  if (lowerMessage.includes('order') || lowerMessage.includes('shipped')) {
-    return 'package';
-  } else if (
-    lowerMessage.includes('password') ||
-    lowerMessage.includes('login')
-  ) {
-    return 'security';
-  } else if (
-    lowerMessage.includes('subscription') ||
-    lowerMessage.includes('renew')
-  ) {
-    return 'update';
-  } else if (lowerMessage.includes('promo') || lowerMessage.includes('off')) {
-    return 'offer';
-  } else if (lowerMessage.includes('profile')) {
-    return 'profile';
-  } else if (
-    lowerMessage.includes('message') ||
-    lowerMessage.includes('support')
-  ) {
-    return 'message';
-  } else if (lowerMessage.includes('payment') || lowerMessage.includes('$')) {
-    return 'payment';
-  } else if (lowerMessage.includes('report')) {
-    return 'report';
-  } else if (
-    lowerMessage.includes('security') ||
-    lowerMessage.includes('suspicious')
-  ) {
-    return 'alert';
-  } else {
-    return 'info';
-  }
-};
-
 export const PROJECT_COLORS = [
   '#40E0D0',
   '#FFA500',

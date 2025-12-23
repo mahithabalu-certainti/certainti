@@ -51,13 +51,13 @@ export interface ConditionField {
   id: string;
   name: string;
   type:
-  | 'text'
-  | 'number'
-  | 'boolean'
-  | 'select'
-  | 'multiselect'
-  | 'date'
-  | 'logical';
+    | 'text'
+    | 'number'
+    | 'boolean'
+    | 'select'
+    | 'multiselect'
+    | 'date'
+    | 'logical';
   operators: string[];
   options?: { value: string; label: string }[];
   placeholder?: string;
@@ -144,16 +144,16 @@ export const transformRuleToPayload = (rule: Rule) => {
   if (rule.actionTemplates) {
     // Find In-App template
     const inAppTemplate = Object.values(rule.actionTemplates).find(
-      template => 
-        template && 
+      (template) =>
+        template &&
         (template.channel === 'In App' || template.channel === 'in_app')
     );
     inAppTemplateRid = inAppTemplate?.rid;
 
     // Find Email template
     const emailTemplate = Object.values(rule.actionTemplates).find(
-      template => 
-        template && 
+      (template) =>
+        template &&
         (template.channel === 'Email' || template.channel === 'email')
     );
     emailTemplateRid = emailTemplate?.rid;
@@ -193,23 +193,23 @@ export const transformApiResponseToRule = (data: RuleDetails): Rule => {
   // Extract trigger information with all RIDs
   const trigger: Trigger | null = data?.event
     ? {
-      id: data.event.event_rid,
-      name: data.event.event_name,
-      description: data.event.description || '',
-      category: data.rule.scope_type_rid, // Use scope_type_rid from rule
-      badge: undefined,
-      requiresConfig: false,
-    }
+        id: data.event.event_rid,
+        name: data.event.event_name,
+        description: data.event.description || '',
+        category: data.rule.scope_type_rid, // Use scope_type_rid from rule
+        badge: undefined,
+        requiresConfig: false,
+      }
     : null;
 
   // Extract condition type with RID
   const conditionType: ConditionType | null = data?.condition
     ? {
-      rid: data.condition.condition_rid,
-      name: data.condition.condition_name,
-      condition_type: data.condition.condition_type,
-      description: data.condition.description || '',
-    }
+        rid: data.condition.condition_rid,
+        name: data.condition.condition_name,
+        condition_type: data.condition.condition_type,
+        description: data.condition.description || '',
+      }
     : null;
 
   // Transform conditions to flat conditions array
@@ -238,13 +238,13 @@ export const transformApiResponseToRule = (data: RuleDetails): Rule => {
   // Transform actions with all RIDs preserved
   const actions: Action[] = data?.actions
     ? data.actions.map((action) => ({
-      id: action.action_rid, // Action RID preserved
-      name: action.action_name,
-      description: action.description || '',
-      category: action?.action_type_rid || '',
-      icon: undefined,
-      badge: undefined,
-    }))
+        id: action.action_rid, // Action RID preserved
+        name: action.action_name,
+        description: action.description || '',
+        category: action?.action_type_rid || '',
+        icon: undefined,
+        badge: undefined,
+      }))
     : [];
 
   // Construct the Rule object with all RIDs preserved
@@ -381,11 +381,15 @@ const getHash = (str: string): number => {
   return hash >>> 0;
 };
 
-export const getDynamicSvgIcon = (name: string, size = 16): JSX.Element => {
+export const getDynamicSvgIcon = (
+  name: string,
+  size = 16,
+  iconColor?: string
+): JSX.Element => {
   const normalized = name.toLowerCase().trim();
 
   const hash = getHash(name);
-  const color = `#2A2A2A`;
+  const color = iconColor ?? `#2A2A2A`;
   const shapeType = hash % 8;
 
   const isEmail = /\b(mail|email|gmail|outlook|inbox|message|compose)\b/i.test(

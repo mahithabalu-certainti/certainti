@@ -575,7 +575,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   >
                     <AdminSettingIcon
                       alt='admin-settings'
-                      className='h-[20px] w-[20px]'
+                      className='h-[19px] w-[19px]'
                     />
                   </IconButton>
                 </span>
