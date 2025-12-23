@@ -306,4 +306,6 @@ routes.post(
   checkUserStatusMiddleware("NA"),
   controller.childCaseController.signOffFinancialWorking
 )
+
+routes.get('/regions/:accountId/:caseId', controller.childCaseController.RegionListForFinancialHighlights)
 export default routes;
