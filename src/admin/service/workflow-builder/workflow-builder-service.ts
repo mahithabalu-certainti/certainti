@@ -27,13 +27,14 @@ import {
   UpdateRuleMapPayload,
   UpdateRulePayload,
   UpdateRuleStatusPayload,
+  WorkflowRuleExportListURLParams,
   WorkflowRuleListItem,
   WorkflowRuleListResponse,
   WorkflowRuleListURLParams,
 } from '../../types';
 import { CommonApiResponse } from '../../../common-service';
 import { ruleBuilderServiceApi } from '../../../api/api';
-import { WorkflowRuleListURL } from '../urls';
+import { WorkflowRuleExportListURL, WorkflowRuleListURL } from '../urls';
 
 // Scope List
 export const fetchScopeList = async (): Promise<ScopeListResponse> => {
@@ -510,7 +511,9 @@ export const getActionsTemplateUrl = (ActionName: string): string => {
   return `api/workflow/notificationTemplate/${ActionName}`;
 };
 
-export const getActionsTemplate = async (ActionName: string): Promise<CommonApiResponse> => {
+export const getActionsTemplate = async (
+  ActionName: string
+): Promise<CommonApiResponse> => {
   try {
     const { data } = await ruleBuilderServiceApi.get<CommonApiResponse>(
       getActionsTemplateUrl(ActionName)
@@ -522,10 +525,9 @@ export const getActionsTemplate = async (ActionName: string): Promise<CommonApiR
   }
 };
 
-export const useGetActionsTemplate = (ActionName: string): UseQueryResult<
-  CommonApiResponse,
-  Error
-> => {
+export const useGetActionsTemplate = (
+  ActionName: string
+): UseQueryResult<CommonApiResponse, Error> => {
   return useQuery({
     queryKey: ['action-template', ActionName],
     queryFn: () => getActionsTemplate(ActionName),
@@ -535,4 +537,42 @@ export const useGetActionsTemplate = (ActionName: string): UseQueryResult<
   });
 };
 
+export const ExportWorkflowRuleList = async (
+  params: WorkflowRuleExportListURLParams
+) => {
+  const systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const url = WorkflowRuleExportListURL({
+    ...params,
+    timezone: systemTimezone,
+  });
+  const filename = 'workflow_records.xlsx';
 
+  try {
+    const response = await ruleBuilderServiceApi.get(url);
+    const base64Data = response.data?.data;
+
+    if (!base64Data) {
+      console.error('No base64 data found in the response.');
+      return;
+    }
+
+    const binary = atob(base64Data);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+
+    const blob = new Blob([bytes], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error('Export failed:', error);
+  }
+};

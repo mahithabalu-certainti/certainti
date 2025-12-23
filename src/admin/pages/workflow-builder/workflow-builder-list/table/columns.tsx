@@ -76,7 +76,7 @@ export const getWorkflowColumns = (
     id: 'createMap',
     sortId: 'create_map',
     label: 'Assign Rule',
-    width: 140,
+    width: 100,
     sortable: false,
     render: (row) => (
       <span
@@ -91,7 +91,7 @@ export const getWorkflowColumns = (
     id: 'is_active',
     sortId: 'is_active',
     label: 'Status',
-    width: 100,
+    width: 80,
     sortable: false,
     render: (row) => (
       <div className='text-center'>

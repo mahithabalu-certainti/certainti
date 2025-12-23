@@ -267,6 +267,14 @@ export interface WorkflowRuleListURLParams {
   search?: string;
 }
 
+export interface WorkflowRuleExportListURLParams {
+  sortBy: string;
+  sortOrder: 'ASC' | 'DESC';
+  filters?: object;
+  search?: string;
+  timezone?: string;
+}
+
 export type WorkflowRuleListItem = {
   rid: string;
   r_number: string | null;

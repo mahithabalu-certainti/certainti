@@ -65,9 +65,8 @@ const RuleMapModal: React.FC<RuleMapModalProps> = ({
     if (ruleMapDetails && open && isRuleMapped) {
       setSelectedApplyType(ruleMapDetails.apply_type);
 
-      // If INDIVIDUAL, show the entity table and set selected IDs
+      // Store the initial entity IDs for INDIVIDUAL type
       if (ruleMapDetails.apply_type === 'INDIVIDUAL') {
-        setShowEntityTable(true);
         setSelectedEntityIds(ruleMapDetails.scope_entity_rid);
         setInitialEntityIds(ruleMapDetails.scope_entity_rid); // Set initial IDs once
       }
