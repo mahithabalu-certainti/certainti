@@ -160,6 +160,7 @@ jobs:
           CLIENT_SECRET_ENCRYPTION_KEY='client-secret-encryption-key'
           CLIENT_SECRET_ENCRYPTION_LENGTH=16
           AZURE_CONTAINER_NAME="user"
+          AZURE_WEB_PUBSUB_CONNECTION_STRING=Endpoint=https://notification-test.webpubsub.azure.com;AccessKey=DZRyMMDQZU1chkLUcTBkNhCNYn0lpOUsWb8mmxHPk7GKodZm3z0UJQQJ99BKACYeBjFXJ3w3AAAAAWPSS5KX;
           EOF
           echo "$ENV_FILE file created successfully!"
           ls -la
