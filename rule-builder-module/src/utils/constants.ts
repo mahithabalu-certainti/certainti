@@ -154,12 +154,9 @@ export const rawQueries = {
 
   fetchConditionCategory(condition_rid: string, status_rid: string): string {
     let query = `SELECT cc.rid, cc.name as category_name, cc.description FROM ${MAIN_SCHEMA_NAME}.condition_category cc JOIN ${MAIN_SCHEMA_NAME}.condition_category_map ccm 
-    ON cc.rid = ccm.category_rid `;
+    ON cc.rid = ccm.category_rid  and cc.status_rid = (select rid from ${MAIN_SCHEMA_NAME}.status where status_name = 'Active') `;
     const conditions: string[] = [];
     conditions.push(`ccm.condition_rid = '${condition_rid}'`);
-    if (status_rid) {
-      conditions.push(`cc.status_rid = '${status_rid}'`);
-    }
     query += ` WHERE ${conditions.join(' AND ')}`;
     return query;
   },
