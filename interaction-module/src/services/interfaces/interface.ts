@@ -254,6 +254,7 @@ export interface IInteractionService {
   }>;
   triggerAI(data : any) : Promise<{
     statusMessage : string,
+    statusCode : number,
     status : any,
     data : any
   }>
@@ -263,7 +264,13 @@ export interface IInteractionService {
       permission_name: string
     ): Promise<any[]>;
   sendEmailInBatch() : Promise<void>
-  fetchStatusIdsForReminder() : Promise<any>
+  fetchStatusIdsForReminder() : Promise<any>,
+  getAccountNumberByRid(accountRid: string): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { account_number: string };
+  }>;
 }
 
 export interface IWebHookService {

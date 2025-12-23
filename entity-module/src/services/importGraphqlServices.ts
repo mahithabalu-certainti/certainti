@@ -11,6 +11,7 @@ import {
   listAllImportedDatasQuery,
   listAllStageFailures,
   listAllLoadFailures,
+  listAllWarning,
 } from "../utils/rawQueries";
 import { logMessage, setInlineForImports } from "../utils/helpers";
 import { generateSasUrl } from "../utils/blob";
@@ -222,6 +223,37 @@ export default class ImportGraphqlServices {
 
     const result = await orgSequelize.query(
       listAllLoadFailures(schemaName, import_rid, entity_type)
+    );
+    if (result[0].length > 0) {
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        data: result[0],
+      };
+    } else {
+      return {
+        statusCode: HttpStatus.NOT_FOUND,
+        data: [],
+      };
+    }
+  }
+
+  async listAllWarnings(
+    account_rid: string,
+    import_rid: string,
+    entity_type: string
+  ) {
+    const orgSequelize = await this.getOrgSequelize();
+    const mainSequelize = await this.getMainDbSequelize();
+
+    const fetchParentRnumber: any = await mainSequelize.query(
+      await rawQueries.fetchParentAccount(account_rid, mainSequelize)
+    );
+    let schemaName = rawQueries.fetchSchemaName(
+      fetchParentRnumber[0][0].r_number
+    );
+
+    const result = await orgSequelize.query(
+      listAllWarning(schemaName, import_rid, entity_type)
     );
     if (result[0].length > 0) {
       return {

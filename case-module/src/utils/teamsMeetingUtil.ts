@@ -80,18 +80,18 @@ export async function scheduleTeamsMeetingUtil(
   }
   
 
-const startDateTime = moment(`${activityRequest.effective_start_date} ${activityRequest.effective_start_time}`,  "YYYY-MM-DD HH:mm");
-const endDateTime   = moment(`${activityRequest.effective_end_date} ${activityRequest.effective_end_time}`,      "YYYY-MM-DD HH:mm");
-const endDateTimepayload   = moment(`${activityRequest.effective_start_date} ${activityRequest.effective_end_time}`,      "YYYY-MM-DD HH:mm");
-
+const tz = activityRequest.time_zone || "UTC";
+const startDateTime = moment.tz(`${activityRequest.effective_start_date} ${activityRequest.effective_start_time}`, "YYYY-MM-DD HH:mm", tz);
+const endDateTime   = moment.tz(`${activityRequest.effective_end_date} ${activityRequest.effective_end_time}`, "YYYY-MM-DD HH:mm", tz);
+const endDateTimepayload   = moment.tz(`${activityRequest.effective_start_date} ${activityRequest.effective_end_time}`, "YYYY-MM-DD HH:mm", tz);
 const payload: any = {
     subject: activityRequest.subject,
     start: {
-      dateTime: startDateTime,
+      dateTime: startDateTime.format("YYYY-MM-DDTHH:mm:ss"),
       timeZone: activityRequest.time_zone || "UTC",
     },
     end: {
-      dateTime: endDateTimepayload,
+      dateTime: endDateTimepayload.format("YYYY-MM-DDTHH:mm:ss"),
       timeZone: activityRequest.time_zone || "UTC",
     },
     attendees: attendees,
@@ -137,15 +137,15 @@ if (activityRequest.recurrence_type && activityRequest.recurrence_type !== 'none
     // Check for conflicting meetings
     // Convert to ISO string if not already
     // Convert moment objects to ISO string
-    const startDateTimeStr = moment(startDateTime).toISOString();
-    const endDateTimeStr = moment(endDateTime).toISOString();
+    const startDateTimeUTC = startDateTime.clone().utc().format('YYYY-MM-DDTHH:mm:ss[Z]');
+    const endDateTimeUTC = endDateTime.clone().utc().format('YYYY-MM-DDTHH:mm:ss[Z]');
 
-    // Query only the exact requested time window
+    // Query only the exact requested time window in UTC
     const conflictResponse = await graphClient
       .api(`/users/${support_email}/calendarView`)
       .query({
-        startDateTime: startDateTimeStr,
-        endDateTime: endDateTimeStr,
+        startDateTime: startDateTimeUTC,
+        endDateTime: endDateTimeUTC,
       })
       .get();
     logMessage(`Conflict check response: ${JSON.stringify(conflictResponse)}`);
@@ -153,34 +153,22 @@ if (activityRequest.recurrence_type && activityRequest.recurrence_type !== 'none
     // Check for overlapping times with existing events, with detailed logging
     let hasConflict = false;
     if (conflictResponse.value && conflictResponse.value.length > 0) {
-      const requestedStart = new Date(startDateTimeStr);
-      const requestedEnd = new Date(endDateTimeStr);
+      const tz = activityRequest.time_zone || "UTC";
+      const requestedStart = startDateTime;
+      const requestedEnd = endDateTime;
       for (const event of conflictResponse.value) {
-        const eventStart = new Date(event.start.dateTime);
-        const eventEnd = new Date(event.end.dateTime);
-        if (
-          requestedStart.toDateString() === eventStart.toDateString() ||
-          requestedEnd.toDateString() === eventStart.toDateString() ||
-          (eventStart > requestedStart && eventStart < requestedEnd)
-        ) {
-          // Check for overlapping hours on the same day
-          const reqStartHours =
-            requestedStart.getHours() * 60 + requestedStart.getMinutes();
-          const reqEndHours =
-            requestedEnd.getHours() * 60 + requestedEnd.getMinutes();
-          const evtStartHours =
-            eventStart.getHours() * 60 + eventStart.getMinutes();
-          const evtEndHours = eventEnd.getHours() * 60 + eventEnd.getMinutes();
-          const overlap =
-            reqStartHours < evtEndHours && reqEndHours > evtStartHours;
-
-          if (overlap) {
-            logMessage(`Conflict detected with event: ${event.id}`);
-            hasConflict = true;
-            break;
-          }
+        // Use event's timezone if available, else fallback to requested timezone
+        const eventTz = (event.start && event.start.timeZone) ? event.start.timeZone : tz;
+        const eventStart = moment.tz(event.start.dateTime, eventTz);
+        const eventEnd = moment.tz(event.end.dateTime, eventTz);
+        // Check for overlap
+        const overlap = requestedStart.isBefore(eventEnd) && requestedEnd.isAfter(eventStart);
+        if (overlap) {
+          logMessage(`Conflict detected with event: ${event.id}`);
+          hasConflict = true;
+          break;
         } else {
-          logMessage(`Event not on same day, skipping.`);
+          logMessage(`No overlap with event: ${event.id}`);
         }
       }
     }

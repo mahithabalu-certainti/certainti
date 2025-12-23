@@ -387,7 +387,7 @@ async function getAllAttachmentSummary(
       req,
       listAttachmentSummarySchema,
       res,
-      "GET"
+      "POST"
     );
     if (!value) {
       return;
@@ -481,7 +481,7 @@ async function exportAllAttachmentSummary(
       req,
       exportListAttachmentSummarySchema,
       res,
-      "GET"
+      "POST"
     );
     if (!value) {
       return;

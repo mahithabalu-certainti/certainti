@@ -4,10 +4,17 @@ import { HttpStatus, rawQueries, STATUS_MESSAGE } from "./constant";
 import { errorResponse, successResponse } from "./apiResponse";
 import configurations from "../config/config";
 import ExcelJS from 'exceljs';
-import { BlobServiceClient } from '@azure/storage-blob';
 import { getSecret } from "../utils/azureSecrets";
 import { Sequelize } from "sequelize";
 import crypto from "crypto";
+import {
+  BlobServiceClient,
+  StorageSharedKeyCredential,
+  generateBlobSASQueryParameters,
+  BlobSASPermissions,
+  SASProtocol
+} from "@azure/storage-blob";
+import { parse } from "url";
 
 function getLogger() {
   return configurations.getInstance().getLogger();
@@ -146,15 +153,15 @@ export async function generateExcelBase64(
   return Buffer.from(buffer).toString('base64');
 }
 
-export async function uploadToAzureBlob(file: Express.Multer.File,account_id:string): Promise<string> {
+export async function uploadToAzureBlob(file: Express.Multer.File,account_id:string, account_number: string): Promise<string> {
   const connectionString =  await getSecret(process.env.AZURE_STORAGE_CONNECTION_STRING as string);
-  const containerName = 'account';
+  const containerName = account_number.toLowerCase();
   
   const connString =  connectionString;
   if (!connString) throw new Error('Azure storage connection string is required');
   const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
   const containerClient = blobServiceClient.getContainerClient(containerName);
-  await containerClient.createIfNotExists({ access: 'blob' })
+  await containerClient.createIfNotExists()
 
   const blobName = `${account_id}/logo/${file.originalname}`;
   const blockBlobClient = containerClient.getBlockBlobClient(blobName);
@@ -188,6 +195,54 @@ export async function deleteFromAzureBlob(blobUrl: string): Promise<void> {
   logMessage
   } else {
     logMessage(`Blob not found: ${blobUrl}`);
+  }
+}
+
+export async function generateSasUrl(blobUrl: string, expiryMinutes = 60): Promise<string> {
+  try {
+    const connectionString = await getSecret(process.env.AZURE_STORAGE_CONNECTION_STRING as string);
+    if (!connectionString) {
+      throw new Error("Azure storage connection string is required");
+    }
+
+    const parsedUrl = parse(blobUrl);
+    const hostnameParts = parsedUrl.hostname?.split(".") || [];
+    const accountName = hostnameParts[0];
+    const pathParts = parsedUrl.pathname?.replace(/^\/+/, "").split("/") || [];
+
+    if (pathParts.length < 2) {
+      throw new Error("Invalid blob URL format");
+    }
+
+    const containerName: any = pathParts[0];
+    const blobName = pathParts.slice(1).join("/");
+
+    const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
+    const credential = (blobServiceClient as any).credential as StorageSharedKeyCredential;
+
+    if (!credential) {
+      throw new Error("StorageSharedKeyCredential missing from BlobServiceClient");
+    }
+
+    const expiresOn = new Date();
+    expiresOn.setMinutes(expiresOn.getMinutes() + expiryMinutes);
+
+    const sasToken = generateBlobSASQueryParameters(
+      {
+        containerName,
+        blobName,
+        permissions: BlobSASPermissions.parse("r"),
+        expiresOn,
+        protocol: SASProtocol.Https
+      },
+      credential
+    ).toString();
+
+    const sasUrl = `${blobUrl}?${sasToken}`;
+    return sasUrl;
+  } catch (error) {
+    logMessage(`Error generating SAS URL: ${error}`);
+    throw new Error(`SAS URL generation failed: ${error instanceof Error ? error.message : "Unknown error"}`);
   }
 }
 
@@ -253,7 +308,11 @@ export function getTableSchemaByEntity(entity: string): ColumnSchema[] {
         { column_name: 'resource_city', data_type: 'String',required:false },
         { column_name: 'resource_state_province', data_type: 'String',required:false },
         { column_name: 'resource_country', data_type: 'String',required:false },
-        { column_name: 'project_type', data_type: 'ENUM' ,required:false}
+        { column_name: 'project_type', data_type: 'ENUM' ,required:false},
+        { column_name: 'task_name', data_type: 'String',required:false },
+        { column_name: 'task_type', data_type: 'String',required:false },
+        { column_name: 'task_classification', data_type: 'String',required:false },
+        { column_name: 'task_description', data_type: 'String',required:false }
       ];
 
     case 'resource_skill':
@@ -302,7 +361,8 @@ export function getTableSchemaByEntity(entity: string): ColumnSchema[] {
         { column_name: 'total_fte_cost', data_type: 'Decimal(18,2)',required:false },
         { column_name: 'total_sub_con_effort_in_hrs', data_type: 'Decimal(18,2)',required:false },
         { column_name: 'total_sub_con_cost', data_type: 'Decimal(18,2)',required:false },
-        { column_name: 'total_non_labor_cost', data_type: 'Decimal(18,2)',required:false }
+        { column_name: 'total_non_labor_cost', data_type: 'Decimal(18,2)',required:false },
+        { column_name: 'total_non_labor_count', data_type: 'Decimal(18,2)',required:false },
       ];
 
     case 'project_resource':

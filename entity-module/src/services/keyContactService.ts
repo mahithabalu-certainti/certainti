@@ -2,8 +2,18 @@ import { Sequelize } from "sequelize";
 import { IKeyContactDetail, IUpdateKeyContactDetail } from "../utils/types";
 import { primaryKeyContacts, rawQueries, STATUS_MESSAGE } from "../utils/constants";
 import { logMessage } from "../utils/helpers";
+import { Logger } from "winston";
+import { CaseStatusResult } from "../utils/types";
+import { initMainDbSequelize } from "../config/mainDataSource";
 
 export class KeyContactService {
+
+  private logger: Logger;
+
+  constructor(logger: Logger) {
+    this.logger = logger;
+  }
+
   async manageKeyContacts(
     key_contacts: IKeyContactDetail,
     projectId: string,
@@ -66,7 +76,7 @@ export class KeyContactService {
         keyContactMap = Object.fromEntries(
           keyContactRows.map((c: any) => [c.rid, c.role_name])
         );
-        
+
         keyContactRoleMap = Object.fromEntries(
           keyContactRows.map((c: any) => [c.role_map, c.role_name])
         );
@@ -90,7 +100,7 @@ export class KeyContactService {
         role_name: keyContactMap[kc.key_contact_role] || null,
         status_name: statusMap[kc.status_rid] || null,
         role_map: keyContactRoleMap[kc.key_contact_role] || null,
-      }));  
+      }));
       const technicalContact = enrichedKeyContacts.find(
         (e: any) =>
           e.role_name === keyContactRoleMap[primaryKeyContacts.technical_point_of_contact] && e.is_primary_contact
@@ -120,18 +130,18 @@ export class KeyContactService {
       projectPointOfContactEmail = pointOfContact
         ? pointOfContact.key_contact_email
         : null;
-        isEmailRecipient = isEmailRecipientInfo || false;
+      isEmailRecipient = isEmailRecipientInfo || false;
     } else {
       return {
         technicalConsultant: null,
         financialConsultant: null,
         projectPointOfContact: null,
-        projectPointOfContactEmail:null,
-        isEmailRecipient:  false
+        projectPointOfContactEmail: null,
+        isEmailRecipient: false
       };
     }
 
-    return { technicalConsultant, financialConsultant, projectPointOfContact,projectPointOfContactEmail,isEmailRecipient };
+    return { technicalConsultant, financialConsultant, projectPointOfContact, projectPointOfContactEmail, isEmailRecipient };
   }
 
   async deleteKeyContactDetails(
@@ -146,6 +156,181 @@ export class KeyContactService {
     });
   }
 
+  async deleteCaseKeyContactDetails(
+    key_contact_id: string,
+    project_rid: string,
+    CaseKeyContactDetails: any,
+    Case: any,
+    projectCaseMapping: any[],
+  ) {
+
+    if (projectCaseMapping.length > 0) {
+      for (const caseMapping of projectCaseMapping) {
+
+        const caseData = await Case.findOne({
+          where: {
+            rid: caseMapping.case_rid,
+          },
+        });
+
+        if (!caseData) {
+          continue;
+        }
+        const mainSequelize = await initMainDbSequelize();
+
+        const caseStatus = await mainSequelize.query(
+          rawQueries.fetchCaseStatusByRid(caseData.status_rid),
+          {
+            type: "SELECT",
+          }
+        ) as CaseStatusResult[];
+
+        if (caseStatus[0]?.status_name === "Closed") {
+          continue;
+        }
+        await CaseKeyContactDetails.destroy({
+          where: {
+            key_contact_rid: key_contact_id,
+          },
+        });
+      }
+    }
+  }
+
+  async insertCaseKeyContactDetails(
+    key_contact: IUpdateKeyContactDetail,
+    userId: string,
+    CaseKeyContactDetails: any,
+    Case: any,
+    projectCaseMapping: any[],
+    projectId: string,
+    keyContactRid?: string
+  ) {
+    try {
+
+      if (projectCaseMapping.length > 0) {
+        for (const caseMapping of projectCaseMapping) {
+
+          const caseData = await Case.findOne({
+            where: {
+              rid: caseMapping.case_rid,
+            },
+          });
+
+          if (!caseData) {
+            continue;
+          }
+          const mainSequelize = await initMainDbSequelize();
+
+          const caseStatus = await mainSequelize.query(
+            rawQueries.fetchCaseStatusByRid(caseData.status_rid),
+            {
+              type: "SELECT",
+            }
+          ) as CaseStatusResult[];
+
+          if (caseStatus[0]?.status_name === "Closed") {
+            continue;
+          }
+
+          const keyContactDetails = key_contact;
+
+          await CaseKeyContactDetails.create({
+            key_contact_rid: keyContactRid || keyContactDetails.rid,
+            key_contact_name: keyContactDetails.key_contact_name || null,
+            key_contact_email: keyContactDetails.key_contact_email || null,
+            key_contact_role: keyContactDetails.key_contact_role || null,
+            status_rid: keyContactDetails.status_rid || null,
+            is_primary_contact: keyContactDetails.is_primary_contact || null,
+            interaction_cc_recipient: keyContactDetails.interaction_cc_recipient || null,
+            include_in_communication:
+              keyContactDetails.include_in_communication === null ? null : keyContactDetails.include_in_communication,
+            entity_rid: projectId,
+            created_by: userId,
+            entity_type: "Project",
+            case_project_rid: caseMapping.rid,
+            case_rid: caseMapping.case_rid,
+            account_rid: caseData.account_rid,
+          });
+        }
+      }
+    } catch (error) {
+      logMessage(`Error updating key contact details: ${error instanceof Error ? error.message : error}`);
+      throw error;
+    }
+  }
+  async updateCaseKeyContactDetails(
+    key_contact: IUpdateKeyContactDetail,
+    userId: string,
+    CaseKeyContactDetails: any,
+    Case: any,
+    projectCaseMapping: any[]
+  ) {
+    try {
+
+      if (projectCaseMapping.length > 0) {
+        for (const caseMapping of projectCaseMapping) {
+
+          const caseData = await Case.findOne({
+            where: {
+              rid: caseMapping.case_rid,
+            },
+          });
+
+          if (!caseData) {
+            continue;
+          }
+          const mainSequelize = await initMainDbSequelize();
+
+          const caseStatus = await mainSequelize.query(
+            rawQueries.fetchCaseStatusByRid(caseData.status_rid),
+            {
+              type: "SELECT",
+            }
+          ) as CaseStatusResult[];
+
+          if (caseStatus[0]?.status_name === "Closed") {
+            continue;
+          }
+
+          const keyContactDetails = key_contact;
+
+          await CaseKeyContactDetails.update(
+            {
+              key_contact_name: keyContactDetails.key_contact_name || null,
+              key_contact_email: keyContactDetails.key_contact_email || null,
+              key_contact_role: keyContactDetails.key_contact_role || null,
+              status_rid: keyContactDetails.status_rid,
+              interaction_cc_recipient:
+                keyContactDetails.interaction_cc_recipient === null
+                  ? null
+                  : keyContactDetails.interaction_cc_recipient,
+              is_primary_contact:
+                keyContactDetails.is_primary_contact === null
+                  ? null
+                  : keyContactDetails.is_primary_contact,
+              include_in_communication:
+                keyContactDetails.include_in_communication === null
+                  ? null
+                  : keyContactDetails.include_in_communication,
+              modified_by: userId,
+            },
+            {
+              where: {
+                key_contact_rid: keyContactDetails.rid,
+              },
+            }
+          );
+        }
+
+      }
+
+
+    } catch (error) {
+      logMessage(`Error updating key contact details: ${error instanceof Error ? error.message : error}`);
+      throw error;
+    }
+  }
   async updateKeyContactDetails(
     key_contact: IUpdateKeyContactDetail,
     userId: string,
@@ -194,7 +379,7 @@ export class KeyContactService {
   ) {
     try {
       const keyContactDetails = keyContacts;
-      await KeyContactModel.create({
+      const createdContact = await KeyContactModel.create({
         key_contact_name: keyContactDetails.key_contact_name || null,
         key_contact_email: keyContactDetails.key_contact_email || null,
         key_contact_role: keyContactDetails.key_contact_role || null,
@@ -207,6 +392,7 @@ export class KeyContactService {
         created_by: userId,
         entity_type: "Project",
       });
+      return createdContact;
     } catch (error) {
       logMessage(`Error inserting key contact details: ${error instanceof Error ? error.message : error}`);
       throw error;
