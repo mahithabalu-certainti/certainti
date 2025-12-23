@@ -300,7 +300,7 @@ class SchemaService {
                     replacements: { userId: projectData.created_by },
                     type: "SELECT",
                 });
-                projectData.created_by_name =
+                projectData.created_name =
                     user?.first_name + " " + user?.last_name || "";
             }
             if (projectData.modified_by) {
@@ -308,7 +308,7 @@ class SchemaService {
                     replacements: { userId: projectData.modified_by },
                     type: "SELECT",
                 });
-                projectData.modified_by_name =
+                projectData.modified_name =
                     user?.first_name + " " + user?.last_name || "";
             }
 
@@ -356,7 +356,7 @@ class SchemaService {
     }
 
     async fetchProjectById(accountNumber: string, projectId: string, caseId: string) {
-        const { CaseProject } = await this.caseModelService.getModels(accountNumber);
+        const { CaseProject, ProjectFiscal } = await this.caseModelService.getModels(accountNumber);
 
         let projectData = await CaseProject.findOne({
             where: {
@@ -377,8 +377,21 @@ class SchemaService {
                     ["country_rid", "country"],
                     ["region_rid", "region"],
                     ["currency_rid", "currency"],
+                    [Sequelize.col("case_project_project_fiscal.r_number"), "r_number"],
+                    [Sequelize.col("case_project_project_fiscal.rid"), "rid"],
+                    [Sequelize.col("case_project_project_fiscal.created_by"), "created_by"],
+                    [Sequelize.col("case_project_project_fiscal.modified_by"), "modified_by"],
+                    [Sequelize.col("case_project_project_fiscal.created_datetime"), "created_datetime"],
+                    [Sequelize.col("case_project_project_fiscal.modified_datetime"), "modified_datetime"],
                 ],
             },
+            include: [
+                {
+                    model: ProjectFiscal,
+                    as: "case_project_project_fiscal",
+                    attributes: [],
+                },
+            ],
         });
 
         return projectData;

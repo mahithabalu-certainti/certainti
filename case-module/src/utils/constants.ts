@@ -1020,7 +1020,7 @@ export const rawQueries = {
   fetchUserNames(oldRid: string, newRid: string) {
     if (oldRid === null) oldRid = ''
     if (newRid === null) newRid = ''
-    return `SELECT rid, CONCAT(first_name, ' ', last_name) AS name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN ('${oldRid}', '${newRid}')`
+    return `SELECT rid, CONCAT(first_name, ' ', last_name) AS name,email FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN ('${oldRid}', '${newRid}')`
   },
   fetchActivityStatusById(oldRid: string, newRid: string) {
     if (oldRid === null) oldRid = ''
@@ -1389,7 +1389,7 @@ export const rawQueries = {
     `;
   },
   checkJurisdictionConfigOverlap(excludeCurrent = false) {
-    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values WHERE credit_config_group_rid = :groupId AND status_rid = :statusRid AND ((:endDate IS NULL AND :startDate < effective_end_date) OR (:endDate IS NOT NULL AND :startDate < effective_end_date AND :endDate > effective_start_date))${excludeCurrent ? ' AND federal_config_id is null AND rid != :excludeRid' : ''} LIMIT 1`;
+    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values WHERE credit_config_group_rid = :groupId  AND ((:endDate IS NULL AND :startDate < effective_end_date) OR (:endDate IS NOT NULL AND :startDate < effective_end_date AND :endDate > effective_start_date))${excludeCurrent ? ' AND federal_config_id is null AND rid != :excludeRid' : ''} LIMIT 1`;
   },
   getJurisdictionByCountryId(country_rid: string, state_rid: string, is_federal: boolean, credit_program_name: string) {
     let whereClause = `g.country_rid = '${country_rid}' AND g.is_federal = ${is_federal}`;
@@ -1440,18 +1440,18 @@ export const rawQueries = {
     LEFT JOIN ${MAIN_SCHEMA_NAME}.user uu ON uu.rid = rv.modified_by
     WHERE federal_config_id = '${config_rid}';`
   },
-  fetchPlatformConfig(rid: string,fiscalYear: number) {
+  fetchPlatformConfig(rid: string,formattedStartDate: string,formattedEndDate:string) {
     return `
     SELECT config_json FROM ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values rv
-join ${MAIN_SCHEMA_NAME}.rd_credit_config_group rg on  rv.credit_config_group_rid  = rg.rid
-where rg.country_rid = '${rid}'
-and credit_program_name = 'Platform Configuration'
+  join ${MAIN_SCHEMA_NAME}.rd_credit_config_group rg on  rv.credit_config_group_rid  = rg.rid
+  where rg.country_rid = '${rid}'
+  and credit_program_name = 'Platform Configuration'
     and rg.is_federal = true 
-     AND rv.effective_start_date <= make_date(${fiscalYear}, 3, 31)
-  AND rv.effective_end_date   >= make_date(${fiscalYear} - 1, 4, 1)
-  AND rv.status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active')
-ORDER BY rv.effective_start_date DESC
-LIMIT 1`;
+     AND rv.effective_start_date <= '${formattedEndDate}'
+    AND rv.effective_end_date   >= '${formattedStartDate}'
+    AND rv.status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active')
+  ORDER BY rv.effective_start_date DESC
+  LIMIT 1`;
   },
 
   fetchAccountDetailsInfo(schemaName: string, account_rid: string) {
@@ -1849,7 +1849,8 @@ export const activityStatus = {
 export const ruleTemplateNames = {
   caseCreated: "case_create",
   statusUpdated:"task_status_update",
-  taskCreated:"task_create"
+  taskCreated:"task_create",
+  assigneeChanged:"task_assignee_change"
 }
 
 export const ruleNames = {
