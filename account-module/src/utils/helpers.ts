@@ -308,7 +308,11 @@ export function getTableSchemaByEntity(entity: string): ColumnSchema[] {
         { column_name: 'resource_city', data_type: 'String',required:false },
         { column_name: 'resource_state_province', data_type: 'String',required:false },
         { column_name: 'resource_country', data_type: 'String',required:false },
-        { column_name: 'project_type', data_type: 'ENUM' ,required:false}
+        { column_name: 'project_type', data_type: 'ENUM' ,required:false},
+        { column_name: 'task_name', data_type: 'String',required:false },
+        { column_name: 'task_type', data_type: 'String',required:false },
+        { column_name: 'task_classification', data_type: 'String',required:false },
+        { column_name: 'task_description', data_type: 'String',required:false }
       ];
 
     case 'resource_skill':
