@@ -17,7 +17,7 @@ export interface IRulemasterService {
     ): Promise<{
         statusCode: number;
         message: string;
-        errorMessage?: string;
+        errorMessage?: any;
         data?: { rules: any };
     }>;
 
@@ -373,7 +373,7 @@ export interface IWorkFlowService {
     ): Promise<{
         statusCode: number;
         message: string;
-        errorMessage?: string;
+        errorMessage?: any;
         data?: { rule: any };
     }>;
 
@@ -393,7 +393,7 @@ export interface IWorkFlowService {
     ): Promise<{
         statusCode: number;
         message: string;
-        errorMessage?: string;
+        errorMessage?: any;
         data?: { rule: any };
     }>;
 
