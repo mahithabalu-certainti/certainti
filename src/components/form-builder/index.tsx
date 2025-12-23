@@ -2380,8 +2380,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             }
 
             if (
-              isFrom === 'geoBasedRuleForm' &&
-              field.name === 'effective_start_date' ||
+              (isFrom === 'geoBasedRuleForm' &&
+                field.name === 'effective_start_date') ||
               field.name === 'effective_end_date'
             ) {
               const startDate = constructFormData[

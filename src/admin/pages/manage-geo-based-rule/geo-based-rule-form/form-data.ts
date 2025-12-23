@@ -88,8 +88,6 @@ export const GeoBasedRuleFormFieldsData = (
       };
     });
 
-
-
     return [
       {
         sectionName: 'Jurisdiction Rules Information',
@@ -186,11 +184,13 @@ export const GeoBasedRuleFormFieldsData = (
             errorHandling: [
               {
                 regex: REGEX_PATTERNS.MIN_3,
-                errorMessage: 'Configuration Name must be more than 2 characters long',
+                errorMessage:
+                  'Configuration Name must be more than 2 characters long',
               },
               {
                 regex: REGEX_PATTERNS.MAX_150,
-                errorMessage: 'Configuration Name must be within 150 characters',
+                errorMessage:
+                  'Configuration Name must be within 150 characters',
               },
             ],
             hide:

@@ -173,20 +173,21 @@ export default function DataCard<T extends BaseCardItem>({
       </button>
 
       {/* Delete button - show for selected triggers or added actions */}
-      {onDelete && !disabled && (
-        (type === 'trigger' && isSelected) || (type === 'action' && isAlreadyAdded)
-      ) && (
-        <button
-          onClick={handleDeleteClick}
-          className='absolute -top-2 -right-2 w-5 h-5 bg-red-100 border border-red-400 rounded-full flex items-center justify-center cursor-pointer z-10 hover:bg-red-200 transition-colors'
-          title={type === 'trigger' ? 'Remove Trigger' : 'Remove Action'}
-          type='button'
-        >
-          <React.Suspense fallback={null}>
-            <CloseIcon className='w-[8px] h-[8px] [&>path]:stroke-[#eb5628]' />
-          </React.Suspense>
-        </button>
-      )}
+      {onDelete &&
+        !disabled &&
+        ((type === 'trigger' && isSelected) ||
+          (type === 'action' && isAlreadyAdded)) && (
+          <button
+            onClick={handleDeleteClick}
+            className='absolute -top-2 -right-2 w-5 h-5 bg-red-100 border border-red-400 rounded-full flex items-center justify-center cursor-pointer z-10 hover:bg-red-200 transition-colors'
+            title={type === 'trigger' ? 'Remove Trigger' : 'Remove Action'}
+            type='button'
+          >
+            <React.Suspense fallback={null}>
+              <CloseIcon className='w-[8px] h-[8px] [&>path]:stroke-[#eb5628]' />
+            </React.Suspense>
+          </button>
+        )}
 
       {/* Remove the "Already Added" overlay - we'll just use opacity */}
     </div>

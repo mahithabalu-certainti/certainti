@@ -642,7 +642,7 @@ const Resource: React.FC<ResourceProps> = ({
       variant: 'outlined' as const,
       onClick: () => handleOpen(),
       sx: { ...BUTTON_STYLES, width: '120px', minWidth: '120px' },
-      hide: !value  || !attachmentCreateEnable,
+      hide: !value || !attachmentCreateEnable,
       disabled: accountInActive ? accountInActive : resourceInActive,
     },
     {

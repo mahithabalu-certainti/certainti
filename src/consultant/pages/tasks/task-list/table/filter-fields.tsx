@@ -12,7 +12,7 @@ const textOptions: { option: string; value: string }[] = [
   { option: 'Not Equals', value: 'not_equals' },
   { option: 'Contains', value: 'contains' },
 ];
-const nonReqTextfieldOptions: { option: string; value: string  }[] = [
+const nonReqTextfieldOptions: { option: string; value: string }[] = [
   { option: 'Equals', value: 'equals' },
   { option: 'Not Equals', value: 'not_equals' },
   { option: 'Contains', value: 'contains' },

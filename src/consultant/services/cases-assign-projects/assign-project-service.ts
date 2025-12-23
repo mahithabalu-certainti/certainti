@@ -15,7 +15,14 @@ import {
 } from '../../types/assign-projects';
 import { caseServiceApi } from '../../../api/api';
 import { CommonApiResponse } from '../../../common-service';
-import { ProjectFinancialResourceCostList, ProjectFinancialResourceCostResponse, ProjectFinancialResourceListParams, ProjectFinancialSummary, ProjectFinancialSummaryListParams, ProjectFinancialSummaryResponse } from '../../types';
+import {
+  ProjectFinancialResourceCostList,
+  ProjectFinancialResourceCostResponse,
+  ProjectFinancialResourceListParams,
+  ProjectFinancialSummary,
+  ProjectFinancialSummaryListParams,
+  ProjectFinancialSummaryResponse,
+} from '../../types';
 
 export const fetchAssigneprojectList = async (
   params: AssignProjectListURLParams
@@ -112,11 +119,15 @@ export const useRemoveProjects = () => {
   });
 };
 
-export const CasesProjectDetailUrl = (accountId: string, caseId: string, projectId: string) => {
+export const CasesProjectDetailUrl = (
+  accountId: string,
+  caseId: string,
+  projectId: string
+) => {
   const params = new URLSearchParams({
     accountId,
     caseId,
-    projectId
+    projectId,
   });
   return `/api/caseProject/details?${params.toString()}`;
 };
@@ -136,7 +147,6 @@ export const fetchCasesProjectDetail = async (
     throw error;
   }
 };
-
 
 export const useCasesProjectDetail = (
   accountId: string,
@@ -160,11 +170,10 @@ const FinancialCaseSummaryURL = () => {
 export const fetchCasesProjectFinancialSummary = async (
   params: ProjectFinancialSummaryListParams
 ): Promise<ProjectFinancialSummary> => {
-  const response =
-    await caseServiceApi.post<ProjectFinancialSummaryResponse>(
-      FinancialCaseSummaryURL(),
-      params
-    );
+  const response = await caseServiceApi.post<ProjectFinancialSummaryResponse>(
+    FinancialCaseSummaryURL(),
+    params
+  );
   return response.data.data;
 };
 
@@ -194,7 +203,7 @@ export const ProjectCasesFinancialResourceCostURL = ({
   projectRid,
   accountRid,
   search,
-  caseRid
+  caseRid,
 }: ProjectFinancialResourceListParams) => {
   const baseUrl = `/api/caseProject/resourceCost/details`;
   const searchParams = new URLSearchParams();

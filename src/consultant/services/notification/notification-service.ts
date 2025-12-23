@@ -5,11 +5,11 @@ import { userServiceApi } from '../../../api/api';
 const fetchNotifications = async (
   userId: string
 ): Promise<NotificationItem[]> => {
-    const response = await userServiceApi.get<NotificationResponse>(
-      `/api/notifications/list`
-    );
+  const response = await userServiceApi.get<NotificationResponse>(
+    `/api/notifications/list`
+  );
 
-    return response.data.data;
+  return response.data.data;
 
   console.log('notifications', userId);
   // Simulate 2-second delay
