@@ -1,5 +1,5 @@
 import type React from 'react';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { Popover, IconButton, Badge } from '@mui/material';
 import { getRelativeTime, getSvgIcon } from './helper';
 import { NotificationItem } from '../../admin/types/notification';
@@ -7,11 +7,9 @@ import {
   useNotificationList,
   useUpdateNotificationList,
 } from '../../admin/service/notification/notification';
-
-import { useRef } from 'react';
 import { getDynamicSvgIcon } from '../../admin/pages/workflow-builder/form/helper';
 import { useWebSocketEvent } from '../../hooks/use-websocket';
-import { useToast } from '../../hooks/use-toast';
+import { useServiceWorkerPush } from '../../hooks/use-service-worker-push';
 
 export default function NotificationPanel() {
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
@@ -21,20 +19,23 @@ export default function NotificationPanel() {
   const [nextOffset, setNextOffset] = useState<string | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [isTabVisible, setIsTabVisible] = useState(true);
 
   const [currentOffset, setCurrentOffset] = useState<string | number>(0);
-  const [limit] = useState(10);
 
   const {
     data: apiNotifications,
     isLoading,
     isError,
     refetch: refetchNotifications,
-  } = useNotificationList(currentOffset, limit);
+  } = useNotificationList(currentOffset, 10);
 
   const { refetch: triggerMarkAsRead } = useUpdateNotificationList(false);
-  const { showToast } = useToast();
+
+  // Service Worker Push API
+  const {
+    isSupported: isPushSupported,
+    showNotification: showPushNotification,
+  } = useServiceWorkerPush();
 
   useEffect(() => {
     if (apiNotifications?.data) {
@@ -55,72 +56,6 @@ export default function NotificationPanel() {
     }
   }, [apiNotifications, currentOffset]);
 
-  // Track tab visibility using Page Visibility API
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      setIsTabVisible(!document.hidden);
-    };
-
-    // Set initial state
-    setIsTabVisible(!document.hidden);
-
-    // Listen for visibility changes
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, []);
-
-  // Request notification permission on mount
-  useEffect(() => {
-    // Check if browser supports notifications
-    if ('Notification' in window && Notification.permission === 'default') {
-      console.log(
-        'Browser notifications supported. Permission will be requested on first notification.'
-      );
-    }
-  }, []);
-
-  // Function to request notification permission and show notification
-  const showBrowserNotification = async (title: string, body: string) => {
-    // Check if browser supports notifications
-    if (!('Notification' in window)) {
-      console.log('Browser does not support notifications');
-      return false;
-    }
-
-    // Request permission if not already granted or denied
-    if (Notification.permission === 'default') {
-      const permission = await Notification.requestPermission();
-      console.log('Notification permission:', permission);
-    }
-
-    // Show notification if permission granted
-    if (Notification.permission === 'granted') {
-      const notification = new Notification(title, {
-        body,
-        icon: '/favicon.svg',
-        badge: '/favicon.svg',
-        tag: 'notification',
-        requireInteraction: false,
-      });
-
-      // Auto-close after 5 seconds
-      setTimeout(() => notification.close(), 5000);
-
-      // Handle notification click
-      notification.onclick = () => {
-        window.focus();
-        notification.close();
-      };
-
-      return true;
-    }
-
-    return false;
-  };
-
   // Listen for real-time notification updates via WebSocket
   useWebSocketEvent('*', (message) => {
     // Check if this is a notification message
@@ -138,13 +73,20 @@ export default function NotificationPanel() {
         message?.data?.message ||
         'New notification received';
 
-      // Industry Standard Notification Architecture
-      if (isTabVisible) {
-        // Tab is active and visible → Show in-app toast
-        showToast(`${notificationMessage}`, 'info');
-      } else {
-        // Tab is inactive, minimized, or in background → Show browser notification
-        showBrowserNotification('New Notification', notificationMessage);
+      // Show browser notification via Service Worker
+      // Using consistent tag prevents duplicate notifications across multiple tabs
+      if (isPushSupported) {
+        showPushNotification('New Notification', {
+          body: notificationMessage,
+          icon: '/favicon.svg',
+          badge: '/favicon.svg',
+          tag: `websocket-notification-${Date.now()}`, // Unique tag each time
+          requireInteraction: false,
+          data: {
+            url: window.location.origin,
+            timestamp: new Date().toISOString(),
+          },
+        });
       }
 
       // Update unread count

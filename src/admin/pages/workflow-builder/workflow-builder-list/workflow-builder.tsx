@@ -6,11 +6,19 @@ import { useNavigate } from 'react-router-dom';
 import { WorkflowTable } from './table/workflow-table';
 import { WorkflowRuleListURLParams } from '../../../types';
 import { ActionsDropdown } from '../../../../components';
-import { FilterTypes } from '../../../../common-service';
+import {
+  AllModules,
+  AllPermissions,
+  FilterTypes,
+} from '../../../../common-service';
 import Filter from '../../../../consultant/pages/account-details-sidebar/components/filter/filter';
 import SearchBar from '../../../../components/search/search-bar';
 import { getWorkflowListFilterFields } from './helper';
 import { ExportWorkflowRuleList } from '../../../service/workflow-builder/workflow-builder-service';
+import { useSelector } from 'react-redux';
+import { checkPermission } from '../../../../common-utils';
+import { RootState } from '../../../../store/store';
+import { AccessRestricted } from '../../../../components/account-restricted';
 
 const BUTTON_STYLES = {
   height: '24px',
@@ -32,6 +40,27 @@ const WorkflowBuilder: React.FC = () => {
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const [columnAnchorEl, setColumnAnchorEl] =
     React.useState<HTMLButtonElement | null>(null);
+
+  // Permission Management
+  const { modules, permission } = useSelector(
+    (state: RootState) => state.permission
+  );
+  const workflowEnable = checkPermission(modules, AllModules.WORKFLOW_BUILDER);
+
+  const isWorkflowViewEnable = checkPermission(
+    permission,
+    AllPermissions.WORKFLOW_BUILDER_VIEW_EDIT
+  );
+
+  const isWorkflowExportEnable = checkPermission(
+    permission,
+    AllPermissions.WORKFLOW_BUILDER_EXPORT
+  );
+
+  const isWorkflowCreateEnable = checkPermission(
+    permission,
+    AllPermissions.WORKFLOW_BUILDER_CREATE
+  );
 
   const onRefreshClick = () => {
     setRefreshTrigger(Date.now());
@@ -92,7 +121,7 @@ const WorkflowBuilder: React.FC = () => {
     {
       label: 'Export',
       onClick: () => handleExport(),
-      hide: false,
+      hide: !isWorkflowExportEnable,
     },
   ];
 
@@ -103,6 +132,8 @@ const WorkflowBuilder: React.FC = () => {
   };
 
   const workflowFilterFields = getWorkflowListFilterFields();
+
+  if (!workflowEnable || !isWorkflowViewEnable) return <AccessRestricted />;
 
   return (
     <div className='flex flex-col w-full h-full'>
@@ -133,6 +164,7 @@ const WorkflowBuilder: React.FC = () => {
           </div>
           <TextButton
             label='Create Rule'
+            hide={!isWorkflowCreateEnable}
             onClick={() => navigate(WORKFLOW_BUILDER_CREATE)}
             sx={{
               ...BUTTON_STYLES,

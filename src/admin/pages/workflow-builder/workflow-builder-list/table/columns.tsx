@@ -5,7 +5,8 @@ import { WorkflowRuleListItem } from '../../../../types';
 
 export const getWorkflowColumns = (
   handleToggleStatus: (row: WorkflowRuleListItem, enabled: boolean) => void,
-  handleCreateRuleMap: (row: WorkflowRuleListItem) => void
+  handleCreateRuleMap: (row: WorkflowRuleListItem) => void,
+  permissionMap: Record<string, { read: boolean; edit: boolean }>
 ): ListTableColumn<WorkflowRuleListItem>[] => [
   {
     id: 'rule_name',
@@ -78,14 +79,28 @@ export const getWorkflowColumns = (
     label: 'Assign Rule',
     width: 90,
     sortable: false,
-    render: (row) => (
-      <span
-        onClick={() => handleCreateRuleMap(row)}
-        className='cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
-      >
-        Assign
-      </span>
-    ),
+    hide:
+      !permissionMap?.['assign_rule']?.edit &&
+      !permissionMap?.['assign_rule']?.read,
+    render: (row) => {
+      const canEditAssignRule = !!permissionMap?.['assign_rule']?.edit;
+      return (
+        <span
+          onClick={() => {
+            if (canEditAssignRule) {
+              handleCreateRuleMap(row);
+            }
+          }}
+          className={`${
+            canEditAssignRule
+              ? 'cursor-pointer !text-[#1755E7] underline hover:text-[#1755E7]'
+              : 'cursor-default text-gray-500 underline'
+          }`}
+        >
+          Assign
+        </span>
+      );
+    },
   },
   {
     id: 'is_active',
@@ -93,21 +108,26 @@ export const getWorkflowColumns = (
     label: 'Status',
     width: 60,
     sortable: false,
-    render: (row) => (
-      <div className='text-center'>
-        <Tooltip
-          title={row.is_active ? 'Disable Rule' : 'Enable Rule'}
-          arrow
-          placement='top'
-        >
-          <Switch
-            size='small'
-            color={row.is_active ? 'success' : 'warning'}
-            onChange={(_e, checked) => handleToggleStatus(row, checked)}
-            checked={row.is_active}
-          />
-        </Tooltip>
-      </div>
-    ),
+    hide: !permissionMap?.['status']?.edit && !permissionMap?.['status']?.read,
+    render: (row) => {
+      const canEditStatus = !!permissionMap?.['status']?.edit;
+      return (
+        <div className='text-center'>
+          <Tooltip
+            title={row.is_active ? 'Disable Rule' : 'Enable Rule'}
+            arrow
+            placement='top'
+          >
+            <Switch
+              size='small'
+              color={row.is_active ? 'success' : 'warning'}
+              onChange={(_e, checked) => handleToggleStatus(row, checked)}
+              checked={row.is_active}
+              disabled={!canEditStatus}
+            />
+          </Tooltip>
+        </div>
+      );
+    },
   },
 ];

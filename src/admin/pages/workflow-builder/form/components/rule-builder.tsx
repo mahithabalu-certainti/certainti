@@ -283,11 +283,11 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
                 </Tooltip>
               )}
             </div>
-            {!isEditView && (
+            {/* {!isEditView && (
               <span className='px-1 py-0.5 bg-purple-100 text-purple-700 text-xs font-medium rounded'>
                 NEW
               </span>
-            )}
+            )} */}
           </div>
         )}
       </div>
@@ -330,7 +330,7 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
                       {rule.trigger ? (
                         <span className='capitalize'>{rule.trigger.name}</span>
                       ) : (
-                        'Add a trigger'
+                        'Add trigger'
                       )}
                     </h3>
                     <p className='text-xs text-gray-600'>
@@ -564,7 +564,7 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
                       rule.actions.length > 0 &&
                       currentStep === 'action-template' &&
                       rule.actions.some(
-                        (action) => !rule.actionTemplates?.[action.id]
+                        (action) => !rule.actionTemplates?.[action.name] // Use action.name
                       )
                     }
                   />
@@ -581,7 +581,7 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
                         ? 'border-blue-500 bg-blue-50'
                         : rule.actions.length > 0 &&
                             rule.actions.every(
-                              (action) => rule.actionTemplates?.[action.id]
+                              (action) => rule.actionTemplates?.[action.name] // Use action.name
                             )
                           ? 'border border-[#d467d4] bg-[#d446d41f]'
                           : 'border-gray-300 bg-white'
@@ -597,12 +597,12 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
                         className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 border ${
                           currentStep === 'action-template' &&
                           rule.actions.some(
-                            (action) => !rule.actionTemplates?.[action.id]
+                            (action) => !rule.actionTemplates?.[action.name] // Use action.name
                           )
                             ? 'border-blue-500 bg-blue-200'
                             : rule.actions.length > 0 &&
                                 rule.actions.every(
-                                  (action) => rule.actionTemplates?.[action.id]
+                                  (action) => rule.actionTemplates?.[action.name] // Use action.name
                                 )
                               ? 'border border-[#d467d4] bg-[#dda0dd1f]'
                               : 'bg-gray-200 border-gray-300'
@@ -612,13 +612,13 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
                           className={`text-sm ${
                             currentStep === 'action-template' &&
                             rule.actions.some(
-                              (action) => !rule.actionTemplates?.[action.id]
+                              (action) => !rule.actionTemplates?.[action.name] // Use action.name
                             )
                               ? 'text-blue-700'
                               : rule.actions.length > 0 &&
                                   rule.actions.every(
                                     (action) =>
-                                      rule.actionTemplates?.[action.id]
+                                      rule.actionTemplates?.[action.name] // Use action.name
                                   )
                                 ? 'text-[#d720d7]'
                                 : 'text-gray-700'

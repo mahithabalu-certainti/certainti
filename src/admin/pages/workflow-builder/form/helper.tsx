@@ -223,7 +223,7 @@ export const transformApiResponseToRule = (data: RuleDetails): Rule => {
         category: conditionItem.category_rid, // Category RID preserved
         name: conditionItem.category_name,
         field: conditionItem.field_rid, // Field RID preserved
-        fieldName: conditionItem.field_name,
+        fieldName: conditionItem.field_description || conditionItem.field_name, // Use field_description if available, fallback to field_name
         operator: conditionItem.operator_rid, // Operator RID preserved
         operatorName: conditionItem.operator_name,
         value: conditionItem.value_rid, // Value RID preserved
@@ -258,7 +258,7 @@ export const transformApiResponseToRule = (data: RuleDetails): Rule => {
       (a) => a.name === ActionTypeEnum.InApp || a.name === 'In App'
     );
     if (inAppAction) {
-      actionTemplates[inAppAction.id] = {
+      actionTemplates[inAppAction.name] = { // Use action.name as key
         rid: ruleData.in_app_template_rid,
         channel: 'In App',
       };
@@ -270,7 +270,7 @@ export const transformApiResponseToRule = (data: RuleDetails): Rule => {
       (a) => a.name === ActionTypeEnum.Email || a.name === 'Email'
     );
     if (emailAction) {
-      actionTemplates[emailAction.id] = {
+      actionTemplates[emailAction.name] = { // Use action.name as key
         rid: ruleData.email_template_rid,
         channel: 'Email',
       };
@@ -622,23 +622,6 @@ export const getDynamicSvgIcon = (
     );
   }
 
-  // 👤 User
-  if (isUser) {
-    return (
-      <svg
-        width={size}
-        height={size}
-        viewBox='0 0 24 24'
-        fill='none'
-        stroke={color}
-        strokeWidth='2'
-      >
-        <circle cx='12' cy='8' r='3' />
-        <path d='M5 20c1-4 4-6 7-6s6 2 7 6' />
-      </svg>
-    );
-  }
-
   // 📝 Task (increased stroke weight)
   if (isTask) {
     return (
@@ -667,6 +650,23 @@ export const getDynamicSvgIcon = (
             strokeLinejoin='round'
           />
         </g>
+      </svg>
+    );
+  }
+
+  // 👤 User
+  if (isUser) {
+    return (
+      <svg
+        width={size}
+        height={size}
+        viewBox='0 0 24 24'
+        fill='none'
+        stroke={color}
+        strokeWidth='2'
+      >
+        <circle cx='12' cy='8' r='3' />
+        <path d='M5 20c1-4 4-6 7-6s6 2 7 6' />
       </svg>
     );
   }

@@ -220,6 +220,8 @@ export enum AllModules {
   ACTIVITIES_TASK = 'activity_task',
   ACTIVITIES_MEETING = 'activity_meeting',
   ACTIVITIES_CALL = 'activity_call',
+  WORKFLOW_BUILDER = 'workflow_builder',
+  MANAGE_JURISDICTION_RULE = 'manage_jurisdiction_rule'
 }
 
 export enum AllPermissions {
@@ -372,6 +374,10 @@ export enum AllPermissions {
   CONFIGURE_SETTINGS_VIEW_EDIT = 'manage_jurisdiction_rule_view_edit',
   CONFIGURE_SETTINGS_EXPORT = 'manage_jurisdiction_rule_export',
   CONFIGURE_SETTINGS_CREATE = 'manage_jurisdiction_rule_create',
+  WORKFLOW_BUILDER_VIEW_EDIT = 'workflow_rule_view_edit',
+  WORKFLOW_BUILDER_CREATE = 'workflow_rule_create',
+  WORKFLOW_BUILDER_EXPORT = 'workflow_rule_export',
+  WORKFLOW_BUILDER_DELETE = 'workflow_rule_delete',
 }
 
 export interface Country {

@@ -34,6 +34,7 @@ interface ConditionFormProps {
   onDelete: () => void;
   showValidationErrors?: boolean;
   isDuplicate?: boolean;
+  disabledFieldIds?: string[]; // Fields that should be disabled in dropdown
 }
 
 interface FieldSuggestion {
@@ -51,6 +52,7 @@ const ConditionForm: React.FC<ConditionFormProps> = ({
   onDelete,
   showValidationErrors = false,
   isDuplicate = false,
+  disabledFieldIds = [],
 }) => {
   const [fieldInputValue, setFieldInputValue] = useState(
     condition.field ? condition.fieldName || condition.field : ''
@@ -65,6 +67,22 @@ const ConditionForm: React.FC<ConditionFormProps> = ({
   );
 
   const { validatedFieldErrors } = useWorkflowContext();
+
+  // Sync local state when condition prop changes externally (e.g., when cleared)
+  React.useEffect(() => {
+    // If condition.field is empty but local state still has a value, clear it
+    if (!condition.field && (fieldInputValue || selectedFieldRid || isFieldFromValidSelection)) {
+      setFieldInputValue('');
+      setSelectedFieldRid('');
+      setIsFieldFromValidSelection(false);
+    }
+    // If condition.field has a value and local state doesn't match, update it
+    else if (condition.field && selectedFieldRid !== condition.field) {
+      setFieldInputValue(condition.fieldName || condition.field);
+      setSelectedFieldRid(condition.field);
+      setIsFieldFromValidSelection(true);
+    }
+  }, [condition.field, condition.fieldName, fieldInputValue, selectedFieldRid, isFieldFromValidSelection]);
 
   // Fetch fields based on selected category
   const { data: fieldsData, isLoading: isLoadingFields } =
@@ -93,6 +111,7 @@ const ConditionForm: React.FC<ConditionFormProps> = ({
       fieldsData?.data?.map((field) => ({
         id: field.rid,
         name: field.name,
+        description: field.field_description, // Use field_description for display
       })) || []
     );
   }, [fieldsData]);
@@ -118,12 +137,14 @@ const ConditionForm: React.FC<ConditionFormProps> = ({
   const isFieldEmpty = !condition.field;
 
   const getAllFieldSuggestions = (): FieldSuggestion[] => {
-    return availableFields.map((field) => ({
-      id: field.id,
-      display: field.name,
-      fullPath: field.id,
-      description: field.name,
-    }));
+    return availableFields
+      .filter((field) => !disabledFieldIds.includes(field.id)) // Filter out disabled fields
+      .map((field) => ({
+        id: field.id,
+        display: field.description || field.name, // Use field_description for display
+        fullPath: field.id,
+        description: field.description || field.name,
+      }));
   };
 
   const filterFieldSuggestions = (inputValue: string): FieldSuggestion[] => {
@@ -211,7 +232,7 @@ const ConditionForm: React.FC<ConditionFormProps> = ({
       onChange({
         ...condition,
         field: selectedField.id,
-        fieldName: selectedField.name, // Store display name
+        fieldName: selectedField.description || selectedField.name, // Store field_description for display
         operator: '',
         operatorName: '',
         value: '',

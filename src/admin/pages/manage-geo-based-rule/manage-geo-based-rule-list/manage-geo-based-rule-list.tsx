@@ -9,6 +9,7 @@ import { GeoBasedRuleListParams } from '../../../types/geo-based-rule';
 import { MANAGE_GEO_BASED_RULE_CREATE } from '../../../../routes';
 import { checkPermission } from '../../../../common-utils';
 import {
+  AllModules,
   AllPermissions,
   useGetAllCountries,
   useGetStatus,
@@ -21,6 +22,7 @@ import { SelectOption } from '../../../../consultant/types';
 import { FilterCondition, Filters } from '../../../types/manage-user';
 import { FilterValue } from '../../../../consultant/types/account-filter';
 import { useFetchState } from '../../../../consultant/services/account';
+import { AccessRestricted } from '../../../../components/account-restricted';
 
 const BUTTON_STYLES = {
   height: '24px',
@@ -49,7 +51,7 @@ export const ManageGeoBasedRuleList: React.FC = () => {
   };
   const [refreshTrigger, setRefreshTrigger] = useState<number>();
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
-  const { permission } = useSelector((state: RootState) => state.permission);
+  const { permission, modules } = useSelector((state: RootState) => state.permission);
   const [columnAnchorEl, setColumnAnchorEl] =
     React.useState<HTMLButtonElement | null>(null);
   const [currentCountry, setCurrentCountry] = useState<string>('');
@@ -176,6 +178,16 @@ export const ManageGeoBasedRuleList: React.FC = () => {
         }),
     },
   ];
+  const isEmailTemplateViewAllEnable = checkPermission(
+    permission,
+    AllPermissions.CONFIGURE_SETTINGS_VIEW_EDIT
+  );
+  const isEmailTemplatesEnable = checkPermission(
+    modules,
+    AllModules.MANAGE_JURISDICTION_RULE
+  );
+  if (!isEmailTemplatesEnable || !isEmailTemplateViewAllEnable)
+    return <AccessRestricted />;
   return (
     <div className='flex flex-col h-full w-full'>
       {/* Header Section */}
