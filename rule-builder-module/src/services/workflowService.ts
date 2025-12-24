@@ -1029,6 +1029,27 @@ export class WorkFlowService {
                         templateDetails[0].subject = templateDetails[0].subject.replace('{{accountName}}', accountNameValue);
                     }
                 }
+                if (messageTemplate.includes('{{plannedSubmissionDate}}')) {
+                    const plannedSubmissionDateValue = taskContext.plannedSubmissionDate ? taskContext.plannedSubmissionDate : '';
+                    messageTemplate = messageTemplate.replace('{{plannedSubmissionDate}}', plannedSubmissionDateValue);
+                    if (templateDetails[0].subject != null) {
+                        templateDetails[0].subject = templateDetails[0].subject.replace('{{plannedSubmissionDate}}', plannedSubmissionDateValue);
+                    }
+                }
+                 if (messageTemplate.includes('{{dueDate}}')) {
+                    const dueDateValue = taskContext.dueDate ? taskContext.dueDate : '';
+                    messageTemplate = messageTemplate.replace('{{dueDate}}', dueDateValue);
+                    if (templateDetails[0].subject != null) {
+                        templateDetails[0].subject = templateDetails[0].subject.replace('{{dueDate}}', dueDateValue);
+                    }
+                }
+                 if (messageTemplate.includes('{{statutorySubmissionDate}}')) {
+                    const statutorySubmissionDateValue   = taskContext.statutorySubmissionDate ? taskContext.statutorySubmissionDate : '';
+                    messageTemplate = messageTemplate.replace('{{statutorySubmissionDate}}', statutorySubmissionDateValue);
+                    if (templateDetails[0].subject != null) {
+                        templateDetails[0].subject = templateDetails[0].subject.replace('{{statutorySubmissionDate}}', statutorySubmissionDateValue);
+                    }
+                }
                 templateDetails[0].message_template = messageTemplate;
                 return {
                     templateDetails: templateDetails
