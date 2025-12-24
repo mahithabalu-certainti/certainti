@@ -295,7 +295,6 @@ export const CaseDetails = () => {
       }
       navigate({ search: newParams.toString() }, { replace: true });
     } else if (searchParams.get('list') !== 'projectTask') {
-      console.log('projectTask');
       const newParams = new URLSearchParams(searchParams);
       newParams.delete('caseProjectTask');
       navigate({ search: newParams.toString() }, { replace: true });
@@ -303,7 +302,6 @@ export const CaseDetails = () => {
   }, [searchParams.get('list')]);
   useEffect(() => {
     if (searchParams.get('list') !== 'projectTask') {
-      console.log('working');
       const newParams = new URLSearchParams(searchParams);
       newParams.delete('caseProjectTask');
       navigate({ search: newParams.toString() }, { replace: true });
@@ -516,7 +514,6 @@ export const CaseDetails = () => {
       }
     } else if (list === 'technicalSummary') {
       if (exportType === 'technical_summary') {
-        console.log('list', technicalSummaryParams);
         exportCasesTechnicalSummary(technicalSummaryParams);
       }
     }

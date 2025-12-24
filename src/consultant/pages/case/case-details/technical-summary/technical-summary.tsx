@@ -55,7 +55,6 @@ const TechnicalSummary: React.FC<TechnicalSummaryProps> = ({
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { caseId } = useParams();
-  console.log(caseId, 'caseId');
   const accountID = searchParams.get('accountID');
   const [appliedFilters, setAppliedFilters] = useState<
     Record<string, string | number | boolean>
@@ -176,7 +175,6 @@ const TechnicalSummary: React.FC<TechnicalSummaryProps> = ({
 
   const handleViewTechnicalSummary = (row: TechnicalSummaryList) => {
     if (row) {
-      console.log(row, 'rid');
       searchParams.set('technical_summary_id', row.rid);
       searchParams.set('project_id', row.project_rid);
       navigate({ search: searchParams.toString() }, { replace: true });
