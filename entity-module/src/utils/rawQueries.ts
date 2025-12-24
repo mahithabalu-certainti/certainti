@@ -2199,14 +2199,14 @@ export const summaryHighlightsQueryRegionForCase = (
       SUM(COALESCE(cf.total_subcon_prj,0)) as total_subcon,
       SUM(COALESCE(cf.total_nonlabor_prj, 0)) AS total_nonlabor,
       cf.account_rid
-      FROM 
-      ${schemaName}.case_project_fiscal_region cf
+      FROM ${schemaName}.case_projects cf
+      LEFT JOIN ${schemaName}.case_project_fiscal_region cp ON cf.rid = cp.case_project_rid AND cp.region_rid = cf.region_rid
       WHERE
       cf.account_rid = '${account_rid}'
       AND
       cf.fiscal_year = ${fiscal_year}
       AND
-      cf.region_rid = '${region_rid}' 
+      cp.region_rid = '${region_rid}' 
       AND
       cf.case_rid = '${caseRid}'
       GROUP BY cf.account_rid
@@ -2217,14 +2217,15 @@ export const summaryHighlightsQueryRegionForCase = (
         CAST(SUM(COALESCE(cf.total_effort_fte_prj,0.00)) AS DECIMAL(18,2)) AS project_level, 
         CAST(SUM(COALESCE(cf.total_effort_fte_from_prj_res,0.00)) AS DECIMAL(18,2)) AS project_resource_level, 
         CAST(SUM(COALESCE(cf.total_effort_fte_from_tasks,0.00)) AS DECIMAL(18,2)) AS project_task_level
-      FROM
-      ${schemaName}.case_project_fiscal_region cf
+      
+      FROM ${schemaName}.case_projects cf
+      LEFT JOIN ${schemaName}.case_project_fiscal_region cp ON cf.rid = cp.case_project_rid AND cp.region_rid = cf.region_rid
       WHERE 
         cf.account_rid = '${account_rid}'
         AND
         cf.fiscal_year = ${fiscal_year}
         AND
-        cf.region_rid = '${region_rid}'
+        cp.region_rid = '${region_rid}'
         AND
         cf.case_rid = '${caseRid}'
       GROUP BY cf.account_rid
@@ -2235,14 +2236,14 @@ export const summaryHighlightsQueryRegionForCase = (
         CAST(SUM(COALESCE(cf.total_cost_fte_prj,0.00)) AS DECIMAL(18,2)) AS project_level, 
         CAST(SUM(COALESCE(cf.total_cost_fte_from_prj_res,0.00)) AS DECIMAL(18,2)) AS project_resource_level, 
         CAST(SUM(COALESCE(cf.total_cost_fte_from_tasks,0.00)) AS DECIMAL(18,2)) AS project_task_level
-      FROM 
-      ${schemaName}.case_project_fiscal_region cf
+      FROM ${schemaName}.case_projects cf
+      LEFT JOIN ${schemaName}.case_project_fiscal_region cp ON cf.rid = cp.case_project_rid AND cp.region_rid = cf.region_rid
       WHERE 
         cf.account_rid = '${account_rid}'
         AND
         cf.fiscal_year = ${fiscal_year}
         AND
-        cf.region_rid = '${region_rid}'
+        cp.region_rid = '${region_rid}'
         AND
         cf.case_rid = '${caseRid}'
       GROUP BY cf.account_rid
@@ -2253,14 +2254,14 @@ export const summaryHighlightsQueryRegionForCase = (
         CAST(SUM(COALESCE(cf.total_effort_subcon_prj,0.00)) AS DECIMAL(18,2)) AS project_level, 
         CAST(SUM(COALESCE(cf.total_effort_subcon_from_prj_res,0.00)) AS DECIMAL(18,2)) AS project_resource_level, 
         CAST(SUM(COALESCE(cf.total_effort_subcon_from_tasks,0.00)) AS DECIMAL(18,2)) AS project_task_level
-      FROM 
-      ${schemaName}.case_project_fiscal_region cf
+      FROM ${schemaName}.case_projects cf
+      LEFT JOIN ${schemaName}.case_project_fiscal_region cp ON cf.rid = cp.case_project_rid AND cp.region_rid = cf.region_rid
       WHERE 
         cf.account_rid = '${account_rid}'
         AND
         cf.fiscal_year = ${fiscal_year}
         AND
-        cf.region_rid = '${region_rid}'
+        cp.region_rid = '${region_rid}'
         AND
         cf.case_rid = '${caseRid}'
         GROUP BY cf.account_rid
@@ -2271,14 +2272,14 @@ export const summaryHighlightsQueryRegionForCase = (
           CAST(SUM(COALESCE(cf.total_cost_subcon_prj,0.00)) AS DECIMAL(18,2)) AS project_level, 
           CAST(SUM(COALESCE(cf.total_cost_subcon_from_prj_res,0.00)) AS DECIMAL(18,2)) AS project_resource_level, 
           CAST(SUM(COALESCE(cf.total_cost_subcon_from_tasks,0.00)) AS DECIMAL(18,2)) AS project_task_level
-      FROM 
-      ${schemaName}.case_project_fiscal_region cf
+      FROM ${schemaName}.case_projects cf
+      LEFT JOIN ${schemaName}.case_project_fiscal_region cp ON cf.rid = cp.case_project_rid AND cp.region_rid = cf.region_rid
       WHERE 
         cf.account_rid = '${account_rid}'
         AND
         cf.fiscal_year = ${fiscal_year}
         AND
-        cf.region_rid = '${region_rid}'
+        cp.region_rid = '${region_rid}'
         AND
         cf.case_rid = '${caseRid}'
       GROUP BY cf.account_rid
@@ -2289,14 +2290,14 @@ export const summaryHighlightsQueryRegionForCase = (
         CAST(SUM(COALESCE(cf.total_cost_nonlabor_prj,0.00)) AS DECIMAL(18,2)) AS project_level, 
         CAST(SUM(COALESCE(cf.total_cost_nonlabor_from_prj_res,0.00)) AS DECIMAL(18,2)) AS project_resource_level
       
-      FROM 
-      ${schemaName}.case_project_fiscal_region cf
+      FROM ${schemaName}.case_projects cf
+      LEFT JOIN ${schemaName}.case_project_fiscal_region cp ON cf.rid = cp.case_project_rid AND cp.region_rid = cf.region_rid
       WHERE 
         cf.account_rid = '${account_rid}'
         AND
         cf.fiscal_year = ${fiscal_year}
         AND
-        cf.region_rid = '${region_rid}'
+        cp.region_rid = '${region_rid}'
         AND
         cf.case_rid = '${caseRid}'
       GROUP BY cf.account_rid
@@ -2325,14 +2326,14 @@ export const summaryHighlightsQueryRegionForCase = (
         CAST(SUM(COALESCE(cf.rd_credits_subcon_fed_level,0.00)) AS DECIMAL(18,2)) AS rd_credits_subcon,
         CAST(SUM(COALESCE(cf.rd_credits_nonlabor_fed_level,0.00)) AS DECIMAL(18,2)) AS rd_credits_nonlabor,
         CAST(SUM(COALESCE(cf.rd_credits_total,0.00)) AS DECIMAL(18,2)) AS rd_credits_total
-      FROM 
-      ${schemaName}.case_project_fiscal_region cf
+      FROM ${schemaName}.case_projects cf
+      LEFT JOIN ${schemaName}.case_project_fiscal_region cp ON cf.rid = cp.case_project_rid AND cp.region_rid = cf.region_rid
       WHERE 
       cf.account_rid = '${account_rid}'
       AND
       cf.fiscal_year = ${fiscal_year}
       AND
-      cf.region_rid = '${region_rid}'
+      cp.region_rid = '${region_rid}'
       AND
       cf.case_rid = '${caseRid}'
       GROUP BY cf.account_rid
