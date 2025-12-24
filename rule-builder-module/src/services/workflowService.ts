@@ -861,7 +861,9 @@ export class WorkFlowService {
             if (ruleConditions.length === 0 || ruleResult) {
                 const actions = actionsByRule[rule_rid] || [];
                 for (const action of actions) {
+                    if(entity?.ruleScope === request.eventName){
                     await this.executeAction(action, entity, userId, rule_rid);
+                    }
                 }
                 triggeredActions[rule_rid] = actions;
             }
@@ -969,54 +971,62 @@ export class WorkFlowService {
     async getNotificationTemplateDetails(templateName: string, oldValue: string, newValue: string, entityName: string, channel: string, ruleRid: string): Promise<{
         templateDetails: any;
     }> {
-        const mainDb = await this.getMainDb();
-        let [notificationTemplateRid]: any[] = [];
-        if (channel === "In App") {
-            [notificationTemplateRid] = await mainDb.query<any>(
-                rawQueries.fetchNotificationInAppTemplatesForRule(ruleRid),
+        try {
+            const mainDb = await this.getMainDb();
+            let [notificationTemplateRid]: any[] = [];
+            if (channel === "In App") {
+                [notificationTemplateRid] = await mainDb.query<any>(
+                    rawQueries.fetchNotificationInAppTemplatesForRule(ruleRid),
+                    { type: QueryTypes.SELECT }
+                );
+            } else {
+                [notificationTemplateRid] = await mainDb.query<any>(
+                    rawQueries.fetchNotificationEmailTemplatesForRule(ruleRid),
+                    { type: QueryTypes.SELECT }
+                );
+            }
+            if (
+                notificationTemplateRid === undefined ||
+                notificationTemplateRid === null ||
+                typeof notificationTemplateRid !== 'object' ||
+                !('template_rid' in notificationTemplateRid) ||
+                !notificationTemplateRid.template_rid
+            ) {
+                return {
+                    templateDetails: []
+                };
+            }
+            const templateDetails = await mainDb.query<any>(
+                rawQueries.fetchNotificationTemplateDetails(
+                    notificationTemplateRid.template_rid, channel
+                ),
                 { type: QueryTypes.SELECT }
             );
-        } else {
-            [notificationTemplateRid] = await mainDb.query<any>(
-                rawQueries.fetchNotificationEmailTemplatesForRule(ruleRid),
-                { type: QueryTypes.SELECT }
-            );
-        }
-        if (
-            notificationTemplateRid === undefined ||
-            notificationTemplateRid === null ||
-            typeof notificationTemplateRid !== 'object' ||
-            !('template_rid' in notificationTemplateRid) ||
-            !notificationTemplateRid.template_rid
-        ) {
-            return {
-                templateDetails: []
-            };
-        }
-        const templateDetails = await mainDb.query<any>(
-            rawQueries.fetchNotificationTemplateDetails(
-                notificationTemplateRid.template_rid, channel
-            ),
-            { type: QueryTypes.SELECT }
-        );
-        if (templateDetails.length > 0) {
-            let messageTemplate = templateDetails[0].message_template;
-            if (messageTemplate.includes('{{old_value}}')) {
-                messageTemplate = messageTemplate.replace('{{old_value}}', oldValue != null ? oldValue : '');
+            if (templateDetails.length > 0) {
+                let messageTemplate = templateDetails[0].message_template;
+                if (messageTemplate.includes('{{old_value}}')) {
+                    messageTemplate = messageTemplate.replace('{{old_value}}', oldValue != null ? oldValue : '');
+                }
+                if (messageTemplate.includes('{{new_value}}')) {
+                    messageTemplate = messageTemplate.replace('{{new_value}}', newValue != null ? newValue : '');
+                }
+                if (messageTemplate.includes('{{entityName}}')) {
+                    messageTemplate = messageTemplate.replace('{{entityName}}', entityName != null ? entityName : '');
+                    if (templateDetails[0].subject != null) {
+                        templateDetails[0].subject = templateDetails[0].subject.replace('{{entityName}}', entityName != null ? entityName : '');
+                    }
+                }
+                templateDetails[0].message_template = messageTemplate;
+                return {
+                    templateDetails: templateDetails
+                };
+            } else {
+                // If no template found, just return empty array and continue
+                return {
+                    templateDetails: []
+                };
             }
-            if (messageTemplate.includes('{{new_value}}')) {
-                messageTemplate = messageTemplate.replace('{{new_value}}', newValue != null ? newValue : '');
-            }
-            if (messageTemplate.includes('{{entityName}}')) {
-                messageTemplate = messageTemplate.replace('{{entityName}}', entityName != null ? entityName : '');
-                templateDetails[0].subject = templateDetails[0].subject.replace('{{entityName}}', entityName != null ? entityName : '');
-            }
-            templateDetails[0].message_template = messageTemplate;
-            return {
-                templateDetails: templateDetails
-            };
-        } else {
-            // If no template found, just return empty array and continue
+        } catch (error) {
             return {
                 templateDetails: []
             };
