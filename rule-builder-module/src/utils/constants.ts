@@ -287,7 +287,7 @@ export const rawQueries = {
   },
 
   fetchConditionsByRuleRid(rule_rid: string): string {
-    let query = `SELECT cc.rid as category_rid,cc.name as category_name, cc.description as category_description, wrc.logical_operator as category_operator, rf.rid as field_rid, rf.name as field_name, ro.rid as operator_rid, ro.name as operator_name, rv.rid as value_rid, rv.name as value_name  FROM ${MAIN_SCHEMA_NAME}.condition_category cc JOIN ${MAIN_SCHEMA_NAME}.workflow_rule_condition wrc ON cc.rid = wrc.category_rid JOIN ${MAIN_SCHEMA_NAME}.rule_fields rf on rf.rid = wrc.field_rid JOIN ${MAIN_SCHEMA_NAME}.rule_operators ro ON ro.rid = wrc.operator_rid JOIN ${MAIN_SCHEMA_NAME}.rule_values rv ON rv.rid = wrc.value_rid
+    let query = `SELECT cc.rid as category_rid,cc.name as category_name, cc.description as category_description, wrc.logical_operator as category_operator, rf.rid as field_rid, rf.name as field_name,rf.field_description, ro.rid as operator_rid, ro.name as operator_name, rv.rid as value_rid, rv.name as value_name  FROM ${MAIN_SCHEMA_NAME}.condition_category cc JOIN ${MAIN_SCHEMA_NAME}.workflow_rule_condition wrc ON cc.rid = wrc.category_rid JOIN ${MAIN_SCHEMA_NAME}.rule_fields rf on rf.rid = wrc.field_rid JOIN ${MAIN_SCHEMA_NAME}.rule_operators ro ON ro.rid = wrc.operator_rid JOIN ${MAIN_SCHEMA_NAME}.rule_values rv ON rv.rid = wrc.value_rid
     WHERE wrc.rule_rid = '${rule_rid}' `;
     return query;
   },
