@@ -122,6 +122,7 @@ export interface RuleCategoryFieldsPayload {
 export interface RuleCategoryFieldItem {
   rid: string;
   name: string;
+  field_description: string;
 }
 
 export interface RuleCategoryFieldsResponse {
@@ -236,6 +237,7 @@ export interface RuleDetails {
     category_operator: 'AND' | 'OR' | null;
     field_rid: string;
     field_name: string;
+    field_description?: string;
     operator_rid: string;
     operator_name: string;
     value_rid: string;
@@ -292,6 +294,7 @@ export type WorkflowRuleListItem = {
   modified_user_name: string | null;
   created_datetime: string;
   modified_datetime: string | null;
+  event_type?: string;
 };
 
 export interface WorkflowRuleListResponse {

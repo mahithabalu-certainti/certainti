@@ -121,9 +121,9 @@ const ActionTemplate: React.FC = () => {
             <ActionTemplateItem
               key={action.id}
               action={action}
-              selectedTemplate={rule.actionTemplates?.[action.id]}
+              selectedTemplate={rule.actionTemplates?.[action.name]}
               onTemplateChange={(templateData) =>
-                updateActionTemplate(action.id, templateData)
+                updateActionTemplate(action.name, templateData)
               }
             />
           ))

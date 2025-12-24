@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { getWorkflowColumns } from './columns';
 import { ShowHideTableColumn } from '../../../../../components/table/types';
 import {
@@ -13,10 +13,12 @@ import {
   WorkflowRuleListItem,
   WorkflowRuleListURLParams,
 } from '../../../../types';
-import { FilterTypes } from '../../../../../common-service';
+import { AllPermissions, FilterTypes } from '../../../../../common-service';
 import { generatePath, useNavigate } from 'react-router-dom';
 import { WORKFLOW_BUILDER_EDIT } from '../../../../../routes';
 import RuleMapModal from '../components/rule-map-modal';
+import { RootState } from '../../../../../store/store';
+import { useSelector } from 'react-redux';
 
 interface IWorkflowTableProps {
   appliedFilters: FilterTypes;
@@ -48,6 +50,8 @@ export const WorkflowTable: React.FC<IWorkflowTableProps> = ({
   const [isRuleMapModalOpen, setIsRuleMapModalOpen] = useState(false);
   const [selectedRuleData, setSelectedRuleData] =
     useState<WorkflowRuleListItem | null>(null);
+  // Permission Management
+  const { permission } = useSelector((state: RootState) => state.permission);
 
   const {
     data,
@@ -72,6 +76,31 @@ export const WorkflowTable: React.FC<IWorkflowTableProps> = ({
       setWorkflowList(data.rules || []);
     }
   }, [data]);
+
+  // Permissions
+  const workflowFieldsEditable = useMemo(
+    () =>
+      permission
+        .find((item) => item.name === AllPermissions.WORKFLOW_BUILDER_VIEW_EDIT)
+        ?.fields?.some((field) => field.edit),
+    [permission]
+  );
+
+  const workflowEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.WORKFLOW_BUILDER_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    workflowEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [workflowEditFields]);
 
   const handleSort = (sortBy: string, sortOrder: 'asc' | 'desc') => {
     const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
@@ -164,13 +193,14 @@ export const WorkflowTable: React.FC<IWorkflowTableProps> = ({
     {
       label: 'Edit',
       onClick: (row: WorkflowRuleListItem) => handleEdit(row),
-      // hide: !notesFieldsEditable,
+      hide: !workflowFieldsEditable,
     },
   ];
 
   const workflowColumns = getWorkflowColumns(
     handleToggleStatus,
-    handleCreateRuleMap
+    handleCreateRuleMap,
+    permissionMap
   );
 
   const handlePopoverClose = () => {
@@ -230,6 +260,7 @@ export const WorkflowTable: React.FC<IWorkflowTableProps> = ({
         ruleRid={selectedRuleData?.rid || ''}
         isRuleMapped={selectedRuleData?.is_rule_mapped || false}
         onSuccess={handleRuleMapSuccess}
+        eventType={selectedRuleData?.event_type}
       />
 
       <ListTable

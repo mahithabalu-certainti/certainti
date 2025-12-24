@@ -338,8 +338,15 @@ export const ProfileUserDetailComponent = ({
 
   const uploadProfilePicture = async (file: File) => {
     try {
+      const sanitizeFileName = (name: string) => {
+        return name.replace(/[ _]/g, '-').replace(/-+/g, '-');
+      };
+
+      const safeName = sanitizeFileName(file.name);
+      const sanitizedFile = new File([file], safeName, { type: file.type });
+
       const formData = new FormData();
-      formData.append('profile', file);
+      formData.append('profile', sanitizedFile);
 
       await uploadImage(formData, {
         onSuccess: (response) => {

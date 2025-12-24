@@ -6,7 +6,7 @@ import {
   getDynamicSvgIcon,
 } from '../helper';
 import { AddIcon, SwapIcon } from '../../../../../assets';
-import { Button } from '@mui/material';
+import { Button, Tooltip } from '@mui/material';
 import { useWorkflowContext } from '../workflow-context';
 import { ConditionListResponse } from '../../../../types';
 import { useGetConditionCategoryList } from '../../../../service/workflow-builder/workflow-builder-service';
@@ -306,80 +306,145 @@ const ConditionManager: React.FC<ConditionManagerProps> = ({
   return (
     <div>
       {/* Existing Conditions */}
-      {rule.conditions.map((condition, index) => (
-        <div key={condition.id}>
-          {index > 0 && (
-            <div className='relative flex justify-center'>
-              <div className='w-[1px] bg-gray-400 h-18 relative'>
-                <div className='absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2'>
-                  <Button
-                    variant='contained'
-                    size='small'
-                    onClick={() => {
-                      const newOperator =
-                        condition.logicalOperator === 'OR' ? 'AND' : 'OR';
-                      updateLogicalOperator(condition.id, newOperator);
-                    }}
-                    sx={{
-                      textTransform: 'none',
-                      fontWeight: 500,
-                      fontSize: '12px',
-                      width: 70,
-                      height: 28,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '4px',
-                      borderRadius: '3px',
-                      color:
-                        condition.logicalOperator === 'OR'
-                          ? '#0B5ED7'
-                          : '#374151',
-                      backgroundColor:
-                        condition.logicalOperator === 'OR'
-                          ? '#E8F0FE'
-                          : '#F3F4F6',
-                      border: '1px solid #D1D5DB',
-                      boxShadow: 'none',
-                      '&:hover': {
-                        backgroundColor:
-                          condition.logicalOperator === 'OR'
-                            ? '#DDE7FC'
-                            : '#E5E7EB',
-                        boxShadow: 'none',
-                      },
-                      transition: 'background-color 0.2s ease, color 0.2s ease',
-                    }}
-                  >
-                    <React.Suspense fallback={null}>
-                      <SwapIcon
-                        className={`w-4 h-4 transition-transform duration-300 ${
-                          condition.logicalOperator === 'OR'
-                            ? 'rotate-180 [&>path]:fill-[#0B5ED7]'
-                            : '[&>path]:fill-[#374151]'
-                        }`}
-                      />
-                    </React.Suspense>
-                    {condition.logicalOperator === 'OR' ? 'OR' : 'AND'}
-                  </Button>
+      {rule.conditions.map((condition, index) => {
+        // Calculate disabled fields for this condition
+        const disabledFieldIds: string[] = [];
+
+        // If this is condition 2 (index 1) and operator is AND
+        if (index === 1 && condition.logicalOperator === 'AND') {
+          // Get the field from condition 1
+          const condition1Field = rule.conditions[0]?.field;
+          if (condition1Field) {
+            disabledFieldIds.push(condition1Field);
+          }
+        }
+
+        // Check if AND button should be disabled (when both conditions have same field)
+        let isAndDisabled = false;
+        let andDisabledTooltip = '';
+
+        if (index === 1 && condition.logicalOperator === 'OR') {
+          const condition1 = rule.conditions[0];
+          const condition2 = condition;
+
+          if (
+            condition1.field &&
+            condition2.field &&
+            condition1.field === condition2.field
+          ) {
+            isAndDisabled = true;
+            andDisabledTooltip =
+              'Cannot use AND operator when both conditions use the same field. Please change one of the fields first.';
+          }
+        }
+
+        return (
+          <div key={condition.id}>
+            {index > 0 && (
+              <div className='relative flex justify-center'>
+                <div className='w-[1px] bg-gray-400 h-18 relative'>
+                  <div className='absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2'>
+                    <Tooltip
+                      title={
+                        isAndDisabled && condition.logicalOperator === 'OR'
+                          ? andDisabledTooltip
+                          : ''
+                      }
+                      arrow
+                      placement='top'
+                      slotProps={{
+                        tooltip: {
+                          sx: {
+                            backgroundColor: '#FEF2F2',
+                          },
+                        },
+                      }}
+                    >
+                      <span>
+                        <Button
+                          variant='contained'
+                          size='small'
+                          onClick={() => {
+                            const newOperator =
+                              condition.logicalOperator === 'OR' ? 'AND' : 'OR';
+                            updateLogicalOperator(condition.id, newOperator);
+                          }}
+                          disabled={
+                            isAndDisabled && condition.logicalOperator === 'OR'
+                          }
+                          sx={{
+                            textTransform: 'none',
+                            fontWeight: 500,
+                            fontSize: '12px',
+                            width: 70,
+                            height: 28,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '4px',
+                            borderRadius: '3px',
+                            color:
+                              condition.logicalOperator === 'OR'
+                                ? '#0B5ED7'
+                                : '#374151',
+                            backgroundColor:
+                              condition.logicalOperator === 'OR'
+                                ? '#E8F0FE'
+                                : '#F3F4F6',
+                            border: '1px solid #D1D5DB',
+                            boxShadow: 'none',
+                            '&:hover': {
+                              backgroundColor:
+                                condition.logicalOperator === 'OR'
+                                  ? '#DDE7FC'
+                                  : '#E5E7EB',
+                              boxShadow: 'none',
+                            },
+                            '&.Mui-disabled': {
+                              backgroundColor: '#F3F4F6',
+                              color: '#9CA3AF',
+                              // opacity: 0.6,
+                              cursor: 'not-allowed',
+                            },
+                            transition:
+                              'background-color 0.2s ease, color 0.2s ease',
+                          }}
+                        >
+                          <React.Suspense fallback={null}>
+                            <SwapIcon
+                              className={`w-4 h-4 transition-transform duration-300 ${
+                                isAndDisabled
+                                  ? '[&>path]:fill-[#9CA3AF]'
+                                  : condition.logicalOperator === 'OR'
+                                    ? 'rotate-180 [&>path]:fill-[#0B5ED7]'
+                                    : '[&>path]:fill-[#374151]'
+                              }`}
+                            />
+                          </React.Suspense>
+                          {condition.logicalOperator === 'OR' ? 'OR' : 'AND'}
+                        </Button>
+                      </span>
+                    </Tooltip>
+                  </div>
                 </div>
               </div>
+            )}
+            <div>
+              <ConditionForm
+                key={condition.id}
+                condition={condition}
+                isExpanded={isExpanded(condition.id)}
+                onToggleExpand={() => handleToggleExpand(condition.id)}
+                onChange={(updated) => updateCondition(condition.id, updated)}
+                onDelete={() => handleDeleteCondition(condition.id)}
+                showValidationErrors={validatedConditionIds.has(condition.id)}
+                isDuplicate={duplicateConditionIds.has(condition.id)}
+                disabledFieldIds={disabledFieldIds}
+              />
             </div>
-          )}
-          <div>
-            <ConditionForm
-              key={condition.id}
-              condition={condition}
-              isExpanded={isExpanded(condition.id)}
-              onToggleExpand={() => handleToggleExpand(condition.id)}
-              onChange={(updated) => updateCondition(condition.id, updated)}
-              onDelete={() => handleDeleteCondition(condition.id)}
-              showValidationErrors={validatedConditionIds.has(condition.id)}
-              isDuplicate={duplicateConditionIds.has(condition.id)}
-            />
           </div>
-        </div>
-      ))}
+        );
+      })}
 
       {/* Show connector line when adding new condition (CategorySelector is shown) */}
       {rule.conditions.length > 0 && showCategorySelector && (

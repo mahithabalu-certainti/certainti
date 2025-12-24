@@ -8,6 +8,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
 import { sideNavAdminItems } from '../sidebar/admin-menus';
 import { useWebSocket } from '../../hooks/use-websocket';
+import { useServiceWorkerPush } from '../../hooks/use-service-worker-push';
 import Footer from '../Footer';
 
 export const AppLayout: React.FC = () => {
@@ -22,6 +23,30 @@ export const AppLayout: React.FC = () => {
 
   // Initialize WebSocket connection for authenticated users
   useWebSocket();
+
+  // Initialize Service Worker for push notifications
+  const { requestPermission, subscribe, permission } = useServiceWorkerPush();
+
+  // Request notification permission after login
+  useEffect(() => {
+    // Check if we've already asked in this session
+    const hasAskedThisSession = sessionStorage.getItem(
+      'notification_permission_asked'
+    );
+
+    if (permission === 'default' && !hasAskedThisSession) {
+      const timer = setTimeout(async () => {
+        sessionStorage.setItem('notification_permission_asked', 'true');
+
+        const hasPermission = await requestPermission();
+        if (hasPermission) {
+          await subscribe();
+        }
+      }, 1500);
+
+      return () => clearTimeout(timer);
+    }
+  }, [permission, requestPermission, subscribe]);
 
   useEffect(() => {
     const showAdminSidebarLocalStorage =
