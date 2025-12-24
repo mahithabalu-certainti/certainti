@@ -107,6 +107,7 @@ import {
   exportFinancialProjectCost,
   exportFinancialResourceCost,
 } from '../../../services/financial/financial-service';
+import { exportCasesTechnicalSummary } from '../../../services/case-technical-summary/technical-summary-service';
 
 export const CaseDetails = () => {
   const navigate = useNavigate();
@@ -238,6 +239,8 @@ export const CaseDetails = () => {
       sortBy: 'r_number',
       sortOrder: 'ASC',
       filters: {},
+      case_rid: caseId ?? '',
+      account_rid: accountId ?? '',
     });
   const [activityParams, setActivityParams] =
     useState<ActivityListExportURLParams>({
@@ -402,6 +405,11 @@ export const CaseDetails = () => {
     AllPermissions.ACCOUNT_FINANCIAL_RESOURCE_COST_EXPORT
   );
 
+  const technicalSummaryExportEnable = checkPermission(
+    permission,
+    AllPermissions.PROJECT_TECHNICAL_SUMMARY_EXPORT
+  );
+
   // Activity Create Permission
   const isActivityTaskCreateEnable = checkPermission(
     permission,
@@ -439,7 +447,8 @@ export const CaseDetails = () => {
       searchParams.get('list') !== 'interactions' &&
       searchParams.get('list') !== 'projectTask' &&
       searchParams.get('list') !== 'projectResource' &&
-      searchParams.get('list') !== 'financialHighlights'
+      searchParams.get('list') !== 'financialHighlights' &&
+      searchParams.get('list') !== 'technicalSummary'
     ) {
       return;
     }
@@ -504,6 +513,11 @@ export const CaseDetails = () => {
         exportFinancialProjectCost(financialProjectCostParams);
       } else if (exportType === 'financial_resource_cost') {
         exportFinancialResourceCost(financialResCostParams);
+      }
+    } else if (list === 'technicalSummary') {
+      if (exportType === 'technical_summary') {
+        console.log('list', technicalSummaryParams);
+        exportCasesTechnicalSummary(technicalSummaryParams);
       }
     }
     if (list === 'interactions') {
@@ -584,7 +598,10 @@ export const CaseDetails = () => {
       return !isProjectTaskExportEnable;
     } else if (list === 'projectResource') {
       return !isProjectResourceExportEnable;
-    } else if (list === 'financialHighlights') {
+    } else if (list === 'technicalSummary') {
+      return !technicalSummaryExportEnable;
+    }
+    else if (list === 'financialHighlights') {
       const tab = searchParams.get('tab');
       if (tab === 'project_cost') {
         return !isFinancialProjectCostExportEnable;

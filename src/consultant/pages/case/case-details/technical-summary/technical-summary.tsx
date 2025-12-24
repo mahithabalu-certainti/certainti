@@ -117,6 +117,8 @@ const TechnicalSummary: React.FC<TechnicalSummaryProps> = ({
       sortBy: sortField,
       sortOrder: sortOrder,
       filters: appliedFilters,
+      case_rid: caseId || '',
+      account_rid: accountID || '',
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortField, sortOrder, appliedFilters]);

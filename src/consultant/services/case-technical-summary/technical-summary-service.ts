@@ -11,7 +11,6 @@ import {
 } from '../../types';
 import {
   getTechnicalSummaryDetailsURL,
-  getTechnicalSummaryExportListURL,
 } from '../urls';
 import { interactionServiceApi } from '../../../api/api';
 
@@ -44,6 +43,37 @@ export const getCasesTechnicalSummaryListURL = ({
   const queryString = searchParams.toString();
   return queryString ? `${baseUrl}?${queryString}` : baseUrl;
 };
+
+export const getCaseTechnicalSummaryExportListURL = ({
+  // page,
+  // limit,
+  sortOrder,
+  sortBy,
+  account_rid,
+  case_rid,
+  filters,
+}: TechnicalSummaryExportListParams): string => {
+  const baseUrl = '/api/interactions/technicalSummary/export';
+  const searchParams = new URLSearchParams();
+
+  if (account_rid !== undefined) {
+    searchParams.set('account_rid', account_rid.toString());
+  }
+  if (case_rid !== undefined) {
+    searchParams.set('case_rid', case_rid.toString());
+  }
+
+  // if (page !== undefined) searchParams.set('page', page.toString());
+  // if (limit !== undefined) searchParams.set('limit', limit.toString());
+  if (filters && Object.keys(filters).length > 0) {
+    searchParams.set('filters', JSON.stringify(filters));
+  }
+  if (sortBy !== undefined) searchParams.set('sortBy', sortBy);
+  if (sortOrder !== undefined) searchParams.set('sortOrder', sortOrder);
+  const queryString = searchParams.toString();
+  return queryString ? `${baseUrl}?${queryString}` : baseUrl;
+};
+
 
 export const fetchTechnicalSummaryList = async (
   params: TechnicalSummaryListURLParams
@@ -146,12 +176,12 @@ export const useUpdateTechnicalSummaryText = () => {
 };
 
 // Export Technical Summary
-export const exportTechnicalSummary = async (
+export const exportCasesTechnicalSummary = async (
   params: TechnicalSummaryExportListParams
 ) => {
   try {
     const response = await interactionServiceApi.get(
-      getTechnicalSummaryExportListURL(params)
+      getCaseTechnicalSummaryExportListURL(params)
     );
     const base64Data = response.data?.data;
 

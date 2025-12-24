@@ -70,6 +70,7 @@ export const getTechnicalSummaryExportListURL = ({
   account_rid,
   project_fiscal_rid,
   timezone,
+  case_rid,
 }: TechnicalSummaryExportListParams): string => {
   const baseUrl = '/api/interactions/technicalSummary/export';
   const searchParams = new URLSearchParams();
@@ -79,6 +80,9 @@ export const getTechnicalSummaryExportListURL = ({
   }
   if (project_fiscal_rid !== undefined) {
     searchParams.set('project_fiscal_rid', project_fiscal_rid.toString());
+  }
+  if (case_rid !== undefined) {
+    searchParams.set('case_rid', case_rid.toString());
   }
   if (filters && Object.keys(filters).length > 0) {
     searchParams.set('filters', JSON.stringify(filters));
