@@ -861,9 +861,15 @@ export class WorkFlowService {
             if (ruleConditions.length === 0 || ruleResult) {
                 const actions = actionsByRule[rule_rid] || [];
                 for (const action of actions) {
+                    if(ruleConditions.length === 0){
                     if(entity?.ruleScope === request.eventName){
                     await this.executeAction(action, entity, userId, rule_rid);
                     }
+                }
+                else
+                {
+                    await this.executeAction(action, entity, userId, rule_rid);
+                }
                 }
                 triggeredActions[rule_rid] = actions;
             }
