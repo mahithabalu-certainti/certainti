@@ -134,7 +134,6 @@ const CaseProjectTask: React.FC<projectTaskProps> = ({
   } = useCaseProjectTaskDetail(
     taskId || '',
     accountID || ''
-    // refreshTaskDetailPageTrigger
   );
   const resourceData = resourceDetails?.data;
   const handleFilter = () => {

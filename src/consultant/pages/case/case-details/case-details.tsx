@@ -29,6 +29,7 @@ import {
   ActivityDropdownItem,
   ProjectFinancialProjectExportParams,
   ProjectFinancialResourceExportParams,
+  TechnicalSummaryExportListParams,
 } from '../../../types';
 import CaseFinancialSummary from './financial-summary/financial-summary';
 import { accountDetailsProps } from '../../account-details/utils';
@@ -99,12 +100,14 @@ import { CaseActivities } from './case-activities';
 import { ExportActivityList } from '../../../services/activities/activities-service';
 import { CaseProjectTask } from './case-project-task';
 import { ExportCaseProjectTasktList } from '../../../services/case-project-task/case-project-task-service';
+import { TechnicalSummary } from './technical-summary';
 import { CaseProjectResource } from './case-project-resource';
 import { ExportCaseProjectResourceList } from '../../../services/case-project-resource/case-project-resource-service';
 import {
   exportFinancialProjectCost,
   exportFinancialResourceCost,
 } from '../../../services/financial/financial-service';
+import { exportCasesTechnicalSummary } from '../../../services/case-technical-summary/technical-summary-service';
 
 export const CaseDetails = () => {
   const navigate = useNavigate();
@@ -231,7 +234,14 @@ export const CaseDetails = () => {
       page: 1,
       limit: 100,
     });
-
+  const [technicalSummaryParams, setTechnicalSummaryParams] =
+    useState<TechnicalSummaryExportListParams>({
+      sortBy: 'r_number',
+      sortOrder: 'ASC',
+      filters: {},
+      case_rid: caseId ?? '',
+      account_rid: accountId ?? '',
+    });
   const [activityParams, setActivityParams] =
     useState<ActivityListExportURLParams>({
       sortBy: 'r_number',
@@ -260,6 +270,7 @@ export const CaseDetails = () => {
   const activityType = searchParams.get('activity_type');
   const activityViewDetails = !!activityId && !!activityType;
 
+
   useEffect(() => {
     const list = searchParams.get('list');
     if (list) {
@@ -282,6 +293,17 @@ export const CaseDetails = () => {
       if (!newParams.get('detailstab')) {
         newParams.delete('assignProject');
       }
+      navigate({ search: newParams.toString() }, { replace: true });
+    } else if (searchParams.get('list') !== 'projectTask') {
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('caseProjectTask');
+      navigate({ search: newParams.toString() }, { replace: true });
+    }
+  }, [searchParams.get('list')]);
+  useEffect(() => {
+    if (searchParams.get('list') !== 'projectTask') {
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('caseProjectTask');
       navigate({ search: newParams.toString() }, { replace: true });
     }
   }, [searchParams.get('list')]);
@@ -381,6 +403,11 @@ export const CaseDetails = () => {
     AllPermissions.ACCOUNT_FINANCIAL_RESOURCE_COST_EXPORT
   );
 
+  const technicalSummaryExportEnable = checkPermission(
+    permission,
+    AllPermissions.PROJECT_TECHNICAL_SUMMARY_EXPORT
+  );
+
   // Activity Create Permission
   const isActivityTaskCreateEnable = checkPermission(
     permission,
@@ -418,7 +445,8 @@ export const CaseDetails = () => {
       searchParams.get('list') !== 'interactions' &&
       searchParams.get('list') !== 'projectTask' &&
       searchParams.get('list') !== 'projectResource' &&
-      searchParams.get('list') !== 'financialHighlights'
+      searchParams.get('list') !== 'financialHighlights' &&
+      searchParams.get('list') !== 'technicalSummary'
     ) {
       return;
     }
@@ -483,6 +511,10 @@ export const CaseDetails = () => {
         exportFinancialProjectCost(financialProjectCostParams);
       } else if (exportType === 'financial_resource_cost') {
         exportFinancialResourceCost(financialResCostParams);
+      }
+    } else if (list === 'technicalSummary') {
+      if (exportType === 'technical_summary') {
+        exportCasesTechnicalSummary(technicalSummaryParams);
       }
     }
     if (list === 'interactions') {
@@ -563,7 +595,10 @@ export const CaseDetails = () => {
       return !isProjectTaskExportEnable;
     } else if (list === 'projectResource') {
       return !isProjectResourceExportEnable;
-    } else if (list === 'financialHighlights') {
+    } else if (list === 'technicalSummary') {
+      return !technicalSummaryExportEnable;
+    }
+    else if (list === 'financialHighlights') {
       const tab = searchParams.get('tab');
       if (tab === 'project_cost') {
         return !isFinancialProjectCostExportEnable;
@@ -805,6 +840,14 @@ export const CaseDetails = () => {
             activityMenuItems={activityMenuItems}
           />
         );
+      case 'technicalSummary':
+        return (
+          <TechnicalSummary
+            accountInActive={accountInActive}
+            setExportType={setExportType}
+            setTechnicalSummaryParams={setTechnicalSummaryParams}
+          />
+        );
       default:
         return (
           <div className='flex items-center justify-center h-full'>
@@ -1035,13 +1078,12 @@ export const CaseDetails = () => {
         />
       </div>
       <div
-        className={`transition-all duration-700 ease-in-out overflow-hidden ${
-          isActionItemsExpanded
-            ? 'max-h-0 opacity-0'
-            : isError
-              ? 'max-h-[60px] opacity-100'
-              : 'max-h-[140px] opacity-100'
-        }`}
+        className={`transition-all duration-700 ease-in-out overflow-hidden ${isActionItemsExpanded
+          ? 'max-h-0 opacity-0'
+          : isError
+            ? 'max-h-[60px] opacity-100'
+            : 'max-h-[140px] opacity-100'
+          }`}
       >
         <InfoSection
           columns={caseHeaderDetails}
@@ -1053,11 +1095,10 @@ export const CaseDetails = () => {
       </div>
       <div className='flex flex-1 flex-row w-full border-b border-[#CBD6E2]'>
         <div
-          className={`flex transition-all ease-in-out ${
-            isCollapsed
-              ? 'w-[60px] min-w-[60px] max-w-[60px] duration-700'
-              : 'w-[220px] min-w-[220px] max-w-[220px] duration-700'
-          }`}
+          className={`flex transition-all ease-in-out ${isCollapsed
+            ? 'w-[60px] min-w-[60px] max-w-[60px] duration-700'
+            : 'w-[220px] min-w-[220px] max-w-[220px] duration-700'
+            }`}
         >
           <SideMenuPanel
             menuItems={sideMenuItems}
