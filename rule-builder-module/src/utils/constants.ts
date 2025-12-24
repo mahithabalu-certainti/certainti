@@ -22,6 +22,17 @@ export const ENV_PREFIX = process.env.NODE_ENV_DB_PREFIX || "D001-";
 export const MAIN_SCHEMA_NAME = "trd365";
 export const SCHEMANAME_PREFIX = "trd365_";
 
+export const constants = {
+  SQL_GET_USER: `SELECT status_description as status, "user".rid, email, profile_rid FROM ${MAIN_SCHEMA_NAME}."user" as "user" ,${MAIN_SCHEMA_NAME}."status" as status WHERE  "user".status_rid = status.rid and {whereClause} LIMIT 1`,
+  SQL_GET_PERMISSION: `SELECT rid FROM ${MAIN_SCHEMA_NAME}."module_permission" WHERE permission_name = :permissionName LIMIT 1`,
+  SQL_GET_PROFILE_ACCESS: `SELECT is_enabled FROM ${MAIN_SCHEMA_NAME}."profile_permission_access" WHERE profile_id = :profileId AND module_permission_id = :permissionId LIMIT 1`,
+  SQL_GET_USER_ACCESS: `SELECT is_enabled FROM ${MAIN_SCHEMA_NAME}."user_permission_access" WHERE user_id = :userId AND module_permission_id = :permissionId LIMIT 1`,
+  SQL_INSERT_API_DENIAL: `INSERT INTO ${MAIN_SCHEMA_NAME}."user_api_access_denials" (rid, user_id, permission_id, permission_name, api_endpoint, created_datetime, updated_datetime) VALUES (:rid, :userId, :permissionId, :permissionName, :apiEndpoint, NOW(), NOW())`,
+  SQL_GET_ACCOUNT: `SELECT status, rid FROM ${MAIN_SCHEMA_NAME}."account" WHERE rid = :rid LIMIT 1`,
+  SELECT: "SELECT",
+  INSERT: "INSERT",
+};
+
 export const NODE_ENV = {
   DEV: "DEV",
   PROD: "PRODUCTION",
@@ -154,12 +165,9 @@ export const rawQueries = {
 
   fetchConditionCategory(condition_rid: string, status_rid: string): string {
     let query = `SELECT cc.rid, cc.name as category_name, cc.description FROM ${MAIN_SCHEMA_NAME}.condition_category cc JOIN ${MAIN_SCHEMA_NAME}.condition_category_map ccm 
-    ON cc.rid = ccm.category_rid `;
+    ON cc.rid = ccm.category_rid  and cc.status_rid = (select rid from ${MAIN_SCHEMA_NAME}.status where status_name = 'Active') `;
     const conditions: string[] = [];
     conditions.push(`ccm.condition_rid = '${condition_rid}'`);
-    if (status_rid) {
-      conditions.push(`cc.status_rid = '${status_rid}'`);
-    }
     query += ` WHERE ${conditions.join(' AND ')}`;
     return query;
   },

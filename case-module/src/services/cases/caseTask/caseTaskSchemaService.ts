@@ -247,13 +247,12 @@ export class CaseTaskSchemaService {
           }, transaction
         });
         let baseRuleEnginePayload: any = {
-          task_rid: data.rid,
           userId: data.modified_by,
           accountRid: data.account_rid,
           entityName: data.task_name,
-          entityId: data.rid,
-          status: "",
-          assigneeId:data.modified_by
+          entityRid: data.rid,
+          assigneeId:data.modified_by,
+          eventName: ruleNames.taskCreated
         };
      
         if (data?.checklist_template_rid) {
@@ -408,6 +407,7 @@ export class CaseTaskSchemaService {
                 newValueString = columnMapping.get(newValue)
                 baseRuleEnginePayload.targetUserID = newValue;
                 baseRuleEnginePayload.targetEmail = emailMapping.get(newValue);
+                baseRuleEnginePayload.assignee = "Updated";
                  await this.helperMethod.triggerDynamicRuleEngine('assignee_change', baseRuleEnginePayload, {
                   newValue: newValueString,
                   oldValue: oldValueString
