@@ -602,7 +602,8 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
                             ? 'border-blue-500 bg-blue-200'
                             : rule.actions.length > 0 &&
                                 rule.actions.every(
-                                  (action) => rule.actionTemplates?.[action.name] // Use action.name
+                                  (action) =>
+                                    rule.actionTemplates?.[action.name] // Use action.name
                                 )
                               ? 'border border-[#d467d4] bg-[#dda0dd1f]'
                               : 'bg-gray-200 border-gray-300'

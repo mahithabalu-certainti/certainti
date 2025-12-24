@@ -204,12 +204,14 @@ export const WorkflowProvider: React.FC<WorkflowProviderProps> = ({
 
         // Check if we're updating condition 1 and there's a condition 2 with AND operator
         if (prev.conditions.length === 2) {
-          const updatedConditionIndex = prev.conditions.findIndex((c) => c.id === conditionId);
-          
+          const updatedConditionIndex = prev.conditions.findIndex(
+            (c) => c.id === conditionId
+          );
+
           // If updating condition 1 (index 0)
           if (updatedConditionIndex === 0) {
             const condition2 = newConditions[1];
-            
+
             // If condition 2 uses AND operator and now has the same field as updated condition 1
             if (
               condition2.logicalOperator === 'AND' &&
@@ -366,21 +368,28 @@ export const WorkflowProvider: React.FC<WorkflowProviderProps> = ({
     setRule((prev) => {
       // Find the action being deleted
       const deletedAction = prev.actions.find((a) => a.id === actionId);
-      
+
       // Remove the action from actions array
       const newActions = prev.actions.filter((a) => a.id !== actionId);
-      
+
       // Remove the action's template from actionTemplates if it exists
       // Use action name as key (Email/InApp) instead of action ID
       const newActionTemplates = { ...prev.actionTemplates };
-      if (deletedAction && newActionTemplates && newActionTemplates[deletedAction.name]) {
+      if (
+        deletedAction &&
+        newActionTemplates &&
+        newActionTemplates[deletedAction.name]
+      ) {
         delete newActionTemplates[deletedAction.name];
       }
-      
+
       return {
         ...prev,
         actions: newActions,
-        actionTemplates: Object.keys(newActionTemplates).length > 0 ? newActionTemplates : undefined,
+        actionTemplates:
+          Object.keys(newActionTemplates).length > 0
+            ? newActionTemplates
+            : undefined,
       };
     });
   }, []);
@@ -476,7 +485,9 @@ export const WorkflowProvider: React.FC<WorkflowProviderProps> = ({
 
   // Only show action template step if there are Email or InApp actions
   const canProceedToActionTemplate = rule.actions.some(
-    (action) => action.name === ActionTypeEnum.InApp || action.name === ActionTypeEnum.Email
+    (action) =>
+      action.name === ActionTypeEnum.InApp ||
+      action.name === ActionTypeEnum.Email
   );
 
   // Validate and save function

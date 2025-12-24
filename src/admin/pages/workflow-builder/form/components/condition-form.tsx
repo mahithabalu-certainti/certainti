@@ -71,7 +71,10 @@ const ConditionForm: React.FC<ConditionFormProps> = ({
   // Sync local state when condition prop changes externally (e.g., when cleared)
   React.useEffect(() => {
     // If condition.field is empty but local state still has a value, clear it
-    if (!condition.field && (fieldInputValue || selectedFieldRid || isFieldFromValidSelection)) {
+    if (
+      !condition.field &&
+      (fieldInputValue || selectedFieldRid || isFieldFromValidSelection)
+    ) {
       setFieldInputValue('');
       setSelectedFieldRid('');
       setIsFieldFromValidSelection(false);
@@ -82,7 +85,13 @@ const ConditionForm: React.FC<ConditionFormProps> = ({
       setSelectedFieldRid(condition.field);
       setIsFieldFromValidSelection(true);
     }
-  }, [condition.field, condition.fieldName, fieldInputValue, selectedFieldRid, isFieldFromValidSelection]);
+  }, [
+    condition.field,
+    condition.fieldName,
+    fieldInputValue,
+    selectedFieldRid,
+    isFieldFromValidSelection,
+  ]);
 
   // Fetch fields based on selected category
   const { data: fieldsData, isLoading: isLoadingFields } =

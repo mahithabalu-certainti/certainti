@@ -112,7 +112,10 @@ const WorkflowBuilderFormContent: React.FC<WorkflowBuilderProps> = ({
     // Check if all Email/InApp actions have templates configured
     rule.actions.every((action) => {
       // If action is Email or InApp, it must have a template
-      if (action.name === ActionTypeEnum.InApp || action.name === ActionTypeEnum.Email) {
+      if (
+        action.name === ActionTypeEnum.InApp ||
+        action.name === ActionTypeEnum.Email
+      ) {
         return !!rule.actionTemplates && !!rule.actionTemplates[action.name]; // Use action.name as key
       }
       // Other actions don't require templates
