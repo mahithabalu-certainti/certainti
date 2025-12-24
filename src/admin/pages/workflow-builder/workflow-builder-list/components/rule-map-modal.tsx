@@ -254,8 +254,8 @@ const RuleMapModal: React.FC<RuleMapModalProps> = ({
           sx={{
             pointerEvents:
               createRuleMap.isPending ||
-                updateRuleMap.isPending ||
-                ruleMapDetailsLoading
+              updateRuleMap.isPending ||
+              ruleMapDetailsLoading
                 ? 'none'
                 : 'all',
           }}
@@ -344,7 +344,9 @@ const RuleMapModal: React.FC<RuleMapModalProps> = ({
                       setSelectedApplyType(e.target.value as ApplyType)
                     }
                   >
-                    {(eventType === 'ALL' || eventType === 'BOTH' || !eventType) && (
+                    {(eventType === 'ALL' ||
+                      eventType === 'BOTH' ||
+                      !eventType) && (
                       <FormControlLabel
                         value='ALL'
                         control={
@@ -378,8 +380,8 @@ const RuleMapModal: React.FC<RuleMapModalProps> = ({
                             <Typography
                               sx={{ fontSize: '12px', color: '#2D3E4F' }}
                             >
-                              Apply this rule to all {scopeTypeName.toLowerCase()}{' '}
-                              entities
+                              Apply this rule to all{' '}
+                              {scopeTypeName.toLowerCase()} entities
                             </Typography>
                           </Box>
                         }

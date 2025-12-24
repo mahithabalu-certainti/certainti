@@ -263,7 +263,7 @@ const TechnicalSummary: React.FC<TechnicalSummaryProps> = ({
         showRefresh={!viewTechSummaryDetails}
         onRefreshClick={onRefreshClick}
         sortFilterCount={0}
-        setSortFilterCount={() => { }}
+        setSortFilterCount={() => {}}
       />
       {viewTechSummaryDetails ? (
         <TechnicalSummaryDetails

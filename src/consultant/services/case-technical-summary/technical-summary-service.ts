@@ -9,9 +9,7 @@ import {
   TechnicalSummaryTextUpdateRequest,
   TechnicalSummaryTextUpdateResponse,
 } from '../../types';
-import {
-  getTechnicalSummaryDetailsURL,
-} from '../urls';
+import { getTechnicalSummaryDetailsURL } from '../urls';
 import { interactionServiceApi } from '../../../api/api';
 
 export const getCasesTechnicalSummaryListURL = ({
@@ -73,7 +71,6 @@ export const getCaseTechnicalSummaryExportListURL = ({
   const queryString = searchParams.toString();
   return queryString ? `${baseUrl}?${queryString}` : baseUrl;
 };
-
 
 export const fetchTechnicalSummaryList = async (
   params: TechnicalSummaryListURLParams

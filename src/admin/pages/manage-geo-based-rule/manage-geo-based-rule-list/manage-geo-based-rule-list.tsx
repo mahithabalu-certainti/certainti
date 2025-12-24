@@ -51,7 +51,9 @@ export const ManageGeoBasedRuleList: React.FC = () => {
   };
   const [refreshTrigger, setRefreshTrigger] = useState<number>();
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
-  const { permission, modules } = useSelector((state: RootState) => state.permission);
+  const { permission, modules } = useSelector(
+    (state: RootState) => state.permission
+  );
   const [columnAnchorEl, setColumnAnchorEl] =
     React.useState<HTMLButtonElement | null>(null);
   const [currentCountry, setCurrentCountry] = useState<string>('');

@@ -131,10 +131,7 @@ const CaseProjectTask: React.FC<projectTaskProps> = ({
     data: resourceDetails,
     isLoading: isDetailsLoading,
     error: detailsError,
-  } = useCaseProjectTaskDetail(
-    taskId || '',
-    accountID || ''
-  );
+  } = useCaseProjectTaskDetail(taskId || '', accountID || '');
   const resourceData = resourceDetails?.data;
   const handleFilter = () => {
     setShowFilter(!showFilter);

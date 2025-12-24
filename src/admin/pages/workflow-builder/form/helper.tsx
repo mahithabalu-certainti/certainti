@@ -258,7 +258,8 @@ export const transformApiResponseToRule = (data: RuleDetails): Rule => {
       (a) => a.name === ActionTypeEnum.InApp || a.name === 'In App'
     );
     if (inAppAction) {
-      actionTemplates[inAppAction.name] = { // Use action.name as key
+      actionTemplates[inAppAction.name] = {
+        // Use action.name as key
         rid: ruleData.in_app_template_rid,
         channel: 'In App',
       };
@@ -270,7 +271,8 @@ export const transformApiResponseToRule = (data: RuleDetails): Rule => {
       (a) => a.name === ActionTypeEnum.Email || a.name === 'Email'
     );
     if (emailAction) {
-      actionTemplates[emailAction.name] = { // Use action.name as key
+      actionTemplates[emailAction.name] = {
+        // Use action.name as key
         rid: ruleData.email_template_rid,
         channel: 'Email',
       };
