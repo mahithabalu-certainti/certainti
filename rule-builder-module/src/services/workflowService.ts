@@ -974,7 +974,7 @@ export class WorkFlowService {
         }
     }
 
-    async getNotificationTemplateDetails(templateName: string, oldValue: string, newValue: string, entityName: string, channel: string, ruleRid: string): Promise<{
+    async getNotificationTemplateDetails(templateName: string, oldValue: string, newValue: string, entityName: string, channel: string, ruleRid: string, taskContext: any): Promise<{
         templateDetails: any;
     }> {
         try {
@@ -1020,6 +1020,13 @@ export class WorkFlowService {
                     messageTemplate = messageTemplate.replace('{{entityName}}', entityName != null ? entityName : '');
                     if (templateDetails[0].subject != null) {
                         templateDetails[0].subject = templateDetails[0].subject.replace('{{entityName}}', entityName != null ? entityName : '');
+                    }
+                }
+                if (messageTemplate.includes('{{accountName}}')) {
+                    const accountNameValue = taskContext.accountName ? taskContext.accountName : '';
+                    messageTemplate = messageTemplate.replace('{{accountName}}', accountNameValue);
+                    if (templateDetails[0].subject != null) {
+                        templateDetails[0].subject = templateDetails[0].subject.replace('{{accountName}}', accountNameValue);
                     }
                 }
                 templateDetails[0].message_template = messageTemplate;
@@ -1134,7 +1141,8 @@ async triggerNotification(taskContext:any,channel:string, ruleRid:string): Promi
         taskContext.newValue,
         taskContext.entityName,
         channel,
-        ruleRid
+        ruleRid,
+        taskContext
     );
     if (templateDetails && Array.isArray(templateDetails.templateDetails) && templateDetails.templateDetails.length > 0) {
         const detail = templateDetails.templateDetails[0];
