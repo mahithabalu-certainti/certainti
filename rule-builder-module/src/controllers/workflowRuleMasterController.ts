@@ -159,20 +159,16 @@ async function exportRuleMasters(req: Request, res: Response): Promise<void> {
           ? []
           : result?.data?.rules.map((d: any) => {
             let resultMap: { [key: string]: any } = {
-              rule_name: d.rule_name,
-              description: d.description,
-              event_rid: d.event_rid,
-              condition_rid: d.condition_rid,
-              scope_type_rid: d.scope_type_rid,
-              scope_type_name: d.scope_type_name,
-              is_active: d.is_active,
-              created_by: d.created_user_name,
-              created_datetime: formatDate(d.created_datetime),
-              modified_by: d.modified_user_name,
-              modified_datetime:
+              "Rule Name": d.rule_name,
+              "Scope Name": d.scope_type_name,
+              "Created By": d.created_user_name,
+              "Created On": formatDate(d.created_datetime),
+              "Updated By": d.modified_user_name,
+              "Updated On":
                 d.modified_datetime == null
                   ? ""
                   : formatDate(d.modified_datetime),
+              "Status": d.is_active ? "Active" : "Inactive",
             };
 
             return resultMap;
