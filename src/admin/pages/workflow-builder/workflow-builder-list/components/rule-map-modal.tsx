@@ -34,6 +34,7 @@ interface RuleMapModalProps {
   ruleRid: string;
   isRuleMapped: boolean;
   onSuccess?: () => void;
+  eventType?: string;
 }
 
 const RuleMapModal: React.FC<RuleMapModalProps> = ({
@@ -44,6 +45,7 @@ const RuleMapModal: React.FC<RuleMapModalProps> = ({
   ruleRid,
   isRuleMapped,
   onSuccess,
+  eventType,
 }) => {
   const { successToast } = useToast();
   const { userId } = useSelector((state: RootState) => state.auth);
@@ -61,6 +63,17 @@ const RuleMapModal: React.FC<RuleMapModalProps> = ({
     useGetRuleMapDetails(ruleRid, open && isRuleMapped);
 
   // Populate modal with existing rule map data
+  useEffect(() => {
+    if (open) {
+      if (eventType === 'INDIVIDUAL') {
+        setSelectedApplyType('INDIVIDUAL');
+      } else if (eventType === 'ALL') {
+        setSelectedApplyType('ALL');
+      }
+      // If BOTH, let it default or stay (which is initialized to ALL)
+    }
+  }, [eventType, open]);
+
   useEffect(() => {
     if (ruleMapDetails && open && isRuleMapped) {
       setSelectedApplyType(ruleMapDetails.apply_type);
@@ -241,8 +254,8 @@ const RuleMapModal: React.FC<RuleMapModalProps> = ({
           sx={{
             pointerEvents:
               createRuleMap.isPending ||
-              updateRuleMap.isPending ||
-              ruleMapDetailsLoading
+                updateRuleMap.isPending ||
+                ruleMapDetailsLoading
                 ? 'none'
                 : 'all',
           }}
@@ -331,87 +344,91 @@ const RuleMapModal: React.FC<RuleMapModalProps> = ({
                       setSelectedApplyType(e.target.value as ApplyType)
                     }
                   >
-                    <FormControlLabel
-                      value='ALL'
-                      control={
-                        <Radio
-                          size='small'
-                          sx={{
-                            color: '#9CA3AF',
-                            mt: 0.5,
-                            '&.Mui-checked': {
-                              color: '#3B82F6',
-                            },
-                          }}
-                        />
-                      }
-                      disabled={
-                        createRuleMap.isPending ||
-                        updateRuleMap.isPending ||
-                        ruleMapDetailsLoading
-                      }
-                      label={
-                        <Box>
-                          <Typography
+                    {(eventType === 'ALL' || eventType === 'BOTH' || !eventType) && (
+                      <FormControlLabel
+                        value='ALL'
+                        control={
+                          <Radio
+                            size='small'
                             sx={{
-                              fontSize: '14px',
-                              fontWeight: 700,
-                              color: '#2D3E4F',
+                              color: '#9CA3AF',
+                              mt: 0.5,
+                              '&.Mui-checked': {
+                                color: '#3B82F6',
+                              },
                             }}
-                          >
-                            All
-                          </Typography>
-                          <Typography
-                            sx={{ fontSize: '12px', color: '#2D3E4F' }}
-                          >
-                            Apply this rule to all {scopeTypeName.toLowerCase()}{' '}
-                            entities
-                          </Typography>
-                        </Box>
-                      }
-                      sx={{ alignItems: 'flex-start', ml: 0 }}
-                    />
+                          />
+                        }
+                        disabled={
+                          createRuleMap.isPending ||
+                          updateRuleMap.isPending ||
+                          ruleMapDetailsLoading
+                        }
+                        label={
+                          <Box>
+                            <Typography
+                              sx={{
+                                fontSize: '14px',
+                                fontWeight: 700,
+                                color: '#2D3E4F',
+                              }}
+                            >
+                              All
+                            </Typography>
+                            <Typography
+                              sx={{ fontSize: '12px', color: '#2D3E4F' }}
+                            >
+                              Apply this rule to all {scopeTypeName.toLowerCase()}{' '}
+                              entities
+                            </Typography>
+                          </Box>
+                        }
+                        sx={{ alignItems: 'flex-start', ml: 0 }}
+                      />
+                    )}
 
-                    <FormControlLabel
-                      value='INDIVIDUAL'
-                      control={
-                        <Radio
-                          size='small'
-                          sx={{
-                            color: '#9CA3AF',
-                            mt: 0.5,
-                            '&.Mui-checked': {
-                              color: '#3B82F6',
-                            },
-                          }}
-                        />
-                      }
-                      disabled={
-                        createRuleMap.isPending ||
-                        updateRuleMap.isPending ||
-                        ruleMapDetailsLoading
-                      }
-                      label={
-                        <Box>
-                          <Typography
+                    {(eventType === 'INDIVIDUAL' || eventType === 'BOTH') && (
+                      <FormControlLabel
+                        value='INDIVIDUAL'
+                        control={
+                          <Radio
+                            size='small'
                             sx={{
-                              fontSize: '14px',
-                              fontWeight: 700,
-                              color: '#2D3E4F',
+                              color: '#9CA3AF',
+                              mt: 0.5,
+                              '&.Mui-checked': {
+                                color: '#3B82F6',
+                              },
                             }}
-                          >
-                            Individual
-                          </Typography>
-                          <Typography
-                            sx={{ fontSize: '12px', color: '#2D3E4F' }}
-                          >
-                            Apply this rule to specific{' '}
-                            {scopeTypeName.toLowerCase()} entities
-                          </Typography>
-                        </Box>
-                      }
-                      sx={{ mt: 2, alignItems: 'flex-start', ml: 0 }}
-                    />
+                          />
+                        }
+                        disabled={
+                          createRuleMap.isPending ||
+                          updateRuleMap.isPending ||
+                          ruleMapDetailsLoading
+                        }
+                        label={
+                          <Box>
+                            <Typography
+                              sx={{
+                                fontSize: '14px',
+                                fontWeight: 700,
+                                color: '#2D3E4F',
+                              }}
+                            >
+                              Individual
+                            </Typography>
+                            <Typography
+                              sx={{ fontSize: '12px', color: '#2D3E4F' }}
+                            >
+                              Apply this rule to specific{' '}
+                              {scopeTypeName.toLowerCase()} entities
+                            </Typography>
+                          </Box>
+                        }
+                        sx={{ mt: 2, alignItems: 'flex-start', ml: 0 }}
+                      />
+                    )}
                   </RadioGroup>
                 </FormControl>
               </div>

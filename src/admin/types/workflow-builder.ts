@@ -292,6 +292,7 @@ export type WorkflowRuleListItem = {
   modified_user_name: string | null;
   created_datetime: string;
   modified_datetime: string | null;
+  event_type?: string;
 };
 
 export interface WorkflowRuleListResponse {

@@ -230,6 +230,7 @@ export const WorkflowTable: React.FC<IWorkflowTableProps> = ({
         ruleRid={selectedRuleData?.rid || ''}
         isRuleMapped={selectedRuleData?.is_rule_mapped || false}
         onSuccess={handleRuleMapSuccess}
+        eventType={selectedRuleData?.event_type}
       />
 
       <ListTable
