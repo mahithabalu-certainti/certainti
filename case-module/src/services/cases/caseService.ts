@@ -196,6 +196,10 @@ export class CaseService {
         rawQueries.fetchUserDetails(caseRequest.case_owner_rid),
         { type: QueryTypes.SELECT }
       );
+      const [accountInfo]: any[] = await mainDb.query(
+        rawQueries.fetchAccountDetails(caseRequest.account_rid),
+        { type: QueryTypes.SELECT }
+      );
       let ruleEnginePayload = {
         entityName: caseRequest.case_name,
         eventName: ruleNames.caseCreated,
@@ -205,6 +209,8 @@ export class CaseService {
         targetUserID: caseRequest.case_owner_rid,
         targetEmail: caseOwnerData.email || "",
         entityId: response.rid,
+        ruleScope:ruleNames.caseCreated,
+        accountName:accountInfo.account_name || ""
       };
       await this.caseSchemaService.triggerRuleEngine(ruleEnginePayload, accessToken);
 

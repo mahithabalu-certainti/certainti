@@ -603,7 +603,7 @@ class CaseSchemaService {
           baseRuleEnginePayload.targetUserID = newValue;
           baseRuleEnginePayload.targetEmail = newName;
           baseRuleEnginePayload.caseOwner = "Updated"
-            await this.helperMethod.triggerDynamicRuleEngine('assigne_change', baseRuleEnginePayload, {
+            await this.helperMethod.triggerDynamicRuleEngine('case_owner_change', baseRuleEnginePayload, {
                   newValue: newName,
                   oldValue: oldName
                 }, accessToken);
@@ -3498,7 +3498,7 @@ class CaseSchemaService {
     accessToken: string
   ) {
     try {
-      const { CaseTask, CaseTeam } =
+      const { CaseTask, CaseTeam, Case } =
         await this.caseModelService.getModels(accountNumber);
       const teamMembers = await CaseTeam.findAll({
         attributes: ['user_rid', 'role_rid'],
@@ -3532,6 +3532,12 @@ class CaseSchemaService {
         user_name: userNamesMap.get(tm.user_rid) || null,
         email: userEmailsMap.get(tm.user_rid) || null,
       }));
+      const caseDetails = await Case.findOne({
+        where: {
+          rid: caseReq.case_rid
+        },
+        raw: true,
+      }); 
       for (const member of teamMembers) {
        const response = await CaseTask.update(
           {
@@ -3546,14 +3552,16 @@ class CaseSchemaService {
           }
         );
           let ruleEnginePayload = {
-                entityName: "case",
+                entityName: caseDetails?.case_name || "Case",
                 eventName: ruleNames.taskCreated,
                 templateName:ruleTemplateNames.taskCreated,
                 userId: userId,
                 accountRid: caseReq.account_rid,
+                newValue: userNamesMap.get(userId),
                 targetUserID: enrichedTeamMembers.find(etm => etm.user_rid === member.user_rid)?.user_rid || null,
                 targetEmail: enrichedTeamMembers.find(etm => etm.user_rid === member.user_rid)?.email || null,
-                entityId:  caseReq.case_rid
+                entityId:  caseReq.case_rid,
+                assignee:"Updated"
               };
         if(response[0] > 0){
 
