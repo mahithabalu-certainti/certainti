@@ -109,12 +109,15 @@ const WorkflowBuilderFormContent: React.FC<WorkflowBuilderProps> = ({
         ConditionTypeEnum.then) &&
     rule.actions.length > 0 &&
     rule.conditionType !== null &&
-    (!rule.actions.some(
-      (a) => a.name === ActionTypeEnum.InApp || a.name === ActionTypeEnum.Email
-    )
-      ? true
-      : !!rule.actionTemplates &&
-        Object.keys(rule.actionTemplates).length === rule.actions.length);
+    // Check if all Email/InApp actions have templates configured
+    rule.actions.every((action) => {
+      // If action is Email or InApp, it must have a template
+      if (action.name === ActionTypeEnum.InApp || action.name === ActionTypeEnum.Email) {
+        return !!rule.actionTemplates && !!rule.actionTemplates[action.name]; // Use action.name as key
+      }
+      // Other actions don't require templates
+      return true;
+    });
 
   const isInitialLoading =
     isLoadingScopeList ||

@@ -162,7 +162,7 @@ const ActionManager = ({
           </React.Suspense>
           <input
             type='text'
-            placeholder='Search Actions...'
+            placeholder='Search actions...'
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className='w-full pl-9 pr-3 py-2 rounded-[2px] text-[12px] border border-[#CBD6E2] text-[#425A76] 
@@ -199,7 +199,7 @@ const ActionManager = ({
         {/* Selected actions highlight section */}
         {rule.actions.length > 0 && !isLoadingActionTypes && (
           <div className='px-6 pt-6'>
-            <h3 className='text-sm font-semibold text-[#425A76] mb-3 uppercase'>
+            <h3 className='text-sm font-semibold text-[#425A76] mb-3'>
               Added Actions
             </h3>
             <div className='grid grid-cols-1 md:grid-cols-4 gap-3'>
@@ -246,7 +246,7 @@ const ActionManager = ({
                   return (
                     <div key={categoryId} className='px-6 space-y-2'>
                       <h3
-                        className='text-sm font-semibold text-[#425A76] uppercase sticky top-0
+                        className='text-sm font-semibold text-[#425A76] sticky top-0
                                    bg-gray-50 z-10 py-2'
                       >
                         {categoryName}
@@ -275,7 +275,7 @@ const ActionManager = ({
               // When specific category is selected - Show all actions in that category
               <div className='px-6 space-y-2'>
                 <h3
-                  className='text-sm font-semibold text-[#425A76] uppercase sticky top-0
+                  className='text-sm font-semibold text-[#425A76] sticky top-0
                              bg-gray-50 z-10 py-2'
                 >
                   {actionCategories.find((c) => c.id === selectedCategory)
@@ -301,7 +301,7 @@ const ActionManager = ({
             ) : (
               <div className='px-6 space-y-2'>
                 <h3
-                  className='text-sm font-semibold text-[#425A76] uppercase sticky top-0
+                  className='text-sm font-semibold text-[#425A76] sticky top-0
                              bg-gray-50 z-10 py-2'
                 >
                   {actionCategories.find((c) => c.id === selectedCategory)

@@ -13,6 +13,7 @@ import {
   Action,
   ConditionType,
   ConditionTypeEnum,
+  ActionTypeEnum,
   LogicalOperator,
 } from './helper';
 import { CreateRulePayload } from '../../../types';
@@ -45,7 +46,7 @@ interface WorkflowContextValue {
   // Rule metadata
   updateRuleName: (name: string) => void;
   updateActionTemplate: (
-    actionId: string,
+    actionName: string,
     templateData: CreateRulePayload
   ) => void;
 
@@ -201,6 +202,30 @@ export const WorkflowProvider: React.FC<WorkflowProviderProps> = ({
           cond.id === conditionId ? updatedCondition : cond
         );
 
+        // Check if we're updating condition 1 and there's a condition 2 with AND operator
+        if (prev.conditions.length === 2) {
+          const updatedConditionIndex = prev.conditions.findIndex((c) => c.id === conditionId);
+          
+          // If updating condition 1 (index 0)
+          if (updatedConditionIndex === 0) {
+            const condition2 = newConditions[1];
+            
+            // If condition 2 uses AND operator and now has the same field as updated condition 1
+            if (
+              condition2.logicalOperator === 'AND' &&
+              updatedCondition.field &&
+              condition2.field &&
+              updatedCondition.field === condition2.field
+            ) {
+              // Auto-swap to OR operator instead of clearing data
+              newConditions[1] = {
+                ...condition2,
+                logicalOperator: 'OR',
+              };
+            }
+          }
+        }
+
         return {
           ...prev,
           conditions: newConditions,
@@ -338,10 +363,26 @@ export const WorkflowProvider: React.FC<WorkflowProviderProps> = ({
   }, []);
 
   const deleteAction = useCallback((actionId: string) => {
-    setRule((prev) => ({
-      ...prev,
-      actions: prev.actions.filter((a) => a.id !== actionId),
-    }));
+    setRule((prev) => {
+      // Find the action being deleted
+      const deletedAction = prev.actions.find((a) => a.id === actionId);
+      
+      // Remove the action from actions array
+      const newActions = prev.actions.filter((a) => a.id !== actionId);
+      
+      // Remove the action's template from actionTemplates if it exists
+      // Use action name as key (Email/InApp) instead of action ID
+      const newActionTemplates = { ...prev.actionTemplates };
+      if (deletedAction && newActionTemplates && newActionTemplates[deletedAction.name]) {
+        delete newActionTemplates[deletedAction.name];
+      }
+      
+      return {
+        ...prev,
+        actions: newActions,
+        actionTemplates: Object.keys(newActionTemplates).length > 0 ? newActionTemplates : undefined,
+      };
+    });
   }, []);
 
   // Rule name validation
@@ -387,12 +428,12 @@ export const WorkflowProvider: React.FC<WorkflowProviderProps> = ({
   );
 
   const updateActionTemplate = useCallback(
-    (actionId: string, templateData: any) => {
+    (actionName: string, templateData: any) => {
       setRule((prev) => ({
         ...prev,
         actionTemplates: {
           ...prev.actionTemplates,
-          [actionId]: templateData,
+          [actionName]: templateData, // Use action name as key (Email/InApp)
         },
       }));
     },
@@ -433,7 +474,10 @@ export const WorkflowProvider: React.FC<WorkflowProviderProps> = ({
     (rule.conditionType && rule.conditions.length === 0)
   );
 
-  const canProceedToActionTemplate = rule.actions.length > 0;
+  // Only show action template step if there are Email or InApp actions
+  const canProceedToActionTemplate = rule.actions.some(
+    (action) => action.name === ActionTypeEnum.InApp || action.name === ActionTypeEnum.Email
+  );
 
   // Validate and save function
   const validateAndSave = useCallback(() => {
