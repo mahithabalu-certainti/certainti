@@ -160,7 +160,7 @@ jobs:
           CLIENT_SECRET_ENCRYPTION_KEY='client-secret-encryption-key'
           CLIENT_SECRET_ENCRYPTION_LENGTH=16
           AZURE_CONTAINER_NAME="user"
-          AZURE_WEB_PUBSUB_CONNECTION_STRING=Endpoint=https://teams.microsoft.com/l/message/19:2a0d5d62-6f4f-48a2-8a22-f6e645238575_af4d9dc7-4fc7-4f6c-b278-681e18376595@unq.gbl.spaces/1766553641732?context=%7B%22contextType%22%3A%22chat%22%7D
+          AZURE_WEB_PUBSUB_CONNECTION_STRING=Endpoint=https://thinkrd365-notification-temp.webpubsub.azure.com;AccessKey=01gO4s5XVafUvLeojgk0QcIMYTXc93Wtr5lgEuqCc142G7xbkZZvJQQJ99BLACYeBjFXJ3w3AAAAAWPSGJVh;Version=1.0;
           EOF
           echo "$ENV_FILE file created successfully!"
           ls -la
@@ -1177,7 +1177,7 @@ jobs:
           CLIENT_SECRET_ENCRYPTION_LENGTH=16
           SCHEDULER_EXPRESSION=scheduler-expression 
           SCHEDULER_EXPRESSION_RULE_ENGINE=scheduler-expression-rule-engine
-          AZURE_WEB_PUBSUB_CONNECTION_STRING=Endpoint=https://teams.microsoft.com/l/message/19:2a0d5d62-6f4f-48a2-8a22-f6e645238575_af4d9dc7-4fc7-4f6c-b278-681e18376595@unq.gbl.spaces/1766553641732?context=%7B%22contextType%22%3A%22chat%22%7D
+          AZURE_WEB_PUBSUB_CONNECTION_STRING=Endpoint=https://thinkrd365-notification-temp.webpubsub.azure.com;AccessKey=01gO4s5XVafUvLeojgk0QcIMYTXc93Wtr5lgEuqCc142G7xbkZZvJQQJ99BLACYeBjFXJ3w3AAAAAWPSGJVh;Version=1.0;
           EOF
           echo "$ENV_FILE file created successfully!"
       - name: Copy .env file to VM
