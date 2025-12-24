@@ -622,23 +622,6 @@ export const getDynamicSvgIcon = (
     );
   }
 
-  // 👤 User
-  if (isUser) {
-    return (
-      <svg
-        width={size}
-        height={size}
-        viewBox='0 0 24 24'
-        fill='none'
-        stroke={color}
-        strokeWidth='2'
-      >
-        <circle cx='12' cy='8' r='3' />
-        <path d='M5 20c1-4 4-6 7-6s6 2 7 6' />
-      </svg>
-    );
-  }
-
   // 📝 Task (increased stroke weight)
   if (isTask) {
     return (
@@ -667,6 +650,23 @@ export const getDynamicSvgIcon = (
             strokeLinejoin='round'
           />
         </g>
+      </svg>
+    );
+  }
+
+  // 👤 User
+  if (isUser) {
+    return (
+      <svg
+        width={size}
+        height={size}
+        viewBox='0 0 24 24'
+        fill='none'
+        stroke={color}
+        strokeWidth='2'
+      >
+        <circle cx='12' cy='8' r='3' />
+        <path d='M5 20c1-4 4-6 7-6s6 2 7 6' />
       </svg>
     );
   }
