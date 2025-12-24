@@ -1,3 +1,4 @@
+import { time } from "console";
 import Joi from "joi";
 
 const uuidRegex = /^[A-Z0-9]{4}-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -48,6 +49,21 @@ const listRuleSchema = Joi.object({
     sortBy: Joi.string().optional(),
     sortOrder: Joi.string().valid("ASC", "DESC").default("ASC")
 });
+
+const exportRuleSchema = Joi.object({
+     page: Joi.string().optional()
+        .pattern(/^[0-9]+$/)
+    ,
+    limit: Joi.string().optional()
+        .pattern(/^[0-9]+$/)
+    ,
+    timezone: Joi.string().optional(),
+    filters: Joi.string().default("{}"),
+    sortBy: Joi.string().optional(),
+    sortOrder: Joi.string().valid("ASC", "DESC").default("ASC")
+});
+
+
 
 const createConditionSchema = Joi.object({
     field_name: Joi.string().required(),
@@ -359,6 +375,7 @@ const updateRuleStatusSchema = Joi.object({
 export {
     createRuleMasterSchema,
     listRuleSchema,
+    exportRuleSchema,
     createConditionSchema,
     listConditionSchema,
     updateConditionSchema,

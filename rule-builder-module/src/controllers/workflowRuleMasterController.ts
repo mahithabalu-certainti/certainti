@@ -13,7 +13,8 @@ import {
 import {
   listRuleSchema,
   createRuleMasterSchema,
-  updateRuleSchema
+  updateRuleSchema,
+  exportRuleSchema
 } from "../lib/joi/schemas/schema";
 import moment from "moment";
 import configurations from "../config/config";
@@ -120,7 +121,7 @@ async function exportRuleMasters(req: Request, res: Response): Promise<void> {
   const methodName = "export rules";
   try {
     const userId = req.headers["x-user-id"] as string;
-    const value = await validateRequest(req, listRuleSchema, res, "GET");
+    const value = await validateRequest(req, exportRuleSchema, res, "GET");
     if (!value) {
       return;
     }
