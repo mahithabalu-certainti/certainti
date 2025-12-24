@@ -160,7 +160,7 @@ jobs:
           CLIENT_SECRET_ENCRYPTION_KEY='client-secret-encryption-key'
           CLIENT_SECRET_ENCRYPTION_LENGTH=16
           AZURE_CONTAINER_NAME="user"
-          AZURE_WEB_PUBSUB_CONNECTION_STRING=Endpoint=https://notification-test.webpubsub.azure.com;AccessKey=DZRyMMDQZU1chkLUcTBkNhCNYn0lpOUsWb8mmxHPk7GKodZm3z0UJQQJ99BKACYeBjFXJ3w3AAAAAWPSS5KX;
+          AZURE_WEB_PUBSUB_CONNECTION_STRING=Endpoint=https://development-thinkrd365-websockets.webpubsub.azure.com;AccessKey=8uPenMCZYO02mcw1gj1ApJML95b4xixS6fRlLgGLvDKjpPG7cJ9mJQQJ99BLACYeBjFXJ3w3AAAAAWPSIpNe;Version=1.0;
           EOF
           echo "$ENV_FILE file created successfully!"
           ls -la
@@ -1177,7 +1177,7 @@ jobs:
           CLIENT_SECRET_ENCRYPTION_LENGTH=16
           SCHEDULER_EXPRESSION=scheduler-expression 
           SCHEDULER_EXPRESSION_RULE_ENGINE=scheduler-expression-rule-engine
-          AZURE_WEB_PUBSUB_CONNECTION_STRING=Endpoint=https://notification-test.webpubsub.azure.com;AccessKey=DZRyMMDQZU1chkLUcTBkNhCNYn0lpOUsWb8mmxHPk7GKodZm3z0UJQQJ99BKACYeBjFXJ3w3AAAAAWPSS5KX;
+          AZURE_WEB_PUBSUB_CONNECTION_STRING=Endpoint=https://development-thinkrd365-websockets.webpubsub.azure.com;AccessKey=8uPenMCZYO02mcw1gj1ApJML95b4xixS6fRlLgGLvDKjpPG7cJ9mJQQJ99BLACYeBjFXJ3w3AAAAAWPSIpNe;Version=1.0;
           EOF
           echo "$ENV_FILE file created successfully!"
       - name: Copy .env file to VM
