@@ -283,11 +283,11 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
                 </Tooltip>
               )}
             </div>
-            {!isEditView && (
+            {/* {!isEditView && (
               <span className='px-1 py-0.5 bg-purple-100 text-purple-700 text-xs font-medium rounded'>
                 NEW
               </span>
-            )}
+            )} */}
           </div>
         )}
       </div>

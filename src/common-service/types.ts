@@ -221,6 +221,7 @@ export enum AllModules {
   ACTIVITIES_MEETING = 'activity_meeting',
   ACTIVITIES_CALL = 'activity_call',
   WORKFLOW_BUILDER = 'workflow_builder',
+  MANAGE_JURISDICTION_RULE = 'manage_jurisdiction_rule'
 }
 
 export enum AllPermissions {
