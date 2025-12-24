@@ -151,30 +151,15 @@ export async function generateExcelBase64(data: any, sheetName: string) {
   // Get headers from the first object in data
   const headers = Object.keys(data[0] || {});
   worksheet.addRow(headers);
-
-  // Add data rows with hyperlink and style support
+  
+  // Add data rows
   data.forEach((row: any) => {
-    const rowValues = headers.map((header) => row[header]);
-    const excelRow = worksheet.addRow(rowValues);
-    rowValues.forEach((cellValue, colIdx) => {
-      const cell = excelRow.getCell(colIdx + 1);
-      if (
-        cellValue &&
-        typeof cellValue === "object" &&
-        cellValue.hyperlink &&
-        cellValue.text
-      ) {
-        cell.value = { text: cellValue.text, hyperlink: cellValue.hyperlink };
-        cell.font = {
-          color: { argb: cellValue.style?.fontColor || "0000FF" },
-        };
-      }
-    });
+    worksheet.addRow(Object.values(row));
   });
 
   // Generate buffer
   const buffer = await workbook.xlsx.writeBuffer();
-  return Buffer.from(buffer).toString("base64");
+  return Buffer.from(buffer).toString('base64');
 }
 
 export function isValidTimezone(tz: string) {
