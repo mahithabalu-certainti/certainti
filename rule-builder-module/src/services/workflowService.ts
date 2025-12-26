@@ -898,6 +898,7 @@ export class WorkFlowService {
 
     private evaluateCondition(condition: any, entity: any): boolean {
         const fieldKey = condition.field.split(".")[1] || condition.field; // "task.status" → "status"
+        logMessage(`Evaluating condition for field ${fieldKey}: ${entity} `);
         let entityValue = entity[fieldKey] || entity[fieldKey.toLowerCase()] || entity[fieldKey.toUpperCase()];
         let conditionValue = condition.value;
         // Special handling for 'current date' as value
@@ -1279,6 +1280,9 @@ async triggerNotification(taskContext:any,channel:string, ruleRid:string): Promi
             parentAccountNumber,
             accountInfo.parent_account_rid
         );
+         if (!senderEmailInfo) {
+            return;
+        }
         const emailContent = {
             message: {
                 subject: emailRequest.subject,

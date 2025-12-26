@@ -995,6 +995,7 @@ export class HelperMethods {
       templateName,
       eventName
     };
+    logMessage(`Triggering rule engine with payload ${JSON.stringify(ruleEnginePayload)}`)
     await this.triggerRuleEngine(ruleEnginePayload, accessToken);
   }
 
