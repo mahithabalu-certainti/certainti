@@ -2067,7 +2067,6 @@ export class CaseService {
         },
       };
     } catch (err) {
-      console.log(err)
       logMessage(`Error fetching case submission date, ${err}`);
       throw this.throwServiceError(err as Error);
     }
