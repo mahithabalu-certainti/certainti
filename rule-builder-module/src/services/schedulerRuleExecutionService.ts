@@ -134,7 +134,7 @@ export class SchedulerService {
           userId: data.assigned_to,
           accountRid: data.account_rid,
           plannedStartDate: data.effective_start_datetime,
-          plannedEndDate: data.effective_end_datetime,
+          dueDate: data.effective_end_datetime,
           entityRid: data.task_rid,
         };
       } else {
@@ -170,11 +170,11 @@ export class SchedulerService {
     const inProgressStatusRid = fetchInProgressCaseStatus[0][0]?.rid;
 
     // 1. Planned Submission Date Overdue
-    const inProgressCasesOverdue: any = await mainDb.query(
+    const [inProgressCasesOverdue]: any[] = await mainDb.query(
       rawQueries.fetchAllCases(inProgressStatusRid)
     );
     const updatedResponse = mapStatusNames(
-      inProgressCasesOverdue[0],
+      inProgressCasesOverdue,
       mapCaseStatus
     );
     await Promise.all(
@@ -230,8 +230,8 @@ export class SchedulerService {
           await this.workflowService.execute(
             buildPayload(
               data,
-              ruleNames.taskAssigned,
-              ruleTemplateNames.caseCreated,
+              ruleNames.taskCreated,
+              ruleTemplateNames.taskCreated,
               "Task"
             ),
             data.userId || data.created_by

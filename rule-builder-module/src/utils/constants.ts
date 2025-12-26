@@ -393,12 +393,13 @@ export const rawQueries = {
     return `SELECT rid, task_type_name from ${MAIN_SCHEMA_NAME}.task_type WHERE task_type_name ='Milestone' and status = 'Active'`;
   },
    fetchAllCases(inProgressStatusRid: string) {
-    return `SELECT cs.rid, cs.status_rid, planned_submission_date,account_rid,case_owner_rid ,email FROM ${MAIN_SCHEMA_NAME}.case_summary  cs
+    return `SELECT cs.rid,cs.case_name, cs.status_rid, planned_submission_date,statutory_submission_date,account_rid,case_owner_rid ,email FROM ${MAIN_SCHEMA_NAME}.case_summary  cs
     LEFT JOIN ${MAIN_SCHEMA_NAME}.user uu ON cs.case_owner_rid = uu.rid
     WHERE cs.status_rid = '${inProgressStatusRid}'`;
   },
   fetchAllCaseTask(inProgressStatusRid: string,taskType:string) {
-    return `SELECT task_rid, status_rid, effective_start_datetime,effective_end_datetime,account_rid FROM ${MAIN_SCHEMA_NAME}.task_summary WHERE status_rid = '${inProgressStatusRid}' and task_type_rid = '${taskType}'`;
+    return `SELECT task_rid,task_name, status_rid, effective_start_datetime,effective_end_datetime,account_rid FROM ${MAIN_SCHEMA_NAME}.task_summary WHERE status_rid = '${inProgressStatusRid}' 
+     and task_type_rid = '${taskType}'`;
   },
   fetchAllCasesOverdue(inProgressStatusRid: string) {
     return `SELECT rid, status_rid, planned_submission_date FROM ${MAIN_SCHEMA_NAME}.case_summary WHERE status_rid = '${inProgressStatusRid}' AND planned_submission_date IS NOT NULL AND planned_submission_date <= CURRENT_DATE limit 1`;
