@@ -109,7 +109,7 @@ const CaseProjectTask: React.FC<projectTaskProps> = ({
       sortOrder: sortOrder,
       sortBy: sortField,
       search: searchText,
-      filters: {},
+      filters: appliedFilters,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
