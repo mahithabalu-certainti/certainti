@@ -212,7 +212,7 @@ export class CaseService {
         ruleScope:ruleNames.caseCreated,
         accountName:accountInfo.account_name || ""
       };
-      await this.caseSchemaService.triggerRuleEngine(ruleEnginePayload, accessToken);
+     // await this.caseSchemaService.triggerRuleEngine(ruleEnginePayload, accessToken);
 
       return {
         statusCode: HttpStatus.SUCCESS,

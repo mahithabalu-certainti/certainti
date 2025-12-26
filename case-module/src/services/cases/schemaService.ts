@@ -534,6 +534,13 @@ class CaseSchemaService {
         this.mainDbSequelize = await this.caseModelService.getMainSequelize();
       }
 
+      const [accountInfo]: any[] = await this.mainDbSequelize.query(
+        rawQueries.fetchAccountInfo(existingCaseData.account_rid),
+        {
+          replacements: { case_rid: caseId },
+          type: "SELECT"
+        });
+
       const excludedFields = [
         "created_by",
         "modified_by",
@@ -581,7 +588,8 @@ class CaseSchemaService {
           userId: newCaseData.modified_by,
           accountRid: newCaseData.account_rid,
           entityName: newCaseData.case_name,
-          entityId: newCaseData.rid
+          entityId: newCaseData.rid,
+          accountName: accountInfo ? accountInfo.account_name : ""
         };
       for (const historyChange of historyChanges) {
         await CaseHistory.create(historyChange);
@@ -603,6 +611,7 @@ class CaseSchemaService {
           baseRuleEnginePayload.targetUserID = newValue;
           baseRuleEnginePayload.targetEmail = newName;
           baseRuleEnginePayload.caseOwner = "Updated"
+
             await this.helperMethod.triggerDynamicRuleEngine('case_owner_change', baseRuleEnginePayload, {
                   newValue: newName,
                   oldValue: oldName
