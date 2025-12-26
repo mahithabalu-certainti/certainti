@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import SectionHeader from '../../../../../../components/details-section/section-header';
 import { TechSummaryIcon } from '../../../../../../assets';
-import {  useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import {
   useTechnicalSummaryDetails,
   useUpdateTechnicalSummaryText,
@@ -127,40 +127,40 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
 
   const headerButtons = isEditing
     ? [
-      {
-        label: 'Save',
-        variant: 'contained' as const,
-        disabled: updateTechSummaryText.isPending,
-        loading: updateTechSummaryText.isPending,
-        sx: { width: '50px', minWidth: '50px' },
-        onClick: handleSave,
-      },
-      {
-        label: 'Cancel',
-        variant: 'outlined' as const,
-        onClick: handleCancel,
-        sx: { width: '60px', minWidth: '60px' },
-        disabled: updateTechSummaryText.isPending,
-      },
-    ]
+        {
+          label: 'Save',
+          variant: 'contained' as const,
+          disabled: updateTechSummaryText.isPending,
+          loading: updateTechSummaryText.isPending,
+          sx: { width: '50px', minWidth: '50px' },
+          onClick: handleSave,
+        },
+        {
+          label: 'Cancel',
+          variant: 'outlined' as const,
+          onClick: handleCancel,
+          sx: { width: '60px', minWidth: '60px' },
+          disabled: updateTechSummaryText.isPending,
+        },
+      ]
     : [
-      {
-        label: 'Edit',
-        variant: 'outlined' as const,
-        disabled: accountInActive || disabledAdditionalSummaryText,
-        onClick: () => setIsEditing(true),
-        sx: { width: '48px', minWidth: '48px' },
-        hide: hideAdditionalSummaryText,
-      },
-      {
-        label: 'Back To Technical Summary',
-        variant: 'outlined' as const,
-        disabled: false,
-        onClick: handleBackClick,
-        sx: { width: '178px', minWidth: '178px' },
-        hide: hideAdditionalSummaryText,
-      },
-    ];
+        {
+          label: 'Edit',
+          variant: 'outlined' as const,
+          disabled: accountInActive || disabledAdditionalSummaryText,
+          onClick: () => setIsEditing(true),
+          sx: { width: '48px', minWidth: '48px' },
+          hide: hideAdditionalSummaryText,
+        },
+        {
+          label: 'Back To Technical Summary',
+          variant: 'outlined' as const,
+          disabled: false,
+          onClick: handleBackClick,
+          sx: { width: '178px', minWidth: '178px' },
+          hide: hideAdditionalSummaryText,
+        },
+      ];
 
   const auditInfo: DetailItem[] = [
     {
@@ -260,10 +260,8 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
           <div
             className={`${updateTechSummaryText.isPending ? 'pointer-events-none cursor-default' : ''} ${hideAdditionalSummaryText ? 'hidden' : ''}`}
           >
-            <div className='flex justify-between items-center align-middle px-6 h-[30px] border-t border-b border-[#CBD6E2] text-[#2D3E4F] text-[14px] font-bold bg-[#ECECEC]' >
-              <div>
-                Refinement Prompt
-              </div>
+            <div className='flex justify-between items-center align-middle px-6 h-[30px] border-t border-b border-[#CBD6E2] text-[#2D3E4F] text-[14px] font-bold bg-[#ECECEC]'>
+              <div>Refinement Prompt</div>
               {/* <div>
                 <TextButton label='Refine Prompt' onClick={() => console.log('Trigger AI Prompt')}
                   sx={{
