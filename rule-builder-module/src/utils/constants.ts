@@ -428,7 +428,7 @@ export const rawQueries = {
         return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.scheduler_task_executions WHERE execution_rid = :executionRid AND task_name = :taskName LIMIT 1`;
       },
     getNotificationTemplates(channel: string) {
-      return `SELECT rid, template_code, channel, message_template,template_name FROM ${MAIN_SCHEMA_NAME}.notification_template WHERE channel = '${channel}' AND status_rid = (SELECT status_rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_name = 'Active')`;
+      return `SELECT rid, template_code, channel, message_template,template_name FROM ${MAIN_SCHEMA_NAME}.notification_template WHERE channel = '${channel}' AND status_rid = (SELECT status_rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_name = 'Active') order by template_name asc`;
     },
     fetchNotificationInAppTemplatesForRule(rule_rid: string) {
       return `SELECT in_app_template_rid as template_rid FROM ${MAIN_SCHEMA_NAME}.workflow_rule_master WHERE rid = '${rule_rid}' AND is_active = true`;
@@ -436,8 +436,22 @@ export const rawQueries = {
     fetchNotificationEmailTemplatesForRule(rule_rid: string) {
       return `SELECT email_template_rid as template_rid FROM ${MAIN_SCHEMA_NAME}.workflow_rule_master WHERE rid = '${rule_rid}'  AND is_active = true`;
     },
+    markTaskAsHighPriorityinCaseTask(schemaName: string){
+      return `
+      UPDATE ${schemaName}.case_tasks
+      SET is_flagged = true
+      WHERE rid = :taskRid
+      `;
+    },
+    markTaskAsHighPriorityTaskSummary(){
+      return `
+      UPDATE ${MAIN_SCHEMA_NAME}.task_summary
+      SET is_flagged = true
+      WHERE rid = :taskRid
+      `;
+    },
     checkTableExists(schemaName: string, table: string) {
-  return `SELECT EXISTS(SELECT 1 FROM information_schema.tables WHERE table_schema = '${schemaName}' AND table_name = '${table}')`;
+      return `SELECT EXISTS(SELECT 1 FROM information_schema.tables WHERE table_schema = '${schemaName}' AND table_name = '${table}')`;
 }
 
 }
