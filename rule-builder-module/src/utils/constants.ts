@@ -154,13 +154,13 @@ export const rawQueries = {
 
   fetchEventConditions(event_rid: string, status_rid: string): string {
     let query = `SELECT ec.rid, ec.name as condition_name, ec.description,ec.type as condition_type  FROM ${MAIN_SCHEMA_NAME}.event_conditions ec JOIN ${MAIN_SCHEMA_NAME}.event_conditions_map ecm 
-    ON ec.rid = ecm.condition_rid `;
+    ON ec.rid = ecm.condition_rid where  ec.status_rid = (select rid from ${MAIN_SCHEMA_NAME}.status where status_name = 'Active') `;
     const conditions: string[] = [];
-    conditions.push(`ecm.event_rid = '${event_rid}'`);
-    if (status_rid) {
-      conditions.push(`ec.status_rid = '${status_rid}'`);
-    }
-    query += ` WHERE ${conditions.join(' AND ')}`;
+    conditions.push(` and ecm.event_rid = '${event_rid}'`);
+    // if (status_rid) {
+    //   conditions.push(`ec.status_rid = '${status_rid}'`);
+    // }
+    query += ` ${conditions.join(' AND ')}`;
     return query;
   },
 
