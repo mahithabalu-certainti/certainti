@@ -5,9 +5,10 @@ import {
   where,
   fn,
   col,
+  QueryTypes,
 } from "sequelize";
 import { HttpStatus, primaryKeyContacts, rawQueries } from "../utils/constant";
-import { IAccount, IUpdateAccount, AccountAttributes } from "../utils/types";
+import { IAccount, IUpdateAccount, AccountAttributes, CaseExistsType } from "../utils/types";
 import { errorLog, generateSasUrl, getTableSchemaByEntity, logMessage, uploadToAzureBlob } from "../utils/helpers";
 import SchemaService from "./schemaService";
 import { Account } from "../models/accountModel";
@@ -20,10 +21,12 @@ import { States } from "../models/stateModel";
 import currency from "currency.js";
 import { Status } from "../models/statusModel";
 import { initSequelize } from "../config/maindbDataSource";
+import { initOrgSequelize } from "../config/orgdbDataSource";
 
 class AccountService {
   private accountRepository: typeof Account | null;
   private schemaService: SchemaService;
+  private orgDbSequelize : Sequelize | null = null;
 
   constructor() {
     this.accountRepository = null;
@@ -1751,6 +1754,7 @@ async accountList(
 
       // Process attachments
       const sequelize = await initSequelize();
+      const orgSequelize = await initOrgSequelize();
       const documentTypeIds = attachments.map((a) => a.document_type_rid);
       const documentCategoryIds = attachments.map(
         (a) => a.document_category_rid
@@ -1802,6 +1806,17 @@ async accountList(
           ? `${attachment.size_in_mb} mb`
           : "0 mb",
       }));
+      let schemaName = rawQueries.fetchSchemaName(accountNumber)
+      let isCaseExists : boolean = false;
+      const checkTableCaseTableExists : any = await orgSequelize.query(rawQueries.checkCaseTableExists(schemaName));
+      if(checkTableCaseTableExists[0][0] === true) {
+        const checkCaseExistsForAccount = await orgSequelize.query<CaseExistsType>(rawQueries.checkCaseExistsForAccount(schemaName, account_id), {type : QueryTypes.SELECT})
+        if(checkCaseExistsForAccount.length > 0) {
+          isCaseExists = true
+        }
+      } else {
+        isCaseExists = false;
+      }
 
       // Construct final account data
       const accountData = {
@@ -1812,6 +1827,7 @@ async accountList(
           accountDetails.length > 0 ? userNames?.created_by_name || "" : "",
         modified_by:
           accountDetails.length > 0 ? userNames?.modified_by_name || "" : "",
+        is_case_exists : isCaseExists
       };
 
       return {

@@ -130,3 +130,7 @@ export interface AccountAttributes {
   finance_executive: string | null;
   parent_account_rid: string | null;
 }
+
+export type CaseExistsType = {
+  rid : string
+}

@@ -3422,7 +3422,21 @@ export const rawQueries = {
       CREATE INDEX IF NOT EXISTS "${indexName}"
       ON "${schemaName}"."notes_timeline"("${field}");
     `;
-  },          
+  }, 
+  checkCaseExistsForAccount (schemaName : string, accountRid : string) {
+    return `SELECT rid FROM ${schemaName}.cases WHERE account_rid = '${accountRid}'`
+  },
+  fetchSchemaName(r_number: string) {
+    return `${MAIN_SCHEMA_NAME}_${r_number.replace("ACC-", "")}`;
+  },    
+  checkCaseTableExists(schemaName : string) {
+    return `SELECT EXISTS (
+    SELECT 1
+    FROM information_schema.tables
+    WHERE table_schema = '${schemaName}'
+    AND table_name = 'cases'
+    )`
+  }     
 };
 
 export const DEFAULT_ACCOUNT_DETAILS = {

@@ -413,6 +413,7 @@ export class CaseTaskSchemaService {
                 baseRuleEnginePayload.targetUserID = newValue;
                 baseRuleEnginePayload.targetEmail = emailMapping.get(newValue);
                 baseRuleEnginePayload.assignee = "Updated";
+                logMessage(`Triggering rule engine for assignee change with payload ${JSON.stringify(baseRuleEnginePayload)}`)
                  await this.helperMethod.triggerDynamicRuleEngine('assignee_change', baseRuleEnginePayload, {
                   newValue: newValueString,
                   oldValue: oldValueString
