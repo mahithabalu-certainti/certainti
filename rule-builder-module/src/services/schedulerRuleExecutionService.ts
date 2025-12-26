@@ -136,6 +136,8 @@ export class SchedulerService {
           plannedStartDate: data.effective_start_datetime,
           dueDate: data.effective_end_datetime,
           entityRid: data.task_rid,
+          targetUserID: data.assigned_to,
+          targetEmail: data.email,
         };
       } else {
         return {

@@ -546,7 +546,8 @@ export type UpdateCaseTaskType = {
   tags : tagTypes[],
   workflow_connector : WorkflowConnectorItemsAccountLevel,
   weightage_rid : string
-  task_category_rid : string
+  task_category_rid : string,
+  is_flagged:boolean
 }
 
 export type CaseTaskQueryType = {

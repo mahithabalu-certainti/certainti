@@ -1411,6 +1411,7 @@ export const taskCardDetails = (schemaName: string, taskRid: string, accountRid:
     'modified_by', ct.modified_by,
     'created_datetime', ct.created_datetime,
     'task_name', ct.task_name,
+    'is_flagged', ct.is_flagged,
     'effective_start_datetime', ct.effective_start_datetime,
     'effective_end_datetime', ct.effective_end_datetime,
     'assigned_to', ctt.user_rid,

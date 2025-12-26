@@ -24,20 +24,25 @@ class NotificationService {
     errorMessage?: string;
     data?: { notifications: any; total: number; nextOffset: number | null; unreadCount: number };
   }> {
-    const { count, rows } = await Notification.findAndCountAll({
-      where: { user_rid: userId },
-      limit,
-      offset,
-      order: [["created_datetime", "DESC"]],
-      include: [
-        {
-          model: NotificationStatus,
-          as: "notificationstatus",
-          attributes: ["status_description", "status_name"],
-          required: false,
-        },
-      ],
-    });
+    const offsetNum = Number(offset);
+const limitNum = Number(limit);
+  const { count, rows } = await Notification.findAndCountAll({
+  where: { user_rid: userId },
+  limit: limitNum,
+  offset : offsetNum,
+  distinct: true,       
+  col: 'rid',            
+  order: [["created_datetime", "DESC"]],
+  include: [
+    {
+      model: NotificationStatus,
+      as: "notificationstatus",
+      attributes: ["status_description", "status_name"],
+      required: false,
+    },
+  ],
+});
+
 
     // Get the 'Unread' status rid
     const unreadStatus = await NotificationStatus.findOne({
@@ -57,7 +62,11 @@ class NotificationService {
     }
 
     // Calculate nextOffset for pagination
-    const nextOffset = offset + rows.length < count ? offset + rows.length : null;
+    let nextOffset: number | null = null; 
+    if (count > 0 && offsetNum + limitNum < count) {
+      nextOffset = offsetNum + limitNum;
+    }
+    
     return {
       statusCode: constants.SUCCESS,
       message: statusMessage.orgRetrieved,
