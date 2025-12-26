@@ -32,6 +32,7 @@ import {
   TechnicalSummaryExportListParams,
 } from '../../../types';
 import CaseFinancialSummary from './financial-summary/financial-summary';
+import DossierMenu from './dossier-menu/dossier-menu';
 import { accountDetailsProps } from '../../account-details/utils';
 import {
   AllMenus,
@@ -848,6 +849,8 @@ export const CaseDetails = () => {
             setTechnicalSummaryParams={setTechnicalSummaryParams}
           />
         );
+      case 'dossier':
+        return <DossierMenu />;
       default:
         return (
           <div className='flex items-center justify-center h-full'>
