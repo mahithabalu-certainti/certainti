@@ -110,8 +110,8 @@ export const ruleTemplateNames = {
 }
 
 export const ruleNames = {
-  caseCreated: "Create Case",
-  taskCreated: "Create Task",
+  caseCreated: "Case Event",
+  taskCreated: "Task Event",
   taskAssigned: "Task Assigned",
 }
 
@@ -173,13 +173,16 @@ export const rawQueries = {
     return query;
   },
 
-  fetchFields(category_rid: string, status_rid: string): string {
+  fetchFields(category_rid: string, status_rid: string,scope_event_rid: string): string {
     let query = `SELECT rf.rid, rf.name as name,rf.field_description FROM ${MAIN_SCHEMA_NAME}.rule_fields rf JOIN ${MAIN_SCHEMA_NAME}.field_category_map fcm 
     ON rf.rid = fcm.field_rid `;
     const conditions: string[] = [];
     conditions.push(`fcm.category_rid = '${category_rid}'`);
     if (status_rid) {
       conditions.push(`rf.status_rid = '${status_rid}'`);
+    }
+    if (scope_event_rid) {
+      conditions.push(`fcm.scope_event_rid = '${scope_event_rid}'`);
     }
     query += ` WHERE ${conditions.join(' AND ')}`;
     return query;
