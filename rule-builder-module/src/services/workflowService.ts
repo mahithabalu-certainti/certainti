@@ -1279,6 +1279,9 @@ async triggerNotification(taskContext:any,channel:string, ruleRid:string): Promi
             parentAccountNumber,
             accountInfo.parent_account_rid
         );
+         if (!senderEmailInfo) {
+            return;
+        }
         const emailContent = {
             message: {
                 subject: emailRequest.subject,
