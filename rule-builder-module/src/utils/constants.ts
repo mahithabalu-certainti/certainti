@@ -136,7 +136,8 @@ export const rawQueries = {
 
   fetchScopeEvents(scope_type_rid: string, status_rid: string): string {
     let query = `SELECT se.rid , se.event_name, se.description,st.name AS scope_type_name, st.rid as scope_type_rid,se.type 
-    FROM ${MAIN_SCHEMA_NAME}.scopes st JOIN ${MAIN_SCHEMA_NAME}.scope_events se ON se.scope_type_rid = st.rid `;
+    FROM ${MAIN_SCHEMA_NAME}.scopes st JOIN ${MAIN_SCHEMA_NAME}.scope_events se ON se.scope_type_rid = st.rid 
+    and se.status_rid = (select rid from ${MAIN_SCHEMA_NAME}.status where status_name = 'Active') `;
     const conditions: string[] = [];
     if (scope_type_rid) {
       conditions.push(`se.scope_type_rid = '${scope_type_rid}'`);
@@ -398,8 +399,11 @@ export const rawQueries = {
     WHERE cs.status_rid = '${inProgressStatusRid}'`;
   },
   fetchAllCaseTask(inProgressStatusRid: string,taskType:string) {
-    return `SELECT task_rid,task_name, status_rid, effective_start_datetime,effective_end_datetime,account_rid FROM ${MAIN_SCHEMA_NAME}.task_summary WHERE status_rid = '${inProgressStatusRid}' 
-     and task_type_rid = '${taskType}'`;
+    return `SELECT task_rid,task_name, ts.status_rid, effective_start_datetime,effective_end_datetime,account_rid,assigned_to FROM ${MAIN_SCHEMA_NAME}.task_summary ts
+      LEFT JOIN ${MAIN_SCHEMA_NAME}.user uu ON ts.assigned_to = uu.rid
+    WHERE ts.status_rid = '${inProgressStatusRid}' 
+     and ts.task_type_rid = '${taskType}'
+      `;
   },
   fetchAllCasesOverdue(inProgressStatusRid: string) {
     return `SELECT rid, status_rid, planned_submission_date FROM ${MAIN_SCHEMA_NAME}.case_summary WHERE status_rid = '${inProgressStatusRid}' AND planned_submission_date IS NOT NULL AND planned_submission_date <= CURRENT_DATE limit 1`;
@@ -438,7 +442,7 @@ export const rawQueries = {
     },
     markTaskAsHighPriorityinCaseTask(schemaName: string){
       return `
-      UPDATE ${schemaName}.case_tasks
+      UPDATE ${schemaName}.case_task
       SET is_flagged = true
       WHERE rid = :taskRid
       `;

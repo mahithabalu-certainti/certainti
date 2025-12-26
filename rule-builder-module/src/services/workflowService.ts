@@ -958,7 +958,7 @@ export class WorkFlowService {
         ruleRid: string
     ) {
         switch (action.action_name) {
-            case "Flag As Important":
+            case "Flag":
                 await this.markUsHighPriority(entity);
                 break;
             case "In App":
@@ -1164,14 +1164,14 @@ async markUsHighPriority(taskContext:any): Promise<void> {
         await mainDb.query(
             query,
             {
-                replacements: { taskRid: taskContext.taskRid },
+                replacements: { taskRid: taskContext.entityRid },
                 type: QueryTypes.UPDATE
             }
         );
         await orgDb.query(
             rawQueries.markTaskAsHighPriorityinCaseTask(schemaName),
             {
-                replacements: { taskRid: taskContext.taskRid },
+                replacements: { taskRid: taskContext.entityRid },
                 type: QueryTypes.UPDATE
             }
         );
