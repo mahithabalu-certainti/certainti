@@ -89,6 +89,7 @@ class ProjectGraphQlServices {
                 data.created_by = findProjectFiscal[0][0].created_by;
                 data.status_rid = findProjectFiscal[0][0].status_rid;
                 data.fiscal_year=data.fiscal_year? data.fiscal_year:findProjectFiscal[0][0].fiscal_year;
+                data.region_rid = findProjectFiscal[0][0].region_rid
                 await this.projectIngestion.updateProjectFiscalRegion(checkAccountExists[0][0].r_number, data, findProjectFiscal[0][0].project_code)
             }
             if(setProjectFiscalSummary.length > 0) {
