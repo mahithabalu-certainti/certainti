@@ -266,6 +266,8 @@ export const fetchProjectsForCases = (
     kc.entity_rid IN (pf.rid)
     AND
     kc.key_contact_role = '${pointOfContactRid}'
+    AND
+    kc.is_primary_contact = TRUE
     ),
     ${subQuery}
     fetch_project_technical_point_of_contact AS (
@@ -277,6 +279,8 @@ export const fetchProjectsForCases = (
     kc.entity_rid IN (pf.rid)
     AND
     kc.key_contact_role = '${technicalPointOfContactRid}'
+    AND
+    kc.is_primary_contact = TRUE
     ), 
 
     fetch_projects AS (
@@ -313,6 +317,7 @@ export const fetchProjectsForCases = (
     )
     SELECT * FROM paginated_projects
     `;
+  console.log(query)
   return query;
 };
 
