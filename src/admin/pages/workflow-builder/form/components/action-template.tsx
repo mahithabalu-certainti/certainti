@@ -2,7 +2,7 @@
 import React from 'react';
 import { FormControl, MenuItem, Select, CircularProgress } from '@mui/material';
 import { useWorkflowContext } from '../workflow-context';
-import { COMMON_MENU_PROPS, getSelectStyles, Action } from '../helper';
+import { COMMON_MENU_PROPS, getSelectStyles, Action, ActionTypeEnum } from '../helper';
 import { useGetActionsTemplate } from '../../../../service/workflow-builder/workflow-builder-service';
 
 interface ActionTemplateItemProps {
@@ -104,6 +104,12 @@ const ActionTemplateItem: React.FC<ActionTemplateItemProps> = ({
 const ActionTemplate: React.FC = () => {
   const { rule, updateActionTemplate } = useWorkflowContext();
 
+  // Filter actions to only show In App and Email actions
+  const templateActions = rule.actions.filter(
+    (action) =>
+      action.name === ActionTypeEnum.InApp || action.name === ActionTypeEnum.Email
+  );
+
   return (
     <div className='p-6 h-full flex flex-col overflow-y-auto'>
       <div className='mb-6'>
@@ -116,8 +122,8 @@ const ActionTemplate: React.FC = () => {
       </div>
 
       <div className='flex-1'>
-        {rule.actions.length > 0 ? (
-          rule.actions.map((action) => (
+        {templateActions.length > 0 ? (
+          templateActions.map((action) => (
             <ActionTemplateItem
               key={action.id}
               action={action}
@@ -129,7 +135,7 @@ const ActionTemplate: React.FC = () => {
           ))
         ) : (
           <div className='text-center py-10 text-gray-500 bg-gray-50 rounded-lg border border-dashed border-gray-300'>
-            No actions added. Please go back and add actions first.
+            No actions added. Please go back and add In App or Email actions first.
           </div>
         )}
       </div>
