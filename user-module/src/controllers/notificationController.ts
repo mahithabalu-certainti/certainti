@@ -136,7 +136,7 @@ async function updateNotificationStatus(req: Request, res: Response): Promise<vo
 }
 
 async function getWebsocketUrl(req: Request, res: Response): Promise<void> {
-  const methodName = "List Notifications for User";
+  const methodName = "Get Connection URL for User";
   // See function-level comment above
   try {
     const userId = req.headers["x-user-id"] as string;
@@ -149,8 +149,6 @@ async function getWebsocketUrl(req: Request, res: Response): Promise<void> {
       );
       return;
     }
-  
-
     const listResponse = await services.notificationService.getWebsocketUrl(userId);
 
     if (listResponse.statusCode === constants.SUCCESS) {
