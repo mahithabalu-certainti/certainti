@@ -185,7 +185,8 @@ export class WorkFlowService {
         const fields: Fields[] = await mainDb.query<Fields>(
             rawQueries.fetchFields(
                 listRequest.category_rid,
-                listRequest.status_rid
+                listRequest.status_rid,
+                listRequest.event_rid
             ),
             { type: QueryTypes.SELECT }
         );

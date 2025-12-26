@@ -1861,8 +1861,8 @@ export const ruleTemplateNames = {
 }
 
 export const ruleNames = {
-  caseCreated: "Create Case",
-  taskCreated: "Create Task",
+  caseCreated: "Case Event",
+  taskCreated: "Task Event",
 }
 
 

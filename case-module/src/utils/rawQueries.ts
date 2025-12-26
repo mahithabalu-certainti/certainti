@@ -961,6 +961,7 @@ export const fetchCaseTemplateData = (schemaName : string, caseRid : string, acc
   array_agg(jsonb_build_object(
   'rid', t.rid,
   'task_name', t.task_name,
+  'is_flagged', t.is_flagged,
   'r_number', t.r_number,
   'created_by', t.created_by,
   'sequence_no', t.sequence_no,
