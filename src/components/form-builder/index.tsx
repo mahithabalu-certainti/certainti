@@ -180,7 +180,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 [field.name]: field.defaultValue || '',
               }));
             }
-          } else if (field.defaultValue && field.assignDefaultValue) {
+          } else if (
+            field.defaultValue &&
+            field.assignDefaultValue &&
+            !field.clearValue
+          ) {
             setConstructFormData((prev) => ({
               ...prev,
               [field.name]: field.defaultValue || '',
@@ -191,7 +195,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               [field.name]: '',
             }));
           }
-        } else if (field.assignDefaultValue && !field.defaultValue) {
+        } else if (
+          field.assignDefaultValue &&
+          !field.defaultValue &&
+          !field.clearValue
+        ) {
           setConstructFormData((prev) => ({
             ...prev,
             [field.name]: '',
@@ -1072,7 +1080,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         );
       case 'file':
         return (
-          <div className='w-full flex items-center justify-between gap-2'>
+          <div className='w-full flex items-center gap-2'>
             <input
               id='upload-logo'
               type={field.type}
@@ -1107,14 +1115,15 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               )}
             </div>
 
+            {/* Browse button */}
             <TextButton
               label='Browse'
               sx={{
-                height: '32px !important',
-                minWidth: '26%',
-                maxWidth: '26%',
+                height: '32px',
+                minWidth: '90px',
                 fontSize: '13px',
-                fontWeight: '400',
+                fontWeight: 400,
+                whiteSpace: 'nowrap',
               }}
               disabled={field.disabled}
               onClick={() => {

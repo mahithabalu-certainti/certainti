@@ -7,6 +7,7 @@ import { CommentIcon, CustomChecklistIcon } from '../../assets';
 import { generateInitials, getTagColor } from './helper';
 import { Tooltip } from '@mui/material';
 import { formatDateToYyyyMmmDd } from '../../common-utils';
+import { getSvgIcon } from '../navbar/helper';
 
 interface ExtendedTaskCardProps extends TaskCardProps {
   isDragable?: boolean;
@@ -209,6 +210,7 @@ const TaskCardComponent: React.FC<ExtendedTaskCardProps> = ({
               {taskData.priority_name}
             </div>
           )}
+          {taskData?.is_flagged && <div>{getSvgIcon('flag', '#FF0000')}</div>}
         </div>
       )}
 

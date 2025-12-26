@@ -66,7 +66,7 @@ const ConditionForm: React.FC<ConditionFormProps> = ({
     !!condition.field
   );
 
-  const { validatedFieldErrors } = useWorkflowContext();
+  const { validatedFieldErrors, rule } = useWorkflowContext();
 
   // Sync local state when condition prop changes externally (e.g., when cleared)
   React.useEffect(() => {
@@ -97,6 +97,7 @@ const ConditionForm: React.FC<ConditionFormProps> = ({
   const { data: fieldsData, isLoading: isLoadingFields } =
     useGetRuleCategoryFields({
       category_rid: condition.category || '',
+      event_rid: rule.trigger?.id || '',
       status_rid: '',
     });
 
