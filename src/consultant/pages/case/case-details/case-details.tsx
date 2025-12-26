@@ -108,6 +108,7 @@ import {
   exportFinancialResourceCost,
 } from '../../../services/financial/financial-service';
 import { exportCasesTechnicalSummary } from '../../../services/case-technical-summary/technical-summary-service';
+import { CircularProgress } from '@mui/material';
 
 export const CaseDetails = () => {
   const navigate = useNavigate();
@@ -116,7 +117,7 @@ export const CaseDetails = () => {
   const { caseId } = useParams();
   const accountId = searchParams.get('accountID') || '';
   const mainSource = searchParams.get('mainSource') || '';
-  const { modules, permission } = useSelector(
+  const { modules, permission, menus } = useSelector(
     (state: RootState) => state.permission
   );
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -692,6 +693,33 @@ export const CaseDetails = () => {
   };
 
   const renderContent = () => {
+    // Check if current activeKey has permission
+    const currentMenuItem = sideMenuItems.find(
+      (item) => item.key === activeKey
+    );
+    if (currentMenuItem) {
+      const module = modules.find((module) => module.name === currentMenuItem.id);
+      const menu = menus.find((menu) => menu.name === currentMenuItem.id);
+      
+      // Use same logic as SideMenuPanel for permission check
+      const shouldHide = !currentMenuItem.hide
+        ? module
+          ? !module.is_enabled
+          : menu
+            ? !menu.is_enabled
+            : false
+        : true;
+
+      // If no permission, show loader (SideMenuPanel will switch to valid menu)
+      if (shouldHide) {
+        return (
+          <div className='flex items-center justify-center h-full'>
+            <CircularProgress size={30} sx={{ color: '#2D3E4F' }} />
+          </div>
+        );
+      }
+    }
+
     switch (activeKey) {
       case 'workBreakdown':
         return (

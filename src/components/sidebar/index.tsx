@@ -36,6 +36,8 @@ import { accountNavItems } from './accounts-menu';
 import LogoSmall from '../../assets/icons/logo-small.svg?react';
 import Logo from '../../assets/icons/logo.svg?react';
 import { sideNavAdminItems } from './admin-menus';
+import { AllModules, MenuOption } from '../../common-service';
+import { checkPermission } from '../../common-utils';
 
 const matchCheck = (subItem: SubItemTitle, pathname: string): boolean => {
   return subItem.matchLink === pathname;
@@ -57,16 +59,32 @@ export const Sidebar: React.FC<SideBarProps> = ({
   const { logout } = useAuthHook();
 
   // Permission Mangement
-  const { menus } = useSelector((state: RootState) => state.permission);
+  const { menus, modules } = useSelector(
+    (state: RootState) => state.permission
+  );
+
+  const isWorkBreakdownEnable = checkPermission(
+    modules,
+    AllModules.WORKBREAKDOWN
+  );
+  const isActivityTaskEnable = checkPermission(
+    modules,
+    AllModules.ACTIVITIES_TASK
+  );
+
   const accountMenus = useMemo(() => {
     return accountNavItems.map((item) => {
       const menu = menus.find((menu) => menu.name === item.id);
+      const isTaskMenu = item.id === MenuOption.TASKS;
       return {
         ...item,
-        hide: menu && !menu.is_enabled,
+        hide:
+          (menu && !menu.is_enabled) ||
+          (isTaskMenu && !isWorkBreakdownEnable && !isActivityTaskEnable),
       };
     });
-  }, [menus]);
+  }, [isActivityTaskEnable, isWorkBreakdownEnable, menus]);
+
   const memoizedAdminNavItems = useMemo(() => {
     return sideNavAdminItems
       .map((item) => ({
