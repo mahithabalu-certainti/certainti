@@ -747,21 +747,21 @@ const ProjectForm: React.FC = () => {
             values={
               isEditView
                 ? {
-                  ...projectData,
-                  ...effortFinancials,
-                  ...costFinancials,
-                }
+                    ...projectData,
+                    ...effortFinancials,
+                    ...costFinancials,
+                  }
                 : {
-                  project_status: defaultActiveValue,
-                  status: defaultActiveValue,
-                  auto_send_ai_interaction:
-                    settings?.auto_send_interaction || enumValue.No,
-                  auto_access_rd: settings?.auto_access_rd || enumValue.Yes,
-                  max_ai_interaction: settings?.max_ai_interactions,
-                  currency: settings?.currency_rid,
-                  ...effortFinancials,
-                  ...costFinancials,
-                }
+                    project_status: defaultActiveValue,
+                    status: defaultActiveValue,
+                    auto_send_ai_interaction:
+                      settings?.auto_send_interaction || enumValue.No,
+                    auto_access_rd: settings?.auto_access_rd || enumValue.Yes,
+                    max_ai_interaction: settings?.max_ai_interactions,
+                    currency: settings?.currency_rid,
+                    ...effortFinancials,
+                    ...costFinancials,
+                  }
             }
             outData={submitData}
             formRef={formRef}

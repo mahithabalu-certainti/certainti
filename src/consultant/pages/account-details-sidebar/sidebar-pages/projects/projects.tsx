@@ -208,42 +208,44 @@ const Projects: React.FC<ProjectsProps> = ({
   };
   useEffect(() => {
     if (data?.projects) {
-      const updatedProjects = data.projects.map((project) => {
-        // 🔹 Map over each ProjectFiscal to add disable logic
-        const updatedProjectFiscal = project?.ProjectFiscal?.map((fiscal) => {
-          // Get message for THIS specific fiscal object
-          const checkBoxMessage = getProjectDisableReason(
-            fiscal?.is_rd_trigger_qualified === true
+      const updatedProjects =
+        data.projects.map((project) => {
+          // 🔹 Map over each ProjectFiscal to add disable logic
+          const updatedProjectFiscal =
+            project?.ProjectFiscal?.map((fiscal) => {
+              // Get message for THIS specific fiscal object
+              const checkBoxMessage = getProjectDisableReason(
+                fiscal?.is_rd_trigger_qualified === true
+              );
+
+              return {
+                ...fiscal,
+                disableCheckBox: !!checkBoxMessage,
+                checkBoxMessage,
+              };
+            }) || [];
+
+          // Check if ANY fiscal in this project is disabled
+          const hasDisabledChild = updatedProjectFiscal.some(
+            (fiscal) => fiscal.disableCheckBox
           );
-  
+
+          // Get the disable reason for the parent based on child condition
+          const parentDisableMessage = hasDisabledChild
+            ? getProjectDisableReason(true) // Or use appropriate logic for parent
+            : null;
+
           return {
-            ...fiscal,
-            disableCheckBox: !!checkBoxMessage,
-            checkBoxMessage,
+            ...project,
+            // Update the ProjectFiscal array with the new objects
+            ProjectFiscal: updatedProjectFiscal,
+            // Set parent-level disable props based on child condition
+            disableCheckBox: hasDisabledChild,
+            checkBoxMessage: parentDisableMessage,
+            hasDisabledFiscal: hasDisabledChild,
           };
         }) || [];
-  
-        // Check if ANY fiscal in this project is disabled
-        const hasDisabledChild = updatedProjectFiscal.some(
-          (fiscal) => fiscal.disableCheckBox
-        );
-        
-        // Get the disable reason for the parent based on child condition
-        const parentDisableMessage = hasDisabledChild 
-          ? getProjectDisableReason(true) // Or use appropriate logic for parent
-          : null;
-  
-        return {
-          ...project,
-          // Update the ProjectFiscal array with the new objects
-          ProjectFiscal: updatedProjectFiscal,
-          // Set parent-level disable props based on child condition
-          disableCheckBox: hasDisabledChild,
-          checkBoxMessage: parentDisableMessage,
-          hasDisabledFiscal: hasDisabledChild,
-        };
-      }) || [];
-  
+
       setProjectList(updatedProjects);
     }
   }, [data?.projects]);

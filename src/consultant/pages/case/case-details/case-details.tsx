@@ -698,9 +698,11 @@ export const CaseDetails = () => {
       (item) => item.key === activeKey
     );
     if (currentMenuItem) {
-      const module = modules.find((module) => module.name === currentMenuItem.id);
+      const module = modules.find(
+        (module) => module.name === currentMenuItem.id
+      );
       const menu = menus.find((menu) => menu.name === currentMenuItem.id);
-      
+
       // Use same logic as SideMenuPanel for permission check
       const shouldHide = !currentMenuItem.hide
         ? module

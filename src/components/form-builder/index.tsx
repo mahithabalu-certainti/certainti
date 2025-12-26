@@ -1072,16 +1072,16 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         );
       case 'file':
         return (
-<div className="w-full flex items-center gap-2">
-  <input
-    id="upload-logo"
-    type={field.type}
-    name={field.name}
-    autoComplete="off"
-    className="hidden"
-    disabled={field.disabled}
-    onChange={handleFileChange}
-  />
+          <div className='w-full flex items-center gap-2'>
+            <input
+              id='upload-logo'
+              type={field.type}
+              name={field.name}
+              autoComplete='off'
+              className='hidden'
+              disabled={field.disabled}
+              onChange={handleFileChange}
+            />
 
             <div className='flex items-center  justify-between w-[74%] sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs overflow-hidden'>
               <span
@@ -1099,34 +1099,33 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     ) as HTMLInputElement;
                     if (fileInput) fileInput.value = '';
 
-          if (field.name === 'logo') {
-            onChange?.({ fieldName: 'logo', fieldValue: null });
-          }
-        }}
-      />
-    )}
-  </div>
+                    if (field.name === 'logo') {
+                      onChange?.({ fieldName: 'logo', fieldValue: null });
+                    }
+                  }}
+                />
+              )}
+            </div>
 
-  {/* Browse button */}
-  <TextButton
-    label="Browse"
-    sx={{
-      height: '32px',
-      minWidth: '90px',
-      fontSize: '13px',
-      fontWeight: 400,
-      whiteSpace: 'nowrap',
-    }}
-    disabled={field.disabled}
-    onClick={() => {
-      const logoFileInput = document.getElementById(
-        'upload-logo'
-      ) as HTMLInputElement;
-      logoFileInput?.click();
-    }}
-  />
-</div>
-
+            {/* Browse button */}
+            <TextButton
+              label='Browse'
+              sx={{
+                height: '32px',
+                minWidth: '90px',
+                fontSize: '13px',
+                fontWeight: 400,
+                whiteSpace: 'nowrap',
+              }}
+              disabled={field.disabled}
+              onClick={() => {
+                const logoFileInput = document.getElementById(
+                  'upload-logo'
+                ) as HTMLInputElement;
+                logoFileInput?.click();
+              }}
+            />
+          </div>
         );
       case 'website':
         return (

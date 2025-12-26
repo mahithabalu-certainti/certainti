@@ -454,8 +454,7 @@ const Interactions: React.FC<InteractionsProps> = ({
       disabled: accountInActive || rdQualified,
       onClick: () => handleCreate(),
       sx: { width: '48px', minWidth: '48px' },
-      tooltipValue:
-      'Project type not allowed due to Configuration setting',
+      tooltipValue: 'Project type not allowed due to Configuration setting',
       toolTipEnabled: rdQualified,
       hide: !createInteractionsEnable || viewResponseHistory,
     },
