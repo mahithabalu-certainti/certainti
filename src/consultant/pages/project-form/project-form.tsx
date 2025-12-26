@@ -531,6 +531,9 @@ const ProjectForm: React.FC = () => {
       }
       setCurrencyValue(currencyValue);
     }
+    if (data.fieldName === 'currency') {
+      setCurrencyValue(data.fieldValue as string);
+    }
     // Handle effort fields
     if (
       data.fieldName === 'total_effort_fte' ||

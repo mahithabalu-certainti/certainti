@@ -173,6 +173,29 @@ export const getSvgIcon = (name: string, color: string = '#425A76') => {
         />
       </svg>
     ),
+
+    flag: (
+      <svg width='18' height='18' viewBox='0 0 24 24' fill='none'>
+        {/* flag pole */}
+        <line
+          x1='5'
+          y1='3'
+          x2='5'
+          y2='21'
+          stroke={color}
+          strokeWidth='2'
+          strokeLinecap='round'
+        />
+        {/* flag */}
+        <path
+          d='M5 4h11l-2 4 2 4H5'
+          stroke={color}
+          strokeWidth='2'
+          strokeLinejoin='round'
+          fill={color}
+        />
+      </svg>
+    ),
   };
 
   return icons[name] || icons['info'];

@@ -81,12 +81,6 @@ export const Tasks: React.FC = () => {
   const { modules, permission } = useSelector(
     (state: RootState) => state.permission
   );
-  const attachmentEnable = checkPermission(modules, AllModules.ATTACHMENTS);
-
-  const isAttachmentViewEnable = checkPermission(
-    permission,
-    AllPermissions.ATTACHMENT_VIEW_EDIT
-  );
 
   const isWorkBreakdownEnable = checkPermission(
     modules,
@@ -333,8 +327,6 @@ export const Tasks: React.FC = () => {
   ) => {
     setColumnAnchorEl(event.currentTarget);
   };
-
-  if (!attachmentEnable || !isAttachmentViewEnable) return <AccessRestricted />;
 
   if (!isWorkBreakdownEnable && !isActivityTaskEnable)
     return <AccessRestricted />;
