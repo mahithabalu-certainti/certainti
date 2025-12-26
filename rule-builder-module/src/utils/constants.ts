@@ -259,7 +259,7 @@ export const rawQueries = {
   },
 
   fetchRuleConditions(condition_rid: string, rule_rid: string): string {
-    let query = `SELECT wrc.rule_rid,rf.name as field,ro.name as operator,rv.name as value,wrc.logical_operator FROM ${MAIN_SCHEMA_NAME}.workflow_rule_condition wrc 
+    let query = `SELECT wrc.rule_rid,rf.name as field,rf.field_description ,ro.name as operator,rv.name as value,wrc.logical_operator FROM ${MAIN_SCHEMA_NAME}.workflow_rule_condition wrc 
     JOIN ${MAIN_SCHEMA_NAME}.rule_fields rf ON rf.rid = wrc.field_rid JOIN ${MAIN_SCHEMA_NAME}.rule_operators ro ON ro.rid = wrc.operator_rid JOIN ${MAIN_SCHEMA_NAME}.rule_values rv on rv.rid = wrc.value_rid 
     WHERE wrc.rule_rid = '${rule_rid}' ORDER BY wrc.sequence `;
     return query;
@@ -397,12 +397,17 @@ export const rawQueries = {
     return `SELECT rid, task_type_name from ${MAIN_SCHEMA_NAME}.task_type WHERE task_type_name ='Milestone' and status = 'Active'`;
   },
    fetchAllCases() {
-    return `SELECT cs.rid,cs.case_name, cs.status_rid, planned_submission_date,statutory_submission_date,account_rid,case_owner_rid ,email FROM ${MAIN_SCHEMA_NAME}.case_summary  cs
-    LEFT JOIN ${MAIN_SCHEMA_NAME}.user uu ON cs.case_owner_rid = uu.rid`;
+    return `SELECT cs.rid,
+    CONCAT(a.account_name, '-', c.country_name, '-',cs.fiscal_year,'-',cs.case_name) AS case_name,ac.account_name, cs.status_rid, planned_submission_date,statutory_submission_date,account_rid,case_owner_rid ,email FROM ${MAIN_SCHEMA_NAME}.case_summary  cs
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.user uu ON cs.case_owner_rid = uu.rid 
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.account ac ON cs.account_rid = ac.rid
+     LEFT JOIN ${MAIN_SCHEMA_NAME}.country c ON ac.country_rid = c.rid
+   `;
   },
   fetchAllCaseTask(taskType:string) {
-    return `SELECT task_rid,task_name, ts.status_rid, effective_start_datetime,effective_end_datetime,account_rid,assigned_to FROM ${MAIN_SCHEMA_NAME}.task_summary ts
+    return `SELECT task_rid,task_name,ac.account_name, ts.status_rid, effective_start_datetime,effective_end_datetime,account_rid,assigned_to FROM ${MAIN_SCHEMA_NAME}.task_summary ts
       LEFT JOIN ${MAIN_SCHEMA_NAME}.user uu ON ts.assigned_to = uu.rid
+      LEFT JOIN ${MAIN_SCHEMA_NAME}.account ac ON ts.account_rid = ac.rid
     WHERE  ts.task_type_rid = '${taskType}'
       `;
   },
