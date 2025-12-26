@@ -454,7 +454,7 @@ export const rawQueries = {
       return `
       UPDATE ${MAIN_SCHEMA_NAME}.task_summary
       SET is_flagged = true
-      WHERE rid = :taskRid
+      WHERE task_rid = :taskRid
       `;
     },
     checkTableExists(schemaName: string, table: string) {
