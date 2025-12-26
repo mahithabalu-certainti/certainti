@@ -77,6 +77,7 @@ export interface TaskCard {
   profile_url: string | null;
   attachment_count?: number | null;
   tags?: string[] | Tag[];
+  is_flagged?: boolean;
 }
 export interface TaskDetailResponse {
   rid: string;
@@ -96,6 +97,7 @@ export interface TaskDetailResponse {
   task_description?: string;
   effective_start_datetime?: string;
   effective_end_datetime?: string;
+  is_flagged?: boolean;
   checklists?: {
     rid: string;
     task_rid: string;
@@ -219,6 +221,7 @@ export const getTaskDetail = async (
         initials: assigneeInitials,
         color: assigneeColor,
       },
+      is_flagged: taskDetailResponse?.is_flagged,
       createdBy: taskDetailResponse.created_by_name,
       created_by_rid: taskDetailResponse.created_by,
       modifiedBy: taskDetailResponse.modified_by_name,

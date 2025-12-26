@@ -58,6 +58,7 @@ export interface Task {
   r_number?: string;
   title: string;
   status: string;
+  is_flagged?: boolean;
   priority?: string;
   assignee: Assignee;
   commentCount: number;
@@ -143,6 +144,7 @@ export interface TaskCard {
   profile_url: string | null;
   attachment_count?: number | null;
   tags?: string[] | Tag[];
+  is_flagged?: boolean;
 }
 
 export interface KanbanColumn {

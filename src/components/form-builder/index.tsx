@@ -180,7 +180,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 [field.name]: field.defaultValue || '',
               }));
             }
-          } else if (field.defaultValue && field.assignDefaultValue) {
+          } else if (
+            field.defaultValue &&
+            field.assignDefaultValue &&
+            !field.clearValue
+          ) {
             setConstructFormData((prev) => ({
               ...prev,
               [field.name]: field.defaultValue || '',
@@ -191,7 +195,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               [field.name]: '',
             }));
           }
-        } else if (field.assignDefaultValue && !field.defaultValue) {
+        } else if (
+          field.assignDefaultValue &&
+          !field.defaultValue &&
+          !field.clearValue
+        ) {
           setConstructFormData((prev) => ({
             ...prev,
             [field.name]: '',
