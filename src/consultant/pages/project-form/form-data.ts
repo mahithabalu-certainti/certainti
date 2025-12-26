@@ -570,8 +570,8 @@ export const FormData = (
             options: currency,
             required: false,
             onChange: true,
-            defaultValue: currencyValue,
-            assignDefaultValue: true,
+            defaultValue: globalType && !isEditView  ? currencyValue : undefined,
+            assignDefaultValue: globalType && !isEditView,
             placeholder: 'Choose Currency',
             dependantLabel: 'account_rid',
             disabled:

@@ -90,6 +90,7 @@ interface InteractionsProps {
     React.SetStateAction<AttachmentsListExportParams>
   >;
   isSendInteraction: boolean;
+  rdQualified: boolean;
   loading: boolean;
   activityMenuItems: ActivityDropdownItem[];
 }
@@ -99,6 +100,7 @@ const Interactions: React.FC<InteractionsProps> = ({
   projectDetails,
   setInteractionsParams,
   isSendInteraction,
+  rdQualified,
   loading,
   activityMenuItems,
 }) => {
@@ -449,9 +451,12 @@ const Interactions: React.FC<InteractionsProps> = ({
     {
       label: 'New',
       variant: 'outlined' as const,
-      disabled: accountInActive,
+      disabled: accountInActive || rdQualified,
       onClick: () => handleCreate(),
       sx: { width: '48px', minWidth: '48px' },
+      tooltipValue:
+      'Project type not allowed due to Configuration setting',
+      toolTipEnabled: rdQualified,
       hide: !createInteractionsEnable || viewResponseHistory,
     },
     {
