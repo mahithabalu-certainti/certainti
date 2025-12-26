@@ -232,6 +232,11 @@ export class CaseTaskSchemaService {
               }
             }
           }
+          const [currentStatus]:any[] = await this.mainDbSequelize.query(rawQueries.fetchTaskStatus(isTaskExists.task_status_rid,data.task_status_rid), { type: QueryTypes.SELECT });
+          if(currentStatus === 'Closed')
+          {
+            data.is_flagged = false;
+          }
         }
         if (data.assigned_to !== null && data.assigned_to !== '' && data.assigned_to !== undefined) {
           if (data.assigned_to !== isTaskExists.assigned_to) {
