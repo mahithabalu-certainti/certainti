@@ -10,6 +10,7 @@ let isJobRunning = false;
 
 export const schedulerForTriggerRule = async () => {
   const schdulerExpression = await getSecret(process.env.SCHEDULER_EXPRESSION as string) || `0 0 * * *`;
+  console.log(`Scheduler Expression: ${schdulerExpression}`);
   const task = cron.schedule(schdulerExpression, async () => {
     if (isJobRunning) {
       logMessage(

@@ -958,9 +958,8 @@ export class WorkFlowService {
         ruleRid: string
     ) {
         switch (action.action_name) {
-            case "create task":
-                // call service / insert into DB
-                console.log("Creating task", entity);
+            case "Flag":
+                await this.markUsHighPriority(entity);
                 break;
             case "In App":
                 await this.triggerNotification(entity, notificationTypes.InApp, ruleRid);
@@ -1150,7 +1149,33 @@ export class WorkFlowService {
             }
         };
     }
-
+async markUsHighPriority(taskContext:any): Promise<void> {    
+        const mainDb = await this.getMainDb();
+        const orgDb = await this.getOrgDb();
+        const { accountNumber, parentAccountId } =
+        await this.fetchValidAccountNumberById(
+          taskContext.accountRid
+        );
+        const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+                /\D/g,
+                ""
+            )}`;
+        let query = rawQueries.markTaskAsHighPriorityTaskSummary();
+        await mainDb.query(
+            query,
+            {
+                replacements: { taskRid: taskContext.entityRid },
+                type: QueryTypes.UPDATE
+            }
+        );
+        await orgDb.query(
+            rawQueries.markTaskAsHighPriorityinCaseTask(schemaName),
+            {
+                replacements: { taskRid: taskContext.entityRid },
+                type: QueryTypes.UPDATE
+            }
+        );
+    }
 async triggerNotification(taskContext:any,channel:string, ruleRid:string): Promise<void> {    
     const { accountNumber, parentAccountId } =
         await this.fetchValidAccountNumberById(
