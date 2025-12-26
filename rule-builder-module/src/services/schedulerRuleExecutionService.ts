@@ -193,7 +193,7 @@ export class SchedulerService {
           );
         } catch (err) {
           this.logger.error(
-            `Workflow execution failed for planned overdue case ${data.rid}: ${err}`
+            `Workflow execution failed  ${data.rid}: ${err}`
           );
         }
       })

@@ -284,6 +284,7 @@ const listScopeConditionCategorySchema = Joi.object({
 const listScopeFieldSchema = Joi.object({
     category_rid: Joi.string().required(),
     status_rid: Joi.string().required().allow(""),
+    event_rid: Joi.string().optional().allow("",null),
     sortBy: Joi.string().optional(),
     sortOrder: Joi.string().valid("ASC", "DESC").default("ASC")
 });
