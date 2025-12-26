@@ -387,25 +387,23 @@ export const rawQueries = {
   fetchSchemaName(r_number: string) {
     return `${MAIN_SCHEMA_NAME}_${r_number.replace("ACC-", "")}`;
   },
-  fetchInProgressCaseStatus() { 
-    return `SELECT rid, status_name from ${MAIN_SCHEMA_NAME}.case_status WHERE status_name = 'In Progress'`;
+  fetchCaseStatus() { 
+    return `SELECT rid, status_name from ${MAIN_SCHEMA_NAME}.case_status`;
   },
-  fetchInProgressTaskStatus() {
-    return `SELECT rid, task_status_name from ${MAIN_SCHEMA_NAME}.case_task_status WHERE task_status_name = 'In Progress'`;
+  fetchTaskStatus() {
+    return `SELECT rid, task_status_name from ${MAIN_SCHEMA_NAME}.case_task_status`;
   },
   fetchTaskTypes() {
     return `SELECT rid, task_type_name from ${MAIN_SCHEMA_NAME}.task_type WHERE task_type_name ='Milestone' and status = 'Active'`;
   },
-   fetchAllCases(inProgressStatusRid: string) {
+   fetchAllCases() {
     return `SELECT cs.rid,cs.case_name, cs.status_rid, planned_submission_date,statutory_submission_date,account_rid,case_owner_rid ,email FROM ${MAIN_SCHEMA_NAME}.case_summary  cs
-    LEFT JOIN ${MAIN_SCHEMA_NAME}.user uu ON cs.case_owner_rid = uu.rid
-    WHERE cs.status_rid = '${inProgressStatusRid}'`;
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.user uu ON cs.case_owner_rid = uu.rid`;
   },
-  fetchAllCaseTask(inProgressStatusRid: string,taskType:string) {
+  fetchAllCaseTask(taskType:string) {
     return `SELECT task_rid,task_name, ts.status_rid, effective_start_datetime,effective_end_datetime,account_rid,assigned_to FROM ${MAIN_SCHEMA_NAME}.task_summary ts
       LEFT JOIN ${MAIN_SCHEMA_NAME}.user uu ON ts.assigned_to = uu.rid
-    WHERE ts.status_rid = '${inProgressStatusRid}' 
-     and ts.task_type_rid = '${taskType}'
+    WHERE  ts.task_type_rid = '${taskType}'
       `;
   },
   fetchAllCasesOverdue(inProgressStatusRid: string) {
