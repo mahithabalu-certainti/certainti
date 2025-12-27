@@ -3535,6 +3535,10 @@ class CaseSchemaService {
           });
         }
       }
+      const [todoStatus]: any[] = await this.mainDbSequelize!.query(
+        rawQueries.getSpecificTaskStatus(),
+        { type: "SELECT" }  
+      );
 
       // Enrich teamMembers with user_name
       const enrichedTeamMembers = teamMembers.map((tm: any) => ({
@@ -3558,6 +3562,10 @@ class CaseSchemaService {
               case_rid: caseReq.case_rid,
               account_rid: caseReq.account_rid,
               case_team_member_role_rid: member.role_rid,
+              [Op.or]: [
+                { assigned_to: '' },
+                { task_status_rid: todoStatus.rid }
+              ]
             },
           }
         );

@@ -832,30 +832,38 @@ export class WorkFlowService {
         const entity = request;
         const triggeredActions: Record<string, any[]> = {};
         const results: Record<string, boolean> = {};
+        // Store templates separately from results to avoid type issues
+        const templates: Record<string, string> = {};
         for (const rule_rid in actionsByRule) {
             console.log("rule id" + rule_rid);
             console.log("conditionLength" + allConditions.length);
             let ruleResult = true;
             const ruleConditions = conditionsByRule[rule_rid] ?? [];
+            // Dynamic template generation
+            let templateParts: string[] = [];
             if (ruleConditions.length > 0) {
                 for (let i = 0; i < ruleConditions.length; i++) {
                     const condition = ruleConditions[i];
                     const conditionResult = await this.evaluateCondition(condition, entity);
-
+                    // Build a human-readable part for this condition
+                    const part = `${condition.field_description} ${condition.operator} ${condition.value}`;
                     if (i === 0) {
-                        ruleResult = conditionResult;
+                        ruleResult = conditionResult.pass;
+                        templateParts.push(part);
                     } else {
                         const logicalOp = condition.logical_operator;
-
                         if (logicalOp === "AND") {
-                            ruleResult = ruleResult && conditionResult;
+                            ruleResult = ruleResult && conditionResult.pass;
                         } else if (logicalOp === "OR") {
-                            ruleResult = ruleResult || conditionResult;
+                            ruleResult = ruleResult || conditionResult.pass;
                         }
+                        templateParts.push(`${logicalOp} ${part}`);
                     }
                 }
             }
             results[rule_rid] = ruleResult;
+            const templateStr = templateParts.join(' ');
+            templates[rule_rid] = templateStr;
             //Execute actions if:
             // - no conditions exist
             // - OR conditions evaluated to true
@@ -863,14 +871,13 @@ export class WorkFlowService {
                 const actions = actionsByRule[rule_rid] || [];
                 for (const action of actions) {
                     if(ruleConditions.length === 0){
-                    if(entity?.ruleScope === request.eventName){
-                    await this.executeAction(action, entity, userId, rule_rid);
+                        if(entity?.ruleScope === request.eventName){
+                            await this.executeAction(action, entity, userId, rule_rid, templateStr);
+                        }
                     }
-                }
-                else
-                {
-                    await this.executeAction(action, entity, userId, rule_rid);
-                }
+                    else {
+                        await this.executeAction(action, entity, userId, rule_rid, templateStr);
+                    }
                 }
                 triggeredActions[rule_rid] = actions;
             }
@@ -891,12 +898,12 @@ export class WorkFlowService {
             statusCode: 200,
             message: "",
             data: {
-                info: { results, triggeredActions }
+                info: { results, triggeredActions, templates }
             }
         };
     }
 
-    private evaluateCondition(condition: any, entity: any): boolean {
+    private evaluateCondition(condition: any, entity: any): { pass: boolean, operator: string, value: any, entityValue: any } {
         const fieldKey = condition.field.split(".")[1] || condition.field; // "task.status" → "status"
         logMessage(`Evaluating condition for field ${fieldKey}: ${JSON.stringify(entity)} `);
         let entityValue = entity[fieldKey] || entity[fieldKey.toLowerCase()] || entity[fieldKey.toUpperCase()];
@@ -920,45 +927,56 @@ export class WorkFlowService {
         }
         logMessage(`Evaluating condition: ${fieldKey} ${condition.operator} ${conditionValue} against entity value: ${entityValue}`);
         const operator = (condition.operator || "").toLowerCase();
-        //console.log(String(entityValue).toLowerCase() + "    " + String(conditionValue).toLowerCase());
+        let pass = false;
         switch (operator) {
             case "equals":
-                return String(entityValue).toLowerCase() === String(conditionValue).toLowerCase();
+                pass = String(entityValue).toLowerCase() === String(conditionValue).toLowerCase();
+                break;
             case "not equals":
-                return String(entityValue).toLowerCase() !== String(conditionValue).toLowerCase();
+                pass = String(entityValue).toLowerCase() !== String(conditionValue).toLowerCase();
+                break;
             case "is":
-                return entityValue === conditionValue;
+                pass = entityValue === conditionValue;
+                break;
             case "greater than": {
                 // date comparison first
                 const dateA = new Date(entityValue);
                 const dateB = new Date(conditionValue);
                 if (!isNaN(dateA.getTime()) && !isNaN(dateB.getTime())) {
-                    return dateA > dateB;
+                    pass = dateA > dateB;
+                } else {
+                    // Fallback to number comparison
+                    pass = Number(entityValue) > Number(conditionValue);
                 }
-                // Fallback to number comparison
-                return Number(entityValue) > Number(conditionValue);
+                break;
             }
             case "less than": {
                 // date comparison first
                 const dateA = new Date(entityValue);
                 const dateB = new Date(conditionValue);
                 if (!isNaN(dateA.getTime()) && !isNaN(dateB.getTime())) {
-                    return dateA < dateB;
+                    pass = dateA < dateB;
+                } else {
+                    // Fallback to number comparison
+                    pass = Number(entityValue) < Number(conditionValue);
                 }
-                // Fallback to number comparison
-                return Number(entityValue) < Number(conditionValue);
+                break;
             }
             default:
-                return false;
+                pass = false;
         }
+        return { pass, operator: condition.operator, value: conditionValue, entityValue };
     }
 
     private async executeAction(
         action: any,
         entity: any,
         userId: string,
-        ruleRid: string
+        ruleRid: string,
+        templateStr?: string
     ) {
+        entity.templateValue = templateStr;
+        // templateStr is now available for use in actions if needed
         switch (action.action_name) {
             case "Flag":
                 await this.markUsHighPriority(entity);
@@ -969,7 +987,6 @@ export class WorkFlowService {
             case "Email":
                 await this.triggerNotification(entity, notificationTypes.Email, ruleRid);
                 break;
-
             default:
                 console.warn("Unknown action:", action.action_name);
         }
@@ -1050,6 +1067,10 @@ export class WorkFlowService {
                     if (templateDetails[0].subject != null) {
                         templateDetails[0].subject = templateDetails[0].subject.replace('{{statutorySubmissionDate}}', statutorySubmissionDateValue);
                     }
+                }
+                if(messageTemplate.includes('{{conditions}}')) {
+                    const templateValue = taskContext.templateValue ? taskContext.templateValue : '';
+                    messageTemplate = messageTemplate.replace('{{conditions}}', templateValue);
                 }
                 templateDetails[0].message_template = messageTemplate;
                 return {

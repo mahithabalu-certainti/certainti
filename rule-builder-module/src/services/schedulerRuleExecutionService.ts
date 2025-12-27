@@ -129,6 +129,7 @@ export class SchedulerService {
       if (entityType === "Task") {
         return {
           entityName: data.task_name,
+          accountName: data.account_name,
           status: data.status_name,
           eventName: eventName,
           templateName: templateName,
@@ -143,6 +144,7 @@ export class SchedulerService {
       } else {
         return {
           entityName: data.case_name,
+          accountName: data.account_name,
           status: data.status_name,
           eventName: eventName,
           templateName: templateName,
