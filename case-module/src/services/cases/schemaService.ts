@@ -3553,18 +3553,27 @@ class CaseSchemaService {
         raw: true,
       }); 
       for (const member of teamMembers) {
-       const response = await CaseTask.update(
+        const newAssignedTo = enrichedTeamMembers.find(etm => etm.user_rid === member.user_rid)?.user_rid || null;
+        // Only update if the previous value is not the same as the new value
+        const response = await CaseTask.update(
           {
-            assigned_to: enrichedTeamMembers.find(etm => etm.user_rid === member.user_rid)?.user_rid || null,
+            assigned_to: newAssignedTo,
           },
           {
             where: {
               case_rid: caseReq.case_rid,
               account_rid: caseReq.account_rid,
               case_team_member_role_rid: member.role_rid,
-              [Op.or]: [
-                { assigned_to: '' },
-                { task_status_rid: todoStatus.rid }
+              [Op.and]: [
+                {
+                  [Op.or]: [
+                    { assigned_to: '' },
+                    { task_status_rid: todoStatus.rid }
+                  ]
+                },
+                {
+                  assigned_to: { [Op.ne]: newAssignedTo }
+                }
               ]
             },
           }
