@@ -72,7 +72,7 @@ async function createCases(req: Request, res: Response): Promise<void> {
     );
     const value = await validateRequest(req, createCaseSchema, res);
     const userId = req.headers["x-user-id"] as string;
-    const accessToken = req.headers["authorization"]?.split(' ')[1] as string;
+    const accessToken = req.headers["authorization"] as string;
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -139,7 +139,7 @@ async function updateCases(req: Request, res: Response): Promise<void> {
     );
     const value = await validateRequest(req, updateCaseSchema, res);
     const userId = req.headers["x-user-id"] as string;
-    const accessToken = req.headers["authorization"]?.split(' ')[1] as string;  
+    const accessToken = req.headers["authorization"] as string;  
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(

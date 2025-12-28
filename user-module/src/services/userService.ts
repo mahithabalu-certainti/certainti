@@ -942,7 +942,8 @@ class UserService {
         roles.profile_rid || ""
       );
       let token = { token: "" };
-        token = await webPubSubClient.getClientAccessToken({ userId: roles.rid});
+       await webPubSubClient.closeUserConnections(roles.rid);
+        token = await webPubSubClient.getClientAccessToken({ userId: roles.rid, expirationTimeInMinutes: 300 });
       return {
         statusCode: constants.SUCCESS,
         message: constants.SUCCESS_MESSAGE,
