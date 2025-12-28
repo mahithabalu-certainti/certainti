@@ -1057,6 +1057,13 @@ export const rawQueries = {
       return `SELECT rid, relationship_type FROM ${MAIN_SCHEMA_NAME}.workflow_connector WHERE rid IN (${ids})`
     }
   },
+  fetchCaseName( caseRids: string) {
+    return `SELECT  CONCAT(a.account_name, '-', ct.country_name, '-',c.fiscal_year,'-',c.case_name) AS case_full_name FROM ${MAIN_SCHEMA_NAME}.case_summary  c
+    lEFT JOIN ${MAIN_SCHEMA_NAME}.account a ON a.rid = c.account_rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.country ct ON ct.rid = a.country_rid
+    WHERE c.case_rid = '${caseRids}'`
+  },
+
   getTaskTypeMilestone() {
     return `SELECT rid, task_type_name FROM ${MAIN_SCHEMA_NAME}.task_type WHERE task_type_name ILIKE '%Milestone%'`
   },

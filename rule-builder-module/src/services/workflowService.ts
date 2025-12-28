@@ -1047,6 +1047,17 @@ export class WorkFlowService {
                         templateDetails[0].subject = templateDetails[0].subject.replace('{{accountName}}', accountNameValue);
                     }
                 }
+                if (messageTemplate.includes('{{caseName}}')) {
+                    const caseNameValue  = taskContext.caseName ? taskContext.caseName : '';
+                    messageTemplate = messageTemplate.replace('{{caseName}}', caseNameValue);
+                    if (templateDetails[0].subject != null) {
+                        templateDetails[0].subject = templateDetails[0].subject.replace('{{caseName}}', caseNameValue);
+                    }
+                }
+                  if (messageTemplate.includes('{{status}}')) {
+                    const statusValue     = taskContext.status ? taskContext.status : '';
+                    messageTemplate = messageTemplate.replace('{{status}}', statusValue);
+                }
                 if (messageTemplate.includes('{{plannedSubmissionDate}}')) {
                     const plannedSubmissionDateValue = taskContext.plannedSubmissionDate ? taskContext.plannedSubmissionDate : '';
                     messageTemplate = messageTemplate.replace('{{plannedSubmissionDate}}', plannedSubmissionDateValue);
