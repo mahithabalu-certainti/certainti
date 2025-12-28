@@ -1011,7 +1011,7 @@ export class HelperMethods {
                 {
                   headers: {
                     "x-user-id": data.userId,
-                    Authorization: `Bearer ${accessToken}`,
+                    Authorization: `${accessToken}`,
                   },
                 }
               );
