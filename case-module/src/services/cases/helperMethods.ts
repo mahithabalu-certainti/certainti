@@ -1016,6 +1016,7 @@ export class HelperMethods {
                 }
               );
       } catch (err) {
+        console.log(err)
         logMessage(`Error triggering rule engine: ${err}`);
       }
     }
