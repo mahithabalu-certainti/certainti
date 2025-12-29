@@ -1160,7 +1160,7 @@ const rdCreditProcessSchema = Joi.object({
 const rdCreditDataSchema = Joi.object({
   accountRid: Joi.string().max(255).required(),
   caseRid: Joi.string().max(255).required(),
-  stateCode: Joi.string().length(2).required(),
+  stateCode: Joi.string().max(255).required(),
 });
 
 
