@@ -1094,6 +1094,9 @@ export const rawQueries = {
   fetchCurrencyById() {
     return `SELECT rid, currency_name, currency_code, currency_symbol FROM ${MAIN_SCHEMA_NAME}.currency WHERE rid = :id`;
   },
+  fetchCurrencies(rid : any[]) {
+    return `SELECT rid, currency_name, currency_code, currency_symbol FROM ${MAIN_SCHEMA_NAME}.currency WHERE rid IN (${rid.map((d : any) => `'${d}'`).join(',')})`;
+  },
   fetchUserById() {
     return `SELECT first_name, middle_name, last_name FROM ${MAIN_SCHEMA_NAME}."user" WHERE rid = :userId`;
   },
