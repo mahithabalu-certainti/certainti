@@ -518,6 +518,10 @@ export class CaseManagementService {
       }
       const setData = setTaskTemplateData(isTaskExists, data, data.userId)
       if(setData.length > 0) {
+        if(data.milestone_template_rid) {
+          const getMilestoneDetails : any = await mainDb.query(rawQueries.fetchMilestoneDetails(data.milestone_template_rid));
+          setData.push(`milestone_sequence = ${getMilestoneDetails[0][0].r_number}`);
+        }
         if(data.status_rid) {
           if(data.status_rid !== isTaskExists.status_rid) {
             const getAllStatus : any = await mainDb.query(rawQueries.getActiveStatusId());

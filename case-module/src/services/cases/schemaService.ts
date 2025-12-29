@@ -3594,16 +3594,21 @@ class CaseSchemaService {
                 {
                   [Op.or]: [
                     { assigned_to: '' },
+                    { assigned_to: null },
                     { task_status_rid: todoStatus.rid }
                   ]
                 },
                 {
-                  assigned_to: { [Op.ne]: newAssignedTo }
+                  [Op.or]: [
+                    { assigned_to: null },
+                    { assigned_to: { [Op.ne]: newAssignedTo } }
+                  ]
                 }
               ]
             },
           }
         );
+        
           let ruleEnginePayload = {
                 entityName: caseDetails?.case_name || "Case",
                 eventName: ruleNames.taskCreated,
@@ -4251,7 +4256,7 @@ class CaseSchemaService {
                   d.effort_in_days = d.effort_in_days
                 }
                 else {
-                  validEndDate = endDateStorage
+                  validEndDate = otherMileStoneEndDateStorgae
                   day = dayjs(validEndDate)
 
                   day = day.add(1, 'day')

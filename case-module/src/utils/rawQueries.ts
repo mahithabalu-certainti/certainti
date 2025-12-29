@@ -290,7 +290,7 @@ export const fetchProjectsForCases = (
     pf.total_cost_subcon_prj, pf.total_cost_nonlabor_prj, pf.assessment_status,
     pf.rd_percent_final, pf.qre_final, pf.comments, pf.modified_datetime, pf.r_number,
     poc.project_point_of_contact, tpoc.project_technical_point_of_contact, pf.account_rid,
-    pf.project_rid
+    pf.project_rid, pf.currency_rid
     FROM
     ${schemaName}.project_fiscal pf
     LEFT JOIN fetch_project_point_of_contact poc ON poc.rid = pf.rid
@@ -317,7 +317,6 @@ export const fetchProjectsForCases = (
     )
     SELECT * FROM paginated_projects
     `;
-  console.log(query)
   return query;
 };
 
