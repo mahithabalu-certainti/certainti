@@ -1554,6 +1554,9 @@ export const rawQueries = {
     WHERE 
     rid IN (${formattedStateIds})`;
   },
+  fetchMilestoneDetails (rid : string) {
+    return `SELECT r_number FROM ${MAIN_SCHEMA_NAME}.milestone_template WHERE rid = '${rid}'`
+  }
 };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 
 const keyContactRole = {
