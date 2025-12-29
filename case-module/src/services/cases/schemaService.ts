@@ -3608,6 +3608,7 @@ class CaseSchemaService {
             },
           }
         );
+        
           let ruleEnginePayload = {
                 entityName: caseDetails?.case_name || "Case",
                 eventName: ruleNames.taskCreated,
