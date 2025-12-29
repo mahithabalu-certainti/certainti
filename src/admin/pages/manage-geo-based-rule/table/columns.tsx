@@ -175,7 +175,7 @@ export const getGeoBasedRuleColumns = (
   },
   {
     id: 'status_name',
-    sortId: 'status_name',
+    sortId: 'status_rid',
     label: 'Status',
     width: 130,
     sortable: true,

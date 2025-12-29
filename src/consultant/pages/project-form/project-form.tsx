@@ -92,6 +92,7 @@ const ProjectForm: React.FC = () => {
   const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
   const getProjectData = useProjectDetail(accountID, projectID || '');
   const account = getProjectData.data?.data?.project;
+  const isCaseExists = account?.is_case_exists;
 
   const [isFormReadyForEdit, setIsFormReadyForEdit] = useState(!isEditView);
 
@@ -666,7 +667,8 @@ const ProjectForm: React.FC = () => {
     disableTotalEffort,
     disableTotalCost,
     globalType,
-    account?.is_project_exists
+    account?.is_project_exists,
+    isCaseExists
   );
 
   const formLoading =

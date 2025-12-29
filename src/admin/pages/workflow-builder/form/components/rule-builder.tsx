@@ -322,7 +322,25 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
                         : 'bg-blue-200 border border-blue-500 text-blue-700'
                     }`}
                   >
-                    <span>⏻</span>
+                    <svg viewBox='0 0 24 24' className='w-4 h-4' fill='none'>
+                      <line
+                        x1='12'
+                        y1='3'
+                        x2='12'
+                        y2='12'
+                        stroke='currentColor'
+                        strokeWidth='2'
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
+                      />
+                      <path
+                        d='M17.66 7.34a8 8 0 1 1-11.32 0'
+                        stroke='currentColor'
+                        strokeWidth='2'
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
+                      />
+                    </svg>
                   </div>
                   <div className='flex-1'>
                     <h3 className='text-sm font-semibold text-gray-900 mb-1'>
