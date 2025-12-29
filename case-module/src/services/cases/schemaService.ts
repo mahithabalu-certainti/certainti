@@ -3594,16 +3594,21 @@ class CaseSchemaService {
                 {
                   [Op.or]: [
                     { assigned_to: '' },
+                    { assigned_to: null },
                     { task_status_rid: todoStatus.rid }
                   ]
                 },
                 {
-                  assigned_to: { [Op.ne]: newAssignedTo }
+                  [Op.or]: [
+                    { assigned_to: null },
+                    { assigned_to: { [Op.ne]: newAssignedTo } }
+                  ]
                 }
               ]
             },
           }
         );
+        
           let ruleEnginePayload = {
                 entityName: caseDetails?.case_name || "Case",
                 eventName: ruleNames.taskCreated,
