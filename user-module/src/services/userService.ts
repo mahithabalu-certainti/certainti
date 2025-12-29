@@ -13,7 +13,7 @@ import { UserGroupEntityAccess } from "../models/UserGroupEntityAccessModel";
 import { UserGroupMapping } from "../models/userGroupMappingModel";
 import { UserGroup } from "../models/userGroupModel";
 import { updateAzureUser } from "./manageUser";
-import { errorLog, logMessage } from "../utils/helpers";
+import { errorLog, logMessage, webPubSubClient } from "../utils/helpers";
 import { uploadToAzure, generateSasUrl } from "./azureBlobService";
   const { 
     User, UserDetails, Department, FunctionGroup, Profile, BusinessTeams,
@@ -869,6 +869,7 @@ class UserService {
       organisation_name: string;
       logo_url: string;
       profile_url: string;
+      web_socket_url: string;
     } | null;
   }> {
     try {
@@ -940,7 +941,9 @@ class UserService {
         roles.rid,
         roles.profile_rid || ""
       );
-
+      let token = { token: "" };
+       await webPubSubClient.closeUserConnections(roles.rid);
+        token = await webPubSubClient.getClientAccessToken({ userId: roles.rid, expirationTimeInMinutes: 300 });
       return {
         statusCode: constants.SUCCESS,
         message: constants.SUCCESS_MESSAGE,
@@ -953,6 +956,7 @@ class UserService {
           organisation_name,
           logo_url,
           profile_url: roles.profile_url ? await generateSasUrl(roles.profile_url) : "",
+          web_socket_url: token.token || "",
         },
       };
     } catch (err) { 

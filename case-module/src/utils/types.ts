@@ -546,7 +546,8 @@ export type UpdateCaseTaskType = {
   tags : tagTypes[],
   workflow_connector : WorkflowConnectorItemsAccountLevel,
   weightage_rid : string
-  task_category_rid : string
+  task_category_rid : string,
+  is_flagged:boolean
 }
 
 export type CaseTaskQueryType = {
@@ -676,7 +677,8 @@ export type TaskCardDetailsType = {
   workflow_connector :  taskWorkFlowConnector[],
   weightage_rid : string
   task_category_rid : string
-  fiscal_year : number
+  fiscal_year : number,
+  is_flagged : boolean
 }
 export type TaskCardResponse ={
   task_details :TaskCardDetailsType

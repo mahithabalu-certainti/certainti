@@ -185,7 +185,8 @@ export class WorkFlowService {
         const fields: Fields[] = await mainDb.query<Fields>(
             rawQueries.fetchFields(
                 listRequest.category_rid,
-                listRequest.status_rid
+                listRequest.status_rid,
+                listRequest.event_rid
             ),
             { type: QueryTypes.SELECT }
         );
@@ -831,37 +832,52 @@ export class WorkFlowService {
         const entity = request;
         const triggeredActions: Record<string, any[]> = {};
         const results: Record<string, boolean> = {};
+        // Store templates separately from results to avoid type issues
+        const templates: Record<string, string> = {};
         for (const rule_rid in actionsByRule) {
             console.log("rule id" + rule_rid);
             console.log("conditionLength" + allConditions.length);
             let ruleResult = true;
             const ruleConditions = conditionsByRule[rule_rid] ?? [];
+            // Dynamic template generation
+            let templateParts: string[] = [];
             if (ruleConditions.length > 0) {
                 for (let i = 0; i < ruleConditions.length; i++) {
                     const condition = ruleConditions[i];
                     const conditionResult = await this.evaluateCondition(condition, entity);
-
+                    // Build a human-readable part for this condition
+                    const part = `${condition.field_description} ${condition.operator} ${condition.value}`;
                     if (i === 0) {
-                        ruleResult = conditionResult;
+                        ruleResult = conditionResult.pass;
+                        templateParts.push(part);
                     } else {
                         const logicalOp = condition.logical_operator;
-
                         if (logicalOp === "AND") {
-                            ruleResult = ruleResult && conditionResult;
+                            ruleResult = ruleResult && conditionResult.pass;
                         } else if (logicalOp === "OR") {
-                            ruleResult = ruleResult || conditionResult;
+                            ruleResult = ruleResult || conditionResult.pass;
                         }
+                        templateParts.push(`${logicalOp} ${part}`);
                     }
                 }
             }
             results[rule_rid] = ruleResult;
+            const templateStr = templateParts.join(' ');
+            templates[rule_rid] = templateStr;
             //Execute actions if:
             // - no conditions exist
             // - OR conditions evaluated to true
             if (ruleConditions.length === 0 || ruleResult) {
                 const actions = actionsByRule[rule_rid] || [];
                 for (const action of actions) {
-                    await this.executeAction(action, entity, userId, rule_rid);
+                    if(ruleConditions.length === 0){
+                        if(entity?.ruleScope === request.eventName){
+                            await this.executeAction(action, entity, userId, rule_rid, templateStr);
+                        }
+                    }
+                    else {
+                        await this.executeAction(action, entity, userId, rule_rid, templateStr);
+                    }
                 }
                 triggeredActions[rule_rid] = actions;
             }
@@ -882,13 +898,14 @@ export class WorkFlowService {
             statusCode: 200,
             message: "",
             data: {
-                info: { results, triggeredActions }
+                info: { results, triggeredActions, templates }
             }
         };
     }
 
-    private evaluateCondition(condition: any, entity: any): boolean {
+    private evaluateCondition(condition: any, entity: any): { pass: boolean, operator: string, value: any, entityValue: any } {
         const fieldKey = condition.field.split(".")[1] || condition.field; // "task.status" → "status"
+        logMessage(`Evaluating condition for field ${fieldKey}: ${JSON.stringify(entity)} `);
         let entityValue = entity[fieldKey] || entity[fieldKey.toLowerCase()] || entity[fieldKey.toUpperCase()];
         let conditionValue = condition.value;
         // Special handling for 'current date' as value
@@ -910,49 +927,59 @@ export class WorkFlowService {
         }
         logMessage(`Evaluating condition: ${fieldKey} ${condition.operator} ${conditionValue} against entity value: ${entityValue}`);
         const operator = (condition.operator || "").toLowerCase();
-        //console.log(String(entityValue).toLowerCase() + "    " + String(conditionValue).toLowerCase());
+        let pass = false;
         switch (operator) {
             case "equals":
-                return String(entityValue).toLowerCase() === String(conditionValue).toLowerCase();
+                pass = String(entityValue).toLowerCase() === String(conditionValue).toLowerCase();
+                break;
             case "not equals":
-                return String(entityValue).toLowerCase() !== String(conditionValue).toLowerCase();
+                pass = String(entityValue).toLowerCase() !== String(conditionValue).toLowerCase();
+                break;
             case "is":
-                return entityValue === conditionValue;
+                pass = entityValue === conditionValue;
+                break;
             case "greater than": {
                 // date comparison first
                 const dateA = new Date(entityValue);
                 const dateB = new Date(conditionValue);
                 if (!isNaN(dateA.getTime()) && !isNaN(dateB.getTime())) {
-                    return dateA > dateB;
+                    pass = dateA > dateB;
+                } else {
+                    // Fallback to number comparison
+                    pass = Number(entityValue) > Number(conditionValue);
                 }
-                // Fallback to number comparison
-                return Number(entityValue) > Number(conditionValue);
+                break;
             }
             case "less than": {
                 // date comparison first
                 const dateA = new Date(entityValue);
                 const dateB = new Date(conditionValue);
                 if (!isNaN(dateA.getTime()) && !isNaN(dateB.getTime())) {
-                    return dateA < dateB;
+                    pass = dateA < dateB;
+                } else {
+                    // Fallback to number comparison
+                    pass = Number(entityValue) < Number(conditionValue);
                 }
-                // Fallback to number comparison
-                return Number(entityValue) < Number(conditionValue);
+                break;
             }
             default:
-                return false;
+                pass = false;
         }
+        return { pass, operator: condition.operator, value: conditionValue, entityValue };
     }
 
     private async executeAction(
         action: any,
         entity: any,
         userId: string,
-        ruleRid: string
+        ruleRid: string,
+        templateStr?: string
     ) {
+        entity.templateValue = templateStr;
+        // templateStr is now available for use in actions if needed
         switch (action.action_name) {
-            case "create task":
-                // call service / insert into DB
-                console.log("Creating task", entity);
+            case "Flag":
+                await this.markUsHighPriority(entity);
                 break;
             case "In App":
                 await this.triggerNotification(entity, notificationTypes.InApp, ruleRid);
@@ -960,63 +987,113 @@ export class WorkFlowService {
             case "Email":
                 await this.triggerNotification(entity, notificationTypes.Email, ruleRid);
                 break;
-
             default:
                 console.warn("Unknown action:", action.action_name);
         }
     }
 
-    async getNotificationTemplateDetails(templateName: string, oldValue: string, newValue: string, entityName: string, channel: string, ruleRid: string): Promise<{
+    async getNotificationTemplateDetails(templateName: string, oldValue: string, newValue: string, entityName: string, channel: string, ruleRid: string, taskContext: any): Promise<{
         templateDetails: any;
     }> {
-        const mainDb = await this.getMainDb();
-        let [notificationTemplateRid]: any[] = [];
-        if (channel === "In App") {
-            [notificationTemplateRid] = await mainDb.query<any>(
-                rawQueries.fetchNotificationInAppTemplatesForRule(ruleRid),
+        try {
+            const mainDb = await this.getMainDb();
+            let [notificationTemplateRid]: any[] = [];
+            if (channel === "In App") {
+                [notificationTemplateRid] = await mainDb.query<any>(
+                    rawQueries.fetchNotificationInAppTemplatesForRule(ruleRid),
+                    { type: QueryTypes.SELECT }
+                );
+            } else {
+                [notificationTemplateRid] = await mainDb.query<any>(
+                    rawQueries.fetchNotificationEmailTemplatesForRule(ruleRid),
+                    { type: QueryTypes.SELECT }
+                );
+            }
+            if (
+                notificationTemplateRid === undefined ||
+                notificationTemplateRid === null ||
+                typeof notificationTemplateRid !== 'object' ||
+                !('template_rid' in notificationTemplateRid) ||
+                !notificationTemplateRid.template_rid
+            ) {
+                return {
+                    templateDetails: []
+                };
+            }
+            const templateDetails = await mainDb.query<any>(
+                rawQueries.fetchNotificationTemplateDetails(
+                    notificationTemplateRid.template_rid, channel
+                ),
                 { type: QueryTypes.SELECT }
             );
-        } else {
-            [notificationTemplateRid] = await mainDb.query<any>(
-                rawQueries.fetchNotificationEmailTemplatesForRule(ruleRid),
-                { type: QueryTypes.SELECT }
-            );
-        }
-        if (
-            notificationTemplateRid === undefined ||
-            notificationTemplateRid === null ||
-            typeof notificationTemplateRid !== 'object' ||
-            !('template_rid' in notificationTemplateRid) ||
-            !notificationTemplateRid.template_rid
-        ) {
-            return {
-                templateDetails: []
-            };
-        }
-        const templateDetails = await mainDb.query<any>(
-            rawQueries.fetchNotificationTemplateDetails(
-                notificationTemplateRid.template_rid, channel
-            ),
-            { type: QueryTypes.SELECT }
-        );
-        if (templateDetails.length > 0) {
-            let messageTemplate = templateDetails[0].message_template;
-            if (messageTemplate.includes('{{old_value}}')) {
-                messageTemplate = messageTemplate.replace('{{old_value}}', oldValue != null ? oldValue : '');
+            if (templateDetails.length > 0) {
+                let messageTemplate = templateDetails[0].message_template;
+                if (messageTemplate.includes('{{old_value}}')) {
+                    messageTemplate = messageTemplate.replace('{{old_value}}', oldValue != null ? oldValue : '');
+                }
+                if (messageTemplate.includes('{{new_value}}')) {
+                    messageTemplate = messageTemplate.replace('{{new_value}}', newValue != null ? newValue : '');
+                }
+                if (messageTemplate.includes('{{entityName}}')) {
+                    messageTemplate = messageTemplate.replace('{{entityName}}', entityName != null ? entityName : '');
+                    if (templateDetails[0].subject != null) {
+                        templateDetails[0].subject = templateDetails[0].subject.replace('{{entityName}}', entityName != null ? entityName : '');
+                    }
+                }
+                if (messageTemplate.includes('{{accountName}}')) {
+                    const accountNameValue = taskContext.accountName ? taskContext.accountName : '';
+                    messageTemplate = messageTemplate.replace('{{accountName}}', accountNameValue);
+                    if (templateDetails[0].subject != null) {
+                        templateDetails[0].subject = templateDetails[0].subject.replace('{{accountName}}', accountNameValue);
+                    }
+                }
+                if (messageTemplate.includes('{{caseName}}')) {
+                    const caseNameValue  = taskContext.caseName ? taskContext.caseName : '';
+                    messageTemplate = messageTemplate.replace('{{caseName}}', caseNameValue);
+                    if (templateDetails[0].subject != null) {
+                        templateDetails[0].subject = templateDetails[0].subject.replace('{{caseName}}', caseNameValue);
+                    }
+                }
+                  if (messageTemplate.includes('{{status}}')) {
+                    const statusValue     = taskContext.status ? taskContext.status : '';
+                    messageTemplate = messageTemplate.replace('{{status}}', statusValue);
+                }
+                if (messageTemplate.includes('{{plannedSubmissionDate}}')) {
+                    const plannedSubmissionDateValue = taskContext.plannedSubmissionDate ? taskContext.plannedSubmissionDate : '';
+                    messageTemplate = messageTemplate.replace('{{plannedSubmissionDate}}', plannedSubmissionDateValue);
+                    if (templateDetails[0].subject != null) {
+                        templateDetails[0].subject = templateDetails[0].subject.replace('{{plannedSubmissionDate}}', plannedSubmissionDateValue);
+                    }
+                }
+                 if (messageTemplate.includes('{{dueDate}}')) {
+                    const dueDateValue = taskContext.dueDate ? taskContext.dueDate : '';
+                    messageTemplate = messageTemplate.replace('{{dueDate}}', dueDateValue);
+                    if (templateDetails[0].subject != null) {
+                        templateDetails[0].subject = templateDetails[0].subject.replace('{{dueDate}}', dueDateValue);
+                    }
+                }
+                 if (messageTemplate.includes('{{statutorySubmissionDate}}')) {
+                    const statutorySubmissionDateValue   = taskContext.statutorySubmissionDate ? taskContext.statutorySubmissionDate : '';
+                    messageTemplate = messageTemplate.replace('{{statutorySubmissionDate}}', statutorySubmissionDateValue);
+                    if (templateDetails[0].subject != null) {
+                        templateDetails[0].subject = templateDetails[0].subject.replace('{{statutorySubmissionDate}}', statutorySubmissionDateValue);
+                    }
+                }
+                if(messageTemplate.includes('{{conditions}}')) {
+                    const templateValue = taskContext.templateValue ? taskContext.templateValue : '';
+                    messageTemplate = messageTemplate.replace('{{conditions}}', templateValue);
+                }
+                templateDetails[0].message_template = messageTemplate;
+                return {
+                    templateDetails: templateDetails
+                };
+            } else {
+                // If no template found, just return empty array and continue
+                return {
+                    templateDetails: []
+                };
             }
-            if (messageTemplate.includes('{{new_value}}')) {
-                messageTemplate = messageTemplate.replace('{{new_value}}', newValue != null ? newValue : '');
-            }
-            if (messageTemplate.includes('{{entityName}}')) {
-                messageTemplate = messageTemplate.replace('{{entityName}}', entityName != null ? entityName : '');
-                templateDetails[0].subject = templateDetails[0].subject.replace('{{entityName}}', entityName != null ? entityName : '');
-            }
-            templateDetails[0].message_template = messageTemplate;
-            return {
-                templateDetails: templateDetails
-            };
-        } else {
-            // If no template found, just return empty array and continue
+        } catch (error) {
             return {
                 templateDetails: []
             };
@@ -1106,7 +1183,33 @@ export class WorkFlowService {
             }
         };
     }
-
+async markUsHighPriority(taskContext:any): Promise<void> {    
+        const mainDb = await this.getMainDb();
+        const orgDb = await this.getOrgDb();
+        const { accountNumber, parentAccountId } =
+        await this.fetchValidAccountNumberById(
+          taskContext.accountRid
+        );
+        const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+                /\D/g,
+                ""
+            )}`;
+        let query = rawQueries.markTaskAsHighPriorityTaskSummary();
+        await mainDb.query(
+            query,
+            {
+                replacements: { taskRid: taskContext.entityRid },
+                type: QueryTypes.UPDATE
+            }
+        );
+        await orgDb.query(
+            rawQueries.markTaskAsHighPriorityinCaseTask(schemaName),
+            {
+                replacements: { taskRid: taskContext.entityRid },
+                type: QueryTypes.UPDATE
+            }
+        );
+    }
 async triggerNotification(taskContext:any,channel:string, ruleRid:string): Promise<void> {    
     const { accountNumber, parentAccountId } =
         await this.fetchValidAccountNumberById(
@@ -1118,7 +1221,8 @@ async triggerNotification(taskContext:any,channel:string, ruleRid:string): Promi
         taskContext.newValue,
         taskContext.entityName,
         channel,
-        ruleRid
+        ruleRid,
+        taskContext
     );
     if (templateDetails && Array.isArray(templateDetails.templateDetails) && templateDetails.templateDetails.length > 0) {
         const detail = templateDetails.templateDetails[0];
@@ -1208,6 +1312,9 @@ async triggerNotification(taskContext:any,channel:string, ruleRid:string): Promi
             parentAccountNumber,
             accountInfo.parent_account_rid
         );
+         if (!senderEmailInfo) {
+            return;
+        }
         const emailContent = {
             message: {
                 subject: emailRequest.subject,

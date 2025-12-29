@@ -3,9 +3,10 @@ import { errorResponse, successResponse } from "./apiResponse";
 import configurations from "../config/config";
 import { HttpStatus } from "./constants";
 import Joi from "joi";
-
+import ExcelJS from "exceljs";
 import { Sequelize } from "sequelize";
 import crypto from "crypto";
+import moment from "moment-timezone";
 import { getSecret } from "./azureSecrets";
 
 function getLogger() {
@@ -140,6 +141,29 @@ export function handleErrorResponse(
   message?: string
 ): void {
   errorResponse(res, statusCode, statusCodeValue, message);
+}
+
+
+export async function generateExcelBase64(data: any, sheetName: string) {
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet(sheetName);
+
+  // Get headers from the first object in data
+  const headers = Object.keys(data[0] || {});
+  worksheet.addRow(headers);
+  
+  // Add data rows
+  data.forEach((row: any) => {
+    worksheet.addRow(Object.values(row));
+  });
+
+  // Generate buffer
+  const buffer = await workbook.xlsx.writeBuffer();
+  return Buffer.from(buffer).toString('base64');
+}
+
+export function isValidTimezone(tz: string) {
+  return moment.tz.names().includes(tz);
 }
 
 export async function decryptClientSecret(

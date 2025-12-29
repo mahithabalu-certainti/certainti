@@ -707,6 +707,7 @@ export class CaseManagementService {
                 rid: d.rid,
                 r_number: d.r_number,
                 task_name: d.task_name,
+                is_flagged: d.is_flagged,
                 created_by: d.created_by,
                 status_rid: d.status_rid,
                 assigned_to: d.assigned_to,

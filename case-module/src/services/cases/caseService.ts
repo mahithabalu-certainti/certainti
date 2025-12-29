@@ -196,6 +196,10 @@ export class CaseService {
         rawQueries.fetchUserDetails(caseRequest.case_owner_rid),
         { type: QueryTypes.SELECT }
       );
+      const [accountInfo]: any[] = await mainDb.query(
+        rawQueries.fetchAccountDetails(caseRequest.account_rid),
+        { type: QueryTypes.SELECT }
+      );
       let ruleEnginePayload = {
         entityName: caseRequest.case_name,
         eventName: ruleNames.caseCreated,
@@ -205,8 +209,10 @@ export class CaseService {
         targetUserID: caseRequest.case_owner_rid,
         targetEmail: caseOwnerData.email || "",
         entityId: response.rid,
+        ruleScope:ruleNames.caseCreated,
+        accountName:accountInfo.account_name || ""
       };
-      await this.caseSchemaService.triggerRuleEngine(ruleEnginePayload, accessToken);
+     // await this.caseSchemaService.triggerRuleEngine(ruleEnginePayload, accessToken);
 
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -250,7 +256,8 @@ export class CaseService {
    */
   async updateCase(
     caseRequest: ICreateCases,
-    userId: string
+    userId: string,
+    accessToken: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -284,7 +291,8 @@ export class CaseService {
         accountNumber,
         userId,
         caseRequest,
-        transaction
+        transaction,
+        accessToken
       );
 
       if(response.statusCode === HttpStatus.BAD_REQUEST) {
@@ -2059,7 +2067,6 @@ export class CaseService {
         },
       };
     } catch (err) {
-      console.log(err)
       logMessage(`Error fetching case submission date, ${err}`);
       throw this.throwServiceError(err as Error);
     }

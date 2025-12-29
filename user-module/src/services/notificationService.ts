@@ -3,6 +3,7 @@ import { constants, statusMessage } from "../utils/constant";
 import { Op } from 'sequelize';
 import { Notification } from "../models/notificationModel";
 import { NotificationStatus } from "../models/notificationStatusModel";
+import { webPubSubClient } from "../utils/helpers";
 class NotificationService {
 
 
@@ -22,24 +23,51 @@ class NotificationService {
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { notifications: any; total: number, nextOffset: number | null };
+    data?: { notifications: any; total: number; nextOffset: number | null; unreadCount: number };
   }> {
-    const { count, rows } = await Notification.findAndCountAll({
-      where: { user_rid: userId },
-      limit,
-      offset,
-      order: [["created_datetime", "DESC"]],
-      include: [
-        {
-          model: NotificationStatus,
-          as: "notificationstatus",
-          attributes: ["status_description", "status_name"],
-          required: false,
-        },
-      ],
+    const offsetNum = Number(offset);
+const limitNum = Number(limit);
+  const { count, rows } = await Notification.findAndCountAll({
+  where: { user_rid: userId },
+  limit: limitNum,
+  offset : offsetNum,
+  distinct: true,       
+  col: 'rid',            
+  order: [["created_datetime", "DESC"]],
+  include: [
+    {
+      model: NotificationStatus,
+      as: "notificationstatus",
+      attributes: ["status_description", "status_name"],
+      required: false,
+    },
+  ],
+});
+
+
+    // Get the 'Unread' status rid
+    const unreadStatus = await NotificationStatus.findOne({
+      where: { status_name: 'Unread' },
+      attributes: ['rid'],
     });
+
+    // Count unread notifications for the user
+    let unreadCount = 0;
+    if (unreadStatus) {
+      unreadCount = await Notification.count({
+        where: {
+          user_rid: userId,
+          status_rid: unreadStatus.rid,
+        },
+      });
+    }
+
     // Calculate nextOffset for pagination
-    const nextOffset = offset + rows.length < count ? offset + rows.length : null;
+    let nextOffset: number | null = null; 
+    if (count > 0 && offsetNum + limitNum < count) {
+      nextOffset = offsetNum + limitNum;
+    }
+    
     return {
       statusCode: constants.SUCCESS,
       message: statusMessage.orgRetrieved,
@@ -47,6 +75,7 @@ class NotificationService {
         notifications: rows,
         total: count,
         nextOffset,
+        unreadCount,
       },
     };
   }
@@ -99,6 +128,23 @@ class NotificationService {
     };
   }
 
+  async getWebsocketUrl(userId: string): Promise<{
+    statusCode: number;
+    message: string;  
+    errorMessage?: string;
+    data?: { webSocketUrl: string };
+  }> {
+     let token = { token: "" };
+           await webPubSubClient.closeUserConnections(userId);
+           token = await webPubSubClient.getClientAccessToken({ userId: userId,expirationTimeInMinutes: 60 });
+    return {
+      statusCode: constants.SUCCESS,
+      message: statusMessage.orgRetrieved,
+      data: {
+        webSocketUrl: token.token,
+      },
+    };
+  }
 }
 
 export default NotificationService;

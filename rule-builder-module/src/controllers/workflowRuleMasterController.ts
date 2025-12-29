@@ -6,14 +6,19 @@ import {
   handleErrorResponse,
   handleSuccessResponse,
   handleCustomResponse,
-  validateRequest
+  validateRequest,
+  generateExcelBase64,
+  isValidTimezone
 } from "../utils/helpers";
 import {
   listRuleSchema,
   createRuleMasterSchema,
-  updateRuleSchema
+  updateRuleSchema,
+  exportRuleSchema
 } from "../lib/joi/schemas/schema";
+import moment from "moment";
 import configurations from "../config/config";
+import fs from "fs";
 
 
 const services = configurations.getInstance().getServices();
@@ -110,6 +115,97 @@ async function getAllRuleMasters(req: Request, res: Response): Promise<void> {
     );
   }
 };
+
+
+async function exportRuleMasters(req: Request, res: Response): Promise<void> {
+  const methodName = "export rules";
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    const value = await validateRequest(req, exportRuleSchema, res, "GET");
+    if (!value) {
+      return;
+    }
+    let parsedFilters: Record<string, any> = {};
+    try {
+      if (value.filters) {
+        parsedFilters = JSON.parse(value.filters);
+      }
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid filters format. Must be a valid JSON object."
+      );
+    }
+    // if (!userId) {
+    //   return;
+    // }
+
+    const result = await RuleService.listRuleMasters(
+      value,
+      parsedFilters,
+      userId,
+      "download");
+    const isValidTZ = value.timezone && isValidTimezone(value.timezone);
+    const formatDate = (date?: Date) => {
+      if (!date) return null;
+
+      return moment(date)
+        .tz(isValidTZ ? value.timezone : "UTC")
+        .format("YYYY-MMM-DD, hh:mm:ss A");
+    };
+    if (result.statusCode == HttpStatus.SUCCESS) {
+      const finalStructuredData =
+        result?.data?.rules.length < 1
+          ? []
+          : result?.data?.rules.map((d: any) => {
+            let resultMap: { [key: string]: any } = {
+              "Rule Name": d.rule_name,
+              "Scope Name": d.scope_type_name,
+              "Created By": d.created_user_name,
+              "Created On": formatDate(d.created_datetime),
+              "Updated By": d.modified_user_name,
+              "Updated On":
+                d.modified_datetime == null
+                  ? ""
+                  : formatDate(d.modified_datetime),
+              "Status": d.is_active ? "Active" : "Inactive",
+            };
+
+            return resultMap;
+          });
+
+      const generateBase64Response = await generateExcelBase64(
+        finalStructuredData,
+        "Rules"
+      );
+      // const base64 = generateBase64Response.replace(/\s/g, "");
+      // const buffer = Buffer.from(base64, "base64");
+      // fs.writeFileSync("rulees.xlsx", buffer);
+      successLog(methodName);
+      handleSuccessResponse(res, generateBase64Response);
+      return;
+    } else {
+      errorLog(methodName, "No data found");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        result.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+};
+
 
 /** GET RuleMaster by RID */
 async function getRuleMasterById(req: Request, res: Response): Promise<void> {
@@ -247,6 +343,7 @@ async function deleteRuleMaster(req: Request, res: Response): Promise<any> {
 export default {
   createRuleMaster,
   getAllRuleMasters,
+  exportRuleMasters,
   getRuleMasterById,
   updateRuleMaster,
   deleteRuleMaster

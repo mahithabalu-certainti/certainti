@@ -971,30 +971,31 @@ export class HelperMethods {
   }
   async triggerDynamicRuleEngine(eventType: string, payload: any, extra: Record<string, any> = {}, accessToken: string) {
     let templateName = '';
-    let event_name = '';
+    let eventName = '';
     switch (eventType) {
-      case 'create':
+      case 'case_owner_change':
         templateName = ruleTemplateNames.taskCreated;
-        event_name = ruleNames.taskCreated;
+        eventName = ruleNames.caseCreated;
         break;
       case 'status_change':
         templateName = ruleTemplateNames.statusUpdated;
-        event_name =  ruleNames.taskCreated;
+        eventName =  ruleNames.taskCreated;
         break;
       case 'assignee_change':
         templateName = ruleTemplateNames.assigneeChanged;
-        event_name =  ruleNames.taskCreated;
+        eventName =  ruleNames.taskCreated;
         break;
       default:
         templateName = eventType;
-        event_name = eventType;
+        eventName = eventType;
     }
     const ruleEnginePayload = {
       ...payload,
       ...extra,
       templateName,
-      event_name
+      eventName
     };
+    logMessage(`Triggering rule engine with payload ${JSON.stringify(ruleEnginePayload)}`)
     await this.triggerRuleEngine(ruleEnginePayload, accessToken);
   }
 
@@ -1010,11 +1011,12 @@ export class HelperMethods {
                 {
                   headers: {
                     "x-user-id": data.userId,
-                    Authorization: `Bearer ${accessToken}`,
+                    Authorization: `${accessToken}`,
                   },
                 }
               );
       } catch (err) {
+        console.log(err)
         logMessage(`Error triggering rule engine: ${err}`);
       }
     }
