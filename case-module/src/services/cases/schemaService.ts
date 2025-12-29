@@ -4251,7 +4251,7 @@ class CaseSchemaService {
                   d.effort_in_days = d.effort_in_days
                 }
                 else {
-                  validEndDate = endDateStorage
+                  validEndDate = otherMileStoneEndDateStorgae
                   day = dayjs(validEndDate)
 
                   day = day.add(1, 'day')
