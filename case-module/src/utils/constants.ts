@@ -1012,6 +1012,11 @@ export const rawQueries = {
     if (newRid === null) newRid = ''
     return `SELECT rid, task_status_name FROM ${MAIN_SCHEMA_NAME}.case_task_status WHERE rid IN ('${oldRid}', '${newRid}')`
   },
+   fetchCaseStatus(oldRid: string, newRid: string) {
+    if (oldRid === null) oldRid = ''
+    if (newRid === null) newRid = ''
+    return `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.case_status WHERE rid IN ('${oldRid}', '${newRid}')`
+  },
   fetchTaskWeightage(oldRid: string, newRid: string) {
     if (oldRid === null) oldRid = ''
     if (newRid === null) newRid = ''

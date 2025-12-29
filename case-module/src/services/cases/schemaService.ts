@@ -618,6 +618,32 @@ class CaseSchemaService {
                 }, accessToken);
          
         }
+          if (historyChange.attribute_name === 'status_rid') {
+          const oldValue = historyChange.old_value;
+          const newValue = historyChange.new_value;
+          const result:any = await this.mainDbSequelize.query(rawQueries.fetchCaseStatus(oldValue, newValue));
+          let nameMapping = new Map();
+          if (result && Array.isArray(result[0])) {
+            for (const r of result[0]) {
+              if (r && r.rid != null) {
+                nameMapping.set(String(r.rid), r.status_name ? String(r.status_name) : '');
+              }
+            }
+          }
+          const [userInfo]: any[] = await this.mainDbSequelize.query(rawQueries.fetchUserDetails(newCaseData.case_owner_rid), { type: QueryTypes.SELECT });
+          baseRuleEnginePayload.targetEmail = userInfo?.email || '';
+          const oldName = nameMapping.get(oldValue) || '';
+          const newName = nameMapping.get(newValue) || '';
+          baseRuleEnginePayload.targetUserID = newCaseData.case_owner_rid;
+         
+          baseRuleEnginePayload.status = newValue
+
+            await this.helperMethod.triggerDynamicRuleEngine('case_status_change', baseRuleEnginePayload, {
+                  newValue: newName,
+                  oldValue: oldName
+                }, accessToken);
+         
+        }
       }
     } catch (err) {
       logMessage(`Error updating project history : ${JSON.stringify(err)}`);
@@ -3568,16 +3594,21 @@ class CaseSchemaService {
                 {
                   [Op.or]: [
                     { assigned_to: '' },
+                    { assigned_to: null },
                     { task_status_rid: todoStatus.rid }
                   ]
                 },
                 {
-                  assigned_to: { [Op.ne]: newAssignedTo }
+                  [Op.or]: [
+                    { assigned_to: null },
+                    { assigned_to: { [Op.ne]: newAssignedTo } }
+                  ]
                 }
               ]
             },
           }
         );
+        
           let ruleEnginePayload = {
                 entityName: caseDetails?.case_name || "Case",
                 eventName: ruleNames.taskCreated,
