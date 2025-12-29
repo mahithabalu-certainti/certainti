@@ -405,7 +405,7 @@ export const rawQueries = {
    `;
   },
   fetchAllCaseTask(taskType:string) {
-    return `SELECT task_rid,task_name,ac.account_name, ts.status_rid, effective_start_datetime,effective_end_datetime,account_rid,assigned_to FROM ${MAIN_SCHEMA_NAME}.task_summary ts
+    return `SELECT task_rid,task_name,ac.account_name, ts.status_rid, effective_start_datetime,effective_end_datetime,account_rid,assigned_to,uu.email FROM ${MAIN_SCHEMA_NAME}.task_summary ts
       LEFT JOIN ${MAIN_SCHEMA_NAME}.user uu ON ts.assigned_to = uu.rid
       LEFT JOIN ${MAIN_SCHEMA_NAME}.account ac ON ts.account_rid = ac.rid
     WHERE  ts.task_type_rid = '${taskType}'
