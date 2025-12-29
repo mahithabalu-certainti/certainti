@@ -977,6 +977,10 @@ export class HelperMethods {
         templateName = ruleTemplateNames.taskCreated;
         eventName = ruleNames.caseCreated;
         break;
+      case 'case_status_change':
+        templateName = ruleTemplateNames.statusUpdated;
+        eventName =  ruleNames.caseCreated;
+        break;
       case 'status_change':
         templateName = ruleTemplateNames.statusUpdated;
         eventName =  ruleNames.taskCreated;

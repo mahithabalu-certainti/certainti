@@ -1809,7 +1809,7 @@ async accountList(
       let schemaName = rawQueries.fetchSchemaName(accountNumber)
       let isCaseExists : boolean = false;
       const checkTableCaseTableExists : any = await orgSequelize.query(rawQueries.checkCaseTableExists(schemaName));
-      if(checkTableCaseTableExists[0][0] === true) {
+      if(checkTableCaseTableExists[0][0].exists === true) {
         const checkCaseExistsForAccount = await orgSequelize.query<CaseExistsType>(rawQueries.checkCaseExistsForAccount(schemaName, account_id), {type : QueryTypes.SELECT})
         if(checkCaseExistsForAccount.length > 0) {
           isCaseExists = true
