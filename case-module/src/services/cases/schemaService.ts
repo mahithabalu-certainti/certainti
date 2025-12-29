@@ -591,6 +591,7 @@ class CaseSchemaService {
           entityId: newCaseData.rid,
           accountName: accountInfo ? accountInfo.account_name : ""
         };
+        baseRuleEnginePayload.targetUserID = newCaseData.case_owner_rid;
       for (const historyChange of historyChanges) {
         await CaseHistory.create(historyChange);
         // If the attribute is 'case_owner_rid', fetch user names for old and new values
@@ -610,12 +611,12 @@ class CaseSchemaService {
           const newName = nameMapping.get(newValue) || '';
           baseRuleEnginePayload.targetUserID = newValue;
           baseRuleEnginePayload.targetEmail = newName;
-          baseRuleEnginePayload.caseOwner = "Updated"
+          baseRuleEnginePayload.case = "Assigned"
 
-            await this.helperMethod.triggerDynamicRuleEngine('case_owner_change', baseRuleEnginePayload, {
-                  newValue: newName,
-                  oldValue: oldName
-                }, accessToken);
+            // await this.helperMethod.triggerDynamicRuleEngine('case_owner_change', baseRuleEnginePayload, {
+            //       newValue: newName,
+            //       oldValue: oldName
+            //     }, accessToken);
          
         }
           if (historyChange.attribute_name === 'status_rid') {
@@ -634,17 +635,16 @@ class CaseSchemaService {
           baseRuleEnginePayload.targetEmail = userInfo?.email || '';
           const oldName = nameMapping.get(oldValue) || '';
           const newName = nameMapping.get(newValue) || '';
-          baseRuleEnginePayload.targetUserID = newCaseData.case_owner_rid;
-         
-          baseRuleEnginePayload.status = newValue
+          baseRuleEnginePayload.status = newName
 
-            await this.helperMethod.triggerDynamicRuleEngine('case_status_change', baseRuleEnginePayload, {
-                  newValue: newName,
-                  oldValue: oldName
-                }, accessToken);
          
         }
       }
+      
+      await this.helperMethod.triggerDynamicRuleEngine('case_status_change', baseRuleEnginePayload, {
+            newValue: "newName",
+            oldValue: "oldName"
+          }, accessToken);
     } catch (err) {
       logMessage(`Error updating project history : ${JSON.stringify(err)}`);
       errorLog("Error updating project history : " + (err as Error).message);
@@ -3608,7 +3608,7 @@ class CaseSchemaService {
             },
           }
         );
-        
+
           let ruleEnginePayload = {
                 entityName: caseDetails?.case_name || "Case",
                 eventName: ruleNames.taskCreated,

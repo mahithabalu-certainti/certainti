@@ -701,6 +701,9 @@ async function fetchNotificationTemplates (req : Request, res : Response) {
       return;
     }
     const { channel } = req.params;
+    const conditionRid = req.query.condition_rid as string || '';
+    const eventRid = req.query.event_rid as string || '';
+
     if (!channel) {
         errorLog(methodName, "Channel parameter is required");
         handleErrorResponse(
@@ -711,7 +714,7 @@ async function fetchNotificationTemplates (req : Request, res : Response) {
         );
         return;
     }
-    const result = await workFlowService.getNotificationTemplates(channel);
+    const result = await workFlowService.getNotificationTemplates(channel,conditionRid,eventRid);
     if(result.data?.templates.length > 0) {
       return res.status(HttpStatus.SUCCESS).json({
         statusCode: HttpStatus.SUCCESS,

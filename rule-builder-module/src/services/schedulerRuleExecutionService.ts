@@ -118,6 +118,9 @@ export class SchedulerService {
             : mapCaseStatus.get(d.status_rid)?.toLowerCase(),
       }));
 
+      const [ruleCategory] :any[] = await mainDb.query(
+            rawQueries.fetchRuleTypeByName('scheduler')
+          );
     // Helper to build rule engine payload
     const buildPayload = (
       data: any,
@@ -185,6 +188,7 @@ export class SchedulerService {
     await Promise.all(
       updatedResponse.map(async (data: any) => {
         try {
+          data.category_rid = ruleCategory[0]?.rid;;
           await this.workflowService.execute(
             buildPayload(
               data,
