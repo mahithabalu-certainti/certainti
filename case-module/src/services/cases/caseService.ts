@@ -997,16 +997,9 @@ export class CaseService {
             }
           });
         }
-        const fetchAccountDetails: any =
-          await this.caseSchemaService.getAccountDetails(data.account_rid);
-        let fetchCurrencyDetails: any;
-        if (fetchAccountDetails.currency_rid !== null) {
-          fetchCurrencyDetails =
-            await this.caseSchemaService.getCurrencyDetails(
-              fetchAccountDetails.currency_rid
-            );
-        }
-
+        let uniqueCurrencyIds : any = [...new Set(queryResult.map((c : any) => c.currency_rid))];
+        let fetchCurrencies : any = await mainDb.query(rawQueries.fetchCurrencies(uniqueCurrencyIds));
+        let mapCurrency : Map<string, {currency_name : string, currency_code : string, currency_symbol : string}>= new Map(fetchCurrencies[0].map((c : any) => [c.rid, {currency_name : c.currency_name, currency_code : c.currency_code, currency_symbol : c.currency_symbol}]))
         const finalData = geoDataAddedResult.map((d: any) => {
           return {
             rid: d.rid,
@@ -1035,9 +1028,9 @@ export class CaseService {
             project_point_of_contact: d.project_point_of_contact,
             project_technical_point_of_contact:
               d.project_technical_point_of_contact,
-            currency_rid: fetchCurrencyDetails == null ? null : fetchCurrencyDetails.rid,
-            currency_code: fetchCurrencyDetails == null ? null : fetchCurrencyDetails.currency_code,
-            currency_symbol: fetchCurrencyDetails == null ? null : fetchCurrencyDetails.currency_symbol,
+            currency_rid: d.currency_rid || null,
+            currency_code: mapCurrency.get(d.currency_rid)?.currency_code || null,
+            currency_symbol: mapCurrency.get(d.currency_rid)?.currency_symbol || null,
           };
         });
         return {
