@@ -454,7 +454,7 @@ class RDCreditSchemaService {
                 JOIN ${MAIN_SCHEMA_NAME}.country ctry ON ctry.rid = rdcg.country_rid
                 JOIN ${MAIN_SCHEMA_NAME}.state st ON st.rid = rdcg.state_rid AND st.country_rid = ctry.rid
                 WHERE LOWER(ctry.country_code) = LOWER(:countryCode)
-                AND is_federal IS FALSE
+                AND rdcg.is_federal IS FALSE
                 -- ProgramName filter
                 AND (
                     (:programName IS NOT NULL AND LOWER(rdcg.credit_program_name) = LOWER(:programName))
