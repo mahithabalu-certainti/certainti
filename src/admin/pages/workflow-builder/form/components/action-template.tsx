@@ -55,6 +55,26 @@ const ActionTemplateItem: React.FC<ActionTemplateItemProps> = ({
     setIsPreviewOpen(false);
   };
 
+  // Get the full template data for preview
+  const getPreviewTemplate = () => {
+    if (!selectedTemplate) return null;
+
+    // If selectedTemplate already has message_template, use it directly
+    if (selectedTemplate.message_template) {
+      return selectedTemplate;
+    }
+
+    // Otherwise, find the full template from options using rid/id
+    const templateId =
+      selectedTemplate.rid || selectedTemplate.id || selectedTemplate;
+    const fullTemplate = options.find(
+      (t: any) => (t.rid || t.id) === templateId
+    );
+    return fullTemplate || selectedTemplate;
+  };
+
+  const previewTemplate = getPreviewTemplate();
+
   return (
     <>
       <div className='mb-6 border border-gray-200 rounded-lg p-4 bg-gray-50'>
@@ -165,7 +185,7 @@ const ActionTemplateItem: React.FC<ActionTemplateItemProps> = ({
                   Template Name
                 </span>
                 <span className='text-[13px] text-[#2D3E4F] font-medium'>
-                  {selectedTemplate?.template_name || '-'}
+                  {previewTemplate?.template_name || '-'}
                 </span>
               </div>
 
@@ -175,7 +195,7 @@ const ActionTemplateItem: React.FC<ActionTemplateItemProps> = ({
                   Channel
                 </span>
                 <div className='text-[13px] text-[#3189e1] font-medium'>
-                  {selectedTemplate?.channel || '-'}
+                  {previewTemplate?.channel || '-'}
                 </div>
               </div>
             </div>
@@ -217,7 +237,7 @@ const ActionTemplateItem: React.FC<ActionTemplateItemProps> = ({
   [&_td]:border [&_td]:border-gray-300 [&_td]:px-2 [&_td]:py-1
 `}
                 dangerouslySetInnerHTML={{
-                  __html: selectedTemplate?.message_template || '-',
+                  __html: previewTemplate?.message_template || '-',
                 }}
               />
             </div>

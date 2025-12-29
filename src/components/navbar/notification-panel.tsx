@@ -92,11 +92,21 @@ export default function NotificationPanel() {
       // Update unread count
       setUnreadCount((prev) => prev + 1);
 
-      // Only refetch if popup is closed to avoid glitch
-      if (!anchorEl) {
-        setCurrentOffset(0);
-        setLocalNotifications([]);
-        refetchNotifications();
+      // Always refetch notifications to get the latest data from server
+      setCurrentOffset(0);
+      refetchNotifications();
+
+      // If popup is open, automatically mark new notifications as read
+      if (anchorEl) {
+        // Delay slightly to ensure refetch completes first
+        setTimeout(async () => {
+          try {
+            await triggerMarkAsRead();
+            setUnreadCount(0);
+          } catch (error) {
+            console.error('Failed to mark notifications as read:', error);
+          }
+        }, 300);
       }
     }
   });
