@@ -107,6 +107,14 @@ export const getDetailedMetricColumns = (
     sx: {
       textAlign: 'right',
     },
+    render: (row: SummaryDetailedMetric) =>
+      row.metric_name &&
+      row.project_resource_level &&
+      (row.metric_name === 'FTE Cost' ||
+        row.metric_name === 'Sub Con Cost' ||
+        row.metric_name === 'Non Labor Cost')
+        ? costDisplay(row.project_resource_level, currencySymbol)
+        : row.project_resource_level || '-',
   },
   {
     id: 'project_task_level',
@@ -117,6 +125,14 @@ export const getDetailedMetricColumns = (
     sx: {
       textAlign: 'right',
     },
+    render: (row: SummaryDetailedMetric) =>
+      row.metric_name &&
+      row.project_task_level &&
+      (row.metric_name === 'FTE Cost' ||
+        row.metric_name === 'Sub Con Cost' ||
+        row.metric_name === 'Non Labor Cost')
+        ? costDisplay(row.project_task_level, currencySymbol)
+        : row.project_task_level || '-',
   },
 ];
 

@@ -280,6 +280,7 @@ export interface AccountFieldsTypes {
   tenant_id: string;
   support_email: string;
   is_send_interaction: boolean;
+  is_case_exists: boolean;
 }
 
 export interface NewAccountData extends AccountFieldsTypes, AccountById {

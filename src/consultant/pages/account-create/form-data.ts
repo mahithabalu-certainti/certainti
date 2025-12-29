@@ -175,6 +175,7 @@ export const AccFormData = (
   addNewKeyContact: () => void,
   removeKeyContact: (index: number) => void,
   isEditView?: boolean,
+  isCaseExists?: boolean,
   stateLoading?: boolean,
   showOthersField?: boolean,
   permissionMap?: Record<string, { read: boolean; edit: boolean }>
@@ -428,9 +429,10 @@ export const AccFormData = (
               !permissionMap?.['country_rid']?.read &&
               !permissionMap?.['country_rid']?.edit,
             disabled:
-              isEditView &&
-              permissionMap?.['country_rid']?.read &&
-              !permissionMap?.['country_rid']?.edit,
+              (isEditView && isCaseExists) ||
+              (isEditView &&
+                permissionMap?.['country_rid']?.read &&
+                !permissionMap?.['country_rid']?.edit),
           }),
           createSelectField('region_rid', 'Region', {
             options: state,
@@ -442,9 +444,10 @@ export const AccFormData = (
               !permissionMap?.['region_rid']?.read &&
               !permissionMap?.['region_rid']?.edit,
             disabled:
-              isEditView &&
-              permissionMap?.['region_rid']?.read &&
-              !permissionMap?.['region_rid']?.edit,
+              (isEditView && isCaseExists) ||
+              (isEditView &&
+                permissionMap?.['region_rid']?.read &&
+                !permissionMap?.['region_rid']?.edit),
           }),
           createSelectField('currency_rid', 'Currency', {
             options: currency,
@@ -455,9 +458,10 @@ export const AccFormData = (
               !permissionMap?.['currency_rid']?.read &&
               !permissionMap?.['currency_rid']?.edit,
             disabled:
-              isEditView &&
-              permissionMap?.['currency_rid']?.read &&
-              !permissionMap?.['currency_rid']?.edit,
+              (isEditView && isCaseExists) ||
+              (isEditView &&
+                permissionMap?.['currency_rid']?.read &&
+                !permissionMap?.['currency_rid']?.edit),
           }),
         ],
       },
@@ -624,6 +628,7 @@ export const AccFormData = (
       addNewKeyContact,
       removeKeyContact,
       permissionMap,
+      isCaseExists,
     ]
   );
 };
