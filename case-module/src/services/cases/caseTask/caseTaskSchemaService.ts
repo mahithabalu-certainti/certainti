@@ -203,317 +203,343 @@ export class CaseTaskSchemaService {
     }
   }
 
- async updateUserLevelTask(data: UpdateCaseTaskType, accountNumber: string, transaction: Transaction, activeStatusRid: string, accessToken: string) {
-    if (!this.mainDbSequelize) {
-      this.mainDbSequelize = await initMainDbSequelize()
-    }
-    const { CaseTask, CaseTimeline, CaseHistory, TaskCollaborators, TaskSummary, CheckList, CheckListItem } = await this.caseModelService.getModels(accountNumber);
-    const checkCaseExists = await this.caseSchemaService.isCaseExistsForAccount(data.account_rid, data.case_rid, accountNumber);
-    if (!checkCaseExists) {
-      return {
-        statusCode: HttpStatus.BAD_REQUEST,
-        statusMessage: STATUS_MESSAGE.caseNotFound
+  async updateUserLevelTask(data: UpdateCaseTaskType, accountNumber: string, transaction: Transaction, activeStatusRid: string, accessToken: string) {
+    try {
+      if (!this.mainDbSequelize) {
+        this.mainDbSequelize = await initMainDbSequelize()
       }
-    } else {
-      const isTaskExists: any = await this.findTaskById(data.rid, data.account_rid, data.case_rid, accountNumber, "milestone");
-      if (!isTaskExists) {
+      const { CaseTask, CaseTimeline, CaseHistory, TaskCollaborators, TaskSummary, CheckList, CheckListItem } = await this.caseModelService.getModels(accountNumber);
+      const checkCaseExists = await this.caseSchemaService.isCaseExistsForAccount(data.account_rid, data.case_rid, accountNumber);
+      if (!checkCaseExists) {
         return {
           statusCode: HttpStatus.BAD_REQUEST,
-          statusMessage: STATUS_MESSAGE.taskNotFound
+          statusMessage: STATUS_MESSAGE.caseNotFound
         }
       } else {
-        if (isTaskExists.task_status_rid !== data.task_status_rid) {
-          if (Object.keys(data.workflow_connector).length > 0) {
-            const workflowResult = await this.checkTaskWorkFlow(accountNumber, data.rid, data.task_status_rid, data.case_rid, data.workflow_connector.target_rid);
-            if (workflowResult?.success) {
-              return {
-                statusCode: HttpStatus.BAD_REQUEST,
-                statusMessage: workflowResult.statusMessage
+        const isTaskExists: any = await this.findTaskById(data.rid, data.account_rid, data.case_rid, accountNumber, "milestone");
+        if (!isTaskExists) {
+          return {
+            statusCode: HttpStatus.BAD_REQUEST,
+            statusMessage: STATUS_MESSAGE.taskNotFound
+          }
+        } else {
+          if (isTaskExists.task_status_rid !== data.task_status_rid) {
+            if (Object.keys(data.workflow_connector).length > 0) {
+              const workflowResult = await this.checkTaskWorkFlow(accountNumber, data.rid, data.task_status_rid, data.case_rid, data.workflow_connector.target_rid);
+              if (workflowResult?.success) {
+                return {
+                  statusCode: HttpStatus.BAD_REQUEST,
+                  statusMessage: workflowResult.statusMessage
+                }
               }
             }
+            const [currentStatus]:any[] = await this.mainDbSequelize.query(rawQueries.fetchTaskStatus(isTaskExists.task_status_rid,data.task_status_rid), { type: QueryTypes.SELECT });
+            if(currentStatus === 'Closed')
+            {
+              data.is_flagged = false;
+            }
           }
-          const [currentStatus]:any[] = await this.mainDbSequelize.query(rawQueries.fetchTaskStatus(isTaskExists.task_status_rid,data.task_status_rid), { type: QueryTypes.SELECT });
-          if(currentStatus === 'Closed')
-          {
-            data.is_flagged = false;
+          if (data.assigned_to !== null && data.assigned_to !== '' && data.assigned_to !== undefined) {
+            if (data.assigned_to !== isTaskExists.assigned_to) {
+              const findUserRoleId = await this.caseSchemaService.fetchAssignedToRole(data.assigned_to, data.case_rid, data.account_rid, accountNumber);
+              data.case_team_member_role_rid = findUserRoleId?.role_rid!
+            }
           }
-        }
-        if (data.assigned_to !== null && data.assigned_to !== '' && data.assigned_to !== undefined) {
-          if (data.assigned_to !== isTaskExists.assigned_to) {
-            const findUserRoleId = await this.caseSchemaService.fetchAssignedToRole(data.assigned_to, data.case_rid, data.account_rid, accountNumber);
-            data.case_team_member_role_rid = findUserRoleId?.role_rid!
-          }
-        }
-        const [updatedResult] = await CaseTask.update(data, {
-          where: {
-            rid: data.rid,
-            account_rid: data.account_rid,
-            case_rid: data.case_rid
-          }, transaction
-        });
-        let baseRuleEnginePayload: any = {
-          userId: data.modified_by,
-          accountRid: data.account_rid,
-          entityName: data.task_name,
-          entityRid: data.rid,
-          assigneeId:data.modified_by,
-          eventName: ruleNames.taskCreated
-        };
-     
-        if (data?.checklist_template_rid) {
-          if (data.checklist_template_rid !== isTaskExists.checklist_template_rid) {
-            if (isTaskExists.checklist_template_rid !== null && isTaskExists.checklist_template_rid !== '') {
-              const checklistResult = await CheckList.findOne({
-                where: {
-                  attach_to: data.rid,
-                  case_rid: data.case_rid,
-                  attachment_level: 'task',
-                  checklist_template_rid: isTaskExists.checklist_template_rid
-                }, raw: true
-              })
-              if (checklistResult) {
-                await CheckListItem.destroy({
-                  where: {
-                    checklist_rid: checklistResult.rid
-                  }
-                })
-                await CheckList.destroy({
+          const [updatedResult] = await CaseTask.update(data, {
+            where: {
+              rid: data.rid,
+              account_rid: data.account_rid,
+              case_rid: data.case_rid
+            }, transaction
+          });
+          let baseRuleEnginePayload: any = {
+            userId: data.modified_by,
+            accountRid: data.account_rid,
+            entityName: data.task_name,
+            entityRid: data.rid,
+            assigneeId:data.modified_by,
+            eventName: ruleNames.taskCreated
+          };
+      
+          if (data?.checklist_template_rid) {
+            if (data.checklist_template_rid !== isTaskExists.checklist_template_rid) {
+              if (isTaskExists.checklist_template_rid !== null && isTaskExists.checklist_template_rid !== '') {
+                const checklistResult = await CheckList.findOne({
                   where: {
                     attach_to: data.rid,
                     case_rid: data.case_rid,
                     attachment_level: 'task',
                     checklist_template_rid: isTaskExists.checklist_template_rid
-                  }
+                  }, raw: true
                 })
+                if (checklistResult) {
+                  await CheckListItem.destroy({
+                    where: {
+                      checklist_rid: checklistResult.rid
+                    }
+                  })
+                  await CheckList.destroy({
+                    where: {
+                      attach_to: data.rid,
+                      case_rid: data.case_rid,
+                      attachment_level: 'task',
+                      checklist_template_rid: isTaskExists.checklist_template_rid
+                    }
+                  })
+                }
+              }
+              const response = await this.helperMethod.fetchChecklistTemplateDetailsById(data.checklist_template_rid);
+              response.checklist_items.map((item: any) => item.action_type = 'add');
+              let caseRequest: any = {
+                account_rid: data.account_rid!,
+                checklist_name: response.checklist_name,
+                checklist_description: response.description,
+                checklist_items: response.checklist_items,
+                attach_to: data.rid,
+                attachment_level: 'task',
+                created_by: data.modified_by,
+                created_datetime: new Date(),
+                fiscal_year: checkCaseExists.fiscal_year,
+                checklist_rid: data.checklist_template_rid,
+                case_rid: data.case_rid
+              };
+              const checklistResponse = await this.helperMethod.createCheckListForTask(accountNumber, caseRequest, transaction);
+              if (checklistResponse)
+                await this.helperMethod.manageCheckListItems(accountNumber, caseRequest, checklistResponse.rid, transaction);
+            }
+          }
+          await TaskSummary.update(
+            {
+              task_name: data.task_name || "",
+              description: data.task_description || "",
+              assigned_to: data.assigned_to || "",
+              status_rid: data.task_status_rid || "",
+              priority_rid: data.priority_rid || "",
+              effective_start_datetime: data.effective_start_datetime,
+              effective_end_datetime: data.effective_end_datetime,
+              modified_by: data.modified_by || "",
+              modified_datetime: new Date(),
+            },
+            {
+              where: {
+                task_rid: data.rid,
+                attach_to: data.case_rid
               }
             }
-            const response = await this.helperMethod.fetchChecklistTemplateDetailsById(data.checklist_template_rid);
-            response.checklist_items.map((item: any) => item.action_type = 'add');
-            let caseRequest: any = {
-              account_rid: data.account_rid!,
-              checklist_name: response.checklist_name,
-              checklist_description: response.description,
-              checklist_items: response.checklist_items,
-              attach_to: data.rid,
-              attachment_level: 'task',
-              created_by: data.modified_by,
-              created_datetime: new Date(),
-              fiscal_year: checkCaseExists.fiscal_year,
-              checklist_rid: data.checklist_template_rid,
-              case_rid: data.case_rid
-            };
-            const checklistResponse = await this.helperMethod.createCheckListForTask(accountNumber, caseRequest, transaction);
-            if (checklistResponse)
-              await this.helperMethod.manageCheckListItems(accountNumber, caseRequest, checklistResponse.rid, transaction);
-          }
-        }
-        await TaskSummary.update(
-          {
-            task_name: data.task_name || "",
-            description: data.task_description || "",
-            assigned_to: data.assigned_to || "",
-            status_rid: data.task_status_rid || "",
-            priority_rid: data.priority_rid || "",
-            effective_start_datetime: data.effective_start_datetime,
-            effective_end_datetime: data.effective_end_datetime,
-            modified_by: data.modified_by || "",
-            modified_datetime: new Date(),
-          },
-          {
-            where: {
-              task_rid: data.rid,
-              attach_to: data.case_rid
+          );
+          const checkIsDifferentCollaborator = await this.isNewCollaborator(data.modified_by, accountNumber, "case_task", data.case_rid, data.rid);
+          if (!checkIsDifferentCollaborator) {
+            const checkCollaboratorExists = await this.isCollaboratorAlreadyAdded(data.modified_by, data.case_rid, data.account_rid, data.rid, accountNumber, "case_task");
+            if (!checkCollaboratorExists) {
+              await TaskCollaborators.create({
+                case_rid: data.case_rid,
+                account_rid: data.account_rid,
+                task_rid: data.rid,
+                assigned_to: data.modified_by,
+                created_by: data.modified_by,
+                created_datetime: new Date()
+              }, { transaction });
             }
           }
-        );
-        const checkIsDifferentCollaborator = await this.isNewCollaborator(data.modified_by, accountNumber, "case_task", data.case_rid, data.rid);
-        if (!checkIsDifferentCollaborator) {
-          const checkCollaboratorExists = await this.isCollaboratorAlreadyAdded(data.modified_by, data.case_rid, data.account_rid, data.rid, accountNumber, "case_task");
-          if (!checkCollaboratorExists) {
-            await TaskCollaborators.create({
-              case_rid: data.case_rid,
-              account_rid: data.account_rid,
-              task_rid: data.rid,
-              assigned_to: data.modified_by,
-              created_by: data.modified_by,
-              created_datetime: new Date()
-            }, { transaction });
-          }
-        }
-        if (updatedResult == 1) {
-          if (data.tags.length > 0) {
-            for (let d of data.tags) {
-              await this.createOrUpdateTags(isTaskExists.rid, data.account_rid, data?.case_rid, d.tag_rid, d.is_new_tag, accountNumber, data.modified_by, activeStatusRid)
-            }
-          }
-          if (Object.keys(data.workflow_connector).length > 0) {
-            data.workflow_connector.created_by = data.modified_by
-            data.workflow_connector.case_rid = data.case_rid
-            data.workflow_connector.account_rid = data.account_rid
-            if (data.workflow_connector.target_rid !== undefined && data.workflow_connector.is_new_changes) {
-              if (data.workflow_connector.target_rid.length > 0)
-                await this.taskWorkflowConnector(accountNumber, data.workflow_connector, transaction);
-            }
-            if (data.workflow_connector.delete_target_rids !== undefined) {
-              if (data.workflow_connector.delete_target_rids.length > 0 && data.workflow_connector.is_new_changes) {
-                data.workflow_connector.source_rid = data.rid
-                await this.deleteTaskWorkConnector(accountNumber, data.workflow_connector)
+          if (updatedResult == 1) {
+            if (data.tags.length > 0) {
+              for (let d of data.tags) {
+                await this.createOrUpdateTags(isTaskExists.rid, data.account_rid, data?.case_rid, d.tag_rid, d.is_new_tag, accountNumber, data.modified_by, activeStatusRid)
               }
             }
-            if (data.workflow_connector.is_new_changes) {
+            if (Object.keys(data.workflow_connector).length > 0) {
+              data.workflow_connector.created_by = data.modified_by
+              data.workflow_connector.case_rid = data.case_rid
+              data.workflow_connector.account_rid = data.account_rid
+              if (data.workflow_connector.target_rid !== undefined && data.workflow_connector.is_new_changes) {
+                if (data.workflow_connector.target_rid.length > 0)
+                  await this.taskWorkflowConnector(accountNumber, data.workflow_connector, transaction);
+              }
+              if (data.workflow_connector.delete_target_rids !== undefined) {
+                if (data.workflow_connector.delete_target_rids.length > 0 && data.workflow_connector.is_new_changes) {
+                  data.workflow_connector.source_rid = data.rid
+                  await this.deleteTaskWorkConnector(accountNumber, data.workflow_connector)
+                }
+              }
+              if (data.workflow_connector.is_new_changes) {
+                await CaseTimeline.create({
+                  created_by: data.modified_by,
+                  created_datetime: new Date(),
+                  account_rid: data.account_rid,
+                  entity_rid: data.case_rid,
+                  event_name:
+                    `Case Task Workflow Connector updated`,
+                  event_type: "ui handler",
+                  event_status: "success",
+                  event_datetime: new Date(),
+                  description: `Case Task Workflow Connector updated`
+                }, { transaction });
+                await CaseHistory.create({
+                  created_by: data.modified_by,
+                  created_datetime: new Date(),
+                  case_rid: data.case_rid,
+                  attribute_name: "Linked Items",
+                  old_value: "CREATE",
+                  new_value: `updated the ${data.workflow_connector.key_name}`,
+                  task_rid: data.rid
+                }, { transaction });
+              }
+            }
+            const [caseInfo]: any[] = await this.mainDbSequelize.query(
+              rawQueries.fetchCaseName(data.case_rid),
+              { type: QueryTypes.SELECT }
+            );
+             baseRuleEnginePayload.caseName = caseInfo?.case_full_name;
+            const fetchUpdatedColumns = getColumnsNamesForTaskUpdate(data, isTaskExists as any);
+            if (fetchUpdatedColumns.length > 0) {
+              let updatedColumnsStorage: string[] = []
+              let oldValue: string;
+              let newValue: string;
+              let columnName: string;
+              let combinedColumns: string = ``
+              let columnMapping: Map<string, string> = new Map()
+              let newValueString;
+              let oldValueString;
+              let labelName;
+              for (let c of fetchUpdatedColumns) {
+                oldValue = (isTaskExists as any)[c]
+                newValue = (data as any)[c]
+                columnName = c
+  
+                if (columnName == "assigned_to") {
+                  labelName = "Assigned To"
+                  const result: any = await this.mainDbSequelize.query(rawQueries.fetchUserNames(oldValue, newValue))
+                  let emailMapping: Map<string, string> = new Map()
+                  for (let r of result[0]) {
+                    columnMapping.set(r.rid, r.name)
+                    emailMapping.set(r.rid, r.email)
+                  }
+                  oldValueString = columnMapping.get(oldValue)
+                  newValueString = columnMapping.get(newValue)
+                  baseRuleEnginePayload.targetUserID = newValue;
+                  baseRuleEnginePayload.targetEmail = emailMapping.get(newValue);
+                  baseRuleEnginePayload.assignee = "Updated";
+                 
+                  logMessage(`Triggering rule engine for assignee change with payload ${JSON.stringify(baseRuleEnginePayload)}`)
+                   await this.helperMethod.triggerDynamicRuleEngine('assignee_change', baseRuleEnginePayload, {
+                    newValue: newValueString,
+                    oldValue: oldValueString
+                  }, accessToken);
+                }
+                else if (columnName === "checklist_template_rid") {
+                  labelName = "Checklist"
+                  const result: any = await this.mainDbSequelize.query(rawQueries.fetchCheckLists(oldValue, newValue));
+                  for (let r of result[0]) {
+                    columnMapping.set(r.rid, r.checklist_name)
+                  }
+                  oldValueString = columnMapping.get(oldValue)
+                  newValueString = columnMapping.get(newValue)
+                }
+                else if (columnName === "priority_rid") {
+                  labelName = "Priority"
+                  const result: any = await this.mainDbSequelize.query(rawQueries.fetchPriority(oldValue, newValue));
+                  for (let r of result[0]) {
+                    columnMapping.set(r.rid, r.priority_name)
+                  }
+                  oldValueString = columnMapping.get(oldValue)
+                  newValueString = columnMapping.get(newValue);
+                }
+                else if (columnName === "task_status_rid") {
+                  
+                  labelName = "Status"
+                  const result: any = await this.mainDbSequelize.query(rawQueries.fetchTaskStatus(oldValue, newValue));
+                 
+                  for (let r of result[0]) {
+                    columnMapping.set(r.rid, r.task_status_name)
+                  }
+                  if(data.assigned_to !== null && data.assigned_to !== '' && data.assigned_to !== undefined)
+            {
+                  const [userInfo]: any[] = await this.mainDbSequelize.query(rawQueries.fetchUserDetails(data.assigned_to), { type: QueryTypes.SELECT });
+                  baseRuleEnginePayload.targetEmail = userInfo?.email || '';
+                  }
+                 
+                  oldValueString = columnMapping.get(oldValue)
+                  newValueString = columnMapping.get(newValue);
+                  baseRuleEnginePayload.status  = newValueString;
+                  baseRuleEnginePayload.targetUserID = data.assigned_to;
+                  
+                   
+                  await this.helperMethod.triggerDynamicRuleEngine('status_change', baseRuleEnginePayload, {
+                    newValue: newValueString,
+                    oldValue: oldValueString
+                  }, accessToken);
+                }
+                else if (columnName === "weightage_rid") {
+                  labelName = "Weightage"
+                  const result: any = await this.mainDbSequelize.query(rawQueries.fetchTaskWeightage(oldValue, newValue));
+                  for (let r of result[0]) {
+                    columnMapping.set(r.rid, r.weightage_value)
+                  }
+                  oldValueString = columnMapping.get(oldValue)
+                  newValueString = columnMapping.get(newValue)
+                }
+                else if (columnName === "task_category_rid") {
+                  labelName = "Task Category"
+                  const result: any = await this.mainDbSequelize.query(rawQueries.fetchTaskCategory(oldValue, newValue));
+                  for (let r of result[0]) {
+                    columnMapping.set(r.rid, r.category_name)
+                  }
+                  oldValueString = columnMapping.get(oldValue)
+                  newValueString = columnMapping.get(newValue)
+                }
+                else {
+                  if (c === 'task_name') labelName = "Task Name"
+                  if (c === 'task_description') labelName = "Task Description"
+                  if (c === 'effective_start_datetime') labelName = "Start Date"
+                  if (c === 'effective_end_datetime') labelName = "Due Date"
+                  oldValueString = oldValue
+                  newValueString = newValue
+                }
+                await CaseHistory.create({
+                  created_by: data.modified_by,
+                  created_datetime: new Date(),
+                  case_rid: data.case_rid,
+                  attribute_name: labelName!,
+                  old_value: oldValueString,
+                  new_value: newValueString,
+                  task_rid: data.rid
+                })
+                updatedColumnsStorage.push(`${oldValue} changed to ${newValue}`);
+              }
+              if (updatedColumnsStorage.length > 0) {
+                combinedColumns = updatedColumnsStorage.join(', ')
+              }
               await CaseTimeline.create({
                 created_by: data.modified_by,
                 created_datetime: new Date(),
                 account_rid: data.account_rid,
                 entity_rid: data.case_rid,
-                event_name:
-                  `Case Task Workflow Connector updated`,
+                event_name: "Task Updated",
                 event_type: "ui handler",
                 event_status: "success",
                 event_datetime: new Date(),
-                description: `Case Task Workflow Connector updated`
-              }, { transaction });
-              await CaseHistory.create({
-                created_by: data.modified_by,
-                created_datetime: new Date(),
-                case_rid: data.case_rid,
-                attribute_name: "Linked Items",
-                old_value: "CREATE",
-                new_value: `updated the ${data.workflow_connector.key_name}`,
-                task_rid: data.rid
-              }, { transaction });
-            }
-          }
-          const fetchUpdatedColumns = getColumnsNamesForTaskUpdate(data, isTaskExists as any);
-          if (fetchUpdatedColumns.length > 0) {
-            let updatedColumnsStorage: string[] = []
-            let oldValue: string;
-            let newValue: string;
-            let columnName: string;
-            let combinedColumns: string = ``
-            let columnMapping: Map<string, string> = new Map()
-            let newValueString;
-            let oldValueString;
-            let labelName;
-            for (let c of fetchUpdatedColumns) {
-              oldValue = (isTaskExists as any)[c]
-              newValue = (data as any)[c]
-              columnName = c
- 
-              if (columnName == "assigned_to") {
-                labelName = "Assigned To"
-                const result: any = await this.mainDbSequelize.query(rawQueries.fetchUserNames(oldValue, newValue))
-                let emailMapping: Map<string, string> = new Map()
-                for (let r of result[0]) {
-                  columnMapping.set(r.rid, r.name)
-                  emailMapping.set(r.rid, r.email)
-                }
-                oldValueString = columnMapping.get(oldValue)
-                newValueString = columnMapping.get(newValue)
-                baseRuleEnginePayload.targetUserID = newValue;
-                baseRuleEnginePayload.targetEmail = emailMapping.get(newValue);
-                baseRuleEnginePayload.assignee = "Updated";
-                logMessage(`Triggering rule engine for assignee change with payload ${JSON.stringify(baseRuleEnginePayload)}`)
-                 await this.helperMethod.triggerDynamicRuleEngine('assignee_change', baseRuleEnginePayload, {
-                  newValue: newValueString,
-                  oldValue: oldValueString
-                }, accessToken);
-              }
-              else if (columnName === "checklist_template_rid") {
-                labelName = "Checklist"
-                const result: any = await this.mainDbSequelize.query(rawQueries.fetchCheckLists(oldValue, newValue));
-                for (let r of result[0]) {
-                  columnMapping.set(r.rid, r.checklist_name)
-                }
-                oldValueString = columnMapping.get(oldValue)
-                newValueString = columnMapping.get(newValue)
-              }
-              else if (columnName === "priority_rid") {
-                labelName = "Priority"
-                const result: any = await this.mainDbSequelize.query(rawQueries.fetchPriority(oldValue, newValue));
-                for (let r of result[0]) {
-                  columnMapping.set(r.rid, r.priority_name)
-                }
-                oldValueString = columnMapping.get(oldValue)
-                newValueString = columnMapping.get(newValue);
-              }
-              else if (columnName === "task_status_rid") {
-                labelName = "Status"
-                const result: any = await this.mainDbSequelize.query(rawQueries.fetchTaskStatus(oldValue, newValue));
-                for (let r of result[0]) {
-                  columnMapping.set(r.rid, r.task_status_name)
-                }
-                oldValueString = columnMapping.get(oldValue)
-                newValueString = columnMapping.get(newValue);
-                baseRuleEnginePayload.status  = newValueString;
-                await this.helperMethod.triggerDynamicRuleEngine('status_change', baseRuleEnginePayload, {
-                  newValue: newValueString,
-                  oldValue: oldValueString
-                }, accessToken);
-              }
-              else if (columnName === "weightage_rid") {
-                labelName = "Weightage"
-                const result: any = await this.mainDbSequelize.query(rawQueries.fetchTaskWeightage(oldValue, newValue));
-                for (let r of result[0]) {
-                  columnMapping.set(r.rid, r.weightage_value)
-                }
-                oldValueString = columnMapping.get(oldValue)
-                newValueString = columnMapping.get(newValue)
-              }
-              else if (columnName === "task_category_rid") {
-                labelName = "Task Category"
-                const result: any = await this.mainDbSequelize.query(rawQueries.fetchTaskCategory(oldValue, newValue));
-                for (let r of result[0]) {
-                  columnMapping.set(r.rid, r.category_name)
-                }
-                oldValueString = columnMapping.get(oldValue)
-                newValueString = columnMapping.get(newValue)
-              }
-              else {
-                if (c === 'task_name') labelName = "Task Name"
-                if (c === 'task_description') labelName = "Task Description"
-                if (c === 'effective_start_datetime') labelName = "Start Date"
-                if (c === 'effective_end_datetime') labelName = "Due Date"
-                oldValueString = oldValue
-                newValueString = newValue
-              }
-              await CaseHistory.create({
-                created_by: data.modified_by,
-                created_datetime: new Date(),
-                case_rid: data.case_rid,
-                attribute_name: labelName!,
-                old_value: oldValueString,
-                new_value: newValueString,
-                task_rid: data.rid
+                description: `Task Updated : ${combinedColumns}`
               })
-              updatedColumnsStorage.push(`${oldValue} changed to ${newValue}`);
             }
-            if (updatedColumnsStorage.length > 0) {
-              combinedColumns = updatedColumnsStorage.join(', ')
+  
+            return {
+              statusCode: HttpStatus.SUCCESS,
+              statusMessage: STATUS_MESSAGE.taskUpdatedSuccess
             }
-            await CaseTimeline.create({
-              created_by: data.modified_by,
-              created_datetime: new Date(),
-              account_rid: data.account_rid,
-              entity_rid: data.case_rid,
-              event_name: "Task Updated",
-              event_type: "ui handler",
-              event_status: "success",
-              event_datetime: new Date(),
-              description: `Task Updated : ${combinedColumns}`
-            })
-          }
- 
-          return {
-            statusCode: HttpStatus.SUCCESS,
-            statusMessage: STATUS_MESSAGE.taskUpdatedSuccess
-          }
-        } else {
-          return {
-            statusCode: HttpStatus.FAILED,
-            statusMessage: STATUS_MESSAGE.taskUpdateFailed
+          } else {
+            return {
+              statusCode: HttpStatus.FAILED,
+              statusMessage: STATUS_MESSAGE.taskUpdateFailed
+            }
           }
         }
+      }
+    } catch (error) {
+      console.log(error)
+      logMessage(`Error in updateUserLevelTask: ${error}`);
+      return {
+        statusCode: HttpStatus.FAILED,
+        statusMessage:  'Task update failed due to an unexpected error.'
       }
     }
   }
