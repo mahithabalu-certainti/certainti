@@ -215,7 +215,7 @@ const Projects: React.FC<ProjectsProps> = ({
             project?.ProjectFiscal?.map((fiscal) => {
               // Get message for THIS specific fiscal object
               const checkBoxMessage = getProjectDisableReason(
-                fiscal?.is_rd_trigger_qualified === true
+                fiscal?.is_rd_trigger_qualified === false
               );
 
               return {

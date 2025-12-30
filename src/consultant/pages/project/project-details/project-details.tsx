@@ -787,7 +787,7 @@ export const ProjectDetails = () => {
             projectDetails={projectData}
             setInteractionsParams={setInteractionsParams}
             isSendInteraction={data?.data?.project?.is_send_interaction}
-            rdQualified={rdQualified}
+            rdQualified={!rdQualified}
             loading={isPending}
             activityMenuItems={activityMenuItems}
           />
@@ -1006,13 +1006,13 @@ export const ProjectDetails = () => {
             {
               label: 'RD Assessment',
               onClick: handleTriggerAI,
-              disabled: accountInActive || projectInActive || rdQualified,
+              disabled: accountInActive || projectInActive || !rdQualified,
               loading: triggerAIMutation.isPending,
               sx: { ...BUTTON_STYLES, width: '115px', minWidth: '115px' },
               hide: !TriggerAIEnable,
               tooltipValue:
                 'Project type not allowed due to Configuration setting',
-              toolTipEnabled: rdQualified,
+              toolTipEnabled: !rdQualified,
             },
           ]}
           primaryButton={
