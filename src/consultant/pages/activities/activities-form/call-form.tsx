@@ -773,11 +773,11 @@ const CallForm: React.FC<CallFormProps> = ({
               <div className='font-semibold text-[12px] leading-[20px] ml-2 mb-[-6px] text-[#7D98B6]'>
                 {sourcePath
                   ? `${sourcePath}${isEditView ? ` > ${callData?.r_number}` : ''}`
-                  : `Call ${isEditView ? `> ${callData?.r_number}` : ''}`}
+                  : `Call Log ${isEditView ? `> ${callData?.r_number}` : ''}`}
               </div>
             )}
             <h5 className='text-[16px] font-bold ml-2 text-[#2D3E4F]'>
-              {isEditView ? 'Edit Call' : 'Create Call'}
+              {isEditView ? 'Edit Call Log' : 'Create Call Log'}
             </h5>
           </div>
         </div>

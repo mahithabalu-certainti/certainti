@@ -348,7 +348,7 @@ const ProjectActivities: React.FC<ProjectActivitiesProps> = ({
     { label: 'Task', value: 'task', hide: !activitiesTaskEnable },
     { label: 'Email', value: 'email', hide: !activitiesEmailEnable },
     { label: 'Meeting', value: 'meeting', hide: !activitiesMeetingEnable },
-    { label: 'Call', value: 'call', hide: !activitiesCallEnable },
+    { label: 'Call Log', value: 'call', hide: !activitiesCallEnable },
   ];
 
   const handleCreate = () => {

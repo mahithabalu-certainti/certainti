@@ -63,7 +63,6 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
   setFinancialProjectCostParams,
   setExportType,
   countryId,
-  stateId,
   activityMenuItems,
 }) => {
   const navigate = useNavigate();
@@ -296,7 +295,6 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
           <StateWiseSummary
             fiscalYear={fiscalYearValue}
             countryId={countryId}
-            stateId={stateId}
             accountDetails={accountDetails}
           />
         )}
