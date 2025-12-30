@@ -14,6 +14,7 @@ import {
 import { CaseModelService } from "../caseModelsService";
 import {
   ALPHANUMERIC_CONDITIONS,
+  entityNames,
   filtersColumnsForCaseSummary,
   filtersColumnsForReviewProjects,
   filterTypesForCaseSummary,
@@ -534,8 +535,8 @@ class CaseSchemaService {
         this.mainDbSequelize = await this.caseModelService.getMainSequelize();
       }
 
-      const [accountInfo]: any[] = await this.mainDbSequelize.query(
-        rawQueries.fetchAccountInfo(existingCaseData.account_rid),
+      const [caseInfo]: any[] = await this.mainDbSequelize.query(
+        rawQueries.fetchCasesInfo(caseId),
         {
           replacements: { case_rid: caseId },
           type: "SELECT"
@@ -589,8 +590,10 @@ class CaseSchemaService {
           accountRid: newCaseData.account_rid,
           entityName: newCaseData.case_name,
           entityId: newCaseData.rid,
-          accountName: accountInfo ? accountInfo.account_name : ""
+          caseName: caseInfo ? caseInfo.case_name : "",
+          entity:entityNames.case
         };
+        baseRuleEnginePayload.targetUserID = newCaseData.case_owner_rid;
       for (const historyChange of historyChanges) {
         await CaseHistory.create(historyChange);
         // If the attribute is 'case_owner_rid', fetch user names for old and new values
@@ -610,12 +613,12 @@ class CaseSchemaService {
           const newName = nameMapping.get(newValue) || '';
           baseRuleEnginePayload.targetUserID = newValue;
           baseRuleEnginePayload.targetEmail = newName;
-          baseRuleEnginePayload.caseOwner = "Updated"
+          baseRuleEnginePayload.case = "Assigned"
 
-            await this.helperMethod.triggerDynamicRuleEngine('case_owner_change', baseRuleEnginePayload, {
-                  newValue: newName,
-                  oldValue: oldName
-                }, accessToken);
+            // await this.helperMethod.triggerDynamicRuleEngine('case_owner_change', baseRuleEnginePayload, {
+            //       newValue: newName,
+            //       oldValue: oldName
+            //     }, accessToken);
          
         }
           if (historyChange.attribute_name === 'status_rid') {
@@ -634,17 +637,16 @@ class CaseSchemaService {
           baseRuleEnginePayload.targetEmail = userInfo?.email || '';
           const oldName = nameMapping.get(oldValue) || '';
           const newName = nameMapping.get(newValue) || '';
-          baseRuleEnginePayload.targetUserID = newCaseData.case_owner_rid;
-         
-          baseRuleEnginePayload.status = newValue
+          baseRuleEnginePayload.status = newName
 
-            await this.helperMethod.triggerDynamicRuleEngine('case_status_change', baseRuleEnginePayload, {
-                  newValue: newName,
-                  oldValue: oldName
-                }, accessToken);
          
         }
       }
+      
+      await this.helperMethod.triggerDynamicRuleEngine( baseRuleEnginePayload, {
+            newValue: "",
+            oldValue: ""
+          }, accessToken);
     } catch (err) {
       logMessage(`Error updating project history : ${JSON.stringify(err)}`);
       errorLog("Error updating project history : " + (err as Error).message);
@@ -3608,7 +3610,7 @@ class CaseSchemaService {
             },
           }
         );
-        
+
           let ruleEnginePayload = {
                 entityName: caseDetails?.case_name || "Case",
                 eventName: ruleNames.taskCreated,
@@ -4256,7 +4258,7 @@ class CaseSchemaService {
                   d.effort_in_days = d.effort_in_days
                 }
                 else {
-                  validEndDate = endDateStorage
+                  validEndDate = otherMileStoneEndDateStorgae
                   day = dayjs(validEndDate)
 
                   day = day.add(1, 'day')
