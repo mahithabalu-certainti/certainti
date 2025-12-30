@@ -258,10 +258,14 @@ export const rawQueries = {
     return query;
   },
 
-  fetchRuleConditions(condition_rid: string, rule_rid: string): string {
-    let query = `SELECT wrc.rule_rid,rf.name as field,rf.field_description ,ro.name as operator,rv.name as value,wrc.logical_operator FROM ${MAIN_SCHEMA_NAME}.workflow_rule_condition wrc 
+  fetchRuleConditions(category_rid: string, rule_rid: string): string {
+    let query = `SELECT wrc.rule_rid,rf.name as field,rf.field_description ,ro.name as operator,rv.name as value,wrc.logical_operator,rv.action_phrase,ro.action_phrase as operator_phrase FROM ${MAIN_SCHEMA_NAME}.workflow_rule_condition wrc 
     JOIN ${MAIN_SCHEMA_NAME}.rule_fields rf ON rf.rid = wrc.field_rid JOIN ${MAIN_SCHEMA_NAME}.rule_operators ro ON ro.rid = wrc.operator_rid JOIN ${MAIN_SCHEMA_NAME}.rule_values rv on rv.rid = wrc.value_rid 
-    WHERE wrc.rule_rid = '${rule_rid}' ORDER BY wrc.sequence `;
+    WHERE wrc.rule_rid = '${rule_rid}'`;
+    if (category_rid) {
+      query += `\n    and wrc.category_rid = '${category_rid}'`;
+    }
+    query += `\n    ORDER BY wrc.sequence `;
     return query;
   },
 
@@ -291,7 +295,7 @@ export const rawQueries = {
   },
 
   fetchConditionsByRuleRid(rule_rid: string): string {
-    let query = `SELECT cc.rid as category_rid,cc.name as category_name, cc.description as category_description, wrc.logical_operator as category_operator, rf.rid as field_rid, rf.name as field_name,rf.field_description, ro.rid as operator_rid, ro.name as operator_name, rv.rid as value_rid, rv.name as value_name  FROM ${MAIN_SCHEMA_NAME}.condition_category cc JOIN ${MAIN_SCHEMA_NAME}.workflow_rule_condition wrc ON cc.rid = wrc.category_rid JOIN ${MAIN_SCHEMA_NAME}.rule_fields rf on rf.rid = wrc.field_rid JOIN ${MAIN_SCHEMA_NAME}.rule_operators ro ON ro.rid = wrc.operator_rid JOIN ${MAIN_SCHEMA_NAME}.rule_values rv ON rv.rid = wrc.value_rid
+    let query = `SELECT cc.rid as category_rid,cc.name as category_name, cc.description as category_description, wrc.logical_operator as category_operator, rf.rid as field_rid, rf.name as field_name,rf.field_description, ro.rid as operator_rid, ro.name as operator_name, rv.rid as value_rid, rv.name as value_name ,rv.action_phrase FROM ${MAIN_SCHEMA_NAME}.condition_category cc JOIN ${MAIN_SCHEMA_NAME}.workflow_rule_condition wrc ON cc.rid = wrc.category_rid JOIN ${MAIN_SCHEMA_NAME}.rule_fields rf on rf.rid = wrc.field_rid JOIN ${MAIN_SCHEMA_NAME}.rule_operators ro ON ro.rid = wrc.operator_rid JOIN ${MAIN_SCHEMA_NAME}.rule_values rv ON rv.rid = wrc.value_rid
     WHERE wrc.rule_rid = '${rule_rid}' `;
     return query;
   },
@@ -299,7 +303,7 @@ export const rawQueries = {
   fetchNotificationTemplateDetails(template_rid: string, channel: string,): string {
     let query = `SELECT nt.message_template,nt.channel,nt.subject
     FROM ${MAIN_SCHEMA_NAME}.notification_template nt 
-    WHERE nt.rid = '${template_rid}'
+    WHERE lower(nt.template_name) = lower('${template_rid.toLowerCase()}')
     and nt.channel = '${channel}'
     and status_rid = (select status_rid from ${MAIN_SCHEMA_NAME}.status where status_name = 'Active');`;
     return query;
@@ -436,8 +440,11 @@ export const rawQueries = {
     schedulerTaskExecutionSelect(): string {
         return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.scheduler_task_executions WHERE execution_rid = :executionRid AND task_name = :taskName LIMIT 1`;
       },
-    getNotificationTemplates(channel: string) {
-      return `SELECT rid, template_code, channel, message_template,template_name FROM ${MAIN_SCHEMA_NAME}.notification_template WHERE channel = '${channel}' AND status_rid = (SELECT status_rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_name = 'Active') order by template_name asc`;
+    getNotificationTemplates(channel: string, conditionRid: string,eventRid:string) {
+      return `SELECT rid, template_code, channel, message_template,template_name FROM ${MAIN_SCHEMA_NAME}.notification_template WHERE channel = '${channel}'`
+        + (conditionRid ? ` AND condition_rid = '${conditionRid}'` : '')
+         + (eventRid ? ` AND event_rid = '${eventRid}'` : '')
+        + ` AND status_rid = (SELECT status_rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_name = 'Active') order by template_name asc`;
     },
     fetchNotificationInAppTemplatesForRule(rule_rid: string) {
       return `SELECT in_app_template_rid as template_rid FROM ${MAIN_SCHEMA_NAME}.workflow_rule_master WHERE rid = '${rule_rid}' AND is_active = true`;
@@ -458,6 +465,9 @@ export const rawQueries = {
       SET is_flagged = true
       WHERE task_rid = :taskRid
       `;
+    },
+    fetchRuleTypeByName(ruleTypeName: string) {
+      return `SELECT rid, name FROM ${MAIN_SCHEMA_NAME}.condition_category WHERE lower(name) = lower('${ruleTypeName}') LIMIT 1`;
     },
     checkTableExists(schemaName: string, table: string) {
       return `SELECT EXISTS(SELECT 1 FROM information_schema.tables WHERE table_schema = '${schemaName}' AND table_name = '${table}')`;

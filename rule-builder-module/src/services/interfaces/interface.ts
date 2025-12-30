@@ -427,7 +427,9 @@ export interface IWorkFlowService {
         data?: { info: any };
     }>;
     getNotificationTemplates(
-        userId: string
+        userId: string,
+        conditionRid: string,
+        eventRid: string,
     ): Promise<{
         statusCode: number;
         message: string;

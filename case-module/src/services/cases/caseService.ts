@@ -49,6 +49,7 @@ import {
   mainTableFiltersForCase,
   ruleNames,
   ruleTemplateNames,
+  entityNames,
 } from "../../utils/constants";
 import currency from "currency.js";
 import moment from "moment";
@@ -196,23 +197,28 @@ export class CaseService {
         rawQueries.fetchUserDetails(caseRequest.case_owner_rid),
         { type: QueryTypes.SELECT }
       );
-      const [accountInfo]: any[] = await mainDb.query(
-        rawQueries.fetchAccountDetails(caseRequest.account_rid),
-        { type: QueryTypes.SELECT }
-      );
+      const [caseInfo]: any[] = await mainDb.query(
+        rawQueries.fetchCasesInfo(response.rid),
+        {
+          replacements: { case_rid: response.rid },
+          type: "SELECT"
+        });
       let ruleEnginePayload = {
         entityName: caseRequest.case_name,
+        entity:entityNames.case,
         eventName: ruleNames.caseCreated,
-        templateName:ruleTemplateNames.caseCreated,
         userId: userId,
         accountRid: caseRequest.account_rid,
         targetUserID: caseRequest.case_owner_rid,
         targetEmail: caseOwnerData.email || "",
         entityId: response.rid,
         ruleScope:ruleNames.caseCreated,
-        accountName:accountInfo.account_name || ""
+        caseName:caseInfo.case_name || "",
+        case : "Assigned",
+        triggerType:"validation",
+        status:caseInfo.status_name || ""
       };
-     // await this.caseSchemaService.triggerRuleEngine(ruleEnginePayload, accessToken);
+     await this.caseSchemaService.triggerRuleEngine(ruleEnginePayload, accessToken);
 
       return {
         statusCode: HttpStatus.SUCCESS,

@@ -556,6 +556,16 @@ export const rawQueries = {
     return `
     SELECT rid, account_name,r_number,parent_account_rid,storage_type,country_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${rid}'`;
   },
+  fetchCasesInfo(rid:string) {
+      return `SELECT cs.rid,
+      CONCAT(ac.account_name, '-', c.country_name, '-',cs.fiscal_year,'-',cs.case_name) AS case_name,ac.account_name, cs.status_rid, planned_submission_date,statutory_submission_date,account_rid,case_owner_rid ,email ,s.status_name FROM ${MAIN_SCHEMA_NAME}.case_summary  cs
+      LEFT JOIN ${MAIN_SCHEMA_NAME}.user uu ON cs.case_owner_rid = uu.rid 
+      LEFT JOIN ${MAIN_SCHEMA_NAME}.account ac ON cs.account_rid = ac.rid
+       LEFT JOIN ${MAIN_SCHEMA_NAME}.country c ON ac.country_rid = c.rid
+       LEFT JOIN ${MAIN_SCHEMA_NAME}.case_status  s ON cs.status_rid = s.rid
+      WHERE cs.case_rid = '${rid}'
+     `;
+    },
   fetchUserGroupType: `
       SELECT type group_type
       FROM ${MAIN_SCHEMA_NAME}.user_groups ug
@@ -974,6 +984,9 @@ export const rawQueries = {
   },
   fetchCaseInfo(schemaName: string, caseRid: string) {
     return `SELECT rid, r_number, case_name, account_rid, fiscal_year FROM ${schemaName}.cases WHERE rid = '${caseRid}' LIMIT 1`;
+  },
+  getTaskInfo(rid: string, schemaName: string) {
+      return `SELECT rid, task_name FROM ${schemaName}.case_task WHERE rid = ${rid}`
   },
   getSpecificTaskStatus() {
     return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.case_task_status WHERE task_status_name ILIKE '%To Do%'`
@@ -1881,6 +1894,11 @@ export const ruleTemplateNames = {
 export const ruleNames = {
   caseCreated: "Case Event",
   taskCreated: "Task Event",
+}
+
+export const entityNames = {
+  case: "Case",
+  task: "Task",
 }
 
 

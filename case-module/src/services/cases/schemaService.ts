@@ -14,6 +14,7 @@ import {
 import { CaseModelService } from "../caseModelsService";
 import {
   ALPHANUMERIC_CONDITIONS,
+  entityNames,
   filtersColumnsForCaseSummary,
   filtersColumnsForReviewProjects,
   filterTypesForCaseSummary,
@@ -372,7 +373,8 @@ class CaseSchemaService {
             caseReq.case_name.toLowerCase()
           ),
           { rid: { [Op.ne]: caseReq.case_rid } },
-          { fiscal_year: caseReq.fiscal_year }
+          { fiscal_year: caseReq.fiscal_year },
+          { account_rid: { [Op.eq]: caseReq.account_rid } }
         ]
       }
     });
@@ -534,8 +536,8 @@ class CaseSchemaService {
         this.mainDbSequelize = await this.caseModelService.getMainSequelize();
       }
 
-      const [accountInfo]: any[] = await this.mainDbSequelize.query(
-        rawQueries.fetchAccountInfo(existingCaseData.account_rid),
+      const [caseInfo]: any[] = await this.mainDbSequelize.query(
+        rawQueries.fetchCasesInfo(caseId),
         {
           replacements: { case_rid: caseId },
           type: "SELECT"
@@ -589,8 +591,10 @@ class CaseSchemaService {
           accountRid: newCaseData.account_rid,
           entityName: newCaseData.case_name,
           entityId: newCaseData.rid,
-          accountName: accountInfo ? accountInfo.account_name : ""
+          caseName: caseInfo ? caseInfo.case_name : "",
+          entity:entityNames.case
         };
+        baseRuleEnginePayload.targetUserID = newCaseData.case_owner_rid;
       for (const historyChange of historyChanges) {
         await CaseHistory.create(historyChange);
         // If the attribute is 'case_owner_rid', fetch user names for old and new values
@@ -610,12 +614,12 @@ class CaseSchemaService {
           const newName = nameMapping.get(newValue) || '';
           baseRuleEnginePayload.targetUserID = newValue;
           baseRuleEnginePayload.targetEmail = newName;
-          baseRuleEnginePayload.caseOwner = "Updated"
+          baseRuleEnginePayload.case = "Assigned"
 
-            await this.helperMethod.triggerDynamicRuleEngine('case_owner_change', baseRuleEnginePayload, {
-                  newValue: newName,
-                  oldValue: oldName
-                }, accessToken);
+            // await this.helperMethod.triggerDynamicRuleEngine('case_owner_change', baseRuleEnginePayload, {
+            //       newValue: newName,
+            //       oldValue: oldName
+            //     }, accessToken);
          
         }
           if (historyChange.attribute_name === 'status_rid') {
@@ -634,17 +638,16 @@ class CaseSchemaService {
           baseRuleEnginePayload.targetEmail = userInfo?.email || '';
           const oldName = nameMapping.get(oldValue) || '';
           const newName = nameMapping.get(newValue) || '';
-          baseRuleEnginePayload.targetUserID = newCaseData.case_owner_rid;
-         
-          baseRuleEnginePayload.status = newValue
+          baseRuleEnginePayload.status = newName
 
-            await this.helperMethod.triggerDynamicRuleEngine('case_status_change', baseRuleEnginePayload, {
-                  newValue: newName,
-                  oldValue: oldName
-                }, accessToken);
          
         }
       }
+      
+      await this.helperMethod.triggerDynamicRuleEngine( baseRuleEnginePayload, {
+            newValue: "",
+            oldValue: ""
+          }, accessToken);
     } catch (err) {
       logMessage(`Error updating project history : ${JSON.stringify(err)}`);
       errorLog("Error updating project history : " + (err as Error).message);
@@ -3546,6 +3549,14 @@ class CaseSchemaService {
         raw: true,
       });
 
+      if(!this.mainDbSequelize) {
+        this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+      } 
+       if(!this.orgDbSequelize) {
+        this.orgDbSequelize = await this.caseModelService.getSequelize();
+      }   
+      
+
       // Fetch user names from mainDbSequelize using rawQueries
       const userRids = teamMembers.map((tm: any) => tm.user_rid);
       let userNamesMap: Map<string, string> = new Map();
@@ -3565,6 +3576,22 @@ class CaseSchemaService {
         rawQueries.getSpecificTaskStatus(),
         { type: "SELECT" }  
       );
+       const [caseInfo]: any[] = await this.mainDbSequelize.query(
+                        rawQueries.fetchCasesInfo(caseReq.case_rid),
+                        {
+                          replacements: { case_rid: caseReq.case_rid },
+                          type: "SELECT"
+                        });
+      const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(
+        /\D/g,
+        ""
+      )}`;
+      const [taskInfo]: any[] = await this.orgDbSequelize.query(
+                        rawQueries.getTaskInfo(caseReq.task_rid,schemaName),
+                        {
+                          replacements: { case_rid: caseReq.case_rid },
+                          type: "SELECT"
+                        });
 
       // Enrich teamMembers with user_name
       const enrichedTeamMembers = teamMembers.map((tm: any) => ({
@@ -3572,12 +3599,6 @@ class CaseSchemaService {
         user_name: userNamesMap.get(tm.user_rid) || null,
         email: userEmailsMap.get(tm.user_rid) || null,
       }));
-      const caseDetails = await Case.findOne({
-        where: {
-          rid: caseReq.case_rid
-        },
-        raw: true,
-      }); 
       for (const member of teamMembers) {
         const newAssignedTo = enrichedTeamMembers.find(etm => etm.user_rid === member.user_rid)?.user_rid || null;
         // Only update if the previous value is not the same as the new value
@@ -3608,9 +3629,10 @@ class CaseSchemaService {
             },
           }
         );
-        
+
           let ruleEnginePayload = {
-                entityName: caseDetails?.case_name || "Case",
+                caseName: caseInfo?.case_name || "Case",
+                taskName: taskInfo?.task_name || "Task",
                 eventName: ruleNames.taskCreated,
                 templateName:ruleTemplateNames.taskCreated,
                 userId: userId,
@@ -3619,7 +3641,8 @@ class CaseSchemaService {
                 targetUserID: enrichedTeamMembers.find(etm => etm.user_rid === member.user_rid)?.user_rid || null,
                 targetEmail: enrichedTeamMembers.find(etm => etm.user_rid === member.user_rid)?.email || null,
                 entityId:  caseReq.case_rid,
-                assignee:"Updated"
+                task:"Assigned",
+                status:caseInfo.case_name || ''
               };
         if(response[0] > 0){
 
