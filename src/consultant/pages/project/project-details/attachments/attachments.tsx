@@ -488,7 +488,7 @@ const Attachments: React.FC<AttachmentsProps> = ({
             titleIcon={
               <AttachmentsSideIcon
                 alt='attachment-header-icon'
-                className={`[&>path]:stroke-[${colorCode.AccountTextColor}] w-[14px] h-[14px]`}
+                className={`[&>path]:stroke-[${colorCode.accountTextColor}] w-[14px] h-[14px]`}
               />
             }
            iconBg={colorCode.projectBgColor}

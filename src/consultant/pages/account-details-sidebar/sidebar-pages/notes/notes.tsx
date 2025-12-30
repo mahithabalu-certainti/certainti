@@ -467,12 +467,12 @@ const Notes: React.FC<NotesProps> = ({
             showItemCount={true}
             titleIcon={
               <NotesSideIcon
-              className={`[&>path]:stroke-[${colorCode.AccountTextColor}] w-[14px] h-[14px]`}
+              className={`[&>path]:stroke-[${colorCode.accountTextColor}] w-[14px] h-[14px]`}
                 alt='Notes-header-icon'
               />
             }
             buttons={headerButtons}
-              iconBg={colorCode.AccountBgColor}
+              iconBg={colorCode.accountBgColor}
               bgType='circle'
           />
           <div className='border border-[#CBD6E2]'>

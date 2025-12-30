@@ -415,12 +415,12 @@ const Checklist: React.FC<ChecklistProps> = ({
             showItemCount={true}
             titleIcon={
               <ChecklistIcon
-              className={`[&>path]:stroke-[${colorCode.AccountTextColor}] w-[14px] h-[14px]`}
+              className={`[&>path]:stroke-[${colorCode.accountTextColor}] w-[14px] h-[14px]`}
                 alt='Checklist-header-icon'
               />
             }
             buttons={headerButtons}
-             iconBg={colorCode.AccountBgColor}
+             iconBg={colorCode.accountBgColor}
               bgType='circle'
           />
 

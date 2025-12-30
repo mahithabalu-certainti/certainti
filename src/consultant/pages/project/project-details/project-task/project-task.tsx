@@ -794,7 +794,7 @@ export const ProjectTask = ({
             titleIcon={
                 <ProjectTaskIcon
                   alt='resource header icon'
-                  className={`[&>path]:stroke-[${colorCode.AccountTextColor}] w-[14px] h-[14px]`}
+                  className={`[&>path]:stroke-[${colorCode.accountTextColor}] w-[14px] h-[14px]`}
                 />
             }
             count={totalItems}

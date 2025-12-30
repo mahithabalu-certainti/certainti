@@ -880,7 +880,7 @@ const HistorySubmission: React.FC<CaseTeamProps> = ({
 
   const getTitleIcon = () => {
     return <HistorySubmissionIcon
-    alt='action-items-icon'  className={`[&>path]:stroke-[${colorCode.AccountTextColor}] w-[14px] h-[14px]`}/>;
+    alt='action-items-icon'  className={`[&>path]:stroke-[${colorCode.accountTextColor}] w-[14px] h-[14px]`}/>;
   };
 
   // Add this function to check if a field should be visible

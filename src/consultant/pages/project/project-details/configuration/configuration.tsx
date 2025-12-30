@@ -134,14 +134,14 @@ const Configuration: React.FC<ConfigurationProps> = ({ activityMenuItems }) => {
         return (
           <ManageGroupIcon
             alt='resource header icon'
-            className={`[&>path]:stroke-[${colorCode.AccountTextColor}] w-[14px] h-[14px]`}
+            className={`[&>path]:stroke-[${colorCode.accountTextColor}] w-[14px] h-[14px]`}
           />
         );
       case 'settings':
         return (
           <SettingIcon
             alt='settings-header-icon'
-            className={`[&>path]:stroke-[${colorCode.AccountTextColor}] w-[14px] h-[14px]`}
+            className={`[&>path]:stroke-[${colorCode.accountTextColor}] w-[14px] h-[14px]`}
           />
         );
       default:

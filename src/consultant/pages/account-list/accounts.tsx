@@ -237,7 +237,7 @@ export const Accounts: React.FC = () => {
           <div className='flex items-center justify-center'>
             <AccountsIcon
               alt='account-icon'
-              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${colorCode.AccountTextColor}] bg-[${colorCode.AccountBgColor}]`}
+              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${colorCode.accountTextColor}] bg-[${colorCode.accountBgColor}]`}
             />
             <div className='flex flex-col mx-2.5 pb-1'>
               <div className='font-bold text-[16px] text-[#2D3E4F]'>

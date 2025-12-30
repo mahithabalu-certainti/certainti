@@ -76,11 +76,11 @@ const JurisdictionSetting: React.FC<JurisdictionSettingProps> = ({
         titleIcon={
           <ConfigRuleIcon
             alt='settings-header-icon'
-            className={`[&>path]:stroke-[${colorCode.AccountTextColor}] w-[14px] h-[14px]`}
+            className={`[&>path]:stroke-[${colorCode.accountTextColor}] w-[14px] h-[14px]`}
           />
         }
         buttons={headerButtons}
-        iconBg={colorCode.AccountBgColor}
+        iconBg={colorCode.accountBgColor}
               bgType='circle'
       />
       <JurisdictionConfig

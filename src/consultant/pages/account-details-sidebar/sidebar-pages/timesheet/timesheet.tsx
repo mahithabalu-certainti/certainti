@@ -420,11 +420,11 @@ const Timesheet: React.FC<TimeSheetProps> = ({
             buttons={headerButtons}
             titleIcon={
               <TimeSheetIcon
-              className={`[&>path]:stroke-[${colorCode.AccountTextColor}] w-[14px] h-[14px]`}
+              className={`[&>path]:stroke-[${colorCode.accountTextColor}] w-[14px] h-[14px]`}
                 alt='Timesheet-header-icon'
               />
             }
-               iconBg={colorCode.AccountBgColor}
+               iconBg={colorCode.accountBgColor}
               bgType='circle'
           />
           <div className='border border-[#CBD6E2]'>

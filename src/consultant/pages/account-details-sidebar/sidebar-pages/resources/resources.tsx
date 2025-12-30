@@ -1113,13 +1113,13 @@ const Resource: React.FC<ResourceProps> = ({
               titleIcon={
                 <ResourcesIcon
                   alt='resource header icon'
-                  className={`[&>path]:stroke-[${colorCode.AccountTextColor}] w-[14px] h-[14px]`}
+                  className={`[&>path]:stroke-[${colorCode.accountTextColor}] w-[14px] h-[14px]`}
                 />
               }
               headerButtons={headerButtons}
               showBackArrow={showBackArrow}
               onBackClick={handleBackClick}
-              iconBg={colorCode.AccountBgColor}
+              iconBg={colorCode.accountBgColor}
               bgType='circle'
               showCount={noteViewDetails || checklistDetails ? false : true}
             />

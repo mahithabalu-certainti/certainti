@@ -73,7 +73,7 @@ const Setting: React.FC<SettingProps> = ({ activityMenuItems }) => {
         titleIcon={
           <ConfigRuleIcon
             alt='settings-header-icon'
-            className={`[&>path]:stroke-[${colorCode.AccountTextColor}] w-[14px] h-[14px]`}
+            className={`[&>path]:stroke-[${colorCode.accountTextColor}] w-[14px] h-[14px]`}
           />
         }
         buttons={headerButtons}

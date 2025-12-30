@@ -508,12 +508,12 @@ const Activities: React.FC<ActivitiesProps> = ({
           titleIcon={
             <ActivitiesIcon
               alt='activity-header-icon'
-              className={`[&>path]:stroke-[${colorCode.AccountTextColor}] w-[14px] h-[14px]`}
+              className={`[&>path]:stroke-[${colorCode.accountTextColor}] w-[14px] h-[14px]`}
             />
           }
           count={count}
           showItemCount={!viewDetails}
-       iconBg={colorCode.AccountBgColor}
+       iconBg={colorCode.accountBgColor}
         bgType='circle'
           buttons={headerButtons}
         />

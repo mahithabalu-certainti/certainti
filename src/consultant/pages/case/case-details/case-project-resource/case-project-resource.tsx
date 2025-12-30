@@ -325,7 +325,7 @@ const CaseProjectResource: React.FC<ProjectResourceProps> = ({
           titleIcon={
             <ResourcesIcon
               alt='attachment-header-icon'
-              className={`[&>path]:stroke-[${colorCode.AccountTextColor}] w-[14px] h-[14px]`}
+              className={`[&>path]:stroke-[${colorCode.accountTextColor}] w-[14px] h-[14px]`}
             />
           }
           count={totalItems}

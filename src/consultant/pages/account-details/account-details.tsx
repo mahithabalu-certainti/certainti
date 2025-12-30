@@ -1134,7 +1134,7 @@ export const AccountDetails = () => {
           icon={
             <AccountsIcon
               alt='account-icon'
-              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${colorCode.AccountTextColor}] bg-[${colorCode.AccountBgColor}]`}
+              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${colorCode.accountTextColor}] bg-[${colorCode.accountBgColor}]`}
             />
           }
           title={data?.data?.accountById?.account_name ?? ''}

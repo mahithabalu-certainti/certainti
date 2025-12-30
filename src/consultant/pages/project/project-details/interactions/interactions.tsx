@@ -793,7 +793,7 @@ const Interactions: React.FC<InteractionsProps> = ({
               titleIcon={
                 <InteractionsIcon
                   alt='financial-header-icon'
-                  className={`[&>path]:stroke-[${colorCode.AccountTextColor}] w-[14px] h-[14px]`}
+                  className={`[&>path]:stroke-[${colorCode.accountTextColor}] w-[14px] h-[14px]`}
                 />
               }
               count={viewResponseHistory ? count : totalItems}

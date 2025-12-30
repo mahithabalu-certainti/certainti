@@ -672,7 +672,7 @@ const CasesProjects: React.FC<casesProjectProps> = ({
         titleIcon={
           <ProjectsSideIcon
             alt='financial-header-icon'
-            className={`[&>path]:stroke-[${colorCode.AccountTextColor}] w-[14px] h-[14px]`}
+            className={`[&>path]:stroke-[${colorCode.accountTextColor}] w-[14px] h-[14px]`}
           />
         }
         count={count}

@@ -106,10 +106,10 @@ const Details: React.FC<DetailsProps> = ({
         <div className='flex flex-col gap-0 border border-[#CBD6E2] rounded-[2px]'>
           <Box className='flex items-center justify-between gap-4 h-[38px] py-1 px-2'>
             <Box className='flex items-center gap-2'>
-              <div className={`w-[24px] h-[24px] flex items-center justify-center rounded-2xl bg-[${colorCode.AccountBgColor}]`}>
+              <div className={`w-[24px] h-[24px] flex items-center justify-center rounded-2xl bg-[${colorCode.accountBgColor}]`}>
                 <AccountsIcon
                   alt='details'
-                  className={`[&>path]:stroke-[${colorCode.AccountTextColor}] w-[14px] h-[14px]`}
+                  className={`[&>path]:stroke-[${colorCode.accountTextColor}] w-[14px] h-[14px]`}
                 />
               </div>
               <Box className='text-[13px] text-[#2D3E4F] font-semibold'>
