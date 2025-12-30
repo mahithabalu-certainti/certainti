@@ -136,7 +136,7 @@ const limitNum = Number(limit);
   }> {
      let token = { token: "" };
            await webPubSubClient.closeUserConnections(userId);
-           token = await webPubSubClient.getClientAccessToken({ userId: userId,expirationTimeInMinutes: 60 });
+           token = await webPubSubClient.getClientAccessToken({ userId: userId,expirationTimeInMinutes: 1400 });
     return {
       statusCode: constants.SUCCESS,
       message: statusMessage.orgRetrieved,

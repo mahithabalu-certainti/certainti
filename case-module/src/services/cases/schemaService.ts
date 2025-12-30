@@ -590,9 +590,9 @@ class CaseSchemaService {
           userId: newCaseData.modified_by,
           accountRid: newCaseData.account_rid,
           entityName: newCaseData.case_name,
-          entityId: newCaseData.rid,
+          entityId: caseId,
           caseName: caseInfo ? caseInfo.case_name : "",
-          entity:entityNames.case
+          entity:entityNames.case,     
         };
         baseRuleEnginePayload.targetUserID = newCaseData.case_owner_rid;
       for (const historyChange of historyChanges) {
@@ -3586,12 +3586,7 @@ class CaseSchemaService {
         /\D/g,
         ""
       )}`;
-      const [taskInfo]: any[] = await this.orgDbSequelize.query(
-                        rawQueries.getTaskInfo(caseReq.task_rid,schemaName),
-                        {
-                          replacements: { case_rid: caseReq.case_rid },
-                          type: "SELECT"
-                        });
+     
 
       // Enrich teamMembers with user_name
       const enrichedTeamMembers = teamMembers.map((tm: any) => ({
@@ -3627,30 +3622,37 @@ class CaseSchemaService {
                 }
               ]
             },
+            returning: true
           }
         );
-
-          let ruleEnginePayload = {
-                caseName: caseInfo?.case_name || "Case",
-                taskName: taskInfo?.task_name || "Task",
-                eventName: ruleNames.taskCreated,
-                templateName:ruleTemplateNames.taskCreated,
-                userId: userId,
-                accountRid: caseReq.account_rid,
-                newValue: userNamesMap.get(userId),
-                targetUserID: enrichedTeamMembers.find(etm => etm.user_rid === member.user_rid)?.user_rid || null,
-                targetEmail: enrichedTeamMembers.find(etm => etm.user_rid === member.user_rid)?.email || null,
-                entityId:  caseReq.case_rid,
-                task:"Assigned",
-                status:caseInfo.case_name || ''
-              };
-        if(response[0] > 0){
-
-          this.triggerRuleEngine(ruleEnginePayload,accessToken); 
-          
+        // For each updated row, trigger rule engine payload with the updated rid
+        if (response[0] > 0 && response[1] && Array.isArray(response[1])) {
+          for (const updatedRow of response[1]) {
+             const [taskInfo]: any[] = await this.orgDbSequelize.query(
+                        rawQueries.getTaskInfo(updatedRow.rid,schemaName),
+                        {
+                          replacements: { case_rid: updatedRow.rid },
+                          type: "SELECT"
+                        });
+            let ruleEnginePayload = {
+              caseName: caseInfo?.case_name || "Case",
+              taskName: taskInfo?.task_name || "Task",
+              eventName: ruleNames.taskCreated,
+              templateName: ruleTemplateNames.taskCreated,
+              userId: userId,
+              accountRid: caseReq.account_rid,
+              newValue: userNamesMap.get(userId),
+              targetUserID: enrichedTeamMembers.find(etm => etm.user_rid === member.user_rid)?.user_rid || null,
+              targetEmail: enrichedTeamMembers.find(etm => etm.user_rid === member.user_rid)?.email || null,
+              entityRid: updatedRow.rid, // Use the updated task rid
+              task: "Assigned",
+              status: caseInfo.case_name || '',
+              triggerType: "validation",
+              entity:"Task"
+            };
+            this.triggerRuleEngine(ruleEnginePayload, accessToken);
+          }
         }
-
-
       }
 
     } catch (error) {
