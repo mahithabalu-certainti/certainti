@@ -786,7 +786,7 @@ export class WorkFlowService {
             { type: QueryTypes.SELECT }
         );
         for (const rule of rules) {
-            const conditions = await mainDb.query<any>(rawQueries.fetchRuleConditions(rule.condition_rid, rule.rule_rid),
+            const conditions = await mainDb.query<any>(rawQueries.fetchRuleConditions(request.category_rid || '', rule.rule_rid),
                 { type: QueryTypes.SELECT }
             );
             allConditions.push(...conditions);
@@ -846,7 +846,23 @@ export class WorkFlowService {
                     const condition = ruleConditions[i];
                     const conditionResult = await this.evaluateCondition(condition, entity);
                     // Build a human-readable part for this condition
-                    const part = `${condition.field_description} ${condition.operator} ${condition.value}`;
+                    let part = ``;
+                    if(conditionResult.pass)
+                    {
+                    if(condition.action_phrase != null && condition.action_phrase != '' ){
+                        part = `${condition.action_phrase}`;
+                    }
+                    else
+                    {
+                       const operatorText =
+                        condition.operator_phrase?.trim() ||
+                        condition.operator?.toLowerCase();
+                        part = `${condition.field_description} ${operatorText} ${condition.value}`;
+                    }
+                }
+
+                   // const part = `${condition.field_description} ${condition.operator.toLowerCase()} ${condition.value}`;
+                    console.log("part " + part);
                     if (i === 0) {
                         ruleResult = conditionResult.pass;
                         templateParts.push(part);
@@ -1164,7 +1180,7 @@ export class WorkFlowService {
         );
     }
 
-    async getNotificationTemplates(channel: string): Promise<{
+    async getNotificationTemplates(channel: string, conditionRid: string,eventRid: string): Promise<{
         statusCode: number;
         message: string;
         errorMessage?: string;
@@ -1172,7 +1188,7 @@ export class WorkFlowService {
     }> {
         const mainDb = await this.getMainDb();
         const result = await mainDb.query(
-            rawQueries.getNotificationTemplates(channel),
+            rawQueries.getNotificationTemplates(channel, conditionRid,eventRid),
             { type: QueryTypes.SELECT }
         );
         return {
