@@ -238,6 +238,7 @@ export class SchedulerService {
     await Promise.all(
       updatedTaskResponse.map(async (data: any) => {
         try {
+          data.category_rid = ruleCategory[0]?.rid;;
           await this.workflowService.execute(
             buildPayload(
               data,
