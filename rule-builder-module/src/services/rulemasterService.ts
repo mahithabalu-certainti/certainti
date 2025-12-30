@@ -41,7 +41,6 @@ export class RulemasterService {
 
         const checkExists = await RuleMaster.findOne({ where: { rule_name: ruleRequest.rule_name } });
         if (checkExists) {
-            console.log("here coming");
             return {
                 statusCode: HttpStatus.BAD_REQUEST,
                 message: "",
@@ -59,9 +58,7 @@ export class RulemasterService {
             scope_type_rid: ruleRequest.scope_type_rid,
             schedule_offset_type: ruleRequest.schedule_offset_type ?? null,
             schedule_offset_value: ruleRequest.schedule_offset_value ?? null,
-            created_by: ruleRequest.created_by,
-            in_app_template_rid: ruleRequest.in_app_template_rid ?? null,
-            email_template_rid: ruleRequest.email_template_rid ?? null
+            created_by: ruleRequest.created_by
         });
 
         // for (const attr of attributesToTrack) {
@@ -339,10 +336,8 @@ export class RulemasterService {
             scope_type_rid: ruleRequest.scope_type_rid,
             schedule_offset_type: ruleRequest.schedule_offset_type ?? null,
             schedule_offset_value: ruleRequest.schedule_offset_value ?? null,
-            modified_by: ruleRequest.modified_by,
-            modified_datetime: new Date(),
-            in_app_template_rid: ruleRequest.in_app_template_rid ?? null,
-            email_template_rid: ruleRequest.email_template_rid ?? null
+            modified_by: userId,
+            modified_datetime: new Date()
         });
 
         return {
@@ -395,6 +390,8 @@ export class RulemasterService {
         }
         await srule.update({
             is_active: req.is_active ?? true,
+            modified_by: userId,
+            modified_datetime: new Date(),
         });
         return {
             statusCode: HttpStatus.SUCCESS,

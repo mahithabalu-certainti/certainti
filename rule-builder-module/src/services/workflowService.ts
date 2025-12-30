@@ -321,10 +321,7 @@ export class WorkFlowService {
                 scope_type_rid: ruleRequest.scope_type_rid,
                 schedule_offset_type: ruleRequest.schedule_offset_type ?? null,
                 schedule_offset_value: ruleRequest.schedule_offset_value ?? null,
-                created_by: ruleRequest.created_by,
-                modified_by: ruleRequest.modified_by ?? ruleRequest.created_by, // fallback to created_by if undefined
-                in_app_template_rid: ruleRequest.in_app_template_rid ?? null,
-                email_template_rid: ruleRequest.email_template_rid ?? null,
+                created_by: ruleRequest.created_by
             }, userId
         )
 
@@ -443,9 +440,7 @@ export class WorkFlowService {
                 scope_type_rid: ruleRequest.scope_type_rid,
                 schedule_offset_type: ruleRequest.schedule_offset_type ?? null,
                 schedule_offset_value: ruleRequest.schedule_offset_value ?? null,
-                modified_by: ruleRequest.modified_by ?? ruleRequest.created_by,
-                in_app_template_rid: ruleRequest.in_app_template_rid ?? null,
-                email_template_rid: ruleRequest.email_template_rid ?? null,
+                modified_by: userId
             },
             userId
         );
