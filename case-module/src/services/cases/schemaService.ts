@@ -208,7 +208,7 @@ class CaseSchemaService {
         if (fetchTaskTypeRid) {
           await this.cloneDefaultMilestoneTaskTemplate(casecreationResponse.account_rid, casecreationResponse.rid,
             casecreationResponse.filing_type_rid, fetchTaskTypeRid.rid, accountNumber, transaction, casecreationResponse.case_startdate,
-            fetchTaskStatusRid?.rid!)
+            fetchTaskStatusRid?.rid!, casecreationResponse.created_by, casecreationResponse.fiscal_year)
         }
         await this.addCaseManagementTimeline(
           accountNumber,
@@ -590,9 +590,9 @@ class CaseSchemaService {
           userId: newCaseData.modified_by,
           accountRid: newCaseData.account_rid,
           entityName: newCaseData.case_name,
-          entityId: newCaseData.rid,
+          entityId: caseId,
           caseName: caseInfo ? caseInfo.case_name : "",
-          entity:entityNames.case
+          entity:entityNames.case,     
         };
         baseRuleEnginePayload.targetUserID = newCaseData.case_owner_rid;
       for (const historyChange of historyChanges) {
@@ -3586,12 +3586,7 @@ class CaseSchemaService {
         /\D/g,
         ""
       )}`;
-      const [taskInfo]: any[] = await this.orgDbSequelize.query(
-                        rawQueries.getTaskInfo(caseReq.task_rid,schemaName),
-                        {
-                          replacements: { case_rid: caseReq.case_rid },
-                          type: "SELECT"
-                        });
+     
 
       // Enrich teamMembers with user_name
       const enrichedTeamMembers = teamMembers.map((tm: any) => ({
@@ -3627,30 +3622,37 @@ class CaseSchemaService {
                 }
               ]
             },
+            returning: true
           }
         );
-
-          let ruleEnginePayload = {
-                caseName: caseInfo?.case_name || "Case",
-                taskName: taskInfo?.task_name || "Task",
-                eventName: ruleNames.taskCreated,
-                templateName:ruleTemplateNames.taskCreated,
-                userId: userId,
-                accountRid: caseReq.account_rid,
-                newValue: userNamesMap.get(userId),
-                targetUserID: enrichedTeamMembers.find(etm => etm.user_rid === member.user_rid)?.user_rid || null,
-                targetEmail: enrichedTeamMembers.find(etm => etm.user_rid === member.user_rid)?.email || null,
-                entityId:  caseReq.case_rid,
-                task:"Assigned",
-                status:caseInfo.case_name || ''
-              };
-        if(response[0] > 0){
-
-          this.triggerRuleEngine(ruleEnginePayload,accessToken); 
-          
+        // For each updated row, trigger rule engine payload with the updated rid
+        if (response[0] > 0 && response[1] && Array.isArray(response[1])) {
+          for (const updatedRow of response[1]) {
+             const [taskInfo]: any[] = await this.orgDbSequelize.query(
+                        rawQueries.getTaskInfo(updatedRow.rid,schemaName),
+                        {
+                          replacements: { case_rid: updatedRow.rid },
+                          type: "SELECT"
+                        });
+            let ruleEnginePayload = {
+              caseName: caseInfo?.case_name || "Case",
+              taskName: taskInfo?.task_name || "Task",
+              eventName: ruleNames.taskCreated,
+              templateName: ruleTemplateNames.taskCreated,
+              userId: userId,
+              accountRid: caseReq.account_rid,
+              newValue: userNamesMap.get(userId),
+              targetUserID: enrichedTeamMembers.find(etm => etm.user_rid === member.user_rid)?.user_rid || null,
+              targetEmail: enrichedTeamMembers.find(etm => etm.user_rid === member.user_rid)?.email || null,
+              entityRid: updatedRow.rid, // Use the updated task rid
+              task: "Assigned",
+              status: caseInfo.case_name || '',
+              triggerType: "validation",
+              entity:"Task"
+            };
+            this.triggerRuleEngine(ruleEnginePayload, accessToken);
+          }
         }
-
-
       }
 
     } catch (error) {
@@ -4173,8 +4175,8 @@ class CaseSchemaService {
       return [];
     }
   }
-  async cloneDefaultMilestoneTaskTemplate(accountRid: string, caseRid: string, filing_type_rid: string, taskTypeRid: string, accountNumber: string, transaction: Transaction, caseStartDate: Date, taskStatusRid: string) {
-    const { CaseTask, CaseMilestone, CaseTaskWorkflowConnector } = await this.caseModelService.getModels(accountNumber);
+  async cloneDefaultMilestoneTaskTemplate(accountRid: string, caseRid: string, filing_type_rid: string, taskTypeRid: string, accountNumber: string, transaction: Transaction, caseStartDate: Date, taskStatusRid: string, createdBy : string, fiscalYear : number) {
+    const { CaseTask, CaseMilestone, CaseTaskWorkflowConnector, TaskSummary } = await this.caseModelService.getModels(accountNumber);
     if (!this.mainDbSequelize) {
       this.mainDbSequelize = await this.caseModelService.getMainSequelize();
     }
@@ -4330,7 +4332,8 @@ class CaseSchemaService {
               account_rid: accountRid,
               case_rid: caseRid,
               task_status_rid: taskStatusRid,
-              rid: d.task_rid
+              rid: d.task_rid,
+              created_by : createdBy
             }
           })
           let finalWorkFlowData;
@@ -4339,13 +4342,35 @@ class CaseSchemaService {
               return {
                 ...d,
                 account_rid: accountRid,
-                case_rid: caseRid
+                case_rid: caseRid,
+                created_by : createdBy,
               }
             })
             await CaseTaskWorkflowConnector.bulkCreate(finalWorkFlowData, { transaction });
           }
-
-          await CaseTask.bulkCreate(finalTaskData, { transaction })
+          const bulkCreateResult = await CaseTask.bulkCreate(finalTaskData, { returning : true, transaction })
+          let taskSummaryData = bulkCreateResult.map(d => d.get({plain : true}));
+          let filteredDataForSummary = taskSummaryData.map((d) => {
+            return {
+              task_rid: d.rid,
+              r_number: d.r_number || "",
+              account_rid: d.account_rid || "",
+              attach_to: d.case_rid || "",
+              attachment_level: "case",
+              task_name: d.task_name || "",
+              description: d.task_description || "",
+              fiscal_year: fiscalYear || 0,
+              assigned_to: d.assigned_to || "",
+              status_rid: taskStatusRid || "",
+              priority_rid: d.priority_rid || "",
+              effective_start_datetime: d.effective_start_datetime!,
+              effective_end_datetime: d.effective_end_datetime!,
+              created_by:  createdBy || "",
+              created_datetime: new Date(),
+              task_type_rid: taskTypeRid || "",
+            }
+          })
+          await TaskSummary.bulkCreate(filteredDataForSummary)
           await this.cloneDefaultChecklistTemplate(accountRid, caseRid, filing_type_rid, accountNumber, transaction, finalTaskData)
         }
       }
