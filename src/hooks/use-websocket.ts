@@ -5,8 +5,9 @@ import {
   WebSocketEventHandler,
   WebSocketMessage,
   websocketService,
+  getNotificationConnectionUrl,
 } from '../services/websocket/websocket-service';
-import { setConnectionError, setConnectionStatus } from '../store/slices';
+import { setConnectionError, setConnectionStatus, setWebSocketUrl } from '../store/slices';
 
 /**
  * Custom hook to manage WebSocket connection
@@ -18,6 +19,29 @@ export const useWebSocket = () => {
     (state: RootState) => state.websocket
   );
   const hasInitialized = useRef(false);
+
+  // Callback to fetch new WebSocket URL and token
+  const refreshWebSocketUrl = useCallback(async (): Promise<string | null> => {
+     console.log('🔄 Fetching new WebSocket connection URL...');
+    try {
+      const response = await getNotificationConnectionUrl();
+      
+      if (response?.data?.webSocketUrl) {
+        const websocketBaseUrl = import.meta.env.VITE_WEBSOCKET_URL;
+        const newWebsocketUrl = `${websocketBaseUrl}?access_token=${response.data.webSocketUrl}`;
+        
+        // Update Redux with new WebSocket URL
+        dispatch(setWebSocketUrl(newWebsocketUrl));
+        
+        return newWebsocketUrl;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Failed to fetch new WebSocket URL:', error);
+      return null;
+    }
+  }, [dispatch]);
 
   useEffect(() => {
     if (websocketUrl && !hasInitialized.current) {
@@ -31,11 +55,12 @@ export const useWebSocket = () => {
         dispatch(setConnectionError(error));
       };
 
-      // Connect to WebSocket
+      // Connect to WebSocket with refresh URL callback
       websocketService.connect(
         websocketUrl,
         handleConnectionChange,
-        handleError
+        handleError,
+        refreshWebSocketUrl
       );
     }
 
@@ -54,7 +79,7 @@ export const useWebSocket = () => {
         hasInitialized.current = false;
       }
     };
-  }, [websocketUrl, dispatch]);
+  }, [websocketUrl, dispatch, refreshWebSocketUrl]);
 
   const subscribe = useCallback(
     (eventType: string, handler: WebSocketEventHandler) => {

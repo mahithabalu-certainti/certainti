@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
-import { ActionTypeEnum } from '../helper';
 
 import { DeleteIcon, ErrorInfoIcon } from '../../../../../assets';
 import {
   ActionManager,
-  ActionTemplate,
   ConditionManager,
   ConnectorLine,
   PageSkeleton,
@@ -53,18 +51,9 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
     goToStep,
     canProceedToConditions,
     canProceedToActions,
-    canProceedToActionTemplate,
     ruleNameError,
     showRuleNameError,
-    validateAndSave,
   } = useWorkflowContext();
-
-  // Check if we should show the Action Template step
-  const shouldShowActionTemplate = rule.actions.some(
-    (action) =>
-      action.name === ActionTypeEnum.InApp ||
-      action.name === ActionTypeEnum.Email
-  );
 
   const handleSelectTrigger = (trigger: Trigger) => {
     selectTrigger(trigger);
@@ -79,8 +68,6 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
       goToStep('trigger');
     } else if (currentStep === 'actions') {
       goToStep('conditions');
-    } else if (currentStep === 'action-template') {
-      goToStep('actions');
     }
   };
 
@@ -96,19 +83,6 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
           goToStep('actions');
         }
         break;
-      case 'actions':
-        if (shouldShowActionTemplate && canProceedToActionTemplate) {
-          goToStep('action-template');
-        } else if (!shouldShowActionTemplate) {
-          // If no template needed, save directly
-          validateAndSave();
-        }
-        break;
-      case 'action-template':
-        validateAndSave();
-        break;
-      // No 'actions' case needed since Next button is not shown in actions step
-      // Validation for save happens in the form-level save button
     }
   };
 
@@ -192,19 +166,6 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
             />
           </div>
         </div>
-
-        {/* Action Template Step - Always mounted, visibility controlled by CSS */}
-        {shouldShowActionTemplate && (
-          <div
-            style={{
-              display: currentStep === 'action-template' ? 'block' : 'none',
-            }}
-          >
-            <div className='relative min-h-[calc(100vh-238px)] max-h-[calc(100vh-238px)]'>
-              <ActionTemplate />
-            </div>
-          </div>
-        )}
       </>
     );
   };
@@ -217,12 +178,7 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
         // Disable if conditions are incomplete OR if category selector is showing
         return !canProceedToActions || isCategorySelectorShowing;
       case 'actions':
-        // If templates are needed, check canProceedToActionTemplate, otherwise check if actions exist
-        return shouldShowActionTemplate
-          ? !canProceedToActionTemplate
-          : rule.actions.length === 0;
-      case 'action-template':
-        return !canProceedToActionTemplate; // Disable if templates are not fully configured
+        return rule.actions.length === 0;
       default:
         return true;
     }
@@ -504,8 +460,7 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
               <ConnectorLine
                 active={
                   rule.conditions.length > 0 &&
-                  (currentStep === 'actions' ||
-                    currentStep === 'action-template') &&
+                  currentStep === 'actions' &&
                   !rule.actions.length
                 }
               />
@@ -574,94 +529,6 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
                   </div>
                 </div>
               </div>
-
-              {shouldShowActionTemplate && (
-                <>
-                  <ConnectorLine
-                    active={
-                      rule.actions.length > 0 &&
-                      currentStep === 'action-template' &&
-                      rule.actions.some(
-                        (action) => !rule.actionTemplates?.[action.name] // Use action.name
-                      )
-                    }
-                  />
-
-                  {/* Action Template Block */}
-                  <div
-                    className={`border rounded-lg p-4 ${
-                      canProceedToActionTemplate &&
-                      currentStep !== 'action-template'
-                        ? 'cursor-pointer'
-                        : 'cursor-default'
-                    } transition-all ${
-                      currentStep === 'action-template'
-                        ? 'border-blue-500 bg-blue-50'
-                        : rule.actions.length > 0 &&
-                            rule.actions.every(
-                              (action) => rule.actionTemplates?.[action.name] // Use action.name
-                            )
-                          ? 'border border-[#d467d4] bg-[#d446d41f]'
-                          : 'border-gray-300 bg-white'
-                    }`}
-                    onClick={() =>
-                      canProceedToActionTemplate &&
-                      currentStep !== 'action-template' &&
-                      goToStep('action-template')
-                    }
-                  >
-                    <div className='flex items-start gap-3'>
-                      <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 border ${
-                          currentStep === 'action-template' &&
-                          rule.actions.some(
-                            (action) => !rule.actionTemplates?.[action.name] // Use action.name
-                          )
-                            ? 'border-blue-500 bg-blue-200'
-                            : rule.actions.length > 0 &&
-                                rule.actions.every(
-                                  (action) =>
-                                    rule.actionTemplates?.[action.name] // Use action.name
-                                )
-                              ? 'border border-[#d467d4] bg-[#dda0dd1f]'
-                              : 'bg-gray-200 border-gray-300'
-                        }`}
-                      >
-                        <span
-                          className={`text-sm ${
-                            currentStep === 'action-template' &&
-                            rule.actions.some(
-                              (action) => !rule.actionTemplates?.[action.name] // Use action.name
-                            )
-                              ? 'text-blue-700'
-                              : rule.actions.length > 0 &&
-                                  rule.actions.every(
-                                    (action) =>
-                                      rule.actionTemplates?.[action.name] // Use action.name
-                                  )
-                                ? 'text-[#d720d7]'
-                                : 'text-gray-700'
-                          }`}
-                        >
-                          🛠
-                        </span>
-                      </div>
-                      <div className='flex-1'>
-                        <h3 className='text-sm font-semibold text-gray-900 mb-1'>
-                          Template:{' '}
-                          {rule.actionTemplates &&
-                          Object.keys(rule.actionTemplates).length > 0
-                            ? `${Object.keys(rule.actionTemplates).length}/${rule.actions.length} Configured`
-                            : 'Configure Templates'}
-                        </h3>
-                        <p className='text-xs text-gray-600'>
-                          Configure template for selected action
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </>
-              )}
             </div>
           </div>
 
@@ -684,38 +551,31 @@ const RuleBuilder: React.FC<RuleBuilderProps> = ({
                     }
                     onClick={handleBack}
                     sx={{
-                      width: '125px',
-                      minWidth: '125px',
+                      width: 'auto',
+                      padding: '10px',
                       fontSize: '12px',
                       fontWeight: 400,
                     }}
                   />
                 )}
 
-                {/* Next Button - Show on trigger, conditions and actions steps */}
-                {currentStep !== 'action-template' &&
-                  !(currentStep === 'actions' && !shouldShowActionTemplate) && (
-                    <TextButton
-                      label={
-                        currentStep === 'trigger'
-                          ? 'Next to Conditions'
-                          : currentStep === 'conditions'
-                            ? 'Next to Actions'
-                            : currentStep === 'actions' &&
-                                shouldShowActionTemplate
-                              ? 'Next to Template'
-                              : 'Next'
-                      }
-                      onClick={handleNext}
-                      disabled={isButtonDisabled}
-                      sx={{
-                        width: '135px',
-                        minWidth: '135px',
-                        fontSize: '12px',
-                        fontWeight: 400,
-                      }}
-                    />
-                  )}
+                {/* Next Button - Show on trigger and conditions steps */}
+                {currentStep !== 'actions' && (
+                  <TextButton
+                    label={
+                      currentStep === 'trigger'
+                        ? 'Next to Conditions'
+                        : 'Next to Actions'
+                    }
+                    onClick={handleNext}
+                    disabled={isButtonDisabled}
+                    sx={{
+                      width: 'auto',
+                      padding: '10px',
+                      fontWeight: 400,
+                    }}
+                  />
+                )}
               </div>
             </div>
           </div>
