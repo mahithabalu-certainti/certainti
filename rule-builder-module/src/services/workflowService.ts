@@ -1073,6 +1073,13 @@ export class WorkFlowService {
                         templateDetails[0].subject = templateDetails[0].subject.replace('{{caseName}}', caseNameValue);
                     }
                 }
+                if (messageTemplate.includes('{{taskName}}')) {
+                    const taskNameValue  = taskContext.taskName ? taskContext.taskName : '';
+                    messageTemplate = messageTemplate.replace('{{taskName}}', taskNameValue);
+                    if (templateDetails[0].subject != null) {
+                        templateDetails[0].subject = templateDetails[0].subject.replace('{{taskName}}', taskNameValue);
+                    }
+                }
                   if (messageTemplate.includes('{{status}}')) {
                     const statusValue     = taskContext.status ? taskContext.status : '';
                     messageTemplate = messageTemplate.replace('{{status}}', statusValue);
