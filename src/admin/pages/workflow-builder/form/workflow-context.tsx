@@ -13,17 +13,15 @@ import {
   Action,
   ConditionType,
   ConditionTypeEnum,
-  ActionTypeEnum,
   LogicalOperator,
 } from './helper';
-import { CreateRulePayload } from '../../../types';
 
 interface WorkflowContextValue {
   // Rule state
   rule: Rule;
 
   // Step management
-  currentStep: 'trigger' | 'conditions' | 'actions' | 'action-template';
+  currentStep: 'trigger' | 'conditions' | 'actions';
 
   // Trigger actions
   selectTrigger: (trigger: Trigger) => void;
@@ -45,20 +43,13 @@ interface WorkflowContextValue {
 
   // Rule metadata
   updateRuleName: (name: string) => void;
-  updateActionTemplate: (
-    actionName: string,
-    templateData: CreateRulePayload
-  ) => void;
 
   // Navigation
-  goToStep: (
-    step: 'trigger' | 'conditions' | 'actions' | 'action-template'
-  ) => void;
+  goToStep: (step: 'trigger' | 'conditions' | 'actions') => void;
 
   // Validation
   canProceedToConditions: boolean;
   canProceedToActions: boolean;
-  canProceedToActionTemplate: boolean;
   validatedConditionIds: Set<string>; // Track which conditions have been validated
   duplicateConditionIds: Set<string>; // Track which conditions are duplicates
   validatedFieldErrors: Map<
@@ -105,7 +96,7 @@ export const WorkflowProvider: React.FC<WorkflowProviderProps> = ({
   );
 
   const [currentStep, setCurrentStep] = useState<
-    'trigger' | 'conditions' | 'actions' | 'action-template'
+    'trigger' | 'conditions' | 'actions'
   >('trigger');
   const [validatedConditionIds, setValidatedConditionIds] = useState<
     Set<string>
@@ -366,30 +357,12 @@ export const WorkflowProvider: React.FC<WorkflowProviderProps> = ({
 
   const deleteAction = useCallback((actionId: string) => {
     setRule((prev) => {
-      // Find the action being deleted
-      const deletedAction = prev.actions.find((a) => a.id === actionId);
-
       // Remove the action from actions array
       const newActions = prev.actions.filter((a) => a.id !== actionId);
-
-      // Remove the action's template from actionTemplates if it exists
-      // Use action name as key (Email/InApp) instead of action ID
-      const newActionTemplates = { ...prev.actionTemplates };
-      if (
-        deletedAction &&
-        newActionTemplates &&
-        newActionTemplates[deletedAction.name]
-      ) {
-        delete newActionTemplates[deletedAction.name];
-      }
 
       return {
         ...prev,
         actions: newActions,
-        actionTemplates:
-          Object.keys(newActionTemplates).length > 0
-            ? newActionTemplates
-            : undefined,
       };
     });
   }, []);
@@ -436,22 +409,11 @@ export const WorkflowProvider: React.FC<WorkflowProviderProps> = ({
     [showRuleNameError]
   );
 
-  const updateActionTemplate = useCallback(
-    (actionName: string, templateData: any) => {
-      setRule((prev) => ({
-        ...prev,
-        actionTemplates: {
-          ...prev.actionTemplates,
-          [actionName]: templateData, // Use action name as key (Email/InApp)
-        },
-      }));
-    },
-    []
-  );
+
 
   // Navigation
   const goToStep = useCallback(
-    (step: 'trigger' | 'conditions' | 'actions' | 'action-template') => {
+    (step: 'trigger' | 'conditions' | 'actions') => {
       setCurrentStep(step);
     },
     []
@@ -483,12 +445,7 @@ export const WorkflowProvider: React.FC<WorkflowProviderProps> = ({
     (rule.conditionType && rule.conditions.length === 0)
   );
 
-  // Only show action template step if there are Email or InApp actions
-  const canProceedToActionTemplate = rule.actions.some(
-    (action) =>
-      action.name === ActionTypeEnum.InApp ||
-      action.name === ActionTypeEnum.Email
-  );
+
 
   // Validate and save function
   const validateAndSave = useCallback(() => {
@@ -610,11 +567,9 @@ export const WorkflowProvider: React.FC<WorkflowProviderProps> = ({
     addAction,
     deleteAction,
     updateRuleName,
-    updateActionTemplate,
     goToStep,
     canProceedToConditions,
     canProceedToActions,
-    canProceedToActionTemplate,
     validatedConditionIds,
     duplicateConditionIds,
     validatedFieldErrors,

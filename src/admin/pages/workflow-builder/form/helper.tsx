@@ -97,11 +97,6 @@ export interface ConditionType {
   condition_type: string; // 'if' or 'then' or other types
   description?: string;
 }
-export interface Template {
-  rid: string;
-  channel: string;
-  // Add other template properties as needed
-}
 export interface Rule {
   id: string;
   name: string;
@@ -111,8 +106,6 @@ export interface Rule {
   actions: Action[];
   isActive: boolean;
   conditionType?: ConditionType | null;
-  // Map of actionId -> template value
-  actionTemplates?: Record<string, Template | undefined>;
 }
 
 export const transformRuleToPayload = (rule: Rule) => {
@@ -137,29 +130,7 @@ export const transformRuleToPayload = (rule: Rule) => {
           };
         });
 
-  // Extract template RIDs dynamically - only include if they exist
-  let inAppTemplateRid: string | undefined;
-  let emailTemplateRid: string | undefined;
-
-  if (rule.actionTemplates) {
-    // Find In-App template
-    const inAppTemplate = Object.values(rule.actionTemplates).find(
-      (template) =>
-        template &&
-        (template.channel === 'In App' || template.channel === 'in_app')
-    );
-    inAppTemplateRid = inAppTemplate?.rid;
-
-    // Find Email template
-    const emailTemplate = Object.values(rule.actionTemplates).find(
-      (template) =>
-        template &&
-        (template.channel === 'Email' || template.channel === 'email')
-    );
-    emailTemplateRid = emailTemplate?.rid;
-  }
-
-  // Build payload with conditional inclusion of template RIDs
+  // Build payload
   const payload: CreateRulePayload = {
     rule_name: rule.name,
     description: '',
@@ -170,16 +141,6 @@ export const transformRuleToPayload = (rule: Rule) => {
     condition_categories,
     action_rid: rule.actions.map((action) => action.id),
   };
-
-  // Only add in_app_template_rid if it exists
-  if (inAppTemplateRid) {
-    payload.in_app_template_rid = inAppTemplateRid;
-  }
-
-  // Only add email_template_rid if it exists
-  if (emailTemplateRid) {
-    payload.email_template_rid = emailTemplateRid;
-  }
 
   return payload;
 };
@@ -247,38 +208,6 @@ export const transformApiResponseToRule = (data: RuleDetails): Rule => {
       }))
     : [];
 
-  // Map action templates if they exist in the rule
-  const actionTemplates: Record<string, Template | undefined> = {};
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const ruleData = data.rule as any;
-
-  if (ruleData.in_app_template_rid) {
-    const inAppAction = actions.find(
-      (a) => a.name === ActionTypeEnum.InApp || a.name === 'In App'
-    );
-    if (inAppAction) {
-      actionTemplates[inAppAction.name] = {
-        // Use action.name as key
-        rid: ruleData.in_app_template_rid,
-        channel: 'In App',
-      };
-    }
-  }
-
-  if (ruleData.email_template_rid) {
-    const emailAction = actions.find(
-      (a) => a.name === ActionTypeEnum.Email || a.name === 'Email'
-    );
-    if (emailAction) {
-      actionTemplates[emailAction.name] = {
-        // Use action.name as key
-        rid: ruleData.email_template_rid,
-        channel: 'Email',
-      };
-    }
-  }
-
   // Construct the Rule object with all RIDs preserved
   const rule: Rule = {
     id: data.rule.rid, // Rule RID preserved
@@ -289,8 +218,6 @@ export const transformApiResponseToRule = (data: RuleDetails): Rule => {
     actions,
     isActive: data.rule.is_active || false,
     conditionType,
-    actionTemplates:
-      Object.keys(actionTemplates).length > 0 ? actionTemplates : undefined,
   };
 
   return rule;
