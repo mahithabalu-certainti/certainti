@@ -3,9 +3,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import TabPanel from '../../../account-details-sidebar/components/tab';
 import {
   AcceptIcon,
-  CreateResourceIcon,
+  ProjectTaskIcon,
   RejectIcon,
-  ResourcesIcon,
 } from '../../../../../assets';
 import { useSelector } from 'react-redux';
 import {
@@ -40,6 +39,7 @@ import { RootState } from '../../../../../store/store';
 import ProjectTaskDetails from './project-task-details';
 import {
   ActivityDropdownItem,
+  colorCode,
   ExportType,
   FilterType,
   FormFiscalDateType,
@@ -792,20 +792,17 @@ export const ProjectTask = ({
           <SectionHeader
             title={viewDetails ? 'Project Task' : 'Project Tasks'}
             titleIcon={
-              viewDetails ? (
-                <ResourcesIcon
+                <ProjectTaskIcon
                   alt='resource header icon'
-                  className='[&>path]:stroke-white w-[14px] h-[14px]'
+                  className={`[&>path]:stroke-[${colorCode.AccountTextColor}] w-[14px] h-[14px]`}
                 />
-              ) : (
-                <CreateResourceIcon />
-              )
             }
             count={totalItems}
             showItemCount={!viewDetails}
             buttons={headerButtons}
             subValue={resourceData?.r_number}
-            iconBg={viewDetails ? '#7785ff' : ''}
+            iconBg={colorCode.projectBgColor}
+            bgType='circle'
           />
           <div className='border border-[#CBD6E2]'>
             {showProjectTaskDetails ? (

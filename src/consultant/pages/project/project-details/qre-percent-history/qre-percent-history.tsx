@@ -12,7 +12,8 @@ import {
 import { getQrePercentHistoryFilterFields } from './helpers';
 import { SectionTabPanel } from '../../../../../components';
 import ResourceTableHeader from '../../../account-details-sidebar/sidebar-pages/resources/resource-table-header';
-import { ActivitiesIcon } from '../../../../../assets';
+import {
+   HistorySubmissionIcon } from '../../../../../assets';
 import {
   ListTable,
   ManageColumnsPopover,
@@ -21,7 +22,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
 import { checkPermission } from '../../../../../common-utils';
 import { AccessRestricted } from '../../../../../components/account-restricted';
-import { ActivityDropdownItem } from '../../../../types';
+import { ActivityDropdownItem, colorCode } from '../../../../types';
 
 const AttachmentTabs: ResourceTabs[] = [
   {
@@ -242,13 +243,13 @@ const QrePercentHistory = ({
         title='RD Assessment History'
         count={totalItems}
         titleIcon={
-          <ActivitiesIcon
+          <HistorySubmissionIcon
             alt='financial-header-icon'
-            className='w-7 h-7 p-1.5 rounded-full bg-[#DFE8FF] [&>path]:stroke-[#1755E7]'
+            className={`[&>path]:stroke-[${colorCode.AccountTextColor}] w-[14px] h-[14px]`}
           />
         }
         headerButtons={headerButtons}
-        iconBg='#D8E9FF'
+        iconBg={colorCode.projectBgColor}
         bgType='circle'
       />
       <div className='border border-[#CBD6E2]'>

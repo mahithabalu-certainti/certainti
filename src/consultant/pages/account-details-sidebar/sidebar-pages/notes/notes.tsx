@@ -28,6 +28,7 @@ import {
 } from '../../../../../components/table/types';
 import {
   ActivityDropdownItem,
+  colorCode,
   ExportType,
   NotesList,
   NotesListExportParams,
@@ -466,13 +467,13 @@ const Notes: React.FC<NotesProps> = ({
             showItemCount={true}
             titleIcon={
               <NotesSideIcon
-                className='[&>path]:stroke-white'
+              className={`[&>path]:stroke-[${colorCode.AccountTextColor}] w-[14px] h-[14px]`}
                 alt='Notes-header-icon'
               />
             }
             buttons={headerButtons}
-            iconBg='#7F81F4'
-            bgType='circle'
+              iconBg={colorCode.AccountBgColor}
+              bgType='circle'
           />
           <div className='border border-[#CBD6E2]'>
             <ManageColumnsPopover

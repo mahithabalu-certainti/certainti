@@ -19,8 +19,8 @@ import {
   Checkbox,
 } from '@mui/material';
 import {
-  ActionItemsIcon,
   CalendarIcon,
+  CaseTeamIcon,
   CloseIcon,
   ErrorInfoIcon,
   KeyContactAddIcon,
@@ -59,7 +59,7 @@ import {
 import { TableSkeleton } from '../../../../../components/table';
 import { RootState } from '../../../../../store/store';
 import { useSelector } from 'react-redux';
-import { ActivityDropdownItem } from '../../../../types';
+import { ActivityDropdownItem, colorCode } from '../../../../types';
 import { useQueryClient } from '@tanstack/react-query';
 
 const ConfigTabs: ResourceTabs[] = [
@@ -721,7 +721,7 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
   ];
 
   const getTitleIcon = () => {
-    return <ActionItemsIcon alt='action-items-icon' />;
+    return <CaseTeamIcon alt='action-items-icon'    className={`[&>path]:stroke-[${colorCode.AccountTextColor}] w-[14px] h-[14px]`}/>;
   };
 
   const isAddButtonEnabled = caseTeamCreatePermission
@@ -800,6 +800,8 @@ const CaseTeam: React.FC<CaseTeamProps> = ({
         }
         showItemCount={true}
         hideSection={false}
+        iconBg={colorCode.caseBgColor}
+        bgType='circle'
       />
 
       <div className='flex flex-col gap-0 border border-[#CBD6E2] pt-5'>

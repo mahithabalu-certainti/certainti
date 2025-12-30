@@ -1,10 +1,10 @@
 import {
   AccountsIcon,
-  AttachmentIcon,
+  AttachmentsAdminIcon,
   CaseIcon,
   DashboardIcon,
   HelpIcon,
-  NotesIcon,
+  NotesAdminSideIcon,
   ProjectsIcon,
   SettingsIcon,
   TaskTemplateIcon,
@@ -80,7 +80,7 @@ export const accountNavItems: INavItem[] = [
   // },
   {
     id: MenuOption.NOTES,
-    icon: NotesIcon,
+    icon: NotesAdminSideIcon,
     name: 'Notes',
     link: NOTES,
     type: 'link',
@@ -89,7 +89,7 @@ export const accountNavItems: INavItem[] = [
   },
   {
     id: MenuOption.ATTACHMENTS,
-    icon: AttachmentIcon,
+    icon: AttachmentsAdminIcon,
     name: 'Attachments',
     link: ATTACHMENTS,
     type: 'link',

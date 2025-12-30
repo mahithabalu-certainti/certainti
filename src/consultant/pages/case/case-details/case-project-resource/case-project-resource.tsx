@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
 import { AllPermissions } from '../../../../../common-service';
-import { ActivityDropdownItem, ExportType } from '../../../../types';
+import { ActivityDropdownItem, colorCode, ExportType } from '../../../../types';
 import { FilterType } from '../../../../../admin/types';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
@@ -12,7 +12,7 @@ import {
 } from '../../../../services/case-project-resource/case-project-resource-service';
 import { BUTTON_STYLES } from '../../../../../admin/pages/manage-user-detail/styles';
 import { ShowHideTableColumn } from '../../../../../components/table/types';
-import { ProjectsIcon } from '../../../../../assets';
+import {  ResourcesIcon } from '../../../../../assets';
 import {
   ListTable,
   ManageColumnsPopover,
@@ -323,9 +323,9 @@ const CaseProjectResource: React.FC<ProjectResourceProps> = ({
               : 'Case Project Resource'
           }
           titleIcon={
-            <ProjectsIcon
+            <ResourcesIcon
               alt='attachment-header-icon'
-              className='[&>path]:stroke-[#4B9BFF]'
+              className={`[&>path]:stroke-[${colorCode.AccountTextColor}] w-[14px] h-[14px]`}
             />
           }
           count={totalItems}
@@ -334,6 +334,8 @@ const CaseProjectResource: React.FC<ProjectResourceProps> = ({
             ...btn,
             hide: Boolean(btn.hide),
           }))}
+          iconBg={colorCode.caseBgColor}
+            bgType='circle'
         />
         {resourceId ? (
           <CaseProjectResourceDetails

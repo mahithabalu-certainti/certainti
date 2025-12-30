@@ -12,7 +12,7 @@ import {
 import {
   DetailsKeyContactErrorIcon,
   EditIcon,
-  InteractionDetailIcon,
+  InteractionsIcon,
 } from '../../../../../assets';
 import SectionHeader from '../../../../../components/details-section/section-header';
 import { SectionTabPanel } from '../../../../../components';
@@ -22,6 +22,7 @@ import {
 } from '../../../../../components/table';
 import {
   ActivityDropdownItem,
+  colorCode,
   InteractionList,
   StatusTypeEnum,
 } from '../../../../types';
@@ -790,14 +791,16 @@ const Interactions: React.FC<InteractionsProps> = ({
                   : 'Interactions'
               }
               titleIcon={
-                <InteractionDetailIcon
+                <InteractionsIcon
                   alt='financial-header-icon'
-                  className={`w-7 h-7 p-1 bg-[#E25A32] ${viewResponseHistory ? 'rounded-[2px]' : 'rounded-full'}`}
+                  className={`[&>path]:stroke-[${colorCode.AccountTextColor}] w-[14px] h-[14px]`}
                 />
               }
               count={viewResponseHistory ? count : totalItems}
               showItemCount={interactionResponseId ? false : true}
               buttons={headerButtons}
+              iconBg={colorCode.projectBgColor}
+              bgType='circle'
             />
             <div className='border border-[#CBD6E2]'>
               {!viewResponseHistory ? (

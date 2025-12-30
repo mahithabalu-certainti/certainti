@@ -3,8 +3,8 @@ import React, { Suspense, useMemo, useState } from 'react';
 import {
   AccountSettingsIcon,
   ActionIcon,
+  AttachmentsSideIcon,
   NewFilterIcon,
-  ProjectDetailsIcon,
   RefreshIcon,
 } from '../../../../assets';
 import { ActionsDropdown } from '../../../../components';
@@ -22,7 +22,7 @@ import {
   getFiscalYears,
   reshapeGlobalFilter,
 } from '../../../../common-utils';
-import { FilterState, SelectOption } from '../../../types';
+import { colorCode, FilterState, SelectOption } from '../../../types';
 import { getAttachmentsFilterFields } from '../../../../components/Attachments/helpers';
 import { exportAttachmentsData } from '../../../services/attachments/attachments-service';
 import { useSelector } from 'react-redux';
@@ -213,9 +213,9 @@ export const Attachments: React.FC = () => {
       <div className='flex items-center justify-between w-full h-[55px] min-h-[55px] max-h-[55px] border-b border-[#CBD6E2] px-4'>
         <div className='flex h-[33px]'>
           <div className='flex items-center justify-center'>
-            <ProjectDetailsIcon
+            <AttachmentsSideIcon
               alt='menu-icon'
-              className='h-7 w-7 bg-[#d16dd3] p-[7px] rounded'
+              className={`h-7 w-7 p-[5px] rounded [&>path]:stroke-[${colorCode.projectTextColor}] bg-[${colorCode.attachmentBgColor}]`}
             />
             <div className='flex flex-col mx-2.5 pb-1'>
               <div className='font-bold text-[16px] text-[#2D3E4F]'>

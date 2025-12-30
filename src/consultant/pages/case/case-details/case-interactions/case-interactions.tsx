@@ -17,6 +17,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityDropdownItem,
   CaseDetails,
+  colorCode,
   ExportType,
   InteractionList,
   InteractionListExportParams,
@@ -42,7 +43,7 @@ import {
 import {
   DetailsKeyContactErrorIcon,
   EditIcon,
-  InteractionDetailIcon,
+  InteractionsIcon,
 } from '../../../../../assets';
 import { getProjectInteractionListModelColumns } from './modelColumns';
 import { getCaseInteractionListColumns } from './columns';
@@ -782,14 +783,16 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
                   : 'Interactions'
               }
               titleIcon={
-                <InteractionDetailIcon
+                <InteractionsIcon
                   alt='financial-header-icon'
-                  className={`w-7 h-7 p-1 bg-[#E25A32] ${viewResponseHistory ? 'rounded-[2px]' : 'rounded-full'}`}
+                  className={`[&>path]:stroke-[${colorCode.AccountTextColor}] w-[14px] h-[14px]`}
                 />
               }
               count={viewResponseHistory ? count : totalItems}
               showItemCount={interactionResponseId ? false : true}
               buttons={headerButtons}
+              iconBg={colorCode.caseBgColor}
+            bgType='circle'
             />
             <div className='border border-[#CBD6E2]'>
               {!viewResponseHistory ? (

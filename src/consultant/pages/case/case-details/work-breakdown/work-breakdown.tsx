@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
-import { CaseIcon } from '../../../../../assets';
+import { WorkBreakdownIcon } from '../../../../../assets';
 import { SectionHeaderTab, SectionTabPanel } from '../../../../../components';
 import SectionHeader from '../../../../../components/details-section/section-header';
 import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
@@ -39,7 +39,7 @@ import {
 } from './helper';
 import { CaseTask } from './case-task';
 import { getAssignGroupsFilterFields } from './case-task/helper';
-import { ActivityDropdownItem, ExportType } from '../../../../types';
+import { ActivityDropdownItem, colorCode, ExportType } from '../../../../types';
 import { useToast } from '../../../../../hooks';
 import { TaskCard } from '../../../../../components/kanban-board/types';
 import { useGetTaskCheckListTypes } from '../../../../../admin/service/task-template/task-template-service';
@@ -680,9 +680,9 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
 
   const getTitleIcon = () => {
     return (
-      <CaseIcon
+      <WorkBreakdownIcon
         alt='case-icon'
-        className={`w-6 h-6 p-[5px] [&>path]:stroke-[#4ce547] bg-[#D2FFE3] !rounded-lg`}
+        className={`[&>path]:stroke-[${colorCode.AccountTextColor}] w-[14px] h-[14px]`}
       />
     );
   };
@@ -835,6 +835,8 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
             count={count}
             showItemCount={tabParam === 'case_task'}
             hideSection={false}
+            iconBg={colorCode.caseBgColor}
+            bgType='circle'
           />
         </>
       )}

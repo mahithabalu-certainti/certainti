@@ -6,7 +6,7 @@ import {
 } from '../../../../components/filter-component/utils';
 import { FilterState } from '../../../../consultant/types/account-filter';
 import {
-  InteractionDetailIcon,
+  InteractionTemplateIcon,
   NewFilterIcon,
   RefreshIcon,
 } from '../../../../assets';
@@ -29,6 +29,7 @@ import { RootState } from '../../../../store/store';
 import { checkPermission } from '../../../../common-utils';
 import { AccessRestricted } from '../../../../components/account-restricted';
 import { ExportInteractionAllTemplateList } from '../../../service/interaction-template/template-service';
+import { colorCode } from '../../../../consultant/types';
 
 const InteractionTemplates: React.FC = () => {
   const navigate = useNavigate();
@@ -200,9 +201,9 @@ const InteractionTemplates: React.FC = () => {
       <div className='flex items-center justify-between w-full h-[55px] min-h-[50px] border-b border-[#CBD6E2] px-4'>
         <div className='flex h-[33px]'>
           <div className='flex items-center justify-center'>
-            <InteractionDetailIcon
+            <InteractionTemplateIcon
               alt='interaction-template-icon'
-              className='h-7 w-7 p-[3px] rounded [&>path]:fill-[#fff] [&>path]:stroke-[#F16137] bg-[#F16137]'
+              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${colorCode.manageAccountTextColor}] bg-[${colorCode.manageTemplateBgcolor}]`}
             />
             <div className='flex flex-col mx-2.5 pb-1'>
               <div className='font-semibold text-[#7D98B6] text-[12px] pt-1'>

@@ -16,11 +16,9 @@ import {
   // ActivitiesIcon,
   AttachmentsSideIcon,
   ChecklistIcon,
-  DetailsIcon,
   FinancialIcon,
   InteractionsIcon,
   NotesSideIcon,
-  ProjectDetailsIcon,
   ProjectsSideIcon,
   ResourcesIcon,
   SettingIcon,
@@ -31,6 +29,9 @@ import {
   DraftEmailIcon,
   MeetingIcon,
   CallLogIcon,
+  HistorySubmissionIcon,
+  ProjectTaskIcon,
+  ManageGroupAccount,
 } from '../../../../assets';
 import { useProjectDetail, ProjectTriggerAI } from '../../../services/project';
 import {
@@ -48,6 +49,7 @@ import {
   ActivityListExportURLParams,
   ActivityType,
   ChecklistListExportParams,
+  colorCode,
   ExportType,
   FiscalDates,
   FormFiscalDateType,
@@ -882,7 +884,7 @@ export const ProjectDetails = () => {
         key: 'projectDetails',
         id: AllModules.PROJECTS,
         disabled: false,
-        icon: DetailsIcon,
+        icon: ProjectsSideIcon,
       },
       {
         name: 'Project Resources',
@@ -896,7 +898,7 @@ export const ProjectDetails = () => {
         key: 'projectsTask',
         id: AllModules.PROJECT_TASK,
         disabled: false,
-        icon: ProjectsSideIcon,
+        icon: ProjectTaskIcon,
       },
       {
         name: 'Interactions',
@@ -924,7 +926,7 @@ export const ProjectDetails = () => {
         key: 'rd-assessment-history',
         id: AllModules.ACTIVITIES,
         disabled: false,
-        icon: ActivitiesIcon,
+        icon: HistorySubmissionIcon,
       },
       {
         name: 'Notes',
@@ -959,7 +961,7 @@ export const ProjectDetails = () => {
             key: 'users',
             id: AllMenus.MANAGE_ACCOUNT_ACCESS,
             disabled: false,
-            icon: ResourcesIcon,
+            icon: ManageGroupAccount,
           },
           {
             name: 'Settings',
@@ -994,10 +996,10 @@ export const ProjectDetails = () => {
           variant='sub'
           placeholder='Project Code'
           icon={
-            <ProjectDetailsIcon
-              className='h-6 w-6 rounded p-[4px]'
-              style={{ backgroundColor: '#AF78FF' }}
-            />
+            <ProjectsSideIcon
+            alt='menu-icon'
+            className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${colorCode.projectTextColor}] bg-[${colorCode.projectBgColor}]`}
+          />
           }
           title={data?.data?.project?.project_code}
           totalRecords={5}
@@ -1018,10 +1020,10 @@ export const ProjectDetails = () => {
           primaryButton={
             isProjectFieldsEditable && !detailPageView
               ? {
-                  label: 'Edit',
-                  onClick: handleEditAccount,
-                  disabled: accountInActive,
-                }
+                label: 'Edit',
+                onClick: handleEditAccount,
+                disabled: accountInActive,
+              }
               : undefined
           }
           onActionsClick={handleActionsClick}
@@ -1040,11 +1042,10 @@ export const ProjectDetails = () => {
       />
       <div className='flex flex-row flex-1 w-full border-b border-[#CBD6E2]'>
         <div
-          className={`flex transition-all duration-300 ease-in-out ${
-            isCollapsed
-              ? 'w-[60px] min-w-[60px] max-w-[60px]'
-              : 'w-[220px] min-w-[220px] max-w-[220px]'
-          }`}
+          className={`flex transition-all duration-300 ease-in-out ${isCollapsed
+            ? 'w-[60px] min-w-[60px] max-w-[60px]'
+            : 'w-[220px] min-w-[220px] max-w-[220px]'
+            }`}
         >
           <SideMenuPanel
             menuItems={sideMenuItems}

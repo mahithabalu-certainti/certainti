@@ -20,6 +20,7 @@ import { useGetResourceType } from '../../../../services/resource-list';
 import { clearFilters } from '../../components/filter/utils';
 import {
   ActivityDropdownItem,
+  colorCode,
   ExportType,
   ProjectFinancialProjectExportParams,
   ProjectFinancialResourceExportParams,
@@ -262,7 +263,7 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
         titleIcon={
           <FinancialIcon
             alt='financial-header-icon'
-            className='[&>path]:stroke-[#f16840]'
+            className={`[&>path]:stroke-[${colorCode.AccountTextColor}] w-[14px] h-[14px]`}
           />
         }
         buttons={headerButtons}
@@ -270,7 +271,7 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
         showItemCount={
           tabParam === 'project_cost' || tabParam === 'resource_cost'
         }
-        iconBg='#ffeae5'
+         iconBg={colorCode.AccountBgColor}
         bgType='circle'
       />
       <SectionHeaderTab

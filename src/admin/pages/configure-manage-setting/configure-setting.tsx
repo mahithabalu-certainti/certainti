@@ -1,5 +1,5 @@
 import { Box } from '@mui/material';
-import { ManageConfigSettingIcon } from '../../../assets';
+import { ManageSettingsIcon } from '../../../assets';
 import { FormBuilder } from '../../../components';
 import { ConfigureSettingsFormFields } from './helper';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -14,6 +14,7 @@ import SkeletonForm from '../../../components/form-builder/skeleton-form';
 import { useToast } from '../../../hooks';
 import TextButton from '../../../components/button/text-button';
 import { BUTTON_STYLES } from '../manage-user-detail/styles';
+import { colorCode } from '../../../consultant/types';
 
 type FormValueType = string | number | boolean | object | string[] | null;
 interface UpdateSettingsSuccess {
@@ -121,9 +122,9 @@ const ConfigureSetting = () => {
         <div className='flex items-center justify-between w-full h-[55px] min-h-[50px] border-b border-[#CBD6E2] px-10'>
           <div className='flex h-[33px]'>
             <div className='flex items-center justify-center'>
-              <ManageConfigSettingIcon
+              <ManageSettingsIcon
                 alt='manage user group'
-                className='h-7 w-7 rounded-[2px] bg-[#495E74] p-[5px]'
+                className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${colorCode.manageAccountTextColor}] bg-[${colorCode.manageTemplateBgcolor}]`}
               />
               <div className='flex flex-col mx-2.5 pb-1'>
                 <div className='font-semibold text-[#7D98B6] text-[12px] pt-1'>

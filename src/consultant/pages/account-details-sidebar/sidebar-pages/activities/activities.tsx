@@ -21,6 +21,7 @@ import {
   ActivityListExportURLParams,
   ActivityModuleType,
   ActivityType,
+  colorCode,
   ExportType,
 } from '../../../../types';
 import {
@@ -507,13 +508,13 @@ const Activities: React.FC<ActivitiesProps> = ({
           titleIcon={
             <ActivitiesIcon
               alt='activity-header-icon'
-              className='[&>path]:stroke-[#FF5F5F]'
+              className={`[&>path]:stroke-[${colorCode.AccountTextColor}] w-[14px] h-[14px]`}
             />
           }
           count={count}
           showItemCount={!viewDetails}
-          iconBg='#FFE9E9'
-          bgType='circle'
+       iconBg={colorCode.AccountBgColor}
+        bgType='circle'
           buttons={headerButtons}
         />
 

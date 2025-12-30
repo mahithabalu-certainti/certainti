@@ -21,6 +21,7 @@ import {
 import { SectionTabPanel } from '../../../../../components';
 import {
   ActivityDropdownItem,
+  colorCode,
   ExportType,
   SelectOption,
 } from '../../../../types';
@@ -487,10 +488,10 @@ const Attachments: React.FC<AttachmentsProps> = ({
             titleIcon={
               <AttachmentsSideIcon
                 alt='attachment-header-icon'
-                className='[&>path]:stroke-[#4B9BFF]'
+                className={`[&>path]:stroke-[${colorCode.AccountTextColor}] w-[14px] h-[14px]`}
               />
             }
-            iconBg='#D8E9FF'
+           iconBg={colorCode.projectBgColor}
             bgType='circle'
             headerButtons={headerButtons}
           />

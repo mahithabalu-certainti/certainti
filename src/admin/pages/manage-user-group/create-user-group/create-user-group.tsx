@@ -9,7 +9,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowDownDisabledIcon,
   ArrowDownIcon,
-  ManageUserIcon,
+  ManageGroupIcon,
   NewFilterIcon,
 } from '../../../../assets/icons';
 import TextButton from '../../../../components/button/text-button';
@@ -32,7 +32,7 @@ import {
   UserGroupDetailsCommon,
 } from '../../../types';
 import { getAvailableUserColumns, getProjectColumns } from '../table';
-import { AccountList, SelectOption, YesNo } from '../../../../consultant/types';
+import { AccountList, colorCode, SelectOption, YesNo } from '../../../../consultant/types';
 import {
   useCreateUserGroup,
   useGetUserGroupDetails,
@@ -659,10 +659,10 @@ export const CreateUserGroup: React.FC = () => {
       {/* Header Section */}
       <div className='h-[50px] border-box flex items-center justify-between px-10 border-b-2 border-gray-200 sticky top-0 z-10 bg-white'>
         <div className='flex items-center gap-2 w-[80%] max-w-[80%]'>
-          <ManageUserIcon
-            alt='manage user group'
-            className='h-6 w-6 rounded [&>path:first-child]:fill-[#BE3EB5]'
-          />
+        <ManageGroupIcon
+              alt='manage user group'
+              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${colorCode.manageAccountTextColor}] bg-[${colorCode.manageAccountBgcolor}]`}
+            />
           <div className='w-[90%]'>
             <div className={HEADER_STYLES.adminPermission}>
               {isEditView

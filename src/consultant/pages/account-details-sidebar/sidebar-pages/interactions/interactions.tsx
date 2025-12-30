@@ -18,6 +18,7 @@ import {
 } from 'react-router-dom';
 import {
   ActivityDropdownItem,
+  colorCode,
   ExportType,
   InteractionList,
   StatusTypeEnum,
@@ -38,7 +39,7 @@ import {
 import {
   DetailsKeyContactErrorIcon,
   EditIcon,
-  InteractionDetailIcon,
+  InteractionsIcon,
 } from '../../../../../assets';
 import { getInteractionListColumns } from './columns';
 import {
@@ -752,9 +753,9 @@ const Interactions: React.FC<InteractionsProps> = ({
                   : 'Interaction'
               }
               titleIcon={
-                <InteractionDetailIcon
-                  alt='financial-header-icon'
-                  className={`w-7 h-7 p-1 bg-[#E25A32] ${viewResponseHistory ? 'rounded-[2px]' : 'rounded-full'}`}
+                <InteractionsIcon
+                  alt='interaction-icon'
+                  className={`[&>path]:stroke-[${colorCode.AccountTextColor}] w-[14px] h-[14px]`}
                 />
               }
               count={viewResponseHistory ? count : totalItems}
@@ -762,6 +763,8 @@ const Interactions: React.FC<InteractionsProps> = ({
               showBackArrow={viewResponseHistory}
               onBackClick={handleBackFromResponse}
               buttons={headerButtons}
+              iconBg={colorCode.AccountBgColor}
+              bgType='circle'
             />
             <div className='border border-[#CBD6E2]'>
               {viewResponseHistory ? (

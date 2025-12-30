@@ -1,5 +1,5 @@
 import { useSearchParams } from 'react-router-dom';
-import { ComingSoon, DetailsIcon, ResourcesIcon } from '../../../../../assets';
+import {  ComingSoon, ManageGroupIcon, SettingIcon } from '../../../../../assets';
 import { Settings } from './settings';
 import { SectionTabPanel } from '../../../../../components';
 import { useRef, useState } from 'react';
@@ -15,7 +15,7 @@ import { clearFilters } from '../../../account-details-sidebar/components/filter
 import { checkPermission } from '../../../../../common-utils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
-import { ActivityDropdownItem } from '../../../../types';
+import { ActivityDropdownItem, colorCode } from '../../../../types';
 
 const ConfigTabs: ResourceTabs[] = [
   {
@@ -132,16 +132,16 @@ const Configuration: React.FC<ConfigurationProps> = ({ activityMenuItems }) => {
     switch (list) {
       case 'users':
         return (
-          <ResourcesIcon
+          <ManageGroupIcon
             alt='resource header icon'
-            className='[&>path]:stroke-white w-[14px] h-[14px]'
+            className={`[&>path]:stroke-[${colorCode.AccountTextColor}] w-[14px] h-[14px]`}
           />
         );
       case 'settings':
         return (
-          <DetailsIcon
+          <SettingIcon
             alt='settings-header-icon'
-            className='[&>path]:stroke-[#294F98] w-[14px] h-[14px]'
+            className={`[&>path]:stroke-[${colorCode.AccountTextColor}] w-[14px] h-[14px]`}
           />
         );
       default:
@@ -218,8 +218,8 @@ const Configuration: React.FC<ConfigurationProps> = ({ activityMenuItems }) => {
         count={count}
         showItemCount={list !== 'settings'}
         hideSection={hideSection}
-        iconBg={list === 'users' ? '#7785ff' : '#D7E5FF'}
-        bgType='circle'
+        iconBg={colorCode.projectBgColor}
+       bgType='circle'
       />
       {renderContent()}
     </div>
