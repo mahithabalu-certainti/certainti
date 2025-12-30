@@ -615,6 +615,7 @@ class CaseSchemaService {
           baseRuleEnginePayload.targetUserID = newValue;
           baseRuleEnginePayload.targetEmail = newName;
           baseRuleEnginePayload.case = "Assigned"
+          baseRuleEnginePayload.status = newName
 
             // await this.helperMethod.triggerDynamicRuleEngine('case_owner_change', baseRuleEnginePayload, {
             //       newValue: newName,
