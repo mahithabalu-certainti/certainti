@@ -25,7 +25,7 @@ export interface IUpdateRule {
     condition_rid: string;
     schedule_offset_type: string | null;
     schedule_offset_value: string | null;
-    modified_by: string
+    modified_by?: string
 }
 
 export interface ICreateCondition {
