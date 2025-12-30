@@ -388,7 +388,6 @@ export class WorkFlowService {
         data?: any;
     }> {
         const mainDb = await this.getMainDb();
-        console.log(ruleRid);
         const ruleDetail = await this.ruleMasterService.getRuleDetailByRuleRid(ruleRid, userId);
         const eventDetail = await mainDb.query<any>(
             rawQueries.fetchEventDetailByEventRid(ruleDetail.data?.toJSON()?.event_rid),
@@ -609,7 +608,6 @@ export class WorkFlowService {
         errorMessage?: string;
         data?: { ruleMap: any };
     }> {
-        console.log("rule map creation");
         const ruleMapResponse = await this.ruleMapService.createRuleMap(
             {
                 rule_rid: ruleRequest.rule_rid,
