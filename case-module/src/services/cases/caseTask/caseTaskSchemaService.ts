@@ -392,11 +392,6 @@ export class CaseTaskSchemaService {
                 }, { transaction });
               }
             }
-            const [caseInfo]: any[] = await this.mainDbSequelize.query(
-              rawQueries.fetchCaseName(data.case_rid),
-              { type: QueryTypes.SELECT }
-            );
-             baseRuleEnginePayload.caseName = caseInfo?.case_name;
             const fetchUpdatedColumns = getColumnsNamesForTaskUpdate(data, isTaskExists as any);
             if (fetchUpdatedColumns.length > 0) {
               let updatedColumnsStorage: string[] = []
