@@ -433,6 +433,11 @@ export const AccFormData = (
               (isEditView &&
                 permissionMap?.['country_rid']?.read &&
                 !permissionMap?.['country_rid']?.edit),
+            labelTooltip: {
+              showTooltip: (isEditView && isCaseExists) || false,
+              tooltipMessage:
+                'The case already exists for this account, so the country should not be changed.',
+            },
           }),
           createSelectField('region_rid', 'Region', {
             options: state,
@@ -448,6 +453,11 @@ export const AccFormData = (
               (isEditView &&
                 permissionMap?.['region_rid']?.read &&
                 !permissionMap?.['region_rid']?.edit),
+            labelTooltip: {
+              showTooltip: (isEditView && isCaseExists) || false,
+              tooltipMessage:
+                'The case already exists for this account, so the region should not be changed.',
+            },
           }),
           createSelectField('currency_rid', 'Currency', {
             options: currency,
@@ -462,6 +472,11 @@ export const AccFormData = (
               (isEditView &&
                 permissionMap?.['currency_rid']?.read &&
                 !permissionMap?.['currency_rid']?.edit),
+            labelTooltip: {
+              showTooltip: (isEditView && isCaseExists) || false,
+              tooltipMessage:
+                'The case already exists for this account, so the currency should not be changed.',
+            },
           }),
         ],
       },
