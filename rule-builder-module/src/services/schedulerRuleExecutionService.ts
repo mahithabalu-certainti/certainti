@@ -118,9 +118,7 @@ export class SchedulerService {
             : mapCaseStatus.get(d.status_rid)?.toLowerCase(),
       }));
 
-      const [ruleCategory] :any[] = await mainDb.query(
-            rawQueries.fetchRuleTypeByName('Scheduler')
-          );
+     
     // Helper to build rule engine payload
     const buildPayload = (
       data: any,
@@ -128,7 +126,6 @@ export class SchedulerService {
       templateName: string,
       entityType: string
     ) => {
-      console.log("Building payload for entity:", JSON.stringify(data));
       if (entityType === "Task") {
         return {
           entity:entityType,
@@ -190,7 +187,6 @@ export class SchedulerService {
     await Promise.all(
       updatedResponse.map(async (data: any) => {
         try {
-          data.category_rid = ruleCategory[0]?.rid;;
           await this.workflowService.execute(
             buildPayload(
               data,
@@ -238,7 +234,6 @@ export class SchedulerService {
     await Promise.all(
       updatedTaskResponse.map(async (data: any) => {
         try {
-          data.category_rid = ruleCategory[0]?.rid;;
           await this.workflowService.execute(
             buildPayload(
               data,
