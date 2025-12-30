@@ -969,35 +969,11 @@ export class HelperMethods {
 
     return results.map((row: any) => row.project_fiscal_rid);
   }
-  async triggerDynamicRuleEngine(eventType: string, payload: any, extra: Record<string, any> = {}, accessToken: string) {
-    let templateName = '';
-    let eventName = '';
-    switch (eventType) {
-      case 'case_owner_change':
-        templateName = ruleTemplateNames.taskCreated;
-        eventName = ruleNames.caseCreated;
-        break;
-      case 'case_status_change':
-        templateName = ruleTemplateNames.statusUpdated;
-        eventName =  ruleNames.caseCreated;
-        break;
-      case 'status_change':
-        templateName = ruleTemplateNames.statusUpdated;
-        eventName =  ruleNames.taskCreated;
-        break;
-      case 'assignee_change':
-        templateName = ruleTemplateNames.assigneeChanged;
-        eventName =  ruleNames.taskCreated;
-        break;
-      default:
-        templateName = eventType;
-        eventName = eventType;
-    }
+  async triggerDynamicRuleEngine(payload: any, extra: Record<string, any> = {}, accessToken: string) {
+    payload.triggerType = 'validation'
     const ruleEnginePayload = {
       ...payload,
-      ...extra,
-      templateName,
-      eventName
+      ...extra
     };
     logMessage(`Triggering rule engine with payload ${JSON.stringify(ruleEnginePayload)}`)
     await this.triggerRuleEngine(ruleEnginePayload, accessToken);

@@ -303,7 +303,7 @@ export const rawQueries = {
   fetchNotificationTemplateDetails(template_rid: string, channel: string,): string {
     let query = `SELECT nt.message_template,nt.channel,nt.subject
     FROM ${MAIN_SCHEMA_NAME}.notification_template nt 
-    WHERE nt.rid = '${template_rid}'
+    WHERE lower(nt.template_name) = lower('${template_rid.toLowerCase()}')
     and nt.channel = '${channel}'
     and status_rid = (select status_rid from ${MAIN_SCHEMA_NAME}.status where status_name = 'Active');`;
     return query;

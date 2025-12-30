@@ -131,11 +131,12 @@ export class SchedulerService {
       console.log("Building payload for entity:", JSON.stringify(data));
       if (entityType === "Task") {
         return {
+          entity:entityType,
           entityName: data.task_name,
-          accountName: data.account_name,
+          caseName: data.case_name,
           status: data.status_name,
           eventName: eventName,
-          templateName: templateName,
+          triggerType: "scheduler",
           userId: data.assigned_to,
           accountRid: data.account_rid,
           plannedStartDate: data.effective_start_datetime,
@@ -146,11 +147,12 @@ export class SchedulerService {
         };
       } else {
         return {
+          entity:entityType,
           entityName: data.case_name,
           accountName: data.account_name,
+          triggerType: "scheduler",
           status: data.status_name,
           eventName: eventName,
-          templateName: templateName,
           userId: data.created_by,
           targetUserID: data.case_owner_rid,
           targetEmail: data.email,
