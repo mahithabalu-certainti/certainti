@@ -14,6 +14,7 @@ import {
 import { CaseModelService } from "../caseModelsService";
 import {
   ALPHANUMERIC_CONDITIONS,
+  entityNames,
   filtersColumnsForCaseSummary,
   filtersColumnsForReviewProjects,
   filterTypesForCaseSummary,
@@ -534,8 +535,8 @@ class CaseSchemaService {
         this.mainDbSequelize = await this.caseModelService.getMainSequelize();
       }
 
-      const [accountInfo]: any[] = await this.mainDbSequelize.query(
-        rawQueries.fetchAccountInfo(existingCaseData.account_rid),
+      const [caseInfo]: any[] = await this.mainDbSequelize.query(
+        rawQueries.fetchCasesInfo(caseId),
         {
           replacements: { case_rid: caseId },
           type: "SELECT"
@@ -589,7 +590,8 @@ class CaseSchemaService {
           accountRid: newCaseData.account_rid,
           entityName: newCaseData.case_name,
           entityId: newCaseData.rid,
-          accountName: accountInfo ? accountInfo.account_name : ""
+          caseName: caseInfo ? caseInfo.case_name : "",
+          entity:entityNames.case
         };
         baseRuleEnginePayload.targetUserID = newCaseData.case_owner_rid;
       for (const historyChange of historyChanges) {
@@ -641,9 +643,9 @@ class CaseSchemaService {
         }
       }
       
-      await this.helperMethod.triggerDynamicRuleEngine('case_status_change', baseRuleEnginePayload, {
-            newValue: "newName",
-            oldValue: "oldName"
+      await this.helperMethod.triggerDynamicRuleEngine( baseRuleEnginePayload, {
+            newValue: "",
+            oldValue: ""
           }, accessToken);
     } catch (err) {
       logMessage(`Error updating project history : ${JSON.stringify(err)}`);

@@ -873,7 +873,9 @@ export class WorkFlowService {
                         } else if (logicalOp === "OR") {
                             ruleResult = ruleResult || conditionResult.pass;
                         }
-                        templateParts.push(`${logicalOp} ${part}`);
+                        if (part && part.trim() !== '') {
+                            templateParts.push(`and ${part}`);
+                        }
                     }
                 }
             }
@@ -1014,31 +1016,31 @@ export class WorkFlowService {
         try {
             const mainDb = await this.getMainDb();
             let [notificationTemplateRid]: any[] = [];
-            if (channel === "In App") {
-                [notificationTemplateRid] = await mainDb.query<any>(
-                    rawQueries.fetchNotificationInAppTemplatesForRule(ruleRid),
-                    { type: QueryTypes.SELECT }
-                );
-            } else {
-                [notificationTemplateRid] = await mainDb.query<any>(
-                    rawQueries.fetchNotificationEmailTemplatesForRule(ruleRid),
-                    { type: QueryTypes.SELECT }
-                );
-            }
-            if (
-                notificationTemplateRid === undefined ||
-                notificationTemplateRid === null ||
-                typeof notificationTemplateRid !== 'object' ||
-                !('template_rid' in notificationTemplateRid) ||
-                !notificationTemplateRid.template_rid
-            ) {
-                return {
-                    templateDetails: []
-                };
-            }
+            // if (channel === "In App") {
+            //     [notificationTemplateRid] = await mainDb.query<any>(
+            //         rawQueries.fetchNotificationInAppTemplatesForRule(ruleRid),
+            //         { type: QueryTypes.SELECT }
+            //     );
+            // } else {
+            //     [notificationTemplateRid] = await mainDb.query<any>(
+            //         rawQueries.fetchNotificationEmailTemplatesForRule(ruleRid),
+            //         { type: QueryTypes.SELECT }
+            //     );
+            // }
+            // if (
+            //     notificationTemplateRid === undefined ||
+            //     notificationTemplateRid === null ||
+            //     typeof notificationTemplateRid !== 'object' ||
+            //     !('template_rid' in notificationTemplateRid) ||
+            //     !notificationTemplateRid.template_rid
+            // ) {
+            //     return {
+            //         templateDetails: []
+            //     };
+            // }
             const templateDetails = await mainDb.query<any>(
                 rawQueries.fetchNotificationTemplateDetails(
-                    notificationTemplateRid.template_rid, channel
+                    `${taskContext.entity} ${taskContext.triggerType}`, channel
                 ),
                 { type: QueryTypes.SELECT }
             );
@@ -1093,6 +1095,13 @@ export class WorkFlowService {
                     messageTemplate = messageTemplate.replace('{{statutorySubmissionDate}}', statutorySubmissionDateValue);
                     if (templateDetails[0].subject != null) {
                         templateDetails[0].subject = templateDetails[0].subject.replace('{{statutorySubmissionDate}}', statutorySubmissionDateValue);
+                    }
+                }
+                  if (messageTemplate.includes('{{entity}}')) {
+                    const entityValue   = taskContext.entity ? taskContext.entity : '';
+                    messageTemplate = messageTemplate.replace('{{entity}}', entityValue);
+                    if (templateDetails[0].subject != null) {
+                        templateDetails[0].subject = templateDetails[0].subject.replace('{{entity}}', entityValue);
                     }
                 }
                 if(messageTemplate.includes('{{conditions}}')) {
