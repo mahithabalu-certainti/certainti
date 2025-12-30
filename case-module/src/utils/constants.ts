@@ -556,6 +556,16 @@ export const rawQueries = {
     return `
     SELECT rid, account_name,r_number,parent_account_rid,storage_type,country_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${rid}'`;
   },
+  fetchCasesInfo(rid:string) {
+      return `SELECT cs.rid,
+      CONCAT(ac.account_name, '-', c.country_name, '-',cs.fiscal_year,'-',cs.case_name) AS case_name,ac.account_name, cs.status_rid, planned_submission_date,statutory_submission_date,account_rid,case_owner_rid ,email ,s.status_name FROM ${MAIN_SCHEMA_NAME}.case_summary  cs
+      LEFT JOIN ${MAIN_SCHEMA_NAME}.user uu ON cs.case_owner_rid = uu.rid 
+      LEFT JOIN ${MAIN_SCHEMA_NAME}.account ac ON cs.account_rid = ac.rid
+       LEFT JOIN ${MAIN_SCHEMA_NAME}.country c ON ac.country_rid = c.rid
+       LEFT JOIN ${MAIN_SCHEMA_NAME}.case_status  s ON cs.status_rid = s.rid
+      WHERE cs.case_rid = '${rid}'
+     `;
+    },
   fetchUserGroupType: `
       SELECT type group_type
       FROM ${MAIN_SCHEMA_NAME}.user_groups ug
@@ -975,6 +985,9 @@ export const rawQueries = {
   fetchCaseInfo(schemaName: string, caseRid: string) {
     return `SELECT rid, r_number, case_name, account_rid, fiscal_year FROM ${schemaName}.cases WHERE rid = '${caseRid}' LIMIT 1`;
   },
+  getTaskInfo(rid: string, schemaName: string) {
+      return `SELECT rid, task_name FROM ${schemaName}.case_task WHERE rid = '${rid}'`
+  },
   getSpecificTaskStatus() {
     return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.case_task_status WHERE task_status_name ILIKE '%To Do%'`
   },
@@ -1007,6 +1020,11 @@ export const rawQueries = {
     if (oldRid === null) oldRid = ''
     if (newRid === null) newRid = ''
     return `SELECT rid, task_status_name FROM ${MAIN_SCHEMA_NAME}.case_task_status WHERE rid IN ('${oldRid}', '${newRid}')`
+  },
+   fetchCaseStatus(oldRid: string, newRid: string) {
+    if (oldRid === null) oldRid = ''
+    if (newRid === null) newRid = ''
+    return `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.case_status WHERE rid IN ('${oldRid}', '${newRid}')`
   },
   fetchTaskWeightage(oldRid: string, newRid: string) {
     if (oldRid === null) oldRid = ''
@@ -1057,6 +1075,13 @@ export const rawQueries = {
       return `SELECT rid, relationship_type FROM ${MAIN_SCHEMA_NAME}.workflow_connector WHERE rid IN (${ids})`
     }
   },
+  fetchCaseName( caseRids: string) {
+    return `SELECT  CONCAT(a.account_name, '-', ct.country_name, '-',c.fiscal_year,'-',c.case_name) AS case_full_name FROM ${MAIN_SCHEMA_NAME}.case_summary  c
+    lEFT JOIN ${MAIN_SCHEMA_NAME}.account a ON a.rid = c.account_rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.country ct ON ct.rid = a.country_rid
+    WHERE c.case_rid = '${caseRids}'`
+  },
+
   getTaskTypeMilestone() {
     return `SELECT rid, task_type_name FROM ${MAIN_SCHEMA_NAME}.task_type WHERE task_type_name ILIKE '%Milestone%'`
   },
@@ -1081,6 +1106,9 @@ export const rawQueries = {
   },
   fetchCurrencyById() {
     return `SELECT rid, currency_name, currency_code, currency_symbol FROM ${MAIN_SCHEMA_NAME}.currency WHERE rid = :id`;
+  },
+  fetchCurrencies(rid : any[]) {
+    return `SELECT rid, currency_name, currency_code, currency_symbol FROM ${MAIN_SCHEMA_NAME}.currency WHERE rid IN (${rid.map((d : any) => `'${d}'`).join(',')})`;
   },
   fetchUserById() {
     return `SELECT first_name, middle_name, last_name FROM ${MAIN_SCHEMA_NAME}."user" WHERE rid = :userId`;
@@ -1539,6 +1567,9 @@ export const rawQueries = {
     WHERE 
     rid IN (${formattedStateIds})`;
   },
+  fetchMilestoneDetails (rid : string) {
+    return `SELECT r_number FROM ${MAIN_SCHEMA_NAME}.milestone_template WHERE rid = '${rid}'`
+  }
 };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 
 const keyContactRole = {
@@ -1861,8 +1892,13 @@ export const ruleTemplateNames = {
 }
 
 export const ruleNames = {
-  caseCreated: "Create Case",
-  taskCreated: "Create Task",
+  caseCreated: "Case Event",
+  taskCreated: "Task Event",
+}
+
+export const entityNames = {
+  case: "Case",
+  task: "Task",
 }
 
 

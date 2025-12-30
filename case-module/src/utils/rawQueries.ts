@@ -266,6 +266,8 @@ export const fetchProjectsForCases = (
     kc.entity_rid IN (pf.rid)
     AND
     kc.key_contact_role = '${pointOfContactRid}'
+    AND
+    kc.is_primary_contact = TRUE
     ),
     ${subQuery}
     fetch_project_technical_point_of_contact AS (
@@ -277,6 +279,8 @@ export const fetchProjectsForCases = (
     kc.entity_rid IN (pf.rid)
     AND
     kc.key_contact_role = '${technicalPointOfContactRid}'
+    AND
+    kc.is_primary_contact = TRUE
     ), 
 
     fetch_projects AS (
@@ -286,7 +290,7 @@ export const fetchProjectsForCases = (
     pf.total_cost_subcon_prj, pf.total_cost_nonlabor_prj, pf.assessment_status,
     pf.rd_percent_final, pf.qre_final, pf.comments, pf.modified_datetime, pf.r_number,
     poc.project_point_of_contact, tpoc.project_technical_point_of_contact, pf.account_rid,
-    pf.project_rid
+    pf.project_rid, pf.currency_rid
     FROM
     ${schemaName}.project_fiscal pf
     LEFT JOIN fetch_project_point_of_contact poc ON poc.rid = pf.rid
@@ -961,6 +965,7 @@ export const fetchCaseTemplateData = (schemaName : string, caseRid : string, acc
   array_agg(jsonb_build_object(
   'rid', t.rid,
   'task_name', t.task_name,
+  'is_flagged', t.is_flagged,
   'r_number', t.r_number,
   'created_by', t.created_by,
   'sequence_no', t.sequence_no,
@@ -1411,6 +1416,7 @@ export const taskCardDetails = (schemaName: string, taskRid: string, accountRid:
     'modified_by', ct.modified_by,
     'created_datetime', ct.created_datetime,
     'task_name', ct.task_name,
+    'is_flagged', ct.is_flagged,
     'effective_start_datetime', ct.effective_start_datetime,
     'effective_end_datetime', ct.effective_end_datetime,
     'assigned_to', ctt.user_rid,

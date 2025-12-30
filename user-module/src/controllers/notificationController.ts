@@ -135,4 +135,47 @@ async function updateNotificationStatus(req: Request, res: Response): Promise<vo
   }
 }
 
-export { listNotifications,updateNotificationStatus };
+async function getWebsocketUrl(req: Request, res: Response): Promise<void> {
+  const methodName = "Get Connection URL for User";
+  // See function-level comment above
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      handleErrorResponse(
+        res,
+        constants.BAD_REQUEST,
+        constants.BAD_REQUEST_MESSAGE,
+        "User ID is required"
+      );
+      return;
+    }
+    const listResponse = await services.notificationService.getWebsocketUrl(userId);
+
+    if (listResponse.statusCode === constants.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, listResponse.data);
+      return;
+    } else {
+      errorLog(methodName, listResponse.errorMessage);
+      handleErrorResponse(
+        res,
+        constants.BAD_REQUEST,
+        constants.BAD_REQUEST_MESSAGE,
+        listResponse.errorMessage
+      );
+      return;
+    }
+  } catch (error) {
+    const err = error as Error;
+    errorLog(methodName, err.message);
+    handleErrorResponse(
+      res,
+      constants.FAILED,
+      constants.FAILED_MESSAGE,
+      err.message
+    );
+    return;
+  }
+}
+
+export { listNotifications,updateNotificationStatus,getWebsocketUrl };

@@ -1238,6 +1238,7 @@ export class CaseTaskService {
         rid: resData?.task_details.rid,
         r_number: resData?.task_details.r_number,
         task_name: resData?.task_details.task_name,
+        is_flagged: resData?.task_details.is_flagged || false,
         created_by: resData?.task_details.created_by,
         fiscal_year: resData?.task_details.fiscal_year || null,
         created_by_name: createdByName,

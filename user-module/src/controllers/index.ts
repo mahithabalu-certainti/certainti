@@ -24,7 +24,7 @@ import {
   listUserGroupUser
 } from "./userGroupController";
 import { listSettings, updateSettings } from "./settingsController";
-import { listNotifications,updateNotificationStatus } from "./notificationController";
+import { listNotifications,updateNotificationStatus ,getWebsocketUrl} from "./notificationController";
 
 
 const controller = {
@@ -71,7 +71,8 @@ const controller = {
   },
   notificationController:{
     listNotifications,
-    updateNotificationStatus
+    updateNotificationStatus,
+    getWebsocketUrl
   }
 };
 

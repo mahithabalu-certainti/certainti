@@ -49,6 +49,7 @@ import {
   mainTableFiltersForCase,
   ruleNames,
   ruleTemplateNames,
+  entityNames,
 } from "../../utils/constants";
 import currency from "currency.js";
 import moment from "moment";
@@ -196,23 +197,28 @@ export class CaseService {
         rawQueries.fetchUserDetails(caseRequest.case_owner_rid),
         { type: QueryTypes.SELECT }
       );
-      const [accountInfo]: any[] = await mainDb.query(
-        rawQueries.fetchAccountDetails(caseRequest.account_rid),
-        { type: QueryTypes.SELECT }
-      );
+      const [caseInfo]: any[] = await mainDb.query(
+        rawQueries.fetchCasesInfo(response.rid),
+        {
+          replacements: { case_rid: response.rid },
+          type: "SELECT"
+        });
       let ruleEnginePayload = {
         entityName: caseRequest.case_name,
+        entity:entityNames.case,
         eventName: ruleNames.caseCreated,
-        templateName:ruleTemplateNames.caseCreated,
         userId: userId,
         accountRid: caseRequest.account_rid,
         targetUserID: caseRequest.case_owner_rid,
         targetEmail: caseOwnerData.email || "",
-        entityId: response.rid,
+        entityRid: response.rid,
         ruleScope:ruleNames.caseCreated,
-        accountName:accountInfo.account_name || ""
+        caseName:caseInfo.case_name || "",
+        case : "Assigned",
+        triggerType:"validation",
+        status:caseInfo.status_name || ""
       };
-      await this.caseSchemaService.triggerRuleEngine(ruleEnginePayload, accessToken);
+     await this.caseSchemaService.triggerRuleEngine(ruleEnginePayload, accessToken);
 
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -997,16 +1003,9 @@ export class CaseService {
             }
           });
         }
-        const fetchAccountDetails: any =
-          await this.caseSchemaService.getAccountDetails(data.account_rid);
-        let fetchCurrencyDetails: any;
-        if (fetchAccountDetails.currency_rid !== null) {
-          fetchCurrencyDetails =
-            await this.caseSchemaService.getCurrencyDetails(
-              fetchAccountDetails.currency_rid
-            );
-        }
-
+        let uniqueCurrencyIds : any = [...new Set(queryResult.map((c : any) => c.currency_rid))];
+        let fetchCurrencies : any = await mainDb.query(rawQueries.fetchCurrencies(uniqueCurrencyIds));
+        let mapCurrency : Map<string, {currency_name : string, currency_code : string, currency_symbol : string}>= new Map(fetchCurrencies[0].map((c : any) => [c.rid, {currency_name : c.currency_name, currency_code : c.currency_code, currency_symbol : c.currency_symbol}]))
         const finalData = geoDataAddedResult.map((d: any) => {
           return {
             rid: d.rid,
@@ -1035,9 +1034,9 @@ export class CaseService {
             project_point_of_contact: d.project_point_of_contact,
             project_technical_point_of_contact:
               d.project_technical_point_of_contact,
-            currency_rid: fetchCurrencyDetails == null ? null : fetchCurrencyDetails.rid,
-            currency_code: fetchCurrencyDetails == null ? null : fetchCurrencyDetails.currency_code,
-            currency_symbol: fetchCurrencyDetails == null ? null : fetchCurrencyDetails.currency_symbol,
+            currency_rid: d.currency_rid || null,
+            currency_code: mapCurrency.get(d.currency_rid)?.currency_code || null,
+            currency_symbol: mapCurrency.get(d.currency_rid)?.currency_symbol || null,
           };
         });
         return {
@@ -2067,7 +2066,6 @@ export class CaseService {
         },
       };
     } catch (err) {
-      console.log(err)
       logMessage(`Error fetching case submission date, ${err}`);
       throw this.throwServiceError(err as Error);
     }

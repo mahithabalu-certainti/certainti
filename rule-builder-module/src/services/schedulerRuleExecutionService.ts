@@ -118,6 +118,7 @@ export class SchedulerService {
             : mapCaseStatus.get(d.status_rid)?.toLowerCase(),
       }));
 
+     
     // Helper to build rule engine payload
     const buildPayload = (
       data: any,
@@ -127,22 +128,28 @@ export class SchedulerService {
     ) => {
       if (entityType === "Task") {
         return {
+          entity:entityType,
           entityName: data.task_name,
+          caseName: data.case_name,
           status: data.status_name,
           eventName: eventName,
-          templateName: templateName,
+          triggerType: "scheduler",
           userId: data.assigned_to,
           accountRid: data.account_rid,
           plannedStartDate: data.effective_start_datetime,
-          plannedEndDate: data.effective_end_datetime,
+          dueDate: data.effective_end_datetime,
           entityRid: data.task_rid,
+          targetUserID: data.assigned_to,
+          targetEmail: data.email,
         };
       } else {
         return {
+          entity:entityType,
           entityName: data.case_name,
+          accountName: data.account_name,
+          triggerType: "scheduler",
           status: data.status_name,
           eventName: eventName,
-          templateName: templateName,
           userId: data.created_by,
           targetUserID: data.case_owner_rid,
           targetEmail: data.email,
@@ -156,25 +163,25 @@ export class SchedulerService {
 
     // Fetch in-progress status and build status map
     let fetchInProgressCaseStatus: any = await mainDb.query(
-      rawQueries.fetchInProgressCaseStatus()
+      rawQueries.fetchCaseStatus()
     );
     const mapCaseStatus: Map<string, string> = new Map();
     if (
-      fetchInProgressCaseStatus[0] &&
-      fetchInProgressCaseStatus[0].length > 0
+      fetchInProgressCaseStatus &&
+      fetchInProgressCaseStatus.length > 0
     ) {
       for (const d of fetchInProgressCaseStatus[0]) {
         mapCaseStatus.set(d.rid, d.status_name);
       }
     }
-    const inProgressStatusRid = fetchInProgressCaseStatus[0][0]?.rid;
+   
 
     // 1. Planned Submission Date Overdue
-    const inProgressCasesOverdue: any = await mainDb.query(
-      rawQueries.fetchAllCases(inProgressStatusRid)
+    const [inProgressCasesOverdue]: any[] = await mainDb.query(
+      rawQueries.fetchAllCases()
     );
     const updatedResponse = mapStatusNames(
-      inProgressCasesOverdue[0],
+      inProgressCasesOverdue,
       mapCaseStatus
     );
     await Promise.all(
@@ -191,7 +198,7 @@ export class SchedulerService {
           );
         } catch (err) {
           this.logger.error(
-            `Workflow execution failed for planned overdue case ${data.rid}: ${err}`
+            `Workflow execution failed  ${data.rid}: ${err}`
           );
         }
       })
@@ -202,21 +209,21 @@ export class SchedulerService {
       rawQueries.fetchTaskTypes()
     );
     let fetchInProgressTaskStatus: any = await mainDb.query(
-      rawQueries.fetchInProgressTaskStatus()
+      rawQueries.fetchTaskStatus(),
+      { type: "SELECT" }
+      
     );
     const mapTaskStatus: Map<string, string> = new Map();
     if (
-      fetchInProgressTaskStatus[0] &&
-      fetchInProgressTaskStatus[0].length > 0
+      fetchInProgressTaskStatus &&
+      fetchInProgressTaskStatus.length > 0
     ) {
-      for (const d of fetchInProgressTaskStatus[0]) {
-        mapTaskStatus.set(d.rid, d.status_name);
+      for (const d of fetchInProgressTaskStatus) {
+        mapTaskStatus.set(d.rid, d.task_status_name);
       }
     }
-    const inProgressTaskStatusRid = fetchInProgressTaskStatus[0][0]?.rid;
     const inProgressTask: any = await mainDb.query(
       rawQueries.fetchAllCaseTask(
-        inProgressTaskStatusRid,
         fetchTaskType[0]?.rid
       )
     );
@@ -230,8 +237,8 @@ export class SchedulerService {
           await this.workflowService.execute(
             buildPayload(
               data,
-              ruleNames.taskAssigned,
-              ruleTemplateNames.caseCreated,
+              ruleNames.taskCreated,
+              ruleTemplateNames.taskCreated,
               "Task"
             ),
             data.userId || data.created_by

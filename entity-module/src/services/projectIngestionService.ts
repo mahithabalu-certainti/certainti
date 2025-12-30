@@ -1434,6 +1434,15 @@ class ProjectIngestionService {
         rid: projectData.project_fiscal_id,
       },
     });
+    if(projectData.currency_rid !== null) {
+      await Project.update({
+        currency_rid : projectData.currency_rid
+      }, {
+        where : {
+          rid : projectData.project_id
+        }
+      })
+    }
 
     await ProjectFiscal.update(
       {
