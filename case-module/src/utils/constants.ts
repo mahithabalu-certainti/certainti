@@ -985,6 +985,9 @@ export const rawQueries = {
   fetchCaseInfo(schemaName: string, caseRid: string) {
     return `SELECT rid, r_number, case_name, account_rid, fiscal_year FROM ${schemaName}.cases WHERE rid = '${caseRid}' LIMIT 1`;
   },
+  getTaskInfo(rid: string, schemaName: string) {
+      return `SELECT rid, task_name FROM ${schemaName}.case_task WHERE rid = ${rid}`
+  },
   getSpecificTaskStatus() {
     return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.case_task_status WHERE task_status_name ILIKE '%To Do%'`
   },

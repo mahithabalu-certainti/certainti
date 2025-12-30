@@ -3548,6 +3548,14 @@ class CaseSchemaService {
         raw: true,
       });
 
+      if(!this.mainDbSequelize) {
+        this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+      } 
+       if(!this.orgDbSequelize) {
+        this.orgDbSequelize = await this.caseModelService.getSequelize();
+      }   
+      
+
       // Fetch user names from mainDbSequelize using rawQueries
       const userRids = teamMembers.map((tm: any) => tm.user_rid);
       let userNamesMap: Map<string, string> = new Map();
@@ -3567,6 +3575,22 @@ class CaseSchemaService {
         rawQueries.getSpecificTaskStatus(),
         { type: "SELECT" }  
       );
+       const [caseInfo]: any[] = await this.mainDbSequelize.query(
+                        rawQueries.fetchCasesInfo(caseReq.case_rid),
+                        {
+                          replacements: { case_rid: caseReq.case_rid },
+                          type: "SELECT"
+                        });
+      const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(
+        /\D/g,
+        ""
+      )}`;
+      const [taskInfo]: any[] = await this.orgDbSequelize.query(
+                        rawQueries.getTaskInfo(caseReq.task_rid,schemaName),
+                        {
+                          replacements: { case_rid: caseReq.case_rid },
+                          type: "SELECT"
+                        });
 
       // Enrich teamMembers with user_name
       const enrichedTeamMembers = teamMembers.map((tm: any) => ({
@@ -3574,12 +3598,6 @@ class CaseSchemaService {
         user_name: userNamesMap.get(tm.user_rid) || null,
         email: userEmailsMap.get(tm.user_rid) || null,
       }));
-      const caseDetails = await Case.findOne({
-        where: {
-          rid: caseReq.case_rid
-        },
-        raw: true,
-      }); 
       for (const member of teamMembers) {
         const newAssignedTo = enrichedTeamMembers.find(etm => etm.user_rid === member.user_rid)?.user_rid || null;
         // Only update if the previous value is not the same as the new value
@@ -3612,7 +3630,8 @@ class CaseSchemaService {
         );
 
           let ruleEnginePayload = {
-                entityName: caseDetails?.case_name || "Case",
+                caseName: caseInfo?.case_name || "Case",
+                taskName: taskInfo?.task_name || "Task",
                 eventName: ruleNames.taskCreated,
                 templateName:ruleTemplateNames.taskCreated,
                 userId: userId,
@@ -3621,7 +3640,8 @@ class CaseSchemaService {
                 targetUserID: enrichedTeamMembers.find(etm => etm.user_rid === member.user_rid)?.user_rid || null,
                 targetEmail: enrichedTeamMembers.find(etm => etm.user_rid === member.user_rid)?.email || null,
                 entityId:  caseReq.case_rid,
-                assignee:"Updated"
+                task:"Assigned",
+                status:caseInfo.case_name || ''
               };
         if(response[0] > 0){
 
