@@ -211,7 +211,7 @@ export class CaseService {
         accountRid: caseRequest.account_rid,
         targetUserID: caseRequest.case_owner_rid,
         targetEmail: caseOwnerData.email || "",
-        entityId: response.rid,
+        entityRid: response.rid,
         ruleScope:ruleNames.caseCreated,
         caseName:caseInfo.case_name || "",
         case : "Assigned",
