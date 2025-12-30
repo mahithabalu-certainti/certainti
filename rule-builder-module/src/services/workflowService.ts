@@ -776,6 +776,9 @@ export class WorkFlowService {
             ),
             { type: QueryTypes.SELECT }
         );
+         const [ruleCategory] :any[] = await mainDb.query(
+            rawQueries.fetchRuleTypeByName(request.triggerType || 'validation')
+          );
         const { scope_type_rid, event_rid } = eventRid[0];
         const allConditions: any[] = [];
         const allActions: any[] = [];
@@ -784,7 +787,7 @@ export class WorkFlowService {
             { type: QueryTypes.SELECT }
         );
         for (const rule of rules) {
-            const conditions = await mainDb.query<any>(rawQueries.fetchRuleConditions(request.category_rid || '', rule.rule_rid),
+            const conditions = await mainDb.query<any>(rawQueries.fetchRuleConditions(ruleCategory[0]?.rid || '', rule.rule_rid),
                 { type: QueryTypes.SELECT }
             );
             allConditions.push(...conditions);

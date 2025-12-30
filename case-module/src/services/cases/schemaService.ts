@@ -373,7 +373,8 @@ class CaseSchemaService {
             caseReq.case_name.toLowerCase()
           ),
           { rid: { [Op.ne]: caseReq.case_rid } },
-          { fiscal_year: caseReq.fiscal_year }
+          { fiscal_year: caseReq.fiscal_year },
+          { account_rid: { [Op.eq]: caseReq.account_rid } }
         ]
       }
     });
