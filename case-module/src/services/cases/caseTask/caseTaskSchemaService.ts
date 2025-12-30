@@ -2,7 +2,7 @@ import { Op, QueryTypes, Sequelize, Transaction } from "sequelize";
 import { AddCommentsType, CaseTaskQueryType, CaseTaskWorkFlowCreate, CreateCaseTaskType, DeleteCommentsType, FilterType, UpdateCaseTaskType, UpdateCommentsType } from "../../../utils/types";
 import { CaseModelService } from "../../caseModelsService";
 import { v4 as uuidv4 } from 'uuid'
-import { ENV_PREFIX, HttpStatus, MAIN_SCHEMA_NAME, rawQueries, relationshipTypes, ruleNames, ruleTemplateNames, STATUS_MESSAGE } from "../../../utils/constants";
+import { entityNames, ENV_PREFIX, HttpStatus, MAIN_SCHEMA_NAME, rawQueries, relationshipTypes, ruleNames, ruleTemplateNames, STATUS_MESSAGE } from "../../../utils/constants";
 import { HelperMethods } from "../helperMethods";
 import { initMainDbSequelize } from "../../../config/mainDataSource";
 import CaseSchemaService from "../schemaService";
@@ -252,13 +252,20 @@ export class CaseTaskSchemaService {
               case_rid: data.case_rid
             }, transaction
           });
+          const [caseInfo]: any[] = await this.mainDbSequelize.query(
+                  rawQueries.fetchCasesInfo(data.case_rid),
+                  {
+                    replacements: { case_rid: data.case_rid },
+                    type: "SELECT"
+                  });
           let baseRuleEnginePayload: any = {
             userId: data.modified_by,
             accountRid: data.account_rid,
             entityName: data.task_name,
             entityRid: data.rid,
-            assigneeId:data.modified_by,
-            eventName: ruleNames.taskCreated
+            eventName: ruleNames.taskCreated,
+            entity: entityNames.task,
+            caseName: caseInfo ? caseInfo.case_name : ""
           };
       
           if (data?.checklist_template_rid) {
@@ -389,7 +396,7 @@ export class CaseTaskSchemaService {
               rawQueries.fetchCaseName(data.case_rid),
               { type: QueryTypes.SELECT }
             );
-             baseRuleEnginePayload.caseName = caseInfo?.case_full_name;
+             baseRuleEnginePayload.caseName = caseInfo?.case_name;
             const fetchUpdatedColumns = getColumnsNamesForTaskUpdate(data, isTaskExists as any);
             if (fetchUpdatedColumns.length > 0) {
               let updatedColumnsStorage: string[] = []
@@ -421,10 +428,7 @@ export class CaseTaskSchemaService {
                   baseRuleEnginePayload.assignee = "Updated";
                  
                   logMessage(`Triggering rule engine for assignee change with payload ${JSON.stringify(baseRuleEnginePayload)}`)
-                   await this.helperMethod.triggerDynamicRuleEngine('assignee_change', baseRuleEnginePayload, {
-                    newValue: newValueString,
-                    oldValue: oldValueString
-                  }, accessToken);
+                   
                 }
                 else if (columnName === "checklist_template_rid") {
                   labelName = "Checklist"
@@ -464,10 +468,10 @@ export class CaseTaskSchemaService {
                   baseRuleEnginePayload.targetUserID = data.assigned_to;
                   
                    
-                  await this.helperMethod.triggerDynamicRuleEngine('status_change', baseRuleEnginePayload, {
-                    newValue: newValueString,
-                    oldValue: oldValueString
-                  }, accessToken);
+                  // await this.helperMethod.triggerDynamicRuleEngine('status_change', baseRuleEnginePayload, {
+                  //   newValue: newValueString,
+                  //   oldValue: oldValueString
+                  // }, accessToken);
                 }
                 else if (columnName === "weightage_rid") {
                   labelName = "Weightage"
@@ -506,6 +510,10 @@ export class CaseTaskSchemaService {
                 })
                 updatedColumnsStorage.push(`${oldValue} changed to ${newValue}`);
               }
+              await this.helperMethod.triggerDynamicRuleEngine(baseRuleEnginePayload, {
+                    newValue: newValueString,
+                    oldValue: oldValueString
+                  }, accessToken);
               if (updatedColumnsStorage.length > 0) {
                 combinedColumns = updatedColumnsStorage.join(', ')
               }
