@@ -119,7 +119,7 @@ export class SchedulerService {
       }));
 
       const [ruleCategory] :any[] = await mainDb.query(
-            rawQueries.fetchRuleTypeByName('scheduler')
+            rawQueries.fetchRuleTypeByName('Scheduler')
           );
     // Helper to build rule engine payload
     const buildPayload = (
