@@ -208,7 +208,7 @@ class CaseSchemaService {
         if (fetchTaskTypeRid) {
           await this.cloneDefaultMilestoneTaskTemplate(casecreationResponse.account_rid, casecreationResponse.rid,
             casecreationResponse.filing_type_rid, fetchTaskTypeRid.rid, accountNumber, transaction, casecreationResponse.case_startdate,
-            fetchTaskStatusRid?.rid!)
+            fetchTaskStatusRid?.rid!, casecreationResponse.created_by, casecreationResponse.fiscal_year)
         }
         await this.addCaseManagementTimeline(
           accountNumber,
@@ -4175,8 +4175,8 @@ class CaseSchemaService {
       return [];
     }
   }
-  async cloneDefaultMilestoneTaskTemplate(accountRid: string, caseRid: string, filing_type_rid: string, taskTypeRid: string, accountNumber: string, transaction: Transaction, caseStartDate: Date, taskStatusRid: string) {
-    const { CaseTask, CaseMilestone, CaseTaskWorkflowConnector } = await this.caseModelService.getModels(accountNumber);
+  async cloneDefaultMilestoneTaskTemplate(accountRid: string, caseRid: string, filing_type_rid: string, taskTypeRid: string, accountNumber: string, transaction: Transaction, caseStartDate: Date, taskStatusRid: string, createdBy : string, fiscalYear : number) {
+    const { CaseTask, CaseMilestone, CaseTaskWorkflowConnector, TaskSummary } = await this.caseModelService.getModels(accountNumber);
     if (!this.mainDbSequelize) {
       this.mainDbSequelize = await this.caseModelService.getMainSequelize();
     }
@@ -4332,7 +4332,8 @@ class CaseSchemaService {
               account_rid: accountRid,
               case_rid: caseRid,
               task_status_rid: taskStatusRid,
-              rid: d.task_rid
+              rid: d.task_rid,
+              created_by : createdBy
             }
           })
           let finalWorkFlowData;
@@ -4341,13 +4342,35 @@ class CaseSchemaService {
               return {
                 ...d,
                 account_rid: accountRid,
-                case_rid: caseRid
+                case_rid: caseRid,
+                created_by : createdBy,
               }
             })
             await CaseTaskWorkflowConnector.bulkCreate(finalWorkFlowData, { transaction });
           }
-
-          await CaseTask.bulkCreate(finalTaskData, { transaction })
+          const bulkCreateResult = await CaseTask.bulkCreate(finalTaskData, { returning : true, transaction })
+          let taskSummaryData = bulkCreateResult.map(d => d.get({plain : true}));
+          let filteredDataForSummary = taskSummaryData.map((d) => {
+            return {
+              task_rid: d.rid,
+              r_number: d.r_number || "",
+              account_rid: d.account_rid || "",
+              attach_to: d.case_rid || "",
+              attachment_level: "case",
+              task_name: d.task_name || "",
+              description: d.task_description || "",
+              fiscal_year: fiscalYear || 0,
+              assigned_to: d.assigned_to || "",
+              status_rid: taskStatusRid || "",
+              priority_rid: d.priority_rid || "",
+              effective_start_datetime: d.effective_start_datetime!,
+              effective_end_datetime: d.effective_end_datetime!,
+              created_by:  createdBy || "",
+              created_datetime: new Date(),
+              task_type_rid: taskTypeRid || "",
+            }
+          })
+          await TaskSummary.bulkCreate(filteredDataForSummary)
           await this.cloneDefaultChecklistTemplate(accountRid, caseRid, filing_type_rid, accountNumber, transaction, finalTaskData)
         }
       }
