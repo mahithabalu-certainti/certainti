@@ -215,7 +215,8 @@ export class CaseService {
         ruleScope:ruleNames.caseCreated,
         caseName:caseInfo.case_name || "",
         case : "Assigned",
-        triggerType:"validation"
+        triggerType:"validation",
+        status:caseInfo.status_name || ""
       };
      await this.caseSchemaService.triggerRuleEngine(ruleEnginePayload, accessToken);
 
