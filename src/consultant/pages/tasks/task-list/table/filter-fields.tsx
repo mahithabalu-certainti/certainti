@@ -28,10 +28,11 @@ export const getTaskFilterFields = (
   _assigneeOptions: { value: string; label: string }[],
   accountStatusOptions: { value: string; label: string }[],
   permissionMap?: Record<string, { read: boolean; edit: boolean }>,
-  accountPermissionMap?: Record<string, { read: boolean; edit: boolean }>
+  accountPermissionMap?: Record<string, { read: boolean; edit: boolean }>,
+  tabParam?: string
 ): FieldConfig[] => [
   {
-    name: 'Task ID',
+    name: tabParam === 'milestone' ? 'Task ID' : 'Activity ID',
     value: 'r_number',
     type: 'text',
     operatorOption: textOptions,
@@ -47,7 +48,7 @@ export const getTaskFilterFields = (
       : false,
   },
   {
-    name: 'Task Name',
+    name: tabParam === 'milestone' ? 'Task Name' : 'Activity Name',
     value: 'task_name',
     type: 'text',
     operatorOption: textOptions,

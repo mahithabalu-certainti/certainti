@@ -207,7 +207,7 @@ export const getTaskFilterFields = (
   permissionMap: Record<string, { read: boolean; edit: boolean }>
 ): FieldConfig[] => [
   {
-    name: 'Activity ID',
+    name: 'Task ID',
     value: 'r_number',
     type: 'text',
     operatorOption: textOptions,
@@ -215,7 +215,7 @@ export const getTaskFilterFields = (
       !permissionMap?.['r_number']?.edit && !permissionMap?.['r_number']?.read,
   },
   {
-    name: 'Activity Name',
+    name: 'Task Name',
     value: 'task_name',
     type: 'text',
     operatorOption: textOptions,

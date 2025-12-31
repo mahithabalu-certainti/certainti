@@ -66,6 +66,7 @@ export const createTextField = (
       minErrorMessage: string;
       maxErrorMessage: string;
     };
+    maxLength?: number;
   } = {}
 ): FieldType => ({
   type: options.type ?? 'text',
@@ -89,6 +90,7 @@ export const createTextField = (
   resetDependsFields: options.resetDependsFields,
   formatCostValue: options.formatCostValue,
   prefixValue: options.prefixValue,
+  maxLength: options.maxLength,
 });
 
 export const createPhoneInputField = (
@@ -485,6 +487,8 @@ export const createFiscalDateField = (
     greaterThan?: Record<string, string>;
     toBeNotSame?: Record<string, string>;
     hide?: boolean;
+    dateFormat?: string;
+    views?: ('day' | 'month' | 'year')[];
   }
 ): FieldType => ({
   type: 'fiscalDate',
@@ -495,6 +499,8 @@ export const createFiscalDateField = (
   greaterThan: others.greaterThan,
   toBeNotSame: others.toBeNotSame,
   hide: others.hide,
+  dateFormat: others.dateFormat,
+  views: others.views,
 });
 
 export const YES_NO_OPTIONS: SelectOption[] = [
@@ -544,6 +550,7 @@ export const REGEX_PATTERNS = {
   EFFORTS_INTEGER_9: /^[0-9]{1,9}$/,
   NUMERIC_10_4: /^\d{1,10}(\.\d{1,4})?$/,
   ALLOW_ONE_TO_99: /^[1-9][0-9]?$/,
+  ALLOW_ZERO_TO_99: /^[0-9]{1,2}$/,
   DESCRIPTION: /^.{0,500}$/,
   RESOURCE_DESCRIPTION: /^.{0,1000}$/,
   ACCOUNT_DESCRIPTION: /^[\s\S]{0,2000}$/,
@@ -1172,4 +1179,19 @@ export const formatDateToYyyyMmmDd = (dateString: string): string => {
   const day = String(date.getDate()).padStart(2, '0');
 
   return `${year}-${month}-${day}`; // 2026-May-02
+};
+
+export const getCapitalizeWords = (value: string): string => {
+  if (!value) return '';
+
+  return (
+    value
+      // replace _, -, and multiple non-alphanumeric chars with space
+      .replace(/[^a-zA-Z0-9]+/g, ' ')
+      .trim()
+      .toLowerCase()
+      .split(' ')
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ')
+  );
 };

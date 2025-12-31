@@ -43,7 +43,7 @@ export class WebSocketService {
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private reconnectDelay = 3000; // 3 seconds
-  private reconnectTimeout: number | null = null;
+  private reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
   private eventHandlers: Map<string, Set<WebSocketEventHandler>> = new Map();
   private onConnectionChange: ((isConnected: boolean) => void) | null = null;
   private onError: ((error: string) => void) | null = null;

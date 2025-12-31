@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import dayjs from 'dayjs';
 import { useLocation, useParams } from 'react-router-dom';
 import { FormBuilder } from '../../../../components';
 import {
@@ -197,7 +197,17 @@ const GeoBasedRuleForm: React.FC = () => {
       if (config && Array.isArray(config?.configItems)) {
         config?.configItems.forEach((item: any) => {
           if (item.label) {
-            dynamicValues[item.label] = item.value;
+            const isSubmissionDate = [
+              'caseSubmissionDate',
+              'case_submission_date',
+              'submission_date',
+            ].includes(item.label);
+
+            if (isSubmissionDate && item.value && dayjs(item.value).isValid()) {
+              dynamicValues[item.label] = dayjs(item.value).format('MM');
+            } else {
+              dynamicValues[item.label] = item.value;
+            }
           }
         });
       }

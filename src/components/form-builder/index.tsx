@@ -1038,6 +1038,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           ? ' truncate overflow-hidden text-ellipsis whitespace-nowrap'
           : ''
       }`}
+              maxLength={field.maxLength}
               disabled={field.disabled}
               onChange={(e) => {
                 const inputValue = e.target.value;
@@ -1976,9 +1977,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               }
               value={dayjs(fieldValue, 'MM/DD')}
               disabled={field.disabled}
-              format='MMM/DD'
-              views={['month', 'day']}
-              open={false}
+              format={field.dateFormat || 'MMM/DD'}
+              views={field.views || ['month', 'day']}
               onChange={(newValue) => {
                 handleChange(dayjs(newValue).format('MM/DD'));
               }}
