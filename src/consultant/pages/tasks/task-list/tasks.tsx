@@ -298,7 +298,8 @@ export const Tasks: React.FC = () => {
         [], // assigneeOptions - currently empty for global list
         accountStatusOptions,
         currentPermissionMap,
-        accountPermissionMap
+        accountPermissionMap,
+        tabParam
       ),
     [
       priorityOptions,
@@ -306,6 +307,7 @@ export const Tasks: React.FC = () => {
       accountStatusOptions,
       currentPermissionMap,
       accountPermissionMap,
+      tabParam,
     ]
   );
 
