@@ -1,8 +1,10 @@
 import { Model, DataTypes, Sequelize, Optional } from "sequelize";
 import { ENV_PREFIX } from "../utils/constants";
+import { logMessage } from "../utils/helpers";
 
 export interface RdCreditStateCalcAttributes {
     rid?: string;
+    r_number?: string;
     case_rid?: string;
     country_rid?: string;
     state_rid?: string;
@@ -23,6 +25,7 @@ export class RdCreditStateCalculations
     >
     implements RdCreditStateCalcAttributes {
     public rid?: string;
+    public r_number?: string | undefined;
     public case_rid?: string;
     public country_rid?: string;
     public state_rid?: string;
@@ -39,6 +42,10 @@ export class RdCreditStateCalculations
                     type: DataTypes.STRING(50),
                     primaryKey: true,
                     defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
+                },
+                r_number : {
+                    type : DataTypes.STRING,
+                    allowNull : true
                 },
                 case_rid: {
                     type: DataTypes.STRING(50),
@@ -90,4 +97,21 @@ export class RdCreditStateCalculations
             }
         );
     }
+}
+export async function setupRdCreditStateCalculationSequence(
+  sequelize: Sequelize,
+  schemaName: string
+) {
+  try {
+    await sequelize.query(
+      `CREATE SEQUENCE IF NOT EXISTS "${schemaName}".rd_credit_state_calculations_seq START 1`
+    );
+
+    await sequelize.query(`ALTER TABLE "${schemaName}".rd_credit_state_calculations
+      ALTER COLUMN r_number SET DEFAULT 'RDCS-' || LPAD(nextval('"${schemaName}".rd_credit_state_calculations_seq')::text, 10, '0')`);
+
+    logMessage("RDCredit Calculations sequence setup complete");
+  } catch (error) {
+    logMessage(`Error setting up RDCredit Calculations sequence: ${error}`);
+  }
 }

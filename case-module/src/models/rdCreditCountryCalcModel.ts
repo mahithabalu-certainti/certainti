@@ -1,9 +1,11 @@
 import { Model, DataTypes, Sequelize, Optional } from "sequelize";
 import { ENV_PREFIX } from "../utils/constants";
+import { logMessage } from "../utils/helpers";
 
 export interface RdCreditCountryCalcAttributes {
     rid?: string;
     case_rid?: string;
+    r_number?: string;
     country_rid?: string;
     input_params?: object | null;
     computed_fields?: object | null;
@@ -22,6 +24,7 @@ export class RdCreditCountryCalculations
     >
     implements RdCreditCountryCalcAttributes {
     public rid?: string;
+    public r_number? : string;
     public case_rid?: string;
     public country_rid?: string;
     public input_params?: object | null;
@@ -37,6 +40,10 @@ export class RdCreditCountryCalculations
                     type: DataTypes.STRING(50),
                     primaryKey: true,
                     defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
+                },
+                r_number : {
+                    type : DataTypes.STRING,
+                    allowNull : true
                 },
                 case_rid: {
                     type: DataTypes.STRING(50),
@@ -84,4 +91,21 @@ export class RdCreditCountryCalculations
             }
         );
     }
+}
+export async function setupRdCreditCountryCalculationSequence(
+  sequelize: Sequelize,
+  schemaName: string
+) {
+  try {
+    await sequelize.query(
+      `CREATE SEQUENCE IF NOT EXISTS "${schemaName}".rd_credit_country_calculations_seq START 1`
+    );
+
+    await sequelize.query(`ALTER TABLE "${schemaName}".rd_credit_country_calculations
+      ALTER COLUMN r_number SET DEFAULT 'RDCC-' || LPAD(nextval('"${schemaName}".rd_credit_country_calculations_seq')::text, 10, '0')`);
+
+    logMessage("RDCredit Calculations sequence setup complete");
+  } catch (error) {
+    logMessage(`Error setting up RDCredit Calculations sequence: ${error}`);
+  }
 }

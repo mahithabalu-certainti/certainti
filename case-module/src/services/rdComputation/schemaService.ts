@@ -36,7 +36,8 @@ class RDCreditSchemaService {
                         ctry.rid,
                         ctry.country_code,
                         ctry.country_name,
-                        st.state_name AS region_name
+                        st.state_name AS region_name,
+                        acc.account_name
                     FROM ${MAIN_SCHEMA_NAME}.account acc
                     JOIN ${MAIN_SCHEMA_NAME}.country ctry 
                         ON acc.country_rid = ctry.rid
@@ -55,7 +56,8 @@ class RDCreditSchemaService {
                 rid: data?.rid || null,
                 countryCode: data?.country_code || null,
                 countryName: data?.country_name || null,
-                regionName: data?.region_name || null
+                regionName: data?.region_name || null,
+                accountName : data?.account_name || null
             };
         } catch (err) {
             logMessage(`Error fetching account: ${err}`);
@@ -336,8 +338,8 @@ class RDCreditSchemaService {
                 )
                 
                 -- Effective date filter
-                AND (:effectiveStart IS NULL OR rdval.effective_start_date >= CAST(:effectiveStart AS timestamptz))
-                AND (:effectiveEnd IS NULL OR rdval.effective_end_date <= CAST(:effectiveEnd AS timestamptz))
+                AND (:effectiveStart IS NULL OR rdval.effective_start_date >= CAST(:effectiveStart AS DATE))
+                AND (:effectiveEnd IS NULL OR rdval.effective_end_date <= CAST(:effectiveEnd AS DATE))
                 group by rdcg.rid, rdval.config_json, st.state_code, ctry.rid
                 LIMIT 1
             `,

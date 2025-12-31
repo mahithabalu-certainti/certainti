@@ -19,7 +19,7 @@ const computationService = Services.computationService;
 async function financialRDCreditFederal(
   req: Request,
   res: Response
-): Promise<void> {
+): Promise<any> {
   const methodName = "financialRDCreditFederal";
   try {
     // Step 1: Log request
@@ -53,13 +53,11 @@ async function financialRDCreditFederal(
 
     // Step 4: Call service to create/update record
     const resultFederal = await federalComputationService.runFederalComputation(value.account_rid, value.case_rid, value.effective_start, value.effective_end);
-
-    // Step 5: Handle service response
-    handleCustomResponse(
-      res,
-      resultFederal.statusCode,
-      resultFederal.message
-    );
+    return res.status(200).send({
+      statusCode : HttpStatus.SUCCESS,
+      statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+      data : resultFederal
+    })
   } catch (err) {
     // Step 6: Catch unexpected errors
     const error = err as Error;

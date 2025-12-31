@@ -935,3 +935,12 @@ export type RegionDetails = {
   rid : string
   state_name : string
 }
+export type ProjectComputeValue = {
+  project_name: string;
+  project_fiscal_rid: string;
+  employees: number;
+  epw: number;
+  reductions: number;
+  net_epw: number;
+  total_project_value_labor: number;
+}
