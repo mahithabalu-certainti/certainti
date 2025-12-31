@@ -15,6 +15,7 @@ import { ScopeEventRows, EventConditions, ConditionCategory, Operators, Values, 
 import { WebPubSubServiceClient } from "@azure/web-pubsub";
 import { sendEmailWithAttachment } from "./emailService";
 import { initOrgSequelize } from "../config/orgDataSource";
+import { getSecret } from "../utils/azureSecrets";
 
 
 /**
@@ -1147,8 +1148,9 @@ export class WorkFlowService {
         try {
 
             // Step 2: Send message with notification ID included
+             const connectionString = await getSecret(process.env.AZURE_WEB_PUBSUB_CONNECTION_STRING!);
             const webPubSubClient = new WebPubSubServiceClient(
-                process.env.AZURE_WEB_PUBSUB_CONNECTION_STRING!,
+                connectionString!,
                 "notificationsHub"
             );
 
