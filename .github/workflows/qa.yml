@@ -1,9 +1,9 @@
-name: Deploy thinkrd365 Pre-Production Backend Services
+name: Deploy thinkrd365 QA Backend Services
 
 on:
   push:
     branches:
-      - preprod
+      - uat
     paths:
       - user-module/**
       - account-module/**
@@ -12,10 +12,10 @@ on:
       - ext-interaction-module/**
       - event-stream-module/**
       - case-module/** 
-      - rule-builder-module/** 
+      - rule-builder-module/**  
 
 env:
-  ENVIRONMENT: preprod
+  ENVIRONMENT: qa
 
 jobs:
   # JOB to run change detection
@@ -72,19 +72,19 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
       - name: Login to ACR
-        run: az acr login --name ${{ secrets.PREPROD_ACR_NAME }}
+        run: az acr login --name ${{ secrets.QA_ACR_NAME }}
         working-directory: user-module
       - name: Build Docker Image
         run: |
-          docker build -t ${{ secrets.PREPROD_ACR_LOGIN_SERVER }}/user-module:${{ env.IMAGE_TAG }} .
+          docker build -t ${{ secrets.QA_ACR_LOGIN_SERVER }}/user-module:${{ env.IMAGE_TAG }} .
         working-directory: user-module
       - name: Push Docker Image to ACR
-        run: docker push ${{ secrets.PREPROD_ACR_LOGIN_SERVER }}/user-module:${{ env.IMAGE_TAG }}
+        run: docker push ${{ secrets.QA_ACR_LOGIN_SERVER }}/user-module:${{ env.IMAGE_TAG }}
         working-directory: user-module
 
       - name: Cleanup old Docker tags in ACR (keep latest 10)
         run: |
-          ACR_NAME=${{ secrets.PREPROD_ACR_NAME }}
+          ACR_NAME=${{ secrets.QA_ACR_NAME }}
           REPO_NAME="user-module"
           KEEP_LATEST=10
 
@@ -105,13 +105,13 @@ jobs:
       - name: Set up SSH key
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.PREPROD_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          echo "${{ secrets.QA_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.PREPROD_BACKEND_VM_HOST }} >> ~/.ssh/known_hosts
+          ssh-keyscan -H ${{ secrets.QA_BACKEND_VM_HOST }} >> ~/.ssh/known_hosts
       - name: Fetch secrets and create .env file
         working-directory: user-module
         run: |
-          KEY_VAULT_NAME=${{ secrets.PREPROD_KEY_VAULT_NAME }}
+          KEY_VAULT_NAME=${{ secrets.QA_KEY_VAULT_NAME }}
           ENV_FILE=".env.usermodule"
           
           # Ensure Azure CLI is authenticated
@@ -143,35 +143,35 @@ jobs:
           AZURE_B2C_TENANT_ID=$API_TENANT_ID
           AZURE_SCOPE=https://graph.microsoft.com/.default
           AZURE_STORAGE_CONNECTION_STRING="storage-account-connection-string"
-          MAINDB_NAME=main-database-name-pvt
-          MAINDB_PASSWORD=main-db-admin-password-pvt
-          MAINDB_USERNAME=main-db-admin-username-pvt
-          MAINDB_ENDPOINT=main-db-endpoint-pvt
+          MAINDB_NAME=main-database-name
+          MAINDB_PASSWORD=main-db-admin-password
+          MAINDB_USERNAME=main-db-admin-username
+          MAINDB_ENDPOINT=main-db-endpoint
           MAIL_TENANT_ID=$MAIL_TENANT_ID
           MAIL_CLIENT_ID=$MAIL_CLIENT_ID
           MAIL_CLIENT_SECRET=$MAIL_CLIENT_SECRET
-          EMAIL_FROM=platform-support@certainti.ai
-          LOGIN_URL=https://thinkrd365-preprod.certainti.ai
-          SUPPORT_EMAIL=platform-support@certainti.ai
+          EMAIL_FROM=interactions@certainti.ai
+          LOGIN_URL=https://thinkrd365-qa.certainti.ai
+          SUPPORT_EMAIL=support@certainti.ai
           LOG_LEVEL=debug
-          NODE_ENV=PREPROD
-          NODE_ENV_DB_PREFIX="S001-"
-          EMAIL_WEBHOOK_URL='https://preprod-thinkrd365-api-management.azure-api.net/interactionService/api/email/webhook'
+          NODE_ENV=QA
+          NODE_ENV_DB_PREFIX="U001-"
+          EMAIL_WEBHOOK_URL='https://qa-thinkrd365-api-management.azure-api.net/interactionService/api/email/webhook'
           CLIENT_SECRET_ENCRYPTION_KEY='client-secret-encryption-key'
           CLIENT_SECRET_ENCRYPTION_LENGTH=16
           AZURE_CONTAINER_NAME="user"
           AZURE_WEB_PUBSUB_CONNECTION_STRING=pubsub-connection-string
           EOF
-
+          
           echo "$ENV_FILE file created successfully!"
           ls -la
       - name: Copy .env file to VM
         run: |
-          scp -v -o StrictHostKeyChecking=no .env.usermodule adminuser@${{ secrets.PREPROD_BACKEND_VM_HOST }}:/tmp/
+          scp -v -o StrictHostKeyChecking=no .env.usermodule adminuser@${{ secrets.QA_BACKEND_VM_HOST }}:/tmp/
         working-directory: user-module
       - name: SSH into VM and deploy
         run: |
-          ssh -o StrictHostKeyChecking=no adminuser@${{ secrets.PREPROD_BACKEND_VM_HOST }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no adminuser@${{ secrets.QA_BACKEND_VM_HOST }} << 'EOF'
             sudo -s
             cd /app/backend
 
@@ -187,11 +187,11 @@ jobs:
             
             # Update only the usermodule image tag
             echo "Updating docker-compose.yml..."
-            sed -i 's|image:.*user-module:.*|image: ${{ secrets.PREPROD_ACR_LOGIN_SERVER }}/user-module:${{ env.IMAGE_TAG }}|' docker-compose.yml
+            sed -i 's|image:.*user-module:.*|image: ${{ secrets.QA_ACR_LOGIN_SERVER }}/user-module:${{ env.IMAGE_TAG }}|' docker-compose.yml
             echo "Docker Compose updated successfully!"
             
             # Login to ACR 
-            az acr login --name ${{ secrets.PREPROD_ACR_NAME }}
+            az acr login --name ${{ secrets.QA_ACR_NAME }}
             echo "Logged in to ACR successfully!"
             
             # Pull latest changes and restart
@@ -224,19 +224,19 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
       - name: Login to ACR
-        run: az acr login --name ${{ secrets.PREPROD_ACR_NAME }}
+        run: az acr login --name ${{ secrets.QA_ACR_NAME }}
         working-directory: account-module
       - name: Build Docker Image
         run: |
-          docker build -t ${{ secrets.PREPROD_ACR_LOGIN_SERVER }}/account-module:${{ env.IMAGE_TAG }} .
+          docker build -t ${{ secrets.QA_ACR_LOGIN_SERVER }}/account-module:${{ env.IMAGE_TAG }} .
         working-directory: account-module
       - name: Push Docker Image to ACR
-        run: docker push ${{ secrets.PREPROD_ACR_LOGIN_SERVER }}/account-module:${{ env.IMAGE_TAG }}
+        run: docker push ${{ secrets.QA_ACR_LOGIN_SERVER }}/account-module:${{ env.IMAGE_TAG }}
         working-directory: account-module
 
       - name: Cleanup old Docker tags in ACR (keep latest 10)
         run: |
-          ACR_NAME=${{ secrets.PREPROD_ACR_NAME }}
+          ACR_NAME=${{ secrets.QA_ACR_NAME }}
           REPO_NAME="account-module"
           KEEP_LATEST=10
 
@@ -257,13 +257,13 @@ jobs:
       - name: Set up SSH key
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.PREPROD_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          echo "${{ secrets.QA_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.PREPROD_BACKEND_VM_HOST }} >> ~/.ssh/known_hosts
+          ssh-keyscan -H ${{ secrets.QA_BACKEND_VM_HOST }} >> ~/.ssh/known_hosts
       - name: Fetch secrets and create .env file
         working-directory: account-module
         run: |
-          KEY_VAULT_NAME=${{ secrets.PREPROD_KEY_VAULT_NAME }}
+          KEY_VAULT_NAME=${{ secrets.QA_KEY_VAULT_NAME }}
           ENV_FILE=".env.accountmodule"
           
           # Ensure Azure CLI is authenticated
@@ -283,17 +283,17 @@ jobs:
           SERVER_PORT=5001
           KEY_VAULT_URI=$KEY_VAULT_URI
           AZURE_STORAGE_CONNECTION_STRING="storage-account-connection-string"
-          MAINDB_NAME=main-database-name-pvt
-          MAINDB_PASSWORD=main-db-admin-password-pvt
-          MAINDB_USERNAME=main-db-admin-username-pvt
-          MAINDB_ENDPOINT=main-db-endpoint-pvt
-          ORGDB_NAME=org-database-name-pvt
-          ORGDB_PASSWORD=org-db-admin-password-pvt
-          ORGDB_USERNAME=org-db-admin-username-pvt
-          ORGDB_ENDPOINT=org-db-endpoint-pvt
+          MAINDB_NAME=main-database-name
+          MAINDB_PASSWORD=main-db-admin-password
+          MAINDB_USERNAME=main-db-admin-username
+          MAINDB_ENDPOINT=main-db-endpoint
+          ORGDB_NAME=org-database-name
+          ORGDB_PASSWORD=org-db-admin-password
+          ORGDB_USERNAME=org-db-admin-username
+          ORGDB_ENDPOINT=org-db-endpoint
           LOG_LEVEL=debug
-          NODE_ENV=PREPROD
-          NODE_ENV_DB_PREFIX="S001-"
+          NODE_ENV=QA
+          NODE_ENV_DB_PREFIX="U001-"
           AZURE_TENANT_ID=${{ secrets.CERTAINTI_AZURE_TENANT_ID }}
           AZURE_CLIENT_ID=${{secrets.CERTAINTI_AZURE_CLIENT_ID}}
           AZURE_CLIENT_SECRET=${{secrets.CERTAINTI_AZURE_CLIENT_SECRET}}
@@ -302,11 +302,11 @@ jobs:
           echo "$ENV_FILE file created successfully!"
       - name: Copy .env file to VM
         run: |
-          scp -o StrictHostKeyChecking=no .env.accountmodule adminuser@${{ secrets.PREPROD_BACKEND_VM_HOST }}:/tmp/
+          scp -o StrictHostKeyChecking=no .env.accountmodule adminuser@${{ secrets.QA_BACKEND_VM_HOST }}:/tmp/
         working-directory: account-module
       - name: SSH into VM and deploy
         run: |
-          ssh -o StrictHostKeyChecking=no adminuser@${{ secrets.PREPROD_BACKEND_VM_HOST }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no adminuser@${{ secrets.QA_BACKEND_VM_HOST }} << 'EOF'
             sudo -s
             cd /app/backend
 
@@ -322,11 +322,11 @@ jobs:
           
             # Update only the account-module image tag
             echo "Updating docker-compose.yml..."
-            sed -i 's|image:.*account-module:.*|image: ${{ secrets.PREPROD_ACR_LOGIN_SERVER }}/account-module:${{ env.IMAGE_TAG }}|' docker-compose.yml
+            sed -i 's|image:.*account-module:.*|image: ${{ secrets.QA_ACR_LOGIN_SERVER }}/account-module:${{ env.IMAGE_TAG }}|' docker-compose.yml
             echo "Docker Compose updated successfully!"
           
             # Login to ACR 
-            az acr login --name ${{ secrets.PREPROD_ACR_NAME }}
+            az acr login --name ${{ secrets.QA_ACR_NAME }}
             echo "Logged in to ACR successfully!"
           
             # Pull latest changes and restart
@@ -359,18 +359,19 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
       - name: Login to ACR
-        run: az acr login --name ${{ secrets.PREPROD_ACR_NAME }}
+        run: az acr login --name ${{ secrets.QA_ACR_NAME }}
         working-directory: entity-module
       - name: Build Docker Image
         run: |
-          docker build -t ${{ secrets.PREPROD_ACR_LOGIN_SERVER }}/entity-module:${{ env.IMAGE_TAG }} .
+          docker build -t ${{ secrets.QA_ACR_LOGIN_SERVER }}/entity-module:${{ env.IMAGE_TAG }} .
         working-directory: entity-module
       - name: Push Docker Image to ACR
-        run: docker push ${{ secrets.PREPROD_ACR_LOGIN_SERVER }}/entity-module:${{ env.IMAGE_TAG }}
+        run: docker push ${{ secrets.QA_ACR_LOGIN_SERVER }}/entity-module:${{ env.IMAGE_TAG }}
         working-directory: entity-module
+
       - name: Cleanup old Docker tags in ACR (keep latest 10)
         run: |
-          ACR_NAME=${{ secrets.PREPROD_ACR_NAME }}
+          ACR_NAME=${{ secrets.QA_ACR_NAME }}
           REPO_NAME="entity-module"
           KEEP_LATEST=10
 
@@ -391,13 +392,13 @@ jobs:
       - name: Set up SSH key
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.PREPROD_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          echo "${{ secrets.QA_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.PREPROD_BACKEND_VM_HOST }} >> ~/.ssh/known_hosts
+          ssh-keyscan -H ${{ secrets.QA_BACKEND_VM_HOST }} >> ~/.ssh/known_hosts
       - name: Fetch secrets and create .env file
         working-directory: entity-module
         run: |
-          KEY_VAULT_NAME=${{ secrets.PREPROD_KEY_VAULT_NAME }}
+          KEY_VAULT_NAME=${{ secrets.QA_KEY_VAULT_NAME }}
           ENV_FILE=".env.entitymodule"
           
           # Ensure Azure CLI is authenticated
@@ -416,32 +417,32 @@ jobs:
           cat <<EOF > $ENV_FILE
           SERVER_PORT=5006
           KEY_VAULT_URI=$KEY_VAULT_URI
-          MAINDB_NAME=main-database-name-pvt
-          MAINDB_PASSWORD=main-db-admin-password-pvt
-          MAINDB_USERNAME=main-db-admin-username-pvt
-          MAINDB_ENDPOINT=main-db-endpoint-pvt
-          ORGDB_NAME=org-database-name-pvt
-          ORGDB_PASSWORD=org-db-admin-password-pvt
-          ORGDB_USERNAME=org-db-admin-username-pvt
-          ORGDB_ENDPOINT=org-db-endpoint-pvt
+          MAINDB_NAME=main-database-name
+          MAINDB_PASSWORD=main-db-admin-password
+          MAINDB_USERNAME=main-db-admin-username
+          MAINDB_ENDPOINT=main-db-endpoint
+          ORGDB_NAME=org-database-name
+          ORGDB_PASSWORD=org-db-admin-password
+          ORGDB_USERNAME=org-db-admin-username
+          ORGDB_ENDPOINT=org-db-endpoint
           LOG_LEVEL=debug
-          NODE_ENV=PREPROD
-          NODE_ENV_DB_PREFIX="S001-"
+          NODE_ENV=QA
+          NODE_ENV_DB_PREFIX="U001-"
           AZURE_STORAGE_CONNECTION_STRING="storage-account-connection-string"
-          EMAIL_WEBHOOK_URL='https://preprod-thinkrd365-api-management.azure-api.net/interactionService/api/email/webhook'
+          EMAIL_WEBHOOK_URL='https://qa-thinkrd365-api-management.azure-api.net/interactionService/api/email/webhook'
           CLIENT_SECRET_ENCRYPTION_KEY=client-secret-encryption-key
           CLIENT_SECRET_ENCRYPTION_LENGTH=16
-          KAFKA_BROKER=${{ secrets.PREPROD_KAFKA_BROKER }}
+          KAFKA_BROKER=${{ secrets.QA_KAFKA_BROKER }}
           KAFKA_AI_REQUEST_TRIGGER_TOPIC = "ai_assessment_request"
           EOF
           echo "$ENV_FILE file created successfully!"
       - name: Copy .env file to VM
         run: |
-          scp -o StrictHostKeyChecking=no .env.entitymodule adminuser@${{ secrets.PREPROD_BACKEND_VM_HOST }}:/tmp/
+          scp -o StrictHostKeyChecking=no .env.entitymodule adminuser@${{ secrets.QA_BACKEND_VM_HOST }}:/tmp/
         working-directory: entity-module
       - name: SSH into VM and deploy
         run: |
-          ssh -o StrictHostKeyChecking=no adminuser@${{ secrets.PREPROD_BACKEND_VM_HOST }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no adminuser@${{ secrets.QA_BACKEND_VM_HOST }} << 'EOF'
             sudo -s
             cd /app/backend
 
@@ -457,11 +458,11 @@ jobs:
           
             # Update only the entity-module image tag
             echo "Updating docker-compose.yml..."
-            sed -i 's|image:.*entity-module:.*|image: ${{ secrets.PREPROD_ACR_LOGIN_SERVER }}/entity-module:${{ env.IMAGE_TAG }}|' docker-compose.yml
+            sed -i 's|image:.*entity-module:.*|image: ${{ secrets.QA_ACR_LOGIN_SERVER }}/entity-module:${{ env.IMAGE_TAG }}|' docker-compose.yml
             echo "Docker Compose updated successfully!"
           
             # Login to ACR 
-            az acr login --name ${{ secrets.PREPROD_ACR_NAME }}
+            az acr login --name ${{ secrets.QA_ACR_NAME }}
             echo "Logged in to ACR successfully!"
           
             # Pull latest changes and restart
@@ -488,25 +489,25 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Set Up Tag
-        run: echo "IMAGE_TAG=$(git rev-parse --short HEAD)" >> $GITHUB_ENV  
+        run: echo "IMAGE_TAG=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
       - name: Login to Azure
         uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
       - name: Login to ACR
-        run: az acr login --name ${{ secrets.PREPROD_ACR_NAME }}
+        run: az acr login --name ${{ secrets.QA_ACR_NAME }}
         working-directory: interaction-module
       - name: Build Docker Image
         run: |
-          docker build -t ${{ secrets.PREPROD_ACR_LOGIN_SERVER }}/interaction-module:${{ env.IMAGE_TAG }} .
+          docker build -t ${{ secrets.QA_ACR_LOGIN_SERVER }}/interaction-module:${{ env.IMAGE_TAG }} .
         working-directory: interaction-module
       - name: Push Docker Image to ACR
-        run: docker push ${{ secrets.PREPROD_ACR_LOGIN_SERVER }}/interaction-module:${{ env.IMAGE_TAG }}
+        run: docker push ${{ secrets.QA_ACR_LOGIN_SERVER }}/interaction-module:${{ env.IMAGE_TAG }}
         working-directory: interaction-module
 
       - name: Cleanup old Docker tags in ACR (keep latest 10)
         run: |
-          ACR_NAME=${{ secrets.PREPROD_ACR_NAME }}
+          ACR_NAME=${{ secrets.QA_ACR_NAME }}
           REPO_NAME="interaction-module"
           KEEP_LATEST=10
 
@@ -526,13 +527,13 @@ jobs:
       - name: Set up SSH key
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.PREPROD_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          echo "${{ secrets.QA_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.PREPROD_BACKEND_VM_HOST }} >> ~/.ssh/known_hosts
+          ssh-keyscan -H ${{ secrets.QA_BACKEND_VM_HOST }} >> ~/.ssh/known_hosts
       - name: Fetch secrets and create .env file
         working-directory: interaction-module
         run: |
-          KEY_VAULT_NAME=${{ secrets.PREPROD_KEY_VAULT_NAME }}
+          KEY_VAULT_NAME=${{ secrets.QA_KEY_VAULT_NAME }}
           ENV_FILE=".env.interactionmodule"
           
           # Ensure Azure CLI is authenticated
@@ -556,48 +557,48 @@ jobs:
           KEY_VAULT_URI=$KEY_VAULT_URI
           AZURE_SCOPE=https://graph.microsoft.com/.default
           AZURE_STORAGE_CONNECTION_STRING="storage-account-connection-string"
-          MAINDB_NAME=main-database-name-pvt
-          MAINDB_PASSWORD=main-db-admin-password-pvt
-          MAINDB_USERNAME=main-db-admin-username-pvt
-          MAINDB_ENDPOINT=main-db-endpoint-pvt
-          ORGDB_NAME=org-database-name-pvt
-          ORGDB_PASSWORD=org-db-admin-password-pvt
-          ORGDB_USERNAME=org-db-admin-username-pvt
-          ORGDB_ENDPOINT=org-db-endpoint-pvt
+          MAINDB_NAME=main-database-name
+          MAINDB_PASSWORD=main-db-admin-password
+          MAINDB_USERNAME=main-db-admin-username
+          MAINDB_ENDPOINT=main-db-endpoint
+          ORGDB_NAME=org-database-name
+          ORGDB_PASSWORD=org-db-admin-password
+          ORGDB_USERNAME=org-db-admin-username
+          ORGDB_ENDPOINT=org-db-endpoint
           MAIL_TENANT_ID=$MAIL_TENANT_ID
           MAIL_CLIENT_ID=$MAIL_CLIENT_ID
           MAIL_CLIENT_SECRET=$MAIL_CLIENT_SECRET
           EMAIL_FROM=interactions@certainti.ai
-          LOGIN_URL=https://thinkrd365-preprod.certainti.ai
+          LOGIN_URL=https://thinkrd365-qa.certainti.ai
           SUPPORT_EMAIL=support@certainti.ai
           LOG_LEVEL=debug
-          NODE_ENV=PREPROD
-          TRIGGER_AI_URL=${{ secrets.PREPROD_TRIGGER_AI_URL }}
-          NODE_ENV_DB_PREFIX="S001-"
-          INTERACTION_URL="https://thinkrd365-preprod.certainti.ai/ext/interaction"
-          KAFKA_BROKER=${{ secrets.PREPROD_KAFKA_BROKER }}
+          NODE_ENV=QA
+          TRIGGER_AI_URL=${{ secrets.QA_TRIGGER_AI_URL}}
+          NODE_ENV_DB_PREFIX="U001-"
+          INTERACTION_URL="https://thinkrd365-qa.certainti.ai/ext/interaction"
+          KAFKA_BROKER=${{ secrets.QA_KAFKA_BROKER }}
           KAFKA_CONSUMER_GROUP="ai_assessment_request"
           KAFKA_AI_RESPONSE_TRIGGER_TOPIC="ai_assessment_response"
           KAFKA_AI_REQUEST_TRIGGER_TOPIC = "ai_assessment_request"
-          SYSTEM_USER_ID = "S001-477aac5d-3d92-4420-8e65-4153af4f3aed"
-          JWT_EXPIRY='1h'
-           WEBHOOK_API_CLIENT_ID=webhook-api-client-id
+          SYSTEM_USER_ID = "U001-477aac5d-3d92-4420-8e65-4153af4f3aed"
+          JWT_EXPIRY='1h'   
+          WEBHOOK_API_CLIENT_ID=webhook-api-client-id
           WEBHOOK_API_CLIENT_SECRET=webhook-api-client-secret
           WEBHOOK_API_TENANT_ID=$MAIL_TENANT_ID
           SCHEDULER_EXPRESSION=scheduler-expression 
-          SCHEDULER_EMAIL=scheduler-email      
+          SCHEDULER_EMAIL=scheduler-email    
           CLIENT_SECRET_ENCRYPTION_KEY=client-secret-encryption-key
-          CLIENT_SECRET_ENCRYPTION_LENGTH=16
-          SUBSCRIPTION_RENEW_TIMER = "subscription-renewal-timer"
+          CLIENT_SECRET_ENCRYPTION_LENGTH=16 
+          SUBSCRIPTION_RENEW_TIMER = "subscription-renewal-timer"        
           EOF
           echo "$ENV_FILE file created successfully!"
       - name: Copy .env file to VM
         run: |
-          scp -o StrictHostKeyChecking=no .env.interactionmodule adminuser@${{ secrets.PREPROD_BACKEND_VM_HOST }}:/tmp/
+          scp -o StrictHostKeyChecking=no .env.interactionmodule adminuser@${{ secrets.QA_BACKEND_VM_HOST }}:/tmp/
         working-directory: interaction-module
       - name: SSH into VM and deploy
         run: |
-          ssh -o StrictHostKeyChecking=no adminuser@${{ secrets.PREPROD_BACKEND_VM_HOST }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no adminuser@${{ secrets.QA_BACKEND_VM_HOST }} << 'EOF'
             sudo -s
             cd /app/backend
 
@@ -613,7 +614,7 @@ jobs:
           
             # Update only the interaction-module image tag
             echo "Updating docker-compose.yml..."
-            sed -i '/interaction-module:/,/image:/ s|image:.*|image: '"${{ secrets.PREPROD_ACR_LOGIN_SERVER }}"'/interaction-module:${{ env.IMAGE_TAG }}|' docker-compose.yml
+            sed -i '/interaction-module:/,/image:/ s|image:.*|image: '"${{ secrets.QA_ACR_LOGIN_SERVER }}"'/interaction-module:${{ env.IMAGE_TAG }}|' docker-compose.yml
             echo "Docker Compose updated successfully!"
 
             # Verify the change
@@ -621,7 +622,7 @@ jobs:
             grep -A5 -B2 "interaction-module:" docker-compose.yml
           
             # Login to ACR 
-            az acr login --name ${{ secrets.PREPROD_ACR_NAME }}
+            az acr login --name ${{ secrets.QA_ACR_NAME }}
             echo "Logged in to ACR successfully!"
           
             # Pull latest changes and restart
@@ -654,19 +655,19 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
       - name: Login to ACR
-        run: az acr login --name ${{ secrets.PREPROD_ACR_NAME }}
+        run: az acr login --name ${{ secrets.QA_ACR_NAME }}
         working-directory: ext-interaction-module
       - name: Build Docker Image
         run: |
-          docker build -t ${{ secrets.PREPROD_ACR_LOGIN_SERVER }}/ext-interaction-module:${{ env.IMAGE_TAG }} .
+          docker build -t ${{ secrets.QA_ACR_LOGIN_SERVER }}/ext-interaction-module:${{ env.IMAGE_TAG }} .
         working-directory: ext-interaction-module
       - name: Push Docker Image to ACR
-        run: docker push ${{ secrets.PREPROD_ACR_LOGIN_SERVER }}/ext-interaction-module:${{ env.IMAGE_TAG }}
+        run: docker push ${{ secrets.QA_ACR_LOGIN_SERVER }}/ext-interaction-module:${{ env.IMAGE_TAG }}
         working-directory: ext-interaction-module
 
       - name: Cleanup old Docker tags in ACR (keep latest 10)
         run: |
-          ACR_NAME=${{ secrets.PREPROD_ACR_NAME }}
+          ACR_NAME=${{ secrets.QA_ACR_NAME }}
           REPO_NAME="ext-interaction-module"
           KEEP_LATEST=10
 
@@ -687,13 +688,13 @@ jobs:
       - name: Set up SSH key
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.PREPROD_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          echo "${{ secrets.QA_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.PREPROD_BACKEND_VM_HOST }} >> ~/.ssh/known_hosts
+          ssh-keyscan -H ${{ secrets.QA_BACKEND_VM_HOST }} >> ~/.ssh/known_hosts
       - name: Fetch secrets and create .env file
         working-directory: ext-interaction-module
         run: |
-          KEY_VAULT_NAME=${{ secrets.PREPROD_KEY_VAULT_NAME }}
+          KEY_VAULT_NAME=${{ secrets.QA_KEY_VAULT_NAME }}
           ENV_FILE=".env.extinteractionmodule"
           
           # Ensure Azure CLI is authenticated
@@ -717,24 +718,24 @@ jobs:
           KEY_VAULT_URI=$KEY_VAULT_URI
           AZURE_SCOPE=https://graph.microsoft.com/.default
           AZURE_STORAGE_CONNECTION_STRING="storage-account-connection-string"
-          MAINDB_NAME=main-database-name-pvt
-          MAINDB_PASSWORD=main-db-admin-password-pvt
-          MAINDB_USERNAME=main-db-admin-username-pvt
-          MAINDB_ENDPOINT=main-db-endpoint-pvt
-          ORGDB_NAME=org-database-name-pvt
-          ORGDB_PASSWORD=org-db-admin-password-pvt
-          ORGDB_USERNAME=org-db-admin-username-pvt
-          ORGDB_ENDPOINT=org-db-endpoint-pvt
+          MAINDB_NAME=main-database-name
+          MAINDB_PASSWORD=main-db-admin-password
+          MAINDB_USERNAME=main-db-admin-username
+          MAINDB_ENDPOINT=main-db-endpoint
+          ORGDB_NAME=org-database-name
+          ORGDB_PASSWORD=org-db-admin-password
+          ORGDB_USERNAME=org-db-admin-username
+          ORGDB_ENDPOINT=org-db-endpoint
           MAIL_TENANT_ID=$MAIL_TENANT_ID
           MAIL_CLIENT_ID=$MAIL_CLIENT_ID
           MAIL_CLIENT_SECRET=$MAIL_CLIENT_SECRET
           EMAIL_FROM=interactions@certainti.ai
-          LOGIN_URL=https://thinkrd365-preprod.certainti.ai
+          LOGIN_URL=https://thinkrd365-qa.certainti.ai
           SUPPORT_EMAIL=support@certainti.ai
           LOG_LEVEL=debug
-          NODE_ENV=PREPROD
-          INTERACTION_BASE_URL='https://preprod-thinkrd365-api-management.azure-api.net/interactionService/api'
-          NODE_ENV_DB_PREFIX="S001-"
+          NODE_ENV=QA
+          INTERACTION_BASE_URL='https://qa-thinkrd365-api-management.azure-api.net/interactionService/api'
+          NODE_ENV_DB_PREFIX="U001-"
           JWT_SECRET=jwt-secret
           CUSTOM_PVT_KEY=custom-pvt
           CUSTOM_PUB_KEY=custom-pub
@@ -746,12 +747,12 @@ jobs:
           echo "$ENV_FILE file created successfully!"
       - name: Copy .env file to VM
         run: |
-          scp -o StrictHostKeyChecking=no .env.extinteractionmodule adminuser@${{ secrets.PREPROD_BACKEND_VM_HOST }}:/tmp/
+          scp -o StrictHostKeyChecking=no .env.extinteractionmodule adminuser@${{ secrets.QA_BACKEND_VM_HOST }}:/tmp/
         working-directory: ext-interaction-module
-        
+
       - name: SSH into VM and deploy
         run: |
-          ssh -o StrictHostKeyChecking=no adminuser@${{ secrets.PREPROD_BACKEND_VM_HOST }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no adminuser@${{ secrets.QA_BACKEND_VM_HOST }} << 'EOF'
             sudo -s
             cd /app/backend
 
@@ -767,7 +768,7 @@ jobs:
           
             # Update only the ext-interaction-module image tag
             echo "Updating docker-compose.yml..."
-            sed -i '/ext-interaction-module:/,/image:/ s|image:.*|image: '"${{ secrets.PREPROD_ACR_LOGIN_SERVER }}"'/ext-interaction-module:${{ env.IMAGE_TAG }}|' docker-compose.yml
+            sed -i '/ext-interaction-module:/,/image:/ s|image:.*|image: '"${{ secrets.QA_ACR_LOGIN_SERVER }}"'/ext-interaction-module:${{ env.IMAGE_TAG }}|' docker-compose.yml
             echo "Docker Compose updated successfully!"
 
             # Verify the change
@@ -775,7 +776,7 @@ jobs:
             grep -A5 -B2 "ext-interaction-module:" docker-compose.yml
           
             # Login to ACR 
-            az acr login --name ${{ secrets.PREPROD_ACR_NAME }}
+            az acr login --name ${{ secrets.QA_ACR_NAME }}
             echo "Logged in to ACR successfully!"
           
             # Pull latest changes and restart
@@ -808,19 +809,19 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
       - name: Login to ACR
-        run: az acr login --name ${{ secrets.PREPROD_ACR_NAME }}
+        run: az acr login --name ${{ secrets.QA_ACR_NAME }}
         working-directory: event-stream-module
       - name: Build Docker Image
         run: |
-          docker build -t ${{ secrets.PREPROD_ACR_LOGIN_SERVER }}/event-stream-module:${{ env.IMAGE_TAG }} .
+          docker build -t ${{ secrets.QA_ACR_LOGIN_SERVER }}/event-stream-module:${{ env.IMAGE_TAG }} .
         working-directory: event-stream-module
       - name: Push Docker Image to ACR
-        run: docker push ${{ secrets.PREPROD_ACR_LOGIN_SERVER }}/event-stream-module:${{ env.IMAGE_TAG }}
+        run: docker push ${{ secrets.QA_ACR_LOGIN_SERVER }}/event-stream-module:${{ env.IMAGE_TAG }}
         working-directory: event-stream-module
 
       - name: Cleanup old Docker tags in ACR (keep latest 10)
         run: |
-          ACR_NAME=${{ secrets.PREPROD_ACR_NAME }}
+          ACR_NAME=${{ secrets.QA_ACR_NAME }}
           REPO_NAME="event-stream-module"
           KEEP_LATEST=10
 
@@ -837,17 +838,17 @@ jobs:
               az acr repository delete --name "$ACR_NAME" --image "$REPO_NAME:$tag" --yes
             done
           fi
-          
+
       - name: Set up SSH key
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.PREPROD_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          echo "${{ secrets.QA_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.PREPROD_BACKEND_VM_HOST }} >> ~/.ssh/known_hosts
+          ssh-keyscan -H ${{ secrets.QA_BACKEND_VM_HOST }} >> ~/.ssh/known_hosts
       - name: Fetch secrets and create .env file
         working-directory: event-stream-module
         run: |
-          KEY_VAULT_NAME=${{ secrets.PREPROD_KEY_VAULT_NAME }}
+          KEY_VAULT_NAME=${{ secrets.QA_KEY_VAULT_NAME }}
           ENV_FILE=".env.eventstreammodule"
           
           # Ensure Azure CLI is authenticated
@@ -871,30 +872,30 @@ jobs:
           KEY_VAULT_URI=$KEY_VAULT_URI
           AZURE_SCOPE=https://graph.microsoft.com/.default
           AZURE_STORAGE_CONNECTION_STRING="storage-account-connection-string"
-          MAINDB_NAME=main-database-name-pvt
-          MAINDB_PASSWORD=main-db-admin-password-pvt
-          MAINDB_USERNAME=main-db-admin-username-pvt
-          MAINDB_ENDPOINT=main-db-endpoint-pvt
-          ORGDB_NAME=org-database-name-pvt
-          ORGDB_PASSWORD=org-db-admin-password-pvt
-          ORGDB_USERNAME=org-db-admin-username-pvt
-          ORGDB_ENDPOINT=org-db-endpoint-pvt
+          MAINDB_NAME=main-database-name
+          MAINDB_PASSWORD=main-db-admin-password
+          MAINDB_USERNAME=main-db-admin-username
+          MAINDB_ENDPOINT=main-db-endpoint
+          ORGDB_NAME=org-database-name
+          ORGDB_PASSWORD=org-db-admin-password
+          ORGDB_USERNAME=org-db-admin-username
+          ORGDB_ENDPOINT=org-db-endpoint
           MAIL_TENANT_ID=$MAIL_TENANT_ID
           MAIL_CLIENT_ID=$MAIL_CLIENT_ID
           MAIL_CLIENT_SECRET=$MAIL_CLIENT_SECRET
           EMAIL_FROM=interactions@certainti.ai
-          LOGIN_URL=https://thinkrd365-preprod.certainti.ai
+          LOGIN_URL=https://thinkrd365-qa.certainti.ai
           SUPPORT_EMAIL=support@certainti.ai
           LOG_LEVEL=debug
-          NODE_ENV=PREPROD
-          TRIGGER_AI_URL=${{ secrets.PREPROD_TRIGGER_AI_URL }}
-          NODE_ENV_DB_PREFIX="S001-"
-          INTERACTION_URL="https://thinkrd365-preprod.certainti.ai/ext/interaction"
-          KAFKA_BROKER=${{ secrets.PREPROD_KAFKA_BROKER }}
+          NODE_ENV=QA
+          TRIGGER_AI_URL=${{ secrets.QA_TRIGGER_AI_URL}}
+          NODE_ENV_DB_PREFIX="U001-"
+          INTERACTION_URL="https://thinkrd365-qa.certainti.ai/ext/interaction"
+          KAFKA_BROKER=${{ secrets.QA_KAFKA_BROKER }}
           KAFKA_CONSUMER_GROUP="ai_assessment_response"
           KAFKA_AI_RESPONSE_TRIGGER_TOPIC="ai_assessment_response"
           KAFKA_AI_REQUEST_TRIGGER_TOPIC = "ai_assessment_request"
-          SYSTEM_USER_ID = "S001-477aac5d-3d92-4420-8e65-4153af4f3aed"
+          SYSTEM_USER_ID = "U001-477aac5d-3d92-4420-8e65-4153af4f3aed"
           CUSTOM_PVT_KEY=custom-pvt
           CUSTOM_PUB_KEY=custom-pub
           CUSTOM_JWT_AUDIENCE=custom-jwt-audience
@@ -903,11 +904,11 @@ jobs:
           echo "$ENV_FILE file created successfully!"
       - name: Copy .env file to VM
         run: |
-          scp -o StrictHostKeyChecking=no .env.eventstreammodule adminuser@${{ secrets.PREPROD_BACKEND_VM_HOST }}:/tmp/
+          scp -o StrictHostKeyChecking=no .env.eventstreammodule adminuser@${{ secrets.QA_BACKEND_VM_HOST }}:/tmp/
         working-directory: event-stream-module
       - name: SSH into VM and deploy
         run: |
-          ssh -o StrictHostKeyChecking=no adminuser@${{ secrets.PREPROD_BACKEND_VM_HOST }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no adminuser@${{ secrets.QA_BACKEND_VM_HOST }} << 'EOF'
             sudo -s
             cd /app/backend
 
@@ -923,7 +924,7 @@ jobs:
           
             # Update only the event-stream-module image tag
             echo "Updating docker-compose.yml..."
-            sed -i '/event-stream-module:/,/image:/ s|image:.*|image: '"${{ secrets.PREPROD_ACR_LOGIN_SERVER }}"'/event-stream-module:${{ env.IMAGE_TAG }}|' docker-compose.yml
+            sed -i '/event-stream-module:/,/image:/ s|image:.*|image: '"${{ secrets.QA_ACR_LOGIN_SERVER }}"'/event-stream-module:${{ env.IMAGE_TAG }}|' docker-compose.yml
             echo "Docker Compose updated successfully!"
 
             # Verify the change
@@ -931,7 +932,7 @@ jobs:
             grep -A5 -B2 "event-stream-module:" docker-compose.yml
           
             # Login to ACR 
-            az acr login --name ${{ secrets.PREPROD_ACR_NAME }}
+            az acr login --name ${{ secrets.QA_ACR_NAME }}
             echo "Logged in to ACR successfully!"
           
             # Pull latest changes and restart
@@ -964,19 +965,19 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
       - name: Login to ACR
-        run: az acr login --name ${{ secrets.PREPROD_ACR_NAME }}
+        run: az acr login --name ${{ secrets.QA_ACR_NAME }}
         working-directory: case-module
       - name: Build Docker Image
         run: |
-          docker build -t ${{ secrets.PREPROD_ACR_LOGIN_SERVER }}/case-module:${{ env.IMAGE_TAG }} .
+          docker build -t ${{ secrets.QA_ACR_LOGIN_SERVER }}/case-module:${{ env.IMAGE_TAG }} .
         working-directory: case-module
       - name: Push Docker Image to ACR
-        run: docker push ${{ secrets.PREPROD_ACR_LOGIN_SERVER }}/case-module:${{ env.IMAGE_TAG }}
+        run: docker push ${{ secrets.QA_ACR_LOGIN_SERVER }}/case-module:${{ env.IMAGE_TAG }}
         working-directory: case-module
 
       - name: Cleanup old Docker tags in ACR (keep latest 10)
         run: |
-          ACR_NAME=${{ secrets.PREPROD_ACR_NAME }}
+          ACR_NAME=${{ secrets.QA_ACR_NAME }}
           REPO_NAME="case-module"
           KEEP_LATEST=10
 
@@ -997,13 +998,13 @@ jobs:
       - name: Set up SSH key
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.PREPROD_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          echo "${{ secrets.QA_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.PREPROD_BACKEND_VM_HOST }} >> ~/.ssh/known_hosts
+          ssh-keyscan -H ${{ secrets.QA_BACKEND_VM_HOST }} >> ~/.ssh/known_hosts
       - name: Fetch secrets and create .env file
         working-directory: case-module
         run: |
-          KEY_VAULT_NAME=${{ secrets.PREPROD_KEY_VAULT_NAME }}
+          KEY_VAULT_NAME=${{ secrets.QA_KEY_VAULT_NAME }}
           ENV_FILE=".env.casemodule"
           
           # Ensure Azure CLI is authenticated
@@ -1024,31 +1025,31 @@ jobs:
           KEY_VAULT_URI=$KEY_VAULT_URI
           AZURE_SCOPE=https://graph.microsoft.com/.default
           AZURE_STORAGE_CONNECTION_STRING = "storage-account-connection-string"
-          MAINDB_NAME=main-database-name-pvt
-          MAINDB_PASSWORD=main-db-admin-password-pvt
-          MAINDB_USERNAME=main-db-admin-username-pvt
-          MAINDB_ENDPOINT=main-db-endpoint-pvt
-          ORGDB_NAME=org-database-name-pvt
-          ORGDB_PASSWORD=org-db-admin-password-pvt
-          ORGDB_USERNAME=org-db-admin-username-pvt
-          ORGDB_ENDPOINT=org-db-endpoint-pvt
+          MAINDB_NAME=main-database-name
+          MAINDB_PASSWORD=main-db-admin-password
+          MAINDB_USERNAME=main-db-admin-username
+          MAINDB_ENDPOINT=main-db-endpoint
+          ORGDB_NAME=org-database-name
+          ORGDB_PASSWORD=org-db-admin-password
+          ORGDB_USERNAME=org-db-admin-username
+          ORGDB_ENDPOINT=org-db-endpoint
           LOG_LEVEL=debug
-          NODE_ENV=PREPROD
-          NODE_ENV_DB_PREFIX="S001-"
-          SYSTEM_USER_ID = "S001-477aac5d-3d92-4420-8e65-4153af4f3aed"
+          NODE_ENV=QA
+          NODE_ENV_DB_PREFIX="U001-"
+          SYSTEM_USER_ID = "U001-477aac5d-3d92-4420-8e65-4153af4f3aed"
           VITE_CASE_URL=/caseService
           CLIENT_SECRET_ENCRYPTION_KEY='client-secret-encryption-key'
           CLIENT_SECRET_ENCRYPTION_LENGTH=16
-          RULEBUILDER_BASE_URL='https://preprod-thinkrd365-api-management.azure-api.net/rulebuilderService/api'
+          RULEBUILDER_BASE_URL='https://qa-thinkrd365-api-management.azure-api.net/rulebuilderService/api'
           EOF
           echo "$ENV_FILE file created successfully!"
       - name: Copy .env file to VM
         run: |
-          scp -o StrictHostKeyChecking=no .env.casemodule adminuser@${{ secrets.PREPROD_BACKEND_VM_HOST }}:/tmp/
+          scp -o StrictHostKeyChecking=no .env.casemodule adminuser@${{ secrets.QA_BACKEND_VM_HOST }}:/tmp/
         working-directory: case-module
       - name: SSH into VM and deploy
         run: |
-          ssh -o StrictHostKeyChecking=no adminuser@${{ secrets.PREPROD_BACKEND_VM_HOST }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no adminuser@${{ secrets.QA_BACKEND_VM_HOST }} << 'EOF'
             sudo -s
             cd /app/backend
 
@@ -1064,11 +1065,11 @@ jobs:
           
             # Update only the case-module image tag
             echo "Updating docker-compose.yml..."
-            sed -i 's|image:.*case-module:.*|image: ${{ secrets.PREPROD_ACR_LOGIN_SERVER }}/case-module:${{ env.IMAGE_TAG }}|' docker-compose.yml
+            sed -i 's|image:.*case-module:.*|image: ${{ secrets.QA_ACR_LOGIN_SERVER }}/case-module:${{ env.IMAGE_TAG }}|' docker-compose.yml
             echo "Docker Compose updated successfully!"
           
             # Login to ACR 
-            az acr login --name ${{ secrets.PREPROD_ACR_NAME }}
+            az acr login --name ${{ secrets.QA_ACR_NAME }}
             echo "Logged in to ACR successfully!"
           
             # Pull latest changes and restart
@@ -1083,7 +1084,7 @@ jobs:
               exit 1
             fi
           EOF
-          
+
   # JOB to build backend rule-builder-module code
   rule-builder-module:
     needs:
@@ -1101,19 +1102,19 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
       - name: Login to ACR
-        run: az acr login --name ${{ secrets.PREPROD_ACR_NAME }}
+        run: az acr login --name ${{ secrets.QA_ACR_NAME }}
         working-directory: rule-builder-module
       - name: Build Docker Image
         run: |
-          docker build -t ${{ secrets.PREPROD_ACR_LOGIN_SERVER }}/rule-builder-module:${{ env.IMAGE_TAG }} .
+          docker build -t ${{ secrets.QA_ACR_LOGIN_SERVER }}/rule-builder-module:${{ env.IMAGE_TAG }} .
         working-directory: rule-builder-module
       - name: Push Docker Image to ACR
-        run: docker push ${{ secrets.PREPROD_ACR_LOGIN_SERVER }}/rule-builder-module:${{ env.IMAGE_TAG }}
+        run: docker push ${{ secrets.QA_ACR_LOGIN_SERVER }}/rule-builder-module:${{ env.IMAGE_TAG }}
         working-directory: rule-builder-module
 
       - name: Cleanup old Docker tags in ACR (keep latest 10)
         run: |
-          ACR_NAME=${{ secrets.PREPROD_ACR_NAME }}
+          ACR_NAME=${{ secrets.QA_ACR_NAME }}
           REPO_NAME="rule-builder-module"
           KEEP_LATEST=10
 
@@ -1134,14 +1135,14 @@ jobs:
       - name: Set up SSH key
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.PREPROD_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          echo "${{ secrets.QA_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.PREPROD_BACKEND_VM_HOST }} >> ~/.ssh/known_hosts
+          ssh-keyscan -H ${{ secrets.QA_BACKEND_VM_HOST }} >> ~/.ssh/known_hosts
       - name: Fetch secrets and create .env file
         working-directory: rule-builder-module
         run: |
-          KEY_VAULT_NAME=${{ secrets.PREPROD_KEY_VAULT_NAME }}
-          ENV_FILE=".env.rule-buildermodule"
+          KEY_VAULT_NAME=${{ secrets.QA_KEY_VAULT_NAME }}
+          ENV_FILE=".env.rulebuildermodule"
           
           # Ensure Azure CLI is authenticated
           az account show > /dev/null 2>&1
@@ -1161,18 +1162,18 @@ jobs:
           KEY_VAULT_URI=$KEY_VAULT_URI
           AZURE_SCOPE=https://graph.microsoft.com/.default
           AZURE_STORAGE_CONNECTION_STRING = "storage-account-connection-string"
-          MAINDB_NAME=main-database-name-pvt
-          MAINDB_PASSWORD=main-db-admin-password-pvt
-          MAINDB_USERNAME=main-db-admin-username-pvt
-          MAINDB_ENDPOINT=main-db-endpoint-pvt
-          ORGDB_NAME=org-database-name-pvt
-          ORGDB_PASSWORD=org-db-admin-password-pvt
-          ORGDB_USERNAME=org-db-admin-username-pvt
-          ORGDB_ENDPOINT=org-db-endpoint-pvt
+          MAINDB_NAME=main-database-name
+          MAINDB_PASSWORD=main-db-admin-password
+          MAINDB_USERNAME=main-db-admin-username
+          MAINDB_ENDPOINT=main-db-endpoint
+          ORGDB_NAME=org-database-name
+          ORGDB_PASSWORD=org-db-admin-password
+          ORGDB_USERNAME=org-db-admin-username
+          ORGDB_ENDPOINT=org-db-endpoint
           LOG_LEVEL=debug
-          NODE_ENV=PREPROD
-          NODE_ENV_DB_PREFIX="S001-"
-          SYSTEM_USER_ID = "S001-477aac5d-3d92-4420-8e65-4153af4f3aed"
+          NODE_ENV=QA
+          NODE_ENV_DB_PREFIX="U001-"
+          SYSTEM_USER_ID = "U001-477aac5d-3d92-4420-8e65-4153af4f3aed"
           CLIENT_SECRET_ENCRYPTION_KEY='client-secret-encryption-key'
           CLIENT_SECRET_ENCRYPTION_LENGTH=16
           SCHEDULER_EXPRESSION=scheduler-expression 
@@ -1182,11 +1183,11 @@ jobs:
           echo "$ENV_FILE file created successfully!"
       - name: Copy .env file to VM
         run: |
-          scp -o StrictHostKeyChecking=no .env.rulebuildermodule adminuser@${{ secrets.PREPROD_BACKEND_VM_HOST }}:/tmp/
+          scp -o StrictHostKeyChecking=no .env.rulebuildermodule adminuser@${{ secrets.QA_BACKEND_VM_HOST }}:/tmp/
         working-directory: rule-builder-module
       - name: SSH into VM and deploy
         run: |
-          ssh -o StrictHostKeyChecking=no adminuser@${{ secrets.PREPROD_BACKEND_VM_HOST }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no adminuser@${{ secrets.QA_BACKEND_VM_HOST }} << 'EOF'
             sudo -s
             cd /app/backend
 
@@ -1197,16 +1198,16 @@ jobs:
             fi
             
             # Move .env file with sudo
-            sudo mv /tmp/.env.rule-buildermodule /app/backend/.env.rule-buildermodule
+            sudo mv /tmp/.env.rulebuildermodule /app/backend/.env.rulebuildermodule
             echo ".env file moved successfully!"
           
             # Update only the rule-builder-module image tag
             echo "Updating docker-compose.yml..."
-            sed -i 's|image:.*rule-builder-module:.*|image: ${{ secrets.PREPROD_ACR_LOGIN_SERVER }}/rule-builder-module:${{ env.IMAGE_TAG }}|' docker-compose.yml
+            sed -i 's|image:.*rule-builder-module:.*|image: ${{ secrets.QA_ACR_LOGIN_SERVER }}/rule-builder-module:${{ env.IMAGE_TAG }}|' docker-compose.yml
             echo "Docker Compose updated successfully!"
           
             # Login to ACR 
-            az acr login --name ${{ secrets.PREPROD_ACR_NAME }}
+            az acr login --name ${{ secrets.QA_ACR_NAME }}
             echo "Logged in to ACR successfully!"
           
             # Pull latest changes and restart
