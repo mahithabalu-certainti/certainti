@@ -1329,6 +1329,7 @@ async triggerNotification(taskContext:any,channel:string, ruleRid:string): Promi
             rawQueries.fetchAccountInfo(accountRid),
             { type: "SELECT" }
         );
+        
         let parentAccountNumber = accountNumber;
         if (accountInfo.storage_type === 'separate_db') {
             const [parentAccountInfo]: any[] =
