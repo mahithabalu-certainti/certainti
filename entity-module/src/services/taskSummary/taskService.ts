@@ -821,12 +821,46 @@ export class TaskService {
       // Build attachment display names for each schemaNumber group
       const attachmentDisplayNames: Record<string, string> = {};
 
-      await Promise.all(
-        Array.from(schemaAttachmentMap.entries()).map(async ([schemaNumber, attachments]) => {
-          const { displayNames, parentRid, currencyRid } = await this.getAttachmentDisplayNames(attachments, schemaNumber);
-          Object.assign(attachmentDisplayNames, displayNames);
-        })
-      );
+      const caseMap = new Map<string, string>();
+      if (flag === 'milestone') {
+        // Fetch resources for each schema number
+        await Promise.all(
+          Array.from(schemaAttachmentMap.entries()).map(async ([schemaNumber, attachments]) => {
+            try {
+              const schemaName = `${MAIN_SCHEMA_NAME}_${schemaNumber.replace(
+                /\D/g,
+                ""
+              )}`;
+              // Get unique RIDs for this schema
+              const uniqueRids = [...new Set(attachments.map((t: any) => t.attach_to))];
+
+              if (uniqueRids.length > 0) {
+                // Fetch from org database using schema number
+                const orgDb = await this.fetchOrgDb();
+                const casesForSchema = await orgDb.query(
+                  `SELECT rid, case_name FROM ${schemaName}.cases WHERE rid IN (:caseRids)`,
+                  { replacements: { caseRids: uniqueRids }, type: 'SELECT' }
+                );
+
+                // Add to resource map
+                casesForSchema.forEach((r: any) => {
+                  caseMap.set(r.rid, r.case_name);
+                });
+              }
+            } catch (error) {
+              console.error(`Error fetching resources for schema ${schemaNumber}:`, error);
+            }
+          })
+        );
+      }
+      else {
+        await Promise.all(
+          Array.from(schemaAttachmentMap.entries()).map(async ([schemaNumber, attachments]) => {
+            const { displayNames, parentRid, currencyRid } = await this.getAttachmentDisplayNames(attachments, schemaNumber);
+            Object.assign(attachmentDisplayNames, displayNames);
+          })
+        );
+      }
 
       // Get related resources (status, priority, assigned to)
       const resourceRids = [
@@ -938,7 +972,7 @@ export class TaskService {
           effective_start_datetime: taskData.effective_start_datetime,
           effective_end_datetime: taskData.effective_end_datetime,
           attachment_level: taskData.attachment_level,
-          attach_to_name: attachmentDisplayNames[taskData.rid] || taskData.attach_to,
+          attach_to_name: flag === 'milestone' ? (caseMap.get(taskData.attach_to) || taskData.attach_to) : (attachmentDisplayNames[taskData.rid] || taskData.attach_to),
           attach_to: taskData.attach_to,
           task_rid: taskData.task_rid
         };
