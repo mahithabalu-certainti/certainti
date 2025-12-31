@@ -261,7 +261,7 @@ export class CaseTaskSchemaService {
           let baseRuleEnginePayload: any = {
             userId: data.modified_by,
             accountRid: data.account_rid,
-            entityName: data.task_name,
+            taskName: data.task_name,
             entityRid: data.rid,
             eventName: ruleNames.taskCreated,
             entity: entityNames.task,
@@ -392,11 +392,6 @@ export class CaseTaskSchemaService {
                 }, { transaction });
               }
             }
-            const [caseInfo]: any[] = await this.mainDbSequelize.query(
-              rawQueries.fetchCaseName(data.case_rid),
-              { type: QueryTypes.SELECT }
-            );
-             baseRuleEnginePayload.caseName = caseInfo?.case_name;
             const fetchUpdatedColumns = getColumnsNamesForTaskUpdate(data, isTaskExists as any);
             if (fetchUpdatedColumns.length > 0) {
               let updatedColumnsStorage: string[] = []
@@ -425,7 +420,7 @@ export class CaseTaskSchemaService {
                   newValueString = columnMapping.get(newValue)
                   baseRuleEnginePayload.targetUserID = newValue;
                   baseRuleEnginePayload.targetEmail = emailMapping.get(newValue);
-                  baseRuleEnginePayload.assignee = "Updated";
+                  baseRuleEnginePayload.task = "Assigned";
                  
                   logMessage(`Triggering rule engine for assignee change with payload ${JSON.stringify(baseRuleEnginePayload)}`)
                    

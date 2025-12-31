@@ -16,8 +16,6 @@ export interface RuleMasterAttributes {
   schedule_offset_value?: string | null;
   created_by: string;
   modified_by?: string;
-  in_app_template_rid?: string | null;
-  email_template_rid?: string | null;
   created_datetime?: Date;
   modified_datetime?: Date;
 }
@@ -40,8 +38,6 @@ export class RuleMaster
   public scope_type_rid!: string;
   public schedule_offset_type?: string | null;
   public schedule_offset_value?: string | null;
-  public in_app_template_rid?: string | null;
-  public email_template_rid?: string | null;
   public created_by!: string;
   public modified_by?: string;
 
@@ -125,17 +121,6 @@ export class RuleMaster
           type: DataTypes.STRING,
           allowNull: true,
         },
-
-        in_app_template_rid: {
-          type: DataTypes.STRING,
-          allowNull: true,
-        },
-
-        email_template_rid: {
-          type: DataTypes.STRING,
-          allowNull: true,
-        },
-
         created_datetime: {
           type: DataTypes.DATE,
           allowNull: false,
@@ -144,8 +129,7 @@ export class RuleMaster
 
         modified_datetime: {
           type: DataTypes.DATE,
-          allowNull: true,
-          defaultValue: DataTypes.NOW,
+          allowNull: true
         },
       },
       {

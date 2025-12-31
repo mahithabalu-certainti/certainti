@@ -3,7 +3,7 @@ import { constants, statusMessage } from "../utils/constant";
 import { Op } from 'sequelize';
 import { Notification } from "../models/notificationModel";
 import { NotificationStatus } from "../models/notificationStatusModel";
-import { webPubSubClient } from "../utils/helpers";
+import { getWebPubSubClient } from "../utils/helpers";
 class NotificationService {
 
 
@@ -134,9 +134,10 @@ const limitNum = Number(limit);
     errorMessage?: string;
     data?: { webSocketUrl: string };
   }> {
-     let token = { token: "" };
-           await webPubSubClient.closeUserConnections(userId);
-           token = await webPubSubClient.getClientAccessToken({ userId: userId,expirationTimeInMinutes: 60 });
+    let token = { token: "" };
+    const webPubSubClient = await getWebPubSubClient();
+    await webPubSubClient.closeUserConnections(userId);
+    token = await webPubSubClient.getClientAccessToken({ userId: userId, expirationTimeInMinutes: 1400 });
     return {
       statusCode: constants.SUCCESS,
       message: statusMessage.orgRetrieved,

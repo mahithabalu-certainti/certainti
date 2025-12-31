@@ -13,7 +13,7 @@ import { UserGroupEntityAccess } from "../models/UserGroupEntityAccessModel";
 import { UserGroupMapping } from "../models/userGroupMappingModel";
 import { UserGroup } from "../models/userGroupModel";
 import { updateAzureUser } from "./manageUser";
-import { errorLog, logMessage, webPubSubClient } from "../utils/helpers";
+import { errorLog, getWebPubSubClient, logMessage } from "../utils/helpers";
 import { uploadToAzure, generateSasUrl } from "./azureBlobService";
   const { 
     User, UserDetails, Department, FunctionGroup, Profile, BusinessTeams,
@@ -942,8 +942,9 @@ class UserService {
         roles.profile_rid || ""
       );
       let token = { token: "" };
-       await webPubSubClient.closeUserConnections(roles.rid);
-        token = await webPubSubClient.getClientAccessToken({ userId: roles.rid, expirationTimeInMinutes: 1400 });
+      const webPubSubClient = await getWebPubSubClient();
+      await webPubSubClient.closeUserConnections(roles.rid);
+      token = await webPubSubClient.getClientAccessToken({ userId: roles.rid, expirationTimeInMinutes: 1400 });
       return {
         statusCode: constants.SUCCESS,
         message: constants.SUCCESS_MESSAGE,

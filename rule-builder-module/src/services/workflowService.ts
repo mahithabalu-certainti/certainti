@@ -15,6 +15,7 @@ import { ScopeEventRows, EventConditions, ConditionCategory, Operators, Values, 
 import { WebPubSubServiceClient } from "@azure/web-pubsub";
 import { sendEmailWithAttachment } from "./emailService";
 import { initOrgSequelize } from "../config/orgDataSource";
+import { getSecret } from "../utils/azureSecrets";
 
 
 /**
@@ -321,10 +322,7 @@ export class WorkFlowService {
                 scope_type_rid: ruleRequest.scope_type_rid,
                 schedule_offset_type: ruleRequest.schedule_offset_type ?? null,
                 schedule_offset_value: ruleRequest.schedule_offset_value ?? null,
-                created_by: ruleRequest.created_by,
-                modified_by: ruleRequest.modified_by ?? ruleRequest.created_by, // fallback to created_by if undefined
-                in_app_template_rid: ruleRequest.in_app_template_rid ?? null,
-                email_template_rid: ruleRequest.email_template_rid ?? null,
+                created_by: ruleRequest.created_by
             }, userId
         )
 
@@ -443,9 +441,7 @@ export class WorkFlowService {
                 scope_type_rid: ruleRequest.scope_type_rid,
                 schedule_offset_type: ruleRequest.schedule_offset_type ?? null,
                 schedule_offset_value: ruleRequest.schedule_offset_value ?? null,
-                modified_by: ruleRequest.modified_by ?? ruleRequest.created_by,
-                in_app_template_rid: ruleRequest.in_app_template_rid ?? null,
-                email_template_rid: ruleRequest.email_template_rid ?? null,
+                modified_by: userId
             },
             userId
         );
@@ -776,6 +772,9 @@ export class WorkFlowService {
             ),
             { type: QueryTypes.SELECT }
         );
+         const [ruleCategory] :any[] = await mainDb.query(
+            rawQueries.fetchRuleTypeByName(request.triggerType || 'validation')
+          );
         const { scope_type_rid, event_rid } = eventRid[0];
         const allConditions: any[] = [];
         const allActions: any[] = [];
@@ -784,7 +783,7 @@ export class WorkFlowService {
             { type: QueryTypes.SELECT }
         );
         for (const rule of rules) {
-            const conditions = await mainDb.query<any>(rawQueries.fetchRuleConditions(request.category_rid || '', rule.rule_rid),
+            const conditions = await mainDb.query<any>(rawQueries.fetchRuleConditions(ruleCategory[0]?.rid || '', rule.rule_rid),
                 { type: QueryTypes.SELECT }
             );
             allConditions.push(...conditions);
@@ -1070,6 +1069,13 @@ export class WorkFlowService {
                         templateDetails[0].subject = templateDetails[0].subject.replace('{{caseName}}', caseNameValue);
                     }
                 }
+                if (messageTemplate.includes('{{taskName}}')) {
+                    const taskNameValue  = taskContext.taskName ? taskContext.taskName : '';
+                    messageTemplate = messageTemplate.replace('{{taskName}}', taskNameValue);
+                    if (templateDetails[0].subject != null) {
+                        templateDetails[0].subject = templateDetails[0].subject.replace('{{taskName}}', taskNameValue);
+                    }
+                }
                   if (messageTemplate.includes('{{status}}')) {
                     const statusValue     = taskContext.status ? taskContext.status : '';
                     messageTemplate = messageTemplate.replace('{{status}}', statusValue);
@@ -1142,8 +1148,9 @@ export class WorkFlowService {
         try {
 
             // Step 2: Send message with notification ID included
+             const connectionString = await getSecret(process.env.AZURE_WEB_PUBSUB_CONNECTION_STRING!);
             const webPubSubClient = new WebPubSubServiceClient(
-                process.env.AZURE_WEB_PUBSUB_CONNECTION_STRING!,
+                connectionString!,
                 "notificationsHub"
             );
 
