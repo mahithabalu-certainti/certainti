@@ -185,7 +185,8 @@ export class WorkFlowService {
         const fields: Fields[] = await mainDb.query<Fields>(
             rawQueries.fetchFields(
                 listRequest.category_rid,
-                listRequest.status_rid
+                listRequest.status_rid,
+                listRequest.event_rid
             ),
             { type: QueryTypes.SELECT }
         );
@@ -320,10 +321,7 @@ export class WorkFlowService {
                 scope_type_rid: ruleRequest.scope_type_rid,
                 schedule_offset_type: ruleRequest.schedule_offset_type ?? null,
                 schedule_offset_value: ruleRequest.schedule_offset_value ?? null,
-                created_by: ruleRequest.created_by,
-                modified_by: ruleRequest.modified_by ?? ruleRequest.created_by, // fallback to created_by if undefined
-                in_app_template_rid: ruleRequest.in_app_template_rid ?? null,
-                email_template_rid: ruleRequest.email_template_rid ?? null,
+                created_by: ruleRequest.created_by
             }, userId
         )
 
@@ -387,7 +385,6 @@ export class WorkFlowService {
         data?: any;
     }> {
         const mainDb = await this.getMainDb();
-        console.log(ruleRid);
         const ruleDetail = await this.ruleMasterService.getRuleDetailByRuleRid(ruleRid, userId);
         const eventDetail = await mainDb.query<any>(
             rawQueries.fetchEventDetailByEventRid(ruleDetail.data?.toJSON()?.event_rid),
@@ -443,9 +440,7 @@ export class WorkFlowService {
                 scope_type_rid: ruleRequest.scope_type_rid,
                 schedule_offset_type: ruleRequest.schedule_offset_type ?? null,
                 schedule_offset_value: ruleRequest.schedule_offset_value ?? null,
-                modified_by: ruleRequest.modified_by ?? ruleRequest.created_by,
-                in_app_template_rid: ruleRequest.in_app_template_rid ?? null,
-                email_template_rid: ruleRequest.email_template_rid ?? null,
+                modified_by: userId
             },
             userId
         );
@@ -608,7 +603,6 @@ export class WorkFlowService {
         errorMessage?: string;
         data?: { ruleMap: any };
     }> {
-        console.log("rule map creation");
         const ruleMapResponse = await this.ruleMapService.createRuleMap(
             {
                 rule_rid: ruleRequest.rule_rid,
@@ -777,6 +771,9 @@ export class WorkFlowService {
             ),
             { type: QueryTypes.SELECT }
         );
+         const [ruleCategory] :any[] = await mainDb.query(
+            rawQueries.fetchRuleTypeByName(request.triggerType || 'validation')
+          );
         const { scope_type_rid, event_rid } = eventRid[0];
         const allConditions: any[] = [];
         const allActions: any[] = [];
@@ -785,7 +782,7 @@ export class WorkFlowService {
             { type: QueryTypes.SELECT }
         );
         for (const rule of rules) {
-            const conditions = await mainDb.query<any>(rawQueries.fetchRuleConditions(rule.condition_rid, rule.rule_rid),
+            const conditions = await mainDb.query<any>(rawQueries.fetchRuleConditions(ruleCategory[0]?.rid || '', rule.rule_rid),
                 { type: QueryTypes.SELECT }
             );
             allConditions.push(...conditions);
@@ -831,30 +828,56 @@ export class WorkFlowService {
         const entity = request;
         const triggeredActions: Record<string, any[]> = {};
         const results: Record<string, boolean> = {};
+        // Store templates separately from results to avoid type issues
+        const templates: Record<string, string> = {};
         for (const rule_rid in actionsByRule) {
             console.log("rule id" + rule_rid);
             console.log("conditionLength" + allConditions.length);
             let ruleResult = true;
             const ruleConditions = conditionsByRule[rule_rid] ?? [];
+            // Dynamic template generation
+            let templateParts: string[] = [];
             if (ruleConditions.length > 0) {
                 for (let i = 0; i < ruleConditions.length; i++) {
                     const condition = ruleConditions[i];
                     const conditionResult = await this.evaluateCondition(condition, entity);
+                    // Build a human-readable part for this condition
+                    let part = ``;
+                    if(conditionResult.pass)
+                    {
+                    if(condition.action_phrase != null && condition.action_phrase != '' ){
+                        part = `${condition.action_phrase}`;
+                    }
+                    else
+                    {
+                       const operatorText =
+                        condition.operator_phrase?.trim() ||
+                        condition.operator?.toLowerCase();
+                        part = `${condition.field_description} ${operatorText} ${condition.value}`;
+                    }
+                }
 
+                   // const part = `${condition.field_description} ${condition.operator.toLowerCase()} ${condition.value}`;
+                    console.log("part " + part);
                     if (i === 0) {
-                        ruleResult = conditionResult;
+                        ruleResult = conditionResult.pass;
+                        templateParts.push(part);
                     } else {
                         const logicalOp = condition.logical_operator;
-
                         if (logicalOp === "AND") {
-                            ruleResult = ruleResult && conditionResult;
+                            ruleResult = ruleResult && conditionResult.pass;
                         } else if (logicalOp === "OR") {
-                            ruleResult = ruleResult || conditionResult;
+                            ruleResult = ruleResult || conditionResult.pass;
+                        }
+                        if (part && part.trim() !== '') {
+                            templateParts.push(`and ${part}`);
                         }
                     }
                 }
             }
             results[rule_rid] = ruleResult;
+            const templateStr = templateParts.join(' ');
+            templates[rule_rid] = templateStr;
             //Execute actions if:
             // - no conditions exist
             // - OR conditions evaluated to true
@@ -862,14 +885,13 @@ export class WorkFlowService {
                 const actions = actionsByRule[rule_rid] || [];
                 for (const action of actions) {
                     if(ruleConditions.length === 0){
-                    if(entity?.ruleScope === request.eventName){
-                    await this.executeAction(action, entity, userId, rule_rid);
+                        if(entity?.ruleScope === request.eventName){
+                            await this.executeAction(action, entity, userId, rule_rid, templateStr);
+                        }
                     }
-                }
-                else
-                {
-                    await this.executeAction(action, entity, userId, rule_rid);
-                }
+                    else {
+                        await this.executeAction(action, entity, userId, rule_rid, templateStr);
+                    }
                 }
                 triggeredActions[rule_rid] = actions;
             }
@@ -890,13 +912,14 @@ export class WorkFlowService {
             statusCode: 200,
             message: "",
             data: {
-                info: { results, triggeredActions }
+                info: { results, triggeredActions, templates }
             }
         };
     }
 
-    private evaluateCondition(condition: any, entity: any): boolean {
+    private evaluateCondition(condition: any, entity: any): { pass: boolean, operator: string, value: any, entityValue: any } {
         const fieldKey = condition.field.split(".")[1] || condition.field; // "task.status" → "status"
+        logMessage(`Evaluating condition for field ${fieldKey}: ${JSON.stringify(entity)} `);
         let entityValue = entity[fieldKey] || entity[fieldKey.toLowerCase()] || entity[fieldKey.toUpperCase()];
         let conditionValue = condition.value;
         // Special handling for 'current date' as value
@@ -918,49 +941,59 @@ export class WorkFlowService {
         }
         logMessage(`Evaluating condition: ${fieldKey} ${condition.operator} ${conditionValue} against entity value: ${entityValue}`);
         const operator = (condition.operator || "").toLowerCase();
-        //console.log(String(entityValue).toLowerCase() + "    " + String(conditionValue).toLowerCase());
+        let pass = false;
         switch (operator) {
             case "equals":
-                return String(entityValue).toLowerCase() === String(conditionValue).toLowerCase();
+                pass = String(entityValue).toLowerCase() === String(conditionValue).toLowerCase();
+                break;
             case "not equals":
-                return String(entityValue).toLowerCase() !== String(conditionValue).toLowerCase();
+                pass = String(entityValue).toLowerCase() !== String(conditionValue).toLowerCase();
+                break;
             case "is":
-                return entityValue === conditionValue;
+                pass = entityValue === conditionValue;
+                break;
             case "greater than": {
                 // date comparison first
                 const dateA = new Date(entityValue);
                 const dateB = new Date(conditionValue);
                 if (!isNaN(dateA.getTime()) && !isNaN(dateB.getTime())) {
-                    return dateA > dateB;
+                    pass = dateA > dateB;
+                } else {
+                    // Fallback to number comparison
+                    pass = Number(entityValue) > Number(conditionValue);
                 }
-                // Fallback to number comparison
-                return Number(entityValue) > Number(conditionValue);
+                break;
             }
             case "less than": {
                 // date comparison first
                 const dateA = new Date(entityValue);
                 const dateB = new Date(conditionValue);
                 if (!isNaN(dateA.getTime()) && !isNaN(dateB.getTime())) {
-                    return dateA < dateB;
+                    pass = dateA < dateB;
+                } else {
+                    // Fallback to number comparison
+                    pass = Number(entityValue) < Number(conditionValue);
                 }
-                // Fallback to number comparison
-                return Number(entityValue) < Number(conditionValue);
+                break;
             }
             default:
-                return false;
+                pass = false;
         }
+        return { pass, operator: condition.operator, value: conditionValue, entityValue };
     }
 
     private async executeAction(
         action: any,
         entity: any,
         userId: string,
-        ruleRid: string
+        ruleRid: string,
+        templateStr?: string
     ) {
+        entity.templateValue = templateStr;
+        // templateStr is now available for use in actions if needed
         switch (action.action_name) {
-            case "create task":
-                // call service / insert into DB
-                console.log("Creating task", entity);
+            case "Flag":
+                await this.markUsHighPriority(entity);
                 break;
             case "In App":
                 await this.triggerNotification(entity, notificationTypes.InApp, ruleRid);
@@ -968,7 +1001,6 @@ export class WorkFlowService {
             case "Email":
                 await this.triggerNotification(entity, notificationTypes.Email, ruleRid);
                 break;
-
             default:
                 console.warn("Unknown action:", action.action_name);
         }
@@ -980,31 +1012,31 @@ export class WorkFlowService {
         try {
             const mainDb = await this.getMainDb();
             let [notificationTemplateRid]: any[] = [];
-            if (channel === "In App") {
-                [notificationTemplateRid] = await mainDb.query<any>(
-                    rawQueries.fetchNotificationInAppTemplatesForRule(ruleRid),
-                    { type: QueryTypes.SELECT }
-                );
-            } else {
-                [notificationTemplateRid] = await mainDb.query<any>(
-                    rawQueries.fetchNotificationEmailTemplatesForRule(ruleRid),
-                    { type: QueryTypes.SELECT }
-                );
-            }
-            if (
-                notificationTemplateRid === undefined ||
-                notificationTemplateRid === null ||
-                typeof notificationTemplateRid !== 'object' ||
-                !('template_rid' in notificationTemplateRid) ||
-                !notificationTemplateRid.template_rid
-            ) {
-                return {
-                    templateDetails: []
-                };
-            }
+            // if (channel === "In App") {
+            //     [notificationTemplateRid] = await mainDb.query<any>(
+            //         rawQueries.fetchNotificationInAppTemplatesForRule(ruleRid),
+            //         { type: QueryTypes.SELECT }
+            //     );
+            // } else {
+            //     [notificationTemplateRid] = await mainDb.query<any>(
+            //         rawQueries.fetchNotificationEmailTemplatesForRule(ruleRid),
+            //         { type: QueryTypes.SELECT }
+            //     );
+            // }
+            // if (
+            //     notificationTemplateRid === undefined ||
+            //     notificationTemplateRid === null ||
+            //     typeof notificationTemplateRid !== 'object' ||
+            //     !('template_rid' in notificationTemplateRid) ||
+            //     !notificationTemplateRid.template_rid
+            // ) {
+            //     return {
+            //         templateDetails: []
+            //     };
+            // }
             const templateDetails = await mainDb.query<any>(
                 rawQueries.fetchNotificationTemplateDetails(
-                    notificationTemplateRid.template_rid, channel
+                    `${taskContext.entity} ${taskContext.triggerType}`, channel
                 ),
                 { type: QueryTypes.SELECT }
             );
@@ -1028,6 +1060,56 @@ export class WorkFlowService {
                     if (templateDetails[0].subject != null) {
                         templateDetails[0].subject = templateDetails[0].subject.replace('{{accountName}}', accountNameValue);
                     }
+                }
+                if (messageTemplate.includes('{{caseName}}')) {
+                    const caseNameValue  = taskContext.caseName ? taskContext.caseName : '';
+                    messageTemplate = messageTemplate.replace('{{caseName}}', caseNameValue);
+                    if (templateDetails[0].subject != null) {
+                        templateDetails[0].subject = templateDetails[0].subject.replace('{{caseName}}', caseNameValue);
+                    }
+                }
+                if (messageTemplate.includes('{{taskName}}')) {
+                    const taskNameValue  = taskContext.taskName ? taskContext.taskName : '';
+                    messageTemplate = messageTemplate.replace('{{taskName}}', taskNameValue);
+                    if (templateDetails[0].subject != null) {
+                        templateDetails[0].subject = templateDetails[0].subject.replace('{{taskName}}', taskNameValue);
+                    }
+                }
+                  if (messageTemplate.includes('{{status}}')) {
+                    const statusValue     = taskContext.status ? taskContext.status : '';
+                    messageTemplate = messageTemplate.replace('{{status}}', statusValue);
+                }
+                if (messageTemplate.includes('{{plannedSubmissionDate}}')) {
+                    const plannedSubmissionDateValue = taskContext.plannedSubmissionDate ? taskContext.plannedSubmissionDate : '';
+                    messageTemplate = messageTemplate.replace('{{plannedSubmissionDate}}', plannedSubmissionDateValue);
+                    if (templateDetails[0].subject != null) {
+                        templateDetails[0].subject = templateDetails[0].subject.replace('{{plannedSubmissionDate}}', plannedSubmissionDateValue);
+                    }
+                }
+                 if (messageTemplate.includes('{{dueDate}}')) {
+                    const dueDateValue = taskContext.dueDate ? taskContext.dueDate : '';
+                    messageTemplate = messageTemplate.replace('{{dueDate}}', dueDateValue);
+                    if (templateDetails[0].subject != null) {
+                        templateDetails[0].subject = templateDetails[0].subject.replace('{{dueDate}}', dueDateValue);
+                    }
+                }
+                 if (messageTemplate.includes('{{statutorySubmissionDate}}')) {
+                    const statutorySubmissionDateValue   = taskContext.statutorySubmissionDate ? taskContext.statutorySubmissionDate : '';
+                    messageTemplate = messageTemplate.replace('{{statutorySubmissionDate}}', statutorySubmissionDateValue);
+                    if (templateDetails[0].subject != null) {
+                        templateDetails[0].subject = templateDetails[0].subject.replace('{{statutorySubmissionDate}}', statutorySubmissionDateValue);
+                    }
+                }
+                  if (messageTemplate.includes('{{entity}}')) {
+                    const entityValue   = taskContext.entity ? taskContext.entity : '';
+                    messageTemplate = messageTemplate.replace('{{entity}}', entityValue);
+                    if (templateDetails[0].subject != null) {
+                        templateDetails[0].subject = templateDetails[0].subject.replace('{{entity}}', entityValue);
+                    }
+                }
+                if(messageTemplate.includes('{{conditions}}')) {
+                    const templateValue = taskContext.templateValue ? taskContext.templateValue : '';
+                    messageTemplate = messageTemplate.replace('{{conditions}}', templateValue);
                 }
                 templateDetails[0].message_template = messageTemplate;
                 return {
@@ -1110,7 +1192,7 @@ export class WorkFlowService {
         );
     }
 
-    async getNotificationTemplates(channel: string): Promise<{
+    async getNotificationTemplates(channel: string, conditionRid: string,eventRid: string): Promise<{
         statusCode: number;
         message: string;
         errorMessage?: string;
@@ -1118,7 +1200,7 @@ export class WorkFlowService {
     }> {
         const mainDb = await this.getMainDb();
         const result = await mainDb.query(
-            rawQueries.getNotificationTemplates(channel),
+            rawQueries.getNotificationTemplates(channel, conditionRid,eventRid),
             { type: QueryTypes.SELECT }
         );
         return {
@@ -1129,7 +1211,33 @@ export class WorkFlowService {
             }
         };
     }
-
+async markUsHighPriority(taskContext:any): Promise<void> {    
+        const mainDb = await this.getMainDb();
+        const orgDb = await this.getOrgDb();
+        const { accountNumber, parentAccountId } =
+        await this.fetchValidAccountNumberById(
+          taskContext.accountRid
+        );
+        const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+                /\D/g,
+                ""
+            )}`;
+        let query = rawQueries.markTaskAsHighPriorityTaskSummary();
+        await mainDb.query(
+            query,
+            {
+                replacements: { taskRid: taskContext.entityRid },
+                type: QueryTypes.UPDATE
+            }
+        );
+        await orgDb.query(
+            rawQueries.markTaskAsHighPriorityinCaseTask(schemaName),
+            {
+                replacements: { taskRid: taskContext.entityRid },
+                type: QueryTypes.UPDATE
+            }
+        );
+    }
 async triggerNotification(taskContext:any,channel:string, ruleRid:string): Promise<void> {    
     const { accountNumber, parentAccountId } =
         await this.fetchValidAccountNumberById(
@@ -1232,6 +1340,9 @@ async triggerNotification(taskContext:any,channel:string, ruleRid:string): Promi
             parentAccountNumber,
             accountInfo.parent_account_rid
         );
+         if (!senderEmailInfo) {
+            return;
+        }
         const emailContent = {
             message: {
                 subject: emailRequest.subject,

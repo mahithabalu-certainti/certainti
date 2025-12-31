@@ -985,7 +985,7 @@ export const summaryHighlightsQueryRegion = (
         af.account_rid
         FROM 
         ${schemaName}.account_fiscal_region af
-		LEFT JOIN ${schemaName}.project_fiscal p 
+		LEFT JOIN ${schemaName}.project_fiscal_region p 
         ON p.region_rid = af.region_rid 
         AND p.account_rid = af.account_rid AND p.fiscal_year = ${fiscal_year}
         WHERE 
@@ -1004,7 +1004,7 @@ export const summaryHighlightsQueryRegion = (
             CAST(SUM(COALESCE(pf.total_effort_fte_from_tasks,0.00)) AS DECIMAL(18,2)) AS project_task_level
         FROM
         ${schemaName}.account_fiscal_region afr
-        LEFT JOIN ${schemaName}.project_fiscal pf 
+        LEFT JOIN ${schemaName}.project_fiscal_region pf 
         ON pf.account_rid = afr.account_rid 
         AND pf.region_rid = afr.region_rid AND pf.fiscal_year = ${fiscal_year}
         WHERE 
@@ -1024,7 +1024,7 @@ export const summaryHighlightsQueryRegion = (
             CAST(SUM(COALESCE(pf.total_cost_fte_from_tasks,0.00)) AS DECIMAL(18,2)) AS project_task_level
 
         FROM ${schemaName}.account_fiscal_region afr
-        LEFT JOIN ${schemaName}.project_fiscal pf 
+        LEFT JOIN ${schemaName}.project_fiscal_region pf 
         ON pf.account_rid = afr.account_rid 
         AND pf.region_rid = afr.region_rid AND pf.fiscal_year = ${fiscal_year}
         WHERE 
@@ -1044,7 +1044,7 @@ export const summaryHighlightsQueryRegion = (
             CAST(SUM(COALESCE(pf.total_effort_subcon_from_tasks,0.00)) AS DECIMAL(18,2)) AS project_task_level
 
         FROM ${schemaName}.account_fiscal_region afr
-        LEFT JOIN ${schemaName}.project_fiscal pf 
+        LEFT JOIN ${schemaName}.project_fiscal_region pf 
         ON pf.account_rid = afr.account_rid 
         AND pf.region_rid = afr.region_rid AND pf.fiscal_year = ${fiscal_year}
         WHERE 
@@ -1064,7 +1064,7 @@ export const summaryHighlightsQueryRegion = (
             CAST(SUM(COALESCE(pf.total_cost_subcon_from_tasks,0.00)) AS DECIMAL(18,2)) AS project_task_level
         
         FROM ${schemaName}.account_fiscal_region afr
-        LEFT JOIN ${schemaName}.project_fiscal pf 
+        LEFT JOIN ${schemaName}.project_fiscal_region pf 
         ON pf.account_rid = afr.account_rid 
         AND pf.region_rid = afr.region_rid AND pf.fiscal_year = ${fiscal_year}
         WHERE 
@@ -1083,7 +1083,7 @@ export const summaryHighlightsQueryRegion = (
             CAST(SUM(COALESCE(pf.total_cost_nonlabor_from_prj_res,0.00)) AS DECIMAL(18,2)) AS project_resource_level
         
         FROM ${schemaName}.account_fiscal_region afr
-        LEFT JOIN ${schemaName}.project_fiscal pf 
+        LEFT JOIN ${schemaName}.project_fiscal_region pf 
         ON pf.account_rid = afr.account_rid 
         AND pf.region_rid = afr.region_rid AND pf.fiscal_year = ${fiscal_year}
         WHERE 
@@ -1106,7 +1106,7 @@ export const summaryHighlightsQueryRegion = (
         ${schemaName}.account_fiscal af
         LEFT JOIN ${schemaName}.account_details ad ON ad.account_rid = af.account_rid
 		LEFT JOIN ${schemaName}.account_fiscal_region afr ON afr.account_rid = af.account_rid
-        LEFT JOIN ${schemaName}.project_fiscal pf ON pf.region_rid = afr.region_rid 
+        LEFT JOIN ${schemaName}.project_fiscal_region pf ON pf.region_rid = afr.region_rid 
         WHERE 
             ad.account_rid = '${account_rid}'
             AND
@@ -1122,8 +1122,8 @@ export const summaryHighlightsQueryRegion = (
             CAST(SUM(COALESCE(pf.rd_credits_nonlabor_fed_level,0.00)) AS DECIMAL(18,2)) AS rd_credits_nonlabor,
             CAST(SUM(COALESCE(pf.rd_credits_total,0.00)) AS DECIMAL(18,2)) AS rd_credits_total
         FROM
-        ${schemaName}.account_fiscal_region af
-        LEFT JOIN ${schemaName}.project_fiscal pf 
+        ${schemaName}.account_fiscal_region af  
+        LEFT JOIN ${schemaName}.project_fiscal_region pf 
         ON pf.account_rid = af.account_rid 
         AND pf.region_rid = af.region_rid AND pf.fiscal_year = ${fiscal_year}
         WHERE 
@@ -1548,7 +1548,7 @@ export const fetchProjectQueryByPrjId = (
   account_rid: string,
   schemaName: string,
   fiscal_year: number,
-  project_fiscal_rid : string
+  project_fiscal_rid: string
 ) => {
   let query = `
     WITH calculate_resource_metrics AS (
@@ -1901,7 +1901,7 @@ export const summaryHighlightsQueryForCase = (
   account_rid: string,
   fiscal_year: number,
   schemaName: string,
-  caseRid : string
+  caseRid: string
 ) => {
   let query = `
     WITH calculate_rd_credits_projects AS (
@@ -2173,7 +2173,7 @@ export const summaryHighlightsQueryRegionForCase = (
   fiscal_year: number,
   schemaName: string,
   region_rid: string,
-  caseRid : string
+  caseRid: string
 ) => {
   let query = `
     WITH calculate_rd_claimed_projects AS (
@@ -2181,13 +2181,12 @@ export const summaryHighlightsQueryRegionForCase = (
       cp.account_rid, COALESCE(COUNT(*) OVER(), 0) AS total_projects_rd_credits
       FROM 
       ${schemaName}.case_projects cp
-      LEFT JOIN ${schemaName}.case_project_fiscal_region cf ON cp.rid = cf.case_project_rid AND cf.region_rid = cp.region_rid
       WHERE 
         cp.account_rid = '${account_rid}'
         AND
         cp.fiscal_year = ${fiscal_year}
         AND
-        cf.region_rid = '${region_rid}'
+        cp.region_rid = '${region_rid}'
         AND
         cp.is_rd_claim_qualified = true
         AND
@@ -2199,8 +2198,7 @@ export const summaryHighlightsQueryRegionForCase = (
       SUM(COALESCE(cf.total_subcon_prj,0)) as total_subcon,
       SUM(COALESCE(cf.total_nonlabor_prj, 0)) AS total_nonlabor,
       cf.account_rid
-      FROM 
-      ${schemaName}.case_project_fiscal_region cf
+      FROM ${schemaName}.case_projects cf
       WHERE
       cf.account_rid = '${account_rid}'
       AND
@@ -2217,8 +2215,8 @@ export const summaryHighlightsQueryRegionForCase = (
         CAST(SUM(COALESCE(cf.total_effort_fte_prj,0.00)) AS DECIMAL(18,2)) AS project_level, 
         CAST(SUM(COALESCE(cf.total_effort_fte_from_prj_res,0.00)) AS DECIMAL(18,2)) AS project_resource_level, 
         CAST(SUM(COALESCE(cf.total_effort_fte_from_tasks,0.00)) AS DECIMAL(18,2)) AS project_task_level
-      FROM
-      ${schemaName}.case_project_fiscal_region cf
+      
+      FROM ${schemaName}.case_projects cf
       WHERE 
         cf.account_rid = '${account_rid}'
         AND
@@ -2235,8 +2233,7 @@ export const summaryHighlightsQueryRegionForCase = (
         CAST(SUM(COALESCE(cf.total_cost_fte_prj,0.00)) AS DECIMAL(18,2)) AS project_level, 
         CAST(SUM(COALESCE(cf.total_cost_fte_from_prj_res,0.00)) AS DECIMAL(18,2)) AS project_resource_level, 
         CAST(SUM(COALESCE(cf.total_cost_fte_from_tasks,0.00)) AS DECIMAL(18,2)) AS project_task_level
-      FROM 
-      ${schemaName}.case_project_fiscal_region cf
+      FROM ${schemaName}.case_projects cf
       WHERE 
         cf.account_rid = '${account_rid}'
         AND
@@ -2253,8 +2250,7 @@ export const summaryHighlightsQueryRegionForCase = (
         CAST(SUM(COALESCE(cf.total_effort_subcon_prj,0.00)) AS DECIMAL(18,2)) AS project_level, 
         CAST(SUM(COALESCE(cf.total_effort_subcon_from_prj_res,0.00)) AS DECIMAL(18,2)) AS project_resource_level, 
         CAST(SUM(COALESCE(cf.total_effort_subcon_from_tasks,0.00)) AS DECIMAL(18,2)) AS project_task_level
-      FROM 
-      ${schemaName}.case_project_fiscal_region cf
+      FROM ${schemaName}.case_projects cf
       WHERE 
         cf.account_rid = '${account_rid}'
         AND
@@ -2271,8 +2267,7 @@ export const summaryHighlightsQueryRegionForCase = (
           CAST(SUM(COALESCE(cf.total_cost_subcon_prj,0.00)) AS DECIMAL(18,2)) AS project_level, 
           CAST(SUM(COALESCE(cf.total_cost_subcon_from_prj_res,0.00)) AS DECIMAL(18,2)) AS project_resource_level, 
           CAST(SUM(COALESCE(cf.total_cost_subcon_from_tasks,0.00)) AS DECIMAL(18,2)) AS project_task_level
-      FROM 
-      ${schemaName}.case_project_fiscal_region cf
+      FROM ${schemaName}.case_projects cf
       WHERE 
         cf.account_rid = '${account_rid}'
         AND
@@ -2289,8 +2284,7 @@ export const summaryHighlightsQueryRegionForCase = (
         CAST(SUM(COALESCE(cf.total_cost_nonlabor_prj,0.00)) AS DECIMAL(18,2)) AS project_level, 
         CAST(SUM(COALESCE(cf.total_cost_nonlabor_from_prj_res,0.00)) AS DECIMAL(18,2)) AS project_resource_level
       
-      FROM 
-      ${schemaName}.case_project_fiscal_region cf
+      FROM ${schemaName}.case_projects cf
       WHERE 
         cf.account_rid = '${account_rid}'
         AND
@@ -2325,8 +2319,7 @@ export const summaryHighlightsQueryRegionForCase = (
         CAST(SUM(COALESCE(cf.rd_credits_subcon_fed_level,0.00)) AS DECIMAL(18,2)) AS rd_credits_subcon,
         CAST(SUM(COALESCE(cf.rd_credits_nonlabor_fed_level,0.00)) AS DECIMAL(18,2)) AS rd_credits_nonlabor,
         CAST(SUM(COALESCE(cf.rd_credits_total,0.00)) AS DECIMAL(18,2)) AS rd_credits_total
-      FROM 
-      ${schemaName}.case_project_fiscal_region cf
+      FROM ${schemaName}.case_projects cf
       WHERE 
       cf.account_rid = '${account_rid}'
       AND
@@ -2465,7 +2458,7 @@ export const fetchResCodeWithPrjResRole = (
   if (search) searchValue = `%${search}%`;
   else searchValue = `%%`;
 
-    let query = `
+  let query = `
     SELECT ps.rid, r.resource_code, ps.project_resource_role, r.resource_name, ps.start_date, ps.end_date
     FROM
     ${schemaName}.project_resource ps
@@ -2487,11 +2480,11 @@ export const fetchResCodeWithPrjResRole = (
     )
     ORDER BY r.resource_code ASC
     `
-    return query;
-  }
+  return query;
+}
 
-  export const fetchNotesById = (schemaName : string, rid : string) => {
-    return `
+export const fetchNotesById = (schemaName: string, rid: string) => {
+  return `
     SELECT 
     n.rid, n.title, n.descriptions, n.notes_owner, 
     n.created_by, n.modified_by, n.account_rid, 
@@ -2571,34 +2564,34 @@ export const fetchResCodeWithPrjResRole = (
     WHERE
     n.rid = '${rid}'
     `
-  }
+}
 
-  export const fetchUsers = (statusRid : string, ids : any[]) => {
-    return `SELECT u.rid, u.first_name, u.last_name FROM ${MAIN_SCHEMA_NAME}.user u
-    WHERE u.status_rid = '${statusRid}' AND u.rid IN (${ids.map((d : any) => `'${d}'`).join(',')})`
-  }
+export const fetchUsers = (statusRid: string, ids: any[]) => {
+  return `SELECT u.rid, u.first_name, u.last_name FROM ${MAIN_SCHEMA_NAME}.user u
+    WHERE u.status_rid = '${statusRid}' AND u.rid IN (${ids.map((d: any) => `'${d}'`).join(',')})`
+}
 
-  export const fetchActiveStatus = () => {
-    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE LOWER(status_name) = 'active' `
-  }
+export const fetchActiveStatus = () => {
+  return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE LOWER(status_name) = 'active' `
+}
 
-  export const checkResourceMappedToProjectRes = (schemaName : string, resourceRid : string) => {
-    return `SELECT resource_rid FROM ${schemaName}.project_resource WHERE resource_rid = '${resourceRid}'`
-  }
+export const checkResourceMappedToProjectRes = (schemaName: string, resourceRid: string) => {
+  return `SELECT resource_rid FROM ${schemaName}.project_resource WHERE resource_rid = '${resourceRid}'`
+}
 
-  export const checkProjectMappedToProjectRes = (schemaName : string, projectFiscalRid : string) => {
-    return `SELECT project_fiscal_rid FROM ${schemaName}.project_resource WHERE project_fiscal_rid = '${projectFiscalRid}'`
-  }
+export const checkProjectMappedToProjectRes = (schemaName: string, projectFiscalRid: string) => {
+  return `SELECT project_fiscal_rid FROM ${schemaName}.project_resource WHERE project_fiscal_rid = '${projectFiscalRid}'`
+}
 
-  export const fetchResCodesForPrjRes = (schemaName : string, search : string, accountId : string, startDate : string | null, endDate : string | null) => {
-    let searchValue : string;
-    if(search) searchValue = `%${search}%`
-    else searchValue = `%%`
-    let dynamicReplacerEnd : string = ``
-    if(startDate == null && endDate == null) dynamicReplacerEnd = `OR pf.project_startdate IS NULL OR pf.project_enddate IS NULL`
-    else dynamicReplacerEnd = `OR DATE(r.resource_enddate) >= DATE('${startDate}')`
+export const fetchResCodesForPrjRes = (schemaName: string, search: string, accountId: string, startDate: string | null, endDate: string | null) => {
+  let searchValue: string;
+  if (search) searchValue = `%${search}%`
+  else searchValue = `%%`
+  let dynamicReplacerEnd: string = ``
+  if (startDate == null && endDate == null) dynamicReplacerEnd = `OR pf.project_startdate IS NULL OR pf.project_enddate IS NULL`
+  else dynamicReplacerEnd = `OR DATE(r.resource_enddate) >= DATE('${startDate}')`
 
-    return `
+  return `
         SELECT r.rid, r.resource_code, r.resource_type_rid,
         r.resource_name, r.resource_startdate AS start_date, r.resource_enddate AS end_date
         FROM
@@ -2617,91 +2610,91 @@ export const fetchResCodeWithPrjResRole = (
         GROUP BY r.rid, r.resource_code, r.resource_type_rid, r.resource_name
         ORDER BY r.resource_code ASC
         `
-        
-  }
 
-  export const fetchProjectById = (schemaName : string, id : string) => {
-    return `SELECT project_startdate, project_enddate FROM ${schemaName}.project_fiscal
+}
+
+export const fetchProjectById = (schemaName: string, id: string) => {
+  return `SELECT project_startdate, project_enddate FROM ${schemaName}.project_fiscal
     WHERE rid = '${id}'`
-  }
+}
 
-  export const fetchQreHistoryDatas = (schemaName : string, accountRid : string, page : number, limit : number, sort : string, sortBy : string, filter : filterType, projectFiscalRid : string) => {
-    let offset = (page - 1) * limit
-    let pagination = `LIMIT ${limit} OFFSET ${offset}`
-    let and : string = ``
-    let sortValue;
-    let filterQueryConditions : string[] = []
+export const fetchQreHistoryDatas = (schemaName: string, accountRid: string, page: number, limit: number, sort: string, sortBy: string, filter: filterType, projectFiscalRid: string) => {
+  let offset = (page - 1) * limit
+  let pagination = `LIMIT ${limit} OFFSET ${offset}`
+  let and: string = ``
+  let sortValue;
+  let filterQueryConditions: string[] = []
 
-    if(sort === 'version') sortValue = `ORDER BY q.version ${sortBy}`
-    else if(sort === 'qre_percent') sortValue = `ORDER BY q.qre_percent ${sortBy}`
-    else if(sort === 'created_datetime') sortValue = `ORDER BY q.created_datetime ${sortBy}`
-    else sortValue = `ORDER BY q.created_datetime ASC`
+  if (sort === 'version') sortValue = `ORDER BY q.version ${sortBy}`
+  else if (sort === 'qre_percent') sortValue = `ORDER BY q.qre_percent ${sortBy}`
+  else if (sort === 'created_datetime') sortValue = `ORDER BY q.created_datetime ${sortBy}`
+  else sortValue = `ORDER BY q.created_datetime ASC`
 
-    if(Object.keys(filter).length > 0) {
-      let validColumns : string = ``
-      for(let [key, conditions] of Object.entries(filter)) {
-        if(Object.keys(filterColumnsForQreHistoryList).includes(key)) {
-          validColumns = filterColumnsForQreHistoryList[key]
-          and = ` AND `
-        }
-        for(let [cond, values] of Object.entries(conditions)) {
-          if(filterColumnsTypesForQreHistory[key] === 'number') {
-            switch (numericConditionsForQRE[cond]) {
-              case "equals":
-                filterQueryConditions.push(`q.${validColumns} = ${values}`)
-                break;
-              case "not_equals" :
-                filterQueryConditions.push(`q.${validColumns} != ${values}`)
-                break;
-              case "greater_than" :
-                filterQueryConditions.push(`q.${validColumns} > ${values}`)
-                break;
-              case "less_than" :
-                filterQueryConditions.push(`q.${validColumns} < ${values}`)
-                break;
-              case "between" :
-                filterQueryConditions.push(`q.${validColumns} BETWEEN ${values.map((d : any) => `${d}`).join(' AND ')}`)
-                break;
-              case "is_empty" :
-                filterQueryConditions.push(`q.${validColumns} IS NULL`)
-                break;
-              default:
-                break;
-            }
-          } else if(filterColumnsTypesForQreHistory[validColumns] === 'date') {
-            switch (dateConditionsForQRE[cond]) {
-              case "equals":
-                filterQueryConditions.push(`DATE(q.${validColumns}) = '${values}'`)
-                break;
-              case "after" :
-                filterQueryConditions.push(`q.${validColumns} > '${values}'`)
-                break;
-              case "before" :
-                filterQueryConditions.push(`q.${validColumns} < '${values}'`)
-                break;
-              case "between" :
-                filterQueryConditions.push(`DATE(q.${validColumns}) BETWEEN ${values.map((d : any) => `'${d}'`).join(' AND ')}`)
-                break;
-              case "is_empty" :
-                filterQueryConditions.push(`DATE(q.${validColumns}) IS NULL`)
-                break;
-              default:
-                break;
-            }
+  if (Object.keys(filter).length > 0) {
+    let validColumns: string = ``
+    for (let [key, conditions] of Object.entries(filter)) {
+      if (Object.keys(filterColumnsForQreHistoryList).includes(key)) {
+        validColumns = filterColumnsForQreHistoryList[key]
+        and = ` AND `
+      }
+      for (let [cond, values] of Object.entries(conditions)) {
+        if (filterColumnsTypesForQreHistory[key] === 'number') {
+          switch (numericConditionsForQRE[cond]) {
+            case "equals":
+              filterQueryConditions.push(`q.${validColumns} = ${values}`)
+              break;
+            case "not_equals":
+              filterQueryConditions.push(`q.${validColumns} != ${values}`)
+              break;
+            case "greater_than":
+              filterQueryConditions.push(`q.${validColumns} > ${values}`)
+              break;
+            case "less_than":
+              filterQueryConditions.push(`q.${validColumns} < ${values}`)
+              break;
+            case "between":
+              filterQueryConditions.push(`q.${validColumns} BETWEEN ${values.map((d: any) => `${d}`).join(' AND ')}`)
+              break;
+            case "is_empty":
+              filterQueryConditions.push(`q.${validColumns} IS NULL`)
+              break;
+            default:
+              break;
+          }
+        } else if (filterColumnsTypesForQreHistory[validColumns] === 'date') {
+          switch (dateConditionsForQRE[cond]) {
+            case "equals":
+              filterQueryConditions.push(`DATE(q.${validColumns}) = '${values}'`)
+              break;
+            case "after":
+              filterQueryConditions.push(`q.${validColumns} > '${values}'`)
+              break;
+            case "before":
+              filterQueryConditions.push(`q.${validColumns} < '${values}'`)
+              break;
+            case "between":
+              filterQueryConditions.push(`DATE(q.${validColumns}) BETWEEN ${values.map((d: any) => `'${d}'`).join(' AND ')}`)
+              break;
+            case "is_empty":
+              filterQueryConditions.push(`DATE(q.${validColumns}) IS NULL`)
+              break;
+            default:
+              break;
           }
         }
       }
-    } else {
-      filterQueryConditions = []
     }
-    let finalListOfCondtions;
-    if(filterQueryConditions.length > 0) {
-      finalListOfCondtions = filterQueryConditions.map((d : any) => d).join(' AND ')
-    } else {
-      finalListOfCondtions = ``
-    }
+  } else {
+    filterQueryConditions = []
+  }
+  let finalListOfCondtions;
+  if (filterQueryConditions.length > 0) {
+    finalListOfCondtions = filterQueryConditions.map((d: any) => d).join(' AND ')
+  } else {
+    finalListOfCondtions = ``
+  }
 
-    let query =
+  let query =
     `WITH fetch_all_qre AS (
     SELECT 
       q.rid, q.created_datetime,
@@ -2734,12 +2727,12 @@ export const fetchResCodeWithPrjResRole = (
     FROM
     paginated_result q
     `
-    return query;
-  }
+  return query;
+}
 
-    export const taskCardDetailsActivityTask = (schemaName : string, taskRid : string, accountRid : string,checklistItemsStatusRid : string) => {
+export const taskCardDetailsActivityTask = (schemaName: string, taskRid: string, accountRid: string, checklistItemsStatusRid: string) => {
   let query =
-  `
+    `
   WITH fetch_checklists AS (
   SELECT c.rid, c.account_rid, c.checklist_name, c.checklist_description, ct.rid AS task_rid
   FROM 
@@ -2831,10 +2824,10 @@ export const fetchResCodeWithPrjResRole = (
   ct.account_rid = '${accountRid}'
   `
   return query;
-  }
+}
 
-  export const taskCardDetails = (schemaName : string, taskRid : string, accountRid : string, caseRid : string, checklistItemsStatusRid : string) => {
-    let query =
+export const taskCardDetails = (schemaName: string, taskRid: string, accountRid: string, caseRid: string, checklistItemsStatusRid: string) => {
+  let query =
     `
     WITH fetch_checklists AS (
     SELECT c.rid, c.account_rid, c.checklist_name, c.checklist_description, ct.rid AS task_rid
@@ -2955,5 +2948,5 @@ export const fetchResCodeWithPrjResRole = (
     AND
     ct.case_rid = '${caseRid}'
     `
-    return query;
-  }
+  return query;
+}

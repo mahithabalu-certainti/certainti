@@ -38,7 +38,6 @@ async function signOffFinancialWorking (req : Request, res : Response) {
         }
     } catch (err) {
     const error = err as Error;
-    console.log(error)
     errorLog(methodName, error.message);
     handleErrorResponse(
       res,
@@ -72,9 +71,9 @@ async function RegionListForFinancialHighlights (req : Request, res : Response) 
                 data : result
             })
         } else {
-            return res.status(HttpStatus.NOT_FOUND).json({
-                statusCode : HttpStatus.NOT_FOUND,
-                statusCodeValue : HttpStatus.NOT_FOUND_MESSAGE,
+            return res.status(HttpStatus.SUCCESS).json({
+                statusCode : HttpStatus.SUCCESS,
+                statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
                 statusMessage : STATUS_MESSAGE.dataNotAvailable,
                 data : result
             })
