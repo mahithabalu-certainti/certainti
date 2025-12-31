@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useParams, useSearchParams } from 'react-router-dom';
-import { EditIcon, ProjectCreateIcon } from '../../../assets';
+import { EditIcon, ProjectsSideIcon } from '../../../assets';
 import {
   AllModules,
   AllPermissions,
@@ -20,6 +20,7 @@ import {
   useKeyContactRoles,
 } from '../../services/account';
 import {
+  colorCode,
   enumValue,
   FieldType,
   KeyContactHeader,
@@ -692,13 +693,13 @@ const ProjectForm: React.FC = () => {
           {isEditView ? (
             <EditIcon
               alt='projrct-icon'
-              className='h-6 w-6 bg-[#7D98B6] p-1.5 border-box rounded'
+              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${colorCode.projectTextColor}] bg-[${colorCode.projectBgColor}]`}
             />
           ) : (
-            <ProjectCreateIcon
-              alt='projrct-icon'
-              className='h-6 w-6 bg-[#7D98B6] p-1.5 border-box rounded'
-            />
+            <ProjectsSideIcon
+            alt='menu-icon'
+            className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${colorCode.projectTextColor}] bg-[${colorCode.projectBgColor}]`}
+          />
           )}
           <div className='w-[90%]'>
             {isEditView && getProjectData?.isPending ? (

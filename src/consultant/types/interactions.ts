@@ -34,13 +34,13 @@ export enum colorCode{
   accountBgColor = '#3992ec',
   accountTextColor = '#fff',
   AccountBgColorShadow = '#EAF4FF',
-  projectBgColor ='#3EBEB5',
+  projectBgColor ='#ba60eb',
   projectTextColor= accountTextColor,
-  caseBgColor= projectBgColor,
+  caseBgColor= '#3EBEB5',
   caseTextColor= accountTextColor,
   notesBgColor = '#7F81F4',
   attachmentBgColor='#d16dd3',
-  taskBgColor = attachmentBgColor,
+  taskBgColor = '#e64c94',
 
 }
 
