@@ -616,11 +616,9 @@ class CaseSchemaService {
           baseRuleEnginePayload.targetEmail = newName;
           baseRuleEnginePayload.case = "Assigned"
           baseRuleEnginePayload.status = newName
+          const [statusInfo]: any[] = await this.mainDbSequelize.query(rawQueries.getCaseStatusDetails(newCaseData.status_rid), { type: QueryTypes.SELECT });
+          baseRuleEnginePayload.status = statusInfo?.status_name || '';
 
-            // await this.helperMethod.triggerDynamicRuleEngine('case_owner_change', baseRuleEnginePayload, {
-            //       newValue: newName,
-            //       oldValue: oldName
-            //     }, accessToken);
          
         }
           if (historyChange.attribute_name === 'status_rid') {
