@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { NotesSideIcon, UploadIcon } from '../../../../assets';
+import { EditIcon, NotesSideIcon, UploadIcon } from '../../../../assets';
 import SingleSkeleton from '../../../../components/skeleton-component/singleskeleton';
 import TextButton from '../../../../components/button/text-button';
 import SkeletonForm from '../../../../components/form-builder/skeleton-form';
@@ -17,7 +17,7 @@ import {
   formatDateToYYYYMMDDWithTime,
   getFiscalYears,
 } from '../../../../common-utils';
-import { NotesFormDataPayload } from '../../../types';
+import { colorCode, NotesFormDataPayload } from '../../../types';
 import { useToast } from '../../../../hooks';
 import { RootState } from '../../../../store/store';
 import { useSelector } from 'react-redux';
@@ -350,10 +350,18 @@ const NotesForm: React.FC = () => {
     <div>
       <div className='h-[50px] flex items-center justify-between px-10 sticky top-0 z-10 bg-white border-b border-[#CBD6E2]'>
         <div className='flex items-center w-[80%] max-w-[80%]'>
-          <NotesSideIcon
-            alt='note-icon'
-            className={`w-7 h-7 p-[5px] [&>path]:stroke-white bg-[#7F81F4] rounded`}
+
+                    {isEditView ? (
+            <EditIcon
+              alt='projrct-icon'
+              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${colorCode.projectTextColor}] bg-[${colorCode.notesBgColor}]`}
+            />
+          ) : (
+            <NotesSideIcon
+            alt='menu-icon'
+            className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${colorCode.projectTextColor}] bg-[${colorCode.notesBgColor}]`}
           />
+          )}
           <div className='w-[90%]'>
             {isLoading ? (
               <div className='ml-2'>

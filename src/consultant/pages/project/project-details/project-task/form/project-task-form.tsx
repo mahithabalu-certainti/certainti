@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useMemo } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { EditIcon, CreateResourceIcon } from '../../../../../../assets';
+import { EditIcon, ProjectTaskIcon } from '../../../../../../assets';
 import { useToast } from '../../../../../../hooks';
 import {
   AllPermissions,
@@ -9,6 +9,7 @@ import {
   OnChange,
 } from '../../../../../../common-service';
 import {
+  colorCode,
   FormFiscalDateType,
   ProjectResourceTaskCodeData,
   SelectResourceOption,
@@ -361,16 +362,16 @@ const ProjectTaskForm: React.FC = () => {
     <>
       <div className='h-[50px] border-box flex items-center justify-between px-10 border-b-2 border-gray-200 sticky top-0 z-10 bg-white'>
         <div className='flex items-center w-[80%] max-w-[80%]'>
-          {isEditView ? (
+        {isEditView ? (
             <EditIcon
-              alt='projrct-resource-icon'
-              className='h-8 w-8 mt-1.5 bg-[#7D98B6] p-2 border-box rounded'
+              alt='projrct-icon'
+              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${colorCode.projectTextColor}] bg-[${colorCode.projectBgColor}]`}
             />
           ) : (
-            <CreateResourceIcon
-              alt='projrct-resource-icon'
-              className='h-8 w-8 [&>path:first-child]:fill-[#7D98B6] mt-1.5 border-box rounded'
-            />
+            <ProjectTaskIcon
+            alt='menu-icon'
+            className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${colorCode.projectTextColor}] bg-[${colorCode.projectBgColor}]`}
+          />
           )}
 
           <div>

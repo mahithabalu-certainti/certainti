@@ -5,7 +5,7 @@ import {
   useParams,
   useSearchParams,
 } from 'react-router-dom';
-import { EditIcon, CreateResourceIcon } from '../../../../../../assets';
+import { EditIcon, ResourcesIcon } from '../../../../../../assets';
 import { useToast } from '../../../../../../hooks';
 import {
   AllPermissions,
@@ -25,6 +25,7 @@ import {
   ProjectResourceNewPayload,
   SelectResourceOption,
   FormFiscalDateType,
+  colorCode,
 } from '../../../../../types';
 import TextButton from '../../../../../../components/button/text-button';
 import { FormBuilder } from '../../../../../../components';
@@ -497,16 +498,15 @@ const ProjectResourceForm: React.FC = () => {
         <div className='flex items-center w-[80%] max-w-[80%]'>
           {isEditView ? (
             <EditIcon
-              alt='projrct-resource-icon'
-              className='h-8 w-8 mt-1.5 bg-[#7D98B6] p-2 border-box rounded'
+              alt='projrct-icon'
+              className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${colorCode.projectTextColor}] bg-[${colorCode.projectBgColor}]`}
             />
           ) : (
-            <CreateResourceIcon
-              alt='projrct-resource-icon'
-              className='h-8 w-8 [&>path:first-child]:fill-[#7D98B6] mt-1.5 border-box rounded'
-            />
+            <ResourcesIcon
+            alt='menu-icon'
+            className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${colorCode.projectTextColor}] bg-[${colorCode.projectBgColor}]`}
+          />
           )}
-
           <div>
             <div className='font-semibold text-[11px] leading-[20px] ml-2 text-[#7D98B6]'>
               Project &gt; {projectCode || ''}{' '}

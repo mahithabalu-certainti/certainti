@@ -16,6 +16,7 @@ import {
   Tooltip,
 } from '@mui/material';
 import {
+  colorCode,
   InteractionFormData,
   InteractionFormErrors,
   InteractionFormQuestion,
@@ -42,7 +43,7 @@ import {
 import {
   DetailsKeyContactErrorIcon,
   ErrorInfoIcon,
-  InteractionDetailIcon,
+  InteractionsIcon,
   KeyContactAddIcon,
   KeyContactRemoveIcon,
   NewFilterIcon,
@@ -621,7 +622,11 @@ const AccountInteractionForm = () => {
     <div>
       <div className='h-[50px] flex items-center justify-between px-10 sticky top-0 z-10 bg-white'>
         <div className='flex items-center w-[80%] max-w-[80%]'>
-          <InteractionDetailIcon className='h-8 w-8 bg-[#6FBDA0] p-1.5 border-box rounded' />
+          <InteractionsIcon
+            alt='menu-icon'
+            className={`h-7 w-7 p-1.5 rounded [&>path]:stroke-[${colorCode.projectTextColor}] bg-[${colorCode.accountBgColor}]`}
+          />
+
           <div className='w-[90%]'>
             <h5 className='text-[16px] font-bold ml-2 text-[#2D3E4F]'>
               New Interaction
