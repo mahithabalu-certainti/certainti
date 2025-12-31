@@ -162,6 +162,7 @@ jobs:
           AZURE_CONTAINER_NAME="user"
           AZURE_WEB_PUBSUB_CONNECTION_STRING=pubsub-connection-string
           EOF
+          
           echo "$ENV_FILE file created successfully!"
           ls -la
       - name: Copy .env file to VM
