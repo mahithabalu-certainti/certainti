@@ -207,7 +207,7 @@ export async function decryptClientSecret(encryptedText: string): Promise<string
   return decrypted.toString();
 }
 
-export const webPubSubClient = new WebPubSubServiceClient(
-  process.env.AZURE_WEB_PUBSUB_CONNECTION_STRING!,
-  "notificationsHub"
-);
+export async function getWebPubSubClient() {
+  const connectionString = await getSecret(process.env.AZURE_WEB_PUBSUB_CONNECTION_STRING!);
+  return new WebPubSubServiceClient(connectionString!, "notificationsHub");
+}

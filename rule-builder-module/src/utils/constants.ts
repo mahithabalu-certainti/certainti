@@ -409,9 +409,13 @@ export const rawQueries = {
    `;
   },
   fetchAllCaseTask(taskType:string) {
-    return `SELECT task_rid,task_name,ac.account_name, ts.status_rid, effective_start_datetime,effective_end_datetime,account_rid,assigned_to,uu.email FROM ${MAIN_SCHEMA_NAME}.task_summary ts
+    return `SELECT task_rid,task_name,ac.account_name, ts.status_rid, effective_start_datetime,effective_end_datetime,ts.account_rid,assigned_to,uu.email,
+     CONCAT(ac.account_name, '-', c.country_name, '-',cs.fiscal_year,'-',cs.case_name) AS case_name
+    FROM ${MAIN_SCHEMA_NAME}.task_summary ts
       LEFT JOIN ${MAIN_SCHEMA_NAME}.user uu ON ts.assigned_to = uu.rid
       LEFT JOIN ${MAIN_SCHEMA_NAME}.account ac ON ts.account_rid = ac.rid
+       LEFT JOIN ${MAIN_SCHEMA_NAME}.country c ON ac.country_rid = c.rid
+       LEFT JOIN trd365.case_Summary cs ON cs.case_rid = ts.attach_to
     WHERE  ts.task_type_rid = '${taskType}'`;
   },
   fetchAllCasesOverdue(inProgressStatusRid: string) {
