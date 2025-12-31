@@ -549,6 +549,7 @@ export const REGEX_PATTERNS = {
   EFFORTS_INTEGER_NUMBER: /^[0-9]{1,16}$/,
   EFFORTS_INTEGER_9: /^[0-9]{1,9}$/,
   NUMERIC_10_4: /^\d{1,10}(\.\d{1,4})?$/,
+  ALLOW_ONE_TO_99: /^[1-9][0-9]?$/,
   ALLOW_ZERO_TO_99: /^[0-9]{1,2}$/,
   DESCRIPTION: /^.{0,500}$/,
   RESOURCE_DESCRIPTION: /^.{0,1000}$/,
