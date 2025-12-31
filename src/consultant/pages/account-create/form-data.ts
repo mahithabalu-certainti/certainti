@@ -449,15 +449,9 @@ export const AccFormData = (
               !permissionMap?.['region_rid']?.read &&
               !permissionMap?.['region_rid']?.edit,
             disabled:
-              (isEditView && isCaseExists) ||
-              (isEditView &&
-                permissionMap?.['region_rid']?.read &&
-                !permissionMap?.['region_rid']?.edit),
-            labelTooltip: {
-              showTooltip: (isEditView && isCaseExists) || false,
-              tooltipMessage:
-                'The case already exists for this account, so the region should not be changed.',
-            },
+              isEditView &&
+              permissionMap?.['region_rid']?.read &&
+              !permissionMap?.['region_rid']?.edit,
           }),
           createSelectField('currency_rid', 'Currency', {
             options: currency,

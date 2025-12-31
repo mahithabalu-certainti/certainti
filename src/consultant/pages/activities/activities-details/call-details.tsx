@@ -128,7 +128,10 @@ const CallDetails: React.FC<CallDetailsProps> = ({
     { label: 'Call Subject', value: call?.subject ?? '-', key: 'subject' },
     {
       label: 'Call Type',
-      value: call?.activity_type ?? '-',
+      value:
+        call?.activity_type?.toLowerCase() === 'call'
+          ? 'Call Log'
+          : call?.activity_type || '-',
       key: 'activity_type',
     },
   ];

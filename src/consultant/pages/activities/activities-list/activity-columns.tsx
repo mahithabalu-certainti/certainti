@@ -55,6 +55,10 @@ export const getActivityAllActivityListColumns = (
     sortId: 'activity_type',
     width: 160,
     hide: shouldHideColumn('activity_type', permissionMaps),
+    render: (row) =>
+      row?.activity_type?.toLowerCase() === 'call'
+        ? 'Call Log'
+        : row?.activity_type,
   },
   {
     id: 'created_by_name',
@@ -445,7 +449,7 @@ export const getActivityTaskListColumns = (
 ): ListTableColumn<ActivityList>[] => [
   {
     id: 'r_number',
-    label: 'Task ID',
+    label: 'Activity ID',
     sortable: true,
     sortId: 'r_number',
     width: 140,
@@ -473,7 +477,7 @@ export const getActivityTaskListColumns = (
   },
   {
     id: 'task_name',
-    label: 'Task Name',
+    label: 'Activity Name',
     sortable: true,
     sortId: 'task_name',
     width: 160,
