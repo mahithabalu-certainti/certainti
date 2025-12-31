@@ -107,11 +107,12 @@ export const CreateCases: React.FC = () => {
     ? caseData?.account_rid || accountId || selectedAccountRid
     : selectedAccountRid || accountId;
 
-  const { data: submissionDateData } = useGetCaseSubmissionDate(
-    effectiveCountryRid,
-    Number(selectedFiscalYear),
-    effectiveAccountRid
-  );
+  const { data: submissionDateData, isFetching: isSubmissionDateFetching } =
+    useGetCaseSubmissionDate(
+      effectiveCountryRid,
+      Number(selectedFiscalYear),
+      effectiveAccountRid
+    );
 
   const commonSuccess = createCase.isSuccess || updateCase.isSuccess;
 
@@ -206,10 +207,16 @@ export const CreateCases: React.FC = () => {
       } else {
         setCalculatedStatutoryDate('');
       }
-    } else {
+    } else if (!isSubmissionDateFetching) {
       setCalculatedStatutoryDate('');
     }
-  }, [submissionDateData, selectedFiscalYear, isEditView, effectiveCountryRid]);
+  }, [
+    submissionDateData,
+    selectedFiscalYear,
+    isEditView,
+    effectiveCountryRid,
+    isSubmissionDateFetching,
+  ]);
 
   useEffect(() => {
     if (selectedFiscalYear) {
@@ -498,16 +505,16 @@ export const CreateCases: React.FC = () => {
             values={
               isEditView && caseFormData
                 ? {
-                    ...caseFormData,
-                  }
+                  ...caseFormData,
+                }
                 : {
-                    account_name: accountName || '',
-                    account_id: accountNumber || '',
-                    case_owner: userId || '',
-                    fiscal_year: currentYear.toString(),
-                    country: countryRid || '',
-                    statutory_submission_date: calculatedStatutoryDate,
-                  }
+                  account_name: accountName || '',
+                  account_id: accountNumber || '',
+                  case_owner: userId || '',
+                  fiscal_year: currentYear.toString(),
+                  country: countryRid || '',
+                  statutory_submission_date: calculatedStatutoryDate,
+                }
             }
             outData={submitData}
             formRef={formRef}
