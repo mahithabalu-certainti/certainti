@@ -12,12 +12,13 @@ export const getTaskTableColumns = (
   statusOptions: SelectOption[] = [],
   priorityOptions: SelectOption[] = [],
   permissionMap?: Record<string, { read: boolean; edit: boolean }>,
-  accountPermissionMap?: Record<string, { read: boolean; edit: boolean }>
+  accountPermissionMap?: Record<string, { read: boolean; edit: boolean }>,
+  isMilestoneTab?: boolean
 ): ListTableColumn<TaskList>[] => [
   {
     id: 'r_number',
     sortId: 'r_number',
-    label: 'Task ID',
+    label: isMilestoneTab ? 'Task ID' : 'Activity ID',
     width: 140,
     sortable: true,
     sticky: true,
@@ -59,7 +60,7 @@ export const getTaskTableColumns = (
   {
     id: 'task_name',
     sortId: 'task_name',
-    label: 'Task Name',
+    label: isMilestoneTab ? 'Task Name' : 'Activity Name',
     width: 250,
     sortable: true,
     editable: permissionMap ? permissionMap['task_name']?.edit : true,

@@ -794,7 +794,8 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
         statusOptions,
         priorityOptions,
         currentPermissionMap,
-        accountPermissionMap
+        accountPermissionMap,
+        isMilestoneTab
       ),
     [
       handleTaskClick,
@@ -802,6 +803,7 @@ export const TaskTable: React.FC<ITaskTableProps> = ({
       priorityOptions,
       currentPermissionMap,
       accountPermissionMap,
+      isMilestoneTab,
     ]
   );
 

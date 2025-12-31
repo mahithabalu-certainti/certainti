@@ -454,7 +454,7 @@ export const getActivityTaskListColumns = (
 ): ListTableColumn<ActivityList>[] => [
   {
     id: 'r_number',
-    label: 'Activity ID',
+    label: 'Task ID',
     sortable: true,
     sortId: 'r_number',
     width: 140,
@@ -482,7 +482,7 @@ export const getActivityTaskListColumns = (
   },
   {
     id: 'task_name',
-    label: 'Activity Name',
+    label: 'Task Name',
     sortable: true,
     sortId: 'task_name',
     width: 160,
