@@ -160,6 +160,7 @@ jobs:
           CLIENT_SECRET_ENCRYPTION_KEY='client-secret-encryption-key'
           CLIENT_SECRET_ENCRYPTION_LENGTH=16
           AZURE_CONTAINER_NAME="user"
+          AZURE_WEB_PUBSUB_CONNECTION_STRING=pubsub-connection-string
           EOF
 
           echo "$ENV_FILE file created successfully!"
@@ -367,6 +368,7 @@ jobs:
       - name: Push Docker Image to ACR
         run: docker push ${{ secrets.PREPROD_ACR_LOGIN_SERVER }}/entity-module:${{ env.IMAGE_TAG }}
         working-directory: entity-module
+        
       - name: Cleanup old Docker tags in ACR (keep latest 10)
         run: |
           ACR_NAME=${{ secrets.PREPROD_ACR_NAME }}
@@ -1176,6 +1178,7 @@ jobs:
           CLIENT_SECRET_ENCRYPTION_LENGTH=16
           SCHEDULER_EXPRESSION=scheduler-expression 
           SCHEDULER_EXPRESSION_RULE_ENGINE=scheduler-expression-rule-engine
+          AZURE_WEB_PUBSUB_CONNECTION_STRING=pubsub-connection-string
           EOF
           echo "$ENV_FILE file created successfully!"
       - name: Copy .env file to VM
