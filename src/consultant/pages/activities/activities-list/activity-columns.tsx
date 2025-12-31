@@ -2,6 +2,7 @@ import {
   formatDateToYYYYMMDDWithTime,
   formatDateToYyyyMmmDd,
   formatTimeToAMPM,
+  getCapitalizeWords,
 } from '../../../../common-utils';
 import { ListTableColumn } from '../../../../components/table/types';
 import { ActivityList, ActivityType } from '../../../types';
@@ -83,6 +84,7 @@ export const getActivityAllActivityListColumns = (
     width: 140,
     sortable: true,
     hide: shouldHideColumn('attachment_level', permissionMaps),
+    render: (row) => getCapitalizeWords(row.attachment_level || ''),
   },
   {
     id: 'attached_to',
@@ -158,6 +160,7 @@ export const getActivityCallLogListColumns = (
     hide:
       !permissionMap?.['attachment_level']?.edit &&
       !permissionMap?.['attachment_level']?.read,
+    render: (row) => getCapitalizeWords(row.attachment_level || ''),
   },
   {
     id: 'attached_to',
@@ -276,6 +279,7 @@ export const getActivityEmailListColumns = (
     hide:
       !permissionMap?.['attachment_level']?.edit &&
       !permissionMap?.['attachment_level']?.read,
+    render: (row) => getCapitalizeWords(row.attachment_level || ''),
   },
   {
     id: 'attached_to',
@@ -430,6 +434,7 @@ export const getActivityMeetingListColumns = (
     hide:
       !permissionMap?.['attachment_level']?.edit &&
       !permissionMap?.['attachment_level']?.read,
+    render: (row) => getCapitalizeWords(row.attachment_level || ''),
   },
   {
     id: 'attached_to',
@@ -502,6 +507,7 @@ export const getActivityTaskListColumns = (
     hide:
       !permissionMap?.['attachment_level']?.edit &&
       !permissionMap?.['attachment_level']?.read,
+    render: (row) => getCapitalizeWords(row.attachment_level || ''),
   },
   {
     id: 'attached_to',

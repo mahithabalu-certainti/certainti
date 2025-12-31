@@ -1173,3 +1173,18 @@ export const formatDateToYyyyMmmDd = (dateString: string): string => {
 
   return `${year}-${month}-${day}`; // 2026-May-02
 };
+
+export const getCapitalizeWords = (value: string): string => {
+  if (!value) return '';
+
+  return (
+    value
+      // replace _, -, and multiple non-alphanumeric chars with space
+      .replace(/[^a-zA-Z0-9]+/g, ' ')
+      .trim()
+      .toLowerCase()
+      .split(' ')
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ')
+  );
+};

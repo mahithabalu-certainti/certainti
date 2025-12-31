@@ -1,5 +1,6 @@
 import {
   formatDateToYYYYMMDDWithTime,
+  getCapitalizeWords,
   REGEX_PATTERNS,
 } from '../../../../../common-utils';
 import { ListTableColumn } from '../../../../../components/table/types';
@@ -131,7 +132,7 @@ export const getTaskTableColumns = (
     width: 160,
     sortable: true,
     hide: permissionMap ? !permissionMap['attachment_level']?.read : false,
-    render: (row: TaskList) => row.attachment_level || '-',
+    render: (row) => getCapitalizeWords(row.attachment_level || ''),
   },
   {
     id: 'assigned_to_name',
