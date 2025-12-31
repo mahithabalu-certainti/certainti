@@ -68,6 +68,9 @@ export interface FormTypeFields {
   clearDate?: string;
   customDateOpen?: Date;
   disableDatesBefore?: Date;
+  dateFormat?: string;
+  views?: ('day' | 'month' | 'year')[];
+  maxLength?: number;
 }
 
 export type InputType =
@@ -174,6 +177,9 @@ export interface FieldType {
   clearDate?: string;
   customDateOpen?: Date;
   disableDatesBefore?: Date;
+  dateFormat?: string;
+  views?: ('day' | 'month' | 'year')[];
+  maxLength?: number;
 }
 
 export type AllowedCountry =

@@ -196,16 +196,13 @@ export const CreateCases: React.FC = () => {
     if (submissionDateData?.data && selectedFiscalYear) {
       const { caseSubmissionDate } = submissionDateData.data;
       if (caseSubmissionDate) {
-        const [mm, dd] = caseSubmissionDate.split('/');
-        if (mm && dd) {
-          const statutoryDate = `${selectedFiscalYear}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`;
-          setCalculatedStatutoryDate(statutoryDate);
-          setDateConstraints((prev) => ({
-            ...prev,
-            planned_max: statutoryDate,
-            start_date_max: statutoryDate,
-          }));
-        }
+        const statutoryDate = caseSubmissionDate;
+        setCalculatedStatutoryDate(statutoryDate);
+        setDateConstraints((prev) => ({
+          ...prev,
+          planned_max: statutoryDate,
+          start_date_max: statutoryDate,
+        }));
       } else {
         setCalculatedStatutoryDate('');
       }
