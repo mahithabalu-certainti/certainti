@@ -434,7 +434,7 @@ res_cnt AS (
 pf.project_code,pf.fiscal_year,pf.project_name,pf.project_type_rid,pf.project_classification_rid,pf.project_classification_other,
 pf.project_group,pf.industry_rid,pf.industry_name,pf.status_rid,pf.total_fte_prj,pf.total_subcon_prj,pf.total_nonlabor_prj,
 pf.total_effort_fte_prj,pf.total_effort_subcon_prj,
-pf.total_effort_prj,
+pf.total_effort_prj,pf.currency_rid,
 pf.total_cost_fte_prj,pf.total_cost_subcon_prj,pf.total_cost_nonlabor_prj,pf.total_cost_prj,
  COALESCE(res_cnt.cnt, 0) AS total_resources_prj,
   COALESCE(task_cnt.cnt, 0) AS total_tasks,
@@ -524,7 +524,8 @@ AND (
             'total_tasks', c.total_tasks,
             'total_technical_summaries', c.total_technical_summaries,
             'project_point_of_contact', c.project_point_of_contact,
-            'project_point_of_contact_email', c.project_point_of_contact_email
+            'project_point_of_contact_email', c.project_point_of_contact_email,
+            'currency_rid', c.currency_rid
         )) AS cases_summary
 
         FROM
