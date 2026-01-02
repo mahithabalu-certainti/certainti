@@ -1142,7 +1142,7 @@ jobs:
         working-directory: rule-builder-module
         run: |
           KEY_VAULT_NAME=${{ secrets.PROD_KEY_VAULT_NAME }}
-          ENV_FILE=".env.rule-buildermodule"
+          ENV_FILE=".env.rulebuildermodule"
           
           # Ensure Azure CLI is authenticated
           az account show > /dev/null 2>&1
@@ -1198,7 +1198,7 @@ jobs:
             fi
             
             # Move .env file with sudo
-            sudo mv /tmp/.env.rule-buildermodule /app/backend/.env.rule-buildermodule
+            sudo mv /tmp/.env.rulebuildermodule /app/backend/.env.rulebuildermodule
             echo ".env file moved successfully!"
           
             # Update only the rule-builder-module image tag
