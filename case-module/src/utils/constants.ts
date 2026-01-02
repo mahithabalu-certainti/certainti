@@ -349,7 +349,7 @@ export const rawQueries = {
   },
   listUsersForCaseTeam(accountRid: string) {
     return `  
-      SELECT u.rid, CONCAT(u.first_name, ' ', u.last_name) AS name,email, profile_url,phone
+      SELECT u.rid, CONCAT(u.first_name, ' ', u.last_name) AS name,email, profile_url,phone as phone_number
       FROM ${MAIN_SCHEMA_NAME}.user u
 	  where (is_consultant_firm is true
 	  or org_id = '${accountRid}')
