@@ -96,6 +96,7 @@ export interface UserOption {
   email: string;
   status?: string;
   profile_url?: string | null;
+  phone_number?: string | null;
 }
 
 export interface UserOptionsResponse extends CommonApiResponse {

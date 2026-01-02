@@ -56,13 +56,26 @@ export const normalizeQuillValue = (value: string): string => {
 // Add these to your existing helper file
 
 export const validateActivityEmailForm = (
-  formData: ActivityEmailFormData
+  formData: ActivityEmailFormData,
+  toInput?: string,
+  ccInput?: string
 ): { isValid: boolean; errors: ActivityEmailFormErrors } => {
   let isValid = true;
   const newErrors: ActivityEmailFormErrors = {};
 
-  if (!formData.to || formData.to.length === 0) {
+  // First check for pending inputs
+  if (toInput && toInput.trim()) {
+    newErrors.to =
+      'Please confirm the entry by pressing Enter or clear the field to continue.';
+    isValid = false;
+  } else if (!formData.to || formData.to.length === 0) {
     newErrors.to = 'Field is required';
+    isValid = false;
+  }
+
+  if (ccInput && ccInput.trim()) {
+    newErrors.cc =
+      'Please confirm the entry by pressing Enter or clear the field to continue.';
     isValid = false;
   }
 
