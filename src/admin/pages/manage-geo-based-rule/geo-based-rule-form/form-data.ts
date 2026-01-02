@@ -3,14 +3,12 @@ import { useMemo } from 'react';
 import { FormType, SelectOption } from '../../../../consultant/types';
 import {
   createDateField,
-  createFiscalDateField,
   createMultiSelectField,
   createSelectField,
   createTextField,
   REGEX_PATTERNS,
   YES_NO_OPTIONS,
 } from '../../../../common-utils';
-
 export const GeoBasedRuleFormFieldsData = (
   isEditView: boolean,
   countryOptions: SelectOption[],
@@ -51,7 +49,23 @@ export const GeoBasedRuleFormFieldsData = (
 
         // ✅ Date field
         if (item.type === 'Date') {
-          return createFiscalDateField(item.label, formattedLabel, {
+          const isSubmissionDate = [
+            'caseSubmissionDate',
+            'case_submission_date',
+            'submission_date',
+          ].includes(item.label);
+
+          if (isSubmissionDate) {
+            return createTextField(item.label, formattedLabel, {
+              ...commonProps,
+              placeholder: 'MM',
+              regex: REGEX_PATTERNS.ALLOW_ZERO_TO_99,
+              regexErrorMessage: 'Value must be between 0 and 99',
+              maxLength: 2,
+            });
+          }
+
+          return createDateField(item.label, formattedLabel, {
             ...commonProps,
           });
         }

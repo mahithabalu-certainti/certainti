@@ -13,6 +13,7 @@ import SectionHeader from '../../../../../../components/details-section/section-
 import {
   applyHidePermission,
   formatDateToYYYYMMDDWithTime,
+  getCapitalizeWords,
 } from '../../../../../../common-utils';
 import { FailureType, ImportEntityType } from '../../../../../types/imports';
 import { useSelector } from 'react-redux';
@@ -101,7 +102,7 @@ const ImportDetails: React.FC<ImportDetailsProps> = ({ handleBackClick }) => {
     },
     {
       label: 'Entity',
-      value: data?.entity,
+      value: getCapitalizeWords(data?.entity || ''),
       key: 'entity',
     },
     // {

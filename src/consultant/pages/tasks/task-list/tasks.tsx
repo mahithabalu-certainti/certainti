@@ -95,10 +95,10 @@ export const Tasks: React.FC = () => {
   const tabs = useMemo(() => {
     const list = [];
     if (isWorkBreakdownEnable) {
-      list.push({ label: 'Milestone', value: 'milestone' });
+      list.push({ label: 'Case Tasks', value: 'milestone' });
     }
     if (isActivityTaskEnable) {
-      list.push({ label: 'Activity', value: 'activity' });
+      list.push({ label: 'Activities', value: 'activity' });
     }
     return list;
   }, [isWorkBreakdownEnable, isActivityTaskEnable]);
@@ -298,7 +298,8 @@ export const Tasks: React.FC = () => {
         [], // assigneeOptions - currently empty for global list
         accountStatusOptions,
         currentPermissionMap,
-        accountPermissionMap
+        accountPermissionMap,
+        tabParam
       ),
     [
       priorityOptions,
@@ -306,6 +307,7 @@ export const Tasks: React.FC = () => {
       accountStatusOptions,
       currentPermissionMap,
       accountPermissionMap,
+      tabParam,
     ]
   );
 

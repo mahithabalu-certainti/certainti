@@ -1,4 +1,7 @@
-import { formatDateToYYYYMMDDWithTime } from '../../common-utils';
+import {
+  formatDateToYYYYMMDDWithTime,
+  getCapitalizeWords,
+} from '../../common-utils';
 import { ChecklistItemDetails } from '../../consultant/types';
 import { AttachmentList } from '../../consultant/types/attachment';
 
@@ -86,6 +89,7 @@ export const getDetailsAttachmentColumns = (
     hide:
       !permissionMap?.['attachment_level']?.edit &&
       !permissionMap?.['attachment_level']?.read,
+    render: (row) => getCapitalizeWords(row.attachment_level || ''),
   },
   {
     id: 'attach_to',
