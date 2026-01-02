@@ -1005,6 +1005,26 @@ export class WorkFlowService {
             default:
                 console.warn("Unknown action:", action.action_name);
         }
+        await this.insertHistoryLog(action, entity, userId);
+    }
+
+    async insertHistoryLog(action: any, entity: any, userId: string): Promise<void> {   
+        const mainDb = await this.getMainDb();
+        const historyPayload = {
+            action_name: action.action_name, 
+            created_by: userId,       
+            user_rid: entity.targetUserID,
+            user_email: entity.targetEmail,
+            entity_rid: entity.entityRid || " ",
+        };
+        const insertQuery = rawQueries.insertHistoryLog();
+        await mainDb.query(
+            insertQuery,
+            {
+                replacements: historyPayload,
+                type: QueryTypes.INSERT
+            }
+        );
     }
 
     async getNotificationTemplateDetails(templateName: string, oldValue: string, newValue: string, entityName: string, channel: string, ruleRid: string, taskContext: any): Promise<{
