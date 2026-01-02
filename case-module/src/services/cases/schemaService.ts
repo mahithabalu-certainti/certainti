@@ -4509,6 +4509,7 @@ class CaseSchemaService {
   const submissionDate = new Date(formattedEndDate);
   submissionDate.setMonth((submissionDate.getMonth()) + parseInt(submissionMonth));
 
+  
   // Return only the date part as YYYY-MM-DD
   return submissionDate.toISOString().split('T')[0];
   }
