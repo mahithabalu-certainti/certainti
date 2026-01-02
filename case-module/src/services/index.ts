@@ -12,6 +12,7 @@ import { ChildCaseService } from "./cases/childCaseService";
 import { CaseTaskSchemaService } from "./cases/caseTask/caseTaskSchemaService";
 import { CaseTaskService } from "./cases/caseTask/caseTaskService";
 import { ChecklistService } from "./cases/caseChecklist/checklistService";
+import { DataMapperService } from "./dataMapper/dataMapperService";
 
 class Services {
   private logger: Logger;
@@ -23,8 +24,9 @@ class Services {
   projectTaskInjestionServices: ProjectInjestionTaskService;
   activityService: IActivityService;
   projectService: ProjectService
-  caseTaskService : CaseTaskService
-  checklistService : ChecklistService
+  caseTaskService: CaseTaskService
+  checklistService: ChecklistService
+  dataMapperService: DataMapperService
 
   constructor(logger: Logger) {
     this.logger = logger;
@@ -38,6 +40,7 @@ class Services {
     this.projectService = new ProjectService(logger)
     this.caseTaskService = new CaseTaskService()
     this.checklistService = new ChecklistService()
+    this.dataMapperService = new DataMapperService()
   }
 }
 

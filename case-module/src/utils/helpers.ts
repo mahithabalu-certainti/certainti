@@ -433,8 +433,8 @@ export const setTaskTemplateData = (dbData: TaskTemplate, reqData: any, userId: 
       validUpdateQuery.push(validUpdateConditions)
     }
   }
-  if(reqData.case_team_member_role_rid) {
-    if(reqData.case_team_member_role_rid !== dbData.case_team_member_role_rid) {
+  if (reqData.case_team_member_role_rid) {
+    if (reqData.case_team_member_role_rid !== dbData.case_team_member_role_rid) {
       validUpdateConditions = `case_team_member_role_rid = '${reqData.case_team_member_role_rid}'`
       validUpdateQuery.push(validUpdateConditions)
     }
@@ -457,31 +457,31 @@ export const setTaskTemplateData = (dbData: TaskTemplate, reqData: any, userId: 
       validUpdateQuery.push(validUpdateConditions)
     }
   }
-  if(reqData.task_description != undefined) {
-    if(reqData.task_description !== dbData.task_description) {
+  if (reqData.task_description != undefined) {
+    if (reqData.task_description !== dbData.task_description) {
       validUpdateConditions = `task_description = '${reqData.task_description.replace(/'/g, "''")}'`
       validUpdateQuery.push(validUpdateConditions)
     }
   }
-  if(reqData.task_category_rid) {
-    if(reqData.task_category_rid !== dbData.task_category_rid) {
+  if (reqData.task_category_rid) {
+    if (reqData.task_category_rid !== dbData.task_category_rid) {
       validUpdateConditions = `task_category_rid = '${reqData.task_category_rid}'`
       validUpdateQuery.push(validUpdateConditions)
     }
   }
-  if(reqData.weightage_rid) {
-    if(reqData.weightage_rid !== dbData.weightage_rid) {
+  if (reqData.weightage_rid) {
+    if (reqData.weightage_rid !== dbData.weightage_rid) {
       validUpdateConditions = `weightage_rid = '${reqData.weightage_rid}'`
       validUpdateQuery.push(validUpdateConditions)
     }
   }
-  if(reqData.status_rid) {
-    if(reqData.status_rid !== dbData.status_rid) {
+  if (reqData.status_rid) {
+    if (reqData.status_rid !== dbData.status_rid) {
       validUpdateConditions = `status_rid = '${reqData.status_rid}'`
       validUpdateQuery.push(validUpdateConditions)
     }
   }
-  if(validUpdateQuery.length > 0) {
+  if (validUpdateQuery.length > 0) {
     validUpdateConditions = `modified_by = '${userId}'`
     validUpdateQuery.push(validUpdateConditions)
     validUpdateConditions = `modified_datetime = NOW()`
@@ -489,10 +489,10 @@ export const setTaskTemplateData = (dbData: TaskTemplate, reqData: any, userId: 
   }
   return validUpdateQuery
 }
-export const getColumnsNamesForTaskUpdate = (data : UpdateCaseTaskType, dbData : CaseTask) => {
-  let columns : string[] = [];
-  if(data.checklist_template_rid !== '') {
-    if(data.checklist_template_rid !== dbData.checklist_template_rid) {
+export const getColumnsNamesForTaskUpdate = (data: UpdateCaseTaskType, dbData: CaseTask) => {
+  let columns: string[] = [];
+  if (data.checklist_template_rid !== '') {
+    if (data.checklist_template_rid !== dbData.checklist_template_rid) {
       columns.push(`checklist_template_rid`)
     }
   }
@@ -590,7 +590,11 @@ export async function uploadToAzureBlob(
     let blobName;
     if (flag === "cases") {
       blobName = `${account_id}/cases/${task_number}/${timestamp}-${sanitizedBaseName}${originalExtension}`;
-    } else {
+    }
+    else if (flag === "data-mapper") {
+      blobName = `${account_id}/data-mapper/${timestamp}-${sanitizedBaseName}${originalExtension}`;
+    }
+    else {
       blobName = `${account_id}/attachments/${timestamp}-${sanitizedBaseName}${originalExtension}`;
     }
 

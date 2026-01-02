@@ -1145,6 +1145,34 @@ const listResourceCostSchemaForFinancialHighlights = Joi.object({
     }),
 });
 
+const createDataMapperSchema = Joi.object({
+  form_name: Joi.string().max(120).required()
+    .messages({
+      'any.required': 'Name is required',
+      'string.empty': 'Name cannot be empty',
+      'string.max': 'Name must be less than or equal to 120 characters'
+    }),
+  fiscal_year: Joi.number().integer().min(1900).max(2100).required()
+    .messages({
+      'any.required': 'Fiscal year is required',
+      'number.base': 'Fiscal year must be a number',
+      'number.min': 'Fiscal year must be greater than or equal to 1900',
+      'number.max': 'Fiscal year must be less than or equal to 2100'
+    }),
+  country_rid: Joi.string().pattern(uuidRegex).required()
+    .messages({
+      'any.required': 'Country is required',
+      'string.empty': 'Country cannot be empty',
+      'string.max': 'Country must be less than or equal to 120 characters'
+    }),
+  state_rid: Joi.string().pattern(uuidRegex).required()
+    .messages({
+      'any.required': 'State is required',
+      'string.empty': 'State cannot be empty',
+      'string.max': 'State must be less than or equal to 120 characters'
+    }),
+});
+
 
 export {
   createCaseSchema,
@@ -1201,5 +1229,6 @@ export {
   exportJurisdictionConfigSchema,
   jurisdictionRDConfigSchemaForNew,
   caseSubmissionDateSchema,
-  listResourceCostSchemaForFinancialHighlights
+  listResourceCostSchemaForFinancialHighlights,
+  createDataMapperSchema
 };
