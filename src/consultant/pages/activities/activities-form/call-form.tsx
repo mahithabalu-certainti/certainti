@@ -28,6 +28,7 @@ import { useSelector } from 'react-redux';
 import { AllPermissions } from '../../../../common-service';
 import { shouldDisableField, shouldHideField } from './helper';
 import { ActivitySourceDetails } from '../../../types';
+import { parsePhoneNumberFromString } from 'libphonenumber-js';
 
 // Types
 interface SuggestionState {
@@ -178,6 +179,7 @@ const CallForm: React.FC<CallFormProps> = ({
         rid: item.rid,
         name: item?.name || '',
         email: item?.email || '',
+        phone: item?.phone_number || undefined,
       })) || []
     );
   }, [userListOptions]);
@@ -234,6 +236,34 @@ const CallForm: React.FC<CallFormProps> = ({
   const isValidEmail = useCallback((email: string): boolean => {
     const emailRegex = REGEX_PATTERNS.EMAIL;
     return emailRegex.test(email.trim());
+  }, []);
+
+  const isValidPhoneNumber = useCallback((phone: string): boolean => {
+    const cleanPhone = phone.trim();
+
+    if (!cleanPhone) return false;
+
+    // Add + prefix if not present and starts with digits (for international format)
+    const phoneWithPlus = cleanPhone.startsWith('+')
+      ? cleanPhone
+      : `+${cleanPhone}`;
+
+    try {
+      // Try to parse the phone number with country code
+      const phoneNumber = parsePhoneNumberFromString(phoneWithPlus);
+
+      // If parsing fails, it means no valid country code was provided
+      if (!phoneNumber) {
+        return false;
+      }
+
+      // Check if the phone number is valid and possible
+      return phoneNumber.isValid() && phoneNumber.isPossible();
+    } catch (error) {
+      console.log(error, 'error');
+      // If parsing throws an error, the number is invalid
+      return false;
+    }
   }, []);
 
   // // File validation function
@@ -316,28 +346,41 @@ const CallForm: React.FC<CallFormProps> = ({
   const addParticipant = useCallback(
     (
       _field: 'attendees' | 'call_participants' | 'caller_id' | 'organizer',
-      email: string
+      value: string
     ) => {
-      if (!email.trim() || !isValidEmail(email)) {
+      if (!value.trim()) {
         return;
       }
 
-      const cleanEmail = email.trim();
+      // Check if it's a valid email or phone number
+      const isEmail = isValidEmail(value);
+      const isPhone = isValidPhoneNumber(value);
 
-      if (formData.call_participants?.includes(cleanEmail)) {
+      if (!isEmail && !isPhone) {
+        return;
+      }
+
+      let cleanValue = value.trim();
+
+      // If it's a phone number, ensure it has + prefix for UI consistency
+      if (isPhone && !cleanValue.startsWith('+')) {
+        cleanValue = `+${cleanValue}`;
+      }
+
+      if (formData.call_participants?.includes(cleanValue)) {
         return;
       }
 
       setFormData((prev) => ({
         ...prev,
-        call_participants: [...(prev.call_participants || []), cleanEmail],
+        call_participants: [...(prev.call_participants || []), cleanValue],
       }));
 
       setParticipantsInput('');
       setParticipantsSuggestions((prev) => ({ ...prev, anchorEl: null }));
       setErrors((prev) => ({ ...prev, call_participants: '' }));
     },
-    [isValidEmail, formData.call_participants]
+    [isValidEmail, isValidPhoneNumber, formData.call_participants]
   );
 
   const removeParticipant = useCallback(
@@ -358,23 +401,37 @@ const CallForm: React.FC<CallFormProps> = ({
   const addCaller = useCallback(
     (
       _field: 'attendees' | 'call_participants' | 'caller_id' | 'organizer',
-      email: string
+      value: string
     ) => {
-      if (!email.trim() || !isValidEmail(email)) {
+      if (!value.trim()) {
         return;
       }
 
-      const cleanEmail = email.trim();
+      // Check if it's a valid email or phone number
+      const isEmail = isValidEmail(value);
+      const isPhone = isValidPhoneNumber(value);
+
+      if (!isEmail && !isPhone) {
+        return;
+      }
+
+      let cleanValue = value.trim();
+
+      // If it's a phone number, ensure it has + prefix for UI consistency
+      if (isPhone && !cleanValue.startsWith('+')) {
+        cleanValue = `+${cleanValue}`;
+      }
+
       setFormData((prev) => ({
         ...prev,
-        caller_id: cleanEmail,
+        caller_id: cleanValue,
       }));
 
       setCallerInput('');
       setCallerSuggestions((prev) => ({ ...prev, anchorEl: null }));
       setErrors((prev) => ({ ...prev, caller_id: '' }));
     },
-    [isValidEmail]
+    [isValidEmail, isValidPhoneNumber]
   );
 
   const removeCaller = useCallback(() => {
@@ -414,8 +471,11 @@ const CallForm: React.FC<CallFormProps> = ({
           participantsInput.trim()
         ) {
           e.preventDefault();
+          const isEmail = isValidEmail(participantsInput);
+          const isPhone = isValidPhoneNumber(participantsInput);
+
           if (
-            isValidEmail(participantsInput) &&
+            (isEmail || isPhone) &&
             !formData.call_participants.includes(participantsInput.trim())
           ) {
             addParticipant('call_participants', participantsInput.trim());
@@ -470,6 +530,7 @@ const CallForm: React.FC<CallFormProps> = ({
       formData.call_participants,
       removeParticipant,
       isValidEmail,
+      isValidPhoneNumber,
       addParticipant,
       participantsInput,
       participantsSuggestions,
@@ -481,7 +542,10 @@ const CallForm: React.FC<CallFormProps> = ({
       if (!callerSuggestions.anchorEl) {
         if ((e.key === 'Enter' || e.key === 'Tab') && callerInput.trim()) {
           e.preventDefault();
-          if (isValidEmail(callerInput)) {
+          const isEmail = isValidEmail(callerInput);
+          const isPhone = isValidPhoneNumber(callerInput);
+
+          if (isEmail || isPhone) {
             addCaller('caller_id', callerInput.trim());
           }
         }
@@ -526,7 +590,13 @@ const CallForm: React.FC<CallFormProps> = ({
           break;
       }
     },
-    [isValidEmail, addCaller, callerInput, callerSuggestions]
+    [
+      isValidEmail,
+      isValidPhoneNumber,
+      addCaller,
+      callerInput,
+      callerSuggestions,
+    ]
   );
 
   // Handle input changes
@@ -572,7 +642,11 @@ const CallForm: React.FC<CallFormProps> = ({
     const now = new Date();
     const maxCallDurationHours = 24;
 
-    if (
+    // Check for pending input in Call Participants field
+    if (participantsInput.trim()) {
+      newErrors.call_participants =
+        'Please confirm the entry by pressing Enter or clear the field to continue.';
+    } else if (
       !formData.call_participants ||
       formData.call_participants.length === 0
     ) {
@@ -580,8 +654,16 @@ const CallForm: React.FC<CallFormProps> = ({
         'Field is required. Please include at least one participant.';
     }
 
-    if (!formData.caller_id.trim()) {
+    // Check for pending input in Caller ID field
+    if (callerInput.trim()) {
+      newErrors.caller_id =
+        'Please confirm the entry by pressing Enter or clear the field to continue.';
+    } else if (!formData.caller_id.trim()) {
       newErrors.caller_id = 'Field is required';
+    }
+
+    if (!formData.minutes_of_meeting.trim()) {
+      newErrors.minutes_of_meeting = 'Field is required';
     }
 
     if (!REGEX_PATTERNS.MAX_2000.test(formData.minutes_of_meeting)) {
@@ -839,6 +921,8 @@ const CallForm: React.FC<CallFormProps> = ({
                 }}
                 required={true}
                 isValidEmail={isValidEmail}
+                allowPhoneNumber={true}
+                isValidPhoneNumber={isValidPhoneNumber}
                 disabled={shouldDisableField(
                   'call_participants',
                   isEditView,
@@ -875,6 +959,8 @@ const CallForm: React.FC<CallFormProps> = ({
                 }}
                 required={true}
                 isValidEmail={isValidEmail}
+                allowPhoneNumber={true}
+                isValidPhoneNumber={isValidPhoneNumber}
                 singleSelect={true}
                 className='!pt-0'
                 disabled={shouldDisableField(
@@ -1043,7 +1129,7 @@ const CallForm: React.FC<CallFormProps> = ({
                 htmlFor='minutes_of_meeting'
                 className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px]'
               >
-                Minutes of Meeting
+                Minutes of Meeting<span className='text-red-500'> *</span>
               </label>
               <textarea
                 name='minutes_of_meeting'

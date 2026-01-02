@@ -551,7 +551,7 @@ const EmailForm: React.FC<EmailFormProps> = ({
 
   const validateForm = (): boolean => {
     const { isValid, errors: validationErrors } =
-      validateActivityEmailForm(formData);
+      validateActivityEmailForm(formData, toInput, ccInput);
     setErrors(validationErrors);
     return isValid;
   };
