@@ -4489,7 +4489,7 @@ class CaseSchemaService {
     );
     const fiscalStart = accountFiscalInfo?.fiscal_start_date; // e.g. 'Apr/01'
     const fiscalEnd = accountFiscalInfo?.fiscal_end_date; // e.g. 'Mar/31'
-    const fiscalYear = new Date().getFullYear();
+    const fiscalYear = data.fiscal_year;
     if (!fiscalStart || !fiscalEnd) return "";
     // Start date
     const formattedStartDate = parseFiscalDate(fiscalStart, fiscalYear);
@@ -4506,9 +4506,10 @@ class CaseSchemaService {
     const submissionMonth = platFormConfig?.config_json?.submission_date;
     if (!submissionMonth) return "";
 
-  const submissionDate = new Date(formattedStartDate);
-  submissionDate.setMonth(submissionDate.getMonth() + parseInt(submissionMonth));
+  const submissionDate = new Date(formattedEndDate);
+  submissionDate.setMonth((submissionDate.getMonth()) + parseInt(submissionMonth));
 
+  
   // Return only the date part as YYYY-MM-DD
   return submissionDate.toISOString().split('T')[0];
   }
