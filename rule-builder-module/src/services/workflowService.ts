@@ -859,7 +859,6 @@ export class WorkFlowService {
                 }
 
                    // const part = `${condition.field_description} ${condition.operator.toLowerCase()} ${condition.value}`;
-                    console.log("part " + part);
                     if (i === 0) {
                         ruleResult = conditionResult.pass;
                         templateParts.push(part);
