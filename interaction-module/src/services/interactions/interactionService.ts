@@ -3061,13 +3061,14 @@ export class InteractionService {
           : [];
         if (projectIds.length === 0) {
           logMessage(`No active projects found for account ID in triggerAI: ${req.data[0].account_rid}`);
-           return {
-              statusCode: HttpStatus.FAILED,
-              statusMessage: `No active projects found for the account with the project type ${projectTypes}`,
-              data: null,
-              status: "error",
-              errorMessage: `No active projects found for the account with the project type ${projectTypes}`,
-            };
+          
+          return {
+            statusCode: HttpStatus.FAILED,
+            statusMessage: `No active projects found for the account`,
+            data: null,
+            status: "error",
+            errorMessage: `No active projects found for the account`,
+          };
         }
         payload.project_id = projectIds;
       }
@@ -3107,18 +3108,18 @@ export class InteractionService {
       }
       logMessage(`Triggering AI with payload: ${JSON.stringify(payload)}`);
 
-      const topic =
-        process.env.KAFKA_AI_REQUEST_TRIGGER_TOPIC || "ai_assessment_request";
-      const message = {
-        value: JSON.stringify(payload),
-      };
-      const producer = await this.getProducer();
-      const sendResult = await producer.send({
-        topic,
-        messages: [message],
-      });
-      // Check if the message was processed successfully
-      logMessage(`Send result to topic: ${JSON.stringify(sendResult)}`);
+      // const topic =
+      //   process.env.KAFKA_AI_REQUEST_TRIGGER_TOPIC || "ai_assessment_request";
+      // const message = {
+      //   value: JSON.stringify(payload),
+      // };
+      // const producer = await this.getProducer();
+      // const sendResult = await producer.send({
+      //   topic,
+      //   messages: [message],
+      // });
+      // // Check if the message was processed successfully
+      // logMessage(`Send result to topic: ${JSON.stringify(sendResult)}`);
       return {
         statusCode: HttpStatus.SUCCESS,
         statusMessage: "RD Assessment Initiated",

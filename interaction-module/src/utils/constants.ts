@@ -345,6 +345,10 @@ export const rawQueries = {
     return `
     SELECT rid, project_name,project_code,r_number,fiscal_year,project_rid,max_ai_interaction FROM ${schemaName}.project_fiscal WHERE rid = '${rid}'`;
   },
+  fetchProjectTypeNames(ids: string[]) {
+    console.log(ids);
+      return `SELECT project_type_name FROM ${MAIN_SCHEMA_NAME}.project_type WHERE rid IN (${ids})`;
+    },
   fetchKeyContactsByCaseId(caseRid: string, schemaName: string) {
   return `
     SELECT 
