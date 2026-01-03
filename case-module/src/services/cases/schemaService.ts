@@ -2,6 +2,7 @@ import { initOrgSequelize } from "../../config/orgDataSource";
 import dayjs from "dayjs";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import axios, { AxiosError } from "axios";
+import { v4 as uuidv4 } from 'uuid'
 import {
   col,
   fn,
@@ -15,6 +16,7 @@ import { CaseModelService } from "../caseModelsService";
 import {
   ALPHANUMERIC_CONDITIONS,
   entityNames,
+  ENV_PREFIX,
   filtersColumnsForCaseSummary,
   filtersColumnsForReviewProjects,
   filterTypesForCaseSummary,
@@ -178,6 +180,95 @@ class CaseSchemaService {
       logMessage(`Error fetching country: ${err}`);
       throw new Error("Error fetching country: " + (err as Error).message);
     }
+  }
+  async cloneCase(
+    accountNumber: string,
+    caseRequest: ICreateCases,
+    transaction: Transaction
+  )
+  {
+    const { Case } = await this.caseModelService.getModels(accountNumber);
+      const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(
+        /\D/g,
+        ""
+      )}`;
+      const tableExists = await this.checkTableExists(schemaName, "cases");
+      if (!tableExists) {
+        await this.createCaseTables(accountNumber);
+      }
+      //  await this.createCaseTables(accountNumber);
+      caseRequest.parent_case_rid = caseRequest.case_rid;
+      const casecreationResponse = await Case.create(caseRequest, {
+        transaction,
+      });
+      // Clone case tasks
+      const { CaseTask } = await this.caseModelService.getModels(accountNumber);
+      const originalCaseTasks = await CaseTask.findAll({
+        where: { case_rid: caseRequest.case_rid },
+        raw: true
+      });
+      for (const task of originalCaseTasks) {
+        const { rid, case_rid, created_datetime, ...rest } = task;
+        await CaseTask.create({
+          ...rest,
+          case_rid: casecreationResponse.rid,
+          created_datetime: new Date(),
+          created_by: caseRequest.created_by,
+          rid: `${ENV_PREFIX}${uuidv4()}`,
+        }, { transaction });
+      }
+        
+
+      //clone case team
+      // Clone case projects
+      const { CaseProject } = await this.caseModelService.getModels(accountNumber);
+      // Fetch all projects for the original case
+      const originalProjects = await CaseProject.findAll({
+        where: { case_rid: caseRequest.case_rid },
+        raw: true
+      });
+      // Clone each project to the new case
+      for (const project of originalProjects) {
+        const { rid, case_rid, created_datetime, ...rest } = project;
+        await CaseProject.create({
+          ...rest,
+          case_rid: casecreationResponse.rid,
+          created_datetime: new Date(),
+          created_by: caseRequest.created_by
+        }, { transaction });
+      }
+      // Clone case project resources
+      const { CaseProjectResource } = await this.caseModelService.getModels(accountNumber);
+      const originalProjectResources = await CaseProjectResource.findAll({
+        where: { case_rid: caseRequest.case_rid },
+        raw: true
+      });
+      for (const resource of originalProjectResources) {
+        const { rid, case_rid, created_datetime, ...rest } = resource;
+        await CaseProjectResource.create({
+          ...rest,
+          case_rid: casecreationResponse.rid,
+          created_datetime: new Date(),
+          created_by: caseRequest.created_by
+        }, { transaction });
+      }
+      
+      // Clone case project tasks
+      const { CaseProjectTask } = await this.caseModelService.getModels(accountNumber);
+      const originalProjectTasks = await CaseProjectTask.findAll({
+        where: { case_rid: caseRequest.case_rid },
+        raw: true
+      });
+      for (const task of originalProjectTasks) {
+        const { rid, case_rid, created_datetime, ...rest } = task;
+        await CaseProjectTask.create({
+          ...rest,
+          case_rid: casecreationResponse.rid,
+          created_datetime: new Date(),
+          created_by: caseRequest.created_by
+        }, { transaction });
+      }
+
   }
 
   async createCases(

@@ -17,6 +17,7 @@ export interface ICreateCases {
   heat_light_power?: number;
   total_nonlabor_cost?: number;
   tax_liability?: number
+  parent_case_rid?: string;
 }
 
 export type CaseHeadersColumns = {
