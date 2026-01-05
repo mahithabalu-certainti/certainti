@@ -33,7 +33,14 @@ interface CaseAttributes {
   approved_datetime?: Date;
   tax_liability?: number;
   financial_working_signoff? : boolean
-  material_software_cost? : number
+  employers_pension_contribution? : number
+  other? : number
+  material_software_cost? : number;
+  sub_contracts? : number;
+  cloud_software?: number;
+  unpaid_amounts_paid? : number;
+  unpaid_amounts? : number;
+  
 }
 
 export interface CaseCreationAttributes
@@ -68,11 +75,17 @@ export class Case
   public case_total_qualified_project_cost?: number;
   public submitted_datetime?: Date;
   public approved_datetime?: Date;
-  public  total_nonlabor_cost?: number;
-  public  heat_light_power?: number;
+  public total_nonlabor_cost?: number;
+  public heat_light_power?: number;
   public tax_liability?: number;
   public financial_working_signoff? : boolean
-  public material_software_cost?: number | undefined;
+  public employers_pension_contribution? : number
+  public other? : number
+  public material_software_cost? : number;
+  public sub_contracts? : number;
+  public cloud_software?: number;
+  public unpaid_amounts_paid? : number;
+  public unpaid_amounts? : number;
 
   static initialize(
     sequelize: Sequelize,
@@ -123,7 +136,13 @@ export class Case
         heat_light_power: { type: DataTypes.DECIMAL, allowNull: true },
         tax_liability: { type: DataTypes.DECIMAL, allowNull: true },
         financial_working_signoff : {type : DataTypes.BOOLEAN, defaultValue : false},
-        material_software_cost : {type : DataTypes.DECIMAL, allowNull : true}
+        employers_pension_contribution : {type : DataTypes.DECIMAL, allowNull : true},
+        other : {type : DataTypes.DECIMAL, allowNull : true},
+        material_software_cost : {type : DataTypes.DECIMAL, allowNull : true},
+        sub_contracts : {type : DataTypes.DECIMAL, allowNull : true},
+        cloud_software: {type : DataTypes.DECIMAL, allowNull : true},
+        unpaid_amounts_paid : {type : DataTypes.DECIMAL, allowNull : true},
+        unpaid_amounts : {type : DataTypes.DECIMAL, allowNull : true}
       },
       {
         sequelize,
