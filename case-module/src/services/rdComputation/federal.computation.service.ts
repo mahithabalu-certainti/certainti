@@ -108,7 +108,7 @@ export class FederalComputationService {
                         const employersPensionContributions = Number(caseDetails?.employers_pension_contribution) || 0.00
                         const qualifyingRdc = (totalSalaryAndExpenses + employersPensionContributions) || 0.00
                         const grossReduction = Number(((qualifyingRdc * extractConfig.gross_rdec)/100).toFixed(2)) || 0.00
-                        const subContracts = Number(caseDetails?.total_nonlabor_cost) || 0.00
+                        const subContracts = Number(caseDetails?.sub_contracts) || 0.00
                         const otherCost = Number(caseDetails?.other) || 0.00
                         let reductionValue = `Reductions (${extractConfig.reduction}%)`
                         let grossReductionValue = `GROSS RDEC @ ${extractConfig.gross_rdec}%`
@@ -156,13 +156,100 @@ export class FederalComputationService {
                         }
                         await this.rdCreditSchemaService.insertRDCreditCalculation(fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, result.inputFields, saveData); 
                         return {
-                        statusCode : HttpStatus.SUCCESS,
-                        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
-                        statusMessage : STATUS_MESSAGE.rdCreditPreviewSuccess || "RD credit calculation processed successfully",
-                        data : saveData
+                            statusCode : HttpStatus.SUCCESS,
+                            statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+                            statusMessage : STATUS_MESSAGE.rdCreditPreviewSuccess || "RD credit calculation processed successfully",
+                            data : saveData
                         };
                     }
                 }
+            } else if (countryInfo.countryCode === "IRL") {
+                const [caseDetails] : any = await orgDb.query(rawQueries.fetchCaseById(schemaName), {replacements : {caseId : caseRid}, type : QueryTypes.SELECT})
+                const config = await this.rdCreditSchemaService.getRDCreditConfig(countryInfo.countryCode, mainDb, effectiveStart, effectiveEnd, "", this.programName);
+                const extractConfig = this.extractConfigJson(config.config_json);
+                const federalComputation = federalCalculators[countryInfo.countryCode];
+                if(federalComputation) {
+                    let totalEmployeesCost = 0.00;
+                    let totalEpwCost = 0.00;
+                    let totalReductionCost = 0.00;
+                    let totalNetEpw = 0.00;
+                    let unpaidAmountPaid = Number(caseDetails?.unipaid_amount_paid) || 0.00
+                    let paidAmount = Number(caseDetails?.paid_amount) || 0.00
+                    let cloudSoftwareCost = Number(caseDetails?.cloud_software) || 0.00
+                    let subContracts = Number(caseDetails?.sub_contracts) || 0.00
+                    let heatLightPower = Number(caseDetails?.heat_light_power) || 0.00
+                    let otherCost = Number(caseDetails?.other) || 0.00
+                    let calculatedPaidUnpaidAmount = paidAmount - unpaidAmountPaid
+                    const computedResult = await federalComputation.computeForIRL(caseRid, accountRid, schemaName, extractConfig);
+                    if(computedResult.computedFields[0].projects !== null) {
+                        const uniqueCurrencyId = [...new Set(computedResult.computedFields[0].projects.map((d: any) => d.currency_rid))];
+                        let getCurrency : any
+                        let mapCurrency;
+                        if(uniqueCurrencyId.length > 0) {
+                            getCurrency = await mainDb.query(rawQueries.fetchCurrencies(uniqueCurrencyId))
+                        } else {
+                            getCurrency = []
+                        }
+                        mapCurrency = new Map(getCurrency[0].map((d : any) => [d.rid, d.currency_symbol]))
+                        computedResult.computedFields[0].projects.forEach((data : any) => {
+                            totalEmployeesCost = totalEmployeesCost + data.employees
+                            totalEpwCost = totalEpwCost + data.epw
+                            totalNetEpw = totalNetEpw + data.net_epw
+                        })
+                        totalReductionCost = totalEpwCost * extractConfig.reduction
+                        let totalLabour = totalEmployeesCost + totalNetEpw + calculatedPaidUnpaidAmount 
+                        let totalQRE = totalLabour + cloudSoftwareCost + subContracts + heatLightPower + otherCost
+                        let researchDevelopmentTaxCredit = Number((totalQRE * extractConfig.research_development_tax_credit)/100).toFixed(2);
+                        let dynamicReductionKey = `Reductions (${extractConfig.reduction}%)`
+                        let dynamicRdCredit = `Research and Development (R&D) Corporation Tax credit @${extractConfig.research_development_tax_credit}%`
+                        const finalData = {
+                            Title : {
+                                    "Account ID" : accountRid,
+                                    "Account Name" : countryInfo.accountName,
+                                    "Description": "Summary of R&D Expenditures",
+                                    "Expleo" : `FY-${caseDetails?.fiscal_year}`
+                                },
+                            Columns : [
+                                "LABOUR", "Employees", "EPW", `Reductions (${extractConfig.reduction}%)`, "Net EPW", "Unpaid amounts (+)", "Unpaid amounts (-)", 
+                                "Total Labour", "Cloud Software", "Subcontracts", "Heat Light Power", "Other", "Total QRE", `Research and Development (R&D) Corporation Tax credit @${extractConfig.research_development_tax_credit}%`
+                            ],
+                            Total : {
+                                Employees : totalEmployeesCost,
+                                EPW : totalEpwCost,
+                                [dynamicReductionKey] : totalReductionCost,
+                                "Net EPW" : totalNetEpw,
+                                "Unpaid amounts (+)" : unpaidAmountPaid,
+                                "Unpaid amounts (-)" : paidAmount,
+                                "Total Labour" : totalLabour,
+                                "Cloud Software" : cloudSoftwareCost,
+                                Subcontracts : subContracts,
+                                "Heat Light Power" : heatLightPower,
+                                Other : otherCost,
+                                "Total QRE": totalQRE,
+                                [dynamicRdCredit]: parseFloat(researchDevelopmentTaxCredit)
+                            },
+                            Projects : computedResult.computedFields[0].projects.map((d : any) => {
+                                return {
+                                    "Project ID": d.project_fiscal_rid,
+                                    "Project Name": d.project_name,
+                                    "Currency Symbol": mapCurrency.get(d.currency_rid) || null,
+                                    "Employees" : d.employees,
+                                    "EPW" : d.epw,
+                                    [dynamicReductionKey] : d.reductions,
+                                    "Net EPW" : d.net_epw,
+                                    "Total Labor" : d.total_project_value_labor,
+                                }
+                            })
+                        } 
+                        await this.rdCreditSchemaService.insertRDCreditCalculation(fetchParentAccountRnumber[0][0].r_number, caseRid, config.country_rid, computedResult.inputFields, finalData); 
+                        return {
+                            statusCode : HttpStatus.SUCCESS,
+                            statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+                            statusMessage : STATUS_MESSAGE.rdCreditPreviewSuccess || "RD credit calculation processed successfully",
+                            data : finalData
+                        };                       
+                    }
+                }                
             }
             return {
                 statusCode: HttpStatus.FAILED,

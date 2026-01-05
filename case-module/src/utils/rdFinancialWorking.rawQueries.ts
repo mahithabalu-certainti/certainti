@@ -37,6 +37,5 @@ export const fetchProjectCostDetailsBasedOnCases = (caseRid : string, accountRid
     FROM
     calculate_cost
     `
-    console.log(query)
     return query;
 }
