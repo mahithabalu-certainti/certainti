@@ -823,6 +823,7 @@ export class CaseTaskSchemaService {
               );
               await ActivityHistory.create({
                 activity_rid: taskRid,
+                account_rid: accountRid,
                 created_by: userId,
                 created_datetime: new Date(),
                 attribute_name: "Tags",
@@ -1258,6 +1259,7 @@ export class CaseTaskSchemaService {
                 old_value: "CREATE",
                 new_value: "added an attachment",
                 task_rid: data.task_rid,
+                account_rid: data.account_rid,
               };
               if (data.task_type !== "activity") {
                 commentsAttachmentPayload.case_rid = data.case_rid;
@@ -1788,6 +1790,7 @@ export class CaseTaskSchemaService {
                 old_value: "CREATE",
                 new_value: "added an attachment",
                 activity_rid: data.task_rid,
+                account_rid: data.account_rid
               });
             }
           }
@@ -1861,6 +1864,7 @@ export class CaseTaskSchemaService {
             old_value: "CREATE",
             new_value: "deleted an attachment",
             activity_rid: data.task_rid,
+            account_rid: data.account_rid
           });
           await this.addTaskTimeline(
             accountNumber,
