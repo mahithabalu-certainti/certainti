@@ -1,7 +1,7 @@
 import type React from 'react';
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { Popover, IconButton, Badge } from '@mui/material';
-import { getRelativeTime, getSvgIcon } from './helper';
+import { getRelativeTime, getSvgIcon, stripHtmlTags } from './helper';
 import { NotificationItem } from '../../admin/types/notification';
 import {
   useNotificationList,
@@ -76,8 +76,11 @@ export default function NotificationPanel() {
       // Show browser notification via Service Worker
       // Using consistent tag prevents duplicate notifications across multiple tabs
       if (isPushSupported) {
+        // Strip HTML tags for browser notification to show plain text
+        const plainTextMessage = stripHtmlTags(notificationMessage);
+
         showPushNotification('New Notification', {
-          body: notificationMessage,
+          body: plainTextMessage,
           icon: '/favicon.svg',
           badge: '/favicon.svg',
           tag: `websocket-notification-${Date.now()}`, // Unique tag each time
@@ -259,9 +262,36 @@ export default function NotificationPanel() {
                   </div>
 
                   <div className='flex-1'>
-                    <p className='text-xs text-[#2A2A2A] text-wrap'>
-                      {message}
-                    </p>
+                    <div
+                      className={`
+  text-xs text-[#2A2A2A] font-normal text-wrap
+  [&_strong]:font-bold [&_em]:italic
+  [&_u]:underline [&_s]:line-through
+
+  [&_h1]:text-2xl [&_h1]:font-bold
+  [&_h2]:text-xl [&_h2]:font-semibold
+  [&_h3]:text-lg [&_h3]:font-semibold
+  [&_h4]:text-base [&_h4]:font-medium
+  [&_h5]:text-sm [&_h5]:font-medium
+  [&_h6]:text-xs [&_h6]:font-medium
+
+  [&_ul]:list-disc [&_ul]:pl-2
+  [&_ol]:list-decimal [&_ol]:pl-2
+  [&_li]:mb-1
+
+  [&_a]:text-blue-600 [&_a]:underline
+  [&_blockquote]:border-l-2 [&_blockquote]:pl-2 [&_blockquote]:italic
+
+  [&_code]:font-mono [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:rounded
+  [&_pre]:font-mono [&_pre]:bg-gray-100 [&_pre]:p-2 [&_pre]:rounded [&_pre]:overflow-x-auto
+
+  [&_img]:max-w-full [&_img]:rounded
+  [&_table]:border-collapse [&_table]:border [&_table]:border-gray-300 [&_table]:my-1
+  [&_th]:border [&_th]:border-gray-300 [&_th]:bg-gray-100 [&_th]:px-2 [&_th]:py-1
+  [&_td]:border [&_td]:border-gray-300 [&_td]:px-2 [&_td]:py-1
+`}
+                      dangerouslySetInnerHTML={{ __html: message || '' }}
+                    />
                     <p className='text-xs text-[#425A76] mt-1'>{timestamp}</p>
                   </div>
                 </div>

@@ -200,3 +200,14 @@ export const getSvgIcon = (name: string, color: string = '#425A76') => {
 
   return icons[name] || icons['info'];
 };
+
+export const stripHtmlTags = (html: string): string => {
+  if (!html) return '';
+
+  // Create a temporary div element to parse HTML
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = html;
+
+  // Get text content (automatically strips HTML tags)
+  return tempDiv.textContent || tempDiv.innerText || '';
+};
