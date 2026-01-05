@@ -3022,7 +3022,7 @@ export class InteractionService {
         );
     const [accountFiscalInfo]: any[] = await this.orgDbSequelize.query(
       rawQueries.fetchAccountDetailsInfo(
-        schemaName,req.data[0].account_rid, 
+        req.data[0].account_rid,schemaName
       ), { type: 'SELECT' }
     );
     const fiscalStart = accountFiscalInfo?.fiscal_start_date; // e.g. 'Apr/01'
