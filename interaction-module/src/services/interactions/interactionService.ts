@@ -3061,13 +3061,14 @@ export class InteractionService {
           : [];
         if (projectIds.length === 0) {
           logMessage(`No active projects found for account ID in triggerAI: ${req.data[0].account_rid}`);
-           return {
-              statusCode: HttpStatus.FAILED,
-              statusMessage: `No active projects found for the account with the project type ${projectTypes}`,
-              data: null,
-              status: "error",
-              errorMessage: `No active projects found for the account with the project type ${projectTypes}`,
-            };
+          
+          return {
+            statusCode: HttpStatus.FAILED,
+            statusMessage: `No active projects found for the account`,
+            data: null,
+            status: "error",
+            errorMessage: `No active projects found for the account`,
+          };
         }
         payload.project_id = projectIds;
       }
