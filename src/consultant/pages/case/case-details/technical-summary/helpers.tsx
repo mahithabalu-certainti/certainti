@@ -42,6 +42,24 @@ export const getTechnicalSummaryFilterFields = (
         !permissionMap?.['r_number']?.read,
     },
     {
+      name: 'Project Code',
+      value: 'project_code',
+      type: 'text',
+      operatorOption: textOptions,
+      // hide:
+      //   !permissionMap?.['project_code']?.edit &&
+      //   !permissionMap?.['project_code']?.read,
+    },
+    {
+      name: 'Project Name',
+      value: 'project_name',
+      type: 'text',
+      operatorOption: textOptions,
+      // hide:
+      //   !permissionMap?.['project_name']?.edit &&
+      //   !permissionMap?.['project_name']?.read,
+    },
+    {
       name: 'Summary Version',
       value: 'version',
       type: 'number',
