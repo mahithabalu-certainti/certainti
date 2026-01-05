@@ -395,11 +395,23 @@ export class JurisdictionSchemaService {
     // 4. GraphQL update
     if (configRequest?.apiType === "graphql") {
       configRequest.modified_datetime = new Date();
-      configRequest.modified_by = configRequest.modified_by;
-      await response.update(configRequest);
-      await JurisdictionConfig.update(configRequest, { where: { federal_config_id: configRequest.config_rid }
-      });
-      
+     const sequelizeInstance = JurisdictionConfig.sequelize as Sequelize;
+      if (!sequelizeInstance) {
+        // Fallback to non-transactional behavior if no sequelize instance is available
+        await response.update(configRequest);
+        await JurisdictionConfig.update(configRequest, {
+          where: { federal_config_id: configRequest.config_rid },
+        });
+      } else {
+        await sequelizeInstance.transaction(async (t: Transaction) => {
+          await response.update(configRequest, { transaction: t });
+          await JurisdictionConfig.update(configRequest, {
+            where: { federal_config_id: configRequest.config_rid },
+            transaction: t,
+          });
+        });
+      }
+
       updated = true;
     }
   

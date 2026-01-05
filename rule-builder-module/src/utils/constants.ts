@@ -398,7 +398,7 @@ export const rawQueries = {
     return `SELECT rid, task_status_name from ${MAIN_SCHEMA_NAME}.case_task_status`;
   },
   fetchTaskTypes() {
-    return `SELECT rid, task_type_name from ${MAIN_SCHEMA_NAME}.task_type WHERE task_type_name ='Milestone' and lower(status) = lower('Active')`;
+    return `SELECT rid, task_type_name from ${MAIN_SCHEMA_NAME}.task_type WHERE task_type_name ='Milestone' and lower(status) = 'active'`;
   },
    fetchAllCases() {
     return `SELECT cs.rid,
