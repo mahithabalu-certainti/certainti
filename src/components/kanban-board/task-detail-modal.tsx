@@ -719,22 +719,22 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     const isAnyFieldEmpty = () => {
       if (!editedTask) return true;
 
-      const isVisible = (key: string) => !fieldVisibility[key];
+      const isFieldVisible = (key: string) => !fieldVisibility[key];
 
       // Check Assignee
-      if (isVisible('assignee')) {
+      if (isFieldVisible('assignee')) {
         const assigneeName = editedTask.assignee?.name;
         if (!assigneeName || assigneeName === 'Unassigned') return true;
       }
 
       // Check Priority
-      if (isVisible('priority') && !editedTask.priority) return true;
+      if (isFieldVisible('priority') && !editedTask.priority) return true;
 
       // Check Start Date
-      if (isVisible('startDate') && !editedTask.startDate) return true;
+      if (isFieldVisible('startDate') && !editedTask.startDate) return true;
 
       // Check End Date
-      if (isVisible('endDate') && !editedTask.endDate) return true;
+      if (isFieldVisible('endDate') && !editedTask.endDate) return true;
 
       return false;
     };
