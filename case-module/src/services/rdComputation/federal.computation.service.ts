@@ -237,7 +237,7 @@ export class FederalComputationService {
                                     "EPW" : d.epw,
                                     [dynamicReductionKey] : d.reductions,
                                     "Net EPW" : d.net_epw,
-                                    "Total Labor" : d.total_project_value_labor,
+                                    "Total Labour" : d.total_project_value_labor,
                                 }
                             })
                         } 
