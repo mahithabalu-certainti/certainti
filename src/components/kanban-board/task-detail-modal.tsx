@@ -715,8 +715,33 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
     // Fields that should be editable only by the creator
     const creatorOnlyFieldsDisabled = !isCreator;
 
+    // Check if any visible field is unassigned or empty
+    const isAnyFieldEmpty = () => {
+      if (!editedTask) return true;
+
+      const isVisible = (key: string) => !fieldVisibility[key];
+
+      // Check Assignee
+      if (isVisible('assignee')) {
+        const assigneeName = editedTask.assignee?.name;
+        if (!assigneeName || assigneeName === 'Unassigned') return true;
+      }
+
+      // Check Priority
+      if (isVisible('priority') && !editedTask.priority) return true;
+
+      // Check Start Date
+      if (isVisible('startDate') && !editedTask.startDate) return true;
+
+      // Check End Date
+      if (isVisible('endDate') && !editedTask.endDate) return true;
+
+      return false;
+    };
+
     const shouldDisableStatus =
-      typeof isCaseTeamCreated === 'boolean' ? !isCaseTeamCreated : false;
+      (typeof isCaseTeamCreated === 'boolean' ? !isCaseTeamCreated : false) ||
+      isAnyFieldEmpty();
 
     return {
       ...fieldDisabled,
@@ -733,11 +758,12 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
       checklist: fieldDisabled.checklist || creatorOnlyFieldsDisabled,
     };
   }, [
-    editedTask?.checklist,
+    editedTask,
     task?.created_by_rid,
     userId,
     fieldDisabled,
     isCaseTeamCreated,
+    fieldVisibility,
   ]);
 
   if (!isAnimating || !taskId) return null;
