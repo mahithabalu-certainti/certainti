@@ -46,16 +46,17 @@ export const sanitizeHtml = (html: string): string => {
 
 /**
  * Strips HTML tags from a string and returns plain text
+ * Uses DOMParser to safely parse HTML without XSS risks
  * @param html - String containing HTML tags
  * @returns Plain text without HTML tags
  */
 export const stripHtmlTags = (html: string): string => {
   if (!html) return '';
 
-  // Create a temporary div element to parse HTML
-  const tempDiv = document.createElement('div');
-  tempDiv.innerHTML = html;
-
-  // Get text content (automatically strips HTML tags)
-  return tempDiv.textContent || tempDiv.innerText || '';
+  // Use DOMParser to safely parse HTML and extract text content
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+  
+  // Get text content from the parsed document (automatically strips HTML tags)
+  return doc.body.textContent || '';
 };
