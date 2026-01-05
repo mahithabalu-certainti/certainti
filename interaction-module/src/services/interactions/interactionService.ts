@@ -3108,18 +3108,18 @@ export class InteractionService {
       }
       logMessage(`Triggering AI with payload: ${JSON.stringify(payload)}`);
 
-      // const topic =
-      //   process.env.KAFKA_AI_REQUEST_TRIGGER_TOPIC || "ai_assessment_request";
-      // const message = {
-      //   value: JSON.stringify(payload),
-      // };
-      // const producer = await this.getProducer();
-      // const sendResult = await producer.send({
-      //   topic,
-      //   messages: [message],
-      // });
-      // // Check if the message was processed successfully
-      // logMessage(`Send result to topic: ${JSON.stringify(sendResult)}`);
+      const topic =
+        process.env.KAFKA_AI_REQUEST_TRIGGER_TOPIC || "ai_assessment_request";
+      const message = {
+        value: JSON.stringify(payload),
+      };
+      const producer = await this.getProducer();
+      const sendResult = await producer.send({
+        topic,
+        messages: [message],
+      });
+      // Check if the message was processed successfully
+      logMessage(`Send result to topic: ${JSON.stringify(sendResult)}`);
       return {
         statusCode: HttpStatus.SUCCESS,
         statusMessage: "RD Assessment Initiated",
