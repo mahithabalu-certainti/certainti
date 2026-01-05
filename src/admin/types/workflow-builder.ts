@@ -116,6 +116,7 @@ export interface ActionCategoryTypeResponse {
 //-------- Category Fields --------
 export interface RuleCategoryFieldsPayload {
   category_rid: string;
+  event_rid?: string;
   status_rid?: string;
 }
 

@@ -55,6 +55,7 @@ import {
   useGetTaskCategoryTypes,
 } from '../../admin/service/task-template/task-template-service';
 import UserAvatar from './user-avatar';
+import { getSvgIcon } from '../navbar/helper';
 
 interface TaskDetailModalPropsExtended
   extends Omit<TaskDetailModalProps, 'tagData'> {
@@ -1245,8 +1246,6 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
           assigned_to: assignedToRid || '',
         };
 
-        let updateResponse;
-
         if (taskType === 'activity') {
           // Use activities API for tasks opened from activities page
           const activityPayload = {
@@ -1276,17 +1275,13 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
             fiscal_year: editedTask.fiscal_year,
             checklist_rid: selectedChecklistObj?.id || '',
           };
-          updateResponse =
-            await updateActivityTaskMutation.mutateAsync(activityPayload);
+          await updateActivityTaskMutation.mutateAsync(activityPayload);
         } else {
           // Use case task API for tasks opened from work breakdown
-          updateResponse = await updateTaskMutation.mutateAsync(updatePayload);
+          await updateTaskMutation.mutateAsync(updatePayload);
         }
 
-        const message =
-          (updateResponse as { statusMessage?: string })?.statusMessage ||
-          'Task updated successfully';
-        successToast(message);
+        successToast('Task updated successfully');
         setOriginalTask(editedTask);
         queryClient.invalidateQueries({
           queryKey: ['taskActivities', accountId, caseId, taskId],
@@ -1700,9 +1695,12 @@ const TaskDetailModal: React.FC<TaskDetailModalPropsExtended> = ({
         }}
       >
         <div className='sticky top-0 flex items-center justify-between p-3 border-b border-[#CBD6E2] bg-white z-50'>
-          <h2 className='text-[16px] font-semibold text-[#2D3E4F] truncate max-w-[400px]'>
-            Edit {task?.title}
-          </h2>
+          <div className='flex gap-2 items-center'>
+            <h2 className='text-[16px] font-semibold text-[#2D3E4F] truncate max-w-[400px]'>
+              Edit {task?.title}
+            </h2>
+            {task?.is_flagged && <div>{getSvgIcon('flag', '#FF0000')}</div>}
+          </div>
 
           <div className='flex items-center gap-2'>
             <TextButton

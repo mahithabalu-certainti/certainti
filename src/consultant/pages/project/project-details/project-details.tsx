@@ -787,6 +787,7 @@ export const ProjectDetails = () => {
             projectDetails={projectData}
             setInteractionsParams={setInteractionsParams}
             isSendInteraction={data?.data?.project?.is_send_interaction}
+            rdQualified={!rdQualified}
             loading={isPending}
             activityMenuItems={activityMenuItems}
           />

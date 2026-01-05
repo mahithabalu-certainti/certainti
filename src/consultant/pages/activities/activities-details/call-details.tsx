@@ -107,7 +107,7 @@ const CallDetails: React.FC<CallDetailsProps> = ({
       hide: !callActivityFieldsEditable,
     },
     {
-      label: tabValue === 'all' ? 'Back To All' : 'Back To Call',
+      label: tabValue === 'all' ? 'Back To All' : 'Back To Call Log',
       variant: 'contained' as const,
       onClick: handleBackClick,
       sx: { width: 'auto', px: '9px' },
@@ -128,7 +128,10 @@ const CallDetails: React.FC<CallDetailsProps> = ({
     { label: 'Call Subject', value: call?.subject ?? '-', key: 'subject' },
     {
       label: 'Call Type',
-      value: call?.activity_type ?? '-',
+      value:
+        call?.activity_type?.toLowerCase() === 'call'
+          ? 'Call Log'
+          : call?.activity_type || '-',
       key: 'activity_type',
     },
   ];
@@ -207,7 +210,7 @@ const CallDetails: React.FC<CallDetailsProps> = ({
   return (
     <div>
       <SectionHeader
-        title='Call'
+        title='Call Log'
         subValue={call?.r_number || ''}
         titleIcon={
           <CallLogIcon

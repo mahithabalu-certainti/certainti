@@ -14,6 +14,7 @@ import DetailsSection, {
 import {
   applyHidePermission,
   formatDateToYYYYMMDDWithTime,
+  getCapitalizeWords,
 } from '../../../../../common-utils';
 import SectionHeader from '../../../../../components/details-section/section-header';
 import { ChecklistIcon } from '../../../../../assets';
@@ -158,7 +159,7 @@ const ChecklistDetails: React.FC<ChecklistDetailsProps> = ({
     },
     {
       label: 'Related Entity',
-      value: data?.attachment_level,
+      value: getCapitalizeWords(data?.attachment_level || ''),
       key: 'attachment_level',
     },
     {

@@ -1,5 +1,8 @@
 import { DownloadIcon } from '../../../../../assets';
-import { formatDateToYYYYMMDDWithTime } from '../../../../../common-utils';
+import {
+  formatDateToYYYYMMDDWithTime,
+  getCapitalizeWords,
+} from '../../../../../common-utils';
 import { ListTableColumn } from '../../../../../components/table/types';
 import { ImportsList } from '../../../../types/imports';
 
@@ -86,6 +89,7 @@ export const getImportsListColumns = (
     width: 160,
     sortable: true,
     hide: !permissionMap?.['entity']?.edit && !permissionMap?.['entity']?.read,
+    render: (row) => getCapitalizeWords(row.entity || ''),
   },
   {
     id: 'total_records',

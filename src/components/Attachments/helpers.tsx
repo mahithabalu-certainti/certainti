@@ -1,6 +1,7 @@
 import { DownloadIcon } from '../../assets';
 import {
   formatDateToYYYYMMDDWithTime,
+  getCapitalizeWords,
   REGEX_PATTERNS,
 } from '../../common-utils';
 import { FieldConfig } from '../../consultant/pages/account-details-sidebar/components/filter/filterType';
@@ -514,6 +515,7 @@ export const getAttachmentTableColumns = (
     hide:
       !permissionMap?.['attachment_level']?.edit &&
       !permissionMap?.['attachment_level']?.read,
+    render: (row) => getCapitalizeWords(row.attachment_level || ''),
   },
   {
     id: 'attach_to',

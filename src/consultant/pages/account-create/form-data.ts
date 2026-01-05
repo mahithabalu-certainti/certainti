@@ -175,6 +175,7 @@ export const AccFormData = (
   addNewKeyContact: () => void,
   removeKeyContact: (index: number) => void,
   isEditView?: boolean,
+  isCaseExists?: boolean,
   stateLoading?: boolean,
   showOthersField?: boolean,
   permissionMap?: Record<string, { read: boolean; edit: boolean }>
@@ -428,9 +429,15 @@ export const AccFormData = (
               !permissionMap?.['country_rid']?.read &&
               !permissionMap?.['country_rid']?.edit,
             disabled:
-              isEditView &&
-              permissionMap?.['country_rid']?.read &&
-              !permissionMap?.['country_rid']?.edit,
+              (isEditView && isCaseExists) ||
+              (isEditView &&
+                permissionMap?.['country_rid']?.read &&
+                !permissionMap?.['country_rid']?.edit),
+            labelTooltip: {
+              showTooltip: (isEditView && isCaseExists) || false,
+              tooltipMessage:
+                'The case already exists for this account, so the country should not be changed.',
+            },
           }),
           createSelectField('region_rid', 'Region', {
             options: state,
@@ -455,9 +462,15 @@ export const AccFormData = (
               !permissionMap?.['currency_rid']?.read &&
               !permissionMap?.['currency_rid']?.edit,
             disabled:
-              isEditView &&
-              permissionMap?.['currency_rid']?.read &&
-              !permissionMap?.['currency_rid']?.edit,
+              (isEditView && isCaseExists) ||
+              (isEditView &&
+                permissionMap?.['currency_rid']?.read &&
+                !permissionMap?.['currency_rid']?.edit),
+            labelTooltip: {
+              showTooltip: (isEditView && isCaseExists) || false,
+              tooltipMessage:
+                'The case already exists for this account, so the currency should not be changed.',
+            },
           }),
         ],
       },
@@ -624,6 +637,7 @@ export const AccFormData = (
       addNewKeyContact,
       removeKeyContact,
       permissionMap,
+      isCaseExists,
     ]
   );
 };

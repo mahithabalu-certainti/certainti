@@ -1,3 +1,5 @@
+import { userServiceApi } from '../../api/api';
+
 /**
  * WebSocket Service for managing real-time connections
  * Handles connection, reconnection, and message handling
@@ -12,16 +14,40 @@ export type WebSocketMessage = {
 
 export type WebSocketEventHandler = (message: WebSocketMessage) => void;
 
+export interface NotificationUrlResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: {
+    webSocketUrl: string;
+  };
+}
+
+export const getNotificationConnectionUrl =
+  async (): Promise<NotificationUrlResponse> => {
+    try {
+      const { data } = await userServiceApi.get<NotificationUrlResponse>(
+        '/api/notifications/getConnectionUrl'
+      );
+
+      return data;
+    } catch (error) {
+      console.error('Error fetching notification connection URL:', error);
+      throw error;
+    }
+  };
+
 export class WebSocketService {
   private ws: WebSocket | null = null;
   private url: string | null = null;
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private reconnectDelay = 3000; // 3 seconds
-  private reconnectTimeout: number | null = null;
+  private reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
   private eventHandlers: Map<string, Set<WebSocketEventHandler>> = new Map();
   private onConnectionChange: ((isConnected: boolean) => void) | null = null;
   private onError: ((error: string) => void) | null = null;
+  private onRefreshUrl: (() => Promise<string | null>) | null = null;
   private isManualClose = false;
 
   /**
@@ -30,7 +56,8 @@ export class WebSocketService {
   connect(
     websocketUrl: string,
     onConnectionChange?: (isConnected: boolean) => void,
-    onError?: (error: string) => void
+    onError?: (error: string) => void,
+    onRefreshUrl?: () => Promise<string | null>
   ): void {
     // Don't connect if already connected or connecting
     if (this.ws?.readyState === WebSocket.OPEN) {
@@ -46,6 +73,7 @@ export class WebSocketService {
     this.url = websocketUrl;
     this.onConnectionChange = onConnectionChange || null;
     this.onError = onError || null;
+    this.onRefreshUrl = onRefreshUrl || null;
     this.isManualClose = false;
 
     try {
@@ -57,7 +85,7 @@ export class WebSocketService {
       this.ws.onerror = this.handleError.bind(this);
       this.ws.onclose = this.handleClose.bind(this);
     } catch (error) {
-      console.error('❌ Failed to create WebSocket connection:', error);
+      console.error('Failed to create WebSocket connection:', error);
       this.handleError(error as Event);
     }
   }
@@ -111,7 +139,7 @@ export class WebSocketService {
   /**
    * Handle WebSocket connection close
    */
-  private handleClose(): void {
+  private async handleClose(): Promise<void> {
     console.log('❌ WebSocket disconnected');
     this.onConnectionChange?.(false);
 
@@ -125,12 +153,26 @@ export class WebSocketService {
         `Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`
       );
 
-      this.reconnectTimeout = setTimeout(() => {
+      this.reconnectTimeout = setTimeout(async () => {
+        // Fetch new WebSocket URL if callback is provided
+        if (this.onRefreshUrl) {
+          try {
+            const newUrl = await this.onRefreshUrl();
+            if (newUrl) {
+              this.url = newUrl;
+            }
+          } catch (error) {
+            console.error('Error fetching new WebSocket URL:', error);
+          }
+        }
+
+        // Reconnect with the URL (either new or existing)
         if (this.url) {
           this.connect(
             this.url,
             this.onConnectionChange || undefined,
-            this.onError || undefined
+            this.onError || undefined,
+            this.onRefreshUrl || undefined
           );
         }
       }, this.reconnectDelay * this.reconnectAttempts);

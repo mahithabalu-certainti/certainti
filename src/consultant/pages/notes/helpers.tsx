@@ -1,6 +1,7 @@
 import { DownloadIcon } from '../../../assets';
 import {
   formatDateToYYYYMMDDWithTime,
+  getCapitalizeWords,
   getFiscalYears,
   REGEX_PATTERNS,
 } from '../../../common-utils';
@@ -315,6 +316,7 @@ export const getNotesTableColumns = (
     hide:
       !permissionMap?.['attachment_level']?.edit &&
       !permissionMap?.['attachment_level']?.read,
+    render: (row) => getCapitalizeWords(row.attachment_level || ''),
   },
   {
     id: 'attach_to',

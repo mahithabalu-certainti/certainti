@@ -64,6 +64,7 @@ export const mockAccountDetails: AccountFieldsApiResponse = {
       client_id: 'e0bd9c7f-4793-4a48-90b8-dc43009bb857',
       tenant_id: '9a2f5c3e-1b74-4b91-bfc1-cb9a8e7725e7',
       support_email: 'https://example.com',
+      is_case_exists: false,
       keyContacts: [
         {
           key_contact_id: 'KEY002',
