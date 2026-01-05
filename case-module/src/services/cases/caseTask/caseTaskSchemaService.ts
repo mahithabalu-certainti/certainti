@@ -1369,6 +1369,7 @@ export class CaseTaskSchemaService {
               await CaseHistory.create(historyPayload);
             } else {
               historyPayload.activity_rid = data.task_rid;
+              historyPayload.account_rid = data.account_rid;
               await ActivityHistory.create(historyPayload);
             }
 
