@@ -394,6 +394,8 @@ export class JurisdictionSchemaService {
 
     // 4. GraphQL update
     if (configRequest?.apiType === "graphql") {
+      configRequest.modified_datetime = new Date();
+      configRequest.modified_by = configRequest.modified_by;
       await response.update(configRequest);
       updated = true;
     }
