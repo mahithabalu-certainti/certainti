@@ -1,2 +1,14 @@
-<!-- License: Apache. Made by Carbon Design: https://github.com/carbon-design-system/carbon -->
-<svg width="52px" height="42px" viewBox="0 0 32 32" id="icon" xmlns="http://www.w3.org/2000/svg"><defs><style>.cls-1{fill:none;}</style></defs><title>task</title><polygon points="14 20.18 10.41 16.59 9 18 14 23 23 14 21.59 12.58 14 20.18"/><path d="M25,5H22V4a2,2,0,0,0-2-2H12a2,2,0,0,0-2,2V5H7A2,2,0,0,0,5,7V28a2,2,0,0,0,2,2H25a2,2,0,0,0,2-2V7A2,2,0,0,0,25,5ZM12,4h8V8H12ZM25,28H7V7h3v3H22V7h3Z" transform="translate(0 0)"/><rect id="_Transparent_Rectangle_" data-name="&lt;Transparent Rectangle&gt;" class="cls-1" width="52" height="42"/></svg>
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Outer document -->
+    <path d="M10.6667 2.66602H12C12.3536 2.66602 12.6928 2.80649 12.9428 3.05654C13.1928 3.30659 13.3333 3.64573 13.3333 3.99935V13.3327C13.3333 13.6863 13.1928 14.0254 12.9428 14.2755C12.6928 14.5255 12.3536 14.666 12 14.666H3.99999C3.64637 14.666 3.30723 14.5255 3.05718 14.2755C2.80713 14.0254 2.66666 13.6863 2.66666 13.3327V3.99935C2.66666 3.64573 2.80713 3.30659 3.05718 3.05654C3.30723 2.80649 3.64637 2.66602 3.99999 2.66602H5.33332"
+          stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  
+    <!-- Top tab -->
+    <path d="M10 1.33398H6.00001C5.63182 1.33398 5.33334 1.63246 5.33334 2.00065V3.33398C5.33334 3.70217 5.63182 4.00065 6.00001 4.00065H10C10.3682 4.00065 10.6667 3.70217 10.6667 3.33398V2.00065C10.6667 1.63246 10.3682 1.33398 10 1.33398Z"
+          stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  
+    <!-- Center tick -->
+    <path d="M5.5 8.5L7.2 10.2L10.5 6.8"
+          stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+  

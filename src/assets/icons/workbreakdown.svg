@@ -1,18 +1,61 @@
-<?xml version="1.0" encoding="utf-8"?>
-<svg height="800px" width="800px" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
-<g>
-	<g>
-		<path d="M495.304,101.652H351.196v-41.43c0-9.22-7.475-16.696-16.696-16.696H177.499c-9.22,0-16.696,7.475-16.696,16.696v41.43
-			H16.696C7.475,101.652,0,109.127,0,118.347v155.268c0,9.22,7.475,16.696,16.696,16.696h0.321v161.467
-			c0,9.22,7.475,16.696,16.696,16.696h444.576c9.22,0,16.696-7.475,16.696-16.696V290.311h0.321c9.22,0,16.696-7.475,16.696-16.696
-			V118.347C512,109.127,504.525,101.652,495.304,101.652z M194.195,76.917h123.611v24.734H194.195V76.917z M461.592,435.084H50.408
-			V290.311h147.351v7.111c0,32.115,26.128,58.241,58.241,58.241s58.241-26.128,58.241-58.241v-7.111h147.351V435.084z
-			 M231.15,297.423c0-16.568,0-29.418,0-45.678h49.7c0,16.281,0,29.111,0,45.678c0,13.703-11.148,24.85-24.85,24.85
-			C242.298,322.272,231.15,311.124,231.15,297.423z M478.609,256.92h-0.321H314.241v-21.871c0-9.22-7.475-16.696-16.696-16.696
-			h-83.091c-9.22,0-16.696,7.475-16.696,16.696v21.871H33.712h-0.321V135.043h445.217V256.92z" 
-			fill="#000000" 
-			stroke="#000000" 
-			stroke-width="3"/>
-	</g>
-</g>
-</svg>
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Left compartment -->
+    <path
+      d="M4 12H3V8C3 6.89543 3.89543 6 5 6H9"
+      stroke="white"
+      stroke-width="1.2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+  
+    <!-- Right compartment -->
+    <path
+      d="M20 12H21V8C21 6.89543 20.1046 6 19 6H15"
+      stroke="white"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+  
+    <!-- Bottom box -->
+    <path
+      d="M4 12V18C4 19.1046 4.89543 20 6 20H18C19.1046 20 20 19.1046 20 18V12"
+      stroke="white"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+  
+    <!-- Middle lines -->
+    <path
+      d="M4 12H10"
+      stroke="white"
+      stroke-width="2"
+      stroke-linecap="round"
+    />
+    <path
+      d="M14 12H20"
+      stroke="white"
+      stroke-width="2"
+      stroke-linecap="round"
+    />
+  
+    <!-- Handle / lock -->
+    <path
+      d="M14 12V10H10V12M14 12V14H10V12"
+      stroke="white"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+  
+    <!-- Top handle -->
+    <path
+      d="M9 6V5C9 3.89543 9.89543 3 11 3H13C14.1046 3 15 3.89543 15 5V6M9 6H15"
+      stroke="white"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+  </svg>
+  
