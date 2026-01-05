@@ -1251,9 +1251,9 @@ export class TaskService {
       }
 
       const labelMap: Record<string, string> = {
-        "Task ID": "Task ID",
+        "Task ID": flag === 'milestone' ? "Task ID" : "Activity ID",
         "Account Name": "Account Name",
-        "Task Name": "Task Name",
+        "Task Name": flag === 'milestone' ? "Task Name" : "Activity Name",
         "Description": "Description",
         "Fiscal Year": "Fiscal Year",
         [flag === 'milestone' ? "Related To Name" : "Related To Name"]: "Related To Name",
@@ -1424,7 +1424,7 @@ export class TaskService {
       "Description": task.description || '-',
       "Fiscal Year": task.fiscal_year ? `FY-${task.fiscal_year}` : '-',
       [flag === 'milestone' ? "Related To Name" : "Related To Name"]: task.attach_to_name || '-',
-      [flag === 'milestone' ? "Related Entity" : "Related Entity"]: task.attachment_level || '-',
+      [flag === 'milestone' ? "Related Entity" : "Related Entity"]: task.attachment_level ? String(task.attachment_level).split('_').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') : '-',
       [flag === 'milestone' ? "Assignee" : "Assigned To"]: task.assigned_to_name || '-',
       "Priority": task.priority_name || '-',
       "Status": task.status_name || '-',
