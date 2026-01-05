@@ -56,19 +56,8 @@ export class ComputationService {
     async initiateRDCreditProcess(accountRid: string, caseRid: string, effectiveStart: string, effectiveEnd: string) {
         try {
             const mainDb = await this.getMainDb();
-
-            const fetchParentAccountRnumber: any = await mainDb.query(
-                await rawQueries.fetchParentAccount(accountRid, mainDb)
-            );
-
-            let schemaName = rawQueries.fetchSchemaName(
-                fetchParentAccountRnumber[0][0].r_number
-            );
-
-            const accountNumber = 'ACC-00001';
-            schemaName = 'trd365_00001';
-
-            const findAvailableConfigLevels = await this.rdCreditSchemaService.findAvailableConfigLevels("USA", mainDb, effectiveStart, effectiveEnd);
+            const fetchAccountCountryId : any = await mainDb.query(rawQueries.fetchAccountAndCountryDetails(accountRid))
+            const findAvailableConfigLevels = await this.rdCreditSchemaService.findAvailableConfigLevels(fetchAccountCountryId[0][0].country_code, mainDb, effectiveStart, effectiveEnd);
             const hasFederal = findAvailableConfigLevels.includes(true);
             const hasState = findAvailableConfigLevels.includes(false);
             const configLevelKey =
@@ -126,19 +115,10 @@ export class ComputationService {
     async getComputationResultsByIDAndState(accountRid: string, caseRid: string, stateRid: string) {
         try {
             const mainDb = await this.getMainDb();
-            const orgDb = await this.getOrgDb();
-
             const fetchParentAccountRnumber: any = await mainDb.query(
                 await rawQueries.fetchParentAccount(accountRid, mainDb)
             );
-
-            let schemaName = rawQueries.fetchSchemaName(
-                fetchParentAccountRnumber[0][0].r_number
-            );
-
-            const accountNumber = 'ACC-00001';
-            schemaName = 'trd365_00001';
-            const results = await this.rdCreditSchemaService.findRdCreditResultsByCaseIdAndState(accountNumber, caseRid, stateRid);
+            const results = await this.rdCreditSchemaService.findRdCreditResultsByCaseIdAndState(fetchParentAccountRnumber[0][0].r_number, caseRid, stateRid);
 
             return {
                 statusCode: HttpStatus.SUCCESS,
@@ -170,14 +150,8 @@ export class ComputationService {
                 await rawQueries.fetchParentAccount(accountRid, mainDb)
             );
 
-            let schemaName = rawQueries.fetchSchemaName(
-                fetchParentAccountRnumber[0][0].r_number
-            );
-
-            const accountNumber = 'ACC-00001';
-            schemaName = 'trd365_00001';
-            logMessage(`Fetching RD Credit Status for Account: ${accountNumber}, Case: ${caseRid}`);
-            const status = await this.rdCreditSchemaService.findProcessStatusByCaseRid(accountNumber, caseRid);
+            logMessage(`Fetching RD Credit Status for Account: ${fetchParentAccountRnumber[0][0].r_number}, Case: ${caseRid}`);
+            const status = await this.rdCreditSchemaService.findProcessStatusByCaseRid(fetchParentAccountRnumber[0][0].r_number, caseRid);
 
             return {
                 statusCode: HttpStatus.SUCCESS,

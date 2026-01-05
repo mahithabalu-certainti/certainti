@@ -5,6 +5,7 @@ import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import { MAIN_SCHEMA_NAME } from "../../utils/constants";
 import { QRE, AnnualGrossReceipt } from "./rdCreditTypes";
+import { fetchAvailableConfigLevelQuery, fetchRdCreditConfigQuery, fetchRdCreditConfigStateLevelQuery } from "../../utils/rawQueries";
 
 /**
  * Schema Service for Financial RD Credit
@@ -264,21 +265,7 @@ class RDCreditSchemaService {
             if (!this.mainDbSequelize) {
                 this.mainDbSequelize = await initMainDbSequelize();
             }
-            const results: any[] = await this.mainDbSequelize.query(
-                `
-                SELECT ctry.country_code, rdcg.is_federal
-                FROM ${MAIN_SCHEMA_NAME}.rd_credit_config_group rdcg
-                JOIN ${MAIN_SCHEMA_NAME}.rd_credit_parameter_key rdkey ON rdkey.credit_config_group_rid = rdcg.rid
-                JOIN ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values rdval ON rdval.credit_config_group_rid = rdcg.rid
-                JOIN ${MAIN_SCHEMA_NAME}.country ctry ON ctry.rid = rdcg.country_rid
-                LEFT JOIN ${MAIN_SCHEMA_NAME}.state st ON st.rid = rdcg.state_rid AND st.country_rid = ctry.rid
-                WHERE LOWER(ctry.country_code) = LOWER(:countryCode)
-                
-                -- Effective date filter
-                AND (:effectiveStart IS NULL OR rdval.effective_start_date >= CAST(:effectiveStart AS timestamptz))
-                AND (:effectiveEnd IS NULL OR rdval.effective_end_date <= CAST(:effectiveEnd AS timestamptz))
-            
-            `,
+            const results: any[] = await this.mainDbSequelize.query(fetchAvailableConfigLevelQuery(),
                 {
                     replacements: {
                         countryCode: countryCode,
@@ -315,34 +302,7 @@ class RDCreditSchemaService {
             if (!this.mainDbSequelize) {
                 this.mainDbSequelize = await initMainDbSequelize();
             }
-            const results: any[] = await this.mainDbSequelize.query(
-                `
-                SELECT rdval.config_json, ctry.rid AS country_rid
-                FROM ${MAIN_SCHEMA_NAME}.rd_credit_config_group rdcg
-                JOIN ${MAIN_SCHEMA_NAME}.rd_credit_parameter_key rdkey ON rdkey.credit_config_group_rid = rdcg.rid
-                JOIN ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values rdval ON rdval.credit_config_group_rid = rdcg.rid
-                JOIN ${MAIN_SCHEMA_NAME}.country ctry ON ctry.rid = rdcg.country_rid
-                LEFT JOIN ${MAIN_SCHEMA_NAME}.state st ON st.rid = rdcg.state_rid AND st.country_rid = ctry.rid
-                WHERE LOWER(ctry.country_code) = LOWER(:countryCode)
-
-                -- State filter
-                AND (
-                    (:regionName IS NOT NULL AND LOWER(st.state_code) = LOWER(:regionName))
-                    OR (:regionName IS NULL AND st.state_code IS NULL)
-                )
-
-                -- ProgramName filter (RRC vs ASC for USA Federal)
-                AND (
-                    (:programName IS NOT NULL AND LOWER(rdcg.credit_program_name) = LOWER(:programName))
-                    OR (:programName IS NULL)
-                )
-                
-                -- Effective date filter
-                AND (:effectiveStart IS NULL OR rdval.effective_start_date >= CAST(:effectiveStart AS DATE))
-                AND (:effectiveEnd IS NULL OR rdval.effective_end_date <= CAST(:effectiveEnd AS DATE))
-                group by rdcg.rid, rdval.config_json, st.state_code, ctry.rid
-                LIMIT 1
-            `,
+            const results: any[] = await this.mainDbSequelize.query(fetchRdCreditConfigQuery(),
                 {
                     replacements: {
                         countryCode: countryCode,
@@ -447,28 +407,7 @@ class RDCreditSchemaService {
             if (!this.mainDbSequelize) {
                 this.mainDbSequelize = await initMainDbSequelize();
             }
-            const results: any[] = await this.mainDbSequelize.query(
-                `
-                SELECT rdval.config_json, st.state_code, st.rid AS state_rid, ctry.rid AS country_rid
-                FROM ${MAIN_SCHEMA_NAME}.rd_credit_config_group rdcg
-                JOIN ${MAIN_SCHEMA_NAME}.rd_credit_parameter_key rdkey ON rdkey.credit_config_group_rid = rdcg.rid
-                JOIN ${MAIN_SCHEMA_NAME}.rd_credit_parameter_values rdval ON rdval.credit_config_group_rid = rdcg.rid
-                JOIN ${MAIN_SCHEMA_NAME}.country ctry ON ctry.rid = rdcg.country_rid
-                JOIN ${MAIN_SCHEMA_NAME}.state st ON st.rid = rdcg.state_rid AND st.country_rid = ctry.rid
-                WHERE LOWER(ctry.country_code) = LOWER(:countryCode)
-                AND rdcg.is_federal IS FALSE
-                -- ProgramName filter
-                AND (
-                    (:programName IS NOT NULL AND LOWER(rdcg.credit_program_name) = LOWER(:programName))
-                    OR (:programName IS NULL)
-                )
-                
-                -- Effective date filter
-                AND (:effectiveStart IS NULL OR rdval.effective_start_date >= CAST(:effectiveStart AS timestamptz))
-                AND (:effectiveEnd IS NULL OR rdval.effective_end_date <= CAST(:effectiveEnd AS timestamptz))
-
-                group by rdcg.rid, rdval.config_json, st.rid , ctry.rid
-            `,
+            const results: any[] = await this.mainDbSequelize.query(fetchRdCreditConfigStateLevelQuery(),
                 {
                     replacements: {
                         countryCode: countryCode,
