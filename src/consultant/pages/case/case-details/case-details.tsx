@@ -32,7 +32,6 @@ import {
   TechnicalSummaryExportListParams,
 } from '../../../types';
 import CaseFinancialSummary from './financial-summary/financial-summary';
-import DossierMenu from './dossier-menu/dossier-menu';
 import { accountDetailsProps } from '../../account-details/utils';
 import {
   AllMenus,
@@ -110,6 +109,7 @@ import {
 } from '../../../services/financial/financial-service';
 import { exportCasesTechnicalSummary } from '../../../services/case-technical-summary/technical-summary-service';
 import { CircularProgress } from '@mui/material';
+import { Dossier } from './dossier';
 
 export const CaseDetails = () => {
   const navigate = useNavigate();
@@ -878,7 +878,7 @@ export const CaseDetails = () => {
           />
         );
       case 'dossier':
-        return <DossierMenu />;
+        return <Dossier activityMenuItems={activityMenuItems} />;
       default:
         return (
           <div className='flex items-center justify-center h-full'>
