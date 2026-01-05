@@ -20,10 +20,10 @@ class RDCreditSchemaService {
     }
 
     /**
-     * 
-     * @param accountRid 
-     * @param mainDbSequelize 
-     * @returns 
+     * Fetches country, region, and account metadata for the given account RID.
+     * @param accountRid Unique account record identifier (RID) used to look up country information.
+     * @param mainDbSequelize Sequelize instance connected to the main database.
+     * @returns An object containing country, region, and account details for the specified account.
      */
     async getCountryByAccountRid(accountRid: string, mainDbSequelize: Sequelize) {
         try {

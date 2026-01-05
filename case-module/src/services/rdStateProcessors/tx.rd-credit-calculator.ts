@@ -11,9 +11,7 @@ export interface ConfigJson {
     wages_rate_3_125pct: number;
 }
 
-/**
- * 
- */
+
 export class RdCreditCalculatorForTX {
 
     country = "USA";
@@ -21,13 +19,9 @@ export class RdCreditCalculatorForTX {
     currency = "USD";
 
     /**
-     * 
-     * @param config 
-     * @param currentYearQREs 
-     * @param annualGrossReceipts 
-     * @param totalGrossReceipts 
-     * @param prior3YearsQREs 
-     * @param priorYearsCount 
+     * Computes TX state R&D credit values for the given configuration and state R&D data.
+     * @param config Configuration values used for the TX R&D credit calculation.
+     * @param stateRdData State R&D data for TX, including currentYearQREs, prior3YearsQREs, and related fields.
      */
     async compute(config: ConfigJson, stateRdData: StateRDData) {
 
@@ -169,21 +163,23 @@ export class RdCreditCalculatorForTX {
     }
 
     /**
-    * 
-    * @param value 
-    * @returns 
+     * Rounds the given value to two decimal places using Decimal.js.
+     * @param value Value to be rounded.
+     * @returns The rounded value as a Decimal with two decimal places.
     */
     round2(value: Decimal | number): Decimal {
         return new Decimal(value).toDecimalPlaces(2);
     }
 
     /**
-   * 
-   * @param currentYearQREs 
-   * @param prior3YearsQREs 
-   * @param metadata 
-   * @returns 
-   */
+    * Builds a normalized input object for the RD credit calculation engine.
+    * Aggregates the current-year qualified research expenses (QREs) together
+    * with summaries of the prior three years' QREs, and attaches metadata (such as country, credit type, and currency) with sensible defaults.
+    * @param currentYearQREs The current fiscal year's qualified research expenses.
+    * @param prior3YearsQREs An array of QRE records for each of the prior three fiscal years.
+    * @param metadata Optional metadata, including country, creditType, and currency.
+    * @returns An object containing normalized metadata and the aggregated qreSummary. 
+    */
     async buildInputParams(currentYearQREs: QRE, prior3YearsQREs: QRE[], metadata: any = {}) {
 
         const qreSummary: Record<string, any> = {
@@ -213,10 +209,11 @@ export class RdCreditCalculatorForTX {
     }
 
     /**
-     * 
-     * @param part4ASCCreditCalculationInfo 
-     * @param part5DevelopmentTaxCreditCalculationInfo 
-     * @returns 
+     * Builds the computed_fields structure for the TX RD credit response.
+     * @param qretInfo Information about the current year QRET calculation.
+     * @param precedingWithQretInfo Information about preceding years with QRET.
+     * @param precedingWithNoQretInfo Information about preceding years with no QRET.
+     * @param qreActivitiesCreditInfo Information about QRET activities credit details.
      */
     buildComputedFields(qretInfo: any, precedingWithQretInfo: any, precedingWithNoQretInfo: any, qreActivitiesCreditInfo: any) {
         return {
