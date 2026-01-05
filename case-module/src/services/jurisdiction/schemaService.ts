@@ -397,6 +397,8 @@ export class JurisdictionSchemaService {
       configRequest.modified_datetime = new Date();
       configRequest.modified_by = configRequest.modified_by;
       await response.update(configRequest);
+      await JurisdictionConfig.update(configRequest, { where: { federal_config_id: configRequest.config_rid }
+      })
       updated = true;
     }
   
