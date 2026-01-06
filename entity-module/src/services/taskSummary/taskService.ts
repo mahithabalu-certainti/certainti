@@ -1424,7 +1424,7 @@ export class TaskService {
       "Description": task.description || '-',
       "Fiscal Year": task.fiscal_year ? `FY-${task.fiscal_year}` : '-',
       [flag === 'milestone' ? "Related To Name" : "Related To Name"]: task.attach_to_name || '-',
-      [flag === 'milestone' ? "Related Entity" : "Related Entity"]: task.attachment_level ? String(task.attachment_level).split('_').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') : '-',
+      [flag === 'milestone' ? "Related Entity" : "Related Entity"]: this.formatAttachmentLevel(task.attachment_level),
       [flag === 'milestone' ? "Assignee" : "Assigned To"]: task.assigned_to_name || '-',
       "Priority": task.priority_name || '-',
       "Status": task.status_name || '-',
@@ -1450,6 +1450,15 @@ export class TaskService {
           )
         : "-"
     };
+  }
+
+  // Helper method to format attachment level
+  private formatAttachmentLevel(level: any): string {
+    if (!level) return '-';
+    return String(level)
+      .split('_')
+      .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
   }
 
   // Helper method to get display names for attachments

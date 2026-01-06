@@ -848,7 +848,6 @@ async function exportAllCasesSummary(req: Request, res: Response) {
       ...value,
       globalFilters: value.globalFilters,
       parsedFilters: value.filters,
-      fiscal_year: value.fiscalYear,
     };
 
     const result = await caseService.listAllCasesSummary(
