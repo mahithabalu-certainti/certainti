@@ -7,6 +7,7 @@ interface DetailItem {
   value?: React.ReactNode;
   hide?: boolean;
   colSpan?: number;
+  hideTooltip?: boolean;
 }
 
 const DetailsSection: React.FC<{
@@ -142,6 +143,7 @@ const DetailsSection: React.FC<{
                                 maxWidth={'100%'}
                                 className='truncate inline-block max-w-full'
                                 alwaysShowTooltip={
+                                  !item.hideTooltip &&
                                   !!item.value &&
                                   item.value !== 'empty' &&
                                   item.value !== '-'
@@ -190,6 +192,7 @@ const DetailsSection: React.FC<{
                                 maxWidth={'100%'}
                                 className='truncate inline-block max-w-full'
                                 alwaysShowTooltip={
+                                  !item.hideTooltip &&
                                   !!item.value &&
                                   item.value !== 'empty' &&
                                   item.value !== '-'
