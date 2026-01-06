@@ -61,7 +61,7 @@ export const fetchGlobalCaseList = async (
       limit: params.limit,
       sortBy: params.sortBy,
       sortOrder: params.sortOrder,
-      fiscal_year: params.fiscalYear,
+      fiscalYear: params.fiscalYear,
       filters: params.filters,
       globalFilters: params.globalFilters,
       search: params.search,

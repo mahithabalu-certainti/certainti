@@ -97,6 +97,8 @@ export interface DateFieldConfig {
   fiscalYearValidation?: boolean;
   startFieldId?: string;
   endFieldId?: string;
+  startFieldLabel?: string;
+  endFieldLabel?: string;
 }
 
 export interface TableField {
