@@ -15,6 +15,7 @@ import {
 import { useParams, useSearchParams } from 'react-router-dom';
 import {
   formatDateToYYYYMMDDWithTime,
+  getCapitalizeWords,
   getFiscalYears,
 } from '../../../../common-utils';
 import { colorCode, NotesFormDataPayload } from '../../../types';
@@ -121,7 +122,7 @@ const NotesForm: React.FC = () => {
         fiscal_year: noteData?.fiscal_year || '',
         rid: noteData?.rid || '',
         r_number: noteData?.r_number || '',
-        related_to: noteData?.attachment_level || '',
+        related_to: getCapitalizeWords(noteData?.attachment_level) || '',
         related_to_name: noteData?.attached_to || '',
         created_on: formatDateToYYYYMMDDWithTime(
           noteData?.created_datetime || '-'
