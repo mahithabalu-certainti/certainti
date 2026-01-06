@@ -224,7 +224,7 @@ class SchemaService {
         }
     }
 
-    async projectKeyContactData(project: any, mainDdSequilze: any) {
+    async projectKeyContactData(project: any, mainDdSequilze: Sequelize) {
         try {
             const plainProject =
                 typeof project.toJSON === "function" ? project.toJSON() : project;
@@ -280,8 +280,8 @@ class SchemaService {
                 ...project,
                 keyContact: enrichedKeyContacts,
             };
-        } catch (err) {
-            throw err;
+        } catch (err: any) {
+            errorLog("Error inserting project key contact data : " + err.message);
         }
     }
 
