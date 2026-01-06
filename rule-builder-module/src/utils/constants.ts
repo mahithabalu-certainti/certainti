@@ -378,10 +378,10 @@ export const rawQueries = {
     return query;
   },
   schedulerSelectRunning(): string {
-    return `SELECT * FROM ${MAIN_SCHEMA_NAME}.scheduler_executions WHERE status = :status LIMIT 1`;
+    return `SELECT * FROM ${MAIN_SCHEMA_NAME}.scheduler_executions WHERE scheduler_name = :scheduler_name AND status = :status LIMIT 1`;
   },
   schedulerInsertRunning(): string {
-    return `INSERT INTO ${MAIN_SCHEMA_NAME}.scheduler_executions (created_datetime, started_at, status) VALUES (:created_datetime, :started_at, :status) RETURNING *`;
+    return `INSERT INTO ${MAIN_SCHEMA_NAME}.scheduler_executions (created_datetime, started_at, status, scheduler_name) VALUES (:created_datetime, :started_at, :status, :scheduler_name) RETURNING *`;
   },
   fetchAllParentRNumber() {
     let query = `SELECT r_number FROM ${MAIN_SCHEMA_NAME}.account WHERE storage_type = '${STATUS_MESSAGE.separateDb}' AND parent_account_rid IS NULL

@@ -12,15 +12,14 @@ let isJobRunning = false
 
 export const schedulerForTriggerAi = async () => {
     const schdulerExpression = await getSecret(process.env.SCHEDULER_EXPRESSION as string) || `0 0 * * *`;
-    logMessage(`Scheduler expression ${schdulerExpression}`)
-    logMessage(`Scheduler expression from env ${process.env.SCHEDULER_EXPRESSION}`)
+    logMessage(`Scheduler Expression for Trigger AI: ${schdulerExpression}`);
     const task = cron.schedule(schdulerExpression, async () => {
         if (isJobRunning) {
             logMessage(`Skipped at: ${new Date().toISOString()} — previous job still running`);
             return;
         }
         isJobRunning = true
-        logMessage(`Scheduler starts at: ${new Date().toISOString()}`);
+        logMessage(`Trigger AI Scheduler starts at: ${new Date().toISOString()}`);
         try {
             const schedulerRecord = await interactionSchemaService.createSchedulerRecords()
             if (schedulerRecord) {
@@ -30,7 +29,7 @@ export const schedulerForTriggerAi = async () => {
             logMessage(`Error in scheduled task: ${error}`);
         } finally {
             isJobRunning = false;
-            logMessage(`Scheduler finished at: ${new Date().toISOString()}`);
+            logMessage(`Trigger AI Scheduler finished at: ${new Date().toISOString()}`);
         }
     })
     return task;

@@ -311,8 +311,7 @@ class ActivitySchemaService {
                   const checklistResult = await CheckList.findOne({
                   where : {
                     attach_to : taskRequest.task_rid,
-                    attachment_level : 'task',
-                    checklist_template_rid : existingTask?.checklist_rid
+                    attachment_level : 'task'
                   }, raw : true
                 })
 

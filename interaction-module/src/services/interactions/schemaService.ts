@@ -4137,6 +4137,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     const { SchedulerExecution } = await this.interactionModelService.getModels("");
     const findSchedulerExists = await SchedulerExecution.findOne({
       where : {
+        scheduler_name : 'AITrigger',
         status : schedulerStatus.Running
       }
     })
@@ -4144,7 +4145,8 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       const createSchedulerExecution = await SchedulerExecution.create({
         created_datetime : new Date(),
         started_at : new Date(),
-        status : schedulerStatus.Running
+        status : schedulerStatus.Running,
+        scheduler_name : 'AITrigger'
       })
       return createSchedulerExecution
     }

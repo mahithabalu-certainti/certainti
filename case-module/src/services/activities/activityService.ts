@@ -172,6 +172,7 @@ export class ActivityService {
           created_datetime: new Date(),
           fiscal_year: taskRequest.fiscal_year,
           checklist_rid: taskRequest.checklist_rid,
+          checklist_template_rid: taskRequest.checklist_rid,
         };
 
         const checklistResponse = await this.checklistSchemaService.createCheckList(
