@@ -60,9 +60,9 @@ import ActivitySchemaService from "../activities/schemaService";
 import { caseTaskMapping, reviewProjectsFieldMappings } from "../../utils/excelExportMapping";
 import { HelperMethods } from "./helperMethods";
 export class CaseService {
-  private caseSchemaService: CaseSchemaService;
+  protected caseSchemaService: CaseSchemaService;
   private activitySchemaService: ActivitySchemaService; // Assuming this is defined somewhere in your code
-  private caseModelService: CaseModelService; // Assuming this is defined somewhere in your code
+  protected caseModelService: CaseModelService; // Assuming this is defined somewhere in your code
   private caseManagementService : CaseManagementSchemaService
   private logger: Logger;
   private orgDbSequelize: Sequelize | null = null;

@@ -199,6 +199,10 @@ export const STATUS_MESSAGE = {
   configUpdatedSuccess: "Configuration updated successfully",
   configCreationFailed: "Configuration creation failed",
   configUpdateFailed: "Configuration update failed",
+  rdCreditPreviewSuccess : "R&D Credit preview fetched successfully",
+  rdCreditPreview: "RD credit calculation results retrieved",
+  rdCreditProcessInitiatedSuccess : "RD credit calculation initiated successfully",
+  rdCreditProcessInitiationFailed: "Failed to initiate RD credit process",
   noProjectsAssignedToCase : "No Assigned Projects found. Kindly assign a project to case and try again",
   financialWorkingSignedOff : "Financial Working has been successfully signed off",
   financialWorkingSignedOffFailed : "Failed to signoff financial working",
@@ -211,6 +215,9 @@ export const caseStatuses = {
   SUBMITTED: "Submitted",
   CLOSED: "Closed",
 };
+
+export const caseFilingTypes = {
+ regular: "Regular",};
 
 export const SUMMARY_HIGHLIGHTS_FLAG = {
   all: "all",
@@ -315,6 +322,10 @@ export const rawQueries = {
       ORDER BY filing_type_name ASC
     `;
   },
+  fetchFilingTypeByName(typeName: string): string {
+    return `
+    SELECT rid, filing_type_name as name FROM ${MAIN_SCHEMA_NAME}.case_filing_type WHERE filing_type_name = '${typeName}'`;
+  },
   getActivityStatus(activityType: string) {
     return `
       SELECT distinct status_name ,rid
@@ -349,7 +360,7 @@ export const rawQueries = {
   },
   listUsersForCaseTeam(accountRid: string) {
     return `  
-      SELECT u.rid, CONCAT(u.first_name, ' ', u.last_name) AS name,email, profile_url
+      SELECT u.rid, CONCAT(u.first_name, ' ', u.last_name) AS name,email, profile_url,phone as phone_number
       FROM ${MAIN_SCHEMA_NAME}.user u
 	  where (is_consultant_firm is true
 	  or org_id = '${accountRid}')
@@ -956,7 +967,8 @@ export const rawQueries = {
   },
   fetchCaseById(schemaName: string) {
     return `
-    SELECT rid,r_number,case_name,account_rid ,fiscal_year
+    SELECT rid,r_number,case_name,account_rid ,fiscal_year, material_software_cost, heat_light_power, total_nonlabor_cost,
+    employers_pension_contribution,other, total_expenses
     FROM "${schemaName}".cases
     WHERE rid = :caseId
     `;
