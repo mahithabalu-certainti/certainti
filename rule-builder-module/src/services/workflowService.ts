@@ -844,12 +844,13 @@ export class WorkFlowService {
                     const condition = ruleConditions[i];
                     const conditionResult = await this.evaluateCondition(condition, entity);
                     // Build a human-readable part for this condition
-                     if(templateParts.length > 0){
-                            part = ` and `;
-                        }
+                     
                     if(conditionResult.pass)
                     {
                     if(condition.action_phrase != null && condition.action_phrase != '' ){
+                         if(templateParts.length > 0){
+                            part = ` and `;
+                        }
                         part = part + `${condition.action_phrase}`;
                     }
                     else
@@ -857,12 +858,15 @@ export class WorkFlowService {
                        const operatorText =
                         condition.operator_phrase?.trim() ||
                         condition.operator?.toLowerCase();
+                         if(templateParts.length > 0){
+                            part = ` and `;
+                        }
                         part = part +`${condition.field_description} ${operatorText} ${condition.value}`;
                     }
                 }
 
                    // const part = `${condition.field_description} ${condition.operator.toLowerCase()} ${condition.value}`;
-                    console.log("part " + part);
+                   
                     if (i === 0) {
                         ruleResult = conditionResult.pass;
                         if(ruleResult){
@@ -876,7 +880,7 @@ export class WorkFlowService {
                         } else if (logicalOp === "OR") {
                             ruleResult = ruleResult || conditionResult.pass;
                         }
-                        if (part !== null && part !== undefined && part.trim() !== '') {
+                        if (part !== null && part !== undefined && part.trim() !== '' && conditionResult.pass) {
                             templateParts.push(`${part}`);
                         }
                     }
@@ -1349,29 +1353,29 @@ async triggerNotification(taskContext:any,channel:string, ruleRid:string): Promi
         emailRequest: any,
         userId: string
     ) {
-        const mainDb = await this.getMainDb();
+        //const mainDb = await this.getMainDb();
 
-        const [accountInfo]: any[] = await mainDb.query(
-            rawQueries.fetchAccountInfo(accountRid),
-            { type: "SELECT" }
-        );
+        // const [accountInfo]: any[] = await mainDb.query(
+        //     rawQueries.fetchAccountInfo(accountRid),
+        //     { type: "SELECT" }
+        // );
         
-        let parentAccountNumber = accountNumber;
-        if (accountInfo.storage_type === 'separate_db') {
-            const [parentAccountInfo]: any[] =
-                await mainDb.query(
-                    rawQueries.fetchAccountInfo(accountInfo.parent_account_rid!),
-                    { type: "SELECT" }
-                );
-            parentAccountNumber = parentAccountInfo.r_number;
-        }
-        let senderEmailInfo = await this.fetchSenderEmailInfoByAccountId(
-            parentAccountNumber,
-            accountInfo.parent_account_rid
-        );
-         if (!senderEmailInfo) {
-            return;
-        }
+        // let parentAccountNumber = accountNumber;
+        // if (accountInfo.storage_type === 'separate_db') {
+        //     const [parentAccountInfo]: any[] =
+        //         await mainDb.query(
+        //             rawQueries.fetchAccountInfo(accountInfo.parent_account_rid!),
+        //             { type: "SELECT" }
+        //         );
+        //     parentAccountNumber = parentAccountInfo.r_number;
+        // }
+        // let senderEmailInfo = await this.fetchSenderEmailInfoByAccountId(
+        //     parentAccountNumber,
+        //     accountInfo.parent_account_rid
+        // );
+        //  if (!senderEmailInfo) {
+        //     return;
+        // }
         const emailContent = {
             message: {
                 subject: emailRequest.subject,
@@ -1391,8 +1395,7 @@ async triggerNotification(taskContext:any,channel:string, ruleRid:string): Promi
 
 
         let emailResponse = await sendEmailWithAttachment({
-            message: emailContent.message,
-            senderEmailInfo: senderEmailInfo!,
+            message: emailContent.message
         });
     }
 
