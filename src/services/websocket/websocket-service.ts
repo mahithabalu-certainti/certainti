@@ -43,12 +43,21 @@ export class WebSocketService {
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private reconnectDelay = 3000; // 3 seconds
+  private reconnectJitterMs = 500; // Random jitter to prevent thundering herd
   private reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
   private eventHandlers: Map<string, Set<WebSocketEventHandler>> = new Map();
   private onConnectionChange: ((isConnected: boolean) => void) | null = null;
   private onError: ((error: string) => void) | null = null;
   private onRefreshUrl: (() => Promise<string | null>) | null = null;
   private isManualClose = false;
+  private lastUrlRefreshAt: number | null = null;
+  private urlRefreshCooldownMs = 60000;
+  private keepAliveInterval: ReturnType<typeof setInterval> | null = null;
+  private keepAlivePeriodMs = 25000;
+  private keepAliveFailureCount = 0;
+  private readonly subprotocol =
+    (import.meta as unknown as { env?: Record<string, string> })?.env
+      ?.VITE_WEBSOCKET_SUBPROTOCOL || 'json.webpubsub.azure.v1';
 
   /**
    * Initialize WebSocket connection
@@ -78,12 +87,12 @@ export class WebSocketService {
 
     try {
       console.log('📡 Connecting to WebSocket...');
-      this.ws = new WebSocket(websocketUrl);
+      this.ws = new WebSocket(websocketUrl, this.subprotocol);
 
       this.ws.onopen = this.handleOpen.bind(this);
       this.ws.onmessage = this.handleMessage.bind(this);
       this.ws.onerror = this.handleError.bind(this);
-      this.ws.onclose = this.handleClose.bind(this);
+      this.ws.onclose = (e) => this.handleClose(e);
     } catch (error) {
       console.error('Failed to create WebSocket connection:', error);
       this.handleError(error as Event);
@@ -96,10 +105,44 @@ export class WebSocketService {
   private handleOpen(): void {
     console.log('✅ WebSocket connected');
     this.reconnectAttempts = 0;
+    this.keepAliveFailureCount = 0; // Reset failure counter on new connection
+    
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout);
       this.reconnectTimeout = null;
     }
+    if (this.keepAliveInterval) {
+      clearInterval(this.keepAliveInterval);
+    }
+    
+    this.keepAliveInterval = setInterval(() => {
+      try {
+        this.send({ type: 'ping', data: 'keepalive' });
+        // Reset failure count on successful send
+        this.keepAliveFailureCount = 0;
+      } catch (error) {
+        this.keepAliveFailureCount++;
+        console.error('WebSocket keep-alive ping failed', error);
+        
+        // If keep-alive fails 3 times consecutively, assume connection is broken
+        if (this.keepAliveFailureCount >= 3) {
+          console.error('Keep-alive failed 3 times, closing connection to trigger reconnection');
+          
+          if (this.keepAliveInterval) {
+            clearInterval(this.keepAliveInterval);
+            this.keepAliveInterval = null;
+          }
+          
+          // Close the connection to trigger reconnection logic
+          try {
+            this.ws?.close();
+          } catch (closeError) {
+            console.error('Error while closing WebSocket after keep-alive failures', closeError);
+          }
+        }
+      }
+    }, this.keepAlivePeriodMs);
+    
     this.onConnectionChange?.(true);
   }
 
@@ -139,9 +182,17 @@ export class WebSocketService {
   /**
    * Handle WebSocket connection close
    */
-  private async handleClose(): Promise<void> {
-    console.log('❌ WebSocket disconnected');
+  private async handleClose(event: CloseEvent): Promise<void> {
+    console.log('❌ WebSocket disconnected', {
+      code: event.code,
+      reason: event.reason || 'No reason provided',
+      wasClean: event.wasClean,
+    });
     this.onConnectionChange?.(false);
+    if (this.keepAliveInterval) {
+      clearInterval(this.keepAliveInterval);
+      this.keepAliveInterval = null;
+    }
 
     // Attempt to reconnect if not manually closed
     if (
@@ -153,29 +204,49 @@ export class WebSocketService {
         `Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`
       );
 
-      this.reconnectTimeout = setTimeout(async () => {
-        // Fetch new WebSocket URL if callback is provided
-        if (this.onRefreshUrl) {
-          try {
-            const newUrl = await this.onRefreshUrl();
-            if (newUrl) {
-              this.url = newUrl;
-            }
-          } catch (error) {
-            console.error('Error fetching new WebSocket URL:', error);
-          }
-        }
+      this.reconnectTimeout = setTimeout(
+        async () => {
+          // Always try to refresh URL on reconnection (tokens may have expired)
+          // Only skip if we're in cooldown period
+          if (this.onRefreshUrl) {
+            const now = Date.now();
+            const timeSinceLastRefresh = this.lastUrlRefreshAt
+              ? now - this.lastUrlRefreshAt
+              : Infinity;
 
-        // Reconnect with the URL (either new or existing)
-        if (this.url) {
-          this.connect(
-            this.url,
-            this.onConnectionChange || undefined,
-            this.onError || undefined,
-            this.onRefreshUrl || undefined
-          );
-        }
-      }, this.reconnectDelay * this.reconnectAttempts);
+            if (timeSinceLastRefresh >= this.urlRefreshCooldownMs) {
+              try {
+                const newUrl = await this.onRefreshUrl();
+                if (newUrl) {
+                  this.url = newUrl;
+                  this.lastUrlRefreshAt = now;
+                }
+              } catch (error) {
+                console.error('Error fetching new WebSocket URL:', error);
+              }
+            } else {
+              const remainingSeconds = Math.ceil(
+                (this.urlRefreshCooldownMs - timeSinceLastRefresh) / 1000
+              );
+              console.log(
+                `⏳ Skipping URL refresh (cooldown: ${remainingSeconds}s remaining)`
+              );
+            }
+          }
+
+          // Reconnect with the URL (either new or existing)
+          if (this.url) {
+            this.connect(
+              this.url,
+              this.onConnectionChange || undefined,
+              this.onError || undefined,
+              this.onRefreshUrl || undefined
+            );
+          }
+        },
+        this.reconnectDelay * this.reconnectAttempts +
+          Math.floor(Math.random() * this.reconnectJitterMs)
+      );
     } else if (this.reconnectAttempts >= this.maxReconnectAttempts) {
       console.error('Max reconnection attempts reached');
       this.onError?.('Failed to reconnect after multiple attempts');
@@ -229,6 +300,10 @@ export class WebSocketService {
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout);
       this.reconnectTimeout = null;
+    }
+    if (this.keepAliveInterval) {
+      clearInterval(this.keepAliveInterval);
+      this.keepAliveInterval = null;
     }
     if (this.ws) {
       this.ws.close();

@@ -287,8 +287,8 @@ const AccountInteractionForm = () => {
       setInteractionLevel(interactionOptions[0].rid);
     }
   }, [getInteractionLevel.data?.data]);
-  const getProjectDisableReason = (isRdTriggerQualified: boolean): string => {
-    if (isRdTriggerQualified) {
+  const getProjectDisableReason = (shouldDisableProject: boolean): string => {
+    if (shouldDisableProject) {
       return 'Project type not allowed due to Configuration setting';
     }
     return '';

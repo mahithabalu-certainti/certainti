@@ -18,7 +18,7 @@ import {
 import { ACTIVITY_EDIT } from '../../../../routes';
 import { ActivityType } from '../../../types';
 import { useCallActivityDetails } from '../../../services/activities/activities-service';
-import { CallLogIcon } from '../../../../assets';
+import { CallLogIcon, DocumentIcon, DownloadIcon } from '../../../../assets';
 import {
   getPermissionMap,
   parseToStringArray,
@@ -26,6 +26,7 @@ import {
 import { RootState } from '../../../../store/store';
 import { useSelector } from 'react-redux';
 import { AllPermissions } from '../../../../common-service';
+import { TruncateWithTooltip } from '../../../../components';
 
 interface CallDetailsProps {
   accountInActive: boolean;
@@ -200,12 +201,26 @@ const CallDetails: React.FC<CallDetailsProps> = ({
       key: 'modified_by_name',
     },
   ];
-  console.log(callPermissionMap);
+
+  const handleDownload = (documentUrl: string) => {
+    if (!documentUrl) return;
+
+    const link = document.createElement('a');
+    link.href = documentUrl;
+    link.download = '';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const basicInfo = applyHidePermission(basicDetails, callPermissionMap);
   const scheduleInfo = applyHidePermission(scheduleDetails, callPermissionMap);
   const descriptionInfo = applyHidePermission(description, callPermissionMap);
   const auditInfo = applyHidePermission(auditDetails, callPermissionMap);
+
+  const hideAttachments =
+    !callPermissionMap?.['attachments']?.edit &&
+    !callPermissionMap?.['attachments']?.read;
 
   return (
     <div>
@@ -248,6 +263,56 @@ const CallDetails: React.FC<CallDetailsProps> = ({
             data={descriptionInfo}
             customStyle='pt-[1px]'
           />
+
+          {/* Attachments Section */}
+          {!hideAttachments && call && call?.attachments?.length > 0 && (
+            <div className='flex flex-col h-full'>
+              <div className='flex items-center align-middle px-3 h-[30px] border-t border-b border-[#CBD6E2] text-[#2D3E4F] text-[14px] font-bold bg-[#ECECEC]'>
+                Attachments
+              </div>
+              <div className='flex-1 p-3'>
+                <div
+                  className={`flex flex-col gap-1 max-h-[85px] ${
+                    call?.attachments?.length > 2
+                      ? 'overflow-auto'
+                      : 'overflow-visible'
+                  }`}
+                >
+                  {call?.attachments?.map((file, idx) => (
+                    <div
+                      key={idx}
+                      className='flex items-center justify-between border border-[#CBD6E2] bg-[#FFFBFA] rounded-[2px] p-2 px-3'
+                    >
+                      <div className='flex items-center gap-2 w-[95%]'>
+                        <DocumentIcon className='w-6 h-6' />
+                        <div className='text-[14px] text-[#425A76] font-normal max-w-[90%]'>
+                          <TruncateWithTooltip
+                            text={`${file.document_name}${file.format}`}
+                            maxWidth={'100%'}
+                          >
+                            {file.document_name}
+                            {file.format}
+                          </TruncateWithTooltip>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleDownload(file.browse_file)}
+                        className='p-1 border border-[#CBD6E2] rounded-[2px] cursor-pointer'
+                        style={{
+                          boxShadow: '0px 1px 2px 0px rgba(42, 54, 71, 0.05)',
+                          background:
+                            'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
+                        }}
+                      >
+                        <DownloadIcon />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
           <DetailsSection
             title='Audit Information'
             data={auditInfo}

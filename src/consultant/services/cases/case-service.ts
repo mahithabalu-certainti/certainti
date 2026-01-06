@@ -61,7 +61,7 @@ export const fetchGlobalCaseList = async (
       limit: params.limit,
       sortBy: params.sortBy,
       sortOrder: params.sortOrder,
-      fiscal_year: params.fiscalYear,
+      fiscalYear: params.fiscalYear,
       filters: params.filters,
       globalFilters: params.globalFilters,
       search: params.search,
@@ -180,13 +180,14 @@ export const ExportCaseList = async (
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
     let response;
+    const { isGlobal, ...restParams } = params;
 
-    if (params.isGlobal) {
+    if (isGlobal) {
       // Use POST API for global export
       const url = `/api/cases/export/caseSummary`;
 
       const body = {
-        ...params,
+        ...restParams,
         timezone,
         account_rid: accountId,
       };

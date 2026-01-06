@@ -2323,6 +2323,17 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     'Statutory Submission Date must be after or equal to Planned Submission Date',
                 };
               }
+
+              // Statutory Submission Date must not be before current date
+              const currentDate = dayjs().startOf('day');
+              if (dayjs(dateValue).isBefore(currentDate)) {
+                hasError = true;
+                const fiscalYear = constructFormData['fiscal_year'] as string;
+                return {
+                  ...field,
+                  error: `Statutory Submission for Fiscal Year ${fiscalYear} is closed. Submissions are no longer allowed.`,
+                };
+              }
             }
           }
 

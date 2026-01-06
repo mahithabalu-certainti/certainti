@@ -148,14 +148,30 @@ export const ExportNotesList = async (
   params: NotesListExportParams
 ) => {
   const systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const isGlobalNotes = type === 'all_notes';
-  const url = NoteExportListURL({ ...params, timezone: systemTimezone });
+  const { isGlobal, ...restParams } = params;
+  const isGlobalNotes = type === 'all_notes' || isGlobal;
+
   const filename = isGlobalNotes
     ? 'all_notes_records.xlsx'
     : `${params.attachmentLevel}_notes_records.xlsx`;
 
   try {
-    const response = await resourceServiceApi.get(url);
+    let response;
+
+    if (isGlobalNotes) {
+      // Use POST API for global export
+      const url = `/api/notes/list/summaryExport`;
+      const body = {
+        ...restParams,
+        timezone: systemTimezone,
+      };
+      response = await resourceServiceApi.post(url, body);
+    } else {
+      // Use GET API for normal export
+      const url = NoteExportListURL({ ...params, timezone: systemTimezone });
+      response = await resourceServiceApi.get(url);
+    }
+
     const base64Data = response.data?.data;
 
     if (!base64Data) {

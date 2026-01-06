@@ -2,6 +2,7 @@ import type React from 'react';
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { Popover, IconButton, Badge } from '@mui/material';
 import { getRelativeTime, getSvgIcon } from './helper';
+import { sanitizeHtml, stripHtmlTags } from '../../utils/html-utils';
 import { NotificationItem } from '../../admin/types/notification';
 import {
   useNotificationList,
@@ -58,17 +59,27 @@ export default function NotificationPanel() {
 
   // Listen for real-time notification updates via WebSocket
   useWebSocketEvent('*', (message) => {
+    // Ignore pong messages from keep-alive
+    if (message?.type === 'pong') {
+      return;
+    }
+
     // Check if this is a notification message
+    // Azure Web PubSub sends notifications as type 'message' with data object
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const messageData = message as any;
+
     const isNotification =
       message?.type === 'notification' ||
+      (message?.type === 'message' && message?.data) || // Azure Web PubSub format
       messageData?.id ||
-      message?.data?.notification_message;
+      message?.data?.notification_message ||
+      messageData?.notification_message;
 
     if (isNotification) {
       const notificationMessage =
         message?.data?.notification_message ||
+        messageData?.notification_message ||
         messageData?.message ||
         message?.data?.message ||
         'New notification received';
@@ -76,8 +87,11 @@ export default function NotificationPanel() {
       // Show browser notification via Service Worker
       // Using consistent tag prevents duplicate notifications across multiple tabs
       if (isPushSupported) {
+        // Strip HTML tags for browser notification to show plain text
+        const plainTextMessage = stripHtmlTags(notificationMessage);
+
         showPushNotification('New Notification', {
-          body: notificationMessage,
+          body: plainTextMessage,
           icon: '/favicon.svg',
           badge: '/favicon.svg',
           tag: `websocket-notification-${Date.now()}`, // Unique tag each time
@@ -242,6 +256,9 @@ export default function NotificationPanel() {
             {sortedNotifications.map((n, index) => {
               const message = n?.notification_message || '';
               const timestamp = getRelativeTime(n.created_datetime);
+              // Sanitize HTML to prevent XSS attacks while preserving safe formatting
+              const sanitizedMessage = sanitizeHtml(message);
+              const plainTextMessage = stripHtmlTags(message);
 
               return (
                 <div
@@ -255,14 +272,17 @@ export default function NotificationPanel() {
                       color: '#686868',
                     }}
                   >
-                    {getDynamicSvgIcon(message, 16, '#686868')}
+                    {getDynamicSvgIcon(plainTextMessage, 16, '#686868')}
                   </div>
 
                   <div className='flex-1'>
-                    <p className='text-xs text-[#2A2A2A] text-wrap'>
-                      {message}
+                    <div
+                      className='text-xs text-[#2A2A2A] leading-tight [&>*]:m-0 [&>*]:leading-tight [&>*:last-child]:mb-0 [&_strong]:font-bold [&_b]:font-bold [&_em]:italic [&_i]:italic [&_u]:underline [&_s]:line-through [&_h1]:text-lg [&_h1]:font-bold [&_h2]:text-base [&_h2]:font-semibold [&_h3]:text-sm [&_h3]:font-semibold [&_h4]:text-xs [&_h4]:font-medium [&_h5]:text-xs [&_h5]:font-medium [&_h6]:text-xs [&_h6]:font-medium [&_ul]:list-disc [&_ul]:pl-4 [&_ul]:mt-1 [&_ul]:mb-0 [&_ol]:list-decimal [&_ol]:pl-4 [&_ol]:mt-1 [&_ol]:mb-0 [&_li]:mb-0 [&_a]:text-blue-600 [&_a]:underline [&_blockquote]:border-l-2 [&_blockquote]:pl-2 [&_blockquote]:italic [&_code]:font-mono [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:rounded [&_pre]:font-mono [&_pre]:bg-gray-100 [&_pre]:p-2 [&_pre]:rounded [&_pre]:overflow-x-auto [&_img]:max-w-full [&_img]:rounded [&_table]:border-collapse [&_table]:border [&_table]:border-gray-300 [&_table]:mt-1 [&_table]:mb-0 [&_th]:border [&_th]:border-gray-300 [&_th]:bg-gray-100 [&_th]:px-2 [&_th]:py-1 [&_td]:border [&_td]:border-gray-300 [&_td]:px-2 [&_td]:py-1'
+                      dangerouslySetInnerHTML={{ __html: sanitizedMessage }}
+                    />
+                    <p className='text-xs text-[#425A76] mt-1 leading-tight'>
+                      {timestamp}
                     </p>
-                    <p className='text-xs text-[#425A76] mt-1'>{timestamp}</p>
                   </div>
                 </div>
               );

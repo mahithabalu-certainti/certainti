@@ -15,6 +15,7 @@ interface UserOption {
   rid: string;
   name: string;
   email: string;
+  phone?: string;
 }
 
 interface SuggestionState {
@@ -55,6 +56,8 @@ interface MeetingAttendeesProps {
   className?: string;
   singleSelect?: boolean;
   maxSelections?: number;
+  allowPhoneNumber?: boolean;
+  isValidPhoneNumber?: (phone: string) => boolean;
 }
 
 const MeetingAttendees: React.FC<MeetingAttendeesProps> = ({
@@ -78,6 +81,8 @@ const MeetingAttendees: React.FC<MeetingAttendeesProps> = ({
   className = '',
   singleSelect = false,
   maxSelections,
+  allowPhoneNumber = false,
+  isValidPhoneNumber,
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -120,27 +125,62 @@ const MeetingAttendees: React.FC<MeetingAttendeesProps> = ({
       const lowerSearch = searchText.toLowerCase();
       const currentFieldEmails = values;
       const isEmailFormat = isValidEmail(searchText.trim());
+      const isPhoneFormat =
+        allowPhoneNumber && isValidPhoneNumber
+          ? isValidPhoneNumber(searchText.trim())
+          : false;
 
       const filtered = userOptions.filter((user) => {
         const nameMatch = user.name.toLowerCase().includes(lowerSearch);
         const emailMatch = user.email.toLowerCase().includes(lowerSearch);
+        const phoneMatch =
+          allowPhoneNumber && user.phone
+            ? user.phone.toLowerCase().includes(lowerSearch)
+            : false;
 
-        return (
-          (nameMatch || emailMatch) && !currentFieldEmails.includes(user.email)
-        );
+        // Check if user's email or phone is already in current field
+        const alreadyAdded =
+          currentFieldEmails.includes(user.email) ||
+          (allowPhoneNumber &&
+            user.phone &&
+            currentFieldEmails.includes(user.phone));
+
+        return (nameMatch || emailMatch || phoneMatch) && !alreadyAdded;
       });
 
       // If user typed a valid email, ALSO allow adding typed email as suggestion
-      const typedEmail = searchText.trim();
+      const typedValue = searchText.trim();
       if (
         isEmailFormat &&
-        !filtered.some((s) => s.email === typedEmail) &&
-        !currentFieldEmails.includes(typedEmail)
+        !filtered.some((s) => s.email === typedValue) &&
+        !currentFieldEmails.includes(typedValue)
       ) {
         filtered.push({
           rid: 'typed',
           name: 'Use this email address:',
-          email: typedEmail,
+          email: typedValue,
+        });
+      }
+
+      // If user typed a valid phone number, ALSO allow adding typed phone as suggestion
+      if (
+        allowPhoneNumber &&
+        isPhoneFormat &&
+        !filtered.some(
+          (s) => s.phone === typedValue || s.email === typedValue
+        ) &&
+        !currentFieldEmails.includes(typedValue)
+      ) {
+        // Add + prefix if not present for UI consistency
+        const phoneWithPlus = typedValue.startsWith('+')
+          ? typedValue
+          : `+${typedValue}`;
+
+        filtered.push({
+          rid: 'typed-phone',
+          name: 'Use this phone number:',
+          email: phoneWithPlus,
+          phone: phoneWithPlus,
         });
       }
 
@@ -152,6 +192,8 @@ const MeetingAttendees: React.FC<MeetingAttendeesProps> = ({
       isValidEmail,
       isMaxSelectionsReached,
       isSingleSelectReached,
+      allowPhoneNumber,
+      isValidPhoneNumber,
     ]
   );
 
@@ -256,9 +298,16 @@ const MeetingAttendees: React.FC<MeetingAttendeesProps> = ({
     }
   };
 
-  const getChipLabel = (email: string) => {
-    const match = userOptions.find((u) => u.email === email);
-    return match ? match.name : email;
+  const getChipLabel = (value: string) => {
+    // Try to find by email first
+    let match = userOptions.find((u) => u.email === value);
+
+    // If allowPhoneNumber is enabled and no email match, try to find by phone
+    if (!match && allowPhoneNumber) {
+      match = userOptions.find((u) => u.phone === value);
+    }
+
+    return match ? match.name : value;
   };
 
   const getFieldColorForEmail = (email: string): string => {
@@ -300,7 +349,11 @@ const MeetingAttendees: React.FC<MeetingAttendeesProps> = ({
     if (isMaxSelectionsReached)
       return `Maximum ${maxSelections} selections reached`;
     if (isSingleSelectReached) return 'Only one selection allowed';
-    if (values.length === 0) return `Type @ to view suggestions…`;
+    if (values.length === 0) {
+      return allowPhoneNumber
+        ? `Type @ to view suggestions or enter email / phone…`
+        : `Type @ to view suggestions…`;
+    }
     return '';
   };
 
@@ -461,9 +514,18 @@ const MeetingAttendees: React.FC<MeetingAttendeesProps> = ({
                         </div>
                       }
                       secondary={
-                        <span className='text-[12px] text-[#425A76]'>
-                          {suggestion.email}
-                        </span>
+                        <div className='flex flex-col'>
+                          <span className='text-[12px] text-[#425A76]'>
+                            {suggestion.email}
+                          </span>
+                          {allowPhoneNumber &&
+                            suggestion.phone &&
+                            suggestion.phone !== suggestion.email && (
+                              <span className='text-[12px] text-[#425A76]'>
+                                {suggestion.phone}
+                              </span>
+                            )}
+                        </div>
                       }
                     />
                   </ListItemButton>
