@@ -224,51 +224,64 @@ class SchemaService {
         }
     }
 
-    async projectKeyContactData(project: any, mainDdSequilze: Sequelize) {
+    async projectKeyContactData(project: any, mainDdSequilze: any) {
         try {
-            if (project.key_contacts) {
-                const keyContactsIds = project.key_contacts.map(
-                    (contact: any) => contact.role_rid
-                );
-                const keyContactsResult: any = await mainDdSequilze.query(
+            const plainProject =
+                typeof project.toJSON === "function" ? project.toJSON() : project;
+
+            const keyContacts = plainProject.keyContact || [];
+
+            const keyContactIds = [
+                ...new Set(keyContacts.map((r: any) => r.key_contact_role)),
+            ].filter(Boolean);
+
+            const statusIds = [
+                ...new Set(keyContacts.map((r: any) => r.status_rid)),
+            ].filter(Boolean);
+
+            let keyContactMap: Record<string, string> = {};
+            let statusMap: Record<string, string> = {};
+
+            if (keyContactIds.length > 0) {
+                const keyContactRows = await mainDdSequilze.query(
                     rawQueries.fetchKeyContactsByIds(),
                     {
-                        replacements: { ids: keyContactsIds },
+                        replacements: { ids: keyContactIds },
                         type: "SELECT",
                     }
                 );
-                project.key_contacts.forEach((contact: any) => {
-                    const role = keyContactsResult.find(
-                        (r: any) => r.rid === contact.role_rid
-                    );
-                    if (role) {
-                        contact.role_name = role.role_name;
-                        contact.role_map = role.role_map;
-                    }
-                });
-                const statusIds = project.key_contacts.map(
-                    (contact: any) => contact.status_rid
+
+                keyContactMap = Object.fromEntries(
+                    keyContactRows.map((c: any) => [c.rid, c.role_name])
                 );
-                const statusResult: any = await mainDdSequilze.query(
+            }
+
+            if (statusIds.length > 0) {
+                const statusRows = await mainDdSequilze.query(
                     rawQueries.fetchStatusByIds(),
                     {
                         replacements: { ids: statusIds },
                         type: "SELECT",
                     }
                 );
-                project.key_contacts.forEach((contact: any) => {
-                    const status = statusResult.find(
-                        (s: any) => s.rid === contact.status_rid
-                    );
-                    if (status) {
-                        contact.status_name = status.status_name;
-                    }
-                });
+
+                statusMap = Object.fromEntries(
+                    statusRows.map((c: any) => [c.rid, c.status_name])
+                );
             }
 
-            return project;
-        } catch (err: any) {
-            errorLog("Error inserting project key contact data : " + err.message);
+            const enrichedKeyContacts = keyContacts.map((kc: any) => ({
+                ...kc,
+                role_name: keyContactMap[kc.key_contact_role] || null,
+                status_name: statusMap[kc.status_rid] || null,
+            }));
+
+            return {
+                ...project,
+                keyContact: enrichedKeyContacts,
+            };
+        } catch (err) {
+            throw err;
         }
     }
 
