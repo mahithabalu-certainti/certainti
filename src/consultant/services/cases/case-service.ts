@@ -180,13 +180,14 @@ export const ExportCaseList = async (
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
     let response;
+    const { isGlobal, ...restParams } = params;
 
-    if (params.isGlobal) {
+    if (isGlobal) {
       // Use POST API for global export
       const url = `/api/cases/export/caseSummary`;
 
       const body = {
-        ...params,
+        ...restParams,
         timezone,
         account_rid: accountId,
       };
