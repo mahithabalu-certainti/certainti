@@ -40,10 +40,11 @@ import {
 } from "../lib/joi/schemas/schema";
 import configurations from "../config/config";
 import moment from "moment";
-import { checklistsFieldMappings, reviewProjectsFieldMappings,
-    casesFieldMappings,
+import {
+  checklistsFieldMappings, reviewProjectsFieldMappings,
+  casesFieldMappings,
   casesSummaryFieldMappings,
- } from "../utils/excelExportMapping";
+} from "../utils/excelExportMapping";
 
 const services = configurations.getInstance().getServices();
 const caseService = services.caseService;
@@ -66,8 +67,7 @@ async function createCases(req: Request, res: Response): Promise<void> {
   const methodName = "Create case";
   try {
     logMessage(
-      `[${methodName}] Request received, ${JSON.stringify(req.body)} userId: ${
-        req.headers["x-user-id"]
+      `[${methodName}] Request received, ${JSON.stringify(req.body)} userId: ${req.headers["x-user-id"]
       }`
     );
     const value = await validateRequest(req, createCaseSchema, res);
@@ -87,7 +87,7 @@ async function createCases(req: Request, res: Response): Promise<void> {
       errorLog(methodName, "Request body is empty");
       return;
     }
-    const cases = await caseService.createCase(value, userId,accessToken);
+    const cases = await caseService.createCase(value, userId, accessToken);
     if (cases.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
       handleCustomResponse(res, cases.data, cases.message);
@@ -133,13 +133,12 @@ async function updateCases(req: Request, res: Response): Promise<void> {
   const methodName = "Update case";
   try {
     logMessage(
-      `[${methodName}] Request received, ${JSON.stringify(req.body)} userId: ${
-        req.headers["x-user-id"]
+      `[${methodName}] Request received, ${JSON.stringify(req.body)} userId: ${req.headers["x-user-id"]
       }`
     );
     const value = await validateRequest(req, updateCaseSchema, res);
     const userId = req.headers["x-user-id"] as string;
-    const accessToken = req.headers["authorization"] as string;  
+    const accessToken = req.headers["authorization"] as string;
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -572,7 +571,7 @@ async function exportAllCasesAccount(req: Request, res: Response) {
     const isValidTZ = value.timezone && isValidTimezone(value.timezone);
     const formatDate = (date?: Date) => {
       if (!date) return null;
-      
+
       return moment(date)
         .tz(isValidTZ ? value.timezone : "UTC")
         .format("YYYY-MMM-DD, hh:mm:ss A");
@@ -582,46 +581,46 @@ async function exportAllCasesAccount(req: Request, res: Response) {
         result?.data?.caseInfo.length < 1
           ? []
           : result?.data?.caseInfo.map((d: any) => {
-              let resultMap: { [key: string]: any } = {
-                r_number: d.r_number,
-                fiscal_year: `FY-${d.fiscal_year}`,
-                status_name: d.status_name,
-                case_owner_name: d.case_owner_name,
-                filing_type_name: d.filing_type_name,
-                case_total_project_cost: d.case_total_project_cost,
-                case_total_projects: d.case_total_projects,
-                case_total_rd_cost: d.case_total_rd_cost,
-                case_total_qre_cost: d.case_total_qre_cost,
-                description: d.description,
-                case_name: `${d.account_name}-${d.country_code}-${d.fiscal_year}-${d.case_name}`,
-                created_by: d.created_user_name,
-                created_datetime: formatDate(d.created_datetime),
-                modified_by: d.modified_user_name,
-                modified_datetime:
-                  d.modified_datetime == null
-                    ? ""
-                    : formatDate(d.modified_datetime),
-                submitted_datetime:
-                  d.submitted_datetime == null
-                    ? ""
-                    : formatDate(d.submitted_datetime),
-                approved_datetime:
-                  d.approved_datetime == null
-                    ? ""
-                    : formatDate(d.approved_datetime),
-              };
+            let resultMap: { [key: string]: any } = {
+              r_number: d.r_number,
+              fiscal_year: `FY-${d.fiscal_year}`,
+              status_name: d.status_name,
+              case_owner_name: d.case_owner_name,
+              filing_type_name: d.filing_type_name,
+              case_total_project_cost: d.case_total_project_cost,
+              case_total_projects: d.case_total_projects,
+              case_total_rd_cost: d.case_total_rd_cost,
+              case_total_qre_cost: d.case_total_qre_cost,
+              description: d.description,
+              case_name: `${d.account_name}-${d.country_code}-${d.fiscal_year}-${d.case_name}`,
+              created_by: d.created_user_name,
+              created_datetime: formatDate(d.created_datetime),
+              modified_by: d.modified_user_name,
+              modified_datetime:
+                d.modified_datetime == null
+                  ? ""
+                  : formatDate(d.modified_datetime),
+              submitted_datetime:
+                d.submitted_datetime == null
+                  ? ""
+                  : formatDate(d.submitted_datetime),
+              approved_datetime:
+                d.approved_datetime == null
+                  ? ""
+                  : formatDate(d.approved_datetime),
+            };
 
-              // Build exportRecord using allowed fields and resultMap
-              const exportRecord: Record<string, any> = {};
-              casesFieldMappings.forEach((mapping) => {
-                if (allowedFieldSet.has(mapping.permissionField)) {
-                  exportRecord[mapping.exportField] =
-                    resultMap[mapping.dataField];
-                }
-              });
-
-              return exportRecord;
+            // Build exportRecord using allowed fields and resultMap
+            const exportRecord: Record<string, any> = {};
+            casesFieldMappings.forEach((mapping) => {
+              if (allowedFieldSet.has(mapping.permissionField)) {
+                exportRecord[mapping.exportField] =
+                  resultMap[mapping.dataField];
+              }
             });
+
+            return exportRecord;
+          });
 
       const generateBase64Response = await generateExcelBase64(
         finalStructuredData,
@@ -737,7 +736,7 @@ async function listAllCasesSummary(req: Request, res: Response) {
     let parsedFilters: Record<string, any> = {};
     let parsedGlobalFilters: Record<string, string[]> = {};
 
-   
+
 
     logMessage(
       `[${methodName}] Request received, ${JSON.stringify(
@@ -898,49 +897,49 @@ async function exportAllCasesSummary(req: Request, res: Response) {
         result?.data?.caseInfo.length < 1
           ? []
           : result?.data?.caseInfo.map((d: any) => {
-              let resultMap: { [key: string]: any } = {
-                r_number: d.r_number,
-                account_name: d.account_name,
-                fiscal_year: `FY-${d.fiscal_year}`,
-                status_name: d.status_name,
-                case_owner_name: d.case_owner_name,
-                filing_type_name: d.filing_type_name,
-                case_total_project_cost: d.case_total_project_cost,
-                case_total_projects: d.case_total_projects,
-                case_total_qualified_projects: d.case_total_qualified_projects,
-                case_total_rd_cost: d.case_total_rd_cost,
-                case_total_qre_cost: d.case_total_qre_cost,
-                description: d.description,
-                case_name: `${d.account_name}-${d.country_code}-${d.fiscal_year}-${d.case_name}`,
-                country_name: d.country_name,
-                created_by: d.created_user_name,
-                created_datetime: formatDate(d.created_datetime),
-                modified_by: d.modified_user_name,
-                modified_datetime:
-                  d.modified_datetime == null
-                    ? ""
-                    : formatDate(d.modified_datetime),
-                submitted_datetime:
-                  d.submitted_datetime == null
-                    ? ""
-                    : formatDate(d.submitted_datetime),
-                approved_datetime:
-                  d.approved_datetime == null
-                    ? ""
-                    : formatDate(d.approved_datetime),
-              };
+            let resultMap: { [key: string]: any } = {
+              r_number: d.r_number,
+              account_name: d.account_name,
+              fiscal_year: `FY-${d.fiscal_year}`,
+              status_name: d.status_name,
+              case_owner_name: d.case_owner_name,
+              filing_type_name: d.filing_type_name,
+              case_total_project_cost: d.case_total_project_cost,
+              case_total_projects: d.case_total_projects,
+              case_total_qualified_projects: d.case_total_qualified_projects,
+              case_total_rd_cost: d.case_total_rd_cost,
+              case_total_qre_cost: d.case_total_qre_cost,
+              description: d.description,
+              case_name: `${d.account_name}-${d.country_code}-${d.fiscal_year}-${d.case_name}`,
+              country_name: d.country_name,
+              created_by: d.created_user_name,
+              created_datetime: formatDate(d.created_datetime),
+              modified_by: d.modified_user_name,
+              modified_datetime:
+                d.modified_datetime == null
+                  ? ""
+                  : formatDate(d.modified_datetime),
+              submitted_datetime:
+                d.submitted_datetime == null
+                  ? ""
+                  : formatDate(d.submitted_datetime),
+              approved_datetime:
+                d.approved_datetime == null
+                  ? ""
+                  : formatDate(d.approved_datetime),
+            };
 
-              // Build exportRecord using allowed fields and resultMap
-              const exportRecord: Record<string, any> = {};
-              casesSummaryFieldMappings.forEach((mapping) => {
-                if (allowedFieldSet.has(mapping.permissionField)) {
-                  exportRecord[mapping.exportField] =
-                    resultMap[mapping.dataField];
-                }
-              });
-
-              return exportRecord;
+            // Build exportRecord using allowed fields and resultMap
+            const exportRecord: Record<string, any> = {};
+            casesSummaryFieldMappings.forEach((mapping) => {
+              if (allowedFieldSet.has(mapping.permissionField)) {
+                exportRecord[mapping.exportField] =
+                  resultMap[mapping.dataField];
+              }
             });
+
+            return exportRecord;
+          });
 
       const generateBase64Response = await generateExcelBase64(
         finalStructuredData,
@@ -1189,7 +1188,7 @@ async function sentReviewProjects(req: Request, res: Response): Promise<void> {
         "Invalid filters format. Must be a valid JSON object."
       );
     }
-      let fileArray: Express.Multer.File[] | [];
+    let fileArray: Express.Multer.File[] | [];
     if (Array.isArray(req.files)) {
       fileArray = req.files;
     } else {
@@ -1290,7 +1289,7 @@ async function exportReviewProjects(req: Request, res: Response): Promise<void> 
       accountRid!,
       caseRid!,
     );
-   const fields = await caseService.getAllowedExportFields(
+    const fields = await caseService.getAllowedExportFields(
       userId,
       "case_review_projects_view_edit"
     );
@@ -1303,56 +1302,56 @@ async function exportReviewProjects(req: Request, res: Response): Promise<void> 
     const isValidTZ = value.timezone && isValidTimezone(value.timezone);
     const formatDate = (date?: Date) => {
       if (!date) return null;
-      
+
       return moment(date)
         .tz(isValidTZ ? value.timezone : "UTC")
         .format("YYYY-MMM-DD, hh:mm:ss A");
-    }; 
+    };
 
     if (reviewProjects.statusCode === HttpStatus.SUCCESS) {
-        const finalStructuredData =
+      const finalStructuredData =
         !reviewProjects?.data?.reviewProjects || reviewProjects.data.reviewProjects.length < 1
           ? []
           : reviewProjects.data.reviewProjects.map((d: any) => {
-              let resultMap: { [key: string]: any } = {
-                r_number: d.r_number,
-                fiscal_year: `FY-${d.fiscal_year}`,
-                project_name: d.project_name,
-                project_code: d.project_code,
-                industry_rid: d.industry_name,
-                project_classification_rid: d.project_classification_name,
-                project_type_rid: d.project_type_name,
-                project_group: d.project_group,
-                total_tasks: d.total_tasks,
-                total_fte_prj: d.total_fte_prj,
-                total_cost_prj: d.total_cost_prj,
-                total_effort_prj: d.total_effort_prj,
-                total_subcon_prj: d.total_subcon_prj,
-                total_cost_fte_prj: d.total_cost_fte_prj,
-                total_cost_subcon_prj:d.total_cost_subcon_prj,
-                total_nonlabor_prj: d.total_nonlabor_prj,
-                total_resources_prj: d.total_resources_prj,
-                total_effort_fte_prj  : d.total_effort_fte_prj,
-                total_cost_nonlabor_prj : d.total_cost_nonlabor_prj,
-                total_effort_subcon_prj : d.total_effort_subcon_prj,
-                primary_point_of_contact: d.project_point_of_contact,
-                primary_point_of_contact_email: d.project_point_of_contact_email,
-                total_technical_summaries: d.total_technical_summaries,
+            let resultMap: { [key: string]: any } = {
+              r_number: d.r_number,
+              fiscal_year: `FY-${d.fiscal_year}`,
+              project_name: d.project_name,
+              project_code: d.project_code,
+              industry_rid: d.industry_name,
+              project_classification_rid: d.project_classification_name,
+              project_type_rid: d.project_type_name,
+              project_group: d.project_group,
+              total_tasks: d.total_tasks,
+              total_fte_prj: d.total_fte_prj,
+              total_cost_prj: d.total_cost_prj,
+              total_effort_prj: d.total_effort_prj,
+              total_subcon_prj: d.total_subcon_prj,
+              total_cost_fte_prj: d.total_cost_fte_prj,
+              total_cost_subcon_prj: d.total_cost_subcon_prj,
+              total_nonlabor_prj: d.total_nonlabor_prj,
+              total_resources_prj: d.total_resources_prj,
+              total_effort_fte_prj: d.total_effort_fte_prj,
+              total_cost_nonlabor_prj: d.total_cost_nonlabor_prj,
+              total_effort_subcon_prj: d.total_effort_subcon_prj,
+              primary_point_of_contact: d.project_point_of_contact,
+              primary_point_of_contact_email: d.project_point_of_contact_email,
+              total_technical_summaries: d.total_technical_summaries,
 
-  
-              };
 
-              // Build exportRecord using allowed fields and resultMap
-              const exportRecord: Record<string, any> = {};
-              reviewProjectsFieldMappings.forEach((mapping) => {
-                if (allowedFieldSet.has(mapping.permissionField)) {
-                  exportRecord[mapping.exportField] =
-                    resultMap[mapping.dataField];
-                }
-              });
+            };
 
-              return exportRecord;
+            // Build exportRecord using allowed fields and resultMap
+            const exportRecord: Record<string, any> = {};
+            reviewProjectsFieldMappings.forEach((mapping) => {
+              if (allowedFieldSet.has(mapping.permissionField)) {
+                exportRecord[mapping.exportField] =
+                  resultMap[mapping.dataField];
+              }
             });
+
+            return exportRecord;
+          });
 
       const generateBase64Response = await generateExcelBase64WithEmptyCheck(
         finalStructuredData,
@@ -1411,8 +1410,7 @@ async function createCaseTeam(req: Request, res: Response): Promise<void> {
   const methodName = "Create case team";
   try {
     logMessage(
-      `[${methodName}] Request received, ${JSON.stringify(req.body)} userId: ${
-        req.headers["x-user-id"]
+      `[${methodName}] Request received, ${JSON.stringify(req.body)} userId: ${req.headers["x-user-id"]
       }`
     );
     const value = await validateRequest(req, createCaseTeamSchema, res);
@@ -1432,7 +1430,7 @@ async function createCaseTeam(req: Request, res: Response): Promise<void> {
       errorLog(methodName, "Request body is empty");
       return;
     }
-    const cases = await caseService.createCaseTeam(value, userId,accessToken);
+    const cases = await caseService.createCaseTeam(value, userId, accessToken);
     if (cases.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
       handleCustomResponse(res, cases.data, cases.message);
@@ -1680,20 +1678,20 @@ async function listUsersForCaseTeam(req: Request, res: Response): Promise<void> 
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
         res,
-        HttpStatus.BAD_REQUEST, 
+        HttpStatus.BAD_REQUEST,
         HttpStatus.BAD_REQUEST_MESSAGE,
         "User ID is required in headers"
       );
       return;
     }
-    
+
     // Extract account RID from request parameters to identify target account
     const accountrid = req.params.accountRid as string;
     const userAccessScope = req.query.user_access_scope as string || 'account'
-    
+
     // Call the service layer to fetch users eligible for case team assignment
-    const result = await caseService.listUsersForCaseTeam(accountrid,userAccessScope);
-    
+    const result = await caseService.listUsersForCaseTeam(accountrid, userAccessScope);
+
     // Handle successful user retrieval
     if (result.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
@@ -1710,7 +1708,7 @@ async function listUsersForCaseTeam(req: Request, res: Response): Promise<void> 
         result.errorMessage
       );
       return;
-    }   
+    }
   } catch (err) {
     // Handle unexpected errors (system failures, network issues, etc.)
     const error = err as Error;
@@ -1742,17 +1740,17 @@ async function listUserForCaseOwner(req: Request, res: Response): Promise<void> 
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
         res,
-        HttpStatus.BAD_REQUEST, 
+        HttpStatus.BAD_REQUEST,
         HttpStatus.BAD_REQUEST_MESSAGE,
         "User ID is required in headers"
       );
       return;
     }
-    
-    
+
+
     // Call the service layer to fetch users eligible for case team assignment
     const result = await caseService.getCaseOwner();
-    
+
     // Handle successful user retrieval
     if (result.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
@@ -1769,7 +1767,7 @@ async function listUserForCaseOwner(req: Request, res: Response): Promise<void> 
         result.errorMessage
       );
       return;
-    }   
+    }
   } catch (err) {
     // Handle unexpected errors (system failures, network issues, etc.)
     const error = err as Error;
@@ -1785,7 +1783,7 @@ async function listUserForCaseOwner(req: Request, res: Response): Promise<void> 
 
 }
 
-async function fetchCaseKanbanBoard (req : Request, res : Response) {
+async function fetchCaseKanbanBoard(req: Request, res: Response) {
   const methodName = "fetchCaseKanbanBoard";
   try {
     const userId = req.headers["x-user-id"] as string;
@@ -1801,21 +1799,21 @@ async function fetchCaseKanbanBoard (req : Request, res : Response) {
     }
     const { accountRid, caseRid } = req.params;
     const result = await caseManagementService.fetchKanbanBoardForCase(accountRid!, caseRid!);
-    if(result.statusCode == HttpStatus.SUCCESS) {
+    if (result.statusCode == HttpStatus.SUCCESS) {
       return res.status(HttpStatus.SUCCESS).json({
         statusCode: HttpStatus.SUCCESS,
         statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
         statusMessage: STATUS_MESSAGE.caseBreakdownSuccess,
         data: result.data,
-      });      
+      });
     } else {
       return res.status(HttpStatus.SUCCESS).json({
         statusCode: HttpStatus.SUCCESS,
         statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
         statusMessage: STATUS_MESSAGE.dataNotAvailable,
         data: [],
-      });       
-    }   
+      });
+    }
   } catch (error: any) {
     handleErrorResponse(
       res,
@@ -1829,7 +1827,7 @@ async function fetchCaseKanbanBoard (req : Request, res : Response) {
 async function getCaseSubmissionDate(req: Request, res: Response): Promise<void> {
   const methodName = "Get Case Submission Date";
   try {
-     const value = await validateRequest(req, caseSubmissionDateSchema, res,"GET");
+    const value = await validateRequest(req, caseSubmissionDateSchema, res, "GET");
     const caseSubmissionDate = await caseService.getCaseSubmissionDate(value);
     if (caseSubmissionDate.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
@@ -1885,7 +1883,7 @@ async function getCaseSubmissionDate(req: Request, res: Response): Promise<void>
  * @param {Response} res - Express response used to return the API result
  * @returns {Promise<void>} - Resolves after sending an HTTP response
  */
-async function signoffTechnicalDocumentation (req : Request, res : Response) {
+async function signoffTechnicalDocumentation(req: Request, res: Response) {
   const methodName = "signoffTechnicalDocumentation";
   try {
     const userId = req.headers["x-user-id"] as string;
@@ -1900,21 +1898,21 @@ async function signoffTechnicalDocumentation (req : Request, res : Response) {
       return;
     }
     const data = req.body;
-    data.userId = userId 
+    data.userId = userId
     const result = await caseService.signOffTechnicalDocumentation(data);
-    if(result.statusCode === HttpStatus.SUCCESS) {
+    if (result.statusCode === HttpStatus.SUCCESS) {
       return res.status(HttpStatus.SUCCESS).json({
         statusCode: HttpStatus.SUCCESS,
         statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
         statusMessage: result.statusMessage
-      }); 
-    } else if(result.statusCode === HttpStatus.BAD_REQUEST) {
+      });
+    } else if (result.statusCode === HttpStatus.BAD_REQUEST) {
       return res.status(HttpStatus.BAD_REQUEST).json({
         statusCode: HttpStatus.BAD_REQUEST,
         statusCodeValue: HttpStatus.BAD_REQUEST_MESSAGE,
         statusMessage: result.statusMessage
       });
-    } else if(result.statusCode === HttpStatus.NOT_FOUND) {
+    } else if (result.statusCode === HttpStatus.NOT_FOUND) {
       return res.status(HttpStatus.NOT_FOUND).json({
         statusCode: HttpStatus.NOT_FOUND,
         statusCodeValue: HttpStatus.NOT_FOUND_MESSAGE,
