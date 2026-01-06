@@ -1897,6 +1897,9 @@ class CaseSchemaService {
     let projectTypeMap: Map<string, string> = new Map(
       fetchProjectTypeInfo[0].map((projectType: any) => [projectType.rid, projectType.name])
     );
+    let uniqueCurrencyIds : any = [...new Set(result.map((c : any) => c.currency_rid))];
+    let fetchCurrencies : any = await this.mainDbSequelize.query(rawQueries.fetchCurrencies(uniqueCurrencyIds));
+    let mapCurrency : Map<string, {currency_name : string, currency_code : string, currency_symbol : string}>= new Map(fetchCurrencies[0].map((c : any) => [c.rid, {currency_name : c.currency_name, currency_code : c.currency_code, currency_symbol : c.currency_symbol}]))
 
     let finalData =
       Array.isArray(result) && result.length > 0
@@ -1910,6 +1913,8 @@ class CaseSchemaService {
             industry_name: industryMap.get(d.industry_rid) || null,
             project_classification_name: classificationMap.get(d.project_classification_rid) || null,
             project_type_name: projectTypeMap.get(d.project_type_rid) || null,
+            currency_code: mapCurrency.get(d.currency_rid)?.currency_code || null,
+            currency_symbol: mapCurrency.get(d.currency_rid)?.currency_symbol || null,
           };
         })
         : [];
@@ -4491,7 +4496,7 @@ class CaseSchemaService {
     );
     const fiscalStart = accountFiscalInfo?.fiscal_start_date; // e.g. 'Apr/01'
     const fiscalEnd = accountFiscalInfo?.fiscal_end_date; // e.g. 'Mar/31'
-    const fiscalYear = new Date().getFullYear();
+    const fiscalYear = data.fiscal_year;
     if (!fiscalStart || !fiscalEnd) return "";
     // Start date
     const formattedStartDate = parseFiscalDate(fiscalStart, fiscalYear);
@@ -4508,11 +4513,12 @@ class CaseSchemaService {
     const submissionMonth = platFormConfig?.config_json?.submission_date;
     if (!submissionMonth) return "";
 
-    const submissionDate = new Date(formattedStartDate);
-    submissionDate.setMonth(submissionDate.getMonth() + parseInt(submissionMonth));
+  const submissionDate = new Date(formattedEndDate);
+  submissionDate.setMonth((submissionDate.getMonth()) + parseInt(submissionMonth));
 
-    // Return only the date part as YYYY-MM-DD
-    return submissionDate.toISOString().split('T')[0];
+  
+  // Return only the date part as YYYY-MM-DD
+  return submissionDate.toISOString().split('T')[0];
   }
 
   async triggerRuleEngine(data: any, accessToken: string): Promise<void> {

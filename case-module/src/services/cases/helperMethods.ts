@@ -285,9 +285,10 @@ export class HelperMethods {
       rawQueries.fetchChecklistStatusByName("Open"),
       { type: "SELECT" }
     );
+     const checklistService = new ChecklistSchemaService();
     switch (item.action_type) {
       case "add":
-        return await this.checklistService?.addChecklistItem(
+        return await checklistService.addChecklistItem(
           CheckListItem,
           checklistRid,
           item,
@@ -298,7 +299,7 @@ export class HelperMethods {
         );
 
       case "edit":
-        return await this.checklistService?.editChecklistItem(
+        return await checklistService.editChecklistItem(
           CheckListItem,
           checklistRid,
           item,
@@ -307,7 +308,7 @@ export class HelperMethods {
         );
 
       case "delete":
-        return await this.checklistService?.deleteChecklistItem(
+        return await checklistService?.deleteChecklistItem(
           CheckListItem,
           checklistRid,
           item,

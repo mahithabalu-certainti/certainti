@@ -398,7 +398,7 @@ export const rawQueries = {
     return `SELECT rid, task_status_name from ${MAIN_SCHEMA_NAME}.case_task_status`;
   },
   fetchTaskTypes() {
-    return `SELECT rid, task_type_name from ${MAIN_SCHEMA_NAME}.task_type WHERE task_type_name ='Milestone' and status = 'Active'`;
+    return `SELECT rid, task_type_name from ${MAIN_SCHEMA_NAME}.task_type WHERE task_type_name ='Milestone' and lower(status) = 'active'`;
   },
    fetchAllCases() {
     return `SELECT cs.rid,
@@ -472,6 +472,23 @@ export const rawQueries = {
     },
     fetchRuleTypeByName(ruleTypeName: string) {
       return `SELECT rid, name FROM ${MAIN_SCHEMA_NAME}.condition_category WHERE lower(name) = lower('${ruleTypeName}') LIMIT 1`;
+    },
+    insertHistoryLog() {
+      return `INSERT INTO ${MAIN_SCHEMA_NAME}.notification_history (
+        created_by,
+        created_datetime,
+        user_rid,
+        user_email,
+        action_name,
+        entity_rid
+      ) VALUES (
+        :created_by,
+        NOW(),
+        :user_rid,
+        :user_email,
+        :action_name,
+        :entity_rid
+      )`;
     },
     checkTableExists(schemaName: string, table: string) {
       return `SELECT EXISTS(SELECT 1 FROM information_schema.tables WHERE table_schema = '${schemaName}' AND table_name = '${table}')`;
