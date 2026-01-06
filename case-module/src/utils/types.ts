@@ -944,3 +944,8 @@ export type ProjectComputeValue = {
   net_epw: number;
   total_project_value_labor: number;
 }
+export type CalculateQreCostType = {
+  fte_qre_amount : number;
+  subcon_qre_amount : number;
+  nonlabor_qre_amount : number;
+}

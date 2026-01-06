@@ -40,6 +40,10 @@ interface CaseAttributes {
   cloud_software?: number;
   unpaid_amounts_paid? : number;
   unpaid_amounts? : number;
+  aggregated_turnover? : number;
+  total_expenses ? : number;
+  taxable_income ? : number;
+  export_sales_revenue? : number;
   
 }
 
@@ -86,6 +90,10 @@ export class Case
   public cloud_software?: number;
   public unpaid_amounts_paid? : number;
   public unpaid_amounts? : number;
+  public aggregated_turnover? : number;
+  public total_expenses ? : number;
+  public taxable_income ? : number;
+  public export_sales_revenue? : number;
 
   static initialize(
     sequelize: Sequelize,
@@ -142,7 +150,11 @@ export class Case
         sub_contracts : {type : DataTypes.DECIMAL, allowNull : true},
         cloud_software: {type : DataTypes.DECIMAL, allowNull : true},
         unpaid_amounts_paid : {type : DataTypes.DECIMAL, allowNull : true},
-        unpaid_amounts : {type : DataTypes.DECIMAL, allowNull : true}
+        unpaid_amounts : {type : DataTypes.DECIMAL, allowNull : true},
+        aggregated_turnover : {type : DataTypes.DECIMAL, allowNull : true},
+        total_expenses : {type : DataTypes.DECIMAL, allowNull : true},
+        taxable_income : {type : DataTypes.DECIMAL, allowNull : true},
+        export_sales_revenue : {type : DataTypes.DECIMAL, allowNull : true}
       },
       {
         sequelize,

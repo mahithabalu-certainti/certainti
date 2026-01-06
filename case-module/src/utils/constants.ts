@@ -961,7 +961,7 @@ export const rawQueries = {
   fetchCaseById(schemaName: string) {
     return `
     SELECT rid,r_number,case_name,account_rid ,fiscal_year, material_software_cost, heat_light_power, total_nonlabor_cost,
-    employers_pension_contribution,other
+    employers_pension_contribution,other, total_expenses
     FROM "${schemaName}".cases
     WHERE rid = :caseId
     `;
