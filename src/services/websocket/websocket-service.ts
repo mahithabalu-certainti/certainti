@@ -43,6 +43,7 @@ export class WebSocketService {
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private reconnectDelay = 3000; // 3 seconds
+  private reconnectJitterMs = 500; // Random jitter to prevent thundering herd
   private reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
   private eventHandlers: Map<string, Set<WebSocketEventHandler>> = new Map();
   private onConnectionChange: ((isConnected: boolean) => void) | null = null;
@@ -53,6 +54,7 @@ export class WebSocketService {
   private urlRefreshCooldownMs = 60000;
   private keepAliveInterval: ReturnType<typeof setInterval> | null = null;
   private keepAlivePeriodMs = 25000;
+  private keepAliveFailureCount = 0;
   private readonly subprotocol =
     (import.meta as unknown as { env?: Record<string, string> })?.env
       ?.VITE_WEBSOCKET_SUBPROTOCOL || 'json.webpubsub.azure.v1';
@@ -103,6 +105,8 @@ export class WebSocketService {
   private handleOpen(): void {
     console.log('✅ WebSocket connected');
     this.reconnectAttempts = 0;
+    this.keepAliveFailureCount = 0; // Reset failure counter on new connection
+    
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout);
       this.reconnectTimeout = null;
@@ -110,13 +114,35 @@ export class WebSocketService {
     if (this.keepAliveInterval) {
       clearInterval(this.keepAliveInterval);
     }
+    
     this.keepAliveInterval = setInterval(() => {
       try {
         this.send({ type: 'ping', data: 'keepalive' });
-      } catch {
-        /* noop */
+        // Reset failure count on successful send
+        this.keepAliveFailureCount = 0;
+      } catch (error) {
+        this.keepAliveFailureCount++;
+        console.error('WebSocket keep-alive ping failed', error);
+        
+        // If keep-alive fails 3 times consecutively, assume connection is broken
+        if (this.keepAliveFailureCount >= 3) {
+          console.error('Keep-alive failed 3 times, closing connection to trigger reconnection');
+          
+          if (this.keepAliveInterval) {
+            clearInterval(this.keepAliveInterval);
+            this.keepAliveInterval = null;
+          }
+          
+          // Close the connection to trigger reconnection logic
+          try {
+            this.ws?.close();
+          } catch (closeError) {
+            console.error('Error while closing WebSocket after keep-alive failures', closeError);
+          }
+        }
       }
     }, this.keepAlivePeriodMs);
+    
     this.onConnectionChange?.(true);
   }
 
@@ -219,7 +245,7 @@ export class WebSocketService {
           }
         },
         this.reconnectDelay * this.reconnectAttempts +
-          Math.floor(Math.random() * 500)
+          Math.floor(Math.random() * this.reconnectJitterMs)
       );
     } else if (this.reconnectAttempts >= this.maxReconnectAttempts) {
       console.error('Max reconnection attempts reached');
